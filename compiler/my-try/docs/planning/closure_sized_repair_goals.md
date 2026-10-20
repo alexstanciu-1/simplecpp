@@ -5,7 +5,7 @@ Doc Status: planning
 
 User-requested planning target: advance by at least three percentage points of the
 original 64-issue inventory per implementation goal. Two fully closed original
-issues equal 3.125 percentage points. The current baseline is 26 closed, one
+issues equal 3.125 percentage points. The pre-batch baseline was 26 closed, one
 partial (S09), and 37 other open issues: 40.625% fully closed.
 
 Recent search and replacement goals completed six API signatures and made both
@@ -38,9 +38,9 @@ This is a batching target, not a guarantee that unknown architectural problems
 can be solved without another discussion. Larger normal-discussion issues may
 need a justified exception; explain it before creating a smaller goal where known.
 
-## Recommended next batch: compatibility and vector APIs
+## Completed first batch: compatibility and vector APIs
 
-Target S09, V-R07 and V-H10: three closures would reach 29/64 (45.3125%), a gain of
+S09, V-R07 and V-H10 closed: three closures reached 29/64 (45.3125%), a gain of
 4.6875 points. Two closures would reach 28/64 (43.75%), a gain of 3.125 points; this
 is a progress checkpoint, not permission to leave a third authorized task undone.
 
@@ -50,9 +50,9 @@ is a progress checkpoint, not permission to leave a third authorized task undone
 | V-R07 | Expose seven vector helper names across eight forms, including both compact arities | Agree generic type binding, reference mutation versus observation, fill-copy constraints, clear/capacity policy and negative-size errors. Probe providers first, then verify strict source behavior and production provider build. Keep legacy-profile fixture evidence separate. |
 | V-H10 | Repair the closure-container negative test's masked assertion | Agree the actual unsupported storage boundary; reach that boundary with valid initialization and retain a typed callable-container positive control. Preserve the old failure evidence and keep fixture work in its own commit. |
 
-Review all three before starting the implementation goal. If S09-B1 needs a wide
-redesign, revise the batch before authorization rather than promising its closure.
-Do not use V-E01's already-resolved environment status merely to pad this batch.
+All three were reviewed and authorized before implementation. The bounded copy
+prerequisite received separate approval; see [closeout evidence](closure_batch.md).
+V-E01's already-resolved environment status was not used to pad this batch.
 
 ## Candidate subsequent batches
 
@@ -75,7 +75,7 @@ and owner (layout declarations/queries, project/module integration, callable
 boundaries, ownership/transfer policies). Do not pre-authorize architecture work
 or assign misleading fixed throughput to those larger tasks.
 
-## Proposed decisions for the first batch — pending approval
+## Approved decisions for the first batch — 2026-10-20
 
 S09-B1 inspection confirms that ordinary `Result_Conversions` already supports
 checked extraction at by-value argument boundaries. `Runtime_Call_Preparation`
@@ -109,6 +109,12 @@ control with append/invocation and an incompatible-signature rejection. Preserve
 the old source/diagnostic in dated evidence; perform fixture migration separately
 from the compiler/API commits. This does not ban supported typed callable storage.
 
-These decisions would authorize one goal targeting all three closures, with
-runtime/compiler bounds scoped per issue and all proofs on dev002. They remain
-proposals until the user accepts the batch; no implementation goal is active.
+The user approved this batch and its implementation goal on 2026-10-20. During
+verification, explicit move into vector_resize exposed a provider-copy prerequisite:
+transport can move a unique value, but the provider still needs copies of the fill.
+The user separately authorized a bounded metadata/shared-preparation copy requirement.
+`requires_copy` belongs to fixed value parameter contracts, survives generic
+instantiation, and is checked using ordinary source-aware capability preparation.
+It does not constrain inference or change runtime implementation. The concrete
+provider header is the existing public `scpp/lang/php.hpp`; the lower support header
+alone is not self-contained. See [batch closeout](closure_batch.md).

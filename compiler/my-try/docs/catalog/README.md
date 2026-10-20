@@ -22,6 +22,9 @@ baseline-unsupported features, and defines the acceptance ledger still needed.
 Existing Chapter 15 safety gates remain in force; its entire extension inventory
 is not automatically the compatibility milestone's implementation queue.
 
+Current closure checkpoint: [S09/V-R07/V-H10](../planning/closure_batch.md) brings
+the original issue inventory to 29/64 closed (45.3125%); no full matrix rerun.
+
 ## Reading current status and historical evidence
 
 The 2026-10-19 [documentation reconciliation](../planning/simple_repairs_03.md)

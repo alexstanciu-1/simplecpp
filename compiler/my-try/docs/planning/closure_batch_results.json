@@ -1,0 +1,663 @@
+{
+  "doc_status": "supporting",
+  "date": "2026-10-20",
+  "passed": true,
+  "head": "4416616e",
+  "host": "alex-ai@dev002.travelfuse.ro",
+  "snapshot": "/home/alex-ai/closure-batch/20261020-01",
+  "suites": {
+    "runtime-first": {
+      "commands": 3,
+      "all_expected_exits": true,
+      "command_seconds": 7.26,
+      "native_executions": 1
+    },
+    "payload-baseline": {
+      "commands": 1,
+      "all_expected_exits": true,
+      "command_seconds": 0.26,
+      "native_executions": 0
+    },
+    "fixture-baseline": {
+      "commands": 1,
+      "all_expected_exits": true,
+      "command_seconds": 0.27,
+      "native_executions": 0
+    },
+    "regressions-01": {
+      "commands": 10,
+      "all_expected_exits": true,
+      "command_seconds": 2.57,
+      "native_executions": 0
+    },
+    "generics-02": {
+      "commands": 49,
+      "all_expected_exits": true,
+      "command_seconds": 37.83,
+      "native_executions": 15
+    },
+    "json-01": {
+      "commands": 47,
+      "all_expected_exits": true,
+      "command_seconds": 29.32,
+      "native_executions": 9
+    },
+    "search-01": {
+      "commands": 12,
+      "all_expected_exits": true,
+      "command_seconds": 14.83,
+      "native_executions": 4
+    },
+    "replace-01": {
+      "commands": 8,
+      "all_expected_exits": true,
+      "command_seconds": 10.25,
+      "native_executions": 2
+    },
+    "conditionals-01": {
+      "commands": 107,
+      "all_expected_exits": true,
+      "command_seconds": 53.59,
+      "native_executions": 46
+    },
+    "payload-final-02": {
+      "commands": 8,
+      "all_expected_exits": true,
+      "command_seconds": 10.57,
+      "native_executions": 2
+    },
+    "vectors-final": {
+      "commands": 32,
+      "all_expected_exits": true,
+      "command_seconds": 42.63,
+      "native_executions": 10
+    },
+    "fixture-final": {
+      "commands": 4,
+      "all_expected_exits": true,
+      "command_seconds": 6.19,
+      "native_executions": 1
+    }
+  },
+  "summaries": {
+    "runtime-first": {
+      "passed": true,
+      "observation": "4 payloads; 5 extraction failures; 8 vector forms; 8 negative checks; move-only lifetime preserved\n",
+      "runtime_changes": false
+    },
+    "payload-baseline": {
+      "passed": true,
+      "baseline": true,
+      "checks": {
+        "path": "tests/php/strings/strict_level_01/strict_strings_004_strpos_false_branch_regression.phs",
+        "sha256": "dc4a756504d246ffadd26af84d9c14e0abbae1713abe48639870eaffe1344cdc",
+        "compiled": false,
+        "diagnostic": "S2S runtime call requires one exact signature; use explicit argument types\n"
+      },
+      "executed": [],
+      "full_matrix_run": false
+    },
+    "fixture-baseline": {
+      "passed": true,
+      "baseline": true,
+      "checks": {
+        "path": "tests/php/closures/strict_level_02/closures_009_container_storage_negative.phs",
+        "source": "$items = [];\n$items[] = function (): int {\n\treturn 1;\n};\n\necho \"unreachable\\n\";\n",
+        "sha256": "3786c6ed2233bf93f45227a1c9261f627a779cb4dcb94a91d684f2189515a399",
+        "diagnostic": "S2S data construction requires a known concrete target\n"
+      }
+    },
+    "regressions-01": {
+      "passed": true,
+      "preparation_suites": [
+        "runtime_signatures",
+        "conversions",
+        "nullable",
+        "results",
+        "references",
+        "reference_model",
+        "result_model",
+        "callable_storage",
+        "callable_variance",
+        "callable_inputs"
+      ],
+      "native_compiler_rebuild": false,
+      "full_matrix_run": false
+    },
+    "json-01": {
+      "passed": true,
+      "php_suites": 9,
+      "generated_programs": 9,
+      "cpp_pch": false,
+      "native_compiler_rebuild": false
+    },
+    "search-01": {
+      "passed": true,
+      "baseline": false,
+      "checks": {
+        "originals": {
+          "002_str_edges": {
+            "path": "tests/php/strings/strict_level_01/strict_strings_002_str_edges.phs",
+            "sha256": "ef5bf5be6d66370a22bc00b14a18c577321c5915d82ba53f4a69025651cdc666",
+            "compiled": true
+          },
+          "004_strpos_false_branch_regression": {
+            "path": "tests/php/strings/strict_level_01/strict_strings_004_strpos_false_branch_regression.phs",
+            "sha256": "dc4a756504d246ffadd26af84d9c14e0abbae1713abe48639870eaffe1344cdc",
+            "compiled": true
+          },
+          "001_str_surface": {
+            "path": "tests/php/strings/strict_level_01/strict_strings_001_str_surface.phs",
+            "sha256": "891580ca91aaa07e9e801f515d13de5b6253227aefd29ce747168b9a6daa5e34",
+            "compiled": true
+          }
+        },
+        "rejections": [
+          {
+            "source": "strpos();",
+            "diagnostic": "S2S runtime call requires one exact signature or a unique checked-payload signature; use explicit argument types\n"
+          },
+          {
+            "source": "strpos(\"a\");",
+            "diagnostic": "S2S runtime call requires one exact signature or a unique checked-payload signature; use explicit argument types\n"
+          },
+          {
+            "source": "strpos(\"a\",\"a\",0,1);",
+            "diagnostic": "S2S runtime call requires one exact signature or a unique checked-payload signature; use explicit argument types\n"
+          },
+          {
+            "source": "strpos(1,\"a\");",
+            "diagnostic": "S2S runtime call requires one exact signature or a unique checked-payload signature; use explicit argument types\n"
+          },
+          {
+            "source": "strpos(\"a\",false);",
+            "diagnostic": "S2S runtime call requires one exact signature or a unique checked-payload signature; use explicit argument types\n"
+          },
+          {
+            "source": "strpos(\"a\",\"a\",1.0);",
+            "diagnostic": "S2S runtime call requires one exact signature or a unique checked-payload signature; use explicit argument types\n"
+          },
+          {
+            "source": "$v mixed=\"a\";strpos($v,\"a\");",
+            "diagnostic": "S2S runtime call requires one exact signature or a unique checked-payload signature; use explicit argument types\n"
+          },
+          {
+            "source": "$v vector<string>=[\"a\"];strpos($v,\"a\");",
+            "diagnostic": "Expected '>' at operator.phs: byte 16"
+          },
+          {
+            "source": "$r =& strpos(\"a\",\"a\");",
+            "diagnostic": "S2S reference binding requires stable storage\n"
+          },
+          {
+            "source": "strrpos();",
+            "diagnostic": "S2S runtime call requires one exact signature or a unique checked-payload signature; use explicit argument types\n"
+          },
+          {
+            "source": "strrpos(\"a\");",
+            "diagnostic": "S2S runtime call requires one exact signature or a unique checked-payload signature; use explicit argument types\n"
+          },
+          {
+            "source": "strrpos(\"a\",\"a\",0,1);",
+            "diagnostic": "S2S runtime call requires one exact signature or a unique checked-payload signature; use explicit argument types\n"
+          },
+          {
+            "source": "strrpos(1,\"a\");",
+            "diagnostic": "S2S runtime call requires one exact signature or a unique checked-payload signature; use explicit argument types\n"
+          },
+          {
+            "source": "strrpos(\"a\",false);",
+            "diagnostic": "S2S runtime call requires one exact signature or a unique checked-payload signature; use explicit argument types\n"
+          },
+          {
+            "source": "strrpos(\"a\",\"a\",1.0);",
+            "diagnostic": "S2S runtime call requires one exact signature or a unique checked-payload signature; use explicit argument types\n"
+          },
+          {
+            "source": "$v mixed=\"a\";strrpos($v,\"a\");",
+            "diagnostic": "S2S runtime call requires one exact signature or a unique checked-payload signature; use explicit argument types\n"
+          },
+          {
+            "source": "$v vector<string>=[\"a\"];strrpos($v,\"a\");",
+            "diagnostic": "Expected '>' at operator.phs: byte 16"
+          },
+          {
+            "source": "$r =& strrpos(\"a\",\"a\");",
+            "diagnostic": "S2S reference binding requires stable storage\n"
+          }
+        ],
+        "recovery_cycles": 4,
+        "downstream_boundary": {
+          "source": "$p=strpos(\"varchar(32)\",\"(\");if($p!==false)echo substr(\"varchar(32)\",0,$p);",
+          "diagnostic": ""
+        }
+      },
+      "executed": [
+        "behavior",
+        "original_002_str_edges",
+        "original_004_strpos_false_branch_regression",
+        "original_001_str_surface"
+      ],
+      "full_matrix_run": false
+    },
+    "replace-01": {
+      "passed": true,
+      "baseline": false,
+      "checks": {
+        "original": {
+          "path": "tests/php/strings/strict_level_01/strict_strings_001_str_surface.phs",
+          "sha256": "891580ca91aaa07e9e801f515d13de5b6253227aefd29ce747168b9a6daa5e34",
+          "compiled": true
+        },
+        "rejections": [
+          {
+            "source": "substr_replace();",
+            "diagnostic": "S2S runtime call requires one exact signature or a unique checked-payload signature; use explicit argument types\n"
+          },
+          {
+            "source": "substr_replace(\"a\");",
+            "diagnostic": "S2S runtime call requires one exact signature or a unique checked-payload signature; use explicit argument types\n"
+          },
+          {
+            "source": "substr_replace(\"a\",\"x\");",
+            "diagnostic": "S2S runtime call requires one exact signature or a unique checked-payload signature; use explicit argument types\n"
+          },
+          {
+            "source": "substr_replace(\"a\",\"x\",0,1,2);",
+            "diagnostic": "S2S runtime call requires one exact signature or a unique checked-payload signature; use explicit argument types\n"
+          },
+          {
+            "source": "substr_replace(1,\"x\",0);",
+            "diagnostic": "S2S runtime call requires one exact signature or a unique checked-payload signature; use explicit argument types\n"
+          },
+          {
+            "source": "substr_replace(\"a\",false,0);",
+            "diagnostic": "S2S runtime call requires one exact signature or a unique checked-payload signature; use explicit argument types\n"
+          },
+          {
+            "source": "substr_replace(\"a\",\"x\",1.0);",
+            "diagnostic": "S2S runtime call requires one exact signature or a unique checked-payload signature; use explicit argument types\n"
+          },
+          {
+            "source": "substr_replace(\"a\",\"x\",0,\"1\");",
+            "diagnostic": "S2S runtime call requires one exact signature or a unique checked-payload signature; use explicit argument types\n"
+          },
+          {
+            "source": "$s mixed=\"a\";substr_replace($s,\"x\",0);",
+            "diagnostic": "S2S runtime call requires one exact signature or a unique checked-payload signature; use explicit argument types\n"
+          },
+          {
+            "source": "$s vector<string>=[\"a\"];substr_replace($s,\"x\",0);",
+            "diagnostic": "Expected '>' at operator.phs: byte 16"
+          },
+          {
+            "source": "$r =& substr_replace(\"a\",\"x\",0);",
+            "diagnostic": "S2S reference binding requires stable storage\n"
+          }
+        ],
+        "recovery_cycles": 2
+      },
+      "executed": [
+        "behavior",
+        "original"
+      ],
+      "full_matrix_run": false
+    },
+    "conditionals-01": {
+      "passed": true,
+      "baseline": false,
+      "checks": {
+        "original": {
+          "source": "/home/alex-ai/closure-batch/20261020-01/tests/php/strings/strict_level_01/strict_strings_004_strpos_false_branch_regression.phs",
+          "sha256": "dc4a756504d246ffadd26af84d9c14e0abbae1713abe48639870eaffe1344cdc",
+          "diagnostic": "",
+          "passed": true
+        },
+        "positive_programs": 46,
+        "rejections": [
+          {
+            "source": "if(true)",
+            "diagnostic": "Expected scalar literal or variable reference at operator.phs: byte 8"
+          },
+          {
+            "source": "if(true) else return 1;",
+            "diagnostic": "Expected ';' at operator.phs: byte 14"
+          },
+          {
+            "source": "if(true) return 1;else",
+            "diagnostic": "Expected scalar literal or variable reference at operator.phs: byte 22"
+          },
+          {
+            "source": "if(false) return 1;else if {return 2;}",
+            "diagnostic": "Expected '(' at operator.phs: byte 27"
+          },
+          {
+            "source": "else return 1;",
+            "diagnostic": "Expected ';' at operator.phs: byte 5"
+          },
+          {
+            "source": "if(true) return 1;else return 2;else return 3;",
+            "diagnostic": "Expected ';' at operator.phs: byte 37"
+          },
+          {
+            "source": "if(true) ;",
+            "diagnostic": "Expected scalar literal or variable reference at operator.phs: byte 10"
+          },
+          {
+            "source": "if(true): return 1;endif;",
+            "diagnostic": "Expected scalar literal or variable reference at operator.phs: byte 10"
+          },
+          {
+            "source": "while(false) return 1;",
+            "diagnostic": "Expected '{' at operator.phs: byte 13"
+          },
+          {
+            "source": "for(;;) break;",
+            "diagnostic": "Expected '{' at operator.phs: byte 8"
+          },
+          {
+            "source": "if(true) break 2;",
+            "diagnostic": "Expected ';' at operator.phs: byte 15"
+          },
+          {
+            "source": "if(true) break;",
+            "diagnostic": "S2S break/continue requires an enclosing legal target\n"
+          },
+          {
+            "source": "if(true) continue;",
+            "diagnostic": "S2S break/continue requires an enclosing legal target\n"
+          },
+          {
+            "source": "if(true) function f():int{return 1;}",
+            "diagnostic": "Local declarations of functions or structs are not supported at operator.phs: byte 9"
+          },
+          {
+            "source": "if(true){function f():int{return 1;}}",
+            "diagnostic": "Local declarations of functions or structs are not supported at operator.phs: byte 9"
+          },
+          {
+            "source": "if(true) struct X {int $v;}",
+            "diagnostic": "Local declarations of functions or structs are not supported at operator.phs: byte 9"
+          },
+          {
+            "source": "if(true){struct X {int $v;}}",
+            "diagnostic": "Local declarations of functions or structs are not supported at operator.phs: byte 9"
+          },
+          {
+            "source": "if(true) $local=7;return $local;",
+            "diagnostic": "S2S needs an established local declaration for local\n"
+          },
+          {
+            "source": "if(false) $local=7;else return $local;",
+            "diagnostic": "S2S needs an established local declaration for local\n"
+          },
+          {
+            "source": "function f(bool $v):int{if($v) return 1;}",
+            "diagnostic": "S2S non-void function f can reach the end without returning a value\n"
+          },
+          {
+            "source": "if(false) $x=missing();return 0;",
+            "diagnostic": "S2S needs one resolved function for missing\n"
+          },
+          {
+            "source": "if(true) return 1;else return missing();",
+            "diagnostic": "S2S needs one resolved function for missing\n"
+          },
+          {
+            "source": "$x=1;if(true) $x int = $x;return $x;",
+            "diagnostic": "S2S local x cannot read or write itself in its initializer\n"
+          }
+        ],
+        "recovery_cycles": 8,
+        "span_checks": 3
+      },
+      "full_matrix_run": false,
+      "runtime_changes": false
+    },
+    "payload-final-02": {
+      "passed": true,
+      "baseline": false,
+      "checks": {
+        "original": {
+          "path": "tests/php/strings/strict_level_01/strict_strings_004_strpos_false_branch_regression.phs",
+          "sha256": "dc4a756504d246ffadd26af84d9c14e0abbae1713abe48639870eaffe1344cdc",
+          "compiled": true
+        },
+        "signatures": [
+          [
+            "?int",
+            "int"
+          ],
+          [
+            "?float",
+            "float"
+          ],
+          [
+            "?bool",
+            "bool"
+          ],
+          [
+            "?string",
+            "string"
+          ],
+          [
+            "result<int>",
+            "int"
+          ],
+          [
+            "result<float>",
+            "float"
+          ],
+          [
+            "result<bool>",
+            "bool"
+          ],
+          [
+            "result<string>",
+            "string"
+          ],
+          [
+            "result_or_false<int>",
+            "int"
+          ],
+          [
+            "result_or_false<float>",
+            "float"
+          ],
+          [
+            "result_or_false<bool>",
+            "bool"
+          ],
+          [
+            "result_or_false<string>",
+            "string"
+          ],
+          [
+            "result_or_bool<int>",
+            "int"
+          ],
+          [
+            "result_or_bool<float>",
+            "float"
+          ],
+          [
+            "result_or_bool<bool>",
+            "bool"
+          ],
+          [
+            "result_or_bool<string>",
+            "string"
+          ]
+        ],
+        "rejections": [
+          {
+            "source": "$v result_or_false<int> = 7;probe_ambiguous($v,$v);",
+            "diagnostic": "S2S runtime call has ambiguous checked-payload signatures; use explicit argument types\n"
+          },
+          {
+            "source": "$v result<int> = 7;probe_ref($v);",
+            "diagnostic": "S2S runtime call requires one exact signature or a unique checked-payload signature; use explicit argument types\n"
+          },
+          {
+            "source": "$v result<int> = 7;probe_observe($v);",
+            "diagnostic": "S2S runtime call requires one exact signature or a unique checked-payload signature; use explicit argument types\n"
+          },
+          {
+            "source": "$v result<int> = 7;probe_default($v);",
+            "diagnostic": "S2S runtime call requires one exact signature or a unique checked-payload signature; use explicit argument types\n"
+          },
+          {
+            "source": "$v result<int> = 7;probe_default($v,0);",
+            "diagnostic": "S2S runtime call requires one exact signature or a unique checked-payload signature; use explicit argument types\n"
+          },
+          {
+            "source": "$v result<int> = 7;probe_pack($v);",
+            "diagnostic": "S2S runtime call requires one exact signature or a unique checked-payload signature; use explicit argument types\n"
+          },
+          {
+            "source": "$v result<int> = 7;probe_numeric($v);",
+            "diagnostic": "S2S runtime call requires one exact signature or a unique checked-payload signature; use explicit argument types\n"
+          },
+          {
+            "source": "probe_numeric(7);",
+            "diagnostic": "S2S runtime call requires one exact signature or a unique checked-payload signature; use explicit argument types\n"
+          },
+          {
+            "source": "probe_wrap(7);",
+            "diagnostic": "S2S runtime call requires one exact signature or a unique checked-payload signature; use explicit argument types\n"
+          },
+          {
+            "source": "$v mixed=7;probe_value($v);",
+            "diagnostic": "S2S runtime call requires one exact signature or a unique checked-payload signature; use explicit argument types\n"
+          }
+        ],
+        "recoveries": 4
+      },
+      "executed": [
+        "behavior",
+        "original"
+      ],
+      "full_matrix_run": false
+    },
+    "vectors-final": {
+      "passed": true,
+      "blockers": [],
+      "checks": {
+        "programs": [
+          "forms",
+          "scalars",
+          "copies",
+          "observation",
+          "noncopyable",
+          "order",
+          "errors"
+        ],
+        "rejections": [
+          {
+            "source": "vector_reserve();",
+            "diagnostic": "S2S runtime call requires one exact signature or a unique checked-payload signature; use explicit argument types\n"
+          },
+          {
+            "source": "vector_capacity(1);",
+            "diagnostic": "S2S runtime call requires one exact signature or a unique checked-payload signature; use explicit argument types\n"
+          },
+          {
+            "source": "$v vector<int>;vector_reserve($v,1.0);",
+            "diagnostic": "S2S runtime call requires one exact signature or a unique checked-payload signature; use explicit argument types\n"
+          },
+          {
+            "source": "vector_resize(vector<int>::[],1,7);",
+            "diagnostic": "S2S reference arguments require stable storage of the exact parameter type\n"
+          },
+          {
+            "source": "function bad(const vector<int> &$v):void{vector_clear($v);}",
+            "diagnostic": "S2S mutation or mutable borrowing through read-only storage is not allowed\n"
+          },
+          {
+            "source": "$v vector<int>;vector_resize($v,2,\"x\");",
+            "diagnostic": "S2S runtime call requires one exact signature or a unique checked-payload signature; use explicit argument types\n"
+          },
+          {
+            "source": "$v vector<unique<int>>;$x unique<int>;vector_resize($v,0,$x);",
+            "diagnostic": "S2S value copy requires copyable_value\n"
+          },
+          {
+            "source": "vector_compact(vector<int>::[]);",
+            "diagnostic": "S2S reference arguments require stable storage of the exact parameter type\n"
+          },
+          {
+            "source": "$v vector<int>;vector_compact($v,1,2);",
+            "diagnostic": "S2S runtime call requires one exact signature or a unique checked-payload signature; use explicit argument types\n"
+          }
+        ],
+        "move_probes": {
+          "filled": {
+            "source": "function probe(unique<int> $x):vector<unique<int>>{return vector_filled(0,move($x));}",
+            "compiled": false,
+            "diagnostic": "S2S value copy requires copyable_value\n"
+          },
+          "resize": {
+            "source": "function probe(vector<unique<int>> &$v,unique<int> $x):void{vector_resize($v,0,move($x));}",
+            "compiled": false,
+            "diagnostic": "S2S value copy requires copyable_value\n"
+          }
+        },
+        "recovery_cycles": 2
+      },
+      "production_build": true,
+      "runtime_changes": false
+    },
+    "fixture-final": {
+      "passed": true,
+      "baseline": false,
+      "checks": {
+        "fixture": {
+          "path": "tests/php/closures/strict_level_02/closures_009_container_storage_negative.phs",
+          "source": "$items vector<mixed> = [];\n$items[] = function (): int {\n\treturn 1;\n};\n\necho \"unreachable\\n\";\n",
+          "sha256": "48abeb12312385eacc5d7a66fafca77f3718e128e2b0d125040179a17e0256c4",
+          "diagnostic": "S2S boxed wrapping currently supports null, bool, ordinary int, float and string\n"
+        },
+        "incompatible_signature": {
+          "source": "$items vector<function<int()>> = []; $items[] = function ():string{return \"wrong\";};",
+          "diagnostic": "Callable boundary requires an exact parameter and return signature\n"
+        },
+        "initializer_valid": true
+      }
+    }
+  },
+  "source_integrity": {
+    "checked": 6297,
+    "mismatches": [],
+    "runtime_changed": [
+      "runtime/metadata/modules/core.json"
+    ],
+    "compiler_changed": [
+      "compiler/my-try/04_analyze/conversions/preparation.php",
+      "compiler/my-try/04_analyze/prepare/semantics/calls.php",
+      "compiler/my-try/04_analyze/prepare/semantics/runtime_calls.php",
+      "compiler/my-try/compiler/callables/catalog.php",
+      "compiler/my-try/compiler/callables/structures.php",
+      "compiler/my-try/compiler/runtime_catalog/patterns.php",
+      "compiler/my-try/compiler/runtime_catalog/reader.php",
+      "compiler/my-try/compiler/runtime_catalog/register.php",
+      "compiler/my-try/compiler/runtime_catalog/structures.php"
+    ]
+  },
+  "toolchain": {
+    "php": "PHP 8.5.11 (cli) (built: Sep 24 2026 13:49:29) (NTS)\nCopyright (c) The PHP Group\nBuilt by Ubuntu\nZend Engine v4.5.11, Copyright (c) Zend Technologies\n    with Zend OPcache v8.5.11, Copyright (c), by Zend Technologies\n",
+    "clang": "Ubuntu clang version 18.1.3 (1ubuntu1)\nTarget: x86_64-pc-linux-gnu\nThread model: posix\nInstalledDir: /usr/bin\n",
+    "python": "Python 3.12.3\n"
+  },
+  "evidence_records": 835,
+  "evidence_sha256": "548465b4e9e5c8465178480313849c508c670757650c132539b229c50cef4ca7",
+  "runtime_implementation_changes": false,
+  "full_matrix_run": false,
+  "native_compiler_rebuilt": false,
+  "original_issue_closure": {
+    "closed": 29,
+    "partial": 0,
+    "total": 64,
+    "percent": 45.3125
+  },
+  "remaining_batch_blockers": []
+}

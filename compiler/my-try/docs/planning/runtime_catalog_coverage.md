@@ -25,7 +25,7 @@ do not request approval for each ordinary metadata row or populate speculative r
 
 | Module | Registered source surface | Shared path |
 | --- | --- | --- |
-| core | Byte `strlen`; `count` for vector/hash/mixed/dynamic; process memory usage/peak; cli_argc/cli_argv/cli_args; getenv/shell_exec | Concrete and inferred generic contracts; non-retaining unary observation |
+| core | Byte `strlen`; all eight strict vector helper forms; `count` for vector/hash/mixed/dynamic; process memory usage/peak; cli_argc/cli_argv/cli_args; getenv/shell_exec | Concrete and inferred generic contracts; non-retaining unary observation |
 | json | Decode/encode families; twelve document/navigation calls, three shared types and diagnostic fields | Concrete overloads, shared storage, reference output and Result returns |
 | datetime | All 11 strict dt_* helpers; clocks, sleep, UTC/local formatting and parsing | Fixed scalar/void signatures, uint64 counters and result<int>; separately linked provider |
 | filesystem | 22 strict fs_* helpers including lock try/release/transfer and file_lock_handle | Shared scalar/container/handle Result calls; providers bundled in snippet runtime |
@@ -412,3 +412,6 @@ Supplementary foundation checks in `/tmp/registry-capabilities-20261009-review`
 pass type-catalog, capability-rule validation, container calls, nullable records and
 ownership (0.39–2.11s per PHP suite). Registration rejects conditional transport
 opt-ins: transport support is unconditional; copying is checked independently.
+
+Vector helper bindings and their explicit provider fill-copy requirement are verified
+in the [S09/V-R07/V-H10 batch](closure_batch.md), including production cold/warm builds.

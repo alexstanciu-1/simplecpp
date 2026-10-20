@@ -2,25 +2,25 @@
 Doc Status: supporting
 
 Snapshot: 2026-10-20, after [V-L07 bounded completion](vl07_completion.md) and
-[V-L06 / S04 closeout](float_identity.md) and [V-L11 / V-D14 text](carrier_text.md), followed by [S06 conditionals](s06_unbraced_conditionals.md) and [S07 predicates](s07_mixed_predicates.md). The [S09 search](s09_byte_search.md) and [replacement](s09_substr_replace.md) slices are complete; S09 remains partial for S09-B1. This covers all 64 original entries in
+[V-L06 / S04 closeout](float_identity.md) and [V-L11 / V-D14 text](carrier_text.md), followed by [S06 conditionals](s06_unbraced_conditionals.md) and [S07 predicates](s07_mixed_predicates.md). The [S09 search](s09_byte_search.md) and [replacement](s09_substr_replace.md) slices are complete. The [closure batch](closure_batch.md) now closes S09-B1, V-R07 and V-H10. This covers all 64 original entries in
 [the issue ledger](language_verification_issues.json), including deferred legacy
 syntax and policy/design issues. Operator signatures are not separate closed issues.
 
 | Status | Issues |
 | --- | ---: |
-| Implemented or already repaired, then verified | 26 |
-| Partially implemented and verified | 1 |
-| Other issues not yet closed | 37 |
+| Implemented or already repaired, then verified | 29 |
+| Partially implemented and verified | 0 |
+| Other issues not yet closed | 35 |
 | Total | 64 |
 
-Fully closed: **26/64 = 40.625%** (about **40.6% by issue count**). This is not an
+Fully closed: **29/64 = 45.3125%** (about **45.3% by issue count**). This is not an
 engineering-effort estimate. Remaining architecture/runtime/project issues can be
 much larger than fixture repairs. There is no defensible weighted effort percentage.
 
 | Original handling class | Fully closed | Partial | Not closed | Total |
 | --- | ---: | ---: | ---: | ---: |
 | Simple fix | 13 | 0 | 0 | 13 |
-| Light discussion | 10 | 1 | 6 | 17 |
+| Light discussion | 13 | 0 | 4 | 17 |
 | Normal discussion | 3 | 0 | 31 | 34 |
 
 V-L06 now admits the final two scalar float identity forms and re-verifies its
@@ -31,16 +31,17 @@ V-L11 and V-D14 now close the approved ready-width/canonical-carrier text domain
 Their 924 source rows include existing controls and aliases; they do not rewrite
 the dated V-L07 canonical inventory or imply wider text/indexed support.
 S06 now admits single-statement conditional bodies. Its unchanged original fixture
-now reaches S09-B1 (wrapper-to-payload runtime argument admission), so syntax
-closure is not a whole-program pass. The earlier unresolved-strpos checkpoint
-remains dated evidence.
+now passes after the subsequent S09-B1 call-boundary repair. The earlier
+unresolved-strpos and exact-signature checkpoints remain dated evidence.
 S07 now exposes three exact-mixed predicates through non-retaining observation.
 Its unchanged original strict fixture passes end to end; wider predicate domains
 and flow-sensitive narrowing remain separate.
 S09 now admits four byte-search and two replacement signatures. Both original S09
-fixtures (string surface and edges) pass unchanged. S09 remains partial only for
-the separately tracked S09-B1 call boundary in the false-branch fixture; this
-checkpoint adds no fully closed issue.
+fixtures (string surface and edges) pass unchanged. S09-B1 now closes through
+bounded checked-payload runtime overload selection; the false-branch fixture also
+passes unchanged. V-R07 exposes all eight vector forms with explicit provider copy
+requirements. V-H10 reaches its intended closure-boxing rejection and preserves
+typed callable storage support. This batch adds three closures, **+4.6875 points**.
 
 “Not closed” does not mean every remaining entry is an accidental regression or an
 authorized implementation task. Some entries still require policy decisions or

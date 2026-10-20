@@ -695,3 +695,14 @@ All six search/replacement API signatures and both original S09 fixtures now pas
 S09 remains partial for separately recorded S09-B1 in the false-branch fixture;
 no compiler conversion or narrowing rule was changed. Fully closed original issues
 remain **26/64 (40.625%)**, with one partial repair and 37 other open issues.
+
+## Closure batch follow-up — 2026-10-20
+
+[S09 / V-R07 / V-H10](closure_batch.md) are implemented and verified on dev002.
+S09-B1 closes through bounded checked-payload overload selection. Eight vector
+forms pass strict behavior and production builds; the separately authorized
+provider copy requirement rejects moved noncopyable fills. V-H10 reaches the
+intended unsupported boxing boundary while typed callable storage passes.
+Current progress is **29/64 (45.3125%)**, zero partial and 35 other open issues,
+**+4.6875 percentage points**. Dated earlier findings/counts remain historical.
+No runtime implementation changes, full matrix or native compiler rebuild.

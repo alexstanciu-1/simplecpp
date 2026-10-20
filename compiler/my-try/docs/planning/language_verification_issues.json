@@ -704,9 +704,9 @@
       "dependencies": [
         "Resolve the named source contract/owner before any repair."
       ],
-      "next_action": "Discuss S09-B1 wrapper-to-payload runtime argument policy. Search/replacement APIs and both original S09 fixtures now pass; preserve the separately blocked false-branch fixture unchanged.",
+      "next_action": "Closed by the approved closure batch; preserve historical findings and keep wider scope separate.",
       "simple_batch_eligible": false,
-      "repair_status": "partially-implemented-and-verified",
+      "repair_status": "implemented-and-verified",
       "repair_evidence": {
         "date": "2026-10-20",
         "report": "s09_byte_search.md",
@@ -714,20 +714,29 @@
         "audit": "s09_search_audit.json",
         "scope": "Search checkpoint: four byte-search signatures implemented; unchanged strict edge fixture passed. Replacement was deferred at this checkpoint and is completed by replacement_repair_evidence; S09-B1 remains separate."
       },
-      "remaining_blockers": [
-        {
-          "id": "S09-B1",
-          "status": "requires-contract-discussion",
-          "finding": "After admitting strpos, the unchanged strict_strings_004_strpos_false_branch_regression.phs passes result_or_false<int> directly to substr integer parameter; exact-signature preparation rejects. A false check does not narrow the static type. Explicit take followed by substr passes. No compiler conversion change in the search slice."
-        }
-      ],
       "replacement_repair_evidence": {
         "date": "2026-10-20",
         "report": "s09_substr_replace.md",
         "results": "s09_replace_results.json",
         "audit": "s09_replace_audit.json",
         "scope": "Both replacement signatures, shared runtime contract reconciliation and unchanged original strict surface pass. All six S09 API signatures are implemented; S09 remains partial only for separately tracked S09-B1."
-      }
+      },
+      "closure_repair_evidence": {
+        "date": "2026-10-20",
+        "report": "closure_batch.md",
+        "results": "closure_batch_results.json",
+        "audit": "closure_batch_audit.json",
+        "scope": "Checked-payload overload fallback; unchanged original false-branch and both S09 fixtures pass."
+      },
+      "resolved_blockers": [
+        {
+          "id": "S09-B1",
+          "status": "resolved-and-verified",
+          "finding": "After admitting strpos, the unchanged strict_strings_004_strpos_false_branch_regression.phs passes result_or_false<int> directly to substr integer parameter; exact-signature preparation rejects. A false check does not narrow the static type. Explicit take followed by substr passes. No compiler conversion change in the search slice.",
+          "resolution": "Approved checked-payload fallback implemented; see closure_batch.md. Historical finding retained."
+        }
+      ],
+      "remaining_blockers": []
     },
     {
       "id": "S10",
@@ -788,8 +797,16 @@
       "dependencies": [
         "Resolve the named source contract/owner before any repair."
       ],
-      "next_action": "Retain first-blocker evidence and discuss the bounded implementation or fixture plan; no fixes during verification.",
-      "simple_batch_eligible": false
+      "next_action": "Closed by the approved closure batch; preserve historical findings and keep wider scope separate.",
+      "simple_batch_eligible": false,
+      "repair_status": "implemented-and-verified",
+      "repair_evidence": {
+        "date": "2026-10-20",
+        "report": "closure_batch.md",
+        "results": "closure_batch_results.json",
+        "audit": "closure_batch_audit.json",
+        "scope": "Explicit mixed-element initializer reaches unsupported closure boxing; typed callable positive and incompatible-signature negative pass."
+      }
     },
     {
       "id": "V-D09",
@@ -1035,10 +1052,18 @@
       ],
       "finding": "Seven strict-symbol-map helpers have provider implementations but no current metadata bindings. Eight strict source calls, including both vector_compact arities, reject as unresolved. Historical successful v0.1 fixture is legacy-profile evidence only; it is not rerun or relabelled strict.",
       "dependencies": [],
-      "next_action": "Agree generic signatures and mutation/copy constraints, including both compact arities, before registering the family. Keep historical legacy fixture outside strict totals.",
+      "next_action": "Closed by the approved closure batch; preserve historical findings and keep wider scope separate.",
       "acceptance": "Strict programs prove reserve/capacity, resize fill/shrink, clear capacity policy, filled value copies, compact arities and negative argument errors through production build.",
       "simple_batch_eligible": false,
-      "eligibility_reason": "Generic mutation/default-value and capacity contracts need a bounded review; missing registration is not proof of a trivial patch."
+      "eligibility_reason": "Generic mutation/default-value and capacity contracts need a bounded review; missing registration is not proof of a trivial patch.",
+      "repair_status": "implemented-and-verified",
+      "repair_evidence": {
+        "date": "2026-10-20",
+        "report": "closure_batch.md",
+        "results": "closure_batch_results.json",
+        "audit": "closure_batch_audit.json",
+        "scope": "Seven vector helpers/eight forms, authorized provider copy requirement, strict behavior and production cold/warm build."
+      }
     },
     {
       "id": "V-R08",
