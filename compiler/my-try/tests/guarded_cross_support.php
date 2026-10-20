@@ -34,7 +34,7 @@ function guarded_fixture_equality_pair(string $left, string $right, string $symb
 	if ($payload!==$right_payload || !in_array($payload,['int','float','bool','string'],true)) { return false; }
 	$carriers=['?'.$payload,'result<'.$payload.'>'];
 	$carriers[]='result_or_false<'.$payload.'>'; $carriers[]='result_or_bool<'.$payload.'>';
-	return ((in_array($symbol,['===','!=='],true) || in_array($payload,['int','float','string'],true)) && in_array($left,$carriers,true) && in_array($right,$carriers,true))
+	return (in_array($left,$carriers,true) && in_array($right,$carriers,true))
 		|| ($left===$right && in_array($left,$carriers,true))
 		|| ($left===$payload && in_array($right,$carriers,true))
 		|| ($right===$payload && in_array($left,$carriers,true));
@@ -69,7 +69,7 @@ function guarded_cross_probe(string $lt, string $rt, string $left_type, string $
 		$lp = guarded_fixture_payload($left_type); $rp = guarded_fixture_payload($right_type);
 		if (in_array($excluded, ['==','!=','===','!=='], true) && guarded_fixture_equality_pair($left_type, $right_type, $excluded)) { continue; }
 		if ($excluded === 'xor' && (($lp === 'bool' && $rp === 'bool') || (in_array($lp, ['int','float'], true) && in_array($rp, ['int','float'], true)))) { continue; }
-		if ($excluded === '<=>' && $lp === $rp && in_array($lp, ['int','string'], true)) { continue; }
+		if ($excluded === '<=>' && (($lp === $rp && $lp === 'string') || (in_array($lp, ['int','float'], true) && in_array($rp, ['int','float'], true)))) { continue; }
 		if ($left_type === $lp && $right_type === $rp) { continue; }
 		guarded_cross_reject('function bad('.$left_type.' $a, '.$right_type.' $b): void { $out=($a '.$excluded.' $b); }');
 	}
@@ -128,11 +128,12 @@ function guarded_spaceship_exclusions(string $payload): void
 	foreach ($formats as $left_format) foreach ($formats as $right_format) {
 		if ($left_format === '%s' && $right_format === '%s') { continue; }
 		foreach (['int16','uint32','float','bool', $payload === 'int' ? 'string' : 'int'] as $other) {
+			if ($payload === 'int' && $other === 'float') { continue; }
 			$left = sprintf($left_format, $payload); $right = sprintf($right_format, $other);
 			guarded_cross_reject('function bad('.$left.' $a, '.$right.' $b): void { $out=($a <=> $b); }');
 			guarded_cross_reject('function bad('.$right.' $a, '.$left.' $b): void { $out=($a <=> $b); }');
 		}
-		foreach (['int16','uint32','float','bool'] as $other) {
+		foreach (['int16','uint32','bool'] as $other) {
 			guarded_cross_reject('function bad('.sprintf($left_format,$other).' $a, '.sprintf($right_format,$other).' $b): void { $out=($a <=> $b); }');
 		}
 	}

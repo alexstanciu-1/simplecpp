@@ -346,3 +346,33 @@ remain visible. RHS replacement cannot alter the saved left operand. There is no
 comparison write-back. Strict identity and existing same-family/plain equality
 are unchanged. Cross-family bool, other heterogeneous payloads, fixed-width,
 boxed, nested, spaceship and update domains remain separate.
+
+
+## Canonical-carrier completion policies — 2026-10-20
+
+Matching bool cross-family ordinary equality preserves storage states: two bool
+payloads compare by value; matching false sentinels compare equal across sentinel
+families; sentinel versus wrapped bool remains unequal. Different unavailable
+states are unequal. Strict identity and carrier/plain bool rules remain unchanged.
+Heterogeneous bool/numeric and string/bool/numeric ordinary equality is rejected
+in preparation; explicit conversion is required. Int-destination/float-RHS numeric
+compounds likewise reject implicit narrowing. No runtime coercion is inferred.
+
+Floating and mixed canonical numeric `<=>` promote int to float and return canonical
+int -1, 0 or 1. Either NaN operand throws `unordered_comparison`. Guarded extraction
+and source failures preserve their existing left-to-right precedence. Signed zeros
+compare equal; infinities order normally.
+
+Canonical integer `**=` uses checked integer power and the existing compound
+snapshot/extraction/write-back protocol. Negative exponent and overflow errors
+prevent compound write-back while preserving earlier RHS effects. The returned
+value is a snapshot of the updated destination.
+
+String-carrier `.` and `.=` use text conversion: present strings preserve complete
+bytes; empty nullable, false sentinels and both result_or_bool sentinel states
+convert to empty string; structured Result failure throws. Convert the saved left
+operand before evaluating/converting the RHS. On successful `.=` write-back the
+original destination receives a string payload, including when it was previously
+empty or a sentinel. Failed conversion/computation causes no compound write-back;
+earlier source effects remain. Indexed and wider payload capabilities must be
+verified through their existing owners and are not implied by these signatures.

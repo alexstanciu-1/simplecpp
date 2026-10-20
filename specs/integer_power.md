@@ -15,7 +15,7 @@ promotion or value-dependent result type is introduced.
 Power associates right-to-left and binds more tightly than prefix unary operators:
 `2 ** 3 ** 2` is `2 ** (3 ** 2)`; `-2 ** 2` is `-(2 ** 2)`; `(-2) ** 2` is `4`.
 A signed exponent is syntactically valid: `2 ** -2` reaches the runtime domain check.
-Grouping overrides these defaults. `**=` is outside this contract.
+Grouping overrides these defaults. The 2026-10-20 compound extension below admits `**=`.
 
 Power follows the [v0.2 eager binary evaluation contract](expression_evaluation.md):
 evaluate and convert the left operand, then the right, each once, before computing.
@@ -49,3 +49,13 @@ The helper is registered in [runtime config](../runtime/specs/config.json).
 errors and the exact public signature. [Compiler tests](../compiler/my-try/tests/power.php)
 and [generated-program fixtures](../compiler/my-try/tests/s2s.php) cover preparation,
 precedence, incremental behavior and C++ lowering.
+
+## Compound extension — 2026-10-20
+
+Canonical `int **= int` and all four canonical-int carrier/plain arrangements use
+the same checked power calculation. Guarded operands require present payloads.
+The compound destination is resolved once and its old value is saved/extracted
+before RHS evaluation. Only successful calculation and destination conversion
+write back once; source/error/overflow failures preserve earlier RHS effects.
+The expression returns the updated destination snapshot. Fixed-width, float,
+boxed and wider target capabilities remain separate.

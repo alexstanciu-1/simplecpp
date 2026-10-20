@@ -1800,7 +1800,7 @@ final class Parser_Run
 			return 3;
 		}
 		if (($text === '=') || ($text === '+=') || ($text === '-=') || ($text === '*=')
-			|| ($text === '/=') || ($text === '%=') || ($text === '.=')
+			|| ($text === '/=') || ($text === '%=') || ($text === '**=') || ($text === '.=')
 			|| ($text === '&=') || ($text === '|=') || ($text === '^=')
 			|| ($text === '<<=') || ($text === '>>=')) {
 			return 4;

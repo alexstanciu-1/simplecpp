@@ -71,8 +71,9 @@ final class Mutation_Preparation
 		$facts->write_back_mode = compound_write_back::converted_assignment;
 		if ($source_operator === operator_kind::concatenation) {
 			// Text replacement may change a boxed payload kind; numeric stored-kind checks do not apply.
-			if (!String_Conversions::is_string($target_type) && !Boxed_Conversions::is_boxed($target_type)) {
-				throw new \RuntimeException('S2S compound concatenation requires string or boxed storage');
+			if (!String_Conversions::is_string($target_type) && !String_Conversions::is_string_carrier($target_type)
+				&& !Boxed_Conversions::is_boxed($target_type)) {
+				throw new \RuntimeException('S2S compound concatenation requires string, string-carrier or boxed storage');
 			}
 		}
 		else {

@@ -1191,11 +1191,11 @@
       ],
       "finding": "Twelve homogeneous <, <=, >, >= cells reject for nullable<int>, result<int> and result_or_false<int>. The runtime ordering contract explicitly admits these carrier families for admitted payload ordering and requires runtime unwrap errors for unusable states. This finding does not yet classify wrapper arithmetic, equality, logical, mutation or spaceship. Eighteen &, |, ^, <<, >> and ~ cells for the same three integer carriers also reject despite section 9 explicitly requiring guarded lifting. The types operator_lifting_rule and nullable_lifted_ops blocks also expose 37 rejected integer-carrier arithmetic, logical, unary and mutation cells. Four explicitly conflicting nullable arithmetic cells stay under V-D13. Nullable negation admits but checkpoint 48 proves its empty-state semantic mismatch, tracked separately as V-L08.",
       "dependencies": [],
-      "next_action": "E4 verifies all 48 mixed-numeric cross-family ordinary-equality signatures. Total 3,208 verified signatures; review 744 design/scope candidates. Cross-family bool ordinary equality, other heterogeneous coercion, concatenation and other domains remain separate.",
+      "next_action": "Approved finite canonical-carrier scope complete; separately review W1 indexed mutation, W2 indexed numeric compounds, W3 presence-policy boundaries and W4 wider domains in vl07_completion.md. No full matrix rerun.",
       "acceptance": "Prove present integer payload ordering and all applicable absent/error/sentinel failures, left-to-right evaluation, unchanged source states and empty artifacts for genuinely invalid payload types. Include each admitted integer bitwise/shift family and valid shift counts, with distinct unusable-state unwrap failures. Include arithmetic, unary, lazy logical and mutation value/state/write-back proofs; do not replace guarded unwrap with condition truthiness.",
       "simple_batch_eligible": false,
-      "eligibility_reason": "Carrier normalization and operand preparation need a shared design; this verification goal authorizes no implementation.",
-      "repair_status": "partially-implemented-and-verified",
+      "eligibility_reason": "Agreed canonical-carrier completion implemented and verified on dev002; wider follow-ups remain explicit and separately scoped.",
+      "repair_status": "implemented-and-verified",
       "repair": {
         "date": "2026-10-19",
         "report": "guarded_wrappers_01.md",
@@ -1203,13 +1203,10 @@
         "scope": "Approved first guarded canonical-int slice; original audit evidence retained. No runtime implementation changes."
       },
       "remaining_scope": [
-        "Cross-family matching non-bool and mixed-numeric ordinary equality are verified; matching bool cross-family ordinary equality remains separate. Same-family/plain canonical scalar equality and mixed numeric equality are verified, as are cross-family matching-payload and heterogeneous canonical scalar strict identities.",
-        "All 336 matching-payload and 96 float-destination/int-RHS carrier compounds and U1 updates complete for admitted stable targets. Narrowing mixed numeric, indexed, fixed-width and power compounds remain separate; V-R10 is repaired.",
-        "spaceship and narrowing compounds beyond approved ordering/arithmetic/logical/float-destination domains",
-        "payload/operator domains beyond implemented numeric, bool logical and string ordering slices",
-        "spaceship outside canonical-int/string pairs; string xor (bool and canonical numeric xor implemented)",
-        "bool/numeric strict identity is verified; ordinary equality, logical mixing and other operators remain separate",
-        "Heterogeneous string strict identity is verified for canonical int/float/bool partners; ordinary string equality/coercion and concatenation remain separate."
+        "W1: indexed ++/-- remain rejected under Mutation_Preparation / Indexing_Preparation; need stable-place design.",
+        "W2: indexed guarded numeric and floating compounds remain deferred; existing indexed string-carrier .= has bounded positive proof.",
+        "W3: 112 non-admitted literal-null comparison cells remain separate presence-policy boundaries, not newly declared language prohibitions.",
+        "W4: fixed-width, nested, object/container payloads, boxed/dynamic/table semantics, selectors and explicit error-sentinel syntax remain with their own owners."
       ],
       "repair_followups": [
         {
@@ -1409,6 +1406,12 @@
           "report": "cross_mixed_equality.md",
           "results": "cross_mixed_equality_results.json",
           "scope": "48 mixed int/float cross-family ordinary-equality signatures. Authorized bounded runtime predicate repair reuses E3 state comparison and shares the canonical numeric/matching-string payload domain with sentinel/plain dispatch. Baseline 24 ambiguous pair probes (48 blocked targets) preserved. States, numeric rounding, eager effects, snapshots and recovery verified on dev002; cross-family bool remains separate."
+        },
+        {
+          "date": "2026-10-20",
+          "report": "vl07_completion.md",
+          "results": "vl07_completion_results.json",
+          "scope": "Final approved canonical scope: E3 bool24, O2 spaceship72, C3 power compounds24, S1 text48; four scalar prerequisites and two scalar controls. E5 heterogeneous480 and C2 narrowing96 verified intentional rejections. Existing129 cells reconciled to17 supported/112 rejected. 3,376 supported carrier signatures across37 slices; no unresolved canonical candidates. States, errors, NaN policy, bytes, snapshots, write-back and recovery verified on dev002. Wider indexed/presence/payload domains remain explicit."
         }
       ],
       "remaining_signature_inventory": {
@@ -1416,9 +1419,9 @@
         "signatures": "vl07_inventory/remaining.csv",
         "summary": "vl07_inventory/summary.json",
         "support_targets": 0,
-        "design_scope_candidates": 744,
-        "method": "Static planning inventory; no new compiler execution or implementation authorization",
-        "wider_domains": "Explicit boundaries in inventory report; not silently included in canonical denominator"
+        "design_scope_candidates": 0,
+        "method": "Exact static reconstruction of dated dev002 proofs: 3,376 supported carriers, 576 intentional rejections; 17 verified existing and112 observed existing rejections remain separately classified.",
+        "wider_domains": "W1-W4 in vl07_completion.md and inventory report; bounded completion does not close these separate owners."
       }
     },
     {

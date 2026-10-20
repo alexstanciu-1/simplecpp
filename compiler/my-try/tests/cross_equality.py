@@ -1,4 +1,4 @@
-"""Cross-family non-bool ordinary equality: runtime probes and 72 source signatures."""
+"""Cross-family ordinary equality: storage-state runtime probes and source proofs."""
 import itertools
 import argparse
 import json
@@ -14,6 +14,7 @@ from cpp_fixture import CppFixtureCompiler
 parser = argparse.ArgumentParser(description=__doc__)
 parser.add_argument("--results", required=True, type=Path)
 parser.add_argument("--runtime-only", action="store_true")
+parser.add_argument("--group", choices=["nonbool", "bool"], default="nonbool")
 parser.add_argument("--probe-runtime", action="store_true", help="Record baseline failures without admitting compiler support.")
 args = parser.parse_args()
 if args.probe_runtime and not args.runtime_only:
@@ -21,6 +22,8 @@ if args.probe_runtime and not args.runtime_only:
 out = args.results.resolve()
 out.mkdir(parents=True, exist_ok=False)
 payloads = {"int": ("scpp::int_t<>", "std::int64_t"), "float": ("scpp::float_t", "double"), "string": ("scpp::string_t", "std::string")}
+if args.group == "bool":
+    payloads = {"bool": ("scpp::bool_t", "bool")}
 pairs = [(p, p) for p in payloads]
 families = {"nullable": 0, "result": 1, "result_or_false": 2, "result_or_bool": 3}
 arrangements = list(itertools.product(families, repeat=2))
@@ -71,9 +74,9 @@ with CommandRunner(out / "logs", ROOT, jobs=12) as runner:
             for a, b in arrangements if a != b for p, q in pairs])
 
 (out / "summary.json").write_text(json.dumps({
-    "passed": all(x["passed"] for x in runtime_results.values()), "group": "cross-nonbool",
-    "runtime_signatures": 96, "runtime_same_family_controls": 24, "runtime_results": runtime_results,
+    "passed": all(x["passed"] for x in runtime_results.values()), "group": args.group,
+    "runtime_signatures": 32 * len(payloads), "runtime_same_family_controls": 8 * len(payloads), "runtime_results": runtime_results,
     "scalar_prerequisites": 0,
-    "carrier_signatures": 0 if args.runtime_only else 72,
+    "carrier_signatures": 0 if args.runtime_only else 24 * len(payloads),
     "full_matrix_run": False,
 }, indent=2) + "\n")

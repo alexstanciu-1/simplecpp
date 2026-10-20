@@ -577,3 +577,25 @@ kinds, eager snapshots and source failure order. Runtime code is unchanged.
 V-L07 now has 2,752 verified signatures across 28 slices and 1,200 design/scope
 candidates remaining. Ordinary equality, strings and logical mixing remain separate.
 Overall closure stays 19/64 (29.7%); V-L07 remains partial. No full matrix rerun.
+
+
+## V-L07 bounded completion — 2026-10-20
+
+[The completion goal](vl07_completion.md) verifies the final 168 approved carrier
+signatures: bool cross-family equality 24, float/mixed spaceship 72, integer power
+compounds 24 and string concatenation/assignment 48. Total supported coverage is
+**3,376 signatures across 37 slices** (2,832 binary, 64 unary, 480 compound).
+All **576 heterogeneous-equality/narrowing exclusions** have rejection/recovery
+proofs. There are no unresolved canonical candidates. The 129 prior existing-path
+cells reconcile to 17 supported operations and 112 observed rejections.
+
+V-L07 is closed within this agreed finite scope; original issue closure is now
+**20/64 (31.25%)**. Indexed unary and numeric compound updates, wider payloads,
+boxed/table/selection semantics and the separate presence-policy boundary remain
+explicit W1-W4 follow-ups with owners. Four indexed string-carrier `.=` probes pass
+through the existing protocol. No full matrix or native compiler rebuild ran.
+
+Evidence retains initial runtime/fixture failures and all repairs. Final acceptance
+covers 44 suites and 4,115 expected command exits on dev002; the generated runtime
+header is reproducible apart from its existing timestamp. See [exact results](vl07_completion_results.json)
+and [the reconciled inventory](vl07_inventory/README.md).

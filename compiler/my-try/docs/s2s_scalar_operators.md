@@ -1,17 +1,43 @@
 # Bounded scalar operators
 Doc Status: supporting
 
-Reconciled 2026-10-19 against scoped verification evidence. This guide records the my-try frontend
+Reconciled 2026-10-20 against scoped verification evidence. This guide records the my-try frontend
 and C++ S2S slice for [catalog chapter 02](catalog/02_expressions.md). Root language
 and runtime specifications remain authoritative. Imported legacy examples do not
 activate additional operand types or coercions.
+
+## Canonical-carrier completion — 2026-10-20
+
+The [V-L07 completion proof](planning/vl07_completion.md) settles the remaining
+canonical candidates: matching bool cross-family ordinary equality preserves
+payload/sentinel distinctions; float/mixed numeric `<=>` promotes int to float and
+throws `unordered_comparison` for NaN; canonical-int `**=` uses checked power.
+String-carrier `.` / `.=` uses explicit string conversion: empty nullable and both
+bool sentinel states become empty text, while Result failure throws. This preserves
+complete bytes and the existing left-to-right snapshot/write-back protocol.
+
+The implementation uses existing preparation, conversion, mutation and emission
+owners, plus a scalar runtime `scpp::numeric_compare` helper. String-carrier text
+pairs admit strings and string carriers only. Heterogeneous ordinary equality and
+implicit narrowing compounds reject before publication; explicit conversions remain
+available through their supported conversion paths.
+
+The finite inventory now has 3,376 verified carrier signatures and 576 intentional
+rejections, with no unresolved canonical candidates. The old 129 “existing paths”
+reconcile to 17 supported operations and 112 observed rejections. Indexed numeric
+updates, fixed-width/nested/object/container payloads, boxed/table semantics and
+selectors remain explicit separate boundaries. Existing indexed text assignment
+passes bounded proofs for all four string carriers. See the [inventory and owners](planning/vl07_inventory/README.md).
+
+Earlier dated checkpoints below retain their original proof boundaries; this
+completion supersedes their deferrals for the specifically admitted operations.
 
 ## Scalar admission follow-up — 2026-10-17
 
 Exact bool `==` / `!=` now return bool. Canonical float/float and int/float pairs
 admit `+`, `-`, `*`, `/` returning float; float unary `+` / `-` are admitted.
 Dedicated boolean/floating owners publish the existing decision shape, including
-operator-only canonical int-to-float conversion. Exact float compound updates are covered by the later compound proof; narrowing compounds remain deferred; the V-L04 follow-up
+operator-only canonical int-to-float conversion. Exact float compound updates are covered by the later compound proof; implicit narrowing compounds are intentionally rejected; the V-L04 follow-up
 below now admits ordinary float comparisons and mutations. Zero divisors raise `division_by_zero`,
 including floating positive/negative zero and both int/float operand orders.
 Preserving this existing runtime behavior was agreed on 2026-10-18; the stale

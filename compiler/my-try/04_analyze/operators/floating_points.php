@@ -32,7 +32,7 @@ final class Floating_Point_Operators
 	public static function is_comparison(operator_kind $source_operator): bool
 	{
 		return ($source_operator === operator_kind::equal) || ($source_operator === operator_kind::not_equal)
-			|| self::is_ordering($source_operator);
+			|| self::is_ordering($source_operator) || ($source_operator === operator_kind::three_way);
 	}
 
 	/** The canonical mixed numeric pair shared by scalar and state-aware comparisons. */
@@ -54,8 +54,11 @@ final class Floating_Point_Operators
 		$floating = Language_Types::floating(Model::$language_scope);
 		$decision = new operator_decision();
 		$decision->source_operator = $source_operator;
-		$decision->result_type = $context->boolean;
-		if ($source_operator === operator_kind::equal) {
+		$decision->result_type = $source_operator === operator_kind::three_way ? $context->integer : $context->boolean;
+		if ($source_operator === operator_kind::three_way) {
+			$decision->operation = operator_operation::floating_three_way;
+		}
+		elseif ($source_operator === operator_kind::equal) {
 			$decision->operation = operator_operation::floating_equal;
 		}
 		elseif ($source_operator === operator_kind::not_equal) {

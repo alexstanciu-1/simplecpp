@@ -764,3 +764,13 @@ See: module_inclusion_model.md
 ## PHP false-sentinel exposure rule
 
 At the PHP exposure layer, functions documented as PHP `T|false` must surface `result_or_false<T>` rather than substituting `null`. Functions documented as PHP `T|bool` should surface `result_or_bool<T>` when the success contract includes both `true` and `T`. Functions documented as PHP `bool` success/failure APIs must return plain `bool_t`, not `nullable<bool_t>`.
+
+
+### Canonical-carrier completion amendment — 2026-10-20
+
+The completion policies in `specs/expression_evaluation.md` extend state-aware
+cross-family ordinary equality to matching bool payloads without collapsing payloads
+into sentinels. They also define NaN-error numeric spaceship, checked integer power
+assignment and carrier text concatenation. Text conversion keeps the current empty
+string rule for both result_or_bool sentinel states; structured Result failures throw.
+Heterogeneous ordinary coercion and implicit narrowing compounds remain rejected.

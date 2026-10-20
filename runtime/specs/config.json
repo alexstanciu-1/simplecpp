@@ -9,7 +9,7 @@
 		"default_overload_policy": "forbidden",
 		"emit_deleted_for_forbidden_operations": true,
 		"comparison_result_type": "bool_t",
-		"cross_family_nonbool_equality_rule": "For distinct nullable/result/result_or_false/result_or_bool families with canonical int_t<>/float_t payload pairs or matching string_t payloads: present values compare by scalar equality, using int-to-float conversion for mixed numeric pairs; matching false sentinels are equal; distinct unavailable states and unavailable/payload pairs are unequal. != negates ==. Bool, other heterogeneous pairs, fixed widths and boxed payloads remain outside this route.",
+		"cross_family_equality_rule": "For distinct nullable/result/result_or_false/result_or_bool families with canonical int_t<>/float_t payload pairs or matching bool_t/string_t payloads: present values compare by scalar equality, using int-to-float conversion for mixed numeric pairs; matching false sentinels are equal; distinct unavailable states and unavailable/payload pairs are unequal. != negates ==. Bool payload/sentinel states stay distinct. Other heterogeneous pairs, fixed widths and boxed payloads remain outside this route.",
 		"condition_lowering": {
 			"semantic_type": "bool_t",
 			"cpp_bridge": "static_cast<bool>"
@@ -3013,6 +3013,13 @@
 				"family_rule": "repeated source-TypeRef conversions use abi_bridge_rule_families with a stable family_id, member list, and deferred-member list",
 				"text_coercion_rule": "new printable source types add coercions.text.abi_bridge_rules or coercions.text.abi_bridge_rule_families plus any needed carrier adapter, not source-specific compiler casts"
 			},
+			"numeric_three_way": {
+				"entrypoint": "scpp::numeric_compare",
+				"header": "operators/ordering/numeric_compare.hpp",
+				"domain": "canonical float operands after explicit int-to-float promotion",
+				"result": "canonical int -1, 0 or 1",
+				"unordered_error": "unordered_comparison"
+			},
 			"integer_power": {
 				"entrypoint": "scpp::pow",
 				"header": "operators/arithmetic/power.hpp",
@@ -3022,7 +3029,7 @@
 				"negative_exponent_error": "power_negative_exponent",
 				"overflow_error": "power_overflow",
 				"rule": "exact signed 64-bit result or runtime_error; no float promotion, implicit carrier widening, or unchecked multiplication",
-				"scope": "canonical int only; float, mixed, wrapper delegation and compound power are deferred"
+				"scope": "canonical int only; checked wrapper delegation and compound power follow expression_evaluation.md; float, mixed and fixed widths remain separate"
 			},
 			"operator_phase": "C++-first operator semantics for numeric and integer-bitwise operators; PHP-only identity and concatenation helpers remain in scpp::php, with strict identity normalizing wrappers and comparing compatible shared-object views by managed identity.",
 			"php_identity": {

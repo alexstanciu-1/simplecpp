@@ -105,11 +105,6 @@ foreach ($types as $tag => $type)
 
 foreach (['?int','result<int>','result_or_false<int>','result_or_bool<int>'] as $type)
 {
-	foreach (['+=','-=','*=','/=','%=','**=','&=','|=','^=','<<=','>>='] as $symbol) {
-		if (in_array($symbol,['+=', '-=', '*=', '/=', '%=', '&=', '|=', '^=', '<<=', '>>='],true)) { continue; }
-		$negatives[] = '$a ' . $type . ' = 1; $a ' . $symbol . ' 2;';
-		$negatives[] = '$a ' . $type . ' = 1; $b = 2; $b ' . $symbol . ' $a;';
-	}
 	foreach (['bool','int16','string'] as $other) {
 		$negatives[] = 'function bad(' . $type . ' $a, ' . $other . ' $b): void { $out = $a + $b; }';
 		$negatives[] = 'function bad(' . $other . ' $a, ' . $type . ' $b): void { $out = $a + $b; }';

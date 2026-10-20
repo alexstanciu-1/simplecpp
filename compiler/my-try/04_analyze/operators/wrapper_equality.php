@@ -28,7 +28,7 @@ final class Wrapper_Equality
 		$admitted_pair = $strict_identity
 			? ($left_value->matches($right_value)
 				|| Scalar_Identity::is_distinct_kind_pair($left_value, $right_value, $context))
-			: self::ordinary_pair_allowed($operands[0], $operands[1], $left_value, $right_value, $context);
+			: self::ordinary_pair_allowed($left_value, $right_value, $context);
 		if (!$admitted_pair || !self::is_admitted_payload($left_value, $context)
 			|| $operands[0]->by_value() || $operands[1]->by_value()) {
 			return null;
@@ -61,17 +61,11 @@ final class Wrapper_Equality
 	}
 
 	/** Ordinary equality preserves family-specific states, including mixed canonical numbers. */
-	private static function ordinary_pair_allowed(canonical_type_use $left, canonical_type_use $right,
-		canonical_type_use $left_value, canonical_type_use $right_value, preparation_context $context): bool
+	private static function ordinary_pair_allowed(canonical_type_use $left_value,
+		canonical_type_use $right_value, preparation_context $context): bool
 	{
-		$left_plain = $left->matches($left_value);
-		$right_plain = $right->matches($right_value);
 		if ($left_value->matches($right_value)) {
-			// Cross-family state equality is bounded to matching canonical non-bool payloads.
-			return $left_plain || $right_plain || $left->matches($right)
-				|| $left_value->matches($context->integer)
-				|| $left_value->matches($context->string_type)
-				|| $left_value->matches(Language_Types::floating(Model::$language_scope));
+			return true;
 		}
 		// All supported carrier/plain families now share canonical numeric equality.
 		return Floating_Point_Operators::is_mixed_numeric_pair($left_value, $right_value, $context);

@@ -126,7 +126,7 @@ foreach ($iterations as $family => $format)
 	if ($numeric_xor_mode) { continue; }
 	// Keep unapproved equality, spaceship and nonnumeric mixed forms excluded.
 	foreach ($pairs as [$lt,$rt]) {
-		foreach (['==','!=','<=>','%','**','&','|','^','<<','>>'] as $symbol) {
+		foreach (['==','!=','%','**','&','|','^','<<','>>'] as $symbol) {
 			if (guarded_fixture_equality_pair($types[$lt],$types[$rt],$symbol)) { continue; }
 			$negatives[] = 'function bad(' . $types[$lt] . ' $a, ' . $types[$rt] . ' $b): void { $out = ($a ' . $symbol . ' $b); }';
 		}

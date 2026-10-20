@@ -849,6 +849,9 @@ final class CPP_Generator
 		elseif ($decision->operation === operator_operation::integer_power) {
 			$spelling = 'scpp::pow';
 		}
+		elseif ($decision->operation === operator_operation::floating_three_way) {
+			$spelling = 'scpp::numeric_compare';
+		}
 		elseif (($decision->operation === operator_operation::integer_multiplication)
 			|| ($decision->operation === operator_operation::floating_multiplication)
 			|| ($decision->operation === operator_operation::boxed_multiplication)) {
@@ -1003,6 +1006,10 @@ final class CPP_Generator
 			if ($decision->operation !== operator_operation::string_three_way) {
 				return 'scpp::bool_t(' . $left . ' ' . $spelling . ' ' . $right . ')';
 			}
+		}
+		if ($decision->operation === operator_operation::floating_three_way) {
+			$context->headers['operators/ordering/numeric_compare.hpp'] = true;
+			return $spelling . '(' . $left . ', ' . $right . ')';
 		}
 		if ($decision->operation === operator_operation::integer_power) {
 			$context->headers['operators/arithmetic/power.hpp'] = true;

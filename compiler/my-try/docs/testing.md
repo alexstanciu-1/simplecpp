@@ -1435,3 +1435,26 @@ checks every selected state/value combination, rounding and NaNs; source proofs
 check eager snapshots, effects, failures, recovery and all 24 bool cross-family
 exclusions. Existing nullable/Result and sentinel groups remain separate controls.
 See [the E4 report](planning/cross_mixed_equality.md).
+
+
+## V-L07 canonical-carrier completion — 2026-10-20
+
+Run `tests/vl07_completion.py --results <fresh-dir>` on dev002 for the 150 spaceship,
+power-compound and text rows; `tests/cross_equality.py --group bool --results
+<fresh-dir>` adds 24 bool cross-family equalities. Source tests inspect preparation,
+cleanup, retained edit/recovery, native values/states, source errors, snapshots,
+property/static/receiver lifetime and write-back. Independent runtime probes live in
+`tests/vl07_runtime.py` (`--final` requires the checked NaN helper).
+
+`tests/vl07_rejections.py` enumerates all 576 E5/C2 negative rows from the inventory,
+with failure/recovery and empty-artifact checks. `tests/vl07_existing.py` reconciles
+129 prior boundary cells, proving 17 supported paths and 112 rejections.
+`tests/vl07_controls.py` checks explicit conversions, power precedence/snapshots and
+indexed boundaries. `tests/vl07_indexed_text.py` audits the existing four-carrier
+indexed text protocol; inspect its per-row `supported` field, not task completion
+alone. Similarly, completion runner acceptance requires `summary.json` passed=true.
+
+All use the shared runner with 12 slots and native fixture compilation. The
+[completion report](planning/vl07_completion.md) and evidence distinguish failed
+attempts, corrected fixtures and accepted suites. This is not a full matrix run or
+a native rebuild of the compiler itself.

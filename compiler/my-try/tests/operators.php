@@ -298,7 +298,7 @@ $rejections = [
 	'logical skipped unknown' => ['return false && $missing;', 'established local declaration for missing'],
 	'power float' => ['return 2.0 ** 3;', 'canonical int operands'],
 	'power narrow' => ['$x uint8 = 2; return $x ** 3;', 'canonical int operands'],
-	'power compound deferred' => ['$x = 2; $x **= 3;', 'Expected scalar literal'],
+	'power compound float' => ['$x = 2.0; $x **= 3;', 'canonical int operands'],
 ];
 foreach ($rejections as $name => [$source, $diagnostic])
 {

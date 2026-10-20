@@ -233,6 +233,13 @@ final class Operator_Preparation
 		if (q_count($operands) !== 2) {
 			throw new \LogicException('Concatenation requires two operands');
 		}
+		if (String_Conversions::is_string_carrier($operands[0]) || String_Conversions::is_string_carrier($operands[1])) {
+			foreach ($operands as $operand) {
+				if (!String_Conversions::is_string($operand) && !String_Conversions::is_string_carrier($operand)) {
+					throw new \RuntimeException('S2S string-carrier concatenation requires string or string-carrier operands');
+				}
+			}
+		}
 		$string_type = $context->string_type;
 		if (Boxed_Conversions::is_boxed($operands[0]) && Boxed_Conversions::is_boxed($operands[1])) {
 			if (!$operands[0]->matches($operands[1])) {

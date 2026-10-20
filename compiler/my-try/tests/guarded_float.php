@@ -110,7 +110,7 @@ foreach ($types as $tag => $type)
 
 foreach (['?float','result<float>','result_or_false<float>','result_or_bool<float>'] as $type)
 {
-	foreach (['==','!=','===','!==','<=>','%','**','&','|','^','<<','>>'] as $symbol) {
+	foreach (['==','!=','===','!==','%','**','&','|','^','<<','>>'] as $symbol) {
 		if (in_array($symbol,['==','!=','===','!=='],true)) { continue; }
 		$negatives[] = '$a ' . $type . ' = 1.5; $b = $a ' . $symbol . ' $a;';
 	}

@@ -6,7 +6,7 @@ namespace cross_equality_probe {
 using namespace identity_probe;
 
 template<class P, class Q> bool oracle(State<P> left, State<Q> right) {
- static_assert(std::is_same_v<P,Q> && !std::is_same_v<P,bool>);
+ static_assert(std::is_same_v<P,Q>);
  if(left.kind != right.kind) return false;
  if(left.kind == state_kind::payload) return left.value == right.value;
  // Nullable absence matches absence; Result failure matches failure, regardless
