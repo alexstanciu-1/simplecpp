@@ -105,6 +105,11 @@ Owners: runtime catalog installation, backend binding/admission checks, diagnost
   ordinary source semantics unchanged. Four new rejection/recovery cases pass;
   [evidence](results/prelower_operation_boundaries_2026_10_20/README.md) records the
   bounded scope. Concrete adapters for these operations remain unimplemented.
+- [x] Reject source throw/catch/finally through the existing native-only handler
+  guard. Their template-bearing exception transport is not yet concrete. Twelve
+  boundary cases now also prove on-disk non-readiness on failure and exact manifest
+  recovery using a fresh publication worker for each attempt; see
+  [evidence](results/prelower_exception_boundaries_2026_10_20/README.md).
 - [ ] For the supported opt-in mode, report unsupported representations/operations
   explicitly. Do not silently fall back to template-bearing application interfaces.
   Choosing ordinary compilation remains an explicit caller decision.

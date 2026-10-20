@@ -31,6 +31,11 @@ Native-only object type tests/casts and weak creation/locking also reject in con
 mode before operand emission. Their runtime helpers must not leak through application
 headers; concrete transport remains future coverage. See the
 [operation-boundary proof](../../../../specs/planning/results/prelower_operation_boundaries_2026_10_20/README.md).
+Source throw/catch/finally also reject through the same native-only operation guard;
+the current exception implementation exposes runtime templates. This does not change
+compiled entry error reporting or ordinary-mode exceptions. The
+[exception-boundary proof](../../../../specs/planning/results/prelower_exception_boundaries_2026_10_20/README.md)
+also checks failed-revision readiness and exact publication recovery.
 Other closure checks and the CLI/API migration remain pending; current mode selectors
 below still describe the implementation, not the completed strict guarantee.
 

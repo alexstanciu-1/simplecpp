@@ -210,6 +210,7 @@ final class CPP_Syntax
 	public function statement(statement_node $node): string
 	{
 		if ($node instanceof throw_node) {
+			$this->require_native_operation('throw operation');
 			$throw_statement = object_cast($node, throw_node::class);
 			$this->context->headers['lang/php/php_exceptions.hpp'] = true;
 			return 'throw ::scpp::php::make_thrown(' . $this->expression($throw_statement->expression) . ");\n";
@@ -290,6 +291,7 @@ final class CPP_Syntax
 	private function generate_try(try_node $node): string
 	{
 		if ($node->finalizer !== null) {
+			$this->require_native_operation('finally operation');
 			return CPP_Finally::generate($node, $this->context);
 		}
 		return $this->generate_protected($node);
@@ -301,6 +303,7 @@ final class CPP_Syntax
 		if ($node->handler === null) {
 			return $this->generate_block($node->body);
 		}
+		$this->require_native_operation('catch operation');
 		$handler /** catch_node */ = $node->handler;
 		$this->context->headers['lang/php/php_exceptions.hpp'] = true;
 		$id = $this->context->next_temporary;
