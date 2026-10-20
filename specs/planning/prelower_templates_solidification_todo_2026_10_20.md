@@ -37,6 +37,13 @@ claim complete closure validation or broaden runtime coverage.
 
 ## Evidence and audit baseline
 
+- [Native prelowering/accounting execution](results/native_prelower_accounting_2026_10_20/README.md):
+  the O2 native compiler publishes and builds ordinary/concrete accounting at O0;
+  artifact/manifests match PHP, 998/0 behavior matches, all 16 application units are
+  template-free, warm builds do no compile/link work, and strict rejection/recovery,
+  replay and PCH rejection pass. This is bounded native execution evidence, not
+  expanded runtime coverage or a new optimization benchmark.
+
 - [Final fresh combined O0 acceptance](results/prelower_solidified_acceptance_2026_10_20/README.md):
   all eight phases pass at `da17e1ba`, including the strengthened metadata, demand,
   publication and deep-naming proofs. Accounting is identical (998/0 each), all 16

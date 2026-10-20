@@ -3,7 +3,8 @@ Doc Status: supporting
 
 PHP behavior, conversion to PHS, native compiler execution and generated-program
 execution are separate claims. The current bounded native checkpoint passes all four.
-The latest focused gate covers Chapter 14, as detailed below. The historical
+The latest focused gate covers native prelowering and accounting; the preceding
+O2 ordinary gate covers Chapter 14, as detailed below. The historical
 cumulative checkpoint covers the implemented Chapter 05–11 slices, including
 registered JSON, separated mixed/dynamic families, references, ownership and
 partitioned namespace/constant/enum programs, bounded class/struct behavior,
@@ -11,6 +12,28 @@ inheritance, traits, interface dispatch and shared callable variance.
 The catalog's bounded closeouts and Chapter 15 deferrals still
 bound the supported language surface.
 This does not establish exhaustive language, lifetime, incremental or performance coverage.
+
+## Native prelowering execution — 2026-10-20
+
+The native driver can now select the public `prelower_templates` setting and run
+production publication/build owners. Use `tools/native_validate.py` with
+`--prelower-accounting --compiler-optimization O2 --no-stan --types-only --no-pch`
+plus the normal checkout/revision/results arguments. The compiler executable is
+O2 without debug information; accounting, middleware and application runtime
+objects remain O0. The compiler's own PCH is independent of the strict application
+PCH prohibition. The validation-only compiler proxy records actual Clang arguments
+because the production release preset otherwise selects O3.
+
+[Native execution evidence](../../../../specs/planning/results/native_prelower_accounting_2026_10_20/README.md)
+records the bounded results and source/executable hashes. The proof compares PHP
+and native artifact bytes/manifests, repeats concrete preparation/emission, checks
+explicit unsupported-case and PCH rejection with publication recovery, and checks
+accounting behavior, full application closure and warm reuse. It does not expand
+runtime coverage or establish a compiler-performance benchmark.
+
+Native execution exposed missing-key hash reads through `??` in specialization
+artifact assembly. Explicit initialization and guarded optional reads repair that
+source-portability issue in the existing owner; no fallback or new registry is added.
 
 ## Native refresh after prelowering — 2026-10-20
 
@@ -28,9 +51,9 @@ typed collection/nullable/scope boundaries and declaration-local enum reflection
 Execution also exposed overloaded-boolean eager evaluation of a nullable guard;
 explicit branches preserve PHP behavior. No prelowering fallback is added.
 
-This rebuild includes the prelowering implementation, but the native execution
-gate exercises ordinary emission. Native execution of the prelowering engine is
-not claimed. STAN and parked LLVM were skipped; build warnings remain. The
+That earlier refresh includes the prelowering implementation, but its native
+execution gate exercises ordinary emission. Native prelowering execution is
+covered by the later focused gate above. STAN and parked LLVM were skipped; build warnings remain. The
 separate O0 prelowering regression uses the PHP-hosted compiler. See the evidence
 note for its result and the exact build configuration.
 

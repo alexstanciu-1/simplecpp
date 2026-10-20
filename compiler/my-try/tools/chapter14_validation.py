@@ -195,6 +195,7 @@ def validate_chapter14(args, results, logs, started, runner, source, project, ex
                cwd=project, timeout=600, cli_reason='CLI build tool with process exit status')
     summary = dict(passed=True, scope='Chapter 14 bounded native gate', candidate_revision=args.candidate_revision,
                    phs_conversion=True, native_compiler_rebuilt=True, stan='skipped', llvm='skipped',
+                   compiler_optimization=args.compiler_optimization, generated_optimization='O0',
                    source_php_files=len(json.loads((results / 'source_hashes.json').read_text())),
                    artifact_parity_projects=len(cases), generated_program_runs=len(cases) * 2,
                    standalone_headers=header_count, host_suites=suites, pch_and_no_pch=True,

@@ -199,19 +199,32 @@ final class CPP_Specializations
 			$member = $entries[$id];
 			if ($member->member_owner === '') { continue; }
 			$owner = $member->member_owner;
-			$member_prefixes[$owner] = ($member_prefixes[$owner] ?? '') . $member->declaration_prefix;
-			$member_declarations[$owner] = ($member_declarations[$owner] ?? '') . $member->declaration;
+			if (!isset($member_prefixes[$owner])) {
+				$member_prefixes[$owner] = '';
+				$member_declarations[$owner] = '';
+			}
+			$member_prefixes[$owner] .= $member->declaration_prefix;
+			$member_declarations[$owner] .= $member->declaration;
 		}
 		foreach ($order as $id) {
 			$entry = $entries[$id];
 			$depth = $depths[$entry->name];
 			if ($depth > $maximum_depth) { $maximum_depth = $depth; }
-			$layout_declarations[$depth] = ($layout_declarations[$depth] ?? '') . $entry->layout_declarations;
-			$layout_statements[$depth] = ($layout_statements[$depth] ?? '') . $entry->layout_statements;
+			if (!isset($layout_declarations[$depth])) {
+				$layout_declarations[$depth] = '';
+				$layout_statements[$depth] = '';
+			}
+			$layout_declarations[$depth] .= $entry->layout_declarations;
+			$layout_statements[$depth] .= $entry->layout_statements;
 			if ($entry->member_owner === '') {
-				$prefix = $member_prefixes[$entry->name] ?? '';
+				$prefix = '';
+				$members = '';
+				if (isset($member_prefixes[$entry->name])) {
+					$prefix = $member_prefixes[$entry->name];
+					$members = $member_declarations[$entry->name];
+				}
 				$declaration = ($prefix === '' ? '' : "#pragma once\n" . $prefix) . $entry->declaration
-					. ($member_declarations[$entry->name] ?? '') . $entry->declaration_tail;
+					. $members . $entry->declaration_tail;
 				$artifacts->append(new cpp_artifact('specialization:' . $entry->name, cpp_artifact_kind::header,
 					$entry->header, $declaration));
 				if ($entry->declaration_tail !== '') {
@@ -223,7 +236,10 @@ final class CPP_Specializations
 			$implementation .= '#include "' . $entry->header . '"' . "\n" . $entry->implementation . "\n";
 		}
 		for ($depth = 0; $depth <= $maximum_depth; $depth++) {
-			$statements = $layout_statements[$depth] ?? '';
+			if (!isset($layout_statements[$depth])) {
+				continue;
+			}
+			$statements = $layout_statements[$depth];
 			if ($statements === '') { continue; }
 			$probe = '#include <cstdio>' . "\n" . '#include <type_traits>' . "\n" . $layout_declarations[$depth]
 				. 'int main() { std::printf("// scpp-native-layout-v1\\n");' . "\n" . $statements . "}\n";

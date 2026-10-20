@@ -106,6 +106,10 @@ Run the combined current acceptance with
 It composes the existing O0 proof owners and retains per-phase evidence; failures
 cannot be hidden by a later successful accounting run.
 
+- [Native compiler execution](../../../../specs/planning/results/native_prelower_accounting_2026_10_20/README.md):
+  O2 compiler executable with O0 downstream builds; PHP/native artifact parity,
+  repeated concrete emission, strict rejection/recovery, accounting and full closure.
+  The existing validator's `--prelower-accounting` gate owns reproduction.
 - [Fresh public accounting acceptance](../../../../specs/planning/results/prelower_public_accounting_2026_10_20/README.md): ordinary/prelowered 998/0, identical output, complete 16-unit no-PCH closure and warm reuse.
 - `tests/prelower_null_output.py`: public CLI/API parity, single-option lifecycle/replay, strict rejection/repair, PCH rejection and complete fixture closure.
 - `tests/prelower_contracts.py`: explicit unsupported-boundary failure/recovery and exact audit command coverage.

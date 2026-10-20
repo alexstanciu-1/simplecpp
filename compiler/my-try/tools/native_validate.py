@@ -56,14 +56,18 @@ def main():
                         help='Maximum concurrent fixture tasks (default: 12)')
     parser.add_argument('--chapter13', action='store_true', help='Validate only the bounded Chapter 13 fixtures after rebuilding the compiler')
     parser.add_argument('--chapter14', action='store_true', help='Validate bounded Chapter 14 artifacts and native publication/build owners')
+    parser.add_argument('--prelower-accounting', action='store_true',
+                        help='Validate native concrete publication/build/recovery and O0 accounting closure')
+    parser.add_argument('--compiler-optimization', choices=('O0', 'O2'), default='O0',
+                        help='Compiler executable optimization; generated fixtures remain independent')
     parser.add_argument('--resume', action='store_true', help='Reuse this proof workspace and native objects; retain each attempt log directory')
     parser.add_argument('--no-pch', action='store_true', help='Compile generated fixture programs without PCH')
     parser.add_argument('--php-executor', choices=('auto', 'fpm', 'cli'), default='auto',
                         help='PHP backend: auto prefers FPM with CLI fallback (default)')
     args = parser.parse_args()
-    if args.chapter13 and args.chapter14:
-        parser.error("Select one chapter gate")
-    if (args.chapter13 or args.chapter14) and (not args.types_only or not args.no_stan):
+    if sum((args.chapter13, args.chapter14, args.prelower_accounting)) > 1:
+        parser.error("Select one focused native gate")
+    if (args.chapter13 or args.chapter14 or args.prelower_accounting) and (not args.types_only or not args.no_stan):
         parser.error('Chapter gates require --types-only --no-stan (LLVM and legacy STAN are deferred)')
     target, results = args.target_checkout.resolve(), args.results.resolve()
     results.mkdir(parents=True, exist_ok=args.resume)
@@ -135,7 +139,7 @@ def validate(args, target, results, logs, started, runner):
     harness_paths = [Path(__file__), *sorted((APP / 'tests').glob('*.php')),
                      *sorted((APP / 'tests/fixtures').glob('*.php')),
                      APP / 'tools/cpp_fixture.py', APP / 'tools/cpp_artifacts.py', APP / 'tools/test_runner.py',
-                     APP / 'tools/php_executor.py', APP / 'tests/native_driver.php.in']
+                     APP / 'tools/php_executor.py', APP / 'tools/native_compiler_o2.py', APP / 'tests/native_driver.php.in']
     (results / 'harness_hashes.json').write_text(json.dumps({
         str(path.relative_to(APP)): hashlib.sha256(path.read_bytes()).hexdigest()
         for path in harness_paths}, indent=2) + '\n')
@@ -155,12 +159,34 @@ def validate(args, target, results, logs, started, runner):
         run('init', ['php', cli, 'init', '--php-profile=strict'], project, cli_reason='CLI build tool with process exit status')
     config = json.loads(config_path.read_text())
     config['build']['cxx'] = 'clang++-18'
+    config['build']['mode'] = 'debug'
+    if args.compiler_optimization == 'O2':
+        # The project release preset is O3. A recorded test proxy selects exactly O2
+        # without changing production build policy or generated compiler sources.
+        proxy = results / 'compiler-o2.py'
+        shutil.copyfile(APP / 'tools/native_compiler_o2.py', proxy)
+        proxy.chmod(0o700)
+        config['build']['cxx'] = str(proxy)
     config['runtime']['modules'] = ['compiler', 'filesystem', 'tasks', 'process', 'datetime', 'json']
     config_path.write_text(json.dumps(config, indent=2) + '\n')
     analysis_options = ['--no-stan'] if args.no_stan else []
     print('Building native compiler ' + ('without STAN...' if args.no_stan else 'with normal STAN...'), flush=True)
-    run('native-build', ['php', cli, 'build', '--build-runtime', *analysis_options], project, timeout=600, cli_reason='CLI build tool with process exit status')
+    run('native-build', ['php', cli, 'build', '--build-runtime', *analysis_options], project, timeout=1800, cli_reason='CLI build tool with process exit status')
     executable = project / '.prism/build/main'
+    if args.prelower_accounting:
+        acceptance = logs / 'prelower-accounting'
+        run('prelower-accounting', [sys.executable, APP / 'tests/prelower_accounting_acceptance.py',
+            '--native-compiler', executable, '--results', acceptance], timeout=1800)
+        run('incremental-compiler-build', ['php', cli, 'build', '--no-stan'], project,
+            timeout=600, cli_reason='CLI build tool with process exit status')
+        summary = dict(passed=True, scope='Native prelowering and O0 accounting',
+            candidate_revision=args.candidate_revision, compiler_optimization=args.compiler_optimization,
+            phs_conversion=True, native_compiler_rebuilt=True, stan='skipped', llvm='skipped',
+            source_php_files=len(hashes), executable_sha256=hashlib.sha256(executable.read_bytes()).hexdigest(),
+            acceptance=json.loads((acceptance / 'result.json').read_text()),
+            wall_seconds=round(time.monotonic() - started, 3))
+        (results / 'summary.json').write_text(json.dumps(summary, indent=2) + '\n')
+        return
     if getattr(args, 'chapter14', False):
         from chapter14_validation import validate_chapter14
         validate_chapter14(args, results, logs, started, runner, source, project, executable)

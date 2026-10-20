@@ -11,27 +11,43 @@ final class S2S_Proof
 		try
 		{
 			$published = fs_read_text($directory . '/published.txt');
-			if (fs_read_text($directory . '/mode.txt') === 'publish')
+			$mode = fs_read_text($directory . '/mode.txt');
+			if (($mode === 'publish') || ($mode === 'publish-prelowered'))
 			{
-				$modules /** vector<string> */ = [fs_read_text($directory . '/module.txt')];
+				$modules = self::request_modules(fs_read_text($directory . '/module.txt'));
 				Compiler_Lifecycle::configure_runtime(Runtime_Catalog_Loader::load(fs_read_text($directory . '/catalog.txt'), $modules));
 				$publication = new Output_Publication($published);
 				try
 				{
 					$paths /** vector<string> */ = [fs_read_text($directory . '/source.txt')];
 					$compiler = new Compiler();
+					$compiler->cpp_lowering->prelower_templates = $mode === 'publish-prelowered';
 					$compiler->init($paths);
 					$compiler->select_entry('main', 'main.phs');
 					$compiler->exec_cpp($publication);
 					$outputs /** Storage<cpp_artifact> */ = Model::$cpp_files;
-					return CPP_Output::encode($outputs);
+					$first = CPP_Output::encode($outputs);
+					if ($compiler->cpp_lowering->prelower_templates)
+					{
+						$compiler->prepare();
+						$compiler->cpp();
+						$outputs = Model::$cpp_files;
+						if (CPP_Output::encode($outputs) !== $first) {
+							throw new \LogicException('Repeated native prelowering changed artifacts');
+						}
+					}
+					return $first;
 				}
 				finally
 				{
 					$publication->close();
 				}
 			}
-			$config = new native_cpp_config('/usr/bin/clang++', fs_read_text($directory . '/runtime.txt'), fs_read_text($directory . '/cache.txt'));
+			$cxx = '/usr/bin/clang++';
+			if ($mode === 'build-recorded') {
+				$cxx = fs_read_text($directory . '/cxx.txt');
+			}
+			$config = new native_cpp_config($cxx, fs_read_text($directory . '/runtime.txt'), fs_read_text($directory . '/cache.txt'));
 			$config->pch = fs_read_text($directory . '/pch.txt') === 'yes';
 			$result = (new Native_CPP_Build($config))->build($published);
 			return '{"executable":' . json_quote($result->executable) . ',"compiled":' . $result->compiled
@@ -42,6 +58,24 @@ final class S2S_Proof
 		{
 			return "ERROR\n" . $error->getMessage();
 		}
+	}
+
+	/** Requests may select the same module list as the public CLI, or one legacy gate module. */
+	private static function request_modules(string $text): array /** vector<string> */
+	{
+		$modules /** vector<string> */ = [];
+		if (string_byte_starts_with($text, '['))
+		{
+			$reader = new \scpp\Json_Reader($text, 'native request modules', 128);
+			$reader->begin_array();
+			while ($reader->next_element()) {
+				$modules[] = $reader->read_string();
+			}
+		}
+		else {
+			$modules[] = $text;
+		}
+		return $modules;
 	}
 
 	/** Run bounded feature edits through the same retained compiler in PHP and native form. */
