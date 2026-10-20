@@ -380,80 +380,84 @@ void maybe_enable_jit(pcre2_code *compiled) {
 	return static_cast<PCRE2_SIZE>(from_end);
 }
 
-[[nodiscard]] result_or_false<replace_result> replace_impl(
-	const string_t &pattern,
-	const string_t &replacement,
-	const string_t &subject,
-	const int_t<> &limit
-) {
-	const auto native_limit = limit.native_value();
-	if (native_limit < 0 && native_limit != -1) {
+// Validation belongs to the operation, not to whether any subjects are visited.
+[[nodiscard]] std::int64_t replacement_limit(const int_t<> &limit) {
+	const auto value = limit.native_value();
+	if (value < 0 && value != -1) {
 		throw scpp::ValueError("preg_replace(): negative limit other than -1 is not supported in the first pass");
 	}
-	if (native_limit == 0) {
+	return value;
+}
+
+// One compiled pattern serves a replacement operation, including all filter rows.
+// Search progress and copied output are independent: empty matches must not drop bytes.
+[[nodiscard]] result_or_false<replace_result> replace_compiled(
+	pcre2_code *compiled, const string_t &replacement, const string_t &subject,
+	const std::int64_t limit
+) {
+	if (limit == 0) {
 		return replace_result{subject, 0u};
 	}
-
-	auto compiled = compile_pattern(pattern);
-	if (!compiled.has_value().native_value()) {
-		return false_sentinel;
-	}
-
-	match_data_ptr match_data(
-		pcre2_match_data_create_from_pattern(compiled.value().get(), nullptr),
-		&pcre2_match_data_free);
+	match_data_ptr match_data(pcre2_match_data_create_from_pattern(compiled, nullptr), &pcre2_match_data_free);
 	if (!match_data) {
 		return false_sentinel;
 	}
-
+	uint32_t pattern_options = 0;
+	static_cast<void>(pcre2_pattern_info(compiled, PCRE2_INFO_ALLOPTIONS, &pattern_options));
+	const bool utf = (pattern_options & PCRE2_UTF) != 0;
 	const std::string &text = subject.native_value();
 	std::string out;
 	out.reserve(text.size());
-	PCRE2_SIZE start_offset = 0;
+	PCRE2_SIZE search_offset = 0;
+	PCRE2_SIZE copied_offset = 0;
+	uint32_t match_options = 0;
 	std::size_t replacements = 0;
-	const bool unlimited = (native_limit < 0);
-	const std::size_t max_replacements = unlimited ? 0u : static_cast<std::size_t>(native_limit);
-
-	while (start_offset <= text.size()) {
-		if (!unlimited && replacements >= max_replacements) {
+	while (search_offset <= text.size()) {
+		if (limit >= 0 && replacements >= static_cast<std::uint64_t>(limit)) {
 			break;
 		}
-
-		const int rc = pcre2_match(
-			compiled.value().get(),
-			reinterpret_cast<PCRE2_SPTR>(text.c_str()),
-			text.size(),
-			start_offset,
-			0,
-			match_data.get(),
-			nullptr);
+		const int rc = pcre2_match(compiled, reinterpret_cast<PCRE2_SPTR>(text.data()),
+			text.size(), search_offset, match_options, match_data.get(), nullptr);
 		if (rc == PCRE2_ERROR_NOMATCH) {
-			break;
+			if (match_options == 0 || search_offset == text.size()) {
+				break;
+			}
+			// No nonempty alternative at this position; advance one character for searching only.
+			++search_offset;
+			if (utf) {
+				while (search_offset < text.size() && (static_cast<unsigned char>(text[search_offset]) & 0xc0u) == 0x80u) {
+					++search_offset;
+				}
+			}
+			match_options = 0;
+			continue;
 		}
 		if (rc < 0) {
 			return false_sentinel;
 		}
-
 		PCRE2_SIZE *ovector = pcre2_get_ovector_pointer(match_data.get());
 		const PCRE2_SIZE match_start = ovector[0];
 		const PCRE2_SIZE match_end = ovector[1];
-
-		out.append(text.substr(start_offset, match_start - start_offset));
+		out.append(text, copied_offset, match_start - copied_offset);
 		out.append(expand_replacement(replacement, subject, match_data.get(), rc));
 		++replacements;
-
-		start_offset = next_match_start(match_start, match_end, text.size());
-		if (start_offset > text.size()) {
-			start_offset = text.size();
-			break;
-		}
+		copied_offset = match_end;
+		search_offset = match_end;
+		match_options = match_start == match_end ? PCRE2_NOTEMPTY_ATSTART | PCRE2_ANCHORED : 0;
 	}
+	out.append(text, copied_offset, std::string::npos);
+	return replace_result{.text = string_t(std::move(out)), .replacements = replacements};
+}
 
-	out.append(text.substr(start_offset));
-	return replace_result{
-		.text = string_t(std::move(out)),
-		.replacements = replacements,
-	};
+[[nodiscard]] result_or_false<replace_result> replace_impl(
+	const string_t &pattern, const string_t &replacement, const string_t &subject, const int_t<> &limit
+) {
+	const auto native_limit = replacement_limit(limit);
+	auto compiled = compile_pattern(pattern);
+	if (!compiled.has_value().native_value()) {
+		return false_sentinel;
+	}
+	return replace_compiled(compiled.value().get(), replacement, subject, native_limit);
 }
 
 } // namespace
@@ -714,10 +718,15 @@ result_or_false<vector_t<string_t>> filter(const string_t &pattern, const string
 }
 
 result_or_false<vector_t<string_t>> filter(const string_t &pattern, const string_t &replacement, const vector_t<string_t> &input, const int_t<> &limit, int_t<> &count) {
+	const auto native_limit = replacement_limit(limit);
+	auto compiled = compile_pattern(pattern);
+	if (!compiled.has_value().native_value()) {
+		return false_sentinel;
+	}
 	vector_t<string_t> out;
 	std::int64_t replacements = 0;
 	for (std::size_t index = 0; index < input.size(); ++index) {
-		const auto replaced = replace_impl(pattern, replacement, input[index], limit);
+		const auto replaced = replace_compiled(compiled.value().get(), replacement, input[index], native_limit);
 		if (replaced.is_false().native_value()) {
 			return false_sentinel;
 		}
@@ -729,6 +738,12 @@ result_or_false<vector_t<string_t>> filter(const string_t &pattern, const string
 	}
 	count = int_t<>(replacements);
 	return out;
+}
+
+// Unambiguous metadata target: a writable snapshot still denotes a limit, never a count output.
+result_or_false<vector_t<string_t>> filter_limited(const string_t &pattern, const string_t &replacement, const vector_t<string_t> &input, const int_t<> &limit) {
+	int_t<> ignored_count(0);
+	return filter(pattern, replacement, input, limit, ignored_count);
 }
 
 result_or_false<string_t> replace_callback(const string_t &pattern, const std::function<string_t(vector_t<string_t>)> &callback, const string_t &subject) {
@@ -864,6 +879,11 @@ result_or_false<string_t> replace(const string_t &pattern, const string_t &repla
 	}
 	count = int_t<>(static_cast<std::int64_t>(replaced.value().replacements));
 	return replaced.value().text;
+}
+
+result_or_false<string_t> replace_limited(const string_t &pattern, const string_t &replacement, const string_t &subject, const int_t<> &limit) {
+	int_t<> ignored_count(0);
+	return replace(pattern, replacement, subject, limit, ignored_count);
 }
 
 result_or_false<vector_t<string_t>> split(const string_t &pattern, const string_t &subject) {
