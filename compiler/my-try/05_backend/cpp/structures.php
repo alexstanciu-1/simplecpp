@@ -28,10 +28,11 @@ enum cpp_type_requirement {
 /** Representation choices only; native optimization/debug belong to the native builder. */
 final class cpp_lowering_options
 {
+	/** Strict concrete application interfaces; native validation enforces template-free inputs. */
 	public bool $prelower_templates = false;
-	/** Opt-in runtime ABI integration; accounting recipes remain a comparison baseline. */
+	/** Deprecated compatibility field; no longer selects the historical transport path. */
 	public bool $runtime_template_abi = false;
-	/** Temporary integration selector; replaces comparison paths after coverage parity. */
+	/** Deprecated compatibility field; prelower_templates alone selects concrete substitution. */
 	public bool $concrete_type_substitution = false;
 }
 
@@ -203,9 +204,9 @@ final class cpp_fragment
 /** Retained fragments are keyed by independent signature/body preparation identities. */
 final class cpp_program {
 	public bool $prelower_templates = false;
-	/** Opt-in runtime ABI integration; accounting recipes remain a comparison baseline. */
+	/** Legacy assembly state; public generation always leaves this false. */
 	public bool $runtime_template_abi = false;
-	/** Temporary integration selector; replaces comparison paths after coverage parity. */
+	/** Effective concrete mode derived from prelower_templates, not a second public choice. */
 	public bool $concrete_type_substitution = false;
 	public \SplObjectStorage $fragments /** hash<cpp_fragment, shared<preparation_owner>> */;
 

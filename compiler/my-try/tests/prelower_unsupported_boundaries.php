@@ -60,7 +60,6 @@ foreach ($cases as $name => [$source, $native_spelling, $diagnostic]) {
 		throw new \LogicException('Missing ordinary representation: ' . $name);
 	}
 	$compiler->cpp_lowering->prelower_templates = true;
-	$compiler->cpp_lowering->concrete_type_substitution = true;
 	$rejected = false;
 	try { $emit(); }
 	catch (\RuntimeException $error) {

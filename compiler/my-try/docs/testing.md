@@ -2,7 +2,11 @@
 Doc Status: supporting
 
 `python3 compiler/my-try/tests/prelower_null_output.py --results FRESH_DIRECTORY`
-builds a fresh concrete application with null interleaved with side-effecting echo
+also proves public CLI/API artifact and manifest parity using only
+`prelower_templates`, mode switching without semantic repreparation, deprecated
+selector neutrality, strict CLI failure/repair, ordinary opt-out, and native PCH
+rejection. The CLI-published application is compiled and audited without PCH.
+The fixture builds a fresh concrete application with null interleaved with side-effecting echo
 operands. It checks ordered bytes, warm reuse and the complete no-PCH template closure
 using recorded native commands and the existing audit. The header-boundary suite
 supplies direct/concrete counters and output failure-prefix equivalence.

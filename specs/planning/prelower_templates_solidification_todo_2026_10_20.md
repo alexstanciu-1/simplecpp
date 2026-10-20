@@ -48,9 +48,9 @@ claim complete closure validation or broaden runtime coverage.
   indexing and compound groups passed, including direct/concrete behavior,
   allocation/copy counters, nested references and warm reuse. Local results:
   `/tmp/prelower-solidification-audit-20261020`. Accounting was not rerun in that audit.
-- Source inspection confirmed three selectable implementations: historical recipes,
-  runtime ABI transport, and concrete substitution. The CLI flag still selects the
-  historical recipes; accounting uses concrete substitution through the API.
+- Initial source inspection found three selectable implementations: historical recipes,
+  runtime ABI transport, and concrete substitution. Public selection is now consolidated
+  as recorded in section 3; historical implementation cleanup remains pending.
 - Metadata owns type recipes and capabilities, but some physical conventions are
   fixed adapter protocols. Registered does not imply concrete-compatible or proven
   template-free. The original audit found a callable `std::function` escape, now
@@ -158,15 +158,22 @@ clearly without publishing a usable partial result or silently changing mode.
 
 Owners: `cpp_lowering_options`, CLI/API entry points, C++ generation/adapters.
 
-- [ ] Make `--prelower-templates` select the same general concrete-substitution path
+- [x] Make `--prelower-templates` select the same general concrete-substitution path
   used by accounting. Align the API setting and document effective options.
+  CLI and API now require only `prelower_templates`; former comparison fields are
+  deprecated and inert. Artifact/manifest parity, strict CLI rejection and repair,
+  ordinary opt-out, native PCH rejection and complete fixture closure pass through
+  `prelower_null_output.py`. See [public-path evidence](results/prelower_public_options_2026_10_20/README.md).
 - [x] Review PCH interaction: the template-free acceptance path must use no runtime
   PCH. Ensure configuration cannot misleadingly claim template-free app input while
   injecting the broad runtime PCH; leave ordinary-mode PCH behavior supported.
 - [ ] Reuse ordinary expression sequencing and prepared operation/conversion facts.
   Keep the specialization engine free of family algorithms and semantic re-analysis.
-- [ ] Prove mode switching invalidates affected C++ fragments without unnecessary
+- [x] Prove mode switching invalidates affected C++ fragments without unnecessary
   semantic repreparation, and restoring settings restores deterministic output.
+  The migrated lifecycle fixture verifies ordinary/concrete restoration, unchanged
+  preparation version, no-op fragment identity, inert comparison fields, demand
+  retirement and failure/repair through the public option.
 - [ ] Retire temporary selectors and superseded production paths only after their
   useful behavior/proofs are accounted for. Keep historical benchmark evidence;
   do not retain obsolete runtime branches solely to reproduce old experiments.

@@ -10,7 +10,6 @@ $cycle = 'struct Node { public function rows(): vector<Node> { $v vector<Node>; 
 file_put_contents($source . '/main.phs', $good);
 $compiler = new Compiler();
 $compiler->cpp_lowering->prelower_templates = true;
-$compiler->cpp_lowering->concrete_type_substitution = true;
 $compiler->init([$source]);
 $compiler->exec_cpp();
 $snapshot = static function () { $result=[]; foreach (Model::$cpp_files as $artifact) { $result[$artifact->file_name]=$artifact->text; } return $result; };

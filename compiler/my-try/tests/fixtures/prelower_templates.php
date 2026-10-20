@@ -34,15 +34,21 @@ $version = $owner->version;
 $compiler->cpp_lowering->prelower_templates = true;
 $compiler->cpp();
 $concrete = prelower_artifacts();
-check_prelower(isset($concrete['specializations/vector_int64.hpp']), 'Concrete vector missing');
-check_prelower(str_contains($concrete['entry.cpp'], 'scpp::internal::report_exception(failure)'), 'Entry reporter bypassed support');
+check_prelower(Model::$cpp_output_program->concrete_type_substitution, 'Public option did not select concrete substitution');
+check_prelower(!Model::$cpp_output_program->runtime_template_abi, 'Public option selected historical ABI mode');
+check_prelower(str_contains($concrete['entry.cpp'], 'scpp::internal::run_application'), 'Entry reporter bypassed support');
 check_prelower(!str_contains($concrete['entry.cpp'], 'scpp/runtime_error.hpp'), 'Runtime diagnostics leaked into entry');
-check_prelower(str_contains($concrete['specializations/base.hpp'], '#include <exception>'), 'Reporter exception declaration missing');
+check_prelower(!str_contains($concrete['specializations/base.hpp'], '#include <exception>'), 'Exception templates leaked into concrete base');
 check_prelower($owner->version === $version, 'Lowering configuration changed semantic work');
 $fragment = Model::$cpp_output_program->fragments[$owner];
 $compiler->cpp();
 check_prelower($concrete === prelower_artifacts(), 'Cached fragment lost support artifacts');
 check_prelower($fragment === Model::$cpp_output_program->fragments[$owner], 'No-op rerendered fragment');
+$compiler->cpp_lowering->runtime_template_abi = true;
+$compiler->cpp_lowering->concrete_type_substitution = false;
+$compiler->cpp();
+check_prelower($concrete === prelower_artifacts(), 'Deprecated comparison fields changed the public path');
+check_prelower($fragment === Model::$cpp_output_program->fragments[$owner], 'Deprecated fields invalidated fragments');
 $compiler->cpp_lowering->prelower_templates = false;
 $compiler->cpp();
 check_prelower($original === prelower_artifacts(), 'Default mode changed after toggling');
@@ -52,24 +58,30 @@ check_prelower($concrete === prelower_artifacts(), 'Concrete mode changed after 
 file_put_contents($path, str_replace('[1, 2]', '[3, 4]', $source));
 $compiler->update_cpp([$path]);
 $changed = prelower_artifacts();
-check_prelower($changed['specializations/containers.cpp'] === $concrete['specializations/containers.cpp'], 'Body edit changed support');
+foreach ($concrete as $name => $text) {
+	if (str_starts_with($name, 'specializations/')) {
+		check_prelower(($changed[$name] ?? null) === $text, 'Body edit changed support: ' . $name);
+	}
+}
 file_put_contents($path, 'return 0;');
 $compiler->update_cpp([$path]);
-check_prelower(!isset(prelower_artifacts()['specializations/vector_int64.hpp']), 'Deleted request retained vector');
-file_put_contents($path, '$v vector<unique<int>>; return 0;');
+foreach (prelower_artifacts() as $name => $text) {
+	check_prelower(!str_contains($name, 'concrete_n_vector'), 'Deleted request retained vector');
+}
+file_put_contents($path, '$f function<int()> = fn(): int => 1; return $f();');
 $failed = false;
 try {
 	$compiler->update_cpp([$path]);
 }
 catch (\RuntimeException $error) {
-	$failed = true;
+	$failed = str_contains($error->getMessage(), 'callable storage requires a concrete callback transport');
 }
 check_prelower($failed && Model::$cpp_files->is_empty(), 'Unsupported family exposed ready output');
 file_put_contents($path, $source);
 $compiler->update_cpp([$path]);
 check_prelower(prelower_artifacts() === $concrete, 'Failed generation did not recover');
-$left = new CPP_Specializations();
-$right = new CPP_Specializations();
+$left = new CPP_Specializations(false, true);
+$right = new CPP_Specializations(false, true);
 $int = Model::$type_catalog->registry()->use(Model::$type_catalog->canonical('int')->type_id());
 $byte = Model::$type_catalog->registry()->use(Model::$type_catalog->canonical('uint8')->type_id());
 $left->request($int);

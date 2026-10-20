@@ -3,17 +3,34 @@ Doc Status: supporting
 
 The opt-in `prelower_templates` path uses the existing AST, prepared types and
 operation decisions. It does not rewrite syntax or add a semantic pass. The ordinary
-C++ path remains the default. The CLI retains the measured integer/vector recipe
-baseline; the API also offers the growing general runtime ABI path described below.
-The general API path now compiles and runs accounting at O0 (998 checks) with no
+C++ path remains the default. CLI `--prelower-templates` and API
+`$compiler->cpp_lowering->prelower_templates = true` select the same general concrete
+path. Deprecated `runtime_template_abi` and `concrete_type_substitution` option fields
+remain temporarily accepted but have no effect; they cannot select a comparison path.
+Changing the effective mode invalidates C++ fragments without semantic repreparation.
+
+For example:
+
+```sh
+php compiler/my-try/main.php --s2s SOURCE_DIRECTORY --output ABSOLUTE_OUTPUT --prelower-templates
+php compiler/my-try/tools/build_cpp.php ABSOLUTE_OUTPUT ABSOLUTE_CACHE --no-pch
+```
+
+The publication carries the strict application-template policy. The native builder
+rejects runtime PCH and active template tokens in transitive application inputs;
+unsupported operations reject rather than falling back. See the
+[native contract](native_cpp_build.md#dependencies-and-pch).
+
+The general path previously compiled and ran accounting at O0 (998 checks) with no
 templates in any app unit or its transitive headers, with PCH disabled. See the
 [template-free evidence](../../../../specs/planning/results/prelower_template_free_accounting_2026_10_19/README.md). The [accounting timing comparison](../../../../specs/planning/results/prelower_accounting_timing_2026_10_19/README.md)
 records the earlier partial implementation against ordinary C++ with PCH in both modes.
 
 The general path follows [capability-driven generalization](../../../../specs/planning/runtime_template_capability_matrix_2026_10_19.md)
 through the existing registry and bindings, using original runtime templates behind
-concrete application interfaces. The handwritten recipes described below are the
-current measured implementation, not a mandate to add more per-family implementations.
+concrete application interfaces. Handwritten recipes and the older opaque transport
+described later are implementation history, not selectable public lowering modes.
+Their code and historical comparison harnesses still need coverage-led cleanup.
 
 Current priority is solidifying preprocessed templates; follow the
 [end-to-end TODO](../../../../specs/planning/prelower_templates_solidification_todo_2026_10_20.md)
@@ -48,8 +65,9 @@ Null output now uses the same generic output bridge as other operands. Its inter
 sentinel has an intrinsic C++ binding; the runtime null header is template-free.
 [Null-output evidence](../../../../specs/planning/results/prelower_null_output_2026_10_20/README.md)
 proves ordered output, counter parity and complete fixture application closure.
-Other closure checks and the CLI/API migration remain pending; current mode selectors
-below still describe the implementation, not the completed strict guarantee.
+The public CLI/API parity, strict failure/repair and mode-replay proof is now
+`tests/prelower_null_output.py`. Unified accounting acceptance and broader operation
+coverage remain pending; the single option does not promise full runtime coverage.
 
 ## Runtime-owned native representation recipes
 
@@ -214,12 +232,8 @@ similarity alone. See the [production-binding proof](../../../../specs/planning/
 
 ## Ordinary source fields, signatures and members
 
-For the bounded integration path, set `prelower_templates = true` and
-`concrete_type_substitution = true` on the existing `cpp_lowering_options`.
-This temporary API selector takes precedence over `runtime_template_abi`; no new CLI
-flag was added. Its retirement condition is equivalent coverage sufficient to make
-concrete substitution the single general prelowering path. Existing comparison paths
-are retained until that condition is met.
+Set `prelower_templates = true` on the existing `cpp_lowering_options`, or use the
+CLI flag. The previous second selector is no longer required or consulted.
 
 The generator configures the same specialization engine for live rendering and
 cached-fragment replay. Existing source declaration/body/dispatch contexts receive
@@ -348,12 +362,11 @@ read-only type/capability queries and C++ type/callable bindings. Its storage an
 lifecycle generation has no family branches. The existing integer/vector recipe
 selection lives in `CPP_Concrete_Recipes`, outside engine bookkeeping.
 
-Ordinary expression emission can now select this protocol through the API:
-set both `cpp_lowering_options::prelower_templates` and `runtime_template_abi` to
-`true`. The CLI's existing `--prelower-templates` and the default API setting retain
-the accounting recipe baseline while this bounded runtime ABI path grows.
-Switching either effective setting invalidates C++ fragments without repreparation.
-No new AST, semantic registry or prepared-fact cache was added.
+Historical integration used `runtime_template_abi` as a second API selector.
+Public generation now always chooses concrete substitution when prelowering is
+enabled; the older transport is no longer selected by that field. Its historical
+expression harness is not current public-path acceptance. No new AST, semantic
+registry or prepared-fact cache was added.
 
 Opaque owners contain the original runtime object in aligned bytes. A grouped
 `layout_probe` artifact asks the native toolchain for size/alignment and physical

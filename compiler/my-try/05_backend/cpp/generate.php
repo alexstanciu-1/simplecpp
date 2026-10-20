@@ -31,8 +31,7 @@ final class CPP_Generator
 		$concrete_types = false;
 		if ($options !== null) {
 			$enabled = $options->prelower_templates;
-			$concrete_types = $enabled && $options->concrete_type_substitution;
-			$runtime_abi = $enabled && !$concrete_types && $options->runtime_template_abi;
+			$concrete_types = $enabled;
 		}
 		if (($this->program->prelower_templates !== $enabled) || ($this->program->runtime_template_abi !== $runtime_abi)
 			|| ($this->program->concrete_type_substitution !== $concrete_types)) {

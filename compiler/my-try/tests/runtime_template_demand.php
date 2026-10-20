@@ -49,7 +49,6 @@ PHS;
 file_put_contents($source.'/main.phs',$program);
 $compiler=new Compiler();
 $compiler->cpp_lowering->prelower_templates=$composed;
-$compiler->cpp_lowering->concrete_type_substitution=$composed;
 $compiler->init([$source]);
 $compiler->exec_cpp();
 function demand_snapshot(): array {
@@ -102,11 +101,9 @@ file_put_contents($source.'/main.phs',$program);
 $compiler->update_cpp([$source.'/main.phs']);
 if(demand_snapshot()!==$before){throw new \LogicException('Restored demand changed output');}
 $compiler->cpp_lowering->prelower_templates=!$composed;
-$compiler->cpp_lowering->concrete_type_substitution=!$composed;
 $compiler->cpp();
 if(count(concrete_headers())!==($composed?0:$expected_concrete)){throw new \LogicException('Option switch did not replace physical selection');}
 $compiler->cpp_lowering->prelower_templates=$composed;
-$compiler->cpp_lowering->concrete_type_substitution=$composed;
 $compiler->cpp();
 if(demand_snapshot()!==$before){throw new \LogicException('Option restoration changed output');}
 

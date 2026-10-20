@@ -10,8 +10,9 @@ No new semantic capabilities, metadata fields or source features are installed b
 
 Reviewed against `b52a02a8`. This section supersedes the historical work-order and
 gap descriptions below; dated evidence remains a record of its tested revision.
-The general path still requires both API settings `prelower_templates` and
-`concrete_type_substitution`. The CLI flag alone still selects historical recipes.
+Public selection has since been consolidated: API `prelower_templates = true` and
+CLI `--prelower-templates` both select the general concrete path. Former comparison
+fields are deprecated and inert; they cannot select historical implementations.
 This table is evidence, not an admission registry or a promise of full-family support.
 
 **Registered** means an existing semantic identity/protocol and its C++ binding.
@@ -64,8 +65,9 @@ enforce the concrete application policy, rejecting broad runtime PCH and active 
 tokens in transitive application inputs before caching new objects. See the
 [native contract](../../compiler/my-try/docs/architecture/native_cpp_build.md#dependencies-and-pch).
 This supersedes the table's historical production-header-enforcement gap, not its
-unproved provider-operation coverage. Remaining operation combinations, public option
-consolidation and unified acceptance stay open. No allowlist, parallel registry,
+unproved provider-operation coverage. Public option consolidation is now proved by
+the [CLI/API fixture](results/prelower_public_options_2026_10_20/README.md).
+Remaining operation combinations and unified acceptance stay open. No allowlist, parallel registry,
 semantic re-analysis or ordinary-template fallback is introduced.
 
 ## Agreed ownership: extend the existing model

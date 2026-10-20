@@ -250,7 +250,6 @@ function source_read(const vector<MyClass> &$owners): MyClass { return $owners[0
 file_put_contents($source . '/main.phs', $program);
 $compiler = new Compiler();
 $compiler->cpp_lowering->prelower_templates = $fields && $composed;
-$compiler->cpp_lowering->concrete_type_substitution = $fields && $composed;
 $compiler->init([$source]);
 $compiler->exec_cpp();
 $body = Model::syntax_files()[0]->root->single_body()->body;
@@ -371,7 +370,6 @@ function cast_text'));
         $compiler->cpp();
         if ($snapshot() === $before) { throw new \LogicException('Option switch reused concrete source fragments'); }
         $compiler->cpp_lowering->prelower_templates = true;
-        $compiler->cpp_lowering->runtime_template_abi = true; // Composition takes precedence over comparison mode.
         $compiler->cpp();
         if (($snapshot() !== $before) || ($stable_owner->version !== $settled)) { throw new \LogicException('Option replay changed preparation or output'); }
     }
