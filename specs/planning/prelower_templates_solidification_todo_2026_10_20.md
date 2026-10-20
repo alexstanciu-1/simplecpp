@@ -85,11 +85,12 @@ Owners: runtime metadata/specs, existing registry and prepared facts, C++ bindin
   implement concrete interfaces; runtime implementations retain dynamic algorithms.
   The interoperability guide now separates these owners, physical transport and
   layout-probe authority from source admission and complete closure evidence.
-- [ ] Audit argument/result transport, receiver adaptation, borrowing, lifecycle and
+- [x] Audit argument/result transport, receiver adaptation, borrowing, lifecycle and
   physical interface assumptions. Keep fixed shared protocols documented in code/specs;
   add metadata only for real provider variation. Do not encode arbitrary C++ snippets
-  or every implementation step in JSON.
-- [ ] Preserve Clang probes as the source of native size/alignment/lifecycle traits.
+  or every implementation step in JSON. See the [transport audit](results/prelower_transport_audit_2026_10_20/README.md)
+  and the interoperability guide for owners, constraints and existing proof coverage.
+- [x] Preserve Clang probes as the source of native size/alignment/lifecycle traits.
   Do not duplicate ABI constants in metadata or infer semantics from native spelling.
 
 Done when: each supported interaction has an existing semantic owner, physical
@@ -102,7 +103,7 @@ Owners: runtime catalog installation, backend binding/admission checks, diagnost
 - [ ] Verify required representation metadata, including native argument mapping,
   stored/payload roles, pointee contracts, scalar/byte interfaces and concrete exposure.
   Retain failed-configuration rejection without replacing installed configuration.
-- [ ] Classify existing limitations: runtime member results/references/variadics;
+- [x] Classify existing limitations: runtime member results/references/variadics;
   runtime-call reference results, variadics and observation/default-input restrictions;
   callable transport; boxed write-back/provider composition; unsupported generated
   header/layout cycles. Separate real remaining gaps from historical stale claims.
@@ -135,16 +136,17 @@ Owners: runtime catalog installation, backend binding/admission checks, diagnost
   its runtime header no longer includes unused template machinery. O0 output/counter
   parity and a fresh complete no-PCH closure proof pass, including ordered echo side
   effects. See [evidence](results/prelower_null_output_2026_10_20/README.md).
-- [ ] Complete strict validation for arbitrary metadata/provider header exposure,
-  remaining representation/operation combinations and PCH configuration before
-  migrating the public option. The listed rejection cases are not a universal proof.
+- [ ] Validate remaining representation/operation combinations before claiming
+  broader provider coverage. Public selection and strict transitive-header/PCH
+  enforcement are complete; arbitrary operation compatibility is not. The listed
+  rejection cases are not a universal proof.
 - [x] Carry the concrete application's template policy through existing publication
   into the native builder. Reject broad runtime PCH; validate active Clang tokens
   across application inputs and transitive provider headers before accepting new
   objects. Reuse dependency-keyed validation through the existing object cache.
   Provider mutation/recovery and ordinary-cache separation are covered by
-  `prelower_native_boundary.py`; remaining operation combinations and public
-  configuration consolidation are still open. See
+  `prelower_native_boundary.py`; remaining operation combinations stay open. Public
+  configuration consolidation is complete. See
   [native enforcement evidence](results/prelower_native_boundary_2026_10_20/README.md).
 - [ ] For the supported opt-in mode, report unsupported representations/operations
   explicitly. Do not silently fall back to template-bearing application interfaces.
