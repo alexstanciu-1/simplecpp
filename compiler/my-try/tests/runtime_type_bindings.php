@@ -16,6 +16,9 @@ $shared_row = array_search('core.representation.shared', array_column($core['cpp
 $value_row = array_search('core.representation.value', array_column($core['cpp_types'], 'id'), true);
 $string_row = array_search('core.representation.string', array_column($core['cpp_types'], 'id'), true);
 $invalids = [];
+$bad=$core; $bad['cpp_types'][$shared_row]['pointee_modified_type']=true; $invalids[]=[$bad,'Modified pointee requires only a modifier'];
+$bad=$core; $bad['cpp_types'][$value_row]['pointee']='Target'; $invalids[]=[$bad,'Modified pointee requires only a modifier'];
+$bad=$core; $bad['cpp_types'][$value_row]['arguments']=[]; $invalids[]=[$bad,'Modified pointee requires payload representation'];
 $bad=$core; $bad['cpp_types'][$integer_row]['literal_interface']='unknown'; $invalids[]=[$bad,'Unknown C++ literal interface'];
 $bad=$core; unset($bad['cpp_types'][$string_row]['byte_interface']); $invalids[]=[$bad,'Byte literal interface'];
 $bad=$core; $bad['cpp_types'][$integer_row]['byte_interface']='fixture::bytes'; $invalids[]=[$bad,'Byte literal interface'];

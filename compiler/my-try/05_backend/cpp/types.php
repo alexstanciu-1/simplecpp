@@ -83,7 +83,7 @@ final class CPP_Types
 	/** One parameter spelling for declarations and erased callable representations. */
 	public static function parameter_representation(callable_parameter $parameter, cpp_type_requirement $requirement, ?cpp_generation_context $context = null): cpp_type
 	{
-		$result = self::representation_for($parameter->type, $requirement, $context);
+		$result = self::signature_representation($parameter->type, $requirement, $context);
 		$result->spelling = ($parameter->access === storage_access::read_only ? 'const ' : '')
 			. $result->spelling . ($parameter->mode === passing_mode::reference ? '&' : '');
 		return $result;
@@ -92,8 +92,19 @@ final class CPP_Types
 	/** Reference results have identical spelling for source and erased callables. */
 	public static function return_representation(callable_signature $signature, cpp_type_requirement $requirement, ?cpp_generation_context $context = null): cpp_type
 	{
-		$result = self::representation_for($signature->return_type, $requirement, $context);
+		$result = self::signature_representation($signature->return_type, $requirement, $context);
 		if ($signature->reference_return !== null) { $result->spelling .= '&'; }
+		return $result;
+	}
+
+	/** Prototypes may name incomplete stored types; fields still need complete handle storage. */
+	private static function signature_representation(canonical_type_use $type, cpp_type_requirement $requirement,
+		?cpp_generation_context $context): cpp_type
+	{
+		$result = self::representation_for($type, $requirement, $context);
+		if (($result->opaque) && ($requirement === cpp_type_requirement::declaration)) {
+			$result->headers = [CPP_Opaque_Representation::declaration_header($result->spelling) => true];
+		}
 		return $result;
 	}
 
@@ -258,7 +269,11 @@ final class CPP_Types
 	public static function pointee(canonical_type_use $type): ?canonical_type_use
 	{
 		$recipe = self::stored_recipe($type);
-		if ($recipe === null || $recipe->pointee_position < 0) { return null; }
+		if ($recipe === null) { return null; }
+		if ($recipe->pointee_modified_type) {
+			return Model::$type_catalog->registry()->use($type->type_id());
+		}
+		if ($recipe->pointee_position < 0) { return null; }
 		if (Type_Queries::is_nominal_handle($type)) { return $type; }
 		$canonical = Type_Queries::canonical($type);
 		if (!($canonical instanceof applied_template_type)) { throw new \LogicException('Pointer interface requires an applied template'); }

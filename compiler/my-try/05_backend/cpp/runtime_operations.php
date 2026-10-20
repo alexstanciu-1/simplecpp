@@ -248,7 +248,7 @@ final class CPP_Runtime_Operations
 		return self::invoke($request, [$left, $right], $context);
 	}
 
-	/** Readonly value conversions use the existing renderer; ownership/wrapper transport is separate. */
+	/** Selected concrete conversions reuse the prepared decision and existing native renderer. */
 	public static function concrete_conversion(conversion_decision $decision, cpp_generation_context $context): bool
 	{
 		$engine = $context->specialization_engine;
@@ -256,6 +256,7 @@ final class CPP_Runtime_Operations
 		return ($decision->operation === conversion_operation::explicit_runtime_cast)
 			|| ($decision->operation === conversion_operation::text_conversion)
 			|| ($decision->operation === conversion_operation::integer_value_cast)
+			|| ($decision->operation === conversion_operation::ownership_empty)
 			|| ($decision->operation === conversion_operation::ownership_upcast)
 			|| ($decision->operation === conversion_operation::unique_upcast);
 	}

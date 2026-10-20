@@ -52,6 +52,23 @@ final class CPP_Runtime_Type_Bindings
 		}
 	}
 
+	/** A modifier pointer interface selects its explicit payload argument, never a type-name convention. */
+	private static function modified_pointee(runtime_cpp_type_spec $spec, bool $modifier): void
+	{
+		if ((!$modifier) || ($spec->pointee_parameter !== '')) {
+			throw new \RuntimeException('Modified pointee requires only a modifier binding');
+		}
+		if ($spec->arguments === null) {
+			throw new \RuntimeException('Modified pointee requires explicit arguments');
+		}
+		foreach ($spec->arguments as $argument) {
+			if (($argument->modified_type) && ($argument->payload)) {
+				return;
+			}
+		}
+		throw new \RuntimeException('Modified pointee requires payload representation in native arguments');
+	}
+
 	private static function recipe(runtime_cpp_type_spec $spec, ?type_definition_i $definition,
 		bool $modifier): cpp_type_recipe
 	{
@@ -68,6 +85,10 @@ final class CPP_Runtime_Type_Bindings
 			throw new \RuntimeException('Byte literal interface requires its runtime adapter');
 		}
 		if ($spec->byte_interface !== '') { CPP_Runtime_Catalog::spelling($spec->byte_interface, false); }
+		if ($spec->pointee_modified_type) {
+			self::modified_pointee($spec, $modifier);
+			$recipe->pointee_modified_type = true;
+		}
 		if ($spec->pointee_parameter !== '') {
 			if ($modifier || !isset($parameters[$spec->pointee_parameter])) {
 				throw new \RuntimeException('C++ pointee must name a declared type parameter');

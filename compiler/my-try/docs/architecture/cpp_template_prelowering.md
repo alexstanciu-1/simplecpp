@@ -62,6 +62,12 @@ generated-header graph, with explicit rejection of unsupported cycles. A layout 
 alone does not authorize byte copying or arbitrary provider interoperability.
 See the [runtime physical contract](../../../../runtime/specs/concrete_type_interoperability.md).
 
+Source method prototypes use concrete forward-declaration headers where a name is
+sufficient, including methods accepting or returning their own `value<T>`. Stored
+fields still require complete concrete storage. Modifier pointer interfaces use the
+runtime's `pointee_modified_type` binding and retain by-value const access; ordinary
+member emission and prepared empty-owner conversions remain with their existing owners.
+
 Low-level `request_opaque`/`request_observation` helpers remain for direct storage and
 observation proofs of the shared representation worker. They are not a selectable
 source-lowering mode. Public requests always use concrete argument substitution.
@@ -73,6 +79,9 @@ source-lowering mode. Public requests always use concrete argument substitution.
 - `tests/prelower_contracts.py`: explicit unsupported-boundary failure/recovery and exact audit command coverage.
 - `tests/prelower_header_boundaries.py`: O0 output/indexing/compound behavior, reference identity, order and matching allocation/copy counters.
 - `tests/prelower_layout.py --o0-only`: shared low-level observation/storage layout and cache proof, including failure/recovery and dependency edits. The default extended run also includes optimization/sanitizers.
+- `tests/prelower_source_lifecycle.py`: ordinary/concrete source methods and constructors,
+  receiver retention, ordered/default/reference arguments, owned results, copy-failure
+  cleanup, ownership identity, strict rejection/recovery and method/layout edits at O0.
 
 Current reproduction and proof limits are in [testing](../testing.md). Comparison-only
 recipe/runtime-ABI harnesses are preserved as non-executable historical source in

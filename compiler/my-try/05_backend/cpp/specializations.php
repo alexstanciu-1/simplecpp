@@ -213,6 +213,11 @@ final class CPP_Specializations
 					. ($member_declarations[$entry->name] ?? '') . $entry->declaration_tail;
 				$artifacts->append(new cpp_artifact('specialization:' . $entry->name, cpp_artifact_kind::header,
 					$entry->header, $declaration));
+				if ($entry->declaration_tail !== '') {
+					$artifacts->append(new cpp_artifact('specialization-declaration:' . $entry->name, cpp_artifact_kind::header,
+						CPP_Opaque_Representation::declaration_header('scpp::internal::' . $entry->name),
+						"#pragma once\nnamespace scpp::internal { struct " . $entry->name . "; }\n"));
+				}
 			}
 			$implementation .= '#include "' . $entry->header . '"' . "\n" . $entry->implementation . "\n";
 		}

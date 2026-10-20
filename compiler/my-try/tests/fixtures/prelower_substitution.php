@@ -707,6 +707,10 @@ if ($compound) {
     $header .= "\nvoid compound_proof();\n";
     foreach (['compound_work','compound_missing','compound_deleted','compound_map','compound_present','compound_divide'] as $name) {
         $support .= "\n" . '#include "' . CPP_Artifacts::callable_header($name) . "\"\n";
+        // Native proof callers materialize results; prototypes now need only declarations.
+        $result_type = Model::$global_scope->functions_named($name)[0]->signature()->return_type;
+        $result_mapping = CPP_Types::representation($result_type, new cpp_generation_context($composed ? $engine : null));
+        $support .= CPP_Artifacts::includes($result_mapping->headers, '');
     }
     $function = CPP_Callables::source_reference(Model::$global_scope->functions_named('compound_work')[0]);
     $missing = CPP_Callables::source_reference(Model::$global_scope->functions_named('compound_missing')[0]);

@@ -251,10 +251,16 @@ Bounded selector/legacy-path retirement and fresh validation are recorded in
 - [ ] Update CLI/API examples, runtime interoperability docs and test instructions.
 - [ ] Remove superseded branches, temporary helpers and stale tests only after the
   acceptance workflow covers the replacement. Preserve unrelated worktree changes.
-- [ ] Migrate the archived detailed source-method/constructor failure cases not
+- [x] Migrate the archived detailed source-method/constructor failure cases not
   covered by current general fixtures. Their inputs remain in
   [the historical proof archive](../../compiler/my-try/tests/historical/prelowering/README.md);
   do not count them as current acceptance or retain obsolete production paths for them.
+  `tests/prelower_source_lifecycle.py` now executes both modes at O0 with matching
+  counters across seven phases, five injected copy failures, strict rejection/recovery,
+  unchanged replay and method/layout edits. The approved modifier-payload pointer
+  contract lives in existing metadata/binding owners; signature-only forward
+  declarations and prepared empty-owner transport close the other discovered gaps.
+  See [migration evidence](results/prelower_source_lifecycle_2026_10_20/README.md).
 - [ ] Naming debt: review readable, bounded, stable specialization and operation
   names, generated file paths and debug discoverability for deeply nested types.
   Concrete type labels already use a 48-byte readable prefix plus a SHA-256 identity;

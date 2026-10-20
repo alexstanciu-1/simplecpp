@@ -324,6 +324,14 @@ its compiled implementations. Unknown parameters, omitted explicit arguments, mi
 payload arguments and modifier targets reject. This mechanism also supplies the
 implicit source-class storage binding through the existing shared owner policy.
 
+A modifier binding may instead set `pointee_modified_type: true`. It identifies
+the explicit `modified_type: true, representation: "payload"` native argument as
+the pointer target. It cannot coexist with `pointee`, and rejects on a definition
+binding or without that payload argument. The concrete interface delegates
+`operator->()` and `operator*()` to the native wrapper; the modifier's existing
+storage and copy semantics are unchanged. Unlike an indirect handle, inline
+modifier storage still requires the complete payload for its layout probe.
+
 The optional `literal_interface` selects a physical contract, not source semantics:
 
 - `scalar` exposes construction/extraction through the prepared native scalar ABI

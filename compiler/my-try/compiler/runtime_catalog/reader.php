@@ -638,6 +638,7 @@ final class Runtime_Catalog_Reader
 			elseif ($key === 'modifier') { $result->modifier_name = self::name($reader); }
 			elseif ($key === 'byte_interface') { $result->byte_interface = self::name($reader); }
 			elseif ($key === 'pointee') { $result->pointee_parameter = self::name($reader); }
+			elseif ($key === 'pointee_modified_type') { $result->pointee_modified_type = $reader->read_boolean(); }
 			elseif ($key === 'concrete_boundary') { $result->concrete_boundary = $reader->read_boolean(); }
 			elseif ($key === 'literal_interface') {
 				$result->literal_interface = self::name($reader);

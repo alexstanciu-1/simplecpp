@@ -67,7 +67,7 @@
     {"id":"core.representation.shared","type":"shared","pointee":"Target","symbol":"scpp::shared_p","header":"scpp/shared_p.hpp","arguments":[{"parameter":"Target","representation":"payload"}]},
     {"id":"core.representation.weak","type":"weak","symbol":"scpp::weak_p","header":"scpp/weak_p.hpp","arguments":[{"parameter":"Target","representation":"payload"}]},
     {"id":"core.representation.unique","type":"unique","pointee":"Target","symbol":"scpp::unique_p","header":"scpp/unique_p.hpp","arguments":[{"parameter":"Target","representation":"payload"}]},
-    {"id":"core.representation.value","modifier":"value","symbol":"scpp::value_p","header":"scpp/value_p.hpp","arguments":[{"modified_type":true,"representation":"payload"}]}
+    {"id":"core.representation.value","modifier":"value","pointee_modified_type":true,"symbol":"scpp::value_p","header":"scpp/value_p.hpp","arguments":[{"modified_type":true,"representation":"payload"}]}
   ],
   "functions": [
     {"id":"core.vector.append","name":"append","member":{"owner":"vector","dispatch":"instance"},"parameters":[{"name":"value","type":{"parameter":"Value"},"passing":"value"}],"returns":"void"},

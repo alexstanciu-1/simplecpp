@@ -4,6 +4,12 @@ namespace scpp\compiler;
 /** Physical representation only: canonical identities/capabilities remain in their existing owners. */
 final class CPP_Opaque_Representation
 {
+	/** Concrete prototypes need the name, not the storage layout of their parameters. */
+	public static function declaration_header(string $spelling): string
+	{
+		return 'specializations/declarations/' . q_substr($spelling, q_strlen('scpp::internal::')) . '.hpp';
+	}
+
 	public static function representation(canonical_type_use $type, CPP_Specializations $engine, bool $compose_arguments = false): cpp_type
 	{
 		$entry = $engine->entry($compose_arguments ? $engine->request_composed($type) : $engine->request_opaque($type));
@@ -127,7 +133,9 @@ final class CPP_Opaque_Representation
 			$implementation_headers = $payload->headers;
 			$payload_declaration = CPP_Types::payload($pointee, new cpp_generation_context($engine), cpp_type_requirement::declaration);
 			$declaration = CPP_Artifacts::preamble($payload_declaration->headers, $payload_declaration->forward_declarations, '') . $declaration;
-			$declaration .= $payload->spelling . '* operator->() const; ' . $payload->spelling . "& operator*() const;\n";
+			$readonly_payload = ($type->by_value() ? 'const ' : '') . $payload->spelling;
+			$declaration .= $payload->spelling . '* operator->(); ' . $payload->spelling . "& operator*();\n"
+				. $readonly_payload . '* operator->() const; ' . $readonly_payload . "& operator*() const;\n";
 		}
 		$implementation = $aliases . CPP_Artifacts::includes($implementation_headers, '') . "#include <memory>\n#include <new>\n#include <utility>\nnamespace scpp::internal {\n"
 			. 'static_assert(sizeof(' . $name . ') == sizeof(' . $native . "));\n"
@@ -135,8 +143,11 @@ final class CPP_Opaque_Representation
 			. $native . '& unwrap(' . $name . '& value) { return *std::launder(static_cast<' . $native . "*>(value.address())); }\n"
 			. 'const ' . $native . '& unwrap(const ' . $name . '& value) { return *std::launder(static_cast<const ' . $native . "*>(value.address())); }\n";
 		if ($payload !== null) {
-			$implementation .= $payload->spelling . '* ' . $name . '::operator->() const { return unwrap(*this).operator->(); }' . "\n"
-				. $payload->spelling . '& ' . $name . '::operator*() const { return unwrap(*this).operator*(); }' . "\n";
+			$readonly_payload = ($type->by_value() ? 'const ' : '') . $payload->spelling;
+			$implementation .= $payload->spelling . '* ' . $name . '::operator->() { return unwrap(*this).operator->(); }' . "\n"
+				. $payload->spelling . '& ' . $name . '::operator*() { return unwrap(*this).operator*(); }' . "\n"
+				. $readonly_payload . '* ' . $name . '::operator->() const { return unwrap(*this).operator->(); }' . "\n"
+				. $readonly_payload . '& ' . $name . '::operator*() const { return unwrap(*this).operator*(); }' . "\n";
 		}
 		$implementation .= $name . '::' . $name . '(operation_result, void (*construct)(void*, const void*), const void* input) { construct(address(), input); }' . "\n";
 		// Native traits govern the physical special members; semantic copy permission is independent.

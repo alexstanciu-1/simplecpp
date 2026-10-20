@@ -195,9 +195,19 @@ see the [composition proof](../../../specs/planning/results/prelower_composition
 The comparison-only `prelower_expressions.py` harness and its source-method/constructor
 fixtures are preserved in [the historical proof archive](../tests/historical/prelowering/README.md).
 They exercised the removed runtime-ABI source-lowering mode, not current acceptance.
-Use the general substitution and header-boundary proofs above. The archive explicitly
-lists detailed source-method/constructor cases still needing migration; they are not
-silently counted as current coverage.
+Use the general substitution and header-boundary proofs above.
+
+`python3 compiler/my-try/tests/prelower_source_lifecycle.py --results FRESH_DIRECTORY`
+migrates the detailed source-method/constructor cases to the public concrete API
+option. It compares ordinary/concrete O0 behavior and allocation/copy/move counters,
+including receiver replacement/clearing, defaults, ordered reference arguments,
+inline results, five injected copy-failure stages, shared aliasing, unique transfer
+and independent value copies. It checks const pointer interfaces, strict unsupported
+boundary rejection/recovery, unchanged replay, warm reuse, method-only layout reuse
+and layout-edit rebuilding. Generated application units retain strict template
+validation; native test instrumentation lives under specialization support.
+The former mode's exact unit-rebuild count and O2/sanitizer results are not claims
+of this migrated proof.
 
 `python3 compiler/my-try/tests/prelower_layout.py --results FRESH_DIRECTORY`
 checks real prepared observation/type bindings through opaque lifecycle generation,
