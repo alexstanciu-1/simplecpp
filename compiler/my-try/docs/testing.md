@@ -1552,3 +1552,20 @@ Focused regressions are `runtime_strings.py`, `nonbool_sentinel_equality.py` and
 S09-B1's exact runtime signature failure; the earlier unresolved-strpos evidence
 remains historical. See [the report](planning/s09_byte_search.md) for boundaries
 and the unchanged original edge fixture's pass. No full matrix is needed.
+
+## S09 offset replacement
+
+On dev002, run `tests/substr_replace_runtime.py --results <fresh-dir>` first, then
+`tests/substr_replace.py --results <fresh-dir>`. Each checks 3,312 replacement calls
+under ASan/UBSan using an independent byte oracle, including signed extrema,
+empty/non-ASCII/arbitrary-byte inputs and aliased inputs. The runtime driver also
+runs the existing full native PHP-string suite with reconciled expectations. The
+source driver checks the unchanged original surface fixture's exact output,
+argument snapshots/order, no-op argument evaluation, saved results, argument
+errors, 11 invalid calls and two recovery cycles.
+
+The optional `--baseline` modes require the pre-repair snapshot and record the
+runtime contract discrepancies and unresolved source name. Focused regressions
+are `runtime_strings.py` and `string_search.py`, each with a fresh results directory.
+S09-B1 remains a separately observed call-boundary blocker; no full matrix or
+fixture migration is part of this slice. See [the report](planning/s09_substr_replace.md).

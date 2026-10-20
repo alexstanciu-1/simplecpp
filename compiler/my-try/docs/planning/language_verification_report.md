@@ -679,3 +679,19 @@ admission. Explicit extraction works, but no implicit conversion or narrowing re
 was made. `substr_replace` remains deferred for separate semantic reconciliation.
 S09 is partial; fully closed original issues remain **26/64 (40.625%)**, with one
 partial repair and 37 other open issues. Original failure records remain historical.
+
+## S09 replacement slice — 2026-10-20
+
+[The replacement proof](s09_substr_replace.md) completes both `substr_replace`
+signatures and reconciles shared runtime behavior with the normative byte contract.
+Omitted or zero length inserts; unusable negative-length windows preserve the input.
+The full original strict string-surface fixture passes unchanged with exact output.
+Runtime and compiled-source observers each pass 3,312 checks, including extrema,
+arbitrary bytes, aliasing and input preservation. Source observers also prove
+argument snapshots, evaluation order, no-op argument evaluation, error propagation,
+11 invalid calls and two recovery cycles. Focused string/search regressions pass.
+
+All six search/replacement API signatures and both original S09 fixtures now pass.
+S09 remains partial for separately recorded S09-B1 in the false-branch fixture;
+no compiler conversion or narrowing rule was changed. Fully closed original issues
+remain **26/64 (40.625%)**, with one partial repair and 37 other open issues.

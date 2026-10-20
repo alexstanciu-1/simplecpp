@@ -704,7 +704,7 @@
       "dependencies": [
         "Resolve the named source contract/owner before any repair."
       ],
-      "next_action": "Discuss substr_replace insertion/no-op contract and bounded runtime repair separately. Review S09-B1 wrapper-to-payload runtime argument policy before changing the original false-branch fixture or compiler.",
+      "next_action": "Discuss S09-B1 wrapper-to-payload runtime argument policy. Search/replacement APIs and both original S09 fixtures now pass; preserve the separately blocked false-branch fixture unchanged.",
       "simple_batch_eligible": false,
       "repair_status": "partially-implemented-and-verified",
       "repair_evidence": {
@@ -712,19 +712,22 @@
         "report": "s09_byte_search.md",
         "results": "s09_search_results.json",
         "audit": "s09_search_audit.json",
-        "scope": "Four byte-search signatures implemented; unchanged strict edge fixture passes. substr_replace remains deferred; original false-branch fixture reaches separately recorded S09-B1 call-boundary blocker."
+        "scope": "Search checkpoint: four byte-search signatures implemented; unchanged strict edge fixture passed. Replacement was deferred at this checkpoint and is completed by replacement_repair_evidence; S09-B1 remains separate."
       },
       "remaining_blockers": [
         {
           "id": "S09-B1",
           "status": "requires-contract-discussion",
           "finding": "After admitting strpos, the unchanged strict_strings_004_strpos_false_branch_regression.phs passes result_or_false<int> directly to substr integer parameter; exact-signature preparation rejects. A false check does not narrow the static type. Explicit take followed by substr passes. No compiler conversion change in the search slice."
-        },
-        {
-          "id": "S09-replacement",
-          "finding": "substr_replace remains unregistered pending omitted-length insertion and unusable negative-window no-op reconciliation."
         }
-      ]
+      ],
+      "replacement_repair_evidence": {
+        "date": "2026-10-20",
+        "report": "s09_substr_replace.md",
+        "results": "s09_replace_results.json",
+        "audit": "s09_replace_audit.json",
+        "scope": "Both replacement signatures, shared runtime contract reconciliation and unchanged original strict surface pass. All six S09 API signatures are implemented; S09 remains partial only for separately tracked S09-B1."
+      }
     },
     {
       "id": "S10",

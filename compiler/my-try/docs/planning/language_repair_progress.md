@@ -2,7 +2,7 @@
 Doc Status: supporting
 
 Snapshot: 2026-10-20, after [V-L07 bounded completion](vl07_completion.md) and
-[V-L06 / S04 closeout](float_identity.md) and [V-L11 / V-D14 text](carrier_text.md), followed by [S06 conditionals](s06_unbraced_conditionals.md) and [S07 predicates](s07_mixed_predicates.md). The [S09 search slice](s09_byte_search.md) is complete; S09 remains partial. This covers all 64 original entries in
+[V-L06 / S04 closeout](float_identity.md) and [V-L11 / V-D14 text](carrier_text.md), followed by [S06 conditionals](s06_unbraced_conditionals.md) and [S07 predicates](s07_mixed_predicates.md). The [S09 search](s09_byte_search.md) and [replacement](s09_substr_replace.md) slices are complete; S09 remains partial for S09-B1. This covers all 64 original entries in
 [the issue ledger](language_verification_issues.json), including deferred legacy
 syntax and policy/design issues. Operator signatures are not separate closed issues.
 
@@ -37,9 +37,10 @@ remains dated evidence.
 S07 now exposes three exact-mixed predicates through non-retaining observation.
 Its unchanged original strict fixture passes end to end; wider predicate domains
 and flow-sensitive narrowing remain separate.
-S09 now admits four byte-search signatures and passes the unchanged string-edge
-fixture. Replacement semantics and the newly exposed S09-B1 call boundary remain
-open; this partial repair adds no fully closed issue.
+S09 now admits four byte-search and two replacement signatures. Both original S09
+fixtures (string surface and edges) pass unchanged. S09 remains partial only for
+the separately tracked S09-B1 call boundary in the false-branch fixture; this
+checkpoint adds no fully closed issue.
 
 “Not closed” does not mean every remaining entry is an accidental regression or an
 authorized implementation task. Some entries still require policy decisions or

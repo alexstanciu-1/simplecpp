@@ -19,6 +19,7 @@ output.mkdir(parents=True, exist_ok=False)
 expected = {'case': 'abc-é中😀|ABC-é中😀|hELLO|Hello|ÉX|éx'.encode(), 'empty': b'[]',
             'predicates': b'', 'order': b'changed', 'purity': b'AbC|abc|ABC', 'shadow': b'', 'boxed_failure': b''}
 expected.update({
+    'offset_replace': b'abXcdef|abcdef',
     'php_byte_search': b'2|5',
     'split_join': b'a||b|;a|b,c;a,b,c;a|b;0;1;0;a/b/c;612d62',
     'join_containers': b'a/b|last/first|eight/two||',

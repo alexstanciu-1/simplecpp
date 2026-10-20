@@ -253,3 +253,11 @@ flow-sensitive narrowing are not covered by this closure.
 blocked by S06 and unresolved `strpos` now reaches S09-B1: a falseable position
 passed directly to an integer runtime parameter. This boundary and `substr_replace`
 remain separately unresolved. Frozen first-cause counts above are not rewritten.
+
+## S09 replacement follow-up — 2026-10-20
+
+[Both replacement signatures now pass](s09_substr_replace.md), including the full
+unchanged `strict_strings_001_str_surface.phs` with exact output. Combined with
+search support, both original S09 cases pass. The separate false-branch fixture
+still reaches S09-B1; no source adaptation or compiler conversion repair was made.
+Historical first-cause counts and the previous search checkpoint remain unchanged.
