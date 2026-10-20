@@ -35,6 +35,13 @@ jobs:
             build_options: false
 
     steps:
+      # Historical compiler evidence contains paths beyond Windows MAX_PATH.
+      # Configure Git before checkout so the full repository can be materialized.
+      - name: Enable Windows long paths
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: git config --global core.longpaths true
+
       - name: Checkout
         uses: actions/checkout@v4
 
