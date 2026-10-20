@@ -165,8 +165,8 @@ Owners: `cpp_lowering_options`, CLI/API entry points, C++ generation/adapters.
 
 - [x] Make `--prelower-templates` select the same general concrete-substitution path
   used by accounting. Align the API setting and document effective options.
-  CLI and API now require only `prelower_templates`; former comparison fields are
-  deprecated and inert. Artifact/manifest parity, strict CLI rejection and repair,
+  CLI and API now require only `prelower_templates`; former comparison fields have
+  been removed. Artifact/manifest parity, strict CLI rejection and repair,
   ordinary opt-out, native PCH rejection and complete fixture closure pass through
   `prelower_null_output.py`. See [public-path evidence](results/prelower_public_options_2026_10_20/README.md).
 - [x] Review PCH interaction: the template-free acceptance path must use no runtime
@@ -177,11 +177,16 @@ Owners: `cpp_lowering_options`, CLI/API entry points, C++ generation/adapters.
 - [x] Prove mode switching invalidates affected C++ fragments without unnecessary
   semantic repreparation, and restoring settings restores deterministic output.
   The migrated lifecycle fixture verifies ordinary/concrete restoration, unchanged
-  preparation version, no-op fragment identity, inert comparison fields, demand
+  preparation version, no-op fragment identity, absence of comparison fields, demand
   retirement and failure/repair through the public option.
-- [ ] Retire temporary selectors and superseded production paths only after their
+- [x] Retire temporary selectors and superseded production paths only after their
   useful behavior/proofs are accounted for. Keep historical benchmark evidence;
   do not retain obsolete runtime branches solely to reproduce old experiments.
+  The engine has one configuration. Handwritten integer/vector recipes, their
+  fallback algorithms, native-source partitioning and the old runtime-ABI emission
+  branches are removed. Shared entry support, storage/layout workers, constructor
+  transport and scalar unary emission are preserved at their current owners.
+  Comparison-only harnesses are archived with an explicit coverage/migration map.
 
 Done when: one supported prelowering selection has consistent CLI/API behavior,
 while ordinary compilation and its regression proofs still work.
@@ -238,11 +243,18 @@ application boundary check without undocumented API toggles or local recordings.
 
 ## 6. Consolidate documentation and remove superseded code
 
-- [ ] Rewrite the current architecture coverage summary around the single supported
+Bounded selector/legacy-path retirement and fresh validation are recorded in
+[the cleanup evidence](results/prelower_cleanup_2026_10_20/README.md).
+
+- [x] Rewrite the current architecture coverage summary around the single supported
   path; move historical recipe/ABI checkpoints out of current guidance.
 - [ ] Update CLI/API examples, runtime interoperability docs and test instructions.
 - [ ] Remove superseded branches, temporary helpers and stale tests only after the
   acceptance workflow covers the replacement. Preserve unrelated worktree changes.
+- [ ] Migrate the archived detailed source-method/constructor failure cases not
+  covered by current general fixtures. Their inputs remain in
+  [the historical proof archive](../../compiler/my-try/tests/historical/prelowering/README.md);
+  do not count them as current acceptance or retain obsolete production paths for them.
 - [ ] Naming debt: review readable, bounded, stable specialization and operation
   names, generated file paths and debug discoverability for deeply nested types.
   Concrete type labels already use a 48-byte readable prefix plus a SHA-256 identity;

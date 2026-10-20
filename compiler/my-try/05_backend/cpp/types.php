@@ -32,13 +32,7 @@ final class CPP_Types
 				}
 				return $result;
 			}
-			if ($context->runtime_abi()) {
-				if (self::has_template_recipe($type_use)
-					|| $type_use->by_value() || (Type_Queries::source_declaration($type_use) instanceof collected_member_owner)) {
-					$engine /** CPP_Specializations */ = $context->specialization_engine;
-					return $engine->representation($type_use, $context);
-				}
-			}
+
 		}
 		return self::native_representation_for($type_use, $requirement, $context,
 			$context !== null ? $context->implementation_engine : null);
@@ -127,8 +121,7 @@ final class CPP_Types
 		if ($context !== null) {
 			$engine = $context->specialization_engine;
 			if ($engine !== null) {
-				$selected = ($engine->concrete_types() || $engine->runtime_abi())
-					? self::has_template_recipe($type_use) : CPP_Concrete_Recipes::selects_representation($type_use);
+				$selected = self::has_template_recipe($type_use);
 				// Payload queries must not select the complete stored owner again.
 				if ($selected && !Type_Queries::is_nominal_handle($type_use)) { return $engine->representation($type_use, $context); }
 			}

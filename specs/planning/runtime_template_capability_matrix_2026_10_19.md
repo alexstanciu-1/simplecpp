@@ -12,7 +12,9 @@ Reviewed against `b52a02a8`. This section supersedes the historical work-order a
 gap descriptions below; dated evidence remains a record of its tested revision.
 Public selection has since been consolidated: API `prelower_templates = true` and
 CLI `--prelower-templates` both select the general concrete path. Former comparison
-fields are deprecated and inert; they cannot select historical implementations.
+fields and superseded recipe/runtime-ABI source-lowering paths have been removed.
+Shared physical storage/lifecycle workers remain; see the
+[current architecture](../../compiler/my-try/docs/architecture/cpp_template_prelowering.md).
 This table is evidence, not an admission registry or a promise of full-family support.
 
 **Registered** means an existing semantic identity/protocol and its C++ binding.

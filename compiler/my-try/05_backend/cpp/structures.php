@@ -30,10 +30,6 @@ final class cpp_lowering_options
 {
 	/** Strict concrete application interfaces; native validation enforces template-free inputs. */
 	public bool $prelower_templates = false;
-	/** Deprecated compatibility field; no longer selects the historical transport path. */
-	public bool $runtime_template_abi = false;
-	/** Deprecated compatibility field; prelower_templates alone selects concrete substitution. */
-	public bool $concrete_type_substitution = false;
 }
 
 /** Engine-owned output parts; references only carry the entry position.
@@ -132,8 +128,6 @@ final class cpp_finally_return
 /** One emission invocation; syntax and prepared facts never retain it. */
 final class cpp_generation_context
 {
-	/** Native source payloads share ordinary bindings; calls back into application ABI need transport. */
-	public bool $native_source = false;
 	/** Middleware expressions use native outer implementations with concrete physical arguments. */
 	public ?CPP_Specializations $implementation_engine = null;
 	public array $specializations /** hash<canonical_type_use,int> */ = [];
@@ -143,16 +137,9 @@ final class cpp_generation_context
 	}
 	public function concrete_types(): bool
 	{
-		if ($this->specialization_engine === null) {
-			return false;
-		}
-		return $this->specialization_engine->concrete_types();
+		return $this->specialization_engine !== null;
 	}
-	public function runtime_abi(): bool
-	{
-		if ($this->specialization_engine === null) { return false; }
-		return $this->specialization_engine->runtime_abi();
-	}
+
 	public ?cpp_finally_return $finally_return = null;
 	public array $compiler_helpers /** hash<prepared_compiler_call> */ = [];
 	public ?breakable_node $break_target = null;
@@ -204,10 +191,6 @@ final class cpp_fragment
 /** Retained fragments are keyed by independent signature/body preparation identities. */
 final class cpp_program {
 	public bool $prelower_templates = false;
-	/** Legacy assembly state; public generation always leaves this false. */
-	public bool $runtime_template_abi = false;
-	/** Effective concrete mode derived from prelower_templates, not a second public choice. */
-	public bool $concrete_type_substitution = false;
 	public \SplObjectStorage $fragments /** hash<cpp_fragment, shared<preparation_owner>> */;
 
 	public function __construct()
@@ -218,12 +201,10 @@ final class cpp_program {
 
 /** Backend recipes retain settled identities, never syntax or generation workers. */
 enum cpp_runtime_operation_kind {
-	case method_call;
 	case concrete_member;
 	case concrete_index;
 	case concrete_iteration;
 	case concrete_mutation;
-	case receiver_check;
 	case construct_default;
 	case construct_call;
 	case observation;
@@ -232,10 +213,7 @@ enum cpp_runtime_operation_kind {
 	case initialize_empty;
 	case initialize_buffer;
 	case binary;
-	case unary;
 	case conversion;
-	case index_read;
-	case index_write;
 	case write_key;
 }
 
@@ -252,13 +230,9 @@ final class cpp_runtime_operation
 	public ?operator_decision $decision = null;
 	public ?conversion_decision $conversion = null;
 	public string $spelling = '';
-	public bool $append = false;
-	/** Path element types, without the source key syntax retained by prepared paths. */
-	public Storage $path /** Storage<canonical_type_use> */;
 	public function __construct(public cpp_runtime_operation_kind $kind)
 	{
 		$this->inputs = new Storage /** Storage<canonical_type_use> */();
-		$this->path = new Storage /** Storage<canonical_type_use> */();
 	}
 }
 

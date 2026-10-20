@@ -7,14 +7,10 @@ final class CPP_Specializations
 	private Storage $entries /** Storage<cpp_specialization_entry> */;
 	private array $names /** hash<int> */ = [];
 
-	public function __construct(private bool $use_runtime_abi = false, private bool $compose_types = false)
+	public function __construct()
 	{
 		$this->entries = new Storage /** Storage<cpp_specialization_entry> */();
 	}
-
-	public function concrete_types(): bool { return $this->compose_types; }
-
-	public function runtime_abi(): bool { return $this->use_runtime_abi && !$this->compose_types; }
 
 	public function request_operation(cpp_runtime_operation $request): cpp_specialization_ref
 	{
@@ -33,12 +29,10 @@ final class CPP_Specializations
 		return $this->intern(CPP_Runtime_Operations::entry($request, $this));
 	}
 
-	/** Compatibility recipe selection stays with the existing recipe owner, not this engine. */
+	/** Every public request uses the general concrete representation. */
 	public function request(canonical_type_use $type): cpp_specialization_ref
 	{
-		if ($this->compose_types) { return $this->request_composed($type); }
-		if ($this->use_runtime_abi) { return $this->request_opaque($type); }
-		return $this->intern(CPP_Concrete_Recipes::request($type, $this));
+		return $this->request_composed($type);
 	}
 
 	private function intern(cpp_specialization_entry $entry): cpp_specialization_ref
@@ -105,9 +99,7 @@ final class CPP_Specializations
 	/** Select the configured physical binding without implementing its storage protocol here. */
 	public function representation(canonical_type_use $type, cpp_generation_context $context): cpp_type
 	{
-		if ($this->compose_types) { return CPP_Opaque_Representation::representation($type, $this, true); }
-		if ($this->use_runtime_abi) { return CPP_Opaque_Representation::representation($type, $this); }
-		return CPP_Concrete_Recipes::representation($type, $context, $this);
+		return CPP_Opaque_Representation::representation($type, $this, true);
 	}
 
 	/** Order an output-only index so discovery and cached-fragment replay cannot churn support bytes. */
@@ -190,8 +182,8 @@ final class CPP_Specializations
 	/** Group implementation work, as in the accounting proof; headers remain per representation. */
 	public function append_artifacts(Storage $artifacts /** Storage<cpp_artifact> */): void
 	{
-		$artifacts->append(new cpp_artifact('specializations:base-header', cpp_artifact_kind::header, 'specializations/base.hpp', CPP_Concrete_Recipes::base_header()));
-		$artifacts->append(new cpp_artifact('specializations:base', cpp_artifact_kind::translation_unit, 'specializations/base.cpp', CPP_Concrete_Recipes::base_body()));
+		$artifacts->append(new cpp_artifact('specializations:base-header', cpp_artifact_kind::header, 'specializations/base.hpp', CPP_Entry_Support::base_header()));
+		$artifacts->append(new cpp_artifact('specializations:base', cpp_artifact_kind::translation_unit, 'specializations/base.cpp', CPP_Entry_Support::base_body()));
 		$implementation = '';
 		$layout_declarations /** hash<string,int> */ = [];
 		$layout_statements /** hash<string,int> */ = [];

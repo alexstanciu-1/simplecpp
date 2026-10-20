@@ -26,19 +26,10 @@ final class CPP_Generator
 	public function __construct(?cpp_program $program = null, ?cpp_lowering_options $options = null)
 	{
 		$this->program = $program ?? new cpp_program();
-		$enabled = false;
-		$runtime_abi = false;
-		$concrete_types = false;
-		if ($options !== null) {
-			$enabled = $options->prelower_templates;
-			$concrete_types = $enabled;
-		}
-		if (($this->program->prelower_templates !== $enabled) || ($this->program->runtime_template_abi !== $runtime_abi)
-			|| ($this->program->concrete_type_substitution !== $concrete_types)) {
+		$enabled = $options !== null && $options->prelower_templates;
+		if ($this->program->prelower_templates !== $enabled) {
 			$this->program->fragments = new \SplObjectStorage /** hash<cpp_fragment, shared<preparation_owner>> */();
 			$this->program->prelower_templates = $enabled;
-			$this->program->runtime_template_abi = $runtime_abi;
-			$this->program->concrete_type_substitution = $concrete_types;
 		}
 	}
 
@@ -53,7 +44,7 @@ final class CPP_Generator
 	/** One partitioning path for single-source and multi-source programs. */
 	public function generate_program(Storage $files /** Storage<prepared_file> */, prepared_file $entry_file): Storage /** Storage<cpp_artifact> */
 	{
-		$this->specializations = $this->program->prelower_templates ? new CPP_Specializations($this->program->runtime_template_abi, $this->program->concrete_type_substitution) : null;
+		$this->specializations = $this->program->prelower_templates ? new CPP_Specializations() : null;
 		$ordered /** Storage<preparation_owner> */ = new Storage();
 		$found_entry = false;
 		foreach ($files as $prepared)
@@ -171,7 +162,7 @@ final class CPP_Generator
 				$path = CPP_Artifacts::type_header($definition->qualified_name());
 				$identity = 'type:' . $definition->qualified_name();
 				$record = object_cast($definition, collected_member_owner::class);
-				$bridge_context = $this->source_context();
+				$bridge_context = new cpp_generation_context($this->specializations);
 				$text = CPP_Declarations::type_opening($record, $bridge_context) . $fragment->text;
 				$contract = $record->contract_work->require_facts();
 				$dispatch /** Keyed_Storage<prepared_method_contract> */ = $contract->methods;
@@ -219,8 +210,7 @@ final class CPP_Generator
 			$result->append($artifact);
 		}
 		foreach ($files as $prepared) {
-			$this->append_implementation($prepared, $ordered, $result, false);
-			if ($this->program->runtime_template_abi) { $this->append_implementation($prepared, $ordered, $result, true); }
+			$this->append_implementation($prepared, $ordered, $result);
 		}
 		$entry_owner = object_cast($entry_file->executable_body()->work(), preparation_owner::class);
 		$entry_fragment = $this->program->fragments[$entry_owner];
@@ -274,14 +264,13 @@ final class CPP_Generator
 
 	/** Keep native payload implementations out of application translation units. */
 	private function append_implementation(prepared_file $prepared, Storage $ordered /** Storage<preparation_owner> */,
-		Storage $result /** Storage<cpp_artifact> */, bool $native_source): void
+		Storage $result /** Storage<cpp_artifact> */): void
 	{
 		$headers /** hash<bool> */ = [];
 		$declarations /** hash<bool> */ = [];
 		$body_text = '';
-		$dispatch_context = $this->source_context();
+		$dispatch_context = new cpp_generation_context($this->specializations);
 		foreach ($ordered as $callable_owner) {
-			if ($this->program->runtime_template_abi && ($native_source !== self::native_source_owner($callable_owner))) { continue; }
 			if (($callable_owner instanceof record_definition_work) || ($callable_owner instanceof type_contract_work)) {
 				if ($callable_owner->source === $prepared->source) {
 					$dispatch_owner = object_cast($callable_owner->declaration(), collected_member_owner::class);
@@ -326,42 +315,10 @@ final class CPP_Generator
 		foreach ($dispatch_context->headers as $header => $used) { $headers[$header] = true; }
 		foreach ($dispatch_context->forward_declarations as $name => $used) { $declarations[$name] = true; }
 		if ($body_text !== '') {
-			$path = ($native_source ? 'support/' : '') . CPP_Artifacts::unit_path($prepared->source);
+			$path = CPP_Artifacts::unit_path($prepared->source);
 			$result->append(CPP_Artifacts::described('implementation:' . $path, cpp_artifact_kind::translation_unit,
 				$path, CPP_Artifacts::preamble($headers, $declarations, '') . $body_text, $headers));
 		}
-	}
-
-	/** One native payload definition, including fields, signatures, bodies and dispatch. */
-	private function source_context(): cpp_generation_context
-	{
-		if ($this->specializations !== null) {
-			if ($this->specializations->runtime_abi()) {
-				$context = new cpp_generation_context();
-				$context->native_source = true;
-				return $context;
-			}
-		}
-		return new cpp_generation_context($this->specializations);
-	}
-
-	/** Physical source ownership is already represented by the preparation work kinds. */
-	private static function native_source_owner(preparation_owner $owner): bool
-	{
-		if ($owner instanceof source_callable_body_work) {
-			return object_cast($owner, source_callable_body_work::class)->callable_definition() instanceof collected_method;
-		}
-		if ($owner->kind() === preparation_kind::declaration) {
-			$declaration = $owner->declaration();
-			return ($declaration instanceof collected_member_owner) || ($declaration instanceof collected_method);
-		}
-		return false;
-	}
-
-	private function fragment_context(preparation_owner $owner): cpp_generation_context
-	{
-		if (self::native_source_owner($owner)) { return $this->source_context(); }
-		return new cpp_generation_context($this->specializations);
 	}
 
 	/** Each body owns its temporary numbering; publish a fragment only after successful rendering. */
@@ -371,7 +328,7 @@ final class CPP_Generator
 		if (($owner->state !== preparation_state::ready) || $owner->failed) {
 			throw new \LogicException('C++ generation requires successfully prepared work');
 		}
-		$context = $this->fragment_context($owner);
+		$context = new cpp_generation_context($this->specializations);
 		$next = new cpp_fragment();
 		if ($owner instanceof body_work) {
 			$body_owner = object_cast($owner, body_work::class);
@@ -390,7 +347,7 @@ final class CPP_Generator
 			$entry = object_cast($owner->declaration(), collected_name::class);
 			if ($entry instanceof collected_source_callable) {
 				$function_syntax = object_cast($entry, collected_source_callable::class)->callable_syntax();
-				$definition_context = $this->fragment_context($owner);
+				$definition_context = new cpp_generation_context($this->specializations);
 				$next->text = CPP_Declarations::signature($function_syntax, $definition_context, false);
 				$next->definition_headers = $definition_context->headers;
 				foreach ($definition_context->runtime_operations as $key => $request) { $context->runtime_operations[$key] = $request; }
@@ -411,7 +368,7 @@ final class CPP_Generator
 				$syntax = object_cast($entry, collected_record::class)->syntax();
 				CPP_Declarations::generate_record($syntax, $context);
 				$next->text = $context->records;
-				$definition_context = $this->fragment_context($owner);
+				$definition_context = new cpp_generation_context($this->specializations);
 				$next->storage_text = CPP_Declarations::static_definitions(object_cast($entry, collected_record::class), $definition_context);
 				$next->definition_headers = $definition_context->headers;
 				foreach ($definition_context->runtime_operations as $key => $request) { $context->runtime_operations[$key] = $request; }
@@ -809,7 +766,6 @@ final class CPP_Generator
 	/** Mutate the resolved place once and copy the selected old/new result into a value. */
 	public static function generate_mutation(mutation_expression_node $syntax, cpp_generation_context $context): string
 	{
-		if ($context->runtime_abi()) { throw new \RuntimeException('runtime template ABI: mutation result transport is not yet implemented'); }
 		$decision = $syntax->require_mutation_preparation()->decision;
 		if ($context->specialization_engine === null) {
 			self::record_operator_headers($decision, $context);
@@ -887,8 +843,7 @@ final class CPP_Generator
 		}
 		$operand = CPP_Declarations::conversion($operand, $decision->operands[0], $context);
 		if ($context->specialization_engine !== null) {
-			if ($context->runtime_abi()) { return CPP_Runtime_Operations::unary($decision, $spelling, $operand, $context); }
-			return CPP_Concrete_Operations::unary($decision, $spelling, $operand, $context);
+			return CPP_Declarations::type($decision->result_type, $context) . '(' . $spelling . '(' . $operand . ').native_value())';
 		}
 		$context->headers['scpp/generated/operators.hpp'] = true;
 		return '(' . $spelling . $operand . ')';
@@ -1101,10 +1056,7 @@ final class CPP_Generator
 		string $left, string $right, cpp_generation_context $context): string
 	{
 		if ($context->specialization_engine !== null) {
-			if ($context->runtime_abi() || $context->specialization_engine->concrete_types()) {
-				return CPP_Runtime_Operations::binary($decision, $spelling, $left, $right, $context);
-			}
-			return CPP_Concrete_Operations::binary($decision, $spelling, $left, $right, $context);
+			return CPP_Runtime_Operations::binary($decision, $spelling, $left, $right, $context);
 		}
 		// Read native bytes only after both source values have been copied in order.
 		if (($decision->operation === operator_operation::string_equal)

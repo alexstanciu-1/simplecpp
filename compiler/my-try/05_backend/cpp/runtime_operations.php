@@ -1,7 +1,7 @@
 <?php
 namespace scpp\compiler;
 
-/** Runtime ABI bridges consume selected contracts; family algorithms remain in the runtime. */
+/** Concrete bridges consume selected contracts; family algorithms remain in the runtime. */
 final class CPP_Runtime_Operations
 {
 	private static function join(array $parts /** vector<string> */): string
@@ -14,7 +14,8 @@ final class CPP_Runtime_Operations
 
 	public static function name(cpp_runtime_operation $request): string
 	{
-		$key = $request->kind_name() . ':' . $request->spelling . ':' . ($request->append ? 'append' : 'store');
+		// Preserve the existing identity seed while retiring the old indexed-write fields.
+		$key = $request->kind_name() . ':' . $request->spelling . ':store';
 		if ($request->iteration !== null) {
 			$key .= ':key=' . CPP_Opaque_Representation::identity($request->iteration->key_type)
 				. ':value=' . CPP_Opaque_Representation::identity($request->iteration->value_type);
@@ -33,7 +34,6 @@ final class CPP_Runtime_Operations
 		if ($request->conversion !== null) { $key .= ':' . $request->conversion->operation_name(); }
 		if ($request->result !== null) { $key .= ':result=' . CPP_Opaque_Representation::identity($request->result); }
 		foreach ($request->inputs as $input) { $key .= ':input=' . CPP_Opaque_Representation::identity($input); }
-		foreach ($request->path as $element) { $key .= ':path=' . CPP_Opaque_Representation::identity($element); }
 		return 'runtime_' . $request->kind_name() . '_' . content_sha256($key);
 	}
 
@@ -75,21 +75,21 @@ final class CPP_Runtime_Operations
 		$name = self::name($request);
 		$existing = $engine->find($name);
 		if ($existing !== null) { return $existing; }
-		if ($engine->concrete_types() && ($request->kind === cpp_runtime_operation_kind::initialize_empty)) {
+		if ($request->kind === cpp_runtime_operation_kind::initialize_empty) {
 			return CPP_Initializer_Buffer::empty_entry($request, $engine);
 		}
 		if ($request->kind === cpp_runtime_operation_kind::initialize_buffer) {
 			return CPP_Initializer_Buffer::entry($request, $engine);
 		}
-		// Only integrated operations select concrete physical bindings. Other ABI
-		// operations retain their existing representation contract until integrated.
-		$implementation_engine = ($engine->concrete_types() && (($request->kind === cpp_runtime_operation_kind::binary)
+		// Native outer implementations retain concrete stored arguments. Key checking
+		// alone consumes its original scalar representation.
+		$implementation_engine = (($request->kind === cpp_runtime_operation_kind::binary)
 			|| ($request->kind === cpp_runtime_operation_kind::conversion)
 			|| ($request->kind === cpp_runtime_operation_kind::observation)
 			|| ($request->kind === cpp_runtime_operation_kind::output)
 			|| ($request->kind === cpp_runtime_operation_kind::runtime_call)
 			|| ($request->kind === cpp_runtime_operation_kind::construct_default)
-			|| ($request->kind === cpp_runtime_operation_kind::construct_call))) ? $engine : null;
+			|| ($request->kind === cpp_runtime_operation_kind::construct_call)) ? $engine : null;
 		$native_context = new cpp_generation_context();
 		$native_context->implementation_engine = $implementation_engine;
 		$signature = '';
@@ -100,7 +100,7 @@ final class CPP_Runtime_Operations
 		foreach ($inputs as $position => $input) {
 			CPP_Opaque_Representation::require_native_type($input);
 			$input_context = $native_context;
-			if ($engine->concrete_types() && ($request->kind === cpp_runtime_operation_kind::construct_call)) {
+			if ($request->kind === cpp_runtime_operation_kind::construct_call) {
 				$input_context = new cpp_generation_context($engine);
 			}
 			$native = CPP_Declarations::type($input, $input_context);
@@ -124,7 +124,7 @@ final class CPP_Runtime_Operations
 			$output = $mapping->spelling;
 			$declaration_headers = $mapping->headers;
 			$body = $unpack . 'return ' . $expression . ';';
-			if ($engine->concrete_types() && (($request->kind === cpp_runtime_operation_kind::observation) || ($request->kind === cpp_runtime_operation_kind::runtime_call)) && $mapping->opaque) {
+			if ((($request->kind === cpp_runtime_operation_kind::observation) || ($request->kind === cpp_runtime_operation_kind::runtime_call)) && $mapping->opaque) {
 				$body = self::concrete_call_result($output, $native_result, $unpack, $expression);
 				$native_context->headers['type_traits'] = true;
 			}
@@ -166,8 +166,8 @@ final class CPP_Runtime_Operations
 
 	private static function mutable_input(cpp_runtime_operation $request, int $position): bool
 	{
-		if ($request->call !== null) { return CPP_Source_Calls::mutable_input($request->call, $position, ($request->construction === null) && ($request->kind !== cpp_runtime_operation_kind::runtime_call)); }
-		return ($position === 0) && ($request->kind === cpp_runtime_operation_kind::index_write);
+		if ($request->call !== null) { return CPP_Source_Calls::mutable_input($request->call, $position, false); }
+		return false;
 	}
 
 	private static function native_operation(cpp_runtime_operation $request, array $arguments /** vector<string> */,
@@ -178,17 +178,9 @@ final class CPP_Runtime_Operations
 			return CPP_Declarations::output($arguments[0], $inputs[0], $context);
 		}
 		if ($request->kind === cpp_runtime_operation_kind::construct_call) { return CPP_Source_Calls::native_construction($request, $arguments, $context); }
-		if ($request->kind === cpp_runtime_operation_kind::receiver_check) { return '(void)' . $arguments[0] . '.operator->()'; }
-		if ($request->kind === cpp_runtime_operation_kind::method_call) { return CPP_Source_Calls::native_call($request, $arguments, $context); }
 		if ($request->kind === cpp_runtime_operation_kind::construct_default) {
 			$facts /** prepared_object_construction */ = $request->construction;
 			return CPP_Record_Construction::object($facts, new Storage /** Storage<expression_node> */(), $context);
-		}
-		if ($request->kind === cpp_runtime_operation_kind::initialize_empty) {
-			$binding /** initialization_binding */ = $request->initialization;
-			$factory = CPP_Data_Construction::reference($binding, $context);
-			$parameters /** Storage<callable_parameter> */ = $binding->factory()->signature()->parameters;
-			return $factory . '(' . CPP_Declarations::type($parameters[0]->type, $context) . '{})';
 		}
 		if (($request->kind === cpp_runtime_operation_kind::observation) || ($request->kind === cpp_runtime_operation_kind::runtime_call)) {
 			$binding /** cpp_function_binding */ = $request->binding;
@@ -202,49 +194,17 @@ final class CPP_Runtime_Operations
 			CPP_Generator::record_operator_headers($decision, $context);
 			return CPP_Generator::render_eager_binary($decision, $request->spelling, $arguments[0], $arguments[1], $context);
 		}
-		if ($request->kind === cpp_runtime_operation_kind::unary) {
-			$decision /** operator_decision */ = $request->decision;
-			CPP_Generator::record_operator_headers($decision, $context);
-			$context->headers['scpp/generated/operators.hpp'] = true;
-			return '(' . $request->spelling . $arguments[0] . ')';
-		}
 		if ($request->kind === cpp_runtime_operation_kind::conversion) {
 			$conversion /** conversion_decision */ = $request->conversion;
 			return CPP_Declarations::conversion($arguments[0], $conversion, $context);
-		}
-		if ($request->kind === cpp_runtime_operation_kind::index_read) {
-			$decision /** operator_decision */ = $request->decision;
-			$context->headers['scpp/index_read.hpp'] = true;
-			$helper = $decision->operation === operator_operation::index_checked_read ? 'checked_index_read' : 'null_index_read';
-			return 'scpp::' . $helper . '(' . self::join($arguments) . ')';
 		}
 		if ($request->kind === cpp_runtime_operation_kind::write_key) {
 			$context->headers['scpp/index_write.hpp'] = true;
 			return 'scpp::require_write_key(' . $arguments[0] . ')';
 		}
-		if ($request->kind === cpp_runtime_operation_kind::index_write) {
-			return self::native_write($request, $arguments, $context);
-		}
-		throw new \LogicException('Unimplemented runtime ABI operation');
+		throw new \LogicException('Unimplemented concrete runtime operation');
 	}
 
-	/** Probe before mutable descent; no source code executes while interior references are held. */
-	private static function native_write(cpp_runtime_operation $request, array $arguments /** vector<string> */,
-		cpp_generation_context $context): string
-	{
-		$context->headers['scpp/index_write_path.hpp'] = true;
-		$keys /** vector<string> */ = [];
-		foreach ($request->path as $position => $element) { $keys[] = $arguments[$position + 1]; }
-		$leaf_position = q_count($keys) + 1;
-		$key = $request->append ? '' : $arguments[$leaf_position];
-		$value = $arguments[$leaf_position + ($request->append ? 0 : 1)];
-		$resolved = CPP_Index_Write::resolve_path($request->path, $keys, $arguments[0], $key, $value, $request->append, $context);
-		$leaf = $request->append ? $value : $key . ', ' . $value;
-		return $resolved->statements . 'scpp::index_' . ($request->append ? 'append' : 'store')
-			. '(' . $resolved->value . ', ' . $leaf . ')';
-	}
-
-	/** Reuse settled storage/allocation facts; no guessed constructor or ownership family. */
 	public static function construct_default(prepared_object_construction $facts, cpp_generation_context $context): string
 	{
 		if ($facts->constructor_call !== null) {
@@ -268,47 +228,12 @@ final class CPP_Runtime_Operations
 		return self::invoke($request, [], $context);
 	}
 
-	public static function read(operator_decision $decision, canonical_type_use $receiver_type,
-		string $receiver, string $key, cpp_generation_context $context): string
-	{
-		$request = new cpp_runtime_operation(cpp_runtime_operation_kind::index_read);
-		$request->decision = $decision;
-		$request->result = $decision->result_type;
-		$inputs /** Storage<canonical_type_use> */ = $request->inputs;
-		$inputs->append($receiver_type);
-		$inputs->append($decision->operands[1]->target_type);
-		return self::invoke($request, [$receiver, $key], $context);
-	}
-
 	public static function write_key(canonical_type_use $type, string $key, cpp_generation_context $context): string
 	{
 		$request = new cpp_runtime_operation(cpp_runtime_operation_kind::write_key);
 		$inputs /** Storage<canonical_type_use> */ = $request->inputs;
 		$inputs->append($type);
 		return self::invoke($request, [$key], $context);
-	}
-
-	public static function write(prepared_index_assignment $facts, string $receiver, array $keys /** vector<string> */,
-		string $value, cpp_generation_context $context): string
-	{
-		$request = new cpp_runtime_operation(cpp_runtime_operation_kind::index_write);
-		$request->append = $facts->target->decision->operation === operator_operation::index_append;
-		$inputs /** Storage<canonical_type_use> */ = $request->inputs;
-		$path /** Storage<canonical_type_use> */ = $request->path;
-		$inputs->append($facts->target->root->require_preparation()->type);
-		$expressions /** vector<string> */ = [$receiver];
-		foreach ($facts->target->path as $position => $step) {
-			$inputs->append($step->key_conversion->target_type);
-			$path->append($step->element_type);
-			$expressions[] = $keys[$position];
-		}
-		if (!$request->append) {
-			$inputs->append($facts->target->decision->operands[1]->target_type);
-			$expressions[] = $keys[q_count($keys) - 1];
-		}
-		$inputs->append($facts->destination_type());
-		$expressions[] = $value;
-		return self::invoke($request, $expressions, $context);
 	}
 
 	public static function binary(operator_decision $decision, string $spelling, string $left, string $right,
@@ -323,23 +248,11 @@ final class CPP_Runtime_Operations
 		return self::invoke($request, [$left, $right], $context);
 	}
 
-	public static function unary(operator_decision $decision, string $spelling, string $operand,
-		cpp_generation_context $context): string
-	{
-		$request = new cpp_runtime_operation(cpp_runtime_operation_kind::unary);
-		$request->result = $decision->result_type;
-		$request->decision = $decision;
-		$request->spelling = $spelling;
-		$inputs /** Storage<canonical_type_use> */ = $request->inputs;
-		$inputs->append($decision->operands[0]->target_type);
-		return self::single_value($request, $operand, $context);
-	}
-
 	/** Readonly value conversions use the existing renderer; ownership/wrapper transport is separate. */
 	public static function concrete_conversion(conversion_decision $decision, cpp_generation_context $context): bool
 	{
 		$engine = $context->specialization_engine;
-		if ($engine === null || !$engine->concrete_types()) { return false; }
+		if ($engine === null) { return false; }
 		return ($decision->operation === conversion_operation::explicit_runtime_cast)
 			|| ($decision->operation === conversion_operation::text_conversion)
 			|| ($decision->operation === conversion_operation::integer_value_cast)
@@ -380,7 +293,7 @@ final class CPP_Runtime_Operations
 		cpp_generation_context $context): string
 	{
 		if (($facts->signature->reference_return !== null) || ($facts->variadic_parameter !== null)) {
-			throw new \RuntimeException('runtime template ABI: reference-result/variadic call transport is not yet implemented');
+			throw new \RuntimeException('prelower_templates: reference-result/variadic call transport is not yet implemented');
 		}
 		foreach ($facts->signature->parameters as $parameter) {
 			if ($parameter->mode !== passing_mode::observation) {
@@ -393,13 +306,13 @@ final class CPP_Runtime_Operations
 		if (Type_Queries::canonical($facts->type)->family() !== type_family::no_value) { $request->result = $facts->type; }
 		$parameters /** Storage<callable_parameter> */ = $facts->signature->parameters;
 		$prepared_arguments /** Storage<prepared_call_argument> */ = $facts->arguments;
-		if (q_count($prepared_arguments) > 1) { throw new \RuntimeException('runtime template ABI: multiple observation inputs need a sequencing contract'); }
-		if (q_count($parameters) !== q_count($prepared_arguments)) { throw new \RuntimeException('runtime template ABI: default call inputs are not yet implemented'); }
+		if (q_count($prepared_arguments) > 1) { throw new \RuntimeException('prelower_templates: multiple observation inputs need a sequencing contract'); }
+		if (q_count($parameters) !== q_count($prepared_arguments)) { throw new \RuntimeException('prelower_templates: default call inputs are not yet implemented'); }
 		$names /** vector<string> */ = [];
 		$inputs /** Storage<canonical_type_use> */ = $request->inputs;
 		$emitter = new CPP_Syntax($context);
 		foreach ($prepared_arguments as $position => $argument) {
-			if (($argument->boundary !== value_boundary_operation::observe_value) || ($argument->conversion !== null)) { throw new \RuntimeException('runtime template ABI: call requires prepared observation inputs'); }
+			if (($argument->boundary !== value_boundary_operation::observe_value) || ($argument->conversion !== null)) { throw new \RuntimeException('prelower_templates: call requires prepared observation inputs'); }
 			$type = $parameters[$position]->type;
 			$inputs->append($type);
 			// Preserve the full-expression lifetime of both the observed value and any

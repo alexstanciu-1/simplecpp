@@ -63,7 +63,7 @@ $mapping=CPP_Types::representation($duo);
 binding_check($mapping->spelling==='std::pair<scpp::string_t, scpp::int_t<>>','Metadata argument order was ignored');
 $closed_mapping=CPP_Types::representation($closed);
 binding_check($closed_mapping->spelling==='scpp::int_t<std::int32_t>' && isset($closed_mapping->headers['cstdint']), 'Closed native template or argument header lost');
-$engine=new CPP_Specializations(true,true);
+$engine=new CPP_Specializations();
 $closed_entry=$engine->entry($engine->request_composed($closed));
 $duo_entry=$engine->entry($engine->request_composed($duo));
 $artifacts=new Storage /** Storage<cpp_artifact> */();

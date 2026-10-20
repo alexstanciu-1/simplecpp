@@ -110,7 +110,7 @@ if(demand_snapshot()!==$before){throw new \LogicException('Option restoration ch
 // Reuse ordinary mappings and engine requests only after proving source-driven closure.
 $closed=Model::$global_scope->functions_named('copy_closed')[0]->syntax()->require_preparation()->signature->return_type;
 $nested=Model::$global_scope->functions_named('copy_nested')[0]->syntax()->require_preparation()->signature->return_type;
-$engine=new CPP_Specializations(true,true);
+$engine=new CPP_Specializations();
 $context=new cpp_generation_context($composed?$engine:null);
 $shared=Model::$global_scope->functions_named('copy_shared')[0]->syntax()->require_preparation()->signature->return_type;
 $shared_mapping=CPP_Types::representation($shared,$context);

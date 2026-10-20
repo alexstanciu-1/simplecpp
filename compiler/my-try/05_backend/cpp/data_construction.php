@@ -82,7 +82,7 @@ final class CPP_Record_Construction
 	public static function object(prepared_object_construction $facts, Storage $arguments /** Storage<expression_node> */,
 		cpp_generation_context $context): string
 	{
-		if ($context->runtime_abi() || ($context->concrete_types() && CPP_Types::needs_concrete_storage($facts->type))) {
+		if ($context->concrete_types() && CPP_Types::needs_concrete_storage($facts->type)) {
 			if ($facts->constructor_call !== null) { return CPP_Source_Calls::construct($facts, $arguments, $context); }
 			return CPP_Runtime_Operations::construct_default($facts, $context);
 		}
@@ -128,8 +128,7 @@ final class CPP_Data_Construction
 		}
 		$binding = object_cast($prepared, prepared_sequence_construction::class)->binding;
 		if ($context->specialization_engine !== null) {
-			if (CPP_Initializer_Buffer::active($context)) { return CPP_Runtime_Operations::initialize($node, $binding, $context); }
-			return CPP_Concrete_Operations::initialize($node, $binding->target(), $context);
+			return CPP_Runtime_Operations::initialize($node, $binding, $context);
 		}
 		return self::sequence($node, $binding, $context);
 	}
@@ -192,7 +191,6 @@ final class CPP_Data_Construction
 	private static function record(data_construction_node $node, prepared_record_construction $facts,
 		cpp_generation_context $context): string
 	{
-		if ($context->runtime_abi()) { throw new \RuntimeException('runtime template ABI: named source construction needs argument transport'); }
 		$type = CPP_Declarations::type($facts->type, $context);
 		$payload = CPP_Types::payload($facts->payload_type, $context);
 		CPP_Types::record_dependencies($payload, $context);

@@ -4,22 +4,19 @@ namespace scpp\compiler;
 /** Physical transport of the existing call-scoped runtime initializer buffer. */
 final class CPP_Initializer_Buffer
 {
-	/** Both experimental representations share sequencing and buffer lifetime ownership. */
+	/** Concrete initialization shares ordinary sequencing and buffer lifetime ownership. */
 	public static function active(cpp_generation_context $context): bool
 	{
 		$engine = $context->specialization_engine;
-		return $engine !== null && ($engine->runtime_abi() || $engine->concrete_types());
+		return $engine !== null;
 	}
 
 	/** Buffer elements are physical values; only the outer result uses its native implementation. */
 	private static function physical_type(canonical_type_use $type, cpp_generation_context $context,
 		CPP_Specializations $engine, bool $implementation): string
 	{
-		$mapping = CPP_Types::representation($type);
-		if ($engine->concrete_types()) {
-			$mapping = $implementation ? CPP_Types::implementation_representation($type, $engine)
-				: CPP_Types::representation($type, new cpp_generation_context($engine));
-		}
+		$mapping = $implementation ? CPP_Types::implementation_representation($type, $engine)
+			: CPP_Types::representation($type, new cpp_generation_context($engine));
 		CPP_Types::record_dependencies($mapping, $context);
 		return $mapping->spelling;
 	}
@@ -86,9 +83,7 @@ final class CPP_Initializer_Buffer
 
 	private static function input_address(canonical_type_use $type, string $value, cpp_generation_context $context): string
 	{
-		$engine /** CPP_Specializations */ = $context->specialization_engine;
-		if ($engine->concrete_types()) { return '&(' . $value . ')'; }
-		return CPP_Runtime_Operations::address(new cpp_runtime_operand($type, $value), $context);
+		return '&(' . $value . ')';
 	}
 
 	/** A nonmovable inline owner preserves the native buffer's self-referencing local storage. */
@@ -98,7 +93,7 @@ final class CPP_Initializer_Buffer
 		$result /** canonical_type_use */ = $request->result;
 		CPP_Opaque_Representation::require_native_type($result);
 		$native_context = new cpp_generation_context();
-		$factory = CPP_Data_Construction::reference($binding, $native_context, $engine->concrete_types() ? $engine : null);
+		$factory = CPP_Data_Construction::reference($binding, $native_context, $engine);
 		$parameters /** Storage<callable_parameter> */ = $binding->factory()->signature()->parameters;
 		$input = object_cast(Type_Queries::canonical($parameters[0]->type), applied_template_type::class);
 		$element_type = $input->arguments()[0];

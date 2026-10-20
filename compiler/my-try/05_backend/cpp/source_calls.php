@@ -4,50 +4,15 @@ namespace scpp\compiler;
 /** Source call transport; receiver lifetime and argument boundaries come from preparation. */
 final class CPP_Source_Calls
 {
-	public static function method(call_node $syntax, cpp_generation_context $context): string
-	{
-		$facts = $syntax->require_call_preparation();
-		if (!(weakref_get($facts->target) instanceof collected_method)) {
-			throw new \RuntimeException('runtime template ABI: provider methods need receiver transport');
-		}
-		self::require_signature($facts);
-		$receiver /** prepared_method_receiver */ = $facts->receiver;
-		if (($receiver->lifetime !== method_receiver_lifetime::retain_shared)
-			&& ($receiver->lifetime !== method_receiver_lifetime::borrow_inline)) {
-			throw new \RuntimeException('runtime template ABI: unsupported method receiver lifetime');
-		}
-		$parameters /** Storage<callable_parameter> */ = $facts->signature->parameters;
-		$base /** expression_node */ = $syntax->receiver;
-		$type = $base->require_preparation()->type;
-		$value = (new CPP_Syntax($context))->expression($base);
-		$name = 'receiver_' . $context->next_temporary;
-		$context->next_temporary++;
-		$prefix = ($receiver->lifetime === method_receiver_lifetime::borrow_inline ? 'auto& ' : 'auto ')
-			. $name . ' = ' . $value . ";\n";
-		if ($receiver->lifetime === method_receiver_lifetime::retain_shared) {
-			$check = new cpp_runtime_operation(cpp_runtime_operation_kind::receiver_check);
-			$check_inputs /** Storage<canonical_type_use> */ = $check->inputs;
-			$check_inputs->append($type);
-			$prefix .= CPP_Runtime_Operations::invoke($check, [$name], $context) . ";\n";
-		}
-		$request = new cpp_runtime_operation(cpp_runtime_operation_kind::method_call);
-		$request->call = $facts;
-		$inputs /** Storage<canonical_type_use> */ = $request->inputs;
-		$inputs->append($type);
-		foreach ($parameters as $parameter) { $inputs->append($parameter->type); }
-		if (Type_Queries::canonical($facts->type)->family() !== type_family::no_value) { $request->result = $facts->type; }
-		return CPP_Declarations::selected_call($facts, $syntax->arguments, $context, $name, null, $prefix, $request);
-	}
-
 	public static function require_signature(prepared_call $facts): void
 	{
 		if (($facts->signature->reference_return !== null) || ($facts->variadic_parameter !== null)) {
-			throw new \RuntimeException('runtime template ABI: source call reference returns and variadic packs need transport');
+			throw new \RuntimeException('prelower_templates: source call reference returns and variadic packs need transport');
 		}
 		$parameters /** Storage<callable_parameter> */ = $facts->signature->parameters;
 		foreach ($parameters as $parameter) {
 			if ($parameter->mode === passing_mode::observation) {
-				throw new \RuntimeException('runtime template ABI: source call observation needs full-expression transport');
+				throw new \RuntimeException('prelower_templates: source call observation needs full-expression transport');
 			}
 		}
 	}
@@ -107,17 +72,6 @@ final class CPP_Source_Calls
 		if ($arguments[$index]->boundary === value_boundary_operation::consume_value) { return true; }
 		return ($parameters[$index]->mode === passing_mode::reference)
 			&& ($parameters[$index]->access !== storage_access::read_only);
-	}
-
-	public static function native_call(cpp_runtime_operation $request, array $arguments /** vector<string> */,
-		cpp_generation_context $context): string
-	{
-		$facts /** prepared_call */ = $request->call;
-		$receiver /** prepared_method_receiver */ = $facts->receiver;
-		$types /** Storage<canonical_type_use> */ = $request->inputs;
-		$arrow = ($receiver->lifetime !== method_receiver_lifetime::borrow_inline) || $types[0]->by_value();
-		$callee = CPP_Declarations::method_reference($facts, $arguments[0], $arrow, $context);
-		return $callee . '(' . self::native_arguments($facts, $arguments, 1, $context) . ')';
 	}
 
 	/** Preserve the ordinary call's copy/consume/default categories without a second snapshot. */

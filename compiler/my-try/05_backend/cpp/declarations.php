@@ -20,7 +20,7 @@ final class CPP_Declarations
 	public static function output(string $expression, canonical_type_use $type, cpp_generation_context $context): string
 	{
 		// Native representations also need the compiled output boundary.
-		if ($context->runtime_abi() || $context->concrete_types()) {
+		if ($context->concrete_types()) {
 			return CPP_Runtime_Operations::output($expression, $type, $context);
 		}
 		$context->headers['lang/php/support/php_string.hpp'] = true;
@@ -58,9 +58,7 @@ final class CPP_Declarations
 	/** Render only the operation selected by shared conversion preparation. */
 	public static function conversion(string $expression, conversion_decision $decision, cpp_generation_context $context): string
 	{
-		if ($context->runtime_abi() && ($decision->operation !== conversion_operation::identity)) {
-			return CPP_Runtime_Operations::convert($expression, $decision, $context);
-		}
+
 		if (CPP_Runtime_Operations::concrete_conversion($decision, $context)) {
 			return CPP_Runtime_Operations::convert($expression, $decision, $context);
 		}
@@ -114,9 +112,6 @@ final class CPP_Declarations
 			$context->headers['scpp/cast.hpp'] = true;
 			return 'scpp::required_cast<' . self::type($decision->target_type, $context)
 				. '>(' . $expression . ')';
-		}
-		if (($context->specialization_engine !== null) && ($decision->operation === conversion_operation::explicit_runtime_cast)) {
-			return CPP_Concrete_Operations::cast($expression, $decision, $context);
 		}
 		if ($decision->operation === conversion_operation::explicit_runtime_cast) {
 			$context->headers['scpp/cast.hpp'] = true;
@@ -455,7 +450,6 @@ final class CPP_Declarations
 
 	public static function static_property(prepared_static_property $facts, cpp_generation_context $context): string
 	{
-		if ($context->runtime_abi()) { throw new \RuntimeException('runtime template ABI: static property access needs native-place transport'); }
 		if ($facts->field instanceof registered_property) {
 			return CPP_Runtime_Catalog::property(object_cast($facts->field, registered_property::class), $context);
 		}
@@ -496,7 +490,6 @@ final class CPP_Declarations
 			return self::selected_call($facts, $syntax->arguments, $context, '', null, $evaluation);
 		}
 		if ($facts->receiver !== null) {
-			if ($context->runtime_abi()) { return CPP_Source_Calls::method($syntax, $context); }
 			$receiver /** prepared_method_receiver */ = $facts->receiver;
 			CPP_Types::record_dependencies(CPP_Types::payload($receiver->record_type, $context), $context);
 			$value = 'this';
@@ -518,7 +511,7 @@ final class CPP_Declarations
 			if ($target instanceof runtime_function_definition) {
 				$member_name = '';
 				$engine = $context->specialization_engine;
-				if (($engine !== null) && $engine->concrete_types()) { $member_name = CPP_Concrete_Members::reference($facts, $context); }
+				if ($engine !== null) { $member_name = CPP_Concrete_Members::reference($facts, $context); }
 				else { $member_name = CPP_Callables::reference($target, $context); }
 				$callee = $name . ($arrow ? '->' : '.') . $member_name;
 				return self::selected_call($facts, $syntax->arguments, $context, $callee, null, $prefix);
@@ -569,13 +562,11 @@ final class CPP_Declarations
 		cpp_generation_context $context, string $callee, ?canonical_type_use $constructed_type,
 		string $prefix, ?cpp_runtime_operation $transport = null): string
 	{
-		if (($transport === null) && $context->runtime_abi() && (weakref_get($facts->target) instanceof collected_method)) {
-			throw new \RuntimeException('runtime template ABI: source method calls need receiver/argument transport');
-		}
-		if (($transport === null) && ($context->runtime_abi() || ($context->concrete_types() && ($facts->receiver === null)))
+
+		if (($transport === null) && ($context->concrete_types() && ($facts->receiver === null))
 			&& (weakref_get($facts->target) instanceof runtime_function_definition)) {
 			if (($callee !== '') || ($prefix !== '') || ($constructed_type !== null)) {
-				throw new \RuntimeException('runtime template ABI: receiver call transport is not yet implemented');
+				throw new \RuntimeException('prelower_templates: receiver call transport is not yet implemented');
 			}
 			return CPP_Runtime_Operations::call($facts, $arguments, $context);
 		}
@@ -594,7 +585,6 @@ final class CPP_Declarations
 		$text = '([&]() -> ' . self::type_for($result_type, $context, $return_requirement) . $return_reference . " {\n";
 		$text .= $prefix;
 		$physical_arguments /** vector<string> */ = [];
-		if (($transport !== null) && ($transport->kind === cpp_runtime_operation_kind::method_call)) { $physical_arguments[] = $callee; }
 		$names = '';
 		$separator = '';
 		if ($constructed_type !== null) {
@@ -687,7 +677,6 @@ final class CPP_Declarations
 	/** Field identity comes from shared preparation, never a backend name lookup. */
 	public static function generate_field_access(field_access_node $syntax, cpp_generation_context $context, ?string $bound_base = null): string
 	{
-		if ($context->runtime_abi()) { throw new \RuntimeException('runtime template ABI: property access needs native-place transport'); }
 		$facts = $syntax->require_field_access_preparation();
 		$name = '';
 		if ($facts->field instanceof registered_property) {

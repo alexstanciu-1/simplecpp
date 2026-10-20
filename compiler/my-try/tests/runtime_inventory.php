@@ -33,7 +33,7 @@ function inventory_specializations(CPP_Specializations $engine): array
 	return $headers;
 }
 
-$engine = new CPP_Specializations(true, true);
+$engine = new CPP_Specializations();
 $null = Model::$type_catalog->null_type();
 $null_mapping = CPP_Types::representation($null, new cpp_generation_context($engine));
 if ($null_mapping->opaque || $null_mapping->spelling !== 'scpp::null_t'
@@ -66,7 +66,7 @@ if ($again->entry_id !== $first->entry_id || inventory_specializations($engine) 
 	|| $registry->type_count() !== $types_before) {
 	throw new \LogicException('Repeated demand changed output or semantic type identities');
 }
-$fresh_engine = new CPP_Specializations(true, true);
+$fresh_engine = new CPP_Specializations();
 if (inventory_specializations($fresh_engine) !== []) {
 	throw new \LogicException('Demand leaked into a new engine through catalog state');
 }

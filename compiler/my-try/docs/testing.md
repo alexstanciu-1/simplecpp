@@ -13,8 +13,8 @@ Any emission, native policy or closure failure fails the run; no fallback is sel
 
 `python3 compiler/my-try/tests/prelower_null_output.py --results FRESH_DIRECTORY`
 also proves public CLI/API artifact and manifest parity using only
-`prelower_templates`, mode switching without semantic repreparation, deprecated
-selector neutrality, strict CLI failure/repair, ordinary opt-out, and native PCH
+`prelower_templates`, mode switching without semantic repreparation, absence of temporary
+selectors, strict CLI failure/repair, ordinary opt-out, and native PCH
 rejection. The CLI-published application is compiled and audited without PCH.
 The fixture builds a fresh concrete application with null interleaved with side-effecting echo
 operands. It checks ordered bytes, warm reuse and the complete no-PCH template closure
@@ -192,50 +192,20 @@ control verifies counter sensitivity. `--timing-repeats 5` adds paired separate-
 compile timings. This is a native representation experiment, not compiler lowering;
 see the [composition proof](../../../specs/planning/results/prelower_composition_2026_10_19/README.md).
 
-`python3 compiler/my-try/tests/prelower_expressions.py --results FRESH_DIRECTORY`
-compares ordinary generated source with the runtime ABI mode at O0/O2 and under
-ASan/UBSan with optional copy elision disabled. It checks payload allocation/copy
-counters, throwing-copy cleanup, nested mutation across RHS root replacement,
-provider/source-function boundaries, cached-fragment replay, edit/removal recovery,
-configuration switching, fresh-output equivalence and warm native reuse. See the
-[expression checkpoint](../../../specs/planning/results/prelower_expressions_2026_10_19/README.md).
-
-`python3 compiler/my-try/tests/prelower_expressions.py --initializers --results FRESH_DIRECTORY`
-uses the same harness for nonempty list/keyed/nested initialization, heap-backed
-inputs, per-entry lifecycle traces, copy-failure sweeps, allocation-before-evaluation,
-key/value conversion failures and duplicate-key factory cleanup. It also verifies
-that literal-length edits do not change specialization support.
-The initializer fixture runs with native stack capture and with a test-only
-`backtrace` interposition returning no frames. It retains unfiltered counters;
-exact allocation parity is asserted with capture isolated, while unfiltered
-conversion failures must preserve payload lifetimes and evaluation traces.
-Runtime error stack-frame allocations depend on bridge depth and optimization.
-
-`python3 compiler/my-try/tests/prelower_expressions.py --source-types --results FRESH_DIRECTORY`
-checks source payload definitions, requested shared/unique/value representations,
-nested containers, tracked payload lifecycle and copy failure, pointer identity,
-unique moved-from state, independent value copies, unused representation removal,
-and native layout reuse on method-body edits versus rebuilding on field-layout edits.
-It also exercises source instance methods: receiver replacement during argument
-evaluation, clearing the caller's handle inside a method, ordered value arguments,
-aliased writable/readonly references, inline receivers, defaults and owned results.
-Throwing copies cover both argument snapshots and native parameter construction.
-The fixture adds identical tracked members to emitted payloads solely for counters;
-construction, methods, destruction and application operations are compiler-generated.
-Direct/ABI counters are compared within each build configuration: disabling optional
-elision may add a return move equally in both modes.
-
-`python3 compiler/my-try/tests/prelower_expressions.py --constructors --results FRESH_DIRECTORY`
-extends that proof with ordered positional constructor arguments, explicit/default
-parameters, shared/unique/inline class storage, struct property-backed parameters,
-and injected copy failures at argument, native parameter and constructor-body stages.
-It retains the same replay, cache, allocation/copy and sanitizer checks.
+The comparison-only `prelower_expressions.py` harness and its source-method/constructor
+fixtures are preserved in [the historical proof archive](../tests/historical/prelowering/README.md).
+They exercised the removed runtime-ABI source-lowering mode, not current acceptance.
+Use the general substitution and header-boundary proofs above. The archive explicitly
+lists detailed source-method/constructor cases still needing migration; they are not
+silently counted as current coverage.
 
 `python3 compiler/my-try/tests/prelower_layout.py --results FRESH_DIRECTORY`
 checks real prepared observation/type bindings through opaque lifecycle generation,
 publication and native layout caching, including provider dependency edits, recovery,
 allocation/copy counters and sanitizers. This is API integration, not ordinary source
 expression adoption; see the [checkpoint](../../../specs/planning/results/prelower_layout_integration_2026_10_19/README.md).
+Add `--o0-only` to retain the layout/cache/counter checks while skipping optimized
+and sanitizer builds.
 
 `python3 compiler/my-try/tests/prelower_boundary.py --results FRESH_DIRECTORY`
 compares direct and in-place opaque runtime objects with allocation/lifecycle counters,
@@ -243,10 +213,10 @@ nested-reference identity, failure cleanup and a deliberately copying negative c
 This is a native boundary experiment, not compiler integration; see the
 [dated proof](../../../specs/planning/results/prelower_boundary_2026_10_19/README.md).
 
-`python3 compiler/my-try/tests/prelower_templates.py --results FRESH_DIRECTORY`
-checks the opt-in concrete integer/vector slice, incremental emission/native reuse,
-error parity, sanitizers and matched no-PCH native timings. See
-[coverage and ownership](architecture/cpp_template_prelowering.md).
+The handwritten integer/vector comparison harness is also archived. Its useful
+emission/replay/recovery fixture (`fixtures/prelower_templates.php`) now exercises the
+single general path and runs within `prelower_null_output.py`; old per-family spellings
+and timings are historical evidence only.
 
 `python3 compiler/my-try/tests/records.py --suite duplicate_types --no-pch --results FRESH_DIRECTORY`
 checks duplicate type admission before emission, all source type kinds, cross-file

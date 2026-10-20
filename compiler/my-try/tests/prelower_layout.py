@@ -14,6 +14,7 @@ from test_runner import CommandRunner, Task, run_tasks
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--results', required=True, type=Path)
+    parser.add_argument('--o0-only', action='store_true', help='Skip optimized and sanitizer builds')
     args = parser.parse_args()
     out = args.results.resolve()
     out.mkdir(parents=True, exist_ok=False)
@@ -58,10 +59,11 @@ def main():
             repair = build('corrupt-layout-repair')
             assert repair['layouts_built'] == 1
             execute('repair-execute', repair, 3)
-            optimized = build('optimized', 0, '-O2')
-            assert optimized['layouts_built'] == 1
-            execute('optimized-execute', optimized, 3)
-            assert build('restore-O0')['layouts_reused'] == 1
+            if not args.o0_only:
+                optimized = build('optimized', 0, '-O2')
+                assert optimized['layouts_built'] == 1
+                execute('optimized-execute', optimized, 3)
+                assert build('restore-O0')['layouts_reused'] == 1
             publish('publish-layout-dependency', 3, 64)
             changed = build('layout-dependency')
             assert changed['layouts_built'] == 1, changed
@@ -73,15 +75,16 @@ def main():
             recovered = build('recovered-layout')
             assert recovered['layouts_reused'] == 1 and recovered['compiled'] == 0, recovered
             execute('recovered-execute', recovered, 3)
-            # Exercise the actual generated wrappers/bridges under sanitizers too.
-            layout_header = next(h for h in (cache / 'artifacts').glob('*.hpp') if '_SIZE 64' in h.read_text())
-            manifest = json.loads((published / '.scpp-output.manifest').read_text())
-            units = [published / f['path'] for f in manifest['files'] if f['kind'] == 'translation_unit']
-            runner.run('sanitized-build', ['clang++', '-std=c++23', '-O1', '-g0', '-fsanitize=address,undefined',
-                       '-fno-omit-frame-pointer', '-include', layout_header, '-I' + str(published),
-                       '-I' + str(ROOT / 'runtime/include'), *units, '-o', out / 'sanitized'])
-            sanitized_output = runner.run('sanitized-execute', ['env', 'ASAN_OPTIONS=detect_leaks=0', out / 'sanitized'], expected=3).decode().splitlines()
-            assert sanitized_output == counts, sanitized_output
+            if not args.o0_only:
+                # Exercise the actual generated wrappers/bridges under sanitizers too.
+                layout_header = next(h for h in (cache / 'artifacts').glob('*.hpp') if '_SIZE 64' in h.read_text())
+                manifest = json.loads((published / '.scpp-output.manifest').read_text())
+                units = [published / f['path'] for f in manifest['files'] if f['kind'] == 'translation_unit']
+                runner.run('sanitized-build', ['clang++', '-std=c++23', '-O1', '-g0', '-fsanitize=address,undefined',
+                           '-fno-omit-frame-pointer', '-include', layout_header, '-I' + str(published),
+                           '-I' + str(ROOT / 'runtime/include'), *units, '-o', out / 'sanitized'])
+                sanitized_output = runner.run('sanitized-execute', ['env', 'ASAN_OPTIONS=detect_leaks=0', out / 'sanitized'], expected=3).decode().splitlines()
+                assert sanitized_output == counts, sanitized_output
             (out / 'summary.json').write_text(json.dumps({'builds': records, 'counters': counts}, indent=2) + '\n')
         run_tasks([Task('layout-integration', proof)])
 

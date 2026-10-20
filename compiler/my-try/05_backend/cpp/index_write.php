@@ -117,14 +117,11 @@ final class CPP_Index_Write
 	public static function generate(assignment_expression_node $node, prepared_index_assignment $facts,
 		cpp_generation_context $context, bool $value_required = true): string
 	{
-		if (($context->specialization_engine !== null) && !$context->runtime_abi() && !CPP_Concrete_Index::active($context)) {
-			return CPP_Concrete_Operations::write($node, $facts, $context, $value_required);
-		}
 		if (CPP_Concrete_Index::active($context)) { CPP_Concrete_Index::write($facts, $context); }
 		$target = object_cast($node->target, index_node::class);
 		$destination = $facts->target;
 		$emitter = new CPP_Syntax($context);
-		if (!$context->runtime_abi() && !CPP_Concrete_Index::active($context)) { $context->headers['scpp/index_write.hpp'] = true; }
+		if (!CPP_Concrete_Index::active($context)) { $context->headers['scpp/index_write.hpp'] = true; }
 		$id = $context->next_temporary;
 		$context->next_temporary++;
 		$receiver = 'write_receiver_' . $id;
@@ -165,10 +162,7 @@ final class CPP_Index_Write
 		}
 		$text .= $type . ' ' . $value . ' = '
 			. CPP_Declarations::conversion($emitter->expression($node->value), $facts->value_conversion, $context) . '; ';
-		if ($context->runtime_abi()) {
-			$text .= CPP_Runtime_Operations::write($facts, $receiver, $keys, $value, $context) . '; ';
-			return $value_required ? '([&]() -> ' . $type . ' ' . $text . 'return ' . $value . '; }())' : $text . '}';
-		}
+
 		if (!$path->is_empty()) {
 			$elements /** Storage<canonical_type_use> */ = new Storage();
 			foreach ($path as $step) { $elements->append($step->element_type); }
@@ -216,7 +210,7 @@ final class CPP_Index_Write
 	/** Borrow the evaluated key; validation stays before RHS evaluation in both write paths. */
 	private static function key_check(canonical_type_use $type, string $key, cpp_generation_context $context): string
 	{
-		if ($context->runtime_abi() || CPP_Concrete_Index::active($context)) {
+		if (CPP_Concrete_Index::active($context)) {
 			return CPP_Runtime_Operations::write_key($type, $key, $context);
 		}
 		return 'scpp::require_write_key(' . $key . ')';

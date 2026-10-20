@@ -74,7 +74,6 @@ final class CPP_Syntax
 		{
 			$this->require_native_operation('ownership observation');
 			$observation = object_cast($node, ownership_observation_node::class);
-			if ($this->context->runtime_abi()) { throw new \RuntimeException('runtime template ABI: weak observation needs operation transport'); }
 			$facts = $observation->require_observation_preparation();
 			$operand = $this->expression($observation->operand);
 			if ($facts->operation === ownership_observation_kind::derive_weak) {
@@ -174,9 +173,6 @@ final class CPP_Syntax
 	/** Bind the receiver once, convert the key next, and copy the read result before releasing temporaries. */
 	private function generate_index(index_node $node): string
 	{
-		if (($this->context->specialization_engine !== null) && !$this->context->runtime_abi() && !CPP_Concrete_Index::active($this->context)) {
-			return CPP_Concrete_Operations::read($node, $this->context);
-		}
 		$decision = $node->require_index_preparation()->decision;
 		$helper = 'scpp::checked_index_read';
 		if ($decision->operation === operator_operation::index_null_read) {
@@ -189,7 +185,7 @@ final class CPP_Syntax
 			$helper = CPP_Concrete_Index::reference($decision->operation === operator_operation::index_checked_read ? 'checked_index_read' : 'null_index_read',
 				[$node->base->require_preparation()->type, $decision->operands[1]->target_type], $decision->result_type, $this->context);
 		}
-		elseif (!$this->context->runtime_abi()) { $this->context->headers['scpp/index_read.hpp'] = true; }
+		else { $this->context->headers['scpp/index_read.hpp'] = true; }
 		$id = $this->context->next_temporary;
 		$this->context->next_temporary++;
 		$receiver = 'index_receiver_' . $id;
@@ -197,9 +193,7 @@ final class CPP_Syntax
 		$argument /** expression_node */ = $node->index;
 		$base = CPP_Declarations::bind_storage_receiver($node->base, $this->context);
 		$converted_key = CPP_Declarations::conversion($this->expression($argument), $decision->operands[1], $this->context);
-		$operation = $this->context->runtime_abi()
-			? CPP_Runtime_Operations::read($decision, $node->base->require_preparation()->type, $receiver, $key, $this->context)
-			: $helper . '(' . $receiver . ', ' . $key . ')';
+		$operation = $helper . '(' . $receiver . ', ' . $key . ')';
 		return '([&]() -> ' . CPP_Declarations::type($decision->result_type, $this->context) . ' { '
 			. $base->statements . 'const auto& ' . $receiver . ' = ' . $base->value . '; '
 			. CPP_Declarations::type($decision->operands[1]->target_type, $this->context) . ' ' . $key . ' = ' . $converted_key . '; '
@@ -483,10 +477,7 @@ final class CPP_Syntax
 	/** Borrow the once-evaluated source; value bindings copy entries, not the collection. */
 	public function generate_foreach(foreach_node $node): string
 	{
-		if (($this->context->specialization_engine !== null) && !$this->context->concrete_types()) {
-			if ($this->context->runtime_abi()) { throw new \RuntimeException('runtime template ABI: iteration needs cursor transport'); }
-			return CPP_Concrete_Operations::iterate($node, $this->context);
-		}
+
 		$facts /** prepared_iteration */ = $node->require_preparation()->iteration;
 		if ($this->context->concrete_types()) { CPP_Concrete_Iteration::require_interface($node, $this->context); }
 		else { $this->context->headers['scpp/value_iteration.hpp'] = true; }
