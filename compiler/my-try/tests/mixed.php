@@ -63,7 +63,9 @@ try
 		=== conversion_operation::explicit_runtime_cast, 'Checked family crossing depended on source spelling');
 	mixed_check(Conversion_Preparation::decide($box, $handle, conversion_context::explicit_cast)->operation
 		=== conversion_operation::explicit_runtime_cast, 'Dynamic extraction used a required boundary');
-	$arithmetic = Boxed_Operators::decide(operator_kind::addition, [$integer, $box]);
+	$arithmetic = Boxed_Operators::decide(operator_kind::addition, [$integer, $box], operator_context::expression);
+	$bitwise = Boxed_Operators::decide(operator_kind::bitwise_and, [$box, $box], operator_context::expression);
+	mixed_check($bitwise->operation === operator_operation::boxed_bitwise_and && $bitwise->result_type->matches($box), 'Boxed integer admission depended on source spelling');
 	$text = Conversion_Preparation::decide($box, Language_Types::string_type(Model::$language_scope), conversion_context::concatenation);
 	mixed_check($text->operation === conversion_operation::text_conversion, 'Text conversion depended on mixed spelling');
 	$logical = Boxed_Operators::decide_logical(operator_kind::logical_and, [$integer, $box]);
@@ -72,7 +74,7 @@ try
 		&& $logical->operand_truthiness[0]->operation === truthiness_operation::scalar_condition
 		&& $logical->operand_truthiness[1]->operation === truthiness_operation::boxed_condition,
 		'Mixed logical normalization lost operand truthiness or depended on spelling');
-	$comparison = Boxed_Operators::decide(operator_kind::identical, [$integer, $box]);
+	$comparison = Boxed_Operators::decide(operator_kind::identical, [$integer, $box], operator_context::expression);
 	mixed_check($comparison->operation === operator_operation::boxed_identical
 		&& $comparison->result_type->matches(Language_Types::boolean(Model::$language_scope))
 		&& $comparison->operands[0]->operation === conversion_operation::identity,
@@ -221,10 +223,10 @@ try
 		['$x mixed = 7; $n uint8 = 2; $y = $x === $n;', 'boxed equality requires'],
 		['$x mixed = 7; $n ?int = 2; $y = $x == $n;', 'boxed equality requires'],
 		['$x mixed = 7; $d dynamic; $y = $x === $d;', 'boxed equality requires'],
-		['$x mixed = 7; $y = ~$x;', 'boxed operator is outside'],
+		['$x mixed = 7; $y = $x & 2;', 'require the same boxed family'],
 		['$x mixed = 7; $x += true;', 'boxed arithmetic requires'],
 		['$x mixed = 7; $n int = 1; $n += $x;', 'boxed compound assignment into native storage is deferred'],
-		['$x mixed = 7; $x &= 1;', 'boxed operator is outside'],
+		['$x mixed = 7; $x &= 1;', 'Boxed bitwise updates remain deferred'],
 		['$x mixed = 7; $n result<int> = 1; $x .= $n;', 'concatenation requires boxed'],
 		['$x mixed = 7; $d dynamic; $x .= $d;', 'same boxed family'],
 		['$x = false; $x .= "x";', 'compound concatenation requires string, string-carrier or boxed storage'],

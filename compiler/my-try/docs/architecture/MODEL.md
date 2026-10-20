@@ -950,7 +950,9 @@ they do not admit wrappers into match's scalar/enum results. Coalescing facts se
 (source to selected payload, identity for direct values) from `left_conversion`
 (selected value to result). Approved wrapper-left/mixed-fallback joins compose
 existing extraction and boxing decisions, without a general conversion chain model
-or implicit wrapper-to-mixed boundary rights.
+or implicit wrapper-to-mixed boundary rights. Homogeneous canonical-scalar wrapper
+pairs attach a `coalesce_selected_value` fallback conversion: usable-value guard
+and exact owned-payload normalization, executed only when fallback is selected.
 `null_type_definition` / `null_type` give null literals a canonical,
 non-storable sentinel identity, without source exposure or a storage backend binding.
 `nullable_type_node` owns `?T` syntax and resolves through shared application interning;

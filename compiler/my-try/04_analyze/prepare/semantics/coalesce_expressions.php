@@ -40,6 +40,14 @@ final class Coalesce_Expression_Preparation
 				$facts->type = Selection_Result_Preparation::boxed_join($selected_type, $fallback->type, $context);
 				$facts->fallback_conversion = Conversion_Preparation::decide($fallback->type, $facts->type, conversion_context::conditional_branch);
 			}
+			elseif ((($payload !== null) || ($role !== null)) && $left->type->matches($fallback->type)) {
+				self::require_canonical_payload($selected_type);
+				Capability_Preparation::require_copy($selected_type, $context);
+				Capability_Preparation::require_copy($fallback->type, $context);
+				$facts->type = $selected_type;
+				$facts->fallback_conversion = Conversion_Preparation::operation($fallback->type, $selected_type,
+					conversion_context::coalesce_value, conversion_operation::coalesce_selected_value);
+			}
 			elseif ($payload !== null) {
 				$facts->type = Selection_Result_Preparation::nullable_value_join($selected_type, $fallback->type, $context);
 				$facts->fallback_conversion = Conversion_Preparation::decide($fallback->type, $facts->type, conversion_context::conditional_branch);
@@ -67,6 +75,16 @@ final class Coalesce_Expression_Preparation
 			return $facts;
 		}
 		finally { $context->statement_assignment = $statement_assignment; }
+	}
+
+	/** This pair slice does not widen records, boxed payloads or fixed-width domains. */
+	private static function require_canonical_payload(canonical_type_use $payload): void
+	{
+		$scope = Model::$language_scope;
+		if (!$payload->matches(Language_Types::integer($scope)) && !$payload->matches(Language_Types::floating($scope))
+			&& !$payload->matches(Language_Types::boolean($scope)) && !$payload->matches(Language_Types::string_type($scope))) {
+			throw new \RuntimeException('Wrapper coalescing requires an exact canonical scalar payload');
+		}
 	}
 
 	/** This family is invalid for coalescing, not merely outside this scalar slice. */

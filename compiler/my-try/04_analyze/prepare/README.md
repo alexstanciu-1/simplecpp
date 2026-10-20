@@ -541,3 +541,12 @@ use prepared facts. Literal decimals remain strings until target lowering/roundi
 
 General validation/STAN is a later pass. Preparation rejects boundaries it cannot
 serve safely to generation; these bounded rejections do not redefine the language.
+
+Homogeneous canonical-scalar wrapper coalescing now joins the two selected payload
+domains. Its fallback uses the `coalesce_selected_value` conversion operation,
+which checks usable-value presence before returning an owned payload. This operation
+is attached only by coalesce preparation; it does not grant general conditional
+branch extraction. Ordinary lazy emission evaluates it only in the fallback arm.
+Boxed integer expression admission has its own integer-kind decision inside
+`Boxed_Operators`; its six operations preserve the family and exclude compounds
+and scalar/cross-family peers.

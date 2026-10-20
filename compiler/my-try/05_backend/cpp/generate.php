@@ -769,7 +769,8 @@ final class CPP_Generator
 			|| ($decision->operation === operator_operation::boxed_negative)) {
 			$spelling = '-';
 		}
-		elseif ($decision->operation === operator_operation::integer_complement) {
+		elseif (($decision->operation === operator_operation::integer_complement)
+			|| ($decision->operation === operator_operation::boxed_complement)) {
 			$spelling = '~';
 		}
 		elseif ($decision->operation === operator_operation::boolean_not) {
@@ -866,19 +867,24 @@ final class CPP_Generator
 			|| ($decision->operation === operator_operation::boxed_remainder)) {
 			$spelling = '%';
 		}
-		elseif ($decision->operation === operator_operation::integer_bitwise_and) {
+		elseif (($decision->operation === operator_operation::integer_bitwise_and)
+			|| ($decision->operation === operator_operation::boxed_bitwise_and)) {
 			$spelling = '&';
 		}
-		elseif ($decision->operation === operator_operation::integer_bitwise_or) {
+		elseif (($decision->operation === operator_operation::integer_bitwise_or)
+			|| ($decision->operation === operator_operation::boxed_bitwise_or)) {
 			$spelling = '|';
 		}
-		elseif ($decision->operation === operator_operation::integer_bitwise_xor) {
+		elseif (($decision->operation === operator_operation::integer_bitwise_xor)
+			|| ($decision->operation === operator_operation::boxed_bitwise_xor)) {
 			$spelling = '^';
 		}
-		elseif ($decision->operation === operator_operation::integer_shift_left) {
+		elseif (($decision->operation === operator_operation::integer_shift_left)
+			|| ($decision->operation === operator_operation::boxed_shift_left)) {
 			$spelling = '<<';
 		}
-		elseif ($decision->operation === operator_operation::integer_shift_right) {
+		elseif (($decision->operation === operator_operation::integer_shift_right)
+			|| ($decision->operation === operator_operation::boxed_shift_right)) {
 			$spelling = '>>';
 		}
 		elseif (($decision->operation === operator_operation::integer_equal)
@@ -1055,6 +1061,12 @@ final class CPP_Generator
 			case operator_operation::boxed_post_increment:
 			case operator_operation::boxed_pre_decrement:
 			case operator_operation::boxed_post_decrement:
+			case operator_operation::boxed_bitwise_and:
+			case operator_operation::boxed_bitwise_or:
+			case operator_operation::boxed_bitwise_xor:
+			case operator_operation::boxed_shift_left:
+			case operator_operation::boxed_shift_right:
+			case operator_operation::boxed_complement:
 			case operator_operation::boxed_positive:
 			case operator_operation::boxed_negative:
 			case operator_operation::boxed_addition:

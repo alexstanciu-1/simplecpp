@@ -133,7 +133,7 @@ dynamic_boundaries_check($elvis->preparation() === null && $coalesce->preparatio
 	'Dynamic joins retained facts after cleanup');
 
 foreach (['mixed', 'dynamic'] as $family) {
-	foreach (['$out = $v + true;', '$out = $v % 0.5;', '$out = ~$v;',
+	foreach (['$out = $v + true;', '$out = $v % 0.5;', '$out = $v & 1;',
 		'$out = $v < "1";', '$v += false;', '$out = $v ** 2;',
 		'$n = 1; $n += $v;'] as $operation) {
 		$rejected = false;

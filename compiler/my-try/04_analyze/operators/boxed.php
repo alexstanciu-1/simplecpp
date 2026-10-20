@@ -38,8 +38,11 @@ final class Boxed_Operators
 
 	/** Numeric payload kinds are checked at runtime; known nonnumeric peers reject here. */
 	public static function decide(operator_kind $source_operator,
-		array $operands /** vector<canonical_type_use> */): operator_decision
+		array $operands /** vector<canonical_type_use> */, operator_context $use): operator_decision
 	{
+		if (self::is_integer_operation($source_operator)) {
+			return self::decide_integer($source_operator, $operands, $use);
+		}
 		if (self::is_comparison($source_operator)) {
 			return self::decide_comparison($source_operator, $operands);
 		}
@@ -91,6 +94,42 @@ final class Boxed_Operators
 				}
 			}
 			$decision->operands[] = Conversion_Preparation::decide($operand, $box, conversion_context::operator_operand);
+		}
+		return $decision;
+	}
+
+	/** Integer-kind dispatch is distinct from numeric arithmetic and admits no scalar peers. */
+	private static function is_integer_operation(operator_kind $source_operator): bool
+	{
+		return ($source_operator === operator_kind::bitwise_and) || ($source_operator === operator_kind::bitwise_or)
+			|| ($source_operator === operator_kind::bitwise_xor) || ($source_operator === operator_kind::shift_left)
+			|| ($source_operator === operator_kind::shift_right) || ($source_operator === operator_kind::bitwise_not);
+	}
+
+	private static function decide_integer(operator_kind $source_operator,
+		array $operands /** vector<canonical_type_use> */, operator_context $use): operator_decision
+	{
+		if ($use !== operator_context::expression) { throw new \RuntimeException('Boxed bitwise updates remain deferred'); }
+		$unary = $source_operator === operator_kind::bitwise_not;
+		if (q_count($operands) !== ($unary ? 1 : 2)) { throw new \LogicException('Boxed integer operand count mismatch'); }
+		$box = $operands[0];
+		$decision = new operator_decision();
+		$decision->source_operator = $source_operator;
+		$decision->result_type = $box;
+		foreach ($operands as $operand) {
+			if ($operand->by_value() || !Boxed_Conversions::is_boxed($operand) || !$operand->matches($box)) {
+				throw new \RuntimeException('Boxed bitwise operators require the same boxed family');
+			}
+			$decision->operands[] = Conversion_Preparation::decide($operand, $box, conversion_context::operator_operand);
+		}
+		switch ($source_operator) {
+			case operator_kind::bitwise_and: $decision->operation = operator_operation::boxed_bitwise_and; break;
+			case operator_kind::bitwise_or: $decision->operation = operator_operation::boxed_bitwise_or; break;
+			case operator_kind::bitwise_xor: $decision->operation = operator_operation::boxed_bitwise_xor; break;
+			case operator_kind::shift_left: $decision->operation = operator_operation::boxed_shift_left; break;
+			case operator_kind::shift_right: $decision->operation = operator_operation::boxed_shift_right; break;
+			case operator_kind::bitwise_not: $decision->operation = operator_operation::boxed_complement; break;
+			default: throw new \LogicException('Expected boxed integer operation');
 		}
 		return $decision;
 	}

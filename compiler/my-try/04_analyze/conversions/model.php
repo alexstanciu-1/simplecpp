@@ -39,6 +39,7 @@ enum conversion_operation
 	case result_false;
 	case result_true;
 	case result_extract;
+	case coalesce_selected_value;
 	case boxed_wrap;
 	case boxed_extract;
 }

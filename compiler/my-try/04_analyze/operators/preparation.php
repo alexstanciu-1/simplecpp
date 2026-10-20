@@ -104,7 +104,7 @@ final class Operator_Preparation
 		if (q_count($operands) === 2) {
 			if (Nullable_Conversions::is_null($operands[0]) || Nullable_Conversions::is_null($operands[1])) {
 				if (Boxed_Conversions::is_boxed($operands[0]) || Boxed_Conversions::is_boxed($operands[1])) {
-					return Boxed_Operators::decide($source_operator, $operands);
+					return Boxed_Operators::decide($source_operator, $operands, $operator_context);
 				}
 				return Presence_Operators::decide_null_comparison($source_operator, $operands, $context);
 			}
@@ -136,7 +136,7 @@ final class Operator_Preparation
 		}
 		foreach ($operands as $operand) {
 			if (Boxed_Conversions::is_boxed($operand)) {
-				return Boxed_Operators::decide($source_operator, $operands);
+				return Boxed_Operators::decide($source_operator, $operands, $operator_context);
 			}
 		}
 		$scalar_identity = Scalar_Identity::try_decide($source_operator, $operands, $context);
@@ -202,7 +202,7 @@ final class Operator_Preparation
 		}
 		$operation = operator_operation::integer_positive;
 		if (Boxed_Conversions::is_boxed($operands[0])) {
-			return Boxed_Operators::decide($source_operator, $operands);
+			return Boxed_Operators::decide($source_operator, $operands, operator_context::expression);
 		}
 		if ($source_operator === operator_kind::logical_not) {
 			$expected = $context->boolean;

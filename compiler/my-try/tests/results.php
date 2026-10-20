@@ -118,7 +118,7 @@ try
 		['$a result<int> = 1; $b ?int = $a;', 'Result extraction requires the exact payload type'],
 		['function ref(int &$v): void {} $a result<int> = 1; ref($a);', 'reference'],
 		['$a result<int> = 1; $b = $a ?? 2.0;', 'coalesce branches require matching scalar'],
-		['$a result<int> = 1; $b = $a ?? $a;', 'coalesce branches require matching scalar'],
+		['$a result<int> = 1; $other result<float> = 2.0; $b = $a ?? $other;', 'coalesce branches require matching scalar'],
 		['$a result<int> = 1; $b = $a ?? null;', 'coalesce branches require matching scalar'],
 		['$a result_or_bool<int> = 1; $b = $a ?? 2;', 'coalesce does not permit result_or_bool'],
 		['$a result_or_bool<int> = 1; $b = 2 ?? $a;', 'coalesce does not permit result_or_bool'],

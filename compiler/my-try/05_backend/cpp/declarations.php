@@ -76,6 +76,11 @@ final class CPP_Declarations
 			|| ($decision->operation === conversion_operation::result_true)) {
 			return self::type($decision->target_type, $context) . '{' . $expression . '}';
 		}
+		if ($decision->operation === conversion_operation::coalesce_selected_value) {
+			$context->headers['operators/coalesce/coalesce.hpp'] = true;
+			return 'scpp::detail::normalize_coalesce_branch<' . self::type($decision->target_type, $context)
+				. '>(' . $expression . ')';
+		}
 		if ($decision->operation === conversion_operation::nullable_extract) {
 			return self::type($decision->target_type, $context) . '((' . $expression
 				. ').require_value("nullable required-value extraction"))';

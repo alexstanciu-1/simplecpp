@@ -107,6 +107,12 @@ enum operator_operation {
 	case integer_complement;
 	case boolean_not;
 	case condition_not;
+	case boxed_bitwise_and;
+	case boxed_bitwise_or;
+	case boxed_bitwise_xor;
+	case boxed_shift_left;
+	case boxed_shift_right;
+	case boxed_complement;
 	case boxed_positive;
 	case boxed_negative;
 	case boxed_addition;
