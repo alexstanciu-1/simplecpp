@@ -225,6 +225,9 @@ final class cpp_program {
 
 /** Backend recipes retain settled identities, never syntax or generation workers. */
 enum cpp_runtime_operation_kind {
+	case property_read;
+	case property_write;
+	case property_target;
 	case wrapper_presence;
 	case take;
 	case concrete_member;
@@ -245,6 +248,7 @@ enum cpp_runtime_operation_kind {
 
 final class cpp_runtime_operation
 {
+	public ?registered_property $property = null;
 	public ?prepared_call $call = null;
 	public ?prepared_iteration $iteration = null;
 	public ?prepared_object_construction $construction = null;

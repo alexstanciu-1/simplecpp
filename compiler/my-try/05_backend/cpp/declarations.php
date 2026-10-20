@@ -698,6 +698,12 @@ final class CPP_Declarations
 	/** Field identity comes from shared preparation, never a backend name lookup. */
 	public static function generate_field_access(field_access_node $syntax, cpp_generation_context $context, ?string $bound_base = null): string
 	{
+		if (CPP_Provider_Properties::applies($syntax, $context)) {
+			if ($bound_base !== null) {
+				throw new \RuntimeException('prelower_templates: provider property storage projections require separate transport');
+			}
+			return CPP_Provider_Properties::read($syntax, $context);
+		}
 		$facts = $syntax->require_field_access_preparation();
 		$name = '';
 		if ($facts->field instanceof registered_property) {
@@ -723,9 +729,15 @@ final class CPP_Declarations
 	}
 
 	/** Bind storage projections while retaining each shared owner through later effects. */
-	public static function bind_storage_receiver(expression_node $syntax, cpp_generation_context $context): cpp_assignment_sequence
+	public static function bind_storage_receiver(expression_node $syntax, cpp_generation_context $context,
+		bool $value_read = false): cpp_assignment_sequence
 	{
 		$result = new cpp_assignment_sequence();
+		if ($value_read && ($syntax instanceof field_access_node)
+			&& CPP_Provider_Properties::applies(object_cast($syntax, field_access_node::class), $context)) {
+			$result->value = CPP_Provider_Properties::read(object_cast($syntax, field_access_node::class), $context);
+			return $result;
+		}
 		if (!($syntax instanceof field_access_node)) {
 			$result->value = (new CPP_Syntax($context))->expression($syntax);
 			return $result;

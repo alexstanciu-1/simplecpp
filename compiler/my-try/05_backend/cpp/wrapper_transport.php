@@ -4,6 +4,26 @@ namespace scpp\compiler;
 /** Physical wrapper adaptation; registry identities and runtime state rules remain authoritative. */
 final class CPP_Wrapper_Transport
 {
+	/** Provider fields keep native vector<string>; application vectors store concrete strings. */
+	public static function provider_vector(canonical_type_use $type, string $expression, bool $compose,
+		CPP_Specializations $engine, cpp_generation_context $context): string
+	{
+		$canonical = Type_Queries::canonical($type);
+		if (!($canonical instanceof applied_template_type)
+			|| ($canonical->definition() !== Model::$type_catalog->definition('vector'))) { return $expression; }
+		$application = object_cast($canonical, applied_template_type::class);
+		$arguments /** vector<canonical_type_use> */ = $application->arguments();
+		$element = $arguments[0];
+		if (!$element->matches(Language_Types::string_type(Model::$language_scope))) {
+			throw new \RuntimeException('prelower_templates: provider vector transport currently requires string elements');
+		}
+		$target = $compose ? CPP_Types::implementation_representation($type, $engine) : CPP_Types::representation($type);
+		CPP_Types::record_dependencies($target, $context);
+		$value = self::payload_value($element, 'vector_source.at(vector_index)', $compose, $engine, $context);
+		return '([](const auto& vector_source) -> ' . $target->spelling . ' { ' . $target->spelling
+			. ' vector_result; for (std::size_t vector_index = 0; vector_index < vector_source.size(); ++vector_index) { '
+			. 'vector_result.append(' . $value . '); } return vector_result; }(' . $expression . '))';
+	}
 	public static function payload(canonical_type_use $type): ?canonical_type_use
 	{
 		$canonical = Type_Queries::canonical($type);

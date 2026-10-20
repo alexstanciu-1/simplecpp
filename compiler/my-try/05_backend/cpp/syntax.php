@@ -192,7 +192,7 @@ final class CPP_Syntax
 		$receiver = 'index_receiver_' . $id;
 		$key = 'index_key_' . $id;
 		$argument /** expression_node */ = $node->index;
-		$base = CPP_Declarations::bind_storage_receiver($node->base, $this->context);
+		$base = CPP_Declarations::bind_storage_receiver($node->base, $this->context, true);
 		$converted_key = CPP_Declarations::conversion($this->expression($argument), $decision->operands[1], $this->context);
 		$operation = $helper . '(' . $receiver . ', ' . $key . ')';
 		return '([&]() -> ' . CPP_Declarations::type($decision->result_type, $this->context) . ' { '

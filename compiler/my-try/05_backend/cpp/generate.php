@@ -537,7 +537,7 @@ final class CPP_Generator
 		}
 		if (($facts instanceof prepared_property_assignment) && ($syntax->target instanceof field_access_node)) {
 			$field = object_cast($syntax->target, field_access_node::class);
-			if (!$field->require_preparation()->addressable()) {
+			if (!$field->require_preparation()->addressable() || CPP_Provider_Properties::applies($field, $context)) {
 				return "\t" . self::generate_retained_property_write($field, object_cast($facts, prepared_property_assignment::class),
 					(new CPP_Syntax($context))->expression($syntax->value), $context) . ";\n";
 			}
@@ -549,6 +549,9 @@ final class CPP_Generator
 	private static function generate_retained_property_write(field_access_node $target, prepared_property_assignment $facts,
 		string $value, cpp_generation_context $context): string
 	{
+		if (CPP_Provider_Properties::applies($target, $context)) {
+			return CPP_Provider_Properties::write($target, $facts, $value, $context);
+		}
 		$receiver = CPP_Declarations::bind_storage_receiver($target, $context);
 		$name = 'property_target_' . $context->next_temporary;
 		$context->next_temporary++;
@@ -621,7 +624,7 @@ final class CPP_Generator
 			CPP_Declarations::type($property_write->destination_type(), $context);
 			if ($target instanceof field_access_node) {
 				$field_target = object_cast($target, field_access_node::class);
-				if (!$field_target->require_preparation()->addressable()) {
+				if (!$field_target->require_preparation()->addressable() || CPP_Provider_Properties::applies($field_target, $context)) {
 					$result_name = 'property_result_' . $context->next_temporary;
 					$context->next_temporary++;
 					$result = new cpp_assignment_sequence();
@@ -752,6 +755,10 @@ final class CPP_Generator
 	/** Mutate the resolved place once and copy the selected old/new result into a value. */
 	public static function generate_mutation(mutation_expression_node $syntax, cpp_generation_context $context): string
 	{
+		if (($syntax->target instanceof field_access_node)
+			&& CPP_Provider_Properties::applies(object_cast($syntax->target, field_access_node::class), $context)) {
+			throw new \RuntimeException('prelower_templates: provider property updates require separate write-back transport');
+		}
 		$decision = $syntax->require_mutation_preparation()->decision;
 		if ($context->specialization_engine === null) {
 			self::record_operator_headers($decision, $context);

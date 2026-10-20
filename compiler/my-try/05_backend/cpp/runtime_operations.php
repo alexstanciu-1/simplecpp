@@ -16,6 +16,12 @@ final class CPP_Runtime_Operations
 	{
 		// Preserve the existing identity seed while retiring the old indexed-write fields.
 		$key = $request->kind_name() . ':' . $request->spelling . ':store';
+		if ($request->property !== null) {
+			$property_context = new cpp_generation_context();
+			$key .= ':property=' . $request->property->definition->identity . ':'
+				. CPP_Runtime_Catalog::property($request->property, $property_context);
+			foreach ($property_context->headers as $header => $used) { $key .= ':header=' . $header; }
+		}
 		if ($request->iteration !== null) {
 			$key .= ':key=' . CPP_Opaque_Representation::identity($request->iteration->key_type)
 				. ':value=' . CPP_Opaque_Representation::identity($request->iteration->value_type);
@@ -94,6 +100,9 @@ final class CPP_Runtime_Operations
 			|| ($request->kind === cpp_runtime_operation_kind::runtime_call)
 			|| ($request->kind === cpp_runtime_operation_kind::take)
 			|| ($request->kind === cpp_runtime_operation_kind::wrapper_presence)
+			|| ($request->kind === cpp_runtime_operation_kind::property_read)
+			|| ($request->kind === cpp_runtime_operation_kind::property_write)
+			|| ($request->kind === cpp_runtime_operation_kind::property_target)
 			|| ($request->kind === cpp_runtime_operation_kind::construct_default)
 			|| ($request->kind === cpp_runtime_operation_kind::construct_call)) { $implementation_engine = $engine; }
 		$native_context = new cpp_generation_context();
@@ -133,6 +142,7 @@ final class CPP_Runtime_Operations
 			$body = $unpack . 'return ' . $expression . ';';
 			if ((($request->kind === cpp_runtime_operation_kind::observation)
 				|| ($request->kind === cpp_runtime_operation_kind::runtime_call)
+				|| ($request->kind === cpp_runtime_operation_kind::property_read)
 				|| ($request->kind === cpp_runtime_operation_kind::conversion)) && $mapping->opaque) {
 				$body = self::concrete_call_result($output, $native_result, $unpack, $expression);
 				$native_context->headers['type_traits'] = true;
@@ -187,6 +197,20 @@ final class CPP_Runtime_Operations
 	private static function native_operation(cpp_runtime_operation $request, array $arguments /** vector<string> */,
 		cpp_generation_context $context): string
 	{
+		if (($request->kind === cpp_runtime_operation_kind::property_read)
+			|| ($request->kind === cpp_runtime_operation_kind::property_write)
+			|| ($request->kind === cpp_runtime_operation_kind::property_target)) {
+			$property /** registered_property */ = $request->property;
+			$member = CPP_Runtime_Catalog::property($property, $context);
+			$access = '(' . $arguments[0] . ')->' . $member;
+			if ($request->kind === cpp_runtime_operation_kind::property_target) {
+				return 'static_cast<void>(&(' . $access . '))';
+			}
+			$engine /** CPP_Specializations */ = $context->implementation_engine;
+			return $request->kind === cpp_runtime_operation_kind::property_read
+				? CPP_Wrapper_Transport::provider_vector($property->type, $access, true, $engine, $context)
+				: $access . ' = ' . CPP_Wrapper_Transport::provider_vector($property->type, $arguments[1], false, $engine, $context);
+		}
 		if ($request->kind === cpp_runtime_operation_kind::wrapper_presence) {
 			return '(' . $arguments[0] . ').has_value()';
 		}
@@ -305,6 +329,11 @@ final class CPP_Runtime_Operations
 	{
 		$engine = $context->specialization_engine;
 		if ($engine === null) { return false; }
+		if ($decision->operation === conversion_operation::boxed_extract) {
+			return (Type_Queries::canonical($decision->source_type)->definition() instanceof mixed_semantics)
+				&& ($decision->target_type->matches(Language_Types::integer(Model::$language_scope))
+					|| $decision->target_type->matches(Language_Types::string_type(Model::$language_scope)));
+		}
 		return ($decision->operation === conversion_operation::explicit_runtime_cast)
 			|| ($decision->operation === conversion_operation::nullable_empty)
 			|| ($decision->operation === conversion_operation::nullable_wrap)
