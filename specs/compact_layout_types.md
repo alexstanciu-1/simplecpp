@@ -452,6 +452,21 @@ registered integer width/signedness facts; backend representation does not decid
 source promotion. Remaining signed/unsigned, overflow and literal ergonomics are
 [CH15 review debt](../compiler/my-try/docs/catalog/15_blocking_debt.md#ch15-integer-domains-01--integer-interoperability-and-overflow).
 
+### 7.1 Checked integer shift counts
+
+Agreed 2026-10-20. For `<<`, `>>`, `<<=` and `>>=`, a count must be
+nonnegative and strictly less than the declared left operand's bit width
+(64 for canonical `int`). Invalid counts throw `ValueError`; they are not
+masked, saturated or passed to an undefined native shift. C++ integer promotion
+does not widen the accepted count range for narrow integer representations.
+
+Existing operand admission, result types and valid-count behavior remain unchanged.
+Boxed operands must first satisfy their integer-kind requirements; lifted operands
+retain left-before-right checked extraction and error precedence. Ordered source
+evaluation and snapshots still apply. A failed compound shift does not write its
+result back to the destination. This runtime contract does not expand frontend
+admission for fixed-width, boxed or indexed compound forms.
+
 ## 8. Deferred Compact Layout Features
 
 The following are not current first-slice semantics:

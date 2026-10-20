@@ -637,8 +637,8 @@ The current runtime phase uses a C++-first operator policy for the newly added n
 Required interpretation for this phase:
 - `int_t` arithmetic uses native C++ integer semantics, including truncating `/`
 - `float_t` arithmetic uses native C++ floating-point semantics except that `/` rejects a zero divisor with `division_by_zero`. This applies to `float_t`/`float_t` and both mixed `int_t`/`float_t` operand orders, including floating `+0.0` and `-0.0`; division by zero does not produce infinity or NaN. This preserves existing runtime behavior (confirmed 2026-10-18).
-- integer-only operators such as `%`, `&`, `|`, `^`, `~`, `<<`, and `>>` follow native C++ behavior
-- compound assignment operators such as `+=`, `/=`, and `<<=` follow the corresponding native C++ base operator
+- integer-only operators such as `%`, `&`, `|`, `^`, `~`, `<<`, and `>>` follow native C++ behavior, except that shifts reject negative counts and counts greater than or equal to the declared left representation's bit width with `ValueError` ([checked-count contract](../../specs/compact_layout_types.md#71-checked-integer-shift-counts)). Narrow native promotion does not widen that count range.
+- compound assignment operators such as `+=`, `/=`, and `<<=` follow the corresponding base operator, including its checked failures. A failing shift performs no compound write-back.
 - approved integer wrapper carriers such as `nullable<int_t>`, `result<int_t>`, `result_or_false<int_t>`, and `result_or_bool<int_t>` participate in integer bitwise and shift families by guarded wrapper lifting: present/success payloads unwrap and delegate to the corresponding `int_t` operator
 - empty/error/sentinel wrapper states in those lifted integer bitwise and shift families remain compile-valid but must runtime-error during guarded unwrap rather than silently normalizing to `0`
 - increment and decrement follow native C++ prefix/postfix behavior

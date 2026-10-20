@@ -25,7 +25,7 @@
 
 namespace scpp {
 
-// Generated from runtime/specs/config.json on 2026-10-20T05:02:12+00:00.
+// Generated from runtime/specs/config.json on 2026-10-20T10:26:53+00:00.
 // Enabled config families: bool_logical, float_arithmetic, float_logical, float_mutation, int_arithmetic, int_bitwise_and_mutation, int_logical, mixed_numeric, mixed_numeric_logical, null_comparisons, nullable_lifted_ops, nullable_ops, pointer_null_comparisons, string_ops, table_identity_comparisons.
 // Do not edit manually.
 
@@ -1364,13 +1364,13 @@ inline int_t<Rep> &operator^=(int_t<Rep> &lhs, const int_t<Rep> &rhs) noexcept {
 }
 
 template <typename Rep>
-inline int_t<Rep> &operator<<=(int_t<Rep> &lhs, const int_t<Rep> &rhs) noexcept {
+inline int_t<Rep> &operator<<=(int_t<Rep> &lhs, const int_t<Rep> &rhs) {
 	lhs = detail::generated_operator_detail::shl(lhs, rhs);
 	return lhs;
 }
 
 template <typename Rep>
-inline int_t<Rep> &operator>>=(int_t<Rep> &lhs, const int_t<Rep> &rhs) noexcept {
+inline int_t<Rep> &operator>>=(int_t<Rep> &lhs, const int_t<Rep> &rhs) {
 	lhs = detail::generated_operator_detail::shr(lhs, rhs);
 	return lhs;
 }

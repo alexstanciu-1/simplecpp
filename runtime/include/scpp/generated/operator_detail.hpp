@@ -15,6 +15,7 @@
 #include "scpp/hash_t.hpp"
 #include "scpp/cast.hpp"
 #include "scpp/runtime_error.hpp"
+#include "operators/arithmetic/integer_shift.hpp"
 #include "lang/php/operators/conditional/condition_truthiness.hpp"
 
 namespace scpp::detail::generated_operator_detail {
@@ -207,13 +208,15 @@ template <typename LeftRep, typename RightRep>
 
 template <typename LeftRep, typename RightRep>
 	requires (std::is_signed_v<LeftRep> == std::is_signed_v<RightRep>)
-[[nodiscard]] inline constexpr int_t<LeftRep> shl(const int_t<LeftRep> &lhs, const int_t<RightRep> &rhs) noexcept {
+[[nodiscard]] inline constexpr int_t<LeftRep> shl(const int_t<LeftRep> &lhs, const int_t<RightRep> &rhs) {
+	detail::require_shift_count<LeftRep>(rhs.native_value());
 	return int_t<LeftRep>(lhs.native_value() << rhs.native_value());
 }
 
 template <typename LeftRep, typename RightRep>
 	requires (std::is_signed_v<LeftRep> == std::is_signed_v<RightRep>)
-[[nodiscard]] inline constexpr int_t<LeftRep> shr(const int_t<LeftRep> &lhs, const int_t<RightRep> &rhs) noexcept {
+[[nodiscard]] inline constexpr int_t<LeftRep> shr(const int_t<LeftRep> &lhs, const int_t<RightRep> &rhs) {
+	detail::require_shift_count<LeftRep>(rhs.native_value());
 	return int_t<LeftRep>(lhs.native_value() >> rhs.native_value());
 }
 

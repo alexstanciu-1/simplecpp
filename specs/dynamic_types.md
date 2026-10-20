@@ -101,6 +101,9 @@ Binary expressions evaluate left then right exactly once, capturing the left
 value before later source mutation. Runtime kind validation occurs after both
 operand expressions have evaluated. Primitive integer bitwise/shift behavior is
 reused; this slice does not introduce a new invalid-shift-count policy.
+The subsequent [checked-count contract](compact_layout_types.md#71-checked-integer-shift-counts)
+requires `ValueError` for negative counts or counts of 64 or greater on these
+canonical integer payloads, after integer-kind validation.
 
 The v0.2 admission slice is homogeneous boxed expressions only. Cross-family and
 boxed/scalar pairs, compounds and indexed updates remain separate. Existing

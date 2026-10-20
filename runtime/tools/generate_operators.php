@@ -1448,13 +1448,13 @@ inline int_t<Rep> &operator^=(int_t<Rep> &lhs, const int_t<Rep> &rhs) noexcept {
 }
 
 template <typename Rep>
-inline int_t<Rep> &operator<<=(int_t<Rep> &lhs, const int_t<Rep> &rhs) noexcept {
+inline int_t<Rep> &operator<<=(int_t<Rep> &lhs, const int_t<Rep> &rhs) {
 	lhs = detail::generated_operator_detail::shl(lhs, rhs);
 	return lhs;
 }
 
 template <typename Rep>
-inline int_t<Rep> &operator>>=(int_t<Rep> &lhs, const int_t<Rep> &rhs) noexcept {
+inline int_t<Rep> &operator>>=(int_t<Rep> &lhs, const int_t<Rep> &rhs) {
 	lhs = detail::generated_operator_detail::shr(lhs, rhs);
 	return lhs;
 }
