@@ -156,11 +156,13 @@ final class CPP_Type_Bindings
 
 final class CPP_Type_Binding_Registration
 {
-	/** Native language-only spelling; runtime representations come from selected catalogs. */
+	/** Intrinsic spellings; exposed runtime type representations come from selected catalogs. */
 	public static function install(registered_type_catalog $types): CPP_Type_Bindings
 	{
 		$bindings = new CPP_Type_Bindings();
 		$bindings->bind_definition($types->definition('void'), 'void', '');
+		// The expression-only sentinel has no source type name for a metadata target.
+		$bindings->bind_definition($types->registry()->type($types->null_type()->type_id())->definition(), 'scpp::null_t', 'scpp/null_t.hpp');
 		return $bindings;
 	}
 }

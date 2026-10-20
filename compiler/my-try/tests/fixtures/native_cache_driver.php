@@ -3,6 +3,7 @@ namespace scpp\compiler;
 require_once dirname(__DIR__, 2) . '/boot.php';
 try {
 	$config = new native_cpp_config($argv[4], $argv[3], $argv[2]);
+	if (($argv[5] ?? '') === '--no-pch') { $config->pch = false; }
 	$result = (new Native_CPP_Build($config))->build($argv[1]);
 	fwrite(STDERR, $result->diagnostics);
 	echo json_encode(['executable' => $result->executable, 'compiled' => $result->compiled,

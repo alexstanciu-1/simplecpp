@@ -1,6 +1,12 @@
 # Test runners
 Doc Status: supporting
 
+`python3 compiler/my-try/tests/prelower_null_output.py --results FRESH_DIRECTORY`
+builds a fresh concrete application with null interleaved with side-effecting echo
+operands. It checks ordered bytes, warm reuse and the complete no-PCH template closure
+using recorded native commands and the existing audit. The header-boundary suite
+supplies direct/concrete counters and output failure-prefix equivalence.
+
 `python3 compiler/my-try/tests/prelower_contracts.py --results FRESH_DIRECTORY`
 checks concrete rejection for callable locals, parameters, results, fields and nested
 containers, plus object tests/casts, weak creation/locking, source throw/catch/finally,

@@ -34,6 +34,12 @@ function inventory_specializations(CPP_Specializations $engine): array
 }
 
 $engine = new CPP_Specializations(true, true);
+$null = Model::$type_catalog->null_type();
+$null_mapping = CPP_Types::representation($null, new cpp_generation_context($engine));
+if ($null_mapping->opaque || $null_mapping->spelling !== 'scpp::null_t'
+	|| (new Capability_Facts())->has_capability($null, generic_contract::value_storable)) {
+	throw new \LogicException('Null expression binding changed storage admission');
+}
 if (inventory_specializations($engine) !== []) {
 	throw new \LogicException('Catalog loading eagerly generated concrete runtime types');
 }
@@ -47,9 +53,11 @@ $types_before = $registry->type_count();
 $first = $engine->request_composed($nested);
 $headers = inventory_specializations($engine);
 $integer_entry = $engine->entry($engine->request_composed($integer));
+$string = $registry->use(Model::$type_catalog->canonical('string')->type_id());
+$string_entry = $engine->entry($engine->request_composed($string));
 $vector_entry = $engine->entry($engine->request_composed($vector));
 $nested_entry = $engine->entry($first);
-if (count($headers) !== 3 || !isset($headers[$integer_entry->header])
+if (count($headers) !== 4 || !isset($headers[$integer_entry->header]) || !isset($headers[$string_entry->header])
 	|| !isset($headers[$vector_entry->header]) || !isset($headers[$nested_entry->header])) {
 	throw new \LogicException('Nested demand omitted a dependency or prepared unrelated runtime types');
 }
@@ -62,4 +70,4 @@ $fresh_engine = new CPP_Specializations(true, true);
 if (inventory_specializations($fresh_engine) !== []) {
 	throw new \LogicException('Demand leaked into a new engine through catalog state');
 }
-echo "All catalogs loaded; only requested hash<vector<int>,string>, vector<int> and int prepared\n";
+echo "All catalogs loaded; only requested hash<vector<int>,string>, vector<int>, string and int prepared; null stays expression-only\n";

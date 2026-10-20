@@ -547,8 +547,8 @@ final class CPP_Syntax
 
 	public function generate_null_literal(null_literal_node $node): string
 	{
-		$node->require_null_preparation();
-		$this->context->headers['scpp/null_t.hpp'] = true;
+		$facts = $node->require_null_preparation();
+		CPP_Declarations::type($facts->type, $this->context);
 		return 'scpp::null';
 	}
 

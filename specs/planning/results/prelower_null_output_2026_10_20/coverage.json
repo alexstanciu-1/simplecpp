@@ -1,0 +1,20 @@
+{
+  "application_units": [
+    "entry.cpp",
+    "units/n6d61696e/n6d61696e2e706873.cpp"
+  ],
+  "excluded_artifacts": [
+    {
+      "path": "specializations/base.cpp",
+      "kind": "translation_unit"
+    },
+    {
+      "path": "specializations/layout.cpp",
+      "kind": "layout_probe"
+    },
+    {
+      "path": "specializations/containers.cpp",
+      "kind": "translation_unit"
+    }
+  ]
+}

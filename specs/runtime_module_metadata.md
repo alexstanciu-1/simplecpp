@@ -267,7 +267,10 @@ metadata definitions must still join by their declaring `id`; explicit targets
 cannot redirect those rows or bind another module's ordinary declaration. Duplicate
 bindings to the same canonical definition or modifier reject before configuration
 publication, including through aliases. Unresolved targets and orphan rows reject.
-The native language spelling of void remains compiler-owned.
+The native language spelling of void remains compiler-owned. The internal null
+literal sentinel likewise has an intrinsic C++ binding in the existing backend
+registry: it has no source type name for a metadata target. That physical binding
+does not expose a source storage type or add storable capabilities.
 
 An optional `arguments` array makes a binding an explicit native template application.
 An empty array means `Symbol<>`, distinct from a plain type. Each argument has one

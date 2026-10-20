@@ -73,7 +73,7 @@ if ($composed && $output_proof) {
 			}
 		}
 	}
-	foreach ([type_family::nominal, type_family::boolean, type_family::floating] as $family) {
+	foreach ([type_family::nominal, type_family::boolean, type_family::floating, type_family::null_sentinel] as $family) {
 		if (!isset($output_families[$family->name])) { throw new \LogicException('Native output bypassed its middleware bridge'); }
 	}
 }

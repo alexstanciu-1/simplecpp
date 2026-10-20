@@ -44,8 +44,10 @@ Confirmed native-only runtime condition/value-probe paths, boxed extraction and
 enum compiler helpers also reject until their physical transport is
 concrete. Integer/boolean conditions, prepared presence and keyed-probe paths remain
 available; see the [runtime-boundary proof](../../../../specs/planning/results/prelower_runtime_boundaries_2026_10_20/README.md).
-Null output remains a known template exposure in the accepted output fixture and
-needs a concrete adapter; it is not silently counted as template-free coverage.
+Null output now uses the same generic output bridge as other operands. Its internal
+sentinel has an intrinsic C++ binding; the runtime null header is template-free.
+[Null-output evidence](../../../../specs/planning/results/prelower_null_output_2026_10_20/README.md)
+proves ordered output, counter parity and complete fixture application closure.
 Other closure checks and the CLI/API migration remain pending; current mode selectors
 below still describe the implementation, not the completed strict guarantee.
 
@@ -55,7 +57,8 @@ below still describe the implementation, not the completed strict guarantee.
 existing compiler-known types/modifiers. `CPP_Runtime_Type_Bindings` resolves these
 records into the existing `CPP_Type_Bindings`; no extra semantic registry is added.
 The core catalog owns scalar, boxed, wrapper and modifier C++ bindings. Compiler
-registration retains only the native spelling of void.
+registration retains intrinsic void and the expression-only null sentinel. The latter
+has no source type name for metadata targeting and gains no storage capability.
 
 A recipe records a symbol/header and explicit native template arguments when needed.
 Arguments may be fixed native types or registered formals in stored/payload
@@ -104,8 +107,9 @@ app. Layout buffers expose `size_t` through `<stddef.h>`.
 Prepared operand types select output transport through `CPP_Declarations::output`.
 All stored operand types in the prelowered path request the existing runtime-operation
 bridge, including native string/bool/float representations. It borrows their
-native storage and calls the same `php::echo_one` helper. Null remains an expression
-sentinel without a stored-type binding. Ordinary emission retains one full expression
+native storage and calls the same `php::echo_one` helper. The internal null sentinel
+now also uses this bridge through its intrinsic physical binding; it remains
+non-storable in the source language. Ordinary emission retains one full expression
 per operand, so borrowed values and temporary owners remain alive through printing;
 exceptions suppress later operands. No formatting algorithm or output admission rule
 is duplicated in the backend.
@@ -123,8 +127,9 @@ execution; `CPP_Concrete_Index` requests only the container interfaces. The comp
 adapter calls the original runtime validator on borrowed storage. Native string keys
 therefore no longer pull `keyed_path.hpp` into the application just for validation.
 Output similarly keeps `php_string.hpp` behind its existing compiled adapter for
-stored operands. Null output and unrelated native fallback operations can still
-expose broad runtime headers; this is not full template elimination.
+stored operands and the null sentinel. Null's runtime header is itself template-free.
+Other unverified provider/operation paths remain outside the proven closure; this
+is not a claim of full runtime coverage.
 
 The O0-only `tests/prelower_header_boundaries.py` runner reuses output, indexing and
 compound proofs for byte/order/exception behavior, nested references, counter parity

@@ -20,9 +20,7 @@ final class CPP_Declarations
 	public static function output(string $expression, canonical_type_use $type, cpp_generation_context $context): string
 	{
 		// Native representations also need the compiled output boundary.
-		// Null is an expression sentinel, not a stored type with a C++ binding.
-		if (($context->runtime_abi() || $context->concrete_types())
-			&& (Type_Queries::canonical($type)->family() !== type_family::null_sentinel)) {
+		if ($context->runtime_abi() || $context->concrete_types()) {
 			return CPP_Runtime_Operations::output($expression, $type, $context);
 		}
 		$context->headers['lang/php/support/php_string.hpp'] = true;
