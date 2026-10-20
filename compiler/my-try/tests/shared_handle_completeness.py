@@ -50,7 +50,7 @@ return 0;''',
             for variant in ['baseline','layout-edit']:
                 if variant=='layout-edit':
                     (source/'types.phs').write_text(files['types.phs'].replace('class Payload {','class Payload { public int $marker = 11;'))
-                payload=runner.run(variant+'-emit',['php',ROOT/'main.php','--s2s',source,'--entry','main.phs'],cli_reason='Focused generated artifact boundary proof')
+                payload=runner.run(variant+'-emit',['php',ROOT/'main.php','--s2s',source,'--no-prelower-templates','--entry','main.phs'],cli_reason='Focused generated artifact boundary proof')
                 (out/(variant+'.json')).write_bytes(payload)
                 artifacts={a['path']:a['text'] for a in decode_artifacts(payload)}
                 def unit(name):return next(text for path,text in artifacts.items() if path.endswith('/n'+name.encode().hex()+'.cpp'))

@@ -44,3 +44,43 @@ resolved before the passing public-default run. The first Ninja test mixed expli
 PCH builds with a now-default no-PCH failure attempt; the fixture now keeps the same
 PCH setting during failure/retry. Final combined results and ancestry checks follow
 below after both merges. No native compiler rebuild is claimed by these checks.
+
+## Recorded merges and retained evidence
+
+- `ce17ff73`: remote integration, parents `ee87a080` and `2b932aab`.
+- `59023685`: `_02` integration, parents `ce17ff73` and `d1d1750e`.
+- Ancestry verification reports zero missing commits for both incoming tips, the
+  prelowering tip, original local develop and both earlier `_02` imports. See
+  [retained results](results/v02_consolidation_2026_10_20/ancestry.json).
+
+Incoming conditional syntax (46 executions), vector helper/copy-contract proofs,
+ordinary shared-handle completeness, optimization policy, lowering reports and
+ordinary Ninja cold/warm/edit/failure-retry checks pass. The concrete O0 latency
+policy also publishes `application_templates: forbidden`, compiles with the normal
+layout/native owner and prints the expected `3` for a class with vector and scalar
+defaults. No runtime/compiler semantics were reimplemented for these checks.
+
+One incoming shared-handle fixture still assumed ordinary CLI defaults; it now
+explicitly selects `--no-prelower-templates`, preserving the original proof scope.
+Imported CSV line endings and historical patch whitespace are preserved, not
+normalized during a history merge. Working-source whitespace checks are separate
+from those archived evidence files.
+
+The local branch tracks `origin/v0.2/develop`. Remote publication and removal of
+redundant branches remain separate steps; this task does not alter the `_02` checkout.
+
+## Final combined O0 acceptance
+
+All eight phases passed in `/tmp/v02-consolidated-acceptance-20261020`: metadata,
+contracts, public defaults, provider boundary, counters/references, source lifecycle,
+layout cache and accounting. Ordinary and prelowered accounting have identical
+output: 998 checks pass, zero fail. All 16 application units have zero template
+declarations and zero class/function instantiations. Both warm builds reuse their
+existing artifacts without compilation/linking. See [acceptance](results/v02_consolidation_2026_10_20/acceptance.json)
+and [accounting](results/v02_consolidation_2026_10_20/accounting.json).
+
+The combined run started with the resolved `_02` merge still uncommitted, so its
+recorded revision is `ce17ff73` with the pending merge worktree. The merge was
+subsequently recorded as `59023685` without changing the tested production sources.
+Checks use the PHP-hosted compiler and execute generated O0 programs; this is not a
+fresh native compiler rebuild, a benchmark, or universal runtime coverage.
