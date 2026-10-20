@@ -2,25 +2,25 @@
 Doc Status: supporting
 
 Snapshot: 2026-10-20, after [V-L07 bounded completion](vl07_completion.md) and
-[V-L06 / S04 closeout](float_identity.md) and [V-L11 / V-D14 text](carrier_text.md), followed by [S06 conditionals](s06_unbraced_conditionals.md). This covers all 64 original entries in
+[V-L06 / S04 closeout](float_identity.md) and [V-L11 / V-D14 text](carrier_text.md), followed by [S06 conditionals](s06_unbraced_conditionals.md) and [S07 predicates](s07_mixed_predicates.md). This covers all 64 original entries in
 [the issue ledger](language_verification_issues.json), including deferred legacy
 syntax and policy/design issues. Operator signatures are not separate closed issues.
 
 | Status | Issues |
 | --- | ---: |
-| Implemented or already repaired, then verified | 25 |
+| Implemented or already repaired, then verified | 26 |
 | Partially implemented and verified | 0 |
-| Not yet closed | 39 |
+| Not yet closed | 38 |
 | Total | 64 |
 
-Fully closed: **25/64 = 39.0625%** (about **39.1% by issue count**). This is not an
+Fully closed: **26/64 = 40.625%** (about **40.6% by issue count**). This is not an
 engineering-effort estimate. Remaining architecture/runtime/project issues can be
 much larger than fixture repairs. There is no defensible weighted effort percentage.
 
 | Original handling class | Fully closed | Partial | Not closed | Total |
 | --- | ---: | ---: | ---: | ---: |
 | Simple fix | 13 | 0 | 0 | 13 |
-| Light discussion | 9 | 0 | 8 | 17 |
+| Light discussion | 10 | 0 | 7 | 17 |
 | Normal discussion | 3 | 0 | 31 | 34 |
 
 V-L06 now admits the final two scalar float identity forms and re-verifies its
@@ -32,6 +32,9 @@ Their 924 source rows include existing controls and aliases; they do not rewrite
 the dated V-L07 canonical inventory or imply wider text/indexed support.
 S06 now admits single-statement conditional bodies. Its unchanged original fixture
 still reaches S09 (unresolved strpos), so syntax closure is not a whole-program pass.
+S07 now exposes three exact-mixed predicates through non-retaining observation.
+Its unchanged original strict fixture passes end to end; wider predicate domains
+and flow-sensitive narrowing remain separate.
 
 “Not closed” does not mean every remaining entry is an accidental regression or an
 authorized implementation task. Some entries still require policy decisions or

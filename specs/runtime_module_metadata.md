@@ -705,3 +705,13 @@ reference-return lifetime contracts,
 profile availability and the rest of the runtime inventory are not encoded by this
 version's bounded consumer yet. Extend the shared models before enabling these rows;
 do not generate fake concrete overloads or function-name-specific preparation paths.
+
+
+## Core exact-mixed predicates — 2026-10-20
+
+Core registers `is_bool`, `is_int` and `is_float`, each with one exact `mixed`
+observation input and a bool value return. Provider bindings use the existing
+`scpp::php` helpers in `lang/php/operators/type_predicates/type_predicates.hpp`.
+The [predicate contract](builtins/type_predicates.md) owns kind semantics and the
+bounded source domain. Generic runtime fallbacks do not widen source admission;
+no predicate-specific compiler dispatch or flow narrowing is introduced.

@@ -54,6 +54,7 @@ cache/PCH consumer. See [asset checks](testing.md) and the current
 | Active type-model discussion | [Type model direction](planning/types.md) |
 | Mixed/dynamic runtime design discussion | [Shared machinery, family separation and recorded mixed layout improvement](planning/mixed_dynamic_storage.md) |
 | Active cast/conversion discussion | [Cast and conversion preparation](planning/casts.md) |
+| Exact-mixed type predicates | [S07 observation bindings, unchanged strict fixture and wider-type boundaries](planning/s07_mixed_predicates.md) |
 | Single-statement conditional bodies | [S06 binding, scope, recovery and separate S09 blocker](planning/s06_unbraced_conditionals.md) |
 | Scalar/carrier text contexts | [V-L11 / V-D14 contract, bounded proofs and deferred domains](planning/carrier_text.md) |
 | Scalar float identity / S04 | [Two scalar forms, carrier reconciliation and unchanged process fixture](planning/float_identity.md) |

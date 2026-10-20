@@ -236,3 +236,12 @@ source records above are retained; this replay is not a whole-program pass and
 does not move that fixture into the historical passed totals. Single-statement
 conditionals preserve nearest-if binding and v0.2 branch scopes. Other statement
 syntax and string API repairs remain separate.
+
+## S07 predicate repair follow-up — 2026-10-20
+
+[S07 is implemented and verified](s07_mixed_predicates.md). The unchanged
+`strict_control_flow_002_mixed_type_predicates.phs` passes with exact output through
+three exact-mixed observation bindings. Runtime-first and source state tests pass;
+no compiler or runtime implementation changes were required. The historical
+first-blocker counts above remain unchanged. Wider predicate overloads and
+flow-sensitive narrowing are not covered by this closure.

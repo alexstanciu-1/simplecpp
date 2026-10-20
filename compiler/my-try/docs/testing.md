@@ -1517,3 +1517,20 @@ the separately tracked `strpos` blocker (S09); this does not claim an end-to-end
 pass. Run `tests/control_flow.py --no-pch --results <fresh-dir>` for existing
 control-flow, AST, completion, tokenizer and retained-preparation regressions.
 See [the S06 report](planning/s06_unbraced_conditionals.md) for exact evidence.
+
+## S07 exact-mixed predicates
+
+Run `tests/mixed_predicates_runtime.py --results <fresh-dir>` first on dev002 to
+probe the existing runtime, then `tests/mixed_predicates.py --results <fresh-dir>`.
+The source suite checks the unchanged strict fixture's exact stdout, empty stderr
+and exit status, plus a 23-state truth table through three source functions.
+AddressSanitizer covers temporary property owners; additional checks cover once-only
+producers, readonly observation, subsequent mutation, saved bool values, source
+errors, 47 rejected calls and six incremental recovery cycles. The optional
+`--baseline` mode requires the pre-admission metadata and reproduces unresolved
+`is_bool`; it is not a check to run against the completed implementation.
+
+Focused regressions are `runtime_observation.py`, `mixed.py --no-pch` and
+`unbraced_conditionals.py`, each with its own fresh `--results` directory. The
+[dated S07 evidence](planning/s07_mixed_predicates.md) preserves the runtime-first
+probe and failed test-observer attempt. No full matrix is needed for this slice.

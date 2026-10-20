@@ -648,3 +648,18 @@ unresolved `strpos`, recorded under S09. It is not an end-to-end compatibility p
 S06 closes; overall original-issue closure is **25/64 (39.0625%)**. Other statement
 syntax remains separate. No runtime changes, full matrix or native compiler rebuild
 ran. Historical findings and failed test-observer attempts remain in the evidence.
+
+## S07 exact-mixed predicate closeout — 2026-10-20
+
+[The S07 proof](s07_mixed_predicates.md) exposes `is_bool`, `is_int` and `is_float`
+for exact `mixed` inputs through the existing non-retaining observation contract.
+The original strict fixture passes unchanged with exact output. Runtime-first and
+source probes each cover 69 predicate checks across 23 mixed states. Readonly and
+temporary inputs, temporary owners, once-only evaluation, saved results, mutation,
+errors, 47 rejection controls and six recovery cycles pass on dev002. Existing
+observation, mixed and conditional suites add 375 native regression programs.
+
+Only core metadata and documentation changed in production; compiler and runtime
+implementations remain unchanged. S07 closes, bringing original-issue closure to
+**26/64 (40.625%)**. Wider types, additional predicates and flow-sensitive narrowing
+remain separate; the frozen original finding above remains historical evidence.

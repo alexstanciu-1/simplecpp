@@ -62,6 +62,9 @@
     {"id":"core.memory_get_usage.1","name":"memory_get_usage","parameters":[{"name":"real_usage","type":"bool","passing":"value"}],"returns":"int"},
     {"id":"core.memory_get_peak_usage.0","name":"memory_get_peak_usage","parameters":[],"returns":"int"},
     {"id":"core.memory_get_peak_usage.1","name":"memory_get_peak_usage","parameters":[{"name":"real_usage","type":"bool","passing":"value"}],"returns":"int"},
+    {"id":"core.is_bool.mixed","name":"is_bool","parameters":[{"name":"value","type":"mixed","passing":"observe"}],"returns":"bool"},
+    {"id":"core.is_int.mixed","name":"is_int","parameters":[{"name":"value","type":"mixed","passing":"observe"}],"returns":"bool"},
+    {"id":"core.is_float.mixed","name":"is_float","parameters":[{"name":"value","type":"mixed","passing":"observe"}],"returns":"bool"},
     {
       "id": "core.strlen",
       "name": "strlen",
@@ -117,6 +120,9 @@
     {"id":"core.memory_get_usage.1","symbol":"scpp::memory_get_usage","header":"operators/memory_usage/memory_usage.hpp"},
     {"id":"core.memory_get_peak_usage.0","symbol":"scpp::memory_get_peak_usage","header":"operators/memory_usage/memory_usage.hpp"},
     {"id":"core.memory_get_peak_usage.1","symbol":"scpp::memory_get_peak_usage","header":"operators/memory_usage/memory_usage.hpp"},
+    {"id":"core.is_bool.mixed","symbol":"scpp::php::is_bool","header":"lang/php/operators/type_predicates/type_predicates.hpp"},
+    {"id":"core.is_int.mixed","symbol":"scpp::php::is_int","header":"lang/php/operators/type_predicates/type_predicates.hpp"},
+    {"id":"core.is_float.mixed","symbol":"scpp::php::is_float","header":"lang/php/operators/type_predicates/type_predicates.hpp"},
     {
       "id": "core.strlen",
       "symbol": "scpp::str::byte_length",
