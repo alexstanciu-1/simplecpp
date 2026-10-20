@@ -19,7 +19,7 @@ foreach(['int','?int','result<int>','result_or_false<int>','result_or_bool<int>'
 foreach(['?int','result<int>','result_or_false<int>','result_or_bool<int>','float','?float','result<float>','result_or_false<float>','result_or_bool<float>'] as $t){
  $source='function bad(vector<'.$t.'> &$v,'.$t.' $rhs):void{$v[0] += $rhs;}';guarded_cross_reject($source);$rejected[]=$source;
 }
-foreach(['int','bool','float','mixed'] as $other)foreach(['.','.='] as $op){
+foreach(['mixed'] as $other)foreach(['.','.='] as $op){
  $source='function bad(?string $a,'.$other.' $b):void{$a '.$op.' $b;}';guarded_cross_reject($source);$rejected[]=$source;
 }
 operator_test_source($program);$cpp=str_replace('int main(int argc, char** argv)','int unused_entry(int argc, char** argv)',CPP_Probe::text(Model::$cpp_files));

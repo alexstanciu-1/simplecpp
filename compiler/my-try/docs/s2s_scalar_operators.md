@@ -6,6 +6,25 @@ and C++ S2S slice for [catalog chapter 02](catalog/02_expressions.md). Root lang
 and runtime specifications remain authoritative. Imported legacy examples do not
 activate additional operand types or coercions.
 
+## Scalar and carrier text contexts — 2026-10-20
+
+[V-L11 / V-D14](planning/carrier_text.md) extends `.` to ready plain integer widths
+(signed 8/16/32/64, unsigned 8/16/32) and all four carriers of canonical
+int/float/bool/string, including heterogeneous text pairs. `.=` retains string or
+string-carrier destinations. Nullable empty and either bool sentinel render empty;
+Result failure throws; a present payload uses the corresponding scalar text rule.
+Carrier float rendering therefore matches plain float text rather than the distinct
+explicit float-to-string cast formatting. Complete string bytes are preserved.
+
+`String_Conversions` selects optional/required payload text operations in existing
+conversion decisions. The C++ consumer composes existing state/payload and scalar
+text helpers. Ordered operand snapshots and captured compound destinations keep
+left conversion before RHS evaluation and commit once only after success. No new
+runtime helper or retained structure is introduced. uint64, wrapped fixed widths,
+nested/object/container domains, new boxed combinations and indexed capabilities
+remain separate; explicit casts, interpolation, echo and value boundaries retain
+their own contracts. The original V-L07 inventory remains a dated proof boundary.
+
 ## Scalar float identity and original equality reconciliation — 2026-10-20
 
 [V-L06 / S04](planning/float_identity.md) now closes the two remaining plain
@@ -32,8 +51,8 @@ bool sentinel states become empty text, while Result failure throws. This preser
 complete bytes and the existing left-to-right snapshot/write-back protocol.
 
 The implementation uses existing preparation, conversion, mutation and emission
-owners, plus a scalar runtime `scpp::numeric_compare` helper. String-carrier text
-pairs admit strings and string carriers only. Heterogeneous ordinary equality and
+owners, plus a scalar runtime `scpp::numeric_compare` helper. That checkpoint admitted string-only text
+pairs; V-L11 / V-D14 above extends the bounded source text domain. Heterogeneous ordinary equality and
 implicit narrowing compounds reject before publication; explicit conversions remain
 available through their supported conversion paths.
 
@@ -464,8 +483,8 @@ retain the runtime's native C++ limitations; no wrapping or checked arithmetic i
 
 Concatenation now uses a separate text context for mixed, ordinary scalar and null
 operands. The [separated-family amendment](../../../specs/dynamic_types.md#v02-separated-mixeddynamic-families--2026-10-05)
-extends the boxed path to dynamic; configured nullable/fixed-width text admission
-remains missing and Result text remains a contract question. It reuses
+extends the boxed path to dynamic; ready-width and canonical-carrier text admission
+is now covered by V-L11 / V-D14 above. uint64 and wider domains remain separate. It reuses
 `php::to_string`, not explicit casts or checked string extraction. `.=` uses the same
 text domain with string/mixed targets. See [chapter 05](catalog/05_dynamic_boundaries.md#text-concatenation-write-back--2026-10-04).
 Strict comparison

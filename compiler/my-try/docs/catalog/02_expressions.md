@@ -967,7 +967,7 @@ auto a = b + static_cast<int_t>(1) + c;
 ## EXPR-CONCAT-001
 
 
-**Current scope — 2026-10-19 (CS052).** Text concatenation owns a string result and prepared text conversion, not general explicit casting. Native string-content observers and mixed-state observers cover literals, both operand orders, null/bool/int/float/string and table behavior. Nullable/fixed-width configured admission remains missing; Result text remains a contract question.
+**Current scope — 2026-10-19 (CS052).** Text concatenation owns a string result and prepared text conversion, not general explicit casting. Native string-content observers and mixed-state observers cover literals, both operand orders, null/bool/int/float/string and table behavior. The later [V-L11 / V-D14 proof](../planning/carrier_text.md) admits ready plain widths and canonical scalar carriers with explicit sentinel/error rules; uint64 and wider domains remain separate.
 
 Contracts and owners: [expression_evaluation.md](../../../../specs/expression_evaluation.md), [profile_semantics_v1.md](../../../../specs/operator_matrix/profile_semantics_v1.md), [config.json](../../../../runtime/specs/config.json). [Scoped evidence and limits](../planning/language_verification_section_reconciliation.json) (`CS052`).
 
@@ -1016,7 +1016,7 @@ auto a = string_t("a") + string_t("b");
 ## EXPR-CONCAT-002
 
 
-**Current scope — 2026-10-19 (CS053).** Variable-left concatenation follows prepared text conversion and owned string results, including exact content observers. Imported `cast<string_t>` is illustrative and cannot substitute checked extraction for text conversion. The broad family claim retains configured nullable/fixed-width gaps.
+**Current scope — 2026-10-19 (CS053).** Variable-left concatenation follows prepared text conversion and owned string results, including exact content observers. Imported `cast<string_t>` is illustrative and cannot substitute checked extraction for text conversion. The later [V-L11 / V-D14 proof](../planning/carrier_text.md) resolves ready plain widths and canonical scalar carrier text; uint64 and wider domains remain separate.
 
 Contracts and owners: [expression_evaluation.md](../../../../specs/expression_evaluation.md), [profile_semantics_v1.md](../../../../specs/operator_matrix/profile_semantics_v1.md), [config.json](../../../../runtime/specs/config.json). [Scoped evidence and limits](../planning/language_verification_section_reconciliation.json) (`CS053`).
 
@@ -1063,7 +1063,7 @@ auto a = cast<string_t>(b) + string_t("x");
 ## EXPR-CONCAT-003
 
 
-**Current scope — 2026-10-19 (CS054).** Variable-right concatenation is observed by exact-content native tests and ordered eager text-call effects. No raw C-string pointer arithmetic is implied; non-string operands follow text context, not universal castability. Configured wrapper/fixed-width gaps remain.
+**Current scope — 2026-10-19 (CS054).** Variable-right concatenation is observed by exact-content native tests and ordered eager text-call effects. No raw C-string pointer arithmetic is implied; non-string operands follow text context, not universal castability. The later [V-L11 / V-D14 proof](../planning/carrier_text.md) resolves ready plain widths and canonical scalar carriers, including both operand orders; wider domains remain separate.
 
 Contracts and owners: [expression_evaluation.md](../../../../specs/expression_evaluation.md), [profile_semantics_v1.md](../../../../specs/operator_matrix/profile_semantics_v1.md), [config.json](../../../../runtime/specs/config.json). [Scoped evidence and limits](../planning/language_verification_section_reconciliation.json) (`CS054`).
 

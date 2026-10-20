@@ -233,10 +233,12 @@ final class Operator_Preparation
 		if (q_count($operands) !== 2) {
 			throw new \LogicException('Concatenation requires two operands');
 		}
-		if (String_Conversions::is_string_carrier($operands[0]) || String_Conversions::is_string_carrier($operands[1])) {
+		// The bounded text extension does not widen the existing boxed operand domain.
+		if (Boxed_Conversions::is_boxed($operands[0]) || Boxed_Conversions::is_boxed($operands[1])) {
 			foreach ($operands as $operand) {
-				if (!String_Conversions::is_string($operand) && !String_Conversions::is_string_carrier($operand)) {
-					throw new \RuntimeException('S2S string-carrier concatenation requires string or string-carrier operands');
+				if (!Boxed_Conversions::is_boxed($operand) && !Boxed_Conversions::is_scalar_payload($operand)
+					&& !Nullable_Conversions::is_null($operand)) {
+					throw new \RuntimeException('S2S boxed concatenation requires boxed, ordinary scalar or null operands');
 				}
 			}
 		}

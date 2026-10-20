@@ -393,3 +393,35 @@ RHS writes cannot change the saved left operand. No numeric promotion is introdu
 int/float strict identity still preserves their distinct scalar kinds. The throwing
 NaN rule for spaceship is a separate operation contract. Fixed-width, boxed and
 other payload capabilities are not expanded by this amendment.
+
+## Bounded scalar and carrier text contexts — 2026-10-20
+
+For `.` and `.=` only, the ready plain integer text domain comprises canonical
+int, signed 8/16/32/64-bit integers and unsigned 8/16/32-bit integers. Canonical
+float, bool and string and literal null retain their scalar text rules. All pairs
+in this domain, including the four carriers (`nullable`, `result`,
+`result_or_false`, `result_or_bool`) of canonical int/float/bool/string, admit
+concatenation and produce plain string.
+
+A present carrier payload renders exactly as its corresponding plain scalar in
+this text context. In particular, carrier float text uses the scalar text helper's
+formatting, not the distinct explicit float-to-string cast formatting. Present
+bool true produces `"1"` and false produces empty text. Empty nullable and both
+boolean sentinel states produce empty text; a true sentinel is distinct from a
+present true bool payload. Structured Result error throws during required payload
+extraction, preserving its message, line and file. Strings preserve all bytes,
+including embedded NUL and non-ASCII bytes.
+
+Convert the saved left value before evaluating/converting the right value. A left
+conversion failure suppresses RHS evaluation. A right failure preserves earlier
+source effects and performs no compound write-back. `.=` admits string and the
+four string-carrier destinations with any RHS in the bounded domain. Success
+stores one string payload into the captured destination and returns its value
+snapshot. Local, property and static destinations retain their established
+receiver capture and once-only write-back rules.
+
+This amendment adds no boxed/carrier combinations, indexed capabilities, uint64
+text, fixed-width carrier payloads, nested carriers or object/container text.
+Existing boxed and indexed text contracts remain separate. Assignment, argument
+passing, equality, explicit casts, echo and interpolation do not acquire these
+text-context conversions.

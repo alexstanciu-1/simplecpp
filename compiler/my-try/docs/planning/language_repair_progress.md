@@ -2,31 +2,34 @@
 Doc Status: supporting
 
 Snapshot: 2026-10-20, after [V-L07 bounded completion](vl07_completion.md) and
-[V-L06 / S04 closeout](float_identity.md). This covers all 64 original entries in
+[V-L06 / S04 closeout](float_identity.md) and [V-L11 / V-D14 text](carrier_text.md). This covers all 64 original entries in
 [the issue ledger](language_verification_issues.json), including deferred legacy
 syntax and policy/design issues. Operator signatures are not separate closed issues.
 
 | Status | Issues |
 | --- | ---: |
-| Implemented or already repaired, then verified | 22 |
+| Implemented or already repaired, then verified | 24 |
 | Partially implemented and verified | 0 |
-| Not yet closed | 42 |
+| Not yet closed | 40 |
 | Total | 64 |
 
-Fully closed: **22/64 = 34.375%** (about **34.4% by issue count**). This is not an
+Fully closed: **24/64 = 37.5%** (**37.5% by issue count**). This is not an
 engineering-effort estimate. Remaining architecture/runtime/project issues can be
 much larger than fixture repairs. There is no defensible weighted effort percentage.
 
 | Original handling class | Fully closed | Partial | Not closed | Total |
 | --- | ---: | ---: | ---: | ---: |
 | Simple fix | 13 | 0 | 0 | 13 |
-| Light discussion | 6 | 0 | 11 | 17 |
+| Light discussion | 8 | 0 | 9 | 17 |
 | Normal discussion | 3 | 0 | 31 | 34 |
 
 V-L06 now admits the final two scalar float identity forms and re-verifies its
 original carrier cases. S04's unchanged original process fixture passes through
 existing repairs. These closures do not add to the V-L07 carrier-signature count.
 V-R10's runtime mutation prerequisite remains separately repaired and verified.
+V-L11 and V-D14 now close the approved ready-width/canonical-carrier text domain.
+Their 924 source rows include existing controls and aliases; they do not rewrite
+the dated V-L07 canonical inventory or imply wider text/indexed support.
 
 “Not closed” does not mean every remaining entry is an accidental regression or an
 authorized implementation task. Some entries still require policy decisions or

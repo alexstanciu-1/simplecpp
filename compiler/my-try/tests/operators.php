@@ -292,7 +292,7 @@ $rejections = [
 	'ordinary comparison bool' => ['return 1 == true;', 'integer binary operation requires integer operands'],
 	'ordinary bool float equality' => ['return true == 2.0;', 'floating comparison requires canonical float or int operands'],
 	'relational chain' => ['return 1 < 2 < 3;', 'integer binary operation requires integer operands'],
-	'wrapper concatenation' => ['$n ?int = 1; $a = "x" . $n;', 'concatenation requires boxed'],
+	'deferred width-carrier concatenation' => ['$n ?int16; $a = "x" . $n;', 'concatenation requires boxed'],
 	'cross-family concatenation' => ['$d dynamic; $m mixed; $a = $d . $m;', 'same boxed family'],
 	'logical non-bool' => ['return false && 1;', 'logical operation requires canonical bool operands'],
 	'logical skipped unknown' => ['return false && $missing;', 'established local declaration for missing'],

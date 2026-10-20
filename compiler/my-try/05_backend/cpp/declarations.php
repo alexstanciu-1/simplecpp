@@ -48,6 +48,16 @@ final class CPP_Declarations
 			self::type($decision->source_type, $context);
 			return self::type($decision->target_type, $context) . '{' . $expression . '}';
 		}
+		if ($decision->operation === conversion_operation::required_payload_text) {
+			$context->headers['lang/php/support/php_string.hpp'] = true;
+			return 'scpp::php::to_string((' . $expression . ').require_value("text: required Result payload"))';
+		}
+		if ($decision->operation === conversion_operation::optional_payload_text) {
+			$context->headers['lang/php/support/php_string.hpp'] = true;
+			return '[](const auto& text_value) { return text_value.has_value().native_value()'
+				. ' ? scpp::php::to_string(text_value.require_value("text: present payload")) : scpp::string_t{}; }('
+				. $expression . ')';
+		}
 		if ($decision->operation === conversion_operation::text_conversion) {
 			$context->headers['lang/php/support/php_string.hpp'] = true;
 			return 'scpp::php::to_string(' . $expression . ')';

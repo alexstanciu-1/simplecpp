@@ -1556,10 +1556,18 @@
       ],
       "finding": "Nullable<int> and int16 concatenations reject although configured text conversion provides the corresponding domains.",
       "dependencies": [],
-      "next_action": "Discuss the owning contract/preparation path before any separately authorized fix.",
+      "next_action": "No remaining blocker in the approved bounded text scope. Keep uint64, wrapped fixed widths/nested/object/container payloads, new boxed/indexed capabilities and other conversion contexts separate.",
       "acceptance": "Prove nullable empty/present and signed-width boundary strings in both operand orders, with single ordered evaluation.",
       "simple_batch_eligible": false,
-      "eligibility_reason": "Requires contract or operator preparation discussion; verification does not authorize fixes."
+      "eligibility_reason": "Approved bounded text scope verified and closed by carrier_text; no further repair queued.",
+      "repair_status": "implemented-and-verified",
+      "newly_exposed_blockers": [],
+      "repair": {
+        "date": "2026-10-20",
+        "report": "carrier_text.md",
+        "results": "carrier_text_results.json",
+        "scope": "Runtime-first state/payload composition; ready plain integer widths and all four carriers of canonical int/float/bool/string for . and string/string-carrier .=. Scalar formatting, sentinel/error states, snapshots and write-back verified on dev002. Runtime contract metadata clarified without runtime implementation changes."
+      }
     },
     {
       "id": "V-D14",
@@ -1574,10 +1582,18 @@
       ],
       "finding": "Result and falseable-Result text helpers exist, but configured coercions.text omits both carriers. Source concatenation rejects. Structured failure helper returns an error message, so silently reusing guarded unwrap would change existing behavior.",
       "dependencies": [],
-      "next_action": "Discuss the owning contract/preparation path before any separately authorized fix.",
+      "next_action": "No remaining blocker in the approved bounded text scope. Keep uint64, wrapped fixed widths/nested/object/container payloads, new boxed/indexed capabilities and other conversion contexts separate.",
       "acceptance": "Set an explicit text contract for success/error/sentinel states, then verify source and native behavior separately.",
       "simple_batch_eligible": false,
-      "eligibility_reason": "Requires contract or operator preparation discussion; verification does not authorize fixes."
+      "eligibility_reason": "Approved bounded text scope verified and closed by carrier_text; no further repair queued.",
+      "repair_status": "implemented-and-verified",
+      "newly_exposed_blockers": [],
+      "repair": {
+        "date": "2026-10-20",
+        "report": "carrier_text.md",
+        "results": "carrier_text_results.json",
+        "scope": "Runtime-first state/payload composition; ready plain integer widths and all four carriers of canonical int/float/bool/string for . and string/string-carrier .=. Scalar formatting, sentinel/error states, snapshots and write-back verified on dev002. Runtime contract metadata clarified without runtime implementation changes."
+      }
     },
     {
       "id": "V-H11",

@@ -1478,3 +1478,24 @@ without migration into an isolated compiler input directory.
 See [the report](planning/float_identity.md) for failed fixture attempts, corrected
 regressions and proof bounds. No runtime changes, native compiler rebuild or full
 matrix run were needed.
+
+## Bounded text contexts: V-L11 / V-D14
+
+On dev002, run `tests/carrier_text_runtime.py --results <fresh-dir>` before source
+admission changes. It checks existing state/payload composition and exposes the
+float-format difference between scalar text and explicit carrier casts. Run
+`tests/carrier_text.py --results <fresh-dir>` for the 864 named-type rows (729 `.`
+and 135 `.=`); `--smoke` selects four representative rows. These use the existing
+completion fixture with independent scalar text expectations and carrier states,
+ordered source errors, local/property/static snapshots, receiver rebinding,
+write-back and invalid-edit recovery. Width boundaries, binary strings and float
+rounding/NaN/infinity/signed-zero rendering are included.
+
+`tests/carrier_text_controls.py --results <fresh-dir>` covers literal-null rows,
+the four original findings and deferred-domain/value-boundary rejection controls.
+Regressions include existing indexed string-carrier writes, boxed text, explicit
+casts, interpolation and compound effects. This is a bounded text inventory, not
+a full operator matrix; `int`/`int64` source spellings are counted separately.
+Use fresh result directories and retain failed attempts. See [the report](planning/carrier_text.md)
+for exact tested manifests and evidence. Compiler-native portability is a separate
+proof; these tests compile emitted C++ with the existing runtime.

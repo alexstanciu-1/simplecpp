@@ -615,3 +615,21 @@ stays 3,376 carrier signatures: these two new forms are scalar. Thirteen accepte
 suites account for 895 expected command exits on dev002. Runtime files remain
 unchanged; no full matrix or native compiler rebuild ran. Failed fixture attempts
 and historical findings are preserved in [the evidence](float_identity_results.json).
+
+
+## V-L11 and V-D14 text closeout — 2026-10-20
+
+[The bounded text proof](carrier_text.md) admits ready integer widths and all four
+canonical scalar carrier families for concatenation and string-destination text
+updates. Present payloads match plain scalar formatting; nullable/sentinel absence
+becomes empty text and structured Result failure throws. Runtime-first composition
+uses existing helpers without runtime implementation changes. Contract metadata
+now distinguishes concatenation from display and explicit-cast behavior.
+
+The 924 source rows include 60 literal-null controls. States, errors, ordered
+snapshots, captured destinations, write-back and recovery pass on dev002, along
+with focused preservation regressions. V-L11 and V-D14 close; overall original-issue
+closure is **24/64 (37.5%)**. uint64, wider payloads, new boxed/indexed combinations
+and other conversion contexts remain separate. Historical findings and failed
+fixture attempts remain in [the evidence](carrier_text_results.json). No full
+operator matrix or native compiler rebuild ran.

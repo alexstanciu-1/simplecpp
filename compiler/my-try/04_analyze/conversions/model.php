@@ -26,6 +26,8 @@ enum conversion_operation
 	case integer_to_floating;
 	case explicit_runtime_cast;
 	case text_conversion;
+	case optional_payload_text;
+	case required_payload_text;
 	case nullable_empty;
 	case ownership_empty;
 	case ownership_upcast;

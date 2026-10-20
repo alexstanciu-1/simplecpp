@@ -7,7 +7,7 @@ function completion_type(string $f,string $p):string{return $f==='plain'?$p:($f=
 function completion_check(bool $ok,string $why):void{if(!$ok)throw new \LogicException($why);}
 $left=completion_type($lf,$lp);$right=completion_type($rf,$rp);$compound=in_array($mode,['power','append'],true);
 $op=['ordering'=>'<=>','power'=>'**=','concat'=>'.','append'=>'.='][$mode];$ret=$compound?$left:($mode==='ordering'?'int':'string');
-$lv=$lp==='string'?'""':($lp==='float'?'1.5':'2');$rv=$rp==='string'?'"x"':($rp==='float'?'1.5':'2');
+$lv=$lp==='string'?'""':($lp==='float'?'1.5':($lp==='bool'?'true':'2'));$rv=$rp==='string'?'"x"':($rp==='float'?'1.5':($rp==='bool'?'false':'2'));
 $valid='function probe('.$left.' $a,'.$right.' $b):'.$ret.'{return $a '.$op.' $b;}';
 $syntax=operator_test_source('$a '.$left.' = '.$lv.';$b '.$right.' = '.$rv.';$out=($a '.$op.' $b);');$node=$syntax->root->single_body()->body->statements[2]->expression->value;
 $facts=$compound?$node->require_compound_assignment_preparation():$node->require_binary_preparation();$decision=$facts->decision;
@@ -39,10 +39,10 @@ try{
  file_put_contents($path,$valid);$compiler->update_cpp([$path]);completion_check(CPP_Probe::text(Model::$cpp_files)===$fresh,'Repair differs from fresh');$compiler->update_cpp([]);completion_check(CPP_Probe::text(Model::$cpp_files)===$fresh,'No-op differs');
 }finally{unlink($path);rmdir($dir);}
 operator_test_source($program);$cpp=str_replace('int main(int argc, char** argv)','int unused_entry(int argc, char** argv)',CPP_Probe::text(Model::$cpp_files));
-$native=['int'=>['scpp::int_t<>','std::int64_t'],'float'=>['scpp::float_t','double'],'string'=>['scpp::string_t','std::string']];$family=['nullable'=>0,'result'=>1,'result_or_false'=>2,'result_or_bool'=>3,'plain'=>4];
+$native=['int'=>['scpp::int_t<>','std::int64_t'],'float'=>['scpp::float_t','double'],'string'=>['scpp::string_t','std::string']];foreach(['int8','int16','int32','int64','uint8','uint16','uint32'] as $width){$native[$width]=['scpp::int_t<std::'.$width.'_t>','std::'.$width.'_t'];}$native['bool']=['scpp::bool_t','bool'];$family=['nullable'=>0,'result'=>1,'result_or_false'=>2,'result_or_bool'=>3,'plain'=>4];
 $cpp.="\n#include \"".__DIR__."/vl07_completion_support.hpp\"\nusing namespace completion_probe;\n";
 $cpp.='using V='.$native[$lp][0].';using P='.$native[$lp][1].';using W='.$native[$rp][0].';using Q='.$native[$rp][1].';constexpr int L='.$family[$lf].',R='.$family[$rf].';constexpr auto M=mode::'.$mode.';constexpr bool compound='.($compound?'true':'false').';' . "\n";
-$cpp.='int main(){long cases=0;auto lefts=states<L,P>();auto rights=states<R,Q>();' . "\n";
+$cpp.='int main(){long cases=0;auto lefts=completion_states<L,M,P>();auto rights=completion_states<R,M,Q>();' . "\n";
 if(!$compound)$cpp.= <<<'CPP'
 for(auto a:lefts)for(auto b:rights)for(bool lf:{false,true})for(bool rf:{false,true}){
  auto av=make<L,V>(a);auto bv=make<R,W>(b);I lc{0},rc{0},trace{0};auto expected=calculation<M>(a,b);
