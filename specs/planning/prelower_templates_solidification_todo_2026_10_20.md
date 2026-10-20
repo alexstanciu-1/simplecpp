@@ -164,8 +164,13 @@ Owners: existing shared test runner and prelowering fixtures; no duplicate test 
   point, using normal publication/native build and the supported public configuration.
 - [ ] Run ordinary and prelowered accounting with matching behavior: 998 checks pass.
 - [ ] Capture the complete application compilation set from the build manifest and
-  verify command coverage, including entry.cpp. The current closure script only
-  requires a nonempty command set; it must not accept a partial recording as complete.
+  verify command coverage, including entry.cpp. Automatic capture belongs in the
+  unified acceptance entry point.
+- [x] Require exact manifest coverage in the closure audit, including entry.cpp;
+  verify readiness through the existing publication owner and artifact digests, reject
+  incomplete/conflicting recordings, and report middleware/layout exclusions.
+  The saved accounting publication passes fresh tracing of all 16 units. See
+  [evidence](results/prelower_closure_coverage_2026_10_20/README.md).
 - [ ] Audit every app unit and its transitive headers without PCH: zero template
   declarations and zero Clang class/function instantiations. Exclude middleware and
   layout probes deliberately; report the unit set and exclusions.

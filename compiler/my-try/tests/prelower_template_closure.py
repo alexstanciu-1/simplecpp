@@ -11,6 +11,56 @@ sys.path.insert(0, str(ROOT / 'compiler/my-try/tools'))
 from test_runner import CommandRunner, Task, run_tasks
 
 
+def application_source(source, published):
+    return source.is_relative_to(published / 'units') or source == published / 'entry.cpp'
+
+
+def select_commands(manifest, published, records):
+    """Require exact coverage of the existing publication's application inventory."""
+    if manifest.get('format') != 'scpp-output-manifest-v1':
+        raise ValueError('Unsupported publication manifest')
+    expected = set()
+    excluded = []
+    for item in manifest['files']:
+        source = (published / item['path']).resolve()
+        if not source.is_relative_to(published):
+            raise ValueError('Published artifact escapes publication: ' + item['path'])
+        if item['kind'] == 'translation_unit' and application_source(source, published):
+            if source in expected:
+                raise ValueError('Duplicate application unit: ' + item['path'])
+            expected.add(source)
+        elif item['kind'] in ('translation_unit', 'layout_probe'):
+            if not source.is_relative_to(published / 'specializations'):
+                raise ValueError('Unclassified compilation artifact: ' + item['path'])
+            excluded.append(dict(path=item['path'], kind=item['kind']))
+    if published / 'entry.cpp' not in expected:
+        raise ValueError('Publication has no application entry.cpp')
+    commands = {}
+    for row in records:
+        if row['phase'] != 'object_compile':
+            continue
+        args = row['arguments']
+        source = Path(args[args.index('-c') + 1])
+        if not source.is_absolute():
+            raise ValueError('Recorded compilation source must be absolute: ' + str(source))
+        source = source.resolve()
+        if not application_source(source, published):
+            continue
+        if source not in expected:
+            raise ValueError('Unexpected application compilation: ' + str(source))
+        if row.get('exit_code', 0) != 0:
+            raise ValueError('Failed application compilation: ' + str(source))
+        if any(arg == '-include-pch' or arg.startswith('-include-pch=') for arg in args):
+            raise ValueError('Application command uses PCH: ' + str(source))
+        if source in commands and commands[source] != args:
+            raise ValueError('Conflicting application commands: ' + str(source))
+        commands[source] = args
+    missing = sorted(str(source.relative_to(published)) for source in expected - commands.keys())
+    if missing:
+        raise ValueError('Missing application compilation commands: ' + ', '.join(missing))
+    return commands, excluded
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--commands', type=Path, required=True,
@@ -21,16 +71,14 @@ def main():
     out = options.results.resolve()
     out.mkdir(parents=True, exist_ok=False)
     published = options.published.resolve()
-    commands = {}
-    for row in map(json.loads, options.commands.read_text().splitlines()):
-        if row['phase'] != 'object_compile':
-            continue
-        args = row['arguments']
-        source = Path(args[args.index('-c') + 1])
-        if source.is_relative_to(published / 'units') or source == published / 'entry.cpp':
-            commands[source] = args
-    assert commands, 'No application compilation commands found'
     with CommandRunner(out / 'logs', ROOT, jobs=12) as runner:
+        manifest = json.loads(runner.run('publication-inventory', ['php',
+            ROOT / 'compiler/my-try/tests/fixtures/prelower_closure_inventory.php', published]))
+        records = [json.loads(line) for line in options.commands.read_text().splitlines() if line.strip()]
+        commands, excluded = select_commands(manifest, published, records)
+        coverage = dict(application_units=sorted(str(source.relative_to(published)) for source in commands),
+                        excluded_artifacts=excluded)
+        (out / 'coverage.json').write_text(json.dumps(coverage, indent=2) + '\n')
         def inspect(source, original):
             relative = str(source.relative_to(published))
             name = relative.encode().hex()

@@ -6,7 +6,9 @@ checks concrete callable rejection for locals, parameters, results, fields and n
 containers. It verifies ordinary emission, no partial in-memory output on rejection,
 mode-switch recovery, source repair and replay through the existing shared runner.
 This is a PHP-host backend contract proof, not a native compiler rebuild or complete
-application closure audit.
+application closure audit. The same runner also exercises closure-recording coverage
+checks: missing/unknown units, conflicting commands, failed compiles, PCH use and
+unclassified compilation artifacts.
 
 `python3 compiler/my-try/tests/prelower_header_boundaries.py --results FRESH_DIRECTORY`
 reuses the output, indexing and compound fixtures at O0 only. It checks native scalar
@@ -20,7 +22,10 @@ an alternate metadata-selected byte adapter.
 `tests/prelower_template_closure.py --commands RECORDED_JSONL --published APP_DIRECTORY --results FRESH_DIRECTORY`
 replays recorded app object commands as preprocessing and full-granularity Clang
 traces. It rejects PCH use, template declarations in transitive input, or class/function
-instantiations. Middleware and layout probes are excluded deliberately.
+instantiations. The audit obtains the ready manifest through `Output_Publication`, checks published
+artifact digests and requires every application unit, including entry.cpp, in the
+recording. Conflicting commands and unclassified compilation artifacts reject.
+`coverage.json` records application units and explicit middleware/layout exclusions.
 
 `python3 compiler/my-try/tests/prelower_substitution.py --source-arguments --results FRESH_DIRECTORY`
 checks source payload layout, generated source-class append/store/read calls, shared

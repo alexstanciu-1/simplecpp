@@ -18,7 +18,9 @@ def main():
     out.mkdir(parents=True, exist_ok=False)
     with CommandRunner(out / 'logs', ROOT, jobs=12) as runner:
         run_tasks([Task('callable-boundary', lambda: runner.run('callable-boundary',
-            ['php', APP / 'tests/prelower_callable_boundary.php', out / 'source']))])
+            ['php', APP / 'tests/prelower_callable_boundary.php', out / 'source'])),
+                   Task('closure-coverage', lambda: runner.run('closure-coverage',
+                       [sys.executable, APP / 'tests/prelower_closure_coverage.py']))])
 
 
 if __name__ == '__main__':
