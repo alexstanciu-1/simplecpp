@@ -303,3 +303,25 @@ later source operation fails. Comparison preserves the stored state and payload
 representation. Strict identity, bool payloads, matching-payload strings, fixed-width
 and boxed behavior are unchanged. Other payload pairs, cross-family equality,
 spaceship and updates remain separate.
+
+
+## Cross-family matching non-bool ordinary equality — 2026-10-20
+
+`==` and `!=` admit distinct pairs of nullable, structured Result, false-sentinel
+and bool-sentinel carriers with matching canonical int, float or string payloads.
+The result is plain bool. Both present payloads compare by scalar equality:
+float NaN is unequal, signed zeros equal, and strings compare complete bytes.
+Matching false sentinel states compare equal across the two sentinel families.
+Different unavailable states (null, structured error, false, true) compare unequal,
+as does any unavailable state versus a present payload, including zero or empty
+string. `!=` negates `==`; no truth conversion or unavailable-payload extraction
+occurs. Stored states and error metadata remain unchanged.
+
+Evaluate and snapshot each complete operand left-to-right before comparing states.
+Unavailable states do not suppress RHS evaluation. A source exception stops later
+evaluation; earlier effects remain visible. RHS replacement cannot change the
+saved left operand. Comparison performs no write-back.
+
+This extension leaves matching-bool and mixed-numeric cross-family ordinary
+comparisons separate. Same-family/plain contracts and strict identity are unchanged;
+fixed-width, boxed, nested and other payload domains are not admitted here.

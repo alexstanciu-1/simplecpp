@@ -1191,7 +1191,7 @@
       ],
       "finding": "Twelve homogeneous <, <=, >, >= cells reject for nullable<int>, result<int> and result_or_false<int>. The runtime ordering contract explicitly admits these carrier families for admitted payload ordering and requires runtime unwrap errors for unusable states. This finding does not yet classify wrapper arithmetic, equality, logical, mutation or spaceship. Eighteen &, |, ^, <<, >> and ~ cells for the same three integer carriers also reject despite section 9 explicitly requiring guarded lifting. The types operator_lifting_rule and nullable_lifted_ops blocks also expose 37 rejected integer-carrier arithmetic, logical, unary and mutation cells. Four explicitly conflicting nullable arithmetic cells stay under V-D13. Nullable negation admits but checkpoint 48 proves its empty-state semantic mismatch, tracked separately as V-L08.",
       "dependencies": [],
-      "next_action": "E4S verifies 24 sentinel mixed int/float ordinary-equality carrier signatures plus four existing scalar controls. Total 3,088 verified signatures; review 864 design/scope candidates. Cross-family ordinary equality, concatenation, logical mixing and other domains remain separate.",
+      "next_action": "E3NB verifies 72 matching non-bool cross-family ordinary-equality signatures. Total 3,160 verified signatures; review 792 design/scope candidates. Cross-family bool and mixed-numeric ordinary equality, heterogeneous coercion, concatenation and other domains remain separate.",
       "acceptance": "Prove present integer payload ordering and all applicable absent/error/sentinel failures, left-to-right evaluation, unchanged source states and empty artifacts for genuinely invalid payload types. Include each admitted integer bitwise/shift family and valid shift counts, with distinct unusable-state unwrap failures. Include arithmetic, unary, lazy logical and mutation value/state/write-back proofs; do not replace guarded unwrap with condition truthiness.",
       "simple_batch_eligible": false,
       "eligibility_reason": "Carrier normalization and operand preparation need a shared design; this verification goal authorizes no implementation.",
@@ -1203,7 +1203,7 @@
         "scope": "Approved first guarded canonical-int slice; original audit evidence retained. No runtime implementation changes."
       },
       "remaining_scope": [
-        "Cross-family ordinary equality remains separate; mixed int/float strict identity and same-family/plain ordinary equality are verified for all four carriers; cross-family matching-payload strict identity is verified; matching canonical scalar equality for same carriers and carrier/plain arrangements is verified for all four carriers.",
+        "Cross-family matching non-bool ordinary equality is verified; matching bool and mixed-numeric cross-family ordinary equality remain separate. Same-family/plain canonical scalar equality and admitted mixed numeric equality are verified, as are cross-family matching-payload and heterogeneous canonical scalar strict identities.",
         "All 336 matching-payload and 96 float-destination/int-RHS carrier compounds and U1 updates complete for admitted stable targets. Narrowing mixed numeric, indexed, fixed-width and power compounds remain separate; V-R10 is repaired.",
         "cross-family mixed ordinary equality, spaceship and narrowing compounds beyond approved ordering/arithmetic/logical/float-destination domains",
         "payload/operator domains beyond implemented numeric, bool logical and string ordering slices",
@@ -1397,6 +1397,12 @@
           "report": "sentinel_mixed_equality.md",
           "results": "sentinel_mixed_equality_results.json",
           "scope": "24 mixed int/float result_or_false/result_or_bool same-family/plain ordinary-equality signatures plus four existing scalar controls. Authorized bounded runtime generator repair admits canonical mixed numeric sentinel/plain dispatch. States, numeric promotion, eager snapshots and recovery verified on dev002; bool, string, fixed-width and boxed behavior preserved. Eight baseline pair compilation failures (16 blocked signature targets) retained; cross-family ordinary equality remains separate."
+        },
+        {
+          "date": "2026-10-20",
+          "report": "cross_equality.md",
+          "results": "cross_equality_results.json",
+          "scope": "72 matching int/float/string cross-family ordinary-equality signatures. Authorized runtime generator repair adds explicit state/family comparison and disjoint dispatch. Baseline 36 ambiguous pair probes (72 blocked targets) preserved. States, bytes, float behavior, eager effects, snapshots and recovery verified on dev002; bool and mixed-numeric cross-family admission remains separate."
         }
       ],
       "remaining_signature_inventory": {
@@ -1404,7 +1410,7 @@
         "signatures": "vl07_inventory/remaining.csv",
         "summary": "vl07_inventory/summary.json",
         "support_targets": 0,
-        "design_scope_candidates": 864,
+        "design_scope_candidates": 792,
         "method": "Static planning inventory; no new compiler execution or implementation authorization",
         "wider_domains": "Explicit boundaries in inventory report; not silently included in canonical denominator"
       }

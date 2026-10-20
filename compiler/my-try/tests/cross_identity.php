@@ -7,6 +7,7 @@ function wrapper_equality_check(bool $ok, string $message): void {
 }
 $carrier=$argv[2]; $right_carrier=$argv[3]; $payload=$argv[4]; $right_payload=$argv[5] ?? $payload;
 $ordinary_numeric=($argv[6] ?? '')==='--ordinary-numeric';
+$ordinary_cross=($argv[6] ?? '')==='--ordinary-cross';
 $scalar_pair=$carrier==='plain' && $right_carrier==='plain';
 $wrapped=$carrier==='plain'?$payload:($carrier==='nullable'?'?'.$payload:$carrier.'<'.$payload.'>');
 $right_wrapped=$right_carrier==='plain'?$right_payload:($right_carrier==='nullable'?'?'.$right_payload:$right_carrier.'<'.$right_payload.'>');
@@ -16,7 +17,7 @@ $second=$right_payload==='bool'?'true':($right_payload==='string'?'"a"':($right_
 $right_initial=$right_payload==='bool'?'false':($right_payload==='string'?'""':($right_payload==='float'?'0.0':'0'));
 $forms=['id'=>'===','nid'=>'!=='];
 $operations=$scalar_pair?['id'=>operator_operation::scalar_identical,'nid'=>operator_operation::scalar_not_identical]:['id'=>operator_operation::wrapper_identical,'nid'=>operator_operation::wrapper_not_identical];
-if ($ordinary_numeric) {
+if ($ordinary_numeric || $ordinary_cross) {
 	$forms=['eq'=>'==','ne'=>'!='];
 	$operations=$scalar_pair?['eq'=>operator_operation::floating_equal,'ne'=>operator_operation::floating_not_equal]:['eq'=>operator_operation::wrapper_equal,'ne'=>operator_operation::wrapper_not_equal];
 }
@@ -64,6 +65,14 @@ foreach ($forms as $name=>$symbol) foreach ([['n','i']] as [$lt,$rt]) {
 	} finally { unlink($path); rmdir($dir); }
 }
 $negative_count=0;
+if ($ordinary_cross && $payload==='int') {
+ foreach ([['bool','bool'],['int','float'],['float','int']] as [$lp,$rp]) foreach (['==','!='] as $symbol) {
+  $lt=$carrier==='nullable'?'?'.$lp:$carrier.'<'.$lp.'>';
+  $rt=$right_carrier==='nullable'?'?'.$rp:$right_carrier.'<'.$rp.'>';
+  guarded_cross_reject('function bad('.$lt.' $a, '.$rt.' $b): bool { return $a '.$symbol.' $b; }'); ++$negative_count;
+ }
+}
+
 foreach (['==','!='] as $symbol) {
  if (guarded_fixture_equality_pair($wrapped,$right_wrapped,$symbol)) { continue; }
  guarded_cross_reject('function bad('.$wrapped.' $a, '.$right_wrapped.' $b): bool { return $a '.$symbol.' $b; }'); ++$negative_count;
@@ -100,14 +109,14 @@ $cpp=str_replace('int main(int argc, char** argv)','int unused_entry(int argc, c
 $families=['nullable'=>0,'result'=>1,'result_or_false'=>2,'result_or_bool'=>3,'plain'=>4];
 $native=['int'=>['scpp::int_t<>','std::int64_t'],'float'=>['scpp::float_t','double'],'bool'=>['scpp::bool_t','bool'],'string'=>['scpp::string_t','std::string']];
 $cpp.='
-#include "'.__DIR__.($ordinary_numeric?'/mixed_equality_support.hpp':'/cross_identity_support.hpp').'"
+#include "'.__DIR__.($ordinary_cross?'/cross_equality_support.hpp':($ordinary_numeric?'/mixed_equality_support.hpp':'/cross_identity_support.hpp')).'"
 using namespace identity_probe;
 ';
 $cpp.='using V='.$native[$payload][0].'; using P='.$native[$payload][1].'; using W='.$native[$right_payload][0].'; using Q='.$native[$right_payload][1].'; using S=State<P>;
 ';
 $cpp.='auto maken(S s) { return make<'.$families[$carrier].',V>(s); } auto makei(State<Q> s) { return make<'.$families[$right_carrier].',W>(s); }
 ';
-$cpp.='bool state_matches(S a,State<Q> b) { return '.($ordinary_numeric?'mixed_equality_probe':'identity_probe').'::oracle(a,b); }
+$cpp.='bool state_matches(S a,State<Q> b) { return '.($ordinary_cross?'cross_equality_probe':($ordinary_numeric?'mixed_equality_probe':'identity_probe')).'::oracle(a,b); }
 ';
 $cpp.= <<<'CPP'
 int classify(const std::exception& e) {

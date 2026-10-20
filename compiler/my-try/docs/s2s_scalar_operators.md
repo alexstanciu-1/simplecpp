@@ -900,3 +900,19 @@ sentinel/plain dispatch repair. Bool, matching strings, fixed-width and boxed
 dispatch are preserved. Cross-family ordinary equality remains separate.
 [The E4S proof](planning/sentinel_mixed_equality.md) covers 24 carrier signatures,
 four existing scalar controls, state preservation, eager effects and snapshots.
+
+## Cross-family non-bool ordinary equality — 2026-10-20
+
+`==`/`!=` admit distinct carrier families with matching canonical int, float or
+string payloads. Both present payloads use scalar equality. Matching false
+sentinels compare equal across the two sentinel families; different unavailable
+states and unavailable/payload comparisons are unequal. No truth conversion or
+guarded extraction occurs. Whole-state eager snapshots use existing lowering.
+
+`Wrapper_Equality` owns the bounded admission. The runtime operator generator
+owns family/state classification and a single cross-family comparison path;
+competing generic overloads exclude exactly that bounded pair domain. Same-family,
+plain, bool and mixed-numeric contracts remain unchanged. [The E3NB proof](planning/cross_equality.md)
+covers 72 signatures, state preservation, byte/float values, source failures and
+local/property replacement snapshots. Cross-family bool and mixed-numeric ordinary
+equality remain separate.

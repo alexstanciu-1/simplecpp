@@ -1413,3 +1413,13 @@ boundaries and NaNs, eager source evaluation, complete operand snapshots, source
 failures and retained recovery. `sentinel_plain_runtime.py` retains matching-payload,
 bool and boxed controls plus fixed-width and numeric/string rejection boundaries.
 See [the E4S proof and preserved baseline](planning/sentinel_mixed_equality.md).
+
+### Cross-family non-bool ordinary equality E3NB — 2026-10-20
+
+Run `python3 compiler/my-try/tests/cross_equality.py --results FRESH` on dev002.
+This checks 72 source signatures for matching int/float/string payloads, with
+24 existing same-family runtime controls. `--runtime-only` selects the runtime
+gate; adding `--probe-runtime` records baseline failures without treating them
+as acceptance. Source proofs reuse the state/snapshot fixture's ordinary-cross
+mode and independent oracle. Explicit negatives keep all 24 bool and 48 mixed
+numeric cross-family signatures separate. See [the proof](planning/cross_equality.md).

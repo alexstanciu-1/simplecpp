@@ -67,7 +67,11 @@ final class Wrapper_Equality
 		$left_plain = $left->matches($left_value);
 		$right_plain = $right->matches($right_value);
 		if ($left_value->matches($right_value)) {
-			return $left_plain || $right_plain || $left->matches($right);
+			// Cross-family state equality is bounded to matching canonical non-bool payloads.
+			return $left_plain || $right_plain || $left->matches($right)
+				|| $left_value->matches($context->integer)
+				|| $left_value->matches($context->string_type)
+				|| $left_value->matches(Language_Types::floating(Model::$language_scope));
 		}
 		if (!Floating_Point_Operators::is_mixed_numeric_pair($left_value, $right_value, $context)) {
 			return false;

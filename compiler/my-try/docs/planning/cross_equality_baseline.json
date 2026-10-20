@@ -1,0 +1,6 @@
+{
+  "doc_status": "supporting",
+  "head": "53668f88fc656c4e30b103fb81d7ddbe2ac12225",
+  "scope": "E3 72 matching non-bool cross-family ordinary equality signatures",
+  "dirty_status": " M compiler/my-try/docs/catalog/15_blocking_debt.md\n M compiler/my-try/docs/catalog/15_review.md\n M compiler/my-try/tests/cross_identity.php\n?? compiler/my-try/docs/planning/cross_equality_source.json\n?? compiler/my-try/tests/__pycache__/\n?? compiler/my-try/tests/cross_equality.py\n?? compiler/my-try/tests/cross_equality_support.hpp\n"
+}

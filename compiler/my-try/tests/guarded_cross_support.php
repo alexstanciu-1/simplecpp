@@ -34,7 +34,7 @@ function guarded_fixture_equality_pair(string $left, string $right, string $symb
 	if ($payload!==$right_payload || !in_array($payload,['int','float','bool','string'],true)) { return false; }
 	$carriers=['?'.$payload,'result<'.$payload.'>'];
 	$carriers[]='result_or_false<'.$payload.'>'; $carriers[]='result_or_bool<'.$payload.'>';
-	return (in_array($symbol,['===','!=='],true) && in_array($left,$carriers,true) && in_array($right,$carriers,true))
+	return ((in_array($symbol,['===','!=='],true) || in_array($payload,['int','float','string'],true)) && in_array($left,$carriers,true) && in_array($right,$carriers,true))
 		|| ($left===$right && in_array($left,$carriers,true))
 		|| ($left===$payload && in_array($right,$carriers,true))
 		|| ($right===$payload && in_array($left,$carriers,true));

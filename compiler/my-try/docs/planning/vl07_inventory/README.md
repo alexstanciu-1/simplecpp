@@ -1,13 +1,13 @@
 # V-L07 remaining signature inventory
 Doc Status: planning
 
-Snapshot: 2026-10-20, after sentinel mixed ordinary equality (E4S). This is a concrete
+Snapshot: 2026-10-20, after non-bool cross-family ordinary equality (E3NB). This is a concrete
 planning list, not a new semantic specification or authorization to implement all
 listed combinations. No compiler/runtime changes or compiler tests were run to
 create it. Existing completed proofs remain authoritative evidence of execution.
 
-[Remaining signatures](remaining.csv) lists **864 exact signatures**:
-**zero remaining support targets** and **864 design/scope decisions**.
+[Remaining signatures](remaining.csv) lists **792 exact signatures**:
+**zero remaining support targets** and **792 design/scope decisions**.
 Each row identifies the operand types, operator, unary/binary/compound form, group,
 planning status and matching matrix definition when one exists. An empty matrix
 reference means no exact definition was found, not that the operation is invalid.
@@ -38,9 +38,9 @@ mistaken for bool payloads.
 
 | Disposition | Signatures | Meaning |
 | --- | ---: | --- |
-| Verified completed slices | 3,088 | 2,592 binary + 64 unary + 432 compound; reproduces current total |
+| Verified completed slices | 3,160 | 2,664 binary + 64 unary + 432 compound; reproduces current total |
 | Remaining support targets | 0 | Missing capability families with bounded candidate signatures |
-| Needs design/scope decision | 864 | Decide semantics/prerequisites before calling them implementation obligations |
+| Needs design/scope decision | 792 | Decide semantics/prerequisites before calling them implementation obligations |
 | Separate existing paths | 129 | 128 null comparisons + preserved nullable-string negation; no new pass claim |
 | Scope exclusions | 10,767 | Other grid cells outside approved payload/operator domains |
 | Total grid | 14,848 | Includes negative/out-of-scope cells, not a completion denominator |
@@ -68,21 +68,21 @@ plus four scalar prerequisites; it does not enable narrowing.
 | Total | 336 | |
 
 Matching-payload equality and numeric carrier updates are also complete within their
-approved bounds. Cross-family and mixed ordinary equality still need normalization decisions.
+approved bounds. Cross-family bool and mixed-numeric ordinary equality still need decisions.
 [E3I](../cross_identity.md) verifies the 96 matching-payload cross-family strict identities.
 
 ## Decisions that must not be silently counted as fixes
 
 | Group | Exact expansion | Count | Decision |
 | --- | --- | ---: | --- |
-| E3 | Two ordinary comparisons × four matching payloads × 12 ordered distinct-carrier pairs | 96 | Cross-family ordinary equality state/error/sentinel policy |
+| E3 | Two ordinary comparisons × matching bool × 12 ordered distinct-carrier pairs | 24 | Bool payload/sentinel state policy |
 | E4 | Two ordinary comparisons × two ordered int/float payload pairs × 12 ordered distinct-carrier pairs | 48 | Cross-family state policy |
 | E5 | Two ordinary comparisons × 10 ordered heterogeneous pairs × 24 arrangements | 480 | Ordinary coercion policy and state normalization |
 | O2 | `<=>` on float/float and both int/float orders × 24 arrangements | 72 | Unordered NaN policy and scalar admission |
 | C2 | Four arithmetic compounds × int-destination/float-RHS × 24 arrangements | 96 | Narrowing, error policy and destination write-back |
 | C3 | `**=` on int/int × 24 arrangements | 24 | Power assignment is outside current power contract |
 | S1 | `.` and `.=` on string/string × 24 arrangements | 48 | Concatenation conversion versus guarded extraction, empty nullable string and write-back |
-| Total | | 864 | |
+| Total | | 792 | |
 
 These groups are review candidates. Some may become implementations, some intentional
 exclusions, and some separate issues. The list preserves that distinction rather
@@ -112,7 +112,7 @@ of matrix rows alone cannot recover V-L07's remaining signature list.
 
 Paths in this table are relative to `compiler/my-try/`. Completed signatures are
 reconstructed from the bounded contracts in `docs/s2s_scalar_operators.md`; the
-builder asserts their exact 2,592 binary / 64 unary / 432 compound totals. This is static reconciliation with dated
+builder asserts their exact 2,664 binary / 64 unary / 432 compound totals. This is static reconciliation with dated
 proofs, not another verification run. Missing probes should run on dev002 using the
 shared runner once their semantics and implementation scope are approved.
 
@@ -137,10 +137,10 @@ These are explicit scope decisions, not forgotten zero-count tasks:
 
 The original proposed core remains **2,080/2,080 signatures (100%)**.
 [O1 mixed ordering](../mixed_ordering.md) adds 192 approved signatures beyond that
-original denominator; C2W, E3I and E4I add 96 each, E5BNI adds 192, E5SI adds 288, and E4NR and E4S add 24 each, bringing verified coverage to 3,088.
+original denominator; C2W, E3I and E4I add 96 each, E5BNI adds 192, E5SI adds 288, E4NR and E4S add 24 each, and E3NB adds 72, bringing verified coverage to 3,160.
 Eight scalar ordering, eight scalar float-compound, twenty-four heterogeneous strict-identity, four mixed numeric ordinary-equality and four plain numeric-XOR prerequisites are excluded
 from that carrier inventory. This is a **bounded core-scope metric**, not
-completion of all V-L07 or engineering effort. The 864 design candidates and wider
+completion of all V-L07 or engineering effort. The 792 design candidates and wider
 domains remain visible outside that denominator until disposition is agreed.
 
 E1 completed with 12 signatures on dev002; see [the report](../nullable_float_equality.md).
@@ -210,3 +210,14 @@ by int-to-float promotion. A bounded runtime generator repair admits mixed
 canonical numeric sentinel/plain comparisons while preserving existing bool,
 string, fixed-width and boxed behavior. State preservation, eager snapshots and
 recovery pass on dev002. E4 retains 48 cross-family mixed ordinary comparisons.
+
+## E3 matching non-bool cross-family ordinary equality — 2026-10-20
+
+[The E3NB proof](../cross_equality.md) verifies 72 cross-family `==`/`!=`
+signatures for matching int, float and string payloads. Present values compare
+by scalar equality; matching false sentinels compare equal across sentinel
+families. Distinct unavailable states and unavailable/payload pairs are unequal.
+A bounded generated runtime path resolves competing carrier overloads using
+explicit family/state classification. Whole states, eager effects and snapshots
+are preserved. The remaining E3 group contains 24 bool comparisons; E4 retains
+48 mixed-numeric cross-family comparisons. Neither group is newly admitted.
