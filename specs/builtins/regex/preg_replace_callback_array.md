@@ -36,6 +36,27 @@ Doc Status: normative
 - Invalid pattern syntax returns `false`.
 - Negative limit other than `-1` throws `ValueError`.
 
+## v0.2 strict callback-table contract
+
+The source table type is `hash<function<string(vector<string>)>, string>`.
+Its callable and matching behavior follows the
+[strict callback contract](preg_replace_callback.md#v02-strict-callback-contract).
+The table is an ordinary value input, snapshotted before later arguments execute.
+The provider does not retain its callbacks after returning.
+
+Validate the limit once before visiting any entries, including an empty table.
+An empty table then returns the unchanged subject. For each entry, validate its
+pattern and apply its callback to the current subject; the same limit applies
+independently to each pattern. Zero limit validates every visited pattern but
+invokes no callbacks.
+
+A later invalid pattern returns false; a callback exception propagates. Neither
+case rolls back effects of callbacks that have already run. The input subject
+and callback table are not modified by replacement.
+
+The v0.2 runtime catalog registers both arities. Explicit limits bind to
+`replace_callback_array_limited`, keeping native count-output overloads separate.
+
 ## Runtime and wrapper split
 - Runtime: iterate typed callback-table entries in order and invoke typed callbacks with `vector_t<string_t>`.
 - Legacy wrapper: adapt typed captures to a PHP-compatible `mixed_t` array before invoking each legacy callback.

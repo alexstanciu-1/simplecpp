@@ -32,6 +32,33 @@ Doc Status: normative
 - Invalid pattern syntax returns `false`.
 - Negative limit other than `-1` throws `ValueError`.
 
+## v0.2 strict callback contract
+
+The source callable type is `function<string(vector<string>)>`. Ordinary exact
+callable conversion applies: owned copyable captures are allowed; direct or
+transitive borrowed captures cannot cross this erased boundary. The provider
+invokes synchronously and does not retain the callback after returning.
+
+The default limit is `-1` (unlimited). A positive limit bounds callback invocations;
+zero returns the unchanged subject without invoking the callback. Validate the
+limit before compiling the pattern, including empty subjects and zero limits.
+An invalid pattern therefore returns false even at zero limit.
+
+Zero-length matches use the same traversal as ordinary replacement: preserve
+uncopied subject bytes, try a nonempty anchored alternative at the same position,
+then advance the search by one character (respecting UTF mode). Callback output
+is literal bytes, without backreference expansion. Successful empty output is a
+present string, distinct from the false sentinel.
+
+Evaluate and snapshot arguments in source order before entering the provider.
+Callback exceptions propagate; completed callback effects are not rolled back.
+An absent callable fails only if a match requires its invocation, using the
+existing absent-callable invocation behavior.
+
+The v0.2 runtime catalog registers both arities. Its explicit-limit binding uses
+`replace_callback_limited` so a writable value snapshot cannot select a native
+count-output overload. Public count-output forms remain outside this contract.
+
 ## Runtime and wrapper split
 - Runtime: perform repeated matches and invoke a typed callback with `vector_t<string_t>`.
 - Legacy wrapper: adapt typed captures to a PHP-compatible `mixed_t` array and invoke a legacy-shaped callback.

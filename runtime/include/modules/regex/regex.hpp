@@ -55,6 +55,8 @@ namespace scpp::regex {
 [[nodiscard]] result_or_false<string_t> replace(const string_t &pattern, const string_t &replacement, const string_t &subject, const int_t<> &limit, int_t<> &count);
 
 // Source metadata targets whose final argument always means a limit.
+[[nodiscard]] result_or_false<string_t> replace_callback_limited(const string_t &pattern, const std::function<string_t(vector_t<string_t>)> &callback, const string_t &subject, const int_t<> &limit);
+[[nodiscard]] result_or_false<string_t> replace_callback_array_limited(const hash_t<std::function<string_t(vector_t<string_t>)>, string_t> &callbacks, const string_t &subject, const int_t<> &limit);
 [[nodiscard]] result_or_false<string_t> replace_limited(const string_t &pattern, const string_t &replacement, const string_t &subject, const int_t<> &limit);
 [[nodiscard]] result_or_false<vector_t<string_t>> filter_limited(const string_t &pattern, const string_t &replacement, const vector_t<string_t> &input, const int_t<> &limit);
 
