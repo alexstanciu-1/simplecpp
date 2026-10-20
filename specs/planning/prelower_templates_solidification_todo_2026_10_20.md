@@ -132,6 +132,14 @@ Owners: runtime catalog installation, backend binding/admission checks, diagnost
 - [ ] Complete strict validation for arbitrary metadata/provider header exposure,
   remaining representation/operation combinations and PCH configuration before
   migrating the public option. The listed rejection cases are not a universal proof.
+- [x] Carry the concrete application's template policy through existing publication
+  into the native builder. Reject broad runtime PCH; validate active Clang tokens
+  across application inputs and transitive provider headers before accepting new
+  objects. Reuse dependency-keyed validation through the existing object cache.
+  Provider mutation/recovery and ordinary-cache separation are covered by
+  `prelower_native_boundary.py`; remaining operation combinations and public
+  configuration consolidation are still open. See
+  [native enforcement evidence](results/prelower_native_boundary_2026_10_20/README.md).
 - [ ] For the supported opt-in mode, report unsupported representations/operations
   explicitly. Do not silently fall back to template-bearing application interfaces.
   Choosing ordinary compilation remains an explicit caller decision.
@@ -152,7 +160,7 @@ Owners: `cpp_lowering_options`, CLI/API entry points, C++ generation/adapters.
 
 - [ ] Make `--prelower-templates` select the same general concrete-substitution path
   used by accounting. Align the API setting and document effective options.
-- [ ] Review PCH interaction: the template-free acceptance path must use no runtime
+- [x] Review PCH interaction: the template-free acceptance path must use no runtime
   PCH. Ensure configuration cannot misleadingly claim template-free app input while
   injecting the broad runtime PCH; leave ordinary-mode PCH behavior supported.
 - [ ] Reuse ordinary expression sequencing and prepared operation/conversion facts.

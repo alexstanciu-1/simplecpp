@@ -78,8 +78,10 @@ path validation before mutation, and re-resolve lazy removal prefixes. The inter
 worker does not evaluate syntax, infer types, or implement container-family behavior.
 Native helper templates stay in support units for concrete receivers. Ordinary mode
 can use native runtime interfaces. In strict concrete mode, an unsubstituted interface
-is not permission to expose templates silently; remaining provider/header enforcement
-is tracked in the solidification TODO before migration of the public option.
+is not permission to expose templates silently. The native builder enforces the
+published concrete application's input policy across transitive headers and rejects
+runtime PCH. Remaining operation coverage and migration of the public option remain
+tracked in the solidification TODO.
 
 The initial indexing proof covers vectors, integer-keyed hashes, nested writes/removal, copied
 reads, append, reference identity, root replacement during key/RHS evaluation, missing

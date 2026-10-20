@@ -305,7 +305,8 @@ final class Compiler
 			$entry /** prepared_file */ = Model::$prepared_entry;
 			$output = (new CPP_Generator(Model::$cpp_output_program, $this->cpp_lowering))->generate_program($prepared, $entry);
 			if ($publication !== null) {
-				$publication->publish($output, CPP_Runtime_Build::requirements(Model::$runtime_metadata));
+				$publication->publish($output, CPP_Runtime_Build::requirements(Model::$runtime_metadata),
+					Model::$cpp_output_program->concrete_type_substitution);
 			}
 		}
 		catch (\RuntimeException $error) {

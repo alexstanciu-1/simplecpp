@@ -59,11 +59,14 @@ Fresh shared-runner checks on 2026-10-20: `runtime_type_bindings.php`,
 Results: `/tmp/prelower-coverage-contract-20261020/logs`. These are PHP contract
 checks, not new native/closure or accounting execution evidence.
 
-Next implementation boundary: enforce generated application input and PCH compatibility
-through existing generation/publication/native-build owners before changing the public
-flag. Keep arbitrary provider exposure and remaining operation combinations explicit
-until that gate exists; no allowlist, parallel registry, semantic re-analysis or silent
-ordinary-template fallback is authorized by this table.
+Follow-up implementation: the existing publication/native-build owners now carry and
+enforce the concrete application policy, rejecting broad runtime PCH and active template
+tokens in transitive application inputs before caching new objects. See the
+[native contract](../../compiler/my-try/docs/architecture/native_cpp_build.md#dependencies-and-pch).
+This supersedes the table's historical production-header-enforcement gap, not its
+unproved provider-operation coverage. Remaining operation combinations, public option
+consolidation and unified acceptance stay open. No allowlist, parallel registry,
+semantic re-analysis or ordinary-template fallback is introduced.
 
 ## Agreed ownership: extend the existing model
 

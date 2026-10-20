@@ -59,6 +59,40 @@ historical executable path remains a historical artifact, not a freshness API.
 
 ## Dependencies and PCH
 
+Publications carry `application_templates: "allowed" | "forbidden"`. The compiler
+coordinator publishes `forbidden` for the general concrete-substitution mode.
+Missing/unknown policies reject with a republish diagnostic; the native builder
+does not infer lowering mode from C++ text. Standalone artifact publishers must pass
+their intended policy to `Output_Publication::publish` (the third argument).
+
+For `forbidden`, the broad runtime PCH is incompatible: explicitly select `--no-pch`.
+The builder rejects rather than silently disabling PCH or reverting lowering mode.
+`entry.cpp` and every `units/` translation unit are checked; `specializations/`
+implementation units and layout probes retain native templates. Unknown translation
+unit locations and a missing entry reject instead of being silently excluded.
+
+Before compiling a new strict application object, Clang dumps its active preprocessed
+tokens with the same flags, definitions, includes and resolved layouts. A `template`
+keyword rejects; comments, string literals and inactive preprocessor branches do not
+constitute template declarations. Missing token-stream completion or compiler failure
+also rejects. This is deliberately a conservative no-template-keyword input contract,
+not a second C++ parser or a provider-name allowlist. The existing independent
+complete-closure regression still checks template declarations and instantiation traces.
+
+Validated objects use the existing native action cache with a versioned validation
+identity. Ordinary objects cannot satisfy these keys. Strict app objects always use
+fresh Clang dependency discovery, even with `--runtime-snapshot`; thus a changed or
+newly selected transitive provider header invalidates their validation. Unchanged
+validated objects reuse without another token dump. Failures leave native readiness
+pending and cannot publish a successful executable for the attempted inputs. Source
+publication readiness means generated inputs are complete, not that native validation
+has succeeded. Toolchain/runtime quiescence during a build remains required.
+
+Focused proof: `tests/prelower_native_boundary.py` covers provider mutation/recovery,
+macro-expanded templates, comment/string/inactive text, strict PCH rejection,
+ordinary PCH support and cache separation. `tests/prelower_null_output.py` exercises
+the policy through real concrete generation and the independent closure audit.
+
 The opt-in `--runtime-snapshot` option reuses Clang dependency discovery when the
 publication supplies complete generated include metadata. Generated inputs retain
 current content validation; external dependencies and include-search inventories
