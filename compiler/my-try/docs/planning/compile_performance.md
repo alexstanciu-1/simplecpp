@@ -7,6 +7,15 @@ workflow, schedule this task explicitly. It must not disappear into optional cle
 The operational milestone's scope is agreed separately; this note creates no new
 language milestone. No backend switch or broad refactor is authorized now.
 
+## Agreed follow-up direction — 2026-10-16
+
+The [Clang unit latency and Mold plan](clang_units_and_mold.md) records the 2–3 second
+p80 compilation target, future stable unit splitting, parallel orchestration, and
+one executable versus up to 20 application shared libraries. Implementation and
+benchmark execution remain deferred. That focused plan treats compiler incremental/MT
+internals as external assumptions and makes Ninja-owned between-run reuse optional
+and non-blocking; broader historical acceptance work below is not its prerequisite.
+
 ## Findings and evidence
 
 Small generated programs repeatedly process a large runtime header graph. The nullable
@@ -85,9 +94,9 @@ current per-run PCH is not a persistent cache and does not prove these requireme
   profiles. Compare a small core plus ordinary specialized includes against broader
   bundles. Avoid a cache entry for every incidental feature combination by default.
 - [ ] Integrate with retained C++ fragments and future stable output units/object reuse.
-  Current assembly is one `main.cpp`; PCH does not avoid recompiling unchanged
-  application bodies inside that unit. Keep semantic and native-build dependency graphs
-  distinct. Measure fan-out from signature/layout and runtime-header changes.
+  The Chapter 08 pipeline now emits partitioned artifacts and supports object reuse;
+  assess finer grouping under the linked unit-latency plan. Keep semantic and native-build
+  dependency graphs distinct. Measure fan-out from signature/layout and runtime-header changes.
 - [ ] Investigate the LLVM/IR route described below; record evidence and a decision.
 - [ ] Deliver measured improvements and focused correctness/invalidation proofs, or
   explicit blockers with bounded follow-up work and user review. A discussion alone

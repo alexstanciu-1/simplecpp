@@ -9541,11 +9541,29 @@ private function renderObjectCastExpr(mixed $expr, ?string $namespacePhp): strin
 			. '([&]() -> decltype(auto) { return ' . $this->renderExpr($condNode, $namespacePhp) . '; }, [&]() -> decltype(auto) { return ' . $this->renderExpr($trueNode, $namespacePhp) . '; }, [&]() -> decltype(auto) { return ' . $falseExpr . '; })';
 	}
 
+	/** A bounded presence read: one index into a locally known string hash. */
+	private function tryRenderCoalesceLookup(mixed $expr, ?string $namespacePhp): ?string
+	{
+		if (!is_object($expr) || ($expr->kind ?? null) !== AstKind::DIM) { return null; }
+		$baseNode = $expr->children['expr'] ?? null;
+		$keyNode = $expr->children['dim'] ?? null;
+		$name = $this->extractSimpleVarName($baseNode);
+		if ($name === null || $keyNode === null || !isset($this->declaredLocalTypes[$name])) { return null; }
+		// For a simple variable this only reads existing local type metadata; no remote inference.
+		$parts = $this->parseHashTypeParts($this->inferExprTypeWithNamespace($baseNode, $namespacePhp));
+		if ($parts === null || $parts['key'] !== 'string_t' || $parts['value'] !== 'string_t') { return null; }
+		$key = $this->renderHashKeyExpr($this->renderExpr($keyNode, $namespacePhp), $parts['key']);
+		return $this->renderExpr($baseNode, $namespacePhp) . '.find(' . $key . ')';
+	}
+
 	private function renderCoalesceExpr(mixed $leftNode, mixed $rightNode, ?string $namespacePhp): string
 	{
 		$coalesceFn = $this->qualifyKnownPhpRuntimeSymbol('coalesce_eval');
+		$lookup = $this->tryRenderCoalesceLookup($leftNode, $namespacePhp);
+		$left = $lookup ?? $this->renderExpr($leftNode, $namespacePhp);
+		$returnType = $lookup !== null ? 'auto' : 'decltype(auto)';
 		return $coalesceFn
-			. '([&]() -> decltype(auto) { return ' . $this->renderExpr($leftNode, $namespacePhp) . '; }, [&]() -> decltype(auto) { return ' . $this->renderExpr($rightNode, $namespacePhp) . '; })';
+			. '([&]() -> ' . $returnType . ' { return ' . $left . '; }, [&]() -> decltype(auto) { return ' . $this->renderExpr($rightNode, $namespacePhp) . '; })';
 	}
 
 

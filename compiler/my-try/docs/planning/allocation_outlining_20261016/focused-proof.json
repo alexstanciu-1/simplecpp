@@ -1,0 +1,12 @@
+{
+  "passed": true,
+  "levels": [
+    0,
+    1,
+    2,
+    3
+  ],
+  "retained_switches": 6,
+  "default_edit_changed_units": 1,
+  "allocation_eligibility_switches": 2
+}

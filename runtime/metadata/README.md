@@ -39,6 +39,15 @@ type-owned static/instance callables use optional membership on ordinary functio
 records. Property/constant members have separate contracts. Type records can opt
 into initialization, indexing and value iteration through generic recipes; core
 vector/hash use that same path. Initialization C++ adapters use separate bindings.
+The core vector/hash adapters select `scpp/data_initializer_typed.hpp`. Compiler
+bindings for the call-scoped input types select `scpp/data_initializer_input.hpp`;
+the language-owned mixed/dynamic adapters select their respective
+`data_initializer_mixed.hpp` and `data_initializer_dynamic.hpp` headers. These
+headers preserve the same inline adapter bodies. `scpp/data_initializer.hpp` remains
+a compatibility umbrella including every adapter. Do not select the umbrella for a
+typed-only initialization binding: its concrete mixed/dynamic bodies cause unrelated
+template instantiation in each consuming unit.
+
 Borrowed lifetimes remain subsequent integration work.
 
 JSON documents/nodes/diagnostics and file-lock handles are registered too. The

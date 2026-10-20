@@ -1,0 +1,2658 @@
+{
+  "units": [
+    {
+      "unit": "src/allocation_desk.phs",
+      "needs_definition": true,
+      "diagnostics": [
+        "/home/alex-ai/accounting-edit-matrix-20261016/header-fanout-analysis/attempt-2/forward-only/units/n6d61696e/n7372632f616c6c6f636174696f6e5f6465736b2e706873.cpp:39:21: error: member access into incomplete type 'record_AccountingCheck'",
+        "/home/alex-ai/accounting-edit-matrix-20261016/header-fanout-analysis/attempt-2/forward-only/units/n6d61696e/n7372632f616c6c6f636174696f6e5f6465736b2e706873.cpp:126:21: error: member access into incomplete type 'record_AccountingCheck'",
+        "/home/alex-ai/accounting-edit-matrix-20261016/header-fanout-analysis/attempt-2/forward-only/units/n6d61696e/n7372632f616c6c6f636174696f6e5f6465736b2e706873.cpp:246:22: error: member access into incomplete type 'record_AccountingCheck'"
+      ],
+      "cpp_bytes": 25321,
+      "cpp_lines": 269,
+      "lambda_count": 68,
+      "shared_constructions": 3,
+      "timings": {
+        "full": [
+          0.890961985,
+          0.872480516,
+          0.8599682
+        ],
+        "common-declaration-edit": [
+          0.869122655,
+          0.866449676,
+          0.858954995
+        ]
+      }
+    },
+    {
+      "unit": "src/allocation_driver.phs",
+      "needs_definition": false,
+      "diagnostics": [],
+      "cpp_bytes": 25816,
+      "cpp_lines": 286,
+      "lambda_count": 102,
+      "shared_constructions": 1,
+      "timings": {
+        "full": [
+          0.366154304,
+          0.364029029,
+          0.367359582
+        ],
+        "common-declaration-edit": [
+          0.36810006,
+          0.360393797,
+          0.361267631
+        ]
+      }
+    },
+    {
+      "unit": "src/asset_revision.phs",
+      "needs_definition": false,
+      "diagnostics": [],
+      "cpp_bytes": 26134,
+      "cpp_lines": 279,
+      "lambda_count": 104,
+      "shared_constructions": 1,
+      "timings": {
+        "full": [
+          0.375527688,
+          0.368764322,
+          0.364387196
+        ],
+        "common-declaration-edit": [
+          0.364042739,
+          0.362093105,
+          0.367667668
+        ]
+      }
+    },
+    {
+      "unit": "src/assets.phs",
+      "needs_definition": true,
+      "diagnostics": [
+        "/home/alex-ai/accounting-edit-matrix-20261016/header-fanout-analysis/attempt-2/forward-only/units/n6d61696e/n7372632f6173736574732e706873.cpp:219:21: error: member access into incomplete type 'record_AccountingCheck'",
+        "/home/alex-ai/accounting-edit-matrix-20261016/header-fanout-analysis/attempt-2/forward-only/units/n6d61696e/n7372632f6173736574732e706873.cpp:309:21: error: member access into incomplete type 'record_AccountingCheck'",
+        "/home/alex-ai/accounting-edit-matrix-20261016/header-fanout-analysis/attempt-2/forward-only/units/n6d61696e/n7372632f6173736574732e706873.cpp:415:19: error: member access into incomplete type 'record_AccountingCheck'"
+      ],
+      "cpp_bytes": 37122,
+      "cpp_lines": 493,
+      "lambda_count": 109,
+      "shared_constructions": 6,
+      "timings": {
+        "full": [
+          0.689520867,
+          0.680444736,
+          0.681250157
+        ],
+        "common-declaration-edit": [
+          0.685273662,
+          0.681002147,
+          0.683139478
+        ]
+      }
+    },
+    {
+      "unit": "src/banking.phs",
+      "needs_definition": true,
+      "diagnostics": [
+        "/home/alex-ai/accounting-edit-matrix-20261016/header-fanout-analysis/attempt-2/forward-only/units/n6d61696e/n7372632f62616e6b696e672e706873.cpp:306:21: error: member access into incomplete type 'record_AccountingCheck'"
+      ],
+      "cpp_bytes": 31309,
+      "cpp_lines": 375,
+      "lambda_count": 80,
+      "shared_constructions": 4,
+      "timings": {
+        "full": [
+          0.936494054,
+          0.903241292,
+          0.90299658
+        ],
+        "common-declaration-edit": [
+          0.895155202,
+          0.904678052,
+          0.898022113
+        ]
+      }
+    },
+    {
+      "unit": "src/business_checks.phs",
+      "needs_definition": false,
+      "diagnostics": [],
+      "cpp_bytes": 56211,
+      "cpp_lines": 1172,
+      "lambda_count": 164,
+      "shared_constructions": 12,
+      "timings": {
+        "full": [
+          1.260732803,
+          1.222681764,
+          1.228204286
+        ],
+        "common-declaration-edit": [
+          1.229435086,
+          1.223788631,
+          1.239060285
+        ]
+      }
+    },
+    {
+      "unit": "src/calendar.phs",
+      "needs_definition": true,
+      "diagnostics": [
+        "/home/alex-ai/accounting-edit-matrix-20261016/header-fanout-analysis/attempt-2/forward-only/units/n6d61696e/n7372632f63616c656e6461722e706873.cpp:218:52: error: member access into incomplete type 'record_AccountingCheck'",
+        "/home/alex-ai/accounting-edit-matrix-20261016/header-fanout-analysis/attempt-2/forward-only/units/n6d61696e/n7372632f63616c656e6461722e706873.cpp:254:83: error: member access into incomplete type 'record_AccountingCheck'"
+      ],
+      "cpp_bytes": 22446,
+      "cpp_lines": 283,
+      "lambda_count": 90,
+      "shared_constructions": 1,
+      "timings": {
+        "full": [
+          0.214960751,
+          0.216607647,
+          0.212603281
+        ],
+        "common-declaration-edit": [
+          0.210308462,
+          0.21285782,
+          0.209755728
+        ]
+      }
+    },
+    {
+      "unit": "src/cash_forecast_item.phs",
+      "needs_definition": false,
+      "diagnostics": [],
+      "cpp_bytes": 25640,
+      "cpp_lines": 279,
+      "lambda_count": 100,
+      "shared_constructions": 1,
+      "timings": {
+        "full": [
+          0.382750969,
+          0.367090552,
+          0.3656955
+        ],
+        "common-declaration-edit": [
+          0.369066693,
+          0.361331576,
+          0.364620682
+        ]
+      }
+    },
+    {
+      "unit": "src/check_allocation_driver.phs",
+      "needs_definition": false,
+      "diagnostics": [],
+      "cpp_bytes": 14791,
+      "cpp_lines": 301,
+      "lambda_count": 52,
+      "shared_constructions": 1,
+      "timings": {
+        "full": [
+          0.358159335,
+          0.340274285,
+          0.341344327
+        ],
+        "common-declaration-edit": [
+          0.337775201,
+          0.342705504,
+          0.340472791
+        ]
+      }
+    },
+    {
+      "unit": "src/check_asset_revision.phs",
+      "needs_definition": false,
+      "diagnostics": [],
+      "cpp_bytes": 14819,
+      "cpp_lines": 301,
+      "lambda_count": 52,
+      "shared_constructions": 1,
+      "timings": {
+        "full": [
+          0.351954294,
+          0.33995187,
+          0.342471241
+        ],
+        "common-declaration-edit": [
+          0.338336453,
+          0.33538998,
+          0.339362478
+        ]
+      }
+    },
+    {
+      "unit": "src/check_cash_forecast_item.phs",
+      "needs_definition": false,
+      "diagnostics": [],
+      "cpp_bytes": 14895,
+      "cpp_lines": 301,
+      "lambda_count": 52,
+      "shared_constructions": 1,
+      "timings": {
+        "full": [
+          0.359776368,
+          0.355200567,
+          0.350693056
+        ],
+        "common-declaration-edit": [
+          0.338139313,
+          0.335529171,
+          0.339435986
+        ]
+      }
+    },
+    {
+      "unit": "src/check_collection_case.phs",
+      "needs_definition": false,
+      "diagnostics": [],
+      "cpp_bytes": 14812,
+      "cpp_lines": 301,
+      "lambda_count": 52,
+      "shared_constructions": 1,
+      "timings": {
+        "full": [
+          0.363825746,
+          0.354507096,
+          0.354595476
+        ],
+        "common-declaration-edit": [
+          0.338527602,
+          0.339799543,
+          0.341858049
+        ]
+      }
+    },
+    {
+      "unit": "src/check_customer_credit.phs",
+      "needs_definition": false,
+      "diagnostics": [],
+      "cpp_bytes": 14717,
+      "cpp_lines": 301,
+      "lambda_count": 52,
+      "shared_constructions": 1,
+      "timings": {
+        "full": [
+          0.367951836,
+          0.355408047,
+          0.387692927
+        ],
+        "common-declaration-edit": [
+          0.339932879,
+          0.344072899,
+          0.346946725
+        ]
+      }
+    },
+    {
+      "unit": "src/check_customer_profile.phs",
+      "needs_definition": false,
+      "diagnostics": [],
+      "cpp_bytes": 14771,
+      "cpp_lines": 301,
+      "lambda_count": 52,
+      "shared_constructions": 1,
+      "timings": {
+        "full": [
+          0.381901155,
+          0.356364441,
+          0.353319142
+        ],
+        "common-declaration-edit": [
+          0.347925082,
+          0.342486664,
+          0.346587061
+        ],
+        "signature-callers-edit": [
+          0.334110377,
+          0.325252664,
+          0.325218304
+        ],
+        "class-layout-edit": [
+          0.328236186,
+          0.359290598,
+          0.325615509
+        ]
+      }
+    },
+    {
+      "unit": "src/check_department_budget.phs",
+      "needs_definition": false,
+      "diagnostics": [],
+      "cpp_bytes": 14896,
+      "cpp_lines": 301,
+      "lambda_count": 52,
+      "shared_constructions": 1,
+      "timings": {
+        "full": [
+          0.362468619,
+          0.363131927,
+          0.355184692
+        ],
+        "common-declaration-edit": [
+          0.351369052,
+          0.343552753,
+          0.345079964
+        ]
+      }
+    },
+    {
+      "unit": "src/check_employee_advance.phs",
+      "needs_definition": false,
+      "diagnostics": [],
+      "cpp_bytes": 14728,
+      "cpp_lines": 301,
+      "lambda_count": 52,
+      "shared_constructions": 1,
+      "timings": {
+        "full": [
+          0.363257449,
+          0.361094484,
+          0.351750389
+        ],
+        "common-declaration-edit": [
+          0.338717529,
+          0.343677838,
+          0.342223185
+        ]
+      }
+    },
+    {
+      "unit": "src/check_employee_profile.phs",
+      "needs_definition": false,
+      "diagnostics": [],
+      "cpp_bytes": 14828,
+      "cpp_lines": 301,
+      "lambda_count": 52,
+      "shared_constructions": 1,
+      "timings": {
+        "full": [
+          0.352417984,
+          0.354069635,
+          0.357564206
+        ],
+        "common-declaration-edit": [
+          0.344046676,
+          0.347364364,
+          0.341558407
+        ]
+      }
+    },
+    {
+      "unit": "src/check_exchange_rate_quote.phs",
+      "needs_definition": false,
+      "diagnostics": [],
+      "cpp_bytes": 14847,
+      "cpp_lines": 300,
+      "lambda_count": 52,
+      "shared_constructions": 1,
+      "timings": {
+        "full": [
+          0.35395103,
+          0.349779617,
+          0.35554626
+        ],
+        "common-declaration-edit": [
+          0.344389178,
+          0.345612477,
+          0.352283788
+        ]
+      }
+    },
+    {
+      "unit": "src/check_expense_claim_line.phs",
+      "needs_definition": false,
+      "diagnostics": [],
+      "cpp_bytes": 15002,
+      "cpp_lines": 301,
+      "lambda_count": 52,
+      "shared_constructions": 1,
+      "timings": {
+        "full": [
+          0.357415198,
+          0.366409014,
+          0.361003398
+        ],
+        "common-declaration-edit": [
+          0.34257252,
+          0.345974757,
+          0.347603378
+        ]
+      }
+    },
+    {
+      "unit": "src/check_foreign_settlement.phs",
+      "needs_definition": false,
+      "diagnostics": [],
+      "cpp_bytes": 14899,
+      "cpp_lines": 301,
+      "lambda_count": 52,
+      "shared_constructions": 1,
+      "timings": {
+        "full": [
+          0.349293613,
+          0.361048738,
+          0.346323639
+        ],
+        "common-declaration-edit": [
+          0.339015577,
+          0.341818389,
+          0.350519158
+        ]
+      }
+    },
+    {
+      "unit": "src/check_goods_receipt_line.phs",
+      "needs_definition": false,
+      "diagnostics": [],
+      "cpp_bytes": 14797,
+      "cpp_lines": 301,
+      "lambda_count": 52,
+      "shared_constructions": 1,
+      "timings": {
+        "full": [
+          0.351149184,
+          0.350834576,
+          0.351672883
+        ],
+        "common-declaration-edit": [
+          0.341654488,
+          0.347861136,
+          0.347080928
+        ]
+      }
+    },
+    {
+      "unit": "src/check_landed_cost_charge.phs",
+      "needs_definition": false,
+      "diagnostics": [],
+      "cpp_bytes": 14930,
+      "cpp_lines": 301,
+      "lambda_count": 52,
+      "shared_constructions": 1,
+      "timings": {
+        "full": [
+          0.344435088,
+          0.344725005,
+          0.357925474
+        ],
+        "common-declaration-edit": [
+          0.34879799,
+          0.340103854,
+          0.349813805
+        ]
+      }
+    },
+    {
+      "unit": "src/check_lease_agreement.phs",
+      "needs_definition": false,
+      "diagnostics": [],
+      "cpp_bytes": 14787,
+      "cpp_lines": 301,
+      "lambda_count": 52,
+      "shared_constructions": 1,
+      "timings": {
+        "full": [
+          0.345831868,
+          0.347784013,
+          0.350839601
+        ],
+        "common-declaration-edit": [
+          0.343795114,
+          0.350916738,
+          0.352577118
+        ]
+      }
+    },
+    {
+      "unit": "src/check_loan_agreement.phs",
+      "needs_definition": false,
+      "diagnostics": [],
+      "cpp_bytes": 14766,
+      "cpp_lines": 301,
+      "lambda_count": 52,
+      "shared_constructions": 1,
+      "timings": {
+        "full": [
+          0.350573734,
+          0.362032344,
+          0.350136902
+        ],
+        "common-declaration-edit": [
+          0.371062437,
+          0.340006831,
+          0.350905312
+        ]
+      }
+    },
+    {
+      "unit": "src/check_payment_instruction.phs",
+      "needs_definition": false,
+      "diagnostics": [],
+      "cpp_bytes": 14973,
+      "cpp_lines": 301,
+      "lambda_count": 52,
+      "shared_constructions": 1,
+      "timings": {
+        "full": [
+          0.350154347,
+          0.345458241,
+          0.351190469
+        ],
+        "common-declaration-edit": [
+          0.34146903,
+          0.343712143,
+          0.354036857
+        ]
+      }
+    },
+    {
+      "unit": "src/check_payroll_instruction.phs",
+      "needs_definition": false,
+      "diagnostics": [],
+      "cpp_bytes": 14935,
+      "cpp_lines": 301,
+      "lambda_count": 52,
+      "shared_constructions": 1,
+      "timings": {
+        "full": [
+          0.357267021,
+          0.342559603,
+          0.352386002
+        ],
+        "common-declaration-edit": [
+          0.340784827,
+          0.346025011,
+          0.353213743
+        ]
+      }
+    },
+    {
+      "unit": "src/check_project_budget.phs",
+      "needs_definition": false,
+      "diagnostics": [],
+      "cpp_bytes": 14709,
+      "cpp_lines": 301,
+      "lambda_count": 52,
+      "shared_constructions": 1,
+      "timings": {
+        "full": [
+          0.351397239,
+          0.34546833,
+          0.343262777
+        ],
+        "common-declaration-edit": [
+          0.340984,
+          0.34184556,
+          0.34999774
+        ]
+      }
+    },
+    {
+      "unit": "src/check_project_milestone.phs",
+      "needs_definition": false,
+      "diagnostics": [],
+      "cpp_bytes": 14956,
+      "cpp_lines": 301,
+      "lambda_count": 52,
+      "shared_constructions": 1,
+      "timings": {
+        "full": [
+          0.355191187,
+          0.350012826,
+          0.34457065
+        ],
+        "common-declaration-edit": [
+          0.346650311,
+          0.345520815,
+          0.347371774
+        ]
+      }
+    },
+    {
+      "unit": "src/check_purchase_order_line.phs",
+      "needs_definition": false,
+      "diagnostics": [],
+      "cpp_bytes": 14835,
+      "cpp_lines": 301,
+      "lambda_count": 52,
+      "shared_constructions": 1,
+      "timings": {
+        "full": [
+          0.354038174,
+          0.344292213,
+          0.347743883
+        ],
+        "common-declaration-edit": [
+          0.347411137,
+          0.347009568,
+          0.344464209
+        ]
+      }
+    },
+    {
+      "unit": "src/check_receipt_allocation.phs",
+      "needs_definition": false,
+      "diagnostics": [],
+      "cpp_bytes": 14925,
+      "cpp_lines": 301,
+      "lambda_count": 52,
+      "shared_constructions": 1,
+      "timings": {
+        "full": [
+          0.35294391,
+          0.345442361,
+          0.347958546
+        ],
+        "common-declaration-edit": [
+          0.344396201,
+          0.340655648,
+          0.352003593
+        ]
+      }
+    },
+    {
+      "unit": "src/check_sales_order_line.phs",
+      "needs_definition": false,
+      "diagnostics": [],
+      "cpp_bytes": 14657,
+      "cpp_lines": 301,
+      "lambda_count": 52,
+      "shared_constructions": 1,
+      "timings": {
+        "full": [
+          0.371318672,
+          0.347849687,
+          0.344899297
+        ],
+        "common-declaration-edit": [
+          0.378055026,
+          0.342889619,
+          0.348145795
+        ]
+      }
+    },
+    {
+      "unit": "src/check_sales_quote_line.phs",
+      "needs_definition": false,
+      "diagnostics": [],
+      "cpp_bytes": 14735,
+      "cpp_lines": 301,
+      "lambda_count": 52,
+      "shared_constructions": 1,
+      "timings": {
+        "full": [
+          0.371068773,
+          0.345515788,
+          0.343699345
+        ],
+        "common-declaration-edit": [
+          0.355577828,
+          0.343964816,
+          0.345442114
+        ]
+      }
+    },
+    {
+      "unit": "src/check_stock_count_line.phs",
+      "needs_definition": false,
+      "diagnostics": [],
+      "cpp_bytes": 14794,
+      "cpp_lines": 301,
+      "lambda_count": 52,
+      "shared_constructions": 1,
+      "timings": {
+        "full": [
+          0.364603293,
+          0.341402192,
+          0.351544513
+        ],
+        "common-declaration-edit": [
+          0.350962259,
+          0.347844404,
+          0.347851082
+        ]
+      }
+    },
+    {
+      "unit": "src/check_supplier_contract.phs",
+      "needs_definition": false,
+      "diagnostics": [],
+      "cpp_bytes": 14827,
+      "cpp_lines": 301,
+      "lambda_count": 52,
+      "shared_constructions": 1,
+      "timings": {
+        "full": [
+          0.356063804,
+          0.355079991,
+          0.348854857
+        ],
+        "common-declaration-edit": [
+          0.344096179,
+          0.343550208,
+          0.348877578
+        ]
+      }
+    },
+    {
+      "unit": "src/check_supplier_invoice_match.phs",
+      "needs_definition": false,
+      "diagnostics": [],
+      "cpp_bytes": 15234,
+      "cpp_lines": 301,
+      "lambda_count": 52,
+      "shared_constructions": 1,
+      "timings": {
+        "full": [
+          0.3570479,
+          0.34716385,
+          0.346155052
+        ],
+        "common-declaration-edit": [
+          0.350311378,
+          0.342612279,
+          0.353098226
+        ]
+      }
+    },
+    {
+      "unit": "src/check_supplier_return.phs",
+      "needs_definition": false,
+      "diagnostics": [],
+      "cpp_bytes": 14825,
+      "cpp_lines": 301,
+      "lambda_count": 52,
+      "shared_constructions": 1,
+      "timings": {
+        "full": [
+          0.35904683,
+          0.341775221,
+          0.347949879
+        ],
+        "common-declaration-edit": [
+          0.378377531,
+          0.351103478,
+          0.350036733
+        ]
+      }
+    },
+    {
+      "unit": "src/check_tax_control_line.phs",
+      "needs_definition": false,
+      "diagnostics": [],
+      "cpp_bytes": 14819,
+      "cpp_lines": 301,
+      "lambda_count": 52,
+      "shared_constructions": 1,
+      "timings": {
+        "full": [
+          0.360021569,
+          0.3427499,
+          0.346552157
+        ],
+        "common-declaration-edit": [
+          0.355727198,
+          0.351158201,
+          0.377088832
+        ]
+      }
+    },
+    {
+      "unit": "src/check_time_sheet_line.phs",
+      "needs_definition": false,
+      "diagnostics": [],
+      "cpp_bytes": 14761,
+      "cpp_lines": 301,
+      "lambda_count": 52,
+      "shared_constructions": 1,
+      "timings": {
+        "full": [
+          0.381480186,
+          0.341040943,
+          0.346067659
+        ],
+        "common-declaration-edit": [
+          0.366414828,
+          0.340047808,
+          0.352104692
+        ]
+      }
+    },
+    {
+      "unit": "src/check_warehouse_location.phs",
+      "needs_definition": false,
+      "diagnostics": [],
+      "cpp_bytes": 14802,
+      "cpp_lines": 301,
+      "lambda_count": 52,
+      "shared_constructions": 1,
+      "timings": {
+        "full": [
+          0.357692158,
+          0.347833115,
+          0.344877716
+        ],
+        "common-declaration-edit": [
+          0.357037447,
+          0.337511039,
+          0.345641056
+        ]
+      }
+    },
+    {
+      "unit": "src/check_warehouse_transfer.phs",
+      "needs_definition": false,
+      "diagnostics": [],
+      "cpp_bytes": 14844,
+      "cpp_lines": 301,
+      "lambda_count": 52,
+      "shared_constructions": 1,
+      "timings": {
+        "full": [
+          0.375037137,
+          0.34595991,
+          0.351599967
+        ],
+        "common-declaration-edit": [
+          0.35668215,
+          0.336623514,
+          0.385540938
+        ]
+      }
+    },
+    {
+      "unit": "src/checks.phs",
+      "needs_definition": true,
+      "diagnostics": [
+        "/home/alex-ai/accounting-edit-matrix-20261016/header-fanout-analysis/attempt-2/forward-only/units/n6d61696e/n7372632f636865636b732e706873.cpp:67:41: error: member access into incomplete type 'record_AccountingCheck'",
+        "/home/alex-ai/accounting-edit-matrix-20261016/header-fanout-analysis/attempt-2/forward-only/units/n6d61696e/n7372632f636865636b732e706873.cpp:68:237: error: member access into incomplete type 'record_AccountingCheck'",
+        "/home/alex-ai/accounting-edit-matrix-20261016/header-fanout-analysis/attempt-2/forward-only/units/n6d61696e/n7372632f636865636b732e706873.cpp:77:74: error: member access into incomplete type 'record_AccountingCheck'",
+        "/home/alex-ai/accounting-edit-matrix-20261016/header-fanout-analysis/attempt-2/forward-only/units/n6d61696e/n7372632f636865636b732e706873.cpp:77:169: error: member access into incomplete type 'record_AccountingCheck'",
+        "/home/alex-ai/accounting-edit-matrix-20261016/header-fanout-analysis/attempt-2/forward-only/units/n6d61696e/n7372632f636865636b732e706873.cpp:78:237: error: member access into incomplete type 'record_AccountingCheck'"
+      ],
+      "cpp_bytes": 70565,
+      "cpp_lines": 1371,
+      "lambda_count": 210,
+      "shared_constructions": 4,
+      "timings": {
+        "full": [
+          1.286367433,
+          1.269692965,
+          1.275827927
+        ],
+        "common-declaration-edit": [
+          1.27674513,
+          1.287899473,
+          1.293586325
+        ]
+      }
+    },
+    {
+      "unit": "src/cli.phs",
+      "needs_definition": true,
+      "diagnostics": [
+        "/home/alex-ai/accounting-edit-matrix-20261016/header-fanout-analysis/attempt-2/forward-only/units/n6d61696e/n7372632f636c692e706873.cpp:114:22: error: member access into incomplete type 'record_AccountingCheck'",
+        "/home/alex-ai/accounting-edit-matrix-20261016/header-fanout-analysis/attempt-2/forward-only/units/n6d61696e/n7372632f636c692e706873.cpp:116:38: error: member access into incomplete type 'record_AccountingCheck'",
+        "/home/alex-ai/accounting-edit-matrix-20261016/header-fanout-analysis/attempt-2/forward-only/units/n6d61696e/n7372632f636c692e706873.cpp:148:40: error: member access into incomplete type 'record_AccountingCheck'",
+        "/home/alex-ai/accounting-edit-matrix-20261016/header-fanout-analysis/attempt-2/forward-only/units/n6d61696e/n7372632f636c692e706873.cpp:150:24: error: member access into incomplete type 'record_AccountingCheck'",
+        "/home/alex-ai/accounting-edit-matrix-20261016/header-fanout-analysis/attempt-2/forward-only/units/n6d61696e/n7372632f636c692e706873.cpp:205:39: error: member access into incomplete type 'record_AccountingCheck'",
+        "/home/alex-ai/accounting-edit-matrix-20261016/header-fanout-analysis/attempt-2/forward-only/units/n6d61696e/n7372632f636c692e706873.cpp:211:46: error: member access into incomplete type 'record_AccountingCheck'",
+        "/home/alex-ai/accounting-edit-matrix-20261016/header-fanout-analysis/attempt-2/forward-only/units/n6d61696e/n7372632f636c692e706873.cpp:236:26: error: member access into incomplete type 'record_AccountingCheck'",
+        "/home/alex-ai/accounting-edit-matrix-20261016/header-fanout-analysis/attempt-2/forward-only/units/n6d61696e/n7372632f636c692e706873.cpp:238:42: error: member access into incomplete type 'record_AccountingCheck'",
+        "/home/alex-ai/accounting-edit-matrix-20261016/header-fanout-analysis/attempt-2/forward-only/units/n6d61696e/n7372632f636c692e706873.cpp:252:24: error: member access into incomplete type 'record_AccountingCheck'",
+        "/home/alex-ai/accounting-edit-matrix-20261016/header-fanout-analysis/attempt-2/forward-only/units/n6d61696e/n7372632f636c692e706873.cpp:254:40: error: member access into incomplete type 'record_AccountingCheck'",
+        "/home/alex-ai/accounting-edit-matrix-20261016/header-fanout-analysis/attempt-2/forward-only/units/n6d61696e/n7372632f636c692e706873.cpp:324:39: error: member access into incomplete type 'record_AccountingCheck'",
+        "/home/alex-ai/accounting-edit-matrix-20261016/header-fanout-analysis/attempt-2/forward-only/units/n6d61696e/n7372632f636c692e706873.cpp:330:46: error: member access into incomplete type 'record_AccountingCheck'"
+      ],
+      "cpp_bytes": 29427,
+      "cpp_lines": 487,
+      "lambda_count": 89,
+      "shared_constructions": 6,
+      "timings": {
+        "full": [
+          1.187551172,
+          1.17781962,
+          1.165616051
+        ],
+        "common-declaration-edit": [
+          1.187067504,
+          1.177145239,
+          1.18097578
+        ]
+      }
+    },
+    {
+      "unit": "src/closing.phs",
+      "needs_definition": true,
+      "diagnostics": [
+        "/home/alex-ai/accounting-edit-matrix-20261016/header-fanout-analysis/attempt-2/forward-only/units/n6d61696e/n7372632f636c6f73696e672e706873.cpp:117:21: error: member access into incomplete type 'record_AccountingCheck'",
+        "/home/alex-ai/accounting-edit-matrix-20261016/header-fanout-analysis/attempt-2/forward-only/units/n6d61696e/n7372632f636c6f73696e672e706873.cpp:198:21: error: member access into incomplete type 'record_AccountingCheck'",
+        "/home/alex-ai/accounting-edit-matrix-20261016/header-fanout-analysis/attempt-2/forward-only/units/n6d61696e/n7372632f636c6f73696e672e706873.cpp:265:21: error: member access into incomplete type 'record_AccountingCheck'",
+        "/home/alex-ai/accounting-edit-matrix-20261016/header-fanout-analysis/attempt-2/forward-only/units/n6d61696e/n7372632f636c6f73696e672e706873.cpp:315:19: error: member access into incomplete type 'record_AccountingCheck'"
+      ],
+      "cpp_bytes": 33555,
+      "cpp_lines": 443,
+      "lambda_count": 103,
+      "shared_constructions": 5,
+      "timings": {
+        "full": [
+          0.930695375,
+          0.906056972,
+          0.915686887
+        ],
+        "common-declaration-edit": [
+          0.906356246,
+          0.908288194,
+          0.94082959
+        ]
+      }
+    },
+    {
+      "unit": "src/closing_checks.phs",
+      "needs_definition": false,
+      "diagnostics": [],
+      "cpp_bytes": 56845,
+      "cpp_lines": 1168,
+      "lambda_count": 161,
+      "shared_constructions": 14,
+      "timings": {
+        "full": [
+          1.817795916,
+          1.785896823,
+          1.821809512
+        ],
+        "common-declaration-edit": [
+          1.806569968,
+          1.803039813,
+          1.830853678
+        ]
+      }
+    },
+    {
+      "unit": "src/collection_case.phs",
+      "needs_definition": false,
+      "diagnostics": [],
+      "cpp_bytes": 26429,
+      "cpp_lines": 293,
+      "lambda_count": 104,
+      "shared_constructions": 1,
+      "timings": {
+        "full": [
+          0.376577708,
+          0.368100756,
+          0.370025423
+        ],
+        "common-declaration-edit": [
+          0.379152775,
+          0.369354326,
+          0.375131951
+        ]
+      }
+    },
+    {
+      "unit": "src/core.phs",
+      "needs_definition": true,
+      "diagnostics": [
+        "/home/alex-ai/accounting-edit-matrix-20261016/header-fanout-analysis/attempt-2/forward-only/units/n6d61696e/n7372632f636f72652e706873.cpp:17:6: error: incomplete type 'record_AccountingCheck' named in nested name specifier",
+        "/home/alex-ai/accounting-edit-matrix-20261016/header-fanout-analysis/attempt-2/forward-only/units/n6d61696e/n7372632f636f72652e706873.cpp:18:6: error: incomplete type 'record_AccountingCheck' named in nested name specifier",
+        "/home/alex-ai/accounting-edit-matrix-20261016/header-fanout-analysis/attempt-2/forward-only/units/n6d61696e/n7372632f636f72652e706873.cpp:33:19: error: member access into incomplete type 'record_AccountingCheck'",
+        "/usr/bin/../lib/gcc/x86_64-linux-gnu/13/../../../../include/c++/13/ext/aligned_buffer.h:93:28: error: invalid application of 'sizeof' to an incomplete type 'record_AccountingCheck'",
+        "/usr/bin/../lib/gcc/x86_64-linux-gnu/13/../../../../include/c++/13/ext/aligned_buffer.h:96:23: error: invalid application of 'sizeof' to an incomplete type 'record_AccountingCheck'"
+      ],
+      "cpp_bytes": 4304,
+      "cpp_lines": 74,
+      "lambda_count": 3,
+      "shared_constructions": 4,
+      "timings": {
+        "full": [
+          0.314113344,
+          0.313815478,
+          0.305704748
+        ],
+        "common-declaration-edit": [
+          0.305809973,
+          0.3123301,
+          0.307393194
+        ]
+      }
+    },
+    {
+      "unit": "src/credit_desk.phs",
+      "needs_definition": true,
+      "diagnostics": [
+        "/home/alex-ai/accounting-edit-matrix-20261016/header-fanout-analysis/attempt-2/forward-only/units/n6d61696e/n7372632f6372656469745f6465736b2e706873.cpp:35:21: error: member access into incomplete type 'record_AccountingCheck'"
+      ],
+      "cpp_bytes": 16033,
+      "cpp_lines": 210,
+      "lambda_count": 44,
+      "shared_constructions": 2,
+      "timings": {
+        "full": [
+          0.656124303,
+          0.630919745,
+          0.633904357
+        ],
+        "common-declaration-edit": [
+          0.630713296,
+          0.638905794,
+          0.629074753
+        ],
+        "signature-callers-edit": [
+          0.617366611,
+          0.604810313,
+          0.606053948
+        ],
+        "class-layout-edit": [
+          0.595829535,
+          0.601758077,
+          0.612751913
+        ]
+      }
+    },
+    {
+      "unit": "src/customer_credit.phs",
+      "needs_definition": false,
+      "diagnostics": [],
+      "cpp_bytes": 26100,
+      "cpp_lines": 286,
+      "lambda_count": 104,
+      "shared_constructions": 1,
+      "timings": {
+        "full": [
+          0.372404138,
+          0.368228466,
+          0.369371466
+        ],
+        "common-declaration-edit": [
+          0.369491691,
+          0.361803201,
+          0.385594659
+        ]
+      }
+    },
+    {
+      "unit": "src/customer_profile.phs",
+      "needs_definition": false,
+      "diagnostics": [],
+      "cpp_bytes": 25533,
+      "cpp_lines": 279,
+      "lambda_count": 100,
+      "shared_constructions": 1,
+      "timings": {
+        "full": [
+          0.372956215,
+          0.377074161,
+          0.363500142
+        ],
+        "common-declaration-edit": [
+          0.369087774,
+          0.371813961,
+          0.369394057
+        ],
+        "signature-callers-edit": [
+          0.355491157,
+          0.350756138,
+          0.352682508
+        ],
+        "class-layout-edit": [
+          0.355651888,
+          0.35760681,
+          0.34929436
+        ]
+      }
+    },
+    {
+      "unit": "src/department_budget.phs",
+      "needs_definition": false,
+      "diagnostics": [],
+      "cpp_bytes": 26176,
+      "cpp_lines": 279,
+      "lambda_count": 104,
+      "shared_constructions": 1,
+      "timings": {
+        "full": [
+          0.371316228,
+          0.366788877,
+          0.358841331
+        ],
+        "common-declaration-edit": [
+          0.371894809,
+          0.38318372,
+          0.371142527
+        ]
+      }
+    },
+    {
+      "unit": "src/document_rules.phs",
+      "needs_definition": false,
+      "diagnostics": [],
+      "cpp_bytes": 10750,
+      "cpp_lines": 211,
+      "lambda_count": 35,
+      "shared_constructions": 1,
+      "timings": {
+        "full": [
+          0.466138285,
+          0.46723294,
+          0.464160329
+        ],
+        "common-declaration-edit": [
+          0.470120843,
+          0.494029236,
+          0.454870168
+        ]
+      }
+    },
+    {
+      "unit": "src/employee_advance.phs",
+      "needs_definition": false,
+      "diagnostics": [],
+      "cpp_bytes": 26546,
+      "cpp_lines": 293,
+      "lambda_count": 106,
+      "shared_constructions": 1,
+      "timings": {
+        "full": [
+          0.381052012,
+          0.380798469,
+          0.375554736
+        ],
+        "common-declaration-edit": [
+          0.379656139,
+          0.386430632,
+          0.375880124
+        ]
+      }
+    },
+    {
+      "unit": "src/employee_profile.phs",
+      "needs_definition": false,
+      "diagnostics": [],
+      "cpp_bytes": 26128,
+      "cpp_lines": 286,
+      "lambda_count": 102,
+      "shared_constructions": 1,
+      "timings": {
+        "full": [
+          0.372045225,
+          0.368889998,
+          0.374094126
+        ],
+        "common-declaration-edit": [
+          0.377226311,
+          0.378041183,
+          0.370672956
+        ]
+      }
+    },
+    {
+      "unit": "src/exchange_rate_quote.phs",
+      "needs_definition": false,
+      "diagnostics": [],
+      "cpp_bytes": 25655,
+      "cpp_lines": 279,
+      "lambda_count": 100,
+      "shared_constructions": 1,
+      "timings": {
+        "full": [
+          0.365680926,
+          0.359496475,
+          0.369715822
+        ],
+        "common-declaration-edit": [
+          0.367718244,
+          0.382982002,
+          0.365441261
+        ]
+      }
+    },
+    {
+      "unit": "src/expense_claim_line.phs",
+      "needs_definition": false,
+      "diagnostics": [],
+      "cpp_bytes": 26633,
+      "cpp_lines": 286,
+      "lambda_count": 105,
+      "shared_constructions": 1,
+      "timings": {
+        "full": [
+          0.376444498,
+          0.370757481,
+          0.374854132
+        ],
+        "common-declaration-edit": [
+          0.367884576,
+          0.376124026,
+          0.368188104
+        ]
+      }
+    },
+    {
+      "unit": "src/expense_desk.phs",
+      "needs_definition": true,
+      "diagnostics": [
+        "/home/alex-ai/accounting-edit-matrix-20261016/header-fanout-analysis/attempt-2/forward-only/units/n6d61696e/n7372632f657870656e73655f6465736b2e706873.cpp:37:21: error: member access into incomplete type 'record_AccountingCheck'",
+        "/home/alex-ai/accounting-edit-matrix-20261016/header-fanout-analysis/attempt-2/forward-only/units/n6d61696e/n7372632f657870656e73655f6465736b2e706873.cpp:95:21: error: member access into incomplete type 'record_AccountingCheck'",
+        "/home/alex-ai/accounting-edit-matrix-20261016/header-fanout-analysis/attempt-2/forward-only/units/n6d61696e/n7372632f657870656e73655f6465736b2e706873.cpp:151:22: error: member access into incomplete type 'record_AccountingCheck'",
+        "/home/alex-ai/accounting-edit-matrix-20261016/header-fanout-analysis/attempt-2/forward-only/units/n6d61696e/n7372632f657870656e73655f6465736b2e706873.cpp:172:21: error: member access into incomplete type 'record_AccountingCheck'",
+        "/home/alex-ai/accounting-edit-matrix-20261016/header-fanout-analysis/attempt-2/forward-only/units/n6d61696e/n7372632f657870656e73655f6465736b2e706873.cpp:264:22: error: member access into incomplete type 'record_AccountingCheck'",
+        "/home/alex-ai/accounting-edit-matrix-20261016/header-fanout-analysis/attempt-2/forward-only/units/n6d61696e/n7372632f657870656e73655f6465736b2e706873.cpp:309:22: error: member access into incomplete type 'record_AccountingCheck'"
+      ],
+      "cpp_bytes": 29457,
+      "cpp_lines": 346,
+      "lambda_count": 91,
+      "shared_constructions": 3,
+      "timings": {
+        "full": [
+          0.806891446,
+          0.806408062,
+          0.795192501
+        ],
+        "common-declaration-edit": [
+          0.796341917,
+          0.816146797,
+          0.81433582
+        ]
+      }
+    },
+    {
+      "unit": "src/foreign_settlement.phs",
+      "needs_definition": false,
+      "diagnostics": [],
+      "cpp_bytes": 26095,
+      "cpp_lines": 286,
+      "lambda_count": 102,
+      "shared_constructions": 1,
+      "timings": {
+        "full": [
+          0.376128566,
+          0.374626079,
+          0.366765477
+        ],
+        "common-declaration-edit": [
+          0.37847834,
+          0.381056891,
+          0.376157565
+        ]
+      }
+    },
+    {
+      "unit": "src/goods_receipt_line.phs",
+      "needs_definition": false,
+      "diagnostics": [],
+      "cpp_bytes": 26189,
+      "cpp_lines": 286,
+      "lambda_count": 105,
+      "shared_constructions": 1,
+      "timings": {
+        "full": [
+          0.375549038,
+          0.369346254,
+          0.373138704
+        ],
+        "common-declaration-edit": [
+          0.374822281,
+          0.374896404,
+          0.371883116
+        ]
+      }
+    },
+    {
+      "unit": "src/landed_cost_charge.phs",
+      "needs_definition": false,
+      "diagnostics": [],
+      "cpp_bytes": 26230,
+      "cpp_lines": 286,
+      "lambda_count": 102,
+      "shared_constructions": 1,
+      "timings": {
+        "full": [
+          0.369863873,
+          0.370683723,
+          0.36891543
+        ],
+        "common-declaration-edit": [
+          0.368261764,
+          0.378113569,
+          0.372424402
+        ]
+      }
+    },
+    {
+      "unit": "src/lease_agreement.phs",
+      "needs_definition": false,
+      "diagnostics": [],
+      "cpp_bytes": 26172,
+      "cpp_lines": 286,
+      "lambda_count": 102,
+      "shared_constructions": 1,
+      "timings": {
+        "full": [
+          0.374525228,
+          0.370293381,
+          0.374542296
+        ],
+        "common-declaration-edit": [
+          0.370360771,
+          0.368624838,
+          0.367772535
+        ]
+      }
+    },
+    {
+      "unit": "src/ledger.phs",
+      "needs_definition": true,
+      "diagnostics": [
+        "/home/alex-ai/accounting-edit-matrix-20261016/header-fanout-analysis/attempt-2/forward-only/units/n6d61696e/n7372632f6c65646765722e706873.cpp:341:19: error: member access into incomplete type 'record_AccountingCheck'",
+        "/home/alex-ai/accounting-edit-matrix-20261016/header-fanout-analysis/attempt-2/forward-only/units/n6d61696e/n7372632f6c65646765722e706873.cpp:433:21: error: member access into incomplete type 'record_AccountingCheck'"
+      ],
+      "cpp_bytes": 39337,
+      "cpp_lines": 513,
+      "lambda_count": 109,
+      "shared_constructions": 6,
+      "timings": {
+        "full": [
+          0.927268296,
+          0.929556269,
+          0.922061365
+        ],
+        "common-declaration-edit": [
+          0.933013966,
+          0.930406748,
+          0.932967099
+        ]
+      }
+    },
+    {
+      "unit": "src/loan_agreement.phs",
+      "needs_definition": false,
+      "diagnostics": [],
+      "cpp_bytes": 26281,
+      "cpp_lines": 286,
+      "lambda_count": 102,
+      "shared_constructions": 1,
+      "timings": {
+        "full": [
+          0.374291168,
+          0.37075671,
+          0.381541337
+        ],
+        "common-declaration-edit": [
+          0.365503409,
+          0.369831121,
+          0.366722275
+        ]
+      }
+    },
+    {
+      "unit": "src/payment_instruction.phs",
+      "needs_definition": false,
+      "diagnostics": [],
+      "cpp_bytes": 25889,
+      "cpp_lines": 279,
+      "lambda_count": 101,
+      "shared_constructions": 1,
+      "timings": {
+        "full": [
+          0.372863089,
+          0.380529614,
+          0.373715556
+        ],
+        "common-declaration-edit": [
+          0.377026386,
+          0.374827004,
+          0.37452367
+        ]
+      }
+    },
+    {
+      "unit": "src/payroll_desk.phs",
+      "needs_definition": true,
+      "diagnostics": [
+        "/home/alex-ai/accounting-edit-matrix-20261016/header-fanout-analysis/attempt-2/forward-only/units/n6d61696e/n7372632f706179726f6c6c5f6465736b2e706873.cpp:34:31: error: member access into incomplete type 'record_AccountingCheck'",
+        "/home/alex-ai/accounting-edit-matrix-20261016/header-fanout-analysis/attempt-2/forward-only/units/n6d61696e/n7372632f706179726f6c6c5f6465736b2e706873.cpp:42:21: error: member access into incomplete type 'record_AccountingCheck'",
+        "/home/alex-ai/accounting-edit-matrix-20261016/header-fanout-analysis/attempt-2/forward-only/units/n6d61696e/n7372632f706179726f6c6c5f6465736b2e706873.cpp:125:22: error: member access into incomplete type 'record_AccountingCheck'",
+        "/home/alex-ai/accounting-edit-matrix-20261016/header-fanout-analysis/attempt-2/forward-only/units/n6d61696e/n7372632f706179726f6c6c5f6465736b2e706873.cpp:179:22: error: member access into incomplete type 'record_AccountingCheck'",
+        "/home/alex-ai/accounting-edit-matrix-20261016/header-fanout-analysis/attempt-2/forward-only/units/n6d61696e/n7372632f706179726f6c6c5f6465736b2e706873.cpp:216:22: error: member access into incomplete type 'record_AccountingCheck'"
+      ],
+      "cpp_bytes": 17651,
+      "cpp_lines": 237,
+      "lambda_count": 51,
+      "shared_constructions": 2,
+      "timings": {
+        "full": [
+          0.668917183,
+          0.663149749,
+          0.673945774
+        ],
+        "common-declaration-edit": [
+          0.670750005,
+          0.665796961,
+          0.669864074
+        ]
+      }
+    },
+    {
+      "unit": "src/payroll_instruction.phs",
+      "needs_definition": false,
+      "diagnostics": [],
+      "cpp_bytes": 26174,
+      "cpp_lines": 279,
+      "lambda_count": 104,
+      "shared_constructions": 1,
+      "timings": {
+        "full": [
+          0.373455792,
+          0.378722223,
+          0.375409945
+        ],
+        "common-declaration-edit": [
+          0.378247136,
+          0.382337153,
+          0.368391486
+        ]
+      }
+    },
+    {
+      "unit": "src/procurement_desk.phs",
+      "needs_definition": true,
+      "diagnostics": [
+        "/home/alex-ai/accounting-edit-matrix-20261016/header-fanout-analysis/attempt-2/forward-only/units/n6d61696e/n7372632f70726f637572656d656e745f6465736b2e706873.cpp:41:21: error: member access into incomplete type 'record_AccountingCheck'",
+        "/home/alex-ai/accounting-edit-matrix-20261016/header-fanout-analysis/attempt-2/forward-only/units/n6d61696e/n7372632f70726f637572656d656e745f6465736b2e706873.cpp:106:21: error: member access into incomplete type 'record_AccountingCheck'",
+        "/home/alex-ai/accounting-edit-matrix-20261016/header-fanout-analysis/attempt-2/forward-only/units/n6d61696e/n7372632f70726f637572656d656e745f6465736b2e706873.cpp:171:22: error: member access into incomplete type 'record_AccountingCheck'",
+        "/home/alex-ai/accounting-edit-matrix-20261016/header-fanout-analysis/attempt-2/forward-only/units/n6d61696e/n7372632f70726f637572656d656e745f6465736b2e706873.cpp:192:21: error: member access into incomplete type 'record_AccountingCheck'",
+        "/home/alex-ai/accounting-edit-matrix-20261016/header-fanout-analysis/attempt-2/forward-only/units/n6d61696e/n7372632f70726f637572656d656e745f6465736b2e706873.cpp:319:22: error: member access into incomplete type 'record_AccountingCheck'",
+        "/home/alex-ai/accounting-edit-matrix-20261016/header-fanout-analysis/attempt-2/forward-only/units/n6d61696e/n7372632f70726f637572656d656e745f6465736b2e706873.cpp:341:21: error: member access into incomplete type 'record_AccountingCheck'",
+        "/home/alex-ai/accounting-edit-matrix-20261016/header-fanout-analysis/attempt-2/forward-only/units/n6d61696e/n7372632f70726f637572656d656e745f6465736b2e706873.cpp:399:22: error: member access into incomplete type 'record_AccountingCheck'"
+      ],
+      "cpp_bytes": 37568,
+      "cpp_lines": 433,
+      "lambda_count": 118,
+      "shared_constructions": 3,
+      "timings": {
+        "full": [
+          0.931248112,
+          0.944063835,
+          0.937244659
+        ],
+        "common-declaration-edit": [
+          0.935220134,
+          0.935587798,
+          0.936976772
+        ]
+      }
+    },
+    {
+      "unit": "src/project_budget.phs",
+      "needs_definition": false,
+      "diagnostics": [],
+      "cpp_bytes": 26235,
+      "cpp_lines": 286,
+      "lambda_count": 104,
+      "shared_constructions": 1,
+      "timings": {
+        "full": [
+          0.372109536,
+          0.375400803,
+          0.36861149
+        ],
+        "common-declaration-edit": [
+          0.380483932,
+          0.374472829,
+          0.383172796
+        ]
+      }
+    },
+    {
+      "unit": "src/project_desk.phs",
+      "needs_definition": true,
+      "diagnostics": [
+        "/home/alex-ai/accounting-edit-matrix-20261016/header-fanout-analysis/attempt-2/forward-only/units/n6d61696e/n7372632f70726f6a6563745f6465736b2e706873.cpp:38:21: error: member access into incomplete type 'record_AccountingCheck'",
+        "/home/alex-ai/accounting-edit-matrix-20261016/header-fanout-analysis/attempt-2/forward-only/units/n6d61696e/n7372632f70726f6a6563745f6465736b2e706873.cpp:96:21: error: member access into incomplete type 'record_AccountingCheck'",
+        "/home/alex-ai/accounting-edit-matrix-20261016/header-fanout-analysis/attempt-2/forward-only/units/n6d61696e/n7372632f70726f6a6563745f6465736b2e706873.cpp:151:22: error: member access into incomplete type 'record_AccountingCheck'",
+        "/home/alex-ai/accounting-edit-matrix-20261016/header-fanout-analysis/attempt-2/forward-only/units/n6d61696e/n7372632f70726f6a6563745f6465736b2e706873.cpp:174:21: error: member access into incomplete type 'record_AccountingCheck'",
+        "/home/alex-ai/accounting-edit-matrix-20261016/header-fanout-analysis/attempt-2/forward-only/units/n6d61696e/n7372632f70726f6a6563745f6465736b2e706873.cpp:215:22: error: member access into incomplete type 'record_AccountingCheck'",
+        "/home/alex-ai/accounting-edit-matrix-20261016/header-fanout-analysis/attempt-2/forward-only/units/n6d61696e/n7372632f70726f6a6563745f6465736b2e706873.cpp:277:22: error: member access into incomplete type 'record_AccountingCheck'"
+      ],
+      "cpp_bytes": 24530,
+      "cpp_lines": 286,
+      "lambda_count": 67,
+      "shared_constructions": 2,
+      "timings": {
+        "full": [
+          0.760770391,
+          0.753889999,
+          0.766473614
+        ],
+        "common-declaration-edit": [
+          0.765865243,
+          0.753646757,
+          0.753422527
+        ]
+      }
+    },
+    {
+      "unit": "src/project_milestone.phs",
+      "needs_definition": false,
+      "diagnostics": [],
+      "cpp_bytes": 26945,
+      "cpp_lines": 293,
+      "lambda_count": 104,
+      "shared_constructions": 1,
+      "timings": {
+        "full": [
+          0.377568627,
+          0.371536844,
+          0.383423177
+        ],
+        "common-declaration-edit": [
+          0.369850714,
+          0.370727513,
+          0.371756198
+        ]
+      }
+    },
+    {
+      "unit": "src/purchase_order_line.phs",
+      "needs_definition": false,
+      "diagnostics": [],
+      "cpp_bytes": 26566,
+      "cpp_lines": 293,
+      "lambda_count": 106,
+      "shared_constructions": 1,
+      "timings": {
+        "full": [
+          0.370405669,
+          0.374528015,
+          0.372749623
+        ],
+        "common-declaration-edit": [
+          0.376380284,
+          0.369554442,
+          0.371310071
+        ]
+      }
+    },
+    {
+      "unit": "src/purchasing.phs",
+      "needs_definition": true,
+      "diagnostics": [
+        "/home/alex-ai/accounting-edit-matrix-20261016/header-fanout-analysis/attempt-2/forward-only/units/n6d61696e/n7372632f70757263686173696e672e706873.cpp:226:21: error: member access into incomplete type 'record_AccountingCheck'",
+        "/home/alex-ai/accounting-edit-matrix-20261016/header-fanout-analysis/attempt-2/forward-only/units/n6d61696e/n7372632f70757263686173696e672e706873.cpp:323:19: error: member access into incomplete type 'record_AccountingCheck'",
+        "/home/alex-ai/accounting-edit-matrix-20261016/header-fanout-analysis/attempt-2/forward-only/units/n6d61696e/n7372632f70757263686173696e672e706873.cpp:411:19: error: member access into incomplete type 'record_AccountingCheck'"
+      ],
+      "cpp_bytes": 41116,
+      "cpp_lines": 521,
+      "lambda_count": 132,
+      "shared_constructions": 7,
+      "timings": {
+        "full": [
+          1.026084758,
+          1.016088483,
+          1.032482834
+        ],
+        "common-declaration-edit": [
+          1.027507196,
+          1.030224565,
+          1.034134859
+        ]
+      }
+    },
+    {
+      "unit": "src/receipt_allocation.phs",
+      "needs_definition": false,
+      "diagnostics": [],
+      "cpp_bytes": 26260,
+      "cpp_lines": 286,
+      "lambda_count": 103,
+      "shared_constructions": 1,
+      "timings": {
+        "full": [
+          0.36794346,
+          0.372950165,
+          0.388219866
+        ],
+        "common-declaration-edit": [
+          0.370656046,
+          0.37618418,
+          0.374568063
+        ]
+      }
+    },
+    {
+      "unit": "src/reports.phs",
+      "needs_definition": false,
+      "diagnostics": [],
+      "cpp_bytes": 15138,
+      "cpp_lines": 213,
+      "lambda_count": 40,
+      "shared_constructions": 6,
+      "timings": {
+        "full": [
+          0.684040144,
+          0.674763016,
+          0.678720771
+        ],
+        "common-declaration-edit": [
+          0.681353146,
+          0.67851982,
+          0.683568923
+        ]
+      }
+    },
+    {
+      "unit": "src/sales.phs",
+      "needs_definition": true,
+      "diagnostics": [
+        "/home/alex-ai/accounting-edit-matrix-20261016/header-fanout-analysis/attempt-2/forward-only/units/n6d61696e/n7372632f73616c65732e706873.cpp:110:19: error: member access into incomplete type 'record_AccountingCheck'",
+        "/home/alex-ai/accounting-edit-matrix-20261016/header-fanout-analysis/attempt-2/forward-only/units/n6d61696e/n7372632f73616c65732e706873.cpp:174:19: error: member access into incomplete type 'record_AccountingCheck'"
+      ],
+      "cpp_bytes": 15042,
+      "cpp_lines": 225,
+      "lambda_count": 42,
+      "shared_constructions": 3,
+      "timings": {
+        "full": [
+          0.60862308,
+          0.597536519,
+          0.604365112
+        ],
+        "common-declaration-edit": [
+          0.607766027,
+          0.599802376,
+          0.608552253
+        ]
+      }
+    },
+    {
+      "unit": "src/sales_order_line.phs",
+      "needs_definition": false,
+      "diagnostics": [],
+      "cpp_bytes": 26353,
+      "cpp_lines": 293,
+      "lambda_count": 105,
+      "shared_constructions": 1,
+      "timings": {
+        "full": [
+          0.364714673,
+          0.372632148,
+          0.374235441
+        ],
+        "common-declaration-edit": [
+          0.369543789,
+          0.371568079,
+          0.373947128
+        ]
+      }
+    },
+    {
+      "unit": "src/sales_quote_line.phs",
+      "needs_definition": false,
+      "diagnostics": [],
+      "cpp_bytes": 25825,
+      "cpp_lines": 279,
+      "lambda_count": 103,
+      "shared_constructions": 1,
+      "timings": {
+        "full": [
+          0.365242052,
+          0.375134603,
+          0.373265631
+        ],
+        "common-declaration-edit": [
+          0.373053432,
+          0.371744341,
+          0.368024207
+        ]
+      }
+    },
+    {
+      "unit": "src/self_test.phs",
+      "needs_definition": true,
+      "diagnostics": [
+        "/home/alex-ai/accounting-edit-matrix-20261016/header-fanout-analysis/attempt-2/forward-only/units/n6d61696e/n7372632f73656c665f746573742e706873.cpp:76:22: error: member access into incomplete type 'record_AccountingCheck'",
+        "/home/alex-ai/accounting-edit-matrix-20261016/header-fanout-analysis/attempt-2/forward-only/units/n6d61696e/n7372632f73656c665f746573742e706873.cpp:77:38: error: member access into incomplete type 'record_AccountingCheck'",
+        "/home/alex-ai/accounting-edit-matrix-20261016/header-fanout-analysis/attempt-2/forward-only/units/n6d61696e/n7372632f73656c665f746573742e706873.cpp:90:20: error: member access into incomplete type 'record_AccountingCheck'",
+        "/home/alex-ai/accounting-edit-matrix-20261016/header-fanout-analysis/attempt-2/forward-only/units/n6d61696e/n7372632f73656c665f746573742e706873.cpp:91:36: error: member access into incomplete type 'record_AccountingCheck'",
+        "/home/alex-ai/accounting-edit-matrix-20261016/header-fanout-analysis/attempt-2/forward-only/units/n6d61696e/n7372632f73656c665f746573742e706873.cpp:141:85: error: member access into incomplete type 'record_AccountingCheck'"
+      ],
+      "cpp_bytes": 11075,
+      "cpp_lines": 226,
+      "lambda_count": 35,
+      "shared_constructions": 4,
+      "timings": {
+        "full": [
+          0.893355885,
+          0.889805676,
+          0.891624686
+        ],
+        "common-declaration-edit": [
+          0.890336502,
+          0.888569532,
+          0.88685835
+        ]
+      }
+    },
+    {
+      "unit": "src/stock.phs",
+      "needs_definition": true,
+      "diagnostics": [
+        "/home/alex-ai/accounting-edit-matrix-20261016/header-fanout-analysis/attempt-2/forward-only/units/n6d61696e/n7372632f73746f636b2e706873.cpp:149:21: error: member access into incomplete type 'record_AccountingCheck'",
+        "/home/alex-ai/accounting-edit-matrix-20261016/header-fanout-analysis/attempt-2/forward-only/units/n6d61696e/n7372632f73746f636b2e706873.cpp:310:21: error: member access into incomplete type 'record_AccountingCheck'",
+        "/home/alex-ai/accounting-edit-matrix-20261016/header-fanout-analysis/attempt-2/forward-only/units/n6d61696e/n7372632f73746f636b2e706873.cpp:312:44: error: member access into incomplete type 'record_AccountingCheck'"
+      ],
+      "cpp_bytes": 37325,
+      "cpp_lines": 435,
+      "lambda_count": 113,
+      "shared_constructions": 6,
+      "timings": {
+        "full": [
+          0.917768273,
+          0.910027422,
+          0.905804007
+        ],
+        "common-declaration-edit": [
+          0.896462343,
+          0.902178772,
+          0.903354907
+        ]
+      }
+    },
+    {
+      "unit": "src/stock_count_line.phs",
+      "needs_definition": false,
+      "diagnostics": [],
+      "cpp_bytes": 24940,
+      "cpp_lines": 272,
+      "lambda_count": 99,
+      "shared_constructions": 1,
+      "timings": {
+        "full": [
+          0.363890456,
+          0.366570787,
+          0.365944848
+        ],
+        "common-declaration-edit": [
+          0.371179267,
+          0.370972442,
+          0.361268243
+        ]
+      }
+    },
+    {
+      "unit": "src/supplier_contract.phs",
+      "needs_definition": false,
+      "diagnostics": [],
+      "cpp_bytes": 25664,
+      "cpp_lines": 279,
+      "lambda_count": 100,
+      "shared_constructions": 1,
+      "timings": {
+        "full": [
+          0.3680719,
+          0.368274413,
+          0.368947491
+        ],
+        "common-declaration-edit": [
+          0.370909912,
+          0.370274954,
+          0.371256862
+        ]
+      }
+    },
+    {
+      "unit": "src/supplier_invoice_match.phs",
+      "needs_definition": false,
+      "diagnostics": [],
+      "cpp_bytes": 26356,
+      "cpp_lines": 279,
+      "lambda_count": 101,
+      "shared_constructions": 1,
+      "timings": {
+        "full": [
+          0.365476973,
+          0.367822155,
+          0.370190583
+        ],
+        "common-declaration-edit": [
+          0.368693604,
+          0.368729865,
+          0.378522011
+        ]
+      }
+    },
+    {
+      "unit": "src/supplier_return.phs",
+      "needs_definition": false,
+      "diagnostics": [],
+      "cpp_bytes": 26165,
+      "cpp_lines": 286,
+      "lambda_count": 103,
+      "shared_constructions": 1,
+      "timings": {
+        "full": [
+          0.374785436,
+          0.374981787,
+          0.371506471
+        ],
+        "common-declaration-edit": [
+          0.378309022,
+          0.37112567,
+          0.379246529
+        ]
+      }
+    },
+    {
+      "unit": "src/tax_control_line.phs",
+      "needs_definition": false,
+      "diagnostics": [],
+      "cpp_bytes": 26128,
+      "cpp_lines": 286,
+      "lambda_count": 102,
+      "shared_constructions": 1,
+      "timings": {
+        "full": [
+          0.37956907,
+          0.374030552,
+          0.368636788
+        ],
+        "common-declaration-edit": [
+          0.366328677,
+          0.375322864,
+          0.372685962
+        ]
+      }
+    },
+    {
+      "unit": "src/time_sheet_line.phs",
+      "needs_definition": false,
+      "diagnostics": [],
+      "cpp_bytes": 25360,
+      "cpp_lines": 279,
+      "lambda_count": 100,
+      "shared_constructions": 1,
+      "timings": {
+        "full": [
+          0.37918554,
+          0.377246495,
+          0.368856791
+        ],
+        "common-declaration-edit": [
+          0.364152164,
+          0.371787913,
+          0.377062052
+        ]
+      }
+    },
+    {
+      "unit": "src/treasury_desk.phs",
+      "needs_definition": true,
+      "diagnostics": [
+        "/home/alex-ai/accounting-edit-matrix-20261016/header-fanout-analysis/attempt-2/forward-only/units/n6d61696e/n7372632f74726561737572795f6465736b2e706873.cpp:78:21: error: member access into incomplete type 'record_AccountingCheck'",
+        "/home/alex-ai/accounting-edit-matrix-20261016/header-fanout-analysis/attempt-2/forward-only/units/n6d61696e/n7372632f74726561737572795f6465736b2e706873.cpp:144:22: error: member access into incomplete type 'record_AccountingCheck'",
+        "/home/alex-ai/accounting-edit-matrix-20261016/header-fanout-analysis/attempt-2/forward-only/units/n6d61696e/n7372632f74726561737572795f6465736b2e706873.cpp:183:22: error: member access into incomplete type 'record_AccountingCheck'",
+        "/home/alex-ai/accounting-edit-matrix-20261016/header-fanout-analysis/attempt-2/forward-only/units/n6d61696e/n7372632f74726561737572795f6465736b2e706873.cpp:254:22: error: member access into incomplete type 'record_AccountingCheck'",
+        "/home/alex-ai/accounting-edit-matrix-20261016/header-fanout-analysis/attempt-2/forward-only/units/n6d61696e/n7372632f74726561737572795f6465736b2e706873.cpp:292:22: error: member access into incomplete type 'record_AccountingCheck'",
+        "/home/alex-ai/accounting-edit-matrix-20261016/header-fanout-analysis/attempt-2/forward-only/units/n6d61696e/n7372632f74726561737572795f6465736b2e706873.cpp:309:52: error: member access into incomplete type 'record_AccountingCheck'",
+        "/home/alex-ai/accounting-edit-matrix-20261016/header-fanout-analysis/attempt-2/forward-only/units/n6d61696e/n7372632f74726561737572795f6465736b2e706873.cpp:332:21: error: member access into incomplete type 'record_AccountingCheck'",
+        "/home/alex-ai/accounting-edit-matrix-20261016/header-fanout-analysis/attempt-2/forward-only/units/n6d61696e/n7372632f74726561737572795f6465736b2e706873.cpp:413:22: error: member access into incomplete type 'record_AccountingCheck'"
+      ],
+      "cpp_bytes": 34832,
+      "cpp_lines": 425,
+      "lambda_count": 106,
+      "shared_constructions": 4,
+      "timings": {
+        "full": [
+          0.963231704,
+          0.974118218,
+          0.956164692
+        ],
+        "common-declaration-edit": [
+          0.968944622,
+          0.963636037,
+          0.973485912
+        ]
+      }
+    },
+    {
+      "unit": "src/warehouse_desk.phs",
+      "needs_definition": true,
+      "diagnostics": [
+        "/home/alex-ai/accounting-edit-matrix-20261016/header-fanout-analysis/attempt-2/forward-only/units/n6d61696e/n7372632f77617265686f7573655f6465736b2e706873.cpp:51:21: error: member access into incomplete type 'record_AccountingCheck'",
+        "/home/alex-ai/accounting-edit-matrix-20261016/header-fanout-analysis/attempt-2/forward-only/units/n6d61696e/n7372632f77617265686f7573655f6465736b2e706873.cpp:169:22: error: member access into incomplete type 'record_AccountingCheck'",
+        "/home/alex-ai/accounting-edit-matrix-20261016/header-fanout-analysis/attempt-2/forward-only/units/n6d61696e/n7372632f77617265686f7573655f6465736b2e706873.cpp:194:21: error: member access into incomplete type 'record_AccountingCheck'",
+        "/home/alex-ai/accounting-edit-matrix-20261016/header-fanout-analysis/attempt-2/forward-only/units/n6d61696e/n7372632f77617265686f7573655f6465736b2e706873.cpp:296:21: error: member access into incomplete type 'record_AccountingCheck'",
+        "/home/alex-ai/accounting-edit-matrix-20261016/header-fanout-analysis/attempt-2/forward-only/units/n6d61696e/n7372632f77617265686f7573655f6465736b2e706873.cpp:383:22: error: member access into incomplete type 'record_AccountingCheck'"
+      ],
+      "cpp_bytes": 37572,
+      "cpp_lines": 400,
+      "lambda_count": 112,
+      "shared_constructions": 2,
+      "timings": {
+        "full": [
+          0.964656727,
+          0.965632438,
+          0.962739998
+        ],
+        "common-declaration-edit": [
+          0.95508463,
+          0.952798314,
+          0.959000357
+        ]
+      }
+    },
+    {
+      "unit": "src/warehouse_location.phs",
+      "needs_definition": false,
+      "diagnostics": [],
+      "cpp_bytes": 26130,
+      "cpp_lines": 286,
+      "lambda_count": 104,
+      "shared_constructions": 1,
+      "timings": {
+        "full": [
+          0.366121192,
+          0.367316597,
+          0.368700226
+        ],
+        "common-declaration-edit": [
+          0.365640085,
+          0.369868641,
+          0.369990245
+        ]
+      }
+    },
+    {
+      "unit": "src/warehouse_transfer.phs",
+      "needs_definition": false,
+      "diagnostics": [],
+      "cpp_bytes": 26996,
+      "cpp_lines": 293,
+      "lambda_count": 107,
+      "shared_constructions": 1,
+      "timings": {
+        "full": [
+          0.369095241,
+          0.379900404,
+          0.365854879
+        ],
+        "common-declaration-edit": [
+          0.36390498,
+          0.370624179,
+          0.367371993
+        ]
+      }
+    },
+    {
+      "unit": "src/workflow_checks.phs",
+      "needs_definition": false,
+      "diagnostics": [],
+      "cpp_bytes": 116813,
+      "cpp_lines": 2486,
+      "lambda_count": 366,
+      "shared_constructions": 8,
+      "timings": {
+        "full": [
+          2.869445492,
+          2.816128681,
+          2.871928571
+        ],
+        "common-declaration-edit": [
+          2.80177364,
+          2.853301498,
+          2.855019064
+        ],
+        "signature-callers-edit": [
+          2.866619489,
+          2.853086136,
+          2.886814391
+        ],
+        "class-layout-edit": [
+          2.795792809,
+          2.804360191,
+          2.818610137
+        ]
+      }
+    }
+  ],
+  "traces": {
+    "profile-workflow_checks": {
+      "totals_s": {
+        "Total ExecuteCompiler": 3.075688,
+        "Total Frontend": 2.257628,
+        "Total InstantiateFunction": 1.546964,
+        "Total PerformPendingInstantiations": 1.46343,
+        "Total InstantiateClass": 0.958372,
+        "Total Backend": 0.797841,
+        "Total CodeGenPasses": 0.766066,
+        "Total OptModule": 0.755461,
+        "Total OptFunction": 0.683858,
+        "Total RunPass": 0.658618,
+        "Total ParseDeclarationOrFunctionDefinition": 0.392719,
+        "Total CodeGen Function": 0.350204,
+        "Total Source": 0.27603,
+        "Total ParseClass": 0.271366,
+        "Total ParseFunctionDefinition": 0.150287,
+        "Total EvaluateAsConstantExpr": 0.072661,
+        "Total EvaluateAsRValue": 0.062178,
+        "Total Optimizer": 0.029117,
+        "Total AlwaysInlinerPass": 0.023184,
+        "Total EvaluateForOverflow": 0.014315,
+        "Total EvaluateAsInt": 0.014277,
+        "Total EvaluateAsInitializer": 0.012009,
+        "Total BlockFrequencyAnalysis": 0.00667,
+        "Total ModuleToFunctionPassAdaptor": 0.005914,
+        "Total BranchProbabilityAnalysis": 0.005495,
+        "Total AnnotationRemarksPass": 0.004312,
+        "Total EvaluateAsBooleanCondition": 0.004243,
+        "Total EvaluateKnownConstInt": 0.003852,
+        "Total TargetLibraryAnalysis": 0.002081,
+        "Total AAManager": 0.001862,
+        "Total LoopAnalysis": 0.001696,
+        "Total isIntegerConstantExpr": 0.001644,
+        "Total PostDominatorTreeAnalysis": 0.001141,
+        "Total AssumptionAnalysis": 0.001133,
+        "Total ReadAST": 0.001096,
+        "Total BasicAA": 0.000983,
+        "Total DominatorTreeAnalysis": 0.000967,
+        "Total TargetIRAnalysis": 0.000677,
+        "Total Read Loaded AST": 0.000392,
+        "Total OuterAnalysisManagerProxy<ModuleAnalysisManager, Function>": 7.7e-05,
+        "Total ScopedNoAliasAA": 6.6e-05,
+        "Total TypeBasedAA": 6e-05,
+        "Total CoroConditionalWrapper": 8e-06,
+        "Total EvaluateAsLValue": 1e-06,
+        "Total ProfileSummaryAnalysis": 1e-06,
+        "Total InnerAnalysisManagerProxy<FunctionAnalysisManager, Module>": 0.0
+      },
+      "largest_instantiations": [
+        {
+          "kind": "InstantiateFunction",
+          "seconds": 0.229298,
+          "detail": "scpp::shared<record_WarehouseDesk>"
+        },
+        {
+          "kind": "InstantiateFunction",
+          "seconds": 0.22878,
+          "detail": "std::make_shared<record_WarehouseDesk>"
+        },
+        {
+          "kind": "InstantiateFunction",
+          "seconds": 0.228688,
+          "detail": "std::shared_ptr<record_WarehouseDesk>::shared_ptr<std::allocator<void>>"
+        },
+        {
+          "kind": "InstantiateFunction",
+          "seconds": 0.228597,
+          "detail": "std::__shared_ptr<record_WarehouseDesk>::__shared_ptr<std::allocator<void>>"
+        },
+        {
+          "kind": "InstantiateFunction",
+          "seconds": 0.228337,
+          "detail": "std::__shared_count<>::__shared_count<record_WarehouseDesk, std::allocator<void>>"
+        },
+        {
+          "kind": "InstantiateFunction",
+          "seconds": 0.226451,
+          "detail": "std::_Sp_counted_ptr_inplace<record_WarehouseDesk, std::allocator<void>, __gnu_cxx::_S_atomic>::_Sp_counted_ptr_inplace<>"
+        },
+        {
+          "kind": "InstantiateFunction",
+          "seconds": 0.225347,
+          "detail": "scpp::shared<record_ProcurementDesk>"
+        },
+        {
+          "kind": "InstantiateFunction",
+          "seconds": 0.224764,
+          "detail": "std::make_shared<record_ProcurementDesk>"
+        },
+        {
+          "kind": "InstantiateFunction",
+          "seconds": 0.224675,
+          "detail": "std::shared_ptr<record_ProcurementDesk>::shared_ptr<std::allocator<void>>"
+        },
+        {
+          "kind": "InstantiateFunction",
+          "seconds": 0.224586,
+          "detail": "std::__shared_ptr<record_ProcurementDesk>::__shared_ptr<std::allocator<void>>"
+        },
+        {
+          "kind": "InstantiateFunction",
+          "seconds": 0.224343,
+          "detail": "std::__shared_count<>::__shared_count<record_ProcurementDesk, std::allocator<void>>"
+        },
+        {
+          "kind": "InstantiateFunction",
+          "seconds": 0.222456,
+          "detail": "std::_Sp_counted_ptr_inplace<record_ProcurementDesk, std::allocator<void>, __gnu_cxx::_S_atomic>::_Sp_counted_ptr_inplace<>"
+        },
+        {
+          "kind": "InstantiateFunction",
+          "seconds": 0.178334,
+          "detail": "scpp::shared<record_ExpenseDesk>"
+        },
+        {
+          "kind": "InstantiateFunction",
+          "seconds": 0.177811,
+          "detail": "std::make_shared<record_ExpenseDesk>"
+        },
+        {
+          "kind": "InstantiateFunction",
+          "seconds": 0.177722,
+          "detail": "std::shared_ptr<record_ExpenseDesk>::shared_ptr<std::allocator<void>>"
+        },
+        {
+          "kind": "InstantiateFunction",
+          "seconds": 0.177633,
+          "detail": "std::__shared_ptr<record_ExpenseDesk>::__shared_ptr<std::allocator<void>>"
+        },
+        {
+          "kind": "InstantiateFunction",
+          "seconds": 0.177377,
+          "detail": "std::__shared_count<>::__shared_count<record_ExpenseDesk, std::allocator<void>>"
+        },
+        {
+          "kind": "InstantiateFunction",
+          "seconds": 0.175444,
+          "detail": "std::_Sp_counted_ptr_inplace<record_ExpenseDesk, std::allocator<void>, __gnu_cxx::_S_atomic>::_Sp_counted_ptr_inplace<>"
+        },
+        {
+          "kind": "InstantiateFunction",
+          "seconds": 0.171158,
+          "detail": "scpp::shared<record_ProjectDesk>"
+        },
+        {
+          "kind": "InstantiateFunction",
+          "seconds": 0.170638,
+          "detail": "std::make_shared<record_ProjectDesk>"
+        },
+        {
+          "kind": "InstantiateFunction",
+          "seconds": 0.170542,
+          "detail": "std::shared_ptr<record_ProjectDesk>::shared_ptr<std::allocator<void>>"
+        },
+        {
+          "kind": "InstantiateFunction",
+          "seconds": 0.170453,
+          "detail": "std::__shared_ptr<record_ProjectDesk>::__shared_ptr<std::allocator<void>>"
+        },
+        {
+          "kind": "InstantiateFunction",
+          "seconds": 0.170204,
+          "detail": "std::__shared_count<>::__shared_count<record_ProjectDesk, std::allocator<void>>"
+        },
+        {
+          "kind": "InstantiateFunction",
+          "seconds": 0.169399,
+          "detail": "scpp::shared<record_TreasuryDesk>"
+        },
+        {
+          "kind": "InstantiateFunction",
+          "seconds": 0.168874,
+          "detail": "std::make_shared<record_TreasuryDesk>"
+        },
+        {
+          "kind": "InstantiateFunction",
+          "seconds": 0.168779,
+          "detail": "std::shared_ptr<record_TreasuryDesk>::shared_ptr<std::allocator<void>>"
+        },
+        {
+          "kind": "InstantiateFunction",
+          "seconds": 0.168695,
+          "detail": "std::__shared_ptr<record_TreasuryDesk>::__shared_ptr<std::allocator<void>>"
+        },
+        {
+          "kind": "InstantiateFunction",
+          "seconds": 0.168448,
+          "detail": "std::__shared_count<>::__shared_count<record_TreasuryDesk, std::allocator<void>>"
+        },
+        {
+          "kind": "InstantiateFunction",
+          "seconds": 0.16832,
+          "detail": "std::_Sp_counted_ptr_inplace<record_ProjectDesk, std::allocator<void>, __gnu_cxx::_S_atomic>::_Sp_counted_ptr_inplace<>"
+        },
+        {
+          "kind": "InstantiateFunction",
+          "seconds": 0.166566,
+          "detail": "std::_Sp_counted_ptr_inplace<record_TreasuryDesk, std::allocator<void>, __gnu_cxx::_S_atomic>::_Sp_counted_ptr_inplace<>"
+        }
+      ]
+    },
+    "profile-customer_profile": {
+      "totals_s": {
+        "Total ExecuteCompiler": 0.342126,
+        "Total Frontend": 0.265223,
+        "Total InstantiateFunction": 0.136153,
+        "Total PerformPendingInstantiations": 0.129284,
+        "Total InstantiateClass": 0.081913,
+        "Total Backend": 0.068358,
+        "Total ParseDeclarationOrFunctionDefinition": 0.067492,
+        "Total CodeGenPasses": 0.064347,
+        "Total OptModule": 0.064093,
+        "Total ParseFunctionDefinition": 0.062139,
+        "Total OptFunction": 0.060911,
+        "Total RunPass": 0.059211,
+        "Total Source": 0.050328,
+        "Total ParseClass": 0.031136,
+        "Total CodeGen Function": 0.0294,
+        "Total EvaluateAsConstantExpr": 0.006076,
+        "Total EvaluateAsRValue": 0.005148,
+        "Total EvaluateAsInitializer": 0.004151,
+        "Total Optimizer": 0.003353,
+        "Total AlwaysInlinerPass": 0.002923,
+        "Total ReadAST": 0.001599,
+        "Total EvaluateAsBooleanCondition": 0.001355,
+        "Total EvaluateForOverflow": 0.00108,
+        "Total BlockFrequencyAnalysis": 0.00104,
+        "Total EvaluateAsInt": 0.000971,
+        "Total BranchProbabilityAnalysis": 0.000835,
+        "Total Read Loaded AST": 0.000596,
+        "Total AAManager": 0.000546,
+        "Total AssumptionAnalysis": 0.000417,
+        "Total ModuleToFunctionPassAdaptor": 0.000414,
+        "Total BasicAA": 0.000405,
+        "Total TargetIRAnalysis": 0.000355,
+        "Total AnnotationRemarksPass": 0.000341,
+        "Total LoopAnalysis": 0.000263,
+        "Total EvaluateKnownConstInt": 0.000183,
+        "Total PostDominatorTreeAnalysis": 0.000169,
+        "Total TargetLibraryAnalysis": 0.000141,
+        "Total DominatorTreeAnalysis": 0.000128,
+        "Total isIntegerConstantExpr": 0.0001,
+        "Total OuterAnalysisManagerProxy<ModuleAnalysisManager, Function>": 1.2e-05,
+        "Total ScopedNoAliasAA": 1e-05,
+        "Total TypeBasedAA": 9e-06,
+        "Total CoroConditionalWrapper": 6e-06,
+        "Total ProfileSummaryAnalysis": 1e-06,
+        "Total InnerAnalysisManagerProxy<FunctionAnalysisManager, Module>": 0.0
+      },
+      "largest_instantiations": [
+        {
+          "kind": "InstantiateFunction",
+          "seconds": 0.047676,
+          "detail": "scpp::hash_detail::packed_table<scpp::detail::dynamic_value>::set"
+        },
+        {
+          "kind": "InstantiateFunction",
+          "seconds": 0.047545,
+          "detail": "scpp::hash_detail::packed_table<scpp::detail::dynamic_value>::insert_or_assign_int"
+        },
+        {
+          "kind": "InstantiateFunction",
+          "seconds": 0.027468,
+          "detail": "scpp::initialization_detail::populate_keyed<scpp::hash_detail::packed_table<scpp::detail::dynamic_value>, scpp::detail::dynamic_value, scpp::mixed_t>"
+        },
+        {
+          "kind": "InstantiateFunction",
+          "seconds": 0.021932,
+          "detail": "scpp::hash_detail::packed_table<scpp::detail::dynamic_value>::has"
+        },
+        {
+          "kind": "InstantiateFunction",
+          "seconds": 0.019326,
+          "detail": "scpp::hash_detail::packed_table<scpp::detail::dynamic_value>::find_int"
+        },
+        {
+          "kind": "InstantiateFunction",
+          "seconds": 0.015094,
+          "detail": "scpp::initialization_detail::populate_keyed<scpp::hash_t<mixed_t, mixed_t>, scpp::mixed_t, scpp::mixed_t>"
+        },
+        {
+          "kind": "InstantiateFunction",
+          "seconds": 0.01362,
+          "detail": "scpp::hash_detail::packed_table<scpp::detail::dynamic_value>::add_to_index"
+        },
+        {
+          "kind": "InstantiateFunction",
+          "seconds": 0.01218,
+          "detail": "std::visit<(lambda at /home/alex-ai/accounting-edit-matrix-20261016/repo/runtime/include/scpp/support/hash_t.hpp:985:14), const std::variant<std::monostate, scpp::hash_detail::flat_hash_index_t<unsigned char>, scpp::hash_detail::flat_hash_index_t<unsigned short>, scpp::hash_detail::flat_hash_index_t<unsigned int>> &>"
+        },
+        {
+          "kind": "InstantiateFunction",
+          "seconds": 0.010864,
+          "detail": "scpp::hash_detail::packed_table<scpp::detail::dynamic_value>::wake_up_associative_mode"
+        },
+        {
+          "kind": "InstantiateClass",
+          "seconds": 0.010431,
+          "detail": "scpp::shared_p<record_AccountingCheck>"
+        },
+        {
+          "kind": "InstantiateFunction",
+          "seconds": 0.010283,
+          "detail": "scpp::hash_detail::packed_table<scpp::mixed_t>::has"
+        },
+        {
+          "kind": "InstantiateFunction",
+          "seconds": 0.010262,
+          "detail": "std::vector<scpp::detail::dynamic_value>::push_back"
+        },
+        {
+          "kind": "InstantiateFunction",
+          "seconds": 0.010195,
+          "detail": "std::vector<scpp::detail::dynamic_value>::emplace_back<scpp::detail::dynamic_value>"
+        },
+        {
+          "kind": "InstantiateFunction",
+          "seconds": 0.010146,
+          "detail": "scpp::hash_detail::packed_table<scpp::detail::dynamic_value>::rehash"
+        },
+        {
+          "kind": "InstantiateFunction",
+          "seconds": 0.009528,
+          "detail": "scpp::hash_detail::packed_table<scpp::detail::dynamic_value>::find_int"
+        },
+        {
+          "kind": "InstantiateFunction",
+          "seconds": 0.009256,
+          "detail": "scpp::hash_detail::packed_table<scpp::mixed_t>::find_int"
+        },
+        {
+          "kind": "InstantiateFunction",
+          "seconds": 0.008379,
+          "detail": "scpp::initialization_detail::populate_list<scpp::hash_detail::packed_table<scpp::detail::dynamic_value>, scpp::detail::dynamic_value>"
+        },
+        {
+          "kind": "InstantiateClass",
+          "seconds": 0.008097,
+          "detail": "std::is_constructible<std::__shared_ptr<scpp::hash_t<mixed_t, mixed_t>>, std::unique_ptr<scpp::hash_t<mixed_t, mixed_t>>>"
+        },
+        {
+          "kind": "InstantiateFunction",
+          "seconds": 0.007815,
+          "detail": "scpp::data_initializer<scpp::vector_t<scpp::string_t>>::from_list"
+        },
+        {
+          "kind": "InstantiateFunction",
+          "seconds": 0.007566,
+          "detail": "scpp::initializer_list<scpp::detail::dynamic_value>::end"
+        },
+        {
+          "kind": "InstantiateClass",
+          "seconds": 0.007454,
+          "detail": "std::optional<scpp::detail::dynamic_value>"
+        },
+        {
+          "kind": "InstantiateFunction",
+          "seconds": 0.007191,
+          "detail": "std::__do_visit<std::__detail::__variant::__deduce_visit_result<void>, (lambda at /home/alex-ai/accounting-edit-matrix-20261016/repo/runtime/include/scpp/support/hash_t.hpp:985:14), const std::variant<std::monostate, scpp::hash_detail::flat_hash_index_t<unsigned char>, scpp::hash_detail::flat_hash_index_t<unsigned short>, scpp::hash_detail::flat_hash_index_t<unsigned int>> &>"
+        },
+        {
+          "kind": "InstantiateFunction",
+          "seconds": 0.007132,
+          "detail": "scpp::initialization_detail::populate_list<scpp::vector_t<scpp::string_t>, scpp::string_t>"
+        },
+        {
+          "kind": "InstantiateFunction",
+          "seconds": 0.00699,
+          "detail": "std::visit<(lambda at /home/alex-ai/accounting-edit-matrix-20261016/repo/runtime/include/scpp/support/hash_t.hpp:869:14), std::variant<std::monostate, scpp::hash_detail::flat_hash_index_t<unsigned char>, scpp::hash_detail::flat_hash_index_t<unsigned short>, scpp::hash_detail::flat_hash_index_t<unsigned int>> &>"
+        },
+        {
+          "kind": "InstantiateClass",
+          "seconds": 0.006847,
+          "detail": "std::is_constructible<std::__shared_ptr<record_AccountingCheck>, const std::shared_ptr<record_AccountingCheck> &>"
+        },
+        {
+          "kind": "InstantiateFunction",
+          "seconds": 0.006803,
+          "detail": "scpp::shared<record_CustomerProfile>"
+        },
+        {
+          "kind": "InstantiateFunction",
+          "seconds": 0.006713,
+          "detail": "std::vector<scpp::detail::dynamic_value>::_M_realloc_insert<scpp::detail::dynamic_value>"
+        },
+        {
+          "kind": "InstantiateFunction",
+          "seconds": 0.006688,
+          "detail": "std::visit<(lambda at /home/alex-ai/accounting-edit-matrix-20261016/repo/runtime/include/scpp/support/hash_t.hpp:954:14), std::variant<std::monostate, scpp::hash_detail::flat_hash_index_t<unsigned char>, scpp::hash_detail::flat_hash_index_t<unsigned short>, scpp::hash_detail::flat_hash_index_t<unsigned int>> &>"
+        },
+        {
+          "kind": "InstantiateFunction",
+          "seconds": 0.006568,
+          "detail": "scpp::hash_detail::packed_table<scpp::detail::dynamic_value>::check_and_rehash"
+        },
+        {
+          "kind": "InstantiateFunction",
+          "seconds": 0.006414,
+          "detail": "std::make_shared<record_CustomerProfile>"
+        }
+      ]
+    },
+    "profile-closing_checks": {
+      "totals_s": {
+        "Total ExecuteCompiler": 1.781855,
+        "Total Frontend": 1.323557,
+        "Total InstantiateFunction": 0.868841,
+        "Total PerformPendingInstantiations": 0.799887,
+        "Total InstantiateClass": 0.573033,
+        "Total Backend": 0.446082,
+        "Total CodeGenPasses": 0.42706,
+        "Total OptModule": 0.421124,
+        "Total OptFunction": 0.389705,
+        "Total RunPass": 0.374875,
+        "Total ParseDeclarationOrFunctionDefinition": 0.269539,
+        "Total CodeGen Function": 0.208137,
+        "Total Source": 0.188916,
+        "Total ParseClass": 0.185989,
+        "Total ParseFunctionDefinition": 0.113196,
+        "Total EvaluateAsConstantExpr": 0.041606,
+        "Total EvaluateAsRValue": 0.033365,
+        "Total Optimizer": 0.017481,
+        "Total AlwaysInlinerPass": 0.01379,
+        "Total EvaluateAsInt": 0.007953,
+        "Total EvaluateAsInitializer": 0.007685,
+        "Total EvaluateForOverflow": 0.007682,
+        "Total BlockFrequencyAnalysis": 0.0046,
+        "Total BranchProbabilityAnalysis": 0.00377,
+        "Total ModuleToFunctionPassAdaptor": 0.003674,
+        "Total AnnotationRemarksPass": 0.002891,
+        "Total EvaluateAsBooleanCondition": 0.002507,
+        "Total EvaluateKnownConstInt": 0.002283,
+        "Total isIntegerConstantExpr": 0.001411,
+        "Total AAManager": 0.001403,
+        "Total LoopAnalysis": 0.001224,
+        "Total TargetLibraryAnalysis": 0.001135,
+        "Total ReadAST": 0.001091,
+        "Total AssumptionAnalysis": 0.00086,
+        "Total PostDominatorTreeAnalysis": 0.00077,
+        "Total BasicAA": 0.000759,
+        "Total DominatorTreeAnalysis": 0.000638,
+        "Total TargetIRAnalysis": 0.000565,
+        "Total Read Loaded AST": 0.000398,
+        "Total OuterAnalysisManagerProxy<ModuleAnalysisManager, Function>": 5.6e-05,
+        "Total ScopedNoAliasAA": 5.2e-05,
+        "Total TypeBasedAA": 4.5e-05,
+        "Total CoroConditionalWrapper": 6e-06,
+        "Total EvaluateAsLValue": 2e-06,
+        "Total ProfileSummaryAnalysis": 1e-06,
+        "Total InnerAnalysisManagerProxy<FunctionAnalysisManager, Module>": 0.0
+      },
+      "largest_instantiations": [
+        {
+          "kind": "InstantiateFunction",
+          "seconds": 0.186413,
+          "detail": "scpp::shared<record_BankReconciliation>"
+        },
+        {
+          "kind": "InstantiateFunction",
+          "seconds": 0.185904,
+          "detail": "std::make_shared<record_BankReconciliation>"
+        },
+        {
+          "kind": "InstantiateFunction",
+          "seconds": 0.185821,
+          "detail": "std::shared_ptr<record_BankReconciliation>::shared_ptr<std::allocator<void>>"
+        },
+        {
+          "kind": "InstantiateFunction",
+          "seconds": 0.185741,
+          "detail": "std::__shared_ptr<record_BankReconciliation>::__shared_ptr<std::allocator<void>>"
+        },
+        {
+          "kind": "InstantiateFunction",
+          "seconds": 0.185498,
+          "detail": "std::__shared_count<>::__shared_count<record_BankReconciliation, std::allocator<void>>"
+        },
+        {
+          "kind": "InstantiateFunction",
+          "seconds": 0.183667,
+          "detail": "std::_Sp_counted_ptr_inplace<record_BankReconciliation, std::allocator<void>, __gnu_cxx::_S_atomic>::_Sp_counted_ptr_inplace<>"
+        },
+        {
+          "kind": "InstantiateFunction",
+          "seconds": 0.118457,
+          "detail": "scpp::shared<record_InventoryBook>"
+        },
+        {
+          "kind": "InstantiateFunction",
+          "seconds": 0.117956,
+          "detail": "std::make_shared<record_InventoryBook>"
+        },
+        {
+          "kind": "InstantiateFunction",
+          "seconds": 0.117875,
+          "detail": "std::shared_ptr<record_InventoryBook>::shared_ptr<std::allocator<void>>"
+        },
+        {
+          "kind": "InstantiateFunction",
+          "seconds": 0.117783,
+          "detail": "std::__shared_ptr<record_InventoryBook>::__shared_ptr<std::allocator<void>>"
+        },
+        {
+          "kind": "InstantiateFunction",
+          "seconds": 0.117538,
+          "detail": "std::__shared_count<>::__shared_count<record_InventoryBook, std::allocator<void>>"
+        },
+        {
+          "kind": "InstantiateFunction",
+          "seconds": 0.117417,
+          "detail": "scpp::shared<record_PurchasingBook>"
+        },
+        {
+          "kind": "InstantiateFunction",
+          "seconds": 0.116913,
+          "detail": "std::make_shared<record_PurchasingBook>"
+        },
+        {
+          "kind": "InstantiateFunction",
+          "seconds": 0.116826,
+          "detail": "std::shared_ptr<record_PurchasingBook>::shared_ptr<std::allocator<void>>"
+        },
+        {
+          "kind": "InstantiateFunction",
+          "seconds": 0.116744,
+          "detail": "std::__shared_ptr<record_PurchasingBook>::__shared_ptr<std::allocator<void>>"
+        },
+        {
+          "kind": "InstantiateFunction",
+          "seconds": 0.116502,
+          "detail": "std::__shared_count<>::__shared_count<record_PurchasingBook, std::allocator<void>>"
+        },
+        {
+          "kind": "InstantiateFunction",
+          "seconds": 0.115675,
+          "detail": "std::_Sp_counted_ptr_inplace<record_InventoryBook, std::allocator<void>, __gnu_cxx::_S_atomic>::_Sp_counted_ptr_inplace<>"
+        },
+        {
+          "kind": "InstantiateFunction",
+          "seconds": 0.114862,
+          "detail": "scpp::shared<record_AdjustmentBook>"
+        },
+        {
+          "kind": "InstantiateFunction",
+          "seconds": 0.114615,
+          "detail": "std::_Sp_counted_ptr_inplace<record_PurchasingBook, std::allocator<void>, __gnu_cxx::_S_atomic>::_Sp_counted_ptr_inplace<>"
+        },
+        {
+          "kind": "InstantiateFunction",
+          "seconds": 0.114369,
+          "detail": "std::make_shared<record_AdjustmentBook>"
+        },
+        {
+          "kind": "InstantiateFunction",
+          "seconds": 0.114282,
+          "detail": "std::shared_ptr<record_AdjustmentBook>::shared_ptr<std::allocator<void>>"
+        },
+        {
+          "kind": "InstantiateFunction",
+          "seconds": 0.114191,
+          "detail": "std::__shared_ptr<record_AdjustmentBook>::__shared_ptr<std::allocator<void>>"
+        },
+        {
+          "kind": "InstantiateFunction",
+          "seconds": 0.11395,
+          "detail": "std::__shared_count<>::__shared_count<record_AdjustmentBook, std::allocator<void>>"
+        },
+        {
+          "kind": "InstantiateFunction",
+          "seconds": 0.112048,
+          "detail": "std::_Sp_counted_ptr_inplace<record_AdjustmentBook, std::allocator<void>, __gnu_cxx::_S_atomic>::_Sp_counted_ptr_inplace<>"
+        },
+        {
+          "kind": "InstantiateFunction",
+          "seconds": 0.072292,
+          "detail": "scpp::data_initializer<scpp::hash_t<scpp::shared_p<record_BankStatementLine>, scpp::string_t>>::from_key_value"
+        },
+        {
+          "kind": "InstantiateFunction",
+          "seconds": 0.06529,
+          "detail": "scpp::shared<record_SalesService>"
+        },
+        {
+          "kind": "InstantiateFunction",
+          "seconds": 0.064792,
+          "detail": "std::make_shared<record_SalesService>"
+        },
+        {
+          "kind": "InstantiateFunction",
+          "seconds": 0.064702,
+          "detail": "std::shared_ptr<record_SalesService>::shared_ptr<std::allocator<void>>"
+        },
+        {
+          "kind": "InstantiateFunction",
+          "seconds": 0.064613,
+          "detail": "std::__shared_ptr<record_SalesService>::__shared_ptr<std::allocator<void>>"
+        },
+        {
+          "kind": "InstantiateFunction",
+          "seconds": 0.064367,
+          "detail": "std::__shared_count<>::__shared_count<record_SalesService, std::allocator<void>>"
+        }
+      ]
+    }
+  },
+  "percentiles": {
+    "full": {
+      "count": 279,
+      "p50": 0.369371466,
+      "p80": 0.684040144,
+      "p95": 1.17781962,
+      "max": 2.871928571
+    },
+    "common-declaration-edit": {
+      "count": 267,
+      "p50": 0.369850714,
+      "p80": 0.683139478,
+      "p95": 1.18097578,
+      "max": 2.855019064
+    },
+    "signature-callers-edit": {
+      "count": 15,
+      "p50": 0.606053948,
+      "p80": 0.767292444,
+      "p95": 2.886814391,
+      "max": 2.886814391
+    },
+    "class-layout-edit": {
+      "count": 15,
+      "p50": 0.601758077,
+      "p80": 0.75280508,
+      "p95": 2.818610137,
+      "max": 2.818610137
+    }
+  }
+}

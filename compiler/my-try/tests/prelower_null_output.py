@@ -51,6 +51,10 @@ def main():
             assert runner.run('public-default-execute', [default_build['executable']]) == b'[p1:p2]2'
             runner.run('public-explicit-pch-reject', [*public_build, '--pch'], expected=1, cli_reason='Public native build')
             assert 'runtime PCH is incompatible' in (out / 'logs/public-explicit-pch-reject.stderr').read_text()
+            runner.run('ninja-concrete-reject', ['php', APP / 'tools/build_ninja.php',
+                cli_published, out / 'ninja-cache'], expected=1, cli_reason='Public Ninja boundary')
+            assert 'Ninja does not yet support concrete layouts' in (
+                out / 'logs/ninja-concrete-reject.stderr').read_text()
             runner.run('closure', [sys.executable, APP / 'tests/prelower_template_closure.py',
                 '--published', cli_published, '--commands', recorder.with_suffix('.jsonl'),
                 '--results', out / 'closure'])

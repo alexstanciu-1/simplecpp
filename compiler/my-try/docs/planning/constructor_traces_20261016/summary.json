@@ -1,0 +1,1135 @@
+[
+  {
+    "name": "pch",
+    "command": [
+      "/usr/bin/clang++-18",
+      "--driver-mode=g++",
+      "-std=c++23",
+      "-O0",
+      "-DSCPP_LANGUAGE_TARGET_PHP=1",
+      "-pthread",
+      "-I",
+      "/home/alex-ai/accounting-shared-handles-20261016/repo/runtime/include",
+      "-fpch-instantiate-templates",
+      "-x",
+      "c++-header",
+      "/home/alex-ai/accounting-shared-handles-20261016/bench/build-1/runtime-pch.hpp",
+      "-o",
+      "/home/alex-ai/accounting-shared-handles-20261016/results/runtime.pch"
+    ],
+    "elapsed": 1.7499250583350658,
+    "user": 1.62,
+    "system": 0.12,
+    "peak_rss_kib": 251456
+  },
+  {
+    "name": "workflow_checks-1",
+    "command": [
+      "/usr/bin/clang++-18",
+      "--driver-mode=g++",
+      "-std=c++23",
+      "-O0",
+      "-DSCPP_LANGUAGE_TARGET_PHP=1",
+      "-pthread",
+      "-I",
+      "/home/alex-ai/accounting-shared-handles-20261016/repo/runtime/include",
+      "-I",
+      "/home/alex-ai/accounting-shared-handles-20261016/bench/published-1",
+      "-include-pch",
+      "/home/alex-ai/accounting-shared-handles-20261016/results/runtime.pch",
+      "-c",
+      "/home/alex-ai/accounting-shared-handles-20261016/bench/published-1/units/n6d61696e/n7372632f776f726b666c6f775f636865636b732e706873.cpp",
+      "-ftime-trace",
+      "-o",
+      "/home/alex-ai/accounting-shared-handles-20261016/results/workflow_checks-1.o"
+    ],
+    "elapsed": 3.0795395113527775,
+    "user": 2.93,
+    "system": 0.14,
+    "peak_rss_kib": 303852,
+    "stages": {
+      "Total ExecuteCompiler": 3.051536,
+      "Total Frontend": 2.247917,
+      "Total InstantiateFunction": 1.526089,
+      "Total InstantiateClass": 0.962535,
+      "Total Backend": 0.784561
+    },
+    "top_templates": [
+      {
+        "name": "InstantiateFunction",
+        "detail": "scpp::shared<record_WarehouseDesk>",
+        "seconds": 0.224112
+      },
+      {
+        "name": "InstantiateFunction",
+        "detail": "std::make_shared<record_WarehouseDesk>",
+        "seconds": 0.223611
+      },
+      {
+        "name": "InstantiateFunction",
+        "detail": "std::shared_ptr<record_WarehouseDesk>::shared_ptr<std::allocator<void>>",
+        "seconds": 0.223519
+      },
+      {
+        "name": "InstantiateFunction",
+        "detail": "std::__shared_ptr<record_WarehouseDesk>::__shared_ptr<std::allocator<void>>",
+        "seconds": 0.22343
+      },
+      {
+        "name": "InstantiateFunction",
+        "detail": "std::__shared_count<>::__shared_count<record_WarehouseDesk, std::allocator<void>>",
+        "seconds": 0.223186
+      },
+      {
+        "name": "InstantiateFunction",
+        "detail": "scpp::shared<record_ProcurementDesk>",
+        "seconds": 0.222556
+      },
+      {
+        "name": "InstantiateFunction",
+        "detail": "std::make_shared<record_ProcurementDesk>",
+        "seconds": 0.222031
+      },
+      {
+        "name": "InstantiateFunction",
+        "detail": "std::shared_ptr<record_ProcurementDesk>::shared_ptr<std::allocator<void>>",
+        "seconds": 0.221943
+      },
+      {
+        "name": "InstantiateFunction",
+        "detail": "std::__shared_ptr<record_ProcurementDesk>::__shared_ptr<std::allocator<void>>",
+        "seconds": 0.221848
+      },
+      {
+        "name": "InstantiateFunction",
+        "detail": "std::__shared_count<>::__shared_count<record_ProcurementDesk, std::allocator<void>>",
+        "seconds": 0.221596
+      },
+      {
+        "name": "InstantiateFunction",
+        "detail": "std::_Sp_counted_ptr_inplace<record_WarehouseDesk, std::allocator<void>, __gnu_cxx::_S_atomic>::_Sp_counted_ptr_inplace<>",
+        "seconds": 0.221347
+      },
+      {
+        "name": "InstantiateFunction",
+        "detail": "std::_Sp_counted_ptr_inplace<record_ProcurementDesk, std::allocator<void>, __gnu_cxx::_S_atomic>::_Sp_counted_ptr_inplace<>",
+        "seconds": 0.219697
+      },
+      {
+        "name": "InstantiateFunction",
+        "detail": "scpp::shared<record_ExpenseDesk>",
+        "seconds": 0.175196
+      },
+      {
+        "name": "InstantiateFunction",
+        "detail": "std::make_shared<record_ExpenseDesk>",
+        "seconds": 0.174689
+      },
+      {
+        "name": "InstantiateFunction",
+        "detail": "std::shared_ptr<record_ExpenseDesk>::shared_ptr<std::allocator<void>>",
+        "seconds": 0.174603
+      },
+      {
+        "name": "InstantiateFunction",
+        "detail": "std::__shared_ptr<record_ExpenseDesk>::__shared_ptr<std::allocator<void>>",
+        "seconds": 0.174518
+      },
+      {
+        "name": "InstantiateFunction",
+        "detail": "std::__shared_count<>::__shared_count<record_ExpenseDesk, std::allocator<void>>",
+        "seconds": 0.174274
+      },
+      {
+        "name": "InstantiateFunction",
+        "detail": "std::_Sp_counted_ptr_inplace<record_ExpenseDesk, std::allocator<void>, __gnu_cxx::_S_atomic>::_Sp_counted_ptr_inplace<>",
+        "seconds": 0.172403
+      },
+      {
+        "name": "InstantiateFunction",
+        "detail": "scpp::shared<record_ProjectDesk>",
+        "seconds": 0.167811
+      },
+      {
+        "name": "InstantiateFunction",
+        "detail": "std::make_shared<record_ProjectDesk>",
+        "seconds": 0.167295
+      },
+      {
+        "name": "InstantiateFunction",
+        "detail": "std::shared_ptr<record_ProjectDesk>::shared_ptr<std::allocator<void>>",
+        "seconds": 0.167207
+      },
+      {
+        "name": "InstantiateFunction",
+        "detail": "std::__shared_ptr<record_ProjectDesk>::__shared_ptr<std::allocator<void>>",
+        "seconds": 0.16712
+      },
+      {
+        "name": "InstantiateFunction",
+        "detail": "std::__shared_count<>::__shared_count<record_ProjectDesk, std::allocator<void>>",
+        "seconds": 0.166865
+      },
+      {
+        "name": "InstantiateFunction",
+        "detail": "scpp::shared<record_TreasuryDesk>",
+        "seconds": 0.166319
+      },
+      {
+        "name": "InstantiateFunction",
+        "detail": "std::make_shared<record_TreasuryDesk>",
+        "seconds": 0.165807
+      },
+      {
+        "name": "InstantiateFunction",
+        "detail": "std::shared_ptr<record_TreasuryDesk>::shared_ptr<std::allocator<void>>",
+        "seconds": 0.165717
+      },
+      {
+        "name": "InstantiateFunction",
+        "detail": "std::__shared_ptr<record_TreasuryDesk>::__shared_ptr<std::allocator<void>>",
+        "seconds": 0.165634
+      },
+      {
+        "name": "InstantiateFunction",
+        "detail": "std::__shared_count<>::__shared_count<record_TreasuryDesk, std::allocator<void>>",
+        "seconds": 0.165382
+      },
+      {
+        "name": "InstantiateFunction",
+        "detail": "std::_Sp_counted_ptr_inplace<record_ProjectDesk, std::allocator<void>, __gnu_cxx::_S_atomic>::_Sp_counted_ptr_inplace<>",
+        "seconds": 0.16501
+      },
+      {
+        "name": "InstantiateFunction",
+        "detail": "std::_Sp_counted_ptr_inplace<record_TreasuryDesk, std::allocator<void>, __gnu_cxx::_S_atomic>::_Sp_counted_ptr_inplace<>",
+        "seconds": 0.16355
+      }
+    ]
+  },
+  {
+    "name": "closing_checks-1",
+    "command": [
+      "/usr/bin/clang++-18",
+      "--driver-mode=g++",
+      "-std=c++23",
+      "-O0",
+      "-DSCPP_LANGUAGE_TARGET_PHP=1",
+      "-pthread",
+      "-I",
+      "/home/alex-ai/accounting-shared-handles-20261016/repo/runtime/include",
+      "-I",
+      "/home/alex-ai/accounting-shared-handles-20261016/bench/published-1",
+      "-include-pch",
+      "/home/alex-ai/accounting-shared-handles-20261016/results/runtime.pch",
+      "-c",
+      "/home/alex-ai/accounting-shared-handles-20261016/bench/published-1/units/n6d61696e/n7372632f636c6f73696e675f636865636b732e706873.cpp",
+      "-ftime-trace",
+      "-o",
+      "/home/alex-ai/accounting-shared-handles-20261016/results/closing_checks-1.o"
+    ],
+    "elapsed": 1.7857485301792622,
+    "user": 1.68,
+    "system": 0.09,
+    "peak_rss_kib": 233352,
+    "stages": {
+      "Total ExecuteCompiler": 1.760529,
+      "Total Frontend": 1.312069,
+      "Total InstantiateFunction": 0.852833,
+      "Total InstantiateClass": 0.566198,
+      "Total Backend": 0.436642
+    },
+    "top_templates": [
+      {
+        "name": "InstantiateFunction",
+        "detail": "scpp::shared<record_BankReconciliation>",
+        "seconds": 0.185489
+      },
+      {
+        "name": "InstantiateFunction",
+        "detail": "std::make_shared<record_BankReconciliation>",
+        "seconds": 0.184983
+      },
+      {
+        "name": "InstantiateFunction",
+        "detail": "std::shared_ptr<record_BankReconciliation>::shared_ptr<std::allocator<void>>",
+        "seconds": 0.184902
+      },
+      {
+        "name": "InstantiateFunction",
+        "detail": "std::__shared_ptr<record_BankReconciliation>::__shared_ptr<std::allocator<void>>",
+        "seconds": 0.184817
+      },
+      {
+        "name": "InstantiateFunction",
+        "detail": "std::__shared_count<>::__shared_count<record_BankReconciliation, std::allocator<void>>",
+        "seconds": 0.184573
+      },
+      {
+        "name": "InstantiateFunction",
+        "detail": "std::_Sp_counted_ptr_inplace<record_BankReconciliation, std::allocator<void>, __gnu_cxx::_S_atomic>::_Sp_counted_ptr_inplace<>",
+        "seconds": 0.182749
+      },
+      {
+        "name": "InstantiateFunction",
+        "detail": "scpp::shared<record_InventoryBook>",
+        "seconds": 0.117777
+      },
+      {
+        "name": "InstantiateFunction",
+        "detail": "std::make_shared<record_InventoryBook>",
+        "seconds": 0.117284
+      },
+      {
+        "name": "InstantiateFunction",
+        "detail": "std::shared_ptr<record_InventoryBook>::shared_ptr<std::allocator<void>>",
+        "seconds": 0.117195
+      },
+      {
+        "name": "InstantiateFunction",
+        "detail": "std::__shared_ptr<record_InventoryBook>::__shared_ptr<std::allocator<void>>",
+        "seconds": 0.117105
+      },
+      {
+        "name": "InstantiateFunction",
+        "detail": "std::__shared_count<>::__shared_count<record_InventoryBook, std::allocator<void>>",
+        "seconds": 0.11686
+      },
+      {
+        "name": "InstantiateFunction",
+        "detail": "scpp::shared<record_PurchasingBook>",
+        "seconds": 0.116717
+      },
+      {
+        "name": "InstantiateFunction",
+        "detail": "std::make_shared<record_PurchasingBook>",
+        "seconds": 0.116211
+      },
+      {
+        "name": "InstantiateFunction",
+        "detail": "std::shared_ptr<record_PurchasingBook>::shared_ptr<std::allocator<void>>",
+        "seconds": 0.116125
+      },
+      {
+        "name": "InstantiateFunction",
+        "detail": "std::__shared_ptr<record_PurchasingBook>::__shared_ptr<std::allocator<void>>",
+        "seconds": 0.116043
+      },
+      {
+        "name": "InstantiateFunction",
+        "detail": "std::__shared_count<>::__shared_count<record_PurchasingBook, std::allocator<void>>",
+        "seconds": 0.115798
+      },
+      {
+        "name": "InstantiateFunction",
+        "detail": "std::_Sp_counted_ptr_inplace<record_InventoryBook, std::allocator<void>, __gnu_cxx::_S_atomic>::_Sp_counted_ptr_inplace<>",
+        "seconds": 0.115006
+      },
+      {
+        "name": "InstantiateFunction",
+        "detail": "std::_Sp_counted_ptr_inplace<record_PurchasingBook, std::allocator<void>, __gnu_cxx::_S_atomic>::_Sp_counted_ptr_inplace<>",
+        "seconds": 0.113925
+      },
+      {
+        "name": "InstantiateFunction",
+        "detail": "scpp::shared<record_AdjustmentBook>",
+        "seconds": 0.113851
+      },
+      {
+        "name": "InstantiateFunction",
+        "detail": "std::make_shared<record_AdjustmentBook>",
+        "seconds": 0.113357
+      },
+      {
+        "name": "InstantiateFunction",
+        "detail": "std::shared_ptr<record_AdjustmentBook>::shared_ptr<std::allocator<void>>",
+        "seconds": 0.113267
+      },
+      {
+        "name": "InstantiateFunction",
+        "detail": "std::__shared_ptr<record_AdjustmentBook>::__shared_ptr<std::allocator<void>>",
+        "seconds": 0.113178
+      },
+      {
+        "name": "InstantiateFunction",
+        "detail": "std::__shared_count<>::__shared_count<record_AdjustmentBook, std::allocator<void>>",
+        "seconds": 0.112939
+      },
+      {
+        "name": "InstantiateFunction",
+        "detail": "std::_Sp_counted_ptr_inplace<record_AdjustmentBook, std::allocator<void>, __gnu_cxx::_S_atomic>::_Sp_counted_ptr_inplace<>",
+        "seconds": 0.111063
+      },
+      {
+        "name": "InstantiateFunction",
+        "detail": "scpp::data_initializer<scpp::hash_t<scpp::shared_p<record_BankStatementLine>, scpp::string_t>>::from_key_value",
+        "seconds": 0.071821
+      },
+      {
+        "name": "InstantiateFunction",
+        "detail": "scpp::shared<record_SalesService>",
+        "seconds": 0.064287
+      },
+      {
+        "name": "InstantiateFunction",
+        "detail": "std::make_shared<record_SalesService>",
+        "seconds": 0.063787
+      },
+      {
+        "name": "InstantiateFunction",
+        "detail": "std::shared_ptr<record_SalesService>::shared_ptr<std::allocator<void>>",
+        "seconds": 0.063703
+      },
+      {
+        "name": "InstantiateFunction",
+        "detail": "std::__shared_ptr<record_SalesService>::__shared_ptr<std::allocator<void>>",
+        "seconds": 0.063615
+      },
+      {
+        "name": "InstantiateFunction",
+        "detail": "std::__shared_count<>::__shared_count<record_SalesService, std::allocator<void>>",
+        "seconds": 0.063378
+      }
+    ]
+  },
+  {
+    "name": "workflow_checks-2",
+    "command": [
+      "/usr/bin/clang++-18",
+      "--driver-mode=g++",
+      "-std=c++23",
+      "-O0",
+      "-DSCPP_LANGUAGE_TARGET_PHP=1",
+      "-pthread",
+      "-I",
+      "/home/alex-ai/accounting-shared-handles-20261016/repo/runtime/include",
+      "-I",
+      "/home/alex-ai/accounting-shared-handles-20261016/bench/published-1",
+      "-include-pch",
+      "/home/alex-ai/accounting-shared-handles-20261016/results/runtime.pch",
+      "-c",
+      "/home/alex-ai/accounting-shared-handles-20261016/bench/published-1/units/n6d61696e/n7372632f776f726b666c6f775f636865636b732e706873.cpp",
+      "-ftime-trace",
+      "-o",
+      "/home/alex-ai/accounting-shared-handles-20261016/results/workflow_checks-2.o"
+    ],
+    "elapsed": 3.052910089492798,
+    "user": 2.88,
+    "system": 0.16,
+    "peak_rss_kib": 303960,
+    "stages": {
+      "Total ExecuteCompiler": 3.024386,
+      "Total Frontend": 2.218131,
+      "Total InstantiateFunction": 1.514556,
+      "Total InstantiateClass": 0.939786,
+      "Total Backend": 0.787772
+    },
+    "top_templates": [
+      {
+        "name": "InstantiateFunction",
+        "detail": "scpp::shared<record_WarehouseDesk>",
+        "seconds": 0.225969
+      },
+      {
+        "name": "InstantiateFunction",
+        "detail": "std::make_shared<record_WarehouseDesk>",
+        "seconds": 0.225466
+      },
+      {
+        "name": "InstantiateFunction",
+        "detail": "std::shared_ptr<record_WarehouseDesk>::shared_ptr<std::allocator<void>>",
+        "seconds": 0.225377
+      },
+      {
+        "name": "InstantiateFunction",
+        "detail": "std::__shared_ptr<record_WarehouseDesk>::__shared_ptr<std::allocator<void>>",
+        "seconds": 0.225289
+      },
+      {
+        "name": "InstantiateFunction",
+        "detail": "std::__shared_count<>::__shared_count<record_WarehouseDesk, std::allocator<void>>",
+        "seconds": 0.225034
+      },
+      {
+        "name": "InstantiateFunction",
+        "detail": "std::_Sp_counted_ptr_inplace<record_WarehouseDesk, std::allocator<void>, __gnu_cxx::_S_atomic>::_Sp_counted_ptr_inplace<>",
+        "seconds": 0.223156
+      },
+      {
+        "name": "InstantiateFunction",
+        "detail": "scpp::shared<record_ProcurementDesk>",
+        "seconds": 0.222596
+      },
+      {
+        "name": "InstantiateFunction",
+        "detail": "std::make_shared<record_ProcurementDesk>",
+        "seconds": 0.222077
+      },
+      {
+        "name": "InstantiateFunction",
+        "detail": "std::shared_ptr<record_ProcurementDesk>::shared_ptr<std::allocator<void>>",
+        "seconds": 0.22199
+      },
+      {
+        "name": "InstantiateFunction",
+        "detail": "std::__shared_ptr<record_ProcurementDesk>::__shared_ptr<std::allocator<void>>",
+        "seconds": 0.221902
+      },
+      {
+        "name": "InstantiateFunction",
+        "detail": "std::__shared_count<>::__shared_count<record_ProcurementDesk, std::allocator<void>>",
+        "seconds": 0.221655
+      },
+      {
+        "name": "InstantiateFunction",
+        "detail": "std::_Sp_counted_ptr_inplace<record_ProcurementDesk, std::allocator<void>, __gnu_cxx::_S_atomic>::_Sp_counted_ptr_inplace<>",
+        "seconds": 0.219799
+      },
+      {
+        "name": "InstantiateFunction",
+        "detail": "scpp::shared<record_ExpenseDesk>",
+        "seconds": 0.175621
+      },
+      {
+        "name": "InstantiateFunction",
+        "detail": "std::make_shared<record_ExpenseDesk>",
+        "seconds": 0.175103
+      },
+      {
+        "name": "InstantiateFunction",
+        "detail": "std::shared_ptr<record_ExpenseDesk>::shared_ptr<std::allocator<void>>",
+        "seconds": 0.175013
+      },
+      {
+        "name": "InstantiateFunction",
+        "detail": "std::__shared_ptr<record_ExpenseDesk>::__shared_ptr<std::allocator<void>>",
+        "seconds": 0.174924
+      },
+      {
+        "name": "InstantiateFunction",
+        "detail": "std::__shared_count<>::__shared_count<record_ExpenseDesk, std::allocator<void>>",
+        "seconds": 0.174674
+      },
+      {
+        "name": "InstantiateFunction",
+        "detail": "std::_Sp_counted_ptr_inplace<record_ExpenseDesk, std::allocator<void>, __gnu_cxx::_S_atomic>::_Sp_counted_ptr_inplace<>",
+        "seconds": 0.172774
+      },
+      {
+        "name": "InstantiateFunction",
+        "detail": "scpp::shared<record_ProjectDesk>",
+        "seconds": 0.168447
+      },
+      {
+        "name": "InstantiateFunction",
+        "detail": "std::make_shared<record_ProjectDesk>",
+        "seconds": 0.167934
+      },
+      {
+        "name": "InstantiateFunction",
+        "detail": "std::shared_ptr<record_ProjectDesk>::shared_ptr<std::allocator<void>>",
+        "seconds": 0.167845
+      },
+      {
+        "name": "InstantiateFunction",
+        "detail": "std::__shared_ptr<record_ProjectDesk>::__shared_ptr<std::allocator<void>>",
+        "seconds": 0.167752
+      },
+      {
+        "name": "InstantiateFunction",
+        "detail": "std::__shared_count<>::__shared_count<record_ProjectDesk, std::allocator<void>>",
+        "seconds": 0.167506
+      },
+      {
+        "name": "InstantiateFunction",
+        "detail": "scpp::shared<record_TreasuryDesk>",
+        "seconds": 0.166736
+      },
+      {
+        "name": "InstantiateFunction",
+        "detail": "std::make_shared<record_TreasuryDesk>",
+        "seconds": 0.166219
+      },
+      {
+        "name": "InstantiateFunction",
+        "detail": "std::shared_ptr<record_TreasuryDesk>::shared_ptr<std::allocator<void>>",
+        "seconds": 0.16613
+      },
+      {
+        "name": "InstantiateFunction",
+        "detail": "std::__shared_ptr<record_TreasuryDesk>::__shared_ptr<std::allocator<void>>",
+        "seconds": 0.166047
+      },
+      {
+        "name": "InstantiateFunction",
+        "detail": "std::__shared_count<>::__shared_count<record_TreasuryDesk, std::allocator<void>>",
+        "seconds": 0.165808
+      },
+      {
+        "name": "InstantiateFunction",
+        "detail": "std::_Sp_counted_ptr_inplace<record_ProjectDesk, std::allocator<void>, __gnu_cxx::_S_atomic>::_Sp_counted_ptr_inplace<>",
+        "seconds": 0.165656
+      },
+      {
+        "name": "InstantiateFunction",
+        "detail": "std::_Sp_counted_ptr_inplace<record_TreasuryDesk, std::allocator<void>, __gnu_cxx::_S_atomic>::_Sp_counted_ptr_inplace<>",
+        "seconds": 0.163947
+      }
+    ]
+  },
+  {
+    "name": "closing_checks-2",
+    "command": [
+      "/usr/bin/clang++-18",
+      "--driver-mode=g++",
+      "-std=c++23",
+      "-O0",
+      "-DSCPP_LANGUAGE_TARGET_PHP=1",
+      "-pthread",
+      "-I",
+      "/home/alex-ai/accounting-shared-handles-20261016/repo/runtime/include",
+      "-I",
+      "/home/alex-ai/accounting-shared-handles-20261016/bench/published-1",
+      "-include-pch",
+      "/home/alex-ai/accounting-shared-handles-20261016/results/runtime.pch",
+      "-c",
+      "/home/alex-ai/accounting-shared-handles-20261016/bench/published-1/units/n6d61696e/n7372632f636c6f73696e675f636865636b732e706873.cpp",
+      "-ftime-trace",
+      "-o",
+      "/home/alex-ai/accounting-shared-handles-20261016/results/closing_checks-2.o"
+    ],
+    "elapsed": 1.787611410021782,
+    "user": 1.69,
+    "system": 0.09,
+    "peak_rss_kib": 233616,
+    "stages": {
+      "Total ExecuteCompiler": 1.762186,
+      "Total Frontend": 1.310215,
+      "Total InstantiateFunction": 0.850645,
+      "Total InstantiateClass": 0.565303,
+      "Total Backend": 0.439728
+    },
+    "top_templates": [
+      {
+        "name": "InstantiateFunction",
+        "detail": "scpp::shared<record_BankReconciliation>",
+        "seconds": 0.184763
+      },
+      {
+        "name": "InstantiateFunction",
+        "detail": "std::make_shared<record_BankReconciliation>",
+        "seconds": 0.184259
+      },
+      {
+        "name": "InstantiateFunction",
+        "detail": "std::shared_ptr<record_BankReconciliation>::shared_ptr<std::allocator<void>>",
+        "seconds": 0.184176
+      },
+      {
+        "name": "InstantiateFunction",
+        "detail": "std::__shared_ptr<record_BankReconciliation>::__shared_ptr<std::allocator<void>>",
+        "seconds": 0.184094
+      },
+      {
+        "name": "InstantiateFunction",
+        "detail": "std::__shared_count<>::__shared_count<record_BankReconciliation, std::allocator<void>>",
+        "seconds": 0.183851
+      },
+      {
+        "name": "InstantiateFunction",
+        "detail": "std::_Sp_counted_ptr_inplace<record_BankReconciliation, std::allocator<void>, __gnu_cxx::_S_atomic>::_Sp_counted_ptr_inplace<>",
+        "seconds": 0.182036
+      },
+      {
+        "name": "InstantiateFunction",
+        "detail": "scpp::shared<record_InventoryBook>",
+        "seconds": 0.117646
+      },
+      {
+        "name": "InstantiateFunction",
+        "detail": "std::make_shared<record_InventoryBook>",
+        "seconds": 0.117151
+      },
+      {
+        "name": "InstantiateFunction",
+        "detail": "std::shared_ptr<record_InventoryBook>::shared_ptr<std::allocator<void>>",
+        "seconds": 0.117065
+      },
+      {
+        "name": "InstantiateFunction",
+        "detail": "std::__shared_ptr<record_InventoryBook>::__shared_ptr<std::allocator<void>>",
+        "seconds": 0.116981
+      },
+      {
+        "name": "InstantiateFunction",
+        "detail": "std::__shared_count<>::__shared_count<record_InventoryBook, std::allocator<void>>",
+        "seconds": 0.116731
+      },
+      {
+        "name": "InstantiateFunction",
+        "detail": "scpp::shared<record_PurchasingBook>",
+        "seconds": 0.1162
+      },
+      {
+        "name": "InstantiateFunction",
+        "detail": "std::make_shared<record_PurchasingBook>",
+        "seconds": 0.115689
+      },
+      {
+        "name": "InstantiateFunction",
+        "detail": "std::shared_ptr<record_PurchasingBook>::shared_ptr<std::allocator<void>>",
+        "seconds": 0.115607
+      },
+      {
+        "name": "InstantiateFunction",
+        "detail": "std::__shared_ptr<record_PurchasingBook>::__shared_ptr<std::allocator<void>>",
+        "seconds": 0.115519
+      },
+      {
+        "name": "InstantiateFunction",
+        "detail": "std::__shared_count<>::__shared_count<record_PurchasingBook, std::allocator<void>>",
+        "seconds": 0.115276
+      },
+      {
+        "name": "InstantiateFunction",
+        "detail": "std::_Sp_counted_ptr_inplace<record_InventoryBook, std::allocator<void>, __gnu_cxx::_S_atomic>::_Sp_counted_ptr_inplace<>",
+        "seconds": 0.114891
+      },
+      {
+        "name": "InstantiateFunction",
+        "detail": "scpp::shared<record_AdjustmentBook>",
+        "seconds": 0.113752
+      },
+      {
+        "name": "InstantiateFunction",
+        "detail": "std::_Sp_counted_ptr_inplace<record_PurchasingBook, std::allocator<void>, __gnu_cxx::_S_atomic>::_Sp_counted_ptr_inplace<>",
+        "seconds": 0.113398
+      },
+      {
+        "name": "InstantiateFunction",
+        "detail": "std::make_shared<record_AdjustmentBook>",
+        "seconds": 0.113249
+      },
+      {
+        "name": "InstantiateFunction",
+        "detail": "std::shared_ptr<record_AdjustmentBook>::shared_ptr<std::allocator<void>>",
+        "seconds": 0.113167
+      },
+      {
+        "name": "InstantiateFunction",
+        "detail": "std::__shared_ptr<record_AdjustmentBook>::__shared_ptr<std::allocator<void>>",
+        "seconds": 0.113081
+      },
+      {
+        "name": "InstantiateFunction",
+        "detail": "std::__shared_count<>::__shared_count<record_AdjustmentBook, std::allocator<void>>",
+        "seconds": 0.112834
+      },
+      {
+        "name": "InstantiateFunction",
+        "detail": "std::_Sp_counted_ptr_inplace<record_AdjustmentBook, std::allocator<void>, __gnu_cxx::_S_atomic>::_Sp_counted_ptr_inplace<>",
+        "seconds": 0.11097
+      },
+      {
+        "name": "InstantiateFunction",
+        "detail": "scpp::data_initializer<scpp::hash_t<scpp::shared_p<record_BankStatementLine>, scpp::string_t>>::from_key_value",
+        "seconds": 0.071463
+      },
+      {
+        "name": "InstantiateFunction",
+        "detail": "scpp::shared<record_SalesService>",
+        "seconds": 0.063927
+      },
+      {
+        "name": "InstantiateFunction",
+        "detail": "std::make_shared<record_SalesService>",
+        "seconds": 0.063424
+      },
+      {
+        "name": "InstantiateFunction",
+        "detail": "std::shared_ptr<record_SalesService>::shared_ptr<std::allocator<void>>",
+        "seconds": 0.063342
+      },
+      {
+        "name": "InstantiateFunction",
+        "detail": "std::__shared_ptr<record_SalesService>::__shared_ptr<std::allocator<void>>",
+        "seconds": 0.063256
+      },
+      {
+        "name": "InstantiateFunction",
+        "detail": "std::__shared_count<>::__shared_count<record_SalesService, std::allocator<void>>",
+        "seconds": 0.063015
+      }
+    ]
+  },
+  {
+    "name": "workflow_checks-3",
+    "command": [
+      "/usr/bin/clang++-18",
+      "--driver-mode=g++",
+      "-std=c++23",
+      "-O0",
+      "-DSCPP_LANGUAGE_TARGET_PHP=1",
+      "-pthread",
+      "-I",
+      "/home/alex-ai/accounting-shared-handles-20261016/repo/runtime/include",
+      "-I",
+      "/home/alex-ai/accounting-shared-handles-20261016/bench/published-1",
+      "-include-pch",
+      "/home/alex-ai/accounting-shared-handles-20261016/results/runtime.pch",
+      "-c",
+      "/home/alex-ai/accounting-shared-handles-20261016/bench/published-1/units/n6d61696e/n7372632f776f726b666c6f775f636865636b732e706873.cpp",
+      "-ftime-trace",
+      "-o",
+      "/home/alex-ai/accounting-shared-handles-20261016/results/workflow_checks-3.o"
+    ],
+    "elapsed": 3.0489193722605705,
+    "user": 2.87,
+    "system": 0.17,
+    "peak_rss_kib": 303676,
+    "stages": {
+      "Total ExecuteCompiler": 3.020284,
+      "Total Frontend": 2.208304,
+      "Total InstantiateFunction": 1.507008,
+      "Total InstantiateClass": 0.935932,
+      "Total Backend": 0.792726
+    },
+    "top_templates": [
+      {
+        "name": "InstantiateFunction",
+        "detail": "scpp::shared<record_WarehouseDesk>",
+        "seconds": 0.224917
+      },
+      {
+        "name": "InstantiateFunction",
+        "detail": "std::make_shared<record_WarehouseDesk>",
+        "seconds": 0.224406
+      },
+      {
+        "name": "InstantiateFunction",
+        "detail": "std::shared_ptr<record_WarehouseDesk>::shared_ptr<std::allocator<void>>",
+        "seconds": 0.224319
+      },
+      {
+        "name": "InstantiateFunction",
+        "detail": "std::__shared_ptr<record_WarehouseDesk>::__shared_ptr<std::allocator<void>>",
+        "seconds": 0.224231
+      },
+      {
+        "name": "InstantiateFunction",
+        "detail": "std::__shared_count<>::__shared_count<record_WarehouseDesk, std::allocator<void>>",
+        "seconds": 0.223986
+      },
+      {
+        "name": "InstantiateFunction",
+        "detail": "std::_Sp_counted_ptr_inplace<record_WarehouseDesk, std::allocator<void>, __gnu_cxx::_S_atomic>::_Sp_counted_ptr_inplace<>",
+        "seconds": 0.222122
+      },
+      {
+        "name": "InstantiateFunction",
+        "detail": "scpp::shared<record_ProcurementDesk>",
+        "seconds": 0.221536
+      },
+      {
+        "name": "InstantiateFunction",
+        "detail": "std::make_shared<record_ProcurementDesk>",
+        "seconds": 0.221013
+      },
+      {
+        "name": "InstantiateFunction",
+        "detail": "std::shared_ptr<record_ProcurementDesk>::shared_ptr<std::allocator<void>>",
+        "seconds": 0.220929
+      },
+      {
+        "name": "InstantiateFunction",
+        "detail": "std::__shared_ptr<record_ProcurementDesk>::__shared_ptr<std::allocator<void>>",
+        "seconds": 0.220843
+      },
+      {
+        "name": "InstantiateFunction",
+        "detail": "std::__shared_count<>::__shared_count<record_ProcurementDesk, std::allocator<void>>",
+        "seconds": 0.220595
+      },
+      {
+        "name": "InstantiateFunction",
+        "detail": "std::_Sp_counted_ptr_inplace<record_ProcurementDesk, std::allocator<void>, __gnu_cxx::_S_atomic>::_Sp_counted_ptr_inplace<>",
+        "seconds": 0.218739
+      },
+      {
+        "name": "InstantiateFunction",
+        "detail": "scpp::shared<record_ExpenseDesk>",
+        "seconds": 0.174855
+      },
+      {
+        "name": "InstantiateFunction",
+        "detail": "std::make_shared<record_ExpenseDesk>",
+        "seconds": 0.174339
+      },
+      {
+        "name": "InstantiateFunction",
+        "detail": "std::shared_ptr<record_ExpenseDesk>::shared_ptr<std::allocator<void>>",
+        "seconds": 0.174249
+      },
+      {
+        "name": "InstantiateFunction",
+        "detail": "std::__shared_ptr<record_ExpenseDesk>::__shared_ptr<std::allocator<void>>",
+        "seconds": 0.174161
+      },
+      {
+        "name": "InstantiateFunction",
+        "detail": "std::__shared_count<>::__shared_count<record_ExpenseDesk, std::allocator<void>>",
+        "seconds": 0.173919
+      },
+      {
+        "name": "InstantiateFunction",
+        "detail": "std::_Sp_counted_ptr_inplace<record_ExpenseDesk, std::allocator<void>, __gnu_cxx::_S_atomic>::_Sp_counted_ptr_inplace<>",
+        "seconds": 0.172034
+      },
+      {
+        "name": "InstantiateFunction",
+        "detail": "scpp::shared<record_ProjectDesk>",
+        "seconds": 0.167243
+      },
+      {
+        "name": "InstantiateFunction",
+        "detail": "std::make_shared<record_ProjectDesk>",
+        "seconds": 0.166742
+      },
+      {
+        "name": "InstantiateFunction",
+        "detail": "std::shared_ptr<record_ProjectDesk>::shared_ptr<std::allocator<void>>",
+        "seconds": 0.166656
+      },
+      {
+        "name": "InstantiateFunction",
+        "detail": "std::__shared_ptr<record_ProjectDesk>::__shared_ptr<std::allocator<void>>",
+        "seconds": 0.166569
+      },
+      {
+        "name": "InstantiateFunction",
+        "detail": "std::__shared_count<>::__shared_count<record_ProjectDesk, std::allocator<void>>",
+        "seconds": 0.166326
+      },
+      {
+        "name": "InstantiateFunction",
+        "detail": "scpp::shared<record_TreasuryDesk>",
+        "seconds": 0.165596
+      },
+      {
+        "name": "InstantiateFunction",
+        "detail": "std::make_shared<record_TreasuryDesk>",
+        "seconds": 0.165082
+      },
+      {
+        "name": "InstantiateFunction",
+        "detail": "std::shared_ptr<record_TreasuryDesk>::shared_ptr<std::allocator<void>>",
+        "seconds": 0.164993
+      },
+      {
+        "name": "InstantiateFunction",
+        "detail": "std::__shared_ptr<record_TreasuryDesk>::__shared_ptr<std::allocator<void>>",
+        "seconds": 0.164909
+      },
+      {
+        "name": "InstantiateFunction",
+        "detail": "std::__shared_count<>::__shared_count<record_TreasuryDesk, std::allocator<void>>",
+        "seconds": 0.164666
+      },
+      {
+        "name": "InstantiateFunction",
+        "detail": "std::_Sp_counted_ptr_inplace<record_ProjectDesk, std::allocator<void>, __gnu_cxx::_S_atomic>::_Sp_counted_ptr_inplace<>",
+        "seconds": 0.164483
+      },
+      {
+        "name": "InstantiateFunction",
+        "detail": "std::_Sp_counted_ptr_inplace<record_TreasuryDesk, std::allocator<void>, __gnu_cxx::_S_atomic>::_Sp_counted_ptr_inplace<>",
+        "seconds": 0.162815
+      }
+    ]
+  },
+  {
+    "name": "closing_checks-3",
+    "command": [
+      "/usr/bin/clang++-18",
+      "--driver-mode=g++",
+      "-std=c++23",
+      "-O0",
+      "-DSCPP_LANGUAGE_TARGET_PHP=1",
+      "-pthread",
+      "-I",
+      "/home/alex-ai/accounting-shared-handles-20261016/repo/runtime/include",
+      "-I",
+      "/home/alex-ai/accounting-shared-handles-20261016/bench/published-1",
+      "-include-pch",
+      "/home/alex-ai/accounting-shared-handles-20261016/results/runtime.pch",
+      "-c",
+      "/home/alex-ai/accounting-shared-handles-20261016/bench/published-1/units/n6d61696e/n7372632f636c6f73696e675f636865636b732e706873.cpp",
+      "-ftime-trace",
+      "-o",
+      "/home/alex-ai/accounting-shared-handles-20261016/results/closing_checks-3.o"
+    ],
+    "elapsed": 1.7985158003866673,
+    "user": 1.71,
+    "system": 0.08,
+    "peak_rss_kib": 233628,
+    "stages": {
+      "Total ExecuteCompiler": 1.772952,
+      "Total Frontend": 1.322938,
+      "Total InstantiateFunction": 0.863577,
+      "Total InstantiateClass": 0.570948,
+      "Total Backend": 0.437633
+    },
+    "top_templates": [
+      {
+        "name": "InstantiateFunction",
+        "detail": "scpp::shared<record_BankReconciliation>",
+        "seconds": 0.190372
+      },
+      {
+        "name": "InstantiateFunction",
+        "detail": "std::make_shared<record_BankReconciliation>",
+        "seconds": 0.189838
+      },
+      {
+        "name": "InstantiateFunction",
+        "detail": "std::shared_ptr<record_BankReconciliation>::shared_ptr<std::allocator<void>>",
+        "seconds": 0.189751
+      },
+      {
+        "name": "InstantiateFunction",
+        "detail": "std::__shared_ptr<record_BankReconciliation>::__shared_ptr<std::allocator<void>>",
+        "seconds": 0.189664
+      },
+      {
+        "name": "InstantiateFunction",
+        "detail": "std::__shared_count<>::__shared_count<record_BankReconciliation, std::allocator<void>>",
+        "seconds": 0.189415
+      },
+      {
+        "name": "InstantiateFunction",
+        "detail": "std::_Sp_counted_ptr_inplace<record_BankReconciliation, std::allocator<void>, __gnu_cxx::_S_atomic>::_Sp_counted_ptr_inplace<>",
+        "seconds": 0.187556
+      },
+      {
+        "name": "InstantiateFunction",
+        "detail": "scpp::shared<record_InventoryBook>",
+        "seconds": 0.117902
+      },
+      {
+        "name": "InstantiateFunction",
+        "detail": "std::make_shared<record_InventoryBook>",
+        "seconds": 0.117388
+      },
+      {
+        "name": "InstantiateFunction",
+        "detail": "std::shared_ptr<record_InventoryBook>::shared_ptr<std::allocator<void>>",
+        "seconds": 0.117296
+      },
+      {
+        "name": "InstantiateFunction",
+        "detail": "std::__shared_ptr<record_InventoryBook>::__shared_ptr<std::allocator<void>>",
+        "seconds": 0.117213
+      },
+      {
+        "name": "InstantiateFunction",
+        "detail": "scpp::shared<record_AdjustmentBook>",
+        "seconds": 0.117069
+      },
+      {
+        "name": "InstantiateFunction",
+        "detail": "std::__shared_count<>::__shared_count<record_InventoryBook, std::allocator<void>>",
+        "seconds": 0.116963
+      },
+      {
+        "name": "InstantiateFunction",
+        "detail": "std::make_shared<record_AdjustmentBook>",
+        "seconds": 0.116557
+      },
+      {
+        "name": "InstantiateFunction",
+        "detail": "std::shared_ptr<record_AdjustmentBook>::shared_ptr<std::allocator<void>>",
+        "seconds": 0.116465
+      },
+      {
+        "name": "InstantiateFunction",
+        "detail": "std::__shared_ptr<record_AdjustmentBook>::__shared_ptr<std::allocator<void>>",
+        "seconds": 0.116367
+      },
+      {
+        "name": "InstantiateFunction",
+        "detail": "scpp::shared<record_PurchasingBook>",
+        "seconds": 0.116201
+      },
+      {
+        "name": "InstantiateFunction",
+        "detail": "std::__shared_count<>::__shared_count<record_AdjustmentBook, std::allocator<void>>",
+        "seconds": 0.116116
+      },
+      {
+        "name": "InstantiateFunction",
+        "detail": "std::make_shared<record_PurchasingBook>",
+        "seconds": 0.115686
+      },
+      {
+        "name": "InstantiateFunction",
+        "detail": "std::shared_ptr<record_PurchasingBook>::shared_ptr<std::allocator<void>>",
+        "seconds": 0.115601
+      },
+      {
+        "name": "InstantiateFunction",
+        "detail": "std::__shared_ptr<record_PurchasingBook>::__shared_ptr<std::allocator<void>>",
+        "seconds": 0.115517
+      },
+      {
+        "name": "InstantiateFunction",
+        "detail": "std::__shared_count<>::__shared_count<record_PurchasingBook, std::allocator<void>>",
+        "seconds": 0.115279
+      },
+      {
+        "name": "InstantiateFunction",
+        "detail": "std::_Sp_counted_ptr_inplace<record_InventoryBook, std::allocator<void>, __gnu_cxx::_S_atomic>::_Sp_counted_ptr_inplace<>",
+        "seconds": 0.115089
+      },
+      {
+        "name": "InstantiateFunction",
+        "detail": "std::_Sp_counted_ptr_inplace<record_AdjustmentBook, std::allocator<void>, __gnu_cxx::_S_atomic>::_Sp_counted_ptr_inplace<>",
+        "seconds": 0.114123
+      },
+      {
+        "name": "InstantiateFunction",
+        "detail": "std::_Sp_counted_ptr_inplace<record_PurchasingBook, std::allocator<void>, __gnu_cxx::_S_atomic>::_Sp_counted_ptr_inplace<>",
+        "seconds": 0.113422
+      },
+      {
+        "name": "InstantiateFunction",
+        "detail": "scpp::data_initializer<scpp::hash_t<scpp::shared_p<record_BankStatementLine>, scpp::string_t>>::from_key_value",
+        "seconds": 0.074678
+      },
+      {
+        "name": "InstantiateFunction",
+        "detail": "scpp::shared<record_SalesService>",
+        "seconds": 0.063998
+      },
+      {
+        "name": "InstantiateFunction",
+        "detail": "std::make_shared<record_SalesService>",
+        "seconds": 0.063493
+      },
+      {
+        "name": "InstantiateFunction",
+        "detail": "std::shared_ptr<record_SalesService>::shared_ptr<std::allocator<void>>",
+        "seconds": 0.063409
+      },
+      {
+        "name": "InstantiateFunction",
+        "detail": "std::__shared_ptr<record_SalesService>::__shared_ptr<std::allocator<void>>",
+        "seconds": 0.063322
+      },
+      {
+        "name": "InstantiateFunction",
+        "detail": "std::__shared_count<>::__shared_count<record_SalesService, std::allocator<void>>",
+        "seconds": 0.063086
+      }
+    ]
+  }
+]

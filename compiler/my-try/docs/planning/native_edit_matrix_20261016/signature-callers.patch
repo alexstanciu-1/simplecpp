@@ -1,0 +1,63 @@
+diff --git a/src/check_customer_profile.phs b/src/check_customer_profile.phs
+index 81087ac..afec6a0 100644
+--- a/src/check_customer_profile.phs
++++ b/src/check_customer_profile.phs
+@@ -20,7 +20,7 @@ function sample_customer_profile(): CustomerProfile {
+ function check_customer_profile(WorkloadChecks $checks): void {
+     $draft CustomerProfile = sample_customer_profile();
+     $checks->accepted($draft->validate(), "customer_profile valid draft");
+-    $checks->equal($draft->available_credit(), 38000, "customer_profile independent business result");
++    $checks->equal($draft->available_credit(0), 38000, "customer_profile independent business result");
+     $copy CustomerProfile = $draft->copy();
+     $checks->equal(count($draft->differences($copy)), 0, "customer_profile snapshot equivalence");
+     $checks->expect($draft->describe() === $copy->describe(), "customer_profile snapshot report");
+diff --git a/src/credit_desk.phs b/src/credit_desk.phs
+index 9c0c93f..173d509 100644
+--- a/src/credit_desk.phs
++++ b/src/credit_desk.phs
+@@ -43,7 +43,7 @@ class CreditDesk {
+         if (isset($this->reservations[$reference])) { return accounting_failure("credit.reference", $reference); }
+         $customer CustomerProfile = $this->customers[$id];
+         if (!$customer->active || $customer->on_hold) { return accounting_failure("credit.hold", $id); }
+-        if ($amount > $customer->available_credit()) { return accounting_failure("credit.limit", $id); }
++        if ($amount > $customer->available_credit(0)) { return accounting_failure("credit.limit", $id); }
+         $reservation CreditReservation = new CreditReservation();
+         $reservation->reference = $reference;
+         $reservation->customer_id = $id;
+diff --git a/src/customer_profile.phs b/src/customer_profile.phs
+index aadec6b..97e0066 100644
+--- a/src/customer_profile.phs
++++ b/src/customer_profile.phs
+@@ -59,8 +59,8 @@ class CustomerProfile {
+         return accounting_success();
+     }
+ 
+-    public function available_credit(): int {
+-        return $this->credit_limit - $this->exposure;
++    public function available_credit(int $reserved): int {
++        return $this->credit_limit - $this->exposure - $reserved;
+     }
+ 
+     public function copy(): CustomerProfile {
+diff --git a/src/workflow_checks.phs b/src/workflow_checks.phs
+index ba0df79..6807833 100644
+--- a/src/workflow_checks.phs
++++ b/src/workflow_checks.phs
+@@ -11,7 +11,7 @@ function check_credit_workflow(WorkloadChecks $checks): void {
+     $checks->equal($desk->customer("CUS-001")->credit_limit, 20000, "credit protects query snapshot");
+     $checks->accepted($desk->reserve("CUS-001", "ORDER-A", 7000), "credit first reservation");
+     $checks->accepted($desk->reserve("CUS-001", "ORDER-B", 8000), "credit second reservation");
+-    $checks->equal($desk->customer("CUS-001")->available_credit(), 5000, "credit available after commitments");
++    $checks->equal($desk->customer("CUS-001")->available_credit(0), 5000, "credit available after commitments");
+     $checks->rejected($desk->reserve("CUS-001", "ORDER-A", 1), "credit.reference", "credit duplicate reference");
+     $checks->rejected($desk->reserve("CUS-001", "ORDER-C", 5001), "credit.limit", "credit over limit");
+     $checks->rejected($desk->reserve("MISSING", "ORDER-C", 1), "credit.customer", "credit missing customer");
+@@ -24,7 +24,7 @@ function check_credit_workflow(WorkloadChecks $checks): void {
+     $checks->equal($desk->customer("CUS-001")->exposure, 8000, "credit rejected operations preserve exposure");
+     $checks->accepted($desk->hold("CUS-001", false), "credit release hold");
+     $checks->accepted($desk->reserve("CUS-001", "ORDER-C", 12000), "credit exact limit");
+-    $checks->equal($desk->customer("CUS-001")->available_credit(), 0, "credit ceiling reached");
++    $checks->equal($desk->customer("CUS-001")->available_credit(0), 0, "credit ceiling reached");
+     $checks->accepted($desk->reconcile(), "credit commitment control");
+ }
+ 

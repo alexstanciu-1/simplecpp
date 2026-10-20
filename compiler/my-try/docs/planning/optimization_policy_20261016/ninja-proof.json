@@ -1,0 +1,80 @@
+[
+  {
+    "name": "cold",
+    "actions": 6,
+    "executable": "/home/alexv/__AI/simple_cpp/simple_cpp_01/sandbox/accounting-recovery-20261016/optimization-policy-20261016/ninja-proof/build space $dollar:colon/app",
+    "output": "[1/6] CXX '/home/alexv/__AI/simple_cpp/simple_cpp_01/sandbox/accounting-recovery-20261016/optimization-policy-20261016/ninja-proof/build space $dollar:colon/runtime.pch'\n[2/6] CXX objects/runtime-8d98b00ec0e6221839cef55085509999bb542ca60a80e82b08e416ba4d6761c8.o\n[3/6] CXX objects/generated-cf4018443306ff122339584d84796c161a29b021a5bf42718dae5ee7e758fbc4.o\n[4/6] CXX objects/generated-71d1644afef6f44158d7585883b6378a60549077687712423dc813aac7c500a8.o\n[5/6] CXX objects/runtime-c3abb6715c8b6a414d3a10d38e1a2e20e251ce0f542f1d160ca56f6669b47728.o\nIn file included from /home/alexv/__AI/simple_cpp/simple_cpp_01/sandbox/accounting-recovery-20261016/optimization-policy-20261016/ninja-proof/runtime/core/runtime.cpp:8:\n/home/alexv/__AI/simple_cpp/simple_cpp_01/sandbox/accounting-recovery-20261016/optimization-policy-20261016/ninja-proof/runtime/core/../scpp/support/hash_t.cpp:29:16: warning: explicit instantiation of 'hash_t<scpp::mixed_t, scpp::mixed_t>' that occurs after an explicit specialization has no effect [-Winstantiation-after-specialization]\n   29 | template class hash_t<mixed_t, mixed_t>;\n      |                ^\n/home/alexv/__AI/simple_cpp/simple_cpp_01/sandbox/accounting-recovery-20261016/optimization-policy-20261016/ninja-proof/runtime/scpp/support/hash_t.hpp:1558:7: note: previous template specialization is here\n 1558 | class hash_t<mixed_t, mixed_t> final : private hash_detail::packed_table<mixed_t> {\n      |       ^\n1 warning generated.\n[6/6] LINK app\n"
+  },
+  {
+    "name": "warm",
+    "actions": 0,
+    "executable": "/home/alexv/__AI/simple_cpp/simple_cpp_01/sandbox/accounting-recovery-20261016/optimization-policy-20261016/ninja-proof/build space $dollar:colon/app",
+    "output": "ninja: no work to do.\n"
+  },
+  {
+    "name": "body",
+    "actions": 2,
+    "executable": "/home/alexv/__AI/simple_cpp/simple_cpp_01/sandbox/accounting-recovery-20261016/optimization-policy-20261016/ninja-proof/build space $dollar:colon/app",
+    "output": "[1/2] CXX objects/generated-cf4018443306ff122339584d84796c161a29b021a5bf42718dae5ee7e758fbc4.o\n[2/2] LINK app\n"
+  },
+  {
+    "name": "add-unit",
+    "actions": 3,
+    "executable": "/home/alexv/__AI/simple_cpp/simple_cpp_01/sandbox/accounting-recovery-20261016/optimization-policy-20261016/ninja-proof/build space $dollar:colon/app",
+    "output": "[1/3] CXX objects/generated-cf4018443306ff122339584d84796c161a29b021a5bf42718dae5ee7e758fbc4.o\n[2/3] CXX objects/generated-11ab0497715f1df9e5434ed10cacd42497d866bbce9744e35375a70e23e65b06.o\n[3/3] LINK app\n"
+  },
+  {
+    "name": "remove-unit",
+    "actions": 2,
+    "executable": "/home/alexv/__AI/simple_cpp/simple_cpp_01/sandbox/accounting-recovery-20261016/optimization-policy-20261016/ninja-proof/build space $dollar:colon/app",
+    "output": "[1/2] CXX objects/generated-cf4018443306ff122339584d84796c161a29b021a5bf42718dae5ee7e758fbc4.o\n[2/2] LINK app\n"
+  },
+  {
+    "name": "provider",
+    "actions": 2,
+    "executable": "/home/alexv/__AI/simple_cpp/simple_cpp_01/sandbox/accounting-recovery-20261016/optimization-policy-20261016/ninja-proof/build space $dollar:colon/app",
+    "output": "[1/2] CXX objects/runtime-8d98b00ec0e6221839cef55085509999bb542ca60a80e82b08e416ba4d6761c8.o\n[2/2] LINK app\n"
+  },
+  {
+    "name": "libraries",
+    "actions": 1,
+    "executable": "/home/alexv/__AI/simple_cpp/simple_cpp_01/sandbox/accounting-recovery-20261016/optimization-policy-20261016/ninja-proof/build space $dollar:colon/app",
+    "output": "[1/1] LINK app\n"
+  },
+  {
+    "name": "header",
+    "actions": 3,
+    "executable": "/home/alexv/__AI/simple_cpp/simple_cpp_01/sandbox/accounting-recovery-20261016/optimization-policy-20261016/ninja-proof/build space $dollar:colon/app",
+    "output": "[1/3] CXX objects/generated-cf4018443306ff122339584d84796c161a29b021a5bf42718dae5ee7e758fbc4.o\n[2/3] CXX objects/runtime-8d98b00ec0e6221839cef55085509999bb542ca60a80e82b08e416ba4d6761c8.o\n[3/3] LINK app\n"
+  },
+  {
+    "name": "no-pch",
+    "actions": 5,
+    "executable": "/home/alexv/__AI/simple_cpp/simple_cpp_01/sandbox/accounting-recovery-20261016/optimization-policy-20261016/ninja-proof/no-pch/app",
+    "output": "[1/5] CXX objects/runtime-8d98b00ec0e6221839cef55085509999bb542ca60a80e82b08e416ba4d6761c8.o\n[2/5] CXX objects/generated-cf4018443306ff122339584d84796c161a29b021a5bf42718dae5ee7e758fbc4.o\n[3/5] CXX objects/generated-71d1644afef6f44158d7585883b6378a60549077687712423dc813aac7c500a8.o\n[4/5] CXX objects/runtime-c3abb6715c8b6a414d3a10d38e1a2e20e251ce0f542f1d160ca56f6669b47728.o\nIn file included from /home/alexv/__AI/simple_cpp/simple_cpp_01/sandbox/accounting-recovery-20261016/optimization-policy-20261016/ninja-proof/runtime/core/runtime.cpp:8:\n/home/alexv/__AI/simple_cpp/simple_cpp_01/sandbox/accounting-recovery-20261016/optimization-policy-20261016/ninja-proof/runtime/core/../scpp/support/hash_t.cpp:29:16: warning: explicit instantiation of 'hash_t<scpp::mixed_t, scpp::mixed_t>' that occurs after an explicit specialization has no effect [-Winstantiation-after-specialization]\n   29 | template class hash_t<mixed_t, mixed_t>;\n      |                ^\n/home/alexv/__AI/simple_cpp/simple_cpp_01/sandbox/accounting-recovery-20261016/optimization-policy-20261016/ninja-proof/runtime/scpp/support/hash_t.hpp:1558:7: note: previous template specialization is here\n 1558 | class hash_t<mixed_t, mixed_t> final : private hash_detail::packed_table<mixed_t> {\n      |       ^\n1 warning generated.\n[5/5] LINK app\n"
+  },
+  {
+    "name": "optimized",
+    "actions": 6,
+    "executable": "/home/alexv/__AI/simple_cpp/simple_cpp_01/sandbox/accounting-recovery-20261016/optimization-policy-20261016/ninja-proof/optimized/app",
+    "output": "[1/6] CXX /home/alexv/__AI/simple_cpp/simple_cpp_01/sandbox/accounting-recovery-20261016/optimization-policy-20261016/ninja-proof/optimized/runtime.pch\n[2/6] CXX objects/runtime-8d98b00ec0e6221839cef55085509999bb542ca60a80e82b08e416ba4d6761c8.o\n[3/6] CXX objects/generated-cf4018443306ff122339584d84796c161a29b021a5bf42718dae5ee7e758fbc4.o\n[4/6] CXX objects/generated-71d1644afef6f44158d7585883b6378a60549077687712423dc813aac7c500a8.o\n[5/6] CXX objects/runtime-c3abb6715c8b6a414d3a10d38e1a2e20e251ce0f542f1d160ca56f6669b47728.o\nIn file included from /home/alexv/__AI/simple_cpp/simple_cpp_01/sandbox/accounting-recovery-20261016/optimization-policy-20261016/ninja-proof/runtime/core/runtime.cpp:8:\n/home/alexv/__AI/simple_cpp/simple_cpp_01/sandbox/accounting-recovery-20261016/optimization-policy-20261016/ninja-proof/runtime/core/../scpp/support/hash_t.cpp:29:16: warning: explicit instantiation of 'hash_t<scpp::mixed_t, scpp::mixed_t>' that occurs after an explicit specialization has no effect [-Winstantiation-after-specialization]\n   29 | template class hash_t<mixed_t, mixed_t>;\n      |                ^\n/home/alexv/__AI/simple_cpp/simple_cpp_01/sandbox/accounting-recovery-20261016/optimization-policy-20261016/ninja-proof/runtime/scpp/support/hash_t.hpp:1558:7: note: previous template specialization is here\n 1558 | class hash_t<mixed_t, mixed_t> final : private hash_detail::packed_table<mixed_t> {\n      |       ^\n1 warning generated.\n[6/6] LINK app\n"
+  },
+  {
+    "name": "pch-header",
+    "actions": 6,
+    "executable": "/home/alexv/__AI/simple_cpp/simple_cpp_01/sandbox/accounting-recovery-20261016/optimization-policy-20261016/ninja-proof/build space $dollar:colon/app",
+    "output": "[1/6] CXX '/home/alexv/__AI/simple_cpp/simple_cpp_01/sandbox/accounting-recovery-20261016/optimization-policy-20261016/ninja-proof/build space $dollar:colon/runtime.pch'\n[2/6] CXX objects/runtime-8d98b00ec0e6221839cef55085509999bb542ca60a80e82b08e416ba4d6761c8.o\n[3/6] CXX objects/generated-cf4018443306ff122339584d84796c161a29b021a5bf42718dae5ee7e758fbc4.o\n[4/6] CXX objects/generated-71d1644afef6f44158d7585883b6378a60549077687712423dc813aac7c500a8.o\n[5/6] CXX objects/runtime-c3abb6715c8b6a414d3a10d38e1a2e20e251ce0f542f1d160ca56f6669b47728.o\nIn file included from /home/alexv/__AI/simple_cpp/simple_cpp_01/sandbox/accounting-recovery-20261016/optimization-policy-20261016/ninja-proof/runtime/core/runtime.cpp:8:\n/home/alexv/__AI/simple_cpp/simple_cpp_01/sandbox/accounting-recovery-20261016/optimization-policy-20261016/ninja-proof/runtime/core/../scpp/support/hash_t.cpp:29:16: warning: explicit instantiation of 'hash_t<scpp::mixed_t, scpp::mixed_t>' that occurs after an explicit specialization has no effect [-Winstantiation-after-specialization]\n   29 | template class hash_t<mixed_t, mixed_t>;\n      |                ^\n/home/alexv/__AI/simple_cpp/simple_cpp_01/sandbox/accounting-recovery-20261016/optimization-policy-20261016/ninja-proof/runtime/scpp/support/hash_t.hpp:1558:7: note: previous template specialization is here\n 1558 | class hash_t<mixed_t, mixed_t> final : private hash_detail::packed_table<mixed_t> {\n      |       ^\n1 warning generated.\n[6/6] LINK app\n"
+  },
+  {
+    "name": "warm-after-pch",
+    "actions": 0,
+    "executable": "/home/alexv/__AI/simple_cpp/simple_cpp_01/sandbox/accounting-recovery-20261016/optimization-policy-20261016/ninja-proof/build space $dollar:colon/app",
+    "output": "ninja: no work to do.\n"
+  },
+  {
+    "name": "retry",
+    "actions": 2,
+    "executable": "/home/alexv/__AI/simple_cpp/simple_cpp_01/sandbox/accounting-recovery-20261016/optimization-policy-20261016/ninja-proof/build space $dollar:colon/app",
+    "output": "[1/2] CXX objects/runtime-8d98b00ec0e6221839cef55085509999bb542ca60a80e82b08e416ba4d6761c8.o\n[2/2] LINK app\n"
+  }
+]

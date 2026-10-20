@@ -1,0 +1,12 @@
+diff --git a/src/customer_profile.phs b/src/customer_profile.phs
+index aadec6b..c23dd1c 100644
+--- a/src/customer_profile.phs
++++ b/src/customer_profile.phs
+@@ -1,6 +1,7 @@
+ // Credit admission and settlement preferences for one customer.
+ // Draft values are mutable. Services retain validated copies, never caller handles.
+ class CustomerProfile {
++    public int $integration_marker = 0;
+     public string $id = "";
+     public string $legal_name = "";
+     public string $control_account = "";

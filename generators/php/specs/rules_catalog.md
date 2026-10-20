@@ -466,3 +466,24 @@ so equivalent qualified/unqualified returns do not generate duplicate virtual sl
 Same-namespace qualified types retain their required forward declarations.
 This is spelling normalization, not symbol resolution or header dependency inference.
 Proof: `tests/tools/test_scpp_cross_file_import_aliases.py`.
+
+## COALESCE-HASH-LOCAL-001: presence read for a local string hash
+
+A coalescing left operand with one `DIM`, a simple variable receiver whose existing
+local type metadata maps exactly to string-keyed `hash_t<string_t>`, and a nonempty
+key expression lowers to `.find(rendered_key)` inside the coalescer's value-returning
+left lambda. Key rendering reuses `renderHashKeyExpr`; `hash_t::find` returns owned
+`nullable<string_t>`, and `coalesce_eval` retains its existing branch normalization.
+
+This is a narrow local structural/type check, not remote symbol resolution or a
+semantic compiler pass. `tryRenderCoalesceLookup` owns this access-context choice.
+It must not rewrite emitted `.at()` text or catch arbitrary lookup exceptions.
+Other expressions keep the existing `renderCoalesceExpr` path. Ordinary indexing
+keeps `renderDimAccess`, including checked missing-key failures. No new runtime
+symbol, PHP-to-PHS token rule or user-facing helper is introduced.
+
+The [conditional contract](../../../specs/conditional_expression_matrix.md) owns
+absence, laziness, key evaluation and result ownership. Focused proofs:
+`tests/portability/hash_coalesce.py` and `hash_coalesce_compiler.py`. This rule does
+not claim complete missing-index support for vectors, nested/remote paths,
+mixed/dynamic values, nullable/wrapper payloads or object-keyed containers.

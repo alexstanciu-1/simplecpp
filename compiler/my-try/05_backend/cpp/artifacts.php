@@ -17,6 +17,13 @@ final class CPP_Artifacts
 		return 'n_' . $result . '_' . content_sha256($identity);
 	}
 
+	/** Materialize one assembled group through the same described-artifact protocol. */
+	public static function implementation(cpp_implementation_group $group): cpp_artifact
+	{
+		return self::described($group->identity, cpp_artifact_kind::translation_unit, $group->file_name,
+			self::preamble($group->headers, $group->forward_declarations, '') . $group->text, $group->headers);
+	}
+
 	/** Preserve the same include set that produced the artifact preamble. */
 	public static function described(string $identity, cpp_artifact_kind $kind, string $path,
 		string $text, array $headers /** hash<bool> */): cpp_artifact

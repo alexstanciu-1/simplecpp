@@ -38,8 +38,8 @@
     }
   ],
   "cpp_initialization": [
-    {"id": "core.vector", "symbol": "scpp::data_initializer", "header": "scpp/data_initializer.hpp"},
-    {"id": "core.hash", "symbol": "scpp::data_initializer", "header": "scpp/data_initializer.hpp"}
+    {"id": "core.vector", "symbol": "scpp::data_initializer", "header": "scpp/data_initializer_typed.hpp"},
+    {"id": "core.hash", "symbol": "scpp::data_initializer", "header": "scpp/data_initializer_typed.hpp"}
   ],
   "cpp_types": [
     {"id":"core.Exception","symbol":"scpp::Exception","header":"lang/php/php_exceptions.hpp"},

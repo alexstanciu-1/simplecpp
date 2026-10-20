@@ -194,7 +194,7 @@ final class CPP_Declarations
 
 	private static function signature_requirement(bool $prototype, bool $reference): cpp_type_requirement
 	{
-		return ($prototype || $reference) ? cpp_type_requirement::declaration : cpp_type_requirement::complete;
+		return ($prototype || $reference) ? cpp_type_requirement::declaration : cpp_type_requirement::stored_value;
 	}
 
 	/** Shared by authored signatures and declaration-independent dispatch entries. */
@@ -318,7 +318,7 @@ final class CPP_Declarations
 	}
 
 	/** Render only this layout; nested representations contribute header dependencies. */
-	public static function generate_record(type_declaration_node $syntax, cpp_generation_context $context): string
+	public static function generate_record(type_declaration_node $syntax, cpp_generation_context $context, bool $outline = false): string
 	{
 		$definition = object_cast($syntax->occurrence(), collected_record::class);
 		$key = $definition->qualified_name();
@@ -346,7 +346,7 @@ final class CPP_Declarations
 			$text .= self::visibility($field->visibility);
 			$text .= "\t" . $representation->spelling . ' ' . CPP_Generator::source_name('field', $entry->name);
 			$default_value = $field->default_value;
-			if ($default_value !== null) {
+			if (($default_value !== null) && !$outline) {
 				$text .= ' = ' . self::property_default($default_value, $context);
 			}
 			$text .= ";\n";
@@ -361,6 +361,7 @@ final class CPP_Declarations
 				. CPP_Generator::source_name('field', $entry->name) . ";\n";
 		}
 		$text .= "public:\n";
+		if ($outline) { $text .= "\t" . CPP_Generator::source_name('record', $key) . "();\n"; }
 		$constructor = weakref_get($syntax->require_preparation()->constructor);
 		if ($constructor !== null) {
 			if ($constructor->declaring_type() !== $syntax->occurrence()) {
@@ -628,7 +629,7 @@ final class CPP_Declarations
 			$default_value /** prepared_parameter_default */ = $parameters[$index]->default_value;
 			$name = 'default_argument_' . $context->next_temporary;
 			$context->next_temporary++;
-			$text .= self::type($parameters[$index]->type, $context) . ' ' . $name . ' = ' . self::parameter_default($default_value, $context) . ";\n";
+			$text .= self::type_for($parameters[$index]->type, $context, cpp_type_requirement::stored_value) . ' ' . $name . ' = ' . self::parameter_default($default_value, $context) . ";\n";
 			if ($transport !== null) { $physical_arguments[] = $name; }
 			$names .= $separator . self::move($name, $parameters[$index]->type, $context);
 			$separator = ', ';

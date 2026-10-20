@@ -125,6 +125,45 @@ complete chapter-native parity, rejection and incremental coverage remains uncla
 The older 2026-10-10 result directories were absent here, so their recorded summaries
 below were reviewed without rechecking their raw logs or overlay hashes.
 
+## Native lowering-report checkpoint — 2026-10-16
+
+The [report checkpoint](../planning/native_lowering_report_20261016.md) rebuilds
+`779f6f39` plus a declared-type correction at O2. Six accounting invocations cover
+reports off/on at O0/O1/O2; both report modes match PHP and all 292 generated artifacts
+match the previous checkpoint. The report uses a required `collected_definition`
+local for its qualified name, preserving the method's actual declaring type.
+The experiment driver uses JSON requests; this is not production native CLI coverage.
+No new application benchmark or broad compiler regression was performed.
+
+## Native Ninja/accounting checkpoint — 2026-10-16
+
+Base `03cf89a0` plus the authored portability fixes in the accompanying
+[measurement report](../planning/native_ninja_accounting_20261016.md). All 214 PHP
+compiler/driver files convert; the compiler and Ninja worker build natively at `-O2`
+with existing debug information and `--no-stan`. New Ninja code uses a non-keyword
+byte-local name and supported integer-to-text concatenation. The measurement driver
+passes an explicitly typed empty vector. The publication journal uses guarded typed
+map reads instead of missing-key coalescing that the legacy S2S lowers through `at()`.
+
+Three full/unchanged/body-edit trials pass on the 528,088-byte accounting fixture.
+Each full native publication matches all 292 PHP reference artifacts; the application
+passes 94 CLI cases plus its self-tests. Native publication addition/removal and the
+existing PHP publication/recovery fixture pass. Detailed timings, memory observations,
+source hashes, executable identity and the archived harness are linked from the report.
+No PHP publication workaround is used. This bounded native integration proof does not
+claim a repeat of the comprehensive language, retained incremental or MT checks below.
+
+## Native linker configuration checkpoint — 2026-10-16
+
+Base `86aed366` plus the shared linker configuration slice is rebuilt at `-O2 -g`
+with `--no-stan` and executed on dev002. The [acceptance report](../planning/native_linker_configuration_20261016.md)
+records native source/binary identities, full/unchanged/body-edit and eight-edit
+accounting measurements, and 14 native Ninja linker-configuration/recovery cases.
+The 26 focused real-tool cases cover both consumers with PHP-hosted orchestration;
+that is distinct from native execution of the Ninja consumer. The production recipe
+selects Mold directly, and link-only tool/configuration changes preserve objects/PCH.
+No new whole-language, retained incremental or compiler-MT coverage is claimed.
+
 ## Native checkpoint — 2026-10-10
 
 Candidate base `e6dad0db97ce1b629608bb772d6529917a45b151` plus authored portability
@@ -871,8 +910,14 @@ remains separate from this native pass; style/full PHP suites remain on demand.
   native vector contract; the reference-cycle checker keeps its active length
   separate from allocated scratch entries.
 - Keep base-constructor calls first; compute their arguments through typed helpers
-  when setup would otherwise precede the call. Negative integer field sentinels
-  use explicit constructor assignments; nullable optional fields initialize to null.
+  when setup would otherwise precede the call. Ordinary integer fields now support
+  [signed decimal defaults](../../../../specs/portability/signed_integer_fields.md);
+  audit initialization ordering before moving assignments across base construction.
+  Nullable optional fields initialize to null.
+- [Integer decrement](../../../../specs/portability/decrement.md) is now admitted
+  through the ordinary expression-token path. Earlier postfix-decrement repairs
+  describe historical converter limits; only the two for-condition counters have
+  migrated in this slice.
 - Enum-valued method defaults remain outside the converter subset. Use named entry
   methods that select the default and delegate to one explicitly parameterized worker
   (`prepare_for_consumer`, `decide_value`); do not make required enum contracts nullable

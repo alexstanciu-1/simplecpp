@@ -1,0 +1,157 @@
+diff --git a/compiler/my-try/06_native/cpp_build.php b/compiler/my-try/06_native/cpp_build.php
+index 61207358..aefb2948 100644
+--- a/compiler/my-try/06_native/cpp_build.php
++++ b/compiler/my-try/06_native/cpp_build.php
+@@ -7,6 +7,7 @@ final class Native_CPP_Build
+ 	private native_cpp_config $config;
+ 	private string $root;
+ 	private string $tool_key;
++	private string $linker_key;
+ 	private array $flags /** vector<string> */ = [];
+ 	private array $libraries /** vector<string> */ = [];
+ 	private native_cpp_result $report;
+@@ -66,8 +67,10 @@ final class Native_CPP_Build
+ 			$version_arguments /** vector<string> */ = ['--version'];
+ 			$version = $this->invoke($version_arguments);
+ 			self::require_success($version);
+-			$this->tool_key = "scpp-native-actions-v1\n" . self::file_digest($this->config->compiler) . self::file_digest('/usr/bin/ld')
++			$this->tool_key = "scpp-native-actions-v2\n" . self::file_digest($this->config->compiler)
+ 				. self::file_digest('/usr/bin/env') . $version->stdout;
++			// Linker replacement must not invalidate compilation or dependency discovery.
++			$this->linker_key = fs_require_realpath($this->config->linker) . ':' . self::file_digest($this->config->linker);
+ 			fs_output_write($this->root, 'runtime-pch.hpp', Native_CPP_Commands::pch_header());
+ 			if ($this->config->runtime_snapshot) {
+ 				$inputs = new Native_Dependency_Inputs($this->root, $runtime, $source_root, $files);
+@@ -163,8 +166,8 @@ final class Native_CPP_Build
+ 	/** Link state records actual linker dependencies in addition to exact ordered object membership. */
+ 	private function link(array $objects /** vector<string> */): native_cpp_artifact
+ 	{
+-		$command = Native_CPP_Commands::link($this->flags, $objects, $this->libraries);
+-		$base = content_sha256($this->tool_key . self::arguments_key($command) . self::inputs_key($objects));
++		$command = Native_CPP_Commands::link($this->config, $this->flags, $objects, $this->libraries);
++		$base = content_sha256($this->tool_key . $this->linker_key . self::arguments_key($command) . self::inputs_key($objects));
+ 		$dependencies_path = 'link-inputs/' . $base . '.d';
+ 		$previous = fs_output_read($this->root, $dependencies_path);
+ 		$dependencies /** vector<string> */ = [];
+diff --git a/compiler/my-try/06_native/cpp_commands.php b/compiler/my-try/06_native/cpp_commands.php
+index b5a71877..81345d49 100644
+--- a/compiler/my-try/06_native/cpp_commands.php
++++ b/compiler/my-try/06_native/cpp_commands.php
+@@ -13,6 +13,9 @@ final class Native_CPP_Commands
+ 		if (($config->optimization !== 0) && ($config->optimization !== 2)) {
+ 			throw new \RuntimeException('Native optimization must be 0 or 2');
+ 		}
++		if (!string_byte_starts_with($config->linker, '/') || ($config->linker_threads < 0)) {
++			throw new \RuntimeException('Native linker must be absolute and linker threads nonnegative');
++		}
+ 		$optimization = $config->optimization === 2 ? '-O2' : '-O0';
+ 		$result /** vector<string> */ = ['--driver-mode=g++', '-std=c++23', $optimization,
+ 			'-DSCPP_LANGUAGE_TARGET_PHP=1', '-pthread', '-I', $runtime];
+@@ -56,11 +59,14 @@ final class Native_CPP_Commands
+ 		return $result;
+ 	}
+ 
+-	/** Preserve object/library order and the current system-linker selection. */
+-	public static function link(array $flags /** vector<string> */, array $objects /** vector<string> */, array $libraries /** vector<string> */): array /** vector<string> */
++	/** Link-only configuration: preserve object/library order and compile/PCH recipes. */
++	public static function link(native_cpp_toolchain $config, array $flags /** vector<string> */, array $objects /** vector<string> */, array $libraries /** vector<string> */): array /** vector<string> */
+ 	{
+ 		$result /** vector<string> */ = $flags;
+-		$result[] = '-fuse-ld=/usr/bin/ld';
++		$result[] = '-fuse-ld=' . $config->linker;
++		if ($config->linker_threads > 0) {
++			$result[] = '-Xlinker'; $result[] = '--threads=' . $config->linker_threads;
++		}
+ 		foreach ($objects as $path) {
+ 			$result[] = $path;
+ 		}
+diff --git a/compiler/my-try/06_native/cpp_structures.php b/compiler/my-try/06_native/cpp_structures.php
+index e04c5be8..43c15a85 100644
+--- a/compiler/my-try/06_native/cpp_structures.php
++++ b/compiler/my-try/06_native/cpp_structures.php
+@@ -6,6 +6,9 @@ abstract class native_cpp_toolchain
+ {
+ 	public string $compiler;
+ 	public string $runtime_include;
++	/** Explicit linker executable; zero threads leaves its own default unchanged. */
++	public string $linker = '/usr/bin/ld';
++	public int $linker_threads = 0;
+ 	public bool $pch = true;
+ 	public int $optimization = 0;
+ 	public function __construct(string $compiler, string $runtime_include)
+diff --git a/compiler/my-try/06_native/ninja_build.php b/compiler/my-try/06_native/ninja_build.php
+index 7c5b2376..468826ae 100644
+--- a/compiler/my-try/06_native/ninja_build.php
++++ b/compiler/my-try/06_native/ninja_build.php
+@@ -75,7 +75,7 @@ final class Native_Ninja_Build
+ 			$flags = Native_CPP_Commands::flags($this->config, $runtime, $requirements->definitions);
+ 			// Separate identities: replacing a linker must not dirty compile commands.
+ 			$this->write_changed('compiler.identity', self::identity($this->config->compiler) . self::identity('/usr/bin/env'));
+-			$this->write_changed('linker.identity', self::identity('/usr/bin/ld'));
++			$this->write_changed('linker.identity', self::identity($this->config->linker));
+ 
+ 			$graph = "# Generated from a ready C++ publication. Do not edit.\nninja_required_version = 1.3\n\n"
+ 				. "rule compile\n  command = \$command\n  depfile = \$depfile\n  deps = gcc\n  description = CXX \$out\n\n"
+@@ -107,7 +107,7 @@ final class Native_Ninja_Build
+ 			}
+ 
+ 			$executable = 'app';
+-			$link = Native_CPP_Commands::link($flags, $objects, $requirements->libraries);
++			$link = Native_CPP_Commands::link($this->config, $flags, $objects, $requirements->libraries);
+ 			$link[] = '-Xlinker'; $link[] = '--dependency-file'; $link[] = '-Xlinker'; $link[] = $executable . '.d';
+ 			$link[] = '-o'; $link[] = $executable;
+ 			$graph .= $this->edge('link', $link, $executable, $objects, [$this->root . '/compiler.identity', $this->root . '/linker.identity']);
+diff --git a/compiler/my-try/tools/build_cpp.php b/compiler/my-try/tools/build_cpp.php
+index f5574920..b7e7820f 100644
+--- a/compiler/my-try/tools/build_cpp.php
++++ b/compiler/my-try/tools/build_cpp.php
+@@ -4,8 +4,8 @@ require_once dirname(__DIR__) . '/boot.php';
+ 
+ // Host CLI only; all build policy is in the portable native-build worker.
+ try {
+-	if ($argc < 3 || $argc > 6) {
+-		throw new \RuntimeException('Usage: php build_cpp.php PUBLISHED_DIRECTORY CACHE_DIRECTORY [--no-pch] [--runtime-snapshot] [-O0|-O2]');
++	if ($argc < 3) {
++		throw new \RuntimeException('Usage: php build_cpp.php PUBLISHED_DIRECTORY CACHE_DIRECTORY [--no-pch] [--runtime-snapshot] [-O0|-O2] [--linker=PATH] [--linker-threads=N]');
+ 	}
+ 	$config = new native_cpp_config('/usr/bin/clang++', dirname(__DIR__, 3) . '/runtime/include', $argv[2]);
+ 	for ($index = 3; $index < $argc; $index++) {
+@@ -13,6 +13,12 @@ try {
+ 		elseif ($argv[$index] === '--runtime-snapshot') { $config->runtime_snapshot = true; }
+ 		elseif ($argv[$index] === '-O0') { $config->optimization = 0; }
+ 		elseif ($argv[$index] === '-O2') { $config->optimization = 2; }
++		elseif (str_starts_with($argv[$index], '--linker=')) {
++			$config->linker = substr($argv[$index], 9);
++		}
++		elseif (preg_match('/^--linker-threads=(0|[1-9][0-9]*)$/D', $argv[$index], $match) === 1) {
++			$config->linker_threads = (int)$match[1];
++		}
+ 		else { throw new \RuntimeException('Unknown native build option'); }
+ 	}
+ 	$result = (new Native_CPP_Build($config))->build($argv[1]);
+diff --git a/compiler/my-try/tools/build_ninja.php b/compiler/my-try/tools/build_ninja.php
+index 471cbb5d..5310798b 100644
+--- a/compiler/my-try/tools/build_ninja.php
++++ b/compiler/my-try/tools/build_ninja.php
+@@ -6,7 +6,7 @@ require_once dirname(__DIR__) . '/boot.php';
+ try
+ {
+ 	if ($argc < 3) {
+-		throw new \RuntimeException('Usage: php build_ninja.php PUBLISHED_DIRECTORY BUILD_DIRECTORY [--reuse] [--no-pch] [-O0|-O2] [--jobs=N] [--compiler=PATH] [--runtime=PATH] [--ninja=PATH]');
++		throw new \RuntimeException('Usage: php build_ninja.php PUBLISHED_DIRECTORY BUILD_DIRECTORY [--reuse] [--no-pch] [-O0|-O2] [--linker=PATH] [--linker-threads=N] [--jobs=N] [--compiler=PATH] [--runtime=PATH] [--ninja=PATH]');
+ 	}
+ 	$config = new native_ninja_config('/usr/bin/clang++', dirname(__DIR__, 3) . '/runtime/include', $argv[2]);
+ 	for ($index = 3; $index < $argc; $index++)
+@@ -36,6 +36,12 @@ try
+ 		elseif (str_starts_with($option, '--ninja=')) {
+ 			$config->ninja = substr($option, 8);
+ 		}
++		elseif (str_starts_with($option, '--linker=')) {
++			$config->linker = substr($option, 9);
++		}
++		elseif (preg_match('/^--linker-threads=(0|[1-9][0-9]*)$/D', $option, $match) === 1) {
++			$config->linker_threads = (int)$match[1];
++		}
+ 		else {
+ 			throw new \RuntimeException('Unknown Ninja build option: ' . $option);
+ 		}

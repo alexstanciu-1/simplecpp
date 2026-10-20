@@ -7,6 +7,7 @@ final class Native_CPP_Build
 	private native_cpp_config $config;
 	private string $root;
 	private string $tool_key;
+	private string $linker_key;
 	private array $flags /** vector<string> */ = [];
 	private array $libraries /** vector<string> */ = [];
 	private native_cpp_result $report;
@@ -19,7 +20,7 @@ final class Native_CPP_Build
 		$this->report = new native_cpp_result();
 		$this->root = fs_output_root($config->cache_directory);
 		if (!string_byte_starts_with($config->compiler, '/')) { throw new \RuntimeException('Native compiler must be absolute'); }
-		if (($config->optimization !== 0) && ($config->optimization !== 2)) { throw new \RuntimeException('Native optimization must be 0 or 2'); }
+		$policy = new cpp_lowering_policy($config->optimization);
 	}
 
 	public function build(string $published): native_cpp_result
@@ -60,8 +61,9 @@ final class Native_CPP_Build
 			if ($template_free && $this->config->pch) {
 				throw new \RuntimeException('prelower_templates: runtime PCH is incompatible with template-free application input; select --no-pch');
 			}
+			Native_CPP_Publication::require_policy($document, $this->config->optimization);
 			if (!$document->has('runtime_build')) { throw new \RuntimeException('Publication lacks runtime build requirements; republish with the current compiler'); }
-			$build_inputs = self::runtime_inputs($document->member('runtime_build'));
+			$build_inputs = Native_CPP_Publication::runtime_inputs($document->member('runtime_build'));
 			$this->libraries = $build_inputs->libraries;
 			$units /** vector<string> */ = [];
 			$checked_units /** hash<bool> */ = [];
@@ -91,17 +93,14 @@ final class Native_CPP_Build
 				throw new \RuntimeException('prelower_templates: missing application entry translation unit');
 			}
 			$runtime = fs_require_realpath($this->config->runtime_include);
-			$optimization = $this->config->optimization === 2 ? '-O2' : '-O0';
-			$flags /** vector<string> */ = ['--driver-mode=g++', '-std=c++23', $optimization, '-Wshadow',
-				'-DSCPP_LANGUAGE_TARGET_PHP=1', '-pthread', '-I', $runtime];
-			if ($this->config->native_debug) { $flags[] = '-g'; }
-			foreach ($build_inputs->definitions as $definition) { $flags[] = '-D' . $definition; }
-			$this->flags = $flags;
+			$this->flags = Native_CPP_Commands::flags($this->config, $runtime, $build_inputs->definitions);
 			$version_arguments /** vector<string> */ = ['--version'];
 			$version = $this->invoke($version_arguments);
 			self::require_success($version);
-			$this->tool_key = "scpp-native-actions-v1\n" . self::file_digest($this->config->compiler) . self::file_digest('/usr/bin/ld')
+			$this->tool_key = "scpp-native-actions-v2\n" . self::file_digest($this->config->compiler)
 				. self::file_digest('/usr/bin/env') . $version->stdout;
+			// Linker replacement must not invalidate compilation or dependency discovery.
+			$this->linker_key = fs_require_realpath($this->config->linker) . ':' . self::file_digest($this->config->linker);
 			$layout_headers /** vector<string> */ = [];
 			foreach ($layout_probes as $probe) {
 				$layout = $this->layout($probe, $source_root, $layout_headers);
@@ -109,10 +108,7 @@ final class Native_CPP_Build
 				if ($layout->reused) { $this->report->layouts_reused++; }
 				else { $this->report->layouts_built++; }
 			}
-			$header = '#include "scpp/int_t.hpp"' . "\n" . '#include "scpp/nullable.hpp"' . "\n"
-				. '#include "scpp/cast.hpp"' . "\n" . '#include "lang/php/operators/conditional/condition_truthiness.hpp"' . "\n"
-				. '#include "scpp/generated/operators.hpp"' . "\n";
-			fs_output_write($this->root, 'runtime-pch.hpp', $header);
+			fs_output_write($this->root, 'runtime-pch.hpp', Native_CPP_Commands::pch_header());
 			if ($this->config->runtime_snapshot) {
 				$inputs = new Native_Dependency_Inputs($this->root, $runtime, $source_root, $files);
 				if ($inputs->complete) {
@@ -124,12 +120,9 @@ final class Native_CPP_Build
 					$this->dependency_inputs = $inputs;
 				}
 			}
-			$pch_args /** vector<string> */ = [];
+			$pch_path = '';
 			if ($this->config->pch) {
-				$pch_command /** vector<string> */ = $this->flags;
-				// Creation policy belongs in the action arguments so old PCH/object keys cannot match.
-				$pch_command[] = '-fpch-instantiate-templates';
-				$pch_command[] = '-x'; $pch_command[] = 'c++-header'; $pch_command[] = $this->root . '/runtime-pch.hpp';
+				$pch_command = Native_CPP_Commands::pch($this->flags, $this->root . '/runtime-pch.hpp');
 				$pch = $this->compile_action($pch_command, 'pch', false);
 				$validation /** vector<string> */ = $this->flags;
 				$validation[] = '-include-pch'; $validation[] = $pch->path;
@@ -137,24 +130,20 @@ final class Native_CPP_Build
 				$check = $this->invoke($validation);
 				if ($check->exit_code !== 0) { $pch = $this->compile_action($pch_command, 'pch', true); }
 				if (!$pch->reused) { $this->report->pch_built++; }
-				$pch_args = ['-include-pch', $pch->path];
+				$pch_path = $pch->path;
 			}
 			$objects /** vector<string> */ = [];
 			foreach ($build_inputs->sources as $provider) {
 				$provider_path = fs_require_realpath($runtime . '/' . $provider);
 				if (!string_byte_starts_with($provider_path, $runtime . '/')) { throw new \RuntimeException('Runtime provider source escapes its root'); }
-				$runtime_command /** vector<string> */ = $this->flags;
-				$runtime_command[] = '-c'; $runtime_command[] = $provider_path;
+				$runtime_command = Native_CPP_Commands::provider($this->flags, $provider_path);
 				$runtime_object = $this->compile_action($runtime_command, 'o', false);
 				$this->record_object($runtime_object);
 				$objects[] = $runtime_object->path;
 			}
 			foreach ($units as $unit) {
-				$command /** vector<string> */ = $this->flags;
-				$command[] = '-I'; $command[] = $source_root;
+				$command = Native_CPP_Commands::implementation($this->flags, $source_root, $pch_path, $unit);
 				foreach ($layout_headers as $layout_header) { $command[] = '-include'; $command[] = $layout_header; }
-				foreach ($pch_args as $argument) { $command[] = $argument; }
-				$command[] = '-c'; $command[] = $unit;
 				$artifact = $this->compile_action($command, 'o', false, isset($checked_units[$unit]));
 				$this->record_object($artifact);
 				$objects[] = $artifact->path;
@@ -174,24 +163,6 @@ final class Native_CPP_Build
 	{
 		if ($artifact->reused) { $this->report->reused++; }
 		else { $this->report->compiled++; }
-	}
-
-	/** Consume the authenticated publication, never reopen module catalogs during a build. */
-	private static function runtime_inputs(\scpp\Json_View $view): runtime_cpp_build_spec
-	{
-		if (($view->kind() !== 'object') || ($view->size() !== 3)) { throw new \RuntimeException('Invalid runtime build publication'); }
-		$result = new runtime_cpp_build_spec();
-		foreach (['sources', 'libraries', 'definitions'] as $name) {
-			$items = $view->member($name);
-			if ($items->kind() !== 'array') { throw new \RuntimeException('Runtime build entries require arrays'); }
-			$values /** vector<string> */ = [];
-			for ($index = 0; $index < $items->size(); $index++) { $values[] = $items->at($index)->text(); }
-			if ($name === 'sources') { $result->sources = $values; }
-			elseif ($name === 'libraries') { $result->libraries = $values; }
-			else { $result->definitions = $values; }
-		}
-		Runtime_Build_Contract::validate($result);
-		return $result;
 	}
 
 	/** Reuse described dependency discovery, otherwise scan through Clang. */
@@ -264,11 +235,8 @@ final class Native_CPP_Build
 	/** Link state records actual linker dependencies in addition to exact ordered object membership. */
 	private function link(array $objects /** vector<string> */): native_cpp_artifact
 	{
-		$command /** vector<string> */ = $this->flags;
-		$command[] = '-fuse-ld=/usr/bin/ld';
-		foreach ($objects as $object_path) { $command[] = $object_path; }
-		foreach ($this->libraries as $library) { $command[] = '-l' . $library; }
-		$base = content_sha256($this->tool_key . self::arguments_key($command) . self::inputs_key($objects));
+		$command = Native_CPP_Commands::link($this->config, $this->flags, $objects, $this->libraries);
+		$base = content_sha256($this->tool_key . $this->linker_key . self::arguments_key($command) . self::inputs_key($objects));
 		$dependencies_path = 'link-inputs/' . $base . '.d';
 		$previous = fs_output_read($this->root, $dependencies_path);
 		$dependencies /** vector<string> */ = [];
@@ -396,7 +364,7 @@ final class Native_CPP_Build
 
 	private function invoke_program(string $executable, array $arguments /** vector<string> */): native_process_result
 	{
-		$args /** vector<string> */ = ['-i', 'PATH=/usr/bin:/bin', 'LC_ALL=C', 'TZ=UTC', 'SOURCE_DATE_EPOCH=0', $executable];
+		$args /** vector<string> */ = Native_CPP_Commands::environment($executable);
 		foreach ($arguments as $argument) { $args[] = $argument; }
 		$handle = process_spawn('/usr/bin/env', $args, '', 120000, $this->root);
 		try {

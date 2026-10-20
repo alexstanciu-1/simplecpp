@@ -1,0 +1,6 @@
+{
+  "passed": true,
+  "native_actions": 0,
+  "policy": "cpp-lowering-v2:latency",
+  "optimization": 2
+}

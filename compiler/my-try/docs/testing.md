@@ -352,6 +352,18 @@ copy behavior, no-error rejection with assignment preservation, preparation reje
 and incremental repair/fresh agreement. It compiles generated programs; it does not
 rebuild the compiler.
 
+`python3 compiler/my-try/tests/lowering_report.py --results FRESH_DIRECTORY` checks
+optional lowering-report correctness, output equivalence and retained-generation
+purity at O0/O1/O2. See the [report schema](architecture/lowering_report.md).
+This is PHP-hosted behavior, not a native compiler rebuild.
+
+`python3 compiler/my-try/tests/ninja_build.py --results FRESH_DIRECTORY` checks
+published-program builds through the shared command recipes and Ninja: fresh/warm,
+body/provider/header edits, source-unit addition/removal, link-only configuration,
+PCH dependency rebuild, no-PCH/O2, failure/retry, path escaping and readiness guards.
+It uses the shared runner and executes generated programs. It does not rebuild the
+compiler natively or test its incremental/MT internals.
+
 `python3 compiler/my-try/tests/indexed_properties.py --results FRESH_DIRECTORY`
 checks plain indexed shared-object property writes, reference/place boundaries,
 key/RHS replacement lifetime and bounds/null failures. Three generated programs
@@ -1658,3 +1670,34 @@ verifies runtime support first, then eight scalar prerequisites and 192 carrier
 signatures with independent state normalization and source snapshots. Add
 `--runtime-only` for the prerequisite gate. Run on dev002; see
 [the dated proof](planning/bool_numeric_identity.md).
+
+## Shared-handle completeness
+
+`python3 compiler/my-try/tests/shared_handle_completeness.py --results FRESH` runs
+a focused PHP-hosted lowering proof and compiles/executes separate generated C++
+units before and after a class-layout edit. It verifies declaration-only handle
+transfer, shared identity/last-owner cleanup, and complete payload dependencies
+for construction, member access, upcasts, value copies and template arguments.
+It does not rebuild the compiler itself.
+
+## Optimization-policy and construction outlining proof
+
+`python3 compiler/my-try/tests/optimization_policy.py --results FRESH` exercises
+O0/O1/O2/O3 generated programs, six retained policy switches without source edits,
+execution-spelling byte preservation, independent containers/shared aliases,
+ineligible constructor/value/inheritance cases, release-policy mismatch rejection,
+a default edit confined to the owning implementation unit, unique-allocation
+preservation, and eligibility changes refreshing untouched callers. This is a PHP-hosted
+compiler proof with compiled generated programs; native compiler and dev002 timing
+evidence are recorded in the [constructor checkpoint](planning/optimization_policy_20261016.md)
+and [allocation checkpoint](planning/allocation_outlining_20261016.md).
+
+## Initialization header isolation
+
+`python3 compiler/my-try/tests/initialization_headers.py --results FRESH` checks all
+five initializer headers without a PCH, both include orders, typed-only exclusion
+of the mixed adapter, and input lifetime/unwinding through both narrow typed and
+compatibility umbrella headers. `data_initialization.py --no-pch` exercises the
+existing typed/mixed/dynamic source-construction and runtime-observation fixtures.
+See the [dev002 header-split checkpoint](planning/initialization_headers_20261016.md)
+for native compiler, build timing, memory and runtime evidence.

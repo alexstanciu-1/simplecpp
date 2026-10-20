@@ -1,6 +1,9 @@
 # my-try compiler
 Doc Status: supporting
 
+Optional [lowering diagnostics](architecture/lowering_report.md) expose artifact
+sizes, direct consumers, fragment header contributions and outlining decisions.
+
 PHP is the implementation source. The active v0.2 path is strict PHS/PHP++ → typed
 syntax and collection → shared semantic preparation → C++ generation. Other
 frontends should normalize toward the same PHS-shaped concepts. LLVM is a parked
@@ -47,10 +50,21 @@ cache/PCH consumer. See [asset checks](testing.md) and the current
 | Stage-owned processing refactor | [Agreed no-visitor boundary, implementation batches and open questions](planning/stage_owned_processing.md) |
 | v0.2 early rejection versus runtime guards | [Preparation diagnostic policy](../../../specs/v0_2_preparation_diagnostics.md) |
 | Mandatory performance task once operational | [PCH findings, incremental builds and LLVM/IR investigation](planning/compile_performance.md) |
+| Planned Clang latency and link-layout experiments | [2–3 s p80 target, future unit splitting, parallel scheduling, and Mold executable/shared-library comparison](planning/clang_units_and_mold.md) |
 | Chapter 08 implementation roadmap | [Multi-file artifacts, staged migration, incremental native builds and runtime PCH](planning/incremental_cpp_artifacts.md) |
+| C++ implementation-group assembly | [Structure and exact-output proof](planning/implementation_group_assembly_20261016.md) |
 | Persistent generated output | [Coordinator publication, ownership, locking and recovery](architecture/output_publication.md) |
 | Concrete C++ specialization | [Active end-to-end solidification TODO](../../../specs/planning/prelower_templates_solidification_todo_2026_10_20.md); [Accounting recipes and opt-in runtime ABI expressions, ownership and coverage](architecture/cpp_template_prelowering.md); [capability-driven generalization matrix](../../../specs/planning/runtime_template_capability_matrix_2026_10_19.md); [representation/ownership audit](../../../specs/planning/prelower_representation_audit_2026_10_19.md); [ABI/layout integration](../../../specs/planning/results/prelower_layout_integration_2026_10_19/README.md); [ordinary-expression proof](../../../specs/planning/results/prelower_expressions_2026_10_19/README.md); [nonempty initializer proof](../../../specs/planning/results/prelower_initializers_2026_10_19/README.md); [source payload and ownership proof](../../../specs/planning/results/prelower_source_payloads_2026_10_19/README.md); [source method transport proof](../../../specs/planning/results/prelower_methods_2026_10_19/README.md); [constructor transport proof](../../../specs/planning/results/prelower_constructors_2026_10_19/README.md); [concrete-field composition experiment](../../../specs/planning/results/prelower_composition_2026_10_19/README.md); [concrete argument binding integration](../../../specs/planning/results/prelower_substitution_2026_10_19/README.md); [ordinary source fields/signatures/member emission](../../../specs/planning/results/prelower_source_fields_2026_10_19/README.md); [source template arguments and shared headers](../../../specs/planning/results/prelower_source_arguments_2026_10_19/README.md) |
 | Persistent native cache | [Staged outputs, dependencies, runtime PCH and bounded native build](architecture/native_cpp_build.md) |
+
+| Native Ninja accounting measurements | [O2 native compiler, full/unchanged/body-edit timings and memory](planning/native_ninja_accounting_20261016.md) |
+| Ninja/Mold comparison and eight-edit scaling | [Mold 8 threads, Ninja 12 jobs, WSL and dev002 timings/memory](planning/native_ninja_mold_20261016.md) |
+| Configurable native linker acceptance | [Production Mold selection, link-only invalidation and native dev002 verification](planning/native_linker_configuration_20261016.md) |
+| Complex edits and PCH integration experiment | [dev002 signature/layout/shared-header/runtime edits: rebuild sets, timing and memory](planning/native_edit_matrix_20261016.md) |
+| Shared-handle dependency refinement | [Implementation and dev002 application edit comparison](planning/shared_handle_completeness_20261016.md) |
+| Initialization header boundaries | [Typed/mixed/dynamic separation, compatibility umbrella and dev002 proof](planning/initialization_headers_20261016.md) |
+| Optimization-aware lowering | [Constructor outlining](planning/optimization_policy_20261016.md), [shared-allocation outlining and dev002 measurements](planning/allocation_outlining_20261016.md) |
+| Native build consumers | [Shared command recipes, optional Ninja execution, and staged native cache](architecture/native_cpp_build.md) |
 | Namespace/import implementation | [Agreed language rules](../../../specs/namespaces_v0_2.md), [approved identity/body migration and current checkpoints](planning/namespace_identity_migration.md) |
 | Remaining implementation debt | [Incremental/v0.2 plan](planning/incremental_strategy.md), [portability review](portability/REVIEW.md) |
 | Value storage modifier semantics | [Registry normalization and AST spelling](../../../specs/type_use_modifiers.md) |

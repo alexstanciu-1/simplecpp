@@ -22,6 +22,8 @@ final class cpp_type_interface
 /** Required visibility at a C++ use site, not a semantic type capability. */
 enum cpp_type_requirement {
 	case declaration;
+	// A complete stored value need not expose the payload of a nominal shared handle.
+	case stored_value;
 	case complete;
 }
 
@@ -117,6 +119,18 @@ final class cpp_artifact {
 	}
 }
 
+/** Transient assembled implementation unit; no semantic owners or scheduling/cache state. */
+final class cpp_implementation_group
+{
+	public string $text = '';
+	public array $headers /** hash<bool> */ = [];
+	public array $forward_declarations /** hash<bool> */ = [];
+
+	public function __construct(public readonly string $identity, public readonly string $file_name)
+	{
+	}
+}
+
 /** Invocation-local progress for ordering complete by-value struct definitions. */
 enum cpp_record_state {
 	case visiting;
@@ -146,6 +160,8 @@ final class cpp_generation_context
 	}
 
 	public ?cpp_finally_return $finally_return = null;
+	/** Invocation selection of backend-owned, no-argument shared allocation functions. */
+	public array $outlined_shared_allocations /** hash<bool> */ = [];
 	public array $compiler_helpers /** hash<prepared_compiler_call> */ = [];
 	public ?breakable_node $break_target = null;
 	public ?loop_node $continue_target = null;
@@ -178,8 +194,9 @@ final class cpp_fragment
 	public string $prototype_text = '';
 	/** Constructor initialization depends on executable body facts, not only the signature. */
 	public string $initializer_text = '';
-	/** Type-owned storage definitions belong to the declaring source implementation unit. */
-	public string $storage_text = '';
+	/** Type-owned storage and constructor definitions belong to the declaring source unit. */
+	public string $record_definition_text = '';
+	public string $allocation_declaration_text = '';
 	public array $headers /** hash<bool> */ = [];
 	public array $forward_declarations /** hash<bool> */ = [];
 	/** Definition signatures can need layouts that their public prototypes do not. */
@@ -196,6 +213,8 @@ final class cpp_fragment
 /** Retained fragments are keyed by independent signature/body preparation identities. */
 final class cpp_program {
 	public bool $prelower_templates = false;
+	public string $policy_identity = '';
+	public array $outlined_shared_allocations /** hash<bool> */ = [];
 	public \SplObjectStorage $fragments /** hash<cpp_fragment, shared<preparation_owner>> */;
 
 	public function __construct()

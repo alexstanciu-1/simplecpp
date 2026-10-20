@@ -1,0 +1,10 @@
+{
+  "passed": true,
+  "native_adapter": true,
+  "publication_recovery": true,
+  "shared_and_exclusive_lock_contention": true,
+  "published_program_executed": true,
+  "converted_native_facade": true,
+  "stan": false,
+  "native_compiler_rebuilt": false
+}

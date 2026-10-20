@@ -1,0 +1,4 @@
+#!/usr/bin/python3
+import os,sys
+args=["-O2" if a in ("-O0","-O3") else a for a in sys.argv[1:]]
+os.execv("/usr/bin/clang++-18",["/usr/bin/clang++-18",*args])

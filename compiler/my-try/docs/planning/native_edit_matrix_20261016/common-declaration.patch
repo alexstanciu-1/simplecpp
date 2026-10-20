@@ -1,0 +1,10 @@
+diff --git a/src/core.phs b/src/core.phs
+index 5fd4f84..4616d2c 100644
+--- a/src/core.phs
++++ b/src/core.phs
+@@ -1,4 +1,5 @@
+ class AccountingCheck {
++    public int $integration_marker = 0;
+     public bool $accepted = true;
+     public string $code = "ok";
+     public string $detail = "";

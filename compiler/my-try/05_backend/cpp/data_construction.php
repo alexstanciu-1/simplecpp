@@ -21,11 +21,11 @@ final class CPP_Initialization_Registration
 	public static function install(): void
 	{
 		$contracts = Model::$initialization_contracts;
-		Model::$cpp_type_bindings->bind_definition($contracts->sequence(), 'scpp::initializer_list', 'scpp/data_initializer.hpp');
-		Model::$cpp_type_bindings->bind_definition($contracts->entry(), 'scpp::initializer_entry', 'scpp/data_initializer.hpp');
+		Model::$cpp_type_bindings->bind_definition($contracts->sequence(), 'scpp::initializer_list', 'scpp/data_initializer_input.hpp');
+		Model::$cpp_type_bindings->bind_definition($contracts->entry(), 'scpp::initializer_entry', 'scpp/data_initializer_input.hpp');
 		foreach (['mixed', 'dynamic'] as $name) {
 			Model::$cpp_callable_bindings->bind_initialization_definition(Model::$type_catalog->definition($name),
-				'scpp::data_initializer', 'scpp/data_initializer.hpp');
+				'scpp::data_initializer', 'scpp/data_initializer_' . $name . '.hpp');
 		}
 		foreach (Model::$runtime_metadata->modules as $module) {
 			$bindings /** Keyed_Storage<runtime_cpp_spec> */ = $module->cpp_initialization;
@@ -73,6 +73,16 @@ final class CPP_Record_Construction
 		if ($storage === record_storage_kind::inline_value) { return CPP_Declarations::type($type, $context); }
 		$payload = CPP_Types::payload($payload_type, $context);
 		CPP_Types::record_dependencies($payload, $context);
+		if ($storage === record_storage_kind::shared) {
+			$source_record = Type_Queries::source_record($payload_type);
+			if ($source_record !== null) {
+				$record /** collected_record */ = $source_record;
+				$allocation_name = $record->qualified_name();
+				if (isset($context->outlined_shared_allocations[$allocation_name])) {
+					return CPP_Shared_Allocations::name($record);
+				}
+			}
+		}
 		$context->headers['scpp/memory.hpp'] = true;
 		$helper = $storage === record_storage_kind::unique ? 'unique' : 'shared';
 		return '::scpp::' . $helper . '<' . $payload->spelling . '>';

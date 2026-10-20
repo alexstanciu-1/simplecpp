@@ -1,4 +1,4 @@
-# Incremental native C++ build
+# Native C++ build consumers
 Doc Status: supporting
 
 `06_native/Native_CPP_Build` consumes a ready disk publication, not syntax or semantic
@@ -33,7 +33,158 @@ this invocation contribute diagnostics; cached warnings are not replayed. Legal 
 shadowing is accepted, and `-Wshadow` is not promoted to an error. The flag participates
 in the ordinary action/PCH keys, so caches from before its introduction rebuild once.
 
-## Ownership and ordering
+
+## Application optimization and C++ lowering
+
+Application levels 0, 1, 2 and 3 are admitted explicitly by both native consumers.
+`cpp_lowering_policy` is the backend-owned lowering input; coordinators pass it to
+`Compiler::exec_cpp`, `update_cpp` or `cpp` alongside the publication. The host S2S
+CLI accepts `--optimization 0|1|2|3`. Standalone emission defaults to execution
+spelling (level 2) to preserve existing output. This is independent of the
+optimization used to build the compiler executable.
+
+For a latency-oriented two-step build, select the level at both boundaries:
+
+```bash
+php compiler/my-try/main.php --s2s /absolute/source --entry main.phs --output /absolute/published --optimization 1 --no-prelower-templates
+php compiler/my-try/tools/build_ninja.php /absolute/published /absolute/build --reuse -O1 --jobs=8
+```
+
+A combined coordinator constructs `new cpp_lowering_policy($config->optimization)`
+and passes it to emission before invoking its native consumer. Optional directory
+reuse still belongs to Ninja.
+
+Levels 0/1 share `cpp-lowering-v2:latency`; levels 2/3 share
+`cpp-lowering-v1:execution`. A profile change clears retained backend fragments,
+without changing prepared semantic facts or source-unit membership. The publication
+records `cpp_policy` under the ready digest. Native consumers reject latency output
+at O2/O3 and unknown policy identities; regenerate first. Earlier
+`cpp-lowering-v1:latency` publications remain valid at O0/O1. Execution spelling,
+including pre-policy publications, may deliberately be compiled at O0/O1 as a
+baseline. Native consumers never invoke lowering themselves. Optimization flags
+remain in compile/PCH command identity, so O0 to O1 rebuilds native inputs even
+though the emitted C++ profile is identical.
+
+The first latency pattern outlines default constructors for ordinary non-inherited
+classes without authored constructors, data initialization, abstract/virtual lifecycle
+or authored destructors. Every instance field must have an explicit constant default
+or an empty typed vector/hash construction, with at least one container default.
+Keep the original expressions and order in a member-initializer list; emit the
+constructor in the declaring source's existing implementation group. Uninitialized
+fields are excluded to preserve C++ value-initialization behavior. Authored methods,
+copy/move/destruction and source contracts are unchanged.
+O2/O3 keep the previous generated form. `record_definition_text` holds type-owned
+static storage, outlined constructors and allocation definitions. Automatic splitting
+is deferred.
+
+The second latency pattern emits a no-argument shared-allocation function for the
+same eligible classes, declared after the type and defined in its existing `.cpp`.
+Shared construction calls it; its body calls the unchanged `scpp::shared<T>()`
+runtime allocator. Unique/value construction and classes outside that eligibility
+retain their previous path. No argument forwarding or new source-visible factory
+is introduced. O2/O3 emit neither the helper nor calls to it.
+
+`CPP_Shared_Allocations` selects helpers from settled declarations. The selected
+qualified names belong to `cpp_program`, and rendering contexts receive the current
+selection. A changed selection clears backend fragments before rendering, including
+unchanged callers; this prevents stale helper references when a field or constructor
+edit changes eligibility. Stable selection preserves ordinary fragment reuse.
+Content-aware publication still avoids rewriting unchanged artifacts. This bounded
+invalidation is backend-owned and does not add semantic dependencies or alter MT.
+
+## Shared commands and optional Ninja execution
+
+`Native_CPP_Commands` owns ordered compiler flags, runtime PCH contents/creation,
+runtime-provider compilation, generated-unit compilation, linking and the controlled
+child environment. Its methods return argument arrays; they do not execute tools or
+make freshness decisions. Both consumers share `native_cpp_toolchain`; their cache
+and directory settings stay in separate derived configuration records. The existing
+`native_cpp_config` constructor and cached-builder behavior are preserved.
+`Native_CPP_Publication` decodes the same validated runtime-build contract for both.
+
+The first Ninja entrypoint consumes a complete ready publication:
+
+```bash
+php compiler/my-try/tools/build_ninja.php /absolute/published /absolute/new-build --jobs=8
+php compiler/my-try/tools/build_ninja.php /absolute/published /absolute/new-build --jobs=8 --reuse
+```
+
+Without `--reuse`, use a fresh empty dedicated directory. An already owned directory
+is rejected rather than deleted. `--reuse` permits Ninja to reuse that directory's
+outputs, including across separate compiler processes. No content-addressed native
+cache runs underneath Ninja. This is ordinary Ninja timestamp/command freshness,
+not historical content-addressed reuse after a Git revert. Use the entrypoint for
+every build so publication validation, tool identity observation and reservations run;
+invoking the saved graph directly is a diagnostic operation, not a readiness API.
+
+Options are `--no-pch`, `-O0`/`-O1`/`-O2`/`-O3`, `--jobs=N`, `--compiler=ABSOLUTE_PATH`,
+`--runtime=ABSOLUTE_PATH`, `--ninja=ABSOLUTE_PATH`, `--linker=ABSOLUTE_PATH` and
+`--linker-threads=N`. Defaults preserve C++23, PHP target, pthread, `-O0`, the runtime
+PCH and `/usr/bin/ld`. `--jobs` limits Ninja commands; `--linker-threads` independently
+configures linker-internal parallelism. Neither changes compiler-internal MT.
+
+The graph contains the current runtime PCH, one object per published translation
+unit, one object per selected runtime provider, and one executable. Object names
+use source-path identities, not traversal positions or content digests. Removed
+units disappear from the link inputs even if their old objects remain on disk.
+Providers do not depend on the PCH; generated objects have a real PCH prerequisite.
+No object depends on the whole publication manifest. Compilation collects full
+header dependencies with `-MD -MF -MQ`; linking uses the existing GNU ld dependency
+file facility (also supported by Mold). No separate `-M` discovery pass or PCH syntax-only validation command
+is scheduled. Clang's normal PCH validation remains enabled.
+
+Graph/umbrella/identity files are written only when their bytes change. Compiler
+and environment-launcher content identity is separate from linker identity; replacing
+the linker does not itself invalidate objects. Keep the surrounding toolchain/include
+search installation fixed during retained reuse; after changing search layout or
+adding a shadowing external header, choose a fresh directory. This first slice does
+not implement include-search inventory or historical artifact corruption recovery.
+
+The worker holds a shared publication reservation and exclusive Ninja-directory
+reservation throughout execution. It verifies all publication digests before invoking
+Ninja. Ninja owns its direct external outputs and completion log (unlike the cached
+consumer's per-action staged promotion). `.scpp-ninja.status` is pending before an
+admitted attempt and ready only after successful Ninja completion and executable
+hashing. A stale executable after failure is not the requested build's result.
+The CLI returns JSON containing the executable path and captured Ninja output.
+
+Ninja graph escaping and POSIX shell quoting are separate. Relative object/executable
+paths avoid GNU ld's unescaped absolute-output-path depfile limitation. Build and
+publication directories containing spaces, dollar signs and colons are covered.
+Quotes, backslashes, pipes, tabs and newlines in dependency paths are rejected in
+this first integration. The standard system library search paths are assumed;
+broader depfile path handling and long link response files remain
+[CH15 debt](../catalog/15_blocking_debt.md#ch15-ninja-01--ninja-adapter-follow-ups).
+
+The implementation follows the upstream [Ninja manual](https://ninja-build.org/manual.html)
+for command freshness, compilation depfiles, explicit dependencies and escaping.
+This integration changes neither C++ grouping/emission nor compiler incremental/MT
+internals. Automatic splitting and multi-file classes remain deferred.
+
+Focused evidence: `python3 compiler/my-try/tests/ninja_build.py --results FRESH`.
+This runs the PHP-hosted builder and real Clang/Ninja-generated executables, not a
+native compiler rebuild or a performance benchmark. The existing
+`tests/runtime_module_build.py` separately covers the refactored cached consumer.
+
+### Focused checkpoint — 2026-10-16
+
+The Ninja suite passed 13 successful build/execution scenarios plus four rejection
+checks (reuse admission, unsupported path, compile failure, publication tampering).
+Observed action counts: cold 6; unchanged 0; body edit 2; added unit 3; removed unit 2;
+provider edit 2; library-list edit 1; provider-header edit 3; no-PCH fresh 5; O2 fresh 6;
+PCH-header edit 6; unchanged after PCH rebuild 0; retry after compile failure 2.
+Each count includes linking where required. The existing cached-consumer suite also
+passed its six scenarios. Evidence: `/tmp/scpp-ninja-final-20261016/` and
+`/tmp/scpp-recipes-existing-20261016/`. These are correctness observations, not
+performance claims. Test sources preserve the checks if temporary logs expire.
+
+The subsequent [O2 native accounting checkpoint](../planning/native_ninja_accounting_20261016.md)
+executes this builder natively on the 515.7 KiB fixture: three full/unchanged/body-edit
+trials, exact PHP/native artifact agreement and 94 CLI cases. It also proves direct
+native publication after explicit missing-digest guards replaced the legacy S2S
+coalescing form. This bounded checkpoint does not replace broad native language tests.
+
+## Cached consumer: ownership and ordering
 
 Hold the source publication's shared reservation for the whole build, then a stable
 exclusive cache reservation. Contention is nonblocking and leaves readiness alone.
@@ -58,6 +209,41 @@ Successful native status records the exact source manifest digest and executable
 digest/path. A future run/current-build reader must check both current source
 readiness and this association while holding the relevant reservations. A raw
 historical executable path remains a historical artifact, not a freshness API.
+
+## Linker selection and identity
+
+Both entrypoints accept `--linker=/absolute/path/to/mold --linker-threads=8`.
+Programmatic callers set `native_cpp_toolchain::linker` and `linker_threads`.
+The default is `/usr/bin/ld` with zero threads, meaning no thread option is sent;
+the selected linker retains its default. A positive count emits `-Xlinker --threads=N`
+and requires a linker supporting that option (tested with Mold 3). GNU BFD should
+use zero. Relative linker paths and negative thread counts are rejected. Unsupported
+linker options fail through normal tool diagnostics; there is no silent fallback.
+
+```bash
+php compiler/my-try/tools/build_ninja.php /absolute/published /absolute/build --reuse --jobs=12 --linker=/absolute/path/to/mold --linker-threads=8
+php compiler/my-try/tools/build_cpp.php /absolute/published /absolute/cache --linker=/absolute/path/to/mold --linker-threads=8
+```
+
+Only the link recipe receives these settings. Each build observes the selected
+executable's resolved path and SHA-256, including same-path content replacement and
+symlink retargeting. Ninja records that in its link-only identity input and observes
+thread/path changes through the command hash. The content-addressed consumer keeps
+linker identity in the link key, separate from compilation/dependency-discovery keys.
+Objects/PCH survive linker-only changes. The latter consumer uses compilation key
+namespace v2, causing a one-time miss for older v1 entries; Ninja directories need no reset.
+A revert may reuse a historical executable in the content-addressed consumer, whereas
+Ninja relinks when its latest recorded command/identity changes.
+
+Existing link depfiles, pending/ready publication, error propagation and recovery
+remain in force. Configure the actual linker binary: scripts or wrappers that invoke
+other mutable tools do not establish transitive tool identity. Toolchain files must
+remain quiescent during a build. Selected linker shared-library dependencies retain
+the documented toolchain-installation limitation below.
+
+Focused proof: `tests/linker_configuration.py --mold /absolute/path/to/mold --results FRESH`
+checks both consumers, configuration changes, binary replacement with preserved mtime,
+same-byte symlink retargeting, no-op/revert behavior and failed-link recovery.
 
 ## Dependencies and PCH
 
@@ -121,8 +307,9 @@ units retain the runtime PCH. Definitions participate in all compile/PCH identit
 ordered libraries participate in link identity. Publications made before this field
 was introduced must be republished. There is no hardcoded core-source fallback.
 
-Reuse is keyed by the compiler/linker/environment-launcher identities, compiler
-version, exact ordered arguments and content digests of inputs. The child environment
+Compilation reuse is keyed by compiler/environment-launcher identities, compiler
+version, exact ordered arguments and content digests of inputs; link reuse additionally
+includes the selected linker identity. The child environment
 is explicit (`env -i`, fixed PATH/locale/timezone/source-date epoch); inherited
 CPATH/CXXFLAGS and other ambient settings cannot silently influence reuse.
 
@@ -138,7 +325,7 @@ cache identity. Clang's normal PCH validation remains enabled; an invalid retain
 PCH is rebuilt, never silently replaced with an uncached/no-PCH fallback. Object
 keys include the PCH artifact digest. `--no-pch` is an explicit separate configuration.
 
-The exact ordered object set determines link identity. GNU ld emits its dependency
+The exact ordered object set determines link identity. GNU ld or Mold emits its dependency
 file; cached linking rechecks those library/startup/script inputs as well. First-link
 metadata associates the completed artifact with the discovered dependency key,
 without copying the executable. Permissions are checked before binary cache reuse.
@@ -171,10 +358,10 @@ facts. Cross-compilation and recursive header/layout graphs remain unsupported. 
 
 ## Bounded first implementation and next work
 
-This is Linux, Clang plus GNU ld with dependency-file support, ordinary core runtime
+This is Linux, Clang plus GNU ld or Mold with dependency-file support, ordinary core runtime
 and metadata-declared provider linkage, and `-O0`/`-O2`. It is not a replacement for the legacy `scpp`/Ninja project
 system or a claim of every optional runtime module's linkage. No arbitrary user
-flags, cross-compilation, alternative linkers, runtime package-manager integration,
+flags, cross-compilation, other linkers, runtime package-manager integration,
 distributed cache or native build of this compiler is claimed.
 
 Toolchain/runtime inputs must remain quiescent during one build. Reuse assumes an
@@ -204,3 +391,8 @@ The native-debug cache proof in `tests/native_cache.py` checks actual ELF debug
 sections, execution, cold/warm debug builds and reuse when returning to the default.
 This option does not implement source-language stepping, variable inspection or
 source-mapped runtime stacks; those require a compiler-owned debugging design.
+
+Concrete prelowered publications currently use `Native_CPP_Build`. The optional
+Ninja consumer rejects them explicitly until it supports layout probes and strict
+application closure validation. Shared-allocation outlining remains ordinary-only;
+concrete construction continues through the existing prepared transport.

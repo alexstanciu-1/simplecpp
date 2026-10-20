@@ -1,0 +1,21 @@
+#!/usr/bin/python3
+import json, os, sys, time
+from pathlib import Path
+args=sys.argv[1:]
+folder=Path.cwd()/'.measure';folder.mkdir(exist_ok=True)
+name=str(os.getpid())
+if '-x' in args and args[args.index('-x')+1]=='c++-header':stage='pch'
+elif '-c' in args: stage='runtime' if 'runtime-' in args[args.index('-o')+1] else 'object'
+else: stage='link'
+actual=list(args)
+if (Path.cwd()/'.profile').exists() and stage!='link':
+ actual.append('-ftime-trace='+str(folder/(name+'.trace.json')))
+start=time.monotonic_ns()
+pid=os.fork()
+if pid==0:
+ os.execv('/usr/bin/clang++-18',['/usr/bin/clang++-18',*actual])
+_,status,usage=os.wait4(pid,0)
+end=time.monotonic_ns()
+code=os.waitstatus_to_exitcode(status)
+(folder/(name+'.json')).write_text(json.dumps(dict(stage=stage,start_ns=start,end_ns=end,wall_s=(end-start)/1e9,user_s=usage.ru_utime,system_s=usage.ru_stime,peak_rss_kib=usage.ru_maxrss,exit=code,args=args,actual_args=actual)))
+sys.exit(code if code>=0 else 128-code)

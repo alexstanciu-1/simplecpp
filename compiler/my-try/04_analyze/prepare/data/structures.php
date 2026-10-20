@@ -239,8 +239,7 @@ final class prepared_data_entry
 	public ?conversion_decision $key_conversion = null;
 	public conversion_decision $value_conversion;
 	/** Record input index; sequence entries retain their source position instead. */
-	public int $input_position;
-	public function __construct() { $this->input_position = -1; }
+	public int $input_position = -1;
 }
 
 enum take_operation { case nullable_value; case false_result; case error_result; case boolean_result; }
