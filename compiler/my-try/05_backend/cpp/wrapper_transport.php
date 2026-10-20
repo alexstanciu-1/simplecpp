@@ -4,6 +4,16 @@ namespace scpp\compiler;
 /** Physical wrapper adaptation; registry identities and runtime state rules remain authoritative. */
 final class CPP_Wrapper_Transport
 {
+	public static function is_string_vector(canonical_type_use $type): bool
+	{
+		$canonical = Type_Queries::canonical($type);
+		if (!($canonical instanceof applied_template_type)
+			|| ($canonical->definition() !== Model::$type_catalog->definition('vector'))) { return false; }
+		$application = object_cast($canonical, applied_template_type::class);
+		$arguments /** vector<canonical_type_use> */ = $application->arguments();
+		return $arguments[0]->matches(Language_Types::string_type(Model::$language_scope));
+	}
+
 	/** Provider fields keep native vector<string>; application vectors store concrete strings. */
 	public static function provider_vector(canonical_type_use $type, string $expression, bool $compose,
 		CPP_Specializations $engine, cpp_generation_context $context): string

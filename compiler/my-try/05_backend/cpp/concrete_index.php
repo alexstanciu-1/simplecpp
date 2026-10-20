@@ -73,6 +73,9 @@ final class CPP_Concrete_Index
 		$existing = $engine->find($name);
 		if ($existing !== null) { return $existing; }
 		$helper = $request->spelling;
+		$inputs /** Storage<canonical_type_use> */ = $request->inputs;
+		$mixed_read = ($helper === 'null_index_read')
+			&& (Type_Queries::canonical($inputs[0])->definition() instanceof mixed_semantics);
 		$pointer = ($helper === 'keyed_ready') || ($helper === 'keyed_lookup') || ($helper === 'keyed_child') || ($helper === 'keyed_probe');
 		$mutable_receiver = ($helper === 'index_store') || ($helper === 'index_append') || ($helper === 'index_path_descend')
 			|| ($helper === 'keyed_descend') || ($helper === 'keyed_erase');
@@ -88,7 +91,7 @@ final class CPP_Concrete_Index
 			$indirection = ($position === 0 && $pointer) ? '*' : '&';
 			$operand = 'a' . $position;
 			$parameters .= $separator . $qualifier . $mapping->spelling . $indirection . ' ' . $operand;
-			if ($position === 0 && $mapping->opaque) {
+			if (($position === 0 || $mixed_read) && $mapping->opaque) {
 				$native = CPP_Types::implementation_representation($type, $engine);
 				foreach ($native->headers as $header => $used) { $native_headers[$header] = true; }
 				$address = $operand . ($pointer ? '->' : '.') . 'address()';
@@ -112,9 +115,20 @@ final class CPP_Concrete_Index
 		}
 		$signature = $output . ' ' . $helper . '(' . $parameters . ')';
 		$declaration = "#pragma once\n" . CPP_Artifacts::includes($context->headers, '') . 'namespace scpp { ' . $signature . "; }\n";
+		$operation = 'return scpp::' . $helper . '(' . $arguments . ')'
+			. ($helper === 'keyed_probe' ? '.native_value()' : '') . ';';
+		if ($mixed_read) {
+			$result /** canonical_type_use */ = $request->result;
+			$native_result = CPP_Types::implementation_representation($result, $engine);
+			foreach ($native_result->headers as $header => $used) { $native_headers[$header] = true; }
+			$native_headers['type_traits'] = true;
+			$native_headers['new'] = true;
+			$native_headers['scpp/index_read.hpp'] = true;
+			$operation = CPP_Runtime_Operations::concrete_call_result($output, $native_result->spelling, '',
+				'scpp::' . $helper . '(' . $arguments . ')');
+		}
 		$body = CPP_Artifacts::includes($native_headers, '') . "#include <memory>\n#include <scpp/keyed_path.hpp>\n#include <scpp/index_existing.hpp>\nnamespace scpp { "
-			. $signature . ' { return scpp::' . $helper . '(' . $arguments . ')'
-			. ($helper === 'keyed_probe' ? '.native_value()' : '') . "; } }\n";
+			. $signature . ' { ' . $operation . " } }\n";
 		$layout_dependencies /** hash<bool> */ = [];
 		return new cpp_specialization_entry($name, 'specializations/' . $name . '.hpp', $declaration, $body, $layout_dependencies);
 	}

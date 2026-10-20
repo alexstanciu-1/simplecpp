@@ -233,6 +233,19 @@ final class CPP_Runtime_Operations
 			$engine /** CPP_Specializations */ = $context->implementation_engine;
 			$inputs /** Storage<canonical_type_use> */ = $request->inputs;
 			foreach ($inputs as $position => $input) {
+				// Concrete provider contracts consume native vectors; inferred generic
+				// contracts continue to use their substituted physical element types.
+				if (($binding->target() instanceof registered_function) && CPP_Wrapper_Transport::is_string_vector($input)) {
+					if ($request->call !== null) {
+						$vector_parameters /** Storage<callable_parameter> */ = $request->call->signature->parameters;
+						$vector_parameter = $vector_parameters[$position];
+						if (($vector_parameter->mode === passing_mode::reference)
+							&& ($vector_parameter->access !== storage_access::read_only)) {
+							throw new \RuntimeException('prelower_templates: mutable provider vectors require separate write-back transport');
+						}
+					}
+					$arguments[$position] = CPP_Wrapper_Transport::provider_vector($input, $arguments[$position], false, $engine, $context);
+				}
 				if (CPP_Wrapper_Transport::payload($input) !== null) {
 					if ($request->call !== null) {
 						$parameters /** Storage<callable_parameter> */ = $request->call->signature->parameters;
@@ -329,6 +342,11 @@ final class CPP_Runtime_Operations
 	{
 		$engine = $context->specialization_engine;
 		if ($engine === null) { return false; }
+		if ($decision->operation === conversion_operation::boxed_wrap) {
+			return (Type_Queries::canonical($decision->target_type)->definition() instanceof mixed_semantics)
+				&& ($decision->source_type->matches(Language_Types::integer(Model::$language_scope))
+					|| $decision->source_type->matches(Language_Types::string_type(Model::$language_scope)));
+		}
 		if ($decision->operation === conversion_operation::boxed_extract) {
 			return (Type_Queries::canonical($decision->source_type)->definition() instanceof mixed_semantics)
 				&& ($decision->target_type->matches(Language_Types::integer(Model::$language_scope))

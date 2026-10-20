@@ -4,6 +4,7 @@ import hashlib
 import json
 from pathlib import Path
 import re
+import shutil
 import sys
 
 from curl_runtime import fixture_server
@@ -90,6 +91,81 @@ if(!take($key,$e,curl_getinfo($h,CURLINFO_RESPONSE_CODE))){return 4;}
 $args=cli_args();$text string=$args[$key];
 if(strlen($text)===0){return 5;}echo "mixed indexing\n";
 ''', expected="mixed indexing\n", changes=[], http=False, external=False)
+    result["mixed_read_contract"] = dict(source=r'''
+function receiver(mixed $value,int &$trace):mixed {$trace=$trace*10+1;return $value;}
+function key(int &$trace):string {$trace=$trace*10+2;return "nested";}
+$e error;$root mixed;
+if(!take($root,$e,json_decode_mixed("{\"nested\":{\"value\":7},\"a\\u0000b\":\"x\\u0000y\"}"))){return 1;}
+$trace=0;$child=receiver($root,$trace)[key($trace)];
+if($trace!==12){return 2;}
+$number int=$child["value"];if($number!==7){return 3;}
+$text string=$root["a\0b"];if($text!=="x\0y"){return 4;}
+$missing=$root["missing"];$encoded string="";
+if(!take($encoded,$e,json_encode($missing))||$encoded!=="null"){return 5;}
+if(!take($root,$e,json_decode_mixed("null"))){return 6;}
+$kept int=$child["value"];if($kept!==7){return 7;}
+$empty=$root["anything"];
+if(!take($encoded,$e,json_encode($empty))||$encoded!=="null"){return 8;}
+$ki mixed=1;$ks mixed="1";
+if(!is_int($ki)||is_int($ks)){return 9;}
+if(!take($root,$e,json_decode_mixed("[11,22]"))){return 10;}
+$a int=$root[$ki];$b int=$root[$ks];if($a!==22||$b!==22){return 11;}
+echo "mixed keys, order, bytes, absence and owned reads\n";
+''', expected="mixed keys, order, bytes, absence and owned reads\n",
+        changes=[], http=False, external=False)
+    result["curl_contracts"] = dict(source=r'''
+function replace_handle(curl_handle &$h,string $url,int &$trace):string {
+    $trace++;$e error;take($h,$e,curl_init());return $url;
+}
+$h curl_handle;$e error;$ok=false;$r curl_response;$m mixed;$path string="";
+if(!take($h,$e,curl_init())){return 1;}
+if(take($r,$e,curl_exec($h))||curl_errno($h)===0||curl_error($h)===""){return 2;}
+$old=$h;$trace=0;
+if(!take($path,$e,fs_realpath("payload.txt"))){return 3;}
+if(!take($ok,$e,curl_setopt($h,CURLOPT_URL,replace_handle($h,"file://".$path,$trace)))||!$ok||$trace!==1){return 4;}
+if(!take($r,$e,curl_exec($old))||$r->body!=="curl-http\n"){return 5;}
+if(take($r,$e,curl_exec($h))){return 6;}
+$h=$old;$headers vector<string> = [];
+if(!take($ok,$e,curl_setopt($h,CURLOPT_HTTPHEADER,$headers))||count($headers)!==0){return 7;}
+$headers=["X-Test: retained"];
+if(!take($ok,$e,curl_setopt($h,CURLOPT_HTTPHEADER,$headers))||$headers[0]!=="X-Test: retained"){return 8;}
+if(!take($ok,$e,curl_setopt($h,CURLOPT_RETURNTRANSFER,true))||
+   !take($ok,$e,curl_setopt($h,CURLOPT_POST,false))||
+   !take($ok,$e,curl_setopt($h,CURLOPT_POSTFIELDS,"unused"))||
+   !take($ok,$e,curl_setopt($h,CURLOPT_CUSTOMREQUEST,"GET"))||
+   !take($ok,$e,curl_setopt($h,CURLOPT_TIMEOUT,5))||
+   !take($ok,$e,curl_setopt($h,CURLOPT_CONNECTTIMEOUT,5))||
+   !take($ok,$e,curl_setopt($h,CURLOPT_FOLLOWLOCATION,false))||
+   !take($ok,$e,curl_setopt($h,CURLOPT_USERAGENT,"curl-proof"))||
+   !take($ok,$e,curl_setopt($h,CURLOPT_SSL_VERIFYPEER,true))||
+   !take($ok,$e,curl_setopt($h,CURLOPT_SSL_VERIFYHOST,2))){return 9;}
+if(take($ok,$e,curl_setopt($h,CURLOPT_SSL_VERIFYHOST,1))||
+   take($ok,$e,curl_setopt($h,9999,"x"))||
+   take($ok,$e,curl_setopt($h,CURLOPT_URL,1))){return 10;}
+if(!take($r,$e,curl_exec($h))){return 11;}
+if(!take($m,$e,curl_getinfo($h,CURLINFO_RESPONSE_CODE))||
+   !take($m,$e,curl_getinfo($h,CURLINFO_EFFECTIVE_URL))||
+   !take($m,$e,curl_getinfo($h,CURLINFO_CONTENT_TYPE))||
+   !take($m,$e,curl_getinfo($h,CURLINFO_TOTAL_TIME_MS))||
+   !take($m,$e,curl_getinfo($h,CURLINFO_HEADER_SIZE))||
+   !take($m,$e,curl_getinfo($h,CURLINFO_REQUEST_SIZE))||
+   !take($m,$e,curl_getinfo($h,CURLINFO_REDIRECT_COUNT))){return 12;}
+if(take($m,$e,curl_getinfo($h,9999))){return 13;}
+if(!take($ok,$e,curl_reset($h))||curl_errno($old)!==0||curl_error($old)!==""){return 14;}
+if(take($m,$e,curl_getinfo($h,CURLINFO_RESPONSE_CODE))){return 15;}
+if(!take($ok,$e,curl_close($h))||take($r,$e,curl_exec($old))||take($ok,$e,curl_close($old))){return 16;}
+if(curl_strerror(0)===""){return 17;}
+echo "all curl names, forms, options, selectors and states\n";
+''', expected="all curl names, forms, options, selectors and states\n",
+        changes=[], http=False, external=False)
+    result["readonly_headers"] = dict(source=r'''
+$headers vector<string> = ["a\0b","tail"];
+$text=probe_headers($headers);
+if($text!=="a\0b|tail|"||count($headers)!==2||$headers[0]!=="a\0b"){return 1;}
+$headers=[];if(probe_headers($headers)!==""){return 2;}
+echo "read-only native header vectors\n";
+''', expected="read-only native header vectors\n",
+        changes=[], http=False, external=False, custom_provider=True)
     return result
 
 
@@ -110,7 +186,43 @@ def main():
             folder = out / name
             (folder / "source").mkdir(parents=True)
             (folder / "source/main.phs").write_text(case["source"])
-            runner.run(name + "-publish", ["php", APP / "tests/curl_publish.php", folder],
+            publish = ["php", APP / "tests/curl_publish.php", folder]
+            runtime = ROOT / "runtime/include"
+            if case.get("custom_provider"):
+                catalog = folder / "catalog"
+                shutil.copytree(ROOT / "runtime/metadata/modules", catalog)
+                runtime = folder / "runtime"
+                shutil.copytree(ROOT / "runtime/include", runtime)
+                functions = []
+                bindings = []
+                for function, passing in [("probe_headers", "readonly_reference"), ("probe_mutable_headers", "reference")]:
+                    functions.append(dict(id="curl_probe."+function, name=function,
+                        parameters=[dict(name="headers", type=dict(name="vector", arguments=["string"]), passing=passing)],
+                        returns="string"))
+                    bindings.append(dict(id="curl_probe."+function, symbol="curl_probe::"+function, header="curl_probe.hpp"))
+                (catalog / "curl_probe.json").write_text(json.dumps(dict(
+                    version=1, module="curl_probe", dependencies=["core"], functions=functions, cpp=bindings)))
+                (runtime / "curl_probe.hpp").write_text('''#pragma once
+#include "scpp/vector_t.hpp"
+#include "scpp/string_t.hpp"
+namespace curl_probe {
+inline scpp::string_t probe_headers(const scpp::vector_t<scpp::string_t>& headers) {
+    std::string result; for (std::size_t i=0;i<headers.size();++i) { result += headers.at(i).native_value(); result += "|"; }
+    return scpp::string_t(result);
+}
+inline scpp::string_t probe_mutable_headers(scpp::vector_t<scpp::string_t>& headers) {
+    headers.clear(); return scpp::string_t("must not execute");
+}
+}
+''')
+                publish.append(catalog)
+                (folder / "source/main.phs").write_text('$h vector<string> = [];probe_mutable_headers($h);')
+                runner.run(name + "-mutable-reject", publish, expected=255,
+                           cli_reason="Mutable native provider vectors remain out of scope")
+                assert "mutable provider vectors require separate write-back transport" in (
+                    out / "logs" / (name + "-mutable-reject.stderr")).read_text()
+                (folder / "source/main.phs").write_text(case["source"])
+            runner.run(name + "-publish", publish,
                        cli_reason="Default production curl publication")
             work = folder / "cwd"
             work.mkdir()
@@ -119,7 +231,7 @@ def main():
             for phase in ["cold", "warm"]:
                 build = json.loads(runner.run(name + "-" + phase, [
                     "php", APP / "tests/fixtures/native_cache_driver.php", folder / "published",
-                    folder / "cache", ROOT / "runtime/include", "/usr/bin/clang++", "--no-pch"],
+                    folder / "cache", runtime, "/usr/bin/clang++", "--no-pch"],
                     timeout=300, cli_reason="Strict concrete curl native build"))
                 if phase == "warm":
                     assert build["compiled"] == build["linked"] == 0, build
