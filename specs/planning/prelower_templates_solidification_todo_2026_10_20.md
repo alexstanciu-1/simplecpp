@@ -2,7 +2,7 @@
 Doc Status: planning
 
 Date: 2026-10-20
-Status: supported-path solidification accepted at `da17e1ba`; broader coverage deferred.
+Status: working for the supported opt-in path; solidification closed. Broader coverage deferred.
 This is the current follow-up to the [implementation history](cpp_template_prelowering_plan_2026_10_19.md)
 and [architectural decision](cpp_template_prelowering_decision_2026_10_19.md).
 Unchecked items are remaining work, not claims that the underlying mechanism is absent.
@@ -21,6 +21,53 @@ protection. It does not require full runtime coverage, new optimization, a rewri
 AST, a new semantic stage, a parallel registry or family-specific engine branches.
 Use existing owners; enrich prepared facts only when genuinely missing. Any newly
 required wide cross-owner redesign must be discussed before implementation.
+
+## Architecture closeout — 2026-10-20
+
+Reviewed implementation at `cdc48357`, including `CPP_Specializations`,
+`CPP_Opaque_Representation`, `CPP_Runtime_Operations`, fragment demand replay in
+`CPP_Generator`, publication policy and `Native_CPP_Build`. This is a focused
+architecture review supported by the retained acceptance results, not a new
+whole-runtime correctness certification. No implementation or tests changed in
+this closeout.
+
+Assessment: the architecture is appropriate and the implementation is a sound
+working foundation within its declared coverage. No blocking redesign was found
+in the reviewed path:
+
+- Semantic identity and operation selection remain with the existing registry and
+  preparation. Physical substitution consumes them without rewriting the AST.
+- The engine interns compact references and assembles demand/dependencies.
+  Its dispatch is by operation contract, not runtime family names; runtime
+  algorithms stay in the runtime and physical adapters have named backend owners.
+- Concrete storage contains the actual native object. Layout probes, placement
+  construction, destruction and prepared copy permission have distinct roles.
+  This avoids a mandatory extra heap object or a second payload representation;
+  retained counter proofs establish the tested allocation/copy behavior.
+- Fragment-owned demand is replayed into a fresh engine. Stable sorted emission,
+  existing publication and dependency-keyed native reuse avoid a parallel
+  persistent cache or a second incremental lifecycle.
+- CLI/API share one path. Published policy, transitive-input validation, PCH
+  rejection and cache-policy separation enforce failure rather than silent fallback.
+
+Accepted tradeoffs, not reasons to prolong this milestone:
+
+- Middleware implementations are grouped in `specializations/containers.cpp`.
+  A changed demand can rebuild that group; finer partitioning is future performance
+  work, not evidence of fine-grained middleware incremental compilation today.
+- Entry ordering uses insertion sorting and layout ordering uses repeated scans.
+  Large specialization graphs may justify better algorithms after measurement.
+- Fixed physical adapter protocols are intentional. Metadata is extensible provider
+  configuration, not a promise that arbitrary C++ libraries work without adapters.
+- Native layout probes require target execution; cross-target probe support is
+  unclaimed. Unsupported transports/cycles and naming/debug-map debt stay explicit.
+
+The combined O0 acceptance at `da17e1ba`, native O2 compiler execution at
+`81913306`, and [matched benchmarks](results/native_compiler_benchmark_2026_10_20/README.md)
+provide complementary behavior, portability and performance evidence. They justify
+marking the supported feature working, without claiming full runtime coverage or
+fully mature incremental compilation. Further work should be driven by concrete
+test failures and prioritized coverage requests; runtime redesign remains deferred.
 
 ## Accepted architecture — 2026-10-20
 
