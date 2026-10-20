@@ -94,16 +94,17 @@ No full matrix or native compiler rebuild was run. Intermediate failed attempts
 remain in the archive, including the float-oracle narrowing mistake, missing cast
 header dependency, stale tests/direct-call signatures and exporter scope mistake.
 
-## BS-R01: invalid primitive shift counts — separate open finding
+## BS-R01: invalid primitive shift counts — historical finding, subsequently closed
 
-The existing integer shift primitives use native C++ shifts without validating
+At this checkpoint, the integer shift primitives used native C++ shifts without validating
 counts. The focused boundary left-shift probe exercises -1 and 64 on scalar int, mixed and
 dynamic controls with an instrumented runtime. These are diagnostic reproductions,
 not supported-operation passes. Valid 0–63 behavior is independently verified.
 
 Owner: the shared primitive integer shift-count contract and runtime validation,
-including its generated source owner. This is outside the two authorized runtime
-repairs and needs a separate policy/implementation discussion. Do not infer safe
+including its generated source owner. This was outside the two runtime repairs
+authorized for this checkpoint. The later [checked-shift goal](compact_layout_shifts.md)
+separately approved and verified `ValueError` for invalid counts. Do not infer safe
 exceptions, masking or saturation for invalid counts. No such behavior is certified
 by the V-L09 admission closeout. Keep this finding visible alongside the remaining
 original issues; it does not alter the frozen 64-issue denominator.
@@ -113,5 +114,6 @@ original issues; it does not alter the frozen 64-issue denominator.
 - `0de3db03`: approved runtime prerequisites, contracts and direct probes.
 - `a56e17be`: shared compiler admission/conversions and focused source/regression proofs.
 
-No blocker remains within the approved admission/normalization slice. BS-R01
-remains an explicit, separate runtime contract/validation discussion.
+No blocker remains within this admission/normalization slice. BS-R01 subsequently
+closed in [compact_layout_shifts.md](compact_layout_shifts.md); the original
+reproduction and audit archive above remain unchanged.

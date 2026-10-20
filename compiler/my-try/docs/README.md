@@ -6,8 +6,8 @@ syntax and collection → shared semantic preparation → C++ generation. Other
 frontends should normalize toward the same PHS-shaped concepts. LLVM is a parked
 experiment retained for regressions, not a second semantic development path.
 
-Current repair checkpoint: [V-R04/V-R09 regex closure](planning/regex_replacement.md),
-31/64 original issues closed (48.4375%).
+Current repair checkpoint: [checked shifts and compact layout](planning/compact_layout_shifts.md),
+37/64 original issues closed (57.8125%); supplementary BS-R01 also closed.
 
 ## Reading map
 

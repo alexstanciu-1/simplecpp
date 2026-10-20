@@ -16,6 +16,13 @@ Order is a discussion sequence, not a claim that every row is a prerequisite. Sp
 
 ## Progress
 
+**2026-10-20 compact-layout checkpoint:** restricted payload unions and all four
+layout queries are implemented and verified on dev002. Recursive payload checks,
+explicit whole-member lifetime, copies, imported layouts and recovery use the
+existing shared declaration/preparation owners. See [V-L01/V-L02 closeout](../planning/compact_layout_shifts.md)
+for evidence and boundaries; no managed unions, general reflection or native
+compiler rebuild is implied.
+
 
 **Current scope — 2026-10-19 (CS358).** Enum support remains bounded by the per-card proofs. Later CH10 ownership/constructor work resolves the nullable and argument-bearing construction prerequisites. Reflection, string backing and method extensions remain V-D08. Original enum failures and adapted audit lanes remain historical evidence; H12 fixture repairs passed in fixture_repairs_01.
 

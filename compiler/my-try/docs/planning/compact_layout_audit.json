@@ -1,0 +1,52 @@
+{
+  "doc_status": "supporting",
+  "date": "2026-10-20",
+  "passed": true,
+  "source_files_checked": 6329,
+  "tested_production_and_test_hashes_match": true,
+  "pre_goal_compiler_php_files_verified_against_git": 228,
+  "evidence_digest_verified": true,
+  "evidence_records": 10298,
+  "accepted_commands": 751,
+  "native_executions": 193,
+  "acceptance_executions": 192,
+  "baseline_comparison_executions": 1,
+  "shift_programs": 8,
+  "compact_layout_programs": 7,
+  "source_rejections": 49,
+  "recovery_cycles": 1,
+  "regression_programs": 175,
+  "regression_php_checks": 29,
+  "production_cold_and_warm_pass": true,
+  "warm_compiled": 0,
+  "warm_linked": 0,
+  "operator_regeneration_matches": true,
+  "closed_issues": [
+    "V-L01",
+    "V-L02"
+  ],
+  "supplementary_closed": [
+    "BS-R01"
+  ],
+  "progress": {
+    "closed": 37,
+    "partial": 0,
+    "total": 64,
+    "percent": 57.8125
+  },
+  "remaining_batch_blockers": [],
+  "separate_open_findings": [
+    {
+      "id": "CL-H01",
+      "status": "open-harness-debt",
+      "finding": "The existing enums.py expects SIGABRT (-6) for enum_unhandled; both pre-goal and candidate generated entrypoints catch the exception, report Unhandled match expression and exit 1. The new combined harness verifies exit 1 and that diagnostic. Original enums.py remains unchanged.",
+      "evidence": "verification/enum-baseline-01"
+    }
+  ],
+  "full_matrix_run": false,
+  "native_compiler_rebuilt": false,
+  "implementation_commits": [
+    "c026e072",
+    "e173100a"
+  ]
+}

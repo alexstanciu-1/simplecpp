@@ -1,6 +1,21 @@
 # Test runners
 Doc Status: supporting
 
+The [checked-shift/compact-layout closeout](planning/compact_layout_shifts.md)
+uses these focused dev002 runners:
+
+- `tests/checked_shifts.py --results FRESH`: generator reproduction, runtime-object
+  UBSan, count failures, source snapshots, extraction precedence and failed write-back.
+- `tests/compact_layout.py --results FRESH`: restricted unions, native layout queries,
+  rejection/recovery, ASan/UBSan observers and production cold/warm builds.
+- `tests/compact_layout_regressions.py --results FRESH`: shared 12-slot declaration,
+  property, enum and boxed/operator checks; no full operator matrix.
+
+CL-H01 records the original `enums.py` runner's stale SIGABRT expectation for
+`enum_unhandled`; the combined runner checks the baseline-confirmed exit 1 and
+diagnostic. The original runner is unchanged. These checks compile generated
+programs, not the compiler itself.
+
 `tests/scalar_admission.py --php /usr/bin/php8.2 --jobs 32 --results FRESH`
 checks bool equality and float arithmetic, conversions, deferred boundaries and
 seven generated programs. Run on dev002. The agreed contract preserves

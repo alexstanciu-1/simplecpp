@@ -303,7 +303,7 @@ native compilation is not warning-clean.
 ### Remaining debt and scope boundaries
 
 
-**Current scope — 2026-10-19 (CS136).** Debt register routes later owners: nullable boundaries, safe explicit references, container operations and templates are no longer blanket unimplemented prerequisites. Restricted unions remain V-L01; explicit ordinary-function/method captures, broader defaults, reference/untyped variadics and unpacking retain their actual boundaries. Legacy annotations and LLVM/native parity remain out of scope.
+**Current scope — 2026-10-19 (CS136).** Debt register routes later owners: nullable boundaries, safe explicit references, container operations and templates are no longer blanket unimplemented prerequisites. Restricted payload unions and layout queries close in [V-L01/V-L02](../planning/compact_layout_shifts.md) on 2026-10-20; explicit ordinary-function/method captures, broader defaults, reference/untyped variadics and unpacking retain their actual boundaries. Legacy annotations and LLVM/native parity remain out of scope.
 
 Contracts and owners: [native_reference_safety.md](../../../../specs/native_reference_safety.md), [expression_evaluation.md](../../../../specs/expression_evaluation.md), [dynamic_types.md](../../../../specs/dynamic_types.md), [04_functions.md](04_functions.md). [Scoped evidence and limits](../planning/language_verification_section_reconciliation.json) (`CS136`).
 
@@ -1150,7 +1150,7 @@ void_t f(string_t s) { s += string_t("x"); }
 ## NOTE-016
 
 
-**Current scope — 2026-10-19 (CS161).** Explicit types, literal defaults and explicit parameter references have direct evidence. Imported primary-type normalized unions remain missing V-L01; nullable/method/reference forms must map to later contracts rather than the blanket original deferral. Prototype default placement is verified, exact generated spelling is not universal.
+**Current scope — 2026-10-19 (CS161).** Explicit types, literal defaults and explicit parameter references have direct evidence. Imported primary-type normalized union parameters remain separate; the earlier V-L01 label was a routing error because V-L01 concerns restricted payload declarations, now [closed](../planning/compact_layout_shifts.md). This does not establish normalized union parameter support; nullable/method/reference forms must map to later contracts rather than the blanket original deferral. Prototype default placement is verified, exact generated spelling is not universal.
 
 Contracts and owners: [native_reference_safety.md](../../../../specs/native_reference_safety.md), [expression_evaluation.md](../../../../specs/expression_evaluation.md), [dynamic_types.md](../../../../specs/dynamic_types.md), [04_functions.md](04_functions.md). [Scoped evidence and limits](../planning/language_verification_section_reconciliation.json) (`CS161`).
 

@@ -741,8 +741,36 @@ types; the user subsequently authorized both bounded runtime repairs. Source,
 retained recovery, focused native regressions and production cold/warm builds
 pass on dev002. No full matrix or native compiler rebuild was run.
 
-Current progress is **35/64 (54.6875%)**, zero partial and 29 other original issues,
+At the boxed/selection checkpoint, progress was **35/64 (54.6875%)**, zero partial and 29 other original issues,
 **+3.125 percentage points**. Separate open finding **BS-R01** records unchecked
 primitive shift counts: -1 and 64 trigger UBSan in scalar, mixed and dynamic
 controls. No safe invalid-count behavior is claimed or repaired here. Earlier
 findings/counts remain historical; wider pairs and updates remain separate.
+
+
+## Checked shifts and compact layout repair — 2026-10-20
+
+[V-L01 and V-L02](compact_layout_shifts.md) close restricted union declarations and
+all four prepared layout queries. The original LV03.004 failure and frozen issue
+findings above remain historical; the repair proves recursive payload restrictions,
+explicit member construction and copy/write semantics, imported/cross-file layouts,
+source-function shadowing and retained error/retry/repair behavior. General reflection,
+managed unions and external ABI promises remain separate.
+
+Supplementary **BS-R01** closes under the separately approved `ValueError` policy
+for negative or width-or-greater shift counts. Native/source checks preserve guarded
+extraction precedence, operand snapshots and failed compound write-back. The old
+UBSan reproductions remain archived, not current acceptance expectations.
+
+Current progress is **37/64 (57.8125%)**, zero partial and 27 other original issues:
+**+3.125 percentage points**. Dev002 verification records 192 acceptance executions
+plus one baseline comparison, 49 rejected source cases, 29 PHP regression checks,
+175 native regression programs and cold/warm production builds. No full operator
+matrix or native compiler rebuild ran.
+
+**CL-H01** is separate harness debt: the old `enums.py` expects SIGABRT for an
+unhandled match, while both the pre-goal compiler and this candidate produce the
+existing caught diagnostic and exit 1. The combined goal harness verifies the actual
+contract; the original runner is unchanged. This neither reopens a compiler issue
+nor inflates the frozen denominator. Normalized PHP union parameter syntax is also
+distinct from V-L01's payload unions; an older catalog cross-reference was corrected.
