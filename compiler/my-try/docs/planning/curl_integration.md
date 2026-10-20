@@ -1,13 +1,13 @@
 # Strict curl integration
 Doc Status: planning
 
-V-R03 and V-E02 goal started 2026-10-20. Neither issue is closed.
-Overall progress remains 41/64 (64.0625%).
+V-R03 and V-E02 completed on 2026-10-20. Overall progress is now
+**43/64 closed (67.1875%)**, zero partial and 21 open: **+3.125 percentage points**.
 
 Verified implementation checkpoints: `1870ecc12` (runtime HTTP harness) and
 `c8bd50e36` (candidate curl metadata, approved property/extraction transport and
 focused tests). These are partial goal checkpoints, not a curl compatibility
-closeout.
+closeout. Final transport and acceptance harness: `e6fd0b523`.
 
 ## Authorized scope
 
@@ -20,7 +20,8 @@ general project CLI work and a full matrix separate.
 The candidate `runtime/metadata/modules/curl.json` uses existing source/library/
 definition build requirements. The first checkpoint changed no compiler or runtime
 implementation; the approved compiler transport implementation is recorded below.
-Final provider portability and missing-library diagnostics are not yet verified.
+Final default-prelowered application builds and missing-library diagnostics pass;
+compiler-native portability was not rebuilt.
 
 An origin fetch during the prerequisite review found no newer remote commits:
 the local branch was 14 commits ahead and zero behind. All 19 candidate metadata
@@ -61,7 +62,9 @@ The JSON fixture first rejects taking default `json_decode` into mixed: v0.2
 intentionally returns dynamic. Its compatibility variant should explicitly use
 `json_decode_mixed`, as already recorded for the standalone strict JSON fixture.
 These additional adaptations must be labelled separately from declaration-only
-migrations. No HTTP or external HTTPS execution pass is claimed.
+migrations. At that initial checkpoint no HTTP or external HTTPS execution pass was claimed.
+The final local HTTP acceptance below supersedes that blocker; external HTTPS
+execution remains opt-in.
 
 ## Bounded prerequisites — approved and implemented
 
@@ -121,26 +124,55 @@ The archive includes intermediate failures and generated publications, not just
 successful logs. Its final cases are scoped as above; there is no aggregate
 full-curl acceptance pass.
 
-The five full curl fixtures are **not yet verified**. Further work needs discussion:
+## Final approved transport and acceptance
 
-- Concrete `vector<string>` value/readonly provider arguments: `curl_setopt`
-  requires native string elements, while the application vector stores concrete
-  strings. Reuse the physical element adapter; do not alter runtime setopt or
-  copy back read-only inputs. Generic provider contracts and mutable references
-  require their own policy and must not be silently converted.
-- Prepared int/string-to-mixed construction for index keys: application code
-  currently tries to construct concrete mixed directly from concrete scalars.
-- Mixed null-index reads: an isolated probe with an already-mixed key fails
-  independently of key wrapping. The existing index bridge unwraps only the
-  receiver; its mixed key and owned mixed result also need concrete transport.
-  Keep indexing writes, references, iteration, dynamic and wider boxed domains
-  separate.
+The user subsequently approved all three remaining bounded prerequisites:
 
-These are physical backend gaps, not missing curl runtime algorithms. Metadata
-source exposure and the passing runtime tests do not close V-R03 or V-E02.
-Complete v0.2 local source oracles, provider failure configuration and
-full fixture cold/warm acceptance remain unfinished. External HTTPS execution
-remains explicitly opt-in.
+- Concrete registered provider value/read-only `vector<string>` arguments reuse
+  the native/concrete element adapter. Inferred generic contracts retain their
+  substituted physical types; mutable provider references explicitly reject.
+- Prepared canonical int/string-to-mixed construction uses the compiled conversion
+  owner. Wider boxed construction remains separate.
+- Mixed null-index reads adapt both receiver and key and return an owned mixed
+  result through the existing index/operation bridge. Receiver/key evaluation stays
+  once-only and ordered; this does not invent a deep receiver snapshot before key
+  side effects. Index writes, references, iteration and dynamic remain separate.
+
+On dev002, `20261020-acceptance-final` passes all **15 cases** under default
+prelowering, cold and warm. All five original strict fixtures compile; four local
+fixtures execute with their original exact stdout oracles, matching the independent
+v0.1 replay. HTTPS is compile-only because external execution was not requested.
+Original fixture files are unchanged. `cases.json` records declaration migrations,
+explicit argv setup/string stabilization and the intentional `json_decode_mixed`
+family migration separately; these are not all declaration-only adaptations.
+
+Controls cover all nine names/13 forms, 12 options, seven selectors, all nine
+response fields, shared handle states, errors/reset/close, receiver replacement,
+once-only write-back, read-only header copying (including NUL bytes), empty headers,
+null-target ordering and checked mixed extraction. Mixed reads prove int/string key
+kind, numeric-string normalization, missing/null results, embedded NUL bytes,
+receiver/key order and owned child survival. Mutable vector references reject;
+source repair then succeeds. Every warm build compiles and links zero units.
+
+`20261020-config-final` passes three CMake discovery checks: enabled with installed
+libcurl, enabled with discovery deliberately unavailable (the documented clear
+failure), and disabled with unavailable discovery (success). No packages changed.
+`20261020-regressions-closeout` passes transport rejection/recovery, unsupported
+boundaries, runtime inventory and take checks. The earlier independent runtime
+ASan/UBSan proof remains valid: this goal changes no runtime implementation.
+
+All **5,346 source inputs** match the tested dev002 tree, with zero mismatches.
+[Final source delta](curl_evidence/source_final_delta.json) overlays the frozen
+S11/S13 manifest. [Acceptance evidence](curl_evidence/curl-acceptance-evidence.tar.gz)
+contains source audit, publications, commands, cold/warm results, exact outputs and
+configuration/recovery logs, excluding caches and binaries. SHA256:
+`97a0be6b2f05503f310e3d0f546f9e78e3ad6600f73ca773c4f284d45f60feca`.
+
+V-R03 and V-E02 are closed within this scope. Legacy curl, general project CLI work,
+external HTTPS execution, wider boxed/provider domains, mutable provider arguments,
+indexed writes and source exception transport remain separate. No full matrix or
+native compiler rebuild ran. Historical failures and earlier partial checkpoints
+are retained below and in the archives; this closeout supersedes their blockers.
 
 ## Original v0.1 baseline replay
 
@@ -150,8 +182,7 @@ The independent baseline harness now resolves the old baseline/provider uncertai
 `/home/alex-ai/curl/20261020-baseline-01` proves all five strict fixtures compile;
 the file, local GET, POST and JSON fixtures execute with their original exact
 stdout oracles and no leftover application files. The external HTTPS fixture is
-compile-only, not an execution pass. This does not close V-E02 until the v0.2
-comparison is also verified.
+compile-only, not an execution pass. The final v0.2 comparison above now closes V-E02 in this same local/compile-only scope.
 
 The reused baseline is checked against 1,289 Git blobs from the pinned revision
 across bin, generators, runtime, specs and curl fixtures, with zero mismatches.
@@ -173,12 +204,11 @@ probe source, excluding native caches and executables. Companion scripts are
 investigation checkpoints, not acceptance runners: their aggregate invocation
 intentionally fails on the recorded blockers. `curl-publish.php` is the corrected
 probe-03 version (strings module included); earlier runs used the smaller module
-selection described above. Production fixture migration and harness work remain
-unfinished.
+selection described above. Final fixture migration and harness acceptance are recorded above.
 
 ## Independent runtime HTTP proof
 
-While transport approval is pending, `tests/curl_runtime.py` runs the unchanged
+The independent `tests/curl_runtime.py` runs the unchanged
 native curl test and `tests/curl_runtime.cpp` through the shared task pool, both
 with ASan/UBSan. The HTTP harness serves the repository's existing PHP router and
 payload on loopback, records its process command/log, checks readiness and always

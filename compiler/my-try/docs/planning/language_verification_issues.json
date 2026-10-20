@@ -905,8 +905,16 @@
       "dependencies": [
         "Resolve the named source contract/owner before any repair."
       ],
-      "next_action": "Retain first-blocker evidence and discuss the bounded implementation or fixture plan; no fixes during verification.",
-      "simple_batch_eligible": false
+      "next_action": "Closed within the approved strict curl scope; see curl_integration.md for default-prelowered evidence and explicit wider gaps.",
+      "simple_batch_eligible": false,
+      "repair_status": "implemented-and-verified",
+      "repair": {
+        "date": "2026-10-20",
+        "report": "curl_integration.md",
+        "evidence": "curl_evidence/curl-acceptance-evidence.tar.gz",
+        "scope": "Nine names/13 forms, two shared provider types, nine fields and 19 constants; default prelowered cold/warm acceptance on dev002. Five original strict fixtures build in v0.1 and v0.2; four local exact oracles pass, external HTTPS remains compile-only. Migrations are recorded separately; original findings retained.",
+        "detail": "Approved concrete provider property/vector and bounded mixed conversion/index-read transports; no runtime implementation change. Configuration discovery and failure, states, snapshots, once-only write-back and recovery verified."
+      }
     },
     {
       "id": "S02",
@@ -1012,10 +1020,18 @@
         "curl_strerror"
       ],
       "dependencies": [],
-      "next_action": "Discuss the owning module contract/integration before implementation; retain current absence evidence.",
+      "next_action": "Closed within the approved strict curl scope; see curl_integration.md for default-prelowered evidence and explicit wider gaps.",
       "acceptance": "All documented in-scope signatures admitted through ordinary metadata, exact behavior/error and production-provider build proofs, with explicit decisions for held contracts.",
       "simple_batch_eligible": false,
-      "eligibility_reason": "Requires contract or module integration discussion; name-resolution probes do not prove a metadata-only repair."
+      "eligibility_reason": "Requires contract or module integration discussion; name-resolution probes do not prove a metadata-only repair.",
+      "repair_status": "implemented-and-verified",
+      "repair": {
+        "date": "2026-10-20",
+        "report": "curl_integration.md",
+        "evidence": "curl_evidence/curl-acceptance-evidence.tar.gz",
+        "scope": "Nine names/13 forms, two shared provider types, nine fields and 19 constants; default prelowered cold/warm acceptance on dev002. Five original strict fixtures build in v0.1 and v0.2; four local exact oracles pass, external HTTPS remains compile-only. Migrations are recorded separately; original findings retained.",
+        "detail": "Approved concrete provider property/vector and bounded mixed conversion/index-read transports; no runtime implementation change. Configuration discovery and failure, states, snapshots, once-only write-back and recovery verified."
+      }
     },
     {
       "id": "V-R04",

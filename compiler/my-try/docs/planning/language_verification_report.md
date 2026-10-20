@@ -806,3 +806,19 @@ default. Their production probes now explicitly reject missing concrete callable
 and compiler-helper transport. Those separate follow-ups do not invalidate their
 historical ordinary-mode evidence, and this repair count is not a claim that all
 41 scopes have been reverified under default prelowering.
+
+## Strict curl closeout — 2026-10-20
+
+[V-R03/V-E02](curl_integration.md) close with **43/64 closed (67.1875%)**, zero
+partial and 21 open: **+3.125 percentage points**. All 15 production cases pass on
+dev002 under default prelowering, cold/warm. Five original strict fixtures compile
+in both versions; four local executions match their original exact oracles. The
+external HTTPS fixture remains compile-only. Declaration, argv/stabilization and
+JSON-family migrations are recorded separately, without editing original sources.
+
+All nine names/13 forms, provider fields/constants, states, snapshots, write-back,
+header-vector and bounded mixed index/conversion transport pass. Provider discovery
+and explicit unavailable-libcurl failure pass, alongside focused recovery checks.
+Earlier runtime sanitizer evidence is retained; no runtime implementation changed.
+No full matrix or native compiler rebuild ran. Historical blocked rows above remain
+original verification evidence, superseded only in this approved bounded scope.

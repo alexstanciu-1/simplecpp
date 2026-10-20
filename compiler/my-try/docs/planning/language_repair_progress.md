@@ -2,18 +2,18 @@
 Doc Status: supporting
 
 Snapshot: 2026-10-20, after [V-L07 bounded completion](vl07_completion.md) and
-[V-L06 / S04 closeout](float_identity.md) and [V-L11 / V-D14 text](carrier_text.md), followed by [S06 conditionals](s06_unbraced_conditionals.md) and [S07 predicates](s07_mixed_predicates.md). The [S09 search](s09_byte_search.md) and [replacement](s09_substr_replace.md) slices are complete. The [closure batch](closure_batch.md) closes S09-B1, V-R07 and V-H10; the [regex batch](regex_replacement.md) also closes V-R04 and V-R09. The [platform/alias batch](platform_alias.md) closes V-D09 and V-D12. The [boxed/selection batch](boxed_selection.md) closes V-L09 and V-L10. The [compact-layout batch](compact_layout_shifts.md) now closes V-L01 and V-L02, plus supplementary BS-R01. The [callback/composition batch](callback_composition.md) closes V-R05 and V-R11. The [tokenizer/IO batch](tokenizer_io.md) closes S11 and S13 with default prelowering verified. This covers all 64 original entries in
+[V-L06 / S04 closeout](float_identity.md) and [V-L11 / V-D14 text](carrier_text.md), followed by [S06 conditionals](s06_unbraced_conditionals.md) and [S07 predicates](s07_mixed_predicates.md). The [S09 search](s09_byte_search.md) and [replacement](s09_substr_replace.md) slices are complete. The [closure batch](closure_batch.md) closes S09-B1, V-R07 and V-H10; the [regex batch](regex_replacement.md) also closes V-R04 and V-R09. The [platform/alias batch](platform_alias.md) closes V-D09 and V-D12. The [boxed/selection batch](boxed_selection.md) closes V-L09 and V-L10. The [compact-layout batch](compact_layout_shifts.md) now closes V-L01 and V-L02, plus supplementary BS-R01. The [callback/composition batch](callback_composition.md) closes V-R05 and V-R11. The [tokenizer/IO batch](tokenizer_io.md) closes S11 and S13 with default prelowering verified. The [strict curl batch](curl_integration.md) closes V-R03 and V-E02. This covers all 64 original entries in
 [the issue ledger](language_verification_issues.json), including deferred legacy
 syntax and policy/design issues. Operator signatures are not separate closed issues.
 
 | Status | Issues |
 | --- | ---: |
-| Implemented or already repaired, then verified | 41 |
+| Implemented or already repaired, then verified | 43 |
 | Partially implemented and verified | 0 |
-| Other issues not yet closed | 23 |
+| Other issues not yet closed | 21 |
 | Total | 64 |
 
-Fully closed: **41/64 = 64.0625%** (about **64.1% by issue count**). This is not an
+Fully closed: **43/64 = 67.1875%** (about **67.2% by issue count**). This is not an
 engineering-effort estimate. Remaining architecture/runtime/project issues can be
 much larger than fixture repairs. There is no defensible weighted effort percentage.
 
@@ -21,7 +21,7 @@ much larger than fixture repairs. There is no defensible weighted effort percent
 | --- | ---: | ---: | ---: | ---: |
 | Simple fix | 13 | 0 | 0 | 13 |
 | Light discussion | 16 | 0 | 1 | 17 |
-| Normal discussion | 12 | 0 | 22 | 34 |
+| Normal discussion | 14 | 0 | 20 | 34 |
 
 V-L06 now admits the final two scalar float identity forms and re-verifies its
 original carrier cases. S04's unchanged original process fixture passes through

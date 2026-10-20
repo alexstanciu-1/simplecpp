@@ -76,10 +76,11 @@ conditions and explicit-default match emission and replay.
 
 The bounded curl prerequisites have separate default-prelowered checks:
 `python3 compiler/my-try/tests/curl_prelower.py --results FRESH_DIRECTORY`
-includes both retained blockers and supported cases, so it is not yet an all-green
-acceptance suite. Use repeated `--case` selectors for `properties_snapshots`,
-`null_read`, `null_write`, `mixed_null_int`, `mixed_null_string`, and
-`mixed_kind_int` to verify the implemented field/extraction slice. The runner
+passes 15 cases, including all five original strict fixture variants, property
+state/snapshot/write-back, vector arguments, checked mixed conversion and mixed
+index reads. Repeated `--case` selectors restrict a focused run.
+`curl_configuration.py --results FRESH_DIRECTORY` verifies enabled, unavailable
+and disabled provider discovery without changing packages. The runner
 records fixture migrations, preserves original oracles and builds external HTTPS
 without executing it. `curl_transport_recovery.php OUTPUT_DIRECTORY` checks
 rejection/repair/no-op behavior; `curl_runtime.py --results FRESH_DIRECTORY`

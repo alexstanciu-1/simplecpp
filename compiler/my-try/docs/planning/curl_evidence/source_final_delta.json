@@ -1,0 +1,26 @@
+{
+  "base_manifest": "../tokenizer_io_source_final.json",
+  "base_head": "fd80f302162bb35d9741951b11c5d8045913a1ed",
+  "working_head": "164b437fd8e1d7cecfe766e3f4d55e5ae15b16da",
+  "files": {
+    "compiler/my-try/05_backend/cpp/concrete_index.php": "5d41fce13b3cd1ed5860f0499a01317be1b0382c72c2796924a4f92097f04d65",
+    "compiler/my-try/05_backend/cpp/declarations.php": "202ceda20a8b18e20e3bd5fb7347468b279bc8db1c466ad21468cfa6b80167d5",
+    "compiler/my-try/05_backend/cpp/generate.php": "6b86c1550453a53234fe4a66ede0758a092ef05f6069a3d83c9bc04cb3c710a2",
+    "compiler/my-try/05_backend/cpp/provider_properties.php": "72ff26c0f638c47724cf3102dae073dfe3d9b67859e4ed312f77f7a226f4960a",
+    "compiler/my-try/05_backend/cpp/runtime_operations.php": "b142fa99eeec31e6f05eb6e7d38abda9c555413cf6177ab646a49586caae72be",
+    "compiler/my-try/05_backend/cpp/structures.php": "95103120db5cf2216be213b598a34ab046942d5e32fad1b4f825253d1737e4b0",
+    "compiler/my-try/05_backend/cpp/syntax.php": "fe3a892f8203b2069851fbfa3089ff39c345fb0eaa9e651ece9fcdd709f148dc",
+    "compiler/my-try/05_backend/cpp/wrapper_transport.php": "ca050a388182a6d25cfa800761f8c2743d2b0a1ea854689c8c965d8ab6a2308b",
+    "compiler/my-try/boot.php": "e3fe4db65ad89d9af4bd62909764752b5e0c61f965d7231d97421b6c7a1b3329",
+    "compiler/my-try/tests/curl_baseline.py": "79e0d6ea42806019aeaccbe479a89bf4a5c19fae0de0cbb67a5caf069e7ec177",
+    "compiler/my-try/tests/curl_configuration.py": "523df09b381874bca25ce6be94f31af74425c67f437a975ec8c8be9db8b1a63e",
+    "compiler/my-try/tests/curl_prelower.py": "0e17f8d64706616b5775175de7cb72d741e21be119268ba1fe93540e4a80216f",
+    "compiler/my-try/tests/curl_publish.php": "40b47dd3edd78fdd105466068df37a45593566397a8c41741f4f89bd882488df",
+    "compiler/my-try/tests/curl_runtime.cpp": "c96a8992d923a886fa6477b90ad9e6535ecb62155d327db4a54eeb340f66a488",
+    "compiler/my-try/tests/curl_runtime.py": "8525566cd6cb2b4c89f1d03ad1563956f973ef26bb64899fbc7deb80e2ab0ab8",
+    "compiler/my-try/tests/curl_transport_recovery.php": "4f8ce80df97401d22e3512fba453e2d3000de5deea7db2989f53e389cbb447f9",
+    "compiler/my-try/tests/prelower_unsupported_boundaries.php": "8859ab74b1acf4dcadc3f3e146a15c5c840721ef38f6c3f3b42447fef9255200",
+    "runtime/metadata/modules/curl.json": "793991bd596c37941fdc2fe016497aa67331a6da2b16f15d2c0fdab8bc737fac"
+  },
+  "total_inputs": 5346
+}

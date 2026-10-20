@@ -65,6 +65,7 @@ promises. Review contracts and feasibility before freezing each goal.
 | Public platform and compatibility aliases — completed | V-D12, V-D09 | [Closeout](platform_alias.md): 33/64 closed, +3.125 points. Qualified aliases preserve source types; platform/environment contracts verified on dev002. |
 | Boxed/selection operators — completed | V-L09, V-L10 | [Closeout](boxed_selection.md): 35/64 closed, +3.125 points. Two runtime prerequisites separately authorized. BS-R01 was tracked separately and subsequently closed in the compact-layout batch. |
 | Regex callbacks and runtime composition — completed | V-R05, V-R11 | [Closeout](callback_composition.md): 39/64 closed, +3.125 points. Four callback forms and six static/shared configurations; database integration and broader closure lifetimes remain separate. |
+| Strict curl — completed | V-R03, V-E02 | [Closeout](curl_integration.md): 43/64 closed, +3.125 points. Default prelowered cold/warm, four original local oracles against v0.1; external HTTPS compile-only. |
 | Typed tokenizer and strict IO — completed | S11, S13 | [Closeout](tokenizer_io.md): 41/64 closed, +3.125 points. Default prelowered cold/warm builds and state/snapshot/provider proofs; earlier callback/layout prelowering gaps remain separate. |
 | Checked shifts and compact layout — completed | V-L01, V-L02 | [Closeout](compact_layout_shifts.md): 37/64 closed, +3.125 points. Supplementary BS-R01 also closed; stale enum-runner expectation CL-H01 remains separate. |
 

@@ -430,3 +430,12 @@ Filesystem restores `fs_is_windows` as a target-native separator fact. The core
 before lookup. Owning contracts: [microtime](../../../../specs/builtins/datetime/microtime.md),
 [fs_is_windows](../../../../specs/builtins/filesystem/fs_is_windows.md), and
 [getenv](../../../../specs/builtins/process/getenv.md). Other aliases remain separate.
+
+## Strict curl integration — 2026-10-20
+
+The opt-in `curl` module exposes nine documented names/13 concrete signatures,
+two shared provider types, nine writable response fields and 19 constants through
+existing metadata/build owners. [Closeout](curl_integration.md) verifies libcurl
+production builds, discovery failure, states/snapshots, local HTTP and original
+strict fixture oracles under default prelowering. External HTTPS execution and
+legacy curl remain separate; startup module defaults are unchanged.

@@ -184,7 +184,11 @@ Two closure negatives are not positive compatibility failures:
   construction. That masks whether callable-container storage is rejected for the
   intended reason; merely observing a rejection is insufficient.
 
-The five `strict_curl_001` through `strict_curl_005` cases remain adapter-blocked.
+At the original checkpoint, the five `strict_curl_001` through `strict_curl_005`
+cases remained adapter-blocked. The later [curl closeout](curl_integration.md)
+supersedes this blocker: all five compile in both versions, four local original
+oracles pass, and external HTTPS execution remains opt-in. The historical
+requirements below describe that earlier checkpoint.
 They require optional curl provider/project resources; some also need HTTP/network
 setup. They are not five demonstrated compiler defects. Additional unadapted
 strict project examples remain in the full inventory, outside these 126 cases.

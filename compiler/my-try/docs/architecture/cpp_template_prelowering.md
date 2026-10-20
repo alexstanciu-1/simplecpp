@@ -59,8 +59,13 @@ concrete element representations. Reading a vector field for indexing uses a val
 snapshot; indexed writes, updates, compounds, reference escape, static properties
 and wider field types remain outside this transport slice. Prepared mixed-to-int
 and mixed-to-string extraction uses the existing required-cast implementation in
-the compiled conversion bridge. This does not enable boxed wrapping or mixed index
-key/result transport. See [curl integration](../planning/curl_integration.md).
+the compiled conversion bridge. Canonical int/string-to-mixed wrapping uses that
+same bridge. Mixed null-index reads adapt the receiver and key and return an owned
+mixed result, preserving once-only ordered evaluation and existing key semantics.
+Concrete registered provider value/read-only vector<string> parameters copy to
+native elements; inferred generic contracts keep substituted physical types.
+Mutable provider references reject pending explicit write-back transport. Wider
+boxed domains and index writes remain separate. See [curl integration](../planning/curl_integration.md).
 
 ## Existing owners
 
