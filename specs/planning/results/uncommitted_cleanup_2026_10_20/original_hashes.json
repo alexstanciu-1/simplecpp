@@ -1,0 +1,8 @@
+{
+  "compiler/my-try/docs/agent_cheat_sheet.md": "62f17ffc809b04eed6a8109eb191619e70cce67ced589f224f79a783a00fe567",
+  "compiler/src/04_analyze/analyze_lifetimes/data/exports.php": "59fb24f154a4b0d28f441439a66810b24f06055001746010e57c0abf7c1fcd79",
+  "compiler/src/04_analyze/analyze_lifetimes/export_join.php": "f75e051581dfc135e4773fe94d4418bc3946dc8a5b0e8d54adf648941a8efeb7",
+  "compiler/src/04_analyze/analyze_lifetimes/export_worker.php": "12844ad44c303341ff6b3616044a29eb32f553adaf290c528092b5e5ac992235",
+  "specs/planning/documentation_evidence_commit_groups_2026_10_18.md": "ad08fa7a11993be6bb1db2c0b69e269dedee6891fc87f13bf66cf4ab5922c46f",
+  "compiler/my-try/tests/dependency_cleanup.php (uncommitted)": "d7948616dc35489a868a1f62962ba919a02df09cc650a53450bf7284c663005c"
+}
