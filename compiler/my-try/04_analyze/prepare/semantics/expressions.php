@@ -442,6 +442,10 @@ final class Expression_Preparation
 			$target = Model::$type_catalog->closures()->identity($value->type);
 			return Call_Preparation::prepare($target, $syntax->arguments, $context);
 		}
+		if ($syntax->owner_type !== null) {
+			$alias = self::prepare_qualified_alias($syntax, $context);
+			if ($alias !== null) { return $alias; }
+		}
 		if (($syntax->receiver !== null) || ($syntax->owner_type !== null)) { return Method_Preparation::call($syntax, $context); }
 		$templates /** Storage<named_type_node> */ = $syntax->template_arguments;
 		if (!$templates->is_empty()) {
@@ -455,6 +459,22 @@ final class Expression_Preparation
 			throw new \RuntimeException('S2S needs one resolved function for ' . $entry->name);
 		}
 
+		return Call_Preparation::prepare_named($targets, $syntax->arguments, $context);
+	}
+
+	/** A visible type wins over an explicit runtime alias, including missing methods. */
+	private static function prepare_qualified_alias(call_node $syntax, preparation_context $context): ?prepared_call
+	{
+		if (!($syntax->owner_type instanceof named_type_node)) { return null; }
+		$owner = object_cast($syntax->owner_type, named_type_node::class);
+		$entry = $owner->occurrence();
+		$targets = Model::$runtime_callables->qualified_named($entry->name, $syntax->name);
+		if (q_count($targets) === 0) { return null; }
+		$lexical_scope = object_cast(weakref_get($entry->scope), scope::class);
+		$types = Observed_Lookup::types($lexical_scope, $entry->name, $context);
+		if (q_count($types) !== 0) { return null; }
+		$templates /** Storage<named_type_node> */ = $syntax->template_arguments;
+		if (!$templates->is_empty()) { throw new \RuntimeException('S2S template calls are deferred'); }
 		return Call_Preparation::prepare_named($targets, $syntax->arguments, $context);
 	}
 

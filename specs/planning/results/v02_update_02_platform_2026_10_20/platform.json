@@ -1,0 +1,84 @@
+{
+  "passed": true,
+  "baseline": false,
+  "checks": {
+    "admission": [
+      {
+        "source": "class Main {\n\tpublic static function run(): void {\n\t\t$started = php::microtime(true);\n\t\techo ($started > 0.0) ? \"ok\\n\" : \"bad\\n\";\n\t}\n}\n\nMain::run();\n",
+        "diagnostic": ""
+      },
+      {
+        "source": "microtime();",
+        "diagnostic": ""
+      },
+      {
+        "source": "microtime(true);",
+        "diagnostic": ""
+      },
+      {
+        "source": "php::microtime();",
+        "diagnostic": ""
+      },
+      {
+        "source": "fs_is_windows();",
+        "diagnostic": ""
+      }
+    ],
+    "rejections": [
+      {
+        "source": "microtime(1);",
+        "diagnostic": "S2S runtime call requires one exact signature or a unique checked-payload signature; use explicit argument types\n"
+      },
+      {
+        "source": "php::microtime(1);",
+        "diagnostic": "S2S runtime call requires one exact signature or a unique checked-payload signature; use explicit argument types\n"
+      },
+      {
+        "source": "php::microtime(true,false);",
+        "diagnostic": "S2S runtime call requires one exact signature or a unique checked-payload signature; use explicit argument types\n"
+      },
+      {
+        "source": "fs_is_windows(1);",
+        "diagnostic": "S2S call argument count does not match its signature\n"
+      },
+      {
+        "source": "getenv();",
+        "diagnostic": "S2S call is missing a required argument\n"
+      },
+      {
+        "source": "getenv(1);",
+        "diagnostic": "S2S value boundary requires matching types or an integer conversion\n"
+      },
+      {
+        "source": "getenv(\"x\",\"y\");",
+        "diagnostic": "S2S call argument count does not match its signature\n"
+      },
+      {
+        "source": "class php {} php::microtime(true);",
+        "diagnostic": "Member call requires one ordinary method: microtime\n"
+      },
+      {
+        "source": "new php();",
+        "diagnostic": "S2S needs one resolved type for php\n"
+      },
+      {
+        "source": "function bad(php $x):void{}",
+        "diagnostic": "S2S needs one resolved type for php\n"
+      },
+      {
+        "source": "php::unknown();",
+        "diagnostic": "S2S needs one resolved type for php\n"
+      },
+      {
+        "source": "other::microtime();",
+        "diagnostic": "S2S needs one resolved type for other\n"
+      },
+      {
+        "source": "php::strlen(\"x\");",
+        "diagnostic": "S2S needs one resolved type for php\n"
+      }
+    ],
+    "retained": "alias / source type / missing method / retry / removed type / no-op / fresh"
+  },
+  "full_matrix_run": false
+}

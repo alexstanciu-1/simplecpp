@@ -105,6 +105,7 @@ final class runtime_function_spec extends runtime_signature_spec
 	public ?runtime_callable_member_spec $member = null;
 	public string $identity = '';
 	public string $name = '';
+	public array $qualified_aliases /** vector<string> */ = [];
 	public array $type_parameters /** vector<string> */ = [];
 }
 

@@ -561,6 +561,12 @@ final class Runtime_Catalog_Reader
 			elseif ($key === 'name') {
 				$result->name = self::name($reader);
 			}
+			elseif ($key === 'qualified_aliases') {
+				$aliases /** vector<string> */ = [];
+				$reader->begin_array();
+				while ($reader->next_element()) { $aliases[] = self::name($reader); }
+				$result->qualified_aliases = $aliases;
+			}
 			elseif ($key === 'member') {
 				$result->member = self::callable_member($reader);
 			}

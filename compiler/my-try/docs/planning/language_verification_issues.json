@@ -822,11 +822,17 @@
         "tests/php/strings/strict_level_01/strict_strings_005_php_microtime_static_call.phs"
       ],
       "finding": "Original strict php::microtime call passes v0.1 but v0.2 cannot resolve type php. dt_* support does not by itself authorize source migration.",
-      "dependencies": [
-        "Resolve the named source contract/owner before any repair."
-      ],
-      "next_action": "Retain first-blocker evidence and discuss the bounded implementation or fixture plan; no fixes during verification.",
-      "simple_batch_eligible": false
+      "dependencies": [],
+      "next_action": "Closed by the approved platform/qualified-alias goal. Other aliases, general namespaces and broader process APIs remain separate.",
+      "simple_batch_eligible": false,
+      "repair_status": "implemented-and-verified",
+      "repair_evidence": {
+        "date": "2026-10-20",
+        "report": "platform_alias.md",
+        "results": "platform_alias_results.json",
+        "audit": "platform_alias_audit.json",
+        "scope": "Two microtime overloads, free/qualified forms, source-type precedence and retained recovery."
+      }
     },
     {
       "id": "V-E02",
@@ -1192,10 +1198,18 @@
       ],
       "finding": "fs_is_windows appears in the strict symbol inventory and portability source-discovery guidance, but has no current metadata binding; no public standalone signature authority established in this audit. getenv behavior is tested and registered, while its independently normative source contract was not located. These are not approved intentional removals.",
       "dependencies": [],
-      "next_action": "Settle public source status/owner and record normative signatures and failure policy before deciding registration or exclusion.",
+      "next_action": "Closed by the approved platform/qualified-alias goal. Other aliases, general namespaces and broader process APIs remain separate.",
       "acceptance": "Each name has an authoritative public/internal disposition; retained APIs have exact source/provider evidence.",
       "simple_batch_eligible": false,
-      "eligibility_reason": "Public contract decision remains."
+      "eligibility_reason": "Public contract decision remains.",
+      "repair_status": "implemented-and-verified",
+      "repair_evidence": {
+        "date": "2026-10-20",
+        "report": "platform_alias.md",
+        "results": "platform_alias_results.json",
+        "audit": "platform_alias_audit.json",
+        "scope": "Restored target-native fs_is_windows, normative getenv contract and NUL rejection; preserved missing/empty/copied values."
+      }
     },
     {
       "id": "V-L04",
