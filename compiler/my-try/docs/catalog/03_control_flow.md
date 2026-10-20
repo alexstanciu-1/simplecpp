@@ -45,7 +45,7 @@ when reopening one. None blocks Chapter 04.
 
 | Debt ID | Deferred item | Owner / reopening condition |
 | --- | --- | --- |
-| CF-01 | Unbraced/alternative statement syntax; numbered break/continue | Chapter 03 parser and transfer preparation; agree the additional syntax first |
+| CF-01 | Unbraced loop bodies, empty semicolon bodies and alternative statement syntax; numbered break/continue | Chapter 03 parser and transfer preparation; agree the additional syntax first |
 | CF-02 | Ternary grammar limits, including required parentheses around fallback assignments | Chapter 03 expression parser; preserve the documented precedence and nesting contract |
 | CF-03 | Selector types beyond canonical int/enums, runtime labels and general constant folding | Enum-case selection added in [CH09](09_value_types.md#enum-equality-and-selection--2026-10-06); agree further domains separately |
 | CF-04 | Broader ternary/Elvis/match result joins beyond matching scalars | Shared result preparation; coordinate wrapper/mixed work with Chapter 05 and object types with later chapters |
@@ -115,6 +115,22 @@ copyability, bracket overload/lowering deferral and the preserved runtime arithm
 contracts. Reopen only dependencies of the selected slice. Check the
 [portability status](../portability/conversion_review.md): the latest chapter 02
 repairs have PHP/generated-C++ proof, not a new native compiler checkpoint.
+
+## Single-statement conditional bodies — 2026-10-20
+
+[S06](../planning/s06_unbraced_conditionals.md) admits brace-free `if`, `elseif`
+and `else` arms. Recursive conditional parsing binds clauses to the nearest
+unmatched if. Each arm still owns an existing block and branch-local scope;
+braced and unbraced bodies share their local-declaration guard. Source spans cover
+the actual single statement without inventing brace tokens. Preparation and C++
+emission retain their existing owners and behavior.
+
+The [normative contract](../../../../specs/conditional_statements_v0_2.md) covers
+binding, scope and lazy conditions. The original S06 fixture advances to the
+separate unresolved `strpos` API (S09); it is not an end-to-end compatibility pass.
+Unbraced loops, empty semicolon bodies, colon/endif syntax and numbered transfers
+remain outside this slice. Earlier dated braced-only checkpoints below retain
+their historical proof boundary and are superseded for conditional bodies only.
 
 ## Agreed first slice — 2026-10-02
 

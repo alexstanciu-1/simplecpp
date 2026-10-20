@@ -1,0 +1,187 @@
+{
+  "doc_status": "supporting",
+  "date": "2026-10-20",
+  "passed": true,
+  "head": "bfa9f25d",
+  "host": "alex-ai@dev002.travelfuse.ro",
+  "snapshot": "/home/alex-ai/unbraced-conditionals/20261020-01",
+  "suites": {
+    "baseline": {
+      "commands": 1,
+      "all_expected_exits": true
+    },
+    "candidate-02": {
+      "commands": 107,
+      "all_expected_exits": true
+    },
+    "control-regression-02": {
+      "commands": 332,
+      "all_expected_exits": true
+    }
+  },
+  "summaries": {
+    "baseline": {
+      "passed": true,
+      "baseline": true,
+      "checks": {
+        "original": {
+          "source": "/home/alex-ai/unbraced-conditionals/20261020-01/tests/php/strings/strict_level_01/strict_strings_004_strpos_false_branch_regression.phs",
+          "sha256": "dc4a756504d246ffadd26af84d9c14e0abbae1713abe48639870eaffe1344cdc",
+          "diagnostic": "Expected '{' at operator.phs: byte 121",
+          "passed": false
+        },
+        "minimal_diagnostic": "Expected '{' at operator.phs: byte 10"
+      },
+      "full_matrix_run": false,
+      "runtime_changes": false
+    },
+    "candidate-02": {
+      "passed": true,
+      "baseline": false,
+      "checks": {
+        "original": {
+          "source": "/home/alex-ai/unbraced-conditionals/20261020-01/tests/php/strings/strict_level_01/strict_strings_004_strpos_false_branch_regression.phs",
+          "sha256": "dc4a756504d246ffadd26af84d9c14e0abbae1713abe48639870eaffe1344cdc",
+          "diagnostic": "S2S needs one resolved function for strpos\n",
+          "passed": false
+        },
+        "positive_programs": 46,
+        "rejections": [
+          {
+            "source": "if(true)",
+            "diagnostic": "Expected scalar literal or variable reference at operator.phs: byte 8"
+          },
+          {
+            "source": "if(true) else return 1;",
+            "diagnostic": "Expected ';' at operator.phs: byte 14"
+          },
+          {
+            "source": "if(true) return 1;else",
+            "diagnostic": "Expected scalar literal or variable reference at operator.phs: byte 22"
+          },
+          {
+            "source": "if(false) return 1;else if {return 2;}",
+            "diagnostic": "Expected '(' at operator.phs: byte 27"
+          },
+          {
+            "source": "else return 1;",
+            "diagnostic": "Expected ';' at operator.phs: byte 5"
+          },
+          {
+            "source": "if(true) return 1;else return 2;else return 3;",
+            "diagnostic": "Expected ';' at operator.phs: byte 37"
+          },
+          {
+            "source": "if(true) ;",
+            "diagnostic": "Expected scalar literal or variable reference at operator.phs: byte 10"
+          },
+          {
+            "source": "if(true): return 1;endif;",
+            "diagnostic": "Expected scalar literal or variable reference at operator.phs: byte 10"
+          },
+          {
+            "source": "while(false) return 1;",
+            "diagnostic": "Expected '{' at operator.phs: byte 13"
+          },
+          {
+            "source": "for(;;) break;",
+            "diagnostic": "Expected '{' at operator.phs: byte 8"
+          },
+          {
+            "source": "if(true) break 2;",
+            "diagnostic": "Expected ';' at operator.phs: byte 15"
+          },
+          {
+            "source": "if(true) break;",
+            "diagnostic": "S2S break/continue requires an enclosing legal target\n"
+          },
+          {
+            "source": "if(true) continue;",
+            "diagnostic": "S2S break/continue requires an enclosing legal target\n"
+          },
+          {
+            "source": "if(true) function f():int{return 1;}",
+            "diagnostic": "Local declarations of functions or structs are not supported at operator.phs: byte 9"
+          },
+          {
+            "source": "if(true){function f():int{return 1;}}",
+            "diagnostic": "Local declarations of functions or structs are not supported at operator.phs: byte 9"
+          },
+          {
+            "source": "if(true) struct X {int $v;}",
+            "diagnostic": "Local declarations of functions or structs are not supported at operator.phs: byte 9"
+          },
+          {
+            "source": "if(true){struct X {int $v;}}",
+            "diagnostic": "Local declarations of functions or structs are not supported at operator.phs: byte 9"
+          },
+          {
+            "source": "if(true) $local=7;return $local;",
+            "diagnostic": "S2S needs an established local declaration for local\n"
+          },
+          {
+            "source": "if(false) $local=7;else return $local;",
+            "diagnostic": "S2S needs an established local declaration for local\n"
+          },
+          {
+            "source": "function f(bool $v):int{if($v) return 1;}",
+            "diagnostic": "S2S non-void function f can reach the end without returning a value\n"
+          },
+          {
+            "source": "if(false) $x=missing();return 0;",
+            "diagnostic": "S2S needs one resolved function for missing\n"
+          },
+          {
+            "source": "if(true) return 1;else return missing();",
+            "diagnostic": "S2S needs one resolved function for missing\n"
+          },
+          {
+            "source": "$x=1;if(true) $x int = $x;return $x;",
+            "diagnostic": "S2S local x cannot read or write itself in its initializer\n"
+          }
+        ],
+        "recovery_cycles": 8,
+        "span_checks": 3
+      },
+      "full_matrix_run": false,
+      "runtime_changes": false
+    },
+    "control-regression-02": {
+      "passed": true,
+      "cpp_pch": false,
+      "php_suites": 12,
+      "generated_programs": 137
+    }
+  },
+  "native_programs": 183,
+  "source_integrity": {
+    "checked": 6272,
+    "mismatches": [],
+    "runtime_files_unchanged": 218
+  },
+  "toolchain": {
+    "php": "PHP 8.5.11 (cli) (built: Sep 24 2026 13:49:29) (NTS)\nCopyright (c) The PHP Group\nBuilt by Ubuntu\nZend Engine v4.5.11, Copyright (c) Zend Technologies\n    with Zend OPcache v8.5.11, Copyright (c), by Zend Technologies\n",
+    "clang": "Ubuntu clang version 18.1.3 (1ubuntu1)\nTarget: x86_64-pc-linux-gnu\nThread model: posix\nInstalledDir: /usr/bin\n",
+    "python": "Python 3.12.3\n"
+  },
+  "evidence_sha256": "f7aec8160de846815054b0517230f3ec6eb387e964824df25a33cb803f772ebf",
+  "original_fixture_end_to_end_passed": false,
+  "remaining_original_fixture_blocker": "S09: unresolved strpos",
+  "remaining_s06_blockers": [],
+  "newly_exposed_implementation_blockers": [],
+  "attempts": {
+    "baseline": "Original and builtin-free source reproduce required-brace parse error.",
+    "candidate-01": "All preparation checks passed; two native exception observers lacked the existing test-only entry-boundary marker. The production boundary caught the exceptions, making the observers return92. Corrected only the observers.",
+    "candidate-02": "46 native programs, rejection/scope/span checks and recovery passed.",
+    "control-regression": "One remaining brace-free if rejection was obsolete. Moved the two old unbraced forms to positive controls and kept malformed/empty-body negatives.",
+    "control-regression-02": "All12 PHP suites and137 native programs pass."
+  },
+  "runtime_changes": false,
+  "full_matrix_run": false,
+  "native_compiler_rebuilt": false,
+  "original_issue_closure": {
+    "closed": 25,
+    "total": 64,
+    "percent": 39.0625
+  }
+}

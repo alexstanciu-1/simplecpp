@@ -1499,3 +1499,21 @@ a full operator matrix; `int`/`int64` source spellings are counted separately.
 Use fresh result directories and retain failed attempts. See [the report](planning/carrier_text.md)
 for exact tested manifests and evidence. Compiler-native portability is a separate
 proof; these tests compile emitted C++ with the existing runtime.
+
+## S06 single-statement conditional bodies
+
+Run `tests/unbraced_conditionals.py --results <fresh-dir>` on dev002. It checks
+nearest-if and nested-elseif binding, mixed braced/unbraced arms, branch-local
+scope, once-only/lazy evaluation, selected errors, loop transfers and completion.
+AST checks cover the three nested single-body token spans. Retained edits add and
+remove braces, change else ownership and recover from syntax and preparation
+failures; fresh and no-op results must agree. Native programs check the behavioral
+result of those edits. The test-only entry-observation marker lets the shared
+fixture adapter expose runtime exceptions to the native observer.
+
+`--baseline` reproduces the old required-brace failure and records the unchanged
+original fixture. On the repaired compiler that original fixture must advance to
+the separately tracked `strpos` blocker (S09); this does not claim an end-to-end
+pass. Run `tests/control_flow.py --no-pch --results <fresh-dir>` for existing
+control-flow, AST, completion, tokenizer and retained-preparation regressions.
+See [the S06 report](planning/s06_unbraced_conditionals.md) for exact evidence.

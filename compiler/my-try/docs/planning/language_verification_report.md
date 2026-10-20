@@ -633,3 +633,18 @@ closure is **24/64 (37.5%)**. uint64, wider payloads, new boxed/indexed combinat
 and other conversion contexts remain separate. Historical findings and failed
 fixture attempts remain in [the evidence](carrier_text_results.json). No full
 operator matrix or native compiler rebuild ran.
+
+
+## S06 conditional syntax closeout — 2026-10-20
+
+[The S06 proof](s06_unbraced_conditionals.md) admits single-statement conditional
+bodies through the existing parser/block model. Nearest-if binding, branch scopes,
+lazy conditions, completion and retained recovery pass on dev002: 46 dedicated
+native programs, 23 rejection controls, three span checks and eight recovery cycles.
+Existing regressions pass 12 PHP suites and 137 native programs.
+
+The unchanged original fixture advances from a required-brace parser failure to
+unresolved `strpos`, recorded under S09. It is not an end-to-end compatibility pass.
+S06 closes; overall original-issue closure is **25/64 (39.0625%)**. Other statement
+syntax remains separate. No runtime changes, full matrix or native compiler rebuild
+ran. Historical findings and failed test-observer attempts remain in the evidence.

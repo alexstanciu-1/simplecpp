@@ -225,3 +225,14 @@ The fixture is byte-identical to pinned v0.1; deterministic false-sentinel/strin
 identity controls also pass. Earlier V-L07 admission work resolves this original
 S04 blocker. No process/runtime/output implementation change was needed. The table
 and original failure evidence above remain the dated strict-04 classification.
+
+
+## S06 parser repair follow-up — 2026-10-20
+
+[S06 is now implemented and verified](s06_unbraced_conditionals.md). The unchanged
+`strict_strings_004_strpos_false_branch_regression.phs` parses its unbraced arms and
+advances to unresolved `strpos`, owned by S09. Historical first-blocker counts and
+source records above are retained; this replay is not a whole-program pass and
+does not move that fixture into the historical passed totals. Single-statement
+conditionals preserve nearest-if binding and v0.2 branch scopes. Other statement
+syntax and string API repairs remain separate.

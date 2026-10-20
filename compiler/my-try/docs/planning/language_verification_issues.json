@@ -316,8 +316,17 @@
         "verification/results/call-contract-probes/brace_free_if"
       ],
       "dependencies": [],
-      "next_action": "Discuss one-statement body parsing and dangling-else binding policy, then implement in the existing control-flow parser. Keep downstream strpos API gap separate.",
-      "simple_batch_eligible": false
+      "next_action": "No remaining S06 parser blocker. The unchanged original fixture now reaches unresolved strpos (S09); retain that API work separately.",
+      "simple_batch_eligible": false,
+      "repair_status": "implemented-and-verified",
+      "eligibility_reason": "Approved bounded syntax slice implemented and verified on dev002.",
+      "newly_exposed_blockers": [],
+      "repair": {
+        "date": "2026-10-20",
+        "report": "s06_unbraced_conditionals.md",
+        "results": "s06_results.json",
+        "scope": "Single-statement if/elseif/else bodies via existing block/branch model; nearest-if binding, scope, lazy evaluation, completion, source spans and recovery verified. No runtime changes. Original fixture remains blocked by S09, not S06."
+      }
     },
     {
       "id": "V-L01",

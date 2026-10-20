@@ -54,6 +54,7 @@ cache/PCH consumer. See [asset checks](testing.md) and the current
 | Active type-model discussion | [Type model direction](planning/types.md) |
 | Mixed/dynamic runtime design discussion | [Shared machinery, family separation and recorded mixed layout improvement](planning/mixed_dynamic_storage.md) |
 | Active cast/conversion discussion | [Cast and conversion preparation](planning/casts.md) |
+| Single-statement conditional bodies | [S06 binding, scope, recovery and separate S09 blocker](planning/s06_unbraced_conditionals.md) |
 | Scalar/carrier text contexts | [V-L11 / V-D14 contract, bounded proofs and deferred domains](planning/carrier_text.md) |
 | Scalar float identity / S04 | [Two scalar forms, carrier reconciliation and unchanged process fixture](planning/float_identity.md) |
 | V-L07 bounded completion | [Completion proof and wider gaps](planning/vl07_completion.md); [canonical inventory and dispositions](planning/vl07_inventory/README.md); [exact unresolved canonical signatures (none)](planning/vl07_inventory/remaining.csv) |
