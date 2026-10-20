@@ -75,3 +75,24 @@ if (inventory_specializations($fresh_engine) !== []) {
 	throw new \LogicException('Demand leaked into a new engine through catalog state');
 }
 echo "All catalogs loaded; only requested hash<vector<int>,string>, vector<int>, string and int prepared; null stays expression-only\n";
+
+// Compare the entire middleware bundle, including implementation and layout batches,
+// not just header names. Compact entry IDs may differ with discovery order.
+function inventory_bundle(CPP_Specializations $engine): array
+{
+	$artifacts = new Storage /** Storage<cpp_artifact> */();
+	$engine->append_artifacts($artifacts);
+	$result = [];
+	foreach ($artifacts as $artifact) { $result[$artifact->file_name] = $artifact->text; }
+	ksort($result);
+	return $result;
+}
+$expected_bundle = inventory_bundle($engine);
+foreach ([[$string, $integer, $vector, $nested], [$vector, $nested, $integer, $string]] as $order) {
+	$ordered_engine = new CPP_Specializations();
+	foreach ($order as $type) { $ordered_engine->request_composed($type); }
+	if (inventory_bundle($ordered_engine) !== $expected_bundle || $registry->type_count() !== $types_before) {
+		throw new \LogicException('Discovery order changed concrete names, middleware or layout probes');
+	}
+}
+echo "Demand discovery order preserves the complete middleware/layout bundle\n";

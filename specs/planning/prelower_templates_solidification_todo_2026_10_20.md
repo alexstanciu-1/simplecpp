@@ -202,19 +202,25 @@ while ordinary compilation and its regression proofs still work.
 Owners: existing fragment requests, specialization assembly, layout cache,
 publication coordinator and native build.
 
-- [ ] Verify unused metadata emits no concrete types; nested demand emits only its
+- [x] Verify unused metadata emits no concrete types; nested demand emits only its
   required closure; removing/restoring use retires/restores support artifacts.
-- [ ] Verify live emission and cached-fragment replay request identical interfaces,
+- [x] Verify live emission and cached-fragment replay request identical interfaces,
   with stable names and output independent of discovery order.
-- [ ] Exercise body-only edits, representation/layout changes, runtime header changes
+- [x] Exercise body-only edits, representation/layout changes, runtime header changes
   and configuration changes through existing invalidation owners. Reuse existing
   cache keys and dependency tracking; do not create another cache or redesign the
   unfinished incremental compiler here.
-- [ ] Verify failure/repair, no partial ready publication, layout dependency ordering
+- [x] Verify failure/repair, no partial ready publication, layout dependency ordering
   and warm reuse of layouts, middleware and app objects where inputs are unchanged.
-- [ ] Preserve source field/signature consistency, nested reference identity,
+- [x] Preserve source field/signature consistency, nested reference identity,
   evaluation order, exception cleanup and zero extra boundary allocations/copies
   in the focused O0 proofs. Keep prior optimized-build differences explicitly scoped.
+
+Evidence: [demand/replay/publication acceptance](results/prelower_demand_publication_2026_10_20/README.md)
+records the exact nested-type discovery-order comparison, disk retirement/restoration,
+retained-fragment checks and focused O0 cache/lifecycle proofs. These checkboxes close
+the bounded supported-path verification, not arbitrary providers or all incremental
+edit combinations. Earlier optimized-build limitations remain deferred.
 
 Done when: reuse is correct and demand-driven, with changed inputs invalidated and
 unchanged artifacts reused; no whole-compiler incremental maturity claim is implied.

@@ -58,6 +58,11 @@ reuses the output, indexing and compound fixtures at O0 only. It checks native s
 output bridge demand, broad indexing-header exclusion, direct/concrete behavior and
 allocation/copy parity, nested references, source evaluation order and warm reuse.
 Output emission also exercises request retirement, replay and option switching.
+The source-demand fixture also publishes uninstrumented compiler output separately,
+checks cached-replay manifest identity, removes demand and verifies retired files are
+gone, then restores the exact original manifest while preserving user-owned files.
+The metadata inventory task compares the complete middleware/layout bundle across
+nested-first and dependency-first request discovery orders.
 Its byte proof covers empty, short, embedded-NUL and long literals, copy/move
 allocation parity, borrowed identity and native/concrete string-hash parity, including
 an alternate metadata-selected byte adapter.

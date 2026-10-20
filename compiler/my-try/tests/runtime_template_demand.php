@@ -76,6 +76,23 @@ if ($composed && $output_proof) {
 		if (!isset($output_families[$family->name])) { throw new \LogicException('Native output bypassed its middleware bridge'); }
 	}
 }
+// Publish production artifacts separately from the instrumented native harness below.
+// Each attempt uses the existing publication owner; no fixture-owned manifest logic.
+function demand_publish(Compiler $compiler, string $root, string $changed_path = ''): string
+{
+	$publication = new Output_Publication($root);
+	try {
+		if ($changed_path === '') { $compiler->cpp($publication); }
+		else { $compiler->update_cpp([$changed_path], $publication); }
+	}
+	finally { $publication->close(); }
+	return Output_Publication::require_ready($root);
+}
+$publication_root = $output . '-demand';
+$live_snapshot = demand_snapshot();
+$published_manifest = demand_publish($compiler, $publication_root);
+if (demand_snapshot() !== $live_snapshot) { throw new \LogicException('First cached publication changed live emission'); }
+file_put_contents($publication_root . '/user-note.txt', 'keep');
 $before=demand_snapshot();
 $expected_concrete=$output_proof?9:6;
 $headers=concrete_headers();
@@ -86,19 +103,27 @@ $nested=Model::$global_scope->functions_named('copy_nested')[0]->syntax()->requi
 $registry=Model::$type_catalog->registry();
 $type_count=$registry->type_count();
 $fragments=[];foreach(Model::$cpp_output_program->fragments as $owner){$fragments[]=Model::$cpp_output_program->fragments[$owner];}
-$compiler->cpp();
+$replayed_manifest = demand_publish($compiler, $publication_root);
+if ($replayed_manifest !== $published_manifest) { throw new \LogicException('Cached demand changed published manifest'); }
 if(demand_snapshot()!==$before || $registry->type_count()!==$type_count){throw new \LogicException('Recipe replay changed output or semantic identity');}
 $index=0;foreach(Model::$cpp_output_program->fragments as $owner){if(Model::$cpp_output_program->fragments[$owner]!==$fragments[$index++]){throw new \LogicException('No-op rebuilt a fragment');}}
 file_put_contents($source.'/main.phs','function empty_work(): void {}');
-$compiler->update_cpp([$source.'/main.phs']);
+demand_publish($compiler, $publication_root, $source.'/main.phs');
 if(concrete_headers()!==[]){throw new \LogicException('Removed source demand retained concrete types');}
 foreach(Model::$cpp_output_program->fragments as $owner){
  foreach(Model::$cpp_output_program->fragments[$owner]->runtime_operations as $request){
   if($request->kind===cpp_runtime_operation_kind::output){throw new \LogicException('Removed output retained a helper request');}
  }
 }
+$retired = array_diff_key($before, demand_snapshot());
+if ($composed && $retired === []) { throw new \LogicException('Demand retirement proof removed no artifacts'); }
+foreach ($retired as $path => $text) {
+	if (file_exists($publication_root . '/' . $path)) { throw new \LogicException('Retired demand remains on disk: ' . $path); }
+}
+if (file_get_contents($publication_root . '/user-note.txt') !== 'keep') { throw new \LogicException('Demand retirement removed user output'); }
 file_put_contents($source.'/main.phs',$program);
-$compiler->update_cpp([$source.'/main.phs']);
+$restored_manifest = demand_publish($compiler, $publication_root, $source.'/main.phs');
+if ($restored_manifest !== $published_manifest) { throw new \LogicException('Restored demand changed published manifest'); }
 if(demand_snapshot()!==$before){throw new \LogicException('Restored demand changed output');}
 $compiler->cpp_lowering->prelower_templates=!$composed;
 $compiler->cpp();
@@ -218,4 +243,4 @@ $artifacts->append(new cpp_artifact('proof:main',cpp_artifact_kind::translation_
 foreach(['instrument.hpp','instrument.cpp'] as $path){$artifacts->append(new cpp_artifact('proof:'.$path,$path==='instrument.hpp'?cpp_artifact_kind::header:cpp_artifact_kind::translation_unit,$path,file_get_contents(__DIR__.'/fixtures/prelower_boundary/'.$path)));}
 $publisher=new Output_Publication($output);
 try{$publisher->publish($artifacts,new runtime_cpp_build_spec());}finally{$publisher->close();}
-echo "Closed-template source demand, nested substitution, retirement, replay and option switching passed\n";
+echo "Closed-template source demand, nested substitution, disk retirement/restoration, replay and option switching passed\n";
