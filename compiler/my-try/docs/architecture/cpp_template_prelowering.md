@@ -96,6 +96,11 @@ maps remain non-blocking debt; this review changes no output spelling or cache k
 
 ## Proofs and remaining work
 
+The agreed supported path is solidified by the [fresh combined O0 sign-off](../../../../specs/planning/results/prelower_solidified_acceptance_2026_10_20/README.md)
+at `da17e1ba`: all eight phases pass, accounting is identical (998/0 in each mode),
+and the complete 16-unit application closure is template-free. This status retains
+the explicit unsupported-operation boundary and deferred broader runtime coverage.
+
 Run the combined current acceptance with
 `python3 compiler/my-try/tests/prelower_acceptance.py --results FRESH_DIRECTORY`.
 It composes the existing O0 proof owners and retains per-phase evidence; failures

@@ -2,7 +2,7 @@
 Doc Status: planning
 
 Date: 2026-10-20
-Status: active planning checklist, combining the backend and runtime-contract audits.
+Status: supported-path solidification accepted at `da17e1ba`; broader coverage deferred.
 This is the current follow-up to the [implementation history](cpp_template_prelowering_plan_2026_10_19.md)
 and [architectural decision](cpp_template_prelowering_decision_2026_10_19.md).
 Unchecked items are remaining work, not claims that the underlying mechanism is absent.
@@ -36,6 +36,12 @@ proofs. Public option migration follows contract enforcement; this slice does no
 claim complete closure validation or broaden runtime coverage.
 
 ## Evidence and audit baseline
+
+- [Final fresh combined O0 acceptance](results/prelower_solidified_acceptance_2026_10_20/README.md):
+  all eight phases pass at `da17e1ba`, including the strengthened metadata, demand,
+  publication and deep-naming proofs. Accounting is identical (998/0 each), all 16
+  app units are template-free, and both warm builds compile/link nothing. This closes
+  the supported-path scope; it does not certify full runtime or incremental maturity.
 
 - [Fresh public-CLI accounting acceptance](results/prelower_public_accounting_2026_10_20/README.md):
   ordinary and prelowered O0/no-debug/no-PCH builds both pass 998/0 with byte-identical
@@ -139,10 +145,10 @@ Owners: runtime catalog installation, backend binding/admission checks, diagnost
   its runtime header no longer includes unused template machinery. O0 output/counter
   parity and a fresh complete no-PCH closure proof pass, including ordered echo side
   effects. See [evidence](results/prelower_null_output_2026_10_20/README.md).
-- [ ] Validate remaining representation/operation combinations before claiming
-  broader provider coverage. Public selection and strict transitive-header/PCH
-  enforcement are complete; arbitrary operation compatibility is not. The listed
-  rejection cases are not a universal proof.
+Broader representation/operation validation is deferred below; it is not an open
+solidification prerequisite. Public selection and strict transitive-header/PCH
+enforcement are complete. The rejection cases are not a universal support proof.
+
 - [x] Carry the concrete application's template policy through existing publication
   into the native builder. Reject broad runtime PCH; validate active Clang tokens
   across application inputs and transitive provider headers before accepting new
@@ -293,9 +299,16 @@ Bounded selector/legacy-path retirement and fresh validation are recorded in
   records bounded concrete/operation names and a deep-nesting proof. Source path and
   proof-only opaque-name growth, richer debug mapping and hash-collision handling
   remain explicitly non-blocking debt; no naming scheme was changed.
-- [ ] Review and commit bounded slices with their relevant proofs.
+- [x] Review and commit bounded slices with their relevant proofs. Final combined
+  O0 acceptance passed all eight phases at `da17e1ba`; see the
+  [sign-off and remaining debt](results/prelower_solidified_acceptance_2026_10_20/README.md).
 
 ## Explicitly deferred / non-blocking
+
+- [ ] Validate additional representation/operation combinations before claiming
+  broader provider coverage. Keep current unsupported transports explicit and
+  retain strict native validation for all admitted application inputs.
+
 
 The [tentative v0.3 runtime review](runtime_prepared_facts_review_v0_3_2026_10_20.md)
 retains wrapper removal, native-operation redesign and broader prepared-fact exposure.
