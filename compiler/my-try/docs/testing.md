@@ -1389,3 +1389,15 @@ eager source order, reference/property snapshots and retained recovery. Add
 `--runtime-only` for the prerequisite gate. Run on dev002; see
 [the dated proof](planning/string_other_identity.md). Ordinary equality and other
 string operators are outside this group.
+
+
+### Mixed numeric nullable/Result ordinary equality E4NR — 2026-10-20
+
+`python3 compiler/my-try/tests/mixed_equality.py --results FRESH` verifies unchanged
+runtime support, four scalar prerequisites and 24 nullable/structured Result
+carrier signatures. The independent oracle checks numeric promotion and absence/
+failure-state equality, including different error metadata; complete-state
+storage, eager source order, snapshots and retained repair are observed separately.
+Add `--runtime-only` for the prerequisite gate. Run on dev002; see
+[the dated proof](planning/mixed_equality.md). Sentinel carriers and cross-family
+ordinary equality remain negative controls.

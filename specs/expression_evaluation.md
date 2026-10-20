@@ -252,3 +252,33 @@ replacement cannot alter the saved left state, and earlier RHS effects survive a
 later failure. This amendment admits strict identity only. Ordinary heterogeneous
 equality, concatenation, logical mixing, spaceship, updates, fixed-width types and
 nested payloads retain their separate admission boundaries.
+
+
+## Mixed numeric ordinary equality for nullable and Result — 2026-10-20
+
+`==` and `!=` admit canonical int/float in both orders for plain scalars,
+nullable/nullable, nullable/plain, plain/nullable, result/result, result/plain and
+plain/result. Here result is the structured-error carrier. Both operators return
+plain bool. This does not admit cross-family or bool-sentinel carrier combinations.
+
+Compare present payloads by converting int to float and using floating numeric
+equality, including its rounding at large integer magnitudes. Signed zeros compare
+equal; NaN compares unequal even to itself. `!=` negates `==`. This is distinct
+from strict identity, where successful int and float payloads remain different kinds.
+
+Two empty nullable values compare equal; empty versus present/plain compares
+unequal. Two Result failures compare equal regardless of error metadata; failure
+versus success/plain compares unequal. These ordinary equality rules preserve
+the existing state policy across payload kinds. Strict Result identity continues
+to compare structured error contents.
+
+Snapshot complete carrier operands eagerly from left to right, then compare their
+states. Only present payload comparisons perform numeric promotion; no guarded
+payload extraction or carrier-to-carrier conversion is inserted. Plain scalar
+operands use the existing numeric conversion path. Unavailable or unequal states
+do not skip RHS evaluation; source exceptions do. RHS replacement cannot alter the
+saved left value, and earlier RHS effects survive a later source failure. Comparison
+does not change stored states, numeric representations or error details.
+
+Sentinel carriers, cross-family equality, other payload kinds, spaceship, updates
+and fixed-width/nested extensions remain separate.

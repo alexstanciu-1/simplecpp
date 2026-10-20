@@ -1,13 +1,13 @@
 # V-L07 remaining signature inventory
 Doc Status: planning
 
-Snapshot: 2026-10-20, after heterogeneous string strict identity (E5SI). This is a concrete
+Snapshot: 2026-10-20, after nullable/Result mixed ordinary equality (E4NR). This is a concrete
 planning list, not a new semantic specification or authorization to implement all
 listed combinations. No compiler/runtime changes or compiler tests were run to
 create it. Existing completed proofs remain authoritative evidence of execution.
 
-[Remaining signatures](remaining.csv) lists **912 exact signatures**:
-**zero remaining support targets** and **912 design/scope decisions**.
+[Remaining signatures](remaining.csv) lists **888 exact signatures**:
+**zero remaining support targets** and **888 design/scope decisions**.
 Each row identifies the operand types, operator, unary/binary/compound form, group,
 planning status and matching matrix definition when one exists. An empty matrix
 reference means no exact definition was found, not that the operation is invalid.
@@ -38,9 +38,9 @@ mistaken for bool payloads.
 
 | Disposition | Signatures | Meaning |
 | --- | ---: | --- |
-| Verified completed slices | 3,040 | 2,544 binary + 64 unary + 432 compound; reproduces current total |
+| Verified completed slices | 3,064 | 2,568 binary + 64 unary + 432 compound; reproduces current total |
 | Remaining support targets | 0 | Missing capability families with bounded candidate signatures |
-| Needs design/scope decision | 912 | Decide semantics/prerequisites before calling them implementation obligations |
+| Needs design/scope decision | 888 | Decide semantics/prerequisites before calling them implementation obligations |
 | Separate existing paths | 129 | 128 null comparisons + preserved nullable-string negation; no new pass claim |
 | Scope exclusions | 10,767 | Other grid cells outside approved payload/operator domains |
 | Total grid | 14,848 | Includes negative/out-of-scope cells, not a completion denominator |
@@ -76,13 +76,13 @@ approved bounds. Cross-family and mixed ordinary equality still need normalizati
 | Group | Exact expansion | Count | Decision |
 | --- | --- | ---: | --- |
 | E3 | Two ordinary comparisons × four matching payloads × 12 ordered distinct-carrier pairs | 96 | Cross-family ordinary equality state/error/sentinel policy |
-| E4 | Two ordinary comparisons × two ordered int/float payload pairs × 24 arrangements | 96 | Equality promotion, state policy and precision/NaN |
+| E4 | Two ordinary comparisons × two ordered int/float payload pairs × 18 remaining arrangements | 72 | Sentinel-carrier and cross-family state policy |
 | E5 | Two ordinary comparisons × 10 ordered heterogeneous pairs × 24 arrangements | 480 | Ordinary coercion policy and state normalization |
 | O2 | `<=>` on float/float and both int/float orders × 24 arrangements | 72 | Unordered NaN policy and scalar admission |
 | C2 | Four arithmetic compounds × int-destination/float-RHS × 24 arrangements | 96 | Narrowing, error policy and destination write-back |
 | C3 | `**=` on int/int × 24 arrangements | 24 | Power assignment is outside current power contract |
 | S1 | `.` and `.=` on string/string × 24 arrangements | 48 | Concatenation conversion versus guarded extraction, empty nullable string and write-back |
-| Total | | 912 | |
+| Total | | 888 | |
 
 These groups are review candidates. Some may become implementations, some intentional
 exclusions, and some separate issues. The list preserves that distinction rather
@@ -112,7 +112,7 @@ of matrix rows alone cannot recover V-L07's remaining signature list.
 
 Paths in this table are relative to `compiler/my-try/`. Completed signatures are
 reconstructed from the bounded contracts in `docs/s2s_scalar_operators.md`; the
-builder asserts their exact 2,544 binary / 64 unary / 432 compound totals. This is static reconciliation with dated
+builder asserts their exact 2,568 binary / 64 unary / 432 compound totals. This is static reconciliation with dated
 proofs, not another verification run. Missing probes should run on dev002 using the
 shared runner once their semantics and implementation scope are approved.
 
@@ -137,10 +137,10 @@ These are explicit scope decisions, not forgotten zero-count tasks:
 
 The original proposed core remains **2,080/2,080 signatures (100%)**.
 [O1 mixed ordering](../mixed_ordering.md) adds 192 approved signatures beyond that
-original denominator; C2W, E3I and E4I add 96 each, E5BNI adds 192, and E5SI adds 288, bringing verified coverage to 3,040.
-Eight scalar ordering, eight scalar float-compound, twenty-four heterogeneous strict-identity and four plain numeric-XOR prerequisites are excluded
+original denominator; C2W, E3I and E4I add 96 each, E5BNI adds 192, and E5SI adds 288, and E4NR adds 24, bringing verified coverage to 3,064.
+Eight scalar ordering, eight scalar float-compound, twenty-four heterogeneous strict-identity, four mixed numeric ordinary-equality and four plain numeric-XOR prerequisites are excluded
 from that carrier inventory. This is a **bounded core-scope metric**, not
-completion of all V-L07 or engineering effort. The 912 design candidates and wider
+completion of all V-L07 or engineering effort. The 888 design candidates and wider
 domains remain visible outside that denominator until disposition is agreed.
 
 E1 completed with 12 signatures on dev002; see [the report](../nullable_float_equality.md).
@@ -191,3 +191,12 @@ both orders. Successful payload kinds stay distinct; matching null, bool sentine
 and structured error states normalize independently. Source order, complete byte
 storage, snapshots and recovery pass on dev002 without runtime changes. E5 now
 contains only the 480 remaining heterogeneous ordinary-equality decisions.
+
+## E4 nullable/Result mixed ordinary equality — 2026-10-20
+
+[The E4NR proof](../mixed_equality.md) verifies 24 carrier signatures and four scalar
+prerequisites. Present payloads compare with int-to-float promotion; two nullable
+absences or two Result failures compare equal. Error metadata remains significant
+for strict identity only. Whole-state snapshots, eager source effects, storage
+preservation and retained recovery pass on dev002 without runtime changes.
+The remaining E4 group has 72 sentinel-carrier/cross-family signatures.

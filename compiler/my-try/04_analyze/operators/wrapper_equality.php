@@ -21,18 +21,14 @@ final class Wrapper_Equality
 		if (($left_payload === null) && ($right_payload === null)) {
 			return null;
 		}
-		// Strict identity normalizes visible values across carriers; ordinary equality
-		// retains its same-carrier/plain domain. Both paths snapshot whole states.
-		if (($left_payload !== null) && ($right_payload !== null)
-			&& !$operands[0]->matches($operands[1])
-			&& ($source_operator !== operator_kind::identical) && ($source_operator !== operator_kind::not_identical)) {
-			return null;
-		}
 		$left_value = $left_payload ?? $operands[0];
 		$right_value = $right_payload ?? $operands[1];
 		$strict_identity = ($source_operator === operator_kind::identical) || ($source_operator === operator_kind::not_identical);
-		$admitted_pair = $left_value->matches($right_value)
-			|| ($strict_identity && Scalar_Identity::is_distinct_kind_pair($left_value, $right_value, $context));
+		// Identity and ordinary equality own separate pair domains. Both retain whole states.
+		$admitted_pair = $strict_identity
+			? ($left_value->matches($right_value)
+				|| Scalar_Identity::is_distinct_kind_pair($left_value, $right_value, $context))
+			: self::ordinary_pair_allowed($operands[0], $operands[1], $left_value, $right_value, $context);
 		if (!$admitted_pair || !self::is_admitted_payload($left_value, $context)
 			|| $operands[0]->by_value() || $operands[1]->by_value()) {
 			return null;
@@ -63,6 +59,36 @@ final class Wrapper_Equality
 		}
 		return $decision;
 	}
+
+	/** Ordinary equality preserves family-specific states; only nullable/Result admit mixed numbers. */
+	private static function ordinary_pair_allowed(canonical_type_use $left, canonical_type_use $right,
+		canonical_type_use $left_value, canonical_type_use $right_value, preparation_context $context): bool
+	{
+		$left_plain = $left->matches($left_value);
+		$right_plain = $right->matches($right_value);
+		if ($left_value->matches($right_value)) {
+			return $left_plain || $right_plain || $left->matches($right);
+		}
+		if (!Floating_Point_Operators::is_mixed_numeric_pair($left_value, $right_value, $context)) {
+			return false;
+		}
+		if (($left_plain || (Nullable_Conversions::payload($left) !== null))
+			&& ($right_plain || (Nullable_Conversions::payload($right) !== null))) {
+			return true;
+		}
+		return ($left_plain || self::is_structured_result($left))
+			&& ($right_plain || self::is_structured_result($right));
+	}
+
+	private static function is_structured_result(canonical_type_use $source): bool
+	{
+		$role = Result_Conversions::role($source);
+		if ($role === null) {
+			return false;
+		}
+		return $role->result_family() === result_kind::structured_error;
+	}
+
 	/** Only roles whose comparison contracts are admitted here participate. */
 	private static function payload(canonical_type_use $source): ?canonical_type_use
 	{

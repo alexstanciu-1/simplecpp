@@ -24,7 +24,7 @@ supersedes their rejection of the specific float arithmetic forms above.
 
 [V-L04 verification](planning/float_operators_l04.md) admits exactly float/float
 `==`, `!=`, `<`, `<=`, `>`, `>=`, returning bool, and canonical float prefix/postfix
-`++`/`--`. Equality retains exact float operands; the O1 extension below adds int-to-float ordering. They preserve ordinary
+`++`/`--`. The O1 and E4NR extensions below add int-to-float ordering and ordinary equality. They preserve ordinary
 IEEE value comparisons, including signed-zero equality and unordered NaN behavior.
 Prefix yields an updated float value snapshot; postfix yields the previous value
 snapshot. Neither result is assignable or reference-bindable, regardless of the
@@ -368,6 +368,22 @@ carrier's bool sentinel can match a bool payload without changing its stored sta
 The existing ordered snapshot renderer handles source effects and failures.
 Ordinary equality, concatenation, logical mixing, spaceship, updates and
 fixed-width/nested extensions remain separate. Runtime implementation is unchanged.
+
+## Mixed numeric nullable/Result ordinary equality — 2026-10-20
+
+[The E4NR proof](planning/mixed_equality.md) adds four scalar and 24 carrier
+signatures for int/float `==`/`!=` in both orders. Scalar comparisons promote int
+to float. Nullable and structured Result comparisons snapshot complete states;
+the runtime promotes only present payloads. No checked extraction or carrier
+conversion occurs. The shared wrapper owner separates ordinary pair admission
+from strict identity and uses semantic carrier roles.
+
+Two nullable absences or two Result failures compare equal; unavailable versus
+present/plain compares unequal. Failure metadata matters only to strict identity.
+Floating comparison preserves signed-zero equality, NaN inequality and int-to-float
+rounding. Source order, RHS effects and saved-left snapshots use the existing
+renderer. Sentinel carriers, cross-family pairs, other payloads and spaceship
+remain separate. No runtime implementation changes were needed.
 
 ## Current contracts
 

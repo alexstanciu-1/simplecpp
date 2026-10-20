@@ -17,9 +17,9 @@
   ],
   "rows": 14848,
   "status_counts": {
-    "verified": 3040,
+    "verified": 3064,
     "scope-exclusion": 10767,
-    "needs-design": 912,
+    "needs-design": 888,
     "separate-existing-path": 129
   },
   "groups": {
@@ -83,11 +83,17 @@
       "authority_or_evidence": "mixed_identity.md; mixed_identity_results.json",
       "signatures": 96
     },
+    "E4NR": {
+      "status": "verified",
+      "title": "Nullable/structured Result mixed int/float ordinary equality",
+      "authority_or_evidence": "mixed_equality.md; mixed_equality_results.json",
+      "signatures": 24
+    },
     "E4": {
       "status": "needs-design",
-      "title": "Mixed int/float ordinary equality",
+      "title": "Remaining mixed int/float ordinary equality",
       "authority_or_evidence": "runtime/specs/spec.md section 7a; mixed equality/promotion and NaN decisions",
-      "signatures": 96
+      "signatures": 72
     },
     "E5BNI": {
       "status": "verified",
@@ -211,13 +217,13 @@
     }
   },
   "verified": {
-    "binary": 2544,
+    "binary": 2568,
     "compound": 432,
     "unary": 64
   },
   "matrix_wrapper_definitions": 376,
   "matrix_separate_selectors": 144,
-  "remaining_list_rows": 912,
+  "remaining_list_rows": 888,
   "input_hashes": {
     "specs/operator_matrix/data/semantics.index.json": "b734f42dcdc5b14608263d2365104a70f51dc110b5788143e2a2dc5e31ddd331",
     "specs/operator_matrix/data/semantics/operators_conditional_selection/coalesce__bool_t__nullable_bool_t.tsv": "26018a3ee482ac4aa8db2d63125c672b20b29501aadf7418e7e3358da7584697",
@@ -598,10 +604,10 @@
     "specs/operator_matrix/data/semantics/operators_compound_assignment/shift_right_assign__result_or_bool_int_t__result_or_bool_int_t.tsv": "9878700ed912a5755a1a9d80c24fb5d5805b8f761f502a126db066d39a8f37fe",
     "runtime/specs/spec.md": "2730f66c763b10ecee8d52435b61f86eb228f06be5c85ef2710512ea2c92d84b",
     "runtime/specs/config.json": "d65695770a325a6a4620e040f3845fed0551b0a257f38aee57f6bc9db37835f9",
-    "specs/expression_evaluation.md": "0e8e7956361c68ded829ac926b727cf60ca1f4f9be1b7314b61dba977737ed8e",
+    "specs/expression_evaluation.md": "e856aab1e9bb11291f8660e99084e3efa2c4516cab12aab55665c52de540d81c",
     "specs/integer_power.md": "4b9a96a28d5225fe2e187b1ff74a6f9838ef0d539ab97bc5479a77ec27c45aed",
     "compiler/my-try/04_analyze/operators/guarded.php": "96ad3596a1657f0ca4bb67e7b72b183af3e51b6a6826cbb17d3d6e2ca2ab835f",
-    "compiler/my-try/04_analyze/operators/wrapper_equality.php": "1bce5bd62e48a1f8e997cd8fd036928b80dbbd20084ed5447589aaa550be3d91",
+    "compiler/my-try/04_analyze/operators/wrapper_equality.php": "292e244b0d147b829b3e065f87d5695705f2d1ea59deca3d2c83365f3f65e333",
     "compiler/my-try/docs/planning/nullable_bool_string_equality_results.json": "d2fa21d3e07c4ae966b739520185fd547632d392fc4f02ff09b986337162e264",
     "compiler/my-try/docs/planning/nullable_float_equality_results.json": "b12cc7f2722c444e700255e8e8f47b1266f05dfe6e84f8e1df1475eec7a5ca93",
     "compiler/my-try/docs/planning/result_equality_results.json": "45830b47351681de7169fe88f2c7af703371216a20e5c03c2bd580c750e4506f",
@@ -619,6 +625,7 @@
     "compiler/my-try/docs/planning/cross_identity_results.json": "9d1851aa2524a52be01ad345f09abb6cf0eca0c1c0de8442429d3ccb87fce1f4",
     "compiler/my-try/docs/planning/mixed_identity_results.json": "825cc2fb91aa41716281453e848d31a8616b49d89611281ef183d9c458673214",
     "compiler/my-try/docs/planning/bool_numeric_identity_results.json": "59f75a97d35016160fe9b9114e54474aa6b72f308f0e8e7c51ebf3ae2a97b575",
-    "compiler/my-try/docs/planning/string_other_identity_results.json": "ac8f8261de65b5e198f73b2f4c9d64a53610ac7e918e78a03d62ed8b41e25950"
+    "compiler/my-try/docs/planning/string_other_identity_results.json": "ac8f8261de65b5e198f73b2f4c9d64a53610ac7e918e78a03d62ed8b41e25950",
+    "compiler/my-try/docs/planning/mixed_equality_results.json": "1151f7b2561bfdcec55d87fea08407d7df456b608d792f57f4b69b12e2086b88"
   }
 }

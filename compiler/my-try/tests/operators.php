@@ -290,7 +290,7 @@ $rejections = [
 	'remainder width' => ['$x uint8 = 7; return $x % 3;', 'integer binary operation requires matching signedness'],
 	'comparison string' => ['return 3 == "3";', 'integer binary operation requires integer operands'],
 	'ordinary comparison bool' => ['return 1 == true;', 'integer binary operation requires integer operands'],
-	'mixed equality float' => ['return 1 == 2.0;', 'floating comparison requires exact floats'],
+	'ordinary bool float equality' => ['return true == 2.0;', 'floating comparison requires canonical float or int operands'],
 	'relational chain' => ['return 1 < 2 < 3;', 'integer binary operation requires integer operands'],
 	'wrapper concatenation' => ['$n ?int = 1; $a = "x" . $n;', 'concatenation requires boxed'],
 	'cross-family concatenation' => ['$d dynamic; $m mixed; $a = $d . $m;', 'same boxed family'],

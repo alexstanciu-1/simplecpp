@@ -37,7 +37,7 @@ foreach ($mutations as $name => $expression) {
 }
 foreach ([
 	'$x = 1.5 === 1.5;', '$x = 1.5 !== 1.5;', '$x = 1.5 <=> 2.5;',
-	'$x = 2 == 1.5;',
+	'$x = true == 1.5;',
 	'function f(const float &$x): void { $x++; }',
 	'function f(float &$x): void {} $x = 1.5; f(++$x);',
 	'function f(float &$x): void {} $x = 1.5; f($x--);',
