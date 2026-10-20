@@ -150,6 +150,10 @@ final class Declaration_Preparation
 	/** Fields belong to their record, never to the surrounding local-variable scope. */
 	public static function prepare_record(type_declaration_node $syntax, preparation_context $context): void
 	{
+		if ($syntax->declaration_kind === type_declaration_kind::union_type) {
+			Union_Preparation::prepare($syntax, $context);
+			return;
+		}
 		// The common AST does not confer support for new declaration/member semantics.
 		$extended /** Storage<named_type_node> */ = $syntax->extended_interfaces;
 		$methods /** Storage<method_node> */ = Member_Inventory::methods(object_cast($syntax->occurrence(), collected_member_owner::class));

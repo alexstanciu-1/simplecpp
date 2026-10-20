@@ -102,6 +102,7 @@ enum type_declaration_kind {
 	case struct_type;
 	case interface_type;
 	case trait_type;
+	case union_type;
 }
 
 /** Retain explicit source modifiers; preparation owns defaults and legality. */

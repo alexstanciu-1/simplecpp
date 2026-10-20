@@ -847,7 +847,7 @@ these facts, not the registry.
 enums. `Source_Type_Declarations` weakly associates exact semantic IDs with that
 role; collection/publication/retirement share the existing paths. `Type_Queries::source_declaration`
 reads that general association, whereas `source_record` returns a `collected_record`
-(plain class or struct). Record reconciliation and backend consumers narrow the role.
+(class, struct or restricted union). Record reconciliation and backend consumers narrow the role.
 There is no parallel enum registry or new Model root. `enum_definition_work` uses
 the ordinary scheduler. `prepared_enum` retains canonical identity, optional source
 backing, selected integer storage and ordered exact-decimal case snapshots. Capability
@@ -855,6 +855,23 @@ queries require completion and read these facts. `static_member_reference_node`
 owns named owner-type syntax; preparation selects an enum case and retains its
 snapshot. Cases are not namespace constants. C++ owns scoped-enum spelling and
 type-header artifacts; shared exact-integer validation never stores C++ strings.
+
+Restricted unions retain `union_type` as their declaration kind and reuse inline
+nominal value storage, record work and field facts. `Union_Preparation` validates
+the restricted shape and recursively observes eligible struct payloads; it does
+not add source-derived capability caches to the registry. Union construction
+creates inactive storage. A whole-member assignment carries the prepared
+`initializes_union_member` fact; the C++ property-write owner snapshots the RHS
+and uses explicit member construction for both direct and retained receivers.
+No hidden active-member tag or managed payload lifecycle is introduced.
+
+`prepared_layout_query` retains the resolved target type and optional field fact.
+`Layout_Query_Preparation` shares observed lexical type lookup with type syntax
+and observes the target declaration. These compiler calls have no runtime
+arguments. The C++ owner spells `sizeof`, `alignof` and field observations with
+complete target dependencies; neither the host nor the shared model stores
+computed byte sizes or C++ type names. Union type uses currently request complete
+headers rather than emitting incorrect `struct` forward declarations.
 
 `prepared_selection_constant` is the common switch/match label role, specialized
 as exact integer or enum-case facts. Enum labels retain canonical enum type and a

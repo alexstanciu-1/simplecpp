@@ -172,7 +172,8 @@ final class Symbol_Collector
 	/** Register typed syntax as soon as parsing identifies it, or refresh its retained identity. */
 	public function collect_member_owner(type_declaration_node $node, scope $scope, int $index): void
 	{
-		if (($node->declaration_kind !== type_declaration_kind::struct_type)
+		if (($node->declaration_kind !== type_declaration_kind::union_type)
+			&& ($node->declaration_kind !== type_declaration_kind::struct_type)
 			&& ($node->declaration_kind !== type_declaration_kind::class_type)
 			&& ($node->declaration_kind !== type_declaration_kind::interface_type)
 			&& ($node->declaration_kind !== type_declaration_kind::trait_type)) {

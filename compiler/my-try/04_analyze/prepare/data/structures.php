@@ -945,6 +945,7 @@ final class prepared_assignment extends prepared_assignment_expression
 /** A property write observes actual storage, never a fabricated local declaration. */
 final class prepared_property_assignment extends prepared_assignment_expression
 {
+	public bool $initializes_union_member = false;
 	public prepared_property_storage $destination;
 	public conversion_decision $conversion;
 	public ?value_boundary_operation $boundary = null;

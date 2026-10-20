@@ -23,6 +23,7 @@ final class Relationship_Preparation
 			throw new \RuntimeException('Traits are composition sources, not runtime types');
 		}
 		$syntax = $entry->syntax();
+		if ($syntax->declaration_kind === type_declaration_kind::union_type) { Union_Preparation::shape($syntax); }
 		$facts = new prepared_type_relationships();
 		foreach ($syntax->modifiers as $modifier) {
 			if ($modifier === declaration_modifier::final_declaration) { $facts->final_type = true; }

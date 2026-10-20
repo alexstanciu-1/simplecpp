@@ -377,6 +377,22 @@ Union fields intentionally omit default initializers. Source code that needs a
 tagged payload should store the tag separately, typically as a fixed-backed
 enum field in an enclosing first-slice struct.
 
+### 4.3 v0.2 restricted union construction and replacement
+
+No-argument construction creates union storage with no active payload member.
+A whole-member assignment evaluates and converts its RHS into a value snapshot,
+then constructs that member in the union storage. This also permits replacing the
+currently active member; eligible payloads have no managed destruction obligation.
+An RHS failure does not perform the replacement. Existing receiver evaluation and
+source assignment rules remain in force.
+
+Copying a restricted union copies its active payload with value semantics. A
+struct payload must be installed as a whole before accessing its nested fields.
+Reads, nested mutations and references require the corresponding member to be
+active and initialized. There is no implicit discriminator, inactive-member read
+guarantee, runtime tag check or new active-member flow analysis. Applications
+maintain their separate tag where required.
+
 ## 5. Project Composition
 
 Within a project, declaration-kind metadata distinguishes `class`, `enum`,
@@ -420,6 +436,16 @@ Probe results are `int`/`int_t<>` values in the current source model.
 Layout probes are compile-time generated-layout observations. They are intended
 for tests, assertions, diagnostics, and compact-row validation inside generated
 Simple C++ projects. They are not a portable external ABI promise.
+
+The v0.2 queries use ordinary callable lookup and may be shadowed by source
+functions. Their type and field arguments are compile-time names, not evaluated
+values or general reflection objects. Both type spellings use ordinary lexical
+type lookup, including imports. Field queries select a direct public instance
+field; strings, computed field names and static fields are outside this slice.
+Offset queries cover public-field layouts without inheritance or polymorphism;
+wider record-layout queries remain separate. Sizes and alignments come from the
+target C++ compiler, not from the compiler host or fixed padding assumptions.
+This does not introduce source constant-call evaluation.
 
 ## 7. v0.2 integer arithmetic and numeric comparisons
 

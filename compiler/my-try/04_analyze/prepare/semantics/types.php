@@ -205,9 +205,16 @@ final class Type_Preparation
 	{
 		$entry = $node->occurrence();
 		$lexical_scope = object_cast(weakref_get($entry->scope), scope::class);
-		$types = Observed_Lookup::types($lexical_scope, $entry->name, $context);
+		$node->set_preparation(self::resolve_name($lexical_scope, $entry->name, $context, $complete));
+	}
+
+	/** Shared lexical type lookup for syntax types and compile-time type arguments. */
+	public static function resolve_name(scope $lexical_scope, string $name,
+		preparation_context $context, bool $complete = true): canonical_type_use
+	{
+		$types = Observed_Lookup::types($lexical_scope, $name, $context);
 		if (q_count($types) !== 1) {
-			throw new \RuntimeException('S2S needs one resolved type for ' . $entry->name);
+			throw new \RuntimeException('S2S needs one resolved type for ' . $name);
 		}
 
 		$definition = $types[0];
@@ -221,7 +228,7 @@ final class Type_Preparation
 			$declaration = Model::$type_catalog->source_declarations()->declaration($definition->definition_id());
 			$context->worker->require_declaration($context->owner, $declaration);
 		}
-		$node->set_preparation($type_use);
+		return $type_use;
 	}
 
 	/** Integer aliases with the same representation designate compatible reference storage. */

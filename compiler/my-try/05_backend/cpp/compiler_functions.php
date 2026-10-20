@@ -33,12 +33,43 @@ final class CPP_Compiler_Functions
 
 	public static function reference(prepared_compiler_call $specialization, cpp_generation_context $context): string
 	{
+		if ($specialization instanceof prepared_layout_query) {
+			return self::layout_reference(object_cast($specialization, prepared_layout_query::class), $context);
+		}
 		$facts = self::enum_facts($specialization);
 		$name = self::owner_name($facts);
 		$kind = self::helper_kind($facts);
 		$context->compiler_helpers[$kind . ':' . $name] = $facts;
 		$context->headers[self::path($kind, $name) . '.hpp'] = true;
 		return CPP_Generator::source_name($kind, $name);
+	}
+
+	/** The target compiler supplies layout; no host-side size or padding guesses. */
+	private static function layout_reference(prepared_layout_query $facts, cpp_generation_context $context): string
+	{
+		$representation = CPP_Types::payload($facts->target_type);
+		CPP_Types::record_dependencies($representation, $context);
+		$type = $representation->spelling;
+		$operation = $facts->kind();
+		$expression = 'sizeof(' . $type . ')';
+		if ($operation === compiler_function_kind::layout_alignof) {
+			$expression = 'alignof(' . $type . ')';
+		}
+		elseif ($facts->field !== null) {
+			$field /** prepared_field */ = $facts->field;
+			$declaration = object_cast(weakref_get($field->declaration), collected_name::class);
+			$name = CPP_Generator::source_name('field', $declaration->name);
+			if ($operation === compiler_function_kind::layout_offsetof) {
+				$context->headers['cstddef'] = true;
+				$expression = 'offsetof(' . $type . ', ' . $name . ')';
+			}
+			else {
+				$context->headers['utility'] = true;
+				$expression = 'sizeof(std::declval<' . $type . '>().' . $name . ')';
+			}
+		}
+		$result = CPP_Declarations::type($facts->result_type, $context);
+		return '([]() -> ' . $result . ' { return ' . $result . '(' . $expression . '); })';
 	}
 
 	/** Separate implementation keeps metadata/string construction out of the enum type header. */

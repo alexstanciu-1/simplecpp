@@ -356,6 +356,10 @@ final class CPP_Declarations
 		if (($initialization !== null) && (weakref_get($syntax->require_preparation()->constructor) === null)) {
 			$text .= CPP_Data_Construction::constructor(CPP_Generator::source_name('record', $key), $initialization, $context);
 		}
+		if ($syntax->declaration_kind === type_declaration_kind::union_type) {
+			// No member is active until a whole payload write constructs it.
+			$text .= "\t" . CPP_Generator::source_name('record', $key) . "() noexcept {}\n";
+		}
 		$context->records .= $text;
 		$context->record_states[$key] = cpp_record_state::complete;
 		return '';
@@ -365,7 +369,8 @@ final class CPP_Declarations
 	public static function type_opening(collected_member_owner $owner, cpp_generation_context $context): string
 	{
 		$relations = $owner->relationship_work->require_facts();
-		$text = 'struct ' . CPP_Generator::source_name('record', $owner->qualified_name());
+		$keyword = $owner->syntax()->declaration_kind === type_declaration_kind::union_type ? 'union ' : 'struct ';
+		$text = $keyword . CPP_Generator::source_name('record', $owner->qualified_name());
 		if ($relations->final_type) { $text .= ' final'; }
 		$separator = ' : ';
 		$base = weakref_get($relations->base);

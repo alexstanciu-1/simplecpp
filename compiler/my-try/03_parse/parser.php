@@ -622,7 +622,7 @@ final class Parser_Run
 		if ($this->text() === '{') {
 			return $this->statement_block();
 		}
-		if (($this->text() === 'struct') || ($this->text() === 'class') || ($this->text() === 'data')
+		if (($this->text() === 'union') || ($this->text() === 'struct') || ($this->text() === 'class') || ($this->text() === 'data')
 			|| ($this->text() === 'interface') || ($this->text() === 'trait') || ($this->text() === 'final') || ($this->text() === 'abstract')) {
 			return $this->type_declaration();
 		}
@@ -689,7 +689,7 @@ final class Parser_Run
 			$statements /** Storage<statement_node> */ = $group->body->statements;
 			while (($this->text() !== '}') && ($this->text() !== 'case') && ($this->text() !== 'default'))
 			{
-				if (($this->text() === 'function') || ($this->text() === 'struct') || ($this->text() === 'class') || ($this->text() === 'data') || ($this->text() === 'template')) {
+				if (($this->text() === 'function') || ($this->text() === 'union') || ($this->text() === 'struct') || ($this->text() === 'class') || ($this->text() === 'data') || ($this->text() === 'template')) {
 					throw new \RuntimeException($this->error_message('Local declarations of functions or structs are not supported'));
 				}
 				$statements->append(object_cast($this->statement(), statement_node::class));
@@ -842,7 +842,7 @@ final class Parser_Run
 	/** Braced and single-statement bodies share the same local declaration boundary. */
 	private function body_statement(): statement_node
 	{
-		if (($this->text() === 'function') || ($this->text() === 'struct') || ($this->text() === 'class') || ($this->text() === 'data') || ($this->text() === 'template')) {
+		if (($this->text() === 'function') || ($this->text() === 'union') || ($this->text() === 'struct') || ($this->text() === 'class') || ($this->text() === 'data') || ($this->text() === 'template')) {
 			throw new \RuntimeException($this->error_message('Local declarations of functions or structs are not supported'));
 		}
 		return object_cast($this->statement(), statement_node::class);
@@ -1014,10 +1014,11 @@ final class Parser_Run
 			else { $modifiers[] = declaration_modifier::abstract_declaration; }
 			$this->position++;
 		}
-		if (($this->text() !== 'class') && ($this->text() !== 'struct') && ($this->text() !== 'interface') && ($this->text() !== 'trait')) {
-			throw new \RuntimeException($this->error_message('Expected class, struct, interface or trait declaration'));
+		if (($this->text() !== 'class') && ($this->text() !== 'union') && ($this->text() !== 'struct') && ($this->text() !== 'interface') && ($this->text() !== 'trait')) {
+			throw new \RuntimeException($this->error_message('Expected class, struct, union, interface or trait declaration'));
 		}
 		$kind = $this->text() === 'class' ? type_declaration_kind::class_type : type_declaration_kind::struct_type;
+		if ($this->text() === 'union') { $kind = type_declaration_kind::union_type; }
 		if ($this->text() === 'interface') { $kind = type_declaration_kind::interface_type; }
 		if ($this->text() === 'trait') { $kind = type_declaration_kind::trait_type; }
 		$this->position++;

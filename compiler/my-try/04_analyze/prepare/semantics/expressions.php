@@ -247,7 +247,12 @@ final class Expression_Preparation
 		$binding = new prepared_property_assignment();
 		$binding->type = $place->type;
 		if ($place instanceof prepared_field_access) {
-			$binding->destination = object_cast($place, prepared_field_access::class)->field;
+			$field_place = object_cast($place, prepared_field_access::class);
+			$binding->destination = $field_place->field;
+			$record = Type_Queries::source_record(Type_Queries::record_payload($field_place->record_type));
+			if ($record !== null) {
+				$binding->initializes_union_member = $record->syntax()->declaration_kind === type_declaration_kind::union_type;
+			}
 		}
 		else {
 			$binding->destination = object_cast($place, prepared_static_property::class)->field;

@@ -126,6 +126,7 @@ final class Object_Construction_Preparation
 		$record /** collected_record */ = Type_Queries::source_record($type);
 		$context->worker->require_declaration($context->owner, $record);
 		$layout = $record->syntax()->require_preparation();
+		if ($record->syntax()->declaration_kind === type_declaration_kind::union_type) { return true; }
 		// Synthesized base inputs may be required even when every local property defaults.
 		if ($layout->initialization !== null) {
 			if ($layout->initialization->base_contract !== null) {

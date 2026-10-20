@@ -526,8 +526,21 @@ final class CPP_Generator
 		$context->next_temporary++;
 		return '([&]() -> ' . CPP_Declarations::type($facts->destination_type(), $context) . ' { '
 			. $receiver->statements . 'auto& ' . $name . ' = ' . $receiver->value . '; '
-			. $name . ' = ' . CPP_Declarations::conversion($value, $facts->conversion, $context)
-			. '; return ' . $name . '; }())';
+			. self::property_store($name, $value, $facts, $context)
+			. ' return ' . $name . '; }())';
+	}
+
+	/** Payload replacement starts union member lifetime only after a successful RHS snapshot. */
+	private static function property_store(string $target, string $value,
+		prepared_property_assignment $facts, cpp_generation_context $context): string
+	{
+		$converted = CPP_Declarations::conversion($value, $facts->conversion, $context);
+		if (!$facts->initializes_union_member) { return $target . ' = ' . $converted . ';'; }
+		$context->headers['memory'] = true;
+		$snapshot = 'union_payload_' . $context->next_temporary;
+		$context->next_temporary++;
+		return 'auto ' . $snapshot . ' = ' . $converted . '; '
+			. 'std::construct_at(std::addressof(' . $target . '), ' . $snapshot . ');';
 	}
 
 	/** Emit inner writes first and return their stored value to the enclosing assignment. */
@@ -590,8 +603,7 @@ final class CPP_Generator
 					return $result;
 				}
 			}
-			$statements .= "\t" . $name . ' = '
-				. CPP_Declarations::conversion($source->value, $property_write->conversion, $context) . ";\n";
+			$statements .= "\t" . self::property_store($name, $source->value, $property_write, $context) . "\n";
 		}
 		else {
 			$binding = $syntax->require_assignment_preparation()->binding;

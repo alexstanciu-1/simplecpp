@@ -20,6 +20,10 @@ final class Compiler_Call_Preparation
 		Storage $arguments /** Storage<expression_node> */, preparation_context $context): prepared_call
 	{
 		$operation = $definition->kind();
+		if (($operation === compiler_function_kind::layout_sizeof) || ($operation === compiler_function_kind::layout_alignof)
+			|| ($operation === compiler_function_kind::layout_offsetof) || ($operation === compiler_function_kind::layout_field_sizeof)) {
+			return Layout_Query_Preparation::prepare($definition, $arguments, $context);
+		}
 		$from_value = $operation === compiler_function_kind::enum_from_value;
 		$source_index = $from_value ? 1 : 0;
 		if ($arguments->count() !== $source_index + 1) {

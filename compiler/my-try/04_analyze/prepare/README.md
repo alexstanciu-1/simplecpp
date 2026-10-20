@@ -47,6 +47,7 @@ become inherited lookup caches.
 | `lookup.php` | Analysis-owned observed lexical lookup across independent type/function/constant pools |
 | `file.php` | Standalone file-entry adapter |
 | `semantics/declarations.php` | Function signatures, parameters, records and fields |
+| `semantics/unions.php` | Restricted union shape and recursive payload eligibility through observed completed records |
 | `semantics/type_contracts.php` | Post-layout abstract obligations, exact overrides, finality and local virtual-dispatch facts |
 | `semantics/constructors.php` | Public constructor contracts, property-backed parameters, receivers and shared named construction inputs |
 | `semantics/methods.php` | Shared instance context, ordinary method admission/selection, visibility and receiver lifetime decisions |
@@ -58,6 +59,7 @@ become inherited lookup caches.
 | `semantics/expressions.php` | Expression dispatch, variable/member access and lexical call selection |
 | `semantics/calls.php` | Common selected-call signature completion and argument admission |
 | `semantics/compiler_calls.php`, `data/compiler_calls.php` | Argument-selected compiler-call signatures and immutable specialization facts |
+| `semantics/layout_queries.php` | Compile-time type/field arguments for the four layout observations; ordinary lexical lookup and no runtime arguments |
 | `semantics/ownership_observation.php` | Exact-payload weak derivation and explicit strong acquisition |
 | `semantics/initialization.php` | Shared initialization-interface selection/substitution and factory/input validation; model query only, not literal execution |
 | `semantics/data_construction.php` | Contextual targets, homogeneous sequence bindings and heterogeneous source-record contracts; ordered input conversions and omission checks |

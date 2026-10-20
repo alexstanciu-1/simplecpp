@@ -129,7 +129,8 @@ final class CPP_Types
 				throw new \LogicException('C++ representation is not implemented for this source type declaration');
 			}
 			$result->spelling = CPP_Generator::source_name('record', $entry->qualified_name());
-			if ($requirement === cpp_type_requirement::complete) {
+			if (($requirement === cpp_type_requirement::complete)
+				|| ($entry->syntax()->declaration_kind === type_declaration_kind::union_type)) {
 				self::add_header($result, CPP_Artifacts::type_header($entry->qualified_name()));
 			}
 			else {
