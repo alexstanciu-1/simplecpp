@@ -376,3 +376,20 @@ original destination receives a string payload, including when it was previously
 empty or a sentinel. Failed conversion/computation causes no compound write-back;
 earlier source effects remain. Indexed and wider payload capabilities must be
 verified through their existing owners and are not implied by these signatures.
+
+
+## Canonical scalar float strict identity — 2026-10-20
+
+Plain canonical float operands admit `===` and `!==`, returning bool under the
+same numeric identity rule already used for successful float carrier payloads.
+Equal finite values and matching infinities are identical; positive and negative
+zero are identical. NaN is non-identical to every value, including itself, without
+throwing. `!==` negates `===`. This is value identity, not floating bit-pattern
+identity; observing identity does not change either operand's representation.
+
+Evaluate and snapshot the complete left value, then the right value, before
+comparison. A source exception stops subsequent evaluation; unequal values do not.
+RHS writes cannot change the saved left operand. No numeric promotion is introduced:
+int/float strict identity still preserves their distinct scalar kinds. The throwing
+NaN rule for spaceship is a separate operation contract. Fixed-width, boxed and
+other payload capabilities are not expanded by this amendment.

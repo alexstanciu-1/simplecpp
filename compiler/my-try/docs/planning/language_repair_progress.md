@@ -1,52 +1,46 @@
 # Overall discovered-issue repair progress
 Doc Status: supporting
 
-Snapshot: 2026-10-20, after E4 mixed-numeric cross-family ordinary equality. This covers all 64
-entries in [the issue ledger](language_verification_issues.json), including deferred
-legacy syntax and policy/design issues. It does not count just operators or count
-individual operator signatures as separate closed issues.
+Snapshot: 2026-10-20, after [V-L07 bounded completion](vl07_completion.md) and
+[V-L06 / S04 closeout](float_identity.md). This covers all 64 original entries in
+[the issue ledger](language_verification_issues.json), including deferred legacy
+syntax and policy/design issues. Operator signatures are not separate closed issues.
 
 | Status | Issues |
 | --- | ---: |
-| Implemented and verified | 19 |
-| Partially implemented and verified | 1 (V-L07) |
-| Not yet repaired | 44 |
+| Implemented or already repaired, then verified | 22 |
+| Partially implemented and verified | 0 |
+| Not yet closed | 42 |
 | Total | 64 |
 
-Fully closed: **19/64 = 29.7%**. A rounded progress estimate allowing for substantial
-partial V-L07 work is **about 30% by issue count**. This is not an estimate of
-engineering effort completed: the remaining design/runtime/project issues can be
-much larger than the completed fixture repairs. There is no defensible weighted
-effort percentage yet.
+Fully closed: **22/64 = 34.375%** (about **34.4% by issue count**). This is not an
+engineering-effort estimate. Remaining architecture/runtime/project issues can be
+much larger than fixture repairs. There is no defensible weighted effort percentage.
 
-| Original handling class | Fully closed | Partial | Not repaired | Total |
+| Original handling class | Fully closed | Partial | Not closed | Total |
 | --- | ---: | ---: | ---: | ---: |
 | Simple fix | 13 | 0 | 0 | 13 |
-| Light discussion | 5 | 0 | 12 | 17 |
-| Normal discussion | 1 | 1 | 32 | 34 |
+| Light discussion | 6 | 0 | 11 | 17 |
+| Normal discussion | 3 | 0 | 31 | 34 |
 
-V-L07 now has verified guarded canonical-int, float, mixed-numeric, bool logical and
-string ordering slices, including boolean-sentinel Result support and all 660
-approved cross-family signatures, 24 guarded-bool XOR signatures and 48 guarded
-canonical-int/string spaceship signatures, plus 100 plain/guarded numeric XOR
-signatures and 48 nullable, 48 structured-error Result and 24 sentinel-family bool and 72 non-bool sentinel equality/identity signatures. Carrier updates add 32 unary signatures. V-L07 is still
-one partially repaired issue.
-Cross-family and mixed ordinary equality semantics, remaining compounds and
-additional payload/operator domains remain separate. V-R10's
-runtime mutation gap is repaired and verified separately by its original native test.
+V-L06 now admits the final two scalar float identity forms and re-verifies its
+original carrier cases. S04's unchanged original process fixture passes through
+existing repairs. These closures do not add to the V-L07 carrier-signature count.
+V-R10's runtime mutation prerequisite remains separately repaired and verified.
 
-The denominator includes explicitly deferred scope; “not repaired” does not mean
-all 44 are accidental regressions or authorized implementation tasks. The issue
-ledger's disposition, contract and next-action fields retain those distinctions.
-Original verification findings and historical evidence are preserved.
-
+“Not closed” does not mean every remaining entry is an accidental regression or an
+authorized implementation task. Some entries still require policy decisions or
+reconciliation against later work. Original findings and historical evidence remain
+in the ledger. This current summary supersedes its previous E4-era partial-V-L07
+status; the dated reports retain those historical counts.
 
 ## Inside V-L07
 
-**33 approved slices completed: 2,712 binary, 64 unary and 432 compound
-signatures (3,208 total).** E4 adds 48 mixed-numeric cross-family ordinary-equality signatures. There are no new scalar prerequisites.
-Aliases count as separate source spellings; the four plain numeric-XOR signatures
-are prerequisites and excluded from this V-L07 total.
+**37 approved slices complete: 2,832 binary, 64 unary and 480 compound signatures
+(3,376 supported carriers).** All canonical candidates have an agreed disposition:
+576 intentional heterogeneous-equality/narrowing rejections, 17 verified existing
+paths and 112 separately observed presence-path rejections. Aliases are distinct
+source spellings; scalar prerequisites are excluded from carrier totals.
 
 | Implemented domain | Binary | Unary | Compound |
 | --- | ---: | ---: | ---: |
@@ -82,12 +76,19 @@ are prerequisites and excluded from this V-L07 total.
 | Mixed numeric sentinel ordinary equality | 24 | 0 | 0 |
 | Matching non-bool cross-family ordinary equality | 72 | 0 | 0 |
 | Mixed-numeric cross-family ordinary equality | 48 | 0 | 0 |
-| Total | 2,712 | 64 | 432 |
+| Cross-family matching-bool ordinary equality | 24 | 0 | 0 |
+| Float/mixed spaceship | 72 | 0 | 0 |
+| Canonical-int power compounds | 0 | 0 | 24 |
+| String-carrier concatenation and assignment | 24 | 0 | 24 |
+| Total | 2,832 | 64 | 480 |
 
-Remaining work includes cross-family bool and other heterogeneous ordinary equality semantics, remaining compounds, and other payload/operator domains. The [remaining-signature inventory](vl07_inventory/README.md) now enumerates the
-canonical scalar universe: **zero remaining support targets** and **744 design/scope
-candidates**, with exclusions and wider domains kept explicit. The original proposed core remains
-**2,080/2,080 signatures (100%)**, with 1,128 additional approved O1/C2/E3I/E4I/E5BNI/E5SI/E4NR/E4S/E3NB/E4 signatures. This completes the bounded support inventory, not
-all V-L07: design candidates and wider-domain boundaries still need disposition.
-Signature counts measure verified coverage, not engineering effort. The overall 29.7% figure above measures
-closed issues across the entire ledger, not progress within V-L07.
+
+The original proposed core remains **2,080/2,080 (100%)**. The agreed canonical
+scope is complete; **1,296** supported carrier signatures were added beyond that
+original core. See the [inventory](vl07_inventory/README.md) for exact dispositions.
+
+V-L07's W1-W4 follow-ups remain explicit: indexed unary/numeric compound updates,
+other null-comparison policy and wider fixed-width/nested/object/container/boxed/table/
+selector domains. The 10,767 wider grid cells are not silently counted as tested
+rejections or permanent language exclusions. Closing the finite issue scope does
+not close those broader language capabilities.

@@ -215,3 +215,13 @@ python3 -B compiler/my-try/tests/legacy_compatibility.py --manifest compiler/my-
 Add `--filter PATH_SUBSTRING` for a focused replay. Do not add `--all`: that option
 expands discovery back to both profiles. Result meanings and toolchain prerequisites
 remain in the [runner guide](v0_1_compatibility_testing.md).
+
+
+## S04 resolved — 2026-10-20
+
+The [V-L06/S04 replay](float_identity.md) compiles and executes
+`strict_process_001_shell_exec_contract.phs` unchanged, with exact expected stdout.
+The fixture is byte-identical to pinned v0.1; deterministic false-sentinel/string
+identity controls also pass. Earlier V-L07 admission work resolves this original
+S04 blocker. No process/runtime/output implementation change was needed. The table
+and original failure evidence above remain the dated strict-04 classification.

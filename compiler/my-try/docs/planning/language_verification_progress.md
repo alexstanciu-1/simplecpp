@@ -2917,3 +2917,19 @@ Evidence retains initial runtime/fixture failures and all repairs. Final accepta
 covers 44 suites and 4,115 expected command exits on dev002; the generated runtime
 header is reproducible apart from its existing timestamp. See [exact results](vl07_completion_results.json)
 and [the reconciled inventory](vl07_inventory/README.md).
+
+
+## V-L06 and S04 closeout — 2026-10-20
+
+[The focused proof](float_identity.md) adds `float === float` and `float !== float`
+through existing identity preparation. Runtime support passes unchanged; signed
+zeros compare identical and NaNs non-identical without throwing. Ordered snapshots,
+source failures and retained recovery pass. All twelve original carrier cells and
+the unchanged pinned-v0.1 S04 process fixture pass, including deterministic sentinel
+controls. No newly exposed implementation blocker remains.
+
+V-L06 and S04 close; original issue closure is **22/64 (34.375%)**. V-L07's total
+stays 3,376 carrier signatures: these two new forms are scalar. Thirteen accepted
+suites account for 895 expected command exits on dev002. Runtime files remain
+unchanged; no full matrix or native compiler rebuild ran. Failed fixture attempts
+and historical findings are preserved in [the evidence](float_identity_results.json).

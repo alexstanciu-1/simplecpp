@@ -29,7 +29,10 @@ final class Scalar_Identity
 		}
 		$same_string = String_Conversions::is_string($operands[0]) && String_Conversions::is_string($operands[1]);
 		$same_bool = $operands[0]->matches($context->boolean) && $operands[1]->matches($context->boolean);
-		if (!$same_string && !$same_bool && !self::is_distinct_kind_pair($operands[0], $operands[1], $context)) {
+		$floating = Language_Types::floating(Model::$language_scope);
+		$same_float = $operands[0]->matches($floating) && $operands[1]->matches($floating);
+		if (!$same_string && !$same_bool && !$same_float
+			&& !self::is_distinct_kind_pair($operands[0], $operands[1], $context)) {
 			return null;
 		}
 		$decision = new operator_decision();

@@ -6,6 +6,21 @@ and C++ S2S slice for [catalog chapter 02](catalog/02_expressions.md). Root lang
 and runtime specifications remain authoritative. Imported legacy examples do not
 activate additional operand types or coercions.
 
+## Scalar float identity and original equality reconciliation — 2026-10-20
+
+[V-L06 / S04](planning/float_identity.md) now closes the two remaining plain
+`float === float` / `float !== float` forms. `Scalar_Identity` uses the existing
+identity decisions, identity operand conversions and ordered value snapshots.
+Signed zeros are identical; NaN is non-identical without throwing; no numeric
+promotion occurs. The existing runtime passes unchanged. The throwing NaN
+spaceship contract remains distinct.
+
+The original twelve V-L06 carrier equality/identity cells and unchanged strict
+S04 `shell_exec` fixture pass on dev002. These are reconciled existing support;
+V-L07's carrier total stays 3,376. Fixed-width identity and other providers/text
+conversions are not broadened. Historical scalar-float rejection expectations are
+superseded by this proof.
+
 ## Canonical-carrier completion — 2026-10-20
 
 The [V-L07 completion proof](planning/vl07_completion.md) settles the remaining

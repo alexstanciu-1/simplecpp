@@ -83,7 +83,7 @@ if ($sentinel_carrier) {
 	else { $program.='function zeropayload(): '.$wrapped.' { return '.$initial.'; } '; }
 	if ($carrier==='result_or_bool') { $program.='function explicittruesentinel(): '.$wrapped.' { return true_sentinel; } '; }
 }
-if ($payload==='float') { foreach (['===','!=='] as $symbol) { guarded_cross_reject('function bad(float $a, float $b): bool { return $a '.$symbol.' $b; }'); ++$negative_count; } }
+// Scalar float identity is covered by float_identity.py; it is no longer an exclusion.
 if ($carrier==='nullable') { $program.='function nullid(?'.$payload.' $a): bool { return $a === null; } function nullnid(?'.$payload.' $a): bool { return null !== $a; } ';
 }
 $guard=$payload==='bool'?'!$a':('$a < '.$second);

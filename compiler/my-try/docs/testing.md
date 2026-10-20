@@ -1458,3 +1458,23 @@ All use the shared runner with 12 slots and native fixture compilation. The
 [completion report](planning/vl07_completion.md) and evidence distinguish failed
 attempts, corrected fixtures and accepted suites. This is not a full matrix run or
 a native rebuild of the compiler itself.
+
+
+## V-L06 scalar float identity and S04 — 2026-10-20
+
+On dev002, run `tests/float_identity.py --runtime-only --results <fresh-dir>` for
+the unchanged runtime prerequisite; omit `--runtime-only` to include both source
+forms with snapshots, source exceptions and retained recovery. The fixture reuses
+the independent carrier-identity oracle for plain float values, preserving float
+bits while comparing numeric identity.
+
+`tests/carrier_equality_reconciliation.py --results <fresh-dir>` replays the twelve
+original homogeneous nullable/int, Result/int and falseable/int equality/identity
+cells. `tests/falseable_process_identity.py --results <fresh-dir>` compiles and runs
+the unchanged strict S04 fixture with its exact metadata output, plus deterministic
+false-sentinel/string controls in both comparison orders. It copies source bytes
+without migration into an isolated compiler input directory.
+
+See [the report](planning/float_identity.md) for failed fixture attempts, corrected
+regressions and proof bounds. No runtime changes, native compiler rebuild or full
+matrix run were needed.
