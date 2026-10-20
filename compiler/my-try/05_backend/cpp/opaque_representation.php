@@ -21,7 +21,7 @@ final class CPP_Opaque_Representation
 	{
 		$canonical = Type_Queries::canonical($type);
 		if ($canonical->definition() instanceof callable_type_definition) {
-			throw new \RuntimeException('Opaque runtime callable storage needs callback ABI transport');
+			throw new \RuntimeException('prelower_templates: callable storage requires a concrete callback transport');
 		}
 		if ($canonical instanceof applied_template_type) {
 			foreach (object_cast($canonical, applied_template_type::class)->arguments() as $argument) {

@@ -22,6 +22,14 @@ for runtime contracts, public-path consolidation and acceptance. The
 is non-blocking and tentatively v0.3: it distinguishes prepared facts/native
 operations from dynamic runtime support without authorizing further optimization.
 
+The [strict contract decision](../../../../specs/planning/cpp_template_prelowering_decision_2026_10_19.md#agreed-solidification-contract--2026-10-20)
+requires explicit rejection rather than template fallback. The first enforcement
+slice rejects structural callable storage in concrete application representations
+through the existing representation check; ordinary callable emission is unchanged.
+See the [bounded proof](../../../../specs/planning/results/prelower_callable_boundary_2026_10_20/README.md).
+Other closure checks and the CLI/API migration remain pending; current mode selectors
+below still describe the implementation, not the completed strict guarantee.
+
 ## Runtime-owned native representation recipes
 
 `cpp_types` now describes both ordinary runtime definitions and representations of

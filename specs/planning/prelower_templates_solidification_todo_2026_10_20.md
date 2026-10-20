@@ -22,6 +22,19 @@ AST, a new semantic stage, a parallel registry or family-specific engine branche
 Use existing owners; enrich prepared facts only when genuinely missing. Any newly
 required wide cross-owner redesign must be discussed before implementation.
 
+## Accepted architecture — 2026-10-20
+
+The user approved one concrete-substitution path for CLI/API; a strict template-free
+application guarantee with explicit failure and no silent fallback; existing metadata
+for provider variation and shared adapters for fixed physical protocols; and support
+checks by representation plus operation contract at the earliest informed owner.
+Shared semantic preparation stays backend-independent. See the
+[decision](cpp_template_prelowering_decision_2026_10_19.md#agreed-solidification-contract--2026-10-20).
+First bounded slice: close the confirmed structural-callable template escape in the
+existing representation owner, with ordinary-mode, explicit-rejection and recovery
+proofs. Public option migration follows contract enforcement; this slice does not
+claim complete closure validation or broaden runtime coverage.
+
 ## Evidence and audit baseline
 
 - [Accounting acceptance](results/prelower_template_free_accounting_2026_10_19/README.md):
@@ -82,6 +95,11 @@ Owners: runtime catalog installation, backend binding/admission checks, diagnost
   runtime-call reference results, variadics and observation/default-input restrictions;
   callable transport; boxed write-back/provider composition; unsupported generated
   header/layout cycles. Separate real remaining gaps from historical stale claims.
+- [x] Close the structural-callable escape in concrete representation emission.
+  Local/signature/field callables now reuse the existing unsupported-transport check;
+  nested callable storage uses the same diagnostic. Five ordinary/rejection/recovery/
+  replay cases pass. This closes one known escape, not the complete contract gate.
+  See [slice evidence](results/prelower_callable_boundary_2026_10_20/README.md).
 - [ ] For the supported opt-in mode, report unsupported representations/operations
   explicitly. Do not silently fall back to template-bearing application interfaces.
   Choosing ordinary compilation remains an explicit caller decision.

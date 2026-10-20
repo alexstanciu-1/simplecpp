@@ -25,6 +25,32 @@ Small `if (prelower_templates)` branches are acceptable. Each branch delegates t
 named method unless its implementation is only one or two lines. No prerequisite
 emitter refactor or new common abstraction is required to start.
 
+## Agreed solidification contract — 2026-10-20
+
+1. Concrete substitution becomes the one supported meaning of `prelower_templates`
+   in CLI and API. Ordinary compilation remains explicitly selectable. Retire older
+   recipe/ABI paths after preserving useful coverage and validating replacement.
+2. The supported prelowering mode guarantees template-free application interfaces
+   and transitive input. Runtime/middleware implementations may contain templates.
+   Unsupported usage must fail explicitly: no silent fallback or automatic retry in
+   ordinary mode. Complete closure validation is required; metadata alone cannot
+   prove arbitrary provider headers template-free.
+3. Existing runtime metadata owns semantic capabilities and provider-specific bindings;
+   fixed physical protocols belong to shared adapters. Preparation selects semantics;
+   the backend consumes settled facts; the engine coordinates requests/artifacts;
+   runtime implementations own dynamic algorithms. No parallel registry or new AST.
+4. Support is assessed by representation and operation contract, not registration or
+   family name alone. Reject unsupported transport at the earliest owner with enough
+   information, without introducing backend-specific rules into shared semantics.
+
+Implement this contract in bounded slices under the
+[solidification TODO](prelower_templates_solidification_todo_2026_10_20.md).
+It is the agreed target, not a claim that all current paths enforce it already.
+First close known fallback escapes, then migrate public configuration; do not expose
+an incomplete mode as a universal guarantee. Accounting and existing focused proofs
+are the initial acceptance boundary. Full runtime coverage and optimization remain
+deferred. Preserve current bounded names while tracking broader naming debt.
+
 ## Capability-driven refinement — 2026-10-19
 
 The generalization target is a runtime-owned, capability-driven contract consumed

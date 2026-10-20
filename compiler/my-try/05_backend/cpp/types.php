@@ -135,6 +135,10 @@ final class CPP_Types
 		}
 		$result = new cpp_type();
 		if ($definition instanceof callable_type_definition) {
+			// Native callable spelling must not bypass the concrete storage contract.
+			if ($context !== null) {
+				if ($context->concrete_types()) { CPP_Opaque_Representation::require_native_type($type_use); }
+			}
 			$signature = object_cast($definition, callable_type_definition::class)->signature();
 			$return_mapping = self::return_representation($signature, cpp_type_requirement::complete, $context);
 			self::merge_headers($result, $return_mapping);

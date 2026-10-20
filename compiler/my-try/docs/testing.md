@@ -1,6 +1,13 @@
 # Test runners
 Doc Status: supporting
 
+`python3 compiler/my-try/tests/prelower_contracts.py --results FRESH_DIRECTORY`
+checks concrete callable rejection for locals, parameters, results, fields and nested
+containers. It verifies ordinary emission, no partial in-memory output on rejection,
+mode-switch recovery, source repair and replay through the existing shared runner.
+This is a PHP-host backend contract proof, not a native compiler rebuild or complete
+application closure audit.
+
 `python3 compiler/my-try/tests/prelower_header_boundaries.py --results FRESH_DIRECTORY`
 reuses the output, indexing and compound fixtures at O0 only. It checks native scalar
 output bridge demand, broad indexing-header exclusion, direct/concrete behavior and
