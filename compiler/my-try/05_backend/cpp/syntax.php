@@ -420,6 +420,7 @@ final class CPP_Syntax
 			$text .= 'if (' . $checks . ') { return ' . $result . '; } ';
 		}
 		if ($fallback === '') {
+			$this->require_native_operation('match failure operation');
 			$this->context->headers['stdexcept'] = true;
 			$fallback = 'throw std::runtime_error("Unhandled match expression"); ';
 		}
@@ -530,6 +531,7 @@ final class CPP_Syntax
 	/** Snapshot the source before any output write, then delegate branch behavior to the runtime. */
 	public function generate_take_expression(take_expression_node $node): string
 	{
+		$this->require_native_operation('take operation');
 		$node->require_take_preparation();
 		$this->context->headers['lang/php/support/php_take.hpp'] = true;
 		$source = $this->expression($node->source);

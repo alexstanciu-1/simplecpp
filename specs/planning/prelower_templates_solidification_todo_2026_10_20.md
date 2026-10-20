@@ -110,6 +110,14 @@ Owners: runtime catalog installation, backend binding/admission checks, diagnost
   boundary cases now also prove on-disk non-readiness on failure and exact manifest
   recovery using a fresh publication worker for each attempt; see
   [evidence](results/prelower_exception_boundaries_2026_10_20/README.md).
+- [x] Reject native `take` transport and the runtime failure fallback for match
+  expressions without a default. Explicit-default match remains admitted and is
+  exercised in every repair/replay case. Fourteen boundary cases pass with disk
+  readiness/recovery; see [evidence](results/prelower_value_boundaries_2026_10_20/README.md).
+- [ ] Finish the remaining native-interface audit, including runtime-backed condition
+  truthiness/value probes, boxed extraction, null output and enum compiler helpers.
+  These are inspection targets, not a claim that every use is unsupported; determine
+  which existing adapters already cover them before adding checks or transport.
 - [ ] For the supported opt-in mode, report unsupported representations/operations
   explicitly. Do not silently fall back to template-bearing application interfaces.
   Choosing ordinary compilation remains an explicit caller decision.

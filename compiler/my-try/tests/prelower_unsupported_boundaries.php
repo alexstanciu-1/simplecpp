@@ -29,6 +29,8 @@ $cases['lock_weak'] = ['class C {} $w weak<C>; $c = lock($w); return 0;', '.lock
 $cases['throw'] = ['$e Exception; throw $e;', '::scpp::php::make_thrown(', 'throw operation requires concrete transport'];
 $cases['catch'] = ['try { return 0; } catch (Exception $e) { return 1; }', '::scpp::php::catch_as<', 'catch operation requires concrete transport'];
 $cases['finally'] = ['try { return 0; } finally {}', 'std::optional<', 'finally operation requires concrete transport'];
+$cases['take'] = ['$r ?int; $v = 0; $ok bool = take($v) = $r; return 0;', 'scpp::php::take(', 'take operation requires concrete transport'];
+$cases['match_failure'] = ['return match (3) { 1 => 7, 2 => 8 };', 'throw std::runtime_error("Unhandled match expression")', 'match failure operation requires concrete transport'];
 foreach ($cases as $name => [$source, $native_spelling, $diagnostic]) {
 	Compiler_Lifecycle::reset();
 	file_put_contents($path, $source);
@@ -73,7 +75,7 @@ foreach ($cases as $name => [$source, $native_spelling, $diagnostic]) {
 	if (Output_Publication::require_ready($output) !== $ordinary_manifest) {
 		throw new \LogicException('Ordinary recovery changed manifest: ' . $name);
 	}
-	file_put_contents($path, '$items vector<int> = []; return 0;');
+	file_put_contents($path, '$items vector<int> = []; return match (1) { 1 => 0, default => 1 };');
 	$compiler->cpp_lowering->prelower_templates = true;
 	$emit(true);
 	$repaired = $snapshot();
