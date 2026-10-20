@@ -47,6 +47,14 @@
     {"id": "core.hash", "symbol": "scpp::hash_t", "header": "scpp/hash_t.hpp"}
   ],
   "functions": [
+    {"id":"core.vector_reserve.2","name":"vector_reserve","type_parameters":["T"],"parameters":[{"name":"values","type":{"name":"vector","arguments":[{"parameter":"T"}]},"passing":"reference"},{"name":"capacity","type":"int","passing":"value"}],"returns":"void"},
+    {"id":"core.vector_capacity.1","name":"vector_capacity","type_parameters":["T"],"parameters":[{"name":"values","type":{"name":"vector","arguments":[{"parameter":"T"}]},"passing":"observe"}],"returns":"int"},
+    {"id":"core.vector_resize.3","name":"vector_resize","type_parameters":["T"],"parameters":[{"name":"values","type":{"name":"vector","arguments":[{"parameter":"T"}]},"passing":"reference"},{"name":"count","type":"int","passing":"value"},{"name":"default_value","type":{"parameter":"T"},"passing":"value","requires_copy":true}],"returns":"void"},
+    {"id":"core.vector_filled.2","name":"vector_filled","type_parameters":["T"],"parameters":[{"name":"count","type":"int","passing":"value"},{"name":"default_value","type":{"parameter":"T"},"passing":"value","requires_copy":true}],"returns":{"name":"vector","arguments":[{"parameter":"T"}]}},
+    {"id":"core.vector_clear.1","name":"vector_clear","type_parameters":["T"],"parameters":[{"name":"values","type":{"name":"vector","arguments":[{"parameter":"T"}]},"passing":"reference"}],"returns":"void"},
+    {"id":"core.vector_clear_keep_capacity.1","name":"vector_clear_keep_capacity","type_parameters":["T"],"parameters":[{"name":"values","type":{"name":"vector","arguments":[{"parameter":"T"}]},"passing":"reference"}],"returns":"void"},
+    {"id":"core.vector_compact.1","name":"vector_compact","type_parameters":["T"],"parameters":[{"name":"values","type":{"name":"vector","arguments":[{"parameter":"T"}]},"passing":"reference"}],"returns":"void"},
+    {"id":"core.vector_compact.2","name":"vector_compact","type_parameters":["T"],"parameters":[{"name":"values","type":{"name":"vector","arguments":[{"parameter":"T"}]},"passing":"reference"},{"name":"capacity","type":"int","passing":"value"}],"returns":"void"},
     {"id":"core.Exception.make","name":"make","member":{"owner":"Exception","dispatch":"static"},"parameters":[{"name":"message","type":"string","passing":"value"}],"returns":"Exception"},
     {"id":"core.Exception.get_message","name":"get_message","member":{"owner":"Exception","dispatch":"instance"},"parameters":[],"returns":"string"},
     {"id":"core.error.make","name":"make","member":{"owner":"error","dispatch":"static"},"parameters":[{"name":"message","type":"string","passing":"value"},{"name":"line","type":"int","passing":"value","default":{"int":0}},{"name":"file","type":"string","passing":"value","default":{"string":""}}],"returns":"error"},
@@ -105,6 +113,14 @@
     }
   ],
   "cpp": [
+    {"id":"core.vector_reserve.2","symbol":"scpp::php::vector_reserve","header":"scpp/lang/php.hpp"},
+    {"id":"core.vector_capacity.1","symbol":"scpp::php::vector_capacity","header":"scpp/lang/php.hpp"},
+    {"id":"core.vector_resize.3","symbol":"scpp::php::vector_resize","header":"scpp/lang/php.hpp"},
+    {"id":"core.vector_filled.2","symbol":"scpp::php::vector_filled","header":"scpp/lang/php.hpp"},
+    {"id":"core.vector_clear.1","symbol":"scpp::php::vector_clear","header":"scpp/lang/php.hpp"},
+    {"id":"core.vector_clear_keep_capacity.1","symbol":"scpp::php::vector_clear_keep_capacity","header":"scpp/lang/php.hpp"},
+    {"id":"core.vector_compact.1","symbol":"scpp::php::vector_compact","header":"scpp/lang/php.hpp"},
+    {"id":"core.vector_compact.2","symbol":"scpp::php::vector_compact","header":"scpp/lang/php.hpp"},
     {"id":"core.Exception.make","symbol":"scpp::Exception::make","header":"lang/php/php_exceptions.hpp"},
     {"id":"core.Exception.get_message","symbol":"message_string","header":"lang/php/php_exceptions.hpp"},
     {"id":"core.error.make","symbol":"scpp::error_t::make","header":"scpp/error_t.hpp"},
