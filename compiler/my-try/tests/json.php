@@ -41,7 +41,7 @@ json_check($body->statements[0]->initializer->preparation() === null, 'Runtime c
 foreach ([
 	'json_decode();', 'json_decode("null", true);', 'json_encode(1);', 'json_encode({n: 1});',
 	'$m mixed = json_decode("{}");', '$d dynamic = json_decode_mixed("{}");',
-	'$r = json_encode(json_decode("{}"));', 'json_encode(vector<int>::[1]);',
+	'json_encode(vector<int>::[1]);',
 ] as $source)
 {
 	$failed = false;

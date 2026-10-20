@@ -99,7 +99,7 @@ foreach (['strpos','strrpos'] as $name)
 	}
 }
 
-// Isolate the newly exposed downstream call boundary without changing the fixture.
+// Preserve the downstream call boundary now closed by checked-payload selection.
 $boundary = '$p=strpos("varchar(32)","(");if($p!==false)echo substr("varchar(32)",0,$p);';
 $boundary_error = '';
 try {
@@ -108,7 +108,8 @@ try {
 catch (\RuntimeException $e) {
 	$boundary_error = $e->getMessage();
 }
-search_check(str_contains($boundary_error, 'exact signature'), 'Downstream boundary changed');
+search_check($boundary_error === '', 'Checked-payload downstream call failed');
+search_check($originals['004_strpos_false_branch_regression']['compiled'], 'Original false-branch fixture failed');
 
 $dir = sys_get_temp_dir() . '/scpp_search_' . bin2hex(random_bytes(6));
 mkdir($dir);

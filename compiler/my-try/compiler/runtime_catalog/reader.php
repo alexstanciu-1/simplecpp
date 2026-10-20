@@ -457,8 +457,8 @@ final class Runtime_Catalog_Reader
 				$reader->begin_array();
 				while ($reader->next_element()) {
 					$parameter = self::parameter($reader);
-					if (($parameter->default_value !== null) || ($parameter->mode === passing_mode::observation)) {
-						$reader->reject('Callable type inputs do not support defaults or observation');
+					if (($parameter->default_value !== null) || ($parameter->mode === passing_mode::observation) || $parameter->requires_copy) {
+						$reader->reject('Callable type inputs do not support defaults, observation or provider copy requirements');
 					}
 					$inputs->append($parameter);
 				}
@@ -488,6 +488,7 @@ final class Runtime_Catalog_Reader
 				$typed = true;
 			}
 			elseif ($key === 'default') { $result->default_value = self::default_spec($reader); }
+			elseif ($key === 'requires_copy') { $result->requires_copy = $reader->read_boolean(); }
 			elseif ($key === 'variadic') { $result->variadic = $reader->read_boolean(); }
 			elseif ($key === 'passing')
 			{
@@ -514,6 +515,9 @@ final class Runtime_Catalog_Reader
 		}
 		if (($result->name === '') || !$typed || !$passing) {
 			$reader->reject('Missing runtime parameter field');
+		}
+		if ($result->requires_copy && (($result->mode !== passing_mode::value) || $result->variadic)) {
+			$reader->reject('Runtime copy requirements need fixed value parameters');
 		}
 		return $result;
 	}

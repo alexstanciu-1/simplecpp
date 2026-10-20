@@ -126,6 +126,7 @@ final class Callable_Contracts
 		foreach ($inputs as $index => $input) {
 			$required_input = $expected[$index];
 			if (($input->default_value !== null) || ($required_input->default_value !== null)) { return false; }
+			if ($input->requires_copy !== $required_input->requires_copy) { return false; }
 			if (!$input->type->matches($required_input->type) || ($input->mode !== $required_input->mode)
 				|| ($input->access !== $required_input->access)) { return false; }
 			if (($input->element_type === null) !== ($required_input->element_type === null)) { return false; }
@@ -144,6 +145,9 @@ final class Callable_Contracts
 		$variadic_seen = false;
 		$parameters /** Storage<callable_parameter> */ = $signature->parameters;
 		foreach ($parameters as $parameter) {
+			if ($parameter->requires_copy && (($parameter->mode !== passing_mode::value) || ($parameter->element_type !== null))) {
+				throw new \RuntimeException('Runtime copy requirements need fixed value parameters');
+			}
 			if ($parameter->mode === passing_mode::observation)
 			{
 				if ((q_count($parameters) !== 1) || ($parameter->access !== storage_access::read_only)

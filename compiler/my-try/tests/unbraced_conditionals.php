@@ -11,7 +11,7 @@ if(($argv[2]??'')==='--baseline'){
  unbraced_check(str_contains($probe,"Expected '{'"),'Baseline did not reproduce S06');
  file_put_contents($argv[1].'/baseline.json',json_encode(['original'=>$original_result,'minimal_diagnostic'=>$probe],JSON_PRETTY_PRINT)."\n");exit(0);
 }
-unbraced_check(str_contains($diagnostic,'exact signature'),'Original fixture did not advance to the separately owned S09-B1 call-boundary blocker');
+unbraced_check($diagnostic === '', 'Original fixture failed after S09-B1 closure');
 $cases=[
  'true'=>['if(true) return 7; return 3;',7],
  'false'=>['if(false) return 7; return 3;',3],
