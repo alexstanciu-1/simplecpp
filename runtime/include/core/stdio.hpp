@@ -7,13 +7,13 @@
 #include "scpp/string_t.hpp"
 #include "core/resource.hpp"
 
-#include <array>
+#include <cstdint>
+#include <limits>
 #include <cstdio>
 #include <memory>
 #include <stdexcept>
 #include <string>
 #include <utility>
-#include <vector>
 
 namespace scpp {
 
@@ -81,36 +81,26 @@ struct file_open_mode_info final {
 	if (!file.readable) {
 		throw std::runtime_error("fgets(): file resource is not readable");
 	}
+	// A line is a byte string, not a NUL-terminated C string. Stdio still owns
+	// buffering; keep the width-minus-one fgets contract without narrowing to int.
+	std::uint64_t remaining = std::numeric_limits<std::uint64_t>::max();
 	if (length.has_value().native_value()) {
 		const auto requested = length.value().native_value();
 		if (requested <= 0) {
 			throw std::runtime_error("fgets(): length must be greater than 0");
 		}
-		std::vector<char> buffer(static_cast<std::size_t>(requested));
-		char *result = std::fgets(buffer.data(), static_cast<int>(buffer.size()), file.native_handle());
-		if (result == nullptr) {
-			return false_sentinel;
-		}
-		return string_t(std::string(result));
+		remaining = static_cast<std::uint64_t>(requested - 1);
 	}
-
 	std::string out;
-	std::array<char, 4096> buffer{};
-	while (true) {
-		char *result = std::fgets(buffer.data(), static_cast<int>(buffer.size()), file.native_handle());
-		if (result == nullptr) {
-			if (out.empty()) {
-				return false_sentinel;
-			}
+	while (remaining != 0) {
+		const int byte = std::fgetc(file.native_handle());
+		if (byte == EOF) {
+			if (out.empty()) { return false_sentinel; }
 			break;
 		}
-		out += result;
-		if (!out.empty() && out.back() == '\n') {
-			break;
-		}
-		if (std::feof(file.native_handle()) != 0) {
-			break;
-		}
+		out.push_back(static_cast<char>(byte));
+		--remaining;
+		if (byte == '\n') { break; }
 	}
 	return string_t(std::move(out));
 }

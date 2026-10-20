@@ -10,19 +10,19 @@ Doc Status: normative
 
 ## Signature
 - Supported forms:
-  - `fgets(resource $stream): nullable<string>`
-  - `fgets(resource $stream, int $length): nullable<string>`
+  - `fgets(resource $stream): result_or_false<string>`
+  - `fgets(resource $stream, int $length): result_or_false<string>`
 - Accepted argument types: nullable resource handle, optional int_t
 
 ## Behavior
 - Reads one line from an open readable file-stream resource.
-- Without `length`, repeatedly reads chunks until newline or EOF.
-- With `length`, reads up to the requested buffer width using stdio semantics.
-- EOF before any bytes are read returns `null`.
+- Without `length`, reads bytes until newline or EOF, preserving embedded NUL.
+- With positive `length`, reads at most `length - 1` bytes. Width one returns a present empty string without advancing.
+- EOF before any bytes are read returns the false sentinel.
 - A partial final line without trailing newline is still returned as a string.
 
 ## Compatibility table
-- PHP returns a line string or `false` â†’ Prism++ returns line string or `null` â†’ modified
+- PHP returns a line string or `false` â†’ Prism++ returns line string or `false` â†’ modified
 - PHP length handling is broader and warning-heavy â†’ Prism++ keeps a narrowed positive-length contract â†’ modified
 
 ## Error policy
@@ -31,7 +31,7 @@ Doc Status: normative
 - Null resource, wrong resource kind, and closed-resource use throw runtime errors.
 
 ## Runtime and wrapper split
-Runtime: validate readable file resource and use `std::fgets` in one-shot or chunked mode.
+Runtime: validate the readable file resource and accumulate bytes through buffered stdio reads.
 - Wrapper: expose PHP-visible name only.
 
 ## Configuration visibility
@@ -39,11 +39,11 @@ Runtime: validate readable file resource and use `std::fgets` in one-shot or chu
 - Filesystem wrappers are available when the dedicated filesystem/stdio module is included by project policy.
 
 ## Compile plan summary
-Implemented in `runtime/include/scpp/support/php_stdio.hpp`.
+Implemented in `runtime/include/core/stdio.hpp`; strict source exposure follows [strict IO](strict_io.md).
 - Registered in `generators/php/specs/php_runtime_symbols_legacy.json`.
 
 ## Test matrix
 - line with newline
 - line without newline at EOF
 - length-limited read
-- EOF before reading returns null
+- EOF before reading returns false
