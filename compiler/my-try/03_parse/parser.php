@@ -832,18 +832,35 @@ final class Parser_Run
 		$statements /** Storage<statement_node> */ = $body->statements;
 		while (($this->text() !== '}') && ($this->text() !== ''))
 		{
-			if (($this->text() === 'function') || ($this->text() === 'struct') || ($this->text() === 'class') || ($this->text() === 'data') || ($this->text() === 'template')) {
-				throw new \RuntimeException($this->error_message('Local declarations of functions or structs are not supported'));
-			}
-			$statement = $this->statement();
-			$statements->append(object_cast($statement, statement_node::class));
+			$statements->append($this->body_statement());
 		}
 		$this->expect('}');
 		$this->finish_node($body, $start);
 		return $body;
 	}
 
-	/** Preserve arm roles and brace bodies; only the initial arm enters the parent sequence. */
+	/** Braced and single-statement bodies share the same local declaration boundary. */
+	private function body_statement(): statement_node
+	{
+		if (($this->text() === 'function') || ($this->text() === 'struct') || ($this->text() === 'class') || ($this->text() === 'data') || ($this->text() === 'template')) {
+			throw new \RuntimeException($this->error_message('Local declarations of functions or structs are not supported'));
+		}
+		return object_cast($this->statement(), statement_node::class);
+	}
+
+	/** A conditional arm always owns a branch scope, even without source braces. */
+	private function conditional_body(): block_node
+	{
+		if ($this->text() === '{') { return $this->statement_block(); }
+		$start = $this->position;
+		$body = new block_node();
+		$statements /** Storage<statement_node> */ = $body->statements;
+		$statements->append($this->body_statement());
+		$this->finish_node($body, $start);
+		return $body;
+	}
+
+	/** Recursive body parsing binds else to the nearest unmatched if. */
 	private function conditional_arm(if_arm_kind $kind): if_node
 	{
 		$start = $this->position++;
@@ -857,7 +874,7 @@ final class Parser_Run
 			$arm->condition = $this->expression();
 			$this->expect(')');
 		}
-		$arm->body = $this->statement_block();
+		$arm->body = $this->conditional_body();
 		if ($kind !== if_arm_kind::else_arm)
 		{
 			if ($this->text() === 'elseif') {
@@ -1800,7 +1817,7 @@ final class Parser_Run
 			return 3;
 		}
 		if (($text === '=') || ($text === '+=') || ($text === '-=') || ($text === '*=')
-			|| ($text === '/=') || ($text === '%=') || ($text === '.=')
+			|| ($text === '/=') || ($text === '%=') || ($text === '**=') || ($text === '.=')
 			|| ($text === '&=') || ($text === '|=') || ($text === '^=')
 			|| ($text === '<<=') || ($text === '>>=')) {
 			return 4;

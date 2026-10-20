@@ -1,0 +1,22 @@
+{
+  "doc_status": "supporting",
+  "date": "2026-10-20",
+  "passed": true,
+  "source_files_checked": 6168,
+  "source_mismatches": [],
+  "remote_source_files_checked": 6277,
+  "runtime_files_unchanged_except_core_metadata": 217,
+  "native_executions": 378,
+  "rejections": 47,
+  "recovery_cycles": 6,
+  "accepted_commands": 1448,
+  "evidence_records": 2941,
+  "evidence_digest_verified": true,
+  "failed_attempt_preserved": true,
+  "original_fixture_matches_pinned_v01_bytes": true,
+  "original_fixture_end_to_end_passed": true,
+  "remaining_s07_blockers": [],
+  "original_issue_closure": "26/64",
+  "full_matrix_run": false,
+  "docs_closeout_after_tested_snapshot": true
+}

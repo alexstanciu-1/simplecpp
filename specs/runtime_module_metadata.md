@@ -62,6 +62,39 @@ Reference-bearing signatures participate in exact-type overload selection. Ordin
 call admission still checks reference places, access and lifetime after selection.
 Reference/value or readonly/writable mode alone cannot distinguish overloads.
 
+### Checked-payload fallback for overloaded calls
+
+The experimental v0.2 compiler first performs exact concrete/generic selection.
+Only when there are no exact matches may it select a unique fully concrete,
+fixed-arity signature whose inputs match by identity or one existing checked
+nullable/Result extraction to the exact payload type. At least one input must
+extract. Only value parameters may extract; reference and observation inputs
+remain exact. Candidates with default or variadic parameters are excluded.
+Multiple eligible candidates are ambiguous, without conversion ranking.
+
+Selection does not infer generic variables through extraction, promote numbers,
+chain conversions, wrap values or narrow flow types. The selected arguments use
+ordinary conversion, copy-capability and emission rules: left-to-right snapshots,
+checked extraction before later arguments, unchanged wrapper state, and the
+existing missing-payload exception behavior. Single concrete callable admission
+continues to use its existing ordinary conversion path.
+
+### Provider copy requirements
+
+A fixed value parameter may declare `"requires_copy": true` (default `false`).
+This records that the provider itself copies the input, independently of whether
+caller-side transport copies or moves it. Shared call preparation requires the
+selected parameter type to satisfy the existing `copyable_value` capability,
+including explicit moves, fresh temporaries and omitted default arguments.
+
+This applies to concrete contracts and instantiated generic contracts. It adds no
+inference rule or overload discriminator and does not cache source capabilities in
+metadata. Reference, observation and variadic parameters cannot use this flag;
+structural callable-type inputs cannot carry provider copy requirements. Existing
+variadic copy rules remain unchanged. Source declaration syntax and runtime ABI do
+not change. Core `vector_resize` and `vector_filled` require copying their fill
+parameter even when the requested size is zero or smaller than the current size.
+
 ### Scalar parameter defaults
 
 A value parameter may add `default` with exactly one typed scalar member:
@@ -601,7 +634,9 @@ Generic inputs support fixed value/reference parameters, typed variadics, scalar
 defaults and the bounded unary observation contract. User-authored generics,
 explicit source type arguments and explicit variable capability constraints remain
 outside this slice. Variables impose no implicit copyability constraint: the formed
-type and selected value boundary own storage/copy requirements.
+type and selected value boundary own storage/copy requirements. The explicit
+parameter-level provider requirement below is checked after selection and does not
+participate in inference or overload ranking.
 
 Installation resolves named parts to registry identities once, retaining a type-pattern
 recipe rather than a placeholder concrete signature. Preparation evaluates argument
@@ -818,3 +853,13 @@ reference-return lifetime contracts,
 profile availability and the rest of the runtime inventory are not encoded by this
 version's bounded consumer yet. Extend the shared models before enabling these rows;
 do not generate fake concrete overloads or function-name-specific preparation paths.
+
+
+## Core exact-mixed predicates — 2026-10-20
+
+Core registers `is_bool`, `is_int` and `is_float`, each with one exact `mixed`
+observation input and a bool value return. Provider bindings use the existing
+`scpp::php` helpers in `lang/php/operators/type_predicates/type_predicates.hpp`.
+The [predicate contract](builtins/type_predicates.md) owns kind semantics and the
+bounded source domain. Generic runtime fallbacks do not widen source admission;
+no predicate-specific compiler dispatch or flow narrowing is introduced.

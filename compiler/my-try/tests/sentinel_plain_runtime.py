@@ -71,9 +71,9 @@ with CommandRunner(out/'logs',ROOT,jobs=12) as runner:
         runner.run(name,['clang++','-std=c++20','-I',ROOT/'runtime/include','-fsyntax-only',f],expected=1)
         assert 'unsupported operator== combination' in (out/'logs'/(name+'.stderr')).read_text()
     def wrapper_negative(carrier,fixed,reverse):
-        name=carrier+('-fixed' if fixed else '-mixed')+str(reverse)
+        name=carrier+('-fixed' if fixed else '-string')+str(reverse)
         payload='scpp::int_t<std::int16_t>' if fixed else 'scpp::int_t<>'
-        plain=payload if fixed else 'scpp::float_t'
+        plain=payload if fixed else 'scpp::string_t'
         expression='v == w' if reverse else 'w == v'
         f=out/(name+'.cpp');f.write_text('#include "operators/identity/strict_identity.hpp"\nscpp::bool_t probe(scpp::'+carrier+'<'+payload+'> w,'+plain+' v) { return '+expression+'; }')
         runner.run(name,['clang++','-std=c++20','-I',ROOT/'runtime/include','-fsyntax-only',f],expected=1)

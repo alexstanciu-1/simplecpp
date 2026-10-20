@@ -1,0 +1,148 @@
+{
+  "doc_status": "supporting",
+  "date": "2026-10-20",
+  "passed": true,
+  "head": "6c25e526",
+  "host": "alex-ai@dev002.travelfuse.ro",
+  "snapshot": "/home/alex-ai/regex-batch/20261020-01",
+  "suites": {
+    "runtime-baseline": {
+      "commands": 4,
+      "all_expected_exits": true,
+      "command_seconds": 8.67,
+      "native_executions": 1
+    },
+    "source-baseline": {
+      "commands": 1,
+      "all_expected_exits": true,
+      "command_seconds": 0.12,
+      "native_executions": 0
+    },
+    "runtime-01": {
+      "commands": 4,
+      "all_expected_exits": true,
+      "command_seconds": 8.64,
+      "native_executions": 1
+    },
+    "source-01": {
+      "commands": 12,
+      "all_expected_exits": true,
+      "command_seconds": 20.19,
+      "native_executions": 3
+    },
+    "regression-02": {
+      "commands": 35,
+      "all_expected_exits": true,
+      "command_seconds": 30.5,
+      "native_executions": 11
+    }
+  },
+  "summaries": {
+    "runtime-baseline": {
+      "passed": true,
+      "baseline": true,
+      "observations": "FAIL replacement bytes\nFAIL replacement bytes\nFAIL replacement bytes\nFAIL replacement bytes\nFAIL empty invalid pattern\nFAIL empty invalid pattern\nFAIL invalid filter pattern\nFAIL invalid replacement pattern\nFAIL empty invalid pattern\nFAIL filter negative precedence\nFAIL filter negative precedence\nFAIL filter negative precedence\nFAIL filter negative precedence\nchecks=51;failures=13\n"
+    },
+    "source-baseline": {
+      "passed": true,
+      "baseline": true,
+      "checks": [
+        {
+          "source": "regex_replace(\"/a/\",\"X\",\"aba\",1);",
+          "diagnostic": "S2S call argument count does not match its signature\n"
+        },
+        {
+          "source": "regex_filter(\"/a/\",\"X\",vector<string>::[\"aba\"]);",
+          "diagnostic": "S2S needs one resolved function for regex_filter\n"
+        },
+        {
+          "source": "regex_filter(\"/a/\",\"X\",vector<string>::[\"aba\"],1);",
+          "diagnostic": "S2S needs one resolved function for regex_filter\n"
+        }
+      ],
+      "full_matrix_run": false
+    },
+    "runtime-01": {
+      "passed": true,
+      "baseline": false,
+      "observations": "checks=54;failures=0\n"
+    },
+    "source-01": {
+      "passed": true,
+      "baseline": false,
+      "checks": {
+        "admission": [
+          {
+            "source": "regex_replace(\"/a/\",\"X\",\"aba\",1);",
+            "diagnostic": ""
+          },
+          {
+            "source": "regex_filter(\"/a/\",\"X\",vector<string>::[\"aba\"]);",
+            "diagnostic": ""
+          },
+          {
+            "source": "regex_filter(\"/a/\",\"X\",vector<string>::[\"aba\"],1);",
+            "diagnostic": ""
+          }
+        ],
+        "rejections": [
+          {
+            "source": "regex_filter(\"/a/\",\"x\",vector<int>::[1]);",
+            "diagnostic": "S2S runtime call requires one exact signature or a unique checked-payload signature; use explicit argument types\n"
+          },
+          {
+            "source": "regex_replace(\"/a/\",\"x\",\"a\",1.0);",
+            "diagnostic": "S2S runtime call requires one exact signature or a unique checked-payload signature; use explicit argument types\n"
+          },
+          {
+            "source": "regex_filter(\"/a/\",\"x\",vector<string>::[],false);",
+            "diagnostic": "S2S runtime call requires one exact signature or a unique checked-payload signature; use explicit argument types\n"
+          },
+          {
+            "source": "$n=0;regex_replace(\"/a/\",\"x\",\"a\",1,$n);",
+            "diagnostic": "S2S runtime call requires one exact signature or a unique checked-payload signature; use explicit argument types\n"
+          },
+          {
+            "source": "$n=0;regex_filter(\"/a/\",\"x\",vector<string>::[],1,$n);",
+            "diagnostic": "S2S runtime call requires one exact signature or a unique checked-payload signature; use explicit argument types\n"
+          }
+        ],
+        "recoveries": 2
+      },
+      "full_matrix_run": false
+    }
+  },
+  "source_integrity": {
+    "checked": 6302,
+    "mismatches": [],
+    "runtime_changed": [
+      "runtime/include/modules/regex/regex.cpp",
+      "runtime/include/modules/regex/regex.hpp",
+      "runtime/metadata/modules/regex.json"
+    ],
+    "compiler_implementation_unchanged": true
+  },
+  "toolchain": {
+    "php": "PHP 8.5.11 (cli) (built: Sep 24 2026 13:49:29) (NTS)\nCopyright (c) The PHP Group\nBuilt by Ubuntu\nZend Engine v4.5.11, Copyright (c) Zend Technologies\n    with Zend OPcache v8.5.11, Copyright (c), by Zend Technologies\n",
+    "clang": "Ubuntu clang version 18.1.3 (1ubuntu1)\nTarget: x86_64-pc-linux-gnu\nThread model: posix\nInstalledDir: /usr/bin\n",
+    "python": "Python 3.12.3\n",
+    "pcre2": "10.42\n"
+  },
+  "evidence_records": 146,
+  "evidence_sha256": "fb4aef8dbef34aad907333fa3d5a7a169cfd64cf0e4578046920e72182423941",
+  "runtime_implementation_changes": true,
+  "full_matrix_run": false,
+  "native_compiler_rebuilt": false,
+  "original_issue_closure": {
+    "closed": 31,
+    "partial": 0,
+    "total": 64,
+    "percent": 48.4375
+  },
+  "remaining_batch_blockers": [],
+  "deferred": [
+    "V-R05 callback ABI",
+    "Public count-output signatures",
+    "Legacy wrapper migration"
+  ]
+}

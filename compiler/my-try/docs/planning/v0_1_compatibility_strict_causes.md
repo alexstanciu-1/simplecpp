@@ -215,3 +215,49 @@ python3 -B compiler/my-try/tests/legacy_compatibility.py --manifest compiler/my-
 Add `--filter PATH_SUBSTRING` for a focused replay. Do not add `--all`: that option
 expands discovery back to both profiles. Result meanings and toolchain prerequisites
 remain in the [runner guide](v0_1_compatibility_testing.md).
+
+
+## S04 resolved — 2026-10-20
+
+The [V-L06/S04 replay](float_identity.md) compiles and executes
+`strict_process_001_shell_exec_contract.phs` unchanged, with exact expected stdout.
+The fixture is byte-identical to pinned v0.1; deterministic false-sentinel/string
+identity controls also pass. Earlier V-L07 admission work resolves this original
+S04 blocker. No process/runtime/output implementation change was needed. The table
+and original failure evidence above remain the dated strict-04 classification.
+
+
+## S06 parser repair follow-up — 2026-10-20
+
+[S06 is now implemented and verified](s06_unbraced_conditionals.md). The unchanged
+`strict_strings_004_strpos_false_branch_regression.phs` parses its unbraced arms and
+advances to unresolved `strpos`, owned by S09. Historical first-blocker counts and
+source records above are retained; this replay is not a whole-program pass and
+does not move that fixture into the historical passed totals. Single-statement
+conditionals preserve nearest-if binding and v0.2 branch scopes. Other statement
+syntax and string API repairs remain separate.
+
+## S07 predicate repair follow-up — 2026-10-20
+
+[S07 is implemented and verified](s07_mixed_predicates.md). The unchanged
+`strict_control_flow_002_mixed_type_predicates.phs` passes with exact output through
+three exact-mixed observation bindings. Runtime-first and source state tests pass;
+no compiler or runtime implementation changes were required. The historical
+first-blocker counts above remain unchanged. Wider predicate overloads and
+flow-sensitive narrowing are not covered by this closure.
+
+## S09 search follow-up — 2026-10-20
+
+[Four search signatures now pass](s09_byte_search.md), including the unchanged
+`strict_strings_002_str_edges.phs`. The original false-branch fixture formerly
+blocked by S06 and unresolved `strpos` now reaches S09-B1: a falseable position
+passed directly to an integer runtime parameter. This boundary and `substr_replace`
+remain separately unresolved. Frozen first-cause counts above are not rewritten.
+
+## S09 replacement follow-up — 2026-10-20
+
+[Both replacement signatures now pass](s09_substr_replace.md), including the full
+unchanged `strict_strings_001_str_surface.phs` with exact output. Combined with
+search support, both original S09 cases pass. The separate false-branch fixture
+still reaches S09-B1; no source adaptation or compiler conversion repair was made.
+Historical first-cause counts and the previous search checkpoint remain unchanged.

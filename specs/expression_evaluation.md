@@ -228,3 +228,200 @@ unavailable states do not suppress RHS evaluation; source failures do. RHS effec
 remain on failure, and RHS replacement cannot alter the saved left state. Ordinary
 bool/numeric equality, logical mixing, strings, fixed-width/nested extensions and
 updates remain separate; this amendment admits strict identity only.
+
+
+## Heterogeneous string strict identity — 2026-10-20
+
+`===` and `!==` admit canonical string/int, string/float and string/bool in both
+orders, plain or carried by nullable, result, result_or_false and result_or_bool.
+Each operand normalizes independently under the shared strict-identity contract.
+Successful string payloads never match numeric or bool payloads, including empty
+and numeric-looking strings. No string parsing, truth conversion, numeric promotion
+or checked extraction occurs.
+
+Matching null states, bool sentinels and structured Result errors can compare
+identically across different declared payload kinds. A string carrier's false/true
+sentinel can match a successful bool payload; its successful string payload cannot.
+Stored states remain distinct and unmodified, including complete string bytes,
+numeric representations and error identity metadata. `!==` negates `===`; both
+return plain bool.
+
+Complete operands are eagerly snapshotted left-to-right. An unequal or unavailable
+state still evaluates RHS; a source exception stops later evaluation. RHS
+replacement cannot alter the saved left state, and earlier RHS effects survive a
+later failure. This amendment admits strict identity only. Ordinary heterogeneous
+equality, concatenation, logical mixing, spaceship, updates, fixed-width types and
+nested payloads retain their separate admission boundaries.
+
+
+## Mixed numeric ordinary equality for nullable and Result — 2026-10-20
+
+`==` and `!=` admit canonical int/float in both orders for plain scalars,
+nullable/nullable, nullable/plain, plain/nullable, result/result, result/plain and
+plain/result. Here result is the structured-error carrier. Both operators return
+plain bool. This does not admit cross-family or bool-sentinel carrier combinations.
+
+Compare present payloads by converting int to float and using floating numeric
+equality, including its rounding at large integer magnitudes. Signed zeros compare
+equal; NaN compares unequal even to itself. `!=` negates `==`. This is distinct
+from strict identity, where successful int and float payloads remain different kinds.
+
+Two empty nullable values compare equal; empty versus present/plain compares
+unequal. Two Result failures compare equal regardless of error metadata; failure
+versus success/plain compares unequal. These ordinary equality rules preserve
+the existing state policy across payload kinds. Strict Result identity continues
+to compare structured error contents.
+
+Snapshot complete carrier operands eagerly from left to right, then compare their
+states. Only present payload comparisons perform numeric promotion; no guarded
+payload extraction or carrier-to-carrier conversion is inserted. Plain scalar
+operands use the existing numeric conversion path. Unavailable or unequal states
+do not skip RHS evaluation; source exceptions do. RHS replacement cannot alter the
+saved left value, and earlier RHS effects survive a later source failure. Comparison
+does not change stored states, numeric representations or error details.
+
+Sentinel carriers, cross-family equality, other payload kinds, spaceship, updates
+and fixed-width/nested extensions remain separate.
+
+
+## Mixed numeric ordinary equality for sentinel carriers — 2026-10-20
+
+`==` and `!=` also admit canonical int/float payload pairs in both orders for
+same-family result_or_false or result_or_bool carriers, and either carrier versus
+a plain numeric operand. This does not admit cross-family ordinary equality.
+
+Present payloads compare with int-to-float numeric equality, including rounding,
+signed-zero equality and NaN inequality. Matching sentinel states compare equal;
+different sentinel states compare unequal. Either sentinel is unequal to every
+present numeric payload or plain number, including zero and one. No bool-to-number
+truth conversion or absent-payload extraction occurs. `!=` negates `==`.
+
+Complete operands are eagerly snapshotted left-to-right before comparison.
+Unavailable or unequal states do not skip RHS; source exceptions do. Preserve
+saved-left snapshots across RHS replacement and retain earlier RHS effects when a
+later source operation fails. Comparison preserves the stored state and payload
+representation. Strict identity, bool payloads, matching-payload strings, fixed-width
+and boxed behavior are unchanged. Other payload pairs, cross-family equality,
+spaceship and updates remain separate.
+
+
+## Cross-family matching non-bool ordinary equality — 2026-10-20
+
+`==` and `!=` admit distinct pairs of nullable, structured Result, false-sentinel
+and bool-sentinel carriers with matching canonical int, float or string payloads.
+The result is plain bool. Both present payloads compare by scalar equality:
+float NaN is unequal, signed zeros equal, and strings compare complete bytes.
+Matching false sentinel states compare equal across the two sentinel families.
+Different unavailable states (null, structured error, false, true) compare unequal,
+as does any unavailable state versus a present payload, including zero or empty
+string. `!=` negates `==`; no truth conversion or unavailable-payload extraction
+occurs. Stored states and error metadata remain unchanged.
+
+Evaluate and snapshot each complete operand left-to-right before comparing states.
+Unavailable states do not suppress RHS evaluation. A source exception stops later
+evaluation; earlier effects remain visible. RHS replacement cannot change the
+saved left operand. Comparison performs no write-back.
+
+This extension leaves matching-bool and mixed-numeric cross-family ordinary
+comparisons separate. Same-family/plain contracts and strict identity are unchanged;
+fixed-width, boxed, nested and other payload domains are not admitted here.
+
+
+## Cross-family mixed numeric ordinary equality — 2026-10-20
+
+`==` and `!=` also admit canonical int/float payload pairs in both orders across
+distinct nullable, structured Result, false-sentinel and bool-sentinel families.
+The result is plain bool. Both present payloads compare by int-to-float numeric
+equality, including rounding near ±2^53 and int64 limits, signed-zero equality and
+NaN inequality. No stored payload representation is converted in place.
+
+The cross-family state rules remain unchanged: matching false sentinel states
+compare equal; different unavailable states and unavailable/payload pairs compare
+unequal, including sentinel versus zero or one. `!=` negates `==`. No truth
+conversion or unavailable-payload extraction occurs; error metadata is preserved.
+
+Complete operand snapshots are evaluated eagerly left-to-right. Unavailable states
+do not skip the RHS. Source failures stop later evaluation, while earlier effects
+remain visible. RHS replacement cannot alter the saved left operand. There is no
+comparison write-back. Strict identity and existing same-family/plain equality
+are unchanged. Cross-family bool, other heterogeneous payloads, fixed-width,
+boxed, nested, spaceship and update domains remain separate.
+
+
+## Canonical-carrier completion policies — 2026-10-20
+
+Matching bool cross-family ordinary equality preserves storage states: two bool
+payloads compare by value; matching false sentinels compare equal across sentinel
+families; sentinel versus wrapped bool remains unequal. Different unavailable
+states are unequal. Strict identity and carrier/plain bool rules remain unchanged.
+Heterogeneous bool/numeric and string/bool/numeric ordinary equality is rejected
+in preparation; explicit conversion is required. Int-destination/float-RHS numeric
+compounds likewise reject implicit narrowing. No runtime coercion is inferred.
+
+Floating and mixed canonical numeric `<=>` promote int to float and return canonical
+int -1, 0 or 1. Either NaN operand throws `unordered_comparison`. Guarded extraction
+and source failures preserve their existing left-to-right precedence. Signed zeros
+compare equal; infinities order normally.
+
+Canonical integer `**=` uses checked integer power and the existing compound
+snapshot/extraction/write-back protocol. Negative exponent and overflow errors
+prevent compound write-back while preserving earlier RHS effects. The returned
+value is a snapshot of the updated destination.
+
+String-carrier `.` and `.=` use text conversion: present strings preserve complete
+bytes; empty nullable, false sentinels and both result_or_bool sentinel states
+convert to empty string; structured Result failure throws. Convert the saved left
+operand before evaluating/converting the RHS. On successful `.=` write-back the
+original destination receives a string payload, including when it was previously
+empty or a sentinel. Failed conversion/computation causes no compound write-back;
+earlier source effects remain. Indexed and wider payload capabilities must be
+verified through their existing owners and are not implied by these signatures.
+
+
+## Canonical scalar float strict identity — 2026-10-20
+
+Plain canonical float operands admit `===` and `!==`, returning bool under the
+same numeric identity rule already used for successful float carrier payloads.
+Equal finite values and matching infinities are identical; positive and negative
+zero are identical. NaN is non-identical to every value, including itself, without
+throwing. `!==` negates `===`. This is value identity, not floating bit-pattern
+identity; observing identity does not change either operand's representation.
+
+Evaluate and snapshot the complete left value, then the right value, before
+comparison. A source exception stops subsequent evaluation; unequal values do not.
+RHS writes cannot change the saved left operand. No numeric promotion is introduced:
+int/float strict identity still preserves their distinct scalar kinds. The throwing
+NaN rule for spaceship is a separate operation contract. Fixed-width, boxed and
+other payload capabilities are not expanded by this amendment.
+
+## Bounded scalar and carrier text contexts — 2026-10-20
+
+For `.` and `.=` only, the ready plain integer text domain comprises canonical
+int, signed 8/16/32/64-bit integers and unsigned 8/16/32-bit integers. Canonical
+float, bool and string and literal null retain their scalar text rules. All pairs
+in this domain, including the four carriers (`nullable`, `result`,
+`result_or_false`, `result_or_bool`) of canonical int/float/bool/string, admit
+concatenation and produce plain string.
+
+A present carrier payload renders exactly as its corresponding plain scalar in
+this text context. In particular, carrier float text uses the scalar text helper's
+formatting, not the distinct explicit float-to-string cast formatting. Present
+bool true produces `"1"` and false produces empty text. Empty nullable and both
+boolean sentinel states produce empty text; a true sentinel is distinct from a
+present true bool payload. Structured Result error throws during required payload
+extraction, preserving its message, line and file. Strings preserve all bytes,
+including embedded NUL and non-ASCII bytes.
+
+Convert the saved left value before evaluating/converting the right value. A left
+conversion failure suppresses RHS evaluation. A right failure preserves earlier
+source effects and performs no compound write-back. `.=` admits string and the
+four string-carrier destinations with any RHS in the bounded domain. Success
+stores one string payload into the captured destination and returns its value
+snapshot. Local, property and static destinations retain their established
+receiver capture and once-only write-back rules.
+
+This amendment adds no boxed/carrier combinations, indexed capabilities, uint64
+text, fixed-width carrier payloads, nested carriers or object/container text.
+Existing boxed and indexed text contracts remain separate. Assignment, argument
+passing, equality, explicit casts, echo and interpolation do not acquire these
+text-context conversions.

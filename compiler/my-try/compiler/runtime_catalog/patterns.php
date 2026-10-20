@@ -60,6 +60,7 @@ final class Runtime_Catalog_Patterns
 			}
 			$parameter = new runtime_pattern_parameter($pattern, $input->mode, $input->access);
 			$parameter->variadic = $input->variadic;
+			$parameter->requires_copy = $input->requires_copy;
 			if ($input->default_value !== null) {
 				if ($input->mode !== passing_mode::value) { throw new \RuntimeException('Runtime defaults require value parameters'); }
 				$default_spec /** runtime_default_spec */ = $input->default_value;
@@ -158,6 +159,7 @@ final class Runtime_Catalog_Patterns
 			else { $closed = false; }
 			$parameter = new runtime_pattern_parameter($pattern, $input->mode, $input->access);
 			$parameter->variadic = $input->variadic;
+			$parameter->requires_copy = $input->requires_copy;
 			$parameters->append($parameter);
 		}
 		if ($closed) { return new runtime_concrete_pattern(Runtime_Catalog_Registration::type($spec, $types)); }

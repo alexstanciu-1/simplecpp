@@ -577,3 +577,143 @@ kinds, eager snapshots and source failure order. Runtime code is unchanged.
 V-L07 now has 2,752 verified signatures across 28 slices and 1,200 design/scope
 candidates remaining. Ordinary equality, strings and logical mixing remain separate.
 Overall closure stays 19/64 (29.7%); V-L07 remains partial. No full matrix rerun.
+
+
+## V-L07 bounded completion — 2026-10-20
+
+[The completion goal](vl07_completion.md) verifies the final 168 approved carrier
+signatures: bool cross-family equality 24, float/mixed spaceship 72, integer power
+compounds 24 and string concatenation/assignment 48. Total supported coverage is
+**3,376 signatures across 37 slices** (2,832 binary, 64 unary, 480 compound).
+All **576 heterogeneous-equality/narrowing exclusions** have rejection/recovery
+proofs. There are no unresolved canonical candidates. The 129 prior existing-path
+cells reconcile to 17 supported operations and 112 observed rejections.
+
+V-L07 is closed within this agreed finite scope; original issue closure is now
+**20/64 (31.25%)**. Indexed unary and numeric compound updates, wider payloads,
+boxed/table/selection semantics and the separate presence-policy boundary remain
+explicit W1-W4 follow-ups with owners. Four indexed string-carrier `.=` probes pass
+through the existing protocol. No full matrix or native compiler rebuild ran.
+
+Evidence retains initial runtime/fixture failures and all repairs. Final acceptance
+covers 44 suites and 4,115 expected command exits on dev002; the generated runtime
+header is reproducible apart from its existing timestamp. See [exact results](vl07_completion_results.json)
+and [the reconciled inventory](vl07_inventory/README.md).
+
+
+## V-L06 and S04 closeout — 2026-10-20
+
+[The focused proof](float_identity.md) adds `float === float` and `float !== float`
+through existing identity preparation. Runtime support passes unchanged; signed
+zeros compare identical and NaNs non-identical without throwing. Ordered snapshots,
+source failures and retained recovery pass. All twelve original carrier cells and
+the unchanged pinned-v0.1 S04 process fixture pass, including deterministic sentinel
+controls. No newly exposed implementation blocker remains.
+
+V-L06 and S04 close; original issue closure is **22/64 (34.375%)**. V-L07's total
+stays 3,376 carrier signatures: these two new forms are scalar. Thirteen accepted
+suites account for 895 expected command exits on dev002. Runtime files remain
+unchanged; no full matrix or native compiler rebuild ran. Failed fixture attempts
+and historical findings are preserved in [the evidence](float_identity_results.json).
+
+
+## V-L11 and V-D14 text closeout — 2026-10-20
+
+[The bounded text proof](carrier_text.md) admits ready integer widths and all four
+canonical scalar carrier families for concatenation and string-destination text
+updates. Present payloads match plain scalar formatting; nullable/sentinel absence
+becomes empty text and structured Result failure throws. Runtime-first composition
+uses existing helpers without runtime implementation changes. Contract metadata
+now distinguishes concatenation from display and explicit-cast behavior.
+
+The 924 source rows include 60 literal-null controls. States, errors, ordered
+snapshots, captured destinations, write-back and recovery pass on dev002, along
+with focused preservation regressions. V-L11 and V-D14 close; overall original-issue
+closure is **24/64 (37.5%)**. uint64, wider payloads, new boxed/indexed combinations
+and other conversion contexts remain separate. Historical findings and failed
+fixture attempts remain in [the evidence](carrier_text_results.json). No full
+operator matrix or native compiler rebuild ran.
+
+
+## S06 conditional syntax closeout — 2026-10-20
+
+[The S06 proof](s06_unbraced_conditionals.md) admits single-statement conditional
+bodies through the existing parser/block model. Nearest-if binding, branch scopes,
+lazy conditions, completion and retained recovery pass on dev002: 46 dedicated
+native programs, 23 rejection controls, three span checks and eight recovery cycles.
+Existing regressions pass 12 PHP suites and 137 native programs.
+
+The unchanged original fixture advances from a required-brace parser failure to
+unresolved `strpos`, recorded under S09. It is not an end-to-end compatibility pass.
+S06 closes; overall original-issue closure is **25/64 (39.0625%)**. Other statement
+syntax remains separate. No runtime changes, full matrix or native compiler rebuild
+ran. Historical findings and failed test-observer attempts remain in the evidence.
+
+## S07 exact-mixed predicate closeout — 2026-10-20
+
+[The S07 proof](s07_mixed_predicates.md) exposes `is_bool`, `is_int` and `is_float`
+for exact `mixed` inputs through the existing non-retaining observation contract.
+The original strict fixture passes unchanged with exact output. Runtime-first and
+source probes each cover 69 predicate checks across 23 mixed states. Readonly and
+temporary inputs, temporary owners, once-only evaluation, saved results, mutation,
+errors, 47 rejection controls and six recovery cycles pass on dev002. Existing
+observation, mixed and conditional suites add 375 native regression programs.
+
+Only core metadata and documentation changed in production; compiler and runtime
+implementations remain unchanged. S07 closes, bringing original-issue closure to
+**26/64 (40.625%)**. Wider types, additional predicates and flow-sensitive narrowing
+remain separate; the frozen original finding above remains historical evidence.
+
+## S09 byte-search slice — 2026-10-20
+
+[The search proof](s09_byte_search.md) admits two/three-argument `strpos` and
+`strrpos` with normative byte positions, signed offsets and false-sentinel results.
+Dedicated adapters preserve the historical code-point helpers used by portability.
+The unchanged string-edge fixture passes exact output. Runtime and source checks
+each cover 1,760 calls, including arbitrary bytes, empty needles, extreme offsets,
+errors and input preservation; source observers prove snapshots and evaluation order.
+
+The original false-branch fixture now reaches **S09-B1**: direct passage of
+`result_or_false<int>` to `substr`'s integer parameter is rejected at exact-signature
+admission. Explicit extraction works, but no implicit conversion or narrowing repair
+was made. `substr_replace` remains deferred for separate semantic reconciliation.
+S09 is partial; fully closed original issues remain **26/64 (40.625%)**, with one
+partial repair and 37 other open issues. Original failure records remain historical.
+
+## S09 replacement slice — 2026-10-20
+
+[The replacement proof](s09_substr_replace.md) completes both `substr_replace`
+signatures and reconciles shared runtime behavior with the normative byte contract.
+Omitted or zero length inserts; unusable negative-length windows preserve the input.
+The full original strict string-surface fixture passes unchanged with exact output.
+Runtime and compiled-source observers each pass 3,312 checks, including extrema,
+arbitrary bytes, aliasing and input preservation. Source observers also prove
+argument snapshots, evaluation order, no-op argument evaluation, error propagation,
+11 invalid calls and two recovery cycles. Focused string/search regressions pass.
+
+All six search/replacement API signatures and both original S09 fixtures now pass.
+S09 remains partial for separately recorded S09-B1 in the false-branch fixture;
+no compiler conversion or narrowing rule was changed. Fully closed original issues
+remain **26/64 (40.625%)**, with one partial repair and 37 other open issues.
+
+## Closure batch follow-up — 2026-10-20
+
+[S09 / V-R07 / V-H10](closure_batch.md) are implemented and verified on dev002.
+S09-B1 closes through bounded checked-payload overload selection. Eight vector
+forms pass strict behavior and production builds; the separately authorized
+provider copy requirement rejects moved noncopyable fills. V-H10 reaches the
+intended unsupported boxing boundary while typed callable storage passes.
+Current progress is **29/64 (45.3125%)**, zero partial and 35 other open issues,
+**+4.6875 percentage points**. Dated earlier findings/counts remain historical.
+No runtime implementation changes, full matrix or native compiler rebuild.
+
+## Regex filter/limit closeout — 2026-10-20
+
+[V-R04 and V-R09](regex_replacement.md) are implemented and verified on dev002.
+Strict filter supports positional backreferences and both arities; replacement
+limits have an unambiguous provider binding. Limit-before-pattern validation now
+also runs for empty input and zero limit, and zero-length replacement preserves
+untouched bytes. Runtime/source oracles and production PCRE2 builds pass.
+Current progress is **31/64 (48.4375%)**, zero partial and 33 other open issues,
+**+3.125 percentage points**. Earlier counts remain dated historical checkpoints.
+Compiler implementation, callback APIs and legacy adapter source are unchanged.

@@ -290,15 +290,15 @@ $rejections = [
 	'remainder width' => ['$x uint8 = 7; return $x % 3;', 'integer binary operation requires matching signedness'],
 	'comparison string' => ['return 3 == "3";', 'integer binary operation requires integer operands'],
 	'ordinary comparison bool' => ['return 1 == true;', 'integer binary operation requires integer operands'],
-	'mixed equality float' => ['return 1 == 2.0;', 'floating comparison requires exact floats'],
+	'ordinary bool float equality' => ['return true == 2.0;', 'floating comparison requires canonical float or int operands'],
 	'relational chain' => ['return 1 < 2 < 3;', 'integer binary operation requires integer operands'],
-	'wrapper concatenation' => ['$n ?int = 1; $a = "x" . $n;', 'concatenation requires boxed'],
+	'deferred width-carrier concatenation' => ['$n ?int16; $a = "x" . $n;', 'concatenation requires boxed'],
 	'cross-family concatenation' => ['$d dynamic; $m mixed; $a = $d . $m;', 'same boxed family'],
 	'logical non-bool' => ['return false && 1;', 'logical operation requires canonical bool operands'],
 	'logical skipped unknown' => ['return false && $missing;', 'established local declaration for missing'],
 	'power float' => ['return 2.0 ** 3;', 'canonical int operands'],
 	'power narrow' => ['$x uint8 = 2; return $x ** 3;', 'canonical int operands'],
-	'power compound deferred' => ['$x = 2; $x **= 3;', 'Expected scalar literal'],
+	'power compound float' => ['$x = 2.0; $x **= 3;', 'canonical int operands'],
 ];
 foreach ($rejections as $name => [$source, $diagnostic])
 {

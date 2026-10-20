@@ -123,6 +123,7 @@ enum operator_operation {
 	case boxed_greater;
 	case boxed_greater_equal;
 	case integer_three_way;
+	case floating_three_way;
 	case boolean_xor;
 	case boolean_and;
 	case boolean_or;

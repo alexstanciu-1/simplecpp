@@ -74,7 +74,8 @@ final class Guarded_Operators
 			&& ($source_operator !== operator_kind::multiplication) && ($source_operator !== operator_kind::division)
 			&& ($source_operator !== operator_kind::remainder) && ($source_operator !== operator_kind::bitwise_and)
 			&& ($source_operator !== operator_kind::bitwise_or) && ($source_operator !== operator_kind::bitwise_xor)
-			&& ($source_operator !== operator_kind::shift_left) && ($source_operator !== operator_kind::shift_right)) {
+			&& ($source_operator !== operator_kind::shift_left) && ($source_operator !== operator_kind::shift_right)
+			&& ($source_operator !== operator_kind::power)) {
 			throw new \RuntimeException('S2S guarded compound operator remains deferred');
 		}
 		if ((q_count($payloads) !== 2) || !$payloads[0]->matches($context->integer)
@@ -115,9 +116,10 @@ final class Guarded_Operators
 	private static function is_admitted_payload(canonical_type_use $payload,
 		operator_kind $source_operator, preparation_context $context): bool
 	{
-		// Spaceship is bounded independently of broader ordinary integer admission.
+		// Spaceship admits canonical numbers and strings, with scalar-owned ordering rules.
 		if ($source_operator === operator_kind::three_way) {
-			return $payload->matches($context->integer) || $payload->matches($context->string_type);
+			return $payload->matches($context->integer) || $payload->matches($context->string_type)
+				|| $payload->matches(Language_Types::floating(Model::$language_scope));
 		}
 		// String ordering must not redirect unrelated nullable-string condition negation.
 		if ($payload->matches($context->string_type)) {

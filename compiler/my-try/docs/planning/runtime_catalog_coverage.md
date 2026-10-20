@@ -25,14 +25,14 @@ do not request approval for each ordinary metadata row or populate speculative r
 
 | Module | Registered source surface | Shared path |
 | --- | --- | --- |
-| core | Byte `strlen`; `count` for vector/hash/mixed/dynamic; process memory usage/peak; cli_argc/cli_argv/cli_args; getenv/shell_exec | Concrete and inferred generic contracts; non-retaining unary observation |
+| core | Byte `strlen`; all eight strict vector helper forms; `count` for vector/hash/mixed/dynamic; process memory usage/peak; cli_argc/cli_argv/cli_args; getenv/shell_exec | Concrete and inferred generic contracts; non-retaining unary observation |
 | json | Decode/encode families; twelve document/navigation calls, three shared types and diagnostic fields | Concrete overloads, shared storage, reference output and Result returns |
 | datetime | All 11 strict dt_* helpers; clocks, sleep, UTC/local formatting and parsing | Fixed scalar/void signatures, uint64 counters and result<int>; separately linked provider |
 | filesystem | 22 strict fs_* helpers including lock try/release/transfer and file_lock_handle | Shared scalar/container/handle Result calls; providers bundled in snippet runtime |
 | process (opt-in) | Five lifecycle calls, process_handle/process_output and six output fields | Shared storage/Result transport; metadata-declared provider linkage |
-| regex (opt-in) | 10 helpers / 18 signatures and two split constants; inventory below | Nested container Results, ordinary value calls; explicit PCRE2 provider linkage |
+| regex (opt-in) | 11 helpers / 21 signatures and two split constants; inventory below | Nested container Results, ordinary value calls; explicit PCRE2 provider linkage |
 | source (opt-in) | Three owning types and thirteen helpers; inventory below | Metadata-owned values, reference transfer, non-retaining reads; no borrowed spans |
-| strings | 49 source helpers / 65 signatures, two builder types and three padding constants; inventory below | Fixed/generic signatures, value/reference/observation boundaries, metadata-owned types and settled constants |
+| strings | 52 source helpers / 71 signatures, two builder types and three padding constants; inventory below | Fixed/generic signatures, value/reference/observation boundaries, metadata-owned types and settled constants |
 
 The host and native-driver startup lists select core, json, strings, datetime and filesystem. Other consumers
 can select a subset; `strings` depends on `core`, and repeated selections deduplicate.
@@ -91,8 +91,8 @@ separate stable-hash owner and remain for that owner's module audit.
 | string_byte_len, string_byte_at, string_byte_find, string_byte_slice, string_byte_slice_equals | Registered; find has 2/3 args | Explicit byte coordinates; find preserves result_or_false<int> through the PHP adapter |
 | string_utf8_codepoint_count, string_utf8_codepoint_at, string_utf8_slice_codepoints | Registered | Explicit code-point units; not portability-framework validation wrappers |
 | string_grapheme_count, string_grapheme_slice | Registered | Existing conservative cluster policy, not a new full Unicode segmentation promise |
-| strpos, strrpos | Held for semantic reconciliation | Top-level specs require byte positions; runtime find/rfind and subordinate catalog use code points, even through PHP adapters |
-| substr_replace | Held for semantic reconciliation | Spec says omitted length inserts and unusable negative window is a no-op; runtime replaces the suffix and inserts for some unusable windows |
+| strpos, strrpos | Registered, 2/3 args each | Byte offsets/positions through dedicated v0.2 adapters; false sentinel preserved, signed offsets checked. Historical code-point adapters and explicit byte_find policy remain unchanged; see [S09 proof](s09_byte_search.md). |
+| substr_replace | Registered, 3/4 args | Shared byte runtime reconciled with the normative insertion/no-op contract; omitted length inserts and unusable negative windows preserve the original. See [S09 replacement proof](s09_substr_replace.md). |
 | implode(mixed/dynamic) | Held for contract review | Documented string-only elements versus adapter cast/coercion; dynamic admission not established |
 | strlen(nullable<string>) / runtime length overload | Not registered | Core's bounded v0.2 contract is string byte length; no implicit nullable overload |
 | string_parts_builder (10 free helpers), text_builder (10 of 11 free helpers) | Registered value types and twenty helpers | Writable-reference mutation; non-retaining queries; only text byte-span append awaits source::byte_span |
@@ -186,19 +186,21 @@ installing anything or silently skipping execution.
 | regex_match, regex_match_named | Registered, 2/3 args | Packed or named captures; optional byte offset |
 | regex_match_all, regex_match_all_pattern_order, regex_match_all_named | Registered, 2/3 args | Match-order, pattern-order or named nested containers |
 | regex_grep | Registered | Typed vector<string> input/output, input-order filtering |
-| regex_replace | Registered, 3 args only | Positional backreferences, unlimited replacements |
+| regex_replace | Registered, 3/4 args | Positional backreferences; value limit through an unambiguous provider target |
 | regex_split | Registered, 2/3/4 args | Optional limit/flags; PREG_SPLIT_NO_EMPTY=1 and PREG_SPLIT_DELIM_CAPTURE=2 |
-| regex_replace with limit; replacement/filter count outputs | Held | C++ const-limit/nonconst-count overloads collide for emitted value snapshots; need unambiguous provider bindings and shared reference-overload admission |
-| regex_filter | Held for semantic reconciliation | Its builtin spec says literal replacement; runtime replace_impl expands backreferences; empty inputs also bypass pattern/limit validation |
+| Replacement/filter count outputs | Held separately | Public count-output signatures and reference/value policy remain separate; value-limit forms now use explicit provider targets |
+| regex_filter | Registered, 3/4 args | Backreferences, per-row limits, packed output; limit-before-pattern validation includes empty input and zero limit |
 | regex_replace_callback, regex_replace_callback_array | Pending module re-audit | Structural callable metadata is now available; verify provider callback/container ABI and contracts before registration |
 | preg_* aliases, unsupported output-shape flags | Excluded | Legacy aliases are not strict APIs; runtime retains errors for unsupported split flags |
 
 Empty successful captures are not failure. `take`/`isset` observe Result state;
 container Result conditions and automatic wrapper `empty` remain rejected. Byte
-offsets and `/u` keep existing runtime semantics; registration does not promise new
-Unicode zero-length matching behavior. Scalar and nested container payloads use the
+offsets and `/u` retain their existing contracts. Replacement/filter now preserve
+untouched bytes around zero-length matches, including UTF-8 code-point search
+progress; other matching/callback traversal remains outside that repair. Scalar and nested container payloads use the
 same registry-driven Result transport/copy rules; no regex-specific type admission.
-See [CH15-RUNTIME-REGEX-01](../catalog/15_blocking_debt.md#ch15-runtime-regex-01--regex-contracts-and-binding-prerequisites).
+The [V-R04/V-R09 closeout](regex_replacement.md) supersedes the filter/limit holds
+in the older chapter checkpoint; callback/count-output holds remain. See [CH15-RUNTIME-REGEX-01](../catalog/15_blocking_debt.md#ch15-runtime-regex-01--regex-contracts-and-binding-prerequisites).
 
 ## Remaining work, grouped by prerequisite
 
@@ -251,7 +253,7 @@ Do not fill this gap by enumerating concrete scalar/container overloads in metad
 | Group | Examples | Next prerequisite / check |
 | --- | --- | --- |
 | Boxed formatting | number_format(mixed/dynamic) | Deferred CH15-RUNTIME-FORMAT-01: explicit numeric-kind validation before registration |
-| Contract-sensitive strings | strpos/strrpos, substr_replace, boxed implode | Resolve the specific differences in the module inventory above; hex2bin and code-point substr are now registered without semantic changes |
+| Contract-sensitive strings | boxed implode | Resolve the specific differences in the module inventory above; hex2bin and code-point substr are now registered without semantic changes |
 | Container-producing/consuming helpers | collection APIs | Audit by owning module; typed split/join now use existing application/generic contracts |
 | Numeric and utility helpers | predicates, stable hashing; future scalar math | Audit real provider ownership; scalar math has no existing public module/strict registry to migrate |
 | Registered runtime types | JSON document/nodes, filesystem handles, compiler Storage, source views | Shared storage and registered members/factories are available; real provider lifecycle contracts still need integration proofs; borrowed source views remain deferred |
@@ -412,3 +414,6 @@ Supplementary foundation checks in `/tmp/registry-capabilities-20261009-review`
 pass type-catalog, capability-rule validation, container calls, nullable records and
 ownership (0.39–2.11s per PHP suite). Registration rejects conditional transport
 opt-ins: transport support is unconditional; copying is checked independently.
+
+Vector helper bindings and their explicit provider fill-copy requirement are verified
+in the [S09/V-R07/V-H10 batch](closure_batch.md), including production cold/warm builds.

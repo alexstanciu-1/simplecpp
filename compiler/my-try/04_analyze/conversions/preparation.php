@@ -75,6 +75,29 @@ final class Conversion_Preparation
 		throw new \RuntimeException('S2S value boundary requires matching types or an integer conversion');
 	}
 
+	/**
+	 * Structural eligibility for one required-payload boundary, without preparing
+	 * capabilities or retaining conversion facts for an unselected overload.
+	 * Selected arguments still pass through decide() and normal copy admission.
+	 */
+	public static function matches_required_payload(canonical_type_use $source, canonical_type_use $target): bool
+	{
+		if ($source->by_value() || (Result_Conversions::role($target) !== null)
+			|| (Nullable_Conversions::payload($target) !== null)) {
+			return false;
+		}
+		$nullable_payload = Nullable_Conversions::payload($source);
+		if ($nullable_payload !== null) {
+			return $nullable_payload->matches($target);
+		}
+		$result_role = Result_Conversions::role($source);
+		if ($result_role === null) {
+			return false;
+		}
+		$application = object_cast(Type_Queries::canonical($source), applied_template_type::class);
+		return $result_role->payload_type($application)->matches($target);
+	}
+
 	/** Scalar cast permission is explicit and does not include arbitrary nominal types. */
 	public static function is_scalar(canonical_type_use $type): bool
 	{

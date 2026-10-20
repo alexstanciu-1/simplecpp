@@ -1,0 +1,33 @@
+{
+  "doc_status": "supporting",
+  "date": "2026-10-20",
+  "passed": true,
+  "source_files_checked": 6172,
+  "remote_source_files_checked": 6281,
+  "source_mismatches": [],
+  "runtime_changed": [
+    "runtime/include/lang/php/support/php_string.hpp",
+    "runtime/include/modules/strings/strings.hpp",
+    "runtime/metadata/modules/strings.json"
+  ],
+  "compiler_implementation_unchanged": true,
+  "text_helpers_unchanged": true,
+  "native_executions": 88,
+  "accepted_commands": 236,
+  "runtime_search_checks": 1760,
+  "source_search_checks": 1760,
+  "rejections": 18,
+  "recovery_cycles": 4,
+  "evidence_records": 526,
+  "evidence_digest_verified": true,
+  "failed_attempt_preserved": true,
+  "original_fixtures_match_pinned_v01_bytes": true,
+  "original_edges_passed": true,
+  "original_false_branch_passed": false,
+  "remaining_blockers": [
+    "substr_replace",
+    "S09-B1"
+  ],
+  "original_issue_closure": "26/64 closed; S09 partial",
+  "docs_closeout_after_tested_snapshot": true
+}

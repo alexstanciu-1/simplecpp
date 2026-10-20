@@ -1,0 +1,48 @@
+{
+  "doc_status": "supporting",
+  "date": "2026-10-20",
+  "passed": true,
+  "remote_source_files_checked": 6297,
+  "local_tested_production_and_test_hashes_match": true,
+  "docs_changed_after_snapshot": [
+    "compiler/my-try/docs/README.md",
+    "compiler/my-try/docs/catalog/README.md",
+    "compiler/my-try/docs/planning/runtime_catalog_coverage.md"
+  ],
+  "evidence_digest_verified": true,
+  "accepted_commands": 282,
+  "native_executions": 90,
+  "evidence_records": 835,
+  "runtime_implementation_unchanged": true,
+  "compiler_changed": [
+    "compiler/my-try/04_analyze/conversions/preparation.php",
+    "compiler/my-try/04_analyze/prepare/semantics/calls.php",
+    "compiler/my-try/04_analyze/prepare/semantics/runtime_calls.php",
+    "compiler/my-try/compiler/callables/catalog.php",
+    "compiler/my-try/compiler/callables/structures.php",
+    "compiler/my-try/compiler/runtime_catalog/patterns.php",
+    "compiler/my-try/compiler/runtime_catalog/reader.php",
+    "compiler/my-try/compiler/runtime_catalog/register.php",
+    "compiler/my-try/compiler/runtime_catalog/structures.php"
+  ],
+  "remaining_batch_blockers": [],
+  "closed_issues": [
+    "S09",
+    "V-R07",
+    "V-H10"
+  ],
+  "progress": {
+    "closed": 29,
+    "partial": 0,
+    "total": 64,
+    "percent": 45.3125
+  },
+  "full_matrix_run": false,
+  "native_compiler_rebuilt": false,
+  "implementation_commits": [
+    "28f11160",
+    "6ddba5c1",
+    "caf7adc7"
+  ],
+  "docs_closeout_after_tested_snapshot": true
+}

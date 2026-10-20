@@ -259,6 +259,22 @@ inline nullable<int_t<>> byte_find(const string_t &haystack, const string_t &nee
 	return int_t<>(static_cast<std::int64_t>(position));
 }
 
+// Reverse byte search limits match starting positions, not the end of the needle.
+// Nonnegative offsets bound the earliest start; negative offsets bound the latest.
+inline nullable<int_t<>> byte_rfind(const string_t &haystack, const string_t &needle, const int_t<> &offset) {
+	const auto &native = haystack.native_value();
+	const auto limit = scpp::normalize_reverse_search_limit(native.size(), offset.native_value(), "strrpos");
+	const auto position = native.rfind(needle.native_value(), offset.native_value() < 0 ? limit : std::string::npos);
+	if (position == std::string::npos || (offset.native_value() >= 0 && position < limit)) {
+		return null;
+	}
+	return int_t<>(static_cast<std::int64_t>(position));
+}
+
+inline nullable<int_t<>> byte_rfind(const string_t &haystack, const string_t &needle) {
+	return byte_rfind(haystack, needle, int_t<>(0));
+}
+
 inline string_t byte_slice(const string_t &value, const int_t<> &offset, const int_t<> &length_value) {
 	const auto native_offset = offset.native_value();
 	const auto native_length = length_value.native_value();
@@ -503,35 +519,14 @@ inline int_t<> substr_compare(const string_t &main_str, const string_t &str_valu
 	return int_t<>(static_cast<std::int64_t>(compare_result));
 }
 
-inline string_t substr_replace(const string_t &subject, const string_t &replacement, const int_t<> &offset) {
-	const auto size = subject.size();
-	const auto start = scpp::normalize_substr_start(size, offset.native_value());
-	std::string out;
-	out.reserve(start + replacement.size());
-	out.append(subject.native_value(), 0, start);
-	out += replacement.native_value();
-	return string_t(std::move(out));
-}
-
+// Zero-length windows insert, but unusable negative-length windows are no-ops.
+// Both public forms share normalized byte bounds and one construction path.
 inline string_t substr_replace(const string_t &subject, const string_t &replacement, const int_t<> &offset, const int_t<> &length_value) {
 	const auto size = subject.size();
 	const auto start = scpp::normalize_substr_start(size, offset.native_value());
-	std::size_t end = start;
-	if (length_value.native_value() < 0) {
-		const auto distance_from_end = static_cast<std::uint64_t>(-(length_value.native_value() + 1)) + 1;
-		if (distance_from_end >= size) {
-			end = start;
-		} else {
-			end = size - static_cast<std::size_t>(distance_from_end);
-			if (end < start) {
-				end = start;
-			}
-		}
-	} else {
-		const auto remaining = size - start;
-		const auto requested = static_cast<std::uint64_t>(length_value.native_value());
-		const auto used = requested < remaining ? requested : remaining;
-		end = start + static_cast<std::size_t>(used);
+	const auto end = scpp::normalize_substr_end(size, start, length_value.native_value());
+	if (length_value.native_value() < 0 && end == start) {
+		return subject;
 	}
 	std::string out;
 	out.reserve(start + replacement.size() + (size - end));
@@ -539,6 +534,10 @@ inline string_t substr_replace(const string_t &subject, const string_t &replacem
 	out += replacement.native_value();
 	out.append(subject.native_value(), end, size - end);
 	return string_t(std::move(out));
+}
+
+inline string_t substr_replace(const string_t &subject, const string_t &replacement, const int_t<> &offset) {
+	return substr_replace(subject, replacement, offset, int_t<>(0));
 }
 
 inline string_t replace(const string_t &search, const string_t &replacement, const string_t &subject) {

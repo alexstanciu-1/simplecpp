@@ -228,6 +228,7 @@ final class Runtime_Catalog_Registration
 		$result->type = self::type($spec->type, $types);
 		if ($registry->type($result->type->type_id()) instanceof no_value_type) { throw new \RuntimeException('Void runtime parameter'); }
 		$result->mode = $spec->mode;
+		$result->requires_copy = $spec->requires_copy;
 		$result->access = $spec->access;
 		if ($spec->variadic) {
 			if (!$registry->has_capability($result->type, generic_contract::copyable_value)) {

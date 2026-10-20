@@ -6,6 +6,8 @@ function wrapper_equality_check(bool $ok, string $message): void {
 	if (!$ok) { throw new \LogicException($message); }
 }
 $carrier=$argv[2]; $right_carrier=$argv[3]; $payload=$argv[4]; $right_payload=$argv[5] ?? $payload;
+$ordinary_numeric=($argv[6] ?? '')==='--ordinary-numeric';
+$ordinary_cross=($argv[6] ?? '')==='--ordinary-cross';
 $scalar_pair=$carrier==='plain' && $right_carrier==='plain';
 $wrapped=$carrier==='plain'?$payload:($carrier==='nullable'?'?'.$payload:$carrier.'<'.$payload.'>');
 $right_wrapped=$right_carrier==='plain'?$right_payload:($right_carrier==='nullable'?'?'.$right_payload:$right_carrier.'<'.$right_payload.'>');
@@ -15,6 +17,10 @@ $second=$right_payload==='bool'?'true':($right_payload==='string'?'"a"':($right_
 $right_initial=$right_payload==='bool'?'false':($right_payload==='string'?'""':($right_payload==='float'?'0.0':'0'));
 $forms=['id'=>'===','nid'=>'!=='];
 $operations=$scalar_pair?['id'=>operator_operation::scalar_identical,'nid'=>operator_operation::scalar_not_identical]:['id'=>operator_operation::wrapper_identical,'nid'=>operator_operation::wrapper_not_identical];
+if ($ordinary_numeric || $ordinary_cross) {
+	$forms=['eq'=>'==','ne'=>'!='];
+	$operations=$scalar_pair?['eq'=>operator_operation::floating_equal,'ne'=>operator_operation::floating_not_equal]:['eq'=>operator_operation::wrapper_equal,'ne'=>operator_operation::wrapper_not_equal];
+}
 $program=''; $observers=''; $signatures=[];
 foreach ($types as $tag=>$type) {
 	$default=$tag==='n'?$initial:$right_initial;
@@ -22,15 +28,21 @@ foreach ($types as $tag=>$type) {
 		.'function mark'.$tag.'('.$type.' $v, int &$calls, int &$trace, int $digit, bool $fail): '.$type.' { $calls++; $trace=$trace*10+$digit; if ($fail) { if ($digit===1) { $bad=1/0; } else { $bad=1%0; } } return $v; } ';
 }
 foreach ($forms as $name=>$symbol) foreach ([['n','i']] as [$lt,$rt]) {
-	$id=$lt.$rt.$name; $left=$types[$lt]; $right=$types[$rt]; $invert=$name==='nid';
-	$expected=($invert?'!':'').'state_identical(sa,sb)';
+	$id=$lt.$rt.$name; $left=$types[$lt]; $right=$types[$rt]; $invert=$name==='nid' || $name==='ne';
+	$expected=($invert?'!':'').'state_matches(sa,sb)';
 	$signatures[]=[$left,$symbol,$right,'bool'];
 	$syntax=operator_test_source('$a '.$left.' = '.$initial.'; $b '.$right.' = '.$second.'; $out=($a '.$symbol.' $b);');
 	$node=$syntax->root->single_body()->body->statements[2]->expression->value;
 	$d=$node->require_binary_preparation()->decision;
 	wrapper_equality_check($d->operation===$operations[$name] && count($d->operand_extractions)===0 && count($d->operands)===2 && $d->result_type->matches(Language_Types::boolean(Model::$language_scope)), 'Equality must retain states without extraction');
 	foreach ($d->operands as $conversion) {
-		wrapper_equality_check($conversion->operation===conversion_operation::identity && $conversion->source_type->matches($conversion->target_type),'Equality changed operand representation');
+		if ($ordinary_numeric && $scalar_pair) {
+			$integer=$conversion->source_type->matches(Language_Types::integer(Model::$language_scope));
+			wrapper_equality_check($conversion->operation===($integer?conversion_operation::integer_to_floating:conversion_operation::identity)
+				&& $conversion->target_type->matches(Language_Types::floating(Model::$language_scope)),'Scalar mixed equality lost numeric promotion');
+		} else {
+			wrapper_equality_check($conversion->operation===conversion_operation::identity && $conversion->source_type->matches($conversion->target_type),'Equality changed operand representation');
+		}
 	}
 	Preparation_Cleanup::tree($syntax->root);
 	wrapper_equality_check($node->preparation()===null,'Cleanup retained equality facts');
@@ -53,13 +65,31 @@ foreach ($forms as $name=>$symbol) foreach ([['n','i']] as [$lt,$rt]) {
 	} finally { unlink($path); rmdir($dir); }
 }
 $negative_count=0;
+
 foreach (['==','!='] as $symbol) {
+ if (guarded_fixture_equality_pair($wrapped,$right_wrapped,$symbol)) { continue; }
  guarded_cross_reject('function bad('.$wrapped.' $a, '.$right_wrapped.' $b): bool { return $a '.$symbol.' $b; }'); ++$negative_count;
+}
+if ($ordinary_numeric && $scalar_pair) {
+ foreach (['plain','nullable','result','result_or_false','result_or_bool'] as $a)
+ foreach (['plain','nullable','result','result_or_false','result_or_bool'] as $b)
+ foreach (['==','!='] as $symbol) {
+  $left_type=$a==='plain'?$payload:($a==='nullable'?'?'.$payload:$a.'<'.$payload.'>');
+  $right_type=$b==='plain'?$right_payload:($b==='nullable'?'?'.$right_payload:$b.'<'.$right_payload.'>');
+  if (guarded_fixture_equality_pair($left_type,$right_type,$symbol)) { continue; }
+  guarded_cross_reject('function bad('.$left_type.' $a, '.$right_type.' $b): bool { return $a '.$symbol.' $b; }'); ++$negative_count;
+ }
 }
 foreach ($forms as $symbol) foreach (['int','float','bool','string','int16'] as $other) {
  if ($other===$payload) { continue; }
  $other_type=$right_carrier==='plain'?$other:($right_carrier==='nullable'?'?'.$other:$right_carrier.'<'.$other.'>');
  if (guarded_fixture_equality_pair($wrapped,$other_type,$symbol)) { continue; }
+ // Existing plain integer equality already admits signed-width pairs. Preserve
+ // that positive control; float/int16 and all carrier/int16 pairs still reject.
+ if ($ordinary_numeric && $scalar_pair && $payload==='int' && $other==='int16') {
+  operator_test_source('function existing(int $a, int16 $b): bool { return $a '.$symbol.' $b; }');
+  continue;
+ }
  guarded_cross_reject('function bad('.$wrapped.' $a, '.$other_type.' $b): bool { return $a '.$symbol.' $b; }'); ++$negative_count;
 }
 if ($payload!==$right_payload && in_array('bool',[$payload,$right_payload],true)) {
@@ -72,14 +102,14 @@ $cpp=str_replace('int main(int argc, char** argv)','int unused_entry(int argc, c
 $families=['nullable'=>0,'result'=>1,'result_or_false'=>2,'result_or_bool'=>3,'plain'=>4];
 $native=['int'=>['scpp::int_t<>','std::int64_t'],'float'=>['scpp::float_t','double'],'bool'=>['scpp::bool_t','bool'],'string'=>['scpp::string_t','std::string']];
 $cpp.='
-#include "'.__DIR__.'/cross_identity_support.hpp"
+#include "'.__DIR__.($ordinary_cross?'/cross_equality_support.hpp':($ordinary_numeric?'/mixed_equality_support.hpp':'/cross_identity_support.hpp')).'"
 using namespace identity_probe;
 ';
 $cpp.='using V='.$native[$payload][0].'; using P='.$native[$payload][1].'; using W='.$native[$right_payload][0].'; using Q='.$native[$right_payload][1].'; using S=State<P>;
 ';
 $cpp.='auto maken(S s) { return make<'.$families[$carrier].',V>(s); } auto makei(State<Q> s) { return make<'.$families[$right_carrier].',W>(s); }
 ';
-$cpp.='bool state_identical(S a,State<Q> b) { return oracle(a,b); }
+$cpp.='bool state_matches(S a,State<Q> b) { return '.($ordinary_cross?'cross_equality_probe':($ordinary_numeric?'mixed_equality_probe':'identity_probe')).'::oracle(a,b); }
 ';
 $cpp.= <<<'CPP'
 int classify(const std::exception& e) {

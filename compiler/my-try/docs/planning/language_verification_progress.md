@@ -2895,3 +2895,41 @@ with independent adaptation proofs and acceptance criteria. No repair goal,
 compiler/runtime fix or production behavior change was performed. Implementation
 failures, contract decisions, deferred scope and optional-environment blockers
 remain work for the agreed discussion/repair sequence.
+
+
+## V-L07 bounded completion — 2026-10-20
+
+[The completion goal](vl07_completion.md) verifies the final 168 approved carrier
+signatures: bool cross-family equality 24, float/mixed spaceship 72, integer power
+compounds 24 and string concatenation/assignment 48. Total supported coverage is
+**3,376 signatures across 37 slices** (2,832 binary, 64 unary, 480 compound).
+All **576 heterogeneous-equality/narrowing exclusions** have rejection/recovery
+proofs. There are no unresolved canonical candidates. The 129 prior existing-path
+cells reconcile to 17 supported operations and 112 observed rejections.
+
+V-L07 is closed within this agreed finite scope; original issue closure is now
+**20/64 (31.25%)**. Indexed unary and numeric compound updates, wider payloads,
+boxed/table/selection semantics and the separate presence-policy boundary remain
+explicit W1-W4 follow-ups with owners. Four indexed string-carrier `.=` probes pass
+through the existing protocol. No full matrix or native compiler rebuild ran.
+
+Evidence retains initial runtime/fixture failures and all repairs. Final acceptance
+covers 44 suites and 4,115 expected command exits on dev002; the generated runtime
+header is reproducible apart from its existing timestamp. See [exact results](vl07_completion_results.json)
+and [the reconciled inventory](vl07_inventory/README.md).
+
+
+## V-L06 and S04 closeout — 2026-10-20
+
+[The focused proof](float_identity.md) adds `float === float` and `float !== float`
+through existing identity preparation. Runtime support passes unchanged; signed
+zeros compare identical and NaNs non-identical without throwing. Ordered snapshots,
+source failures and retained recovery pass. All twelve original carrier cells and
+the unchanged pinned-v0.1 S04 process fixture pass, including deterministic sentinel
+controls. No newly exposed implementation blocker remains.
+
+V-L06 and S04 close; original issue closure is **22/64 (34.375%)**. V-L07's total
+stays 3,376 carrier signatures: these two new forms are scalar. Thirteen accepted
+suites account for 895 expected command exits on dev002. Runtime files remain
+unchanged; no full matrix or native compiler rebuild ran. Failed fixture attempts
+and historical findings are preserved in [the evidence](float_identity_results.json).

@@ -1,0 +1,924 @@
+{
+  "doc_status": "supporting",
+  "date": "2026-10-20",
+  "passed": true,
+  "host": "alex-ai@dev002.travelfuse.ro",
+  "snapshot": "/home/alex-ai/float-identity/20261020-01",
+  "head": "3c17c75e",
+  "signatures": [
+    [
+      "float",
+      "===",
+      "float",
+      "bool"
+    ],
+    [
+      "float",
+      "!==",
+      "float",
+      "bool"
+    ]
+  ],
+  "runtime_probe": {
+    "passed": true,
+    "runtime_pairs": 256,
+    "source_forms": 0,
+    "runtime_changes": false,
+    "full_matrix_run": false
+  },
+  "carrier_reconciliation": {
+    "passed": true,
+    "original_carrier_cells": 12,
+    "signatures": [
+      [
+        "?int",
+        "==",
+        "?int",
+        "bool"
+      ],
+      [
+        "?int",
+        "!=",
+        "?int",
+        "bool"
+      ],
+      [
+        "?int",
+        "===",
+        "?int",
+        "bool"
+      ],
+      [
+        "?int",
+        "!==",
+        "?int",
+        "bool"
+      ],
+      [
+        "result_or_false<int>",
+        "===",
+        "result_or_false<int>",
+        "bool"
+      ],
+      [
+        "result_or_false<int>",
+        "!==",
+        "result_or_false<int>",
+        "bool"
+      ],
+      [
+        "result_or_false<int>",
+        "==",
+        "result_or_false<int>",
+        "bool"
+      ],
+      [
+        "result_or_false<int>",
+        "!=",
+        "result_or_false<int>",
+        "bool"
+      ],
+      [
+        "result<int>",
+        "==",
+        "result<int>",
+        "bool"
+      ],
+      [
+        "result<int>",
+        "!=",
+        "result<int>",
+        "bool"
+      ],
+      [
+        "result<int>",
+        "===",
+        "result<int>",
+        "bool"
+      ],
+      [
+        "result<int>",
+        "!==",
+        "result<int>",
+        "bool"
+      ]
+    ],
+    "new_carrier_admission": false,
+    "full_matrix_run": false
+  },
+  "s04": {
+    "passed": true,
+    "source": "tests/php/process/strict_level_01/strict_process_001_shell_exec_contract.phs",
+    "source_sha256": "7a4c1dabc5d2b735e3c7c06cfbf3040b7d6ea65faa45b652cfd383419930c749",
+    "metadata_sha256": "7174690ff6e694c688280664cc7a7b4c6d2bd2799a0c5072490e499c4990704f",
+    "source_changed": false,
+    "expected_stdout": "strict_shell_exec_ok\n",
+    "control_forms": 4,
+    "full_matrix_run": false
+  },
+  "counts": {
+    "verification/runtime-baseline/logs/runtime-execute.stdout": {
+      "runtime_pairs": 256
+    },
+    "verification/float-identity-corrected/logs/source-execute.stdout": {
+      "binary_cases": 2048,
+      "local_cases": 16384,
+      "property_cases": 8192
+    },
+    "verification/float-identity-corrected/logs/runtime-execute.stdout": {
+      "runtime_pairs": 256
+    },
+    "verification/s04/logs/controls-execute.stdout": {
+      "branch_cases": 12
+    },
+    "verification/regression-original-carriers/logs/nullable-ordinary-execute.stdout": {
+      "binary_cases": 968,
+      "local_cases": 5324,
+      "property_cases": 2662
+    },
+    "verification/regression-original-carriers/logs/result_or_false-ordinary-execute.stdout": {
+      "binary_cases": 968,
+      "local_cases": 5324,
+      "property_cases": 2662
+    },
+    "verification/regression-original-carriers/logs/result-identity-execute.stdout": {
+      "binary_cases": 1568,
+      "local_cases": 10976,
+      "property_cases": 5488
+    },
+    "verification/regression-original-carriers/logs/nullable-identity-execute.stdout": {
+      "binary_cases": 968,
+      "local_cases": 5324,
+      "property_cases": 2662
+    },
+    "verification/regression-original-carriers/logs/result_or_false-identity-execute.stdout": {
+      "binary_cases": 968,
+      "local_cases": 5324,
+      "property_cases": 2662
+    },
+    "verification/regression-original-carriers/logs/result-ordinary-execute.stdout": {
+      "binary_cases": 1568,
+      "local_cases": 10976,
+      "property_cases": 5488
+    },
+    "verification/repaired-nullable-float/logs/native-execute.stdout": {
+      "binary_cases": 8960,
+      "local_cases": 61264,
+      "property_cases": 30632
+    },
+    "verification/repaired-result-equality/logs/float-native-execute.stdout": {
+      "binary_cases": 12672,
+      "local_cases": 104688,
+      "property_cases": 52344
+    },
+    "verification/repaired-result-equality/logs/int-native-execute.stdout": {
+      "binary_cases": 4992,
+      "local_cases": 26592,
+      "property_cases": 13296
+    },
+    "verification/repaired-result-equality/logs/bool-native-execute.stdout": {
+      "binary_cases": 1232,
+      "local_cases": 3752,
+      "property_cases": 1876
+    },
+    "verification/repaired-result-equality/logs/string-native-execute.stdout": {
+      "binary_cases": 21712,
+      "local_cases": 233128,
+      "property_cases": 116564
+    },
+    "verification/repaired-nonbool-sentinel/logs/result_or_false-float-native-execute.stdout": {
+      "binary_cases": 8960,
+      "local_cases": 61264,
+      "property_cases": 30632
+    },
+    "verification/repaired-nonbool-sentinel/logs/result_or_bool-int-native-execute.stdout": {
+      "binary_cases": 3312,
+      "local_cases": 13896,
+      "property_cases": 6948
+    },
+    "verification/repaired-nonbool-sentinel/logs/result_or_bool-string-native-execute.stdout": {
+      "binary_cases": 17920,
+      "local_cases": 173440,
+      "property_cases": 86720
+    },
+    "verification/repaired-nonbool-sentinel/logs/result_or_bool-float-native-execute.stdout": {
+      "binary_cases": 9840,
+      "local_cases": 70680,
+      "property_cases": 35340
+    },
+    "verification/repaired-nonbool-sentinel/logs/result_or_false-int-native-execute.stdout": {
+      "binary_cases": 2816,
+      "local_cases": 10816,
+      "property_cases": 5408
+    },
+    "verification/repaired-nonbool-sentinel/logs/result_or_false-string-native-execute.stdout": {
+      "binary_cases": 16720,
+      "local_cases": 156104,
+      "property_cases": 78052
+    },
+    "verification/regression-mixed-identity/logs/nullable-plain-int-float-execute.stdout": {
+      "binary_cases": 1408,
+      "local_cases": 7744,
+      "property_cases": 3872
+    },
+    "verification/regression-mixed-identity/logs/result_or_bool-result_or_bool-int-float-execute.stdout": {
+      "binary_cases": 1728,
+      "local_cases": 10368,
+      "property_cases": 5184
+    },
+    "verification/regression-mixed-identity/logs/plain-plain-int-float-execute.stdout": {
+      "binary_cases": 1280,
+      "local_cases": 6400,
+      "property_cases": 3200
+    },
+    "verification/regression-mixed-identity/logs/result-result-float-int-execute.stdout": {
+      "binary_cases": 2240,
+      "local_cases": 22400,
+      "property_cases": 11200
+    },
+    "verification/regression-mixed-identity/logs/plain-nullable-float-int-execute.stdout": {
+      "binary_cases": 1408,
+      "local_cases": 11264,
+      "property_cases": 5632
+    },
+    "verification/regression-mixed-identity/logs/plain-result-float-int-execute.stdout": {
+      "binary_cases": 1792,
+      "local_cases": 14336,
+      "property_cases": 7168
+    },
+    "verification/regression-mixed-identity/logs/plain-result_or_false-int-float-execute.stdout": {
+      "binary_cases": 1360,
+      "local_cases": 6800,
+      "property_cases": 3400
+    },
+    "verification/regression-mixed-identity/logs/result_or_false-result_or_bool-int-float-execute.stdout": {
+      "binary_cases": 1584,
+      "local_cases": 8712,
+      "property_cases": 4356
+    },
+    "verification/regression-mixed-identity/logs/result_or_false-plain-float-int-execute.stdout": {
+      "binary_cases": 1360,
+      "local_cases": 11560,
+      "property_cases": 5780
+    },
+    "verification/regression-mixed-identity/logs/result_or_false-nullable-float-int-execute.stdout": {
+      "binary_cases": 1496,
+      "local_cases": 12716,
+      "property_cases": 6358
+    },
+    "verification/regression-mixed-identity/logs/plain-nullable-int-float-execute.stdout": {
+      "binary_cases": 1360,
+      "local_cases": 6800,
+      "property_cases": 3400
+    },
+    "verification/regression-mixed-identity/logs/result_or_bool-result_or_bool-float-int-execute.stdout": {
+      "binary_cases": 1728,
+      "local_cases": 15552,
+      "property_cases": 7776
+    },
+    "verification/regression-mixed-identity/logs/result_or_false-result_or_bool-float-int-execute.stdout": {
+      "binary_cases": 1632,
+      "local_cases": 13872,
+      "property_cases": 6936
+    },
+    "verification/regression-mixed-identity/logs/int-float-runtime-execute.stdout": {
+      "cases": 5104
+    },
+    "verification/regression-mixed-identity/logs/nullable-result_or_bool-int-float-execute.stdout": {
+      "binary_cases": 1584,
+      "local_cases": 8712,
+      "property_cases": 4356
+    },
+    "verification/regression-mixed-identity/logs/plain-result_or_bool-float-int-execute.stdout": {
+      "binary_cases": 1536,
+      "local_cases": 12288,
+      "property_cases": 6144
+    },
+    "verification/regression-mixed-identity/logs/plain-result_or_false-float-int-execute.stdout": {
+      "binary_cases": 1408,
+      "local_cases": 11264,
+      "property_cases": 5632
+    },
+    "verification/regression-mixed-identity/logs/result-nullable-int-float-execute.stdout": {
+      "binary_cases": 1904,
+      "local_cases": 13328,
+      "property_cases": 6664
+    },
+    "verification/regression-mixed-identity/logs/result-plain-float-int-execute.stdout": {
+      "binary_cases": 1600,
+      "local_cases": 16000,
+      "property_cases": 8000
+    },
+    "verification/regression-mixed-identity/logs/nullable-result_or_bool-float-int-execute.stdout": {
+      "binary_cases": 1632,
+      "local_cases": 13872,
+      "property_cases": 6936
+    },
+    "verification/regression-mixed-identity/logs/result_or_false-result-float-int-execute.stdout": {
+      "binary_cases": 1904,
+      "local_cases": 16184,
+      "property_cases": 8092
+    },
+    "verification/regression-mixed-identity/logs/result_or_bool-plain-float-int-execute.stdout": {
+      "binary_cases": 1440,
+      "local_cases": 12960,
+      "property_cases": 6480
+    },
+    "verification/regression-mixed-identity/logs/result_or_false-plain-int-float-execute.stdout": {
+      "binary_cases": 1408,
+      "local_cases": 7744,
+      "property_cases": 3872
+    },
+    "verification/regression-mixed-identity/logs/result_or_false-result-int-float-execute.stdout": {
+      "binary_cases": 1760,
+      "local_cases": 9680,
+      "property_cases": 4840
+    },
+    "verification/regression-mixed-identity/logs/result_or_false-nullable-int-float-execute.stdout": {
+      "binary_cases": 1496,
+      "local_cases": 8228,
+      "property_cases": 4114
+    },
+    "verification/regression-mixed-identity/logs/result-result_or_false-int-float-execute.stdout": {
+      "binary_cases": 1904,
+      "local_cases": 13328,
+      "property_cases": 6664
+    },
+    "verification/regression-mixed-identity/logs/plain-result-int-float-execute.stdout": {
+      "binary_cases": 1600,
+      "local_cases": 8000,
+      "property_cases": 4000
+    },
+    "verification/regression-mixed-identity/logs/result_or_false-result_or_false-float-int-execute.stdout": {
+      "binary_cases": 1496,
+      "local_cases": 12716,
+      "property_cases": 6358
+    },
+    "verification/regression-mixed-identity/logs/nullable-nullable-float-int-execute.stdout": {
+      "binary_cases": 1496,
+      "local_cases": 12716,
+      "property_cases": 6358
+    },
+    "verification/regression-mixed-identity/logs/nullable-result-int-float-execute.stdout": {
+      "binary_cases": 1760,
+      "local_cases": 9680,
+      "property_cases": 4840
+    },
+    "verification/regression-mixed-identity/logs/result-result_or_bool-float-int-execute.stdout": {
+      "binary_cases": 1920,
+      "local_cases": 19200,
+      "property_cases": 9600
+    },
+    "verification/regression-mixed-identity/logs/result-result_or_bool-int-float-execute.stdout": {
+      "binary_cases": 2016,
+      "local_cases": 14112,
+      "property_cases": 7056
+    },
+    "verification/regression-mixed-identity/logs/result_or_bool-nullable-int-float-execute.stdout": {
+      "binary_cases": 1632,
+      "local_cases": 9792,
+      "property_cases": 4896
+    },
+    "verification/regression-mixed-identity/logs/result_or_bool-result_or_false-float-int-execute.stdout": {
+      "binary_cases": 1584,
+      "local_cases": 14256,
+      "property_cases": 7128
+    },
+    "verification/regression-mixed-identity/logs/nullable-plain-float-int-execute.stdout": {
+      "binary_cases": 1360,
+      "local_cases": 11560,
+      "property_cases": 5780
+    },
+    "verification/regression-mixed-identity/logs/plain-plain-float-int-execute.stdout": {
+      "binary_cases": 1280,
+      "local_cases": 10240,
+      "property_cases": 5120
+    },
+    "verification/regression-mixed-identity/logs/result_or_bool-result_or_false-int-float-execute.stdout": {
+      "binary_cases": 1632,
+      "local_cases": 9792,
+      "property_cases": 4896
+    },
+    "verification/regression-mixed-identity/logs/nullable-result-float-int-execute.stdout": {
+      "binary_cases": 1904,
+      "local_cases": 16184,
+      "property_cases": 8092
+    },
+    "verification/regression-mixed-identity/logs/result-result-int-float-execute.stdout": {
+      "binary_cases": 2240,
+      "local_cases": 15680,
+      "property_cases": 7840
+    },
+    "verification/regression-mixed-identity/logs/result_or_bool-result-int-float-execute.stdout": {
+      "binary_cases": 1920,
+      "local_cases": 11520,
+      "property_cases": 5760
+    },
+    "verification/regression-mixed-identity/logs/nullable-result_or_false-int-float-execute.stdout": {
+      "binary_cases": 1496,
+      "local_cases": 8228,
+      "property_cases": 4114
+    },
+    "verification/regression-mixed-identity/logs/result_or_bool-result-float-int-execute.stdout": {
+      "binary_cases": 2016,
+      "local_cases": 18144,
+      "property_cases": 9072
+    },
+    "verification/regression-mixed-identity/logs/result-result_or_false-float-int-execute.stdout": {
+      "binary_cases": 1760,
+      "local_cases": 17600,
+      "property_cases": 8800
+    },
+    "verification/regression-mixed-identity/logs/result-nullable-float-int-execute.stdout": {
+      "binary_cases": 1760,
+      "local_cases": 17600,
+      "property_cases": 8800
+    },
+    "verification/regression-mixed-identity/logs/plain-result_or_bool-int-float-execute.stdout": {
+      "binary_cases": 1440,
+      "local_cases": 7200,
+      "property_cases": 3600
+    },
+    "verification/regression-mixed-identity/logs/nullable-result_or_false-float-int-execute.stdout": {
+      "binary_cases": 1496,
+      "local_cases": 12716,
+      "property_cases": 6358
+    },
+    "verification/regression-mixed-identity/logs/result-plain-int-float-execute.stdout": {
+      "binary_cases": 1792,
+      "local_cases": 12544,
+      "property_cases": 6272
+    },
+    "verification/regression-mixed-identity/logs/result_or_bool-nullable-float-int-execute.stdout": {
+      "binary_cases": 1584,
+      "local_cases": 14256,
+      "property_cases": 7128
+    },
+    "verification/regression-mixed-identity/logs/result_or_bool-plain-int-float-execute.stdout": {
+      "binary_cases": 1536,
+      "local_cases": 9216,
+      "property_cases": 4608
+    },
+    "verification/regression-mixed-identity/logs/result_or_false-result_or_false-int-float-execute.stdout": {
+      "binary_cases": 1496,
+      "local_cases": 8228,
+      "property_cases": 4114
+    },
+    "verification/regression-mixed-identity/logs/nullable-nullable-int-float-execute.stdout": {
+      "binary_cases": 1496,
+      "local_cases": 8228,
+      "property_cases": 4114
+    },
+    "verification/regression-mixed-identity/logs/float-int-runtime-execute.stdout": {
+      "cases": 5104
+    },
+    "verification/regression-mixed-equality/logs/nullable-plain-int-float-execute.stdout": {
+      "binary_cases": 1408,
+      "local_cases": 7744,
+      "property_cases": 3872
+    },
+    "verification/regression-mixed-equality/logs/nullable-plain-float-int-runtime-execute.stdout": {
+      "cases": 170
+    },
+    "verification/regression-mixed-equality/logs/plain-plain-int-float-execute.stdout": {
+      "binary_cases": 1280,
+      "local_cases": 6400,
+      "property_cases": 3200
+    },
+    "verification/regression-mixed-equality/logs/plain-nullable-float-int-runtime-execute.stdout": {
+      "cases": 176
+    },
+    "verification/regression-mixed-equality/logs/result-result-float-int-execute.stdout": {
+      "binary_cases": 2240,
+      "local_cases": 22400,
+      "property_cases": 11200
+    },
+    "verification/regression-mixed-equality/logs/plain-nullable-float-int-execute.stdout": {
+      "binary_cases": 1408,
+      "local_cases": 11264,
+      "property_cases": 5632
+    },
+    "verification/regression-mixed-equality/logs/plain-result-float-int-execute.stdout": {
+      "binary_cases": 1792,
+      "local_cases": 14336,
+      "property_cases": 7168
+    },
+    "verification/regression-mixed-equality/logs/nullable-plain-int-float-runtime-execute.stdout": {
+      "cases": 176
+    },
+    "verification/regression-mixed-equality/logs/result-plain-float-int-runtime-execute.stdout": {
+      "cases": 200
+    },
+    "verification/regression-mixed-equality/logs/plain-nullable-int-float-execute.stdout": {
+      "binary_cases": 1360,
+      "local_cases": 6800,
+      "property_cases": 3400
+    },
+    "verification/regression-mixed-equality/logs/result-plain-float-int-execute.stdout": {
+      "binary_cases": 1600,
+      "local_cases": 16000,
+      "property_cases": 8000
+    },
+    "verification/regression-mixed-equality/logs/plain-plain-float-int-runtime-execute.stdout": {
+      "cases": 160
+    },
+    "verification/regression-mixed-equality/logs/plain-nullable-int-float-runtime-execute.stdout": {
+      "cases": 170
+    },
+    "verification/regression-mixed-equality/logs/result-result-int-float-runtime-execute.stdout": {
+      "cases": 280
+    },
+    "verification/regression-mixed-equality/logs/plain-result-int-float-execute.stdout": {
+      "binary_cases": 1600,
+      "local_cases": 8000,
+      "property_cases": 4000
+    },
+    "verification/regression-mixed-equality/logs/plain-plain-int-float-runtime-execute.stdout": {
+      "cases": 160
+    },
+    "verification/regression-mixed-equality/logs/nullable-nullable-float-int-execute.stdout": {
+      "binary_cases": 1496,
+      "local_cases": 12716,
+      "property_cases": 6358
+    },
+    "verification/regression-mixed-equality/logs/nullable-plain-float-int-execute.stdout": {
+      "binary_cases": 1360,
+      "local_cases": 11560,
+      "property_cases": 5780
+    },
+    "verification/regression-mixed-equality/logs/plain-plain-float-int-execute.stdout": {
+      "binary_cases": 1280,
+      "local_cases": 10240,
+      "property_cases": 5120
+    },
+    "verification/regression-mixed-equality/logs/result-result-int-float-execute.stdout": {
+      "binary_cases": 2240,
+      "local_cases": 15680,
+      "property_cases": 7840
+    },
+    "verification/regression-mixed-equality/logs/plain-result-float-int-runtime-execute.stdout": {
+      "cases": 224
+    },
+    "verification/regression-mixed-equality/logs/plain-result-int-float-runtime-execute.stdout": {
+      "cases": 200
+    },
+    "verification/regression-mixed-equality/logs/nullable-nullable-float-int-runtime-execute.stdout": {
+      "cases": 187
+    },
+    "verification/regression-mixed-equality/logs/nullable-nullable-int-float-runtime-execute.stdout": {
+      "cases": 187
+    },
+    "verification/regression-mixed-equality/logs/result-result-float-int-runtime-execute.stdout": {
+      "cases": 280
+    },
+    "verification/regression-mixed-equality/logs/result-plain-int-float-runtime-execute.stdout": {
+      "cases": 224
+    },
+    "verification/regression-mixed-equality/logs/result-plain-int-float-execute.stdout": {
+      "binary_cases": 1792,
+      "local_cases": 12544,
+      "property_cases": 6272
+    },
+    "verification/regression-mixed-equality/logs/nullable-nullable-int-float-execute.stdout": {
+      "binary_cases": 1496,
+      "local_cases": 8228,
+      "property_cases": 4114
+    },
+    "verification/regression-float-spaceship/logs/ordering-result_or_bool-result_or_bool-int-float-execute.stdout": {
+      "cases": 6048
+    },
+    "verification/regression-float-spaceship/logs/ordering-nullable-result_or_bool-float-float-execute.stdout": {
+      "cases": 11628
+    },
+    "verification/regression-float-spaceship/logs/ordering-result_or_bool-result_or_false-int-float-execute.stdout": {
+      "cases": 5712
+    },
+    "verification/regression-float-spaceship/logs/ordering-result_or_bool-result_or_false-float-float-execute.stdout": {
+      "cases": 12240
+    },
+    "verification/regression-float-spaceship/logs/ordering-result-result_or_bool-float-int-execute.stdout": {
+      "cases": 10560
+    },
+    "verification/regression-float-spaceship/logs/ordering-result_or_bool-nullable-float-float-execute.stdout": {
+      "cases": 12240
+    },
+    "verification/regression-float-spaceship/logs/ordering-result_or_false-plain-float-float-execute.stdout": {
+      "cases": 10336
+    },
+    "verification/regression-float-spaceship/logs/ordering-plain-result-float-float-execute.stdout": {
+      "cases": 11520
+    },
+    "verification/regression-float-spaceship/logs/ordering-plain-nullable-float-int-execute.stdout": {
+      "cases": 6336
+    },
+    "verification/regression-float-spaceship/logs/ordering-plain-result_or_bool-float-float-execute.stdout": {
+      "cases": 10368
+    },
+    "verification/regression-float-spaceship/logs/ordering-result-result_or_false-float-int-execute.stdout": {
+      "cases": 9680
+    },
+    "verification/regression-float-spaceship/logs/ordering-result-result_or_false-int-float-execute.stdout": {
+      "cases": 7616
+    },
+    "verification/regression-float-spaceship/logs/ordering-result_or_bool-result-float-int-execute.stdout": {
+      "cases": 10080
+    },
+    "verification/regression-float-spaceship/logs/ordering-result_or_bool-result_or_bool-float-int-execute.stdout": {
+      "cases": 8640
+    },
+    "verification/regression-float-spaceship/logs/ordering-plain-nullable-float-float-execute.stdout": {
+      "cases": 9792
+    },
+    "verification/regression-float-spaceship/logs/ordering-result-nullable-int-float-execute.stdout": {
+      "cases": 7616
+    },
+    "verification/regression-float-spaceship/logs/ordering-result_or_bool-plain-float-float-execute.stdout": {
+      "cases": 11520
+    },
+    "verification/regression-float-spaceship/logs/ordering-nullable-nullable-float-int-execute.stdout": {
+      "cases": 7106
+    },
+    "verification/regression-float-spaceship/logs/ordering-result_or_bool-result-int-float-execute.stdout": {
+      "cases": 6720
+    },
+    "verification/regression-float-spaceship/logs/ordering-result_or_bool-nullable-float-int-execute.stdout": {
+      "cases": 7920
+    },
+    "verification/regression-float-spaceship/logs/ordering-nullable-result-int-float-execute.stdout": {
+      "cases": 5720
+    },
+    "verification/regression-float-spaceship/logs/ordering-result_or_false-result_or_bool-float-float-execute.stdout": {
+      "cases": 11628
+    },
+    "verification/regression-float-spaceship/logs/ordering-nullable-result_or_bool-int-float-execute.stdout": {
+      "cases": 5148
+    },
+    "verification/regression-float-spaceship/logs/ordering-plain-result_or_false-float-int-execute.stdout": {
+      "cases": 6336
+    },
+    "verification/regression-float-spaceship/logs/ordering-nullable-result_or_bool-float-int-execute.stdout": {
+      "cases": 7752
+    },
+    "verification/regression-float-spaceship/logs/ordering-result-plain-int-float-execute.stdout": {
+      "cases": 7168
+    },
+    "verification/regression-float-spaceship/logs/ordering-nullable-plain-float-float-execute.stdout": {
+      "cases": 10336
+    },
+    "verification/regression-float-spaceship/logs/ordering-result_or_false-result_or_bool-int-float-execute.stdout": {
+      "cases": 5148
+    },
+    "verification/regression-float-spaceship/logs/ordering-result_or_false-nullable-float-int-execute.stdout": {
+      "cases": 7106
+    },
+    "verification/regression-float-spaceship/logs/ordering-result_or_false-result_or_bool-float-int-execute.stdout": {
+      "cases": 7752
+    },
+    "verification/regression-float-spaceship/logs/ordering-result-nullable-float-int-execute.stdout": {
+      "cases": 9680
+    },
+    "verification/regression-float-spaceship/logs/ordering-result_or_false-nullable-float-float-execute.stdout": {
+      "cases": 10982
+    },
+    "verification/regression-float-spaceship/logs/ordering-result-result_or_false-float-float-execute.stdout": {
+      "cases": 14960
+    },
+    "verification/regression-float-spaceship/logs/ordering-result-result-int-float-execute.stdout": {
+      "cases": 8960
+    },
+    "verification/regression-float-spaceship/logs/ordering-nullable-nullable-int-float-execute.stdout": {
+      "cases": 4862
+    },
+    "verification/regression-float-spaceship/logs/ordering-plain-plain-float-int-execute.stdout": {
+      "cases": 5760
+    },
+    "verification/regression-float-spaceship/logs/ordering-plain-result_or_bool-float-int-execute.stdout": {
+      "cases": 6912
+    },
+    "verification/regression-float-spaceship/logs/ordering-result_or_bool-result_or_bool-float-float-execute.stdout": {
+      "cases": 12960
+    },
+    "verification/regression-float-spaceship/logs/ordering-result-result-float-float-execute.stdout": {
+      "cases": 17600
+    },
+    "verification/regression-float-spaceship/logs/ordering-result-nullable-float-float-execute.stdout": {
+      "cases": 14960
+    },
+    "verification/regression-float-spaceship/logs/ordering-result_or_false-result_or_false-float-int-execute.stdout": {
+      "cases": 7106
+    },
+    "verification/regression-float-spaceship/logs/ordering-plain-result-float-int-execute.stdout": {
+      "cases": 8064
+    },
+    "verification/regression-float-spaceship/logs/ordering-nullable-result_or_false-float-int-execute.stdout": {
+      "cases": 7106
+    },
+    "verification/regression-float-spaceship/logs/ordering-result_or_bool-nullable-int-float-execute.stdout": {
+      "cases": 5712
+    },
+    "verification/regression-float-spaceship/logs/ordering-plain-plain-int-float-execute.stdout": {
+      "cases": 3840
+    },
+    "verification/regression-float-spaceship/logs/ordering-result_or_false-result-float-int-execute.stdout": {
+      "cases": 9044
+    },
+    "verification/regression-float-spaceship/logs/ordering-result-result-float-int-execute.stdout": {
+      "cases": 12320
+    },
+    "verification/regression-float-spaceship/logs/ordering-nullable-result_or_false-int-float-execute.stdout": {
+      "cases": 4862
+    },
+    "verification/regression-float-spaceship/logs/ordering-result_or_bool-result_or_false-float-int-execute.stdout": {
+      "cases": 7920
+    },
+    "verification/regression-float-spaceship/logs/ordering-nullable-result_or_false-float-float-execute.stdout": {
+      "cases": 10982
+    },
+    "verification/regression-float-spaceship/logs/ordering-result_or_false-result_or_false-int-float-execute.stdout": {
+      "cases": 4862
+    },
+    "verification/regression-float-spaceship/logs/ordering-result_or_false-result-float-float-execute.stdout": {
+      "cases": 12920
+    },
+    "verification/regression-float-spaceship/logs/ordering-result_or_false-plain-float-int-execute.stdout": {
+      "cases": 6460
+    },
+    "verification/regression-float-spaceship/logs/ordering-result_or_false-result-int-float-execute.stdout": {
+      "cases": 5720
+    },
+    "verification/regression-float-spaceship/logs/ordering-result-result_or_bool-int-float-execute.stdout": {
+      "cases": 8064
+    },
+    "verification/regression-float-spaceship/logs/ordering-result-plain-float-float-execute.stdout": {
+      "cases": 14080
+    },
+    "verification/regression-float-spaceship/logs/ordering-result-plain-float-int-execute.stdout": {
+      "cases": 8800
+    },
+    "verification/regression-float-spaceship/logs/ordering-result_or_bool-plain-int-float-execute.stdout": {
+      "cases": 5376
+    },
+    "verification/regression-float-spaceship/logs/ordering-plain-result_or_false-float-float-execute.stdout": {
+      "cases": 9792
+    },
+    "verification/regression-float-spaceship/logs/ordering-result_or_bool-plain-float-int-execute.stdout": {
+      "cases": 7200
+    },
+    "verification/regression-float-spaceship/logs/ordering-plain-result_or_false-int-float-execute.stdout": {
+      "cases": 4080
+    },
+    "verification/regression-float-spaceship/logs/ordering-nullable-plain-float-int-execute.stdout": {
+      "cases": 6460
+    },
+    "verification/regression-float-spaceship/logs/ordering-result_or_bool-result-float-float-execute.stdout": {
+      "cases": 14400
+    },
+    "verification/regression-float-spaceship/logs/ordering-result-result_or_bool-float-float-execute.stdout": {
+      "cases": 15840
+    },
+    "verification/regression-float-spaceship/logs/ordering-plain-nullable-int-float-execute.stdout": {
+      "cases": 4080
+    },
+    "verification/regression-float-spaceship/logs/ordering-result_or_false-result_or_false-float-float-execute.stdout": {
+      "cases": 10982
+    },
+    "verification/regression-float-spaceship/logs/ordering-result_or_false-plain-int-float-execute.stdout": {
+      "cases": 4576
+    },
+    "verification/regression-float-spaceship/logs/ordering-plain-result-int-float-execute.stdout": {
+      "cases": 4800
+    },
+    "verification/regression-float-spaceship/logs/ordering-nullable-plain-int-float-execute.stdout": {
+      "cases": 4576
+    },
+    "verification/regression-float-spaceship/logs/ordering-nullable-result-float-float-execute.stdout": {
+      "cases": 12920
+    },
+    "verification/regression-float-spaceship/logs/ordering-nullable-result-float-int-execute.stdout": {
+      "cases": 9044
+    },
+    "verification/regression-float-spaceship/logs/ordering-result_or_false-nullable-int-float-execute.stdout": {
+      "cases": 4862
+    },
+    "verification/regression-float-spaceship/logs/ordering-plain-plain-float-float-execute.stdout": {
+      "cases": 9216
+    },
+    "verification/regression-float-spaceship/logs/ordering-nullable-nullable-float-float-execute.stdout": {
+      "cases": 10982
+    },
+    "verification/regression-float-spaceship/logs/ordering-plain-result_or_bool-int-float-execute.stdout": {
+      "cases": 4320
+    }
+  },
+  "suites": {
+    "runtime-baseline": {
+      "commands": 3,
+      "all_expected_exits": true
+    },
+    "float-identity-corrected": {
+      "commands": 8,
+      "all_expected_exits": true
+    },
+    "s04": {
+      "commands": 8,
+      "all_expected_exits": true
+    },
+    "regression-original-carriers": {
+      "commands": 31,
+      "all_expected_exits": true
+    },
+    "regression-float-operators": {
+      "commands": 6,
+      "all_expected_exits": true
+    },
+    "repaired-nullable-float": {
+      "commands": 6,
+      "all_expected_exits": true
+    },
+    "repaired-result-equality": {
+      "commands": 21,
+      "all_expected_exits": true
+    },
+    "repaired-nonbool-sentinel": {
+      "commands": 31,
+      "all_expected_exits": true
+    },
+    "regression-mixed-identity": {
+      "commands": 255,
+      "all_expected_exits": true
+    },
+    "regression-scalar-admission": {
+      "commands": 39,
+      "all_expected_exits": true
+    },
+    "regression-string-identity": {
+      "commands": 12,
+      "all_expected_exits": true
+    },
+    "regression-mixed-equality": {
+      "commands": 99,
+      "all_expected_exits": true
+    },
+    "regression-float-spaceship": {
+      "commands": 376,
+      "all_expected_exits": true
+    }
+  },
+  "regression_original_exits": {
+    "original-carriers": 0,
+    "float-operators": 0,
+    "nullable-float": 1,
+    "result-equality": 1,
+    "nonbool-sentinel": 1,
+    "mixed-identity": 0,
+    "scalar-admission": 0,
+    "string-identity": 0,
+    "mixed-equality": 0,
+    "float-spaceship": 0
+  },
+  "regression_repair_exits": {
+    "nullable-float": 0,
+    "result-equality": 0,
+    "nonbool-sentinel": 0
+  },
+  "regression_resolved_exits": {
+    "original-carriers": 0,
+    "float-operators": 0,
+    "nullable-float": 0,
+    "result-equality": 0,
+    "nonbool-sentinel": 0,
+    "mixed-identity": 0,
+    "scalar-admission": 0,
+    "string-identity": 0,
+    "mixed-equality": 0,
+    "float-spaceship": 0
+  },
+  "source_integrity": {
+    "checked": 6264,
+    "mismatches": [],
+    "runtime_files_unchanged": 218
+  },
+  "toolchain": {
+    "php": "PHP 8.5.11 (cli) (built: Sep 24 2026 13:49:29) (NTS)\nCopyright (c) The PHP Group\nBuilt by Ubuntu\nZend Engine v4.5.11, Copyright (c) Zend Technologies\n    with Zend OPcache v8.5.11, Copyright (c), by Zend Technologies\n",
+    "clang": "Ubuntu clang version 18.1.3 (1ubuntu1)\nTarget: x86_64-pc-linux-gnu\nThread model: posix\nInstalledDir: /usr/bin\n",
+    "python": "Python 3.12.3\n"
+  },
+  "runtime_changes": false,
+  "full_matrix_run": false,
+  "native_compiler_rebuilt": false,
+  "remaining_blockers_in_scope": [],
+  "newly_exposed_implementation_blockers": [],
+  "attempts": {
+    "runtime_first": "Existing runtime passed all256 pairs before admission change.",
+    "float_source_first": "Fixture exclusion helper incorrectly rejected already-supported ordinary float equality; corrected matching-plain pair classification.",
+    "wrapper_regressions": "Three suites shared an obsolete scalar float ===/!== rejection; removed only that exclusion, then reran all three.",
+    "s04": "Unchanged original source and deterministic controls passed first attempt; no process/provider/output implementation changed."
+  },
+  "evidence_sha256": "9c2e0a99e150d5986384397dc64daec81f76636193e80cb7131ff412b7cd2616",
+  "original_issue_closure": {
+    "closed": 22,
+    "total": 64,
+    "percent": 34.375
+  },
+  "vl07_carrier_signature_count_unchanged": 3376
+}

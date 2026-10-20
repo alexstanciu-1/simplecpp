@@ -38,24 +38,29 @@ GROUPS = {
  'E2NB': ('verified', 'Non-bool sentinel same-carrier equality and carrier/plain strict identity', 'nonbool_sentinel_equality.md; nonbool_sentinel_equality_results.json'),
  'E2': ('verified', 'Sentinel/plain non-bool ordinary equality', 'sentinel_plain_equality.md; sentinel_plain_equality_results.json'),
  'E3I': ('verified', 'Cross-family matching-payload strict identity', 'cross_identity.md; cross_identity_results.json'),
- 'E3': ('needs-design', 'Cross-family matching-payload ordinary equality', 'runtime/specs/spec.md sections 6.10, 7a; distinguish equality from identity normalization'),
+ 'E3NB': ('verified', 'Cross-family matching non-bool ordinary equality', 'cross_equality.md; cross_equality_results.json'),
+ 'E3': ('verified', 'Cross-family matching-bool ordinary equality', 'vl07_completion.md; vl07_completion_results.json; specs/expression_evaluation.md'),
  'E4I': ('verified', 'Mixed int/float strict identity', 'mixed_identity.md; mixed_identity_results.json'),
- 'E4': ('needs-design', 'Mixed int/float ordinary equality', 'runtime/specs/spec.md section 7a; mixed equality/promotion and NaN decisions'),
+ 'E4NR': ('verified', 'Nullable/structured Result mixed int/float ordinary equality', 'mixed_equality.md; mixed_equality_results.json'),
+ 'E4S': ('verified', 'Sentinel-carrier mixed int/float ordinary equality', 'sentinel_mixed_equality.md; sentinel_mixed_equality_results.json'),
+ 'E4': ('verified', 'Cross-family mixed int/float ordinary equality', 'cross_mixed_equality.md; cross_mixed_equality_results.json'),
  'E5BNI': ('verified', 'Bool/numeric strict identity', 'bool_numeric_identity.md; bool_numeric_identity_results.json'),
- 'E5': ('needs-design', 'Other heterogeneous equality/identity, including bool sentinels', 'runtime/specs/spec.md sections 6.10, 7a; payload/sentinel distinctions'),
+ 'E5SI': ('verified', 'Heterogeneous string strict identity', 'string_other_identity.md; string_other_identity_results.json'),
+ 'E5': ('intentional-rejection', 'Other heterogeneous ordinary equality, including bool sentinels', 'vl07_completion.md; vl07_completion_results.json; specs/expression_evaluation.md'),
  'U1': ('verified', 'Numeric carrier prefix/postfix updates', 'carrier_updates.md; carrier_updates_results.json; V-R10 repaired'),
  'C1IA': ('verified', 'Canonical-int arithmetic compounds, same carrier/plain', 'int_carrier_compounds.md; int_carrier_compounds_results.json'),
  'C1IB': ('verified', 'Canonical-int remainder/bitwise/shift compounds, same carrier/plain', 'int_bitwise_compounds.md; int_bitwise_compounds_results.json'),
  'C1IX': ('verified', 'Canonical-int cross-family compounds', 'int_cross_compounds.md; int_cross_compounds_results.json'),
  'C1': ('verified', 'Exact-float compound updates', 'float_compounds.md; float_compounds_results.json'),
  'C2W': ('verified', 'Float-destination mixed compounds', 'widening_compounds.md; widening_compounds_results.json; specs/expression_evaluation.md'),
- 'C2': ('needs-design', 'Int-destination mixed compound updates', 'specs/expression_evaluation.md compound updates; conversion/write-back policy'),
- 'C3': ('needs-design', 'Canonical-int power assignment', 'specs/integer_power.md explicitly leaves **= outside contract'),
+ 'C2': ('intentional-rejection', 'Int-destination mixed compound updates', 'vl07_completion.md; vl07_completion_results.json; specs/expression_evaluation.md'),
+ 'C3': ('verified', 'Canonical-int power assignment', 'vl07_completion.md; vl07_completion_results.json; specs/expression_evaluation.md'),
  'O1': ('verified', 'Mixed numeric ordering with int-to-float conversion', 'mixed_ordering.md; mixed_ordering_results.json; specs/expression_evaluation.md'),
- 'O2': ('needs-design', 'Float or mixed numeric spaceship', 's2s_scalar_operators.md: bounded spaceship gate; unordered NaN policy'),
- 'S1': ('needs-design', 'String concatenation / concatenation assignment', 'specs/expression_evaluation.md; nullable string conversion exception needs separate review'),
- 'P1': ('separate-existing-path', 'Literal null comparison/presence', 'nullable presence and boxed comparison owners; not all cells freshly verified'),
- 'P2': ('separate-existing-path', 'Nullable string condition negation', 's2s_scalar_operators.md preserved nullable-string ! behavior'),
+ 'O2': ('verified', 'Float or mixed numeric spaceship', 'vl07_completion.md; vl07_completion_results.json; specs/expression_evaluation.md'),
+ 'S1': ('verified', 'String concatenation / concatenation assignment', 'vl07_completion.md; vl07_completion_results.json; specs/expression_evaluation.md'),
+ 'P1V': ('verified-existing-path', 'Nullable strict literal-null presence', 'vl07_completion.md; vl07_completion_results.json'),
+ 'P1R': ('observed-rejection', 'Other literal-null comparisons; separate presence contract', 'vl07_completion.md; 112 observed rejections, not newly authorized language policy'),
+ 'P2': ('verified-existing-path', 'Nullable string condition negation', 'vl07_completion.md; vl07_completion_results.json; specs/expression_evaluation.md'),
  'X1': ('scope-exclusion', 'Bool/numeric logical combinations', 'numeric_logical_l05.md; numeric_xor.md: explicit bounded exclusion, not a permanent language ban'),
  'X2': ('scope-exclusion', 'String logical operators', 'guarded_string.md: no guarded string logical admission in approved slice'),
  'X3': ('scope-exclusion', 'Noncanonical-int power payload', 'specs/integer_power.md: other payloads need separately agreed operation'),
@@ -89,9 +94,14 @@ def classify(a, op, b, compound=False):
                 if p == 'bool' and f in ('plain','result_or_bool') and g in ('plain','result_or_bool'): return 'E2BB'
                 if p in ('int','float','string') and (f in ('result_or_false','result_or_bool') or g in ('result_or_false','result_or_bool')) and (f == g or op in ('===','!==')): return 'E2NB'
                 return 'E2R' if f in ('plain','result') and g in ('plain','result') else 'E2'
-            return 'E3I' if op in ('===','!==') else 'E3'
-        if numeric: return 'E4I' if op in ('===','!==') else 'E4'
+            return 'E3I' if op in ('===','!==') else 'E3NB' if p in ('int','float','string') else 'E3'
+        if numeric:
+            if op in ('===','!=='): return 'E4I'
+            if any(f in ('plain', family) and g in ('plain', family) for family in ('nullable','result')): return 'E4NR'
+            if any(f in ('plain', family) and g in ('plain', family) for family in ('result_or_false','result_or_bool')): return 'E4S'
+            return 'E4'
         if op in ('===','!==') and ((p == 'bool' and q in ('int','float')) or (q == 'bool' and p in ('int','float'))): return 'E5BNI'
+        if op in ('===','!==') and 'string' in (p,q): return 'E5SI'
         return 'E5'
     if op in LOGIC:
         if numeric or p == q == 'bool': return 'done'
@@ -122,8 +132,9 @@ for a in TYPES:
         else: group = 'P2' if a == ('string','nullable') and op == '!' else 'X4'
         add('unary', a, op, None, group)
     for op in EQ:
-        add('binary', a, op, ('null','plain'), 'P1')
-        add('binary', ('null','plain'), op, a, 'P1')
+        group = 'P1V' if f == 'nullable' and op in ('===','!==') else 'P1R'
+        add('binary', a, op, ('null','plain'), group)
+        add('binary', ('null','plain'), op, a, group)
 
 # Reconcile every matrix wrapper operator definition, including separately owned selectors.
 items = {'add':'+','subtract':'-','multiply':'*','divide':'/','modulo':'%',
@@ -153,7 +164,7 @@ for d in json.loads(index_path.read_text())['definitions']:
     matrix.append(dict(d, inventory_group=classification, signature_id=signature, semantic_row_statuses=dict(states)))
 assert len(rows) == len(lookup)
 done = Counter(r['kind'] for r in rows if r['status']=='verified')
-assert done == {'binary':2256,'unary':64,'compound':432}, done
+assert done == {'binary':2832,'unary':64,'compound':480}, done
 assert len(matrix)==376
 with (OUT/'signatures.csv').open('w') as stream:
     writer=csv.DictWriter(stream,fieldnames=list(rows[0]));writer.writeheader();writer.writerows(rows)
@@ -161,9 +172,9 @@ remaining = [r for r in rows if r['status'] in ('remaining-support','needs-desig
 with (OUT/'remaining.csv').open('w') as stream:
     writer=csv.DictWriter(stream,fieldnames=list(rows[0]));writer.writeheader();writer.writerows(remaining)
 counts=Counter(r['group'] for r in rows)
-for name in ['runtime/specs/spec.md', 'runtime/specs/config.json', 'specs/expression_evaluation.md', 'specs/integer_power.md', 'compiler/my-try/04_analyze/operators/guarded.php', 'compiler/my-try/04_analyze/operators/wrapper_equality.php', 'compiler/my-try/docs/planning/nullable_bool_string_equality_results.json', 'compiler/my-try/docs/planning/nullable_float_equality_results.json', 'compiler/my-try/docs/planning/result_equality_results.json', 'compiler/my-try/docs/planning/false_bool_equality_results.json', 'compiler/my-try/docs/planning/bool_sentinel_equality_results.json', 'compiler/my-try/docs/planning/nonbool_sentinel_equality_results.json', 'compiler/my-try/docs/planning/sentinel_plain_equality_results.json', 'compiler/my-try/docs/planning/carrier_updates_results.json', 'compiler/my-try/docs/planning/int_carrier_compounds_results.json', 'compiler/my-try/docs/planning/int_bitwise_compounds_results.json', 'compiler/my-try/docs/planning/int_cross_compounds_results.json', 'compiler/my-try/docs/planning/float_compounds_results.json', 'compiler/my-try/docs/planning/mixed_ordering_results.json', 'compiler/my-try/docs/planning/widening_compounds_results.json', 'compiler/my-try/docs/planning/cross_identity_results.json', 'compiler/my-try/docs/planning/mixed_identity_results.json', 'compiler/my-try/docs/planning/bool_numeric_identity_results.json']:
+for name in ['compiler/my-try/docs/planning/vl07_completion_results.json', 'runtime/specs/spec.md', 'runtime/specs/config.json', 'specs/expression_evaluation.md', 'specs/integer_power.md', 'compiler/my-try/04_analyze/operators/guarded.php', 'compiler/my-try/04_analyze/operators/wrapper_equality.php', 'compiler/my-try/docs/planning/nullable_bool_string_equality_results.json', 'compiler/my-try/docs/planning/nullable_float_equality_results.json', 'compiler/my-try/docs/planning/result_equality_results.json', 'compiler/my-try/docs/planning/false_bool_equality_results.json', 'compiler/my-try/docs/planning/bool_sentinel_equality_results.json', 'compiler/my-try/docs/planning/nonbool_sentinel_equality_results.json', 'compiler/my-try/docs/planning/sentinel_plain_equality_results.json', 'compiler/my-try/docs/planning/carrier_updates_results.json', 'compiler/my-try/docs/planning/int_carrier_compounds_results.json', 'compiler/my-try/docs/planning/int_bitwise_compounds_results.json', 'compiler/my-try/docs/planning/int_cross_compounds_results.json', 'compiler/my-try/docs/planning/float_compounds_results.json', 'compiler/my-try/docs/planning/mixed_ordering_results.json', 'compiler/my-try/docs/planning/widening_compounds_results.json', 'compiler/my-try/docs/planning/cross_identity_results.json', 'compiler/my-try/docs/planning/mixed_identity_results.json', 'compiler/my-try/docs/planning/bool_numeric_identity_results.json', 'compiler/my-try/docs/planning/string_other_identity_results.json', 'compiler/my-try/docs/planning/mixed_equality_results.json', 'compiler/my-try/docs/planning/sentinel_mixed_equality_results.json', 'compiler/my-try/docs/planning/cross_equality_results.json', 'compiler/my-try/docs/planning/cross_mixed_equality_results.json']:
     inputs[name] = hashlib.sha256((ROOT/name).read_bytes()).hexdigest()
-summary={'doc_status':'planning','date':'2026-10-19','method':'Static inventory, no compiler/runtime execution; statuses are planning dispositions, not fresh admission results.',
+summary={'doc_status':'planning','date':'2026-10-20','method':'Static reconstruction of dated bounded proofs and explicit dispositions; builder itself executes no compiler tests.',
          'canonical_payloads':PAYLOADS,'families':FAMILIES,'rows':len(rows),'status_counts':dict(Counter(r['status'] for r in rows)),
          'groups':{k:dict(status=v[0],title=v[1],authority_or_evidence=v[2],signatures=counts[k]) for k,v in GROUPS.items()},
          'verified':dict(done),'matrix_wrapper_definitions':len(matrix),'matrix_separate_selectors':144,

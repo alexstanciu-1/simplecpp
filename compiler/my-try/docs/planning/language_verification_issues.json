@@ -316,8 +316,17 @@
         "verification/results/call-contract-probes/brace_free_if"
       ],
       "dependencies": [],
-      "next_action": "Discuss one-statement body parsing and dangling-else binding policy, then implement in the existing control-flow parser. Keep downstream strpos API gap separate.",
-      "simple_batch_eligible": false
+      "next_action": "No remaining S06 parser blocker. The unchanged original fixture now reaches unresolved strpos (S09); retain that API work separately.",
+      "simple_batch_eligible": false,
+      "repair_status": "implemented-and-verified",
+      "eligibility_reason": "Approved bounded syntax slice implemented and verified on dev002.",
+      "newly_exposed_blockers": [],
+      "repair": {
+        "date": "2026-10-20",
+        "report": "s06_unbraced_conditionals.md",
+        "results": "s06_results.json",
+        "scope": "Single-statement if/elseif/else bodies via existing block/branch model; nearest-if binding, scope, lazy evaluation, completion, source spans and recovery verified. No runtime changes. Original fixture remains blocked by S09, not S06."
+      }
     },
     {
       "id": "V-L01",
@@ -597,8 +606,17 @@
       "dependencies": [
         "Resolve the named source contract/owner before any repair."
       ],
-      "next_action": "Retain first-blocker evidence and discuss the bounded implementation or fixture plan; no fixes during verification.",
-      "simple_batch_eligible": false
+      "next_action": "No remaining blocker in the recorded issue scope. Preserve original evidence; wider fixed-width, text, process/provider and indexed domains remain separate.",
+      "simple_batch_eligible": false,
+      "repair_status": "implemented-and-verified",
+      "repair": {
+        "date": "2026-10-20",
+        "report": "float_identity.md",
+        "results": "float_identity_results.json",
+        "scope": "Unchanged pinned-v0.1 strict shell_exec fixture compiles and executes with exact output; deterministic false-sentinel/string identity controls pass. Existing V-L07 repairs suffice; no process/runtime/output implementation change."
+      },
+      "eligibility_reason": "Recorded scope verified and closed by float_identity; no further repair queued.",
+      "newly_exposed_blockers": []
     },
     {
       "id": "S05",
@@ -637,8 +655,16 @@
       "dependencies": [
         "Resolve the named source contract/owner before any repair."
       ],
-      "next_action": "Retain first-blocker evidence and discuss the bounded implementation or fixture plan; no fixes during verification.",
-      "simple_batch_eligible": false
+      "next_action": "No remaining S07 blocker. Keep scalar/fixed-width, dynamic, wrapper and other predicates and flow-sensitive narrowing separate.",
+      "simple_batch_eligible": false,
+      "repair_status": "implemented-and-verified",
+      "repair_evidence": {
+        "date": "2026-10-20",
+        "report": "s07_mixed_predicates.md",
+        "results": "s07_results.json",
+        "audit": "s07_audit.json",
+        "scope": "Three exact-mixed observe predicates only. Existing runtime probed first; original strict fixture passes unchanged. No compiler or runtime implementation changes."
+      }
     },
     {
       "id": "S08",
@@ -678,8 +704,39 @@
       "dependencies": [
         "Resolve the named source contract/owner before any repair."
       ],
-      "next_action": "Retain first-blocker evidence and discuss the bounded implementation or fixture plan; no fixes during verification.",
-      "simple_batch_eligible": false
+      "next_action": "Closed by the approved closure batch; preserve historical findings and keep wider scope separate.",
+      "simple_batch_eligible": false,
+      "repair_status": "implemented-and-verified",
+      "repair_evidence": {
+        "date": "2026-10-20",
+        "report": "s09_byte_search.md",
+        "results": "s09_search_results.json",
+        "audit": "s09_search_audit.json",
+        "scope": "Search checkpoint: four byte-search signatures implemented; unchanged strict edge fixture passed. Replacement was deferred at this checkpoint and is completed by replacement_repair_evidence; S09-B1 remains separate."
+      },
+      "replacement_repair_evidence": {
+        "date": "2026-10-20",
+        "report": "s09_substr_replace.md",
+        "results": "s09_replace_results.json",
+        "audit": "s09_replace_audit.json",
+        "scope": "Both replacement signatures, shared runtime contract reconciliation and unchanged original strict surface pass. All six S09 API signatures are implemented; S09 remains partial only for separately tracked S09-B1."
+      },
+      "closure_repair_evidence": {
+        "date": "2026-10-20",
+        "report": "closure_batch.md",
+        "results": "closure_batch_results.json",
+        "audit": "closure_batch_audit.json",
+        "scope": "Checked-payload overload fallback; unchanged original false-branch and both S09 fixtures pass."
+      },
+      "resolved_blockers": [
+        {
+          "id": "S09-B1",
+          "status": "resolved-and-verified",
+          "finding": "After admitting strpos, the unchanged strict_strings_004_strpos_false_branch_regression.phs passes result_or_false<int> directly to substr integer parameter; exact-signature preparation rejects. A false check does not narrow the static type. Explicit take followed by substr passes. No compiler conversion change in the search slice.",
+          "resolution": "Approved checked-payload fallback implemented; see closure_batch.md. Historical finding retained."
+        }
+      ],
+      "remaining_blockers": []
     },
     {
       "id": "S10",
@@ -740,8 +797,16 @@
       "dependencies": [
         "Resolve the named source contract/owner before any repair."
       ],
-      "next_action": "Retain first-blocker evidence and discuss the bounded implementation or fixture plan; no fixes during verification.",
-      "simple_batch_eligible": false
+      "next_action": "Closed by the approved closure batch; preserve historical findings and keep wider scope separate.",
+      "simple_batch_eligible": false,
+      "repair_status": "implemented-and-verified",
+      "repair_evidence": {
+        "date": "2026-10-20",
+        "report": "closure_batch.md",
+        "results": "closure_batch_results.json",
+        "audit": "closure_batch_audit.json",
+        "scope": "Explicit mixed-element initializer reaches unsupported closure boxing; typed callable positive and incompatible-signature negative pass."
+      }
     },
     {
       "id": "V-D09",
@@ -914,10 +979,18 @@
         "regex_filter"
       ],
       "dependencies": [],
-      "next_action": "Discuss the owning module contract/integration before implementation; retain current absence evidence.",
+      "next_action": "Closed by the approved regex filter/limit goal. Callback ABI, public count-output signatures and legacy wrapper migration remain separate.",
       "acceptance": "All documented in-scope signatures admitted through ordinary metadata, exact behavior/error and production-provider build proofs, with explicit decisions for held contracts.",
       "simple_batch_eligible": false,
-      "eligibility_reason": "Requires contract or module integration discussion; name-resolution probes do not prove a metadata-only repair."
+      "eligibility_reason": "Requires contract or module integration discussion; name-resolution probes do not prove a metadata-only repair.",
+      "repair_status": "implemented-and-verified",
+      "repair_evidence": {
+        "date": "2026-10-20",
+        "report": "regex_replacement.md",
+        "results": "regex_replacement_results.json",
+        "audit": "regex_replacement_audit.json",
+        "scope": "Strict filter 3/4 forms, positional backreferences, per-row limits, empty/zero validation, preserved rows and source snapshots."
+      }
     },
     {
       "id": "V-R05",
@@ -987,10 +1060,18 @@
       ],
       "finding": "Seven strict-symbol-map helpers have provider implementations but no current metadata bindings. Eight strict source calls, including both vector_compact arities, reject as unresolved. Historical successful v0.1 fixture is legacy-profile evidence only; it is not rerun or relabelled strict.",
       "dependencies": [],
-      "next_action": "Agree generic signatures and mutation/copy constraints, including both compact arities, before registering the family. Keep historical legacy fixture outside strict totals.",
+      "next_action": "Closed by the approved closure batch; preserve historical findings and keep wider scope separate.",
       "acceptance": "Strict programs prove reserve/capacity, resize fill/shrink, clear capacity policy, filled value copies, compact arities and negative argument errors through production build.",
       "simple_batch_eligible": false,
-      "eligibility_reason": "Generic mutation/default-value and capacity contracts need a bounded review; missing registration is not proof of a trivial patch."
+      "eligibility_reason": "Generic mutation/default-value and capacity contracts need a bounded review; missing registration is not proof of a trivial patch.",
+      "repair_status": "implemented-and-verified",
+      "repair_evidence": {
+        "date": "2026-10-20",
+        "report": "closure_batch.md",
+        "results": "closure_batch_results.json",
+        "audit": "closure_batch_audit.json",
+        "scope": "Seven vector helpers/eight forms, authorized provider copy requirement, strict behavior and production cold/warm build."
+      }
     },
     {
       "id": "V-R08",
@@ -1082,10 +1163,18 @@
       ],
       "finding": "Three-argument regex_replace admits; documented fourth integer limit rejects during preparation. Existing module audit records const-limit/nonconst-count provider overload collisions for emitted snapshots. This is a missing public overload, distinct from regex_filter semantics and callback ABI.",
       "dependencies": [],
-      "next_action": "Discuss unambiguous provider targets and reference/value overload handling; do not append a speculative metadata row.",
+      "next_action": "Closed by the approved regex filter/limit goal. Callback ABI, public count-output signatures and legacy wrapper migration remain separate.",
       "acceptance": "Production builds prove limits -1, 0 and positive, reject/throw invalid negative per contract, preserve backreferences, and distinguish any separate count-output signature.",
       "simple_batch_eligible": false,
-      "eligibility_reason": "Provider overload collision requires shared binding/admission review."
+      "eligibility_reason": "Provider overload collision requires shared binding/admission review.",
+      "repair_status": "implemented-and-verified",
+      "repair_evidence": {
+        "date": "2026-10-20",
+        "report": "regex_replacement.md",
+        "results": "regex_replacement_results.json",
+        "audit": "regex_replacement_audit.json",
+        "scope": "Replacement value-limit binding uses an unambiguous provider target; limits, errors, snapshots and production PCRE2 cold/warm builds pass."
+      }
     },
     {
       "id": "V-D12",
@@ -1173,10 +1262,18 @@
       "dependencies": [
         "S04"
       ],
-      "next_action": "Discuss a shared carrier admission/normalization model before implementation; keep distinct equality normalization and guarded unwrap semantics.",
+      "next_action": "No remaining blocker in the recorded issue scope. Preserve original evidence; wider fixed-width, text, process/provider and indexed domains remain separate.",
       "acceptance": "Prove homogeneous float and carrier identity, absent/error/sentinel distinctions, differing visible kinds and single ordered evaluation; retain S04 as a related string carrier proof.",
       "simple_batch_eligible": false,
-      "eligibility_reason": "Carrier normalization and operand preparation need a shared design; this verification goal authorizes no implementation."
+      "eligibility_reason": "Recorded scope verified and closed by float_identity; no further repair queued.",
+      "repair_status": "implemented-and-verified",
+      "repair": {
+        "date": "2026-10-20",
+        "report": "float_identity.md",
+        "results": "float_identity_results.json",
+        "scope": "Two scalar float identity forms admitted through existing Scalar_Identity. Runtime-first probe unchanged; NaN/signed-zero semantics, ordered snapshots, errors and recovery verified. Original twelve carrier cells reconciled against current source/native behavior."
+      },
+      "newly_exposed_blockers": []
     },
     {
       "id": "V-L07",
@@ -1191,11 +1288,11 @@
       ],
       "finding": "Twelve homogeneous <, <=, >, >= cells reject for nullable<int>, result<int> and result_or_false<int>. The runtime ordering contract explicitly admits these carrier families for admitted payload ordering and requires runtime unwrap errors for unusable states. This finding does not yet classify wrapper arithmetic, equality, logical, mutation or spaceship. Eighteen &, |, ^, <<, >> and ~ cells for the same three integer carriers also reject despite section 9 explicitly requiring guarded lifting. The types operator_lifting_rule and nullable_lifted_ops blocks also expose 37 rejected integer-carrier arithmetic, logical, unary and mutation cells. Four explicitly conflicting nullable arithmetic cells stay under V-D13. Nullable negation admits but checkpoint 48 proves its empty-state semantic mismatch, tracked separately as V-L08.",
       "dependencies": [],
-      "next_action": "E5BNI verifies 192 bool/numeric carrier strict identities plus eight scalar prerequisites. Total 2,752 verified signatures; review 1,200 design/scope candidates. Ordinary equality, string-related identity, logical mixing and other domains remain separate.",
+      "next_action": "Approved finite canonical-carrier scope complete; separately review W1 indexed mutation, W2 indexed numeric compounds, W3 presence-policy boundaries and W4 wider domains in vl07_completion.md. No full matrix rerun.",
       "acceptance": "Prove present integer payload ordering and all applicable absent/error/sentinel failures, left-to-right evaluation, unchanged source states and empty artifacts for genuinely invalid payload types. Include each admitted integer bitwise/shift family and valid shift counts, with distinct unusable-state unwrap failures. Include arithmetic, unary, lazy logical and mutation value/state/write-back proofs; do not replace guarded unwrap with condition truthiness.",
       "simple_batch_eligible": false,
-      "eligibility_reason": "Carrier normalization and operand preparation need a shared design; this verification goal authorizes no implementation.",
-      "repair_status": "partially-implemented-and-verified",
+      "eligibility_reason": "Agreed canonical-carrier completion implemented and verified on dev002; wider follow-ups remain explicit and separately scoped.",
+      "repair_status": "implemented-and-verified",
       "repair": {
         "date": "2026-10-19",
         "report": "guarded_wrappers_01.md",
@@ -1203,12 +1300,10 @@
         "scope": "Approved first guarded canonical-int slice; original audit evidence retained. No runtime implementation changes."
       },
       "remaining_scope": [
-        "Cross-family and mixed ordinary equality remain separate; mixed int/float strict identity is verified; cross-family matching-payload strict identity is verified; matching canonical scalar equality for same carriers and carrier/plain arrangements is verified for all four carriers.",
-        "All 336 matching-payload and 96 float-destination/int-RHS carrier compounds and U1 updates complete for admitted stable targets. Narrowing mixed numeric, indexed, fixed-width and power compounds remain separate; V-R10 is repaired.",
-        "string-related heterogeneous identity, mixed ordinary equality, spaceship and narrowing compounds beyond approved ordering/arithmetic/logical/float-destination domains",
-        "payload/operator domains beyond implemented numeric, bool logical and string ordering slices",
-        "spaceship outside canonical-int/string pairs; string xor (bool and canonical numeric xor implemented)",
-        "bool/numeric strict identity is verified; ordinary equality, logical mixing and other operators remain separate"
+        "W1: indexed ++/-- remain rejected under Mutation_Preparation / Indexing_Preparation; need stable-place design.",
+        "W2: indexed guarded numeric and floating compounds remain deferred; existing indexed string-carrier .= has bounded positive proof.",
+        "W3: 112 non-admitted literal-null comparison cells remain separate presence-policy boundaries, not newly declared language prohibitions.",
+        "W4: fixed-width, nested, object/container payloads, boxed/dynamic/table semantics, selectors and explicit error-sentinel syntax remain with their own owners."
       ],
       "repair_followups": [
         {
@@ -1378,6 +1473,42 @@
           "report": "bool_numeric_identity.md",
           "results": "bool_numeric_identity_results.json",
           "scope": "192 bool/numeric carrier strict identities plus eight scalar prerequisites; independent visible-state normalization, source order, snapshots and recovery verified on dev002. Runtime unchanged. Stale 1===true and true===1 rejections corrected to ordinary equality; historical failures preserved."
+        },
+        {
+          "date": "2026-10-20",
+          "report": "string_other_identity.md",
+          "results": "string_other_identity_results.json",
+          "scope": "288 string/int, string/float and string/bool carrier strict identities plus twelve scalar prerequisites; independent state normalization, byte storage, eager evaluation, snapshots and recovery verified on dev002. Runtime unchanged; ordinary equality and other operators excluded."
+        },
+        {
+          "date": "2026-10-20",
+          "report": "mixed_equality.md",
+          "results": "mixed_equality_results.json",
+          "scope": "24 mixed int/float nullable and structured Result ordinary-equality signatures plus four scalar prerequisites; numeric promotion, absence/failure-state policy, snapshots and recovery verified on dev002. Runtime unchanged. Initial scalar test incorrectly rejected existing int/int16 ordinary equality; repaired as positive control with failure evidence preserved."
+        },
+        {
+          "date": "2026-10-20",
+          "report": "sentinel_mixed_equality.md",
+          "results": "sentinel_mixed_equality_results.json",
+          "scope": "24 mixed int/float result_or_false/result_or_bool same-family/plain ordinary-equality signatures plus four existing scalar controls. Authorized bounded runtime generator repair admits canonical mixed numeric sentinel/plain dispatch. States, numeric promotion, eager snapshots and recovery verified on dev002; bool, string, fixed-width and boxed behavior preserved. Eight baseline pair compilation failures (16 blocked signature targets) retained; cross-family ordinary equality remains separate."
+        },
+        {
+          "date": "2026-10-20",
+          "report": "cross_equality.md",
+          "results": "cross_equality_results.json",
+          "scope": "72 matching int/float/string cross-family ordinary-equality signatures. Authorized runtime generator repair adds explicit state/family comparison and disjoint dispatch. Baseline 36 ambiguous pair probes (72 blocked targets) preserved. States, bytes, float behavior, eager effects, snapshots and recovery verified on dev002; bool and mixed-numeric cross-family admission remains separate."
+        },
+        {
+          "date": "2026-10-20",
+          "report": "cross_mixed_equality.md",
+          "results": "cross_mixed_equality_results.json",
+          "scope": "48 mixed int/float cross-family ordinary-equality signatures. Authorized bounded runtime predicate repair reuses E3 state comparison and shares the canonical numeric/matching-string payload domain with sentinel/plain dispatch. Baseline 24 ambiguous pair probes (48 blocked targets) preserved. States, numeric rounding, eager effects, snapshots and recovery verified on dev002; cross-family bool remains separate."
+        },
+        {
+          "date": "2026-10-20",
+          "report": "vl07_completion.md",
+          "results": "vl07_completion_results.json",
+          "scope": "Final approved canonical scope: E3 bool24, O2 spaceship72, C3 power compounds24, S1 text48; four scalar prerequisites and two scalar controls. E5 heterogeneous480 and C2 narrowing96 verified intentional rejections. Existing129 cells reconciled to17 supported/112 rejected. 3,376 supported carrier signatures across37 slices; no unresolved canonical candidates. States, errors, NaN policy, bytes, snapshots, write-back and recovery verified on dev002. Wider indexed/presence/payload domains remain explicit."
         }
       ],
       "remaining_signature_inventory": {
@@ -1385,9 +1516,9 @@
         "signatures": "vl07_inventory/remaining.csv",
         "summary": "vl07_inventory/summary.json",
         "support_targets": 0,
-        "design_scope_candidates": 1200,
-        "method": "Static planning inventory; no new compiler execution or implementation authorization",
-        "wider_domains": "Explicit boundaries in inventory report; not silently included in canonical denominator"
+        "design_scope_candidates": 0,
+        "method": "Exact static reconstruction of dated dev002 proofs: 3,376 supported carriers, 576 intentional rejections; 17 verified existing and112 observed existing rejections remain separately classified.",
+        "wider_domains": "W1-W4 in vl07_completion.md and inventory report; bounded completion does not close these separate owners."
       }
     },
     {
@@ -1505,10 +1636,18 @@
       ],
       "finding": "Nullable<int> and int16 concatenations reject although configured text conversion provides the corresponding domains.",
       "dependencies": [],
-      "next_action": "Discuss the owning contract/preparation path before any separately authorized fix.",
+      "next_action": "No remaining blocker in the approved bounded text scope. Keep uint64, wrapped fixed widths/nested/object/container payloads, new boxed/indexed capabilities and other conversion contexts separate.",
       "acceptance": "Prove nullable empty/present and signed-width boundary strings in both operand orders, with single ordered evaluation.",
       "simple_batch_eligible": false,
-      "eligibility_reason": "Requires contract or operator preparation discussion; verification does not authorize fixes."
+      "eligibility_reason": "Approved bounded text scope verified and closed by carrier_text; no further repair queued.",
+      "repair_status": "implemented-and-verified",
+      "newly_exposed_blockers": [],
+      "repair": {
+        "date": "2026-10-20",
+        "report": "carrier_text.md",
+        "results": "carrier_text_results.json",
+        "scope": "Runtime-first state/payload composition; ready plain integer widths and all four carriers of canonical int/float/bool/string for . and string/string-carrier .=. Scalar formatting, sentinel/error states, snapshots and write-back verified on dev002. Runtime contract metadata clarified without runtime implementation changes."
+      }
     },
     {
       "id": "V-D14",
@@ -1523,10 +1662,18 @@
       ],
       "finding": "Result and falseable-Result text helpers exist, but configured coercions.text omits both carriers. Source concatenation rejects. Structured failure helper returns an error message, so silently reusing guarded unwrap would change existing behavior.",
       "dependencies": [],
-      "next_action": "Discuss the owning contract/preparation path before any separately authorized fix.",
+      "next_action": "No remaining blocker in the approved bounded text scope. Keep uint64, wrapped fixed widths/nested/object/container payloads, new boxed/indexed capabilities and other conversion contexts separate.",
       "acceptance": "Set an explicit text contract for success/error/sentinel states, then verify source and native behavior separately.",
       "simple_batch_eligible": false,
-      "eligibility_reason": "Requires contract or operator preparation discussion; verification does not authorize fixes."
+      "eligibility_reason": "Approved bounded text scope verified and closed by carrier_text; no further repair queued.",
+      "repair_status": "implemented-and-verified",
+      "newly_exposed_blockers": [],
+      "repair": {
+        "date": "2026-10-20",
+        "report": "carrier_text.md",
+        "results": "carrier_text_results.json",
+        "scope": "Runtime-first state/payload composition; ready plain integer widths and all four carriers of canonical int/float/bool/string for . and string/string-carrier .=. Scalar formatting, sentinel/error states, snapshots and write-back verified on dev002. Runtime contract metadata clarified without runtime implementation changes."
+      }
     },
     {
       "id": "V-H11",

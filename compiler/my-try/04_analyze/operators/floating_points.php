@@ -32,10 +32,19 @@ final class Floating_Point_Operators
 	public static function is_comparison(operator_kind $source_operator): bool
 	{
 		return ($source_operator === operator_kind::equal) || ($source_operator === operator_kind::not_equal)
-			|| self::is_ordering($source_operator);
+			|| self::is_ordering($source_operator) || ($source_operator === operator_kind::three_way);
 	}
 
-	/** Ordering permits canonical int promotion; equality retains its exact-float domain. */
+	/** The canonical mixed numeric pair shared by scalar and state-aware comparisons. */
+	public static function is_mixed_numeric_pair(canonical_type_use $left,
+		canonical_type_use $right, preparation_context $context): bool
+	{
+		$floating = Language_Types::floating(Model::$language_scope);
+		return ($left->matches($context->integer) && $right->matches($floating))
+			|| ($left->matches($floating) && $right->matches($context->integer));
+	}
+
+	/** Numeric comparisons promote canonical int operands to float. */
 	public static function decide_comparison(operator_kind $source_operator,
 		array $operands /** vector<canonical_type_use> */, preparation_context $context): operator_decision
 	{
@@ -45,8 +54,11 @@ final class Floating_Point_Operators
 		$floating = Language_Types::floating(Model::$language_scope);
 		$decision = new operator_decision();
 		$decision->source_operator = $source_operator;
-		$decision->result_type = $context->boolean;
-		if ($source_operator === operator_kind::equal) {
+		$decision->result_type = $source_operator === operator_kind::three_way ? $context->integer : $context->boolean;
+		if ($source_operator === operator_kind::three_way) {
+			$decision->operation = operator_operation::floating_three_way;
+		}
+		elseif ($source_operator === operator_kind::equal) {
 			$decision->operation = operator_operation::floating_equal;
 		}
 		elseif ($source_operator === operator_kind::not_equal) {
@@ -65,9 +77,8 @@ final class Floating_Point_Operators
 			$decision->operation = operator_operation::floating_greater_equal;
 		}
 		foreach ($operands as $operand) {
-			if (!$operand->matches($floating)
-				&& !(self::is_ordering($source_operator) && $operand->matches($context->integer))) {
-				throw new \RuntimeException('S2S floating comparison requires exact floats, or canonical int operands for ordering');
+			if (!$operand->matches($floating) && !$operand->matches($context->integer)) {
+				throw new \RuntimeException('S2S floating comparison requires canonical float or int operands');
 			}
 			$decision->operands[] = Conversion_Preparation::decide(
 				$operand, $floating, conversion_context::operator_operand);

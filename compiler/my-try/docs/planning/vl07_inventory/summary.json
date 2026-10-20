@@ -1,7 +1,7 @@
 {
   "doc_status": "planning",
-  "date": "2026-10-19",
-  "method": "Static inventory, no compiler/runtime execution; statuses are planning dispositions, not fresh admission results.",
+  "date": "2026-10-20",
+  "method": "Static reconstruction of dated bounded proofs and explicit dispositions; builder itself executes no compiler tests.",
   "canonical_payloads": [
     "int",
     "float",
@@ -17,10 +17,11 @@
   ],
   "rows": 14848,
   "status_counts": {
-    "verified": 2752,
+    "verified": 3376,
     "scope-exclusion": 10767,
-    "needs-design": 1200,
-    "separate-existing-path": 129
+    "intentional-rejection": 576,
+    "observed-rejection": 112,
+    "verified-existing-path": 17
   },
   "groups": {
     "done": {
@@ -71,11 +72,17 @@
       "authority_or_evidence": "cross_identity.md; cross_identity_results.json",
       "signatures": 96
     },
+    "E3NB": {
+      "status": "verified",
+      "title": "Cross-family matching non-bool ordinary equality",
+      "authority_or_evidence": "cross_equality.md; cross_equality_results.json",
+      "signatures": 72
+    },
     "E3": {
-      "status": "needs-design",
-      "title": "Cross-family matching-payload ordinary equality",
-      "authority_or_evidence": "runtime/specs/spec.md sections 6.10, 7a; distinguish equality from identity normalization",
-      "signatures": 96
+      "status": "verified",
+      "title": "Cross-family matching-bool ordinary equality",
+      "authority_or_evidence": "vl07_completion.md; vl07_completion_results.json; specs/expression_evaluation.md",
+      "signatures": 24
     },
     "E4I": {
       "status": "verified",
@@ -83,11 +90,23 @@
       "authority_or_evidence": "mixed_identity.md; mixed_identity_results.json",
       "signatures": 96
     },
+    "E4NR": {
+      "status": "verified",
+      "title": "Nullable/structured Result mixed int/float ordinary equality",
+      "authority_or_evidence": "mixed_equality.md; mixed_equality_results.json",
+      "signatures": 24
+    },
+    "E4S": {
+      "status": "verified",
+      "title": "Sentinel-carrier mixed int/float ordinary equality",
+      "authority_or_evidence": "sentinel_mixed_equality.md; sentinel_mixed_equality_results.json",
+      "signatures": 24
+    },
     "E4": {
-      "status": "needs-design",
-      "title": "Mixed int/float ordinary equality",
-      "authority_or_evidence": "runtime/specs/spec.md section 7a; mixed equality/promotion and NaN decisions",
-      "signatures": 96
+      "status": "verified",
+      "title": "Cross-family mixed int/float ordinary equality",
+      "authority_or_evidence": "cross_mixed_equality.md; cross_mixed_equality_results.json",
+      "signatures": 48
     },
     "E5BNI": {
       "status": "verified",
@@ -95,11 +114,17 @@
       "authority_or_evidence": "bool_numeric_identity.md; bool_numeric_identity_results.json",
       "signatures": 192
     },
+    "E5SI": {
+      "status": "verified",
+      "title": "Heterogeneous string strict identity",
+      "authority_or_evidence": "string_other_identity.md; string_other_identity_results.json",
+      "signatures": 288
+    },
     "E5": {
-      "status": "needs-design",
-      "title": "Other heterogeneous equality/identity, including bool sentinels",
-      "authority_or_evidence": "runtime/specs/spec.md sections 6.10, 7a; payload/sentinel distinctions",
-      "signatures": 768
+      "status": "intentional-rejection",
+      "title": "Other heterogeneous ordinary equality, including bool sentinels",
+      "authority_or_evidence": "vl07_completion.md; vl07_completion_results.json; specs/expression_evaluation.md",
+      "signatures": 480
     },
     "U1": {
       "status": "verified",
@@ -138,15 +163,15 @@
       "signatures": 96
     },
     "C2": {
-      "status": "needs-design",
+      "status": "intentional-rejection",
       "title": "Int-destination mixed compound updates",
-      "authority_or_evidence": "specs/expression_evaluation.md compound updates; conversion/write-back policy",
+      "authority_or_evidence": "vl07_completion.md; vl07_completion_results.json; specs/expression_evaluation.md",
       "signatures": 96
     },
     "C3": {
-      "status": "needs-design",
+      "status": "verified",
       "title": "Canonical-int power assignment",
-      "authority_or_evidence": "specs/integer_power.md explicitly leaves **= outside contract",
+      "authority_or_evidence": "vl07_completion.md; vl07_completion_results.json; specs/expression_evaluation.md",
       "signatures": 24
     },
     "O1": {
@@ -156,27 +181,33 @@
       "signatures": 192
     },
     "O2": {
-      "status": "needs-design",
+      "status": "verified",
       "title": "Float or mixed numeric spaceship",
-      "authority_or_evidence": "s2s_scalar_operators.md: bounded spaceship gate; unordered NaN policy",
+      "authority_or_evidence": "vl07_completion.md; vl07_completion_results.json; specs/expression_evaluation.md",
       "signatures": 72
     },
     "S1": {
-      "status": "needs-design",
+      "status": "verified",
       "title": "String concatenation / concatenation assignment",
-      "authority_or_evidence": "specs/expression_evaluation.md; nullable string conversion exception needs separate review",
+      "authority_or_evidence": "vl07_completion.md; vl07_completion_results.json; specs/expression_evaluation.md",
       "signatures": 48
     },
-    "P1": {
-      "status": "separate-existing-path",
-      "title": "Literal null comparison/presence",
-      "authority_or_evidence": "nullable presence and boxed comparison owners; not all cells freshly verified",
-      "signatures": 128
+    "P1V": {
+      "status": "verified-existing-path",
+      "title": "Nullable strict literal-null presence",
+      "authority_or_evidence": "vl07_completion.md; vl07_completion_results.json",
+      "signatures": 16
+    },
+    "P1R": {
+      "status": "observed-rejection",
+      "title": "Other literal-null comparisons; separate presence contract",
+      "authority_or_evidence": "vl07_completion.md; 112 observed rejections, not newly authorized language policy",
+      "signatures": 112
     },
     "P2": {
-      "status": "separate-existing-path",
+      "status": "verified-existing-path",
       "title": "Nullable string condition negation",
-      "authority_or_evidence": "s2s_scalar_operators.md preserved nullable-string ! behavior",
+      "authority_or_evidence": "vl07_completion.md; vl07_completion_results.json; specs/expression_evaluation.md",
       "signatures": 1
     },
     "X1": {
@@ -205,13 +236,13 @@
     }
   },
   "verified": {
-    "binary": 2256,
-    "compound": 432,
+    "binary": 2832,
+    "compound": 480,
     "unary": 64
   },
   "matrix_wrapper_definitions": 376,
   "matrix_separate_selectors": 144,
-  "remaining_list_rows": 1200,
+  "remaining_list_rows": 0,
   "input_hashes": {
     "specs/operator_matrix/data/semantics.index.json": "b734f42dcdc5b14608263d2365104a70f51dc110b5788143e2a2dc5e31ddd331",
     "specs/operator_matrix/data/semantics/operators_conditional_selection/coalesce__bool_t__nullable_bool_t.tsv": "26018a3ee482ac4aa8db2d63125c672b20b29501aadf7418e7e3358da7584697",
@@ -590,12 +621,13 @@
     "specs/operator_matrix/data/semantics/operators_compound_assignment/shift_right_assign__result_int_t__result_int_t.tsv": "3c49ec9815160830bf85381916bf9f081253c9b4eb8b00b8544fa9f3f84a49bd",
     "specs/operator_matrix/data/semantics/operators_compound_assignment/shift_right_assign__result_or_false_int_t__result_or_false_int_t.tsv": "09b1c3941bc3253f445479c42ec8cf1859719bbeade3388e112e0c6f42599df4",
     "specs/operator_matrix/data/semantics/operators_compound_assignment/shift_right_assign__result_or_bool_int_t__result_or_bool_int_t.tsv": "9878700ed912a5755a1a9d80c24fb5d5805b8f761f502a126db066d39a8f37fe",
-    "runtime/specs/spec.md": "2730f66c763b10ecee8d52435b61f86eb228f06be5c85ef2710512ea2c92d84b",
-    "runtime/specs/config.json": "d65695770a325a6a4620e040f3845fed0551b0a257f38aee57f6bc9db37835f9",
-    "specs/expression_evaluation.md": "2dc368c6ecf17be5870d37c148f2542fe5cfd7a6027d2f554076a9282178835c",
-    "specs/integer_power.md": "4b9a96a28d5225fe2e187b1ff74a6f9838ef0d539ab97bc5479a77ec27c45aed",
-    "compiler/my-try/04_analyze/operators/guarded.php": "96ad3596a1657f0ca4bb67e7b72b183af3e51b6a6826cbb17d3d6e2ca2ab835f",
-    "compiler/my-try/04_analyze/operators/wrapper_equality.php": "1bce5bd62e48a1f8e997cd8fd036928b80dbbd20084ed5447589aaa550be3d91",
+    "compiler/my-try/docs/planning/vl07_completion_results.json": "8ad6c158dab1b42b27de34d0c2af5cea88072e3d0c0eafec4df5889c4aa4ccf9",
+    "runtime/specs/spec.md": "2b47793311e5137a27418f8ee8fdd160c91e343f453b874ede550bfcdb6486af",
+    "runtime/specs/config.json": "dc9974f5e26a03f68fef86829c5d224c4e769294a096835ce966bf5c5c3c7771",
+    "specs/expression_evaluation.md": "c064ad1880013f90a1f752b57fcb4fadec4384addd00dfa827b9e049eea96e9e",
+    "specs/integer_power.md": "d90599c93e5b0035cfdf03cc85e682fd44f9ea8889bf08401f02e007febb9fd2",
+    "compiler/my-try/04_analyze/operators/guarded.php": "9c46ad6ec3c203a885068d5b9dbe7ef62e41419a531702faa99d7db3aadcd089",
+    "compiler/my-try/04_analyze/operators/wrapper_equality.php": "9e55c9ded293d97edd5f64e9cbd443cf8fe300052f685ec7e4d4a256862c4218",
     "compiler/my-try/docs/planning/nullable_bool_string_equality_results.json": "d2fa21d3e07c4ae966b739520185fd547632d392fc4f02ff09b986337162e264",
     "compiler/my-try/docs/planning/nullable_float_equality_results.json": "b12cc7f2722c444e700255e8e8f47b1266f05dfe6e84f8e1df1475eec7a5ca93",
     "compiler/my-try/docs/planning/result_equality_results.json": "45830b47351681de7169fe88f2c7af703371216a20e5c03c2bd580c750e4506f",
@@ -612,6 +644,11 @@
     "compiler/my-try/docs/planning/widening_compounds_results.json": "97e73c7496d2870b724d36126d1bd42f45b60ea9cc3f2f648505c044736f578f",
     "compiler/my-try/docs/planning/cross_identity_results.json": "9d1851aa2524a52be01ad345f09abb6cf0eca0c1c0de8442429d3ccb87fce1f4",
     "compiler/my-try/docs/planning/mixed_identity_results.json": "825cc2fb91aa41716281453e848d31a8616b49d89611281ef183d9c458673214",
-    "compiler/my-try/docs/planning/bool_numeric_identity_results.json": "59f75a97d35016160fe9b9114e54474aa6b72f308f0e8e7c51ebf3ae2a97b575"
+    "compiler/my-try/docs/planning/bool_numeric_identity_results.json": "59f75a97d35016160fe9b9114e54474aa6b72f308f0e8e7c51ebf3ae2a97b575",
+    "compiler/my-try/docs/planning/string_other_identity_results.json": "ac8f8261de65b5e198f73b2f4c9d64a53610ac7e918e78a03d62ed8b41e25950",
+    "compiler/my-try/docs/planning/mixed_equality_results.json": "1151f7b2561bfdcec55d87fea08407d7df456b608d792f57f4b69b12e2086b88",
+    "compiler/my-try/docs/planning/sentinel_mixed_equality_results.json": "10b7630e94fa102253fdeff71279ecd16c2ccd08778f2d8c8581cb38c8f3609c",
+    "compiler/my-try/docs/planning/cross_equality_results.json": "ef86f2f9ab762005c861e7796b415620d180121d11e0d2da41480a6574aed51f",
+    "compiler/my-try/docs/planning/cross_mixed_equality_results.json": "06366e0ee80761b5a23e1261b355a731d62d82080af4b5cb93684b8a9de3029d"
   }
 }

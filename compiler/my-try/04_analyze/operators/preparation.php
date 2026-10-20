@@ -233,6 +233,15 @@ final class Operator_Preparation
 		if (q_count($operands) !== 2) {
 			throw new \LogicException('Concatenation requires two operands');
 		}
+		// The bounded text extension does not widen the existing boxed operand domain.
+		if (Boxed_Conversions::is_boxed($operands[0]) || Boxed_Conversions::is_boxed($operands[1])) {
+			foreach ($operands as $operand) {
+				if (!Boxed_Conversions::is_boxed($operand) && !Boxed_Conversions::is_scalar_payload($operand)
+					&& !Nullable_Conversions::is_null($operand)) {
+					throw new \RuntimeException('S2S boxed concatenation requires boxed, ordinary scalar or null operands');
+				}
+			}
+		}
 		$string_type = $context->string_type;
 		if (Boxed_Conversions::is_boxed($operands[0]) && Boxed_Conversions::is_boxed($operands[1])) {
 			if (!$operands[0]->matches($operands[1])) {

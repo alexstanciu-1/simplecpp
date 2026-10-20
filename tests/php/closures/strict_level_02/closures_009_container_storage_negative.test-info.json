@@ -27,7 +27,7 @@
         "generate": {
             "success": false,
             "error_contains": [
-                "Closures cannot be stored in array or dynamic container slots"
+                "S2S boxed wrapping currently supports null, bool, ordinary int, float and string"
             ]
         },
         "compile": {
@@ -46,7 +46,7 @@
         "negative_generate",
         "container_storage"
     ],
-    "notes": "Closures remain concrete local callable values and cannot be appended into dynamic containers.",
+    "notes": "Explicit mixed-element storage reaches the unsupported closure-boxing boundary. Typed callable containers are supported and have a separate positive control; the historical untyped initializer failure is preserved in closure-batch evidence.",
     "build": {
         "sanitizers": null
     }

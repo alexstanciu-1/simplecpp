@@ -21,18 +21,14 @@ final class Wrapper_Equality
 		if (($left_payload === null) && ($right_payload === null)) {
 			return null;
 		}
-		// Strict identity normalizes visible values across carriers; ordinary equality
-		// retains its same-carrier/plain domain. Both paths snapshot whole states.
-		if (($left_payload !== null) && ($right_payload !== null)
-			&& !$operands[0]->matches($operands[1])
-			&& ($source_operator !== operator_kind::identical) && ($source_operator !== operator_kind::not_identical)) {
-			return null;
-		}
 		$left_value = $left_payload ?? $operands[0];
 		$right_value = $right_payload ?? $operands[1];
 		$strict_identity = ($source_operator === operator_kind::identical) || ($source_operator === operator_kind::not_identical);
-		$admitted_pair = $left_value->matches($right_value)
-			|| ($strict_identity && Scalar_Identity::is_distinct_kind_pair($left_value, $right_value, $context));
+		// Identity and ordinary equality own separate pair domains. Both retain whole states.
+		$admitted_pair = $strict_identity
+			? ($left_value->matches($right_value)
+				|| Scalar_Identity::is_distinct_kind_pair($left_value, $right_value, $context))
+			: self::ordinary_pair_allowed($left_value, $right_value, $context);
 		if (!$admitted_pair || !self::is_admitted_payload($left_value, $context)
 			|| $operands[0]->by_value() || $operands[1]->by_value()) {
 			return null;
@@ -63,6 +59,18 @@ final class Wrapper_Equality
 		}
 		return $decision;
 	}
+
+	/** Ordinary equality preserves family-specific states, including mixed canonical numbers. */
+	private static function ordinary_pair_allowed(canonical_type_use $left_value,
+		canonical_type_use $right_value, preparation_context $context): bool
+	{
+		if ($left_value->matches($right_value)) {
+			return true;
+		}
+		// All supported carrier/plain families now share canonical numeric equality.
+		return Floating_Point_Operators::is_mixed_numeric_pair($left_value, $right_value, $context);
+	}
+
 	/** Only roles whose comparison contracts are admitted here participate. */
 	private static function payload(canonical_type_use $source): ?canonical_type_use
 	{

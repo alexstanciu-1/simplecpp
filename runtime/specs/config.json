@@ -9,6 +9,7 @@
 		"default_overload_policy": "forbidden",
 		"emit_deleted_for_forbidden_operations": true,
 		"comparison_result_type": "bool_t",
+		"cross_family_equality_rule": "For distinct nullable/result/result_or_false/result_or_bool families with canonical int_t<>/float_t payload pairs or matching bool_t/string_t payloads: present values compare by scalar equality, using int-to-float conversion for mixed numeric pairs; matching false sentinels are equal; distinct unavailable states and unavailable/payload pairs are unequal. != negates ==. Bool payload/sentinel states stay distinct. Other heterogeneous pairs, fixed widths and boxed payloads remain outside this route.",
 		"condition_lowering": {
 			"semantic_type": "bool_t",
 			"cpp_bridge": "static_cast<bool>"
@@ -579,7 +580,7 @@
 			"typed_boundary_bridge_rule": "temporary implicit unwrap to wrapped T is allowed only at explicit typed destinations while the current generator remains symbol/type-blind; the false-like empty state is a runtime error for required-value conversions",
 			"cast_lifting_rule": "centralized cast lifting may unwrap result_or_false<U> to any configured explicit target T through require_value and cast<T>(U); string_t keeps the configured empty-string fallback for the false-like empty state",
 			"operator_lifting_rule": "centralized generated operators define result_or_false participation through the same guarded-value lifting surface used by nullable; value-required operations fail on the false-like empty state; state-aware equality and explicit sentinel comparisons do not unwrap",
-			"plain_payload_equality_rule": "for matching canonical int_t<>, float_t or string_t payloads, sentinel/plain == is false in both orders and != is its negation; present payloads use scalar equality; bool and mixed/boxed behavior is unchanged",
+			"plain_payload_equality_rule": "for canonical int_t<>/float_t payload and plain operand pairs, or matching string_t pairs, sentinel/plain == is false in both orders and != is its negation; present numeric payloads use int-to-float equality; same-family matching sentinels compare equal and sentinel/payload compares unequal; bool, fixed-width and mixed/boxed behavior is unchanged",
 			"sentinel_rule": "the public PHP-facing comparison surface remains == false while the runtime implementation uses false_sentinel_t / false_sentinel internally"
 		},
 		"result_or_bool": {
@@ -607,7 +608,7 @@
 			"typed_boundary_bridge_rule": "temporary implicit unwrap to wrapped T is allowed only at explicit typed destinations while the current generator remains symbol/type-blind; the bool states are runtime errors for required-value conversions",
 			"cast_lifting_rule": "centralized cast lifting may unwrap result_or_bool<U> to any configured explicit target T through require_value and cast<T>(U); string_t keeps the configured empty-string fallback for the bool states, while a true-state stringifies as the PHP boolean true contract",
 			"operator_lifting_rule": "centralized generated operators define result_or_bool participation through the same guarded-value lifting surface used by nullable; value-required operations fail on the non-value bool states; state-aware equality and explicit sentinel comparisons do not unwrap",
-			"plain_payload_equality_rule": "for matching canonical int_t<>, float_t or string_t payloads, sentinel/plain == is false in both orders and != is its negation; present payloads use scalar equality; bool and mixed/boxed behavior is unchanged",
+			"plain_payload_equality_rule": "for canonical int_t<>/float_t payload and plain operand pairs, or matching string_t pairs, sentinel/plain == is false in both orders and != is its negation; present numeric payloads use int-to-float equality; same-family matching sentinels compare equal and sentinel/payload compares unequal; bool, fixed-width and mixed/boxed behavior is unchanged",
 			"sentinel_rule": "the public PHP-facing comparison surface remains == false and == true while the runtime implementation uses false_sentinel_t / false_sentinel and true_sentinel_t / true_sentinel internally; result_or_bool<bool_t> reserves plain bool/bool_t construction for wrapped payload values"
 		},
 		"error_t": {
@@ -1360,6 +1361,20 @@
 			"mixed_t_rule": "for generic condition coercion and php::ternary_eval, mixed_t currently delegates through the shared condition helper for null, bool, int, float, and string payloads; table/object-like runtime kinds still fail in condition context"
 		},
 		"text": {
+			"source_concatenation_contract": {
+				"operators": [".", ".="],
+				"plain_integer_family": "php_text_integer_widths_to_string_i64",
+				"carrier_families": ["nullable", "result", "result_or_false", "result_or_bool"],
+				"carrier_payloads": ["int", "float", "bool", "string"],
+				"present_payload": "render with the corresponding plain scalar text rule; preserve complete string bytes",
+				"optional_empty_or_sentinel": "empty text, including both result_or_bool sentinel states",
+				"structured_result_error": "required payload extraction throws; stored error remains unchanged",
+				"composition": "existing has_value/require_value and scalar to_string helpers; string carriers may use the equivalent explicit string cast",
+				"evaluation": "convert saved left before evaluating and converting right; successful compound commits once to captured destination",
+				"compound_destinations": ["string", "nullable<string>", "result<string>", "result_or_false<string>", "result_or_bool<string>"],
+				"scope": "bounded source concatenation only; no new boxed/carrier or indexed capabilities, uint64, wrapped fixed widths, nested or object/container payloads",
+				"other_contexts": "display helpers, explicit casts, interpolation and value boundaries keep their own contracts"
+			},
 			"result_type": "string_t",
 			"dispatch_helper": "to_string",
 			"null_rendering": {
@@ -3012,6 +3027,13 @@
 				"family_rule": "repeated source-TypeRef conversions use abi_bridge_rule_families with a stable family_id, member list, and deferred-member list",
 				"text_coercion_rule": "new printable source types add coercions.text.abi_bridge_rules or coercions.text.abi_bridge_rule_families plus any needed carrier adapter, not source-specific compiler casts"
 			},
+			"numeric_three_way": {
+				"entrypoint": "scpp::numeric_compare",
+				"header": "operators/ordering/numeric_compare.hpp",
+				"domain": "canonical float operands after explicit int-to-float promotion",
+				"result": "canonical int -1, 0 or 1",
+				"unordered_error": "unordered_comparison"
+			},
 			"integer_power": {
 				"entrypoint": "scpp::pow",
 				"header": "operators/arithmetic/power.hpp",
@@ -3021,7 +3043,7 @@
 				"negative_exponent_error": "power_negative_exponent",
 				"overflow_error": "power_overflow",
 				"rule": "exact signed 64-bit result or runtime_error; no float promotion, implicit carrier widening, or unchecked multiplication",
-				"scope": "canonical int only; float, mixed, wrapper delegation and compound power are deferred"
+				"scope": "canonical int only; checked wrapper delegation and compound power follow expression_evaluation.md; float, mixed and fixed widths remain separate"
 			},
 			"operator_phase": "C++-first operator semantics for numeric and integer-bitwise operators; PHP-only identity and concatenation helpers remain in scpp::php, with strict identity normalizing wrappers and comparing compatible shared-object views by managed identity.",
 			"php_identity": {

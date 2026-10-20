@@ -1,0 +1,8 @@
+{
+  "doc_status": "supporting",
+  "date": "2026-10-20",
+  "head": "e9ec8195b2d84fbc84f41bf70ab0f13502903fda",
+  "branch": "v0.2/develop",
+  "scope": "E4S: 24 sentinel carrier mixed numeric ordinary-equality signatures; bounded runtime repair authorized",
+  "dirty_status": " M compiler/my-try/docs/catalog/15_blocking_debt.md\n M compiler/my-try/docs/catalog/15_review.md\n M compiler/my-try/tests/mixed_equality.py\n M compiler/my-try/tests/mixed_equality_support.hpp\n?? compiler/my-try/tests/__pycache__/\n"
+}

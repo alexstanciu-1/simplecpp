@@ -1,0 +1,8 @@
+{
+  "doc_status": "supporting",
+  "date": "2026-10-20",
+  "head": "9355ccfe05df89a97766c314d1e654e24b65b43b",
+  "branch": "v0.2/develop",
+  "scope": "E4NR: 24 nullable/Result mixed ordinary equality signatures and four scalar prerequisites; runtime-first gate",
+  "dirty_status": " M compiler/my-try/docs/catalog/15_blocking_debt.md\n M compiler/my-try/docs/catalog/15_review.md\n?? compiler/my-try/tests/__pycache__/\n?? compiler/my-try/tests/mixed_equality.py\n?? compiler/my-try/tests/mixed_equality_support.hpp\n"
+}

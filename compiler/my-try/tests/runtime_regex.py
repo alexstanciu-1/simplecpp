@@ -22,6 +22,7 @@ expected = {
     'match': '3|Abb-cDD|Abb|cDD|AB|AB|😀'.encode(),
     'named': b'AB|AB|AB|ab', 'rows': b'2|1|b|3|2|1|2|ab|1',
     'states': b'preserved|0||fallback|0', 'grep_replace': b'2|abb|3|ba ba',
+    'limited_filter': b'ba|b|1',
     'split': b'3||b,c|2|,', 'order': b'a|/b/|1', 'shadow': b'',
 }
 with CommandRunner(output / 'logs', ROOT) as runner:

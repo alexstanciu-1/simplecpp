@@ -1,17 +1,77 @@
 # Bounded scalar operators
 Doc Status: supporting
 
-Reconciled 2026-10-19 against scoped verification evidence. This guide records the my-try frontend
+Reconciled 2026-10-20 against scoped verification evidence. This guide records the my-try frontend
 and C++ S2S slice for [catalog chapter 02](catalog/02_expressions.md). Root language
 and runtime specifications remain authoritative. Imported legacy examples do not
 activate additional operand types or coercions.
+
+## Scalar and carrier text contexts — 2026-10-20
+
+[V-L11 / V-D14](planning/carrier_text.md) extends `.` to ready plain integer widths
+(signed 8/16/32/64, unsigned 8/16/32) and all four carriers of canonical
+int/float/bool/string, including heterogeneous text pairs. `.=` retains string or
+string-carrier destinations. Nullable empty and either bool sentinel render empty;
+Result failure throws; a present payload uses the corresponding scalar text rule.
+Carrier float rendering therefore matches plain float text rather than the distinct
+explicit float-to-string cast formatting. Complete string bytes are preserved.
+
+`String_Conversions` selects optional/required payload text operations in existing
+conversion decisions. The C++ consumer composes existing state/payload and scalar
+text helpers. Ordered operand snapshots and captured compound destinations keep
+left conversion before RHS evaluation and commit once only after success. No new
+runtime helper or retained structure is introduced. uint64, wrapped fixed widths,
+nested/object/container domains, new boxed combinations and indexed capabilities
+remain separate; explicit casts, interpolation, echo and value boundaries retain
+their own contracts. The original V-L07 inventory remains a dated proof boundary.
+
+## Scalar float identity and original equality reconciliation — 2026-10-20
+
+[V-L06 / S04](planning/float_identity.md) now closes the two remaining plain
+`float === float` / `float !== float` forms. `Scalar_Identity` uses the existing
+identity decisions, identity operand conversions and ordered value snapshots.
+Signed zeros are identical; NaN is non-identical without throwing; no numeric
+promotion occurs. The existing runtime passes unchanged. The throwing NaN
+spaceship contract remains distinct.
+
+The original twelve V-L06 carrier equality/identity cells and unchanged strict
+S04 `shell_exec` fixture pass on dev002. These are reconciled existing support;
+V-L07's carrier total stays 3,376. Fixed-width identity and other providers/text
+conversions are not broadened. Historical scalar-float rejection expectations are
+superseded by this proof.
+
+## Canonical-carrier completion — 2026-10-20
+
+The [V-L07 completion proof](planning/vl07_completion.md) settles the remaining
+canonical candidates: matching bool cross-family ordinary equality preserves
+payload/sentinel distinctions; float/mixed numeric `<=>` promotes int to float and
+throws `unordered_comparison` for NaN; canonical-int `**=` uses checked power.
+String-carrier `.` / `.=` uses explicit string conversion: empty nullable and both
+bool sentinel states become empty text, while Result failure throws. This preserves
+complete bytes and the existing left-to-right snapshot/write-back protocol.
+
+The implementation uses existing preparation, conversion, mutation and emission
+owners, plus a scalar runtime `scpp::numeric_compare` helper. That checkpoint admitted string-only text
+pairs; V-L11 / V-D14 above extends the bounded source text domain. Heterogeneous ordinary equality and
+implicit narrowing compounds reject before publication; explicit conversions remain
+available through their supported conversion paths.
+
+The finite inventory now has 3,376 verified carrier signatures and 576 intentional
+rejections, with no unresolved canonical candidates. The old 129 “existing paths”
+reconcile to 17 supported operations and 112 observed rejections. Indexed numeric
+updates, fixed-width/nested/object/container payloads, boxed/table semantics and
+selectors remain explicit separate boundaries. Existing indexed text assignment
+passes bounded proofs for all four string carriers. See the [inventory and owners](planning/vl07_inventory/README.md).
+
+Earlier dated checkpoints below retain their original proof boundaries; this
+completion supersedes their deferrals for the specifically admitted operations.
 
 ## Scalar admission follow-up — 2026-10-17
 
 Exact bool `==` / `!=` now return bool. Canonical float/float and int/float pairs
 admit `+`, `-`, `*`, `/` returning float; float unary `+` / `-` are admitted.
 Dedicated boolean/floating owners publish the existing decision shape, including
-operator-only canonical int-to-float conversion. Exact float compound updates are covered by the later compound proof; narrowing compounds remain deferred; the V-L04 follow-up
+operator-only canonical int-to-float conversion. Exact float compound updates are covered by the later compound proof; implicit narrowing compounds are intentionally rejected; the V-L04 follow-up
 below now admits ordinary float comparisons and mutations. Zero divisors raise `division_by_zero`,
 including floating positive/negative zero and both int/float operand orders.
 Preserving this existing runtime behavior was agreed on 2026-10-18; the stale
@@ -24,7 +84,7 @@ supersedes their rejection of the specific float arithmetic forms above.
 
 [V-L04 verification](planning/float_operators_l04.md) admits exactly float/float
 `==`, `!=`, `<`, `<=`, `>`, `>=`, returning bool, and canonical float prefix/postfix
-`++`/`--`. Equality retains exact float operands; the O1 extension below adds int-to-float ordering. They preserve ordinary
+`++`/`--`. The O1 and E4NR extensions below add int-to-float ordering and ordinary equality. They preserve ordinary
 IEEE value comparisons, including signed-zero equality and unordered NaN behavior.
 Prefix yields an updated float value snapshot; postfix yields the previous value
 snapshot. Neither result is assignable or reference-bindable, regardless of the
@@ -351,6 +411,39 @@ Bool payloads can match numeric carriers' bool sentinel states, while present
 numeric payloads remain distinct from bool values. Null and structured errors retain
 their normalized kinds and metadata. Ordinary equality, strings, fixed-width types,
 logical mixing and updates remain separate. No runtime changes were needed.
+The E5SI extension below subsequently admits heterogeneous string identity.
+
+## Heterogeneous string strict identity — 2026-10-20
+
+[The E5SI proof](planning/string_other_identity.md) adds twelve scalar and 288
+carrier signatures for string/int, string/float and string/bool `===`/`!==`
+in both orders. `Scalar_Identity` owns the shared distinct-kind capability for
+canonical int, float, bool and string; wrapper preparation reuses it. Each
+operand keeps its original type and complete state, with no checked extraction,
+string parsing, numeric promotion or truth conversion.
+
+Successful string payloads differ from numeric/bool payloads. Matching normalized
+null, bool sentinel and structured error states can still be identical. A string
+carrier's bool sentinel can match a bool payload without changing its stored state.
+The existing ordered snapshot renderer handles source effects and failures.
+Ordinary equality, concatenation, logical mixing, spaceship, updates and
+fixed-width/nested extensions remain separate. Runtime implementation is unchanged.
+
+## Mixed numeric nullable/Result ordinary equality — 2026-10-20
+
+[The E4NR proof](planning/mixed_equality.md) adds four scalar and 24 carrier
+signatures for int/float `==`/`!=` in both orders. Scalar comparisons promote int
+to float. Nullable and structured Result comparisons snapshot complete states;
+the runtime promotes only present payloads. No checked extraction or carrier
+conversion occurs. The shared wrapper owner separates ordinary pair admission
+from strict identity and uses semantic carrier roles.
+
+Two nullable absences or two Result failures compare equal; unavailable versus
+present/plain compares unequal. Failure metadata matters only to strict identity.
+Floating comparison preserves signed-zero equality, NaN inequality and int-to-float
+rounding. Source order, RHS effects and saved-left snapshots use the existing
+renderer. Sentinel carriers were added by E4S below; cross-family pairs, other
+payloads and spaceship remain separate. E4NR needed no runtime implementation changes.
 
 ## Current contracts
 
@@ -390,8 +483,8 @@ retain the runtime's native C++ limitations; no wrapping or checked arithmetic i
 
 Concatenation now uses a separate text context for mixed, ordinary scalar and null
 operands. The [separated-family amendment](../../../specs/dynamic_types.md#v02-separated-mixeddynamic-families--2026-10-05)
-extends the boxed path to dynamic; configured nullable/fixed-width text admission
-remains missing and Result text remains a contract question. It reuses
+extends the boxed path to dynamic; ready-width and canonical-carrier text admission
+is now covered by V-L11 / V-D14 above. uint64 and wider domains remain separate. It reuses
 `php::to_string`, not explicit casts or checked string extraction. `.=` uses the same
 text domain with string/mixed targets. See [chapter 05](catalog/05_dynamic_boundaries.md#text-concatenation-write-back--2026-10-04).
 Strict comparison
@@ -851,3 +944,50 @@ imported prose notes are now reconciled and agreed.
 The October 02 closeout was a bounded checkpoint. Current per-card reconciliations
 distinguish implemented slices, missing configured admission and explicit deferrals;
 it is not a whole-language or whole-operator completion claim.
+
+## Mixed numeric sentinel ordinary equality — 2026-10-20
+
+`==`/`!=` now also admit mixed canonical int/float values in the same
+`result_or_false` or `result_or_bool` family, and either carrier/plain order.
+Matching sentinels compare equal, different sentinel states compare unequal, and
+sentinel/payload pairs compare unequal even for zero/one. Present values compare
+by int-to-float promotion, including rounding, signed zero and NaN behavior.
+
+`Wrapper_Equality` admits the pair using semantic Result-family roles. Whole
+carriers are snapshotted left-to-right before comparison without extraction or
+truth conversion. The runtime generator owns the bounded canonical numeric
+sentinel/plain dispatch repair. Bool, matching strings, fixed-width and boxed
+dispatch are preserved. Cross-family ordinary equality remains separate.
+[The E4S proof](planning/sentinel_mixed_equality.md) covers 24 carrier signatures,
+four existing scalar controls, state preservation, eager effects and snapshots.
+
+## Cross-family non-bool ordinary equality — 2026-10-20
+
+`==`/`!=` admit distinct carrier families with matching canonical int, float or
+string payloads. Both present payloads use scalar equality. Matching false
+sentinels compare equal across the two sentinel families; different unavailable
+states and unavailable/payload comparisons are unequal. No truth conversion or
+guarded extraction occurs. Whole-state eager snapshots use existing lowering.
+
+`Wrapper_Equality` owns the bounded admission. The runtime operator generator
+owns family/state classification and a single cross-family comparison path;
+competing generic overloads exclude exactly that bounded pair domain. Same-family,
+plain, bool and mixed-numeric contracts remain unchanged. [The E3NB proof](planning/cross_equality.md)
+covers 72 signatures, state preservation, byte/float values, source failures and
+local/property replacement snapshots. Cross-family bool and mixed-numeric ordinary
+equality remain separate.
+
+## Cross-family mixed numeric ordinary equality — 2026-10-20
+
+`==`/`!=` now admit canonical int/float payload pairs in both orders across all
+four carrier families. The E3 state-comparison path is unchanged: present payloads
+use scalar int-to-float equality; matching false sentinels compare equal; different
+unavailable states and unavailable/payload pairs are unequal. Complete operand
+snapshots preserve source representations and error details.
+
+The runtime generator shares one canonical numeric/matching-string payload-pair
+predicate between cross-family and sentinel/plain equality. Compiler admission
+uses the existing canonical mixed-numeric predicate without family-specific branches.
+[The E4 proof](planning/cross_mixed_equality.md) covers the remaining 48 signatures,
+numeric boundaries, NaNs, eager effects, snapshots and recovery. Cross-family bool
+and other heterogeneous payloads remain separate; strict identity is unchanged.

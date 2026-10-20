@@ -1,0 +1,275 @@
+{
+  "doc_status": "supporting",
+  "date": "2026-10-20",
+  "passed": true,
+  "head": "c37e0597",
+  "host": "alex-ai@dev002.travelfuse.ro",
+  "snapshot": "/home/alex-ai/substr-replace/20261020-01",
+  "suites": {
+    "runtime-baseline": {
+      "commands": 3,
+      "all_expected_exits": true,
+      "native_executions": 1
+    },
+    "runtime-01": {
+      "commands": 5,
+      "all_expected_exits": true,
+      "native_executions": 2
+    },
+    "source-baseline": {
+      "commands": 1,
+      "all_expected_exits": true,
+      "native_executions": 0
+    },
+    "source-01": {
+      "commands": 8,
+      "all_expected_exits": true,
+      "native_executions": 2
+    },
+    "regression-strings": {
+      "commands": 85,
+      "all_expected_exits": true,
+      "native_executions": 33
+    },
+    "regression-search": {
+      "commands": 10,
+      "all_expected_exits": true,
+      "native_executions": 3
+    }
+  },
+  "summaries": {
+    "runtime-baseline": {
+      "passed": true,
+      "baseline": true,
+      "observation": "abX\nabXcdef\nabXcdef\nXabcdef\n"
+    },
+    "runtime-01": {
+      "passed": true,
+      "baseline": false,
+      "observation": "replace_checks=3312\n"
+    },
+    "source-baseline": {
+      "passed": true,
+      "baseline": true,
+      "checks": {
+        "path": "tests/php/strings/strict_level_01/strict_strings_001_str_surface.phs",
+        "sha256": "891580ca91aaa07e9e801f515d13de5b6253227aefd29ce747168b9a6daa5e34",
+        "compiled": false,
+        "diagnostic": "S2S needs one resolved function for substr_replace\n"
+      },
+      "executed": [],
+      "full_matrix_run": false
+    },
+    "source-01": {
+      "passed": true,
+      "baseline": false,
+      "checks": {
+        "original": {
+          "path": "tests/php/strings/strict_level_01/strict_strings_001_str_surface.phs",
+          "sha256": "891580ca91aaa07e9e801f515d13de5b6253227aefd29ce747168b9a6daa5e34",
+          "compiled": true
+        },
+        "rejections": [
+          {
+            "source": "substr_replace();",
+            "diagnostic": "S2S runtime call requires one exact signature; use explicit argument types\n"
+          },
+          {
+            "source": "substr_replace(\"a\");",
+            "diagnostic": "S2S runtime call requires one exact signature; use explicit argument types\n"
+          },
+          {
+            "source": "substr_replace(\"a\",\"x\");",
+            "diagnostic": "S2S runtime call requires one exact signature; use explicit argument types\n"
+          },
+          {
+            "source": "substr_replace(\"a\",\"x\",0,1,2);",
+            "diagnostic": "S2S runtime call requires one exact signature; use explicit argument types\n"
+          },
+          {
+            "source": "substr_replace(1,\"x\",0);",
+            "diagnostic": "S2S runtime call requires one exact signature; use explicit argument types\n"
+          },
+          {
+            "source": "substr_replace(\"a\",false,0);",
+            "diagnostic": "S2S runtime call requires one exact signature; use explicit argument types\n"
+          },
+          {
+            "source": "substr_replace(\"a\",\"x\",1.0);",
+            "diagnostic": "S2S runtime call requires one exact signature; use explicit argument types\n"
+          },
+          {
+            "source": "substr_replace(\"a\",\"x\",0,\"1\");",
+            "diagnostic": "S2S runtime call requires one exact signature; use explicit argument types\n"
+          },
+          {
+            "source": "$s mixed=\"a\";substr_replace($s,\"x\",0);",
+            "diagnostic": "S2S runtime call requires one exact signature; use explicit argument types\n"
+          },
+          {
+            "source": "$s vector<string>=[\"a\"];substr_replace($s,\"x\",0);",
+            "diagnostic": "Expected '>' at operator.phs: byte 16"
+          },
+          {
+            "source": "$r =& substr_replace(\"a\",\"x\",0);",
+            "diagnostic": "S2S reference binding requires stable storage\n"
+          }
+        ],
+        "recovery_cycles": 2
+      },
+      "executed": [
+        "behavior",
+        "original"
+      ],
+      "full_matrix_run": false
+    },
+    "regression-search": {
+      "passed": true,
+      "baseline": false,
+      "checks": {
+        "originals": {
+          "002_str_edges": {
+            "path": "tests/php/strings/strict_level_01/strict_strings_002_str_edges.phs",
+            "sha256": "ef5bf5be6d66370a22bc00b14a18c577321c5915d82ba53f4a69025651cdc666",
+            "compiled": true
+          },
+          "004_strpos_false_branch_regression": {
+            "path": "tests/php/strings/strict_level_01/strict_strings_004_strpos_false_branch_regression.phs",
+            "sha256": "dc4a756504d246ffadd26af84d9c14e0abbae1713abe48639870eaffe1344cdc",
+            "compiled": false,
+            "diagnostic": "S2S runtime call requires one exact signature; use explicit argument types\n"
+          },
+          "001_str_surface": {
+            "path": "tests/php/strings/strict_level_01/strict_strings_001_str_surface.phs",
+            "sha256": "891580ca91aaa07e9e801f515d13de5b6253227aefd29ce747168b9a6daa5e34",
+            "compiled": true
+          }
+        },
+        "rejections": [
+          {
+            "source": "strpos();",
+            "diagnostic": "S2S runtime call requires one exact signature; use explicit argument types\n"
+          },
+          {
+            "source": "strpos(\"a\");",
+            "diagnostic": "S2S runtime call requires one exact signature; use explicit argument types\n"
+          },
+          {
+            "source": "strpos(\"a\",\"a\",0,1);",
+            "diagnostic": "S2S runtime call requires one exact signature; use explicit argument types\n"
+          },
+          {
+            "source": "strpos(1,\"a\");",
+            "diagnostic": "S2S runtime call requires one exact signature; use explicit argument types\n"
+          },
+          {
+            "source": "strpos(\"a\",false);",
+            "diagnostic": "S2S runtime call requires one exact signature; use explicit argument types\n"
+          },
+          {
+            "source": "strpos(\"a\",\"a\",1.0);",
+            "diagnostic": "S2S runtime call requires one exact signature; use explicit argument types\n"
+          },
+          {
+            "source": "$v mixed=\"a\";strpos($v,\"a\");",
+            "diagnostic": "S2S runtime call requires one exact signature; use explicit argument types\n"
+          },
+          {
+            "source": "$v vector<string>=[\"a\"];strpos($v,\"a\");",
+            "diagnostic": "Expected '>' at operator.phs: byte 16"
+          },
+          {
+            "source": "$r =& strpos(\"a\",\"a\");",
+            "diagnostic": "S2S reference binding requires stable storage\n"
+          },
+          {
+            "source": "strrpos();",
+            "diagnostic": "S2S runtime call requires one exact signature; use explicit argument types\n"
+          },
+          {
+            "source": "strrpos(\"a\");",
+            "diagnostic": "S2S runtime call requires one exact signature; use explicit argument types\n"
+          },
+          {
+            "source": "strrpos(\"a\",\"a\",0,1);",
+            "diagnostic": "S2S runtime call requires one exact signature; use explicit argument types\n"
+          },
+          {
+            "source": "strrpos(1,\"a\");",
+            "diagnostic": "S2S runtime call requires one exact signature; use explicit argument types\n"
+          },
+          {
+            "source": "strrpos(\"a\",false);",
+            "diagnostic": "S2S runtime call requires one exact signature; use explicit argument types\n"
+          },
+          {
+            "source": "strrpos(\"a\",\"a\",1.0);",
+            "diagnostic": "S2S runtime call requires one exact signature; use explicit argument types\n"
+          },
+          {
+            "source": "$v mixed=\"a\";strrpos($v,\"a\");",
+            "diagnostic": "S2S runtime call requires one exact signature; use explicit argument types\n"
+          },
+          {
+            "source": "$v vector<string>=[\"a\"];strrpos($v,\"a\");",
+            "diagnostic": "Expected '>' at operator.phs: byte 16"
+          },
+          {
+            "source": "$r =& strrpos(\"a\",\"a\");",
+            "diagnostic": "S2S reference binding requires stable storage\n"
+          }
+        ],
+        "recovery_cycles": 4,
+        "downstream_boundary": {
+          "source": "$p=strpos(\"varchar(32)\",\"(\");if($p!==false)echo substr(\"varchar(32)\",0,$p);",
+          "diagnostic": "S2S runtime call requires one exact signature; use explicit argument types\n"
+        }
+      },
+      "executed": [
+        "behavior",
+        "original_002_str_edges",
+        "original_001_str_surface"
+      ],
+      "full_matrix_run": false
+    }
+  },
+  "source_integrity": {
+    "checked": 6285,
+    "mismatches": [],
+    "runtime_changed": [
+      "runtime/include/modules/strings/strings.hpp",
+      "runtime/metadata/modules/strings.json",
+      "runtime/specs/catalog.md"
+    ],
+    "compiler_implementation_unchanged": true
+  },
+  "toolchain": {
+    "php": "PHP 8.5.11 (cli) (built: Sep 24 2026 13:49:29) (NTS)\nCopyright (c) The PHP Group\nBuilt by Ubuntu\nZend Engine v4.5.11, Copyright (c) Zend Technologies\n    with Zend OPcache v8.5.11, Copyright (c), by Zend Technologies\n",
+    "clang": "Ubuntu clang version 18.1.3 (1ubuntu1)\nTarget: x86_64-pc-linux-gnu\nThread model: posix\nInstalledDir: /usr/bin\n",
+    "python": "Python 3.12.3\n"
+  },
+  "evidence_sha256": "48c99eefda9b5c188d8649788effaa04d3af7fb11ee9cd19e3c470b2cbbaf42f",
+  "original_surface_fixture_end_to_end_passed": true,
+  "remaining_replacement_blockers": [],
+  "remaining_s09_blockers": [
+    "S09-B1: original false-branch fixture passes result_or_false<int> to substr integer parameter; exact runtime call signature rejects"
+  ],
+  "newly_exposed_implementation_blockers": [],
+  "attempts": {
+    "runtime-baseline": "Reproduces suffix replacement for omitted length and insertion for unusable negative windows.",
+    "source-baseline": "Original strict surface stops at unresolved substr_replace.",
+    "runtime-01": "3312 replacement checks and existing full native PHP-string suite pass with reconciled expectations under ASan/UBSan.",
+    "source-01": "Original unchanged strict surface exact output and 3312 source checks, effects, rejection/recovery pass under ASan/UBSan.",
+    "regressions": "String/catalog/generic suite and source search suite pass; search suite independently reruns original surface/edge fixtures and retains S09-B1."
+  },
+  "runtime_implementation_changes": true,
+  "compiler_implementation_changes": false,
+  "full_matrix_run": false,
+  "native_compiler_rebuilt": false,
+  "original_issue_closure": {
+    "closed": 26,
+    "partial": 1,
+    "total": 64,
+    "percent": 40.625
+  }
+}

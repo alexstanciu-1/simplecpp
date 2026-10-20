@@ -1701,3 +1701,193 @@ compatibility umbrella headers. `data_initialization.py --no-pch` exercises the
 existing typed/mixed/dynamic source-construction and runtime-observation fixtures.
 See the [dev002 header-split checkpoint](planning/initialization_headers_20261016.md)
 for native compiler, build timing, memory and runtime evidence.
+
+### Heterogeneous string strict identity E5SI — 2026-10-20
+
+`python3 compiler/my-try/tests/mixed_identity.py --group string-other --results FRESH`
+verifies runtime support, twelve scalar prerequisites and 288 carrier signatures
+with independent normalized-state expectations, exact string-byte storage checks,
+eager source order, reference/property snapshots and retained recovery. Add
+`--runtime-only` for the prerequisite gate. Run on dev002; see
+[the dated proof](planning/string_other_identity.md). Ordinary equality and other
+string operators are outside this group.
+
+
+### Mixed numeric nullable/Result ordinary equality E4NR — 2026-10-20
+
+`python3 compiler/my-try/tests/mixed_equality.py --results FRESH` verifies unchanged
+runtime support, four scalar prerequisites and 24 nullable/structured Result
+carrier signatures. The independent oracle checks numeric promotion and absence/
+failure-state equality, including different error metadata; complete-state
+storage, eager source order, snapshots and retained repair are observed separately.
+Add `--runtime-only` for the prerequisite gate. Run on dev002; see
+[the dated proof](planning/mixed_equality.md). Cross-family ordinary equality remains
+a negative control; sentinel support is covered by the next group.
+
+### Mixed numeric sentinel ordinary equality E4S — 2026-10-20
+
+Run `python3 compiler/my-try/tests/mixed_equality.py --group sentinel --results FRESH`
+on dev002 for the 24 same-family/plain sentinel signatures and four existing scalar
+controls. Add `--runtime-only` for a runtime gate. `--probe-runtime` is an
+observational baseline mode: it records compilation failures and is not an
+acceptance run. The repaired source proof covers every sentinel state, numeric
+boundaries and NaNs, eager source evaluation, complete operand snapshots, source
+failures and retained recovery. `sentinel_plain_runtime.py` retains matching-payload,
+bool and boxed controls plus fixed-width and numeric/string rejection boundaries.
+See [the E4S proof and preserved baseline](planning/sentinel_mixed_equality.md).
+
+### Cross-family non-bool ordinary equality E3NB — 2026-10-20
+
+Run `python3 compiler/my-try/tests/cross_equality.py --results FRESH` on dev002.
+This checks 72 source signatures for matching int/float/string payloads, with
+24 existing same-family runtime controls. `--runtime-only` selects the runtime
+gate; adding `--probe-runtime` records baseline failures without treating them
+as acceptance. Source proofs reuse the state/snapshot fixture's ordinary-cross
+mode and independent oracle. The initial proof retained 24 bool and 48 mixed-numeric cross-family negatives;
+E4 below now admits the mixed-numeric pairs while preserving bool exclusions.
+See [the proof](planning/cross_equality.md).
+
+### Cross-family mixed numeric ordinary equality E4 — 2026-10-20
+
+Run `python3 compiler/my-try/tests/mixed_equality.py --group cross --results FRESH`
+on dev002 for all 48 distinct-family int/float `==`/`!=` signatures. Add
+`--runtime-only` for the prerequisite gate; `--probe-runtime` additionally records
+baseline failures rather than claiming acceptance. The independent numeric oracle
+checks every selected state/value combination, rounding and NaNs; source proofs
+check eager snapshots, effects, failures, recovery and all 24 bool cross-family
+exclusions. Existing nullable/Result and sentinel groups remain separate controls.
+See [the E4 report](planning/cross_mixed_equality.md).
+
+
+## V-L07 canonical-carrier completion — 2026-10-20
+
+Run `tests/vl07_completion.py --results <fresh-dir>` on dev002 for the 150 spaceship,
+power-compound and text rows; `tests/cross_equality.py --group bool --results
+<fresh-dir>` adds 24 bool cross-family equalities. Source tests inspect preparation,
+cleanup, retained edit/recovery, native values/states, source errors, snapshots,
+property/static/receiver lifetime and write-back. Independent runtime probes live in
+`tests/vl07_runtime.py` (`--final` requires the checked NaN helper).
+
+`tests/vl07_rejections.py` enumerates all 576 E5/C2 negative rows from the inventory,
+with failure/recovery and empty-artifact checks. `tests/vl07_existing.py` reconciles
+129 prior boundary cells, proving 17 supported paths and 112 rejections.
+`tests/vl07_controls.py` checks explicit conversions, power precedence/snapshots and
+indexed boundaries. `tests/vl07_indexed_text.py` audits the existing four-carrier
+indexed text protocol; inspect its per-row `supported` field, not task completion
+alone. Similarly, completion runner acceptance requires `summary.json` passed=true.
+
+All use the shared runner with 12 slots and native fixture compilation. The
+[completion report](planning/vl07_completion.md) and evidence distinguish failed
+attempts, corrected fixtures and accepted suites. This is not a full matrix run or
+a native rebuild of the compiler itself.
+
+
+## V-L06 scalar float identity and S04 — 2026-10-20
+
+On dev002, run `tests/float_identity.py --runtime-only --results <fresh-dir>` for
+the unchanged runtime prerequisite; omit `--runtime-only` to include both source
+forms with snapshots, source exceptions and retained recovery. The fixture reuses
+the independent carrier-identity oracle for plain float values, preserving float
+bits while comparing numeric identity.
+
+`tests/carrier_equality_reconciliation.py --results <fresh-dir>` replays the twelve
+original homogeneous nullable/int, Result/int and falseable/int equality/identity
+cells. `tests/falseable_process_identity.py --results <fresh-dir>` compiles and runs
+the unchanged strict S04 fixture with its exact metadata output, plus deterministic
+false-sentinel/string controls in both comparison orders. It copies source bytes
+without migration into an isolated compiler input directory.
+
+See [the report](planning/float_identity.md) for failed fixture attempts, corrected
+regressions and proof bounds. No runtime changes, native compiler rebuild or full
+matrix run were needed.
+
+## Bounded text contexts: V-L11 / V-D14
+
+On dev002, run `tests/carrier_text_runtime.py --results <fresh-dir>` before source
+admission changes. It checks existing state/payload composition and exposes the
+float-format difference between scalar text and explicit carrier casts. Run
+`tests/carrier_text.py --results <fresh-dir>` for the 864 named-type rows (729 `.`
+and 135 `.=`); `--smoke` selects four representative rows. These use the existing
+completion fixture with independent scalar text expectations and carrier states,
+ordered source errors, local/property/static snapshots, receiver rebinding,
+write-back and invalid-edit recovery. Width boundaries, binary strings and float
+rounding/NaN/infinity/signed-zero rendering are included.
+
+`tests/carrier_text_controls.py --results <fresh-dir>` covers literal-null rows,
+the four original findings and deferred-domain/value-boundary rejection controls.
+Regressions include existing indexed string-carrier writes, boxed text, explicit
+casts, interpolation and compound effects. This is a bounded text inventory, not
+a full operator matrix; `int`/`int64` source spellings are counted separately.
+Use fresh result directories and retain failed attempts. See [the report](planning/carrier_text.md)
+for exact tested manifests and evidence. Compiler-native portability is a separate
+proof; these tests compile emitted C++ with the existing runtime.
+
+## S06 single-statement conditional bodies
+
+Run `tests/unbraced_conditionals.py --results <fresh-dir>` on dev002. It checks
+nearest-if and nested-elseif binding, mixed braced/unbraced arms, branch-local
+scope, once-only/lazy evaluation, selected errors, loop transfers and completion.
+AST checks cover the three nested single-body token spans. Retained edits add and
+remove braces, change else ownership and recover from syntax and preparation
+failures; fresh and no-op results must agree. Native programs check the behavioral
+result of those edits. The test-only entry-observation marker lets the shared
+fixture adapter expose runtime exceptions to the native observer.
+
+`--baseline` reproduces the old required-brace failure and records the unchanged
+original fixture. On the repaired compiler that original fixture must advance to
+the separately tracked wrapper-to-integer call blocker (S09-B1), following the
+S09 search repair; this does not claim an end-to-end pass. Run `tests/control_flow.py --no-pch --results <fresh-dir>` for existing
+control-flow, AST, completion, tokenizer and retained-preparation regressions.
+See [the S06 report](planning/s06_unbraced_conditionals.md) for exact evidence.
+
+## S07 exact-mixed predicates
+
+Run `tests/mixed_predicates_runtime.py --results <fresh-dir>` first on dev002 to
+probe the existing runtime, then `tests/mixed_predicates.py --results <fresh-dir>`.
+The source suite checks the unchanged strict fixture's exact stdout, empty stderr
+and exit status, plus a 23-state truth table through three source functions.
+AddressSanitizer covers temporary property owners; additional checks cover once-only
+producers, readonly observation, subsequent mutation, saved bool values, source
+errors, 47 rejected calls and six incremental recovery cycles. The optional
+`--baseline` mode requires the pre-admission metadata and reproduces unresolved
+`is_bool`; it is not a check to run against the completed implementation.
+
+Focused regressions are `runtime_observation.py`, `mixed.py --no-pch` and
+`unbraced_conditionals.py`, each with its own fresh `--results` directory. The
+[dated S07 evidence](planning/s07_mixed_predicates.md) preserves the runtime-first
+probe and failed test-observer attempt. No full matrix is needed for this slice.
+
+## S09 byte search
+
+On dev002, run `tests/string_search_runtime.py --results <fresh-dir>` and
+`tests/string_search.py --results <fresh-dir>`. The optional `--baseline` modes
+require the pre-admission snapshot: they record code-point adapter behavior and
+unresolved source calls. The completed runtime suite checks 1,760 byte-search calls
+under UBSan; compiled source repeats those checks under ASan/UBSan and adds
+argument snapshots, short-circuited evaluation after an error, saved results,
+explicit extraction, 18 invalid calls and four recovery cycles. Original fixtures
+are never edited; compiled ones use their exact stored output oracle, while
+remaining preparation failures are recorded in the summary.
+
+Focused regressions are `runtime_strings.py`, `nonbool_sentinel_equality.py` and
+`unbraced_conditionals.py`. The conditional first-blocker assertion now expects
+S09-B1's exact runtime signature failure; the earlier unresolved-strpos evidence
+remains historical. See [the report](planning/s09_byte_search.md) for boundaries
+and the unchanged original edge fixture's pass. No full matrix is needed.
+
+## S09 offset replacement
+
+On dev002, run `tests/substr_replace_runtime.py --results <fresh-dir>` first, then
+`tests/substr_replace.py --results <fresh-dir>`. Each checks 3,312 replacement calls
+under ASan/UBSan using an independent byte oracle, including signed extrema,
+empty/non-ASCII/arbitrary-byte inputs and aliased inputs. The runtime driver also
+runs the existing full native PHP-string suite with reconciled expectations. The
+source driver checks the unchanged original surface fixture's exact output,
+argument snapshots/order, no-op argument evaluation, saved results, argument
+errors, 11 invalid calls and two recovery cycles.
+
+The optional `--baseline` modes require the pre-repair snapshot and record the
+runtime contract discrepancies and unresolved source name. Focused regressions
+are `runtime_strings.py` and `string_search.py`, each with a fresh results directory.
+S09-B1 remains a separately observed call-boundary blocker; no full matrix or
+fixture migration is part of this slice. See [the report](planning/s09_substr_replace.md).

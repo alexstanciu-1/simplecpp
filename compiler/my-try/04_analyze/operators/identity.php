@@ -5,17 +5,18 @@ namespace scpp\compiler;
 
 final class Scalar_Identity
 {
-	/** Admitted distinct scalar kinds: canonical bool, int and float; no coercion. */
+	/** Admitted distinct scalar kinds: canonical bool, int, float and string; no coercion. */
 	public static function is_distinct_kind_pair(canonical_type_use $left,
 		canonical_type_use $right, preparation_context $context): bool
 	{
-		return !$left->matches($right) && self::is_numeric_or_bool($left, $context)
-			&& self::is_numeric_or_bool($right, $context);
+		return !$left->matches($right) && self::is_canonical_scalar($left, $context)
+			&& self::is_canonical_scalar($right, $context);
 	}
 
-	private static function is_numeric_or_bool(canonical_type_use $type, preparation_context $context): bool
+	private static function is_canonical_scalar(canonical_type_use $type, preparation_context $context): bool
 	{
 		return $type->matches($context->integer) || $type->matches($context->boolean)
+			|| $type->matches($context->string_type)
 			|| $type->matches(Language_Types::floating(Model::$language_scope));
 	}
 
@@ -28,7 +29,10 @@ final class Scalar_Identity
 		}
 		$same_string = String_Conversions::is_string($operands[0]) && String_Conversions::is_string($operands[1]);
 		$same_bool = $operands[0]->matches($context->boolean) && $operands[1]->matches($context->boolean);
-		if (!$same_string && !$same_bool && !self::is_distinct_kind_pair($operands[0], $operands[1], $context)) {
+		$floating = Language_Types::floating(Model::$language_scope);
+		$same_float = $operands[0]->matches($floating) && $operands[1]->matches($floating);
+		if (!$same_string && !$same_bool && !$same_float
+			&& !self::is_distinct_kind_pair($operands[0], $operands[1], $context)) {
 			return null;
 		}
 		$decision = new operator_decision();

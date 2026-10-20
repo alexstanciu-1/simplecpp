@@ -70,9 +70,13 @@ final class Mutation_Preparation
 		$source_operator = Operator_Preparation::binary_kind(string_byte_slice($text, 0, string_byte_len($text) - 1));
 		$facts->write_back_mode = compound_write_back::converted_assignment;
 		if ($source_operator === operator_kind::concatenation) {
+			if (($facts->indexed_target !== null) && !self::existing_indexed_text_pair($target_type, $value->type)) {
+				throw new \RuntimeException('S2S extended text operands in indexed compounds remain deferred');
+			}
 			// Text replacement may change a boxed payload kind; numeric stored-kind checks do not apply.
-			if (!String_Conversions::is_string($target_type) && !Boxed_Conversions::is_boxed($target_type)) {
-				throw new \RuntimeException('S2S compound concatenation requires string or boxed storage');
+			if (!String_Conversions::is_string($target_type) && !String_Conversions::is_string_carrier($target_type)
+				&& !Boxed_Conversions::is_boxed($target_type)) {
+				throw new \RuntimeException('S2S compound concatenation requires string, string-carrier or boxed storage');
 			}
 		}
 		else {
@@ -177,6 +181,16 @@ final class Mutation_Preparation
 			$operands[0], $decision->result_type, conversion_context::operator_operand);
 		return $decision;
 	}
+	/** Preserve the previously admitted indexed pairs; new text values need their own write-path proof. */
+	private static function existing_indexed_text_pair(canonical_type_use $target, canonical_type_use $value): bool
+	{
+		if (String_Conversions::is_string_carrier($target)) {
+			return String_Conversions::is_string($value) || String_Conversions::is_string_carrier($value);
+		}
+		return Boxed_Conversions::is_scalar_payload($value) || Boxed_Conversions::is_boxed($value)
+			|| Nullable_Conversions::is_null($value) || String_Conversions::is_string_carrier($value);
+	}
+
 	/** Writable carrier identity stays intact; only the runtime accesses its payload. */
 	private static function carrier_payload(canonical_type_use $source): ?canonical_type_use
 	{
