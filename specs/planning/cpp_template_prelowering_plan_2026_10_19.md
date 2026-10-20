@@ -13,6 +13,8 @@ non-blocking, tentatively v0.3. It records template-cost findings and candidates
 prepared facts/native operations; it authorizes no implementation or further
 optimization now.
 
+The active follow-up is the [end-to-end solidification TODO](prelower_templates_solidification_todo_2026_10_20.md), combining runtime-contract and backend audits.
+
 ## Accounting coverage checkpoint
 
 The [unchanged small-app audit](results/accounting_concrete_coverage_2026_10_19/README.md)
