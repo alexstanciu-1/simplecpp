@@ -717,3 +717,16 @@ untouched bytes. Runtime/source oracles and production PCRE2 builds pass.
 Current progress is **31/64 (48.4375%)**, zero partial and 33 other open issues,
 **+3.125 percentage points**. Earlier counts remain dated historical checkpoints.
 Compiler implementation, callback APIs and legacy adapter source are unchanged.
+
+## Platform query and qualified aliases closeout — 2026-10-20
+
+[V-D09 and V-D12](platform_alias.md) are implemented and verified on dev002.
+Free and explicit `php::microtime` calls use the original runtime identities;
+visible source types win and missing methods never fall back. The unchanged
+strict fixture and retained type-add/remove/recovery proofs pass. `fs_is_windows`
+restores the v0.1.77 target-host contract. `getenv` now has normative authority and
+rejects embedded NUL before lookup while preserving missing/empty/copied values.
+Current progress is **33/64 (51.5625%)**, zero partial and 31 other open issues,
+**+3.125 percentage points**. Earlier findings/counts remain historical. General
+namespaces, other aliases and native Windows evidence remain separate; no full
+matrix or native compiler rebuild.

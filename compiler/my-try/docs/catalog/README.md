@@ -320,3 +320,7 @@ new mixed-property behavior and incremental publication may need new examples wh
 we reach them. Add those deliberately rather than treating absence as rejection.
 
 Intake totals: **402 source rows → 330 distinct rule IDs**, with **13 IDs retaining differing versions** and **64 prose sections**.
+
+The [V-D09/V-D12 closeout](../planning/platform_alias.md) records qualified runtime
+callable aliases with observed source-type precedence, restored `fs_is_windows`
+and NUL-rejecting `getenv`. Other aliases and general namespace work are separate.

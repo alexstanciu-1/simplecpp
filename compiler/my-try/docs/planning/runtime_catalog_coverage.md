@@ -28,7 +28,7 @@ do not request approval for each ordinary metadata row or populate speculative r
 | core | Byte `strlen`; all eight strict vector helper forms; `count` for vector/hash/mixed/dynamic; process memory usage/peak; cli_argc/cli_argv/cli_args; getenv/shell_exec | Concrete and inferred generic contracts; non-retaining unary observation |
 | json | Decode/encode families; twelve document/navigation calls, three shared types and diagnostic fields | Concrete overloads, shared storage, reference output and Result returns |
 | datetime | All 11 strict dt_* helpers; clocks, sleep, UTC/local formatting and parsing | Fixed scalar/void signatures, uint64 counters and result<int>; separately linked provider |
-| filesystem | 22 strict fs_* helpers including lock try/release/transfer and file_lock_handle | Shared scalar/container/handle Result calls; providers bundled in snippet runtime |
+| filesystem | 23 strict fs_* helpers including lock try/release/transfer and file_lock_handle | Shared scalar/container/handle Result calls; providers bundled in snippet runtime |
 | process (opt-in) | Five lifecycle calls, process_handle/process_output and six output fields | Shared storage/Result transport; metadata-declared provider linkage |
 | regex (opt-in) | 11 helpers / 21 signatures and two split constants; inventory below | Nested container Results, ordinary value calls; explicit PCRE2 provider linkage |
 | source (opt-in) | Three owning types and thirteen helpers; inventory below | Metadata-owned values, reference transfer, non-retaining reads; no borrowed spans |
@@ -417,3 +417,14 @@ opt-ins: transport support is unconditional; copying is checked independently.
 
 Vector helper bindings and their explicit provider fill-copy requirement are verified
 in the [S09/V-R07/V-H10 batch](closure_batch.md), including production cold/warm builds.
+
+## Platform/compatibility contract slice — 2026-10-20
+
+Core exposes the two `microtime` overloads both free and through explicit `php`
+qualified aliases. The aliases index original callable identities and observe
+source-type shadowing; they do not introduce a class or general namespaces.
+Filesystem restores `fs_is_windows` as a target-native separator fact. The core
+`getenv` contract distinguishes missing/empty/copied values and rejects NUL names
+before lookup. Owning contracts: [microtime](../../../../specs/builtins/datetime/microtime.md),
+[fs_is_windows](../../../../specs/builtins/filesystem/fs_is_windows.md), and
+[getenv](../../../../specs/builtins/process/getenv.md). Other aliases remain separate.
