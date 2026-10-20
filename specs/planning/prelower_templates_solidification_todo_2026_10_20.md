@@ -2,7 +2,8 @@
 Doc Status: planning
 
 Date: 2026-10-20
-Status: working for the supported opt-in path; solidification closed. Broader coverage deferred.
+Status: working for the supported path; solidification closed. Prelowering is the default,
+with explicit ordinary opt-out. Broader coverage deferred.
 This is the current follow-up to the [implementation history](cpp_template_prelowering_plan_2026_10_19.md)
 and [architectural decision](cpp_template_prelowering_decision_2026_10_19.md).
 Unchecked items are remaining work, not claims that the underlying mechanism is absent.

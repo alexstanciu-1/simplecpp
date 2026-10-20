@@ -29,7 +29,12 @@ enum cpp_type_requirement {
 final class cpp_lowering_options
 {
 	/** Strict concrete application interfaces; native validation enforces template-free inputs. */
-	public bool $prelower_templates = false;
+	public bool $prelower_templates = true;
+
+	public function __construct(bool $prelower_templates = true)
+	{
+		$this->prelower_templates = $prelower_templates;
+	}
 }
 
 /** Engine-owned output parts; references only carry the entry position.

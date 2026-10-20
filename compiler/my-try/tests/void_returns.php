@@ -27,7 +27,7 @@ $executions = [];
 try {
 	foreach ($cases as $name => $body) {
 		Compiler_Lifecycle::reset(); file_put_contents($path, $prefix . $body . ' return Log::$n;');
-		$compiler = new Compiler(); $compiler->init([$directory]); $compiler->exec_cpp();
+		$compiler = new Compiler(new cpp_lowering_options(false)); $compiler->init([$directory]); $compiler->exec_cpp();
 		$text = CPP_Probe::text(Model::$cpp_files); $compiler->exec_cpp();
 		if (CPP_Probe::text(Model::$cpp_files) !== $text) { throw new \LogicException('Void return no-op changed output'); }
 		file_put_contents($output . '/' . $name . '.cpp', $text);
@@ -44,21 +44,21 @@ try {
 		'class C { public function f(): void { return 1; } } return 0;',
 	] as $source) {
 		Compiler_Lifecycle::reset(); file_put_contents($path, $source);
-		$compiler = new Compiler(); $compiler->init([$directory]); $compiler->sync([]); $rejected = false;
+		$compiler = new Compiler(new cpp_lowering_options(false)); $compiler->init([$directory]); $compiler->sync([]); $rejected = false;
 		try { $compiler->prepare(); } catch (\RuntimeException $error) { $rejected = true; }
 		if (!$rejected) { throw new \LogicException('Invalid void return accepted: ' . $source); }
 	}
 	Compiler_Lifecycle::reset();
 	$provider = $directory . '/api.phs'; file_put_contents($provider, 'function action(): void {}');
 	file_put_contents($path, 'function forward(): void { return action(); } forward(); return 0;');
-	$compiler = new Compiler(); $compiler->init([$directory]); $compiler->select_entry('main', 'main.phs'); $compiler->exec_cpp();
+	$compiler = new Compiler(new cpp_lowering_options(false)); $compiler->init([$directory]); $compiler->select_entry('main', 'main.phs'); $compiler->exec_cpp();
 	$before = CPP_Probe::text(Model::$cpp_files);
 	file_put_contents($provider, 'function action(): int { return 1; }'); $rejected = false;
 	try { $compiler->update_cpp([$provider]); } catch (\RuntimeException $error) { $rejected = true; }
 	if (!$rejected) { throw new \LogicException('Return type change failed to invalidate void forwarding'); }
 	file_put_contents($provider, 'function action(): void {}'); $compiler->update_cpp([$provider]);
 	if (CPP_Probe::text(Model::$cpp_files) !== $before) { throw new \LogicException('Void return recovery differs'); }
-	Compiler_Lifecycle::reset(); $compiler = new Compiler(); $compiler->init([$directory]); $compiler->select_entry('main', 'main.phs'); $compiler->exec_cpp();
+	Compiler_Lifecycle::reset(); $compiler = new Compiler(new cpp_lowering_options(false)); $compiler->init([$directory]); $compiler->select_entry('main', 'main.phs'); $compiler->exec_cpp();
 	if (CPP_Probe::text(Model::$cpp_files) !== $before) { throw new \LogicException('Fresh void return output differs'); }
 	unlink($provider);
 	file_put_contents($output . '/executions.json', json_encode($executions));

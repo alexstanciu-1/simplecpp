@@ -138,7 +138,7 @@ foreach ($fact_pairs as $pair)
 }
 
 // A reused generator must own fresh output state rather than retain a prior invocation's headers.
-$generator = new CPP_Generator();
+$generator = new CPP_Generator(null, new cpp_lowering_options(false));
 $integer_source = dispatch_parse('$a int = 10; return $a;');
 $integer_prepared = (new File_Preparation($integer_source->collection, Model::$language_scope))->prepare();
 $integer_output = CPP_Probe::text($generator->generate($integer_prepared));

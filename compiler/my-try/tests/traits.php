@@ -11,7 +11,7 @@ function traits_compile(string $text): string
 	$module = new module('/traits', '/traits', '/traits');
 	$file = new file(); $file->path = 'main.phs'; $file->content = $text;
 	Source_Registry::add($module, $file); Model::$modules->add($module->name, $module);
-	(new Compiler())->exec_cpp();
+	(new Compiler(new cpp_lowering_options(false)))->exec_cpp();
 	return native_record_export();
 }
 $results = [];
@@ -94,7 +94,7 @@ try {
 	$consumer = 'namespace app; use feature\\T as Shared; trait Outer { use Shared; } class A { use Outer; }';
 	file_put_contents($origin_path, $origin); file_put_contents($consumer_path, $consumer);
 	file_put_contents($main_path, '$a = new \\app\\A(); return $a->read();');
-	Compiler_Lifecycle::reset(); $compiler = new Compiler(); $compiler->init([$directory]); $compiler->select_entry('main', 'main.phs'); $compiler->exec_cpp();
+	Compiler_Lifecycle::reset(); $compiler = new Compiler(new cpp_lowering_options(false)); $compiler->init([$directory]); $compiler->select_entry('main', 'main.phs'); $compiler->exec_cpp();
 	$record = null;
 	foreach (Model::collected_files() as $source) { foreach ($source->entries as $entry) { if ($entry instanceof collected_record && $entry->qualified_name() === 'app\\A') { $record = $entry; } } }
 	traits_check($record !== null, 'Missing consumer');

@@ -74,7 +74,7 @@ foreach ($operations as $name => $symbol)
 	{
 		file_put_contents($path, $valid);
 		Compiler_Lifecycle::reset();
-		$compiler = new Compiler();
+		$compiler = new Compiler(new cpp_lowering_options(false));
 		$compiler->init([$directory]);
 		$compiler->exec_cpp();
 		file_put_contents($path, str_replace('string $b', 'int $b', $valid));

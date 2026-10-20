@@ -7,7 +7,7 @@ final class native_cpp_config
 	public string $compiler;
 	public string $runtime_include;
 	public string $cache_directory;
-	public bool $pch = true;
+	public bool $pch = false;
 	public bool $native_debug = false;
 	/** Explicit opt-in: runtime changes require a fresh cache directory. */
 	public bool $runtime_snapshot = false;

@@ -26,8 +26,8 @@ final class CPP_Generator
 	public function __construct(?cpp_program $program = null, ?cpp_lowering_options $options = null)
 	{
 		$this->program = $program ?? new cpp_program();
-		$enabled = false;
-		if ($options !== null) { $enabled = $options->prelower_templates; }
+		$effective_options = $options ?? new cpp_lowering_options();
+		$enabled = $effective_options->prelower_templates;
 		if ($this->program->prelower_templates !== $enabled) {
 			$this->program->fragments = new \SplObjectStorage /** hash<cpp_fragment, shared<preparation_owner>> */();
 			$this->program->prelower_templates = $enabled;

@@ -14,7 +14,7 @@ $metadata->modules->add('type_proof', Runtime_Catalog_Reader::decode(file_get_co
 Compiler_Lifecycle::configure_runtime($metadata);
 if (!is_dir($source)) { mkdir($source); }
 file_put_contents($source . '/main.phs', '$a vector<vector<int>>; $b hash<int>; $c vector<unique<int>>; $p parcel<int>; $q parcel<receipt>; $n = count($a); $m = count($b); $z = count($c); $w = unpack($p); $r = unpack($q);');
-$compiler = new Compiler();
+$compiler = new Compiler(new cpp_lowering_options(false));
 $compiler->init([$source]);
 $compiler->exec_cpp();
 $body = Model::syntax_files()[0]->root->single_body()->body;

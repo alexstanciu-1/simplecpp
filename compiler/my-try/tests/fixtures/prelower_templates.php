@@ -25,7 +25,7 @@ mkdir($directory);
 $path = $directory . '/main.phs';
 $source = 'function make(): vector<int> { $v vector<int> = [1, 2]; return $v; } function use_value(): int { $u vector<uint16> = [9]; $v = make(); return $v[0]; } return use_value();';
 file_put_contents($path, $source);
-$compiler = new Compiler();
+$compiler = new Compiler(new cpp_lowering_options(false));
 $compiler->init([$directory]);
 $compiler->exec_cpp();
 $original = prelower_artifacts();

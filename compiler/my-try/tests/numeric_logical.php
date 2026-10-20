@@ -70,7 +70,7 @@ PHS;
 foreach (['function f(int $a, float $b): bool { return $a && $b; }', 'function f(int $a, float $b): bool { return !$a; }'] as $valid) {
 	$directory = sys_get_temp_dir() . '/scpp_logic_' . bin2hex(random_bytes(6)); mkdir($directory); $path = $directory . '/main.phs';
 	try {
-		file_put_contents($path, $valid); Compiler_Lifecycle::reset(); $compiler = new Compiler(); $compiler->init([$directory]); $compiler->exec_cpp();
+		file_put_contents($path, $valid); Compiler_Lifecycle::reset(); $compiler = new Compiler(new cpp_lowering_options(false)); $compiler->init([$directory]); $compiler->exec_cpp();
 		file_put_contents($path, str_replace('int $a', 'int16 $a', $valid));
 		foreach ([[$path], []] as $changes) {
 			$failed = false; try { $compiler->update_cpp($changes); } catch (\RuntimeException $error) { $failed = true; }

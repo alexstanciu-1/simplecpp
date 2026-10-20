@@ -12,7 +12,7 @@ function export_project(string $text, string $library = ''): Compiler
 		Source_Registry::add($module, $file);
 	}
 	Model::$modules->add($module->name, $module);
-	$compiler = new Compiler();
+	$compiler = new Compiler(new cpp_lowering_options(false));
 	$compiler->select_entry('main', 'main.phs');
 	$compiler->exec_cpp();
 	return $compiler;

@@ -74,7 +74,7 @@ function guarded_cross_probe(string $lt, string $rt, string $left_type, string $
 	mkdir($directory); $path=$directory.'/main.phs';
 	$valid_source = 'function probe('.$left_type.' $a, '.$right_type.' $b): void { $out=($a '.$symbol.' $b); }';
 	try {
-		file_put_contents($path,$valid_source); Compiler_Lifecycle::reset(); $compiler=new Compiler(); $compiler->init([$directory]); $compiler->exec_cpp();
+		file_put_contents($path,$valid_source); Compiler_Lifecycle::reset(); $compiler=new Compiler(new cpp_lowering_options(false)); $compiler->init([$directory]); $compiler->exec_cpp();
 		file_put_contents($path,str_replace('($a '.$symbol.' $b)', 'missing()', $valid_source));
 		foreach ([[$path],[]] as $changes) {
 			$failed=false; try { $compiler->update_cpp($changes); } catch (\RuntimeException $e) { $failed=true; }

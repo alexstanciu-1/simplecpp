@@ -25,7 +25,7 @@ if (!is_dir($source)) {
 	mkdir($source, 0777, true);
 }
 file_put_contents($source . '/main.phs', $program);
-$compiler = new Compiler();
+$compiler = new Compiler(new cpp_lowering_options(false));
 $compiler->cpp_lowering->prelower_templates = $concrete;
 $compiler->init([$source]);
 $compiler->exec_cpp();

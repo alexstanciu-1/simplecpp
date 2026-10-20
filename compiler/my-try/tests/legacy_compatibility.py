@@ -347,7 +347,7 @@ def main():
                                 text = runner.run(prefix + '-generate', ['php', APP / 'tests/compatibility_modules.php',
                                                   source_dir, json.dumps(case['modules'])])
                             else:
-                                text = runner.run(prefix + '-generate', ['php', APP / 'main.php', '--s2s', source_dir],
+                                text = runner.run(prefix + '-generate', ['php', APP / 'main.php', '--s2s', source_dir, '--no-prelower-templates'],
                                                   cli_reason='Exercise the production CLI argument boundary')
                             (work / 'artifacts.json').write_bytes(text)
                         if lane == 'generation-probe':

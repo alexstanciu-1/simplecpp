@@ -45,7 +45,7 @@ try
 			{
 				file_put_contents($path, $declaration . ' ' . $owner_kind . ' C { function __construct(' . $input_type . ' $input) {} } ' . $derived . ' return 0;');
 				Compiler_Lifecycle::reset();
-				$compiler = new Compiler();
+				$compiler = new Compiler(new cpp_lowering_options(false));
 				$compiler->init([$directory]);
 				$compiler->select_entry('main', 'main.phs');
 				constructor_parameter_rejection($compiler, []);
@@ -59,7 +59,7 @@ try
 		$baseline = 'struct A { int $n = 9; } ' . $owner_kind . ' C { int $n; function __construct(A $input) { $this->n = $input->n; } } ' . $owner_kind . ' D extends C {} return 9;';
 		file_put_contents($path, $baseline);
 		Compiler_Lifecycle::reset();
-		$compiler = new Compiler();
+		$compiler = new Compiler(new cpp_lowering_options(false));
 		$compiler->init([$directory]);
 		$compiler->select_entry('main', 'main.phs');
 		$compiler->exec_cpp();
@@ -87,7 +87,7 @@ try
 	{
 		file_put_contents($path, 'abstract class A { abstract function score(): int; } class B extends A { function score(): int { return 9; } } ' . $owner_kind . ' C { int $n; function __construct(A $input) { $this->n = $input->score(); } } ' . $owner_kind . ' D extends C {} $b = new B(); $d = new D($b); return $d->n;');
 		Compiler_Lifecycle::reset();
-		$compiler = new Compiler();
+		$compiler = new Compiler(new cpp_lowering_options(false));
 		$compiler->init([$directory]);
 		$compiler->select_entry('main', 'main.phs');
 		$compiler->exec_cpp();

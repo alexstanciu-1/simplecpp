@@ -194,7 +194,7 @@ final class LLVM_Test
 	{
 		mkdir($directory);
 		file_put_contents($directory . '/main.phs', $source);
-		$compiler = new Compiler();
+		$compiler = new Compiler(new cpp_lowering_options(false));
 		$compiler->init([$directory]);
 		ob_start();
 		try {

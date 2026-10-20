@@ -16,10 +16,10 @@ final class Compiler
 	public int $jobs = 0;
 	public cpp_lowering_options $cpp_lowering;
 
-	public function __construct()
+	public function __construct(?cpp_lowering_options $cpp_lowering = null)
 	{
 		$this->jobs = \scpp\compiler\DEFAULT_COMPILER_JOBS;
-		$this->cpp_lowering = new cpp_lowering_options();
+		$this->cpp_lowering = $cpp_lowering ?? new cpp_lowering_options();
 	}
 
 	public function select_entry(string $module_name, string $source_path): void

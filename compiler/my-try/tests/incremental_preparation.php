@@ -32,7 +32,7 @@ file_put_contents($directory . '/b.phs', 'function caller(int $x): int { return 
 file_put_contents($directory . '/c.phs', '$local int = 3; return $local;');
 try
 {
-	$compiler = new Compiler();
+	$compiler = new Compiler(new cpp_lowering_options(false));
 	$compiler->init([$directory]);
 	$module = Model::$modules[$directory];
 	$a = $module->sources['a.phs'];

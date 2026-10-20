@@ -37,7 +37,7 @@ $executions = [];
 try {
 	foreach ($cases as $name => [$source, $exit]) {
 		Compiler_Lifecycle::reset(); file_put_contents($path, $source);
-		$compiler = new Compiler(); $compiler->init([$directory]);
+		$compiler = new Compiler(new cpp_lowering_options(false)); $compiler->init([$directory]);
 		try { $compiler->exec_cpp(); } catch (\RuntimeException $error) { throw new \RuntimeException($name . ': ' . $error->getMessage()); }
 		$text = CPP_Probe::text(Model::$cpp_files); $compiler->exec_cpp();
 		if (CPP_Probe::text(Model::$cpp_files) !== $text) { throw new \LogicException('Callable storage no-op changed output'); }
@@ -66,7 +66,7 @@ try {
 		'$items dynamic = {}; $items["run"] = fn(): int => 1; return 0;',
 	] as $source) {
 		Compiler_Lifecycle::reset(); file_put_contents($path, $source);
-		$compiler = new Compiler(); $compiler->init([$directory]); $compiler->sync([]); $rejected = false;
+		$compiler = new Compiler(new cpp_lowering_options(false)); $compiler->init([$directory]); $compiler->sync([]); $rejected = false;
 		try { $compiler->prepare(); } catch (\RuntimeException $error) { $rejected = true; }
 		if (!$rejected) { throw new \LogicException('Invalid callable storage accepted: ' . $source); }
 	}
@@ -75,14 +75,14 @@ try {
 	$declaration = 'class Holder { public function<int(int)> $handler; }';
 	file_put_contents($provider, $declaration);
 	file_put_contents($path, '$c = new Holder(); $c->handler = fn($n) => $n; return ($c->handler)(4);');
-	$compiler = new Compiler(); $compiler->init([$directory]); $compiler->select_entry('main', 'main.phs'); $compiler->exec_cpp();
+	$compiler = new Compiler(new cpp_lowering_options(false)); $compiler->init([$directory]); $compiler->select_entry('main', 'main.phs'); $compiler->exec_cpp();
 	$before = CPP_Probe::text(Model::$cpp_files);
 	file_put_contents($provider, str_replace('int(int)', 'int(int, int)', $declaration)); $rejected = false;
 	try { $compiler->update_cpp([$provider]); } catch (\RuntimeException $error) { $rejected = true; }
 	if (!$rejected) { throw new \LogicException('Changed property signature accepted'); }
 	file_put_contents($provider, $declaration); $compiler->update_cpp([$provider]);
 	if (CPP_Probe::text(Model::$cpp_files) !== $before) { throw new \LogicException('Property signature recovery differs'); }
-	Compiler_Lifecycle::reset(); $compiler = new Compiler(); $compiler->init([$directory]); $compiler->select_entry('main', 'main.phs'); $compiler->exec_cpp();
+	Compiler_Lifecycle::reset(); $compiler = new Compiler(new cpp_lowering_options(false)); $compiler->init([$directory]); $compiler->select_entry('main', 'main.phs'); $compiler->exec_cpp();
 	if (CPP_Probe::text(Model::$cpp_files) !== $before) { throw new \LogicException('Fresh property signature output differs'); }
 	file_put_contents($output . '/property_recovery.cpp', $before);
 	$executions[] = ['path' => $output . '/property_recovery.cpp', 'exit_code' => 4];

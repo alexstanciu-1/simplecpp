@@ -1,6 +1,13 @@
 # Test runners
 Doc Status: supporting
 
+Production CLI/API generation now defaults to strict template prelowering. Existing
+ordinary-language/emission baselines explicitly construct
+`Compiler(new cpp_lowering_options(false))` or use `--no-prelower-templates`;
+this preserves their scope rather than treating them as concrete-coverage proofs.
+Prelowering fixtures select their mode explicitly except for the public-default
+proof, which intentionally exercises unconfigured CLI, API and standalone generation.
+
 `python3 compiler/my-try/tests/prelower_acceptance.py --results FRESH_DIRECTORY`
 is the combined prelowering solidification acceptance command. It runs the existing
 metadata, unsupported-contract, public-option, provider/PCH-boundary, counter/reference,
@@ -29,8 +36,8 @@ requested directory. This is correctness/closure acceptance, not a timing benchm
 Any emission, native policy or closure failure fails the run; no fallback is selected.
 
 `python3 compiler/my-try/tests/prelower_null_output.py --results FRESH_DIRECTORY`
-also proves public CLI/API artifact and manifest parity using only
-`prelower_templates`, mode switching without semantic repreparation, absence of temporary
+also proves default CLI/API/standalone artifact parity, default no-PCH native builds,
+explicit ordinary/PCH builds, mode switching without semantic repreparation, absence of temporary
 selectors, strict CLI failure/repair, ordinary opt-out, and native PCH
 rejection. The CLI-published application is compiled and audited without PCH.
 The fixture builds a fresh concrete application with null interleaved with side-effecting echo

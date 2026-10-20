@@ -44,7 +44,7 @@ $first_work = $first->body->work();
 $second_work = $second->body->work();
 namespace_body_check($first_work !== $second_work && Preparation_Status::complete($second_work), 'Bodies did not prepare independently');
 $program = new cpp_program();
-$generator = new CPP_Generator($program);
+$generator = new CPP_Generator($program, new cpp_lowering_options(false));
 $initial = CPP_Output::encode($generator->generate($prepared));
 
 // Move execution to a later body: the emitter must consume analysis's selection.

@@ -34,7 +34,7 @@ def main():
             cache = output / 'cache'
             observations = []
             def publish(name, expected=0):
-                runner.run(name, ['php', APP / 'main.php', '--s2s', source, '--entry', 'main.phs', '--output', published],
+                runner.run(name, ['php', APP / 'main.php', '--s2s', source, '--no-prelower-templates', '--entry', 'main.phs', '--output', published],
                            expected=expected, cli_reason='Publication CLI contract')
             def build(name, expected=0, *options):
                 start = time.monotonic()

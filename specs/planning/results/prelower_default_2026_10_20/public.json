@@ -1,0 +1,17 @@
+{
+  "build": {
+    "executable": "/tmp/prelower-default-public-final-20261020/cache/artifacts/2337d7bfab6ee1ef533a5e1c0dd7f12113adb1294a5e6b739597a355d448d92e.bin",
+    "compiled": 8,
+    "reused": 0,
+    "pch_built": 0,
+    "linked": 1
+  },
+  "warm": {
+    "executable": "/tmp/prelower-default-public-final-20261020/cache/artifacts/2337d7bfab6ee1ef533a5e1c0dd7f12113adb1294a5e6b739597a355d448d92e.bin",
+    "compiled": 0,
+    "reused": 8,
+    "pch_built": 0,
+    "linked": 0
+  },
+  "expected_output": "[p1:p2]2"
+}

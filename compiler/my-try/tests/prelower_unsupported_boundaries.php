@@ -41,7 +41,7 @@ $cases['enum_from_value'] = ['enum E { case A; } $value = enum_from_value(E::cla
 foreach ($cases as $name => [$source, $native_spelling, $diagnostic]) {
 	Compiler_Lifecycle::reset();
 	file_put_contents($path, $source);
-	$compiler = new Compiler();
+	$compiler = new Compiler(new cpp_lowering_options(false));
 	$compiler->init([$directory]);
 	$output = $directory . '-output-' . $name;
 	// Publication workers own one attempt; every retry acquires a fresh worker.

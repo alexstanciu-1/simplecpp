@@ -10,7 +10,7 @@ function derived_data_source(string $text): string
 	$module = new module('/derived-data', '/derived-data', '/derived-data');
 	$file = new file(); $file->path = 'main.phs'; $file->content = $text;
 	Source_Registry::add($module, $file); Model::$modules->add($module->name, $module);
-	(new Compiler())->exec_cpp();
+	(new Compiler(new cpp_lowering_options(false)))->exec_cpp();
 	return native_record_export();
 }
 
@@ -74,7 +74,7 @@ try {
 	$child = 'namespace Types; data class C extends B {}';
 	file_put_contents($base_path, $base); file_put_contents($child_path, $child);
 	file_put_contents($main_path, 'use Types\C; $c C = {input: 8}; return $c->n;');
-	Compiler_Lifecycle::reset(); $compiler = new Compiler(); $compiler->init([$directory]); $compiler->select_entry('main', 'main.phs'); $compiler->exec_cpp();
+	Compiler_Lifecycle::reset(); $compiler = new Compiler(new cpp_lowering_options(false)); $compiler->init([$directory]); $compiler->select_entry('main', 'main.phs'); $compiler->exec_cpp();
 	$original = CPP_Output::encode(Model::$cpp_files); $compiler->update_cpp([]);
 	if ($original !== CPP_Output::encode(Model::$cpp_files)) { throw new \LogicException('No-op changed derived data output'); }
 	foreach ([str_replace('$input', '$renamed', $base),
@@ -97,7 +97,7 @@ try {
 	}
 	Compiler_Lifecycle::reset_preparation(); $compiler->prepare(); $compiler->cpp();
 	if ($repaired !== CPP_Output::encode(Model::$cpp_files)) { throw new \LogicException('Reset changed derived data output'); }
-	Compiler_Lifecycle::reset(); $compiler = new Compiler(); $compiler->init([$directory]); $compiler->select_entry('main', 'main.phs'); $compiler->exec_cpp();
+	Compiler_Lifecycle::reset(); $compiler = new Compiler(new cpp_lowering_options(false)); $compiler->init([$directory]); $compiler->select_entry('main', 'main.phs'); $compiler->exec_cpp();
 	if ($repaired !== CPP_Output::encode(Model::$cpp_files)) { throw new \LogicException('Fresh/incremental derived data mismatch'); }
 	// A base schema/default edit must flow through the composed contract to an unchanged caller.
 	$base = 'namespace Types; data class B { int $n = 7; }';
@@ -128,7 +128,7 @@ try {
 	if ($repaired !== CPP_Output::encode(Model::$cpp_files)) { throw new \LogicException('Composed no-op changed output'); }
 	Compiler_Lifecycle::reset_preparation(); $compiler->prepare(); $compiler->cpp();
 	if ($repaired !== CPP_Output::encode(Model::$cpp_files)) { throw new \LogicException('Composed reset changed output'); }
-	Compiler_Lifecycle::reset(); $compiler = new Compiler(); $compiler->init([$directory]); $compiler->select_entry('main', 'main.phs'); $compiler->exec_cpp();
+	Compiler_Lifecycle::reset(); $compiler = new Compiler(new cpp_lowering_options(false)); $compiler->init([$directory]); $compiler->select_entry('main', 'main.phs'); $compiler->exec_cpp();
 	if ($repaired !== CPP_Output::encode(Model::$cpp_files)) { throw new \LogicException('Composed fresh/incremental mismatch'); }
 }
 finally {

@@ -47,7 +47,7 @@ function output_fail(int &$n, int $zero): void { echo output_next($n), ":", 1 / 
 PHS;
 }
 file_put_contents($source.'/main.phs',$program);
-$compiler=new Compiler();
+$compiler=new Compiler(new cpp_lowering_options(false));
 $compiler->cpp_lowering->prelower_templates=$composed;
 $compiler->init([$source]);
 $compiler->exec_cpp();

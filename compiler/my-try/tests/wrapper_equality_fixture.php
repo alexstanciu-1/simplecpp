@@ -47,7 +47,7 @@ foreach ($forms as $name=>$symbol) foreach ([['n','n'],['n','i'],['i','n']] as [
 	$dir=sys_get_temp_dir().'/scpp_wrapper_equality_'.bin2hex(random_bytes(6)); mkdir($dir); $path=$dir.'/main.phs';
 	$valid='function probe('.$left.' $a, '.$right.' $b): bool { return ($a '.$symbol.' $b); }';
 	try {
-		file_put_contents($path,$valid); Compiler_Lifecycle::reset(); $compiler=new Compiler(); $compiler->init([$dir]); $compiler->exec_cpp();
+		file_put_contents($path,$valid); Compiler_Lifecycle::reset(); $compiler=new Compiler(new cpp_lowering_options(false)); $compiler->init([$dir]); $compiler->exec_cpp();
 		file_put_contents($path,str_replace('($a '.$symbol.' $b)','missing()',$valid));
 		foreach ([[$path],[]] as $changes) { $failed=false; try { $compiler->update_cpp($changes); } catch (\RuntimeException $e) { $failed=true; } wrapper_equality_check($failed && Model::$prepared_files->is_empty() && Model::$cpp_files->is_empty(),'Failed edit retained artifacts'); }
 		file_put_contents($path,str_replace('($a '.$symbol.' $b)','($b '.$symbol.' $a)',$valid)); $compiler->update_cpp([$path]); $output=CPP_Probe::text(Model::$cpp_files); $compiler->update_cpp([]); wrapper_equality_check($output===CPP_Probe::text(Model::$cpp_files),'No-op changed output');

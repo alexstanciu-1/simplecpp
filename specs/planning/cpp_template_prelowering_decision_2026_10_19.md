@@ -10,7 +10,11 @@ See [current coverage](../../compiler/my-try/docs/architecture/cpp_template_prel
 
 Keep one C++ backend operating on the existing AST and settled prepared facts.
 Introduce a dedicated C++ lowering configuration with `prelower_templates`, supplied
-through the CLI/API. The existing template path remains available for comparison.
+through the CLI/API. Prelowering is the default (approved 2026-10-20); ordinary
+compilation remains an explicit opt-out through `--no-prelower-templates` or the
+existing lowering setting set to false. Unsupported concrete operations still fail
+without automatic fallback. Native builds default to no PCH; ordinary builds can
+explicitly enable it. Changing defaults does not expand the supported-operation set.
 No additional semantic stage, replacement AST, AST rewriting or generated-C++
 postprocessing is introduced.
 

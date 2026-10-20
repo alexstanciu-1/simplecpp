@@ -70,7 +70,7 @@ try {
 	foreach ($cases as $name => $fixture) {
 		Compiler_Lifecycle::reset();
 		file_put_contents($path, $fixture[0]);
-		$compiler = new Compiler();
+		$compiler = new Compiler(new cpp_lowering_options(false));
 		$compiler->init([$directory]);
 		try { $compiler->exec_cpp(); }
 		catch (\Throwable $error) { throw new \RuntimeException($name . ': ' . $error->getMessage(), 0, $error); }
@@ -92,7 +92,7 @@ try {
 	foreach ($rejections as $source) {
 		Compiler_Lifecycle::reset();
 		file_put_contents($path, $source . ' return 0;');
-		$compiler = new Compiler();
+		$compiler = new Compiler(new cpp_lowering_options(false));
 		$compiler->init([$directory]);
 		$rejected = false;
 		try { $compiler->sync([]); $compiler->prepare(); } catch (\RuntimeException $error) { $rejected = true; }
@@ -101,7 +101,7 @@ try {
 	}
 	Compiler_Lifecycle::reset();
 	file_put_contents($path, $cases['snapshot'][0]);
-	$compiler = new Compiler();
+	$compiler = new Compiler(new cpp_lowering_options(false));
 	$compiler->init([$directory]);
 	$compiler->exec_cpp();
 	$before = CPP_Probe::text(Model::$cpp_files);
@@ -123,7 +123,7 @@ try {
 		if (CPP_Probe::text(Model::$cpp_files) !== $before) { throw new \LogicException('Finally valid-edit repair differs'); }
 	}
 	Compiler_Lifecycle::reset();
-	$compiler = new Compiler();
+	$compiler = new Compiler(new cpp_lowering_options(false));
 	$compiler->init([$directory]);
 	$compiler->exec_cpp();
 	if (CPP_Probe::text(Model::$cpp_files) !== $before) { throw new \LogicException('Finally fresh output differs'); }

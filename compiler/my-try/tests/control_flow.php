@@ -17,7 +17,7 @@ function control_program(string $path, string $source): Compiler
 {
 	file_put_contents($path, $source);
 	Compiler_Lifecycle::reset();
-	$compiler = new Compiler();
+	$compiler = new Compiler(new cpp_lowering_options(false));
 	$compiler->init([dirname($path)]);
 	$compiler->sync([]);
 	return $compiler;

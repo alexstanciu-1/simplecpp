@@ -25,7 +25,7 @@ try {
 	file_put_contents($base_path, 'class Root { public static function ancestor(): int { return 2; } } class Base extends Root { public static function start(int $n): int { $first = self::step($n); $second = parent::ancestor(); $third = Base::step(0); return $first + $second + $third; } public static function step(int $n): int { if ($n === 0) { return 1; } return self::step($n - 1); } }');
 	file_put_contents($child_path, 'class Child extends Base {} class Other extends Base {}');
 	Compiler_Lifecycle::reset();
-	$compiler = new Compiler(); $compiler->init([$directory]); $compiler->select_entry('main', 'child.phs'); $compiler->exec_cpp();
+	$compiler = new Compiler(new cpp_lowering_options(false)); $compiler->init([$directory]); $compiler->select_entry('main', 'child.phs'); $compiler->exec_cpp();
 	$base = demand_record('Base'); $child = demand_record('Child'); $other = demand_record('Other');
 	$start = object_cast($base->syntax()->methods[0]->occurrence(), collected_method::class);
 	$step = object_cast($base->syntax()->methods[1]->occurrence(), collected_method::class);

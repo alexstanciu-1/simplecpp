@@ -248,7 +248,7 @@ function source_read(const vector<MyClass> &$owners): MyClass { return $owners[0
     if ($revision !== 0) { $program = str_replace('return $this->inner->amounts;', 'if (false) { return $this->inner->amounts; } return $this->inner->amounts;', $program); }
 }
 file_put_contents($source . '/main.phs', $program);
-$compiler = new Compiler();
+$compiler = new Compiler(new cpp_lowering_options(false));
 $compiler->cpp_lowering->prelower_templates = $fields && $composed;
 $compiler->init([$source]);
 $compiler->exec_cpp();

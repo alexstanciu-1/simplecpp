@@ -29,7 +29,7 @@ try
 {
 	file_put_contents($definition, $original);
 	file_put_contents($caller, 'return value();');
-	$compiler = new Compiler();
+	$compiler = new Compiler(new cpp_lowering_options(false));
 	$compiler->init([$directory]);
 	$compiler->exec_llvm();
 	$baseline = smoke_output();
@@ -56,7 +56,7 @@ try
 		$restored = smoke_output();
 		smoke_require($restored === $baseline, 'Restore differs from original full-build output');
 		smoke_require(Model::syntax_files()[1] === $kept_caller, 'Restore reparsed unchanged caller');
-		$fresh = new Compiler();
+		$fresh = new Compiler(new cpp_lowering_options(false));
 		Compiler_Lifecycle::reset();
 		$fresh->init([$directory]);
 		$fresh->exec_llvm();

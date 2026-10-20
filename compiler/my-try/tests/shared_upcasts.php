@@ -10,7 +10,7 @@ function upcast_source(string $text): string
 	$module = new module('/upcasts', '/upcasts', '/upcasts');
 	$file = new file(); $file->path = 'main.phs'; $file->content = $text;
 	Source_Registry::add($module, $file); Model::$modules->add($module->name, $module);
-	(new Compiler())->exec_cpp();
+	(new Compiler(new cpp_lowering_options(false)))->exec_cpp();
 	return native_record_export();
 }
 $results = [];
@@ -157,7 +157,7 @@ try {
 	] as $boundary => $main) {
 		file_put_contents($main_path, $main);
 		Compiler_Lifecycle::reset();
-		$compiler = new Compiler(); $compiler->init([$directory]); $compiler->select_entry('main', 'main.phs'); $compiler->exec_cpp();
+		$compiler = new Compiler(new cpp_lowering_options(false)); $compiler->init([$directory]); $compiler->select_entry('main', 'main.phs'); $compiler->exec_cpp();
 		$original = CPP_Output::encode(Model::$cpp_files);
 		file_put_contents($child_path, 'class C {}');
 		foreach ([[$child_path], []] as $changes) {
@@ -177,7 +177,7 @@ try {
 	file_put_contents($child_path, 'class C extends B {}');
 	file_put_contents($main_path, '$c unique<C> = new C(); $b unique<B> = move($c); return $b->n;');
 	Compiler_Lifecycle::reset();
-	$compiler = new Compiler(); $compiler->init([$directory]); $compiler->select_entry('main', 'main.phs'); $compiler->exec_cpp();
+	$compiler = new Compiler(new cpp_lowering_options(false)); $compiler->init([$directory]); $compiler->select_entry('main', 'main.phs'); $compiler->exec_cpp();
 	$original = CPP_Output::encode(Model::$cpp_files);
 	file_put_contents($base_path, str_replace(' implements I', '', $virtual_base));
 	foreach ([[$base_path], []] as $changes) {

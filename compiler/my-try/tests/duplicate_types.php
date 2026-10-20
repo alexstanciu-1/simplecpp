@@ -29,7 +29,7 @@ function duplicate_type_rejection(Compiler $compiler, array $paths, string $name
 function duplicate_type_compiler(string $directory): Compiler
 {
 	Compiler_Lifecycle::reset();
-	$compiler = new Compiler();
+	$compiler = new Compiler(new cpp_lowering_options(false));
 	$compiler->init([$directory]);
 	$compiler->select_entry('main', 'main.phs');
 	return $compiler;

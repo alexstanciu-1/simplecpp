@@ -6,7 +6,11 @@ require_once dirname(__DIR__, 2) . '/boot.php';
 $publication = new Output_Publication($argv[2]);
 try {
 	$compiler = new Compiler();
-	$compiler->cpp_lowering->prelower_templates = true;
 	$compiler->init([$argv[1]]);
 	$compiler->exec_cpp($publication);
+	$standalone = new CPP_Generator();
+	$artifacts = $standalone->generate_program(Model::$prepared_files, Model::$prepared_entry);
+	if (CPP_Output::encode($artifacts) !== CPP_Output::encode(Model::$cpp_files)) {
+		throw new \LogicException('Standalone generator and compiler defaults differ');
+	}
 } finally { $publication->close(); }

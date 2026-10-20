@@ -124,7 +124,7 @@ $file->path = 'main.phs';
 $file->content = 'struct Box { public int $value; } const LIMIT = -(-7); function read(Box $box): int { return $box->value; } $b Box; $b->value = LIMIT; return read($b);';
 $source = Source_Registry::add($module, $file);
 Model::$modules->add($module->name, $module);
-$compiler = new Compiler();
+$compiler = new Compiler(new cpp_lowering_options(false));
 $compiler->exec_cpp();
 $before = CPP_Output::encode(Model::$cpp_files);
 $record = object_cast(Model::$global_scope->source_types_named('Box')[0], collected_record::class)->syntax();

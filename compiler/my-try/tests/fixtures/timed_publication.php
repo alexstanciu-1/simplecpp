@@ -10,7 +10,7 @@ try
 {
 	$started = hrtime(true);
 	$publication = new Output_Publication($argv[2]);
-	$compiler = new Compiler();
+	$compiler = new Compiler(new cpp_lowering_options(false));
 	$compiler->init([$argv[1]]);
 	$compiler->select_entry('main', 'main.phs');
 	$times['initialization'] = (hrtime(true) - $started) / 1e9;

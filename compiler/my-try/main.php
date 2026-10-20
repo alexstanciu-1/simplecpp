@@ -17,7 +17,7 @@ if (PHP_SAPI !== 'cli') {
 // CLI: --s2s SOURCE_DIRECTORY [--entry RELATIVE_PATH] [--output ABSOLUTE_DIRECTORY].
 // HTTP also accepts entry=RELATIVE_PATH, but never selects an output directory.
 // No parameter retains the existing sample/debug report.
-$prelower_templates = false;
+$lowering = new cpp_lowering_options();
 $s2s = false;
 $source_directory = '';
 $entry_path = '';
@@ -36,7 +36,10 @@ if (PHP_SAPI === 'cli')
 			$usage_error = $source_directory === '';
 			for ($index = 3; $index < $argc; $index++) {
 				if ($argv[$index] === '--prelower-templates') {
-					$prelower_templates = true; continue;
+					$lowering->prelower_templates = true; continue;
+				}
+				if ($argv[$index] === '--no-prelower-templates') {
+					$lowering->prelower_templates = false; continue;
 				}
 				if ($index + 1 >= $argc) {
 					$usage_error = true; break;
@@ -69,7 +72,7 @@ else
 if ($usage_error)
 {
 	if (PHP_SAPI === 'cli') {
-		fwrite(STDERR, "Usage: php compiler/my-try/main.php [--s2s SOURCE_DIRECTORY [--entry RELATIVE_PATH] [--output ABSOLUTE_DIRECTORY] [--prelower-templates]]\n");
+		fwrite(STDERR, "Usage: php compiler/my-try/main.php [--s2s SOURCE_DIRECTORY [--entry RELATIVE_PATH] [--output ABSOLUTE_DIRECTORY] [--prelower-templates|--no-prelower-templates]] (prelowering is the default)\n");
 	}
 	else {
 		http_response_code(400);
@@ -84,8 +87,7 @@ if ($s2s)
 	$failed = false;
 	try {
 		if ($output_directory !== '') { $publication = new Output_Publication($output_directory); }
-		$compiler = new Compiler();
-		$compiler->cpp_lowering->prelower_templates = $prelower_templates;
+		$compiler = new Compiler($lowering);
 		$compiler->init([$source_directory]);
 		if ($entry_path !== '') { $compiler->select_entry('main', $entry_path); }
 		$compiler->exec_cpp($publication);

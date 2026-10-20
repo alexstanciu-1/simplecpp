@@ -20,7 +20,7 @@ final class S2S_Proof
 				try
 				{
 					$paths /** vector<string> */ = [fs_read_text($directory . '/source.txt')];
-					$compiler = new Compiler();
+					$compiler = new Compiler(new cpp_lowering_options(false));
 					$compiler->cpp_lowering->prelower_templates = $mode === 'publish-prelowered';
 					$compiler->init($paths);
 					$compiler->select_entry('main', 'main.phs');
@@ -89,7 +89,7 @@ final class S2S_Proof
 		$record = Source_Registry::add($input_module, $source);
 		$modules /** Keyed_Storage<module> */ = Model::$modules;
 		$modules->add($input_module->name, $input_module);
-		$compiler = new Compiler();
+		$compiler = new Compiler(new cpp_lowering_options(false));
 		$compiler->exec_cpp();
 		$outputs /** Storage<cpp_artifact> */ = Model::$cpp_files;
 		$original = CPP_Output::encode($outputs);
@@ -126,7 +126,7 @@ final class S2S_Proof
 		Source_Registry::add($input_module, $source);
 		$modules = Model::$modules;
 		$modules->add($input_module->name, $input_module);
-		$compiler = new Compiler();
+		$compiler = new Compiler(new cpp_lowering_options(false));
 		$compiler->exec_cpp();
 		$outputs = Model::$cpp_files;
 		if (CPP_Output::encode($outputs) !== $original) {
@@ -150,7 +150,7 @@ final class S2S_Proof
 		$record = Source_Registry::add($input_module, $source);
 		$modules /** Keyed_Storage<module> */ = Model::$modules;
 		$modules->add($input_module->name, $input_module);
-		$compiler = new Compiler();
+		$compiler = new Compiler(new cpp_lowering_options(false));
 		$compiler->exec_cpp();
 		$outputs /** Storage<cpp_artifact> */ = Model::$cpp_files;
 		$original = CPP_Probe::text($outputs);
@@ -213,7 +213,7 @@ final class S2S_Proof
 		Source_Registry::add($input_module, $source);
 		$modules /** Keyed_Storage<module> */ = Model::$modules;
 		$modules->add($input_module->name, $input_module);
-		$compiler = new Compiler();
+		$compiler = new Compiler(new cpp_lowering_options(false));
 		$compiler->exec_cpp();
 
 		$catalog = Model::$type_catalog;
@@ -324,7 +324,7 @@ final class S2S_Proof
 		$stable = Source_Registry::add($input_module, $source);
 		$modules /** Keyed_Storage<module> */ = Model::$modules;
 		$modules->add($input_module->name, $input_module);
-		$compiler = new Compiler();
+		$compiler = new Compiler(new cpp_lowering_options(false));
 		$compiler->exec_cpp();
 
 		$prepared_files /** Storage<prepared_file> */ = Model::$prepared_files;

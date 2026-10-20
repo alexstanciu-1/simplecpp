@@ -18,7 +18,7 @@ try {
 		. '$a bool = isset(source()); $b bool = empty(source()); return $b;';
 	file_put_contents($path, $valid);
 	Compiler_Lifecycle::reset();
-	$compiler = new Compiler();
+	$compiler = new Compiler(new cpp_lowering_options(false));
 	$compiler->init([$directory]);
 	$compiler->exec_cpp();
 	$original = CPP_Probe::text(Model::$cpp_files);
@@ -45,7 +45,7 @@ try {
 	$compiler->update_cpp([$path]);
 	probe_check(CPP_Probe::text(Model::$cpp_files) === $original, 'Probe repair changed output');
 	Compiler_Lifecycle::reset();
-	$clean = new Compiler();
+	$clean = new Compiler(new cpp_lowering_options(false));
 	$clean->init([$directory]);
 	$clean->exec_cpp();
 	probe_check(CPP_Probe::text(Model::$cpp_files) === $original, 'Clean and incremental probe output differ');
@@ -56,7 +56,7 @@ try {
 	foreach (['isset()', 'empty()', 'isset(1, 2)', 'empty(1, 2)'] as $bad) {
 		file_put_contents($path, 'return ' . $bad . ';');
 		Compiler_Lifecycle::reset();
-		$compiler = new Compiler();
+		$compiler = new Compiler(new cpp_lowering_options(false));
 		$failed = false;
 		try { $compiler->init([$directory]); $compiler->exec_cpp(); }
 		catch (\RuntimeException $error) { $failed = true; }
@@ -65,7 +65,7 @@ try {
 	$nested = 'function probe(hash<hash<int>> &$v): bool { unset($v["parent"]["x"]); return isset($v["parent"]["y"]); } return 0;';
 	file_put_contents($path, $nested);
 	Compiler_Lifecycle::reset();
-	$compiler = new Compiler();
+	$compiler = new Compiler(new cpp_lowering_options(false));
 	$compiler->init([$directory]);
 	$compiler->exec_cpp();
 	$function = Model::$global_scope->functions_named('probe')[0]->syntax();
@@ -94,14 +94,14 @@ try {
 	probe_check($removal->preparation() === null && $probe->preparation() === null
 		&& $old->root->preparation() === null, 'Keyed cleanup missed syntax facts');
 	Compiler_Lifecycle::reset();
-	$clean = new Compiler();
+	$clean = new Compiler(new cpp_lowering_options(false));
 	$clean->init([$directory]);
 	$clean->exec_cpp();
 	probe_check($incremental === CPP_Probe::text(Model::$cpp_files), 'Keyed clean/incremental recovery differs');
 	foreach (['unset();', 'unset($v[0], $v[1]);'] as $bad) {
 		file_put_contents($path, '$v mixed = {}; ' . $bad);
 		Compiler_Lifecycle::reset();
-		$compiler = new Compiler();
+		$compiler = new Compiler(new cpp_lowering_options(false));
 		$failed = false;
 		try { $compiler->init([$directory]); $compiler->exec_cpp(); }
 		catch (\RuntimeException $error) { $failed = true; }

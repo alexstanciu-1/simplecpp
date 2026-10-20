@@ -16,7 +16,7 @@ foreach (['main.phs' => 'namespace Client; return Sub\\target();', 'lib.phs' => 
 	Source_Registry::add($module, $file);
 }
 Model::$modules->add($module->name, $module);
-$compiler = new Compiler();
+$compiler = new Compiler(new cpp_lowering_options(false));
 $compiler->select_entry('main', 'main.phs');
 $compiler->tokenize();
 $compiler->parse();

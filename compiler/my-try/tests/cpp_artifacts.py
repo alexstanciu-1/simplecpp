@@ -97,7 +97,7 @@ def main():
         run_tasks(tasks, jobs=12)
         rejection_checks(output)
         entry_boundary_checks()
-        payload = runner.run('artifact-cli', ['php', ROOT / 'main.php', '--s2s', source],
+        payload = runner.run('artifact-cli', ['php', ROOT / 'main.php', '--s2s', source, '--no-prelower-templates'],
                              cli_reason='Tests the artifact CLI delivery contract')
         if 'function_answer' not in probe_text(payload):
             raise RuntimeError('CLI failed to deliver generated program')
@@ -179,7 +179,7 @@ def main():
                    for directory, compiler in compilers for name, text in probes.items()], jobs=12)
         # Malformed source must never publish a partial successful bundle on stdout.
         (source / 'main.phs').write_text('function broken(')
-        rejected = runner.run('artifact-cli-rejected', ['php', ROOT / 'main.php', '--s2s', source], expected=1,
+        rejected = runner.run('artifact-cli-rejected', ['php', ROOT / 'main.php', '--s2s', source, '--no-prelower-templates'], expected=1,
                               cli_reason='Tests CLI failure publication')
         if rejected:
             raise RuntimeError('Failed compilation published an artifact bundle')

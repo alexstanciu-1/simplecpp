@@ -14,7 +14,9 @@ php compiler/my-try/tools/build_cpp.php /absolute/published /absolute/cache --no
 ```
 
 The CLI defaults to `/usr/bin/clang++`, the checkout runtime headers, C++23, PHP target,
-threads, `-Wshadow` and `-O0`, without native debug information. Pass `--native-debug` (or set
+threads, `-Wshadow` and `-O0`, without PCH or native debug information. API configuration
+also defaults to no PCH. Ordinary builds may explicitly select `--pch` or
+`$config->pch = true`; `--no-pch` remains accepted. Pass `--native-debug` (or set
 `$config->native_debug = true`) to request full Clang `-g` information for
 PCH, generated units and runtime provider objects. Debug selection is independent
 of optimization and participates in the existing action cache keys; returning to
@@ -65,7 +67,7 @@ Missing/unknown policies reject with a republish diagnostic; the native builder
 does not infer lowering mode from C++ text. Standalone artifact publishers must pass
 their intended policy to `Output_Publication::publish` (the third argument).
 
-For `forbidden`, the broad runtime PCH is incompatible: explicitly select `--no-pch`.
+For `forbidden`, the broad runtime PCH is incompatible; the default is already no PCH.
 The builder rejects rather than silently disabling PCH or reverting lowering mode.
 `entry.cpp` and every `units/` translation unit are checked; `specializations/`
 implementation units and layout probes retain native templates. Unknown translation

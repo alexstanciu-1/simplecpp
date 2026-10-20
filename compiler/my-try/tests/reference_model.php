@@ -65,7 +65,7 @@ return 0;
 PHS;
 Source_Registry::add($input_module, $source);
 Model::$modules->add($input_module->name, $input_module);
-$compiler = new Compiler();
+$compiler = new Compiler(new cpp_lowering_options(false));
 $compiler->exec_cpp();
 $original_cpp = CPP_Probe::text(Model::$cpp_files);
 $function = Model::$global_scope->functions_named('inspect')[0]->syntax();

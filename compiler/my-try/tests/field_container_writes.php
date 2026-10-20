@@ -10,7 +10,7 @@ function field_write_compile(string $source): string
 	$file = new file(); $file->path = 'main.phs'; $file->content = $source;
 	Source_Registry::add($module, $file);
 	Model::$modules->add($module->name, $module);
-	$compiler = new Compiler(); $compiler->exec_cpp();
+	$compiler = new Compiler(new cpp_lowering_options(false)); $compiler->exec_cpp();
 	$result = CPP_Probe::text(Model::$cpp_files);
 	$compiler->exec_cpp();
 	if ($result !== CPP_Probe::text(Model::$cpp_files)) { throw new \LogicException('Field write no-op changed output'); }

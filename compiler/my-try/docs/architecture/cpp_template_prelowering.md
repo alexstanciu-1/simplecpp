@@ -1,22 +1,30 @@
 # Concrete C++ specialization
 Doc Status: supporting
 
-The opt-in `prelower_templates` path uses the existing AST, registry identities and
+The default `prelower_templates` path uses the existing AST, registry identities and
 prepared operation decisions. It adds no semantic pass or second type registry.
-Ordinary C++ remains the default. There is one specialization engine configuration;
+Ordinary C++ is an explicit opt-out. There is one specialization engine configuration;
 handwritten family recipes and the former runtime-ABI emission mode have been removed.
 
 ## Selection and strict boundary
 
-CLI `--prelower-templates` and API `$compiler->cpp_lowering->prelower_templates = true`
-select the same general concrete path. The temporary `runtime_template_abi` and
+CLI, `Compiler` and standalone `CPP_Generator` default to the same general concrete
+path through `cpp_lowering_options`. CLI `--prelower-templates` remains an explicit
+selection; `--no-prelower-templates` selects ordinary compilation (the last mode flag
+wins). API callers can set `$compiler->cpp_lowering->prelower_templates = false`,
+or pass `new cpp_lowering_options(false)` to `Compiler` or as the generator's options.
+Unsupported concrete operations fail; ordinary mode is never selected automatically.
+The temporary `runtime_template_abi` and
 `concrete_type_substitution` option fields no longer exist. The retained C++ program
 stores only the effective `prelower_templates` setting. Switching it clears affected
 C++ fragments without changing semantic preparation; unchanged mode replays demand.
 
 ```sh
-php compiler/my-try/main.php --s2s SOURCE_DIRECTORY --output ABSOLUTE_OUTPUT --prelower-templates
-php compiler/my-try/tools/build_cpp.php ABSOLUTE_OUTPUT ABSOLUTE_CACHE --no-pch
+php compiler/my-try/main.php --s2s SOURCE_DIRECTORY --output ABSOLUTE_OUTPUT
+php compiler/my-try/tools/build_cpp.php ABSOLUTE_OUTPUT ABSOLUTE_CACHE
+# Explicit ordinary compilation, with optional runtime PCH:
+php compiler/my-try/main.php --s2s SOURCE_DIRECTORY --output ABSOLUTE_OUTPUT --no-prelower-templates
+php compiler/my-try/tools/build_cpp.php ABSOLUTE_OUTPUT ABSOLUTE_CACHE --pch
 ```
 
 The coordinator publishes `application_templates: "forbidden"` for this mode.

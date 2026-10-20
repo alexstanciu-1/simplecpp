@@ -37,7 +37,7 @@ with CommandRunner(output / 'logs', APP.parents[1], jobs=args.jobs) as runner:
                       source_sha256=hashlib.sha256(source_file.read_bytes()).hexdigest(),
                       stage='generation', passed=False)
         try:
-            payload = runner.run(name + '-generate', [args.php, APP / 'main.php', '--s2s', source])
+            payload = runner.run(name + '-generate', [args.php, APP / 'main.php', '--s2s', source, '--no-prelower-templates'])
             (work / 'artifacts.json').write_bytes(payload)
             result['stage'] = 'cpp-build'
             executable = work / 'program'

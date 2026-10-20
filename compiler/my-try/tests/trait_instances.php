@@ -45,7 +45,7 @@ try {
 	// Exercise materialization directly, independently of the automatic source-use path.
 	file_put_contents($consumer_path, 'namespace defs; struct Payload { int $number; } namespace app; struct Item { string $wrong; } class A { private int $own = 1; public int $read = 4; } struct B { private int $own = 3; } $item \\defs\\Payload; $a = new A(); $answer = $a->relay($item);');
 	Compiler_Lifecycle::reset();
-	$compiler = new Compiler(); $compiler->init([$directory]); $compiler->sync([]);
+	$compiler = new Compiler(new cpp_lowering_options(false)); $compiler->init([$directory]); $compiler->sync([]);
 	$trait = object_cast(instance_owner('features\\Reader'), collected_trait::class);
 	$a = object_cast(instance_owner('app\\A'), collected_record::class);
 	$b = object_cast(instance_owner('app\\B'), collected_record::class);
@@ -89,7 +89,7 @@ try {
 	// Normal source scheduling and backend enumeration use the same local-member view.
 	$sources = new Storage(); $sources->append($a->collection);
 	$prepared = (new Preparation_Worker(Model::$language_scope))->prepare($sources);
-	$artifacts = (new CPP_Generator())->generate_program($prepared, $prepared[0]);
+	$artifacts = (new CPP_Generator(null, new cpp_lowering_options(false)))->generate_program($prepared, $prepared[0]);
 	$implementation = '';
 	foreach ($artifacts as $artifact) {
 		if ($artifact->file_name === CPP_Artifacts::unit_path($a->collection)) { $implementation = $artifact->text; }

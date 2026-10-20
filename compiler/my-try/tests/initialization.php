@@ -158,7 +158,7 @@ try {
 	$source = 'struct Item { int $value; } return 0;';
 	file_put_contents($path, $source);
 	Compiler_Lifecycle::reset();
-	$compiler = new Compiler();
+	$compiler = new Compiler(new cpp_lowering_options(false));
 	$compiler->init([$directory]);
 	$compiler->sync([]);
 	$compiler->prepare();

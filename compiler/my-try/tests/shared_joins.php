@@ -10,7 +10,7 @@ function shared_join_source(string $text): string
 	$module = new module('/shared-joins', '/shared-joins', '/shared-joins');
 	$file = new file(); $file->path = 'main.phs'; $file->content = $text;
 	Source_Registry::add($module, $file); Model::$modules->add($module->name, $module);
-	(new Compiler())->exec_cpp();
+	(new Compiler(new cpp_lowering_options(false)))->exec_cpp();
 	return native_record_export();
 }
 $results = [];
@@ -69,7 +69,7 @@ try {
 	foreach (['true ? $c : $b', '$c ?: $b', '$c ?? $b'] as $index => $expression) {
 		file_put_contents($child_path, 'class C extends B {}');
 		file_put_contents($main_path, '$c = new C(); $b B; $out = ' . $expression . '; return $out->n;');
-		Compiler_Lifecycle::reset(); $compiler = new Compiler();
+		Compiler_Lifecycle::reset(); $compiler = new Compiler(new cpp_lowering_options(false));
 		$compiler->init([$directory]); $compiler->select_entry('main', 'main.phs'); $compiler->exec_cpp();
 		$original = CPP_Output::encode(Model::$cpp_files);
 		file_put_contents($child_path, 'class C { int $n = 9; }');

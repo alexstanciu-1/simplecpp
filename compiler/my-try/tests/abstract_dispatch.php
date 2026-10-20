@@ -13,7 +13,7 @@ function abstract_source(string $text): string
 	$file->content = $text;
 	Source_Registry::add($module, $file);
 	Model::$modules->add($module->name, $module);
-	(new Compiler())->exec_cpp();
+	(new Compiler(new cpp_lowering_options(false)))->exec_cpp();
 	return native_record_export();
 }
 
@@ -108,7 +108,7 @@ try {
 	file_put_contents($child_path, $child_text);
 	file_put_contents($main_path, '$c = new C(); return $c->read();');
 	Compiler_Lifecycle::reset();
-	$compiler = new Compiler();
+	$compiler = new Compiler(new cpp_lowering_options(false));
 	$compiler->init([$directory]);
 	$compiler->select_entry('main', 'main.phs');
 	$compiler->exec_cpp();

@@ -22,7 +22,7 @@ function cleanup_source(string $source): string
 	$input->content = $source;
 	Source_Registry::add($input_module, $input);
 	Model::$modules->add($input_module->name, $input_module);
-	(new Compiler())->exec_cpp();
+	(new Compiler(new cpp_lowering_options(false)))->exec_cpp();
 	return CPP_Probe::text(Model::$cpp_files);
 }
 
@@ -98,7 +98,7 @@ try
 	$valid = 'function reset(?int $n): void { unset($n); } return 0;';
 	file_put_contents($path, $valid);
 	Compiler_Lifecycle::reset();
-	$compiler = new Compiler();
+	$compiler = new Compiler(new cpp_lowering_options(false));
 	$compiler->init([$directory]);
 	$compiler->exec_cpp();
 	$original = CPP_Probe::text(Model::$cpp_files);

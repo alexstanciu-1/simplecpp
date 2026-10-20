@@ -41,7 +41,7 @@ foreach (['result', 'result_or_false', 'result_or_bool'] as $family) {
 try {
 	foreach ($cases as $name => [$source, $exit]) {
 		Compiler_Lifecycle::reset(); file_put_contents($path, $source);
-		$compiler = new Compiler(); $compiler->init([$directory]);
+		$compiler = new Compiler(new cpp_lowering_options(false)); $compiler->init([$directory]);
 		try { $compiler->exec_cpp(); } catch (\RuntimeException $error) { throw new \RuntimeException($name . ': ' . $error->getMessage()); }
 		$text = CPP_Probe::text(Model::$cpp_files); $compiler->exec_cpp();
 		if (CPP_Probe::text(Model::$cpp_files) !== $text) { throw new \LogicException('Callable Result no-op differs'); }
@@ -70,18 +70,18 @@ try {
 		'$r result<function<int()>>;',
 	] as $source) {
 		Compiler_Lifecycle::reset(); file_put_contents($path, $source . ' return 0;');
-		$compiler = new Compiler(); $compiler->init([$directory]); $compiler->sync([]); $rejected = false;
+		$compiler = new Compiler(new cpp_lowering_options(false)); $compiler->init([$directory]); $compiler->sync([]); $rejected = false;
 		try { $compiler->prepare(); } catch (\RuntimeException $error) { $rejected = true; }
 		if (!$rejected) { throw new \LogicException('Invalid callable Result accepted: ' . $source); }
 	}
 	$source = $cases['factory'][0]; Compiler_Lifecycle::reset(); file_put_contents($path, $source);
-	$compiler = new Compiler(); $compiler->init([$directory]); $compiler->exec_cpp(); $before = CPP_Probe::text(Model::$cpp_files);
+	$compiler = new Compiler(new cpp_lowering_options(false)); $compiler->init([$directory]); $compiler->exec_cpp(); $before = CPP_Probe::text(Model::$cpp_files);
 	file_put_contents($path, str_replace('result<function<int(int)>>', 'result<function<string(int)>>', $source)); $rejected = false;
 	try { $compiler->update_cpp([$path]); } catch (\RuntimeException $error) { $rejected = true; }
 	if (!$rejected) { throw new \LogicException('Callable Result signature edit accepted'); }
 	file_put_contents($path, $source); $compiler->update_cpp([$path]);
 	if (CPP_Probe::text(Model::$cpp_files) !== $before) { throw new \LogicException('Callable Result repair differs'); }
-	Compiler_Lifecycle::reset(); $compiler = new Compiler(); $compiler->init([$directory]); $compiler->exec_cpp();
+	Compiler_Lifecycle::reset(); $compiler = new Compiler(new cpp_lowering_options(false)); $compiler->init([$directory]); $compiler->exec_cpp();
 	if (CPP_Probe::text(Model::$cpp_files) !== $before) { throw new \LogicException('Callable Result fresh output differs'); }
 	$join_source = $cases['lazy'][0]; file_put_contents($path, $join_source); $compiler->update_cpp([$path]);
 	$join_before = CPP_Probe::text(Model::$cpp_files);
@@ -92,7 +92,7 @@ try {
 	if (!$rejected) { throw new \LogicException('Callable coalesce accepted boolable family edit'); }
 	file_put_contents($path, $join_source); $compiler->update_cpp([$path]);
 	if (CPP_Probe::text(Model::$cpp_files) !== $join_before) { throw new \LogicException('Callable join repair differs'); }
-	Compiler_Lifecycle::reset(); $compiler = new Compiler(); $compiler->init([$directory]); $compiler->exec_cpp();
+	Compiler_Lifecycle::reset(); $compiler = new Compiler(new cpp_lowering_options(false)); $compiler->init([$directory]); $compiler->exec_cpp();
 	if (CPP_Probe::text(Model::$cpp_files) !== $join_before) { throw new \LogicException('Callable join fresh output differs'); }
 	$probe_path = $output . '/runtime_observation.cpp';
 	file_put_contents($probe_path, file_get_contents(__DIR__ . '/fixtures/callable_result_observation.cpp'));

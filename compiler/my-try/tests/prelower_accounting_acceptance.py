@@ -84,8 +84,8 @@ def main():
             recorder.chmod(0o700)
             command = ['php', APP / 'main.php', '--s2s', source, '--entry', 'main.phs',
                        '--output', published]
-            if mode == 'prelowered':
-                command.append('--prelower-templates')
+            if mode == 'ordinary':
+                command.append('--no-prelower-templates')
             runner.run(mode + '-publish', command, timeout=600, cli_reason='Public CLI acceptance')
             if options.native_compiler:
                 host = published

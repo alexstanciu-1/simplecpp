@@ -46,7 +46,7 @@ try
 		{
 			file_put_contents($path, $source);
 			Compiler_Lifecycle::reset();
-			$compiler = new Compiler();
+			$compiler = new Compiler(new cpp_lowering_options(false));
 			$compiler->init([$directory]);
 			$compiler->select_entry('main', 'main.phs');
 			ownership_target_rejection($compiler, []);
@@ -55,7 +55,7 @@ try
 		$baseline = '$p ' . $family . '<int>; return 0;';
 		file_put_contents($path, $baseline);
 		Compiler_Lifecycle::reset();
-		$compiler = new Compiler();
+		$compiler = new Compiler(new cpp_lowering_options(false));
 		$compiler->init([$directory]);
 		$compiler->select_entry('main', 'main.phs');
 		$compiler->exec_cpp();
@@ -77,7 +77,7 @@ try
 	{
 		file_put_contents($path, $source);
 		Compiler_Lifecycle::reset();
-		$compiler = new Compiler();
+		$compiler = new Compiler(new cpp_lowering_options(false));
 		$compiler->init([$directory]);
 		$compiler->select_entry('main', 'main.phs');
 		$compiler->exec_cpp();

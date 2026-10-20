@@ -34,7 +34,7 @@ foreach ($cases as [$required_parameters, $required_return, $provided_parameters
 		. 'interface Required { function f(' . $required_parameters . '): ' . $required_return . '; } '
 		. 'interface Provided { function f(' . $provided_parameters . '): ' . $provided_return . '; } return 9;';
 	Source_Registry::add($module, $file); Model::$modules->add($module->name, $module);
-	(new Compiler())->exec_cpp();
+	(new Compiler(new cpp_lowering_options(false)))->exec_cpp();
 	$signatures = []; $owners = [];
 	foreach (Model::collected_files() as $source) {
 		foreach ($source->entries as $entry) {

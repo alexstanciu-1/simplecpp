@@ -78,7 +78,7 @@ def main():
             source.mkdir()
             (source / 'main.phs').write_text('return 0;')
             target = out / 'ordinary-published'
-            runner.run('ordinary-publish', ['php', APP / 'main.php', '--s2s', source,
+            runner.run('ordinary-publish', ['php', APP / 'main.php', '--s2s', source, '--no-prelower-templates',
                        '--output', target], cli_reason='Publication CLI contract')
             command = ['php', APP / 'tests/fixtures/native_cache_driver.php', target,
                        out / 'ordinary-cache', ROOT / 'runtime/include', '/usr/bin/clang++']

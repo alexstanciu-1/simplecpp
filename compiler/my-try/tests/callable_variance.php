@@ -10,7 +10,7 @@ function variance_source(string $text): string
 	$module = new module('/variance', '/variance', '/variance');
 	$file = new file(); $file->path = 'main.phs'; $file->content = $text;
 	Source_Registry::add($module, $file); Model::$modules->add($module->name, $module);
-	(new Compiler())->exec_cpp();
+	(new Compiler(new cpp_lowering_options(false)))->exec_cpp();
 	return native_record_export();
 }
 
@@ -77,7 +77,7 @@ try {
 	file_put_contents($contract_path, $contract_text);
 	file_put_contents($implementation, 'class C implements I { function f(Animal $x): Dog { return new Dog(); } }');
 	file_put_contents($main, '$c = new C(); $i I = $c; $d = new Dog(); $r = $i->f($d); return $r->n;');
-	Compiler_Lifecycle::reset(); $compiler = new Compiler(); $compiler->init([$directory]);
+	Compiler_Lifecycle::reset(); $compiler = new Compiler(new cpp_lowering_options(false)); $compiler->init([$directory]);
 	$compiler->select_entry('main', 'main.phs'); $compiler->exec_cpp();
 	$original = CPP_Output::encode(Model::$cpp_files);
 	$record = Model::$global_scope->source_types_named('C')[0]; $work = $record->contract_work;

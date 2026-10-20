@@ -50,7 +50,7 @@ def main():
             library = sources / 'library.phs'
             library.write_text('function answer(): int { return 7; }')
             published = output / 'cli-published'
-            command = ['php', APP / 'main.php', '--s2s', sources, '--entry', 'main.phs', '--output', published]
+            command = ['php', APP / 'main.php', '--s2s', sources, '--no-prelower-templates', '--entry', 'main.phs', '--output', published]
             def invoke(name, expected=0):
                 return runner.run(name, command, expected=expected, cli_reason='Tests disk publication CLI and process locking')
             invoke('cli-first')

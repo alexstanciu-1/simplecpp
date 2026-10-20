@@ -10,7 +10,7 @@ function interface_source(string $text): string
 	$module = new module('/interfaces', '/interfaces', '/interfaces');
 	$file = new file(); $file->path = 'main.phs'; $file->content = $text;
 	Source_Registry::add($module, $file); Model::$modules->add($module->name, $module);
-	(new Compiler())->exec_cpp();
+	(new Compiler(new cpp_lowering_options(false)))->exec_cpp();
 	return native_record_export();
 }
 $results = [];
@@ -98,7 +98,7 @@ try {
 	file_put_contents($child_path, $child_text);
 	file_put_contents($main_path, '$c = new C(); return $c->read();');
 	Compiler_Lifecycle::reset();
-	$compiler = new Compiler(); $compiler->init([$directory]); $compiler->select_entry('main', 'main.phs'); $compiler->exec_cpp();
+	$compiler = new Compiler(new cpp_lowering_options(false)); $compiler->init([$directory]); $compiler->select_entry('main', 'main.phs'); $compiler->exec_cpp();
 	$original = CPP_Output::encode(Model::$cpp_files);
 	$child = Model::$global_scope->source_types_named('C')[0];
 	$interface = Model::$global_scope->source_types_named('I')[0];

@@ -8,7 +8,7 @@ if (!is_dir($source)) { mkdir($source, 0777, true); }
 $good = 'struct Node { public vector<int> $values; }';
 $cycle = 'struct Node { public function rows(): vector<Node> { $v vector<Node>; return $v; } }';
 file_put_contents($source . '/main.phs', $good);
-$compiler = new Compiler();
+$compiler = new Compiler(new cpp_lowering_options(false));
 $compiler->cpp_lowering->prelower_templates = true;
 $compiler->init([$source]);
 $compiler->exec_cpp();

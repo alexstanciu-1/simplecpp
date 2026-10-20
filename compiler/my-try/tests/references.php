@@ -22,7 +22,7 @@ function references_source(string $source): string
 	$input->content = $source;
 	Source_Registry::add($input_module, $input);
 	Model::$modules->add($input_module->name, $input_module);
-	(new Compiler())->exec_cpp();
+	(new Compiler(new cpp_lowering_options(false)))->exec_cpp();
 	return CPP_Probe::text(Model::$cpp_files);
 }
 
@@ -200,7 +200,7 @@ try
 	$valid = 'function &id(int &$x): int { if (true) { $a =& $x; return $a; } return $x; } $n = 1; $a =& id($n); $a = 7; return $n;';
 	file_put_contents($path, $valid);
 	Compiler_Lifecycle::reset();
-	$compiler = new Compiler();
+	$compiler = new Compiler(new cpp_lowering_options(false));
 	$compiler->init([$directory]);
 	$compiler->exec_cpp();
 	$original = CPP_Probe::text(Model::$cpp_files);
@@ -234,7 +234,7 @@ try
 		references_check(CPP_Probe::text(Model::$cpp_files) === $original, 'Incremental reference recovery changed output');
 	}
 	Compiler_Lifecycle::reset();
-	$clean = new Compiler();
+	$clean = new Compiler(new cpp_lowering_options(false));
 	$clean->init([$directory]);
 	$clean->exec_cpp();
 	references_check(CPP_Probe::text(Model::$cpp_files) === $original, 'Clean/incremental reference output differs');
@@ -276,7 +276,7 @@ try
 	$block_source = '$n = 1; while ($n < 3) { if (true) { $a =& $n; $a++; } } return $n;';
 	file_put_contents($path, $block_source);
 	Compiler_Lifecycle::reset();
-	$block_compiler = new Compiler();
+	$block_compiler = new Compiler(new cpp_lowering_options(false));
 	$block_compiler->init([$directory]);
 	$block_compiler->exec_cpp();
 	$block_output = CPP_Probe::text(Model::$cpp_files);

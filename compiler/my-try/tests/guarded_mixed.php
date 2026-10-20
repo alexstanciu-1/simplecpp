@@ -146,7 +146,7 @@ foreach ($iterations as $family => $format)
 			$directory=sys_get_temp_dir().'/scpp_guarded_mixed_'.bin2hex(random_bytes(6)); mkdir($directory); $path=$directory.'/main.phs';
 			$valid='function probe(' . $type . ' $a, ' . $other . ' $b): void { $out = ($a ' . $symbol . ' $b); }';
 			try {
-				file_put_contents($path,$valid); Compiler_Lifecycle::reset(); $compiler=new Compiler(); $compiler->init([$directory]); $compiler->exec_cpp();
+				file_put_contents($path,$valid); Compiler_Lifecycle::reset(); $compiler=new Compiler(new cpp_lowering_options(false)); $compiler->init([$directory]); $compiler->exec_cpp();
 				file_put_contents($path,str_replace($other.' $b','string $b',$valid));
 				foreach ([[$path],[]] as $changes) { $failed=false; try { $compiler->update_cpp($changes); } catch (\RuntimeException $e) { $failed=true; } guarded_mixed_check($failed && Model::$cpp_files->is_empty() && Model::$prepared_files->is_empty(),'Failed/repeated mixed edit retained artifacts'); }
 				$repair=str_replace('($a '.$symbol.' $b)','($b '.$symbol.' $a)',$valid); file_put_contents($path,$repair); $compiler->update_cpp([$path]); $output=CPP_Probe::text(Model::$cpp_files); $compiler->update_cpp([]); guarded_mixed_check($output===CPP_Probe::text(Model::$cpp_files),'No-op mixed repair changed output');

@@ -16,7 +16,7 @@ function import_project(array $sources): Compiler
 		Source_Registry::add($module, $file);
 	}
 	Model::$modules->add($module->name, $module);
-	$compiler = new Compiler(); $compiler->select_entry('main', 'main.phs');
+	$compiler = new Compiler(new cpp_lowering_options(false)); $compiler->select_entry('main', 'main.phs');
 	return $compiler;
 }
 

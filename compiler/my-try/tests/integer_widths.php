@@ -82,7 +82,7 @@ return 0;
 PHS;
 operator_test_source($source);
 $cpp = CPP_Probe::text(Model::$cpp_files);
-$compiler = new Compiler();
+$compiler = new Compiler(new cpp_lowering_options(false));
 $compiler->prepare();
 $compiler->cpp();
 if ($cpp !== CPP_Probe::text(Model::$cpp_files)) {
