@@ -15,6 +15,11 @@ through the existing registry and bindings, using original runtime templates beh
 concrete application interfaces. The handwritten recipes described below are the
 current measured implementation, not a mandate to add more per-family implementations.
 
+Current priority is solidifying preprocessed templates. The
+[future runtime review](../../../../specs/planning/runtime_prepared_facts_review_v0_3_2026_10_20.md)
+is non-blocking and tentatively v0.3: it distinguishes prepared facts/native
+operations from dynamic runtime support without authorizing further optimization.
+
 ## Runtime-owned native representation recipes
 
 `cpp_types` now describes both ordinary runtime definitions and representations of

@@ -1,7 +1,12 @@
 # Template-free accounting application boundary
-Doc Status: implemented and validated for accounting. All 16 app units have zero template declarations and zero Clang instantiations without PCH; accounting passes 998/0. See the [acceptance evidence and O0 timings](results/prelower_template_free_accounting_2026_10_19/README.md). Full runtime coverage remains deferred.
+Doc Status: planning
 
-Status: approved; goal active. The [source-handle slice](results/prelower_source_handles_2026_10_19/README.md) passes accounting and focused O0 proofs. Literal/scalar interfaces and template-free include closure remain in progress.
+Status: implemented and validated for accounting; goal complete. All 16 app units
+have zero template declarations and zero Clang instantiations without PCH;
+accounting passes 998/0. See the [acceptance evidence and O0 timings](results/prelower_template_free_accounting_2026_10_19/README.md).
+Current priority: solidify preprocessed templates. Full runtime coverage and the
+[future runtime review](runtime_prepared_facts_review_v0_3_2026_10_20.md) remain deferred.
+The sequence below records the original plan and starting-state audit.
 
 ## Target and audit
 

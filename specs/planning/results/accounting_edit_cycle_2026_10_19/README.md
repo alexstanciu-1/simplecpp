@@ -6,6 +6,12 @@ Doc Status: supporting
 previously cached app objects cannot satisfy later samples. All accounting behavior
 checks still pass. Sources are temporary copies; the checkout's app is unchanged.
 
+Scope update, 2026-10-20: these PHP-hosted timings are diagnostic only. The PHP
+compiler is not the intended performance comparison, and incremental compilation
+is unfinished. The follow-ups below are deferred, not current optimization work.
+Current priority is solidifying preprocessed templates; see the
+[non-blocking future review](../../runtime_prepared_facts_review_v0_3_2026_10_20.md).
+
 ## End-to-end results
 
 Seconds, medians of three body edits after an initial build. The compiler retains
@@ -74,7 +80,7 @@ by a test-only compiler recorder replacing the existing hard-coded GNU linker fl
 Each variant has a separate cache and fixed recorder executable. This is a measured
 experiment, not a new production linker-selection setting.
 
-## What the measurements justify next
+## Potential follow-ups (deferred)
 
 1. Profile native-build validation/dependency work, especially the no-op path. Keep
    correct invalidation for runtime/header changes; separate correctness from cache
@@ -87,7 +93,8 @@ experiment, not a new production linker-selection setting.
 
 The earlier roughly 10x unit-compilation gain is confirmed, but the current complete
 edit cycle contains substantial unoptimized work around that unit. These measurements
-establish that remaining work rather than predicting its eventual optimized cost.
+describe this experimental PHP-hosted path, not the intended compiler performance
+or a requirement to optimize it now.
 
 ## Method and limits
 

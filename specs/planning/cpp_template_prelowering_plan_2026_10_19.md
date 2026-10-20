@@ -2,8 +2,16 @@
 Doc Status: planning
 
 Date: 2026-10-19
-Status: first bounded integer/vector slice implemented; remaining work follows the [agreed decision](cpp_template_prelowering_decision_2026_10_19.md).
-This document records the implementation sequence. The [current coverage guide](../../compiler/my-try/docs/architecture/cpp_template_prelowering.md) distinguishes implemented behavior from remaining work.
+Status: template-free accounting boundary validated; current priority is solidifying
+preprocessed templates. This document records the implementation sequence under the
+[agreed decision](cpp_template_prelowering_decision_2026_10_19.md); checkpoints below
+are historical. The [current coverage guide](../../compiler/my-try/docs/architecture/cpp_template_prelowering.md)
+distinguishes implemented behavior from remaining work.
+
+The [runtime review direction](runtime_prepared_facts_review_v0_3_2026_10_20.md) is
+non-blocking, tentatively v0.3. It records template-cost findings and candidates for
+prepared facts/native operations; it authorizes no implementation or further
+optimization now.
 
 ## Accounting coverage checkpoint
 
