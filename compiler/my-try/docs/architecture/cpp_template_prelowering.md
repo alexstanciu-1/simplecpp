@@ -72,6 +72,28 @@ Low-level `request_opaque`/`request_observation` helpers remain for direct stora
 observation proofs of the shared representation worker. They are not a selectable
 source-lowering mode. Public requests always use concrete argument substitution.
 
+## Generated naming
+
+`CPP_Artifacts::bounded_component` supplies concrete type labels: up to 48 readable
+bytes plus the full SHA-256 of semantic identity and physical spelling. With the
+`concrete_` prefix, identifiers are at most 124 bytes; nesting does not expand the
+public filename. `CPP_Runtime_Operations::name` uses the operation kind and a full
+SHA-256 of its selected contract/types/binding. The engine sorts emitted entries by
+name, so discovery order and compact entry IDs do not determine artifact bytes.
+
+The readable prefix is a debugging aid, not identity. Distinct deep types may have
+the same prefix. Generated implementation aliases and bridge definitions show their
+physical targets; no additional debug-name registry is retained. Hash collisions
+have no separate detection/disambiguation mechanism; these names rely on SHA-256.
+Do not describe this as a proven collision-free encoding.
+
+The inventory proof exercises ten nested template levels with different leaves,
+shared readable prefixes, distinct type/operation identities and bounded filenames.
+It tests naming only, not execution of every deep operation. Source callable/type/unit
+paths and low-level proof-only `opaque_` names still use reversible hex encoding and
+can grow with the original name. General path-limit handling and richer debug name
+maps remain non-blocking debt; this review changes no output spelling or cache keys.
+
 ## Proofs and remaining work
 
 Run the combined current acceptance with
@@ -90,8 +112,8 @@ cannot be hidden by a later successful accounting run.
 
 Current reproduction and proof limits are in [testing](../testing.md). Comparison-only
 recipe/runtime-ABI harnesses are preserved as non-executable historical source in
-[the proof archive](../../tests/historical/prelowering/README.md), with their remaining
-migration cases explicit. They do not justify keeping obsolete production branches.
+[the proof archive](../../tests/historical/prelowering/README.md), with their migrated
+behavior mapped to current fixtures. They do not justify keeping obsolete production branches.
 
 The [solidification TODO](../../../../specs/planning/prelower_templates_solidification_todo_2026_10_20.md)
 tracks consolidated acceptance and remaining contracts. Full runtime coverage,

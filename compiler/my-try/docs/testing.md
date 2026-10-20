@@ -62,7 +62,9 @@ The source-demand fixture also publishes uninstrumented compiler output separate
 checks cached-replay manifest identity, removes demand and verifies retired files are
 gone, then restores the exact original manifest while preserving user-owned files.
 The metadata inventory task compares the complete middleware/layout bundle across
-nested-first and dependency-first request discovery orders.
+nested-first and dependency-first request discovery orders. It also checks bounded
+names/filenames for ten nested template levels with distinct leaves beyond the
+readable prefix; this naming check does not claim deep operation execution.
 Its byte proof covers empty, short, embedded-NUL and long literals, copy/move
 allocation parity, borrowed identity and native/concrete string-hash parity, including
 an alternate metadata-selected byte adapter.
@@ -78,8 +80,8 @@ recording. Conflicting commands and unclassified compilation artifacts reject.
 `python3 compiler/my-try/tests/prelower_substitution.py --source-arguments --results FRESH_DIRECTORY`
 checks source payload layout, generated source-class append/store/read calls, shared
 identity/reference counts, allocation/copy parity, source header cycles and incremental
-body/layout cache behavior. Nested storage must match ordinary signatures; native
-source-class shared wrappers remain exposed in this checkpoint.
+body/layout cache behavior. This is a focused harness; use the combined acceptance
+for the current strict application closure and the migrated source-lifecycle coverage.
 
 `python3 compiler/my-try/tests/runtime_template_demand.py --output --alternate-storage --results FRESH_DIRECTORY`
 adds scalar echo transport, borrowed/temporary operands, exact ordered bytes and

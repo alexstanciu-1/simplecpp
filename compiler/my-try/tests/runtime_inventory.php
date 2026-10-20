@@ -96,3 +96,37 @@ foreach ([[$string, $integer, $vector, $nested], [$vector, $nested, $integer, $s
 	}
 }
 echo "Demand discovery order preserves the complete middleware/layout bundle\n";
+
+// Deep semantic identities must not become recursively expanded public filenames.
+// The two leaves intentionally differ beyond the readable prefix.
+$deep_integer = $integer;
+$deep_string = $string;
+for ($depth = 0; $depth < 10; $depth++) {
+	$deep_integer = $registry->use($registry->intern_application($vector_definition, [$deep_integer])->type_id());
+	$deep_string = $registry->use($registry->intern_application($vector_definition, [$deep_string])->type_id());
+}
+$naming_engine = new CPP_Specializations();
+$deep_names = [];
+$operation_names = [];
+foreach ([$deep_integer, $deep_string] as $type) {
+	$entry = $naming_engine->entry($naming_engine->request($type));
+	$deep_names[] = $entry->name;
+	if (strlen($entry->name) > 124 || !preg_match('/^[a-zA-Z0-9_]+$/', $entry->name)) {
+		throw new \LogicException('Deep concrete name is not a bounded C++ identifier');
+	}
+	$request = new cpp_runtime_operation(cpp_runtime_operation_kind::output);
+	$request->inputs->append($type);
+	$name = CPP_Runtime_Operations::name($request);
+	$operation_names[] = $name;
+	if (strlen($name) > 128 || $name !== CPP_Runtime_Operations::name($request)) {
+		throw new \LogicException('Deep operation identity is unbounded or unstable');
+	}
+}
+if ($deep_names[0] === $deep_names[1] || substr($deep_names[0], 0, 59) !== substr($deep_names[1], 0, 59)
+	|| $operation_names[0] === $operation_names[1]) {
+	throw new \LogicException('Truncated readable labels merged distinct deep type/operation identities');
+}
+foreach (inventory_bundle($naming_engine) as $path => $text) {
+	if (strlen(basename($path)) > 128) { throw new \LogicException('Deep specialization filename is unbounded'); }
+}
+echo "Deep concrete names/paths stay bounded; shared readable prefixes retain distinct type/operation identities\n";

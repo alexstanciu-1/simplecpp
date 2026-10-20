@@ -151,13 +151,15 @@ Owners: runtime catalog installation, backend binding/admission checks, diagnost
   `prelower_native_boundary.py`; remaining operation combinations stay open. Public
   configuration consolidation is complete. See
   [native enforcement evidence](results/prelower_native_boundary_2026_10_20/README.md).
-- [ ] For the supported opt-in mode, report unsupported representations/operations
+- [x] For the supported opt-in mode, report unsupported representations/operations
   explicitly. Do not silently fall back to template-bearing application interfaces.
-  Choosing ordinary compilation remains an explicit caller decision.
-- [ ] Establish a clear contract for transitive header exposure: `cpp_types` selection
+  Choosing ordinary compilation remains an explicit caller decision. See the
+  [metadata/native recovery evidence](results/prelower_metadata_recovery_2026_10_20/README.md).
+- [x] Establish a clear contract for transitive header exposure: `cpp_types` selection
   alone cannot prove arbitrary provider headers template-free. Combine binding checks
   with a complete generated-input closure regression, rather than promising universal
-  freedom from templates based on flags alone.
+  freedom from templates based on flags alone. The public/native contracts and
+  complete accounting acceptance establish this bounded guarantee.
 - [x] Cover representative invalid/missing contracts and failure/repair behavior.
   Implement only bounded missing adapters needed for the agreed surface; keep broader
   runtime expansion deferred instead of making it a hidden prerequisite.
@@ -178,8 +180,10 @@ Owners: `cpp_lowering_options`, CLI/API entry points, C++ generation/adapters.
 - [x] Review PCH interaction: the template-free acceptance path must use no runtime
   PCH. Ensure configuration cannot misleadingly claim template-free app input while
   injecting the broad runtime PCH; leave ordinary-mode PCH behavior supported.
-- [ ] Reuse ordinary expression sequencing and prepared operation/conversion facts.
+- [x] Reuse ordinary expression sequencing and prepared operation/conversion facts.
   Keep the specialization engine free of family algorithms and semantic re-analysis.
+  See the [transport audit](results/prelower_transport_audit_2026_10_20/README.md) and
+  [demand/counter verification](results/prelower_demand_publication_2026_10_20/README.md).
 - [x] Prove mode switching invalidates affected C++ fragments without unnecessary
   semantic repreparation, and restoring settings restores deterministic output.
   The migrated lifecycle fixture verifies ordinary/concrete restoration, unchanged
@@ -267,8 +271,8 @@ Bounded selector/legacy-path retirement and fresh validation are recorded in
 
 - [x] Rewrite the current architecture coverage summary around the single supported
   path; move historical recipe/ABI checkpoints out of current guidance.
-- [ ] Update CLI/API examples, runtime interoperability docs and test instructions.
-- [ ] Remove superseded branches, temporary helpers and stale tests only after the
+- [x] Update CLI/API examples, runtime interoperability docs and test instructions.
+- [x] Remove superseded branches, temporary helpers and stale tests only after the
   acceptance workflow covers the replacement. Preserve unrelated worktree changes.
 - [x] Migrate the archived detailed source-method/constructor failure cases not
   covered by current general fixtures. Their inputs remain in
@@ -280,12 +284,15 @@ Bounded selector/legacy-path retirement and fresh validation are recorded in
   contract lives in existing metadata/binding owners; signature-only forward
   declarations and prepared empty-owner transport close the other discovered gaps.
   See [migration evidence](results/prelower_source_lifecycle_2026_10_20/README.md).
-- [ ] Naming debt: review readable, bounded, stable specialization and operation
+- [x] Naming debt: review readable, bounded, stable specialization and operation
   names, generated file paths and debug discoverability for deeply nested types.
   Concrete type labels already use a 48-byte readable prefix plus a SHA-256 identity;
   audit other generated names before choosing changes. Preserve identity separation,
   collision handling and deterministic replay; avoid recursively expanding full type
-  spellings in public names. This is recorded debt, not a new optimization blocker.
+  spellings in public names. The [consolidation/naming review](results/prelower_consolidation_2026_10_20/README.md)
+  records bounded concrete/operation names and a deep-nesting proof. Source path and
+  proof-only opaque-name growth, richer debug mapping and hash-collision handling
+  remain explicitly non-blocking debt; no naming scheme was changed.
 - [ ] Review and commit bounded slices with their relevant proofs.
 
 ## Explicitly deferred / non-blocking
