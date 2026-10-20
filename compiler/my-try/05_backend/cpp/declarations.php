@@ -112,6 +112,7 @@ final class CPP_Declarations
 				. '>((' . $expression . ').native_value())';
 		}
 		if ($decision->operation === conversion_operation::boxed_extract) {
+			if ($context->concrete_types()) { throw new \RuntimeException('prelower_templates: boxed extraction requires concrete transport'); }
 			$context->headers['scpp/cast.hpp'] = true;
 			return 'scpp::required_cast<' . self::type($decision->target_type, $context)
 				. '>(' . $expression . ')';
@@ -146,11 +147,12 @@ final class CPP_Declarations
 			|| ($decision->operation === truthiness_operation::error_condition)
 			|| ($decision->operation === truthiness_operation::result_condition)
 			|| ($decision->operation === truthiness_operation::nullable_condition)) {
+			if (($context->specialization_engine !== null) && ($decision->operation === truthiness_operation::scalar_condition)
+				&& (Type_Queries::canonical($decision->source_type)->family() === type_family::integer)) { return '((' . $expression . ').native_value() != 0)'; }
+			if ($context->concrete_types()) { throw new \RuntimeException('prelower_templates: runtime condition requires concrete transport'); }
 			if ($decision->operation === truthiness_operation::nullable_condition) {
 				$context->headers['scpp/cast.hpp'] = true;
 			}
-			if (($context->specialization_engine !== null) && ($decision->operation === truthiness_operation::scalar_condition)
-				&& (Type_Queries::canonical($decision->source_type)->family() === type_family::integer)) { return '((' . $expression . ').native_value() != 0)'; }
 			$context->headers['lang/php/operators/conditional/condition_truthiness.hpp'] = true;
 			return 'scpp::php::condition_truthy(' . $expression . ').native_value()';
 		}

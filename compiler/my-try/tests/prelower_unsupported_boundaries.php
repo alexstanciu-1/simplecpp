@@ -31,6 +31,13 @@ $cases['catch'] = ['try { return 0; } catch (Exception $e) { return 1; }', '::sc
 $cases['finally'] = ['try { return 0; } finally {}', 'std::optional<', 'finally operation requires concrete transport'];
 $cases['take'] = ['$r ?int; $v = 0; $ok bool = take($v) = $r; return 0;', 'scpp::php::take(', 'take operation requires concrete transport'];
 $cases['match_failure'] = ['return match (3) { 1 => 7, 2 => 8 };', 'throw std::runtime_error("Unhandled match expression")', 'match failure operation requires concrete transport'];
+$cases['boxed_extract'] = ['$a mixed = 7; $b int = $a; return 0;', 'scpp::required_cast<', 'boxed extraction requires concrete transport'];
+$cases['boxed_condition'] = ['$a mixed = 7; if ($a) { return 1; } return 0;', 'condition_truthy(', 'runtime condition requires concrete transport'];
+$cases['scalar_condition'] = ['$a = "hello"; if ($a) { return 1; } return 0;', 'condition_truthy(', 'runtime condition requires concrete transport'];
+$cases['value_probe'] = ['$a dynamic; $v = empty($a); return 0;', 'scpp::php::empty(', 'value probe operation requires concrete transport'];
+$cases['enum_name'] = ['enum E { case A; } $name = enum_name(E::A); return 0;', 'helpers/', 'compiler helper requires concrete transport'];
+$cases['enum_value'] = ['enum E { case A; } $value = enum_value(E::A); return 0;', 'helpers/', 'compiler helper requires concrete transport'];
+$cases['enum_from_value'] = ['enum E { case A; } $value = enum_from_value(E::class, 0); return 0;', 'helpers/', 'compiler helper requires concrete transport'];
 foreach ($cases as $name => [$source, $native_spelling, $diagnostic]) {
 	Compiler_Lifecycle::reset();
 	file_put_contents($path, $source);
@@ -75,7 +82,7 @@ foreach ($cases as $name => [$source, $native_spelling, $diagnostic]) {
 	if (Output_Publication::require_ready($output) !== $ordinary_manifest) {
 		throw new \LogicException('Ordinary recovery changed manifest: ' . $name);
 	}
-	file_put_contents($path, '$items vector<int> = []; return match (1) { 1 => 0, default => 1 };');
+	file_put_contents($path, '$items vector<int> = []; $n = 1; $ok = true; if ($ok) { if ($n) { return match ($n) { 1 => 0, default => 1 }; } } return 1;');
 	$compiler->cpp_lowering->prelower_templates = true;
 	$emit(true);
 	$repaired = $snapshot();

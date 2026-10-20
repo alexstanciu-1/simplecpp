@@ -563,6 +563,7 @@ final class CPP_Syntax
 		if ($facts->presence !== null) {
 			return CPP_Declarations::type($facts->type, $this->context) . '(' . CPP_Declarations::truthiness($this->expression($node->operand), $facts->presence, $this->context) . ')';
 		}
+		$this->require_native_operation('value probe operation');
 		$name = $facts->operation === value_probe_kind::isset ? 'isset' : 'empty';
 		$this->context->headers['lang/php/operators/' . $name . '/' . $name . '.hpp'] = true;
 		return 'scpp::php::' . $name . '(' . $this->expression($node->operand) . ')';

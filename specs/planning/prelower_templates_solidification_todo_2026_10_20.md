@@ -114,10 +114,19 @@ Owners: runtime catalog installation, backend binding/admission checks, diagnost
   expressions without a default. Explicit-default match remains admitted and is
   exercised in every repair/replay case. Fourteen boundary cases pass with disk
   readiness/recovery; see [evidence](results/prelower_value_boundaries_2026_10_20/README.md).
-- [ ] Finish the remaining native-interface audit, including runtime-backed condition
-  truthiness/value probes, boxed extraction, null output and enum compiler helpers.
-  These are inspection targets, not a claim that every use is unsupported; determine
-  which existing adapters already cover them before adding checks or transport.
+- [x] Audit runtime-backed condition truthiness/value probes, boxed extraction
+  and enum compiler helpers. Reject the confirmed native transport paths at their
+  existing emitters; preserve integer/boolean conditions, prepared presence and
+  keyed probes. Twenty-one boundary cases exercise rejection/recovery; see
+  [evidence](results/prelower_runtime_boundaries_2026_10_20/README.md).
+- [ ] Supply concrete null-output transport. The existing output proof includes
+  `echo null` during mode switching; rejecting it regresses the accepted workload.
+  Its broad output/null headers are a known remaining exposure and must be resolved
+  before public strict-mode migration. Preserve operand evaluation and runtime output
+  semantics; do not drop the case from the proof or silently claim full closure.
+- [ ] Complete strict validation for arbitrary metadata/provider header exposure,
+  remaining representation/operation combinations and PCH configuration before
+  migrating the public option. The listed rejection cases are not a universal proof.
 - [ ] For the supported opt-in mode, report unsupported representations/operations
   explicitly. Do not silently fall back to template-bearing application interfaces.
   Choosing ordinary compilation remains an explicit caller decision.

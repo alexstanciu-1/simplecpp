@@ -40,6 +40,12 @@ Native `take` and match without a default also reject until their runtime transp
 is concrete. Explicit-default match remains supported by the existing emitter;
 [boundary evidence](../../../../specs/planning/results/prelower_value_boundaries_2026_10_20/README.md)
 checks that distinction during source repair and replay.
+Confirmed native-only runtime condition/value-probe paths, boxed extraction and
+enum compiler helpers also reject until their physical transport is
+concrete. Integer/boolean conditions, prepared presence and keyed-probe paths remain
+available; see the [runtime-boundary proof](../../../../specs/planning/results/prelower_runtime_boundaries_2026_10_20/README.md).
+Null output remains a known template exposure in the accepted output fixture and
+needs a concrete adapter; it is not silently counted as template-free coverage.
 Other closure checks and the CLI/API migration remain pending; current mode selectors
 below still describe the implementation, not the completed strict guarantee.
 

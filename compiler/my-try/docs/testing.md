@@ -4,8 +4,9 @@ Doc Status: supporting
 `python3 compiler/my-try/tests/prelower_contracts.py --results FRESH_DIRECTORY`
 checks concrete rejection for callable locals, parameters, results, fields and nested
 containers, plus object tests/casts, weak creation/locking, source throw/catch/finally,
-`take` and match without a default. Repair cases include supported explicit-default
-match emission and replay.
+`take`, match without a default, boxed extraction, runtime-backed conditions/value
+probes and enum helpers. Repair cases include supported integer/boolean
+conditions and explicit-default match emission and replay.
 It verifies ordinary emission, no partial in-memory output on rejection,
 mode-switch recovery, source repair and replay through the existing shared runner.
 Each attempt uses a fresh `Output_Publication`: rejected revisions are not ready on
