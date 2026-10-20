@@ -74,6 +74,11 @@ source-lowering mode. Public requests always use concrete argument substitution.
 
 ## Proofs and remaining work
 
+Run the combined current acceptance with
+`python3 compiler/my-try/tests/prelower_acceptance.py --results FRESH_DIRECTORY`.
+It composes the existing O0 proof owners and retains per-phase evidence; failures
+cannot be hidden by a later successful accounting run.
+
 - [Fresh public accounting acceptance](../../../../specs/planning/results/prelower_public_accounting_2026_10_20/README.md): ordinary/prelowered 998/0, identical output, complete 16-unit no-PCH closure and warm reuse.
 - `tests/prelower_null_output.py`: public CLI/API parity, single-option lifecycle/replay, strict rejection/repair, PCH rejection and complete fixture closure.
 - `tests/prelower_contracts.py`: explicit unsupported-boundary failure/recovery and exact audit command coverage.

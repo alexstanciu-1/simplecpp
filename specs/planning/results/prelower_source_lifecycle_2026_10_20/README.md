@@ -64,8 +64,13 @@ An earlier one-field edit fit padding and correctly retained the layout result.
 
 Supporting checks:
 
-- Runtime inventory and type bindings passed, including 24 invalid-schema cases:
-  `/tmp/prelower-modifier-bindings-20261020`.
+- Type bindings passed, including 24 invalid-schema cases:
+  `/tmp/prelower-modifier-bindings-20261020`. Correction during acceptance
+  consolidation: the inventory task in that recording failed because its old
+  header count included the new declaration companions. The earlier wording
+  incorrectly reported it as passing. The exact-demand assertion is now repaired;
+  `/tmp/prelower-acceptance-reporting-20261020` records the focused inventory pass,
+  and the combined acceptance supplies the fresh end-to-end result.
 - Public CLI/API, lifecycle, strict rejection/recovery, PCH rejection and closure
   audit passed: `/tmp/prelower-source-public-20261020`.
 - Output/indexing/compound boundary proofs passed after the signature-header repair,

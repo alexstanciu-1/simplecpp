@@ -20,7 +20,9 @@ def main():
         run_tasks([Task('unsupported-boundaries', lambda: runner.run('unsupported-boundaries',
             ['php', APP / 'tests/prelower_unsupported_boundaries.php', out / 'source'])),
                    Task('closure-coverage', lambda: runner.run('closure-coverage',
-                       [sys.executable, APP / 'tests/prelower_closure_coverage.py']))])
+                       [sys.executable, APP / 'tests/prelower_closure_coverage.py'])),
+                   Task('acceptance-reporting', lambda: runner.run('acceptance-reporting',
+                       [sys.executable, APP / 'tests/prelower_acceptance_contracts.py']))])
 
 
 if __name__ == '__main__':

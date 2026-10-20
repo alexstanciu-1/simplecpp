@@ -57,8 +57,12 @@ $string = $registry->use(Model::$type_catalog->canonical('string')->type_id());
 $string_entry = $engine->entry($engine->request_composed($string));
 $vector_entry = $engine->entry($engine->request_composed($vector));
 $nested_entry = $engine->entry($first);
-if (count($headers) !== 4 || !isset($headers[$integer_entry->header]) || !isset($headers[$string_entry->header])
-	|| !isset($headers[$vector_entry->header]) || !isset($headers[$nested_entry->header])) {
+$expected = [];
+foreach ([$integer_entry, $string_entry, $vector_entry, $nested_entry] as $entry) {
+	$expected[$entry->header] = true;
+	$expected[CPP_Opaque_Representation::declaration_header('scpp::internal::' . $entry->name)] = true;
+}
+if ((count($headers) !== count($expected)) || (array_diff_key($expected, $headers) !== [])) {
 	throw new \LogicException('Nested demand omitted a dependency or prepared unrelated runtime types');
 }
 $again = $engine->request_composed($nested);

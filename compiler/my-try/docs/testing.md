@@ -1,6 +1,23 @@
 # Test runners
 Doc Status: supporting
 
+`python3 compiler/my-try/tests/prelower_acceptance.py --results FRESH_DIRECTORY`
+is the combined prelowering solidification acceptance command. It runs the existing
+metadata, unsupported-contract, public-option, provider/PCH-boundary, counter/reference,
+source-lifecycle, layout-cache and accounting proofs. Suites run sequentially, each
+retaining its existing shared 12-slot runner; there is no second test scheduler.
+Native builds use O0 without debug. Strict application builds reject PCH; the provider
+suite also retains an explicitly ordinary-mode PCH compatibility control.
+
+`result.json` records revision, worktree status, tool versions, entrypoint hashes,
+per-phase status, result directories and the accounting closure totals. A failed
+phase remains failed even if later independent phases pass; the command exits nonzero.
+Interrupted or incomplete evidence cannot produce a passing summary. Each suite's
+command logs and detailed results remain under its own directory. The contract suite
+tests these reporting failure cases without rebuilding native programs.
+This is bounded acceptance of the current surface, not full runtime coverage, a
+native compiler rebuild, an incremental-compiler maturity claim or a timing benchmark.
+
 `python3 compiler/my-try/tests/prelower_accounting_acceptance.py --results FRESH_DIRECTORY`
 publishes ordinary and prelowered accounting through the public CLI, builds both
 at O0 without debug/PCH in fresh native caches, and requires identical output with

@@ -55,7 +55,8 @@ claim complete closure validation or broaden runtime coverage.
   `/tmp/prelower-solidification-audit-20261020`. Accounting was not rerun in that audit.
 - Initial source inspection found three selectable implementations: historical recipes,
   runtime ABI transport, and concrete substitution. Public selection is now consolidated
-  as recorded in section 3; historical implementation cleanup remains pending.
+  as recorded in section 3; superseded implementations and temporary selectors have
+  been retired, and useful source-lifecycle proofs migrated.
 - Metadata owns type recipes and capabilities, but some physical conventions are
   fixed adapter protocols. Registered does not imply concrete-compatible or proven
   template-free. The original audit found a callable `std::function` escape, now
@@ -217,8 +218,11 @@ unchanged artifacts reused; no whole-compiler incremental maturity claim is impl
 
 Owners: existing shared test runner and prelowering fixtures; no duplicate test engine.
 
-- [ ] Assemble the existing proofs into a documented O0/no-debug acceptance entry
+- [x] Assemble the existing proofs into a documented O0/no-debug acceptance entry
   point, using normal publication/native build and the supported public configuration.
+  `tests/prelower_acceptance.py --results FRESH_DIRECTORY` composes eight existing
+  proof groups without another scheduler. All phases pass in the
+  [combined acceptance recording](results/prelower_acceptance_2026_10_20/README.md).
 - [x] Run ordinary and prelowered accounting with matching behavior: 998 checks pass.
 - [x] Capture the complete application compilation set from the build manifest and
   verify command coverage, including entry.cpp. Automatic capture belongs in the
@@ -231,9 +235,13 @@ Owners: existing shared test runner and prelowering fixtures; no duplicate test 
 - [x] Audit every app unit and its transitive headers without PCH: zero template
   declarations and zero Clang class/function instantiations. Exclude middleware and
   layout probes deliberately; report the unit set and exclusions.
-- [ ] Include focused lifecycle/counter, evaluation-order, nested-reference,
+- [x] Include focused lifecycle/counter, evaluation-order, nested-reference,
   demand/replay, invalid-metadata, failure-recovery and ordinary-mode checks.
   Retain alternate metadata-selected provider proofs against accidental family coupling.
+  The combined command includes metadata/inventory, contracts, public flags,
+  provider/PCH enforcement, header/counter proofs, source lifecycle, O0 layout
+  recovery and fresh accounting closure. Failed or incomplete phases cannot yield
+  a passing aggregate; four reporting-contract cases exercise that requirement.
 - [x] Record revision, toolchain, options and result locations. Separate fresh results
   from historical evidence. A generated application proof is not a native compiler
   rebuild or an end-to-end compiler performance benchmark.
