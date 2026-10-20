@@ -1,7 +1,7 @@
 # Overall discovered-issue repair progress
 Doc Status: supporting
 
-Snapshot: 2026-10-19, after E5BNI bool/numeric strict identity. This covers all 64
+Snapshot: 2026-10-20, after E5SI heterogeneous string strict identity. This covers all 64
 entries in [the issue ledger](language_verification_issues.json), including deferred
 legacy syntax and policy/design issues. It does not count just operators or count
 individual operator signatures as separate closed issues.
@@ -43,8 +43,8 @@ Original verification findings and historical evidence are preserved.
 
 ## Inside V-L07
 
-**28 approved slices completed: 2,256 binary, 64 unary and 432 compound
-signatures (2,752 total).** E5BNI adds 192 bool/numeric strict-identity signatures. Eight new scalar prerequisites are counted separately.
+**29 approved slices completed: 2,544 binary, 64 unary and 432 compound
+signatures (3,040 total).** E5SI adds 288 heterogeneous string strict-identity signatures. Twelve new scalar prerequisites are counted separately.
 Aliases count as separate source spellings; the four plain numeric-XOR signatures
 are prerequisites and excluded from this V-L07 total.
 
@@ -77,12 +77,13 @@ are prerequisites and excluded from this V-L07 total.
 | Cross-family matching-payload strict identity | 96 | 0 | 0 |
 | Mixed int/float strict identity | 96 | 0 | 0 |
 | Bool/numeric strict identity | 192 | 0 | 0 |
-| Total | 2,256 | 64 | 432 |
+| Heterogeneous string strict identity | 288 | 0 | 0 |
+| Total | 2,544 | 64 | 432 |
 
 Remaining work includes cross-family and mixed ordinary equality semantics, remaining compounds, and other payload/operator domains. The [remaining-signature inventory](vl07_inventory/README.md) now enumerates the
-canonical scalar universe: **zero remaining support targets** and **1,200 design/scope
+canonical scalar universe: **zero remaining support targets** and **912 design/scope
 candidates**, with exclusions and wider domains kept explicit. The original proposed core remains
-**2,080/2,080 signatures (100%)**, with 672 additional approved O1/C2/E3I/E4I/E5BNI signatures. This completes the bounded support inventory, not
+**2,080/2,080 signatures (100%)**, with 960 additional approved O1/C2/E3I/E4I/E5BNI/E5SI signatures. This completes the bounded support inventory, not
 all V-L07: design candidates and wider-domain boundaries still need disposition.
 Signature counts measure verified coverage, not engineering effort. The overall 29.7% figure above measures
 closed issues across the entire ledger, not progress within V-L07.

@@ -1,6 +1,6 @@
 {
   "doc_status": "planning",
-  "date": "2026-10-19",
+  "date": "2026-10-20",
   "method": "Static inventory, no compiler/runtime execution; statuses are planning dispositions, not fresh admission results.",
   "canonical_payloads": [
     "int",
@@ -17,9 +17,9 @@
   ],
   "rows": 14848,
   "status_counts": {
-    "verified": 2752,
+    "verified": 3040,
     "scope-exclusion": 10767,
-    "needs-design": 1200,
+    "needs-design": 912,
     "separate-existing-path": 129
   },
   "groups": {
@@ -95,11 +95,17 @@
       "authority_or_evidence": "bool_numeric_identity.md; bool_numeric_identity_results.json",
       "signatures": 192
     },
+    "E5SI": {
+      "status": "verified",
+      "title": "Heterogeneous string strict identity",
+      "authority_or_evidence": "string_other_identity.md; string_other_identity_results.json",
+      "signatures": 288
+    },
     "E5": {
       "status": "needs-design",
-      "title": "Other heterogeneous equality/identity, including bool sentinels",
+      "title": "Other heterogeneous ordinary equality, including bool sentinels",
       "authority_or_evidence": "runtime/specs/spec.md sections 6.10, 7a; payload/sentinel distinctions",
-      "signatures": 768
+      "signatures": 480
     },
     "U1": {
       "status": "verified",
@@ -205,13 +211,13 @@
     }
   },
   "verified": {
-    "binary": 2256,
+    "binary": 2544,
     "compound": 432,
     "unary": 64
   },
   "matrix_wrapper_definitions": 376,
   "matrix_separate_selectors": 144,
-  "remaining_list_rows": 1200,
+  "remaining_list_rows": 912,
   "input_hashes": {
     "specs/operator_matrix/data/semantics.index.json": "b734f42dcdc5b14608263d2365104a70f51dc110b5788143e2a2dc5e31ddd331",
     "specs/operator_matrix/data/semantics/operators_conditional_selection/coalesce__bool_t__nullable_bool_t.tsv": "26018a3ee482ac4aa8db2d63125c672b20b29501aadf7418e7e3358da7584697",
@@ -592,7 +598,7 @@
     "specs/operator_matrix/data/semantics/operators_compound_assignment/shift_right_assign__result_or_bool_int_t__result_or_bool_int_t.tsv": "9878700ed912a5755a1a9d80c24fb5d5805b8f761f502a126db066d39a8f37fe",
     "runtime/specs/spec.md": "2730f66c763b10ecee8d52435b61f86eb228f06be5c85ef2710512ea2c92d84b",
     "runtime/specs/config.json": "d65695770a325a6a4620e040f3845fed0551b0a257f38aee57f6bc9db37835f9",
-    "specs/expression_evaluation.md": "2dc368c6ecf17be5870d37c148f2542fe5cfd7a6027d2f554076a9282178835c",
+    "specs/expression_evaluation.md": "0e8e7956361c68ded829ac926b727cf60ca1f4f9be1b7314b61dba977737ed8e",
     "specs/integer_power.md": "4b9a96a28d5225fe2e187b1ff74a6f9838ef0d539ab97bc5479a77ec27c45aed",
     "compiler/my-try/04_analyze/operators/guarded.php": "96ad3596a1657f0ca4bb67e7b72b183af3e51b6a6826cbb17d3d6e2ca2ab835f",
     "compiler/my-try/04_analyze/operators/wrapper_equality.php": "1bce5bd62e48a1f8e997cd8fd036928b80dbbd20084ed5447589aaa550be3d91",
@@ -612,6 +618,7 @@
     "compiler/my-try/docs/planning/widening_compounds_results.json": "97e73c7496d2870b724d36126d1bd42f45b60ea9cc3f2f648505c044736f578f",
     "compiler/my-try/docs/planning/cross_identity_results.json": "9d1851aa2524a52be01ad345f09abb6cf0eca0c1c0de8442429d3ccb87fce1f4",
     "compiler/my-try/docs/planning/mixed_identity_results.json": "825cc2fb91aa41716281453e848d31a8616b49d89611281ef183d9c458673214",
-    "compiler/my-try/docs/planning/bool_numeric_identity_results.json": "59f75a97d35016160fe9b9114e54474aa6b72f308f0e8e7c51ebf3ae2a97b575"
+    "compiler/my-try/docs/planning/bool_numeric_identity_results.json": "59f75a97d35016160fe9b9114e54474aa6b72f308f0e8e7c51ebf3ae2a97b575",
+    "compiler/my-try/docs/planning/string_other_identity_results.json": "ac8f8261de65b5e198f73b2f4c9d64a53610ac7e918e78a03d62ed8b41e25950"
   }
 }

@@ -1,0 +1,21 @@
+{
+  "doc_status": "supporting",
+  "date": "2026-10-20",
+  "existing_code_and_contract_changes": [
+    "compiler/my-try/04_analyze/operators/identity.php",
+    "compiler/my-try/tests/cross_identity_support.hpp",
+    "compiler/my-try/tests/guarded_cross_support.php",
+    "compiler/my-try/tests/mixed_identity.py",
+    "compiler/my-try/tests/string_identity.php",
+    "specs/expression_evaluation.md"
+  ],
+  "new_sources": [],
+  "tested_source_mismatches": [],
+  "runtime_changes": [],
+  "historical_evidence_preserved": true,
+  "evidence_records": 4761,
+  "evidence_digest_verified": true,
+  "inventory_matches_proved_carrier_signatures": true,
+  "docs_closeout_after_tested_snapshot": true,
+  "remaining_blockers_in_scope": []
+}

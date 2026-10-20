@@ -21,7 +21,7 @@ function guarded_fixture_equality_pair(string $left, string $right, string $symb
 {
 	$payload=guarded_fixture_payload($left);
 	$right_payload=guarded_fixture_payload($right);
-	if (in_array($symbol,['===','!=='],true) && $payload!==$right_payload && in_array($payload,['bool','int','float'],true) && in_array($right_payload,['bool','int','float'],true)) { return true; }
+	if (in_array($symbol,['===','!=='],true) && $payload!==$right_payload && in_array($payload,['bool','int','float','string'],true) && in_array($right_payload,['bool','int','float','string'],true)) { return true; }
 	if ($payload!==$right_payload || !in_array($payload,['int','float','bool','string'],true)) { return false; }
 	$carriers=['?'.$payload,'result<'.$payload.'>'];
 	$carriers[]='result_or_false<'.$payload.'>'; $carriers[]='result_or_bool<'.$payload.'>';

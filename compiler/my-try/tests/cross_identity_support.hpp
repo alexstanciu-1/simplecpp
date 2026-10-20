@@ -27,7 +27,7 @@ template<class P,class Q> bool oracle(State<P> a,State<Q> b) {
  if(left_kind!=right_kind) return false;
  if(left_kind==state_kind::payload) {
   if constexpr(std::is_same_v<P,Q>) return a.value==b.value;
-  else return false; // Numeric kinds stay distinct; never coerce to bool.
+  else return false; // Distinct scalar kinds never parse, promote or convert truth.
  }
  if(left_kind==state_kind::error) return a.error==b.error;
  return true;

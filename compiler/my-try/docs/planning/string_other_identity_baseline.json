@@ -1,0 +1,8 @@
+{
+  "doc_status": "supporting",
+  "date": "2026-10-20",
+  "head": "3afc0573fdd6406930b0c70a2af9bce2470b4139",
+  "branch": "v0.2/develop",
+  "scope": "E5SI: 288 carrier signatures and 12 scalar prerequisites; runtime-first gate",
+  "dirty_status": " M compiler/my-try/docs/catalog/15_blocking_debt.md\n M compiler/my-try/docs/catalog/15_review.md\n M compiler/my-try/tests/mixed_identity.py\n?? compiler/my-try/tests/__pycache__/\n"
+}

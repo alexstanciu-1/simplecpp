@@ -42,7 +42,8 @@ GROUPS = {
  'E4I': ('verified', 'Mixed int/float strict identity', 'mixed_identity.md; mixed_identity_results.json'),
  'E4': ('needs-design', 'Mixed int/float ordinary equality', 'runtime/specs/spec.md section 7a; mixed equality/promotion and NaN decisions'),
  'E5BNI': ('verified', 'Bool/numeric strict identity', 'bool_numeric_identity.md; bool_numeric_identity_results.json'),
- 'E5': ('needs-design', 'Other heterogeneous equality/identity, including bool sentinels', 'runtime/specs/spec.md sections 6.10, 7a; payload/sentinel distinctions'),
+ 'E5SI': ('verified', 'Heterogeneous string strict identity', 'string_other_identity.md; string_other_identity_results.json'),
+ 'E5': ('needs-design', 'Other heterogeneous ordinary equality, including bool sentinels', 'runtime/specs/spec.md sections 6.10, 7a; payload/sentinel distinctions'),
  'U1': ('verified', 'Numeric carrier prefix/postfix updates', 'carrier_updates.md; carrier_updates_results.json; V-R10 repaired'),
  'C1IA': ('verified', 'Canonical-int arithmetic compounds, same carrier/plain', 'int_carrier_compounds.md; int_carrier_compounds_results.json'),
  'C1IB': ('verified', 'Canonical-int remainder/bitwise/shift compounds, same carrier/plain', 'int_bitwise_compounds.md; int_bitwise_compounds_results.json'),
@@ -92,6 +93,7 @@ def classify(a, op, b, compound=False):
             return 'E3I' if op in ('===','!==') else 'E3'
         if numeric: return 'E4I' if op in ('===','!==') else 'E4'
         if op in ('===','!==') and ((p == 'bool' and q in ('int','float')) or (q == 'bool' and p in ('int','float'))): return 'E5BNI'
+        if op in ('===','!==') and 'string' in (p,q): return 'E5SI'
         return 'E5'
     if op in LOGIC:
         if numeric or p == q == 'bool': return 'done'
@@ -153,7 +155,7 @@ for d in json.loads(index_path.read_text())['definitions']:
     matrix.append(dict(d, inventory_group=classification, signature_id=signature, semantic_row_statuses=dict(states)))
 assert len(rows) == len(lookup)
 done = Counter(r['kind'] for r in rows if r['status']=='verified')
-assert done == {'binary':2256,'unary':64,'compound':432}, done
+assert done == {'binary':2544,'unary':64,'compound':432}, done
 assert len(matrix)==376
 with (OUT/'signatures.csv').open('w') as stream:
     writer=csv.DictWriter(stream,fieldnames=list(rows[0]));writer.writeheader();writer.writerows(rows)
@@ -161,9 +163,9 @@ remaining = [r for r in rows if r['status'] in ('remaining-support','needs-desig
 with (OUT/'remaining.csv').open('w') as stream:
     writer=csv.DictWriter(stream,fieldnames=list(rows[0]));writer.writeheader();writer.writerows(remaining)
 counts=Counter(r['group'] for r in rows)
-for name in ['runtime/specs/spec.md', 'runtime/specs/config.json', 'specs/expression_evaluation.md', 'specs/integer_power.md', 'compiler/my-try/04_analyze/operators/guarded.php', 'compiler/my-try/04_analyze/operators/wrapper_equality.php', 'compiler/my-try/docs/planning/nullable_bool_string_equality_results.json', 'compiler/my-try/docs/planning/nullable_float_equality_results.json', 'compiler/my-try/docs/planning/result_equality_results.json', 'compiler/my-try/docs/planning/false_bool_equality_results.json', 'compiler/my-try/docs/planning/bool_sentinel_equality_results.json', 'compiler/my-try/docs/planning/nonbool_sentinel_equality_results.json', 'compiler/my-try/docs/planning/sentinel_plain_equality_results.json', 'compiler/my-try/docs/planning/carrier_updates_results.json', 'compiler/my-try/docs/planning/int_carrier_compounds_results.json', 'compiler/my-try/docs/planning/int_bitwise_compounds_results.json', 'compiler/my-try/docs/planning/int_cross_compounds_results.json', 'compiler/my-try/docs/planning/float_compounds_results.json', 'compiler/my-try/docs/planning/mixed_ordering_results.json', 'compiler/my-try/docs/planning/widening_compounds_results.json', 'compiler/my-try/docs/planning/cross_identity_results.json', 'compiler/my-try/docs/planning/mixed_identity_results.json', 'compiler/my-try/docs/planning/bool_numeric_identity_results.json']:
+for name in ['runtime/specs/spec.md', 'runtime/specs/config.json', 'specs/expression_evaluation.md', 'specs/integer_power.md', 'compiler/my-try/04_analyze/operators/guarded.php', 'compiler/my-try/04_analyze/operators/wrapper_equality.php', 'compiler/my-try/docs/planning/nullable_bool_string_equality_results.json', 'compiler/my-try/docs/planning/nullable_float_equality_results.json', 'compiler/my-try/docs/planning/result_equality_results.json', 'compiler/my-try/docs/planning/false_bool_equality_results.json', 'compiler/my-try/docs/planning/bool_sentinel_equality_results.json', 'compiler/my-try/docs/planning/nonbool_sentinel_equality_results.json', 'compiler/my-try/docs/planning/sentinel_plain_equality_results.json', 'compiler/my-try/docs/planning/carrier_updates_results.json', 'compiler/my-try/docs/planning/int_carrier_compounds_results.json', 'compiler/my-try/docs/planning/int_bitwise_compounds_results.json', 'compiler/my-try/docs/planning/int_cross_compounds_results.json', 'compiler/my-try/docs/planning/float_compounds_results.json', 'compiler/my-try/docs/planning/mixed_ordering_results.json', 'compiler/my-try/docs/planning/widening_compounds_results.json', 'compiler/my-try/docs/planning/cross_identity_results.json', 'compiler/my-try/docs/planning/mixed_identity_results.json', 'compiler/my-try/docs/planning/bool_numeric_identity_results.json', 'compiler/my-try/docs/planning/string_other_identity_results.json']:
     inputs[name] = hashlib.sha256((ROOT/name).read_bytes()).hexdigest()
-summary={'doc_status':'planning','date':'2026-10-19','method':'Static inventory, no compiler/runtime execution; statuses are planning dispositions, not fresh admission results.',
+summary={'doc_status':'planning','date':'2026-10-20','method':'Static inventory, no compiler/runtime execution; statuses are planning dispositions, not fresh admission results.',
          'canonical_payloads':PAYLOADS,'families':FAMILIES,'rows':len(rows),'status_counts':dict(Counter(r['status'] for r in rows)),
          'groups':{k:dict(status=v[0],title=v[1],authority_or_evidence=v[2],signatures=counts[k]) for k,v in GROUPS.items()},
          'verified':dict(done),'matrix_wrapper_definitions':len(matrix),'matrix_separate_selectors':144,

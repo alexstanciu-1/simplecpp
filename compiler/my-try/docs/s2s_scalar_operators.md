@@ -351,6 +351,23 @@ Bool payloads can match numeric carriers' bool sentinel states, while present
 numeric payloads remain distinct from bool values. Null and structured errors retain
 their normalized kinds and metadata. Ordinary equality, strings, fixed-width types,
 logical mixing and updates remain separate. No runtime changes were needed.
+The E5SI extension below subsequently admits heterogeneous string identity.
+
+## Heterogeneous string strict identity — 2026-10-20
+
+[The E5SI proof](planning/string_other_identity.md) adds twelve scalar and 288
+carrier signatures for string/int, string/float and string/bool `===`/`!==`
+in both orders. `Scalar_Identity` owns the shared distinct-kind capability for
+canonical int, float, bool and string; wrapper preparation reuses it. Each
+operand keeps its original type and complete state, with no checked extraction,
+string parsing, numeric promotion or truth conversion.
+
+Successful string payloads differ from numeric/bool payloads. Matching normalized
+null, bool sentinel and structured error states can still be identical. A string
+carrier's bool sentinel can match a bool payload without changing its stored state.
+The existing ordered snapshot renderer handles source effects and failures.
+Ordinary equality, concatenation, logical mixing, spaceship, updates and
+fixed-width/nested extensions remain separate. Runtime implementation is unchanged.
 
 ## Current contracts
 

@@ -1378,3 +1378,14 @@ verifies runtime support first, then eight scalar prerequisites and 192 carrier
 signatures with independent state normalization and source snapshots. Add
 `--runtime-only` for the prerequisite gate. Run on dev002; see
 [the dated proof](planning/bool_numeric_identity.md).
+
+
+### Heterogeneous string strict identity E5SI — 2026-10-20
+
+`python3 compiler/my-try/tests/mixed_identity.py --group string-other --results FRESH`
+verifies runtime support, twelve scalar prerequisites and 288 carrier signatures
+with independent normalized-state expectations, exact string-byte storage checks,
+eager source order, reference/property snapshots and retained recovery. Add
+`--runtime-only` for the prerequisite gate. Run on dev002; see
+[the dated proof](planning/string_other_identity.md). Ordinary equality and other
+string operators are outside this group.

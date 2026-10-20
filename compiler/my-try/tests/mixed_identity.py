@@ -1,13 +1,15 @@
-"""Heterogeneous numeric/bool strict identity: runtime gate, scalar and carrier proofs."""
+"""Heterogeneous canonical scalar identity: runtime gate, scalar and carrier proofs."""
 import argparse,itertools,json,sys
 from pathlib import Path
 APP=Path(__file__).resolve().parents[1];ROOT=APP.parents[1]
 sys.path.insert(0,str(APP/'tools'))
 from test_runner import CommandRunner,Task,run_tasks
 from cpp_fixture import CppFixtureCompiler
-parser=argparse.ArgumentParser(description=__doc__);parser.add_argument('--results',required=True,type=Path);parser.add_argument('--runtime-only',action='store_true');parser.add_argument('--group',choices=['mixed-numeric','bool-numeric'],default='mixed-numeric');args=parser.parse_args();out=args.results.resolve();out.mkdir(parents=True,exist_ok=False)
-families=['nullable','result','result_or_false','result_or_bool','plain'];pairs=[('int','float'),('float','int')] if args.group=='mixed-numeric' else [('bool','int'),('int','bool'),('bool','float'),('float','bool')]
-payloads={'bool':('scpp::bool_t','bool'),'int':('scpp::int_t<>','std::int64_t'),'float':('scpp::float_t','double')}
+parser=argparse.ArgumentParser(description=__doc__);parser.add_argument('--results',required=True,type=Path);parser.add_argument('--runtime-only',action='store_true');parser.add_argument('--group',choices=['mixed-numeric','bool-numeric','string-other'],default='mixed-numeric');args=parser.parse_args();out=args.results.resolve();out.mkdir(parents=True,exist_ok=False)
+families=['nullable','result','result_or_false','result_or_bool','plain']
+groups={'mixed-numeric':[('int','float'),('float','int')], 'bool-numeric':[('bool','int'),('int','bool'),('bool','float'),('float','bool')], 'string-other':[(a,b) for p in ['int','float','bool'] for a,b in [('string',p),(p,'string')]]}
+pairs=groups[args.group]
+payloads={'bool':('scpp::bool_t','bool'),'int':('scpp::int_t<>','std::int64_t'),'float':('scpp::float_t','double'),'string':('scpp::string_t','std::string')}
 with CommandRunner(out/'logs',ROOT,jobs=12) as runner:
  cpp=CppFixtureCompiler(runner,ROOT,out,pch=False,runtime=True)
  def runtime(p,q):

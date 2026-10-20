@@ -228,3 +228,27 @@ unavailable states do not suppress RHS evaluation; source failures do. RHS effec
 remain on failure, and RHS replacement cannot alter the saved left state. Ordinary
 bool/numeric equality, logical mixing, strings, fixed-width/nested extensions and
 updates remain separate; this amendment admits strict identity only.
+
+
+## Heterogeneous string strict identity — 2026-10-20
+
+`===` and `!==` admit canonical string/int, string/float and string/bool in both
+orders, plain or carried by nullable, result, result_or_false and result_or_bool.
+Each operand normalizes independently under the shared strict-identity contract.
+Successful string payloads never match numeric or bool payloads, including empty
+and numeric-looking strings. No string parsing, truth conversion, numeric promotion
+or checked extraction occurs.
+
+Matching null states, bool sentinels and structured Result errors can compare
+identically across different declared payload kinds. A string carrier's false/true
+sentinel can match a successful bool payload; its successful string payload cannot.
+Stored states remain distinct and unmodified, including complete string bytes,
+numeric representations and error identity metadata. `!==` negates `===`; both
+return plain bool.
+
+Complete operands are eagerly snapshotted left-to-right. An unequal or unavailable
+state still evaluates RHS; a source exception stops later evaluation. RHS
+replacement cannot alter the saved left state, and earlier RHS effects survive a
+later failure. This amendment admits strict identity only. Ordinary heterogeneous
+equality, concatenation, logical mixing, spaceship, updates, fixed-width types and
+nested payloads retain their separate admission boundaries.
