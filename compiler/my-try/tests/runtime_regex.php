@@ -91,6 +91,13 @@ $text string = regex_replace("/(a)(b)/", "$2$1", "ab ab");
 echo $text;
 return 0;
 PHS,
+	'limited_filter' => <<<'PHS'
+$n=1;
+$text string = regex_replace("/a/", "b", "aa", $n);
+$rows vector<string> = regex_filter("/a/", "b", vector<string>::["a"]);
+echo $text, "|", $rows[0], "|", $n;
+return 0;
+PHS,
 	'split' => <<<'PHS'
 $parts vector<string> = regex_split("/,/", "a,b,");
 $limited vector<string> = regex_split("/,/", "a,b,c", 2);
@@ -114,7 +121,6 @@ foreach ($cases as $name => $source) {
 }
 
 foreach (['regex_match();', 'regex_match("/a/", 1);', 'regex_grep("/a/", vector<int>::[1]);',
-	'regex_replace("/a/", "b", "a", 1);', 'regex_filter("/a/", "b", vector<string>::["a"]);',
 	'regex_replace_callback("/a/", "b", "a");', 'regex_replace_callback_array("a", "a");',
 	'preg_match("/a/", "a");', 'if (regex_match("/a/", "a")) { return 1; }',
 	'empty(regex_match("/a/", "a"));'] as $source) {
