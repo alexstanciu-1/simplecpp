@@ -11,14 +11,14 @@ template<class P, class Q> bool oracle(State<P> left, State<Q> right) {
  if(left.kind != right.kind) return false;
  if(left.kind == state_kind::payload) return static_cast<double>(left.value) == static_cast<double>(right.value);
  // Nullable absence matches absence; Result failure matches failure, regardless
- // of error metadata. This bounded oracle never admits bool sentinel carriers.
- if(left.kind == state_kind::null_value || left.kind == state_kind::error) return true;
- throw std::logic_error("sentinel state outside mixed equality proof");
+ // of error metadata. Matching bool sentinel states compare equal; a sentinel
+ // never equals a numeric payload, even when its truth conversion would match.
+ return true;
 }
 
 template<int L, int R, class V, class P, class W, class Q> long runtime_pair() {
- static_assert((L == R && (L == 0 || L == 1 || L == 4))
-  || (L == 4 && (R == 0 || R == 1)) || (R == 4 && (L == 0 || L == 1)));
+ static_assert((L == R && L >= 0 && L <= 4)
+  || (L == 4 && R >= 0 && R < 4) || (R == 4 && L >= 0 && L < 4));
  long count = 0;
  for(auto a : states<L, P>()) for(auto b : states<R, Q>()) {
   auto left = make<L, V>(a);

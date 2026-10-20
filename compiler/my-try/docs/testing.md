@@ -1399,5 +1399,17 @@ carrier signatures. The independent oracle checks numeric promotion and absence/
 failure-state equality, including different error metadata; complete-state
 storage, eager source order, snapshots and retained repair are observed separately.
 Add `--runtime-only` for the prerequisite gate. Run on dev002; see
-[the dated proof](planning/mixed_equality.md). Sentinel carriers and cross-family
-ordinary equality remain negative controls.
+[the dated proof](planning/mixed_equality.md). Cross-family ordinary equality remains
+a negative control; sentinel support is covered by the next group.
+
+### Mixed numeric sentinel ordinary equality E4S — 2026-10-20
+
+Run `python3 compiler/my-try/tests/mixed_equality.py --group sentinel --results FRESH`
+on dev002 for the 24 same-family/plain sentinel signatures and four existing scalar
+controls. Add `--runtime-only` for a runtime gate. `--probe-runtime` is an
+observational baseline mode: it records compilation failures and is not an
+acceptance run. The repaired source proof covers every sentinel state, numeric
+boundaries and NaNs, eager source evaluation, complete operand snapshots, source
+failures and retained recovery. `sentinel_plain_runtime.py` retains matching-payload,
+bool and boxed controls plus fixed-width and numeric/string rejection boundaries.
+See [the E4S proof and preserved baseline](planning/sentinel_mixed_equality.md).

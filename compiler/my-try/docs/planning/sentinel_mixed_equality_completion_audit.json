@@ -1,0 +1,35 @@
+{
+  "doc_status": "supporting",
+  "date": "2026-10-20",
+  "existing_code_and_contract_changes": [
+    "compiler/my-try/04_analyze/operators/wrapper_equality.php",
+    "compiler/my-try/tests/guarded_cross_support.php",
+    "compiler/my-try/tests/mixed_equality.py",
+    "compiler/my-try/tests/mixed_equality_support.hpp",
+    "compiler/my-try/tests/sentinel_plain_runtime.py",
+    "runtime/include/scpp/generated/operators.hpp",
+    "runtime/specs/config.json",
+    "runtime/specs/spec.md",
+    "runtime/tools/generate_operators.php",
+    "specs/expression_evaluation.md"
+  ],
+  "new_sources": [],
+  "tested_source_mismatches": [],
+  "runtime_changes": [
+    "runtime/tools/generate_operators.php",
+    "runtime/include/scpp/generated/operators.hpp",
+    "runtime/specs/config.json",
+    "runtime/specs/spec.md"
+  ],
+  "historical_evidence_preserved": true,
+  "initial_failed_attempt_preserved": true,
+  "baseline_failed_pair_probes": 8,
+  "baseline_blocked_signature_targets": 16,
+  "evidence_records": 5326,
+  "evidence_digest_verified": true,
+  "inventory_matches_proved_carrier_signatures": true,
+  "remaining_mixed_equality_signatures": 48,
+  "generator_reproducible_modulo_existing_timestamp": true,
+  "docs_closeout_after_tested_snapshot": true,
+  "remaining_blockers_in_scope": []
+}

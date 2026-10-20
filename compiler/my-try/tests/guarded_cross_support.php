@@ -24,7 +24,7 @@ function guarded_fixture_equality_pair(string $left, string $right, string $symb
 	if (in_array($symbol,['===','!=='],true) && $payload!==$right_payload && in_array($payload,['bool','int','float','string'],true) && in_array($right_payload,['bool','int','float','string'],true)) { return true; }
 	if (in_array($symbol,['==','!='],true) && $payload!==$right_payload
 		&& in_array($payload,['int','float'],true) && in_array($right_payload,['int','float'],true)) {
-		foreach (['nullable','result'] as $family) {
+		foreach (['nullable','result','result_or_false','result_or_bool'] as $family) {
 			$left_carrier=$family==='nullable'?'?'.$payload:$family.'<'.$payload.'>';
 			$right_carrier=$family==='nullable'?'?'.$right_payload:$family.'<'.$right_payload.'>';
 			if (in_array($left,[$payload,$left_carrier],true)

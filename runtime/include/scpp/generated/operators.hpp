@@ -25,7 +25,7 @@
 
 namespace scpp {
 
-// Generated from runtime/specs/config.json on 2026-10-19T09:32:00+00:00.
+// Generated from runtime/specs/config.json on 2026-10-20T04:00:18+00:00.
 // Enabled config families: bool_logical, float_arithmetic, float_logical, float_mutation, int_arithmetic, int_bitwise_and_mutation, int_logical, mixed_numeric, mixed_numeric_logical, null_comparisons, nullable_lifted_ops, nullable_ops, pointer_null_comparisons, string_ops, table_identity_comparisons.
 // Do not edit manually.
 
@@ -546,10 +546,17 @@ template <typename Left, typename T>
 // Runtime spec 6.10: a bool sentinel differs from canonical non-bool scalars.
 // Preserve existing bool and boxed dispatch; this helper is only used by sentinel branches.
 namespace detail {
+// Sentinel/plain equality admits canonical numeric pairs and matching strings.
+// Keep fixed-width, bool and boxed operands on their existing dispatch paths.
+template <typename Payload, typename Plain>
+concept sentinel_plain_nonbool_pair =
+	((is_default_int<Payload> || is_native_float<Payload>) && (is_default_int<Plain> || is_native_float<Plain>))
+	|| (is_string_like<Payload> && is_string_like<Plain>);
+
 template <typename Payload, typename Left, typename Right>
 [[nodiscard]] inline bool_t sentinel_plain_equal(const Left &lhs, const Right &rhs) {
-	if constexpr ((is_bool<Left> && std::same_as<detail::remove_cvref_t<Payload>, detail::remove_cvref_t<Right>> && (is_default_int<Right> || is_native_float<Right> || is_string_like<Right>))
-		|| (is_bool<Right> && std::same_as<detail::remove_cvref_t<Payload>, detail::remove_cvref_t<Left>> && (is_default_int<Left> || is_native_float<Left> || is_string_like<Left>))) {
+	if constexpr ((is_bool<Left> && sentinel_plain_nonbool_pair<Payload, Right>)
+		|| (is_bool<Right> && sentinel_plain_nonbool_pair<Payload, Left>)) {
 		return bool_t(false);
 	} else {
 		return bool_t(lhs == rhs);

@@ -579,7 +579,7 @@
 			"typed_boundary_bridge_rule": "temporary implicit unwrap to wrapped T is allowed only at explicit typed destinations while the current generator remains symbol/type-blind; the false-like empty state is a runtime error for required-value conversions",
 			"cast_lifting_rule": "centralized cast lifting may unwrap result_or_false<U> to any configured explicit target T through require_value and cast<T>(U); string_t keeps the configured empty-string fallback for the false-like empty state",
 			"operator_lifting_rule": "centralized generated operators define result_or_false participation through the same guarded-value lifting surface used by nullable; value-required operations fail on the false-like empty state; state-aware equality and explicit sentinel comparisons do not unwrap",
-			"plain_payload_equality_rule": "for matching canonical int_t<>, float_t or string_t payloads, sentinel/plain == is false in both orders and != is its negation; present payloads use scalar equality; bool and mixed/boxed behavior is unchanged",
+			"plain_payload_equality_rule": "for canonical int_t<>/float_t payload and plain operand pairs, or matching string_t pairs, sentinel/plain == is false in both orders and != is its negation; present numeric payloads use int-to-float equality; same-family matching sentinels compare equal and sentinel/payload compares unequal; bool, fixed-width and mixed/boxed behavior is unchanged",
 			"sentinel_rule": "the public PHP-facing comparison surface remains == false while the runtime implementation uses false_sentinel_t / false_sentinel internally"
 		},
 		"result_or_bool": {
@@ -607,7 +607,7 @@
 			"typed_boundary_bridge_rule": "temporary implicit unwrap to wrapped T is allowed only at explicit typed destinations while the current generator remains symbol/type-blind; the bool states are runtime errors for required-value conversions",
 			"cast_lifting_rule": "centralized cast lifting may unwrap result_or_bool<U> to any configured explicit target T through require_value and cast<T>(U); string_t keeps the configured empty-string fallback for the bool states, while a true-state stringifies as the PHP boolean true contract",
 			"operator_lifting_rule": "centralized generated operators define result_or_bool participation through the same guarded-value lifting surface used by nullable; value-required operations fail on the non-value bool states; state-aware equality and explicit sentinel comparisons do not unwrap",
-			"plain_payload_equality_rule": "for matching canonical int_t<>, float_t or string_t payloads, sentinel/plain == is false in both orders and != is its negation; present payloads use scalar equality; bool and mixed/boxed behavior is unchanged",
+			"plain_payload_equality_rule": "for canonical int_t<>/float_t payload and plain operand pairs, or matching string_t pairs, sentinel/plain == is false in both orders and != is its negation; present numeric payloads use int-to-float equality; same-family matching sentinels compare equal and sentinel/payload compares unequal; bool, fixed-width and mixed/boxed behavior is unchanged",
 			"sentinel_rule": "the public PHP-facing comparison surface remains == false and == true while the runtime implementation uses false_sentinel_t / false_sentinel and true_sentinel_t / true_sentinel internally; result_or_bool<bool_t> reserves plain bool/bool_t construction for wrapped payload values"
 		},
 		"error_t": {

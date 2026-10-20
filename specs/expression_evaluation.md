@@ -282,3 +282,24 @@ does not change stored states, numeric representations or error details.
 
 Sentinel carriers, cross-family equality, other payload kinds, spaceship, updates
 and fixed-width/nested extensions remain separate.
+
+
+## Mixed numeric ordinary equality for sentinel carriers — 2026-10-20
+
+`==` and `!=` also admit canonical int/float payload pairs in both orders for
+same-family result_or_false or result_or_bool carriers, and either carrier versus
+a plain numeric operand. This does not admit cross-family ordinary equality.
+
+Present payloads compare with int-to-float numeric equality, including rounding,
+signed-zero equality and NaN inequality. Matching sentinel states compare equal;
+different sentinel states compare unequal. Either sentinel is unequal to every
+present numeric payload or plain number, including zero and one. No bool-to-number
+truth conversion or absent-payload extraction occurs. `!=` negates `==`.
+
+Complete operands are eagerly snapshotted left-to-right before comparison.
+Unavailable or unequal states do not skip RHS; source exceptions do. Preserve
+saved-left snapshots across RHS replacement and retain earlier RHS effects when a
+later source operation fails. Comparison preserves the stored state and payload
+representation. Strict identity, bool payloads, matching-payload strings, fixed-width
+and boxed behavior are unchanged. Other payload pairs, cross-family equality,
+spaceship and updates remain separate.

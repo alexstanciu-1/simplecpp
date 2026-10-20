@@ -60,7 +60,7 @@ final class Wrapper_Equality
 		return $decision;
 	}
 
-	/** Ordinary equality preserves family-specific states; only nullable/Result admit mixed numbers. */
+	/** Ordinary equality preserves family-specific states, including mixed canonical numbers. */
 	private static function ordinary_pair_allowed(canonical_type_use $left, canonical_type_use $right,
 		canonical_type_use $left_value, canonical_type_use $right_value, preparation_context $context): bool
 	{
@@ -76,17 +76,18 @@ final class Wrapper_Equality
 			&& ($right_plain || (Nullable_Conversions::payload($right) !== null))) {
 			return true;
 		}
-		return ($left_plain || self::is_structured_result($left))
-			&& ($right_plain || self::is_structured_result($right));
-	}
-
-	private static function is_structured_result(canonical_type_use $source): bool
-	{
-		$role = Result_Conversions::role($source);
-		if ($role === null) {
+		$left_role = Result_Conversions::role($left);
+		$right_role = Result_Conversions::role($right);
+		if ($left_plain) {
+			return $right_role !== null;
+		}
+		if ($right_plain) {
+			return $left_role !== null;
+		}
+		if (($left_role === null) || ($right_role === null)) {
 			return false;
 		}
-		return $role->result_family() === result_kind::structured_error;
+		return $left_role->result_family() === $right_role->result_family();
 	}
 
 	/** Only roles whose comparison contracts are admitted here participate. */

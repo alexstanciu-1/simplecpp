@@ -382,8 +382,8 @@ Two nullable absences or two Result failures compare equal; unavailable versus
 present/plain compares unequal. Failure metadata matters only to strict identity.
 Floating comparison preserves signed-zero equality, NaN inequality and int-to-float
 rounding. Source order, RHS effects and saved-left snapshots use the existing
-renderer. Sentinel carriers, cross-family pairs, other payloads and spaceship
-remain separate. No runtime implementation changes were needed.
+renderer. Sentinel carriers were added by E4S below; cross-family pairs, other
+payloads and spaceship remain separate. E4NR needed no runtime implementation changes.
 
 ## Current contracts
 
@@ -884,3 +884,19 @@ imported prose notes are now reconciled and agreed.
 The October 02 closeout was a bounded checkpoint. Current per-card reconciliations
 distinguish implemented slices, missing configured admission and explicit deferrals;
 it is not a whole-language or whole-operator completion claim.
+
+## Mixed numeric sentinel ordinary equality — 2026-10-20
+
+`==`/`!=` now also admit mixed canonical int/float values in the same
+`result_or_false` or `result_or_bool` family, and either carrier/plain order.
+Matching sentinels compare equal, different sentinel states compare unequal, and
+sentinel/payload pairs compare unequal even for zero/one. Present values compare
+by int-to-float promotion, including rounding, signed zero and NaN behavior.
+
+`Wrapper_Equality` admits the pair using semantic Result-family roles. Whole
+carriers are snapshotted left-to-right before comparison without extraction or
+truth conversion. The runtime generator owns the bounded canonical numeric
+sentinel/plain dispatch repair. Bool, matching strings, fixed-width and boxed
+dispatch are preserved. Cross-family ordinary equality remains separate.
+[The E4S proof](planning/sentinel_mixed_equality.md) covers 24 carrier signatures,
+four existing scalar controls, state preservation, eager effects and snapshots.
