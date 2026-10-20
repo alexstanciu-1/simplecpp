@@ -784,3 +784,25 @@ runtime validation/traversal, snapshots and six static/shared CMake configuratio
 pass. The baseline unresolved calls, nine runtime oracle failures and aggregate-link
 failure remain in the evidence. No full matrix or native compiler rebuild ran.
 MySQL/legacy-adapter compilation is not database integration or a V-E03 closure.
+
+## Typed tokenizer and strict IO closeout — 2026-10-20
+
+[S11/S13](tokenizer_io.md) are implemented and verified on dev002: **41/64 closed
+(64.0625%)**, zero partial and 23 open, adding **3.125 percentage points**. The
+original tokenizer fixture and both existing declaration-only IO migrations pass
+under default template prelowering. Eight production cases pass cold/warm builds;
+five ordinary sanitizer controls, 190 runtime checks, fourteen source rejections
+and three retained recovery cycles pass, with focused representation regressions.
+The IO provider repair preserves embedded NUL bytes in line reads.
+
+Authorized prelowering prerequisites use the existing metadata, representation and
+compiled-operation owners. The proposed nullable schema extension was unnecessary
+and was not implemented. Original failures and intermediate transport gaps remain
+archived; source exception unwind is verified in ordinary mode, while concrete
+source exception transport remains outside scope. S02 legacy syntax stays deferred.
+
+The earlier callback and compact-layout repairs were also reviewed under the new
+default. Their production probes now explicitly reject missing concrete callable
+and compiler-helper transport. Those separate follow-ups do not invalidate their
+historical ordinary-mode evidence, and this repair count is not a claim that all
+41 scopes have been reverified under default prelowering.

@@ -1,0 +1,137 @@
+{
+  "source_head": "fd80f302162bb35d9741951b11c5d8045913a1ed",
+  "source_hash_audit": {
+    "source_hashes_verified": 5337,
+    "catalog_checks": [
+      "runtime_inventory",
+      "runtime_protocols",
+      "take"
+    ],
+    "separate_default_mode_gaps": {
+      "regex_callbacks": "concrete callback transport",
+      "compact_layout": "concrete compiler-helper transport"
+    }
+  },
+  "prelower": {
+    "passed": true,
+    "cases": [
+      "tokenizer",
+      "io_surface",
+      "io_failure",
+      "take_states",
+      "take_error",
+      "io_states",
+      "tokenizer_forms",
+      "provider_roundtrip"
+    ]
+  },
+  "source": {
+    "passed": true,
+    "baseline": false,
+    "tokenizer_only": false,
+    "checks": {
+      "executions": [
+        {
+          "name": "tokenizer",
+          "stdout": "10\n2\n0\n8\n2\n1\n0\n7\n1\n5\n6\n2\n2\n1\n",
+          "source": "tests/php/tokenizer/strict_level_01/strict_tokenizer_001_typed_buffer_accessors.phs"
+        },
+        {
+          "name": "io_surface",
+          "stdout": "O\n11\nF\nR\nline1\n6\nline2\nE\nC\nO\n0\n2\nne1\nC\n",
+          "source": "compiler/my-try/tests/compatibility_variants/s02/strict_io_001_io_surface.phs"
+        },
+        {
+          "name": "io_failure",
+          "stdout": "F\nT\nT\nC\n",
+          "source": "compiler/my-try/tests/compatibility_variants/s02/strict_io_002_io_open_failure.phs"
+        },
+        {
+          "name": "tokenizer_controls",
+          "stdout": "typed tokens; owned mixed adapter; lifetimes; errors; snapshots\n"
+        },
+        {
+          "name": "io_controls",
+          "stdout": "IO bytes; shared state; failure carriers; snapshots; unwind\n"
+        }
+      ],
+      "rejections": [
+        {
+          "source": "phs_tokenize(1);",
+          "diagnostic": "S2S value boundary requires matching types or an integer conversion\n"
+        },
+        {
+          "source": "jss_tokenize_buffer();",
+          "diagnostic": "S2S call is missing a required argument\n"
+        },
+        {
+          "source": "token_buffer_count(1);",
+          "diagnostic": "S2S ownership boundary requires matching handles, a proven safe same-family upcast, or null storage initialization/assignment\n"
+        },
+        {
+          "source": "token_buffer_kind_id(phs_tokenize(\"x\"),\"0\");",
+          "diagnostic": "S2S value boundary requires matching types or an integer conversion\n"
+        },
+        {
+          "source": "$b=new token_buffer();",
+          "diagnostic": "S2S new requires a source struct or class\n"
+        },
+        {
+          "source": "$b=phs_tokenize(\"x\");$b->source_length=1;",
+          "diagnostic": "Unknown runtime property: source_length\n"
+        },
+        {
+          "source": "token_buffer_count(1);",
+          "diagnostic": "S2S ownership boundary requires matching handles, a proven safe same-family upcast, or null storage initialization/assignment\n"
+        },
+        {
+          "source": "token_buffer_kind_id(phs_tokenize(\"x\"),\"0\");",
+          "diagnostic": "S2S value boundary requires matching types or an integer conversion\n"
+        },
+        {
+          "source": "io_read(\"wrong\",1);",
+          "diagnostic": "S2S ownership boundary requires matching handles, a proven safe same-family upcast, or null storage initialization/assignment\n"
+        },
+        {
+          "source": "io_open(\"x\",1);",
+          "diagnostic": "S2S value boundary requires matching types or an integer conversion\n"
+        },
+        {
+          "source": "io_seek(io_open(\"x\",\"rb\"),1.0);",
+          "diagnostic": "S2S runtime call requires one exact signature or a unique checked-payload signature; use explicit argument types\n"
+        },
+        {
+          "source": "$b token_buffer=io_open(\"x\",\"rb\");",
+          "diagnostic": "S2S Result extraction requires the exact payload type\n"
+        },
+        {
+          "source": "io_close(phs_tokenize(\"x\"));",
+          "diagnostic": "S2S ownership boundary requires matching handles, a proven safe same-family upcast, or null storage initialization/assignment\n"
+        },
+        {
+          "source": "$h resource_handle=new resource_handle();",
+          "diagnostic": "S2S new requires a source struct or class\n"
+        }
+      ],
+      "recovery_cycles": 3
+    }
+  },
+  "runtime": {
+    "passed": true,
+    "baseline": false,
+    "observations": "checks=190 failures=0\n"
+  },
+  "lifecycle": {
+    "ordinary": "source-methods-constructors 31 2496 31 14 15 4 32\nmethod-argument-failure 0 0 0 1 0 0 1\nmethod-result-failure 0 0 0 1 1 0 2\nconstructor-argument-failure 0 0 0 1 0 0 1\nconstructor-parameter-failure 1 256 1 1 1 0 2\nconstructor-body-failure 1 256 1 2 2 0 4\nsource-identities 2 320 2 3 1 0 4\n",
+    "concrete": "source-methods-constructors 31 2496 31 14 15 4 32\nmethod-argument-failure 0 0 0 1 0 0 1\nmethod-result-failure 0 0 0 1 1 0 2\nconstructor-argument-failure 0 0 0 1 0 0 1\nconstructor-parameter-failure 1 256 1 1 1 0 2\nconstructor-body-failure 1 256 1 2 2 0 4\nsource-identities 2 320 2 3 1 0 4\n"
+  },
+  "evidence_files": 1066,
+  "evidence_sha256": "01da154fce8be57df41f5f5c242bd5881eeca58b6a123d87c5816630202ad634",
+  "remote_root": "/home/alex-ai/tokenizer-io/20261020-final",
+  "scope": "S11/S13 plus explicitly authorized prelowering prerequisites; no full matrix or native compiler rebuild",
+  "implementation_commits": [
+    "da7a03886",
+    "50334b158"
+  ],
+  "tested_source_note": "Source archive records base HEAD fd80f3021 plus hashed working inputs; committed implementation matches all 5337 hashes."
+}

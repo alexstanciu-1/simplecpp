@@ -19,6 +19,11 @@ not make every source spelling strict syntax: S02 comment declarations are
 original results remain in the ledger; strict-declaration companions are reported
 separately and do not count as unchanged-source passes.
 
+Later [tokenizer/IO closeout](tokenizer_io.md) resolves S11 and S13. The original
+tokenizer source and both declaration-only IO companions pass default-prelowered
+cold/warm builds on dev002. Counts and first-blocker descriptions below retain
+their dated audit meaning; S02 syntax remains deferred.
+
 ## Result and evidence boundary
 
 The retained strict subset contains **126 cases**: 125 metadata-backed fixtures

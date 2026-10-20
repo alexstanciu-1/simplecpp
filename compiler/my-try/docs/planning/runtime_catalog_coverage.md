@@ -29,6 +29,8 @@ do not request approval for each ordinary metadata row or populate speculative r
 | json | Decode/encode families; twelve document/navigation calls, three shared types and diagnostic fields | Concrete overloads, shared storage, reference output and Result returns |
 | datetime | All 11 strict dt_* helpers; clocks, sleep, UTC/local formatting and parsing | Fixed scalar/void signatures, uint64 counters and result<int>; separately linked provider |
 | filesystem | 23 strict fs_* helpers including lock try/release/transfer and file_lock_handle | Shared scalar/container/handle Result calls; providers bundled in snippet runtime |
+| io | Shared resource_handle; ten helpers across twelve forms, including optional seek/read-line arguments | Existing resource provider; nullable/Result transport, shared cursor/closed state and snapshots; [default-prelowered proof](tokenizer_io.md) |
+| tokenizer | Shared token_buffer; four entrypoints, seven accessors and readable mixed adapter | Existing typed tokenizer provider; owned bytes/locations and concrete call boundaries; [proof](tokenizer_io.md) |
 | process (opt-in) | Five lifecycle calls, process_handle/process_output and six output fields | Shared storage/Result transport; metadata-declared provider linkage |
 | regex (opt-in) | 13 helpers / 25 signatures and two split constants; inventory below | Nested container Results, ordinary value calls; explicit PCRE2 provider linkage |
 | source (opt-in) | Three owning types and thirteen helpers; inventory below | Metadata-owned values, reference transfer, non-retaining reads; no borrowed spans |
