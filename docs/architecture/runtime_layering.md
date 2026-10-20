@@ -19,12 +19,14 @@ Use:
 
 Current runtime targets include:
 
-- `scpp_runtime` â†’ non-language runtime core
-- `scpp_lang_php` â†’ PHP runtime layer
-- `scpp_json` â†’ JSON runtime module
+- `scpp_runtime` -> CMake interface aggregate for the core and selected providers
+- `scpp_runtime_core` -> core-only implementation library
+- `scpp_runtime_configuration` -> common includes and build definitions
+- `scpp_lang_php` -> PHP runtime layer
+- `scpp_json` -> JSON runtime module
 - `scpp_filesystem` -> filesystem runtime module
 - `scpp_datetime` -> datetime runtime module
-- `scpp_tokenizer` -> tokenizer runtime module
+- tokenizer provider -> metadata/native-builder composition; no standalone CMake target
 
 ## Dependency rule
 
@@ -68,3 +70,7 @@ Current examples:
 Legacy list-style `runtime.languages` remains accepted as a compatibility shape and defaults PHP to profile `legacy`.
 
 Current default behavior enables the `json`, `filesystem`, and `datetime` runtime modules. `mysqli` and `regex` remain opt-in. Unsupported language or module names must fail clearly during build configuration.
+
+CMake built-in libraries follow `BUILD_SHARED_LIBS` together. Providers depend on
+`scpp_runtime_core`, not the aggregate. Link named targets; the interface aggregate
+does not produce a `libscpp_runtime` file. See the [owning contract](../../specs/architecture/runtime_layering.md#cmake-core-and-aggregate-ownership).

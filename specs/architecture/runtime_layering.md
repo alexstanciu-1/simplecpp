@@ -212,3 +212,25 @@ When reorganizing runtime code:
 Legacy list-style `runtime.languages` remains accepted as a compatibility shape and defaults PHP to profile `legacy`.
 
 Current default behavior enables the `json`, `filesystem`, and `datetime` runtime modules. `mysqli` and `regex` remain opt-in. Unsupported language or module names must fail clearly during build configuration.
+
+### CMake core and aggregate ownership
+
+The CMake consumer target `scpp_runtime` is an interface aggregate. Its concrete
+core owner is `scpp_runtime_core`; enabled module targets depend on that core,
+never on the aggregate. `scpp_runtime_configuration` carries common includes,
+language mode and feature definitions without a reverse module dependency.
+The MySQL implementation belongs to `scpp_mysql` when selected.
+
+`BUILD_SHARED_LIBS` selects a coherent static or shared composition for built-in
+core, providers and language adapters. Shared providers use one shared core,
+including its process-wide string-key pool. Static consumers resolve their
+providers and then the core through target dependencies. This does not promise
+multiple independent static runtime copies can safely exchange interned values
+across externally assembled shared libraries.
+
+`core/runtime_core.cpp` owns only the core implementation bundle. The existing
+`core/runtime.cpp` remains the snippet/native-builder convenience bundle, including
+core plus filesystem support. CMake compiles the core-only bundle and filesystem
+module separately; the convenience bundle is not a second CMake core owner.
+Consumers should link named targets, rather than assume the interface aggregate
+produces a `libscpp_runtime` archive or shared library.

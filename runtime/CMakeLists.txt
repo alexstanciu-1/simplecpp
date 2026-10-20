@@ -2,6 +2,7 @@ cmake_minimum_required(VERSION 3.20)
 
 project(scpp_runtime LANGUAGES CXX)
 
+option(BUILD_SHARED_LIBS "Build core, providers and language adapters as shared libraries" OFF)
 option(SCPP_LANGUAGE_TARGET_PHP "Build runtime with PHP-target array semantics" ON)
 option(SCPP_WITH_MYSQLI "Build runtime with the optional mysqli module enabled" ON)
 option(SCPP_WITH_REGEX "Build runtime with the optional PCRE2 regex module enabled" OFF)
@@ -14,7 +15,17 @@ include(FindPkgConfig)
 
 enable_testing()
 
-add_library(scpp_json SHARED
+# Configuration is shared without making core depend on an aggregate/module.
+add_library(scpp_runtime_configuration INTERFACE)
+target_include_directories(scpp_runtime_configuration INTERFACE ${CMAKE_CURRENT_SOURCE_DIR}/include)
+target_compile_features(scpp_runtime_configuration INTERFACE cxx_std_23)
+add_library(scpp_runtime_core include/core/runtime_core.cpp)
+target_link_libraries(scpp_runtime_core PUBLIC scpp_runtime_configuration)
+set_target_properties(scpp_runtime_core PROPERTIES POSITION_INDEPENDENT_CODE ON)
+# Consumers retain the aggregate target name; implementations have truthful owners.
+add_library(scpp_runtime INTERFACE)
+
+add_library(scpp_json
 	include/modules/json/json.cpp
 	include/modules/json/document.cpp
 )
@@ -27,7 +38,7 @@ PUBLIC
 target_compile_features(scpp_json PUBLIC cxx_std_23)
 
 if(SCPP_WITH_PROCESS)
-	add_library(scpp_process SHARED include/modules/process/process.cpp)
+	add_library(scpp_process include/modules/process/process.cpp)
 	target_include_directories(scpp_process PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include)
 	target_compile_features(scpp_process PUBLIC cxx_std_23)
 	if(CMAKE_SYSTEM_NAME STREQUAL "Linux")
@@ -36,7 +47,7 @@ if(SCPP_WITH_PROCESS)
 	endif()
 endif()
 
-add_library(scpp_filesystem SHARED
+add_library(scpp_filesystem
 	include/modules/filesystem/file_lock.cpp
 	include/modules/filesystem/filesystem.cpp
 	include/modules/filesystem/snapshot.cpp
@@ -49,7 +60,7 @@ PUBLIC
 
 target_compile_features(scpp_filesystem PUBLIC cxx_std_23)
 
-add_library(scpp_datetime SHARED
+add_library(scpp_datetime
 	include/modules/datetime/datetime.cpp
 )
 
@@ -61,7 +72,7 @@ PUBLIC
 target_compile_features(scpp_datetime PUBLIC cxx_std_23)
 
 if(SCPP_WITH_REGEX)
-	add_library(scpp_regex SHARED
+	add_library(scpp_regex
 		include/modules/regex/regex.cpp
 	)
 
@@ -74,7 +85,7 @@ if(SCPP_WITH_REGEX)
 endif()
 
 if(SCPP_WITH_CURL)
-	add_library(scpp_curl SHARED
+	add_library(scpp_curl
 		include/modules/curl/curl.cpp
 	)
 
@@ -88,7 +99,7 @@ if(SCPP_WITH_CURL)
 endif()
 
 if(SCPP_WITH_UI)
-	add_library(scpp_ui SHARED
+	add_library(scpp_ui
 		include/modules/ui/ui.cpp
 	)
 	if(APPLE)
@@ -105,30 +116,28 @@ if(SCPP_WITH_UI)
 	target_compile_definitions(scpp_ui PUBLIC SCPP_HAS_UI=1)
 endif()
 
-add_library(scpp_runtime
-	include/core/runtime.cpp
-)
-
-target_include_directories(scpp_runtime
-PUBLIC
-	${CMAKE_CURRENT_SOURCE_DIR}/include
-)
-
-target_compile_features(scpp_runtime PUBLIC cxx_std_23)
-
-target_link_libraries(scpp_runtime PUBLIC scpp_json scpp_filesystem scpp_datetime)
+target_link_libraries(scpp_runtime INTERFACE scpp_json scpp_filesystem scpp_datetime)
 if(SCPP_WITH_PROCESS)
-	target_link_libraries(scpp_runtime PUBLIC scpp_process)
+	target_link_libraries(scpp_runtime INTERFACE scpp_process)
 endif()
 if(SCPP_WITH_REGEX)
-	target_link_libraries(scpp_runtime PUBLIC scpp_regex)
+	target_link_libraries(scpp_runtime INTERFACE scpp_regex)
 endif()
 if(SCPP_WITH_CURL)
-	target_link_libraries(scpp_runtime PUBLIC scpp_curl)
+	target_link_libraries(scpp_runtime INTERFACE scpp_curl)
 endif()
 if(SCPP_WITH_UI)
-	target_link_libraries(scpp_runtime PUBLIC scpp_ui)
+	target_link_libraries(scpp_runtime INTERFACE scpp_ui)
 endif()
+
+# Every enabled provider uses the same core target. BUILD_SHARED_LIBS chooses
+# one coherent built-in composition, avoiding core archive copies in module DSOs.
+foreach(provider scpp_json scpp_filesystem scpp_datetime scpp_process scpp_regex scpp_curl scpp_ui)
+	if(TARGET ${provider})
+		target_link_libraries(${provider} PUBLIC scpp_runtime_core)
+	endif()
+endforeach()
+target_link_libraries(scpp_runtime INTERFACE scpp_runtime_core)
 
 add_library(scpp_php_legacy
 	include/lang/php/php_abi_bridge.cpp
@@ -160,7 +169,7 @@ INTERFACE
 target_link_libraries(scpp_lang_php INTERFACE scpp_runtime)
 
 if(SCPP_LANGUAGE_TARGET_PHP)
-	target_compile_definitions(scpp_runtime PUBLIC SCPP_LANGUAGE_TARGET_PHP=1)
+	target_compile_definitions(scpp_runtime_configuration INTERFACE SCPP_LANGUAGE_TARGET_PHP=1)
 	target_compile_definitions(scpp_lang_php INTERFACE SCPP_LANGUAGE_TARGET_PHP=1)
 	target_compile_definitions(scpp_php_legacy PUBLIC SCPP_LANGUAGE_TARGET_PHP=1)
 endif()
@@ -176,7 +185,7 @@ if(SCPP_WITH_REGEX)
 
 	if(SCPP_REGEX_PKG_NAME STREQUAL "libpcre2-8")
 		target_link_libraries(scpp_regex PUBLIC PkgConfig::PCRE2_8)
-		target_compile_definitions(scpp_runtime PUBLIC SCPP_HAS_REGEX=1)
+		target_compile_definitions(scpp_runtime_configuration INTERFACE SCPP_HAS_REGEX=1)
 		target_compile_definitions(scpp_lang_php INTERFACE SCPP_HAS_REGEX=1)
 		target_compile_definitions(scpp_php_legacy PUBLIC SCPP_HAS_REGEX=1)
 		message(STATUS "SCPP regex module: using pkg-config package libpcre2-8")
@@ -184,7 +193,7 @@ if(SCPP_WITH_REGEX)
 		message(FATAL_ERROR "SCPP_WITH_REGEX=ON but no supported PCRE2 pkg-config package was found (tried: libpcre2-8).")
 	endif()
 else()
-	target_compile_definitions(scpp_runtime PUBLIC SCPP_HAS_REGEX=0)
+	target_compile_definitions(scpp_runtime_configuration INTERFACE SCPP_HAS_REGEX=0)
 	target_compile_definitions(scpp_lang_php INTERFACE SCPP_HAS_REGEX=0)
 	target_compile_definitions(scpp_php_legacy PUBLIC SCPP_HAS_REGEX=0)
 endif()
@@ -216,14 +225,14 @@ if(SCPP_WITH_CURL)
 	endif()
 
 	if(SCPP_CURL_LINKED)
-		target_compile_definitions(scpp_runtime PUBLIC SCPP_HAS_CURL=1)
+		target_compile_definitions(scpp_runtime_configuration INTERFACE SCPP_HAS_CURL=1)
 		target_compile_definitions(scpp_lang_php INTERFACE SCPP_HAS_CURL=1)
 		target_compile_definitions(scpp_php_legacy PUBLIC SCPP_HAS_CURL=1)
 	else()
 		message(FATAL_ERROR "SCPP_WITH_CURL=ON but no supported libcurl development package was found. Install libcurl dev files or disable the curl module.")
 	endif()
 else()
-	target_compile_definitions(scpp_runtime PUBLIC SCPP_HAS_CURL=0)
+	target_compile_definitions(scpp_runtime_configuration INTERFACE SCPP_HAS_CURL=0)
 	target_compile_definitions(scpp_lang_php INTERFACE SCPP_HAS_CURL=0)
 	target_compile_definitions(scpp_php_legacy PUBLIC SCPP_HAS_CURL=0)
 endif()
@@ -246,17 +255,19 @@ if(SCPP_WITH_UI)
 		target_compile_definitions(scpp_ui PUBLIC SCPP_UI_BACKEND_APPKIT=1)
 		message(STATUS "SCPP ui module: using AppKit/Cocoa")
 	endif()
-	target_compile_definitions(scpp_runtime PUBLIC SCPP_HAS_UI=1)
+	target_compile_definitions(scpp_runtime_configuration INTERFACE SCPP_HAS_UI=1)
 	target_compile_definitions(scpp_lang_php INTERFACE SCPP_HAS_UI=1)
 	target_compile_definitions(scpp_php_legacy PUBLIC SCPP_HAS_UI=1)
 else()
-	target_compile_definitions(scpp_runtime PUBLIC SCPP_HAS_UI=0)
+	target_compile_definitions(scpp_runtime_configuration INTERFACE SCPP_HAS_UI=0)
 	target_compile_definitions(scpp_lang_php INTERFACE SCPP_HAS_UI=0)
 	target_compile_definitions(scpp_php_legacy PUBLIC SCPP_HAS_UI=0)
 endif()
 
 if(SCPP_WITH_MYSQLI)
-	target_sources(scpp_runtime PRIVATE include/modules/mysql/mysql_module.cpp)
+	add_library(scpp_mysql include/modules/mysql/mysql_module.cpp)
+	target_link_libraries(scpp_mysql PUBLIC scpp_runtime_core)
+	target_link_libraries(scpp_runtime INTERFACE scpp_mysql)
 	set(SCPP_MYSQLI_PKG_NAME "")
 
 	if(PKG_CONFIG_FOUND)
@@ -283,34 +294,34 @@ if(SCPP_WITH_MYSQLI)
 	endif()
 
 	if(SCPP_MYSQLI_PKG_NAME STREQUAL "libmariadb")
-		target_link_libraries(scpp_runtime PUBLIC PkgConfig::MARIADB_LIB)
+		target_link_libraries(scpp_mysql PUBLIC PkgConfig::MARIADB_LIB)
 		target_link_libraries(scpp_php_legacy PUBLIC PkgConfig::MARIADB_LIB)
-		target_compile_definitions(scpp_runtime PUBLIC SCPP_HAS_MYSQLI=1)
+		target_compile_definitions(scpp_runtime_configuration INTERFACE SCPP_HAS_MYSQLI=1)
 		target_compile_definitions(scpp_lang_php INTERFACE SCPP_HAS_MYSQLI=1)
 		target_compile_definitions(scpp_php_legacy PUBLIC SCPP_HAS_MYSQLI=1)
 		message(STATUS "SCPP mysqli module: using pkg-config package libmariadb")
 	elseif(SCPP_MYSQLI_PKG_NAME STREQUAL "mariadb")
-		target_link_libraries(scpp_runtime PUBLIC PkgConfig::MARIADB)
+		target_link_libraries(scpp_mysql PUBLIC PkgConfig::MARIADB)
 		target_link_libraries(scpp_php_legacy PUBLIC PkgConfig::MARIADB)
-		target_compile_definitions(scpp_runtime PUBLIC SCPP_HAS_MYSQLI=1)
+		target_compile_definitions(scpp_runtime_configuration INTERFACE SCPP_HAS_MYSQLI=1)
 		target_compile_definitions(scpp_lang_php INTERFACE SCPP_HAS_MYSQLI=1)
 		target_compile_definitions(scpp_php_legacy PUBLIC SCPP_HAS_MYSQLI=1)
 		message(STATUS "SCPP mysqli module: using pkg-config package mariadb")
 	elseif(SCPP_MYSQLI_PKG_NAME STREQUAL "mysqlclient")
-		target_link_libraries(scpp_runtime PUBLIC PkgConfig::MYSQLCLIENT)
+		target_link_libraries(scpp_mysql PUBLIC PkgConfig::MYSQLCLIENT)
 		target_link_libraries(scpp_php_legacy PUBLIC PkgConfig::MYSQLCLIENT)
-		target_compile_definitions(scpp_runtime PUBLIC SCPP_HAS_MYSQLI=1)
+		target_compile_definitions(scpp_runtime_configuration INTERFACE SCPP_HAS_MYSQLI=1)
 		target_compile_definitions(scpp_lang_php INTERFACE SCPP_HAS_MYSQLI=1)
 		target_compile_definitions(scpp_php_legacy PUBLIC SCPP_HAS_MYSQLI=1)
 		message(STATUS "SCPP mysqli module: using pkg-config package mysqlclient")
 	else()
 		message(WARNING "SCPP_WITH_MYSQLI=ON but no supported MariaDB/MySQL Connector/C pkg-config package was found (tried: libmariadb, mariadb, mysqlclient). Building mysqli wrappers in disabled-stub mode.")
-		target_compile_definitions(scpp_runtime PUBLIC SCPP_HAS_MYSQLI=0)
+		target_compile_definitions(scpp_runtime_configuration INTERFACE SCPP_HAS_MYSQLI=0)
 		target_compile_definitions(scpp_lang_php INTERFACE SCPP_HAS_MYSQLI=0)
 		target_compile_definitions(scpp_php_legacy PUBLIC SCPP_HAS_MYSQLI=0)
 	endif()
 else()
-	target_compile_definitions(scpp_runtime PUBLIC SCPP_HAS_MYSQLI=0)
+	target_compile_definitions(scpp_runtime_configuration INTERFACE SCPP_HAS_MYSQLI=0)
 	target_compile_definitions(scpp_lang_php INTERFACE SCPP_HAS_MYSQLI=0)
 	target_compile_definitions(scpp_php_legacy PUBLIC SCPP_HAS_MYSQLI=0)
 endif()
