@@ -1,0 +1,360 @@
+{
+  "status": "passed",
+  "rounds": 5,
+  "compiler_optimization": "O2",
+  "generated_optimization": "O0",
+  "native_compiler_sha256": "ab8392d78a84140d3690b37bf7752a16821c16d6a5f7f8e1a10fb0564c008990",
+  "samples": [
+    {
+      "phase": "publication",
+      "mode": "ordinary",
+      "engine": "php",
+      "trial": 0,
+      "seconds": 3.777128931018524
+    },
+    {
+      "phase": "publication",
+      "mode": "ordinary",
+      "engine": "native",
+      "trial": 0,
+      "seconds": 0.36486012500245124
+    },
+    {
+      "phase": "publication",
+      "mode": "prelowered",
+      "engine": "php",
+      "trial": 0,
+      "seconds": 6.401266985980328
+    },
+    {
+      "phase": "publication",
+      "mode": "prelowered",
+      "engine": "native",
+      "trial": 0,
+      "seconds": 1.3779564339783974
+    },
+    {
+      "phase": "warm-build",
+      "mode": "ordinary",
+      "engine": "php",
+      "trial": 0,
+      "seconds": 6.0620692250085995
+    },
+    {
+      "phase": "warm-build",
+      "mode": "ordinary",
+      "engine": "native",
+      "trial": 0,
+      "seconds": 4.711745640030131
+    },
+    {
+      "phase": "warm-build",
+      "mode": "prelowered",
+      "engine": "php",
+      "trial": 0,
+      "seconds": 5.6986896130256355
+    },
+    {
+      "phase": "warm-build",
+      "mode": "prelowered",
+      "engine": "native",
+      "trial": 0,
+      "seconds": 3.830020789988339
+    },
+    {
+      "phase": "warm-build",
+      "mode": "prelowered",
+      "engine": "native",
+      "trial": 1,
+      "seconds": 4.058051722997334
+    },
+    {
+      "phase": "warm-build",
+      "mode": "prelowered",
+      "engine": "php",
+      "trial": 1,
+      "seconds": 5.639175486983731
+    },
+    {
+      "phase": "warm-build",
+      "mode": "ordinary",
+      "engine": "native",
+      "trial": 1,
+      "seconds": 4.84339492500294
+    },
+    {
+      "phase": "warm-build",
+      "mode": "ordinary",
+      "engine": "php",
+      "trial": 1,
+      "seconds": 6.320624713029247
+    },
+    {
+      "phase": "publication",
+      "mode": "prelowered",
+      "engine": "native",
+      "trial": 1,
+      "seconds": 1.3803078720229678
+    },
+    {
+      "phase": "publication",
+      "mode": "prelowered",
+      "engine": "php",
+      "trial": 1,
+      "seconds": 6.225271406001411
+    },
+    {
+      "phase": "publication",
+      "mode": "ordinary",
+      "engine": "native",
+      "trial": 1,
+      "seconds": 0.41413625300629064
+    },
+    {
+      "phase": "publication",
+      "mode": "ordinary",
+      "engine": "php",
+      "trial": 1,
+      "seconds": 3.8853078539832495
+    },
+    {
+      "phase": "publication",
+      "mode": "ordinary",
+      "engine": "php",
+      "trial": 2,
+      "seconds": 3.7267141809570603
+    },
+    {
+      "phase": "publication",
+      "mode": "ordinary",
+      "engine": "native",
+      "trial": 2,
+      "seconds": 0.3507953839725815
+    },
+    {
+      "phase": "publication",
+      "mode": "prelowered",
+      "engine": "php",
+      "trial": 2,
+      "seconds": 6.2609563349979
+    },
+    {
+      "phase": "publication",
+      "mode": "prelowered",
+      "engine": "native",
+      "trial": 2,
+      "seconds": 1.3705612390185706
+    },
+    {
+      "phase": "warm-build",
+      "mode": "ordinary",
+      "engine": "php",
+      "trial": 2,
+      "seconds": 6.143660043017007
+    },
+    {
+      "phase": "warm-build",
+      "mode": "ordinary",
+      "engine": "native",
+      "trial": 2,
+      "seconds": 4.646063652995508
+    },
+    {
+      "phase": "warm-build",
+      "mode": "prelowered",
+      "engine": "php",
+      "trial": 2,
+      "seconds": 5.632136519008782
+    },
+    {
+      "phase": "warm-build",
+      "mode": "prelowered",
+      "engine": "native",
+      "trial": 2,
+      "seconds": 3.797075170034077
+    },
+    {
+      "phase": "warm-build",
+      "mode": "prelowered",
+      "engine": "native",
+      "trial": 3,
+      "seconds": 3.8649964589858428
+    },
+    {
+      "phase": "warm-build",
+      "mode": "prelowered",
+      "engine": "php",
+      "trial": 3,
+      "seconds": 5.5322646659915335
+    },
+    {
+      "phase": "warm-build",
+      "mode": "ordinary",
+      "engine": "native",
+      "trial": 3,
+      "seconds": 4.645177090016659
+    },
+    {
+      "phase": "warm-build",
+      "mode": "ordinary",
+      "engine": "php",
+      "trial": 3,
+      "seconds": 6.226839648035821
+    },
+    {
+      "phase": "publication",
+      "mode": "prelowered",
+      "engine": "native",
+      "trial": 3,
+      "seconds": 1.4973170190351084
+    },
+    {
+      "phase": "publication",
+      "mode": "prelowered",
+      "engine": "php",
+      "trial": 3,
+      "seconds": 6.650341030035634
+    },
+    {
+      "phase": "publication",
+      "mode": "ordinary",
+      "engine": "native",
+      "trial": 3,
+      "seconds": 0.3654258019523695
+    },
+    {
+      "phase": "publication",
+      "mode": "ordinary",
+      "engine": "php",
+      "trial": 3,
+      "seconds": 3.9753941219532862
+    },
+    {
+      "phase": "publication",
+      "mode": "ordinary",
+      "engine": "php",
+      "trial": 4,
+      "seconds": 3.6920502120046876
+    },
+    {
+      "phase": "publication",
+      "mode": "ordinary",
+      "engine": "native",
+      "trial": 4,
+      "seconds": 0.3658494360279292
+    },
+    {
+      "phase": "publication",
+      "mode": "prelowered",
+      "engine": "php",
+      "trial": 4,
+      "seconds": 6.1581872930401005
+    },
+    {
+      "phase": "publication",
+      "mode": "prelowered",
+      "engine": "native",
+      "trial": 4,
+      "seconds": 1.3620552819920704
+    },
+    {
+      "phase": "warm-build",
+      "mode": "ordinary",
+      "engine": "php",
+      "trial": 4,
+      "seconds": 6.014726945024449
+    },
+    {
+      "phase": "warm-build",
+      "mode": "ordinary",
+      "engine": "native",
+      "trial": 4,
+      "seconds": 4.580964963010047
+    },
+    {
+      "phase": "warm-build",
+      "mode": "prelowered",
+      "engine": "php",
+      "trial": 4,
+      "seconds": 5.364299365959596
+    },
+    {
+      "phase": "warm-build",
+      "mode": "prelowered",
+      "engine": "native",
+      "trial": 4,
+      "seconds": 3.683347223966848
+    }
+  ],
+  "scope": "Fresh process incl startup/catalog/frontend/lowering/publication/encoding; prelowered also repeats preparation/emission. Warm build is native-cache reuse, not incremental source editing.",
+  "revision": "81913306fcb7cf07b75f3449c703875d4a86bb79",
+  "cpu": "Architecture:                         x86_64\nCPU op-mode(s):                       32-bit, 64-bit\nAddress sizes:                        48 bits physical, 48 bits virtual\nByte Order:                           Little Endian\nCPU(s):                               12\nOn-line CPU(s) list:                  0-11\nVendor ID:                            AuthenticAMD\nModel name:                           AMD Ryzen 5 PRO 4650G with Radeon Graphics\nCPU family:                           23\nModel:                                96\nThread(s) per core:                   2\nCore(s) per socket:                   6\nSocket(s):                            1\nStepping:                             1\nBogoMIPS:                             7999.73\nFlags:                                fpu vme de pse tsc msr pae mce cx8 apic sep mtrr pge mca cmov pat pse36 clflush mmx fxsr sse sse2 ht syscall nx mmxext fxsr_opt pdpe1gb rdtscp lm constant_tsc rep_good nopl tsc_reliable nonstop_tsc cpuid extd_apicid tsc_known_freq pni pclmulqdq ssse3 fma cx16 sse4_1 sse4_2 movbe popcnt aes xsave avx f16c rdrand hypervisor lahf_lm cmp_legacy cr8_legacy abm sse4a misalignsse 3dnowprefetch osvw topoext perfctr_core ssbd ibrs ibpb stibp vmmcall fsgsbase bmi1 avx2 smep bmi2 rdseed adx smap clflushopt clwb sha_ni xsaveopt xsavec xgetbv1 clzero xsaveerptr arat umip rdpid\nHypervisor vendor:                    Microsoft\nVirtualization type:                  full\nL1d cache:                            192 KiB (6 instances)\nL1i cache:                            192 KiB (6 instances)\nL2 cache:                             3 MiB (6 instances)\nL3 cache:                             4 MiB (1 instance)\nNUMA node(s):                         1\nNUMA node0 CPU(s):                    0-11\nVulnerability Gather data sampling:   Not affected\nVulnerability Itlb multihit:          Not affected\nVulnerability L1tf:                   Not affected\nVulnerability Mds:                    Not affected\nVulnerability Meltdown:               Not affected\nVulnerability Mmio stale data:        Not affected\nVulnerability Reg file data sampling: Not affected\nVulnerability Retbleed:               Mitigation; untrained return thunk; SMT enabled with STIBP protection\nVulnerability Spec rstack overflow:   Vulnerable: Safe RET, no microcode\nVulnerability Spec store bypass:      Mitigation; Speculative Store Bypass disabled via prctl\nVulnerability Spectre v1:             Mitigation; usercopy/swapgs barriers and __user pointer sanitization\nVulnerability Spectre v2:             Mitigation; Retpolines; IBPB conditional; STIBP always-on; RSB filling; PBRSB-eIBRS Not affected; BHI Not affected\nVulnerability Srbds:                  Not affected\nVulnerability Tsx async abort:        Not affected\n",
+  "system": "Linux randdesk 6.6.87.2-microsoft-standard-WSL2 #1 SMP PREEMPT_DYNAMIC Thu Jun  5 18:30:46 UTC 2025 x86_64 x86_64 x86_64 GNU/Linux\n",
+  "php": "PHP 8.5.7 (cli) (built: Jun  6 2026 05:36:56) (NTS)\nCopyright (c) The PHP Group\nBuilt by Ubuntu\nZend Engine v4.5.7, Copyright (c) Zend Technologies\n    with Xdebug v3.5.3, Copyright (c) 2002-2026, by Derick Rethans\n    with Zend OPcache v8.5.7, Copyright (c), by Zend Technologies\n",
+  "statistics": [
+    {
+      "phase": "publication",
+      "mode": "ordinary",
+      "engine": "php",
+      "median": 3.777128931018524,
+      "minimum": 3.6920502120046876,
+      "maximum": 3.9753941219532862
+    },
+    {
+      "phase": "publication",
+      "mode": "ordinary",
+      "engine": "native",
+      "median": 0.3654258019523695,
+      "minimum": 0.3507953839725815,
+      "maximum": 0.41413625300629064
+    },
+    {
+      "phase": "publication",
+      "mode": "prelowered",
+      "engine": "php",
+      "median": 6.2609563349979,
+      "minimum": 6.1581872930401005,
+      "maximum": 6.650341030035634
+    },
+    {
+      "phase": "publication",
+      "mode": "prelowered",
+      "engine": "native",
+      "median": 1.3779564339783974,
+      "minimum": 1.3620552819920704,
+      "maximum": 1.4973170190351084
+    },
+    {
+      "phase": "warm-build",
+      "mode": "ordinary",
+      "engine": "php",
+      "median": 6.143660043017007,
+      "minimum": 6.014726945024449,
+      "maximum": 6.320624713029247
+    },
+    {
+      "phase": "warm-build",
+      "mode": "ordinary",
+      "engine": "native",
+      "median": 4.646063652995508,
+      "minimum": 4.580964963010047,
+      "maximum": 4.84339492500294
+    },
+    {
+      "phase": "warm-build",
+      "mode": "prelowered",
+      "engine": "php",
+      "median": 5.632136519008782,
+      "minimum": 5.364299365959596,
+      "maximum": 5.6986896130256355
+    },
+    {
+      "phase": "warm-build",
+      "mode": "prelowered",
+      "engine": "native",
+      "median": 3.830020789988339,
+      "minimum": 3.683347223966848,
+      "maximum": 4.058051722997334
+    }
+  ]
+}
