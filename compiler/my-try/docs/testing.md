@@ -1,6 +1,16 @@
 # Test runners
 Doc Status: supporting
 
+`python3 compiler/my-try/tests/prelower_accounting_acceptance.py --results FRESH_DIRECTORY`
+publishes ordinary and prelowered accounting through the public CLI, builds both
+at O0 without debug/PCH in fresh native caches, and requires identical output with
+998 checks and zero failures. It checks warm reuse and automatically records the
+actual native commands for the complete manifest-driven application closure audit.
+Runtime/middleware and layout probes are explicitly excluded from that application
+audit. Source hashes, revision, toolchain, options and results are retained in the
+requested directory. This is correctness/closure acceptance, not a timing benchmark.
+Any emission, native policy or closure failure fails the run; no fallback is selected.
+
 `python3 compiler/my-try/tests/prelower_null_output.py --results FRESH_DIRECTORY`
 also proves public CLI/API artifact and manifest parity using only
 `prelower_templates`, mode switching without semantic repreparation, deprecated

@@ -37,6 +37,11 @@ claim complete closure validation or broaden runtime coverage.
 
 ## Evidence and audit baseline
 
+- [Fresh public-CLI accounting acceptance](results/prelower_public_accounting_2026_10_20/README.md):
+  ordinary and prelowered O0/no-debug/no-PCH builds both pass 998/0 with byte-identical
+  output. Complete fresh 16-unit application closure is template-free; both warm
+  builds compile/link nothing. This supersedes the saved-publication-only acceptance
+  checkpoint without making a new performance or full-runtime-coverage claim.
 - [Accounting acceptance](results/prelower_template_free_accounting_2026_10_19/README.md):
   998 checks pass; 16 app units have zero template declarations and zero Clang
   class/function instantiations without PCH. This is workload coverage, not universal
@@ -209,22 +214,22 @@ Owners: existing shared test runner and prelowering fixtures; no duplicate test 
 
 - [ ] Assemble the existing proofs into a documented O0/no-debug acceptance entry
   point, using normal publication/native build and the supported public configuration.
-- [ ] Run ordinary and prelowered accounting with matching behavior: 998 checks pass.
-- [ ] Capture the complete application compilation set from the build manifest and
+- [x] Run ordinary and prelowered accounting with matching behavior: 998 checks pass.
+- [x] Capture the complete application compilation set from the build manifest and
   verify command coverage, including entry.cpp. Automatic capture belongs in the
-  unified acceptance entry point.
+  accounting acceptance entry point, `prelower_accounting_acceptance.py`.
 - [x] Require exact manifest coverage in the closure audit, including entry.cpp;
   verify readiness through the existing publication owner and artifact digests, reject
   incomplete/conflicting recordings, and report middleware/layout exclusions.
   The saved accounting publication passes fresh tracing of all 16 units. See
   [evidence](results/prelower_closure_coverage_2026_10_20/README.md).
-- [ ] Audit every app unit and its transitive headers without PCH: zero template
+- [x] Audit every app unit and its transitive headers without PCH: zero template
   declarations and zero Clang class/function instantiations. Exclude middleware and
   layout probes deliberately; report the unit set and exclusions.
 - [ ] Include focused lifecycle/counter, evaluation-order, nested-reference,
   demand/replay, invalid-metadata, failure-recovery and ordinary-mode checks.
   Retain alternate metadata-selected provider proofs against accidental family coupling.
-- [ ] Record revision, toolchain, options and result locations. Separate fresh results
+- [x] Record revision, toolchain, options and result locations. Separate fresh results
   from historical evidence. A generated application proof is not a native compiler
   rebuild or an end-to-end compiler performance benchmark.
 

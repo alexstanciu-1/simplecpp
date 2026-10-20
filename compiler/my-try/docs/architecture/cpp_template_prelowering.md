@@ -21,6 +21,12 @@ rejects runtime PCH and active template tokens in transitive application inputs;
 unsupported operations reject rather than falling back. See the
 [native contract](native_cpp_build.md#dependencies-and-pch).
 
+Fresh [public-CLI accounting acceptance](../../../../specs/planning/results/prelower_public_accounting_2026_10_20/README.md)
+passes 998/0 in ordinary and prelowered modes with byte-identical output. All 16
+prelowered application units pass the complete no-PCH closure audit at O0.
+Both modes reuse all objects/linking on warm builds. This is behavior/closure
+acceptance, not a new timing measurement or full runtime coverage claim.
+
 The general path previously compiled and ran accounting at O0 (998 checks) with no
 templates in any app unit or its transitive headers, with PCH disabled. See the
 [template-free evidence](../../../../specs/planning/results/prelower_template_free_accounting_2026_10_19/README.md). The [accounting timing comparison](../../../../specs/planning/results/prelower_accounting_timing_2026_10_19/README.md)
@@ -66,8 +72,10 @@ sentinel has an intrinsic C++ binding; the runtime null header is template-free.
 [Null-output evidence](../../../../specs/planning/results/prelower_null_output_2026_10_20/README.md)
 proves ordered output, counter parity and complete fixture application closure.
 The public CLI/API parity, strict failure/repair and mode-replay proof is now
-`tests/prelower_null_output.py`. Unified accounting acceptance and broader operation
-coverage remain pending; the single option does not promise full runtime coverage.
+`tests/prelower_null_output.py`; fresh accounting acceptance is
+`tests/prelower_accounting_acceptance.py`. Consolidating the remaining focused proofs
+and broader operation coverage remain pending; the single option does not promise
+full runtime coverage.
 
 ## Runtime-owned native representation recipes
 
