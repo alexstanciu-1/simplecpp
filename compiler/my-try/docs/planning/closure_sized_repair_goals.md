@@ -74,3 +74,41 @@ After these batches, regroup the remaining normal-discussion items by dependency
 and owner (layout declarations/queries, project/module integration, callable
 boundaries, ownership/transfer policies). Do not pre-authorize architecture work
 or assign misleading fixed throughput to those larger tasks.
+
+## Proposed decisions for the first batch — pending approval
+
+S09-B1 inspection confirms that ordinary `Result_Conversions` already supports
+checked extraction at by-value argument boundaries. `Runtime_Call_Preparation`
+currently rejects before `Call_Preparation::admit` can select that conversion.
+Proposed policy: retain the exact-match phase unchanged; only when it has zero
+matches, consider fully concrete, fixed-arity runtime contracts using identity or
+one existing checked wrapper-to-exact-payload conversion for value inputs. Require
+one candidate; ambiguous fallback candidates reject. References/observation stay
+exact. Do not introduce generic inference through extraction, conversion ranking,
+numeric promotion, chained conversion, variadic/default adaptation or flow narrowing.
+Use ordinary conversion/capability and argument-emission owners after selection.
+Probe runtime extraction first; prove errors, source preservation, ordered snapshots,
+exact-match priority, ambiguity and the unchanged original false-branch fixture.
+Any needed cross-owner redesign is a discussion gate, not automatically authorized.
+
+V-R07 proposed contract: mutation helpers use writable exact vector references;
+capacity uses the existing unary non-retaining observation mode. Resize and filled
+infer one exact T, with fill values copied through existing capability rules.
+Both clear names retain capacity. Reserve/explicit compact provide a capacity lower
+bound without truncation; no-argument compact is a nonbinding shrink request.
+Negative counts/capacities throw existing value_error without changing the vector
+(ordinary argument evaluation still occurs before entering the provider). Test
+scalars, strings, copyable containers and representative noncopyable/reference
+boundaries, aliased fill snapshots, destruction/content preservation and production
+provider linkage. No runtime change is presumed; isolate any provider gap first.
+
+V-H10 proposed migration: replace the ambiguous untyped [] setup with an explicit
+mixed-element container so rejection reaches unsupported closure boxing/storage.
+Keep it negative for that actual reason. Add a vector<function<int()>> positive
+control with append/invocation and an incompatible-signature rejection. Preserve
+the old source/diagnostic in dated evidence; perform fixture migration separately
+from the compiler/API commits. This does not ban supported typed callable storage.
+
+These decisions would authorize one goal targeting all three closures, with
+runtime/compiler bounds scoped per issue and all proofs on dev002. They remain
+proposals until the user accepts the batch; no implementation goal is active.
