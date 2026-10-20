@@ -2,18 +2,18 @@
 Doc Status: supporting
 
 Snapshot: 2026-10-20, after [V-L07 bounded completion](vl07_completion.md) and
-[V-L06 / S04 closeout](float_identity.md) and [V-L11 / V-D14 text](carrier_text.md), followed by [S06 conditionals](s06_unbraced_conditionals.md) and [S07 predicates](s07_mixed_predicates.md). The [S09 search](s09_byte_search.md) and [replacement](s09_substr_replace.md) slices are complete. The [closure batch](closure_batch.md) closes S09-B1, V-R07 and V-H10; the [regex batch](regex_replacement.md) also closes V-R04 and V-R09. The [platform/alias batch](platform_alias.md) closes V-D09 and V-D12. The [boxed/selection batch](boxed_selection.md) closes V-L09 and V-L10. The [compact-layout batch](compact_layout_shifts.md) now closes V-L01 and V-L02, plus supplementary BS-R01. This covers all 64 original entries in
+[V-L06 / S04 closeout](float_identity.md) and [V-L11 / V-D14 text](carrier_text.md), followed by [S06 conditionals](s06_unbraced_conditionals.md) and [S07 predicates](s07_mixed_predicates.md). The [S09 search](s09_byte_search.md) and [replacement](s09_substr_replace.md) slices are complete. The [closure batch](closure_batch.md) closes S09-B1, V-R07 and V-H10; the [regex batch](regex_replacement.md) also closes V-R04 and V-R09. The [platform/alias batch](platform_alias.md) closes V-D09 and V-D12. The [boxed/selection batch](boxed_selection.md) closes V-L09 and V-L10. The [compact-layout batch](compact_layout_shifts.md) now closes V-L01 and V-L02, plus supplementary BS-R01. The [callback/composition batch](callback_composition.md) closes V-R05 and V-R11. This covers all 64 original entries in
 [the issue ledger](language_verification_issues.json), including deferred legacy
 syntax and policy/design issues. Operator signatures are not separate closed issues.
 
 | Status | Issues |
 | --- | ---: |
-| Implemented or already repaired, then verified | 37 |
+| Implemented or already repaired, then verified | 39 |
 | Partially implemented and verified | 0 |
-| Other issues not yet closed | 27 |
+| Other issues not yet closed | 25 |
 | Total | 64 |
 
-Fully closed: **37/64 = 57.8125%** (about **57.8% by issue count**). This is not an
+Fully closed: **39/64 = 60.9375%** (about **60.9% by issue count**). This is not an
 engineering-effort estimate. Remaining architecture/runtime/project issues can be
 much larger than fixture repairs. There is no defensible weighted effort percentage.
 
@@ -21,7 +21,7 @@ much larger than fixture repairs. There is no defensible weighted effort percent
 | --- | ---: | ---: | ---: | ---: |
 | Simple fix | 13 | 0 | 0 | 13 |
 | Light discussion | 16 | 0 | 1 | 17 |
-| Normal discussion | 8 | 0 | 26 | 34 |
+| Normal discussion | 10 | 0 | 24 | 34 |
 
 V-L06 now admits the final two scalar float identity forms and re-verifies its
 original carrier cases. S04's unchanged original process fixture passes through
@@ -67,6 +67,12 @@ failed write-back, union lifetime/copy behavior, native layout, retained recover
 and production cold/warm builds pass on dev002. The separate CL-H01 finding records
 an older enum runner's stale SIGABRT expectation; it does not add an original
 issue closure. No full matrix or native compiler rebuild was run.
+
+V-R05 and V-R11 now close strict regex callback bindings and CMake runtime
+composition, adding **+3.125 points**. Four callback forms, shared zero-length
+replacement traversal, ordered snapshots and six static/shared CMake configurations
+pass on dev002. Baseline failures remain evidence; MySQL compilation does not close
+V-E03 database integration. See [batch closeout](callback_composition.md).
 
 “Not closed” does not mean every remaining entry is an accidental regression or an
 authorized implementation task. Some entries still require policy decisions or

@@ -6,8 +6,8 @@ syntax and collection → shared semantic preparation → C++ generation. Other
 frontends should normalize toward the same PHS-shaped concepts. LLVM is a parked
 experiment retained for regressions, not a second semantic development path.
 
-Current repair checkpoint: [checked shifts and compact layout](planning/compact_layout_shifts.md),
-37/64 original issues closed (57.8125%); supplementary BS-R01 also closed.
+Current repair checkpoint: [regex callbacks and runtime composition](planning/callback_composition.md),
+39/64 original issues closed (60.9375%); supplementary BS-R01 also closed.
 
 ## Reading map
 
@@ -193,3 +193,8 @@ The [V-L09/V-L10 closeout](planning/boxed_selection.md) adds homogeneous boxed
 integer expressions and canonical-scalar wrapper coalescing with lazy payload
 normalization. Its separate BS-R01 finding keeps unchecked primitive shift counts
 explicit; it does not certify those counts or widen pairs/updates.
+
+The [callback/composition closeout](planning/callback_composition.md) exposes both
+strict regex callback APIs and repairs runtime CMake core/provider ownership.
+Snapshots, errors and static/shared consumers pass on dev002; broader callback
+lifetimes, count outputs and database integration remain separate.

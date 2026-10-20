@@ -1,0 +1,45 @@
+{
+  "doc_status": "supporting",
+  "passed": true,
+  "source_files": 6336,
+  "post_test_markdown_changes": [
+    "compiler/my-try/docs/README.md",
+    "compiler/my-try/docs/catalog/14_output_runtime.md",
+    "compiler/my-try/docs/catalog/README.md",
+    "compiler/my-try/docs/planning/runtime_catalog_coverage.md",
+    "compiler/my-try/docs/testing.md",
+    "specs/architecture/runtime_layering.md",
+    "specs/builtins/regex/preg_replace_callback.md",
+    "specs/builtins/regex/preg_replace_callback_array.md"
+  ],
+  "evidence_digest_verified": true,
+  "accepted_commands": 133,
+  "accepted_native_executions": 70,
+  "callback_oracle_checks_per_path": 34,
+  "preparation_rejections": 7,
+  "recovery_cycles": 2,
+  "cmake_configurations": 6,
+  "full_matrix_run": false,
+  "native_compiler_rebuilt": false,
+  "progress": {
+    "closed": 39,
+    "total": 64,
+    "partial": 0,
+    "percent": 60.9375,
+    "gain_percentage_points": 3.125
+  },
+  "executable_sources_match_except_recorded_whitespace": true,
+  "post_test_whitespace_changes": [
+    {
+      "path": "runtime/include/core/runtime_core.cpp",
+      "change": "Removed one trailing blank line after verification.",
+      "verified_tested_sha256": "57074350ecc49bb4a47f364b944db28c1041a578de25a83886a4caec25e40c89",
+      "committed_sha256": "008a9aae6ccce499de2e50702d5b16da2f7b5aa3d732b7b842be442bc1f2ed57"
+    }
+  ],
+  "implementation_commits": [
+    "99d919cb",
+    "13251d1c",
+    "b26b107d"
+  ]
+}

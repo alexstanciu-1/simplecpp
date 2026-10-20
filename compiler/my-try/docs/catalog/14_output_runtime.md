@@ -1197,3 +1197,13 @@ same emitted handle type, different recorded intent metadata
 > - General rules have precedence.
 > - Concrete examples may be corrected to fit the general rules.
 > - The goal is to avoid combinatorial explosion and preserve only reusable rule knowledge.
+
+## Runtime callback and CMake integration checkpoint — 2026-10-20
+
+[V-R05/V-R11](../planning/callback_composition.md) close strict regex callback
+bindings and aggregate runtime linkage. Existing structural callable metadata
+supplies exact callback/container ABI; no compiler model change was needed.
+Core/configuration/provider targets now have explicit dependencies. Six dev002
+static/shared configurations and production native-builder cold/warm checks pass.
+Original Chapter 15 observations remain historical; wider provider/lifetime and
+platform gaps remain explicit.

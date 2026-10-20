@@ -1584,3 +1584,14 @@ runtime contract discrepancies and unresolved source name. Focused regressions
 are `runtime_strings.py` and `string_search.py`, each with a fresh results directory.
 S09-B1 remains a separately observed call-boundary blocker; no full matrix or
 fixture migration is part of this slice. See [the report](planning/s09_substr_replace.md).
+
+`python3 compiler/my-try/tests/regex_callbacks_runtime.py --results FRESH` runs the
+34-check direct callback oracle; `regex_callbacks.py` proves all four source forms,
+ordered snapshots, rejection/recovery and production cold/warm PCRE2 builds.
+`--baseline` records the expected pre-repair failures and is not an acceptance mode.
+
+`python3 compiler/my-try/tests/runtime_composition.py --results FRESH` verifies six
+static/shared CMake configurations, aggregate/direct/core consumers and shared
+string-pool identity. Optional process/regex executions and MySQL/legacy adapter
+compilation are included; no database connection test is implied. Run on dev002.
+See [results and boundaries](planning/callback_composition.md).

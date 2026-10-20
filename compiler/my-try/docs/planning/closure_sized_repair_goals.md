@@ -64,6 +64,7 @@ promises. Review contracts and feasibility before freezing each goal.
 | Regex contract and provider bindings — completed | V-R04, V-R09 | [Closeout](regex_replacement.md): 31/64 closed, +3.125 points. V-R05 callback ABI remains a separate discussion. |
 | Public platform and compatibility aliases — completed | V-D12, V-D09 | [Closeout](platform_alias.md): 33/64 closed, +3.125 points. Qualified aliases preserve source types; platform/environment contracts verified on dev002. |
 | Boxed/selection operators — completed | V-L09, V-L10 | [Closeout](boxed_selection.md): 35/64 closed, +3.125 points. Two runtime prerequisites separately authorized. BS-R01 was tracked separately and subsequently closed in the compact-layout batch. |
+| Regex callbacks and runtime composition — completed | V-R05, V-R11 | [Closeout](callback_composition.md): 39/64 closed, +3.125 points. Four callback forms and six static/shared configurations; database integration and broader closure lifetimes remain separate. |
 | Checked shifts and compact layout — completed | V-L01, V-L02 | [Closeout](compact_layout_shifts.md): 37/64 closed, +3.125 points. Supplementary BS-R01 also closed; stale enum-runner expectation CL-H01 remains separate. |
 
 V-E01 needs a separate evidence/status reconciliation: its ledger already says

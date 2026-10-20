@@ -774,3 +774,13 @@ existing caught diagnostic and exit 1. The combined goal harness verifies the ac
 contract; the original runner is unchanged. This neither reopens a compiler issue
 nor inflates the frozen denominator. Normalized PHP union parameter syntax is also
 distinct from V-L01's payload unions; an older catalog cross-reference was corrected.
+
+## Regex callback and CMake composition closeout — 2026-10-20
+
+[V-R05/V-R11](callback_composition.md) are implemented and verified on dev002.
+The original issue inventory now has **39/64 closed (60.9375%)**, zero partial and
+25 open; this batch adds **3.125 percentage points**. Four callback source forms,
+runtime validation/traversal, snapshots and six static/shared CMake configurations
+pass. The baseline unresolved calls, nine runtime oracle failures and aggregate-link
+failure remain in the evidence. No full matrix or native compiler rebuild ran.
+MySQL/legacy-adapter compilation is not database integration or a V-E03 closure.
