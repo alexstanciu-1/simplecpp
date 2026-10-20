@@ -704,8 +704,27 @@
       "dependencies": [
         "Resolve the named source contract/owner before any repair."
       ],
-      "next_action": "Retain first-blocker evidence and discuss the bounded implementation or fixture plan; no fixes during verification.",
-      "simple_batch_eligible": false
+      "next_action": "Discuss substr_replace insertion/no-op contract and bounded runtime repair separately. Review S09-B1 wrapper-to-payload runtime argument policy before changing the original false-branch fixture or compiler.",
+      "simple_batch_eligible": false,
+      "repair_status": "partially-implemented-and-verified",
+      "repair_evidence": {
+        "date": "2026-10-20",
+        "report": "s09_byte_search.md",
+        "results": "s09_search_results.json",
+        "audit": "s09_search_audit.json",
+        "scope": "Four byte-search signatures implemented; unchanged strict edge fixture passes. substr_replace remains deferred; original false-branch fixture reaches separately recorded S09-B1 call-boundary blocker."
+      },
+      "remaining_blockers": [
+        {
+          "id": "S09-B1",
+          "status": "requires-contract-discussion",
+          "finding": "After admitting strpos, the unchanged strict_strings_004_strpos_false_branch_regression.phs passes result_or_false<int> directly to substr integer parameter; exact-signature preparation rejects. A false check does not narrow the static type. Explicit take followed by substr passes. No compiler conversion change in the search slice."
+        },
+        {
+          "id": "S09-replacement",
+          "finding": "substr_replace remains unregistered pending omitted-length insertion and unusable negative-window no-op reconciliation."
+        }
+      ]
     },
     {
       "id": "S10",

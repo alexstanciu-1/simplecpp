@@ -32,7 +32,7 @@ do not request approval for each ordinary metadata row or populate speculative r
 | process (opt-in) | Five lifecycle calls, process_handle/process_output and six output fields | Shared storage/Result transport; metadata-declared provider linkage |
 | regex (opt-in) | 10 helpers / 18 signatures and two split constants; inventory below | Nested container Results, ordinary value calls; explicit PCRE2 provider linkage |
 | source (opt-in) | Three owning types and thirteen helpers; inventory below | Metadata-owned values, reference transfer, non-retaining reads; no borrowed spans |
-| strings | 49 source helpers / 65 signatures, two builder types and three padding constants; inventory below | Fixed/generic signatures, value/reference/observation boundaries, metadata-owned types and settled constants |
+| strings | 51 source helpers / 69 signatures, two builder types and three padding constants; inventory below | Fixed/generic signatures, value/reference/observation boundaries, metadata-owned types and settled constants |
 
 The host and native-driver startup lists select core, json, strings, datetime and filesystem. Other consumers
 can select a subset; `strings` depends on `core`, and repeated selections deduplicate.
@@ -91,7 +91,7 @@ separate stable-hash owner and remain for that owner's module audit.
 | string_byte_len, string_byte_at, string_byte_find, string_byte_slice, string_byte_slice_equals | Registered; find has 2/3 args | Explicit byte coordinates; find preserves result_or_false<int> through the PHP adapter |
 | string_utf8_codepoint_count, string_utf8_codepoint_at, string_utf8_slice_codepoints | Registered | Explicit code-point units; not portability-framework validation wrappers |
 | string_grapheme_count, string_grapheme_slice | Registered | Existing conservative cluster policy, not a new full Unicode segmentation promise |
-| strpos, strrpos | Held for semantic reconciliation | Top-level specs require byte positions; runtime find/rfind and subordinate catalog use code points, even through PHP adapters |
+| strpos, strrpos | Registered, 2/3 args each | Byte offsets/positions through dedicated v0.2 adapters; false sentinel preserved, signed offsets checked. Historical code-point adapters and explicit byte_find policy remain unchanged; see [S09 proof](s09_byte_search.md). |
 | substr_replace | Held for semantic reconciliation | Spec says omitted length inserts and unusable negative window is a no-op; runtime replaces the suffix and inserts for some unusable windows |
 | implode(mixed/dynamic) | Held for contract review | Documented string-only elements versus adapter cast/coercion; dynamic admission not established |
 | strlen(nullable<string>) / runtime length overload | Not registered | Core's bounded v0.2 contract is string byte length; no implicit nullable overload |
@@ -251,7 +251,7 @@ Do not fill this gap by enumerating concrete scalar/container overloads in metad
 | Group | Examples | Next prerequisite / check |
 | --- | --- | --- |
 | Boxed formatting | number_format(mixed/dynamic) | Deferred CH15-RUNTIME-FORMAT-01: explicit numeric-kind validation before registration |
-| Contract-sensitive strings | strpos/strrpos, substr_replace, boxed implode | Resolve the specific differences in the module inventory above; hex2bin and code-point substr are now registered without semantic changes |
+| Contract-sensitive strings | substr_replace, boxed implode | Resolve the specific differences in the module inventory above; hex2bin and code-point substr are now registered without semantic changes |
 | Container-producing/consuming helpers | collection APIs | Audit by owning module; typed split/join now use existing application/generic contracts |
 | Numeric and utility helpers | predicates, stable hashing; future scalar math | Audit real provider ownership; scalar math has no existing public module/strict registry to migrate |
 | Registered runtime types | JSON document/nodes, filesystem handles, compiler Storage, source views | Shared storage and registered members/factories are available; real provider lifecycle contracts still need integration proofs; borrowed source views remain deferred |

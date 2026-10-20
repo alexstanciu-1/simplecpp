@@ -663,3 +663,19 @@ Only core metadata and documentation changed in production; compiler and runtime
 implementations remain unchanged. S07 closes, bringing original-issue closure to
 **26/64 (40.625%)**. Wider types, additional predicates and flow-sensitive narrowing
 remain separate; the frozen original finding above remains historical evidence.
+
+## S09 byte-search slice — 2026-10-20
+
+[The search proof](s09_byte_search.md) admits two/three-argument `strpos` and
+`strrpos` with normative byte positions, signed offsets and false-sentinel results.
+Dedicated adapters preserve the historical code-point helpers used by portability.
+The unchanged string-edge fixture passes exact output. Runtime and source checks
+each cover 1,760 calls, including arbitrary bytes, empty needles, extreme offsets,
+errors and input preservation; source observers prove snapshots and evaluation order.
+
+The original false-branch fixture now reaches **S09-B1**: direct passage of
+`result_or_false<int>` to `substr`'s integer parameter is rejected at exact-signature
+admission. Explicit extraction works, but no implicit conversion or narrowing repair
+was made. `substr_replace` remains deferred for separate semantic reconciliation.
+S09 is partial; fully closed original issues remain **26/64 (40.625%)**, with one
+partial repair and 37 other open issues. Original failure records remain historical.

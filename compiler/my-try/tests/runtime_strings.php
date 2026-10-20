@@ -107,6 +107,7 @@ PHS,
 	'predicates' => 'if (!str_contains("abc", "b") || !str_starts_with("abc", "ab") || !str_ends_with("abc", "bc")) { return 1; } if (str_contains("abc", "B") || str_starts_with("abc", "bc") || str_ends_with("abc", "ab")) { return 2; } if (str_starts_with("a", "abc") || str_ends_with("a", "abc") || str_contains("", "a")) { return 3; } if (!str_contains("é中😀", "中") || !str_starts_with("é中😀", "é") || !str_ends_with("é中😀", "😀")) { return 4; } if (!str_contains("abc", "") || !str_starts_with("abc", "") || !str_ends_with("abc", "")) { return 5; } return 0;',
 	'order' => 'function first(int &$order, string &$text): string { $order = $order * 10 + 1; return $text; } function second(int &$order, string &$text): string { $order = $order * 10 + 2; $text = "changed"; return "b"; } $order = 0; $text = "abc"; $found = str_contains(first($order, $text), second($order, $text)); if (!$found || $order !== 12) { return 1; } echo $text; return 0;',
 	'purity' => '$text = "AbC"; $lower = strtolower($text); $upper = strtoupper($text); echo $text, "|", $lower, "|", $upper; return 0;',
+	'php_byte_search' => 'echo (strpos("éaéa", "a") ?? -1), "|", (strrpos("éaéa", "a") ?? -1); return 0;',
 	'shadow' => 'function strtolower(int $value): int { return $value; } return strtolower(0);',
 ];
 foreach ($cases as $name => $source) {
@@ -127,7 +128,7 @@ foreach (['pad_empty' => 'str_pad("abc", 1, "");', 'pad_mode' => 'str_pad("abc",
 	file_put_contents($argv[1] . '/' . $name . '.cpp', $cpp);
 }
 foreach (['strtolower();', 'strtoupper("x", "y");', 'lcfirst(vector<int>::[1]);',
-	'strpos("abc", "a");', 'strrpos("abc", "a");', 'substr_replace("abc", "x", 1);',
+	'substr_replace("abc", "x", 1);',
 	'text_builder_append_byte_span();',
 	'explode(",");', 'explode(",", "abc", "2");', 'implode(vector<string>::[]);',
 	'implode(",", vector<int>::[1]);', 'implode(",", hash<int>::["a" => 1]);',

@@ -259,6 +259,22 @@ inline nullable<int_t<>> byte_find(const string_t &haystack, const string_t &nee
 	return int_t<>(static_cast<std::int64_t>(position));
 }
 
+// Reverse byte search limits match starting positions, not the end of the needle.
+// Nonnegative offsets bound the earliest start; negative offsets bound the latest.
+inline nullable<int_t<>> byte_rfind(const string_t &haystack, const string_t &needle, const int_t<> &offset) {
+	const auto &native = haystack.native_value();
+	const auto limit = scpp::normalize_reverse_search_limit(native.size(), offset.native_value(), "strrpos");
+	const auto position = native.rfind(needle.native_value(), offset.native_value() < 0 ? limit : std::string::npos);
+	if (position == std::string::npos || (offset.native_value() >= 0 && position < limit)) {
+		return null;
+	}
+	return int_t<>(static_cast<std::int64_t>(position));
+}
+
+inline nullable<int_t<>> byte_rfind(const string_t &haystack, const string_t &needle) {
+	return byte_rfind(haystack, needle, int_t<>(0));
+}
+
 inline string_t byte_slice(const string_t &value, const int_t<> &offset, const int_t<> &length_value) {
 	const auto native_offset = offset.native_value();
 	const auto native_length = length_value.native_value();

@@ -1513,8 +1513,8 @@ fixture adapter expose runtime exceptions to the native observer.
 
 `--baseline` reproduces the old required-brace failure and records the unchanged
 original fixture. On the repaired compiler that original fixture must advance to
-the separately tracked `strpos` blocker (S09); this does not claim an end-to-end
-pass. Run `tests/control_flow.py --no-pch --results <fresh-dir>` for existing
+the separately tracked wrapper-to-integer call blocker (S09-B1), following the
+S09 search repair; this does not claim an end-to-end pass. Run `tests/control_flow.py --no-pch --results <fresh-dir>` for existing
 control-flow, AST, completion, tokenizer and retained-preparation regressions.
 See [the S06 report](planning/s06_unbraced_conditionals.md) for exact evidence.
 
@@ -1534,3 +1534,21 @@ Focused regressions are `runtime_observation.py`, `mixed.py --no-pch` and
 `unbraced_conditionals.py`, each with its own fresh `--results` directory. The
 [dated S07 evidence](planning/s07_mixed_predicates.md) preserves the runtime-first
 probe and failed test-observer attempt. No full matrix is needed for this slice.
+
+## S09 byte search
+
+On dev002, run `tests/string_search_runtime.py --results <fresh-dir>` and
+`tests/string_search.py --results <fresh-dir>`. The optional `--baseline` modes
+require the pre-admission snapshot: they record code-point adapter behavior and
+unresolved source calls. The completed runtime suite checks 1,760 byte-search calls
+under UBSan; compiled source repeats those checks under ASan/UBSan and adds
+argument snapshots, short-circuited evaluation after an error, saved results,
+explicit extraction, 18 invalid calls and four recovery cycles. Original fixtures
+are never edited; compiled ones use their exact stored output oracle, while
+remaining preparation failures are recorded in the summary.
+
+Focused regressions are `runtime_strings.py`, `nonbool_sentinel_equality.py` and
+`unbraced_conditionals.py`. The conditional first-blocker assertion now expects
+S09-B1's exact runtime signature failure; the earlier unresolved-strpos evidence
+remains historical. See [the report](planning/s09_byte_search.md) for boundaries
+and the unchanged original edge fixture's pass. No full matrix is needed.

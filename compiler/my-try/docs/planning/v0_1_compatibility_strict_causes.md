@@ -245,3 +245,11 @@ three exact-mixed observation bindings. Runtime-first and source state tests pas
 no compiler or runtime implementation changes were required. The historical
 first-blocker counts above remain unchanged. Wider predicate overloads and
 flow-sensitive narrowing are not covered by this closure.
+
+## S09 search follow-up — 2026-10-20
+
+[Four search signatures now pass](s09_byte_search.md), including the unchanged
+`strict_strings_002_str_edges.phs`. The original false-branch fixture formerly
+blocked by S06 and unresolved `strpos` now reaches S09-B1: a falseable position
+passed directly to an integer runtime parameter. This boundary and `substr_replace`
+remain separately unresolved. Frozen first-cause counts above are not rewritten.
