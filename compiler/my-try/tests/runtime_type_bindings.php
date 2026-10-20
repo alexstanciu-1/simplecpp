@@ -10,7 +10,14 @@ function binding_check(bool $condition, string $message): void
 // Host-only fixture mutation; production reads directly into typed metadata records.
 $core_text = file_get_contents(dirname(__DIR__, 3) . '/runtime/metadata/modules/core.json');
 $core = json_decode($core_text, true, 512, JSON_THROW_ON_ERROR);
-$input = Model::$runtime_metadata;
+// Keep a valid custom provider installed while candidates fail, including failures
+// after core bindings have already been privately resolved.
+$custom = file_get_contents(__DIR__ . '/runtime_type_bindings.json');
+$custom_schema = json_decode($custom, true, 512, JSON_THROW_ON_ERROR);
+$input = new runtime_catalog_input();
+$input->modules->add('core', Runtime_Catalog_Reader::decode($core_text, 'core.json'));
+$input->modules->add('binding_proof', Runtime_Catalog_Reader::decode($custom, 'binding_proof.json'));
+Compiler_Lifecycle::configure_runtime($input);
 $integer_row = array_search('core.representation.int', array_column($core['cpp_types'], 'id'), true);
 $shared_row = array_search('core.representation.shared', array_column($core['cpp_types'], 'id'), true);
 $value_row = array_search('core.representation.value', array_column($core['cpp_types'], 'id'), true);
@@ -40,21 +47,42 @@ $bad=$core; $bad['cpp_types'][$value_row]['arguments'][0]['representation']='sto
 $bad=$core; unset($bad['cpp_types'][$value_row]['arguments']); $invalids[]=[$bad,'requires explicit arguments'];
 $bad=$core; $duplicate=$bad['cpp_types'][$integer_row]; $duplicate['id']='duplicate'; $bad['cpp_types'][]=$duplicate; $invalids[]=[$bad,'Duplicate C++ type definition binding'];
 $bad=$core; $bad['cpp_types'][0]['type']='int'; $invalids[]=[$bad,'type binding count mismatch'];
-foreach ($invalids as [$bad,$message]) {
-	$failed=false;
+$bad=$core; unset($bad['cpp_types'][$integer_row]['header']); $invalids[]=[$bad,'Missing C++ binding field'];
+$bad=$core; $bad['cpp_types'][$integer_row]['unknown_contract']=true; $invalids[]=[$bad,'Unknown C++ type binding field'];
+$bad=$core; $bad['cpp_types'][$integer_row]['header']='bad\"header'; $invalids[]=[$bad,'Invalid runtime C++ binding'];
+$bad=$core; $bad['cpp_types'][$integer_row]['arguments']=[['native'=>'int','representation'=>'stored']]; $invalids[]=[$bad,'Native C++ argument cannot select semantic representation'];
+$bad=$core; $bad['cpp_types'][$shared_row]['arguments'][0]['header']='provider.hpp'; $invalids[]=[$bad,'Semantic C++ argument requires representation'];
+$bad=$core; $bad['cpp_types'][$shared_row]['arguments'][0]['representation']='unknown'; $invalids[]=[$bad,'Unknown C++ argument representation'];
+$bad=$core; $bad['cpp_types'][$value_row]['arguments'][0]['modified_type']=false; $invalids[]=[$bad,'modified_type argument must be true'];
+$bad=$core; $bad['cpp_types'][$integer_row]['arguments']=[['native'=>'int','header'=>'bad\"header']]; $invalids[]=[$bad,'Invalid runtime C++ binding'];
+$bad=$core; $duplicate=$bad['cpp_types'][$value_row]; $duplicate['id']='duplicate.modifier'; $bad['cpp_types'][]=$duplicate; $invalids[]=[$bad,'Duplicate C++ type modifier binding'];
+
+$bad=$core; $bad['cpp_types'][$integer_row]['concrete_boundary']='true'; $invalids[]=[$bad,'expected boolean'];
+$bad=$core; $bad['cpp_types'][$value_row]['pointee_modified_type']='true'; $invalids[]=[$bad,'expected boolean'];
+
+function binding_rejection(array $core, array $provider, string $message, runtime_catalog_input $installed): void
+{
+	$diagnostic = '';
 	try {
 		$candidate = new runtime_catalog_input();
-		$candidate->modules->add('core', Runtime_Catalog_Reader::decode(json_encode($bad), 'bad.json'));
+		$candidate->modules->add('core', Runtime_Catalog_Reader::decode(json_encode($core), 'candidate-core.json'));
+		$candidate->modules->add('binding_proof', Runtime_Catalog_Reader::decode(json_encode($provider), 'candidate-provider.json'));
 		Compiler_Lifecycle::configure_runtime($candidate);
-	} catch (\Throwable $error) { $failed=str_contains($error->getMessage(), $message); }
-	binding_check($failed && Model::$runtime_metadata === $input, 'Invalid binding accepted or wrong diagnostic: '.$message);
+	} catch (\Throwable $error) { $diagnostic = $error->getMessage(); }
+	binding_check(str_contains($diagnostic, $message), 'Expected rejection: '.$message.'; received: '.$diagnostic);
+	binding_check(Model::$runtime_metadata === $installed, 'Rejected candidate replaced installed metadata');
+	// A failed candidate must not poison subsequent validation of the valid input.
+	Compiler_Lifecycle::configure_runtime($installed);
+	binding_check(Model::$runtime_metadata === $installed, 'Valid configuration recovery lost installed input');
 }
-
-$custom = file_get_contents(__DIR__ . '/runtime_type_bindings.json');
-$candidate = new runtime_catalog_input();
-$candidate->modules->add('core', Runtime_Catalog_Reader::decode($core_text, 'core.json'));
-$candidate->modules->add('binding_proof', Runtime_Catalog_Reader::decode($custom, 'binding_proof.json'));
-Compiler_Lifecycle::configure_runtime($candidate);
+foreach ($invalids as [$bad,$message]) { binding_rejection($bad, $custom_schema, $message, $input); }
+$provider_invalids = [];
+$bad=$custom_schema; array_pop($bad['cpp_types']); $provider_invalids[]=[$bad,'type binding count mismatch'];
+$bad=$custom_schema; $bad['cpp_types'][0]['id']='proof.absent'; $provider_invalids[]=[$bad,'Missing runtime type binding'];
+$bad=$custom_schema; $bad['cpp_types'][0]['arguments'][0]['parameter']='Absent'; $provider_invalids[]=[$bad,'Unknown C++ type parameter'];
+$bad=$custom_schema; $bad['cpp_types'][1]['arguments'][0]['native']='invalid()'; $provider_invalids[]=[$bad,'Invalid runtime C++ binding'];
+foreach ($provider_invalids as [$bad,$message]) { binding_rejection($core, $bad, $message, $input); }
+$candidate = $input;
 Compiler_Lifecycle::reset();
 $registry=Model::$type_catalog->registry();
 $integer=$registry->use(Model::$type_catalog->canonical('int')->type_id());
@@ -76,7 +104,22 @@ $artifact_snapshot=[]; foreach ($artifacts as $artifact) { $artifact_snapshot[$a
 $definition_before=Model::$type_catalog->definition('closed');
 Compiler_Lifecycle::reset();
 binding_check(Model::$runtime_metadata===$candidate && Model::$type_catalog->definition('closed')!==$definition_before, 'Recipe configuration did not survive identity reset');
-echo 'Runtime type bindings: '.count($invalids)." invalid schemas rejected; reordered and closed native templates, demand and reset passed\n";
+// Recovery also preserves demanded output across fresh registry identities.
+$replayed_registry = Model::$type_catalog->registry();
+$replayed_integer = $replayed_registry->use(Model::$type_catalog->canonical('int')->type_id());
+$replayed_string = $replayed_registry->use(Model::$type_catalog->canonical('string')->type_id());
+$replayed_definition = object_cast(Model::$type_catalog->definition('duo'), abstract_template_type_definition::class);
+$replayed_duo = $replayed_registry->use($replayed_registry->intern_application($replayed_definition, [$replayed_integer, $replayed_string])->type_id());
+$replayed_closed = $replayed_registry->use(Model::$type_catalog->canonical('closed')->type_id());
+$replayed_engine = new CPP_Specializations();
+$replayed_engine->request_composed($replayed_closed);
+$replayed_engine->request_composed($replayed_duo);
+$replayed_artifacts = new Storage /** Storage<cpp_artifact> */();
+$replayed_engine->append_artifacts($replayed_artifacts);
+$replayed_snapshot = [];
+foreach ($replayed_artifacts as $artifact) { $replayed_snapshot[$artifact->file_name] = $artifact->text; }
+binding_check($replayed_snapshot === $artifact_snapshot, 'Reset/recovery changed demanded concrete artifacts');
+echo 'Runtime type bindings: '.(count($invalids) + count($provider_invalids))." invalid schemas rejected with recovery; reordered and closed native templates, demand and deterministic reset passed\n";
 if (isset($argv[1])) {
 	$folder=$argv[1];
 	foreach ($artifact_snapshot as $file=>$text) { $path=$folder.'/'.$file; if(!is_dir(dirname($path))) { mkdir(dirname($path),0777,true); } file_put_contents($path,$text); }

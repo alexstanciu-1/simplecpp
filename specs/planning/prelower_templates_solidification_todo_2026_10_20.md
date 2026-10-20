@@ -100,9 +100,12 @@ contract and proof reference; unknowns are explicitly bounded.
 
 Owners: runtime catalog installation, backend binding/admission checks, diagnostics.
 
-- [ ] Verify required representation metadata, including native argument mapping,
+- [x] Verify required representation metadata, including native argument mapping,
   stored/payload roles, pointee contracts, scalar/byte interfaces and concrete exposure.
   Retain failed-configuration rejection without replacing installed configuration.
+  The [metadata recovery proof](results/prelower_metadata_recovery_2026_10_20/README.md)
+  covers 39 invalid schemas, valid reconfiguration after each rejection and identical
+  demanded artifacts after a registry reset. Provider C++ validity remains a native check.
 - [x] Classify existing limitations: runtime member results/references/variadics;
   runtime-call reference results, variadics and observation/default-input restrictions;
   callable transport; boxed write-back/provider composition; unsupported generated
@@ -155,7 +158,7 @@ Owners: runtime catalog installation, backend binding/admission checks, diagnost
   alone cannot prove arbitrary provider headers template-free. Combine binding checks
   with a complete generated-input closure regression, rather than promising universal
   freedom from templates based on flags alone.
-- [ ] Cover representative invalid/missing contracts and failure/repair behavior.
+- [x] Cover representative invalid/missing contracts and failure/repair behavior.
   Implement only bounded missing adapters needed for the agreed surface; keep broader
   runtime expansion deferred instead of making it a hidden prerequisite.
 

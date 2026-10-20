@@ -90,6 +90,13 @@ O0/O2 and sanitizer runs must report zero boundary allocations and tracked paylo
 lifecycle counters; warm native builds compile/link nothing. Primitive numeric
 copies are not instrumented payload copies.
 
+The combined acceptance's `runtime_type_bindings.php` metadata task covers 39
+malformed/missing/duplicate recipes, including late provider failures after private
+core installation. Each rejection preserves the installed configuration and is
+followed by valid reconfiguration. Demanded concrete artifacts must remain identical
+across a registry reset. These are PHP-host contract checks; native provider validity
+and template-free exposure are separate checks in the provider-boundary suite.
+
 `python3 compiler/my-try/tests/runtime_type_bindings.py --results FRESH_DIRECTORY`
 checks malformed/duplicate type recipes, existing-identity targets, argument reordering,
 closed native templates, reset and explicit demand. It compiles the generated layout

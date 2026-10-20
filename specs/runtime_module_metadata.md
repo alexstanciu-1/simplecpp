@@ -310,6 +310,14 @@ For example, core binds the existing integer and ownership identities:
  "arguments":[{"parameter":"Target","representation":"payload"}]}
 ```
 
+Candidate configuration is validated privately through the existing lifecycle owner
+before replacing the installed metadata. Rejected recipes must leave that input
+usable for a subsequent valid configuration; concrete demand after reset consumes
+fresh registry identities with the same recipes. This is startup configuration,
+not runtime hot reload. Schema/name validation does not certify provider C++ or
+transitive header contents: the native build must still enforce the strict
+application template policy. See the [recovery proof](planning/results/prelower_metadata_recovery_2026_10_20/README.md).
+
 A type recipe may set `concrete_boundary: true` to require concrete application
 storage even when its native spelling is not a template. This is physical exposure
 metadata; it does not change semantic identity or capabilities. Template applications
