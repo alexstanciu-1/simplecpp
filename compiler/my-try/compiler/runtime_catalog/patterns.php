@@ -95,6 +95,14 @@ final class Runtime_Catalog_Patterns
 			if (!isset($positions[$name])) { throw new \RuntimeException('Unknown transfer type parameter: ' . $name); }
 			$result->transfer_positions[] = $positions[$name];
 		}
+		$requirements /** Storage<runtime_replacement_requirement> */ = $result->replacement_results;
+		foreach ($spec->replacement_results as $relation) {
+			if (!isset($positions[$relation->result_name]) || !isset($positions[$relation->replacement_name])) {
+				throw new \RuntimeException('Unknown replacement result type parameter');
+			}
+			$requirements->append(new runtime_replacement_requirement(
+				$positions[$relation->result_name], $positions[$relation->replacement_name]));
+		}
 		$result->return_type = self::type($spec->return_type, $types, $positions, true);
 		return $result;
 	}

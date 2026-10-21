@@ -251,6 +251,14 @@ final class Runtime_Call_Preparation
 		if (q_count($inference->bindings) !== $contract->type_parameter_count) {
 			throw new \LogicException('Incomplete runtime type inference');
 		}
+		foreach ($contract->replacement_results as $requirement) {
+			$result_type = $inference->bindings[$requirement->result_position];
+			$replacement_type = $inference->bindings[$requirement->replacement_position];
+			if ((Type_Queries::canonical($replacement_type)->family() !== type_family::no_value)
+				&& !$replacement_type->matches($result_type)) {
+				throw new \RuntimeException('Runtime replacement result must be void or exactly match the worker result type');
+			}
+		}
 		foreach ($contract->transfer_positions as $position) {
 			Transfer_Preparation::require_payload($inference->bindings[$position]);
 		}

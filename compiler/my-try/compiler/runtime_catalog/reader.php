@@ -583,6 +583,11 @@ final class Runtime_Catalog_Reader
 				$result->return_type = self::type($reader);
 				$returns = true;
 			}
+			elseif ($key === 'replacement_results') {
+				$relations /** Storage<runtime_replacement_spec> */ = $result->replacement_results;
+				$reader->begin_array();
+				while ($reader->next_element()) { $relations->append(self::replacement_result($reader)); }
+			}
 			elseif ($key === 'transfer_types') {
 				$reader->begin_array();
 				while ($reader->next_element()) { $result->transfer_types[] = self::name($reader); }
@@ -616,6 +621,10 @@ final class Runtime_Catalog_Reader
 		if ((q_count($result->transfer_types) > 0) && (q_count($result->type_parameters) === 0)) {
 			$reader->reject('Transfer type requirements need a generic function');
 		}
+		$replacement_results /** Storage<runtime_replacement_spec> */ = $result->replacement_results;
+		if (!$replacement_results->is_empty() && (q_count($result->type_parameters) === 0)) {
+			$reader->reject('Replacement result requirements need a generic function');
+		}
 		if ($result->snapshot_borrow_safe) {
 			if (($result->member !== null) || (q_count($result->type_parameters) !== 0)) {
 				$reader->reject('Snapshot borrowing requires a fixed free runtime function');
@@ -625,6 +634,22 @@ final class Runtime_Catalog_Reader
 					$reader->reject('Snapshot borrowing requires fixed explicit value inputs');
 				}
 			}
+		}
+		return $result;
+	}
+
+	private static function replacement_result(\scpp\Json_Reader $reader): runtime_replacement_spec
+	{
+		$result = new runtime_replacement_spec();
+		$reader->begin_object();
+		while ($reader->next_property()) {
+			$key = $reader->property_name();
+			if ($key === 'result') { $result->result_name = self::name($reader); }
+			elseif ($key === 'replacement') { $result->replacement_name = self::name($reader); }
+			else { $reader->reject('Unknown replacement result field: ' . $key); }
+		}
+		if (($result->result_name === '') || ($result->replacement_name === '')) {
+			$reader->reject('Replacement result requirement needs result and replacement variables');
 		}
 		return $result;
 	}

@@ -978,3 +978,20 @@ observation input and a bool value return. Provider bindings use the existing
 The [predicate contract](builtins/type_predicates.md) owns kind semantics and the
 bounded source domain. Generic runtime fallbacks do not widen source admission;
 no predicate-specific compiler dispatch or flow narrowing is introduced.
+
+
+### Replacement result requirements
+
+A generic function may declare `replacement_results` as a list of objects with
+`result` and `replacement` naming its inferred type variables. Each selected
+requirement admits an exact replacement type or `void` for omission. A void result
+therefore admits only a void replacement. For example,
+`{"result":"R","replacement":"E"}` requires `E == R` or `E == void`.
+Names must resolve in the generic contract; missing/unknown fields and references
+reject during metadata installation. Fixed functions cannot carry this relation.
+
+The shared preparation owner checks the relation after selecting one signature
+and before publishing output. It does not rank overloads, convert result types,
+or alter payload/capture-transfer requirements. This bounded relation supports
+recovery callbacks whose replacement result must match the worker result; it is
+not a general constraint-expression language.

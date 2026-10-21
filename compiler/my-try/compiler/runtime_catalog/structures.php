@@ -102,6 +102,13 @@ abstract class runtime_signature_spec
 
 final class runtime_callable_spec extends runtime_signature_spec {}
 
+/** Named result relation in immutable startup metadata. */
+final class runtime_replacement_spec
+{
+	public string $result_name = '';
+	public string $replacement_name = '';
+}
+
 final class runtime_function_spec extends runtime_signature_spec
 {
 	/** Provider permits synchronous readonly borrowing in place of value snapshots. */
@@ -112,6 +119,12 @@ final class runtime_function_spec extends runtime_signature_spec
 	public array $qualified_aliases /** vector<string> */ = [];
 	public array $type_parameters /** vector<string> */ = [];
 	public array $transfer_types /** vector<string> */ = [];
+	public Storage $replacement_results /** Storage<runtime_replacement_spec> */;
+	public function __construct()
+	{
+		parent::__construct();
+		$this->replacement_results = new Storage /** Storage<runtime_replacement_spec> */();
+	}
 }
 
 /** Membership is independent of the function signature and backend symbol. */

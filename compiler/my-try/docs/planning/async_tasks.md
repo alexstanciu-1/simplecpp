@@ -590,7 +590,7 @@ attempt remain archived. Final uploaded source hashes were verified.
 partial and overall original issue closure remains 56/64.
 
 
-### Error-handler result relation prerequisite — proposed 2026-10-21
+### Error-handler result relation prerequisite — authorized 2026-10-21
 
 The dev002 `task-error-contract-01` probe confirms that separate generic handler
 returns `R` and `void` admit omission for a value worker but collide for a void
@@ -609,8 +609,8 @@ accept void handlers, while non-void workers accept exact replacements or omissi
 Existing transfer requirements remain independent: background handlers must be
 transferable; synchronous coordinator handlers do not cross a thread boundary.
 
-This is a new retained semantic relation, requiring discussion under my-try's local
-rules. No implementation of the relation has begun. Upon authorization, verify
+This new retained semantic relation was explicitly authorized under my-try's local
+rules. The implementation checkpoint is recorded below. Its validation scope is:
 malformed references, wrong replacement types, all void/value cases, wrappers,
 retained reject/repair/fresh parity and default-prelowered runtime error handling
 on dev002. Existing coordinator dispatch, omission identity and shutdown repairs
@@ -638,3 +638,23 @@ implementation changed.
 still outstanding. Its bounded result relation was explicitly authorized after
 the proposal above; that approval is resolved and implementation follows next.
 V-R02 remains partial, with 56/64 original issues closed.
+
+
+### Approved error-result relation implemented — 2026-10-21
+
+`replacement_results` now resolves named variables through the existing startup
+contract owner into typed position pairs. Selected-call preparation admits an
+exact replacement or void omission. Overload selection, result conversion and
+transfer checks are unchanged; no backend or runtime implementation changed.
+
+Dev002 `task-error-relation-02` passes 11 checks: exact/void/nullable admission,
+wrong replacement and void-worker/value-handler rejection, malformed metadata,
+retained rejection/repair/replay and void-edit fresh parity, and three executable
+replacement/omission/void-handler cold/warm programs using default prelowering.
+The original ambiguity probe remains runnable without `--relation` and its
+historical evidence is preserved. Production task overload wiring remains next;
+this prerequisite alone does not complete error-handler API admission or V-R02.
+
+[Error-result relation evidence](task-error-relation-evidence.tar.gz), SHA-256:
+`445d56055694d56b3517db7330ff44096eeebb70b6764ddda73f6eb1a4ce5774`. Final uploaded source hashes were verified; no full matrix or
+native compiler rebuild. Overall remains 56/64 closed, V-R02 partial.
