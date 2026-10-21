@@ -132,3 +132,9 @@ prelowering; see [acceptance](project_startup_metadata.md). Progress is now
 closure is a capability repair; the other confirms immutable startup semantics.
 No runtime implementation changes or full matrix rerun. Build-planner/packaging
 parity and metadata hot reload remain separate.
+
+## S10 / V-R06 closeout — 2026-10-21
+
+[Checked spans and stable hashing](span_hash.md) close two original issues:
+**49/64 resolved (76.5625%), +3.125 points**, with 15 original issues open.
+Default-prelowered dev002 checks pass; wider language gaps remain explicit.

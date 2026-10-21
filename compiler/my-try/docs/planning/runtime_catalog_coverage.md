@@ -33,8 +33,8 @@ do not request approval for each ordinary metadata row or populate speculative r
 | tokenizer | Shared token_buffer; four entrypoints, seven accessors and readable mixed adapter | Existing typed tokenizer provider; owned bytes/locations and concrete call boundaries; [proof](tokenizer_io.md) |
 | process (opt-in) | Five lifecycle calls, process_handle/process_output and six output fields | Shared storage/Result transport; metadata-declared provider linkage |
 | regex (opt-in) | 13 helpers / 25 signatures and two split constants; inventory below | Nested container Results, ordinary value calls; explicit PCRE2 provider linkage |
-| source (opt-in) | Three owning types and thirteen helpers; inventory below | Metadata-owned values, reference transfer, non-retaining reads; no borrowed spans |
-| strings | 52 source helpers / 71 signatures, two builder types and three padding constants; inventory below | Fixed/generic signatures, value/reference/observation boundaries, metadata-owned types and settled constants |
+| source (opt-in) | Four value types and twenty helpers; inventory below | Metadata-owned values, reference transfer, non-retaining reads; checked weak-owner spans |
+| strings | 54 source helpers / 73 signatures, two builder types and three padding constants; inventory below | Fixed/generic signatures, value/reference/observation boundaries, metadata-owned types and settled constants |
 
 The host and native-driver startup lists select core, json, strings, datetime and filesystem. Other consumers
 can select a subset; `strings` depends on `core`, and repeated selections deduplicate.
@@ -44,21 +44,22 @@ the root manifest runtime modules. [V-D10 acceptance](project_startup_metadata.m
 verifies immutable startup constraints, live-replacement rejection and fresh-session
 changes under default prelowering; it adds no hot-reload mechanism.
 
-## Source module inventory — 2026-10-09
+## Source module inventory — updated 2026-10-21
 
-Opt-in `source.json` registers three opaque value types and thirteen helpers:
+Opt-in `source.json` registers four opaque value types and twenty helpers. The
+original thirteen are:
 buffer empty/take/release/byte-len/byte-at/slice; index build/line-count/
 offset-to-location/line-column-to-offset; location offset/line/column.
 All use existing type and callable metadata, with reference mutation,
 non-retaining observation and readonly-reference reads. No compiler worker changes.
 Index data and slices own their storage independently of the buffer.
 
-Held: byte_span, source_buffer_span, byte_span_len/at/to_string and
-text_builder_append_byte_span require retained-borrow/invalidation support
-(CH15-RUNTIME-SOURCE-01). Span hashing additionally awaits stable-hash contract
-reconciliation. Internal source_text_vector_move_append is not promoted as a
-public API by this pass. Buffer replacement/move safety for existing C++ span
-consumers is not repaired by withholding frontend exposure.
+The [S10/V-R06 closeout](span_hash.md) adds byte_span, source_buffer_span,
+byte_span_len/at/to_string, hash_bytes, stable_hash_bytes_u64 and builder span
+append. Checked weak-owner state invalidates on release/move/replacement/destruction;
+copying a buffer remains independent. Source depends on strings; both provider
+families use existing concrete-boundary metadata for default prelowering.
+Internal source_text_vector_move_append is not promoted as a public API.
 
 The provider reverse-map arithmetic now checks remaining file length before
 addition, preventing uint32 wraparound; existing cross-line column policy stays
@@ -79,7 +80,7 @@ PHP adapters and strict symbol-map spellings. Top-level builtin specs own semant
 `runtime/specs/catalog.md` supplies the explicit-unit helper contracts. Native private
 mechanics such as `make_pad_bytes` are not source APIs. `hash_string` and
 `stable_hash_string_u64` happen to share the PHP adapter header but belong to the
-separate stable-hash owner and remain for that owner's module audit.
+separate stable-hash owner; both are now registered after the FNV-1a contract repair.
 
 | Public surface | Status | Contract / remaining prerequisite |
 | --- | --- | --- |
@@ -101,7 +102,7 @@ separate stable-hash owner and remain for that owner's module audit.
 | substr_replace | Registered, 3/4 args | Shared byte runtime reconciled with the normative insertion/no-op contract; omitted length inserts and unusable negative windows preserve the original. See [S09 replacement proof](s09_substr_replace.md). |
 | implode(mixed/dynamic) | Held for contract review | Documented string-only elements versus adapter cast/coercion; dynamic admission not established |
 | strlen(nullable<string>) / runtime length overload | Not registered | Core's bounded v0.2 contract is string byte length; no implicit nullable overload |
-| string_parts_builder (10 free helpers), text_builder (10 of 11 free helpers) | Registered value types and twenty helpers | Writable-reference mutation; non-retaining queries; only text byte-span append awaits source::byte_span |
+| string_parts_builder (10 free helpers), text_builder (10 of 11 free helpers) | Registered value types and twenty helpers | Writable-reference mutation; non-retaining queries; text byte-span append is registered by the opt-in source module |
 
 This completes the **ready-contract module pass**, not every runtime capability.
 No source aliases for internal `find`, `rfind`, `split`, `join`, `hex_decode` or
@@ -247,11 +248,9 @@ values select the same measurement policy. Unsupported measurements may return z
 The narrow existing provider header owns behavior; no new runtime implementation,
 type registration or compiler dispatch is needed.
 
-Stable string hashing is **held**, not registered: its implementation mixes
-`std::hash<std::string>` despite a cross-process/standard-library stability promise.
-Algorithm changes require persisted-key migration review; see
-[CH15-RUNTIME-HASH-01](../catalog/15_blocking_debt.md#ch15-runtime-hash-01--stable-hashing-implementation-and-persisted-key-compatibility).
-Byte-span hashing also needs the source type model. Type predicates require a
+Stable string and span hashing is registered after the [S10/V-R06 repair](span_hash.md):
+FNV-1a64 over exact bytes, sixteen-digit hex helpers, and a v2 persisted-key namespace.
+Hash-table hashing and native SHA-256 build keys are unchanged. Type predicates require a
 separate family-consistency audit: the existing PHP provider recognizes mixed numeric
 kinds but its generic fallback does not establish equivalent dynamic-kind behavior.
 Do not fill this gap by enumerating concrete scalar/container overloads in metadata.
@@ -262,7 +261,7 @@ Do not fill this gap by enumerating concrete scalar/container overloads in metad
 | Contract-sensitive strings | boxed implode | Resolve the specific differences in the module inventory above; hex2bin and code-point substr are now registered without semantic changes |
 | Container-producing/consuming helpers | collection APIs | Audit by owning module; typed split/join now use existing application/generic contracts |
 | Numeric and utility helpers | predicates, stable hashing; future scalar math | Audit real provider ownership; scalar math has no existing public module/strict registry to migrate |
-| Registered runtime types | JSON document/nodes, filesystem handles, compiler Storage, source views | Shared storage and registered members/factories are available; real provider lifecycle contracts still need integration proofs; borrowed source views remain deferred |
+| Registered runtime types | JSON document/nodes, filesystem handles, compiler Storage, source views | Shared storage and registered members/factories are available; real provider lifecycle contracts still need integration proofs; checked source spans are admitted; wider borrowed views remain separate |
 | Defaults and richer signatures | optional/default parameters, variadics, reference outputs | Scalar defaults, variadics, callbacks and reference inputs are available; reference returns/non-scalar defaults remain deferred |
 | Optional/linking modules | IO, process, regex, curl, tasks, DB/UI | Build metadata is available; audit public contracts and type/lifetime requirements by whole module |
 | Non-type template arguments | fixed_array<T,N> | Extend the type-argument model deliberately; do not enumerate element types or sizes |
@@ -283,7 +282,7 @@ queries use non-retaining observation. No compiler worker, registry schema, back
 or runtime implementation change was needed. The focused proof covers independent
 copies, explicit aliases, source value/reference boundaries, read-only/temporary
 queries, argument-induced replacement, byte preservation, negative reserve errors,
-selection/reset and rejected unsupported operations. Byte-span append stays held.
+selection/reset and rejected unsupported operations. Byte-span append was held at that checkpoint; S10 now admits it.
 
 Evidence: `/tmp/my-try-runtime-builders-20261009-2` passes six PHP suites
 (0.46–2.61s), ten generated C++ programs and two existing native runtime tests
@@ -338,7 +337,7 @@ suites (0.53–0.93s) and three generated-program builds/runs (1.83–6.11s).
 Both helpers and all four registered signatures execute; bool expressions are
 evaluated once and source declarations shadow runtime names normally. Linux /proc
 observations are positive; tests do not assert equality across changing samples.
-Stable-hash names remain rejected. No PCH or native compiler rebuild.
+Stable-hash names were rejected at that checkpoint; V-R06 now admits them. No PCH or native compiler rebuild.
 
 `tests/runtime_strings.py` checks exact generated-program output for ASCII transforms,
 unchanged UTF-8 bytes, empty strings, byte predicates, source shadowing, input purity,

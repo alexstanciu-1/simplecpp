@@ -822,8 +822,15 @@
       "dependencies": [
         "Resolve the named source contract/owner before any repair."
       ],
-      "next_action": "Retain first-blocker evidence and discuss the bounded implementation or fixture plan; no fixes during verification.",
-      "simple_batch_eligible": false
+      "next_action": "Closed in bounded scope; retain wider uint64 equality, explicit copyable-value move and 4-GiB/concurrency boundaries separately.",
+      "simple_batch_eligible": false,
+      "repair_status": "implemented-and-verified",
+      "repair": {
+        "date": "2026-10-21",
+        "report": "span_hash.md",
+        "evidence": "span-hash-acceptance.tar.gz",
+        "summary": "Checked weak-owner spans and fixed FNV-1a64 with v2 persisted keys; metadata/default-prelowered acceptance and runtime regressions pass on dev002."
+      }
     },
     {
       "id": "S11",
@@ -1157,10 +1164,17 @@
       "dependencies": [
         "S10"
       ],
-      "next_action": "Discuss the owning module contract/integration before implementation; retain current absence evidence.",
+      "next_action": "Closed in bounded scope; retain wider uint64 equality, explicit copyable-value move and 4-GiB/concurrency boundaries separately.",
       "acceptance": "All documented in-scope signatures admitted through ordinary metadata, exact behavior/error and production-provider build proofs, with explicit decisions for held contracts.",
       "simple_batch_eligible": false,
-      "eligibility_reason": "Requires contract or module integration discussion; name-resolution probes do not prove a metadata-only repair."
+      "eligibility_reason": "Requires contract or module integration discussion; name-resolution probes do not prove a metadata-only repair.",
+      "repair_status": "implemented-and-verified",
+      "repair": {
+        "date": "2026-10-21",
+        "report": "span_hash.md",
+        "evidence": "span-hash-acceptance.tar.gz",
+        "summary": "Checked weak-owner spans and fixed FNV-1a64 with v2 persisted keys; metadata/default-prelowered acceptance and runtime regressions pass on dev002."
+      }
     },
     {
       "id": "V-R07",

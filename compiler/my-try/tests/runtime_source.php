@@ -113,7 +113,7 @@ foreach ([
 	'source_buffer_release(source_buffer_empty());',
 	'function bad(const source_buffer &$b): void { source_buffer_release($b); }',
 	'$b = source_buffer_empty(); source_buffer_byte_at($b, "0");',
-	'$b = source_buffer_empty(); source_buffer_span($b, 0, 0);',
+	'source_buffer_span(source_buffer_empty(), 0, 0);',
 	'$b = source_buffer_empty(); count($b);',
 ] as $source)
 {

@@ -11,6 +11,7 @@
 #include <cstddef>
 #include <cstdint>
 #include <limits>
+#include <memory>
 #include <string>
 #include <string_view>
 #include <vector>
@@ -42,103 +43,116 @@ namespace detail {
 	return static_cast<std::uint32_t>(native);
 }
 
-	} // namespace detail
+// Each buffer owns a distinct state. Spans observe it weakly, never the buffer object.
+struct source_buffer_state final {
+	std::string bytes;
+	explicit source_buffer_state(std::string value = {}) : bytes(std::move(value)) {}
+};
+
+} // namespace detail
 
 class source_buffer final {
 private:
-	std::string bytes_;
-	std::uint64_t generation_ = 1;
+	// A moved-from/released buffer is empty; allocate a fresh state only when needed.
+	mutable std::shared_ptr<detail::source_buffer_state> state_;
+	friend class byte_span;
+
+	[[nodiscard]] const std::string &bytes() const noexcept {
+		static const std::string empty;
+		return state_ ? state_->bytes : empty;
+	}
+
+	[[nodiscard]] std::shared_ptr<detail::source_buffer_state> span_state() const {
+		if (!state_) { state_ = std::make_shared<detail::source_buffer_state>(); }
+		return state_;
+	}
 
 	void check_bounds(const std::size_t offset, const std::size_t length, const char *context) const {
-		if (offset > bytes_.size() || length > bytes_.size() - offset) {
+		if (offset > byte_size() || length > byte_size() - offset) {
 			throw runtime_error(std::string(context), "source buffer byte range is out of bounds");
 		}
 	}
 
 public:
 	source_buffer() = default;
+	explicit source_buffer(std::string value)
+		: state_(std::make_shared<detail::source_buffer_state>(std::move(value))) {}
 
-	explicit source_buffer(std::string bytes)
-		: bytes_(std::move(bytes)) {
+	// Copies never alias invalidation or bytes. Replacement retires the old state.
+	source_buffer(const source_buffer &other) : source_buffer(other.bytes()) {}
+	source_buffer &operator=(const source_buffer &other) {
+		if (this != &other) { source_buffer replacement(other); state_.swap(replacement.state_); }
+		return *this;
 	}
 
-	[[nodiscard]] std::size_t byte_size() const noexcept {
-		return bytes_.size();
+	// Allocate before moving bytes, then expire every source span, including empty ones.
+	source_buffer(source_buffer &&other)
+		: state_(other.state_ ? std::make_shared<detail::source_buffer_state>(std::move(other.state_->bytes)) : nullptr) {
+		other.state_.reset();
+	}
+	source_buffer &operator=(source_buffer &&other) {
+		if (this != &other) { source_buffer replacement(std::move(other)); state_.swap(replacement.state_); }
+		return *this;
 	}
 
-	[[nodiscard]] bool empty() const noexcept {
-		return bytes_.empty();
-	}
-
-	[[nodiscard]] std::uint64_t generation() const noexcept {
-		return generation_;
-	}
-
-	[[nodiscard]] std::string_view view() const noexcept {
-		return std::string_view(bytes_);
-	}
-
+	[[nodiscard]] std::size_t byte_size() const noexcept { return bytes().size(); }
+	[[nodiscard]] bool empty() const noexcept { return bytes().empty(); }
+	// Internal synchronous borrow: callers must not retain this view across invalidation.
+	[[nodiscard]] std::string_view view() const noexcept { return bytes(); }
 	[[nodiscard]] unsigned char byte_at(const std::size_t offset) const {
 		check_bounds(offset, 1U, "source_buffer_byte_at");
-		return static_cast<unsigned char>(bytes_[offset]);
+		return static_cast<unsigned char>(bytes()[offset]);
 	}
-
 	[[nodiscard]] string_t slice(const std::size_t offset, const std::size_t length) const {
 		check_bounds(offset, length, "source_buffer_slice");
-		return string_t(bytes_.substr(offset, length));
+		return string_t(bytes().substr(offset, length));
 	}
-
 	[[nodiscard]] byte_span span(std::size_t offset, std::size_t length) const;
-
 	[[nodiscard]] string_t release() {
-		std::string out = std::move(bytes_);
-		bytes_.clear();
-		++generation_;
+		std::string out;
+		if (state_) { out = std::move(state_->bytes); state_.reset(); }
 		return string_t(std::move(out));
 	}
 };
 
 class byte_span final {
 private:
-	const source_buffer *owner_ = nullptr;
+	std::weak_ptr<detail::source_buffer_state> owner_;
 	std::size_t offset_ = 0;
 	std::size_t length_ = 0;
-	std::uint64_t generation_ = 0;
 
-	[[nodiscard]] const source_buffer &owner(const char *context) const {
-		if (owner_ == nullptr || owner_->generation() != generation_) {
+	[[nodiscard]] std::shared_ptr<detail::source_buffer_state> owner(const char *context) const {
+		auto state = owner_.lock();
+		if (!state) {
 			throw runtime_error(std::string(context), "byte span source buffer is no longer valid");
 		}
-		return *owner_;
+		return state;
 	}
 
 public:
 	byte_span() = default;
-
-	byte_span(const source_buffer &owner, const std::size_t offset, const std::size_t length)
-		: owner_(&owner), offset_(offset), length_(length), generation_(owner.generation()) {
+	byte_span(const source_buffer &buffer, const std::size_t offset, const std::size_t length)
+		: offset_(offset), length_(length) {
+		buffer.check_bounds(offset, length, "source_buffer_span");
+		owner_ = buffer.span_state();
 	}
-
 	[[nodiscard]] std::size_t byte_size() const {
 		static_cast<void>(owner("byte_span_len"));
 		return length_;
 	}
-
 	[[nodiscard]] unsigned char byte_at(const std::size_t offset) const {
-		const auto &buffer = owner("byte_span_at");
-		if (offset >= length_) {
-			throw runtime_error("byte_span_at", "byte span offset is out of bounds");
-		}
-		return buffer.byte_at(offset_ + offset);
+		const auto state = owner("byte_span_at");
+		if (offset >= length_) { throw runtime_error("byte_span_at", "byte span offset is out of bounds"); }
+		return static_cast<unsigned char>(state->bytes[offset_ + offset]);
 	}
-
+	// Only synchronous provider consumers use this raw view; no source-language view escapes.
 	[[nodiscard]] std::string_view view() const {
-		const auto &buffer = owner("byte_span_view");
-		return buffer.view().substr(offset_, length_);
+		const auto state = owner("byte_span_view");
+		return std::string_view(state->bytes).substr(offset_, length_);
 	}
-
 	[[nodiscard]] string_t to_string() const {
-		return string_t(std::string(view()));
+		const auto state = owner("byte_span_to_string");
+		return string_t(state->bytes.substr(offset_, length_));
 	}
 };
 
@@ -215,7 +229,6 @@ public:
 };
 
 inline byte_span source_buffer::span(const std::size_t offset, const std::size_t length) const {
-	check_bounds(offset, length, "source_buffer_span");
 	return byte_span(*this, offset, length);
 }
 

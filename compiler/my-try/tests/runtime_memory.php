@@ -38,7 +38,7 @@ foreach ($cases as $name => $source) {
 }
 foreach (['memory_get_usage(1);', 'memory_get_peak_usage("true");',
 	'memory_get_usage(true, false);', 'memory_get_peak_usage(true, false);',
-	'hash_string("abc");', 'stable_hash_string_u64("abc");', 'stable_hash_bytes_u64("abc");'] as $source) {
+	'stable_hash_bytes_u64("abc");'] as $source) {
 	$failed = false;
 	try { memory_compile($source); }
 	catch (\RuntimeException $error) { $failed = true; }

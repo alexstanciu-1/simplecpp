@@ -2,7 +2,7 @@
   "version": 1,
   "module": "source",
   "dependencies": [
-    "core"
+    "strings"
   ],
   "types": [
     {
@@ -31,23 +31,41 @@
         "value_storable",
         "copyable_value"
       ]
+    },
+    {
+      "id": "source.byte_span",
+      "name": "byte_span",
+      "kind": "struct",
+      "capabilities": [
+        "value_storable",
+        "copyable_value"
+      ]
     }
   ],
   "cpp_types": [
     {
       "id": "source.source_buffer",
       "symbol": "scpp::source::source_buffer",
-      "header": "modules/source/source.hpp"
+      "header": "modules/source/source.hpp",
+      "concrete_boundary": true
     },
     {
       "id": "source.source_line_index",
       "symbol": "scpp::source::source_line_index",
-      "header": "modules/source/source.hpp"
+      "header": "modules/source/source.hpp",
+      "concrete_boundary": true
     },
     {
       "id": "source.source_location",
       "symbol": "scpp::source::source_location",
-      "header": "modules/source/source.hpp"
+      "header": "modules/source/source.hpp",
+      "concrete_boundary": true
+    },
+    {
+      "id": "source.byte_span",
+      "symbol": "scpp::source::byte_span",
+      "header": "modules/source/source.hpp",
+      "concrete_boundary": true
     }
   ],
   "functions": [
@@ -230,6 +248,110 @@
         }
       ],
       "returns": "uint32"
+    },
+    {
+      "id": "source.source_buffer_span",
+      "name": "source_buffer_span",
+      "parameters": [
+        {
+          "name": "buffer",
+          "type": "source_buffer",
+          "passing": "readonly_reference"
+        },
+        {
+          "name": "offset",
+          "type": "int",
+          "passing": "value"
+        },
+        {
+          "name": "length",
+          "type": "int",
+          "passing": "value"
+        }
+      ],
+      "returns": "byte_span"
+    },
+    {
+      "id": "source.byte_span_len",
+      "name": "byte_span_len",
+      "parameters": [
+        {
+          "name": "span",
+          "type": "byte_span",
+          "passing": "observe"
+        }
+      ],
+      "returns": "uint32"
+    },
+    {
+      "id": "source.byte_span_at",
+      "name": "byte_span_at",
+      "parameters": [
+        {
+          "name": "span",
+          "type": "byte_span",
+          "passing": "readonly_reference"
+        },
+        {
+          "name": "offset",
+          "type": "int",
+          "passing": "value"
+        }
+      ],
+      "returns": "uint8"
+    },
+    {
+      "id": "source.byte_span_to_string",
+      "name": "byte_span_to_string",
+      "parameters": [
+        {
+          "name": "span",
+          "type": "byte_span",
+          "passing": "observe"
+        }
+      ],
+      "returns": "string"
+    },
+    {
+      "id": "source.hash_bytes",
+      "name": "hash_bytes",
+      "parameters": [
+        {
+          "name": "span",
+          "type": "byte_span",
+          "passing": "observe"
+        }
+      ],
+      "returns": "string"
+    },
+    {
+      "id": "source.stable_hash_bytes_u64",
+      "name": "stable_hash_bytes_u64",
+      "parameters": [
+        {
+          "name": "span",
+          "type": "byte_span",
+          "passing": "observe"
+        }
+      ],
+      "returns": "uint64"
+    },
+    {
+      "id": "source.text_builder_append_byte_span",
+      "name": "text_builder_append_byte_span",
+      "parameters": [
+        {
+          "name": "builder",
+          "type": "text_builder",
+          "passing": "reference"
+        },
+        {
+          "name": "span",
+          "type": "byte_span",
+          "passing": "readonly_reference"
+        }
+      ],
+      "returns": "void"
     }
   ],
   "cpp": [
@@ -297,6 +419,41 @@
       "id": "source.source_location_column",
       "symbol": "scpp::source::source_location_column",
       "header": "modules/source/source.hpp"
+    },
+    {
+      "id": "source.source_buffer_span",
+      "symbol": "scpp::source::source_buffer_span",
+      "header": "modules/source/source.hpp"
+    },
+    {
+      "id": "source.byte_span_len",
+      "symbol": "scpp::source::byte_span_len",
+      "header": "modules/source/source.hpp"
+    },
+    {
+      "id": "source.byte_span_at",
+      "symbol": "scpp::source::byte_span_at",
+      "header": "modules/source/source.hpp"
+    },
+    {
+      "id": "source.byte_span_to_string",
+      "symbol": "scpp::source::byte_span_to_string",
+      "header": "modules/source/source.hpp"
+    },
+    {
+      "id": "source.hash_bytes",
+      "symbol": "scpp::source::hash_bytes",
+      "header": "modules/source/source.hpp"
+    },
+    {
+      "id": "source.stable_hash_bytes_u64",
+      "symbol": "scpp::source::stable_hash_bytes_u64",
+      "header": "modules/source/source.hpp"
+    },
+    {
+      "id": "source.text_builder_append_byte_span",
+      "symbol": "scpp::str::text_builder_append_byte_span",
+      "header": "modules/strings/strings.hpp"
     }
   ]
 }

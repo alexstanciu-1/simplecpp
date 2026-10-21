@@ -9,9 +9,13 @@ syntax and collection → shared semantic preparation → C++ generation. Other
 frontends should normalize toward the same PHS-shaped concepts. LLVM is a parked
 experiment retained for regressions, not a second semantic development path.
 
-Current repair checkpoint: [project composition and startup metadata](planning/project_startup_metadata.md),
-47/64 original issues resolved (73.4375%): 45 implemented/repaired and two intentional
+Current repair checkpoint: [checked spans and stable hashing](planning/span_hash.md),
+49/64 original issues resolved (76.5625%): 47 implemented/repaired and two intentional
 contract reconciliations. Supplementary BS-R01 also remains closed.
+
+S10/V-R06 add invalidation-checked spans and FNV-1a64 with versioned keys, verified
+on dev002 with default prelowering. Wider uint64 equality and explicit copyable-value
+move remain separate.
 
 V-P01 exposes strict manifest projects and existing export/dependency policies through
 `--project`. V-D10 preserves immutable startup metadata; live replacement stays

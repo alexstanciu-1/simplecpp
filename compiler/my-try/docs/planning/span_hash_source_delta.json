@@ -1,0 +1,19 @@
+{
+  "base": "project_startup_source_delta.json",
+  "inputs": 5372,
+  "delta": {
+    "compiler/my-try/tests/runtime_memory.php": "c4779d43a831d096894913cfef84a78cdbbda0376b136ca95ca96948b8dc84ef",
+    "compiler/my-try/tests/runtime_source.php": "9908de77a7b8d5199a37119ddc05e7d6e299ae7933399eb4a518bf08c2079564",
+    "runtime/include/modules/source/source.hpp": "d339ed26745159db1fdc57b2ef8c4cd5dc496491b34d1e5275dc82c558b8f05c",
+    "runtime/include/scpp/stable_hash.hpp": "1f67819d44fdc5473803b6875432b23e2b0de103410dab853391639f336d43c2",
+    "runtime/metadata/modules/source.json": "06135db7a9ec8b4b2779f3e4017a267cad13962965b6a7bd400479357983c84f",
+    "runtime/metadata/modules/strings.json": "41515cfefda614e09710ac8d7b73efdf8213d41f03214d503d4e98f9fa96a7f9",
+    "tests/php/source/strict_level_01/strict_source_003_stable_hash.test-info.json": "6d1af3bab73be15a250c815e56c24298cb581cba67f4e98e5610894425d6bd4b",
+    "tests/runtime/native/test_stable_hash.cpp": "a8a3e62147afff38d04a7b405e2ac1d2f8686e3d3335dd46fdb4ee40ef65fa09",
+    "compiler/my-try/tests/span_hash.py": "dedb89d260ce8ce9dca695670566ce504262364d0f6c5dada61c201e6125d4b5",
+    "compiler/my-try/tests/span_hash_publish.php": "f96a328db2d5abb62fb293d88f6b786f828b94302d5a533850005d83003f448c",
+    "compiler/my-try/tests/span_hash_recovery.php": "5535edd442fc9feb120046e5af6ce43f1cb4a2b75d6cda1b3d7ceb36eedac4f6",
+    "compiler/my-try/tests/span_hash_regressions.py": "2c55ec1c0765b4458d0b9160d7c2527d0d858dce0f8993d83895acb8afd154e7",
+    "tests/runtime/native/test_source_span_lifetime.cpp": "af6488536231efa3e4366545dee9df483cb9443ec534cce31911413c2cbcdc6d"
+  }
+}

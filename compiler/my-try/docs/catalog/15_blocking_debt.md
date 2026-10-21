@@ -197,20 +197,12 @@ outstanding debt. This follow-up does not block the bounded catalog pass.
 
 ### CH15-RUNTIME-HASH-01 — stable hashing implementation and persisted-key compatibility
 
-The core-utility audit found `scpp::stable_hash::string_u64` delegates to
-`hash_detail::key_ops<string_t>::hash`, which mixes `std::hash<std::string>`.
-This does not establish the stable-hash header's promise of repeatable output across
-processes and host standard-library versions. Existing golden tests establish only
-the tested toolchain's values, not the portable algorithm contract.
-
-Before registering `hash_string` / `stable_hash_string_u64` in my-try metadata,
-agree a fixed byte-hashing algorithm and a persisted-key/version migration policy,
-or explicitly revise the promised scope of stability. Do not silently change the
-runtime algorithm: current compiler caches and other consumers already use it.
-Prove string/span agreement, empty and binary/UTF-8 inputs, and cross-toolchain
-goldens under the chosen contract. `stable_hash_bytes_u64` additionally needs the
-registered source/byte-span type model. The existing providers remain unchanged;
-the new catalog intentionally leaves these helpers unavailable pending review.
+Resolved 2026-10-21 by the approved [S10/V-R06 batch](../planning/span_hash.md).
+FNV-1a64 over exact bytes replaces the historical std::hash dependency; persisted
+keys use `stable_hash_u64:fnv1a64:v2:<16hex>`. No active in-repository persisted
+consumer required migration; historical artifacts and table hashing are unchanged.
+All four helpers are registered. Independent goldens and Clang/GCC executions pass;
+both used libstdc++, so a second standard-library execution remains unverified.
 
 ### CH15-RUNTIME-TYPE-METADATA-01 — review metadata-driven types, not hardcoded families
 
@@ -347,16 +339,13 @@ roots/package-manager support need separate contracts if introduced.
 
 ### CH15-RUNTIME-SOURCE-01 — borrowed source views
 
-Open; prerequisite for enabling span APIs, not a blocker for owning source calls.
-The current byte_span stores a raw source_buffer pointer and a generation.
-Destruction leaves the pointer dangling; replacement/move is not uniformly
-invalidated. Do not register it as an ordinary owned value. Agree a reusable
-borrow-origin/escape/invalidation contract or a safe runtime view representation,
-then prove return, storage, temporary, release, replacement and move cases before
-enabling source_buffer_span, span queries, hashing and builder span append.
-Existing native consumers also need review. Separately review uint32 endpoint,
-column and line-count representability for maximum-size sources; this batch
-repairs reverse-map addition overflow but does not claim exhaustive 4-GiB proofs.
+The bounded lifetime prerequisite is resolved by [S10](../planning/span_hash.md):
+weak-owner spans reject after release, destruction, replacement and move; independent
+buffer copies and actual-owner readonly-reference binding are verified. Span helpers,
+hashes and builder append are enabled with default prelowering. Runtime moves pass
+sanitizers; explicit source move remains restricted to unique ownership.
+Separately review uint32 endpoint, column and line-count representability for
+maximum-size sources; no exhaustive 4-GiB or concurrent-access guarantee is claimed.
 
 ### CH15-RUNTIME-STRINGS-01 — unresolved string contracts and runtime types
 
