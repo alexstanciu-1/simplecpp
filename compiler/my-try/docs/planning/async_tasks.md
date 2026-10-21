@@ -1107,3 +1107,34 @@ checkpoint remains historical evidence, not the final source-acceptance boundary
 The bounded boxed-source prerequisite is complete. The final goal audit must
 reconcile the explicitly separate source exception restriction and signature scope;
 V-R02 is not marked closed by this checkpoint.
+
+## Final evidence audit and remaining scope decision — 2026-10-21
+
+All 33 SHA-256 archive references in this report matched their committed files.
+The audit inspected saved summaries and execution/publication logs, including
+S12's disk rejection/repair/retirement/fresh proof, rather than treating metadata
+rows or historical prose as proof. A remaining weak runtime check was strengthened:
+`verify_boxed_family` now starts actual failing workers and actual failing handlers,
+then joins each twice, for mixed/dynamic and pool sizes 0/2. This replaces reliance
+on manually injected failure state for the full boxed start/join route (the earlier
+low-level lifecycle test remains). Dev002 ASan/UBSan and leak checking pass.
+The initial native probe used the source helper name rather than the provider's
+`configure_default_worker_pool`; that authoring failure is preserved.
+
+[Final runtime audit evidence](task-final-audit-evidence.tar.gz), SHA-256:
+`35fbd114ea73d5d59f25c755da31c98b565a663a25a4a02120f546462b3ffab3`.
+
+Source throw/catch/finally prelowering remains explicitly separate, as agreed;
+no claim is made that the source repeated-error fixture executes. Native error
+retention plus source unhandled-error propagation are distinct proved facts.
+
+One acceptance ambiguity still needs a user decision: typed vector/hash inputs
+support custom index callbacks and prefilled targets; boxed mixed/dynamic inputs
+currently expose null index/target placeholders only. The normative general
+placement prose does not explicitly exclude boxed inputs. The earlier bounded
+boxed snapshot approval did not settle all placement/result-family combinations.
+Consequently this audit does **not** silently classify boxed custom placement as
+an intentional language restriction or declare V-R02 complete. The user has been
+asked whether to retain it in this goal for design/implementation or explicitly
+defer it and close the verified bounded scope. No implementation is authorized
+by the audit itself, and V-R02 remains partial pending that decision.

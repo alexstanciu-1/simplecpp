@@ -26,6 +26,21 @@ void verify_boxed_family() {
 	auto first=tasks::join(handle);auto second=tasks::join(handle);
 	assert(family::table(first)->at(integer(0)).get_int().native_value()==42);
 	assert(family::table(second)->at(integer(0)).get_int().native_value()==42);
+	for (bool handler_failure : {false,true}) {
+		auto failing_work=[](Box)->Box { throw std::runtime_error("boxed worker failure"); };
+		auto failed = handler_failure
+			? tasks::start(items,integer(1),failing_work,null,null,
+				[](Box,shared_p<tasks::error>)->Box { throw std::runtime_error("boxed handler failure"); },integer(0))
+			: tasks::start(items,integer(1),failing_work);
+		for (int attempt=0;attempt<2;++attempt) {
+			bool caught=false;
+			try { (void)tasks::join(failed); }
+			catch (const std::runtime_error &error) {
+				caught=std::string(error.what())==(handler_failure?"boxed handler failure":"boxed worker failure");
+			}
+			assert(caught && tasks::done(failed).native_value());
+		}
+	}
 	auto keyed=family::empty();family::output(keyed).set(string_t("key"),Box(integer(9)));
 	auto result=tasks::run(keyed,integer(1),[](Box value){return value;});
 	assert(family::table(result)->at(string_t("key")).get_int().native_value()==9);
@@ -50,8 +65,12 @@ void verify_boxed_family() {
 	assert(rejected);
 }
 int main() {
-	verify_boxed_family<mixed_t>();
-	verify_boxed_family<dynamic_t<>>();
+	for (int workers : {0,2}) {
+		tasks::configure_default_worker_pool(integer(workers));
+		verify_boxed_family<mixed_t>();
+		verify_boxed_family<dynamic_t<>>();
+	}
+	tasks::configure_default_worker_pool(integer(0));
 	bool shared_input_rejected=false;
 	auto shared_table=shared<hash_t<mixed_t>>();
 	(void)shared_table->append(mixed_t(integer(1)));

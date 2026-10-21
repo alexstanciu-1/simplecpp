@@ -32,7 +32,9 @@ nullable keys, cross-carrier targets and exact-result-or-void error handlers.
 The generic transfer contract covers admitted owned payloads; it does not authorize
 shared/resource captures. Boxed rows are deliberately the approved scalar-table
 snapshot slice: default placement, matching-family results and null index/target
-slots. They do not establish boxed custom-index/result-target support.
+slots. They do not establish boxed custom-index/result-target support. Whether that gap is
+in this goal or explicitly deferred is a pending user decision; the spec does not
+clearly exclude it, so it is not classified as intentional by this audit.
 
 Unordered publication intentionally excludes contexts, timeout, replacement handlers,
 batching and hash input, as its own normative contract states. Source exception
@@ -49,7 +51,8 @@ wider async methods/closures and async task storage remain separate scope items.
 | Source timeout, active cancellation and shutdown | Proved with default prelowering on dev002. Cancellation's source test uses status plus a bounded delay; deterministic concurrency assertions remain in native proofs. |
 | Module opt-in and immutable startup configuration | Proved in separate fresh compiler processes; metadata hot reload is rejected. |
 | Boxed source construction/index usability | Bounded repair verified by 112 fixture-free source execution cases plus retained edits; see the approved boxed prelowering checkpoint. |
-| Repeated-error source join | Native behavior proved; source probe blocked by the separately deferred throw/catch prelowering transport. Do not count expected rejection as successful execution. |
+| Repeated-error source join | Real boxed worker/handler failures retain and rethrow on repeated joins in both pool modes under ASan/UBSan; source throw/catch transport remains explicitly separate. Expected source rejection is not an execution pass. |
+| Boxed custom placement scope | Null index/target slots only; user decision pending on custom callbacks and prefilled targets. Do not close the goal by silently excluding them. |
 | Retained rejection/repair/fresh parity | Existing task/boxed contract suites cover admission, replacement, type-family edits and recovery; new transport edits require focused retained checks. |
 | Wider project workflow | `prism.json` default worker-pool configuration belongs to existing `bin/project_services.php`; this audit verifies compiler module requirements and runtime controls, not a fresh end-to-end project configuration proof. |
 

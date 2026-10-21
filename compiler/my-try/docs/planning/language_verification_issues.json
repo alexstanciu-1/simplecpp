@@ -1058,7 +1058,7 @@
         "task_publish_deferred_flush_count"
       ],
       "dependencies": [],
-      "next_action": "Complete the final acceptance audit against task_acceptance_inventory.md, reconciling explicitly separate exception-transport restrictions and approved signature boundaries; preserve original absence evidence.",
+      "next_action": "Resolve the boxed custom-index/prefilled-target scope decision recorded in task_acceptance_inventory.md before closure; source exception transport remains explicitly separate. Preserve original absence evidence.",
       "acceptance": "All documented in-scope signatures admitted through ordinary metadata, exact behavior/error and production-provider build proofs, with explicit decisions for held contracts.",
       "simple_batch_eligible": false,
       "eligibility_reason": "Requires contract or module integration discussion; name-resolution probes do not prove a metadata-only repair.",
