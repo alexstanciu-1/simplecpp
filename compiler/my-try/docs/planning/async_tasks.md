@@ -932,3 +932,38 @@ dynamic join diagnostics. V-R02 remains partial.
 
 [Shared lifecycle evidence](task-family-lifecycle-evidence.tar.gz), SHA-256:
 `71dbfe1cb9db9aea13a79f5d505d37dd36d37409e5569a128f44794fc497a746`. Final source hashes verified; no full matrix or native compiler rebuild.
+
+
+### Scalar boxed runtime adapters — 2026-10-21
+
+Mixed/dynamic entrypoints now use one boxed snapshot adapter over the existing
+vector/hash execution owners. It validates all input elements before dispatch and
+copies scalar values into an owned packed/keyed snapshot before background launch.
+Family traits own only input/output representation and batch-result type. Worker
+and error-handler adapters reject nested results before transport; family-specific
+assembly retains keys and the mixed/dynamic distinction. Shared/weak mixed roots
+and nested table elements reject. Existing capture classification is unchanged.
+
+`task-boxed-adapters-03` passes ASan/UBSan with leak checking for both families:
+caller mutation after launch cannot change the snapshot, associative keys survive,
+void results remain null, nested inputs reject before any callback, nested worker
+and handler results reject, scalar error replacement works, repeated joins preserve
+results, and shared mixed roots reject. The prior lifecycle/cancellation tests remain
+in the same probe. Enabled/disabled checks and all five existing runtime regression
+groups pass; all four default-prelowered timeout controls pass cold/warm builds.
+
+This is runtime integration, not boxed source admission. Metadata must still admit
+the new dynamic handle and the exact scalar/same-family result domain. The existing
+`transfer_types` requirement permits recursively owned containers, so it cannot be
+silently reused as a scalar-only boxed-result requirement or globally relaxed for
+mixed/dynamic. Implement that bounded result-domain contract through the existing
+generic-contract/preparation owners under the approved boxed integration. Preserve
+static rejection of incompatible families and container result types; valid boxed
+values still require runtime scalar checks. No further approval is pending.
+
+The shared-root test in `task-boxed-adapters-02` exposed that `table_if()` also
+returns shared storage. The family input owner now requires the owned mixed table
+kind explicitly; the failing assertion remains archived.
+
+[Boxed adapter evidence](task-boxed-adapters-evidence.tar.gz), SHA-256:
+`61226d6f94f0b7c63b3e1314b271d5f703b32cbcefeb37d4252c8e76195d19b4`. Final source hashes verified; no full matrix or native compiler rebuild.

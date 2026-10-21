@@ -297,6 +297,17 @@ The later mutable/exclusive item model is expected to be a separate design proje
 Mixed/dynamic input is currently limited to runtime-recognized table shapes.
 Broader transfer rules for nested dynamic values, runtime resources, and shared mutable objects are deferred.
 
+The bounded v0.2 boxed-input integration snapshots a table of scalar elements
+before launching workers. Elements may be null, bool, int, float or string. Nested
+containers and shared/weak mixed ownership reject at the runtime boundary; resource
+and object payloads remain outside the boxed families. Worker and error-handler
+results must likewise be scalar values (or void omission/completion). Returning a
+nested boxed container is a transfer error, not an implicit deep-copy operation.
+Mixed input produces mixed results. Dynamic input produces dynamic results;
+background dynamic results use a distinct result handle with the same lifecycle
+owner and a family-preserving `task_join`. This does not relax closure capture
+permissions or add mutable item transfer.
+
 ## Performance policy
 
 The tasks layer should stay light enough that it remains useful for performance-sensitive batch work.

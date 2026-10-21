@@ -22,5 +22,10 @@ int main() {
 	shared_p<tasks::dynamic_batch> dynamic_handle;
 	try { (void)tasks::join(dynamic_handle); }
 	catch (const runtime_error &e) { assert(std::string(e.what()).find("not enabled") != std::string::npos); ++rejected; }
-	assert(rejected == 6);
+	auto dynamic_input=dynamic_t<>::make_container();
+	try { (void)tasks::run(dynamic_input,int_t<>(1),[](dynamic_t<> value){return value;}); }
+	catch (const runtime_error &e) { assert(std::string(e.what()).find("not enabled") != std::string::npos); ++rejected; }
+	try { (void)tasks::start(dynamic_input,int_t<>(1),[](dynamic_t<> value){return value;}); }
+	catch (const runtime_error &e) { assert(std::string(e.what()).find("not enabled") != std::string::npos); ++rejected; }
+	assert(rejected == 8);
 }

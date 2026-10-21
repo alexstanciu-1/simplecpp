@@ -12,7 +12,52 @@ template<typename T>
 concept accepts_dynamic_tasks = requires(const T &items) {
 	tasks::run(items,integer(1),dynamic_work{});
 };
+template<typename Box>
+void verify_boxed_family() {
+	using family=tasks::detail::boxed_task_family<Box>;
+	auto items=family::empty();
+	(void)family::output(items).append(Box(integer(42)));
+	std::promise<void> started,release;
+	auto ready=started.get_future();auto resume=release.get_future();
+	auto handle=tasks::start(items,integer(1),[&](Box value) {
+		started.set_value();resume.wait();return value;
+	});
+	ready.wait();family::output(items).set(integer(0),Box(integer(7)));release.set_value();
+	auto first=tasks::join(handle);auto second=tasks::join(handle);
+	assert(family::table(first)->at(integer(0)).get_int().native_value()==42);
+	assert(family::table(second)->at(integer(0)).get_int().native_value()==42);
+	auto keyed=family::empty();family::output(keyed).set(string_t("key"),Box(integer(9)));
+	auto result=tasks::run(keyed,integer(1),[](Box value){return value;});
+	assert(family::table(result)->at(string_t("key")).get_int().native_value()==9);
+	auto voids=tasks::run(items,integer(1),[](Box){});
+	assert(family::table(voids)->at(integer(0)).is_null().native_value());
+	auto nested=family::empty();(void)family::output(nested).append(family::empty());
+	bool ran=false,rejected=false;
+	try { (void)tasks::start(nested,integer(1),[&](Box value){ran=true;return value;}); }
+	catch(const runtime_error &e) { rejected=e.code()=="invalid_task_payload_transfer"; }
+	assert(rejected && !ran);
+	rejected=false;
+	try { (void)tasks::run(items,integer(1),[](Box){return family::empty();}); }
+	catch(const runtime_error &e) { rejected=e.code()=="invalid_task_payload_transfer"; }
+	assert(rejected);
+	auto recovered=tasks::run(items,integer(1),[](Box)->Box{throw std::runtime_error("fail");},
+		null,null,[](Box,shared_p<tasks::error>){return Box(integer(8));},integer(0));
+	assert(family::table(recovered)->at(integer(0)).get_int().native_value()==8);
+	rejected=false;
+	try { (void)tasks::run(items,integer(1),[](Box)->Box{throw std::runtime_error("fail");},
+		null,null,[](Box,shared_p<tasks::error>){return family::empty();},integer(0)); }
+	catch(const runtime_error &e) { rejected=e.code()=="invalid_task_payload_transfer"; }
+	assert(rejected);
+}
 int main() {
+	verify_boxed_family<mixed_t>();
+	verify_boxed_family<dynamic_t<>>();
+	bool shared_input_rejected=false;
+	auto shared_table=shared<hash_t<mixed_t>>();
+	(void)shared_table->append(mixed_t(integer(1)));
+	try { (void)tasks::run(mixed_t(shared_table),integer(1),[](mixed_t value){return value;}); }
+	catch(const runtime_error &e) { shared_input_rejected=e.code()=="invalid_task_input_transfer"; }
+	assert(shared_input_rejected);
 	hash_t<mixed_t> table;
 	(void)table.append(mixed_t(integer(40)));
 	(void)table.append(mixed_t(integer(42)));

@@ -496,49 +496,98 @@ template <typename TValue, typename TKey>
 	return box_hash_result(std::move(values));
 }
 
-[[nodiscard]] inline const hash_t<mixed_t> *task_input_table_or_null(const mixed_t &items) noexcept
+// Boxed task input permits one container of scalar values, never nested aliases.
+template <typename Box> struct boxed_task_family;
+template <> struct boxed_task_family<mixed_t> {
+	using batch_type = batch;
+	static auto table(const mixed_t &value) {
+		return value.kind() == mixed_t::kind_t::table_v ? value.table_if() : nullptr;
+	}
+	static bool scalar(const mixed_t &value) {
+		return value.kind() <= mixed_t::kind_t::string_v;
+	}
+	static mixed_t empty() { return mixed_t(unique<hash_t<mixed_t>>()); }
+	static auto &output(mixed_t &value) { return *value.table_if(); }
+};
+template <> struct boxed_task_family<dynamic_t<>> {
+	using batch_type = dynamic_batch;
+	static auto table(const dynamic_t<> &value) { return value.table_if(); }
+	static bool scalar(const dynamic_t<> &value) {
+		return value.kind() != dynamic_t<>::kind_t::table_v;
+	}
+	static dynamic_t<> empty() { return dynamic_t<>::make_container(); }
+	static auto &output(dynamic_t<> &value) { return value.get_table(); }
+};
+template <typename Box>
+concept task_box = std::is_same_v<Box, mixed_t> || std::is_same_v<Box, dynamic_t<>>;
+
+template <task_box Box>
+void require_boxed_scalar(const Box &value)
 {
-	if (const auto *table = items.table_if(); table != nullptr) {
-		return table;
+	if (!boxed_task_family<Box>::scalar(value)) {
+		throw runtime_error("task payload must be a scalar boxed value",
+			"invalid_task_payload_transfer", "scpp::tasks", "task_run");
 	}
-	if (const auto *shared_table = items.shared_table_if();
-		shared_table != nullptr && shared_table->has_value().native_value()) {
-		return shared_table->get();
-	}
-	return nullptr;
 }
 
-[[nodiscard]] inline const hash_t<mixed_t> &require_task_input_table(const mixed_t &items)
-{
-	if (const auto *table = task_input_table_or_null(items); table != nullptr) {
-		return *table;
-	}
-	throw runtime_error(
-		"task_run(): mixed input must resolve to a vector-like or hash-like collection",
-		"invalid_task_input_transfer",
-		"scpp::tasks",
-		"task_run"
-	);
-}
+template <task_box Box>
+struct boxed_input_snapshot {
+	bool packed;
+	vector_t<Box> values;
+	hash_t<Box, mixed_t> keyed;
+	std::size_t size() const { return packed ? values.size() : keyed.size(); }
+};
 
-[[nodiscard]] inline vector_t<mixed_t> mixed_table_to_vector_input(const hash_t<mixed_t> &table)
+template <task_box Box>
+boxed_input_snapshot<Box> snapshot_boxed_input(const Box &items)
 {
-	vector_t<mixed_t> values;
-	for (auto it = table.begin_entries(); it != table.end_entries(); ++it) {
+	const auto *table = boxed_task_family<Box>::table(items);
+	if (table == nullptr) {
+		throw runtime_error("task input must be a boxed table without shared mixed ownership",
+			"invalid_task_input_transfer", "scpp::tasks", "task_run");
+	}
+	boxed_input_snapshot<Box> snapshot{table->is_packed().native_value(), {}, {}};
+	for (auto it = table->begin_entries(); it != table->end_entries(); ++it) {
 		const auto entry = *it;
-		values.push_back(entry.value_copy());
+		auto value = entry.value_copy();
+		require_boxed_scalar(value);
+		if (snapshot.packed) { snapshot.values.append(std::move(value)); }
+		else { snapshot.keyed.set(entry.key(), std::move(value)); }
 	}
-	return values;
+	return snapshot;
 }
 
-[[nodiscard]] inline hash_t<mixed_t, mixed_t> mixed_table_to_hash_input(const hash_t<mixed_t> &table)
+template <task_box Box, typename Callback>
+auto checked_boxed_work(Callback callback)
 {
-	hash_t<mixed_t, mixed_t> values;
-	for (auto it = table.begin_entries(); it != table.end_entries(); ++it) {
-		const auto entry = *it;
-		values.set(entry.key(), entry.value_copy());
+	return [callback=std::move(callback)](Box value, shared_p<context> context) mutable
+		-> callback_result_t<Callback, Box> {
+		if constexpr (std::is_void_v<callback_result_t<Callback, Box>>) {
+			invoke_callback(callback, value, context);
+		} else {
+			auto result = invoke_callback(callback, value, context);
+			require_boxed_scalar(Box(result));
+			return result;
+		}
+	};
+}
+
+template <task_box Box, typename Handler>
+auto checked_boxed_error(Handler handler)
+{
+	if constexpr (std::is_same_v<Handler, null_t>) { return null; }
+	else {
+		return [handler=std::move(handler)](Box value, shared_p<error> event) mutable
+			-> std::invoke_result_t<Handler, Box, shared_p<error>> {
+			if constexpr (std::is_void_v<std::invoke_result_t<Handler, Box, shared_p<error>>>) {
+				handler(value, event);
+			} else {
+				auto result = handler(value, event);
+				require_boxed_scalar(Box(result));
+				return result;
+			}
+		};
 	}
-	return values;
 }
 
 } // namespace detail
@@ -1520,46 +1569,63 @@ template <typename TItem, typename TKey, typename TCallback, typename TIndexCall
 	return result;
 }
 
-template <typename TCallback, typename TErrorHandler>
-[[nodiscard]] mixed_t run_mixed_with_state(const mixed_t &items, const int_t<> &workers, TCallback callback, TErrorHandler error_handler, const int_t<> &timeout_ms, const shared_p<detail::batch_state> &state)
+template <detail::task_box Box, typename TCallback, typename TErrorHandler>
+[[nodiscard]] Box run_boxed_snapshot(const detail::boxed_input_snapshot<Box> &snapshot,
+	const int_t<> &workers, TCallback callback, TErrorHandler error_handler,
+	const int_t<> &timeout_ms, const shared_p<detail::batch_state> &state)
 {
-	const auto &table = detail::require_task_input_table(items);
-	if (table.is_packed().native_value()) {
-		auto values = detail::mixed_table_to_vector_input(table);
-		return detail::box_vector_result(detail::run_vector_with_state(values, workers, callback, error_handler, timeout_ms, state));
+	auto work = detail::checked_boxed_work<Box>(std::move(callback));
+	auto handler = detail::checked_boxed_error<Box>(std::move(error_handler));
+	auto result = detail::boxed_task_family<Box>::empty();
+	auto &table = detail::boxed_task_family<Box>::output(result);
+	if (snapshot.packed) {
+		auto values = detail::run_vector_with_state(snapshot.values, workers, work, handler, timeout_ms, state);
+		for (auto &value : values.native_value()) { (void)table.append(Box(std::move(value))); }
+	} else {
+		auto values = run_hash_with_state(snapshot.keyed, workers, work, handler, timeout_ms, state);
+		for (auto it = values.begin_entries(); it != values.end_entries(); ++it) {
+			const auto entry = *it;
+			table.set(entry.key(), Box(entry.value_copy()));
+		}
 	}
-	auto values = detail::mixed_table_to_hash_input(table);
-	return detail::box_hash_result(run_hash_with_state(values, workers, callback, error_handler, timeout_ms, state));
+	return result;
 }
 
-template <typename TCallback, typename TErrorHandler>
-[[nodiscard]] mixed_t run(const mixed_t &items, const int_t<> &workers, TCallback callback, null_t, null_t, TErrorHandler error_handler, const int_t<> &timeout_ms)
+template <detail::task_box Box, typename TCallback, typename TErrorHandler>
+[[nodiscard]] Box run(const Box &items, const int_t<> &workers, TCallback callback,
+	null_t, null_t, TErrorHandler error_handler, const int_t<> &timeout_ms)
 {
-	return run_mixed_with_state(items, workers, std::move(callback), std::move(error_handler), timeout_ms, shared<detail::batch_state>());
+	auto snapshot = detail::snapshot_boxed_input(items);
+	return run_boxed_snapshot(snapshot, workers, std::move(callback), std::move(error_handler),
+		timeout_ms, shared<detail::batch_state>());
 }
 
-template <typename TCallback>
-[[nodiscard]] mixed_t run(const mixed_t &items, const int_t<> &workers, TCallback callback)
+template <detail::task_box Box, typename TCallback>
+[[nodiscard]] Box run(const Box &items, const int_t<> &workers, TCallback callback)
 {
-	return run(items, workers, callback, null, null, null, int_t<>(0));
+	return run(items, workers, std::move(callback), null, null, null, int_t<>(0));
 }
 
-template <typename TCallback, typename TErrorHandler>
-[[nodiscard]] mixed_t run(const mixed_t &items, const int_t<> &workers, TCallback callback, null_t, null_t, TErrorHandler error_handler)
+template <detail::task_box Box, typename TCallback, typename TErrorHandler>
+[[nodiscard]] Box run(const Box &items, const int_t<> &workers, TCallback callback,
+	null_t, null_t, TErrorHandler error_handler)
 {
-	return run(items, workers, callback, null, null, error_handler, int_t<>(0));
+	return run(items, workers, std::move(callback), null, null, std::move(error_handler), int_t<>(0));
 }
 
-template <typename TCallback, typename TErrorHandler>
-[[nodiscard]] shared_p<batch> start(const mixed_t &items, const int_t<> &workers, TCallback callback, null_t, null_t, TErrorHandler error_handler, const int_t<> &timeout_ms)
+template <detail::task_box Box, typename TCallback, typename TErrorHandler>
+[[nodiscard]] shared_p<typename detail::boxed_task_family<Box>::batch_type> start(
+	const Box &items, const int_t<> &workers, TCallback callback,
+	null_t, null_t, TErrorHandler error_handler, const int_t<> &timeout_ms)
 {
-	const auto &table = detail::require_task_input_table(items);
-	auto resource = shared<batch>();
-	resource->state->total.store(static_cast<std::int64_t>(table.size()), std::memory_order_relaxed);
-	resource->state->queued.store(static_cast<std::int64_t>(table.size()), std::memory_order_relaxed);
-	resource->coordinator = unique<detail::worker_thread>([resource, items, workers, callback, error_handler, timeout_ms]() mutable {
+	auto snapshot = detail::snapshot_boxed_input(items);
+	auto resource = shared<typename detail::boxed_task_family<Box>::batch_type>();
+	resource->state->total.store(static_cast<std::int64_t>(snapshot.size()), std::memory_order_relaxed);
+	resource->state->queued.store(static_cast<std::int64_t>(snapshot.size()), std::memory_order_relaxed);
+	resource->coordinator = unique<detail::worker_thread>([resource, snapshot=std::move(snapshot), workers,
+		callback=std::move(callback), error_handler=std::move(error_handler), timeout_ms]() mutable {
 		try {
-			auto values = run_mixed_with_state(items, workers, callback, error_handler, timeout_ms, resource->state);
+			auto values = run_boxed_snapshot(snapshot, workers, std::move(callback), std::move(error_handler), timeout_ms, resource->state);
 			std::lock_guard<std::mutex> lock(resource->lifecycle_mutex);
 			resource->result = std::move(values);
 			resource->state->done.store(true);
@@ -1574,19 +1640,37 @@ template <typename TCallback, typename TErrorHandler>
 	return resource;
 }
 
-template <typename TCallback>
-[[nodiscard]] shared_p<batch> start(const mixed_t &items, const int_t<> &workers, TCallback callback)
+template <detail::task_box Box, typename TCallback>
+[[nodiscard]] auto start(const Box &items, const int_t<> &workers, TCallback callback)
 {
-	return start(items, workers, callback, null, null, null, int_t<>(0));
+	return start(items, workers, std::move(callback), null, null, null, int_t<>(0));
 }
 
-template <typename TCallback, typename TErrorHandler>
-[[nodiscard]] shared_p<batch> start(const mixed_t &items, const int_t<> &workers, TCallback callback, null_t, null_t, TErrorHandler error_handler)
+template <detail::task_box Box, typename TCallback, typename TErrorHandler>
+[[nodiscard]] auto start(const Box &items, const int_t<> &workers, TCallback callback,
+	null_t, null_t, TErrorHandler error_handler)
 {
-	return start(items, workers, callback, null, null, error_handler, int_t<>(0));
+	return start(items, workers, std::move(callback), null, null, std::move(error_handler), int_t<>(0));
 }
 
 #else
+
+template <detail::task_box Box, typename TCallback, typename TErrorHandler = null_t>
+[[nodiscard]] Box run(const Box &, const int_t<> &, TCallback, null_t = null,
+	null_t = null, TErrorHandler = null, const int_t<> & = int_t<>(0))
+{
+	throw runtime_error("task_run(): tasks runtime module is not enabled in this build",
+		"tasks_module_disabled", "scpp::tasks", "task_run");
+}
+
+template <detail::task_box Box, typename TCallback, typename TErrorHandler = null_t>
+[[nodiscard]] shared_p<typename detail::boxed_task_family<Box>::batch_type> start(
+	const Box &, const int_t<> &, TCallback, null_t = null,
+	null_t = null, TErrorHandler = null, const int_t<> & = int_t<>(0))
+{
+	throw runtime_error("task_start(): tasks runtime module is not enabled in this build",
+		"tasks_module_disabled", "scpp::tasks", "task_start");
+}
 
 [[nodiscard]] inline bool_t done(const shared_p<batch_lifecycle> &)
 {
