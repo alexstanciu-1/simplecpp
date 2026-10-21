@@ -156,7 +156,15 @@ $core = Runtime_Catalog_Loader::load($root, ['core']);
 $types = Type_Definition_Registration::install(new Type_Registry());
 Runtime_Type_Registration::install($core, $types);
 $catalog = Runtime_Catalog_Registration::resolve($core, $types);
-strings_check(Runtime_Catalog_Registration::resolve_constants($core, $types)->is_empty(), 'Unselected constants were installed');
+$expected_constants = [];
+foreach ($core->modules as $module) {
+	foreach ($module->constants as $constant) { $expected_constants[$constant->name] = true; }
+}
+$installed_constants = Runtime_Catalog_Registration::resolve_constants($core, $types);
+strings_check(count($installed_constants) === count($expected_constants), 'Selected constant inventory differs');
+foreach ($installed_constants as $constant) {
+	strings_check(isset($expected_constants[$constant->constant_name()]), 'Unselected constants were installed');
+}
 $failed = false;
 try { $catalog->function_definition('strings.lower'); }
 catch (\Exception $error) { $failed = true; }

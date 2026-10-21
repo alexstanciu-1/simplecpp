@@ -102,6 +102,8 @@ final class runtime_callable_spec extends runtime_signature_spec {}
 
 final class runtime_function_spec extends runtime_signature_spec
 {
+	/** Provider permits synchronous readonly borrowing in place of value snapshots. */
+	public bool $snapshot_borrow_safe = false;
 	public ?runtime_callable_member_spec $member = null;
 	public string $identity = '';
 	public string $name = '';

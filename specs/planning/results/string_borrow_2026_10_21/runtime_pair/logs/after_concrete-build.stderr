@@ -1,0 +1,9 @@
+In file included from /tmp/scpp-borrow-20261021-0839/after/runtime/include/core/runtime.cpp:3:
+In file included from /tmp/scpp-borrow-20261021-0839/after/runtime/include/core/runtime_core.cpp:6:
+/tmp/scpp-borrow-20261021-0839/after/runtime/include/core/../scpp/support/hash_t.cpp:29:16: warning: explicit instantiation of 'hash_t<scpp::mixed_t, scpp::mixed_t>' that occurs after an explicit specialization has no effect [-Winstantiation-after-specialization]
+   29 | template class hash_t<mixed_t, mixed_t>;
+      |                ^
+/tmp/scpp-borrow-20261021-0839/after/runtime/include/scpp/support/hash_t.hpp:1573:7: note: previous template specialization is here
+ 1573 | class hash_t<mixed_t, mixed_t> final : private hash_detail::packed_table<mixed_t> {
+      |       ^
+1 warning generated.

@@ -1,0 +1,1543 @@
+[
+  {
+    "name": "catalog",
+    "command": [
+      "php",
+      "/tmp/scpp-borrow-20261021-0839/after/compiler/my-try/tests/runtime_catalog.php",
+      "/tmp/scpp-borrow-20261021-0839/regression-02/catalog"
+    ],
+    "cwd": "/tmp/scpp-borrow-20261021-0839/after",
+    "seconds": 0.183,
+    "code": 0,
+    "expected": 0,
+    "executor": "cli",
+    "executor_reason": "PHP CLI/FPM versions differ"
+  },
+  {
+    "name": "source_constants",
+    "command": [
+      "php",
+      "/tmp/scpp-borrow-20261021-0839/after/compiler/my-try/tests/source_constants.php"
+    ],
+    "cwd": "/tmp/scpp-borrow-20261021-0839/after",
+    "seconds": 0.229,
+    "code": 0,
+    "expected": 0,
+    "executor": "cli",
+    "executor_reason": "PHP CLI/FPM versions differ"
+  },
+  {
+    "name": "generics",
+    "command": [
+      "php",
+      "/tmp/scpp-borrow-20261021-0839/after/compiler/my-try/tests/runtime_generics.php",
+      "/tmp/scpp-borrow-20261021-0839/regression-02/generics"
+    ],
+    "cwd": "/tmp/scpp-borrow-20261021-0839/after",
+    "seconds": 0.245,
+    "code": 0,
+    "expected": 0,
+    "executor": "cli",
+    "executor_reason": "PHP CLI/FPM versions differ"
+  },
+  {
+    "name": "strings",
+    "command": [
+      "php",
+      "/tmp/scpp-borrow-20261021-0839/after/compiler/my-try/tests/runtime_strings.php",
+      "/tmp/scpp-borrow-20261021-0839/regression-02"
+    ],
+    "cwd": "/tmp/scpp-borrow-20261021-0839/after",
+    "seconds": 0.366,
+    "code": 0,
+    "expected": 0,
+    "executor": "cli",
+    "executor_reason": "PHP CLI/FPM versions differ"
+  },
+  {
+    "name": "cpp-runtime-build",
+    "command": [
+      "clang++",
+      "-std=c++23",
+      "-Wshadow",
+      "-DSCPP_LANGUAGE_TARGET_PHP=1",
+      "-I",
+      "/tmp/scpp-borrow-20261021-0839/after/runtime/include",
+      "-pthread",
+      "-c",
+      "/tmp/scpp-borrow-20261021-0839/after/runtime/include/core/runtime.cpp",
+      "-o",
+      "/tmp/scpp-borrow-20261021-0839/regression-02/fixture-runtime.o"
+    ],
+    "cwd": "/tmp/scpp-borrow-20261021-0839/after",
+    "seconds": 4.098,
+    "code": 0,
+    "expected": 0,
+    "executor": "subprocess",
+    "executor_reason": "subprocess"
+  },
+  {
+    "name": "shadow-compile-unit-0",
+    "command": [
+      "clang++",
+      "-std=c++20",
+      "-Wshadow",
+      "-I",
+      "/tmp/scpp-borrow-20261021-0839/after/runtime/include",
+      "-DSCPP_LANGUAGE_TARGET_PHP=1",
+      "-pthread",
+      "-I",
+      "/tmp/scpp-borrow-20261021-0839/regression-02/shadow.artifacts-3emkzpgb/sources",
+      "-c",
+      "/tmp/scpp-borrow-20261021-0839/regression-02/shadow.artifacts-3emkzpgb/sources/units/n6d61696e/n6d61696e2e706873.cpp",
+      "-o",
+      "/tmp/scpp-borrow-20261021-0839/regression-02/shadow.artifacts-3emkzpgb/sources/units/n6d61696e/n6d61696e2e706873.o"
+    ],
+    "cwd": "/tmp/scpp-borrow-20261021-0839/after",
+    "seconds": 0.429,
+    "code": 0,
+    "expected": 0,
+    "executor": "subprocess",
+    "executor_reason": "subprocess"
+  },
+  {
+    "name": "shadow-compile-unit-1",
+    "command": [
+      "clang++",
+      "-std=c++20",
+      "-Wshadow",
+      "-I",
+      "/tmp/scpp-borrow-20261021-0839/after/runtime/include",
+      "-DSCPP_LANGUAGE_TARGET_PHP=1",
+      "-pthread",
+      "-I",
+      "/tmp/scpp-borrow-20261021-0839/regression-02/shadow.artifacts-3emkzpgb/sources",
+      "-c",
+      "/tmp/scpp-borrow-20261021-0839/regression-02/shadow.artifacts-3emkzpgb/sources/entry.cpp",
+      "-o",
+      "/tmp/scpp-borrow-20261021-0839/regression-02/shadow.artifacts-3emkzpgb/sources/entry.o"
+    ],
+    "cwd": "/tmp/scpp-borrow-20261021-0839/after",
+    "seconds": 0.575,
+    "code": 0,
+    "expected": 0,
+    "executor": "subprocess",
+    "executor_reason": "subprocess"
+  },
+  {
+    "name": "shadow-compile-link",
+    "command": [
+      "clang++",
+      "-std=c++20",
+      "-Wshadow",
+      "-I",
+      "/tmp/scpp-borrow-20261021-0839/after/runtime/include",
+      "-DSCPP_LANGUAGE_TARGET_PHP=1",
+      "-pthread",
+      "/tmp/scpp-borrow-20261021-0839/regression-02/shadow.artifacts-3emkzpgb/sources/units/n6d61696e/n6d61696e2e706873.o",
+      "/tmp/scpp-borrow-20261021-0839/regression-02/shadow.artifacts-3emkzpgb/sources/entry.o",
+      "/tmp/scpp-borrow-20261021-0839/regression-02/fixture-runtime.o",
+      "-o",
+      "/tmp/scpp-borrow-20261021-0839/regression-02/shadow"
+    ],
+    "cwd": "/tmp/scpp-borrow-20261021-0839/after",
+    "seconds": 0.12,
+    "code": 0,
+    "expected": 0,
+    "executor": "subprocess",
+    "executor_reason": "subprocess"
+  },
+  {
+    "name": "shadow-execute",
+    "command": [
+      "/tmp/scpp-borrow-20261021-0839/regression-02/shadow"
+    ],
+    "cwd": "/tmp/scpp-borrow-20261021-0839/after",
+    "seconds": 0.002,
+    "code": 0,
+    "expected": 0,
+    "executor": "subprocess",
+    "executor_reason": "subprocess"
+  },
+  {
+    "name": "boxed_failure-compile-unit-0",
+    "command": [
+      "clang++",
+      "-std=c++20",
+      "-Wshadow",
+      "-I",
+      "/tmp/scpp-borrow-20261021-0839/after/runtime/include",
+      "-DSCPP_LANGUAGE_TARGET_PHP=1",
+      "-pthread",
+      "-I",
+      "/tmp/scpp-borrow-20261021-0839/regression-02/boxed_failure.artifacts-bss95z12/sources",
+      "-c",
+      "/tmp/scpp-borrow-20261021-0839/regression-02/boxed_failure.artifacts-bss95z12/sources/entry.cpp",
+      "-o",
+      "/tmp/scpp-borrow-20261021-0839/regression-02/boxed_failure.artifacts-bss95z12/sources/entry.o"
+    ],
+    "cwd": "/tmp/scpp-borrow-20261021-0839/after",
+    "seconds": 1.404,
+    "code": 0,
+    "expected": 0,
+    "executor": "subprocess",
+    "executor_reason": "subprocess"
+  },
+  {
+    "name": "boxed_failure-compile-link",
+    "command": [
+      "clang++",
+      "-std=c++20",
+      "-Wshadow",
+      "-I",
+      "/tmp/scpp-borrow-20261021-0839/after/runtime/include",
+      "-DSCPP_LANGUAGE_TARGET_PHP=1",
+      "-pthread",
+      "/tmp/scpp-borrow-20261021-0839/regression-02/boxed_failure.artifacts-bss95z12/sources/entry.o",
+      "/tmp/scpp-borrow-20261021-0839/regression-02/fixture-runtime.o",
+      "-o",
+      "/tmp/scpp-borrow-20261021-0839/regression-02/boxed_failure"
+    ],
+    "cwd": "/tmp/scpp-borrow-20261021-0839/after",
+    "seconds": 0.118,
+    "code": 0,
+    "expected": 0,
+    "executor": "subprocess",
+    "executor_reason": "subprocess"
+  },
+  {
+    "name": "boxed_failure-execute",
+    "command": [
+      "/tmp/scpp-borrow-20261021-0839/regression-02/boxed_failure"
+    ],
+    "cwd": "/tmp/scpp-borrow-20261021-0839/after",
+    "seconds": 0.002,
+    "code": 0,
+    "expected": 0,
+    "executor": "subprocess",
+    "executor_reason": "subprocess"
+  },
+  {
+    "name": "order-compile-unit-0",
+    "command": [
+      "clang++",
+      "-std=c++20",
+      "-Wshadow",
+      "-I",
+      "/tmp/scpp-borrow-20261021-0839/after/runtime/include",
+      "-DSCPP_LANGUAGE_TARGET_PHP=1",
+      "-pthread",
+      "-I",
+      "/tmp/scpp-borrow-20261021-0839/regression-02/order.artifacts-w2jmjpmc/sources",
+      "-c",
+      "/tmp/scpp-borrow-20261021-0839/regression-02/order.artifacts-w2jmjpmc/sources/units/n6d61696e/n6d61696e2e706873.cpp",
+      "-o",
+      "/tmp/scpp-borrow-20261021-0839/regression-02/order.artifacts-w2jmjpmc/sources/units/n6d61696e/n6d61696e2e706873.o"
+    ],
+    "cwd": "/tmp/scpp-borrow-20261021-0839/after",
+    "seconds": 1.656,
+    "code": 0,
+    "expected": 0,
+    "executor": "subprocess",
+    "executor_reason": "subprocess"
+  },
+  {
+    "name": "split_order-compile-unit-0",
+    "command": [
+      "clang++",
+      "-std=c++20",
+      "-Wshadow",
+      "-I",
+      "/tmp/scpp-borrow-20261021-0839/after/runtime/include",
+      "-DSCPP_LANGUAGE_TARGET_PHP=1",
+      "-pthread",
+      "-I",
+      "/tmp/scpp-borrow-20261021-0839/regression-02/split_order.artifacts-hiresa_w/sources",
+      "-c",
+      "/tmp/scpp-borrow-20261021-0839/regression-02/split_order.artifacts-hiresa_w/sources/units/n6d61696e/n6d61696e2e706873.cpp",
+      "-o",
+      "/tmp/scpp-borrow-20261021-0839/regression-02/split_order.artifacts-hiresa_w/sources/units/n6d61696e/n6d61696e2e706873.o"
+    ],
+    "cwd": "/tmp/scpp-borrow-20261021-0839/after",
+    "seconds": 1.657,
+    "code": 0,
+    "expected": 0,
+    "executor": "subprocess",
+    "executor_reason": "subprocess"
+  },
+  {
+    "name": "purity-compile",
+    "command": [
+      "clang++",
+      "-std=c++20",
+      "-Wshadow",
+      "-I",
+      "/tmp/scpp-borrow-20261021-0839/after/runtime/include",
+      "-DSCPP_LANGUAGE_TARGET_PHP=1",
+      "-pthread",
+      "/tmp/scpp-borrow-20261021-0839/regression-02/purity.cpp",
+      "/tmp/scpp-borrow-20261021-0839/regression-02/fixture-runtime.o",
+      "-o",
+      "/tmp/scpp-borrow-20261021-0839/regression-02/purity"
+    ],
+    "cwd": "/tmp/scpp-borrow-20261021-0839/after",
+    "seconds": 1.912,
+    "code": 0,
+    "expected": 0,
+    "executor": "subprocess",
+    "executor_reason": "subprocess"
+  },
+  {
+    "name": "purity-execute",
+    "command": [
+      "/tmp/scpp-borrow-20261021-0839/regression-02/purity"
+    ],
+    "cwd": "/tmp/scpp-borrow-20261021-0839/after",
+    "seconds": 0.002,
+    "code": 0,
+    "expected": 0,
+    "executor": "subprocess",
+    "executor_reason": "subprocess"
+  },
+  {
+    "name": "case-compile",
+    "command": [
+      "clang++",
+      "-std=c++20",
+      "-Wshadow",
+      "-I",
+      "/tmp/scpp-borrow-20261021-0839/after/runtime/include",
+      "-DSCPP_LANGUAGE_TARGET_PHP=1",
+      "-pthread",
+      "/tmp/scpp-borrow-20261021-0839/regression-02/case.cpp",
+      "/tmp/scpp-borrow-20261021-0839/regression-02/fixture-runtime.o",
+      "-o",
+      "/tmp/scpp-borrow-20261021-0839/regression-02/case"
+    ],
+    "cwd": "/tmp/scpp-borrow-20261021-0839/after",
+    "seconds": 1.925,
+    "code": 0,
+    "expected": 0,
+    "executor": "subprocess",
+    "executor_reason": "subprocess"
+  },
+  {
+    "name": "case-execute",
+    "command": [
+      "/tmp/scpp-borrow-20261021-0839/regression-02/case"
+    ],
+    "cwd": "/tmp/scpp-borrow-20261021-0839/after",
+    "seconds": 0.002,
+    "code": 0,
+    "expected": 0,
+    "executor": "subprocess",
+    "executor_reason": "subprocess"
+  },
+  {
+    "name": "predicates-compile",
+    "command": [
+      "clang++",
+      "-std=c++20",
+      "-Wshadow",
+      "-I",
+      "/tmp/scpp-borrow-20261021-0839/after/runtime/include",
+      "-DSCPP_LANGUAGE_TARGET_PHP=1",
+      "-pthread",
+      "/tmp/scpp-borrow-20261021-0839/regression-02/predicates.cpp",
+      "/tmp/scpp-borrow-20261021-0839/regression-02/fixture-runtime.o",
+      "-o",
+      "/tmp/scpp-borrow-20261021-0839/regression-02/predicates"
+    ],
+    "cwd": "/tmp/scpp-borrow-20261021-0839/after",
+    "seconds": 1.95,
+    "code": 0,
+    "expected": 0,
+    "executor": "subprocess",
+    "executor_reason": "subprocess"
+  },
+  {
+    "name": "predicates-execute",
+    "command": [
+      "/tmp/scpp-borrow-20261021-0839/regression-02/predicates"
+    ],
+    "cwd": "/tmp/scpp-borrow-20261021-0839/after",
+    "seconds": 0.002,
+    "code": 0,
+    "expected": 0,
+    "executor": "subprocess",
+    "executor_reason": "subprocess"
+  },
+  {
+    "name": "offset_replace-compile",
+    "command": [
+      "clang++",
+      "-std=c++20",
+      "-Wshadow",
+      "-I",
+      "/tmp/scpp-borrow-20261021-0839/after/runtime/include",
+      "-DSCPP_LANGUAGE_TARGET_PHP=1",
+      "-pthread",
+      "/tmp/scpp-borrow-20261021-0839/regression-02/offset_replace.cpp",
+      "/tmp/scpp-borrow-20261021-0839/regression-02/fixture-runtime.o",
+      "-o",
+      "/tmp/scpp-borrow-20261021-0839/regression-02/offset_replace"
+    ],
+    "cwd": "/tmp/scpp-borrow-20261021-0839/after",
+    "seconds": 1.95,
+    "code": 0,
+    "expected": 0,
+    "executor": "subprocess",
+    "executor_reason": "subprocess"
+  },
+  {
+    "name": "offset_replace-execute",
+    "command": [
+      "/tmp/scpp-borrow-20261021-0839/regression-02/offset_replace"
+    ],
+    "cwd": "/tmp/scpp-borrow-20261021-0839/after",
+    "seconds": 0.002,
+    "code": 0,
+    "expected": 0,
+    "executor": "subprocess",
+    "executor_reason": "subprocess"
+  },
+  {
+    "name": "empty-compile",
+    "command": [
+      "clang++",
+      "-std=c++20",
+      "-Wshadow",
+      "-I",
+      "/tmp/scpp-borrow-20261021-0839/after/runtime/include",
+      "-DSCPP_LANGUAGE_TARGET_PHP=1",
+      "-pthread",
+      "/tmp/scpp-borrow-20261021-0839/regression-02/empty.cpp",
+      "/tmp/scpp-borrow-20261021-0839/regression-02/fixture-runtime.o",
+      "-o",
+      "/tmp/scpp-borrow-20261021-0839/regression-02/empty"
+    ],
+    "cwd": "/tmp/scpp-borrow-20261021-0839/after",
+    "seconds": 1.977,
+    "code": 0,
+    "expected": 0,
+    "executor": "subprocess",
+    "executor_reason": "subprocess"
+  },
+  {
+    "name": "empty-execute",
+    "command": [
+      "/tmp/scpp-borrow-20261021-0839/regression-02/empty"
+    ],
+    "cwd": "/tmp/scpp-borrow-20261021-0839/after",
+    "seconds": 0.002,
+    "code": 0,
+    "expected": 0,
+    "executor": "subprocess",
+    "executor_reason": "subprocess"
+  },
+  {
+    "name": "split_join-compile",
+    "command": [
+      "clang++",
+      "-std=c++20",
+      "-Wshadow",
+      "-I",
+      "/tmp/scpp-borrow-20261021-0839/after/runtime/include",
+      "-DSCPP_LANGUAGE_TARGET_PHP=1",
+      "-pthread",
+      "/tmp/scpp-borrow-20261021-0839/regression-02/split_join.cpp",
+      "/tmp/scpp-borrow-20261021-0839/regression-02/fixture-runtime.o",
+      "-o",
+      "/tmp/scpp-borrow-20261021-0839/regression-02/split_join"
+    ],
+    "cwd": "/tmp/scpp-borrow-20261021-0839/after",
+    "seconds": 1.982,
+    "code": 0,
+    "expected": 0,
+    "executor": "subprocess",
+    "executor_reason": "subprocess"
+  },
+  {
+    "name": "php_byte_search-compile",
+    "command": [
+      "clang++",
+      "-std=c++20",
+      "-Wshadow",
+      "-I",
+      "/tmp/scpp-borrow-20261021-0839/after/runtime/include",
+      "-DSCPP_LANGUAGE_TARGET_PHP=1",
+      "-pthread",
+      "/tmp/scpp-borrow-20261021-0839/regression-02/php_byte_search.cpp",
+      "/tmp/scpp-borrow-20261021-0839/regression-02/fixture-runtime.o",
+      "-o",
+      "/tmp/scpp-borrow-20261021-0839/regression-02/php_byte_search"
+    ],
+    "cwd": "/tmp/scpp-borrow-20261021-0839/after",
+    "seconds": 1.982,
+    "code": 0,
+    "expected": 0,
+    "executor": "subprocess",
+    "executor_reason": "subprocess"
+  },
+  {
+    "name": "split_join-execute",
+    "command": [
+      "/tmp/scpp-borrow-20261021-0839/regression-02/split_join"
+    ],
+    "cwd": "/tmp/scpp-borrow-20261021-0839/after",
+    "seconds": 0.002,
+    "code": 0,
+    "expected": 0,
+    "executor": "subprocess",
+    "executor_reason": "subprocess"
+  },
+  {
+    "name": "php_byte_search-execute",
+    "command": [
+      "/tmp/scpp-borrow-20261021-0839/regression-02/php_byte_search"
+    ],
+    "cwd": "/tmp/scpp-borrow-20261021-0839/after",
+    "seconds": 0.002,
+    "code": 0,
+    "expected": 0,
+    "executor": "subprocess",
+    "executor_reason": "subprocess"
+  },
+  {
+    "name": "join_containers-compile",
+    "command": [
+      "clang++",
+      "-std=c++20",
+      "-Wshadow",
+      "-I",
+      "/tmp/scpp-borrow-20261021-0839/after/runtime/include",
+      "-DSCPP_LANGUAGE_TARGET_PHP=1",
+      "-pthread",
+      "/tmp/scpp-borrow-20261021-0839/regression-02/join_containers.cpp",
+      "/tmp/scpp-borrow-20261021-0839/regression-02/fixture-runtime.o",
+      "-o",
+      "/tmp/scpp-borrow-20261021-0839/regression-02/join_containers"
+    ],
+    "cwd": "/tmp/scpp-borrow-20261021-0839/after",
+    "seconds": 2.224,
+    "code": 0,
+    "expected": 0,
+    "executor": "subprocess",
+    "executor_reason": "subprocess"
+  },
+  {
+    "name": "join_containers-execute",
+    "command": [
+      "/tmp/scpp-borrow-20261021-0839/regression-02/join_containers"
+    ],
+    "cwd": "/tmp/scpp-borrow-20261021-0839/after",
+    "seconds": 0.003,
+    "code": 0,
+    "expected": 0,
+    "executor": "subprocess",
+    "executor_reason": "subprocess"
+  },
+  {
+    "name": "split_empty-compile-unit-0",
+    "command": [
+      "clang++",
+      "-std=c++20",
+      "-Wshadow",
+      "-I",
+      "/tmp/scpp-borrow-20261021-0839/after/runtime/include",
+      "-DSCPP_LANGUAGE_TARGET_PHP=1",
+      "-pthread",
+      "-I",
+      "/tmp/scpp-borrow-20261021-0839/regression-02/split_empty.artifacts-glpq4q7c/sources",
+      "-c",
+      "/tmp/scpp-borrow-20261021-0839/regression-02/split_empty.artifacts-glpq4q7c/sources/entry.cpp",
+      "-o",
+      "/tmp/scpp-borrow-20261021-0839/regression-02/split_empty.artifacts-glpq4q7c/sources/entry.o"
+    ],
+    "cwd": "/tmp/scpp-borrow-20261021-0839/after",
+    "seconds": 1.14,
+    "code": 0,
+    "expected": 0,
+    "executor": "subprocess",
+    "executor_reason": "subprocess"
+  },
+  {
+    "name": "slice_compare-compile",
+    "command": [
+      "clang++",
+      "-std=c++20",
+      "-Wshadow",
+      "-I",
+      "/tmp/scpp-borrow-20261021-0839/after/runtime/include",
+      "-DSCPP_LANGUAGE_TARGET_PHP=1",
+      "-pthread",
+      "/tmp/scpp-borrow-20261021-0839/regression-02/slice_compare.cpp",
+      "/tmp/scpp-borrow-20261021-0839/regression-02/fixture-runtime.o",
+      "-o",
+      "/tmp/scpp-borrow-20261021-0839/regression-02/slice_compare"
+    ],
+    "cwd": "/tmp/scpp-borrow-20261021-0839/after",
+    "seconds": 1.993,
+    "code": 0,
+    "expected": 0,
+    "executor": "subprocess",
+    "executor_reason": "subprocess"
+  },
+  {
+    "name": "slice_compare-execute",
+    "command": [
+      "/tmp/scpp-borrow-20261021-0839/regression-02/slice_compare"
+    ],
+    "cwd": "/tmp/scpp-borrow-20261021-0839/after",
+    "seconds": 0.002,
+    "code": 0,
+    "expected": 0,
+    "executor": "subprocess",
+    "executor_reason": "subprocess"
+  },
+  {
+    "name": "split_empty-compile-link",
+    "command": [
+      "clang++",
+      "-std=c++20",
+      "-Wshadow",
+      "-I",
+      "/tmp/scpp-borrow-20261021-0839/after/runtime/include",
+      "-DSCPP_LANGUAGE_TARGET_PHP=1",
+      "-pthread",
+      "/tmp/scpp-borrow-20261021-0839/regression-02/split_empty.artifacts-glpq4q7c/sources/entry.o",
+      "/tmp/scpp-borrow-20261021-0839/regression-02/fixture-runtime.o",
+      "-o",
+      "/tmp/scpp-borrow-20261021-0839/regression-02/split_empty"
+    ],
+    "cwd": "/tmp/scpp-borrow-20261021-0839/after",
+    "seconds": 0.117,
+    "code": 0,
+    "expected": 0,
+    "executor": "subprocess",
+    "executor_reason": "subprocess"
+  },
+  {
+    "name": "split_empty-execute",
+    "command": [
+      "/tmp/scpp-borrow-20261021-0839/regression-02/split_empty"
+    ],
+    "cwd": "/tmp/scpp-borrow-20261021-0839/after",
+    "seconds": 0.002,
+    "code": 0,
+    "expected": 0,
+    "executor": "subprocess",
+    "executor_reason": "subprocess"
+  },
+  {
+    "name": "split_order-compile-unit-1",
+    "command": [
+      "clang++",
+      "-std=c++20",
+      "-Wshadow",
+      "-I",
+      "/tmp/scpp-borrow-20261021-0839/after/runtime/include",
+      "-DSCPP_LANGUAGE_TARGET_PHP=1",
+      "-pthread",
+      "-I",
+      "/tmp/scpp-borrow-20261021-0839/regression-02/split_order.artifacts-hiresa_w/sources",
+      "-c",
+      "/tmp/scpp-borrow-20261021-0839/regression-02/split_order.artifacts-hiresa_w/sources/entry.cpp",
+      "-o",
+      "/tmp/scpp-borrow-20261021-0839/regression-02/split_order.artifacts-hiresa_w/sources/entry.o"
+    ],
+    "cwd": "/tmp/scpp-borrow-20261021-0839/after",
+    "seconds": 1.803,
+    "code": 0,
+    "expected": 0,
+    "executor": "subprocess",
+    "executor_reason": "subprocess"
+  },
+  {
+    "name": "hex_decode-compile",
+    "command": [
+      "clang++",
+      "-std=c++20",
+      "-Wshadow",
+      "-I",
+      "/tmp/scpp-borrow-20261021-0839/after/runtime/include",
+      "-DSCPP_LANGUAGE_TARGET_PHP=1",
+      "-pthread",
+      "/tmp/scpp-borrow-20261021-0839/regression-02/hex_decode.cpp",
+      "/tmp/scpp-borrow-20261021-0839/regression-02/fixture-runtime.o",
+      "-o",
+      "/tmp/scpp-borrow-20261021-0839/regression-02/hex_decode"
+    ],
+    "cwd": "/tmp/scpp-borrow-20261021-0839/after",
+    "seconds": 1.947,
+    "code": 0,
+    "expected": 0,
+    "executor": "subprocess",
+    "executor_reason": "subprocess"
+  },
+  {
+    "name": "hex_decode-execute",
+    "command": [
+      "/tmp/scpp-borrow-20261021-0839/regression-02/hex_decode"
+    ],
+    "cwd": "/tmp/scpp-borrow-20261021-0839/after",
+    "seconds": 0.002,
+    "code": 0,
+    "expected": 0,
+    "executor": "subprocess",
+    "executor_reason": "subprocess"
+  },
+  {
+    "name": "order-compile-unit-1",
+    "command": [
+      "clang++",
+      "-std=c++20",
+      "-Wshadow",
+      "-I",
+      "/tmp/scpp-borrow-20261021-0839/after/runtime/include",
+      "-DSCPP_LANGUAGE_TARGET_PHP=1",
+      "-pthread",
+      "-I",
+      "/tmp/scpp-borrow-20261021-0839/regression-02/order.artifacts-w2jmjpmc/sources",
+      "-c",
+      "/tmp/scpp-borrow-20261021-0839/regression-02/order.artifacts-w2jmjpmc/sources/entry.cpp",
+      "-o",
+      "/tmp/scpp-borrow-20261021-0839/regression-02/order.artifacts-w2jmjpmc/sources/entry.o"
+    ],
+    "cwd": "/tmp/scpp-borrow-20261021-0839/after",
+    "seconds": 1.853,
+    "code": 0,
+    "expected": 0,
+    "executor": "subprocess",
+    "executor_reason": "subprocess"
+  },
+  {
+    "name": "split_order-compile-link",
+    "command": [
+      "clang++",
+      "-std=c++20",
+      "-Wshadow",
+      "-I",
+      "/tmp/scpp-borrow-20261021-0839/after/runtime/include",
+      "-DSCPP_LANGUAGE_TARGET_PHP=1",
+      "-pthread",
+      "/tmp/scpp-borrow-20261021-0839/regression-02/split_order.artifacts-hiresa_w/sources/units/n6d61696e/n6d61696e2e706873.o",
+      "/tmp/scpp-borrow-20261021-0839/regression-02/split_order.artifacts-hiresa_w/sources/entry.o",
+      "/tmp/scpp-borrow-20261021-0839/regression-02/fixture-runtime.o",
+      "-o",
+      "/tmp/scpp-borrow-20261021-0839/regression-02/split_order"
+    ],
+    "cwd": "/tmp/scpp-borrow-20261021-0839/after",
+    "seconds": 0.126,
+    "code": 0,
+    "expected": 0,
+    "executor": "subprocess",
+    "executor_reason": "subprocess"
+  },
+  {
+    "name": "split_order-execute",
+    "command": [
+      "/tmp/scpp-borrow-20261021-0839/regression-02/split_order"
+    ],
+    "cwd": "/tmp/scpp-borrow-20261021-0839/after",
+    "seconds": 0.002,
+    "code": 0,
+    "expected": 0,
+    "executor": "subprocess",
+    "executor_reason": "subprocess"
+  },
+  {
+    "name": "order-compile-link",
+    "command": [
+      "clang++",
+      "-std=c++20",
+      "-Wshadow",
+      "-I",
+      "/tmp/scpp-borrow-20261021-0839/after/runtime/include",
+      "-DSCPP_LANGUAGE_TARGET_PHP=1",
+      "-pthread",
+      "/tmp/scpp-borrow-20261021-0839/regression-02/order.artifacts-w2jmjpmc/sources/units/n6d61696e/n6d61696e2e706873.o",
+      "/tmp/scpp-borrow-20261021-0839/regression-02/order.artifacts-w2jmjpmc/sources/entry.o",
+      "/tmp/scpp-borrow-20261021-0839/regression-02/fixture-runtime.o",
+      "-o",
+      "/tmp/scpp-borrow-20261021-0839/regression-02/order"
+    ],
+    "cwd": "/tmp/scpp-borrow-20261021-0839/after",
+    "seconds": 0.119,
+    "code": 0,
+    "expected": 0,
+    "executor": "subprocess",
+    "executor_reason": "subprocess"
+  },
+  {
+    "name": "order-execute",
+    "command": [
+      "/tmp/scpp-borrow-20261021-0839/regression-02/order"
+    ],
+    "cwd": "/tmp/scpp-borrow-20261021-0839/after",
+    "seconds": 0.002,
+    "code": 0,
+    "expected": 0,
+    "executor": "subprocess",
+    "executor_reason": "subprocess"
+  },
+  {
+    "name": "byte_search_outside-compile-unit-0",
+    "command": [
+      "clang++",
+      "-std=c++20",
+      "-Wshadow",
+      "-I",
+      "/tmp/scpp-borrow-20261021-0839/after/runtime/include",
+      "-DSCPP_LANGUAGE_TARGET_PHP=1",
+      "-pthread",
+      "-I",
+      "/tmp/scpp-borrow-20261021-0839/regression-02/byte_search_outside.artifacts-nliqqvhx/sources",
+      "-c",
+      "/tmp/scpp-borrow-20261021-0839/regression-02/byte_search_outside.artifacts-nliqqvhx/sources/entry.cpp",
+      "-o",
+      "/tmp/scpp-borrow-20261021-0839/regression-02/byte_search_outside.artifacts-nliqqvhx/sources/entry.o"
+    ],
+    "cwd": "/tmp/scpp-borrow-20261021-0839/after",
+    "seconds": 1.727,
+    "code": 0,
+    "expected": 0,
+    "executor": "subprocess",
+    "executor_reason": "subprocess"
+  },
+  {
+    "name": "byte_search_negative-compile-unit-0",
+    "command": [
+      "clang++",
+      "-std=c++20",
+      "-Wshadow",
+      "-I",
+      "/tmp/scpp-borrow-20261021-0839/after/runtime/include",
+      "-DSCPP_LANGUAGE_TARGET_PHP=1",
+      "-pthread",
+      "-I",
+      "/tmp/scpp-borrow-20261021-0839/regression-02/byte_search_negative.artifacts-s5pdczw3/sources",
+      "-c",
+      "/tmp/scpp-borrow-20261021-0839/regression-02/byte_search_negative.artifacts-s5pdczw3/sources/entry.cpp",
+      "-o",
+      "/tmp/scpp-borrow-20261021-0839/regression-02/byte_search_negative.artifacts-s5pdczw3/sources/entry.o"
+    ],
+    "cwd": "/tmp/scpp-borrow-20261021-0839/after",
+    "seconds": 1.795,
+    "code": 0,
+    "expected": 0,
+    "executor": "subprocess",
+    "executor_reason": "subprocess"
+  },
+  {
+    "name": "byte_search_outside-compile-link",
+    "command": [
+      "clang++",
+      "-std=c++20",
+      "-Wshadow",
+      "-I",
+      "/tmp/scpp-borrow-20261021-0839/after/runtime/include",
+      "-DSCPP_LANGUAGE_TARGET_PHP=1",
+      "-pthread",
+      "/tmp/scpp-borrow-20261021-0839/regression-02/byte_search_outside.artifacts-nliqqvhx/sources/entry.o",
+      "/tmp/scpp-borrow-20261021-0839/regression-02/fixture-runtime.o",
+      "-o",
+      "/tmp/scpp-borrow-20261021-0839/regression-02/byte_search_outside"
+    ],
+    "cwd": "/tmp/scpp-borrow-20261021-0839/after",
+    "seconds": 0.128,
+    "code": 0,
+    "expected": 0,
+    "executor": "subprocess",
+    "executor_reason": "subprocess"
+  },
+  {
+    "name": "byte_search_outside-execute",
+    "command": [
+      "/tmp/scpp-borrow-20261021-0839/regression-02/byte_search_outside"
+    ],
+    "cwd": "/tmp/scpp-borrow-20261021-0839/after",
+    "seconds": 0.002,
+    "code": 0,
+    "expected": 0,
+    "executor": "subprocess",
+    "executor_reason": "subprocess"
+  },
+  {
+    "name": "byte_helpers-compile",
+    "command": [
+      "clang++",
+      "-std=c++20",
+      "-Wshadow",
+      "-I",
+      "/tmp/scpp-borrow-20261021-0839/after/runtime/include",
+      "-DSCPP_LANGUAGE_TARGET_PHP=1",
+      "-pthread",
+      "/tmp/scpp-borrow-20261021-0839/regression-02/byte_helpers.cpp",
+      "/tmp/scpp-borrow-20261021-0839/regression-02/fixture-runtime.o",
+      "-o",
+      "/tmp/scpp-borrow-20261021-0839/regression-02/byte_helpers"
+    ],
+    "cwd": "/tmp/scpp-borrow-20261021-0839/after",
+    "seconds": 1.976,
+    "code": 0,
+    "expected": 0,
+    "executor": "subprocess",
+    "executor_reason": "subprocess"
+  },
+  {
+    "name": "byte_helpers-execute",
+    "command": [
+      "/tmp/scpp-borrow-20261021-0839/regression-02/byte_helpers"
+    ],
+    "cwd": "/tmp/scpp-borrow-20261021-0839/after",
+    "seconds": 0.002,
+    "code": 0,
+    "expected": 0,
+    "executor": "subprocess",
+    "executor_reason": "subprocess"
+  },
+  {
+    "name": "byte_search-compile",
+    "command": [
+      "clang++",
+      "-std=c++20",
+      "-Wshadow",
+      "-I",
+      "/tmp/scpp-borrow-20261021-0839/after/runtime/include",
+      "-DSCPP_LANGUAGE_TARGET_PHP=1",
+      "-pthread",
+      "/tmp/scpp-borrow-20261021-0839/regression-02/byte_search.cpp",
+      "/tmp/scpp-borrow-20261021-0839/regression-02/fixture-runtime.o",
+      "-o",
+      "/tmp/scpp-borrow-20261021-0839/regression-02/byte_search"
+    ],
+    "cwd": "/tmp/scpp-borrow-20261021-0839/after",
+    "seconds": 2.004,
+    "code": 0,
+    "expected": 0,
+    "executor": "subprocess",
+    "executor_reason": "subprocess"
+  },
+  {
+    "name": "byte_search_negative-compile-link",
+    "command": [
+      "clang++",
+      "-std=c++20",
+      "-Wshadow",
+      "-I",
+      "/tmp/scpp-borrow-20261021-0839/after/runtime/include",
+      "-DSCPP_LANGUAGE_TARGET_PHP=1",
+      "-pthread",
+      "/tmp/scpp-borrow-20261021-0839/regression-02/byte_search_negative.artifacts-s5pdczw3/sources/entry.o",
+      "/tmp/scpp-borrow-20261021-0839/regression-02/fixture-runtime.o",
+      "-o",
+      "/tmp/scpp-borrow-20261021-0839/regression-02/byte_search_negative"
+    ],
+    "cwd": "/tmp/scpp-borrow-20261021-0839/after",
+    "seconds": 0.151,
+    "code": 0,
+    "expected": 0,
+    "executor": "subprocess",
+    "executor_reason": "subprocess"
+  },
+  {
+    "name": "byte_search-execute",
+    "command": [
+      "/tmp/scpp-borrow-20261021-0839/regression-02/byte_search"
+    ],
+    "cwd": "/tmp/scpp-borrow-20261021-0839/after",
+    "seconds": 0.002,
+    "code": 0,
+    "expected": 0,
+    "executor": "subprocess",
+    "executor_reason": "subprocess"
+  },
+  {
+    "name": "byte_search_negative-execute",
+    "command": [
+      "/tmp/scpp-borrow-20261021-0839/regression-02/byte_search_negative"
+    ],
+    "cwd": "/tmp/scpp-borrow-20261021-0839/after",
+    "seconds": 0.003,
+    "code": 0,
+    "expected": 0,
+    "executor": "subprocess",
+    "executor_reason": "subprocess"
+  },
+  {
+    "name": "unicode_helpers-compile",
+    "command": [
+      "clang++",
+      "-std=c++20",
+      "-Wshadow",
+      "-I",
+      "/tmp/scpp-borrow-20261021-0839/after/runtime/include",
+      "-DSCPP_LANGUAGE_TARGET_PHP=1",
+      "-pthread",
+      "/tmp/scpp-borrow-20261021-0839/regression-02/unicode_helpers.cpp",
+      "/tmp/scpp-borrow-20261021-0839/regression-02/fixture-runtime.o",
+      "-o",
+      "/tmp/scpp-borrow-20261021-0839/regression-02/unicode_helpers"
+    ],
+    "cwd": "/tmp/scpp-borrow-20261021-0839/after",
+    "seconds": 1.983,
+    "code": 0,
+    "expected": 0,
+    "executor": "subprocess",
+    "executor_reason": "subprocess"
+  },
+  {
+    "name": "unicode_helpers-execute",
+    "command": [
+      "/tmp/scpp-borrow-20261021-0839/regression-02/unicode_helpers"
+    ],
+    "cwd": "/tmp/scpp-borrow-20261021-0839/after",
+    "seconds": 0.002,
+    "code": 0,
+    "expected": 0,
+    "executor": "subprocess",
+    "executor_reason": "subprocess"
+  },
+  {
+    "name": "constant_use-compile",
+    "command": [
+      "clang++",
+      "-std=c++20",
+      "-Wshadow",
+      "-I",
+      "/tmp/scpp-borrow-20261021-0839/after/runtime/include",
+      "-DSCPP_LANGUAGE_TARGET_PHP=1",
+      "-pthread",
+      "/tmp/scpp-borrow-20261021-0839/regression-02/constant_use.cpp",
+      "/tmp/scpp-borrow-20261021-0839/regression-02/fixture-runtime.o",
+      "-o",
+      "/tmp/scpp-borrow-20261021-0839/regression-02/constant_use"
+    ],
+    "cwd": "/tmp/scpp-borrow-20261021-0839/after",
+    "seconds": 0.727,
+    "code": 0,
+    "expected": 0,
+    "executor": "subprocess",
+    "executor_reason": "subprocess"
+  },
+  {
+    "name": "constant_use-execute",
+    "command": [
+      "/tmp/scpp-borrow-20261021-0839/regression-02/constant_use"
+    ],
+    "cwd": "/tmp/scpp-borrow-20261021-0839/after",
+    "seconds": 0.002,
+    "code": 0,
+    "expected": 0,
+    "executor": "subprocess",
+    "executor_reason": "subprocess"
+  },
+  {
+    "name": "pad-compile",
+    "command": [
+      "clang++",
+      "-std=c++20",
+      "-Wshadow",
+      "-I",
+      "/tmp/scpp-borrow-20261021-0839/after/runtime/include",
+      "-DSCPP_LANGUAGE_TARGET_PHP=1",
+      "-pthread",
+      "/tmp/scpp-borrow-20261021-0839/regression-02/pad.cpp",
+      "/tmp/scpp-borrow-20261021-0839/regression-02/fixture-runtime.o",
+      "-o",
+      "/tmp/scpp-borrow-20261021-0839/regression-02/pad"
+    ],
+    "cwd": "/tmp/scpp-borrow-20261021-0839/after",
+    "seconds": 1.962,
+    "code": 0,
+    "expected": 0,
+    "executor": "subprocess",
+    "executor_reason": "subprocess"
+  },
+  {
+    "name": "pad-execute",
+    "command": [
+      "/tmp/scpp-borrow-20261021-0839/regression-02/pad"
+    ],
+    "cwd": "/tmp/scpp-borrow-20261021-0839/after",
+    "seconds": 0.002,
+    "code": 0,
+    "expected": 0,
+    "executor": "subprocess",
+    "executor_reason": "subprocess"
+  },
+  {
+    "name": "format-compile",
+    "command": [
+      "clang++",
+      "-std=c++20",
+      "-Wshadow",
+      "-I",
+      "/tmp/scpp-borrow-20261021-0839/after/runtime/include",
+      "-DSCPP_LANGUAGE_TARGET_PHP=1",
+      "-pthread",
+      "/tmp/scpp-borrow-20261021-0839/regression-02/format.cpp",
+      "/tmp/scpp-borrow-20261021-0839/regression-02/fixture-runtime.o",
+      "-o",
+      "/tmp/scpp-borrow-20261021-0839/regression-02/format"
+    ],
+    "cwd": "/tmp/scpp-borrow-20261021-0839/after",
+    "seconds": 1.967,
+    "code": 0,
+    "expected": 0,
+    "executor": "subprocess",
+    "executor_reason": "subprocess"
+  },
+  {
+    "name": "format-execute",
+    "command": [
+      "/tmp/scpp-borrow-20261021-0839/regression-02/format"
+    ],
+    "cwd": "/tmp/scpp-borrow-20261021-0839/after",
+    "seconds": 0.002,
+    "code": 0,
+    "expected": 0,
+    "executor": "subprocess",
+    "executor_reason": "subprocess"
+  },
+  {
+    "name": "pad_empty-compile-unit-0",
+    "command": [
+      "clang++",
+      "-std=c++20",
+      "-Wshadow",
+      "-I",
+      "/tmp/scpp-borrow-20261021-0839/after/runtime/include",
+      "-DSCPP_LANGUAGE_TARGET_PHP=1",
+      "-pthread",
+      "-I",
+      "/tmp/scpp-borrow-20261021-0839/regression-02/pad_empty.artifacts-nqfj78ca/sources",
+      "-c",
+      "/tmp/scpp-borrow-20261021-0839/regression-02/pad_empty.artifacts-nqfj78ca/sources/entry.cpp",
+      "-o",
+      "/tmp/scpp-borrow-20261021-0839/regression-02/pad_empty.artifacts-nqfj78ca/sources/entry.o"
+    ],
+    "cwd": "/tmp/scpp-borrow-20261021-0839/after",
+    "seconds": 1.155,
+    "code": 0,
+    "expected": 0,
+    "executor": "subprocess",
+    "executor_reason": "subprocess"
+  },
+  {
+    "name": "pad_mode-compile-unit-0",
+    "command": [
+      "clang++",
+      "-std=c++20",
+      "-Wshadow",
+      "-I",
+      "/tmp/scpp-borrow-20261021-0839/after/runtime/include",
+      "-DSCPP_LANGUAGE_TARGET_PHP=1",
+      "-pthread",
+      "-I",
+      "/tmp/scpp-borrow-20261021-0839/regression-02/pad_mode.artifacts-wrlu6r_8/sources",
+      "-c",
+      "/tmp/scpp-borrow-20261021-0839/regression-02/pad_mode.artifacts-wrlu6r_8/sources/entry.cpp",
+      "-o",
+      "/tmp/scpp-borrow-20261021-0839/regression-02/pad_mode.artifacts-wrlu6r_8/sources/entry.o"
+    ],
+    "cwd": "/tmp/scpp-borrow-20261021-0839/after",
+    "seconds": 1.151,
+    "code": 0,
+    "expected": 0,
+    "executor": "subprocess",
+    "executor_reason": "subprocess"
+  },
+  {
+    "name": "pad_empty-compile-link",
+    "command": [
+      "clang++",
+      "-std=c++20",
+      "-Wshadow",
+      "-I",
+      "/tmp/scpp-borrow-20261021-0839/after/runtime/include",
+      "-DSCPP_LANGUAGE_TARGET_PHP=1",
+      "-pthread",
+      "/tmp/scpp-borrow-20261021-0839/regression-02/pad_empty.artifacts-nqfj78ca/sources/entry.o",
+      "/tmp/scpp-borrow-20261021-0839/regression-02/fixture-runtime.o",
+      "-o",
+      "/tmp/scpp-borrow-20261021-0839/regression-02/pad_empty"
+    ],
+    "cwd": "/tmp/scpp-borrow-20261021-0839/after",
+    "seconds": 0.117,
+    "code": 0,
+    "expected": 0,
+    "executor": "subprocess",
+    "executor_reason": "subprocess"
+  },
+  {
+    "name": "pad_empty-execute",
+    "command": [
+      "/tmp/scpp-borrow-20261021-0839/regression-02/pad_empty"
+    ],
+    "cwd": "/tmp/scpp-borrow-20261021-0839/after",
+    "seconds": 0.002,
+    "code": 0,
+    "expected": 0,
+    "executor": "subprocess",
+    "executor_reason": "subprocess"
+  },
+  {
+    "name": "pad_mode-compile-link",
+    "command": [
+      "clang++",
+      "-std=c++20",
+      "-Wshadow",
+      "-I",
+      "/tmp/scpp-borrow-20261021-0839/after/runtime/include",
+      "-DSCPP_LANGUAGE_TARGET_PHP=1",
+      "-pthread",
+      "/tmp/scpp-borrow-20261021-0839/regression-02/pad_mode.artifacts-wrlu6r_8/sources/entry.o",
+      "/tmp/scpp-borrow-20261021-0839/regression-02/fixture-runtime.o",
+      "-o",
+      "/tmp/scpp-borrow-20261021-0839/regression-02/pad_mode"
+    ],
+    "cwd": "/tmp/scpp-borrow-20261021-0839/after",
+    "seconds": 0.112,
+    "code": 0,
+    "expected": 0,
+    "executor": "subprocess",
+    "executor_reason": "subprocess"
+  },
+  {
+    "name": "pad_mode-execute",
+    "command": [
+      "/tmp/scpp-borrow-20261021-0839/regression-02/pad_mode"
+    ],
+    "cwd": "/tmp/scpp-borrow-20261021-0839/after",
+    "seconds": 0.002,
+    "code": 0,
+    "expected": 0,
+    "executor": "subprocess",
+    "executor_reason": "subprocess"
+  },
+  {
+    "name": "constant_shadow-compile",
+    "command": [
+      "clang++",
+      "-std=c++20",
+      "-Wshadow",
+      "-I",
+      "/tmp/scpp-borrow-20261021-0839/after/runtime/include",
+      "-DSCPP_LANGUAGE_TARGET_PHP=1",
+      "-pthread",
+      "/tmp/scpp-borrow-20261021-0839/regression-02/constant_shadow.cpp",
+      "/tmp/scpp-borrow-20261021-0839/regression-02/fixture-runtime.o",
+      "-o",
+      "/tmp/scpp-borrow-20261021-0839/regression-02/constant_shadow"
+    ],
+    "cwd": "/tmp/scpp-borrow-20261021-0839/after",
+    "seconds": 1.883,
+    "code": 0,
+    "expected": 0,
+    "executor": "subprocess",
+    "executor_reason": "subprocess"
+  },
+  {
+    "name": "constant_shadow-execute",
+    "command": [
+      "/tmp/scpp-borrow-20261021-0839/regression-02/constant_shadow"
+    ],
+    "cwd": "/tmp/scpp-borrow-20261021-0839/after",
+    "seconds": 0.002,
+    "code": 0,
+    "expected": 0,
+    "executor": "subprocess",
+    "executor_reason": "subprocess"
+  },
+  {
+    "name": "trim_order-compile-unit-0",
+    "command": [
+      "clang++",
+      "-std=c++20",
+      "-Wshadow",
+      "-I",
+      "/tmp/scpp-borrow-20261021-0839/after/runtime/include",
+      "-DSCPP_LANGUAGE_TARGET_PHP=1",
+      "-pthread",
+      "-I",
+      "/tmp/scpp-borrow-20261021-0839/regression-02/trim_order.artifacts-xkosfyln/sources",
+      "-c",
+      "/tmp/scpp-borrow-20261021-0839/regression-02/trim_order.artifacts-xkosfyln/sources/units/n6d61696e/n6d61696e2e706873.cpp",
+      "-o",
+      "/tmp/scpp-borrow-20261021-0839/regression-02/trim_order.artifacts-xkosfyln/sources/units/n6d61696e/n6d61696e2e706873.o"
+    ],
+    "cwd": "/tmp/scpp-borrow-20261021-0839/after",
+    "seconds": 1.624,
+    "code": 0,
+    "expected": 0,
+    "executor": "subprocess",
+    "executor_reason": "subprocess"
+  },
+  {
+    "name": "trim_default-compile",
+    "command": [
+      "clang++",
+      "-std=c++20",
+      "-Wshadow",
+      "-I",
+      "/tmp/scpp-borrow-20261021-0839/after/runtime/include",
+      "-DSCPP_LANGUAGE_TARGET_PHP=1",
+      "-pthread",
+      "/tmp/scpp-borrow-20261021-0839/regression-02/trim_default.cpp",
+      "/tmp/scpp-borrow-20261021-0839/regression-02/fixture-runtime.o",
+      "-o",
+      "/tmp/scpp-borrow-20261021-0839/regression-02/trim_default"
+    ],
+    "cwd": "/tmp/scpp-borrow-20261021-0839/after",
+    "seconds": 1.932,
+    "code": 0,
+    "expected": 0,
+    "executor": "subprocess",
+    "executor_reason": "subprocess"
+  },
+  {
+    "name": "trim_default-execute",
+    "command": [
+      "/tmp/scpp-borrow-20261021-0839/regression-02/trim_default"
+    ],
+    "cwd": "/tmp/scpp-borrow-20261021-0839/after",
+    "seconds": 0.002,
+    "code": 0,
+    "expected": 0,
+    "executor": "subprocess",
+    "executor_reason": "subprocess"
+  },
+  {
+    "name": "trim_masks-compile",
+    "command": [
+      "clang++",
+      "-std=c++20",
+      "-Wshadow",
+      "-I",
+      "/tmp/scpp-borrow-20261021-0839/after/runtime/include",
+      "-DSCPP_LANGUAGE_TARGET_PHP=1",
+      "-pthread",
+      "/tmp/scpp-borrow-20261021-0839/regression-02/trim_masks.cpp",
+      "/tmp/scpp-borrow-20261021-0839/regression-02/fixture-runtime.o",
+      "-o",
+      "/tmp/scpp-borrow-20261021-0839/regression-02/trim_masks"
+    ],
+    "cwd": "/tmp/scpp-borrow-20261021-0839/after",
+    "seconds": 1.873,
+    "code": 0,
+    "expected": 0,
+    "executor": "subprocess",
+    "executor_reason": "subprocess"
+  },
+  {
+    "name": "trim_masks-execute",
+    "command": [
+      "/tmp/scpp-borrow-20261021-0839/regression-02/trim_masks"
+    ],
+    "cwd": "/tmp/scpp-borrow-20261021-0839/after",
+    "seconds": 0.002,
+    "code": 0,
+    "expected": 0,
+    "executor": "subprocess",
+    "executor_reason": "subprocess"
+  },
+  {
+    "name": "hex_bytes-compile",
+    "command": [
+      "clang++",
+      "-std=c++20",
+      "-Wshadow",
+      "-I",
+      "/tmp/scpp-borrow-20261021-0839/after/runtime/include",
+      "-DSCPP_LANGUAGE_TARGET_PHP=1",
+      "-pthread",
+      "/tmp/scpp-borrow-20261021-0839/regression-02/hex_bytes.cpp",
+      "/tmp/scpp-borrow-20261021-0839/regression-02/fixture-runtime.o",
+      "-o",
+      "/tmp/scpp-borrow-20261021-0839/regression-02/hex_bytes"
+    ],
+    "cwd": "/tmp/scpp-borrow-20261021-0839/after",
+    "seconds": 1.875,
+    "code": 0,
+    "expected": 0,
+    "executor": "subprocess",
+    "executor_reason": "subprocess"
+  },
+  {
+    "name": "hex_bytes-execute",
+    "command": [
+      "/tmp/scpp-borrow-20261021-0839/regression-02/hex_bytes"
+    ],
+    "cwd": "/tmp/scpp-borrow-20261021-0839/after",
+    "seconds": 0.002,
+    "code": 0,
+    "expected": 0,
+    "executor": "subprocess",
+    "executor_reason": "subprocess"
+  },
+  {
+    "name": "replace-compile",
+    "command": [
+      "clang++",
+      "-std=c++20",
+      "-Wshadow",
+      "-I",
+      "/tmp/scpp-borrow-20261021-0839/after/runtime/include",
+      "-DSCPP_LANGUAGE_TARGET_PHP=1",
+      "-pthread",
+      "/tmp/scpp-borrow-20261021-0839/regression-02/replace.cpp",
+      "/tmp/scpp-borrow-20261021-0839/regression-02/fixture-runtime.o",
+      "-o",
+      "/tmp/scpp-borrow-20261021-0839/regression-02/replace"
+    ],
+    "cwd": "/tmp/scpp-borrow-20261021-0839/after",
+    "seconds": 1.877,
+    "code": 0,
+    "expected": 0,
+    "executor": "subprocess",
+    "executor_reason": "subprocess"
+  },
+  {
+    "name": "replace-execute",
+    "command": [
+      "/tmp/scpp-borrow-20261021-0839/regression-02/replace"
+    ],
+    "cwd": "/tmp/scpp-borrow-20261021-0839/after",
+    "seconds": 0.002,
+    "code": 0,
+    "expected": 0,
+    "executor": "subprocess",
+    "executor_reason": "subprocess"
+  },
+  {
+    "name": "catalog-extremes-compile",
+    "command": [
+      "clang++",
+      "-std=c++20",
+      "-Wshadow",
+      "-I",
+      "/tmp/scpp-borrow-20261021-0839/after/runtime/include",
+      "-DSCPP_LANGUAGE_TARGET_PHP=1",
+      "-pthread",
+      "/tmp/scpp-borrow-20261021-0839/regression-02/catalog/length.cpp",
+      "/tmp/scpp-borrow-20261021-0839/regression-02/fixture-runtime.o",
+      "-o",
+      "/tmp/scpp-borrow-20261021-0839/regression-02/catalog-extremes"
+    ],
+    "cwd": "/tmp/scpp-borrow-20261021-0839/after",
+    "seconds": 1.889,
+    "code": 0,
+    "expected": 0,
+    "executor": "subprocess",
+    "executor_reason": "subprocess"
+  },
+  {
+    "name": "catalog-extremes-execute",
+    "command": [
+      "/tmp/scpp-borrow-20261021-0839/regression-02/catalog-extremes"
+    ],
+    "cwd": "/tmp/scpp-borrow-20261021-0839/after",
+    "seconds": 0.002,
+    "code": 0,
+    "expected": 0,
+    "executor": "subprocess",
+    "executor_reason": "subprocess"
+  },
+  {
+    "name": "split-limits-compile",
+    "command": [
+      "clang++",
+      "-std=c++20",
+      "-Wshadow",
+      "-I",
+      "/tmp/scpp-borrow-20261021-0839/after/runtime/include",
+      "-DSCPP_LANGUAGE_TARGET_PHP=1",
+      "-pthread",
+      "-fsanitize=undefined",
+      "-fno-sanitize-recover=undefined",
+      "/tmp/scpp-borrow-20261021-0839/after/tests/runtime/native/test_string_split_limits.cpp",
+      "/tmp/scpp-borrow-20261021-0839/regression-02/fixture-runtime.o",
+      "-o",
+      "/tmp/scpp-borrow-20261021-0839/regression-02/split-limits"
+    ],
+    "cwd": "/tmp/scpp-borrow-20261021-0839/after",
+    "seconds": 2.512,
+    "code": 0,
+    "expected": 0,
+    "executor": "subprocess",
+    "executor_reason": "subprocess"
+  },
+  {
+    "name": "split-limits-execute",
+    "command": [
+      "/tmp/scpp-borrow-20261021-0839/regression-02/split-limits"
+    ],
+    "cwd": "/tmp/scpp-borrow-20261021-0839/after",
+    "seconds": 0.002,
+    "code": 0,
+    "expected": 0,
+    "executor": "subprocess",
+    "executor_reason": "subprocess"
+  },
+  {
+    "name": "trim_order-compile-unit-1",
+    "command": [
+      "clang++",
+      "-std=c++20",
+      "-Wshadow",
+      "-I",
+      "/tmp/scpp-borrow-20261021-0839/after/runtime/include",
+      "-DSCPP_LANGUAGE_TARGET_PHP=1",
+      "-pthread",
+      "-I",
+      "/tmp/scpp-borrow-20261021-0839/regression-02/trim_order.artifacts-xkosfyln/sources",
+      "-c",
+      "/tmp/scpp-borrow-20261021-0839/regression-02/trim_order.artifacts-xkosfyln/sources/entry.cpp",
+      "-o",
+      "/tmp/scpp-borrow-20261021-0839/regression-02/trim_order.artifacts-xkosfyln/sources/entry.o"
+    ],
+    "cwd": "/tmp/scpp-borrow-20261021-0839/after",
+    "seconds": 1.684,
+    "code": 0,
+    "expected": 0,
+    "executor": "subprocess",
+    "executor_reason": "subprocess"
+  },
+  {
+    "name": "trim_order-compile-link",
+    "command": [
+      "clang++",
+      "-std=c++20",
+      "-Wshadow",
+      "-I",
+      "/tmp/scpp-borrow-20261021-0839/after/runtime/include",
+      "-DSCPP_LANGUAGE_TARGET_PHP=1",
+      "-pthread",
+      "/tmp/scpp-borrow-20261021-0839/regression-02/trim_order.artifacts-xkosfyln/sources/units/n6d61696e/n6d61696e2e706873.o",
+      "/tmp/scpp-borrow-20261021-0839/regression-02/trim_order.artifacts-xkosfyln/sources/entry.o",
+      "/tmp/scpp-borrow-20261021-0839/regression-02/fixture-runtime.o",
+      "-o",
+      "/tmp/scpp-borrow-20261021-0839/regression-02/trim_order"
+    ],
+    "cwd": "/tmp/scpp-borrow-20261021-0839/after",
+    "seconds": 0.119,
+    "code": 0,
+    "expected": 0,
+    "executor": "subprocess",
+    "executor_reason": "subprocess"
+  },
+  {
+    "name": "trim_order-execute",
+    "command": [
+      "/tmp/scpp-borrow-20261021-0839/regression-02/trim_order"
+    ],
+    "cwd": "/tmp/scpp-borrow-20261021-0839/after",
+    "seconds": 0.002,
+    "code": 0,
+    "expected": 0,
+    "executor": "subprocess",
+    "executor_reason": "subprocess"
+  }
+]

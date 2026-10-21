@@ -1,0 +1,2270 @@
+[
+  {
+    "backend": "after_concrete",
+    "id": "ascii_4096_baseline",
+    "round_medians_ns": [
+      19.285791397094727,
+      19.236660957336426,
+      19.16794776916504
+    ]
+  },
+  {
+    "backend": "after_concrete",
+    "id": "ascii_4096_compare_early",
+    "round_medians_ns": [
+      32.468892097473145,
+      32.38620662689209,
+      32.54160690307617
+    ]
+  },
+  {
+    "backend": "after_concrete",
+    "id": "ascii_4096_compare_equal",
+    "round_medians_ns": [
+      66.56528663635254,
+      64.50874137878418,
+      64.64702415466309
+    ]
+  },
+  {
+    "backend": "after_concrete",
+    "id": "ascii_4096_compare_late",
+    "round_medians_ns": [
+      59.48374938964844,
+      59.620880126953125,
+      59.359724044799805
+    ]
+  },
+  {
+    "backend": "after_concrete",
+    "id": "ascii_4096_replace_absent",
+    "round_medians_ns": [
+      120.94332885742188,
+      119.82146072387695,
+      119.53862380981445
+    ]
+  },
+  {
+    "backend": "after_concrete",
+    "id": "ascii_4096_replace_dense",
+    "round_medians_ns": [
+      5032.982177734375,
+      5148.77294921875,
+      5215.060302734375
+    ]
+  },
+  {
+    "backend": "after_concrete",
+    "id": "ascii_4096_replace_grow",
+    "round_medians_ns": [
+      6385.553466796875,
+      6430.897705078125,
+      6272.238037109375
+    ]
+  },
+  {
+    "backend": "after_concrete",
+    "id": "ascii_64_baseline",
+    "round_medians_ns": [
+      19.299034118652344,
+      19.23186492919922,
+      19.13637924194336
+    ]
+  },
+  {
+    "backend": "after_concrete",
+    "id": "ascii_64_compare_early",
+    "round_medians_ns": [
+      32.3999547958374,
+      32.34004783630371,
+      32.20404052734375
+    ]
+  },
+  {
+    "backend": "after_concrete",
+    "id": "ascii_64_compare_equal",
+    "round_medians_ns": [
+      39.18027305603027,
+      38.49590873718262,
+      38.330678939819336
+    ]
+  },
+  {
+    "backend": "after_concrete",
+    "id": "ascii_64_compare_late",
+    "round_medians_ns": [
+      32.916441917419434,
+      32.809678077697754,
+      32.67990970611572
+    ]
+  },
+  {
+    "backend": "after_concrete",
+    "id": "ascii_64_replace_absent",
+    "round_medians_ns": [
+      39.96136665344238,
+      39.220916748046875,
+      39.29243278503418
+    ]
+  },
+  {
+    "backend": "after_concrete",
+    "id": "ascii_64_replace_dense",
+    "round_medians_ns": [
+      131.05189895629883,
+      127.77059936523438,
+      130.44175338745117
+    ]
+  },
+  {
+    "backend": "after_concrete",
+    "id": "ascii_64_replace_grow",
+    "round_medians_ns": [
+      169.82955932617188,
+      170.1755142211914,
+      169.40176391601562
+    ]
+  },
+  {
+    "backend": "after_concrete",
+    "id": "ascii_65536_baseline",
+    "round_medians_ns": [
+      19.2630033493042,
+      19.230670928955078,
+      19.14205551147461
+    ]
+  },
+  {
+    "backend": "after_concrete",
+    "id": "ascii_65536_compare_early",
+    "round_medians_ns": [
+      32.974764823913574,
+      32.33965492248535,
+      32.20004653930664
+    ]
+  },
+  {
+    "backend": "after_concrete",
+    "id": "ascii_65536_compare_equal",
+    "round_medians_ns": [
+      919.6378479003906,
+      909.4402160644531,
+      907.2429809570312
+    ]
+  },
+  {
+    "backend": "after_concrete",
+    "id": "ascii_65536_compare_late",
+    "round_medians_ns": [
+      908.5987548828125,
+      915.9208679199219,
+      900.707275390625
+    ]
+  },
+  {
+    "backend": "after_concrete",
+    "id": "ascii_65536_replace_absent",
+    "round_medians_ns": [
+      1456.1381225585938,
+      1452.7553100585938,
+      1448.4338989257812
+    ]
+  },
+  {
+    "backend": "after_concrete",
+    "id": "ascii_65536_replace_dense",
+    "round_medians_ns": [
+      78814.8125,
+      79664.1796875,
+      77639.34375
+    ]
+  },
+  {
+    "backend": "after_concrete",
+    "id": "ascii_65536_replace_grow",
+    "round_medians_ns": [
+      214460.6953125,
+      216593.90625,
+      212514.53125
+    ]
+  },
+  {
+    "backend": "after_concrete",
+    "id": "utf8_4096_baseline",
+    "round_medians_ns": [
+      19.293922424316406,
+      19.262039184570312,
+      19.131067276000977
+    ]
+  },
+  {
+    "backend": "after_concrete",
+    "id": "utf8_4096_compare_early",
+    "round_medians_ns": [
+      32.52753829956055,
+      32.339674949645996,
+      32.22766971588135
+    ]
+  },
+  {
+    "backend": "after_concrete",
+    "id": "utf8_4096_compare_equal",
+    "round_medians_ns": [
+      64.82930183410645,
+      64.94850540161133,
+      64.57093048095703
+    ]
+  },
+  {
+    "backend": "after_concrete",
+    "id": "utf8_4096_compare_late",
+    "round_medians_ns": [
+      59.59500503540039,
+      59.609222412109375,
+      59.44269561767578
+    ]
+  },
+  {
+    "backend": "after_concrete",
+    "id": "utf8_4096_replace_absent",
+    "round_medians_ns": [
+      110.56791687011719,
+      109.28724670410156,
+      110.62313461303711
+    ]
+  },
+  {
+    "backend": "after_concrete",
+    "id": "utf8_4096_replace_dense",
+    "round_medians_ns": [
+      4412.0208740234375,
+      4575.643310546875,
+      4489.5078125
+    ]
+  },
+  {
+    "backend": "after_concrete",
+    "id": "utf8_4096_replace_grow",
+    "round_medians_ns": [
+      5736.415771484375,
+      5908.78515625,
+      5851.982177734375
+    ]
+  },
+  {
+    "backend": "after_concrete",
+    "id": "utf8_64_baseline",
+    "round_medians_ns": [
+      19.571934700012207,
+      19.21689224243164,
+      19.147080421447754
+    ]
+  },
+  {
+    "backend": "after_concrete",
+    "id": "utf8_64_compare_early",
+    "round_medians_ns": [
+      32.436951637268066,
+      32.379326820373535,
+      32.20664882659912
+    ]
+  },
+  {
+    "backend": "after_concrete",
+    "id": "utf8_64_compare_equal",
+    "round_medians_ns": [
+      38.584882736206055,
+      38.49659729003906,
+      38.32597732543945
+    ]
+  },
+  {
+    "backend": "after_concrete",
+    "id": "utf8_64_compare_late",
+    "round_medians_ns": [
+      33.530683517456055,
+      32.998154640197754,
+      32.92740440368652
+    ]
+  },
+  {
+    "backend": "after_concrete",
+    "id": "utf8_64_replace_absent",
+    "round_medians_ns": [
+      39.77942657470703,
+      39.27801704406738,
+      39.116455078125
+    ]
+  },
+  {
+    "backend": "after_concrete",
+    "id": "utf8_64_replace_dense",
+    "round_medians_ns": [
+      118.80132675170898,
+      118.64837646484375,
+      118.42779922485352
+    ]
+  },
+  {
+    "backend": "after_concrete",
+    "id": "utf8_64_replace_grow",
+    "round_medians_ns": [
+      163.0984115600586,
+      163.18669891357422,
+      167.32457733154297
+    ]
+  },
+  {
+    "backend": "after_concrete",
+    "id": "utf8_65536_baseline",
+    "round_medians_ns": [
+      19.298948287963867,
+      19.230603218078613,
+      19.13518524169922
+    ]
+  },
+  {
+    "backend": "after_concrete",
+    "id": "utf8_65536_compare_early",
+    "round_medians_ns": [
+      32.45312690734863,
+      32.35338592529297,
+      32.22639751434326
+    ]
+  },
+  {
+    "backend": "after_concrete",
+    "id": "utf8_65536_compare_equal",
+    "round_medians_ns": [
+      914.5929870605469,
+      914.4871826171875,
+      923.9173278808594
+    ]
+  },
+  {
+    "backend": "after_concrete",
+    "id": "utf8_65536_compare_late",
+    "round_medians_ns": [
+      909.000244140625,
+      907.6524963378906,
+      903.7305297851562
+    ]
+  },
+  {
+    "backend": "after_concrete",
+    "id": "utf8_65536_replace_absent",
+    "round_medians_ns": [
+      1460.6412353515625,
+      1459.4952392578125,
+      1453.7545776367188
+    ]
+  },
+  {
+    "backend": "after_concrete",
+    "id": "utf8_65536_replace_dense",
+    "round_medians_ns": [
+      69569.615234375,
+      71344.9375,
+      69830.1875
+    ]
+  },
+  {
+    "backend": "after_concrete",
+    "id": "utf8_65536_replace_grow",
+    "round_medians_ns": [
+      165940.9921875,
+      169347.703125,
+      166627.2265625
+    ]
+  },
+  {
+    "backend": "after_ordinary",
+    "id": "ascii_4096_baseline",
+    "round_medians_ns": [
+      0.21019761264324188,
+      0.20960205793380737,
+      0.20911329984664917
+    ]
+  },
+  {
+    "backend": "after_ordinary",
+    "id": "ascii_4096_compare_early",
+    "round_medians_ns": [
+      2.767415165901184,
+      2.7618340253829956,
+      2.757368803024292
+    ]
+  },
+  {
+    "backend": "after_ordinary",
+    "id": "ascii_4096_compare_equal",
+    "round_medians_ns": [
+      37.22740364074707,
+      37.1092472076416,
+      38.763240814208984
+    ]
+  },
+  {
+    "backend": "after_ordinary",
+    "id": "ascii_4096_compare_late",
+    "round_medians_ns": [
+      37.600589752197266,
+      37.53842258453369,
+      39.04139518737793
+    ]
+  },
+  {
+    "backend": "after_ordinary",
+    "id": "ascii_4096_replace_absent",
+    "round_medians_ns": [
+      359.7693176269531,
+      88.42398071289062,
+      92.77392196655273
+    ]
+  },
+  {
+    "backend": "after_ordinary",
+    "id": "ascii_4096_replace_dense",
+    "round_medians_ns": [
+      4700.739990234375,
+      4850.7401123046875,
+      4931.572265625
+    ]
+  },
+  {
+    "backend": "after_ordinary",
+    "id": "ascii_4096_replace_grow",
+    "round_medians_ns": [
+      6129.47998046875,
+      6200.645751953125,
+      6578.664794921875
+    ]
+  },
+  {
+    "backend": "after_ordinary",
+    "id": "ascii_64_baseline",
+    "round_medians_ns": [
+      0.21020911633968353,
+      0.2093651443719864,
+      0.23288260400295258
+    ]
+  },
+  {
+    "backend": "after_ordinary",
+    "id": "ascii_64_compare_early",
+    "round_medians_ns": [
+      2.5533082485198975,
+      2.5489526987075806,
+      2.6613409519195557
+    ]
+  },
+  {
+    "backend": "after_ordinary",
+    "id": "ascii_64_compare_equal",
+    "round_medians_ns": [
+      2.5549181699752808,
+      2.551876425743103,
+      2.662007212638855
+    ]
+  },
+  {
+    "backend": "after_ordinary",
+    "id": "ascii_64_compare_late",
+    "round_medians_ns": [
+      2.9938548803329468,
+      2.9945820569992065,
+      3.0293004512786865
+    ]
+  },
+  {
+    "backend": "after_ordinary",
+    "id": "ascii_64_replace_absent",
+    "round_medians_ns": [
+      19.09042739868164,
+      19.262069702148438,
+      19.97966480255127
+    ]
+  },
+  {
+    "backend": "after_ordinary",
+    "id": "ascii_64_replace_dense",
+    "round_medians_ns": [
+      104.0447883605957,
+      105.62099075317383,
+      109.39731216430664
+    ]
+  },
+  {
+    "backend": "after_ordinary",
+    "id": "ascii_64_replace_grow",
+    "round_medians_ns": [
+      146.4397315979004,
+      150.69357299804688,
+      154.07945251464844
+    ]
+  },
+  {
+    "backend": "after_ordinary",
+    "id": "ascii_65536_baseline",
+    "round_medians_ns": [
+      0.21012116968631744,
+      0.20952577888965607,
+      0.23411127924919128
+    ]
+  },
+  {
+    "backend": "after_ordinary",
+    "id": "ascii_65536_compare_early",
+    "round_medians_ns": [
+      2.5531564950942993,
+      2.553175926208496,
+      2.665897250175476
+    ]
+  },
+  {
+    "backend": "after_ordinary",
+    "id": "ascii_65536_compare_equal",
+    "round_medians_ns": [
+      884.052001953125,
+      875.7733764648438,
+      912.4006958007812
+    ]
+  },
+  {
+    "backend": "after_ordinary",
+    "id": "ascii_65536_compare_late",
+    "round_medians_ns": [
+      885.5807189941406,
+      877.0972595214844,
+      911.5794677734375
+    ]
+  },
+  {
+    "backend": "after_ordinary",
+    "id": "ascii_65536_replace_absent",
+    "round_medians_ns": [
+      1432.011474609375,
+      1434.2770385742188,
+      2664.45947265625
+    ]
+  },
+  {
+    "backend": "after_ordinary",
+    "id": "ascii_65536_replace_dense",
+    "round_medians_ns": [
+      73662.1171875,
+      75619.00390625,
+      77246.283203125
+    ]
+  },
+  {
+    "backend": "after_ordinary",
+    "id": "ascii_65536_replace_grow",
+    "round_medians_ns": [
+      232564.4921875,
+      229041.125,
+      229843.046875
+    ]
+  },
+  {
+    "backend": "after_ordinary",
+    "id": "utf8_4096_baseline",
+    "round_medians_ns": [
+      0.2101505845785141,
+      0.21182340383529663,
+      0.2091328650712967
+    ]
+  },
+  {
+    "backend": "after_ordinary",
+    "id": "utf8_4096_compare_early",
+    "round_medians_ns": [
+      2.554289937019348,
+      2.5509209632873535,
+      2.6504223346710205
+    ]
+  },
+  {
+    "backend": "after_ordinary",
+    "id": "utf8_4096_compare_equal",
+    "round_medians_ns": [
+      37.127509117126465,
+      37.09548854827881,
+      38.6934700012207
+    ]
+  },
+  {
+    "backend": "after_ordinary",
+    "id": "utf8_4096_compare_late",
+    "round_medians_ns": [
+      37.44217300415039,
+      37.6513786315918,
+      38.84432029724121
+    ]
+  },
+  {
+    "backend": "after_ordinary",
+    "id": "utf8_4096_replace_absent",
+    "round_medians_ns": [
+      359.33851623535156,
+      88.51410293579102,
+      92.52622985839844
+    ]
+  },
+  {
+    "backend": "after_ordinary",
+    "id": "utf8_4096_replace_dense",
+    "round_medians_ns": [
+      4383.3587646484375,
+      4326.9185791015625,
+      4536.9136962890625
+    ]
+  },
+  {
+    "backend": "after_ordinary",
+    "id": "utf8_4096_replace_grow",
+    "round_medians_ns": [
+      5633.794189453125,
+      5633.838134765625,
+      5574.760986328125
+    ]
+  },
+  {
+    "backend": "after_ordinary",
+    "id": "utf8_64_baseline",
+    "round_medians_ns": [
+      0.2100704163312912,
+      0.209373340010643,
+      0.23504959046840668
+    ]
+  },
+  {
+    "backend": "after_ordinary",
+    "id": "utf8_64_compare_early",
+    "round_medians_ns": [
+      2.5518428087234497,
+      2.548801064491272,
+      2.653282642364502
+    ]
+  },
+  {
+    "backend": "after_ordinary",
+    "id": "utf8_64_compare_equal",
+    "round_medians_ns": [
+      2.5546387434005737,
+      2.551542043685913,
+      2.65655517578125
+    ]
+  },
+  {
+    "backend": "after_ordinary",
+    "id": "utf8_64_compare_late",
+    "round_medians_ns": [
+      3.207197427749634,
+      3.2073702812194824,
+      3.3280112743377686
+    ]
+  },
+  {
+    "backend": "after_ordinary",
+    "id": "utf8_64_replace_absent",
+    "round_medians_ns": [
+      19.28876304626465,
+      19.278685569763184,
+      19.93869400024414
+    ]
+  },
+  {
+    "backend": "after_ordinary",
+    "id": "utf8_64_replace_dense",
+    "round_medians_ns": [
+      97.9255599975586,
+      95.92889785766602,
+      100.93918228149414
+    ]
+  },
+  {
+    "backend": "after_ordinary",
+    "id": "utf8_64_replace_grow",
+    "round_medians_ns": [
+      143.17138290405273,
+      143.4859504699707,
+      141.31603240966797
+    ]
+  },
+  {
+    "backend": "after_ordinary",
+    "id": "utf8_65536_baseline",
+    "round_medians_ns": [
+      0.2098493129014969,
+      0.2092701941728592,
+      0.2326662838459015
+    ]
+  },
+  {
+    "backend": "after_ordinary",
+    "id": "utf8_65536_compare_early",
+    "round_medians_ns": [
+      2.5555440187454224,
+      2.5538506507873535,
+      2.5462191104888916
+    ]
+  },
+  {
+    "backend": "after_ordinary",
+    "id": "utf8_65536_compare_equal",
+    "round_medians_ns": [
+      887.7270812988281,
+      882.8185119628906,
+      876.2614440917969
+    ]
+  },
+  {
+    "backend": "after_ordinary",
+    "id": "utf8_65536_compare_late",
+    "round_medians_ns": [
+      906.1466369628906,
+      878.5474243164062,
+      911.5938415527344
+    ]
+  },
+  {
+    "backend": "after_ordinary",
+    "id": "utf8_65536_replace_absent",
+    "round_medians_ns": [
+      1437.9454345703125,
+      1436.552978515625,
+      2514.22412109375
+    ]
+  },
+  {
+    "backend": "after_ordinary",
+    "id": "utf8_65536_replace_dense",
+    "round_medians_ns": [
+      65763.86328125,
+      67458.09765625,
+      68774.205078125
+    ]
+  },
+  {
+    "backend": "after_ordinary",
+    "id": "utf8_65536_replace_grow",
+    "round_medians_ns": [
+      217614.8125,
+      216399.765625,
+      218017.1953125
+    ]
+  },
+  {
+    "backend": "before_concrete",
+    "id": "ascii_4096_baseline",
+    "round_medians_ns": [
+      77.38887405395508,
+      77.07062530517578,
+      76.51501846313477
+    ]
+  },
+  {
+    "backend": "before_concrete",
+    "id": "ascii_4096_compare_early",
+    "round_medians_ns": [
+      1484.7813720703125,
+      1049.3456115722656,
+      1045.5366516113281
+    ]
+  },
+  {
+    "backend": "before_concrete",
+    "id": "ascii_4096_compare_equal",
+    "round_medians_ns": [
+      1537.2106323242188,
+      1141.2682189941406,
+      1093.9853820800781
+    ]
+  },
+  {
+    "backend": "before_concrete",
+    "id": "ascii_4096_compare_late",
+    "round_medians_ns": [
+      1528.2406005859375,
+      1092.1177978515625,
+      1087.1170043945312
+    ]
+  },
+  {
+    "backend": "before_concrete",
+    "id": "ascii_4096_replace_absent",
+    "round_medians_ns": [
+      185.64276885986328,
+      186.2183380126953,
+      184.57196044921875
+    ]
+  },
+  {
+    "backend": "before_concrete",
+    "id": "ascii_4096_replace_dense",
+    "round_medians_ns": [
+      4996.460693359375,
+      5256.885986328125,
+      5137.57861328125
+    ]
+  },
+  {
+    "backend": "before_concrete",
+    "id": "ascii_4096_replace_grow",
+    "round_medians_ns": [
+      6485.02001953125,
+      6285.859619140625,
+      6476.24609375
+    ]
+  },
+  {
+    "backend": "before_concrete",
+    "id": "ascii_64_baseline",
+    "round_medians_ns": [
+      32.8709716796875,
+      32.654396057128906,
+      32.56406879425049
+    ]
+  },
+  {
+    "backend": "before_concrete",
+    "id": "ascii_64_compare_early",
+    "round_medians_ns": [
+      58.860633850097656,
+      58.065284729003906,
+      57.99216270446777
+    ]
+  },
+  {
+    "backend": "before_concrete",
+    "id": "ascii_64_compare_equal",
+    "round_medians_ns": [
+      64.95618629455566,
+      65.64796447753906,
+      64.56250381469727
+    ]
+  },
+  {
+    "backend": "before_concrete",
+    "id": "ascii_64_compare_late",
+    "round_medians_ns": [
+      60.089115142822266,
+      59.32254409790039,
+      59.3858642578125
+    ]
+  },
+  {
+    "backend": "before_concrete",
+    "id": "ascii_64_replace_absent",
+    "round_medians_ns": [
+      61.566650390625,
+      61.22506904602051,
+      61.190528869628906
+    ]
+  },
+  {
+    "backend": "before_concrete",
+    "id": "ascii_64_replace_dense",
+    "round_medians_ns": [
+      150.05487442016602,
+      150.55381774902344,
+      152.10105895996094
+    ]
+  },
+  {
+    "backend": "before_concrete",
+    "id": "ascii_64_replace_grow",
+    "round_medians_ns": [
+      195.42376708984375,
+      197.05989837646484,
+      201.0615463256836
+    ]
+  },
+  {
+    "backend": "before_concrete",
+    "id": "ascii_65536_baseline",
+    "round_medians_ns": [
+      1012.6642456054688,
+      1014.7815551757812,
+      1006.9474487304688
+    ]
+  },
+  {
+    "backend": "before_concrete",
+    "id": "ascii_65536_compare_early",
+    "round_medians_ns": [
+      16148.091796875,
+      16110.453125,
+      16040.34326171875
+    ]
+  },
+  {
+    "backend": "before_concrete",
+    "id": "ascii_65536_compare_equal",
+    "round_medians_ns": [
+      17020.74462890625,
+      17057.7626953125,
+      16901.8955078125
+    ]
+  },
+  {
+    "backend": "before_concrete",
+    "id": "ascii_65536_compare_late",
+    "round_medians_ns": [
+      16993.93212890625,
+      16532.841796875,
+      16856.287109375
+    ]
+  },
+  {
+    "backend": "before_concrete",
+    "id": "ascii_65536_replace_absent",
+    "round_medians_ns": [
+      2396.5003051757812,
+      2447.0100708007812,
+      2377.87646484375
+    ]
+  },
+  {
+    "backend": "before_concrete",
+    "id": "ascii_65536_replace_dense",
+    "round_medians_ns": [
+      78569.234375,
+      78274.890625,
+      79728.2578125
+    ]
+  },
+  {
+    "backend": "before_concrete",
+    "id": "ascii_65536_replace_grow",
+    "round_medians_ns": [
+      231822.71875,
+      227363.9609375,
+      231185.9453125
+    ]
+  },
+  {
+    "backend": "before_concrete",
+    "id": "utf8_4096_baseline",
+    "round_medians_ns": [
+      72.63242530822754,
+      71.76490020751953,
+      71.72272491455078
+    ]
+  },
+  {
+    "backend": "before_concrete",
+    "id": "utf8_4096_compare_early",
+    "round_medians_ns": [
+      1493.2243041992188,
+      1060.5415344238281,
+      1052.5010375976562
+    ]
+  },
+  {
+    "backend": "before_concrete",
+    "id": "utf8_4096_compare_equal",
+    "round_medians_ns": [
+      1534.836181640625,
+      1099.4848327636719,
+      1097.0612182617188
+    ]
+  },
+  {
+    "backend": "before_concrete",
+    "id": "utf8_4096_compare_late",
+    "round_medians_ns": [
+      1515.7457885742188,
+      1077.1015319824219,
+      1074.9273986816406
+    ]
+  },
+  {
+    "backend": "before_concrete",
+    "id": "utf8_4096_replace_absent",
+    "round_medians_ns": [
+      178.99729919433594,
+      179.8714370727539,
+      178.26917266845703
+    ]
+  },
+  {
+    "backend": "before_concrete",
+    "id": "utf8_4096_replace_dense",
+    "round_medians_ns": [
+      4496.3564453125,
+      4669.872802734375,
+      4598.799560546875
+    ]
+  },
+  {
+    "backend": "before_concrete",
+    "id": "utf8_4096_replace_grow",
+    "round_medians_ns": [
+      5700.097900390625,
+      5676.107421875,
+      5790.4873046875
+    ]
+  },
+  {
+    "backend": "before_concrete",
+    "id": "utf8_64_baseline",
+    "round_medians_ns": [
+      32.634063720703125,
+      32.810184478759766,
+      32.5664005279541
+    ]
+  },
+  {
+    "backend": "before_concrete",
+    "id": "utf8_64_compare_early",
+    "round_medians_ns": [
+      58.76243019104004,
+      58.04957580566406,
+      58.01733207702637
+    ]
+  },
+  {
+    "backend": "before_concrete",
+    "id": "utf8_64_compare_equal",
+    "round_medians_ns": [
+      65.28406524658203,
+      64.52660942077637,
+      64.55073165893555
+    ]
+  },
+  {
+    "backend": "before_concrete",
+    "id": "utf8_64_compare_late",
+    "round_medians_ns": [
+      59.417728424072266,
+      59.63035774230957,
+      59.55142593383789
+    ]
+  },
+  {
+    "backend": "before_concrete",
+    "id": "utf8_64_replace_absent",
+    "round_medians_ns": [
+      61.02346611022949,
+      60.961570739746094,
+      60.999704360961914
+    ]
+  },
+  {
+    "backend": "before_concrete",
+    "id": "utf8_64_replace_dense",
+    "round_medians_ns": [
+      139.96946716308594,
+      139.08829498291016,
+      141.7546615600586
+    ]
+  },
+  {
+    "backend": "before_concrete",
+    "id": "utf8_64_replace_grow",
+    "round_medians_ns": [
+      187.47772216796875,
+      185.88101959228516,
+      186.88494873046875
+    ]
+  },
+  {
+    "backend": "before_concrete",
+    "id": "utf8_65536_baseline",
+    "round_medians_ns": [
+      1016.1617126464844,
+      1005.6102905273438,
+      1008.3960876464844
+    ]
+  },
+  {
+    "backend": "before_concrete",
+    "id": "utf8_65536_compare_early",
+    "round_medians_ns": [
+      15737.03759765625,
+      16468.5322265625,
+      16013.44140625
+    ]
+  },
+  {
+    "backend": "before_concrete",
+    "id": "utf8_65536_compare_equal",
+    "round_medians_ns": [
+      16605.89404296875,
+      16928.9267578125,
+      16896.64111328125
+    ]
+  },
+  {
+    "backend": "before_concrete",
+    "id": "utf8_65536_compare_late",
+    "round_medians_ns": [
+      16994.18603515625,
+      16545.92333984375,
+      16865.13671875
+    ]
+  },
+  {
+    "backend": "before_concrete",
+    "id": "utf8_65536_replace_absent",
+    "round_medians_ns": [
+      2434.0426025390625,
+      2400.0463256835938,
+      2386.943115234375
+    ]
+  },
+  {
+    "backend": "before_concrete",
+    "id": "utf8_65536_replace_dense",
+    "round_medians_ns": [
+      70707.39453125,
+      69840.474609375,
+      71336.9765625
+    ]
+  },
+  {
+    "backend": "before_concrete",
+    "id": "utf8_65536_replace_grow",
+    "round_medians_ns": [
+      168005.9609375,
+      163753.53125,
+      166949.546875
+    ]
+  },
+  {
+    "backend": "before_ordinary",
+    "id": "ascii_4096_baseline",
+    "round_medians_ns": [
+      52.48984909057617,
+      52.675642013549805,
+      51.88364219665527
+    ]
+  },
+  {
+    "backend": "before_ordinary",
+    "id": "ascii_4096_compare_early",
+    "round_medians_ns": [
+      109.2657699584961,
+      107.90627670288086,
+      107.76219940185547
+    ]
+  },
+  {
+    "backend": "before_ordinary",
+    "id": "ascii_4096_compare_equal",
+    "round_medians_ns": [
+      144.21563720703125,
+      142.09659576416016,
+      142.08919525146484
+    ]
+  },
+  {
+    "backend": "before_ordinary",
+    "id": "ascii_4096_compare_late",
+    "round_medians_ns": [
+      148.5362548828125,
+      145.3947868347168,
+      145.51507186889648
+    ]
+  },
+  {
+    "backend": "before_ordinary",
+    "id": "ascii_4096_replace_absent",
+    "round_medians_ns": [
+      1052.5373229980469,
+      1046.2554321289062,
+      1041.2091369628906
+    ]
+  },
+  {
+    "backend": "before_ordinary",
+    "id": "ascii_4096_replace_dense",
+    "round_medians_ns": [
+      5054.7587890625,
+      5190.6513671875,
+      4958.1357421875
+    ]
+  },
+  {
+    "backend": "before_ordinary",
+    "id": "ascii_4096_replace_grow",
+    "round_medians_ns": [
+      6412.43994140625,
+      6501.2216796875,
+      6228.31787109375
+    ]
+  },
+  {
+    "backend": "before_ordinary",
+    "id": "ascii_64_baseline",
+    "round_medians_ns": [
+      12.330399513244629,
+      12.204153060913086,
+      12.122150897979736
+    ]
+  },
+  {
+    "backend": "before_ordinary",
+    "id": "ascii_64_compare_early",
+    "round_medians_ns": [
+      26.540010452270508,
+      26.500279426574707,
+      26.078864097595215
+    ]
+  },
+  {
+    "backend": "before_ordinary",
+    "id": "ascii_64_compare_equal",
+    "round_medians_ns": [
+      26.75639533996582,
+      26.719701766967773,
+      25.865622520446777
+    ]
+  },
+  {
+    "backend": "before_ordinary",
+    "id": "ascii_64_compare_late",
+    "round_medians_ns": [
+      28.07999324798584,
+      27.79959774017334,
+      27.38462257385254
+    ]
+  },
+  {
+    "backend": "before_ordinary",
+    "id": "ascii_64_replace_absent",
+    "round_medians_ns": [
+      36.30937194824219,
+      36.269765853881836,
+      35.860934257507324
+    ]
+  },
+  {
+    "backend": "before_ordinary",
+    "id": "ascii_64_replace_dense",
+    "round_medians_ns": [
+      126.88407897949219,
+      123.88277816772461,
+      123.35999298095703
+    ]
+  },
+  {
+    "backend": "before_ordinary",
+    "id": "ascii_64_replace_grow",
+    "round_medians_ns": [
+      173.10565948486328,
+      173.47486114501953,
+      170.2466278076172
+    ]
+  },
+  {
+    "backend": "before_ordinary",
+    "id": "ascii_65536_baseline",
+    "round_medians_ns": [
+      920.0350036621094,
+      937.2525024414062,
+      935.9186096191406
+    ]
+  },
+  {
+    "backend": "before_ordinary",
+    "id": "ascii_65536_compare_early",
+    "round_medians_ns": [
+      1863.3327026367188,
+      1870.3865966796875,
+      1855.2821044921875
+    ]
+  },
+  {
+    "backend": "before_ordinary",
+    "id": "ascii_65536_compare_equal",
+    "round_medians_ns": [
+      2738.254638671875,
+      2752.0673828125,
+      2734.337890625
+    ]
+  },
+  {
+    "backend": "before_ordinary",
+    "id": "ascii_65536_compare_late",
+    "round_medians_ns": [
+      2790.288330078125,
+      2755.080810546875,
+      2733.712890625
+    ]
+  },
+  {
+    "backend": "before_ordinary",
+    "id": "ascii_65536_replace_absent",
+    "round_medians_ns": [
+      17396.98291015625,
+      16700.30517578125,
+      16702.28271484375
+    ]
+  },
+  {
+    "backend": "before_ordinary",
+    "id": "ascii_65536_replace_dense",
+    "round_medians_ns": [
+      78662.84765625,
+      77585.486328125,
+      77124.4140625
+    ]
+  },
+  {
+    "backend": "before_ordinary",
+    "id": "ascii_65536_replace_grow",
+    "round_medians_ns": [
+      257943.828125,
+      259145.703125,
+      254758.046875
+    ]
+  },
+  {
+    "backend": "before_ordinary",
+    "id": "utf8_4096_baseline",
+    "round_medians_ns": [
+      51.980966567993164,
+      51.441925048828125,
+      51.42776870727539
+    ]
+  },
+  {
+    "backend": "before_ordinary",
+    "id": "utf8_4096_compare_early",
+    "round_medians_ns": [
+      112.42809677124023,
+      111.30506134033203,
+      112.32749557495117
+    ]
+  },
+  {
+    "backend": "before_ordinary",
+    "id": "utf8_4096_compare_equal",
+    "round_medians_ns": [
+      144.5896453857422,
+      142.27312850952148,
+      142.4697723388672
+    ]
+  },
+  {
+    "backend": "before_ordinary",
+    "id": "utf8_4096_compare_late",
+    "round_medians_ns": [
+      147.99290084838867,
+      145.4917106628418,
+      145.6236114501953
+    ]
+  },
+  {
+    "backend": "before_ordinary",
+    "id": "utf8_4096_replace_absent",
+    "round_medians_ns": [
+      1048.6756896972656,
+      1045.4837036132812,
+      1044.8145446777344
+    ]
+  },
+  {
+    "backend": "before_ordinary",
+    "id": "utf8_4096_replace_dense",
+    "round_medians_ns": [
+      4601.940185546875,
+      4638.626220703125,
+      4454.29541015625
+    ]
+  },
+  {
+    "backend": "before_ordinary",
+    "id": "utf8_4096_replace_grow",
+    "round_medians_ns": [
+      5718.846435546875,
+      5725.51416015625,
+      5616.760986328125
+    ]
+  },
+  {
+    "backend": "before_ordinary",
+    "id": "utf8_64_baseline",
+    "round_medians_ns": [
+      12.20416259765625,
+      12.938199520111084,
+      11.75999116897583
+    ]
+  },
+  {
+    "backend": "before_ordinary",
+    "id": "utf8_64_compare_early",
+    "round_medians_ns": [
+      26.809012413024902,
+      26.500967025756836,
+      26.081337928771973
+    ]
+  },
+  {
+    "backend": "before_ordinary",
+    "id": "utf8_64_compare_equal",
+    "round_medians_ns": [
+      26.792970657348633,
+      26.74724769592285,
+      26.28895092010498
+    ]
+  },
+  {
+    "backend": "before_ordinary",
+    "id": "utf8_64_compare_late",
+    "round_medians_ns": [
+      28.0920991897583,
+      27.80668830871582,
+      27.547921180725098
+    ]
+  },
+  {
+    "backend": "before_ordinary",
+    "id": "utf8_64_replace_absent",
+    "round_medians_ns": [
+      36.50076198577881,
+      36.3606595993042,
+      35.93867111206055
+    ]
+  },
+  {
+    "backend": "before_ordinary",
+    "id": "utf8_64_replace_dense",
+    "round_medians_ns": [
+      117.95780181884766,
+      117.98498916625977,
+      113.9973030090332
+    ]
+  },
+  {
+    "backend": "before_ordinary",
+    "id": "utf8_64_replace_grow",
+    "round_medians_ns": [
+      163.23377990722656,
+      165.82088470458984,
+      161.76475524902344
+    ]
+  },
+  {
+    "backend": "before_ordinary",
+    "id": "utf8_65536_baseline",
+    "round_medians_ns": [
+      932.4671020507812,
+      941.4048767089844,
+      942.6988830566406
+    ]
+  },
+  {
+    "backend": "before_ordinary",
+    "id": "utf8_65536_compare_early",
+    "round_medians_ns": [
+      1923.816650390625,
+      1878.2321166992188,
+      1875.9085083007812
+    ]
+  },
+  {
+    "backend": "before_ordinary",
+    "id": "utf8_65536_compare_equal",
+    "round_medians_ns": [
+      2917.1842041015625,
+      2721.0899658203125,
+      2767.5628662109375
+    ]
+  },
+  {
+    "backend": "before_ordinary",
+    "id": "utf8_65536_compare_late",
+    "round_medians_ns": [
+      2753.6583251953125,
+      2762.240234375,
+      2741.842041015625
+    ]
+  },
+  {
+    "backend": "before_ordinary",
+    "id": "utf8_65536_replace_absent",
+    "round_medians_ns": [
+      18156.826171875,
+      16879.39111328125,
+      16876.466796875
+    ]
+  },
+  {
+    "backend": "before_ordinary",
+    "id": "utf8_65536_replace_dense",
+    "round_medians_ns": [
+      69761.712890625,
+      68747.05859375,
+      68831.14453125
+    ]
+  },
+  {
+    "backend": "before_ordinary",
+    "id": "utf8_65536_replace_grow",
+    "round_medians_ns": [
+      249675.7421875,
+      241449.3984375,
+      241312.6015625
+    ]
+  },
+  {
+    "backend": "cpp",
+    "id": "ascii_4096_baseline",
+    "round_medians_ns": [
+      1.051451176404953,
+      0.9968636631965637,
+      0.9972202479839325
+    ]
+  },
+  {
+    "backend": "cpp",
+    "id": "ascii_4096_compare_early",
+    "round_medians_ns": [
+      4.895964622497559,
+      4.703291058540344,
+      4.490280985832214
+    ]
+  },
+  {
+    "backend": "cpp",
+    "id": "ascii_4096_compare_equal",
+    "round_medians_ns": [
+      41.220882415771484,
+      40.3904914855957,
+      40.38583183288574
+    ]
+  },
+  {
+    "backend": "cpp",
+    "id": "ascii_4096_compare_late",
+    "round_medians_ns": [
+      42.258480072021484,
+      40.40837860107422,
+      41.15954780578613
+    ]
+  },
+  {
+    "backend": "cpp",
+    "id": "ascii_4096_replace_absent",
+    "round_medians_ns": [
+      88.67155838012695,
+      85.60058212280273,
+      85.82703399658203
+    ]
+  },
+  {
+    "backend": "cpp",
+    "id": "ascii_4096_replace_dense",
+    "round_medians_ns": [
+      4814.725830078125,
+      4655.8472900390625,
+      4876.56201171875
+    ]
+  },
+  {
+    "backend": "cpp",
+    "id": "ascii_4096_replace_grow",
+    "round_medians_ns": [
+      6150.894775390625,
+      5915.4921875,
+      6015.599853515625
+    ]
+  },
+  {
+    "backend": "cpp",
+    "id": "ascii_64_baseline",
+    "round_medians_ns": [
+      1.0503580570220947,
+      0.9970828294754028,
+      0.9983796775341034
+    ]
+  },
+  {
+    "backend": "cpp",
+    "id": "ascii_64_compare_early",
+    "round_medians_ns": [
+      4.6055028438568115,
+      4.4899067878723145,
+      4.496762633323669
+    ]
+  },
+  {
+    "backend": "cpp",
+    "id": "ascii_64_compare_equal",
+    "round_medians_ns": [
+      4.314606189727783,
+      4.281233072280884,
+      4.284548878669739
+    ]
+  },
+  {
+    "backend": "cpp",
+    "id": "ascii_64_compare_late",
+    "round_medians_ns": [
+      5.147680044174194,
+      4.957683801651001,
+      4.955233573913574
+    ]
+  },
+  {
+    "backend": "cpp",
+    "id": "ascii_64_replace_absent",
+    "round_medians_ns": [
+      21.231589317321777,
+      20.73775005340576,
+      21.143632888793945
+    ]
+  },
+  {
+    "backend": "cpp",
+    "id": "ascii_64_replace_dense",
+    "round_medians_ns": [
+      104.44807434082031,
+      104.2066764831543,
+      106.29055786132812
+    ]
+  },
+  {
+    "backend": "cpp",
+    "id": "ascii_64_replace_grow",
+    "round_medians_ns": [
+      149.97721481323242,
+      146.3563346862793,
+      146.67310333251953
+    ]
+  },
+  {
+    "backend": "cpp",
+    "id": "ascii_65536_baseline",
+    "round_medians_ns": [
+      1.0332534313201904,
+      0.9967827498912811,
+      1.0033890008926392
+    ]
+  },
+  {
+    "backend": "cpp",
+    "id": "ascii_65536_compare_early",
+    "round_medians_ns": [
+      4.513374328613281,
+      4.490014314651489,
+      4.4898916482925415
+    ]
+  },
+  {
+    "backend": "cpp",
+    "id": "ascii_65536_compare_equal",
+    "round_medians_ns": [
+      889.3702087402344,
+      884.2610168457031,
+      886.2350158691406
+    ]
+  },
+  {
+    "backend": "cpp",
+    "id": "ascii_65536_compare_late",
+    "round_medians_ns": [
+      921.7402038574219,
+      885.1054992675781,
+      900.2682800292969
+    ]
+  },
+  {
+    "backend": "cpp",
+    "id": "ascii_65536_replace_absent",
+    "round_medians_ns": [
+      1442.026611328125,
+      1371.4046630859375,
+      1371.5118408203125
+    ]
+  },
+  {
+    "backend": "cpp",
+    "id": "ascii_65536_replace_dense",
+    "round_medians_ns": [
+      74072.1640625,
+      73397.9296875,
+      74909.1875
+    ]
+  },
+  {
+    "backend": "cpp",
+    "id": "ascii_65536_replace_grow",
+    "round_medians_ns": [
+      228073.7265625,
+      215060.859375,
+      219980.734375
+    ]
+  },
+  {
+    "backend": "cpp",
+    "id": "utf8_4096_baseline",
+    "round_medians_ns": [
+      1.06879261136055,
+      0.996933251619339,
+      0.9970775246620178
+    ]
+  },
+  {
+    "backend": "cpp",
+    "id": "utf8_4096_compare_early",
+    "round_medians_ns": [
+      4.6678996086120605,
+      4.4897764921188354,
+      4.496855735778809
+    ]
+  },
+  {
+    "backend": "cpp",
+    "id": "utf8_4096_compare_equal",
+    "round_medians_ns": [
+      41.33981704711914,
+      39.75740051269531,
+      39.92063522338867
+    ]
+  },
+  {
+    "backend": "cpp",
+    "id": "utf8_4096_compare_late",
+    "round_medians_ns": [
+      42.33682823181152,
+      40.27191734313965,
+      41.129241943359375
+    ]
+  },
+  {
+    "backend": "cpp",
+    "id": "utf8_4096_replace_absent",
+    "round_medians_ns": [
+      85.77832794189453,
+      85.61686325073242,
+      85.98239517211914
+    ]
+  },
+  {
+    "backend": "cpp",
+    "id": "utf8_4096_replace_dense",
+    "round_medians_ns": [
+      4351.052001953125,
+      4160.46533203125,
+      4656.5791015625
+    ]
+  },
+  {
+    "backend": "cpp",
+    "id": "utf8_4096_replace_grow",
+    "round_medians_ns": [
+      5500.95458984375,
+      5307.252197265625,
+      5586.4453125
+    ]
+  },
+  {
+    "backend": "cpp",
+    "id": "utf8_64_baseline",
+    "round_medians_ns": [
+      1.0013154745101929,
+      1.0351486206054688,
+      1.002493530511856
+    ]
+  },
+  {
+    "backend": "cpp",
+    "id": "utf8_64_compare_early",
+    "round_medians_ns": [
+      4.666806697845459,
+      4.489813685417175,
+      4.495823860168457
+    ]
+  },
+  {
+    "backend": "cpp",
+    "id": "utf8_64_compare_equal",
+    "round_medians_ns": [
+      4.431871771812439,
+      4.2794904708862305,
+      4.29176139831543
+    ]
+  },
+  {
+    "backend": "cpp",
+    "id": "utf8_64_compare_late",
+    "round_medians_ns": [
+      5.034951686859131,
+      5.137944459915161,
+      5.141685485839844
+    ]
+  },
+  {
+    "backend": "cpp",
+    "id": "utf8_64_replace_absent",
+    "round_medians_ns": [
+      20.857181549072266,
+      20.742642402648926,
+      20.976512908935547
+    ]
+  },
+  {
+    "backend": "cpp",
+    "id": "utf8_64_replace_dense",
+    "round_medians_ns": [
+      96.56940841674805,
+      94.53839111328125,
+      95.62415313720703
+    ]
+  },
+  {
+    "backend": "cpp",
+    "id": "utf8_64_replace_grow",
+    "round_medians_ns": [
+      145.018798828125,
+      137.4487533569336,
+      139.18163681030273
+    ]
+  },
+  {
+    "backend": "cpp",
+    "id": "utf8_65536_baseline",
+    "round_medians_ns": [
+      1.0461991131305695,
+      0.9968627691268921,
+      0.9972008764743805
+    ]
+  },
+  {
+    "backend": "cpp",
+    "id": "utf8_65536_compare_early",
+    "round_medians_ns": [
+      4.735375881195068,
+      4.489772915840149,
+      4.49186110496521
+    ]
+  },
+  {
+    "backend": "cpp",
+    "id": "utf8_65536_compare_equal",
+    "round_medians_ns": [
+      925.410400390625,
+      885.5460510253906,
+      887.9939575195312
+    ]
+  },
+  {
+    "backend": "cpp",
+    "id": "utf8_65536_compare_late",
+    "round_medians_ns": [
+      920.7006530761719,
+      887.2604064941406,
+      886.7859802246094
+    ]
+  },
+  {
+    "backend": "cpp",
+    "id": "utf8_65536_replace_absent",
+    "round_medians_ns": [
+      1461.894775390625,
+      1373.1321411132812,
+      1401.8512573242188
+    ]
+  },
+  {
+    "backend": "cpp",
+    "id": "utf8_65536_replace_dense",
+    "round_medians_ns": [
+      66474.51171875,
+      65787.623046875,
+      67119.853515625
+    ]
+  },
+  {
+    "backend": "cpp",
+    "id": "utf8_65536_replace_grow",
+    "round_medians_ns": [
+      213453.6484375,
+      200275.40625,
+      207818.234375
+    ]
+  },
+  {
+    "backend": "runtime",
+    "id": "ascii_4096_baseline",
+    "round_medians_ns": [
+      0.997809499502182,
+      0.9977507591247559,
+      1.0363408923149109
+    ]
+  },
+  {
+    "backend": "runtime",
+    "id": "ascii_4096_compare_early",
+    "round_medians_ns": [
+      4.710967183113098,
+      4.704746842384338,
+      5.142905950546265
+    ]
+  },
+  {
+    "backend": "runtime",
+    "id": "ascii_4096_compare_equal",
+    "round_medians_ns": [
+      41.622846603393555,
+      40.323970794677734,
+      39.84733200073242
+    ]
+  },
+  {
+    "backend": "runtime",
+    "id": "ascii_4096_compare_late",
+    "round_medians_ns": [
+      40.829044342041016,
+      40.73155403137207,
+      40.70235824584961
+    ]
+  },
+  {
+    "backend": "runtime",
+    "id": "ascii_4096_replace_absent",
+    "round_medians_ns": [
+      90.1634635925293,
+      87.83564758300781,
+      87.63947677612305
+    ]
+  },
+  {
+    "backend": "runtime",
+    "id": "ascii_4096_replace_dense",
+    "round_medians_ns": [
+      5144.773681640625,
+      4780.871826171875,
+      4944.259765625
+    ]
+  },
+  {
+    "backend": "runtime",
+    "id": "ascii_4096_replace_grow",
+    "round_medians_ns": [
+      6336.1396484375,
+      6032.046142578125,
+      6111.216064453125
+    ]
+  },
+  {
+    "backend": "runtime",
+    "id": "ascii_64_baseline",
+    "round_medians_ns": [
+      1.0441135168075562,
+      1.020907074213028,
+      1.000169038772583
+    ]
+  },
+  {
+    "backend": "runtime",
+    "id": "ascii_64_compare_early",
+    "round_medians_ns": [
+      4.9297356605529785,
+      4.703388810157776,
+      4.713096737861633
+    ]
+  },
+  {
+    "backend": "runtime",
+    "id": "ascii_64_compare_equal",
+    "round_medians_ns": [
+      5.1699018478393555,
+      4.917511224746704,
+      4.924049377441406
+    ]
+  },
+  {
+    "backend": "runtime",
+    "id": "ascii_64_compare_late",
+    "round_medians_ns": [
+      5.209713697433472,
+      5.182870388031006,
+      5.476903438568115
+    ]
+  },
+  {
+    "backend": "runtime",
+    "id": "ascii_64_replace_absent",
+    "round_medians_ns": [
+      22.696014404296875,
+      20.986523628234863,
+      21.683271408081055
+    ]
+  },
+  {
+    "backend": "runtime",
+    "id": "ascii_64_replace_dense",
+    "round_medians_ns": [
+      112.71767807006836,
+      107.25472640991211,
+      106.26361465454102
+    ]
+  },
+  {
+    "backend": "runtime",
+    "id": "ascii_64_replace_grow",
+    "round_medians_ns": [
+      155.5827865600586,
+      150.0035743713379,
+      150.31270217895508
+    ]
+  },
+  {
+    "backend": "runtime",
+    "id": "ascii_65536_baseline",
+    "round_medians_ns": [
+      1.0443505644798279,
+      1.0075693428516388,
+      1.0025159418582916
+    ]
+  },
+  {
+    "backend": "runtime",
+    "id": "ascii_65536_compare_early",
+    "round_medians_ns": [
+      4.921759843826294,
+      4.703853487968445,
+      4.713218688964844
+    ]
+  },
+  {
+    "backend": "runtime",
+    "id": "ascii_65536_compare_equal",
+    "round_medians_ns": [
+      922.51708984375,
+      886.19091796875,
+      885.973876953125
+    ]
+  },
+  {
+    "backend": "runtime",
+    "id": "ascii_65536_compare_late",
+    "round_medians_ns": [
+      885.5097961425781,
+      886.6828308105469,
+      914.5705871582031
+    ]
+  },
+  {
+    "backend": "runtime",
+    "id": "ascii_65536_replace_absent",
+    "round_medians_ns": [
+      1519.435546875,
+      1371.6492309570312,
+      1373.0955810546875
+    ]
+  },
+  {
+    "backend": "runtime",
+    "id": "ascii_65536_replace_dense",
+    "round_medians_ns": [
+      80494.21484375,
+      74550.677734375,
+      74819.408203125
+    ]
+  },
+  {
+    "backend": "runtime",
+    "id": "ascii_65536_replace_grow",
+    "round_medians_ns": [
+      223748.5859375,
+      217335.984375,
+      228080.0546875
+    ]
+  },
+  {
+    "backend": "runtime",
+    "id": "utf8_4096_baseline",
+    "round_medians_ns": [
+      0.9973016083240509,
+      1.0173422694206238,
+      1.0908451676368713
+    ]
+  },
+  {
+    "backend": "runtime",
+    "id": "utf8_4096_compare_early",
+    "round_medians_ns": [
+      4.713759660720825,
+      4.948470592498779,
+      4.726300239562988
+    ]
+  },
+  {
+    "backend": "runtime",
+    "id": "utf8_4096_compare_equal",
+    "round_medians_ns": [
+      41.4783992767334,
+      39.90232276916504,
+      39.914384841918945
+    ]
+  },
+  {
+    "backend": "runtime",
+    "id": "utf8_4096_compare_late",
+    "round_medians_ns": [
+      40.32885932922363,
+      40.54474067687988,
+      41.47964859008789
+    ]
+  },
+  {
+    "backend": "runtime",
+    "id": "utf8_4096_replace_absent",
+    "round_medians_ns": [
+      93.15273666381836,
+      88.02295684814453,
+      87.7037582397461
+    ]
+  },
+  {
+    "backend": "runtime",
+    "id": "utf8_4096_replace_dense",
+    "round_medians_ns": [
+      4538.5595703125,
+      4280.4595947265625,
+      4572.1678466796875
+    ]
+  },
+  {
+    "backend": "runtime",
+    "id": "utf8_4096_replace_grow",
+    "round_medians_ns": [
+      5733.172607421875,
+      5412.605712890625,
+      5662.94384765625
+    ]
+  },
+  {
+    "backend": "runtime",
+    "id": "utf8_64_baseline",
+    "round_medians_ns": [
+      1.0354566872119904,
+      0.997236579656601,
+      0.99822798371315
+    ]
+  },
+  {
+    "backend": "runtime",
+    "id": "utf8_64_compare_early",
+    "round_medians_ns": [
+      4.712204456329346,
+      4.705290198326111,
+      4.72809636592865
+    ]
+  },
+  {
+    "backend": "runtime",
+    "id": "utf8_64_compare_equal",
+    "round_medians_ns": [
+      5.163134813308716,
+      4.9178431034088135,
+      4.934943914413452
+    ]
+  },
+  {
+    "backend": "runtime",
+    "id": "utf8_64_compare_late",
+    "round_medians_ns": [
+      5.576256990432739,
+      5.359192132949829,
+      5.368914365768433
+    ]
+  },
+  {
+    "backend": "runtime",
+    "id": "utf8_64_replace_absent",
+    "round_medians_ns": [
+      22.703227996826172,
+      20.9938907623291,
+      21.496132850646973
+    ]
+  },
+  {
+    "backend": "runtime",
+    "id": "utf8_64_replace_dense",
+    "round_medians_ns": [
+      100.26423645019531,
+      97.39745330810547,
+      98.42451095581055
+    ]
+  },
+  {
+    "backend": "runtime",
+    "id": "utf8_64_replace_grow",
+    "round_medians_ns": [
+      143.59737014770508,
+      141.80907821655273,
+      147.64778900146484
+    ]
+  },
+  {
+    "backend": "runtime",
+    "id": "utf8_65536_baseline",
+    "round_medians_ns": [
+      1.0324568152427673,
+      1.0836725234985352,
+      0.9999564588069916
+    ]
+  },
+  {
+    "backend": "runtime",
+    "id": "utf8_65536_compare_early",
+    "round_medians_ns": [
+      4.72162663936615,
+      4.7040863037109375,
+      4.8663129806518555
+    ]
+  },
+  {
+    "backend": "runtime",
+    "id": "utf8_65536_compare_equal",
+    "round_medians_ns": [
+      889.1644287109375,
+      887.9764709472656,
+      979.1387023925781
+    ]
+  },
+  {
+    "backend": "runtime",
+    "id": "utf8_65536_compare_late",
+    "round_medians_ns": [
+      917.9574584960938,
+      888.9554748535156,
+      890.167236328125
+    ]
+  },
+  {
+    "backend": "runtime",
+    "id": "utf8_65536_replace_absent",
+    "round_medians_ns": [
+      1417.1764526367188,
+      1405.128173828125,
+      1438.972900390625
+    ]
+  },
+  {
+    "backend": "runtime",
+    "id": "utf8_65536_replace_dense",
+    "round_medians_ns": [
+      72757.94140625,
+      66531.83203125,
+      67153.70703125
+    ]
+  },
+  {
+    "backend": "runtime",
+    "id": "utf8_65536_replace_grow",
+    "round_medians_ns": [
+      209836.78125,
+      205562.34375,
+      214358.703125
+    ]
+  }
+]

@@ -1,0 +1,197 @@
+#include "callables/n6261746368.hpp"
+#include "specializations/declarations/concrete_n_string_cb09c05d430d526c57669be36f53eaef91a464df3207777c50c6507bd74edd80.hpp"
+#include "specializations/concrete_n_int_ebd4c8f08856c4fac31841078980c195a23599b423d11ba32ba63ece111aa421.hpp"
+#include "specializations/concrete_n_string_cb09c05d430d526c57669be36f53eaef91a464df3207777c50c6507bd74edd80.hpp"
+#include "specializations/concrete_n_bool_186b6fb4c7e65e0a2d027fe4a8eb785f77810b58584e99fc5cb73047a04b3bac.hpp"
+#include "specializations/runtime_binary_a420abdebf502877e3833c45330b98a1c4c07d15d121cac996fdba50875f923d.hpp"
+#include "specializations/runtime_binary_64064a09a7e8a889ee4af8589a8881d7193fa76065e4a6252d16273047b51eb1.hpp"
+#include "specializations/runtime_runtime_call_31903cd56a6e601fe4be345f4c2c19a624c4e8cd89329bbf6c1c8ef5fb273c43.hpp"
+#include "specializations/runtime_runtime_call_ced22ad6a5b9e94c84510ea5e3255273ce7fa730d4090692a57a44020f984ea5.hpp"
+#include "specializations/runtime_binary_bd2bf20d9bab1d2b41cecbe8fb098b597a65ab0b55b18381256b025c093b85bc.hpp"
+#include "specializations/runtime_runtime_call_7ad9c856417c1d52970c5a099d66a08e7fec1ce2639b05693cd616c1393371f0.hpp"
+#include "specializations/runtime_binary_e710c2f29903d2f6b1ebf74234fd853f71c4ffb52eb7542c7a5208f9b9af3c48.hpp"
+#include "callables/n726561645f66697874757265.hpp"
+#include "specializations/concrete_n_error_20ce0bcb3b6e7324a99bb6001bbf815f5121bf25cde1d76f233cce9764b62b9b.hpp"
+#include "specializations/concrete_n_result_string__f542cbfe6a6cb4f895c02c651233c91610a2a3e776c971218b81eb18f341185c.hpp"
+#include "specializations/runtime_runtime_call_bb7887a0993b9512b08a3a2a084658b6c16cd41ffe87f44fc2710735ba87cd25.hpp"
+#include "specializations/runtime_take_3a7e6469e613a46059cf2f1fd5b809b6006a0743a3f00b4d748ac05dc7d83ed1.hpp"
+#include "specializations/runtime_output_4aaf85373671286625eee8ba68a576b8c80daaade768e9f28081067314d78176.hpp"
+#include "callables/n72756e5f63617365.hpp"
+#include "specializations/runtime_binary_b504b469e9c28a36d02ad90b3ce2cc602653a0abcae20c46c88e80cffceb8c48.hpp"
+#include "specializations/runtime_binary_e1cae3dfaf8a356573a2e7fd62291a6880716cfad95db2e261f461464ddaf2c7.hpp"
+#include "specializations/runtime_conversion_4240e816e8279acc6ed421d0be7e2a97abbef04177ab297be654750405f48ffc.hpp"
+#include "specializations/runtime_binary_0ae0ad3101200cca097ef5a546ed9ce5568e5a6a7c74fd8eacb1e7ef34c17a35.hpp"
+#include "specializations/runtime_observation_82da1d0b116dc7331c9101286e7023d5a62610c2cf2bb13a3520ef54888c8164.hpp"
+#include "specializations/concrete_n_uint64_971ed599e79aa9f3bae43435cf98e2d574a8ac5d55cf4273c0881c69ded239f8.hpp"
+#include "specializations/runtime_binary_1c6b160218284b7447e210f54bc9560b964a3fcd55426aa2e03dcba31985af3e.hpp"
+#include "specializations/runtime_conversion_6e6923b2680208535b315bda3aa4ff43f2c30973b3ec109f602769f86cf4a861.hpp"
+#include "specializations/runtime_binary_341f2e659d41cbcdd4747040248fad593bb1f48ed900f3d78db6cdd1ff15d96b.hpp"
+#include "specializations/runtime_binary_77b9e7b7b47099ba81dc136c4585fa01fb12094afe0afbde5f3aca94603e65c7.hpp"
+#include "specializations/runtime_output_471a8c3f154d6ce391da2dbfb43a336f242b6ceca46fbd891edcd7448f8ef20d.hpp"
+scpp::internal::concrete_n_int_ebd4c8f08856c4fac31841078980c195a23599b423d11ba32ba63ece111aa421 function_batch(scpp::internal::concrete_n_string_cb09c05d430d526c57669be36f53eaef91a464df3207777c50c6507bd74edd80& local_op, scpp::internal::concrete_n_string_cb09c05d430d526c57669be36f53eaef91a464df3207777c50c6507bd74edd80& local_s, scpp::internal::concrete_n_string_cb09c05d430d526c57669be36f53eaef91a464df3207777c50c6507bd74edd80& local_t, scpp::internal::concrete_n_string_cb09c05d430d526c57669be36f53eaef91a464df3207777c50c6507bd74edd80& local_needle, scpp::internal::concrete_n_string_cb09c05d430d526c57669be36f53eaef91a464df3207777c50c6507bd74edd80& local_repl, scpp::internal::concrete_n_int_ebd4c8f08856c4fac31841078980c195a23599b423d11ba32ba63ece111aa421 local_count)
+{
+	scpp::internal::concrete_n_int_ebd4c8f08856c4fac31841078980c195a23599b423d11ba32ba63ece111aa421 local_sum = static_cast<scpp::internal::concrete_n_int_ebd4c8f08856c4fac31841078980c195a23599b423d11ba32ba63ece111aa421>(0LL);
+if ((([&]() -> scpp::internal::concrete_n_bool_186b6fb4c7e65e0a2d027fe4a8eb785f77810b58584e99fc5cb73047a04b3bac { auto operand_0 = local_op; auto operand_1 = scpp::internal::concrete_n_string_cb09c05d430d526c57669be36f53eaef91a464df3207777c50c6507bd74edd80("replace", 7); return scpp::internal::runtime_binary_a420abdebf502877e3833c45330b98a1c4c07d15d121cac996fdba50875f923d((operand_0).address(), (operand_1).address()); }())).native_value()) {
+{
+	scpp::internal::concrete_n_int_ebd4c8f08856c4fac31841078980c195a23599b423d11ba32ba63ece111aa421 local_i = static_cast<scpp::internal::concrete_n_int_ebd4c8f08856c4fac31841078980c195a23599b423d11ba32ba63ece111aa421>(0LL);
+for (; (([&]() -> scpp::internal::concrete_n_bool_186b6fb4c7e65e0a2d027fe4a8eb785f77810b58584e99fc5cb73047a04b3bac { auto operand_2 = local_i; auto operand_3 = local_count; return scpp::internal::runtime_binary_64064a09a7e8a889ee4af8589a8881d7193fa76065e4a6252d16273047b51eb1((operand_2).address(), (operand_3).address()); }())).native_value(); (void)(static_cast<scpp::internal::concrete_n_int_ebd4c8f08856c4fac31841078980c195a23599b423d11ba32ba63ece111aa421>(local_i++))) {
+	([&]() -> scpp::internal::concrete_n_int_ebd4c8f08856c4fac31841078980c195a23599b423d11ba32ba63ece111aa421 { auto& target_4 = local_sum; auto previous_5 = target_4; previous_5 = ([&]() -> scpp::internal::concrete_n_int_ebd4c8f08856c4fac31841078980c195a23599b423d11ba32ba63ece111aa421 { auto operand_10 = previous_5; auto operand_11 = ([&]() -> scpp::internal::concrete_n_int_ebd4c8f08856c4fac31841078980c195a23599b423d11ba32ba63ece111aa421 {
+	scpp::internal::concrete_n_string_cb09c05d430d526c57669be36f53eaef91a464df3207777c50c6507bd74edd80 argument_9 = ([&]() -> scpp::internal::concrete_n_string_cb09c05d430d526c57669be36f53eaef91a464df3207777c50c6507bd74edd80 {
+	scpp::internal::concrete_n_string_cb09c05d430d526c57669be36f53eaef91a464df3207777c50c6507bd74edd80 argument_6 = local_needle;
+	scpp::internal::concrete_n_string_cb09c05d430d526c57669be36f53eaef91a464df3207777c50c6507bd74edd80 argument_7 = local_repl;
+	scpp::internal::concrete_n_string_cb09c05d430d526c57669be36f53eaef91a464df3207777c50c6507bd74edd80 argument_8 = local_s;
+	return scpp::internal::runtime_runtime_call_31903cd56a6e601fe4be345f4c2c19a624c4e8cd89329bbf6c1c8ef5fb273c43((argument_6).address(), (argument_7).address(), (argument_8).address());
+}());
+	return scpp::internal::runtime_runtime_call_ced22ad6a5b9e94c84510ea5e3255273ce7fa730d4090692a57a44020f984ea5((argument_9).address());
+}()); return scpp::internal::runtime_binary_bd2bf20d9bab1d2b41cecbe8fb098b597a65ab0b55b18381256b025c093b85bc((operand_10).address(), (operand_11).address()); }()); target_4 = previous_5; return target_4; }());
+}
+}
+}
+else if ((([&]() -> scpp::internal::concrete_n_bool_186b6fb4c7e65e0a2d027fe4a8eb785f77810b58584e99fc5cb73047a04b3bac { auto operand_12 = local_op; auto operand_13 = scpp::internal::concrete_n_string_cb09c05d430d526c57669be36f53eaef91a464df3207777c50c6507bd74edd80("compare", 7); return scpp::internal::runtime_binary_a420abdebf502877e3833c45330b98a1c4c07d15d121cac996fdba50875f923d((operand_12).address(), (operand_13).address()); }())).native_value()) {
+{
+	scpp::internal::concrete_n_int_ebd4c8f08856c4fac31841078980c195a23599b423d11ba32ba63ece111aa421 local_i = static_cast<scpp::internal::concrete_n_int_ebd4c8f08856c4fac31841078980c195a23599b423d11ba32ba63ece111aa421>(0LL);
+for (; (([&]() -> scpp::internal::concrete_n_bool_186b6fb4c7e65e0a2d027fe4a8eb785f77810b58584e99fc5cb73047a04b3bac { auto operand_14 = local_i; auto operand_15 = local_count; return scpp::internal::runtime_binary_64064a09a7e8a889ee4af8589a8881d7193fa76065e4a6252d16273047b51eb1((operand_14).address(), (operand_15).address()); }())).native_value(); (void)(static_cast<scpp::internal::concrete_n_int_ebd4c8f08856c4fac31841078980c195a23599b423d11ba32ba63ece111aa421>(local_i++))) {
+	scpp::internal::concrete_n_int_ebd4c8f08856c4fac31841078980c195a23599b423d11ba32ba63ece111aa421 local_v = ([&]() -> scpp::internal::concrete_n_int_ebd4c8f08856c4fac31841078980c195a23599b423d11ba32ba63ece111aa421 {
+	scpp::internal::concrete_n_string_cb09c05d430d526c57669be36f53eaef91a464df3207777c50c6507bd74edd80 argument_16 = local_s;
+	scpp::internal::concrete_n_string_cb09c05d430d526c57669be36f53eaef91a464df3207777c50c6507bd74edd80 argument_17 = local_t;
+	scpp::internal::concrete_n_int_ebd4c8f08856c4fac31841078980c195a23599b423d11ba32ba63ece111aa421 argument_18 = static_cast<scpp::internal::concrete_n_int_ebd4c8f08856c4fac31841078980c195a23599b423d11ba32ba63ece111aa421>(0LL);
+	return scpp::internal::runtime_runtime_call_7ad9c856417c1d52970c5a099d66a08e7fec1ce2639b05693cd616c1393371f0((argument_16).address(), (argument_17).address(), (argument_18).address());
+}());
+if ((([&]() -> scpp::internal::concrete_n_bool_186b6fb4c7e65e0a2d027fe4a8eb785f77810b58584e99fc5cb73047a04b3bac { auto operand_19 = local_v; auto operand_20 = static_cast<scpp::internal::concrete_n_int_ebd4c8f08856c4fac31841078980c195a23599b423d11ba32ba63ece111aa421>(0LL); return scpp::internal::runtime_binary_64064a09a7e8a889ee4af8589a8881d7193fa76065e4a6252d16273047b51eb1((operand_19).address(), (operand_20).address()); }())).native_value()) {
+	([&]() -> scpp::internal::concrete_n_int_ebd4c8f08856c4fac31841078980c195a23599b423d11ba32ba63ece111aa421 { auto& target_21 = local_sum; auto previous_22 = target_21; previous_22 = ([&]() -> scpp::internal::concrete_n_int_ebd4c8f08856c4fac31841078980c195a23599b423d11ba32ba63ece111aa421 { auto operand_23 = previous_22; auto operand_24 = static_cast<scpp::internal::concrete_n_int_ebd4c8f08856c4fac31841078980c195a23599b423d11ba32ba63ece111aa421>(0LL); return scpp::internal::runtime_binary_bd2bf20d9bab1d2b41cecbe8fb098b597a65ab0b55b18381256b025c093b85bc((operand_23).address(), (operand_24).address()); }()); target_21 = previous_22; return target_21; }());
+}
+else if ((([&]() -> scpp::internal::concrete_n_bool_186b6fb4c7e65e0a2d027fe4a8eb785f77810b58584e99fc5cb73047a04b3bac { auto operand_25 = local_v; auto operand_26 = static_cast<scpp::internal::concrete_n_int_ebd4c8f08856c4fac31841078980c195a23599b423d11ba32ba63ece111aa421>(0LL); return scpp::internal::runtime_binary_e710c2f29903d2f6b1ebf74234fd853f71c4ffb52eb7542c7a5208f9b9af3c48((operand_25).address(), (operand_26).address()); }())).native_value()) {
+	([&]() -> scpp::internal::concrete_n_int_ebd4c8f08856c4fac31841078980c195a23599b423d11ba32ba63ece111aa421 { auto& target_27 = local_sum; auto previous_28 = target_27; previous_28 = ([&]() -> scpp::internal::concrete_n_int_ebd4c8f08856c4fac31841078980c195a23599b423d11ba32ba63ece111aa421 { auto operand_29 = previous_28; auto operand_30 = static_cast<scpp::internal::concrete_n_int_ebd4c8f08856c4fac31841078980c195a23599b423d11ba32ba63ece111aa421>(2LL); return scpp::internal::runtime_binary_bd2bf20d9bab1d2b41cecbe8fb098b597a65ab0b55b18381256b025c093b85bc((operand_29).address(), (operand_30).address()); }()); target_27 = previous_28; return target_27; }());
+}
+else {
+	([&]() -> scpp::internal::concrete_n_int_ebd4c8f08856c4fac31841078980c195a23599b423d11ba32ba63ece111aa421 { auto& target_31 = local_sum; auto previous_32 = target_31; previous_32 = ([&]() -> scpp::internal::concrete_n_int_ebd4c8f08856c4fac31841078980c195a23599b423d11ba32ba63ece111aa421 { auto operand_33 = previous_32; auto operand_34 = static_cast<scpp::internal::concrete_n_int_ebd4c8f08856c4fac31841078980c195a23599b423d11ba32ba63ece111aa421>(1LL); return scpp::internal::runtime_binary_bd2bf20d9bab1d2b41cecbe8fb098b597a65ab0b55b18381256b025c093b85bc((operand_33).address(), (operand_34).address()); }()); target_31 = previous_32; return target_31; }());
+}
+}
+}
+}
+else {
+{
+	scpp::internal::concrete_n_int_ebd4c8f08856c4fac31841078980c195a23599b423d11ba32ba63ece111aa421 local_i = static_cast<scpp::internal::concrete_n_int_ebd4c8f08856c4fac31841078980c195a23599b423d11ba32ba63ece111aa421>(0LL);
+for (; (([&]() -> scpp::internal::concrete_n_bool_186b6fb4c7e65e0a2d027fe4a8eb785f77810b58584e99fc5cb73047a04b3bac { auto operand_35 = local_i; auto operand_36 = local_count; return scpp::internal::runtime_binary_64064a09a7e8a889ee4af8589a8881d7193fa76065e4a6252d16273047b51eb1((operand_35).address(), (operand_36).address()); }())).native_value(); (void)(static_cast<scpp::internal::concrete_n_int_ebd4c8f08856c4fac31841078980c195a23599b423d11ba32ba63ece111aa421>(local_i++))) {
+	([&]() -> scpp::internal::concrete_n_int_ebd4c8f08856c4fac31841078980c195a23599b423d11ba32ba63ece111aa421 { auto& target_37 = local_sum; auto previous_38 = target_37; previous_38 = ([&]() -> scpp::internal::concrete_n_int_ebd4c8f08856c4fac31841078980c195a23599b423d11ba32ba63ece111aa421 { auto operand_40 = previous_38; auto operand_41 = ([&]() -> scpp::internal::concrete_n_int_ebd4c8f08856c4fac31841078980c195a23599b423d11ba32ba63ece111aa421 {
+	scpp::internal::concrete_n_string_cb09c05d430d526c57669be36f53eaef91a464df3207777c50c6507bd74edd80 argument_39 = local_s;
+	return scpp::internal::runtime_runtime_call_ced22ad6a5b9e94c84510ea5e3255273ce7fa730d4090692a57a44020f984ea5((argument_39).address());
+}()); return scpp::internal::runtime_binary_bd2bf20d9bab1d2b41cecbe8fb098b597a65ab0b55b18381256b025c093b85bc((operand_40).address(), (operand_41).address()); }()); target_37 = previous_38; return target_37; }());
+}
+}
+}
+	return local_sum;
+}
+
+scpp::internal::concrete_n_string_cb09c05d430d526c57669be36f53eaef91a464df3207777c50c6507bd74edd80 function_readU_fixture(scpp::internal::concrete_n_string_cb09c05d430d526c57669be36f53eaef91a464df3207777c50c6507bd74edd80 local_path)
+{
+	scpp::internal::concrete_n_string_cb09c05d430d526c57669be36f53eaef91a464df3207777c50c6507bd74edd80 local_value = scpp::internal::concrete_n_string_cb09c05d430d526c57669be36f53eaef91a464df3207777c50c6507bd74edd80("", 0);
+	scpp::internal::concrete_n_error_20ce0bcb3b6e7324a99bb6001bbf815f5121bf25cde1d76f233cce9764b62b9b local_err;
+if ((scpp::internal::concrete_n_bool_186b6fb4c7e65e0a2d027fe4a8eb785f77810b58584e99fc5cb73047a04b3bac(!(([&]() -> scpp::internal::concrete_n_bool_186b6fb4c7e65e0a2d027fe4a8eb785f77810b58584e99fc5cb73047a04b3bac { auto take_source_1 = ([&]() -> scpp::internal::concrete_n_result_string__f542cbfe6a6cb4f895c02c651233c91610a2a3e776c971218b81eb18f341185c {
+	scpp::internal::concrete_n_string_cb09c05d430d526c57669be36f53eaef91a464df3207777c50c6507bd74edd80 argument_0 = local_path;
+	return scpp::internal::runtime_runtime_call_bb7887a0993b9512b08a3a2a084658b6c16cd41ffe87f44fc2710735ba87cd25((argument_0).address());
+}()); return scpp::internal::runtime_take_3a7e6469e613a46059cf2f1fd5b809b6006a0743a3f00b4d748ac05dc7d83ed1(&(local_value), (local_err).address(), (take_source_1).address()); }())).native_value())).native_value()) {
+	scpp::internal::runtime_output_4aaf85373671286625eee8ba68a576b8c80daaade768e9f28081067314d78176((static_cast<const scpp::internal::concrete_n_string_cb09c05d430d526c57669be36f53eaef91a464df3207777c50c6507bd74edd80&>(scpp::internal::concrete_n_string_cb09c05d430d526c57669be36f53eaef91a464df3207777c50c6507bd74edd80("ERROR: corpus read\x0A" "", 19))).address());
+}
+	return local_value;
+}
+
+void function_runU_case(scpp::internal::concrete_n_string_cb09c05d430d526c57669be36f53eaef91a464df3207777c50c6507bd74edd80 local_id, scpp::internal::concrete_n_string_cb09c05d430d526c57669be36f53eaef91a464df3207777c50c6507bd74edd80 local_op, scpp::internal::concrete_n_string_cb09c05d430d526c57669be36f53eaef91a464df3207777c50c6507bd74edd80 local_base)
+{
+	scpp::internal::concrete_n_string_cb09c05d430d526c57669be36f53eaef91a464df3207777c50c6507bd74edd80 local_s = ([&]() -> scpp::internal::concrete_n_string_cb09c05d430d526c57669be36f53eaef91a464df3207777c50c6507bd74edd80 {
+	scpp::internal::concrete_n_string_cb09c05d430d526c57669be36f53eaef91a464df3207777c50c6507bd74edd80 argument_2 = ([&]() -> scpp::internal::concrete_n_string_cb09c05d430d526c57669be36f53eaef91a464df3207777c50c6507bd74edd80 { auto operand_0 = local_base; auto operand_1 = scpp::internal::concrete_n_string_cb09c05d430d526c57669be36f53eaef91a464df3207777c50c6507bd74edd80("/s", 2); return scpp::internal::runtime_binary_b504b469e9c28a36d02ad90b3ce2cc602653a0abcae20c46c88e80cffceb8c48((operand_0).address(), (operand_1).address()); }());
+	return function_readU_fixture(argument_2);
+}());
+	scpp::internal::concrete_n_string_cb09c05d430d526c57669be36f53eaef91a464df3207777c50c6507bd74edd80 local_t = ([&]() -> scpp::internal::concrete_n_string_cb09c05d430d526c57669be36f53eaef91a464df3207777c50c6507bd74edd80 {
+	scpp::internal::concrete_n_string_cb09c05d430d526c57669be36f53eaef91a464df3207777c50c6507bd74edd80 argument_5 = ([&]() -> scpp::internal::concrete_n_string_cb09c05d430d526c57669be36f53eaef91a464df3207777c50c6507bd74edd80 { auto operand_3 = local_base; auto operand_4 = scpp::internal::concrete_n_string_cb09c05d430d526c57669be36f53eaef91a464df3207777c50c6507bd74edd80("/t", 2); return scpp::internal::runtime_binary_b504b469e9c28a36d02ad90b3ce2cc602653a0abcae20c46c88e80cffceb8c48((operand_3).address(), (operand_4).address()); }());
+	return function_readU_fixture(argument_5);
+}());
+	scpp::internal::concrete_n_string_cb09c05d430d526c57669be36f53eaef91a464df3207777c50c6507bd74edd80 local_needle = ([&]() -> scpp::internal::concrete_n_string_cb09c05d430d526c57669be36f53eaef91a464df3207777c50c6507bd74edd80 {
+	scpp::internal::concrete_n_string_cb09c05d430d526c57669be36f53eaef91a464df3207777c50c6507bd74edd80 argument_8 = ([&]() -> scpp::internal::concrete_n_string_cb09c05d430d526c57669be36f53eaef91a464df3207777c50c6507bd74edd80 { auto operand_6 = local_base; auto operand_7 = scpp::internal::concrete_n_string_cb09c05d430d526c57669be36f53eaef91a464df3207777c50c6507bd74edd80("/n", 2); return scpp::internal::runtime_binary_b504b469e9c28a36d02ad90b3ce2cc602653a0abcae20c46c88e80cffceb8c48((operand_6).address(), (operand_7).address()); }());
+	return function_readU_fixture(argument_8);
+}());
+	scpp::internal::concrete_n_string_cb09c05d430d526c57669be36f53eaef91a464df3207777c50c6507bd74edd80 local_repl = ([&]() -> scpp::internal::concrete_n_string_cb09c05d430d526c57669be36f53eaef91a464df3207777c50c6507bd74edd80 {
+	scpp::internal::concrete_n_string_cb09c05d430d526c57669be36f53eaef91a464df3207777c50c6507bd74edd80 argument_11 = ([&]() -> scpp::internal::concrete_n_string_cb09c05d430d526c57669be36f53eaef91a464df3207777c50c6507bd74edd80 { auto operand_9 = local_base; auto operand_10 = scpp::internal::concrete_n_string_cb09c05d430d526c57669be36f53eaef91a464df3207777c50c6507bd74edd80("/r", 2); return scpp::internal::runtime_binary_b504b469e9c28a36d02ad90b3ce2cc602653a0abcae20c46c88e80cffceb8c48((operand_9).address(), (operand_10).address()); }());
+	return function_readU_fixture(argument_11);
+}());
+	scpp::internal::concrete_n_string_cb09c05d430d526c57669be36f53eaef91a464df3207777c50c6507bd74edd80 local_expected = ([&]() -> scpp::internal::concrete_n_string_cb09c05d430d526c57669be36f53eaef91a464df3207777c50c6507bd74edd80 {
+	scpp::internal::concrete_n_string_cb09c05d430d526c57669be36f53eaef91a464df3207777c50c6507bd74edd80 argument_14 = ([&]() -> scpp::internal::concrete_n_string_cb09c05d430d526c57669be36f53eaef91a464df3207777c50c6507bd74edd80 { auto operand_12 = local_base; auto operand_13 = scpp::internal::concrete_n_string_cb09c05d430d526c57669be36f53eaef91a464df3207777c50c6507bd74edd80("/expected", 9); return scpp::internal::runtime_binary_b504b469e9c28a36d02ad90b3ce2cc602653a0abcae20c46c88e80cffceb8c48((operand_12).address(), (operand_13).address()); }());
+	return function_readU_fixture(argument_14);
+}());
+if ((([&]() -> scpp::internal::concrete_n_bool_186b6fb4c7e65e0a2d027fe4a8eb785f77810b58584e99fc5cb73047a04b3bac { auto operand_15 = local_op; auto operand_16 = scpp::internal::concrete_n_string_cb09c05d430d526c57669be36f53eaef91a464df3207777c50c6507bd74edd80("replace", 7); return scpp::internal::runtime_binary_a420abdebf502877e3833c45330b98a1c4c07d15d121cac996fdba50875f923d((operand_15).address(), (operand_16).address()); }())).native_value()) {
+if ((([&]() -> scpp::internal::concrete_n_bool_186b6fb4c7e65e0a2d027fe4a8eb785f77810b58584e99fc5cb73047a04b3bac { auto operand_20 = ([&]() -> scpp::internal::concrete_n_string_cb09c05d430d526c57669be36f53eaef91a464df3207777c50c6507bd74edd80 {
+	scpp::internal::concrete_n_string_cb09c05d430d526c57669be36f53eaef91a464df3207777c50c6507bd74edd80 argument_17 = local_needle;
+	scpp::internal::concrete_n_string_cb09c05d430d526c57669be36f53eaef91a464df3207777c50c6507bd74edd80 argument_18 = local_repl;
+	scpp::internal::concrete_n_string_cb09c05d430d526c57669be36f53eaef91a464df3207777c50c6507bd74edd80 argument_19 = local_s;
+	return scpp::internal::runtime_runtime_call_31903cd56a6e601fe4be345f4c2c19a624c4e8cd89329bbf6c1c8ef5fb273c43((argument_17).address(), (argument_18).address(), (argument_19).address());
+}()); auto operand_21 = local_expected; return scpp::internal::runtime_binary_e1cae3dfaf8a356573a2e7fd62291a6880716cfad95db2e261f461464ddaf2c7((operand_20).address(), (operand_21).address()); }())).native_value()) {
+	scpp::internal::runtime_output_4aaf85373671286625eee8ba68a576b8c80daaade768e9f28081067314d78176((static_cast<const scpp::internal::concrete_n_string_cb09c05d430d526c57669be36f53eaef91a464df3207777c50c6507bd74edd80&>(scpp::internal::concrete_n_string_cb09c05d430d526c57669be36f53eaef91a464df3207777c50c6507bd74edd80("ERROR: replacement mismatch\x0A" "", 28))).address());
+}
+}
+else if ((([&]() -> scpp::internal::concrete_n_bool_186b6fb4c7e65e0a2d027fe4a8eb785f77810b58584e99fc5cb73047a04b3bac { auto operand_22 = local_op; auto operand_23 = scpp::internal::concrete_n_string_cb09c05d430d526c57669be36f53eaef91a464df3207777c50c6507bd74edd80("compare", 7); return scpp::internal::runtime_binary_a420abdebf502877e3833c45330b98a1c4c07d15d121cac996fdba50875f923d((operand_22).address(), (operand_23).address()); }())).native_value()) {
+	scpp::internal::concrete_n_int_ebd4c8f08856c4fac31841078980c195a23599b423d11ba32ba63ece111aa421 local_v = ([&]() -> scpp::internal::concrete_n_int_ebd4c8f08856c4fac31841078980c195a23599b423d11ba32ba63ece111aa421 {
+	scpp::internal::concrete_n_string_cb09c05d430d526c57669be36f53eaef91a464df3207777c50c6507bd74edd80 argument_24 = local_s;
+	scpp::internal::concrete_n_string_cb09c05d430d526c57669be36f53eaef91a464df3207777c50c6507bd74edd80 argument_25 = local_t;
+	scpp::internal::concrete_n_int_ebd4c8f08856c4fac31841078980c195a23599b423d11ba32ba63ece111aa421 argument_26 = static_cast<scpp::internal::concrete_n_int_ebd4c8f08856c4fac31841078980c195a23599b423d11ba32ba63ece111aa421>(0LL);
+	return scpp::internal::runtime_runtime_call_7ad9c856417c1d52970c5a099d66a08e7fec1ce2639b05693cd616c1393371f0((argument_24).address(), (argument_25).address(), (argument_26).address());
+}());
+	scpp::internal::concrete_n_int_ebd4c8f08856c4fac31841078980c195a23599b423d11ba32ba63ece111aa421 local_sign = static_cast<scpp::internal::concrete_n_int_ebd4c8f08856c4fac31841078980c195a23599b423d11ba32ba63ece111aa421>(0LL);
+if ((([&]() -> scpp::internal::concrete_n_bool_186b6fb4c7e65e0a2d027fe4a8eb785f77810b58584e99fc5cb73047a04b3bac { auto operand_27 = local_v; auto operand_28 = static_cast<scpp::internal::concrete_n_int_ebd4c8f08856c4fac31841078980c195a23599b423d11ba32ba63ece111aa421>(0LL); return scpp::internal::runtime_binary_64064a09a7e8a889ee4af8589a8881d7193fa76065e4a6252d16273047b51eb1((operand_27).address(), (operand_28).address()); }())).native_value()) {
+	local_sign = scpp::internal::concrete_n_int_ebd4c8f08856c4fac31841078980c195a23599b423d11ba32ba63ece111aa421(-(static_cast<scpp::internal::concrete_n_int_ebd4c8f08856c4fac31841078980c195a23599b423d11ba32ba63ece111aa421>(1LL)).native_value());
+}
+else if ((([&]() -> scpp::internal::concrete_n_bool_186b6fb4c7e65e0a2d027fe4a8eb785f77810b58584e99fc5cb73047a04b3bac { auto operand_29 = local_v; auto operand_30 = static_cast<scpp::internal::concrete_n_int_ebd4c8f08856c4fac31841078980c195a23599b423d11ba32ba63ece111aa421>(0LL); return scpp::internal::runtime_binary_e710c2f29903d2f6b1ebf74234fd853f71c4ffb52eb7542c7a5208f9b9af3c48((operand_29).address(), (operand_30).address()); }())).native_value()) {
+	local_sign = static_cast<scpp::internal::concrete_n_int_ebd4c8f08856c4fac31841078980c195a23599b423d11ba32ba63ece111aa421>(1LL);
+}
+if ((([&]() -> scpp::internal::concrete_n_bool_186b6fb4c7e65e0a2d027fe4a8eb785f77810b58584e99fc5cb73047a04b3bac { auto operand_32 = local_sign; auto operand_33 = ([&]() -> scpp::internal::concrete_n_int_ebd4c8f08856c4fac31841078980c195a23599b423d11ba32ba63ece111aa421 { const auto& runtime_input_31 = local_expected; return scpp::internal::runtime_conversion_4240e816e8279acc6ed421d0be7e2a97abbef04177ab297be654750405f48ffc((runtime_input_31).address()); }()); return scpp::internal::runtime_binary_0ae0ad3101200cca097ef5a546ed9ce5568e5a6a7c74fd8eacb1e7ef34c17a35((operand_32).address(), (operand_33).address()); }())).native_value()) {
+	scpp::internal::runtime_output_4aaf85373671286625eee8ba68a576b8c80daaade768e9f28081067314d78176((static_cast<const scpp::internal::concrete_n_string_cb09c05d430d526c57669be36f53eaef91a464df3207777c50c6507bd74edd80&>(scpp::internal::concrete_n_string_cb09c05d430d526c57669be36f53eaef91a464df3207777c50c6507bd74edd80("ERROR: comparison mismatch\x0A" "", 27))).address());
+}
+}
+	scpp::internal::concrete_n_int_ebd4c8f08856c4fac31841078980c195a23599b423d11ba32ba63ece111aa421 local_count = static_cast<scpp::internal::concrete_n_int_ebd4c8f08856c4fac31841078980c195a23599b423d11ba32ba63ece111aa421>(1LL);
+while ((static_cast<scpp::internal::concrete_n_bool_186b6fb4c7e65e0a2d027fe4a8eb785f77810b58584e99fc5cb73047a04b3bac>(true)).native_value()) {
+	scpp::internal::concrete_n_uint64_971ed599e79aa9f3bae43435cf98e2d574a8ac5d55cf4273c0881c69ded239f8 local_start = scpp::internal::runtime_observation_82da1d0b116dc7331c9101286e7023d5a62610c2cf2bb13a3520ef54888c8164();
+	scpp::internal::concrete_n_int_ebd4c8f08856c4fac31841078980c195a23599b423d11ba32ba63ece111aa421 local_warm = ([&]() -> scpp::internal::concrete_n_int_ebd4c8f08856c4fac31841078980c195a23599b423d11ba32ba63ece111aa421 {
+	scpp::internal::concrete_n_string_cb09c05d430d526c57669be36f53eaef91a464df3207777c50c6507bd74edd80& argument_34 = local_op;
+	scpp::internal::concrete_n_string_cb09c05d430d526c57669be36f53eaef91a464df3207777c50c6507bd74edd80& argument_35 = local_s;
+	scpp::internal::concrete_n_string_cb09c05d430d526c57669be36f53eaef91a464df3207777c50c6507bd74edd80& argument_36 = local_t;
+	scpp::internal::concrete_n_string_cb09c05d430d526c57669be36f53eaef91a464df3207777c50c6507bd74edd80& argument_37 = local_needle;
+	scpp::internal::concrete_n_string_cb09c05d430d526c57669be36f53eaef91a464df3207777c50c6507bd74edd80& argument_38 = local_repl;
+	scpp::internal::concrete_n_int_ebd4c8f08856c4fac31841078980c195a23599b423d11ba32ba63ece111aa421 argument_39 = local_count;
+	return function_batch(argument_34, argument_35, argument_36, argument_37, argument_38, argument_39);
+}());
+	scpp::internal::concrete_n_int_ebd4c8f08856c4fac31841078980c195a23599b423d11ba32ba63ece111aa421 local_elapsed = ([&]() -> scpp::internal::concrete_n_int_ebd4c8f08856c4fac31841078980c195a23599b423d11ba32ba63ece111aa421 { const auto& runtime_input_42 = ([&]() -> scpp::internal::concrete_n_uint64_971ed599e79aa9f3bae43435cf98e2d574a8ac5d55cf4273c0881c69ded239f8 { auto operand_40 = scpp::internal::runtime_observation_82da1d0b116dc7331c9101286e7023d5a62610c2cf2bb13a3520ef54888c8164(); auto operand_41 = local_start; return scpp::internal::runtime_binary_1c6b160218284b7447e210f54bc9560b964a3fcd55426aa2e03dcba31985af3e((operand_40).address(), (operand_41).address()); }()); return scpp::internal::runtime_conversion_6e6923b2680208535b315bda3aa4ff43f2c30973b3ec109f602769f86cf4a861((runtime_input_42).address()); }());
+if ((([&]() -> scpp::internal::concrete_n_bool_186b6fb4c7e65e0a2d027fe4a8eb785f77810b58584e99fc5cb73047a04b3bac { auto operand_43 = local_warm; auto operand_44 = static_cast<scpp::internal::concrete_n_int_ebd4c8f08856c4fac31841078980c195a23599b423d11ba32ba63ece111aa421>(0LL); return scpp::internal::runtime_binary_64064a09a7e8a889ee4af8589a8881d7193fa76065e4a6252d16273047b51eb1((operand_43).address(), (operand_44).address()); }())).native_value()) {
+	scpp::internal::runtime_output_4aaf85373671286625eee8ba68a576b8c80daaade768e9f28081067314d78176((static_cast<const scpp::internal::concrete_n_string_cb09c05d430d526c57669be36f53eaef91a464df3207777c50c6507bd74edd80&>(scpp::internal::concrete_n_string_cb09c05d430d526c57669be36f53eaef91a464df3207777c50c6507bd74edd80("ERROR: checksum\x0A" "", 16))).address());
+}
+if ((scpp::internal::concrete_n_bool_186b6fb4c7e65e0a2d027fe4a8eb785f77810b58584e99fc5cb73047a04b3bac(static_cast<bool>(([&]() -> scpp::internal::concrete_n_bool_186b6fb4c7e65e0a2d027fe4a8eb785f77810b58584e99fc5cb73047a04b3bac { auto operand_45 = local_elapsed; auto operand_46 = static_cast<scpp::internal::concrete_n_int_ebd4c8f08856c4fac31841078980c195a23599b423d11ba32ba63ece111aa421>(20000000LL); return scpp::internal::runtime_binary_341f2e659d41cbcdd4747040248fad593bb1f48ed900f3d78db6cdd1ff15d96b((operand_45).address(), (operand_46).address()); }())) || static_cast<bool>(([&]() -> scpp::internal::concrete_n_bool_186b6fb4c7e65e0a2d027fe4a8eb785f77810b58584e99fc5cb73047a04b3bac { auto operand_47 = local_count; auto operand_48 = static_cast<scpp::internal::concrete_n_int_ebd4c8f08856c4fac31841078980c195a23599b423d11ba32ba63ece111aa421>(67108864LL); return scpp::internal::runtime_binary_341f2e659d41cbcdd4747040248fad593bb1f48ed900f3d78db6cdd1ff15d96b((operand_47).address(), (operand_48).address()); }())))).native_value()) {
+break;
+}
+	([&]() -> scpp::internal::concrete_n_int_ebd4c8f08856c4fac31841078980c195a23599b423d11ba32ba63ece111aa421 { auto& target_49 = local_count; auto previous_50 = target_49; previous_50 = ([&]() -> scpp::internal::concrete_n_int_ebd4c8f08856c4fac31841078980c195a23599b423d11ba32ba63ece111aa421 { auto operand_51 = previous_50; auto operand_52 = static_cast<scpp::internal::concrete_n_int_ebd4c8f08856c4fac31841078980c195a23599b423d11ba32ba63ece111aa421>(2LL); return scpp::internal::runtime_binary_77b9e7b7b47099ba81dc136c4585fa01fb12094afe0afbde5f3aca94603e65c7((operand_51).address(), (operand_52).address()); }()); target_49 = previous_50; return target_49; }());
+}
+{
+	scpp::internal::concrete_n_int_ebd4c8f08856c4fac31841078980c195a23599b423d11ba32ba63ece111aa421 local_trial = static_cast<scpp::internal::concrete_n_int_ebd4c8f08856c4fac31841078980c195a23599b423d11ba32ba63ece111aa421>(0LL);
+for (; (([&]() -> scpp::internal::concrete_n_bool_186b6fb4c7e65e0a2d027fe4a8eb785f77810b58584e99fc5cb73047a04b3bac { auto operand_53 = local_trial; auto operand_54 = static_cast<scpp::internal::concrete_n_int_ebd4c8f08856c4fac31841078980c195a23599b423d11ba32ba63ece111aa421>(7LL); return scpp::internal::runtime_binary_64064a09a7e8a889ee4af8589a8881d7193fa76065e4a6252d16273047b51eb1((operand_53).address(), (operand_54).address()); }())).native_value(); (void)(static_cast<scpp::internal::concrete_n_int_ebd4c8f08856c4fac31841078980c195a23599b423d11ba32ba63ece111aa421>(local_trial++))) {
+	scpp::internal::concrete_n_uint64_971ed599e79aa9f3bae43435cf98e2d574a8ac5d55cf4273c0881c69ded239f8 local_start = scpp::internal::runtime_observation_82da1d0b116dc7331c9101286e7023d5a62610c2cf2bb13a3520ef54888c8164();
+	scpp::internal::concrete_n_int_ebd4c8f08856c4fac31841078980c195a23599b423d11ba32ba63ece111aa421 local_sum = ([&]() -> scpp::internal::concrete_n_int_ebd4c8f08856c4fac31841078980c195a23599b423d11ba32ba63ece111aa421 {
+	scpp::internal::concrete_n_string_cb09c05d430d526c57669be36f53eaef91a464df3207777c50c6507bd74edd80& argument_55 = local_op;
+	scpp::internal::concrete_n_string_cb09c05d430d526c57669be36f53eaef91a464df3207777c50c6507bd74edd80& argument_56 = local_s;
+	scpp::internal::concrete_n_string_cb09c05d430d526c57669be36f53eaef91a464df3207777c50c6507bd74edd80& argument_57 = local_t;
+	scpp::internal::concrete_n_string_cb09c05d430d526c57669be36f53eaef91a464df3207777c50c6507bd74edd80& argument_58 = local_needle;
+	scpp::internal::concrete_n_string_cb09c05d430d526c57669be36f53eaef91a464df3207777c50c6507bd74edd80& argument_59 = local_repl;
+	scpp::internal::concrete_n_int_ebd4c8f08856c4fac31841078980c195a23599b423d11ba32ba63ece111aa421 argument_60 = local_count;
+	return function_batch(argument_55, argument_56, argument_57, argument_58, argument_59, argument_60);
+}());
+	scpp::internal::concrete_n_int_ebd4c8f08856c4fac31841078980c195a23599b423d11ba32ba63ece111aa421 local_elapsed = ([&]() -> scpp::internal::concrete_n_int_ebd4c8f08856c4fac31841078980c195a23599b423d11ba32ba63ece111aa421 { const auto& runtime_input_63 = ([&]() -> scpp::internal::concrete_n_uint64_971ed599e79aa9f3bae43435cf98e2d574a8ac5d55cf4273c0881c69ded239f8 { auto operand_61 = scpp::internal::runtime_observation_82da1d0b116dc7331c9101286e7023d5a62610c2cf2bb13a3520ef54888c8164(); auto operand_62 = local_start; return scpp::internal::runtime_binary_1c6b160218284b7447e210f54bc9560b964a3fcd55426aa2e03dcba31985af3e((operand_61).address(), (operand_62).address()); }()); return scpp::internal::runtime_conversion_6e6923b2680208535b315bda3aa4ff43f2c30973b3ec109f602769f86cf4a861((runtime_input_63).address()); }());
+	scpp::internal::runtime_output_4aaf85373671286625eee8ba68a576b8c80daaade768e9f28081067314d78176((static_cast<const scpp::internal::concrete_n_string_cb09c05d430d526c57669be36f53eaef91a464df3207777c50c6507bd74edd80&>(local_id)).address());
+	scpp::internal::runtime_output_4aaf85373671286625eee8ba68a576b8c80daaade768e9f28081067314d78176((static_cast<const scpp::internal::concrete_n_string_cb09c05d430d526c57669be36f53eaef91a464df3207777c50c6507bd74edd80&>(scpp::internal::concrete_n_string_cb09c05d430d526c57669be36f53eaef91a464df3207777c50c6507bd74edd80(",mytry,", 7))).address());
+	scpp::internal::runtime_output_471a8c3f154d6ce391da2dbfb43a336f242b6ceca46fbd891edcd7448f8ef20d((static_cast<const scpp::internal::concrete_n_int_ebd4c8f08856c4fac31841078980c195a23599b423d11ba32ba63ece111aa421&>(local_trial)).address());
+	scpp::internal::runtime_output_4aaf85373671286625eee8ba68a576b8c80daaade768e9f28081067314d78176((static_cast<const scpp::internal::concrete_n_string_cb09c05d430d526c57669be36f53eaef91a464df3207777c50c6507bd74edd80&>(scpp::internal::concrete_n_string_cb09c05d430d526c57669be36f53eaef91a464df3207777c50c6507bd74edd80(",", 1))).address());
+	scpp::internal::runtime_output_471a8c3f154d6ce391da2dbfb43a336f242b6ceca46fbd891edcd7448f8ef20d((static_cast<const scpp::internal::concrete_n_int_ebd4c8f08856c4fac31841078980c195a23599b423d11ba32ba63ece111aa421&>(local_count)).address());
+	scpp::internal::runtime_output_4aaf85373671286625eee8ba68a576b8c80daaade768e9f28081067314d78176((static_cast<const scpp::internal::concrete_n_string_cb09c05d430d526c57669be36f53eaef91a464df3207777c50c6507bd74edd80&>(scpp::internal::concrete_n_string_cb09c05d430d526c57669be36f53eaef91a464df3207777c50c6507bd74edd80(",", 1))).address());
+	scpp::internal::runtime_output_471a8c3f154d6ce391da2dbfb43a336f242b6ceca46fbd891edcd7448f8ef20d((static_cast<const scpp::internal::concrete_n_int_ebd4c8f08856c4fac31841078980c195a23599b423d11ba32ba63ece111aa421&>(local_elapsed)).address());
+	scpp::internal::runtime_output_4aaf85373671286625eee8ba68a576b8c80daaade768e9f28081067314d78176((static_cast<const scpp::internal::concrete_n_string_cb09c05d430d526c57669be36f53eaef91a464df3207777c50c6507bd74edd80&>(scpp::internal::concrete_n_string_cb09c05d430d526c57669be36f53eaef91a464df3207777c50c6507bd74edd80(",", 1))).address());
+	scpp::internal::runtime_output_471a8c3f154d6ce391da2dbfb43a336f242b6ceca46fbd891edcd7448f8ef20d((static_cast<const scpp::internal::concrete_n_int_ebd4c8f08856c4fac31841078980c195a23599b423d11ba32ba63ece111aa421&>(local_sum)).address());
+	scpp::internal::runtime_output_4aaf85373671286625eee8ba68a576b8c80daaade768e9f28081067314d78176((static_cast<const scpp::internal::concrete_n_string_cb09c05d430d526c57669be36f53eaef91a464df3207777c50c6507bd74edd80&>(scpp::internal::concrete_n_string_cb09c05d430d526c57669be36f53eaef91a464df3207777c50c6507bd74edd80("\x0A" "", 1))).address());
+}
+}
+}
+

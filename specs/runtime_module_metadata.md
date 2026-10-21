@@ -113,6 +113,35 @@ checked extraction before later arguments, unchanged wrapper state, and the
 existing missing-payload exception behavior. Single concrete callable admission
 continues to use its existing ordinary conversion path.
 
+### Snapshot borrowing guarantee
+
+A fixed free runtime function may declare `"snapshot_borrow_safe": true`
+(default `false`). This is a reviewed provider guarantee, not a new parameter
+passing mode or a source-language borrowing restriction. It permits a compiler
+to replace value-input snapshots with synchronous readonly borrows when the
+call site proves that argument evaluation preserves the same values.
+
+The provider must not modify or invalidate the input storage, directly or through
+another alias, retain an input reference beyond the call, or expose differences
+in input storage identity. These guarantees cover callbacks and transitively
+called code as well. Results must not depend on references into caller input
+storage after return. Allocation and diagnostic output are not categorically
+forbidden, but must preserve those guarantees. Native implementations must accept
+readonly input access. The compiler does not verify provider bodies.
+
+The current metadata form requires a non-generic free function with fixed,
+explicit value parameters, without defaults or packs. Existing type admission,
+conversion, copyability and value semantics still apply. Missing proof means
+keeping a snapshot, never rejecting otherwise valid source. This contract does
+not introduce thread synchronization or authorize concurrent input mutation.
+
+my-try initially elides only string-variable snapshots when every argument is an
+exact identity-converted scalar/string literal or stable whole-variable read.
+Calls, conversions, property/index reads and unsupported shapes conservatively
+retain all snapshots. Source functions and existing explicit reference parameters
+retain their contracts. Initial reviewed providers are `strlen`, `str_replace`
+and the three `substr_compare` arities.
+
 ### Provider copy requirements
 
 A fixed value parameter may declare `"requires_copy": true` (default `false`).

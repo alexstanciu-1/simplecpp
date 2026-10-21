@@ -1,0 +1,102 @@
+// Compiled by compiler/my-try. The driver substitutes the corpus path only.
+function batch(string &$op, string &$s, string &$t, string &$needle, string &$repl, int $count): int {
+    $sum int = 0;
+    if ($op === "replace") {
+        for ($i int = 0; $i < $count; $i++) {
+            bench_fence();
+            $sum += strlen(str_replace($needle, $repl, $s));
+        }
+    } elseif ($op === "compare") {
+        for ($i int = 0; $i < $count; $i++) {
+            bench_fence();
+            $v int = substr_compare($s, $t, 0);
+            if ($v < 0) { $sum += 0; }
+            elseif ($v > 0) { $sum += 2; }
+            else { $sum += 1; }
+        }
+    } else {
+        for ($i int = 0; $i < $count; $i++) { bench_fence(); $sum += strlen($s); }
+    }
+    return $sum;
+}
+
+function read_fixture(string $path): string {
+    $value string = "";
+    $err error;
+    if (!take($value, $err, fs_get($path))) { echo "ERROR: corpus read\n"; }
+    return $value;
+}
+function run_case(string $id, string $op, string $base): void {
+    $s string = read_fixture($base . "/s");
+    $t string = read_fixture($base . "/t");
+    $needle string = read_fixture($base . "/n");
+    $repl string = read_fixture($base . "/r");
+    $expected string = read_fixture($base . "/expected");
+    if ($op === "replace") {
+        if (str_replace($needle, $repl, $s) !== $expected) { echo "ERROR: replacement mismatch\n"; }
+    } elseif ($op === "compare") {
+        $v int = substr_compare($s, $t, 0);
+        $sign int = 0;
+        if ($v < 0) { $sign = -1; }
+        elseif ($v > 0) { $sign = 1; }
+        if ($sign !== (int)$expected) { echo "ERROR: comparison mismatch\n"; }
+    }
+    $count int = 1;
+    while (true) {
+        $start uint64 = dt_monotonic_ns();
+        $warm int = batch($op, $s, $t, $needle, $repl, $count);
+        $elapsed int = (int)(dt_monotonic_ns() - $start);
+        if ($warm < 0) { echo "ERROR: checksum\n"; }
+        if ($elapsed >= 20000000 || $count >= 67108864) { break; }
+        $count *= 2;
+    }
+    for ($trial int = 0; $trial < 7; $trial++) {
+        $start uint64 = dt_monotonic_ns();
+        $sum int = batch($op, $s, $t, $needle, $repl, $count);
+        $elapsed int = (int)(dt_monotonic_ns() - $start);
+        echo $id, ",mytry,", $trial, ",", $count, ",", $elapsed, ",", $sum, "\n";
+    }
+}
+
+run_case("utf8_4096_baseline","baseline","/tmp/scpp-borrow-20261021-0839/runtime-paired/inputs/utf8_4096_baseline");
+run_case("utf8_65536_compare_equal","compare","/tmp/scpp-borrow-20261021-0839/runtime-paired/inputs/utf8_65536_compare_equal");
+run_case("utf8_64_replace_grow","replace","/tmp/scpp-borrow-20261021-0839/runtime-paired/inputs/utf8_64_replace_grow");
+run_case("ascii_4096_compare_early","compare","/tmp/scpp-borrow-20261021-0839/runtime-paired/inputs/ascii_4096_compare_early");
+run_case("ascii_4096_baseline","baseline","/tmp/scpp-borrow-20261021-0839/runtime-paired/inputs/ascii_4096_baseline");
+run_case("ascii_65536_replace_grow","replace","/tmp/scpp-borrow-20261021-0839/runtime-paired/inputs/ascii_65536_replace_grow");
+run_case("utf8_65536_replace_absent","replace","/tmp/scpp-borrow-20261021-0839/runtime-paired/inputs/utf8_65536_replace_absent");
+run_case("utf8_65536_compare_early","compare","/tmp/scpp-borrow-20261021-0839/runtime-paired/inputs/utf8_65536_compare_early");
+run_case("utf8_65536_replace_grow","replace","/tmp/scpp-borrow-20261021-0839/runtime-paired/inputs/utf8_65536_replace_grow");
+run_case("utf8_4096_replace_grow","replace","/tmp/scpp-borrow-20261021-0839/runtime-paired/inputs/utf8_4096_replace_grow");
+run_case("ascii_64_compare_late","compare","/tmp/scpp-borrow-20261021-0839/runtime-paired/inputs/ascii_64_compare_late");
+run_case("utf8_4096_replace_dense","replace","/tmp/scpp-borrow-20261021-0839/runtime-paired/inputs/utf8_4096_replace_dense");
+run_case("utf8_4096_compare_late","compare","/tmp/scpp-borrow-20261021-0839/runtime-paired/inputs/utf8_4096_compare_late");
+run_case("ascii_65536_compare_late","compare","/tmp/scpp-borrow-20261021-0839/runtime-paired/inputs/ascii_65536_compare_late");
+run_case("utf8_64_replace_dense","replace","/tmp/scpp-borrow-20261021-0839/runtime-paired/inputs/utf8_64_replace_dense");
+run_case("ascii_4096_replace_grow","replace","/tmp/scpp-borrow-20261021-0839/runtime-paired/inputs/ascii_4096_replace_grow");
+run_case("utf8_64_compare_early","compare","/tmp/scpp-borrow-20261021-0839/runtime-paired/inputs/utf8_64_compare_early");
+run_case("ascii_4096_compare_late","compare","/tmp/scpp-borrow-20261021-0839/runtime-paired/inputs/ascii_4096_compare_late");
+run_case("utf8_4096_compare_early","compare","/tmp/scpp-borrow-20261021-0839/runtime-paired/inputs/utf8_4096_compare_early");
+run_case("ascii_64_baseline","baseline","/tmp/scpp-borrow-20261021-0839/runtime-paired/inputs/ascii_64_baseline");
+run_case("utf8_65536_baseline","baseline","/tmp/scpp-borrow-20261021-0839/runtime-paired/inputs/utf8_65536_baseline");
+run_case("utf8_64_compare_equal","compare","/tmp/scpp-borrow-20261021-0839/runtime-paired/inputs/utf8_64_compare_equal");
+run_case("utf8_64_replace_absent","replace","/tmp/scpp-borrow-20261021-0839/runtime-paired/inputs/utf8_64_replace_absent");
+run_case("utf8_65536_compare_late","compare","/tmp/scpp-borrow-20261021-0839/runtime-paired/inputs/utf8_65536_compare_late");
+run_case("ascii_64_replace_grow","replace","/tmp/scpp-borrow-20261021-0839/runtime-paired/inputs/ascii_64_replace_grow");
+run_case("ascii_4096_replace_dense","replace","/tmp/scpp-borrow-20261021-0839/runtime-paired/inputs/ascii_4096_replace_dense");
+run_case("utf8_4096_compare_equal","compare","/tmp/scpp-borrow-20261021-0839/runtime-paired/inputs/utf8_4096_compare_equal");
+run_case("ascii_4096_replace_absent","replace","/tmp/scpp-borrow-20261021-0839/runtime-paired/inputs/ascii_4096_replace_absent");
+run_case("ascii_65536_baseline","baseline","/tmp/scpp-borrow-20261021-0839/runtime-paired/inputs/ascii_65536_baseline");
+run_case("ascii_65536_replace_absent","replace","/tmp/scpp-borrow-20261021-0839/runtime-paired/inputs/ascii_65536_replace_absent");
+run_case("ascii_64_replace_absent","replace","/tmp/scpp-borrow-20261021-0839/runtime-paired/inputs/ascii_64_replace_absent");
+run_case("ascii_64_compare_early","compare","/tmp/scpp-borrow-20261021-0839/runtime-paired/inputs/ascii_64_compare_early");
+run_case("utf8_65536_replace_dense","replace","/tmp/scpp-borrow-20261021-0839/runtime-paired/inputs/utf8_65536_replace_dense");
+run_case("ascii_65536_replace_dense","replace","/tmp/scpp-borrow-20261021-0839/runtime-paired/inputs/ascii_65536_replace_dense");
+run_case("ascii_4096_compare_equal","compare","/tmp/scpp-borrow-20261021-0839/runtime-paired/inputs/ascii_4096_compare_equal");
+run_case("ascii_64_compare_equal","compare","/tmp/scpp-borrow-20261021-0839/runtime-paired/inputs/ascii_64_compare_equal");
+run_case("ascii_65536_compare_equal","compare","/tmp/scpp-borrow-20261021-0839/runtime-paired/inputs/ascii_65536_compare_equal");
+run_case("utf8_64_compare_late","compare","/tmp/scpp-borrow-20261021-0839/runtime-paired/inputs/utf8_64_compare_late");
+run_case("ascii_65536_compare_early","compare","/tmp/scpp-borrow-20261021-0839/runtime-paired/inputs/ascii_65536_compare_early");
+run_case("ascii_64_replace_dense","replace","/tmp/scpp-borrow-20261021-0839/runtime-paired/inputs/ascii_64_replace_dense");
+run_case("utf8_64_baseline","baseline","/tmp/scpp-borrow-20261021-0839/runtime-paired/inputs/utf8_64_baseline");
+run_case("utf8_4096_replace_absent","replace","/tmp/scpp-borrow-20261021-0839/runtime-paired/inputs/utf8_4096_replace_absent");

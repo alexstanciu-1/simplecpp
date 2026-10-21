@@ -1,0 +1,10 @@
+{
+  "timed_batches_checked": 7644,
+  "configurations": 13,
+  "cases": 42,
+  "rounds": 2,
+  "samples_per_case": 14,
+  "all_checksums_valid": true,
+  "timed_source_hashes_verified": 7,
+  "runtime_source_changes": false
+}

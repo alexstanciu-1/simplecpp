@@ -561,6 +561,7 @@ final class Runtime_Catalog_Reader
 			elseif ($key === 'name') {
 				$result->name = self::name($reader);
 			}
+			elseif ($key === 'snapshot_borrow_safe') { $result->snapshot_borrow_safe = $reader->read_boolean(); }
 			elseif ($key === 'qualified_aliases') {
 				$aliases /** vector<string> */ = [];
 				$reader->begin_array();
@@ -599,6 +600,16 @@ final class Runtime_Catalog_Reader
 		}
 		if (($result->identity === '') || ($result->name === '') || !$returns || !$parameters) {
 			$reader->reject('Missing runtime function field');
+		}
+		if ($result->snapshot_borrow_safe) {
+			if (($result->member !== null) || (q_count($result->type_parameters) !== 0)) {
+				$reader->reject('Snapshot borrowing requires a fixed free runtime function');
+			}
+			foreach ($result->parameters as $parameter) {
+				if (($parameter->mode !== passing_mode::value) || $parameter->variadic || ($parameter->default_value !== null)) {
+					$reader->reject('Snapshot borrowing requires fixed explicit value inputs');
+				}
+			}
 		}
 		return $result;
 	}

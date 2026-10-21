@@ -1,0 +1,1010 @@
+[
+  {
+    "round": 1,
+    "backend": "mytry_ordinary",
+    "id": "utf8_4096_baseline",
+    "median_ns": 60.19454002380371
+  },
+  {
+    "round": 1,
+    "backend": "mytry_ordinary",
+    "id": "utf8_65536_compare_equal",
+    "median_ns": 3415.3204345703125
+  },
+  {
+    "round": 1,
+    "backend": "mytry_ordinary",
+    "id": "utf8_64_replace_grow",
+    "median_ns": 234.10114288330078
+  },
+  {
+    "round": 1,
+    "backend": "mytry_ordinary",
+    "id": "ascii_4096_compare_early",
+    "median_ns": 117.75402069091797
+  },
+  {
+    "round": 1,
+    "backend": "mytry_ordinary",
+    "id": "ascii_4096_baseline",
+    "median_ns": 59.94009208679199
+  },
+  {
+    "round": 1,
+    "backend": "mytry_ordinary",
+    "id": "ascii_65536_replace_grow",
+    "median_ns": 365618.9375
+  },
+  {
+    "round": 1,
+    "backend": "mytry_ordinary",
+    "id": "utf8_65536_replace_absent",
+    "median_ns": 2724.328125
+  },
+  {
+    "round": 1,
+    "backend": "mytry_ordinary",
+    "id": "utf8_65536_compare_early",
+    "median_ns": 2261.84130859375
+  },
+  {
+    "round": 1,
+    "backend": "mytry_ordinary",
+    "id": "utf8_65536_replace_grow",
+    "median_ns": 353437.265625
+  },
+  {
+    "round": 1,
+    "backend": "mytry_ordinary",
+    "id": "utf8_4096_replace_grow",
+    "median_ns": 6753.0625
+  },
+  {
+    "round": 1,
+    "backend": "mytry_ordinary",
+    "id": "ascii_64_compare_late",
+    "median_ns": 37.60029697418213
+  },
+  {
+    "round": 1,
+    "backend": "mytry_ordinary",
+    "id": "utf8_4096_replace_dense",
+    "median_ns": 6875.564453125
+  },
+  {
+    "round": 1,
+    "backend": "mytry_ordinary",
+    "id": "utf8_4096_compare_late",
+    "median_ns": 183.77505493164062
+  },
+  {
+    "round": 1,
+    "backend": "mytry_ordinary",
+    "id": "ascii_65536_compare_late",
+    "median_ns": 4086.312255859375
+  },
+  {
+    "round": 1,
+    "backend": "mytry_ordinary",
+    "id": "utf8_64_replace_dense",
+    "median_ns": 170.79329681396484
+  },
+  {
+    "round": 1,
+    "backend": "mytry_ordinary",
+    "id": "ascii_4096_replace_grow",
+    "median_ns": 7017.734375
+  },
+  {
+    "round": 1,
+    "backend": "mytry_ordinary",
+    "id": "utf8_64_compare_early",
+    "median_ns": 29.988338470458984
+  },
+  {
+    "round": 1,
+    "backend": "mytry_ordinary",
+    "id": "ascii_4096_compare_late",
+    "median_ns": 157.639404296875
+  },
+  {
+    "round": 1,
+    "backend": "mytry_ordinary",
+    "id": "utf8_4096_compare_early",
+    "median_ns": 116.69915008544922
+  },
+  {
+    "round": 1,
+    "backend": "mytry_ordinary",
+    "id": "ascii_64_baseline",
+    "median_ns": 13.083005905151367
+  },
+  {
+    "round": 1,
+    "backend": "mytry_ordinary",
+    "id": "utf8_65536_baseline",
+    "median_ns": 1097.7298278808594
+  },
+  {
+    "round": 1,
+    "backend": "mytry_ordinary",
+    "id": "utf8_64_compare_equal",
+    "median_ns": 51.9746789932251
+  },
+  {
+    "round": 1,
+    "backend": "mytry_ordinary",
+    "id": "utf8_64_replace_absent",
+    "median_ns": 77.51216506958008
+  },
+  {
+    "round": 1,
+    "backend": "mytry_ordinary",
+    "id": "utf8_65536_compare_late",
+    "median_ns": 3694.43994140625
+  },
+  {
+    "round": 1,
+    "backend": "mytry_ordinary",
+    "id": "ascii_64_replace_grow",
+    "median_ns": 303.9185333251953
+  },
+  {
+    "round": 1,
+    "backend": "mytry_ordinary",
+    "id": "ascii_4096_replace_dense",
+    "median_ns": 6458.47998046875
+  },
+  {
+    "round": 1,
+    "backend": "mytry_ordinary",
+    "id": "utf8_4096_compare_equal",
+    "median_ns": 171.90011596679688
+  },
+  {
+    "round": 1,
+    "backend": "mytry_ordinary",
+    "id": "ascii_4096_replace_absent",
+    "median_ns": 223.85324096679688
+  },
+  {
+    "round": 1,
+    "backend": "mytry_ordinary",
+    "id": "ascii_65536_baseline",
+    "median_ns": 1223.1565551757812
+  },
+  {
+    "round": 1,
+    "backend": "mytry_ordinary",
+    "id": "ascii_65536_replace_absent",
+    "median_ns": 3111.7203369140625
+  },
+  {
+    "round": 1,
+    "backend": "mytry_ordinary",
+    "id": "ascii_64_replace_absent",
+    "median_ns": 54.52676010131836
+  },
+  {
+    "round": 1,
+    "backend": "mytry_ordinary",
+    "id": "ascii_64_compare_early",
+    "median_ns": 27.416081428527832
+  },
+  {
+    "round": 1,
+    "backend": "mytry_ordinary",
+    "id": "utf8_65536_replace_dense",
+    "median_ns": 84102.5703125
+  },
+  {
+    "round": 1,
+    "backend": "mytry_ordinary",
+    "id": "ascii_65536_replace_dense",
+    "median_ns": 87802.35546875
+  },
+  {
+    "round": 1,
+    "backend": "mytry_ordinary",
+    "id": "ascii_4096_compare_equal",
+    "median_ns": 164.31090545654297
+  },
+  {
+    "round": 1,
+    "backend": "mytry_ordinary",
+    "id": "ascii_64_compare_equal",
+    "median_ns": 27.78671169281006
+  },
+  {
+    "round": 1,
+    "backend": "mytry_ordinary",
+    "id": "ascii_65536_compare_equal",
+    "median_ns": 3434.1236572265625
+  },
+  {
+    "round": 1,
+    "backend": "mytry_ordinary",
+    "id": "utf8_64_compare_late",
+    "median_ns": 47.20191287994385
+  },
+  {
+    "round": 1,
+    "backend": "mytry_ordinary",
+    "id": "ascii_65536_compare_early",
+    "median_ns": 2326.837890625
+  },
+  {
+    "round": 1,
+    "backend": "mytry_ordinary",
+    "id": "ascii_64_replace_dense",
+    "median_ns": 182.96226501464844
+  },
+  {
+    "round": 1,
+    "backend": "mytry_ordinary",
+    "id": "utf8_64_baseline",
+    "median_ns": 12.630975723266602
+  },
+  {
+    "round": 1,
+    "backend": "mytry_ordinary",
+    "id": "utf8_4096_replace_absent",
+    "median_ns": 168.2047119140625
+  },
+  {
+    "round": 1,
+    "backend": "mytry_concrete",
+    "id": "utf8_4096_baseline",
+    "median_ns": 83.62648391723633
+  },
+  {
+    "round": 1,
+    "backend": "mytry_concrete",
+    "id": "utf8_65536_compare_equal",
+    "median_ns": 3361.0450439453125
+  },
+  {
+    "round": 1,
+    "backend": "mytry_concrete",
+    "id": "utf8_64_replace_grow",
+    "median_ns": 559.858039855957
+  },
+  {
+    "round": 1,
+    "backend": "mytry_concrete",
+    "id": "ascii_4096_compare_early",
+    "median_ns": 570.0544281005859
+  },
+  {
+    "round": 1,
+    "backend": "mytry_concrete",
+    "id": "ascii_4096_baseline",
+    "median_ns": 105.9725456237793
+  },
+  {
+    "round": 1,
+    "backend": "mytry_concrete",
+    "id": "ascii_65536_replace_grow",
+    "median_ns": 413334.109375
+  },
+  {
+    "round": 1,
+    "backend": "mytry_concrete",
+    "id": "utf8_65536_replace_absent",
+    "median_ns": 3443.97607421875
+  },
+  {
+    "round": 1,
+    "backend": "mytry_concrete",
+    "id": "utf8_65536_compare_early",
+    "median_ns": 2469.6759033203125
+  },
+  {
+    "round": 1,
+    "backend": "mytry_concrete",
+    "id": "utf8_65536_replace_grow",
+    "median_ns": 251557.078125
+  },
+  {
+    "round": 1,
+    "backend": "mytry_concrete",
+    "id": "utf8_4096_replace_grow",
+    "median_ns": 8451.59375
+  },
+  {
+    "round": 1,
+    "backend": "mytry_concrete",
+    "id": "ascii_64_compare_late",
+    "median_ns": 81.70724868774414
+  },
+  {
+    "round": 1,
+    "backend": "mytry_concrete",
+    "id": "utf8_4096_replace_dense",
+    "median_ns": 6850.900146484375
+  },
+  {
+    "round": 1,
+    "backend": "mytry_concrete",
+    "id": "utf8_4096_compare_late",
+    "median_ns": 207.25774383544922
+  },
+  {
+    "round": 1,
+    "backend": "mytry_concrete",
+    "id": "ascii_65536_compare_late",
+    "median_ns": 3344.3216552734375
+  },
+  {
+    "round": 1,
+    "backend": "mytry_concrete",
+    "id": "utf8_64_replace_dense",
+    "median_ns": 199.97067260742188
+  },
+  {
+    "round": 1,
+    "backend": "mytry_concrete",
+    "id": "ascii_4096_replace_grow",
+    "median_ns": 8953.4609375
+  },
+  {
+    "round": 1,
+    "backend": "mytry_concrete",
+    "id": "utf8_64_compare_early",
+    "median_ns": 73.3522891998291
+  },
+  {
+    "round": 1,
+    "backend": "mytry_concrete",
+    "id": "ascii_4096_compare_late",
+    "median_ns": 210.345703125
+  },
+  {
+    "round": 1,
+    "backend": "mytry_concrete",
+    "id": "utf8_4096_compare_early",
+    "median_ns": 161.5937957763672
+  },
+  {
+    "round": 1,
+    "backend": "mytry_concrete",
+    "id": "ascii_64_baseline",
+    "median_ns": 42.562971115112305
+  },
+  {
+    "round": 1,
+    "backend": "mytry_concrete",
+    "id": "utf8_65536_baseline",
+    "median_ns": 1147.8189697265625
+  },
+  {
+    "round": 1,
+    "backend": "mytry_concrete",
+    "id": "utf8_64_compare_equal",
+    "median_ns": 80.18227005004883
+  },
+  {
+    "round": 1,
+    "backend": "mytry_concrete",
+    "id": "utf8_64_replace_absent",
+    "median_ns": 99.01072311401367
+  },
+  {
+    "round": 1,
+    "backend": "mytry_concrete",
+    "id": "utf8_65536_compare_late",
+    "median_ns": 3377.5567626953125
+  },
+  {
+    "round": 1,
+    "backend": "mytry_concrete",
+    "id": "ascii_64_replace_grow",
+    "median_ns": 268.5936508178711
+  },
+  {
+    "round": 1,
+    "backend": "mytry_concrete",
+    "id": "ascii_4096_replace_dense",
+    "median_ns": 5944.962158203125
+  },
+  {
+    "round": 1,
+    "backend": "mytry_concrete",
+    "id": "utf8_4096_compare_equal",
+    "median_ns": 212.82501983642578
+  },
+  {
+    "round": 1,
+    "backend": "mytry_concrete",
+    "id": "ascii_4096_replace_absent",
+    "median_ns": 203.37596130371094
+  },
+  {
+    "round": 1,
+    "backend": "mytry_concrete",
+    "id": "ascii_65536_baseline",
+    "median_ns": 1137.5285949707031
+  },
+  {
+    "round": 1,
+    "backend": "mytry_concrete",
+    "id": "ascii_65536_replace_absent",
+    "median_ns": 2697.1484375
+  },
+  {
+    "round": 1,
+    "backend": "mytry_concrete",
+    "id": "ascii_64_replace_absent",
+    "median_ns": 84.48827362060547
+  },
+  {
+    "round": 1,
+    "backend": "mytry_concrete",
+    "id": "ascii_64_compare_early",
+    "median_ns": 72.04853439331055
+  },
+  {
+    "round": 1,
+    "backend": "mytry_concrete",
+    "id": "utf8_65536_replace_dense",
+    "median_ns": 91729.515625
+  },
+  {
+    "round": 1,
+    "backend": "mytry_concrete",
+    "id": "ascii_65536_replace_dense",
+    "median_ns": 91622.9609375
+  },
+  {
+    "round": 1,
+    "backend": "mytry_concrete",
+    "id": "ascii_4096_compare_equal",
+    "median_ns": 212.63986206054688
+  },
+  {
+    "round": 1,
+    "backend": "mytry_concrete",
+    "id": "ascii_64_compare_equal",
+    "median_ns": 79.56819915771484
+  },
+  {
+    "round": 1,
+    "backend": "mytry_concrete",
+    "id": "ascii_65536_compare_equal",
+    "median_ns": 3402.85302734375
+  },
+  {
+    "round": 1,
+    "backend": "mytry_concrete",
+    "id": "utf8_64_compare_late",
+    "median_ns": 74.2607250213623
+  },
+  {
+    "round": 1,
+    "backend": "mytry_concrete",
+    "id": "ascii_65536_compare_early",
+    "median_ns": 2348.2852783203125
+  },
+  {
+    "round": 1,
+    "backend": "mytry_concrete",
+    "id": "ascii_64_replace_dense",
+    "median_ns": 222.95986938476562
+  },
+  {
+    "round": 1,
+    "backend": "mytry_concrete",
+    "id": "utf8_64_baseline",
+    "median_ns": 56.426103591918945
+  },
+  {
+    "round": 1,
+    "backend": "mytry_concrete",
+    "id": "utf8_4096_replace_absent",
+    "median_ns": 262.5187454223633
+  },
+  {
+    "round": 2,
+    "backend": "mytry_ordinary",
+    "id": "utf8_4096_baseline",
+    "median_ns": 55.2792911529541
+  },
+  {
+    "round": 2,
+    "backend": "mytry_ordinary",
+    "id": "utf8_65536_compare_equal",
+    "median_ns": 3252.59521484375
+  },
+  {
+    "round": 2,
+    "backend": "mytry_ordinary",
+    "id": "utf8_64_replace_grow",
+    "median_ns": 210.08887481689453
+  },
+  {
+    "round": 2,
+    "backend": "mytry_ordinary",
+    "id": "ascii_4096_compare_early",
+    "median_ns": 116.71200942993164
+  },
+  {
+    "round": 2,
+    "backend": "mytry_ordinary",
+    "id": "ascii_4096_baseline",
+    "median_ns": 58.89292335510254
+  },
+  {
+    "round": 2,
+    "backend": "mytry_ordinary",
+    "id": "ascii_65536_replace_grow",
+    "median_ns": 382623.390625
+  },
+  {
+    "round": 2,
+    "backend": "mytry_ordinary",
+    "id": "utf8_65536_replace_absent",
+    "median_ns": 2898.3218994140625
+  },
+  {
+    "round": 2,
+    "backend": "mytry_ordinary",
+    "id": "utf8_65536_compare_early",
+    "median_ns": 2343.075439453125
+  },
+  {
+    "round": 2,
+    "backend": "mytry_ordinary",
+    "id": "utf8_65536_replace_grow",
+    "median_ns": 352030.21875
+  },
+  {
+    "round": 2,
+    "backend": "mytry_ordinary",
+    "id": "utf8_4096_replace_grow",
+    "median_ns": 6205.7861328125
+  },
+  {
+    "round": 2,
+    "backend": "mytry_ordinary",
+    "id": "ascii_64_compare_late",
+    "median_ns": 39.26814556121826
+  },
+  {
+    "round": 2,
+    "backend": "mytry_ordinary",
+    "id": "utf8_4096_replace_dense",
+    "median_ns": 6213.335693359375
+  },
+  {
+    "round": 2,
+    "backend": "mytry_ordinary",
+    "id": "utf8_4096_compare_late",
+    "median_ns": 159.2490234375
+  },
+  {
+    "round": 2,
+    "backend": "mytry_ordinary",
+    "id": "ascii_65536_compare_late",
+    "median_ns": 3323.039794921875
+  },
+  {
+    "round": 2,
+    "backend": "mytry_ordinary",
+    "id": "utf8_64_replace_dense",
+    "median_ns": 232.14048767089844
+  },
+  {
+    "round": 2,
+    "backend": "mytry_ordinary",
+    "id": "ascii_4096_replace_grow",
+    "median_ns": 9271.819580078125
+  },
+  {
+    "round": 2,
+    "backend": "mytry_ordinary",
+    "id": "utf8_64_compare_early",
+    "median_ns": 37.5941276550293
+  },
+  {
+    "round": 2,
+    "backend": "mytry_ordinary",
+    "id": "ascii_4096_compare_late",
+    "median_ns": 252.46649932861328
+  },
+  {
+    "round": 2,
+    "backend": "mytry_ordinary",
+    "id": "utf8_4096_compare_early",
+    "median_ns": 156.73849868774414
+  },
+  {
+    "round": 2,
+    "backend": "mytry_ordinary",
+    "id": "ascii_64_baseline",
+    "median_ns": 31.14870023727417
+  },
+  {
+    "round": 2,
+    "backend": "mytry_ordinary",
+    "id": "utf8_65536_baseline",
+    "median_ns": 1490.6407470703125
+  },
+  {
+    "round": 2,
+    "backend": "mytry_ordinary",
+    "id": "utf8_64_compare_equal",
+    "median_ns": 54.65620231628418
+  },
+  {
+    "round": 2,
+    "backend": "mytry_ordinary",
+    "id": "utf8_64_replace_absent",
+    "median_ns": 64.7254409790039
+  },
+  {
+    "round": 2,
+    "backend": "mytry_ordinary",
+    "id": "utf8_65536_compare_late",
+    "median_ns": 4602.930419921875
+  },
+  {
+    "round": 2,
+    "backend": "mytry_ordinary",
+    "id": "ascii_64_replace_grow",
+    "median_ns": 308.74303436279297
+  },
+  {
+    "round": 2,
+    "backend": "mytry_ordinary",
+    "id": "ascii_4096_replace_dense",
+    "median_ns": 8080.146728515625
+  },
+  {
+    "round": 2,
+    "backend": "mytry_ordinary",
+    "id": "utf8_4096_compare_equal",
+    "median_ns": 229.68939971923828
+  },
+  {
+    "round": 2,
+    "backend": "mytry_ordinary",
+    "id": "ascii_4096_replace_absent",
+    "median_ns": 234.97152709960938
+  },
+  {
+    "round": 2,
+    "backend": "mytry_ordinary",
+    "id": "ascii_65536_baseline",
+    "median_ns": 1367.9446411132812
+  },
+  {
+    "round": 2,
+    "backend": "mytry_ordinary",
+    "id": "ascii_65536_replace_absent",
+    "median_ns": 3277.6134033203125
+  },
+  {
+    "round": 2,
+    "backend": "mytry_ordinary",
+    "id": "ascii_64_replace_absent",
+    "median_ns": 63.314443588256836
+  },
+  {
+    "round": 2,
+    "backend": "mytry_ordinary",
+    "id": "ascii_64_compare_early",
+    "median_ns": 42.62599754333496
+  },
+  {
+    "round": 2,
+    "backend": "mytry_ordinary",
+    "id": "utf8_65536_replace_dense",
+    "median_ns": 157184.453125
+  },
+  {
+    "round": 2,
+    "backend": "mytry_ordinary",
+    "id": "ascii_65536_replace_dense",
+    "median_ns": 150241.140625
+  },
+  {
+    "round": 2,
+    "backend": "mytry_ordinary",
+    "id": "ascii_4096_compare_equal",
+    "median_ns": 249.38687896728516
+  },
+  {
+    "round": 2,
+    "backend": "mytry_ordinary",
+    "id": "ascii_64_compare_equal",
+    "median_ns": 40.52883720397949
+  },
+  {
+    "round": 2,
+    "backend": "mytry_ordinary",
+    "id": "ascii_65536_compare_equal",
+    "median_ns": 4110.8861083984375
+  },
+  {
+    "round": 2,
+    "backend": "mytry_ordinary",
+    "id": "utf8_64_compare_late",
+    "median_ns": 40.27845001220703
+  },
+  {
+    "round": 2,
+    "backend": "mytry_ordinary",
+    "id": "ascii_65536_compare_early",
+    "median_ns": 2534.178955078125
+  },
+  {
+    "round": 2,
+    "backend": "mytry_ordinary",
+    "id": "ascii_64_replace_dense",
+    "median_ns": 199.7932891845703
+  },
+  {
+    "round": 2,
+    "backend": "mytry_ordinary",
+    "id": "utf8_64_baseline",
+    "median_ns": 12.74238920211792
+  },
+  {
+    "round": 2,
+    "backend": "mytry_ordinary",
+    "id": "utf8_4096_replace_absent",
+    "median_ns": 171.58625030517578
+  },
+  {
+    "round": 2,
+    "backend": "mytry_concrete",
+    "id": "utf8_4096_baseline",
+    "median_ns": 84.51590728759766
+  },
+  {
+    "round": 2,
+    "backend": "mytry_concrete",
+    "id": "utf8_65536_compare_equal",
+    "median_ns": 3438.521240234375
+  },
+  {
+    "round": 2,
+    "backend": "mytry_concrete",
+    "id": "utf8_64_replace_grow",
+    "median_ns": 261.0225296020508
+  },
+  {
+    "round": 2,
+    "backend": "mytry_concrete",
+    "id": "ascii_4096_compare_early",
+    "median_ns": 162.43521881103516
+  },
+  {
+    "round": 2,
+    "backend": "mytry_concrete",
+    "id": "ascii_4096_baseline",
+    "median_ns": 92.69319152832031
+  },
+  {
+    "round": 2,
+    "backend": "mytry_concrete",
+    "id": "ascii_65536_replace_grow",
+    "median_ns": 322373.578125
+  },
+  {
+    "round": 2,
+    "backend": "mytry_concrete",
+    "id": "utf8_65536_replace_absent",
+    "median_ns": 2728.5242919921875
+  },
+  {
+    "round": 2,
+    "backend": "mytry_concrete",
+    "id": "utf8_65536_compare_early",
+    "median_ns": 2538.8688354492188
+  },
+  {
+    "round": 2,
+    "backend": "mytry_concrete",
+    "id": "utf8_65536_replace_grow",
+    "median_ns": 208845.0703125
+  },
+  {
+    "round": 2,
+    "backend": "mytry_concrete",
+    "id": "utf8_4096_replace_grow",
+    "median_ns": 6797.147216796875
+  },
+  {
+    "round": 2,
+    "backend": "mytry_concrete",
+    "id": "ascii_64_compare_late",
+    "median_ns": 72.96935272216797
+  },
+  {
+    "round": 2,
+    "backend": "mytry_concrete",
+    "id": "utf8_4096_replace_dense",
+    "median_ns": 5339.9560546875
+  },
+  {
+    "round": 2,
+    "backend": "mytry_concrete",
+    "id": "utf8_4096_compare_late",
+    "median_ns": 204.4447250366211
+  },
+  {
+    "round": 2,
+    "backend": "mytry_concrete",
+    "id": "ascii_65536_compare_late",
+    "median_ns": 3460.940185546875
+  },
+  {
+    "round": 2,
+    "backend": "mytry_concrete",
+    "id": "utf8_64_replace_dense",
+    "median_ns": 197.6101837158203
+  },
+  {
+    "round": 2,
+    "backend": "mytry_concrete",
+    "id": "ascii_4096_replace_grow",
+    "median_ns": 7452.0556640625
+  },
+  {
+    "round": 2,
+    "backend": "mytry_concrete",
+    "id": "utf8_64_compare_early",
+    "median_ns": 71.60561752319336
+  },
+  {
+    "round": 2,
+    "backend": "mytry_concrete",
+    "id": "ascii_4096_compare_late",
+    "median_ns": 208.1405029296875
+  },
+  {
+    "round": 2,
+    "backend": "mytry_concrete",
+    "id": "utf8_4096_compare_early",
+    "median_ns": 174.87484741210938
+  },
+  {
+    "round": 2,
+    "backend": "mytry_concrete",
+    "id": "ascii_64_baseline",
+    "median_ns": 43.36801338195801
+  },
+  {
+    "round": 2,
+    "backend": "mytry_concrete",
+    "id": "utf8_65536_baseline",
+    "median_ns": 1144.1038208007812
+  },
+  {
+    "round": 2,
+    "backend": "mytry_concrete",
+    "id": "utf8_64_compare_equal",
+    "median_ns": 80.04524612426758
+  },
+  {
+    "round": 2,
+    "backend": "mytry_concrete",
+    "id": "utf8_64_replace_absent",
+    "median_ns": 84.45301055908203
+  },
+  {
+    "round": 2,
+    "backend": "mytry_concrete",
+    "id": "utf8_65536_compare_late",
+    "median_ns": 3536.8367919921875
+  },
+  {
+    "round": 2,
+    "backend": "mytry_concrete",
+    "id": "ascii_64_replace_grow",
+    "median_ns": 263.22923278808594
+  },
+  {
+    "round": 2,
+    "backend": "mytry_concrete",
+    "id": "ascii_4096_replace_dense",
+    "median_ns": 5829.581787109375
+  },
+  {
+    "round": 2,
+    "backend": "mytry_concrete",
+    "id": "utf8_4096_compare_equal",
+    "median_ns": 214.79102325439453
+  },
+  {
+    "round": 2,
+    "backend": "mytry_concrete",
+    "id": "ascii_4096_replace_absent",
+    "median_ns": 202.25774383544922
+  },
+  {
+    "round": 2,
+    "backend": "mytry_concrete",
+    "id": "ascii_65536_baseline",
+    "median_ns": 1183.5313110351562
+  },
+  {
+    "round": 2,
+    "backend": "mytry_concrete",
+    "id": "ascii_65536_replace_absent",
+    "median_ns": 2683.666259765625
+  },
+  {
+    "round": 2,
+    "backend": "mytry_concrete",
+    "id": "ascii_64_replace_absent",
+    "median_ns": 83.89478302001953
+  },
+  {
+    "round": 2,
+    "backend": "mytry_concrete",
+    "id": "ascii_64_compare_early",
+    "median_ns": 78.27571296691895
+  },
+  {
+    "round": 2,
+    "backend": "mytry_concrete",
+    "id": "utf8_65536_replace_dense",
+    "median_ns": 139761.5390625
+  },
+  {
+    "round": 2,
+    "backend": "mytry_concrete",
+    "id": "ascii_65536_replace_dense",
+    "median_ns": 134083.484375
+  },
+  {
+    "round": 2,
+    "backend": "mytry_concrete",
+    "id": "ascii_4096_compare_equal",
+    "median_ns": 320.81410217285156
+  },
+  {
+    "round": 2,
+    "backend": "mytry_concrete",
+    "id": "ascii_64_compare_equal",
+    "median_ns": 136.12270736694336
+  },
+  {
+    "round": 2,
+    "backend": "mytry_concrete",
+    "id": "ascii_65536_compare_equal",
+    "median_ns": 4001.5093994140625
+  },
+  {
+    "round": 2,
+    "backend": "mytry_concrete",
+    "id": "utf8_64_compare_late",
+    "median_ns": 81.0409927368164
+  },
+  {
+    "round": 2,
+    "backend": "mytry_concrete",
+    "id": "ascii_65536_compare_early",
+    "median_ns": 2770.748046875
+  },
+  {
+    "round": 2,
+    "backend": "mytry_concrete",
+    "id": "ascii_64_replace_dense",
+    "median_ns": 221.33323669433594
+  },
+  {
+    "round": 2,
+    "backend": "mytry_concrete",
+    "id": "utf8_64_baseline",
+    "median_ns": 43.0721549987793
+  },
+  {
+    "round": 2,
+    "backend": "mytry_concrete",
+    "id": "utf8_4096_replace_absent",
+    "median_ns": 202.5144805908203
+  }
+]

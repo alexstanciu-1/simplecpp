@@ -1,0 +1,51 @@
+function change_subject(string &$subject): string {
+	$subject = "zzz";
+	return "abc";
+}
+function change_search(string &$search): string {
+	$search = "z";
+	return "x";
+}
+function change_both(string &$subject, string &$other): int {
+	$subject = "zzz";
+	$other = "yyy";
+	return 0;
+}
+function ordered(int &$trace, int $digit, string $value): string {
+	$trace = $trace * 10 + $digit;
+	return $value;
+}
+function borrowed_parameters(string &$subject, string &$other): int {
+	return substr_compare($subject, $other, 0);
+}
+$s string = "abc";
+$t string = "abc";
+echo substr_compare($s, $t, 0), "\n";
+echo borrowed_parameters($s, $t), "\n";
+echo substr_compare($s, change_subject($s), 0), ":", $s, "\n";
+$s = "abc";
+$t = "abc";
+echo substr_compare($s, $t, change_both($s, $t)), ":", $s, ":", $t, "\n";
+$s = "abc";
+$alias =& $s;
+echo substr_compare($s, change_subject($alias), 0), ":", $s, "\n";
+$search string = "a";
+$subject string = "aba";
+echo str_replace($search, change_search($search), $subject), ":", $search, "\n";
+$trace int = 0;
+echo str_replace(ordered($trace, 1, "a"), ordered($trace, 2, "x"), ordered($trace, 3, "aba")), ":", $trace, "\n";
+$s = "abc";
+$s = str_replace("a", "x", $s);
+echo $s, ":", strlen($s), "\n";
+
+function observe_alias(const string &$read, string &$write): string {
+	$write = "updated";
+	return $read;
+}
+$s = "before";
+echo observe_alias($s, $s), "\n";
+class SnapshotBox { public string $value = "owned"; }
+function make_box(): SnapshotBox { return new SnapshotBox(); }
+echo strlen(make_box()->value), "\n";
+$nullable ?string = "abc";
+echo strlen($nullable), "\n";

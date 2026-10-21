@@ -1,6 +1,21 @@
 # Test runners
 Doc Status: supporting
 
+## Conservative call snapshot elision
+
+`python3 compiler/my-try/tests/call_snapshot_borrow.py --results FRESH` checks
+prepared borrowing facts and fallback in both C++ modes, provider metadata,
+retained edits, unchanged explicit-reference semantics, argument/conversion error
+ordering and native allocation counts. It uses the production native builder at
+O0 without PCH. `runtime_strings.py` supplies the existing string/catalog regression.
+
+`call_snapshot_cost.py --before TREE --after TREE --results FRESH --php PHP`
+measures isolated PHP-hosted compiler processes in alternating before/after order,
+pinned to one CPU. Both trees need matching dependencies; `--php` must select a
+CLI with mbstring. It records boot, frontend, preparation and emission separately,
+excluding publication, C++ compilation/linking and program execution. Warmup rounds
+are retained but excluded from medians. This is not a native compiler rebuild.
+
 `tests/scalar_debug.py --results FRESH_DIRECTORY` verifies the bounded scalar
 `dbg` forms with default-prelowered cold/warm execution, source locations,
 snapshots, invalid-depth reporting, source shadowing, metadata validation and

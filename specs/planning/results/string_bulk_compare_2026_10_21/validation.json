@@ -1,0 +1,14 @@
+{
+  "timed_batches_checked": 7644,
+  "configurations": 13,
+  "cases": 42,
+  "rounds": 2,
+  "samples_per_case": 14,
+  "all_checksums_valid": true,
+  "runtime_source_hashes_verified": 3,
+  "round_sources_and_executables_match": true,
+  "runtime_source_changes": true,
+  "normal_runtime_test_passed": true,
+  "asan_ubsan_runtime_test_passed": true,
+  "leak_sanitizer": "disabled: LeakSanitizer cannot run under ptrace"
+}

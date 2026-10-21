@@ -198,6 +198,17 @@ calls retain the fixed-prefix/pack boundary without rewriting source arguments.
 
 ### Callable contracts
 
+Registered runtime functions may carry the reviewed `snapshot_borrow_safe`
+provider guarantee from module metadata. `Call_Snapshot_Preparation` checks the
+already-admitted call in two linear scans and sets `prepared_call_argument`'s
+`borrow_snapshot` hint only for stable string-variable reads in harmless argument
+lists. The semantic boundary remains `copy_value`, including its copyability and
+conversion checks. Missing proof retains the snapshot. No callee-body traversal,
+alias graph, runtime tracking, source rejection or new retained owner is added.
+Both ordinary and concrete C++ calls consume the same hint within their existing
+ordered argument lambda. Ordinary body retirement/repreparation clears/rebuilds it.
+The parked LLVM backend may continue implementing the value boundary with a copy.
+
 Anonymous signature work owns an optional canonical expected-type input supplied by
 creation-site expression preparation. Query-only signature/capability demands do not
 erase it. Changed inputs schedule signature rebuilding; ordinary signature comparison

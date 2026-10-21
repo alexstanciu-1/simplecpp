@@ -626,10 +626,11 @@ final class CPP_Declarations
 			$name = 'argument_' . $context->next_temporary;
 			$context->next_temporary++;
 			$boundary = $prepared_arguments[$index]->boundary;
-			$reference = $boundary === value_boundary_operation::bind_reference ? '&' : '';
+			$borrow = $prepared_argument->borrow_snapshot;
+			$reference = (($boundary === value_boundary_operation::bind_reference) || $borrow) ? '&' : '';
 
-			$qualifier = $parameter->access === storage_access::read_only ? 'const ' : '';
-			$argument_requirement = self::signature_requirement(false, $boundary === value_boundary_operation::bind_reference);
+			$qualifier = (($parameter->access === storage_access::read_only) || $borrow) ? 'const ' : '';
+			$argument_requirement = self::signature_requirement(false, ($boundary === value_boundary_operation::bind_reference) || $borrow);
 			$text .= "\t" . $qualifier . self::type_for($argument_type, $context, $argument_requirement) . $reference . ' ' . $name . ' = ' . $value . ";\n";
 			if ($transport !== null) { $physical_arguments[] = $name; }
 			if ($boundary === value_boundary_operation::consume_value) {

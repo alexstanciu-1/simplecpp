@@ -1,0 +1,11 @@
+{
+  "host": "tf-dev002",
+  "platform": "Linux-6.8.0-85-generic-x86_64-with-glibc2.39",
+  "cpu": 0,
+  "rounds": 15,
+  "workload_hashes": {
+    "simple_1000": "71c119d62e33b99ca1d80a964c6c64b9d49a1ac2319a58e70fc950dd1fbd5bae",
+    "fallback_1000": "6ff820544fd05f95e396c073c589e01c9e457cbf3cde8542b53512eee5fcbb05",
+    "string_benchmark": "2e9f4665199b9dd1dfaa3f12528d0be8fea3ebc305d6eb80d85f149f1a159b5f"
+  }
+}

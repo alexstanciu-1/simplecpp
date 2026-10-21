@@ -1,0 +1,1 @@
+scpp::nullable runtime error: nullable required-value extraction requires a present wrapped value. Requirement: unwrap only non-empty nullable<T> values before using the delegated operator/property path.

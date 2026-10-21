@@ -114,6 +114,7 @@ final class Runtime_Catalog_Registration
 					$signature->parameters = $parameters;
 					$result->register_function($function->identity, $function->name, $signature);
 				}
+				$result->function_definition($function->identity)->snapshot_borrow_safe = $function->snapshot_borrow_safe;
 				foreach ($function->qualified_aliases as $qualifier) {
 					if ($member_owner !== null) { throw new \RuntimeException('Runtime members cannot expose qualified aliases'); }
 					self::validate_qualifier($qualifier);

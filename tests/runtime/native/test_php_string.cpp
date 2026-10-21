@@ -257,6 +257,49 @@ static void test_substr_compare() {
 	assert(scpp::php::substr_compare(scpp::string_t("abcdef"), scpp::string_t("dEf"), scpp::int_t<>(-3), scpp::int_t<>(3), scpp::bool_t(false)).native_value() != 0);
 }
 
+static void test_substr_compare_binary_ordering() {
+	// Every byte value participates in unsigned ordering, including embedded NUL
+	// and bytes that cannot independently form valid UTF-8.
+	for (int left = 0; left < 256; ++left) {
+		for (int right = 0; right < 256; ++right) {
+			const scpp::string_t lhs(std::string(1, static_cast<char>(left)));
+			const scpp::string_t rhs(std::string(1, static_cast<char>(right)));
+			const auto expected = (left > right) - (left < right);
+			const auto result = scpp::php::substr_compare(lhs, rhs, scpp::int_t<>(0)).native_value();
+			assert(((result > 0) - (result < 0)) == expected);
+		}
+	}
+	assert(scpp::ascii_compare_sensitive({}, {}) == 0);
+	assert(scpp::ascii_compare_sensitive({}, "x") == -1);
+	assert(scpp::ascii_compare_sensitive("x", {}) == 1);
+	assert(scpp::ascii_compare_sensitive("a", "aa") == -1);
+	assert(scpp::ascii_compare_sensitive("aa", "a") == 1);
+
+	// Exercise unequal alignment, equal long prefixes and mismatch positions on
+	// either side of common bulk-comparison block boundaries.
+	for (std::size_t alignment = 0; alignment < 32; ++alignment) {
+		std::string left(4096 + alignment, '\0');
+		std::string right(4096 + 31 - alignment, '\0');
+		const std::string_view lhs(left.data() + alignment, 4096);
+		const std::string_view rhs(right.data() + 31 - alignment, 4096);
+		assert(scpp::ascii_compare_sensitive(lhs, rhs) == 0);
+		for (const auto position : {0, 1, 15, 16, 31, 32, 63, 64, 255, 256, 4095}) {
+			right[31 - alignment + position] = static_cast<char>(0xff);
+			assert(scpp::ascii_compare_sensitive(lhs, rhs) < 0);
+			assert(scpp::ascii_compare_sensitive(rhs, lhs) > 0);
+			right[31 - alignment + position] = '\0';
+		}
+	}
+
+	const scpp::string_t subject(std::string("x\0\x80\xffZ", 5));
+	const scpp::string_t part(std::string("\0\x80\xff", 3));
+	assert(scpp::php::substr_compare(subject, part, scpp::int_t<>(1), scpp::int_t<>(3)).native_value() == 0);
+	assert(scpp::php::substr_compare(subject, part, scpp::int_t<>(-4), scpp::int_t<>(-1), scpp::bool_t(false)).native_value() == 0);
+	assert(scpp::php::substr_compare(subject, part, scpp::int_t<>(1)).native_value() == 1);
+	assert(subject.native_value() == std::string("x\0\x80\xffZ", 5));
+	assert(part.native_value() == std::string("\0\x80\xff", 3));
+}
+
 
 static void test_number_format() {
 	assert(scpp::php::number_format(scpp::int_t<>(1234)).native_value() == "1,234");
@@ -339,6 +382,7 @@ int main() {
 	test_trim_family_default_mask();
 	test_trim_family_custom_mask();
 	test_substr_compare();
+	test_substr_compare_binary_ordering();
 	test_substr_replace();
 	test_number_format();
 	test_shared_str_surface();

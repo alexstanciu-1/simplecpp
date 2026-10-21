@@ -1,0 +1,6554 @@
+[
+  {
+    "round": "round1",
+    "backend": "python_bytes",
+    "id": "utf8_4096_baseline",
+    "median_ns": 49.00604248046875
+  },
+  {
+    "round": "round1",
+    "backend": "python_bytes",
+    "id": "utf8_65536_compare_equal",
+    "median_ns": 2200.9500732421875
+  },
+  {
+    "round": "round1",
+    "backend": "python_bytes",
+    "id": "utf8_64_replace_grow",
+    "median_ns": 254.44690704345703
+  },
+  {
+    "round": "round1",
+    "backend": "python_bytes",
+    "id": "ascii_4096_compare_early",
+    "median_ns": 63.000572204589844
+  },
+  {
+    "round": "round1",
+    "backend": "python_bytes",
+    "id": "ascii_4096_baseline",
+    "median_ns": 49.24954032897949
+  },
+  {
+    "round": "round1",
+    "backend": "python_bytes",
+    "id": "ascii_65536_replace_grow",
+    "median_ns": 119533.12890625
+  },
+  {
+    "round": "round1",
+    "backend": "python_bytes",
+    "id": "utf8_65536_replace_absent",
+    "median_ns": 18800.06689453125
+  },
+  {
+    "round": "round1",
+    "backend": "python_bytes",
+    "id": "utf8_65536_compare_early",
+    "median_ns": 63.03822326660156
+  },
+  {
+    "round": "round1",
+    "backend": "python_bytes",
+    "id": "utf8_65536_replace_grow",
+    "median_ns": 115867.5859375
+  },
+  {
+    "round": "round1",
+    "backend": "python_bytes",
+    "id": "utf8_4096_replace_grow",
+    "median_ns": 7480.023193359375
+  },
+  {
+    "round": "round1",
+    "backend": "python_bytes",
+    "id": "ascii_64_compare_late",
+    "median_ns": 68.11159896850586
+  },
+  {
+    "round": "round1",
+    "backend": "python_bytes",
+    "id": "utf8_4096_replace_dense",
+    "median_ns": 7064.953125
+  },
+  {
+    "round": "round1",
+    "backend": "python_bytes",
+    "id": "utf8_4096_compare_late",
+    "median_ns": 133.13004302978516
+  },
+  {
+    "round": "round1",
+    "backend": "python_bytes",
+    "id": "ascii_65536_compare_late",
+    "median_ns": 2211.0431518554688
+  },
+  {
+    "round": "round1",
+    "backend": "python_bytes",
+    "id": "utf8_64_replace_dense",
+    "median_ns": 241.92474365234375
+  },
+  {
+    "round": "round1",
+    "backend": "python_bytes",
+    "id": "ascii_4096_replace_grow",
+    "median_ns": 6915.084716796875
+  },
+  {
+    "round": "round1",
+    "backend": "python_bytes",
+    "id": "utf8_64_compare_early",
+    "median_ns": 62.77170181274414
+  },
+  {
+    "round": "round1",
+    "backend": "python_bytes",
+    "id": "ascii_4096_compare_late",
+    "median_ns": 152.6661605834961
+  },
+  {
+    "round": "round1",
+    "backend": "python_bytes",
+    "id": "utf8_4096_compare_early",
+    "median_ns": 63.266923904418945
+  },
+  {
+    "round": "round1",
+    "backend": "python_bytes",
+    "id": "ascii_64_baseline",
+    "median_ns": 39.9002799987793
+  },
+  {
+    "round": "round1",
+    "backend": "python_bytes",
+    "id": "utf8_65536_baseline",
+    "median_ns": 52.15107345581055
+  },
+  {
+    "round": "round1",
+    "backend": "python_bytes",
+    "id": "utf8_64_compare_equal",
+    "median_ns": 81.40607452392578
+  },
+  {
+    "round": "round1",
+    "backend": "python_bytes",
+    "id": "utf8_64_replace_absent",
+    "median_ns": 97.60999298095703
+  },
+  {
+    "round": "round1",
+    "backend": "python_bytes",
+    "id": "utf8_65536_compare_late",
+    "median_ns": 2211.5247192382812
+  },
+  {
+    "round": "round1",
+    "backend": "python_bytes",
+    "id": "ascii_64_replace_grow",
+    "median_ns": 224.01475524902344
+  },
+  {
+    "round": "round1",
+    "backend": "python_bytes",
+    "id": "ascii_4096_replace_dense",
+    "median_ns": 7521.875
+  },
+  {
+    "round": "round1",
+    "backend": "python_bytes",
+    "id": "utf8_4096_compare_equal",
+    "median_ns": 164.2954864501953
+  },
+  {
+    "round": "round1",
+    "backend": "python_bytes",
+    "id": "ascii_4096_replace_absent",
+    "median_ns": 422.01788330078125
+  },
+  {
+    "round": "round1",
+    "backend": "python_bytes",
+    "id": "ascii_65536_baseline",
+    "median_ns": 52.49148941040039
+  },
+  {
+    "round": "round1",
+    "backend": "python_bytes",
+    "id": "ascii_65536_replace_absent",
+    "median_ns": 18774.40673828125
+  },
+  {
+    "round": "round1",
+    "backend": "python_bytes",
+    "id": "ascii_64_replace_absent",
+    "median_ns": 97.45050048828125
+  },
+  {
+    "round": "round1",
+    "backend": "python_bytes",
+    "id": "ascii_64_compare_early",
+    "median_ns": 62.76141929626465
+  },
+  {
+    "round": "round1",
+    "backend": "python_bytes",
+    "id": "utf8_65536_replace_dense",
+    "median_ns": 115271.70703125
+  },
+  {
+    "round": "round1",
+    "backend": "python_bytes",
+    "id": "ascii_65536_replace_dense",
+    "median_ns": 120325.078125
+  },
+  {
+    "round": "round1",
+    "backend": "python_bytes",
+    "id": "ascii_4096_compare_equal",
+    "median_ns": 145.39716720581055
+  },
+  {
+    "round": "round1",
+    "backend": "python_bytes",
+    "id": "ascii_64_compare_equal",
+    "median_ns": 81.87155532836914
+  },
+  {
+    "round": "round1",
+    "backend": "python_bytes",
+    "id": "ascii_65536_compare_equal",
+    "median_ns": 2205.4661865234375
+  },
+  {
+    "round": "round1",
+    "backend": "python_bytes",
+    "id": "utf8_64_compare_late",
+    "median_ns": 68.32108879089355
+  },
+  {
+    "round": "round1",
+    "backend": "python_bytes",
+    "id": "ascii_65536_compare_early",
+    "median_ns": 63.32095909118652
+  },
+  {
+    "round": "round1",
+    "backend": "python_bytes",
+    "id": "ascii_64_replace_dense",
+    "median_ns": 233.11905670166016
+  },
+  {
+    "round": "round1",
+    "backend": "python_bytes",
+    "id": "utf8_64_baseline",
+    "median_ns": 40.192766189575195
+  },
+  {
+    "round": "round1",
+    "backend": "python_bytes",
+    "id": "utf8_4096_replace_absent",
+    "median_ns": 461.87303161621094
+  },
+  {
+    "round": "round1",
+    "backend": "mytry_ordinary",
+    "id": "utf8_4096_baseline",
+    "median_ns": 54.463623046875
+  },
+  {
+    "round": "round1",
+    "backend": "mytry_ordinary",
+    "id": "utf8_65536_compare_equal",
+    "median_ns": 3130.226806640625
+  },
+  {
+    "round": "round1",
+    "backend": "mytry_ordinary",
+    "id": "utf8_64_replace_grow",
+    "median_ns": 211.53395080566406
+  },
+  {
+    "round": "round1",
+    "backend": "mytry_ordinary",
+    "id": "ascii_4096_compare_early",
+    "median_ns": 117.0995979309082
+  },
+  {
+    "round": "round1",
+    "backend": "mytry_ordinary",
+    "id": "ascii_4096_baseline",
+    "median_ns": 64.81341552734375
+  },
+  {
+    "round": "round1",
+    "backend": "mytry_ordinary",
+    "id": "ascii_65536_replace_grow",
+    "median_ns": 382092.90625
+  },
+  {
+    "round": "round1",
+    "backend": "mytry_ordinary",
+    "id": "utf8_65536_replace_absent",
+    "median_ns": 3424.3355712890625
+  },
+  {
+    "round": "round1",
+    "backend": "mytry_ordinary",
+    "id": "utf8_65536_compare_early",
+    "median_ns": 2834.7847900390625
+  },
+  {
+    "round": "round1",
+    "backend": "mytry_ordinary",
+    "id": "utf8_65536_replace_grow",
+    "median_ns": 462293.109375
+  },
+  {
+    "round": "round1",
+    "backend": "mytry_ordinary",
+    "id": "utf8_4096_replace_grow",
+    "median_ns": 7780.4140625
+  },
+  {
+    "round": "round1",
+    "backend": "mytry_ordinary",
+    "id": "ascii_64_compare_late",
+    "median_ns": 34.138723373413086
+  },
+  {
+    "round": "round1",
+    "backend": "mytry_ordinary",
+    "id": "utf8_4096_replace_dense",
+    "median_ns": 5520.745849609375
+  },
+  {
+    "round": "round1",
+    "backend": "mytry_ordinary",
+    "id": "utf8_4096_compare_late",
+    "median_ns": 156.35508728027344
+  },
+  {
+    "round": "round1",
+    "backend": "mytry_ordinary",
+    "id": "ascii_65536_compare_late",
+    "median_ns": 3126.8819580078125
+  },
+  {
+    "round": "round1",
+    "backend": "mytry_ordinary",
+    "id": "utf8_64_replace_dense",
+    "median_ns": 171.83038330078125
+  },
+  {
+    "round": "round1",
+    "backend": "mytry_ordinary",
+    "id": "ascii_4096_replace_grow",
+    "median_ns": 7537.173583984375
+  },
+  {
+    "round": "round1",
+    "backend": "mytry_ordinary",
+    "id": "utf8_64_compare_early",
+    "median_ns": 29.868162155151367
+  },
+  {
+    "round": "round1",
+    "backend": "mytry_ordinary",
+    "id": "ascii_4096_compare_late",
+    "median_ns": 157.86522674560547
+  },
+  {
+    "round": "round1",
+    "backend": "mytry_ordinary",
+    "id": "utf8_4096_compare_early",
+    "median_ns": 116.55667114257812
+  },
+  {
+    "round": "round1",
+    "backend": "mytry_ordinary",
+    "id": "ascii_64_baseline",
+    "median_ns": 12.483637809753418
+  },
+  {
+    "round": "round1",
+    "backend": "mytry_ordinary",
+    "id": "utf8_65536_baseline",
+    "median_ns": 1081.623046875
+  },
+  {
+    "round": "round1",
+    "backend": "mytry_ordinary",
+    "id": "utf8_64_compare_equal",
+    "median_ns": 26.8956880569458
+  },
+  {
+    "round": "round1",
+    "backend": "mytry_ordinary",
+    "id": "utf8_64_replace_absent",
+    "median_ns": 52.093894958496094
+  },
+  {
+    "round": "round1",
+    "backend": "mytry_ordinary",
+    "id": "utf8_65536_compare_late",
+    "median_ns": 3119.5379638671875
+  },
+  {
+    "round": "round1",
+    "backend": "mytry_ordinary",
+    "id": "ascii_64_replace_grow",
+    "median_ns": 222.71436309814453
+  },
+  {
+    "round": "round1",
+    "backend": "mytry_ordinary",
+    "id": "ascii_4096_replace_dense",
+    "median_ns": 6300.840576171875
+  },
+  {
+    "round": "round1",
+    "backend": "mytry_ordinary",
+    "id": "utf8_4096_compare_equal",
+    "median_ns": 157.115234375
+  },
+  {
+    "round": "round1",
+    "backend": "mytry_ordinary",
+    "id": "ascii_4096_replace_absent",
+    "median_ns": 166.5956802368164
+  },
+  {
+    "round": "round1",
+    "backend": "mytry_ordinary",
+    "id": "ascii_65536_baseline",
+    "median_ns": 1087.4671020507812
+  },
+  {
+    "round": "round1",
+    "backend": "mytry_ordinary",
+    "id": "ascii_65536_replace_absent",
+    "median_ns": 2704.1346435546875
+  },
+  {
+    "round": "round1",
+    "backend": "mytry_ordinary",
+    "id": "ascii_64_replace_absent",
+    "median_ns": 52.02190399169922
+  },
+  {
+    "round": "round1",
+    "backend": "mytry_ordinary",
+    "id": "ascii_64_compare_early",
+    "median_ns": 27.56258487701416
+  },
+  {
+    "round": "round1",
+    "backend": "mytry_ordinary",
+    "id": "utf8_65536_replace_dense",
+    "median_ns": 87701.2109375
+  },
+  {
+    "round": "round1",
+    "backend": "mytry_ordinary",
+    "id": "ascii_65536_replace_dense",
+    "median_ns": 92445.15625
+  },
+  {
+    "round": "round1",
+    "backend": "mytry_ordinary",
+    "id": "ascii_4096_compare_equal",
+    "median_ns": 155.79539489746094
+  },
+  {
+    "round": "round1",
+    "backend": "mytry_ordinary",
+    "id": "ascii_64_compare_equal",
+    "median_ns": 35.08456039428711
+  },
+  {
+    "round": "round1",
+    "backend": "mytry_ordinary",
+    "id": "ascii_65536_compare_equal",
+    "median_ns": 4059.94873046875
+  },
+  {
+    "round": "round1",
+    "backend": "mytry_ordinary",
+    "id": "utf8_64_compare_late",
+    "median_ns": 42.95722198486328
+  },
+  {
+    "round": "round1",
+    "backend": "mytry_ordinary",
+    "id": "ascii_65536_compare_early",
+    "median_ns": 2714.882080078125
+  },
+  {
+    "round": "round1",
+    "backend": "mytry_ordinary",
+    "id": "ascii_64_replace_dense",
+    "median_ns": 186.93092346191406
+  },
+  {
+    "round": "round1",
+    "backend": "mytry_ordinary",
+    "id": "utf8_64_baseline",
+    "median_ns": 13.29221773147583
+  },
+  {
+    "round": "round1",
+    "backend": "mytry_ordinary",
+    "id": "utf8_4096_replace_absent",
+    "median_ns": 164.71292114257812
+  },
+  {
+    "round": "round1",
+    "backend": "rust",
+    "id": "utf8_4096_baseline",
+    "median_ns": 1.881190836429596
+  },
+  {
+    "round": "round1",
+    "backend": "rust",
+    "id": "utf8_65536_compare_equal",
+    "median_ns": 2497.501708984375
+  },
+  {
+    "round": "round1",
+    "backend": "rust",
+    "id": "utf8_64_replace_grow",
+    "median_ns": 717.4268188476562
+  },
+  {
+    "round": "round1",
+    "backend": "rust",
+    "id": "ascii_4096_compare_early",
+    "median_ns": 13.302436351776123
+  },
+  {
+    "round": "round1",
+    "backend": "rust",
+    "id": "ascii_4096_baseline",
+    "median_ns": 1.8624783754348755
+  },
+  {
+    "round": "round1",
+    "backend": "rust",
+    "id": "ascii_65536_replace_grow",
+    "median_ns": 367007.40625
+  },
+  {
+    "round": "round1",
+    "backend": "rust",
+    "id": "utf8_65536_replace_absent",
+    "median_ns": 19646.82421875
+  },
+  {
+    "round": "round1",
+    "backend": "rust",
+    "id": "utf8_65536_compare_early",
+    "median_ns": 12.727967262268066
+  },
+  {
+    "round": "round1",
+    "backend": "rust",
+    "id": "utf8_65536_replace_grow",
+    "median_ns": 316723.40625
+  },
+  {
+    "round": "round1",
+    "backend": "rust",
+    "id": "utf8_4096_replace_grow",
+    "median_ns": 19664.125
+  },
+  {
+    "round": "round1",
+    "backend": "rust",
+    "id": "ascii_64_compare_late",
+    "median_ns": 19.058011054992676
+  },
+  {
+    "round": "round1",
+    "backend": "rust",
+    "id": "utf8_4096_replace_dense",
+    "median_ns": 20501.669921875
+  },
+  {
+    "round": "round1",
+    "backend": "rust",
+    "id": "utf8_4096_compare_late",
+    "median_ns": 143.61956787109375
+  },
+  {
+    "round": "round1",
+    "backend": "rust",
+    "id": "ascii_65536_compare_late",
+    "median_ns": 2688.012451171875
+  },
+  {
+    "round": "round1",
+    "backend": "rust",
+    "id": "utf8_64_replace_dense",
+    "median_ns": 683.896484375
+  },
+  {
+    "round": "round1",
+    "backend": "rust",
+    "id": "ascii_4096_replace_grow",
+    "median_ns": 21069.15576171875
+  },
+  {
+    "round": "round1",
+    "backend": "rust",
+    "id": "utf8_64_compare_early",
+    "median_ns": 15.795609951019287
+  },
+  {
+    "round": "round1",
+    "backend": "rust",
+    "id": "ascii_4096_compare_late",
+    "median_ns": 100.72322845458984
+  },
+  {
+    "round": "round1",
+    "backend": "rust",
+    "id": "utf8_4096_compare_early",
+    "median_ns": 16.16502857208252
+  },
+  {
+    "round": "round1",
+    "backend": "rust",
+    "id": "ascii_64_baseline",
+    "median_ns": 1.8777533173561096
+  },
+  {
+    "round": "round1",
+    "backend": "rust",
+    "id": "utf8_65536_baseline",
+    "median_ns": 1.3145486116409302
+  },
+  {
+    "round": "round1",
+    "backend": "rust",
+    "id": "utf8_64_compare_equal",
+    "median_ns": 6.533571481704712
+  },
+  {
+    "round": "round1",
+    "backend": "rust",
+    "id": "utf8_64_replace_absent",
+    "median_ns": 92.93195724487305
+  },
+  {
+    "round": "round1",
+    "backend": "rust",
+    "id": "utf8_65536_compare_late",
+    "median_ns": 1506.7069091796875
+  },
+  {
+    "round": "round1",
+    "backend": "rust",
+    "id": "ascii_64_replace_grow",
+    "median_ns": 369.18067932128906
+  },
+  {
+    "round": "round1",
+    "backend": "rust",
+    "id": "ascii_4096_replace_dense",
+    "median_ns": 6733.303955078125
+  },
+  {
+    "round": "round1",
+    "backend": "rust",
+    "id": "utf8_4096_compare_equal",
+    "median_ns": 53.06838607788086
+  },
+  {
+    "round": "round1",
+    "backend": "rust",
+    "id": "ascii_4096_replace_absent",
+    "median_ns": 610.2390594482422
+  },
+  {
+    "round": "round1",
+    "backend": "rust",
+    "id": "ascii_65536_baseline",
+    "median_ns": 0.8139619529247284
+  },
+  {
+    "round": "round1",
+    "backend": "rust",
+    "id": "ascii_65536_replace_absent",
+    "median_ns": 8006.44921875
+  },
+  {
+    "round": "round1",
+    "backend": "rust",
+    "id": "ascii_64_replace_absent",
+    "median_ns": 78.8963394165039
+  },
+  {
+    "round": "round1",
+    "backend": "rust",
+    "id": "ascii_64_compare_early",
+    "median_ns": 5.048691511154175
+  },
+  {
+    "round": "round1",
+    "backend": "rust",
+    "id": "utf8_65536_replace_dense",
+    "median_ns": 127795.5625
+  },
+  {
+    "round": "round1",
+    "backend": "rust",
+    "id": "ascii_65536_replace_dense",
+    "median_ns": 122536.98828125
+  },
+  {
+    "round": "round1",
+    "backend": "rust",
+    "id": "ascii_4096_compare_equal",
+    "median_ns": 53.38739585876465
+  },
+  {
+    "round": "round1",
+    "backend": "rust",
+    "id": "ascii_64_compare_equal",
+    "median_ns": 5.72463583946228
+  },
+  {
+    "round": "round1",
+    "backend": "rust",
+    "id": "ascii_65536_compare_equal",
+    "median_ns": 1065.0215148925781
+  },
+  {
+    "round": "round1",
+    "backend": "rust",
+    "id": "utf8_64_compare_late",
+    "median_ns": 5.876260757446289
+  },
+  {
+    "round": "round1",
+    "backend": "rust",
+    "id": "ascii_65536_compare_early",
+    "median_ns": 4.745596647262573
+  },
+  {
+    "round": "round1",
+    "backend": "rust",
+    "id": "ascii_64_replace_dense",
+    "median_ns": 256.4618225097656
+  },
+  {
+    "round": "round1",
+    "backend": "rust",
+    "id": "utf8_64_baseline",
+    "median_ns": 0.5171869546175003
+  },
+  {
+    "round": "round1",
+    "backend": "rust",
+    "id": "utf8_4096_replace_absent",
+    "median_ns": 578.4386596679688
+  },
+  {
+    "round": "round1",
+    "backend": "java",
+    "id": "utf8_4096_baseline",
+    "median_ns": 0.7538809478282928
+  },
+  {
+    "round": "round1",
+    "backend": "java",
+    "id": "utf8_65536_compare_equal",
+    "median_ns": 1306.6318359375
+  },
+  {
+    "round": "round1",
+    "backend": "java",
+    "id": "utf8_64_replace_grow",
+    "median_ns": 122.45331954956055
+  },
+  {
+    "round": "round1",
+    "backend": "java",
+    "id": "ascii_4096_compare_early",
+    "median_ns": 2.074520230293274
+  },
+  {
+    "round": "round1",
+    "backend": "java",
+    "id": "ascii_4096_baseline",
+    "median_ns": 0.6476747393608093
+  },
+  {
+    "round": "round1",
+    "backend": "java",
+    "id": "ascii_65536_replace_grow",
+    "median_ns": 175957.4453125
+  },
+  {
+    "round": "round1",
+    "backend": "java",
+    "id": "utf8_65536_replace_absent",
+    "median_ns": 4702.048095703125
+  },
+  {
+    "round": "round1",
+    "backend": "java",
+    "id": "utf8_65536_compare_early",
+    "median_ns": 5.12149977684021
+  },
+  {
+    "round": "round1",
+    "backend": "java",
+    "id": "utf8_65536_replace_grow",
+    "median_ns": 381584.1640625
+  },
+  {
+    "round": "round1",
+    "backend": "java",
+    "id": "utf8_4096_replace_grow",
+    "median_ns": 11528.7890625
+  },
+  {
+    "round": "round1",
+    "backend": "java",
+    "id": "ascii_64_compare_late",
+    "median_ns": 9.652029037475586
+  },
+  {
+    "round": "round1",
+    "backend": "java",
+    "id": "utf8_4096_replace_dense",
+    "median_ns": 1548.6473388671875
+  },
+  {
+    "round": "round1",
+    "backend": "java",
+    "id": "utf8_4096_compare_late",
+    "median_ns": 68.56785202026367
+  },
+  {
+    "round": "round1",
+    "backend": "java",
+    "id": "ascii_65536_compare_late",
+    "median_ns": 1090.5807189941406
+  },
+  {
+    "round": "round1",
+    "backend": "java",
+    "id": "utf8_64_replace_dense",
+    "median_ns": 27.654619216918945
+  },
+  {
+    "round": "round1",
+    "backend": "java",
+    "id": "ascii_4096_replace_grow",
+    "median_ns": 9719.666015625
+  },
+  {
+    "round": "round1",
+    "backend": "java",
+    "id": "utf8_64_compare_early",
+    "median_ns": 2.3262038230895996
+  },
+  {
+    "round": "round1",
+    "backend": "java",
+    "id": "ascii_4096_compare_late",
+    "median_ns": 82.20817947387695
+  },
+  {
+    "round": "round1",
+    "backend": "java",
+    "id": "utf8_4096_compare_early",
+    "median_ns": 2.178899049758911
+  },
+  {
+    "round": "round1",
+    "backend": "java",
+    "id": "ascii_64_baseline",
+    "median_ns": 0.6510644853115082
+  },
+  {
+    "round": "round1",
+    "backend": "java",
+    "id": "utf8_65536_baseline",
+    "median_ns": 0.6740357279777527
+  },
+  {
+    "round": "round1",
+    "backend": "java",
+    "id": "utf8_64_compare_equal",
+    "median_ns": 5.691287040710449
+  },
+  {
+    "round": "round1",
+    "backend": "java",
+    "id": "utf8_64_replace_absent",
+    "median_ns": 15.193278789520264
+  },
+  {
+    "round": "round1",
+    "backend": "java",
+    "id": "utf8_65536_compare_late",
+    "median_ns": 967.09716796875
+  },
+  {
+    "round": "round1",
+    "backend": "java",
+    "id": "ascii_64_replace_grow",
+    "median_ns": 151.96075820922852
+  },
+  {
+    "round": "round1",
+    "backend": "java",
+    "id": "ascii_4096_replace_dense",
+    "median_ns": 8401.045166015625
+  },
+  {
+    "round": "round1",
+    "backend": "java",
+    "id": "utf8_4096_compare_equal",
+    "median_ns": 69.70316314697266
+  },
+  {
+    "round": "round1",
+    "backend": "java",
+    "id": "ascii_4096_replace_absent",
+    "median_ns": 344.7940979003906
+  },
+  {
+    "round": "round1",
+    "backend": "java",
+    "id": "ascii_65536_baseline",
+    "median_ns": 0.6960121393203735
+  },
+  {
+    "round": "round1",
+    "backend": "java",
+    "id": "ascii_65536_replace_absent",
+    "median_ns": 9770.492431640625
+  },
+  {
+    "round": "round1",
+    "backend": "java",
+    "id": "ascii_64_replace_absent",
+    "median_ns": 15.53797960281372
+  },
+  {
+    "round": "round1",
+    "backend": "java",
+    "id": "ascii_64_compare_early",
+    "median_ns": 2.257516860961914
+  },
+  {
+    "round": "round1",
+    "backend": "java",
+    "id": "utf8_65536_replace_dense",
+    "median_ns": 28751.068359375
+  },
+  {
+    "round": "round1",
+    "backend": "java",
+    "id": "ascii_65536_replace_dense",
+    "median_ns": 122985.47265625
+  },
+  {
+    "round": "round1",
+    "backend": "java",
+    "id": "ascii_4096_compare_equal",
+    "median_ns": 70.05906867980957
+  },
+  {
+    "round": "round1",
+    "backend": "java",
+    "id": "ascii_64_compare_equal",
+    "median_ns": 5.754326820373535
+  },
+  {
+    "round": "round1",
+    "backend": "java",
+    "id": "ascii_65536_compare_equal",
+    "median_ns": 1069.5487060546875
+  },
+  {
+    "round": "round1",
+    "backend": "java",
+    "id": "utf8_64_compare_late",
+    "median_ns": 7.81009316444397
+  },
+  {
+    "round": "round1",
+    "backend": "java",
+    "id": "ascii_65536_compare_early",
+    "median_ns": 2.13815701007843
+  },
+  {
+    "round": "round1",
+    "backend": "java",
+    "id": "ascii_64_replace_dense",
+    "median_ns": 110.07035446166992
+  },
+  {
+    "round": "round1",
+    "backend": "java",
+    "id": "utf8_64_baseline",
+    "median_ns": 0.7113842368125916
+  },
+  {
+    "round": "round1",
+    "backend": "java",
+    "id": "utf8_4096_replace_absent",
+    "median_ns": 303.5701904296875
+  },
+  {
+    "round": "round1",
+    "backend": "python",
+    "id": "utf8_4096_baseline",
+    "median_ns": 48.16586112976074
+  },
+  {
+    "round": "round1",
+    "backend": "python",
+    "id": "utf8_65536_compare_equal",
+    "median_ns": 2948.346923828125
+  },
+  {
+    "round": "round1",
+    "backend": "python",
+    "id": "utf8_64_replace_grow",
+    "median_ns": 312.9627685546875
+  },
+  {
+    "round": "round1",
+    "backend": "python",
+    "id": "ascii_4096_compare_early",
+    "median_ns": 70.02093887329102
+  },
+  {
+    "round": "round1",
+    "backend": "python",
+    "id": "ascii_4096_baseline",
+    "median_ns": 52.367876052856445
+  },
+  {
+    "round": "round1",
+    "backend": "python",
+    "id": "ascii_65536_replace_grow",
+    "median_ns": 120006.58984375
+  },
+  {
+    "round": "round1",
+    "backend": "python",
+    "id": "utf8_65536_replace_absent",
+    "median_ns": 4887.14697265625
+  },
+  {
+    "round": "round1",
+    "backend": "python",
+    "id": "utf8_65536_compare_early",
+    "median_ns": 75.71675682067871
+  },
+  {
+    "round": "round1",
+    "backend": "python",
+    "id": "utf8_65536_replace_grow",
+    "median_ns": 166899.875
+  },
+  {
+    "round": "round1",
+    "backend": "python",
+    "id": "utf8_4096_replace_grow",
+    "median_ns": 8582.54052734375
+  },
+  {
+    "round": "round1",
+    "backend": "python",
+    "id": "ascii_64_compare_late",
+    "median_ns": 70.5586929321289
+  },
+  {
+    "round": "round1",
+    "backend": "python",
+    "id": "utf8_4096_replace_dense",
+    "median_ns": 1421.5757446289062
+  },
+  {
+    "round": "round1",
+    "backend": "python",
+    "id": "utf8_4096_compare_late",
+    "median_ns": 159.75470733642578
+  },
+  {
+    "round": "round1",
+    "backend": "python",
+    "id": "ascii_65536_compare_late",
+    "median_ns": 2248.7720336914062
+  },
+  {
+    "round": "round1",
+    "backend": "python",
+    "id": "utf8_64_replace_dense",
+    "median_ns": 140.90770721435547
+  },
+  {
+    "round": "round1",
+    "backend": "python",
+    "id": "ascii_4096_replace_grow",
+    "median_ns": 7256.2119140625
+  },
+  {
+    "round": "round1",
+    "backend": "python",
+    "id": "utf8_64_compare_early",
+    "median_ns": 78.28522109985352
+  },
+  {
+    "round": "round1",
+    "backend": "python",
+    "id": "ascii_4096_compare_late",
+    "median_ns": 157.2708740234375
+  },
+  {
+    "round": "round1",
+    "backend": "python",
+    "id": "utf8_4096_compare_early",
+    "median_ns": 76.48263168334961
+  },
+  {
+    "round": "round1",
+    "backend": "python",
+    "id": "ascii_64_baseline",
+    "median_ns": 45.09439659118652
+  },
+  {
+    "round": "round1",
+    "backend": "python",
+    "id": "utf8_65536_baseline",
+    "median_ns": 53.525047302246094
+  },
+  {
+    "round": "round1",
+    "backend": "python",
+    "id": "utf8_64_compare_equal",
+    "median_ns": 86.40910339355469
+  },
+  {
+    "round": "round1",
+    "backend": "python",
+    "id": "utf8_64_replace_absent",
+    "median_ns": 121.87968063354492
+  },
+  {
+    "round": "round1",
+    "backend": "python",
+    "id": "utf8_65536_compare_late",
+    "median_ns": 2928.559814453125
+  },
+  {
+    "round": "round1",
+    "backend": "python",
+    "id": "ascii_64_replace_grow",
+    "median_ns": 242.6982421875
+  },
+  {
+    "round": "round1",
+    "backend": "python",
+    "id": "ascii_4096_replace_dense",
+    "median_ns": 7305.48828125
+  },
+  {
+    "round": "round1",
+    "backend": "python",
+    "id": "utf8_4096_compare_equal",
+    "median_ns": 168.44609832763672
+  },
+  {
+    "round": "round1",
+    "backend": "python",
+    "id": "ascii_4096_replace_absent",
+    "median_ns": 417.2368469238281
+  },
+  {
+    "round": "round1",
+    "backend": "python",
+    "id": "ascii_65536_baseline",
+    "median_ns": 51.218597412109375
+  },
+  {
+    "round": "round1",
+    "backend": "python",
+    "id": "ascii_65536_replace_absent",
+    "median_ns": 18819.3740234375
+  },
+  {
+    "round": "round1",
+    "backend": "python",
+    "id": "ascii_64_replace_absent",
+    "median_ns": 90.79676055908203
+  },
+  {
+    "round": "round1",
+    "backend": "python",
+    "id": "ascii_64_compare_early",
+    "median_ns": 67.91170310974121
+  },
+  {
+    "round": "round1",
+    "backend": "python",
+    "id": "utf8_65536_replace_dense",
+    "median_ns": 20456.220703125
+  },
+  {
+    "round": "round1",
+    "backend": "python",
+    "id": "ascii_65536_replace_dense",
+    "median_ns": 122427.7265625
+  },
+  {
+    "round": "round1",
+    "backend": "python",
+    "id": "ascii_4096_compare_equal",
+    "median_ns": 144.27232360839844
+  },
+  {
+    "round": "round1",
+    "backend": "python",
+    "id": "ascii_64_compare_equal",
+    "median_ns": 78.70197677612305
+  },
+  {
+    "round": "round1",
+    "backend": "python",
+    "id": "ascii_65536_compare_equal",
+    "median_ns": 2519.3040771484375
+  },
+  {
+    "round": "round1",
+    "backend": "python",
+    "id": "utf8_64_compare_late",
+    "median_ns": 84.6812858581543
+  },
+  {
+    "round": "round1",
+    "backend": "python",
+    "id": "ascii_65536_compare_early",
+    "median_ns": 68.21873664855957
+  },
+  {
+    "round": "round1",
+    "backend": "python",
+    "id": "ascii_64_replace_dense",
+    "median_ns": 227.97958374023438
+  },
+  {
+    "round": "round1",
+    "backend": "python",
+    "id": "utf8_64_baseline",
+    "median_ns": 41.37011528015137
+  },
+  {
+    "round": "round1",
+    "backend": "python",
+    "id": "utf8_4096_replace_absent",
+    "median_ns": 439.1798858642578
+  },
+  {
+    "round": "round1",
+    "backend": "runtime",
+    "id": "utf8_4096_baseline",
+    "median_ns": 1.3766754269599915
+  },
+  {
+    "round": "round1",
+    "backend": "runtime",
+    "id": "utf8_65536_compare_equal",
+    "median_ns": 1082.2389526367188
+  },
+  {
+    "round": "round1",
+    "backend": "runtime",
+    "id": "utf8_64_replace_grow",
+    "median_ns": 179.18927001953125
+  },
+  {
+    "round": "round1",
+    "backend": "runtime",
+    "id": "ascii_4096_compare_early",
+    "median_ns": 6.368585586547852
+  },
+  {
+    "round": "round1",
+    "backend": "runtime",
+    "id": "ascii_4096_baseline",
+    "median_ns": 1.72190523147583
+  },
+  {
+    "round": "round1",
+    "backend": "runtime",
+    "id": "ascii_65536_replace_grow",
+    "median_ns": 299334.2265625
+  },
+  {
+    "round": "round1",
+    "backend": "runtime",
+    "id": "utf8_65536_replace_absent",
+    "median_ns": 1507.6798706054688
+  },
+  {
+    "round": "round1",
+    "backend": "runtime",
+    "id": "utf8_65536_compare_early",
+    "median_ns": 5.8933703899383545
+  },
+  {
+    "round": "round1",
+    "backend": "runtime",
+    "id": "utf8_65536_replace_grow",
+    "median_ns": 272119.1796875
+  },
+  {
+    "round": "round1",
+    "backend": "runtime",
+    "id": "utf8_4096_replace_grow",
+    "median_ns": 7899.986083984375
+  },
+  {
+    "round": "round1",
+    "backend": "runtime",
+    "id": "ascii_64_compare_late",
+    "median_ns": 7.776088714599609
+  },
+  {
+    "round": "round1",
+    "backend": "runtime",
+    "id": "utf8_4096_replace_dense",
+    "median_ns": 5050.251708984375
+  },
+  {
+    "round": "round1",
+    "backend": "runtime",
+    "id": "utf8_4096_compare_late",
+    "median_ns": 49.603023529052734
+  },
+  {
+    "round": "round1",
+    "backend": "runtime",
+    "id": "ascii_65536_compare_late",
+    "median_ns": 1077.886962890625
+  },
+  {
+    "round": "round1",
+    "backend": "runtime",
+    "id": "utf8_64_replace_dense",
+    "median_ns": 130.57950592041016
+  },
+  {
+    "round": "round1",
+    "backend": "runtime",
+    "id": "ascii_4096_replace_grow",
+    "median_ns": 6915.6953125
+  },
+  {
+    "round": "round1",
+    "backend": "runtime",
+    "id": "utf8_64_compare_early",
+    "median_ns": 5.717389822006226
+  },
+  {
+    "round": "round1",
+    "backend": "runtime",
+    "id": "ascii_4096_compare_late",
+    "median_ns": 49.955244064331055
+  },
+  {
+    "round": "round1",
+    "backend": "runtime",
+    "id": "utf8_4096_compare_early",
+    "median_ns": 5.6290435791015625
+  },
+  {
+    "round": "round1",
+    "backend": "runtime",
+    "id": "ascii_64_baseline",
+    "median_ns": 1.3707547783851624
+  },
+  {
+    "round": "round1",
+    "backend": "runtime",
+    "id": "utf8_65536_baseline",
+    "median_ns": 1.38168603181839
+  },
+  {
+    "round": "round1",
+    "backend": "runtime",
+    "id": "utf8_64_compare_equal",
+    "median_ns": 5.931165933609009
+  },
+  {
+    "round": "round1",
+    "backend": "runtime",
+    "id": "utf8_64_replace_absent",
+    "median_ns": 32.22381591796875
+  },
+  {
+    "round": "round1",
+    "backend": "runtime",
+    "id": "utf8_65536_compare_late",
+    "median_ns": 1067.9501953125
+  },
+  {
+    "round": "round1",
+    "backend": "runtime",
+    "id": "ascii_64_replace_grow",
+    "median_ns": 202.18648529052734
+  },
+  {
+    "round": "round1",
+    "backend": "runtime",
+    "id": "ascii_4096_replace_dense",
+    "median_ns": 6078.955810546875
+  },
+  {
+    "round": "round1",
+    "backend": "runtime",
+    "id": "utf8_4096_compare_equal",
+    "median_ns": 56.34473419189453
+  },
+  {
+    "round": "round1",
+    "backend": "runtime",
+    "id": "ascii_4096_replace_absent",
+    "median_ns": 122.71399688720703
+  },
+  {
+    "round": "round1",
+    "backend": "runtime",
+    "id": "ascii_65536_baseline",
+    "median_ns": 2.622711181640625
+  },
+  {
+    "round": "round1",
+    "backend": "runtime",
+    "id": "ascii_65536_replace_absent",
+    "median_ns": 2631.179443359375
+  },
+  {
+    "round": "round1",
+    "backend": "runtime",
+    "id": "ascii_64_replace_absent",
+    "median_ns": 52.360206604003906
+  },
+  {
+    "round": "round1",
+    "backend": "runtime",
+    "id": "ascii_64_compare_early",
+    "median_ns": 14.637568950653076
+  },
+  {
+    "round": "round1",
+    "backend": "runtime",
+    "id": "utf8_65536_replace_dense",
+    "median_ns": 175035.859375
+  },
+  {
+    "round": "round1",
+    "backend": "runtime",
+    "id": "ascii_65536_replace_dense",
+    "median_ns": 169019.40625
+  },
+  {
+    "round": "round1",
+    "backend": "runtime",
+    "id": "ascii_4096_compare_equal",
+    "median_ns": 89.6887435913086
+  },
+  {
+    "round": "round1",
+    "backend": "runtime",
+    "id": "ascii_64_compare_equal",
+    "median_ns": 13.431054592132568
+  },
+  {
+    "round": "round1",
+    "backend": "runtime",
+    "id": "ascii_65536_compare_equal",
+    "median_ns": 1521.6490478515625
+  },
+  {
+    "round": "round1",
+    "backend": "runtime",
+    "id": "utf8_64_compare_late",
+    "median_ns": 10.834817886352539
+  },
+  {
+    "round": "round1",
+    "backend": "runtime",
+    "id": "ascii_65536_compare_early",
+    "median_ns": 8.589526653289795
+  },
+  {
+    "round": "round1",
+    "backend": "runtime",
+    "id": "ascii_64_replace_dense",
+    "median_ns": 196.04690551757812
+  },
+  {
+    "round": "round1",
+    "backend": "runtime",
+    "id": "utf8_64_baseline",
+    "median_ns": 1.7872835397720337
+  },
+  {
+    "round": "round1",
+    "backend": "runtime",
+    "id": "utf8_4096_replace_absent",
+    "median_ns": 182.92498016357422
+  },
+  {
+    "round": "round1",
+    "backend": "js",
+    "id": "utf8_4096_baseline",
+    "median_ns": 6.793652057647705
+  },
+  {
+    "round": "round1",
+    "backend": "js",
+    "id": "utf8_65536_compare_equal",
+    "median_ns": 26504.5380859375
+  },
+  {
+    "round": "round1",
+    "backend": "js",
+    "id": "utf8_64_replace_grow",
+    "median_ns": 531.6445159912109
+  },
+  {
+    "round": "round1",
+    "backend": "js",
+    "id": "ascii_4096_compare_early",
+    "median_ns": 50.04851722717285
+  },
+  {
+    "round": "round1",
+    "backend": "js",
+    "id": "ascii_4096_baseline",
+    "median_ns": 5.689571142196655
+  },
+  {
+    "round": "round1",
+    "backend": "js",
+    "id": "ascii_65536_replace_grow",
+    "median_ns": 505525.953125
+  },
+  {
+    "round": "round1",
+    "backend": "js",
+    "id": "utf8_65536_replace_absent",
+    "median_ns": 576.7436676025391
+  },
+  {
+    "round": "round1",
+    "backend": "js",
+    "id": "utf8_65536_compare_early",
+    "median_ns": 50.0379695892334
+  },
+  {
+    "round": "round1",
+    "backend": "js",
+    "id": "utf8_65536_replace_grow",
+    "median_ns": 431011.109375
+  },
+  {
+    "round": "round1",
+    "backend": "js",
+    "id": "utf8_4096_replace_grow",
+    "median_ns": 24727.515625
+  },
+  {
+    "round": "round1",
+    "backend": "js",
+    "id": "ascii_64_compare_late",
+    "median_ns": 145.3140754699707
+  },
+  {
+    "round": "round1",
+    "backend": "js",
+    "id": "utf8_4096_replace_dense",
+    "median_ns": 24426.1591796875
+  },
+  {
+    "round": "round1",
+    "backend": "js",
+    "id": "utf8_4096_compare_late",
+    "median_ns": 1796.8104248046875
+  },
+  {
+    "round": "round1",
+    "backend": "js",
+    "id": "ascii_65536_compare_late",
+    "median_ns": 59181.314453125
+  },
+  {
+    "round": "round1",
+    "backend": "js",
+    "id": "utf8_64_replace_dense",
+    "median_ns": 650.5292358398438
+  },
+  {
+    "round": "round1",
+    "backend": "js",
+    "id": "ascii_4096_replace_grow",
+    "median_ns": 26750.4443359375
+  },
+  {
+    "round": "round1",
+    "backend": "js",
+    "id": "utf8_64_compare_early",
+    "median_ns": 49.96077919006348
+  },
+  {
+    "round": "round1",
+    "backend": "js",
+    "id": "ascii_4096_compare_late",
+    "median_ns": 3900.4984130859375
+  },
+  {
+    "round": "round1",
+    "backend": "js",
+    "id": "utf8_4096_compare_early",
+    "median_ns": 49.93464660644531
+  },
+  {
+    "round": "round1",
+    "backend": "js",
+    "id": "ascii_64_baseline",
+    "median_ns": 5.716879367828369
+  },
+  {
+    "round": "round1",
+    "backend": "js",
+    "id": "utf8_65536_baseline",
+    "median_ns": 5.636117458343506
+  },
+  {
+    "round": "round1",
+    "backend": "js",
+    "id": "utf8_64_compare_equal",
+    "median_ns": 102.26717376708984
+  },
+  {
+    "round": "round1",
+    "backend": "js",
+    "id": "utf8_64_replace_absent",
+    "median_ns": 86.23018264770508
+  },
+  {
+    "round": "round1",
+    "backend": "js",
+    "id": "utf8_65536_compare_late",
+    "median_ns": 27237.3662109375
+  },
+  {
+    "round": "round1",
+    "backend": "js",
+    "id": "ascii_64_replace_grow",
+    "median_ns": 521.0983581542969
+  },
+  {
+    "round": "round1",
+    "backend": "js",
+    "id": "ascii_4096_replace_dense",
+    "median_ns": 30646.611328125
+  },
+  {
+    "round": "round1",
+    "backend": "js",
+    "id": "utf8_4096_compare_equal",
+    "median_ns": 1731.295654296875
+  },
+  {
+    "round": "round1",
+    "backend": "js",
+    "id": "ascii_4096_replace_absent",
+    "median_ns": 126.40230178833008
+  },
+  {
+    "round": "round1",
+    "backend": "js",
+    "id": "ascii_65536_baseline",
+    "median_ns": 5.661781311035156
+  },
+  {
+    "round": "round1",
+    "backend": "js",
+    "id": "ascii_65536_replace_absent",
+    "median_ns": 1155.92626953125
+  },
+  {
+    "round": "round1",
+    "backend": "js",
+    "id": "ascii_64_replace_absent",
+    "median_ns": 86.26295852661133
+  },
+  {
+    "round": "round1",
+    "backend": "js",
+    "id": "ascii_64_compare_early",
+    "median_ns": 50.24942588806152
+  },
+  {
+    "round": "round1",
+    "backend": "js",
+    "id": "utf8_65536_replace_dense",
+    "median_ns": 430844.578125
+  },
+  {
+    "round": "round1",
+    "backend": "js",
+    "id": "ascii_65536_replace_dense",
+    "median_ns": 484437.59375
+  },
+  {
+    "round": "round1",
+    "backend": "js",
+    "id": "ascii_4096_compare_equal",
+    "median_ns": 3722.637939453125
+  },
+  {
+    "round": "round1",
+    "backend": "js",
+    "id": "ascii_64_compare_equal",
+    "median_ns": 175.02614212036133
+  },
+  {
+    "round": "round1",
+    "backend": "js",
+    "id": "ascii_65536_compare_equal",
+    "median_ns": 58134.169921875
+  },
+  {
+    "round": "round1",
+    "backend": "js",
+    "id": "utf8_64_compare_late",
+    "median_ns": 106.85046005249023
+  },
+  {
+    "round": "round1",
+    "backend": "js",
+    "id": "ascii_65536_compare_early",
+    "median_ns": 50.76727104187012
+  },
+  {
+    "round": "round1",
+    "backend": "js",
+    "id": "ascii_64_replace_dense",
+    "median_ns": 531.4505615234375
+  },
+  {
+    "round": "round1",
+    "backend": "js",
+    "id": "utf8_64_baseline",
+    "median_ns": 5.6683430671691895
+  },
+  {
+    "round": "round1",
+    "backend": "js",
+    "id": "utf8_4096_replace_absent",
+    "median_ns": 103.14561080932617
+  },
+  {
+    "round": "round1",
+    "backend": "runtime_snapshot",
+    "id": "utf8_4096_baseline",
+    "median_ns": 78.63340377807617
+  },
+  {
+    "round": "round1",
+    "backend": "runtime_snapshot",
+    "id": "utf8_65536_compare_equal",
+    "median_ns": 4829.3377685546875
+  },
+  {
+    "round": "round1",
+    "backend": "runtime_snapshot",
+    "id": "utf8_64_replace_grow",
+    "median_ns": 286.8622360229492
+  },
+  {
+    "round": "round1",
+    "backend": "runtime_snapshot",
+    "id": "ascii_4096_compare_early",
+    "median_ns": 184.4780731201172
+  },
+  {
+    "round": "round1",
+    "backend": "runtime_snapshot",
+    "id": "ascii_4096_baseline",
+    "median_ns": 92.21434783935547
+  },
+  {
+    "round": "round1",
+    "backend": "runtime_snapshot",
+    "id": "ascii_65536_replace_grow",
+    "median_ns": 422733.421875
+  },
+  {
+    "round": "round1",
+    "backend": "runtime_snapshot",
+    "id": "utf8_65536_replace_absent",
+    "median_ns": 3007.8887939453125
+  },
+  {
+    "round": "round1",
+    "backend": "runtime_snapshot",
+    "id": "utf8_65536_compare_early",
+    "median_ns": 2955.76171875
+  },
+  {
+    "round": "round1",
+    "backend": "runtime_snapshot",
+    "id": "utf8_65536_replace_grow",
+    "median_ns": 487834.75
+  },
+  {
+    "round": "round1",
+    "backend": "runtime_snapshot",
+    "id": "utf8_4096_replace_grow",
+    "median_ns": 9395.6806640625
+  },
+  {
+    "round": "round1",
+    "backend": "runtime_snapshot",
+    "id": "ascii_64_compare_late",
+    "median_ns": 61.04907989501953
+  },
+  {
+    "round": "round1",
+    "backend": "runtime_snapshot",
+    "id": "utf8_4096_replace_dense",
+    "median_ns": 7359.45068359375
+  },
+  {
+    "round": "round1",
+    "backend": "runtime_snapshot",
+    "id": "utf8_4096_compare_late",
+    "median_ns": 257.0628967285156
+  },
+  {
+    "round": "round1",
+    "backend": "runtime_snapshot",
+    "id": "ascii_65536_compare_late",
+    "median_ns": 3648.5963134765625
+  },
+  {
+    "round": "round1",
+    "backend": "runtime_snapshot",
+    "id": "utf8_64_replace_dense",
+    "median_ns": 212.02285766601562
+  },
+  {
+    "round": "round1",
+    "backend": "runtime_snapshot",
+    "id": "ascii_4096_replace_grow",
+    "median_ns": 14060.47509765625
+  },
+  {
+    "round": "round1",
+    "backend": "runtime_snapshot",
+    "id": "utf8_64_compare_early",
+    "median_ns": 49.348642349243164
+  },
+  {
+    "round": "round1",
+    "backend": "runtime_snapshot",
+    "id": "ascii_4096_compare_late",
+    "median_ns": 264.18516540527344
+  },
+  {
+    "round": "round1",
+    "backend": "runtime_snapshot",
+    "id": "utf8_4096_compare_early",
+    "median_ns": 219.0810546875
+  },
+  {
+    "round": "round1",
+    "backend": "runtime_snapshot",
+    "id": "ascii_64_baseline",
+    "median_ns": 21.10112190246582
+  },
+  {
+    "round": "round1",
+    "backend": "runtime_snapshot",
+    "id": "utf8_65536_baseline",
+    "median_ns": 1268.4988403320312
+  },
+  {
+    "round": "round1",
+    "backend": "runtime_snapshot",
+    "id": "utf8_64_compare_equal",
+    "median_ns": 41.67903232574463
+  },
+  {
+    "round": "round1",
+    "backend": "runtime_snapshot",
+    "id": "utf8_64_replace_absent",
+    "median_ns": 68.00005149841309
+  },
+  {
+    "round": "round1",
+    "backend": "runtime_snapshot",
+    "id": "utf8_65536_compare_late",
+    "median_ns": 3500.6494140625
+  },
+  {
+    "round": "round1",
+    "backend": "runtime_snapshot",
+    "id": "ascii_64_replace_grow",
+    "median_ns": 220.71029663085938
+  },
+  {
+    "round": "round1",
+    "backend": "runtime_snapshot",
+    "id": "ascii_4096_replace_dense",
+    "median_ns": 6330.7587890625
+  },
+  {
+    "round": "round1",
+    "backend": "runtime_snapshot",
+    "id": "utf8_4096_compare_equal",
+    "median_ns": 220.3443603515625
+  },
+  {
+    "round": "round1",
+    "backend": "runtime_snapshot",
+    "id": "ascii_4096_replace_absent",
+    "median_ns": 189.08589935302734
+  },
+  {
+    "round": "round1",
+    "backend": "runtime_snapshot",
+    "id": "ascii_65536_baseline",
+    "median_ns": 1110.1231689453125
+  },
+  {
+    "round": "round1",
+    "backend": "runtime_snapshot",
+    "id": "ascii_65536_replace_absent",
+    "median_ns": 2647.2344970703125
+  },
+  {
+    "round": "round1",
+    "backend": "runtime_snapshot",
+    "id": "ascii_64_replace_absent",
+    "median_ns": 54.698333740234375
+  },
+  {
+    "round": "round1",
+    "backend": "runtime_snapshot",
+    "id": "ascii_64_compare_early",
+    "median_ns": 32.63640785217285
+  },
+  {
+    "round": "round1",
+    "backend": "runtime_snapshot",
+    "id": "utf8_65536_replace_dense",
+    "median_ns": 79485.78125
+  },
+  {
+    "round": "round1",
+    "backend": "runtime_snapshot",
+    "id": "ascii_65536_replace_dense",
+    "median_ns": 91265.8828125
+  },
+  {
+    "round": "round1",
+    "backend": "runtime_snapshot",
+    "id": "ascii_4096_compare_equal",
+    "median_ns": 199.5753173828125
+  },
+  {
+    "round": "round1",
+    "backend": "runtime_snapshot",
+    "id": "ascii_64_compare_equal",
+    "median_ns": 36.100220680236816
+  },
+  {
+    "round": "round1",
+    "backend": "runtime_snapshot",
+    "id": "ascii_65536_compare_equal",
+    "median_ns": 3141.2354736328125
+  },
+  {
+    "round": "round1",
+    "backend": "runtime_snapshot",
+    "id": "utf8_64_compare_late",
+    "median_ns": 38.866790771484375
+  },
+  {
+    "round": "round1",
+    "backend": "runtime_snapshot",
+    "id": "ascii_65536_compare_early",
+    "median_ns": 2400.378662109375
+  },
+  {
+    "round": "round1",
+    "backend": "runtime_snapshot",
+    "id": "ascii_64_replace_dense",
+    "median_ns": 188.59479522705078
+  },
+  {
+    "round": "round1",
+    "backend": "runtime_snapshot",
+    "id": "utf8_64_baseline",
+    "median_ns": 17.586286544799805
+  },
+  {
+    "round": "round1",
+    "backend": "runtime_snapshot",
+    "id": "utf8_4096_replace_absent",
+    "median_ns": 245.66334533691406
+  },
+  {
+    "round": "round1",
+    "backend": "cpp_reserved",
+    "id": "utf8_4096_baseline",
+    "median_ns": 1.378961443901062
+  },
+  {
+    "round": "round1",
+    "backend": "cpp_reserved",
+    "id": "utf8_65536_compare_equal",
+    "median_ns": 1073.9134826660156
+  },
+  {
+    "round": "round1",
+    "backend": "cpp_reserved",
+    "id": "utf8_64_replace_grow",
+    "median_ns": 132.9499626159668
+  },
+  {
+    "round": "round1",
+    "backend": "cpp_reserved",
+    "id": "ascii_4096_compare_early",
+    "median_ns": 5.285896062850952
+  },
+  {
+    "round": "round1",
+    "backend": "cpp_reserved",
+    "id": "ascii_4096_baseline",
+    "median_ns": 1.3932538032531738
+  },
+  {
+    "round": "round1",
+    "backend": "cpp_reserved",
+    "id": "ascii_65536_replace_grow",
+    "median_ns": 275160.0546875
+  },
+  {
+    "round": "round1",
+    "backend": "cpp_reserved",
+    "id": "utf8_65536_replace_absent",
+    "median_ns": 1490.2182006835938
+  },
+  {
+    "round": "round1",
+    "backend": "cpp_reserved",
+    "id": "utf8_65536_compare_early",
+    "median_ns": 5.344419002532959
+  },
+  {
+    "round": "round1",
+    "backend": "cpp_reserved",
+    "id": "utf8_65536_replace_grow",
+    "median_ns": 91457.2734375
+  },
+  {
+    "round": "round1",
+    "backend": "cpp_reserved",
+    "id": "utf8_4096_replace_grow",
+    "median_ns": 5853.41845703125
+  },
+  {
+    "round": "round1",
+    "backend": "cpp_reserved",
+    "id": "ascii_64_compare_late",
+    "median_ns": 6.7742228507995605
+  },
+  {
+    "round": "round1",
+    "backend": "cpp_reserved",
+    "id": "utf8_4096_replace_dense",
+    "median_ns": 4650.6644287109375
+  },
+  {
+    "round": "round1",
+    "backend": "cpp_reserved",
+    "id": "utf8_4096_compare_late",
+    "median_ns": 49.5557746887207
+  },
+  {
+    "round": "round1",
+    "backend": "cpp_reserved",
+    "id": "ascii_65536_compare_late",
+    "median_ns": 1083.4746398925781
+  },
+  {
+    "round": "round1",
+    "backend": "cpp_reserved",
+    "id": "utf8_64_replace_dense",
+    "median_ns": 99.83003616333008
+  },
+  {
+    "round": "round1",
+    "backend": "cpp_reserved",
+    "id": "ascii_4096_replace_grow",
+    "median_ns": 11409.750244140625
+  },
+  {
+    "round": "round1",
+    "backend": "cpp_reserved",
+    "id": "utf8_64_compare_early",
+    "median_ns": 14.452186584472656
+  },
+  {
+    "round": "round1",
+    "backend": "cpp_reserved",
+    "id": "ascii_4096_compare_late",
+    "median_ns": 105.38003540039062
+  },
+  {
+    "round": "round1",
+    "backend": "cpp_reserved",
+    "id": "utf8_4096_compare_early",
+    "median_ns": 15.21593427658081
+  },
+  {
+    "round": "round1",
+    "backend": "cpp_reserved",
+    "id": "ascii_64_baseline",
+    "median_ns": 3.42259418964386
+  },
+  {
+    "round": "round1",
+    "backend": "cpp_reserved",
+    "id": "utf8_65536_baseline",
+    "median_ns": 2.330630302429199
+  },
+  {
+    "round": "round1",
+    "backend": "cpp_reserved",
+    "id": "utf8_64_compare_equal",
+    "median_ns": 14.849868297576904
+  },
+  {
+    "round": "round1",
+    "backend": "cpp_reserved",
+    "id": "utf8_64_replace_absent",
+    "median_ns": 40.292503356933594
+  },
+  {
+    "round": "round1",
+    "backend": "cpp_reserved",
+    "id": "utf8_65536_compare_late",
+    "median_ns": 1562.1676635742188
+  },
+  {
+    "round": "round1",
+    "backend": "cpp_reserved",
+    "id": "ascii_64_replace_grow",
+    "median_ns": 160.89994049072266
+  },
+  {
+    "round": "round1",
+    "backend": "cpp_reserved",
+    "id": "ascii_4096_replace_dense",
+    "median_ns": 5168.380615234375
+  },
+  {
+    "round": "round1",
+    "backend": "cpp_reserved",
+    "id": "utf8_4096_compare_equal",
+    "median_ns": 49.86250877380371
+  },
+  {
+    "round": "round1",
+    "backend": "cpp_reserved",
+    "id": "ascii_4096_replace_absent",
+    "median_ns": 95.69568252563477
+  },
+  {
+    "round": "round1",
+    "backend": "cpp_reserved",
+    "id": "ascii_65536_baseline",
+    "median_ns": 1.3813230395317078
+  },
+  {
+    "round": "round1",
+    "backend": "cpp_reserved",
+    "id": "ascii_65536_replace_absent",
+    "median_ns": 1497.1363525390625
+  },
+  {
+    "round": "round1",
+    "backend": "cpp_reserved",
+    "id": "ascii_64_replace_absent",
+    "median_ns": 22.43565273284912
+  },
+  {
+    "round": "round1",
+    "backend": "cpp_reserved",
+    "id": "ascii_64_compare_early",
+    "median_ns": 5.319114923477173
+  },
+  {
+    "round": "round1",
+    "backend": "cpp_reserved",
+    "id": "utf8_65536_replace_dense",
+    "median_ns": 73997.16015625
+  },
+  {
+    "round": "round1",
+    "backend": "cpp_reserved",
+    "id": "ascii_65536_replace_dense",
+    "median_ns": 81413.5
+  },
+  {
+    "round": "round1",
+    "backend": "cpp_reserved",
+    "id": "ascii_4096_compare_equal",
+    "median_ns": 52.39288139343262
+  },
+  {
+    "round": "round1",
+    "backend": "cpp_reserved",
+    "id": "ascii_64_compare_equal",
+    "median_ns": 5.610243797302246
+  },
+  {
+    "round": "round1",
+    "backend": "cpp_reserved",
+    "id": "ascii_65536_compare_equal",
+    "median_ns": 1079.0986328125
+  },
+  {
+    "round": "round1",
+    "backend": "cpp_reserved",
+    "id": "utf8_64_compare_late",
+    "median_ns": 6.703810930252075
+  },
+  {
+    "round": "round1",
+    "backend": "cpp_reserved",
+    "id": "ascii_65536_compare_early",
+    "median_ns": 5.356152534484863
+  },
+  {
+    "round": "round1",
+    "backend": "cpp_reserved",
+    "id": "ascii_64_replace_dense",
+    "median_ns": 98.77874374389648
+  },
+  {
+    "round": "round1",
+    "backend": "cpp_reserved",
+    "id": "utf8_64_baseline",
+    "median_ns": 2.0467178225517273
+  },
+  {
+    "round": "round1",
+    "backend": "cpp_reserved",
+    "id": "utf8_4096_replace_absent",
+    "median_ns": 94.92996215820312
+  },
+  {
+    "round": "round1",
+    "backend": "mytry_concrete",
+    "id": "utf8_4096_baseline",
+    "median_ns": 100.87202072143555
+  },
+  {
+    "round": "round1",
+    "backend": "mytry_concrete",
+    "id": "utf8_65536_compare_equal",
+    "median_ns": 3595.0328369140625
+  },
+  {
+    "round": "round1",
+    "backend": "mytry_concrete",
+    "id": "utf8_64_replace_grow",
+    "median_ns": 278.1037826538086
+  },
+  {
+    "round": "round1",
+    "backend": "mytry_concrete",
+    "id": "ascii_4096_compare_early",
+    "median_ns": 226.87763214111328
+  },
+  {
+    "round": "round1",
+    "backend": "mytry_concrete",
+    "id": "ascii_4096_baseline",
+    "median_ns": 106.6404914855957
+  },
+  {
+    "round": "round1",
+    "backend": "mytry_concrete",
+    "id": "ascii_65536_replace_grow",
+    "median_ns": 407397.203125
+  },
+  {
+    "round": "round1",
+    "backend": "mytry_concrete",
+    "id": "utf8_65536_replace_absent",
+    "median_ns": 2861.6641845703125
+  },
+  {
+    "round": "round1",
+    "backend": "mytry_concrete",
+    "id": "utf8_65536_compare_early",
+    "median_ns": 2389.480224609375
+  },
+  {
+    "round": "round1",
+    "backend": "mytry_concrete",
+    "id": "utf8_65536_replace_grow",
+    "median_ns": 244627.4765625
+  },
+  {
+    "round": "round1",
+    "backend": "mytry_concrete",
+    "id": "utf8_4096_replace_grow",
+    "median_ns": 8401.486572265625
+  },
+  {
+    "round": "round1",
+    "backend": "mytry_concrete",
+    "id": "ascii_64_compare_late",
+    "median_ns": 106.4305191040039
+  },
+  {
+    "round": "round1",
+    "backend": "mytry_concrete",
+    "id": "utf8_4096_replace_dense",
+    "median_ns": 7289.923828125
+  },
+  {
+    "round": "round1",
+    "backend": "mytry_concrete",
+    "id": "utf8_4096_compare_late",
+    "median_ns": 422.1289520263672
+  },
+  {
+    "round": "round1",
+    "backend": "mytry_concrete",
+    "id": "ascii_65536_compare_late",
+    "median_ns": 6071.27197265625
+  },
+  {
+    "round": "round1",
+    "backend": "mytry_concrete",
+    "id": "utf8_64_replace_dense",
+    "median_ns": 356.803466796875
+  },
+  {
+    "round": "round1",
+    "backend": "mytry_concrete",
+    "id": "ascii_4096_replace_grow",
+    "median_ns": 17976.7138671875
+  },
+  {
+    "round": "round1",
+    "backend": "mytry_concrete",
+    "id": "utf8_64_compare_early",
+    "median_ns": 170.7415542602539
+  },
+  {
+    "round": "round1",
+    "backend": "mytry_concrete",
+    "id": "ascii_4096_compare_late",
+    "median_ns": 354.3297424316406
+  },
+  {
+    "round": "round1",
+    "backend": "mytry_concrete",
+    "id": "utf8_4096_compare_early",
+    "median_ns": 350.2416687011719
+  },
+  {
+    "round": "round1",
+    "backend": "mytry_concrete",
+    "id": "ascii_64_baseline",
+    "median_ns": 82.19400596618652
+  },
+  {
+    "round": "round1",
+    "backend": "mytry_concrete",
+    "id": "utf8_65536_baseline",
+    "median_ns": 2170.4198608398438
+  },
+  {
+    "round": "round1",
+    "backend": "mytry_concrete",
+    "id": "utf8_64_compare_equal",
+    "median_ns": 174.25220489501953
+  },
+  {
+    "round": "round1",
+    "backend": "mytry_concrete",
+    "id": "utf8_64_replace_absent",
+    "median_ns": 153.53862762451172
+  },
+  {
+    "round": "round1",
+    "backend": "mytry_concrete",
+    "id": "utf8_65536_compare_late",
+    "median_ns": 4928.6717529296875
+  },
+  {
+    "round": "round1",
+    "backend": "mytry_concrete",
+    "id": "ascii_64_replace_grow",
+    "median_ns": 316.66831970214844
+  },
+  {
+    "round": "round1",
+    "backend": "mytry_concrete",
+    "id": "ascii_4096_replace_dense",
+    "median_ns": 7047.884521484375
+  },
+  {
+    "round": "round1",
+    "backend": "mytry_concrete",
+    "id": "utf8_4096_compare_equal",
+    "median_ns": 291.20457458496094
+  },
+  {
+    "round": "round1",
+    "backend": "mytry_concrete",
+    "id": "ascii_4096_replace_absent",
+    "median_ns": 230.97200775146484
+  },
+  {
+    "round": "round1",
+    "backend": "mytry_concrete",
+    "id": "ascii_65536_baseline",
+    "median_ns": 1127.7485961914062
+  },
+  {
+    "round": "round1",
+    "backend": "mytry_concrete",
+    "id": "ascii_65536_replace_absent",
+    "median_ns": 2667.223388671875
+  },
+  {
+    "round": "round1",
+    "backend": "mytry_concrete",
+    "id": "ascii_64_replace_absent",
+    "median_ns": 81.79980087280273
+  },
+  {
+    "round": "round1",
+    "backend": "mytry_concrete",
+    "id": "ascii_64_compare_early",
+    "median_ns": 69.7818603515625
+  },
+  {
+    "round": "round1",
+    "backend": "mytry_concrete",
+    "id": "utf8_65536_replace_dense",
+    "median_ns": 77947.48828125
+  },
+  {
+    "round": "round1",
+    "backend": "mytry_concrete",
+    "id": "ascii_65536_replace_dense",
+    "median_ns": 88105.20703125
+  },
+  {
+    "round": "round1",
+    "backend": "mytry_concrete",
+    "id": "ascii_4096_compare_equal",
+    "median_ns": 249.1447525024414
+  },
+  {
+    "round": "round1",
+    "backend": "mytry_concrete",
+    "id": "ascii_64_compare_equal",
+    "median_ns": 77.11023330688477
+  },
+  {
+    "round": "round1",
+    "backend": "mytry_concrete",
+    "id": "ascii_65536_compare_equal",
+    "median_ns": 3396.90673828125
+  },
+  {
+    "round": "round1",
+    "backend": "mytry_concrete",
+    "id": "utf8_64_compare_late",
+    "median_ns": 73.06680679321289
+  },
+  {
+    "round": "round1",
+    "backend": "mytry_concrete",
+    "id": "ascii_65536_compare_early",
+    "median_ns": 2300.32470703125
+  },
+  {
+    "round": "round1",
+    "backend": "mytry_concrete",
+    "id": "ascii_64_replace_dense",
+    "median_ns": 204.08771514892578
+  },
+  {
+    "round": "round1",
+    "backend": "mytry_concrete",
+    "id": "utf8_64_baseline",
+    "median_ns": 42.188270568847656
+  },
+  {
+    "round": "round1",
+    "backend": "mytry_concrete",
+    "id": "utf8_4096_replace_absent",
+    "median_ns": 226.7736358642578
+  },
+  {
+    "round": "round1",
+    "backend": "php",
+    "id": "utf8_4096_baseline",
+    "median_ns": 8.084207773208618
+  },
+  {
+    "round": "round1",
+    "backend": "php",
+    "id": "utf8_65536_compare_equal",
+    "median_ns": 1358.6373901367188
+  },
+  {
+    "round": "round1",
+    "backend": "php",
+    "id": "utf8_64_replace_grow",
+    "median_ns": 187.01628875732422
+  },
+  {
+    "round": "round1",
+    "backend": "php",
+    "id": "ascii_4096_compare_early",
+    "median_ns": 63.438377380371094
+  },
+  {
+    "round": "round1",
+    "backend": "php",
+    "id": "ascii_4096_baseline",
+    "median_ns": 8.033376932144165
+  },
+  {
+    "round": "round1",
+    "backend": "php",
+    "id": "ascii_65536_replace_grow",
+    "median_ns": 156266.28125
+  },
+  {
+    "round": "round1",
+    "backend": "php",
+    "id": "utf8_65536_replace_absent",
+    "median_ns": 17531.54296875
+  },
+  {
+    "round": "round1",
+    "backend": "php",
+    "id": "utf8_65536_compare_early",
+    "median_ns": 89.51908683776855
+  },
+  {
+    "round": "round1",
+    "backend": "php",
+    "id": "utf8_65536_replace_grow",
+    "median_ns": 135067.375
+  },
+  {
+    "round": "round1",
+    "backend": "php",
+    "id": "utf8_4096_replace_grow",
+    "median_ns": 8126.385986328125
+  },
+  {
+    "round": "round1",
+    "backend": "php",
+    "id": "ascii_64_compare_late",
+    "median_ns": 69.72801780700684
+  },
+  {
+    "round": "round1",
+    "backend": "php",
+    "id": "utf8_4096_replace_dense",
+    "median_ns": 10317.615234375
+  },
+  {
+    "round": "round1",
+    "backend": "php",
+    "id": "utf8_4096_compare_late",
+    "median_ns": 129.59886169433594
+  },
+  {
+    "round": "round1",
+    "backend": "php",
+    "id": "ascii_65536_compare_late",
+    "median_ns": 1401.4793090820312
+  },
+  {
+    "round": "round1",
+    "backend": "php",
+    "id": "utf8_64_replace_dense",
+    "median_ns": 214.01656341552734
+  },
+  {
+    "round": "round1",
+    "backend": "php",
+    "id": "ascii_4096_replace_grow",
+    "median_ns": 10490.88720703125
+  },
+  {
+    "round": "round1",
+    "backend": "php",
+    "id": "utf8_64_compare_early",
+    "median_ns": 69.35991668701172
+  },
+  {
+    "round": "round1",
+    "backend": "php",
+    "id": "ascii_4096_compare_late",
+    "median_ns": 97.29901885986328
+  },
+  {
+    "round": "round1",
+    "backend": "php",
+    "id": "utf8_4096_compare_early",
+    "median_ns": 73.01300048828125
+  },
+  {
+    "round": "round1",
+    "backend": "php",
+    "id": "ascii_64_baseline",
+    "median_ns": 8.261258125305176
+  },
+  {
+    "round": "round1",
+    "backend": "php",
+    "id": "utf8_65536_baseline",
+    "median_ns": 10.215452432632446
+  },
+  {
+    "round": "round1",
+    "backend": "php",
+    "id": "utf8_64_compare_equal",
+    "median_ns": 76.74092102050781
+  },
+  {
+    "round": "round1",
+    "backend": "php",
+    "id": "utf8_64_replace_absent",
+    "median_ns": 56.33952331542969
+  },
+  {
+    "round": "round1",
+    "backend": "php",
+    "id": "utf8_65536_compare_late",
+    "median_ns": 1439.8222045898438
+  },
+  {
+    "round": "round1",
+    "backend": "php",
+    "id": "ascii_64_replace_grow",
+    "median_ns": 250.82083892822266
+  },
+  {
+    "round": "round1",
+    "backend": "php",
+    "id": "ascii_4096_replace_dense",
+    "median_ns": 12685.53076171875
+  },
+  {
+    "round": "round1",
+    "backend": "php",
+    "id": "utf8_4096_compare_equal",
+    "median_ns": 132.1602554321289
+  },
+  {
+    "round": "round1",
+    "backend": "php",
+    "id": "ascii_4096_replace_absent",
+    "median_ns": 1201.0477905273438
+  },
+  {
+    "round": "round1",
+    "backend": "php",
+    "id": "ascii_65536_baseline",
+    "median_ns": 11.615478038787842
+  },
+  {
+    "round": "round1",
+    "backend": "php",
+    "id": "ascii_65536_replace_absent",
+    "median_ns": 18549.1357421875
+  },
+  {
+    "round": "round1",
+    "backend": "php",
+    "id": "ascii_64_replace_absent",
+    "median_ns": 48.639692306518555
+  },
+  {
+    "round": "round1",
+    "backend": "php",
+    "id": "ascii_64_compare_early",
+    "median_ns": 78.98431396484375
+  },
+  {
+    "round": "round1",
+    "backend": "php",
+    "id": "utf8_65536_replace_dense",
+    "median_ns": 184839.7890625
+  },
+  {
+    "round": "round1",
+    "backend": "php",
+    "id": "ascii_65536_replace_dense",
+    "median_ns": 203354.3828125
+  },
+  {
+    "round": "round1",
+    "backend": "php",
+    "id": "ascii_4096_compare_equal",
+    "median_ns": 100.12358856201172
+  },
+  {
+    "round": "round1",
+    "backend": "php",
+    "id": "ascii_64_compare_equal",
+    "median_ns": 70.82439613342285
+  },
+  {
+    "round": "round1",
+    "backend": "php",
+    "id": "ascii_65536_compare_equal",
+    "median_ns": 2318.7450561523438
+  },
+  {
+    "round": "round1",
+    "backend": "php",
+    "id": "utf8_64_compare_late",
+    "median_ns": 79.49964904785156
+  },
+  {
+    "round": "round1",
+    "backend": "php",
+    "id": "ascii_65536_compare_early",
+    "median_ns": 64.26400375366211
+  },
+  {
+    "round": "round1",
+    "backend": "php",
+    "id": "ascii_64_replace_dense",
+    "median_ns": 249.32943725585938
+  },
+  {
+    "round": "round1",
+    "backend": "php",
+    "id": "utf8_64_baseline",
+    "median_ns": 10.9156014919281
+  },
+  {
+    "round": "round1",
+    "backend": "php",
+    "id": "utf8_4096_replace_absent",
+    "median_ns": 1438.3970336914062
+  },
+  {
+    "round": "round1",
+    "backend": "js_flat",
+    "id": "utf8_4096_baseline",
+    "median_ns": 5.904123544692993
+  },
+  {
+    "round": "round1",
+    "backend": "js_flat",
+    "id": "utf8_65536_compare_equal",
+    "median_ns": 26067.5888671875
+  },
+  {
+    "round": "round1",
+    "backend": "js_flat",
+    "id": "utf8_64_replace_grow",
+    "median_ns": 1051.5121765136719
+  },
+  {
+    "round": "round1",
+    "backend": "js_flat",
+    "id": "ascii_4096_compare_early",
+    "median_ns": 49.961008071899414
+  },
+  {
+    "round": "round1",
+    "backend": "js_flat",
+    "id": "ascii_4096_baseline",
+    "median_ns": 5.702507734298706
+  },
+  {
+    "round": "round1",
+    "backend": "js_flat",
+    "id": "ascii_65536_replace_grow",
+    "median_ns": 939602.5
+  },
+  {
+    "round": "round1",
+    "backend": "js_flat",
+    "id": "utf8_65536_replace_absent",
+    "median_ns": 84593.88671875
+  },
+  {
+    "round": "round1",
+    "backend": "js_flat",
+    "id": "utf8_65536_compare_early",
+    "median_ns": 50.006248474121094
+  },
+  {
+    "round": "round1",
+    "backend": "js_flat",
+    "id": "utf8_65536_replace_grow",
+    "median_ns": 959945.125
+  },
+  {
+    "round": "round1",
+    "backend": "js_flat",
+    "id": "utf8_4096_replace_grow",
+    "median_ns": 44158.056640625
+  },
+  {
+    "round": "round1",
+    "backend": "js_flat",
+    "id": "ascii_64_compare_late",
+    "median_ns": 148.5364990234375
+  },
+  {
+    "round": "round1",
+    "backend": "js_flat",
+    "id": "utf8_4096_replace_dense",
+    "median_ns": 35262.1943359375
+  },
+  {
+    "round": "round1",
+    "backend": "js_flat",
+    "id": "utf8_4096_compare_late",
+    "median_ns": 1797.6668090820312
+  },
+  {
+    "round": "round1",
+    "backend": "js_flat",
+    "id": "ascii_65536_compare_late",
+    "median_ns": 58330.037109375
+  },
+  {
+    "round": "round1",
+    "backend": "js_flat",
+    "id": "utf8_64_replace_dense",
+    "median_ns": 1094.2919616699219
+  },
+  {
+    "round": "round1",
+    "backend": "js_flat",
+    "id": "ascii_4096_replace_grow",
+    "median_ns": 38435.599609375
+  },
+  {
+    "round": "round1",
+    "backend": "js_flat",
+    "id": "utf8_64_compare_early",
+    "median_ns": 50.26180458068848
+  },
+  {
+    "round": "round1",
+    "backend": "js_flat",
+    "id": "ascii_4096_compare_late",
+    "median_ns": 3928.7786865234375
+  },
+  {
+    "round": "round1",
+    "backend": "js_flat",
+    "id": "utf8_4096_compare_early",
+    "median_ns": 50.53633689880371
+  },
+  {
+    "round": "round1",
+    "backend": "js_flat",
+    "id": "ascii_64_baseline",
+    "median_ns": 5.751153230667114
+  },
+  {
+    "round": "round1",
+    "backend": "js_flat",
+    "id": "utf8_65536_baseline",
+    "median_ns": 5.68344259262085
+  },
+  {
+    "round": "round1",
+    "backend": "js_flat",
+    "id": "utf8_64_compare_equal",
+    "median_ns": 103.46009063720703
+  },
+  {
+    "round": "round1",
+    "backend": "js_flat",
+    "id": "utf8_64_replace_absent",
+    "median_ns": 346.729248046875
+  },
+  {
+    "round": "round1",
+    "backend": "js_flat",
+    "id": "utf8_65536_compare_late",
+    "median_ns": 27799.1611328125
+  },
+  {
+    "round": "round1",
+    "backend": "js_flat",
+    "id": "ascii_64_replace_grow",
+    "median_ns": 1204.7717895507812
+  },
+  {
+    "round": "round1",
+    "backend": "js_flat",
+    "id": "ascii_4096_replace_dense",
+    "median_ns": 46667.91796875
+  },
+  {
+    "round": "round1",
+    "backend": "js_flat",
+    "id": "utf8_4096_compare_equal",
+    "median_ns": 2178.4120483398438
+  },
+  {
+    "round": "round1",
+    "backend": "js_flat",
+    "id": "ascii_4096_replace_absent",
+    "median_ns": 5882.46484375
+  },
+  {
+    "round": "round1",
+    "backend": "js_flat",
+    "id": "ascii_65536_baseline",
+    "median_ns": 5.911926984786987
+  },
+  {
+    "round": "round1",
+    "backend": "js_flat",
+    "id": "ascii_65536_replace_absent",
+    "median_ns": 87185.22265625
+  },
+  {
+    "round": "round1",
+    "backend": "js_flat",
+    "id": "ascii_64_replace_absent",
+    "median_ns": 373.20201110839844
+  },
+  {
+    "round": "round1",
+    "backend": "js_flat",
+    "id": "ascii_64_compare_early",
+    "median_ns": 50.62522506713867
+  },
+  {
+    "round": "round1",
+    "backend": "js_flat",
+    "id": "utf8_65536_replace_dense",
+    "median_ns": 555983.4375
+  },
+  {
+    "round": "round1",
+    "backend": "js_flat",
+    "id": "ascii_65536_replace_dense",
+    "median_ns": 547594.09375
+  },
+  {
+    "round": "round1",
+    "backend": "js_flat",
+    "id": "ascii_4096_compare_equal",
+    "median_ns": 3726.82373046875
+  },
+  {
+    "round": "round1",
+    "backend": "js_flat",
+    "id": "ascii_64_compare_equal",
+    "median_ns": 133.9214859008789
+  },
+  {
+    "round": "round1",
+    "backend": "js_flat",
+    "id": "ascii_65536_compare_equal",
+    "median_ns": 57933.01171875
+  },
+  {
+    "round": "round1",
+    "backend": "js_flat",
+    "id": "utf8_64_compare_late",
+    "median_ns": 105.43742752075195
+  },
+  {
+    "round": "round1",
+    "backend": "js_flat",
+    "id": "ascii_65536_compare_early",
+    "median_ns": 49.58437919616699
+  },
+  {
+    "round": "round1",
+    "backend": "js_flat",
+    "id": "ascii_64_replace_dense",
+    "median_ns": 872.6618957519531
+  },
+  {
+    "round": "round1",
+    "backend": "js_flat",
+    "id": "utf8_64_baseline",
+    "median_ns": 7.556386947631836
+  },
+  {
+    "round": "round1",
+    "backend": "js_flat",
+    "id": "utf8_4096_replace_absent",
+    "median_ns": 16286.403564453125
+  },
+  {
+    "round": "round1",
+    "backend": "cpp",
+    "id": "utf8_4096_baseline",
+    "median_ns": 1.6482717394828796
+  },
+  {
+    "round": "round1",
+    "backend": "cpp",
+    "id": "utf8_65536_compare_equal",
+    "median_ns": 2057.4790649414062
+  },
+  {
+    "round": "round1",
+    "backend": "cpp",
+    "id": "utf8_64_replace_grow",
+    "median_ns": 539.9147491455078
+  },
+  {
+    "round": "round1",
+    "backend": "cpp",
+    "id": "ascii_4096_compare_early",
+    "median_ns": 16.071046829223633
+  },
+  {
+    "round": "round1",
+    "backend": "cpp",
+    "id": "ascii_4096_baseline",
+    "median_ns": 3.7251741886138916
+  },
+  {
+    "round": "round1",
+    "backend": "cpp",
+    "id": "ascii_65536_replace_grow",
+    "median_ns": 1161922.28125
+  },
+  {
+    "round": "round1",
+    "backend": "cpp",
+    "id": "utf8_65536_replace_absent",
+    "median_ns": 4661.9295654296875
+  },
+  {
+    "round": "round1",
+    "backend": "cpp",
+    "id": "utf8_65536_compare_early",
+    "median_ns": 15.0688157081604
+  },
+  {
+    "round": "round1",
+    "backend": "cpp",
+    "id": "utf8_65536_replace_grow",
+    "median_ns": 1042169.71875
+  },
+  {
+    "round": "round1",
+    "backend": "cpp",
+    "id": "utf8_4096_replace_grow",
+    "median_ns": 21480.30712890625
+  },
+  {
+    "round": "round1",
+    "backend": "cpp",
+    "id": "ascii_64_compare_late",
+    "median_ns": 21.98792552947998
+  },
+  {
+    "round": "round1",
+    "backend": "cpp",
+    "id": "utf8_4096_replace_dense",
+    "median_ns": 17571.1533203125
+  },
+  {
+    "round": "round1",
+    "backend": "cpp",
+    "id": "utf8_4096_compare_late",
+    "median_ns": 140.76410293579102
+  },
+  {
+    "round": "round1",
+    "backend": "cpp",
+    "id": "ascii_65536_compare_late",
+    "median_ns": 2906.375244140625
+  },
+  {
+    "round": "round1",
+    "backend": "cpp",
+    "id": "utf8_64_replace_dense",
+    "median_ns": 396.0101776123047
+  },
+  {
+    "round": "round1",
+    "backend": "cpp",
+    "id": "ascii_4096_replace_grow",
+    "median_ns": 25047.408203125
+  },
+  {
+    "round": "round1",
+    "backend": "cpp",
+    "id": "utf8_64_compare_early",
+    "median_ns": 15.984302043914795
+  },
+  {
+    "round": "round1",
+    "backend": "cpp",
+    "id": "ascii_4096_compare_late",
+    "median_ns": 129.78510284423828
+  },
+  {
+    "round": "round1",
+    "backend": "cpp",
+    "id": "utf8_4096_compare_early",
+    "median_ns": 16.732645988464355
+  },
+  {
+    "round": "round1",
+    "backend": "cpp",
+    "id": "ascii_64_baseline",
+    "median_ns": 3.085844039916992
+  },
+  {
+    "round": "round1",
+    "backend": "cpp",
+    "id": "utf8_65536_baseline",
+    "median_ns": 2.253412365913391
+  },
+  {
+    "round": "round1",
+    "backend": "cpp",
+    "id": "utf8_64_compare_equal",
+    "median_ns": 7.834200382232666
+  },
+  {
+    "round": "round1",
+    "backend": "cpp",
+    "id": "utf8_64_replace_absent",
+    "median_ns": 47.556222915649414
+  },
+  {
+    "round": "round1",
+    "backend": "cpp",
+    "id": "utf8_65536_compare_late",
+    "median_ns": 1198.0942687988281
+  },
+  {
+    "round": "round1",
+    "backend": "cpp",
+    "id": "ascii_64_replace_grow",
+    "median_ns": 198.52974700927734
+  },
+  {
+    "round": "round1",
+    "backend": "cpp",
+    "id": "ascii_4096_replace_dense",
+    "median_ns": 6181.55810546875
+  },
+  {
+    "round": "round1",
+    "backend": "cpp",
+    "id": "utf8_4096_compare_equal",
+    "median_ns": 48.54109001159668
+  },
+  {
+    "round": "round1",
+    "backend": "cpp",
+    "id": "ascii_4096_replace_absent",
+    "median_ns": 117.27652740478516
+  },
+  {
+    "round": "round1",
+    "backend": "cpp",
+    "id": "ascii_65536_baseline",
+    "median_ns": 1.3704889416694641
+  },
+  {
+    "round": "round1",
+    "backend": "cpp",
+    "id": "ascii_65536_replace_absent",
+    "median_ns": 1510.4215698242188
+  },
+  {
+    "round": "round1",
+    "backend": "cpp",
+    "id": "ascii_64_replace_absent",
+    "median_ns": 31.179917335510254
+  },
+  {
+    "round": "round1",
+    "backend": "cpp",
+    "id": "ascii_64_compare_early",
+    "median_ns": 5.624312400817871
+  },
+  {
+    "round": "round1",
+    "backend": "cpp",
+    "id": "utf8_65536_replace_dense",
+    "median_ns": 90745.30078125
+  },
+  {
+    "round": "round1",
+    "backend": "cpp",
+    "id": "ascii_65536_replace_dense",
+    "median_ns": 92894.671875
+  },
+  {
+    "round": "round1",
+    "backend": "cpp",
+    "id": "ascii_4096_compare_equal",
+    "median_ns": 48.99130821228027
+  },
+  {
+    "round": "round1",
+    "backend": "cpp",
+    "id": "ascii_64_compare_equal",
+    "median_ns": 5.732875347137451
+  },
+  {
+    "round": "round1",
+    "backend": "cpp",
+    "id": "ascii_65536_compare_equal",
+    "median_ns": 1065.7979736328125
+  },
+  {
+    "round": "round1",
+    "backend": "cpp",
+    "id": "utf8_64_compare_late",
+    "median_ns": 6.7742063999176025
+  },
+  {
+    "round": "round1",
+    "backend": "cpp",
+    "id": "ascii_65536_compare_early",
+    "median_ns": 5.383707284927368
+  },
+  {
+    "round": "round1",
+    "backend": "cpp",
+    "id": "ascii_64_replace_dense",
+    "median_ns": 142.96444702148438
+  },
+  {
+    "round": "round1",
+    "backend": "cpp",
+    "id": "utf8_64_baseline",
+    "median_ns": 1.3667426109313965
+  },
+  {
+    "round": "round1",
+    "backend": "cpp",
+    "id": "utf8_4096_replace_absent",
+    "median_ns": 103.45717239379883
+  },
+  {
+    "round": "round2",
+    "backend": "python_bytes",
+    "id": "utf8_4096_baseline",
+    "median_ns": 50.99123954772949
+  },
+  {
+    "round": "round2",
+    "backend": "python_bytes",
+    "id": "utf8_65536_compare_equal",
+    "median_ns": 2229.4306030273438
+  },
+  {
+    "round": "round2",
+    "backend": "python_bytes",
+    "id": "utf8_64_replace_grow",
+    "median_ns": 254.8064193725586
+  },
+  {
+    "round": "round2",
+    "backend": "python_bytes",
+    "id": "ascii_4096_compare_early",
+    "median_ns": 63.00425338745117
+  },
+  {
+    "round": "round2",
+    "backend": "python_bytes",
+    "id": "ascii_4096_baseline",
+    "median_ns": 49.60295486450195
+  },
+  {
+    "round": "round2",
+    "backend": "python_bytes",
+    "id": "ascii_65536_replace_grow",
+    "median_ns": 119468.25
+  },
+  {
+    "round": "round2",
+    "backend": "python_bytes",
+    "id": "utf8_65536_replace_absent",
+    "median_ns": 18976.35791015625
+  },
+  {
+    "round": "round2",
+    "backend": "python_bytes",
+    "id": "utf8_65536_compare_early",
+    "median_ns": 62.62248611450195
+  },
+  {
+    "round": "round2",
+    "backend": "python_bytes",
+    "id": "utf8_65536_replace_grow",
+    "median_ns": 116554.015625
+  },
+  {
+    "round": "round2",
+    "backend": "python_bytes",
+    "id": "utf8_4096_replace_grow",
+    "median_ns": 7053.0458984375
+  },
+  {
+    "round": "round2",
+    "backend": "python_bytes",
+    "id": "ascii_64_compare_late",
+    "median_ns": 69.46125602722168
+  },
+  {
+    "round": "round2",
+    "backend": "python_bytes",
+    "id": "utf8_4096_replace_dense",
+    "median_ns": 6842.108642578125
+  },
+  {
+    "round": "round2",
+    "backend": "python_bytes",
+    "id": "utf8_4096_compare_late",
+    "median_ns": 132.30510330200195
+  },
+  {
+    "round": "round2",
+    "backend": "python_bytes",
+    "id": "ascii_65536_compare_late",
+    "median_ns": 2284.6278076171875
+  },
+  {
+    "round": "round2",
+    "backend": "python_bytes",
+    "id": "utf8_64_replace_dense",
+    "median_ns": 239.77136993408203
+  },
+  {
+    "round": "round2",
+    "backend": "python_bytes",
+    "id": "ascii_4096_replace_grow",
+    "median_ns": 6981.39794921875
+  },
+  {
+    "round": "round2",
+    "backend": "python_bytes",
+    "id": "utf8_64_compare_early",
+    "median_ns": 63.7633113861084
+  },
+  {
+    "round": "round2",
+    "backend": "python_bytes",
+    "id": "ascii_4096_compare_late",
+    "median_ns": 151.45385360717773
+  },
+  {
+    "round": "round2",
+    "backend": "python_bytes",
+    "id": "utf8_4096_compare_early",
+    "median_ns": 63.26495933532715
+  },
+  {
+    "round": "round2",
+    "backend": "python_bytes",
+    "id": "ascii_64_baseline",
+    "median_ns": 40.06991958618164
+  },
+  {
+    "round": "round2",
+    "backend": "python_bytes",
+    "id": "utf8_65536_baseline",
+    "median_ns": 50.9915828704834
+  },
+  {
+    "round": "round2",
+    "backend": "python_bytes",
+    "id": "utf8_64_compare_equal",
+    "median_ns": 80.70578384399414
+  },
+  {
+    "round": "round2",
+    "backend": "python_bytes",
+    "id": "utf8_64_replace_absent",
+    "median_ns": 99.21794891357422
+  },
+  {
+    "round": "round2",
+    "backend": "python_bytes",
+    "id": "utf8_65536_compare_late",
+    "median_ns": 2201.1128540039062
+  },
+  {
+    "round": "round2",
+    "backend": "python_bytes",
+    "id": "ascii_64_replace_grow",
+    "median_ns": 228.43437957763672
+  },
+  {
+    "round": "round2",
+    "backend": "python_bytes",
+    "id": "ascii_4096_replace_dense",
+    "median_ns": 7115.5771484375
+  },
+  {
+    "round": "round2",
+    "backend": "python_bytes",
+    "id": "utf8_4096_compare_equal",
+    "median_ns": 162.15682983398438
+  },
+  {
+    "round": "round2",
+    "backend": "python_bytes",
+    "id": "ascii_4096_replace_absent",
+    "median_ns": 418.77423095703125
+  },
+  {
+    "round": "round2",
+    "backend": "python_bytes",
+    "id": "ascii_65536_baseline",
+    "median_ns": 51.65233039855957
+  },
+  {
+    "round": "round2",
+    "backend": "python_bytes",
+    "id": "ascii_65536_replace_absent",
+    "median_ns": 18753.27392578125
+  },
+  {
+    "round": "round2",
+    "backend": "python_bytes",
+    "id": "ascii_64_replace_absent",
+    "median_ns": 96.38967514038086
+  },
+  {
+    "round": "round2",
+    "backend": "python_bytes",
+    "id": "ascii_64_compare_early",
+    "median_ns": 62.51719856262207
+  },
+  {
+    "round": "round2",
+    "backend": "python_bytes",
+    "id": "utf8_65536_replace_dense",
+    "median_ns": 115545.640625
+  },
+  {
+    "round": "round2",
+    "backend": "python_bytes",
+    "id": "ascii_65536_replace_dense",
+    "median_ns": 122273.23046875
+  },
+  {
+    "round": "round2",
+    "backend": "python_bytes",
+    "id": "ascii_4096_compare_equal",
+    "median_ns": 145.42100524902344
+  },
+  {
+    "round": "round2",
+    "backend": "python_bytes",
+    "id": "ascii_64_compare_equal",
+    "median_ns": 81.66170501708984
+  },
+  {
+    "round": "round2",
+    "backend": "python_bytes",
+    "id": "ascii_65536_compare_equal",
+    "median_ns": 2390.548828125
+  },
+  {
+    "round": "round2",
+    "backend": "python_bytes",
+    "id": "utf8_64_compare_late",
+    "median_ns": 70.12100410461426
+  },
+  {
+    "round": "round2",
+    "backend": "python_bytes",
+    "id": "ascii_65536_compare_early",
+    "median_ns": 62.90167427062988
+  },
+  {
+    "round": "round2",
+    "backend": "python_bytes",
+    "id": "ascii_64_replace_dense",
+    "median_ns": 294.83180236816406
+  },
+  {
+    "round": "round2",
+    "backend": "python_bytes",
+    "id": "utf8_64_baseline",
+    "median_ns": 51.82061958312988
+  },
+  {
+    "round": "round2",
+    "backend": "python_bytes",
+    "id": "utf8_4096_replace_absent",
+    "median_ns": 557.604248046875
+  },
+  {
+    "round": "round2",
+    "backend": "mytry_ordinary",
+    "id": "utf8_4096_baseline",
+    "median_ns": 55.061044692993164
+  },
+  {
+    "round": "round2",
+    "backend": "mytry_ordinary",
+    "id": "utf8_65536_compare_equal",
+    "median_ns": 3126.9500732421875
+  },
+  {
+    "round": "round2",
+    "backend": "mytry_ordinary",
+    "id": "utf8_64_replace_grow",
+    "median_ns": 221.28738403320312
+  },
+  {
+    "round": "round2",
+    "backend": "mytry_ordinary",
+    "id": "ascii_4096_compare_early",
+    "median_ns": 129.2541275024414
+  },
+  {
+    "round": "round2",
+    "backend": "mytry_ordinary",
+    "id": "ascii_4096_baseline",
+    "median_ns": 56.93122482299805
+  },
+  {
+    "round": "round2",
+    "backend": "mytry_ordinary",
+    "id": "ascii_65536_replace_grow",
+    "median_ns": 367802.578125
+  },
+  {
+    "round": "round2",
+    "backend": "mytry_ordinary",
+    "id": "utf8_65536_replace_absent",
+    "median_ns": 2748.9200439453125
+  },
+  {
+    "round": "round2",
+    "backend": "mytry_ordinary",
+    "id": "utf8_65536_compare_early",
+    "median_ns": 2192.6312866210938
+  },
+  {
+    "round": "round2",
+    "backend": "mytry_ordinary",
+    "id": "utf8_65536_replace_grow",
+    "median_ns": 347059.21875
+  },
+  {
+    "round": "round2",
+    "backend": "mytry_ordinary",
+    "id": "utf8_4096_replace_grow",
+    "median_ns": 6157.506103515625
+  },
+  {
+    "round": "round2",
+    "backend": "mytry_ordinary",
+    "id": "ascii_64_compare_late",
+    "median_ns": 34.51658630371094
+  },
+  {
+    "round": "round2",
+    "backend": "mytry_ordinary",
+    "id": "utf8_4096_replace_dense",
+    "median_ns": 5383.724609375
+  },
+  {
+    "round": "round2",
+    "backend": "mytry_ordinary",
+    "id": "utf8_4096_compare_late",
+    "median_ns": 158.92628479003906
+  },
+  {
+    "round": "round2",
+    "backend": "mytry_ordinary",
+    "id": "ascii_65536_compare_late",
+    "median_ns": 3137.4859619140625
+  },
+  {
+    "round": "round2",
+    "backend": "mytry_ordinary",
+    "id": "utf8_64_replace_dense",
+    "median_ns": 167.80491638183594
+  },
+  {
+    "round": "round2",
+    "backend": "mytry_ordinary",
+    "id": "ascii_4096_replace_grow",
+    "median_ns": 7016.596923828125
+  },
+  {
+    "round": "round2",
+    "backend": "mytry_ordinary",
+    "id": "utf8_64_compare_early",
+    "median_ns": 30.841350555419922
+  },
+  {
+    "round": "round2",
+    "backend": "mytry_ordinary",
+    "id": "ascii_4096_compare_late",
+    "median_ns": 161.62718200683594
+  },
+  {
+    "round": "round2",
+    "backend": "mytry_ordinary",
+    "id": "utf8_4096_compare_early",
+    "median_ns": 115.05984497070312
+  },
+  {
+    "round": "round2",
+    "backend": "mytry_ordinary",
+    "id": "ascii_64_baseline",
+    "median_ns": 12.385241031646729
+  },
+  {
+    "round": "round2",
+    "backend": "mytry_ordinary",
+    "id": "utf8_65536_baseline",
+    "median_ns": 1102.7864990234375
+  },
+  {
+    "round": "round2",
+    "backend": "mytry_ordinary",
+    "id": "utf8_64_compare_equal",
+    "median_ns": 28.61134147644043
+  },
+  {
+    "round": "round2",
+    "backend": "mytry_ordinary",
+    "id": "utf8_64_replace_absent",
+    "median_ns": 51.20335006713867
+  },
+  {
+    "round": "round2",
+    "backend": "mytry_ordinary",
+    "id": "utf8_65536_compare_late",
+    "median_ns": 3135.3758544921875
+  },
+  {
+    "round": "round2",
+    "backend": "mytry_ordinary",
+    "id": "ascii_64_replace_grow",
+    "median_ns": 224.6847152709961
+  },
+  {
+    "round": "round2",
+    "backend": "mytry_ordinary",
+    "id": "ascii_4096_replace_dense",
+    "median_ns": 6131.4501953125
+  },
+  {
+    "round": "round2",
+    "backend": "mytry_ordinary",
+    "id": "utf8_4096_compare_equal",
+    "median_ns": 155.01792907714844
+  },
+  {
+    "round": "round2",
+    "backend": "mytry_ordinary",
+    "id": "ascii_4096_replace_absent",
+    "median_ns": 164.14328002929688
+  },
+  {
+    "round": "round2",
+    "backend": "mytry_ordinary",
+    "id": "ascii_65536_baseline",
+    "median_ns": 1091.1679992675781
+  },
+  {
+    "round": "round2",
+    "backend": "mytry_ordinary",
+    "id": "ascii_65536_replace_absent",
+    "median_ns": 2775.2186279296875
+  },
+  {
+    "round": "round2",
+    "backend": "mytry_ordinary",
+    "id": "ascii_64_replace_absent",
+    "median_ns": 50.33108329772949
+  },
+  {
+    "round": "round2",
+    "backend": "mytry_ordinary",
+    "id": "ascii_64_compare_early",
+    "median_ns": 26.71596336364746
+  },
+  {
+    "round": "round2",
+    "backend": "mytry_ordinary",
+    "id": "utf8_65536_replace_dense",
+    "median_ns": 85403.16796875
+  },
+  {
+    "round": "round2",
+    "backend": "mytry_ordinary",
+    "id": "ascii_65536_replace_dense",
+    "median_ns": 94809.1953125
+  },
+  {
+    "round": "round2",
+    "backend": "mytry_ordinary",
+    "id": "ascii_4096_compare_equal",
+    "median_ns": 155.20600128173828
+  },
+  {
+    "round": "round2",
+    "backend": "mytry_ordinary",
+    "id": "ascii_64_compare_equal",
+    "median_ns": 27.61284828186035
+  },
+  {
+    "round": "round2",
+    "backend": "mytry_ordinary",
+    "id": "ascii_65536_compare_equal",
+    "median_ns": 3127.7147216796875
+  },
+  {
+    "round": "round2",
+    "backend": "mytry_ordinary",
+    "id": "utf8_64_compare_late",
+    "median_ns": 33.95107936859131
+  },
+  {
+    "round": "round2",
+    "backend": "mytry_ordinary",
+    "id": "ascii_65536_compare_early",
+    "median_ns": 2209.65283203125
+  },
+  {
+    "round": "round2",
+    "backend": "mytry_ordinary",
+    "id": "ascii_64_replace_dense",
+    "median_ns": 178.67786407470703
+  },
+  {
+    "round": "round2",
+    "backend": "mytry_ordinary",
+    "id": "utf8_64_baseline",
+    "median_ns": 12.332838535308838
+  },
+  {
+    "round": "round2",
+    "backend": "mytry_ordinary",
+    "id": "utf8_4096_replace_absent",
+    "median_ns": 165.30804443359375
+  },
+  {
+    "round": "round2",
+    "backend": "rust",
+    "id": "utf8_4096_baseline",
+    "median_ns": 0.5087973326444626
+  },
+  {
+    "round": "round2",
+    "backend": "rust",
+    "id": "utf8_65536_compare_equal",
+    "median_ns": 1056.6903076171875
+  },
+  {
+    "round": "round2",
+    "backend": "rust",
+    "id": "utf8_64_replace_grow",
+    "median_ns": 254.55908203125
+  },
+  {
+    "round": "round2",
+    "backend": "rust",
+    "id": "ascii_4096_compare_early",
+    "median_ns": 4.590873599052429
+  },
+  {
+    "round": "round2",
+    "backend": "rust",
+    "id": "ascii_4096_baseline",
+    "median_ns": 0.513726070523262
+  },
+  {
+    "round": "round2",
+    "backend": "rust",
+    "id": "ascii_65536_replace_grow",
+    "median_ns": 121465.4296875
+  },
+  {
+    "round": "round2",
+    "backend": "rust",
+    "id": "utf8_65536_replace_absent",
+    "median_ns": 7060.482666015625
+  },
+  {
+    "round": "round2",
+    "backend": "rust",
+    "id": "utf8_65536_compare_early",
+    "median_ns": 4.610211133956909
+  },
+  {
+    "round": "round2",
+    "backend": "rust",
+    "id": "utf8_65536_replace_grow",
+    "median_ns": 122776.68359375
+  },
+  {
+    "round": "round2",
+    "backend": "rust",
+    "id": "utf8_4096_replace_grow",
+    "median_ns": 6663.242919921875
+  },
+  {
+    "round": "round2",
+    "backend": "rust",
+    "id": "ascii_64_compare_late",
+    "median_ns": 6.496184349060059
+  },
+  {
+    "round": "round2",
+    "backend": "rust",
+    "id": "utf8_4096_replace_dense",
+    "median_ns": 8105.35546875
+  },
+  {
+    "round": "round2",
+    "backend": "rust",
+    "id": "utf8_4096_compare_late",
+    "median_ns": 55.07308006286621
+  },
+  {
+    "round": "round2",
+    "backend": "rust",
+    "id": "ascii_65536_compare_late",
+    "median_ns": 1127.4437255859375
+  },
+  {
+    "round": "round2",
+    "backend": "rust",
+    "id": "utf8_64_replace_dense",
+    "median_ns": 242.04674530029297
+  },
+  {
+    "round": "round2",
+    "backend": "rust",
+    "id": "ascii_4096_replace_grow",
+    "median_ns": 6669.7666015625
+  },
+  {
+    "round": "round2",
+    "backend": "rust",
+    "id": "utf8_64_compare_early",
+    "median_ns": 4.652157545089722
+  },
+  {
+    "round": "round2",
+    "backend": "rust",
+    "id": "ascii_4096_compare_late",
+    "median_ns": 46.346763610839844
+  },
+  {
+    "round": "round2",
+    "backend": "rust",
+    "id": "utf8_4096_compare_early",
+    "median_ns": 4.599957704544067
+  },
+  {
+    "round": "round2",
+    "backend": "rust",
+    "id": "ascii_64_baseline",
+    "median_ns": 0.5143011212348938
+  },
+  {
+    "round": "round2",
+    "backend": "rust",
+    "id": "utf8_65536_baseline",
+    "median_ns": 0.5478285253047943
+  },
+  {
+    "round": "round2",
+    "backend": "rust",
+    "id": "utf8_64_compare_equal",
+    "median_ns": 4.621180415153503
+  },
+  {
+    "round": "round2",
+    "backend": "rust",
+    "id": "utf8_64_replace_absent",
+    "median_ns": 70.11197853088379
+  },
+  {
+    "round": "round2",
+    "backend": "rust",
+    "id": "utf8_65536_compare_late",
+    "median_ns": 1051.6471252441406
+  },
+  {
+    "round": "round2",
+    "backend": "rust",
+    "id": "ascii_64_replace_grow",
+    "median_ns": 350.44482421875
+  },
+  {
+    "round": "round2",
+    "backend": "rust",
+    "id": "ascii_4096_replace_dense",
+    "median_ns": 6587.24169921875
+  },
+  {
+    "round": "round2",
+    "backend": "rust",
+    "id": "utf8_4096_compare_equal",
+    "median_ns": 46.279165267944336
+  },
+  {
+    "round": "round2",
+    "backend": "rust",
+    "id": "ascii_4096_replace_absent",
+    "median_ns": 518.2096099853516
+  },
+  {
+    "round": "round2",
+    "backend": "rust",
+    "id": "ascii_65536_baseline",
+    "median_ns": 0.5221581906080246
+  },
+  {
+    "round": "round2",
+    "backend": "rust",
+    "id": "ascii_65536_replace_absent",
+    "median_ns": 6922.785400390625
+  },
+  {
+    "round": "round2",
+    "backend": "rust",
+    "id": "ascii_64_replace_absent",
+    "median_ns": 69.84877395629883
+  },
+  {
+    "round": "round2",
+    "backend": "rust",
+    "id": "ascii_64_compare_early",
+    "median_ns": 5.113538503646851
+  },
+  {
+    "round": "round2",
+    "backend": "rust",
+    "id": "utf8_65536_replace_dense",
+    "median_ns": 101783.4453125
+  },
+  {
+    "round": "round2",
+    "backend": "rust",
+    "id": "ascii_65536_replace_dense",
+    "median_ns": 96974.45703125
+  },
+  {
+    "round": "round2",
+    "backend": "rust",
+    "id": "ascii_4096_compare_equal",
+    "median_ns": 47.33232116699219
+  },
+  {
+    "round": "round2",
+    "backend": "rust",
+    "id": "ascii_64_compare_equal",
+    "median_ns": 4.5891817808151245
+  },
+  {
+    "round": "round2",
+    "backend": "rust",
+    "id": "ascii_65536_compare_equal",
+    "median_ns": 1055.68896484375
+  },
+  {
+    "round": "round2",
+    "backend": "rust",
+    "id": "utf8_64_compare_late",
+    "median_ns": 5.692240476608276
+  },
+  {
+    "round": "round2",
+    "backend": "rust",
+    "id": "ascii_65536_compare_early",
+    "median_ns": 4.59973669052124
+  },
+  {
+    "round": "round2",
+    "backend": "rust",
+    "id": "ascii_64_replace_dense",
+    "median_ns": 256.82682037353516
+  },
+  {
+    "round": "round2",
+    "backend": "rust",
+    "id": "utf8_64_baseline",
+    "median_ns": 0.5189197361469269
+  },
+  {
+    "round": "round2",
+    "backend": "rust",
+    "id": "utf8_4096_replace_absent",
+    "median_ns": 517.8414916992188
+  },
+  {
+    "round": "round2",
+    "backend": "java",
+    "id": "utf8_4096_baseline",
+    "median_ns": 0.6027709245681763
+  },
+  {
+    "round": "round2",
+    "backend": "java",
+    "id": "utf8_65536_compare_equal",
+    "median_ns": 961.8607482910156
+  },
+  {
+    "round": "round2",
+    "backend": "java",
+    "id": "utf8_64_replace_grow",
+    "median_ns": 110.36166381835938
+  },
+  {
+    "round": "round2",
+    "backend": "java",
+    "id": "ascii_4096_compare_early",
+    "median_ns": 2.2326804995536804
+  },
+  {
+    "round": "round2",
+    "backend": "java",
+    "id": "ascii_4096_baseline",
+    "median_ns": 0.6668656468391418
+  },
+  {
+    "round": "round2",
+    "backend": "java",
+    "id": "ascii_65536_replace_grow",
+    "median_ns": 164559.5625
+  },
+  {
+    "round": "round2",
+    "backend": "java",
+    "id": "utf8_65536_replace_absent",
+    "median_ns": 6178.329345703125
+  },
+  {
+    "round": "round2",
+    "backend": "java",
+    "id": "utf8_65536_compare_early",
+    "median_ns": 2.2102891206741333
+  },
+  {
+    "round": "round2",
+    "backend": "java",
+    "id": "utf8_65536_replace_grow",
+    "median_ns": 146497.9765625
+  },
+  {
+    "round": "round2",
+    "backend": "java",
+    "id": "utf8_4096_replace_grow",
+    "median_ns": 8731.49853515625
+  },
+  {
+    "round": "round2",
+    "backend": "java",
+    "id": "ascii_64_compare_late",
+    "median_ns": 8.00468897819519
+  },
+  {
+    "round": "round2",
+    "backend": "java",
+    "id": "utf8_4096_replace_dense",
+    "median_ns": 1438.3067016601562
+  },
+  {
+    "round": "round2",
+    "backend": "java",
+    "id": "utf8_4096_compare_late",
+    "median_ns": 71.33021926879883
+  },
+  {
+    "round": "round2",
+    "backend": "java",
+    "id": "ascii_65536_compare_late",
+    "median_ns": 1075.746826171875
+  },
+  {
+    "round": "round2",
+    "backend": "java",
+    "id": "utf8_64_replace_dense",
+    "median_ns": 31.708297729492188
+  },
+  {
+    "round": "round2",
+    "backend": "java",
+    "id": "ascii_4096_replace_grow",
+    "median_ns": 8868.849609375
+  },
+  {
+    "round": "round2",
+    "backend": "java",
+    "id": "utf8_64_compare_early",
+    "median_ns": 2.135481536388397
+  },
+  {
+    "round": "round2",
+    "backend": "java",
+    "id": "ascii_4096_compare_late",
+    "median_ns": 76.66876029968262
+  },
+  {
+    "round": "round2",
+    "backend": "java",
+    "id": "utf8_4096_compare_early",
+    "median_ns": 2.2493021488189697
+  },
+  {
+    "round": "round2",
+    "backend": "java",
+    "id": "ascii_64_baseline",
+    "median_ns": 0.6499350666999817
+  },
+  {
+    "round": "round2",
+    "backend": "java",
+    "id": "utf8_65536_baseline",
+    "median_ns": 0.6434567272663116
+  },
+  {
+    "round": "round2",
+    "backend": "java",
+    "id": "utf8_64_compare_equal",
+    "median_ns": 5.650686740875244
+  },
+  {
+    "round": "round2",
+    "backend": "java",
+    "id": "utf8_64_replace_absent",
+    "median_ns": 11.751168727874756
+  },
+  {
+    "round": "round2",
+    "backend": "java",
+    "id": "utf8_65536_compare_late",
+    "median_ns": 957.1991882324219
+  },
+  {
+    "round": "round2",
+    "backend": "java",
+    "id": "ascii_64_replace_grow",
+    "median_ns": 174.30243682861328
+  },
+  {
+    "round": "round2",
+    "backend": "java",
+    "id": "ascii_4096_replace_dense",
+    "median_ns": 6970.975341796875
+  },
+  {
+    "round": "round2",
+    "backend": "java",
+    "id": "utf8_4096_compare_equal",
+    "median_ns": 65.95081901550293
+  },
+  {
+    "round": "round2",
+    "backend": "java",
+    "id": "ascii_4096_replace_absent",
+    "median_ns": 338.5286407470703
+  },
+  {
+    "round": "round2",
+    "backend": "java",
+    "id": "ascii_65536_baseline",
+    "median_ns": 0.643727570772171
+  },
+  {
+    "round": "round2",
+    "backend": "java",
+    "id": "ascii_65536_replace_absent",
+    "median_ns": 5247.497314453125
+  },
+  {
+    "round": "round2",
+    "backend": "java",
+    "id": "ascii_64_replace_absent",
+    "median_ns": 13.789642810821533
+  },
+  {
+    "round": "round2",
+    "backend": "java",
+    "id": "ascii_64_compare_early",
+    "median_ns": 2.090005397796631
+  },
+  {
+    "round": "round2",
+    "backend": "java",
+    "id": "utf8_65536_replace_dense",
+    "median_ns": 23720.44921875
+  },
+  {
+    "round": "round2",
+    "backend": "java",
+    "id": "ascii_65536_replace_dense",
+    "median_ns": 117373.765625
+  },
+  {
+    "round": "round2",
+    "backend": "java",
+    "id": "ascii_4096_compare_equal",
+    "median_ns": 69.20231437683105
+  },
+  {
+    "round": "round2",
+    "backend": "java",
+    "id": "ascii_64_compare_equal",
+    "median_ns": 5.61142110824585
+  },
+  {
+    "round": "round2",
+    "backend": "java",
+    "id": "ascii_65536_compare_equal",
+    "median_ns": 1075.0496215820312
+  },
+  {
+    "round": "round2",
+    "backend": "java",
+    "id": "utf8_64_compare_late",
+    "median_ns": 7.669366836547852
+  },
+  {
+    "round": "round2",
+    "backend": "java",
+    "id": "ascii_65536_compare_early",
+    "median_ns": 2.097953975200653
+  },
+  {
+    "round": "round2",
+    "backend": "java",
+    "id": "ascii_64_replace_dense",
+    "median_ns": 118.91971588134766
+  },
+  {
+    "round": "round2",
+    "backend": "java",
+    "id": "utf8_64_baseline",
+    "median_ns": 0.6464309394359589
+  },
+  {
+    "round": "round2",
+    "backend": "java",
+    "id": "utf8_4096_replace_absent",
+    "median_ns": 308.55126190185547
+  },
+  {
+    "round": "round2",
+    "backend": "python",
+    "id": "utf8_4096_baseline",
+    "median_ns": 48.960336685180664
+  },
+  {
+    "round": "round2",
+    "backend": "python",
+    "id": "utf8_65536_compare_equal",
+    "median_ns": 2954.538330078125
+  },
+  {
+    "round": "round2",
+    "backend": "python",
+    "id": "utf8_64_replace_grow",
+    "median_ns": 309.4376678466797
+  },
+  {
+    "round": "round2",
+    "backend": "python",
+    "id": "ascii_4096_compare_early",
+    "median_ns": 68.78211975097656
+  },
+  {
+    "round": "round2",
+    "backend": "python",
+    "id": "ascii_4096_baseline",
+    "median_ns": 50.15350341796875
+  },
+  {
+    "round": "round2",
+    "backend": "python",
+    "id": "ascii_65536_replace_grow",
+    "median_ns": 149156.66796875
+  },
+  {
+    "round": "round2",
+    "backend": "python",
+    "id": "utf8_65536_replace_absent",
+    "median_ns": 5064.9276123046875
+  },
+  {
+    "round": "round2",
+    "backend": "python",
+    "id": "utf8_65536_compare_early",
+    "median_ns": 76.34780693054199
+  },
+  {
+    "round": "round2",
+    "backend": "python",
+    "id": "utf8_65536_replace_grow",
+    "median_ns": 132111.953125
+  },
+  {
+    "round": "round2",
+    "backend": "python",
+    "id": "utf8_4096_replace_grow",
+    "median_ns": 9199.965576171875
+  },
+  {
+    "round": "round2",
+    "backend": "python",
+    "id": "ascii_64_compare_late",
+    "median_ns": 70.06648635864258
+  },
+  {
+    "round": "round2",
+    "backend": "python",
+    "id": "utf8_4096_replace_dense",
+    "median_ns": 1401.061279296875
+  },
+  {
+    "round": "round2",
+    "backend": "python",
+    "id": "utf8_4096_compare_late",
+    "median_ns": 161.9352569580078
+  },
+  {
+    "round": "round2",
+    "backend": "python",
+    "id": "ascii_65536_compare_late",
+    "median_ns": 2229.1998901367188
+  },
+  {
+    "round": "round2",
+    "backend": "python",
+    "id": "utf8_64_replace_dense",
+    "median_ns": 140.95823287963867
+  },
+  {
+    "round": "round2",
+    "backend": "python",
+    "id": "ascii_4096_replace_grow",
+    "median_ns": 7093.298828125
+  },
+  {
+    "round": "round2",
+    "backend": "python",
+    "id": "utf8_64_compare_early",
+    "median_ns": 76.28184509277344
+  },
+  {
+    "round": "round2",
+    "backend": "python",
+    "id": "ascii_4096_compare_late",
+    "median_ns": 153.81541442871094
+  },
+  {
+    "round": "round2",
+    "backend": "python",
+    "id": "utf8_4096_compare_early",
+    "median_ns": 75.41443061828613
+  },
+  {
+    "round": "round2",
+    "backend": "python",
+    "id": "ascii_64_baseline",
+    "median_ns": 39.95992469787598
+  },
+  {
+    "round": "round2",
+    "backend": "python",
+    "id": "utf8_65536_baseline",
+    "median_ns": 50.621829986572266
+  },
+  {
+    "round": "round2",
+    "backend": "python",
+    "id": "utf8_64_compare_equal",
+    "median_ns": 83.54573440551758
+  },
+  {
+    "round": "round2",
+    "backend": "python",
+    "id": "utf8_64_replace_absent",
+    "median_ns": 128.55715560913086
+  },
+  {
+    "round": "round2",
+    "backend": "python",
+    "id": "utf8_65536_compare_late",
+    "median_ns": 2930.8338623046875
+  },
+  {
+    "round": "round2",
+    "backend": "python",
+    "id": "ascii_64_replace_grow",
+    "median_ns": 240.8315658569336
+  },
+  {
+    "round": "round2",
+    "backend": "python",
+    "id": "ascii_4096_replace_dense",
+    "median_ns": 7233.39111328125
+  },
+  {
+    "round": "round2",
+    "backend": "python",
+    "id": "utf8_4096_compare_equal",
+    "median_ns": 164.9598846435547
+  },
+  {
+    "round": "round2",
+    "backend": "python",
+    "id": "ascii_4096_replace_absent",
+    "median_ns": 417.13812255859375
+  },
+  {
+    "round": "round2",
+    "backend": "python",
+    "id": "ascii_65536_baseline",
+    "median_ns": 50.96968078613281
+  },
+  {
+    "round": "round2",
+    "backend": "python",
+    "id": "ascii_65536_replace_absent",
+    "median_ns": 18816.498046875
+  },
+  {
+    "round": "round2",
+    "backend": "python",
+    "id": "ascii_64_replace_absent",
+    "median_ns": 91.05903244018555
+  },
+  {
+    "round": "round2",
+    "backend": "python",
+    "id": "ascii_64_compare_early",
+    "median_ns": 68.35466003417969
+  },
+  {
+    "round": "round2",
+    "backend": "python",
+    "id": "utf8_65536_replace_dense",
+    "median_ns": 21147.1533203125
+  },
+  {
+    "round": "round2",
+    "backend": "python",
+    "id": "ascii_65536_replace_dense",
+    "median_ns": 156897.59375
+  },
+  {
+    "round": "round2",
+    "backend": "python",
+    "id": "ascii_4096_compare_equal",
+    "median_ns": 148.20921325683594
+  },
+  {
+    "round": "round2",
+    "backend": "python",
+    "id": "ascii_64_compare_equal",
+    "median_ns": 78.25586318969727
+  },
+  {
+    "round": "round2",
+    "backend": "python",
+    "id": "ascii_65536_compare_equal",
+    "median_ns": 2219.3497314453125
+  },
+  {
+    "round": "round2",
+    "backend": "python",
+    "id": "utf8_64_compare_late",
+    "median_ns": 77.73361587524414
+  },
+  {
+    "round": "round2",
+    "backend": "python",
+    "id": "ascii_65536_compare_early",
+    "median_ns": 68.09149169921875
+  },
+  {
+    "round": "round2",
+    "backend": "python",
+    "id": "ascii_64_replace_dense",
+    "median_ns": 234.5475616455078
+  },
+  {
+    "round": "round2",
+    "backend": "python",
+    "id": "utf8_64_baseline",
+    "median_ns": 40.09424591064453
+  },
+  {
+    "round": "round2",
+    "backend": "python",
+    "id": "utf8_4096_replace_absent",
+    "median_ns": 443.66200256347656
+  },
+  {
+    "round": "round2",
+    "backend": "runtime",
+    "id": "utf8_4096_baseline",
+    "median_ns": 1.3779070377349854
+  },
+  {
+    "round": "round2",
+    "backend": "runtime",
+    "id": "utf8_65536_compare_equal",
+    "median_ns": 1069.4596557617188
+  },
+  {
+    "round": "round2",
+    "backend": "runtime",
+    "id": "utf8_64_replace_grow",
+    "median_ns": 192.91448974609375
+  },
+  {
+    "round": "round2",
+    "backend": "runtime",
+    "id": "ascii_4096_compare_early",
+    "median_ns": 5.663716077804565
+  },
+  {
+    "round": "round2",
+    "backend": "runtime",
+    "id": "ascii_4096_baseline",
+    "median_ns": 1.3783714771270752
+  },
+  {
+    "round": "round2",
+    "backend": "runtime",
+    "id": "ascii_65536_replace_grow",
+    "median_ns": 291665.625
+  },
+  {
+    "round": "round2",
+    "backend": "runtime",
+    "id": "utf8_65536_replace_absent",
+    "median_ns": 1516.3355712890625
+  },
+  {
+    "round": "round2",
+    "backend": "runtime",
+    "id": "utf8_65536_compare_early",
+    "median_ns": 5.757153034210205
+  },
+  {
+    "round": "round2",
+    "backend": "runtime",
+    "id": "utf8_65536_replace_grow",
+    "median_ns": 272267.171875
+  },
+  {
+    "round": "round2",
+    "backend": "runtime",
+    "id": "utf8_4096_replace_grow",
+    "median_ns": 6419.848388671875
+  },
+  {
+    "round": "round2",
+    "backend": "runtime",
+    "id": "ascii_64_compare_late",
+    "median_ns": 7.090374708175659
+  },
+  {
+    "round": "round2",
+    "backend": "runtime",
+    "id": "utf8_4096_replace_dense",
+    "median_ns": 5212.003173828125
+  },
+  {
+    "round": "round2",
+    "backend": "runtime",
+    "id": "utf8_4096_compare_late",
+    "median_ns": 49.53073501586914
+  },
+  {
+    "round": "round2",
+    "backend": "runtime",
+    "id": "ascii_65536_compare_late",
+    "median_ns": 1077.9393005371094
+  },
+  {
+    "round": "round2",
+    "backend": "runtime",
+    "id": "utf8_64_replace_dense",
+    "median_ns": 138.83764266967773
+  },
+  {
+    "round": "round2",
+    "backend": "runtime",
+    "id": "ascii_4096_replace_grow",
+    "median_ns": 13107.4970703125
+  },
+  {
+    "round": "round2",
+    "backend": "runtime",
+    "id": "utf8_64_compare_early",
+    "median_ns": 19.08041524887085
+  },
+  {
+    "round": "round2",
+    "backend": "runtime",
+    "id": "ascii_4096_compare_late",
+    "median_ns": 126.35982513427734
+  },
+  {
+    "round": "round2",
+    "backend": "runtime",
+    "id": "utf8_4096_compare_early",
+    "median_ns": 10.112994194030762
+  },
+  {
+    "round": "round2",
+    "backend": "runtime",
+    "id": "ascii_64_baseline",
+    "median_ns": 2.043651819229126
+  },
+  {
+    "round": "round2",
+    "backend": "runtime",
+    "id": "utf8_65536_baseline",
+    "median_ns": 2.1790311336517334
+  },
+  {
+    "round": "round2",
+    "backend": "runtime",
+    "id": "utf8_64_compare_equal",
+    "median_ns": 6.943135738372803
+  },
+  {
+    "round": "round2",
+    "backend": "runtime",
+    "id": "utf8_64_replace_absent",
+    "median_ns": 37.133423805236816
+  },
+  {
+    "round": "round2",
+    "backend": "runtime",
+    "id": "utf8_65536_compare_late",
+    "median_ns": 1259.6356811523438
+  },
+  {
+    "round": "round2",
+    "backend": "runtime",
+    "id": "ascii_64_replace_grow",
+    "median_ns": 229.79908752441406
+  },
+  {
+    "round": "round2",
+    "backend": "runtime",
+    "id": "ascii_4096_replace_dense",
+    "median_ns": 7000.032958984375
+  },
+  {
+    "round": "round2",
+    "backend": "runtime",
+    "id": "utf8_4096_compare_equal",
+    "median_ns": 56.56415367126465
+  },
+  {
+    "round": "round2",
+    "backend": "runtime",
+    "id": "ascii_4096_replace_absent",
+    "median_ns": 119.41179275512695
+  },
+  {
+    "round": "round2",
+    "backend": "runtime",
+    "id": "ascii_65536_baseline",
+    "median_ns": 1.8247867822647095
+  },
+  {
+    "round": "round2",
+    "backend": "runtime",
+    "id": "ascii_65536_replace_absent",
+    "median_ns": 1955.2379760742188
+  },
+  {
+    "round": "round2",
+    "backend": "runtime",
+    "id": "ascii_64_replace_absent",
+    "median_ns": 44.34672546386719
+  },
+  {
+    "round": "round2",
+    "backend": "runtime",
+    "id": "ascii_64_compare_early",
+    "median_ns": 7.537108659744263
+  },
+  {
+    "round": "round2",
+    "backend": "runtime",
+    "id": "utf8_65536_replace_dense",
+    "median_ns": 92250.109375
+  },
+  {
+    "round": "round2",
+    "backend": "runtime",
+    "id": "ascii_65536_replace_dense",
+    "median_ns": 118158.1640625
+  },
+  {
+    "round": "round2",
+    "backend": "runtime",
+    "id": "ascii_4096_compare_equal",
+    "median_ns": 80.70097541809082
+  },
+  {
+    "round": "round2",
+    "backend": "runtime",
+    "id": "ascii_64_compare_equal",
+    "median_ns": 16.379607677459717
+  },
+  {
+    "round": "round2",
+    "backend": "runtime",
+    "id": "ascii_65536_compare_equal",
+    "median_ns": 1726.526123046875
+  },
+  {
+    "round": "round2",
+    "backend": "runtime",
+    "id": "utf8_64_compare_late",
+    "median_ns": 13.394474029541016
+  },
+  {
+    "round": "round2",
+    "backend": "runtime",
+    "id": "ascii_65536_compare_early",
+    "median_ns": 9.315930366516113
+  },
+  {
+    "round": "round2",
+    "backend": "runtime",
+    "id": "ascii_64_replace_dense",
+    "median_ns": 251.9048843383789
+  },
+  {
+    "round": "round2",
+    "backend": "runtime",
+    "id": "utf8_64_baseline",
+    "median_ns": 2.135644793510437
+  },
+  {
+    "round": "round2",
+    "backend": "runtime",
+    "id": "utf8_4096_replace_absent",
+    "median_ns": 231.47470092773438
+  },
+  {
+    "round": "round2",
+    "backend": "js",
+    "id": "utf8_4096_baseline",
+    "median_ns": 9.201908588409424
+  },
+  {
+    "round": "round2",
+    "backend": "js",
+    "id": "utf8_65536_compare_equal",
+    "median_ns": 25909.5869140625
+  },
+  {
+    "round": "round2",
+    "backend": "js",
+    "id": "utf8_64_replace_grow",
+    "median_ns": 522.4031982421875
+  },
+  {
+    "round": "round2",
+    "backend": "js",
+    "id": "ascii_4096_compare_early",
+    "median_ns": 50.05477333068848
+  },
+  {
+    "round": "round2",
+    "backend": "js",
+    "id": "ascii_4096_baseline",
+    "median_ns": 5.743743181228638
+  },
+  {
+    "round": "round2",
+    "backend": "js",
+    "id": "ascii_65536_replace_grow",
+    "median_ns": 486746.125
+  },
+  {
+    "round": "round2",
+    "backend": "js",
+    "id": "utf8_65536_replace_absent",
+    "median_ns": 572.9925231933594
+  },
+  {
+    "round": "round2",
+    "backend": "js",
+    "id": "utf8_65536_compare_early",
+    "median_ns": 50.41996955871582
+  },
+  {
+    "round": "round2",
+    "backend": "js",
+    "id": "utf8_65536_replace_grow",
+    "median_ns": 429097.15625
+  },
+  {
+    "round": "round2",
+    "backend": "js",
+    "id": "utf8_4096_replace_grow",
+    "median_ns": 24518.73046875
+  },
+  {
+    "round": "round2",
+    "backend": "js",
+    "id": "ascii_64_compare_late",
+    "median_ns": 144.0694580078125
+  },
+  {
+    "round": "round2",
+    "backend": "js",
+    "id": "utf8_4096_replace_dense",
+    "median_ns": 25617.41015625
+  },
+  {
+    "round": "round2",
+    "backend": "js",
+    "id": "utf8_4096_compare_late",
+    "median_ns": 1830.0159912109375
+  },
+  {
+    "round": "round2",
+    "backend": "js",
+    "id": "ascii_65536_compare_late",
+    "median_ns": 58367.9296875
+  },
+  {
+    "round": "round2",
+    "backend": "js",
+    "id": "utf8_64_replace_dense",
+    "median_ns": 651.9043884277344
+  },
+  {
+    "round": "round2",
+    "backend": "js",
+    "id": "ascii_4096_replace_grow",
+    "median_ns": 26811.490234375
+  },
+  {
+    "round": "round2",
+    "backend": "js",
+    "id": "utf8_64_compare_early",
+    "median_ns": 50.463666915893555
+  },
+  {
+    "round": "round2",
+    "backend": "js",
+    "id": "ascii_4096_compare_late",
+    "median_ns": 4021.05224609375
+  },
+  {
+    "round": "round2",
+    "backend": "js",
+    "id": "utf8_4096_compare_early",
+    "median_ns": 50.184335708618164
+  },
+  {
+    "round": "round2",
+    "backend": "js",
+    "id": "ascii_64_baseline",
+    "median_ns": 5.633058071136475
+  },
+  {
+    "round": "round2",
+    "backend": "js",
+    "id": "utf8_65536_baseline",
+    "median_ns": 5.681299686431885
+  },
+  {
+    "round": "round2",
+    "backend": "js",
+    "id": "utf8_64_compare_equal",
+    "median_ns": 102.97218704223633
+  },
+  {
+    "round": "round2",
+    "backend": "js",
+    "id": "utf8_64_replace_absent",
+    "median_ns": 86.61594009399414
+  },
+  {
+    "round": "round2",
+    "backend": "js",
+    "id": "utf8_65536_compare_late",
+    "median_ns": 27112.857421875
+  },
+  {
+    "round": "round2",
+    "backend": "js",
+    "id": "ascii_64_replace_grow",
+    "median_ns": 523.2776794433594
+  },
+  {
+    "round": "round2",
+    "backend": "js",
+    "id": "ascii_4096_replace_dense",
+    "median_ns": 26570.310546875
+  },
+  {
+    "round": "round2",
+    "backend": "js",
+    "id": "utf8_4096_compare_equal",
+    "median_ns": 1742.532470703125
+  },
+  {
+    "round": "round2",
+    "backend": "js",
+    "id": "ascii_4096_replace_absent",
+    "median_ns": 131.05781173706055
+  },
+  {
+    "round": "round2",
+    "backend": "js",
+    "id": "ascii_65536_baseline",
+    "median_ns": 5.68104887008667
+  },
+  {
+    "round": "round2",
+    "backend": "js",
+    "id": "ascii_65536_replace_absent",
+    "median_ns": 1153.6845092773438
+  },
+  {
+    "round": "round2",
+    "backend": "js",
+    "id": "ascii_64_replace_absent",
+    "median_ns": 88.23368835449219
+  },
+  {
+    "round": "round2",
+    "backend": "js",
+    "id": "ascii_64_compare_early",
+    "median_ns": 50.15846252441406
+  },
+  {
+    "round": "round2",
+    "backend": "js",
+    "id": "utf8_65536_replace_dense",
+    "median_ns": 428753.859375
+  },
+  {
+    "round": "round2",
+    "backend": "js",
+    "id": "ascii_65536_replace_dense",
+    "median_ns": 489152.296875
+  },
+  {
+    "round": "round2",
+    "backend": "js",
+    "id": "ascii_4096_compare_equal",
+    "median_ns": 3747.6912841796875
+  },
+  {
+    "round": "round2",
+    "backend": "js",
+    "id": "ascii_64_compare_equal",
+    "median_ns": 141.47536849975586
+  },
+  {
+    "round": "round2",
+    "backend": "js",
+    "id": "ascii_65536_compare_equal",
+    "median_ns": 58226.048828125
+  },
+  {
+    "round": "round2",
+    "backend": "js",
+    "id": "utf8_64_compare_late",
+    "median_ns": 107.2553939819336
+  },
+  {
+    "round": "round2",
+    "backend": "js",
+    "id": "ascii_65536_compare_early",
+    "median_ns": 50.626461029052734
+  },
+  {
+    "round": "round2",
+    "backend": "js",
+    "id": "ascii_64_replace_dense",
+    "median_ns": 537.1672973632812
+  },
+  {
+    "round": "round2",
+    "backend": "js",
+    "id": "utf8_64_baseline",
+    "median_ns": 5.777244567871094
+  },
+  {
+    "round": "round2",
+    "backend": "js",
+    "id": "utf8_4096_replace_absent",
+    "median_ns": 103.93165969848633
+  },
+  {
+    "round": "round2",
+    "backend": "runtime_snapshot",
+    "id": "utf8_4096_baseline",
+    "median_ns": 125.64262008666992
+  },
+  {
+    "round": "round2",
+    "backend": "runtime_snapshot",
+    "id": "utf8_65536_compare_equal",
+    "median_ns": 3959.045654296875
+  },
+  {
+    "round": "round2",
+    "backend": "runtime_snapshot",
+    "id": "utf8_64_replace_grow",
+    "median_ns": 228.98535919189453
+  },
+  {
+    "round": "round2",
+    "backend": "runtime_snapshot",
+    "id": "ascii_4096_compare_early",
+    "median_ns": 162.53762817382812
+  },
+  {
+    "round": "round2",
+    "backend": "runtime_snapshot",
+    "id": "ascii_4096_baseline",
+    "median_ns": 70.18880462646484
+  },
+  {
+    "round": "round2",
+    "backend": "runtime_snapshot",
+    "id": "ascii_65536_replace_grow",
+    "median_ns": 336470.125
+  },
+  {
+    "round": "round2",
+    "backend": "runtime_snapshot",
+    "id": "utf8_65536_replace_absent",
+    "median_ns": 2652.324951171875
+  },
+  {
+    "round": "round2",
+    "backend": "runtime_snapshot",
+    "id": "utf8_65536_compare_early",
+    "median_ns": 2234.7906494140625
+  },
+  {
+    "round": "round2",
+    "backend": "runtime_snapshot",
+    "id": "utf8_65536_replace_grow",
+    "median_ns": 323708.609375
+  },
+  {
+    "round": "round2",
+    "backend": "runtime_snapshot",
+    "id": "utf8_4096_replace_grow",
+    "median_ns": 6381.963623046875
+  },
+  {
+    "round": "round2",
+    "backend": "runtime_snapshot",
+    "id": "ascii_64_compare_late",
+    "median_ns": 36.65762233734131
+  },
+  {
+    "round": "round2",
+    "backend": "runtime_snapshot",
+    "id": "utf8_4096_replace_dense",
+    "median_ns": 5303.5537109375
+  },
+  {
+    "round": "round2",
+    "backend": "runtime_snapshot",
+    "id": "utf8_4096_compare_late",
+    "median_ns": 199.9829330444336
+  },
+  {
+    "round": "round2",
+    "backend": "runtime_snapshot",
+    "id": "ascii_65536_compare_late",
+    "median_ns": 3147.61474609375
+  },
+  {
+    "round": "round2",
+    "backend": "runtime_snapshot",
+    "id": "utf8_64_replace_dense",
+    "median_ns": 149.80625915527344
+  },
+  {
+    "round": "round2",
+    "backend": "runtime_snapshot",
+    "id": "ascii_4096_replace_grow",
+    "median_ns": 7425.799072265625
+  },
+  {
+    "round": "round2",
+    "backend": "runtime_snapshot",
+    "id": "utf8_64_compare_early",
+    "median_ns": 44.08889865875244
+  },
+  {
+    "round": "round2",
+    "backend": "runtime_snapshot",
+    "id": "ascii_4096_compare_late",
+    "median_ns": 199.05381774902344
+  },
+  {
+    "round": "round2",
+    "backend": "runtime_snapshot",
+    "id": "utf8_4096_compare_early",
+    "median_ns": 156.62525939941406
+  },
+  {
+    "round": "round2",
+    "backend": "runtime_snapshot",
+    "id": "ascii_64_baseline",
+    "median_ns": 15.065038204193115
+  },
+  {
+    "round": "round2",
+    "backend": "runtime_snapshot",
+    "id": "utf8_65536_baseline",
+    "median_ns": 1083.007568359375
+  },
+  {
+    "round": "round2",
+    "backend": "runtime_snapshot",
+    "id": "utf8_64_compare_equal",
+    "median_ns": 31.933467864990234
+  },
+  {
+    "round": "round2",
+    "backend": "runtime_snapshot",
+    "id": "utf8_64_replace_absent",
+    "median_ns": 50.59450912475586
+  },
+  {
+    "round": "round2",
+    "backend": "runtime_snapshot",
+    "id": "utf8_65536_compare_late",
+    "median_ns": 3139.413818359375
+  },
+  {
+    "round": "round2",
+    "backend": "runtime_snapshot",
+    "id": "ascii_64_replace_grow",
+    "median_ns": 219.21973419189453
+  },
+  {
+    "round": "round2",
+    "backend": "runtime_snapshot",
+    "id": "ascii_4096_replace_dense",
+    "median_ns": 5875.027587890625
+  },
+  {
+    "round": "round2",
+    "backend": "runtime_snapshot",
+    "id": "utf8_4096_compare_equal",
+    "median_ns": 197.48622131347656
+  },
+  {
+    "round": "round2",
+    "backend": "runtime_snapshot",
+    "id": "ascii_4096_replace_absent",
+    "median_ns": 190.36980438232422
+  },
+  {
+    "round": "round2",
+    "backend": "runtime_snapshot",
+    "id": "ascii_65536_baseline",
+    "median_ns": 1096.6976013183594
+  },
+  {
+    "round": "round2",
+    "backend": "runtime_snapshot",
+    "id": "ascii_65536_replace_absent",
+    "median_ns": 2622.3602294921875
+  },
+  {
+    "round": "round2",
+    "backend": "runtime_snapshot",
+    "id": "ascii_64_replace_absent",
+    "median_ns": 51.25508689880371
+  },
+  {
+    "round": "round2",
+    "backend": "runtime_snapshot",
+    "id": "ascii_64_compare_early",
+    "median_ns": 32.26735019683838
+  },
+  {
+    "round": "round2",
+    "backend": "runtime_snapshot",
+    "id": "utf8_65536_replace_dense",
+    "median_ns": 77304.53125
+  },
+  {
+    "round": "round2",
+    "backend": "runtime_snapshot",
+    "id": "ascii_65536_replace_dense",
+    "median_ns": 93467.82421875
+  },
+  {
+    "round": "round2",
+    "backend": "runtime_snapshot",
+    "id": "ascii_4096_compare_equal",
+    "median_ns": 198.7160415649414
+  },
+  {
+    "round": "round2",
+    "backend": "runtime_snapshot",
+    "id": "ascii_64_compare_equal",
+    "median_ns": 31.940332412719727
+  },
+  {
+    "round": "round2",
+    "backend": "runtime_snapshot",
+    "id": "ascii_65536_compare_equal",
+    "median_ns": 3149.2066650390625
+  },
+  {
+    "round": "round2",
+    "backend": "runtime_snapshot",
+    "id": "utf8_64_compare_late",
+    "median_ns": 35.73584747314453
+  },
+  {
+    "round": "round2",
+    "backend": "runtime_snapshot",
+    "id": "ascii_65536_compare_early",
+    "median_ns": 2392.1879272460938
+  },
+  {
+    "round": "round2",
+    "backend": "runtime_snapshot",
+    "id": "ascii_64_replace_dense",
+    "median_ns": 161.42057037353516
+  },
+  {
+    "round": "round2",
+    "backend": "runtime_snapshot",
+    "id": "utf8_64_baseline",
+    "median_ns": 15.118579864501953
+  },
+  {
+    "round": "round2",
+    "backend": "runtime_snapshot",
+    "id": "utf8_4096_replace_absent",
+    "median_ns": 193.86053466796875
+  },
+  {
+    "round": "round2",
+    "backend": "cpp_reserved",
+    "id": "utf8_4096_baseline",
+    "median_ns": 1.3820842504501343
+  },
+  {
+    "round": "round2",
+    "backend": "cpp_reserved",
+    "id": "utf8_65536_compare_equal",
+    "median_ns": 1063.4166564941406
+  },
+  {
+    "round": "round2",
+    "backend": "cpp_reserved",
+    "id": "utf8_64_replace_grow",
+    "median_ns": 129.0761604309082
+  },
+  {
+    "round": "round2",
+    "backend": "cpp_reserved",
+    "id": "ascii_4096_compare_early",
+    "median_ns": 5.295458555221558
+  },
+  {
+    "round": "round2",
+    "backend": "cpp_reserved",
+    "id": "ascii_4096_baseline",
+    "median_ns": 1.4586710333824158
+  },
+  {
+    "round": "round2",
+    "backend": "cpp_reserved",
+    "id": "ascii_65536_replace_grow",
+    "median_ns": 281865.125
+  },
+  {
+    "round": "round2",
+    "backend": "cpp_reserved",
+    "id": "utf8_65536_replace_absent",
+    "median_ns": 1496.1109008789062
+  },
+  {
+    "round": "round2",
+    "backend": "cpp_reserved",
+    "id": "utf8_65536_compare_early",
+    "median_ns": 5.467814683914185
+  },
+  {
+    "round": "round2",
+    "backend": "cpp_reserved",
+    "id": "utf8_65536_replace_grow",
+    "median_ns": 97424.23046875
+  },
+  {
+    "round": "round2",
+    "backend": "cpp_reserved",
+    "id": "utf8_4096_replace_grow",
+    "median_ns": 5958.898193359375
+  },
+  {
+    "round": "round2",
+    "backend": "cpp_reserved",
+    "id": "ascii_64_compare_late",
+    "median_ns": 6.769158840179443
+  },
+  {
+    "round": "round2",
+    "backend": "cpp_reserved",
+    "id": "utf8_4096_replace_dense",
+    "median_ns": 4679.3995361328125
+  },
+  {
+    "round": "round2",
+    "backend": "cpp_reserved",
+    "id": "utf8_4096_compare_late",
+    "median_ns": 49.31553840637207
+  },
+  {
+    "round": "round2",
+    "backend": "cpp_reserved",
+    "id": "ascii_65536_compare_late",
+    "median_ns": 1067.1060791015625
+  },
+  {
+    "round": "round2",
+    "backend": "cpp_reserved",
+    "id": "utf8_64_replace_dense",
+    "median_ns": 91.50177764892578
+  },
+  {
+    "round": "round2",
+    "backend": "cpp_reserved",
+    "id": "ascii_4096_replace_grow",
+    "median_ns": 6675.75830078125
+  },
+  {
+    "round": "round2",
+    "backend": "cpp_reserved",
+    "id": "utf8_64_compare_early",
+    "median_ns": 5.32982063293457
+  },
+  {
+    "round": "round2",
+    "backend": "cpp_reserved",
+    "id": "ascii_4096_compare_late",
+    "median_ns": 49.376651763916016
+  },
+  {
+    "round": "round2",
+    "backend": "cpp_reserved",
+    "id": "utf8_4096_compare_early",
+    "median_ns": 5.360661268234253
+  },
+  {
+    "round": "round2",
+    "backend": "cpp_reserved",
+    "id": "ascii_64_baseline",
+    "median_ns": 1.3785525560379028
+  },
+  {
+    "round": "round2",
+    "backend": "cpp_reserved",
+    "id": "utf8_65536_baseline",
+    "median_ns": 1.3853048086166382
+  },
+  {
+    "round": "round2",
+    "backend": "cpp_reserved",
+    "id": "utf8_64_compare_equal",
+    "median_ns": 6.681398630142212
+  },
+  {
+    "round": "round2",
+    "backend": "cpp_reserved",
+    "id": "utf8_64_replace_absent",
+    "median_ns": 22.14613628387451
+  },
+  {
+    "round": "round2",
+    "backend": "cpp_reserved",
+    "id": "utf8_65536_compare_late",
+    "median_ns": 1080.5656127929688
+  },
+  {
+    "round": "round2",
+    "backend": "cpp_reserved",
+    "id": "ascii_64_replace_grow",
+    "median_ns": 161.3279571533203
+  },
+  {
+    "round": "round2",
+    "backend": "cpp_reserved",
+    "id": "ascii_4096_replace_dense",
+    "median_ns": 5272.5712890625
+  },
+  {
+    "round": "round2",
+    "backend": "cpp_reserved",
+    "id": "utf8_4096_compare_equal",
+    "median_ns": 49.32009696960449
+  },
+  {
+    "round": "round2",
+    "backend": "cpp_reserved",
+    "id": "ascii_4096_replace_absent",
+    "median_ns": 170.04196548461914
+  },
+  {
+    "round": "round2",
+    "backend": "cpp_reserved",
+    "id": "ascii_65536_baseline",
+    "median_ns": 1.7190110683441162
+  },
+  {
+    "round": "round2",
+    "backend": "cpp_reserved",
+    "id": "ascii_65536_replace_absent",
+    "median_ns": 1862.9712524414062
+  },
+  {
+    "round": "round2",
+    "backend": "cpp_reserved",
+    "id": "ascii_64_replace_absent",
+    "median_ns": 26.213202476501465
+  },
+  {
+    "round": "round2",
+    "backend": "cpp_reserved",
+    "id": "ascii_64_compare_early",
+    "median_ns": 5.883857250213623
+  },
+  {
+    "round": "round2",
+    "backend": "cpp_reserved",
+    "id": "utf8_65536_replace_dense",
+    "median_ns": 89815.85546875
+  },
+  {
+    "round": "round2",
+    "backend": "cpp_reserved",
+    "id": "ascii_65536_replace_dense",
+    "median_ns": 91293.30859375
+  },
+  {
+    "round": "round2",
+    "backend": "cpp_reserved",
+    "id": "ascii_4096_compare_equal",
+    "median_ns": 55.64600944519043
+  },
+  {
+    "round": "round2",
+    "backend": "cpp_reserved",
+    "id": "ascii_64_compare_equal",
+    "median_ns": 6.010314226150513
+  },
+  {
+    "round": "round2",
+    "backend": "cpp_reserved",
+    "id": "ascii_65536_compare_equal",
+    "median_ns": 1168.3356323242188
+  },
+  {
+    "round": "round2",
+    "backend": "cpp_reserved",
+    "id": "utf8_64_compare_late",
+    "median_ns": 6.70992636680603
+  },
+  {
+    "round": "round2",
+    "backend": "cpp_reserved",
+    "id": "ascii_65536_compare_early",
+    "median_ns": 5.356750965118408
+  },
+  {
+    "round": "round2",
+    "backend": "cpp_reserved",
+    "id": "ascii_64_replace_dense",
+    "median_ns": 100.29723358154297
+  },
+  {
+    "round": "round2",
+    "backend": "cpp_reserved",
+    "id": "utf8_64_baseline",
+    "median_ns": 1.374975860118866
+  },
+  {
+    "round": "round2",
+    "backend": "cpp_reserved",
+    "id": "utf8_4096_replace_absent",
+    "median_ns": 93.85896301269531
+  },
+  {
+    "round": "round2",
+    "backend": "mytry_concrete",
+    "id": "utf8_4096_baseline",
+    "median_ns": 80.64391326904297
+  },
+  {
+    "round": "round2",
+    "backend": "mytry_concrete",
+    "id": "utf8_65536_compare_equal",
+    "median_ns": 3454.24560546875
+  },
+  {
+    "round": "round2",
+    "backend": "mytry_concrete",
+    "id": "utf8_64_replace_grow",
+    "median_ns": 254.23712158203125
+  },
+  {
+    "round": "round2",
+    "backend": "mytry_concrete",
+    "id": "ascii_4096_compare_early",
+    "median_ns": 181.11866760253906
+  },
+  {
+    "round": "round2",
+    "backend": "mytry_concrete",
+    "id": "ascii_4096_baseline",
+    "median_ns": 92.40460205078125
+  },
+  {
+    "round": "round2",
+    "backend": "mytry_concrete",
+    "id": "ascii_65536_replace_grow",
+    "median_ns": 326906.28125
+  },
+  {
+    "round": "round2",
+    "backend": "mytry_concrete",
+    "id": "utf8_65536_replace_absent",
+    "median_ns": 2682.786376953125
+  },
+  {
+    "round": "round2",
+    "backend": "mytry_concrete",
+    "id": "utf8_65536_compare_early",
+    "median_ns": 2382.4175415039062
+  },
+  {
+    "round": "round2",
+    "backend": "mytry_concrete",
+    "id": "utf8_65536_replace_grow",
+    "median_ns": 212025.46875
+  },
+  {
+    "round": "round2",
+    "backend": "mytry_concrete",
+    "id": "utf8_4096_replace_grow",
+    "median_ns": 6672.10791015625
+  },
+  {
+    "round": "round2",
+    "backend": "mytry_concrete",
+    "id": "ascii_64_compare_late",
+    "median_ns": 72.34589767456055
+  },
+  {
+    "round": "round2",
+    "backend": "mytry_concrete",
+    "id": "utf8_4096_replace_dense",
+    "median_ns": 5315.040771484375
+  },
+  {
+    "round": "round2",
+    "backend": "mytry_concrete",
+    "id": "utf8_4096_compare_late",
+    "median_ns": 232.0997314453125
+  },
+  {
+    "round": "round2",
+    "backend": "mytry_concrete",
+    "id": "ascii_65536_compare_late",
+    "median_ns": 3389.0123291015625
+  },
+  {
+    "round": "round2",
+    "backend": "mytry_concrete",
+    "id": "utf8_64_replace_dense",
+    "median_ns": 193.73268127441406
+  },
+  {
+    "round": "round2",
+    "backend": "mytry_concrete",
+    "id": "ascii_4096_replace_grow",
+    "median_ns": 7893.884521484375
+  },
+  {
+    "round": "round2",
+    "backend": "mytry_concrete",
+    "id": "utf8_64_compare_early",
+    "median_ns": 70.81745338439941
+  },
+  {
+    "round": "round2",
+    "backend": "mytry_concrete",
+    "id": "ascii_4096_compare_late",
+    "median_ns": 232.62877655029297
+  },
+  {
+    "round": "round2",
+    "backend": "mytry_concrete",
+    "id": "utf8_4096_compare_early",
+    "median_ns": 183.2015380859375
+  },
+  {
+    "round": "round2",
+    "backend": "mytry_concrete",
+    "id": "ascii_64_baseline",
+    "median_ns": 41.22123718261719
+  },
+  {
+    "round": "round2",
+    "backend": "mytry_concrete",
+    "id": "utf8_65536_baseline",
+    "median_ns": 1130.64013671875
+  },
+  {
+    "round": "round2",
+    "backend": "mytry_concrete",
+    "id": "utf8_64_compare_equal",
+    "median_ns": 77.61539077758789
+  },
+  {
+    "round": "round2",
+    "backend": "mytry_concrete",
+    "id": "utf8_64_replace_absent",
+    "median_ns": 86.06808853149414
+  },
+  {
+    "round": "round2",
+    "backend": "mytry_concrete",
+    "id": "utf8_65536_compare_late",
+    "median_ns": 3370.0406494140625
+  },
+  {
+    "round": "round2",
+    "backend": "mytry_concrete",
+    "id": "ascii_64_replace_grow",
+    "median_ns": 267.1691131591797
+  },
+  {
+    "round": "round2",
+    "backend": "mytry_concrete",
+    "id": "ascii_4096_replace_dense",
+    "median_ns": 7172.951904296875
+  },
+  {
+    "round": "round2",
+    "backend": "mytry_concrete",
+    "id": "utf8_4096_compare_equal",
+    "median_ns": 303.7699890136719
+  },
+  {
+    "round": "round2",
+    "backend": "mytry_concrete",
+    "id": "ascii_4096_replace_absent",
+    "median_ns": 310.3077697753906
+  },
+  {
+    "round": "round2",
+    "backend": "mytry_concrete",
+    "id": "ascii_65536_baseline",
+    "median_ns": 1129.5305480957031
+  },
+  {
+    "round": "round2",
+    "backend": "mytry_concrete",
+    "id": "ascii_65536_replace_absent",
+    "median_ns": 2653.1829833984375
+  },
+  {
+    "round": "round2",
+    "backend": "mytry_concrete",
+    "id": "ascii_64_replace_absent",
+    "median_ns": 81.9996337890625
+  },
+  {
+    "round": "round2",
+    "backend": "mytry_concrete",
+    "id": "ascii_64_compare_early",
+    "median_ns": 70.11563873291016
+  },
+  {
+    "round": "round2",
+    "backend": "mytry_concrete",
+    "id": "utf8_65536_replace_dense",
+    "median_ns": 82819.484375
+  },
+  {
+    "round": "round2",
+    "backend": "mytry_concrete",
+    "id": "ascii_65536_replace_dense",
+    "median_ns": 90428.87890625
+  },
+  {
+    "round": "round2",
+    "backend": "mytry_concrete",
+    "id": "ascii_4096_compare_equal",
+    "median_ns": 237.43004608154297
+  },
+  {
+    "round": "round2",
+    "backend": "mytry_concrete",
+    "id": "ascii_64_compare_equal",
+    "median_ns": 81.39169311523438
+  },
+  {
+    "round": "round2",
+    "backend": "mytry_concrete",
+    "id": "ascii_65536_compare_equal",
+    "median_ns": 3642.1021728515625
+  },
+  {
+    "round": "round2",
+    "backend": "mytry_concrete",
+    "id": "utf8_64_compare_late",
+    "median_ns": 76.56974792480469
+  },
+  {
+    "round": "round2",
+    "backend": "mytry_concrete",
+    "id": "ascii_65536_compare_early",
+    "median_ns": 2346.68505859375
+  },
+  {
+    "round": "round2",
+    "backend": "mytry_concrete",
+    "id": "ascii_64_replace_dense",
+    "median_ns": 209.1869125366211
+  },
+  {
+    "round": "round2",
+    "backend": "mytry_concrete",
+    "id": "utf8_64_baseline",
+    "median_ns": 41.66751670837402
+  },
+  {
+    "round": "round2",
+    "backend": "mytry_concrete",
+    "id": "utf8_4096_replace_absent",
+    "median_ns": 234.21490478515625
+  },
+  {
+    "round": "round2",
+    "backend": "php",
+    "id": "utf8_4096_baseline",
+    "median_ns": 8.040465593338013
+  },
+  {
+    "round": "round2",
+    "backend": "php",
+    "id": "utf8_65536_compare_equal",
+    "median_ns": 1111.5419616699219
+  },
+  {
+    "round": "round2",
+    "backend": "php",
+    "id": "utf8_64_replace_grow",
+    "median_ns": 186.33985137939453
+  },
+  {
+    "round": "round2",
+    "backend": "php",
+    "id": "ascii_4096_compare_early",
+    "median_ns": 82.09772109985352
+  },
+  {
+    "round": "round2",
+    "backend": "php",
+    "id": "ascii_4096_baseline",
+    "median_ns": 8.714223384857178
+  },
+  {
+    "round": "round2",
+    "backend": "php",
+    "id": "ascii_65536_replace_grow",
+    "median_ns": 149331.359375
+  },
+  {
+    "round": "round2",
+    "backend": "php",
+    "id": "utf8_65536_replace_absent",
+    "median_ns": 16874.37353515625
+  },
+  {
+    "round": "round2",
+    "backend": "php",
+    "id": "utf8_65536_compare_early",
+    "median_ns": 62.058597564697266
+  },
+  {
+    "round": "round2",
+    "backend": "php",
+    "id": "utf8_65536_replace_grow",
+    "median_ns": 132212.15625
+  },
+  {
+    "round": "round2",
+    "backend": "php",
+    "id": "utf8_4096_replace_grow",
+    "median_ns": 10813.61376953125
+  },
+  {
+    "round": "round2",
+    "backend": "php",
+    "id": "ascii_64_compare_late",
+    "median_ns": 87.72533416748047
+  },
+  {
+    "round": "round2",
+    "backend": "php",
+    "id": "utf8_4096_replace_dense",
+    "median_ns": 8481.78564453125
+  },
+  {
+    "round": "round2",
+    "backend": "php",
+    "id": "utf8_4096_compare_late",
+    "median_ns": 96.44491577148438
+  },
+  {
+    "round": "round2",
+    "backend": "php",
+    "id": "ascii_65536_compare_late",
+    "median_ns": 1112.4869079589844
+  },
+  {
+    "round": "round2",
+    "backend": "php",
+    "id": "utf8_64_replace_dense",
+    "median_ns": 186.34297943115234
+  },
+  {
+    "round": "round2",
+    "backend": "php",
+    "id": "ascii_4096_replace_grow",
+    "median_ns": 9398.32470703125
+  },
+  {
+    "round": "round2",
+    "backend": "php",
+    "id": "utf8_64_compare_early",
+    "median_ns": 64.73844718933105
+  },
+  {
+    "round": "round2",
+    "backend": "php",
+    "id": "ascii_4096_compare_late",
+    "median_ns": 95.66883087158203
+  },
+  {
+    "round": "round2",
+    "backend": "php",
+    "id": "utf8_4096_compare_early",
+    "median_ns": 61.86066818237305
+  },
+  {
+    "round": "round2",
+    "backend": "php",
+    "id": "ascii_64_baseline",
+    "median_ns": 8.048553466796875
+  },
+  {
+    "round": "round2",
+    "backend": "php",
+    "id": "utf8_65536_baseline",
+    "median_ns": 8.093041181564331
+  },
+  {
+    "round": "round2",
+    "backend": "php",
+    "id": "utf8_64_compare_equal",
+    "median_ns": 63.164306640625
+  },
+  {
+    "round": "round2",
+    "backend": "php",
+    "id": "utf8_64_replace_absent",
+    "median_ns": 40.73702621459961
+  },
+  {
+    "round": "round2",
+    "backend": "php",
+    "id": "utf8_65536_compare_late",
+    "median_ns": 1121.8753051757812
+  },
+  {
+    "round": "round2",
+    "backend": "php",
+    "id": "ascii_64_replace_grow",
+    "median_ns": 202.35159301757812
+  },
+  {
+    "round": "round2",
+    "backend": "php",
+    "id": "ascii_4096_replace_dense",
+    "median_ns": 9538.329345703125
+  },
+  {
+    "round": "round2",
+    "backend": "php",
+    "id": "utf8_4096_compare_equal",
+    "median_ns": 93.67145919799805
+  },
+  {
+    "round": "round2",
+    "backend": "php",
+    "id": "ascii_4096_replace_absent",
+    "median_ns": 1105.6980590820312
+  },
+  {
+    "round": "round2",
+    "backend": "php",
+    "id": "ascii_65536_baseline",
+    "median_ns": 8.481428861618042
+  },
+  {
+    "round": "round2",
+    "backend": "php",
+    "id": "ascii_65536_replace_absent",
+    "median_ns": 16919.892578125
+  },
+  {
+    "round": "round2",
+    "backend": "php",
+    "id": "ascii_64_replace_absent",
+    "median_ns": 41.073646545410156
+  },
+  {
+    "round": "round2",
+    "backend": "php",
+    "id": "ascii_64_compare_early",
+    "median_ns": 61.09022521972656
+  },
+  {
+    "round": "round2",
+    "backend": "php",
+    "id": "utf8_65536_replace_dense",
+    "median_ns": 139147.71875
+  },
+  {
+    "round": "round2",
+    "backend": "php",
+    "id": "ascii_65536_replace_dense",
+    "median_ns": 153366.8515625
+  },
+  {
+    "round": "round2",
+    "backend": "php",
+    "id": "ascii_4096_compare_equal",
+    "median_ns": 95.96329498291016
+  },
+  {
+    "round": "round2",
+    "backend": "php",
+    "id": "ascii_64_compare_equal",
+    "median_ns": 61.47689247131348
+  },
+  {
+    "round": "round2",
+    "backend": "php",
+    "id": "ascii_65536_compare_equal",
+    "median_ns": 1191.2495727539062
+  },
+  {
+    "round": "round2",
+    "backend": "php",
+    "id": "utf8_64_compare_late",
+    "median_ns": 64.40744209289551
+  },
+  {
+    "round": "round2",
+    "backend": "php",
+    "id": "ascii_65536_compare_early",
+    "median_ns": 61.50958824157715
+  },
+  {
+    "round": "round2",
+    "backend": "php",
+    "id": "ascii_64_replace_dense",
+    "median_ns": 200.83047485351562
+  },
+  {
+    "round": "round2",
+    "backend": "php",
+    "id": "utf8_64_baseline",
+    "median_ns": 8.087204694747925
+  },
+  {
+    "round": "round2",
+    "backend": "php",
+    "id": "utf8_4096_replace_absent",
+    "median_ns": 1117.400634765625
+  },
+  {
+    "round": "round2",
+    "backend": "js_flat",
+    "id": "utf8_4096_baseline",
+    "median_ns": 5.863595247268677
+  },
+  {
+    "round": "round2",
+    "backend": "js_flat",
+    "id": "utf8_65536_compare_equal",
+    "median_ns": 26207.87890625
+  },
+  {
+    "round": "round2",
+    "backend": "js_flat",
+    "id": "utf8_64_replace_grow",
+    "median_ns": 1029.75146484375
+  },
+  {
+    "round": "round2",
+    "backend": "js_flat",
+    "id": "ascii_4096_compare_early",
+    "median_ns": 51.35017395019531
+  },
+  {
+    "round": "round2",
+    "backend": "js_flat",
+    "id": "ascii_4096_baseline",
+    "median_ns": 5.724328279495239
+  },
+  {
+    "round": "round2",
+    "backend": "js_flat",
+    "id": "ascii_65536_replace_grow",
+    "median_ns": 869627.75
+  },
+  {
+    "round": "round2",
+    "backend": "js_flat",
+    "id": "utf8_65536_replace_absent",
+    "median_ns": 75676.9453125
+  },
+  {
+    "round": "round2",
+    "backend": "js_flat",
+    "id": "utf8_65536_compare_early",
+    "median_ns": 51.569183349609375
+  },
+  {
+    "round": "round2",
+    "backend": "js_flat",
+    "id": "utf8_65536_replace_grow",
+    "median_ns": 947780.4375
+  },
+  {
+    "round": "round2",
+    "backend": "js_flat",
+    "id": "utf8_4096_replace_grow",
+    "median_ns": 43797.908203125
+  },
+  {
+    "round": "round2",
+    "backend": "js_flat",
+    "id": "ascii_64_compare_late",
+    "median_ns": 146.9639129638672
+  },
+  {
+    "round": "round2",
+    "backend": "js_flat",
+    "id": "utf8_4096_replace_dense",
+    "median_ns": 35687.072265625
+  },
+  {
+    "round": "round2",
+    "backend": "js_flat",
+    "id": "utf8_4096_compare_late",
+    "median_ns": 1860.4490966796875
+  },
+  {
+    "round": "round2",
+    "backend": "js_flat",
+    "id": "ascii_65536_compare_late",
+    "median_ns": 58805.580078125
+  },
+  {
+    "round": "round2",
+    "backend": "js_flat",
+    "id": "utf8_64_replace_dense",
+    "median_ns": 1056.450439453125
+  },
+  {
+    "round": "round2",
+    "backend": "js_flat",
+    "id": "ascii_4096_replace_grow",
+    "median_ns": 36959.6044921875
+  },
+  {
+    "round": "round2",
+    "backend": "js_flat",
+    "id": "utf8_64_compare_early",
+    "median_ns": 50.64883804321289
+  },
+  {
+    "round": "round2",
+    "backend": "js_flat",
+    "id": "ascii_4096_compare_late",
+    "median_ns": 3935.1427001953125
+  },
+  {
+    "round": "round2",
+    "backend": "js_flat",
+    "id": "utf8_4096_compare_early",
+    "median_ns": 51.013132095336914
+  },
+  {
+    "round": "round2",
+    "backend": "js_flat",
+    "id": "ascii_64_baseline",
+    "median_ns": 7.514486312866211
+  },
+  {
+    "round": "round2",
+    "backend": "js_flat",
+    "id": "utf8_65536_baseline",
+    "median_ns": 5.713658571243286
+  },
+  {
+    "round": "round2",
+    "backend": "js_flat",
+    "id": "utf8_64_compare_equal",
+    "median_ns": 104.94472885131836
+  },
+  {
+    "round": "round2",
+    "backend": "js_flat",
+    "id": "utf8_64_replace_absent",
+    "median_ns": 351.2858581542969
+  },
+  {
+    "round": "round2",
+    "backend": "js_flat",
+    "id": "utf8_65536_compare_late",
+    "median_ns": 26522.2060546875
+  },
+  {
+    "round": "round2",
+    "backend": "js_flat",
+    "id": "ascii_64_replace_grow",
+    "median_ns": 921.9638366699219
+  },
+  {
+    "round": "round2",
+    "backend": "js_flat",
+    "id": "ascii_4096_replace_dense",
+    "median_ns": 34787.6142578125
+  },
+  {
+    "round": "round2",
+    "backend": "js_flat",
+    "id": "utf8_4096_compare_equal",
+    "median_ns": 1773.382080078125
+  },
+  {
+    "round": "round2",
+    "backend": "js_flat",
+    "id": "ascii_4096_replace_absent",
+    "median_ns": 6040.61474609375
+  },
+  {
+    "round": "round2",
+    "backend": "js_flat",
+    "id": "ascii_65536_baseline",
+    "median_ns": 5.7010650634765625
+  },
+  {
+    "round": "round2",
+    "backend": "js_flat",
+    "id": "ascii_65536_replace_absent",
+    "median_ns": 74303.20703125
+  },
+  {
+    "round": "round2",
+    "backend": "js_flat",
+    "id": "ascii_64_replace_absent",
+    "median_ns": 311.9667663574219
+  },
+  {
+    "round": "round2",
+    "backend": "js_flat",
+    "id": "ascii_64_compare_early",
+    "median_ns": 50.5408992767334
+  },
+  {
+    "round": "round2",
+    "backend": "js_flat",
+    "id": "utf8_65536_replace_dense",
+    "median_ns": 552634.546875
+  },
+  {
+    "round": "round2",
+    "backend": "js_flat",
+    "id": "ascii_65536_replace_dense",
+    "median_ns": 541417.8125
+  },
+  {
+    "round": "round2",
+    "backend": "js_flat",
+    "id": "ascii_4096_compare_equal",
+    "median_ns": 3733.0106201171875
+  },
+  {
+    "round": "round2",
+    "backend": "js_flat",
+    "id": "ascii_64_compare_equal",
+    "median_ns": 133.8555679321289
+  },
+  {
+    "round": "round2",
+    "backend": "js_flat",
+    "id": "ascii_65536_compare_equal",
+    "median_ns": 58074.501953125
+  },
+  {
+    "round": "round2",
+    "backend": "js_flat",
+    "id": "utf8_64_compare_late",
+    "median_ns": 105.7320671081543
+  },
+  {
+    "round": "round2",
+    "backend": "js_flat",
+    "id": "ascii_65536_compare_early",
+    "median_ns": 50.4261589050293
+  },
+  {
+    "round": "round2",
+    "backend": "js_flat",
+    "id": "ascii_64_replace_dense",
+    "median_ns": 898.5133361816406
+  },
+  {
+    "round": "round2",
+    "backend": "js_flat",
+    "id": "utf8_64_baseline",
+    "median_ns": 5.678431272506714
+  },
+  {
+    "round": "round2",
+    "backend": "js_flat",
+    "id": "utf8_4096_replace_absent",
+    "median_ns": 5890.514404296875
+  },
+  {
+    "round": "round2",
+    "backend": "cpp",
+    "id": "utf8_4096_baseline",
+    "median_ns": 1.3899522423744202
+  },
+  {
+    "round": "round2",
+    "backend": "cpp",
+    "id": "utf8_65536_compare_equal",
+    "median_ns": 1077.9931945800781
+  },
+  {
+    "round": "round2",
+    "backend": "cpp",
+    "id": "utf8_64_replace_grow",
+    "median_ns": 180.98650360107422
+  },
+  {
+    "round": "round2",
+    "backend": "cpp",
+    "id": "ascii_4096_compare_early",
+    "median_ns": 5.290279865264893
+  },
+  {
+    "round": "round2",
+    "backend": "cpp",
+    "id": "ascii_4096_baseline",
+    "median_ns": 1.3718973398208618
+  },
+  {
+    "round": "round2",
+    "backend": "cpp",
+    "id": "ascii_65536_replace_grow",
+    "median_ns": 294591.890625
+  },
+  {
+    "round": "round2",
+    "backend": "cpp",
+    "id": "utf8_65536_replace_absent",
+    "median_ns": 1553.560791015625
+  },
+  {
+    "round": "round2",
+    "backend": "cpp",
+    "id": "utf8_65536_compare_early",
+    "median_ns": 5.507448434829712
+  },
+  {
+    "round": "round2",
+    "backend": "cpp",
+    "id": "utf8_65536_replace_grow",
+    "median_ns": 271037.1875
+  },
+  {
+    "round": "round2",
+    "backend": "cpp",
+    "id": "utf8_4096_replace_grow",
+    "median_ns": 6193.161376953125
+  },
+  {
+    "round": "round2",
+    "backend": "cpp",
+    "id": "ascii_64_compare_late",
+    "median_ns": 6.905946493148804
+  },
+  {
+    "round": "round2",
+    "backend": "cpp",
+    "id": "utf8_4096_replace_dense",
+    "median_ns": 5083.292724609375
+  },
+  {
+    "round": "round2",
+    "backend": "cpp",
+    "id": "utf8_4096_compare_late",
+    "median_ns": 49.63613319396973
+  },
+  {
+    "round": "round2",
+    "backend": "cpp",
+    "id": "ascii_65536_compare_late",
+    "median_ns": 1073.484375
+  },
+  {
+    "round": "round2",
+    "backend": "cpp",
+    "id": "utf8_64_replace_dense",
+    "median_ns": 128.79184341430664
+  },
+  {
+    "round": "round2",
+    "backend": "cpp",
+    "id": "ascii_4096_replace_grow",
+    "median_ns": 7418.04541015625
+  },
+  {
+    "round": "round2",
+    "backend": "cpp",
+    "id": "utf8_64_compare_early",
+    "median_ns": 5.371519088745117
+  },
+  {
+    "round": "round2",
+    "backend": "cpp",
+    "id": "ascii_4096_compare_late",
+    "median_ns": 49.68744659423828
+  },
+  {
+    "round": "round2",
+    "backend": "cpp",
+    "id": "utf8_4096_compare_early",
+    "median_ns": 5.420319557189941
+  },
+  {
+    "round": "round2",
+    "backend": "cpp",
+    "id": "ascii_64_baseline",
+    "median_ns": 1.3960596323013306
+  },
+  {
+    "round": "round2",
+    "backend": "cpp",
+    "id": "utf8_65536_baseline",
+    "median_ns": 1.374727487564087
+  },
+  {
+    "round": "round2",
+    "backend": "cpp",
+    "id": "utf8_64_compare_equal",
+    "median_ns": 5.567062139511108
+  },
+  {
+    "round": "round2",
+    "backend": "cpp",
+    "id": "utf8_64_replace_absent",
+    "median_ns": 32.02559757232666
+  },
+  {
+    "round": "round2",
+    "backend": "cpp",
+    "id": "utf8_65536_compare_late",
+    "median_ns": 1066.8090209960938
+  },
+  {
+    "round": "round2",
+    "backend": "cpp",
+    "id": "ascii_64_replace_grow",
+    "median_ns": 194.93067932128906
+  },
+  {
+    "round": "round2",
+    "backend": "cpp",
+    "id": "ascii_4096_replace_dense",
+    "median_ns": 5706.911865234375
+  },
+  {
+    "round": "round2",
+    "backend": "cpp",
+    "id": "utf8_4096_compare_equal",
+    "median_ns": 48.41405487060547
+  },
+  {
+    "round": "round2",
+    "backend": "cpp",
+    "id": "ascii_4096_replace_absent",
+    "median_ns": 100.52956008911133
+  },
+  {
+    "round": "round2",
+    "backend": "cpp",
+    "id": "ascii_65536_baseline",
+    "median_ns": 1.3914019465446472
+  },
+  {
+    "round": "round2",
+    "backend": "cpp",
+    "id": "ascii_65536_replace_absent",
+    "median_ns": 1512.9931030273438
+  },
+  {
+    "round": "round2",
+    "backend": "cpp",
+    "id": "ascii_64_replace_absent",
+    "median_ns": 31.3840389251709
+  },
+  {
+    "round": "round2",
+    "backend": "cpp",
+    "id": "ascii_64_compare_early",
+    "median_ns": 5.403215408325195
+  },
+  {
+    "round": "round2",
+    "backend": "cpp",
+    "id": "utf8_65536_replace_dense",
+    "median_ns": 75981.353515625
+  },
+  {
+    "round": "round2",
+    "backend": "cpp",
+    "id": "ascii_65536_replace_dense",
+    "median_ns": 84207.38671875
+  },
+  {
+    "round": "round2",
+    "backend": "cpp",
+    "id": "ascii_4096_compare_equal",
+    "median_ns": 48.82771682739258
+  },
+  {
+    "round": "round2",
+    "backend": "cpp",
+    "id": "ascii_64_compare_equal",
+    "median_ns": 5.609017610549927
+  },
+  {
+    "round": "round2",
+    "backend": "cpp",
+    "id": "ascii_65536_compare_equal",
+    "median_ns": 1064.613525390625
+  },
+  {
+    "round": "round2",
+    "backend": "cpp",
+    "id": "utf8_64_compare_late",
+    "median_ns": 6.814836502075195
+  },
+  {
+    "round": "round2",
+    "backend": "cpp",
+    "id": "ascii_65536_compare_early",
+    "median_ns": 6.12501335144043
+  },
+  {
+    "round": "round2",
+    "backend": "cpp",
+    "id": "ascii_64_replace_dense",
+    "median_ns": 140.90925216674805
+  },
+  {
+    "round": "round2",
+    "backend": "cpp",
+    "id": "utf8_64_baseline",
+    "median_ns": 1.37581068277359
+  },
+  {
+    "round": "round2",
+    "backend": "cpp",
+    "id": "utf8_4096_replace_absent",
+    "median_ns": 102.53200149536133
+  }
+]

@@ -1,0 +1,227 @@
+diff --git a/compiler/my-try/04_analyze/prepare/data/structures.php b/compiler/my-try/04_analyze/prepare/data/structures.php
+index 32c9ea06..a5f9cfe5 100644
+--- a/compiler/my-try/04_analyze/prepare/data/structures.php
++++ b/compiler/my-try/04_analyze/prepare/data/structures.php
+@@ -695,6 +695,8 @@ final class prepared_method_receiver
+ /** A reference argument has no conversion; a by-value argument requires one decision. */
+ final class prepared_call_argument
+ {
++	/** Optional implementation of copy_value; absence always retains the semantic snapshot. */
++	public bool $borrow_snapshot = false;
+ 	/** Runtime argument's position in the original syntax; compile-time inputs are omitted. */
+ 	public int $source_index;
+ 	public value_boundary_operation $boundary;
+diff --git a/compiler/my-try/04_analyze/prepare/semantics/calls.php b/compiler/my-try/04_analyze/prepare/semantics/calls.php
+index e8fd0fa5..543e5096 100644
+--- a/compiler/my-try/04_analyze/prepare/semantics/calls.php
++++ b/compiler/my-try/04_analyze/prepare/semantics/calls.php
+@@ -137,6 +137,8 @@ final class Call_Preparation
+ 			$prepared_arguments->append($prepared_argument);
+ 		}
+ 
++		Call_Snapshot_Preparation::prepare($facts, $arguments);
++
+ 		if ($facts->signature->reference_return !== null) {
+ 			$origin /** reference_return_contract */ = $facts->signature->reference_return;
+ 			$facts->place = $arguments[$origin->parameter_index()]->require_preparation()->place;
+diff --git a/compiler/my-try/05_backend/cpp/declarations.php b/compiler/my-try/05_backend/cpp/declarations.php
+index 216c617a..c2cb2a6c 100644
+--- a/compiler/my-try/05_backend/cpp/declarations.php
++++ b/compiler/my-try/05_backend/cpp/declarations.php
+@@ -626,10 +626,11 @@ final class CPP_Declarations
+ 			$name = 'argument_' . $context->next_temporary;
+ 			$context->next_temporary++;
+ 			$boundary = $prepared_arguments[$index]->boundary;
+-			$reference = $boundary === value_boundary_operation::bind_reference ? '&' : '';
++			$borrow = $prepared_argument->borrow_snapshot;
++			$reference = (($boundary === value_boundary_operation::bind_reference) || $borrow) ? '&' : '';
+ 
+-			$qualifier = $parameter->access === storage_access::read_only ? 'const ' : '';
+-			$argument_requirement = self::signature_requirement(false, $boundary === value_boundary_operation::bind_reference);
++			$qualifier = (($parameter->access === storage_access::read_only) || $borrow) ? 'const ' : '';
++			$argument_requirement = self::signature_requirement(false, ($boundary === value_boundary_operation::bind_reference) || $borrow);
+ 			$text .= "\t" . $qualifier . self::type_for($argument_type, $context, $argument_requirement) . $reference . ' ' . $name . ' = ' . $value . ";\n";
+ 			if ($transport !== null) { $physical_arguments[] = $name; }
+ 			if ($boundary === value_boundary_operation::consume_value) {
+diff --git a/compiler/my-try/boot.php b/compiler/my-try/boot.php
+index 57d0a31f..a3bfe658 100644
+--- a/compiler/my-try/boot.php
++++ b/compiler/my-try/boot.php
+@@ -170,6 +170,7 @@ require_once __DIR__ . '/04_analyze/prepare/semantics/constants.php';
+ require_once __DIR__ . '/04_analyze/prepare/semantics/expressions.php';
+ require_once __DIR__ . '/04_analyze/prepare/semantics/captures.php';
+ require_once __DIR__ . '/04_analyze/prepare/semantics/lifetimes.php';
++require_once __DIR__ . '/04_analyze/prepare/semantics/call_snapshots.php';
+ require_once __DIR__ . '/04_analyze/prepare/semantics/calls.php';
+ require_once __DIR__ . '/04_analyze/prepare/semantics/layout_queries.php';
+ require_once __DIR__ . '/04_analyze/prepare/semantics/compiler_calls.php';
+diff --git a/compiler/my-try/compiler/callables/structures.php b/compiler/my-try/compiler/callables/structures.php
+index c851c620..477d84fa 100644
+--- a/compiler/my-try/compiler/callables/structures.php
++++ b/compiler/my-try/compiler/callables/structures.php
+@@ -34,6 +34,8 @@ final class compiler_function_definition implements callable_definition_i
+ /** Catalog-owned runtime identity, independent of whether its signature needs inference. */
+ abstract class runtime_function_definition implements callable_definition_i
+ {
++	/** Installed provider guarantee; never inferred from its name or native spelling. */
++	public bool $snapshot_borrow_safe = false;
+ 	private string $registration_key;
+ 	private string $source_name;
+ 
+diff --git a/compiler/my-try/compiler/runtime_catalog/reader.php b/compiler/my-try/compiler/runtime_catalog/reader.php
+index cf769908..3d3ae5ba 100644
+--- a/compiler/my-try/compiler/runtime_catalog/reader.php
++++ b/compiler/my-try/compiler/runtime_catalog/reader.php
+@@ -561,6 +561,7 @@ final class Runtime_Catalog_Reader
+ 			elseif ($key === 'name') {
+ 				$result->name = self::name($reader);
+ 			}
++			elseif ($key === 'snapshot_borrow_safe') { $result->snapshot_borrow_safe = $reader->read_boolean(); }
+ 			elseif ($key === 'qualified_aliases') {
+ 				$aliases /** vector<string> */ = [];
+ 				$reader->begin_array();
+@@ -600,6 +601,16 @@ final class Runtime_Catalog_Reader
+ 		if (($result->identity === '') || ($result->name === '') || !$returns || !$parameters) {
+ 			$reader->reject('Missing runtime function field');
+ 		}
++		if ($result->snapshot_borrow_safe) {
++			if (($result->member !== null) || (q_count($result->type_parameters) !== 0)) {
++				$reader->reject('Snapshot borrowing requires a fixed free runtime function');
++			}
++			foreach ($result->parameters as $parameter) {
++				if (($parameter->mode !== passing_mode::value) || $parameter->variadic || ($parameter->default_value !== null)) {
++					$reader->reject('Snapshot borrowing requires fixed explicit value inputs');
++				}
++			}
++		}
+ 		return $result;
+ 	}
+ 
+diff --git a/compiler/my-try/compiler/runtime_catalog/register.php b/compiler/my-try/compiler/runtime_catalog/register.php
+index 8e28c65e..617ae71a 100644
+--- a/compiler/my-try/compiler/runtime_catalog/register.php
++++ b/compiler/my-try/compiler/runtime_catalog/register.php
+@@ -114,6 +114,7 @@ final class Runtime_Catalog_Registration
+ 					$signature->parameters = $parameters;
+ 					$result->register_function($function->identity, $function->name, $signature);
+ 				}
++				$result->function_definition($function->identity)->snapshot_borrow_safe = $function->snapshot_borrow_safe;
+ 				foreach ($function->qualified_aliases as $qualifier) {
+ 					if ($member_owner !== null) { throw new \RuntimeException('Runtime members cannot expose qualified aliases'); }
+ 					self::validate_qualifier($qualifier);
+diff --git a/compiler/my-try/compiler/runtime_catalog/structures.php b/compiler/my-try/compiler/runtime_catalog/structures.php
+index cdfda661..f4988162 100644
+--- a/compiler/my-try/compiler/runtime_catalog/structures.php
++++ b/compiler/my-try/compiler/runtime_catalog/structures.php
+@@ -102,6 +102,8 @@ final class runtime_callable_spec extends runtime_signature_spec {}
+ 
+ final class runtime_function_spec extends runtime_signature_spec
+ {
++	/** Provider permits synchronous readonly borrowing in place of value snapshots. */
++	public bool $snapshot_borrow_safe = false;
+ 	public ?runtime_callable_member_spec $member = null;
+ 	public string $identity = '';
+ 	public string $name = '';
+diff --git a/compiler/my-try/docs/README.md b/compiler/my-try/docs/README.md
+index 23303703..11118d3d 100644
+--- a/compiler/my-try/docs/README.md
++++ b/compiler/my-try/docs/README.md
+@@ -20,6 +20,12 @@ explicit callable storage remains a separate prelowering gap. The earlier
+ 
+ ## Reading map
+ 
++The [safe string-argument snapshot optimization](../../../specs/planning/results/string_borrow_2026_10_21/README.md)
++preserves value semantics and retains copies when proof is missing. Its
++[provider contract](../../../specs/runtime_module_metadata.md#snapshot-borrowing-guarantee)
++and [focused tests](testing.md#conservative-call-snapshot-elision) also document
++the bounded proof and compilation-cost measurement.
++
+ The completed bounded [runtime module integration plan](planning/runtime_module_integration.md)
+ covers storage, members, protocols, signatures and build composition. Its
+ [closeout audit](planning/runtime_module_closeout.md) separates supported foundations
+diff --git a/compiler/my-try/docs/architecture/MODEL.md b/compiler/my-try/docs/architecture/MODEL.md
+index 1896e214..92149698 100644
+--- a/compiler/my-try/docs/architecture/MODEL.md
++++ b/compiler/my-try/docs/architecture/MODEL.md
+@@ -198,6 +198,17 @@ calls retain the fixed-prefix/pack boundary without rewriting source arguments.
+ 
+ ### Callable contracts
+ 
++Registered runtime functions may carry the reviewed `snapshot_borrow_safe`
++provider guarantee from module metadata. `Call_Snapshot_Preparation` checks the
++already-admitted call in two linear scans and sets `prepared_call_argument`'s
++`borrow_snapshot` hint only for stable string-variable reads in harmless argument
++lists. The semantic boundary remains `copy_value`, including its copyability and
++conversion checks. Missing proof retains the snapshot. No callee-body traversal,
++alias graph, runtime tracking, source rejection or new retained owner is added.
++Both ordinary and concrete C++ calls consume the same hint within their existing
++ordered argument lambda. Ordinary body retirement/repreparation clears/rebuilds it.
++The parked LLVM backend may continue implementing the value boundary with a copy.
++
+ Anonymous signature work owns an optional canonical expected-type input supplied by
+ creation-site expression preparation. Query-only signature/capability demands do not
+ erase it. Changed inputs schedule signature rebuilding; ordinary signature comparison
+diff --git a/compiler/my-try/docs/testing.md b/compiler/my-try/docs/testing.md
+index 9afbcfc0..3edf0934 100644
+--- a/compiler/my-try/docs/testing.md
++++ b/compiler/my-try/docs/testing.md
+@@ -1,6 +1,21 @@
+ # Test runners
+ Doc Status: supporting
+ 
++## Conservative call snapshot elision
++
++`python3 compiler/my-try/tests/call_snapshot_borrow.py --results FRESH` checks
++prepared borrowing facts and fallback in both C++ modes, provider metadata,
++retained edits, unchanged explicit-reference semantics, argument/conversion error
++ordering and native allocation counts. It uses the production native builder at
++O0 without PCH. `runtime_strings.py` supplies the existing string/catalog regression.
++
++`call_snapshot_cost.py --before TREE --after TREE --results FRESH --php PHP`
++measures isolated PHP-hosted compiler processes in alternating before/after order,
++pinned to one CPU. Both trees need matching dependencies; `--php` must select a
++CLI with mbstring. It records boot, frontend, preparation and emission separately,
++excluding publication, C++ compilation/linking and program execution. Warmup rounds
++are retained but excluded from medians. This is not a native compiler rebuild.
++
+ `tests/scalar_debug.py --results FRESH_DIRECTORY` verifies the bounded scalar
+ `dbg` forms with default-prelowered cold/warm execution, source locations,
+ snapshots, invalid-depth reporting, source shadowing, metadata validation and
+diff --git a/runtime/metadata/modules/core.json b/runtime/metadata/modules/core.json
+index 9d6c1b00..aef42e3b 100644
+--- a/runtime/metadata/modules/core.json
++++ b/runtime/metadata/modules/core.json
+@@ -130,6 +130,7 @@
+     {"id":"core.is_float.mixed","name":"is_float","parameters":[{"name":"value","type":"mixed","passing":"observe"}],"returns":"bool"},
+     {
+       "id": "core.strlen",
++      "snapshot_borrow_safe": true,
+       "name": "strlen",
+       "parameters": [
+         {
+diff --git a/runtime/metadata/modules/strings.json b/runtime/metadata/modules/strings.json
+index 9ad40cf2..5bb7f4c5 100644
+--- a/runtime/metadata/modules/strings.json
++++ b/runtime/metadata/modules/strings.json
+@@ -48,9 +48,9 @@
+     {"id":"strings.join.hash","name":"implode","parameters":[{"name":"separator","type":"string","passing":"value"},{"name":"pieces","type":{"name":"hash","arguments":["string",{"parameter":"K"}]},"passing":"value"}],"returns":"string","type_parameters":["K"]},
+     {"id":"strings.substr.2","name":"substr","parameters":[{"name":"value","type":"string","passing":"value"},{"name":"offset","type":"int","passing":"value"}],"returns":"string"},
+     {"id":"strings.substr.3","name":"substr","parameters":[{"name":"value","type":"string","passing":"value"},{"name":"offset","type":"int","passing":"value"},{"name":"length","type":"int","passing":"value"}],"returns":"string"},
+-    {"id":"strings.substr_compare.3","name":"substr_compare","parameters":[{"name":"subject","type":"string","passing":"value"},{"name":"other","type":"string","passing":"value"},{"name":"offset","type":"int","passing":"value"}],"returns":"int"},
+-    {"id":"strings.substr_compare.4","name":"substr_compare","parameters":[{"name":"subject","type":"string","passing":"value"},{"name":"other","type":"string","passing":"value"},{"name":"offset","type":"int","passing":"value"},{"name":"length","type":"int","passing":"value"}],"returns":"int"},
+-    {"id":"strings.substr_compare.5","name":"substr_compare","parameters":[{"name":"subject","type":"string","passing":"value"},{"name":"other","type":"string","passing":"value"},{"name":"offset","type":"int","passing":"value"},{"name":"length","type":"int","passing":"value"},{"name":"case_insensitive","type":"bool","passing":"value"}],"returns":"int"},
++    {"id":"strings.substr_compare.3","snapshot_borrow_safe":true,"name":"substr_compare","parameters":[{"name":"subject","type":"string","passing":"value"},{"name":"other","type":"string","passing":"value"},{"name":"offset","type":"int","passing":"value"}],"returns":"int"},
++    {"id":"strings.substr_compare.4","snapshot_borrow_safe":true,"name":"substr_compare","parameters":[{"name":"subject","type":"string","passing":"value"},{"name":"other","type":"string","passing":"value"},{"name":"offset","type":"int","passing":"value"},{"name":"length","type":"int","passing":"value"}],"returns":"int"},
++    {"id":"strings.substr_compare.5","snapshot_borrow_safe":true,"name":"substr_compare","parameters":[{"name":"subject","type":"string","passing":"value"},{"name":"other","type":"string","passing":"value"},{"name":"offset","type":"int","passing":"value"},{"name":"length","type":"int","passing":"value"},{"name":"case_insensitive","type":"bool","passing":"value"}],"returns":"int"},
+     {"id":"strings.hex_decode","name":"hex2bin","parameters":[{"name":"value","type":"string","passing":"value"}],"returns":{"name":"result_or_false","arguments":["string"]}},
+     {"id":"strings.byte_length","name":"string_byte_len","parameters":[{"name":"value","type":"string","passing":"value"}],"returns":"int"},
+     {"id":"strings.byte_at","name":"string_byte_at","parameters":[{"name":"value","type":"string","passing":"value"},{"name":"offset","type":"int","passing":"value"}],"returns":"int"},
+@@ -79,7 +79,7 @@
+     {"id":"strings.rtrim.1","name":"rtrim","parameters":[{"name":"value","type":"string","passing":"value"}],"returns":"string"},
+     {"id":"strings.rtrim.2","name":"rtrim","parameters":[{"name":"value","type":"string","passing":"value"},{"name":"mask","type":"string","passing":"value"}],"returns":"string"},
+     {"id":"strings.hex_encode","name":"bin2hex","parameters":[{"name":"value","type":"string","passing":"value"}],"returns":"string"},
+-    {"id":"strings.replace","name":"str_replace","parameters":[{"name":"search","type":"string","passing":"value"},{"name":"replacement","type":"string","passing":"value"},{"name":"subject","type":"string","passing":"value"}],"returns":"string"},
++    {"id":"strings.replace","snapshot_borrow_safe":true,"name":"str_replace","parameters":[{"name":"search","type":"string","passing":"value"},{"name":"replacement","type":"string","passing":"value"},{"name":"subject","type":"string","passing":"value"}],"returns":"string"},
+     {"id": "strings.lower", "name": "strtolower", "parameters": [{"name": "value", "type": "string", "passing": "value"}], "returns": "string"},
+     {"id": "strings.upper", "name": "strtoupper", "parameters": [{"name": "value", "type": "string", "passing": "value"}], "returns": "string"},
+     {"id": "strings.lcfirst", "name": "lcfirst", "parameters": [{"name": "value", "type": "string", "passing": "value"}], "returns": "string"},

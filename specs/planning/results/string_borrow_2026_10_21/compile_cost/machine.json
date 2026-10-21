@@ -1,0 +1,6 @@
+{
+  "host": "tf-dev002",
+  "cpu_model": "AMD Ryzen 9 5950X 16-Core Processor",
+  "php": "PHP 8.2.34 (cli) (built: Sep 24 2026 14:34:53) (NTS)\nCopyright (c) The PHP Group\nZend Engine v4.2.34, Copyright (c) Zend Technologies\n    with Zend OPcache v8.2.34, Copyright (c), by Zend Technologies\n",
+  "php_modules": "[PHP Modules]\nbcmath\ncalendar\nCore\nctype\ncurl\ndate\ndom\nexif\nFFI\nfileinfo\nfilter\nftp\ngd\ngettext\ngmp\nhash\niconv\nimagick\nimap\nintl\njson\nlibxml\nmbstring\nmysqli\nmysqlnd\nopenssl\npcntl\npcre\nPDO\npdo_mysql\nPhar\nposix\nrandom\nreadline\nReflection\nsession\nshmop\nSimpleXML\nsoap\nsockets\nsodium\nSPL\nstandard\nsysvmsg\nsysvsem\nsysvshm\ntokenizer\nxml\nxmlreader\nxmlrpc\nxmlwriter\nxsl\nZend OPcache\nzip\nzlib\n\n[Zend Modules]\nZend OPcache\n\n"
+}

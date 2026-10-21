@@ -34,6 +34,8 @@ final class compiler_function_definition implements callable_definition_i
 /** Catalog-owned runtime identity, independent of whether its signature needs inference. */
 abstract class runtime_function_definition implements callable_definition_i
 {
+	/** Installed provider guarantee; never inferred from its name or native spelling. */
+	public bool $snapshot_borrow_safe = false;
 	private string $registration_key;
 	private string $source_name;
 

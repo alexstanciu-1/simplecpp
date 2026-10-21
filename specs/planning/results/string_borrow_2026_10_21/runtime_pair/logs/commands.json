@@ -1,0 +1,447 @@
+[
+  {
+    "name": "before_concrete-emit",
+    "command": [
+      "/usr/bin/php",
+      "/tmp/scpp-borrow-20261021-0839/after/specs/planning/benchmarks/string_defaults/publish.php",
+      "/tmp/scpp-borrow-20261021-0839/before",
+      "/tmp/scpp-borrow-20261021-0839/runtime-paired/source",
+      "/tmp/scpp-borrow-20261021-0839/runtime-paired/before_concrete",
+      "concrete"
+    ],
+    "cwd": "/tmp/scpp-borrow-20261021-0839/after",
+    "seconds": 0.177,
+    "code": 0,
+    "expected": 0,
+    "executor": "cli",
+    "executor_reason": "PHP CLI/FPM versions differ"
+  },
+  {
+    "name": "before_concrete-build",
+    "command": [
+      "/usr/bin/php8.4",
+      "-d",
+      "extension=/tmp/scpp-borrow-20261021-0839/php-extension/extracted/usr/lib/php/20240924/mbstring.so",
+      "/tmp/scpp-borrow-20261021-0839/before/compiler/my-try/tools/build_cpp.php",
+      "/tmp/scpp-borrow-20261021-0839/runtime-paired/before_concrete",
+      "/tmp/scpp-borrow-20261021-0839/runtime-paired/before_concrete-cache",
+      "--no-pch",
+      "-O3"
+    ],
+    "cwd": "/tmp/scpp-borrow-20261021-0839/after",
+    "seconds": 18.144,
+    "code": 0,
+    "expected": 0,
+    "executor": "cli",
+    "executor_reason": "Native builder with temporary mbstring extension"
+  },
+  {
+    "name": "before_ordinary-emit",
+    "command": [
+      "/usr/bin/php",
+      "/tmp/scpp-borrow-20261021-0839/after/specs/planning/benchmarks/string_defaults/publish.php",
+      "/tmp/scpp-borrow-20261021-0839/before",
+      "/tmp/scpp-borrow-20261021-0839/runtime-paired/source",
+      "/tmp/scpp-borrow-20261021-0839/runtime-paired/before_ordinary",
+      "ordinary"
+    ],
+    "cwd": "/tmp/scpp-borrow-20261021-0839/after",
+    "seconds": 0.102,
+    "code": 0,
+    "expected": 0,
+    "executor": "cli",
+    "executor_reason": "PHP CLI/FPM versions differ"
+  },
+  {
+    "name": "before_ordinary-build",
+    "command": [
+      "/usr/bin/php8.4",
+      "-d",
+      "extension=/tmp/scpp-borrow-20261021-0839/php-extension/extracted/usr/lib/php/20240924/mbstring.so",
+      "/tmp/scpp-borrow-20261021-0839/before/compiler/my-try/tools/build_cpp.php",
+      "/tmp/scpp-borrow-20261021-0839/runtime-paired/before_ordinary",
+      "/tmp/scpp-borrow-20261021-0839/runtime-paired/before_ordinary-cache",
+      "--no-pch",
+      "-O3"
+    ],
+    "cwd": "/tmp/scpp-borrow-20261021-0839/after",
+    "seconds": 16.288,
+    "code": 0,
+    "expected": 0,
+    "executor": "cli",
+    "executor_reason": "Native builder with temporary mbstring extension"
+  },
+  {
+    "name": "after_concrete-emit",
+    "command": [
+      "/usr/bin/php",
+      "/tmp/scpp-borrow-20261021-0839/after/specs/planning/benchmarks/string_defaults/publish.php",
+      "/tmp/scpp-borrow-20261021-0839/after",
+      "/tmp/scpp-borrow-20261021-0839/runtime-paired/source",
+      "/tmp/scpp-borrow-20261021-0839/runtime-paired/after_concrete",
+      "concrete"
+    ],
+    "cwd": "/tmp/scpp-borrow-20261021-0839/after",
+    "seconds": 0.121,
+    "code": 0,
+    "expected": 0,
+    "executor": "cli",
+    "executor_reason": "PHP CLI/FPM versions differ"
+  },
+  {
+    "name": "after_concrete-build",
+    "command": [
+      "/usr/bin/php8.4",
+      "-d",
+      "extension=/tmp/scpp-borrow-20261021-0839/php-extension/extracted/usr/lib/php/20240924/mbstring.so",
+      "/tmp/scpp-borrow-20261021-0839/after/compiler/my-try/tools/build_cpp.php",
+      "/tmp/scpp-borrow-20261021-0839/runtime-paired/after_concrete",
+      "/tmp/scpp-borrow-20261021-0839/runtime-paired/after_concrete-cache",
+      "--no-pch",
+      "-O3"
+    ],
+    "cwd": "/tmp/scpp-borrow-20261021-0839/after",
+    "seconds": 18.039,
+    "code": 0,
+    "expected": 0,
+    "executor": "cli",
+    "executor_reason": "Native builder with temporary mbstring extension"
+  },
+  {
+    "name": "after_ordinary-emit",
+    "command": [
+      "/usr/bin/php",
+      "/tmp/scpp-borrow-20261021-0839/after/specs/planning/benchmarks/string_defaults/publish.php",
+      "/tmp/scpp-borrow-20261021-0839/after",
+      "/tmp/scpp-borrow-20261021-0839/runtime-paired/source",
+      "/tmp/scpp-borrow-20261021-0839/runtime-paired/after_ordinary",
+      "ordinary"
+    ],
+    "cwd": "/tmp/scpp-borrow-20261021-0839/after",
+    "seconds": 0.104,
+    "code": 0,
+    "expected": 0,
+    "executor": "cli",
+    "executor_reason": "PHP CLI/FPM versions differ"
+  },
+  {
+    "name": "after_ordinary-build",
+    "command": [
+      "/usr/bin/php8.4",
+      "-d",
+      "extension=/tmp/scpp-borrow-20261021-0839/php-extension/extracted/usr/lib/php/20240924/mbstring.so",
+      "/tmp/scpp-borrow-20261021-0839/after/compiler/my-try/tools/build_cpp.php",
+      "/tmp/scpp-borrow-20261021-0839/runtime-paired/after_ordinary",
+      "/tmp/scpp-borrow-20261021-0839/runtime-paired/after_ordinary-cache",
+      "--no-pch",
+      "-O3"
+    ],
+    "cwd": "/tmp/scpp-borrow-20261021-0839/after",
+    "seconds": 15.989,
+    "code": 0,
+    "expected": 0,
+    "executor": "cli",
+    "executor_reason": "Native builder with temporary mbstring extension"
+  },
+  {
+    "name": "cpp-build",
+    "command": [
+      "clang++",
+      "-std=c++20",
+      "-O3",
+      "-DNDEBUG",
+      "-I/tmp/scpp-borrow-20261021-0839/after/runtime/include",
+      "/tmp/scpp-borrow-20261021-0839/after/specs/planning/benchmarks/string_defaults/bench.cpp",
+      "-o",
+      "/tmp/scpp-borrow-20261021-0839/runtime-paired/bench_cpp"
+    ],
+    "cwd": "/tmp/scpp-borrow-20261021-0839/after",
+    "seconds": 1.593,
+    "code": 0,
+    "expected": 0,
+    "executor": "subprocess",
+    "executor_reason": "subprocess"
+  },
+  {
+    "name": "round1-before_concrete",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/tmp/scpp-borrow-20261021-0839/runtime-paired/before_concrete-cache/artifacts/af448ad3c0650aad926ec3f82de332c2a536ce997da64a4f5d31153318e055b7.bin"
+    ],
+    "cwd": "/tmp/scpp-borrow-20261021-0839/after",
+    "seconds": 11.464,
+    "code": 0,
+    "expected": 0,
+    "executor": "subprocess",
+    "executor_reason": "subprocess"
+  },
+  {
+    "name": "round1-after_concrete",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/tmp/scpp-borrow-20261021-0839/runtime-paired/after_concrete-cache/artifacts/e741ffd3068d61a9a9b6e491881478b4c80f5764f4187e658143d5d162081760.bin"
+    ],
+    "cwd": "/tmp/scpp-borrow-20261021-0839/after",
+    "seconds": 10.435,
+    "code": 0,
+    "expected": 0,
+    "executor": "subprocess",
+    "executor_reason": "subprocess"
+  },
+  {
+    "name": "round1-before_ordinary",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/tmp/scpp-borrow-20261021-0839/runtime-paired/before_ordinary-cache/artifacts/10cb62b8ade8a12e19248d6521272279ee7a8efb974f9babf5d337aef6766d78.bin"
+    ],
+    "cwd": "/tmp/scpp-borrow-20261021-0839/after",
+    "seconds": 11.352,
+    "code": 0,
+    "expected": 0,
+    "executor": "subprocess",
+    "executor_reason": "subprocess"
+  },
+  {
+    "name": "round1-after_ordinary",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/tmp/scpp-borrow-20261021-0839/runtime-paired/after_ordinary-cache/artifacts/1028da8c49f8c405c4fa1b536b4099ee222a36b585d3d1ba3956766b8787bc68.bin"
+    ],
+    "cwd": "/tmp/scpp-borrow-20261021-0839/after",
+    "seconds": 9.897,
+    "code": 0,
+    "expected": 0,
+    "executor": "subprocess",
+    "executor_reason": "subprocess"
+  },
+  {
+    "name": "round1-runtime",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/tmp/scpp-borrow-20261021-0839/runtime-paired/bench_cpp",
+      "/tmp/scpp-borrow-20261021-0839/runtime-paired/corpus.tsv",
+      "runtime"
+    ],
+    "cwd": "/tmp/scpp-borrow-20261021-0839/after",
+    "seconds": 10.61,
+    "code": 0,
+    "expected": 0,
+    "executor": "subprocess",
+    "executor_reason": "subprocess"
+  },
+  {
+    "name": "round1-cpp",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/tmp/scpp-borrow-20261021-0839/runtime-paired/bench_cpp",
+      "/tmp/scpp-borrow-20261021-0839/runtime-paired/corpus.tsv",
+      "cpp"
+    ],
+    "cwd": "/tmp/scpp-borrow-20261021-0839/after",
+    "seconds": 11.448,
+    "code": 0,
+    "expected": 0,
+    "executor": "subprocess",
+    "executor_reason": "subprocess"
+  },
+  {
+    "name": "round2-after_concrete",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/tmp/scpp-borrow-20261021-0839/runtime-paired/after_concrete-cache/artifacts/e741ffd3068d61a9a9b6e491881478b4c80f5764f4187e658143d5d162081760.bin"
+    ],
+    "cwd": "/tmp/scpp-borrow-20261021-0839/after",
+    "seconds": 10.422,
+    "code": 0,
+    "expected": 0,
+    "executor": "subprocess",
+    "executor_reason": "subprocess"
+  },
+  {
+    "name": "round2-before_concrete",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/tmp/scpp-borrow-20261021-0839/runtime-paired/before_concrete-cache/artifacts/af448ad3c0650aad926ec3f82de332c2a536ce997da64a4f5d31153318e055b7.bin"
+    ],
+    "cwd": "/tmp/scpp-borrow-20261021-0839/after",
+    "seconds": 12.018,
+    "code": 0,
+    "expected": 0,
+    "executor": "subprocess",
+    "executor_reason": "subprocess"
+  },
+  {
+    "name": "round2-after_ordinary",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/tmp/scpp-borrow-20261021-0839/runtime-paired/after_ordinary-cache/artifacts/1028da8c49f8c405c4fa1b536b4099ee222a36b585d3d1ba3956766b8787bc68.bin"
+    ],
+    "cwd": "/tmp/scpp-borrow-20261021-0839/after",
+    "seconds": 9.904,
+    "code": 0,
+    "expected": 0,
+    "executor": "subprocess",
+    "executor_reason": "subprocess"
+  },
+  {
+    "name": "round2-before_ordinary",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/tmp/scpp-borrow-20261021-0839/runtime-paired/before_ordinary-cache/artifacts/10cb62b8ade8a12e19248d6521272279ee7a8efb974f9babf5d337aef6766d78.bin"
+    ],
+    "cwd": "/tmp/scpp-borrow-20261021-0839/after",
+    "seconds": 11.448,
+    "code": 0,
+    "expected": 0,
+    "executor": "subprocess",
+    "executor_reason": "subprocess"
+  },
+  {
+    "name": "round2-runtime",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/tmp/scpp-borrow-20261021-0839/runtime-paired/bench_cpp",
+      "/tmp/scpp-borrow-20261021-0839/runtime-paired/corpus.tsv",
+      "runtime"
+    ],
+    "cwd": "/tmp/scpp-borrow-20261021-0839/after",
+    "seconds": 11.026,
+    "code": 0,
+    "expected": 0,
+    "executor": "subprocess",
+    "executor_reason": "subprocess"
+  },
+  {
+    "name": "round2-cpp",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/tmp/scpp-borrow-20261021-0839/runtime-paired/bench_cpp",
+      "/tmp/scpp-borrow-20261021-0839/runtime-paired/corpus.tsv",
+      "cpp"
+    ],
+    "cwd": "/tmp/scpp-borrow-20261021-0839/after",
+    "seconds": 11.236,
+    "code": 0,
+    "expected": 0,
+    "executor": "subprocess",
+    "executor_reason": "subprocess"
+  },
+  {
+    "name": "round3-before_concrete",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/tmp/scpp-borrow-20261021-0839/runtime-paired/before_concrete-cache/artifacts/af448ad3c0650aad926ec3f82de332c2a536ce997da64a4f5d31153318e055b7.bin"
+    ],
+    "cwd": "/tmp/scpp-borrow-20261021-0839/after",
+    "seconds": 12.005,
+    "code": 0,
+    "expected": 0,
+    "executor": "subprocess",
+    "executor_reason": "subprocess"
+  },
+  {
+    "name": "round3-after_concrete",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/tmp/scpp-borrow-20261021-0839/runtime-paired/after_concrete-cache/artifacts/e741ffd3068d61a9a9b6e491881478b4c80f5764f4187e658143d5d162081760.bin"
+    ],
+    "cwd": "/tmp/scpp-borrow-20261021-0839/after",
+    "seconds": 10.556,
+    "code": 0,
+    "expected": 0,
+    "executor": "subprocess",
+    "executor_reason": "subprocess"
+  },
+  {
+    "name": "round3-before_ordinary",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/tmp/scpp-borrow-20261021-0839/runtime-paired/before_ordinary-cache/artifacts/10cb62b8ade8a12e19248d6521272279ee7a8efb974f9babf5d337aef6766d78.bin"
+    ],
+    "cwd": "/tmp/scpp-borrow-20261021-0839/after",
+    "seconds": 11.321,
+    "code": 0,
+    "expected": 0,
+    "executor": "subprocess",
+    "executor_reason": "subprocess"
+  },
+  {
+    "name": "round3-after_ordinary",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/tmp/scpp-borrow-20261021-0839/runtime-paired/after_ordinary-cache/artifacts/1028da8c49f8c405c4fa1b536b4099ee222a36b585d3d1ba3956766b8787bc68.bin"
+    ],
+    "cwd": "/tmp/scpp-borrow-20261021-0839/after",
+    "seconds": 9.076,
+    "code": 0,
+    "expected": 0,
+    "executor": "subprocess",
+    "executor_reason": "subprocess"
+  },
+  {
+    "name": "round3-runtime",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/tmp/scpp-borrow-20261021-0839/runtime-paired/bench_cpp",
+      "/tmp/scpp-borrow-20261021-0839/runtime-paired/corpus.tsv",
+      "runtime"
+    ],
+    "cwd": "/tmp/scpp-borrow-20261021-0839/after",
+    "seconds": 10.839,
+    "code": 0,
+    "expected": 0,
+    "executor": "subprocess",
+    "executor_reason": "subprocess"
+  },
+  {
+    "name": "round3-cpp",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/tmp/scpp-borrow-20261021-0839/runtime-paired/bench_cpp",
+      "/tmp/scpp-borrow-20261021-0839/runtime-paired/corpus.tsv",
+      "cpp"
+    ],
+    "cwd": "/tmp/scpp-borrow-20261021-0839/after",
+    "seconds": 11.378,
+    "code": 0,
+    "expected": 0,
+    "executor": "subprocess",
+    "executor_reason": "subprocess"
+  }
+]

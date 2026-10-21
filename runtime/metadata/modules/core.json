@@ -130,6 +130,7 @@
     {"id":"core.is_float.mixed","name":"is_float","parameters":[{"name":"value","type":"mixed","passing":"observe"}],"returns":"bool"},
     {
       "id": "core.strlen",
+      "snapshot_borrow_safe": true,
       "name": "strlen",
       "parameters": [
         {

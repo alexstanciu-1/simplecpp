@@ -6,6 +6,7 @@
 #include <array>
 #include <cctype>
 #include <cstdint>
+#include <cstring>
 #include <cmath>
 #include <iomanip>
 #include <limits>
@@ -107,11 +108,13 @@ inline unsigned char ascii_tolower_byte(unsigned char value) {
 
 inline int ascii_compare_sensitive(std::string_view left, std::string_view right) {
 	const auto shared = left.size() < right.size() ? left.size() : right.size();
-	for (std::size_t index = 0; index < shared; ++index) {
-		const auto left_byte = static_cast<unsigned char>(left[index]);
-		const auto right_byte = static_cast<unsigned char>(right[index]);
-		if (left_byte != right_byte) {
-			return static_cast<int>(left_byte) - static_cast<int>(right_byte);
+	// Exact unsigned-byte ordering, including NUL and malformed UTF-8. Only
+	// the sign of a differing-byte result is required by substr_compare's contract.
+	// Empty views can have null data, so do not pass them to memcmp.
+	if (shared != 0) {
+		const auto compared = std::memcmp(left.data(), right.data(), shared);
+		if (compared != 0) {
+			return compared;
 		}
 	}
 	if (left.size() == right.size()) {

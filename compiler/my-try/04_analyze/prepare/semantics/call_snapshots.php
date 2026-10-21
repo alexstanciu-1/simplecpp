@@ -1,0 +1,45 @@
+<?php
+namespace scpp\compiler;
+
+/** Bounded snapshot elision; uncertainty preserves the already-admitted value boundary. */
+final class Call_Snapshot_Preparation
+{
+	/** Two linear scans, with no body traversal, alias graph or additional retained owners. */
+	public static function prepare(prepared_call $call, Storage $syntax /** Storage<expression_node> */): void
+	{
+		$target = weakref_get($call->target);
+		if (!($target instanceof runtime_function_definition)) { return; }
+		$provider = object_cast($target, runtime_function_definition::class);
+		if (!$provider->snapshot_borrow_safe) { return; }
+		if (($call->signature->reference_return !== null) || ($call->variadic_parameter !== null)) { return; }
+		$arguments /** Storage<prepared_call_argument> */ = $call->arguments;
+		if ($arguments->count() !== $call->fixed_count) { return; }
+		$string_type = Language_Types::string_type(Model::$language_scope);
+
+		// Every argument must be harmless: even a later call through an unrelated
+		// name may mutate an earlier string through an alias. Do not inspect callees.
+		foreach ($arguments as $argument) {
+			if ($argument->boundary !== value_boundary_operation::copy_value) { return; }
+			$conversion = $argument->require_conversion();
+			if ($conversion->operation !== conversion_operation::identity) { return; }
+			$value = $syntax[$argument->source_index]->require_preparation();
+			$family = Type_Queries::canonical($value->type)->family();
+			if (!$value->type->matches($string_type) && ($family !== type_family::integer)
+				&& ($family !== type_family::boolean) && ($family !== type_family::floating)) { return; }
+			if ($value instanceof prepared_literal) { continue; }
+			if (!($value instanceof prepared_variable_reference)) { return; }
+			$place = $value->place;
+			if ($place === null) { return; }
+			if (!$place->borrowable() || ($place->base() !== null)) { return; }
+		}
+
+		// Borrow only existing strings. Scalar and literal temporaries keep ordinary
+		// value transport, and the source call still evaluates arguments in order.
+		foreach ($arguments as $argument) {
+			$value = $syntax[$argument->source_index]->require_preparation();
+			if (($value instanceof prepared_variable_reference) && $value->type->matches($string_type)) {
+				$argument->borrow_snapshot = true;
+			}
+		}
+	}
+}

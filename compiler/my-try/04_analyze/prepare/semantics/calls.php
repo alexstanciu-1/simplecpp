@@ -137,6 +137,8 @@ final class Call_Preparation
 			$prepared_arguments->append($prepared_argument);
 		}
 
+		Call_Snapshot_Preparation::prepare($facts, $arguments);
+
 		if ($facts->signature->reference_return !== null) {
 			$origin /** reference_return_contract */ = $facts->signature->reference_return;
 			$facts->place = $arguments[$origin->parameter_index()]->require_preparation()->place;

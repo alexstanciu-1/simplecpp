@@ -1,0 +1,4 @@
+/tmp/scpp-borrow-20261021-0839/regression-02/split_order.artifacts-hiresa_w/sources/units/n6d61696e/n6d61696e2e706873.cpp:7:2: warning: expression result unused [-Wunused-value]
+    7 |         static_cast<scpp::int_t<>>(local_calls++);
+      |         ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+1 warning generated.

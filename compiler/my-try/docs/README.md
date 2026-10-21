@@ -20,6 +20,12 @@ explicit callable storage remains a separate prelowering gap. The earlier
 
 ## Reading map
 
+The [safe string-argument snapshot optimization](../../../specs/planning/results/string_borrow_2026_10_21/README.md)
+preserves value semantics and retains copies when proof is missing. Its
+[provider contract](../../../specs/runtime_module_metadata.md#snapshot-borrowing-guarantee)
+and [focused tests](testing.md#conservative-call-snapshot-elision) also document
+the bounded proof and compilation-cost measurement.
+
 The completed bounded [runtime module integration plan](planning/runtime_module_integration.md)
 covers storage, members, protocols, signatures and build composition. Its
 [closeout audit](planning/runtime_module_closeout.md) separates supported foundations

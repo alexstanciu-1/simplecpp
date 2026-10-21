@@ -695,6 +695,8 @@ final class prepared_method_receiver
 /** A reference argument has no conversion; a by-value argument requires one decision. */
 final class prepared_call_argument
 {
+	/** Optional implementation of copy_value; absence always retains the semantic snapshot. */
+	public bool $borrow_snapshot = false;
 	/** Runtime argument's position in the original syntax; compile-time inputs are omitted. */
 	public int $source_index;
 	public value_boundary_operation $boundary;
