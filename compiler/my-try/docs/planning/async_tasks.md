@@ -553,3 +553,38 @@ indexed edit-versus-fresh parity. Final uploaded source hashes were verified.
 `43ab680af5c679ef100d4af02886c3afb88384612559103d5eae3dc5e865d5e0`. This slice changes metadata/tests only, adds no runtime behavior,
 and runs no full matrix or native compiler rebuild. V-R02 remains partial; overall
 original issue closure remains 56/64.
+
+
+### Inferred keyed result targets — 2026-10-21
+
+Sixteen metadata contracts admit int/string custom keys without an explicit result
+target: vector/hash input, run/start and one-argument/context workers. Generic
+worker results retain void-to-null output mapping. Background index callbacks
+retain capture-transfer requirements; synchronous coordinator callbacks do not
+cross a thread boundary. Unsupported key types reject during preparation.
+
+The runtime-first probe found absent background default-target overloads. Two
+bounded adapters now construct the inferred hash target and delegate to the
+existing retained custom-target path; no new scheduler, lifetime or publication
+owner is introduced. Source coverage exercises all 32 value/void combinations,
+duplicate-key overwrite, int/string output lookup, background joins, callback
+errors and neighboring overload controls.
+
+Nullable custom keys without an explicit target remain open: the inferred key
+family must account for append keys as well as explicit keys, especially nullable
+string keys. Explicit nullable-int vector targets are already proved separately.
+This checkpoint does not decide that additional result-shape policy or close the
+remaining error-handler, cross-carrier-target or boxed-input acceptance work.
+
+
+Dev002 `task-default-index-source` passes all 37 focused default-prelowered
+cold/warm checks. `task-default-index-errors` passes synchronous/background index
+exception cleanup with production sanitizers plus retained target-shape edit,
+reject/repair/replay and fresh parity. `task-default-index-04` passes enabled and
+disabled runtime sanitizer probes; the adapters reuse disabled-target diagnostics.
+The initial missing-overload failure and duplicate test-harness runtime-build
+attempt remain archived. Final uploaded source hashes were verified.
+
+[Inferred-target evidence](task-default-index-evidence.tar.gz), SHA-256:
+`663c1f7d735de3182ecf0821ec8def392d8578b9588a5135951e73dbd0669030`. No full matrix or native compiler rebuild was run. V-R02 remains
+partial and overall original issue closure remains 56/64.

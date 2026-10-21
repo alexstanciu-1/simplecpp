@@ -5449,6 +5449,1678 @@
         }
       ],
       "returns": "task_batch"
+    },
+    {
+      "id": "tasks.run.vector.keyed.int",
+      "name": "task_run",
+      "type_parameters": [
+        "T",
+        "R"
+      ],
+      "transfer_types": [
+        "T",
+        "R"
+      ],
+      "parameters": [
+        {
+          "name": "items",
+          "type": {
+            "name": "vector",
+            "arguments": [
+              {
+                "parameter": "T"
+              }
+            ]
+          },
+          "passing": "value"
+        },
+        {
+          "name": "workers",
+          "type": "int",
+          "passing": "value"
+        },
+        {
+          "name": "callback",
+          "type": {
+            "callable": {
+              "parameters": [
+                {
+                  "name": "p0",
+                  "type": {
+                    "parameter": "T"
+                  },
+                  "passing": "value"
+                }
+              ],
+              "returns": {
+                "parameter": "R"
+              }
+            }
+          },
+          "passing": "value",
+          "requires_transfer": true
+        },
+        {
+          "name": "index_callback",
+          "type": {
+            "callable": {
+              "parameters": [
+                {
+                  "name": "item",
+                  "type": {
+                    "parameter": "T"
+                  },
+                  "passing": "value"
+                }
+              ],
+              "returns": "int"
+            }
+          },
+          "passing": "value"
+        },
+        {
+          "name": "result",
+          "type": "null",
+          "passing": "value",
+          "default": {
+            "null": null
+          }
+        },
+        {
+          "name": "error_handler",
+          "type": "null",
+          "passing": "value",
+          "default": {
+            "null": null
+          }
+        },
+        {
+          "name": "timeout_ms",
+          "type": "int",
+          "passing": "value",
+          "default": {
+            "int": 0
+          }
+        }
+      ],
+      "returns": {
+        "name": "hash",
+        "arguments": [
+          {
+            "parameter": "R",
+            "void_to_null": true
+          },
+          "int"
+        ]
+      }
+    },
+    {
+      "id": "tasks.run.vector.keyed.string",
+      "name": "task_run",
+      "type_parameters": [
+        "T",
+        "R"
+      ],
+      "transfer_types": [
+        "T",
+        "R"
+      ],
+      "parameters": [
+        {
+          "name": "items",
+          "type": {
+            "name": "vector",
+            "arguments": [
+              {
+                "parameter": "T"
+              }
+            ]
+          },
+          "passing": "value"
+        },
+        {
+          "name": "workers",
+          "type": "int",
+          "passing": "value"
+        },
+        {
+          "name": "callback",
+          "type": {
+            "callable": {
+              "parameters": [
+                {
+                  "name": "p0",
+                  "type": {
+                    "parameter": "T"
+                  },
+                  "passing": "value"
+                }
+              ],
+              "returns": {
+                "parameter": "R"
+              }
+            }
+          },
+          "passing": "value",
+          "requires_transfer": true
+        },
+        {
+          "name": "index_callback",
+          "type": {
+            "callable": {
+              "parameters": [
+                {
+                  "name": "item",
+                  "type": {
+                    "parameter": "T"
+                  },
+                  "passing": "value"
+                }
+              ],
+              "returns": "string"
+            }
+          },
+          "passing": "value"
+        },
+        {
+          "name": "result",
+          "type": "null",
+          "passing": "value",
+          "default": {
+            "null": null
+          }
+        },
+        {
+          "name": "error_handler",
+          "type": "null",
+          "passing": "value",
+          "default": {
+            "null": null
+          }
+        },
+        {
+          "name": "timeout_ms",
+          "type": "int",
+          "passing": "value",
+          "default": {
+            "int": 0
+          }
+        }
+      ],
+      "returns": {
+        "name": "hash",
+        "arguments": [
+          {
+            "parameter": "R",
+            "void_to_null": true
+          },
+          "string"
+        ]
+      }
+    },
+    {
+      "id": "tasks.start.vector.keyed.int",
+      "name": "task_start",
+      "type_parameters": [
+        "T",
+        "R"
+      ],
+      "transfer_types": [
+        "T",
+        "R"
+      ],
+      "parameters": [
+        {
+          "name": "items",
+          "type": {
+            "name": "vector",
+            "arguments": [
+              {
+                "parameter": "T"
+              }
+            ]
+          },
+          "passing": "value"
+        },
+        {
+          "name": "workers",
+          "type": "int",
+          "passing": "value"
+        },
+        {
+          "name": "callback",
+          "type": {
+            "callable": {
+              "parameters": [
+                {
+                  "name": "p0",
+                  "type": {
+                    "parameter": "T"
+                  },
+                  "passing": "value"
+                }
+              ],
+              "returns": {
+                "parameter": "R"
+              }
+            }
+          },
+          "passing": "value",
+          "requires_transfer": true
+        },
+        {
+          "name": "index_callback",
+          "type": {
+            "callable": {
+              "parameters": [
+                {
+                  "name": "item",
+                  "type": {
+                    "parameter": "T"
+                  },
+                  "passing": "value"
+                }
+              ],
+              "returns": "int"
+            }
+          },
+          "passing": "value",
+          "requires_transfer": true
+        },
+        {
+          "name": "result",
+          "type": "null",
+          "passing": "value",
+          "default": {
+            "null": null
+          }
+        },
+        {
+          "name": "error_handler",
+          "type": "null",
+          "passing": "value",
+          "default": {
+            "null": null
+          }
+        },
+        {
+          "name": "timeout_ms",
+          "type": "int",
+          "passing": "value",
+          "default": {
+            "int": 0
+          }
+        }
+      ],
+      "returns": "task_batch"
+    },
+    {
+      "id": "tasks.start.vector.keyed.string",
+      "name": "task_start",
+      "type_parameters": [
+        "T",
+        "R"
+      ],
+      "transfer_types": [
+        "T",
+        "R"
+      ],
+      "parameters": [
+        {
+          "name": "items",
+          "type": {
+            "name": "vector",
+            "arguments": [
+              {
+                "parameter": "T"
+              }
+            ]
+          },
+          "passing": "value"
+        },
+        {
+          "name": "workers",
+          "type": "int",
+          "passing": "value"
+        },
+        {
+          "name": "callback",
+          "type": {
+            "callable": {
+              "parameters": [
+                {
+                  "name": "p0",
+                  "type": {
+                    "parameter": "T"
+                  },
+                  "passing": "value"
+                }
+              ],
+              "returns": {
+                "parameter": "R"
+              }
+            }
+          },
+          "passing": "value",
+          "requires_transfer": true
+        },
+        {
+          "name": "index_callback",
+          "type": {
+            "callable": {
+              "parameters": [
+                {
+                  "name": "item",
+                  "type": {
+                    "parameter": "T"
+                  },
+                  "passing": "value"
+                }
+              ],
+              "returns": "string"
+            }
+          },
+          "passing": "value",
+          "requires_transfer": true
+        },
+        {
+          "name": "result",
+          "type": "null",
+          "passing": "value",
+          "default": {
+            "null": null
+          }
+        },
+        {
+          "name": "error_handler",
+          "type": "null",
+          "passing": "value",
+          "default": {
+            "null": null
+          }
+        },
+        {
+          "name": "timeout_ms",
+          "type": "int",
+          "passing": "value",
+          "default": {
+            "int": 0
+          }
+        }
+      ],
+      "returns": "task_batch"
+    },
+    {
+      "id": "tasks.run.vector.context.keyed.int",
+      "name": "task_run",
+      "type_parameters": [
+        "T",
+        "R"
+      ],
+      "transfer_types": [
+        "T",
+        "R"
+      ],
+      "parameters": [
+        {
+          "name": "items",
+          "type": {
+            "name": "vector",
+            "arguments": [
+              {
+                "parameter": "T"
+              }
+            ]
+          },
+          "passing": "value"
+        },
+        {
+          "name": "workers",
+          "type": "int",
+          "passing": "value"
+        },
+        {
+          "name": "callback",
+          "type": {
+            "callable": {
+              "parameters": [
+                {
+                  "name": "p0",
+                  "type": {
+                    "parameter": "T"
+                  },
+                  "passing": "value"
+                },
+                {
+                  "name": "p1",
+                  "type": "task_context",
+                  "passing": "value"
+                }
+              ],
+              "returns": {
+                "parameter": "R"
+              }
+            }
+          },
+          "passing": "value",
+          "requires_transfer": true
+        },
+        {
+          "name": "index_callback",
+          "type": {
+            "callable": {
+              "parameters": [
+                {
+                  "name": "item",
+                  "type": {
+                    "parameter": "T"
+                  },
+                  "passing": "value"
+                }
+              ],
+              "returns": "int"
+            }
+          },
+          "passing": "value"
+        },
+        {
+          "name": "result",
+          "type": "null",
+          "passing": "value",
+          "default": {
+            "null": null
+          }
+        },
+        {
+          "name": "error_handler",
+          "type": "null",
+          "passing": "value",
+          "default": {
+            "null": null
+          }
+        },
+        {
+          "name": "timeout_ms",
+          "type": "int",
+          "passing": "value",
+          "default": {
+            "int": 0
+          }
+        }
+      ],
+      "returns": {
+        "name": "hash",
+        "arguments": [
+          {
+            "parameter": "R",
+            "void_to_null": true
+          },
+          "int"
+        ]
+      }
+    },
+    {
+      "id": "tasks.run.vector.context.keyed.string",
+      "name": "task_run",
+      "type_parameters": [
+        "T",
+        "R"
+      ],
+      "transfer_types": [
+        "T",
+        "R"
+      ],
+      "parameters": [
+        {
+          "name": "items",
+          "type": {
+            "name": "vector",
+            "arguments": [
+              {
+                "parameter": "T"
+              }
+            ]
+          },
+          "passing": "value"
+        },
+        {
+          "name": "workers",
+          "type": "int",
+          "passing": "value"
+        },
+        {
+          "name": "callback",
+          "type": {
+            "callable": {
+              "parameters": [
+                {
+                  "name": "p0",
+                  "type": {
+                    "parameter": "T"
+                  },
+                  "passing": "value"
+                },
+                {
+                  "name": "p1",
+                  "type": "task_context",
+                  "passing": "value"
+                }
+              ],
+              "returns": {
+                "parameter": "R"
+              }
+            }
+          },
+          "passing": "value",
+          "requires_transfer": true
+        },
+        {
+          "name": "index_callback",
+          "type": {
+            "callable": {
+              "parameters": [
+                {
+                  "name": "item",
+                  "type": {
+                    "parameter": "T"
+                  },
+                  "passing": "value"
+                }
+              ],
+              "returns": "string"
+            }
+          },
+          "passing": "value"
+        },
+        {
+          "name": "result",
+          "type": "null",
+          "passing": "value",
+          "default": {
+            "null": null
+          }
+        },
+        {
+          "name": "error_handler",
+          "type": "null",
+          "passing": "value",
+          "default": {
+            "null": null
+          }
+        },
+        {
+          "name": "timeout_ms",
+          "type": "int",
+          "passing": "value",
+          "default": {
+            "int": 0
+          }
+        }
+      ],
+      "returns": {
+        "name": "hash",
+        "arguments": [
+          {
+            "parameter": "R",
+            "void_to_null": true
+          },
+          "string"
+        ]
+      }
+    },
+    {
+      "id": "tasks.start.vector.context.keyed.int",
+      "name": "task_start",
+      "type_parameters": [
+        "T",
+        "R"
+      ],
+      "transfer_types": [
+        "T",
+        "R"
+      ],
+      "parameters": [
+        {
+          "name": "items",
+          "type": {
+            "name": "vector",
+            "arguments": [
+              {
+                "parameter": "T"
+              }
+            ]
+          },
+          "passing": "value"
+        },
+        {
+          "name": "workers",
+          "type": "int",
+          "passing": "value"
+        },
+        {
+          "name": "callback",
+          "type": {
+            "callable": {
+              "parameters": [
+                {
+                  "name": "p0",
+                  "type": {
+                    "parameter": "T"
+                  },
+                  "passing": "value"
+                },
+                {
+                  "name": "p1",
+                  "type": "task_context",
+                  "passing": "value"
+                }
+              ],
+              "returns": {
+                "parameter": "R"
+              }
+            }
+          },
+          "passing": "value",
+          "requires_transfer": true
+        },
+        {
+          "name": "index_callback",
+          "type": {
+            "callable": {
+              "parameters": [
+                {
+                  "name": "item",
+                  "type": {
+                    "parameter": "T"
+                  },
+                  "passing": "value"
+                }
+              ],
+              "returns": "int"
+            }
+          },
+          "passing": "value",
+          "requires_transfer": true
+        },
+        {
+          "name": "result",
+          "type": "null",
+          "passing": "value",
+          "default": {
+            "null": null
+          }
+        },
+        {
+          "name": "error_handler",
+          "type": "null",
+          "passing": "value",
+          "default": {
+            "null": null
+          }
+        },
+        {
+          "name": "timeout_ms",
+          "type": "int",
+          "passing": "value",
+          "default": {
+            "int": 0
+          }
+        }
+      ],
+      "returns": "task_batch"
+    },
+    {
+      "id": "tasks.start.vector.context.keyed.string",
+      "name": "task_start",
+      "type_parameters": [
+        "T",
+        "R"
+      ],
+      "transfer_types": [
+        "T",
+        "R"
+      ],
+      "parameters": [
+        {
+          "name": "items",
+          "type": {
+            "name": "vector",
+            "arguments": [
+              {
+                "parameter": "T"
+              }
+            ]
+          },
+          "passing": "value"
+        },
+        {
+          "name": "workers",
+          "type": "int",
+          "passing": "value"
+        },
+        {
+          "name": "callback",
+          "type": {
+            "callable": {
+              "parameters": [
+                {
+                  "name": "p0",
+                  "type": {
+                    "parameter": "T"
+                  },
+                  "passing": "value"
+                },
+                {
+                  "name": "p1",
+                  "type": "task_context",
+                  "passing": "value"
+                }
+              ],
+              "returns": {
+                "parameter": "R"
+              }
+            }
+          },
+          "passing": "value",
+          "requires_transfer": true
+        },
+        {
+          "name": "index_callback",
+          "type": {
+            "callable": {
+              "parameters": [
+                {
+                  "name": "item",
+                  "type": {
+                    "parameter": "T"
+                  },
+                  "passing": "value"
+                }
+              ],
+              "returns": "string"
+            }
+          },
+          "passing": "value",
+          "requires_transfer": true
+        },
+        {
+          "name": "result",
+          "type": "null",
+          "passing": "value",
+          "default": {
+            "null": null
+          }
+        },
+        {
+          "name": "error_handler",
+          "type": "null",
+          "passing": "value",
+          "default": {
+            "null": null
+          }
+        },
+        {
+          "name": "timeout_ms",
+          "type": "int",
+          "passing": "value",
+          "default": {
+            "int": 0
+          }
+        }
+      ],
+      "returns": "task_batch"
+    },
+    {
+      "id": "tasks.run.hash.keyed.int",
+      "name": "task_run",
+      "type_parameters": [
+        "T",
+        "R",
+        "K"
+      ],
+      "transfer_types": [
+        "T",
+        "R"
+      ],
+      "parameters": [
+        {
+          "name": "items",
+          "type": {
+            "name": "hash",
+            "arguments": [
+              {
+                "parameter": "T"
+              },
+              {
+                "parameter": "K"
+              }
+            ]
+          },
+          "passing": "value"
+        },
+        {
+          "name": "workers",
+          "type": "int",
+          "passing": "value"
+        },
+        {
+          "name": "callback",
+          "type": {
+            "callable": {
+              "parameters": [
+                {
+                  "name": "p0",
+                  "type": {
+                    "parameter": "T"
+                  },
+                  "passing": "value"
+                }
+              ],
+              "returns": {
+                "parameter": "R"
+              }
+            }
+          },
+          "passing": "value",
+          "requires_transfer": true
+        },
+        {
+          "name": "index_callback",
+          "type": {
+            "callable": {
+              "parameters": [
+                {
+                  "name": "item",
+                  "type": {
+                    "parameter": "T"
+                  },
+                  "passing": "value"
+                }
+              ],
+              "returns": "int"
+            }
+          },
+          "passing": "value"
+        },
+        {
+          "name": "result",
+          "type": "null",
+          "passing": "value",
+          "default": {
+            "null": null
+          }
+        },
+        {
+          "name": "error_handler",
+          "type": "null",
+          "passing": "value",
+          "default": {
+            "null": null
+          }
+        },
+        {
+          "name": "timeout_ms",
+          "type": "int",
+          "passing": "value",
+          "default": {
+            "int": 0
+          }
+        }
+      ],
+      "returns": {
+        "name": "hash",
+        "arguments": [
+          {
+            "parameter": "R",
+            "void_to_null": true
+          },
+          "int"
+        ]
+      }
+    },
+    {
+      "id": "tasks.run.hash.keyed.string",
+      "name": "task_run",
+      "type_parameters": [
+        "T",
+        "R",
+        "K"
+      ],
+      "transfer_types": [
+        "T",
+        "R"
+      ],
+      "parameters": [
+        {
+          "name": "items",
+          "type": {
+            "name": "hash",
+            "arguments": [
+              {
+                "parameter": "T"
+              },
+              {
+                "parameter": "K"
+              }
+            ]
+          },
+          "passing": "value"
+        },
+        {
+          "name": "workers",
+          "type": "int",
+          "passing": "value"
+        },
+        {
+          "name": "callback",
+          "type": {
+            "callable": {
+              "parameters": [
+                {
+                  "name": "p0",
+                  "type": {
+                    "parameter": "T"
+                  },
+                  "passing": "value"
+                }
+              ],
+              "returns": {
+                "parameter": "R"
+              }
+            }
+          },
+          "passing": "value",
+          "requires_transfer": true
+        },
+        {
+          "name": "index_callback",
+          "type": {
+            "callable": {
+              "parameters": [
+                {
+                  "name": "item",
+                  "type": {
+                    "parameter": "T"
+                  },
+                  "passing": "value"
+                }
+              ],
+              "returns": "string"
+            }
+          },
+          "passing": "value"
+        },
+        {
+          "name": "result",
+          "type": "null",
+          "passing": "value",
+          "default": {
+            "null": null
+          }
+        },
+        {
+          "name": "error_handler",
+          "type": "null",
+          "passing": "value",
+          "default": {
+            "null": null
+          }
+        },
+        {
+          "name": "timeout_ms",
+          "type": "int",
+          "passing": "value",
+          "default": {
+            "int": 0
+          }
+        }
+      ],
+      "returns": {
+        "name": "hash",
+        "arguments": [
+          {
+            "parameter": "R",
+            "void_to_null": true
+          },
+          "string"
+        ]
+      }
+    },
+    {
+      "id": "tasks.start.hash.keyed.int",
+      "name": "task_start",
+      "type_parameters": [
+        "T",
+        "R",
+        "K"
+      ],
+      "transfer_types": [
+        "T",
+        "R"
+      ],
+      "parameters": [
+        {
+          "name": "items",
+          "type": {
+            "name": "hash",
+            "arguments": [
+              {
+                "parameter": "T"
+              },
+              {
+                "parameter": "K"
+              }
+            ]
+          },
+          "passing": "value"
+        },
+        {
+          "name": "workers",
+          "type": "int",
+          "passing": "value"
+        },
+        {
+          "name": "callback",
+          "type": {
+            "callable": {
+              "parameters": [
+                {
+                  "name": "p0",
+                  "type": {
+                    "parameter": "T"
+                  },
+                  "passing": "value"
+                }
+              ],
+              "returns": {
+                "parameter": "R"
+              }
+            }
+          },
+          "passing": "value",
+          "requires_transfer": true
+        },
+        {
+          "name": "index_callback",
+          "type": {
+            "callable": {
+              "parameters": [
+                {
+                  "name": "item",
+                  "type": {
+                    "parameter": "T"
+                  },
+                  "passing": "value"
+                }
+              ],
+              "returns": "int"
+            }
+          },
+          "passing": "value",
+          "requires_transfer": true
+        },
+        {
+          "name": "result",
+          "type": "null",
+          "passing": "value",
+          "default": {
+            "null": null
+          }
+        },
+        {
+          "name": "error_handler",
+          "type": "null",
+          "passing": "value",
+          "default": {
+            "null": null
+          }
+        },
+        {
+          "name": "timeout_ms",
+          "type": "int",
+          "passing": "value",
+          "default": {
+            "int": 0
+          }
+        }
+      ],
+      "returns": "task_batch"
+    },
+    {
+      "id": "tasks.start.hash.keyed.string",
+      "name": "task_start",
+      "type_parameters": [
+        "T",
+        "R",
+        "K"
+      ],
+      "transfer_types": [
+        "T",
+        "R"
+      ],
+      "parameters": [
+        {
+          "name": "items",
+          "type": {
+            "name": "hash",
+            "arguments": [
+              {
+                "parameter": "T"
+              },
+              {
+                "parameter": "K"
+              }
+            ]
+          },
+          "passing": "value"
+        },
+        {
+          "name": "workers",
+          "type": "int",
+          "passing": "value"
+        },
+        {
+          "name": "callback",
+          "type": {
+            "callable": {
+              "parameters": [
+                {
+                  "name": "p0",
+                  "type": {
+                    "parameter": "T"
+                  },
+                  "passing": "value"
+                }
+              ],
+              "returns": {
+                "parameter": "R"
+              }
+            }
+          },
+          "passing": "value",
+          "requires_transfer": true
+        },
+        {
+          "name": "index_callback",
+          "type": {
+            "callable": {
+              "parameters": [
+                {
+                  "name": "item",
+                  "type": {
+                    "parameter": "T"
+                  },
+                  "passing": "value"
+                }
+              ],
+              "returns": "string"
+            }
+          },
+          "passing": "value",
+          "requires_transfer": true
+        },
+        {
+          "name": "result",
+          "type": "null",
+          "passing": "value",
+          "default": {
+            "null": null
+          }
+        },
+        {
+          "name": "error_handler",
+          "type": "null",
+          "passing": "value",
+          "default": {
+            "null": null
+          }
+        },
+        {
+          "name": "timeout_ms",
+          "type": "int",
+          "passing": "value",
+          "default": {
+            "int": 0
+          }
+        }
+      ],
+      "returns": "task_batch"
+    },
+    {
+      "id": "tasks.run.hash.context.keyed.int",
+      "name": "task_run",
+      "type_parameters": [
+        "T",
+        "R",
+        "K"
+      ],
+      "transfer_types": [
+        "T",
+        "R"
+      ],
+      "parameters": [
+        {
+          "name": "items",
+          "type": {
+            "name": "hash",
+            "arguments": [
+              {
+                "parameter": "T"
+              },
+              {
+                "parameter": "K"
+              }
+            ]
+          },
+          "passing": "value"
+        },
+        {
+          "name": "workers",
+          "type": "int",
+          "passing": "value"
+        },
+        {
+          "name": "callback",
+          "type": {
+            "callable": {
+              "parameters": [
+                {
+                  "name": "p0",
+                  "type": {
+                    "parameter": "T"
+                  },
+                  "passing": "value"
+                },
+                {
+                  "name": "p1",
+                  "type": "task_context",
+                  "passing": "value"
+                }
+              ],
+              "returns": {
+                "parameter": "R"
+              }
+            }
+          },
+          "passing": "value",
+          "requires_transfer": true
+        },
+        {
+          "name": "index_callback",
+          "type": {
+            "callable": {
+              "parameters": [
+                {
+                  "name": "item",
+                  "type": {
+                    "parameter": "T"
+                  },
+                  "passing": "value"
+                }
+              ],
+              "returns": "int"
+            }
+          },
+          "passing": "value"
+        },
+        {
+          "name": "result",
+          "type": "null",
+          "passing": "value",
+          "default": {
+            "null": null
+          }
+        },
+        {
+          "name": "error_handler",
+          "type": "null",
+          "passing": "value",
+          "default": {
+            "null": null
+          }
+        },
+        {
+          "name": "timeout_ms",
+          "type": "int",
+          "passing": "value",
+          "default": {
+            "int": 0
+          }
+        }
+      ],
+      "returns": {
+        "name": "hash",
+        "arguments": [
+          {
+            "parameter": "R",
+            "void_to_null": true
+          },
+          "int"
+        ]
+      }
+    },
+    {
+      "id": "tasks.run.hash.context.keyed.string",
+      "name": "task_run",
+      "type_parameters": [
+        "T",
+        "R",
+        "K"
+      ],
+      "transfer_types": [
+        "T",
+        "R"
+      ],
+      "parameters": [
+        {
+          "name": "items",
+          "type": {
+            "name": "hash",
+            "arguments": [
+              {
+                "parameter": "T"
+              },
+              {
+                "parameter": "K"
+              }
+            ]
+          },
+          "passing": "value"
+        },
+        {
+          "name": "workers",
+          "type": "int",
+          "passing": "value"
+        },
+        {
+          "name": "callback",
+          "type": {
+            "callable": {
+              "parameters": [
+                {
+                  "name": "p0",
+                  "type": {
+                    "parameter": "T"
+                  },
+                  "passing": "value"
+                },
+                {
+                  "name": "p1",
+                  "type": "task_context",
+                  "passing": "value"
+                }
+              ],
+              "returns": {
+                "parameter": "R"
+              }
+            }
+          },
+          "passing": "value",
+          "requires_transfer": true
+        },
+        {
+          "name": "index_callback",
+          "type": {
+            "callable": {
+              "parameters": [
+                {
+                  "name": "item",
+                  "type": {
+                    "parameter": "T"
+                  },
+                  "passing": "value"
+                }
+              ],
+              "returns": "string"
+            }
+          },
+          "passing": "value"
+        },
+        {
+          "name": "result",
+          "type": "null",
+          "passing": "value",
+          "default": {
+            "null": null
+          }
+        },
+        {
+          "name": "error_handler",
+          "type": "null",
+          "passing": "value",
+          "default": {
+            "null": null
+          }
+        },
+        {
+          "name": "timeout_ms",
+          "type": "int",
+          "passing": "value",
+          "default": {
+            "int": 0
+          }
+        }
+      ],
+      "returns": {
+        "name": "hash",
+        "arguments": [
+          {
+            "parameter": "R",
+            "void_to_null": true
+          },
+          "string"
+        ]
+      }
+    },
+    {
+      "id": "tasks.start.hash.context.keyed.int",
+      "name": "task_start",
+      "type_parameters": [
+        "T",
+        "R",
+        "K"
+      ],
+      "transfer_types": [
+        "T",
+        "R"
+      ],
+      "parameters": [
+        {
+          "name": "items",
+          "type": {
+            "name": "hash",
+            "arguments": [
+              {
+                "parameter": "T"
+              },
+              {
+                "parameter": "K"
+              }
+            ]
+          },
+          "passing": "value"
+        },
+        {
+          "name": "workers",
+          "type": "int",
+          "passing": "value"
+        },
+        {
+          "name": "callback",
+          "type": {
+            "callable": {
+              "parameters": [
+                {
+                  "name": "p0",
+                  "type": {
+                    "parameter": "T"
+                  },
+                  "passing": "value"
+                },
+                {
+                  "name": "p1",
+                  "type": "task_context",
+                  "passing": "value"
+                }
+              ],
+              "returns": {
+                "parameter": "R"
+              }
+            }
+          },
+          "passing": "value",
+          "requires_transfer": true
+        },
+        {
+          "name": "index_callback",
+          "type": {
+            "callable": {
+              "parameters": [
+                {
+                  "name": "item",
+                  "type": {
+                    "parameter": "T"
+                  },
+                  "passing": "value"
+                }
+              ],
+              "returns": "int"
+            }
+          },
+          "passing": "value",
+          "requires_transfer": true
+        },
+        {
+          "name": "result",
+          "type": "null",
+          "passing": "value",
+          "default": {
+            "null": null
+          }
+        },
+        {
+          "name": "error_handler",
+          "type": "null",
+          "passing": "value",
+          "default": {
+            "null": null
+          }
+        },
+        {
+          "name": "timeout_ms",
+          "type": "int",
+          "passing": "value",
+          "default": {
+            "int": 0
+          }
+        }
+      ],
+      "returns": "task_batch"
+    },
+    {
+      "id": "tasks.start.hash.context.keyed.string",
+      "name": "task_start",
+      "type_parameters": [
+        "T",
+        "R",
+        "K"
+      ],
+      "transfer_types": [
+        "T",
+        "R"
+      ],
+      "parameters": [
+        {
+          "name": "items",
+          "type": {
+            "name": "hash",
+            "arguments": [
+              {
+                "parameter": "T"
+              },
+              {
+                "parameter": "K"
+              }
+            ]
+          },
+          "passing": "value"
+        },
+        {
+          "name": "workers",
+          "type": "int",
+          "passing": "value"
+        },
+        {
+          "name": "callback",
+          "type": {
+            "callable": {
+              "parameters": [
+                {
+                  "name": "p0",
+                  "type": {
+                    "parameter": "T"
+                  },
+                  "passing": "value"
+                },
+                {
+                  "name": "p1",
+                  "type": "task_context",
+                  "passing": "value"
+                }
+              ],
+              "returns": {
+                "parameter": "R"
+              }
+            }
+          },
+          "passing": "value",
+          "requires_transfer": true
+        },
+        {
+          "name": "index_callback",
+          "type": {
+            "callable": {
+              "parameters": [
+                {
+                  "name": "item",
+                  "type": {
+                    "parameter": "T"
+                  },
+                  "passing": "value"
+                }
+              ],
+              "returns": "string"
+            }
+          },
+          "passing": "value",
+          "requires_transfer": true
+        },
+        {
+          "name": "result",
+          "type": "null",
+          "passing": "value",
+          "default": {
+            "null": null
+          }
+        },
+        {
+          "name": "error_handler",
+          "type": "null",
+          "passing": "value",
+          "default": {
+            "null": null
+          }
+        },
+        {
+          "name": "timeout_ms",
+          "type": "int",
+          "passing": "value",
+          "default": {
+            "int": 0
+          }
+        }
+      ],
+      "returns": "task_batch"
     }
   ],
   "cpp": [
@@ -5874,6 +7546,102 @@
     },
     {
       "id": "tasks.start.hash.context.target.void.indexed",
+      "symbol": "scpp::tasks::start",
+      "header": "modules/tasks/tasks.hpp",
+      "native_payloads": true
+    },
+    {
+      "id": "tasks.run.vector.keyed.int",
+      "symbol": "scpp::tasks::run",
+      "header": "modules/tasks/tasks.hpp",
+      "native_payloads": true
+    },
+    {
+      "id": "tasks.run.vector.keyed.string",
+      "symbol": "scpp::tasks::run",
+      "header": "modules/tasks/tasks.hpp",
+      "native_payloads": true
+    },
+    {
+      "id": "tasks.start.vector.keyed.int",
+      "symbol": "scpp::tasks::start",
+      "header": "modules/tasks/tasks.hpp",
+      "native_payloads": true
+    },
+    {
+      "id": "tasks.start.vector.keyed.string",
+      "symbol": "scpp::tasks::start",
+      "header": "modules/tasks/tasks.hpp",
+      "native_payloads": true
+    },
+    {
+      "id": "tasks.run.vector.context.keyed.int",
+      "symbol": "scpp::tasks::run",
+      "header": "modules/tasks/tasks.hpp",
+      "native_payloads": true
+    },
+    {
+      "id": "tasks.run.vector.context.keyed.string",
+      "symbol": "scpp::tasks::run",
+      "header": "modules/tasks/tasks.hpp",
+      "native_payloads": true
+    },
+    {
+      "id": "tasks.start.vector.context.keyed.int",
+      "symbol": "scpp::tasks::start",
+      "header": "modules/tasks/tasks.hpp",
+      "native_payloads": true
+    },
+    {
+      "id": "tasks.start.vector.context.keyed.string",
+      "symbol": "scpp::tasks::start",
+      "header": "modules/tasks/tasks.hpp",
+      "native_payloads": true
+    },
+    {
+      "id": "tasks.run.hash.keyed.int",
+      "symbol": "scpp::tasks::run",
+      "header": "modules/tasks/tasks.hpp",
+      "native_payloads": true
+    },
+    {
+      "id": "tasks.run.hash.keyed.string",
+      "symbol": "scpp::tasks::run",
+      "header": "modules/tasks/tasks.hpp",
+      "native_payloads": true
+    },
+    {
+      "id": "tasks.start.hash.keyed.int",
+      "symbol": "scpp::tasks::start",
+      "header": "modules/tasks/tasks.hpp",
+      "native_payloads": true
+    },
+    {
+      "id": "tasks.start.hash.keyed.string",
+      "symbol": "scpp::tasks::start",
+      "header": "modules/tasks/tasks.hpp",
+      "native_payloads": true
+    },
+    {
+      "id": "tasks.run.hash.context.keyed.int",
+      "symbol": "scpp::tasks::run",
+      "header": "modules/tasks/tasks.hpp",
+      "native_payloads": true
+    },
+    {
+      "id": "tasks.run.hash.context.keyed.string",
+      "symbol": "scpp::tasks::run",
+      "header": "modules/tasks/tasks.hpp",
+      "native_payloads": true
+    },
+    {
+      "id": "tasks.start.hash.context.keyed.int",
+      "symbol": "scpp::tasks::start",
+      "header": "modules/tasks/tasks.hpp",
+      "native_payloads": true
+    },
+    {
+      "id": "tasks.start.hash.context.keyed.string",
       "symbol": "scpp::tasks::start",
       "header": "modules/tasks/tasks.hpp",
       "native_payloads": true

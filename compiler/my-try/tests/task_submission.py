@@ -26,6 +26,8 @@ module = {'version':1, 'module':'task_submission_probe','dependencies':['tasks']
  'cpp':[{'id':'probe.work','symbol':'task_submission_probe::work_context','header':str(APP/'tests/fixtures/task_submission/provider.hpp')}]}
 (metadata/'task_submission_probe.json').write_text(json.dumps(module,indent=2)+'\n')
 cases = {
+ 'keyed-index-error': ('$v vector<int> = [0];task_run($v,1,fn(int $n):int=>42,fn(int $n):int=>1/$n);', '', "operator '/' rejected a zero divisor"),
+ 'keyed-start-index-error': ('$v vector<int> = [0];$b=task_start($v,1,fn(int $n):int=>42,fn(int $n):int=>1/$n);task_join($b);', '', "operator '/' rejected a zero divisor"),
  'target-vector': ('$v vector<int> = [40,41];$t vector<int> = [7];$r=task_run($v,2,fn(int $n):int=>$n+1,null,$t);echo count($r),$r[0],$r[1],$r[2],count($t),$t[0];', '37414217', False),
  'target-hash': ('$v hash<int,string> = {"a":41};$t hash<int,string> = {"a":7,"b":8};$r=task_run($v,2,fn(int $n):int=>$n+1,null,$t);echo $r["a"],$r["b"],$t["a"];', '4287', False),
  'target-start': ('$v vector<string> = ["a"];$t vector<string> = ["z"];$b=task_start($v,2,fn(string $n):string=>$n."!",null,$t);$r=task_join($b);echo $r[0],$r[1],$t[0];', 'za!z', False),
@@ -96,6 +98,22 @@ for carrier in ['vector', 'hash']:
 cases['indexed-coordinator']=('class Counter{public int $n=0;}$c=new Counter();$v vector<int> = [40,42];$t vector<int> = [7];$r=task_run($v,1,fn(int $n):int=>$n,function(int $n)use($c):int{++$c->n;return 0;},$t);echo $c->n,$r[0],$t[0];','2427',False)
 cases['indexed-sparse']=('$v vector<int> = [42];$t vector<int> = [7];task_run($v,1,fn(int $n):int=>$n,fn(int $n):int=>3,$t);','','sparse vector result key')
 cases['indexed-negative']=('$v vector<int> = [42];$t vector<int> = [7];task_run($v,1,fn(int $n):int=>$n,fn(int $n):int=>-1,$t);','','negative vector result key')
+for carrier in ['vector', 'hash']:
+ for context in [False, True]:
+  for background in [False, True]:
+   for key_type in ['int', 'string']:
+    for void in [False, True]:
+     name='keyed-'+carrier+('-context' if context else '')+('-start' if background else '-run')+'-'+key_type+('-void' if void else '-value')
+     items='$v vector<int> = [40,42];' if carrier=='vector' else '$v hash<int,string> = {"a":40,"b":42};'
+     callback='function(int $n'+(',task_context $ctx' if context else '')+'):'+('void{}' if void else 'int{return $n;}')
+     key='7' if key_type=='int' else '"same"'
+     index='function(int $n):'+key_type+'{return '+key+';}'
+     call=('task_start' if background else 'task_run')+'($v,2,'+callback+','+index+')'
+     result='$b='+call+';$r=task_join($b);' if background else '$r='+call+';'
+     output='echo count($r);'
+     expected='1'
+     if not void:output+='echo $r['+key+'];';expected+='42'
+     cases[name]=(items+result+output,expected,False)
 if a.case:
  unknown=set(a.case)-set(cases)
  if unknown: raise ValueError('Unknown cases: '+str(unknown))

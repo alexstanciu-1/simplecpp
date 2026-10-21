@@ -2168,6 +2168,29 @@ inline void configure_publish_try_lock(const bool_t &)
 
 #endif
 
+// Inferred keyed output uses the same retained target path as an explicit target.
+template <typename TItem, typename TCallback, typename TIndexCallback, typename TErrorHandler>
+[[nodiscard]] shared_p<batch> start(const vector_t<TItem> &items, const int_t<> &workers,
+	TCallback callback, TIndexCallback index_callback, null_t, TErrorHandler error_handler, const int_t<> &timeout_ms)
+	requires(!std::is_same_v<std::decay_t<TIndexCallback>, null_t>)
+{
+	using value_t = detail::task_value_t<detail::callback_result_t<TCallback, TItem>>;
+	using key_t = detail::task_value_t<std::invoke_result_t<TIndexCallback, TItem>>;
+	return start(items, workers, std::move(callback), std::move(index_callback), hash_t<value_t, key_t>{},
+		std::move(error_handler), timeout_ms);
+}
+
+template <typename TItem, typename TKey, typename TCallback, typename TIndexCallback, typename TErrorHandler>
+[[nodiscard]] shared_p<batch> start(const hash_t<TItem, TKey> &items, const int_t<> &workers,
+	TCallback callback, TIndexCallback index_callback, null_t, TErrorHandler error_handler, const int_t<> &timeout_ms)
+	requires(!std::is_same_v<std::decay_t<TIndexCallback>, null_t>)
+{
+	using value_t = detail::task_value_t<detail::callback_result_t<TCallback, TItem>>;
+	using key_t = detail::task_value_t<std::invoke_result_t<TIndexCallback, TItem>>;
+	return start(items, workers, std::move(callback), std::move(index_callback), hash_t<value_t, key_t>{},
+		std::move(error_handler), timeout_ms);
+}
+
 // Publication order follows completion rather than input position. Reuse run's
 // bounded workers and join/error protocol; user work never holds this mutex.
 template <typename TItem, typename TWork, typename TPublish>

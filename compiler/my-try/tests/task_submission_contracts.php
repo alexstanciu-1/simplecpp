@@ -32,6 +32,8 @@ foreach (['unknown_transfer', 'mapped_input', 'mapped_callback', 'null_reference
 }
 
 $bad = [
+ '$v vector<int> = [1];task_start($v,1,fn(int $n):int=>$n,fn(int $n):float=>1.0);',
+
  'class Box{}$b=new Box();$v vector<int> = [1];$t vector<int> = [];task_start($v,1,fn(int $n):int=>$n,function(int $n)use($b):int{return 0;},$t);',
  '$v vector<int> = [1];$t vector<int> = [];task_run($v,1,fn(int $n):int=>$n,fn(int $n):string=>"x",$t);',
 
@@ -57,8 +59,14 @@ foreach ($bad as $source) {
  $compiler->update_cpp([]);
  if (CPP_Probe::text(Model::$cpp_files)!==$initial) {throw new \LogicException('Task submission replay differs');}
 }
-$edit = '$v vector<int> = [1,2];$t vector<int> = [7];$r=task_run($v,2,fn(int $n):int=>$n,fn(int $n):int=>0,$t);';
-file_put_contents($path,$edit);$compiler->update_cpp([$path]);$incremental=CPP_Probe::text(Model::$cpp_files);
-Compiler_Lifecycle::reset();$fresh=new Compiler();$fresh->init([$directory]);$fresh->select_entry('main','main.phs');$fresh->exec_cpp();
-if (CPP_Probe::text(Model::$cpp_files)!==$incremental) {throw new \LogicException('Indexed target edit differs from fresh');}
-echo "Task payload rejection, recovery and indexed-target fresh parity passed\n";
+$edits = [
+ '$v vector<int> = [1,2];$t vector<int> = [7];$r=task_run($v,2,fn(int $n):int=>$n,fn(int $n):int=>0,$t);',
+ '$v vector<int> = [1,2];$r=task_run($v,2,fn(int $n):int=>$n,fn(int $n):string=>"key");',
+];
+foreach ($edits as $edit) {
+ file_put_contents($path,$edit);$compiler->update_cpp([$path]);$incremental=CPP_Probe::text(Model::$cpp_files);
+ Compiler_Lifecycle::reset();$fresh=new Compiler();$fresh->init([$directory]);$fresh->select_entry('main','main.phs');$fresh->exec_cpp();
+ if (CPP_Probe::text(Model::$cpp_files)!==$incremental) {throw new \LogicException('Task placement edit differs from fresh');}
+ $compiler=$fresh;
+}
+echo "Task payload rejection, recovery and placement fresh parity passed\n";
