@@ -23,6 +23,15 @@ Collected identities are specialized records in [03_parse/collect/structures.php
   declaration state. `collected_variable_write` is a separate unresolved-write
   role: first-write declaration versus assignment is decided during preparation.
 
+`collected_name` declares retention, publication and preparation-owner queries
+abstract so their polymorphism is explicit in both compiler routes. Declaration
+records report their existing state; the declaration branch defaults to no work,
+while definitions return their existing preparation slot. References and unresolved
+writes return false/false/no work. This adds no state or ownership edge and does
+not make ordinary methods virtual. The portable dispatch proof extracts these
+query bodies from the real hierarchy; v0.2 still rejects the raw null return in
+no-work implementations, independently of virtual dispatch.
+
 Preparation never replaces a write occurrence with a declaration record. Its existing
 identity is used for inferred storage and retained by later references. Scope indexes,
 syntax backlinks and dependency facts continue to reference these same objects;

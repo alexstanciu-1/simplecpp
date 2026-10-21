@@ -14,34 +14,38 @@ The catalog's bounded closeouts and Chapter 15 deferrals still
 bound the supported language surface.
 This does not establish exhaustive language, lifetime, incremental or performance coverage.
 
-## PHP-hosted bootstrap after object-identity keys — 2026-10-21
+## PHP-hosted bootstrap after explicit collected queries — 2026-10-21
 
-The latest retry uses `b203ed1f` plus the object-key overlay. Portable compiler PHP
-now spells object maps `hash<V, Key>` with a SplObjectStorage carrier, retaining
-existing identity and ownership. Both routes accept the common spelling. v0.2
-admits shared source class/interface keys; indexed/keyed conversions reuse safe
-upcasts. Empty hash construction uses the registered factory protocol. Concrete
-handle facades delegate key hashing/equality to the native shared-pointer policy.
+The latest retry uses `2a3f6e47` plus a PHP-source hierarchy refactor.
+`collected_name` declares `is_retained`, `is_exported` and `preparation_work_owner`
+abstract. Existing declaration state and definition work slots remain unchanged;
+reference/write branches supply false/false/no-work defaults. This uses the existing
+abstract-method dispatch contract, without changing ordinary method virtuality.
+The preceding common object-key support remains in place.
 
-`tests/portability/object_keys_common.py` passes PHP/v0.1 parity and four v0.2
-ordinary/prelowered executions, plus retained rejection/recovery. Converter,
-indexing, runtime catalog and compiler-storage metadata checks pass; existing
-Storage generated execution also passes in both modes. These are
-focused generated-program proofs, not a native compiler rebuild.
+`tests/portability/collected_query_dispatch.py` extracts the actual query bodies
+for focused portability checks. Actual-record PHP behavior and all three queries
+in PHP/v0.1 native pass. Boolean query dispatch passes through base handles in
+v0.2 ordinary/prelowered output. The complete v0.2 projection still rejects raw
+`return null` in the no-work implementations; the proof records this as a blocker,
+not successful native execution. Existing collected-role and incremental parsing
+checks pass. No native compiler rebuild is claimed.
 
-Conversion produces 269 assembled PHS files from 259 PHP files (1,925,430 bytes).
-Isolated bootstrap takes **169.87 seconds**, peak RSS **396.8 MiB**, peak PHP heap
-**372.5 MiB** under a 4 GiB limit. Parsing finishes at 4.228 seconds. It stops during
-preparation without PHP fatal/OOM or C++ emission. The prior 52-second run stopped
-much earlier; neither partial run predicts the full bootstrap cost.
+Conversion produces 269 assembled PHS files from 259 PHP files (1,926,079 bytes).
+Isolated bootstrap takes **192.00 seconds**, peak RSS **418.0 MiB**, peak PHP heap
+**410.5 MiB** under a 4 GiB limit. Parsing finishes at 4.441 seconds. It stops during
+preparation without PHP fatal/OOM or C++ emission. Timing includes failure-owner
+capture in the same process; these are partial-run costs, not full bootstrap costs.
 
-The redundant shared-storage/object-key blocker is passed. The first reported
-failure is now `Nonvirtual inherited member redeclaration is deferred`. Owner
-replay identifies `collected_declaration` as the first failing type contract:
-`is_retained()`/`is_exported()` redeclare concrete defaults from `collected_name`.
-Other preparation failures remain, including Storage_Cursor. No next-blocker fix,
-Storage_Cursor widening or repair of the known prelowered handle/null comparison
-defect is included. Readonly enforcement remains
+The `collected_declaration` type-contract failure is gone. The first failing type
+contract is now `collected_method`: its `qualified_name()` redeclares the concrete
+nonvirtual implementation in `collected_definition`. The first diagnostic remains
+`Nonvirtual inherited member redeclaration is deferred`, propagated first through
+`Symbol_Collector::previous_function`. Null-return ownership failures also remain
+on the three no-work query implementations. Both blockers are left unchanged.
+
+Storage_Cursor widening and the known prelowered handle/null comparison defect
+remain excluded. Readonly enforcement remains
 [CH15-READONLY-FIELDS-01](../catalog/15_blocking_debt.md#readonly-instance-fields--ch15-readonly-fields-01).
 The [checkpoint](../../../../specs/planning/storage_bootstrap_2026_10_21.md) records
 snapshot, measurements and limitations. This is not a successful self-bootstrap;

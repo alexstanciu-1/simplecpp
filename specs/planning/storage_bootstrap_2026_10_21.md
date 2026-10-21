@@ -638,3 +638,48 @@ on `collected_name`. The current contract treats abstract methods (and the typed
 Iterator methods) as virtual, so these ordinary PHP overrides are rejected.
 The diagnostic occurs in 91 retained work items, including propagated failures;
 that is not a count of independent root defects. No override-policy change is made.
+
+
+## Explicit collected-query dispatch and retry — 2026-10-21
+
+Candidate: `2a3f6e47` plus the overlay retained in
+`/tmp/bootstrap-attempt-20261021-collected-queries/candidate.diff`.
+Only the PHP collected hierarchy changes: the three polymorphic queries
+`is_retained`, `is_exported` and `preparation_work_owner` are abstract at
+`collected_name`. Declaration flags and the existing definition work slot keep
+their behavior. Default false/false/no-work behavior belongs to references and
+unresolved writes; declarations default to no work and definitions override that
+query. No new fields, lifetime protocol, converter behavior or language semantics.
+
+`tests/portability/collected_query_dispatch.py --results /tmp/collected-query-dispatch-04`
+checks the actual PHP records and projects their real query declarations/bodies
+into a standalone portable proof. Unrelated syntax/collection members are omitted.
+PHP/v0.1 native pass for all three queries, including empty and populated work slots.
+Boolean dispatch through base-typed parameters passes in both v0.2 output modes.
+The full v0.2 projection reproducibly rejects raw null returns at the ownership
+boundary. This is explicitly recorded as a blocker; the proof does not claim all
+three queries execute natively in v0.2. No generated production output is patched.
+`/tmp/collected-query-regressions` records passing collected-role and incremental
+parse/collection checks. Initial proof-harness corrections included the concrete
+work-class name and a supported static helper instead of a portable free function.
+
+Conversion: 259 PHP files, 4.96 s, peak RSS 186.4 MiB. Assembled input: 269 PHS files,
+1,926,079 bytes. Isolated PHP8.5 CLI bootstrap (OPcache CLI/Xdebug disabled, 4 GiB
+limit): **192.00 s wall time**, **428004 KiB / 418.0 MiB peak RSS**,
+**430440448 bytes / 410.5 MiB peak PHP heap**. Parsing completes at 4.441 s.
+Preparation fails without PHP fatal/OOM or C++ emission. Diagnostic-owner capture
+runs in the same process and is included in the totals. Snapshot hashes, phase
+marks and `failure-owners.json` are in the artifact directory; its `.py` sibling
+is the retry driver. No separate expensive owner replay was needed.
+
+The `collected_declaration` type-contract failure is gone. The first diagnostic
+still says `Nonvirtual inherited member redeclaration is deferred`, but the first
+failing type contract is now `collected_method`: its `qualified_name()` redeclares
+`collected_definition`'s concrete method. It propagates first through
+`Symbol_Collector::previous_function`. This distinct override is left unchanged.
+The owner capture also confirms null-return ownership failures in
+`collected_declaration`, `collected_reference` and `collected_variable_write`'s
+`preparation_work_owner` bodies. No null-return repair, other override adaptation,
+Storage_Cursor widening or prelowered handle/null comparison fix is included.
+These are partial-run measurements, not a completed bootstrap or native compiler
+rebuild.

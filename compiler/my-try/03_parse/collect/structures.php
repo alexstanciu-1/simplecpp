@@ -66,21 +66,12 @@ abstract class collected_name
 	/** Dispatch only; the collector owns occurrence-list maintenance. */
 	abstract public function index_collection(Symbol_Collector $collector): void;
 
-	public function is_retained(): bool
-	{
-		return false;
-	}
-
-	public function is_exported(): bool
-	{
-		return false;
-	}
+	/** Occurrence categories supply their retention and publication policy. */
+	abstract public function is_retained(): bool;
+	abstract public function is_exported(): bool;
 
 	/** Only independently prepared declarations own this slot. */
-	public function preparation_work_owner(): ?preparation_owner
-	{
-		return null;
-	}
+	abstract public function preparation_work_owner(): ?preparation_owner;
 
 	public function source_file(): file
 	{
@@ -99,6 +90,12 @@ abstract class collected_declaration extends collected_name
 	public function index_collection(Symbol_Collector $collector): void
 	{
 		$collector->index_declaration($this);
+	}
+
+	/** Local/member declarations have no independent work; definitions override this query. */
+	public function preparation_work_owner(): ?preparation_owner
+	{
+		return null;
 	}
 
 	public bool $retained_symbol = false;
@@ -139,7 +136,11 @@ abstract class collected_definition extends collected_declaration implements pre
 }
 
 /** Unresolved reads and named lookups have no declaration/publication or preparation-owner slot. */
-abstract class collected_reference extends collected_name {
+abstract class collected_reference extends collected_name
+{
+	public function is_retained(): bool { return false; }
+	public function is_exported(): bool { return false; }
+	public function preparation_work_owner(): ?preparation_owner { return null; }
 }
 
 /** Shared source identity; semantic work never needs to pretend a member is a free function. */
@@ -519,6 +520,10 @@ final class collected_type_reference extends collected_reference
 /** An unresolved write keeps its identity when preparation discovers declaration or assignment. */
 final class collected_variable_write extends collected_name
 {
+	public function is_retained(): bool { return false; }
+	public function is_exported(): bool { return false; }
+	public function preparation_work_owner(): ?preparation_owner { return null; }
+
 	public function index_collection(Symbol_Collector $collector): void
 	{
 		$collector->index_variable_write($this);
