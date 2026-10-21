@@ -207,3 +207,9 @@ native handle; application code sees only concrete storage. Methods with argumen
 remain rejected until receiver checks can precede argument snapshots through that
 boundary. Provider property observation additionally transports bool and mixed
 values; their mutable property transport is not added by the tasks slice.
+
+When tasks are selected, entry support drains runtime-retained background batches
+before returning the application's exit status. Exceptional exit also drains work
+and preserves the original application failure. Ordinary tasks programs reuse the
+same entry-support implementation. Retention and join bookkeeping belong to the
+tasks provider; the compiler does not maintain a second batch registry.

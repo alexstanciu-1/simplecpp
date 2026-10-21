@@ -17,17 +17,34 @@ int run_application(int argc, char** argv, int (*body)());
 	}
 
 	/** Keep production runtime diagnostics behind separately compiled support. */
-	public static function base_body(): string
+	public static function base_body(bool $external_declaration = true): string
 	{
-		return '#include "specializations/base.hpp"
-#include <cstdint>
+		$header = $external_declaration ? "#include \"specializations/base.hpp\"\n" : '';
+		return $header . '#include <cstdint>
 #include "scpp/runtime_error.hpp"
 #include "lang/php/cli_context.hpp"
+#if SCPP_HAS_TASKS
+namespace scpp::tasks { void shutdown(); }
+#endif
 namespace scpp::internal {
 void initialize_cli(int argc, char** argv) { scpp::php::set_cli_args(argc, argv); }
+static void finish_application() {
+#if SCPP_HAS_TASKS
+    scpp::tasks::shutdown();
+#endif
+}
 int run_application(int argc, char** argv, int (*body)()) {
-    try { initialize_cli(argc, argv); return body(); }
-    catch (const std::exception& failure) { scpp::print_runtime_exception(failure); return 1; }
+    try {
+        initialize_cli(argc, argv);
+        int result = body();
+        finish_application();
+        return result;
+    } catch (const std::exception& failure) {
+        // Drain remaining work, preserving the original application failure.
+        try { finish_application(); } catch (...) {}
+        scpp::print_runtime_exception(failure);
+        return 1;
+    }
 }
 }
 ';

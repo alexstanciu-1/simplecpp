@@ -26,6 +26,7 @@ with CommandRunner(out / 'logs', ROOT, jobs=12) as runner:
         runner.run(name + '-run', ['env', 'ASAN_OPTIONS=detect_leaks=1', out / name], timeout=120)
 
     run_tasks([
+        Task('shutdown-tasks', lambda: check('shutdown-tasks', APP / 'tests/tasks_shutdown_runtime.cpp')),
         Task('existing-async', lambda: check('existing-async', ROOT / 'tests/runtime/native/test_async_core.cpp')),
         Task('ownership-tasks', lambda: check('ownership-tasks', APP / 'tests/async_tasks_runtime.cpp')),
     ])

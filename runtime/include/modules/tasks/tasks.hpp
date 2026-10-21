@@ -503,6 +503,9 @@ void cancel(const shared_p<batch> &resource);
 void set_status(const shared_p<context> &resource, const string_t &value);
 void configure_default_worker_pool(const int_t<> &workers);
 void shutdown_default_worker_pool();
+// Process-entry cleanup retains unjoined batches independently of source handles.
+void shutdown();
+namespace detail { void retain_background(const shared_p<batch>& resource); }
 [[nodiscard]] int_t<> default_worker_pool_size();
 [[nodiscard]] int_t<> default_worker_pool_live_workers();
 [[nodiscard]] int_t<> default_worker_pool_created_workers();
@@ -1081,6 +1084,7 @@ template <typename TItem, typename TCallback, typename TErrorHandler>
 			resource->state->stop_requested.store(true);
 		}
 	});
+	detail::retain_background(resource);
 	return resource;
 }
 
@@ -1107,6 +1111,7 @@ template <typename TItem, typename TCallback, typename TResultCollection, typena
 			resource->state->stop_requested.store(true);
 		}
 	});
+	detail::retain_background(resource);
 	return resource;
 }
 
@@ -1134,6 +1139,7 @@ template <typename TItem, typename TCallback, typename TIndexCallback, typename 
 			resource->state->stop_requested.store(true);
 		}
 	});
+	detail::retain_background(resource);
 	return resource;
 }
 
@@ -1390,6 +1396,7 @@ template <typename TItem, typename TKey, typename TCallback, typename TErrorHand
 			resource->state->stop_requested.store(true);
 		}
 	});
+	detail::retain_background(resource);
 	return resource;
 }
 
@@ -1417,6 +1424,7 @@ template <typename TItem, typename TKey, typename TCallback, typename TResultCol
 			resource->state->stop_requested.store(true);
 		}
 	});
+	detail::retain_background(resource);
 	return resource;
 }
 
@@ -1463,6 +1471,7 @@ template <typename TItem, typename TKey, typename TCallback, typename TIndexCall
 			resource->state->stop_requested.store(true);
 		}
 	});
+	detail::retain_background(resource);
 	return resource;
 }
 
@@ -1519,6 +1528,7 @@ template <typename TCallback, typename TErrorHandler>
 			resource->state->stop_requested.store(true);
 		}
 	});
+	detail::retain_background(resource);
 	return resource;
 }
 

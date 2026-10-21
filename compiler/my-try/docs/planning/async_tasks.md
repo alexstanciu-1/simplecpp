@@ -153,3 +153,45 @@ the fixture now checks supported storage and invalid-return rejection/recovery.
 [Evidence archive](tasks-metadata-evidence.tar.gz), SHA-256:
 `5e516203b95c6f95530bf4669d97027ffe04c5f02562382ee52f8aaeee407d40`.
 Historical attempts and upload hashes are included. Overall closure remains 55/64.
+
+## Verified background shutdown prerequisite — 2026-10-21
+
+All seven runtime background-start implementations now retain their batch through
+the existing tasks provider until explicit join or process-entry cleanup. Explicit
+join retires retention even when rethrowing a cached worker failure. Shutdown
+drains outstanding batches, including batches created by work it is joining, then
+stops the worker pool. It drains after failures and reports the first failure.
+
+The existing C++ entry-support owner invokes shutdown after the application body
+returns and on application exceptions. A body exception remains primary if cleanup
+also fails. Default-prelowered and ordinary tasks programs share that entry owner;
+there is no scheduler redesign or new source cleanup helper.
+
+Dev002 `20261021-tasks-shutdown-entry-02` passes eleven tasks: existing handle and
+contract checks plus production cold/warm return, worker-failure and body-failure
+cases in both lowering modes. `20261021-tasks-shutdown-runtime-02` passes three
+ASan/UBSan probes, including existing async/task controls and a latch-controlled
+lost-handle lifetime test, nested cleanup, repeated shutdown and draining remaining
+work after failure. This supersedes the pending shutdown prerequisite above.
+
+[Evidence archive](tasks-shutdown-evidence.tar.gz), SHA-256:
+`d3dab89e4eec3681bac03469d38fd4b44bca6e76602ef34360643953ff137437`.
+Source hashes and earlier attempts are preserved. Source batch admission remains
+open; neither original issue is closed here.
+
+### Pending transfer-model decision
+
+Closure-to-callable conversion checks borrowed lifetimes and copyability, then
+stores only function-signature identity. Owned capture storage is not proof of
+transferability: shared mutable handles and resources can still be owned captures.
+After erasure, the signature cannot recover this distinction across copies,
+returns or parameters.
+
+The requested extension is a bounded transfer capability owned by existing
+callable preparation and carried by callable storage/transport, checked at task
+submission. Direct capture checks must observe anonymous-body dependencies;
+typed callable transport must preserve the established capability. No general
+thread-safety analysis or scheduler changes are proposed. This extends the
+transfer model and awaits the user's decision under the goal's explicit redesign
+boundary. Do not admit all owned captures or claim completion by rejecting every
+stored callable.

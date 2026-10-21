@@ -1,6 +1,21 @@
 #pragma once
 #include "modules/tasks/tasks.hpp"
+#include <iostream>
+#include <latch>
 namespace tasks_probe {
+inline std::latch background_release(1);
+inline void background(scpp::bool_t fail) {
+ scpp::vector_t<scpp::int_t<>> values;
+ values.push_back(scpp::int_t<>(1));
+ (void) scpp::tasks::start(values, scpp::int_t<>(1), [fail](scpp::int_t<> value) {
+  background_release.wait();
+  if (fail.native_value()) { throw std::runtime_error("background cleanup failure"); }
+  std::cout << "done";
+  return value;
+ });
+}
+inline void release() { background_release.count_down(); }
+
 inline scpp::shared_p<scpp::tasks::batch> batch() {
  scpp::vector_t<scpp::int_t<>> values;
  values.push_back(scpp::int_t<>(21));

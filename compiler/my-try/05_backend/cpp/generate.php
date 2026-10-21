@@ -14,6 +14,10 @@ final class CPP_Generator
 
 	private static function native_entry(string $body): string
 	{
+		$modules /** Keyed_Storage<runtime_module_spec> */ = Model::$runtime_metadata->modules;
+		if (isset($modules['tasks'])) {
+			return CPP_Entry_Support::base_body(false) . self::compiled_entry($body);
+		}
 		return "\nint main(int argc, char** argv)\n{\n// SCPP-ENTRY-TRY\n\ttry {\n\tscpp::php::set_cli_args(argc, argv);\n"
 			. $body . "\treturn 0;\n// SCPP-ENTRY-CATCH\n"
 			. "\t} catch (const std::exception& failure) {\n\t\tscpp::print_runtime_exception(failure);\n\t\treturn 1;\n\t}\n// SCPP-ENTRY-END\n}\n";

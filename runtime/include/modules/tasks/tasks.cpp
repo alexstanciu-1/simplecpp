@@ -199,6 +199,15 @@ private:
 	bool stopping_ = false;
 };
 
+std::mutex background_mutex;
+std::vector<shared_p<batch>> background_batches;
+
+void release_background(const shared_p<batch>& resource)
+{
+	std::lock_guard<std::mutex> guard(background_mutex);
+	std::erase_if(background_batches, [&](const auto& saved) { return saved.get() == resource.get(); });
+}
+
 std::mutex default_pool_mutex;
 std::shared_ptr<reusable_worker_pool> default_pool;
 std::atomic<bool> publish_try_lock_mode{false};
@@ -525,11 +534,45 @@ void cancel(const shared_p<batch> &resource)
 		resource->coordinator->join();
 	}
 
+	release_background(resource);
 	std::lock_guard<std::mutex> lock(resource->lifecycle_mutex);
 	if (resource->error) {
 		std::rethrow_exception(resource->error);
 	}
 	return resource->result;
+}
+
+namespace detail {
+void retain_background(const shared_p<batch>& resource)
+{
+	try {
+		std::lock_guard<std::mutex> guard(background_mutex);
+		background_batches.push_back(resource);
+	} catch (...) {
+		// Never leave a running thread to destroy its own last handle on failure.
+		try { (void) join(resource); } catch (...) {}
+		throw;
+	}
+}
+}
+
+void shutdown()
+{
+	std::exception_ptr first_failure;
+	for (;;) {
+		std::vector<shared_p<batch>> pending;
+		{
+			std::lock_guard<std::mutex> guard(background_mutex);
+			pending.swap(background_batches);
+		}
+		if (pending.empty()) { break; }
+		for (const auto& resource : pending) {
+			try { (void) join(resource); }
+			catch (...) { if (!first_failure) { first_failure = std::current_exception(); } }
+		}
+	}
+	shutdown_default_worker_pool();
+	if (first_failure) { std::rethrow_exception(first_failure); }
 }
 
 [[nodiscard]] string_t status(const shared_p<batch> &resource)
