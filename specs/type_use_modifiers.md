@@ -107,6 +107,19 @@ C++ emission consumes the normalized type use. Thus `value<int>` lowers to
 conversions and the existing native program-exit adaptation still apply when their
 destination requires them. Source syntax alone never suppresses a required conversion.
 
+## Null defaults for handle parameters — 2026-10-21
+
+A copyable by-value ownership-handle parameter may declare `= null`. Omission
+initializes empty parameter storage using the existing null storage-initialization
+conversion. Nullable spelling remains normalized: `?Class $x = null` and
+`Class $x = null` have the same strict-PHS meaning. Class/interface shared handles
+and weak observers use their existing copy rules; unique defaults remain excluded
+by the current default-copy requirement. Non-null handle defaults remain deferred.
+
+This default does not widen explicit argument or return conversion: a typed empty
+handle may be passed, but a raw `null` call argument remains rejected. Reference
+defaults and ownership transfer rules are unchanged.
+
 ## v0.2 ownership composition — 2026-10-06
 
 ### Non-void owning targets — 2026-10-18

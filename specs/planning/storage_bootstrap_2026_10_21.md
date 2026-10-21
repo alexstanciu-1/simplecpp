@@ -546,3 +546,39 @@ Read-only owner replay (46.95 s, `/tmp/closure-context-bootstrap-owner-logs`) co
 no remaining failure in `Symbol_Collector::register_source_type` and identifies
 `collect_constant` for the first default rejection. Full records are retained in
 `failure-owners.json` in the artifact directory.
+
+
+## Copyable handle null defaults and retry — 2026-10-21
+
+Candidate: `ac54c7d0` plus the overlay retained in
+`/tmp/bootstrap-attempt-20261021-handle-default/candidate.diff`. The default owner
+admits null literals for ownership handles using existing empty-storage assignment
+conversion and copy eligibility. This does not widen raw null arguments/returns,
+unique transfer or reference defaults. No new lifetime protocol or backend path.
+
+`tests/handle_defaults.py --results /tmp/handle-defaults-20261021-presence` passes
+ordinary/prelowered generated execution for class, interface and weak defaults,
+omitted/typed-empty/present handles and member calls, plus rejection/recovery in
+both modes. The initial comparison-based proofs encountered the already recorded
+prelowered handle-null comparison defect (template header leakage and direct
+`.has_value()` emission). The final proof uses supported handle-presence conditions
+to verify absence/presence. That defect remains unfixed; no native compiler rebuild.
+
+Conversion: 259 PHP files, 4.75 s, peak RSS 186.4 MiB. Assembled input: 269 PHS files,
+1,923,397 bytes. Isolated PHP8.5 CLI bootstrap (OPcache CLI/Xdebug disabled, 4 GiB
+limit): **52.38 s wall time**, **329188 KiB / 321.5 MiB peak RSS**,
+**314572800 bytes / 300 MiB peak PHP heap**. Parsing completes at 4.238 s.
+Preparation fails without PHP fatal/OOM or C++ emission. Evidence and source hashes
+are in the artifact directory above; its `.py` sibling is the retry driver. These
+are partial-run measurements, not full bootstrap costs or a performance comparison.
+
+The first diagnostic is now `shared<Class> repeats the declaration default storage`.
+The handle parameter-default blocker is passed. Redundant-storage cleanup and
+Storage_Cursor widening are not included in this slice.
+
+Read-only owner replay (52.88 s, `/tmp/handle-default-bootstrap-owner-logs`) confirms
+that `Symbol_Collector::collect_constant` no longer has the default-type rejection.
+The first affected callable for redundant shared storage is
+`Symbol_Collector::__construct`; this owner may reflect a dependent declaration
+failure, not a redundant type written directly in that constructor. Full records
+are retained as `failure-owners.json` in the artifact directory.

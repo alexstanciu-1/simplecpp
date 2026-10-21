@@ -81,6 +81,7 @@ final class Parameter_Defaults
 			throw new \RuntimeException('S2S reference parameter defaults are deferred');
 		}
 		$value /** prepared_constant_expression */;
+		$handle_default = Ownership_Conversions::role($parameter->type) !== null;
 		if (Type_Queries::is_enum($parameter->type)) {
 			if (!($syntax instanceof static_member_reference_node)) {
 				throw new \RuntimeException('S2S enum parameter defaults require a constant enum case reference');
@@ -91,8 +92,9 @@ final class Parameter_Defaults
 			}
 			$value = $reference;
 		}
-		elseif (Nullable_Conversions::payload($parameter->type) !== null) {
+		elseif ((Nullable_Conversions::payload($parameter->type) !== null) || $handle_default) {
 			if (!($syntax instanceof null_literal_node)) {
+				if ($handle_default) { throw new \RuntimeException('S2S handle parameter defaults require null'); }
 				throw new \RuntimeException('S2S nullable parameter defaults require null');
 			}
 			$null_literal = object_cast($syntax, null_literal_node::class);
@@ -107,8 +109,10 @@ final class Parameter_Defaults
 		}
 		$facts = new prepared_literal_parameter_default();
 		$facts->value = $value;
+		// An omitted handle argument initializes empty parameter storage; it does not
+		// widen the separate explicit-argument or return conversion contracts.
 		$facts->conversion = Conversion_Preparation::decide(
-			$value->type, $parameter->type, conversion_context::argument);
+			$value->type, $parameter->type, $handle_default ? conversion_context::assignment : conversion_context::argument);
 		Capability_Preparation::require_copy($parameter->type, $context);
 		return $facts;
 	}

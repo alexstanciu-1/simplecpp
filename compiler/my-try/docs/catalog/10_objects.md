@@ -432,6 +432,17 @@ failed retries, destructor removal/readdition and fresh/reset agreement pass.
 `/tmp/ch10-destructors-regression/` passes 12 focused PHP suites. No compiler native
 rebuild or conversion was performed.
 
+## Handle parameter null defaults — 2026-10-21
+
+`Parameter_Defaults` now accepts null for copyable ownership-handle parameters,
+using the existing empty-storage conversion and copy eligibility. This includes
+normalized nullable class/interface types and weak handles. Non-null defaults,
+unique defaults, reference defaults and raw null arguments remain rejected.
+`tests/handle_defaults.py` checks ordinary/prelowered generated execution plus
+rejection/recovery. Presence conditions verify empty defaults; direct handle/null
+comparison still has the separately recorded prelowered emission defect and was
+not repaired. No new runtime or lifetime protocol is introduced.
+
 ## Nullable handle normalization — 2026-10-07
 
 The [approved contract](../../../../specs/type_use_modifiers.md#v02-nullable-records-and-handle-normalization--2026-10-07)

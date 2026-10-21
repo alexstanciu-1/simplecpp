@@ -144,3 +144,8 @@ explicit-null arguments both produce absence. Non-null defaults and unsupported
 nullable payloads remain rejected; no implicit nullable type inference is added.
 Ordinary and prelowered execution are covered by
 [`nullable_defaults.py`](../../compiler/my-try/tests/nullable_defaults.py).
+
+Normalized object-handle null defaults now use existing empty-storage initialization
+in v0.2; see the [handle-default contract](../type_use_modifiers.md#null-defaults-for-handle-parameters--2026-10-21).
+The bound is copyable handle parameters. Explicit raw null call arguments remain
+outside this slice; pass a typed empty handle when supplying the argument explicitly.
