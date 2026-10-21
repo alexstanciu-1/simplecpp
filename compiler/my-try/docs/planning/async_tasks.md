@@ -765,3 +765,30 @@ remains partial; no full matrix or native compiler rebuild was requested.
 
 [Keyed-target evidence](task-keyed-evidence.tar.gz), SHA-256:
 `d04b0bc88e36b6b3eaa6b56d0b08d48ef63a1eb5bc10a4783442e9fb95956175`. Final uploaded source hashes were verified.
+
+
+### Nullable integer hash targets — 2026-10-21
+
+Sixteen additional hash-input contracts accept nullable-int index callbacks with
+integer-key hash targets: run/start, both worker arities, value/void workers and
+optional exact/void error handlers. Present keys overwrite; absent keys append
+using the existing hash append owner. No compiler or runtime implementation changed.
+
+The dev002 sanitizer probe confirms nullable-int append after existing integer
+keys. It also probes nullable-string keys: present keys work, but null append
+throws `hash_t::append requires integer keys`. This agrees with the typed hash
+contract; this checkpoint does not invent numeric-to-string append or admit a
+heterogeneous typed-key family. Nullable-string source admission and inferred
+nullable-key result shapes remain open for explicit reconciliation.
+
+`task-nullable-target-controls` passes retained nullable-hash edit/fresh parity,
+existing rejection/recovery checks and the existing target-hash cold/warm control.
+The first source pass proves all 20 absent-key cases; eight present-key fixtures
+looked up the append position instead of the overwrite key. The fixture is repaired
+and all 20 present-key cases passed separately. Together the runs prove all 40
+source cases using default prelowering and cold/warm builds; warm builds compile
+and link zero units. Original evidence is kept.
+V-R02 remains partial.
+
+[Nullable-target evidence](task-nullable-target-evidence.tar.gz), SHA-256:
+`356bae7cfc20836255bf4b84e422a4e7214c4af34ab2e3bc5453c857ab9dcecb`. Final uploaded hashes were verified; no full matrix or native compiler rebuild.

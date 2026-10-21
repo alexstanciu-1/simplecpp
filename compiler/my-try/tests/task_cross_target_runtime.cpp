@@ -44,5 +44,14 @@ int main() {
 	(void)tasks::join(string_batch);
 	auto rekeyed_batch=tasks::start(string_input,integer(1),work,key,target,null,integer(0));
 	(void)tasks::join(rekeyed_batch);
+	auto nullable_hash=tasks::run(string_input,integer(1),work,nullable_key,target,null,integer(0));
+	assert(nullable_hash[integer(8)].native_value()==40 && nullable_hash[integer(9)].native_value()==41);
+	auto nullable_string=[](integer n) { return nullable<string_t>(n.native_value()==0 ? string_t("a") : string_t("b")); };
+	auto present_strings=tasks::run(items,integer(1),work,nullable_string,strings,null,integer(0));
+	assert(present_strings[string_t("a")].native_value()==40);
+	bool string_append_rejected=false;
+	try { (void)tasks::run(items,integer(1),work,[](integer){return nullable<string_t>(null);},strings,null,integer(0)); }
+	catch(const std::runtime_error &e) { string_append_rejected=std::string(e.what()).find("requires integer keys")!=std::string::npos; }
+	assert(string_append_rejected);
 	tasks::shutdown();
 }
