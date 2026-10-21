@@ -337,6 +337,11 @@ final class CPP_Declarations
 			$text = CPP_Enums::reference(object_cast($value, prepared_enum_case_reference::class), $context);
 		}
 		else { throw new \LogicException('Unsupported prepared parameter default'); }
+		// Constant defaults have no caller locals. Give concrete conversion sequencing
+		// a function scope even when the default appears in a namespace declaration.
+		if (CPP_Runtime_Operations::concrete_conversion($facts->conversion, $context)) {
+			return '([]() { return ' . self::conversion($text, $facts->conversion, $context) . '; }())';
+		}
 		return self::conversion($text, $facts->conversion, $context);
 	}
 

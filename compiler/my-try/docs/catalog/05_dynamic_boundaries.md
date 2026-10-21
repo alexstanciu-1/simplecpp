@@ -568,11 +568,26 @@ Focused checkpoint: nine PHP suites and 33 generated programs/probes pass in
 FPM socket creation was unavailable).
 
 Debt/non-goals: cross-payload lifting/conversion and wrapper-valued coalescing fallback,
-keyed/property-path probes, nullable parameter defaults, flow narrowing, mixed and object/container
+keyed/property-path probes, non-null nullable parameter defaults, flow narrowing, mixed and object/container
 payload operations. Existing generic type formation does not imply those operations.
 The runtime generic identity helper currently fails to instantiate nullable/null
 comparison (its fallback attempts `null_t == null_t`). This slice emits the equivalent
 prepared presence test; runtime-helper repair belongs to a separate owner/task.
+
+## Nullable null parameter defaults — 2026-10-21
+
+By-value nullable parameters may declare `= null`. Omission supplies an empty
+nullable value, just as an explicit null argument does; a nullable parameter without
+a default remains required. Defaults do not infer nullability. Non-null nullable
+defaults, reference defaults and unsupported payload families remain rejected.
+The existing nullable value-boundary and copy rules determine payload admission.
+
+`Parameter_Defaults` retains the existing prepared null literal and argument
+conversion. Concrete default emission provides a capture-free outer function scope
+for conversion sequencing in C++ declarations. No new runtime/lifetime protocol.
+`tests/nullable_defaults.py` covers ordinary/concrete generated execution (free and
+instance calls, omitted/explicit null, empty string and zero), invalid defaults and
+retained failure/recovery. This is not a native compiler rebuild.
 
 ## Nullable truthiness and coalescing — 2026-10-03
 
@@ -1315,7 +1330,7 @@ Edit these rows as work proceeds. Imported source support is recorded below, ind
 | [CAST-BOOL-001](#cast-bool-001) | agreed | `$a = (bool)$b;` | proved | proved | deferred | [Prepared scalar matrix](../../tests/conversions.php); [PHP/native bytes and Clang execution](../portability/conversion_review.md) |
 | [CAST-STRING-001](#cast-string-001) | agreed | `$a = (string)$b;` | proved | proved | deferred | [Prepared scalar matrix](../../tests/conversions.php); [PHP/native bytes and Clang execution](../portability/conversion_review.md) |
 | [CAST-OBJECT-001](#cast-object-001) | deferred-dependency | `$a = (object)$b;` | deferred | deferred | deferred | CH05-DYN-01 / chapter 06; no unrestricted object cast |
-| [FUNC-NULLABLE-001](#func-nullable-001) | agreed | `function f(?int $a): ?int { return $a; }` | proved | proved | deferred | Same scalar payload; nullable defaults deferred |
+| [FUNC-NULLABLE-001](#func-nullable-001) | agreed | `function f(?int $a): ?int { return $a; }` | proved | proved | deferred | Same scalar payload; nullable null defaults supported |
 | [TYPE-VAR-002](#type-var-002) | agreed | `$x ?string = null;` | proved | proved | deferred | Scalar nullable value boundary slice |
 | [NULL-CHECK-001](#null-check-001) | agreed | `$x === null` | proved | proved | deferred | Both orders; single evaluation and presence |
 | [NULL-CHECK-002](#null-check-002) | agreed | `$x !== null` | proved | proved | deferred | Both orders; false/zero/empty-string remain present |
@@ -2137,8 +2152,9 @@ text-context conversion remain distinct.
 **Source:** [generators/php/specs/rules.md:708](../../../../generators/php/specs/rules.md)
 
 **v0.2 decision / examples:** Typed predeclarations, nullable mapping, typed null,
-nullable null returns and untyped-null rejection are covered. Nullable defaults
-remain CH05-VAL-01; callable/closure expansion belongs to chapter 12. Imported
+nullable null returns and untyped-null rejection are covered. Nullable null defaults
+are supported; non-null defaults remain deferred. Callable/closure expansion belongs
+to chapter 12. Imported
 comment-annotation placement remains outside the strict-first proof.
 
 > ## 7. Null and nullable rules

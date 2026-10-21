@@ -135,3 +135,12 @@ validation remains opt-in under the project's operating rules.
 Implementation references: `runtime/include/scpp/nullable.hpp` (`operator T`,
 `require_value`), `tools/php_portability/function_map.php` and
 `tools/php_portability/runtime/bootstrap.php` (`take_nullable`).
+
+## v0.2 nullable null defaults
+
+The v0.2 parameter-default owner now accepts `= null` on supported by-value nullable
+parameters, reusing nullable argument conversion and copy eligibility. Omitted and
+explicit-null arguments both produce absence. Non-null defaults and unsupported
+nullable payloads remain rejected; no implicit nullable type inference is added.
+Ordinary and prelowered execution are covered by
+[`nullable_defaults.py`](../../compiler/my-try/tests/nullable_defaults.py).

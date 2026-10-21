@@ -14,7 +14,7 @@ The catalog's bounded closeouts and Chapter 15 deferrals still
 bound the supported language surface.
 This does not establish exhaustive language, lifetime, incremental or performance coverage.
 
-## PHP-hosted bootstrap after token offset casts — 2026-10-21
+## PHP-hosted bootstrap after nullable null defaults — 2026-10-21
 
 The common `object_cast(value, Target::class)` spelling works through PHP, v0.1
 (with its legacy alias retained) and v0.2. Prelowered checked casts and type tests
@@ -23,20 +23,22 @@ semantic admission. Focused identity, interface/struct, weak-lock, evaluation an
 failure proofs pass in ordinary and concrete modes.
 
 Remote task fixes were reconciled in `a92689b2`; `task_synchronize` remains resolved.
-The latest retry uses `9dbf849f` plus explicit `(int)` casts in the token adjacency
-check, preserving compact stored offsets while adding and comparing in canonical
-`int`. The tokenizer PHP tests pass. Conversion produces 269 assembled PHS files
-from 259 PHP files (1,920,648 bytes). Bootstrap takes **47.67 seconds**, peak RSS
-**310.2 MiB**, peak PHP heap **290 MiB** under a 4 GiB limit. Parsing finishes at
-4.504 seconds. It stops during preparation without PHP fatal/OOM or C++ emission.
+The latest retry uses `7b8a0d7a` plus nullable null-default preparation and concrete
+constant-default emission. `tests/nullable_defaults.py` passes ordinary/concrete
+execution and retained rejection/recovery; no runtime/lifetime protocol is added.
+Conversion produces 269 assembled PHS files from 259 PHP files (1,921,424 bytes).
+Bootstrap takes **46.90 seconds**, peak RSS **311.2 MiB**, peak PHP heap **290 MiB**
+under a 4 GiB limit. Parsing finishes at 4.245 seconds. It stops during preparation
+without PHP fatal/OOM or C++ emission.
 
 Readonly enforcement remains deferred to
 [CH15-READONLY-FIELDS-01](../catalog/15_blocking_debt.md#readonly-instance-fields--ch15-readonly-fields-01).
 The compiler's 21 formerly readonly properties have source TODOs; constructor-only
 writes remain a convention. The unsupported-member-modifier diagnostic is gone.
-The next reported diagnostic is `S2S parameter defaults require scalar value types`;
-`Tokenizer::tokenize(?string $full_path = null)` uses a nullable parameter default.
-This retry makes no change to default-parameter semantics or other integer failures.
+The next reported diagnostic is `S2S data construction requires a known concrete target`.
+`Tokenizer::token_end` iterates a bare list literal of punctuation spellings with
+no explicit container target. That source adaptation is not included in this retry.
+Other parameter-default diagnostics remain outside this bounded nullable-value fix.
 
 Other preparation failures remain, as does the prelowered locked-class null-check
 defect. Semantic widening and Storage_Cursor widening are excluded.

@@ -91,6 +91,14 @@ final class Parameter_Defaults
 			}
 			$value = $reference;
 		}
+		elseif (Nullable_Conversions::payload($parameter->type) !== null) {
+			if (!($syntax instanceof null_literal_node)) {
+				throw new \RuntimeException('S2S nullable parameter defaults require null');
+			}
+			$null_literal = object_cast($syntax, null_literal_node::class);
+			Expression_Preparation::prepare($null_literal, $context);
+			$value = $null_literal->require_null_preparation();
+		}
 		elseif (!Conversion_Preparation::is_scalar($parameter->type)) {
 			throw new \RuntimeException('S2S parameter defaults require scalar value types');
 		}

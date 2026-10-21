@@ -427,3 +427,39 @@ confirms no remaining failure for `token_list::operator_text_at` and identifies
 `Tokenizer::tokenize` as the first affected callable for the defaults diagnostic.
 The artifact directory retains `failure-owners.json`. Other callable owners still
 report the canonical-int diagnostic; they have not been audited or changed here.
+
+
+## Nullable null defaults and retry — 2026-10-21
+
+Candidate: `7b8a0d7a` plus the overlay saved in
+`/tmp/bootstrap-attempt-20261021-nullable-default/candidate.diff`. The parameter
+default owner admits null literals for existing supported nullable value types,
+using prepared null facts, argument conversion and copy eligibility. Non-null
+nullable defaults and unsupported payloads remain rejected. Concrete C++ defaults
+use a capture-free outer function scope so the existing conversion sequencing is
+valid in declarations. No runtime/lifetime protocol or Storage_Cursor widening.
+
+`tests/nullable_defaults.py --results /tmp/nullable-defaults-20261021-final` passes
+ordinary/concrete generated execution and invalid-default/recovery checks in both
+modes. Omitted and explicit null arguments, supplied strings, empty strings, zero,
+free and instance calls are covered. The initial concrete proof exposed the
+namespace-scope capturing-lambda problem; the final proof validates its correction.
+These tests compile generated programs, not the compiler itself.
+
+Conversion: 259 PHP files, 4.76 s, peak RSS 186.4 MiB. Assembled input: 269 PHS files,
+1,921,424 bytes. Isolated PHP8.5 CLI bootstrap (OPcache CLI/Xdebug disabled, 4 GiB
+limit): **46.90 s wall time**, **318720 KiB / 311.2 MiB peak RSS**,
+**304087040 bytes / 290 MiB peak PHP heap**. Parsing completes at 4.245 s. Preparation
+fails without PHP fatal/OOM or C++ emission. Raw evidence, source hashes and phase
+marks: `/tmp/bootstrap-attempt-20261021-nullable-default`; driver has the same path
+with `.py` appended. This partial run does not establish full bootstrap cost.
+
+The first diagnostic is now `S2S data construction requires a known concrete target`.
+`Tokenizer::token_end` uses a bare list literal in `foreach` for punctuation spellings.
+That expression lacks an explicit container type. No repair is made here; other
+parameter-default and integer diagnostics also remain outside this slice.
+
+Read-only owner replay (47.48 s, `/tmp/nullable-default-bootstrap-owner-logs`) confirms
+that `Tokenizer::tokenize` no longer has the parameter-default rejection and
+`Tokenizer::token_end` is the first affected callable for the construction diagnostic.
+Full owner records are saved as `failure-owners.json` in the artifact directory.
