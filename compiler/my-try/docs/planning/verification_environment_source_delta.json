@@ -1,0 +1,12 @@
+{
+  "base": "span_hash_source_delta.json",
+  "inputs": 5378,
+  "delta": {
+    "compiler/my-try/tests/fixtures/mysql_verification/CMakeLists.txt": "cc882e6c0945078be3dc891edd65a776e18ce8bcd5008ad411824a4763315ce5",
+    "compiler/my-try/tests/fixtures/mysql_verification/mysql_fixture.cpp": "8aae6b27c3820109b8d375be494c18877c103b4778ca04e74c964cf38c97a021",
+    "compiler/my-try/tests/mysql_isolated.py": "50f69bb68c1033a853c495acf0fa49f5dcd02f4a3fb5851e878d7f4194c2dcc8",
+    "compiler/my-try/tests/verification_environment.py": "1b801ec671c94dd132c6615d78783c83d03d3fa226c1deca2bc488bdea1cc753",
+    "compiler/my-try/tests/verification_host_publish.php": "5cf09f3ae50f19b05139f663f54159022ed3c114927ecc858d0a6394ee6d6438",
+    "compiler/my-try/tools/verification_host.py": "6fa8f4f780fa028923935d3df0213c2433f44aa33a3859b0c6a584721a1ad4bc"
+  }
+}

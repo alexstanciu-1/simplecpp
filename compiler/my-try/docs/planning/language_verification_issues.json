@@ -71,10 +71,17 @@
         "verification/results/wave-01/runtime_assets/logs/build.stderr"
       ],
       "finding": "v0.1 needs PHP8.4/8.5 plus ext-ast; PHP8.5 satisfies this. v0.2 tokenization uses mbstring present in PHP8.2. Production process launcher needs pcntl_waitid (PHP8.4+), absent in PHP8.2.",
-      "next_action": "Resolved for tested integrations with privately extracted PHP8.5 mbstring; runtime assets, native invalidation, runtime module build, native cache and publication pass. Preserve setup failures separately.",
+      "next_action": "Closed for the tested host and bounded integration scope. Keep strict-PHS MySQL exposure and wider provider behavior separate.",
       "dependencies": [],
       "simple_batch_eligible": false,
-      "status": "resolved-environment"
+      "status": "resolved-environment",
+      "repair_status": "reconciled-and-verified",
+      "repair": {
+        "date": "2026-10-21",
+        "report": "verification_environment.md",
+        "evidence": "verification-environment-acceptance.tar.gz",
+        "scope": "Harness/fixtures/docs only; stage preflight, default-prelowered production cold/warm, two unchanged native MySQL tests and isolated real-provider/cleanup proofs on dev002. Historical findings retained."
+      }
     },
     {
       "id": "S12",
@@ -1897,10 +1904,17 @@
       ],
       "finding": "test_mysqli_connect.cpp and test_mysqli_fetch_exhaustion.cpp remain not run in both snapshots because their provider/environment harness is absent. No current failure or compatibility pass is inferred.",
       "dependencies": [],
-      "next_action": "Keep this finding separate from source-language admission and resolve in a separately authorized batch.",
+      "next_action": "Closed for the tested host and bounded integration scope. Keep strict-PHS MySQL exposure and wider provider behavior separate.",
       "acceptance": "Supply an isolated provider/database fixture with deterministic connection and fetch-exhaustion expectations before running either native test.",
       "simple_batch_eligible": false,
-      "eligibility_reason": "Needs runtime ownership discussion or an external integration fixture."
+      "eligibility_reason": "Needs runtime ownership discussion or an external integration fixture.",
+      "repair_status": "implemented-and-verified",
+      "repair": {
+        "date": "2026-10-21",
+        "report": "verification_environment.md",
+        "evidence": "verification-environment-acceptance.tar.gz",
+        "scope": "Harness/fixtures/docs only; stage preflight, default-prelowered production cold/warm, two unchanged native MySQL tests and isolated real-provider/cleanup proofs on dev002. Historical findings retained."
+      }
     },
     {
       "id": "V-D02",

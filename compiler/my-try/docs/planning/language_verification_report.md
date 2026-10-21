@@ -5,7 +5,7 @@ Verification closeout: evidence through checkpoint 75. All planned checks and di
 
 The frozen v0.2 audit has 105 passed checks, 5 failed, 6 blocked and 3 explicitly deferred across 36 language families. A passed audit check can establish a complete inventory or reproduce intended rejection; it does not necessarily mean every feature in that family is implemented. No compiler/runtime fixes were made by this verification goal.
 
-Current follow-up repair status: [49/64 resolved (76.5625%)](language_repair_progress.md),
+Current follow-up repair status: [51/64 resolved (79.6875%)](language_repair_progress.md),
 including [V-P01/V-D10](project_startup_metadata.md). The audit tables below retain
 the original frozen results; dated repair closeouts record subsequent changes.
 
@@ -864,3 +864,12 @@ The [span/hash closeout](span_hash.md) implements both original issues through
 bounded runtime and metadata changes, with default-prelowered dev002 acceptance.
 Current total: **49/64 resolved (76.5625%), 15 open**. Historical audit findings above
 remain unchanged; uint64 equality and explicit copyable-buffer move remain separate.
+
+## V-E01 / V-E03 host and database verification — 2026-10-21
+
+The [verification environment closeout](verification_environment.md) reconciles
+V-E01 and supplies V-E03’s missing isolated MySQL integration harness. Both original
+native tests and the real-provider/cleanup checks pass; default-prelowered production
+cold/warm execution passes separately. **51/64 resolved (79.6875%), 13 open**.
+Historical blocked snapshots remain unchanged; no strict-PHS MySQL admission or
+wider provider behavior is inferred. Harness, fixtures and docs only.

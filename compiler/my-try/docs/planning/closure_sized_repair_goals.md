@@ -70,10 +70,10 @@ promises. Review contracts and feasibility before freezing each goal.
 | Typed tokenizer and strict IO — completed | S11, S13 | [Closeout](tokenizer_io.md): 41/64 closed, +3.125 points. Default prelowered cold/warm builds and state/snapshot/provider proofs; earlier callback/layout prelowering gaps remain separate. |
 | Checked shifts and compact layout — completed | V-L01, V-L02 | [Closeout](compact_layout_shifts.md): 37/64 closed, +3.125 points. Supplementary BS-R01 also closed; stale enum-runner expectation CL-H01 remains separate. |
 
-V-E01 needs a separate evidence/status reconciliation: its ledger already says
-resolved-environment but lacks the fully-closed repair status. Such a justified
-closure is useful bookkeeping and should be labelled as such. It must not replace
-planned compiler/runtime capability work merely to improve the displayed number.
+V-E01's separate evidence/status reconciliation is now complete in the approved
+[verification environment batch](verification_environment.md), together with the
+V-E03 isolated real-database proof. This is explicitly an environment/harness batch;
+it does not claim two new compiler/runtime capabilities.
 
 After these batches, regroup the remaining normal-discussion items by dependency
 and owner (layout declarations/queries, project/module integration, callable
@@ -138,3 +138,10 @@ parity and metadata hot reload remain separate.
 [Checked spans and stable hashing](span_hash.md) close two original issues:
 **49/64 resolved (76.5625%), +3.125 points**, with 15 original issues open.
 Default-prelowered dev002 checks pass; wider language gaps remain explicit.
+
+## V-E01 / V-E03 closeout — 2026-10-21
+
+[Host and isolated database verification](verification_environment.md) close two
+original issues: **51/64 resolved (79.6875%), +3.125 points**, with 13 still open.
+All remaining originals require normal discussion; fixed issue-count throughput
+should not obscure the size of their language/ownership design decisions.
