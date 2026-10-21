@@ -109,6 +109,13 @@ final class runtime_replacement_spec
 	public string $replacement_name = '';
 }
 
+/** Scalar or matching boxed-family result requirement in startup metadata. */
+final class runtime_boxed_result_spec
+{
+	public string $result_name = '';
+	public string $family_name = '';
+}
+
 final class runtime_function_spec extends runtime_signature_spec
 {
 	/** Provider permits synchronous readonly borrowing in place of value snapshots. */
@@ -120,10 +127,12 @@ final class runtime_function_spec extends runtime_signature_spec
 	public array $type_parameters /** vector<string> */ = [];
 	public array $transfer_types /** vector<string> */ = [];
 	public Storage $replacement_results /** Storage<runtime_replacement_spec> */;
+	public Storage $boxed_results /** Storage<runtime_boxed_result_spec> */;
 	public function __construct()
 	{
 		parent::__construct();
 		$this->replacement_results = new Storage /** Storage<runtime_replacement_spec> */();
+		$this->boxed_results = new Storage /** Storage<runtime_boxed_result_spec> */();
 	}
 }
 

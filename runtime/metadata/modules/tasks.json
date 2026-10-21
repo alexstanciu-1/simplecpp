@@ -51,6 +51,15 @@
       "capabilities": [
         "result_payload"
       ]
+    },
+    {
+      "id": "tasks.dynamic_batch",
+      "name": "task_dynamic_batch",
+      "kind": "class",
+      "storage": "shared",
+      "capabilities": [
+        "result_payload"
+      ]
     }
   ],
   "cpp_types": [
@@ -72,6 +81,11 @@
     {
       "id": "tasks.error",
       "symbol": "scpp::tasks::error",
+      "header": "modules/tasks/tasks.hpp"
+    },
+    {
+      "id": "tasks.dynamic_batch",
+      "symbol": "scpp::tasks::dynamic_batch",
       "header": "modules/tasks/tasks.hpp"
     }
   ],
@@ -41490,6 +41504,1470 @@
         }
       ],
       "returns": "task_batch"
+    },
+    {
+      "id": "tasks.task_join.dynamic",
+      "name": "task_join",
+      "parameters": [
+        {
+          "name": "batch",
+          "type": "task_dynamic_batch",
+          "passing": "value"
+        }
+      ],
+      "returns": "dynamic"
+    },
+    {
+      "id": "tasks.task_done.dynamic",
+      "name": "task_done",
+      "parameters": [
+        {
+          "name": "batch",
+          "type": "task_dynamic_batch",
+          "passing": "value"
+        }
+      ],
+      "returns": "bool"
+    },
+    {
+      "id": "tasks.task_cancel.dynamic",
+      "name": "task_cancel",
+      "parameters": [
+        {
+          "name": "batch",
+          "type": "task_dynamic_batch",
+          "passing": "value"
+        }
+      ],
+      "returns": "void"
+    },
+    {
+      "id": "tasks.task_status.dynamic",
+      "name": "task_status",
+      "parameters": [
+        {
+          "name": "batch",
+          "type": "task_dynamic_batch",
+          "passing": "value"
+        }
+      ],
+      "returns": "string"
+    },
+    {
+      "id": "tasks.task_progress.dynamic",
+      "name": "task_progress",
+      "parameters": [
+        {
+          "name": "batch",
+          "type": "task_dynamic_batch",
+          "passing": "value"
+        }
+      ],
+      "returns": "task_progress_info"
+    },
+    {
+      "id": "tasks.run.mixed",
+      "name": "task_run",
+      "type_parameters": [
+        "R"
+      ],
+      "parameters": [
+        {
+          "name": "items",
+          "type": "mixed",
+          "passing": "value"
+        },
+        {
+          "name": "workers",
+          "type": "int",
+          "passing": "value"
+        },
+        {
+          "name": "callback",
+          "type": {
+            "callable": {
+              "parameters": [
+                {
+                  "name": "p0",
+                  "type": "mixed",
+                  "passing": "value"
+                }
+              ],
+              "returns": {
+                "parameter": "R"
+              }
+            }
+          },
+          "passing": "value",
+          "requires_transfer": true
+        },
+        {
+          "name": "index_callback",
+          "type": "null",
+          "passing": "value",
+          "default": {
+            "null": null
+          }
+        },
+        {
+          "name": "result",
+          "type": "null",
+          "passing": "value",
+          "default": {
+            "null": null
+          }
+        },
+        {
+          "name": "error_handler",
+          "type": "null",
+          "passing": "value",
+          "default": {
+            "null": null
+          }
+        },
+        {
+          "name": "timeout_ms",
+          "type": "int",
+          "passing": "value",
+          "default": {
+            "int": 0
+          }
+        }
+      ],
+      "returns": "mixed",
+      "boxed_results": [
+        {
+          "result": "R",
+          "family": "mixed"
+        }
+      ]
+    },
+    {
+      "id": "tasks.run.mixed.error",
+      "name": "task_run",
+      "type_parameters": [
+        "R",
+        "E"
+      ],
+      "parameters": [
+        {
+          "name": "items",
+          "type": "mixed",
+          "passing": "value"
+        },
+        {
+          "name": "workers",
+          "type": "int",
+          "passing": "value"
+        },
+        {
+          "name": "callback",
+          "type": {
+            "callable": {
+              "parameters": [
+                {
+                  "name": "p0",
+                  "type": "mixed",
+                  "passing": "value"
+                }
+              ],
+              "returns": {
+                "parameter": "R"
+              }
+            }
+          },
+          "passing": "value",
+          "requires_transfer": true
+        },
+        {
+          "name": "index_callback",
+          "type": "null",
+          "passing": "value"
+        },
+        {
+          "name": "result",
+          "type": "null",
+          "passing": "value"
+        },
+        {
+          "name": "error_handler",
+          "type": {
+            "callable": {
+              "parameters": [
+                {
+                  "name": "item",
+                  "type": "mixed",
+                  "passing": "value"
+                },
+                {
+                  "name": "error",
+                  "type": "task_error",
+                  "passing": "value"
+                }
+              ],
+              "returns": {
+                "parameter": "E"
+              }
+            }
+          },
+          "passing": "value"
+        },
+        {
+          "name": "timeout_ms",
+          "type": "int",
+          "passing": "value",
+          "default": {
+            "int": 0
+          }
+        }
+      ],
+      "returns": "mixed",
+      "replacement_results": [
+        {
+          "result": "R",
+          "replacement": "E"
+        }
+      ],
+      "boxed_results": [
+        {
+          "result": "R",
+          "family": "mixed"
+        }
+      ]
+    },
+    {
+      "id": "tasks.run.mixed.context",
+      "name": "task_run",
+      "type_parameters": [
+        "R"
+      ],
+      "parameters": [
+        {
+          "name": "items",
+          "type": "mixed",
+          "passing": "value"
+        },
+        {
+          "name": "workers",
+          "type": "int",
+          "passing": "value"
+        },
+        {
+          "name": "callback",
+          "type": {
+            "callable": {
+              "parameters": [
+                {
+                  "name": "p0",
+                  "type": "mixed",
+                  "passing": "value"
+                },
+                {
+                  "name": "p1",
+                  "type": "task_context",
+                  "passing": "value"
+                }
+              ],
+              "returns": {
+                "parameter": "R"
+              }
+            }
+          },
+          "passing": "value",
+          "requires_transfer": true
+        },
+        {
+          "name": "index_callback",
+          "type": "null",
+          "passing": "value",
+          "default": {
+            "null": null
+          }
+        },
+        {
+          "name": "result",
+          "type": "null",
+          "passing": "value",
+          "default": {
+            "null": null
+          }
+        },
+        {
+          "name": "error_handler",
+          "type": "null",
+          "passing": "value",
+          "default": {
+            "null": null
+          }
+        },
+        {
+          "name": "timeout_ms",
+          "type": "int",
+          "passing": "value",
+          "default": {
+            "int": 0
+          }
+        }
+      ],
+      "returns": "mixed",
+      "boxed_results": [
+        {
+          "result": "R",
+          "family": "mixed"
+        }
+      ]
+    },
+    {
+      "id": "tasks.run.mixed.context.error",
+      "name": "task_run",
+      "type_parameters": [
+        "R",
+        "E"
+      ],
+      "parameters": [
+        {
+          "name": "items",
+          "type": "mixed",
+          "passing": "value"
+        },
+        {
+          "name": "workers",
+          "type": "int",
+          "passing": "value"
+        },
+        {
+          "name": "callback",
+          "type": {
+            "callable": {
+              "parameters": [
+                {
+                  "name": "p0",
+                  "type": "mixed",
+                  "passing": "value"
+                },
+                {
+                  "name": "p1",
+                  "type": "task_context",
+                  "passing": "value"
+                }
+              ],
+              "returns": {
+                "parameter": "R"
+              }
+            }
+          },
+          "passing": "value",
+          "requires_transfer": true
+        },
+        {
+          "name": "index_callback",
+          "type": "null",
+          "passing": "value"
+        },
+        {
+          "name": "result",
+          "type": "null",
+          "passing": "value"
+        },
+        {
+          "name": "error_handler",
+          "type": {
+            "callable": {
+              "parameters": [
+                {
+                  "name": "item",
+                  "type": "mixed",
+                  "passing": "value"
+                },
+                {
+                  "name": "error",
+                  "type": "task_error",
+                  "passing": "value"
+                }
+              ],
+              "returns": {
+                "parameter": "E"
+              }
+            }
+          },
+          "passing": "value"
+        },
+        {
+          "name": "timeout_ms",
+          "type": "int",
+          "passing": "value",
+          "default": {
+            "int": 0
+          }
+        }
+      ],
+      "returns": "mixed",
+      "replacement_results": [
+        {
+          "result": "R",
+          "replacement": "E"
+        }
+      ],
+      "boxed_results": [
+        {
+          "result": "R",
+          "family": "mixed"
+        }
+      ]
+    },
+    {
+      "id": "tasks.start.mixed",
+      "name": "task_start",
+      "type_parameters": [
+        "R"
+      ],
+      "parameters": [
+        {
+          "name": "items",
+          "type": "mixed",
+          "passing": "value"
+        },
+        {
+          "name": "workers",
+          "type": "int",
+          "passing": "value"
+        },
+        {
+          "name": "callback",
+          "type": {
+            "callable": {
+              "parameters": [
+                {
+                  "name": "p0",
+                  "type": "mixed",
+                  "passing": "value"
+                }
+              ],
+              "returns": {
+                "parameter": "R"
+              }
+            }
+          },
+          "passing": "value",
+          "requires_transfer": true
+        },
+        {
+          "name": "index_callback",
+          "type": "null",
+          "passing": "value",
+          "default": {
+            "null": null
+          }
+        },
+        {
+          "name": "result",
+          "type": "null",
+          "passing": "value",
+          "default": {
+            "null": null
+          }
+        },
+        {
+          "name": "error_handler",
+          "type": "null",
+          "passing": "value",
+          "default": {
+            "null": null
+          }
+        },
+        {
+          "name": "timeout_ms",
+          "type": "int",
+          "passing": "value",
+          "default": {
+            "int": 0
+          }
+        }
+      ],
+      "returns": "task_batch",
+      "boxed_results": [
+        {
+          "result": "R",
+          "family": "mixed"
+        }
+      ]
+    },
+    {
+      "id": "tasks.start.mixed.error",
+      "name": "task_start",
+      "type_parameters": [
+        "R",
+        "E"
+      ],
+      "parameters": [
+        {
+          "name": "items",
+          "type": "mixed",
+          "passing": "value"
+        },
+        {
+          "name": "workers",
+          "type": "int",
+          "passing": "value"
+        },
+        {
+          "name": "callback",
+          "type": {
+            "callable": {
+              "parameters": [
+                {
+                  "name": "p0",
+                  "type": "mixed",
+                  "passing": "value"
+                }
+              ],
+              "returns": {
+                "parameter": "R"
+              }
+            }
+          },
+          "passing": "value",
+          "requires_transfer": true
+        },
+        {
+          "name": "index_callback",
+          "type": "null",
+          "passing": "value"
+        },
+        {
+          "name": "result",
+          "type": "null",
+          "passing": "value"
+        },
+        {
+          "name": "error_handler",
+          "type": {
+            "callable": {
+              "parameters": [
+                {
+                  "name": "item",
+                  "type": "mixed",
+                  "passing": "value"
+                },
+                {
+                  "name": "error",
+                  "type": "task_error",
+                  "passing": "value"
+                }
+              ],
+              "returns": {
+                "parameter": "E"
+              }
+            }
+          },
+          "passing": "value",
+          "requires_transfer": true
+        },
+        {
+          "name": "timeout_ms",
+          "type": "int",
+          "passing": "value",
+          "default": {
+            "int": 0
+          }
+        }
+      ],
+      "returns": "task_batch",
+      "replacement_results": [
+        {
+          "result": "R",
+          "replacement": "E"
+        }
+      ],
+      "boxed_results": [
+        {
+          "result": "R",
+          "family": "mixed"
+        }
+      ]
+    },
+    {
+      "id": "tasks.start.mixed.context",
+      "name": "task_start",
+      "type_parameters": [
+        "R"
+      ],
+      "parameters": [
+        {
+          "name": "items",
+          "type": "mixed",
+          "passing": "value"
+        },
+        {
+          "name": "workers",
+          "type": "int",
+          "passing": "value"
+        },
+        {
+          "name": "callback",
+          "type": {
+            "callable": {
+              "parameters": [
+                {
+                  "name": "p0",
+                  "type": "mixed",
+                  "passing": "value"
+                },
+                {
+                  "name": "p1",
+                  "type": "task_context",
+                  "passing": "value"
+                }
+              ],
+              "returns": {
+                "parameter": "R"
+              }
+            }
+          },
+          "passing": "value",
+          "requires_transfer": true
+        },
+        {
+          "name": "index_callback",
+          "type": "null",
+          "passing": "value",
+          "default": {
+            "null": null
+          }
+        },
+        {
+          "name": "result",
+          "type": "null",
+          "passing": "value",
+          "default": {
+            "null": null
+          }
+        },
+        {
+          "name": "error_handler",
+          "type": "null",
+          "passing": "value",
+          "default": {
+            "null": null
+          }
+        },
+        {
+          "name": "timeout_ms",
+          "type": "int",
+          "passing": "value",
+          "default": {
+            "int": 0
+          }
+        }
+      ],
+      "returns": "task_batch",
+      "boxed_results": [
+        {
+          "result": "R",
+          "family": "mixed"
+        }
+      ]
+    },
+    {
+      "id": "tasks.start.mixed.context.error",
+      "name": "task_start",
+      "type_parameters": [
+        "R",
+        "E"
+      ],
+      "parameters": [
+        {
+          "name": "items",
+          "type": "mixed",
+          "passing": "value"
+        },
+        {
+          "name": "workers",
+          "type": "int",
+          "passing": "value"
+        },
+        {
+          "name": "callback",
+          "type": {
+            "callable": {
+              "parameters": [
+                {
+                  "name": "p0",
+                  "type": "mixed",
+                  "passing": "value"
+                },
+                {
+                  "name": "p1",
+                  "type": "task_context",
+                  "passing": "value"
+                }
+              ],
+              "returns": {
+                "parameter": "R"
+              }
+            }
+          },
+          "passing": "value",
+          "requires_transfer": true
+        },
+        {
+          "name": "index_callback",
+          "type": "null",
+          "passing": "value"
+        },
+        {
+          "name": "result",
+          "type": "null",
+          "passing": "value"
+        },
+        {
+          "name": "error_handler",
+          "type": {
+            "callable": {
+              "parameters": [
+                {
+                  "name": "item",
+                  "type": "mixed",
+                  "passing": "value"
+                },
+                {
+                  "name": "error",
+                  "type": "task_error",
+                  "passing": "value"
+                }
+              ],
+              "returns": {
+                "parameter": "E"
+              }
+            }
+          },
+          "passing": "value",
+          "requires_transfer": true
+        },
+        {
+          "name": "timeout_ms",
+          "type": "int",
+          "passing": "value",
+          "default": {
+            "int": 0
+          }
+        }
+      ],
+      "returns": "task_batch",
+      "replacement_results": [
+        {
+          "result": "R",
+          "replacement": "E"
+        }
+      ],
+      "boxed_results": [
+        {
+          "result": "R",
+          "family": "mixed"
+        }
+      ]
+    },
+    {
+      "id": "tasks.run.dynamic",
+      "name": "task_run",
+      "type_parameters": [
+        "R"
+      ],
+      "parameters": [
+        {
+          "name": "items",
+          "type": "dynamic",
+          "passing": "value"
+        },
+        {
+          "name": "workers",
+          "type": "int",
+          "passing": "value"
+        },
+        {
+          "name": "callback",
+          "type": {
+            "callable": {
+              "parameters": [
+                {
+                  "name": "p0",
+                  "type": "dynamic",
+                  "passing": "value"
+                }
+              ],
+              "returns": {
+                "parameter": "R"
+              }
+            }
+          },
+          "passing": "value",
+          "requires_transfer": true
+        },
+        {
+          "name": "index_callback",
+          "type": "null",
+          "passing": "value",
+          "default": {
+            "null": null
+          }
+        },
+        {
+          "name": "result",
+          "type": "null",
+          "passing": "value",
+          "default": {
+            "null": null
+          }
+        },
+        {
+          "name": "error_handler",
+          "type": "null",
+          "passing": "value",
+          "default": {
+            "null": null
+          }
+        },
+        {
+          "name": "timeout_ms",
+          "type": "int",
+          "passing": "value",
+          "default": {
+            "int": 0
+          }
+        }
+      ],
+      "returns": "dynamic",
+      "boxed_results": [
+        {
+          "result": "R",
+          "family": "dynamic"
+        }
+      ]
+    },
+    {
+      "id": "tasks.run.dynamic.error",
+      "name": "task_run",
+      "type_parameters": [
+        "R",
+        "E"
+      ],
+      "parameters": [
+        {
+          "name": "items",
+          "type": "dynamic",
+          "passing": "value"
+        },
+        {
+          "name": "workers",
+          "type": "int",
+          "passing": "value"
+        },
+        {
+          "name": "callback",
+          "type": {
+            "callable": {
+              "parameters": [
+                {
+                  "name": "p0",
+                  "type": "dynamic",
+                  "passing": "value"
+                }
+              ],
+              "returns": {
+                "parameter": "R"
+              }
+            }
+          },
+          "passing": "value",
+          "requires_transfer": true
+        },
+        {
+          "name": "index_callback",
+          "type": "null",
+          "passing": "value"
+        },
+        {
+          "name": "result",
+          "type": "null",
+          "passing": "value"
+        },
+        {
+          "name": "error_handler",
+          "type": {
+            "callable": {
+              "parameters": [
+                {
+                  "name": "item",
+                  "type": "dynamic",
+                  "passing": "value"
+                },
+                {
+                  "name": "error",
+                  "type": "task_error",
+                  "passing": "value"
+                }
+              ],
+              "returns": {
+                "parameter": "E"
+              }
+            }
+          },
+          "passing": "value"
+        },
+        {
+          "name": "timeout_ms",
+          "type": "int",
+          "passing": "value",
+          "default": {
+            "int": 0
+          }
+        }
+      ],
+      "returns": "dynamic",
+      "replacement_results": [
+        {
+          "result": "R",
+          "replacement": "E"
+        }
+      ],
+      "boxed_results": [
+        {
+          "result": "R",
+          "family": "dynamic"
+        }
+      ]
+    },
+    {
+      "id": "tasks.run.dynamic.context",
+      "name": "task_run",
+      "type_parameters": [
+        "R"
+      ],
+      "parameters": [
+        {
+          "name": "items",
+          "type": "dynamic",
+          "passing": "value"
+        },
+        {
+          "name": "workers",
+          "type": "int",
+          "passing": "value"
+        },
+        {
+          "name": "callback",
+          "type": {
+            "callable": {
+              "parameters": [
+                {
+                  "name": "p0",
+                  "type": "dynamic",
+                  "passing": "value"
+                },
+                {
+                  "name": "p1",
+                  "type": "task_context",
+                  "passing": "value"
+                }
+              ],
+              "returns": {
+                "parameter": "R"
+              }
+            }
+          },
+          "passing": "value",
+          "requires_transfer": true
+        },
+        {
+          "name": "index_callback",
+          "type": "null",
+          "passing": "value",
+          "default": {
+            "null": null
+          }
+        },
+        {
+          "name": "result",
+          "type": "null",
+          "passing": "value",
+          "default": {
+            "null": null
+          }
+        },
+        {
+          "name": "error_handler",
+          "type": "null",
+          "passing": "value",
+          "default": {
+            "null": null
+          }
+        },
+        {
+          "name": "timeout_ms",
+          "type": "int",
+          "passing": "value",
+          "default": {
+            "int": 0
+          }
+        }
+      ],
+      "returns": "dynamic",
+      "boxed_results": [
+        {
+          "result": "R",
+          "family": "dynamic"
+        }
+      ]
+    },
+    {
+      "id": "tasks.run.dynamic.context.error",
+      "name": "task_run",
+      "type_parameters": [
+        "R",
+        "E"
+      ],
+      "parameters": [
+        {
+          "name": "items",
+          "type": "dynamic",
+          "passing": "value"
+        },
+        {
+          "name": "workers",
+          "type": "int",
+          "passing": "value"
+        },
+        {
+          "name": "callback",
+          "type": {
+            "callable": {
+              "parameters": [
+                {
+                  "name": "p0",
+                  "type": "dynamic",
+                  "passing": "value"
+                },
+                {
+                  "name": "p1",
+                  "type": "task_context",
+                  "passing": "value"
+                }
+              ],
+              "returns": {
+                "parameter": "R"
+              }
+            }
+          },
+          "passing": "value",
+          "requires_transfer": true
+        },
+        {
+          "name": "index_callback",
+          "type": "null",
+          "passing": "value"
+        },
+        {
+          "name": "result",
+          "type": "null",
+          "passing": "value"
+        },
+        {
+          "name": "error_handler",
+          "type": {
+            "callable": {
+              "parameters": [
+                {
+                  "name": "item",
+                  "type": "dynamic",
+                  "passing": "value"
+                },
+                {
+                  "name": "error",
+                  "type": "task_error",
+                  "passing": "value"
+                }
+              ],
+              "returns": {
+                "parameter": "E"
+              }
+            }
+          },
+          "passing": "value"
+        },
+        {
+          "name": "timeout_ms",
+          "type": "int",
+          "passing": "value",
+          "default": {
+            "int": 0
+          }
+        }
+      ],
+      "returns": "dynamic",
+      "replacement_results": [
+        {
+          "result": "R",
+          "replacement": "E"
+        }
+      ],
+      "boxed_results": [
+        {
+          "result": "R",
+          "family": "dynamic"
+        }
+      ]
+    },
+    {
+      "id": "tasks.start.dynamic",
+      "name": "task_start",
+      "type_parameters": [
+        "R"
+      ],
+      "parameters": [
+        {
+          "name": "items",
+          "type": "dynamic",
+          "passing": "value"
+        },
+        {
+          "name": "workers",
+          "type": "int",
+          "passing": "value"
+        },
+        {
+          "name": "callback",
+          "type": {
+            "callable": {
+              "parameters": [
+                {
+                  "name": "p0",
+                  "type": "dynamic",
+                  "passing": "value"
+                }
+              ],
+              "returns": {
+                "parameter": "R"
+              }
+            }
+          },
+          "passing": "value",
+          "requires_transfer": true
+        },
+        {
+          "name": "index_callback",
+          "type": "null",
+          "passing": "value",
+          "default": {
+            "null": null
+          }
+        },
+        {
+          "name": "result",
+          "type": "null",
+          "passing": "value",
+          "default": {
+            "null": null
+          }
+        },
+        {
+          "name": "error_handler",
+          "type": "null",
+          "passing": "value",
+          "default": {
+            "null": null
+          }
+        },
+        {
+          "name": "timeout_ms",
+          "type": "int",
+          "passing": "value",
+          "default": {
+            "int": 0
+          }
+        }
+      ],
+      "returns": "task_dynamic_batch",
+      "boxed_results": [
+        {
+          "result": "R",
+          "family": "dynamic"
+        }
+      ]
+    },
+    {
+      "id": "tasks.start.dynamic.error",
+      "name": "task_start",
+      "type_parameters": [
+        "R",
+        "E"
+      ],
+      "parameters": [
+        {
+          "name": "items",
+          "type": "dynamic",
+          "passing": "value"
+        },
+        {
+          "name": "workers",
+          "type": "int",
+          "passing": "value"
+        },
+        {
+          "name": "callback",
+          "type": {
+            "callable": {
+              "parameters": [
+                {
+                  "name": "p0",
+                  "type": "dynamic",
+                  "passing": "value"
+                }
+              ],
+              "returns": {
+                "parameter": "R"
+              }
+            }
+          },
+          "passing": "value",
+          "requires_transfer": true
+        },
+        {
+          "name": "index_callback",
+          "type": "null",
+          "passing": "value"
+        },
+        {
+          "name": "result",
+          "type": "null",
+          "passing": "value"
+        },
+        {
+          "name": "error_handler",
+          "type": {
+            "callable": {
+              "parameters": [
+                {
+                  "name": "item",
+                  "type": "dynamic",
+                  "passing": "value"
+                },
+                {
+                  "name": "error",
+                  "type": "task_error",
+                  "passing": "value"
+                }
+              ],
+              "returns": {
+                "parameter": "E"
+              }
+            }
+          },
+          "passing": "value",
+          "requires_transfer": true
+        },
+        {
+          "name": "timeout_ms",
+          "type": "int",
+          "passing": "value",
+          "default": {
+            "int": 0
+          }
+        }
+      ],
+      "returns": "task_dynamic_batch",
+      "replacement_results": [
+        {
+          "result": "R",
+          "replacement": "E"
+        }
+      ],
+      "boxed_results": [
+        {
+          "result": "R",
+          "family": "dynamic"
+        }
+      ]
+    },
+    {
+      "id": "tasks.start.dynamic.context",
+      "name": "task_start",
+      "type_parameters": [
+        "R"
+      ],
+      "parameters": [
+        {
+          "name": "items",
+          "type": "dynamic",
+          "passing": "value"
+        },
+        {
+          "name": "workers",
+          "type": "int",
+          "passing": "value"
+        },
+        {
+          "name": "callback",
+          "type": {
+            "callable": {
+              "parameters": [
+                {
+                  "name": "p0",
+                  "type": "dynamic",
+                  "passing": "value"
+                },
+                {
+                  "name": "p1",
+                  "type": "task_context",
+                  "passing": "value"
+                }
+              ],
+              "returns": {
+                "parameter": "R"
+              }
+            }
+          },
+          "passing": "value",
+          "requires_transfer": true
+        },
+        {
+          "name": "index_callback",
+          "type": "null",
+          "passing": "value",
+          "default": {
+            "null": null
+          }
+        },
+        {
+          "name": "result",
+          "type": "null",
+          "passing": "value",
+          "default": {
+            "null": null
+          }
+        },
+        {
+          "name": "error_handler",
+          "type": "null",
+          "passing": "value",
+          "default": {
+            "null": null
+          }
+        },
+        {
+          "name": "timeout_ms",
+          "type": "int",
+          "passing": "value",
+          "default": {
+            "int": 0
+          }
+        }
+      ],
+      "returns": "task_dynamic_batch",
+      "boxed_results": [
+        {
+          "result": "R",
+          "family": "dynamic"
+        }
+      ]
+    },
+    {
+      "id": "tasks.start.dynamic.context.error",
+      "name": "task_start",
+      "type_parameters": [
+        "R",
+        "E"
+      ],
+      "parameters": [
+        {
+          "name": "items",
+          "type": "dynamic",
+          "passing": "value"
+        },
+        {
+          "name": "workers",
+          "type": "int",
+          "passing": "value"
+        },
+        {
+          "name": "callback",
+          "type": {
+            "callable": {
+              "parameters": [
+                {
+                  "name": "p0",
+                  "type": "dynamic",
+                  "passing": "value"
+                },
+                {
+                  "name": "p1",
+                  "type": "task_context",
+                  "passing": "value"
+                }
+              ],
+              "returns": {
+                "parameter": "R"
+              }
+            }
+          },
+          "passing": "value",
+          "requires_transfer": true
+        },
+        {
+          "name": "index_callback",
+          "type": "null",
+          "passing": "value"
+        },
+        {
+          "name": "result",
+          "type": "null",
+          "passing": "value"
+        },
+        {
+          "name": "error_handler",
+          "type": {
+            "callable": {
+              "parameters": [
+                {
+                  "name": "item",
+                  "type": "dynamic",
+                  "passing": "value"
+                },
+                {
+                  "name": "error",
+                  "type": "task_error",
+                  "passing": "value"
+                }
+              ],
+              "returns": {
+                "parameter": "E"
+              }
+            }
+          },
+          "passing": "value",
+          "requires_transfer": true
+        },
+        {
+          "name": "timeout_ms",
+          "type": "int",
+          "passing": "value",
+          "default": {
+            "int": 0
+          }
+        }
+      ],
+      "returns": "task_dynamic_batch",
+      "replacement_results": [
+        {
+          "result": "R",
+          "replacement": "E"
+        }
+      ],
+      "boxed_results": [
+        {
+          "result": "R",
+          "family": "dynamic"
+        }
+      ]
     }
   ],
   "cpp": [
@@ -43775,6 +45253,127 @@
     },
     {
       "id": "tasks.start.hash.context.target.void.indexed.error.nullable-int.nullable-string",
+      "symbol": "scpp::tasks::start",
+      "header": "modules/tasks/tasks.hpp",
+      "native_payloads": true
+    },
+    {
+      "id": "tasks.task_join.dynamic",
+      "symbol": "scpp::tasks::join",
+      "header": "modules/tasks/tasks.hpp"
+    },
+    {
+      "id": "tasks.task_done.dynamic",
+      "symbol": "scpp::tasks::done",
+      "header": "modules/tasks/tasks.hpp"
+    },
+    {
+      "id": "tasks.task_cancel.dynamic",
+      "symbol": "scpp::tasks::cancel",
+      "header": "modules/tasks/tasks.hpp"
+    },
+    {
+      "id": "tasks.task_status.dynamic",
+      "symbol": "scpp::tasks::status",
+      "header": "modules/tasks/tasks.hpp"
+    },
+    {
+      "id": "tasks.task_progress.dynamic",
+      "symbol": "scpp::tasks::progress",
+      "header": "modules/tasks/tasks.hpp"
+    },
+    {
+      "id": "tasks.run.mixed",
+      "symbol": "scpp::tasks::run",
+      "header": "modules/tasks/tasks.hpp",
+      "native_payloads": true
+    },
+    {
+      "id": "tasks.run.mixed.error",
+      "symbol": "scpp::tasks::run",
+      "header": "modules/tasks/tasks.hpp",
+      "native_payloads": true
+    },
+    {
+      "id": "tasks.run.mixed.context",
+      "symbol": "scpp::tasks::run",
+      "header": "modules/tasks/tasks.hpp",
+      "native_payloads": true
+    },
+    {
+      "id": "tasks.run.mixed.context.error",
+      "symbol": "scpp::tasks::run",
+      "header": "modules/tasks/tasks.hpp",
+      "native_payloads": true
+    },
+    {
+      "id": "tasks.start.mixed",
+      "symbol": "scpp::tasks::start",
+      "header": "modules/tasks/tasks.hpp",
+      "native_payloads": true
+    },
+    {
+      "id": "tasks.start.mixed.error",
+      "symbol": "scpp::tasks::start",
+      "header": "modules/tasks/tasks.hpp",
+      "native_payloads": true
+    },
+    {
+      "id": "tasks.start.mixed.context",
+      "symbol": "scpp::tasks::start",
+      "header": "modules/tasks/tasks.hpp",
+      "native_payloads": true
+    },
+    {
+      "id": "tasks.start.mixed.context.error",
+      "symbol": "scpp::tasks::start",
+      "header": "modules/tasks/tasks.hpp",
+      "native_payloads": true
+    },
+    {
+      "id": "tasks.run.dynamic",
+      "symbol": "scpp::tasks::run",
+      "header": "modules/tasks/tasks.hpp",
+      "native_payloads": true
+    },
+    {
+      "id": "tasks.run.dynamic.error",
+      "symbol": "scpp::tasks::run",
+      "header": "modules/tasks/tasks.hpp",
+      "native_payloads": true
+    },
+    {
+      "id": "tasks.run.dynamic.context",
+      "symbol": "scpp::tasks::run",
+      "header": "modules/tasks/tasks.hpp",
+      "native_payloads": true
+    },
+    {
+      "id": "tasks.run.dynamic.context.error",
+      "symbol": "scpp::tasks::run",
+      "header": "modules/tasks/tasks.hpp",
+      "native_payloads": true
+    },
+    {
+      "id": "tasks.start.dynamic",
+      "symbol": "scpp::tasks::start",
+      "header": "modules/tasks/tasks.hpp",
+      "native_payloads": true
+    },
+    {
+      "id": "tasks.start.dynamic.error",
+      "symbol": "scpp::tasks::start",
+      "header": "modules/tasks/tasks.hpp",
+      "native_payloads": true
+    },
+    {
+      "id": "tasks.start.dynamic.context",
+      "symbol": "scpp::tasks::start",
+      "header": "modules/tasks/tasks.hpp",
+      "native_payloads": true
+    },
+    {
+      "id": "tasks.start.dynamic.context.error",
       "symbol": "scpp::tasks::start",
       "header": "modules/tasks/tasks.hpp",
       "native_payloads": true

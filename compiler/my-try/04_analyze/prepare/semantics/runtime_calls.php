@@ -259,6 +259,9 @@ final class Runtime_Call_Preparation
 				throw new \RuntimeException('Runtime replacement result must be void or exactly match the worker result type');
 			}
 		}
+		foreach ($contract->boxed_results as $boxed_result) {
+			Transfer_Preparation::require_boxed_result($inference->bindings[$boxed_result->result_position], $boxed_result->family_type);
+		}
 		foreach ($contract->transfer_positions as $position) {
 			Transfer_Preparation::require_payload($inference->bindings[$position]);
 		}

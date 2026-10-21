@@ -41,6 +41,18 @@ final class Transfer_Preparation
 		return capture_transfer::forbidden;
 	}
 
+	/** Box contents remain value-checked by the provider; this does not permit boxed captures. */
+	public static function require_boxed_result(canonical_type_use $type, canonical_type_use $family_type): void
+	{
+		if (Type_Queries::canonical($type)->family() === type_family::no_value) { return; }
+		if ($type->matches($family_type)
+			|| $type->matches(Language_Types::boolean(Model::$language_scope))
+			|| $type->matches(Language_Types::integer(Model::$language_scope))
+			|| $type->matches(Language_Types::floating(Model::$language_scope))
+			|| $type->matches(Language_Types::string_type(Model::$language_scope))) { return; }
+		throw new \RuntimeException('Boxed task result must be void, a canonical scalar or the matching boxed family');
+	}
+
 	public static function require_payload(canonical_type_use $type): void
 	{
 		if (Type_Queries::canonical($type)->family() === type_family::no_value) { return; }

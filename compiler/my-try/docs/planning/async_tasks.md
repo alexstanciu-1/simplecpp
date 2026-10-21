@@ -9,10 +9,10 @@ The S12 closeout below advances this to 56/64; V-R02 is partial and remains acti
 | Requirement | Current evidence and remaining work |
 | --- | --- |
 | S12 suspension, sequencing, cleanup and restrictions | Closed by the source/runtime/retained proofs below. |
-| Runtime-owned task types, controls and all 21 API names | Bounded source paths exist; final complete API/opt-in audit remains. |
+| Runtime-owned task types, controls and all 21 API names | Bounded source paths and separate mixed/dynamic batch handles exist; final complete API/opt-in audit remains. |
 | Typed vector/hash submissions and placement | Value/void work, contexts, prefilled/cross-carrier targets, independent int/string keys and inferred nullable keys have default-prelowered proof. Explicit nullable-string targets also have success/error/omission proof. |
 | Error callbacks and publication | Replacement/omission, coordinator dispatch, ordered publication context/options and unordered synchronization proved in the bounded forms below. |
-| Transfer restrictions | Typed payload and capture rejection proved. Boxed input and boxed result-family admission still require runtime audit and source integration; do not broaden transfer permission implicitly. |
+| Transfer restrictions | Typed payload/capture rejection and bounded scalar boxed task admission proved. Boxed source tests use native input/access fixtures because general boxed literal/index prelowering gaps remain separate; capture permission is unchanged. |
 | Lifecycle acceptance | Native concurrency/cancellation/timeout/shutdown evidence exists. Production-source handled/unhandled timeout passes; cancellation, repeated-error joins and shutdown/module-selection audit remains. |
 | Final closure | Still 56/64 original issues closed. V-R02 remains partial until the remaining scope is proved. |
 
@@ -967,3 +967,58 @@ kind explicitly; the failing assertion remains archived.
 
 [Boxed adapter evidence](task-boxed-adapters-evidence.tar.gz), SHA-256:
 `61226d6f94f0b7c63b3e1314b271d5f703b32cbcefeb37d4252c8e76195d19b4`. Final source hashes verified; no full matrix or native compiler rebuild.
+
+## Boxed task source admission checkpoint — 2026-10-21
+
+Installed 16 mixed/dynamic run/start signatures (with/without worker context and
+error handler), a runtime-owned `task_dynamic_batch`, and five dynamic lifecycle
+control overloads. A named `boxed_results` generic contract resolves its family
+once at registration and checks selected inferred results during shared preparation.
+It accepts canonical bool/int/float/string, void and the matching boxed family;
+containers, wrappers, fixed-width types and the opposite family reject before
+publication. Existing exact replacement-or-void requirements constrain handlers.
+General payload and capture-transfer classification is unchanged.
+
+Dev002 default-prelowered evidence:
+
+- `20261021-task-boxed-source-03`: all 64 source execution cases passed, cold/warm,
+  covering both families, run/start, worker contexts, six result forms and nested
+  input/worker-result rejection. The retained task failed due to a fixture's
+  `vector<int>=>` tokenization; the corrected fixture passes in the later runs.
+- `...-04`: all 24 replacement/omission/nested-handler cases and retained checks
+  passed. Five malformed metadata cases, eight invalid result types, rejection /
+  repair / replay and family/void edits versus fresh publication are covered.
+- `...-05`: dynamic caller-mutation snapshots, repeated joins, done/status/progress
+  and cancellation after completion passed. This is not active-cancellation proof.
+- `...-06`: mixed caller-variable replacement snapshots and the same controls
+  passed. Native mixed mutation evidence remains in the prior runtime checkpoint.
+- `20261021-task-boxed-typed-regression`: existing typed task metadata rejection,
+  repair/replay and placement edits versus fresh publication passed.
+
+Thus 90 distinct execution cases passed across the focused runs; these are not a
+full matrix or native compiler proof. All successful warm builds compiled/linked
+zero files, and publication manifests forbid application templates. Native fixture
+functions supply input tables and read/mutate dynamic values; production task
+metadata, callbacks, handle transport and lifecycle calls are used unchanged.
+
+Separate general boxed-operation blockers exposed by these tests:
+
+1. `...-01`: mixed literal initialization passes concrete wrapper elements to a
+   native `initializer_list<mixed_t>`; dynamic scalar literal construction lacks
+   an adapter. Both fail before task execution.
+2. `...-02`: dynamic index read unwraps the receiver but leaves its mixed key in
+   concrete storage, so the native `null_index_read` call cannot bind.
+3. `...-05`: mixed index store similarly leaves key/value arguments in concrete
+   storage while unwrapping the receiver.
+
+These failures remain archived and unfixed; successful fixture-backed task checks
+do not close them. Repair belongs to general initializer/conversion/runtime-operation
+transport owners and must not be hidden in task-specific adapters. Source boxed
+construction/index usability and the final lifecycle/module/API audit remain open.
+V-R02 remains partial and overall progress remains 56/64 (87.5%).
+
+[Evidence archive](task-boxed-source-evidence.tar.gz), SHA-256:
+`f5258050e0c5135cd3ea3998533beea553001aa843def5b9c64b4a29190da939`.
+The archive preserves the failed probes, corrected fixtures, logs, publication
+manifests and final verified source hashes, including the initial contracts-only
+run that lacked the dev002 PHP PATH setup.

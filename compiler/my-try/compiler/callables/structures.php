@@ -148,18 +148,32 @@ final class runtime_replacement_requirement
 	}
 }
 
+/** Canonical scalar or matching boxed-family output, checked after inference. */
+final class runtime_boxed_result_requirement
+{
+	public int $result_position;
+	public canonical_type_use $family_type;
+	public function __construct(int $result_position, canonical_type_use $family_type)
+	{
+		$this->result_position = $result_position;
+		$this->family_type = $family_type;
+	}
+}
+
 final class runtime_generic_contract
 {
 	public int $owner_parameter_count = 0;
 	public int $type_parameter_count = 0;
 	public array $transfer_positions /** vector<int> */ = [];
 	public Storage $replacement_results /** Storage<runtime_replacement_requirement> */;
+	public Storage $boxed_results /** Storage<runtime_boxed_result_requirement> */;
 	public runtime_type_pattern $return_type;
 	public Storage $parameters /** Storage<runtime_pattern_parameter> */;
 	public function __construct()
 	{
 		$this->parameters = new Storage /** Storage<runtime_pattern_parameter> */();
 		$this->replacement_results = new Storage /** Storage<runtime_replacement_requirement> */();
+		$this->boxed_results = new Storage /** Storage<runtime_boxed_result_requirement> */();
 	}
 }
 

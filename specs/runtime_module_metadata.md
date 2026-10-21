@@ -995,3 +995,15 @@ and before publishing output. It does not rank overloads, convert result types,
 or alter payload/capture-transfer requirements. This bounded relation supports
 recovery callbacks whose replacement result must match the worker result; it is
 not a general constraint-expression language.
+
+### Boxed scalar result requirements
+
+A generic function may declare `boxed_results` with entries such as
+`{"result":"R","family":"mixed"}`. The family must be `mixed` or `dynamic`,
+and the result must name an inferred type variable. Shared preparation admits
+void, canonical bool/int/float/string, or exactly the named boxed family.
+Opposite families, wrappers, fixed-width types and containers reject statically.
+The provider checks the contents of a valid boxed result at runtime: only scalar
+values, including null, may cross this boundary. This does not authorize boxed
+captures or change general payload transfer classification. Metadata installation
+rejects unknown fields, missing fields, unknown variables and fixed-function use.

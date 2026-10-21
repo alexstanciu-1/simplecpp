@@ -103,6 +103,16 @@ final class Runtime_Catalog_Patterns
 			$requirements->append(new runtime_replacement_requirement(
 				$positions[$relation->result_name], $positions[$relation->replacement_name]));
 		}
+		$boxed_requirements /** Storage<runtime_boxed_result_requirement> */ = $result->boxed_results;
+		foreach ($spec->boxed_results as $boxed_result) {
+			if (!isset($positions[$boxed_result->result_name])) {
+				throw new \RuntimeException('Unknown boxed result type parameter');
+			}
+			$family_spec = new runtime_type_spec();
+			$family_spec->name = $boxed_result->family_name;
+			$family_type = Runtime_Catalog_Registration::type($family_spec, $types);
+			$boxed_requirements->append(new runtime_boxed_result_requirement($positions[$boxed_result->result_name], $family_type));
+		}
 		$result->return_type = self::type($spec->return_type, $types, $positions, true);
 		return $result;
 	}

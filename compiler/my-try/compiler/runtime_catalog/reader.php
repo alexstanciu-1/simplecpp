@@ -583,6 +583,11 @@ final class Runtime_Catalog_Reader
 				$result->return_type = self::type($reader);
 				$returns = true;
 			}
+			elseif ($key === 'boxed_results') {
+				$boxed_results /** Storage<runtime_boxed_result_spec> */ = $result->boxed_results;
+				$reader->begin_array();
+				while ($reader->next_element()) { $boxed_results->append(self::boxed_result($reader)); }
+			}
 			elseif ($key === 'replacement_results') {
 				$relations /** Storage<runtime_replacement_spec> */ = $result->replacement_results;
 				$reader->begin_array();
@@ -625,6 +630,10 @@ final class Runtime_Catalog_Reader
 		if (!$replacement_results->is_empty() && (q_count($result->type_parameters) === 0)) {
 			$reader->reject('Replacement result requirements need a generic function');
 		}
+		$boxed_requirements /** Storage<runtime_boxed_result_spec> */ = $result->boxed_results;
+		if (!$boxed_requirements->is_empty() && (q_count($result->type_parameters) === 0)) {
+			$reader->reject('Boxed result requirements need a generic function');
+		}
 		if ($result->snapshot_borrow_safe) {
 			if (($result->member !== null) || (q_count($result->type_parameters) !== 0)) {
 				$reader->reject('Snapshot borrowing requires a fixed free runtime function');
@@ -634,6 +643,22 @@ final class Runtime_Catalog_Reader
 					$reader->reject('Snapshot borrowing requires fixed explicit value inputs');
 				}
 			}
+		}
+		return $result;
+	}
+
+	private static function boxed_result(\scpp\Json_Reader $reader): runtime_boxed_result_spec
+	{
+		$result = new runtime_boxed_result_spec();
+		$reader->begin_object();
+		while ($reader->next_property()) {
+			$key = $reader->property_name();
+			if ($key === 'result') { $result->result_name = self::name($reader); }
+			elseif ($key === 'family') { $result->family_name = self::name($reader); }
+			else { $reader->reject('Unknown boxed result field: ' . $key); }
+		}
+		if (($result->result_name === '') || (($result->family_name !== 'mixed') && ($result->family_name !== 'dynamic'))) {
+			$reader->reject('Boxed result requirement needs a result variable and mixed or dynamic family');
 		}
 		return $result;
 	}
