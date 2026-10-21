@@ -822,3 +822,19 @@ and explicit unavailable-libcurl failure pass, alongside focused recovery checks
 Earlier runtime sanitizer evidence is retained; no runtime implementation changed.
 No full matrix or native compiler rebuild ran. Historical blocked rows above remain
 original verification evidence, superseded only in this approved bounded scope.
+
+## Scalar debug and closure reconciliation — 2026-10-21
+
+[S08/S05](scalar_debug_closure_reconciliation.md) resolve the approved bounded
+scope on dev002: **45/64 resolved (70.3125%)**, zero partial and 19 open, adding
+**3.125 percentage points**. This means 44 implemented/repaired issues plus one
+intentional-contract reconciliation, not restored compatibility for all originals.
+
+S08 exposes canonical int/float/bool/string debugging through existing runtime
+metadata and approved PHS call-site context. All 12 source forms, original output,
+ordered snapshots, source-line movement, recovery and metadata checks pass with
+default prelowering. S05 preserves the borrowed-erasure rejection and verifies the
+concrete-closure adaptation, owned concrete capture and reference mutation. Its
+original fixture remains unchanged and rejected. Owned erased callable storage
+still rejects for missing concrete callback transport, explicitly kept separate.
+No runtime implementation change, full matrix or native compiler rebuild ran.

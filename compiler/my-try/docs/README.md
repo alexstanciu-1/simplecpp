@@ -9,12 +9,14 @@ syntax and collection → shared semantic preparation → C++ generation. Other
 frontends should normalize toward the same PHS-shaped concepts. LLVM is a parked
 experiment retained for regressions, not a second semantic development path.
 
-Current repair checkpoint: [strict curl integration](planning/curl_integration.md),
-43/64 original issues closed (67.1875%); supplementary BS-R01 also closed.
+Current repair checkpoint: [scalar debug and closure reconciliation](planning/scalar_debug_closure_reconciliation.md),
+45/64 original issues resolved (70.3125%): 44 implemented/repaired and one intentional
+contract reconciliation. Supplementary BS-R01 also remains closed.
 
-V-R03/V-E02 pass default-prelowered cold/warm builds on dev002, with all five
-strict fixtures compiled and four local original output oracles verified against
-v0.1. External HTTPS execution remains opt-in; wider transport gaps stay explicit.
+S08 scalar `dbg` passes default-prelowered cold/warm execution on dev002. S05
+preserves borrowed-closure restrictions and verifies the concrete adaptation;
+explicit callable storage remains a separate prelowering gap. The earlier
+[strict curl closeout](planning/curl_integration.md) retains its own proof scope.
 
 ## Reading map
 

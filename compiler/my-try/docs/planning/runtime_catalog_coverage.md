@@ -439,3 +439,13 @@ existing metadata/build owners. [Closeout](curl_integration.md) verifies libcurl
 production builds, discovery failure, states/snapshots, local HTTP and original
 strict fixture oracles under default prelowering. External HTTPS execution and
 legacy curl remain separate; startup module defaults are unchanged.
+
+## Bounded scalar debug — 2026-10-21
+
+Core exposes `dbg` for canonical int/float/bool/string through eight contracts
+covering 12 source forms and 19 constants. Label/value uses the existing default
+flags explicitly to disambiguate native overload selection. Backend-only PHS
+file/line binding context preserves source signatures and ordered value snapshots;
+native inspection runs behind the default-prelowering boundary. See
+[verified closeout](scalar_debug_closure_reconciliation.md). Wider values,
+value/flags shorthand, gates and debugger instrumentation remain separate.

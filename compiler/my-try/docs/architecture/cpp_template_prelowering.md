@@ -69,6 +69,15 @@ boxed domains and index writes remain separate. See [curl integration](../planni
 
 ## Existing owners
 
+Free runtime bindings can explicitly request PHS file/line context. `CPP_Callsites`
+reads the current token snapshot (including retained-range translation); ordinary
+calls and the existing compiled-operation bridge prefix the same native arguments.
+Location enters operation identity. Only fragments consuming source context retain
+a source digest, so whitespace edits refresh their locations without inventing
+semantic signature changes. Core scalar `dbg` uses this path; native runtime
+inspection stays behind the compiled boundary. See the
+[S08/S05 report](../planning/scalar_debug_closure_reconciliation.md).
+
 | Responsibility | Owner and contract |
 |---|---|
 | Source identities, storable/copy requirements, ownership and source capabilities | Existing registry and completed preparation; backend reads settled facts |

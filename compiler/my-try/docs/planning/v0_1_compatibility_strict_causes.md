@@ -1,6 +1,13 @@
 # Strict v0.1 compatibility: grouped causes
 Doc Status: planning
 
+Later [S08/S05 closeout](scalar_debug_closure_reconciliation.md) restores bounded
+scalar debug support and reconciles reference-capture erasure as an intentional
+v0.2 restriction. The original S05 fixture remains negative; its concrete-closure
+adaptation executes. Explicit callable storage has a separate default-prelowering
+gap. Original grouped failures/counts below remain historical evidence.
+
+
 Later [scalar admission follow-up](v0_1_compatibility_scalar_admission.md): all 48
 ordinary strict operator fixtures now compile, resolving S03; 60 affected matrix
 rows pass their existing oracles. Counts below retain their dated audit meaning.

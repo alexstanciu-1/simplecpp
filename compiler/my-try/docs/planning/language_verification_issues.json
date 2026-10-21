@@ -677,8 +677,16 @@
       "dependencies": [
         "Resolve the named source contract/owner before any repair."
       ],
-      "next_action": "Retain first-blocker evidence and discuss the bounded implementation or fixture plan; no fixes during verification.",
-      "simple_batch_eligible": false
+      "next_action": "Resolved within the approved bounded scope; see scalar_debug_closure_reconciliation.md. Keep wider debug and concrete callback transport separate.",
+      "simple_batch_eligible": false,
+      "repair_status": "reconciled-and-verified",
+      "repair": {
+        "date": "2026-10-21",
+        "report": "scalar_debug_closure_reconciliation.md",
+        "evidence": "scalar-debug-acceptance.tar.gz",
+        "implementation_commit": "af5677d04",
+        "scope": "Intentional v0.2 borrowed-environment erasure restriction preserved. Original fixture remains negative; concrete-closure adaptation, owned concrete capture and borrowed mutation execute cold/warm on dev002. Direct/nested borrowed erasure reject. Owned erased callable storage passes preparation but remains a separate prelowering transport gap, explicitly approved outside this goal. This is contract reconciliation, not restored v0.1 erased-callable support."
+      }
     },
     {
       "id": "S07",
@@ -725,8 +733,16 @@
       "dependencies": [
         "Resolve the named source contract/owner before any repair."
       ],
-      "next_action": "Retain first-blocker evidence and discuss the bounded implementation or fixture plan; no fixes during verification.",
-      "simple_batch_eligible": false
+      "next_action": "Resolved within the approved bounded scope; see scalar_debug_closure_reconciliation.md. Keep wider debug and concrete callback transport separate.",
+      "simple_batch_eligible": false,
+      "repair_status": "implemented-and-verified",
+      "repair": {
+        "date": "2026-10-21",
+        "report": "scalar_debug_closure_reconciliation.md",
+        "evidence": "scalar-debug-acceptance.tar.gz",
+        "implementation_commit": "af5677d04",
+        "scope": "Canonical int/float/bool/string dbg: 12 source forms, eight metadata contracts and 19 constants. Explicit PHS call-site context through existing bindings/compiled-operation bridge; default prelowered cold/warm execution, snapshots, locations, recovery and metadata checks on dev002. No runtime implementation changes."
+      }
     },
     {
       "id": "S09",

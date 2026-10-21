@@ -1,11 +1,12 @@
 # Scalar debug and reference-capture reconciliation
 Doc Status: planning
 
-Goal authorized 2026-10-21: implement bounded scalar `dbg` support (S08),
+Goal completed 2026-10-21: implement bounded scalar `dbg` support (S08),
 preserve the borrowed-closure restriction and verify the concrete-closure
 adaptation (S05) on dev002 under default template prelowering. No runtime
-implementation changes or full matrix rerun. Baseline: 43/64 closed; neither
-issue is closed by these initial probes.
+implementation changes or full matrix rerun. **45/64 issues resolved (70.3125%)**,
+19 open: **+3.125 percentage points**. This comprises 44 implemented/repaired
+issues and one intentional-contract reconciliation (S05), not two capability fixes.
 
 ## Owners and scope
 
@@ -48,7 +49,7 @@ without compiler/runtime edits. Probe results:
   invalid flags and prints an inspection-failure message; it does not propagate
   that configuration error to the outer program.
 
-## Bounded binding prerequisite under discussion
+## Approved binding implementation
 
 The permanent `tests/s05_reconciliation.py --results FRESH_DIRECTORY` runner now
 passes all six checks in `20261021-s05-reconciliation-01`: three concrete programs
@@ -65,23 +66,61 @@ Existing C++ free-function metadata has only identity, symbol and header. Callin
 from the source signature. Do not hardcode a source function name in the emitter,
 pass generated C++ locations, or add hidden parameters to source callable types.
 
-Proposed extension: explicit call-site context on the existing C++ binding,
+Implemented extension: explicit call-site context on the existing C++ binding,
 consumed by the ordinary and compiled-operation call owners. Backend call-site
 facts supply the PHS file/line, separately from ordered source arguments. Keep
 metadata validation, specialization identity and replay sensitive to those facts.
-No new metadata registry or runtime implementation is needed. User approval for
-this specific retained transport extension was requested after the probes.
+No new metadata registry or runtime implementation was added. The user explicitly
+approved this retained transport extension and keeping callback transport separate.
 
 Keep concrete callback storage separate; report the owned-capture control's
 prepared acceptance and backend rejection honestly. S05 reconciliation must not
 claim that all erased callable forms execute under default prelowering.
 
-## Remaining acceptance
+## Final acceptance and accounting
 
-Implement the approved binding path and scalar registrations; verify the unchanged
-debug fixture and ordered side effects, native scalar type reporting, source
-locations, flags and unsupported value rejection. Run cold/warm builds and
-rejection/repair/no-op checks through the shared runner on dev002. Complete
-concrete-closure mutation/lifetime controls and preserve original borrowed
-rejections. Update the ledger only after the bounded scope is verified, separating
-one capability repair from one intentional-contract reconciliation.
+`20261021-s08-final` passes 11 checks: nine default-prelowered native programs
+cold/warm, incremental recovery and metadata validation. The unchanged original
+fixture matches its exact output. Int/float/bool/string each exercise value-only,
+label/value and label/value/flags forms. These 12 source forms use eight metadata
+contracts, with the label form's optional flags supplied by ordinary defaults.
+All 19 debug constants are exposed. A direct native label/int call was ambiguous
+between label/value and value/flags overloads; explicitly supplying the existing
+`DBG_DEFAULT` through metadata resolves it without runtime changes. The initial
+failed build remains in the evidence.
+
+Checks prove native scalar type/value reporting, label snapshots despite later
+mutation, ordered once-only side effects (trace 123), source file/line, CRLF input,
+source-function shadowing and invalid-depth inspection-failure reporting with
+continued execution. Incremental whitespace moves line 2 to 4, matches a fresh
+compile and remains byte-stable on no-op. Three invalid calls reject on edit and
+retry, then repair to fresh output. Binding validation rejects invalid context
+forms/reference inputs and preserves prior configuration; a renamed source
+function uses the same context binding, proving no dbg-name branch.
+
+`20261021-s05-final` re-verifies the six closure checks against the final code:
+three concrete programs run cold/warm, direct and nested borrowed erasure reject,
+and owned erased storage still reaches its separate backend transport rejection.
+The user approved leaving that transport gap separate. The original v0.1 fixture
+is unchanged; S05 is reconciled against the current normative restriction, with
+the explicit-storage-removal adaptation verified. No erased-callable execution
+or lifetime extension is claimed. Every warm native build compiles/links zero units.
+
+`20261021-s08-regressions` passes runtime catalog, inventory, take and unsupported
+boundary checks. The catalog fixture now inserts its test constants into the
+existing core constants list rather than introducing a duplicate JSON property.
+The shared runner uses CLI fallback because installed CLI/FPM versions differ.
+No full matrix, runtime implementation change or native compiler rebuild ran.
+
+All **5,352 source inputs** match dev002 with zero mismatches. The
+[source delta](scalar_debug_source_delta.json) overlays the frozen tokenizer/IO
+manifest. [Final evidence](scalar-debug-acceptance.tar.gz) includes final cases,
+commands, exact outputs, generated publications, audit and historical attempts,
+excluding native caches/binaries. SHA256:
+`57c02976f96353cd53c98624fdc18b13c7c5aba53cf3bfe05d47d4ed5294535e`.
+
+Wider debug values (including fixed-width, null, boxed, wrappers, containers and
+objects), value/flags shorthand, gated helpers and debugger instrumentation remain
+separate. The binding extension is bounded to free fixed-value calls. Core scalar
+support does not claim that the full runtime debug surface is exposed. Concrete
+callback storage remains the previously recorded prelowering follow-up.

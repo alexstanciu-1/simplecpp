@@ -1,6 +1,14 @@
 # Test runners
 Doc Status: supporting
 
+`tests/scalar_debug.py --results FRESH_DIRECTORY` verifies the bounded scalar
+`dbg` forms with default-prelowered cold/warm execution, source locations,
+snapshots, invalid-depth reporting, source shadowing, metadata validation and
+incremental rejection/repair. `tests/s05_reconciliation.py --results FRESH_DIRECTORY`
+verifies three concrete closure programs, two borrowed-boundary rejections and
+one separately recorded erased-callable backend gap. The last is an expected
+gap assertion, not a callable execution pass. Run both Python runners on dev002.
+
 The [tokenizer/IO closeout](planning/tokenizer_io.md) uses `tests/tokenizer_io_runtime.py`,
 `tests/tokenizer_io.py` and `tests/tokenizer_io_prelower.py`, each with
 `--results FRESH_DIRECTORY` on dev002. The prelowering runner uses the default
