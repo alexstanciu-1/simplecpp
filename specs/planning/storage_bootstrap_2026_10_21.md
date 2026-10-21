@@ -361,3 +361,34 @@ Read-only owner replay (`/tmp/object-cast-bootstrap-owner-logs`, 59.39 s) confir
 owners, and no remaining failure in `source_record::owning_module`. Full owner
 records are saved in the bootstrap artifact directory as `failure-owners.json`.
 The replay is diagnostic evidence, not the reported bootstrap timing.
+
+
+## Retry after readonly deferral — 2026-10-21
+
+Candidate: `d7353ece`, clean source checkout. Evidence and source hashes are in
+`/tmp/bootstrap-attempt-20261021-readonly`; the driver is
+`/tmp/bootstrap-attempt-20261021-readonly.py`. The 21 readonly property removals and
+CH15-READONLY-FIELDS-01 debt are already committed in this candidate.
+
+Conversion: 259 PHP files, 4.71 s, peak RSS 186.3 MiB. Assembled input: 269 PHS
+files, 1,920,614 bytes. Isolated PHP8.5 CLI bootstrap (OPcache CLI/Xdebug disabled,
+4 GiB limit): **48.02 s wall time**, **317632 KiB / 310.2 MiB peak RSS**,
+**304087040 bytes / 290 MiB peak PHP heap**. Parsing completes at 4.269 s.
+Preparation fails without PHP fatal/OOM or C++ emission. These remain partial-run
+measurements and do not establish total bootstrap time or eventual peak memory.
+
+The unsupported-member-modifier diagnostic is gone. The next reported diagnostic
+is `S2S integer binary operation requires canonical int operands`. Source inspection
+identifies the strict equality in `token_list::operator_text_at`:
+`$second->offset === $first->offset + $first->length`. The converted fields retain
+`uint32`; `Integer_Operators::operand_domain` admits arithmetic on those operands
+but requires canonical `int` for strict equality. This retry does not repair that
+boundary or claim all integer failures have the same cause.
+
+Other preparation blockers, the prelowered locked-class null-check defect and
+Storage_Cursor widening remain untouched. No native compiler rebuild is claimed.
+
+Read-only owner replay confirms `token_list::operator_text_at` as the first affected
+callable. Owner records are retained as `failure-owners.json`; replay logs are in
+`/tmp/readonly-bootstrap-owner-logs` (49.17 s). This separate diagnostic replay is
+not included in the measured bootstrap time.

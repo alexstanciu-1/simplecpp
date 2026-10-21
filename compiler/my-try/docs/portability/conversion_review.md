@@ -14,7 +14,7 @@ The catalog's bounded closeouts and Chapter 15 deferrals still
 bound the supported language surface.
 This does not establish exhaustive language, lifetime, incremental or performance coverage.
 
-## PHP-hosted bootstrap after common object casts — 2026-10-21
+## PHP-hosted bootstrap after readonly deferral — 2026-10-21
 
 The common `object_cast(value, Target::class)` spelling works through PHP, v0.1
 (with its legacy alias retained) and v0.2. Prelowered checked casts and type tests
@@ -23,16 +23,19 @@ semantic admission. Focused identity, interface/struct, weak-lock, evaluation an
 failure proofs pass in ordinary and concrete modes.
 
 Remote task fixes were reconciled in `a92689b2`; `task_synchronize` remains resolved.
-The latest retry converts 259 PHP files into 269 assembled PHS files (1,919,594 bytes).
-Bootstrap takes 51.50 seconds, peak RSS 309.4 MiB, peak PHP heap 288 MiB under a
-4 GiB limit. Parsing finishes at 5.700 seconds. It stops during preparation without
-OOM or C++ emission. The unresolved cast binding is gone; the next diagnostic is
-unsupported member modifiers, including readonly fields in `program_entry_selection`.
-After that measured attempt, the user deferred readonly enforcement to
+The latest retry at `d7353ece` converts 259 PHP files into 269 assembled PHS files
+(1,920,614 bytes). Bootstrap takes **48.02 seconds**, peak RSS **310.2 MiB**, peak PHP
+heap **290 MiB** under a 4 GiB limit. Parsing finishes at 4.269 seconds. It stops
+during preparation without PHP fatal/OOM or C++ emission.
+
+Readonly enforcement is deferred to
 [CH15-READONLY-FIELDS-01](../catalog/15_blocking_debt.md#readonly-instance-fields--ch15-readonly-fields-01).
-The compiler's 21 readonly properties are now ordinary properties with source TODOs;
-constructor-only writes remain a convention. Conversion passes after removal; no
-new bootstrap retry or next-blocker claim accompanies this deferral.
+The compiler's 21 formerly readonly properties have source TODOs; constructor-only
+writes remain a convention. The unsupported-member-modifier diagnostic is gone.
+The next diagnostic is `S2S integer binary operation requires canonical int operands`.
+The token adjacency check compares `uint32` offsets using `===`; integer preparation
+currently restricts strict equality to canonical `int`. No repair is included in
+this retry.
 
 Other preparation failures remain, as does the prelowered locked-class null-check
 defect. Semantic widening and Storage_Cursor widening are excluded.
