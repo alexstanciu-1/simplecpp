@@ -196,9 +196,9 @@ private:
 };
 
 std::mutex background_mutex;
-std::vector<shared_p<batch>> background_batches;
+std::vector<shared_p<batch_lifecycle>> background_batches;
 
-void release_background(const shared_p<batch>& resource)
+void release_background(const shared_p<batch_lifecycle>& resource)
 {
 	std::lock_guard<std::mutex> guard(background_mutex);
 	std::erase_if(background_batches, [&](const auto& saved) { return saved.get() == resource.get(); });
@@ -248,7 +248,7 @@ configured_default_worker_pool configured_default_worker_pool_instance;
 	return default_pool;
 }
 
-[[nodiscard]] shared_p<detail::batch_state> state_or_throw(const shared_p<batch> &resource, const char *name)
+[[nodiscard]] shared_p<detail::batch_state> state_or_throw(const shared_p<batch_lifecycle> &resource, const char *name)
 {
 	if (!resource.has_value().native_value() || !resource->state.has_value().native_value()) {
 		throw runtime_error(
@@ -533,12 +533,12 @@ void execute_worker_batch(std::size_t worker_count, const worker_batch_body &bod
 	return state->status;
 }
 
-[[nodiscard]] bool_t done(const shared_p<batch> &resource)
+[[nodiscard]] bool_t done(const shared_p<batch_lifecycle> &resource)
 {
 	return bool_t(state_or_throw(resource, "task_done")->done.load());
 }
 
-void cancel(const shared_p<batch> &resource)
+void cancel(const shared_p<batch_lifecycle> &resource)
 {
 	const auto state = state_or_throw(resource, "task_cancel");
 	if (!state->done.load()) {
@@ -546,7 +546,7 @@ void cancel(const shared_p<batch> &resource)
 	}
 }
 
-[[nodiscard]] mixed_t join(const shared_p<batch> &resource)
+void detail::wait_batch(const shared_p<batch_lifecycle> &resource)
 {
 	(void) state_or_throw(resource, "task_join");
 	if (!resource->coordinator.has_value().native_value()) {
@@ -573,18 +573,31 @@ void cancel(const shared_p<batch> &resource)
 	if (resource->error) {
 		std::rethrow_exception(resource->error);
 	}
+}
+
+[[nodiscard]] mixed_t join(const shared_p<batch> &resource)
+{
+	detail::wait_batch(resource);
+	std::lock_guard<std::mutex> lock(resource->lifecycle_mutex);
+	return resource->result;
+}
+
+[[nodiscard]] dynamic_t<> join(const shared_p<dynamic_batch> &resource)
+{
+	detail::wait_batch(resource);
+	std::lock_guard<std::mutex> lock(resource->lifecycle_mutex);
 	return resource->result;
 }
 
 namespace detail {
-void retain_background(const shared_p<batch>& resource)
+void retain_background(const shared_p<batch_lifecycle>& resource)
 {
 	try {
 		std::lock_guard<std::mutex> guard(background_mutex);
 		background_batches.push_back(resource);
 	} catch (...) {
 		// Never leave a running thread to destroy its own last handle on failure.
-		try { (void) join(resource); } catch (...) {}
+		try { detail::wait_batch(resource); } catch (...) {}
 		throw;
 	}
 }
@@ -594,14 +607,14 @@ void shutdown()
 {
 	std::exception_ptr first_failure;
 	for (;;) {
-		std::vector<shared_p<batch>> pending;
+		std::vector<shared_p<batch_lifecycle>> pending;
 		{
 			std::lock_guard<std::mutex> guard(background_mutex);
 			pending.swap(background_batches);
 		}
 		if (pending.empty()) { break; }
 		for (const auto& resource : pending) {
-			try { (void) join(resource); }
+			try { detail::wait_batch(resource); }
 			catch (...) { if (!first_failure) { first_failure = std::current_exception(); } }
 		}
 	}
@@ -609,14 +622,14 @@ void shutdown()
 	if (first_failure) { std::rethrow_exception(first_failure); }
 }
 
-[[nodiscard]] string_t status(const shared_p<batch> &resource)
+[[nodiscard]] string_t status(const shared_p<batch_lifecycle> &resource)
 {
 	const auto state = state_or_throw(resource, "task_status");
 	std::lock_guard<std::mutex> lock(state->status_mutex);
 	return state->status;
 }
 
-[[nodiscard]] shared_p<progress_info> progress(const shared_p<batch> &resource)
+[[nodiscard]] shared_p<progress_info> progress(const shared_p<batch_lifecycle> &resource)
 {
 	auto info = shared<progress_info>();
 	info->state = state_or_throw(resource, "task_progress");

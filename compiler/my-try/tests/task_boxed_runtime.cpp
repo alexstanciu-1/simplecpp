@@ -51,5 +51,38 @@ int main() {
 	std::cout << "{\"mixed_basic\":true,\"rejects_scalar\":true,\"same_batch_state\":" << (same_state?"true":"false")
 		<< ",\"total\":" << total << ",\"completed\":" << completed
 		<< ",\"dynamic_overload\":" << (accepts_dynamic_tasks<dynamic_t<>>?"true":"false") << "}\n";
+	auto dynamic_handle=shared<tasks::dynamic_batch>();
+	dynamic_handle->coordinator=unique<tasks::detail::worker_thread>([dynamic_handle] {
+		std::lock_guard<std::mutex> lock(dynamic_handle->lifecycle_mutex);
+		dynamic_handle->result=dynamic_t<>::make_container();
+		(void)dynamic_handle->result.get_table().append(dynamic_t<>(integer(42)));
+		dynamic_handle->state->done.store(true);
+	});
+	tasks::detail::retain_background(dynamic_handle);
+	assert(tasks::join(dynamic_handle).get_table().at(integer(0)).get_int().native_value()==42);
+	assert(tasks::join(dynamic_handle).get_table().at(integer(0)).get_int().native_value()==42);
+	assert(tasks::done(dynamic_handle).native_value());
+	auto failed=shared<tasks::dynamic_batch>();
+	failed->coordinator=unique<tasks::detail::worker_thread>([failed] {
+		std::lock_guard<std::mutex> lock(failed->lifecycle_mutex);
+		failed->error=std::make_exception_ptr(std::runtime_error("dynamic failure"));
+		failed->state->done.store(true);
+	});
+	tasks::detail::retain_background(failed);
+	int errors=0;
+	for(int repeat=0;repeat<2;++repeat) {
+		try { (void)tasks::join(failed); }
+		catch(const std::runtime_error &e) { assert(std::string(e.what())=="dynamic failure");++errors; }
+	}
+	assert(errors==2);
+	std::atomic<bool> drained=false;
+	{
+		auto dropped=shared<tasks::dynamic_batch>();
+		dropped->coordinator=unique<tasks::detail::worker_thread>([dropped,&drained] {
+			drained.store(true);dropped->state->done.store(true);
+		});
+		tasks::detail::retain_background(dropped);
+	}
 	tasks::shutdown();
+	assert(drained.load());
 }

@@ -5,6 +5,7 @@
 #include "scpp/int_t.hpp"
 #include "scpp/memory.hpp"
 #include "scpp/mixed_t.hpp"
+#include "scpp/dynamic_t.hpp"
 #include "scpp/nullable.hpp"
 #include "scpp/null_t.hpp"
 #include "scpp/runtime_error.hpp"
@@ -209,14 +210,23 @@ void configure_publish_try_lock(const bool_t &enabled);
 [[nodiscard]] int_t<> publish_failed_try_lock_count();
 [[nodiscard]] int_t<> publish_deferred_flush_count();
 
-class batch final {
+class batch_lifecycle {
 public:
 	shared_p<detail::batch_state> state = shared<detail::batch_state>();
 	std::mutex lifecycle_mutex;
 	unique_p<detail::worker_thread> coordinator = null;
-	mixed_t result = null;
 	std::exception_ptr error = nullptr;
 	bool_t joined = bool_t(false);
+};
+
+class batch final : public batch_lifecycle {
+public:
+	mixed_t result = null;
+};
+
+class dynamic_batch final : public batch_lifecycle {
+public:
+	dynamic_t<> result = null;
 };
 
 class context final {
@@ -533,17 +543,21 @@ template <typename TValue, typename TKey>
 
 } // namespace detail
 
-[[nodiscard]] bool_t done(const shared_p<batch> &resource);
-void cancel(const shared_p<batch> &resource);
+[[nodiscard]] bool_t done(const shared_p<batch_lifecycle> &resource);
+void cancel(const shared_p<batch_lifecycle> &resource);
 [[nodiscard]] mixed_t join(const shared_p<batch> &resource);
-[[nodiscard]] string_t status(const shared_p<batch> &resource);
-[[nodiscard]] shared_p<progress_info> progress(const shared_p<batch> &resource);
+[[nodiscard]] dynamic_t<> join(const shared_p<dynamic_batch> &resource);
+[[nodiscard]] string_t status(const shared_p<batch_lifecycle> &resource);
+[[nodiscard]] shared_p<progress_info> progress(const shared_p<batch_lifecycle> &resource);
 void set_status(const shared_p<context> &resource, const string_t &value);
 void configure_default_worker_pool(const int_t<> &workers);
 void shutdown_default_worker_pool();
 // Process-entry cleanup retains unjoined batches independently of source handles.
 void shutdown();
-namespace detail { void retain_background(const shared_p<batch>& resource); }
+namespace detail {
+void retain_background(const shared_p<batch_lifecycle>& resource);
+void wait_batch(const shared_p<batch_lifecycle>& resource);
+}
 [[nodiscard]] int_t<> default_worker_pool_size();
 [[nodiscard]] int_t<> default_worker_pool_live_workers();
 [[nodiscard]] int_t<> default_worker_pool_created_workers();
@@ -1574,7 +1588,7 @@ template <typename TCallback, typename TErrorHandler>
 
 #else
 
-[[nodiscard]] inline bool_t done(const shared_p<batch> &)
+[[nodiscard]] inline bool_t done(const shared_p<batch_lifecycle> &)
 {
 	throw runtime_error(
 		"task_done(): tasks runtime module is not enabled in this build",
@@ -1584,7 +1598,7 @@ template <typename TCallback, typename TErrorHandler>
 	);
 }
 
-inline void cancel(const shared_p<batch> &)
+inline void cancel(const shared_p<batch_lifecycle> &)
 {
 	throw runtime_error(
 		"task_cancel(): tasks runtime module is not enabled in this build",
@@ -1604,7 +1618,13 @@ inline void cancel(const shared_p<batch> &)
 	);
 }
 
-[[nodiscard]] inline string_t status(const shared_p<batch> &)
+[[nodiscard]] inline dynamic_t<> join(const shared_p<dynamic_batch> &)
+{
+	throw runtime_error("task_join(): tasks runtime module is not enabled in this build",
+		"tasks_module_disabled", "scpp::tasks", "task_join");
+}
+
+[[nodiscard]] inline string_t status(const shared_p<batch_lifecycle> &)
 {
 	throw runtime_error(
 		"task_status(): tasks runtime module is not enabled in this build",
@@ -1614,7 +1634,7 @@ inline void cancel(const shared_p<batch> &)
 	);
 }
 
-[[nodiscard]] inline shared_p<progress_info> progress(const shared_p<batch> &)
+[[nodiscard]] inline shared_p<progress_info> progress(const shared_p<batch_lifecycle> &)
 {
 	throw runtime_error(
 		"task_progress(): tasks runtime module is not enabled in this build",

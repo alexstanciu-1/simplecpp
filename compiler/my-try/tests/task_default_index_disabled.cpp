@@ -19,5 +19,8 @@ int main() {
 	auto nullable_index=[](int_t<>) { return nullable<int_t<>>(null); };
 	try { (void)tasks::run(items, int_t<>(1), work, nullable_index, null, null, int_t<>(0)); }
 	catch (const runtime_error &e) { assert(std::string(e.what()).find("not enabled") != std::string::npos); ++rejected; }
-	assert(rejected == 5);
+	shared_p<tasks::dynamic_batch> dynamic_handle;
+	try { (void)tasks::join(dynamic_handle); }
+	catch (const runtime_error &e) { assert(std::string(e.what()).find("not enabled") != std::string::npos); ++rejected; }
+	assert(rejected == 6);
 }

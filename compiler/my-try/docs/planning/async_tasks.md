@@ -878,13 +878,13 @@ synchronized borrowed test state; this does not authorize source borrowed captur
 The dynamic overload remains absent. These are runtime proofs, not default-
 prelowered boxed-input source proofs.
 
-Boxed source admission remains blocked on an explicit family/transfer decision.
+The bounded boxed-family integration below was subsequently authorized.
 The current `task_batch` stores a mixed result and `task_join` returns mixed. Dynamic
 containers cannot be put into it through an implicit mixed conversion. A proposed
 bounded extension is scalar-element boxed snapshots with runtime rejection of
 nested/shared/resource payloads, plus a dynamic-result batch handle reusing the
 same execution/lifecycle owners and a family-preserving join overload. This would
-change runtime-owned type metadata and provider transport, so it requires discussion
+change runtime-owned type metadata and provider transport, so it was discussed
 before implementation. Existing typed/mixed batch signatures would remain stable.
 The alternative is to defer dynamic background support explicitly rather than
 silently convert families. Independent source lifecycle verification can continue.
@@ -904,5 +904,31 @@ and link zero units. No implementation changed. These tests establish timeout
 integration, not a hard scheduling deadline or arbitrary-code interruption.
 
 [Source timeout evidence](task-lifecycle-timeout-evidence.tar.gz), SHA-256:
-`8dea8751643d78cecc6b0000bf1b6a373cf7598a3fad93c5b2daa9e5d05a3836`. Fixture hashes were verified. The boxed-family decision remains pending;
+`8dea8751643d78cecc6b0000bf1b6a373cf7598a3fad93c5b2daa9e5d05a3836`. Fixture hashes were verified. The boxed-family prerequisite is now authorized;
 independent lifecycle verification remains available. V-R02 is partial.
+
+
+### Authorized boxed-family lifecycle foundation — 2026-10-21
+
+The user authorized scalar-element boxed snapshots and family-preserving dynamic
+batch results, with shared lifecycle owners and runtime rejection of nested/shared/
+resource payloads. No approval remains pending for this bounded prerequisite.
+
+`batch_lifecycle` now owns state, coordinator, join/error bookkeeping and retention.
+Existing `batch` retains mixed result storage; `dynamic_batch` owns dynamic result
+storage. Controls, shutdown and one wait/join lifecycle reuse the common owner.
+Family-specific join overloads only retrieve their own result. Source type metadata
+and boxed execution adapters are still outstanding; capture permission is unchanged.
+
+Dev002 `task-family-lifecycle-02` passes ASan/UBSan and leak checking for dynamic
+table repeated joins, repeated errors, lost-handle shutdown and the existing mixed
+state/cancellation assertions. Test-only native construction deliberately isolates
+lifecycle proof from unimplemented dynamic submission; it is not source admission.
+All five `task-family-lifecycle-regression` runtime groups pass (callback transfer,
+async core, shutdown, ownership and coordinator dispatch). The four production
+`task-family-source-controls` timeout programs pass default-prelowered cold/warm
+builds. `task-family-disabled` verifies ordinary inferred-key controls and disabled
+dynamic join diagnostics. V-R02 remains partial.
+
+[Shared lifecycle evidence](task-family-lifecycle-evidence.tar.gz), SHA-256:
+`71dbfe1cb9db9aea13a79f5d505d37dd36d37409e5569a128f44794fc497a746`. Final source hashes verified; no full matrix or native compiler rebuild.
