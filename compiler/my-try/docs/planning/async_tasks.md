@@ -700,3 +700,18 @@ V-R02 remains partial: cross-carrier result targets, nullable inferred-key polic
 boxed inputs and final source timeout/cancellation/shutdown acceptance remain open.
 The separate nullable identity/prelowering gap and historical evidence are preserved.
 No full matrix or native compiler rebuild was run. Overall remains 56/64 closed.
+
+
+### Cross-carrier target runtime probe — 2026-10-21
+
+Dev002 `task-cross-target-01` passes with address/undefined sanitizers and leak
+checking. Existing runtime owners support vector-to-integer-key-hash append and
+indexed placement, nullable integer-key append, numeric-key hash-to-vector
+placement, error replacement, both background directions, sparse-key rejection
+and original target preservation. No runtime implementation change was needed.
+This is runtime evidence only: production source admission and default-prelowered
+cold/warm proofs remain next. String-key targets and other combinations are not
+inferred from this probe. V-R02 remains partial.
+
+[Cross-target runtime evidence](task-cross-target-evidence.tar.gz), SHA-256:
+`938627348669b97f5e4284e0cffb8b504025c15d89c3bcc6b3d4b5886b2f7c58`. Uploaded probe hashes were verified.
