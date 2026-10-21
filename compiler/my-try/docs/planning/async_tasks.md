@@ -13,7 +13,7 @@ The S12 closeout below advances this to 56/64; V-R02 is partial and remains acti
 | Typed vector/hash submissions and placement | Value/void work, contexts, prefilled/cross-carrier targets, independent int/string keys and inferred nullable keys have default-prelowered proof. Explicit nullable-string targets also have success/error/omission proof. |
 | Error callbacks and publication | Replacement/omission, coordinator dispatch, ordered publication context/options and unordered synchronization proved in the bounded forms below. |
 | Transfer restrictions | Typed payload/capture rejection and bounded scalar boxed task admission proved. Boxed source tests use native input/access fixtures because general boxed literal/index prelowering gaps remain separate; capture permission is unchanged. |
-| Lifecycle acceptance | Native concurrency/cancellation/timeout/shutdown evidence exists. Production-source handled/unhandled timeout passes; cancellation, repeated-error joins and shutdown/module-selection audit remains. |
+| Lifecycle acceptance | Native lifecycle evidence and production-source timeout, active cancellation, shutdown/error precedence and module opt-in pass. Source repeated-error joins remain blocked by the separately deferred exception transport; no source-level closure is claimed. |
 | Final closure | Still 56/64 original issues closed. V-R02 remains partial until the remaining scope is proved. |
 
 Historical checkpoints below retain their then-current boundaries; they do not
@@ -1022,3 +1022,45 @@ V-R02 remains partial and overall progress remains 56/64 (87.5%).
 The archive preserves the failed probes, corrected fixtures, logs, publication
 manifests and final verified source hashes, including the initial contracts-only
 run that lacked the dev002 PHP PATH setup.
+
+## Production lifecycle acceptance checkpoint — 2026-10-21
+
+Nine additional source execution cases passed on dev002 with default prelowering,
+cold/warm builds and zero warm compile/link work:
+
+- Active cancellation with pool sizes 0 and 2: main observes worker status before
+  cancelling; retained progress observes stop requested, fewer than all 100 items
+  completed, zero active workers and a completed batch. The worker uses a bounded
+  delay; this is source integration evidence, supplementing the deterministic native
+  cancellation proof, not a scheduling/timing guarantee.
+- Dropped handles with pool sizes 0 and 2: main prints before delayed work, and
+  generated cleanup joins the work before process exit.
+- Unhandled background errors with both pool settings report at shutdown; when
+  main also fails, its division error retains precedence over the worker modulo error.
+- Publication caps batches at one item, reports three published items/three batches,
+  and exposes all eight measurement APIs with nonnegative timing/counter values.
+
+The metadata audit checks all 21 free API names and task build requirements.
+Separate fresh processes prove task names absent without opt-in and available with
+opt-in; changing startup catalogs after compilation rejects without changing output.
+Initial audit attempts incorrectly treated compiler reset as permission to change
+startup metadata; those harness failures are preserved, and no compiler change was
+made. Final corrected module checks pass in `...-04` and `...-05`.
+
+The repeated-error source probes remain **blocked**, not accepted tests: both fail
+at publication with `prelower_templates: throw operation requires concrete transport`.
+`CPP_Syntax::generate_protected` also explicitly rejects catch transport in this
+mode. The harness records these as `known_blockers`; its successful expected-rejection
+checks do not prove repeated-error source behavior. Native repeated joins/errors
+remain independently verified in the earlier runtime checkpoint. This is the
+previously deferred general exception-transport prerequisite, not a task scheduler
+failure, and has not been silently folded into task implementation.
+
+[Evidence archive](task-lifecycle-acceptance-evidence.tar.gz), SHA-256:
+`6640f8eeaaeba8a2241425115eaba22d42142f2d3ee394b8e4c584c95c368784`.
+Includes `20261021-task-lifecycle-acceptance-01` through `-05`, source fixtures,
+publication manifests, success/failure logs and final source hashes.
+
+Remaining completion audit: reconcile documented signature boundaries against the
+metadata and current evidence; keep boxed initializer/index and source exception
+transport gaps explicit. V-R02 remains partial; overall closure is 56/64.
