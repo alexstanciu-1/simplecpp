@@ -102,7 +102,7 @@
       "dependencies": [
         "Agree retained callable/suspension model and execution flow before implementation."
       ],
-      "next_action": "Closed within the approved S12 contract; V-R02 task integration remains separate and active.",
+      "next_action": "Closed within the approved S12 contract; V-R02 integration is also closed by the final acceptance review.",
       "simple_batch_eligible": false,
       "repair_status": "implemented-and-verified",
       "repair_evidence": {
@@ -1058,19 +1058,22 @@
         "task_publish_deferred_flush_count"
       ],
       "dependencies": [],
-      "next_action": "Resolve the boxed custom-index/prefilled-target scope decision recorded in task_acceptance_inventory.md before closure; source exception transport remains explicitly separate. Preserve original absence evidence.",
+      "next_action": "Closed within the approved scope. Boxed custom-index/prefilled-target arguments remain explicitly unsupported in v0.2 by user decision; source exception transport remains separate. Preserve original absence evidence.",
       "acceptance": "All documented in-scope signatures admitted through ordinary metadata, exact behavior/error and production-provider build proofs, with explicit decisions for held contracts.",
       "simple_batch_eligible": false,
       "eligibility_reason": "Requires contract or module integration discussion; name-resolution probes do not prove a metadata-only repair.",
-      "repair_status": "partially-implemented-and-verified",
+      "repair_status": "implemented-and-verified",
       "repair_evidence": {
         "date": "2026-10-21",
         "report": "async_tasks.md",
         "archives": [
           "tasks-metadata-evidence.tar.gz",
-          "tasks-shutdown-evidence.tar.gz"
+          "tasks-shutdown-evidence.tar.gz",
+          "task-lifecycle-acceptance-evidence.tar.gz",
+          "boxed-prelower-evidence.tar.gz",
+          "task-final-audit-evidence.tar.gz"
         ],
-        "scope": "All 21 API names are installed: typed and bounded boxed batch/callback integration, transfer restrictions, coordinator errors, lifecycle/module checks and boxed prelowering source transport are verified on dev002. See async_tasks.md and task_acceptance_inventory.md for current evidence and separate exception-transport limits; final closure audit remains open."
+        "scope": "All 21 API names and approved typed/boxed signature groups verified on dev002 with default prelowering: callback transfer, placement, coordinator errors, lifecycle/module checks, boxed source transport and retained/fresh parity. Final acceptance is recorded in async_tasks.md and task_acceptance_inventory.md. Boxed custom placement is explicitly unsupported; source exception transport and wider transfer/project domains remain separate."
       }
     },
     {

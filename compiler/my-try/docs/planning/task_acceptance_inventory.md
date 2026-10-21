@@ -32,9 +32,12 @@ nullable keys, cross-carrier targets and exact-result-or-void error handlers.
 The generic transfer contract covers admitted owned payloads; it does not authorize
 shared/resource captures. Boxed rows are deliberately the approved scalar-table
 snapshot slice: default placement, matching-family results and null index/target
-slots. They do not establish boxed custom-index/result-target support. Whether that gap is
-in this goal or explicitly deferred is a pending user decision; the spec does not
-clearly exclude it, so it is not classified as intentional by this audit.
+slots. By explicit user decision on 2026-10-21, boxed custom index callbacks and
+prefilled targets remain unsupported in v0.2. The normative task contract now
+states this boundary. Inspection of both `v0.1.77` and `release/0.1.78` found
+identical task implementations: boxed run/start accept only null index/target
+slots, while typed vector/hash inputs support custom placement. This is not a
+missing v0.1 compatibility feature.
 
 Unordered publication intentionally excludes contexts, timeout, replacement handlers,
 batching and hash input, as its own normative contract states. Source exception
@@ -52,24 +55,26 @@ wider async methods/closures and async task storage remain separate scope items.
 | Module opt-in and immutable startup configuration | Proved in separate fresh compiler processes; metadata hot reload is rejected. |
 | Boxed source construction/index usability | Bounded repair verified by 112 fixture-free source execution cases plus retained edits; see the approved boxed prelowering checkpoint. |
 | Repeated-error source join | Real boxed worker/handler failures retain and rethrow on repeated joins in both pool modes under ASan/UBSan; source throw/catch transport remains explicitly separate. Expected source rejection is not an execution pass. |
-| Boxed custom placement scope | Null index/target slots only; user decision pending on custom callbacks and prefilled targets. Do not close the goal by silently excluding them. |
+| Boxed custom placement scope | Closed by explicit user decision: null index/target slots only; boxed custom callbacks and prefilled targets remain unsupported in v0.2, matching the v0.1 implementation boundary. |
 | Retained rejection/repair/fresh parity | Existing task/boxed contract suites cover admission, replacement, type-family edits and recovery; new transport edits require focused retained checks. |
 | Wider project workflow | `prism.json` default worker-pool configuration belongs to existing `bin/project_services.php`; this audit verifies compiler module requirements and runtime controls, not a fresh end-to-end project configuration proof. |
 
-No full operator matrix or native compiler rebuild is part of this goal. Closing
-V-R02 still requires reconciling the open source transport gates and the explicitly
-bounded signature scope with the original acceptance contract; the issue remains
-partial at this checkpoint.
+Acceptance review complete: S12 and V-R02 are closed within the approved scope.
+All implementation evidence remains the recorded dev002 default-prelowered runs;
+this closeout changes documentation only. Source exception transport and wider
+project workflow proof remain separate as stated above. No full operator matrix
+or native compiler rebuild was performed.
 
-## Boxed placement design notes — awaiting scope decision
+## Historical boxed placement proposal — not adopted
 
 Read-only inspection confirms that current boxed run/start overloads have literal
 `null_t` index/target slots. `run_boxed_snapshot` assembles a fresh same-family table
 from packed/keyed worker results. Therefore adding metadata alone cannot expose
 custom placement; a runtime-owned placement path is required.
 
-If the user keeps this work in the goal, the discussion should settle these cases
-before implementation:
+The user explicitly excluded this extension from v0.2 on 2026-10-21. The following
+proposal is retained for historical traceability only; it is neither an active
+plan nor an implementation authorization:
 
 | Destination | Proposed contract to discuss |
 | --- | --- |

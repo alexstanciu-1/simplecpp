@@ -10,15 +10,15 @@ frontends should normalize toward the same PHS-shaped concepts. LLVM is a parked
 experiment retained for regressions, not a second semantic development path.
 
 Current repair checkpoint: [async execution and publication verification](planning/async_tasks.md),
-56/64 original issues resolved (87.5%): 53 implemented/repaired (including
+57/64 original issues resolved (89.0625%): 54 implemented/repaired (including
 harnesses) and three contract/environment reconciliations. Supplementary BS-R01 also remains closed.
 
-The active [async/tasks goal](planning/async_tasks.md) closes S12 with dev002
-execution and retained disk-publication proofs. V-R02 is partial: handles, controls
-and shutdown are verified. Callable transfer capability and provider admission are
-verified. All five submission/synchronization names have bounded typed source paths,
-including real unordered-worker synchronization. Custom placement, error/timeout
-options, boxed inputs and the final acceptance audit remain open.
+The completed [async/tasks goal](planning/async_tasks.md) closes S12 and V-R02
+with dev002 default-prelowered source/runtime and retained-publication proofs.
+All 21 task names and approved typed/boxed signature groups are verified. Boxed
+custom placement remains explicitly unsupported in v0.2; source exception
+transport and wider transfer/project domains remain separate. The
+[acceptance inventory](planning/task_acceptance_inventory.md) records exact limits.
 
 S10/V-R06 add invalidation-checked spans and FNV-1a64 with versioned keys, verified
 on dev002 with default prelowering. Wider uint64 equality and explicit copyable-value

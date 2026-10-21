@@ -8,21 +8,21 @@ syntax and policy/design issues. Operator signatures are not separate closed iss
 
 | Status | Issues |
 | --- | ---: |
-| Implemented or already repaired (including harnesses), then verified | 53 |
+| Implemented or already repaired (including harnesses), then verified | 54 |
 | Contract/environment reconciled and verified | 3 |
-| Partially implemented and verified | 1 |
+| Partially implemented and verified | 0 |
 | Other issues not yet closed | 7 |
 | Total | 64 |
 
-Resolved: **56/64 = 87.5%** (by issue count). This is not an
-engineering-effort estimate. The current async/tasks goal has closed S12 (+1.5625 points so far); V-R02 is partial. Its remaining callback/transfer work must pass before the goal reaches the intended +3.125 points. S05 does not certify explicit callable storage under default prelowering. Remaining architecture/runtime/project issues can be
+Resolved: **57/64 = 89.0625%** (by issue count). This is not an
+engineering-effort estimate. The completed async/tasks goal closes S12 and V-R02, adding 3.125 percentage points from its 55/64 baseline. S05 does not certify explicit callable storage under default prelowering. Remaining architecture/runtime/project issues can be
 much larger than fixture repairs. There is no defensible weighted effort percentage.
 
 | Original handling class | Fully closed | Partial | Not closed | Total |
 | --- | ---: | ---: | ---: | ---: |
 | Simple fix | 13 | 0 | 0 | 13 |
 | Light discussion | 17 | 0 | 0 | 17 |
-| Normal discussion | 26 | 1 | 7 | 34 |
+| Normal discussion | 27 | 0 | 7 | 34 |
 
 V-L06 now admits the final two scalar float identity forms and re-verifies its
 original carrier cases. S04's unchanged original process fixture passes through
@@ -84,8 +84,11 @@ status; the dated reports retain those historical counts.
 S12 now closes through [async suspension and publication proof](async_tasks.md):
 unchanged strict source, default-prelowered production builds, suspension/lifetime
 and ordered/lazy evaluation, plus retained disk rejection/repair/retirement/fresh
-parity. V-R02 has verified handles/controls and shutdown; batch/callback admission
-remain open; the bounded transfer-model prerequisite is authorized.
+parity. V-R02 closes all 21 names and the approved typed/boxed signature groups,
+including callbacks, coordinator errors, lifecycle and retained/fresh proofs.
+Boxed custom placement remains explicitly unsupported in v0.2 by user decision;
+source exception transport and wider transfer/project domains remain separate.
+See the [acceptance inventory](task_acceptance_inventory.md) for exact boundaries.
 
 ## Inside V-L07
 

@@ -1,8 +1,8 @@
 # Async suspension and strict tasks integration
 Doc Status: planning
 
-Active approved goal: S12 and V-R02. Baseline was 55/64 original issues closed.
-The S12 closeout below advances this to 56/64; V-R02 is partial and remains active.
+Completed approved goal: S12 and V-R02. Baseline was 55/64 original issues closed.
+Final acceptance closes both, reaching 57/64 (89.0625%), a gain of 3.125 percentage points.
 
 ## Current acceptance status — 2026-10-21
 
@@ -14,7 +14,7 @@ The S12 closeout below advances this to 56/64; V-R02 is partial and remains acti
 | Error callbacks and publication | Replacement/omission, coordinator dispatch, ordered publication context/options and unordered synchronization proved in the bounded forms below. |
 | Transfer restrictions | Typed payload/capture rejection and bounded scalar boxed task admission proved. Literal/index transport now passes fixture-free source tests; capture permission is unchanged. |
 | Lifecycle acceptance | Native lifecycle evidence and production-source timeout, active cancellation, shutdown/error precedence and module opt-in pass. Source repeated-error joins remain blocked by the separately deferred exception transport; no source-level closure is claimed. |
-| Final closure | Still 56/64 original issues closed. V-R02 remains partial until the remaining scope is proved. |
+| Final closure | Complete: 57/64 original issues closed. Boxed custom placement is explicitly unsupported in v0.2; separate source exception transport is not claimed. |
 
 The [task acceptance inventory](task_acceptance_inventory.md) maps installed
 signature groups to proof owners and remaining gates.
@@ -1138,3 +1138,24 @@ an intentional language restriction or declare V-R02 complete. The user has been
 asked whether to retain it in this goal for design/implementation or explicitly
 defer it and close the verified bounded scope. No implementation is authorized
 by the audit itself, and V-R02 remains partial pending that decision.
+
+
+## Acceptance closeout — 2026-10-21
+
+The user explicitly chose to keep boxed custom index callbacks and prefilled
+result targets unsupported in v0.2, and to finish this goal without that extension.
+Both `v0.1.77` and `release/0.1.78` have identical relevant task code: boxed
+run/start accept null index/target slots only. Their implementation summary limits
+boxed input to base calls and custom placement to typed vector/hash inputs.
+The normative task contract now makes this boundary explicit. The earlier open
+scope question and unadopted design proposal remain historical evidence.
+
+The acceptance inventory reconciles all 21 names and the approved signature groups
+with dev002 default-prelowered source, runtime, lifecycle and retained/fresh proofs.
+The preceding checkpoint audited 33 archive references; this documentation-only
+closeout rechecked all 34 references, including the final runtime audit archive,
+without rerunning compilation. S12 and
+V-R02 are implemented and verified within the agreed scope: 57/64 issues resolved,
+zero partial and seven open. Source exception transport, wider project workflow
+proof and transfer domains excluded above remain explicit; no passing source
+throw/catch proof, exhaustive generic-domain proof or full matrix is inferred.

@@ -5,7 +5,7 @@ Verification closeout: evidence through checkpoint 75. All planned checks and di
 
 The frozen v0.2 audit has 105 passed checks, 5 failed, 6 blocked and 3 explicitly deferred across 36 language families. A passed audit check can establish a complete inventory or reproduce intended rejection; it does not necessarily mean every feature in that family is implemented. No compiler/runtime fixes were made by this verification goal.
 
-Current follow-up repair status: [55/64 resolved (85.9375%)](language_repair_progress.md),
+Current follow-up repair status: [57/64 resolved (89.0625%)](language_repair_progress.md),
 including [V-D11/V-D15](collection_advisories.md). The audit tables below retain
 the original frozen results; dated repair closeouts record subsequent changes.
 
