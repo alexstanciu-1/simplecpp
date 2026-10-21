@@ -16,7 +16,10 @@ final class CPP_Runtime_Operations
 	{
 		// Preserve the existing identity seed while retiring the old indexed-write fields.
 		$key = $request->kind_name() . ':' . $request->spelling . ':store';
-		if ($request->ownership_observation !== null) { $key .= ':' . enum_name($request->ownership_observation); }
+		if ($request->ownership_observation !== null) {
+			$observation /** ownership_observation_kind */ = $request->ownership_observation;
+			$key .= ':' . Ownership_Observation_Kind_Name::text($observation);
+		}
 		if ($request->callsite !== null) { $key .= ':callsite=' . json_quote($request->callsite->path) . ':' . $request->callsite->line; }
 		if ($request->property !== null) {
 			$property_context = new cpp_generation_context();
@@ -49,7 +52,7 @@ final class CPP_Runtime_Operations
 
 	/** Inputs designate existing objects. Calling code owns sequencing and lifetime. */
 	public static function invoke(cpp_runtime_operation $request, array $expressions /** vector<string> */,
-		cpp_generation_context $context, string $construction_key = ''): string
+		cpp_generation_context $context, string $construction_key): string
 	{
 		$entry = self::reference($request, $context);
 		$inputs /** Storage<canonical_type_use> */ = $request->inputs;
@@ -206,7 +209,11 @@ final class CPP_Runtime_Operations
 			$inputs /** Storage<canonical_type_use> */ = $request->inputs;
 			return $position < $inputs->count() - 1;
 		}
-		if (($request->conversion !== null) && ($request->conversion->operation === conversion_operation::unique_upcast)) { return true; }
+		if ($request->conversion !== null) {
+			if ($request->conversion->operation === conversion_operation::unique_upcast) {
+				return true;
+			}
+		}
 		if ($request->call !== null) { return CPP_Source_Calls::mutable_input($request->call, $position, false); }
 		return false;
 	}
@@ -256,6 +263,10 @@ final class CPP_Runtime_Operations
 			$engine /** CPP_Specializations */ = $context->implementation_engine;
 			$inputs /** Storage<canonical_type_use> */ = $request->inputs;
 			foreach ($inputs as $position => $input) {
+				if (Type_Queries::canonical($input)->definition() instanceof callable_type_definition) {
+					$arguments[$position] = CPP_Callback_Transport::provider($input, $arguments[$position],
+						$binding->target() instanceof registered_function, $context);
+				}
 				// Concrete provider contracts consume native vectors; inferred generic
 				// contracts continue to use their substituted physical element types.
 				if (($binding->target() instanceof registered_function) && CPP_Wrapper_Transport::is_string_vector($input)) {
@@ -330,7 +341,7 @@ final class CPP_Runtime_Operations
 		$request = new cpp_runtime_operation(cpp_runtime_operation_kind::construct_default);
 		$request->construction = $facts;
 		$request->result = $facts->type;
-		return self::invoke($request, [], $context);
+		return self::invoke($request, [], $context, '');
 	}
 
 	public static function initialize(data_construction_node $node, initialization_binding $binding,
@@ -343,7 +354,7 @@ final class CPP_Runtime_Operations
 		$request = new cpp_runtime_operation(cpp_runtime_operation_kind::initialize_empty);
 		$request->initialization = $binding;
 		$request->result = $binding->target();
-		return self::invoke($request, [], $context);
+		return self::invoke($request, [], $context, '');
 	}
 
 	public static function write_key(canonical_type_use $type, string $key, cpp_generation_context $context): string
@@ -351,7 +362,7 @@ final class CPP_Runtime_Operations
 		$request = new cpp_runtime_operation(cpp_runtime_operation_kind::write_key);
 		$inputs /** Storage<canonical_type_use> */ = $request->inputs;
 		$inputs->append($type);
-		return self::invoke($request, [$key], $context);
+		return self::invoke($request, [$key], $context, '');
 	}
 
 	public static function binary(operator_decision $decision, string $spelling, string $left, string $right,
@@ -363,7 +374,7 @@ final class CPP_Runtime_Operations
 		$request->spelling = $spelling;
 		$inputs /** Storage<canonical_type_use> */ = $request->inputs;
 		foreach ($decision->operands as $conversion) { $inputs->append($conversion->target_type); }
-		return self::invoke($request, [$left, $right], $context);
+		return self::invoke($request, [$left, $right], $context, '');
 	}
 
 	/** Selected concrete conversions reuse the prepared decision and existing native renderer. */
@@ -417,7 +428,7 @@ final class CPP_Runtime_Operations
 		$inputs->append($input);
 		// Borrow in the caller's full expression so lock(weak(make())) keeps its owner alive.
 		$operand = 'static_cast<const ' . CPP_Declarations::type($input, $context) . '&>(' . $expression . ')';
-		return self::invoke($request, [$operand], $context);
+		return self::invoke($request, [$operand], $context, '');
 	}
 
 	public static function wrapper_presence(canonical_type_use $type, string $expression, cpp_generation_context $context): string
@@ -426,7 +437,7 @@ final class CPP_Runtime_Operations
 		$request->result = Model::$type_catalog->registry()->use(Model::$type_catalog->canonical('bool')->type_id());
 		$inputs /** Storage<canonical_type_use> */ = $request->inputs;
 		$inputs->append($type);
-		return '(' . self::invoke($request, [$expression], $context) . ').native_value()';
+		return '(' . self::invoke($request, [$expression], $context, '') . ').native_value()';
 	}
 
 	/** Borrow within the full expression, including any temporary that owns a nested reference. */
@@ -436,7 +447,7 @@ final class CPP_Runtime_Operations
 		$inputs /** Storage<canonical_type_use> */ = $request->inputs;
 		$inputs->append($type);
 		$operand = 'static_cast<const ' . CPP_Declarations::type($type, $context) . '&>(' . $expression . ')';
-		return self::invoke($request, [$operand], $context);
+		return self::invoke($request, [$operand], $context, '');
 	}
 
 	private static function single_value(cpp_runtime_operation $request, string $expression, cpp_generation_context $context): string
@@ -444,7 +455,7 @@ final class CPP_Runtime_Operations
 		$name = 'runtime_input_' . $context->next_temporary++;
 		$result /** canonical_type_use */ = $request->result;
 		return '([&]() -> ' . CPP_Declarations::type($result, $context) . ' { ' . (self::mutable_input($request, 0) ? 'auto ' : 'const auto& ') . $name . ' = '
-			. $expression . '; return ' . self::invoke($request, [$name], $context) . '; }())';
+			. $expression . '; return ' . self::invoke($request, [$name], $context, '') . '; }())';
 	}
 
 	/** Dispatch settled observation versus value/reference contracts without naming runtime functions. */
@@ -479,7 +490,7 @@ final class CPP_Runtime_Operations
 			$names[] = 'static_cast<const ' . CPP_Declarations::type($type, $context) . '&>('
 				. $emitter->expression($arguments[$argument->source_index]) . ')';
 		}
-		return self::invoke($request, $names, $context);
+		return self::invoke($request, $names, $context, '');
 	}
 
 	/** Reuse ordinary argument/default sequencing and prepared copy/consume/reference boundaries. */

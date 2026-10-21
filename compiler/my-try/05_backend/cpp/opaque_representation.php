@@ -22,12 +22,12 @@ final class CPP_Opaque_Representation
 		return $mapping;
 	}
 
-	/** Callable transport remains unsupported; physical layout ordering belongs to the engine. */
+	/** Validate the bounded callable transport; physical layout ordering belongs to the engine. */
 	public static function require_native_type(canonical_type_use $type): void
 	{
 		$canonical = Type_Queries::canonical($type);
 		if ($canonical->definition() instanceof callable_type_definition) {
-			throw new \RuntimeException('prelower_templates: callable storage requires a concrete callback transport');
+			CPP_Callback_Transport::signature($type);
 		}
 		if ($canonical instanceof applied_template_type) {
 			foreach (object_cast($canonical, applied_template_type::class)->arguments() as $argument) {
@@ -186,6 +186,11 @@ final class CPP_Opaque_Representation
 			$declaration .= '#if ' . $macro . "\n" . $return_type . $signature . ";\n#else\n"
 				. $return_type . $signature . " = delete;\n#endif\n";
 			$implementation .= '#if ' . $macro . "\n" . $return_type . $name . '::' . $signature . ' { ' . $body . " }\n#endif\n";
+		}
+		if (Type_Queries::canonical($type)->definition() instanceof callable_type_definition) {
+			$callback = CPP_Callback_Transport::interface($type, $name, $native, $engine);
+			$declaration = $callback->declaration_prefix . $declaration . $callback->declaration;
+			$implementation .= $callback->implementation;
 		}
 		$literal = CPP_Physical_Interfaces::literal($type, $mapping, $name, $native);
 		$declaration = $literal->declaration_prefix . $declaration . $literal->declaration;

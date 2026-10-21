@@ -163,13 +163,14 @@ final class CPP_Types
 				if ($context->concrete_types()) { CPP_Opaque_Representation::require_native_type($type_use); }
 			}
 			$signature = object_cast($definition, callable_type_definition::class)->signature();
-			$return_mapping = self::return_representation($signature, cpp_type_requirement::complete, $context);
+			$signature_context = $argument_engine !== null ? new cpp_generation_context($argument_engine) : $context;
+			$return_mapping = self::return_representation($signature, cpp_type_requirement::complete, $signature_context);
 			self::merge_headers($result, $return_mapping);
 			$parts = '';
 			$separator = '';
 			$parameters /** Storage<callable_parameter> */ = $signature->parameters;
 			foreach ($parameters as $parameter) {
-				$mapping = self::parameter_representation($parameter, cpp_type_requirement::complete, $context);
+				$mapping = self::parameter_representation($parameter, cpp_type_requirement::complete, $signature_context);
 				self::merge_headers($result, $mapping);
 				$parts .= $separator . $mapping->spelling;
 				$separator = ', ';
@@ -206,9 +207,10 @@ final class CPP_Types
 			if (!($entry instanceof collected_member_owner)) {
 				throw new \LogicException('C++ representation is not implemented for this source type declaration');
 			}
+			$member_owner = object_cast($entry, collected_member_owner::class);
 			$result->spelling = CPP_Generator::source_name('record', $entry->qualified_name());
 			if (($requirement === cpp_type_requirement::complete)
-				|| ($entry->syntax()->declaration_kind === type_declaration_kind::union_type)) {
+				|| ($member_owner->syntax()->declaration_kind === type_declaration_kind::union_type)) {
 				self::add_header($result, CPP_Artifacts::type_header($entry->qualified_name()));
 			}
 			else {
@@ -283,6 +285,7 @@ final class CPP_Types
 
 	public static function needs_concrete_storage(canonical_type_use $type): bool
 	{
+		if (Type_Queries::canonical($type)->definition() instanceof callable_type_definition) { return true; }
 		$recipe = self::stored_recipe($type);
 		if ($recipe === null) { return false; }
 		return $recipe->template_application || $recipe->concrete_boundary;

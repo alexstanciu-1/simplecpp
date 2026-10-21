@@ -248,6 +248,7 @@ require_once __DIR__ . '/compiler/sources.php';
 require_once __DIR__ . '/compiler/lifecycle.php';
 require_once __DIR__ . '/compiler/scope_publication.php';
 require_once __DIR__ . '/compiler/structures.php';
+require_once __DIR__ . '/05_backend/cpp/callback_transport.php';
 require_once __DIR__ . '/compiler/output_publication.php';
 require_once __DIR__ . '/compiler/work_queue.php';
 require_once __DIR__ . '/compiler/sync/sources.php';

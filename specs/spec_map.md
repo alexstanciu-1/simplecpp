@@ -263,6 +263,9 @@ If JSON, code, and prose disagree, the higher-level semantic specs win unless th
 
 ---
 
+The [synchronous collection contract](collections.md) owns v0.2 strict map/filter
+carrier policy, callback boundaries and boxed-family separation.
+
 ## 7. Required implementation checklist
 
 Before changing generator or runtime behavior in areas touched by dynamic typing or conditional semantics, check all of the following:

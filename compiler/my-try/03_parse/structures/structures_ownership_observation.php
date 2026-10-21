@@ -63,3 +63,12 @@ final class ownership_observation_children_iterator extends children_iterator
 		return $this->source->operand;
 	}
 }
+
+/** Keep enum reflection beside its declaration for native lowering. */
+final class Ownership_Observation_Kind_Name
+{
+	public static function text(ownership_observation_kind $kind): string
+	{
+		return enum_name($kind);
+	}
+}

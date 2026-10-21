@@ -543,7 +543,7 @@ final class CPP_Syntax
 			$inputs->append($node->source->require_preparation()->type);
 			$arguments[] = $name;
 			$result = CPP_Declarations::type($facts->type, $this->context);
-			$call = CPP_Runtime_Operations::invoke($request, $arguments, $this->context);
+			$call = CPP_Runtime_Operations::invoke($request, $arguments, $this->context, '');
 			return '([&]() -> ' . $result . ' { auto ' . $name . ' = ' . $source . '; return ' . $call . '; }())';
 		}
 		$this->context->headers['lang/php/support/php_take.hpp'] = true;

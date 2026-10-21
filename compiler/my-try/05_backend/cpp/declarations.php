@@ -63,6 +63,7 @@ final class CPP_Declarations
 			return CPP_Runtime_Operations::convert($expression, $decision, $context);
 		}
 		if ($decision->operation === conversion_operation::callable_wrap) {
+			if ($context->concrete_types()) { return CPP_Callback_Transport::wrap($expression, $decision->target_type, $context); }
 			return self::type($decision->target_type, $context) . '{' . $expression . '}';
 		}
 		if ($decision->operation === conversion_operation::identity) {
