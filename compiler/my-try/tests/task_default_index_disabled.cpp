@@ -16,5 +16,8 @@ int main() {
 	catch (const runtime_error &e) { assert(std::string(e.what()).find("not enabled") != std::string::npos); ++rejected; }
 	try { (void)tasks::run(keyed, int_t<>(1), work, index, null, error, int_t<>(0)); }
 	catch (const runtime_error &e) { assert(std::string(e.what()).find("not enabled") != std::string::npos); ++rejected; }
-	assert(rejected == 4);
+	auto nullable_index=[](int_t<>) { return nullable<int_t<>>(null); };
+	try { (void)tasks::run(items, int_t<>(1), work, nullable_index, null, null, int_t<>(0)); }
+	catch (const runtime_error &e) { assert(std::string(e.what()).find("not enabled") != std::string::npos); ++rejected; }
+	assert(rejected == 5);
 }

@@ -212,6 +212,8 @@ Custom result behavior:
 - result-target writes occur after worker execution has produced values or error-handler replacement values
 - result targets may be pre-populated; existing values remain unless a produced key overwrites them
 - nullable custom-index keys append when the key is `null`
+- inferred custom-index results use the non-null key payload type; null is an append instruction, not a stored key
+- typed hash append remains restricted to integer keys: a null nullable-string key raises the typed hash append error, while a present string key uses normal keyed placement; no implicit numeric-to-string conversion or heterogeneous key family is introduced
 - for vector result targets, appending is allowed and keyed overwrite is allowed for existing positions; sparse writes are rejected
 - negative numeric vector result keys are rejected
 

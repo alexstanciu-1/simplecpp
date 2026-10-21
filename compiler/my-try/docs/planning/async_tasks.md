@@ -792,3 +792,31 @@ V-R02 remains partial.
 
 [Nullable-target evidence](task-nullable-target-evidence.tar.gz), SHA-256:
 `356bae7cfc20836255bf4b84e422a4e7214c4af34ab2e3bc5453c857ab9dcecb`. Final uploaded hashes were verified; no full matrix or native compiler rebuild.
+
+
+### Inferred nullable-key result shape — 2026-10-21
+
+The runtime-first probe found that inferred nullable indexes instantiated
+`hash<T,nullable<K>>`, rejected by the typed-key contract. A task-owned key-shape
+trait now maps an optional index to its payload key type. This is distinct from
+the void-worker-to-null value mapping. All inferred run/start declarations and
+adapters reuse it; placement and scheduler owners remain unchanged.
+
+Thirty-two source contracts now admit nullable-int/string custom indexes without
+an explicit target. A present key is stored; absent integer keys append; absent
+string keys raise the existing typed-hash append error. No heterogeneous keys or
+numeric-to-string conversion are introduced. The tasks spec now records this
+interaction with the existing typed-hash contract. Explicit nullable-string target
+source admission remains separate; its runtime behavior was already probed.
+
+Dev002 `task-nullable-index-03` passes enabled/disabled sanitizer checks, including
+integer append after explicit key 7 and nullable-string present/error paths.
+Retained result-shape edits and existing reject/repair checks pass. Production
+verification covers all 128 default-prelowered cold/warm cases: the first run
+passed 120 and exposed eight invalid post-failure fixture lookups; the corrected
+16-case synchronous/background string-error rerun passes. Warm builds compile/link
+zero units. Original runtime compile failure and fixture failures remain preserved.
+V-R02 is not closed by this checkpoint.
+
+[Inferred nullable-key evidence](task-nullable-index-evidence.tar.gz), SHA-256:
+`d03313d36a8be5537c48bb58197183c0b99a6a2d2c92b01dc4885032d0d48225`. Final source hashes verified; no full matrix or native compiler rebuild.
