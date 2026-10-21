@@ -61,6 +61,12 @@ struct task_value {
 	using type = std::decay_t<T>;
 };
 
+// Completed void work stores the language null sentinel in result collections.
+template <>
+struct task_value<void> {
+	using type = null_t;
+};
+
 template <typename T>
 using task_value_t = typename task_value<T>::type;
 
@@ -87,11 +93,6 @@ struct result_vector {
 	using type = vector_t<task_value_t<TResult>>;
 };
 
-template <>
-struct result_vector<void> {
-	using type = vector_t<null_t>;
-};
-
 template <typename TResult>
 using result_vector_t = typename result_vector<TResult>::type;
 
@@ -100,22 +101,12 @@ struct result_hash {
 	using type = hash_t<task_value_t<TResult>, TKey>;
 };
 
-template <typename TKey>
-struct result_hash<void, TKey> {
-	using type = hash_t<null_t, TKey>;
-};
-
 template <typename TResult, typename TKey>
 using result_hash_t = typename result_hash<TResult, TKey>::type;
 
 template <typename TResult>
 struct result_slot {
 	using type = std::optional<task_value_t<TResult>>;
-};
-
-template <>
-struct result_slot<void> {
-	using type = std::optional<null_t>;
 };
 
 template <typename TResult>

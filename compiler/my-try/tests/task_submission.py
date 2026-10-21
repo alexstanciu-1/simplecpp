@@ -26,6 +26,10 @@ module = {'version':1, 'module':'task_submission_probe','dependencies':['tasks']
  'cpp':[{'id':'probe.work','symbol':'task_submission_probe::work_context','header':str(APP/'tests/fixtures/task_submission/provider.hpp')}]}
 (metadata/'task_submission_probe.json').write_text(json.dumps(module,indent=2)+'\n')
 cases = {
+ 'target-vector': ('$v vector<int> = [40,41];$t vector<int> = [7];$r=task_run($v,2,fn(int $n):int=>$n+1,null,$t);echo count($r),$r[0],$r[1],$r[2],count($t),$t[0];', '37414217', False),
+ 'target-hash': ('$v hash<int,string> = {"a":41};$t hash<int,string> = {"a":7,"b":8};$r=task_run($v,2,fn(int $n):int=>$n+1,null,$t);echo $r["a"],$r["b"],$t["a"];', '4287', False),
+ 'target-start': ('$v vector<string> = ["a"];$t vector<string> = ["z"];$b=task_start($v,2,fn(string $n):string=>$n."!",null,$t);$r=task_join($b);echo $r[0],$r[1],$t[0];', 'za!z', False),
+ 'target-void': ('$v vector<int> = [1];$t=task_run($v,1,function(int $n):void{});$r=task_run($v,1,function(int $n):void{},null,$t);echo count($r),count($t);', '21', False),
  'run-explicit-null': ('$v vector<int> = [42];$r=task_run($v,2,fn(int $n):int=>$n,null,null,null,0);echo $r[0];', '42', False),
  'start-explicit-null': ('$v hash<int,string> = {"a":42};$b=task_start($v,2,fn(int $n):int=>$n,null);$r=task_join($b);echo $r["a"];', '42', False),
  'run-string': ('$v vector<string> = ["a","b"];$r=task_run($v,2,fn(string $s):string=>$s."!");echo $r[0],$r[1];', 'a!b!', False),
@@ -53,6 +57,23 @@ cases = {
  'synchronize-outside': ('task_synchronize(function():void{echo "unexpected";});', '', True),
  'synchronize-recursive': ('probe_work(function():void{task_synchronize(function():void{task_synchronize(function():void{echo "unexpected";});});});', '', True),
 }
+# Cover every carrier/context/void variant of the prefilled-target contracts.
+for carrier in ['vector', 'hash']:
+ for context in [False, True]:
+  for background in [False, True]:
+   for void in [False, True]:
+    name='target-contract-'+carrier+('-context' if context else '')+('-start' if background else '-run')+('-void' if void else '-value')
+    items='$v vector<int> = [42];' if carrier=='vector' else '$v hash<int,string> = {"a":42};'
+    callback='function(int $n'+(',task_context $ctx' if context else '')+'):'+('void{}' if void else 'int{return $n;}')
+    target=('$t=task_run($v,1,function(int $n):void{});' if void else ('$t vector<int> = [7];' if carrier=='vector' else '$t hash<int,string> = {"a":7};'))
+    call=('task_start' if background else 'task_run')+'($v,2,'+callback+',null,$t)'
+    result='$b='+call+';$r=task_join($b);' if background else '$r='+call+';'
+    output='echo count($r),count($t);'
+    expected='21' if carrier=='vector' else '11'
+    if not void:
+     output+='echo $r['+('1' if carrier=='vector' else '"a"')+'];'
+     expected+='42'
+    cases[name]=(items+target+result+output,expected,False)
 if a.case:
  unknown=set(a.case)-set(cases)
  if unknown: raise ValueError('Unknown cases: '+str(unknown))

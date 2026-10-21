@@ -492,3 +492,35 @@ The original omission observation and intermediate failures are preserved.
 [Placement evidence](task-placement-evidence.tar.gz), SHA-256:
 `e1466feb6d2d86be1ff132f93c762b0ba6671acdedcac77c1ee3b2e0a5ab3a6c`. Final uploaded source hashes were verified. No full matrix or
 native compiler rebuild was run; original issue closure remains 56/64.
+
+
+### Prefilled typed result targets — 2026-10-21
+
+Existing generic runtime metadata now admits 16 same-carrier result-target
+contracts: vector/hash input, run/start, one-argument/context worker, and value/void
+worker results. Value targets match the worker payload exactly; void targets use
+canonical null containers inferred from existing void batches. Required targets
+retain explicit null index placeholders, followed by optional null error handler
+and timeout. Both input and result payloads retain the existing transfer policy.
+
+Vector targets append after prefilled elements; hash targets preserve existing keys
+unless produced keys overwrite them. Source tests verify that caller targets remain
+unchanged, background string result lifetime, and all 16 signature combinations.
+Mismatched target payloads and void-to-int targets reject during preparation.
+Custom-index, handler, cross-carrier-target and boxed-input admission remain open;
+these same-carrier proofs do not close V-R02 or imply support for those forms.
+
+
+Dev002 evidence: `task-target-02` passed 41/45 checks and exposed an older hash-void
+worker-buffer defect (`pair<Key,void>`). The common runtime `task_value<void>` now
+maps to null, replacing duplicated vector/hash/slot specializations. All four
+failed hash-void contracts plus vector-void controls and retained contracts pass
+in `task-target-void` (seven checks). All five runtime sanitizer suites pass in
+`task-target-runtime`. `task-target-sanitized` passes two production sanitizer
+programs and target-based retained reject/repair/replay/fresh checks. Across these
+runs all 16 target contracts have default-prelowered cold/warm evidence.
+
+[Target evidence](task-target-evidence.tar.gz), SHA-256:
+`39b4d49d40bfb1b2def56ebd02f4e6967a9e315a60ca6a71c907fc568bd103cc`. Final source hashes were verified on dev002. Historical failures
+remain archived. No full matrix or native compiler rebuild; V-R02 remains partial
+and original issue closure remains 56/64.

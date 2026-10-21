@@ -4,7 +4,7 @@ require_once dirname(__DIR__) . '/boot.php';
 require_once __DIR__ . '/cpp_probe.php';
 Compiler_Lifecycle::configure_runtime(Runtime_Catalog_Loader::load($argv[1], ['tasks']));
 $directory = $argv[2]; mkdir($directory); $path = $directory . '/main.phs';
-$valid = '$v vector<int> = [1,2];$r=task_run($v,2,fn(int $n):int=>$n);';
+$valid = '$v vector<int> = [1,2];$t vector<int> = [7];$r=task_run($v,2,fn(int $n):int=>$n,null,$t);';
 file_put_contents($path,$valid);
 $compiler = new Compiler();$compiler->init([$directory]);$compiler->select_entry('main','main.phs');$compiler->exec_cpp();
 $initial = CPP_Probe::text(Model::$cpp_files);
@@ -32,6 +32,9 @@ foreach (['unknown_transfer', 'mapped_input', 'mapped_callback', 'null_reference
 }
 
 $bad = [
+ '$v vector<int> = [1];$t vector<string> = [];task_run($v,1,fn(int $n):int=>$n,null,$t);',
+ '$v vector<int> = [1];$t vector<int> = [];task_run($v,1,function(int $n):void{},null,$t);',
+
  '$n=null;',
  '$v vector<int> = [1];task_run($v,2,fn(int $n):int=>$n,false);',
  'class Box{}$v vector<Box> = [new Box()];task_run($v,2,fn(Box $b):int=>1);',
