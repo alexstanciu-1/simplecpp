@@ -239,7 +239,7 @@ trait Collected_Occurrence
 		if ($this->optional_occurrence() !== null) {
 			throw new \LogicException('Syntax occurrence is already attached');
 		}
-		$this->collected_occurrence = $entry;
+		$this->collected_occurrence = weak($entry);
 	}
 }
 

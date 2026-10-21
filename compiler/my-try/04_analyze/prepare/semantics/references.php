@@ -64,7 +64,7 @@ final class Reference_Preparation
 			throw new \RuntimeException('S2S reference binding requires a new local; rebinding is not supported');
 		}
 		$binding = new prepared_binding();
-		$binding->declaration = $entry;
+		$binding->declaration = weak($entry);
 		$binding->resolved_kind = binding_kind::declaration;
 		$expected /** nullable<canonical_type_use> */ = null;
 		if ($type_syntax !== null) {

@@ -40,8 +40,8 @@ final class Type_Contract_Preparation
 			Call_Preparation::require_signature($method, $context);
 			$signature = $syntax->require_preparation();
 			$decision = new prepared_method_contract();
-			$decision->dispatch_owner = $record;
-			$decision->method = $method;
+			$decision->dispatch_owner = weak($record);
+			$decision->method = weak($method);
 			$decision->abstract_method = $signature->abstract_method;
 			$decision->final_method = $signature->final_method;
 			$decision->virtual_method = $signature->abstract_method
@@ -78,7 +78,7 @@ final class Type_Contract_Preparation
 					throw new \RuntimeException('Override cannot narrow visibility');
 				}
 				if (!$static_redeclaration) {
-					$decision->overridden = $parent;
+					$decision->overridden = weak($parent);
 					$decision->virtual_method = true;
 					self::bind($facts, $parent, weakref_get($inherited->dispatch_owner), $method, $record, $adaptation);
 				}
@@ -115,8 +115,8 @@ final class Type_Contract_Preparation
 			if ($provided->abstract_method && !isset($decisions[$requirement->name])) {
 				if ($implementation->declaring_type() === $record) {
 					$slot = new prepared_method_contract();
-					$slot->dispatch_owner = $record;
-					$slot->method = $implementation;
+					$slot->dispatch_owner = weak($record);
+					$slot->method = weak($implementation);
 					$slot->abstract_method = true;
 					$slot->virtual_method = true;
 					$decisions->add($requirement->name, $slot);
@@ -151,8 +151,8 @@ final class Type_Contract_Preparation
 					$inherited = self::effective_method($base, $implementation->name, $context);
 					if (!isset($forwarders[$requirement->name])) {
 						$bridge = new prepared_method_contract();
-						$bridge->dispatch_owner = $record;
-						$bridge->method = $implementation;
+						$bridge->dispatch_owner = weak($record);
+						$bridge->method = weak($implementation);
 						$bridge->virtual_method = true;
 						$bridge->final_method = $signature->final_method;
 						$forwarders->add($implementation->name, $bridge);
@@ -210,10 +210,10 @@ final class Type_Contract_Preparation
 			if ((weakref_get($existing->required) === $required) && (weakref_get($existing->required_owner) === $required_owner)) { return; }
 		}
 		$binding = new prepared_dispatch_binding();
-		$binding->required = $required;
-		$binding->required_owner = $required_owner;
-		$binding->implementation = $implementation;
-		$binding->implementation_owner = $implementation_owner;
+		$binding->required = weak($required);
+		$binding->required_owner = weak($required_owner);
+		$binding->implementation = weak($implementation);
+		$binding->implementation_owner = weak($implementation_owner);
 		$binding->adaptation = $adaptation;
 		$binding->virtual_dispatch = $virtual_dispatch;
 		$bindings->append($binding);

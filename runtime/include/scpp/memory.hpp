@@ -48,6 +48,12 @@ weak_p<T> weak(const shared_p<T> &value) {
 	return weak_p<T>(value);
 }
 
+// Acquire shared ownership from a weak observer, or an empty shared handle.
+template <typename T>
+shared_p<T> lock(const weak_p<T> &value) {
+	return value.lock();
+}
+
 // Explicit inline value-construction helper.
 //
 // This is the opt-in path for generated or hand-written code that wants inline

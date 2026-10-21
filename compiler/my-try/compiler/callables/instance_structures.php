@@ -15,13 +15,13 @@ final class callable_instance
 	/** Capture provenance without retaining either owning declaration through a backlink. */
 	public function __construct(collected_method $origin, collected_record $called, parsed_file $parsed, collected_method $working)
 	{
-		$this->origin_reference = $origin;
-		$this->called_reference = $called;
+		$this->origin_reference = weak($origin);
+		$this->called_reference = weak($called);
 		$this->parsed = $parsed;
 		$this->working = $working;
 		$this->origin_input = $origin->collection->source_file()->content;
 		$this->called_input = $called->collection->source_file()->content;
-		$this->called_scope = $called->syntax()->member_scope();
+		$this->called_scope = weak($called->syntax()->member_scope());
 	}
 
 	public function origin(): collected_method

@@ -200,7 +200,7 @@ final class Member_Preparation
 	private static function constant_reference(constant_target_i $target): prepared_constant_reference
 	{
 		$facts = new prepared_constant_reference();
-		$facts->target = $target;
+		$facts->target = weak($target);
 		$facts->value = $target->value();
 		$facts->type = $facts->value->type;
 		return $facts;

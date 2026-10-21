@@ -202,7 +202,7 @@ final class closure_node extends expression_node implements callable_syntax_owne
 		if (weakref_get($this->source_identity) !== null) {
 			throw new \LogicException('Anonymous callable identity is already attached');
 		}
-		$this->source_identity = $identity;
+		$this->source_identity = weak($identity);
 	}
 
 	/** Nested bodies survive reuse of their enclosing body without another scope scan. */

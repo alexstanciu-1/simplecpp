@@ -93,7 +93,7 @@ final class namespace_body_node extends ast_node
 	/** Initialize an empty source occurrence before parsing publishes declarations. */
 	public function __construct(scope $body_scope)
 	{
-		$this->body_scope_reference = $body_scope;
+		$this->body_scope_reference = weak($body_scope);
 		$this->declarations = new Storage /** Storage<declaration_node> */();
 		$this->imports = new Storage /** Storage<import_node> */();
 		$this->body = new function_body_node($body_scope);
@@ -175,7 +175,7 @@ final class function_body_node extends statement_body_node
 	public function __construct(scope $local_scope)
 	{
 		parent::__construct();
-		$this->local_scope_reference = $local_scope;
+		$this->local_scope_reference = weak($local_scope);
 	}
 
 	/** Required lexical context, independent of syntax ownership. */

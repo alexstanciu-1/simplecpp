@@ -136,7 +136,7 @@ final class Preparation_Worker
 				$source->prepared->source = $source;
 			}
 			$prepared /** prepared_file */ = $source->prepared;
-			$prepared->entry_body = Program_Preparation::source_body($source);
+			$prepared->entry_body = weak(Program_Preparation::source_body($source));
 			$result->append($prepared);
 		}
 		foreach ($result as $prepared) {

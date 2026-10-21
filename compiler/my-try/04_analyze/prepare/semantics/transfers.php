@@ -19,7 +19,7 @@ final class Control_Transfer_Preparation
 		$facts = new prepared_control_transfer();
 		$facts->transfer_kind = $kind;
 		$required_target /** breakable_node */ = $target;
-		$facts->target = $required_target;
+		$facts->target = weak($required_target);
 		return $facts;
 	}
 }

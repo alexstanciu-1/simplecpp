@@ -14,6 +14,7 @@ function fs_output_remove(string $root, string $relative, string $expected): boo
 function content_sha256(string $bytes): string { return \scpp\content_sha256($bytes); }
 function task_synchronize(callable $callback): void { \scpp\task_synchronize($callback); }
 function task_run_publish_unordered(array $items, int $workers, callable $work, callable $publish): int { return \scpp\task_run_publish_unordered($items, $workers, $work, $publish); }
+function weak(?object $value): ?object { return \scpp\weak($value); }
 function weakref_get(?object $value): ?object { return \scpp\weakref_get($value); }
 function object_cast(?object $value, string $target): object { return \scpp\object_cast($value, $target); }
 function dt_sleep_ms(int $millis): void { \scpp\dt_sleep_ms($millis); }

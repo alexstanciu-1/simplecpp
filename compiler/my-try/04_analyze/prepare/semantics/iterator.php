@@ -25,11 +25,11 @@ final class Iterator_Preparation
 	public static function protocol(collected_member_owner $owner, preparation_context $context): prepared_iterator_protocol
 	{
 		$facts = new prepared_iterator_protocol();
-		$facts->current = self::method($owner, 'current', $context);
-		$facts->key = self::method($owner, 'key', $context);
-		$facts->valid = self::method($owner, 'valid', $context);
-		$facts->next = self::method($owner, 'next', $context);
-		$facts->rewind = self::method($owner, 'rewind', $context);
+		$facts->current = weak(self::method($owner, 'current', $context));
+		$facts->key = weak(self::method($owner, 'key', $context));
+		$facts->valid = weak(self::method($owner, 'valid', $context));
+		$facts->next = weak(self::method($owner, 'next', $context));
+		$facts->rewind = weak(self::method($owner, 'rewind', $context));
 		$facts->key_type = weakref_get($facts->key)->signature()->return_type;
 		$facts->value_type = weakref_get($facts->current)->signature()->return_type;
 		if (!weakref_get($facts->valid)->signature()->return_type->matches($context->boolean)

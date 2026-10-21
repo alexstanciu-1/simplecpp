@@ -113,7 +113,7 @@ final class anonymous_signature_work extends contract_work
 	public function __construct(anonymous_callable_identity $identity)
 	{
 		parent::__construct($identity->collection());
-		$this->source_identity = $identity;
+		$this->source_identity = weak($identity);
 	}
 	public function anonymous_identity(): anonymous_callable_identity
 	{
@@ -234,7 +234,7 @@ abstract class body_work extends preparation_owner
 	public function __construct(collected_file $source, function_body_node $body)
 	{
 		parent::__construct($source);
-		$this->body_reference = $body;
+		$this->body_reference = weak($body);
 	}
 
 	public function executable_body(): function_body_node
@@ -245,7 +245,7 @@ abstract class body_work extends preparation_owner
 	/** Structural identity transfer only; preparation state remains analysis-owned. */
 	public function rebind_body(function_body_node $body): void
 	{
-		$this->body_reference = $body;
+		$this->body_reference = weak($body);
 	}
 }
 
@@ -284,7 +284,7 @@ final class anonymous_body_work extends body_work
 	{
 		parent::__construct($identity->collection(), $identity->syntax()->require_body());
 		$this->captures = new Storage /** Storage<prepared_capture> */();
-		$this->source_identity = $identity;
+		$this->source_identity = weak($identity);
 	}
 	public function anonymous_identity(): anonymous_callable_identity
 	{

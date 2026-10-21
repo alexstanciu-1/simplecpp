@@ -105,7 +105,7 @@ final class Symbol_Collector
 		$entry = new collected_constant($this->collection, $node);
 		if ($record !== null) {
 			$owner /** collected_member_owner */ = $record;
-			$entry->member_owner = $owner;
+			$entry->member_owner = weak($owner);
 		}
 		$entry->retained_symbol = true;
 		$this->append($entry, $scope, $node->name, $index);
@@ -327,7 +327,7 @@ final class Symbol_Collector
 			throw new \LogicException('Syntax already has a collected occurrence');
 		}
 		$entry->name = $name;
-		$entry->scope = $scope;
+		$entry->scope = weak($scope);
 		$entry->token_index = $index;
 		$entry->revision = $this->collection->revision;
 		$entries /** Storage<collected_name> */ = $this->collection->entries;

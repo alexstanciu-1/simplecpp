@@ -444,7 +444,7 @@ final class Expression_Preparation
 			$constant = object_cast($target, collected_constant::class);
 			$context->worker->require_declaration($context->owner, $constant);
 		}
-		$facts->target = $target;
+		$facts->target = weak($target);
 		$facts->value = $target->value();
 		$facts->type = $facts->value->type;
 		return $facts;

@@ -38,7 +38,7 @@ final class Callable_Instances
 		$declarations /** Storage<declaration_node> */ = $parsed->root->single_body()->declarations;
 		$working = object_cast($declarations[0]->occurrence(), collected_method::class);
 		$instance = new callable_instance($origin, $called, $parsed, $working);
-		$working->instance_context = $instance;
+		$working->instance_context = weak($instance);
 		$instances->append($instance);
 		return $instance;
 	}

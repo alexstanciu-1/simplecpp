@@ -482,6 +482,13 @@ Contract:
 ### `weakref(shared_p<T>) -> weak_p<T>` â€” Stable
 Creates weak observation handle.
 
+### `lock(weak_p<T>) -> shared_p<T>` — Stable
+
+Explicit weak acquisition, provided by `scpp/memory.hpp`. Returns shared ownership
+of the same live object, or an empty shared handle after expiration. The portable
+converter emits this spelling for `weakref_get`; v0.2 treats it as a typed language
+ownership operation. No pointee copy or allocation is introduced.
+
 ### `weakref_get(weak_p<T>) -> shared_p<T>` â€” Stable
 Locks weak handle.
 

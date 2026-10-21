@@ -250,3 +250,44 @@ into the `weak<module>` field `module_reference`. An isolated fixture reproduces
 the same preparation rejection (`/tmp/exception-next-blocker/`). This weak-reference
 assignment boundary is the next concrete blocker; it is not repaired. Storage_Cursor
 widening and other reported diagnostics also remain untouched.
+
+
+## Portable weak operation retry — 2026-10-21
+
+Candidate: `14e8c4be` plus the portable-weak overlay retained in
+`/tmp/bootstrap-attempt-20261021-weak/candidate.diff`; source hashes and revision are
+in that directory. The facade adds `weak`, identity-preserving under PHP, and maps
+`weakref_get` to `lock`. The legacy runtime exposes `scpp::lock`; v0.2 reuses existing
+ownership preparation and lowering. Explicit derivation is authored at shared-to-weak
+writes; weak copies/null resets remain direct. No ownership conversion policy changes.
+
+Measured PHP8.5 CLI, OPcache CLI disabled, Xdebug disabled, 4 GiB memory limit:
+
+| Stage | Wall time | Peak RSS |
+| --- | ---: | ---: |
+| Convert 258 PHP files | 5.92 s | 184.8 MiB |
+| Framework assembly | 0.06 s | 31.0 MiB |
+| PHP-hosted bootstrap | 52.58 s | 289.3 MiB |
+
+Assembled input: 268 PHS files, 1,917,038 bytes. PHP peak heap: 270 MiB.
+Parsing completes at 5.003 s; preparation fails without PHP fatal/OOM. No C++ emission.
+Focused verification overlapped this run; this is a single observed attempt, not
+an isolated performance comparison. Bootstrap CPU utilization was 99%.
+
+First diagnostic: unresolved `scpp_portability_object_cast` in
+`source_record::owning_module` (`01_prepare_inputs/structures.phs`). The original
+constructor weak assignment no longer appears among failed owners. The read-only
+owner replay in `/tmp/weak-bootstrap-audit-logs` records 42 object-cast owners and
+54 ownership-boundary owners (not 54 independent root causes); no `weakref_get`
+resolution failures remain. No subsequent bootstrap blocker was fixed.
+
+Focused proofs: `/tmp/portable-weak-proof-final`, the retained
+`tests/portability/weak_operation.py` runner; PHP/v0.1/ordinary-v0.2 identity,
+single evaluation, weak copying, clearing and native expiration. Prelowered
+locked-class null comparison fails native compilation because emitted `.has_value()`
+is absent on the concrete shared handle. The test records this expected defect;
+it is not a full prelowered pass. A separate prelowered live-owner proof passes
+derivation, acquisition, single evaluation, identity and clearing. Host ownership and inheritance checks pass in
+`/tmp/portable-weak-host`; corrected stale weak-field fixture paths/qualified C++
+names and portable helper arity checks pass in `/tmp/portable-weak-field-final-02`.
+Storage_Cursor widening and the discovered backend defect remain out of this slice.

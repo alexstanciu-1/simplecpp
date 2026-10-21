@@ -78,7 +78,7 @@ final class source_record
 
 	public function __construct(module $owner, file $snapshot)
 	{
-		$this->module_reference = $owner;
+		$this->module_reference = weak($owner);
 		$this->path = $snapshot->path;
 		$this->file = $snapshot;
 	}

@@ -9,7 +9,7 @@ final class Method_Preparation
 	{
 		$record = object_cast($method->declaring_type(), collected_record::class);
 		$receiver = new prepared_receiver();
-		$receiver->declaration = $method;
+		$receiver->declaration = weak($method);
 		$type = Model::$type_catalog->registry()->canonical(Source_Types::definition($record));
 		$receiver->type = Model::$type_catalog->registry()->use($type->type_id());
 		if (Type_Queries::is_nominal_handle($receiver->type)) {

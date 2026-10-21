@@ -52,7 +52,7 @@ final class Inheritance_Preparation
 				}
 			}
 		}
-		$facts->constructor = $constructor;
+		$facts->constructor = weak($constructor);
 	}
 
 	/** Lifecycle methods are not inherited ordinary members; their bodies construct/destroy subobjects. */

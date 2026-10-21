@@ -200,7 +200,7 @@ final class Body_Preparation
 		if (($type_syntax !== null) || (q_count($previous) === 0))
 		{
 			$binding->resolved_kind = binding_kind::declaration;
-			$binding->declaration = $entry;
+			$binding->declaration = weak($entry);
 			if (($type_syntax === null) && ($value !== null)) {
 				$binding->type = $value->type;
 			}

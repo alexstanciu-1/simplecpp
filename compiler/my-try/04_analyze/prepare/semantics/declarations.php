@@ -116,7 +116,7 @@ final class Declaration_Preparation
 	public static function prepare_parameter(parameter_node $node, preparation_context $context, ?canonical_type_use $expected_type = null): void
 	{
 		$facts = new prepared_parameter();
-		$facts->declaration = $node->occurrence();
+		$facts->declaration = weak($node->occurrence());
 		$type /** canonical_type_use */;
 		if ($node->type_syntax !== null) { $type = Type_Preparation::type($node->type_syntax, $context); }
 		elseif ($expected_type !== null) { $type = $expected_type; }
@@ -204,7 +204,7 @@ final class Declaration_Preparation
 			$members->add($method->name, object_cast($method->occurrence(), collected_method::class));
 			if ($method->name !== '__construct') { continue; }
 			if (weakref_get($facts->constructor) !== null) { throw new \RuntimeException('Duplicate constructor'); }
-			$facts->constructor = object_cast($method->occurrence(), collected_method::class);
+			$facts->constructor = weak(object_cast($method->occurrence(), collected_method::class));
 		}
 
 		$copyable = true;
@@ -265,7 +265,7 @@ final class Declaration_Preparation
 		$prepared->visibility = Member_Preparation::visibility($field->modifiers);
 		$prepared->static_member = Member_Preparation::is_static($field->modifiers);
 		if ($prepared->static_member) { $allows_required = false; }
-		$prepared->declaration = $field->occurrence();
+		$prepared->declaration = weak($field->occurrence());
 		$type /** nullable<canonical_type_use> */ = null;
 		if ($field->type_syntax !== null) {
 			$type = Type_Preparation::type($field->require_type_syntax(), $context);

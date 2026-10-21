@@ -54,7 +54,7 @@ final class scope
 				throw new \LogicException('A published namespace scope cannot change identity');
 			}
 		}
-		$this->namespace_owner = $identity;
+		$this->namespace_owner = weak($identity);
 	}
 
 	/** Lexical children inherit source identity, not namespace-parent lookup. */
@@ -74,7 +74,7 @@ final class scope
 
 	public function set_parent(scope $parent): void
 	{
-		$this->enclosing = $parent;
+		$this->enclosing = weak($parent);
 	}
 
 	public function parent_scope(): ?scope
@@ -300,7 +300,7 @@ final class scope
 
 	public function set_publication(scope $global): void
 	{
-		$this->publication = $global;
+		$this->publication = weak($global);
 	}
 
 	/** Snapshot of local declaration references; no liveness or publication policy. */

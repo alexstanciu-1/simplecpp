@@ -58,7 +58,7 @@ final class Call_Preparation
 		bool $arguments_prepared): prepared_call
 	{
 		$facts = new prepared_call();
-		$facts->target = $target;
+		$facts->target = weak($target);
 		$facts->signature = $signature;
 		if ($facts->signature->reference_return !== null) {
 			if (!($target instanceof collected_source_callable) && !($target instanceof anonymous_callable_identity)

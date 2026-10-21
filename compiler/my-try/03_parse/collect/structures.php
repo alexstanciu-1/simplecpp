@@ -191,7 +191,7 @@ final class collected_method extends collected_source_callable
 	public function __construct(collected_file $collection, method_node $node, collected_member_owner $owner)
 	{
 		parent::__construct($collection, $node);
-		$this->type_owner = $owner;
+		$this->type_owner = weak($owner);
 		$this->called_instances = new Storage /** Storage<callable_instance> */();
 	}
 
@@ -560,7 +560,7 @@ final class anonymous_callable_identity implements callable_target_i
 
 	public function __construct(collected_file $collection, closure_node $syntax)
 	{
-		$this->source_collection = $collection;
+		$this->source_collection = weak($collection);
 		$this->syntax_node = $syntax;
 	}
 

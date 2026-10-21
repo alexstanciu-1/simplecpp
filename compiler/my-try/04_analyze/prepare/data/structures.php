@@ -121,7 +121,7 @@ final class prepared_place
 		elseif (!($storage instanceof prepared_property_storage)) {
 			throw new \LogicException('A storage projection requires a direct struct field');
 		}
-		$this->selected_storage = $storage;
+		$this->selected_storage = weak($storage);
 		$this->base_place = $base;
 	}
 

@@ -16,6 +16,11 @@ require_once __DIR__ . "/lock_reservation.php";
 require_once __DIR__ . "/processes.php";
 require_once __DIR__ . "/datetime.php";
 
+/** Explicit native weak derivation; PHP preserves the ordinary object reference. */
+function weak(?object $value): ?object {
+    return $value;
+}
+
 /** PHP retains ordinary references; native weakref_get locks the annotated weak field. */
 function weakref_get(?object $value): ?object {
     return $value;

@@ -424,8 +424,8 @@ an abstract PHP declaration alone is insufficient. The linked guide distinguishe
 focused native evidence from broader unproved RTTI/failure behavior.
 
 For native-only non-retaining links, see [weak object fields](weak_fields.md).
-PHP keeps ordinary references; use explicit `weakref_get` acquisition in portable
-source and maintain a real strong owner for the target's required lifetime.
+PHP keeps ordinary references; use explicit `weak` derivation and `weakref_get`
+acquisition in portable source and maintain a real strong owner for the target's required lifetime.
 
 Ordinary reference classes now preserve `abstract class` and one literal `extends`
 clause. Explicit public/protected abstract method declarations are also supported;

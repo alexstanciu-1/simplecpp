@@ -60,7 +60,7 @@ final class Relationship_Preparation
 				}
 				$base_facts = $context->worker->require_relationships($base, $context);
 				if ($base_facts->final_type) { throw new \RuntimeException('Cannot extend a final type'); }
-				$facts->base = object_cast($base, collected_record::class);
+				$facts->base = weak(object_cast($base, collected_record::class));
 				$facts->typed_iterator = $base_facts->typed_iterator;
 				$facts->exception_type = $base_facts->exception_type;
 			}

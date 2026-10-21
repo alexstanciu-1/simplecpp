@@ -285,7 +285,7 @@ final class source_type_declaration
 
 	public function __construct(collected_type_definition $declaration)
 	{
-		$this->source_declaration = $declaration;
+		$this->source_declaration = weak($declaration);
 	}
 
 	public function declaration(): collected_type_definition
@@ -339,7 +339,7 @@ final class Source_Type_Declarations
 final class source_closure_association
 {
 	private anonymous_callable_identity $source_identity /** weak<anonymous_callable_identity> */;
-	public function __construct(anonymous_callable_identity $identity) { $this->source_identity = $identity; }
+	public function __construct(anonymous_callable_identity $identity) { $this->source_identity = weak($identity); }
 	public function identity(): anonymous_callable_identity { return weakref_get($this->source_identity); }
 }
 

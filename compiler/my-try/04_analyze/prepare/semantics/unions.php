@@ -48,7 +48,7 @@ final class Union_Preparation
 			self::require_payload($type, $context);
 			$field = new prepared_field();
 			$field->type = $type;
-			$field->declaration = $node->occurrence();
+			$field->declaration = weak($node->occurrence());
 			$node->set_preparation($field);
 			$fields->add($node->name, $field);
 		}

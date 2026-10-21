@@ -32,7 +32,7 @@ final class trait_instance
 	public function __construct(collected_trait $origin, collected_record $consumer, parsed_file $parsed)
 	{
 		$this->origin = $origin;
-		$this->consumer_reference = $consumer;
+		$this->consumer_reference = weak($consumer);
 		$this->parsed = $parsed;
 		$this->collection = $parsed->collection;
 		$this->members = new Storage /** Storage<trait_member_instance> */();

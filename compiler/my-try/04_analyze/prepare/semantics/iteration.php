@@ -64,7 +64,7 @@ final class Iteration_Preparation
 		}
 		$binding = new prepared_binding();
 		$binding->type = $source;
-		$binding->declaration = $syntax->occurrence();
+		$binding->declaration = weak($syntax->occurrence());
 		$binding->resolved_kind = binding_kind::declaration;
 		if (q_count($existing) !== 0)
 		{
