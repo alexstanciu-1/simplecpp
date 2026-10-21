@@ -4,6 +4,21 @@ Doc Status: planning
 Active approved goal: S12 and V-R02. Baseline was 55/64 original issues closed.
 The S12 closeout below advances this to 56/64; V-R02 is partial and remains active.
 
+## Current acceptance status — 2026-10-21
+
+| Requirement | Current evidence and remaining work |
+| --- | --- |
+| S12 suspension, sequencing, cleanup and restrictions | Closed by the source/runtime/retained proofs below. |
+| Runtime-owned task types, controls and all 21 API names | Bounded source paths exist; final complete API/opt-in audit remains. |
+| Typed vector/hash submissions and placement | Value/void work, contexts, prefilled/cross-carrier targets, independent int/string keys and inferred nullable keys have default-prelowered proof. Explicit nullable-string targets also have success/error/omission proof. |
+| Error callbacks and publication | Replacement/omission, coordinator dispatch, ordered publication context/options and unordered synchronization proved in the bounded forms below. |
+| Transfer restrictions | Typed payload and capture rejection proved. Boxed input and boxed result-family admission still require runtime audit and source integration; do not broaden transfer permission implicitly. |
+| Lifecycle acceptance | Native concurrency/cancellation/timeout/shutdown evidence exists. Complete production-source timeout, cancellation, repeated-error joins and shutdown/module-selection audit remains. |
+| Final closure | Still 56/64 original issues closed. V-R02 remains partial until the remaining scope is proved. |
+
+Historical checkpoints below retain their then-current boundaries; they do not
+supersede this summary. The nullable identity/prelowering issue remains separate.
+
 ## Contract and owners
 
 - S12 follows `specs/async_await.md`: await suspends inside async functions;
@@ -340,7 +355,7 @@ null` leaks `scpp/generated/operators.hpp` into template-free application inputs
 The original failures remain in `task-submission-05`; state proofs use coalescing.
 This slice does not repair equality or claim that the failure disappeared.
 
-Remaining acceptance, before V-R02 can close:
+Remaining acceptance at the initial typed-submission checkpoint (subsequent progress below):
 
 - Custom index callbacks (key preservation, collisions, nullable append), prefilled
   result targets and vector sparse/negative-key rejection.
@@ -820,3 +835,22 @@ V-R02 is not closed by this checkpoint.
 
 [Inferred nullable-key evidence](task-nullable-index-evidence.tar.gz), SHA-256:
 `d03313d36a8be5537c48bb58197183c0b99a6a2d2c92b01dc4885032d0d48225`. Final source hashes verified; no full matrix or native compiler rebuild.
+
+
+### Explicit nullable-string targets — 2026-10-21
+
+Thirty-two contracts complete the explicit nullable-string target forms for
+vector/hash input, run/start, value/void work, worker context and exact/void error
+handlers. Present keys overwrite the named target slot; null keys raise the
+existing typed-hash append error. Omitted failed items do not invoke placement,
+so they preserve the target without raising that append error. Existing target
+snapshots and background transfer restrictions remain intact. No compiler or
+runtime implementation changed in this checkpoint.
+
+Dev002 production default-prelowered verification passed all 80 cold/warm
+cases; warm builds compiled/linked zero units. `task-nullable-string-controls` passes retained target edit/fresh parity,
+existing reject/repair checks and a neighboring hash-target program. Runtime
+boundary proofs are retained in the nullable-target and nullable-index archives.
+
+[Explicit nullable-string evidence](task-nullable-string-evidence.tar.gz), SHA-256:
+`ab0c1df9ba734aed4b0a288cb976211890de76232abb476c6728fecde77383d2`. Final source hashes verified; no full matrix or native compiler rebuild.

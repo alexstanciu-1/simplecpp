@@ -67,6 +67,8 @@ foreach ($bad as $source) {
  if (CPP_Probe::text(Model::$cpp_files)!==$initial) {throw new \LogicException('Task submission replay differs');}
 }
 $edits = [
+ '$v vector<int> = [1];$t hash<int,string> = {}; $r=task_run($v,1,fn(int $n):int=>$n,fn(int $n):?string=>"a",$t);',
+
  '$v vector<int> = [1];$r=task_run($v,1,fn(int $n):int=>$n,fn(int $n):?int=>null);',
  '$v vector<int> = [1];$r=task_run($v,1,fn(int $n):int=>$n,fn(int $n):?string=>"a");',
 
