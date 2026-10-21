@@ -377,6 +377,35 @@ holds these symbols outside executable catalog JSON pending review:
 These gaps do not block the ready-contract module pass. Boxed formatting retains its
 separate debt below. No decisions to change these semantics are implied by this record.
 
+#### Deferred performance and UTF-8 defaults review — 2026-10-21
+
+Deferred by user request; **non-blocking, no current implementation work**.
+The [string benchmark and safe snapshot-elision report](../../../../specs/planning/results/string_borrow_2026_10_21/README.md)
+records the completed bulk comparison and safe argument-copy optimizations
+(`fffe04e4`). Stable dev002 measurements put long-prefix comparisons near native
+C++ cost for both ASCII and UTF-8. The measured problems did not justify changing
+UTF-8 defaults; existing semantics remain in force.
+
+Remaining work, when prioritized:
+
+- Investigate default concrete lowering's small-call overhead against ordinary
+  lowering and direct runtime calls; preserve evaluation order and mutation semantics.
+- Profile replacement search and output construction, including growing output,
+  before choosing algorithm or allocation changes. Dense replacement is already
+  close to the equivalent C++ baseline on dev002.
+- Consider extending snapshot elision only where safety can be proved cheaply.
+  Unknown calls, conversions and projected reads continue to copy; this is a missed
+  optimization, not grounds for rejecting valid source or adding a general borrow checker.
+- Before revisiting UTF-8 defaults, measure actual character work: code-point
+  slicing/search positions, validation and Unicode case handling. Coordinate byte
+  versus character positions with this contract debt and CH15-TEXT-LENGTH-01.
+
+Runtime algorithms belong to runtime helpers; borrowing proofs belong to shared
+preparation and their consumption to C++ lowering. Resume with paired measurements
+on dev002; the seven-language local run had substantial host variation and is not
+proof of small speed differences. This deferral authorizes neither broader borrowing
+nor a default/contract change.
+
 ### CH15-RUNTIME-FORMAT-01 — boxed number formatting
 
 The v0.2 runtime catalog intentionally registers `number_format` only for canonical

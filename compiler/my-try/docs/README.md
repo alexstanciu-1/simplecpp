@@ -24,7 +24,9 @@ The [safe string-argument snapshot optimization](../../../specs/planning/results
 preserves value semantics and retains copies when proof is missing. Its
 [provider contract](../../../specs/runtime_module_metadata.md#snapshot-borrowing-guarantee)
 and [focused tests](testing.md#conservative-call-snapshot-elision) also document
-the bounded proof and compilation-cost measurement.
+the bounded proof and compilation-cost measurement. Remaining string performance and
+UTF-8-default investigations are [deferred in CH15](catalog/15_blocking_debt.md#deferred-performance-and-utf-8-defaults-review--2026-10-21)
+by user request; they are non-blocking.
 
 The completed bounded [runtime module integration plan](planning/runtime_module_integration.md)
 covers storage, members, protocols, signatures and build composition. Its
