@@ -76,6 +76,7 @@ final class runtime_parameter_spec
 {
 	/** Provider copies the input independently of caller-side value transport. */
 	public bool $requires_copy = false;
+	public bool $requires_transfer = false;
 	public bool $variadic = false;
 	public ?runtime_default_spec $default_value = null;
 	public string $name = '';

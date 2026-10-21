@@ -121,6 +121,7 @@ final class runtime_application_pattern extends runtime_type_pattern
 final class runtime_pattern_parameter
 {
 	public bool $requires_copy = false;
+	public bool $requires_transfer = false;
 	public bool $variadic = false;
 	public ?prepared_literal_parameter_default $default_value = null;
 	public function __construct(public runtime_type_pattern $type, public passing_mode $mode,
@@ -164,6 +165,7 @@ final class callable_parameter
 {
 	/** Runtime provider requires copying even when the argument is moved. */
 	public bool $requires_copy = false;
+	public bool $requires_transfer = false;
 	public canonical_type_use $type;
 	public passing_mode $mode;
 	public storage_access $access = storage_access::writable;

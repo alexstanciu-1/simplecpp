@@ -126,6 +126,7 @@ final class Call_Preparation
 			}
 			$value /** prepared_expression */ = $arguments_prepared
 				? $argument->require_preparation() : Expression_Preparation::prepare_for_consumer($argument, $context, $argument_type, $consumer);
+			if ($parameter->requires_transfer) { Capture_Preparation::require_transfer($value->type, $context); }
 			$prepared_argument = new prepared_call_argument();
 			$prepared_argument->source_index = $index;
 			if ($parameter->mode === passing_mode::value) {

@@ -19,10 +19,16 @@ metadata = out / 'metadata'
 shutil.copytree(ROOT / 'runtime/metadata/modules', metadata)
 module = {'version':1, 'module':'task_transfer_probe', 'dependencies':['core'], 'functions':[], 'cpp':[]}
 for name, result in [('allowed','bool'), ('execute','int')]:
-    module['functions'].append({'id':'probe.'+name,'name':'probe_'+name,'parameters':[{'name':'callback','type':{'callable':{'parameters':[],'returns':'int'}},'passing':'value'}],'returns':result})
+    module['functions'].append({'id':'probe.'+name,'name':'probe_'+name,'parameters':[{'name':'callback','type':{'callable':{'parameters':[],'returns':'int'}},'passing':'value','requires_transfer':name == 'execute'}],'returns':result})
     module['cpp'].append({'id':'probe.'+name,'symbol':'task_transfer_probe::'+name,'header':str(APP/'tests/fixtures/task_transfer/provider.hpp')})
+module['functions'].append({'id':'probe.generic','name':'probe_generic','type_parameters':['R'],'parameters':[{'name':'callback','type':{'callable':{'parameters':[],'returns':{'parameter':'R'}}},'passing':'value','requires_transfer':True}],'returns':{'parameter':'R'}})
+module['cpp'].append({'id':'probe.generic','symbol':'task_transfer_probe::generic','header':str(APP/'tests/fixtures/task_transfer/provider.hpp')})
+module['functions'].append({'id':'probe.after','name':'probe_after','parameters':[{'name':'callback','type':{'callable':{'parameters':[],'returns':'int'}},'passing':'value','requires_transfer':True},{'name':'marker','type':'int','passing':'value'}],'returns':'int'})
+module['cpp'].append({'id':'probe.after','symbol':'task_transfer_probe::after','header':str(APP/'tests/fixtures/task_transfer/provider.hpp')})
 (metadata/'task_transfer_probe.json').write_text(json.dumps(module,indent=2)+'\n')
 cases = {
+    'generic': ('echo probe_generic(fn():string=>"owned");', 'owned'),
+    'reject-order': ('function mark():int{echo 42;return 0;}class Box{public int $n=7;}$b=new Box();$f function<int()> = function() use ($b):int{return $b->n;};probe_after($f,mark());', '42'),
     'containers': ('$v vector<int> = [40,2];$h hash<int> = {"n":0};$n ?int=0;$f function<int()> = function() use ($v,$h,$n):int{return $v[0]+$v[1]+$h["n"]+($n??0);};echo probe_execute($f);', '42'),
     'owned': ('$n=42;$f function<int()> = function() use ($n):int{return $n;};$g=$f;$n=9;echo probe_allowed($g),probe_execute($g);', '142'),
     'shared': ('class Box{public int $n=7;}$b=new Box();$f function<int()> = function() use ($b):int{return $b->n;};echo probe_allowed($f),$f();', '7'),
@@ -43,8 +49,8 @@ with CommandRunner(out / 'logs', ROOT, jobs=12) as runner:
         for temperature in ['cold', 'warm']:
             build = json.loads(runner.run(name + '-' + temperature, ['php', APP / 'tools/build_cpp.php', folder / 'published', folder / 'cache'], timeout=300))
             run_name = name + '-' + temperature + '-run'
-            assert runner.run(run_name, [build['executable']], expected=1 if scenario == 'reject-transfer' else 0) == expected.encode()
-            if scenario == 'reject-transfer':
+            assert runner.run(run_name, [build['executable']], expected=1 if scenario.startswith('reject-') else 0) == expected.encode()
+            if scenario.startswith('reject-'):
                 assert 'Task callback captures are not transferable' in (out / 'logs' / (run_name + '.stderr')).read_text()
             if temperature == 'warm':
                 assert build['compiled'] == build['linked'] == 0

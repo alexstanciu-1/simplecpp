@@ -250,6 +250,10 @@ final class Runtime_Catalog_Registration
 		if ($registry->type($result->type->type_id()) instanceof no_value_type) { throw new \RuntimeException('Void runtime parameter'); }
 		$result->mode = $spec->mode;
 		$result->requires_copy = $spec->requires_copy;
+		$result->requires_transfer = $spec->requires_transfer;
+		if ($result->requires_transfer && !($registry->type($result->type->type_id())->definition() instanceof callable_type_definition)) {
+			throw new \RuntimeException('Runtime transfer requirements need callable parameters');
+		}
 		$result->access = $spec->access;
 		if ($spec->variadic) {
 			if (!$registry->has_capability($result->type, generic_contract::copyable_value)) {

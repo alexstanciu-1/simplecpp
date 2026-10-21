@@ -258,3 +258,32 @@ Dev002 results:
 The task API submission contracts still need to consume this capability; the
 probe is not a claim that the five remaining batch/callback APIs are admitted.
 V-R02 remains partial. The approval blocker has been cleared.
+
+
+## Provider transfer admission checkpoint — 2026-10-21
+
+The existing runtime parameter contract now carries `requires_transfer` through
+startup loading, registration, generic instantiation and shared call preparation.
+Known forbidden closure environments reject during preparation. Erased callable
+values are checked after all argument snapshots and before provider invocation;
+ordinary and default-prelowered calls use the same sequencing owner. The probe
+provider deliberately contains no guard, proving that admission owns enforcement.
+This is independent of callback signature compatibility and provider copyability.
+
+`20261021-task-admission-03` passes all 15 tasks on dev002: production cold/warm
+runs in both modes, fixed and generic contracts, argument-side effects before
+value-dependent rejection, nested callable snapshots, six invalid metadata shapes,
+and retained rejection/repair/replay/fresh agreement. The four catalog regressions
+in `20261021-task-admission-catalog` also pass. The initial startup-validation
+failure is retained: the corrected registration uses its private catalog instead
+of reading the global model before initialization.
+
+[Admission evidence](task-admission-evidence.tar.gz), SHA-256:
+`8644ed83b4d5bf207bc322671ddabb06fe849b6c362228d7436829f7685bd23a`.
+Reproduce with `tests/task_transfer.py --results FRESH_DIRECTORY` and
+`tests/runtime_catalog.py --results FRESH_DIRECTORY` from this compiler directory.
+
+V-R02 remains partial: `task_run`, `task_start`, `task_run_publish`,
+`task_run_publish_unordered` and `task_synchronize` still require source admission
+and integration proofs. The transfer prerequisite is implemented, not an approval
+blocker. Overall closure remains **56/64 (87.5%)**.

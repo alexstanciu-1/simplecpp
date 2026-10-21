@@ -632,6 +632,7 @@ final class CPP_Declarations
 				}
 			}
 		}
+		$transfer_checks = '';
 		$packed_names = '';
 		$packed_separator = '';
 		foreach ($prepared_arguments as $index => $prepared_argument)
@@ -651,6 +652,7 @@ final class CPP_Declarations
 			$qualifier = (($parameter->access === storage_access::read_only) || $borrow) ? 'const ' : '';
 			$argument_requirement = self::signature_requirement(false, ($boundary === value_boundary_operation::bind_reference) || $borrow);
 			$text .= "\t" . $qualifier . self::type_for($argument_type, $context, $argument_requirement) . $reference . ' ' . $name . ' = ' . $value . ";\n";
+			if ($parameter->requires_transfer) { $transfer_checks .= $name . ".require_transfer();\n"; }
 			if ($transport !== null) { $physical_arguments[] = $name; }
 			if ($boundary === value_boundary_operation::consume_value) {
 				$name = self::move($name, $argument_type, $context, $parameter->access === storage_access::read_only);
@@ -674,6 +676,7 @@ final class CPP_Declarations
 			$names .= $separator . self::move($name, $parameters[$index]->type, $context);
 			$separator = ', ';
 		}
+		$text .= $transfer_checks;
 		if ($facts->variadic_parameter !== null) {
 			$pack /** callable_parameter */ = $facts->variadic_parameter;
 			$names .= $separator . self::type($pack->type, $context) . '{' . $packed_names . '}';

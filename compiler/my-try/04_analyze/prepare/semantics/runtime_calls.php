@@ -259,6 +259,7 @@ final class Runtime_Call_Preparation
 			$parameter = Declaration_Preparation::parameter_contract($type, $pattern->mode, $pattern->access,
 				$pattern->variadic, $context);
 			$parameter->requires_copy = $pattern->requires_copy;
+			$parameter->requires_transfer = $pattern->requires_transfer;
 			if ($pattern->default_value !== null) {
 				$default_value /** prepared_literal_parameter_default */ = $pattern->default_value;
 				if (!$default_value->result_type()->matches($parameter->type)) {

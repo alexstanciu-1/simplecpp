@@ -158,6 +158,22 @@ variadic copy rules remain unchanged. Source declaration syntax and runtime ABI 
 not change. Core `vector_resize` and `vector_filled` require copying their fill
 parameter even when the requested size is zero or smaller than the current size.
 
+### Provider callable transfer requirements
+
+A fixed callable value parameter may declare `"requires_transfer": true` (default
+`false`). It requires an owned transferable capture environment independently of
+signature compatibility or copyability. Defaults, references, observation,
+variadic inputs and requirements inside structural callable signatures reject.
+The contract applies to fixed and instantiated generic provider parameters.
+
+Shared preparation rejects statically known forbidden closure captures. Erased
+callable values retain a value-dependent permission; the call checks this after
+all source argument snapshots, before entering the provider. Copies, parameters,
+returns and concrete provider adapters preserve that permission. A denied callable
+can still be invoked where no transfer requirement exists. This contract adds no
+general thread-safety analysis and does not authorize shared mutable or resource
+captures. Unknown capture domains remain denied pending their own contract.
+
 ### Scalar parameter defaults
 
 A value parameter may add `default` with exactly one typed scalar member:

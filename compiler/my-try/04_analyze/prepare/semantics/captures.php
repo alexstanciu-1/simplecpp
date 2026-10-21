@@ -101,6 +101,22 @@ final class Capture_Preparation
 		return capture_transfer::forbidden;
 	}
 
+	/** Reject known forbidden environments; erased callable values retain a runtime guard. */
+	public static function require_transfer(canonical_type_use $type, preparation_context $context): void
+	{
+		if (!(Type_Queries::canonical($type)->definition() instanceof closure_type_definition)) { return; }
+		$identity = Model::$type_catalog->closures()->identity($type);
+		$context->worker->prepare_anonymous($identity, $context->owner);
+		$body = object_cast($identity->syntax()->require_body()->work(), anonymous_body_work::class);
+		$captures /** Storage<prepared_capture> */ = $body->captures;
+		foreach ($captures as $capture) {
+			if ($capture->transfer === capture_transfer::forbidden) {
+				throw new \RuntimeException('Task callback captures are not transferable');
+			}
+			if ($capture->transfer === capture_transfer::callable_value) { self::require_transfer($capture->type, $context); }
+		}
+	}
+
 	/** Capture environments, not registry flags, own transitive borrowing obligations. */
 	public static function borrowed_lifetimes(canonical_type_use $type, preparation_context $context): Storage /** Storage<storage_lifetime> */
 	{
