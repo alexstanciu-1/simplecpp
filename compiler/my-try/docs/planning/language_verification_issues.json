@@ -1058,7 +1058,7 @@
         "task_publish_deferred_flush_count"
       ],
       "dependencies": [],
-      "next_action": "Complete batch/callback integration using the authorized callable-transfer capability; preserve original absence evidence.",
+      "next_action": "Complete the final acceptance audit against task_acceptance_inventory.md, reconciling explicitly separate exception-transport restrictions and approved signature boundaries; preserve original absence evidence.",
       "acceptance": "All documented in-scope signatures admitted through ordinary metadata, exact behavior/error and production-provider build proofs, with explicit decisions for held contracts.",
       "simple_batch_eligible": false,
       "eligibility_reason": "Requires contract or module integration discussion; name-resolution probes do not prove a metadata-only repair.",
@@ -1070,7 +1070,7 @@
           "tasks-metadata-evidence.tar.gz",
           "tasks-shutdown-evidence.tar.gz"
         ],
-        "scope": "Sixteen fixed functions, runtime handles, progress/error observations and background shutdown verified. Five batch/callback APIs and transfer capability remain open."
+        "scope": "All 21 API names are installed: typed and bounded boxed batch/callback integration, transfer restrictions, coordinator errors, lifecycle/module checks and boxed prelowering source transport are verified on dev002. See async_tasks.md and task_acceptance_inventory.md for current evidence and separate exception-transport limits; final closure audit remains open."
       }
     },
     {

@@ -59,13 +59,20 @@ concrete element representations. Reading a vector field for indexing uses a val
 snapshot; indexed writes, updates, compounds, reference escape, static properties
 and wider field types remain outside this transport slice. Prepared mixed-to-int
 and mixed-to-string extraction uses the existing required-cast implementation in
-the compiled conversion bridge. Canonical int/string-to-mixed wrapping uses that
-same bridge. Mixed null-index reads adapt the receiver and key and return an owned
-mixed result, preserving once-only ordered evaluation and existing key semantics.
+the compiled conversion bridge. Prepared scalar/null wrapping into mixed or dynamic uses that
+same bridge. Boxed null-index reads adapt the receiver and key and return an owned
+result in the same family, preserving once-only ordered evaluation and existing key semantics.
+Boxed initializer buffers store native boxed elements; generic containers retain
+substituted concrete elements. Direct boxed writes unwrap their key/value operands.
+Nested boxed store/append stays inside one compiled helper: source keys and RHS are
+already snapshotted, then the existing path owner validates the entire path before
+mutable descent and the final write. Native interior references never cross into
+application wrapper references. This preserves mixed copy-on-write and dynamic
+shared identity without changing runtime algorithms.
 Concrete registered provider value/read-only vector<string> parameters copy to
 native elements; inferred generic contracts keep substituted physical types.
-Mutable provider references reject pending explicit write-back transport. Wider
-boxed domains and index writes remain separate. See [curl integration](../planning/curl_integration.md).
+Mutable provider references reject pending explicit write-back transport. Boxed extraction beyond the existing int/string slice, indexed updates/compounds,
+and broader keyed probes remain separate. See [curl integration](../planning/curl_integration.md).
 
 ## Existing owners
 

@@ -26,10 +26,30 @@ final class CPP_Concrete_Index
 		return 'scpp::' . $helper;
 	}
 
+	/** Native boxed children cannot be exposed as references to concrete wrapper objects. */
+	public static function native_path(prepared_index_target $destination): bool
+	{
+		$path /** Storage<prepared_index_path_step> */ = $destination->path;
+		$definition = Type_Queries::canonical($destination->root->require_preparation()->type)->definition();
+		return !$path->is_empty() && (($definition instanceof mixed_semantics) || ($definition instanceof dynamic_semantics));
+	}
+
+	public static function path_reference(prepared_index_assignment $facts, cpp_generation_context $context): string
+	{
+		$destination = $facts->target;
+		$types /** vector<canonical_type_use> */ = [$destination->root->require_preparation()->type];
+		foreach ($destination->path as $step) { $types[] = $step->key_conversion->target_type; }
+		$append = $destination->decision->operation === operator_operation::index_append;
+		if (!$append) { $types[] = $destination->decision->operands[1]->target_type; }
+		$types[] = $facts->destination_type();
+		return self::reference($append ? 'native_index_path_append' : 'native_index_path_store', $types, null, $context);
+	}
+
 	/** Demand physical interfaces from settled path facts; source evaluation stays in CPP_Index_Write. */
 	public static function write(prepared_index_assignment $facts, cpp_generation_context $context): void
 	{
 		$destination = $facts->target;
+		if (self::native_path($destination)) { return; }
 		$current = $destination->root->require_preparation()->type;
 		$path /** Storage<prepared_index_path_step> */ = $destination->path;
 		foreach ($path as $step) {
@@ -74,14 +94,17 @@ final class CPP_Concrete_Index
 		if ($existing !== null) { return $existing; }
 		$helper = $request->spelling;
 		$inputs /** Storage<canonical_type_use> */ = $request->inputs;
-		$mixed_read = ($helper === 'null_index_read')
-			&& (Type_Queries::canonical($inputs[0])->definition() instanceof mixed_semantics);
+		$receiver_definition = Type_Queries::canonical($inputs[0])->definition();
+		$boxed_elements = ($receiver_definition instanceof mixed_semantics) || ($receiver_definition instanceof dynamic_semantics);
+		$boxed_read = ($helper === 'null_index_read') && $boxed_elements;
+		$path_write = ($helper === 'native_index_path_append') || ($helper === 'native_index_path_store');
 		$pointer = ($helper === 'keyed_ready') || ($helper === 'keyed_lookup') || ($helper === 'keyed_child') || ($helper === 'keyed_probe');
-		$mutable_receiver = ($helper === 'index_store') || ($helper === 'index_append') || ($helper === 'index_path_descend')
+		$mutable_receiver = $path_write || ($helper === 'index_store') || ($helper === 'index_append') || ($helper === 'index_path_descend')
 			|| ($helper === 'keyed_descend') || ($helper === 'keyed_erase');
 		$context = new cpp_generation_context($engine);
 		$parameters = '';
 		$arguments = '';
+		$operands /** vector<string> */ = [];
 		$separator = '';
 		$native_headers /** hash<bool> */ = [];
 		foreach ($request->inputs as $position => $type) {
@@ -91,13 +114,15 @@ final class CPP_Concrete_Index
 			$indirection = ($position === 0 && $pointer) ? '*' : '&';
 			$operand = 'a' . $position;
 			$parameters .= $separator . $qualifier . $mapping->spelling . $indirection . ' ' . $operand;
-			if (($position === 0 || $mixed_read) && $mapping->opaque) {
+			if (($position === 0 || $boxed_elements) && $mapping->opaque) {
 				$native = CPP_Types::implementation_representation($type, $engine);
 				foreach ($native->headers as $header => $used) { $native_headers[$header] = true; }
-				$address = $operand . ($pointer ? '->' : '.') . 'address()';
+				$pointer_operand = ($position === 0) && $pointer;
+				$address = $operand . ($pointer_operand ? '->' : '.') . 'address()';
 				$unwrapped = 'std::launder(static_cast<' . $qualifier . $native->spelling . '*>' . '(' . $address . '))';
-				$operand = $pointer ? '(' . $operand . ' ? ' . $unwrapped . ' : nullptr)' : '*' . $unwrapped;
+				$operand = $pointer_operand ? '(' . $operand . ' ? ' . $unwrapped . ' : nullptr)' : '*' . $unwrapped;
 			}
+			$operands[] = $operand;
 			$arguments .= $separator . $operand;
 			$separator = ', ';
 		}
@@ -117,7 +142,26 @@ final class CPP_Concrete_Index
 		$declaration = "#pragma once\n" . CPP_Artifacts::includes($context->headers, '') . 'namespace scpp { ' . $signature . "; }\n";
 		$operation = 'return scpp::' . $helper . '(' . $arguments . ')'
 			. ($helper === 'keyed_probe' ? '.native_value()' : '') . ';';
-		if ($mixed_read) {
+		if ($path_write) {
+			$native_context = new cpp_generation_context();
+			$append = $helper === 'native_index_path_append';
+			$last = q_count($operands) - 1;
+			$path_count = $last - ($append ? 1 : 2);
+			$elements /** Storage<canonical_type_use> */ = new Storage();
+			$keys /** vector<string> */ = [];
+			for ($index = 1; $index <= $path_count; $index++) {
+				$elements->append($inputs[0]);
+				$keys[] = $operands[$index];
+			}
+			$key = $append ? '' : $operands[$last - 1];
+			$value = $operands[$last];
+			$resolved = CPP_Index_Write::resolve_path($elements, $keys, $operands[0], $key, $value, $append, $native_context);
+			$native_context->headers['scpp/index_write.hpp'] = true;
+			foreach ($native_context->headers as $header => $used) { $native_headers[$header] = true; }
+			$operation = $resolved->statements . 'scpp::' . ($append ? 'index_append' : 'index_store')
+				. '(' . $resolved->value . ', ' . ($append ? '' : $key . ', ') . $value . ');';
+		}
+		if ($boxed_read) {
 			$result /** canonical_type_use */ = $request->result;
 			$native_result = CPP_Types::implementation_representation($result, $engine);
 			foreach ($native_result->headers as $header => $used) { $native_headers[$header] = true; }

@@ -45,7 +45,10 @@ foreach (['mixed','dynamic'] as $family) {
   if(CPP_Probe::text(Model::$cpp_files)!==$initial){throw new \LogicException('Boxed result replay differs');}
  }
 }
-foreach (['$v dynamic = [1];$b=task_start($v,1,fn(dynamic $n):dynamic=>$n);$r=task_join($b);',
+foreach (['$v mixed = {a:[1]};$v["a"][0]=9;',
+ '$v dynamic = {a:[1.5]};$v["a"][]=2.5;',
+ '$v vector<string> = ["a"];',
+ '$v dynamic = [1];$b=task_start($v,1,fn(dynamic $n):dynamic=>$n);$r=task_join($b);',
  '$v mixed = [1];$r=task_run($v,1,function(mixed $n):void{});'] as $edit) {
  file_put_contents($path,$edit);$compiler->update_cpp([$path]);$incremental=CPP_Probe::text(Model::$cpp_files);
  Compiler_Lifecycle::reset();$fresh=new Compiler();$fresh->init([$directory]);$fresh->select_entry('main','main.phs');$fresh->exec_cpp();

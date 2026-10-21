@@ -392,9 +392,7 @@ final class CPP_Runtime_Operations
 		$engine = $context->specialization_engine;
 		if ($engine === null) { return false; }
 		if ($decision->operation === conversion_operation::boxed_wrap) {
-			return (Type_Queries::canonical($decision->target_type)->definition() instanceof mixed_semantics)
-				&& ($decision->source_type->matches(Language_Types::integer(Model::$language_scope))
-					|| $decision->source_type->matches(Language_Types::string_type(Model::$language_scope)));
+			return true;
 		}
 		if ($decision->operation === conversion_operation::boxed_extract) {
 			return (Type_Queries::canonical($decision->source_type)->definition() instanceof mixed_semantics)

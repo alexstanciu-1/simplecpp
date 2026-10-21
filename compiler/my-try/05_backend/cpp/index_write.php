@@ -167,7 +167,12 @@ final class CPP_Index_Write
 		$text .= $type . ' ' . $value . ' = '
 			. CPP_Declarations::conversion($emitter->expression($node->value), $facts->value_conversion, $context) . '; ';
 
-		if (!$path->is_empty()) {
+		if (CPP_Concrete_Index::active($context) && CPP_Concrete_Index::native_path($destination)) {
+			$helper = CPP_Concrete_Index::path_reference($facts, $context);
+			$arguments = $receiver . ', ';
+			foreach ($keys as $path_argument) { $arguments .= $path_argument . ', '; }
+		}
+		elseif (!$path->is_empty()) {
 			$elements /** Storage<canonical_type_use> */ = new Storage();
 			foreach ($path as $step) { $elements->append($step->element_type); }
 			$resolved = self::resolve_path($elements, $keys, $receiver, $key, $value,

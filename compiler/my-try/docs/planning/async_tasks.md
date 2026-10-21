@@ -9,12 +9,15 @@ The S12 closeout below advances this to 56/64; V-R02 is partial and remains acti
 | Requirement | Current evidence and remaining work |
 | --- | --- |
 | S12 suspension, sequencing, cleanup and restrictions | Closed by the source/runtime/retained proofs below. |
-| Runtime-owned task types, controls and all 21 API names | Bounded source paths and separate mixed/dynamic batch handles exist; final complete API/opt-in audit remains. |
+| Runtime-owned task types, controls and all 21 API names | All 21 names and separate mixed/dynamic batch handles are installed; the acceptance inventory records signature boundaries and source/runtime proofs. Module opt-in is verified. |
 | Typed vector/hash submissions and placement | Value/void work, contexts, prefilled/cross-carrier targets, independent int/string keys and inferred nullable keys have default-prelowered proof. Explicit nullable-string targets also have success/error/omission proof. |
 | Error callbacks and publication | Replacement/omission, coordinator dispatch, ordered publication context/options and unordered synchronization proved in the bounded forms below. |
-| Transfer restrictions | Typed payload/capture rejection and bounded scalar boxed task admission proved. Boxed source tests use native input/access fixtures because general boxed literal/index prelowering gaps remain separate; capture permission is unchanged. |
+| Transfer restrictions | Typed payload/capture rejection and bounded scalar boxed task admission proved. Literal/index transport now passes fixture-free source tests; capture permission is unchanged. |
 | Lifecycle acceptance | Native lifecycle evidence and production-source timeout, active cancellation, shutdown/error precedence and module opt-in pass. Source repeated-error joins remain blocked by the separately deferred exception transport; no source-level closure is claimed. |
 | Final closure | Still 56/64 original issues closed. V-R02 remains partial until the remaining scope is proved. |
+
+The [task acceptance inventory](task_acceptance_inventory.md) maps installed
+signature groups to proof owners and remaining gates.
 
 Historical checkpoints below retain their then-current boundaries; they do not
 supersede this summary. The nullable identity/prelowering issue remains separate.
@@ -1064,3 +1067,43 @@ publication manifests, success/failure logs and final source hashes.
 Remaining completion audit: reconcile documented signature boundaries against the
 metadata and current evidence; keep boxed initializer/index and source exception
 transport gaps explicit. V-R02 remains partial; overall closure is 56/64.
+
+## Approved boxed prelowering repair — 2026-10-21
+
+The user authorized repairs through the existing initializer, conversion and
+concrete-index owners; exception transport remains separate. No runtime changes.
+
+- Boxed scalar/null construction now consistently selects the existing compiled
+  conversion operation. Shared preparation still owns the admitted scalar domain.
+- Boxed initializer buffers use native boxed elements, including keyed entries;
+  generic vector/hash buffers retain substituted concrete elements.
+- Boxed reads/writes adapt all native operands and preserve owned read results.
+- Nested store/append executes as one compiled path operation, reusing
+  `CPP_Index_Write::resolve_path` for validation before mutable descent. No native
+  child reference is reinterpreted as a concrete wrapper reference or allowed to
+  escape. Source key/RHS evaluation remains in the existing sequencing owner.
+
+Dev002 `20261021-boxed-prelower-02` passed **100 source execution cases** without
+native input/access fixtures, including all 90 task cases and ten literal/index
+cases. `...-03` passed **12 additional cases**: initializer order, mixed copy-on-write,
+dynamic sharing, nested append, key/RHS order, root replacement during RHS, and
+ordinary/boxed typed-container initializer regressions. Both runs used default
+prelowering, verified template-free application manifests and zero warm compile/link
+work. Retained tests additionally cover nested mixed/dynamic edits and typed
+initializer edits versus fresh output, plus admission rejection/repair/replay.
+
+`...-01` preserves the initial nested-write failure: per-step helpers attempted to
+return native child references as wrapper references. The final whole-path helper
+repairs that ownership error; no runtime algorithm or source semantics changed.
+Indexed updates/compounds, broader keyed probes and additional extraction domains
+are not claimed by this store/append/read slice.
+
+[Evidence archive](boxed-prelower-evidence.tar.gz), SHA-256:
+`f9c18ead4f096e2544d3ee5792b27d12396ba5efc7a6b7cde9a72a01eed746d1`.
+Includes original failures, final fixture-free sources/module descriptors, logs,
+publication manifests and verified source hashes. The earlier fixture-backed
+checkpoint remains historical evidence, not the final source-acceptance boundary.
+
+The bounded boxed-source prerequisite is complete. The final goal audit must
+reconcile the explicitly separate source exception restriction and signature scope;
+V-R02 is not marked closed by this checkpoint.
