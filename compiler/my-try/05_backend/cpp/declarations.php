@@ -540,7 +540,7 @@ final class CPP_Declarations
 			$callee = self::method_reference($facts, $name, $arrow, $context);
 			return self::selected_call($facts, $syntax->arguments, $context, $callee, null, $prefix);
 		}
-		return self::selected_call($syntax->require_call_preparation(), $syntax->arguments, $context, '', null, '');
+		return self::selected_call($facts, $syntax->arguments, $context, '', null, '', null, CPP_Callsites::for_call($syntax, $context));
 	}
 
 	/** One source dispatch spelling for ordinary calls and concrete ABI bridges. */
@@ -581,7 +581,7 @@ final class CPP_Declarations
 	/** Source syntax and future factory consumers supply the same prepared call and ordered expressions. */
 	public static function selected_call(prepared_call $facts, Storage $arguments /** Storage<expression_node> */,
 		cpp_generation_context $context, string $callee, ?canonical_type_use $constructed_type,
-		string $prefix, ?cpp_runtime_operation $transport = null): string
+		string $prefix, ?cpp_runtime_operation $transport = null, ?cpp_callsite $callsite = null): string
 	{
 
 		if (($transport === null) && ($context->concrete_types() && ($facts->receiver === null))
@@ -589,7 +589,7 @@ final class CPP_Declarations
 			if (($callee !== '') || ($prefix !== '') || ($constructed_type !== null)) {
 				throw new \RuntimeException('prelower_templates: receiver call transport is not yet implemented');
 			}
-			return CPP_Runtime_Operations::call($facts, $arguments, $context);
+			return CPP_Runtime_Operations::call($facts, $arguments, $context, $callsite);
 		}
 		$parameters /** Storage<callable_parameter> */ = $facts->signature->parameters;
 		$prepared_arguments /** Storage<prepared_call_argument> */ = $facts->arguments;
@@ -672,6 +672,7 @@ final class CPP_Declarations
 				$reference = CPP_Callables::call_reference($facts, $context);
 			}
 		}
+		$names = CPP_Callsites::arguments($callsite, $names);
 		$text .= "\treturn " . $reference . '(' . $names . ");\n}())";
 		return $text;
 	}

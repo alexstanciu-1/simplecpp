@@ -87,7 +87,7 @@ final class Runtime_Catalog_Reader
 				elseif ($key === 'cpp_initialization') { $bindings = $result->cpp_initialization; }
 				$reader->begin_array();
 				while ($reader->next_element()) {
-					$binding = self::cpp_spec($reader);
+					$binding = self::cpp_spec($reader, $key === 'cpp');
 					if (isset($bindings[$binding->identity])) {
 						$reader->reject('Duplicate C++ binding identity');
 					}
@@ -706,7 +706,7 @@ final class Runtime_Catalog_Reader
 	}
 
 	/** Decode backend metadata as data; only the backend interprets its spelling. */
-	private static function cpp_spec(\scpp\Json_Reader $reader): runtime_cpp_spec
+	private static function cpp_spec(\scpp\Json_Reader $reader, bool $allow_context): runtime_cpp_spec
 	{
 		$result = new runtime_cpp_spec();
 		$reader->begin_object();
@@ -718,6 +718,10 @@ final class Runtime_Catalog_Reader
 			}
 			elseif ($key === 'symbol') {
 				$result->symbol = self::name($reader);
+			}
+			elseif ($key === 'source_context') {
+				if (!$allow_context || (self::name($reader) !== 'phs_file_line')) { $reader->reject('Unsupported C++ call-site context'); }
+				$result->source_context = true;
 			}
 			elseif ($key === 'header') {
 				$result->header = self::name($reader);

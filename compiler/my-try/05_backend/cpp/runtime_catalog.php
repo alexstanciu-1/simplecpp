@@ -51,6 +51,14 @@ final class CPP_Runtime_Catalog
 				if (!isset($bindings[$function->identity])) {
 					throw new \RuntimeException('Missing runtime binding: ' . $function->identity);
 				}
+				if ($bindings[$function->identity]->source_context) {
+					if (($function->member !== null) || $function->parameters->is_empty()) { throw new \RuntimeException('Call-site context requires a free function with value inputs'); }
+					foreach ($function->parameters as $parameter) {
+						if (($parameter->mode !== passing_mode::value) || $parameter->variadic) {
+							throw new \RuntimeException('Call-site context requires fixed value parameters');
+						}
+					}
+				}
 				if ($function->member !== null) {
 					$member /** runtime_callable_member_spec */ = $function->member;
 					$owner = $types->definition($member->owner->name);
@@ -130,7 +138,7 @@ final class CPP_Runtime_Catalog
 			}
 			foreach ($module->cpp as $binding) {
 				$target = Model::$runtime_callables->function_definition($binding->identity);
-				Model::$cpp_callable_bindings->bind_function($target, $binding->symbol, $binding->header);
+				Model::$cpp_callable_bindings->bind_function($target, $binding->symbol, $binding->header, $binding->source_context);
 			}
 		}
 	}

@@ -147,6 +147,7 @@ final class cpp_finally_return
 /** One emission invocation; syntax and prepared facts never retain it. */
 final class cpp_generation_context
 {
+	public bool $reads_source_context = false;
 	/** Middleware expressions use native outer implementations with concrete physical arguments. */
 	public ?CPP_Specializations $implementation_engine = null;
 	public array $specializations /** hash<canonical_type_use,int> */ = [];
@@ -182,6 +183,7 @@ final class cpp_generation_context
 /** One independently replaceable C++ fragment; no references to transient generation workers. */
 final class cpp_fragment
 {
+	public string $source_context_digest = '';
 	public array $specializations /** hash<canonical_type_use,int> */ = [];
 	public array $runtime_operations /** hash<cpp_runtime_operation> */ = [];
 	/** Used helper requests survive cached body reuse; assembly deduplicates live fragments. */
@@ -246,8 +248,15 @@ enum cpp_runtime_operation_kind {
 	case write_key;
 }
 
+/** Backend call-site facts; no source ownership or semantic signature changes. */
+final class cpp_callsite
+{
+	public function __construct(public string $path, public int $line) {}
+}
+
 final class cpp_runtime_operation
 {
+	public ?cpp_callsite $callsite = null;
 	public ?registered_property $property = null;
 	public ?prepared_call $call = null;
 	public ?prepared_iteration $iteration = null;

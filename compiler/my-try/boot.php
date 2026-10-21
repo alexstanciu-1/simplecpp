@@ -193,6 +193,7 @@ require_once __DIR__ . '/05_backend/cpp/specializations.php';
 require_once __DIR__ . '/05_backend/cpp/entry_support.php';
 require_once __DIR__ . '/05_backend/cpp/physical_interfaces.php';
 require_once __DIR__ . '/05_backend/cpp/opaque_representation.php';
+require_once __DIR__ . '/05_backend/cpp/callsites.php';
 require_once __DIR__ . '/05_backend/cpp/runtime_operations.php';
 require_once __DIR__ . '/05_backend/cpp/wrapper_transport.php';
 require_once __DIR__ . '/05_backend/cpp/provider_properties.php';

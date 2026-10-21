@@ -140,6 +140,10 @@ final class CPP_Generator
 				$this->program->fragments[$owner] = new cpp_fragment();
 			}
 			$fragment = $this->program->fragments[$owner];
+			if (($fragment->source_context_digest !== '')
+				&& ($fragment->source_context_digest !== CPP_Callsites::digest($owner->source))) {
+				$fragment->change_status = change_state::changed;
+			}
 			if (($fragment->version !== $owner->version) || ($fragment->change_status !== change_state::unchanged))
 			{
 				$fragment->change_status = change_state::changed;
@@ -312,6 +316,7 @@ final class CPP_Generator
 				$definition_context->outlined_shared_allocations = $this->program->outlined_shared_allocations;
 				$next->text = CPP_Declarations::signature($function_syntax, $definition_context, false);
 				$next->definition_headers = $definition_context->headers;
+				if ($definition_context->reads_source_context) { $context->reads_source_context = true; }
 				foreach ($definition_context->runtime_operations as $key => $request) { $context->runtime_operations[$key] = $request; }
 				foreach ($definition_context->specializations as $id => $type) {
 					$context->specializations[$id] = $type;
@@ -345,6 +350,7 @@ final class CPP_Generator
 					$next->record_definition_text .= CPP_Shared_Allocations::definition($allocation_record, $definition_context);
 				}
 				$next->definition_headers = $definition_context->headers;
+				if ($definition_context->reads_source_context) { $context->reads_source_context = true; }
 				foreach ($definition_context->runtime_operations as $key => $request) { $context->runtime_operations[$key] = $request; }
 				foreach ($definition_context->specializations as $id => $type) {
 					$context->specializations[$id] = $type;
@@ -368,6 +374,7 @@ final class CPP_Generator
 		$next->headers = $context->headers;
 		$next->compiler_helpers = $context->compiler_helpers;
 		$next->forward_declarations = $context->forward_declarations;
+		if ($context->reads_source_context) { $next->source_context_digest = CPP_Callsites::digest($owner->source); }
 		$next->version = $owner->version;
 		$next->change_status = change_state::unchanged;
 		$this->program->fragments[$owner] = $next;
@@ -1227,7 +1234,7 @@ final class CPP_Generator
 	}
 
 	/** Escape every byte without allowing a hexadecimal escape to consume its neighbor. */
-	private static function cpp_string_literal(string $value): string
+	public static function cpp_string_literal(string $value): string
 	{
 		$result = '"';
 		$hex = '0123456789ABCDEF';

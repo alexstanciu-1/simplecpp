@@ -22,6 +22,20 @@ Every module object requires these fields:
 - `functions`: ordered array of function contracts.
 - `cpp`: array of separate C++ bindings, joined to functions by `id`.
 
+A free-function C++ binding may opt into `"source_context":"phs_file_line"`.
+The backend then prefixes the native call with a C string containing the PHS
+module-relative source path and a one-based native integer line number. These
+are backend call-site inputs, not source-language parameters or callable identity.
+This bounded form requires at least one fixed by-value parameter; member calls,
+references/observations and variadics are excluded. Defaults remain ordinary
+prepared parameter defaults. Other context values, or context on property and
+initialization bindings, reject during catalog validation.
+
+Ordinary and default-prelowered emission preserve the same PHS location. Compiled
+operation identity includes the location, and source-sensitive fragments refresh
+after whitespace-only source edits. No generated C++ `__FILE__`/`__LINE__` substitution
+or source-function-name dispatch is permitted.
+
 An optional `constants` array contains module-owned scalar constants. Omission means
 no constants. The initial supported form is:
 

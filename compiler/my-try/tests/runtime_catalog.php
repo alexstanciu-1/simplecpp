@@ -12,7 +12,7 @@ function catalog_check(bool $condition, string $message): void
 $directory = $argv[1];
 $root = dirname(__DIR__, 3) . '/runtime/metadata/modules';
 $core = file_get_contents($root . '/core.json');
-$core = str_replace('"functions": [', '"constants": [{"name":"CATALOG_MIN","type":"int","value":-9223372036854775808},{"name":"CATALOG_MAX","type":"int","value":9223372036854775807}], "functions": [', $core);
+$core = str_replace('"constants": [', '"constants": [{"name":"CATALOG_MIN","type":"int","value":-9223372036854775808},{"name":"CATALOG_MAX","type":"int","value":9223372036854775807},', $core);
 $json = file_get_contents($root . '/json.json');
 file_put_contents($directory . '/core.json', $core);
 file_put_contents($directory . '/json.json', $json);

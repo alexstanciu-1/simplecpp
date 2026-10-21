@@ -121,6 +121,8 @@ class runtime_cpp_spec
 {
 	public string $identity = '';
 	public string $symbol = '';
+	/** Backend-only opt-in to PHS file/line prefix arguments. */
+	public bool $source_context = false;
 	public string $header = '';
 }
 

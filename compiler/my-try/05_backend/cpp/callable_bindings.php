@@ -11,7 +11,7 @@ final class cpp_function_binding
 	private string $required_header;
 
 	/** Publish backend spelling separately from the installed semantic identity. */
-	public function __construct(runtime_function_definition $target, string $symbol, string $header)
+	public function __construct(runtime_function_definition $target, string $symbol, string $header, public readonly bool $source_context = false)
 	{
 		if ($symbol === '') {
 			throw new \InvalidArgumentException('C++ function symbol must not be empty');
@@ -73,10 +73,10 @@ final class CPP_Callable_Bindings
 		$this->functions = new Keyed_Storage /** Keyed_Storage<cpp_function_binding> */();
 	}
 
-	public function bind_function(runtime_function_definition $target, string $symbol, string $header): void
+	public function bind_function(runtime_function_definition $target, string $symbol, string $header, bool $source_context = false): void
 	{
 		$functions /** Keyed_Storage<cpp_function_binding> */ = $this->functions;
-		$functions->add($target->key(), new cpp_function_binding($target, $symbol, $header));
+		$functions->add($target->key(), new cpp_function_binding($target, $symbol, $header, $source_context));
 	}
 
 	/** Reject stale identities even when their provider keys have been reinstalled. */

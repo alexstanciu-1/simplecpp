@@ -16,6 +16,7 @@ final class CPP_Runtime_Operations
 	{
 		// Preserve the existing identity seed while retiring the old indexed-write fields.
 		$key = $request->kind_name() . ':' . $request->spelling . ':store';
+		if ($request->callsite !== null) { $key .= ':callsite=' . json_quote($request->callsite->path) . ':' . $request->callsite->line; }
 		if ($request->property !== null) {
 			$property_context = new cpp_generation_context();
 			$key .= ':property=' . $request->property->definition->identity . ':'
@@ -259,6 +260,7 @@ final class CPP_Runtime_Operations
 			}
 			$values = self::join($arguments);
 			if ($request->call !== null) { $values = CPP_Source_Calls::native_arguments($request->call, $arguments, 0, $context); }
+			$values = CPP_Callsites::arguments($request->callsite, $values);
 			$expression = $binding->symbol() . '(' . $values . ')';
 			if (($request->result !== null) && (CPP_Wrapper_Transport::payload($request->result) !== null)) {
 				return CPP_Wrapper_Transport::adapt($request->result, $expression, true, $engine, $context);
@@ -407,14 +409,14 @@ final class CPP_Runtime_Operations
 
 	/** Dispatch settled observation versus value/reference contracts without naming runtime functions. */
 	public static function call(prepared_call $facts, Storage $arguments /** Storage<expression_node> */,
-		cpp_generation_context $context): string
+		cpp_generation_context $context, ?cpp_callsite $callsite = null): string
 	{
 		if (($facts->signature->reference_return !== null) || ($facts->variadic_parameter !== null)) {
 			throw new \RuntimeException('prelower_templates: reference-result/variadic call transport is not yet implemented');
 		}
 		foreach ($facts->signature->parameters as $parameter) {
 			if ($parameter->mode !== passing_mode::observation) {
-				return self::value_call($facts, $arguments, $context);
+				return self::value_call($facts, $arguments, $context, $callsite);
 			}
 		}
 		$request = new cpp_runtime_operation(cpp_runtime_operation_kind::observation);
@@ -442,10 +444,11 @@ final class CPP_Runtime_Operations
 
 	/** Reuse ordinary argument/default sequencing and prepared copy/consume/reference boundaries. */
 	private static function value_call(prepared_call $facts, Storage $arguments /** Storage<expression_node> */,
-		cpp_generation_context $context): string
+		cpp_generation_context $context, ?cpp_callsite $callsite): string
 	{
 		CPP_Source_Calls::require_signature($facts);
 		$request = new cpp_runtime_operation(cpp_runtime_operation_kind::runtime_call);
+		$request->callsite = $callsite;
 		$request->call = $facts;
 		$target = object_cast(weakref_get($facts->target), runtime_function_definition::class);
 		$request->binding = Model::$cpp_callable_bindings->function_binding($target);
