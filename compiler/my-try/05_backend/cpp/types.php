@@ -185,8 +185,8 @@ final class CPP_Types
 				$parts .= $separator . $mapping->spelling;
 				$separator = ', ';
 			}
-			$result->spelling = 'std::function<' . $return_mapping->spelling . '(' . $parts . ')>';
-			self::add_header($result, 'functional');
+			$result->spelling = 'scpp::callable_t<' . $return_mapping->spelling . '(' . $parts . ')>';
+			self::add_header($result, 'scpp/callable_t.hpp');
 			$result->literal = cpp_literal_kind::none;
 			return $result;
 		}

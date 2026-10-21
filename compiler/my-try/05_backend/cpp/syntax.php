@@ -71,7 +71,28 @@ final class CPP_Syntax
 			}
 			// Value bindings stay read-only in preparation; mutable permits shared-payload APIs and callable invocation.
 			$qualifier = q_count($capture_parts) === 0 ? '' : ' mutable';
-			return '[' . q_implode(', ', $capture_parts) . '](' . q_implode(', ', $parts) . ')' . $qualifier . ' -> ' . CPP_Declarations::return_type($facts->signature, $this->context, false) . " {\n" . $body . '}';
+			$result_type = CPP_Declarations::return_type($facts->signature, $this->context, false);
+			$callback = '[' . q_implode(', ', $capture_parts) . '](' . q_implode(', ', $parts) . ')' . $qualifier . ' -> ' . $result_type . " {\n" . $body . '}';
+			$permission = 'true';
+			foreach ($captures as $capture) {
+				if ($capture->transfer === capture_transfer::forbidden) { $permission = 'false'; break; }
+				if ($capture->transfer === capture_transfer::callable_value) {
+					$permission .= ' && ' . CPP_Generator::local_name(object_cast(weakref_get($capture->declaration), collected_name::class)) . '.transfer_allowed()';
+				}
+			}
+			$forwarded /** vector<string> */ = [];
+			foreach ($parameters as $parameter) {
+				$argument = CPP_Generator::local_name(object_cast(weakref_get($parameter->declaration), collected_name::class));
+				$forwarded[] = $parameter->contract->mode === passing_mode::value
+					? 'static_cast<decltype(' . $argument . ')&&>(' . $argument . ')' : $argument;
+			}
+			// The closure owns its permission, so nesting and later erasure observe the
+			// captured callable value rather than the current outer variable.
+			return '([&]() { auto callback = ' . $callback . '; bool transferable = ' . $permission . '; '
+				. 'struct closure_value { decltype(callback) body; bool transferable; '
+				. 'bool transfer_allowed() const { return transferable; } '
+				. $result_type . ' operator()(' . q_implode(', ', $parts) . ') { return this->body(' . q_implode(', ', $forwarded) . '); } }; '
+				. 'return closure_value{static_cast<decltype(callback)&&>(callback), transferable}; }())';
 		}
 		if ($node instanceof object_type_node) {
 			$this->require_native_operation('object type operation');

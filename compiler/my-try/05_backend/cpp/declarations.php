@@ -64,7 +64,8 @@ final class CPP_Declarations
 		}
 		if ($decision->operation === conversion_operation::callable_wrap) {
 			if ($context->concrete_types()) { return CPP_Callback_Transport::wrap($expression, $decision->target_type, $context); }
-			return self::type($decision->target_type, $context) . '{' . $expression . '}';
+			return '([&]() { auto callback = ' . $expression . '; bool transferable = callback.transfer_allowed(); return '
+				. self::type($decision->target_type, $context) . '{static_cast<decltype(callback)&&>(callback), transferable}; }())';
 		}
 		if ($decision->operation === conversion_operation::identity) {
 			return $expression;

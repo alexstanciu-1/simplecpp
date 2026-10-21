@@ -34,11 +34,11 @@ final class CPP_Callback_Transport
 		}
 		$result = CPP_Declarations::type($signature->return_type, $context);
 		$storage = CPP_Declarations::type($type, $context);
-		return '([&]() -> ' . $storage . ' { auto callback = ' . $expression . '; using Captures = decltype(callback); '
+		return '([&]() -> ' . $storage . ' { auto callback = ' . $expression . '; bool transferable = callback.transfer_allowed(); using Captures = decltype(callback); '
 			. 'return ' . $storage . '(new Captures(static_cast<Captures&&>(callback)), '
 			. '+[](void* state' . $declarations . ') -> ' . $result . ' { return (*static_cast<Captures*>(state))(' . $arguments . '); }, '
 			. '+[](const void* state) -> void* { return new Captures(*static_cast<const Captures*>(state)); }, '
-			. '+[](void* state) { delete static_cast<Captures*>(state); }); }())';
+			. '+[](void* state) { delete static_cast<Captures*>(state); }, transferable); }())';
 	}
 
 	/** Provider-native payloads are adapted at the existing runtime call boundary. */
@@ -49,6 +49,7 @@ final class CPP_Callback_Transport
 		$parameters /** Storage<callable_parameter> */ = $signature->parameters;
 		$engine /** CPP_Specializations */ = $context->implementation_engine;
 		$physical_context = new cpp_generation_context($engine);
+		$input_types /** vector<string> */ = [];
 		$declarations = '';
 		$arguments = '';
 		$body = '';
@@ -60,6 +61,7 @@ final class CPP_Callback_Transport
 			CPP_Types::record_dependencies($native_input, $context);
 			$name = 'value_' . $index;
 			$argument_type = $native_payloads ? $native_input->spelling : $physical_input->spelling;
+			$input_types[] = $argument_type;
 			$declarations .= ($index === 0 ? '' : ', ') . $argument_type . ' ' . $name;
 			$argument = $name;
 			if ($native_payloads && $physical_input->opaque) {
@@ -88,7 +90,9 @@ final class CPP_Callback_Transport
 				: 'return result; ';
 		}
 		// The adapter may outlive the operation helper: never retain its stack inputs.
-		return '[callback = (' . $expression . ')](' . $declarations . ') mutable -> ' . $result_type . ' { ' . $body . '}';
+		return '([&]() { auto provider_callback = (' . $expression . '); bool transferable = provider_callback.transfer_allowed(); '
+			. 'return scpp::internal::carry_callback_transfer<' . $result_type . '(' . q_implode(', ', $input_types) . ')>([callback = static_cast<decltype(provider_callback)&&>(provider_callback)]('
+			. $declarations . ') mutable -> ' . $result_type . ' { ' . $body . '}, transferable); }())';
 	}
 
 	public static function interface(canonical_type_use $type, string $name, string $native,
@@ -111,8 +115,8 @@ final class CPP_Callback_Transport
 		$interface = new cpp_type_interface();
 		$interface->declaration_prefix = CPP_Artifacts::includes($context->headers, '');
 		$inputs = 'void* state, ' . $result . ' (*call)(void*' . $types . '), void* (*copy)(const void*), void (*destroy)(void*)';
-		$interface->declaration = $name . '(' . $inputs . " );\n"
-			. $result . ' operator()(' . $declarations . ") const;\nexplicit operator bool() const;\n";
+		$interface->declaration = $name . '(' . $inputs . " , bool transferable);\n"
+			. $result . ' operator()(' . $declarations . ") const;\nexplicit operator bool() const;\nbool transfer_allowed() const;\nvoid require_transfer() const;\n";
 		$owner = 'callback_owner_' . $name;
 		$interface->implementation = 'struct ' . $owner . ' { void* state; '
 			. $result . ' (*call)(void*' . $types . '); void* (*copy)(const void*); void (*destroy)(void*); '
@@ -121,10 +125,12 @@ final class CPP_Callback_Transport
 			. $owner . '(' . $owner . '&& other) noexcept : state(other.state), call(other.call), copy(other.copy), destroy(other.destroy) { other.state = nullptr; } '
 			. '~' . $owner . '() { if (state) destroy(state); } '
 			. $result . ' operator()(' . $declarations . ') const { return call(state' . ($arguments === '' ? '' : ', ' . $arguments) . '); } }; '
-			. $name . '::' . $name . '(' . $inputs . ') { ' . $owner . ' owner(state, call, copy, destroy); '
-			. '::new(address()) ' . $native . '(std::move(owner)); }' . "\n"
+			. $name . '::' . $name . '(' . $inputs . ', bool transferable) { ' . $owner . ' owner(state, call, copy, destroy); '
+			. '::new(address()) ' . $native . '(std::move(owner), transferable); }' . "\n"
 			. $result . ' ' . $name . '::operator()(' . $declarations . ') const { return unwrap(*this)(' . $arguments . '); }' . "\n"
-			. $name . '::operator bool() const { return static_cast<bool>(unwrap(*this)); }' . "\n";
+			. $name . '::operator bool() const { return static_cast<bool>(unwrap(*this)); }' . "\n"
+			. 'bool ' . $name . '::transfer_allowed() const { return unwrap(*this).transfer_allowed(); }' . "\n"
+			. 'void ' . $name . '::require_transfer() const { unwrap(*this).require_transfer(); }' . "\n";
 		return $interface;
 	}
 }

@@ -179,7 +179,7 @@ work after failure. This supersedes the pending shutdown prerequisite above.
 Source hashes and earlier attempts are preserved. Source batch admission remains
 open; neither original issue is closed here.
 
-### Pending transfer-model decision
+### Authorized transfer-model prerequisite
 
 Closure-to-callable conversion checks borrowed lifetimes and copyability, then
 stores only function-signature identity. Owned capture storage is not proof of
@@ -191,9 +191,7 @@ The requested extension is a bounded transfer capability owned by existing
 callable preparation and carried by callable storage/transport, checked at task
 submission. Direct capture checks must observe anonymous-body dependencies;
 typed callable transport must preserve the established capability. No general
-thread-safety analysis or scheduler changes are proposed. This extends the
-transfer model and awaits the user's decision under the goal's explicit redesign
-boundary. Do not admit all owned captures or claim completion by rejecting every
+thread-safety analysis or scheduler changes are proposed. The user authorized this bounded transfer-model extension on 2026-10-21. Do not admit all owned captures or claim completion by rejecting every
 stored callable.
 
 ## S12 closeout — 2026-10-21
@@ -220,6 +218,43 @@ Reproduce both checks with `python3 compiler/my-try/tests/async_preparation.py
 --results FRESH_DIRECTORY` on dev002.
 
 Current overall status: **56/64 closed (87.5%), one partial**. V-R02 remains partial
-and the combined goal remains active. Its pending transfer decision and remaining
+and the combined goal remains active. Its authorized transfer prerequisite and remaining
 five batch/callback APIs are not removed from acceptance. Earlier 55/64 entries
 above are dated intermediate checkpoints.
+
+## Callable transfer capability checkpoint — 2026-10-21
+
+The authorized prerequisite now has a verified vertical path. Capture preparation
+classifies copyable scalar/string/enum values and recursively owned vector/hash
+and nullable/result payloads separately from borrowed/shared/resource captures.
+A captured callable requires its value's retained permission. A closure stores
+that result with its owned environment; typed erasure, copies, parameters and
+returns preserve it in `scpp::callable_t`. Moved-from callable values cannot claim
+transfer permission. Ordinary invocation is unaffected by a denied permission.
+
+The provider adapter preserves both the exact callback signature and permission.
+The first generic adapter hid its signature from collection traits; that failure
+is retained and the corrected fixed-signature adapter passes the regressions.
+The runtime guard rejects denied transfer before the probe starts a worker. This
+is a capture-transfer capability, not a proof of general body/thread safety.
+Unknown capture domains remain closed: arbitrary records, boxed captures and
+containers of callable values need their own verified inspection rules. No new
+permission for mutable shared objects or resources is introduced.
+
+Dev002 results:
+
+- `20261021-task-transfer-source-03`: eleven tasks pass, covering default-prelowered
+  and ordinary cold/warm builds, nested snapshots, typed parameter/return/copy
+  transport, owned containers, shared-capture transfer rejection, and retained
+  failure/repair/replay/fresh agreement.
+- `20261021-task-transfer-callback-regression`: all five existing callback tasks
+  pass; `20261021-task-transfer-collection-regression-03`: all 25 tasks pass.
+- `20261021-task-transfer-runtime-03`: all four ASan/UBSan runtime probes pass,
+  including default/denied/allowed callables, copying, moves, parameter/return
+  preservation, worker execution, void and string signatures.
+
+[Evidence archive](task-transfer-evidence.tar.gz), SHA-256:
+`1a119e6b0a73a2257b8500b7c34cf52bdf4bf9f280f19aa18450bdd8df6b17d2`.
+The task API submission contracts still need to consume this capability; the
+probe is not a claim that the five remaining batch/callback APIs are admitted.
+V-R02 remains partial. The approval blocker has been cleared.

@@ -1058,7 +1058,7 @@
         "task_publish_deferred_flush_count"
       ],
       "dependencies": [],
-      "next_action": "Complete batch/callback integration after the pending transfer-model decision; preserve original absence evidence.",
+      "next_action": "Complete batch/callback integration using the authorized callable-transfer capability; preserve original absence evidence.",
       "acceptance": "All documented in-scope signatures admitted through ordinary metadata, exact behavior/error and production-provider build proofs, with explicit decisions for held contracts.",
       "simple_batch_eligible": false,
       "eligibility_reason": "Requires contract or module integration discussion; name-resolution probes do not prove a metadata-only repair.",

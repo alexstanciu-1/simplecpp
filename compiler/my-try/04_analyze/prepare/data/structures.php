@@ -458,10 +458,13 @@ abstract class prepared_source_storage extends prepared_storage {
 	public collected_name $declaration /** weak<collected_name> */;
 }
 
+enum capture_transfer { case forbidden; case owned_value; case callable_value; }
+
 /** A capture binding is distinct from its source, whether copied or borrowed. */
 final class prepared_capture extends prepared_source_storage {
 	public canonical_type_use $type;
 	public ?storage_borrow $borrow = null;
+	public capture_transfer $transfer = capture_transfer::forbidden;
 	public storage_access $access = storage_access::read_only;
 	public function storage_type(): canonical_type_use { return $this->type; }
 	/** Receiver role is derived from the borrow origin, never a duplicated kind flag. */

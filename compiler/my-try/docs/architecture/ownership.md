@@ -321,6 +321,12 @@ Nested closures have independently scheduled workers
 which own their facts. Shared callable inspection retains the syntax owner only for the
 cursor lifetime and follows the existing ordered children.
 
+Capture preparation also settles a bounded transfer classification independently of
+copyability. Closure environments retain the resulting value permission; callable
+erasure, copying and provider adaptation preserve it. This capability describes
+captured storage, not general thread safety of the body. Unknown capture domains
+remain denied. No secondary capture registry or lifetime owner is introduced.
+
 Capture entries own a variable-reference child and passing mode. A prepared reference
 capture owns a `storage_borrow`: its place weakly observes original prepared storage,
 and its lifetime point retains only a neutral region/order. Region parents point upward;

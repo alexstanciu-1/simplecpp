@@ -85,7 +85,7 @@ S12 now closes through [async suspension and publication proof](async_tasks.md):
 unchanged strict source, default-prelowered production builds, suspension/lifetime
 and ordered/lazy evaluation, plus retained disk rejection/repair/retirement/fresh
 parity. V-R02 has verified handles/controls and shutdown; batch/callback admission
-and the pending transfer-model prerequisite remain open.
+remain open; the bounded transfer-model prerequisite is authorized.
 
 ## Inside V-L07
 
