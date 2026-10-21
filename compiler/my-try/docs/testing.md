@@ -1263,6 +1263,18 @@ python3 compiler/my-try/tests/compiler_storage.py --results /tmp/FRESH_STORAGE_R
 This builds and executes generated programs through the production C++ build owner.
 It does not rebuild the compiler itself or establish cursor/borrowed-slot support.
 
+For typed source Iterator admission, incremental signature recovery and matching
+ordinary/prelowered execution:
+
+```bash
+python3 compiler/my-try/tests/typed_iterator.py --results /tmp/FRESH_ITERATOR_RESULTS
+```
+
+The generated programs cover direct and interface implementations, inherited
+dispatch, exact scalar/string/record yields, temporary receiver evaluation,
+receiver reassignment, empty iteration, continue and early break. This does not
+establish Storage_Cursor widening or whole-compiler self-hosting.
+
 For ordinary runtime type metadata and the vector/hash registration migration:
 
 ```bash

@@ -254,6 +254,9 @@ final class Type_Preparation
 	/** Admit storage separately from internal sentinel identities and generic type formation. */
 	public static function require_value_type(canonical_type_use $type): void
 	{
+		if (Type_Queries::canonical($type)->definition() === Model::$type_catalog->definition('Iterator')) {
+			throw new \RuntimeException('Iterator is a protocol marker; use a typed source interface for storage');
+		}
 		if (Result_Conversions::is_boolean_sentinel($type)) {
 			throw new \RuntimeException('S2S boolean sentinel requires an explicit Result destination');
 		}

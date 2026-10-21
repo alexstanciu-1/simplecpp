@@ -132,3 +132,48 @@ The converted `03_parse/structures/iterators.phs:6` declares
 `interface child_iterator_i extends \Iterator`, preserved from the authored PHP.
 No Iterator binding or relationship repair is made. Semantic preparation does not
 complete and C++ emission is not reached, so full-bootstrap time/memory remain unknown.
+
+## Typed Iterator retry
+
+Candidate: `dd8bc541` plus the bounded typed Iterator implementation committed with
+this section. Global Iterator has a distinct non-storable protocol role, source
+relationships carry membership, and completed source type contracts retain the
+five selected methods with exact key/value types. Foreach prepares ordinary source
+calls and retains one shared receiver. Both C++ modes consume their existing
+source-method ABI directly, without applying the native-container range bridge to
+already-concrete source results. General runtime inheritance is not enabled.
+
+`tests/typed_iterator.py` passes ordinary and concrete execution and admission
+checks (`/tmp/iterator-v02-full/`). Tests cover interface dispatch, inherited
+overrides, direct implementation, string keys, shared record yields, temporary
+receiver evaluation, replacement of the original receiver, empty iteration,
+continue and early break. Incremental signature edits exposed a missing equality
+comparison in the new protocol facts; method/type comparison fixes stale foreach
+bindings. Final admission/recovery and relationship checks pass in
+`/tmp/iterator-v02-final-contracts/`. Type capabilities, provider iteration, runtime
+catalog, interface and inheritance PHP suites pass in `/tmp/iterator-v02-regression/`.
+
+The type-catalog test's fixed semantic definition/type/exposure counts are adjusted
+for the new marker. Its later `C++ binding count changed` assertion fails identically
+on an isolated archive of unmodified `dd8bc541`; it remains unchanged. Baseline
+evidence: `/tmp/iterator-v02-base-check/`. No native compiler rebuild is claimed.
+
+The bootstrap ran after preceding checks finished, with the same PHP 8.5 CLI,
+OPcache/Xdebug settings and 4 GiB limit. Exact snapshots, source hashes, diagnostics,
+phase JSON and GNU time reports are in `/tmp/bootstrap-attempt-20261021-iterator/`;
+the harness is `/tmp/bootstrap-attempt-20261021-iterator.py`.
+
+| Phase | Wall time | Peak RSS | Outcome |
+| --- | ---: | ---: | --- |
+| PHP-to-PHS conversion | 5.94 s | 184.4 MiB | 257 PHP files converted |
+| Framework assembly | 0.05 s | 30.9 MiB | 267 PHS files, 1,908,220 bytes |
+| PHP-hosted bootstrap | 4.49 s | 165.9 MiB | Exception relationships rejected |
+
+Initialization completes at 161 ms; parsing completes at 4,199 ms. Peak PHP heap
+is 142 MiB. The 56 unresolved Iterator diagnostics are gone; the eight relationship
+target failures remain for the portability exception hierarchy. The first is
+`scpp_portability_exception extends Exception`, whose base is runtime-owned rather
+than a source declaration. No exception or Storage_Cursor widening repair is made.
+Relationship preparation still stops before type contracts/method bodies and C++
+emission, so this does not prove the whole converted compiler's Iterator use or
+full-bootstrap time/memory.

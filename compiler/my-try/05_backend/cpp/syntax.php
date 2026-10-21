@@ -519,6 +519,7 @@ final class CPP_Syntax
 	{
 
 		$facts /** prepared_iteration */ = $node->require_preparation()->iteration;
+		if ($facts->source_iterator !== null) { return $this->generate_source_iterator($node, $facts); }
 		if ($this->context->concrete_types()) { CPP_Concrete_Iteration::require_interface($node, $this->context); }
 		else { $this->context->headers['scpp/value_iteration.hpp'] = true; }
 		$id = $this->context->next_temporary;
@@ -539,6 +540,29 @@ final class CPP_Syntax
 		$entry = object_cast(weakref_get($binding->declaration), collected_name::class);
 		return CPP_Generator::generate_storage_value($binding, CPP_Generator::local_name($entry),
 			$value, true, $this->context) . ";\n";
+	}
+
+	/** Source facades already expose the selected ordinary/concrete ABI; no native-container adapter. */
+	private function iterator_call(prepared_call $call, string $source): string
+	{
+		$arguments /** Storage<expression_node> */ = new Storage();
+		$callee = CPP_Declarations::method_reference($call, $source, true, $this->context);
+		return CPP_Declarations::selected_call($call, $arguments, $this->context, $callee, null, '');
+	}
+
+	private function generate_source_iterator(foreach_node $node, prepared_iteration $facts): string
+	{
+		$calls /** prepared_iterator_calls */ = $facts->source_iterator;
+		$source = 'iterator_source_' . $this->context->next_temporary;
+		$this->context->next_temporary++;
+		// Copy the handle before the body can replace its original storage; retain temporaries too.
+		$text = "{\nauto " . $source . ' = ' . $this->expression($node->iterable) . ";\n";
+		$text .= '(void)' . $source . ".operator->();\n" . $this->iterator_call($calls->rewind, $source) . ";\n";
+		$text .= 'for (; static_cast<bool>(' . $this->iterator_call($calls->valid, $source) . '); '
+			. $this->iterator_call($calls->next, $source) . ") {\n";
+		if ($facts->key !== null) { $text .= $this->initialized_binding($facts->key, $this->iterator_call($calls->key, $source)); }
+		$text .= $this->initialized_binding($facts->value, $this->iterator_call($calls->current, $source));
+		return $text . $this->loop_body($node) . "}\n}\n";
 	}
 
 	public function generate_control_transfer(control_transfer_node $node): string

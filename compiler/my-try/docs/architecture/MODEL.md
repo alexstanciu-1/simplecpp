@@ -748,11 +748,21 @@ ordered body storage/traversal between executable roots and nested blocks.
 Conditional arms own explicit body/next-arm edges. The common `loop_node` owns a block
 body; concrete while/do-while/for/foreach nodes own typed headers. Foreach owns an
 iterable expression, optional key and required value syntax. Its loop-owned
-`prepared_iteration` holds the selected registry contract, substituted types and
+`prepared_iteration` holds either the selected registry contract or five prepared
+source-Iterator calls, together with resolved types and
 ordinary binding/conversion facts. `Iteration_Preparation` owns admission and lexical
 binding; the loop worker still owns body/transfer traversal. C++ generation borrows
 the once-evaluated source, extends temporary lifetime and consumes const entry views
 through a shared checked runtime adapter. It never snapshots the collection.
+For typed source Iterator, relationship facts retain protocol membership separately
+from source interface edges. Type contracts retain the five original selected method
+identities and exact key/value types; signature/name dependencies and the contract
+equality check invalidate consumers after edits. No synthetic source members or
+runtime inheritance edges are introduced. Foreach retains one shared handle and
+emits rewind/valid/current/key/next through existing source-call facades in both
+ordinary and prelowered modes. These facades already expose the appropriate result
+ABI, so the native-container concrete range adapter is not used for source iterators.
+See the [bounded protocol](../../../../specs/compiler_storage.md#v02-typed-source-iterator).
 Mutation/replacement semantics remain unsupported; CH06-ITER-01 now blocks final
 catalog completion under [Chapter 15](../catalog/15_blocking_debt.md). Reference
 foreach stays disabled pending the runtime safety foundation tracked there as

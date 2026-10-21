@@ -210,6 +210,36 @@ count or by-reference iteration API. Compiler inspection iterators delegate to i
 A source interface extending global `Iterator` can declare exact typed `current`,
 `key`, `valid`, `next` and `rewind` methods. Value `foreach` uses these methods,
 retains the iterator object, rewinds once at entry and advances after each iteration.
-The native nominal protocol and C++ method requirements enforce this bounded
+The v0.1 native nominal protocol and C++ method requirements enforce this bounded
 binding. `current` and `key` must be observational; no getter side-effect ordering
 contract is introduced. This is not arbitrary PHP Traversable/Generator support.
+
+### v0.2 typed source Iterator
+
+Global `Iterator` is a non-storable language protocol marker. Source interfaces may
+extend it and source classes may implement it; membership propagates through source
+interface/class ancestry. It does not enable general source-to-runtime inheritance.
+Use a typed source interface, not bare `Iterator`, for a parameter, field or return.
+Struct/union receivers, explicit inline storage and reference foreach are excluded.
+
+The completed type contract must select exactly one public, non-static,
+zero-parameter method for each operation. Reference returns are excluded.
+`valid` returns exactly bool; `next` and `rewind` return void. `current` and `key`
+return concrete copyable storage types, retained as the exact foreach value/key
+types. The five operations participate in source virtual dispatch, including
+inherited implementations and overrides. Ordinary interface compatibility rules
+still apply. Membership alone does not synthesize missing method declarations.
+
+Foreach evaluates its receiver once and retains a shared handle through the loop.
+Replacing the original receiver variable does not replace that handle. It calls
+rewind once, tests valid before each iteration, reads the optional key and current
+value, then advances with next. Continue advances; break, return and exceptions
+leave without an extra advance. Existing cursor restart rules remain with the
+implementation. Observational getter requirements above remain author obligations.
+
+Shared preparation owns method admission and signature dependencies. Both C++ modes
+lower these prepared source calls through existing method facades; prelowered code
+uses their concrete handle/result ABI directly. It does not wrap source results as
+native-container results or instantiate an application-side iterator template.
+The existing runtime-container iteration path remains separate. Storage_Cursor
+registration/widening and exception hierarchy support are not part of this slice.

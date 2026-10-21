@@ -832,11 +832,22 @@ final class prepared_loop
 /** Loop-owned binding facts refer to registry signatures and existing storage identities. */
 final class prepared_iteration
 {
-	public iteration_declaration $contract;
+	public ?iteration_declaration $contract = null;
+	public ?prepared_iterator_calls $source_iterator = null;
 	public canonical_type_use $key_type;
 	public canonical_type_use $value_type;
 	public ?prepared_binding $key = null;
 	public prepared_binding $value;
+}
+
+/** Five ordinary source calls, evaluated against one retained receiver for the loop. */
+final class prepared_iterator_calls
+{
+	public prepared_call $current;
+	public prepared_call $key;
+	public prepared_call $valid;
+	public prepared_call $next;
+	public prepared_call $rewind;
 }
 
 /** Default has no value; every case retains one typed selection constant. */

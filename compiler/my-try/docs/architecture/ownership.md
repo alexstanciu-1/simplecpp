@@ -17,6 +17,14 @@ handles; explicit supported `weak<T>` fields lower to weak handles. Documentary
 
 ## Current graph
 
+Typed source Iterator contracts are owned by the existing type-contract work record.
+They retain weak links to the five original method declarations and canonical
+key/value types. Foreach owns prepared calls to those methods through its existing
+iteration facts. Signature/name dependencies use the normal preparation scheduler;
+reset and retirement discard these facts with their owners. Generated source loops
+retain one shared receiver handle until loop exit, including early exit/unwinding.
+This adds no independent lifetime graph or source-interface membership owner.
+
 `Model::$runtime_metadata` also owns unresolved ordinary type/parameter/default records
 and separate `cpp_types` bindings. These immutable-by-contract inputs own neither
 canonical identities nor workers. The transient startup type worker indexes recipes

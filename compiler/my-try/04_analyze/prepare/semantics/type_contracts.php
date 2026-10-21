@@ -13,7 +13,7 @@ final class Type_Contract_Preparation
 		$relations = $context->worker->require_relationships($record, $context);
 		$facts = new prepared_type_contract();
 		$facts->abstract_type = $is_interface || $relations->abstract_type;
-		$facts->polymorphic = $is_interface || (q_count($relations->interfaces) !== 0);
+		$facts->polymorphic = $is_interface || $relations->typed_iterator || (q_count($relations->interfaces) !== 0);
 		$base = weakref_get($relations->base);
 		$base_contract /** nullable<prepared_type_contract> */ = null;
 		$pending /** vector<collected_method> */ = [];
@@ -44,7 +44,8 @@ final class Type_Contract_Preparation
 			$decision->method = $method;
 			$decision->abstract_method = $signature->abstract_method;
 			$decision->final_method = $signature->final_method;
-			$decision->virtual_method = $signature->abstract_method;
+			$decision->virtual_method = $signature->abstract_method
+				|| ($relations->typed_iterator && Iterator_Preparation::method_name($syntax->name));
 			if ($signature->abstract_method && !$facts->abstract_type) {
 				throw new \RuntimeException('Abstract method requires an abstract declaring type');
 			}
@@ -185,6 +186,7 @@ final class Type_Contract_Preparation
 		if (!$facts->abstract_type && (q_count($facts->obligations) !== 0)) {
 			throw new \RuntimeException('Concrete type has unimplemented abstract methods');
 		}
+		if ($relations->typed_iterator) { $facts->iterator_protocol = Iterator_Preparation::protocol($record, $context); }
 		return $facts;
 	}
 
@@ -251,6 +253,9 @@ final class Type_Contract_Preparation
 
 	public static function same(?prepared_type_contract $old, prepared_type_contract $current): bool
 	{
+		if ($old !== null) {
+			if (!Iterator_Preparation::same($old->iterator_protocol, $current->iterator_protocol)) { return false; }
+		}
 		if ($old === null) { return false; }
 		if (($old->abstract_type !== $current->abstract_type) || ($old->polymorphic !== $current->polymorphic)) { return false; }
 		$old_bindings /** Storage<prepared_dispatch_binding> */ = $old->bindings;

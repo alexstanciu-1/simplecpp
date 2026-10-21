@@ -38,6 +38,10 @@ final class Type_Definition_Registration
 	{
 		$no_value_definition = $registry->define_no_value('void', type_definition_origin::language);
 		self::install_concrete($registry, $source, $no_value_definition);
+		$protocol_capabilities /** vector<generic_contract> */ = [];
+		$iterator = $registry->define_nominal('Iterator', type_definition_origin::language,
+			nominal_type_kind::interface_type, $protocol_capabilities);
+		self::install_concrete($registry, $source, $iterator);
 
 		$scalar_capabilities /** vector<generic_contract> */ = [generic_contract::copyable_value, generic_contract::value_storable,
 			generic_contract::hashable, generic_contract::comparable, generic_contract::result_payload];

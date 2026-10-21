@@ -8,13 +8,20 @@ final class Iteration_Preparation
 	/** Resolve the source before introducing loop-local keys or reusing value storage. */
 	public static function prepare(foreach_node $syntax, preparation_context $context): prepared_iteration
 	{
-		$receiver = Expression_Preparation::prepare($syntax->iterable, $context)->type;
+		$value = Expression_Preparation::prepare($syntax->iterable, $context);
+		$receiver = $value->type;
 		if ($receiver->by_value()) {
 			throw new \RuntimeException('S2S foreach with effective storage modifiers is deferred');
 		}
 		$type = Type_Queries::canonical($receiver);
 		$contract = Model::$iteration_contracts->lookup($type->definition());
-		if ($contract === null) {
+		$protocol /** nullable<prepared_iterator_protocol> */ = null;
+		$declaration = Type_Queries::source_declaration($receiver);
+		if ($declaration instanceof collected_member_owner) {
+			$owner = object_cast($declaration, collected_member_owner::class);
+			$protocol = $context->worker->require_type_contract($owner, $context)->iterator_protocol;
+		}
+		if (($contract === null) && ($protocol === null)) {
 			throw new \RuntimeException('S2S foreach requires a registered iterable type; wrapper unwrapping is deferred');
 		}
 		$arguments /** vector<canonical_type_use> */ = [];
@@ -23,8 +30,18 @@ final class Iteration_Preparation
 		}
 		$facts = new prepared_iteration();
 		$facts->contract = $contract;
-		$facts->key_type = Contract_Type_Substitution::resolve($contract->key(), $receiver, $arguments);
-		$facts->value_type = Contract_Type_Substitution::resolve($contract->value(), $receiver, $arguments);
+		if ($protocol !== null) {
+			if (!Type_Queries::is_nominal_handle($receiver)) { throw new \RuntimeException('Iterator foreach requires a shared source handle'); }
+			if ($value->place !== null) { Reference_Preparation::require_mutable_contents($value->place, $receiver); }
+			$facts->source_iterator = Iterator_Preparation::calls($protocol, $receiver, $context);
+			$facts->key_type = $protocol->key_type;
+			$facts->value_type = $protocol->value_type;
+		}
+		else {
+			$registered /** iteration_declaration */ = $contract;
+			$facts->key_type = Contract_Type_Substitution::resolve($registered->key(), $receiver, $arguments);
+			$facts->value_type = Contract_Type_Substitution::resolve($registered->value(), $receiver, $arguments);
+		}
 		if ($syntax->key !== null)
 		{
 			$key /** variable_reference_node */ = $syntax->key;

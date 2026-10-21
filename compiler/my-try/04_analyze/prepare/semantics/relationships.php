@@ -9,7 +9,12 @@ final class Relationship_Preparation
 	private static function target(named_type_node $syntax, preparation_context $context): collected_member_owner
 	{
 		Type_Preparation::prepare_named_type($syntax, $context, false);
-		$entry = Type_Queries::source_declaration($syntax->require_preparation());
+		return self::source_target($syntax->require_preparation());
+	}
+
+	private static function source_target(canonical_type_use $type): collected_member_owner
+	{
+		$entry = Type_Queries::source_declaration($type);
 		if (!($entry instanceof collected_member_owner)) {
 			throw new \RuntimeException('Relationship target must be a source class, struct or interface');
 		}
@@ -54,17 +59,31 @@ final class Relationship_Preparation
 			$base_facts = $context->worker->require_relationships($base, $context);
 			if ($base_facts->final_type) { throw new \RuntimeException('Cannot extend a final type'); }
 			$facts->base = object_cast($base, collected_record::class);
+			$facts->typed_iterator = $base_facts->typed_iterator;
 		}
+		$direct_iterator = false;
 		foreach ($interfaces as $interface_syntax) {
-			$target = self::target($interface_syntax, $context);
+			Type_Preparation::prepare_named_type($interface_syntax, $context, false);
+			if (Type_Queries::canonical($interface_syntax->require_preparation())->definition() === Model::$type_catalog->definition('Iterator')) {
+				if ($direct_iterator) { throw new \RuntimeException('Duplicate direct Iterator protocol'); }
+				$direct_iterator = true;
+				$facts->typed_iterator = true;
+				continue;
+			}
+			$target = self::source_target($interface_syntax->require_preparation());
 			if (!($target instanceof collected_interface)) {
 				throw new \RuntimeException('Interface relationship requires an interface target');
 			}
 			foreach ($facts->interfaces as $previous) {
 				if ($previous === $target) { throw new \RuntimeException('Duplicate direct interface relationship'); }
 			}
-			$context->worker->require_relationships($target, $context);
+			$parent = $context->worker->require_relationships($target, $context);
+			$facts->typed_iterator = $facts->typed_iterator || $parent->typed_iterator;
 			$facts->interfaces[] = object_cast($target, collected_interface::class);
+		}
+		if ($facts->typed_iterator && ($syntax->declaration_kind !== type_declaration_kind::class_type)
+			&& ($syntax->declaration_kind !== type_declaration_kind::interface_type)) {
+			throw new \RuntimeException('Iterator protocol requires a shared class or interface');
 		}
 		return $facts;
 	}
@@ -74,6 +93,7 @@ final class Relationship_Preparation
 	{
 		if ($old === null) { return false; }
 		if ((weakref_get($old->base) !== weakref_get($current->base)) || ($old->final_type !== $current->final_type) || ($old->abstract_type !== $current->abstract_type)
+			|| ($old->typed_iterator !== $current->typed_iterator)
 			|| (q_count($old->interfaces) !== q_count($current->interfaces))) { return false; }
 		foreach ($old->interfaces as $index => $target) {
 			if ($target !== $current->interfaces[$index]) { return false; }

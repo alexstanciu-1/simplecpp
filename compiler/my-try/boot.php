@@ -70,6 +70,7 @@ require_once __DIR__ . '/04_analyze/prepare/semantics/relationships.php';
 require_once __DIR__ . '/04_analyze/prepare/semantics/conversion_relationships.php';
 require_once __DIR__ . '/04_analyze/prepare/semantics/inheritance.php';
 require_once __DIR__ . '/04_analyze/prepare/semantics/type_contracts.php';
+require_once __DIR__ . '/04_analyze/prepare/semantics/iterator.php';
 require_once __DIR__ . '/04_analyze/prepare/semantics/traits.php';
 require_once __DIR__ . '/04_analyze/prepare/inherited_lookup.php';
 require_once __DIR__ . '/04_analyze/prepare/data/enums.php';

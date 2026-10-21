@@ -10,11 +10,14 @@ final class prepared_type_relationships
 	public array $interfaces /** vector<collected_interface> */ = [];
 	public bool $final_type = false;
 	public bool $abstract_type = false;
+	/** Protocol membership is separate from source-interface ancestry and object storage. */
+	public bool $typed_iterator = false;
 }
 
 /** Local dispatch decisions and unresolved obligations, not a flattened member inventory. */
 final class prepared_type_contract
 {
+	public ?prepared_iterator_protocol $iterator_protocol = null;
 	public bool $abstract_type = false;
 	public bool $polymorphic = false;
 	public Keyed_Storage $methods /** Keyed_Storage<prepared_method_contract> */;
@@ -33,6 +36,18 @@ final class prepared_type_contract
 		$this->forwarders = new Keyed_Storage /** Keyed_Storage<prepared_method_contract> */();
 		$this->bindings = new Storage /** Storage<prepared_dispatch_binding> */();
 	}
+}
+
+/** Original selected methods; the type-contract owner observes signatures and inheritance. */
+final class prepared_iterator_protocol
+{
+	public collected_method $current /** weak<collected_method> */;
+	public collected_method $key /** weak<collected_method> */;
+	public collected_method $valid /** weak<collected_method> */;
+	public collected_method $next /** weak<collected_method> */;
+	public collected_method $rewind /** weak<collected_method> */;
+	public canonical_type_use $key_type;
+	public canonical_type_use $value_type;
 }
 
 final class prepared_method_contract
