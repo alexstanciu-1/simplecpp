@@ -1114,7 +1114,7 @@ final class Type_Registry implements type_capability_query
 
 	public function define_null(): null_type_definition
 	{
-		$capabilities /** vector<generic_contract> */ = [];
+		$capabilities /** vector<generic_contract> */ = [generic_contract::value_storable, generic_contract::copyable_value];
 		$definition = new null_type_definition($this->allocate_definition_id(), 'null',
 			type_definition_origin::language, $capabilities);
 		$this->register_definition($definition);

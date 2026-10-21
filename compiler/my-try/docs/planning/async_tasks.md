@@ -308,3 +308,66 @@ The user also authorized bounded generic payload-transfer contracts and a void-t
 worker-result mapping. These extend existing metadata/preparation owners; no scheduler
 redesign or general thread-safety analysis is authorized. Four batch APIs remain open;
 V-R02 remains partial and overall closure remains 56/64.
+
+
+## Typed batch admission checkpoint — 2026-10-21
+
+The approved payload and native-provider prerequisites are implemented through the
+existing runtime generic-contract, shared preparation, C++ binding and representation
+owners. `transfer_types` checks inferred payload types independently of capture
+permission. Output-only void-to-null substitution gives void workers null entries.
+A shared bounded transfer classifier owns both capture and payload classification.
+The opted-in native binding policy recursively adapts vectors, hashes and wrappers;
+callbacks retain their exact signature and capture permission. Task handles preserve
+identity. No scheduler or runtime implementation change was required in this slice.
+
+Initial admitted signatures: vector/hash `task_run` and `task_start`, each with
+one-argument or item/context workers (eight signatures); vector `task_run_publish`
+with one-argument or item/context work and a one-argument batch publisher (two);
+vector `task_run_publish_unordered` with one-argument work/publish (one). Together
+with `task_synchronize`, all five names now have a source path. This is not the
+complete V-R02 acceptance surface.
+
+The 23-task execution/recovery run `20261021-task-submission-06` passes on dev002
+with production default-prelowered cold/warm builds. Final validation adds malformed
+metadata rejection and sanitizer lifetime/cleanup probes; results are recorded below.
+The 25 focused collection regressions in `20261021-task-native-collection` pass.
+Historical attempts retain fixture spacing errors, null capability/mapping failures,
+provider representation mismatches and the corrected hash entry accessor.
+
+A separate pre-existing null-comparison lowering issue was exposed: nullable `===
+null` leaks `scpp/generated/operators.hpp` into template-free application inputs.
+The original failures remain in `task-submission-05`; state proofs use coalescing.
+This slice does not repair equality or claim that the failure disappeared.
+
+Remaining acceptance, before V-R02 can close:
+
+- Custom index callbacks (key preservation, collisions, nullable append), prefilled
+  result targets and vector sparse/negative-key rejection.
+- Replacement/omission error handlers, timeout shapes and repeated-error joins.
+- Publisher context arity, batching options and all admitted signature controls.
+- Boxed mixed/dynamic inputs and output-family reconciliation; wider boxed/nested
+  resource transfer remains forbidden without a proved policy.
+- Cancellation/concurrency integration, retained publication checks and final API
+  coverage audit. Existing runtime-only proofs are not a substitute for these.
+
+Overall remains **56/64 closed (87.5%), V-R02 partial**. Both prerequisite approvals
+are resolved; there is no pending permission request for this checkpoint.
+
+
+Final typed checkpoint evidence:
+
+- `task-submission-07`: all 22 production execution cases pass. Its new malformed
+  metadata task initially accessed the model before initialization; that test setup
+  was corrected and the full contracts task passes in `task-submission-sanitized`.
+- `task-submission-sanitized`: all six tasks pass, including five production
+  ASan/UBSan builds/runs for background ownership, worker-error cleanup, nested and
+  nullable payload transport, and unordered worker synchronization.
+- `task-native-catalog`: all four startup/callable/execution regressions pass.
+
+[Typed batch evidence](task-typed-batches-evidence.tar.gz), SHA-256:
+`aea40e6f1a71291e9b4382920b5f27f37f9344456ea4b3e96b4f64b594843af3`.
+The archive includes failed attempts, publication manifests, source fixtures and
+final uploaded source hashes. Reproduce using `tests/task_submission.py --results
+FRESH_DIRECTORY`; add `--sanitize` and repeated `--case NAME` for the five sanitizer
+cases above. No full matrix or native compiler rebuild was run.

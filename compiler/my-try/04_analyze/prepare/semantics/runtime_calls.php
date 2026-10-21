@@ -251,6 +251,9 @@ final class Runtime_Call_Preparation
 		if (q_count($inference->bindings) !== $contract->type_parameter_count) {
 			throw new \LogicException('Incomplete runtime type inference');
 		}
+		foreach ($contract->transfer_positions as $position) {
+			Transfer_Preparation::require_payload($inference->bindings[$position]);
+		}
 		$result = new callable_signature();
 		$result->return_type = Runtime_Pattern_Preparation::substitute($contract->return_type, $inference, $context);
 		$parameters /** Storage<callable_parameter> */ = $result->parameters;

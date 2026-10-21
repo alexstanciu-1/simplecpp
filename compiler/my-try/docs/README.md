@@ -16,8 +16,9 @@ harnesses) and three contract/environment reconciliations. Supplementary BS-R01 
 The active [async/tasks goal](planning/async_tasks.md) closes S12 with dev002
 execution and retained disk-publication proofs. V-R02 is partial: handles, controls
 and shutdown are verified. Callable transfer capability and provider admission are
-verified; four batch APIs and their payload contracts remain open. Task synchronization
-has focused source admission proof, with real unordered-batch integration still due.
+verified. All five submission/synchronization names have bounded typed source paths,
+including real unordered-worker synchronization. Custom placement, error/timeout
+options, boxed inputs and the final acceptance audit remain open.
 
 S10/V-R06 add invalidation-checked spans and FNV-1a64 with versioned keys, verified
 on dev002 with default prelowering. Wider uint64 equality and explicit copyable-value

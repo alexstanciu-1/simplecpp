@@ -174,6 +174,37 @@ can still be invoked where no transfer requirement exists. This contract adds no
 general thread-safety analysis and does not authorize shared mutable or resource
 captures. Unknown capture domains remain denied pending their own contract.
 
+### Bounded generic payload transfer and result mapping
+
+A generic function may list inferred parameter names in `transfer_types`. Shared
+preparation checks the selected bindings before materializing the result. This is
+a requirement on the selected contract, not an overload ranking rule. Owned
+scalar/string/enum values and recursively owned vector/hash and nullable/Result
+payloads qualify under the bounded transfer classification; shared objects,
+resources, callable payloads and unclassified boxed payloads reject. Void may be
+listed for a callback result, since it transfers no value. These requirements do
+not authorize arbitrary callback captures or general thread-safe body execution.
+
+An output type variable may use `{"parameter":"R","void_to_null":true}`.
+Substitution maps void to the canonical null sentinel and leaves other bindings
+unchanged. The mapping is allowed inside provider result containers, never input
+patterns or callback signatures. Canonical null is storable/copyable for such
+inferred containers; ordinary source null-local admission rules remain unchanged.
+This expresses the runtime's null entries for void workers without forming
+`vector<void>` or adding task-name checks to preparation.
+
+### Native provider payload transport
+
+A free-function C++ binding may opt into `"native_payloads": true`. Its parameters
+must be fixed values. Under default prelowering, the existing provider bridge
+recursively converts composed container/wrapper payloads to native provider types,
+and converts results back. Callback adapters use the same representation boundary,
+retain owned captures and preserve transfer permission. Task context/error handles
+preserve shared identity; this transport grants no capture-transfer permission.
+Ordinary emission already uses the provider's native types. The policy does not
+permit reference write-back, alter source signatures, or weaken template-free
+application inputs. Only reviewed task batch bindings currently opt in.
+
 ### Scalar parameter defaults
 
 A value parameter may add `default` with exactly one typed scalar member:

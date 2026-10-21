@@ -98,7 +98,7 @@ abstract class runtime_type_pattern
 
 final class runtime_variable_pattern extends runtime_type_pattern
 {
-	public function __construct(public int $position) {}
+	public function __construct(public int $position, public bool $void_to_null = false) {}
 	public function kind(): runtime_pattern_kind { return runtime_pattern_kind::variable; }
 }
 
@@ -140,6 +140,7 @@ final class runtime_generic_contract
 {
 	public int $owner_parameter_count = 0;
 	public int $type_parameter_count = 0;
+	public array $transfer_positions /** vector<int> */ = [];
 	public runtime_type_pattern $return_type;
 	public Storage $parameters /** Storage<runtime_pattern_parameter> */;
 	public function __construct()

@@ -51,6 +51,14 @@ final class CPP_Runtime_Catalog
 				if (!isset($bindings[$function->identity])) {
 					throw new \RuntimeException('Missing runtime binding: ' . $function->identity);
 				}
+				if ($bindings[$function->identity]->native_payloads) {
+					if ($function->member !== null) { throw new \RuntimeException('Native payload policy requires a free function'); }
+					foreach ($function->parameters as $parameter) {
+						if (($parameter->mode !== passing_mode::value) || $parameter->variadic) {
+							throw new \RuntimeException('Native payload policy requires fixed value parameters');
+						}
+					}
+				}
 				if ($bindings[$function->identity]->source_context) {
 					$parameters /** Storage<runtime_parameter_spec> */ = $function->parameters;
 					if (($function->member !== null) || $parameters->is_empty()) { throw new \RuntimeException('Call-site context requires a free function with value inputs'); }
@@ -139,7 +147,7 @@ final class CPP_Runtime_Catalog
 			}
 			foreach ($module->cpp as $binding) {
 				$target = Model::$runtime_callables->function_definition($binding->identity);
-				Model::$cpp_callable_bindings->bind_function($target, $binding->symbol, $binding->header, $binding->source_context);
+				Model::$cpp_callable_bindings->bind_function($target, $binding->symbol, $binding->header, $binding->source_context, $binding->native_payloads);
 			}
 		}
 	}

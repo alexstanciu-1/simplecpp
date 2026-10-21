@@ -85,18 +85,23 @@ final class Runtime_Catalog_Patterns
 			}
 			if (!$found) { throw new \RuntimeException('Runtime type parameter must be inferable from an input'); }
 		}
-		$result->return_type = self::type($spec->return_type, $types, $positions);
+		foreach ($spec->transfer_types as $name) {
+			if (!isset($positions[$name])) { throw new \RuntimeException('Unknown transfer type parameter: ' . $name); }
+			$result->transfer_positions[] = $positions[$name];
+		}
+		$result->return_type = self::type($spec->return_type, $types, $positions, true);
 		return $result;
 	}
 
 	/** Resolve explicit variables, closed types and application structure without dummy types. */
 	public static function type(runtime_type_spec $spec, registered_type_catalog $types,
-		array $positions /** hash<int> */): runtime_type_pattern
+		array $positions /** hash<int> */, bool $output = false): runtime_type_pattern
 	{
+		if ($spec->void_to_null && !$output) { throw new \RuntimeException('Void-to-null mapping is only valid in provider result types'); }
 		if ($spec->callable !== null) { return self::callable_type($spec, $types, $positions); }
 		if ($spec->parameter !== '') {
 			if (!isset($positions[$spec->parameter])) { throw new \RuntimeException('Unknown runtime type parameter: ' . $spec->parameter); }
-			return new runtime_variable_pattern($positions[$spec->parameter]);
+			return new runtime_variable_pattern($positions[$spec->parameter], $spec->void_to_null);
 		}
 		$definition = $types->definition($spec->name);
 		if (!($definition instanceof abstract_template_type_definition)) {
@@ -111,7 +116,7 @@ final class Runtime_Catalog_Patterns
 		$arguments /** Storage<runtime_type_pattern> */ = $result->arguments;
 		$closed /** vector<canonical_type_use> */ = [];
 		foreach ($spec->arguments as $argument) {
-			$child = self::type($argument, $types, $positions);
+			$child = self::type($argument, $types, $positions, $output);
 			$arguments->append($child);
 			if ($child instanceof runtime_concrete_pattern) {
 				$closed[] = object_cast($child, runtime_concrete_pattern::class)->type;
@@ -204,7 +209,8 @@ final class Runtime_Catalog_Patterns
 			return $key . ')->' . self::key($callable->return_type);
 		}
 		if ($pattern instanceof runtime_variable_pattern) {
-			return '$' . object_cast($pattern, runtime_variable_pattern::class)->position;
+			$variable = object_cast($pattern, runtime_variable_pattern::class);
+			return '$' . $variable->position . ($variable->void_to_null ? ':void_to_null' : '');
 		}
 		if ($pattern instanceof runtime_concrete_pattern) {
 			$type = object_cast($pattern, runtime_concrete_pattern::class)->type;

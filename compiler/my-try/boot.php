@@ -170,6 +170,7 @@ require_once __DIR__ . '/04_analyze/prepare/semantics/iteration.php';
 require_once __DIR__ . '/04_analyze/prepare/semantics/switches.php';
 require_once __DIR__ . '/04_analyze/prepare/semantics/constants.php';
 require_once __DIR__ . '/04_analyze/prepare/semantics/expressions.php';
+require_once __DIR__ . '/04_analyze/prepare/semantics/transfer.php';
 require_once __DIR__ . '/04_analyze/prepare/semantics/captures.php';
 require_once __DIR__ . '/04_analyze/prepare/semantics/lifetimes.php';
 require_once __DIR__ . '/04_analyze/prepare/semantics/call_snapshots.php';

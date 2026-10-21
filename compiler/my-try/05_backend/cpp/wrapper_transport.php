@@ -34,6 +34,67 @@ final class CPP_Wrapper_Transport
 			. ' vector_result; for (std::size_t vector_index = 0; vector_index < vector_source.size(); ++vector_index) { '
 			. 'vector_result.append(' . $value . '); } return vector_result; }(' . $expression . '))';
 	}
+	/** Fully native providers cross the same representation boundary recursively. */
+	public static function provider_value(canonical_type_use $type, string $expression, bool $compose,
+		CPP_Specializations $engine, cpp_generation_context $context): string
+	{
+		$canonical = Type_Queries::canonical($type);
+		if (!($canonical instanceof applied_template_type)) { return $expression; }
+		$application = object_cast($canonical, applied_template_type::class);
+		$definition = $canonical->definition();
+		$target = $compose ? CPP_Types::implementation_representation($type, $engine) : CPP_Types::representation($type);
+		CPP_Types::record_dependencies($target, $context);
+		$arguments /** vector<canonical_type_use> */ = $application->arguments();
+		$body = '';
+		if ($definition === Model::$type_catalog->definition('vector')) {
+			$value = self::provider_payload($arguments[0], 'provider_source.at(provider_index)', $compose, $engine, $context);
+			$body = $target->spelling . ' provider_result; for (std::size_t provider_index = 0; provider_index < provider_source.size(); ++provider_index) { provider_result.append(' . $value . '); } return provider_result;';
+		}
+		elseif ($definition === Model::$type_catalog->definition('hash')) {
+			$value = self::provider_payload($arguments[0], 'provider_entry.value_copy()', $compose, $engine, $context);
+			$key = self::provider_payload($arguments[1], 'provider_entry.key()', $compose, $engine, $context);
+			$body = $target->spelling . ' provider_result; for (auto provider_it = provider_source.begin_entries(); provider_it != provider_source.end_entries(); ++provider_it) { const auto provider_entry = *provider_it; provider_result.set(' . $key . ', ' . $value . '); } return provider_result;';
+		}
+		else {
+			$payload = self::payload($type);
+			if ($payload === null) { return $expression; }
+			$value = self::provider_payload($payload, 'provider_source.require_value("provider transport")', $compose, $engine, $context);
+			$body = 'if (provider_source.has_value().native_value()) { return ' . $target->spelling . '(' . $value . '); } ';
+			if ($definition instanceof nullable_type_definition) { $body .= 'return ' . $target->spelling . '(scpp::null);'; }
+			else {
+				$family = object_cast($definition, result_type_definition::class)->result_family();
+				if ($family === result_kind::structured_error) { $body .= 'return ' . $target->spelling . '(provider_source.require_error("provider transport"));'; }
+				else {
+					if ($family === result_kind::boolean_sentinels) { $body .= 'if (provider_source.is_true().native_value()) { return ' . $target->spelling . '(scpp::true_sentinel); } '; }
+					$body .= 'return ' . $target->spelling . '(scpp::false_sentinel);';
+				}
+			}
+		}
+		return '([](const auto& provider_source) -> ' . $target->spelling . ' { ' . $body . ' }(' . $expression . '))';
+	}
+
+	/** Bridge one stored application value, including nested container/wrapper payloads. */
+	public static function provider_payload(canonical_type_use $type, string $expression, bool $compose,
+		CPP_Specializations $engine, cpp_generation_context $context): string
+	{
+		$mapping = CPP_Types::representation($type, new cpp_generation_context($engine));
+		$implementation = CPP_Types::implementation_representation($type, $engine);
+		CPP_Types::record_dependencies($mapping, $context);
+		CPP_Types::record_dependencies($implementation, $context);
+		if (!$mapping->opaque) { return self::provider_value($type, $expression, $compose, $engine, $context); }
+		$context->headers['memory'] = true;
+		$context->headers['new'] = true;
+		if (!$compose) {
+			$value = '*std::launder(static_cast<const ' . $implementation->spelling . '*>((' . $expression . ').address()))';
+			return self::provider_value($type, $value, false, $engine, $context);
+		}
+		$value = self::provider_value($type, $expression, true, $engine, $context);
+		return '([](const auto& provider_value) -> ' . $mapping->spelling . ' { return '
+			. $mapping->spelling . '(' . $mapping->spelling . '::operation_result{}, +[](void* destination, const void* input) { '
+			. '::new(destination) ' . $implementation->spelling . '(*static_cast<const ' . $implementation->spelling
+			. '*>(input)); }, &provider_value); }(' . $value . '))';
+	}
+
 	public static function payload(canonical_type_use $type): ?canonical_type_use
 	{
 		$canonical = Type_Queries::canonical($type);

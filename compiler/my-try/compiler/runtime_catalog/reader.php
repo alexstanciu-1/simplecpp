@@ -418,6 +418,7 @@ final class Runtime_Catalog_Reader
 				$result->parameter = self::name($reader);
 			}
 			elseif ($key === 'callable') { $result->callable = self::callable_spec($reader); }
+			elseif ($key === 'void_to_null') { $result->void_to_null = $reader->read_boolean(); }
 			elseif ($key === 'arguments')
 			{
 				$items /** Storage<runtime_type_spec> */ = $result->arguments;
@@ -431,6 +432,7 @@ final class Runtime_Catalog_Reader
 				$reader->reject('Unknown runtime type field: ' . $key);
 			}
 		}
+		if ($result->void_to_null && ($result->parameter === '')) { $reader->reject('Void-to-null mapping requires a type parameter'); }
 		if ($result->callable !== null) {
 			if (($result->name !== '') || ($result->parameter !== '') || $arguments) {
 				$reader->reject('Callable type cannot also name another type form');
@@ -580,6 +582,10 @@ final class Runtime_Catalog_Reader
 				$result->return_type = self::type($reader);
 				$returns = true;
 			}
+			elseif ($key === 'transfer_types') {
+				$reader->begin_array();
+				while ($reader->next_element()) { $result->transfer_types[] = self::name($reader); }
+			}
 			elseif ($key === 'type_parameters')
 			{
 				$names /** vector<string> */ = [];
@@ -605,6 +611,9 @@ final class Runtime_Catalog_Reader
 		}
 		if (($result->identity === '') || ($result->name === '') || !$returns || !$parameters) {
 			$reader->reject('Missing runtime function field');
+		}
+		if ((q_count($result->transfer_types) > 0) && (q_count($result->type_parameters) === 0)) {
+			$reader->reject('Transfer type requirements need a generic function');
 		}
 		if ($result->snapshot_borrow_safe) {
 			if (($result->member !== null) || (q_count($result->type_parameters) !== 0)) {
@@ -734,6 +743,10 @@ final class Runtime_Catalog_Reader
 			}
 			elseif ($key === 'symbol') {
 				$result->symbol = self::name($reader);
+			}
+			elseif ($key === 'native_payloads') {
+				if (!$allow_context) { $reader->reject('Native payload policy requires a function binding'); }
+				$result->native_payloads = $reader->read_boolean();
 			}
 			elseif ($key === 'source_context') {
 				if (!$allow_context || (self::name($reader) !== 'phs_file_line')) { $reader->reject('Unsupported C++ call-site context'); }
