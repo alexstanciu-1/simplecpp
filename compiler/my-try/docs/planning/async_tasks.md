@@ -440,3 +440,24 @@ Verified on dev002:
 `b35557e4d57b45fe149994a4e0bc08fa4eab4cae49278fb5def1bfdbc0b82216`. Uploaded implementation/test hashes were verified on dev002.
 No full matrix or native compiler rebuild was run. V-R02 remains partial; overall
 closure remains 56/64 pending its remaining source acceptance inventory.
+
+
+### Optional task placeholders — 2026-10-21
+
+All eight typed vector/hash run/start contracts now accept the documented optional
+null index/result/error slots and integer timeout, using existing metadata defaults
+and ordered call preparation. Metadata resolves `null` to the canonical sentinel;
+exact null argument conversion is permitted, while standalone null source storage
+remains rejected. Provider defaults use the existing prepared literal path.
+No new retained representation or runtime behavior was introduced.
+
+`20261021-task-null-03` on dev002 passes all 25 production default-prelowered tasks,
+including explicit placeholders, omitted defaults, cold/warm reuse, malformed null
+metadata rejection and retained reject/repair/replay/fresh parity. The initial
+explicit-null conversion failure remains in the evidence; it is resolved by the
+exact argument conversion, not by relaxing source declaration rules.
+
+[Optional placeholder evidence](task-null-evidence.tar.gz), SHA-256:
+`63c9be3e18c28a67227efb35a22fe277b3e142f4596347b29c94620195424ace`. Final uploaded source hashes were verified on dev002.
+Custom index/result/error callbacks remain outstanding; accepting null placeholders
+does not close those forms or V-R02. Overall remains 56/64 closed.

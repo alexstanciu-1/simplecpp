@@ -449,6 +449,38 @@
           },
           "passing": "value",
           "requires_transfer": true
+        },
+        {
+          "name": "index_callback",
+          "type": "null",
+          "passing": "value",
+          "default": {
+            "null": null
+          }
+        },
+        {
+          "name": "result",
+          "type": "null",
+          "passing": "value",
+          "default": {
+            "null": null
+          }
+        },
+        {
+          "name": "error_handler",
+          "type": "null",
+          "passing": "value",
+          "default": {
+            "null": null
+          }
+        },
+        {
+          "name": "timeout_ms",
+          "type": "int",
+          "passing": "value",
+          "default": {
+            "int": 0
+          }
         }
       ],
       "returns": {
@@ -510,6 +542,38 @@
           },
           "passing": "value",
           "requires_transfer": true
+        },
+        {
+          "name": "index_callback",
+          "type": "null",
+          "passing": "value",
+          "default": {
+            "null": null
+          }
+        },
+        {
+          "name": "result",
+          "type": "null",
+          "passing": "value",
+          "default": {
+            "null": null
+          }
+        },
+        {
+          "name": "error_handler",
+          "type": "null",
+          "passing": "value",
+          "default": {
+            "null": null
+          }
+        },
+        {
+          "name": "timeout_ms",
+          "type": "int",
+          "passing": "value",
+          "default": {
+            "int": 0
+          }
         }
       ],
       "returns": "task_batch"
@@ -568,6 +632,38 @@
           },
           "passing": "value",
           "requires_transfer": true
+        },
+        {
+          "name": "index_callback",
+          "type": "null",
+          "passing": "value",
+          "default": {
+            "null": null
+          }
+        },
+        {
+          "name": "result",
+          "type": "null",
+          "passing": "value",
+          "default": {
+            "null": null
+          }
+        },
+        {
+          "name": "error_handler",
+          "type": "null",
+          "passing": "value",
+          "default": {
+            "null": null
+          }
+        },
+        {
+          "name": "timeout_ms",
+          "type": "int",
+          "passing": "value",
+          "default": {
+            "int": 0
+          }
         }
       ],
       "returns": {
@@ -634,6 +730,38 @@
           },
           "passing": "value",
           "requires_transfer": true
+        },
+        {
+          "name": "index_callback",
+          "type": "null",
+          "passing": "value",
+          "default": {
+            "null": null
+          }
+        },
+        {
+          "name": "result",
+          "type": "null",
+          "passing": "value",
+          "default": {
+            "null": null
+          }
+        },
+        {
+          "name": "error_handler",
+          "type": "null",
+          "passing": "value",
+          "default": {
+            "null": null
+          }
+        },
+        {
+          "name": "timeout_ms",
+          "type": "int",
+          "passing": "value",
+          "default": {
+            "int": 0
+          }
         }
       ],
       "returns": "task_batch"
@@ -691,6 +819,38 @@
           },
           "passing": "value",
           "requires_transfer": true
+        },
+        {
+          "name": "index_callback",
+          "type": "null",
+          "passing": "value",
+          "default": {
+            "null": null
+          }
+        },
+        {
+          "name": "result",
+          "type": "null",
+          "passing": "value",
+          "default": {
+            "null": null
+          }
+        },
+        {
+          "name": "error_handler",
+          "type": "null",
+          "passing": "value",
+          "default": {
+            "null": null
+          }
+        },
+        {
+          "name": "timeout_ms",
+          "type": "int",
+          "passing": "value",
+          "default": {
+            "int": 0
+          }
         }
       ],
       "returns": {
@@ -759,6 +919,38 @@
           },
           "passing": "value",
           "requires_transfer": true
+        },
+        {
+          "name": "index_callback",
+          "type": "null",
+          "passing": "value",
+          "default": {
+            "null": null
+          }
+        },
+        {
+          "name": "result",
+          "type": "null",
+          "passing": "value",
+          "default": {
+            "null": null
+          }
+        },
+        {
+          "name": "error_handler",
+          "type": "null",
+          "passing": "value",
+          "default": {
+            "null": null
+          }
+        },
+        {
+          "name": "timeout_ms",
+          "type": "int",
+          "passing": "value",
+          "default": {
+            "int": 0
+          }
         }
       ],
       "returns": "task_batch"
@@ -821,6 +1013,38 @@
           },
           "passing": "value",
           "requires_transfer": true
+        },
+        {
+          "name": "index_callback",
+          "type": "null",
+          "passing": "value",
+          "default": {
+            "null": null
+          }
+        },
+        {
+          "name": "result",
+          "type": "null",
+          "passing": "value",
+          "default": {
+            "null": null
+          }
+        },
+        {
+          "name": "error_handler",
+          "type": "null",
+          "passing": "value",
+          "default": {
+            "null": null
+          }
+        },
+        {
+          "name": "timeout_ms",
+          "type": "int",
+          "passing": "value",
+          "default": {
+            "int": 0
+          }
         }
       ],
       "returns": {
@@ -894,6 +1118,38 @@
           },
           "passing": "value",
           "requires_transfer": true
+        },
+        {
+          "name": "index_callback",
+          "type": "null",
+          "passing": "value",
+          "default": {
+            "null": null
+          }
+        },
+        {
+          "name": "result",
+          "type": "null",
+          "passing": "value",
+          "default": {
+            "null": null
+          }
+        },
+        {
+          "name": "error_handler",
+          "type": "null",
+          "passing": "value",
+          "default": {
+            "null": null
+          }
+        },
+        {
+          "name": "timeout_ms",
+          "type": "int",
+          "passing": "value",
+          "default": {
+            "int": 0
+          }
         }
       ],
       "returns": "task_batch"

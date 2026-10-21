@@ -9,6 +9,12 @@ final class Conversion_Preparation
 	public static function decide(canonical_type_use $source, canonical_type_use $target,
 		conversion_context $context, ?conversion_relationship_query $relationships = null): conversion_decision
 	{
+		// Registered providers may expose a fixed null sentinel argument slot.
+		// Source declarations still reject null storage before reaching this boundary.
+		if (($context === conversion_context::argument) && Nullable_Conversions::is_null($target)
+			&& $source->matches($target)) {
+			return self::operation($source, $target, $context, conversion_operation::identity);
+		}
 		Type_Preparation::require_value_type($target);
 		if (($context === conversion_context::initializer_key) || ($context === conversion_context::container_element)) {
 			if (Boxed_Conversions::is_boxed($source) || Boxed_Conversions::is_boxed($target)) {

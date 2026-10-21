@@ -27,8 +27,10 @@ final class Runtime_Default_Registration
 			$string_value->value = $spec->text;
 			$value = $string_value;
 		}
+		elseif ($spec->type_name === 'null') { $value = new prepared_null_literal(); }
 		else { throw new \RuntimeException('Unsupported runtime default scalar tag'); }
-		$type = $types->registry()->use($types->canonical($spec->type_name)->type_id());
+		$type = $spec->type_name === 'null' ? $types->null_type()
+			: $types->registry()->use($types->canonical($spec->type_name)->type_id());
 		$value->type = $type;
 		$conversion = new conversion_decision();
 		$conversion->source_type = $type;

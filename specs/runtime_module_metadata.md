@@ -208,11 +208,16 @@ application inputs. Only reviewed task batch bindings currently opt in.
 ### Scalar parameter defaults
 
 A value parameter may add `default` with exactly one typed scalar member:
-`{"int":7}`, `{"float":2.5}`, `{"bool":true}`, or `{"string":"text"}`.
+`{"int":7}`, `{"float":2.5}`, `{"bool":true}`, `{"string":"text"}`, or `{"null":null}`.
 The explicit tag preserves integer versus floating intent, including an integral
 floating value. Integers use checked signed-64 JSON integer spellings; floating
 spellings retain their decimal text, and strings preserve decoded bytes.
-Null, enum, container and expression defaults are not enabled in this catalog slice.
+The metadata type `null` denotes the canonical sentinel for a fixed value parameter,
+including optional provider placeholders. It accepts no type arguments, reference
+passing or variadic packing. Its default is exactly `{"null":null}`; it does not
+implicitly initialize nullable or boxed parameters. This does not admit standalone
+null source variable declarations. Enum, container and expression defaults remain
+outside this catalog slice.
 
 The default must have the exact parameter type; metadata does not ask the source
 preparation worker to infer conversions. Required inputs cannot follow optional

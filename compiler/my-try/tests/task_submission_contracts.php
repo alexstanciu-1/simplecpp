@@ -9,13 +9,16 @@ file_put_contents($path,$valid);
 $compiler = new Compiler();$compiler->init([$directory]);$compiler->select_entry('main','main.phs');$compiler->exec_cpp();
 $initial = CPP_Probe::text(Model::$cpp_files);
 $schema = json_decode(file_get_contents($argv[1] . '/tasks.json'), true);
-foreach (['unknown_transfer', 'mapped_input', 'mapped_callback'] as $case) {
+foreach (['unknown_transfer', 'mapped_input', 'mapped_callback', 'null_reference', 'null_arguments', 'null_default_type'] as $case) {
 	$bad = $schema;
 	foreach ($bad['functions'] as &$row) {
 		if ($row['id'] !== 'tasks.run.vector') { continue; }
 		if ($case === 'unknown_transfer') { $row['transfer_types'] = ['Unknown']; }
 		elseif ($case === 'mapped_input') { $row['parameters'][0]['type']['arguments'][0]['void_to_null'] = true; }
-		else { $row['parameters'][2]['type']['callable']['returns']['void_to_null'] = true; }
+		elseif ($case === 'mapped_callback') { $row['parameters'][2]['type']['callable']['returns']['void_to_null'] = true; }
+		elseif ($case === 'null_reference') { $row['parameters'][3]['passing'] = 'reference'; }
+		elseif ($case === 'null_arguments') { $row['parameters'][3]['type'] = ['name'=>'null','arguments'=>['int']]; }
+		else { $row['parameters'][3]['default'] = ['int'=>0]; }
 	}
 	unset($row);
 	$failed = false;
@@ -29,6 +32,8 @@ foreach (['unknown_transfer', 'mapped_input', 'mapped_callback'] as $case) {
 }
 
 $bad = [
+ '$n=null;',
+ '$v vector<int> = [1];task_run($v,2,fn(int $n):int=>$n,false);',
  'class Box{}$v vector<Box> = [new Box()];task_run($v,2,fn(Box $b):int=>1);',
  'class Box{}$v vector<int> = [1];task_run($v,2,fn(int $n):Box=>new Box());',
  'class Box{}$b=new Box();$v vector<int> = [1];task_run($v,2,function(int $n)use($b):int{return $n;});',

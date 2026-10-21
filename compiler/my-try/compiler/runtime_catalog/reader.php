@@ -545,6 +545,7 @@ final class Runtime_Catalog_Reader
 			if ($result->type_name === 'int') { $result->text = '' . $reader->read_integer(); }
 			elseif ($result->type_name === 'float') { $result->text = $reader->read_number(); }
 			elseif ($result->type_name === 'string') { $result->text = $reader->read_string(); }
+			elseif ($result->type_name === 'null') { $reader->read_null(); }
 			elseif ($result->type_name === 'bool') { $result->text = $reader->read_boolean() ? 'true' : 'false'; }
 			else { $reader->reject('Unsupported runtime default scalar tag'); }
 		}

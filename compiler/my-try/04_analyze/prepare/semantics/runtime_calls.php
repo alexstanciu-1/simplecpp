@@ -259,8 +259,20 @@ final class Runtime_Call_Preparation
 		$parameters /** Storage<callable_parameter> */ = $result->parameters;
 		foreach ($contract->parameters as $pattern) {
 			$type = Runtime_Pattern_Preparation::substitute($pattern->type, $inference, $context);
-			$parameter = Declaration_Preparation::parameter_contract($type, $pattern->mode, $pattern->access,
-				$pattern->variadic, $context);
+			// Explicit provider sentinel slots are not source variable declarations.
+			$parameter = new callable_parameter();
+			if (Type_Queries::canonical($type)->family() === type_family::null_sentinel) {
+				if (($pattern->mode !== passing_mode::value) || $pattern->variadic) {
+					throw new \RuntimeException('Runtime null slots require fixed value passing');
+				}
+				$parameter->type = $type;
+				$parameter->mode = $pattern->mode;
+				$parameter->access = $pattern->access;
+			}
+			else {
+				$parameter = Declaration_Preparation::parameter_contract($type, $pattern->mode, $pattern->access,
+					$pattern->variadic, $context);
+			}
 			$parameter->requires_copy = $pattern->requires_copy;
 			$parameter->requires_transfer = $pattern->requires_transfer;
 			if ($pattern->default_value !== null) {

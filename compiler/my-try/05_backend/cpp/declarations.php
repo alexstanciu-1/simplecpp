@@ -329,6 +329,10 @@ final class CPP_Declarations
 		elseif ($value instanceof prepared_string_literal) {
 			$text = CPP_Generator::generate_string(object_cast($value, prepared_string_literal::class), $context);
 		}
+		elseif ($value instanceof prepared_null_literal) {
+			self::type($value->type, $context);
+			$text = 'scpp::null';
+		}
 		elseif ($value instanceof prepared_enum_case_reference) {
 			$text = CPP_Enums::reference(object_cast($value, prepared_enum_case_reference::class), $context);
 		}

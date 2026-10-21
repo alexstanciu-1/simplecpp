@@ -26,6 +26,8 @@ module = {'version':1, 'module':'task_submission_probe','dependencies':['tasks']
  'cpp':[{'id':'probe.work','symbol':'task_submission_probe::work_context','header':str(APP/'tests/fixtures/task_submission/provider.hpp')}]}
 (metadata/'task_submission_probe.json').write_text(json.dumps(module,indent=2)+'\n')
 cases = {
+ 'run-explicit-null': ('$v vector<int> = [42];$r=task_run($v,2,fn(int $n):int=>$n,null,null,null,0);echo $r[0];', '42', False),
+ 'start-explicit-null': ('$v hash<int,string> = {"a":42};$b=task_start($v,2,fn(int $n):int=>$n,null);$r=task_join($b);echo $r["a"];', '42', False),
  'run-string': ('$v vector<string> = ["a","b"];$r=task_run($v,2,fn(string $s):string=>$s."!");echo $r[0],$r[1];', 'a!b!', False),
  'run-nested': ('$a vector<int> = [40,2];$v vector<vector<int>> = [$a];$r=task_run($v,2,fn(vector<int> $n):vector<int> =>$n);echo $r[0][0],$r[0][1];', '402', False),
  'run-nullable': ('$a ?int=42;$v vector<?int> = [$a,null];$r=task_run($v,2,fn(?int $n):?int=>$n);echo $r[0]??0,$r[1]??7;', '427', False),

@@ -58,6 +58,12 @@ final class Runtime_Catalog_Patterns
 					throw new \RuntimeException('Void runtime parameter');
 				}
 			}
+			if ($pattern instanceof runtime_concrete_pattern) {
+				$slot_type = object_cast($pattern, runtime_concrete_pattern::class)->type;
+				if ($slot_type->matches($types->null_type()) && (($input->mode !== passing_mode::value) || $input->variadic)) {
+					throw new \RuntimeException('Runtime null slots require fixed value passing');
+				}
+			}
 			$parameter = new runtime_pattern_parameter($pattern, $input->mode, $input->access);
 			$parameter->variadic = $input->variadic;
 			$parameter->requires_copy = $input->requires_copy;
@@ -103,6 +109,7 @@ final class Runtime_Catalog_Patterns
 			if (!isset($positions[$spec->parameter])) { throw new \RuntimeException('Unknown runtime type parameter: ' . $spec->parameter); }
 			return new runtime_variable_pattern($positions[$spec->parameter], $spec->void_to_null);
 		}
+		if ($spec->name === 'null') { return new runtime_concrete_pattern(Runtime_Catalog_Registration::type($spec, $types)); }
 		$definition = $types->definition($spec->name);
 		if (!($definition instanceof abstract_template_type_definition)) {
 			return new runtime_concrete_pattern(Runtime_Catalog_Registration::type($spec, $types));
@@ -163,6 +170,12 @@ final class Runtime_Catalog_Patterns
 				}
 			}
 			else { $closed = false; }
+			if ($pattern instanceof runtime_concrete_pattern) {
+				$slot_type = object_cast($pattern, runtime_concrete_pattern::class)->type;
+				if ($slot_type->matches($types->null_type()) && (($input->mode !== passing_mode::value) || $input->variadic)) {
+					throw new \RuntimeException('Runtime null slots require fixed value passing');
+				}
+			}
 			$parameter = new runtime_pattern_parameter($pattern, $input->mode, $input->access);
 			$parameter->variadic = $input->variadic;
 			$parameter->requires_copy = $input->requires_copy;
