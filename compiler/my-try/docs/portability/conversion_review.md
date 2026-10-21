@@ -14,18 +14,24 @@ The catalog's bounded closeouts and Chapter 15 deferrals still
 bound the supported language surface.
 This does not establish exhaustive language, lifetime, incremental or performance coverage.
 
-## PHP-hosted bootstrap after portable weak integration — 2026-10-21
+## PHP-hosted bootstrap after remote task reconciliation — 2026-10-21
 
 Portable `weak($owner)` now emits explicit weak derivation in both routes;
 `weakref_get($link)` emits `lock($link)`. PHP retains ordinary object references.
 Compiler weak-link writes express derivation explicitly; weak copies and null resets
 retain their previous spelling. v0.2 implicit conversion rules remain unchanged.
 
-The retry converts 258 PHP files into 268 assembled PHS files (1,917,038 bytes).
-Bootstrap takes 52.58 seconds, peak RSS 289.3 MiB, peak PHP heap 270 MiB with a
-4 GiB limit. Parsing finishes at 5.003 seconds. It stops during preparation without
+Merge `a92689b2` combines the bootstrap changes with remote task fixes through
+`ae359660`. Specialized runtime callable selection and native provider result
+transport are both preserved. Storage, exception hierarchy and focused task
+submission cold/warm checks pass. The other checkout's uncommitted work was not imported.
+
+The retry converts 259 PHP files into 269 assembled PHS files (1,931,029 bytes).
+Bootstrap takes 46.94 seconds, peak RSS 296.0 MiB, peak PHP heap 276 MiB with a
+4 GiB limit. Parsing finishes at 4.425 seconds. It stops during preparation without
 OOM or C++ emission. The original `source_record::__construct` ownership rejection
-is gone; the first diagnostic is unresolved `scpp_portability_object_cast`, located
+is gone, and remote metadata removes the unresolved `task_synchronize` diagnostic.
+The first diagnostic remains unresolved `scpp_portability_object_cast`, located
 in `source_record::owning_module`. Other preparation failures remain, including
 ownership boundaries unrelated to that original assignment. Storage_Cursor widening
 is excluded.

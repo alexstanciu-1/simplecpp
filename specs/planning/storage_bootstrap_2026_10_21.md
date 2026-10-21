@@ -291,3 +291,35 @@ derivation, acquisition, single evaluation, identity and clearing. Host ownershi
 `/tmp/portable-weak-host`; corrected stale weak-field fixture paths/qualified C++
 names and portable helper arity checks pass in `/tmp/portable-weak-field-final-02`.
 Storage_Cursor widening and the discovered backend defect remain out of this slice.
+
+
+## Remote task reconciliation and retry — 2026-10-21
+
+Merge `a92689b2` incorporates remote `ae359660` (23 commits since the common base)
+into the portable-bootstrap branch. The single textual conflict in
+`05_backend/cpp/runtime_operations.php` keeps specialized callable selection before
+applying the remote native-payload result conversion. The shared wrapper-transport
+owner retains Storage record-vector adaptation and task recursive provider transport.
+No uncommitted changes from `simple_cpp_02` were imported.
+
+Focused verification passed:
+
+- `/tmp/merge-remote-storage`: ordinary/concrete native execution and semantic contracts.
+- `/tmp/merge-remote-exceptions`: six ordinary/concrete programs plus semantic and
+  legacy runtime contracts.
+- `/tmp/merge-remote-tasks`: synchronization, nested payloads, nullable payloads and
+  background string result targets; production prelowered cold/warm execution and
+  submission contracts. Warm builds reuse artifacts.
+
+The isolated retry is retained in `/tmp/bootstrap-attempt-20261021-merged`, with
+source hashes, exact revision, phase measurements and logs. Conversion: 259 PHP
+files in 5.16 s, peak RSS 186.3 MiB; assembled input: 269 PHS files, 1,931,029 bytes.
+PHP8.5 CLI bootstrap (OPcache CLI/Xdebug disabled, 4 GiB limit): 46.94 s wall time,
+296.0 MiB peak RSS, 276 MiB peak PHP heap. Parsing completes at 4.425 s. It stops in
+preparation, without PHP fatal/OOM or C++ emission. No other validation ran during
+the measured bootstrap; this remains a single observation, not a performance claim.
+
+The unresolved `task_synchronize` diagnostic is gone. The first diagnostic remains
+`S2S needs one resolved function for scpp_portability_object_cast`. Subsequent
+preparation blockers, the prelowered locked-class null-check defect, and
+Storage_Cursor widening remain unfixed. No native compiler rebuild is claimed.
