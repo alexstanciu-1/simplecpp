@@ -615,7 +615,7 @@ malformed references, wrong replacement types, all void/value cases, wrappers,
 retained reject/repair/fresh parity and default-prelowered runtime error handling
 on dev002. Existing coordinator dispatch, omission identity and shutdown repairs
 remain the execution owners; this proposal adds no scheduler or transfer redesign.
-Independent publisher-option admission can continue while approval is pending.
+The approval is resolved; production admission is recorded below.
 
 [Error contract probe evidence](task-error-contract-evidence.tar.gz), SHA-256:
 `685eea384580b362aec5e68d93c9ab79c93d34ead706b77459ef29b3d0f83b72`. The passing probe records a semantic mismatch; it is not
@@ -658,3 +658,45 @@ this prerequisite alone does not complete error-handler API admission or V-R02.
 [Error-result relation evidence](task-error-relation-evidence.tar.gz), SHA-256:
 `445d56055694d56b3517db7330ff44096eeebb70b6764ddda73f6eb1a4ce5774`. Final uploaded source hashes were verified; no full matrix or
 native compiler rebuild. Overall remains 56/64 closed, V-R02 partial.
+
+
+### Production error-handler admission — 2026-10-21
+
+All 68 existing typed run/start/ordered-publish forms now have error-handler
+counterparts. Generic handlers return exactly the worker result or void omission;
+concrete void-worker targets require void handlers. Background handlers retain
+capture-transfer checks. Synchronous handlers execute on the caller coordinator
+and may retain owned shared state without crossing a thread boundary. Borrowed
+callback transport remains restricted.
+
+Inferred-key synchronous results now delegate to the existing explicit-target
+placement owner, carrying the handler through the same path. This removes the
+separate placement loops and shares enabled/disabled behavior. Scheduling and
+error handoff remain with the previously verified coordinator dispatcher.
+
+Dev002 default-prelowered verification passed:
+
+- `task-error-submission-02`: 147 cold/warm cases, including 140 generated
+  actual-handler-invocation cases covering the 68 signatures and seven independent
+  replacement, omission, original-key, error-event and exception oracles.
+- `task-error-lifetime`: two cases proving caller-coordinator mutation and owned
+  background capture lifetime with repeated joins.
+- `task-error-payloads`: four string, float, nullable replacement/input cases.
+- `task-error-controls`: three neighboring source controls plus retained contract
+  checks, including wrong replacements, invalid background captures and value/void
+  handler edits with fresh parity.
+- `task-error-index-runtime`: enabled and disabled sanitizer probes, including
+  omitted vector/hash inputs with inferred keys.
+
+The initial seven-case focused pass is also retained. The production handler
+suite now contains 153 cases; the 147-case pass and six subsequent cases together
+cover that set. Warm builds compile/link zero units. Source hashes were verified
+against the remote checkout. Source cases are not claimed as sanitizer runs.
+
+[Production handler evidence](task-error-submission-evidence.tar.gz), SHA-256:
+`7cb657c321ea117f7d10a1c102fd7a5189cbca7adbd96f994fb1ef563c13afac`.
+
+V-R02 remains partial: cross-carrier result targets, nullable inferred-key policy,
+boxed inputs and final source timeout/cancellation/shutdown acceptance remain open.
+The separate nullable identity/prelowering gap and historical evidence are preserved.
+No full matrix or native compiler rebuild was run. Overall remains 56/64 closed.

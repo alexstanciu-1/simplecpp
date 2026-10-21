@@ -563,8 +563,8 @@ template <typename TItem, typename TWorkCallback, typename TPublishCallback, typ
 template <typename TItem, typename TWorkCallback, typename TPublishCallback, typename TErrorHandler>
 [[nodiscard]] int_t<> run_publish(const vector_t<TItem> &items, const int_t<> &workers, TWorkCallback work_callback, TPublishCallback publish_callback, TErrorHandler error_handler, const int_t<> &timeout_ms);
 
-template <typename TItem, typename TCallback, typename TIndexCallback>
-[[nodiscard]] auto run(const vector_t<TItem> &items, const int_t<> &workers, TCallback callback, TIndexCallback index_callback, null_t, null_t, const int_t<> &timeout_ms)
+template <typename TItem, typename TCallback, typename TIndexCallback, typename TErrorHandler>
+[[nodiscard]] auto run(const vector_t<TItem> &items, const int_t<> &workers, TCallback callback, TIndexCallback index_callback, null_t, TErrorHandler error_handler, const int_t<> &timeout_ms)
 	-> hash_t<detail::task_value_t<detail::callback_result_t<TCallback, TItem>>, detail::task_value_t<std::invoke_result_t<TIndexCallback, TItem>>>;
 
 template <typename TItem, typename TCallback, typename TResultCollection, typename TErrorHandler>
@@ -579,8 +579,8 @@ template <typename TItem, typename TKey, typename TCallback, typename TErrorHand
 [[nodiscard]] auto run(const hash_t<TItem, TKey> &items, const int_t<> &workers, TCallback callback, null_t, null_t, TErrorHandler error_handler, const int_t<> &timeout_ms)
 	-> detail::result_hash_t<detail::callback_result_t<TCallback, TItem>, TKey>;
 
-template <typename TItem, typename TKey, typename TCallback, typename TIndexCallback>
-[[nodiscard]] auto run(const hash_t<TItem, TKey> &items, const int_t<> &workers, TCallback callback, TIndexCallback index_callback, null_t, null_t, const int_t<> &timeout_ms)
+template <typename TItem, typename TKey, typename TCallback, typename TIndexCallback, typename TErrorHandler>
+[[nodiscard]] auto run(const hash_t<TItem, TKey> &items, const int_t<> &workers, TCallback callback, TIndexCallback index_callback, null_t, TErrorHandler error_handler, const int_t<> &timeout_ms)
 	-> hash_t<detail::task_value_t<detail::callback_result_t<TCallback, TItem>>, detail::task_value_t<std::invoke_result_t<TIndexCallback, TItem>>>;
 
 template <typename TItem, typename TKey, typename TCallback, typename TResultCollection, typename TErrorHandler>
@@ -1032,24 +1032,6 @@ template <typename TItem, typename TWorkCallback, typename TPublishCallback>
 	return run_publish(items, workers, work_callback, publish_callback, null, int_t<>(0));
 }
 
-template <typename TItem, typename TCallback, typename TIndexCallback>
-[[nodiscard]] auto run(const vector_t<TItem> &items, const int_t<> &workers, TCallback callback, TIndexCallback index_callback, null_t, null_t, const int_t<> &timeout_ms)
-	-> hash_t<detail::task_value_t<detail::callback_result_t<TCallback, TItem>>, detail::task_value_t<std::invoke_result_t<TIndexCallback, TItem>>>
-{
-	using result_t = detail::callback_result_t<TCallback, TItem>;
-	using value_t = detail::task_value_t<result_t>;
-	using key_t = detail::task_value_t<std::invoke_result_t<TIndexCallback, TItem>>;
-
-	auto values = detail::run_vector_slots_with_state(items, workers, callback, null, timeout_ms, shared<detail::batch_state>());
-	hash_t<value_t, key_t> keyed;
-	for (std::size_t index = 0; index < values.size(); ++index) {
-		if (!values.at(index).has_value()) { continue; }
-		key_t key = index_callback(items.at(index));
-		keyed.set(std::move(key), std::move(values.at(index).value()));
-	}
-	return keyed;
-}
-
 template <typename TItem, typename TCallback, typename TResultCollection, typename TErrorHandler>
 [[nodiscard]] TResultCollection run(const vector_t<TItem> &items, const int_t<> &workers, TCallback callback, null_t, TResultCollection result, TErrorHandler error_handler, const int_t<> &timeout_ms)
 	requires(!std::is_same_v<std::decay_t<TResultCollection>, null_t>)
@@ -1466,25 +1448,6 @@ template <typename TItem, typename TKey, typename TCallback, typename TResultCol
 	return resource;
 }
 
-template <typename TItem, typename TKey, typename TCallback, typename TIndexCallback>
-[[nodiscard]] auto run(const hash_t<TItem, TKey> &items, const int_t<> &workers, TCallback callback, TIndexCallback index_callback, null_t, null_t, const int_t<> &timeout_ms)
-	-> hash_t<detail::task_value_t<detail::callback_result_t<TCallback, TItem>>, detail::task_value_t<std::invoke_result_t<TIndexCallback, TItem>>>
-{
-	using result_t = detail::callback_result_t<TCallback, TItem>;
-	using value_t = detail::task_value_t<result_t>;
-	using index_key_t = detail::task_value_t<std::invoke_result_t<TIndexCallback, TItem>>;
-
-	auto values = run(items, workers, callback, null, null, null, timeout_ms);
-	hash_t<value_t, index_key_t> keyed;
-	for (auto it = items.begin_entries(); it != items.end_entries(); ++it) {
-		const auto entry = *it;
-		if (!values.has(entry.key()).native_value()) { continue; }
-		index_key_t key = index_callback(entry.value_copy());
-		keyed.set(std::move(key), std::move(values[entry.key()]));
-	}
-	return keyed;
-}
-
 template <typename TItem, typename TKey, typename TCallback, typename TIndexCallback, typename TResultCollection, typename TErrorHandler>
 [[nodiscard]] shared_p<batch> start(const hash_t<TItem, TKey> &items, const int_t<> &workers, TCallback callback, TIndexCallback index_callback, TResultCollection result, TErrorHandler error_handler, const int_t<> &timeout_ms)
 	requires(!std::is_same_v<std::decay_t<TResultCollection>, null_t>)
@@ -1887,18 +1850,6 @@ template <typename TItem, typename TWorkCallback, typename TPublishCallback>
 }
 
 template <typename TItem, typename TCallback, typename TIndexCallback>
-[[nodiscard]] auto run(const vector_t<TItem> &, const int_t<> &, TCallback, TIndexCallback, null_t, null_t, const int_t<> &)
-	-> hash_t<detail::task_value_t<detail::callback_result_t<TCallback, TItem>>, detail::task_value_t<std::invoke_result_t<TIndexCallback, TItem>>>
-{
-	throw runtime_error(
-		"task_run(): tasks runtime module is not enabled in this build",
-		"tasks_module_disabled",
-		"scpp::tasks",
-		"task_run"
-	);
-}
-
-template <typename TItem, typename TCallback, typename TIndexCallback>
 [[nodiscard]] auto run(const vector_t<TItem> &, const int_t<> &, TCallback, TIndexCallback, null_t, null_t)
 	-> hash_t<detail::task_value_t<detail::callback_result_t<TCallback, TItem>>, detail::task_value_t<std::invoke_result_t<TIndexCallback, TItem>>>
 {
@@ -1996,18 +1947,6 @@ template <typename TItem, typename TKey, typename TCallback, typename TErrorHand
 
 template <typename TItem, typename TKey, typename TCallback, typename TIndexCallback>
 [[nodiscard]] auto run(const hash_t<TItem, TKey> &, const int_t<> &, TCallback, TIndexCallback, null_t, null_t)
-	-> hash_t<detail::task_value_t<detail::callback_result_t<TCallback, TItem>>, detail::task_value_t<std::invoke_result_t<TIndexCallback, TItem>>>
-{
-	throw runtime_error(
-		"task_run(): tasks runtime module is not enabled in this build",
-		"tasks_module_disabled",
-		"scpp::tasks",
-		"task_run"
-	);
-}
-
-template <typename TItem, typename TKey, typename TCallback, typename TIndexCallback>
-[[nodiscard]] auto run(const hash_t<TItem, TKey> &, const int_t<> &, TCallback, TIndexCallback, null_t, null_t, const int_t<> &)
 	-> hash_t<detail::task_value_t<detail::callback_result_t<TCallback, TItem>>, detail::task_value_t<std::invoke_result_t<TIndexCallback, TItem>>>
 {
 	throw runtime_error(
@@ -2167,6 +2106,28 @@ inline void configure_publish_try_lock(const bool_t &)
 }
 
 #endif
+
+template <typename TItem, typename TCallback, typename TIndexCallback, typename TErrorHandler>
+[[nodiscard]] auto run(const vector_t<TItem> &items, const int_t<> &workers,
+	TCallback callback, TIndexCallback index_callback, null_t, TErrorHandler error_handler, const int_t<> &timeout_ms)
+	-> hash_t<detail::task_value_t<detail::callback_result_t<TCallback, TItem>>, detail::task_value_t<std::invoke_result_t<TIndexCallback, TItem>>>
+{
+	using value_t = detail::task_value_t<detail::callback_result_t<TCallback, TItem>>;
+	using key_t = detail::task_value_t<std::invoke_result_t<TIndexCallback, TItem>>;
+	return run(items, workers, std::move(callback), std::move(index_callback), hash_t<value_t, key_t>{},
+		std::move(error_handler), timeout_ms);
+}
+
+template <typename TItem, typename TKey, typename TCallback, typename TIndexCallback, typename TErrorHandler>
+[[nodiscard]] auto run(const hash_t<TItem, TKey> &items, const int_t<> &workers,
+	TCallback callback, TIndexCallback index_callback, null_t, TErrorHandler error_handler, const int_t<> &timeout_ms)
+	-> hash_t<detail::task_value_t<detail::callback_result_t<TCallback, TItem>>, detail::task_value_t<std::invoke_result_t<TIndexCallback, TItem>>>
+{
+	using value_t = detail::task_value_t<detail::callback_result_t<TCallback, TItem>>;
+	using key_t = detail::task_value_t<std::invoke_result_t<TIndexCallback, TItem>>;
+	return run(items, workers, std::move(callback), std::move(index_callback), hash_t<value_t, key_t>{},
+		std::move(error_handler), timeout_ms);
+}
 
 // Inferred keyed output uses the same retained target path as an explicit target.
 template <typename TItem, typename TCallback, typename TIndexCallback, typename TErrorHandler>
