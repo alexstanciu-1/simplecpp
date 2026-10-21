@@ -102,8 +102,16 @@
       "dependencies": [
         "Agree retained callable/suspension model and execution flow before implementation."
       ],
-      "next_action": "Design discussion; no callback source adaptation and no compiler fix during verification.",
-      "simple_batch_eligible": false
+      "next_action": "Closed within the approved S12 contract; V-R02 task integration remains separate and active.",
+      "simple_batch_eligible": false,
+      "repair_status": "implemented-and-verified",
+      "repair_evidence": {
+        "date": "2026-10-21",
+        "report": "async_tasks.md",
+        "archive": "async-backend-evidence.tar.gz",
+        "additional_archive": "async-publication-evidence.tar.gz",
+        "scope": "Named strict async functions, suspending await, synchronous waits, ordered/lazy expressions, owned lifetime and error cleanup; dev002 default-prelowered cold/warm and sanitizer proofs, retained disk rejection/repair/retirement/fresh parity. Wider async callable storage and existing V-D06 syntax gap remain separate."
+      }
     },
     {
       "id": "V-H02",
@@ -1050,10 +1058,20 @@
         "task_publish_deferred_flush_count"
       ],
       "dependencies": [],
-      "next_action": "Discuss the owning module contract/integration before implementation; retain current absence evidence.",
+      "next_action": "Complete batch/callback integration after the pending transfer-model decision; preserve original absence evidence.",
       "acceptance": "All documented in-scope signatures admitted through ordinary metadata, exact behavior/error and production-provider build proofs, with explicit decisions for held contracts.",
       "simple_batch_eligible": false,
-      "eligibility_reason": "Requires contract or module integration discussion; name-resolution probes do not prove a metadata-only repair."
+      "eligibility_reason": "Requires contract or module integration discussion; name-resolution probes do not prove a metadata-only repair.",
+      "repair_status": "partially-implemented-and-verified",
+      "repair_evidence": {
+        "date": "2026-10-21",
+        "report": "async_tasks.md",
+        "archives": [
+          "tasks-metadata-evidence.tar.gz",
+          "tasks-shutdown-evidence.tar.gz"
+        ],
+        "scope": "Sixteen fixed functions, runtime handles, progress/error observations and background shutdown verified. Five batch/callback APIs and transfer capability remain open."
+      }
     },
     {
       "id": "V-R03",

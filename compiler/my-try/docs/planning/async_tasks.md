@@ -1,8 +1,8 @@
 # Async suspension and strict tasks integration
 Doc Status: planning
 
-Active approved goal: S12 and V-R02. Baseline is 55/64 original issues closed;
-neither issue is closed by this plan or by runtime-only probes.
+Active approved goal: S12 and V-R02. Baseline was 55/64 original issues closed.
+The S12 closeout below advances this to 56/64; V-R02 is partial and remains active.
 
 ## Contract and owners
 
@@ -195,3 +195,31 @@ thread-safety analysis or scheduler changes are proposed. This extends the
 transfer model and awaits the user's decision under the goal's explicit redesign
 boundary. Do not admit all owned captures or claim completion by rejecting every
 stored callable.
+
+## S12 closeout — 2026-10-21
+
+S12 is now **implemented and verified** within the approved named-function async
+scope. LV28.001 and LV28.003 are proved by the unchanged strict v0.1 fixture;
+LV28.002 is proved by source value/void nesting, scheduler identity, lifetime,
+exception cleanup and eager/lazy snapshot cases, including four sanitizer builds.
+Preparation verifies reference restrictions and task-consumer boundaries. These
+are the production/default-prelowering proofs archived above, not runtime-only
+inferences. Wider async methods/closures/task storage and V-D06 exception-syntax
+transport remain explicit separate limits.
+
+The final missing publication check now passes in
+`20261021-async-publication-01` on dev002. Invalid async returns make the existing
+published directory unready; repair and replay restore identical artifacts.
+Removing async deletes its compiled implementation unit. Payload changes and
+restoration agree byte-for-byte with fresh disk publication, with manifest hashes
+checked against every published file. The paired preparation suite also passes.
+
+[Publication evidence](async-publication-evidence.tar.gz), SHA-256:
+`31c1709472f81a87193c0791874d041961a393c8b906560f70fa19ffdd99349a`.
+Reproduce both checks with `python3 compiler/my-try/tests/async_preparation.py
+--results FRESH_DIRECTORY` on dev002.
+
+Current overall status: **56/64 closed (87.5%), one partial**. V-R02 remains partial
+and the combined goal remains active. Its pending transfer decision and remaining
+five batch/callback APIs are not removed from acceptance. Earlier 55/64 entries
+above are dated intermediate checkpoints.

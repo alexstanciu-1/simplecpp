@@ -12,4 +12,7 @@ a = p.parse_args()
 out = a.results.resolve()
 out.mkdir(parents=True, exist_ok=False)
 with CommandRunner(out / 'logs', ROOT, jobs=12) as runner:
-    run_tasks([Task('async-preparation', lambda: runner.run('async-preparation', ['php', APP / 'tests/async_preparation.php', out / 'source']))])
+    run_tasks([
+        Task('async-preparation', lambda: runner.run('async-preparation', ['php', APP / 'tests/async_preparation.php', out / 'source'])),
+        Task('async-published', lambda: runner.run('async-published', ['php', APP / 'tests/async_published.php', out / 'published-proof'])),
+    ])

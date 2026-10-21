@@ -8,21 +8,21 @@ syntax and policy/design issues. Operator signatures are not separate closed iss
 
 | Status | Issues |
 | --- | ---: |
-| Implemented or already repaired (including harnesses), then verified | 52 |
+| Implemented or already repaired (including harnesses), then verified | 53 |
 | Contract/environment reconciled and verified | 3 |
-| Partially implemented and verified | 0 |
-| Other issues not yet closed | 9 |
+| Partially implemented and verified | 1 |
+| Other issues not yet closed | 7 |
 | Total | 64 |
 
-Resolved: **55/64 = 85.9375%** (about **85.9% by issue count**). This is not an
-engineering-effort estimate. The latest +3.125 points comprise the bounded collection migration and retained advisory delivery implementations. S05 does not certify explicit callable storage under default prelowering. Remaining architecture/runtime/project issues can be
+Resolved: **56/64 = 87.5%** (by issue count). This is not an
+engineering-effort estimate. The current async/tasks goal has closed S12 (+1.5625 points so far); V-R02 is partial. Its remaining callback/transfer work must pass before the goal reaches the intended +3.125 points. S05 does not certify explicit callable storage under default prelowering. Remaining architecture/runtime/project issues can be
 much larger than fixture repairs. There is no defensible weighted effort percentage.
 
 | Original handling class | Fully closed | Partial | Not closed | Total |
 | --- | ---: | ---: | ---: | ---: |
 | Simple fix | 13 | 0 | 0 | 13 |
 | Light discussion | 17 | 0 | 0 | 17 |
-| Normal discussion | 25 | 0 | 9 | 34 |
+| Normal discussion | 26 | 1 | 7 | 34 |
 
 V-L06 now admits the final two scalar float identity forms and re-verifies its
 original carrier cases. S04's unchanged original process fixture passes through
@@ -80,6 +80,12 @@ authorized implementation task. Some entries still require policy decisions or
 reconciliation against later work. Original findings and historical evidence remain
 in the ledger. This current summary supersedes its previous E4-era partial-V-L07
 status; the dated reports retain those historical counts.
+
+S12 now closes through [async suspension and publication proof](async_tasks.md):
+unchanged strict source, default-prelowered production builds, suspension/lifetime
+and ordered/lazy evaluation, plus retained disk rejection/repair/retirement/fresh
+parity. V-R02 has verified handles/controls and shutdown; batch/callback admission
+and the pending transfer-model prerequisite remain open.
 
 ## Inside V-L07
 
