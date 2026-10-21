@@ -1507,15 +1507,21 @@ template <typename TItem, typename TKey, typename TCallback, typename TIndexCall
 }
 
 template <typename TCallback, typename TErrorHandler>
-[[nodiscard]] mixed_t run(const mixed_t &items, const int_t<> &workers, TCallback callback, null_t, null_t, TErrorHandler error_handler, const int_t<> &timeout_ms)
+[[nodiscard]] mixed_t run_mixed_with_state(const mixed_t &items, const int_t<> &workers, TCallback callback, TErrorHandler error_handler, const int_t<> &timeout_ms, const shared_p<detail::batch_state> &state)
 {
 	const auto &table = detail::require_task_input_table(items);
 	if (table.is_packed().native_value()) {
 		auto values = detail::mixed_table_to_vector_input(table);
-		return detail::box_vector_result(detail::run_vector_with_state(values, workers, callback, error_handler, timeout_ms, shared<detail::batch_state>()));
+		return detail::box_vector_result(detail::run_vector_with_state(values, workers, callback, error_handler, timeout_ms, state));
 	}
 	auto values = detail::mixed_table_to_hash_input(table);
-	return detail::box_hash_result(run_hash_with_state(values, workers, callback, error_handler, timeout_ms, shared<detail::batch_state>()));
+	return detail::box_hash_result(run_hash_with_state(values, workers, callback, error_handler, timeout_ms, state));
+}
+
+template <typename TCallback, typename TErrorHandler>
+[[nodiscard]] mixed_t run(const mixed_t &items, const int_t<> &workers, TCallback callback, null_t, null_t, TErrorHandler error_handler, const int_t<> &timeout_ms)
+{
+	return run_mixed_with_state(items, workers, std::move(callback), std::move(error_handler), timeout_ms, shared<detail::batch_state>());
 }
 
 template <typename TCallback>
@@ -1533,11 +1539,15 @@ template <typename TCallback, typename TErrorHandler>
 template <typename TCallback, typename TErrorHandler>
 [[nodiscard]] shared_p<batch> start(const mixed_t &items, const int_t<> &workers, TCallback callback, null_t, null_t, TErrorHandler error_handler, const int_t<> &timeout_ms)
 {
-	(void) detail::require_task_input_table(items);
+	const auto &table = detail::require_task_input_table(items);
 	auto resource = shared<batch>();
+	resource->state->total.store(static_cast<std::int64_t>(table.size()), std::memory_order_relaxed);
+	resource->state->queued.store(static_cast<std::int64_t>(table.size()), std::memory_order_relaxed);
 	resource->coordinator = unique<detail::worker_thread>([resource, items, workers, callback, error_handler, timeout_ms]() mutable {
 		try {
-			resource->result = run(items, workers, callback, null, null, error_handler, timeout_ms);
+			auto values = run_mixed_with_state(items, workers, callback, error_handler, timeout_ms, resource->state);
+			std::lock_guard<std::mutex> lock(resource->lifecycle_mutex);
+			resource->result = std::move(values);
 			resource->state->done.store(true);
 		} catch (...) {
 			std::lock_guard<std::mutex> lock(resource->lifecycle_mutex);

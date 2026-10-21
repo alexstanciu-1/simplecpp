@@ -854,3 +854,40 @@ boundary proofs are retained in the nullable-target and nullable-index archives.
 
 [Explicit nullable-string evidence](task-nullable-string-evidence.tar.gz), SHA-256:
 `ab0c1df9ba734aed4b0a288cb976211890de76232abb476c6728fecde77383d2`. Final source hashes verified; no full matrix or native compiler rebuild.
+
+
+### Boxed-input runtime audit and shared batch state — 2026-10-21
+
+`task-boxed-02` is a diagnostic probe, not conformance: basic mixed tables execute
+and scalar inputs reject, but worker contexts use a different state object from
+the background batch. The batch reports total/completed zero after two completed
+items. The C++ overload availability probe also finds no dynamic-input entrypoint.
+The initial probe authoring errors (dynamic alias arguments and boxed construction)
+are preserved separately.
+
+The bounded runtime repair introduces `run_mixed_with_state` alongside the existing
+vector/hash execution owners. Blocking calls supply fresh state; background calls
+supply their retained batch state. Startup counters initialize before launch and
+result publication uses the existing lifecycle lock. No new scheduler, source
+admission or transfer permission is introduced.
+
+`task-boxed-03` passes ASan/UBSan with leak checking. It proves state identity,
+total/completed counts and deterministic cancellation after the first item for
+both packed and associative mixed inputs. Native test callbacks deliberately use
+synchronized borrowed test state; this does not authorize source borrowed captures.
+The dynamic overload remains absent. These are runtime proofs, not default-
+prelowered boxed-input source proofs.
+
+Boxed source admission remains blocked on an explicit family/transfer decision.
+The current `task_batch` stores a mixed result and `task_join` returns mixed. Dynamic
+containers cannot be put into it through an implicit mixed conversion. A proposed
+bounded extension is scalar-element boxed snapshots with runtime rejection of
+nested/shared/resource payloads, plus a dynamic-result batch handle reusing the
+same execution/lifecycle owners and a family-preserving join overload. This would
+change runtime-owned type metadata and provider transport, so it requires discussion
+before implementation. Existing typed/mixed batch signatures would remain stable.
+The alternative is to defer dynamic background support explicitly rather than
+silently convert families. Independent source lifecycle verification can continue.
+
+[Boxed-state evidence](task-boxed-state-evidence.tar.gz), SHA-256:
+`c3ac7766e60e416ba004fad09cadfedd84af53abc6bf4ffbd5c3f1e52b72c13e`. Final source hashes verified; no full matrix or native compiler rebuild.
