@@ -174,14 +174,50 @@ can still be invoked where no transfer requirement exists. This contract adds no
 general thread-safety analysis and does not authorize shared mutable or resource
 captures. Unknown capture domains remain denied pending their own contract.
 
+### Bounded generic payload transfer and result mapping
+
+A generic function may list inferred parameter names in `transfer_types`. Shared
+preparation checks the selected bindings before materializing the result. This is
+a requirement on the selected contract, not an overload ranking rule. Owned
+scalar/string/enum values and recursively owned vector/hash and nullable/Result
+payloads qualify under the bounded transfer classification; shared objects,
+resources, callable payloads and unclassified boxed payloads reject. Void may be
+listed for a callback result, since it transfers no value. These requirements do
+not authorize arbitrary callback captures or general thread-safe body execution.
+
+An output type variable may use `{"parameter":"R","void_to_null":true}`.
+Substitution maps void to the canonical null sentinel and leaves other bindings
+unchanged. The mapping is allowed inside provider result containers, never input
+patterns or callback signatures. Canonical null is storable/copyable for such
+inferred containers; ordinary source null-local admission rules remain unchanged.
+This expresses the runtime's null entries for void workers without forming
+`vector<void>` or adding task-name checks to preparation.
+
+### Native provider payload transport
+
+A free-function C++ binding may opt into `"native_payloads": true`. Its parameters
+must be fixed values. Under default prelowering, the existing provider bridge
+recursively converts composed container/wrapper payloads to native provider types,
+and converts results back. Callback adapters use the same representation boundary,
+retain owned captures and preserve transfer permission. Task context/error handles
+preserve shared identity; this transport grants no capture-transfer permission.
+Ordinary emission already uses the provider's native types. The policy does not
+permit reference write-back, alter source signatures, or weaken template-free
+application inputs. Only reviewed task batch bindings currently opt in.
+
 ### Scalar parameter defaults
 
 A value parameter may add `default` with exactly one typed scalar member:
-`{"int":7}`, `{"float":2.5}`, `{"bool":true}`, or `{"string":"text"}`.
+`{"int":7}`, `{"float":2.5}`, `{"bool":true}`, `{"string":"text"}`, or `{"null":null}`.
 The explicit tag preserves integer versus floating intent, including an integral
 floating value. Integers use checked signed-64 JSON integer spellings; floating
 spellings retain their decimal text, and strings preserve decoded bytes.
-Null, enum, container and expression defaults are not enabled in this catalog slice.
+The metadata type `null` denotes the canonical sentinel for a fixed value parameter,
+including optional provider placeholders. It accepts no type arguments, reference
+passing or variadic packing. Its default is exactly `{"null":null}`; it does not
+implicitly initialize nullable or boxed parameters. This does not admit standalone
+null source variable declarations. Enum, container and expression defaults remain
+outside this catalog slice.
 
 The default must have the exact parameter type; metadata does not ask the source
 preparation worker to infer conversions. Required inputs cannot follow optional
@@ -963,3 +999,20 @@ observation input and a bool value return. Provider bindings use the existing
 The [predicate contract](builtins/type_predicates.md) owns kind semantics and the
 bounded source domain. Generic runtime fallbacks do not widen source admission;
 no predicate-specific compiler dispatch or flow narrowing is introduced.
+
+
+### Replacement result requirements
+
+A generic function may declare `replacement_results` as a list of objects with
+`result` and `replacement` naming its inferred type variables. Each selected
+requirement admits an exact replacement type or `void` for omission. A void result
+therefore admits only a void replacement. For example,
+`{"result":"R","replacement":"E"}` requires `E == R` or `E == void`.
+Names must resolve in the generic contract; missing/unknown fields and references
+reject during metadata installation. Fixed functions cannot carry this relation.
+
+The shared preparation owner checks the relation after selecting one signature
+and before publishing output. It does not rank overloads, convert result types,
+or alter payload/capture-transfer requirements. This bounded relation supports
+recovery callbacks whose replacement result must match the worker result; it is
+not a general constraint-expression language.

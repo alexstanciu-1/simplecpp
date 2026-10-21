@@ -212,6 +212,8 @@ Custom result behavior:
 - result-target writes occur after worker execution has produced values or error-handler replacement values
 - result targets may be pre-populated; existing values remain unless a produced key overwrites them
 - nullable custom-index keys append when the key is `null`
+- inferred custom-index results use the non-null key payload type; null is an append instruction, not a stored key
+- typed hash append remains restricted to integer keys: a null nullable-string key raises the typed hash append error, while a present string key uses normal keyed placement; no implicit numeric-to-string conversion or heterogeneous key family is introduced
 - for vector result targets, appending is allowed and keyed overwrite is allowed for existing positions; sparse writes are rejected
 - negative numeric vector result keys are rejected
 
@@ -294,6 +296,17 @@ The later mutable/exclusive item model is expected to be a separate design proje
 
 Mixed/dynamic input is currently limited to runtime-recognized table shapes.
 Broader transfer rules for nested dynamic values, runtime resources, and shared mutable objects are deferred.
+
+The bounded v0.2 boxed-input integration snapshots a table of scalar elements
+before launching workers. Elements may be null, bool, int, float or string. Nested
+containers and shared/weak mixed ownership reject at the runtime boundary; resource
+and object payloads remain outside the boxed families. Worker and error-handler
+results must likewise be scalar values (or void omission/completion). Returning a
+nested boxed container is a transfer error, not an implicit deep-copy operation.
+Mixed input produces mixed results. Dynamic input produces dynamic results;
+background dynamic results use a distinct result handle with the same lifecycle
+owner and a family-preserving `task_join`. This does not relax closure capture
+permissions or add mutable item transfer.
 
 ## Performance policy
 

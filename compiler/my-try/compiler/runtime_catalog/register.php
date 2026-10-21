@@ -258,6 +258,10 @@ final class Runtime_Catalog_Registration
 			return $registry->use($registry->canonical($callable_definition)->type_id());
 		}
 		if ($spec->parameter !== '') { throw new \RuntimeException('Type parameter requires a generic runtime contract'); }
+		if ($spec->name === 'null') {
+			if (!$spec->arguments->is_empty()) { throw new \RuntimeException('Null runtime type does not accept arguments'); }
+			return $types->null_type();
+		}
 		$definition = $types->definition($spec->name);
 		$registry = $types->registry();
 		$items /** Storage<runtime_type_spec> */ = $spec->arguments;
@@ -283,6 +287,10 @@ final class Runtime_Catalog_Registration
 		$result = new callable_parameter();
 		$result->type = self::type($spec->type, $types);
 		if ($registry->type($result->type->type_id()) instanceof no_value_type) { throw new \RuntimeException('Void runtime parameter'); }
+		if (($registry->type($result->type->type_id())->family() === type_family::null_sentinel)
+			&& (($spec->mode !== passing_mode::value) || $spec->variadic)) {
+			throw new \RuntimeException('Runtime null slots require fixed value passing');
+		}
 		$result->mode = $spec->mode;
 		$result->requires_copy = $spec->requires_copy;
 		$result->requires_transfer = $spec->requires_transfer;

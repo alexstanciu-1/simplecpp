@@ -98,7 +98,7 @@ abstract class runtime_type_pattern
 
 final class runtime_variable_pattern extends runtime_type_pattern
 {
-	public function __construct(public int $position) {}
+	public function __construct(public int $position, public bool $void_to_null = false) {}
 	public function kind(): runtime_pattern_kind { return runtime_pattern_kind::variable; }
 }
 
@@ -136,15 +136,30 @@ final class runtime_callable_pattern extends runtime_type_pattern
 	public function kind(): runtime_pattern_kind { return runtime_pattern_kind::callable_type; }
 }
 
+/** Exact result replacement or void omission, resolved to generic binding positions. */
+final class runtime_replacement_requirement
+{
+	public int $result_position;
+	public int $replacement_position;
+	public function __construct(int $result_position, int $replacement_position)
+	{
+		$this->result_position = $result_position;
+		$this->replacement_position = $replacement_position;
+	}
+}
+
 final class runtime_generic_contract
 {
 	public int $owner_parameter_count = 0;
 	public int $type_parameter_count = 0;
+	public array $transfer_positions /** vector<int> */ = [];
+	public Storage $replacement_results /** Storage<runtime_replacement_requirement> */;
 	public runtime_type_pattern $return_type;
 	public Storage $parameters /** Storage<runtime_pattern_parameter> */;
 	public function __construct()
 	{
 		$this->parameters = new Storage /** Storage<runtime_pattern_parameter> */();
+		$this->replacement_results = new Storage /** Storage<runtime_replacement_requirement> */();
 	}
 }
 

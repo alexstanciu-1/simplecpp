@@ -45,7 +45,7 @@ final class CPP_Runtime_Operations
 			$key .= ':payload=' . CPP_Opaque_Representation::identity($construction->constructed_type)
 				. ':storage=' . Record_Storage_Kind_Name::text($storage);
 		}
-		if ($request->binding !== null) { $key .= ':' . $request->binding->target()->key() . ':' . $request->binding->symbol() . ':' . $request->binding->header(); }
+		if ($request->binding !== null) { $key .= ':' . $request->binding->target()->key() . ':' . $request->binding->symbol() . ':' . $request->binding->header() . ($request->binding->native_payloads ? ':native_payloads' : ''); }
 		if ($request->initialization !== null) { $key .= ':' . CPP_Data_Construction::binding_identity($request->initialization); }
 		if ($request->decision !== null) { $key .= ':' . $request->decision->operation_name(); }
 		if ($request->conversion !== null) { $key .= ':' . $request->conversion->operation_name(); }
@@ -280,6 +280,12 @@ final class CPP_Runtime_Operations
 			$engine /** CPP_Specializations */ = $context->implementation_engine;
 			$inputs /** Storage<canonical_type_use> */ = $request->inputs;
 			foreach ($inputs as $position => $input) {
+				if ($binding->native_payloads) {
+					$arguments[$position] = Type_Queries::canonical($input)->definition() instanceof callable_type_definition
+						? CPP_Callback_Transport::provider($input, $arguments[$position], true, $context, true)
+						: CPP_Wrapper_Transport::provider_value($input, $arguments[$position], false, $engine, $context);
+					continue;
+				}
 				if (Type_Queries::canonical($input)->definition() instanceof callable_type_definition) {
 					$arguments[$position] = CPP_Callback_Transport::provider($input, $arguments[$position],
 						$binding->target() instanceof registered_function, $context);
@@ -314,6 +320,9 @@ final class CPP_Runtime_Operations
 			$callee = $binding->symbol();
 			if ($request->call !== null) { $callee = CPP_Callables::call_reference($request->call, $context); }
 			$expression = $callee . '(' . $values . ')';
+			if ($binding->native_payloads && ($request->result !== null)) {
+				return CPP_Wrapper_Transport::provider_value($request->result, $expression, true, $engine, $context);
+			}
 			if (($request->result !== null) && (CPP_Wrapper_Transport::payload($request->result) !== null)) {
 				return CPP_Wrapper_Transport::adapt($request->result, $expression, true, $engine, $context);
 			}

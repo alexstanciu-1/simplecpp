@@ -5,6 +5,7 @@
 #include "scpp/int_t.hpp"
 #include "scpp/memory.hpp"
 #include "scpp/mixed_t.hpp"
+#include "scpp/dynamic_t.hpp"
 #include "scpp/nullable.hpp"
 #include "scpp/null_t.hpp"
 #include "scpp/runtime_error.hpp"
@@ -61,8 +62,28 @@ struct task_value {
 	using type = std::decay_t<T>;
 };
 
+// Completed void work stores the language null sentinel in result collections.
+template <>
+struct task_value<void> {
+	using type = null_t;
+};
+
 template <typename T>
 using task_value_t = typename task_value<T>::type;
+
+// A nullable index encodes append; stored keys retain the payload key family.
+template <typename T>
+struct task_key {
+	using type = T;
+};
+
+template <typename T>
+struct task_key<nullable<T>> {
+	using type = T;
+};
+
+template <typename T>
+using task_key_t = typename task_key<std::decay_t<T>>::type;
 
 template <typename TCallback, typename TItem, bool HasContext = std::is_invocable_v<TCallback, TItem, shared_p<context>>>
 struct callback_result {
@@ -87,11 +108,6 @@ struct result_vector {
 	using type = vector_t<task_value_t<TResult>>;
 };
 
-template <>
-struct result_vector<void> {
-	using type = vector_t<null_t>;
-};
-
 template <typename TResult>
 using result_vector_t = typename result_vector<TResult>::type;
 
@@ -100,22 +116,12 @@ struct result_hash {
 	using type = hash_t<task_value_t<TResult>, TKey>;
 };
 
-template <typename TKey>
-struct result_hash<void, TKey> {
-	using type = hash_t<null_t, TKey>;
-};
-
 template <typename TResult, typename TKey>
 using result_hash_t = typename result_hash<TResult, TKey>::type;
 
 template <typename TResult>
 struct result_slot {
 	using type = std::optional<task_value_t<TResult>>;
-};
-
-template <>
-struct result_slot<void> {
-	using type = null_t;
 };
 
 template <typename TResult>
@@ -204,14 +210,23 @@ void configure_publish_try_lock(const bool_t &enabled);
 [[nodiscard]] int_t<> publish_failed_try_lock_count();
 [[nodiscard]] int_t<> publish_deferred_flush_count();
 
-class batch final {
+class batch_lifecycle {
 public:
 	shared_p<detail::batch_state> state = shared<detail::batch_state>();
 	std::mutex lifecycle_mutex;
 	unique_p<detail::worker_thread> coordinator = null;
-	mixed_t result = null;
 	std::exception_ptr error = nullptr;
 	bool_t joined = bool_t(false);
+};
+
+class batch final : public batch_lifecycle {
+public:
+	mixed_t result = null;
+};
+
+class dynamic_batch final : public batch_lifecycle {
+public:
+	dynamic_t<> result = null;
 };
 
 class context final {
@@ -246,10 +261,43 @@ public:
 
 namespace detail {
 
+// Worker requests borrow their active stack only until synchronous acknowledgement.
+// The batch coordinator drains them before joining workers or releasing the queue.
+class coordinator_dispatch final {
+	struct request {
+		std::function<void()> body;
+		bool complete = false;
+		std::exception_ptr failure;
+	};
+	std::mutex mutex_;
+	std::condition_variable changed_;
+	std::vector<request*> requests_;
+	std::size_t remaining_;
+public:
+	explicit coordinator_dispatch(std::size_t workers) : remaining_(workers) {}
+	void invoke(std::function<void()> body);
+	void finish_workers(std::size_t count = 1);
+	void drain();
+};
+
 template <typename TErrorHandler, typename TItem>
-decltype(auto) invoke_error_handler(TErrorHandler &handler, TItem item, const shared_p<error> &event)
+auto invoke_error_handler(coordinator_dispatch &dispatch, const shared_p<batch_state> &state,
+	TErrorHandler &handler, TItem item, const shared_p<error> &event)
 {
-	return handler(item, event);
+	using result_t = std::invoke_result_t<TErrorHandler, TItem, shared_p<error>>;
+	if constexpr (std::is_void_v<result_t>) {
+		dispatch.invoke([&] {
+			try { handler(item, event); }
+			catch (...) { state->stop_requested.store(true); throw; }
+		});
+	} else {
+		std::optional<std::decay_t<result_t>> result;
+		dispatch.invoke([&] {
+			try { result.emplace(handler(item, event)); }
+			catch (...) { state->stop_requested.store(true); throw; }
+		});
+		return std::move(*result);
+	}
 }
 
 inline shared_p<error> make_error_event(
@@ -448,64 +496,117 @@ template <typename TValue, typename TKey>
 	return box_hash_result(std::move(values));
 }
 
-[[nodiscard]] inline const hash_t<mixed_t> *task_input_table_or_null(const mixed_t &items) noexcept
+// Boxed task input permits one container of scalar values, never nested aliases.
+template <typename Box> struct boxed_task_family;
+template <> struct boxed_task_family<mixed_t> {
+	using batch_type = batch;
+	static auto table(const mixed_t &value) {
+		return value.kind() == mixed_t::kind_t::table_v ? value.table_if() : nullptr;
+	}
+	static bool scalar(const mixed_t &value) {
+		return value.kind() <= mixed_t::kind_t::string_v;
+	}
+	static mixed_t empty() { return mixed_t(unique<hash_t<mixed_t>>()); }
+	static auto &output(mixed_t &value) { return *value.table_if(); }
+};
+template <> struct boxed_task_family<dynamic_t<>> {
+	using batch_type = dynamic_batch;
+	static auto table(const dynamic_t<> &value) { return value.table_if(); }
+	static bool scalar(const dynamic_t<> &value) {
+		return value.kind() != dynamic_t<>::kind_t::table_v;
+	}
+	static dynamic_t<> empty() { return dynamic_t<>::make_container(); }
+	static auto &output(dynamic_t<> &value) { return value.get_table(); }
+};
+template <typename Box>
+concept task_box = std::is_same_v<Box, mixed_t> || std::is_same_v<Box, dynamic_t<>>;
+
+template <task_box Box>
+void require_boxed_scalar(const Box &value)
 {
-	if (const auto *table = items.table_if(); table != nullptr) {
-		return table;
+	if (!boxed_task_family<Box>::scalar(value)) {
+		throw runtime_error("task payload must be a scalar boxed value",
+			"invalid_task_payload_transfer", "scpp::tasks", "task_run");
 	}
-	if (const auto *shared_table = items.shared_table_if();
-		shared_table != nullptr && shared_table->has_value().native_value()) {
-		return shared_table->get();
-	}
-	return nullptr;
 }
 
-[[nodiscard]] inline const hash_t<mixed_t> &require_task_input_table(const mixed_t &items)
-{
-	if (const auto *table = task_input_table_or_null(items); table != nullptr) {
-		return *table;
-	}
-	throw runtime_error(
-		"task_run(): mixed input must resolve to a vector-like or hash-like collection",
-		"invalid_task_input_transfer",
-		"scpp::tasks",
-		"task_run"
-	);
-}
+template <task_box Box>
+struct boxed_input_snapshot {
+	bool packed;
+	vector_t<Box> values;
+	hash_t<Box, mixed_t> keyed;
+	std::size_t size() const { return packed ? values.size() : keyed.size(); }
+};
 
-[[nodiscard]] inline vector_t<mixed_t> mixed_table_to_vector_input(const hash_t<mixed_t> &table)
+template <task_box Box>
+boxed_input_snapshot<Box> snapshot_boxed_input(const Box &items)
 {
-	vector_t<mixed_t> values;
-	for (auto it = table.begin_entries(); it != table.end_entries(); ++it) {
+	const auto *table = boxed_task_family<Box>::table(items);
+	if (table == nullptr) {
+		throw runtime_error("task input must be a boxed table without shared mixed ownership",
+			"invalid_task_input_transfer", "scpp::tasks", "task_run");
+	}
+	boxed_input_snapshot<Box> snapshot{table->is_packed().native_value(), {}, {}};
+	for (auto it = table->begin_entries(); it != table->end_entries(); ++it) {
 		const auto entry = *it;
-		values.push_back(entry.value_copy());
+		auto value = entry.value_copy();
+		require_boxed_scalar(value);
+		if (snapshot.packed) { snapshot.values.append(std::move(value)); }
+		else { snapshot.keyed.set(entry.key(), std::move(value)); }
 	}
-	return values;
+	return snapshot;
 }
 
-[[nodiscard]] inline hash_t<mixed_t, mixed_t> mixed_table_to_hash_input(const hash_t<mixed_t> &table)
+template <task_box Box, typename Callback>
+auto checked_boxed_work(Callback callback)
 {
-	hash_t<mixed_t, mixed_t> values;
-	for (auto it = table.begin_entries(); it != table.end_entries(); ++it) {
-		const auto entry = *it;
-		values.set(entry.key(), entry.value_copy());
+	return [callback=std::move(callback)](Box value, shared_p<context> context) mutable
+		-> callback_result_t<Callback, Box> {
+		if constexpr (std::is_void_v<callback_result_t<Callback, Box>>) {
+			invoke_callback(callback, value, context);
+		} else {
+			auto result = invoke_callback(callback, value, context);
+			require_boxed_scalar(Box(result));
+			return result;
+		}
+	};
+}
+
+template <task_box Box, typename Handler>
+auto checked_boxed_error(Handler handler)
+{
+	if constexpr (std::is_same_v<Handler, null_t>) { return null; }
+	else {
+		return [handler=std::move(handler)](Box value, shared_p<error> event) mutable
+			-> std::invoke_result_t<Handler, Box, shared_p<error>> {
+			if constexpr (std::is_void_v<std::invoke_result_t<Handler, Box, shared_p<error>>>) {
+				handler(value, event);
+			} else {
+				auto result = handler(value, event);
+				require_boxed_scalar(Box(result));
+				return result;
+			}
+		};
 	}
-	return values;
 }
 
 } // namespace detail
 
-[[nodiscard]] bool_t done(const shared_p<batch> &resource);
-void cancel(const shared_p<batch> &resource);
+[[nodiscard]] bool_t done(const shared_p<batch_lifecycle> &resource);
+void cancel(const shared_p<batch_lifecycle> &resource);
 [[nodiscard]] mixed_t join(const shared_p<batch> &resource);
-[[nodiscard]] string_t status(const shared_p<batch> &resource);
-[[nodiscard]] shared_p<progress_info> progress(const shared_p<batch> &resource);
+[[nodiscard]] dynamic_t<> join(const shared_p<dynamic_batch> &resource);
+[[nodiscard]] string_t status(const shared_p<batch_lifecycle> &resource);
+[[nodiscard]] shared_p<progress_info> progress(const shared_p<batch_lifecycle> &resource);
 void set_status(const shared_p<context> &resource, const string_t &value);
 void configure_default_worker_pool(const int_t<> &workers);
 void shutdown_default_worker_pool();
 // Process-entry cleanup retains unjoined batches independently of source handles.
 void shutdown();
-namespace detail { void retain_background(const shared_p<batch>& resource); }
+namespace detail {
+void retain_background(const shared_p<batch_lifecycle>& resource);
+void wait_batch(const shared_p<batch_lifecycle>& resource);
+}
 [[nodiscard]] int_t<> default_worker_pool_size();
 [[nodiscard]] int_t<> default_worker_pool_live_workers();
 [[nodiscard]] int_t<> default_worker_pool_created_workers();
@@ -523,7 +624,7 @@ namespace detail {
 
 using worker_batch_body = std::function<void(std::size_t)>;
 
-void execute_worker_batch(std::size_t worker_count, const worker_batch_body &body);
+void execute_worker_batch(std::size_t worker_count, const worker_batch_body &body, coordinator_dispatch &dispatch);
 
 } // namespace detail
 
@@ -539,9 +640,9 @@ template <typename TItem, typename TWorkCallback, typename TPublishCallback, typ
 template <typename TItem, typename TWorkCallback, typename TPublishCallback, typename TErrorHandler>
 [[nodiscard]] int_t<> run_publish(const vector_t<TItem> &items, const int_t<> &workers, TWorkCallback work_callback, TPublishCallback publish_callback, TErrorHandler error_handler, const int_t<> &timeout_ms);
 
-template <typename TItem, typename TCallback, typename TIndexCallback>
-[[nodiscard]] auto run(const vector_t<TItem> &items, const int_t<> &workers, TCallback callback, TIndexCallback index_callback, null_t, null_t, const int_t<> &timeout_ms)
-	-> hash_t<detail::task_value_t<detail::callback_result_t<TCallback, TItem>>, detail::task_value_t<std::invoke_result_t<TIndexCallback, TItem>>>;
+template <typename TItem, typename TCallback, typename TIndexCallback, typename TErrorHandler>
+[[nodiscard]] auto run(const vector_t<TItem> &items, const int_t<> &workers, TCallback callback, TIndexCallback index_callback, null_t, TErrorHandler error_handler, const int_t<> &timeout_ms)
+	-> hash_t<detail::task_value_t<detail::callback_result_t<TCallback, TItem>>, detail::task_key_t<std::invoke_result_t<TIndexCallback, TItem>>>;
 
 template <typename TItem, typename TCallback, typename TResultCollection, typename TErrorHandler>
 [[nodiscard]] TResultCollection run(const vector_t<TItem> &items, const int_t<> &workers, TCallback callback, null_t, TResultCollection result, TErrorHandler error_handler, const int_t<> &timeout_ms)
@@ -555,9 +656,9 @@ template <typename TItem, typename TKey, typename TCallback, typename TErrorHand
 [[nodiscard]] auto run(const hash_t<TItem, TKey> &items, const int_t<> &workers, TCallback callback, null_t, null_t, TErrorHandler error_handler, const int_t<> &timeout_ms)
 	-> detail::result_hash_t<detail::callback_result_t<TCallback, TItem>, TKey>;
 
-template <typename TItem, typename TKey, typename TCallback, typename TIndexCallback>
-[[nodiscard]] auto run(const hash_t<TItem, TKey> &items, const int_t<> &workers, TCallback callback, TIndexCallback index_callback, null_t, null_t, const int_t<> &timeout_ms)
-	-> hash_t<detail::task_value_t<detail::callback_result_t<TCallback, TItem>>, detail::task_value_t<std::invoke_result_t<TIndexCallback, TItem>>>;
+template <typename TItem, typename TKey, typename TCallback, typename TIndexCallback, typename TErrorHandler>
+[[nodiscard]] auto run(const hash_t<TItem, TKey> &items, const int_t<> &workers, TCallback callback, TIndexCallback index_callback, null_t, TErrorHandler error_handler, const int_t<> &timeout_ms)
+	-> hash_t<detail::task_value_t<detail::callback_result_t<TCallback, TItem>>, detail::task_key_t<std::invoke_result_t<TIndexCallback, TItem>>>;
 
 template <typename TItem, typename TKey, typename TCallback, typename TResultCollection, typename TErrorHandler>
 [[nodiscard]] TResultCollection run(const hash_t<TItem, TKey> &items, const int_t<> &workers, TCallback callback, null_t, TResultCollection result, TErrorHandler error_handler, const int_t<> &timeout_ms)
@@ -615,7 +716,7 @@ template <typename TItem, typename TCallback, typename TErrorHandler>
 
 template <typename TItem, typename TCallback, typename TIndexCallback>
 [[nodiscard]] auto run(const vector_t<TItem> &items, const int_t<> &workers, TCallback callback, TIndexCallback index_callback, null_t, null_t)
-	-> hash_t<detail::task_value_t<detail::callback_result_t<TCallback, TItem>>, detail::task_value_t<std::invoke_result_t<TIndexCallback, TItem>>>
+	-> hash_t<detail::task_value_t<detail::callback_result_t<TCallback, TItem>>, detail::task_key_t<std::invoke_result_t<TIndexCallback, TItem>>>
 {
 	return run(items, workers, callback, index_callback, null, null, int_t<>(0));
 }
@@ -637,7 +738,7 @@ template <typename TItem, typename TCallback, typename TIndexCallback, typename 
 namespace detail {
 
 template <typename TItem, typename TCallback, typename TErrorHandler>
-[[nodiscard]] auto run_vector_with_state(
+[[nodiscard]] auto run_vector_slots_with_state(
 	const vector_t<TItem> &items,
 	const int_t<> &workers,
 	TCallback callback,
@@ -645,15 +746,14 @@ template <typename TItem, typename TCallback, typename TErrorHandler>
 	const int_t<> &timeout_ms,
 	const shared_p<batch_state> &state
 )
-	-> result_vector_t<callback_result_t<TCallback, TItem>>
+	-> std::vector<result_slot_t<callback_result_t<TCallback, TItem>>>
 {
 	using result_t = callback_result_t<TCallback, TItem>;
-	using output_t = result_vector_t<result_t>;
 
 	const auto item_count = items.size();
-	output_t results;
+	std::vector<result_slot_t<result_t>> value_results(item_count);
 	if (item_count == 0) {
-		return results;
+		return value_results;
 	}
 
 	const auto requested_workers = workers.native_value();
@@ -667,12 +767,8 @@ template <typename TItem, typename TCallback, typename TErrorHandler>
 	const auto timeout = detail::make_timeout_policy(timeout_ms);
 	state->total.store(static_cast<std::int64_t>(item_count), std::memory_order_relaxed);
 	state->queued.store(static_cast<std::int64_t>(item_count), std::memory_order_relaxed);
-	std::atomic<std::size_t> void_result_count{0};
-	std::vector<result_slot_t<result_t>> value_results;
-	if constexpr (!std::is_void_v<result_t>) {
-		value_results.resize(item_count);
-	}
 
+	detail::coordinator_dispatch dispatch(worker_count);
 	execute_worker_batch(worker_count, [&](std::size_t worker_index) {
 			auto worker_context = shared<context>();
 			worker_context->state = state;
@@ -702,7 +798,7 @@ template <typename TItem, typename TCallback, typename TErrorHandler>
 								state->stop_requested.store(true);
 								throw_timeout();
 							}
-							void_result_count.fetch_add(1, std::memory_order_relaxed);
+							value_results.at(index) = null;
 						} else {
 							auto value = invoke_callback(callback, items.at(index), worker_context);
 							if (is_timed_out(timeout)) {
@@ -719,11 +815,11 @@ template <typename TItem, typename TCallback, typename TErrorHandler>
 						} else {
 							auto event = make_error_event(exception, mixed_t(int_t<>(static_cast<std::int64_t>(index))), worker_index);
 							if constexpr (std::is_void_v<result_t>) {
-								invoke_error_handler(error_handler, items.at(index), event);
+								invoke_error_handler(dispatch, state, error_handler, items.at(index), event);
 							} else if constexpr (std::is_void_v<std::invoke_result_t<TErrorHandler, TItem, shared_p<error>>>) {
-								invoke_error_handler(error_handler, items.at(index), event);
+								invoke_error_handler(dispatch, state, error_handler, items.at(index), event);
 							} else {
-								auto value = invoke_error_handler(error_handler, items.at(index), event);
+								auto value = invoke_error_handler(dispatch, state, error_handler, items.at(index), event);
 								value_results.at(index) = std::move(value);
 							}
 						}
@@ -735,11 +831,11 @@ template <typename TItem, typename TCallback, typename TErrorHandler>
 						} else {
 							auto event = make_unknown_error_event(mixed_t(int_t<>(static_cast<std::int64_t>(index))), worker_index);
 							if constexpr (std::is_void_v<result_t>) {
-								invoke_error_handler(error_handler, items.at(index), event);
+								invoke_error_handler(dispatch, state, error_handler, items.at(index), event);
 							} else if constexpr (std::is_void_v<std::invoke_result_t<TErrorHandler, TItem, shared_p<error>>>) {
-								invoke_error_handler(error_handler, items.at(index), event);
+								invoke_error_handler(dispatch, state, error_handler, items.at(index), event);
 							} else {
-								auto value = invoke_error_handler(error_handler, items.at(index), event);
+								auto value = invoke_error_handler(dispatch, state, error_handler, items.at(index), event);
 								value_results.at(index) = std::move(value);
 							}
 						}
@@ -752,9 +848,10 @@ template <typename TItem, typename TCallback, typename TErrorHandler>
 				if (active_item) {
 					state->active.fetch_sub(1, std::memory_order_relaxed);
 				}
+				state->stop_requested.store(true);
 				errors.at(worker_index) = std::current_exception();
 			}
-	});
+	}, dispatch);
 
 	for (const auto &entry : errors) {
 		if (entry) {
@@ -764,19 +861,20 @@ template <typename TItem, typename TCallback, typename TErrorHandler>
 
 	state->done.store(true);
 
-	if constexpr (std::is_void_v<result_t>) {
-		const auto count = void_result_count.load(std::memory_order_relaxed);
-		for (std::size_t index = 0; index < count; ++index) {
-			results.push_back(null);
-		}
-	} else {
-		for (auto &entry : value_results) {
-			if (entry.has_value()) {
-				results.push_back(std::move(entry.value()));
-			}
-		}
-	}
+	return value_results;
+}
 
+// Dense output is a final placement choice; custom placement retains original slots.
+template <typename TItem, typename TCallback, typename TErrorHandler>
+[[nodiscard]] auto run_vector_with_state(const vector_t<TItem> &items, const int_t<> &workers,
+	TCallback callback, TErrorHandler error_handler, const int_t<> &timeout_ms,
+	const shared_p<batch_state> &state) -> result_vector_t<callback_result_t<TCallback, TItem>>
+{
+	auto slots = run_vector_slots_with_state(items, workers, callback, error_handler, timeout_ms, state);
+	result_vector_t<callback_result_t<TCallback, TItem>> results;
+	for (auto &slot : slots) {
+		if (slot.has_value()) { results.push_back(std::move(slot.value())); }
+	}
 	return results;
 }
 
@@ -819,15 +917,17 @@ template <typename TItem, typename TWorkCallback, typename TPublishCallback, typ
 
 	std::mutex publish_mutex;
 	std::vector<result_slot_t<result_t>> value_results(item_count);
+	std::vector<bool> omitted(item_count, false);
 	std::size_t next_publish_index = 0;
 	std::size_t published_count = 0;
 	auto publish_ready_values = [&](const shared_p<context> &worker_context) -> std::pair<std::size_t, bool> {
 		vector_t<task_value_t<result_t>> ready_values;
 		while (
 			next_publish_index < item_count
-			&& value_results.at(next_publish_index).has_value()
 			&& (publish_batch_limit == 0 || ready_values.size() < publish_batch_limit)
 		) {
+			if (omitted.at(next_publish_index)) { ++next_publish_index; continue; }
+			if (!value_results.at(next_publish_index).has_value()) { break; }
 			ready_values.push_back(std::move(value_results.at(next_publish_index).value()));
 			value_results.at(next_publish_index).reset();
 			++next_publish_index;
@@ -840,12 +940,12 @@ template <typename TItem, typename TWorkCallback, typename TPublishCallback, typ
 			invoke_publish_callback(publish_callback, std::move(ready_values), worker_context);
 			record_publish_callback(detail::elapsed_micros_since(callback_started), batch_size);
 		}
-		const bool more_ready = next_publish_index < item_count && value_results.at(next_publish_index).has_value();
+		const bool more_ready = next_publish_index < item_count && (omitted.at(next_publish_index) || value_results.at(next_publish_index).has_value());
 		return {published_now, more_ready};
 	};
 	using pending_result_t = std::pair<std::size_t, task_value_t<result_t>>;
 	auto flush_pending_values = [&](std::vector<pending_result_t> &pending_values, const shared_p<context> &worker_context, bool blocking) -> std::pair<std::size_t, bool> {
-		if (pending_values.empty() && (!blocking || publish_batch_limit == 0)) {
+		if (pending_values.empty() && !blocking) {
 			return {0, false};
 		}
 		const bool deferred_flush = publish_try_lock_enabled() && (blocking || pending_values.size() > 1);
@@ -887,6 +987,7 @@ template <typename TItem, typename TWorkCallback, typename TPublishCallback, typ
 		return published;
 	};
 
+	detail::coordinator_dispatch dispatch(worker_count);
 	execute_worker_batch(worker_count, [&](std::size_t worker_index) {
 		auto worker_context = shared<context>();
 		worker_context->state = state;
@@ -925,8 +1026,12 @@ template <typename TItem, typename TWorkCallback, typename TPublishCallback, typ
 						throw;
 					} else {
 						auto event = make_error_event(exception, mixed_t(int_t<>(static_cast<std::int64_t>(index))), worker_index);
-						if constexpr (!std::is_void_v<std::invoke_result_t<TErrorHandler, TItem, shared_p<error>>>) {
-							auto value = invoke_error_handler(error_handler, items.at(index), event);
+						if constexpr (std::is_void_v<std::invoke_result_t<TErrorHandler, TItem, shared_p<error>>>) {
+							invoke_error_handler(dispatch, state, error_handler, items.at(index), event);
+							{ std::lock_guard<std::mutex> lock(publish_mutex); omitted.at(index) = true; }
+							flush_pending_values(pending_values, worker_context, true);
+						} else {
+							auto value = invoke_error_handler(dispatch, state, error_handler, items.at(index), event);
 							pending_values.emplace_back(index, std::move(value));
 							flush_pending_values(pending_values, worker_context, !publish_try_lock_enabled());
 						}
@@ -938,8 +1043,12 @@ template <typename TItem, typename TWorkCallback, typename TPublishCallback, typ
 						throw;
 					} else {
 						auto event = make_unknown_error_event(mixed_t(int_t<>(static_cast<std::int64_t>(index))), worker_index);
-						if constexpr (!std::is_void_v<std::invoke_result_t<TErrorHandler, TItem, shared_p<error>>>) {
-							auto value = invoke_error_handler(error_handler, items.at(index), event);
+						if constexpr (std::is_void_v<std::invoke_result_t<TErrorHandler, TItem, shared_p<error>>>) {
+							invoke_error_handler(dispatch, state, error_handler, items.at(index), event);
+							{ std::lock_guard<std::mutex> lock(publish_mutex); omitted.at(index) = true; }
+							flush_pending_values(pending_values, worker_context, true);
+						} else {
+							auto value = invoke_error_handler(dispatch, state, error_handler, items.at(index), event);
 							pending_values.emplace_back(index, std::move(value));
 							flush_pending_values(pending_values, worker_context, !publish_try_lock_enabled());
 						}
@@ -959,9 +1068,10 @@ template <typename TItem, typename TWorkCallback, typename TPublishCallback, typ
 			if (active_item) {
 				state->active.fetch_sub(1, std::memory_order_relaxed);
 			}
+			state->stop_requested.store(true);
 			errors.at(worker_index) = std::current_exception();
 		}
-	});
+	}, dispatch);
 
 	for (const auto &entry : errors) {
 		if (entry) {
@@ -999,23 +1109,6 @@ template <typename TItem, typename TWorkCallback, typename TPublishCallback>
 	return run_publish(items, workers, work_callback, publish_callback, null, int_t<>(0));
 }
 
-template <typename TItem, typename TCallback, typename TIndexCallback>
-[[nodiscard]] auto run(const vector_t<TItem> &items, const int_t<> &workers, TCallback callback, TIndexCallback index_callback, null_t, null_t, const int_t<> &timeout_ms)
-	-> hash_t<detail::task_value_t<detail::callback_result_t<TCallback, TItem>>, detail::task_value_t<std::invoke_result_t<TIndexCallback, TItem>>>
-{
-	using result_t = detail::callback_result_t<TCallback, TItem>;
-	using value_t = detail::task_value_t<result_t>;
-	using key_t = detail::task_value_t<std::invoke_result_t<TIndexCallback, TItem>>;
-
-	auto values = detail::run_vector_with_state(items, workers, callback, null, timeout_ms, shared<detail::batch_state>());
-	hash_t<value_t, key_t> keyed;
-	for (std::size_t index = 0; index < values.size(); ++index) {
-		key_t key = index_callback(items.at(index));
-		keyed.set(std::move(key), std::move(values.at(index)));
-	}
-	return keyed;
-}
-
 template <typename TItem, typename TCallback, typename TResultCollection, typename TErrorHandler>
 [[nodiscard]] TResultCollection run(const vector_t<TItem> &items, const int_t<> &workers, TCallback callback, null_t, TResultCollection result, TErrorHandler error_handler, const int_t<> &timeout_ms)
 	requires(!std::is_same_v<std::decay_t<TResultCollection>, null_t>)
@@ -1031,10 +1124,11 @@ template <typename TItem, typename TCallback, typename TIndexCallback, typename 
 [[nodiscard]] TResultCollection run(const vector_t<TItem> &items, const int_t<> &workers, TCallback callback, TIndexCallback index_callback, TResultCollection result, TErrorHandler error_handler, const int_t<> &timeout_ms)
 	requires(!std::is_same_v<std::decay_t<TResultCollection>, null_t>)
 {
-	auto values = detail::run_vector_with_state(items, workers, callback, error_handler, timeout_ms, shared<detail::batch_state>());
+	auto values = detail::run_vector_slots_with_state(items, workers, callback, error_handler, timeout_ms, shared<detail::batch_state>());
 	for (std::size_t index = 0; index < values.size(); ++index) {
+		if (!values.at(index).has_value()) { continue; }
 		auto key = index_callback(items.at(index));
-		detail::set_result(result, std::move(key), std::move(values.at(index)));
+		detail::set_result(result, std::move(key), std::move(values.at(index).value()));
 	}
 	return result;
 }
@@ -1124,10 +1218,11 @@ template <typename TItem, typename TCallback, typename TIndexCallback, typename 
 	resource->state->queued.store(static_cast<std::int64_t>(items.size()), std::memory_order_relaxed);
 	resource->coordinator = unique<detail::worker_thread>([resource, items, workers, callback, index_callback, result = std::move(result), error_handler, timeout_ms]() mutable {
 		try {
-			auto values = detail::run_vector_with_state(items, workers, callback, error_handler, timeout_ms, resource->state);
+			auto values = detail::run_vector_slots_with_state(items, workers, callback, error_handler, timeout_ms, resource->state);
 			for (std::size_t index = 0; index < values.size(); ++index) {
+				if (!values.at(index).has_value()) { continue; }
 				auto key = index_callback(items.at(index));
-				detail::set_result(result, std::move(key), std::move(values.at(index)));
+				detail::set_result(result, std::move(key), std::move(values.at(index).value()));
 			}
 			std::lock_guard<std::mutex> lock(resource->lifecycle_mutex);
 			resource->result = detail::box_result_target(std::move(result));
@@ -1159,7 +1254,7 @@ template <typename TItem, typename TKey, typename TCallback, typename TErrorHand
 
 template <typename TItem, typename TKey, typename TCallback, typename TIndexCallback>
 [[nodiscard]] auto run(const hash_t<TItem, TKey> &items, const int_t<> &workers, TCallback callback, TIndexCallback index_callback, null_t, null_t)
-	-> hash_t<detail::task_value_t<detail::callback_result_t<TCallback, TItem>>, detail::task_value_t<std::invoke_result_t<TIndexCallback, TItem>>>
+	-> hash_t<detail::task_value_t<detail::callback_result_t<TCallback, TItem>>, detail::task_key_t<std::invoke_result_t<TIndexCallback, TItem>>>
 {
 	return run(items, workers, callback, index_callback, null, null, int_t<>(0));
 }
@@ -1222,6 +1317,7 @@ template <typename TItem, typename TKey, typename TCallback, typename TErrorHand
 	std::vector<std::pair<TKey, null_t>> void_results;
 	void_results.reserve(item_count);
 
+	detail::coordinator_dispatch dispatch(worker_count);
 	detail::execute_worker_batch(worker_count, [&](std::size_t worker_index) {
 			auto worker_context = shared<context>();
 			worker_context->state = state;
@@ -1273,11 +1369,11 @@ template <typename TItem, typename TKey, typename TCallback, typename TErrorHand
 						} else {
 							auto event = detail::make_error_event(exception, mixed_t(key), worker_index);
 							if constexpr (std::is_void_v<result_t>) {
-								detail::invoke_error_handler(error_handler, item, event);
+								detail::invoke_error_handler(dispatch, state, error_handler, item, event);
 							} else if constexpr (std::is_void_v<std::invoke_result_t<TErrorHandler, TItem, shared_p<error>>>) {
-								detail::invoke_error_handler(error_handler, item, event);
+								detail::invoke_error_handler(dispatch, state, error_handler, item, event);
 							} else {
-								auto value = detail::invoke_error_handler(error_handler, item, event);
+								auto value = detail::invoke_error_handler(dispatch, state, error_handler, item, event);
 								std::lock_guard<std::mutex> lock(result_mutex);
 								value_results.emplace_back(key, std::move(value));
 							}
@@ -1290,11 +1386,11 @@ template <typename TItem, typename TKey, typename TCallback, typename TErrorHand
 						} else {
 							auto event = detail::make_unknown_error_event(mixed_t(key), worker_index);
 							if constexpr (std::is_void_v<result_t>) {
-								detail::invoke_error_handler(error_handler, item, event);
+								detail::invoke_error_handler(dispatch, state, error_handler, item, event);
 							} else if constexpr (std::is_void_v<std::invoke_result_t<TErrorHandler, TItem, shared_p<error>>>) {
-								detail::invoke_error_handler(error_handler, item, event);
+								detail::invoke_error_handler(dispatch, state, error_handler, item, event);
 							} else {
-								auto value = detail::invoke_error_handler(error_handler, item, event);
+								auto value = detail::invoke_error_handler(dispatch, state, error_handler, item, event);
 								std::lock_guard<std::mutex> lock(result_mutex);
 								value_results.emplace_back(key, std::move(value));
 							}
@@ -1308,9 +1404,10 @@ template <typename TItem, typename TKey, typename TCallback, typename TErrorHand
 				if (active_item) {
 					state->active.fetch_sub(1, std::memory_order_relaxed);
 				}
+				state->stop_requested.store(true);
 				errors.at(worker_index) = std::current_exception();
 			}
-	});
+	}, dispatch);
 
 	for (const auto &entry : errors) {
 		if (entry) {
@@ -1428,24 +1525,6 @@ template <typename TItem, typename TKey, typename TCallback, typename TResultCol
 	return resource;
 }
 
-template <typename TItem, typename TKey, typename TCallback, typename TIndexCallback>
-[[nodiscard]] auto run(const hash_t<TItem, TKey> &items, const int_t<> &workers, TCallback callback, TIndexCallback index_callback, null_t, null_t, const int_t<> &timeout_ms)
-	-> hash_t<detail::task_value_t<detail::callback_result_t<TCallback, TItem>>, detail::task_value_t<std::invoke_result_t<TIndexCallback, TItem>>>
-{
-	using result_t = detail::callback_result_t<TCallback, TItem>;
-	using value_t = detail::task_value_t<result_t>;
-	using index_key_t = detail::task_value_t<std::invoke_result_t<TIndexCallback, TItem>>;
-
-	auto values = run(items, workers, callback, null, null, null, timeout_ms);
-	hash_t<value_t, index_key_t> keyed;
-	for (auto it = items.begin_entries(); it != items.end_entries(); ++it) {
-		const auto entry = *it;
-		index_key_t key = index_callback(entry.value_copy());
-		keyed.set(std::move(key), std::move(values[entry.key()]));
-	}
-	return keyed;
-}
-
 template <typename TItem, typename TKey, typename TCallback, typename TIndexCallback, typename TResultCollection, typename TErrorHandler>
 [[nodiscard]] shared_p<batch> start(const hash_t<TItem, TKey> &items, const int_t<> &workers, TCallback callback, TIndexCallback index_callback, TResultCollection result, TErrorHandler error_handler, const int_t<> &timeout_ms)
 	requires(!std::is_same_v<std::decay_t<TResultCollection>, null_t>)
@@ -1458,6 +1537,7 @@ template <typename TItem, typename TKey, typename TCallback, typename TIndexCall
 			auto values = run_hash_with_state(items, workers, callback, error_handler, timeout_ms, resource->state);
 			for (auto it = items.begin_entries(); it != items.end_entries(); ++it) {
 				const auto entry = *it;
+				if (!values.has(entry.key()).native_value()) { continue; }
 				auto key = index_callback(entry.value_copy());
 				detail::set_result(result, std::move(key), std::move(values[entry.key()]));
 			}
@@ -1482,44 +1562,72 @@ template <typename TItem, typename TKey, typename TCallback, typename TIndexCall
 	auto values = run_hash_with_state(items, workers, callback, error_handler, timeout_ms, shared<detail::batch_state>());
 	for (auto it = items.begin_entries(); it != items.end_entries(); ++it) {
 		const auto entry = *it;
+		if (!values.has(entry.key()).native_value()) { continue; }
 		auto key = index_callback(entry.value_copy());
 		detail::set_result(result, std::move(key), std::move(values[entry.key()]));
 	}
 	return result;
 }
 
-template <typename TCallback, typename TErrorHandler>
-[[nodiscard]] mixed_t run(const mixed_t &items, const int_t<> &workers, TCallback callback, null_t, null_t, TErrorHandler error_handler, const int_t<> &timeout_ms)
+template <detail::task_box Box, typename TCallback, typename TErrorHandler>
+[[nodiscard]] Box run_boxed_snapshot(const detail::boxed_input_snapshot<Box> &snapshot,
+	const int_t<> &workers, TCallback callback, TErrorHandler error_handler,
+	const int_t<> &timeout_ms, const shared_p<detail::batch_state> &state)
 {
-	const auto &table = detail::require_task_input_table(items);
-	if (table.is_packed().native_value()) {
-		auto values = detail::mixed_table_to_vector_input(table);
-		return detail::box_vector_result(detail::run_vector_with_state(values, workers, callback, error_handler, timeout_ms, shared<detail::batch_state>()));
+	auto work = detail::checked_boxed_work<Box>(std::move(callback));
+	auto handler = detail::checked_boxed_error<Box>(std::move(error_handler));
+	auto result = detail::boxed_task_family<Box>::empty();
+	auto &table = detail::boxed_task_family<Box>::output(result);
+	if (snapshot.packed) {
+		auto values = detail::run_vector_with_state(snapshot.values, workers, work, handler, timeout_ms, state);
+		for (auto &value : values.native_value()) { (void)table.append(Box(std::move(value))); }
+	} else {
+		auto values = run_hash_with_state(snapshot.keyed, workers, work, handler, timeout_ms, state);
+		for (auto it = values.begin_entries(); it != values.end_entries(); ++it) {
+			const auto entry = *it;
+			table.set(entry.key(), Box(entry.value_copy()));
+		}
 	}
-	auto values = detail::mixed_table_to_hash_input(table);
-	return detail::box_hash_result(run_hash_with_state(values, workers, callback, error_handler, timeout_ms, shared<detail::batch_state>()));
+	return result;
 }
 
-template <typename TCallback>
-[[nodiscard]] mixed_t run(const mixed_t &items, const int_t<> &workers, TCallback callback)
+template <detail::task_box Box, typename TCallback, typename TErrorHandler>
+[[nodiscard]] Box run(const Box &items, const int_t<> &workers, TCallback callback,
+	null_t, null_t, TErrorHandler error_handler, const int_t<> &timeout_ms)
 {
-	return run(items, workers, callback, null, null, null, int_t<>(0));
+	auto snapshot = detail::snapshot_boxed_input(items);
+	return run_boxed_snapshot(snapshot, workers, std::move(callback), std::move(error_handler),
+		timeout_ms, shared<detail::batch_state>());
 }
 
-template <typename TCallback, typename TErrorHandler>
-[[nodiscard]] mixed_t run(const mixed_t &items, const int_t<> &workers, TCallback callback, null_t, null_t, TErrorHandler error_handler)
+template <detail::task_box Box, typename TCallback>
+[[nodiscard]] Box run(const Box &items, const int_t<> &workers, TCallback callback)
 {
-	return run(items, workers, callback, null, null, error_handler, int_t<>(0));
+	return run(items, workers, std::move(callback), null, null, null, int_t<>(0));
 }
 
-template <typename TCallback, typename TErrorHandler>
-[[nodiscard]] shared_p<batch> start(const mixed_t &items, const int_t<> &workers, TCallback callback, null_t, null_t, TErrorHandler error_handler, const int_t<> &timeout_ms)
+template <detail::task_box Box, typename TCallback, typename TErrorHandler>
+[[nodiscard]] Box run(const Box &items, const int_t<> &workers, TCallback callback,
+	null_t, null_t, TErrorHandler error_handler)
 {
-	(void) detail::require_task_input_table(items);
-	auto resource = shared<batch>();
-	resource->coordinator = unique<detail::worker_thread>([resource, items, workers, callback, error_handler, timeout_ms]() mutable {
+	return run(items, workers, std::move(callback), null, null, std::move(error_handler), int_t<>(0));
+}
+
+template <detail::task_box Box, typename TCallback, typename TErrorHandler>
+[[nodiscard]] shared_p<typename detail::boxed_task_family<Box>::batch_type> start(
+	const Box &items, const int_t<> &workers, TCallback callback,
+	null_t, null_t, TErrorHandler error_handler, const int_t<> &timeout_ms)
+{
+	auto snapshot = detail::snapshot_boxed_input(items);
+	auto resource = shared<typename detail::boxed_task_family<Box>::batch_type>();
+	resource->state->total.store(static_cast<std::int64_t>(snapshot.size()), std::memory_order_relaxed);
+	resource->state->queued.store(static_cast<std::int64_t>(snapshot.size()), std::memory_order_relaxed);
+	resource->coordinator = unique<detail::worker_thread>([resource, snapshot=std::move(snapshot), workers,
+		callback=std::move(callback), error_handler=std::move(error_handler), timeout_ms]() mutable {
 		try {
-			resource->result = run(items, workers, callback, null, null, error_handler, timeout_ms);
+			auto values = run_boxed_snapshot(snapshot, workers, std::move(callback), std::move(error_handler), timeout_ms, resource->state);
+			std::lock_guard<std::mutex> lock(resource->lifecycle_mutex);
+			resource->result = std::move(values);
 			resource->state->done.store(true);
 		} catch (...) {
 			std::lock_guard<std::mutex> lock(resource->lifecycle_mutex);
@@ -1532,21 +1640,39 @@ template <typename TCallback, typename TErrorHandler>
 	return resource;
 }
 
-template <typename TCallback>
-[[nodiscard]] shared_p<batch> start(const mixed_t &items, const int_t<> &workers, TCallback callback)
+template <detail::task_box Box, typename TCallback>
+[[nodiscard]] auto start(const Box &items, const int_t<> &workers, TCallback callback)
 {
-	return start(items, workers, callback, null, null, null, int_t<>(0));
+	return start(items, workers, std::move(callback), null, null, null, int_t<>(0));
 }
 
-template <typename TCallback, typename TErrorHandler>
-[[nodiscard]] shared_p<batch> start(const mixed_t &items, const int_t<> &workers, TCallback callback, null_t, null_t, TErrorHandler error_handler)
+template <detail::task_box Box, typename TCallback, typename TErrorHandler>
+[[nodiscard]] auto start(const Box &items, const int_t<> &workers, TCallback callback,
+	null_t, null_t, TErrorHandler error_handler)
 {
-	return start(items, workers, callback, null, null, error_handler, int_t<>(0));
+	return start(items, workers, std::move(callback), null, null, std::move(error_handler), int_t<>(0));
 }
 
 #else
 
-[[nodiscard]] inline bool_t done(const shared_p<batch> &)
+template <detail::task_box Box, typename TCallback, typename TErrorHandler = null_t>
+[[nodiscard]] Box run(const Box &, const int_t<> &, TCallback, null_t = null,
+	null_t = null, TErrorHandler = null, const int_t<> & = int_t<>(0))
+{
+	throw runtime_error("task_run(): tasks runtime module is not enabled in this build",
+		"tasks_module_disabled", "scpp::tasks", "task_run");
+}
+
+template <detail::task_box Box, typename TCallback, typename TErrorHandler = null_t>
+[[nodiscard]] shared_p<typename detail::boxed_task_family<Box>::batch_type> start(
+	const Box &, const int_t<> &, TCallback, null_t = null,
+	null_t = null, TErrorHandler = null, const int_t<> & = int_t<>(0))
+{
+	throw runtime_error("task_start(): tasks runtime module is not enabled in this build",
+		"tasks_module_disabled", "scpp::tasks", "task_start");
+}
+
+[[nodiscard]] inline bool_t done(const shared_p<batch_lifecycle> &)
 {
 	throw runtime_error(
 		"task_done(): tasks runtime module is not enabled in this build",
@@ -1556,7 +1682,7 @@ template <typename TCallback, typename TErrorHandler>
 	);
 }
 
-inline void cancel(const shared_p<batch> &)
+inline void cancel(const shared_p<batch_lifecycle> &)
 {
 	throw runtime_error(
 		"task_cancel(): tasks runtime module is not enabled in this build",
@@ -1576,7 +1702,13 @@ inline void cancel(const shared_p<batch> &)
 	);
 }
 
-[[nodiscard]] inline string_t status(const shared_p<batch> &)
+[[nodiscard]] inline dynamic_t<> join(const shared_p<dynamic_batch> &)
+{
+	throw runtime_error("task_join(): tasks runtime module is not enabled in this build",
+		"tasks_module_disabled", "scpp::tasks", "task_join");
+}
+
+[[nodiscard]] inline string_t status(const shared_p<batch_lifecycle> &)
 {
 	throw runtime_error(
 		"task_status(): tasks runtime module is not enabled in this build",
@@ -1586,7 +1718,7 @@ inline void cancel(const shared_p<batch> &)
 	);
 }
 
-[[nodiscard]] inline shared_p<progress_info> progress(const shared_p<batch> &)
+[[nodiscard]] inline shared_p<progress_info> progress(const shared_p<batch_lifecycle> &)
 {
 	throw runtime_error(
 		"task_progress(): tasks runtime module is not enabled in this build",
@@ -1846,20 +1978,8 @@ template <typename TItem, typename TWorkCallback, typename TPublishCallback>
 }
 
 template <typename TItem, typename TCallback, typename TIndexCallback>
-[[nodiscard]] auto run(const vector_t<TItem> &, const int_t<> &, TCallback, TIndexCallback, null_t, null_t, const int_t<> &)
-	-> hash_t<detail::task_value_t<detail::callback_result_t<TCallback, TItem>>, detail::task_value_t<std::invoke_result_t<TIndexCallback, TItem>>>
-{
-	throw runtime_error(
-		"task_run(): tasks runtime module is not enabled in this build",
-		"tasks_module_disabled",
-		"scpp::tasks",
-		"task_run"
-	);
-}
-
-template <typename TItem, typename TCallback, typename TIndexCallback>
 [[nodiscard]] auto run(const vector_t<TItem> &, const int_t<> &, TCallback, TIndexCallback, null_t, null_t)
-	-> hash_t<detail::task_value_t<detail::callback_result_t<TCallback, TItem>>, detail::task_value_t<std::invoke_result_t<TIndexCallback, TItem>>>
+	-> hash_t<detail::task_value_t<detail::callback_result_t<TCallback, TItem>>, detail::task_key_t<std::invoke_result_t<TIndexCallback, TItem>>>
 {
 	throw runtime_error(
 		"task_run(): tasks runtime module is not enabled in this build",
@@ -1955,19 +2075,7 @@ template <typename TItem, typename TKey, typename TCallback, typename TErrorHand
 
 template <typename TItem, typename TKey, typename TCallback, typename TIndexCallback>
 [[nodiscard]] auto run(const hash_t<TItem, TKey> &, const int_t<> &, TCallback, TIndexCallback, null_t, null_t)
-	-> hash_t<detail::task_value_t<detail::callback_result_t<TCallback, TItem>>, detail::task_value_t<std::invoke_result_t<TIndexCallback, TItem>>>
-{
-	throw runtime_error(
-		"task_run(): tasks runtime module is not enabled in this build",
-		"tasks_module_disabled",
-		"scpp::tasks",
-		"task_run"
-	);
-}
-
-template <typename TItem, typename TKey, typename TCallback, typename TIndexCallback>
-[[nodiscard]] auto run(const hash_t<TItem, TKey> &, const int_t<> &, TCallback, TIndexCallback, null_t, null_t, const int_t<> &)
-	-> hash_t<detail::task_value_t<detail::callback_result_t<TCallback, TItem>>, detail::task_value_t<std::invoke_result_t<TIndexCallback, TItem>>>
+	-> hash_t<detail::task_value_t<detail::callback_result_t<TCallback, TItem>>, detail::task_key_t<std::invoke_result_t<TIndexCallback, TItem>>>
 {
 	throw runtime_error(
 		"task_run(): tasks runtime module is not enabled in this build",
@@ -2127,6 +2235,51 @@ inline void configure_publish_try_lock(const bool_t &)
 
 #endif
 
+template <typename TItem, typename TCallback, typename TIndexCallback, typename TErrorHandler>
+[[nodiscard]] auto run(const vector_t<TItem> &items, const int_t<> &workers,
+	TCallback callback, TIndexCallback index_callback, null_t, TErrorHandler error_handler, const int_t<> &timeout_ms)
+	-> hash_t<detail::task_value_t<detail::callback_result_t<TCallback, TItem>>, detail::task_key_t<std::invoke_result_t<TIndexCallback, TItem>>>
+{
+	using value_t = detail::task_value_t<detail::callback_result_t<TCallback, TItem>>;
+	using key_t = detail::task_key_t<std::invoke_result_t<TIndexCallback, TItem>>;
+	return run(items, workers, std::move(callback), std::move(index_callback), hash_t<value_t, key_t>{},
+		std::move(error_handler), timeout_ms);
+}
+
+template <typename TItem, typename TKey, typename TCallback, typename TIndexCallback, typename TErrorHandler>
+[[nodiscard]] auto run(const hash_t<TItem, TKey> &items, const int_t<> &workers,
+	TCallback callback, TIndexCallback index_callback, null_t, TErrorHandler error_handler, const int_t<> &timeout_ms)
+	-> hash_t<detail::task_value_t<detail::callback_result_t<TCallback, TItem>>, detail::task_key_t<std::invoke_result_t<TIndexCallback, TItem>>>
+{
+	using value_t = detail::task_value_t<detail::callback_result_t<TCallback, TItem>>;
+	using key_t = detail::task_key_t<std::invoke_result_t<TIndexCallback, TItem>>;
+	return run(items, workers, std::move(callback), std::move(index_callback), hash_t<value_t, key_t>{},
+		std::move(error_handler), timeout_ms);
+}
+
+// Inferred keyed output uses the same retained target path as an explicit target.
+template <typename TItem, typename TCallback, typename TIndexCallback, typename TErrorHandler>
+[[nodiscard]] shared_p<batch> start(const vector_t<TItem> &items, const int_t<> &workers,
+	TCallback callback, TIndexCallback index_callback, null_t, TErrorHandler error_handler, const int_t<> &timeout_ms)
+	requires(!std::is_same_v<std::decay_t<TIndexCallback>, null_t>)
+{
+	using value_t = detail::task_value_t<detail::callback_result_t<TCallback, TItem>>;
+	using key_t = detail::task_key_t<std::invoke_result_t<TIndexCallback, TItem>>;
+	return start(items, workers, std::move(callback), std::move(index_callback), hash_t<value_t, key_t>{},
+		std::move(error_handler), timeout_ms);
+}
+
+template <typename TItem, typename TKey, typename TCallback, typename TIndexCallback, typename TErrorHandler>
+[[nodiscard]] shared_p<batch> start(const hash_t<TItem, TKey> &items, const int_t<> &workers,
+	TCallback callback, TIndexCallback index_callback, null_t, TErrorHandler error_handler, const int_t<> &timeout_ms)
+	requires(!std::is_same_v<std::decay_t<TIndexCallback>, null_t>)
+{
+	using value_t = detail::task_value_t<detail::callback_result_t<TCallback, TItem>>;
+	using key_t = detail::task_key_t<std::invoke_result_t<TIndexCallback, TItem>>;
+	return start(items, workers, std::move(callback), std::move(index_callback), hash_t<value_t, key_t>{},
+		std::move(error_handler), timeout_ms);
+}
+
 // Publication order follows completion rather than input position. Reuse run's
 // bounded workers and join/error protocol; user work never holds this mutex.
 template <typename TItem, typename TWork, typename TPublish>
@@ -2152,7 +2305,7 @@ template <typename TItem, typename TWork, typename TPublish>
 // Synchronous callback under the active batch's publication lock; no mutex is exposed.
 template <typename Callback>
 void synchronize(Callback callback) {
-    detail::synchronized_publication(std::move(callback));
+				detail::synchronized_publication(std::move(callback));
 }
 
 } // namespace scpp::tasks

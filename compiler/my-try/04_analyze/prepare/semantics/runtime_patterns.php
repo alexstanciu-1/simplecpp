@@ -60,7 +60,12 @@ final class Runtime_Pattern_Preparation
 			return object_cast($pattern, runtime_concrete_pattern::class)->type;
 		}
 		if ($pattern instanceof runtime_variable_pattern) {
-			return $inference->bindings[object_cast($pattern, runtime_variable_pattern::class)->position];
+			$variable = object_cast($pattern, runtime_variable_pattern::class);
+			$type = $inference->bindings[$variable->position];
+			if ($variable->void_to_null && (Type_Queries::canonical($type)->family() === type_family::no_value)) {
+				return Model::$type_catalog->null_type();
+			}
+			return $type;
 		}
 		$application = object_cast($pattern, runtime_application_pattern::class);
 		$arguments /** vector<canonical_type_use> */ = [];

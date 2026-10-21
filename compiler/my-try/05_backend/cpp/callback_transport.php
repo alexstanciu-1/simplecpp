@@ -43,7 +43,7 @@ final class CPP_Callback_Transport
 
 	/** Provider-native payloads are adapted at the existing runtime call boundary. */
 	public static function provider(canonical_type_use $type, string $expression, bool $native_payloads,
-		cpp_generation_context $context): string
+		cpp_generation_context $context, bool $fully_native = false): string
 	{
 		$signature = self::signature($type);
 		$parameters /** Storage<callable_parameter> */ = $signature->parameters;
@@ -56,7 +56,7 @@ final class CPP_Callback_Transport
 		foreach ($parameters as $index => $parameter) {
 			$input = $parameter->type;
 			$physical_input = CPP_Types::representation($input, $physical_context);
-			$native_input = CPP_Types::implementation_representation($input, $engine);
+			$native_input = $fully_native ? CPP_Types::representation($input) : CPP_Types::implementation_representation($input, $engine);
 			CPP_Types::record_dependencies($physical_input, $context);
 			CPP_Types::record_dependencies($native_input, $context);
 			$name = 'value_' . $index;
@@ -64,7 +64,10 @@ final class CPP_Callback_Transport
 			$input_types[] = $argument_type;
 			$declarations .= ($index === 0 ? '' : ', ') . $argument_type . ' ' . $name;
 			$argument = $name;
-			if ($native_payloads && $physical_input->opaque) {
+			if ($fully_native) {
+				$argument = CPP_Wrapper_Transport::provider_payload($input, $name, true, $engine, $context);
+			}
+			elseif ($native_payloads && $physical_input->opaque) {
 				$context->headers['new'] = true;
 				$argument = 'argument_' . $index;
 				$body .= $physical_input->spelling . ' ' . $argument . '(' . $physical_input->spelling . '::operation_result{}, '
@@ -75,7 +78,7 @@ final class CPP_Callback_Transport
 		}
 		$output = $signature->return_type;
 		$physical_output = CPP_Types::representation($output, $physical_context);
-		$native_output = CPP_Types::implementation_representation($output, $engine);
+		$native_output = $fully_native ? CPP_Types::representation($output) : CPP_Types::implementation_representation($output, $engine);
 		$convert_output = $native_payloads || $output->matches(Language_Types::boolean(Model::$language_scope));
 		CPP_Types::record_dependencies($physical_output, $context);
 		CPP_Types::record_dependencies($native_output, $context);
@@ -85,9 +88,10 @@ final class CPP_Callback_Transport
 		}
 		else {
 			$body .= 'auto result = callback(' . $arguments . '); ';
-			$body .= ($convert_output && $physical_output->opaque)
+			$body .= $fully_native ? 'return ' . CPP_Wrapper_Transport::provider_payload($output, 'result', false, $engine, $context) . '; '
+				: (($convert_output && $physical_output->opaque)
 				? 'return *static_cast<const ' . $native_output->spelling . '*>(result.address()); '
-				: 'return result; ';
+				: 'return result; ');
 		}
 		// The adapter may outlive the operation helper: never retain its stack inputs.
 		return '([&]() { auto provider_callback = (' . $expression . '); bool transferable = provider_callback.transfer_allowed(); '

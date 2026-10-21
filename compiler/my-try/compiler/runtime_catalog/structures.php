@@ -5,6 +5,7 @@ namespace scpp\compiler;
 final class runtime_type_spec
 {
 	public ?runtime_callable_spec $callable = null;
+	public bool $void_to_null = false;
 	public string $name = '';
 	/** Explicit variable spelling distinguishes a type parameter from a registered type. */
 	public string $parameter = '';
@@ -104,6 +105,13 @@ abstract class runtime_signature_spec
 
 final class runtime_callable_spec extends runtime_signature_spec {}
 
+/** Named result relation in immutable startup metadata. */
+final class runtime_replacement_spec
+{
+	public string $result_name = '';
+	public string $replacement_name = '';
+}
+
 final class runtime_function_spec extends runtime_signature_spec
 {
 	/** Provider permits synchronous readonly borrowing in place of value snapshots. */
@@ -113,6 +121,13 @@ final class runtime_function_spec extends runtime_signature_spec
 	public string $name = '';
 	public array $qualified_aliases /** vector<string> */ = [];
 	public array $type_parameters /** vector<string> */ = [];
+	public array $transfer_types /** vector<string> */ = [];
+	public Storage $replacement_results /** Storage<runtime_replacement_spec> */;
+	public function __construct()
+	{
+		parent::__construct();
+		$this->replacement_results = new Storage /** Storage<runtime_replacement_spec> */();
+	}
 }
 
 /** Membership is independent of the function signature and backend symbol. */
@@ -129,6 +144,7 @@ class runtime_cpp_spec
 	public string $symbol = '';
 	/** Backend-only opt-in to PHS file/line prefix arguments. */
 	public bool $source_context = false;
+	public bool $native_payloads = false;
 	public string $header = '';
 }
 

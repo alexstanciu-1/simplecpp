@@ -421,6 +421,7 @@ final class Runtime_Catalog_Reader
 				$result->parameter = self::name($reader);
 			}
 			elseif ($key === 'callable') { $result->callable = self::callable_spec($reader); }
+			elseif ($key === 'void_to_null') { $result->void_to_null = $reader->read_boolean(); }
 			elseif ($key === 'arguments')
 			{
 				$items /** Storage<runtime_type_spec> */ = $result->arguments;
@@ -434,6 +435,7 @@ final class Runtime_Catalog_Reader
 				$reader->reject('Unknown runtime type field: ' . $key);
 			}
 		}
+		if ($result->void_to_null && ($result->parameter === '')) { $reader->reject('Void-to-null mapping requires a type parameter'); }
 		if ($result->callable !== null) {
 			if (($result->name !== '') || ($result->parameter !== '') || $arguments) {
 				$reader->reject('Callable type cannot also name another type form');
@@ -546,6 +548,7 @@ final class Runtime_Catalog_Reader
 			if ($result->type_name === 'int') { $result->text = '' . $reader->read_integer(); }
 			elseif ($result->type_name === 'float') { $result->text = $reader->read_number(); }
 			elseif ($result->type_name === 'string') { $result->text = $reader->read_string(); }
+			elseif ($result->type_name === 'null') { $reader->read_null(); }
 			elseif ($result->type_name === 'bool') { $result->text = $reader->read_boolean() ? 'true' : 'false'; }
 			else { $reader->reject('Unsupported runtime default scalar tag'); }
 		}
@@ -583,6 +586,15 @@ final class Runtime_Catalog_Reader
 				$result->return_type = self::type($reader);
 				$returns = true;
 			}
+			elseif ($key === 'replacement_results') {
+				$relations /** Storage<runtime_replacement_spec> */ = $result->replacement_results;
+				$reader->begin_array();
+				while ($reader->next_element()) { $relations->append(self::replacement_result($reader)); }
+			}
+			elseif ($key === 'transfer_types') {
+				$reader->begin_array();
+				while ($reader->next_element()) { $result->transfer_types[] = self::name($reader); }
+			}
 			elseif ($key === 'type_parameters')
 			{
 				$names /** vector<string> */ = [];
@@ -609,6 +621,13 @@ final class Runtime_Catalog_Reader
 		if (($result->identity === '') || ($result->name === '') || !$returns || !$parameters) {
 			$reader->reject('Missing runtime function field');
 		}
+		if ((q_count($result->transfer_types) > 0) && (q_count($result->type_parameters) === 0)) {
+			$reader->reject('Transfer type requirements need a generic function');
+		}
+		$replacement_results /** Storage<runtime_replacement_spec> */ = $result->replacement_results;
+		if (!$replacement_results->is_empty() && (q_count($result->type_parameters) === 0)) {
+			$reader->reject('Replacement result requirements need a generic function');
+		}
 		if ($result->snapshot_borrow_safe) {
 			if (($result->member !== null) || (q_count($result->type_parameters) !== 0)) {
 				$reader->reject('Snapshot borrowing requires a fixed free runtime function');
@@ -618,6 +637,22 @@ final class Runtime_Catalog_Reader
 					$reader->reject('Snapshot borrowing requires fixed explicit value inputs');
 				}
 			}
+		}
+		return $result;
+	}
+
+	private static function replacement_result(\scpp\Json_Reader $reader): runtime_replacement_spec
+	{
+		$result = new runtime_replacement_spec();
+		$reader->begin_object();
+		while ($reader->next_property()) {
+			$key = $reader->property_name();
+			if ($key === 'result') { $result->result_name = self::name($reader); }
+			elseif ($key === 'replacement') { $result->replacement_name = self::name($reader); }
+			else { $reader->reject('Unknown replacement result field: ' . $key); }
+		}
+		if (($result->result_name === '') || ($result->replacement_name === '')) {
+			$reader->reject('Replacement result requirement needs result and replacement variables');
 		}
 		return $result;
 	}
@@ -737,6 +772,10 @@ final class Runtime_Catalog_Reader
 			}
 			elseif ($key === 'symbol') {
 				$result->symbol = self::name($reader);
+			}
+			elseif ($key === 'native_payloads') {
+				if (!$allow_context) { $reader->reject('Native payload policy requires a function binding'); }
+				$result->native_payloads = $reader->read_boolean();
 			}
 			elseif ($key === 'source_context') {
 				if (!$allow_context || (self::name($reader) !== 'phs_file_line')) { $reader->reject('Unsupported C++ call-site context'); }
