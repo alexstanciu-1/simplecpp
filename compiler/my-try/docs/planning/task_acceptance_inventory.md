@@ -60,3 +60,35 @@ No full operator matrix or native compiler rebuild is part of this goal. Closing
 V-R02 still requires reconciling the open source transport gates and the explicitly
 bounded signature scope with the original acceptance contract; the issue remains
 partial at this checkpoint.
+
+## Boxed placement design notes — awaiting scope decision
+
+Read-only inspection confirms that current boxed run/start overloads have literal
+`null_t` index/target slots. `run_boxed_snapshot` assembles a fresh same-family table
+from packed/keyed worker results. Therefore adding metadata alone cannot expose
+custom placement; a runtime-owned placement path is required.
+
+If the user keeps this work in the goal, the discussion should settle these cases
+before implementation:
+
+| Destination | Proposed contract to discuss |
+| --- | --- |
+| No target, custom index | Keep the input's boxed result family. Index callback receives the original snapshotted item, runs on the coordinator, and returns int/string or nullable variants. Null appends; duplicate keys overwrite in input order. |
+| Same-family boxed target | Snapshot/validate its scalar entries before launching work, construct an independent result table, preserve prefilled entries unless overwritten. In particular, a dynamic target must not leak shared mutable caller state into background work. |
+| Explicit typed vector/hash target | Reuse exact scalar worker-result/target compatibility and existing vector bounds/hash key rules. The explicit target owns the return shape; background typed targets use the existing mixed-backed batch convention. Avoid silently extracting arbitrary boxed worker results into typed slots. |
+| Opposite boxed-family target | Requires an explicit policy decision; do not infer permission to cross mixed/dynamic container families merely from the target argument. |
+
+Placement must consume success slots retaining original input identity, as the
+existing typed custom-placement path already does. It must not index a compacted
+result vector after void-handler omission. Reuse worker execution, coordinator
+error dispatch, nullable-key handling, batch state and retention owners; this does
+not justify a scheduler redesign. Source generic-contract/preparation and provider
+transport should remain the existing owners.
+
+Focused verification would cover packed/associative inputs, run/start, contexts,
+replacement/omission, omitted-first-item identity, duplicate keys, nullable append,
+prefilled values, invalid vector keys, target/input snapshots, key/handler failures,
+pool/non-pool lifecycle and retained reject/repair/fresh publication. Use dev002
+with default prelowering, preserve source errors and existing transfer restrictions,
+and do not run a full operator matrix. These are proposed checks, not evidence of
+support or an authorization to implement the unresolved contract.
