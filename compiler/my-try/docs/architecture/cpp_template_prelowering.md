@@ -69,6 +69,14 @@ boxed domains and index writes remain separate. See [curl integration](../planni
 
 ## Existing owners
 
+`CPP_Callback_Transport` provides owned callable storage for fixed value parameter
+lists, including zero inputs and void results. Provider adapters own their callback
+copy, allowing it to survive the compiled helper's return. This is a transport
+contract: preparation must still authorize captures and execution context before
+background use. Reference inputs/results, variadics and borrowed erased captures
+remain restricted. The [async/tasks prerequisite](../planning/async_tasks.md) records
+the default-prelowered proofs and the still-open task integration.
+
 Free runtime bindings can explicitly request PHS file/line context. `CPP_Callsites`
 reads the current token snapshot (including retained-range translation); ordinary
 calls and the existing compiled-operation bridge prefix the same native arguments.
