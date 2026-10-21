@@ -14,7 +14,7 @@ The catalog's bounded closeouts and Chapter 15 deferrals still
 bound the supported language surface.
 This does not establish exhaustive language, lifetime, incremental or performance coverage.
 
-## PHP-hosted bootstrap after typed punctuation list — 2026-10-21
+## PHP-hosted bootstrap after closure class context — 2026-10-21
 
 The common `object_cast(value, Target::class)` spelling works through PHP, v0.1
 (with its legacy alias retained) and v0.2. Prelowered checked casts and type tests
@@ -23,25 +23,25 @@ semantic admission. Focused identity, interface/struct, weak-lock, evaluation an
 failure proofs pass in ordinary and concrete modes.
 
 Remote task fixes were reconciled in `a92689b2`; `task_synchronize` remains resolved.
-The latest retry uses `858d0008` plus an explicit `vector<string>` local for
-`Tokenizer::token_end`'s punctuation list. The tokenizer PHP tests pass; conversion
-produces 269 assembled PHS files from 259 PHP files (1,921,462 bytes).
-Bootstrap takes **47.16 seconds**, peak RSS **311.4 MiB**, peak PHP heap **290 MiB**
-under a 4 GiB limit. Parsing finishes at 4.278 seconds. It stops during preparation
-without PHP fatal/OOM or C++ emission. The preceding nullable-default proof covers
-ordinary/concrete execution and retained rejection/recovery.
+The latest retry uses `9a4dd0fd` plus closure lexical class-context preparation.
+Anonymous signatures and bodies recover their method owner from existing scope
+ancestry, independently of receiver captures. Ordinary/prelowered class-access,
+explicit receiver-capture and rejection/recovery proofs pass in
+`tests/closure_class_context.py`. No retained state or lifetime protocol is added.
+Conversion produces 269 assembled PHS files from 259 PHP files (1,922,976 bytes).
+Bootstrap takes **46.33 seconds**, peak RSS **312.0 MiB**, peak PHP heap **290 MiB**
+under a 4 GiB limit. Parsing finishes at 4.216 seconds. It stops during preparation
+without PHP fatal/OOM or C++ emission.
 
 Readonly enforcement remains deferred to
 [CH15-READONLY-FIELDS-01](../catalog/15_blocking_debt.md#readonly-instance-fields--ch15-readonly-fields-01).
 The compiler's 21 formerly readonly properties have source TODOs; constructor-only
 writes remain a convention. The unsupported-member-modifier diagnostic is gone.
-The next reported diagnostic is `self requires a declaring type context`.
-`Symbol_Collector::register_source_type` calls `self::define_source_type` from a
-`task_synchronize` closure. An explicit `Symbol_Collector::` source trial then
-fails private-method access (48.43 s, 311.8 MiB RSS, 290 MiB PHP heap). That trial
-was reverted: explicit naming does not supply the closure's enclosing class access
-context, and widening the helper's visibility is not an appropriate source fix.
-The declaration-context issue is not repaired here.
+The `self`/private-access closure blocker is gone. The next reported diagnostic is
+`S2S parameter defaults require scalar value types`, affecting
+`Symbol_Collector::collect_constant`'s `?collected_member_owner $record = null`.
+Nullable object handles normalize differently from nullable scalar values; their
+null defaults remain outside the earlier nullable-value fix. No repair is made here.
 
 Other preparation failures remain, as does the prelowered locked-class null-check
 defect. Semantic widening and Storage_Cursor widening are excluded.

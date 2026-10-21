@@ -824,8 +824,6 @@ final class Preparation_Worker
 				if ($receiver !== null) {
 					$name = 'this';
 					$context->receiver = $receiver;
-					$method = object_cast(weakref_get($receiver->declaration), collected_method::class);
-					$context->member_owner = $method->declaring_type();
 				}
 				if (q_count($context->locals->local_named($name)) !== 0) {
 					throw new \RuntimeException('Capture collides with a parameter: ' . $name);
@@ -988,8 +986,16 @@ final class Preparation_Worker
 		$context->owner = $owner;
 		$context->collection = $owner->source;
 		$definition = $owner->declaration();
+		if ($owner instanceof anonymous_signature_work) {
+			$definition = Callable_Inventory::lexical_method(object_cast($owner, anonymous_signature_work::class)->anonymous_identity());
+		}
+		elseif ($owner instanceof anonymous_body_work) {
+			$definition = Callable_Inventory::lexical_method(object_cast($owner, anonymous_body_work::class)->anonymous_identity());
+		}
 		if ($definition instanceof collected_method) {
-			$instance = weakref_get(object_cast($definition, collected_method::class)->instance_context);
+			$method = object_cast($definition, collected_method::class);
+			$context->member_owner = $method->declaring_type();
+			$instance = weakref_get($method->instance_context);
 			if ($instance !== null) {
 				$context->called_type = $instance->called_type();
 			}

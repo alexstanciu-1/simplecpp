@@ -27,6 +27,20 @@ cards below retain their original order and provenance.
 
 ## Progress
 
+### Lexical class context — 2026-10-21
+
+Anonymous signature and body preparation now recover the nearest lexical method
+from existing scope ancestry and callable inventory. Class access no longer depends
+on capturing `$this`. The query builds only a transient scope index; no retained
+owner link or new lifetime protocol is introduced. A named free callable stops
+inheritance, and concrete method implementations retain their called-type context.
+
+`tests/closure_class_context.py` proves ordinary/prelowered execution for nested
+`self` and protected `parent` calls, explicit private qualification from an instance
+method without receiver capture, and private instance access with explicit `$this`
+capture. Outside/unrelated private access and uncaptured receiver use reject;
+retained failure/recovery is checked in both modes. No native compiler rebuild.
+
 ### Bounded closeout and current handoff — 2026-10-16
 
 Chapter 12's selected frontend + C++ S2S positive pass is **closed with explicit

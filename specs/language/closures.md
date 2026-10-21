@@ -528,6 +528,14 @@ $read = function () use ($this): int { return $this->count; };
 $increment = fn(): int => ++$this->count;
 ```
 
+A closure inherits its lexical method's declaring-class context independently of
+receiver capture. This applies through nested closures, including closures in static
+methods: `self`, `parent` and private/protected member access retain that lexical
+context. Explicit class qualification does not grant access to unrelated classes.
+This inheritance does not provide `$this`; receiver capture still follows the rules
+below. Concrete static-method implementations retain their existing called-type
+context separately from lexical access.
+
 Receiver-capturing closures and their transitive copies are bounded by the creating
 instance invocation's lifetime. Existing local-copy checks and erased-boundary
 rejection apply. Member mutations affect the original object. The receiver's original

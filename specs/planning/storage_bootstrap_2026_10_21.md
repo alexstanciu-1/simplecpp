@@ -509,3 +509,40 @@ The isolated trial (same PHP8.5 CLI settings, 4 GiB limit) takes **48.43 s wall 
 4.425 s; preparation stops without PHP fatal/OOM or C++ emission. Exact overlay,
 source hashes and logs: `/tmp/bootstrap-attempt-20261021-explicit-owner`; the `.py`
 sibling is the driver. This measures the reverted experiment, not the final source.
+
+
+## Closure lexical class context and retry — 2026-10-21
+
+Candidate: `9a4dd0fd` plus the overlay retained in
+`/tmp/bootstrap-attempt-20261021-closure-context/candidate.diff`. The read-only
+callable inventory derives the nearest named lexical method from scope ancestry;
+anonymous signature/body contexts use its declaring type and existing concrete
+called-type context. Receiver captures supply only receiver storage. No new retained
+link, registry, semantic privilege bypass or lifetime protocol is introduced.
+
+`tests/closure_class_context.py --results /tmp/closure-class-context-20261021-final`
+passes ordinary/prelowered generated execution for nested `self`/protected `parent`,
+private static access without receiver capture and private instance access with
+explicit `$this`. Outside/unrelated private access and uncaptured receiver use reject;
+retained failure/recovery passes in both modes. These are generated-program proofs,
+not a native compiler rebuild. No authored-source workaround remains.
+
+Conversion: 259 PHP files, 4.70 s, peak RSS 186.4 MiB. Assembled input: 269 PHS files,
+1,922,976 bytes. Isolated PHP8.5 CLI bootstrap (OPcache CLI/Xdebug disabled, 4 GiB
+limit): **46.33 s wall time**, **319456 KiB / 312.0 MiB peak RSS**,
+**304087040 bytes / 290 MiB peak PHP heap**. Parsing completes at 4.216 s. Preparation
+fails without PHP fatal/OOM or C++ emission. Source hashes, phase marks and logs are
+in the artifact directory above; its `.py` sibling is the retry driver. This remains
+a partial-run observation, not a full bootstrap cost or performance comparison.
+
+The `self` context diagnostic is gone. The next diagnostic is
+`S2S parameter defaults require scalar value types`; the first affected callable is
+`Symbol_Collector::collect_constant`, with `?collected_member_owner $record = null`.
+Object-handle normalization differs from nullable scalar wrapping, so this case was
+not admitted by the preceding nullable-value default slice. No further default or
+Storage_Cursor widening is included.
+
+Read-only owner replay (46.95 s, `/tmp/closure-context-bootstrap-owner-logs`) confirms
+no remaining failure in `Symbol_Collector::register_source_type` and identifies
+`collect_constant` for the first default rejection. Full records are retained in
+`failure-owners.json` in the artifact directory.

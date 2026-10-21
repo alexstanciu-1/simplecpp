@@ -4,6 +4,33 @@ namespace scpp\compiler;
 /** Read-only callable graph view; private implementations are not source/member declarations. */
 final class Callable_Inventory
 {
+	/** Anonymous scopes inherit the nearest named callable's class context, not its receiver. */
+	public static function lexical_method(anonymous_callable_identity $identity): ?collected_method
+	{
+		$owners /** hash<collected_source_callable, shared<scope>> */ = new \SplObjectStorage /** hash<collected_source_callable, shared<scope>> */();
+		$collection = $identity->collection();
+		$entries /** Storage<collected_name> */ = $collection->entries;
+		foreach ($collection->defined_elements as $position) {
+			$entry = $entries[$position];
+			if ($entry->change_status === change_state::deleted) { continue; }
+			if ($entry instanceof collected_source_callable) {
+				$callable = object_cast($entry, collected_source_callable::class);
+				$owners[$callable->callable_syntax()->signature_scope()] = $callable;
+			}
+		}
+		$current = $identity->syntax()->signature_scope()->parent_scope();
+		while ($current !== null) {
+			$lookup_scope /** scope */ = $current;
+			if (isset($owners[$lookup_scope])) {
+				$owner /** collected_source_callable */ = $owners[$lookup_scope];
+				if ($owner instanceof collected_method) { return object_cast($owner, collected_method::class); }
+				return null;
+			}
+			$current = $lookup_scope->parent_scope();
+		}
+		return null;
+	}
+
 	/** Static source bodies are checked only through concrete called-type implementations. */
 	public static function deferred_body(collected_source_callable $definition): bool
 	{
