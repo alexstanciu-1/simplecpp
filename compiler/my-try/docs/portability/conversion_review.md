@@ -14,35 +14,33 @@ The catalog's bounded closeouts and Chapter 15 deferrals still
 bound the supported language surface.
 This does not establish exhaustive language, lifetime, incremental or performance coverage.
 
-## PHP-hosted bootstrap after explicit collected queries — 2026-10-21
+## PHP-hosted bootstrap after qualified-name dispatch — 2026-10-21
 
-The latest retry uses `2a3f6e47` plus a PHP-source hierarchy refactor.
-`collected_name` declares `is_retained`, `is_exported` and `preparation_work_owner`
-abstract. Existing declaration state and definition work slots remain unchanged;
-reference/write branches supply false/false/no-work defaults. This uses the existing
-abstract-method dispatch contract, without changing ordinary method virtuality.
-The preceding common object-key support remains in place.
+The latest retry uses `46d9e35e` plus the PHP qualified-name refactor.
+`collected_definition::qualified_name()` is abstract. Functions, constants and
+types call the protected `scope_qualified_name()` helper containing the unchanged
+namespace algorithm. Methods preserve their `Type::method` implementation. This
+uses existing abstract-method dispatch without changing language semantics.
 
-`tests/portability/collected_query_dispatch.py` extracts the actual query bodies
-for focused portability checks. Actual-record PHP behavior and all three queries
-in PHP/v0.1 native pass. Boolean query dispatch passes through base handles in
-v0.2 ordinary/prelowered output. The complete v0.2 projection still rejects raw
-`return null` in the no-work implementations; the proof records this as a blocker,
-not successful native execution. Existing collected-role and incremental parsing
-checks pass. No native compiler rebuild is claimed.
+`tests/portability/qualified_name_dispatch.py` passes actual parsed-name checks in
+PHP and projected dispatch execution through PHP, v0.1 native and both v0.2 modes.
+The projection extracts real dispatch methods and supplies controlled scope/accessor
+inputs; it does not prove native execution of the full scope lookup or repair its
+known handle/null comparison issue. Existing namespace, collected-role and
+incremental parse/collection checks pass. No native compiler rebuild is claimed.
 
-Conversion produces 269 assembled PHS files from 259 PHP files (1,926,079 bytes).
-Isolated bootstrap takes **192.00 seconds**, peak RSS **418.0 MiB**, peak PHP heap
-**410.5 MiB** under a 4 GiB limit. Parsing finishes at 4.441 seconds. It stops during
+Conversion produces 269 assembled PHS files from 259 PHP files (1,926,457 bytes).
+Isolated bootstrap takes **190.40 seconds**, peak RSS **418.8 MiB**, peak PHP heap
+**410.5 MiB** under a 4 GiB limit. Parsing finishes at 4.175 seconds. It stops during
 preparation without PHP fatal/OOM or C++ emission. Timing includes failure-owner
 capture in the same process; these are partial-run costs, not full bootstrap costs.
 
-The `collected_declaration` type-contract failure is gone. The first failing type
-contract is now `collected_method`: its `qualified_name()` redeclares the concrete
-nonvirtual implementation in `collected_definition`. The first diagnostic remains
-`Nonvirtual inherited member redeclaration is deferred`, propagated first through
-`Symbol_Collector::previous_function`. Null-return ownership failures also remain
-on the three no-work query implementations. Both blockers are left unchanged.
+The `collected_method` type-contract failure is gone. The first failing type
+contract is now `loop_node`: its `Preparation_Facts` trait supplies
+`clear_preparation()`, redeclaring the nonvirtual default on `ast_node`. The first
+reported diagnostic remains `Nonvirtual inherited member redeclaration is deferred`,
+propagated through `Symbol_Collector::previous_function`. This AST/trait contract
+and null-return ownership failures are left unchanged.
 
 Storage_Cursor widening and the known prelowered handle/null comparison defect
 remain excluded. Readonly enforcement remains

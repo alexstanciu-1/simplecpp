@@ -32,6 +32,14 @@ not make ordinary methods virtual. The portable dispatch proof extracts these
 query bodies from the real hierarchy; v0.2 still rejects the raw null return in
 no-work implementations, independently of virtual dispatch.
 
+`collected_definition::qualified_name()` is also an explicit abstract contract.
+Functions, constants and type definitions delegate to the protected nonvirtual
+`scope_qualified_name()` helper, which owns namespace naming. Methods retain
+`declaring_type()->qualified_name() . '::' . name`. This preserves name bytes and
+keeps method identity distinct from namespace membership without duplicating the
+namespace algorithm. The focused proof checks actual parsed names in PHP and
+projects the real dispatch methods onto controlled naming inputs for native tests.
+
 Preparation never replaces a write occurrence with a declaration record. Its existing
 identity is used for inferred storage and retained by later references. Scope indexes,
 syntax backlinks and dependency facts continue to reference these same objects;

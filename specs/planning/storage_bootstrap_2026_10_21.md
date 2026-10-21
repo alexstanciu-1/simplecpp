@@ -683,3 +683,44 @@ The owner capture also confirms null-return ownership failures in
 Storage_Cursor widening or prelowered handle/null comparison fix is included.
 These are partial-run measurements, not a completed bootstrap or native compiler
 rebuild.
+
+
+## Explicit qualified-name dispatch and retry — 2026-10-21
+
+Candidate: `46d9e35e` plus the overlay retained in
+`/tmp/bootstrap-attempt-20261021-qualified-names/candidate.diff`.
+`collected_definition::qualified_name()` is abstract. Its unchanged namespace
+algorithm moves to protected `scope_qualified_name()`. Functions, constants and
+type definitions delegate to that helper; methods retain their existing
+`declaring_type()->qualified_name() . '::' . name` implementation. This source-only
+refactor establishes the existing virtual contract without changing language policy,
+name formatting, ownership or lifetime.
+
+`tests/portability/qualified_name_dispatch.py --results /tmp/qualified-name-dispatch-03`
+passes real PHP parser/collection naming checks for global/namespaced functions,
+constants, class/interface/enum/trait types and methods. A projection extracts the
+actual dispatch methods and supplies controlled scope/accessor inputs, proving
+base-handle dispatch and protected-helper calls through PHP, v0.1 native and v0.2
+ordinary/prelowered generated execution. The projection does not claim native
+execution of the full scope-lookup implementation or repair its separately known
+handle/null comparison problem. `/tmp/qualified-name-regressions` records passing
+existing namespace, collected-role and incremental parse/collection checks.
+No native compiler rebuild is performed.
+
+Conversion: 259 PHP files, 4.72 s, peak RSS 186.4 MiB. Assembled input: 269 PHS files,
+1,926,457 bytes. Isolated PHP8.5 CLI bootstrap (OPcache CLI/Xdebug disabled, 4 GiB
+limit): **190.40 s wall time**, **428852 KiB / 418.8 MiB peak RSS**,
+**430440448 bytes / 410.5 MiB peak PHP heap**. Parsing completes at 4.175 s.
+Preparation fails without PHP fatal/OOM or C++ emission. Failure-owner capture runs
+in the same process and is included in those totals. The artifact directory retains
+source hashes, phase marks and `failure-owners.json`; its `.py` sibling is the driver.
+
+The `collected_method` type-contract failure is gone. The first reported diagnostic
+still says `Nonvirtual inherited member redeclaration is deferred`, propagated
+through `Symbol_Collector::previous_function`. The first failing type contract is
+now `loop_node` in `03_parse/structures/abstractions.php`: `Preparation_Facts`
+contributes `clear_preparation()`, overriding the concrete default on `ast_node`.
+The group contains 67 failing work items including propagation, not 67 independent
+root defects. No AST/trait contract repair is included. Null-return ownership,
+Storage_Cursor widening and the known prelowered handle/null comparison defect
+remain untouched. This is a partial-run measurement, not completed self-bootstrap.

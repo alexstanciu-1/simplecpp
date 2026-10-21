@@ -116,7 +116,10 @@ abstract class collected_declaration extends collected_name
 abstract class collected_definition extends collected_declaration implements preparation_lookup_candidate_i
 {
 	/** Stable source identity is separate from local lookup spelling and backend encoding. */
-	public function qualified_name(): string
+	abstract public function qualified_name(): string;
+
+	/** Shared namespace naming for definitions that are not methods. */
+	protected function scope_qualified_name(): string
 	{
 		$declaration_scope = object_cast(weakref_get($this->scope), \scpp\compiler\scope::class);
 		$identity = $declaration_scope->source_namespace();
@@ -173,6 +176,8 @@ abstract class collected_source_callable extends collected_definition implements
 
 final class collected_function extends collected_source_callable
 {
+	public function qualified_name(): string { return $this->scope_qualified_name(); }
+
 	public function kind(): collected_name_kind
 	{
 		return collected_name_kind::function_declaration;
@@ -214,6 +219,8 @@ final class collected_method extends collected_source_callable
 
 final class collected_constant extends collected_definition implements constant_target_i
 {
+	public function qualified_name(): string { return $this->scope_qualified_name(); }
+
 	public ?collected_member_owner $member_owner /** weak<collected_member_owner> */ = null;
 	private constant_declaration_node $syntax_node;
 	public function __construct(collected_file $collection, constant_declaration_node $node)
@@ -230,6 +237,7 @@ final class collected_constant extends collected_definition implements constant_
 /** Shared source-type identity; record-only consumers must explicitly narrow to collected_record. */
 abstract class collected_type_definition extends collected_definition
 {
+	public function qualified_name(): string { return $this->scope_qualified_name(); }
 }
 
 final class collected_enum extends collected_type_definition
