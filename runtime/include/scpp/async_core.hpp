@@ -330,6 +330,20 @@ public:
 
 [[nodiscard]] sleep_awaitable sleep_for(std::chrono::milliseconds duration) noexcept;
 [[nodiscard]] sleep_awaitable sleep_ms(const int_t<> &duration_ms) noexcept;
+
+// Own the timer argument in a task frame, matching other awaitable call results.
+[[nodiscard]] inline task<void> sleep_task(int_t<> duration_ms)
+{
+	co_await sleep_ms(duration_ms);
+}
+
+// Keep a coroutine closure alive until its returned task finishes. Captured
+// references remain bounded by the enclosing invocation that immediately awaits it.
+template <typename Callback>
+[[nodiscard]] auto invoke_owned(Callback callback) -> decltype(callback())
+{
+	co_return co_await callback();
+}
 [[nodiscard]] yield_awaitable yield_now() noexcept;
 
 template <typename T>

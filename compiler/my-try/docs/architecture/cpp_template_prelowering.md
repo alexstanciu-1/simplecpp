@@ -180,3 +180,23 @@ wrapper removal, new optimization and ThinLTO remain deferred; see the
 [tentative v0.3 runtime review](../../../../specs/planning/runtime_prepared_facts_review_v0_3_2026_10_20.md).
 The [pre-cleanup history](cpp_template_prelowering_history_2026_10_20.md) retains older
 implementation checkpoints and evidence links without defining current configuration.
+
+## Async implementation placement
+
+Async callable signatures expose concrete move-only task storage. The registry
+owns an internal task identity parameterized by the canonical payload; shared
+preparation retains the body payload return and settled suspension facts. The C++
+opaque representation uses recursive payload identity for stable artifact names.
+
+The existing implementation-group assembler places async bodies and concrete
+entry bridges in per-source `specializations/async/` units. Coroutine headers stay
+behind that compiled boundary; application units keep the template prohibition.
+This is a placement policy over existing source work, not another semantic owner.
+Normal fragment retirement/republication also governs async groups.
+
+`CPP_Sequence` consumes prepared expression suspension facts. Expressions that
+suspend use an immediately awaited, owned coroutine scope so ordered snapshots
+survive suspension. Lazy branches stay within that scope and remain lazy. The
+runtime `invoke_owned` helper owns its callable until completion. Other expressions
+retain ordinary scopes. See the [async checkpoint](../planning/async_tasks.md) for
+proof boundaries and deferred contracts.

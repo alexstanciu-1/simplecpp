@@ -6,6 +6,7 @@ namespace scpp\compiler;
 /** Authored signature data, independent of declaration names and expression identity. */
 final class callable_signature_syntax
 {
+	public bool $asynchronous = false;
 	public Storage $parameters /** Storage<parameter_node> */;
 	public ?type_node $return_type = null;
 	/** Explicit source marker; its lifetime contract is established by preparation. */

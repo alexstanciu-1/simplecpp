@@ -43,9 +43,9 @@ final class CPP_Provider_Properties
 		$request = self::request($syntax, false);
 		$name = 'provider_owner_' . $context->next_temporary++;
 		$arguments /** vector<string> */ = [$name];
-		return '([&]() -> ' . CPP_Declarations::type($syntax->require_preparation()->type, $context)
-			. ' { auto ' . $name . ' = ' . (new CPP_Syntax($context))->expression($syntax->base)
-			. '; return ' . CPP_Runtime_Operations::invoke($request, $arguments, $context, '') . '; }())';
+		return CPP_Sequence::open(CPP_Declarations::type($syntax->require_preparation()->type, $context), $context)
+			. 'auto ' . $name . ' = ' . (new CPP_Syntax($context))->expression($syntax->base)
+			. '; ' . CPP_Sequence::result(CPP_Runtime_Operations::invoke($request, $arguments, $context, ''), $context) . CPP_Sequence::close($context);
 	}
 
 	public static function write(field_access_node $syntax, prepared_property_assignment $facts,
@@ -60,11 +60,11 @@ final class CPP_Provider_Properties
 		$target_arguments /** vector<string> */ = [$owner];
 		$write_arguments /** vector<string> */ = [$owner, $snapshot];
 		$converted = CPP_Declarations::conversion($value, $facts->conversion, $context);
-		return '([&]() -> ' . CPP_Declarations::type($facts->destination_type(), $context)
-			. ' { auto ' . $owner . ' = ' . (new CPP_Syntax($context))->expression($syntax->base)
+		return CPP_Sequence::open(CPP_Declarations::type($facts->destination_type(), $context), $context)
+			. 'auto ' . $owner . ' = ' . (new CPP_Syntax($context))->expression($syntax->base)
 			. '; ' . CPP_Runtime_Operations::invoke($target, $target_arguments, $context, '')
 			. '; auto ' . $snapshot . ' = ' . $converted . '; '
 			. CPP_Runtime_Operations::invoke($request, $write_arguments, $context, '')
-			. '; return ' . $snapshot . '; }())';
+			. '; ' . CPP_Sequence::result($snapshot, $context) . CPP_Sequence::close($context);
 	}
 }

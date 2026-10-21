@@ -9,9 +9,14 @@ syntax and collection → shared semantic preparation → C++ generation. Other
 frontends should normalize toward the same PHS-shaped concepts. LLVM is a parked
 experiment retained for regressions, not a second semantic development path.
 
-Current repair checkpoint: [host and isolated database verification](planning/verification_environment.md),
-51/64 original issues resolved (79.6875%): 48 implemented/repaired (including
+Current repair checkpoint: [collection and advisory verification](planning/collection_advisories.md),
+55/64 original issues resolved (85.9375%): 52 implemented/repaired (including
 harnesses) and three contract/environment reconciliations. Supplementary BS-R01 also remains closed.
+
+The active [async/tasks goal](planning/async_tasks.md) has verified owned callback
+transport and async suspension under default prelowering on dev002. Tasks module
+admission, transfer restrictions and shutdown integration remain open; this
+checkpoint does not add either issue to the closed count.
 
 S10/V-R06 add invalidation-checked spans and FNV-1a64 with versioned keys, verified
 on dev002 with default prelowering. Wider uint64 equality and explicit copyable-value
@@ -21,8 +26,8 @@ V-P01 exposes strict manifest projects and existing export/dependency policies t
 `--project`. V-D10 preserves immutable startup metadata; live replacement stays
 unsupported. Both have default-prelowered dev002 proof. The earlier
 [debug/closure closeout](planning/scalar_debug_closure_reconciliation.md) preserves
-borrowed-closure restrictions; explicit callable storage remains a separate
-prelowering gap.
+borrowed-closure restrictions. Subsequent collection and async work verifies bounded
+owned callable storage; this does not admit arbitrary cross-thread captures.
 
 ## Reading map
 

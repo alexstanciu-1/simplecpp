@@ -16,7 +16,12 @@ final class Expression_Preparation
 	public static function prepare_for_consumer(expression_node $node, preparation_context $context,
 		?canonical_type_use $expected_type, expression_consumer $consumer): prepared_expression
 	{
-		if ($node instanceof closure_node) {
+		$suspension_start = $context->suspension_count;
+		if ($node instanceof await_expression_node) {
+			$awaited = object_cast($node, await_expression_node::class);
+			$awaited->set_preparation(Async_Preparation::await_value($awaited->operand, $context));
+		}
+		elseif ($node instanceof closure_node) {
 			$closure = object_cast($node, closure_node::class);
 			$identity = $closure->anonymous_identity();
 			$captures = Capture_Preparation::prepare($closure, $context);
@@ -151,7 +156,14 @@ final class Expression_Preparation
 		else {
 			throw new \RuntimeException('Preparation is not supported for this node');
 		}
-		return $node->require_preparation();
+		$result = $node->require_preparation();
+		$result->suspends = $context->suspension_count !== $suspension_start;
+		if (Type_Queries::canonical($result->type)->definition() instanceof async_task_type_definition) {
+			if ($consumer !== expression_consumer::await_operand) {
+				throw new \RuntimeException('Async task values require immediate await; task storage and passing are deferred');
+			}
+		}
+		return $result;
 	}
 
 	/** A variable write enters local binding; supported member writes retain their exact field target. */

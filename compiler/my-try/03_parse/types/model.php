@@ -44,6 +44,7 @@ enum nominal_type_kind: int
 	case trait_type = 5;
 	case closure_type = 6;
 	case callable_type = 7;
+	case async_task = 8;
 }
 
 /** Storage of a record instance, independently of its nominal declaration identity. */
@@ -331,6 +332,16 @@ final class nominal_type_definition extends abstract_nominal_type_definition
 /** Unique expression type; source ownership and callable facts live outside the registry. */
 final class closure_type_definition extends abstract_nominal_type_definition
 {
+}
+
+/** Internal awaitable identity. Source task storage/passing is not exposed by this slice. */
+final class async_task_type_definition extends abstract_nominal_type_definition
+{
+	public function __construct(int $id, string $name, public readonly canonical_type_use $value_type)
+	{
+		parent::__construct($id, $name, type_definition_origin::language, nominal_type_kind::async_task,
+			/** vector<generic_contract> */ [generic_contract::value_storable]);
+	}
 }
 
 /** Structural, name-free callable contract; no source occurrence or backend spelling. */
@@ -1047,6 +1058,16 @@ final class Type_Registry implements type_capability_query
 	}
 
 	private array $callable_types /** hash<callable_type_definition> */ = [];
+	private array $async_task_types /** hash<async_task_type_definition> */ = [];
+	public function define_async_task(canonical_type_use $value): async_task_type_definition
+	{
+		$key = $value->type_id() . ':' . ($value->by_value() ? 'v' : 'n');
+		if (isset($this->async_task_types[$key])) { return $this->async_task_types[$key]; }
+		$definition = new async_task_type_definition($this->allocate_definition_id(), '<async:' . $key . '>', $value);
+		$this->register_definition($definition);
+		$this->async_task_types[$key] = $definition;
+		return $definition;
+	}
 	public function define_callable(canonical_type_use $result, array $inputs /** vector<callable_parameter> */,
 		?reference_return_contract $reference_return = null): callable_type_definition
 	{
@@ -1315,6 +1336,7 @@ final class Type_Registry implements type_capability_query
 			return ($nominal->nominal_kind() === nominal_type_kind::structure)
 				|| ($nominal->nominal_kind() === nominal_type_kind::closure_type)
 				|| ($nominal->nominal_kind() === nominal_type_kind::callable_type)
+				|| ($nominal->nominal_kind() === nominal_type_kind::async_task)
 				|| ($nominal->nominal_kind() === nominal_type_kind::enumeration);
 		}
 		if ($definition instanceof abstract_template_type_definition) {

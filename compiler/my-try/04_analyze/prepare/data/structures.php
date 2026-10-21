@@ -18,6 +18,7 @@ enum expression_value_origin
 /** The immediate consumer selects admission; this does not propagate into child expressions. */
 enum expression_consumer
 {
+	case await_operand;
 	case value;
 	case local_storage;
 	case typed_local_initialization;
@@ -38,6 +39,8 @@ enum value_boundary_operation
 
 /** Common backend-neutral result of preparing an expression. */
 abstract class prepared_expression {
+	/** True only when this expression can suspend its enclosing async invocation. */
+	public bool $suspends = false;
 	public canonical_type_use $type;
 	public expression_value_origin $value_origin = expression_value_origin::ordinary;
 	/** Absent for values; present for whole storage and prepared property projections. */
@@ -765,6 +768,8 @@ final class prepared_finally
 /** Invocation-local preparation data; never published into AST records or source scopes. */
 final class preparation_context
 {
+	public bool $asynchronous = false;
+	public int $suspension_count = 0;
 	/** Current protected region; nested callable preparation starts with a fresh context. */
 	public ?prepared_finally $finally_region = null;
 	public bool $finally_return_forbidden = false;

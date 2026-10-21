@@ -1,6 +1,14 @@
 # Test runners
 Doc Status: supporting
 
+Async checks use the shared runner on dev002:
+`python3 compiler/my-try/tests/async_execution.py --results FRESH_DIRECTORY` covers
+default-prelowered cold/warm execution, four production sanitizer cases, an ordinary
+control and retained recovery/fresh parity. `async_preparation.py` covers shared
+admission; `async_tasks_runtime.py` covers runtime foundations. Each accepts its
+own fresh `--results` directory. These checks do not rebuild the compiler natively
+or prove full tasks integration. See [scope and evidence](planning/async_tasks.md).
+
 ## Conservative call snapshot elision
 
 `python3 compiler/my-try/tests/call_snapshot_borrow.py --results FRESH` checks

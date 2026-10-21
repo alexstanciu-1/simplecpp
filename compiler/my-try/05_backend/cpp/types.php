@@ -148,7 +148,7 @@ final class CPP_Types
 			if ($engine !== null) {
 				$selected = self::has_template_recipe($type_use);
 				if (($definition->origin() !== type_definition_origin::source)
-					&& !($definition instanceof callable_type_definition)) {
+					&& !($definition instanceof callable_type_definition) && !($definition instanceof async_task_type_definition)) {
 					$recipe = Model::$cpp_type_bindings->definition($definition->definition_id())->recipe();
 					$selected = $selected || $recipe->concrete_boundary;
 				}
@@ -157,6 +157,16 @@ final class CPP_Types
 			}
 		}
 		$result = new cpp_type();
+		if ($definition instanceof async_task_type_definition) {
+			$task = object_cast($definition, async_task_type_definition::class);
+			$payload_context = $argument_engine !== null ? new cpp_generation_context($argument_engine) : $context;
+			$payload = self::representation($task->value_type, $payload_context);
+			self::merge_headers($result, $payload);
+			$result->spelling = 'scpp::async_core::task<' . $payload->spelling . '>';
+			self::add_header($result, 'scpp/async_core.hpp');
+			$result->literal = cpp_literal_kind::none;
+			return $result;
+		}
 		if ($definition instanceof callable_type_definition) {
 			// Native callable spelling must not bypass the concrete storage contract.
 			if ($context !== null) {
@@ -279,13 +289,14 @@ final class CPP_Types
 		if ($type->by_value()) { return Model::$cpp_type_bindings->modifier(type_use_modifier_kind::by_value)->recipe(); }
 		$definition = Type_Queries::canonical($type)->definition();
 		if (Type_Queries::is_nominal_handle($type)) { $definition = Model::$type_catalog->definition('shared'); }
-		elseif (($definition->origin() === type_definition_origin::source) || ($definition instanceof callable_type_definition)) { return null; }
+		elseif (($definition->origin() === type_definition_origin::source) || ($definition instanceof callable_type_definition) || ($definition instanceof async_task_type_definition)) { return null; }
 		return Model::$cpp_type_bindings->definition($definition->definition_id())->recipe();
 	}
 
 	public static function needs_concrete_storage(canonical_type_use $type): bool
 	{
-		if (Type_Queries::canonical($type)->definition() instanceof callable_type_definition) { return true; }
+		if ((Type_Queries::canonical($type)->definition() instanceof callable_type_definition)
+			|| (Type_Queries::canonical($type)->definition() instanceof async_task_type_definition)) { return true; }
 		$recipe = self::stored_recipe($type);
 		if ($recipe === null) { return false; }
 		return $recipe->template_application || $recipe->concrete_boundary;
@@ -322,7 +333,7 @@ final class CPP_Types
 	{
 		$definition = Type_Queries::canonical($type_use)->definition();
 		// Source records and structural callables have their own representation owners.
-		if (($definition->origin() === type_definition_origin::source) || ($definition instanceof callable_type_definition)) {
+		if (($definition->origin() === type_definition_origin::source) || ($definition instanceof callable_type_definition) || ($definition instanceof async_task_type_definition)) {
 			return false;
 		}
 		return Model::$cpp_type_bindings->definition($definition->definition_id())->recipe()->template_application;

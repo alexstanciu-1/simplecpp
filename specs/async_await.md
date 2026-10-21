@@ -32,13 +32,26 @@ $value int = await compute_value();
 echo $value, "\n";
 ```
 
-Current lowering:
+Lowering contract:
 
-- `async function f(): T` becomes the parser-compatible `/** @async */ function f(): T` form before IR building.
+- `async function f(): T` declares a task-producing callable whose eventual value has type `T`. The legacy frontend uses a parser-compatible `/** @async */` marker; v0.2 retains this distinction in callable preparation.
 - `return` inside an async function lowers to `co_return`.
 - `await async_sleep_ms(ms)` inside an async function lowers to `co_await scpp::async_core::sleep_ms(...)`.
-- Expression-level `await expr` lowers to `async_wait(expr)`.
+- Expression-level `await expr` suspends inside an async function. At synchronous/top-level sites it waits synchronously. Nested calls, lazy branches and operand snapshots preserve source evaluation order across suspension.
 - `async_wait(task_expr)` lowers to `scpp::async_core::sync_wait(task_expr)`.
+
+For the bounded v0.2 source slice, task-producing calls must be consumed directly
+by `await` or `async_wait`; task variables, task parameters and async callable
+adaptation remain separate work. Async parameters must be owned values; reference
+parameters and reference results reject. Local values and their cleanup remain
+alive across suspension. The `tasks` module's cross-thread transfer rules do not
+apply to cooperative async calls.
+
+Default prelowering keeps coroutine implementations behind the compiled boundary
+and exports concrete task storage to template-free application units. Snapshot
+scopes containing suspension retain their own locals and closure until completion;
+ordinary expressions do not acquire extra suspension points. This describes the
+v0.2 implementation contract, not a claim that unrelated prelowering gaps are closed.
 
 `async_sleep_ms(...)` is a suspension primitive. It must be used inside an async function. Synchronous code should await an async task value instead.
 

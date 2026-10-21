@@ -626,7 +626,7 @@ final class Parser_Run
 			|| ($this->text() === 'interface') || ($this->text() === 'trait') || ($this->text() === 'final') || ($this->text() === 'abstract')) {
 			return $this->type_declaration();
 		}
-		if ((($this->text() === 'function') || ($this->text() === 'template'))) {
+		if (($this->text() === 'function') || ($this->text() === 'template') || ($this->text() === 'async')) {
 			return $this->function_declaration();
 		}
 		if ($this->text() === 'return') {
@@ -1301,6 +1301,8 @@ final class Parser_Run
 			$this->expect('>');
 		}
 
+		$asynchronous = $this->text() === 'async';
+		if ($asynchronous) { $this->position++; }
 		$this->expect('function');
 		$returns_reference = $this->text() === '&';
 		if ($returns_reference) {
@@ -1348,6 +1350,7 @@ final class Parser_Run
 			}
 		}
 		$function->name = $function_name;
+		$function->signature_syntax->asynchronous = $asynchronous;
 		if ($record === null) {
 			$this->collector->collect_function(object_cast($function, function_node::class), $declaration_scope, $name_token_index);
 		}
@@ -1867,6 +1870,13 @@ final class Parser_Run
 	private function unary_expression(): expression_node
 	{
 		$text = $this->text();
+		if ($text === 'await') {
+			$start = $this->position++;
+			$awaited = new await_expression_node();
+			$awaited->operand = $this->unary_expression();
+			$this->finish_node($awaited, $start);
+			return $awaited;
+		}
 		if (($text === '++') || ($text === '--'))
 		{
 			$start = $this->position++;

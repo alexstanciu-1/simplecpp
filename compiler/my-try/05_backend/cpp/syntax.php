@@ -23,6 +23,18 @@ final class CPP_Syntax
 	/** Backend-owned selection only; typed handlers own child traversal. */
 	public function expression(expression_node $node): string
 	{
+		$previous = $this->context->suspending_expression;
+		$this->context->suspending_expression = $node->require_preparation()->suspends;
+		try { return $this->render_expression($node); }
+		finally { $this->context->suspending_expression = $previous; }
+	}
+
+	private function render_expression(expression_node $node): string
+	{
+		if ($node instanceof await_expression_node) {
+			$awaited = object_cast($node, await_expression_node::class);
+			return CPP_Async::await_value($awaited->require_await_preparation(), $this->expression($awaited->operand), $this->context);
+		}
 		if ($node instanceof closure_node) {
 			$closure = object_cast($node, closure_node::class);
 			$signature_work /** anonymous_signature_work */ = $closure->anonymous_identity()->signature_work;
@@ -37,6 +49,8 @@ final class CPP_Syntax
 					. CPP_Generator::local_name(object_cast(weakref_get($parameter->declaration), collected_name::class));
 			}
 			$previous_return = $this->context->return_type;
+			$previous_async = $this->context->asynchronous;
+			$this->context->asynchronous = false;
 			$previous_finally = $this->context->finally_return;
 			$this->context->finally_return = null;
 			$capture_parts /** vector<string> */ = [];
@@ -52,6 +66,7 @@ final class CPP_Syntax
 			try { $body = CPP_Generator::generate_statements($closure->require_body(), $this->context); }
 			finally {
 				$this->context->return_type = $previous_return;
+				$this->context->asynchronous = $previous_async;
 				$this->context->finally_return = $previous_finally;
 			}
 			// Value bindings stay read-only in preparation; mutable permits shared-payload APIs and callable invocation.
@@ -198,10 +213,10 @@ final class CPP_Syntax
 		$base = CPP_Declarations::bind_storage_receiver($node->base, $this->context, true);
 		$converted_key = CPP_Declarations::conversion($this->expression($argument), $decision->operands[1], $this->context);
 		$operation = $helper . '(' . $receiver . ', ' . $key . ')';
-		return '([&]() -> ' . CPP_Declarations::type($decision->result_type, $this->context) . ' { '
+		return CPP_Sequence::open(CPP_Declarations::type($decision->result_type, $this->context), $this->context)
 			. $base->statements . 'const auto& ' . $receiver . ' = ' . $base->value . '; '
 			. CPP_Declarations::type($decision->operands[1]->target_type, $this->context) . ' ' . $key . ' = ' . $converted_key . '; '
-			. 'return ' . $operation . '; }())';
+			. CPP_Sequence::result($operation, $this->context) . CPP_Sequence::close($this->context);
 	}
 
 	/** Backend-owned selection only; typed handlers own child traversal. */
@@ -396,7 +411,7 @@ final class CPP_Syntax
 		$selector = $this->expression($node->selector);
 		$temporary = 'match_subject_' . $this->context->next_temporary;
 		$this->context->next_temporary++;
-		$text = '([&]() -> ' . $result_type . ' { const auto ' . $temporary
+		$text = CPP_Sequence::open($result_type, $this->context) . 'const auto ' . $temporary
 			. ' = ' . CPP_Selection::subject($selector, $node->selector->require_preparation()->type) . '; ';
 		$fallback = '';
 		$arms /** Storage<match_arm_node> */ = $node->arms;
@@ -405,7 +420,7 @@ final class CPP_Syntax
 			$facts = $arm->require_preparation();
 			$result = CPP_Declarations::conversion($this->expression($arm->result), $facts->conversion, $this->context);
 			if (q_count($facts->labels) === 0) {
-				$fallback = 'return ' . $result . '; ';
+				$fallback = CPP_Sequence::result($result, $this->context);
 				continue;
 			}
 			$checks = '';
@@ -415,14 +430,14 @@ final class CPP_Syntax
 				}
 				$checks .= '(' . $temporary . ' == ' . CPP_Selection::constant($label, $this->context) . ')';
 			}
-			$text .= 'if (' . $checks . ') { return ' . $result . '; } ';
+			$text .= 'if (' . $checks . ') { ' . CPP_Sequence::result($result, $this->context) . '} ';
 		}
 		if ($fallback === '') {
 			$this->require_native_operation('match failure operation');
 			$this->context->headers['stdexcept'] = true;
 			$fallback = 'throw std::runtime_error("Unhandled match expression"); ';
 		}
-		return $text . $fallback . '}())';
+		return $text . $fallback . CPP_Sequence::close($this->context);
 	}
 
 	public function loop_body(loop_node $node): string
@@ -544,15 +559,15 @@ final class CPP_Syntax
 			$arguments[] = $name;
 			$result = CPP_Declarations::type($facts->type, $this->context);
 			$call = CPP_Runtime_Operations::invoke($request, $arguments, $this->context, '');
-			return '([&]() -> ' . $result . ' { auto ' . $name . ' = ' . $source . '; return ' . $call . '; }())';
+			return CPP_Sequence::open($result, $this->context) . 'auto ' . $name . ' = ' . $source . '; ' . CPP_Sequence::result($call, $this->context) . CPP_Sequence::close($this->context);
 		}
 		$this->context->headers['lang/php/support/php_take.hpp'] = true;
 		$outputs = $this->expression($node->value_binding);
 		if ($node->alternative_binding !== null) {
 			$outputs .= ', ' . $this->expression($node->alternative_binding);
 		}
-		return '([&]() -> scpp::bool_t { auto ' . $name . ' = ' . $source
-			. '; return scpp::php::take(' . $outputs . ', ' . $name . '); }())';
+		return CPP_Sequence::open('scpp::bool_t', $this->context) . 'auto ' . $name . ' = ' . $source
+			. '; ' . CPP_Sequence::result('scpp::php::take(' . $outputs . ', ' . $name . ')', $this->context) . CPP_Sequence::close($this->context);
 	}
 
 	public function generate_null_literal(null_literal_node $node): string
@@ -589,7 +604,7 @@ final class CPP_Syntax
 		if ($facts->presence === coalesce_presence::always) {
 			$extracted = CPP_Declarations::conversion($left, $facts->left_extraction, $this->context);
 			$selected = CPP_Declarations::conversion($extracted, $facts->left_conversion, $this->context);
-			return '([&]() -> ' . $result_type . ' { return ' . $selected . '; }())';
+			return CPP_Sequence::open($result_type, $this->context) . CPP_Sequence::result($selected, $this->context) . CPP_Sequence::close($this->context);
 		}
 		$temporary = 'coalesce_' . $this->context->next_temporary;
 		$this->context->next_temporary++;
@@ -614,9 +629,9 @@ final class CPP_Syntax
 		else {
 			throw new \LogicException('Unsupported prepared coalesce presence');
 		}
-		return '([&]() -> ' . $result_type . ' { ' . $source_type . ' ' . $temporary . ' = ' . $left
-			. '; if (' . $presence . ') { return ' . $selected
-			. '; } return ' . $fallback . '; }())';
+		return CPP_Sequence::open($result_type, $this->context) . $source_type . ' ' . $temporary . ' = ' . $left
+			. '; if (' . $presence . ') { ' . CPP_Sequence::result($selected, $this->context)
+			. '} ' . CPP_Sequence::result($fallback, $this->context) . CPP_Sequence::close($this->context);
 	}
 
 	/** Full ternary and Elvis use truthiness, not the coalescing presence rule. */
@@ -642,8 +657,8 @@ final class CPP_Syntax
 		$test = CPP_Declarations::truthiness($condition, $facts->truthiness, $this->context);
 		$selected = CPP_Declarations::conversion($selected, $facts->true_conversion, $this->context);
 		$fallback = CPP_Declarations::conversion($this->expression($node->fallback), $facts->fallback_conversion, $this->context);
-		return '([&]() -> ' . $result_type . ' { ' . $prefix . 'if (' . $test . ') { return '
-			. $selected . '; } return ' . $fallback . '; }())';
+		return CPP_Sequence::open($result_type, $this->context) . $prefix . 'if (' . $test . ') { '
+			. CPP_Sequence::result($selected, $this->context) . '} ' . CPP_Sequence::result($fallback, $this->context) . CPP_Sequence::close($this->context);
 	}
 
 	public function generate_float_literal(float_literal_node $node): string

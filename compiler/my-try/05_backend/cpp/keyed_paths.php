@@ -22,11 +22,11 @@ final class CPP_Keyed_Path
 		$mode = $removing ? 'true' : 'false';
 		if (!$removing && $result === null) { throw new \LogicException('Keyed probe requires its prepared result type'); }
 		$result_type = $removing ? 'void' : CPP_Declarations::type($result, $context);
-		$stop = 'return;';
-		if (!$removing) { $stop = 'return ' . $result_type . '{' . ($emptiness ? 'true' : 'false') . '};'; }
+		$stop = CPP_Sequence::result('', $context);
+		if (!$removing) { $stop = CPP_Sequence::result($result_type . '{' . ($emptiness ? 'true' : 'false') . '}', $context); }
 		if (!$removing && $emptiness) { $stop = 'scpp::detail::throw_invalid_empty();'; }
 		$binding = CPP_Declarations::bind_storage_receiver($path->root, $context);
-		$text = '([&]() -> ' . $result_type . ' { ' . $binding->statements . ($removing ? 'auto& ' : 'const auto& ')
+		$text = CPP_Sequence::open($result_type, $context) . $binding->statements . ($removing ? 'auto& ' : 'const auto& ')
 			. $root . ' = ' . $binding->value . '; ';
 		$resolver = 'keyed_resolve_' . $id . '_0';
 		$text .= 'auto ' . $resolver . ' = [&]() -> const ' . $root_type . '* { return &' . $root . '; }; ';
@@ -55,16 +55,16 @@ final class CPP_Keyed_Path
 				if ($presence !== null) {
 					$leaf = 'keyed_leaf_' . $id;
 					$text .= 'const auto* ' . $leaf . ' = scpp::keyed_lookup(' . $resolver . '(), ' . $key . ', false); ';
-					$text .= 'if (!' . $leaf . ') { return ' . $result_type . '{false}; } return ' . $result_type . '('
-						. CPP_Declarations::truthiness('(*' . $leaf . ')', $presence, $context) . '); ';
+					$text .= 'if (!' . $leaf . ') { ' . CPP_Sequence::result($result_type . '{false}', $context) . '} ' . CPP_Sequence::result($result_type . '('
+						. CPP_Declarations::truthiness('(*' . $leaf . ')', $presence, $context) . ')', $context);
 				}
 				else {
-					$text .= 'return ' . $result_type . '(scpp::keyed_probe(' . $resolver . '(), ' . $key . ', ' . ($emptiness ? 'true' : 'false') . ')); ';
+					$text .= CPP_Sequence::result($result_type . '(scpp::keyed_probe(' . $resolver . '(), ' . $key . ', ' . ($emptiness ? 'true' : 'false') . '))', $context);
 				}
 			}
 			else
 			{
-				$text .= 'if (!scpp::keyed_lookup(' . $resolver . '(), ' . $key . ', true)) { return; } ';
+				$text .= 'if (!scpp::keyed_lookup(' . $resolver . '(), ' . $key . ', true)) { ' . CPP_Sequence::result('', $context) . '} ';
 				$parent = $root;
 				for ($prefix = 0; $prefix < $last; $prefix++)
 				{
@@ -77,6 +77,7 @@ final class CPP_Keyed_Path
 			$current_type = $step->element_type;
 			$position++;
 		}
-		return $text . '}())';
+		if ($removing) { $text .= CPP_Sequence::result('', $context); }
+		return $text . CPP_Sequence::close($context);
 	}
 }

@@ -45,8 +45,8 @@ final class CPP_Index_Write
 		$text .= self::existing_snapshot($destination, $receiver, $keys, $previous, $context);
 		$text .= CPP_Generator::compute_compound($facts, $previous, $emitter->expression($node->value), $context);
 		$text .= self::existing_store($destination, $receiver, $keys, $previous, $context);
-		return '([&]() -> ' . CPP_Declarations::type($facts->type, $context) . ' { '
-			. $text . 'return ' . $previous . '; }())';
+		return CPP_Sequence::open(CPP_Declarations::type($facts->type, $context), $context)
+			. $text . CPP_Sequence::result($previous, $context) . CPP_Sequence::close($context);
 	}
 
 	/** Append already evaluated keys to a runtime helper call. */
@@ -181,7 +181,7 @@ final class CPP_Index_Write
 		if (!$value_required) {
 			return $text . '}';
 		}
-		return '([&]() -> ' . $type . ' ' . $text . 'return ' . $value . '; }())';
+		return CPP_Sequence::open($type, $context) . q_substr($text, 2) . CPP_Sequence::result($value, $context) . CPP_Sequence::close($context);
 	}
 	/** Shared prepared-path lowering for ordinary code and native ABI bridges. */
 	public static function resolve_path(Storage $elements /** Storage<canonical_type_use> */,

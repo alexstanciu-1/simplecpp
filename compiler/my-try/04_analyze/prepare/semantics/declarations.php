@@ -55,6 +55,7 @@ final class Declaration_Preparation
 		self::prepare_parameters($syntax->signature_syntax, $facts, $context);
 		Reference_Preparation::prepare_signature($syntax->signature_syntax, $facts->signature);
 		Callable_Contracts::validate($facts->signature);
+		Async_Preparation::signature($syntax->signature_syntax, $facts->signature);
 		$syntax->set_preparation($facts);
 	}
 

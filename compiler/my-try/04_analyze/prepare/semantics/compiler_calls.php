@@ -20,6 +20,9 @@ final class Compiler_Call_Preparation
 		Storage $arguments /** Storage<expression_node> */, preparation_context $context): prepared_call
 	{
 		$operation = $definition->kind();
+		if (($operation === compiler_function_kind::async_sleep) || ($operation === compiler_function_kind::async_wait)) {
+			return Async_Preparation::call($definition, $arguments, $context);
+		}
 		if (($operation === compiler_function_kind::layout_sizeof) || ($operation === compiler_function_kind::layout_alignof)
 			|| ($operation === compiler_function_kind::layout_offsetof) || ($operation === compiler_function_kind::layout_field_sizeof)) {
 			return Layout_Query_Preparation::prepare($definition, $arguments, $context);

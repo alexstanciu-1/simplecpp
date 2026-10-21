@@ -299,13 +299,18 @@ final class CPP_Generator
 			$body_owner = object_cast($owner, body_work::class);
 			if ($body_owner instanceof source_callable_body_work) {
 				$function = object_cast($body_owner, source_callable_body_work::class)->callable_definition()->callable_syntax();
-				$context->return_type = $function->require_preparation()->signature->return_type;
+				$function_signature = $function->require_preparation()->signature;
+				$context->asynchronous = $function_signature->async_value_type !== null;
+				$context->return_type = $function_signature->async_value_type ?? $function_signature->return_type;
 				$definition = object_cast($body_owner, source_callable_body_work::class)->callable_definition();
 				if ($definition instanceof collected_method) {
 					$next->initializer_text = CPP_Declarations::constructor_initializers(object_cast($definition, collected_method::class), $context);
 				}
 			}
 			$next->text = self::generate_statements($body_owner->executable_body(), $context);
+			if ($context->asynchronous) {
+				if (Type_Queries::canonical($context->return_type)->family() === type_family::no_value) { $next->text .= "\tco_return;\n"; }
+			}
 		}
 		else
 		{
@@ -314,7 +319,9 @@ final class CPP_Generator
 				$function_syntax = object_cast($entry, collected_source_callable::class)->callable_syntax();
 				$definition_context = new cpp_generation_context($this->specializations);
 				$definition_context->outlined_shared_allocations = $this->program->outlined_shared_allocations;
-				$next->text = CPP_Declarations::signature($function_syntax, $definition_context, false);
+				$async_bridge = ($this->specializations !== null) && ($function_syntax->require_preparation()->signature->async_value_type !== null);
+				$next->text = CPP_Declarations::signature($function_syntax, $definition_context, false, $async_bridge);
+				if ($async_bridge) { $next->async_bridge_text = CPP_Async::bridge($function_syntax, $definition_context); }
 				$next->definition_headers = $definition_context->headers;
 				if ($definition_context->reads_source_context) { $context->reads_source_context = true; }
 				foreach ($definition_context->runtime_operations as $key => $request) { $context->runtime_operations[$key] = $request; }
@@ -429,8 +436,13 @@ final class CPP_Generator
 		}
 
 		$initializer /** expression_node */ = $initializer;
-		$value = (new CPP_Syntax($context))->expression($initializer);
-		return self::generate_storage_value($binding, $name, $value, $explicit_type, $context);
+		$previous = $context->suspending_expression;
+		$context->suspending_expression = $initializer->require_preparation()->suspends;
+		try {
+			$value = (new CPP_Syntax($context))->expression($initializer);
+			return self::generate_storage_value($binding, $name, $value, $explicit_type, $context);
+		}
+		finally { $context->suspending_expression = $previous; }
 	}
 
 	/** Select the declared local or concrete assignable target without rendering its value. */
@@ -476,7 +488,7 @@ final class CPP_Generator
 			$pending /** cpp_finally_return */ = $context->finally_return;
 			return CPP_Finally::capture_return($pending, $value);
 		}
-		return "\treturn" . ($value === '' ? '' : ' ' . $value) . ";\n";
+		return "\t" . ($context->asynchronous ? 'co_return' : 'return') . ($value === '' ? '' : ' ' . $value) . ";\n";
 	}
 
 	/** Evaluate the ordinary prepared conversion once, before any delayed-exit storage. */
@@ -492,7 +504,10 @@ final class CPP_Generator
 				return $value;
 			}
 			$decision = $syntax->require_preparation()->require_conversion();
-			return CPP_Declarations::conversion($value, $decision, $context);
+			$previous = $context->suspending_expression;
+			$context->suspending_expression = $expression->require_preparation()->suspends;
+			try { return CPP_Declarations::conversion($value, $decision, $context); }
+			finally { $context->suspending_expression = $previous; }
 		}
 		return 'static_cast<int>((' . $value . ').native_value())';
 	}
@@ -501,7 +516,10 @@ final class CPP_Generator
 	{
 		$expression = $syntax->expression;
 		if ($expression instanceof assignment_expression_node) {
-			return self::generate_assignment_statement(object_cast($expression, assignment_expression_node::class), $context);
+			$previous = $context->suspending_expression;
+			$context->suspending_expression = $expression->require_preparation()->suspends;
+			try { return self::generate_assignment_statement(object_cast($expression, assignment_expression_node::class), $context); }
+			finally { $context->suspending_expression = $previous; }
 		}
 		return "\t" . (new CPP_Syntax($context))->expression($expression) . ";\n";
 	}
@@ -532,7 +550,7 @@ final class CPP_Generator
 		$value = (new CPP_Syntax($context))->expression($syntax->value);
 		$write = self::generate_storage_value($binding, $name, $value, false, $context);
 		$result_type = CPP_Declarations::type($facts->destination_type(), $context);
-		return '([&]() -> ' . $result_type . ' { ' . $write . '; return ' . $name . '; }())';
+		return CPP_Sequence::open($result_type, $context) . $write . '; ' . CPP_Sequence::result($name, $context) . CPP_Sequence::close($context);
 	}
 
 	/** Flatten right-associative writes so introduced locals remain in the surrounding body. */
@@ -562,10 +580,10 @@ final class CPP_Generator
 		$receiver = CPP_Declarations::bind_storage_receiver($target, $context);
 		$name = 'property_target_' . $context->next_temporary;
 		$context->next_temporary++;
-		return '([&]() -> ' . CPP_Declarations::type($facts->destination_type(), $context) . ' { '
+		return CPP_Sequence::open(CPP_Declarations::type($facts->destination_type(), $context), $context)
 			. $receiver->statements . 'auto& ' . $name . ' = ' . $receiver->value . '; '
 			. self::property_store($name, $value, $facts, $context)
-			. ' return ' . $name . '; }())';
+			. CPP_Sequence::result($name, $context) . CPP_Sequence::close($context);
 	}
 
 	/** Payload replacement starts union member lifetime only after a successful RHS snapshot. */
@@ -742,8 +760,8 @@ final class CPP_Generator
 		$right = (new CPP_Syntax($context))->expression($syntax->value);
 		$prefix .= self::compute_compound($facts, $previous, $right, $context);
 		$result_type = CPP_Declarations::type($facts->type, $context);
-		return '([&]() -> ' . $result_type . ' { ' . $prefix
-			. $place . ' = ' . $previous . '; return ' . $place . '; }())';
+		return CPP_Sequence::open($result_type, $context) . $prefix
+			. $place . ' = ' . $previous . '; ' . CPP_Sequence::result($place, $context) . CPP_Sequence::close($context);
 	}
 
 	/** Compute/validate into an owned old-value snapshot before either destination protocol commits. */
@@ -1044,10 +1062,10 @@ final class CPP_Generator
 		$right_name = 'operand_' . $context->next_temporary;
 		$context->next_temporary++;
 		$result_type = CPP_Declarations::type($decision->result_type, $context);
-		$prefix = '([&]() -> ' . $result_type . ' { '
+		$prefix = CPP_Sequence::open($result_type, $context)
 			. 'auto ' . $left_name . ' = ' . $left . '; '
-			. 'auto ' . $right_name . ' = ' . $right . '; return ';
-		return $prefix . self::render_eager_binary($decision, $spelling, $left_name, $right_name, $context) . '; }())';
+			. 'auto ' . $right_name . ' = ' . $right . '; ';
+		return $prefix . CPP_Sequence::result(self::render_eager_binary($decision, $spelling, $left_name, $right_name, $context), $context) . CPP_Sequence::close($context);
 	}
 
 	/** Compose extraction inside the operand expression so lazy RHS guards remain lazy. */
@@ -1202,13 +1220,13 @@ final class CPP_Generator
 		$type = CPP_Declarations::type($syntax->require_preparation()->type, $context);
 		$name = 'interpolation_' . $context->next_temporary;
 		$context->next_temporary++;
-		$text = '([&]() -> ' . $type . ' { ' . $type . ' ' . $name . '; ';
+		$text = CPP_Sequence::open($type, $context) . $type . ' ' . $name . '; ';
 		$worker = new CPP_Syntax($context);
 		$parts /** Storage<interpolation_part_node> */ = $syntax->parts;
 		foreach ($parts as $part) {
 			$text .= $name . '.append(' . $worker->interpolation_part($part) . '); ';
 		}
-		return $text . 'return ' . $name . '; }())';
+		return $text . CPP_Sequence::result($name, $context) . CPP_Sequence::close($context);
 	}
 
 	/** Render decoded bytes as a C++ literal, retaining length when a C string would truncate. */

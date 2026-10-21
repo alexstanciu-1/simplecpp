@@ -41,6 +41,9 @@ final class CPP_Opaque_Representation
 	{
 		$canonical = Type_Queries::canonical($type);
 		$text = $canonical->definition()->name();
+		if ($canonical->definition() instanceof async_task_type_definition) {
+			$text = 'async<' . self::identity(object_cast($canonical->definition(), async_task_type_definition::class)->value_type) . '>';
+		}
 		if ($canonical instanceof applied_template_type) {
 			$text .= '<';
 			$separator = '';
@@ -191,6 +194,11 @@ final class CPP_Opaque_Representation
 			$callback = CPP_Callback_Transport::interface($type, $name, $native, $engine);
 			$declaration = $callback->declaration_prefix . $declaration . $callback->declaration;
 			$implementation .= $callback->implementation;
+		}
+		if (Type_Queries::canonical($type)->definition() instanceof async_task_type_definition) {
+			$async = CPP_Async::interface($type, $name, $native, $engine);
+			$declaration = $async->declaration_prefix . $declaration . $async->declaration;
+			$implementation .= $async->implementation;
 		}
 		$literal = CPP_Physical_Interfaces::literal($type, $mapping, $name, $native);
 		$declaration = $literal->declaration_prefix . $declaration . $literal->declaration;

@@ -340,7 +340,8 @@ final class Body_Preparation
 
 	public static function bind_parameters(prepared_source_callable $signature, preparation_context $context): void
 	{
-		$context->return_type = $signature->signature->return_type;
+		$context->asynchronous = $signature->signature->async_value_type !== null;
+		$context->return_type = $signature->signature->async_value_type ?? $signature->signature->return_type;
 		Reference_Preparation::begin_body($signature, $context);
 		$locals = $context->locals;
 		$parameters /** Storage<prepared_parameter> */ = $signature->parameters;
@@ -354,7 +355,7 @@ final class Body_Preparation
 	public static function prepare_callable_statements(function_body_node $body, prepared_source_callable $signature, preparation_context $context, int $start, string $name): void
 	{
 		$completion = self::prepare_statements($body, $context, $start);
-		if ($completion->can_fall_through && (Type_Queries::canonical($signature->signature->return_type)->family() !== type_family::no_value)) {
+		if ($completion->can_fall_through && (Type_Queries::canonical($signature->signature->async_value_type ?? $signature->signature->return_type)->family() !== type_family::no_value)) {
 			throw new \RuntimeException('S2S non-void function ' . $name . ' can reach the end without returning a value');
 		}
 	}

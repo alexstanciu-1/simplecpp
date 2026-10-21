@@ -74,6 +74,46 @@ the existing compiled boundary for async implementations and adding suspension-a
 expression sequencing. Preserve lazy branches, snapshot lifetimes and retained
 invalidation; do not disable prelowering or create another source/semantic registry.
 
-Current status: callback prerequisite verified. Async semantic/backend integration
-and tasks module admission/transfer/shutdown contracts remain open. The original
-ledger remains **55/64**; neither S12 nor V-R02 is closed.
+## Verified async backend prerequisite — 2026-10-21
+
+Shared preparation now distinguishes an async body's payload return from its
+caller-visible, move-only internal task. Immediate await consumes that task;
+reference parameters/results and source task storage remain rejected. Bare await
+suspends inside async functions and waits in synchronous code. Explicit
+`async_wait` remains synchronous in either context.
+
+Default prelowering publishes coroutine bodies through the existing per-source
+implementation grouping under `specializations/async/`. Application inputs retain
+the template prohibition. Prepared suspension facts select an owned coroutine
+scope for expression snapshots; ordinary expressions retain their existing scopes.
+The runtime helper retains that scope until its immediately awaited child finishes.
+
+dev002 evidence:
+
+- `20261021-async-execution-07`: all 16 tasks passed. Includes the unchanged v0.1
+  strict fixture (4242), value/void nesting, owned strings, ordered eager operands,
+  lazy branches, containers, match, loops, conversions, explicit synchronous waits
+  and scheduler identity across nested suspension. Production cold/warm builds
+  preserve the application template prohibition and warm reuse. An ordinary-mode
+  control agrees. Four production ASan/UBSan builds prove snapshot lifetime,
+  container evaluation and exceptional cleanup.
+- Retained rejection/repair/replay and async removal/payload edits agree with fresh
+  in-memory artifact generation. This does not independently prove stale-file
+  retirement in a previously published directory.
+- `20261021-async-preparation-final`: shared facts and eleven invalid forms pass,
+  with repair/replay and lexical helper shadowing.
+- `20261021-async-runtime-final`: both runtime probes pass.
+- `20261021-async-collection-regression`: all 25 focused tasks pass.
+
+[Evidence archive](async-backend-evidence.tar.gz), SHA-256:
+`4be8ac2f1677739852dc0139844aa040273e75743c186329f531e68119d9bf19`.
+It includes earlier failed attempts, final logs, fixture sources, manifests and
+the uploaded source hash manifest. No full matrix or native compiler rebuild ran.
+
+Current status: callback and async backend prerequisites verified. Tasks module
+admission/transfer/shutdown contracts and final issue closeout remain open. Named
+free async functions are the bounded surface; async methods/closures are not added.
+Existing default-prelowered throw/catch/finally transport remains separate V-D06
+work; runtime exception propagation and cleanup are verified here without claiming
+that syntax gap closed. The original ledger remains **55/64**; neither S12 nor
+V-R02 is closed at this intermediate checkpoint.

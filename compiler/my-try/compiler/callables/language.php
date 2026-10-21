@@ -5,6 +5,8 @@ final class Language_Callables
 {
 	public static function install(scope $language): void
 	{
+		$language->register_compiler_function(new compiler_function_definition('async_sleep_ms', compiler_function_kind::async_sleep));
+		$language->register_compiler_function(new compiler_function_definition('async_wait', compiler_function_kind::async_wait));
 		$language->register_compiler_function(new compiler_function_definition('layout_sizeof', compiler_function_kind::layout_sizeof));
 		$language->register_compiler_function(new compiler_function_definition('layout_alignof', compiler_function_kind::layout_alignof));
 		$language->register_compiler_function(new compiler_function_definition('layout_offsetof', compiler_function_kind::layout_offsetof));

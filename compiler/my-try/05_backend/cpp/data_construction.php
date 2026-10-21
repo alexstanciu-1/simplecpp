@@ -168,7 +168,7 @@ final class CPP_Data_Construction
 
 		$buffer = 'initializer_' . $context->next_temporary;
 		$context->next_temporary++;
-		$text = '([&]() -> ' . CPP_Declarations::type($binding->target(), $context) . " {\n";
+		$text = CPP_Sequence::open(CPP_Declarations::type($binding->target(), $context), $context);
 		$text .= $buffer_type . ' ' . $buffer . '(' . q_count($entries) . ");\n";
 		$emitter = new CPP_Syntax($context);
 		foreach ($entries as $entry) {
@@ -195,7 +195,7 @@ final class CPP_Data_Construction
 			$text .= $buffer . '.append(' . $argument . ");\n}\n";
 		}
 		$finish = CPP_Initializer_Buffer::active($context) ? $buffer . '.finish()' : $factory . '(' . $buffer . '.view())';
-		return $text . 'return ' . $finish . ";\n}())";
+		return $text . CPP_Sequence::result($finish, $context) . CPP_Sequence::close($context);
 	}
 
 	/** Snapshot supplied inputs first, then omitted defaults; invoke the settled typed constructor. */
@@ -205,7 +205,7 @@ final class CPP_Data_Construction
 		$type = CPP_Declarations::type($facts->type, $context);
 		$payload = CPP_Types::payload($facts->payload_type, $context);
 		CPP_Types::record_dependencies($payload, $context);
-		$text = '([&]() -> ' . $type . " {\n";
+		$text = CPP_Sequence::open($type, $context);
 		$arguments /** hash<string, int> */ = [];
 		$emitter = new CPP_Syntax($context);
 		$entries /** Storage<data_entry_node> */ = $node->entries;
@@ -235,7 +235,7 @@ final class CPP_Data_Construction
 			$ordered .= ($ordered === '' ? '' : ', ') . CPP_Declarations::move($arguments[$position], $parameter->type, $context);
 		}
 		$callee = CPP_Record_Construction::allocation($facts->type, $facts->payload_type, $facts->storage, $context);
-		return $text . 'return ' . $callee . '(' . $ordered . ");\n}())";
+		return $text . CPP_Sequence::result($callee . '(' . $ordered . ')', $context) . CPP_Sequence::close($context);
 	}
 
 	/** This overload initializes members directly; supplied inputs never execute member defaults. */

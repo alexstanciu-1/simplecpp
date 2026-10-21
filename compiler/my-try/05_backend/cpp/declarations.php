@@ -170,7 +170,7 @@ final class CPP_Declarations
 	}
 
 	/** Prototypes only name records; value definitions need layouts, reference definitions do not. */
-	public static function signature(callable_declaration_node $syntax, cpp_generation_context $context, bool $prototype): string
+	public static function signature(callable_declaration_node $syntax, cpp_generation_context $context, bool $prototype, bool $async_implementation = false): string
 	{
 		$facts = $syntax->require_preparation();
 		$parts = '';
@@ -192,6 +192,7 @@ final class CPP_Declarations
 
 		$function_declaration = object_cast($syntax->occurrence(), collected_source_callable::class);
 		$return_prefix = self::return_type($facts->signature, $context, $prototype) . ' ';
+		if ($async_implementation) { $return_prefix = CPP_Async::native_task($facts->signature->return_type, $context) . ' '; }
 		if ($function_declaration instanceof collected_method) {
 			$method = object_cast($function_declaration, collected_method::class);
 			$record_name = CPP_Generator::source_name('record', $method->declaring_type()->qualified_name());
@@ -206,7 +207,7 @@ final class CPP_Declarations
 			if ($prototype && $facts->static_member) { $prefix = 'static ' . $prefix; }
 			return $prefix . $name . '(' . $parts . ')' . ($destructor ? ' noexcept' : '');
 		}
-		return $return_prefix . CPP_Callables::source_reference(object_cast($function_declaration, collected_function::class)) . '(' . $parts . ')';
+		return $return_prefix . ($async_implementation ? 'coroutine_' : '') . CPP_Callables::source_reference(object_cast($function_declaration, collected_function::class)) . '(' . $parts . ')';
 	}
 
 	private static function signature_requirement(bool $prototype, bool $reference): cpp_type_requirement
@@ -501,6 +502,9 @@ final class CPP_Declarations
 	public static function generate_call(call_node $syntax, cpp_generation_context $context): string
 	{
 		$facts = $syntax->require_call_preparation();
+		if ($facts->specialization instanceof prepared_async_call) {
+			return CPP_Async::call($syntax, object_cast($facts->specialization, prepared_async_call::class), $context);
+		}
 		if ($syntax->callee !== null) {
 			$value = (new CPP_Syntax($context))->expression($syntax->callee);
 			$name = 'callee_' . $context->next_temporary;
@@ -577,7 +581,8 @@ final class CPP_Declarations
 		else { $value = CPP_Enums::reference($syntax->enum_case_preparation(), $context); }
 		if ($syntax->qualifier === null) { return $value; }
 		// The comma expression preserves the member's value category without returning a borrow.
-		return '([&]() { ' . self::qualifier_evaluation($syntax->qualifier, $context) . ' }(), ' . $value . ')';
+		return '(' . CPP_Sequence::open('void', $context) . self::qualifier_evaluation($syntax->qualifier, $context)
+			. CPP_Sequence::result('', $context) . CPP_Sequence::close($context) . ', ' . $value . ')';
 	}
 
 	/** Source syntax and future factory consumers supply the same prepared call and ordered expressions. */
@@ -605,7 +610,7 @@ final class CPP_Declarations
 		$return_reference = $facts->signature->reference_return !== null ? '&' : '';
 		$return_requirement = self::signature_requirement(false, $facts->signature->reference_return !== null);
 		$result_type = $constructed_type ?? $facts->type;
-		$text = '([&]() -> ' . self::type_for($result_type, $context, $return_requirement) . $return_reference . " {\n";
+		$text = CPP_Sequence::open(self::type_for($result_type, $context, $return_requirement), $context, $return_reference !== '');
 		$text .= $prefix;
 		$physical_arguments /** vector<string> */ = [];
 		$construction_key = '';
@@ -670,7 +675,7 @@ final class CPP_Declarations
 		}
 
 		if ($transport !== null) {
-			return $text . "\treturn " . CPP_Runtime_Operations::invoke($transport, $physical_arguments, $context, $construction_key) . ";\n}())";
+			return $text . CPP_Sequence::result(CPP_Runtime_Operations::invoke($transport, $physical_arguments, $context, $construction_key), $context, $return_reference !== '') . CPP_Sequence::close($context);
 		}
 		$reference = $callee;
 		if ($callee === '') {
@@ -683,7 +688,7 @@ final class CPP_Declarations
 			}
 		}
 		$names = CPP_Callsites::arguments($callsite, $names);
-		$text .= "\treturn " . $reference . '(' . $names . ");\n}())";
+		$text .= CPP_Sequence::result($reference . '(' . $names . ')', $context, $return_reference !== '') . CPP_Sequence::close($context);
 		return $text;
 	}
 
@@ -702,8 +707,8 @@ final class CPP_Declarations
 		$reference = $callee !== '' ? $callee : CPP_Callables::call_reference($facts, $context);
 		$call = $reference . '(static_cast<const ' . $type . '&>(' . $value . '))';
 		if ($prefix === '') { return $call; }
-		return '([&]() -> ' . self::type($facts->type, $context) . " {\n"
-			. $prefix . 'return ' . $call . ";\n}())";
+		return CPP_Sequence::open(self::type($facts->type, $context), $context)
+			. $prefix . CPP_Sequence::result($call, $context) . CPP_Sequence::close($context);
 	}
 
 	/** Field identity comes from shared preparation, never a backend name lookup. */

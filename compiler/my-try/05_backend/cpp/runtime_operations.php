@@ -454,8 +454,8 @@ final class CPP_Runtime_Operations
 	{
 		$name = 'runtime_input_' . $context->next_temporary++;
 		$result /** canonical_type_use */ = $request->result;
-		return '([&]() -> ' . CPP_Declarations::type($result, $context) . ' { ' . (self::mutable_input($request, 0) ? 'auto ' : 'const auto& ') . $name . ' = '
-			. $expression . '; return ' . self::invoke($request, [$name], $context, '') . '; }())';
+		return CPP_Sequence::open(CPP_Declarations::type($result, $context), $context) . (self::mutable_input($request, 0) ? 'auto ' : 'const auto& ') . $name . ' = '
+			. $expression . '; ' . CPP_Sequence::result(self::invoke($request, [$name], $context, ''), $context) . CPP_Sequence::close($context);
 	}
 
 	/** Dispatch settled observation versus value/reference contracts without naming runtime functions. */

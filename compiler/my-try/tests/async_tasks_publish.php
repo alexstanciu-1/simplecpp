@@ -4,7 +4,7 @@ require_once dirname(__DIR__) . '/boot.php';
 Compiler_Lifecycle::configure_runtime(Runtime_Catalog_Loader::load($argv[2], [$argv[3]]));
 $publication = new Output_Publication($argv[1] . '/published');
 try {
-	$compiler = new Compiler();
+	$compiler = new Compiler(new cpp_lowering_options(($argv[4] ?? '') !== 'ordinary'));
 	$compiler->init([$argv[1] . '/source']);
 	$compiler->select_entry('main', 'main.phs');
 	$compiler->exec_cpp($publication);

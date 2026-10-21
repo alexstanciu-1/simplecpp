@@ -147,6 +147,8 @@ final class cpp_finally_return
 /** One emission invocation; syntax and prepared facts never retain it. */
 final class cpp_generation_context
 {
+	public bool $asynchronous = false;
+	public bool $suspending_expression = false;
 	public bool $reads_source_context = false;
 	/** Middleware expressions use native outer implementations with concrete physical arguments. */
 	public ?CPP_Specializations $implementation_engine = null;
@@ -183,6 +185,7 @@ final class cpp_generation_context
 /** One independently replaceable C++ fragment; no references to transient generation workers. */
 final class cpp_fragment
 {
+	public string $async_bridge_text = '';
 	public string $source_context_digest = '';
 	public array $specializations /** hash<canonical_type_use,int> */ = [];
 	public array $runtime_operations /** hash<cpp_runtime_operation> */ = [];

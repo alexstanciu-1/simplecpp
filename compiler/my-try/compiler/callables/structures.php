@@ -14,6 +14,8 @@ interface callable_target_i extends callable_definition_i
 
 enum compiler_function_kind
 {
+	case async_sleep;
+	case async_wait;
 	case enum_name;
 	case enum_value;
 	case enum_from_value;
@@ -173,6 +175,8 @@ final class callable_parameter
 /** Complete, declaration-independent contract shared by every call consumer. */
 final class callable_signature
 {
+	/** An async body's declared value type; return_type is its caller-visible task. */
+	public ?canonical_type_use $async_value_type = null;
 	public canonical_type_use $return_type;
 	/** Null means an ordinary value return. Reference execution is still gated. */
 	public ?reference_return_contract $reference_return = null;
