@@ -371,3 +371,39 @@ The archive includes failed attempts, publication manifests, source fixtures and
 final uploaded source hashes. Reproduce using `tests/task_submission.py --results
 FRESH_DIRECTORY`; add `--sanitize` and repeated `--case NAME` for the five sanitizer
 cases above. No full matrix or native compiler rebuild was run.
+
+
+## Error callback execution prerequisite — 2026-10-21
+
+Before registering the error-handler forms, a focused ASan/UBSan runtime probe on
+dev002 confirmed three contract mismatches against `specs/builtins/tasks/first_pass.md`:
+vector and hash handlers run inside worker loops, not on the calling coordinator;
+ordered publication does not invoke a void-returning error handler. Replacement
+values are correct in the tested vector/hash cases, so the mismatch is specifically
+execution context and omitted invocation, not general callback transport.
+
+`tests/task_error_context.py` records observations and explicit expected/observed
+mismatches; a successful probe run does not mean semantic conformance. The observed
+values are `vector_error_on_coordinator=false`, `hash_error_on_coordinator=false`,
+`publish_void_handler_calls=0` (expected true, true, one respectively).
+
+[Runtime prerequisite evidence](task-error-context-evidence.tar.gz), SHA-256:
+`e7f40ae9250e8101185db232ae2f89700a3eb920bd838766776ceae6a77cf2a8`.
+
+Proposed repair, awaiting discussion/authorization: extend the existing batch
+execution owner with a coordinator error-event handoff while workers run. Worker
+catch paths publish item/error identity; coordinator processing invokes handlers,
+returns replacement/omission outcomes and requests cooperative stop if a handler
+throws. Both batch-local threads and the existing worker pool must use this path.
+Ordered publication must advance omitted positions without suppressing later
+successful values. Background batches use their existing coordinator thread.
+No new public scheduler API or general thread-safety analysis is proposed.
+
+This crosses the current adapter boundary: `tasks.hpp` vector/hash/publish loops,
+`tasks.cpp` worker execution/join coordination and shutdown/cancellation interaction
+must agree. Merely moving handlers after join delays handler-failure cancellation;
+retaining worker callbacks changes the normative context and capture rules. Verify
+thread identity, replacement/omission, handler failure, timeout, cooperative stop,
+nested batches, pool and non-pool execution, repeated joins and shutdown, then source
+cold/warm and retained/default-prelowered parity on dev002. The current goal requires
+discussion before widening scheduler/transfer flow; the implementation has not begun.
