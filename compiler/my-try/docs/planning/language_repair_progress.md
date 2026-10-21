@@ -2,27 +2,27 @@
 Doc Status: supporting
 
 Snapshot: 2026-10-21, after [V-L07 bounded completion](vl07_completion.md) and
-[V-L06 / S04 closeout](float_identity.md) and [V-L11 / V-D14 text](carrier_text.md), followed by [S06 conditionals](s06_unbraced_conditionals.md) and [S07 predicates](s07_mixed_predicates.md). The [S09 search](s09_byte_search.md) and [replacement](s09_substr_replace.md) slices are complete. The [closure batch](closure_batch.md) closes S09-B1, V-R07 and V-H10; the [regex batch](regex_replacement.md) also closes V-R04 and V-R09. The [platform/alias batch](platform_alias.md) closes V-D09 and V-D12. The [boxed/selection batch](boxed_selection.md) closes V-L09 and V-L10. The [compact-layout batch](compact_layout_shifts.md) now closes V-L01 and V-L02, plus supplementary BS-R01. The [callback/composition batch](callback_composition.md) closes V-R05 and V-R11. The [tokenizer/IO batch](tokenizer_io.md) closes S11 and S13 with default prelowering verified. The [strict curl batch](curl_integration.md) closes V-R03 and V-E02. The [debug/closure batch](scalar_debug_closure_reconciliation.md) implements S08 and reconciles S05 as an intentional v0.2 restriction. The [project/startup batch](project_startup_metadata.md) implements V-P01 and reconciles V-D10. The [checked span/hash batch](span_hash.md) implements S10 and V-R06. The [verification environment batch](verification_environment.md) reconciles V-E01 and closes V-E03 with a real isolated database proof. The [trait/ownership batch](trait_ownership.md) closes V-D03 and V-D04. This covers all 64 original entries in
+[V-L06 / S04 closeout](float_identity.md) and [V-L11 / V-D14 text](carrier_text.md), followed by [S06 conditionals](s06_unbraced_conditionals.md) and [S07 predicates](s07_mixed_predicates.md). The [S09 search](s09_byte_search.md) and [replacement](s09_substr_replace.md) slices are complete. The [closure batch](closure_batch.md) closes S09-B1, V-R07 and V-H10; the [regex batch](regex_replacement.md) also closes V-R04 and V-R09. The [platform/alias batch](platform_alias.md) closes V-D09 and V-D12. The [boxed/selection batch](boxed_selection.md) closes V-L09 and V-L10. The [compact-layout batch](compact_layout_shifts.md) now closes V-L01 and V-L02, plus supplementary BS-R01. The [callback/composition batch](callback_composition.md) closes V-R05 and V-R11. The [tokenizer/IO batch](tokenizer_io.md) closes S11 and S13 with default prelowering verified. The [strict curl batch](curl_integration.md) closes V-R03 and V-E02. The [debug/closure batch](scalar_debug_closure_reconciliation.md) implements S08 and reconciles S05 as an intentional v0.2 restriction. The [project/startup batch](project_startup_metadata.md) implements V-P01 and reconciles V-D10. The [checked span/hash batch](span_hash.md) implements S10 and V-R06. The [verification environment batch](verification_environment.md) reconciles V-E01 and closes V-E03 with a real isolated database proof. The [trait/ownership batch](trait_ownership.md) closes V-D03 and V-D04. The [collection/advisory batch](collection_advisories.md) closes V-D11 and V-D15. This covers all 64 original entries in
 [the issue ledger](language_verification_issues.json), including deferred legacy
 syntax and policy/design issues. Operator signatures are not separate closed issues.
 
 | Status | Issues |
 | --- | ---: |
-| Implemented or already repaired (including harnesses), then verified | 50 |
+| Implemented or already repaired (including harnesses), then verified | 52 |
 | Contract/environment reconciled and verified | 3 |
 | Partially implemented and verified | 0 |
-| Other issues not yet closed | 11 |
+| Other issues not yet closed | 9 |
 | Total | 64 |
 
-Resolved: **53/64 = 82.8125%** (about **82.8% by issue count**). This is not an
-engineering-effort estimate. The latest +3.125 points comprise the bounded trait lifecycle and unique/weak selection implementations. S05 does not certify explicit callable storage under default prelowering. Remaining architecture/runtime/project issues can be
+Resolved: **55/64 = 85.9375%** (about **85.9% by issue count**). This is not an
+engineering-effort estimate. The latest +3.125 points comprise the bounded collection migration and retained advisory delivery implementations. S05 does not certify explicit callable storage under default prelowering. Remaining architecture/runtime/project issues can be
 much larger than fixture repairs. There is no defensible weighted effort percentage.
 
 | Original handling class | Fully closed | Partial | Not closed | Total |
 | --- | ---: | ---: | ---: | ---: |
 | Simple fix | 13 | 0 | 0 | 13 |
 | Light discussion | 17 | 0 | 0 | 17 |
-| Normal discussion | 23 | 0 | 11 | 34 |
+| Normal discussion | 25 | 0 | 9 | 34 |
 
 V-L06 now admits the final two scalar float identity forms and re-verifies its
 original carrier cases. S04's unchanged original process fixture passes through
@@ -160,3 +160,10 @@ immutable startup metadata: disk edits require a new session, live replacement
 rejects, source edits preserve the snapshot and reset retires old identities.
 The batch adds **+3.125 points**, comprising one implementation and one contract
 reconciliation. Full build-planner/packaging parity and hot reload remain separate.
+
+V-D11 restores six collection helpers and bounded owned value-callback transport.
+V-D15 supplies retained reference advisories, including focused PHP/native compiler
+parity. Thirty-nine focused tasks, including remote snapshot integration, and the native
+parity gate pass on dev002. This batch
+adds **+3.125 points**; initializer/indexing and wider callback gaps remain explicit
+in [the closeout](collection_advisories.md).

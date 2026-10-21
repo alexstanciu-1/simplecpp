@@ -11,6 +11,8 @@ namespace scpp\compiler;
 
 final class Model
 {
+	/** Published advisory snapshot; reset before source/semantic changes. */
+	public static Storage $diagnostics /** Storage<compiler_diagnostic> */;
 	/** Startup metadata survives semantic resets; no stage performs catalog IO. */
 	public static runtime_catalog_input $runtime_metadata;
 	/**

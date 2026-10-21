@@ -858,10 +858,15 @@ Transferred for final review by user approval; these do not require expanding th
 bounded Chapter 07 implementation before Chapter 08. Existing restrictions remain
 enforced until their respective contracts and proofs are agreed.
 
-- **CH07-WARN-01 — advisory delivery:** establish a retained, non-fatal diagnostics
-  owner and publication/retraction behavior for reference-return advice and relevant
-  performance guidance. Coordinate with Chapter 14. Do not equate hard safety errors
-  with delivered warnings or add emitter-only reporting as a substitute.
+- **CH07-WARN-01 — closed 2026-10-21:** shared preparation publishes retained
+  nonfatal REF001 diagnostics, with source locations, replacement/retraction and
+  focused PHP/native parity. [V-D15](../planning/collection_advisories.md) reconciles
+  historical alias-copy advice; performance guidance is not an additional warning.
+- **V-D11 wider prelowering boundaries:** the collection closeout keeps mixed keyed
+  initializer entry transport, dynamic scalar/data initialization and dynamic indexed
+  key transport explicit. Bounded one-value callbacks do not establish general
+  callable arities, reference callbacks or asynchronous retention. See the same
+  closeout for failed probes and approved proof limits.
 - **CH07-OWN-EXEC-01 — broader ownership operations:** review ownership selection and
   variadic transfers, broader const forms and precise additional target constraints.
   Constructor arguments remain with Chapter 10; member lifetime work belongs with

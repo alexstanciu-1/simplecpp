@@ -3,7 +3,8 @@ Doc Status: supporting
 
 PHP behavior, conversion to PHS, native compiler execution and generated-program
 execution are separate claims. The current bounded native checkpoint passes all four.
-The latest focused gate covers native prelowering and accounting; the preceding
+The latest focused gate covers retained reference advisory PHP/native parity;
+the earlier gate covers native prelowering and accounting. The preceding
 O2 ordinary gate covers Chapter 14, as detailed below. The historical
 cumulative checkpoint covers the implemented Chapter 05–11 slices, including
 registered JSON, separated mixed/dynamic families, references, ownership and
@@ -935,3 +936,12 @@ remains separate from this native pass; style/full PHP suites remain on demand.
 The [incremental plan](../planning/incremental_strategy.md) records remaining model
 and validation debt. Earlier failures and intermediate fixes are retained in the
 [historical checkpoint ledger](../archive/conversion_review_checkpoints.md), not current blockers.
+
+## Focused reference advisory parity — 2026-10-21
+
+[V-D15](../planning/collection_advisories.md) builds the current compiler at O2 and
+compares exact structured-warning rendering through retained edits and recovery,
+using default prelowering. Run `tools/native_validate.py --reference-advisories
+--types-only --no-stan --no-pch --compiler-optimization O2` with the normal target,
+revision and result arguments. The closeout records source hashes and portability
+adaptations; this does not replace earlier broader checkpoints.

@@ -88,6 +88,7 @@ final class Compiler_Lifecycle
 			}
 		}
 		Model::$prepared_files = new Storage /** Storage<prepared_file> */();
+		Model::$diagnostics = new Storage /** Storage<compiler_diagnostic> */();
 		Model::$cpp_output_program = new cpp_program();
 		self::reset_types();
 		Model::$language_scope = new scope();
@@ -230,6 +231,7 @@ final class Compiler_Lifecycle
 			}
 		}
 		Model::$prepared_files = new Storage /** Storage<prepared_file> */();
+		Model::$diagnostics = new Storage /** Storage<compiler_diagnostic> */();
 		self::reset_cpp();
 	}
 

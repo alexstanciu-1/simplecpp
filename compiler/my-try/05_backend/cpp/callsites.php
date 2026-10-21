@@ -12,26 +12,8 @@ final class CPP_Callsites
 		if (!$binding->source_context) { return null; }
 		$context->reads_source_context = true;
 		$tokens = $syntax->occurrence()->token_snapshot();
-		$index = $syntax->start_token();
-		$ranges /** Storage<retained_token_range> */ = $tokens->retained_ranges;
-		foreach ($ranges as $range) {
-			if (($index >= $range->first) && ($index < $range->end)) {
-				$index += $range->current_first - $range->first;
-				break;
-			}
-		}
-		$rows /** Storage<token> */ = $tokens->tokens;
-		$offset = (int)$rows[$index]->offset;
-		$line = 1;
-		for ($position = $tokens->content_offset; $position < $offset; $position++) {
-			$byte = string_byte_at($tokens->content, $position);
-			if ($byte === 10) { $line++; }
-			elseif ($byte === 13) {
-				$line++;
-				if (($position + 1 < $offset) && (string_byte_at($tokens->content, $position + 1) === 10)) { $position++; }
-			}
-		}
-		return new cpp_callsite($tokens->file->path, $line);
+		$location = Source_Locations::at($tokens, $syntax->start_token());
+		return new cpp_callsite($location->path, $location->line);
 	}
 
 	/** Whitespace-only edits can move calls without changing semantic completion versions. */

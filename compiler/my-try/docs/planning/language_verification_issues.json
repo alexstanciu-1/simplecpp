@@ -1297,10 +1297,17 @@
         "keyed_filter"
       ],
       "dependencies": [],
-      "next_action": "Determine retained typed vector/hash algorithms and explicitly decide old mixed/dynamic cases under current tagged-family rules. Do not silently restore the old header or assume its removal was intentional.",
+      "next_action": "Closed within the approved contract; see collection_advisories.md for separate gaps and historical evidence.",
       "acceptance": "Explicit contract disposition for every listed public name, followed by signature/behavior/provider integration proofs for retained APIs.",
       "simple_batch_eligible": false,
-      "eligibility_reason": "Provider, type and integration decisions remain; not a proven metadata-only repair."
+      "eligibility_reason": "Provider, type and integration decisions remain; not a proven metadata-only repair.",
+      "repair_status": "implemented-and-verified",
+      "repair_evidence": {
+        "date": "2026-10-21",
+        "report": "collection_advisories.md",
+        "archive": "collection-advisories-acceptance.tar.gz",
+        "scope": "Approved bounded collection migration and retained reference diagnostics; default prelowering on dev002, focused native compiler parity; wider gaps remain explicit."
+      }
     },
     {
       "id": "V-R09",
@@ -2014,8 +2021,15 @@
       "dependencies": [
         "Agree diagnostics ownership, warning policy and delivery scope; native compiler parity remains deferred during this goal."
       ],
-      "next_action": "Discuss retained diagnostic representation and publication/replacement before implementation; add explicit warning assertions to that slice.",
-      "simple_batch_eligible": false
+      "next_action": "Closed within the approved contract; see collection_advisories.md for separate gaps and historical evidence.",
+      "simple_batch_eligible": false,
+      "repair_status": "implemented-and-verified",
+      "repair_evidence": {
+        "date": "2026-10-21",
+        "report": "collection_advisories.md",
+        "archive": "collection-advisories-acceptance.tar.gz",
+        "scope": "Approved bounded collection migration and retained reference diagnostics; default prelowering on dev002, focused native compiler parity; wider gaps remain explicit."
+      }
     },
     {
       "id": "V-R11",

@@ -27,6 +27,7 @@ final class Compiler
 		Model::$entry_selection = new program_entry_selection($module_name, $source_path);
 		Model::$prepared_entry = null;
 		Model::$prepared_files = new Storage /** Storage<prepared_file> */();
+		Model::$diagnostics = new Storage /** Storage<compiler_diagnostic> */();
 		Compiler_Lifecycle::reset_cpp();
 	}
 
@@ -38,6 +39,16 @@ final class Compiler
 			$inputs->append(new module_input($path));
 		}
 		$this->init_modules($inputs);
+	}
+
+	/** Ordered source selections compare values, independent of host container operators. */
+	private static function same_source_paths(array $before /** vector<string> */, array $after /** vector<string> */): bool
+	{
+		if (q_count($before) !== q_count($after)) { return false; }
+		foreach ($before as $index => $path) {
+			if ($path !== $after[$index]) { return false; }
+		}
+		return true;
 	}
 
 	/** Reconcile in place; only configuration changes replace the ordered module store. */
@@ -61,7 +72,7 @@ final class Compiler
 				if ($record->changes === change_state::deleted) {
 					$record->changes = change_state::added;
 				}
-				elseif (($record->declared_path !== $candidate->declared_path) || ($record->resolved_path !== $candidate->resolved_path) || ($record->position !== $candidate->position) || ($record->disk_source !== $candidate->disk_source) || ($record->logical_name !== $candidate->logical_name) || ($record->selected_sources !== $candidate->selected_sources) || ($record->source_paths !== $candidate->source_paths)) {
+				elseif (($record->declared_path !== $candidate->declared_path) || ($record->resolved_path !== $candidate->resolved_path) || ($record->position !== $candidate->position) || ($record->disk_source !== $candidate->disk_source) || ($record->logical_name !== $candidate->logical_name) || ($record->selected_sources !== $candidate->selected_sources) || !self::same_source_paths($record->source_paths, $candidate->source_paths)) {
 					$record->changes = change_state::changed;
 				}
 				else {
@@ -138,6 +149,17 @@ final class Compiler
 		}
 	}
 
+	/** Portable structured reporting; reading never changes preparation or delivery state. */
+	public function diagnostics(): Storage /** Storage<compiler_diagnostic> */
+	{
+		$result /** Storage<compiler_diagnostic> */ = new Storage();
+		foreach (Model::$diagnostics as $diagnostic) {
+			$result->append(new compiler_diagnostic($diagnostic->code, $diagnostic->severity,
+				$diagnostic->path, $diagnostic->line, $diagnostic->column, $diagnostic->message));
+		}
+		return $result;
+	}
+
 	/** Parked legacy LLVM entry remains available only for existing regression callers. */
 	public function exec_llvm(): void
 	{
@@ -170,6 +192,7 @@ final class Compiler
 	/** Combined entrypoint uses the same retained tokenization and parsing phases as direct callers. */
 	public function sync(array $paths /** vector<string> */): void
 	{
+		Model::$diagnostics = new Storage /** Storage<compiler_diagnostic> */();
 		if ($this->jobs < 1) {
 			throw new \LogicException('Compiler job limit must be positive');
 		}
@@ -182,6 +205,7 @@ final class Compiler
 		Compiler_Lifecycle::reset_llvm();
 		Model::$prepared_entry = null;
 		Model::$prepared_files = new Storage /** Storage<prepared_file> */();
+		Model::$diagnostics = new Storage /** Storage<compiler_diagnostic> */();
 		foreach (Model::$modules as $module) {
 			if (($module->changes !== change_state::deleted) && $module->disk_source) {
 				Module_Loader::discover($module);
@@ -274,6 +298,7 @@ final class Compiler
 		}
 		Compiler_Lifecycle::reset_cpp();
 		Model::$prepared_files = new Storage /** Storage<prepared_file> */();
+		Model::$diagnostics = new Storage /** Storage<compiler_diagnostic> */();
 		Model::$prepared_entry = null;
 		try {
 			Compiler_Lifecycle::retire_deleted_sources($sources, Model::$language_scope);
@@ -282,6 +307,7 @@ final class Compiler
 			$entry = Program_Preparation::entry($prepared, Model::$entry_selection, $require_entry);
 			Model::$prepared_files = $prepared;
 			Model::$prepared_entry = $entry;
+			Model::$diagnostics = Preparation_Advisories::collect($sources);
 		}
 		catch (\RuntimeException $error) {
 			// Expected diagnostics retain the existing incremental retry state.

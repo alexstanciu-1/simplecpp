@@ -118,11 +118,10 @@ functions were gated pending the forwarding integration below.
 Installed runtime reference returns, const semantics, reset/removal and ownership
 classification are not added. Reference foreach stays in Chapter 15.
 
-**CH07-WARN-01:** the existing return-by-reference advisory remains intended, but
-my-try has no retained warning/reporting path. Add it through a diagnostics owner,
-with incremental replacement/cleanup and host/native delivery, rather than emitting
-backend-specific warnings from preparation. Safety rejections already happen during
-preparation; this debt concerns non-fatal advice only.
+**CH07-WARN-01 — closed 2026-10-21:** shared preparation now publishes retained
+source-located REF001 advisories with replacement/cleanup and host/native parity.
+See the [V-D15 closeout](../planning/collection_advisories.md). Safety rejections
+remain distinct from this nonfatal advice.
 
 Proof runner: `python3 compiler/my-try/tests/references.py --results FRESH`.
 It checks alias/parameter origin, scope, exact typing, rebindings, temporary/interior
@@ -615,7 +614,7 @@ Edit these rows as work proceeds. Imported source support is recorded below, ind
 | [TYPE-VAR-008](#type-var-008) | supported-strict | `$r int =& $x;` | prepared | verified | deferred | Reduced block-local binding, including control-flow bodies; legacy annotation spelling not added |
 | [NOTE-038](#note-038) | reconciled | Value snapshots versus explicit const-reference borrowing | prepared | verified | deferred | Chapter 04 value contract and const-reference checkpoint; no automatic const-ref ABI |
 | [NOTE-056](#note-056) | guidance-only | Composite value parameter reassignment | existing value contract | verified for admitted types | deferred | No body-dependent passing mode or universal deep-copy claim |
-| [NOTE-059](#note-059) | debt | Reference-return advice | warning delivery deferred | — | deferred | CH07-WARN-01 |
+| [NOTE-059](#note-059) | implemented | Reference-return advice | retained REF001 delivery | PHP/native | verified | V-D15 closeout |
 | [NOTE-060](#note-060) | reconciled-excluded | Legacy typed reference proxies | not admitted | not used | deferred | Native-reference safety; exact stable places only |
 
 </details>
@@ -1369,7 +1368,7 @@ int_t& r = x;
 
 **Source:** [generators/php/specs/rules.md:1272](../../../../generators/php/specs/rules.md)
 
-**v0.2 decision / examples:** Non-fatal advisory delivery remains CH07-WARN-01. Proved safety rejections and bounded reference returns do not satisfy that missing warning/reporting contract.
+**v0.2 decision / examples — updated 2026-10-21:** CH07-WARN-01 is implemented and verified; see [V-D15](../planning/collection_advisories.md). The historical quotation below is preserved. Interior reference-return origins reject; legal whole-parameter aliases use ordinary value-copy semantics and do not require a second copy-after-alias warning.
 
 > ## Return-by-reference warnings
 >

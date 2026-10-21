@@ -52,7 +52,8 @@ final class Union_Preparation
 			$node->set_preparation($field);
 			$fields->add($node->name, $field);
 		}
-		$facts->capabilities = [generic_contract::value_storable, generic_contract::copyable_value];
+		$capabilities /** vector<generic_contract> */ = [generic_contract::value_storable, generic_contract::copyable_value];
+		$facts->capabilities = $capabilities;
 		$syntax->set_preparation($facts);
 	}
 

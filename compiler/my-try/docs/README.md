@@ -240,3 +240,8 @@ The [callback/composition closeout](planning/callback_composition.md) exposes bo
 strict regex callback APIs and repairs runtime CMake core/provider ownership.
 Snapshots, errors and static/shared consumers pass on dev002; broader callback
 lifetimes, count outputs and database integration remain separate.
+
+The [V-D11/V-D15 closeout](planning/collection_advisories.md) restores six collection
+helpers with bounded concrete callbacks and retained reference advisories. It records
+default-prelowered production checks, focused native diagnostic parity and separate
+initializer/indexing/callback gaps.

@@ -187,7 +187,7 @@ bounded restriction is structural: unused functions and calls in unreachable bra
 are included. Ordinary by-value recursion remains supported. Recursive reference
 returns, runtime-registered reference returns, const-reference returns and reference
 foreach are separate work. The advisory warning policy below remains intended;
-my-try's missing retained warning delivery is tracked as CH07-WARN-01 in its catalog.
+my-try delivers it through the retained diagnostics owner described below.
 
 Concrete closures and arrows use this same whole-reference-parameter contract,
 including origin substitution, copy versus alias behavior and recursive-component
@@ -221,3 +221,20 @@ In short:
 
 - Return-by-reference is not recommended in Prism++ and should surface a generator warning even when generation is still allowed.
 - Reference-returning flows remain deliberately narrower than PHP and should be treated as a conservative subset feature.
+
+### v0.2 advisory delivery
+
+A successful preparation publishes one nonfatal `REF001` warning per explicit
+reference-return declaration, including methods, trait origins and anonymous
+callables. The warning carries source path, one-based line and byte column.
+Retained edits replace the snapshot; deletion, failed preparation and reset clear
+obsolete diagnostics. Trait instantiations do not duplicate their origin warning.
+CLI delivery uses stderr independently of generated program output.
+
+Historical generator advice about copying after an interior reference alias does
+not establish an additional v0.2 warning. Interior reference returns already reject.
+For admitted whole-parameter origins, normal assignment follows the type's ordinary
+copy contract; it does not inherit PHP alias-set behavior. A legal alias followed by
+a value copy therefore receives the declaration advisory, without a second claim
+that its copy semantics are undefined. This reconciles catalog NOTE-059; it does not
+relax provenance or add a safety rejection.

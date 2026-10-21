@@ -114,6 +114,11 @@ if ($s2s)
 			$compiler->cpp($publication, $policy);
 		}
 		else { $compiler->exec_cpp($publication, $policy); }
+		$advisories = Diagnostic_Reporting::text($compiler->diagnostics());
+		if ($advisories !== '') {
+			if (PHP_SAPI === 'cli') { fwrite(STDERR, $advisories); }
+			else { echo $advisories; }
+		}
 		foreach ([$lowering_report => false, $lowering_explain => true] as $report_path => $explain) {
 			if ($report_path === '') { continue; }
 			// Exclusive creation prevents a diagnostic path from overwriting source/build inputs.

@@ -52,7 +52,8 @@ final class CPP_Runtime_Catalog
 					throw new \RuntimeException('Missing runtime binding: ' . $function->identity);
 				}
 				if ($bindings[$function->identity]->source_context) {
-					if (($function->member !== null) || $function->parameters->is_empty()) { throw new \RuntimeException('Call-site context requires a free function with value inputs'); }
+					$parameters /** Storage<runtime_parameter_spec> */ = $function->parameters;
+					if (($function->member !== null) || $parameters->is_empty()) { throw new \RuntimeException('Call-site context requires a free function with value inputs'); }
 					foreach ($function->parameters as $parameter) {
 						if (($parameter->mode !== passing_mode::value) || $parameter->variadic) {
 							throw new \RuntimeException('Call-site context requires fixed value parameters');

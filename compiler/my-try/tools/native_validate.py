@@ -56,6 +56,7 @@ def main():
                         help='Maximum concurrent fixture tasks (default: 12)')
     parser.add_argument('--chapter13', action='store_true', help='Validate only the bounded Chapter 13 fixtures after rebuilding the compiler')
     parser.add_argument('--chapter14', action='store_true', help='Validate bounded Chapter 14 artifacts and native publication/build owners')
+    parser.add_argument('--reference-advisories', action='store_true', help='Only run focused retained reference diagnostic PHP/native parity')
     parser.add_argument('--prelower-accounting', action='store_true',
                         help='Validate native concrete publication/build/recovery and O0 accounting closure')
     parser.add_argument('--compiler-optimization', choices=('O0', 'O2'), default='O0',
@@ -65,9 +66,9 @@ def main():
     parser.add_argument('--php-executor', choices=('auto', 'fpm', 'cli'), default='auto',
                         help='PHP backend: auto prefers FPM with CLI fallback (default)')
     args = parser.parse_args()
-    if sum((args.chapter13, args.chapter14, args.prelower_accounting)) > 1:
+    if sum((args.chapter13, args.chapter14, args.prelower_accounting, args.reference_advisories)) > 1:
         parser.error("Select one focused native gate")
-    if (args.chapter13 or args.chapter14 or args.prelower_accounting) and (not args.types_only or not args.no_stan):
+    if (args.chapter13 or args.chapter14 or args.prelower_accounting or args.reference_advisories) and (not args.types_only or not args.no_stan):
         parser.error('Chapter gates require --types-only --no-stan (LLVM and legacy STAN are deferred)')
     target, results = args.target_checkout.resolve(), args.results.resolve()
     results.mkdir(parents=True, exist_ok=args.resume)
@@ -126,6 +127,7 @@ def validate(args, target, results, logs, started, runner):
         p.name: hashlib.sha256(p.read_bytes()).hexdigest()
         for p in sorted(catalog_directory.glob('*.json'))
     }, indent=2) + '\n')
+    shutil.copyfile(APP / 'tests/reference_advisory_proof.php', source / 'reference_advisory_proof.php')
     shutil.copyfile(APP / 'tests/s2s_proof.php', source / 's2s_proof.php')
     shutil.copyfile(APP / 'tests/cpp_probe.php', source / 'cpp_probe.php')
     driver = (driver.replace('__REQUEST_FILE__', php_literal('request.txt'))
@@ -173,6 +175,21 @@ def validate(args, target, results, logs, started, runner):
     print('Building native compiler ' + ('without STAN...' if args.no_stan else 'with normal STAN...'), flush=True)
     run('native-build', ['php', cli, 'build', '--build-runtime', *analysis_options], project, timeout=1800, cli_reason='CLI build tool with process exit status')
     executable = project / '.prism/build/main'
+    if args.reference_advisories:
+        proof = results / 'reference-advisories'
+        proof.mkdir(exist_ok=True)
+        (proof / 'request.txt').write_text('reference-advisories')
+        php_code = ('require ' + php_literal(APP / 'boot.php') + '; require '
+                    + php_literal(APP / 'tests/reference_advisory_proof.php')
+                    + '; echo scpp\\compiler\\Reference_Advisory_Proof::run();')
+        expected = run('advisories-php', ['php', '-r', php_code], proof)
+        actual = run('advisories-native', [executable], proof, timeout=300)
+        if actual != expected:
+            raise RuntimeError('Native reference diagnostics differ from PHP')
+        (results / 'summary.json').write_text(json.dumps(dict(passed=True,
+            scope='Focused reference advisory PHP/native parity; default prelowering',
+            elapsed_seconds=time.monotonic()-started), indent=2)+'\n')
+        return
     if args.prelower_accounting:
         acceptance = logs / 'prelower-accounting'
         run('prelower-accounting', [sys.executable, APP / 'tests/prelower_accounting_acceptance.py',
