@@ -81,7 +81,8 @@ final class token_list
 		if ((($text === '<') || ($text === '>')) && ($index + 1 < q_count($tokens)))
 		{
 			$second = $tokens[$index + 1];
-			if (($second->text() === $text) && ($second->offset === $first->offset + $first->length)) {
+			if (($second->text() === $text)
+				&& ((int) $second->offset === (int) $first->offset + (int) $first->length)) {
 				return $text . $text;
 			}
 		}

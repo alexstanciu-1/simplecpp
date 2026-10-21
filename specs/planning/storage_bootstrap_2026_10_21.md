@@ -392,3 +392,38 @@ Read-only owner replay confirms `token_list::operator_text_at` as the first affe
 callable. Owner records are retained as `failure-owners.json`; replay logs are in
 `/tmp/readonly-bootstrap-owner-logs` (49.17 s). This separate diagnostic replay is
 not included in the measured bootstrap time.
+
+
+## Token adjacency integer casts and retry — 2026-10-21
+
+Candidate: `9dbf849f` plus the source overlay retained in
+`/tmp/bootstrap-attempt-20261021-offset-cast/candidate.diff`. In
+`token_list::operator_text_at`, explicit `(int)` casts normalize both offsets and
+the length before addition and strict comparison. Stored `uint32` fields and the
+index argument stay unchanged. No integer semantic support is added.
+
+The existing tokenizer PHP tests pass through the shared runner (CLI fallback),
+including adjacent shift tokens, whitespace and comment gaps. Logs:
+`/tmp/token-offset-cast-check`. Full conversion succeeds: 259 PHP files in 5.31 s,
+peak RSS 186.4 MiB; 269 assembled PHS files total 1,920,648 bytes.
+
+The isolated PHP8.5 CLI bootstrap (OPcache CLI/Xdebug disabled, 4 GiB limit) takes
+**47.67 s wall time**, **317680 KiB / 310.2 MiB peak RSS**, and
+**304087040 bytes / 290 MiB peak PHP heap**. Parsing completes at 4.504 s.
+It stops in preparation without PHP fatal/OOM or C++ emission. Evidence, source
+hashes and phase marks: `/tmp/bootstrap-attempt-20261021-offset-cast`; driver:
+`/tmp/bootstrap-attempt-20261021-offset-cast.py`.
+
+The next reported diagnostic is `S2S parameter defaults require scalar value types`.
+`Tokenizer::tokenize(?string $full_path = null)` converts to a nullable string
+parameter with a null default; `Parameter_Defaults::prepare` currently admits
+scalar value types and enum cases, rejecting that nullable parameter type.
+No default-parameter repair, broader integer repair or Storage_Cursor widening is
+included. This partial attempt does not establish full bootstrap time or native
+compiler execution.
+
+Separate read-only owner replay (46.77 s, `/tmp/offset-cast-bootstrap-owner-logs`)
+confirms no remaining failure for `token_list::operator_text_at` and identifies
+`Tokenizer::tokenize` as the first affected callable for the defaults diagnostic.
+The artifact directory retains `failure-owners.json`. Other callable owners still
+report the canonical-int diagnostic; they have not been audited or changed here.
