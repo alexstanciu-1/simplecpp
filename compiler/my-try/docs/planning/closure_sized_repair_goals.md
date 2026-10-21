@@ -123,3 +123,12 @@ instantiation, and is checked using ordinary source-aware capability preparation
 It does not constrain inference or change runtime implementation. The concrete
 provider header is the existing public `scpp/lang/php.hpp`; the lower support header
 alone is not self-contained. See [batch closeout](closure_batch.md).
+
+## Project/startup batch — completed 2026-10-21
+
+V-P01 is implemented and V-D10 is reconciled and verified on dev002 with default
+prelowering; see [acceptance](project_startup_metadata.md). Progress is now
+**47/64 resolved (73.4375%), +3.125 points**, with 17 original issues open. One
+closure is a capability repair; the other confirms immutable startup semantics.
+No runtime implementation changes or full matrix rerun. Build-planner/packaging
+parity and metadata hot reload remain separate.

@@ -20,6 +20,7 @@ if (PHP_SAPI !== 'cli') {
 $lowering = new cpp_lowering_options();
 $s2s = false;
 $source_directory = '';
+$project_mode = false;
 $entry_path = '';
 $output_directory = '';
 $optimization = 2;
@@ -30,11 +31,12 @@ if (PHP_SAPI === 'cli')
 {
 	if ($argc !== 1)
 	{
-		if (($argc < 3) || ($argv[1] !== '--s2s')) {
+		if (($argc < 3) || !in_array($argv[1], ['--s2s', '--project'], true)) {
 			$usage_error = true;
 		}
 		else {
 			$s2s = true;
+			$project_mode = $argv[1] === '--project';
 			$source_directory = $argv[2];
 			$usage_error = $source_directory === '';
 			for ($index = 3; $index < $argc; $index++) {
@@ -79,7 +81,7 @@ if (($lowering_report !== '') && ($lowering_report === $lowering_explain)) { $us
 if ($usage_error)
 {
 	if (PHP_SAPI === 'cli') {
-		fwrite(STDERR, "Usage: php compiler/my-try/main.php [--s2s SOURCE_DIRECTORY [--entry RELATIVE_PATH] [--output ABSOLUTE_DIRECTORY] [--prelower-templates|--no-prelower-templates] [--optimization 0|1|2|3] [--lowering-report PATH] [--lowering-explain PATH]] (prelowering is the default)\n");
+		fwrite(STDERR, "Usage: php compiler/my-try/main.php [(--s2s SOURCE_DIRECTORY | --project PRISM_JSON_OR_DIRECTORY) [--entry RELATIVE_PATH] [--output ABSOLUTE_DIRECTORY] [--prelower-templates|--no-prelower-templates] [--optimization 0|1|2|3] [--lowering-report PATH] [--lowering-explain PATH]] (prelowering is the default)\n");
 	}
 	else {
 		http_response_code(400);
@@ -95,10 +97,23 @@ if ($s2s)
 	try {
 		if ($output_directory !== '') { $publication = new Output_Publication($output_directory); }
 		$compiler = new Compiler($lowering);
-		$compiler->init([$source_directory]);
-		if ($entry_path !== '') { $compiler->select_entry('main', $entry_path); }
+		$project = null;
+		if ($project_mode) {
+			require_once __DIR__ . '/host/project.php';
+			$project = new Project_Compilation($source_directory);
+			$project->initialize($compiler, $entry_path);
+		}
+		else { $compiler->init([$source_directory]); }
+		if (!$project_mode && $entry_path !== '') { $compiler->select_entry('main', $entry_path); }
 		$policy = new cpp_lowering_policy($optimization);
-		$compiler->exec_cpp($publication, $policy);
+		if ($project !== null) {
+			$compiler->sync([]);
+			$compiler->prepare(true);
+			$project->validate();
+			fwrite(STDERR, json_encode($project->report, JSON_THROW_ON_ERROR | JSON_UNESCAPED_SLASHES) . "\n");
+			$compiler->cpp($publication, $policy);
+		}
+		else { $compiler->exec_cpp($publication, $policy); }
 		foreach ([$lowering_report => false, $lowering_explain => true] as $report_path => $explain) {
 			if ($report_path === '') { continue; }
 			// Exclusive creation prevents a diagnostic path from overwriting source/build inputs.

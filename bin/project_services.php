@@ -9148,6 +9148,30 @@ function collect_project_module_report(string $projectRoot, array $projectContex
 	$moduleRows = apply_project_module_dependency_validation_to_module_rows($moduleRows, $dependencyValidation);
 	$publicApiValidation = collect_project_module_public_api_validation($normalizedProjectRoot, $projectContexts, $moduleRows, $projectUnitForceIncludeReport, $publicApiPolicy);
 	$moduleRows = apply_project_module_public_api_validation_to_module_rows($moduleRows, $publicApiValidation);
+	enforce_project_module_validation($dependencyValidation, $publicApiValidation);
+	return normalize_project_module_report([
+		'configured' => $moduleRows !== [],
+		'total_modules' => count($moduleRows),
+		'generated_source_count' => $generatedSourceCount,
+		'assigned_source_count' => count($assignedSourceKeys),
+		'unassigned_source_count' => count($unassignedSources),
+		'unassigned_sources' => array_values(array_unique($unassignedSources)),
+		'duplicate_assignments' => $duplicateAssignments,
+		'consumer_rebuild_required_count' => count(array_filter($moduleRows, static fn (array $row): bool => (bool) ($row['consumer_rebuild_required'] ?? false))),
+		'cache_status_counts' => $cacheStatusCounts,
+		'stan_summary_cache_status_counts' => $stanSummaryCacheStatusCounts,
+		'dependency_validation' => $dependencyValidation,
+		'public_api_validation' => $publicApiValidation,
+		'manifest_artifacts' => normalize_string_list($manifestArtifacts),
+		'modules' => $moduleRows,
+	]);
+}
+
+/** Apply the shared project policy after either compiler supplies declaration/source evidence. */
+function enforce_project_module_validation(array $dependencyValidation, array $publicApiValidation): void
+{
+	$dependencyValidationPolicy = (string) ($dependencyValidation['policy'] ?? 'report');
+	$publicApiPolicy = (string) ($publicApiValidation['policy'] ?? 'report');
 	if ($dependencyValidationPolicy === 'warn' && (int) ($dependencyValidation['undeclared_dependency_count'] ?? 0) > 0) {
 		foreach (normalize_project_module_dependency_validation_rows(is_array($dependencyValidation['undeclared_dependencies'] ?? null) ? $dependencyValidation['undeclared_dependencies'] : []) as $violation) {
 			scpp_write('Project module dependency warning: module `' . (string) ($violation['module'] ?? '') . '` uses undeclared dependency `' . (string) ($violation['dependency'] ?? '') . '` from ' . implode(', ', normalize_string_list($violation['sources'] ?? [])) . PHP_EOL, 'stderr');
@@ -9178,22 +9202,6 @@ function collect_project_module_report(string $projectRoot, array $projectContex
 		}
 		scpp_fail('Project module public API validation failed: ' . implode('; ', $messages) . PHP_EOL, 2);
 	}
-	return normalize_project_module_report([
-		'configured' => $moduleRows !== [],
-		'total_modules' => count($moduleRows),
-		'generated_source_count' => $generatedSourceCount,
-		'assigned_source_count' => count($assignedSourceKeys),
-		'unassigned_source_count' => count($unassignedSources),
-		'unassigned_sources' => array_values(array_unique($unassignedSources)),
-		'duplicate_assignments' => $duplicateAssignments,
-		'consumer_rebuild_required_count' => count(array_filter($moduleRows, static fn (array $row): bool => (bool) ($row['consumer_rebuild_required'] ?? false))),
-		'cache_status_counts' => $cacheStatusCounts,
-		'stan_summary_cache_status_counts' => $stanSummaryCacheStatusCounts,
-		'dependency_validation' => $dependencyValidation,
-		'public_api_validation' => $publicApiValidation,
-		'manifest_artifacts' => normalize_string_list($manifestArtifacts),
-		'modules' => $moduleRows,
-	]);
 }
 
 function normalize_project_module_dependency_policy(array $config, string $projectLabel): string

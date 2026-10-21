@@ -39,6 +39,10 @@ do not request approval for each ordinary metadata row or populate speculative r
 The host and native-driver startup lists select core, json, strings, datetime and filesystem. Other consumers
 can select a subset; `strings` depends on `core`, and repeated selections deduplicate.
 String registration adds metadata and tests, not parsing/preparation/backend handlers.
+The [project CLI](../architecture/project_compilation.md) selects core/strings plus
+the root manifest runtime modules. [V-D10 acceptance](project_startup_metadata.md)
+verifies immutable startup constraints, live-replacement rejection and fresh-session
+changes under default prelowering; it adds no hot-reload mechanism.
 
 ## Source module inventory — 2026-10-09
 

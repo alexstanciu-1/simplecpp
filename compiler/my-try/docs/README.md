@@ -9,14 +9,16 @@ syntax and collection → shared semantic preparation → C++ generation. Other
 frontends should normalize toward the same PHS-shaped concepts. LLVM is a parked
 experiment retained for regressions, not a second semantic development path.
 
-Current repair checkpoint: [scalar debug and closure reconciliation](planning/scalar_debug_closure_reconciliation.md),
-45/64 original issues resolved (70.3125%): 44 implemented/repaired and one intentional
-contract reconciliation. Supplementary BS-R01 also remains closed.
+Current repair checkpoint: [project composition and startup metadata](planning/project_startup_metadata.md),
+47/64 original issues resolved (73.4375%): 45 implemented/repaired and two intentional
+contract reconciliations. Supplementary BS-R01 also remains closed.
 
-S08 scalar `dbg` passes default-prelowered cold/warm execution on dev002. S05
-preserves borrowed-closure restrictions and verifies the concrete adaptation;
-explicit callable storage remains a separate prelowering gap. The earlier
-[strict curl closeout](planning/curl_integration.md) retains its own proof scope.
+V-P01 exposes strict manifest projects and existing export/dependency policies through
+`--project`. V-D10 preserves immutable startup metadata; live replacement stays
+unsupported. Both have default-prelowered dev002 proof. The earlier
+[debug/closure closeout](planning/scalar_debug_closure_reconciliation.md) preserves
+borrowed-closure restrictions; explicit callable storage remains a separate
+prelowering gap.
 
 ## Reading map
 
@@ -174,6 +176,7 @@ From the repository root:
 ```bash
 php compiler/my-try/main.php --s2s SOURCE_DIRECTORY
 php compiler/my-try/main.php --s2s SOURCE_DIRECTORY --entry main.phs
+php compiler/my-try/main.php --project PROJECT_DIRECTORY --output /absolute/output
 php compiler/my-try/main.php --s2s SOURCE_DIRECTORY --entry main.phs --output /absolute/output
 php compiler/my-try/tests/tokenizer.php
 ```
@@ -189,6 +192,10 @@ logical names and `select_entry(module, path)`. Without a mode,
 `main.php` runs the legacy sample/debug report, including native sample execution.
 The browser accepts `mode=s2s&source=SOURCE_DIRECTORY&entry=main.phs`; the local Apache template
 is [tools/apache/scpp-my-try.conf](../tools/apache/scpp-my-try.conf).
+
+The CLI also supports [project composition](architecture/project_compilation.md) through
+`--project`: transitive `prism.json` dependencies, runtime selection and the existing
+project-module export/dependency policies. The strict profile must be explicit.
 
 Optional CLI `--output` publishes content-aware disk artifacts through the
 [locked ownership/recovery protocol](architecture/output_publication.md), while

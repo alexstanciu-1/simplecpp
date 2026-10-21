@@ -5,6 +5,10 @@ Verification closeout: evidence through checkpoint 75. All planned checks and di
 
 The frozen v0.2 audit has 105 passed checks, 5 failed, 6 blocked and 3 explicitly deferred across 36 language families. A passed audit check can establish a complete inventory or reproduce intended rejection; it does not necessarily mean every feature in that family is implemented. No compiler/runtime fixes were made by this verification goal.
 
+Current follow-up repair status: [47/64 resolved (73.4375%)](language_repair_progress.md),
+including [V-P01/V-D10](project_startup_metadata.md). The audit tables below retain
+the original frozen results; dated repair closeouts record subsequent changes.
+
 ## Scope and provenance
 
 Tests ran on `alex-ai@dev002.travelfuse.ro` under `/home/alex-ai/language-verification/20261018`, using shared runners and at most 32 workers. Local work processes evidence and reports only. The frozen source includes the previously approved S01/scalar working-tree changes; HEAD alone is not its identity.
@@ -838,3 +842,18 @@ concrete-closure adaptation, owned concrete capture and reference mutation. Its
 original fixture remains unchanged and rejected. Owned erased callable storage
 still rejects for missing concrete callback transport, explicitly kept separate.
 No runtime implementation change, full matrix or native compiler rebuild ran.
+
+## Project/startup closeout — 2026-10-21
+
+The [project/startup acceptance](project_startup_metadata.md) closes V-P01 and
+reconciles V-D10: **47/64 original issues resolved (73.4375%), 17 open**. This adds
+one capability repair and one intentional-contract reconciliation, +3.125 points.
+The dated V-P01/V-D10 findings above remain historical, not current blockers.
+
+LV25.004 and the bounded project/provider portion of LV33.003 now pass through
+`--project`, with transitive/diamond composition, export/dependency policies,
+optional runtime selection and default-prelowered execution. The checked
+run/current-build reader remains separate. LV27.003 is reconciled with the immutable
+startup contract: live replacement stays unsupported; source edits preserve loaded
+metadata and a new process observes changed constraints. Native compiler parity,
+full packaging/build-planner parity and wider deferred issues are not implied.

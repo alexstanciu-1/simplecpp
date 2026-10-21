@@ -628,8 +628,15 @@
       "dependencies": [
         "Agree project-manifest/dependency/export-policy integration through existing module and runtime configuration owners."
       ],
-      "next_action": "Discuss bounded project CLI composition; do not duplicate semantic resolution in a manifest reader or equate API tests with CLI project support.",
-      "simple_batch_eligible": false
+      "next_action": "Bounded project CLI composition complete. Full build-planner/packaging parity, native-library projects, JSS/legacy projects and checked current-build execution remain separate.",
+      "simple_batch_eligible": false,
+      "repair_status": "implemented-and-verified",
+      "repair": {
+        "date": "2026-10-21",
+        "report": "project_startup_metadata.md",
+        "evidence": "project-startup-acceptance.tar.gz",
+        "scope": "Production project CLI reuses manifest/dependency/export-policy owners, explicit compiler source selection, prepared declaration evidence, runtime selection and publication/native cache. Verified on dev002 with default prelowering; no runtime implementation changes."
+      }
     },
     {
       "id": "S04",
@@ -967,8 +974,15 @@
       "dependencies": [
         "Explicitly agree catalog hot reload and identity invalidation semantics before requiring selective preservation across metadata edits."
       ],
-      "next_action": "Keep live constraint-edit scenario deferred. Ordinary source incremental specialization and startup validation retain their existing verified scope.",
-      "simple_batch_eligible": false
+      "next_action": "Immutable startup contract reconciled and verified. Live catalog replacement and selective preservation across metadata edits remain deliberately unsupported; changes require a new session.",
+      "simple_batch_eligible": false,
+      "repair_status": "reconciled-and-verified",
+      "repair": {
+        "date": "2026-10-21",
+        "report": "project_startup_metadata.md",
+        "evidence": "project-startup-acceptance.tar.gz",
+        "scope": "Existing private startup validation, rejection of live replacement, source-update snapshot retention, reset/stale-identity behavior and fresh-process constraint replacement verified; initial and edited programs executed under default prelowering. No runtime implementation change or hot reload."
+      }
     },
     {
       "id": "V-R02",
