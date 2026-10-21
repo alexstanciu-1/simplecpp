@@ -1,5 +1,8 @@
 #pragma once
 
+#include "scpp/bool_t.hpp"
+#include "scpp/int_t.hpp"
+
 #include "modules/compiler/detail/storage_common.hpp"
 #include <list>
 #include <memory>
@@ -11,6 +14,11 @@ namespace scpp::compiler {
 template<class T>
 class Keyed_Storage {
 public:
+	scpp::bool_t source_is_empty() const { return scpp::bool_t(is_empty()); }
+	scpp::int_t<> source_count() const { return scpp::int_t<>(count()); }
+
+	static Keyed_Storage make(scpp::int_t<> capacity) { return Keyed_Storage(capacity); }
+
 	using record_handle = typename detail::storage_record<T>::handle;
 	using key_type = std::string;
 private:

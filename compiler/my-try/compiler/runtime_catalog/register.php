@@ -126,7 +126,42 @@ final class Runtime_Catalog_Registration
 				}
 			}
 		}
+		self::validate_construction($input);
 		return $result;
+	}
+
+	/** Factory opt-ins resolve privately; no source new can discover a malformed provider contract. */
+	private static function validate_construction(runtime_catalog_input $input): void
+	{
+		foreach ($input->modules as $module) {
+			foreach ($module->types as $recipe) {
+				if ($recipe->construction === '') { continue; }
+				$found = false;
+				foreach ($input->modules as $provider) {
+					foreach ($provider->functions as $function) {
+						$member = $function->member;
+						if ($member === null) { continue; }
+						if (($member->owner->name !== $recipe->name) || ($function->name !== $recipe->construction)) { continue; }
+						$found = true;
+						if (!$member->static_member || (q_count($function->type_parameters) !== 0)) {
+							throw new \RuntimeException('Runtime construction requires an owner-bound static factory');
+						}
+						$returned = $function->return_type;
+						if (($returned->name !== $recipe->name) || ($returned->callable !== null)
+							|| ($returned->parameter !== '') || (q_count($returned->arguments) !== q_count($recipe->parameters))) {
+							throw new \RuntimeException('Runtime construction factory must return the exact owner type');
+						}
+						$arguments /** Storage<runtime_type_spec> */ = $returned->arguments;
+						foreach ($recipe->parameters as $index => $parameter) {
+							if ($arguments[$index]->parameter !== $parameter->name) {
+								throw new \RuntimeException('Runtime construction factory must preserve owner arguments');
+							}
+						}
+					}
+				}
+				if (!$found) { throw new \RuntimeException('Runtime construction factory not found: ' . $recipe->construction); }
+			}
+		}
 	}
 
 	/** Bounded bare qualifiers, not namespace paths or contextual type keywords. */

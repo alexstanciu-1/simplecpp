@@ -14,7 +14,7 @@ final class CPP_Wrapper_Transport
 		return $arguments[0]->matches(Language_Types::string_type(Model::$language_scope));
 	}
 
-	/** Provider fields keep native vector<string>; application vectors store concrete strings. */
+	/** Provider vectors keep native strings/handles; application vectors store concrete elements. */
 	public static function provider_vector(canonical_type_use $type, string $expression, bool $compose,
 		CPP_Specializations $engine, cpp_generation_context $context): string
 	{
@@ -24,8 +24,8 @@ final class CPP_Wrapper_Transport
 		$application = object_cast($canonical, applied_template_type::class);
 		$arguments /** vector<canonical_type_use> */ = $application->arguments();
 		$element = $arguments[0];
-		if (!$element->matches(Language_Types::string_type(Model::$language_scope))) {
-			throw new \RuntimeException('prelower_templates: provider vector transport currently requires string elements');
+		if (!$element->matches(Language_Types::string_type(Model::$language_scope)) && !Type_Queries::is_nominal_handle($element)) {
+			throw new \RuntimeException('prelower_templates: provider vector transport requires string or shared-record elements');
 		}
 		$target = $compose ? CPP_Types::implementation_representation($type, $engine) : CPP_Types::representation($type);
 		CPP_Types::record_dependencies($target, $context);

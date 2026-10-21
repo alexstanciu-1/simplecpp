@@ -12,6 +12,10 @@ final class Capability_Preparation implements type_capability_query
 	public function has_capability(canonical_type_use $type_use, generic_contract $capability): bool
 	{
 		$definition = Type_Queries::canonical($type_use)->definition();
+		if ($capability === generic_contract::shared_record) {
+			return Type_Queries::is_nominal_handle($type_use)
+				&& ($definition->origin() === type_definition_origin::source);
+		}
 		if ($definition instanceof closure_type_definition) {
 			$identity = Model::$type_catalog->closures()->identity($type_use);
 			$this->context->worker->require_contract($this->context->owner, $identity->signature_work);

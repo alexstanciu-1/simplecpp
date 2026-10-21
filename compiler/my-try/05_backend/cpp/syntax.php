@@ -602,6 +602,11 @@ final class CPP_Syntax
 	public function generate_value_probe(value_probe_node $node): string
 	{
 		$facts = $node->require_probe_preparation();
+		if ($facts->runtime_call !== null) {
+			$arguments = new Storage /** Storage<expression_node> */();
+			$arguments->append($node->operand);
+			return CPP_Declarations::selected_call($facts->runtime_call, $arguments, $this->context, '', null, '');
+		}
 		$path = $facts->path;
 		if ($path !== null) {
 			return CPP_Keyed_Path::generate($path, $this->context, false, $facts->operation === value_probe_kind::empty, $facts->presence, $facts->type);

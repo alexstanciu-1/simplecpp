@@ -1,5 +1,8 @@
 #pragma once
 
+#include "scpp/bool_t.hpp"
+#include "scpp/int_t.hpp"
+
 // Contract: specs/compiler_storage.md.
 #include "modules/compiler/detail/storage_common.hpp"
 #include "scpp/vector_t.hpp"
@@ -10,6 +13,12 @@ namespace scpp::compiler {
 template<class T>
 class Storage {
 public:
+	scpp::bool_t source_is_empty() const { return scpp::bool_t(is_empty()); }
+	scpp::int_t<> source_count() const { return scpp::int_t<>(count()); }
+	scpp::int_t<> source_append(scpp::shared_p<T> record) { return scpp::int_t<>(append(std::move(record))); }
+
+	static Storage make(scpp::int_t<> capacity) { return Storage(capacity); }
+
 	using record_handle = typename detail::storage_record<T>::handle;
 	using key_type = std::int64_t;
 private:

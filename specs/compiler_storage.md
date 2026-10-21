@@ -7,6 +7,17 @@ issue #242. Strict PHS binds these wrappers
 through the PHP language adapter. Enable `"compiler"` in `runtime.modules`; this
 module is header-only and has no additional native link library.
 
+The v0.2 catalog `runtime/metadata/modules/compiler.json` registers `Storage`,
+`Keyed_Storage` and `Key_Storage_List` through the ordinary runtime type/member
+machinery. `new` selects registered factories; implicit fields default-construct
+independent collections. Record arguments satisfy the `shared_record` formation
+requirement. Numeric/keyed access and owning iteration reuse the existing indexing
+and iteration protocols. Native adapters return the exact source int/bool carriers.
+Ordinary and prelowered C++ preserve the same shared membership and record identity;
+prelowered snapshots use the existing vector representation and handle transport.
+This registration does not expose borrowed slots, nested writable container paths,
+membership mutation during iteration or `Storage_Cursor` widening.
+
 ## Public types and identity
 
 `Storage<T>` is a numeric object list. `Keyed_Storage<T>` is an exact string-keyed

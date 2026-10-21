@@ -1253,6 +1253,16 @@ evaluation, exact binary/UTF-8 bytes and negative-capacity errors. The two exist
 native runtime builder tests also run. No PCH or native compiler rebuild is implied;
 byte-span append is not admitted by this metadata slice.
 
+For compiler collection registration, ordinary and prelowered identity/iteration,
+name-pool snapshots, admission and malformed metadata recovery:
+
+```bash
+python3 compiler/my-try/tests/compiler_storage.py --results /tmp/FRESH_STORAGE_RESULTS
+```
+
+This builds and executes generated programs through the production C++ build owner.
+It does not rebuild the compiler itself or establish cursor/borrowed-slot support.
+
 For ordinary runtime type metadata and the vector/hash registration migration:
 
 ```bash

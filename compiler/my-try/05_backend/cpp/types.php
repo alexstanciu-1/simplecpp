@@ -293,6 +293,17 @@ final class CPP_Types
 		return Model::$cpp_type_bindings->definition($definition->definition_id())->recipe();
 	}
 
+	/** Payload-template providers consume native handles, unlike stored-argument containers. */
+	public static function uses_payload_arguments(canonical_type_use $type): bool
+	{
+		$recipe = self::stored_recipe($type);
+		if ($recipe === null) { return false; }
+		foreach ($recipe->arguments as $argument) {
+			if ($argument->payload) { return true; }
+		}
+		return false;
+	}
+
 	public static function needs_concrete_storage(canonical_type_use $type): bool
 	{
 		if ((Type_Queries::canonical($type)->definition() instanceof callable_type_definition)

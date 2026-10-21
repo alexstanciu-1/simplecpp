@@ -78,6 +78,12 @@ inline const detail::dynamic_value *keyed_lookup(const detail::dynamic_value *re
 	return table.has(key).native_value() ? &table.at(key) : nullptr;
 }
 
+// Membership rechecks do not expose a payload pointer across representation boundaries.
+template <typename R, typename K>
+bool keyed_present(const R *receiver, const K &key, bool removing) {
+	return keyed_lookup(receiver, key, removing) != nullptr;
+}
+
 // Interior pointers live only within one lookup/resolution call, never across a key expression.
 template <typename R, typename K>
 auto keyed_child(const R *receiver, const K &key, bool removing) {

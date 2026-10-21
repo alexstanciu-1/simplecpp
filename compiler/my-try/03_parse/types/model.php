@@ -71,6 +71,8 @@ enum generic_contract: int
 	case comparable = 4;
 	// Provider opt-in for exact Result value transport; not truthiness or copyability.
 	case result_payload = 5;
+	// Formation-only requirement; never a provider-declared capability.
+	case shared_record = 6;
 }
 
 /** Stable text for contracts; native enum reflection is not required by the model. */
@@ -93,6 +95,7 @@ final class Generic_Contract_Name
 		if ($contract === generic_contract::result_payload) {
 			return 'result_payload';
 		}
+		if ($contract === generic_contract::shared_record) { return 'shared_record'; }
 		throw new \LogicException('Unknown generic contract');
 	}
 }
@@ -1039,6 +1042,26 @@ final class Type_Registry implements type_capability_query
 {
 	/** Explicit provider storage is independent of nominal kind and payload capabilities. */
 	private array $runtime_storage_policies /** hash<record_storage_kind, int> */ = [];
+	private array $runtime_construction_names /** hash<string, int> */ = [];
+	private array $runtime_default_construction /** hash<bool, int> */ = [];
+
+	public function register_runtime_construction(type_definition_i $definition, string $factory, bool $default_constructible): void
+	{
+		$this->runtime_construction_names[$definition->definition_id()] = $factory;
+		$this->runtime_default_construction[$definition->definition_id()] = $default_constructible;
+	}
+
+	public function runtime_construction(type_definition_i $definition): string
+	{
+		$key = $definition->definition_id();
+		return isset($this->runtime_construction_names[$key]) ? $this->runtime_construction_names[$key] : '';
+	}
+
+	public function runtime_default_constructible(type_definition_i $definition): bool
+	{
+		$key = $definition->definition_id();
+		return isset($this->runtime_default_construction[$key]) && $this->runtime_default_construction[$key];
+	}
 
 	/** Install once with the definition; never derive provider representation from its name. */
 	public function register_runtime_storage(type_definition_i $definition, record_storage_kind $storage): void
@@ -1378,6 +1401,7 @@ final class Type_Registry implements type_capability_query
 	{
 		$canonical = $this->type($type_use->type_id());
 		$definition = $canonical->definition();
+		if ($capability === generic_contract::shared_record) { return false; }
 		if ($definition->origin() === type_definition_origin::source) {
 			throw new \LogicException('Source type capabilities require completed declaration preparation');
 		}

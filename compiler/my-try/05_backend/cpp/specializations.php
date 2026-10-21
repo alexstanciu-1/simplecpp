@@ -167,6 +167,8 @@ final class CPP_Specializations
 				if ($depth >= 0) { $depths[$artifact->file_name] = $depth; }
 			}
 			foreach ($entries as $entry) {
+				// Member fragments share the owning type header; only its layout entry determines readiness.
+				if ($entry->member_owner !== '') { continue; }
 				if (isset($depths[$entry->header])) { continue; }
 				$depth = self::required_depth($entry->layout_dependencies, $known, $depths);
 				if ($depth >= 0) { $depths[$entry->header] = $depth + ($entry->layout_statements === '' ? 0 : 1); }

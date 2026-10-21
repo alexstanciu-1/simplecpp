@@ -58,13 +58,17 @@ final class CPP_Concrete_Index
 		$operand_types /** vector<canonical_type_use> */ = [$receiver];
 		self::reference('keyed_ready', $operand_types, null, $context);
 		$inputs /** vector<canonical_type_use> */ = [$receiver, $step->key_conversion->target_type];
-		self::reference('keyed_lookup', $inputs, $step->element_type, $context);
+		if (!$last) { self::reference('keyed_lookup', $inputs, $step->element_type, $context); }
 		if (!$last) {
 			self::reference('keyed_child', $inputs, $step->element_type, $context);
 			if ($removing) { self::reference('keyed_descend', $inputs, $step->element_type, $context); }
 		}
-		elseif ($removing) { self::reference('keyed_erase', $inputs, null, $context); }
-		elseif (!$presence) { self::reference('keyed_probe', $inputs, null, $context); }
+		elseif ($removing) {
+			self::reference('keyed_present', $inputs, null, $context);
+			self::reference('keyed_erase', $inputs, null, $context);
+		}
+		elseif (!$presence || Type_Queries::is_nominal_handle($step->element_type)) { self::reference('keyed_probe', $inputs, null, $context); }
+		else { self::reference('keyed_lookup', $inputs, $step->element_type, $context); }
 	}
 
 	public static function entry(cpp_runtime_operation $request, CPP_Specializations $engine): cpp_specialization_entry
@@ -76,9 +80,10 @@ final class CPP_Concrete_Index
 		$inputs /** Storage<canonical_type_use> */ = $request->inputs;
 		$mixed_read = ($helper === 'null_index_read')
 			&& (Type_Queries::canonical($inputs[0])->definition() instanceof mixed_semantics);
-		$pointer = ($helper === 'keyed_ready') || ($helper === 'keyed_lookup') || ($helper === 'keyed_child') || ($helper === 'keyed_probe');
+		$pointer = ($helper === 'keyed_ready') || ($helper === 'keyed_present') || ($helper === 'keyed_lookup') || ($helper === 'keyed_child') || ($helper === 'keyed_probe');
 		$mutable_receiver = ($helper === 'index_store') || ($helper === 'index_append') || ($helper === 'index_path_descend')
 			|| ($helper === 'keyed_descend') || ($helper === 'keyed_erase');
+		$payload_provider = CPP_Types::uses_payload_arguments($inputs[0]);
 		$context = new cpp_generation_context($engine);
 		$parameters = '';
 		$arguments = '';
@@ -91,19 +96,20 @@ final class CPP_Concrete_Index
 			$indirection = ($position === 0 && $pointer) ? '*' : '&';
 			$operand = 'a' . $position;
 			$parameters .= $separator . $qualifier . $mapping->spelling . $indirection . ' ' . $operand;
-			if (($position === 0 || $mixed_read) && $mapping->opaque) {
+			if (($position === 0 || $mixed_read || $payload_provider) && $mapping->opaque) {
 				$native = CPP_Types::implementation_representation($type, $engine);
 				foreach ($native->headers as $header => $used) { $native_headers[$header] = true; }
-				$address = $operand . ($pointer ? '->' : '.') . 'address()';
+				$input_pointer = ($position === 0) && $pointer;
+				$address = $operand . ($input_pointer ? '->' : '.') . 'address()';
 				$unwrapped = 'std::launder(static_cast<' . $qualifier . $native->spelling . '*>' . '(' . $address . '))';
-				$operand = $pointer ? '(' . $operand . ' ? ' . $unwrapped . ' : nullptr)' : '*' . $unwrapped;
+				$operand = $input_pointer ? '(' . $operand . ' ? ' . $unwrapped . ' : nullptr)' : '*' . $unwrapped;
 			}
 			$arguments .= $separator . $operand;
 			$separator = ', ';
 		}
 		if ($pointer) { $parameters .= ', bool mode'; $arguments .= ', mode'; }
 		$output = 'void';
-		if ($helper === 'keyed_ready') { $output = 'bool'; }
+		if (($helper === 'keyed_ready') || ($helper === 'keyed_present')) { $output = 'bool'; }
 		if ($helper === 'keyed_probe') { $output = 'bool'; }
 		if ($request->result !== null) {
 			$mapping = CPP_Types::representation($request->result, $context);
@@ -117,7 +123,7 @@ final class CPP_Concrete_Index
 		$declaration = "#pragma once\n" . CPP_Artifacts::includes($context->headers, '') . 'namespace scpp { ' . $signature . "; }\n";
 		$operation = 'return scpp::' . $helper . '(' . $arguments . ')'
 			. ($helper === 'keyed_probe' ? '.native_value()' : '') . ';';
-		if ($mixed_read) {
+		if ($mixed_read || ($payload_provider && ($helper === 'checked_index_read'))) {
 			$result /** canonical_type_use */ = $request->result;
 			$native_result = CPP_Types::implementation_representation($result, $engine);
 			foreach ($native_result->headers as $header => $used) { $native_headers[$header] = true; }

@@ -4,6 +4,18 @@ namespace scpp\compiler;
 /** Exact selection precedes bounded required-payload fallback; both share ordinary argument admission. */
 final class Runtime_Call_Preparation
 {
+	/** Query prepared inputs without applying conversions or hiding an ambiguous match. */
+	public static function has_exact_match(array $targets /** vector<callable_definition_i> */,
+		Storage $arguments /** Storage<expression_node> */): bool
+	{
+		foreach ($targets as $target) {
+			if ($target instanceof runtime_function_definition) {
+				if (self::match(object_cast($target, runtime_function_definition::class), $arguments, null) !== null) { return true; }
+			}
+		}
+		return false;
+	}
+
 	public static function prepare(array $targets /** vector<callable_definition_i> */,
 		Storage $arguments /** Storage<expression_node> */, preparation_context $context,
 		?canonical_type_use $runtime_owner = null): prepared_call

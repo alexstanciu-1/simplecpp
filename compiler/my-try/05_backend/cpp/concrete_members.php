@@ -39,6 +39,7 @@ final class CPP_Concrete_Members
 		$owner_type = $inputs[0];
 		$owner = $engine->entry($engine->request_composed($owner_type));
 		$native = CPP_Types::implementation_representation($owner_type, $engine);
+		$payload_provider = CPP_Types::uses_payload_arguments($owner_type);
 		$binding /** cpp_function_binding */ = $request->binding;
 		$context = new cpp_generation_context($engine);
 		$parameters = '';
@@ -65,6 +66,9 @@ final class CPP_Concrete_Members
 			}
 			elseif ($parameter->mode === passing_mode::observation) { $qualifier = 'const '; }
 			$parameters .= $separator . $qualifier . $mapping->spelling . $reference . ' a' . $index;
+			if ($payload_provider) {
+				$argument = CPP_Wrapper_Transport::payload_value($parameter->type, 'a' . $index, false, $engine, $context);
+			}
 			$arguments .= $separator . $argument;
 			$separator = ', ';
 		}
@@ -89,6 +93,7 @@ final class CPP_Concrete_Members
 				if (CPP_Wrapper_Transport::payload($call->type) !== null) {
 					$expression = CPP_Wrapper_Transport::adapt($call->type, $expression, true, $engine, $context);
 				}
+				if ($payload_provider) { $expression = CPP_Wrapper_Transport::provider_vector($call->type, $expression, true, $engine, $context); }
 				$operation = CPP_Runtime_Operations::concrete_call_result($return_type, $native_result->spelling, '', $expression);
 			}
 			else {

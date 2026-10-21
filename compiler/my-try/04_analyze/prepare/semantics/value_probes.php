@@ -27,6 +27,16 @@ final class Value_Probe_Preparation
 				$operand = Expression_Preparation::prepare($syntax->operand, $context);
 				$probe_type = $operand->type;
 			}
+			if (($facts->path === null) && ($syntax->probe_kind === value_probe_kind::empty)) {
+				$targets = Model::$language_scope->callables_named('empty');
+				$arguments = new Storage /** Storage<expression_node> */();
+				$arguments->append($syntax->operand);
+				if (Runtime_Call_Preparation::has_exact_match($targets, $arguments)) {
+					$facts->runtime_call = Runtime_Call_Preparation::prepare($targets, $arguments, $context);
+					if (!$facts->runtime_call->type->matches($context->boolean)) { throw new \RuntimeException('Runtime empty must return bool'); }
+					return $facts;
+				}
+			}
 			self::require_type($probe_type, $syntax->probe_kind);
 			$definition = Type_Queries::canonical($probe_type)->definition();
 			if (($definition instanceof callable_type_definition) || ($definition instanceof closure_type_definition)) {

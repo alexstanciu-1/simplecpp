@@ -174,6 +174,7 @@ final class Runtime_Catalog_Reader
 			elseif ($name === 'value_storable') {
 				$result[] = generic_contract::value_storable;
 			}
+			elseif ($name === 'shared_record') { $result[] = generic_contract::shared_record; }
 			elseif ($name === 'hashable') {
 				$result[] = generic_contract::hashable;
 			}
@@ -252,6 +253,8 @@ final class Runtime_Catalog_Reader
 				}
 				$kind = true;
 			}
+			elseif ($key === 'construction') { $result->construction = self::name($reader); }
+			elseif ($key === 'default_constructible') { $result->default_constructible = $reader->read_boolean(); }
 			elseif ($key === 'storage')
 			{
 				$storage_name = self::name($reader);

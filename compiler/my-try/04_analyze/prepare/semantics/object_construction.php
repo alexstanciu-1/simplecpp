@@ -33,6 +33,18 @@ final class Object_Construction_Preparation
 		}
 		else { $target = Type_Preparation::type($node->target_type, $context); }
 		$source_arguments /** Storage<expression_node> */ = $node->arguments;
+		$factory = Model::$type_catalog->registry()->runtime_construction(Type_Queries::canonical($target)->definition());
+		if ($factory !== '') {
+			$call = Runtime_Call_Preparation::prepare(Model::$runtime_callables->methods_named($target, $factory, true), $source_arguments, $context, $target);
+			if (!$call->type->matches($target)) { throw new \RuntimeException('Runtime construction factory must return the exact owner type'); }
+			$facts = new prepared_object_construction();
+			$facts->value_origin = expression_value_origin::fresh_construction;
+			$facts->constructed_type = $target;
+			$facts->type = $target;
+			$facts->storage = record_storage_kind::inline_value;
+			$facts->runtime_factory = $call;
+			return $facts;
+		}
 		if ($target->by_value() || (Type_Queries::source_record($target) === null)) {
 			throw new \RuntimeException('S2S new requires a source struct or class');
 		}
@@ -114,7 +126,8 @@ final class Object_Construction_Preparation
 			return true;
 		}
 		$definition = Type_Queries::canonical($type)->definition();
-		return ($definition instanceof callable_type_definition)
+		return Model::$type_catalog->registry()->runtime_default_constructible($definition)
+			|| ($definition instanceof callable_type_definition)
 			|| ($definition === Model::$type_catalog->definition('vector'))
 			|| ($definition === Model::$type_catalog->definition('hash'))
 			|| $type->matches(Language_Types::error_type(Model::$language_scope));

@@ -1,5 +1,8 @@
 #pragma once
 
+#include "scpp/bool_t.hpp"
+#include "scpp/int_t.hpp"
+
 #include "scpp/shared_p.hpp"
 #include "scpp/string_t.hpp"
 #include "scpp/vector_t.hpp"
@@ -22,6 +25,10 @@ class Key_Storage_List {
 	};
 	std::shared_ptr<state> data_ = std::make_shared<state>();
 public:
+	scpp::bool_t source_is_empty() const { return scpp::bool_t(is_empty()); }
+
+	static Key_Storage_List make() { return Key_Storage_List(); }
+
 	void add(const scpp::string_t &key, handle record) {
 		if (!record) throw std::invalid_argument("Key_Storage_List requires a non-null record");
 		auto &bucket = data_->positions[std::string(key.native_value())];

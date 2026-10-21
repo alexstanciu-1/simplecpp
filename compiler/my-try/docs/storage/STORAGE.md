@@ -98,3 +98,15 @@ no-op. Remaining iteration order is preserved and snapshots are packed. Internal
 positions are not reused; native storage retains empty slots until release (compaction
 debt). There is no unique-key replacement or public position API.
 PHP helper code and the compiler runtime wrapper implement the same contract.
+
+## v0.2 registration
+
+The opt-in compiler runtime catalog registers all three collections through the
+existing type, factory, member, indexing and iteration machinery. Ordinary and
+prelowered C++ are covered by `tests/compiler_storage.py`: aliases share membership,
+reads retain identity across removal, foreach exports owning handles, and name-pool
+snapshots use vectors of the same handles. Scalar and inline record arguments reject
+during shared preparation. `Storage_Cursor`, borrowed slots and nested writable
+container paths remain outside this registration. See the
+[normative contract](../../../../specs/compiler_storage.md) and
+[bootstrap checkpoint](../../../../specs/planning/storage_bootstrap_2026_10_21.md).

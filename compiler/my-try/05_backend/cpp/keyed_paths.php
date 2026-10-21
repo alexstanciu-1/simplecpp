@@ -52,7 +52,7 @@ final class CPP_Keyed_Path
 				$resolver = $next;
 			}
 			elseif (!$removing) {
-				if ($presence !== null) {
+				if (($presence !== null) && !Type_Queries::is_nominal_handle($step->element_type)) {
 					$leaf = 'keyed_leaf_' . $id;
 					$text .= 'const auto* ' . $leaf . ' = scpp::keyed_lookup(' . $resolver . '(), ' . $key . ', false); ';
 					$text .= 'if (!' . $leaf . ') { ' . CPP_Sequence::result($result_type . '{false}', $context) . '} ' . CPP_Sequence::result($result_type . '('
@@ -64,7 +64,7 @@ final class CPP_Keyed_Path
 			}
 			else
 			{
-				$text .= 'if (!scpp::keyed_lookup(' . $resolver . '(), ' . $key . ', true)) { ' . CPP_Sequence::result('', $context) . '} ';
+				$text .= 'if (!scpp::keyed_present(' . $resolver . '(), ' . $key . ', true)) { ' . CPP_Sequence::result('', $context) . '} ';
 				$parent = $root;
 				for ($prefix = 0; $prefix < $last; $prefix++)
 				{

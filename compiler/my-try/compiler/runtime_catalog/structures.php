@@ -32,6 +32,9 @@ final class runtime_type_definition_spec
 	public string $identity = '';
 	public string $name = '';
 	public nominal_type_kind $kind;
+	/** Explicit native default and source-new factory opt-ins. */
+	public bool $default_constructible = false;
+	public string $construction = '';
 	public record_storage_kind $storage = record_storage_kind::inline_value;
 	public array $capabilities /** vector<generic_contract> */ = [];
 	public Storage $parameters /** Storage<runtime_type_parameter_spec> */;

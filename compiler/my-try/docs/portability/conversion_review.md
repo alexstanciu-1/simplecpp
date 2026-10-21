@@ -14,6 +14,18 @@ The catalog's bounded closeouts and Chapter 15 deferrals still
 bound the supported language surface.
 This does not establish exhaustive language, lifetime, incremental or performance coverage.
 
+## PHP-hosted bootstrap after Storage registration — 2026-10-21
+
+Storage registration passes ordinary and prelowered generated-program proofs.
+The converted compiler (266 PHS files, 1,898,504 bytes including framework) passes
+runtime initialization, then stops in parsing on converter-emitted postfix parameter
+types: `$inputs Storage<module_input>` instead of `Storage<module_input> $inputs`.
+The measured attempt takes 2.88 seconds, peaks at 126.2 MiB RSS / 100 MiB PHP heap,
+and never reaches semantic preparation or C++ emission. This is not a successful
+self-bootstrap or a full compilation performance measurement. The blocker remains
+unmodified; [checkpoint and evidence](../../../../specs/planning/storage_bootstrap_2026_10_21.md)
+record the boundary. The native checkpoints below describe earlier revisions.
+
 ## Native prelowering execution — 2026-10-20
 
 The native driver can now select the public `prelower_templates` setting and run

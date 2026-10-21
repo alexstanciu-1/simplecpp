@@ -69,7 +69,7 @@ cache/PCH consumer. See [asset checks](testing.md) and the current
 | Incremental stages and failure handling | [Lifecycle](lifecycle/incremental.md), [work queue](lifecycle/work_queue.md) |
 | Active multithreading design and shared-write inventory | [Multithreading plan](planning/multithreading.md) |
 | Collection and preparation | [Analysis](../04_analyze/README.md), [preparation](../04_analyze/prepare/README.md) |
-| Collection APIs | [Storage](storage/STORAGE.md) |
+| Collection APIs and v0.2 registration | [Storage](storage/STORAGE.md) |
 | Portability status and evidence limits | [Conversion review](portability/conversion_review.md) |
 | Conversion quality and portable-PHP frontend discussion | [PHS elegance, native costs, lookup review and shared-model options](planning/conversion_quality.md) (planning only) |
 | Preparation / C++ emission boundary audit | [Findings, evidence and open repair gates](planning/preparation_emission_audit.md) |

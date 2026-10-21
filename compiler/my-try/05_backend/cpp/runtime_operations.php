@@ -294,7 +294,9 @@ final class CPP_Runtime_Operations
 			$values = self::join($arguments);
 			if ($request->call !== null) { $values = CPP_Source_Calls::native_arguments($request->call, $arguments, 0, $context); }
 			$values = CPP_Callsites::arguments($request->callsite, $values);
-			$expression = $binding->symbol() . '(' . $values . ')';
+			$callee = $binding->symbol();
+			if ($request->call !== null) { $callee = CPP_Callables::call_reference($request->call, $context); }
+			$expression = $callee . '(' . $values . ')';
 			if (($request->result !== null) && (CPP_Wrapper_Transport::payload($request->result) !== null)) {
 				return CPP_Wrapper_Transport::adapt($request->result, $expression, true, $engine, $context);
 			}
@@ -464,6 +466,9 @@ final class CPP_Runtime_Operations
 	{
 		if (($facts->signature->reference_return !== null) || ($facts->variadic_parameter !== null)) {
 			throw new \RuntimeException('prelower_templates: reference-result/variadic call transport is not yet implemented');
+		}
+		if ($facts->signature->parameters->is_empty()) {
+			return self::value_call($facts, $arguments, $context, $callsite);
 		}
 		foreach ($facts->signature->parameters as $parameter) {
 			if ($parameter->mode !== passing_mode::observation) {

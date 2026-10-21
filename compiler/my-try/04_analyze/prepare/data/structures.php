@@ -189,6 +189,8 @@ final class prepared_object_construction extends prepared_expression
 	public canonical_type_use $constructed_type;
 	public record_storage_kind $storage;
 	public ?prepared_call $constructor_call = null;
+	/** Provider factories share runtime call admission and physical transport. */
+	public ?prepared_call $runtime_factory = null;
 }
 
 /** One syntax family, with distinct settled sequence-factory and typed-record contracts. */
@@ -319,6 +321,7 @@ final class prepared_constant_reference extends prepared_expression {
 /** Admitted one-value query; distinct helper semantics are retained for emission. */
 final class prepared_value_probe extends prepared_expression
 {
+	public ?prepared_call $runtime_call = null;
 	public value_probe_kind $operation;
 	public ?prepared_keyed_path $path = null;
 	/** Present when this type's isset contract is exactly its condition/presence operation. */

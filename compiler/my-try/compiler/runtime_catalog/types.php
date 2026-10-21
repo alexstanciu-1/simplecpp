@@ -79,7 +79,19 @@ final class Runtime_Type_Registration
 			$parameters[] = new template_type_parameter($parameter->name, $parameter->formation_contracts,
 				$default_type, $parameter->capability_dependencies);
 		}
+		foreach ($recipe->capabilities as $capability) {
+			if ($capability === generic_contract::shared_record) { throw new \RuntimeException('shared_record is a formation requirement, not a declared capability'); }
+		}
+		foreach ($recipe->parameters as $parameter) {
+			foreach ($parameter->capability_dependencies as $dependency) {
+				if ($dependency === generic_contract::shared_record) { throw new \RuntimeException('shared_record cannot be a capability dependency'); }
+			}
+		}
+		if (($recipe->construction !== '') || $recipe->default_constructible) {
+			if ($recipe->storage !== record_storage_kind::inline_value) { throw new \RuntimeException('Runtime construction requires inline provider storage'); }
+		}
 		$definition = $this->register_definition($recipe, $parameters);
+		$this->types->registry()->register_runtime_construction($definition, $recipe->construction, $recipe->default_constructible);
 		$this->types->registry()->register_runtime_storage($definition, $recipe->storage);
 		$this->types->source()->expose_type($name, $definition);
 		$this->types->providers()->register($definition, 'simple_cpp.runtime.' . $this->owners[$name], $recipe->identity);

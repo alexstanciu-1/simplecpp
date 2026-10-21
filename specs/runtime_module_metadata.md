@@ -354,6 +354,27 @@ must name an owner-declared capability. `result_payload` is an unconditional Res
 transport opt-in and cannot be an argument dependency. Copy operations still check
 effective copyability. These are registry contracts, never JSON callbacks or rules.
 
+`shared_record` is an additional formation-only requirement. Shared preparation
+accepts source nominal record handles, including interfaces, and rejects scalars,
+inline `value<Record>` and runtime carriers. Providers cannot declare it as a
+capability or capability dependency. It describes handle representation, not
+copyability of the underlying record.
+
+Runtime types with inline provider storage may opt into `new` through an optional
+`construction` member name. It must resolve to registered static factories on the
+same owner, with no extra type parameters and an exact owner return type preserving
+all owner arguments. Startup rejects missing or malformed factories. Construction
+reuses ordinary runtime call matching, argument defaults and prepared boundaries;
+it grants no source constructor body or inheritance behavior. Omission forbids `new`.
+Independent `default_constructible: true` permits implicit empty field construction;
+the provider guarantees that native default construction yields the appropriate
+independent initial state. This flag defaults to false and does not infer a factory.
+Neither option grants indexing, iteration or array-literal initialization.
+
+A registered exact unary `empty` overload can serve the plain `empty(value)` probe;
+shared preparation requires a bool result and retains the selected call. Indexed
+probes continue to use their indexing contracts.
+
 An optional parameter `default` uses the ordinary type-reference shape above. It
 must be closed (no `parameter` variables), satisfy that parameter's requirements,
 and follow any required parameters. Forward references are supported across the

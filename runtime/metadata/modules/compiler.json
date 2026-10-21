@@ -1,0 +1,710 @@
+{
+  "version": 1,
+  "module": "compiler",
+  "dependencies": [
+    "core"
+  ],
+  "types": [
+    {
+      "id": "compiler.Storage",
+      "name": "Storage",
+      "kind": "class",
+      "storage": "inline",
+      "construction": "make",
+      "default_constructible": true,
+      "parameters": [
+        {
+          "name": "Record",
+          "requires": [
+            "shared_record"
+          ]
+        }
+      ],
+      "capabilities": [
+        "copyable_value",
+        "value_storable"
+      ],
+      "indexing": {
+        "key": "int",
+        "value": {
+          "parameter": "Record"
+        },
+        "nested": {
+          "parameter": "Record"
+        },
+        "write": true,
+        "append": "allowed",
+        "probes": true,
+        "removal": true
+      },
+      "iteration": {
+        "key": "int",
+        "value": {
+          "parameter": "Record"
+        }
+      }
+    },
+    {
+      "id": "compiler.Keyed_Storage",
+      "name": "Keyed_Storage",
+      "kind": "class",
+      "storage": "inline",
+      "construction": "make",
+      "default_constructible": true,
+      "parameters": [
+        {
+          "name": "Record",
+          "requires": [
+            "shared_record"
+          ]
+        }
+      ],
+      "capabilities": [
+        "copyable_value",
+        "value_storable"
+      ],
+      "indexing": {
+        "key": "string",
+        "value": {
+          "parameter": "Record"
+        },
+        "nested": {
+          "parameter": "Record"
+        },
+        "write": true,
+        "append": "unsupported",
+        "probes": true,
+        "removal": true
+      },
+      "iteration": {
+        "key": "string",
+        "value": {
+          "parameter": "Record"
+        }
+      }
+    },
+    {
+      "id": "compiler.Key_Storage_List",
+      "name": "Key_Storage_List",
+      "kind": "class",
+      "storage": "inline",
+      "construction": "make",
+      "default_constructible": true,
+      "parameters": [
+        {
+          "name": "Record",
+          "requires": [
+            "shared_record"
+          ]
+        }
+      ],
+      "capabilities": [
+        "copyable_value",
+        "value_storable"
+      ]
+    }
+  ],
+  "cpp_types": [
+    {
+      "id": "compiler.Storage",
+      "symbol": "scpp::compiler::Storage",
+      "header": "modules/compiler/bindings.hpp",
+      "arguments": [
+        {
+          "parameter": "Record",
+          "representation": "payload"
+        }
+      ]
+    },
+    {
+      "id": "compiler.Keyed_Storage",
+      "symbol": "scpp::compiler::Keyed_Storage",
+      "header": "modules/compiler/bindings.hpp",
+      "arguments": [
+        {
+          "parameter": "Record",
+          "representation": "payload"
+        }
+      ]
+    },
+    {
+      "id": "compiler.Key_Storage_List",
+      "symbol": "scpp::compiler::Key_Storage_List",
+      "header": "modules/compiler/bindings.hpp",
+      "arguments": [
+        {
+          "parameter": "Record",
+          "representation": "payload"
+        }
+      ]
+    }
+  ],
+  "functions": [
+    {
+      "id": "compiler.Storage.make",
+      "name": "make",
+      "member": {
+        "owner": "Storage",
+        "dispatch": "static"
+      },
+      "parameters": [
+        {
+          "name": "capacity",
+          "type": "int",
+          "passing": "value",
+          "default": {
+            "int": 0
+          }
+        }
+      ],
+      "returns": {
+        "name": "Storage",
+        "arguments": [
+          {
+            "parameter": "Record"
+          }
+        ]
+      }
+    },
+    {
+      "id": "compiler.Storage.is_empty",
+      "name": "is_empty",
+      "member": {
+        "owner": "Storage",
+        "dispatch": "instance"
+      },
+      "parameters": [],
+      "returns": "bool"
+    },
+    {
+      "id": "compiler.Storage.reserve",
+      "name": "reserve",
+      "member": {
+        "owner": "Storage",
+        "dispatch": "instance"
+      },
+      "parameters": [
+        {
+          "name": "capacity",
+          "type": "int",
+          "passing": "value"
+        }
+      ],
+      "returns": "void"
+    },
+    {
+      "id": "compiler.Storage.count",
+      "name": "count",
+      "member": {
+        "owner": "Storage",
+        "dispatch": "instance"
+      },
+      "parameters": [],
+      "returns": "int"
+    },
+    {
+      "id": "compiler.Storage.append",
+      "name": "append",
+      "member": {
+        "owner": "Storage",
+        "dispatch": "instance"
+      },
+      "parameters": [
+        {
+          "name": "record",
+          "type": {
+            "parameter": "Record"
+          },
+          "passing": "value"
+        }
+      ],
+      "returns": "int"
+    },
+    {
+      "id": "compiler.Storage.replace",
+      "name": "replace",
+      "member": {
+        "owner": "Storage",
+        "dispatch": "instance"
+      },
+      "parameters": [
+        {
+          "name": "key",
+          "type": "int",
+          "passing": "value"
+        },
+        {
+          "name": "record",
+          "type": {
+            "parameter": "Record"
+          },
+          "passing": "value"
+        }
+      ],
+      "returns": "void"
+    },
+    {
+      "id": "compiler.Storage.remove",
+      "name": "remove",
+      "member": {
+        "owner": "Storage",
+        "dispatch": "instance"
+      },
+      "parameters": [
+        {
+          "name": "key",
+          "type": "int",
+          "passing": "value"
+        }
+      ],
+      "returns": "void"
+    },
+    {
+      "id": "compiler.Storage.count.free",
+      "name": "count",
+      "type_parameters": [
+        "Record"
+      ],
+      "parameters": [
+        {
+          "name": "value",
+          "type": {
+            "name": "Storage",
+            "arguments": [
+              {
+                "parameter": "Record"
+              }
+            ]
+          },
+          "passing": "observe"
+        }
+      ],
+      "returns": "int"
+    },
+    {
+      "id": "compiler.Storage.empty.free",
+      "name": "empty",
+      "type_parameters": [
+        "Record"
+      ],
+      "parameters": [
+        {
+          "name": "value",
+          "type": {
+            "name": "Storage",
+            "arguments": [
+              {
+                "parameter": "Record"
+              }
+            ]
+          },
+          "passing": "observe"
+        }
+      ],
+      "returns": "bool"
+    },
+    {
+      "id": "compiler.Keyed_Storage.make",
+      "name": "make",
+      "member": {
+        "owner": "Keyed_Storage",
+        "dispatch": "static"
+      },
+      "parameters": [
+        {
+          "name": "capacity",
+          "type": "int",
+          "passing": "value",
+          "default": {
+            "int": 0
+          }
+        }
+      ],
+      "returns": {
+        "name": "Keyed_Storage",
+        "arguments": [
+          {
+            "parameter": "Record"
+          }
+        ]
+      }
+    },
+    {
+      "id": "compiler.Keyed_Storage.is_empty",
+      "name": "is_empty",
+      "member": {
+        "owner": "Keyed_Storage",
+        "dispatch": "instance"
+      },
+      "parameters": [],
+      "returns": "bool"
+    },
+    {
+      "id": "compiler.Keyed_Storage.reserve",
+      "name": "reserve",
+      "member": {
+        "owner": "Keyed_Storage",
+        "dispatch": "instance"
+      },
+      "parameters": [
+        {
+          "name": "capacity",
+          "type": "int",
+          "passing": "value"
+        }
+      ],
+      "returns": "void"
+    },
+    {
+      "id": "compiler.Keyed_Storage.count",
+      "name": "count",
+      "member": {
+        "owner": "Keyed_Storage",
+        "dispatch": "instance"
+      },
+      "parameters": [],
+      "returns": "int"
+    },
+    {
+      "id": "compiler.Keyed_Storage.add",
+      "name": "add",
+      "member": {
+        "owner": "Keyed_Storage",
+        "dispatch": "instance"
+      },
+      "parameters": [
+        {
+          "name": "key",
+          "type": "string",
+          "passing": "value"
+        },
+        {
+          "name": "record",
+          "type": {
+            "parameter": "Record"
+          },
+          "passing": "value"
+        }
+      ],
+      "returns": "void"
+    },
+    {
+      "id": "compiler.Keyed_Storage.replace",
+      "name": "replace",
+      "member": {
+        "owner": "Keyed_Storage",
+        "dispatch": "instance"
+      },
+      "parameters": [
+        {
+          "name": "key",
+          "type": "string",
+          "passing": "value"
+        },
+        {
+          "name": "record",
+          "type": {
+            "parameter": "Record"
+          },
+          "passing": "value"
+        }
+      ],
+      "returns": "void"
+    },
+    {
+      "id": "compiler.Keyed_Storage.remove",
+      "name": "remove",
+      "member": {
+        "owner": "Keyed_Storage",
+        "dispatch": "instance"
+      },
+      "parameters": [
+        {
+          "name": "key",
+          "type": "string",
+          "passing": "value"
+        }
+      ],
+      "returns": "void"
+    },
+    {
+      "id": "compiler.Keyed_Storage.count.free",
+      "name": "count",
+      "type_parameters": [
+        "Record"
+      ],
+      "parameters": [
+        {
+          "name": "value",
+          "type": {
+            "name": "Keyed_Storage",
+            "arguments": [
+              {
+                "parameter": "Record"
+              }
+            ]
+          },
+          "passing": "observe"
+        }
+      ],
+      "returns": "int"
+    },
+    {
+      "id": "compiler.Keyed_Storage.empty.free",
+      "name": "empty",
+      "type_parameters": [
+        "Record"
+      ],
+      "parameters": [
+        {
+          "name": "value",
+          "type": {
+            "name": "Keyed_Storage",
+            "arguments": [
+              {
+                "parameter": "Record"
+              }
+            ]
+          },
+          "passing": "observe"
+        }
+      ],
+      "returns": "bool"
+    },
+    {
+      "id": "compiler.Key_Storage_List.make",
+      "name": "make",
+      "member": {
+        "owner": "Key_Storage_List",
+        "dispatch": "static"
+      },
+      "parameters": [],
+      "returns": {
+        "name": "Key_Storage_List",
+        "arguments": [
+          {
+            "parameter": "Record"
+          }
+        ]
+      }
+    },
+    {
+      "id": "compiler.Key_Storage_List.is_empty",
+      "name": "is_empty",
+      "member": {
+        "owner": "Key_Storage_List",
+        "dispatch": "instance"
+      },
+      "parameters": [],
+      "returns": "bool"
+    },
+    {
+      "id": "compiler.Key_Storage_List.add",
+      "name": "add",
+      "member": {
+        "owner": "Key_Storage_List",
+        "dispatch": "instance"
+      },
+      "parameters": [
+        {
+          "name": "key",
+          "type": "string",
+          "passing": "value"
+        },
+        {
+          "name": "record",
+          "type": {
+            "parameter": "Record"
+          },
+          "passing": "value"
+        }
+      ],
+      "returns": "void"
+    },
+    {
+      "id": "compiler.Key_Storage_List.remove",
+      "name": "remove",
+      "member": {
+        "owner": "Key_Storage_List",
+        "dispatch": "instance"
+      },
+      "parameters": [
+        {
+          "name": "key",
+          "type": "string",
+          "passing": "value"
+        },
+        {
+          "name": "record",
+          "type": {
+            "parameter": "Record"
+          },
+          "passing": "value"
+        }
+      ],
+      "returns": "void"
+    },
+    {
+      "id": "compiler.Key_Storage_List.named",
+      "name": "named",
+      "member": {
+        "owner": "Key_Storage_List",
+        "dispatch": "instance"
+      },
+      "parameters": [
+        {
+          "name": "key",
+          "type": "string",
+          "passing": "value"
+        }
+      ],
+      "returns": {
+        "name": "vector",
+        "arguments": [
+          {
+            "parameter": "Record"
+          }
+        ]
+      }
+    },
+    {
+      "id": "compiler.Key_Storage_List.items",
+      "name": "items",
+      "member": {
+        "owner": "Key_Storage_List",
+        "dispatch": "instance"
+      },
+      "parameters": [],
+      "returns": {
+        "name": "vector",
+        "arguments": [
+          {
+            "parameter": "Record"
+          }
+        ]
+      }
+    }
+  ],
+  "cpp": [
+    {
+      "id": "compiler.Storage.make",
+      "symbol": "make",
+      "header": "modules/compiler/bindings.hpp"
+    },
+    {
+      "id": "compiler.Storage.is_empty",
+      "symbol": "source_is_empty",
+      "header": "modules/compiler/bindings.hpp"
+    },
+    {
+      "id": "compiler.Storage.reserve",
+      "symbol": "reserve",
+      "header": "modules/compiler/bindings.hpp"
+    },
+    {
+      "id": "compiler.Storage.count",
+      "symbol": "source_count",
+      "header": "modules/compiler/bindings.hpp"
+    },
+    {
+      "id": "compiler.Storage.append",
+      "symbol": "source_append",
+      "header": "modules/compiler/bindings.hpp"
+    },
+    {
+      "id": "compiler.Storage.replace",
+      "symbol": "replace",
+      "header": "modules/compiler/bindings.hpp"
+    },
+    {
+      "id": "compiler.Storage.remove",
+      "symbol": "remove",
+      "header": "modules/compiler/bindings.hpp"
+    },
+    {
+      "id": "compiler.Storage.count.free",
+      "symbol": "scpp::compiler::storage_count",
+      "header": "modules/compiler/bindings.hpp"
+    },
+    {
+      "id": "compiler.Storage.empty.free",
+      "symbol": "scpp::compiler::storage_empty",
+      "header": "modules/compiler/bindings.hpp"
+    },
+    {
+      "id": "compiler.Keyed_Storage.make",
+      "symbol": "make",
+      "header": "modules/compiler/bindings.hpp"
+    },
+    {
+      "id": "compiler.Keyed_Storage.is_empty",
+      "symbol": "source_is_empty",
+      "header": "modules/compiler/bindings.hpp"
+    },
+    {
+      "id": "compiler.Keyed_Storage.reserve",
+      "symbol": "reserve",
+      "header": "modules/compiler/bindings.hpp"
+    },
+    {
+      "id": "compiler.Keyed_Storage.count",
+      "symbol": "source_count",
+      "header": "modules/compiler/bindings.hpp"
+    },
+    {
+      "id": "compiler.Keyed_Storage.add",
+      "symbol": "add",
+      "header": "modules/compiler/bindings.hpp"
+    },
+    {
+      "id": "compiler.Keyed_Storage.replace",
+      "symbol": "replace",
+      "header": "modules/compiler/bindings.hpp"
+    },
+    {
+      "id": "compiler.Keyed_Storage.remove",
+      "symbol": "remove",
+      "header": "modules/compiler/bindings.hpp"
+    },
+    {
+      "id": "compiler.Keyed_Storage.count.free",
+      "symbol": "scpp::compiler::storage_count",
+      "header": "modules/compiler/bindings.hpp"
+    },
+    {
+      "id": "compiler.Keyed_Storage.empty.free",
+      "symbol": "scpp::compiler::storage_empty",
+      "header": "modules/compiler/bindings.hpp"
+    },
+    {
+      "id": "compiler.Key_Storage_List.make",
+      "symbol": "make",
+      "header": "modules/compiler/bindings.hpp"
+    },
+    {
+      "id": "compiler.Key_Storage_List.is_empty",
+      "symbol": "source_is_empty",
+      "header": "modules/compiler/bindings.hpp"
+    },
+    {
+      "id": "compiler.Key_Storage_List.add",
+      "symbol": "add",
+      "header": "modules/compiler/bindings.hpp"
+    },
+    {
+      "id": "compiler.Key_Storage_List.remove",
+      "symbol": "remove",
+      "header": "modules/compiler/bindings.hpp"
+    },
+    {
+      "id": "compiler.Key_Storage_List.named",
+      "symbol": "named",
+      "header": "modules/compiler/bindings.hpp"
+    },
+    {
+      "id": "compiler.Key_Storage_List.items",
+      "symbol": "items",
+      "header": "modules/compiler/bindings.hpp"
+    }
+  ]
+}

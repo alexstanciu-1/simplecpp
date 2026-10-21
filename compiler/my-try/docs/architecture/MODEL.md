@@ -52,6 +52,16 @@ query and backend representation; copying them copies identity, not payload stat
 Registry reset rebuilds policies with definitions. Opaque payload ownership
 transformations remain unavailable without their own contracts.
 
+The registry also retains optional runtime construction member names and default
+construction admission. Catalog registration validates factory contracts privately;
+object construction preparation selects an ordinary runtime call and retains it in
+`prepared_object_construction`. C++ consumes that call through the existing ordinary
+or concrete transport. The `shared_record` formation requirement is answered by
+shared preparation from source nominal-handle representation, not provider claims.
+Storage uses these facts and the existing indexing/iteration contracts. Its native
+payload arguments are bridged through ordinary concrete handle/vector transport;
+the backend does not identify the provider by its source name.
+
 The mixed and dynamic semantic roles remain distinct nominal definitions. Both are
 registered as value-stored tagged bindings; dynamic's shared container identity is
 a payload-copy contract, not class-like storage for every value. The registry's
