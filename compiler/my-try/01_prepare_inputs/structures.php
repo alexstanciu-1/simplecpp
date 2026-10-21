@@ -39,6 +39,9 @@ final class module
 	/** Configuration-backed modules participate in filesystem scanning. */
 	public bool $disk_source = false;
 	public change_state $changes = change_state::unchanged;
+	/** Explicit project inventory; false retains recursive directory discovery. */
+	public bool $selected_sources = false;
+	public array $source_paths /** vector<string> */ = [];
 	/** Last reconciliation run in which this module was present. */
 	public int $revision /** uint32 */ = 0;
 	/**
@@ -93,6 +96,8 @@ final class module_input
 	public string $logical_name;
 	public string $name;
 	public string $declared_path;
+	public bool $selected_sources = false;
+	public array $source_paths /** vector<string> */ = [];
 
 	public function __construct(string $path, ?string $name = null)
 	{

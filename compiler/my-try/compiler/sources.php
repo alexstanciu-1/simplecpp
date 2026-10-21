@@ -122,7 +122,7 @@ final class Source_Registry
 				if (isset($members[$relative])) {
 					return $members[$relative];
 				}
-				return null;
+				if (!$owner->selected_sources) { return null; }
 			}
 		}
 		return null;
@@ -143,6 +143,7 @@ final class Source_Registry
 				if (isset($members[$relative])) {
 					return $members[$relative];
 				}
+				if ($owner->selected_sources) { continue; }
 				$snapshot = new file();
 				$snapshot->path = $relative;
 				$snapshot->disk_source = true;

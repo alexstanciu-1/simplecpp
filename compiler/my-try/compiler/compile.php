@@ -61,7 +61,7 @@ final class Compiler
 				if ($record->changes === change_state::deleted) {
 					$record->changes = change_state::added;
 				}
-				elseif (($record->declared_path !== $candidate->declared_path) || ($record->resolved_path !== $candidate->resolved_path) || ($record->position !== $candidate->position) || ($record->disk_source !== $candidate->disk_source) || ($record->logical_name !== $candidate->logical_name)) {
+				elseif (($record->declared_path !== $candidate->declared_path) || ($record->resolved_path !== $candidate->resolved_path) || ($record->position !== $candidate->position) || ($record->disk_source !== $candidate->disk_source) || ($record->logical_name !== $candidate->logical_name) || ($record->selected_sources !== $candidate->selected_sources) || ($record->source_paths !== $candidate->source_paths)) {
 					$record->changes = change_state::changed;
 				}
 				else {
@@ -72,6 +72,8 @@ final class Compiler
 				$record->resolved_path = $candidate->resolved_path;
 				$record->position = $candidate->position;
 				$record->disk_source = $candidate->disk_source;
+				$record->selected_sources = $candidate->selected_sources;
+				$record->source_paths = $candidate->source_paths;
 				$record->revision = $revision;
 				if ($record->changes !== change_state::unchanged) {
 					$changed = true;
