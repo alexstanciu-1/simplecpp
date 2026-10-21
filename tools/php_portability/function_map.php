@@ -17,7 +17,7 @@ return [
 	'task_run_publish_unordered' => ['php' => 'scpp\\task_run_publish_unordered', 'target' => 'task_run_publish_unordered', 'arity' => 4],
 	'weak' => ['php' => 'scpp\\weak', 'target' => 'weak', 'arity' => 1],
 	'weakref_get' => array ('php' => 'scpp\\weakref_get', 'target' => 'lock', 'arity' => 1),
-	'object_cast' => array ('php' => 'scpp\\object_cast', 'target' => 'scpp_portability_object_cast', 'arity' => 2),
+	'object_cast' => array ('php' => 'scpp\\object_cast', 'target' => 'object_cast', 'arity' => 2),
 	'dt_sleep_ms' => array ( 'php' => 'scpp\\dt_sleep_ms', 'target' => 'dt_sleep_ms', 'arity' => 1, ),
 	'fs_read_snapshot' => array ( 'php' => 'scpp\\fs_read_snapshot', 'target' => 'scpp_portability_fs_read_snapshot', 'arity' => 3, ),
 	'fs_is_windows' => array ( 'php' => 'scpp\\fs_is_windows', 'target' => 'fs_is_windows', 'arity' => 0, ),

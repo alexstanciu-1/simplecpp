@@ -20,6 +20,10 @@ final class CPP_Runtime_Operations
 			$observation /** ownership_observation_kind */ = $request->ownership_observation;
 			$key .= ':' . Ownership_Observation_Kind_Name::text($observation);
 		}
+		if ($request->object_type !== null) {
+			$key .= ':' . ($request->object_type->operation === object_type_operation::checked_cast ? 'cast' : 'test')
+				. ':' . CPP_Opaque_Representation::identity($request->object_type->target_payload);
+		}
 		if ($request->callsite !== null) { $key .= ':callsite=' . json_quote($request->callsite->path) . ':' . $request->callsite->line; }
 		if ($request->property !== null) {
 			$property_context = new cpp_generation_context();
@@ -109,6 +113,7 @@ final class CPP_Runtime_Operations
 		if (($request->kind === cpp_runtime_operation_kind::binary)
 			|| ($request->kind === cpp_runtime_operation_kind::conversion)
 			|| ($request->kind === cpp_runtime_operation_kind::observation)
+			|| ($request->kind === cpp_runtime_operation_kind::object_type)
 			|| ($request->kind === cpp_runtime_operation_kind::ownership_observation)
 			|| ($request->kind === cpp_runtime_operation_kind::output)
 			|| ($request->kind === cpp_runtime_operation_kind::runtime_call)
@@ -162,6 +167,7 @@ final class CPP_Runtime_Operations
 			$declaration_headers = $mapping->headers;
 			$body = $unpack . 'return ' . $expression . ';';
 			if ((($request->kind === cpp_runtime_operation_kind::observation)
+				|| ($request->kind === cpp_runtime_operation_kind::object_type)
 				|| ($request->kind === cpp_runtime_operation_kind::ownership_observation)
 				|| ($request->kind === cpp_runtime_operation_kind::runtime_call)
 				|| ($request->kind === cpp_runtime_operation_kind::property_read)
@@ -251,6 +257,14 @@ final class CPP_Runtime_Operations
 			return $request->kind === cpp_runtime_operation_kind::property_read
 				? CPP_Wrapper_Transport::provider_vector($property->type, $access, true, $engine, $context)
 				: $access . ' = ' . CPP_Wrapper_Transport::provider_vector($property->type, $arguments[1], false, $engine, $context);
+		}
+		if ($request->kind === cpp_runtime_operation_kind::object_type) {
+			$facts /** prepared_object_type */ = $request->object_type;
+			$target = CPP_Types::payload($facts->target_payload, $context);
+			CPP_Types::record_dependencies($target, $context);
+			$context->headers['scpp/object_cast.hpp'] = true;
+			$helper = $facts->operation === object_type_operation::checked_cast ? 'checked_object_cast' : 'object_is';
+			return '::scpp::' . $helper . '<' . $target->spelling . '>(' . $arguments[0] . ')';
 		}
 		if ($request->kind === cpp_runtime_operation_kind::ownership_observation) {
 			$context->headers['scpp/memory.hpp'] = true;
@@ -444,6 +458,19 @@ final class CPP_Runtime_Operations
 		$inputs /** Storage<canonical_type_use> */ = $request->inputs;
 		$inputs->append($decision->source_type);
 		return self::single_value($request, $expression, $context);
+	}
+
+	/** Borrow the operand once; the existing runtime preserves identity and checks presence/type. */
+	public static function object_type(prepared_object_type $facts, canonical_type_use $input,
+		string $expression, cpp_generation_context $context): string
+	{
+		$request = new cpp_runtime_operation(cpp_runtime_operation_kind::object_type);
+		$request->object_type = $facts;
+		$request->result = $facts->type;
+		$inputs /** Storage<canonical_type_use> */ = $request->inputs;
+		$inputs->append($input);
+		$operand = 'static_cast<const ' . CPP_Declarations::type($input, $context) . '&>(' . $expression . ')';
+		return self::invoke($request, [$operand], $context, '');
 	}
 
 	public static function ownership_observation(prepared_ownership_observation $facts,

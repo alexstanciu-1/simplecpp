@@ -14,32 +14,24 @@ The catalog's bounded closeouts and Chapter 15 deferrals still
 bound the supported language surface.
 This does not establish exhaustive language, lifetime, incremental or performance coverage.
 
-## PHP-hosted bootstrap after remote task reconciliation — 2026-10-21
+## PHP-hosted bootstrap after common object casts — 2026-10-21
 
-Portable `weak($owner)` now emits explicit weak derivation in both routes;
-`weakref_get($link)` emits `lock($link)`. PHP retains ordinary object references.
-Compiler weak-link writes express derivation explicitly; weak copies and null resets
-retain their previous spelling. v0.2 implicit conversion rules remain unchanged.
+The common `object_cast(value, Target::class)` spelling works through PHP, v0.1
+(with its legacy alias retained) and v0.2. Prelowered checked casts and type tests
+consume existing prepared facts through compiled runtime operations, with unchanged
+semantic admission. Focused identity, interface/struct, weak-lock, evaluation and
+failure proofs pass in ordinary and concrete modes.
 
-Merge `a92689b2` combines the bootstrap changes with remote task fixes through
-`ae359660`. Specialized runtime callable selection and native provider result
-transport are both preserved. Storage, exception hierarchy and focused task
-submission cold/warm checks pass. The other checkout's uncommitted work was not imported.
+Remote task fixes were reconciled in `a92689b2`; `task_synchronize` remains resolved.
+The latest retry converts 259 PHP files into 269 assembled PHS files (1,919,594 bytes).
+Bootstrap takes 51.50 seconds, peak RSS 309.4 MiB, peak PHP heap 288 MiB under a
+4 GiB limit. Parsing finishes at 5.700 seconds. It stops during preparation without
+OOM or C++ emission. The unresolved cast binding is gone; the next diagnostic is
+unsupported member modifiers, including readonly fields in `program_entry_selection`.
+Readonly semantics and source workarounds were not added.
 
-The retry converts 259 PHP files into 269 assembled PHS files (1,931,029 bytes).
-Bootstrap takes 46.94 seconds, peak RSS 296.0 MiB, peak PHP heap 276 MiB with a
-4 GiB limit. Parsing finishes at 4.425 seconds. It stops during preparation without
-OOM or C++ emission. The original `source_record::__construct` ownership rejection
-is gone, and remote metadata removes the unresolved `task_synchronize` diagnostic.
-The first diagnostic remains unresolved `scpp_portability_object_cast`, located
-in `source_record::owning_module`. Other preparation failures remain, including
-ownership boundaries unrelated to that original assignment. Storage_Cursor widening
-is excluded.
-
-Focused PHP/v0.1/ordinary-v0.2 proofs cover identity, single evaluation, weak copies,
-clearing and native expiration. Prelowered derivation/acquisition also pass an
-independent live-owner proof. Prelowered locked-class null comparison exposes a
-separate unfixed backend defect: `.has_value()` on a concrete shared handle.
+Other preparation failures remain, as does the prelowered locked-class null-check
+defect. Semantic widening and Storage_Cursor widening are excluded.
 [Checkpoint and evidence](../../../../specs/planning/storage_bootstrap_2026_10_21.md)
 record the snapshot and limitations. This is not a successful self-bootstrap or a
 native compiler rebuild; the native checkpoints below describe earlier revisions.

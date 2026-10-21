@@ -38,9 +38,15 @@ Source publication readiness and successful native readiness are distinct.
 Runtime and middleware implementations still use templates. Only application inputs
 must be template-free. Metadata registration alone is not a support claim; consult
 the [representation/operation coverage matrix](../../../../specs/planning/runtime_template_capability_matrix_2026_10_19.md#current-coverage-contract--2026-10-20).
-Callable storage, object tests/casts, weak observation,
+Callable storage, weak observation,
 match without a default, and specified boxed/runtime helper paths still reject
 until concrete transports exist. Ordinary mode retains its existing semantics.
+
+Object tests and checked casts consume `prepared_object_type` through a compiled
+runtime operation. The key includes operation, source type and target payload
+(including the target of boolean tests). The bridge borrows its operand in the
+caller's full expression, preserves shared identity, and retains existing runtime
+failure behavior. Semantic admission is unchanged; no nullable-wrapper widening.
 
 Source exception hierarchies, throw/catch and bounded scalar/void finally now use
 compiled exception operations. The runtime payload base exposes a template-free

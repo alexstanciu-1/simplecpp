@@ -18,8 +18,9 @@ or null and returns that same object when compatible. Null or mismatch throws
 RuntimeException. Dynamic class strings, coercion and automatic downcasts at ordinary
 typed boundaries are outside this slice.
 
-The converter emits the reserved `scpp_portability_object_cast` binding with the
-literal marker. Native generation reads only that locally supplied marker and emits
+The converter preserves `object_cast` with the literal marker. The v0.1 generator
+also retains `scpp_portability_object_cast` as a compatibility alias. Native
+generation reads only that locally supplied marker and emits
 `scpp::checked_object_cast<T>(value)`. No inheritance inference or whole-program
 semantic analysis is added. The runtime implementation lives in
 `runtime/include/scpp/object_cast.hpp`; it retains the shared control block using
@@ -106,3 +107,25 @@ The configured native target is unchanged. These runtime/generator changes must 
 included alongside the Storage source-binding delivery before the exported compiler
 can undergo native build/behavior validation. This is a completed conversion slice,
 not a completed native release or general PHP RTTI compatibility claim.
+
+
+## Common v0.2 route — 2026-10-21
+
+v0.2 parses the same `object_cast(value, Target::class)` spelling into its existing
+object-type operation. Shared preparation owns ancestry, polymorphism, ownership
+and result typing. The C++ backend consumes those facts in ordinary and prelowered
+modes. Prelowering uses one compiled object-type adapter family for checked casts
+and `instanceof`, keyed by operation, source type and target payload. Templates and
+runtime type checks remain in middleware; application fragments use concrete calls.
+The input is evaluated once and borrowed through the caller's full expression.
+
+This does not widen v0.2 admission: nullable ownership wrappers, unrelated records,
+nonpolymorphic narrowing, bare null, dynamic targets and weak/unique operands remain
+outside its supported contract. Lock a weak link first. The broader PHP/v0.1 nullable
+carrier is not a claim of v0.2 nullable-wrapper support.
+
+`python3 tests/portability/object_cast_common.py --results FRESH` checks common PHP
+and v0.1 execution, legacy alias emission, ordinary/concrete v0.2 identity and
+single evaluation, interface cross-casts, struct handles, weak-lock inputs, empty
+and mismatched failures, and retained semantic rejection tests. It builds generated
+programs, not a native compiler.

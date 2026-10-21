@@ -323,3 +323,41 @@ The unresolved `task_synchronize` diagnostic is gone. The first diagnostic remai
 `S2S needs one resolved function for scpp_portability_object_cast`. Subsequent
 preparation blockers, the prelowered locked-class null-check defect, and
 Storage_Cursor widening remain unfixed. No native compiler rebuild is claimed.
+
+
+## Common object-cast spelling and concrete transport — 2026-10-21
+
+Candidate: `b50e51a0` plus the object-cast overlay saved in
+`/tmp/bootstrap-attempt-20261021-object-cast/candidate.diff`; revision, source hashes,
+phase marks and logs are retained alongside it. The converter preserves
+`object_cast`, v0.1 accepts both that spelling and its old reserved alias, and v0.2
+uses its existing prepared object-type facts for compiled checked-cast/type-test
+operations. Operation identity includes the target payload even for boolean tests.
+No semantic admission, ownership, nullable-wrapper or Storage_Cursor widening.
+
+`/tmp/object-cast-common-02` passes PHP and legacy native identity/cross-interface
+execution, alias emission parity, ten ordinary/concrete v0.2 generated programs,
+and existing semantic rejections/recovery. The cases cover class/interface and
+struct handles, single evaluation, weak-lock input, empty and mismatched failures.
+The retained runner is `tests/portability/object_cast_common.py`. Historical
+object-cast/type-test rejection expectations were removed from the unsupported
+prelowering suite; unrelated expectations were not changed.
+
+Conversion: 259 PHP files, 7.80 s, peak RSS 186.2 MiB. Assembled input: 269 PHS
+files, 1,919,594 bytes. Isolated PHP8.5 CLI bootstrap (OPcache CLI/Xdebug disabled,
+4 GiB limit): **51.50 s**, **309.4 MiB peak RSS**, **288 MiB peak PHP heap**.
+Parsing finishes at 5.700 s. Preparation fails without PHP fatal/OOM or C++ emission.
+The unresolved `scpp_portability_object_cast` diagnostic is gone.
+
+The next reported diagnostic is `Member requires public, protected or private
+visibility and supported modifiers`. `program_entry_selection` declares readonly
+`module_name` and `source_path` fields in `01_prepare_inputs/structures.php`,
+preserved in converted PHS. The existing v0.2 member modifier validator rejects
+readonly. No readonly support or source workaround was added. Other preparation
+failures remain; no full self-bootstrap or native compiler rebuild is claimed.
+
+Read-only owner replay (`/tmp/object-cast-bootstrap-owner-logs`, 59.39 s) confirms
+`program_entry_selection` as the first affected owner, zero unresolved cast-binding
+owners, and no remaining failure in `source_record::owning_module`. Full owner
+records are saved in the bootstrap artifact directory as `failure-owners.json`.
+The replay is diagnostic evidence, not the reported bootstrap timing.

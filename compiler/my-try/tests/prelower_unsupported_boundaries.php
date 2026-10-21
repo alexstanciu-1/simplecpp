@@ -21,9 +21,6 @@ $cases = [
 foreach ($cases as $name => $source) {
 	$cases[$name] = [$source, 'std::function<', 'callable storage requires a concrete callback transport'];
 }
-$object_prefix = 'interface I { function read(): int; } class B implements I { function read(): int { return 1; } } class C extends B {} ';
-$cases['object_test'] = [$object_prefix . '$b B; return $b instanceof C ? 1 : 0;', '::scpp::object_is<', 'object type operation requires concrete transport'];
-$cases['object_cast'] = [$object_prefix . '$b B; $c = object_cast($b, C::class); return 0;', '::scpp::checked_object_cast<', 'object type operation requires concrete transport'];
 $cases['derive_weak'] = ['class C {} $c C; $w = weak($c); return 0;', '::scpp::weak(', 'ownership observation requires concrete transport'];
 $cases['lock_weak'] = ['class C {} $w weak<C>; $c = lock($w); return 0;', '.lock()', 'ownership observation requires concrete transport'];
 $cases['match_failure'] = ['return match (3) { 1 => 7, 2 => 8 };', 'throw std::runtime_error("Unhandled match expression")', 'match failure operation requires concrete transport'];

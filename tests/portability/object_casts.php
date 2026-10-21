@@ -25,7 +25,7 @@ echo Access::is_row(null) ? 'bad' : 'absent', ':', Access::is_row($other) ? 'bad
 SOURCE;
 $converter = new scpp\portability\Converter(require __DIR__ . '/../../tools/php_portability/function_map.php');
 $out = $converter->convert($source, 'cast.php');
-ensure(str_contains($out, 'scpp_portability_object_cast($value, Row::class)'), 'Missing checked cast binding');
+ensure(str_contains($out, 'object_cast($value, Row::class)'), 'Missing checked cast binding');
 ob_start(); eval(substr($source, 5)); $trace = ob_get_clean();
 ensure($trace === "same:9:row\nabsent:other\n", 'Unexpected identity/predicate trace: ' . $trace);
 foreach ([null, new cast_proof\Other()] as $value) {
@@ -44,6 +44,9 @@ foreach ([
 }
 // Generate and inspect C++ only. Do not invoke a native compiler or run native code.
 $result = (new Scpp\S2S\Transpiler())->transpile('/tmp/object-casts-proof.phs', false, false, $out);
+$legacy = (new Scpp\S2S\Transpiler())->transpile('/tmp/object-casts-proof.phs', false, false,
+    str_replace('object_cast(', 'scpp_portability_object_cast(', $out));
+ensure($legacy->errors === [] && $legacy->sourceLines === $result->sourceLines, 'Legacy cast alias changed lowering');
 ensure($result->errors === [], 'Generator errors: ' . implode('; ', $result->errors));
 $cpp = implode("\n", $result->sourceLines);
 $header = implode("\n", $result->headerLines);

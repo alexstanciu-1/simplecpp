@@ -238,6 +238,7 @@ enum cpp_runtime_operation_kind {
 	case property_target;
 	case wrapper_presence;
 	case ownership_observation;
+	case object_type;
 	case take;
 	case concrete_member;
 	case concrete_index;
@@ -264,6 +265,7 @@ final class cpp_callsite
 final class cpp_runtime_operation
 {
 	public ?ownership_observation_kind $ownership_observation = null;
+	public ?prepared_object_type $object_type = null;
 	public ?cpp_callsite $callsite = null;
 	public ?registered_property $property = null;
 	public ?prepared_call $call = null;

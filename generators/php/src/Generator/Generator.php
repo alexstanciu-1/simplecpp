@@ -8292,7 +8292,8 @@ final class Generator
 	/** Framework cast binding uses only its explicit class marker, with no type inference. */
 	private function isObjectCastCallName(mixed $expr): bool {
 		return is_object($expr) && ($expr->kind ?? null) === AstKind::NAME
-			&& strtolower(ltrim((string) ($expr->children['name'] ?? ''), '\\')) === 'scpp_portability_object_cast';
+			&& in_array(strtolower(ltrim((string) ($expr->children['name'] ?? ''), '\\')),
+				['object_cast', 'scpp_portability_object_cast'], true);
 	}
 
 	private function objectCastTarget(array $args, ?string $namespacePhp): string {

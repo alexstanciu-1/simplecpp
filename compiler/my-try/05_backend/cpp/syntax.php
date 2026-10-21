@@ -95,9 +95,12 @@ final class CPP_Syntax
 				. 'return closure_value{static_cast<decltype(callback)&&>(callback), transferable}; }())';
 		}
 		if ($node instanceof object_type_node) {
-			$this->require_native_operation('object type operation');
 			$object_type = object_cast($node, object_type_node::class);
 			$facts = $object_type->require_object_type_preparation();
+			if ($this->context->concrete_types()) {
+				return CPP_Runtime_Operations::object_type($facts, $object_type->operand->require_preparation()->type,
+					$this->expression($object_type->operand), $this->context);
+			}
 			$target = CPP_Types::payload($facts->target_payload, $this->context);
 			CPP_Types::record_dependencies($target, $this->context);
 			CPP_Declarations::type($object_type->operand->require_preparation()->type, $this->context);

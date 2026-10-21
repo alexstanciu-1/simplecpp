@@ -2388,6 +2388,8 @@ final class StanExpressionTypeResolver
 			'line' => 0,
 			'is_static' => false,
 		];
+		$catalog['object_cast'] = $catalog['scpp_portability_object_cast'];
+		$catalog['object_cast']['name'] = 'object_cast';
 		// Generic runtime acquisition. Arity is known; the native template owns T.
 		// Do not pretend STAN inferred the result's record type from a weak field.
 		$catalog['weakref_get'] = [

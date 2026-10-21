@@ -1,10 +1,11 @@
 # Portability object casts and literal instanceof
 Doc Status: supporting
 
-Literal `instanceof` lowers to `scpp::object_is<T>`. The reserved portability call
-`scpp_portability_object_cast(value, Class::class)` lowers to an identity-preserving
+Literal `instanceof` lowers to `scpp::object_is<T>`. The common portable/PHS call
+`object_cast(value, Class::class)` and legacy alias
+`scpp_portability_object_cast(value, Class::class)` lower to an identity-preserving
 `scpp::checked_object_cast<T>`. Dynamic targets are rejected; this binding does not
-add whole-program type inference. STAN registers the reserved call; lowering checks
+add whole-program type inference. STAN registers both spellings; lowering checks
 its literal marker and arity. Generated interfaces have virtual destructors so their
 shared handles support checked polymorphic narrowing.
 
