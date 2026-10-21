@@ -107,6 +107,15 @@ No outstanding feature is closed merely because its infrastructure now exists.
   broader native parity/rejection/incremental coverage gap, the module-wide acceptance
   matrix, or the inherited-limit audit. Preserve those evidence boundaries in 21/49.
 
+## Added bootstrap debt — 2026-10-21
+
+**CH15-READONLY-FIELDS-01:** authored readonly instance fields need an initialization
+and write-enforcement contract across compiler routes. By user decision, the compiler's
+21 readonly properties are temporarily ordinary properties, with constructor-only
+writes by convention and source TODOs. PHP enforcement is deliberately lost during
+this deferral. This adds no final-catalog gate and does not change read-only references.
+See [the owning debt](15_blocking_debt.md#readonly-instance-fields--ch15-readonly-fields-01).
+
 ## Recommended sequence and first bounded slice
 
 Start with **1: CH06-ITER-01 policy/ownership design**, then agree **2's runtime

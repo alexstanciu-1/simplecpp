@@ -1078,3 +1078,37 @@ Before widening this bounded adapter, address:
 
 Mold selection/thread tuning remains CH15-MOLD-01. Automatic grouping and multi-file
 classes remain CH15-CPP-GROUP-SPLIT-01 and CH15-PARTIAL-TYPE-01.
+
+
+## Readonly instance fields — CH15-READONLY-FIELDS-01
+
+**Status: deferred by user decision, 2026-10-21; not an added final-catalog gate.**
+The portable converter admits readonly declarations, but v0.1 does not establish
+native write enforcement and v0.2 rejects the modifier. Supporting authored readonly
+fields needs an agreed initialization/write contract, not keyword stripping in the
+converter or an emitter-only const qualifier.
+
+For bootstrap, remove `readonly` from the compiler PHP declarations, including
+promoted constructor properties. This deliberately removes PHP's runtime enforcement;
+constructor-only writes remain the authoring convention. Keep source TODOs with this
+ID so the intended constraints are not lost. Affected declarations:
+
+- `program_entry_selection`: module_name, source_path.
+- `async_task_type_definition`: value_type.
+- `cpp_function_binding`: source_context, native_payloads.
+- `cpp_specialization_entry`: all ten promoted constructor fields.
+- `cpp_artifact`: identity, file_name, text.
+- `cpp_implementation_group`: identity, file_name.
+- `cpp_lowering_policy`: optimization.
+
+Future work must specify initialization authority and timing, repeated writes,
+constructor/inheritance behavior, aliases and mutating field/container operations,
+and shallow handle immutability versus pointee mutation. Shared declaration and
+initialization preparation plus place/access checks should own enforcement; ordinary
+and prelowered emission must consume those facts. Define the portable PHP/v0.1
+compatibility boundary explicitly. Prove permitted initialization and rejected writes,
+including failure/recovery, before restoring the source modifiers.
+
+Non-goals for this deferral: no new readonly semantics, parser/validator relaxation,
+deep immutability, semantic widening or Storage_Cursor widening. Existing read-only
+references, runtime constants and rejection fixtures retain their contracts.

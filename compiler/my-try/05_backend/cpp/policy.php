@@ -4,7 +4,9 @@ namespace scpp\compiler;
 /** Application optimization intent; independent of compiler executable optimization. */
 final class cpp_lowering_policy
 {
-	public function __construct(public readonly int $optimization = 2)
+	// TODO CH15-READONLY-FIELDS-01: restore readonly enforcement for optimization.
+	// Constructor-only writes remain a convention; see docs/catalog/15_blocking_debt.md.
+	public function __construct(public int $optimization = 2)
 	{
 		if (($optimization < 0) || ($optimization > 3)) {
 			throw new \InvalidArgumentException('C++ optimization must be 0, 1, 2 or 3');

@@ -110,8 +110,10 @@ final class module_input
 /** Executable selection uses a logical module and normalized module-relative path. */
 final class program_entry_selection
 {
-	public readonly string $module_name;
-	public readonly string $source_path;
+	// TODO CH15-READONLY-FIELDS-01: restore readonly enforcement for module_name and source_path.
+	// Constructor-only writes remain a convention; see docs/catalog/15_blocking_debt.md.
+	public string $module_name;
+	public string $source_path;
 
 	public function __construct(string $module_name, string $source_path)
 	{

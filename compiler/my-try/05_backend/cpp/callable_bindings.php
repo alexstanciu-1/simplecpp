@@ -6,12 +6,14 @@ namespace scpp\compiler;
 /** Free symbols have no fabricated receiver or construction owner. */
 final class cpp_function_binding
 {
+	// TODO CH15-READONLY-FIELDS-01: restore readonly enforcement for source_context and native_payloads.
+	// Constructor-only writes remain a convention; see docs/catalog/15_blocking_debt.md.
 	private runtime_function_definition $semantic_target;
 	private string $qualified_symbol;
 	private string $required_header;
 
 	/** Publish backend spelling separately from the installed semantic identity. */
-	public function __construct(runtime_function_definition $target, string $symbol, string $header, public readonly bool $source_context = false, public readonly bool $native_payloads = false)
+	public function __construct(runtime_function_definition $target, string $symbol, string $header, public bool $source_context = false, public bool $native_payloads = false)
 	{
 		if ($symbol === '') {
 			throw new \InvalidArgumentException('C++ function symbol must not be empty');

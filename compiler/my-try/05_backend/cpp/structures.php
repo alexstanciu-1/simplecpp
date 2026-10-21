@@ -45,12 +45,14 @@ final class cpp_lowering_options
  */
 final class cpp_specialization_entry
 {
-	public function __construct(public readonly string $name, public readonly string $header,
-		public readonly string $declaration, public readonly string $implementation,
-		public readonly array $layout_dependencies /** hash<bool> */, // Headers required by the native layout probe.
-		public readonly string $layout_declarations = '', public readonly string $layout_statements = '',
-		public readonly string $declaration_tail = '', public readonly string $member_owner = '',
-		public readonly string $declaration_prefix = '')
+	// TODO CH15-READONLY-FIELDS-01: restore readonly enforcement for all promoted constructor fields.
+	// Constructor-only writes remain a convention; see docs/catalog/15_blocking_debt.md.
+	public function __construct(public string $name, public string $header,
+		public string $declaration, public string $implementation,
+		public array $layout_dependencies /** hash<bool> */, // Headers required by the native layout probe.
+		public string $layout_declarations = '', public string $layout_statements = '',
+		public string $declaration_tail = '', public string $member_owner = '',
+		public string $declaration_prefix = '')
 	{
 	}
 }
@@ -86,12 +88,14 @@ enum cpp_artifact_kind {
 
 /** One final artifact; its logical identity is independent of storage position. */
 final class cpp_artifact {
+	// TODO CH15-READONLY-FIELDS-01: restore readonly enforcement for identity, file_name and text.
+	// Constructor-only writes remain a convention; see docs/catalog/15_blocking_debt.md.
 	/** Assembly-only generated header dependencies; copied from emission facts, never parsed from text. */
 	public array $header_dependencies /** hash<bool> */ = [];
-	public readonly string $identity;
+	public string $identity;
 	private cpp_artifact_kind $artifact_kind;
-	public readonly string $file_name;
-	public readonly string $text;
+	public string $file_name;
+	public string $text;
 	/** Explicit preamble dependencies; unknown adapters retain the scanning fallback. */
 	public array $includes /** vector<string> */ = [];
 	public bool $includes_complete = false;
@@ -122,11 +126,13 @@ final class cpp_artifact {
 /** Transient assembled implementation unit; no semantic owners or scheduling/cache state. */
 final class cpp_implementation_group
 {
+	// TODO CH15-READONLY-FIELDS-01: restore readonly enforcement for identity and file_name.
+	// Constructor-only writes remain a convention; see docs/catalog/15_blocking_debt.md.
 	public string $text = '';
 	public array $headers /** hash<bool> */ = [];
 	public array $forward_declarations /** hash<bool> */ = [];
 
-	public function __construct(public readonly string $identity, public readonly string $file_name)
+	public function __construct(public string $identity, public string $file_name)
 	{
 	}
 }

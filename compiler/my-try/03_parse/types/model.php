@@ -340,7 +340,9 @@ final class closure_type_definition extends abstract_nominal_type_definition
 /** Internal awaitable identity. Source task storage/passing is not exposed by this slice. */
 final class async_task_type_definition extends abstract_nominal_type_definition
 {
-	public function __construct(int $id, string $name, public readonly canonical_type_use $value_type)
+	// TODO CH15-READONLY-FIELDS-01: restore readonly enforcement for value_type.
+	// Constructor-only writes remain a convention; see docs/catalog/15_blocking_debt.md.
+	public function __construct(int $id, string $name, public canonical_type_use $value_type)
 	{
 		parent::__construct($id, $name, type_definition_origin::language, nominal_type_kind::async_task,
 			self::task_capabilities());

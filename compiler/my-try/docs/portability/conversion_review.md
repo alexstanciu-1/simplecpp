@@ -28,7 +28,11 @@ Bootstrap takes 51.50 seconds, peak RSS 309.4 MiB, peak PHP heap 288 MiB under a
 4 GiB limit. Parsing finishes at 5.700 seconds. It stops during preparation without
 OOM or C++ emission. The unresolved cast binding is gone; the next diagnostic is
 unsupported member modifiers, including readonly fields in `program_entry_selection`.
-Readonly semantics and source workarounds were not added.
+After that measured attempt, the user deferred readonly enforcement to
+[CH15-READONLY-FIELDS-01](../catalog/15_blocking_debt.md#readonly-instance-fields--ch15-readonly-fields-01).
+The compiler's 21 readonly properties are now ordinary properties with source TODOs;
+constructor-only writes remain a convention. Conversion passes after removal; no
+new bootstrap retry or next-blocker claim accompanies this deferral.
 
 Other preparation failures remain, as does the prelowered locked-class null-check
 defect. Semantic widening and Storage_Cursor widening are excluded.
