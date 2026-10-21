@@ -132,9 +132,13 @@ final class CPP_Opaque_Representation
 		$payload /** nullable<cpp_type> */ = null;
 		$pointee = $compose_arguments ? CPP_Types::application_pointee($type) : null;
 		$implementation_headers /** hash<bool> */ = [];
+		if (Type_Queries::is_nominal_handle($type)
+			&& (Type_Queries::canonical($type)->definition()->origin() === type_definition_origin::source)) {
+			$implementation_headers['scpp/hash_t.hpp'] = true;
+		}
 		if ($pointee !== null) {
 			$payload = CPP_Types::payload($pointee, new cpp_generation_context($engine));
-			$implementation_headers = $payload->headers;
+			foreach ($payload->headers as $header => $used) { $implementation_headers[$header] = $used; }
 			$payload_declaration = CPP_Types::payload_for($pointee, cpp_type_requirement::declaration, new cpp_generation_context($engine));
 			$declaration = CPP_Artifacts::preamble($payload_declaration->headers, $payload_declaration->forward_declarations, '') . $declaration;
 			$readonly_payload = ($type->by_value() ? 'const ' : '') . $payload->spelling;
@@ -203,6 +207,9 @@ final class CPP_Opaque_Representation
 		$literal = CPP_Physical_Interfaces::literal($type, $mapping, $name, $native);
 		$declaration = $literal->declaration_prefix . $declaration . $literal->declaration;
 		$implementation .= $literal->implementation;
+		$identity_key = CPP_Physical_Interfaces::identity_key($type, $name, $native);
+		$declaration = $identity_key->declaration_prefix . $declaration . $identity_key->declaration;
+		$implementation .= $identity_key->implementation;
 
 		$declaration .= '~' . $name . "() noexcept;\n";
 		$implementation .= 'static_assert(std::is_nothrow_destructible_v<' . $native . ">);\n"

@@ -226,11 +226,11 @@ final class cpp_program {
 	public bool $prelower_templates = false;
 	public string $policy_identity = '';
 	public array $outlined_shared_allocations /** hash<bool> */ = [];
-	public \SplObjectStorage $fragments /** hash<cpp_fragment, shared<preparation_owner>> */;
+	public \SplObjectStorage $fragments /** hash<cpp_fragment, preparation_owner> */;
 
 	public function __construct()
 	{
-		$this->fragments = new \SplObjectStorage /** hash<cpp_fragment, shared<preparation_owner>> */();
+		$this->fragments = new \SplObjectStorage /** hash<cpp_fragment, preparation_owner> */();
 	}
 }
 

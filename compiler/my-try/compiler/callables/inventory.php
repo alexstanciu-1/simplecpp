@@ -7,7 +7,7 @@ final class Callable_Inventory
 	/** Anonymous scopes inherit the nearest named callable's class context, not its receiver. */
 	public static function lexical_method(anonymous_callable_identity $identity): ?collected_method
 	{
-		$owners /** hash<collected_source_callable, shared<scope>> */ = new \SplObjectStorage /** hash<collected_source_callable, shared<scope>> */();
+		$owners /** hash<collected_source_callable, scope> */ = new \SplObjectStorage /** hash<collected_source_callable, scope> */();
 		$collection = $identity->collection();
 		$entries /** Storage<collected_name> */ = $collection->entries;
 		foreach ($collection->defined_elements as $position) {
@@ -58,7 +58,7 @@ final class Callable_Inventory
 	public static function source_collections(Storage $sources /** Storage<collected_file> */): Storage /** Storage<collected_file> */
 	{
 		$result /** Storage<collected_file> */ = Member_Inventory::source_collections($sources);
-		$seen /** hash<bool, shared<collected_file>> */ = new \SplObjectStorage /** hash<bool, shared<collected_file>> */();
+		$seen /** hash<bool, collected_file> */ = new \SplObjectStorage /** hash<bool, collected_file> */();
 		foreach ($result as $source) {
 			$seen[$source] = true;
 		}

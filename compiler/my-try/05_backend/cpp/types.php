@@ -51,6 +51,12 @@ final class CPP_Types
 		return self::native_representation_for($type_use, $requirement, null, $engine);
 	}
 
+	/** Static members belong to the outer payload with the same composed arguments as storage. */
+	public static function implementation_payload(canonical_type_use $type_use, CPP_Specializations $engine): cpp_type
+	{
+		return self::unmodified_representation($type_use, cpp_type_requirement::complete, null, $engine);
+	}
+
 	private static function native_representation_for(canonical_type_use $type_use, cpp_type_requirement $requirement,
 		?cpp_generation_context $context, ?CPP_Specializations $argument_engine): cpp_type
 	{

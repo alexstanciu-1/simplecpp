@@ -6,11 +6,11 @@ final class Source_Work_Queue
 {
 	private array $pending /** vector<source_work> */ = [];
 	private bool $sealed = false;
-	private \SplObjectStorage $sources /** hash<bool, shared<source_record>> */;
+	private \SplObjectStorage $sources /** hash<bool, source_record> */;
 
 	public function __construct()
 	{
-		$sources /** hash<bool, shared<source_record>> */ = new \SplObjectStorage /** hash<bool, shared<source_record>> */();
+		$sources /** hash<bool, source_record> */ = new \SplObjectStorage /** hash<bool, source_record> */();
 		$this->sources = $sources;
 	}
 

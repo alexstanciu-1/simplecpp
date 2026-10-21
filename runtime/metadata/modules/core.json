@@ -19,11 +19,10 @@
       ]
     },
     {
-      "id": "core.hash", "name": "hash", "kind": "class",
+      "id": "core.hash", "name": "hash", "kind": "class", "construction": "make",
       "initialization": [
         {"value": {"parameter":"Value"}, "nested": {"parameter":"Value"}, "where": {"Key":"int"}},
-        {"key": {"parameter":"Key"}, "value": {"parameter":"Value"}, "nested": {"parameter":"Value"}, "where": {"Key":"int"}},
-        {"key": {"parameter":"Key"}, "value": {"parameter":"Value"}, "nested": {"parameter":"Value"}, "where": {"Key":"string"}}
+        {"key": {"parameter":"Key"}, "value": {"parameter":"Value"}, "nested": {"parameter":"Value"}}
       ],
       "indexing": {
         "key": {"parameter": "Key"}, "value": {"parameter": "Value"}, "nested": {"parameter": "Value"},
@@ -91,6 +90,7 @@
     {"name":"DBG_DEFAULT","type":"int","value":262343}
   ],
   "functions": [
+    {"id":"core.hash.make","name":"make","member":{"owner":"hash","dispatch":"static"},"parameters":[],"returns":{"name":"hash","arguments":[{"parameter":"Value"},{"parameter":"Key"}]}},
     {"id":"core.collection_map.vector","name":"collection_map","parameters":[{"name":"source","type":{"name":"vector","arguments":[{"parameter":"T"}]},"passing":"value"},{"name":"callback","type":{"callable":{"parameters":[{"name":"value","type":{"parameter":"T"},"passing":"value"}],"returns":{"parameter":"R"}}},"passing":"value"}],"returns":{"name":"vector","arguments":[{"parameter":"R"}]},"type_parameters":["T","R"]},
     {"id":"core.collection_map.hash","name":"collection_map","parameters":[{"name":"source","type":{"name":"hash","arguments":[{"parameter":"T"},{"parameter":"K"}]},"passing":"value"},{"name":"callback","type":{"callable":{"parameters":[{"name":"value","type":{"parameter":"T"},"passing":"value"}],"returns":{"parameter":"R"}}},"passing":"value"}],"returns":{"name":"hash","arguments":[{"parameter":"R"},{"parameter":"K"}]},"type_parameters":["T","R","K"]},
     {"id":"core.collection_map.mixed","name":"collection_map","parameters":[{"name":"source","type":"mixed","passing":"value"},{"name":"callback","type":{"callable":{"parameters":[{"name":"value","type":"mixed","passing":"value"}],"returns":"mixed"}},"passing":"value"}],"returns":"mixed"},
@@ -181,6 +181,7 @@
     }
   ],
   "cpp": [
+    {"id":"core.hash.make","symbol":"make","header":"scpp/hash_t.hpp"},
     {"id":"core.collection_map.vector","symbol":"scpp::collections::map","header":"scpp/collections.hpp"},
     {"id":"core.collection_map.hash","symbol":"scpp::collections::map","header":"scpp/collections.hpp"},
     {"id":"core.collection_map.mixed","symbol":"scpp::collections::map","header":"scpp/collections.hpp"},

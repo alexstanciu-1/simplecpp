@@ -21,8 +21,8 @@ final class Reference_Cycles
 	public function find(Storage $sources /** Storage<collected_file> */): Storage /** Storage<reference_cycle_vertex> */
 	{
 		$sources = Callable_Inventory::source_collections($sources);
-		$by_definition = new \SplObjectStorage /** hash<int, shared<callable_target_i>> */();
-		$by_scope = new \SplObjectStorage /** hash<int, shared<scope>> */();
+		$by_definition = new \SplObjectStorage /** hash<int, callable_target_i> */();
+		$by_scope = new \SplObjectStorage /** hash<int, scope> */();
 		$vertices /** Storage<reference_cycle_vertex> */ = $this->vertices;
 		$has_reference_return = false;
 		foreach ($sources as $source)
@@ -138,7 +138,7 @@ final class Reference_Cycles
 
 	/** Interface/trait contracts route to implementations, including inherited forwarding bindings. */
 	private function requirement_targets(Storage $sources /** Storage<collected_file> */,
-		\SplObjectStorage $by_definition /** hash<int, shared<callable_target_i>> */): void
+		\SplObjectStorage $by_definition /** hash<int, callable_target_i> */): void
 	{
 		$vertices /** Storage<reference_cycle_vertex> */ = $this->vertices;
 		foreach ($sources as $source) {
@@ -169,7 +169,7 @@ final class Reference_Cycles
 	{
 		if (!($target instanceof collected_method)) { return; }
 		$vertices /** Storage<reference_cycle_vertex> */ = $this->vertices;
-		$reachable = new \SplObjectStorage /** hash<bool, shared<collected_source_callable>> */();
+		$reachable = new \SplObjectStorage /** hash<bool, collected_source_callable> */();
 		$reachable[$target] = true;
 		$changed = true;
 		while ($changed) {

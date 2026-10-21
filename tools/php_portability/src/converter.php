@@ -384,7 +384,7 @@ final class Converter {
 			if (!$storage && !str_starts_with($type, 'vector<') && !str_starts_with($type, 'hash<')) {
 				$this->fail($token[2], 'PHP array requires a vector or hash annotation');
 			}
-			if (!$storage && str_contains($type, ', shared<')) {
+			if (!$storage && Container_Type::containsObjectKey($type)) {
 				$this->fail($token[2], 'object-keyed hashes require the SplObjectStorage PHP carrier');
 			}
 			return $type;
@@ -395,8 +395,8 @@ final class Converter {
 	/** SplObjectStorage is the PHP carrier for an explicitly object-keyed native hash. */
 	private function objectHashAnnotation(array $token): string {
 		$type = $this->containerAnnotation($token, true);
-		if (!preg_match('/^hash<.+, shared<[^<>]+>>$/D', $type)) {
-			$this->fail($token[2], 'SplObjectStorage requires hash<Value, shared<Key>>');
+		if (!Container_Type::hasObjectKey($type)) {
+			$this->fail($token[2], 'SplObjectStorage requires an object-keyed hash<Value, Key>');
 		}
 		return $type;
 	}

@@ -4,6 +4,22 @@ namespace scpp\compiler;
 /** Physical interfaces consume runtime recipes and settled literal facts, never source names. */
 final class CPP_Physical_Interfaces
 {
+	/** Preserve the native handle's hash/equality policy across concrete storage composition. */
+	public static function identity_key(canonical_type_use $type, string $name, string $native): cpp_type_interface
+	{
+		$result = new cpp_type_interface();
+		if (!Type_Queries::is_nominal_handle($type)
+			|| (Type_Queries::canonical($type)->definition()->origin() !== type_definition_origin::source)) { return $result; }
+		$result->declaration_prefix = "#include <stdint.h>\n";
+		$result->declaration = "using scpp_runtime_hash_key = void;\nuint64_t hash_key_hash() const;\n"
+			. 'bool hash_key_equal(const ' . $name . "& other) const;\n";
+		$result->implementation = 'uint64_t ' . $name . '::hash_key_hash() const { return scpp::hash_detail::key_ops<'
+			. $native . '>::hash(unwrap(*this)); }' . "\n"
+			. 'bool ' . $name . '::hash_key_equal(const ' . $name . '& other) const { return scpp::hash_detail::key_ops<'
+			. $native . '>::equal(unwrap(*this), unwrap(other)); }' . "\n";
+		return $result;
+	}
+
 	public static function literal(canonical_type_use $type, cpp_type $mapping, string $name, string $native): cpp_type_interface
 	{
 		$recipe = CPP_Types::stored_recipe($type);

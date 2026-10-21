@@ -48,6 +48,15 @@ runtime operation. The key includes operation, source type and target payload
 caller's full expression, preserves shared identity, and retains existing runtime
 failure behavior. Semantic admission is unchanged; no nullable-wrapper widening.
 
+Source nominal handle facades expose a concrete identity-key interface. Their
+`hash_key_hash`/`hash_key_equal` implementations delegate to native shared-pointer
+key operations; `hash_t` composes these facades without changing key ownership or
+identity. The marker and methods contain no application templates. Registered
+static factories use the owner's composed payload arguments unless the binding
+explicitly requires native payloads. Thus empty hash construction returns the same
+physical representation used for stored hashes. See [object hashes](../../../../specs/portability/object_hashes.md)
+for cross-route proofs and the portable carrier's restrictions.
+
 Source exception hierarchies, throw/catch and bounded scalar/void finally now use
 compiled exception operations. The runtime payload base exposes a template-free
 inheritance interface; typed extraction and shared ownership stay in middleware.

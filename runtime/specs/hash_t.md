@@ -26,6 +26,21 @@ The runtime headers may expose a broader template form for `dynamic_t`, but that
 
 The donor implementation is `mem_container`, but generated/runtime-facing code must target `hash_t` only.
 
+### Typed identity keys and compiled representations
+
+Typed hashes support `shared_p<T>` identity keys, retaining the shared handle and
+using its pointer identity for hash/equality. This does not extend mixed-table keys.
+Generated concrete handle representations opt into the same policy with the
+`scpp_runtime_hash_key` marker, `hash_key_hash() -> uint64_t` and
+`hash_key_equal(const Self&) -> bool`. These methods delegate to their native key
+policy; the adapter does not inspect payload fields or establish language admission.
+The language compiler admits only the key families specified in
+[typed hash semantics](../../specs/array_semantics.md#v02-object-identity-hash-keys--2026-10-21).
+
+`hash_t::make()` constructs an empty value through the registered runtime factory
+protocol, including concrete composition. It takes no arguments and has the same
+ownership and membership semantics as ordinary default construction.
+
 ## 2. Import / adaptation rules
 
 The goal is **not** to expose `mem_container` directly.

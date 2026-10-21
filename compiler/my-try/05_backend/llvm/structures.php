@@ -37,7 +37,7 @@ final class llvm_legacy_template_check_context {
 	/** Index references the prepared files supplied to LLVM_Legacy_Template_Checker::check.
 	 * @reference.weak
 	 */
-	public \SplObjectStorage $files /** hash<llvm_prepared_file, shared<collected_file>> */;
+	public \SplObjectStorage $files /** hash<llvm_prepared_file, collected_file> */;
 }
 
 /** Explicit defaults for this experiment, not the full Simple C++ type/ABI contract. */

@@ -65,7 +65,8 @@ final class Keyed_Path_Preparation
 		$step = new prepared_keyed_step();
 		$step->syntax = $syntax;
 		$step->element_type = $element;
-		$step->key_conversion = Conversion_Preparation::decide($key->type, $key_target, conversion_context::argument);
+		$step->key_conversion = Conversion_Preparation::decide($key->type, $key_target, conversion_context::argument,
+			new Conversion_Relationships($context));
 		$steps /** Storage<prepared_keyed_step> */ = $path->steps;
 		$steps->append($step);
 		return $element;

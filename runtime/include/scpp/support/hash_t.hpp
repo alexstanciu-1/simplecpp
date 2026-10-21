@@ -222,6 +222,17 @@ struct key_ops<shared_p<T>> final {
 	}
 };
 
+// Concrete compiled representations delegate to their native key policy.
+template <typename T> requires requires(const T &left, const T &right) {
+	typename T::scpp_runtime_hash_key;
+	{ left.hash_key_hash() } -> std::same_as<std::uint64_t>;
+	{ left.hash_key_equal(right) } -> std::same_as<bool>;
+}
+struct key_ops<T> final {
+	[[nodiscard]] static std::uint64_t hash(const T &key) { return key.hash_key_hash(); }
+	[[nodiscard]] static bool equal(const T &left, const T &right) { return left.hash_key_equal(right); }
+};
+
 template <typename T>
 struct key_ops<unique_p<T>> final {
 	[[nodiscard]] static std::uint64_t hash(const unique_p<T> &key) {
@@ -505,6 +516,7 @@ private:
 
 public:
 	hash_t() = default;
+	[[nodiscard]] static hash_t make() { return hash_t(); }
 
 	hash_t(const hash_t &other) requires(std::copyable<T_VALUE> && std::copyable<T_KEY>)
 		: values_(other.values_), keys_(other.keys_), live_(other.live_), live_size_(other.live_size_) {
@@ -1574,6 +1586,7 @@ class hash_t<mixed_t, mixed_t> final : private hash_detail::packed_table<mixed_t
 	using storage_type = hash_detail::packed_table<mixed_t>;
 public:
 	hash_t() = default;
+	[[nodiscard]] static hash_t make() { return hash_t(); }
 	hash_t(const hash_t &) = default;
 	hash_t(hash_t &&) noexcept = default;
 	hash_t &operator=(const hash_t &) = default;

@@ -52,7 +52,7 @@ final class Model
 	public static Indexing_Contracts $indexing_contracts;
 	public static Iteration_Contracts $iteration_contracts;
 	public static CPP_Callable_Bindings $cpp_callable_bindings;
-	public static \SplObjectStorage $cpp_property_bindings /** hash<runtime_cpp_spec, shared<runtime_property_definition>> */;
+	public static \SplObjectStorage $cpp_property_bindings /** hash<runtime_cpp_spec, runtime_property_definition> */;
 	/**
 	 * Numeric storage of llvm_module records, including their LLVM text.
 	 * @storage.owner

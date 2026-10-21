@@ -37,17 +37,17 @@ abstract class preparation_owner
 	public collected_file $source;
 	public int $version = 0;
 	/** Strong identity keys; explicit cleanup severs registrations on replacement, deletion and reset. */
-	public \SplObjectStorage $dependencies /** hash<int, shared<contract_work>> */;
-	public \SplObjectStorage $dependents /** hash<bool, shared<preparation_owner>> */;
-	public \SplObjectStorage $lookups /** hash<bool, shared<preparation_lookup>> */;
+	public \SplObjectStorage $dependencies /** hash<int, contract_work> */;
+	public \SplObjectStorage $dependents /** hash<bool, preparation_owner> */;
+	public \SplObjectStorage $lookups /** hash<bool, preparation_lookup> */;
 
 	/** Retained graph data never references a processing worker. */
 	public function __construct(collected_file $source)
 	{
 		$this->source = $source;
-		$this->dependencies = new \SplObjectStorage /** hash<int, shared<contract_work>> */();
-		$this->dependents = new \SplObjectStorage /** hash<bool, shared<preparation_owner>> */();
-		$this->lookups = new \SplObjectStorage /** hash<bool, shared<preparation_lookup>> */();
+		$this->dependencies = new \SplObjectStorage /** hash<int, contract_work> */();
+		$this->dependents = new \SplObjectStorage /** hash<bool, preparation_owner> */();
+		$this->lookups = new \SplObjectStorage /** hash<bool, preparation_lookup> */();
 	}
 
 	/** Computed compatibility category for backend fragment assembly. */

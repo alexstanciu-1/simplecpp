@@ -139,7 +139,7 @@ final class CPP_Runtime_Catalog
 	/** Callable installation follows both semantic and type-binding installation. */
 	public static function install(runtime_catalog_input $input): void
 	{
-		Model::$cpp_property_bindings = new \SplObjectStorage /** hash<runtime_cpp_spec, shared<runtime_property_definition>> */();
+		Model::$cpp_property_bindings = new \SplObjectStorage /** hash<runtime_cpp_spec, runtime_property_definition> */();
 		foreach ($input->modules as $module) {
 			foreach ($module->cpp_properties as $property_binding) {
 				$property = Model::$runtime_members->property_identity($property_binding->identity);

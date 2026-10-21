@@ -351,7 +351,7 @@ final class Compiler
 			$consumed->append($file->source);
 		}
 		foreach (Callable_Inventory::source_collections($consumed) as $source) {
-			$source->preparation_changes = new \SplObjectStorage /** hash<bool, shared<preparation_owner>> */();
+			$source->preparation_changes = new \SplObjectStorage /** hash<bool, preparation_owner> */();
 		}
 	}
 

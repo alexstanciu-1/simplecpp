@@ -223,7 +223,11 @@ final class CPP_Callables
 			$member = Model::$runtime_callables->member_for(object_cast($target, runtime_function_definition::class));
 			if ($member !== null) {
 				if ($member->static_member && ($member->owner instanceof abstract_template_type_definition)) {
-					$mapping = CPP_Types::payload($owner, $context);
+					$binding = Model::$cpp_callable_bindings->function_binding(object_cast($target, runtime_function_definition::class));
+					$engine = $context->implementation_engine;
+					$mapping = (($engine !== null) && !$binding->native_payloads)
+						? CPP_Types::implementation_payload($owner, $engine)
+						: CPP_Types::payload($owner, $context);
 					CPP_Types::record_dependencies($mapping, $context);
 					return $mapping->spelling . '::' . $reference;
 				}

@@ -44,9 +44,9 @@ final class LLVM_Preparation {
 final class LLVM_Preparation_Run
 {
 	private llvm_policy $policy;
-	private \SplObjectStorage $structs /** hash<llvm_struct_type, shared<collected_name>> */;
-	private \SplObjectStorage $owners /** hash<llvm_prepared_file, shared<collected_name>> */;
-	private \SplObjectStorage $file_indexes /** hash<int, shared<llvm_prepared_file>> */;
+	private \SplObjectStorage $structs /** hash<llvm_struct_type, collected_name> */;
+	private \SplObjectStorage $owners /** hash<llvm_prepared_file, collected_name> */;
+	private \SplObjectStorage $file_indexes /** hash<int, llvm_prepared_file> */;
 	/** Exact definition/argument keys; references to file.functions. */
 	private Keyed_Storage $instances /** Keyed_Storage<llvm_prepared_function> */;
 	/** Append-only work queue referencing file.functions; indexed traversal may grow it. */
@@ -58,11 +58,11 @@ final class LLVM_Preparation_Run
 		$this->policy = $policy;
 		$this->instances = new Keyed_Storage /** Keyed_Storage<llvm_prepared_function> */();
 		$this->pending = new Storage /** Storage<llvm_prepared_function> */();
-		$owners /** hash<llvm_prepared_file, shared<collected_name>> */ = new \SplObjectStorage /** hash<llvm_prepared_file, shared<collected_name>> */();
+		$owners /** hash<llvm_prepared_file, collected_name> */ = new \SplObjectStorage /** hash<llvm_prepared_file, collected_name> */();
 		$this->owners = $owners;
-		$file_indexes /** hash<int, shared<llvm_prepared_file>> */ = new \SplObjectStorage /** hash<int, shared<llvm_prepared_file>> */();
+		$file_indexes /** hash<int, llvm_prepared_file> */ = new \SplObjectStorage /** hash<int, llvm_prepared_file> */();
 		$this->file_indexes = $file_indexes;
-		$structs /** hash<llvm_struct_type, shared<collected_name>> */ = (new LLVM_Struct_Preparation())->prepare($sources, $policy);
+		$structs /** hash<llvm_struct_type, collected_name> */ = (new LLVM_Struct_Preparation())->prepare($sources, $policy);
 		$this->structs = $structs;
 	}
 

@@ -10,9 +10,9 @@ final class LLVM_Struct_Preparation
 {
 	/** Prepare all definitions before file-local storage, including forward/cross-file types.
 	 */
-	public function prepare(Storage $files /** Storage<collected_file> */, llvm_policy $policy): \SplObjectStorage /** hash<llvm_struct_type, shared<collected_name>> */
+	public function prepare(Storage $files /** Storage<collected_file> */, llvm_policy $policy): \SplObjectStorage /** hash<llvm_struct_type, collected_name> */
 	{
-		$result /** hash<llvm_struct_type, shared<collected_name>> */ = new \SplObjectStorage /** hash<llvm_struct_type, shared<collected_name>> */();
+		$result /** hash<llvm_struct_type, collected_name> */ = new \SplObjectStorage /** hash<llvm_struct_type, collected_name> */();
 		foreach ($files as $file)
 		{
 			$entries /** Storage<collected_name> */ = $file->entries;

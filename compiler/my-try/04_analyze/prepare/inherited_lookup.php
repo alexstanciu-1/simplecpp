@@ -75,7 +75,7 @@ final class Inherited_Lookup
 		}
 		// Implements contributes obligations, never a concrete method implementation.
 		if (!($entry instanceof collected_interface)) { return $result; }
-		$seen /** hash<bool, shared<collected_declaration>> */ = new \SplObjectStorage /** hash<bool, shared<collected_declaration>> */();
+		$seen /** hash<bool, collected_declaration> */ = new \SplObjectStorage /** hash<bool, collected_declaration> */();
 		foreach ($relationships->interfaces as $parent_interface) {
 			$inherited = self::members($parent_interface, $name, $kind, $context);
 			foreach ($inherited as $candidate) {

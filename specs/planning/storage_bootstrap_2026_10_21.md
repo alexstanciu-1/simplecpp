@@ -582,3 +582,59 @@ The first affected callable for redundant shared storage is
 `Symbol_Collector::__construct`; this owner may reflect a dependent declaration
 failure, not a redundant type written directly in that constructor. Full records
 are retained as `failure-owners.json` in the artifact directory.
+
+
+## Common object-identity hash keys and retry — 2026-10-21
+
+Candidate: `b203ed1f` plus the overlay retained in
+`/tmp/bootstrap-attempt-20261021-object-keys/candidate.diff`. Compiler annotations
+use bare class/interface keys; the converter preserves this spelling without type
+inference. Legacy explicit shared-key spelling remains convertible but is redundant
+storage in v0.2. PHP arrays reject object-key annotations, including nested maps.
+PHP SplObjectStorage retains its existing carrier role and aliasing restrictions.
+
+Shared source handles acquire identity hash/comparison capabilities. Index reads,
+writes, probes/removal and initialization use existing conversion relationships.
+The runtime metadata registers empty hash construction and generic keyed
+initialization. Concrete source-handle facades delegate to native key operations;
+static factories use their composed owner payload. No new identity/lifetime policy,
+weak/unique/value-key support or LLVM semantic change is introduced.
+
+Evidence:
+- `/tmp/object-keys-common-05`: PHP + legacy native parity; four ordinary/prelowered
+  v0.2 executions cover identity, replacement, retained keys, field mutation,
+  ordered iteration, removal, interface upcast, initialization and probes.
+  Struct/value/weak/unique-key rejection and retained recovery pass in both modes.
+- `/tmp/object-key-php-regressions`: converter contracts pass (including the
+  updated parameter-syntax expectation). The first ad-hoc regression invocation
+  omitted required fixture-directory arguments; those harness failures were rerun.
+- `/tmp/object-key-php-regressions-02`: indexing, runtime catalog and compiler
+  Storage contract checks pass with their required fixture directories.
+- `/tmp/object-key-storage-regression`: existing compiler Storage execution passes
+  in ordinary and prelowered modes after the generic factory binding change.
+
+Conversion: 259 PHP files, 4.66 s, peak RSS 186.3 MiB. Assembled input: 269 PHS files,
+1,925,430 bytes. Isolated PHP8.5 CLI bootstrap (OPcache CLI/Xdebug disabled, 4 GiB
+limit): **169.87 s wall time**, **406324 KiB / 396.8 MiB peak RSS**,
+**390594560 bytes / 372.5 MiB peak PHP heap**. Parsing completes at 4.228 s.
+Preparation fails without PHP fatal/OOM or C++ emission. Snapshot hashes, phase
+marks and logs are in the artifact directory above; its `.py` sibling is the retry
+driver. Final source differs from that snapshot only in continuation indentation;
+subsequent documentation does not affect the measured run.
+
+The redundant shared-storage/hash-key diagnostic is gone. The first diagnostic is
+`Nonvirtual inherited member redeclaration is deferred`. No next-blocker repair or
+Storage_Cursor widening is included. The known prelowered handle/null comparison
+defect remains excluded. These are partial-run costs, not a completed bootstrap or
+native compiler rebuild; the earlier 52.38-second stop performed less preparation.
+
+
+Read-only owner replay: 173.44 s, `/tmp/object-keys-bootstrap-owner-logs`.
+`failure-owners.json` confirms zero redundant-storage failures. The first affected
+callable is `Symbol_Collector::previous_function`, through a dependent type
+contract. The first failing type contract is `collected_declaration`; source
+inspection shows `is_retained()` and `is_exported()` redeclaring concrete defaults
+on `collected_name`. The current contract treats abstract methods (and the typed
+Iterator methods) as virtual, so these ordinary PHP overrides are rejected.
+The diagnostic occurs in 91 retained work items, including propagated failures;
+that is not a count of independent root defects. No override-policy change is made.

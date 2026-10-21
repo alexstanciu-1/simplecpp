@@ -8,7 +8,7 @@ final class Member_Inventory
 	public static function source_collections(Storage $sources /** Storage<collected_file> */): Storage /** Storage<collected_file> */
 	{
 		$result /** Storage<collected_file> */ = new Storage();
-		$seen /** hash<bool, shared<collected_file>> */ = new \SplObjectStorage /** hash<bool, shared<collected_file>> */();
+		$seen /** hash<bool, collected_file> */ = new \SplObjectStorage /** hash<bool, collected_file> */();
 		foreach ($sources as $source) {
 			if (!isset($seen[$source])) { $seen[$source] = true; $result->append($source); }
 			if ($source->deleted) { continue; }

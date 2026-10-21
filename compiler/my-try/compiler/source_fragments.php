@@ -38,7 +38,7 @@ final class Source_Fragments
 		}
 		Collection_Retirement::remove_deleted_sources($sources);
 		foreach ($sources as $source) {
-			$source->preparation_changes = new \SplObjectStorage /** hash<bool, shared<preparation_owner>> */();
+			$source->preparation_changes = new \SplObjectStorage /** hash<bool, preparation_owner> */();
 		}
 	}
 }

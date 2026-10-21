@@ -5,6 +5,25 @@ namespace scpp\portability;
 
 /** Recursive explicit container spelling, with no type or declaration lookup. */
 final class Container_Type {
+    /** Structural carrier classification only; the target validates the named type. */
+    public static function isObjectKey(string $type): bool {
+        if (str_starts_with($type, 'shared<')) { return true; }
+        return !str_contains($type, '<') && !in_array(strtolower($type),
+            ['int', 'string', 'bool', 'float', 'double', 'uint8', 'uint16', 'uint32', 'uint64',
+             'int8', 'int16', 'int32', 'int64'], true);
+    }
+
+    public static function containsObjectKey(string $type): bool {
+        preg_match_all('/, (shared<[^<>]+>|[^<>, ]+)>/', $type, $matches);
+        foreach ($matches[1] as $key) { if (self::isObjectKey($key)) { return true; } }
+        return false;
+    }
+
+    public static function hasObjectKey(string $type): bool {
+        return preg_match('/^hash<.+, (shared<[^<>]+>|[^<>, ]+)>$/D', $type, $match) === 1
+            && self::isObjectKey($match[1]);
+    }
+
     public static function parse(string $annotation): string {
         if (!preg_match('~^/\*\*\s*(.*?)\s*\*/$~sD', $annotation, $match)) {
             throw new \RuntimeException('expected explicit container type annotation');
@@ -35,8 +54,8 @@ final class Container_Type {
                 if (($type === 'vector' && count($arguments) !== 1) || ($type === 'hash' && count($arguments) > 2)) {
                     throw new \RuntimeException('wrong container type argument count');
                 }
-                if ($type === 'hash' && isset($arguments[1]) && !in_array($arguments[1], ['int', 'string'], true) && !str_starts_with($arguments[1], 'shared<')) {
-                    throw new \RuntimeException('hash key type must be int, string or shared<Record> in this profile');
+                if ($type === 'hash' && isset($arguments[1]) && !in_array($arguments[1], ['int', 'string'], true) && !self::isObjectKey($arguments[1])) {
+                    throw new \RuntimeException('hash key type must be int, string or an object handle in this profile');
                 }
                 return $type . '<' . implode(', ', $arguments) . '>';
             }

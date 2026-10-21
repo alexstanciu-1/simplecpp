@@ -13,7 +13,7 @@ final class LLVM_Legacy_Template_Checker
 	/** Index prepared files once and check every template against the shared symbolic policy. */
 	public function check(Storage $files /** Storage<llvm_prepared_file> */, llvm_policy $policy): void
 	{
-		$file_index /** hash<llvm_prepared_file, shared<collected_file>> */ = new \SplObjectStorage /** hash<llvm_prepared_file, shared<collected_file>> */();
+		$file_index /** hash<llvm_prepared_file, collected_file> */ = new \SplObjectStorage /** hash<llvm_prepared_file, collected_file> */();
 		foreach ($files as $file) {
 			$file_index[$file->source] = $file;
 		}

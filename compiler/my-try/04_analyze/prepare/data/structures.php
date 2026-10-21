@@ -875,7 +875,7 @@ final class local_environment
 {
 	public ?local_environment $parent = null;
 	public storage_lifetime_region $region;
-	private \SplObjectStorage $lifetimes /** hash<storage_lifetime, shared<prepared_source_storage>> */;
+	private \SplObjectStorage $lifetimes /** hash<storage_lifetime, prepared_source_storage> */;
 	public Key_Storage_List $bindings /** Key_Storage_List<prepared_source_storage> */;
 	/** A typed declaration reserves its name while preparing its initializer. */
 	public ?string $initializing_name = null;
@@ -890,7 +890,7 @@ final class local_environment
 			$entered_at = $parent_region->next_order++;
 		}
 		$this->region = new storage_lifetime_region($parent_region, $entered_at);
-		$this->lifetimes = new \SplObjectStorage /** hash<storage_lifetime, shared<prepared_source_storage>> */();
+		$this->lifetimes = new \SplObjectStorage /** hash<storage_lifetime, prepared_source_storage> */();
 		$this->bindings = new Key_Storage_List /** Key_Storage_List<prepared_source_storage> */();
 	}
 
@@ -940,14 +940,14 @@ final class preparation_lookup
 	public string $name;
 	public preparation_lookup_kind $kind;
 	public array $candidates /** vector<preparation_lookup_candidate_i> */ = [];
-	public \SplObjectStorage $dependents /** hash<bool, shared<preparation_owner>> */;
+	public \SplObjectStorage $dependents /** hash<bool, preparation_owner> */;
 
 	public function __construct(scope $lookup_scope, string $name, preparation_lookup_kind $kind)
 	{
 		$this->lookup_scope = $lookup_scope;
 		$this->name = $name;
 		$this->kind = $kind;
-		$this->dependents = new \SplObjectStorage /** hash<bool, shared<preparation_owner>> */();
+		$this->dependents = new \SplObjectStorage /** hash<bool, preparation_owner> */();
 	}
 }
 

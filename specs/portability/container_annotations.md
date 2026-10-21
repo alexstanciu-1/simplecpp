@@ -20,8 +20,11 @@ No backticks belong inside the actual type comment.
 - `vector<T>` takes one argument; `hash<T>` or `hash<T, K>` takes one or two.
 - Elements/values can be scalar or literal named types, or recursively nested
   vectors/hashes. Named types are not resolved by the converter.
-- Explicit hash keys currently admit `int` and `string`; omitted keys use the
-  target's string-key default. Other key families need their own proof.
+- Explicit hash keys admit `int`, `string`, and named object handles; omitted keys
+  use the target's string-key default. [Object keys](object_hashes.md) require the
+  explicit SplObjectStorage carrier, never a PHP array (including nested types).
+  Common source uses bare class/interface key names; legacy `shared<Key>` remains
+  convertible but is redundant storage in v0.2.
 - Whitespace around type punctuation is accepted and normalized. Generic arity,
   complete consumption, unsupported element spellings and nesting over 32 levels
   produce source diagnostics rather than a guessed conversion.

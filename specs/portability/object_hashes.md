@@ -8,21 +8,24 @@ existing container; they do not need another native Storage specialization.
 Executable PHP uses SplObjectStorage as the carrier, with explicit conversion types:
 
 ```php
-private \SplObjectStorage $owners /** hash<llvm_prepared_file, shared<collected_name>> */;
-$owners /** hash<llvm_prepared_file, shared<collected_name>> */ = new \SplObjectStorage /** hash<llvm_prepared_file, shared<collected_name>> */();
+private \SplObjectStorage $owners /** hash<llvm_prepared_file, collected_name> */;
+$owners /** hash<llvm_prepared_file, collected_name> */ = new \SplObjectStorage /** hash<llvm_prepared_file, collected_name> */();
 $this->owners = $owners;
 ```
 
-The property becomes a native hash. The constructor annotation is preserved as
-`new hash<Value, shared<Key>>()`, which lowers directly to a native hash value.
+The property becomes a native hash. v0.2 uses the registered empty `make` factory
+for construction, including template prelowering. The constructor annotation is preserved as
+`new hash<Value, Key>()`, which lowers directly to a native hash value.
 Direct property initialization/reset and return expressions therefore need no
 intermediate typed local or destination-type inference. Only empty construction
 is supported; constructor arguments are rejected. A SplObjectStorage return or concrete method parameter has an adjacent hash
 annotation as well. Method parameters use the same explicit carrier grammar;
 interface object-hash parameters remain outside this slice. Bare or incorrectly annotated constructors/properties reject. The native
-source has no dependency on the PHP SplObjectStorage class. `shared<Key>` states the
-key ownership/type explicitly; the native type mapper supplies shared handles for
-ordinary record values too. Scalar values, such as file indexes, remain scalars.
+source has no dependency on the PHP SplObjectStorage class. Bare class/interface `Key` uses its default shared identity in both compiler routes.
+The converter retains legacy `shared<Key>` annotations, but v0.2 rejects that redundant
+storage modifier; use bare `Key` for common source. The converter checks structural
+spelling/carrier compatibility; the target compiler validates the named key type.
+Scalar values, such as file indexes, remain scalars.
 
 This bounded carrier covers keyed set/read/isset/unset operations and return/
 publication into a worker field. Keys are non-null records; values are non-null
@@ -70,9 +73,17 @@ renaming do not change retained storage.
 
 `php tests/portability/object_hashes.php` proves PHP identity/replacement/removal,
 real converter boundaries, rejections, and the native TypeMapper result
-`hash_t<shared_p<Row>, shared_p<Key>>`. PHP compiler model and LLVM tests also pass.
-No native compilation or native runtime execution was performed in this slice.
+`hash_t<shared_p<Row>, shared_p<Key>>`. This converter-only check does not itself compile native code.
 
 `python3 tests/portability/typed_hash_construction.py --results FRESH` proves PHP/native
 parity for direct property construction/reset, typed returns and identity-key
 access. The proof bypasses STAN; no broader semantic inference is introduced.
+
+`tests/portability/object_keys_common.py --results FRESH` proves common bare-key
+PHP/v0.1 execution and v0.2 ordinary/prelowered execution: identity versus equal
+payloads, alias replacement, mutation-stable keys, retained keys, ordered iteration
+and removal. Additional v0.2 cases prove interface upcasts, keyed initialization,
+probes and scalar empty construction. Rejection/recovery covers struct, value,
+weak and unique keys. Prelowered handle facades delegate hashing/equality to the
+existing native shared-pointer key policy; application headers remain template-free.
+These are generated-program proofs, not a native compiler rebuild.

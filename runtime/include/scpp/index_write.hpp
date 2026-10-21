@@ -7,6 +7,10 @@ namespace scpp {
 // Validation occurs before RHS evaluation; numeric-string normalization stays in hash storage.
 template<class K> requires detail::is_int_t_v<K>
 void require_write_key(const K &) {}
+template<class T>
+void require_write_key(const shared_p<T> &) {}
+template<class K> requires requires { typename K::scpp_runtime_hash_key; }
+void require_write_key(const K &) {}
 inline void require_write_key(const string_t &) {}
 inline void require_write_key(const mixed_t &key) { require_index_key(key); }
 

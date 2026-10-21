@@ -68,7 +68,8 @@ final class Data_Construction_Preparation
 			$key_type = $binding->key();
 			if ($key_type === null) { throw new \LogicException('Keyed syntax requires a keyed binding'); }
 			$key = Expression_Preparation::prepare($entry->key, $context, $key_type);
-			$facts->key_conversion = Conversion_Preparation::decide($key->type, $key_type, conversion_context::initializer_key);
+			$facts->key_conversion = Conversion_Preparation::decide($key->type, $key_type, conversion_context::initializer_key,
+				new Conversion_Relationships($context));
 		}
 		$value = Expression_Preparation::prepare($entry->value, $context, $binding->nested_target());
 		$facts->value_conversion = Conversion_Preparation::decide($value->type, $binding->value(), conversion_context::container_element,

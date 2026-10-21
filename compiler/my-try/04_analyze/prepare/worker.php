@@ -10,11 +10,11 @@ final class Preparation_Worker
 	/** Identity-tagged control signal, never a user diagnostic or retained work field. */
 	private \RuntimeException $materialization_signal;
 	/** A failed item is attempted at most once by this invocation, but stays changed for the next. */
-	private \SplObjectStorage $attempt_failed /** hash<bool, shared<preparation_owner>> */;
-	private \SplObjectStorage $contracts /** hash<bool, shared<contract_work>> */;
-	private \SplObjectStorage $callable_bodies /** hash<bool, shared<body_work>> */;
-	private \SplObjectStorage $file_bodies /** hash<bool, shared<file_body_work>> */;
-	private \SplObjectStorage $owners /** hash<bool, shared<preparation_owner>> */;
+	private \SplObjectStorage $attempt_failed /** hash<bool, preparation_owner> */;
+	private \SplObjectStorage $contracts /** hash<bool, contract_work> */;
+	private \SplObjectStorage $callable_bodies /** hash<bool, body_work> */;
+	private \SplObjectStorage $file_bodies /** hash<bool, file_body_work> */;
+	private \SplObjectStorage $owners /** hash<bool, preparation_owner> */;
 
 	/** Work lists are invocation-local; retained dependency records never reference this worker. */
 	public function __construct(scope $language)
@@ -22,11 +22,11 @@ final class Preparation_Worker
 		$this->language = $language;
 		$this->instance_requests = new Storage /** Storage<callable_instance_request> */();
 		$this->materialization_signal = new \RuntimeException('Callable materialization requires the coordinator');
-		$this->attempt_failed = new \SplObjectStorage /** hash<bool, shared<preparation_owner>> */();
-		$this->contracts = new \SplObjectStorage /** hash<bool, shared<contract_work>> */();
-		$this->callable_bodies = new \SplObjectStorage /** hash<bool, shared<body_work>> */();
-		$this->file_bodies = new \SplObjectStorage /** hash<bool, shared<file_body_work>> */();
-		$this->owners = new \SplObjectStorage /** hash<bool, shared<preparation_owner>> */();
+		$this->attempt_failed = new \SplObjectStorage /** hash<bool, preparation_owner> */();
+		$this->contracts = new \SplObjectStorage /** hash<bool, contract_work> */();
+		$this->callable_bodies = new \SplObjectStorage /** hash<bool, body_work> */();
+		$this->file_bodies = new \SplObjectStorage /** hash<bool, file_body_work> */();
+		$this->owners = new \SplObjectStorage /** hash<bool, preparation_owner> */();
 	}
 
 	public function is_materialization_yield(\Throwable $error): bool
@@ -212,7 +212,7 @@ final class Preparation_Worker
 			$this->retire($owner);
 		}
 		foreach ($sources as $source) {
-			$source->preparation_changes = new \SplObjectStorage /** hash<bool, shared<preparation_owner>> */();
+			$source->preparation_changes = new \SplObjectStorage /** hash<bool, preparation_owner> */();
 			$anonymous /** Storage<anonymous_callable_identity> */ = $source->anonymous_callables;
 			foreach ($anonymous as $identity) {
 				$identity->signature_work = null;
@@ -222,9 +222,9 @@ final class Preparation_Worker
 	}
 
 	/** Mark the complete batch before notification, including bodies belonging to deleted functions. */
-	private function retiring_owners(Storage $sources /** Storage<collected_file> */, bool $all): \SplObjectStorage /** hash<bool, shared<preparation_owner>> */
+	private function retiring_owners(Storage $sources /** Storage<collected_file> */, bool $all): \SplObjectStorage /** hash<bool, preparation_owner> */
 	{
-		$result /** hash<bool, shared<preparation_owner>> */ = new \SplObjectStorage /** hash<bool, shared<preparation_owner>> */();
+		$result /** hash<bool, preparation_owner> */ = new \SplObjectStorage /** hash<bool, preparation_owner> */();
 		foreach ($sources as $source)
 		{
 			$anonymous /** Storage<anonymous_callable_identity> */ = $source->anonymous_callables;
@@ -290,10 +290,10 @@ final class Preparation_Worker
 	}
 
 	/** Traverse intact reverse links once; deleted owners cannot be scheduled back into work. */
-	private function notify_retiring(\SplObjectStorage $retired /** hash<bool, shared<preparation_owner>> */): void
+	private function notify_retiring(\SplObjectStorage $retired /** hash<bool, preparation_owner> */): void
 	{
 		$pending /** Storage<preparation_owner> */ = new Storage();
-		$seen /** hash<bool, shared<preparation_owner>> */ = new \SplObjectStorage /** hash<bool, shared<preparation_owner>> */();
+		$seen /** hash<bool, preparation_owner> */ = new \SplObjectStorage /** hash<bool, preparation_owner> */();
 		foreach ($retired as $owner /** @object-key */) {
 			$pending->append($owner);
 		}
@@ -639,8 +639,8 @@ final class Preparation_Worker
 				$lookup->lookup_scope->remove_preparation_lookup($lookup);
 			}
 		}
-		$owner->dependencies = new \SplObjectStorage /** hash<int, shared<contract_work>> */();
-		$owner->lookups = new \SplObjectStorage /** hash<bool, shared<preparation_lookup>> */();
+		$owner->dependencies = new \SplObjectStorage /** hash<int, contract_work> */();
+		$owner->lookups = new \SplObjectStorage /** hash<bool, preparation_lookup> */();
 	}
 
 	/** Rebuild selected signatures/layout facts; only effective changes propagate to consumers. */
@@ -679,7 +679,7 @@ final class Preparation_Worker
 			}
 		}
 		$recovering = $owner->failed;
-		$old_dependencies /** hash<int, shared<contract_work>> */ = $owner->dependencies;
+		$old_dependencies /** hash<int, contract_work> */ = $owner->dependencies;
 		$this->detach_dependencies($owner);
 		$owner->state = preparation_state::processing;
 		$context = $this->context($owner);
@@ -726,7 +726,7 @@ final class Preparation_Worker
 	}
 
 	/** Dispatch by retained work role; records carry identities, not processing hooks. */
-	private function rebuild_contract(contract_work $owner, preparation_context $context, \SplObjectStorage $previous /** hash<int, shared<contract_work>> */): bool
+	private function rebuild_contract(contract_work $owner, preparation_context $context, \SplObjectStorage $previous /** hash<int, contract_work> */): bool
 	{
 		if ($owner instanceof anonymous_signature_work) {
 			$anonymous = object_cast($owner, anonymous_signature_work::class);
@@ -871,7 +871,7 @@ final class Preparation_Worker
 	}
 
 	/** Nested layout versions matter even if this record retains the same field type identities. */
-	private function prepare_record_definition(record_definition_work $owner, preparation_context $context, \SplObjectStorage $previous /** hash<int, shared<contract_work>> */): bool
+	private function prepare_record_definition(record_definition_work $owner, preparation_context $context, \SplObjectStorage $previous /** hash<int, contract_work> */): bool
 	{
 		$this->require_relationships($owner->record_definition(), $context);
 		$syntax = $owner->record_definition()->syntax();
@@ -936,7 +936,7 @@ final class Preparation_Worker
 		$this->attempt_failed[$owner] = true;
 		$owner->state = preparation_state::pending;
 		$pending /** Storage<preparation_owner> */ = new Storage();
-		$seen /** hash<bool, shared<preparation_owner>> */ = new \SplObjectStorage /** hash<bool, shared<preparation_owner>> */();
+		$seen /** hash<bool, preparation_owner> */ = new \SplObjectStorage /** hash<bool, preparation_owner> */();
 		$pending->append($owner);
 		for ($index = 0; $index < q_count($pending); $index++)
 		{
@@ -1071,7 +1071,7 @@ final class Preparation_Worker
 	/** Membership changes can invalidate successful, ambiguous or previously missing lookups. */
 	private function changed_lookups(): void
 	{
-		$seen /** hash<bool, shared<preparation_lookup>> */ = new \SplObjectStorage /** hash<bool, shared<preparation_lookup>> */();
+		$seen /** hash<bool, preparation_lookup> */ = new \SplObjectStorage /** hash<bool, preparation_lookup> */();
 		foreach ($this->owners as $owner /** @object-key */)
 		{
 			foreach ($owner->lookups as $lookup /** @object-key */)
@@ -1205,7 +1205,7 @@ final class Preparation_Worker
 		}
 		else { throw new \LogicException('Unsupported preparation work role'); }
 		$this->detach_dependencies($owner);
-		$owner->dependents = new \SplObjectStorage /** hash<bool, shared<preparation_owner>> */();
+		$owner->dependents = new \SplObjectStorage /** hash<bool, preparation_owner> */();
 		unset($this->owners[$owner]);
 		unset($this->attempt_failed[$owner]);
 	}

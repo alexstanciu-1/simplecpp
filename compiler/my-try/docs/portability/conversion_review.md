@@ -14,39 +14,38 @@ The catalog's bounded closeouts and Chapter 15 deferrals still
 bound the supported language surface.
 This does not establish exhaustive language, lifetime, incremental or performance coverage.
 
-## PHP-hosted bootstrap after handle null defaults — 2026-10-21
+## PHP-hosted bootstrap after object-identity keys — 2026-10-21
 
-The common `object_cast(value, Target::class)` spelling works through PHP, v0.1
-(with its legacy alias retained) and v0.2. Prelowered checked casts and type tests
-consume existing prepared facts through compiled runtime operations, with unchanged
-semantic admission. Focused identity, interface/struct, weak-lock, evaluation and
-failure proofs pass in ordinary and concrete modes.
+The latest retry uses `b203ed1f` plus the object-key overlay. Portable compiler PHP
+now spells object maps `hash<V, Key>` with a SplObjectStorage carrier, retaining
+existing identity and ownership. Both routes accept the common spelling. v0.2
+admits shared source class/interface keys; indexed/keyed conversions reuse safe
+upcasts. Empty hash construction uses the registered factory protocol. Concrete
+handle facades delegate key hashing/equality to the native shared-pointer policy.
 
-Remote task fixes were reconciled in `a92689b2`; `task_synchronize` remains resolved.
-The latest retry uses `ac54c7d0` plus copyable handle null-default preparation.
-Omitted handle arguments use existing empty-storage initialization; raw null call
-arguments and noncopyable defaults remain rejected. `tests/handle_defaults.py`
-passes ordinary/prelowered class, interface and weak-handle execution plus retained
-rejection/recovery. Presence conditions avoid the separately known direct-null
-comparison emission defect; no repair to that defect is claimed.
-Conversion produces 269 assembled PHS files from 259 PHP files (1,923,397 bytes).
-Bootstrap takes **52.38 seconds**, peak RSS **321.5 MiB**, peak PHP heap **300 MiB**
-under a 4 GiB limit. Parsing finishes at 4.238 seconds. It stops during preparation
-without PHP fatal/OOM or C++ emission.
+`tests/portability/object_keys_common.py` passes PHP/v0.1 parity and four v0.2
+ordinary/prelowered executions, plus retained rejection/recovery. Converter,
+indexing, runtime catalog and compiler-storage metadata checks pass; existing
+Storage generated execution also passes in both modes. These are
+focused generated-program proofs, not a native compiler rebuild.
 
-Readonly enforcement remains deferred to
+Conversion produces 269 assembled PHS files from 259 PHP files (1,925,430 bytes).
+Isolated bootstrap takes **169.87 seconds**, peak RSS **396.8 MiB**, peak PHP heap
+**372.5 MiB** under a 4 GiB limit. Parsing finishes at 4.228 seconds. It stops during
+preparation without PHP fatal/OOM or C++ emission. The prior 52-second run stopped
+much earlier; neither partial run predicts the full bootstrap cost.
+
+The redundant shared-storage/object-key blocker is passed. The first reported
+failure is now `Nonvirtual inherited member redeclaration is deferred`. Owner
+replay identifies `collected_declaration` as the first failing type contract:
+`is_retained()`/`is_exported()` redeclare concrete defaults from `collected_name`.
+Other preparation failures remain, including Storage_Cursor. No next-blocker fix,
+Storage_Cursor widening or repair of the known prelowered handle/null comparison
+defect is included. Readonly enforcement remains
 [CH15-READONLY-FIELDS-01](../catalog/15_blocking_debt.md#readonly-instance-fields--ch15-readonly-fields-01).
-The compiler's 21 formerly readonly properties have source TODOs; constructor-only
-writes remain a convention. The unsupported-member-modifier diagnostic is gone.
-The closure-context and handle-default blockers are passed. The next reported
-diagnostic is `shared<Class> repeats the declaration default storage`.
-No redundant-storage normalization or source cleanup is included in this retry.
-
-Other preparation failures remain, as does the prelowered locked-class null-check
-defect. Semantic widening and Storage_Cursor widening are excluded.
-[Checkpoint and evidence](../../../../specs/planning/storage_bootstrap_2026_10_21.md)
-record the snapshot and limitations. This is not a successful self-bootstrap or a
-native compiler rebuild; the native checkpoints below describe earlier revisions.
+The [checkpoint](../../../../specs/planning/storage_bootstrap_2026_10_21.md) records
+snapshot, measurements and limitations. This is not a successful self-bootstrap;
+the native checkpoints below describe earlier revisions.
 
 ## Native prelowering execution — 2026-10-20
 

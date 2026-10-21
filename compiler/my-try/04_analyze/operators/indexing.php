@@ -26,7 +26,8 @@ final class Indexing_Preparation
 		Capability_Preparation::require_copy($signature->value, $context);
 		self::require_key_domain($operands[1], $context);
 		$decision = self::decision($receiver, $signature, $declaration->operation());
-		$decision->operands[] = Conversion_Preparation::decide($operands[1], $signature->key, conversion_context::argument);
+		$decision->operands[] = Conversion_Preparation::decide($operands[1], $signature->key, conversion_context::argument,
+			new Conversion_Relationships($context));
 		return $decision;
 	}
 
@@ -133,7 +134,8 @@ final class Indexing_Preparation
 				$key_node /** expression_node */ = $target->index;
 				$key = Expression_Preparation::prepare($key_node, $context);
 				self::require_key_domain($key->type, $context);
-				$decision->operands[] = Conversion_Preparation::decide($key->type, $signature->key, conversion_context::argument);
+				$decision->operands[] = Conversion_Preparation::decide($key->type, $signature->key, conversion_context::argument,
+					new Conversion_Relationships($context));
 			}
 			$facts->decision = $decision;
 			$facts->nested_type = $signature->nested;
@@ -170,7 +172,8 @@ final class Indexing_Preparation
 			$step = new prepared_index_path_step();
 			$step->syntax = $index;
 			$step->element_type = $element;
-			$step->key_conversion = Conversion_Preparation::decide($key->type, $signature->key, conversion_context::argument);
+			$step->key_conversion = Conversion_Preparation::decide($key->type, $signature->key, conversion_context::argument,
+				new Conversion_Relationships($context));
 			$path /** Storage<prepared_index_path_step> */ = $facts->path;
 			$path->append($step);
 			return $step->element_type;
@@ -217,10 +220,12 @@ final class Indexing_Preparation
 	/** No PHP bool/float/null key coercion; unknown mixed payloads remain runtime checked. */
 	public static function require_key_domain(canonical_type_use $type, preparation_context $context): void
 	{
+		$capabilities = new Capability_Preparation($context);
 		if ($type->matches($context->integer) || $type->matches($context->string_type)
-			|| Boxed_Conversions::is_mixed($type)) {
+			|| Boxed_Conversions::is_mixed($type)
+			|| $capabilities->has_capability($type, generic_contract::shared_record)) {
 			return;
 		}
-		throw new \RuntimeException('S2S indexed access keys require int, string or mixed');
+		throw new \RuntimeException('S2S indexed access keys require int, string, shared record or mixed');
 	}
 }

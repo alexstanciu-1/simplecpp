@@ -35,7 +35,7 @@ final class CPP_Generator
 		$effective_options = $options ?? new cpp_lowering_options();
 		$enabled = $effective_options->prelower_templates;
 		if ($this->program->prelower_templates !== $enabled) {
-			$this->program->fragments = new \SplObjectStorage /** hash<cpp_fragment, shared<preparation_owner>> */();
+			$this->program->fragments = new \SplObjectStorage /** hash<cpp_fragment, preparation_owner> */();
 			$this->program->prelower_templates = $enabled;
 		}
 	}
@@ -55,7 +55,7 @@ final class CPP_Generator
 		if ($this->program->prelower_templates) { $this->specializations = new CPP_Specializations(); }
 		// Policy changes invalidate only backend fragments, even with unchanged preparation.
 		if ($this->program->policy_identity !== $this->policy->identity()) {
-			$this->program->fragments = new \SplObjectStorage /** hash<cpp_fragment, shared<preparation_owner>> */();
+			$this->program->fragments = new \SplObjectStorage /** hash<cpp_fragment, preparation_owner> */();
 			$this->program->policy_identity = $this->policy->identity();
 		}
 		$ordered /** Storage<preparation_owner> */ = new Storage();
@@ -120,7 +120,7 @@ final class CPP_Generator
 		// Eligibility is a backend placement decision, not a semantic body dependency.
 		// Re-render on shape changes so cached callers cannot reference retired helpers.
 		if (CPP_Shared_Allocations::changed($this->program->outlined_shared_allocations, $allocations)) {
-			$this->program->fragments = new \SplObjectStorage /** hash<cpp_fragment, shared<preparation_owner>> */();
+			$this->program->fragments = new \SplObjectStorage /** hash<cpp_fragment, preparation_owner> */();
 		}
 		$this->program->outlined_shared_allocations = $allocations;
 		$definitions /** Storage<preparation_owner> */ = new Storage();

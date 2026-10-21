@@ -59,7 +59,7 @@ final class Parser_Run
 	private int $position = 0;
 	private bool $shared_publication = false;
 	private Storage $selected_bodies /** Storage<namespace_body_node> */;
-	private \SplObjectStorage $claimed_bodies /** hash<bool, shared<namespace_body_node>> */;
+	private \SplObjectStorage $claimed_bodies /** hash<bool, namespace_body_node> */;
 
 	/** Establish the retained file and symbol inventory before any declaration can be registered. */
 	public function __construct(token_list $tokens, ?scope $target_scope = null, ?parsed_file $previous = null, ?scope $global = null)
@@ -76,7 +76,7 @@ final class Parser_Run
 		$this->scopes = new Storage /** Storage<scope> */();
 		$this->shared_publication = $global !== null;
 		$this->selected_bodies = new Storage /** Storage<namespace_body_node> */();
-		$this->claimed_bodies = new \SplObjectStorage /** hash<bool, shared<namespace_body_node>> */();
+		$this->claimed_bodies = new \SplObjectStorage /** hash<bool, namespace_body_node> */();
 		$selected_scope /** nullable<scope> */ = $target_scope;
 		if ($previous !== null) {
 			if (q_count($previous->root->namespace_bodies) === 1) {
@@ -460,7 +460,7 @@ final class Parser_Run
 	{
 		$previous /** Storage<import_node> */ = $body->imports;
 		$selected /** Storage<import_node> */ = new Storage();
-		$used /** hash<bool, shared<import_node>> */ = new \SplObjectStorage /** hash<bool, shared<import_node>> */();
+		$used /** hash<bool, import_node> */ = new \SplObjectStorage /** hash<bool, import_node> */();
 		foreach ($imports as $binding) {
 			$match = $binding;
 			foreach ($previous as $old) {

@@ -45,7 +45,13 @@ $mapper = new Scpp\S2S\Lowering\TypeMapper();
 $mapped = $mapper->mapDeclaredType('hash<Row, shared<Key>>');
 ensure($mapped === 'hash_t<shared_p<Row>, shared_p<Key>>', 'Unexpected native hash mapping: ' . $mapped);
 ensure($mapper->mapDeclaredType('hash<int, shared<Key>>') === 'hash_t<int_t<>, shared_p<Key>>', 'Wrong scalar-value map');
+$bare = $converter->convert(str_replace('shared<Key>', 'Key', $source), 'bare.php');
+ensure(str_contains($bare, 'hash<Row, Key>'), 'Bare object key was not preserved');
+ensure($mapper->mapDeclaredType('hash<int, Key>') === 'hash_t<int_t<>, shared_p<Key>>', 'Bare key lost shared identity');
 foreach ([
+    'class Bad { public array $rows /** hash<int, Key> */; }',
+    'class Bad { public array $rows /** vector<hash<int, Key>> */; }',
+    'class Bad { public \\SplObjectStorage $rows /** hash<int, bool> */; }',
     'class Bad { public array $rows /** hash<Row, shared<Key>> */; }',
     'class Bad { public \\SplObjectStorage $rows; }',
     'class Bad { public \\SplObjectStorage $rows /** hash<Row, string> */; }',
@@ -86,7 +92,7 @@ final class Check {
 }
 SOURCE;
 $lowered = $converter->convert($method, 'object_parameter.php');
-ensure(str_contains($lowered, '$rows hash<int, shared<Key>>'), 'Object hash parameter annotation was lost');
+ensure(str_contains($lowered, 'hash<int, shared<Key>> $rows'), 'Object hash parameter annotation was lost');
 ensure(str_contains($lowered, 'bool $enabled = false'), 'Boolean default was lost');
 ensure(str_contains($lowered, '<= 7'), 'Less-or-equal comparison was lost');
 echo "Object hash method parameters and less-or-equal: conversion passed\n";

@@ -113,6 +113,23 @@ v0.1 implicit array examples are not proof of v0.2 target resolution or support.
 
 Prism++ treats array/table operations through three semantic classes:
 
+### v0.2 object-identity hash keys — 2026-10-21
+
+`hash<V, K>` admits a source class/interface `K` with its default shared storage.
+Hashing and comparison use object identity, independent of fields. Distinct objects
+with equal fields are distinct keys; aliases replace the same entry. Keys are
+retained by the map. Membership copies have value semantics while key identities
+remain shared. Key operations apply ordinary shared upcasts to the declared key
+type before hashing/comparison; no container covariance is introduced.
+
+Empty construction (`new hash<V, K>()` or typed `[]`), keyed initialization,
+read/write/probe/removal and iteration share existing container contracts. Value
+records, `value<K>`, weak and unique handles do not gain hash-key capabilities.
+No object coercion into the mixed/dynamic scalar key domain is introduced.
+The portable PHP carrier requires non-null object keys; see
+[portable object hashes](portability/object_hashes.md) for its stricter aliasing and
+iteration rules. This slice does not define new null-key portability.
+
 ### 2.1 Value read path
 
 For v0.2, distinguish statically typed containers from mixed/dynamic carriers:
@@ -136,8 +153,9 @@ temporary remains alive through lookup and result copying. Binding a stable rece
 does not promise a deep snapshot of that container before key-expression effects.
 No read inserts keys or autovivifies containers.
 
-The first v0.2 key domain is ordinary `int` for vectors, the declared ordinary
-`int`/`string` key for typed hashes, and `int`/`string`/runtime-checked `mixed` for
+The v0.2 key domain is ordinary `int` for vectors, the declared ordinary
+`int`/`string` or shared source class/interface key for typed hashes, and
+`int`/`string`/runtime-checked `mixed` for
 mixed/dynamic. Mixed keys at typed boundaries use ordinary checked extraction.
 No implicit bool/float/null key coercion is introduced. Static invalid types reject
 during preparation; unknown invalid mixed key kinds throw at runtime, even when the

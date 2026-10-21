@@ -5,13 +5,13 @@ namespace scpp\compiler;
 final class Trait_Preparation
 {
 	/** Invocation-local traversal state: recursive calls must share these maps. */
-	private \SplObjectStorage $active /** hash<bool, shared<collected_trait>> */;
-	private \SplObjectStorage $visited /** hash<bool, shared<collected_trait>> */;
+	private \SplObjectStorage $active /** hash<bool, collected_trait> */;
+	private \SplObjectStorage $visited /** hash<bool, collected_trait> */;
 
 	public function __construct()
 	{
-		$this->active = new \SplObjectStorage /** hash<bool, shared<collected_trait>> */();
-		$this->visited = new \SplObjectStorage /** hash<bool, shared<collected_trait>> */();
+		$this->active = new \SplObjectStorage /** hash<bool, collected_trait> */();
+		$this->visited = new \SplObjectStorage /** hash<bool, collected_trait> */();
 	}
 
 	/** Whole-use admission is re-evaluated on every coordinator invocation, like imports. */

@@ -100,7 +100,7 @@ final class Capture_Preparation
 	/** Existing occurrence/scope indexes supply free names, not a second AST traversal. */
 	private static function discover(closure_node $target, collected_file $collection): array /** vector<string> */
 	{
-		$owners /** hash<closure_node, shared<scope>> */ = new \SplObjectStorage /** hash<closure_node, shared<scope>> */();
+		$owners /** hash<closure_node, scope> */ = new \SplObjectStorage /** hash<closure_node, scope> */();
 		$anonymous /** Storage<anonymous_callable_identity> */ = $collection->anonymous_callables;
 		foreach ($anonymous as $identity) {
 			if (!$identity->deleted) {
@@ -127,7 +127,7 @@ final class Capture_Preparation
 
 	/** Parameters stop propagation; explicit nested bodies never contribute implicit captures. */
 	private static function required_by(scope $start, string $name, closure_node $target,
-		\SplObjectStorage $owners /** hash<closure_node, shared<scope>> */): bool
+		\SplObjectStorage $owners /** hash<closure_node, scope> */): bool
 	{
 		$current /** nullable<scope> */ = $start;
 		while ($current !== null) {

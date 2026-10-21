@@ -586,7 +586,7 @@ final class collected_file
 	public bool $deleted = false;
 	public ?prepared_file $prepared = null;
 	/** Completed changes awaiting backend consumption, including retired owners. */
-	public \SplObjectStorage $preparation_changes /** hash<bool, shared<preparation_owner>> */;
+	public \SplObjectStorage $preparation_changes /** hash<bool, preparation_owner> */;
 	public int $revision /** uint32 */ = 0;
 	/**
 	 * @storage.reference model.tokens
@@ -646,7 +646,7 @@ final class collected_file
 		$this->tokens = $tokens;
 		$this->anonymous_callables = new Storage /** Storage<anonymous_callable_identity> */();
 		$this->retired_scopes = new Storage /** Storage<scope> */();
-		$this->preparation_changes = new \SplObjectStorage /** hash<bool, shared<preparation_owner>> */();
+		$this->preparation_changes = new \SplObjectStorage /** hash<bool, preparation_owner> */();
 		$this->entries = new Storage /** Storage<collected_name> */();
 	}
 
