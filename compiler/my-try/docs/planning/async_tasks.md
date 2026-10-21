@@ -739,3 +739,29 @@ an incorrect void-error omission expectation; these fixture failures are retaine
 
 [Cross-target source evidence](task-cross-source-evidence.tar.gz), SHA-256:
 `c766cfbd125fcacee3db4561fc9e2fb0e566712d8912b87767623f3a9f492006`. Final uploaded hashes were verified. No full matrix or native compiler rebuild.
+
+
+### Explicit keyed-target completion — 2026-10-21
+
+Sixteen existing indexed hash contracts now infer input and output key types
+independently. Forty-eight additional contracts admit vector input to string-key
+hash targets and string-key hash input to int/nullable-int indexed vector targets.
+They reuse the existing placement, transfer and provider owners; no runtime or
+compiler implementation changed. Numeric object-key literal syntax is not added.
+
+The extended dev002 runtime probe (`task-cross-target-02`) passes sanitizers for
+string targets, hash rekeying, reverse vector placement and background joins.
+Source verification passed all 80 default-prelowered cold/warm cases
+(`task-keyed-source-01`); warm builds compiled/linked zero units.
+`task-keyed-controls` passes existing hash/void targets and retained rekeying and
+string-target edits with fresh parity, together with existing reject/repair tests.
+
+Remaining placement work includes nullable custom keys for hash targets and
+inferred targets. Boxed input needs its own runtime audit: inspection finds an
+explicit mixed adapter but no corresponding dynamic adapter, and mixed background
+execution must be checked against batch cancellation/progress state. These are
+unverified concerns, not conclusions from this typed-target checkpoint. V-R02
+remains partial; no full matrix or native compiler rebuild was requested.
+
+[Keyed-target evidence](task-keyed-evidence.tar.gz), SHA-256:
+`d04b0bc88e36b6b3eaa6b56d0b08d48ef63a1eb5bc10a4783442e9fb95956175`. Final uploaded source hashes were verified.
