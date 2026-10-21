@@ -620,3 +620,21 @@ Independent publisher-option admission can continue while approval is pending.
 [Error contract probe evidence](task-error-contract-evidence.tar.gz), SHA-256:
 `685eea384580b362aec5e68d93c9ab79c93d34ead706b77459ef29b3d0f83b72`. The passing probe records a semantic mismatch; it is not
 conformance evidence or an issue closure.
+
+
+### Ordered publication options — 2026-10-21
+
+Both worker arities now accept publishers with or without task context, explicit
+null error placeholders, timeout and maximum batch size. The eight combinations
+of worker/publisher context and default/capped batches pass default-prelowered
+cold/warm builds on dev002 (`task-publish-options`: 11 checks including existing
+publication controls and retained contracts). The capped cases prove one-element
+batches and input-order output. Publisher captures retain transfer restrictions;
+context callbacks use existing runtime transport and status operations. No runtime
+implementation changed.
+
+[Publication option evidence](task-publish-options-evidence.tar.gz), SHA-256:
+`4db101afe18b44b817c78997230350937fa184a3e10e40c3dc702e22d5d23dc2`. Uploaded source hashes were verified. Error-handler admission is
+still outstanding. Its bounded result relation was explicitly authorized after
+the proposal above; that approval is resolved and implementation follows next.
+V-R02 remains partial, with 56/64 original issues closed.

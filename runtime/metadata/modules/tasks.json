@@ -1230,6 +1230,30 @@
           },
           "passing": "value",
           "requires_transfer": true
+        },
+        {
+          "name": "error_handler",
+          "type": "null",
+          "passing": "value",
+          "default": {
+            "null": null
+          }
+        },
+        {
+          "name": "timeout_ms",
+          "type": "int",
+          "passing": "value",
+          "default": {
+            "int": 0
+          }
+        },
+        {
+          "name": "max_publish_batch_size",
+          "type": "int",
+          "passing": "value",
+          "default": {
+            "int": 0
+          }
         }
       ],
       "returns": "int"
@@ -1315,6 +1339,30 @@
           },
           "passing": "value",
           "requires_transfer": true
+        },
+        {
+          "name": "error_handler",
+          "type": "null",
+          "passing": "value",
+          "default": {
+            "null": null
+          }
+        },
+        {
+          "name": "timeout_ms",
+          "type": "int",
+          "passing": "value",
+          "default": {
+            "int": 0
+          }
+        },
+        {
+          "name": "max_publish_batch_size",
+          "type": "int",
+          "passing": "value",
+          "default": {
+            "int": 0
+          }
         }
       ],
       "returns": "int"
@@ -7121,6 +7169,229 @@
         }
       ],
       "returns": "task_batch"
+    },
+    {
+      "id": "tasks.run_publish.publisher_context",
+      "name": "task_run_publish",
+      "type_parameters": [
+        "T",
+        "R",
+        "P"
+      ],
+      "transfer_types": [
+        "T",
+        "R"
+      ],
+      "parameters": [
+        {
+          "name": "items",
+          "type": {
+            "name": "vector",
+            "arguments": [
+              {
+                "parameter": "T"
+              }
+            ]
+          },
+          "passing": "value"
+        },
+        {
+          "name": "workers",
+          "type": "int",
+          "passing": "value"
+        },
+        {
+          "name": "work",
+          "type": {
+            "callable": {
+              "parameters": [
+                {
+                  "name": "p0",
+                  "type": {
+                    "parameter": "T"
+                  },
+                  "passing": "value"
+                }
+              ],
+              "returns": {
+                "parameter": "R"
+              }
+            }
+          },
+          "passing": "value",
+          "requires_transfer": true
+        },
+        {
+          "name": "publish",
+          "type": {
+            "callable": {
+              "parameters": [
+                {
+                  "name": "p0",
+                  "type": {
+                    "name": "vector",
+                    "arguments": [
+                      {
+                        "parameter": "R"
+                      }
+                    ]
+                  },
+                  "passing": "value"
+                },
+                {
+                  "name": "context",
+                  "type": "task_context",
+                  "passing": "value"
+                }
+              ],
+              "returns": {
+                "parameter": "P"
+              }
+            }
+          },
+          "passing": "value",
+          "requires_transfer": true
+        },
+        {
+          "name": "error_handler",
+          "type": "null",
+          "passing": "value",
+          "default": {
+            "null": null
+          }
+        },
+        {
+          "name": "timeout_ms",
+          "type": "int",
+          "passing": "value",
+          "default": {
+            "int": 0
+          }
+        },
+        {
+          "name": "max_publish_batch_size",
+          "type": "int",
+          "passing": "value",
+          "default": {
+            "int": 0
+          }
+        }
+      ],
+      "returns": "int"
+    },
+    {
+      "id": "tasks.run_publish.context.publisher_context",
+      "name": "task_run_publish",
+      "type_parameters": [
+        "T",
+        "R",
+        "P"
+      ],
+      "transfer_types": [
+        "T",
+        "R"
+      ],
+      "parameters": [
+        {
+          "name": "items",
+          "type": {
+            "name": "vector",
+            "arguments": [
+              {
+                "parameter": "T"
+              }
+            ]
+          },
+          "passing": "value"
+        },
+        {
+          "name": "workers",
+          "type": "int",
+          "passing": "value"
+        },
+        {
+          "name": "work",
+          "type": {
+            "callable": {
+              "parameters": [
+                {
+                  "name": "p0",
+                  "type": {
+                    "parameter": "T"
+                  },
+                  "passing": "value"
+                },
+                {
+                  "name": "p1",
+                  "type": "task_context",
+                  "passing": "value"
+                }
+              ],
+              "returns": {
+                "parameter": "R"
+              }
+            }
+          },
+          "passing": "value",
+          "requires_transfer": true
+        },
+        {
+          "name": "publish",
+          "type": {
+            "callable": {
+              "parameters": [
+                {
+                  "name": "p0",
+                  "type": {
+                    "name": "vector",
+                    "arguments": [
+                      {
+                        "parameter": "R"
+                      }
+                    ]
+                  },
+                  "passing": "value"
+                },
+                {
+                  "name": "context",
+                  "type": "task_context",
+                  "passing": "value"
+                }
+              ],
+              "returns": {
+                "parameter": "P"
+              }
+            }
+          },
+          "passing": "value",
+          "requires_transfer": true
+        },
+        {
+          "name": "error_handler",
+          "type": "null",
+          "passing": "value",
+          "default": {
+            "null": null
+          }
+        },
+        {
+          "name": "timeout_ms",
+          "type": "int",
+          "passing": "value",
+          "default": {
+            "int": 0
+          }
+        },
+        {
+          "name": "max_publish_batch_size",
+          "type": "int",
+          "passing": "value",
+          "default": {
+            "int": 0
+          }
+        }
+      ],
+      "returns": "int"
     }
   ],
   "cpp": [
@@ -7643,6 +7914,18 @@
     {
       "id": "tasks.start.hash.context.keyed.string",
       "symbol": "scpp::tasks::start",
+      "header": "modules/tasks/tasks.hpp",
+      "native_payloads": true
+    },
+    {
+      "id": "tasks.run_publish.publisher_context",
+      "symbol": "scpp::tasks::run_publish",
+      "header": "modules/tasks/tasks.hpp",
+      "native_payloads": true
+    },
+    {
+      "id": "tasks.run_publish.context.publisher_context",
+      "symbol": "scpp::tasks::run_publish",
       "header": "modules/tasks/tasks.hpp",
       "native_payloads": true
     }

@@ -114,6 +114,17 @@ for carrier in ['vector', 'hash']:
      expected='1'
      if not void:output+='echo $r['+key+'];';expected+='42'
      cases[name]=(items+result+output,expected,False)
+for work_context in [False, True]:
+ for publish_context in [False, True]:
+  for capped in [False, True]:
+   name='publish-options'+('-work-context' if work_context else '')+('-publish-context' if publish_context else '')+('-capped' if capped else '-default')
+   work='function(int $n'+(',task_context $c' if work_context else '')+'):int{return $n;}'
+   publisher='function(vector<int> $b'+(',task_context $c' if publish_context else '')+'):void{'
+   if publish_context:publisher+='task_set_status($c,"publishing");'
+   publisher+=('echo count($b);' if capped else '')+'foreach($b as $n){echo $n;}}'
+   suffix=',null,0,1' if capped else ''
+   source='$v vector<int> = [40,41,42];echo task_run_publish($v,2,'+work+','+publisher+suffix+');'
+   cases[name]=(source,'1401411423' if capped else '4041423',False)
 if a.case:
  unknown=set(a.case)-set(cases)
  if unknown: raise ValueError('Unknown cases: '+str(unknown))
