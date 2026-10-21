@@ -13,7 +13,7 @@ The S12 closeout below advances this to 56/64; V-R02 is partial and remains acti
 | Typed vector/hash submissions and placement | Value/void work, contexts, prefilled/cross-carrier targets, independent int/string keys and inferred nullable keys have default-prelowered proof. Explicit nullable-string targets also have success/error/omission proof. |
 | Error callbacks and publication | Replacement/omission, coordinator dispatch, ordered publication context/options and unordered synchronization proved in the bounded forms below. |
 | Transfer restrictions | Typed payload and capture rejection proved. Boxed input and boxed result-family admission still require runtime audit and source integration; do not broaden transfer permission implicitly. |
-| Lifecycle acceptance | Native concurrency/cancellation/timeout/shutdown evidence exists. Complete production-source timeout, cancellation, repeated-error joins and shutdown/module-selection audit remains. |
+| Lifecycle acceptance | Native concurrency/cancellation/timeout/shutdown evidence exists. Production-source handled/unhandled timeout passes; cancellation, repeated-error joins and shutdown/module-selection audit remains. |
 | Final closure | Still 56/64 original issues closed. V-R02 remains partial until the remaining scope is proved. |
 
 Historical checkpoints below retain their then-current boundaries; they do not
@@ -891,3 +891,18 @@ silently convert families. Independent source lifecycle verification can continu
 
 [Boxed-state evidence](task-boxed-state-evidence.tar.gz), SHA-256:
 `c3ac7766e60e416ba004fad09cadfedd84af53abc6bf4ffbd5c3f1e52b72c13e`. Final source hashes verified; no full matrix or native compiler rebuild.
+
+
+### Production timeout integration — 2026-10-21
+
+`task-lifecycle-timeout-01` passes four default-prelowered cold/warm source cases:
+blocking/background execution, each with handled and unhandled timeout. Existing
+`dt_sleep_ms` induces the timeout; a metadata-only test module selects production
+tasks and datetime modules. Handlers observe `timeout=true`, `kind="timeout"` and
+supply replacement 42; unhandled timeouts propagate on run/join. Warm builds compile
+and link zero units. No implementation changed. These tests establish timeout
+integration, not a hard scheduling deadline or arbitrary-code interruption.
+
+[Source timeout evidence](task-lifecycle-timeout-evidence.tar.gz), SHA-256:
+`8dea8751643d78cecc6b0000bf1b6a373cf7598a3fad93c5b2daa9e5d05a3836`. Fixture hashes were verified. The boxed-family decision remains pending;
+independent lifecycle verification remains available. V-R02 is partial.
