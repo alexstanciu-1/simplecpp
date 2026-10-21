@@ -390,7 +390,7 @@ values are `vector_error_on_coordinator=false`, `hash_error_on_coordinator=false
 [Runtime prerequisite evidence](task-error-context-evidence.tar.gz), SHA-256:
 `e7f40ae9250e8101185db232ae2f89700a3eb920bd838766776ceae6a77cf2a8`.
 
-Proposed repair, awaiting discussion/authorization: extend the existing batch
+Approved repair: extend the existing batch
 execution owner with a coordinator error-event handoff while workers run. Worker
 catch paths publish item/error identity; coordinator processing invokes handlers,
 returns replacement/omission outcomes and requests cooperative stop if a handler
@@ -406,4 +406,37 @@ retaining worker callbacks changes the normative context and capture rules. Veri
 thread identity, replacement/omission, handler failure, timeout, cooperative stop,
 nested batches, pool and non-pool execution, repeated joins and shutdown, then source
 cold/warm and retained/default-prelowered parity on dev002. The current goal requires
-discussion before widening scheduler/transfer flow; the implementation has not begun.
+discussion before widening scheduler/transfer flow; the user authorized this bounded
+coordinator dispatch extension on 2026-10-21.
+
+
+### Coordinator dispatch implementation
+
+The batch execution owner now drains synchronous worker error requests on the
+calling coordinator, or the retained background coordinator for `task_start`.
+Workers retain their item/event until acknowledgement. Handler results return to
+existing collection/publication owners; handler failure requests cooperative stop
+before propagating. Local workers and the reusable pool share the dispatch path.
+Nested batches inside handlers use local workers to avoid waiting on a saturated
+pool whose workers are awaiting that handler. Ordered publication explicitly tracks
+omitted positions, so a void handler does not strand subsequent successful values.
+
+This adds no public scheduling API or broader transfer permission. Source error
+handler overload admission remains part of the unfinished V-R02 integration.
+
+Verified on dev002:
+
+- `20261021-task-coordinator-02`: all five runtime ASan/UBSan tasks pass.
+  Coordinator coverage includes vector/hash replacement, omission, ordered
+  publication with both try-lock settings, unknown exceptions, nested batches,
+  handler-failure stop, timeout, cancellation, repeated joins/errors and shutdown,
+  with local threads and the reusable pool.
+- `20261021-task-coordinator-source`: all 23 default-prelowered production
+  execution/recovery tasks pass, including cold/warm publication and contracts.
+- `20261021-task-coordinator-context`: the historical observation probe now reports
+  no contract mismatches. Original failing evidence above remains unchanged.
+
+[Coordinator repair evidence](task-coordinator-evidence.tar.gz), SHA-256:
+`b35557e4d57b45fe149994a4e0bc08fa4eab4cae49278fb5def1bfdbc0b82216`. Uploaded implementation/test hashes were verified on dev002.
+No full matrix or native compiler rebuild was run. V-R02 remains partial; overall
+closure remains 56/64 pending its remaining source acceptance inventory.

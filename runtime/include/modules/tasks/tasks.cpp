@@ -12,6 +12,7 @@ namespace scpp::tasks {
 namespace {
 
 thread_local bool default_pool_worker_active = false;
+thread_local bool coordinator_callback_active = false;
 
 class reusable_worker_pool final {
 public:
@@ -46,7 +47,7 @@ public:
 		return created_workers_.load(std::memory_order_relaxed);
 	}
 
-	[[nodiscard]] bool run_batch(std::size_t worker_count, const detail::worker_batch_body &body)
+	[[nodiscard]] bool run_batch(std::size_t worker_count, const detail::worker_batch_body &body, detail::coordinator_dispatch &dispatch)
 	{
 		if (worker_count == 0) {
 			return true;
@@ -54,14 +55,11 @@ public:
 
 		struct wait_state final {
 			std::mutex mutex;
-			std::condition_variable cv;
-			std::size_t remaining = 0;
 			std::exception_ptr error = nullptr;
 		};
 
 		auto state = std::make_shared<wait_state>();
 		auto shared_body = std::make_shared<detail::worker_batch_body>(body);
-		state->remaining = worker_count;
 
 		{
 			std::lock_guard<std::mutex> lock(mutex_);
@@ -69,35 +67,33 @@ public:
 				return false;
 			}
 
-			for (std::size_t worker_index = 0; worker_index < worker_count; ++worker_index) {
-				jobs_.push_back([state, shared_body, worker_index]() {
-					try {
-						(*shared_body)(worker_index);
-					} catch (...) {
-						std::lock_guard<std::mutex> lock(state->mutex);
-						if (!state->error) {
-							state->error = std::current_exception();
-						}
-					}
-
-					{
-						std::lock_guard<std::mutex> lock(state->mutex);
-						if (state->remaining > 0) {
-							--state->remaining;
-						}
-					}
-					state->cv.notify_one();
-				});
-			}
-
 			ensure_workers_locked();
+			const auto queued_before = jobs_.size();
+			try {
+				for (std::size_t worker_index = 0; worker_index < worker_count; ++worker_index) {
+					jobs_.push_back([state, shared_body, worker_index, &dispatch]() {
+						try {
+							(*shared_body)(worker_index);
+						} catch (...) {
+							std::lock_guard<std::mutex> lock(state->mutex);
+							if (!state->error) {
+								state->error = std::current_exception();
+							}
+						}
+
+						dispatch.finish_workers();
+					});
+				}
+
+			} catch (...) {
+				while (jobs_.size() > queued_before) { jobs_.pop_back(); }
+				throw;
+			}
 		}
 		cv_.notify_all();
 
+		dispatch.drain();
 		std::unique_lock<std::mutex> lock(state->mutex);
-		state->cv.wait(lock, [&state]() {
-			return state->remaining == 0;
-		});
 		if (state->error) {
 			std::rethrow_exception(state->error);
 		}
@@ -431,31 +427,69 @@ void shutdown_default_worker_pool()
 
 namespace detail {
 
-void execute_worker_batch(std::size_t worker_count, const worker_batch_body &body)
+void coordinator_dispatch::invoke(std::function<void()> body)
 {
-	if (worker_count == 0) {
-		return;
-	}
+	request entry{std::move(body), false, nullptr};
+	std::unique_lock<std::mutex> lock(mutex_);
+	requests_.push_back(&entry);
+	changed_.notify_all();
+	changed_.wait(lock, [&] { return entry.complete; });
+	if (entry.failure) { std::rethrow_exception(entry.failure); }
+}
 
-	if (!default_pool_worker_active) {
-		if (auto pool = current_default_pool(); pool && pool->run_batch(worker_count, body)) {
-			return;
-		}
-	}
+void coordinator_dispatch::finish_workers(std::size_t count)
+{
+	std::lock_guard<std::mutex> lock(mutex_);
+	remaining_ -= count;
+	changed_.notify_all();
+}
 
+void coordinator_dispatch::drain()
+{
+	std::unique_lock<std::mutex> lock(mutex_);
+	while (remaining_ != 0 || !requests_.empty()) {
+		changed_.wait(lock, [&] { return remaining_ == 0 || !requests_.empty(); });
+		if (requests_.empty()) { continue; }
+		auto* entry = requests_.front();
+		requests_.erase(requests_.begin());
+		lock.unlock();
+		const bool previous = coordinator_callback_active;
+		coordinator_callback_active = true;
+		try { entry->body(); }
+		catch (...) { entry->failure = std::current_exception(); }
+		coordinator_callback_active = previous;
+		lock.lock();
+		entry->complete = true;
+		changed_.notify_all();
+	}
+}
+
+void execute_worker_batch(std::size_t worker_count, const worker_batch_body &body, coordinator_dispatch &dispatch)
+{
+	if (worker_count == 0) { return; }
+	if (!default_pool_worker_active && !coordinator_callback_active) {
+		if (auto pool = current_default_pool(); pool && pool->run_batch(worker_count, body, dispatch)) { return; }
+	}
 	std::vector<worker_thread> threads;
 	threads.reserve(worker_count);
-	for (std::size_t worker_index = 0; worker_index < worker_count; ++worker_index) {
-		threads.emplace_back([&, worker_index]() {
-			body(worker_index);
-		});
-	}
-
-	for (auto &thread : threads) {
-		if (thread.joinable()) {
-			thread.join();
+	std::vector<std::exception_ptr> errors(worker_count);
+	std::exception_ptr launch_error;
+	try {
+		for (std::size_t worker_index = 0; worker_index < worker_count; ++worker_index) {
+			threads.emplace_back([&, worker_index] {
+				try { body(worker_index); }
+				catch (...) { errors.at(worker_index) = std::current_exception(); }
+				dispatch.finish_workers();
+			});
 		}
+	} catch (...) {
+		launch_error = std::current_exception();
+		dispatch.finish_workers(worker_count - threads.size());
 	}
+	dispatch.drain();
+	for (auto &thread : threads) { if (thread.joinable()) { thread.join(); } }
+	if (launch_error) { std::rethrow_exception(launch_error); }
+	for (const auto& error : errors) { if (error) { std::rethrow_exception(error); } }
 }
 
 } // namespace detail

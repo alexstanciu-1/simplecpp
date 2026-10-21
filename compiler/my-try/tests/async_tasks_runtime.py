@@ -26,6 +26,7 @@ with CommandRunner(out / 'logs', ROOT, jobs=12) as runner:
         runner.run(name + '-run', ['env', 'ASAN_OPTIONS=detect_leaks=1', out / name], timeout=120)
 
     run_tasks([
+        Task('coordinator-tasks', lambda: check('coordinator-tasks', APP / 'tests/task_coordinator_runtime.cpp')),
         Task('callable-transfer', lambda: check('callable-transfer', APP / 'tests/task_callable_runtime.cpp')),
         Task('shutdown-tasks', lambda: check('shutdown-tasks', APP / 'tests/tasks_shutdown_runtime.cpp')),
         Task('existing-async', lambda: check('existing-async', ROOT / 'tests/runtime/native/test_async_core.cpp')),

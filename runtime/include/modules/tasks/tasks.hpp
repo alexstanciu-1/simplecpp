@@ -246,10 +246,43 @@ public:
 
 namespace detail {
 
+// Worker requests borrow their active stack only until synchronous acknowledgement.
+// The batch coordinator drains them before joining workers or releasing the queue.
+class coordinator_dispatch final {
+	struct request {
+		std::function<void()> body;
+		bool complete = false;
+		std::exception_ptr failure;
+	};
+	std::mutex mutex_;
+	std::condition_variable changed_;
+	std::vector<request*> requests_;
+	std::size_t remaining_;
+public:
+	explicit coordinator_dispatch(std::size_t workers) : remaining_(workers) {}
+	void invoke(std::function<void()> body);
+	void finish_workers(std::size_t count = 1);
+	void drain();
+};
+
 template <typename TErrorHandler, typename TItem>
-decltype(auto) invoke_error_handler(TErrorHandler &handler, TItem item, const shared_p<error> &event)
+auto invoke_error_handler(coordinator_dispatch &dispatch, const shared_p<batch_state> &state,
+	TErrorHandler &handler, TItem item, const shared_p<error> &event)
 {
-	return handler(item, event);
+	using result_t = std::invoke_result_t<TErrorHandler, TItem, shared_p<error>>;
+	if constexpr (std::is_void_v<result_t>) {
+		dispatch.invoke([&] {
+			try { handler(item, event); }
+			catch (...) { state->stop_requested.store(true); throw; }
+		});
+	} else {
+		std::optional<std::decay_t<result_t>> result;
+		dispatch.invoke([&] {
+			try { result.emplace(handler(item, event)); }
+			catch (...) { state->stop_requested.store(true); throw; }
+		});
+		return std::move(*result);
+	}
 }
 
 inline shared_p<error> make_error_event(
@@ -523,7 +556,7 @@ namespace detail {
 
 using worker_batch_body = std::function<void(std::size_t)>;
 
-void execute_worker_batch(std::size_t worker_count, const worker_batch_body &body);
+void execute_worker_batch(std::size_t worker_count, const worker_batch_body &body, coordinator_dispatch &dispatch);
 
 } // namespace detail
 
@@ -673,6 +706,7 @@ template <typename TItem, typename TCallback, typename TErrorHandler>
 		value_results.resize(item_count);
 	}
 
+	detail::coordinator_dispatch dispatch(worker_count);
 	execute_worker_batch(worker_count, [&](std::size_t worker_index) {
 			auto worker_context = shared<context>();
 			worker_context->state = state;
@@ -719,11 +753,11 @@ template <typename TItem, typename TCallback, typename TErrorHandler>
 						} else {
 							auto event = make_error_event(exception, mixed_t(int_t<>(static_cast<std::int64_t>(index))), worker_index);
 							if constexpr (std::is_void_v<result_t>) {
-								invoke_error_handler(error_handler, items.at(index), event);
+								invoke_error_handler(dispatch, state, error_handler, items.at(index), event);
 							} else if constexpr (std::is_void_v<std::invoke_result_t<TErrorHandler, TItem, shared_p<error>>>) {
-								invoke_error_handler(error_handler, items.at(index), event);
+								invoke_error_handler(dispatch, state, error_handler, items.at(index), event);
 							} else {
-								auto value = invoke_error_handler(error_handler, items.at(index), event);
+								auto value = invoke_error_handler(dispatch, state, error_handler, items.at(index), event);
 								value_results.at(index) = std::move(value);
 							}
 						}
@@ -735,11 +769,11 @@ template <typename TItem, typename TCallback, typename TErrorHandler>
 						} else {
 							auto event = make_unknown_error_event(mixed_t(int_t<>(static_cast<std::int64_t>(index))), worker_index);
 							if constexpr (std::is_void_v<result_t>) {
-								invoke_error_handler(error_handler, items.at(index), event);
+								invoke_error_handler(dispatch, state, error_handler, items.at(index), event);
 							} else if constexpr (std::is_void_v<std::invoke_result_t<TErrorHandler, TItem, shared_p<error>>>) {
-								invoke_error_handler(error_handler, items.at(index), event);
+								invoke_error_handler(dispatch, state, error_handler, items.at(index), event);
 							} else {
-								auto value = invoke_error_handler(error_handler, items.at(index), event);
+								auto value = invoke_error_handler(dispatch, state, error_handler, items.at(index), event);
 								value_results.at(index) = std::move(value);
 							}
 						}
@@ -752,9 +786,10 @@ template <typename TItem, typename TCallback, typename TErrorHandler>
 				if (active_item) {
 					state->active.fetch_sub(1, std::memory_order_relaxed);
 				}
+				state->stop_requested.store(true);
 				errors.at(worker_index) = std::current_exception();
 			}
-	});
+	}, dispatch);
 
 	for (const auto &entry : errors) {
 		if (entry) {
@@ -819,15 +854,17 @@ template <typename TItem, typename TWorkCallback, typename TPublishCallback, typ
 
 	std::mutex publish_mutex;
 	std::vector<result_slot_t<result_t>> value_results(item_count);
+	std::vector<bool> omitted(item_count, false);
 	std::size_t next_publish_index = 0;
 	std::size_t published_count = 0;
 	auto publish_ready_values = [&](const shared_p<context> &worker_context) -> std::pair<std::size_t, bool> {
 		vector_t<task_value_t<result_t>> ready_values;
 		while (
 			next_publish_index < item_count
-			&& value_results.at(next_publish_index).has_value()
 			&& (publish_batch_limit == 0 || ready_values.size() < publish_batch_limit)
 		) {
+			if (omitted.at(next_publish_index)) { ++next_publish_index; continue; }
+			if (!value_results.at(next_publish_index).has_value()) { break; }
 			ready_values.push_back(std::move(value_results.at(next_publish_index).value()));
 			value_results.at(next_publish_index).reset();
 			++next_publish_index;
@@ -840,12 +877,12 @@ template <typename TItem, typename TWorkCallback, typename TPublishCallback, typ
 			invoke_publish_callback(publish_callback, std::move(ready_values), worker_context);
 			record_publish_callback(detail::elapsed_micros_since(callback_started), batch_size);
 		}
-		const bool more_ready = next_publish_index < item_count && value_results.at(next_publish_index).has_value();
+		const bool more_ready = next_publish_index < item_count && (omitted.at(next_publish_index) || value_results.at(next_publish_index).has_value());
 		return {published_now, more_ready};
 	};
 	using pending_result_t = std::pair<std::size_t, task_value_t<result_t>>;
 	auto flush_pending_values = [&](std::vector<pending_result_t> &pending_values, const shared_p<context> &worker_context, bool blocking) -> std::pair<std::size_t, bool> {
-		if (pending_values.empty() && (!blocking || publish_batch_limit == 0)) {
+		if (pending_values.empty() && !blocking) {
 			return {0, false};
 		}
 		const bool deferred_flush = publish_try_lock_enabled() && (blocking || pending_values.size() > 1);
@@ -887,6 +924,7 @@ template <typename TItem, typename TWorkCallback, typename TPublishCallback, typ
 		return published;
 	};
 
+	detail::coordinator_dispatch dispatch(worker_count);
 	execute_worker_batch(worker_count, [&](std::size_t worker_index) {
 		auto worker_context = shared<context>();
 		worker_context->state = state;
@@ -925,8 +963,12 @@ template <typename TItem, typename TWorkCallback, typename TPublishCallback, typ
 						throw;
 					} else {
 						auto event = make_error_event(exception, mixed_t(int_t<>(static_cast<std::int64_t>(index))), worker_index);
-						if constexpr (!std::is_void_v<std::invoke_result_t<TErrorHandler, TItem, shared_p<error>>>) {
-							auto value = invoke_error_handler(error_handler, items.at(index), event);
+						if constexpr (std::is_void_v<std::invoke_result_t<TErrorHandler, TItem, shared_p<error>>>) {
+							invoke_error_handler(dispatch, state, error_handler, items.at(index), event);
+							{ std::lock_guard<std::mutex> lock(publish_mutex); omitted.at(index) = true; }
+							flush_pending_values(pending_values, worker_context, true);
+						} else {
+							auto value = invoke_error_handler(dispatch, state, error_handler, items.at(index), event);
 							pending_values.emplace_back(index, std::move(value));
 							flush_pending_values(pending_values, worker_context, !publish_try_lock_enabled());
 						}
@@ -938,8 +980,12 @@ template <typename TItem, typename TWorkCallback, typename TPublishCallback, typ
 						throw;
 					} else {
 						auto event = make_unknown_error_event(mixed_t(int_t<>(static_cast<std::int64_t>(index))), worker_index);
-						if constexpr (!std::is_void_v<std::invoke_result_t<TErrorHandler, TItem, shared_p<error>>>) {
-							auto value = invoke_error_handler(error_handler, items.at(index), event);
+						if constexpr (std::is_void_v<std::invoke_result_t<TErrorHandler, TItem, shared_p<error>>>) {
+							invoke_error_handler(dispatch, state, error_handler, items.at(index), event);
+							{ std::lock_guard<std::mutex> lock(publish_mutex); omitted.at(index) = true; }
+							flush_pending_values(pending_values, worker_context, true);
+						} else {
+							auto value = invoke_error_handler(dispatch, state, error_handler, items.at(index), event);
 							pending_values.emplace_back(index, std::move(value));
 							flush_pending_values(pending_values, worker_context, !publish_try_lock_enabled());
 						}
@@ -959,9 +1005,10 @@ template <typename TItem, typename TWorkCallback, typename TPublishCallback, typ
 			if (active_item) {
 				state->active.fetch_sub(1, std::memory_order_relaxed);
 			}
+			state->stop_requested.store(true);
 			errors.at(worker_index) = std::current_exception();
 		}
-	});
+	}, dispatch);
 
 	for (const auto &entry : errors) {
 		if (entry) {
@@ -1222,6 +1269,7 @@ template <typename TItem, typename TKey, typename TCallback, typename TErrorHand
 	std::vector<std::pair<TKey, null_t>> void_results;
 	void_results.reserve(item_count);
 
+	detail::coordinator_dispatch dispatch(worker_count);
 	detail::execute_worker_batch(worker_count, [&](std::size_t worker_index) {
 			auto worker_context = shared<context>();
 			worker_context->state = state;
@@ -1273,11 +1321,11 @@ template <typename TItem, typename TKey, typename TCallback, typename TErrorHand
 						} else {
 							auto event = detail::make_error_event(exception, mixed_t(key), worker_index);
 							if constexpr (std::is_void_v<result_t>) {
-								detail::invoke_error_handler(error_handler, item, event);
+								detail::invoke_error_handler(dispatch, state, error_handler, item, event);
 							} else if constexpr (std::is_void_v<std::invoke_result_t<TErrorHandler, TItem, shared_p<error>>>) {
-								detail::invoke_error_handler(error_handler, item, event);
+								detail::invoke_error_handler(dispatch, state, error_handler, item, event);
 							} else {
-								auto value = detail::invoke_error_handler(error_handler, item, event);
+								auto value = detail::invoke_error_handler(dispatch, state, error_handler, item, event);
 								std::lock_guard<std::mutex> lock(result_mutex);
 								value_results.emplace_back(key, std::move(value));
 							}
@@ -1290,11 +1338,11 @@ template <typename TItem, typename TKey, typename TCallback, typename TErrorHand
 						} else {
 							auto event = detail::make_unknown_error_event(mixed_t(key), worker_index);
 							if constexpr (std::is_void_v<result_t>) {
-								detail::invoke_error_handler(error_handler, item, event);
+								detail::invoke_error_handler(dispatch, state, error_handler, item, event);
 							} else if constexpr (std::is_void_v<std::invoke_result_t<TErrorHandler, TItem, shared_p<error>>>) {
-								detail::invoke_error_handler(error_handler, item, event);
+								detail::invoke_error_handler(dispatch, state, error_handler, item, event);
 							} else {
-								auto value = detail::invoke_error_handler(error_handler, item, event);
+								auto value = detail::invoke_error_handler(dispatch, state, error_handler, item, event);
 								std::lock_guard<std::mutex> lock(result_mutex);
 								value_results.emplace_back(key, std::move(value));
 							}
@@ -1308,9 +1356,10 @@ template <typename TItem, typename TKey, typename TCallback, typename TErrorHand
 				if (active_item) {
 					state->active.fetch_sub(1, std::memory_order_relaxed);
 				}
+				state->stop_requested.store(true);
 				errors.at(worker_index) = std::current_exception();
 			}
-	});
+	}, dispatch);
 
 	for (const auto &entry : errors) {
 		if (entry) {
@@ -2152,7 +2201,7 @@ template <typename TItem, typename TWork, typename TPublish>
 // Synchronous callback under the active batch's publication lock; no mutex is exposed.
 template <typename Callback>
 void synchronize(Callback callback) {
-    detail::synchronized_publication(std::move(callback));
+				detail::synchronized_publication(std::move(callback));
 }
 
 } // namespace scpp::tasks
