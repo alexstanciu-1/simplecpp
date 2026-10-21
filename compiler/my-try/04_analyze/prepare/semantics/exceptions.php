@@ -5,17 +5,26 @@ namespace scpp\compiler;
 
 final class Exception_Preparation
 {
-	private static function require_exception(canonical_type_use $type): void
+	public static function is_exception(canonical_type_use $type, preparation_context $context): bool
 	{
-		if (!$type->matches(Language_Types::exception_type(Model::$language_scope))) {
-			throw new \RuntimeException('Throw and catch require the registered Exception type');
+		if ($type->matches(Language_Types::exception_type(Model::$language_scope))) { return true; }
+		if (Type_Queries::record_storage($type) !== record_storage_kind::shared) { return false; }
+		$record = Type_Queries::source_record($type);
+		if ($record === null) { return false; }
+		return $context->worker->require_relationships($record, $context)->exception_type;
+	}
+
+	private static function require_exception(canonical_type_use $type, preparation_context $context): void
+	{
+		if (!self::is_exception($type, $context)) {
+			throw new \RuntimeException('Throw and catch require the registered Exception type or a shared source descendant');
 		}
 	}
 
 	public static function prepare_throw(throw_node $node, preparation_context $context): statement_completion
 	{
 		$value = Expression_Preparation::prepare($node->expression, $context);
-		self::require_exception($value->type);
+		self::require_exception($value->type, $context);
 		// Explicit throw has no normal continuation, irrespective of its enclosing handler.
 		return new statement_completion(false);
 	}
@@ -93,7 +102,7 @@ final class Exception_Preparation
 		{
 			$binding = $handler->binding;
 			$facts = Body_Preparation::prepare_local_storage($binding->occurrence(), $binding->type_syntax, null, $context);
-			self::require_exception($facts->type);
+			self::require_exception($facts->type, $context);
 			$binding->set_preparation($facts);
 			$handled = Body_Preparation::prepare_statements($handler->body, $context, 0);
 			return Completion_Preparation::alternatives($protected_completion, $handled);

@@ -31,6 +31,12 @@ owned callable storage; this does not admit arbitrary cross-thread captures.
 
 ## Reading map
 
+The [bounded exception hierarchy](../../../specs/exceptions_v0_2.md) now supports
+source descendants and prelowered throw/catch/finally. The
+[PHP-hosted bootstrap checkpoint](../../../specs/planning/storage_bootstrap_2026_10_21.md)
+records the measured retry and its next semantic blockers; Storage_Cursor widening
+remains excluded.
+
 The [safe string-argument snapshot optimization](../../../specs/planning/results/string_borrow_2026_10_21/README.md)
 preserves value semantics and retains copies when proof is missing. Its
 [provider contract](../../../specs/runtime_module_metadata.md#snapshot-borrowing-guarantee)

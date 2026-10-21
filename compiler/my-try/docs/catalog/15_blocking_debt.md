@@ -1030,8 +1030,8 @@ and explicit native validation gate. These extensions are not implied by its clo
   chapter closeout into a cross-stage diagnostic redesign.
 - Finally transport for reference, record/container/wrapper and owning-handle returns;
   break/continue crossing protected regions; transfers escaping finally.
-- Multiple/union catches, source exception subclasses/runtime inheritance, runtime
-  constructor metadata (`new Exception`), bare rethrow, throw expressions and chaining.
+- Multiple/union catches, arbitrary runtime-class inheritance, direct runtime
+  construction (`new Exception`), bare rethrow, throw expressions and chaining.
 - Static exception-effect analysis, expanded runtime-handle ownership/identity APIs,
   broader error getter receivers and Result payload families, `result<error>`, and LLVM.
 

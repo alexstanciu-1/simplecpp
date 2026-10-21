@@ -42,7 +42,7 @@
     {"id": "core.hash", "symbol": "scpp::data_initializer", "header": "scpp/data_initializer_typed.hpp"}
   ],
   "cpp_types": [
-    {"id":"core.Exception","symbol":"scpp::Exception","header":"lang/php/php_exceptions.hpp"},
+    {"id":"core.Exception","symbol":"scpp::php::exception_payload","header":"lang/php/exception_payload.hpp"},
     {"id": "core.vector", "symbol": "scpp::vector_t", "header": "scpp/vector_t.hpp"},
     {"id": "core.hash", "symbol": "scpp::hash_t", "header": "scpp/hash_t.hpp"},
     {"id":"core.representation.bool","type":"bool","literal_interface":"scalar","concrete_boundary":true,"symbol":"scpp::bool_t","header":"scpp/bool_t.hpp"},
@@ -212,7 +212,7 @@
     {"id":"core.vector_clear_keep_capacity.1","symbol":"scpp::php::vector_clear_keep_capacity","header":"scpp/lang/php.hpp"},
     {"id":"core.vector_compact.1","symbol":"scpp::php::vector_compact","header":"scpp/lang/php.hpp"},
     {"id":"core.vector_compact.2","symbol":"scpp::php::vector_compact","header":"scpp/lang/php.hpp"},
-    {"id":"core.Exception.make","symbol":"scpp::Exception::make","header":"lang/php/php_exceptions.hpp"},
+    {"id":"core.Exception.make","symbol":"scpp::php::make_exception","header":"lang/php/php_exceptions.hpp"},
     {"id":"core.Exception.get_message","symbol":"message_string","header":"lang/php/php_exceptions.hpp"},
     {"id":"core.error.make","symbol":"scpp::error_t::make","header":"scpp/error_t.hpp"},
     {"id":"core.error.get_message","symbol":"get_message","header":"scpp/error_t.hpp"},

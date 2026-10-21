@@ -10,7 +10,7 @@ final class CPP_Finally
 	{
 		$text = '';
 		if ($pending->value !== null) {
-			$text = $pending->value . '.emplace(' . $value . ");\n";
+			$text = $pending->value . ' = ' . $value . ";\n";
 		}
 		elseif ($value !== '') {
 			$text = $value . ";\n";
@@ -27,8 +27,18 @@ final class CPP_Finally
 		$exception = 'finally_exception_' . $id;
 		$pending = new cpp_finally_return();
 		$pending->flag = 'finally_return_' . $id;
-		$context->headers['exception'] = true;
-		$text = "{\nstd::exception_ptr " . $exception . ";\n";
+		$state_type = '';
+		$text = '';
+		if ($context->concrete_types()) {
+			$request = new cpp_runtime_operation(cpp_runtime_operation_kind::exception_state);
+			$entry = CPP_Runtime_Operations::reference($request, $context);
+			$state_type = 'scpp::internal::' . $entry->name;
+			$text = "{\n" . $state_type . ' ' . $exception . ";\n";
+		}
+		else {
+			$context->headers['exception'] = true;
+			$text = "{\nstd::exception_ptr " . $exception . ";\n";
+		}
 		if ($facts->captures_return)
 		{
 			$text .= 'bool ' . $pending->flag . " = false;\n";
@@ -43,9 +53,7 @@ final class CPP_Finally
 			}
 			if ($spelling !== '') {
 				$pending->value = 'finally_value_' . $id;
-				$context->headers['optional'] = true;
-				$context->headers['utility'] = true;
-				$text .= 'std::optional<' . $spelling . '> ' . $pending->value . ";\n";
+				$text .= $spelling . ' ' . $pending->value . "{};\n";
 			}
 		}
 		$outer = $context->finally_return;
@@ -56,13 +64,18 @@ final class CPP_Finally
 		finally {
 			$context->finally_return = $outer;
 		}
-		$text .= 'catch (...) { ' . $exception . " = std::current_exception(); }\n";
+		$text .= 'catch (...) { ' . $exception . ($state_type === '' ? ' = std::current_exception()' : '.capture()') . "; }\n";
 		$finalizer /** block_node */ = $node->finalizer;
 		$text .= (new CPP_Syntax($context))->generate_block($finalizer);
-		$text .= 'if (' . $exception . ') { std::rethrow_exception(' . $exception . "); }\n";
+		$text .= $state_type === '' ? 'if (' . $exception . ') { std::rethrow_exception(' . $exception . "); }\n"
+			: $exception . ".replay();\n";
 		if ($facts->captures_return)
 		{
-			$value = $pending->value === null ? '' : 'std::move(*' . $pending->value . ')';
+			$value = $pending->value === null ? '' : $pending->value;
+			$replay_type = $context->return_type;
+			if (($value !== '') && ($replay_type !== null)) {
+				$value = CPP_Declarations::move($value, $replay_type, $context);
+			}
 			$replay = $outer === null
 				? 'return' . ($value === '' ? '' : ' ' . $value) . ";\n"
 				: self::capture_return($outer, $value);
@@ -70,7 +83,7 @@ final class CPP_Finally
 		}
 		if (!$facts->can_fall_through) {
 			// The prepared exit composition excludes this path; keep native return analysis explicit.
-			$text .= "std::terminate(); // unreachable: prepared finally region cannot fall through\n";
+			$text .= ($state_type === '' ? 'std::terminate' : $state_type . '::unreachable') . "(); // prepared non-fallthrough\n";
 		}
 		return $text . "}\n";
 	}

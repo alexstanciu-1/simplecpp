@@ -13,7 +13,7 @@ final class Type_Contract_Preparation
 		$relations = $context->worker->require_relationships($record, $context);
 		$facts = new prepared_type_contract();
 		$facts->abstract_type = $is_interface || $relations->abstract_type;
-		$facts->polymorphic = $is_interface || $relations->typed_iterator || (q_count($relations->interfaces) !== 0);
+		$facts->polymorphic = $is_interface || $relations->exception_type || $relations->typed_iterator || (q_count($relations->interfaces) !== 0);
 		$base = weakref_get($relations->base);
 		$base_contract /** nullable<prepared_type_contract> */ = null;
 		$pending /** vector<collected_method> */ = [];

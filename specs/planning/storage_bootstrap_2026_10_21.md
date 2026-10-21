@@ -177,3 +177,76 @@ than a source declaration. No exception or Storage_Cursor widening repair is mad
 Relationship preparation still stops before type contracts/method bodies and C++
 emission, so this does not prove the whole converted compiler's Iterator use or
 full-bootstrap time/memory.
+
+## Exception hierarchy and prelowered transport retry — 2026-10-21
+
+Candidate: `68e75704` plus the bounded exception implementation in this change.
+Canonical Exception ancestry now admits source shared classes, including descendants
+and aliases. Existing relationship work owns membership and invalidation; the type
+contract owns polymorphic destruction. Root widening and throw/catch retain the
+original shared payload. Runtime-instance lookup falls back to the registered root
+when source lookup has no declaration; borrowed `$this` calls use compiled transport.
+The runtime payload base is template-free. Native factory/typed catch templates stay
+behind the compiled boundary. Finally uses inline layout-probed exception state and
+scalar storage with a pending-return flag; replay moves the saved scalar value.
+
+Root message semantics are explicit: runtime factory messages preserve bytes;
+source-created exceptions have the default root message `Exception`. The portability
+framework's `getMessage()` remains its ordinary source detail getter, not an override
+of native root reporting. General runtime inheritance, new runtime constructors,
+multiple catches and Storage_Cursor widening are not added.
+
+Focused evidence:
+
+- `/tmp/exception-hierarchy-final/`: six ordinary/concrete programs, runtime legacy
+  factory/subtype/identity/destruction proof and PHP ancestry rejection/invalidation/
+  recovery. Concrete production builds enforce full transitive template-free headers.
+  Cases include current-instance root access, embedded NUL messages, once-only throw
+  evaluation, retained catch lifetime, unmatched and foreign propagation, absent
+  throws and nested/replacing finally. All pass.
+- `/tmp/exception-v02-regression/`: all 17 existing generated exception programs pass,
+  plus the retained semantic rejections and repair checks.
+- `/tmp/exception-v02-finally-regression/`: all 34 existing generated finally programs
+  and 19 preparation rejections pass. The subsequent replay-move refinement is
+  exercised by the final ordinary/concrete nested string-return proof above.
+- `/tmp/exception-v02-semantic-regression/`: runtime catalog, typed Iterator admission,
+  inheritance and interfaces pass. No native compiler rebuild was performed.
+
+After test work completed, the existing harness ran conversion/framework assembly
+and a fresh PHP-hosted bootstrap sequentially. PHP 8.5 CLI used OPcache disabled,
+Xdebug off and a 4 GiB memory limit for the bootstrap. Source snapshots, hashes,
+phase JSON, GNU time files, metadata copy, candidate code hashes and diagnostics are
+in `/tmp/bootstrap-attempt-20261021-exceptions/`; reproduction harness:
+`/tmp/bootstrap-attempt-20261021-exceptions.py`.
+
+| Phase | Wall time | Peak RSS | Outcome |
+| --- | ---: | ---: | --- |
+| PHP-to-PHS conversion | 6.87 s | 184.6 MiB | 258 PHP files converted |
+| Framework assembly | 0.07 s | 31.0 MiB | 268 PHS files, 1,918,244 bytes |
+| PHP-hosted bootstrap | 47.97 s | 289.2 MiB | Later semantic preparation rejected |
+
+Peak PHP heap: 270 MiB. Initialization completes at 210 ms; parsing completes at
+4,640 ms. There is no OOM or PHP fatal error. The original eight exception relationship
+errors are gone. Preparation reports 60 distinct diagnostic messages, beginning
+with the ownership-boundary rejection. Other categories include portable helper
+bindings, parameter defaults, member/modifier restrictions, enum initialization,
+nullable/value boundaries and unresolved Storage_Cursor. These are a failed
+preparation round's aggregate diagnostics, not 60 independently diagnosed root causes.
+C++ emission is not reached. The elapsed time and memory cover only progress to
+this blocker and cannot establish full-bootstrap cost. No downstream fix is made.
+
+A separate read-only diagnostic-owner replay initially used default PHP debugging
+settings and timed out at 240 s (`/tmp/exception-bootstrap-locate-logs/`). It is not
+included in the measured bootstrap above; the owner lookup then passes in 58.35 s with the same OPcache/Xdebug settings as
+the measured attempt (`/tmp/exception-bootstrap-locate-final-logs/`). This second
+run includes diagnostic inventory work and is not substituted for the timed result.
+It confirms zero relationship failures. Retained owner details are saved as
+`/tmp/bootstrap-attempt-20261021-exceptions/failure-owners.json`.
+
+The first located ownership failure is `source_record::__construct`, authored at
+`compiler/my-try/01_prepare_inputs/structures.php:81` and converted at
+`01_prepare_inputs/structures.phs:75`: a shared `module` parameter is assigned
+into the `weak<module>` field `module_reference`. An isolated fixture reproduces
+the same preparation rejection (`/tmp/exception-next-blocker/`). This weak-reference
+assignment boundary is the next concrete blocker; it is not repaired. Storage_Cursor
+widening and other reported diagnostics also remain untouched.

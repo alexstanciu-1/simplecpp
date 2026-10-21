@@ -17,6 +17,14 @@ handles; explicit supported `weak<T>` fields lower to weak handles. Documentary
 
 ## Current graph
 
+Exception membership belongs to existing relationship facts; the source-base link
+remains weak and no fabricated runtime source declaration is retained. Throw/catch
+uses one shared payload and ordinary catch-local lifetime. Prelowered extraction
+borrows the active transport only while obtaining that owned handle. Finally owns
+inline pending-exception state until replay/replacement; the representation uses
+the existing specialization/layout owner. Inherited runtime methods on `$this`
+borrow its payload for the call, without inventing a shared owner.
+
 Typed source Iterator contracts are owned by the existing type-contract work record.
 They retain weak links to the five original method declarations and canonical
 key/value types. Foreach owns prepared calls to those methods through its existing

@@ -1149,3 +1149,20 @@ names. `CPP_Shared_Allocations` recomputes the selection from settled declaratio
 selection changes discard backend fragments so cached callers cannot reference
 retired allocation functions. Rendering contexts receive the selection, never a
 worker. Helpers remain in the existing declaring-source implementation group.
+
+### Exception root relationship — 2026-10-21
+
+Prepared relationships retain transitive `exception_type` membership independently
+of the weak source-base link. Membership with no source base identifies the direct
+canonical runtime Exception edge. Relationship equality includes membership, so
+ancestry edits invalidate throw/catch, conversion and member consumers through the
+existing scheduler. Shared preparation owns admission; backends do not rediscover
+exception ancestry. The type contract marks these source classes polymorphic.
+Runtime instance members are a fallback after observed source lookup, never copied
+source declarations. Static factory inheritance is not introduced.
+
+The C++ root payload binding is template-free. Exception operations and inline
+pending-exception state use existing specialization requests and layout probes.
+The active handler owns the transport while a compiled typed catch acquires the
+same shared payload; unmatched and foreign exceptions propagate. No new retained
+semantic lifetime structure or native compiler validation is implied.

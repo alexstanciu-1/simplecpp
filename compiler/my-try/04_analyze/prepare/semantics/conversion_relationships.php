@@ -22,6 +22,9 @@ final class Conversion_Relationships implements conversion_relationship_query
 
 	public function is_subtype(canonical_type_use $source, canonical_type_use $target): bool
 	{
+		if ($target->matches(Language_Types::exception_type(Model::$language_scope))) {
+			return Exception_Preparation::is_exception($source, $this->context);
+		}
 		$source_owner = Type_Queries::source_declaration($source);
 		$target_owner = Type_Queries::source_declaration($target);
 		if (!($source_owner instanceof collected_member_owner) || !($target_owner instanceof collected_member_owner)) {
@@ -34,6 +37,7 @@ final class Conversion_Relationships implements conversion_relationship_query
 	/** Observe the target contract: a later edit can remove safe base destruction. */
 	public function has_virtual_destruction(canonical_type_use $type): bool
 	{
+		if ($type->matches(Language_Types::exception_type(Model::$language_scope))) { return true; }
 		$record = Type_Queries::source_record($type);
 		if ($record === null) { return false; }
 		return $this->context->worker->require_type_contract($record, $this->context)->polymorphic;

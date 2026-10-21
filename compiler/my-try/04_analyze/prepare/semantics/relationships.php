@@ -5,13 +5,6 @@ namespace scpp\compiler;
 
 final class Relationship_Preparation
 {
-	/** Resolve identity with ordinary observed type lookup, explicitly without layout completion. */
-	private static function target(named_type_node $syntax, preparation_context $context): collected_member_owner
-	{
-		Type_Preparation::prepare_named_type($syntax, $context, false);
-		return self::source_target($syntax->require_preparation());
-	}
-
 	private static function source_target(canonical_type_use $type): collected_member_owner
 	{
 		$entry = Type_Queries::source_declaration($type);
@@ -49,17 +42,28 @@ final class Relationship_Preparation
 			throw new \RuntimeException('Records use implements for interface relationships');
 		}
 		if ($syntax->base_class !== null) {
-			$base = self::target($syntax->base_class, $context);
-			if (!($base instanceof collected_record)) {
-				throw new \RuntimeException('Record base must be a class or struct');
+			Type_Preparation::prepare_named_type($syntax->base_class, $context, false);
+			$base_type = $syntax->base_class->require_preparation();
+			if ($base_type->matches(Language_Types::exception_type(Model::$language_scope))) {
+				if ($syntax->declaration_kind !== type_declaration_kind::class_type) {
+					throw new \RuntimeException('Exception inheritance requires a shared class');
+				}
+				$facts->exception_type = true;
 			}
-			if ($base->syntax()->declaration_kind !== $syntax->declaration_kind) {
-				throw new \RuntimeException('Class/struct inheritance requires a same-kind base');
+			else {
+				$base = self::source_target($base_type);
+				if (!($base instanceof collected_record)) {
+					throw new \RuntimeException('Record base must be a class or struct');
+				}
+				if ($base->syntax()->declaration_kind !== $syntax->declaration_kind) {
+					throw new \RuntimeException('Class/struct inheritance requires a same-kind base');
+				}
+				$base_facts = $context->worker->require_relationships($base, $context);
+				if ($base_facts->final_type) { throw new \RuntimeException('Cannot extend a final type'); }
+				$facts->base = object_cast($base, collected_record::class);
+				$facts->typed_iterator = $base_facts->typed_iterator;
+				$facts->exception_type = $base_facts->exception_type;
 			}
-			$base_facts = $context->worker->require_relationships($base, $context);
-			if ($base_facts->final_type) { throw new \RuntimeException('Cannot extend a final type'); }
-			$facts->base = object_cast($base, collected_record::class);
-			$facts->typed_iterator = $base_facts->typed_iterator;
 		}
 		$direct_iterator = false;
 		foreach ($interfaces as $interface_syntax) {
@@ -94,6 +98,7 @@ final class Relationship_Preparation
 		if ($old === null) { return false; }
 		if ((weakref_get($old->base) !== weakref_get($current->base)) || ($old->final_type !== $current->final_type) || ($old->abstract_type !== $current->abstract_type)
 			|| ($old->typed_iterator !== $current->typed_iterator)
+			|| ($old->exception_type !== $current->exception_type)
 			|| (q_count($old->interfaces) !== q_count($current->interfaces))) { return false; }
 		foreach ($old->interfaces as $index => $target) {
 			if ($target !== $current->interfaces[$index]) { return false; }

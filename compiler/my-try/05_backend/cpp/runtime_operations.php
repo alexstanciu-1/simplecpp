@@ -32,6 +32,10 @@ final class CPP_Runtime_Operations
 				. ':value=' . CPP_Opaque_Representation::identity($request->iteration->value_type);
 		}
 		if ($request->call !== null) {
+			if ($request->call->receiver !== null) {
+				$lifetime /** method_receiver_lifetime */ = $request->call->receiver->lifetime;
+				$key .= ':receiver=' . Method_Receiver_Lifetime_Name::text($lifetime);
+			}
 			$key .= ':' . ((($request->kind === cpp_runtime_operation_kind::concrete_member) || ($request->kind === cpp_runtime_operation_kind::runtime_call))
 				? CPP_Callables::argument_identity($request->call) : CPP_Source_Calls::identity($request->call));
 		}
@@ -180,7 +184,7 @@ final class CPP_Runtime_Operations
 					. '::new(destination) ' . $native_result . '(' . $expression . '); }, addresses);';
 			}
 		}
-		$prototype = $output . ' ' . $name . '(' . $signature . ')';
+		$prototype = ($request->kind === cpp_runtime_operation_kind::exception_throw ? '[[noreturn]] ' : '') . $output . ' ' . $name . '(' . $signature . ')';
 		$header = 'specializations/' . $name . '.hpp';
 		$declaration = "#pragma once\n" . CPP_Artifacts::includes($declaration_headers, '')
 			. 'namespace scpp::internal { ' . $prototype . "; }\n";
@@ -221,6 +225,19 @@ final class CPP_Runtime_Operations
 	private static function native_operation(cpp_runtime_operation $request, array $arguments /** vector<string> */,
 		cpp_generation_context $context): string
 	{
+		if ($request->kind === cpp_runtime_operation_kind::exception_throw) {
+			$context->headers['lang/php/php_exceptions.hpp'] = true;
+			return 'throw ::scpp::php::make_thrown(' . $arguments[0] . ')';
+		}
+		if ($request->kind === cpp_runtime_operation_kind::exception_catch) {
+			$context->headers['lang/php/php_exceptions.hpp'] = true;
+			$result /** canonical_type_use */ = $request->result;
+			$payload = CPP_Types::payload($result);
+			CPP_Types::record_dependencies($payload, $context);
+			return '([]() { try { throw; } catch (const ::scpp::php::thrown_object& caught) { '
+				. 'auto value = ::scpp::php::catch_as<' . $payload->spelling . '>(caught); '
+				. 'if (!value) { throw; } return value; } }())';
+		}
 		if (($request->kind === cpp_runtime_operation_kind::property_read)
 			|| ($request->kind === cpp_runtime_operation_kind::property_write)
 			|| ($request->kind === cpp_runtime_operation_kind::property_target)) {

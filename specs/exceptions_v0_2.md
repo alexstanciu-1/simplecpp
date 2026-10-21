@@ -1,7 +1,7 @@
 # Bounded exceptions — v0.2
 Doc Status: normative
 
-This contract covers the strict frontend and C++ S2S single-type exception slice.
+This contract covers the strict frontend and C++ S2S bounded exception hierarchy.
 It also defines the bounded scalar/void-return finally extension.
 The in-band [error value](error_values_and_take.md) remains a separate type.
 
@@ -9,12 +9,31 @@ The in-band [error value](error_values_and_take.md) remains a separate type.
 
 Core runtime metadata registers `Exception` as an opaque shared class handle.
 `Exception::make(string message): Exception` creates a present handle; the instance
-method `get_message(): string` returns its message by value. An empty message is valid.
+method `get_message(): string` returns its message by value. Empty messages and embedded
+zero bytes are preserved.
 Default storage is absent. Ordinary shared copying retains the same object.
 The existing stable-receiver rules apply to instance calls.
 
-`throw expression;` evaluates its operand once. Shared preparation requires exactly
-the registered canonical `Exception` identity, including ordinary aliases. Source
+Source shared classes may extend the canonical registered `Exception`, directly or
+through source ancestors. Aliases preserve that identity. This is a bounded
+exception-root relationship, not permission to inherit arbitrary runtime types.
+Source classes use their ordinary constructors, fields, visibility, inheritance
+and virtual destruction. A descendant can widen to the root shared handle without
+copying its payload.
+
+The root instance method `get_message()` is available when ordinary source member
+lookup finds no matching declaration, including on `$this`. Runtime static factory
+inheritance and `parent` qualification of the runtime root are not added. A source
+method named `getMessage` (including the portability framework's getter) remains
+an ordinary source method; it does not override native diagnostic dispatch. The
+root message of a source-created exception is `"Exception"`. A source declaration
+named `get_message` hides the root method through normal source lookup, rather than
+overriding the native root's implementation. Root-typed access still uses the root
+contract. Framework detail/code/cause fields have ordinary source-class semantics;
+this slice adds no language-level chaining protocol.
+
+`throw expression;` evaluates its operand once. Shared preparation requires the
+registered canonical `Exception` or a shared source descendant, including aliases. Source
 shadowing cannot turn an unrelated class named `Exception` into a throwable. Scalars,
 in-band errors and other objects are rejected before C++ generation. An absent
 Exception is a value-dependent runtime error (`absent_exception`), not a language
@@ -36,7 +55,10 @@ try {
 ```
 
 Each try requires a catch, a finally, or both in that order. At most one typed catch
-is supported, with a simple local variable whose type must be the registered Exception. The handler binding is local to the handler and
+is supported, with a simple local variable typed as the registered Exception or a
+shared source descendant. A base handler accepts a thrown descendant. A narrower
+handler accepts the object only when its dynamic type matches that class or a
+descendant; unmatched language exceptions propagate. The handler binding is local to the handler and
 can shadow an outer local; it is unavailable after the handler. Protected-block
 locals are unavailable in the handler. Nested try/catch is supported. A handler can
 propagate the same object outward with `throw $e;`; it does not catch its own throws.
@@ -110,6 +132,15 @@ ordinary source exits do not use that path.
 
 ## Runtime boundary
 
+Ordinary and prelowered C++ preserve the same payload identity and catch matching.
+A template-free runtime payload base permits source inheritance. Native ownership
+and typed catch operations remain behind compiled specialization boundaries in
+prelowered output; application units and their transitive headers remain
+free of template tokens. Prelowered finally retains an inline native exception
+state whose size/alignment is measured by the existing layout machinery. Its
+pending scalar return uses scalar storage plus an explicit pending flag; this
+does not admit additional source return types.
+
 C++ lowering catches the runtime `thrown_object` transport, checks the prepared
 payload type and binds a shared handle. An unmatched transport propagates outward.
 Source catch does not intercept standard C++ exceptions or runtime guard failures.
@@ -123,8 +154,8 @@ non-standard foreign exceptions, fatal signals or destructor termination.
 ## Excluded from this slice
 
 Crossing break/continue, returns from finally, non-scalar/non-void returns through
-finally, multiple catch arms, union catches, source exception subclasses and
-source-to-runtime inheritance, general runtime constructor metadata (`new Exception`),
+finally, multiple catch arms, union catches, arbitrary source-to-runtime
+inheritance, direct runtime construction (`new Exception`),
 throw expressions, bare rethrow, exception chaining and static exception-effect
 analysis remain deferred. Runtime-handle identity operators and ownership transformations
 such as `weak(Exception)` are not added by this slice. LLVM remains deferred.

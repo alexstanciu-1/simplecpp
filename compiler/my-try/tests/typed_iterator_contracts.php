@@ -25,7 +25,7 @@ $cases = [
  'marker storage' => ['$cursor Iterator;', 'protocol marker'],
  'struct' => [str_replace('class Cursor', 'struct Cursor', $valid), 'shared class or interface'],
  'duplicate' => [str_replace('implements \\Iterator', 'implements \\Iterator, \\Iterator', $valid), 'Duplicate direct'],
- 'runtime inheritance' => ['class Child extends Exception {}', 'Relationship target must'],
+ 'runtime inheritance' => ['class Child extends string {}', 'Relationship target must'],
  'unmarked' => [str_replace(' implements \\Iterator', '', $valid), 'registered iterable'],
 ];
 foreach ($cases as $name => [$source, $message]) {

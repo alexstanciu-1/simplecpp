@@ -38,9 +38,18 @@ Source publication readiness and successful native readiness are distinct.
 Runtime and middleware implementations still use templates. Only application inputs
 must be template-free. Metadata registration alone is not a support claim; consult
 the [representation/operation coverage matrix](../../../../specs/planning/runtime_template_capability_matrix_2026_10_19.md#current-coverage-contract--2026-10-20).
-Callable storage, object tests/casts, weak observation, source exception transport,
+Callable storage, object tests/casts, weak observation,
 match without a default, and specified boxed/runtime helper paths still reject
 until concrete transports exist. Ordinary mode retains its existing semantics.
+
+Source exception hierarchies, throw/catch and bounded scalar/void finally now use
+compiled exception operations. The runtime payload base exposes a template-free
+inheritance interface; typed extraction and shared ownership stay in middleware.
+Finally uses layout-probed inline exception state and pending scalar storage.
+Inherited zero-argument runtime methods on `$this` borrow the original payload
+through a compiled member bridge without manufacturing a shared owner. Root
+message behavior and the bounded source contract are defined in
+[exceptions](../../../../specs/exceptions_v0_2.md).
 
 Prepared `take`, nullable/Result construction and required extraction, and wrapper
 usable-value coalescing use the existing compiled operation bridge. Provider

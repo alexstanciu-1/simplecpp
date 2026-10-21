@@ -172,6 +172,14 @@ final class Method_Preparation
 		if ($record instanceof collected_record) { $context->worker->require_declaration($context->owner, $record); }
 		else { $context->worker->require_type_contract($record, $context); }
 		$matches = Inherited_Lookup::members($record, $syntax->name, preparation_lookup_kind::method_name, $context);
+		if ((q_count($matches) === 0) && !$static_call && !$parent_call
+			&& $context->worker->require_relationships($record, $context)->exception_type) {
+			$root = Language_Types::exception_type(Model::$language_scope);
+			$runtime_methods /** vector<callable_definition_i> */ = Model::$runtime_callables->methods_named($root, $syntax->name, false);
+			if (q_count($runtime_methods) !== 0) {
+				return Call_Preparation::prepare_named($runtime_methods, $syntax->arguments, $context, $root);
+			}
+		}
 		if ((q_count($matches) === 0) && !$static_call && !$parent_call) {
 			// Call contracts are not implementations: keep this fallback out of ordinary inherited lookup.
 			$contracts = $context->worker->require_type_contract($record, $context);

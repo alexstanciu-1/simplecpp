@@ -11,6 +11,17 @@ non-scalar return transport remain deferred.
 
 Order is a discussion sequence, not a claim that every row is a prerequisite. Split combined examples before implementation.
 
+## Source hierarchy and prelowering — 2026-10-21
+
+The [exception contract](../../../../specs/exceptions_v0_2.md) now admits shared
+source descendants of the registered Exception root. Existing ancestry/conversion
+owners retain exception membership, and ordinary/prelowered throw/catch preserve
+payload identity. Prelowered finally uses compiled inline exception state and
+scalar pending returns. `tests/exception_hierarchy.py` owns generated-program,
+header-purity, legacy-runtime and incremental ancestry proofs. This extension has
+PHP-hosted and generated-program evidence; it does not extend the older native
+compiler checkpoint below. Arbitrary runtime inheritance remains deferred.
+
 ## Bounded closeout and native gate — 2026-10-16
 
 **Chapter 13 is finalized within its implemented frontend + C++ S2S bounds.**
@@ -155,7 +166,7 @@ run was performed.
 
 [The normative contract](../../../../specs/exceptions_v0_2.md) owns semantics.
 The following finally slice supersedes the original finally deferral. Other
-non-goals remain multiple/union catches, subclasses and source-to-runtime inheritance,
+non-goals remain multiple/union catches and arbitrary source-to-runtime inheritance,
 `new Exception`, arbitrary runtime/std exception catches, throw expressions, bare
 rethrow, chaining, runtime-handle ownership extensions, static effect analysis and LLVM.
 The original two finally-syntax rejection cases in `exceptions.php` are retired by
@@ -197,7 +208,7 @@ workspace runs. These are host-PHP and generated-C++ proofs, not a native compil
 
 Non-goals remain reference and non-scalar/non-void return transport through finally,
 return/break/continue escaping finally, break/continue crossing protected regions,
-multiple/union catches, source exception subclasses, chaining, static effect analysis
+multiple/union catches, chaining, static effect analysis
 and LLVM. Internal loop/switch transfers remain allowed in both protected and finally
 bodies. [The normative contract](../../../../specs/exceptions_v0_2.md#finally-and-delayed-exits--v02)
 owns exit precedence and cleanup order. The [native closeout](#bounded-closeout-and-native-gate--2026-10-16) finalizes these
@@ -210,7 +221,7 @@ Edit these rows as work proceeds. Imported source support is recorded below, ind
 | Entry | Status | PHP input example | Frontend | C++ S2S | LLVM | Proof / blocker |
 | --- | --- | --- | --- | --- | --- | --- |
 | RSL-ERROR-01 | implemented-bounded | `error::make("bad", 12, "input.phs")`, getters and `error -> result<T>` | proved | proved | deferred | 17 generated programs, 13 preparation rejections and incremental repair; `tests/error_values.php`; general runtime `new` remains excluded |
-| [ERR-THROW-001](#err-throw-001) | implemented-bounded | `throw Exception::make("x");` | proved | proved | deferred | Single canonical shared Exception; identity, absence and unwind proofs in `tests/exceptions.php`; runtime `new` excluded |
+| [ERR-THROW-001](#err-throw-001) | implemented-bounded | `throw Exception::make("x");` | proved | proved | deferred | Canonical shared Exception and source descendants; `tests/exceptions.php` and `tests/exception_hierarchy.py`; runtime `new` excluded |
 | [ERR-TRY-001](#err-try-001) | implemented-bounded | `try { f(); } catch (Exception $e) { }` | proved | proved | deferred | One handler, nested/callee propagation, handler scope, RAII cleanup and outer reporting; bounded finally added below |
 | [ERR-FINALLY-001](#err-finally-001) | implemented-bounded | `try { return 1; } finally { g(); }` | proved | proved | deferred | Scalar/void pending returns, exception precedence and RAII cleanup; `tests/finally.php`; crossing loop transfers and other return families deferred |
 | [NOTE-047](#note-047) | closed-bounded | `throw 3;`, `try {} finally { return 1; }` | proved | publication blocked on rejection | deferred | Static rejection/recovery proved; uniform file/line/column delivery remains CH13-DIAG-01 |

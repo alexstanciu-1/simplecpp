@@ -12,6 +12,8 @@ final class prepared_type_relationships
 	public bool $abstract_type = false;
 	/** Protocol membership is separate from source-interface ancestry and object storage. */
 	public bool $typed_iterator = false;
+	/** Transitive membership; a null source base identifies the direct runtime root edge. */
+	public bool $exception_type = false;
 }
 
 /** Local dispatch decisions and unresolved obligations, not a flattened member inventory. */

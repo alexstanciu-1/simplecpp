@@ -414,6 +414,12 @@ final class CPP_Declarations
 			$text .= $separator . 'public ' . CPP_Generator::source_name('record', $base->qualified_name());
 			$separator = ', ';
 		}
+		if (($base === null) && $relations->exception_type) {
+			$root = CPP_Types::payload(Language_Types::exception_type(Model::$language_scope));
+			CPP_Types::record_dependencies($root, $context);
+			$text .= $separator . 'public ' . $root->spelling;
+			$separator = ', ';
+		}
 		foreach ($relations->interfaces as $interface) {
 			$context->headers[CPP_Artifacts::type_header($interface->qualified_name())] = true;
 			$text .= $separator . 'public virtual ' . CPP_Generator::source_name('record', $interface->qualified_name());
@@ -520,6 +526,10 @@ final class CPP_Declarations
 		if ($facts->receiver !== null) {
 			$receiver /** prepared_method_receiver */ = $facts->receiver;
 			$target = weakref_get($facts->target);
+			if ($context->concrete_types() && ($target instanceof runtime_function_definition)
+				&& ($receiver->lifetime === method_receiver_lifetime::current_instance)) {
+				return CPP_Concrete_Members::current_instance($facts, $context);
+			}
 			$concrete_shared = $context->concrete_types() && ($target instanceof runtime_function_definition)
 				&& ($receiver->lifetime === method_receiver_lifetime::retain_shared);
 			if (!$concrete_shared) { CPP_Types::record_dependencies(CPP_Types::payload($receiver->record_type, $context), $context); }

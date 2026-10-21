@@ -41,7 +41,7 @@ $rejections = [
 	'function fail(): int { try { throw Exception::make("x"); } catch (Exception $e) {} } $n = fail();',
 	'try {} catch (Exception $e) {} catch (Exception $f) {}',
 	'try {} catch (Exception|error $e) {}', 'throw;', '$x = throw Exception::make("x");',
-	'$e = new Exception("x");', 'class Child extends Exception {}',
+	'$e = new Exception("x");', 'struct Child extends Exception {}',
 ];
 try {
 	foreach ($cases as $name => $fixture) {

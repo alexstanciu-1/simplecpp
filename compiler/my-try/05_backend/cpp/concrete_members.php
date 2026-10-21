@@ -4,7 +4,23 @@ namespace scpp\compiler;
 /** Ordinary member surfaces over composed storage; selected calls still own all value boundaries. */
 final class CPP_Concrete_Members
 {
+	/** Current-instance calls borrow the payload; they must not manufacture a shared owner. */
+	public static function current_instance(prepared_call $call, cpp_generation_context $context): string
+	{
+		$request = self::request($call);
+		$entry = CPP_Runtime_Operations::reference($request, $context);
+		return 'scpp::internal::' . $entry->name . '(this)';
+	}
+
 	public static function reference(prepared_call $call, cpp_generation_context $context): string
+	{
+		$request = self::request($call);
+		CPP_Runtime_Operations::reference($request, $context);
+		$binding /** cpp_function_binding */ = $request->binding;
+		return $binding->symbol();
+	}
+
+	private static function request(prepared_call $call): cpp_runtime_operation
 	{
 		$target = object_cast(weakref_get($call->target), runtime_function_definition::class);
 		$request = new cpp_runtime_operation(cpp_runtime_operation_kind::concrete_member);
@@ -13,11 +29,7 @@ final class CPP_Concrete_Members
 		$receiver /** prepared_method_receiver */ = $call->receiver;
 		$inputs /** Storage<canonical_type_use> */ = $request->inputs;
 		$inputs->append($receiver->record_type);
-		$engine /** CPP_Specializations */ = $context->specialization_engine;
-		$entry = $engine->entry($engine->request_operation($request));
-		$context->runtime_operations[$entry->name] = $request;
-		$context->headers[$entry->header] = true;
-		return $request->binding->symbol();
+		return $request;
 	}
 
 	public static function entry(cpp_runtime_operation $request, CPP_Specializations $engine): cpp_specialization_entry
@@ -27,6 +39,9 @@ final class CPP_Concrete_Members
 		if ($existing !== null) { return $existing; }
 		$call /** prepared_call */ = $request->call;
 		$receiver /** prepared_method_receiver */ = $call->receiver;
+		if ($receiver->lifetime === method_receiver_lifetime::current_instance) {
+			return self::borrowed_entry($request, $engine);
+		}
 		$shared = $receiver->lifetime === method_receiver_lifetime::retain_shared;
 		$signature_parameters /** Storage<callable_parameter> */ = $call->signature->parameters;
 		if ($shared && !$signature_parameters->is_empty()) {
@@ -111,5 +126,39 @@ final class CPP_Concrete_Members
 		$layout_dependencies /** hash<bool> */ = [];
 		return new cpp_specialization_entry($name, $owner->header, $return_type . ' ' . $prototype . ";\n", $body, $layout_dependencies, '', '', '',
 			$owner->name, $prefix);
+	}
+
+	private static function borrowed_entry(cpp_runtime_operation $request, CPP_Specializations $engine): cpp_specialization_entry
+	{
+		$call /** prepared_call */ = $request->call;
+		$parameters /** Storage<callable_parameter> */ = $call->signature->parameters;
+		if (!$parameters->is_empty() || ($call->signature->reference_return !== null) || ($call->variadic_parameter !== null)) {
+			throw new \RuntimeException('Borrowed runtime members require zero parameters and a value or void result');
+		}
+		$receiver /** prepared_method_receiver */ = $call->receiver;
+		$payload = CPP_Types::payload($receiver->record_type, new cpp_generation_context($engine));
+		$binding /** cpp_function_binding */ = $request->binding;
+		$headers = $payload->headers;
+		$headers[$binding->header()] = true;
+		$expression = 'static_cast<' . $payload->spelling . '*>(receiver)->' . $binding->symbol() . '()';
+		$output = 'void';
+		$body = $expression . ';';
+		$public_headers /** hash<bool> */ = [];
+		if (Type_Queries::canonical($call->type)->family() !== type_family::no_value) {
+			$result = CPP_Types::representation($call->type, new cpp_generation_context($engine));
+			$native = CPP_Types::implementation_representation($call->type, $engine);
+			foreach ($native->headers as $header => $used) { $headers[$header] = true; }
+			foreach ($result->headers as $header => $used) { $headers[$header] = true; }
+			$public_headers = $result->headers;
+			$output = $result->spelling;
+			$body = $result->opaque ? CPP_Runtime_Operations::concrete_call_result($output, $native->spelling, '', $expression)
+				: 'return ' . $expression . ';';
+		}
+		$name = CPP_Runtime_Operations::name($request);
+		$prototype = $output . ' ' . $name . '(void* receiver)';
+		return new cpp_specialization_entry($name, 'specializations/' . $name . '.hpp',
+			"#pragma once\n" . CPP_Artifacts::includes($public_headers, '') . 'namespace scpp::internal { ' . $prototype . "; }\n",
+			CPP_Artifacts::includes($headers, '') . "#include <new>\n#include <type_traits>\nnamespace scpp::internal { "
+				. $prototype . ' { ' . $body . " } }\n", []);
 	}
 }

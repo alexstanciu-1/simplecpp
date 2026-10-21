@@ -14,6 +14,9 @@ final class CPP_Specializations
 
 	public function request_operation(cpp_runtime_operation $request): cpp_specialization_ref
 	{
+		if ($request->kind === cpp_runtime_operation_kind::exception_state) {
+			return $this->intern(CPP_Exceptions::state_entry($request));
+		}
 		if ($request->kind === cpp_runtime_operation_kind::concrete_member) {
 			return $this->intern(CPP_Concrete_Members::entry($request, $this));
 		}

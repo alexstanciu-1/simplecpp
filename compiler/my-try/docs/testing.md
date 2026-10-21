@@ -119,7 +119,7 @@ supplies direct/concrete counters and output failure-prefix equivalence.
 
 `python3 compiler/my-try/tests/prelower_contracts.py --results FRESH_DIRECTORY`
 checks concrete rejection for callable locals, parameters, results, fields and nested
-containers, plus object tests/casts, weak creation/locking, source throw/catch/finally,
+containers, plus object tests/casts, weak creation/locking,
 match without a default, wider boxed extraction, runtime-backed conditions/value
 probes and enum helpers. Repair cases include supported integer/boolean
 conditions and explicit-default match emission and replay.
@@ -419,6 +419,17 @@ attempt logs. `source_hashes.json`, `harness_hashes.json`, `candidate.json` and 
 executable hash distinguish the tested source/overlay from an earlier revision.
 Test-owned native instrumentation executes only after byte equality of its complete
 uninstrumented base. A missing successful summary keeps the closeout gate open.
+
+`python3 compiler/my-try/tests/exception_hierarchy.py --results FRESH`
+checks source/root widening, descendant matching, unmatched propagation, same-object
+mutation/rethrow, destruction after retained catches, once-only throw evaluation,
+root messages including embedded zero bytes, inherited `$this` runtime access,
+finally replacement/nested scalar returns, absent throws and foreign guard bypass.
+The native runtime fixture also preserves legacy Exception factory and typed-catch
+compatibility. Ordinary and concrete publication/build/execution share expected outputs; the
+production concrete builder checks the complete transitive template-free header
+closure. The accompanying PHP contracts check canonical aliases, source shadowing,
+invalid roots, ancestry removal and incremental repair/fresh agreement.
 
 `python3 compiler/my-try/tests/records.py --suite finally --no-pch --results FRESH`
 checks scalar/void delayed returns, nested exception propagation/replacement, cleanup

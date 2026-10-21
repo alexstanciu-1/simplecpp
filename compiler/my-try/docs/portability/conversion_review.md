@@ -14,24 +14,26 @@ The catalog's bounded closeouts and Chapter 15 deferrals still
 bound the supported language surface.
 This does not establish exhaustive language, lifetime, incremental or performance coverage.
 
-## PHP-hosted bootstrap after typed Iterator integration — 2026-10-21
+## PHP-hosted bootstrap after exception integration — 2026-10-21
 
-Storage registration passes ordinary and prelowered generated-program proofs.
-The converter now emits type-first method/constructor parameters, including
-nullable and generic annotations. Framework `collections.phs` and `processes.phs`
-now use the same parameter syntax. Typed source Iterator passes focused ordinary
-and prelowered execution plus admission/recovery proofs. The retry (267 PHS files,
-1,908,220 bytes including framework) completes parsing and no longer reports
-unresolved Iterator relationships. It stops on the eight portability exception
-classes rooted at `scpp_portability_exception extends Exception`.
-The attempt takes 4.49 seconds, peaks at 165.9 MiB RSS / 142 MiB PHP heap,
-and never reaches C++ emission. This is not a successful self-bootstrap or a full
-compilation performance measurement. The preparation blocker remains unmodified;
-[checkpoint and evidence](../../../../specs/planning/storage_bootstrap_2026_10_21.md)
-record the attempts. Exceptions and Storage_Cursor widening remain unmodified.
-This failure precedes method-body preparation and does not prove all converted
-compiler iterator implementations compile. The native checkpoints below describe
-earlier revisions.
+Storage, typed source Iterator and the bounded exception hierarchy pass focused
+ordinary and prelowered generated-program proofs. Converter/framework parameter
+syntax is type-first. The latest retry converts 258 PHP files and assembles 268
+PHS files (1,918,244 bytes). Parsing finishes at 4.640 seconds; preparation now
+passes exception relationships and reaches subsequent declaration/body failures.
+It reports 60 distinct diagnostic messages, starting with an ownership-conversion
+rejection. The first located failure is `source_record::__construct`, which assigns
+a shared `module` parameter into `weak<module>` storage; an isolated fixture
+reproduces it. The read-only owner replay confirms zero relationship failures. Other reported categories include unresolved portable helper bindings,
+source syntax/type restrictions and the explicitly deferred Storage_Cursor type.
+
+The measured bootstrap takes 47.97 seconds, with peak RSS 289.2 MiB and peak PHP
+heap 270 MiB under a 4 GiB limit. It does not run out of memory and does not reach
+C++ emission. This is not full-bootstrap timing or a successful self-bootstrap.
+The next blockers and Storage_Cursor widening are not repaired.
+[Checkpoint and evidence](../../../../specs/planning/storage_bootstrap_2026_10_21.md)
+record the exact snapshot, test boundaries and retry. The native compiler
+checkpoints below describe earlier revisions.
 
 ## Native prelowering execution — 2026-10-20
 
