@@ -588,3 +588,35 @@ attempt remain archived. Final uploaded source hashes were verified.
 [Inferred-target evidence](task-default-index-evidence.tar.gz), SHA-256:
 `663c1f7d735de3182ecf0821ec8def392d8578b9588a5135951e73dbd0669030`. No full matrix or native compiler rebuild was run. V-R02 remains
 partial and overall original issue closure remains 56/64.
+
+
+### Error-handler result relation prerequisite — proposed 2026-10-21
+
+The dev002 `task-error-contract-01` probe confirms that separate generic handler
+returns `R` and `void` admit omission for a value worker but collide for a void
+worker: both overloads match exactly. Treating this as successful compilation,
+choosing an arbitrary candidate or enumerating payload types would conceal the
+missing relation. A completely unconstrained handler return would instead admit
+incompatible replacements until C++ compilation.
+
+Proposed bounded model: one handler return variable `E`, with an explicit metadata
+requirement `replacement_results: [{"result":"R","replacement":"E"}]`. The
+existing metadata reader/registration owners resolve the variable names into a
+typed requirement in `runtime_generic_contract`. Selected-call preparation checks
+`E == R || E == void` before publication. It does not change overload ranking,
+introduce coercions or create a general constraint language. Void workers therefore
+accept void handlers, while non-void workers accept exact replacements or omission.
+Existing transfer requirements remain independent: background handlers must be
+transferable; synchronous coordinator handlers do not cross a thread boundary.
+
+This is a new retained semantic relation, requiring discussion under my-try's local
+rules. No implementation of the relation has begun. Upon authorization, verify
+malformed references, wrong replacement types, all void/value cases, wrappers,
+retained reject/repair/fresh parity and default-prelowered runtime error handling
+on dev002. Existing coordinator dispatch, omission identity and shutdown repairs
+remain the execution owners; this proposal adds no scheduler or transfer redesign.
+Independent publisher-option admission can continue while approval is pending.
+
+[Error contract probe evidence](task-error-contract-evidence.tar.gz), SHA-256:
+`685eea384580b362aec5e68d93c9ab79c93d34ead706b77459ef29b3d0f83b72`. The passing probe records a semantic mismatch; it is not
+conformance evidence or an issue closure.
