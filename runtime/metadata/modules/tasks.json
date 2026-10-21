@@ -1,0 +1,504 @@
+{
+  "version": 1,
+  "module": "tasks",
+  "dependencies": [
+    "core"
+  ],
+  "cpp_build": {
+    "sources": [
+      "modules/tasks/tasks.cpp"
+    ],
+    "definitions": [
+      "SCPP_HAS_TASKS=1"
+    ],
+    "libraries": [
+      "pthread"
+    ]
+  },
+  "types": [
+    {
+      "id": "tasks.batch",
+      "name": "task_batch",
+      "kind": "class",
+      "storage": "shared",
+      "capabilities": [
+        "result_payload"
+      ]
+    },
+    {
+      "id": "tasks.context",
+      "name": "task_context",
+      "kind": "class",
+      "storage": "shared",
+      "capabilities": [
+        "result_payload"
+      ]
+    },
+    {
+      "id": "tasks.progress_info",
+      "name": "task_progress_info",
+      "kind": "class",
+      "storage": "shared",
+      "capabilities": [
+        "result_payload"
+      ]
+    },
+    {
+      "id": "tasks.error",
+      "name": "task_error",
+      "kind": "class",
+      "storage": "shared",
+      "capabilities": [
+        "result_payload"
+      ]
+    }
+  ],
+  "cpp_types": [
+    {
+      "id": "tasks.batch",
+      "symbol": "scpp::tasks::batch",
+      "header": "modules/tasks/tasks.hpp"
+    },
+    {
+      "id": "tasks.context",
+      "symbol": "scpp::tasks::context",
+      "header": "modules/tasks/tasks.hpp"
+    },
+    {
+      "id": "tasks.progress_info",
+      "symbol": "scpp::tasks::progress_info",
+      "header": "modules/tasks/tasks.hpp"
+    },
+    {
+      "id": "tasks.error",
+      "symbol": "scpp::tasks::error",
+      "header": "modules/tasks/tasks.hpp"
+    }
+  ],
+  "properties": [
+    {
+      "id": "tasks.error.message",
+      "owner": "task_error",
+      "name": "message",
+      "type": "string",
+      "access": "read_only"
+    },
+    {
+      "id": "tasks.error.kind",
+      "owner": "task_error",
+      "name": "kind",
+      "type": "string",
+      "access": "read_only"
+    },
+    {
+      "id": "tasks.error.key",
+      "owner": "task_error",
+      "name": "key",
+      "type": "mixed",
+      "access": "read_only"
+    },
+    {
+      "id": "tasks.error.worker_id",
+      "owner": "task_error",
+      "name": "worker_id",
+      "type": "int",
+      "access": "read_only"
+    },
+    {
+      "id": "tasks.error.timeout",
+      "owner": "task_error",
+      "name": "timeout",
+      "type": "bool",
+      "access": "read_only"
+    },
+    {
+      "id": "tasks.error.source_file",
+      "owner": "task_error",
+      "name": "source_file",
+      "type": "string",
+      "access": "read_only"
+    },
+    {
+      "id": "tasks.error.source_line",
+      "owner": "task_error",
+      "name": "source_line",
+      "type": "int",
+      "access": "read_only"
+    }
+  ],
+  "cpp_properties": [
+    {
+      "id": "tasks.error.message",
+      "symbol": "message",
+      "header": "modules/tasks/tasks.hpp"
+    },
+    {
+      "id": "tasks.error.kind",
+      "symbol": "kind",
+      "header": "modules/tasks/tasks.hpp"
+    },
+    {
+      "id": "tasks.error.key",
+      "symbol": "key",
+      "header": "modules/tasks/tasks.hpp"
+    },
+    {
+      "id": "tasks.error.worker_id",
+      "symbol": "worker_id",
+      "header": "modules/tasks/tasks.hpp"
+    },
+    {
+      "id": "tasks.error.timeout",
+      "symbol": "timeout",
+      "header": "modules/tasks/tasks.hpp"
+    },
+    {
+      "id": "tasks.error.source_file",
+      "symbol": "source_file",
+      "header": "modules/tasks/tasks.hpp"
+    },
+    {
+      "id": "tasks.error.source_line",
+      "symbol": "source_line",
+      "header": "modules/tasks/tasks.hpp"
+    }
+  ],
+  "functions": [
+    {
+      "id": "tasks.task_join",
+      "name": "task_join",
+      "parameters": [
+        {
+          "name": "batch",
+          "type": "task_batch",
+          "passing": "value"
+        }
+      ],
+      "returns": "mixed"
+    },
+    {
+      "id": "tasks.task_cancel",
+      "name": "task_cancel",
+      "parameters": [
+        {
+          "name": "batch",
+          "type": "task_batch",
+          "passing": "value"
+        }
+      ],
+      "returns": "void"
+    },
+    {
+      "id": "tasks.task_done",
+      "name": "task_done",
+      "parameters": [
+        {
+          "name": "batch",
+          "type": "task_batch",
+          "passing": "value"
+        }
+      ],
+      "returns": "bool"
+    },
+    {
+      "id": "tasks.task_status",
+      "name": "task_status",
+      "parameters": [
+        {
+          "name": "batch",
+          "type": "task_batch",
+          "passing": "value"
+        }
+      ],
+      "returns": "string"
+    },
+    {
+      "id": "tasks.task_progress",
+      "name": "task_progress",
+      "parameters": [
+        {
+          "name": "batch",
+          "type": "task_batch",
+          "passing": "value"
+        }
+      ],
+      "returns": "task_progress_info"
+    },
+    {
+      "id": "tasks.task_set_status",
+      "name": "task_set_status",
+      "parameters": [
+        {
+          "name": "context",
+          "type": "task_context",
+          "passing": "value"
+        },
+        {
+          "name": "status",
+          "type": "string",
+          "passing": "value"
+        }
+      ],
+      "returns": "void"
+    },
+    {
+      "id": "tasks.task_set_worker_pool_size",
+      "name": "task_set_worker_pool_size",
+      "parameters": [
+        {
+          "name": "workers",
+          "type": "int",
+          "passing": "value"
+        }
+      ],
+      "returns": "void"
+    },
+    {
+      "id": "tasks.task_set_publish_try_lock",
+      "name": "task_set_publish_try_lock",
+      "parameters": [
+        {
+          "name": "enabled",
+          "type": "bool",
+          "passing": "value"
+        }
+      ],
+      "returns": "void"
+    },
+    {
+      "id": "tasks.task_publish_lock_wait_us",
+      "name": "task_publish_lock_wait_us",
+      "parameters": [],
+      "returns": "int"
+    },
+    {
+      "id": "tasks.task_publish_lock_hold_us",
+      "name": "task_publish_lock_hold_us",
+      "parameters": [],
+      "returns": "int"
+    },
+    {
+      "id": "tasks.task_publish_callback_us",
+      "name": "task_publish_callback_us",
+      "parameters": [],
+      "returns": "int"
+    },
+    {
+      "id": "tasks.task_publish_batch_count",
+      "name": "task_publish_batch_count",
+      "parameters": [],
+      "returns": "int"
+    },
+    {
+      "id": "tasks.task_publish_published_count",
+      "name": "task_publish_published_count",
+      "parameters": [],
+      "returns": "int"
+    },
+    {
+      "id": "tasks.task_publish_max_batch_size",
+      "name": "task_publish_max_batch_size",
+      "parameters": [],
+      "returns": "int"
+    },
+    {
+      "id": "tasks.task_publish_failed_try_lock_count",
+      "name": "task_publish_failed_try_lock_count",
+      "parameters": [],
+      "returns": "int"
+    },
+    {
+      "id": "tasks.task_publish_deferred_flush_count",
+      "name": "task_publish_deferred_flush_count",
+      "parameters": [],
+      "returns": "int"
+    },
+    {
+      "id": "tasks.task_progress_info.total",
+      "name": "total",
+      "parameters": [],
+      "returns": "int",
+      "member": {
+        "owner": "task_progress_info",
+        "dispatch": "instance"
+      }
+    },
+    {
+      "id": "tasks.task_progress_info.completed",
+      "name": "completed",
+      "parameters": [],
+      "returns": "int",
+      "member": {
+        "owner": "task_progress_info",
+        "dispatch": "instance"
+      }
+    },
+    {
+      "id": "tasks.task_progress_info.queued",
+      "name": "queued",
+      "parameters": [],
+      "returns": "int",
+      "member": {
+        "owner": "task_progress_info",
+        "dispatch": "instance"
+      }
+    },
+    {
+      "id": "tasks.task_progress_info.active",
+      "name": "active",
+      "parameters": [],
+      "returns": "int",
+      "member": {
+        "owner": "task_progress_info",
+        "dispatch": "instance"
+      }
+    },
+    {
+      "id": "tasks.task_progress_info.errors",
+      "name": "errors",
+      "parameters": [],
+      "returns": "int",
+      "member": {
+        "owner": "task_progress_info",
+        "dispatch": "instance"
+      }
+    },
+    {
+      "id": "tasks.task_progress_info.stop_requested",
+      "name": "stop_requested",
+      "parameters": [],
+      "returns": "bool",
+      "member": {
+        "owner": "task_progress_info",
+        "dispatch": "instance"
+      }
+    },
+    {
+      "id": "tasks.task_progress_info.status",
+      "name": "status",
+      "parameters": [],
+      "returns": "string",
+      "member": {
+        "owner": "task_progress_info",
+        "dispatch": "instance"
+      }
+    }
+  ],
+  "cpp": [
+    {
+      "id": "tasks.task_join",
+      "symbol": "scpp::tasks::join",
+      "header": "modules/tasks/tasks.hpp"
+    },
+    {
+      "id": "tasks.task_cancel",
+      "symbol": "scpp::tasks::cancel",
+      "header": "modules/tasks/tasks.hpp"
+    },
+    {
+      "id": "tasks.task_done",
+      "symbol": "scpp::tasks::done",
+      "header": "modules/tasks/tasks.hpp"
+    },
+    {
+      "id": "tasks.task_status",
+      "symbol": "scpp::tasks::status",
+      "header": "modules/tasks/tasks.hpp"
+    },
+    {
+      "id": "tasks.task_progress",
+      "symbol": "scpp::tasks::progress",
+      "header": "modules/tasks/tasks.hpp"
+    },
+    {
+      "id": "tasks.task_set_status",
+      "symbol": "scpp::tasks::set_status",
+      "header": "modules/tasks/tasks.hpp"
+    },
+    {
+      "id": "tasks.task_set_worker_pool_size",
+      "symbol": "scpp::tasks::configure_default_worker_pool",
+      "header": "modules/tasks/tasks.hpp"
+    },
+    {
+      "id": "tasks.task_set_publish_try_lock",
+      "symbol": "scpp::tasks::configure_publish_try_lock",
+      "header": "modules/tasks/tasks.hpp"
+    },
+    {
+      "id": "tasks.task_publish_lock_wait_us",
+      "symbol": "scpp::tasks::publish_lock_wait_us",
+      "header": "modules/tasks/tasks.hpp"
+    },
+    {
+      "id": "tasks.task_publish_lock_hold_us",
+      "symbol": "scpp::tasks::publish_lock_hold_us",
+      "header": "modules/tasks/tasks.hpp"
+    },
+    {
+      "id": "tasks.task_publish_callback_us",
+      "symbol": "scpp::tasks::publish_callback_us",
+      "header": "modules/tasks/tasks.hpp"
+    },
+    {
+      "id": "tasks.task_publish_batch_count",
+      "symbol": "scpp::tasks::publish_batch_count",
+      "header": "modules/tasks/tasks.hpp"
+    },
+    {
+      "id": "tasks.task_publish_published_count",
+      "symbol": "scpp::tasks::publish_published_count",
+      "header": "modules/tasks/tasks.hpp"
+    },
+    {
+      "id": "tasks.task_publish_max_batch_size",
+      "symbol": "scpp::tasks::publish_max_batch_size",
+      "header": "modules/tasks/tasks.hpp"
+    },
+    {
+      "id": "tasks.task_publish_failed_try_lock_count",
+      "symbol": "scpp::tasks::publish_failed_try_lock_count",
+      "header": "modules/tasks/tasks.hpp"
+    },
+    {
+      "id": "tasks.task_publish_deferred_flush_count",
+      "symbol": "scpp::tasks::publish_deferred_flush_count",
+      "header": "modules/tasks/tasks.hpp"
+    },
+    {
+      "id": "tasks.task_progress_info.total",
+      "symbol": "total",
+      "header": "modules/tasks/tasks.hpp"
+    },
+    {
+      "id": "tasks.task_progress_info.completed",
+      "symbol": "completed",
+      "header": "modules/tasks/tasks.hpp"
+    },
+    {
+      "id": "tasks.task_progress_info.queued",
+      "symbol": "queued",
+      "header": "modules/tasks/tasks.hpp"
+    },
+    {
+      "id": "tasks.task_progress_info.active",
+      "symbol": "active",
+      "header": "modules/tasks/tasks.hpp"
+    },
+    {
+      "id": "tasks.task_progress_info.errors",
+      "symbol": "errors",
+      "header": "modules/tasks/tasks.hpp"
+    },
+    {
+      "id": "tasks.task_progress_info.stop_requested",
+      "symbol": "stop_requested",
+      "header": "modules/tasks/tasks.hpp"
+    },
+    {
+      "id": "tasks.task_progress_info.status",
+      "symbol": "status",
+      "header": "modules/tasks/tasks.hpp"
+    }
+  ]
+}

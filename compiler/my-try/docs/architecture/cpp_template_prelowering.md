@@ -200,3 +200,10 @@ survive suspension. Lazy branches stay within that scope and remain lazy. The
 runtime `invoke_owned` helper owns its callable until completion. Other expressions
 retain ordinary scopes. See the [async checkpoint](../planning/async_tasks.md) for
 proof boundaries and deferred contracts.
+
+Shared runtime handles also use the existing concrete-member owner for
+zero-argument instance methods. The compiled method dereferences the retained
+native handle; application code sees only concrete storage. Methods with arguments
+remain rejected until receiver checks can precede argument snapshots through that
+boundary. Provider property observation additionally transports bool and mixed
+values; their mutable property transport is not added by the tasks slice.

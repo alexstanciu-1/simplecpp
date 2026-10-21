@@ -48,15 +48,20 @@ if (lifecycle_snapshot() !== $before) {
 if ($concrete)
 {
 	file_put_contents($source . '/main.phs', '$f function<int()> = fn(): int => 1; return $f();');
+	$compiler->update_cpp([$source . '/main.phs']);
+	if (Model::$cpp_files->is_empty()) {
+		throw new \LogicException('Supported owned callable storage produced no artifacts');
+	}
+	file_put_contents($source . '/main.phs', '$f function<int()> = fn(): int => "wrong"; return $f();');
 	$rejected = false;
 	try {
 		$compiler->update_cpp([$source . '/main.phs']);
 	}
-	catch (\Throwable $error) {
-		$rejected = str_contains($error->getMessage(), 'callable storage requires a concrete callback transport');
+	catch (\RuntimeException $error) {
+		$rejected = true;
 	}
 	if ((!$rejected) || (!Model::$cpp_files->is_empty())) {
-		throw new \LogicException('Unsupported source boundary silently fell back');
+		throw new \LogicException('Invalid callable return survived source preparation');
 	}
 	file_put_contents($source . '/main.phs', $program);
 	$compiler->update_cpp([$source . '/main.phs']);

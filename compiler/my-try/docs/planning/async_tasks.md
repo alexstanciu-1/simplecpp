@@ -117,3 +117,39 @@ Existing default-prelowered throw/catch/finally transport remains separate V-D06
 work; runtime exception propagation and cleanup are verified here without claiming
 that syntax gap closed. The original ledger remains **55/64**; neither S12 nor
 V-R02 is closed at this intermediate checkpoint.
+
+## Verified tasks handle/control bindings — 2026-10-21
+
+`runtime/metadata/modules/tasks.json` now selects the existing tasks provider,
+`SCPP_HAS_TASKS=1` and pthread linkage through ordinary module build metadata.
+It declares four runtime-owned shared types, seven readonly error fields, seven
+progress observation methods and the sixteen fixed free functions:
+
+- join, cancel, done, status, progress;
+- set_status, set_worker_pool_size, set_publish_try_lock;
+- all eight publication measurements.
+
+The remaining five free names are **not yet admitted**: task_run,
+task_run_publish, task_start, task_run_publish_unordered and task_synchronize.
+Their callback/context/transfer contracts, result-placement forms, background
+retention and shutdown integration remain required goal work. The test-only batch
+factory proves transport of existing runtime handles, not source batch admission.
+
+The existing concrete-member owner now transports zero-argument shared runtime
+methods behind the compiled boundary. Shared methods with arguments remain an
+explicit gap because the receiver check must precede argument evaluation. The
+existing property owner adds bool/mixed reads; it does not add mutable bool/mixed
+property transport. No new runtime behavior was needed for this checkpoint.
+
+`20261021-tasks-metadata-04` passes all five tasks: four production cold/warm
+programs and seven rejection/repair/replay cases. They cover repeated joins,
+progress/status, context status updates, error fields, pool/measurement controls,
+wrong handles, readonly writes and source construction rejection.
+`20261021-tasks-member-regression-02` passes ordinary/concrete source lifecycle,
+method/layout edits and warm reuse. Its first attempt exposed the obsolete
+owned-callable rejection expectation from before the callback prerequisite;
+the fixture now checks supported storage and invalid-return rejection/recovery.
+
+[Evidence archive](tasks-metadata-evidence.tar.gz), SHA-256:
+`5e516203b95c6f95530bf4669d97027ffe04c5f02562382ee52f8aaeee407d40`.
+Historical attempts and upload hashes are included. Overall closure remains 55/64.

@@ -518,7 +518,10 @@ final class CPP_Declarations
 		}
 		if ($facts->receiver !== null) {
 			$receiver /** prepared_method_receiver */ = $facts->receiver;
-			CPP_Types::record_dependencies(CPP_Types::payload($receiver->record_type, $context), $context);
+			$target = weakref_get($facts->target);
+			$concrete_shared = $context->concrete_types() && ($target instanceof runtime_function_definition)
+				&& ($receiver->lifetime === method_receiver_lifetime::retain_shared);
+			if (!$concrete_shared) { CPP_Types::record_dependencies(CPP_Types::payload($receiver->record_type, $context), $context); }
 			$value = 'this';
 			$arrow = true;
 			if ($receiver->lifetime !== method_receiver_lifetime::current_instance) {
@@ -530,12 +533,13 @@ final class CPP_Declarations
 			$context->next_temporary++;
 			$binding = $receiver->lifetime === method_receiver_lifetime::borrow_inline ? 'auto& ' : 'auto ';
 			$prefix = $binding . $name . ' = ' . $value . ";\n";
-			if ($receiver->lifetime === method_receiver_lifetime::retain_shared) {
+			if (($receiver->lifetime === method_receiver_lifetime::retain_shared) && !$concrete_shared) {
 				// Check before evaluating arguments; the retained handle owns the selected object.
 				$prefix .= '(void)' . $name . ".operator->();\n";
 			}
 			$target = weakref_get($facts->target);
 			if ($target instanceof runtime_function_definition) {
+				if ($concrete_shared) { $arrow = false; }
 				$member_name = '';
 				$engine = $context->specialization_engine;
 				if ($engine !== null) { $member_name = CPP_Concrete_Members::reference($facts, $context); }

@@ -20,6 +20,12 @@ final class CPP_Provider_Properties
 		$supported = $type->matches(Language_Types::integer(Model::$language_scope))
 			|| $type->matches(Language_Types::string_type(Model::$language_scope));
 		$canonical = Type_Queries::canonical($type);
+		// Task error observations use the existing scalar/boxed value bridge.
+		// Keep new mutable property domains outside this read-only extension.
+		if (!$write) {
+			$supported = $supported || $type->matches(Language_Types::boolean(Model::$language_scope))
+				|| ($canonical->definition() instanceof mixed_semantics);
+		}
 		if (($canonical instanceof applied_template_type)
 			&& ($canonical->definition() === Model::$type_catalog->definition('vector'))) {
 			$application = object_cast($canonical, applied_template_type::class);
@@ -27,7 +33,7 @@ final class CPP_Provider_Properties
 			$supported = $arguments[0]->matches(Language_Types::string_type(Model::$language_scope));
 		}
 		if (!$supported) {
-			throw new \RuntimeException('prelower_templates: provider property value transport is outside the int/string/vector<string> slice');
+			throw new \RuntimeException('prelower_templates: unsupported provider property value transport (bool/mixed additions are read-only)');
 		}
 		$request = new cpp_runtime_operation($write ? cpp_runtime_operation_kind::property_write : cpp_runtime_operation_kind::property_read);
 		$request->property = object_cast($facts->field, registered_property::class);

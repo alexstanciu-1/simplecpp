@@ -9,6 +9,11 @@ admission; `async_tasks_runtime.py` covers runtime foundations. Each accepts its
 own fresh `--results` directory. These checks do not rebuild the compiler natively
 or prove full tasks integration. See [scope and evidence](planning/async_tasks.md).
 
+`python3 compiler/my-try/tests/tasks_metadata.py --results FRESH_DIRECTORY`
+checks the fixed tasks handle/control bindings with default-prelowered cold/warm
+builds and retained rejection/recovery. Its batch factory is a test provider;
+passing this suite does not prove source task creation or callback transfer.
+
 ## Conservative call snapshot elision
 
 `python3 compiler/my-try/tests/call_snapshot_borrow.py --results FRESH` checks

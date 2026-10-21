@@ -26,6 +26,12 @@ final class CPP_Concrete_Members
 		$existing = $engine->find($name);
 		if ($existing !== null) { return $existing; }
 		$call /** prepared_call */ = $request->call;
+		$receiver /** prepared_method_receiver */ = $call->receiver;
+		$shared = $receiver->lifetime === method_receiver_lifetime::retain_shared;
+		$signature_parameters /** Storage<callable_parameter> */ = $call->signature->parameters;
+		if ($shared && !$signature_parameters->is_empty()) {
+			throw new \RuntimeException('Concrete shared runtime members with arguments require receiver-check sequencing');
+		}
 		if (($call->signature->reference_return !== null) || ($call->variadic_parameter !== null)) {
 			throw new \RuntimeException('Concrete runtime members: reference result and variadic transport are not implemented');
 		}
@@ -66,6 +72,10 @@ final class CPP_Concrete_Members
 		$return_type = 'void';
 		$expression = 'std::launder(static_cast<' . $native->spelling
 			. '*>(address()))->' . $binding->symbol() . '(' . $arguments . ')';
+		if ($shared) {
+			$expression = '(*std::launder(static_cast<' . $native->spelling
+				. '*>(address())))->' . $binding->symbol() . '()';
+		}
 		$operation = $expression . ';';
 		if (Type_Queries::canonical($call->type)->family() !== type_family::no_value) {
 			$result = CPP_Types::representation($call->type, $context);
