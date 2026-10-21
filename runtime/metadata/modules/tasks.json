@@ -382,6 +382,23 @@
         "owner": "task_progress_info",
         "dispatch": "instance"
       }
+    },
+    {
+      "id": "tasks.synchronize",
+      "name": "task_synchronize",
+      "parameters": [
+        {
+          "name": "callback",
+          "type": {
+            "callable": {
+              "parameters": [],
+              "returns": "void"
+            }
+          },
+          "passing": "value"
+        }
+      ],
+      "returns": "void"
     }
   ],
   "cpp": [
@@ -498,6 +515,11 @@
     {
       "id": "tasks.task_progress_info.status",
       "symbol": "status",
+      "header": "modules/tasks/tasks.hpp"
+    },
+    {
+      "id": "tasks.synchronize",
+      "symbol": "scpp::tasks::synchronize",
       "header": "modules/tasks/tasks.hpp"
     }
   ]

@@ -287,3 +287,24 @@ V-R02 remains partial: `task_run`, `task_start`, `task_run_publish`,
 `task_run_publish_unordered` and `task_synchronize` still require source admission
 and integration proofs. The transfer prerequisite is implemented, not an approval
 blocker. Overall closure remains **56/64 (87.5%)**.
+
+
+## Task synchronization admission — 2026-10-21
+
+`task_synchronize(function<void()>)` now uses ordinary task-module metadata and
+existing owned callback transport. It executes synchronously in the active worker
+context; it does not acquire a cross-thread capture permission. Existing borrowed
+callable erasure restrictions remain unchanged. Three default-prelowered production
+cold/warm checks pass on dev002: repeated valid synchronization, outside-context
+rejection and recursive-context rejection. The positive test establishes the runtime
+worker context through an explicitly test-only provider; real unordered task source
+integration remains required. Earlier sanitizer probes cover runtime context restore.
+
+[Evidence](task-synchronize-evidence.tar.gz), SHA-256:
+`aca37026e6cdf7cd3f0ceb08c24b3b527be8b53dff62eb740138a7934f0b4162`.
+Reproduce with `tests/task_submission.py --results FRESH_DIRECTORY`.
+
+The user also authorized bounded generic payload-transfer contracts and a void-to-null
+worker-result mapping. These extend existing metadata/preparation owners; no scheduler
+redesign or general thread-safety analysis is authorized. Four batch APIs remain open;
+V-R02 remains partial and overall closure remains 56/64.
