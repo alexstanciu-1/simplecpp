@@ -115,7 +115,7 @@ struct result_slot {
 
 template <>
 struct result_slot<void> {
-	using type = null_t;
+	using type = std::optional<null_t>;
 };
 
 template <typename TResult>
@@ -670,7 +670,7 @@ template <typename TItem, typename TCallback, typename TIndexCallback, typename 
 namespace detail {
 
 template <typename TItem, typename TCallback, typename TErrorHandler>
-[[nodiscard]] auto run_vector_with_state(
+[[nodiscard]] auto run_vector_slots_with_state(
 	const vector_t<TItem> &items,
 	const int_t<> &workers,
 	TCallback callback,
@@ -678,15 +678,14 @@ template <typename TItem, typename TCallback, typename TErrorHandler>
 	const int_t<> &timeout_ms,
 	const shared_p<batch_state> &state
 )
-	-> result_vector_t<callback_result_t<TCallback, TItem>>
+	-> std::vector<result_slot_t<callback_result_t<TCallback, TItem>>>
 {
 	using result_t = callback_result_t<TCallback, TItem>;
-	using output_t = result_vector_t<result_t>;
 
 	const auto item_count = items.size();
-	output_t results;
+	std::vector<result_slot_t<result_t>> value_results(item_count);
 	if (item_count == 0) {
-		return results;
+		return value_results;
 	}
 
 	const auto requested_workers = workers.native_value();
@@ -700,11 +699,6 @@ template <typename TItem, typename TCallback, typename TErrorHandler>
 	const auto timeout = detail::make_timeout_policy(timeout_ms);
 	state->total.store(static_cast<std::int64_t>(item_count), std::memory_order_relaxed);
 	state->queued.store(static_cast<std::int64_t>(item_count), std::memory_order_relaxed);
-	std::atomic<std::size_t> void_result_count{0};
-	std::vector<result_slot_t<result_t>> value_results;
-	if constexpr (!std::is_void_v<result_t>) {
-		value_results.resize(item_count);
-	}
 
 	detail::coordinator_dispatch dispatch(worker_count);
 	execute_worker_batch(worker_count, [&](std::size_t worker_index) {
@@ -736,7 +730,7 @@ template <typename TItem, typename TCallback, typename TErrorHandler>
 								state->stop_requested.store(true);
 								throw_timeout();
 							}
-							void_result_count.fetch_add(1, std::memory_order_relaxed);
+							value_results.at(index) = null;
 						} else {
 							auto value = invoke_callback(callback, items.at(index), worker_context);
 							if (is_timed_out(timeout)) {
@@ -799,19 +793,20 @@ template <typename TItem, typename TCallback, typename TErrorHandler>
 
 	state->done.store(true);
 
-	if constexpr (std::is_void_v<result_t>) {
-		const auto count = void_result_count.load(std::memory_order_relaxed);
-		for (std::size_t index = 0; index < count; ++index) {
-			results.push_back(null);
-		}
-	} else {
-		for (auto &entry : value_results) {
-			if (entry.has_value()) {
-				results.push_back(std::move(entry.value()));
-			}
-		}
-	}
+	return value_results;
+}
 
+// Dense output is a final placement choice; custom placement retains original slots.
+template <typename TItem, typename TCallback, typename TErrorHandler>
+[[nodiscard]] auto run_vector_with_state(const vector_t<TItem> &items, const int_t<> &workers,
+	TCallback callback, TErrorHandler error_handler, const int_t<> &timeout_ms,
+	const shared_p<batch_state> &state) -> result_vector_t<callback_result_t<TCallback, TItem>>
+{
+	auto slots = run_vector_slots_with_state(items, workers, callback, error_handler, timeout_ms, state);
+	result_vector_t<callback_result_t<TCallback, TItem>> results;
+	for (auto &slot : slots) {
+		if (slot.has_value()) { results.push_back(std::move(slot.value())); }
+	}
 	return results;
 }
 
@@ -1054,11 +1049,12 @@ template <typename TItem, typename TCallback, typename TIndexCallback>
 	using value_t = detail::task_value_t<result_t>;
 	using key_t = detail::task_value_t<std::invoke_result_t<TIndexCallback, TItem>>;
 
-	auto values = detail::run_vector_with_state(items, workers, callback, null, timeout_ms, shared<detail::batch_state>());
+	auto values = detail::run_vector_slots_with_state(items, workers, callback, null, timeout_ms, shared<detail::batch_state>());
 	hash_t<value_t, key_t> keyed;
 	for (std::size_t index = 0; index < values.size(); ++index) {
+		if (!values.at(index).has_value()) { continue; }
 		key_t key = index_callback(items.at(index));
-		keyed.set(std::move(key), std::move(values.at(index)));
+		keyed.set(std::move(key), std::move(values.at(index).value()));
 	}
 	return keyed;
 }
@@ -1078,10 +1074,11 @@ template <typename TItem, typename TCallback, typename TIndexCallback, typename 
 [[nodiscard]] TResultCollection run(const vector_t<TItem> &items, const int_t<> &workers, TCallback callback, TIndexCallback index_callback, TResultCollection result, TErrorHandler error_handler, const int_t<> &timeout_ms)
 	requires(!std::is_same_v<std::decay_t<TResultCollection>, null_t>)
 {
-	auto values = detail::run_vector_with_state(items, workers, callback, error_handler, timeout_ms, shared<detail::batch_state>());
+	auto values = detail::run_vector_slots_with_state(items, workers, callback, error_handler, timeout_ms, shared<detail::batch_state>());
 	for (std::size_t index = 0; index < values.size(); ++index) {
+		if (!values.at(index).has_value()) { continue; }
 		auto key = index_callback(items.at(index));
-		detail::set_result(result, std::move(key), std::move(values.at(index)));
+		detail::set_result(result, std::move(key), std::move(values.at(index).value()));
 	}
 	return result;
 }
@@ -1171,10 +1168,11 @@ template <typename TItem, typename TCallback, typename TIndexCallback, typename 
 	resource->state->queued.store(static_cast<std::int64_t>(items.size()), std::memory_order_relaxed);
 	resource->coordinator = unique<detail::worker_thread>([resource, items, workers, callback, index_callback, result = std::move(result), error_handler, timeout_ms]() mutable {
 		try {
-			auto values = detail::run_vector_with_state(items, workers, callback, error_handler, timeout_ms, resource->state);
+			auto values = detail::run_vector_slots_with_state(items, workers, callback, error_handler, timeout_ms, resource->state);
 			for (std::size_t index = 0; index < values.size(); ++index) {
+				if (!values.at(index).has_value()) { continue; }
 				auto key = index_callback(items.at(index));
-				detail::set_result(result, std::move(key), std::move(values.at(index)));
+				detail::set_result(result, std::move(key), std::move(values.at(index).value()));
 			}
 			std::lock_guard<std::mutex> lock(resource->lifecycle_mutex);
 			resource->result = detail::box_result_target(std::move(result));
@@ -1489,6 +1487,7 @@ template <typename TItem, typename TKey, typename TCallback, typename TIndexCall
 	hash_t<value_t, index_key_t> keyed;
 	for (auto it = items.begin_entries(); it != items.end_entries(); ++it) {
 		const auto entry = *it;
+		if (!values.has(entry.key()).native_value()) { continue; }
 		index_key_t key = index_callback(entry.value_copy());
 		keyed.set(std::move(key), std::move(values[entry.key()]));
 	}
@@ -1507,6 +1506,7 @@ template <typename TItem, typename TKey, typename TCallback, typename TIndexCall
 			auto values = run_hash_with_state(items, workers, callback, error_handler, timeout_ms, resource->state);
 			for (auto it = items.begin_entries(); it != items.end_entries(); ++it) {
 				const auto entry = *it;
+				if (!values.has(entry.key()).native_value()) { continue; }
 				auto key = index_callback(entry.value_copy());
 				detail::set_result(result, std::move(key), std::move(values[entry.key()]));
 			}
@@ -1531,6 +1531,7 @@ template <typename TItem, typename TKey, typename TCallback, typename TIndexCall
 	auto values = run_hash_with_state(items, workers, callback, error_handler, timeout_ms, shared<detail::batch_state>());
 	for (auto it = items.begin_entries(); it != items.end_entries(); ++it) {
 		const auto entry = *it;
+		if (!values.has(entry.key()).native_value()) { continue; }
 		auto key = index_callback(entry.value_copy());
 		detail::set_result(result, std::move(key), std::move(values[entry.key()]));
 	}

@@ -461,3 +461,34 @@ exact argument conversion, not by relaxing source declaration rules.
 `63c9be3e18c28a67227efb35a22fe277b3e142f4596347b29c94620195424ace`. Final uploaded source hashes were verified on dev002.
 Custom index/result/error callbacks remain outstanding; accepting null placeholders
 does not close those forms or V-R02. Overall remains 56/64 closed.
+
+
+### Custom placement retains input identity — 2026-10-21
+
+The runtime-first custom-index probe exposed an existing omission defect: a dense
+vector result was paired with the original input at the same dense position, so
+omitting item 0 caused item 1's value to use item 0's custom key. Hash custom
+placement also visited omitted input keys through a mutating result lookup.
+
+The existing vector worker owner now returns its position-preserving optional
+slots to custom placement. Default dense placement compacts only at its final
+boundary. Void callbacks use optional null slots, preserving the distinction
+between completed and absent work. Hash placement checks result membership before
+index invocation. Both synchronous and background custom-target paths use this
+rule; no scheduler or transfer-model change is introduced.
+
+The focused runtime probe covers original item identity after omission, coordinator
+index context, vector/hash background placement, prefilled targets, duplicate
+keys, nullable append and negative/sparse vector-key rejection. These runtime
+proofs precede source metadata admission; they do not close V-R02.
+
+Verified on dev002: `task-placement-03` reports no placement mismatches and its
+sanitizer assertions pass; all five `task-placement-runtime` suites pass. The
+25-case default-prelowered source regression initially passed 23 cases and exposed
+a missing void-slot specialization in this refactor. Corrected optional-null slots
+pass both affected cold/warm programs plus contracts in `task-placement-source-02`.
+The original omission observation and intermediate failures are preserved.
+
+[Placement evidence](task-placement-evidence.tar.gz), SHA-256:
+`e1466feb6d2d86be1ff132f93c762b0ba6671acdedcac77c1ee3b2e0a5ab3a6c`. Final uploaded source hashes were verified. No full matrix or
+native compiler rebuild was run; original issue closure remains 56/64.
