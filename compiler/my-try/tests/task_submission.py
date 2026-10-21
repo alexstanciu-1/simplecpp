@@ -74,6 +74,28 @@ for carrier in ['vector', 'hash']:
      output+='echo $r['+('1' if carrier=='vector' else '"a"')+'];'
      expected+='42'
     cases[name]=(items+target+result+output,expected,False)
+# Indexed targets preserve input identity and use coordinator-side placement.
+for carrier in ['vector', 'hash']:
+ for context in [False, True]:
+  for background in [False, True]:
+   for void in [False, True]:
+    for nullable in ([False, True] if carrier=='vector' else [False]):
+     name='indexed-'+carrier+('-context' if context else '')+('-start' if background else '-run')+('-void' if void else '-value')+('-nullable' if nullable else '')
+     items='$v vector<int> = [42];' if carrier=='vector' else '$v hash<int,string> = {"a":42};'
+     callback='function(int $n'+(',task_context $ctx' if context else '')+'):'+('void{}' if void else 'int{return $n;}')
+     target=('$t=task_run($v,1,function(int $n):void{});' if void else ('$t vector<int> = [7];' if carrier=='vector' else '$t hash<int,string> = {"a":7};'))
+     index=('function(int $n):?int{return null;}' if nullable else ('function(int $n):int{return 0;}' if carrier=='vector' else 'function(int $n):string{return "z";}'))
+     call=('task_start' if background else 'task_run')+'($v,2,'+callback+','+index+',$t)'
+     result='$b='+call+';$r=task_join($b);' if background else '$r='+call+';'
+     output='echo count($r),count($t);'
+     expected='21' if nullable or carrier=='hash' else '11'
+     if not void:
+      output+='echo $r['+('1' if nullable else ('0' if carrier=='vector' else '"z"'))+'];'
+      expected+='42'
+     cases[name]=(items+target+result+output,expected,False)
+cases['indexed-coordinator']=('class Counter{public int $n=0;}$c=new Counter();$v vector<int> = [40,42];$t vector<int> = [7];$r=task_run($v,1,fn(int $n):int=>$n,function(int $n)use($c):int{++$c->n;return 0;},$t);echo $c->n,$r[0],$t[0];','2427',False)
+cases['indexed-sparse']=('$v vector<int> = [42];$t vector<int> = [7];task_run($v,1,fn(int $n):int=>$n,fn(int $n):int=>3,$t);','','sparse vector result key')
+cases['indexed-negative']=('$v vector<int> = [42];$t vector<int> = [7];task_run($v,1,fn(int $n):int=>$n,fn(int $n):int=>-1,$t);','','negative vector result key')
 if a.case:
  unknown=set(a.case)-set(cases)
  if unknown: raise ValueError('Unknown cases: '+str(unknown))

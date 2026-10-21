@@ -524,3 +524,32 @@ runs all 16 target contracts have default-prelowered cold/warm evidence.
 `39b4d49d40bfb1b2def56ebd02f4e6967a9e315a60ca6a71c907fc568bd103cc`. Final source hashes were verified on dev002. Historical failures
 remain archived. No full matrix or native compiler rebuild; V-R02 remains partial
 and original issue closure remains 56/64.
+
+
+### Indexed typed targets — 2026-10-21
+
+Existing metadata now describes 24 indexed-target contracts: the 16 same-carrier
+run/start, worker-context and void/value variants, plus nullable-int index results
+for the eight vector-target variants. Index callbacks receive the original item;
+vector keys are canonical int (or nullable int), and hash keys match the declared
+key type. Default target and error-handler combinations remain separate work.
+
+Synchronous index callbacks execute on the calling coordinator and do not cross
+a thread boundary; they may retain an owned handle to caller-visible state.
+Background index callbacks cross into the retained coordinator and therefore carry
+`requires_transfer`. Worker callback and payload checks remain unchanged. Borrowed
+callback transport has not been widened. The source probes cover coordinator
+mutation, duplicate overwrite, unchanged input targets, nullable append, invalid
+negative/sparse keys and background rejection of shared-object captures.
+
+
+Dev002 `task-index-01` passes all 72 checks, including every indexed-target signature
+and previous task source regressions, using default-prelowered cold/warm builds.
+`task-index-sanitized` passes two production sanitizer cases (coordinator state
+capture and background nullable index) plus retained reject/repair/replay and
+indexed edit-versus-fresh parity. Final uploaded source hashes were verified.
+
+[Indexed-target evidence](task-index-evidence.tar.gz), SHA-256:
+`43ab680af5c679ef100d4af02886c3afb88384612559103d5eae3dc5e865d5e0`. This slice changes metadata/tests only, adds no runtime behavior,
+and runs no full matrix or native compiler rebuild. V-R02 remains partial; overall
+original issue closure remains 56/64.
