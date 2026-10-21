@@ -30,7 +30,7 @@ final class Inherited_Lookup
 		}
 		elseif ($kind === preparation_lookup_kind::method_name) {
 			foreach ($members->methods_named($name) as $method) {
-				if (Member_Inventory::is_requirement($method)) { continue; }
+				if (Member_Inventory::is_requirement($method) || Member_Inventory::shadowed_lifecycle($method)) { continue; }
 				$result[] = new inherited_member_candidate($entry, $method);
 			}
 		}

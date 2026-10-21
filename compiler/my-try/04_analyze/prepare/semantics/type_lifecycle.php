@@ -11,11 +11,12 @@ final class Type_Lifecycle_Preparation
 		$count = 0;
 		foreach (Member_Inventory::scopes($owner) as $members) {
 			$context->worker->observe($members, '__destruct', preparation_lookup_kind::method_name, $context->owner);
-			foreach ($members->methods_named('__destruct') as $method) {
-				$count++;
-				$syntax = object_cast($method->callable_syntax(), method_node::class);
-				$facts->destructor_visibility = Member_Preparation::visibility($syntax->modifiers);
-			}
+		}
+		// Selection is shared with declaration/signature preparation; observe hidden pools too.
+		foreach (Member_Inventory::methods($owner) as $syntax) {
+			if ($syntax->name !== '__destruct') { continue; }
+			$count++;
+			$facts->destructor_visibility = Member_Preparation::visibility($syntax->modifiers);
 		}
 		if ($count > 1) { throw new \RuntimeException('Duplicate destructor'); }
 		$base = weakref_get($context->worker->require_relationships($owner, $context)->base);

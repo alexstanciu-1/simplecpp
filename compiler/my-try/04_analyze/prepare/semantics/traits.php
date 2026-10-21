@@ -82,8 +82,17 @@ final class Trait_Preparation
 
 	public static function validate(collected_record $consumer): void
 	{
+		$lifecycle /** hash<bool> */ = [];
 		foreach (Member_Inventory::contributions($consumer) as $member) {
-			self::member(object_cast($member->working->syntax(), declaration_node::class));
+			$syntax = object_cast($member->working->syntax(), declaration_node::class);
+			self::member($syntax);
+			if ($syntax instanceof method_node) {
+				$method = object_cast($syntax, method_node::class);
+				if (($method->name === '__construct') || ($method->name === '__destruct')) {
+					if (isset($lifecycle[$method->name])) { throw new \RuntimeException('Conflicting trait lifecycle method: ' . $method->name); }
+					$lifecycle[$method->name] = true;
+				}
+			}
 		}
 	}
 
@@ -97,10 +106,14 @@ final class Trait_Preparation
 		}
 		elseif ($syntax instanceof method_node) {
 			$method = object_cast($syntax, method_node::class);
-			if (string_byte_starts_with($method->name, '__')) {
+			if (string_byte_starts_with($method->name, '__')
+				&& ($method->name !== '__construct') && ($method->name !== '__destruct')) {
 				throw new \RuntimeException('Trait methods require ordinary concrete bodies');
 			}
 			if (!$method->has_parsed_body()) {
+				if (($method->name === '__construct') || ($method->name === '__destruct')) {
+					throw new \RuntimeException('Trait lifecycle methods require concrete bodies');
+				}
 				$abstract = false;
 				foreach ($method->modifiers as $modifier) {
 					if ($modifier === declaration_modifier::abstract_declaration) { $abstract = true; }

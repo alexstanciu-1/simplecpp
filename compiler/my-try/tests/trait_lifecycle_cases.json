@@ -1,0 +1,82 @@
+{
+  "local-precedence": {
+    "source": "trait T {function __construct(int $n){echo \"wrong\";}function __destruct(){echo \"wrong\";}}class A {use T;function __construct(){echo \"L\";}function __destruct(){echo \"D\";}}function run():void {$a=new A();}run();echo \"\\n\";",
+    "stdout": "LD\n"
+  },
+  "diamond": {
+    "source": "trait T {function __construct(){echo \"C\";}function __destruct(){echo \"D\";}}trait L {use T;}trait R {use T;}class A {use L,R;}function run():void {$a=new A();}run();echo \"\\n\";",
+    "stdout": "CD\n"
+  },
+  "set-defaults": {
+    "source": "trait T {function __construct(set:$n){} function __destruct(){echo $this->n;}}class A {use T; public int $n=7;}data struct B {use T;public int $n=9;}function run():void {$a=new A();$b B={n:4};echo $a->n,\":\",$b->n,\":\";}run();echo \"\\n\";",
+    "stdout": "7:4:47\n"
+  },
+  "parent-init": {
+    "source": "class B {public int $n;function __construct(int $n){$this->n=$n;echo \"B\";}function __destruct(){echo \"b\";}}trait T {function __construct(int $n){parent::__construct($n);echo \"C\";}function __destruct(){echo \"c\";}}class A extends B {use T;}function run():void {$a=new A(8);echo $a->n;}run();echo \"\\n\";",
+    "stdout": "BC8cb\n"
+  },
+  "inherited-constructor": {
+    "source": "trait T {function __construct(){echo \"C\";}function __destruct(){echo \"D\";}}class B {use T;}class A extends B {}function run():void {$a=new A();}run();echo \"\\n\";",
+    "stdout": "CD\n"
+  },
+  "lexical": {
+    "source": "namespace Origin;function value():int{return 7;}trait T {function __construct(){echo value();}function __destruct(){echo value();}}namespace Consumer;function value():int{return 9;}class A {use \\Origin\\T;}function run():void {$a=new A();}run();echo \"\\n\";",
+    "stdout": "77\n"
+  },
+  "private-factory": {
+    "source": "trait T {private function __construct(){echo \"C\";}}class A {use T;static function make():A{return new A();}}$a=A::make();echo \"\\n\";",
+    "stdout": "C\n"
+  },
+  "member-cleanup": {
+    "source": "class Part {function __destruct(){echo \"P\";}}trait T {function __construct(){ $this->part=new Part();echo \"C\";}function __destruct(){echo \"D\";}}class A {use T;Part $part;}function run():void {$a=new A();}run();echo \"\\n\";",
+    "stdout": "CDP\n"
+  },
+  "conflict-__construct": {
+    "source": "trait T {function __construct(){}}trait U {function __construct(){}}class A {use T,U;}",
+    "error": "Conflicting trait lifecycle method"
+  },
+  "conflict-__construct-local": {
+    "source": "trait T {function __construct(){}}trait U {function __construct(){}}class A {use T,U;function __construct(){}}",
+    "error": "Conflicting trait lifecycle method"
+  },
+  "conflict-__destruct": {
+    "source": "trait T {function __destruct(){}}trait U {function __destruct(){}}class A {use T,U;}",
+    "error": "Conflicting trait lifecycle method"
+  },
+  "conflict-__destruct-local": {
+    "source": "trait T {function __destruct(){}}trait U {function __destruct(){}}class A {use T,U;function __destruct(){}}",
+    "error": "Conflicting trait lifecycle method"
+  },
+  "abstract-lifecycle": {
+    "source": "trait T {abstract function __construct();}class A {use T;}",
+    "error": "Trait lifecycle methods require concrete bodies"
+  },
+  "private-constructor": {
+    "source": "trait T {private function __construct(){}}class A {use T;}$a=new A();",
+    "error": "access"
+  },
+  "private-destructor": {
+    "source": "trait T {private function __destruct(){}}class A {use T;}$a=new A();",
+    "error": "destructor"
+  },
+  "static-destructor": {
+    "source": "trait T {static function __destruct(){}}class A {use T;}",
+    "error": "Destructor requires instance access"
+  },
+  "explicit-destructor": {
+    "source": "trait T {function __destruct(){}}class A {use T;}$a=new A();$a->__destruct();",
+    "error": "ordinary method: __destruct"
+  },
+  "private-arguments": {
+    "source": "function next(int &$n):int{$n++;return $n;}trait T {private function __construct(int $a,int $b,int $c=9){echo $a,$b,$c;}}class A {use T;static function make():A{$n=0;return new A(next($n),next($n));}}$a=A::make();echo \"\\n\";",
+    "stdout": "129\n"
+  },
+  "protected-factory": {
+    "source": "trait T {protected function __construct(){echo \"C\";}}class A {use T;}class B extends A {static function make():B{return new B();}}$b=B::make();echo \"\\n\";",
+    "stdout": "C\n"
+  },
+  "shadowed-visibility": {
+    "source": "trait T {private function __construct(){} private function __destruct(){}}class A {use T;function __construct(){echo \"C\";}function __destruct(){echo \"D\";}}function run():void{$a=new A();}run();echo \"\\n\";",
+    "stdout": "CD\n"
+  }
+}

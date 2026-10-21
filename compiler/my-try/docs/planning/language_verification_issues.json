@@ -413,8 +413,16 @@
       "dependencies": [
         "Agree the deferred semantic contract before implementation"
       ],
-      "next_action": "Discuss the responsible ownership/selection contract; do not reclassify as a simple syntax repair.",
-      "simple_batch_eligible": false
+      "next_action": "Closed within the approved bounded contract; retain wider ownership, trait adaptation and prelowering value-probe gaps separately.",
+      "simple_batch_eligible": false,
+      "status": "implemented",
+      "repair_status": "implemented-and-verified",
+      "repair": {
+        "date": "2026-10-21",
+        "report": "trait_ownership.md",
+        "evidence": "trait-ownership-acceptance.tar.gz",
+        "scope": "Trait lifecycle precedence/conflicts and unique/weak selections, with separately approved compiler bridge prerequisites. 54 focused tasks passed on dev002 with 31 default-prelowered production programs, warm reuse and retained recovery. No runtime changes or full matrix."
+      }
     },
     {
       "id": "V-D04",
@@ -430,8 +438,16 @@
       "dependencies": [
         "Agree the deferred semantic contract before implementation"
       ],
-      "next_action": "Discuss the responsible ownership/selection contract; do not reclassify as a simple syntax repair.",
-      "simple_batch_eligible": false
+      "next_action": "Closed within the approved bounded contract; retain wider ownership, trait adaptation and prelowering value-probe gaps separately.",
+      "simple_batch_eligible": false,
+      "status": "implemented",
+      "repair_status": "implemented-and-verified",
+      "repair": {
+        "date": "2026-10-21",
+        "report": "trait_ownership.md",
+        "evidence": "trait-ownership-acceptance.tar.gz",
+        "scope": "Trait lifecycle precedence/conflicts and unique/weak selections, with separately approved compiler bridge prerequisites. 54 focused tasks passed on dev002 with 31 default-prelowered production programs, warm reuse and retained recovery. No runtime changes or full matrix."
+      }
     },
     {
       "id": "V-D05",

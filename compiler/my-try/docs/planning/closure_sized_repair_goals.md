@@ -61,6 +61,7 @@ promises. Review contracts and feasibility before freezing each goal.
 
 | Batch | Original issues | Reason to discuss together |
 | --- | --- | --- |
+| Trait lifecycle and ownership selections — completed | V-D03, V-D04 | [Closeout](trait_ownership.md): 53/64 resolved, +3.125 points. Default prelowering and approved compiler bridges; no runtime changes. |
 | Regex contract and provider bindings — completed | V-R04, V-R09 | [Closeout](regex_replacement.md): 31/64 closed, +3.125 points. V-R05 callback ABI remains a separate discussion. |
 | Public platform and compatibility aliases — completed | V-D12, V-D09 | [Closeout](platform_alias.md): 33/64 closed, +3.125 points. Qualified aliases preserve source types; platform/environment contracts verified on dev002. |
 | Boxed/selection operators — completed | V-L09, V-L10 | [Closeout](boxed_selection.md): 35/64 closed, +3.125 points. Two runtime prerequisites separately authorized. BS-R01 was tracked separately and subsequently closed in the compact-layout batch. |

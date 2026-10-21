@@ -16,6 +16,7 @@ final class CPP_Runtime_Operations
 	{
 		// Preserve the existing identity seed while retiring the old indexed-write fields.
 		$key = $request->kind_name() . ':' . $request->spelling . ':store';
+		if ($request->ownership_observation !== null) { $key .= ':' . enum_name($request->ownership_observation); }
 		if ($request->callsite !== null) { $key .= ':callsite=' . json_quote($request->callsite->path) . ':' . $request->callsite->line; }
 		if ($request->property !== null) {
 			$property_context = new cpp_generation_context();
@@ -48,7 +49,7 @@ final class CPP_Runtime_Operations
 
 	/** Inputs designate existing objects. Calling code owns sequencing and lifetime. */
 	public static function invoke(cpp_runtime_operation $request, array $expressions /** vector<string> */,
-		cpp_generation_context $context): string
+		cpp_generation_context $context, string $construction_key = ''): string
 	{
 		$entry = self::reference($request, $context);
 		$inputs /** Storage<canonical_type_use> */ = $request->inputs;
@@ -59,6 +60,10 @@ final class CPP_Runtime_Operations
 			$parts[] = ($context->concrete_types() && (($request->kind === cpp_runtime_operation_kind::construct_call)
 				|| (($request->kind === cpp_runtime_operation_kind::take) && ($position === 0))))
 				? '&(' . $operand->expression . ')' : self::address($operand, $context);
+		}
+		if (CPP_Source_Calls::construction_key_type($request) !== '') {
+			if ($construction_key === '') { throw new \LogicException('Constructor transport requires an authorized key'); }
+			$parts[] = '&(' . $construction_key . ')';
 		}
 		return 'scpp::internal::' . $entry->name . '(' . self::join($parts) . ')';
 	}
@@ -97,6 +102,7 @@ final class CPP_Runtime_Operations
 		if (($request->kind === cpp_runtime_operation_kind::binary)
 			|| ($request->kind === cpp_runtime_operation_kind::conversion)
 			|| ($request->kind === cpp_runtime_operation_kind::observation)
+			|| ($request->kind === cpp_runtime_operation_kind::ownership_observation)
 			|| ($request->kind === cpp_runtime_operation_kind::output)
 			|| ($request->kind === cpp_runtime_operation_kind::runtime_call)
 			|| ($request->kind === cpp_runtime_operation_kind::take)
@@ -130,6 +136,13 @@ final class CPP_Runtime_Operations
 			$arguments[] = 'a' . $position;
 			$pointers[] = 'p' . $position;
 		}
+		$key_type = CPP_Source_Calls::construction_key_type($request);
+		if ($key_type !== '') {
+			if ($signature !== '') { $signature .= ', '; }
+			$signature .= 'const void* construction_key';
+			$unpack .= 'const auto& construction_key_value = *static_cast<const ' . $key_type . '*>(construction_key); ';
+			$pointers[] = 'construction_key';
+		}
 		$expression = self::native_operation($request, $arguments, $native_context);
 		$output = 'void';
 		$declaration_headers /** hash<bool> */ = [];
@@ -142,6 +155,7 @@ final class CPP_Runtime_Operations
 			$declaration_headers = $mapping->headers;
 			$body = $unpack . 'return ' . $expression . ';';
 			if ((($request->kind === cpp_runtime_operation_kind::observation)
+				|| ($request->kind === cpp_runtime_operation_kind::ownership_observation)
 				|| ($request->kind === cpp_runtime_operation_kind::runtime_call)
 				|| ($request->kind === cpp_runtime_operation_kind::property_read)
 				|| ($request->kind === cpp_runtime_operation_kind::conversion)) && $mapping->opaque) {
@@ -156,6 +170,7 @@ final class CPP_Runtime_Operations
 						? 'void* p' . $position . ' = const_cast<void*>(addresses[' . $position . ']); '
 						: 'const void* p' . $position . ' = addresses[' . $position . ']; ';
 				}
+				if ($key_type !== '') { $reload .= 'const void* construction_key = addresses[' . q_count($inputs) . ']; '; }
 				$body = 'const void* addresses[] = {' . (q_count($pointers) === 0 ? 'nullptr' : self::join($pointers)) . '}; '
 					. 'return ' . $output . '(' . $output . '::operation_result{}, +[](void* destination, const void* input) { '
 					. 'auto addresses = static_cast<const void* const*>(input); ' . $reload . $unpack
@@ -191,6 +206,7 @@ final class CPP_Runtime_Operations
 			$inputs /** Storage<canonical_type_use> */ = $request->inputs;
 			return $position < $inputs->count() - 1;
 		}
+		if (($request->conversion !== null) && ($request->conversion->operation === conversion_operation::unique_upcast)) { return true; }
 		if ($request->call !== null) { return CPP_Source_Calls::mutable_input($request->call, $position, false); }
 		return false;
 	}
@@ -211,6 +227,12 @@ final class CPP_Runtime_Operations
 			return $request->kind === cpp_runtime_operation_kind::property_read
 				? CPP_Wrapper_Transport::provider_vector($property->type, $access, true, $engine, $context)
 				: $access . ' = ' . CPP_Wrapper_Transport::provider_vector($property->type, $arguments[1], false, $engine, $context);
+		}
+		if ($request->kind === cpp_runtime_operation_kind::ownership_observation) {
+			$context->headers['scpp/memory.hpp'] = true;
+			$context->headers['scpp/weak_p.hpp'] = true;
+			return $request->ownership_observation === ownership_observation_kind::derive_weak
+				? '::scpp::weak(' . $arguments[0] . ')' : '(' . $arguments[0] . ').lock()';
 		}
 		if ($request->kind === cpp_runtime_operation_kind::wrapper_presence) {
 			return '(' . $arguments[0] . ').has_value()';
@@ -286,7 +308,12 @@ final class CPP_Runtime_Operations
 					? 'nullable required-value extraction' : 'Result required-value extraction';
 				return '(' . $arguments[0] . ').require_value("' . $message . '")';
 			}
-			return CPP_Declarations::conversion($arguments[0], $conversion, $context);
+			$operand = $arguments[0];
+			if ($conversion->operation === conversion_operation::unique_upcast) {
+				$context->headers['utility'] = true;
+				$operand = 'std::move(' . $operand . ')';
+			}
+			return CPP_Declarations::conversion($operand, $conversion, $context);
 		}
 		if ($request->kind === cpp_runtime_operation_kind::write_key) {
 			$context->headers['scpp/index_write.hpp'] = true;
@@ -380,6 +407,19 @@ final class CPP_Runtime_Operations
 		return self::single_value($request, $expression, $context);
 	}
 
+	public static function ownership_observation(prepared_ownership_observation $facts,
+		canonical_type_use $input, string $expression, cpp_generation_context $context): string
+	{
+		$request = new cpp_runtime_operation(cpp_runtime_operation_kind::ownership_observation);
+		$request->ownership_observation = $facts->operation;
+		$request->result = $facts->type;
+		$inputs /** Storage<canonical_type_use> */ = $request->inputs;
+		$inputs->append($input);
+		// Borrow in the caller's full expression so lock(weak(make())) keeps its owner alive.
+		$operand = 'static_cast<const ' . CPP_Declarations::type($input, $context) . '&>(' . $expression . ')';
+		return self::invoke($request, [$operand], $context);
+	}
+
 	public static function wrapper_presence(canonical_type_use $type, string $expression, cpp_generation_context $context): string
 	{
 		$request = new cpp_runtime_operation(cpp_runtime_operation_kind::wrapper_presence);
@@ -403,7 +443,7 @@ final class CPP_Runtime_Operations
 	{
 		$name = 'runtime_input_' . $context->next_temporary++;
 		$result /** canonical_type_use */ = $request->result;
-		return '([&]() -> ' . CPP_Declarations::type($result, $context) . ' { const auto& ' . $name . ' = '
+		return '([&]() -> ' . CPP_Declarations::type($result, $context) . ' { ' . (self::mutable_input($request, 0) ? 'auto ' : 'const auto& ') . $name . ' = '
 			. $expression . '; return ' . self::invoke($request, [$name], $context) . '; }())';
 	}
 

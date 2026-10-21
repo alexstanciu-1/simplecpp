@@ -113,7 +113,7 @@ shared structs use the same rule; a record paired with an implemented interface
 produces the interface handle. Preparation observes ancestry dependencies.
 
 No unseen common ancestor/interface is inferred for siblings. Such branches must
-first be explicitly normalized to a chosen shared type. Unique/weak joins, inline
+first be explicitly normalized to a chosen handle type. Inline
 record joins, bare-null branch inference and wrapper-payload widening are not
 enabled by this amendment. Match retains its existing result admission.
 
@@ -123,6 +123,21 @@ an empty left selects the fallback, which may itself be empty. The selected hand
 retains its object/control-block identity without allocating or copying a payload.
 Results are values, not reference aliases. Statically invalid joins reject during
 preparation even when the invalid branch is unselected.
+
+Unique handles follow the same supplied-type join rule for full ternary, Elvis and
+coalescing. Named unique alternatives require explicit `move(...)`; owned call or
+selection results already transfer. A selected upcast must satisfy the existing
+virtual-destruction contract. Evaluation consumes only the selected full-ternary
+branch. Elvis/coalescing evaluate and consume their left operand once, then consume
+the fallback only if that left result is empty. The result is an owned value; moves
+leave named source storage empty and preserve payload identity. No payload copy or
+implicit unique-interface conversion is introduced.
+
+Weak handles accept full ternary with matching types or an existing permitted
+same-family upcast, preserving control-block identity and empty/expired state.
+Weak Elvis/coalescing remain rejected: observing usability requires explicit
+`lock(...)`. Cross-family ownership joins and unseen common ancestors remain
+rejected, and match keeps its separate admission rules.
 
 This amendment extends the older exact-type matrices below, not their scalar,
 Result, nullable or boxed-family behavior. It does not claim support in the legacy

@@ -122,7 +122,7 @@ this deferral assigns no new release-blocking classification or language semanti
 | Instance late static binding | Runtime called-type representation, fixed-method selection, forwarding, specialization scheduling and invalidation; hidden virtual machinery is only a proposal |
 | Inline/struct `new static()` | Called-type construction, value representation, result typing and no accidental slicing |
 | Unique/weak downcasts | Ownership-specific checked narrowing and failure/consumption guarantees; weak locking remains explicit |
-| Unique/weak conditional joins | Selection result rules, unique consumption and weak presence without hidden lifetime acquisition |
+| Unique/weak conditional joins — bounded closure 2026-10-21 | [V-D04](../planning/trait_ownership.md) enables unique ternary/Elvis/coalescing and weak full ternary; weak shorthand, sibling inference and match remain separate |
 | Sibling conditional joins | Common-ancestor/interface selection and ambiguity; current shared joins choose only one supplied type |
 | Trait adaptations | Alias/conflict-resolution syntax integrated with consumer-owned members |
 | Abstract constructor contracts | Descendant signature obligations, inheritance, access and ordinary/data construction |
@@ -149,19 +149,11 @@ This deferral assigns no new release-blocking classification.
 
 ### CH15-TRAIT-LIFECYCLE-01 — trait constructors and destructors
 
-Deferred by user on 2026-10-08 from CH11; not part of its next implementation queue.
-Trait constructors/destructors remain disabled. Final review should decide whether
-and when to enable them; no release-blocking classification was assigned by this
-deferral.
-
-Before implementation, reconcile authoritative contracts for local-versus-trait-versus-
-inherited constructor precedence, conflicting trait lifecycle members, constructor
-`set:` bindings to consumer properties, visibility, parent initialization and `data`
-construction. Review destructor selection, nonthrowing cleanup and base/member order;
-do not silently chain multiple trait destructors. The discussed precedence rules were
-proposals, not approved language semantics. Reuse consumer-owned trait method instances
-and the common callable/constructor/destructor paths rather than new lifecycle ASTs.
-Trait adaptation syntax is separate deferred work, not enabled by this debt.
+Originally deferred on 2026-10-08; the approved [V-D03 closeout](../planning/trait_ownership.md)
+implements consumer-local precedence, distinct contribution conflicts, diamond
+identity deduplication and ordinary construction/cleanup contracts. Verified on
+dev002 with default prelowering. Trait adaptations and abstract lifecycle contracts
+remain deferred; no implicit lifecycle chaining was added.
 
 ## Non-blocking follow-ups
 

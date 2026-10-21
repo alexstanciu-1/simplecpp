@@ -1,0 +1,94 @@
+{
+  "unique-elvis-present": {
+    "source": "class A {} $a unique<A> =new A();$b unique<A> =new A();$c=move($a) ?: move($b);echo ($a?1:0),\":\",($b?1:0),\":\",($c?1:0),\"\\n\";",
+    "stdout": "0:1:1\n"
+  },
+  "unique-elvis-empty": {
+    "source": "class A {} $a unique<A>;$b unique<A> =new A();$c=move($a) ?: move($b);echo ($a?1:0),\":\",($b?1:0),\":\",($c?1:0),\"\\n\";",
+    "stdout": "0:0:1\n"
+  },
+  "unique-call-elvisTrue": {
+    "source": "class A {} function make(int &$calls,bool $present):unique<A>{$calls++;$a unique<A>;if($present){$created unique<A> =new A();$a=move($created);}return move($a);}$calls=0;$c=make($calls,true) ?: make($calls,true);echo $calls,\":\",($c?1:0),\"\\n\";",
+    "stdout": "1:1\n"
+  },
+  "unique-call-elvisFalse": {
+    "source": "class A {} function make(int &$calls,bool $present):unique<A>{$calls++;$a unique<A>;if($present){$created unique<A> =new A();$a=move($created);}return move($a);}$calls=0;$c=make($calls,false) ?: make($calls,true);echo $calls,\":\",($c?1:0),\"\\n\";",
+    "stdout": "2:1\n"
+  },
+  "unique-coalesce-present": {
+    "source": "class A {} $a unique<A> =new A();$b unique<A> =new A();$c=move($a) ?? move($b);echo ($a?1:0),\":\",($b?1:0),\":\",($c?1:0),\"\\n\";",
+    "stdout": "0:1:1\n"
+  },
+  "unique-coalesce-empty": {
+    "source": "class A {} $a unique<A>;$b unique<A> =new A();$c=move($a) ?? move($b);echo ($a?1:0),\":\",($b?1:0),\":\",($c?1:0),\"\\n\";",
+    "stdout": "0:0:1\n"
+  },
+  "unique-call-coalesceTrue": {
+    "source": "class A {} function make(int &$calls,bool $present):unique<A>{$calls++;$a unique<A>;if($present){$created unique<A> =new A();$a=move($created);}return move($a);}$calls=0;$c=make($calls,true) ?? make($calls,true);echo $calls,\":\",($c?1:0),\"\\n\";",
+    "stdout": "1:1\n"
+  },
+  "unique-call-coalesceFalse": {
+    "source": "class A {} function make(int &$calls,bool $present):unique<A>{$calls++;$a unique<A>;if($present){$created unique<A> =new A();$a=move($created);}return move($a);}$calls=0;$c=make($calls,false) ?? make($calls,true);echo $calls,\":\",($c?1:0),\"\\n\";",
+    "stdout": "2:1\n"
+  },
+  "unique-upcast-ternary": {
+    "source": "abstract class B {abstract function read():int;function __destruct(){echo \"B\";}}class C extends B {function read():int{return 7;}function __destruct(){echo \"C\";}}function run():void {$c unique<C> =new C();$b unique<B>;$v=true?move($c):move($b);echo ($v?7:0),\":\",($c?1:0),\":\";}run();echo \"\\n\";",
+    "stdout": "7:0:CB\n"
+  },
+  "unique-upcast-elvis": {
+    "source": "abstract class B {abstract function read():int;function __destruct(){echo \"B\";}}class C extends B {function read():int{return 7;}function __destruct(){echo \"C\";}}function run():void {$c unique<C> =new C();$b unique<B>;$v=move($c)?:move($b);echo ($v?7:0),\":\",($c?1:0),\":\";}run();echo \"\\n\";",
+    "stdout": "7:0:CB\n"
+  },
+  "unique-upcast-coalesce": {
+    "source": "abstract class B {abstract function read():int;function __destruct(){echo \"B\";}}class C extends B {function read():int{return 7;}function __destruct(){echo \"C\";}}function run():void {$c unique<C> =new C();$b unique<B>;$v=move($b)??move($c);echo ($v?7:0),\":\",($c?1:0),\":\";}run();echo \"\\n\";",
+    "stdout": "7:0:CB\n"
+  },
+  "unique-nested": {
+    "source": "class A {} $a unique<A> =new A();$b unique<A>;$c unique<A>;$v=true?(move($b)??move($a)):move($c);echo ($v?1:0),\":\",($a?1:0),\"\\n\";",
+    "stdout": "1:0\n"
+  },
+  "weak-temporary": {
+    "source": "class A {} function make():A{return new A();}$held=lock(weak(make()));echo ($held?1:0),\":\";$w=weak(make());echo (lock($w)?1:0),\"\\n\";",
+    "stdout": "1:0\n"
+  },
+  "weak-upcast": {
+    "source": "class B {int $n=7;}class C extends B {}$owner=new C();$c=weak($owner);$b weak<B>;$out=true?$c:$b;echo lock($out)->n,\":\";$owner=null;echo (lock($out)?1:0),\"\\n\";",
+    "stdout": "7:0\n"
+  },
+  "weak-interface": {
+    "source": "interface I {function read():int;}class C implements I {function read():int{return 8;}}$owner=new C();$c=weak($owner);$i weak<I>;$out=true?$c:$i;echo lock($out)->read(),\"\\n\";",
+    "stdout": "8\n"
+  },
+  "unique-no-move-ternary": {
+    "source": "class A {}$a unique<A>;$b unique<A>;$v=true?$a:$b;",
+    "error": "copy"
+  },
+  "unique-no-move-elvis": {
+    "source": "class A {}$a unique<A>;$b unique<A>;$v=$a?:move($b);",
+    "error": "copy"
+  },
+  "unique-no-move-coalesce": {
+    "source": "class A {}$a unique<A>;$b unique<A>;$v=$a??move($b);",
+    "error": "copy"
+  },
+  "weak-reject-elvis": {
+    "source": "class A {}$a weak<A>;$b weak<A>;$v=$a?:$b;",
+    "error": "weak"
+  },
+  "weak-reject-coalesce": {
+    "source": "class A {}$a weak<A>;$b weak<A>;$v=$a??$b;",
+    "error": "weak"
+  },
+  "unique-unsafe-upcast": {
+    "source": "class B {}class C extends B {}$b unique<B>;$c unique<C>;$v=true?move($c):move($b);",
+    "error": "virtual destruction"
+  },
+  "unique-siblings": {
+    "source": "class B {}class C extends B {}class D extends B {}$c unique<C>;$d unique<D>;$v=true?move($c):move($d);",
+    "error": "sibling"
+  },
+  "unique-cross-family": {
+    "source": "class A {}$a unique<A>;$b A;$v=true?move($a):$b;",
+    "error": "same-family"
+  }
+}

@@ -281,7 +281,8 @@ runtime base or conversion target. Contributed methods reuse ordinary parameter,
 reference-return and dispatch contracts, including satisfying interface obligations.
 
 Reject duplicate same-category members between traits or between a trait and the
-consumer, including an authored method replacing a trait method. Property, method and constant
+consumer, including an authored method replacing an ordinary trait method. Lifecycle
+methods use the precedence rule below. Property, method and constant
 names remain separate categories. Existing inherited-member restrictions still apply.
 Public contributed instance properties participate in synthesized `data` inputs under
 the ordinary public-property rules; private properties do not become data inputs.
@@ -319,8 +320,24 @@ retroactively make that method virtual; implementing an inherited abstract slot 
 the ordinary override path. Reference-return cycle checks include requirement-to-
 implementation edges, including descendant implementations of abstract slots.
 
-Adaptations/aliases and trait lifecycle methods remain deferred. This v0.2 contract
-supersedes the legacy blanket rejection of trait syntax, not the deferred extensions.
+### Trait lifecycle methods
+
+Concrete trait constructors/destructors contribute to the consuming class or struct
+through the ordinary lifecycle contracts. A consumer-authored constructor or
+destructor takes precedence over one same-name trait contribution. Two distinct
+trait contributions of the same lifecycle method conflict even when the consumer
+has a local override; reaching the same originating trait through a diamond still
+contributes only once. Hidden contributions remain conflict evidence but do not
+supply executable bodies, lookup results or lifecycle visibility.
+
+Selected methods preserve trait lexical provenance and consumer access context.
+Constructor defaults, `set:` parameters, visibility and explicit parent initialization
+follow ordinary rules. Destructors follow ordinary nonthrowing cleanup and member/base
+cleanup order. No implicit constructor/destructor chaining is added. Bodyless lifecycle
+requirements remain rejected. Adaptations/aliases remain deferred.
+
+This v0.2 contract supersedes the legacy blanket rejection of trait syntax, not the
+deferred extensions.
 
 ## Remaining gates
 
@@ -461,12 +478,13 @@ introduced by the conversion. An abstract declaration alone is insufficient; ord
 nonpolymorphic bases reject, even when the source handle is empty.
 
 Named sources require `move($source)`; an existing unique-valued call result is already
-owned and needs no additional move. The conversion preserves object identity, transfers
+owned and needs no additional move; this also applies to owned selection results. The conversion preserves object identity, transfers
 ownership without allocation or payload copying, and leaves moved-from named storage
 empty. Existing nontransactional evaluation and replacement-cleanup rules remain.
 The admitted boundaries are whole-local/parameter initialization or statement assignment,
-fixed by-value arguments and value returns. References, including readonly references,
-remain invariant. Interface destinations, downcasts, unique conditional joins, implicit
+fixed by-value arguments, value returns and the bounded ownership selections in the
+[selection amendment](conditional_expression_matrix.md#v02-shared-handle-joins). References, including readonly references,
+remain invariant. Interface destinations, downcasts, implicit
 new-to-different-unique destinations, fields and container-element transfers remain out
 of scope. Unique method receiver lifetime support is not enabled by an ownership upcast.
 

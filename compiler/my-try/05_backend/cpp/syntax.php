@@ -72,10 +72,13 @@ final class CPP_Syntax
 		}
 		if ($node instanceof ownership_observation_node)
 		{
-			$this->require_native_operation('ownership observation');
 			$observation = object_cast($node, ownership_observation_node::class);
 			$facts = $observation->require_observation_preparation();
 			$operand = $this->expression($observation->operand);
+			if ($this->context->concrete_types()) {
+				return CPP_Runtime_Operations::ownership_observation($facts,
+					$observation->operand->require_preparation()->type, $operand, $this->context);
+			}
 			if ($facts->operation === ownership_observation_kind::derive_weak) {
 				$this->context->headers['scpp/memory.hpp'] = true;
 				return '::scpp::weak(' . $operand . ')';
@@ -591,7 +594,8 @@ final class CPP_Syntax
 		$temporary = 'coalesce_' . $this->context->next_temporary;
 		$this->context->next_temporary++;
 		$source_type = CPP_Declarations::type($facts->left_extraction->source_type, $this->context);
-		$extracted = CPP_Declarations::conversion($temporary, $facts->left_extraction, $this->context);
+		$left_value = $facts->left_boundary === value_boundary_operation::consume_value ? CPP_Declarations::move($temporary, $node->left->require_preparation()->type, $this->context) : $temporary;
+		$extracted = CPP_Declarations::conversion($left_value, $facts->left_extraction, $this->context);
 		$selected = CPP_Declarations::conversion($extracted, $facts->left_conversion, $this->context);
 		$presence = '';
 		if ($facts->presence === coalesce_presence::wrapper_value) {
@@ -603,7 +607,9 @@ final class CPP_Syntax
 			$presence = '!' . $temporary . '.is_null().native_value()';
 		}
 		elseif ($facts->presence === coalesce_presence::handle_presence) {
-			$presence = 'static_cast<bool>(' . $temporary . ')';
+			$presence = $this->context->concrete_types()
+				? CPP_Runtime_Operations::wrapper_presence($facts->left_extraction->source_type, $temporary, $this->context)
+				: 'static_cast<bool>(' . $temporary . ')';
 		}
 		else {
 			throw new \LogicException('Unsupported prepared coalesce presence');
@@ -627,7 +633,7 @@ final class CPP_Syntax
 			$condition_type = CPP_Declarations::type($facts->truthiness->source_type, $this->context);
 			$prefix = $condition_type . ' ' . $temporary . ' = ' . $condition . '; ';
 			$condition = $temporary;
-			$selected = $temporary;
+			$selected = $facts->true_boundary === value_boundary_operation::consume_value ? CPP_Declarations::move($temporary, $node->condition->require_preparation()->type, $this->context) : $temporary;
 		}
 		else {
 			$branch /** expression_node */ = $node->true_branch;

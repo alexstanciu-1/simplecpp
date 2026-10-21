@@ -1,0 +1,30 @@
+{
+  "baseline": "verification_environment_source_delta.json and its 5378-path complete manifest",
+  "files": {
+    "compiler/my-try/04_analyze/conversions/ownership.php": "8a021bc18f97f3790c6b228c8534a220db666ede651139521e2bf4a8f261f2e2",
+    "compiler/my-try/04_analyze/prepare/data/structures.php": "f5b30cc231e499403663dfad00aeaa47cf182d61652c8746ca0f0524876ff192",
+    "compiler/my-try/04_analyze/prepare/inherited_lookup.php": "910af56ca2f4deba7ee34a79e1213cbb3e5a193397f0467e8eaee78c2296dd5c",
+    "compiler/my-try/04_analyze/prepare/semantics/bodies.php": "b35fb750dbee577ae2bdccc7a0ca87a7d4835e550d0f4c1aa91c0fd136d07fa8",
+    "compiler/my-try/04_analyze/prepare/semantics/coalesce_expressions.php": "bd9fe1e0f1640080b2cb73c5406bc880eb37b72a858382f93df5509dad8938ba",
+    "compiler/my-try/04_analyze/prepare/semantics/conditional_expressions.php": "6f7474ff5b53976514d13119bf2c84ef13088f5de0a609421a3f03e9105bcef6",
+    "compiler/my-try/04_analyze/prepare/semantics/expressions.php": "75042870ce4640fc52907eff7a5840bfd4eaa2c5f18f42c90208c9c2a07ba438",
+    "compiler/my-try/04_analyze/prepare/semantics/reference_cycles.php": "b08d4ddb8f66f73c6d186d2d329c874e44376584008f8bdb06ad7a27a31d9d1f",
+    "compiler/my-try/04_analyze/prepare/semantics/selection_results.php": "093c68015c80fcbcbad4b737ac84690b53f7ec4d9b2e61ca49ffd47d10c40f24",
+    "compiler/my-try/04_analyze/prepare/semantics/traits.php": "05c2e8ee9f342d60537e65c5633173811651724cb6352c8c83153c951e165004",
+    "compiler/my-try/04_analyze/prepare/semantics/type_lifecycle.php": "439a188992f79705bb90fb85be1ce3a6385c131cda78e803595a579b2c7d3fc7",
+    "compiler/my-try/05_backend/cpp/declarations.php": "b55bec69831cc002157d1912698baad9eccd638dd5e2255e70bce3312af22c8b",
+    "compiler/my-try/05_backend/cpp/runtime_operations.php": "b0680917189fd675f13a2b36e6412b1393846ef0492ba03b696db97b0630caa0",
+    "compiler/my-try/05_backend/cpp/source_calls.php": "88c7a08665642256da66cffd34183903e35ac1ab1a132e4af58c4fc815f61a66",
+    "compiler/my-try/05_backend/cpp/structures.php": "b2fc9f063066da230c838a0d3300bac117b52a5316d36fd9de8a5516ae42eb22",
+    "compiler/my-try/05_backend/cpp/syntax.php": "e3ded1db3fa3d9b75fe463852a134befaff73f5af3aeb662bd4662f5611855bd",
+    "compiler/my-try/compiler/traits/inventory.php": "918466726e1b653692b28a9d814489dea9a17b899d051a817cf25f3e54893662",
+    "compiler/my-try/tests/ownership_selection_cases.json": "7ad387cdf391ec72be48547b668d8929e3ee22cb7a359f118eb4f35f95425f0a",
+    "compiler/my-try/tests/shared_joins.php": "63c9c7bb580ca6ef0c5c64cf99a7b24f18a4e273feb44179628a0cb42838b2f6",
+    "compiler/my-try/tests/trait_instances.php": "208b0862ad4eb613d83284e6c106cd7f380b8e4373572c3be6953304382dd9bb",
+    "compiler/my-try/tests/trait_lifecycle_cases.json": "8079a61789fc978747d727f215ffd51835bc3f2d01cb2dcd51e4cc653e9f63ca",
+    "compiler/my-try/tests/trait_ownership.py": "7928ef0aef13769d4b3b35bec15b0bbeec61de3054d9da2954f933093f46e101",
+    "compiler/my-try/tests/trait_ownership_recovery.php": "b04508b8c7b266548636e1d4af3a13dad9cd491877b9f7161287885646b027df",
+    "compiler/my-try/tests/trait_ownership_runtime.cpp": "82d93d0bcf8c481e67774461f599f270a7463e7bb9a5f610f453417a22f6e14a",
+    "runtime/metadata/README.md": "749ce8e96cf10b6e79a21a2f040512028fc9437efdfa20b5a5bd4ef45e068787"
+  }
+}

@@ -37,10 +37,29 @@ final class Member_Inventory
 			if ($member->working instanceof collected_method) {
 				$contributed = object_cast($member->working, collected_method::class);
 				if (!$contributed->callable_syntax()->has_parsed_body()) { continue; }
+				// Analysis validates conflicts across all contributions, including hidden ones.
+				if (self::shadowed_lifecycle($contributed)) { continue; }
 				$result->append(object_cast($member->working->syntax(), method_node::class));
 			}
 		}
 		return $result;
+	}
+
+	/** Local lifecycle declarations hide contributed bodies, not conflict evidence. */
+	public static function shadowed_lifecycle(collected_method $method): bool
+	{
+		if (($method->name !== '__construct') && ($method->name !== '__destruct')) { return false; }
+		$owner = $method->declaring_type();
+		$contributed = false;
+		foreach (self::contributions($owner) as $member) {
+			if ($member->working === $method) { $contributed = true; break; }
+		}
+		if (!$contributed) { return false; }
+		$authored /** Storage<method_node> */ = $owner->syntax()->methods;
+		foreach ($authored as $local) {
+			if ($local->name === $method->name) { return true; }
+		}
+		return false;
 	}
 
 	/** Bodyless contributions are contracts, not competing method implementations. */

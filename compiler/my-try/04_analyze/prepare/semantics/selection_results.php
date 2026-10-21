@@ -5,18 +5,17 @@ namespace scpp\compiler;
 
 final class Selection_Result_Preparation
 {
-	/** Choose one supplied shared type, never an unseen common ancestor or destination. */
-	public static function shared_join(canonical_type_use $left, canonical_type_use $right,
+	/** Choose one supplied same-family ownership type, never an unseen common ancestor or destination. */
+	public static function ownership_join(canonical_type_use $left, canonical_type_use $right,
 		preparation_context $context): canonical_type_use
 	{
 		$left_role = Ownership_Conversions::role($left);
 		$right_role = Ownership_Conversions::role($right);
 		if (($left_role === null) || ($right_role === null)) {
-			throw new \RuntimeException('Shared selection requires two shared handles');
+			throw new \RuntimeException('Ownership selection requires two same-family handles');
 		}
-		if (($left_role->ownership_family() !== ownership_kind::shared)
-			|| ($right_role->ownership_family() !== ownership_kind::shared)) {
-			throw new \RuntimeException('Shared selection requires two shared handles');
+		if ($left_role->ownership_family() !== $right_role->ownership_family()) {
+			throw new \RuntimeException('Ownership selection requires two same-family handles');
 		}
 		if ($left->matches($right)) { return $left; }
 		$relationships = new Conversion_Relationships($context);
@@ -26,7 +25,7 @@ final class Selection_Result_Preparation
 		if ($relationships->is_subtype(Ownership_Conversions::payload($right), Ownership_Conversions::payload($left))) {
 			return $left;
 		}
-		throw new \RuntimeException('Shared selection requires one branch type to be a base of the other; sibling inference is deferred');
+		throw new \RuntimeException('Ownership selection requires one branch type to be a base of the other; sibling inference is deferred');
 	}
 
 	/** Exact selected payloads for nullable joins; does not broaden match admission. */

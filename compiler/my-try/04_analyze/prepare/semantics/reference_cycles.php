@@ -42,6 +42,7 @@ final class Reference_Cycles
 					if (Callable_Inventory::deferred_body($definition)) { continue; }
 					if ($definition instanceof collected_method) {
 						if (object_cast($definition, collected_method::class)->declaring_type() instanceof collected_trait) { continue; }
+						if (Member_Inventory::shadowed_lifecycle(object_cast($definition, collected_method::class))) { continue; }
 					}
 					$index = q_count($vertices);
 					$by_definition[$definition] = $index;

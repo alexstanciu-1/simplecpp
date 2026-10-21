@@ -12,19 +12,26 @@ final class Conditional_Expression_Preparation
 		$context->statement_assignment = false;
 		try
 		{
-			$condition = Expression_Preparation::prepare($syntax->condition, $context);
+			$condition = Expression_Preparation::prepare_for_consumer($syntax->condition, $context, null,
+				$syntax->true_branch === null ? expression_consumer::selection_branch : expression_consumer::value);
 			$facts = new prepared_conditional_expression();
 			$facts->truthiness = Condition_Truthiness::decide($condition->type);
 			$selected /** prepared_expression */ = $condition;
 			if ($syntax->true_branch !== null) {
 				$branch /** expression_node */ = $syntax->true_branch;
-				$selected = Expression_Preparation::prepare($branch, $context);
+				$selected = Expression_Preparation::prepare_for_consumer($branch, $context, null, expression_consumer::selection_branch);
 			}
-			$fallback = Expression_Preparation::prepare($syntax->fallback, $context);
+			$fallback = Expression_Preparation::prepare_for_consumer($syntax->fallback, $context, null, expression_consumer::selection_branch);
 			$facts->type = self::join($selected->type, $fallback->type, $context);
 			$relationships = new Conversion_Relationships($context);
 			$facts->true_conversion = Conversion_Preparation::decide($selected->type, $facts->type, conversion_context::conditional_branch, $relationships);
 			$facts->fallback_conversion = Conversion_Preparation::decide($fallback->type, $facts->type, conversion_context::conditional_branch, $relationships);
+			$facts->true_boundary = Value_Boundary_Preparation::decide_value($facts->type, $facts->true_conversion, $context, $selected);
+			$facts->fallback_boundary = Value_Boundary_Preparation::decide_value($facts->type, $facts->fallback_conversion, $context, $fallback);
+			$role = Ownership_Conversions::role($facts->type);
+			if (($role !== null) && ($role->ownership_family() === ownership_kind::unique)) {
+				$facts->value_origin = expression_value_origin::owned_selection_result;
+			}
 			return $facts;
 		}
 		finally { $context->statement_assignment = $statement_assignment; }
@@ -35,7 +42,7 @@ final class Conditional_Expression_Preparation
 		preparation_context $context): canonical_type_use
 	{
 		if ((Ownership_Conversions::role($selected) !== null) || (Ownership_Conversions::role($fallback) !== null)) {
-			return Selection_Result_Preparation::shared_join($selected, $fallback, $context);
+			return Selection_Result_Preparation::ownership_join($selected, $fallback, $context);
 		}
 		$selected_role = Result_Conversions::role($selected);
 		$fallback_role = Result_Conversions::role($fallback);
