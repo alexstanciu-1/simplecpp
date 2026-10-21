@@ -14,19 +14,20 @@ The catalog's bounded closeouts and Chapter 15 deferrals still
 bound the supported language surface.
 This does not establish exhaustive language, lifetime, incremental or performance coverage.
 
-## PHP-hosted bootstrap after parameter emission repair — 2026-10-21
+## PHP-hosted bootstrap after framework parameter repair — 2026-10-21
 
 Storage registration passes ordinary and prelowered generated-program proofs.
 The converter now emits type-first method/constructor parameters, including
-nullable and generic annotations. The retry (266 PHS files, 1,898,519 bytes including
-framework) reports no converted-compiler parse failures. Parsing stops instead on
-postfix parameters in the separately maintained framework `collections.phs` and
-`processes.phs`; these files are copied by framework assembly, not converted.
-The attempt takes 4.02 seconds, peaks at 162.7 MiB RSS / 140 MiB PHP heap,
-and never reaches semantic preparation or C++ emission. This is not a successful
-self-bootstrap or a full compilation performance measurement. The framework blocker
-remains unmodified; [checkpoint and evidence](../../../../specs/planning/storage_bootstrap_2026_10_21.md)
-record both attempts. The native checkpoints below describe earlier revisions.
+nullable and generic annotations. Framework `collections.phs` and `processes.phs`
+now use the same parameter syntax. The retry (266 PHS files, 1,898,515 bytes including
+framework) completes parsing, then stops during relationship preparation with
+`S2S needs one resolved type for \Iterator` and relationship-target diagnostics.
+The first unresolved base is `child_iterator_i extends \Iterator`.
+The attempt takes 4.36 seconds, peaks at 165.0 MiB RSS / 142 MiB PHP heap,
+and never reaches C++ emission. This is not a successful self-bootstrap or a full
+compilation performance measurement. The preparation blocker remains unmodified;
+[checkpoint and evidence](../../../../specs/planning/storage_bootstrap_2026_10_21.md)
+record the attempts. The native checkpoints below describe earlier revisions.
 
 ## Native prelowering execution — 2026-10-20
 

@@ -1,5 +1,5 @@
 // Portable facade. Native result errors become the supported PHP exception family.
-function scpp_portability_process_spawn(string $executable, $args vector<string>, string $input, int $timeout_ms, string $cwd): process_handle {
+function scpp_portability_process_spawn(string $executable, vector<string> $args, string $input, int $timeout_ms, string $cwd): process_handle {
     $out process_handle;
     $failure error;
     if (!take($out, $failure, process_start($executable, $args, $input, $timeout_ms, $cwd))) {
