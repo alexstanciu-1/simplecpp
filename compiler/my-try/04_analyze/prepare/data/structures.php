@@ -12,6 +12,7 @@ enum expression_value_origin
 	case fresh_construction;
 	case explicit_transfer;
 	case owned_call_result;
+	case owned_selection_result;
 }
 
 /** The immediate consumer selects admission; this does not propagate into child expressions. */
@@ -22,6 +23,7 @@ enum expression_consumer
 	case typed_local_initialization;
 	case consuming_argument;
 	case consuming_return;
+	case selection_branch;
 }
 
 /** Storage admission is independent of type conversion and runtime representation. */
@@ -56,7 +58,8 @@ abstract class prepared_expression {
 	{
 		return ($this->value_origin === expression_value_origin::fresh_construction)
 			|| ($this->value_origin === expression_value_origin::explicit_transfer)
-			|| ($this->value_origin === expression_value_origin::owned_call_result);
+			|| ($this->value_origin === expression_value_origin::owned_call_result)
+			|| ($this->value_origin === expression_value_origin::owned_selection_result);
 	}
 }
 
@@ -382,6 +385,8 @@ enum coalesce_presence
 final class prepared_coalesce_expression extends prepared_expression
 {
 	public coalesce_presence $presence;
+	public value_boundary_operation $left_boundary;
+	public value_boundary_operation $fallback_boundary;
 	/** Source to selected-value domain; identity for direct scalar/mixed inputs. */
 	public conversion_decision $left_extraction;
 	/** Selected-value domain to the joined result; independent of extraction. */
@@ -393,6 +398,8 @@ final class prepared_coalesce_expression extends prepared_expression
 final class prepared_conditional_expression extends prepared_expression
 {
 	public truthiness_decision $truthiness;
+	public value_boundary_operation $true_boundary;
+	public value_boundary_operation $fallback_boundary;
 	public conversion_decision $true_conversion;
 	public conversion_decision $fallback_conversion;
 }

@@ -14,6 +14,7 @@ final class Module_Loader
 	{
 		$result /** Keyed_Storage<module> */ = new Keyed_Storage();
 		$position = 0;
+		$selected_paths /** hash<bool, string> */ = [];
 		foreach ($inputs as $input)
 		{
 			if (isset($result[$input->name])) {
@@ -27,10 +28,28 @@ final class Module_Loader
 			$candidate->logical_name = $input->logical_name;
 			$candidate->position = $position;
 			$candidate->disk_source = true;
+			$candidate->selected_sources = $input->selected_sources;
+			if (!$input->selected_sources && q_count($input->source_paths) !== 0) {
+				throw new \LogicException('Source paths require explicit selection');
+			}
+			foreach ($input->source_paths as $relative) {
+				$full_path = Source_Registry::full_path($candidate, $relative);
+				if ($relative === '' || Source_Registry::normalize($full_path) !== $full_path
+					|| !Module_Loader::contains_path($candidate, $full_path) || fs_is_link($full_path)) {
+					throw new \LogicException('Selected source must have a canonical module-relative path: ' . $relative);
+				}
+				if (isset($selected_paths[$full_path])) {
+					throw new \LogicException('Selected source has multiple owners: ' . $full_path);
+				}
+				$selected_paths[$full_path] = true;
+				$candidate->source_paths[] = $relative;
+			}
 			$position++;
 			foreach ($result as $existing) {
 				if (($existing->resolved_path === $resolved) || Module_Loader::contains_path($existing, $resolved) || Module_Loader::contains_path($candidate, $existing->resolved_path)) {
-					throw new \LogicException('Overlapping module roots are not supported');
+					if (!$existing->selected_sources || !$candidate->selected_sources) {
+						throw new \LogicException('Overlapping module roots require explicit source selection');
+					}
 				}
 			}
 			$result->add($candidate->name, $candidate);
@@ -42,7 +61,16 @@ final class Module_Loader
 	public static function discover(module $module): void
 	{
 		$revision = Compiler_Lifecycle::next_revision();
-		self::scan($module, '', $revision);
+		if ($module->selected_sources) {
+			foreach ($module->source_paths as $relative) {
+				if (fs_is_file(Source_Registry::full_path($module, $relative))) {
+					self::observe($module, $relative, $revision);
+				}
+			}
+		}
+		else {
+			self::scan($module, '', $revision);
+		}
 		foreach ($module->sources as $source) {
 			if ((int)$source->revision !== $revision) {
 				$source->changes = change_state::deleted;
@@ -73,7 +101,6 @@ final class Module_Loader
 		if (!take_false($names, fs_scan($path))) {
 			throw new \RuntimeException('Cannot scan input folder: ' . $path);
 		}
-		$members /** Keyed_Storage<source_record> */ = $module->sources;
 		foreach ($names as $name)
 		{
 			$relative = $folder . $name;
@@ -87,26 +114,34 @@ final class Module_Loader
 			if (!string_byte_ends_with($name, '.phs') || !fs_is_file($full_path)) {
 				continue;
 			}
-			$mtime = 0;
-			$size = 0;
-			if (!take_false($mtime, fs_mtime($full_path)) || !take_false($size, fs_size($full_path))) {
-				throw new \RuntimeException('Cannot read file metadata: ' . $full_path);
-			}
-			if (!isset($members[$relative])) {
-				$loaded = new file();
-				$loaded->path = $relative;
-				$loaded->disk_source = true;
-				Source_Registry::add($module, $loaded);
-			}
-			$record = $members[$relative];
-			$record->revision = $revision;
-			if ($record->changes === change_state::deleted) {
-				$record->changes = change_state::added;
-			}
-			elseif (($record->file->mtime !== $mtime) || ($record->file->size !== $size)) {
-				if ($record->changes === change_state::unchanged) {
-					$record->changes = change_state::changed;
-				}
+			self::observe($module, $relative, $revision);
+		}
+	}
+
+	/** Reconcile one selected or discovered file through the same stable membership owner. */
+	private static function observe(module $module, string $relative, int $revision): void
+	{
+		$full_path = Source_Registry::full_path($module, $relative);
+		$members /** Keyed_Storage<source_record> */ = $module->sources;
+		$mtime = 0;
+		$size = 0;
+		if (!take_false($mtime, fs_mtime($full_path)) || !take_false($size, fs_size($full_path))) {
+			throw new \RuntimeException('Cannot read file metadata: ' . $full_path);
+		}
+		if (!isset($members[$relative])) {
+			$loaded = new file();
+			$loaded->path = $relative;
+			$loaded->disk_source = true;
+			Source_Registry::add($module, $loaded);
+		}
+		$record = $members[$relative];
+		$record->revision = $revision;
+		if ($record->changes === change_state::deleted) {
+			$record->changes = change_state::added;
+		}
+		elseif (($record->file->mtime !== $mtime) || ($record->file->size !== $size)) {
+			if ($record->changes === change_state::unchanged) {
+				$record->changes = change_state::changed;
 			}
 		}
 	}

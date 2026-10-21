@@ -5,6 +5,10 @@ Verification closeout: evidence through checkpoint 75. All planned checks and di
 
 The frozen v0.2 audit has 105 passed checks, 5 failed, 6 blocked and 3 explicitly deferred across 36 language families. A passed audit check can establish a complete inventory or reproduce intended rejection; it does not necessarily mean every feature in that family is implemented. No compiler/runtime fixes were made by this verification goal.
 
+Current follow-up repair status: [53/64 resolved (82.8125%)](language_repair_progress.md),
+including [V-D03/V-D04](trait_ownership.md). The audit tables below retain
+the original frozen results; dated repair closeouts record subsequent changes.
+
 ## Scope and provenance
 
 Tests ran on `alex-ai@dev002.travelfuse.ro` under `/home/alex-ai/language-verification/20261018`, using shared runners and at most 32 workers. Local work processes evidence and reports only. The frozen source includes the previously approved S01/scalar working-tree changes; HEAD alone is not its identity.
@@ -838,3 +842,34 @@ concrete-closure adaptation, owned concrete capture and reference mutation. Its
 original fixture remains unchanged and rejected. Owned erased callable storage
 still rejects for missing concrete callback transport, explicitly kept separate.
 No runtime implementation change, full matrix or native compiler rebuild ran.
+
+## Project/startup closeout — 2026-10-21
+
+The [project/startup acceptance](project_startup_metadata.md) closes V-P01 and
+reconciles V-D10: **47/64 original issues resolved (73.4375%), 17 open**. This adds
+one capability repair and one intentional-contract reconciliation, +3.125 points.
+The dated V-P01/V-D10 findings above remain historical, not current blockers.
+
+LV25.004 and the bounded project/provider portion of LV33.003 now pass through
+`--project`, with transitive/diamond composition, export/dependency policies,
+optional runtime selection and default-prelowered execution. The checked
+run/current-build reader remains separate. LV27.003 is reconciled with the immutable
+startup contract: live replacement stays unsupported; source edits preserve loaded
+metadata and a new process observes changed constraints. Native compiler parity,
+full packaging/build-planner parity and wider deferred issues are not implied.
+
+## S10 / V-R06 checked spans and stable hashing — 2026-10-21
+
+The [span/hash closeout](span_hash.md) implements both original issues through
+bounded runtime and metadata changes, with default-prelowered dev002 acceptance.
+Current total: **49/64 resolved (76.5625%), 15 open**. Historical audit findings above
+remain unchanged; uint64 equality and explicit copyable-buffer move remain separate.
+
+## V-E01 / V-E03 host and database verification — 2026-10-21
+
+The [verification environment closeout](verification_environment.md) reconciles
+V-E01 and supplies V-E03’s missing isolated MySQL integration harness. Both original
+native tests and the real-provider/cleanup checks pass; default-prelowered production
+cold/warm execution passes separately. **53/64 resolved (82.8125%), 13 open**.
+Historical blocked snapshots remain unchanged; no strict-PHS MySQL admission or
+wider provider behavior is inferred. Harness, fixtures and docs only.

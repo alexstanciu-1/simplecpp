@@ -115,7 +115,7 @@ try {
 		(new Preparation_Worker(Model::$language_scope))->discard_sources($collision_sources);
 	}
 	instance_rejection('$number = 4;', 'explicit types');
-	instance_rejection('public function __construct() {}', 'ordinary concrete bodies');
+	instance_rejection('public function __clone(): void {}', 'ordinary concrete bodies');
 	instance_rejection('public function &select(int &$value): int { return $this->select($value); }', 'recursive reference-return cycles');
 	// Snapshot owns token rows, so origin compaction cannot rebase working spans.
 	$working_tokens = $first->parsed->tokens;

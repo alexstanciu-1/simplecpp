@@ -37,7 +37,14 @@ Rules:
 - `source_buffer_empty` returns an owned zero-length source buffer;
 - source-language offsets and lengths accept normal `int` values and are
   range-checked to runtime storage width;
-- `source_buffer_release` invalidates spans derived from that buffer;
+- release, destruction, replacement and move-from invalidate all spans derived
+  from that buffer; move assignment also invalidates the destination's old spans;
+- every span read, length query, hash or builder append validates the owner and
+  throws the existing runtime error for an expired/default span, even if empty;
+- buffer copies own independent bytes and invalidation state; span copies observe
+  the same owner; self-copy and self-move assignment are no-ops;
+- spans do not extend the byte owner's lifetime. Raw C++ string views are internal
+  synchronous borrows only; concurrent mutation/access is outside this contract;
 - byte reads return `uint8` in compiler metadata, corresponding to strict
   source spelling `byte` where that alias is exposed.
 
@@ -71,9 +78,10 @@ Rules:
 ### v0.2 owning source-module admission
 
 The opt-in `source` metadata module admits `source_buffer`,
-`source_line_index`, and `source_location` as opaque, copyable runtime value
-types, with the thirteen non-span helpers above. Copies are independent values,
-not implicitly shared class handles. No public field layout, automatic Result
+`source_line_index`, `source_location`, and checked `byte_span` as opaque, copyable
+runtime value types, with the buffer/index/location and span helpers above.
+Owning-value copies are independent; span copies observe the same buffer state.
+These are not implicitly shared class handles. No public field layout, automatic Result
 payload capability, or generic count/empty capability is exposed.
 
 `source_buffer_take` takes a writable string reference and leaves it empty;
@@ -88,12 +96,14 @@ CRLF is one delimiter. EOF is an accepted offset. Reverse mapping preserves the
 existing file-range check (it does not impose a separate same-line column bound);
 arithmetic must not wrap to make an invalid column appear in range.
 
-`byte_span`, span-producing/consuming calls, and builder span append remain
-unavailable in this v0.2 catalog. The current runtime view retains a raw owner
-pointer: generation checks cannot establish safety after owner destruction and
-do not cover every replacement/move. Enabling these requires an agreed borrow
-and invalidation model, not merely a copyable type row. This does not remove
-the older provider API or assert that its existing lifetime limitations are solved.
+`source_buffer_span` uses an ordinary readonly reference to the actual stable
+buffer place; it must not borrow a temporary copy. Offsets and lengths preserve
+ordinary left-to-right evaluation. The opt-in source module depends on strings
+and registers span hashes and builder span append. Span append copies the selected
+bytes into the builder, which remains valid after owner invalidation. Providers
+use existing concrete-boundary metadata under default template prelowering.
+No general borrow checker, Result payload admission or explicit source-language
+move support for these copyable values is added by this contract.
 
 ## Stable Hash
 
@@ -101,22 +111,33 @@ Simple C++ exposes:
 
 ```text
 hash_string(string): string
+hash_bytes(byte_span): string
 stable_hash_string_u64(string): uint64
 stable_hash_bytes_u64(byte_span): uint64
 ```
 
-`hash_string` remains the legacy/public 16-hex string helper.
+`hash_string` and `hash_bytes` return exactly sixteen lowercase hexadecimal
+characters, including leading zeroes. The uint64 helpers return the same numeric
+hash. All four use **64-bit FNV-1a** over exact unsigned bytes: start at
+14695981039346656037; for each byte XOR it into the accumulator, then multiply by
+1099511628211 modulo 2^64. No terminator, Unicode normalization or host hash is
+involved. String and span inputs with identical bytes must agree across processes,
+compilers and standard libraries. Empty input is `cbf29ce484222325`; `abc` is
+`e71fa2190541574b`.
 
-`stable_hash_string_u64` and `stable_hash_bytes_u64` are the preferred helpers
-for compiler-owned cache/model keys when the compiler can version the key
-format itself. Byte-span and string hashing must agree for the same byte
-sequence.
-
-Consumers should prefix persisted key formats, for example:
+This replaces the incompatible historical std::hash-derived algorithm. Persisted
+consumers must invalidate old entries and use the new namespace:
 
 ```text
-stable_hash_u64:v1:<uint64>
+stable_hash_u64:fnv1a64:v2:<16 lowercase hex digits>
 ```
+
+The native `scpp::stable_hash::versioned_key` helper constructs that format.
+Unversioned/v1 keys must never be interpreted as v2 hits. No active in-repository
+persisted consumer of these helpers was found in the S10/V-R06 audit; historical
+compiler/cache artifacts retain their old evidence. Existing SHA-256 native build
+keys and hash-table key hashing are separate and unchanged. External consumers
+must migrate their persisted namespaces when adopting this contract.
 
 This helper is not a cryptographic security hash.
 
@@ -171,9 +192,8 @@ Rules:
 ### v0.2 metadata-backed builder calls
 
 The v0.2 strings catalog admits both builder value types and the helper surface
-above except `text_builder_append_byte_span`, whose source-view type remains a
-separate prerequisite. These are runtime carrier values, not implicitly shared
-source-class objects. Ordinary assignment and value parameters copy builder state;
+above; `text_builder_append_byte_span` is enabled by the opt-in source module.
+These are runtime carrier values, not implicitly shared source-class objects. Ordinary assignment and value parameters copy builder state;
 later mutation of a copy does not change the original. Explicit source reference
 aliases and reference parameters operate on the original storage.
 

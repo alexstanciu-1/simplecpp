@@ -216,7 +216,8 @@ final class Body_Preparation
 			$binding->type = $previous[0]->storage_type();
 			if ($value !== null) {
 				if (($value->value_origin === expression_value_origin::explicit_transfer)
-					|| ($value->value_origin === expression_value_origin::owned_call_result)) {
+					|| ($value->value_origin === expression_value_origin::owned_call_result)
+					|| ($value->value_origin === expression_value_origin::owned_selection_result)) {
 					Move_Preparation::require_whole_place(Reference_Preparation::storage_place($previous[0]));
 				}
 			}

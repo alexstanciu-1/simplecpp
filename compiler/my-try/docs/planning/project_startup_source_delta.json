@@ -1,0 +1,27 @@
+{
+  "base": "scalar_debug_source_delta.json over tokenizer_io_source_final.json",
+  "inputs": 5367,
+  "delta": {
+    "bin/bootstrap.php": "cea8516f6ecfbb061acb675939834725b9cfa950276d10c57f0f5ac9aaf019a5",
+    "bin/debug/debug_call_harness.php": "9e24b0426c0ed613c2e37e5736425d9ebcd790480fb729a803f3d869a5021aef",
+    "bin/debug/debug_command.php": "70f98a211d9a10f8c49e1d2bfee002a8111209894130eb662d9496a029399bfb",
+    "bin/debug/debug_event_stream.php": "f530d9cc3e205dc7f1a24a09b3431119765106929f49aaf3af3920e24e645942",
+    "bin/debug/debug_plan.php": "66576a1d5d18d77e9bbddb872767af642211594435bec25b0d886963b2087673",
+    "bin/debug/debug_session_io.php": "18b228e51630392c958153376f5eb2bf1a899ad3f82a2c7674b813d060b05fae",
+    "bin/debug/debug_slots.php": "bb199eb9f2831aaa971af31e9ca9329b455298d917f0e97f48fbad716e6639e2",
+    "bin/debug/debug_source_rewriter.php": "7823471c7579bae9ec799e94b3f134501cfc8382defd32f06132aa9f99693a97",
+    "bin/project_services.php": "a9ab8f62b469e58cdef63f8411eede322bab18e2eef0bf89ea8f6b52f23a9367",
+    "compiler/my-try/01_prepare_inputs/module.php": "f56f4bbed6d096674e69b50ea98adede95325db5236e82da50b3c2f49facf38a",
+    "compiler/my-try/01_prepare_inputs/structures.php": "d1b51de1060cece0ef48af58025558d8da4e61a1f6ca451bcc69acb7bb75fbc6",
+    "compiler/my-try/04_analyze/prepare/data/project_evidence.php": "83212ca9914dc19cade8657baaa8801a9e34d9b0293222bf25a5c33f7ac4480b",
+    "compiler/my-try/04_analyze/prepare/project_evidence.php": "7a9a066cda8cbddd683d2db77f7c701b3c92657512ae84da26150e2dc91733c7",
+    "compiler/my-try/boot.php": "9881c7e50da0b77381b9cdd3ddd8b237aaa10c47036c888f85b7329fb97e42e0",
+    "compiler/my-try/compiler/compile.php": "a19883373e2117fb0afe5f3f27671a29efcd5f7b5e4d5a4276d10bd7a7795824",
+    "compiler/my-try/compiler/sources.php": "848551285bdfac98892eac811a82b4857b8f5caccbe9a4b6a5097c7e7758b59c",
+    "compiler/my-try/host/project.php": "4001f3b97425c76e14440f6150bb4f6f5947e304af7a3661b642ff675e32c8e3",
+    "compiler/my-try/main.php": "0f8816c8eade431ba09da96a8bc7bae04b31a25f96e877c7a57c0c1e2bbc13bc",
+    "compiler/my-try/tests/project_compilation.py": "8a1071094f5a5f505b2290395f0e4d022318d794d2160350f72522e379f63b0a",
+    "compiler/my-try/tests/project_source_selection.php": "b1359e117563f18781e2cbf7e0443b68e3b112aea2a45fb52e4450e2c3bc3878",
+    "compiler/my-try/tests/startup_metadata.php": "2201a9bec710645d0bbff94fb372363aaa781cf0da8b03d95d22c2420d90d91d"
+  }
+}

@@ -55,7 +55,7 @@ foreach (['true ? $c : $d', '$c ?: $d', '$c ?? $d'] as $expression) {
 }
 foreach ([
 	'class C {} $a unique<C>; $b unique<C>; $out = true ? $a : $b;',
-	'class C {} $a weak<C>; $b weak<C>; $out = true ? $a : $b;',
+	'class C {} $a weak<C>; $b weak<C>; $out = $a ?: $b;',
 	'class C {} $a C; $out = $a ?? null;',
 	'struct B {} struct C extends B {} $a B; $b C; $out = true ? $a : $b;',
 ] as $source) {

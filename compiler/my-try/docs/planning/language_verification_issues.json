@@ -71,10 +71,17 @@
         "verification/results/wave-01/runtime_assets/logs/build.stderr"
       ],
       "finding": "v0.1 needs PHP8.4/8.5 plus ext-ast; PHP8.5 satisfies this. v0.2 tokenization uses mbstring present in PHP8.2. Production process launcher needs pcntl_waitid (PHP8.4+), absent in PHP8.2.",
-      "next_action": "Resolved for tested integrations with privately extracted PHP8.5 mbstring; runtime assets, native invalidation, runtime module build, native cache and publication pass. Preserve setup failures separately.",
+      "next_action": "Closed for the tested host and bounded integration scope. Keep strict-PHS MySQL exposure and wider provider behavior separate.",
       "dependencies": [],
       "simple_batch_eligible": false,
-      "status": "resolved-environment"
+      "status": "resolved-environment",
+      "repair_status": "reconciled-and-verified",
+      "repair": {
+        "date": "2026-10-21",
+        "report": "verification_environment.md",
+        "evidence": "verification-environment-acceptance.tar.gz",
+        "scope": "Harness/fixtures/docs only; stage preflight, default-prelowered production cold/warm, two unchanged native MySQL tests and isolated real-provider/cleanup proofs on dev002. Historical findings retained."
+      }
     },
     {
       "id": "S12",
@@ -406,8 +413,16 @@
       "dependencies": [
         "Agree the deferred semantic contract before implementation"
       ],
-      "next_action": "Discuss the responsible ownership/selection contract; do not reclassify as a simple syntax repair.",
-      "simple_batch_eligible": false
+      "next_action": "Closed within the approved bounded contract; retain wider ownership, trait adaptation and prelowering value-probe gaps separately.",
+      "simple_batch_eligible": false,
+      "status": "implemented",
+      "repair_status": "implemented-and-verified",
+      "repair": {
+        "date": "2026-10-21",
+        "report": "trait_ownership.md",
+        "evidence": "trait-ownership-acceptance.tar.gz",
+        "scope": "Trait lifecycle precedence/conflicts and unique/weak selections, with separately approved compiler bridge prerequisites. 54 focused tasks passed on dev002 with 31 default-prelowered production programs, warm reuse and retained recovery. No runtime changes or full matrix."
+      }
     },
     {
       "id": "V-D04",
@@ -423,8 +438,16 @@
       "dependencies": [
         "Agree the deferred semantic contract before implementation"
       ],
-      "next_action": "Discuss the responsible ownership/selection contract; do not reclassify as a simple syntax repair.",
-      "simple_batch_eligible": false
+      "next_action": "Closed within the approved bounded contract; retain wider ownership, trait adaptation and prelowering value-probe gaps separately.",
+      "simple_batch_eligible": false,
+      "status": "implemented",
+      "repair_status": "implemented-and-verified",
+      "repair": {
+        "date": "2026-10-21",
+        "report": "trait_ownership.md",
+        "evidence": "trait-ownership-acceptance.tar.gz",
+        "scope": "Trait lifecycle precedence/conflicts and unique/weak selections, with separately approved compiler bridge prerequisites. 54 focused tasks passed on dev002 with 31 default-prelowered production programs, warm reuse and retained recovery. No runtime changes or full matrix."
+      }
     },
     {
       "id": "V-D05",
@@ -628,8 +651,15 @@
       "dependencies": [
         "Agree project-manifest/dependency/export-policy integration through existing module and runtime configuration owners."
       ],
-      "next_action": "Discuss bounded project CLI composition; do not duplicate semantic resolution in a manifest reader or equate API tests with CLI project support.",
-      "simple_batch_eligible": false
+      "next_action": "Bounded project CLI composition complete. Full build-planner/packaging parity, native-library projects, JSS/legacy projects and checked current-build execution remain separate.",
+      "simple_batch_eligible": false,
+      "repair_status": "implemented-and-verified",
+      "repair": {
+        "date": "2026-10-21",
+        "report": "project_startup_metadata.md",
+        "evidence": "project-startup-acceptance.tar.gz",
+        "scope": "Production project CLI reuses manifest/dependency/export-policy owners, explicit compiler source selection, prepared declaration evidence, runtime selection and publication/native cache. Verified on dev002 with default prelowering; no runtime implementation changes."
+      }
     },
     {
       "id": "S04",
@@ -815,8 +845,15 @@
       "dependencies": [
         "Resolve the named source contract/owner before any repair."
       ],
-      "next_action": "Retain first-blocker evidence and discuss the bounded implementation or fixture plan; no fixes during verification.",
-      "simple_batch_eligible": false
+      "next_action": "Closed in bounded scope; retain wider uint64 equality, explicit copyable-value move and 4-GiB/concurrency boundaries separately.",
+      "simple_batch_eligible": false,
+      "repair_status": "implemented-and-verified",
+      "repair": {
+        "date": "2026-10-21",
+        "report": "span_hash.md",
+        "evidence": "span-hash-acceptance.tar.gz",
+        "summary": "Checked weak-owner spans and fixed FNV-1a64 with v2 persisted keys; metadata/default-prelowered acceptance and runtime regressions pass on dev002."
+      }
     },
     {
       "id": "S11",
@@ -967,8 +1004,15 @@
       "dependencies": [
         "Explicitly agree catalog hot reload and identity invalidation semantics before requiring selective preservation across metadata edits."
       ],
-      "next_action": "Keep live constraint-edit scenario deferred. Ordinary source incremental specialization and startup validation retain their existing verified scope.",
-      "simple_batch_eligible": false
+      "next_action": "Immutable startup contract reconciled and verified. Live catalog replacement and selective preservation across metadata edits remain deliberately unsupported; changes require a new session.",
+      "simple_batch_eligible": false,
+      "repair_status": "reconciled-and-verified",
+      "repair": {
+        "date": "2026-10-21",
+        "report": "project_startup_metadata.md",
+        "evidence": "project-startup-acceptance.tar.gz",
+        "scope": "Existing private startup validation, rejection of live replacement, source-update snapshot retention, reset/stale-identity behavior and fresh-process constraint replacement verified; initial and edited programs executed under default prelowering. No runtime implementation change or hot reload."
+      }
     },
     {
       "id": "V-R02",
@@ -1143,10 +1187,17 @@
       "dependencies": [
         "S10"
       ],
-      "next_action": "Discuss the owning module contract/integration before implementation; retain current absence evidence.",
+      "next_action": "Closed in bounded scope; retain wider uint64 equality, explicit copyable-value move and 4-GiB/concurrency boundaries separately.",
       "acceptance": "All documented in-scope signatures admitted through ordinary metadata, exact behavior/error and production-provider build proofs, with explicit decisions for held contracts.",
       "simple_batch_eligible": false,
-      "eligibility_reason": "Requires contract or module integration discussion; name-resolution probes do not prove a metadata-only repair."
+      "eligibility_reason": "Requires contract or module integration discussion; name-resolution probes do not prove a metadata-only repair.",
+      "repair_status": "implemented-and-verified",
+      "repair": {
+        "date": "2026-10-21",
+        "report": "span_hash.md",
+        "evidence": "span-hash-acceptance.tar.gz",
+        "summary": "Checked weak-owner spans and fixed FNV-1a64 with v2 persisted keys; metadata/default-prelowered acceptance and runtime regressions pass on dev002."
+      }
     },
     {
       "id": "V-R07",
@@ -1869,10 +1920,17 @@
       ],
       "finding": "test_mysqli_connect.cpp and test_mysqli_fetch_exhaustion.cpp remain not run in both snapshots because their provider/environment harness is absent. No current failure or compatibility pass is inferred.",
       "dependencies": [],
-      "next_action": "Keep this finding separate from source-language admission and resolve in a separately authorized batch.",
+      "next_action": "Closed for the tested host and bounded integration scope. Keep strict-PHS MySQL exposure and wider provider behavior separate.",
       "acceptance": "Supply an isolated provider/database fixture with deterministic connection and fetch-exhaustion expectations before running either native test.",
       "simple_batch_eligible": false,
-      "eligibility_reason": "Needs runtime ownership discussion or an external integration fixture."
+      "eligibility_reason": "Needs runtime ownership discussion or an external integration fixture.",
+      "repair_status": "implemented-and-verified",
+      "repair": {
+        "date": "2026-10-21",
+        "report": "verification_environment.md",
+        "evidence": "verification-environment-acceptance.tar.gz",
+        "scope": "Harness/fixtures/docs only; stage preflight, default-prelowered production cold/warm, two unchanged native MySQL tests and isolated real-provider/cleanup proofs on dev002. Historical findings retained."
+      }
     },
     {
       "id": "V-D02",

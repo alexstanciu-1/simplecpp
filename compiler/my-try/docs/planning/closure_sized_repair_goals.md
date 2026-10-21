@@ -61,6 +61,7 @@ promises. Review contracts and feasibility before freezing each goal.
 
 | Batch | Original issues | Reason to discuss together |
 | --- | --- | --- |
+| Trait lifecycle and ownership selections — completed | V-D03, V-D04 | [Closeout](trait_ownership.md): 53/64 resolved, +3.125 points. Default prelowering and approved compiler bridges; no runtime changes. |
 | Regex contract and provider bindings — completed | V-R04, V-R09 | [Closeout](regex_replacement.md): 31/64 closed, +3.125 points. V-R05 callback ABI remains a separate discussion. |
 | Public platform and compatibility aliases — completed | V-D12, V-D09 | [Closeout](platform_alias.md): 33/64 closed, +3.125 points. Qualified aliases preserve source types; platform/environment contracts verified on dev002. |
 | Boxed/selection operators — completed | V-L09, V-L10 | [Closeout](boxed_selection.md): 35/64 closed, +3.125 points. Two runtime prerequisites separately authorized. BS-R01 was tracked separately and subsequently closed in the compact-layout batch. |
@@ -70,10 +71,10 @@ promises. Review contracts and feasibility before freezing each goal.
 | Typed tokenizer and strict IO — completed | S11, S13 | [Closeout](tokenizer_io.md): 41/64 closed, +3.125 points. Default prelowered cold/warm builds and state/snapshot/provider proofs; earlier callback/layout prelowering gaps remain separate. |
 | Checked shifts and compact layout — completed | V-L01, V-L02 | [Closeout](compact_layout_shifts.md): 37/64 closed, +3.125 points. Supplementary BS-R01 also closed; stale enum-runner expectation CL-H01 remains separate. |
 
-V-E01 needs a separate evidence/status reconciliation: its ledger already says
-resolved-environment but lacks the fully-closed repair status. Such a justified
-closure is useful bookkeeping and should be labelled as such. It must not replace
-planned compiler/runtime capability work merely to improve the displayed number.
+V-E01's separate evidence/status reconciliation is now complete in the approved
+[verification environment batch](verification_environment.md), together with the
+V-E03 isolated real-database proof. This is explicitly an environment/harness batch;
+it does not claim two new compiler/runtime capabilities.
 
 After these batches, regroup the remaining normal-discussion items by dependency
 and owner (layout declarations/queries, project/module integration, callable
@@ -123,3 +124,25 @@ instantiation, and is checked using ordinary source-aware capability preparation
 It does not constrain inference or change runtime implementation. The concrete
 provider header is the existing public `scpp/lang/php.hpp`; the lower support header
 alone is not self-contained. See [batch closeout](closure_batch.md).
+
+## Project/startup batch — completed 2026-10-21
+
+V-P01 is implemented and V-D10 is reconciled and verified on dev002 with default
+prelowering; see [acceptance](project_startup_metadata.md). Progress is now
+**47/64 resolved (73.4375%), +3.125 points**, with 17 original issues open. One
+closure is a capability repair; the other confirms immutable startup semantics.
+No runtime implementation changes or full matrix rerun. Build-planner/packaging
+parity and metadata hot reload remain separate.
+
+## S10 / V-R06 closeout — 2026-10-21
+
+[Checked spans and stable hashing](span_hash.md) close two original issues:
+**49/64 resolved (76.5625%), +3.125 points**, with 15 original issues open.
+Default-prelowered dev002 checks pass; wider language gaps remain explicit.
+
+## V-E01 / V-E03 closeout — 2026-10-21
+
+[Host and isolated database verification](verification_environment.md) close two
+original issues: **51/64 resolved (79.6875%), +3.125 points**, with 13 still open.
+All remaining originals require normal discussion; fixed issue-count throughput
+should not obscure the size of their language/ownership design decisions.

@@ -32,6 +32,16 @@ final class CPP_Source_Calls
 		return CPP_Declarations::selected_call($call, $arguments, $context, '', $facts->type, '', $request);
 	}
 
+	/** The public key type is transportable; only the authorized caller may mint it. */
+	public static function construction_key_type(cpp_runtime_operation $request): string
+	{
+		if ($request->kind !== cpp_runtime_operation_kind::construct_call) { return ''; }
+		$call /** prepared_call */ = $request->call;
+		$method = object_cast(weakref_get($call->target), collected_method::class);
+		if (!CPP_Record_Construction::keyed($method)) { return ''; }
+		return CPP_Generator::source_name('record', $method->declaring_type()->qualified_name()) . '::scpp_construction_key';
+	}
+
 	public static function native_construction(cpp_runtime_operation $request, array $arguments /** vector<string> */,
 		cpp_generation_context $context): string
 	{
@@ -39,7 +49,7 @@ final class CPP_Source_Calls
 		$call /** prepared_call */ = $request->call;
 		$callee = CPP_Record_Construction::allocation($facts->type, $facts->constructed_type, $facts->storage, $context);
 		$method = object_cast(weakref_get($call->target), collected_method::class);
-		$values = CPP_Record_Construction::key($method);
+		$values = CPP_Record_Construction::keyed($method) ? 'construction_key_value' : '';
 		$parameters /** Storage<callable_parameter> */ = $call->signature->parameters;
 		if (($values !== '') && !$parameters->is_empty()) { $values .= ', '; }
 		return $callee . '(' . $values . self::native_arguments($call, $arguments, 0, $context) . ')';

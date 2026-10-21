@@ -12,8 +12,8 @@ final class Coalesce_Expression_Preparation
 		$context->statement_assignment = false;
 		try
 		{
-			$left = Expression_Preparation::prepare($syntax->left, $context);
-			$fallback = Expression_Preparation::prepare($syntax->fallback, $context);
+			$left = Expression_Preparation::prepare_for_consumer($syntax->left, $context, null, expression_consumer::selection_branch);
+			$fallback = Expression_Preparation::prepare_for_consumer($syntax->fallback, $context, null, expression_consumer::selection_branch);
 			self::require_admitted_family($left->type);
 			self::require_admitted_family($fallback->type);
 			$facts = new prepared_coalesce_expression();
@@ -32,8 +32,9 @@ final class Coalesce_Expression_Preparation
 			}
 			$relationships = new Conversion_Relationships($context);
 			if ((Ownership_Conversions::role($left->type) !== null) || (Ownership_Conversions::role($fallback->type) !== null)) {
-				$facts->type = Selection_Result_Preparation::shared_join($left->type, $fallback->type, $context);
+				$facts->type = Selection_Result_Preparation::ownership_join($left->type, $fallback->type, $context);
 				$facts->presence = coalesce_presence::handle_presence;
+				Ownership_Conversions::require_presence($left->type);
 				$facts->fallback_conversion = Conversion_Preparation::decide($fallback->type, $facts->type, conversion_context::conditional_branch, $relationships);
 			}
 			elseif (Boxed_Conversions::is_boxed($selected_type) || Boxed_Conversions::is_boxed($fallback->type)) {
@@ -69,9 +70,14 @@ final class Coalesce_Expression_Preparation
 				$facts->type = Selection_Result_Preparation::begin($selected_type, $context, 'coalesce');
 				$facts->fallback_conversion = Selection_Result_Preparation::branch($fallback->type, $facts->type, 'coalesce');
 			}
-			Capability_Preparation::require_copy($left->type, $context);
+			$facts->left_boundary = Value_Boundary_Preparation::decide_value($left->type, null, $context, $left);
 			$facts->left_extraction = Conversion_Preparation::decide($left->type, $selected_type, conversion_context::coalesce_value);
 			$facts->left_conversion = Conversion_Preparation::decide($selected_type, $facts->type, conversion_context::coalesce_value, $relationships);
+			$facts->fallback_boundary = Value_Boundary_Preparation::decide_value($facts->type, $facts->fallback_conversion, $context, $fallback);
+			$ownership = Ownership_Conversions::role($facts->type);
+			if (($ownership !== null) && ($ownership->ownership_family() === ownership_kind::unique)) {
+				$facts->value_origin = expression_value_origin::owned_selection_result;
+			}
 			return $facts;
 		}
 		finally { $context->statement_assignment = $statement_assignment; }

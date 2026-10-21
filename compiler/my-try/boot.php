@@ -256,6 +256,9 @@ require_once __DIR__ . '/compiler/frontend.php';
 require_once __DIR__ . '/compiler/compile.php';
 require_once __DIR__ . '/compiler/host_report.php';
 
+require_once __DIR__ . '/04_analyze/prepare/data/project_evidence.php';
+require_once __DIR__ . '/04_analyze/prepare/project_evidence.php';
+
 // Host composition supplies the location once; native entrypoints do the same.
 Compiler_Lifecycle::configure_runtime(Runtime_Catalog_Loader::load(
 	dirname(__DIR__, 2) . '/runtime/metadata/modules', ['core', 'json', 'strings', 'datetime', 'filesystem']));

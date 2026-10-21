@@ -19,17 +19,19 @@ for remaining groups and prerequisites.
 
 Work proceeds module-by-module: audit public contracts, register the settled rows,
 validate the batch, and track blocked rows outside executable JSON. The strings
-inventory records 49 names/65 signatures, including two builder types and twenty
+inventory records 54 names/73 signatures, including two builder types and twenty
 builder helpers. Search-coordinate conflicts, replacement semantics, boxed
-joins/formatting and builder byte-span append remain explicit gaps.
+joins/formatting remain explicit gaps. Builder span append is enabled by the source module.
 
 Load selected modules once at startup, decode directly to typed records and retain
 them for registry installation/reset. Do not rescan these files during compilation.
 
-The opt-in `source` module depends on core and registers three owning value types
-and thirteen buffer/index/location helpers. Startup defaults are unchanged.
-Borrowed byte spans and their consumers remain held for lifetime/invalidation
-support; source metadata does not make raw views into owning values.
+The opt-in `source` module depends on strings and registers four runtime value
+types and twenty helpers, including checked spans, span hashes and builder span
+append. Startup defaults are unchanged. Spans weakly observe independent buffer
+states and reject reads after release, move, replacement or destruction. String
+hashes are registered in strings; the stable algorithm is FNV-1a64 with v2 keys.
+Source and builder types use existing concrete-boundary metadata for prelowering.
 
 Ordinary runtime type definitions use `types`, with separate `cpp_types` bindings.
 The core vector/hash recipes now live here, including constraints, defaults and

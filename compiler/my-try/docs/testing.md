@@ -16,6 +16,20 @@ CLI with mbstring. It records boot, frontend, preparation and emission separatel
 excluding publication, C++ compilation/linking and program execution. Warmup rounds
 are retained but excluded from medians. This is not a native compiler rebuild.
 
+## Host and feature verification
+
+`python3 compiler/my-try/tools/verification_host.py --results FRESH_DIRECTORY`
+checks stage-specific host requirements without installing anything. Use `--stages`
+with `baseline`, `frontend`, `native` and/or `mysql` to limit the checks; `--php`
+selects the CLI executable whose capabilities are inspected.
+
+`python3 compiler/my-try/tests/verification_environment.py --results FRESH_DIRECTORY`
+is the bounded [V-E01/V-E03 acceptance](planning/verification_environment.md) for
+dev002. It uses the shared 12-slot runner, default-prelowered production cold/warm
+execution, existing native MySQL CMake targets and a disposable MariaDB Unix-socket
+fixture. It verifies real connection/fetch exhaustion and teardown on success and
+injected failure. No system database is used. This is not strict-PHS MySQL exposure.
+
 `tests/scalar_debug.py --results FRESH_DIRECTORY` verifies the bounded scalar
 `dbg` forms with default-prelowered cold/warm execution, source locations,
 snapshots, invalid-depth reporting, source shadowing, metadata validation and

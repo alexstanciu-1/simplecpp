@@ -144,6 +144,7 @@ final class CPP_Declarations
 			return '(static_cast<void>(' . $expression . '), true)';
 		}
 		if ($decision->operation === truthiness_operation::value_presence) {
+			if ($context->concrete_types()) { return CPP_Runtime_Operations::wrapper_presence($decision->source_type, $expression, $context); }
 			return 'static_cast<bool>((' . $expression . ').has_value())';
 		}
 		if ($decision->operation === truthiness_operation::boolean_identity) {
@@ -606,12 +607,19 @@ final class CPP_Declarations
 		$text = '([&]() -> ' . self::type_for($result_type, $context, $return_requirement) . $return_reference . " {\n";
 		$text .= $prefix;
 		$physical_arguments /** vector<string> */ = [];
+		$construction_key = '';
 		$names = '';
 		$separator = '';
 		if ($constructed_type !== null) {
 			$constructor = object_cast(weakref_get($facts->target), collected_method::class);
 			$names = CPP_Record_Construction::key($constructor);
-			if ($names !== '') { $separator = ', '; }
+			if ($names !== '') {
+				$separator = ', ';
+				if ($transport !== null) {
+					$construction_key = 'construction_key_' . $context->next_temporary++;
+					$text .= 'const auto ' . $construction_key . ' = ' . $names . ";\n";
+				}
+			}
 		}
 		$packed_names = '';
 		$packed_separator = '';
@@ -661,7 +669,7 @@ final class CPP_Declarations
 		}
 
 		if ($transport !== null) {
-			return $text . "\treturn " . CPP_Runtime_Operations::invoke($transport, $physical_arguments, $context) . ";\n}())";
+			return $text . "\treturn " . CPP_Runtime_Operations::invoke($transport, $physical_arguments, $context, $construction_key) . ";\n}())";
 		}
 		$reference = $callee;
 		if ($callee === '') {

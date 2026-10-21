@@ -7,8 +7,8 @@
     {"id":"strings.text_builder","name":"text_builder","kind":"struct","capabilities":["value_storable","copyable_value"]}
   ],
   "cpp_types": [
-    {"id":"strings.string_parts_builder","symbol":"scpp::str::string_parts_builder","header":"modules/strings/strings.hpp"},
-    {"id":"strings.text_builder","symbol":"scpp::str::text_builder","header":"modules/strings/strings.hpp"}
+    {"id":"strings.string_parts_builder","concrete_boundary":true,"symbol":"scpp::str::string_parts_builder","header":"modules/strings/strings.hpp"},
+    {"id":"strings.text_builder","concrete_boundary":true,"symbol":"scpp::str::text_builder","header":"modules/strings/strings.hpp"}
   ],
   "constants": [
     {"name":"STR_PAD_LEFT","type":"int","value":0},
@@ -16,6 +16,8 @@
     {"name":"STR_PAD_BOTH","type":"int","value":2}
   ],
   "functions": [
+    {"id":"strings.hash_string","name":"hash_string","parameters":[{"name":"text","type":"string","passing":"value"}],"returns":"string"},
+    {"id":"strings.stable_hash_string_u64","name":"stable_hash_string_u64","parameters":[{"name":"text","type":"string","passing":"value"}],"returns":"uint64"},
     {"id":"strings.substr_replace.3","name":"substr_replace","parameters":[{"name":"subject","type":"string","passing":"value"},{"name":"replacement","type":"string","passing":"value"},{"name":"offset","type":"int","passing":"value"}],"returns":"string"},
     {"id":"strings.substr_replace.4","name":"substr_replace","parameters":[{"name":"subject","type":"string","passing":"value"},{"name":"replacement","type":"string","passing":"value"},{"name":"offset","type":"int","passing":"value"},{"name":"length","type":"int","passing":"value"}],"returns":"string"},
     {"id":"strings.strpos.2","name":"strpos","parameters":[{"name":"haystack","type":"string","passing":"value"},{"name":"needle","type":"string","passing":"value"}],"returns":{"name":"result_or_false","arguments":["int"]}},
@@ -89,6 +91,8 @@
     {"id": "strings.ends_with", "name": "str_ends_with", "parameters": [{"name": "haystack", "type": "string", "passing": "value"}, {"name": "needle", "type": "string", "passing": "value"}], "returns": "bool"}
   ],
   "cpp": [
+    {"id":"strings.hash_string","symbol":"scpp::php::hash_string","header":"scpp/lang/php.hpp"},
+    {"id":"strings.stable_hash_string_u64","symbol":"scpp::php::stable_hash_string_u64","header":"scpp/lang/php.hpp"},
     {"id":"strings.substr_replace.3","symbol":"scpp::php::substr_replace","header":"lang/php/support/php_string.hpp"},
     {"id":"strings.substr_replace.4","symbol":"scpp::php::substr_replace","header":"lang/php/support/php_string.hpp"},
     {"id":"strings.strpos.2","symbol":"scpp::php::strpos_bytes","header":"lang/php/support/php_string.hpp"},
