@@ -340,7 +340,12 @@ final class async_task_type_definition extends abstract_nominal_type_definition
 	public function __construct(int $id, string $name, public readonly canonical_type_use $value_type)
 	{
 		parent::__construct($id, $name, type_definition_origin::language, nominal_type_kind::async_task,
-			/** vector<generic_contract> */ [generic_contract::value_storable]);
+			self::task_capabilities());
+	}
+
+	private static function task_capabilities(): array /** vector<generic_contract> */
+	{
+		return [generic_contract::value_storable];
 	}
 }
 
