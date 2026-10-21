@@ -4,7 +4,7 @@ Doc Status: supporting
 Ordinary instance/static methods, direct expanded trait methods and declaration-only
 interface methods accept `?T $value`, optionally followed by `= null`. T uses the
 existing scalar or literal named type grammar, including interface names. The
-converter emits `$value nullable<T>` and preserves the optional null default.
+converter emits `nullable<T> $value` and preserves the optional null default.
 It does not resolve types or infer nullability from defaults.
 
 ```php

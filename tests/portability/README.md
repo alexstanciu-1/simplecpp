@@ -2,6 +2,10 @@
 Doc Status: planning
 
 Home for tests of the [portable profile](../../specs/portability/README.md).
+`php tests/portability/parameter_syntax_v02.php FRESH_DIRECTORY` checks converted
+scalar, nullable, container, Storage and object-hash parameters with the v0.2
+parser, including constructors, interfaces and expanded traits. Run it through
+the my-try shared test runner alongside the affected portability suites.
 `python3 tests/portability/check.py` verifies read-only checking, PHP lint,
 cross-file trait lookup, shared rejection behavior and existing-cache discovery.
 `collection_snapshots.py --results FRESH_RESULTS_DIRECTORY` proves owned collection

@@ -46,7 +46,9 @@ Generated PHS:
 private $folders vector<vector<int>> = [];
 ```
 
-The same rule applies to container locals and nullable fields/promoted parameters.
+The same rule applies to container locals and nullable fields. Method and constructor
+parameters use v0.2 type-first syntax, for example `vector<Row> $rows` and
+`nullable<Row> $row = null`, including parameters expanded from promotion.
 Type doc comments belong to the PHP authoring input; generated PHS uses explicit
 native type syntax. Ordinary explanatory/doc comments can remain. This supersedes
 earlier checkpoints describing type-comment emission. It changes no inferred

@@ -93,8 +93,8 @@ echo $holder->real() ? 'absent' : 'bad', ':', $holder->real(\demo\Holder::as_rea
     run(['php', TOOLS / 'check.php', source])
     run(['php', TOOLS / 'convert.php', source, output])
     generated = (output / 'model.phs').read_text()
-    assert '$row nullable<Row> = null' in generated
-    assert '$value nullable<int>' in generated
+    assert 'nullable<Row> $row = null' in generated
+    assert 'nullable<int> $value' in generated
     run(['php', TOOLS / 'convert.php', source, output, '--stats'])
     with tempfile.TemporaryDirectory(prefix='scpp-nullable-parameter-reject-') as temp:
         bad = Path(temp) / 'php'; bad.mkdir()

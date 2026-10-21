@@ -337,7 +337,7 @@ final class Converter {
 					$type = $this->objectHashAnnotation($this->significant());
 				}
 				$nullable = str_starts_with($type, 'nullable<');
-				$declaration = ($container || $storage || $objectHash || $nullable) ? $parameter[1] . ' ' . $type : $type . ' ' . $parameter[1];
+				$declaration = $type . ' ' . $parameter[1];
 				$separator = $this->significant();
 				if ($separator[1] === '=') {
 					$value = $this->significant();
@@ -493,7 +493,7 @@ final class Converter {
 				? ($readonly ? '/** PHP readonly; native usage contract. */ ' : '') . $visibility[1] . ' ' . $field[1] . ' ' . $typeName . ';'
 				: $visibility[1] . ' ' . ($readonly ? 'readonly ' : '') . $typeName . ' ' . $field[1] . ';';
 			if ($promoted) { $fields[] = new Node('property', $property, $line); }
-			$parameters[] = ($annotated ? $field[1] . ' ' . $typeName : $typeName . ' ' . $field[1]) . $default;
+			$parameters[] = $typeName . ' ' . $field[1] . $default;
 			if ($promoted) { $assignments[] = new Node('initialization', '$this->' . substr($field[1], 1) . ' = ' . $field[1] . ';', $line); }
 			if ($separator[1] === ')') { --$this->position; break; }
 			if ($separator[1] !== ',') { $this->fail($separator[2], 'expected promoted parameter separator'); }

@@ -65,6 +65,10 @@ input, arbitrary imports, finally and dynamic names remain outside the subset.
 
 Type annotations in executable PHP emit native PHS type syntax; see the
 [map/iteration and emission checkpoint](../../specs/portability/map_iteration.md).
+All method and constructor parameters use type-first v0.2 syntax, including
+annotated containers, Storage and nullable parameters. Field/local syntax is
+unchanged. `tests/portability/parameter_syntax_v02.php` converts a declaration
+fixture and checks it with the v0.2 parser; it does not prove native execution.
 
 Output trees must be separate from inputs. Each `.php` maps to one `.phs` at the
 same relative path; traits expand into their consumers and leave no native trait
