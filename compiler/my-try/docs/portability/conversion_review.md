@@ -37,7 +37,11 @@ The compiler's 21 formerly readonly properties have source TODOs; constructor-on
 writes remain a convention. The unsupported-member-modifier diagnostic is gone.
 The next reported diagnostic is `self requires a declaring type context`.
 `Symbol_Collector::register_source_type` calls `self::define_source_type` from a
-`task_synchronize` closure. The declaration-context issue is not repaired here.
+`task_synchronize` closure. An explicit `Symbol_Collector::` source trial then
+fails private-method access (48.43 s, 311.8 MiB RSS, 290 MiB PHP heap). That trial
+was reverted: explicit naming does not supply the closure's enclosing class access
+context, and widening the helper's visibility is not an appropriate source fix.
+The declaration-context issue is not repaired here.
 
 Other preparation failures remain, as does the prelowered locked-class null-check
 defect. Semantic widening and Storage_Cursor widening are excluded.

@@ -491,3 +491,21 @@ Read-only owner replay (47.59 s, `/tmp/typed-operators-bootstrap-owner-logs`) co
 no remaining failure for `Tokenizer::token_end` and identifies
 `Symbol_Collector::register_source_type` for the `self` diagnostic. Full records are
 retained in the artifact directory as `failure-owners.json`.
+
+
+## Explicit closure owner experiment — 2026-10-21
+
+At `7d835147`, replacing only the synchronization callback's
+`self::define_source_type` with `Symbol_Collector::define_source_type` passes
+conversion but changes the first preparation diagnostic to
+`Private method is not accessible here: define_source_type`. This is evidence that
+explicit naming alone does not restore the callback's enclosing class access
+context. The source trial was reverted; the private helper remains private.
+Repairing lexical class context belongs to compiler closure preparation, not a
+visibility workaround in authored PHP. No such repair is included here.
+
+The isolated trial (same PHP8.5 CLI settings, 4 GiB limit) takes **48.43 s wall time**,
+**319284 KiB / 311.8 MiB peak RSS**, **290 MiB peak PHP heap**. Parsing completes at
+4.425 s; preparation stops without PHP fatal/OOM or C++ emission. Exact overlay,
+source hashes and logs: `/tmp/bootstrap-attempt-20261021-explicit-owner`; the `.py`
+sibling is the driver. This measures the reverted experiment, not the final source.
