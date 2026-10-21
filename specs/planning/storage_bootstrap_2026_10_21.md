@@ -463,3 +463,31 @@ Read-only owner replay (47.48 s, `/tmp/nullable-default-bootstrap-owner-logs`) c
 that `Tokenizer::tokenize` no longer has the parameter-default rejection and
 `Tokenizer::token_end` is the first affected callable for the construction diagnostic.
 Full owner records are saved as `failure-owners.json` in the artifact directory.
+
+
+## Typed punctuation list and retry — 2026-10-21
+
+Candidate: `858d0008` plus the source overlay retained in
+`/tmp/bootstrap-attempt-20261021-typed-operators/candidate.diff`.
+`Tokenizer::token_end` now declares its punctuation list as a `vector<string>`
+local before iteration. Ordering and longest-match behavior are unchanged; the
+converter has an explicit container target. Tokenizer PHP tests pass through the
+shared runner (`/tmp/token-operators-source-check`). No semantic support is added.
+
+Conversion: 259 PHP files, 5.23 s, peak RSS 186.2 MiB. Assembled input: 269 PHS files,
+1,921,462 bytes. Isolated PHP8.5 CLI bootstrap (OPcache CLI/Xdebug disabled, 4 GiB
+limit): **47.16 s wall time**, **318924 KiB / 311.4 MiB peak RSS**,
+**304087040 bytes / 290 MiB peak PHP heap**. Parsing completes at 4.278 s. Preparation
+fails without PHP fatal/OOM or C++ emission. Evidence and source hashes are in the
+artifact directory above; its `.py` sibling is the retry driver. This remains a
+partial-run measurement, not the full bootstrap cost.
+
+The next reported diagnostic is `self requires a declaring type context`.
+`Symbol_Collector::register_source_type` includes a `self::define_source_type` call
+inside a `task_synchronize` closure. No closure-context repair or Storage_Cursor
+widening is included in this source-only adaptation.
+
+Read-only owner replay (47.59 s, `/tmp/typed-operators-bootstrap-owner-logs`) confirms
+no remaining failure for `Tokenizer::token_end` and identifies
+`Symbol_Collector::register_source_type` for the `self` diagnostic. Full records are
+retained in the artifact directory as `failure-owners.json`.
