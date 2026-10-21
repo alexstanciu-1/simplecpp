@@ -715,3 +715,27 @@ inferred from this probe. V-R02 remains partial.
 
 [Cross-target runtime evidence](task-cross-target-evidence.tar.gz), SHA-256:
 `938627348669b97f5e4284e0cffb8b504025c15d89c3bcc6b3d4b5886b2f7c58`. Uploaded probe hashes were verified.
+
+
+### Integer-key cross-carrier source admission — 2026-10-21
+
+The existing metadata owner now admits 96 additional contracts: vector input to
+integer-key hash targets and integer-key hash input to vector targets, for
+run/start, both worker arities, value/void workers, null/int/nullable-int index
+callbacks and optional exact/void error handlers. Existing contracts and C++
+bindings are unchanged. No runtime or compiler implementation changed.
+
+Prefilled targets retain their values unless overwritten. Nullable keys append;
+non-null vector keys retain negative/sparse rejection. Background callbacks retain
+transfer checks, and result snapshots use the existing native-payload bridge.
+String-key cross-carrier targets and nullable inferred-key policy remain separate
+acceptance work; this checkpoint does not close V-R02.
+
+Dev002 `task-cross-source-02` passed all 120 production default-prelowered
+cold/warm cases. Warm builds compiled/linked zero units. `task-cross-controls` passed both existing target controls and
+retained invalid-key/type rejection, repair/replay and cross-carrier edit/fresh
+parity. The first source run exposed invalid numeric object-literal fixtures and
+an incorrect void-error omission expectation; these fixture failures are retained.
+
+[Cross-target source evidence](task-cross-source-evidence.tar.gz), SHA-256:
+`c766cfbd125fcacee3db4561fc9e2fb0e566712d8912b87767623f3a9f492006`. Final uploaded hashes were verified. No full matrix or native compiler rebuild.

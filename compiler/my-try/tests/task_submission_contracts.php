@@ -32,6 +32,9 @@ foreach (['unknown_transfer', 'mapped_input', 'mapped_callback', 'null_reference
 }
 
 $bad = [
+ '$v hash<int,string> = {"a":1};$t vector<int> = [];task_run($v,1,fn(int $n):int=>$n,null,$t);',
+ '$v vector<int> = [1];$t hash<string,int> = [];task_run($v,1,fn(int $n):int=>$n,null,$t);',
+
  '$v vector<int> = [1];task_run($v,1,fn(int $n):int=>$n,null,null,fn(int $n,task_error $e):string=>"bad");',
  '$v vector<int> = [1];task_run($v,1,function(int $n):void{},null,null,fn(int $n,task_error $e):int=>42);',
  'class Box{}$b=new Box();$v vector<int> = [1];task_start($v,1,fn(int $n):int=>$n,null,null,function(int $n,task_error $e)use($b):int{return 42;});',
@@ -64,6 +67,9 @@ foreach ($bad as $source) {
  if (CPP_Probe::text(Model::$cpp_files)!==$initial) {throw new \LogicException('Task submission replay differs');}
 }
 $edits = [
+ '$v vector<int> = [1];$t hash<int,int> = [];$r=task_run($v,1,fn(int $n):int=>$n,null,$t);',
+ '$v hash<int,int> = [];$v[0]=1;$t vector<int> = [];$r=task_run($v,1,fn(int $n):int=>$n,fn(int $n):?int=>null,$t);',
+
  '$v vector<int> = [1];$r=task_run($v,1,fn(int $n):int=>$n,null,null,fn(int $n,task_error $e):int=>42);',
  '$v vector<int> = [1];$r=task_run($v,1,function(int $n):void{},null,null,function(int $n,task_error $e):void{});',
 
