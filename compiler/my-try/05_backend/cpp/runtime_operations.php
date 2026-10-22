@@ -111,6 +111,7 @@ final class CPP_Runtime_Operations
 			|| ($request->kind === cpp_runtime_operation_kind::runtime_call)
 			|| ($request->kind === cpp_runtime_operation_kind::take)
 			|| ($request->kind === cpp_runtime_operation_kind::wrapper_presence)
+			|| ($request->kind === cpp_runtime_operation_kind::wrapper_isset)
 			|| ($request->kind === cpp_runtime_operation_kind::property_read)
 			|| ($request->kind === cpp_runtime_operation_kind::property_write)
 			|| ($request->kind === cpp_runtime_operation_kind::property_target)
@@ -260,6 +261,10 @@ final class CPP_Runtime_Operations
 		if ($request->kind === cpp_runtime_operation_kind::enum_helper) {
 			$facts /** prepared_enum_call */ = $request->enum_helper;
 			return CPP_Compiler_Functions::native_expression($facts, $arguments[0], $context);
+		}
+		if ($request->kind === cpp_runtime_operation_kind::wrapper_isset) {
+			$context->headers['lang/php/operators/isset/isset.hpp'] = true;
+			return 'scpp::php::isset(' . $arguments[0] . ')';
 		}
 		if ($request->kind === cpp_runtime_operation_kind::wrapper_presence) {
 			return '(' . $arguments[0] . ').has_value()';
@@ -460,7 +465,19 @@ final class CPP_Runtime_Operations
 
 	public static function wrapper_presence(canonical_type_use $type, string $expression, cpp_generation_context $context): string
 	{
-		$request = new cpp_runtime_operation(cpp_runtime_operation_kind::wrapper_presence);
+		return self::wrapper_observation($type, $expression, cpp_runtime_operation_kind::wrapper_presence, $context);
+	}
+
+	/** Sentinel-aware probe presence is separate from checked payload availability. */
+	public static function wrapper_isset(canonical_type_use $type, string $expression, cpp_generation_context $context): string
+	{
+		return self::wrapper_observation($type, $expression, cpp_runtime_operation_kind::wrapper_isset, $context);
+	}
+
+	private static function wrapper_observation(canonical_type_use $type, string $expression,
+		cpp_runtime_operation_kind $operation, cpp_generation_context $context): string
+	{
+		$request = new cpp_runtime_operation($operation);
 		$request->result = Model::$type_catalog->registry()->use(Model::$type_catalog->canonical('bool')->type_id());
 		$inputs /** Storage<canonical_type_use> */ = $request->inputs;
 		$inputs->append($type);

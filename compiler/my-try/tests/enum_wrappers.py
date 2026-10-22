@@ -27,6 +27,8 @@ CASES.update({
  'presence':BASE+'$v ?E;if(isset($v)){return 2;}$v=E::A;if(!isset($v)){return 3;}$r result<E> =E::A;if(!isset($r)){return 4;}$r=error::make("failed");if(isset($r)){return 5;}echo "AA";',
  'extract':BASE+'$v ?E=E::A;$r result<E> =E::B;$a E=$v;$b E=$r;echo $a===E::A?"A":"bad";echo $b===E::B?"A":"bad";',
 })
+CASES['false-carrier']=BASE+'$v result_or_false<E> =E::A;if(!isset($v)){return 2;}$v=false_sentinel;if(isset($v)){return 3;}echo "AA";'
+CASES['bool-carrier']=BASE+'$v result_or_bool<E> =true_sentinel;if(!isset($v)){return 2;}$v=false_sentinel;if(isset($v)){return 3;}echo "AA";'
 DEFERRED={}
 CASES['enum-helper']=BASE+'echo enum_name(E::A);echo enum_name(enum_from_value(E::class,enum_value(E::A)));'
 CASES['default-empty']=BASE+'$v ?E;$out E=E::B;if(take($out,$v)){return 2;}echo $out===E::B?"A":"bad";$v=E::A;if(!take($out,$v)){return 3;}echo $out===E::A?"A":"bad";'
@@ -44,8 +46,6 @@ NEGATIVE={
  'result-field-default':'enum E:int{case A=7;}class H{result<E> $v;}$h=new H();',
  'nullable-condition':BASE+'$v ?E=E::A;if($v){echo "wrong";}',
  'result-condition':BASE+'$v result<E> =E::A;if($v){echo "wrong";}',
- 'false-carrier':BASE+'$v result_or_false<E> =E::A;',
- 'bool-carrier':BASE+'$v result_or_bool<E> =E::A;',
  'lifted-equality':BASE+'$v ?E=E::A;echo $v===E::A;',
 }
 p=argparse.ArgumentParser(description=__doc__);p.add_argument('--results',type=Path,required=True)

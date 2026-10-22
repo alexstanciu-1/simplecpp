@@ -242,6 +242,7 @@ enum cpp_runtime_operation_kind {
 	case property_write;
 	case property_target;
 	case wrapper_presence;
+	case wrapper_isset;
 	case enum_helper;
 	case ownership_observation;
 	case take;

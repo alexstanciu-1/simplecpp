@@ -31,10 +31,6 @@ final class Result_Conversions
 			|| !$capabilities->has_capability($payload, generic_contract::result_payload)) {
 			throw new \RuntimeException('S2S Result operations require an unmodified type with result_payload capability');
 		}
-		if (Type_Queries::is_enum($payload) && ($role->result_family() !== result_kind::structured_error))
-		{
-			throw new \RuntimeException('Enum payloads in sentinel Result families remain deferred');
-		}
 		return $payload;
 	}
 

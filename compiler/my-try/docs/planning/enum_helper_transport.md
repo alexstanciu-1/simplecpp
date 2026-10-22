@@ -72,7 +72,11 @@ The three obsolete helper rejection rows were removed from
 `prelower_unsupported_boundaries.php`; unrelated historical rows were not migrated
 or used as current acceptance claims.
 
-## Remaining V-D08 scope
+## Remaining V-D08 scope at this checkpoint
+
+The subsequent [sentinel-carrier repair](enum_sentinel_carriers.md) implements the
+two sentinel families and their distinct true-sentinel presence contract. The
+following records this earlier checkpoint; other listed extensions remain separate.
 
 VD08-H01 and VD08-H02 are repaired within the above boundary. Sentinel Result enum
 carriers, lifted operators, wrapper conditions, broader selection and same-wrapper

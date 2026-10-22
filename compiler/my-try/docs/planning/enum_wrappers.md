@@ -94,7 +94,9 @@ passes in `20261022-vd08-container-control` and the consolidated harness.
 
 The subsequent [helper/presence transport slice](enum_helper_transport.md) repairs
 VD08-H01 and VD08-H02 for the approved enum/plain-wrapper domain. The original
-observations below remain historical evidence; wider gaps remain deferred.
+observations below remain historical evidence. The subsequent
+[sentinel-carrier slice](enum_sentinel_carriers.md) admits both sentinel families;
+other wider gaps remain deferred.
 
 - **VD08-H01:** `enum_name(E::A)` rejects under default prelowering with
   `compiler helper requires concrete transport`. Ordinary enum metadata helper

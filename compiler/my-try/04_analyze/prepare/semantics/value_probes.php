@@ -40,6 +40,9 @@ final class Value_Probe_Preparation
 				$facts->presence = new truthiness_decision();
 				$facts->presence->source_type = $probe_type;
 				$facts->presence->operation = truthiness_operation::value_presence;
+				if (($result_role !== null) && ($result_role->result_family() === result_kind::boolean_sentinels)) {
+					$facts->presence->operation = truthiness_operation::sentinel_presence;
+				}
 			}
 			return $facts;
 		}

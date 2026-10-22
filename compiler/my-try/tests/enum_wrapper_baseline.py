@@ -12,6 +12,8 @@ cases={
  'plain': '$out E = E::B; echo enum_name($out);',
  'nullable': '$v nullable<E> = E::A; $out E = E::B; echo take($out,$v)?"yes":"no"; echo enum_name($out); $v=null; echo take($out,$v)?"bad":"empty"; echo enum_name($out);',
  'shorthand': '$v ?E = E::A; $out E = E::B; echo take($out,$v)?"yes":"no"; $v=null; echo take($out,$v)?"bad":"empty";',
+ 'falseable': '$v result_or_false<E> = E::A; $out E = E::B; echo take($out,$v)?"yes":"no"; echo enum_name($out); $v=false; echo take($out,$v)?"bad":"empty"; echo enum_name($out);',
+ 'boolable': '$v result_or_bool<E> = E::A; $out E = E::B; $flag bool=false; echo take($out,$flag,$v)?"yes":"no"; echo enum_name($out); echo $flag?"T":"F"; $v=true; echo take($out,$flag,$v)?"yes":"no"; echo enum_name($out); echo $flag?"T":"F"; $v=false; echo take($out,$flag,$v)?"yes":"no"; echo enum_name($out); echo $flag?"T":"F";',
  'result': '$v result<E> = E::A; $out E = E::B; $err error; echo take($out,$err,$v)?"yes":"no"; echo enum_name($out); $v=error; echo take($out,$err,$v)?"bad":"error"; echo enum_name($out);',
 }
 with CommandRunner(out/'logs',ROOT,jobs=12) as runner:
@@ -31,7 +33,7 @@ with CommandRunner(out/'logs',ROOT,jobs=12) as runner:
  results=run_tasks([Task(n,lambda n=n,b=b:check(n,b)) for n,b in cases.items()])
  rows=[r.value for r in results]
  (out/'summary.json').write_text(json.dumps(rows,indent=2)+'\n')
- expected={'plain':'B','nullable':'yesAemptyA','result':'yesAerrorA'}
+ expected={'plain':'B','nullable':'yesAemptyA','result':'yesAerrorA','falseable':'yesAemptyA','boolable':'yesAFyesATnoAF'}
  for row in rows:
   if row['case'] in expected:assert row['passed'] and row['stdout']==expected[row['case']],row
   else:assert not row['passed'] and row['stage']=='generation',row

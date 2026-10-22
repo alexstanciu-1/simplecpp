@@ -145,6 +145,11 @@ final class CPP_Declarations
 		if ($decision->operation === truthiness_operation::always_true) {
 			return '(static_cast<void>(' . $expression . '), true)';
 		}
+		if ($decision->operation === truthiness_operation::sentinel_presence) {
+			if ($context->concrete_types()) { return CPP_Runtime_Operations::wrapper_isset($decision->source_type, $expression, $context); }
+			$context->headers['lang/php/operators/isset/isset.hpp'] = true;
+			return '(scpp::php::isset(' . $expression . ')).native_value()';
+		}
 		if ($decision->operation === truthiness_operation::value_presence) {
 			if ($context->concrete_types()) { return CPP_Runtime_Operations::wrapper_presence($decision->source_type, $expression, $context); }
 			return 'static_cast<bool>((' . $expression . ').has_value())';

@@ -433,8 +433,11 @@ payload required-value extraction at assignment/argument/return boundaries recor
 failed stores preserve targets and reference arguments never implicitly extract.
 Result probes admit these payloads through the existing semantic role. Conditions
 additionally require the payload's truthiness contract, rejecting vector/hash and
-enum payloads. Enum admission is bounded to structured Result; sentinel families
-remain deferred. Nullable value/extraction boundaries also admit exact enums, and
+enum payloads. Enum admission covers all three Result families, preserving explicit
+sentinel construction and exact payload identity. Enum wrapper probes attach
+value presence, or sentinel-aware presence for the boolean-sentinel family; the
+latter admits true-sentinel isset without granting payload extraction or conditions.
+Nullable value/extraction boundaries also admit exact enums, and
 `?E` shares ordinary nullable application identity. Neither path grants enum
 truthiness or lifted operators. Existing type-application preparation observes
 declaration capabilities; conversion queries read those settled facts.
