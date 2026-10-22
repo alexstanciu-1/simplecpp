@@ -1,6 +1,15 @@
 # Test runners
 Doc Status: supporting
 
+[S02/V-R08 closeout](planning/strict_gui_closeout.md): run `tests/s02_prelower.py`
+for the six declaration-only companions; `tests/ui_webview_enabled.py --integration`
+for real Linux GUI/native/source/retained/disabled-provider acceptance; and
+`tests/ui_webview_selection.py` for same-cache SDK transitions. Paths are under
+`compiler/my-try/`; each command takes `--results FRESH_DIRECTORY`. GUI checks need
+GTK/WebKitGTK development packages, Xvfb and D-Bus. `--retained-source EXISTING_HTML_CASE`
+reruns retained acceptance independently. Do not equate disabled-provider success
+with enabled GUI proof. Compiler/runtime gaps are listed separately in the report.
+
 [V-D01 mutation/lifetime acceptance](planning/iteration_mutation.md) runs on dev002:
 `iteration_mutation_runtime.py`, `iteration_mutation_prelower.py`,
 `iteration_mutation_retained.py`, and `iteration_mutation_cost.py` under

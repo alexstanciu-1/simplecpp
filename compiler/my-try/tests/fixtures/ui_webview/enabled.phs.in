@@ -1,0 +1,87 @@
+function clear_view(webview &$view, string $html):string {
+	$view = null;
+	return $html;
+}
+
+$app ui_app = null;
+$window ui_window = null;
+$view webview = null;
+$kept_app ui_app = null;
+$kept_window ui_window = null;
+$kept_view webview = null;
+$error error;
+$value = false;
+try {
+	if (!take($app, $error, ui_app_create())) { echo $error->get_message(); return 1; }
+	$kept_app = $app;
+	if (!take($window, $error, ui_window_create($app, "V-R08 acceptance", 400, 300))) { return 2; }
+	$kept_window = $window;
+	if (!take($view, $error, webview_create($window))) { return 3; }
+	$kept_view = $view;
+	$app = null;
+	$window = null;
+	if (!take($value, $error, ui_window_show($kept_window)) || !$value) { return 4; }
+	// A failed load must preserve the populated output destination.
+	$value = true;
+	if (take($value, $error, webview_load_app($view, "missing-app")) || !$value) { return 5; }
+	@@LOAD@@
+	$ready = false;
+	$started = false;
+	$finished = false;
+	$failed = false;
+	$ok_ack = false;
+	$error_ack = false;
+	$eval_ack = false;
+	$sent_eval = false;
+	for ($turn = 0; $turn < 600; $turn++) {
+		ui_app_poll($kept_app);
+		$event = ui_app_next_event($kept_app);
+		$type = ui_event_type($event);
+		if ($type === "webview_ready") { $ready = true; }
+		if ($type === "webview_navigation_started") { $started = true; }
+		if ($type === "webview_navigation_finished") { $finished = true; }
+		if ($type === "webview_load_failed") { $failed = true; }
+		if ($type !== "") {
+			ui_event_window($event);
+			ui_event_webview($event);
+			ui_event_text($event);
+			ui_event_url($event);
+		}
+		if ($type === "webview_message") {
+			$id = webview_message_id($event);
+			$command = webview_message_command($event);
+			$payload = webview_message_payload_json($event);
+			if ($id <= 0 || ui_event_message($event) === "") { return 6; }
+			if ($command === "ok") {
+				if ($payload !== '{"probe":7}') { return 7; }
+				if (!take($value, $error, webview_reply_ok($kept_view, $id, '{"answer":42}'))) { return 8; }
+			} else if ($command === "error") {
+				if (!take($value, $error, webview_reply_error($kept_view, $id, "expected", "expected failure"))) { return 9; }
+			} else {
+				if ($command === "ack-ok") { $ok_ack = true; }
+				if ($command === "ack-error") { $error_ack = true; }
+				if ($command === "ack-eval") { $eval_ack = true; }
+				if ($command === "bad") { return 10; }
+				if (!take($value, $error, webview_reply_ok($kept_view, $id, "null"))) { return 11; }
+			}
+		}
+		if ($finished && !$sent_eval) {
+			if (!take($value, $error, webview_eval($kept_view, "window.scpp.invoke('ack-eval',null);"))) { return 12; }
+			$sent_eval = true;
+		}
+		@@DONE@@
+		dt_sleep_ms(20);
+	}
+	@@ASSERT@@
+	webview_close($kept_view);
+	$value = true;
+	if (take($value, $error, webview_load_html($kept_view, "closed")) || !$value) { return 14; }
+	if (!take($value, $error, ui_window_close($kept_window))) { return 15; }
+	ui_app_exit($kept_app);
+	if (ui_app_poll($kept_app)) { return 16; }
+	echo "enabled-ok\n";
+} finally {
+	webview_close($kept_view);
+	ui_window_close($kept_window);
+	ui_app_exit($kept_app);
+}

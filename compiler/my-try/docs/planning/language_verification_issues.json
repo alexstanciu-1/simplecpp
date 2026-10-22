@@ -1442,11 +1442,17 @@
         "webview_close"
       ],
       "dependencies": [],
-      "next_action": "Run enabled GTK/WebKitGTK build and isolated GUI load/message/reply/shutdown proofs on a suitably provisioned host; source/module exposure is implemented. Keep general error-condition transport VR08-H01 separate.",
+      "next_action": "Closed in agreed Linux scope with enabled GTK/WebKitGTK and default-prelowered GUI proofs on dev002. Discuss supplementary VR08-H02 handle/null comparison separately; keep prior VR08-H01 and other platforms separate.",
       "acceptance": "Explicit contract disposition for every listed public name, followed by signature/behavior/provider integration proofs for retained APIs.",
       "simple_batch_eligible": false,
-      "eligibility_reason": "Source/build integration is implemented and verified within its headless scope; enabled-provider acceptance remains explicit.",
-      "repair_status": "partially-implemented-and-verified",
+      "eligibility_reason": "Original source/build integration and enabled Linux acceptance are verified; supplementary compiler gaps and other platforms remain separate.",
+      "repair_status": "implemented-and-verified",
+      "acceptance_closeout": {
+        "date": "2026-10-22",
+        "report": "strict_gui_closeout.md",
+        "results": "strict_gui_closeout_results.json",
+        "scope": "Enabled Linux GTK/WebKitGTK native/source execution, replies acknowledged by JavaScript, snapshots, lifecycle, retained recovery and SDK cache transitions on dev002. S02-H01, VR08-H02 and prior VR08-H01 remain separate."
+      },
       "repair": {
         "date": "2026-10-22",
         "report": "ui_webview_integration.md",

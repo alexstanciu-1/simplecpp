@@ -9,12 +9,13 @@ syntax and collection → shared semantic preparation → C++ generation. Other
 frontends should normalize toward the same PHS-shaped concepts. LLVM is a parked
 experiment retained for regressions, not a second semantic development path.
 
-Current verification checkpoint: [S02 strict-scope reconciliation](planning/strict_gui_closeout.md),
-63/64 original dispositions resolved for the strict milestone (98.44%): 58
+Current verification checkpoint: [S02 / V-R08 closeout](planning/strict_gui_closeout.md),
+64/64 original dispositions resolved for the strict milestone (100%): 59
 implemented/repaired and five contract/environment/scope reconciliations. S02 is an
-exclusion with six migrated proofs, not legacy syntax implementation. V-R08 remains partial:
-all 24 APIs pass disabled-provider source/build proofs; enabled GTK/WebKitGTK and
-GUI acceptance remain unavailable. V-D08 is closed within its compatibility scope:
+exclusion with six migrated proofs, not legacy syntax implementation. V-R08 now
+passes enabled Linux GTK/WebKitGTK GUI acceptance on dev002 with default prelowering. Supplementary S02-H01 project IO selection and VR08-H02 concrete
+handle/null comparison remain open; prior VR08-H01 and other platforms stay separate.
+V-D08 is closed within its compatibility scope:
 enum carriers/helpers and default-less match pass default-prelowered execution,
 state, snapshot and cleanup checks. The [audit](planning/enum_compatibility_closeout.md)
 keeps baseline-unsupported extensions and intentional v0.2 changes explicit.

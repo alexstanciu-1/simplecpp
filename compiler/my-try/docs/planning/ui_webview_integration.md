@@ -21,7 +21,16 @@ enter link commands. No executable metadata, extra runtime registry, package
 installation or runtime implementation changes are introduced. This integration's
 native consumer remains Linux/Clang; other platforms require their own build proof.
 
-## Evidence and remaining acceptance
+## Enabled acceptance closeout — 2026-10-22
+
+[V-R08 enabled Linux acceptance](strict_gui_closeout.md) now passes on provisioned
+dev002 with GTK 3.24.41/WebKitGTK 2.52.6 and default prelowering. Native/source GUI
+execution, acknowledged replies, snapshots, cleanup, retained recovery and SDK cache
+transitions close the original issue. VR08-H02 concrete handle/null comparison and
+prior VR08-H01 remain separate. The historical unavailable-host statements below
+record the earlier checkpoint; they are superseded by this enabled acceptance.
+
+## Historical source-integration evidence and then-remaining acceptance
 
 Implementation is complete within the available host proof boundary. V-R08 remains
 **partial** until enabled-provider and GUI acceptance are proved: overall 58/64
