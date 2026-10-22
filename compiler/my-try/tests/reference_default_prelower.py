@@ -40,7 +40,6 @@ CASES.update({
 })
 CASES['borrowed-bool-control'] = ('class C{function f(const bool &$n):int{return $n ? 1 : 0;}}$c=new C();$b=true;echo $c->f($b);', '1', False)
 REJECTIONS = {
- 'writable': ('function f(int &$n=7):int{return $n;}echo f();', 'writable reference parameter defaults'),
  'temporary': ('function f(const int &$n=7):int{return $n;}echo f(3);', 'stable storage'),
  'conversion': ('function f(const float &$n=1.0):float{return $n;}$n=1;echo f($n);', 'exact parameter type'),
  'write': ('function f(const int &$n=7):void{$n=9;}f();', 'read-only'),

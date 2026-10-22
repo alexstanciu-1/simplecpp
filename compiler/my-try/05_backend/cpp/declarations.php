@@ -188,13 +188,7 @@ final class CPP_Declarations
 			$entry = object_cast(weakref_get($storage->declaration), collected_name::class);
 			$parameter = $storage->contract;
 			$parts .= $separator . self::parameter_type($parameter, $context, $prototype) . ' ' . CPP_Generator::local_name($entry);
-			if ($prototype && ($syntax instanceof function_node) && ($parameter->default_value !== null)) {
-				$parts .= ' = ' . self::parameter_default($parameter->default_value, $context);
-			}
-			elseif ($prototype && ($parameter->element_type !== null)) {
-				// An empty tail is implicit in source; this also permits preceding C++ defaults.
-				$parts .= ' = ' . self::type($parameter->type, $context) . '{}';
-			}
+			// Source calls materialize every default and pack; C++ declarations carry no defaults.
 			$separator = ', ';
 		}
 
@@ -689,7 +683,7 @@ final class CPP_Declarations
 			$context->next_temporary++;
 			$text .= self::type_for($parameters[$index]->type, $context, cpp_type_requirement::stored_value) . ' ' . $name . ' = ' . self::parameter_default($default_value, $context) . ";\n";
 			if ($transport !== null) { $physical_arguments[] = $name; }
-			// An omitted read-only reference borrows this call-local owner until invocation completes.
+			// An omitted reference borrows this call-local owner until invocation completes.
 			$names .= $separator . ($parameters[$index]->mode === passing_mode::reference
 				? $name : self::move($name, $parameters[$index]->type, $context));
 			$separator = ', ';

@@ -202,9 +202,6 @@ final class Callable_Contracts
 				}
 			}
 			if ($parameter->default_value !== null) {
-				if (($parameter->mode !== passing_mode::value) && ($parameter->access !== storage_access::read_only)) {
-					throw new \RuntimeException('S2S writable reference parameter defaults are deferred');
-				}
 				$optional_seen = true;
 			}
 			elseif ($optional_seen && !$variadic_seen) {

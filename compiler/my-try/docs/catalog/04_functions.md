@@ -7,9 +7,10 @@ read-only reference-pack spellings. Nonempty value packs expose VD07-A02 under
 default prelowering. The subsequent [VD07-A02 repair](../planning/value_pack_transport.md)
 verifies canonical scalar packs through source free/static/instance calls, with
 snapshots, owned storage and cleanup. Wider packs and other bridges stay separate;
-The [read-only default slice](../planning/reference_defaults.md) admits canonical
-scalar literal defaults with call-local ownership; V-D07 remains open for writable
-defaults and reference-pack spelling.
+The [reference-default repair](../planning/reference_defaults.md) admits read-only
+and writable canonical scalar literal defaults with fresh call-local ownership,
+explicit caller binding and rejected escaping default references. VD07-A01 is
+verified in this scope; V-D07 remains open for reference-pack spelling.
 
 
 > **Important: LLVM is deferred by default. Work on the direct LLVM backend only when the user explicitly requests it. The v0.2 default scope is Frontend + C++ S2S.**

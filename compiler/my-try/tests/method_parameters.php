@@ -24,6 +24,7 @@ foreach (['class', 'struct'] as $kind) {
 		$setup = $mode === 'static' ? '' : '$c = new C(); ';
 		$call = $mode === 'static' ? 'C::f' : '$c->f';
 		foreach ([
+			'writable_default' => ['int &$n = 7', 'int', '++$n; return $n;', '$n = 3; $first = CALL($n); return $first + CALL() + $n;', 16],
 			'write' => ['int &$n', 'void', '$n += 2;', '$n = 7; CALL($n); return $n;', 9],
 			'alias' => ['int &$n', 'void', '$a =& $n; $a = 9;', '$n = 7; $a =& $n; CALL($a); return $n;', 9],
 			'observation' => ['const int &$read, int &$write', 'int', '$write = 9; return $read;', '$n = 7; return CALL($n, $n);', 9],
@@ -58,7 +59,6 @@ foreach (['class', 'struct'] as $kind) {
 			['int &...$values', 'void', '', ''],
 			['int ...$values = 1', 'void', '', ''],
 			['int ...$values, int $n', 'void', '', ''],
-			['int &$n = 1', 'void', '', ''],
 		] as [$parameters, $return_type, $body, $program]) {
 			$failed = false;
 			try {

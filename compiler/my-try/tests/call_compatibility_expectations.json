@@ -184,9 +184,10 @@
     "stdout": "4:4"
   },
   "v02-ref-default-explicit": {
-    "stage": "generation",
-    "supported": false,
-    "source_sha256": "0d698641ea2c3bb7a1d0963624bbc6c801f58c9268c28c9d2b7f312725eb1f26"
+    "stage": "executed",
+    "supported": true,
+    "source_sha256": "0d698641ea2c3bb7a1d0963624bbc6c801f58c9268c28c9d2b7f312725eb1f26",
+    "stdout": "4:4"
   },
   "v01-ref-default-omitted": {
     "stage": "build",
@@ -194,9 +195,10 @@
     "source_sha256": "f9e6d7d176ab22a0210200b295dec12a7087680ce071568e274e326eb447024a"
   },
   "v02-ref-default-omitted": {
-    "stage": "generation",
-    "supported": false,
-    "source_sha256": "f9e6d7d176ab22a0210200b295dec12a7087680ce071568e274e326eb447024a"
+    "stage": "executed",
+    "supported": true,
+    "source_sha256": "f9e6d7d176ab22a0210200b295dec12a7087680ce071568e274e326eb447024a",
+    "stdout": "8:8"
   },
   "v01-const-ref-default-omitted": {
     "stage": "executed",

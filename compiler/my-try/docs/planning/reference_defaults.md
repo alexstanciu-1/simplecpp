@@ -1,7 +1,92 @@
-# VD07-A01 read-only reference defaults
+# VD07-A01 reference defaults
 Doc Status: planning
 
-## Approved scope — 2026-10-22
+## Completed writable follow-up — 2026-10-22
+
+**VD07-A01 is implemented and verified within its canonical scalar scope.** Named
+source free/static/instance functions admit literal defaults on writable references
+to int/float/bool/string. Explicit calls retain exact caller storage and write-back;
+omitted calls initialize fresh mutable owners on every invocation. Reference results
+whose origin was omitted reject during preparation, including uses that would copy
+the result. Explicit reference-return origins remain supported, even when another
+parameter uses its default. Wider defaults and other callable bridges remain separate.
+
+The [normative contract](../../../../specs/native_reference_safety.md#writable-reference-defaults--2026-10-22)
+distinguishes safe borrow-or-copy optimization for ordinary values from explicit
+reference semantics: copying an explicit reference would change its live alias or
+write-back behavior. No new escape analysis, runtime mechanism or retained structure
+was added. Existing borrowed-capture restrictions remain.
+
+Parameter-default preparation admits both access modes through the same scalar
+literal path. Shared callable validation no longer rejects writable defaults. Call
+preparation checks that a reference result has an explicit origin before assigning
+its place. The existing emitter supplies owned default locals as lvalues. Redundant
+C++ defaults were removed from source callable prototypes: call-site lowering already
+materializes every default and pack, and C++ writable references cannot bind a
+literal default temporary. This keeps one default-binding path. Ordinary by-value
+and empty/nonempty pack controls verify the shared declaration change.
+
+### Verification and evidence
+
+Dev002 checkout `/home/alex-ai/curl/20261020-work`, base `dc80eec76` with twelve
+compiler/test/expectation files in `writable-default-manifest.json`. Final hashes
+were verified before the retained closeout. Tests use default prelowering and assert
+`application_templates: forbidden`, through the shared 12-slot runner with:
+
+```sh
+export PATH=/home/alex-ai/curl/value-pack-bin:$PATH
+export MY_TRY_PHP_EXECUTOR=cli
+python3 compiler/my-try/tests/writable_reference_default_prelower.py \
+  --baseline /home/alex-ai/curl/vd08-v01-baseline --results FRESH_DIRECTORY
+python3 compiler/my-try/tests/reference_default_prelower.py --results FRESH_READONLY
+```
+
+- `20261022-writable-default-01`: 24 pinned-v0.1 observations. All twelve explicit
+  scalar/free/static/instance calls execute with caller write-back; all twelve
+  omitted calls fail native build. Omitted writable defaults are an explicit v0.2
+  extension throughout this tested slice. The baseline is pinned at
+  `75de94c71e37060c564b6ade19850b7686bd457a`.
+- `20261022-writable-default-final`: 37 executable cases, twelve source rejections
+  and three existing PHP regression suites pass. Five programs also pass ASan/UBSan.
+  Coverage includes repeated/nested defaults, mutable forwarding, alias/snapshot
+  order, exception write-back, independent string values, receiver cleanup, signed
+  defaults, explicit reference results and omitted-origin rejection. Each executable
+  runs cold and warm; warm compilation/linking is zero.
+- That run's sole remaining failure was a retained-test expectation that removing
+  an unused default must change explicit-call artifacts. The corrected assertion
+  verifies that these artifacts stay unchanged; other edits still change consumers.
+  `20261022-writable-default-retained-final` passes explicit/omitted/default/access
+  edits, rejection of an escaping default reference, withdrawal of ready output,
+  identical recovery, fresh parity, provider exclusion and cold/warm execution.
+  Acceptance combines these two runs; the original failed log is preserved.
+- `20261022-writable-default-readonly-final`: all 35 tasks pass, including 22 source
+  programs, nine rejections, retained lifecycle and three PHP regression suites;
+  five programs also pass ASan/UBSan. Its 23 publications run cold/warm without warm
+  compilation or linking.
+- `20261022-writable-default-audit-final`: ten paired cases and retained recovery
+  pass reviewed stage/hash/stdout expectations. Each version executes nine cases:
+  v0.1 rejects omitted writable defaults at build, while v0.2 rejects the separately
+  deferred reference-pack spelling. Ordinary value defaults and empty/nonempty packs
+  remain positive controls. Current executed cases and retained output pass warm
+  no-work builds.
+
+The initial runs preserve the redundant C++-default build failures and stale method/
+retained expectations. The signed-default probe initially requested an unsupported
+int-to-float default conversion; it now uses correct-type signed literals without
+widening conversion rules. A container-interior probe initially had a `>=` tokenization
+error; corrected whitespace now reaches and proves the intended binding rejection.
+The escaping-capture rejection remains the existing exact-callable boundary diagnostic.
+
+No runtime changes, full matrix or native compiler rebuild. Wider defaults/packs,
+constructors and other bridges stay separate. VD07-A03 reference-pack spelling is
+still open; overall remains **60/64 resolved (93.75%)** with V-R08 partial and V-D01,
+V-D07 and S02 open. RD-H01 below remains a separate stale nullable-metadata fixture.
+
+Writable evidence archive: `/home/alex-ai/curl/writable-default-evidence.tar.gz`,
+SHA-256 `43cca4d2eadc95777b0cbf4bbe7ec052134b5936111c495e457cbe646fb7f189`.
+It retains initial failures and final proofs, excluding native caches.
+
+## Completed read-only scope — 2026-10-22
 
 Named source free functions and static/instance methods admit literal defaults for
 fixed read-only references to canonical int/float/bool/string. The normative
@@ -29,7 +114,7 @@ The existing truthiness emitter now records that dependency, instead of relying
 on a parameter forward declaration. A no-default borrowed-bool control verifies
 the same requirement.
 
-**VD07-A01 is partial:** this completes its read-only scalar slice, while writable
+**At this historical checkpoint VD07-A01 was partial:** this completed its read-only scalar slice, while writable
 reference-default declarations remain unsupported, including explicit-argument
 calls that v0.1 accepts. VD07-A03 reference-pack spelling also remains open. Wider
 default types/expressions and other bridges stay separate. Overall remains

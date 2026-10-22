@@ -19,9 +19,9 @@ state, snapshot and cleanup checks. The [audit](planning/enum_compatibility_clos
 keeps baseline-unsupported extensions and intentional v0.2 changes explicit.
 V-D05 is reconciled as a baseline-unsupported extension. Three other original issues
 remain open: V-D01, V-D07 and S02. The [VD07-A02 repair](planning/value_pack_transport.md) verifies concrete scalar
-value packs. [Read-only reference defaults](planning/reference_defaults.md) now pass
-binding/snapshot/lifetime proofs; V-D07 retains writable-default and reference-pack
-spelling decisions for discussion. Supplementary BS-R01 remains closed.
+value packs. [Read-only and writable reference defaults](planning/reference_defaults.md) now pass
+binding/snapshot/lifetime proofs, closing VD07-A01 in canonical scalar scope.
+V-D07 retains the reference-pack spelling decision for discussion. Supplementary BS-R01 remains closed.
 
 The completed [async/tasks goal](planning/async_tasks.md) closes S12 and V-R02
 with dev002 default-prelowered source/runtime and retained-publication proofs.

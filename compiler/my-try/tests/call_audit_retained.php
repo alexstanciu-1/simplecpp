@@ -31,7 +31,7 @@ if ($saved === $original) { throw new \LogicException('Default edit did not upda
 $manifest = Output_Publication::require_ready($output);
 foreach ([str_replace('C::value()', 'C::value(n:9)', $source),
 	str_replace('function read():int;', 'static function read():int;', $source),
-	str_replace('int $n=9', 'int &$n=9', $source),
+	str_replace('function value(int $n=9)', 'function &value(int &$n=9)', $source),
 	str_replace('C::value()', 'C::value(...[9])', $source)] as $invalid) {
 	file_put_contents($path, $invalid);
 	$rejected = false;

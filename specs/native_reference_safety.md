@@ -130,7 +130,7 @@ the C++ handle qualifier alone is not sufficient.
 
 The bounded source slice admits fixed reference parameters, with the omitted-default
 exception defined below. By-value
-`const T $value`, const-reference returns, writable reference defaults, variadics, temporary
+`const T $value`, const-reference returns, variadics, temporary
 binding, closures and broader const type/local syntax remain deferred. Methods now
 share the [fixed read-only reference contract](instance_methods_v0_2.md#shared-method-parameters--2026-10-07);
 constructors retain their separate bounded parameter admission. The
@@ -162,9 +162,39 @@ the storage is released. No static shared default storage is introduced.
 
 Read-only writes and mutable forwarding remain rejected. The borrowed storage must
 not escape: const-reference returns and escaping borrowed captures remain rejected.
-Writable reference-default declarations remain unsupported even when a particular
-call supplies an explicit argument; that compatibility question is separate.
 Required parameters after optional parameters remain rejected.
+
+## Writable reference defaults — 2026-10-22
+
+Named free functions and source static/instance methods also admit literal defaults
+for fixed writable references to canonical `int`, `float`, `bool` and `string`.
+The literal/conversion domain and excluded callable/type domains are the same as
+for read-only defaults above.
+
+An explicit argument binds exact caller storage and preserves write-back and live
+alias behavior. An omitted argument instead owns fresh mutable call-local storage;
+mutations affect that storage only. Repeated calls each initialize the default
+again. Defaults are materialized after explicit arguments, in parameter order, and
+live through synchronous invocation, forwarding and exceptional cleanup. Ordinary
+value returns survive independently of default storage.
+
+A reference-returning callable may declare such a default, but a call must supply
+its reference-return origin explicitly. Preparation rejects an omitted origin even
+when the surrounding expression would copy the result: no reference result may
+escape call-local default storage. Explicit-origin calls retain the existing
+same-origin reference-return contract. Borrowed captures may not escape through
+callable storage; this adds no asynchronous retention or escape-analysis extension.
+
+Safe borrowing of ordinary value inputs is an optimization that must preserve
+value snapshots; when its proof is unavailable, retain the normal copy. Explicit
+source references are different: copying them would lose live alias/write-back
+semantics. Unsafe explicit bindings therefore reject rather than silently copy.
+Fresh omitted-default ownership is not a fallback copy of caller storage.
+
+Pinned v0.1 probes execute explicit binding with declared defaults for all four
+canonical scalars through free/static/instance calls, but fail native compilation
+when those arguments are omitted. The fresh mutable omitted-default behavior above
+is an explicit v0.2 extension, not a claim of baseline parity for omitted calls.
 
 ## v0.2 bounded closure borrows — 2026-10-09
 

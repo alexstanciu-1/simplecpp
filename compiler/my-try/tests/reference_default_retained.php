@@ -44,7 +44,7 @@ foreach ([$omitted_call, str_replace('"saved"', '"edited"', $omitted_call), $exp
 }
 $saved = CPP_Probe::text(Model::$cpp_files);
 $manifest = Output_Publication::require_ready($output);
-file_put_contents($path, str_replace('const string &$s', 'string &$s', $omitted_call));
+file_put_contents($path, str_replace('return $s;', '$s="invalid";return $s;', $omitted_call));
 $rejected = false;
 try {
 	default_publish($compiler, $path, $output, false);

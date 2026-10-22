@@ -144,6 +144,10 @@ final class Call_Preparation
 
 		if ($facts->signature->reference_return !== null) {
 			$origin /** reference_return_contract */ = $facts->signature->reference_return;
+			// A reference result needs caller storage, never a call-local default owner.
+			if ($origin->parameter_index() >= q_count($arguments)) {
+				throw new \RuntimeException('Reference return cannot escape omitted default storage');
+			}
 			$facts->place = $arguments[$origin->parameter_index()]->require_preparation()->place;
 		}
 		return $facts;
