@@ -274,8 +274,39 @@ selected result expression executes. Ordinary typed value arguments and returns
 accept that result; it cannot initialize a storage reference.
 
 Result admission is independent of condition truthiness and selector admission.
-This extension does not admit enum conditions, enum Elvis operands, enum `??`
-results or enum payloads in nullable/Result wrappers. Those remain separate slices.
+This extension does not admit enum conditions or enum Elvis operands. The bounded
+nullable/Result value boundaries and exact-enum `??` fallback are specified below.
+
+### 3.2.1 v0.2 nullable and Result enum payloads
+
+Unit, int-backed and fixed-integer-backed enums may be payloads of `nullable<E>`
+and `result<E>`. `?E` denotes exactly the same nullable type as `nullable<E>`;
+it does not erase absence or lower to a bare enum. Values preserve the exact
+nominal enum identity and its backing representation. Integers and another enum's
+cases do not implicitly initialize or replace the payload.
+
+Nullable values contain either absence or an enum case. Result values contain
+either an enum case or a genuine structured error. A zero-backed case is a
+successful payload. Nullable default initialization is empty; this does not add
+implicit bare-enum or Result default initialization. Required storage and existing
+explicit-initializer rules remain in force.
+
+Ordinary exact-type initialization, assignment, by-value parameters, returns and
+same-wrapper copying reuse the existing wrapper boundaries. Required extraction
+checks the state and throws on absence or failure. Existing-output `take` preserves
+the output on failure, copies the case on success, and clears the structured error
+output after successful Result extraction. Its source is evaluated and snapshotted
+once before write-back. Both existing take spellings have the same behavior.
+
+`nullable<E> ?? E` and `result<E> ?? E` return the exact enum value; the fallback
+is evaluated only for a non-value state. There is no integer fallback conversion
+or cross-enum join. Same-wrapper fallback and other selection extensions are not
+added here. Enum truthiness, wrapper conditions, lifted equality/arithmetic,
+`result_or_false<E>` and `result_or_bool<E>` remain outside this slice.
+
+Default-prelowering gaps in enum metadata helpers and generic wrapper value probes
+remain separate from these value boundaries; see the implementation report in
+`compiler/my-try/docs/planning/enum_wrappers.md`.
 
 ### 3.3 v0.2 explicit enum parameter defaults
 

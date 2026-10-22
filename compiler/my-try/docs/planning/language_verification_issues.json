@@ -651,13 +651,21 @@
       "dependencies": [
         "Agree enum extension semantics and interaction with method/interface foundations and payload capabilities."
       ],
-      "next_action": "Discuss extensions individually after the bounded enum implementation; retain existing explicit enum_name/value/from_value support.",
+      "next_action": "Discuss remaining enum extensions separately. Preserve VD08-H01 enum helper and VD08-H02 wrapper value-probe concrete transport gaps; sentinel Result carriers, lifted operators and reflection/method/string-backing extensions remain deferred.",
       "simple_batch_eligible": false,
       "compatibility_audit": {
         "date": "2026-10-22",
         "report": "ui_webview_integration.md",
         "scope": "Pinned v0.1 source/catalog audit only; no issue closure or fresh baseline execution claim."
-      }
+      },
+      "repair_status": "partially-implemented-and-verified",
+      "repair_report": "enum_wrappers.md",
+      "repair_evidence": [
+        "20261022-vd08-final",
+        "20261022-vd08-runtime-01",
+        "20261022-vd08-baseline-01"
+      ],
+      "repair_scope": "nullable<E> / ?E and structured result<E> for unit/int/fixed-width enums; default-prelowered states, snapshots, take, checked extraction and exact-enum fallback verified. No runtime changes."
     },
     {
       "id": "V-P01",

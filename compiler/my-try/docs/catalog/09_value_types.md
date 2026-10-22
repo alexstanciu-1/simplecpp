@@ -266,7 +266,7 @@ rebuild or portability conversion was performed.
 ### Bounded closeout — 2026-10-06
 
 
-**Current scope — 2026-10-19 (CS366).** Bounded enums and explicit helpers have concrete proofs; later constructor probes resolve the old CH10 carryovers. String backing, PHP reflection, enum methods/interfaces and wrappers remain explicit extensions in V-D08. Historical native compiler checkpoints do not prove current native compiler parity. Original enum failures remain archived; H12 repaired the bounded stale fixture expectations in fixture_repairs_01.
+**Current scope — 2026-10-19 (CS366).** Bounded enums and explicit helpers have concrete proofs; later constructor probes resolve the old CH10 carryovers. The [2026-10-22 V-D08 slice](../planning/enum_wrappers.md) admits nullable/structured Result enum payloads with default-prelowered state/snapshot proofs. String backing, PHP reflection, enum methods/interfaces, sentinel Result carriers and lifted operators remain extensions. Default-prelowered enum helper and wrapper value-probe transport remain separate gaps. Historical native compiler checkpoints do not prove current native compiler parity. Original enum failures remain archived; H12 repaired the bounded stale fixture expectations in fixture_repairs_01.
 
 Contracts and owners: [compact_layout_types.md](../../../../specs/compact_layout_types.md), [type_use_modifiers.md](../../../../specs/type_use_modifiers.md). [Scoped evidence and limits](../planning/language_verification_section_reconciliation.json) (`CS366`).
 

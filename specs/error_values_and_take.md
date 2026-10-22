@@ -61,8 +61,11 @@ The experimental v0.2 compiler admits the assignment spelling and normalizes bot
 spellings to one AST node. Outputs currently reference existing local variables or
 parameters of the exact selected branch types; the two outputs must name distinct
 declarations (aliasing between reference parameters is not analyzed). Payloads are
-supported for scalars, exact `mixed`/`dynamic`, explicit callables and typed vector/hash Result payloads (nullable payloads
-remain scalar-only). Wrapped null/false are successful payloads, not wrapper failure.
+supported for scalars, exact `mixed`/`dynamic`, explicit callables and typed vector/hash Result payloads.
+Nullable and structured Result extraction also admit exact enum payloads;
+nullable take otherwise retains its scalar domain. Enum sentinel Result families
+remain deferred. See [enum wrapper boundaries](compact_layout_types.md#321-v02-nullable-and-result-enum-payloads).
+Wrapped null/false are successful payloads, not wrapper failure.
 Likewise, an absent callable is a successful payload: `take` returns true, replaces
 the callable output with absence and clears the structured error output. Presence
 and invocation are separate checks on that extracted callable. See
@@ -104,8 +107,10 @@ introduce an implicit or explicit boolean cast from error.
 
 ## Typed-container Result boundaries — v0.2
 
-The compiler registry owns exact payload admission through the `result_payload`
-provider opt-in. This is not implied by storage, copying or truthiness support.
+The shared type-capability model owns exact payload admission through the `result_payload`
+capability: registered providers declare it, while completed source enum facts
+publish it for the bounded structured-Result domain. This is not implied by
+storage, copying or truthiness support.
 Registered template copyability can depend on selected type parameters; Result
 operations use these effective capabilities, not container-name special cases.
 Registering transport support does not grant a condition contract or bypass

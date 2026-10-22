@@ -27,7 +27,8 @@ final class prepared_enum
 	public function has_capability(generic_contract $capability): bool
 	{
 		return ($capability === generic_contract::copyable_value)
-			|| ($capability === generic_contract::value_storable);
+			|| ($capability === generic_contract::value_storable)
+			|| ($capability === generic_contract::result_payload);
 	}
 }
 

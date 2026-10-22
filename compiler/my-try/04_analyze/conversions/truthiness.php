@@ -60,6 +60,10 @@ final class Condition_Truthiness
 		$payload = Nullable_Conversions::payload($source);
 		if ($payload !== null) {
 			Nullable_Conversions::require_value_payload($payload);
+			if (Type_Queries::is_enum($payload))
+			{
+				throw new \RuntimeException('Nullable enum conditions require explicit presence or extraction');
+			}
 			if ($source->by_value()) { throw new \RuntimeException('S2S nullable conditions do not support storage modifiers'); }
 			$decision = new truthiness_decision();
 			$decision->source_type = $source;
