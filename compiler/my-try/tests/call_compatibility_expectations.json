@@ -251,9 +251,10 @@
     "stdout": "0"
   },
   "v02-ref-pack-empty": {
-    "stage": "generation",
-    "supported": false,
-    "source_sha256": "abc1b68361b8398f76808478da4d0d175799c8e28d1b89f774e4c786a63a4f84"
+    "stage": "executed",
+    "supported": true,
+    "source_sha256": "abc1b68361b8398f76808478da4d0d175799c8e28d1b89f774e4c786a63a4f84",
+    "stdout": "0"
   },
   "v01-value-pack-write": {
     "stage": "build",
@@ -428,9 +429,10 @@
     "stdout": "6:3"
   },
   "v02-ref-pack-read": {
-    "stage": "generation",
-    "supported": false,
-    "source_sha256": "20971079083bb6796f55d98dc0992ca3978f6ed4180117527c4681c0102f844e"
+    "stage": "executed",
+    "supported": true,
+    "source_sha256": "20971079083bb6796f55d98dc0992ca3978f6ed4180117527c4681c0102f844e",
+    "stdout": "6:3"
   },
   "v01-value-pack-local-copy": {
     "stage": "executed",

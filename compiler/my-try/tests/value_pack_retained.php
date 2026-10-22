@@ -42,7 +42,7 @@ foreach ([$nonempty_call, $empty_call, $prefix . 'echo f(1);', $nonempty_call] a
 }
 $saved = CPP_Probe::text(Model::$cpp_files);
 $manifest = Output_Publication::require_ready($output);
-file_put_contents($path, str_replace('int ...$xs', 'int &...$xs', $nonempty_call));
+file_put_contents($path, str_replace('int ...$xs', 'const int &...$xs', $nonempty_call));
 $rejected = false;
 try {
 	pack_publish($compiler, $path, $output, false);

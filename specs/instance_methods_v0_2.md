@@ -79,7 +79,8 @@ under [the existing reference rules](native_reference_safety.md).
 
 A typed variadic tail is an owned `vector<T>`, may be empty and may follow fixed
 parameters (including references or supported by-value defaults). It must be last;
-reference variadics, explicit pack defaults and call-site unpacking remain excluded.
+true reference variadics, explicit pack defaults and call-site unpacking remain excluded.
+The bounded `T &...$values` compatibility spelling below denotes read-only owned values.
 Element admission/conversion and copy capability are the same as for free functions.
 Explicit arguments are evaluated once in source order; value snapshots and reference
 bindings retain their distinct semantics. Two references may alias the same storage;
@@ -139,3 +140,38 @@ a weak handle produces an ordinary shared receiver; an expired lock still fails 
 normal presence check. These are implementation gates, not permanent prohibitions on
 those storage families. Never substitute a raw pointer or unchecked C++ reference to
 silently accept an unsupported lifetime.
+
+## Read-only owned compatibility packs — 2026-10-22
+
+Named source free functions and static/instance methods accept `T &...$values`
+for canonical `int`, `float`, `bool` and `string`. This is a compatibility spelling
+for a read-only owned value pack, not caller-element references. It is distinct
+from fixed `T &$value`, which retains its live alias and write-back contract.
+
+Tail arguments use ordinary value-pack admission, conversion and copy restrictions.
+Each is evaluated and snapshotted once, left-to-right; later argument effects and
+writes through separate fixed references do not change earlier snapshots. The
+completed pack is owned storage whose lifetime covers invocation and cleanup. Empty
+packs are permitted. Fixed parameters, including their admitted defaults, may precede
+the tail. The tail must remain last and cannot have an explicit default.
+
+The callee may read, index, iterate, bind read-only local aliases and forward the
+whole pack to an eligible read-only parameter. Mutation, append, replacement,
+cleanup/removal and writable-reference forwarding through the pack or its aliases
+reject during shared preparation. An ordinary copy creates independent mutable
+value storage; returning an ordinary value copy preserves it after pack cleanup.
+Borrowed references to pack storage may not escape the call. Existing escape and
+capture restrictions apply without new lifetime inference.
+
+The backend may borrow call-owned storage when safe, or pass owned values; it must
+preserve these semantics. No caller aliasing, pack-of-references representation or
+copy-back is implied by the compatibility marker. Ordinary `T ...$values` remains
+a mutable owned value pack in v0.2.
+
+This scope does not introduce explicit `const T &...$values` spelling, general
+read-only value parameters, wider element types, constructor/anonymous-callable/
+provider/callback variadic bridges, call-site unpacking or asynchronous retention.
+Those contracts remain separate. Pinned v0.1 evidence executes tested free/static
+scalar read-only packs and rejects direct element writes. Its instance-method
+packing probes fail native compilation; current method support follows the v0.2
+contract rather than a claim of demonstrated executable baseline parity.

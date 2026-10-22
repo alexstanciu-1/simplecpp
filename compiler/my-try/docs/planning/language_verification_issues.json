@@ -601,8 +601,15 @@
       "dependencies": [
         "Agree binding/evaluation and pack/reference contracts before expanding admission"
       ],
-      "next_action": "VD07-A02 scalar packs and VD07-A01 read-only/writable scalar reference defaults are verified. Discuss VD07-A03 accepted read-only reference-pack spelling; wider defaults/packs and other bridges remain separate.",
+      "next_action": "Closed within the agreed v0.1 compatibility scope: VD07-A01 scalar defaults, VD07-A02 value packs and VD07-A03 read-only owned compatibility packs are verified. Named arguments/unpacking remain baseline-unsupported extensions; true aliasing packs, wider defaults/packs and other bridges remain separate.",
       "simple_batch_eligible": false,
+      "repair_status": "implemented-and-verified",
+      "repair_evidence": {
+        "date": "2026-10-22",
+        "report": "readonly_packs.md",
+        "archives": ["readonly-pack-evidence.tar.gz"],
+        "scope": "Canonical scalar source free/static/instance calls; read-only owned pack compatibility, snapshots, cleanup, mutation/escape rejection, retained recovery and cold/warm default-prelowered dev002 proof. A01/A02 evidence remains in their reports; wider extensions remain separate."
+      },
       "compatibility_audit": {
         "date": "2026-10-22",
         "report": "ui_webview_integration.md",
@@ -610,7 +617,7 @@
       },
       "compatibility_closeout_audit": {
         "report": "call_compatibility_audit.md",
-        "status": "audit-complete-gaps-open",
+        "status": "audit-complete-bounded-gaps-repaired",
         "evidence": [
           "20261022-call-audit-01",
           "20261022-call-audit-followup",
@@ -648,7 +655,11 @@
           {
             "id": "VD07-A03",
             "title": "Accepted read-only reference-pack spelling needs explicit disposition",
-            "owner": "parameter passing/variadic contract"
+            "owner": "parameter passing/variadic contract",
+            "status": "implemented-and-verified",
+            "report": "readonly_packs.md",
+            "evidence": ["20261022-readonly-pack-01", "20261022-readonly-pack-rejection-final", "20261022-readonly-pack-value-regression", "20261022-readonly-pack-audit"],
+            "scope": "Read-only owned canonical scalar value packs; no caller aliasing. Named free/static/instance source calls, value snapshots, independent copies, cleanup and rejected writes/escaping references. Wider elements and other bridges separate."
           }
         ]
       }

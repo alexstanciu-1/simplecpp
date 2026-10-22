@@ -9,19 +9,20 @@ syntax and collection → shared semantic preparation → C++ generation. Other
 frontends should normalize toward the same PHS-shaped concepts. LLVM is a parked
 experiment retained for regressions, not a second semantic development path.
 
-Current verification checkpoint: [V-D05/V-D07 call audit](planning/call_compatibility_audit.md),
-60/64 original issues resolved (93.75%): 56 implemented/repaired (including
+Current verification checkpoint: [V-D07 compatibility closeout](planning/readonly_packs.md),
+61/64 original issues resolved (95.31%): 57 implemented/repaired (including
 harnesses) and four contract/environment reconciliations. V-R08 remains partial:
 all 24 APIs pass disabled-provider source/build proofs; enabled GTK/WebKitGTK and
 GUI acceptance remain unavailable. V-D08 is closed within its compatibility scope:
 enum carriers/helpers and default-less match pass default-prelowered execution,
 state, snapshot and cleanup checks. The [audit](planning/enum_compatibility_closeout.md)
 keeps baseline-unsupported extensions and intentional v0.2 changes explicit.
-V-D05 is reconciled as a baseline-unsupported extension. Three other original issues
-remain open: V-D01, V-D07 and S02. The [VD07-A02 repair](planning/value_pack_transport.md) verifies concrete scalar
+V-D05 is reconciled as a baseline-unsupported extension. Two other original issues
+remain open: V-D01 and S02. The [VD07-A02 repair](planning/value_pack_transport.md) verifies concrete scalar
 value packs. [Read-only and writable reference defaults](planning/reference_defaults.md) now pass
 binding/snapshot/lifetime proofs, closing VD07-A01 in canonical scalar scope.
-V-D07 retains the reference-pack spelling decision for discussion. Supplementary BS-R01 remains closed.
+[Read-only owned compatibility packs](planning/readonly_packs.md) close VD07-A03
+and V-D07 in the agreed scalar scope; wider extensions remain explicit. Supplementary BS-R01 remains closed.
 
 The completed [async/tasks goal](planning/async_tasks.md) closes S12 and V-R02
 with dev002 default-prelowered source/runtime and retained-publication proofs.

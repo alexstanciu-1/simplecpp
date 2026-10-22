@@ -658,13 +658,15 @@ final class CPP_Declarations
 			$borrow = $prepared_argument->borrow_snapshot;
 			$reference = (($boundary === value_boundary_operation::bind_reference) || $borrow) ? '&' : '';
 
-			$qualifier = (($parameter->access === storage_access::read_only) || $borrow) ? 'const ' : '';
+			// Pack access constrains the completed vector, not its owned element snapshots.
+			$read_only_input = ($parameter->element_type === null) && ($parameter->access === storage_access::read_only);
+			$qualifier = ($read_only_input || $borrow) ? 'const ' : '';
 			$argument_requirement = self::signature_requirement(false, ($boundary === value_boundary_operation::bind_reference) || $borrow);
 			$text .= "\t" . $qualifier . self::type_for($argument_type, $context, $argument_requirement) . $reference . ' ' . $name . ' = ' . $value . ";\n";
 			if ($parameter->requires_transfer) { $transfer_checks .= $name . ".require_transfer();\n"; }
 			if ($transport !== null) { $physical_arguments[] = $name; }
 			if ($boundary === value_boundary_operation::consume_value) {
-				$name = self::move($name, $argument_type, $context, $parameter->access === storage_access::read_only);
+				$name = self::move($name, $argument_type, $context, $read_only_input);
 			}
 			if ($index < $facts->fixed_count) {
 				$names .= $separator . $name;

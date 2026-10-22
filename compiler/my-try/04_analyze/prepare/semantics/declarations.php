@@ -110,6 +110,9 @@ final class Declaration_Preparation
 		$parameters /** Storage<callable_parameter> */ = $facts->signature->parameters;
 		foreach ($parameters as $parameter)
 		{
+			if (($parameter->element_type !== null) && ($parameter->access === storage_access::read_only)) {
+				throw new \RuntimeException('Anonymous read-only compatibility packs remain deferred');
+			}
 			if (($parameter->mode === passing_mode::reference) && ($parameter->default_value !== null))
 			{
 				throw new \RuntimeException('Anonymous reference parameter defaults remain deferred');
@@ -137,7 +140,26 @@ final class Declaration_Preparation
 		if ($node->variadic && ($node->default_value !== null)) {
 			throw new \RuntimeException('S2S variadic parameters cannot have an explicit default');
 		}
-		$contract = self::parameter_contract($type, $node->mode, $node->access, $node->variadic, $context);
+		$mode = $node->mode;
+		$access = $node->access;
+		$compatibility_pack = false;
+		if ($node->variadic && ($mode === passing_mode::reference)) {
+			// Compatibility spelling: value snapshots form an owned pack with read-only access.
+			if ($access === storage_access::read_only) {
+				throw new \RuntimeException('Explicit const reference-pack spelling remains deferred');
+			}
+			$language = Model::$language_scope;
+			if (!$type->matches(Language_Types::integer($language))
+				&& !$type->matches(Language_Types::floating($language))
+				&& !$type->matches(Language_Types::boolean($language))
+				&& !$type->matches(Language_Types::string_type($language))) {
+				throw new \RuntimeException('Read-only compatibility packs require canonical scalar elements');
+			}
+			$mode = passing_mode::value;
+			$compatibility_pack = true;
+		}
+		$contract = self::parameter_contract($type, $mode, $access, $node->variadic, $context);
+		if ($compatibility_pack) { $contract->access = storage_access::read_only; }
 		if ($node->default_value !== null) {
 			$contract->default_value = Parameter_Defaults::prepare($node->default_value, $contract, $context);
 		}
@@ -158,6 +180,9 @@ final class Declaration_Preparation
 			Capability_Preparation::require_concrete_value($contract->type, $context);
 		}
 		if ($variadic) {
+			if ($access === storage_access::read_only) {
+				throw new \RuntimeException('Read-only variadic contracts require named source compatibility spelling');
+			}
 			if ($mode !== passing_mode::value) {
 				throw new \RuntimeException('S2S variadic parameters must be by value without an explicit default');
 			}

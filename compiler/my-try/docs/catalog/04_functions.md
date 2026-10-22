@@ -10,7 +10,10 @@ snapshots, owned storage and cleanup. Wider packs and other bridges stay separat
 The [reference-default repair](../planning/reference_defaults.md) admits read-only
 and writable canonical scalar literal defaults with fresh call-local ownership,
 explicit caller binding and rejected escaping default references. VD07-A01 is
-verified in this scope; V-D07 remains open for reference-pack spelling.
+verified in this scope. The [read-only owned pack repair](../planning/readonly_packs.md)
+closes VD07-A03 and V-D07 in the agreed compatibility scope. The `&...` spelling
+creates value snapshots with read-only pack access, never caller-element aliases.
+Wider packs/bridges and baseline-unsupported named arguments/unpacking remain separate.
 
 
 > **Important: LLVM is deferred by default. Work on the direct LLVM backend only when the user explicitly requests it. The v0.2 default scope is Frontend + C++ S2S.**

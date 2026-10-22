@@ -50,7 +50,7 @@ for kind in ['method', 'static']:
 CASES['literal-controls'] = ('$v vector<string> =["a","b"];$h hash<int> ={x:7};$m mixed=[9];$d dynamic={x:8};echo $v[0],$v[1],$h["x"],$m[0],$d["x"];', 'ab798', False)
 REJECTIONS = {
     'wider-pack': ('function f(vector<int> ...$xs):void{}$v vector<int> =[1];f($v);', 'wider value-pack'),
-    'reference-pack': ('function f(int &...$xs):void{}$n=1;f($n);', 'variadic parameters must be by value'),
+    'reference-pack-write': ('function f(int &...$xs):void{$xs[0]=9;}$n=1;f($n);', 'read-only'),
     'constructor-pack': ('class C{function __construct(int ...$xs){}}$c=new C(1,2);', 'Constructor parameters require fixed by-value inputs'),
 }
 sanitizer = out / 'sanitizer-clang'

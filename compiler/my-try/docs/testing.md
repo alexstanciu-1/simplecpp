@@ -1,6 +1,13 @@
 # Test runners
 Doc Status: supporting
 
+The [read-only owned pack proof](planning/readonly_packs.md) runs on dev002 with
+`python3 compiler/my-try/tests/readonly_pack_prelower.py --results FRESH_DIRECTORY`.
+It covers canonical scalar calls, value snapshots without caller aliases, read-only
+mutation/escape gates, cleanup/sanitizers and retained/cold-warm publication. Optional
+`--baseline PINNED_CHECKOUT` records v0.1 observations without equating recording
+success with executable support.
+
 The [reference-default proof](planning/reference_defaults.md) uses
 `python3 compiler/my-try/tests/reference_default_prelower.py --results FRESH_DIRECTORY`
 on dev002: explicit binding versus omitted ownership, alias/snapshot behavior,

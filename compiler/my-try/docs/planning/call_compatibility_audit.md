@@ -4,8 +4,10 @@ Doc Status: planning
 ## Current follow-up
 
 The subsequent [VD07-A02 repair](value_pack_transport.md) supplies scalar value-pack
-transport with dev002 default-prelowered snapshots/cleanup proofs. V-D07 remains
-open for A03. The [A01 repair](reference_defaults.md) now verifies both read-only
+transport with dev002 default-prelowered snapshots/cleanup proofs. The subsequent
+[A03 repair](readonly_packs.md) admits read-only owned scalar packs and closes V-D07
+in its agreed compatibility scope. Named/unpacking extensions, true aliasing packs
+and wider domains remain separate. The [A01 repair](reference_defaults.md) now verifies both read-only
 and writable scalar defaults. Expanded baseline probes execute all twelve explicit
 writable scalar/free/static/instance calls and fail native build for all twelve
 omitted calls; fresh omitted writable storage is an explicit v0.2 extension. The audit findings and failures below are historical evidence.

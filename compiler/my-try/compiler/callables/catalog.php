@@ -188,8 +188,8 @@ final class Callable_Contracts
 				continue;
 			}
 			if ($parameter->access === storage_access::read_only) {
-				if (($parameter->mode !== passing_mode::reference) || ($parameter->element_type !== null)) {
-					throw new \RuntimeException('S2S const parameters require a fixed reference');
+				if (($parameter->element_type === null) && ($parameter->mode !== passing_mode::reference)) {
+					throw new \RuntimeException('S2S const parameters require a fixed reference or a value pack');
 				}
 			}
 			if ($variadic_seen) {

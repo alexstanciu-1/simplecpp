@@ -196,6 +196,10 @@ canonical scalars through free/static/instance calls, but fail native compilatio
 when those arguments are omitted. The fresh mutable omitted-default behavior above
 is an explicit v0.2 extension, not a claim of baseline parity for omitted calls.
 
+The [`T &...$values` compatibility spelling](instance_methods_v0_2.md#read-only-owned-compatibility-packs--2026-10-22)
+is a read-only owned value pack. It does not create native references to caller
+elements and does not relax fixed-reference binding or escape rules.
+
 ## v0.2 bounded closure borrows — 2026-10-09
 
 Concrete closures additionally admit bounded whole-local/parameter reference captures
