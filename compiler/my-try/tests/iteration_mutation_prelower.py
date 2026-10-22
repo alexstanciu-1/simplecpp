@@ -10,6 +10,13 @@ sys.path.insert(0, str(APP / 'tools'))
 from test_runner import CommandRunner, Task, run_tasks
 
 CASES = {
+    'lifetime-temporary-field': ('class C{public vector<int> $items=[1,2,3];function __destruct(){echo "D";}}function make():C{return new C();}foreach(make()->items as $v){echo $v;}echo "E";', '123DE'),
+    'lifetime-released-field-owner': ('class C{public vector<int> $items=[1,2,3];function __destruct(){echo "D";}}$c=new C();foreach($c->items as $v){echo $v;if($v===1){$c=null;}}echo "E";', '123DE'),
+    'lifetime-field-replacement': ('class C{public vector<int> $items=[1,2,3];}$c=new C();foreach($c->items as $v){echo $v;if($v===1){$c->items=[9];}}echo ":",$c->items[0];', '123:9'),
+    'lifetime-break': ('class C{public vector<int> $items=[1,2,3];function __destruct(){echo "D";}}function make():C{return new C();}foreach(make()->items as $v){echo $v;break;}echo "E";', '1DE'),
+    'lifetime-return': ('class C{public vector<int> $items=[1,2,3];function __destruct(){echo "D";}}function make():C{return new C();}function f():int{foreach(make()->items as $v){return $v;}return 0;}echo f(),"E";', 'D1E'),
+    'lifetime-throw': ('class C{public vector<int> $items=[1,2,3];function __destruct(){echo "D";}}function make():C{return new C();}try{foreach(make()->items as $v){echo $v;throw Exception::make("X");}}catch(Exception $e){echo $e->get_message();}echo "E";', '1DXE'),
+    'lifetime-continue': ('class C{public vector<int> $items=[1,2,3];function __destruct(){echo "D";}}function make():C{return new C();}foreach(make()->items as $v){if($v===2){continue;}echo $v;}echo "E";', '13DE'),
     'mixed-cow-live': ('$xs mixed = [1,2,3];$copy=$xs;foreach($xs as $v){$n int=$v;echo $n,",";if($n===1){$xs[1]=20;$xs[]=4;$xs[2]=30;}}echo ":",$copy[1];', '1,20,3,:2'),
     'mixed-independent-copy': ('$xs mixed = [1,2,3];$copy=$xs;foreach($xs as $v){$n int=$v;echo $n,",";if($n===1){$copy[]=4;$xs[1]=20;}}', '1,20,3,'),
     'mixed-replace': ('$xs mixed = [1,2,3];$copy=$xs;foreach($xs as $v){$n int=$v;echo $n;if($n===1){$xs=null;$copy[1]=20;}}', '123'),
@@ -53,10 +60,15 @@ CASES = {
 parser = argparse.ArgumentParser(description=__doc__)
 parser.add_argument('--results', required=True, type=Path)
 parser.add_argument('--case', action='append', choices=list(CASES))
+parser.add_argument('--sanitize', action='store_true')
 args = parser.parse_args()
 selected = {name: CASES[name] for name in args.case} if args.case else CASES
 out = args.results.resolve()
 out.mkdir(parents=True, exist_ok=False)
+sanitizer = out / 'sanitizer-clang'
+if args.sanitize:
+    sanitizer.write_text('#!/bin/sh\nexec /usr/bin/clang++ -fsanitize=address,undefined -fno-sanitize-recover=undefined -fno-omit-frame-pointer "$@"\n')
+    sanitizer.chmod(0o755)
 with CommandRunner(out / 'logs', ROOT, jobs=12, journals=[out / 'commands.json']) as runner:
     def check(name, source, expected):
         directory = out / name
@@ -75,7 +87,12 @@ with CommandRunner(out / 'logs', ROOT, jobs=12, journals=[out / 'commands.json']
                 assert 'exact int access requires int payload' in (out / 'logs' / (label + '.stderr')).read_text()
             if mode == 'warm':
                 assert build['compiled'] == 0 and not build['linked'], build
+        if args.sanitize:
+            build = json.loads(runner.run(name + '-sanitized', ['php', APP / 'tests/async_sanitized_build.php',
+                published, directory / 'sanitized-cache', sanitizer], timeout=600))
+            assert runner.run(name + '-sanitized-run', [build['executable']],
+                expected=1 if name == 'dynamic-conversion-failure' else 0).decode() == expected
     run_tasks([Task(name, lambda n=name, v=value: check(n, *v)) for name, value in selected.items()]
               + [Task(name + '-contracts', lambda n=name: runner.run(n + '-contracts',
                       ['php', APP / 'tests' / (n + '.php')])) for name in ['iteration', 'indexing']])
-(out / 'summary.json').write_text(json.dumps({'passed': True, 'cases': list(selected), 'default_prelowering': True}) + '\n')
+(out / 'summary.json').write_text(json.dumps({'passed': True, 'cases': list(selected), 'default_prelowering': True, 'sanitized': args.sanitize}) + '\n')

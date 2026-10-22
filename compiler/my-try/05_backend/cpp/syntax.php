@@ -578,7 +578,8 @@ final class CPP_Syntax
 		$this->context->next_temporary++;
 		$source = 'foreach_source_' . $id;
 		$entry = 'foreach_entry_' . $id;
-		$text = "{\nconst auto& " . $source . ' = ' . $this->expression($node->iterable) . ";\n";
+		$binding = CPP_Declarations::bind_storage_receiver($node->iterable, $this->context, true);
+		$text = "{\n" . $binding->statements . 'const auto& ' . $source . ' = ' . $binding->value . ";\n";
 		$text .= 'for (auto ' . $entry . ' : scpp::value_iteration(' . $source . ")) {\n";
 		if ($facts->key !== null) {
 			$text .= $this->initialized_binding($facts->key, $entry . '.key()');

@@ -275,3 +275,30 @@ now use the preservation protocol. V-D01 is still open pending the source-owner
 lifetime and retained-default-prelowering acceptance, native mutation audit,
 focused layout/timing measurements and normative/catalog closeout. Mixed's added
 optional binding state must be included in those measurements.
+
+### Source lifetime and retained publication acceptance
+
+Foreach now uses the existing storage-receiver binding owner before constructing
+its range. Shared field parents remain alive and temporary inline receiver lifetime
+is extended through the loop. No new ownership model is introduced.
+
+- `20261022-iteration-lifetime-01`: seven default-prelowered lifetime programs pass
+  cold/warm and with sanitizer builds: temporary field owner, releasing the parent,
+  field replacement, break, continue, return and throw. Existing iteration/indexing
+  contract suites pass. Destruction markers prove cleanup order.
+- `20261022-iteration-retained-01`: six published programs pass cold/warm. One retained
+  compiler crosses vector/hash/mixed/dynamic and temporary-owner source edits;
+  reference foreach rejection invalidates publication; recovery restores identical
+  artifacts; a fresh compiler produces identical artifacts. Application templates
+  remain forbidden and warm builds compile zero units without linking.
+
+These directories are under `/home/alex-ai/curl/`. The source suite now contains
+46 cases. These proofs do not enable reference foreach or escaping element references.
+
+The native vector write audit found raw structural writes only in private bitset
+word storage, work-queue slots and the PHP static-context stack. Task result loops
+move elements of internal results; they do not structurally mutate a source foreach
+container. Source-visible append/removal/resize/clear/replacement go through the
+registered runtime owners. Capacity changes remain nonstructural. Arbitrary native
+code mutating exposed `native_value()` storage is outside this source-language
+contract; no unconditional freeze was added to mutable native access.
