@@ -8,9 +8,9 @@ syntax and policy/design issues. Operator signatures are not separate closed iss
 
 | Status | Issues |
 | --- | ---: |
-| Implemented or already repaired (including harnesses), then verified | 55 |
+| Implemented or already repaired (including harnesses), then verified | 56 |
 | Contract/environment reconciled and verified | 3 |
-| Partially implemented and verified | 2 |
+| Partially implemented and verified | 1 |
 | Other issues not yet closed | 4 |
 | Total | 64 |
 
@@ -26,9 +26,11 @@ indexed/general probes remain separate. The [sentinel-carrier slice](enum_sentin
 adds falseable/boolean Result enum state transport and true-sentinel presence;
 these bounded repairs add no original issue closure. The [closeout audit](enum_compatibility_closeout.md)
 reconciles all eight original probes but confirms VD08-A01, shared default-less-match
-failure transport. V-D08 remains partial pending that genuine compatibility gap.
+failure transport. The subsequent [VD08-A01 repair](match_failure_transport.md)
+verifies that failure path, matched execution, snapshots and cleanup with default
+prelowering and closes V-D08 (+1.5625 percentage points). Wider extensions stay separate.
 
-Resolved: **58/64 = 90.625%** (by issue count). This is not an
+Resolved: **59/64 = 92.1875%** (by issue count). This is not an
 engineering-effort estimate. The completed async/tasks goal closed S12 and V-R02 (+3.125 points). The subsequent [V-D06 goal](finally_value_transfers.md) closes finally value/loop transfers and default-prelowered exception transport (+1.5625 points). S05 does not certify explicit callable storage under default prelowering. Remaining architecture/runtime/project issues can be
 much larger than fixture repairs. There is no defensible weighted effort percentage.
 
@@ -36,7 +38,7 @@ much larger than fixture repairs. There is no defensible weighted effort percent
 | --- | ---: | ---: | ---: | ---: |
 | Simple fix | 13 | 0 | 0 | 13 |
 | Light discussion | 17 | 0 | 0 | 17 |
-| Normal discussion | 28 | 2 | 4 | 34 |
+| Normal discussion | 29 | 1 | 4 | 34 |
 
 V-L06 now admits the final two scalar float identity forms and re-verifies its
 original carrier cases. S04's unchanged original process fixture passes through

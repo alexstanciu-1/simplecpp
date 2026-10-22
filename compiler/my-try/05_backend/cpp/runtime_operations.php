@@ -182,7 +182,9 @@ final class CPP_Runtime_Operations
 					. '::new(destination) ' . $native_result . '(' . $expression . '); }, addresses);';
 			}
 		}
-		$prototype = ($request->kind === cpp_runtime_operation_kind::exception_throw ? '[[noreturn]] ' : '')
+		$never_returns = ($request->kind === cpp_runtime_operation_kind::exception_throw)
+			|| ($request->kind === cpp_runtime_operation_kind::match_failure);
+		$prototype = ($never_returns ? '[[noreturn]] ' : '')
 			. $output . ' ' . $name . '(' . $signature . ')';
 		$header = 'specializations/' . $name . '.hpp';
 		$declaration = "#pragma once\n" . CPP_Artifacts::includes($declaration_headers, '')
@@ -224,6 +226,10 @@ final class CPP_Runtime_Operations
 	private static function native_operation(cpp_runtime_operation $request, array $arguments /** vector<string> */,
 		cpp_generation_context $context): string
 	{
+		if ($request->kind === cpp_runtime_operation_kind::match_failure) {
+			$context->headers['stdexcept'] = true;
+			return 'throw std::runtime_error("Unhandled match expression")';
+		}
 		if ($request->kind === cpp_runtime_operation_kind::exception_throw) {
 			$context->headers['lang/php/php_exceptions.hpp'] = true;
 			return 'throw ::scpp::php::make_thrown(' . $arguments[0] . ')';

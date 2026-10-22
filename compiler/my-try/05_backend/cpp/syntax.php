@@ -502,9 +502,14 @@ final class CPP_Syntax
 			$text .= 'if (' . $checks . ') { ' . CPP_Sequence::result($result, $this->context) . '} ';
 		}
 		if ($fallback === '') {
-			$this->require_native_operation('match failure operation');
-			$this->context->headers['stdexcept'] = true;
-			$fallback = 'throw std::runtime_error("Unhandled match expression"); ';
+			if ($this->context->concrete_types()) {
+				$request = new cpp_runtime_operation(cpp_runtime_operation_kind::match_failure);
+				$fallback = CPP_Runtime_Operations::invoke($request, [], $this->context, '') . '; ';
+			}
+			else {
+				$this->context->headers['stdexcept'] = true;
+				$fallback = 'throw std::runtime_error("Unhandled match expression"); ';
+			}
 		}
 		return $text . $fallback . CPP_Sequence::close($this->context);
 	}

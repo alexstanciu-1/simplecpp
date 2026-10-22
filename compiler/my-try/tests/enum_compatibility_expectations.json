@@ -335,8 +335,8 @@
     "source_sha256": "2d1114cf476dc7d2bcf3cf523b9648707593ca3f4f0c43fe5722de8882f3dc61"
   },
   "v02-match": {
-    "stage": "generation",
-    "supported": false,
+    "stage": "executed",
+    "supported": true,
     "source_sha256": "2d1114cf476dc7d2bcf3cf523b9648707593ca3f4f0c43fe5722de8882f3dc61"
   },
   "v01-selection": {
@@ -395,8 +395,8 @@
     "source_sha256": "dd83021628168d976148aac90625dfd50e5767c0b255f4a905094b62ee4d595d"
   },
   "v02-numeric-match": {
-    "stage": "generation",
-    "supported": false,
+    "stage": "executed",
+    "supported": true,
     "source_sha256": "dd83021628168d976148aac90625dfd50e5767c0b255f4a905094b62ee4d595d"
   },
   "v01-original-nullable-observed": {

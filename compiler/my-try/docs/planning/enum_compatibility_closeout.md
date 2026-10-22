@@ -1,7 +1,14 @@
 # V-D08 compatibility closeout audit
 Doc Status: planning
 
-## Outcome — 2026-10-22
+## Current follow-up — 2026-10-22
+
+The subsequent authorized [VD08-A01 goal](match_failure_transport.md) repairs and
+verifies the gap below, closing V-D08 within its compatibility scope. Overall is
+now 59/64 (92.1875%), one partial and four other open. The original audit results
+and failure evidence below are preserved as the pre-repair checkpoint.
+
+## Historical audit outcome — 2026-10-22
 
 The tests/docs-only audit accounts for all eight original V-D08 probes: nullable
 and Result enum payloads now execute; the other six are unsupported in pinned
@@ -102,7 +109,7 @@ an explicit enum destination passes. Enum switch executes in v0.2; the baseline
 probe generates invalid `.native_value()` access on the native enum. These are
 baseline limitations, not v0.2 regressions.
 
-## VD08-A01 — default-less match
+## VD08-A01 — historical default-less match finding
 
 Minimal successful v0.1 / failing default-prelowered v0.2 case:
 
@@ -126,12 +133,12 @@ to throw. This is **not** a request for exhaustiveness analysis or a reason to i
 a default arm. The native compiler still needs a valid failure path even for a
 source case list that appears exhaustive.
 
-Next discussion: a bounded compiled failure operation through the existing
+The audit proposed a bounded compiled failure operation through the existing
 exception/operation transport owners, preserving selector snapshots, lazy selected
 arms and unmatched failure behavior. Verify enum and scalar selectors, side effects,
-matched/unmatched execution, exception cleanup and retained recovery. No repair is
-included or implicitly authorized by this audit. Broader exception work remains
-separate if that probe exposes another prerequisite.
+matched/unmatched execution, exception cleanup and retained recovery. No repair was
+included or implicitly authorized by this audit. The separately authorized
+[repair](match_failure_transport.md) now supplies this bridge with no runtime changes.
 
 ## Retained and regression proofs
 

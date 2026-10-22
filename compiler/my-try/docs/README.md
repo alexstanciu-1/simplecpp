@@ -9,17 +9,15 @@ syntax and collection → shared semantic preparation → C++ generation. Other
 frontends should normalize toward the same PHS-shaped concepts. LLVM is a parked
 experiment retained for regressions, not a second semantic development path.
 
-Current verification checkpoint: [V-D08 compatibility closeout audit](planning/enum_compatibility_closeout.md),
-58/64 original issues resolved (90.625%): 55 implemented/repaired (including
-harnesses) and three contract/environment reconciliations. V-R08 is now partial: all
-24 APIs pass disabled-provider source/build proofs; enabled GTK/WebKitGTK and GUI
-acceptance remain unavailable. V-D08 is also partial: nullable and all three Result enum
-carriers, three enum helpers and state-correct plain wrapper presence pass with default prelowering;
-The audit reconciles the original eight extension probes but finds VD08-A01:
-default-less match lacks concrete failure transport for enum and integer selectors.
-V-D08 closure is held for discussion; wider extensions and indexed/general probes remain separate.
-Four other original issues remain open. Supplementary
-BS-R01 also remains closed.
+Current verification checkpoint: [VD08-A01 match transport](planning/match_failure_transport.md),
+59/64 original issues resolved (92.1875%): 56 implemented/repaired (including
+harnesses) and three contract/environment reconciliations. V-R08 remains partial:
+all 24 APIs pass disabled-provider source/build proofs; enabled GTK/WebKitGTK and
+GUI acceptance remain unavailable. V-D08 is closed within its compatibility scope:
+enum carriers/helpers and default-less match pass default-prelowered execution,
+state, snapshot and cleanup checks. The [audit](planning/enum_compatibility_closeout.md)
+keeps baseline-unsupported extensions and intentional v0.2 changes explicit.
+Four other original issues remain open. Supplementary BS-R01 remains closed.
 
 The completed [async/tasks goal](planning/async_tasks.md) closes S12 and V-R02
 with dev002 default-prelowered source/runtime and retained-publication proofs.

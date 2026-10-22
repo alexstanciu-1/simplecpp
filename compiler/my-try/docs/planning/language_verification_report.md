@@ -5,15 +5,14 @@ Verification closeout: evidence through checkpoint 75. All planned checks and di
 
 The frozen v0.2 audit has 105 passed checks, 5 failed, 6 blocked and 3 explicitly deferred across 36 language families. A passed audit check can establish a complete inventory or reproduce intended rejection; it does not necessarily mean every feature in that family is implemented. No compiler/runtime fixes were made by this verification goal.
 
-Current follow-up repair status: [58/64 resolved (90.625%)](language_repair_progress.md),
+Current follow-up repair status: [59/64 resolved (92.1875%)](language_repair_progress.md),
 with [V-R08 partially implemented and verified](ui_webview_integration.md); enabled
-GUI/provider proof remains outstanding. [V-D08 enum wrappers](enum_wrappers.md) are
-also partially implemented and verified. [Helper/presence transport](enum_helper_transport.md)
-now repairs VD08-H01/H02 for their bounded domain. [Sentinel Result enum carriers](enum_sentinel_carriers.md)
-also pass states/snapshots/default-prelowering proofs. The [compatibility closeout audit](enum_compatibility_closeout.md)
-accounts for all original enum extension probes but holds V-D08 closure for VD08-A01:
-default-less enum/scalar match lacks concrete failure transport. Wider enum extensions remain separate. Four other original issues remain open. The audit tables below retain
-the original frozen results; dated repair closeouts record subsequent changes.
+GUI/provider proof remains outstanding. V-D08 closes through the enum payload,
+helper and sentinel-carrier repairs, the [compatibility audit](enum_compatibility_closeout.md),
+and [VD08-A01 default-less match transport](match_failure_transport.md). Wider enum
+extensions remain separate. Four other original issues remain open. The audit
+tables below retain the original frozen results; dated repair closeouts record
+subsequent changes.
 
 ## Scope and provenance
 
