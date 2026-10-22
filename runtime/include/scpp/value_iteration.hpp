@@ -7,11 +7,11 @@
 
 namespace scpp {
 
-// Non-mutating value iteration. The caller retains the source for the whole loop.
-// Mutation/replacement (including aliases) is deferred, not snapshot or live semantics.
+// Vector value traversal preserves remaining entries before structural writes.
+// Table-family mutation support is still pending the shared protocol integration.
 template <typename T>
 auto value_iteration(const vector_t<T> &source) {
-	return foreach_range(source);
+	return source.value_range();
 }
 
 template <typename V, typename K>

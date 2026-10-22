@@ -4,6 +4,7 @@
 #include "scpp/bool_t.hpp"
 #include "scpp/int_t.hpp"
 #include "scpp/runtime_error.hpp"
+#include "scpp/vector_iteration.hpp"
 
 #include <cstdint>
 #include <initializer_list>
@@ -22,6 +23,11 @@ template <typename T>
 class vector_t final {
 private:
 	std::vector<T> value_;
+	mutable std::shared_ptr<iteration_detail::vector_source<T>> iteration_;
+
+	void preserve_iteration() {
+		iteration_detail::preserve({iteration_.get()});
+	}
 
 	[[noreturn]] void throw_bounds_error(std::int64_t index) const {
 		throw runtime_error(
@@ -46,6 +52,35 @@ private:
 
 public:
 	vector_t() = default;
+	vector_t(const vector_t &other) : value_(other.value_) {}
+	vector_t(vector_t &&other) {
+		other.preserve_iteration();
+		value_ = std::move(other.value_);
+	}
+	vector_t &operator=(const vector_t &other) {
+		if (this == &other) return *this;
+		auto next = other.value_;
+		preserve_iteration();
+		value_ = std::move(next);
+		return *this;
+	}
+	vector_t &operator=(vector_t &&other) {
+		if (this == &other) return *this;
+		iteration_detail::preserve({iteration_.get(), other.iteration_.get()});
+		value_ = std::move(other.value_);
+		return *this;
+	}
+	~vector_t() {
+		if (iteration_) iteration_->retire();
+	}
+
+	// The range owns the traversal; the optional source state retains storage
+	// only if the wrapper dies before the traversal finishes.
+	iteration_detail::vector_range<T> value_range() const {
+		if (!iteration_) iteration_ = std::make_shared<iteration_detail::vector_source<T>>(
+			const_cast<std::vector<T> &>(value_));
+		return iteration_detail::vector_range<T>(iteration_);
+	}
 
 	vector_t(std::initializer_list<T> init)
 		: value_(init) {
@@ -70,6 +105,7 @@ public:
 	}
 
 	void resize(std::size_t count, const T &default_value) {
+		if (count != value_.size()) preserve_iteration();
 		value_.resize(count, default_value);
 	}
 
@@ -79,7 +115,8 @@ public:
 	}
 
 	// Removes all elements.
-	void clear() noexcept {
+	void clear() {
+		if (!value_.empty()) preserve_iteration();
 		value_.clear();
 	}
 
@@ -109,13 +146,14 @@ public:
 			return false;
 		}
 
+		preserve_iteration();
 		value_.erase(value_.begin() + static_cast<std::ptrdiff_t>(offset));
 		return true;
 	}
 
 	// Implements the runtime unset hook for wrapped vectors.
 	// How: the wrapper owns its sequence storage, so unsetting it clears the held elements immediately.
-	void _unset_() noexcept {
+	void _unset_() {
 		clear();
 	}
 
@@ -221,6 +259,7 @@ public:
 
 	// Append by copy or move.
 	void append(const T &value) {
+		preserve_iteration();
 		value_.push_back(value);
 	}
 
@@ -231,6 +270,7 @@ public:
 	// Appends data while staying in the wrapper domain defined by the spec.
 	// How: behavior is defined here once so the generator can lower into stable helpers instead of ad-hoc code.
 	void append(T &&value) {
+		preserve_iteration();
 		value_.push_back(std::move(value));
 	}
 
