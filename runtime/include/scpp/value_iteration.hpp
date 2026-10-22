@@ -7,8 +7,8 @@
 
 namespace scpp {
 
-// Vector value traversal preserves remaining entries before structural writes.
-// Table-family mutation support is still pending the shared protocol integration.
+// Direct vector/hash traversal preserves remaining entries before structural writes.
+// Boxed-source bindings still need replacement/COW integration below.
 template <typename T>
 auto value_iteration(const vector_t<T> &source) {
 	return source.value_range();
@@ -16,7 +16,7 @@ auto value_iteration(const vector_t<T> &source) {
 
 template <typename V, typename K>
 auto value_iteration(const hash_t<V, K> &source) {
-	return foreach_range(source);
+	return source.value_range();
 }
 
 inline auto value_iteration(const mixed_t &source) {

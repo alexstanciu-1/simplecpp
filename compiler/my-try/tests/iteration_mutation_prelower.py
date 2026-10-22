@@ -10,6 +10,13 @@ sys.path.insert(0, str(APP / 'tools'))
 from test_runner import CommandRunner, Task, run_tasks
 
 CASES = {
+    'hash-live': ('$xs hash<int> = {a:1,b:2,c:3};foreach($xs as $k=>$v){echo $k,":",$v,",";if($v===1){$xs["b"]=20;}}', 'a:1,b:20,c:3,'),
+    'hash-insert': ('$xs hash<int> = {a:1,b:2,c:3};foreach($xs as $k=>$v){echo $k,":",$v,",";if($v===1){$xs["b"]=20;$xs["d"]=4;$xs["c"]=30;}}', 'a:1,b:20,c:3,'),
+    'hash-remove': ('$xs hash<int> = {a:1,b:2,c:3};foreach($xs as $k=>$v){echo $k,":",$v,",";if($v===1){unset($xs["b"]);$xs["c"]=30;}}', 'a:1,b:2,c:3,'),
+    'hash-replace': ('$xs hash<int> = {a:1,b:2,c:3};foreach($xs as $v){echo $v;if($v===1){$xs={x:9};}}echo ":",$xs["x"];', '123:9'),
+    'hash-call': ('function change(hash<int> &$xs):void{$xs["d"]=4;$xs["b"]=20;}$xs hash<int> = {a:1,b:2,c:3};foreach($xs as $v){echo $v;if($v===1){change($xs);}}echo ":",$xs["b"];', '123:20'),
+    'hash-copy': ('$xs hash<int> = {a:1,b:2,c:3};$copy=$xs;foreach($xs as $v){echo $v,",";if($v===1){$copy["d"]=4;$xs["b"]=20;}}', '1,20,3,'),
+    'hash-integer-keys': ('$xs hash<int,int> = [10=>1,20=>2,30=>3];foreach($xs as $k=>$v){echo $k,":",$v,",";if($v===1){$xs[40]=4;$xs[20]=200;}}', '10:1,20:2,30:3,'),
     'vector-live': ('$xs vector<int> = [1,2,3];foreach($xs as $v){echo $v,",";if($v===1){$xs[1]=20;}}', '1,20,3,'),
     'vector-append': ('$xs vector<int> = [1,2,3];foreach($xs as $k=>$v){echo $k,":",$v,",";if($v===1){$xs[1]=20;$xs[]=4;$xs[2]=30;}}echo count($xs);', '0:1,1:20,2:3,4'),
     'vector-replace': ('$xs vector<int> = [1,2,3];foreach($xs as $v){echo $v;if($v===1){$xs=[9];}}echo ":",$xs[0];', '123:9'),

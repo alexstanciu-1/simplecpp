@@ -137,9 +137,47 @@ warm builds compile zero units and do not link. The earlier `-01` source run fai
 because the new fixture omitted whitespace between `>` and `=`; that fixture typo
 was corrected without a compiler change.
 
-Still open: typed hash/packed table and boxed-family integration, native mutable
+Still open after the vector checkpoint: typed hash/packed table and boxed-family integration, native mutable
 storage coverage, field/temporary and inline-parent source lifetimes, retained
 regeneration, broader cleanup/failure cases, and focused performance measurements.
 The optional shared source state changes vector layout and moves may now throw;
 review nested-container relocation costs and ownership behavior explicitly before
 closeout. Reference foreach remains untouched.
+
+### Direct-table checkpoint
+
+Typed hashes and packed tables now use the same staged observer protocol as
+vectors. `table_iteration.hpp` preserves remaining key/value pairs in established
+entry order, skipping existing tombstones. Existing-key assignments stay live;
+new keys, successful removal, clear and whole replacement preserve first. A
+retirement shell is created with traversal state so destruction can transfer
+storage without allocation or copying. Cursor registrations remain attached to
+their original binding across container copy/move operations.
+
+The packed-table owner supplies this protocol for both mixed and dynamic element
+types. This does **not** yet enable the boxed `mixed`/`dynamic` source overloads:
+those still use their previous traversal paths until wrapper replacement and
+mixed COW rebinding are integrated. Direct `hash<mixed,mixed>` traversal does use
+the packed-table protocol. No source-family closeout is claimed from native packed
+tests alone.
+
+The first runtime build exposed explicit native instantiations with unique values.
+`value_range` now requires copy-constructible payloads (and typed-hash keys), matching
+the value-iteration copy requirement instead of breaking noniterable native types.
+
+Dev002 evidence:
+
+- `/home/alex-ai/curl/20261022-iteration-packed-02`: vector, typed-hash and packed-table
+  runtime acceptance passes, with probe/header ASan/UBSan. Table cases include
+  existing-value writes before preservation, deletion gaps, integer/string keys,
+  dense-to-associative conversion, source destruction, removal/clear/replacement,
+  and rollback when a later typed-hash cursor copy fails.
+- `/home/alex-ai/curl/20261022-iteration-table-prelower-01`: fourteen source programs
+  pass with default prelowering and cold/warm execution. Seven typed-hash programs
+  cover live writes, insertion, removal, replacement, reference-parameter mutation,
+  independent copies and integer keys; the seven vector programs remain controls.
+
+Next: boxed-source binding subscriptions and COW retargeting, followed by source
+lifetime/retained and focused performance acceptance. Native mutable vector
+storage coverage remains open. Reference iteration and callback policies remain
+separate.

@@ -2,6 +2,7 @@
 
 #include "scpp/iteration_preservation.hpp"
 #include "scpp/int_t.hpp"
+#include <concepts>
 #include <memory>
 #include <vector>
 

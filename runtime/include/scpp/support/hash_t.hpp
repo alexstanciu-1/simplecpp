@@ -13,6 +13,7 @@
 #include "scpp/unique_p.hpp"
 #include "scpp/mixed_t.hpp"
 #include "scpp/util/global_string_pool.hpp"
+#include "scpp/table_iteration.hpp"
 
 #include <concepts>
 #include <cstddef>
@@ -259,6 +260,18 @@ concept typed_hash_key = hash_key<T_KEY>;
 template <typename T_VALUE, typename T_KEY>
 class hash_t final {
 private:
+	friend struct iteration_detail::table_source<hash_t>;
+	friend class iteration_detail::table_range<hash_t, T_KEY, T_VALUE>;
+	mutable std::shared_ptr<iteration_detail::table_source<hash_t>> iteration_;
+
+	void preserve_iteration() { iteration_detail::preserve({iteration_.get()}); }
+	void swap_iteration_storage(hash_t &other) noexcept {
+		values_.swap(other.values_);
+		keys_.swap(other.keys_);
+		live_.swap(other.live_);
+		hash_index_.swap(other.hash_index_);
+		std::swap(live_size_, other.live_size_);
+	}
 	static_assert(!std::same_as<T_VALUE, mixed_t>, "hash_t<mixed_t> uses the specialized dynamic implementation");
 	static_assert(hash_detail::typed_hash_key<T_KEY>, "hash_t<T, T_KEY> requires a supported typed key family");
 
@@ -443,6 +456,7 @@ private:
 			*ptr = std::move(value);
 			return;
 		}
+		preserve_iteration();
 		const auto physical_index = static_cast<std::uint32_t>(values_.size());
 		keys_.push_back(std::forward<T_INSERT_KEY>(key));
 		values_.push_back(std::move(value));
@@ -513,7 +527,10 @@ public:
 		}
 	}
 
-	hash_t(hash_t &&) noexcept = default;
+	hash_t(hash_t &&other) {
+		other.preserve_iteration();
+		swap_iteration_storage(other);
+	}
 
 	hash_t &operator=(const hash_t &other) requires(std::copyable<T_VALUE> && std::copyable<T_KEY>) {
 		if (this == &other) return *this;
@@ -522,8 +539,22 @@ public:
 		return *this;
 	}
 
-	hash_t &operator=(hash_t &&) noexcept = default;
-	~hash_t() = default;
+	hash_t &operator=(hash_t &&other) {
+		if (this == &other) return *this;
+		iteration_detail::preserve({iteration_.get(), other.iteration_.get()});
+		hash_t discarded;
+		swap_iteration_storage(discarded);
+		swap_iteration_storage(other);
+		return *this;
+	}
+	~hash_t() { if (iteration_) iteration_->retire(); }
+
+	iteration_detail::table_range<hash_t, T_KEY, T_VALUE> value_range() const
+		requires(std::copy_constructible<T_KEY> && std::copy_constructible<T_VALUE>) {
+		if (!iteration_) iteration_ = std::make_shared<iteration_detail::table_source<hash_t>>(
+			const_cast<hash_t &>(*this));
+		return iteration_detail::table_range<hash_t, T_KEY, T_VALUE>(iteration_);
+	}
 
 	[[nodiscard]] bool_t empty() const noexcept {
 		return bool_t{live_size_ == 0};
@@ -557,7 +588,8 @@ public:
 		return bool_t{false};
 	}
 
-	void clear() noexcept {
+	void clear() {
+		if (live_size_ != 0) preserve_iteration();
 		values_.clear();
 		keys_.clear();
 		live_.clear();
@@ -784,6 +816,7 @@ public:
 	}
 
 	[[nodiscard]] bool remove(const T_KEY &key) {
+		if (find_key(key).first) preserve_iteration();
 		return erase_key(key);
 	}
 
@@ -830,6 +863,15 @@ namespace hash_detail {
 template <typename Value>
 class packed_table {
 private:
+	friend struct iteration_detail::table_source<packed_table>;
+	friend class iteration_detail::table_range<packed_table, mixed_t, Value>;
+	mutable std::shared_ptr<iteration_detail::table_source<packed_table>> iteration_;
+	void preserve_iteration() { iteration_detail::preserve({iteration_.get()}); }
+	void swap_iteration_storage(packed_table &other) noexcept {
+		values_.swap(other.values_);
+		keys_.swap(other.keys_);
+		hash_index_.swap(other.hash_index_);
+	}
 	using key_storage_t = std::uint32_t;
 	using native_values_t = std::vector<Value>;
 	using native_keys_t = std::vector<key_storage_t>;
@@ -933,22 +975,20 @@ private:
 	}
 
 	void insert_or_assign_int(std::uint32_t key, Value value) {
+		// An existing-value write stays live, including in associative mode.
+		if (auto [found, ptr] = find_int(key); found) {
+			*ptr = std::move(value);
+			return;
+		}
+		preserve_iteration();
 		if (std::holds_alternative<std::monostate>(keys_)) {
 			if (!hash_detail::dyn_keys::is_string(key)) {
-				if (key < values_.size()) {
-					values_[key] = std::move(value);
-					return;
-				}
 				if (key == values_.size()) {
 					values_.push_back(std::move(value));
 					return;
 				}
 			}
 			wake_up_associative_mode();
-		}
-		if (auto [found, ptr] = find_int(key); found) {
-			*ptr = std::move(value);
-			return;
 		}
 		auto &keys = std::get<native_keys_t>(keys_);
 		const auto physical_index = static_cast<std::uint32_t>(values_.size());
@@ -1020,6 +1060,8 @@ private:
 	}
 
 	bool erase_int(std::uint32_t key) {
+		if (!find_int(key).first) return false;
+		preserve_iteration();
 		if (std::holds_alternative<std::monostate>(keys_)) return erase_packed(key);
 		bool found = false;
 		auto &keys = std::get<native_keys_t>(keys_);
@@ -1112,7 +1154,10 @@ public:
 		}
 	}
 
-	packed_table(packed_table &&) noexcept = default;
+	packed_table(packed_table &&other) : packed_table() {
+		other.preserve_iteration();
+		swap_iteration_storage(other);
+	}
 
 	packed_table &operator=(const packed_table &other) {
 		if (this == &other) return *this;
@@ -1121,8 +1166,22 @@ public:
 		return *this;
 	}
 
-	packed_table &operator=(packed_table &&) noexcept = default;
-	~packed_table() = default;
+	packed_table &operator=(packed_table &&other) {
+		if (this == &other) return *this;
+		iteration_detail::preserve({iteration_.get(), other.iteration_.get()});
+		packed_table discarded;
+		swap_iteration_storage(discarded);
+		swap_iteration_storage(other);
+		return *this;
+	}
+	~packed_table() { if (iteration_) iteration_->retire(); }
+
+	iteration_detail::table_range<packed_table, mixed_t, Value> value_range() const
+		requires std::copy_constructible<Value> {
+		if (!iteration_) iteration_ = std::make_shared<iteration_detail::table_source<packed_table>>(
+			const_cast<packed_table &>(*this));
+		return iteration_detail::table_range<packed_table, mixed_t, Value>(iteration_);
+	}
 
 	[[nodiscard]] bool_t empty() const noexcept {
 		if (std::holds_alternative<std::monostate>(keys_)) return bool_t{values_.empty()};
@@ -1168,7 +1227,8 @@ public:
 		return bool_t{std::holds_alternative<std::monostate>(keys_)};
 	}
 
-	void clear() noexcept {
+	void clear() {
+		if (size() != 0) preserve_iteration();
 		values_.clear();
 		keys_ = std::monostate{};
 		hash_index_ = std::monostate{};
@@ -1575,9 +1635,10 @@ class hash_t<mixed_t, mixed_t> final : private hash_detail::packed_table<mixed_t
 public:
 	hash_t() = default;
 	hash_t(const hash_t &) = default;
-	hash_t(hash_t &&) noexcept = default;
+	hash_t(hash_t &&) = default;
 	hash_t &operator=(const hash_t &) = default;
-	hash_t &operator=(hash_t &&) noexcept = default;
+	hash_t &operator=(hash_t &&) = default;
+	using storage_type::value_range;
 
 	using storage_type::empty;
 	using storage_type::size;
