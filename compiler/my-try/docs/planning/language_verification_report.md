@@ -5,12 +5,14 @@ Verification closeout: evidence through checkpoint 75. All planned checks and di
 
 The frozen v0.2 audit has 105 passed checks, 5 failed, 6 blocked and 3 explicitly deferred across 36 language families. A passed audit check can establish a complete inventory or reproduce intended rejection; it does not necessarily mean every feature in that family is implemented. No compiler/runtime fixes were made by this verification goal.
 
-Current follow-up repair status: [59/64 resolved (92.1875%)](language_repair_progress.md),
+Current follow-up repair status: [60/64 resolved (93.75%)](language_repair_progress.md),
 with [V-R08 partially implemented and verified](ui_webview_integration.md); enabled
 GUI/provider proof remains outstanding. V-D08 closes through the enum payload,
 helper and sentinel-carrier repairs, the [compatibility audit](enum_compatibility_closeout.md),
 and [VD08-A01 default-less match transport](match_failure_transport.md). Wider enum
-extensions remain separate. Four other original issues remain open. The audit
+extensions remain separate. The [call audit](call_compatibility_audit.md) reconciles
+V-D05, but leaves V-D07 open with genuine gaps for discussion. Three other original
+issues remain open (V-D01, V-D07 and S02). The audit
 tables below retain the original frozen results; dated repair closeouts record
 subsequent changes.
 

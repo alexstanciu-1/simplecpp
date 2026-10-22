@@ -471,8 +471,13 @@
       "dependencies": [
         "Agree the deferred semantic contract before implementation"
       ],
-      "next_action": "Discuss the responsible ownership/selection contract; do not reclassify as a simple syntax repair.",
-      "simple_batch_eligible": false
+      "next_action": "Closed as a verified compatibility reconciliation. Static interface declarations/implementation selection remain separately deferred design extensions; concrete static and interface instance calls are supported controls.",
+      "simple_batch_eligible": false,
+      "repair_status": "reconciled-and-verified",
+      "repair_report": "call_compatibility_audit.md",
+      "repair_evidence": [
+        "20261022-call-audit-final"
+      ]
     },
     {
       "id": "V-H08",
@@ -596,12 +601,38 @@
       "dependencies": [
         "Agree binding/evaluation and pack/reference contracts before expanding admission"
       ],
-      "next_action": "Discuss named binding and unpacking independently from reference default/variadic semantics; retain positional regression proofs.",
+      "next_action": "Discuss VD07-A02 concrete nonempty value-pack construction first, then VD07-A01 reference defaults and VD07-A03 accepted read-only reference-pack spelling. Named/unpacking extensions reject in pinned v0.1 too; do not infer write-through from accepted reference-pack reads.",
       "simple_batch_eligible": false,
       "compatibility_audit": {
         "date": "2026-10-22",
         "report": "ui_webview_integration.md",
         "scope": "Pinned v0.1 source/catalog audit only; no issue closure or fresh baseline execution claim."
+      },
+      "compatibility_closeout_audit": {
+        "report": "call_compatibility_audit.md",
+        "status": "audit-complete-gaps-open",
+        "evidence": [
+          "20261022-call-audit-01",
+          "20261022-call-audit-followup",
+          "20261022-call-audit-final"
+        ],
+        "gaps": [
+          {
+            "id": "VD07-A01",
+            "title": "Executable reference-default declarations reject",
+            "owner": "parameter-default preparation and call lifetime/binding"
+          },
+          {
+            "id": "VD07-A02",
+            "title": "Nonempty value packs lack concrete initialization transport",
+            "owner": "CPP_Declarations call sequencing and initializer transport"
+          },
+          {
+            "id": "VD07-A03",
+            "title": "Accepted read-only reference-pack spelling needs explicit disposition",
+            "owner": "parameter passing/variadic contract"
+          }
+        ]
       }
     },
     {

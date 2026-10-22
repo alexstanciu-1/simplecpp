@@ -1,6 +1,13 @@
 # 04. Functions, parameters and calls
 Doc Status: planning
 
+The [2026-10-22 V-D07 audit](../planning/call_compatibility_audit.md) distinguishes
+baseline-unsupported named/unpacking forms from executable reference defaults and
+read-only reference-pack spellings. Nonempty value packs expose VD07-A02 under
+default prelowering; ordinary-mode historical pack proofs below do not close that
+transport gap. V-D07 remains open; no call-contract expansion is authorized by the audit.
+
+
 > **Important: LLVM is deferred by default. Work on the direct LLVM backend only when the user explicitly requests it. The v0.2 default scope is Frontend + C++ S2S.**
 
 [Catalog and workflow](README.md) · [Source merge ledger](source_merge.json)

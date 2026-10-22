@@ -65,6 +65,10 @@ a bytes/string assertion mismatch; those were fixture mistakes, not compiler gap
 
 ## V-D07 / V-D08 compatibility audit
 
+Historical source-only checkpoint below. The subsequent [call audit](call_compatibility_audit.md)
+adds pinned native evidence for V-D05/V-D07; V-D07 retains genuine reference-default
+and concrete-pack gaps. The [enum closeout](match_failure_transport.md) closes V-D08.
+
 This is a read-only source/catalog audit, not a claim of fresh v0.1 execution.
 Baselines are local `release/0.1.78` at
 `d2f63e37efe949355c11b137cc4c3520fbfc6368` and `v0.1.77` at

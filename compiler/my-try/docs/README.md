@@ -9,15 +9,17 @@ syntax and collection → shared semantic preparation → C++ generation. Other
 frontends should normalize toward the same PHS-shaped concepts. LLVM is a parked
 experiment retained for regressions, not a second semantic development path.
 
-Current verification checkpoint: [VD08-A01 match transport](planning/match_failure_transport.md),
-59/64 original issues resolved (92.1875%): 56 implemented/repaired (including
-harnesses) and three contract/environment reconciliations. V-R08 remains partial:
+Current verification checkpoint: [V-D05/V-D07 call audit](planning/call_compatibility_audit.md),
+60/64 original issues resolved (93.75%): 56 implemented/repaired (including
+harnesses) and four contract/environment reconciliations. V-R08 remains partial:
 all 24 APIs pass disabled-provider source/build proofs; enabled GTK/WebKitGTK and
 GUI acceptance remain unavailable. V-D08 is closed within its compatibility scope:
 enum carriers/helpers and default-less match pass default-prelowered execution,
 state, snapshot and cleanup checks. The [audit](planning/enum_compatibility_closeout.md)
 keeps baseline-unsupported extensions and intentional v0.2 changes explicit.
-Four other original issues remain open. Supplementary BS-R01 remains closed.
+V-D05 is reconciled as a baseline-unsupported extension. Three other original issues
+remain open: V-D01, V-D07 and S02. V-D07 now has explicit reference-default, concrete
+value-pack and reference-pack-spelling findings for discussion. Supplementary BS-R01 remains closed.
 
 The completed [async/tasks goal](planning/async_tasks.md) closes S12 and V-R02
 with dev002 default-prelowered source/runtime and retained-publication proofs.

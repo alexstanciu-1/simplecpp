@@ -9,9 +9,9 @@ syntax and policy/design issues. Operator signatures are not separate closed iss
 | Status | Issues |
 | --- | ---: |
 | Implemented or already repaired (including harnesses), then verified | 56 |
-| Contract/environment reconciled and verified | 3 |
+| Contract/environment reconciled and verified | 4 |
 | Partially implemented and verified | 1 |
-| Other issues not yet closed | 4 |
+| Other issues not yet closed | 3 |
 | Total | 64 |
 
 The [V-R08 batch](ui_webview_integration.md) implements all 24 UI/WebView source APIs
@@ -30,7 +30,12 @@ failure transport. The subsequent [VD08-A01 repair](match_failure_transport.md)
 verifies that failure path, matched execution, snapshots and cleanup with default
 prelowering and closes V-D08 (+1.5625 percentage points). Wider extensions stay separate.
 
-Resolved: **59/64 = 92.1875%** (by issue count). This is not an
+The [V-D05/V-D07 call audit](call_compatibility_audit.md) reconciles V-D05 against
+pinned v0.1 execution/build evidence (+1.5625 points). V-D07 remains open: reference
+defaults, nonempty value-pack prelowering and reference-pack spelling need discussion.
+The remaining original entries are V-D01, V-D07, S02 and partial V-R08.
+
+Resolved: **60/64 = 93.75%** (by issue count). This is not an
 engineering-effort estimate. The completed async/tasks goal closed S12 and V-R02 (+3.125 points). The subsequent [V-D06 goal](finally_value_transfers.md) closes finally value/loop transfers and default-prelowered exception transport (+1.5625 points). S05 does not certify explicit callable storage under default prelowering. Remaining architecture/runtime/project issues can be
 much larger than fixture repairs. There is no defensible weighted effort percentage.
 
@@ -38,7 +43,7 @@ much larger than fixture repairs. There is no defensible weighted effort percent
 | --- | ---: | ---: | ---: | ---: |
 | Simple fix | 13 | 0 | 0 | 13 |
 | Light discussion | 17 | 0 | 0 | 17 |
-| Normal discussion | 29 | 1 | 4 | 34 |
+| Normal discussion | 30 | 1 | 3 | 34 |
 
 V-L06 now admits the final two scalar float identity forms and re-verifies its
 original carrier cases. S04's unchanged original process fixture passes through
