@@ -24,7 +24,9 @@ The subsequent [helper/presence transport slice](enum_helper_transport.md) repai
 VD08-H01/H02 for three helpers and plain enum wrappers. Wider extensions and
 indexed/general probes remain separate. The [sentinel-carrier slice](enum_sentinel_carriers.md)
 adds falseable/boolean Result enum state transport and true-sentinel presence;
-these bounded repairs add no original issue closure.
+these bounded repairs add no original issue closure. The [closeout audit](enum_compatibility_closeout.md)
+reconciles all eight original probes but confirms VD08-A01, shared default-less-match
+failure transport. V-D08 remains partial pending that genuine compatibility gap.
 
 Resolved: **58/64 = 90.625%** (by issue count). This is not an
 engineering-effort estimate. The completed async/tasks goal closed S12 and V-R02 (+3.125 points). The subsequent [V-D06 goal](finally_value_transfers.md) closes finally value/loop transfers and default-prelowered exception transport (+1.5625 points). S05 does not certify explicit callable storage under default prelowering. Remaining architecture/runtime/project issues can be

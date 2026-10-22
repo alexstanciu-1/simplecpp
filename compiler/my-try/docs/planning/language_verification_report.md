@@ -10,7 +10,9 @@ with [V-R08 partially implemented and verified](ui_webview_integration.md); enab
 GUI/provider proof remains outstanding. [V-D08 enum wrappers](enum_wrappers.md) are
 also partially implemented and verified. [Helper/presence transport](enum_helper_transport.md)
 now repairs VD08-H01/H02 for their bounded domain. [Sentinel Result enum carriers](enum_sentinel_carriers.md)
-also pass states/snapshots/default-prelowering proofs; wider enum extensions remain separate. Four other original issues remain open. The audit tables below retain
+also pass states/snapshots/default-prelowering proofs. The [compatibility closeout audit](enum_compatibility_closeout.md)
+accounts for all original enum extension probes but holds V-D08 closure for VD08-A01:
+default-less enum/scalar match lacks concrete failure transport. Wider enum extensions remain separate. Four other original issues remain open. The audit tables below retain
 the original frozen results; dated repair closeouts record subsequent changes.
 
 ## Scope and provenance

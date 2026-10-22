@@ -651,7 +651,7 @@
       "dependencies": [
         "Agree enum extension semantics and interaction with method/interface foundations and payload capabilities."
       ],
-      "next_action": "Discuss remaining enum extensions individually. All four enum carriers and three explicit helpers have bounded default-prelowering value/state proofs. Keep indexed/general probes, conditions, lifted operators, broader selection and reflection/method/string-backing extensions separate.",
+      "next_action": "Discuss VD08-A01: default-less match lacks concrete failure transport for enum and scalar selectors. Original eight extension probes are reconciled (two repaired, six unsupported in pinned v0.1), but keep V-D08 partial pending this genuine compatibility gap. Reflection, string backing, methods/interfaces and broader constant expressions remain deferred extensions.",
       "simple_batch_eligible": false,
       "compatibility_audit": {
         "date": "2026-10-22",
@@ -685,6 +685,34 @@
           "20261022-vd08s-wrapper-controls"
         ],
         "scope": "result_or_false<E> and result_or_bool<E>; explicit sentinel spelling, true-sentinel isset, take, checked extraction, exact-enum falseable fallback, snapshots and retained recovery. No runtime changes."
+      },
+      "compatibility_closeout_audit": {
+        "report": "enum_compatibility_closeout.md",
+        "status": "audit-complete-closure-held",
+        "evidence": [
+          "20261022-vd08-audit-01",
+          "20261022-vd08-audit-followup",
+          "20261022-vd08-audit-final"
+        ],
+        "original_probes": {
+          "repaired": 2,
+          "deferred_not_supported_in_v01": 6
+        },
+        "observations": 96,
+        "v01_executed": 22,
+        "v02_executed": 27,
+        "intentional_changes": [
+          "No implicit enum default",
+          "Initialize enum fields before constructor body; use explicit defaults or set:"
+        ],
+        "remaining_gap": {
+          "id": "VD08-A01",
+          "title": "Default-less match requires concrete failure transport",
+          "owner": "CPP_Syntax match emission and compiled exception/operation transport",
+          "finding": "Pinned v0.1 executes enum and integer match without default. Default-prelowered v0.2 rejects with match failure operation requires concrete transport. Explicit-default controls pass.",
+          "status": "discussion-required",
+          "scope": "No compiler/runtime changes authorized by this audit."
+        }
       }
     },
     {

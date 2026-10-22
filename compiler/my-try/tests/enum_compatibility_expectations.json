@@ -1,0 +1,482 @@
+{
+  "v01-original-cases": {
+    "stage": "build",
+    "supported": false,
+    "source_sha256": "9935059cb4cfa0da105b2bd44a072379ba544d546ae53f93714399a46eb3870b"
+  },
+  "v02-original-cases": {
+    "stage": "generation",
+    "supported": false,
+    "source_sha256": "9935059cb4cfa0da105b2bd44a072379ba544d546ae53f93714399a46eb3870b"
+  },
+  "v01-original-from": {
+    "stage": "build",
+    "supported": false,
+    "source_sha256": "6dd3afd35208e67450cfb9c62b63c647384d5e547646f79fbba8e5fe279343b8"
+  },
+  "v02-original-from": {
+    "stage": "generation",
+    "supported": false,
+    "source_sha256": "6dd3afd35208e67450cfb9c62b63c647384d5e547646f79fbba8e5fe279343b8"
+  },
+  "v01-original-interfaces": {
+    "stage": "generation",
+    "supported": false,
+    "source_sha256": "5961151ef14109606681d355c264dfe8631bb00f423722a259ec948e7bc7718b"
+  },
+  "v02-original-interfaces": {
+    "stage": "generation",
+    "supported": false,
+    "source_sha256": "5961151ef14109606681d355c264dfe8631bb00f423722a259ec948e7bc7718b"
+  },
+  "v01-original-methods": {
+    "stage": "generation",
+    "supported": false,
+    "source_sha256": "057a078ca045aa8a85b67f8432d7a885f46c9972ae4541d4dbfc08550f074537"
+  },
+  "v02-original-methods": {
+    "stage": "generation",
+    "supported": false,
+    "source_sha256": "057a078ca045aa8a85b67f8432d7a885f46c9972ae4541d4dbfc08550f074537"
+  },
+  "v01-original-nullable": {
+    "stage": "build",
+    "supported": false,
+    "source_sha256": "32d692ee347207db6dc39e9dfde9a11b4944e41e16772621c8bcaa9329560130"
+  },
+  "v02-original-nullable": {
+    "stage": "executed",
+    "supported": true,
+    "source_sha256": "32d692ee347207db6dc39e9dfde9a11b4944e41e16772621c8bcaa9329560130"
+  },
+  "v01-original-result": {
+    "stage": "build",
+    "supported": false,
+    "source_sha256": "d81e89c8f97cf98d762fe829c254b72faf6e8e70811002e20ce30145ee5e77cd"
+  },
+  "v02-original-result": {
+    "stage": "executed",
+    "supported": true,
+    "source_sha256": "d81e89c8f97cf98d762fe829c254b72faf6e8e70811002e20ce30145ee5e77cd"
+  },
+  "v01-original-string_backing": {
+    "stage": "generation",
+    "supported": false,
+    "source_sha256": "78f3c6afd47b2efff94c1d8a091aa1c231f2901d311caf6bcf2646206f222c12"
+  },
+  "v02-original-string_backing": {
+    "stage": "generation",
+    "supported": false,
+    "source_sha256": "78f3c6afd47b2efff94c1d8a091aa1c231f2901d311caf6bcf2646206f222c12"
+  },
+  "v01-original-tryFrom": {
+    "stage": "build",
+    "supported": false,
+    "source_sha256": "66206148790bd463a942b38e5b62603c653dc34b5f7b326c3511c10e79070075"
+  },
+  "v02-original-tryFrom": {
+    "stage": "generation",
+    "supported": false,
+    "source_sha256": "66206148790bd463a942b38e5b62603c653dc34b5f7b326c3511c10e79070075"
+  },
+  "v01-pseudo-name": {
+    "stage": "build",
+    "supported": false,
+    "source_sha256": "c5898f8260763dcf7f8cc56bbcf35d92580f029dfbf7320e90470d31e84fc2ce"
+  },
+  "v02-pseudo-name": {
+    "stage": "generation",
+    "supported": false,
+    "source_sha256": "c5898f8260763dcf7f8cc56bbcf35d92580f029dfbf7320e90470d31e84fc2ce"
+  },
+  "v01-pseudo-value": {
+    "stage": "build",
+    "supported": false,
+    "source_sha256": "61c9582308831c788957bcd944a87d6624a510c69e732dccb9693b2602801c61"
+  },
+  "v02-pseudo-value": {
+    "stage": "generation",
+    "supported": false,
+    "source_sha256": "61c9582308831c788957bcd944a87d6624a510c69e732dccb9693b2602801c61"
+  },
+  "v01-method-call": {
+    "stage": "generation",
+    "supported": false,
+    "source_sha256": "1e764b66da058ae96074318e3d39720cb2e06358cd401cea24a861f4a97ef93e"
+  },
+  "v02-method-call": {
+    "stage": "generation",
+    "supported": false,
+    "source_sha256": "1e764b66da058ae96074318e3d39720cb2e06358cd401cea24a861f4a97ef93e"
+  },
+  "v01-interface-call": {
+    "stage": "generation",
+    "supported": false,
+    "source_sha256": "9769af664e6461699a47a5f66c0301432886ff657cd16b707aa7af381f191e52"
+  },
+  "v02-interface-call": {
+    "stage": "generation",
+    "supported": false,
+    "source_sha256": "9769af664e6461699a47a5f66c0301432886ff657cd16b707aa7af381f191e52"
+  },
+  "v01-class-field": {
+    "stage": "executed",
+    "supported": true,
+    "source_sha256": "b33799bd05ed5f0b75af8f4a6bf6b7b6b501c268bf23de7aedd7d052d4cfaf81"
+  },
+  "v02-class-field": {
+    "stage": "executed",
+    "supported": true,
+    "source_sha256": "b33799bd05ed5f0b75af8f4a6bf6b7b6b501c268bf23de7aedd7d052d4cfaf81"
+  },
+  "v01-class-ctor": {
+    "stage": "executed",
+    "supported": true,
+    "source_sha256": "499ee7f22137c349dc1f828c01a2b39a6171fd976b7a6a938706072edf5f8d62"
+  },
+  "v02-class-ctor": {
+    "stage": "executed",
+    "supported": true,
+    "source_sha256": "499ee7f22137c349dc1f828c01a2b39a6171fd976b7a6a938706072edf5f8d62"
+  },
+  "v01-class-implicit-field": {
+    "stage": "executed",
+    "supported": true,
+    "source_sha256": "6d14e333a2d901504192c3fef40abdf33e9b9378217d25f13af9fad7ca2ce635"
+  },
+  "v02-class-implicit-field": {
+    "stage": "generation",
+    "supported": false,
+    "source_sha256": "6d14e333a2d901504192c3fef40abdf33e9b9378217d25f13af9fad7ca2ce635"
+  },
+  "v01-class-ctor-no-default": {
+    "stage": "executed",
+    "supported": true,
+    "source_sha256": "1a9a45ecc1d775f4a8ffb0c7781b311e80d69f53528871002c0cfa3f86f403e8"
+  },
+  "v02-class-ctor-no-default": {
+    "stage": "generation",
+    "supported": false,
+    "source_sha256": "1a9a45ecc1d775f4a8ffb0c7781b311e80d69f53528871002c0cfa3f86f403e8"
+  },
+  "v01-struct-field": {
+    "stage": "executed",
+    "supported": true,
+    "source_sha256": "0db245a4210be5a3cc7e83dbe8617423283229b2b459b3ec50d1d228e68cf788"
+  },
+  "v02-struct-field": {
+    "stage": "executed",
+    "supported": true,
+    "source_sha256": "0db245a4210be5a3cc7e83dbe8617423283229b2b459b3ec50d1d228e68cf788"
+  },
+  "v01-struct-ctor": {
+    "stage": "generation",
+    "supported": false,
+    "source_sha256": "f6c4d96758c373305ac1a65595873f758aae28935ba2093aaa25e28bd3fbd577"
+  },
+  "v02-struct-ctor": {
+    "stage": "executed",
+    "supported": true,
+    "source_sha256": "f6c4d96758c373305ac1a65595873f758aae28935ba2093aaa25e28bd3fbd577"
+  },
+  "v01-struct-implicit-field": {
+    "stage": "executed",
+    "supported": true,
+    "source_sha256": "bfe38438040f9412ceeffad7278b115a12111ab2948f759db3541d2c17b51c39"
+  },
+  "v02-struct-implicit-field": {
+    "stage": "generation",
+    "supported": false,
+    "source_sha256": "bfe38438040f9412ceeffad7278b115a12111ab2948f759db3541d2c17b51c39"
+  },
+  "v01-struct-ctor-no-default": {
+    "stage": "generation",
+    "supported": false,
+    "source_sha256": "16c9f813c3122fdc09d088afcbca408a241a291dd28c786ec37ff558be24fef6"
+  },
+  "v02-struct-ctor-no-default": {
+    "stage": "generation",
+    "supported": false,
+    "source_sha256": "16c9f813c3122fdc09d088afcbca408a241a291dd28c786ec37ff558be24fef6"
+  },
+  "v01-parameter-default": {
+    "stage": "executed",
+    "supported": true,
+    "source_sha256": "7b463cad495867a86b0bda6ddaceb27d836ecea28b0beec115dbfff5e309aafb"
+  },
+  "v02-parameter-default": {
+    "stage": "executed",
+    "supported": true,
+    "source_sha256": "7b463cad495867a86b0bda6ddaceb27d836ecea28b0beec115dbfff5e309aafb"
+  },
+  "v01-parameter-explicit": {
+    "stage": "executed",
+    "supported": true,
+    "source_sha256": "271ae6a1d59c4171c9a6c26cbf1641c8d68f981e9f6d474eb9d113ef22bcbf1a"
+  },
+  "v02-parameter-explicit": {
+    "stage": "executed",
+    "supported": true,
+    "source_sha256": "271ae6a1d59c4171c9a6c26cbf1641c8d68f981e9f6d474eb9d113ef22bcbf1a"
+  },
+  "v01-imported-default": {
+    "stage": "build",
+    "supported": false,
+    "source_sha256": "4d72d910d4e8616aa6eb84810294d19751e33fbb68c1938ef508a91061262d69"
+  },
+  "v02-imported-default": {
+    "stage": "executed",
+    "supported": true,
+    "source_sha256": "4d72d910d4e8616aa6eb84810294d19751e33fbb68c1938ef508a91061262d69"
+  },
+  "v01-nullable-field": {
+    "stage": "generation",
+    "supported": false,
+    "source_sha256": "c7eeaeac2d66804885b2e799d73f687494d888c485732378b4643d5667f0d567"
+  },
+  "v02-nullable-field": {
+    "stage": "executed",
+    "supported": true,
+    "source_sha256": "c7eeaeac2d66804885b2e799d73f687494d888c485732378b4643d5667f0d567"
+  },
+  "v01-result-field": {
+    "stage": "generation",
+    "supported": false,
+    "source_sha256": "47d93ebcb8d9f79d7307f90165fe071222d4d608aedc717792e377aec63e85e2"
+  },
+  "v02-result-field": {
+    "stage": "executed",
+    "supported": true,
+    "source_sha256": "47d93ebcb8d9f79d7307f90165fe071222d4d608aedc717792e377aec63e85e2"
+  },
+  "v01-literal-case": {
+    "stage": "executed",
+    "supported": true,
+    "source_sha256": "a72c69da137b402999e8f6404fdf8fb8bfe47bb22f6b4db235af67bb7099f1bb"
+  },
+  "v02-literal-case": {
+    "stage": "executed",
+    "supported": true,
+    "source_sha256": "a72c69da137b402999e8f6404fdf8fb8bfe47bb22f6b4db235af67bb7099f1bb"
+  },
+  "v01-signed-case": {
+    "stage": "executed",
+    "supported": true,
+    "source_sha256": "60aafbe1b5917df1b8d545cb24eedd76a92cb187f67051014adf5d59aaabaa97"
+  },
+  "v02-signed-case": {
+    "stage": "executed",
+    "supported": true,
+    "source_sha256": "60aafbe1b5917df1b8d545cb24eedd76a92cb187f67051014adf5d59aaabaa97"
+  },
+  "v01-named-case": {
+    "stage": "generation",
+    "supported": false,
+    "source_sha256": "3f6983860acf6780f32da1e89c761716be437ae28e961f0f83aeb92cc5c10c88"
+  },
+  "v02-named-case": {
+    "stage": "generation",
+    "supported": false,
+    "source_sha256": "3f6983860acf6780f32da1e89c761716be437ae28e961f0f83aeb92cc5c10c88"
+  },
+  "v01-arithmetic-case": {
+    "stage": "generation",
+    "supported": false,
+    "source_sha256": "57c08bd145de07c2991b5156b3a3b03a8538798ebcd63a7c4295ffa4f8b4b6bd"
+  },
+  "v02-arithmetic-case": {
+    "stage": "generation",
+    "supported": false,
+    "source_sha256": "57c08bd145de07c2991b5156b3a3b03a8538798ebcd63a7c4295ffa4f8b4b6bd"
+  },
+  "v01-case-reference": {
+    "stage": "generation",
+    "supported": false,
+    "source_sha256": "fcdea6fc89925d61f5595a9bcb6b5bc9c06f9699fbefe165fea6fcfc19c8fd13"
+  },
+  "v02-case-reference": {
+    "stage": "generation",
+    "supported": false,
+    "source_sha256": "fcdea6fc89925d61f5595a9bcb6b5bc9c06f9699fbefe165fea6fcfc19c8fd13"
+  },
+  "v01-class-constant-case": {
+    "stage": "generation",
+    "supported": false,
+    "source_sha256": "a3f4cef0710dbc58694c5a448ff881e708fd284ec924a0e305bfd193cf8d022c"
+  },
+  "v02-class-constant-case": {
+    "stage": "generation",
+    "supported": false,
+    "source_sha256": "a3f4cef0710dbc58694c5a448ff881e708fd284ec924a0e305bfd193cf8d022c"
+  },
+  "v01-equality": {
+    "stage": "build",
+    "supported": false,
+    "source_sha256": "b0a961857208895f663a3e6b34a6c9394fc96d60d2ae98570c7cd18cdfa4ee7b"
+  },
+  "v02-equality": {
+    "stage": "executed",
+    "supported": true,
+    "source_sha256": "b0a961857208895f663a3e6b34a6c9394fc96d60d2ae98570c7cd18cdfa4ee7b"
+  },
+  "v01-switch": {
+    "stage": "build",
+    "supported": false,
+    "source_sha256": "a9edd844e3d6e315f47853ba623f6ed895c6a4801e69f9ec5b3eb19840e42f2c"
+  },
+  "v02-switch": {
+    "stage": "executed",
+    "supported": true,
+    "source_sha256": "a9edd844e3d6e315f47853ba623f6ed895c6a4801e69f9ec5b3eb19840e42f2c"
+  },
+  "v01-match": {
+    "stage": "executed",
+    "supported": true,
+    "source_sha256": "2d1114cf476dc7d2bcf3cf523b9648707593ca3f4f0c43fe5722de8882f3dc61"
+  },
+  "v02-match": {
+    "stage": "generation",
+    "supported": false,
+    "source_sha256": "2d1114cf476dc7d2bcf3cf523b9648707593ca3f4f0c43fe5722de8882f3dc61"
+  },
+  "v01-selection": {
+    "stage": "generation",
+    "supported": false,
+    "source_sha256": "6351f980ac2aa5bbf4c0c7f2d26e215b948d1165730a3e19b06a51dc47139b6d"
+  },
+  "v02-selection": {
+    "stage": "executed",
+    "supported": true,
+    "source_sha256": "6351f980ac2aa5bbf4c0c7f2d26e215b948d1165730a3e19b06a51dc47139b6d"
+  },
+  "v01-implicit-local": {
+    "stage": "executed",
+    "supported": true,
+    "source_sha256": "b7a935c019cfbce690b62f47bee7620f5106ae5e93d914df7af55a329b0e2a80"
+  },
+  "v02-implicit-local": {
+    "stage": "generation",
+    "supported": false,
+    "source_sha256": "b7a935c019cfbce690b62f47bee7620f5106ae5e93d914df7af55a329b0e2a80"
+  },
+  "v01-class-set": {
+    "stage": "generation",
+    "supported": false,
+    "source_sha256": "36ccd6944d4d857088ac22b164f45776b08e8a4e2a7705ec74bd3ce9a4aa2dba"
+  },
+  "v02-class-set": {
+    "stage": "executed",
+    "supported": true,
+    "source_sha256": "36ccd6944d4d857088ac22b164f45776b08e8a4e2a7705ec74bd3ce9a4aa2dba"
+  },
+  "v01-struct-set": {
+    "stage": "generation",
+    "supported": false,
+    "source_sha256": "7972717034784bf40b3360e1e1b1c0c3f45451f6368fa751de04e61f9d340f9f"
+  },
+  "v02-struct-set": {
+    "stage": "executed",
+    "supported": true,
+    "source_sha256": "7972717034784bf40b3360e1e1b1c0c3f45451f6368fa751de04e61f9d340f9f"
+  },
+  "v01-match-default": {
+    "stage": "executed",
+    "supported": true,
+    "source_sha256": "b7043fbc7b015899d10bdb3deddb944f64949e3bd5987c380281167e6819a1d4"
+  },
+  "v02-match-default": {
+    "stage": "executed",
+    "supported": true,
+    "source_sha256": "b7043fbc7b015899d10bdb3deddb944f64949e3bd5987c380281167e6819a1d4"
+  },
+  "v01-numeric-match": {
+    "stage": "executed",
+    "supported": true,
+    "source_sha256": "dd83021628168d976148aac90625dfd50e5767c0b255f4a905094b62ee4d595d"
+  },
+  "v02-numeric-match": {
+    "stage": "generation",
+    "supported": false,
+    "source_sha256": "dd83021628168d976148aac90625dfd50e5767c0b255f4a905094b62ee4d595d"
+  },
+  "v01-original-nullable-observed": {
+    "stage": "executed",
+    "supported": true,
+    "source_sha256": "9096e21bc106fa6ba00b73ee107b2ce70d5f4b2671d99c200e714de699541b93"
+  },
+  "v02-original-nullable-observed": {
+    "stage": "executed",
+    "supported": true,
+    "source_sha256": "9096e21bc106fa6ba00b73ee107b2ce70d5f4b2671d99c200e714de699541b93"
+  },
+  "v01-original-result-observed": {
+    "stage": "executed",
+    "supported": true,
+    "source_sha256": "24087e2ed7d1f48ab5bb9d56c9b2e77899b511d7fafd0a82e6c94547d2434449"
+  },
+  "v02-original-result-observed": {
+    "stage": "executed",
+    "supported": true,
+    "source_sha256": "24087e2ed7d1f48ab5bb9d56c9b2e77899b511d7fafd0a82e6c94547d2434449"
+  },
+  "v01-equality-observed": {
+    "stage": "executed",
+    "supported": true,
+    "source_sha256": "8c1f234a6889d564186ea9edb083372b646ff747fdf75983ae6d4fef7de3ff03"
+  },
+  "v02-equality-observed": {
+    "stage": "executed",
+    "supported": true,
+    "source_sha256": "8c1f234a6889d564186ea9edb083372b646ff747fdf75983ae6d4fef7de3ff03"
+  },
+  "v01-nullable-field-name-first": {
+    "stage": "executed",
+    "supported": true,
+    "source_sha256": "316ba3705eabc9f57af705960f0424324126a8e84f95537ac4872b4066a1bea1"
+  },
+  "v02-nullable-field-name-first": {
+    "stage": "executed",
+    "supported": true,
+    "source_sha256": "316ba3705eabc9f57af705960f0424324126a8e84f95537ac4872b4066a1bea1"
+  },
+  "v01-result-field-name-first": {
+    "stage": "executed",
+    "supported": true,
+    "source_sha256": "78d7c8462c36968b9020fd80a29f5c691cf44f65f7078848c839395d1911d174"
+  },
+  "v02-result-field-name-first": {
+    "stage": "executed",
+    "supported": true,
+    "source_sha256": "78d7c8462c36968b9020fd80a29f5c691cf44f65f7078848c839395d1911d174"
+  },
+  "v01-imported-default-observed": {
+    "stage": "executed",
+    "supported": true,
+    "source_sha256": "8626150ca13bdbf324646c39ba4bca3dfb0698dadcd778c30a6c248690f32c46"
+  },
+  "v02-imported-default-observed": {
+    "stage": "executed",
+    "supported": true,
+    "source_sha256": "8626150ca13bdbf324646c39ba4bca3dfb0698dadcd778c30a6c248690f32c46"
+  },
+  "v01-selection-observed": {
+    "stage": "executed",
+    "supported": true,
+    "source_sha256": "6e31c27338b2d3a3caba92837e82f5aa87f4f2c42400d068457b8c3c74cf01f9"
+  },
+  "v02-selection-observed": {
+    "stage": "executed",
+    "supported": true,
+    "source_sha256": "6e31c27338b2d3a3caba92837e82f5aa87f4f2c42400d068457b8c3c74cf01f9"
+  },
+  "v01-wrapper-control": {
+    "stage": "executed",
+    "supported": true,
+    "source_sha256": "c32105d4dbda4cf7e8bf54c08a2fcc5012533f63369e84b0f49332efb3b790c5"
+  },
+  "v02-wrapper-control": {
+    "stage": "executed",
+    "supported": true,
+    "source_sha256": "c32105d4dbda4cf7e8bf54c08a2fcc5012533f63369e84b0f49332efb3b790c5"
+  }
+}

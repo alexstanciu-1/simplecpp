@@ -1,0 +1,293 @@
+{
+  "baseline": "75de94c71e37060c564b6ade19850b7686bd457a",
+  "cases": [
+    {
+      "name": "original-cases",
+      "group": "original",
+      "source": "enum E { case A; } $all = E::cases(); return 0;\n",
+      "stdout": ""
+    },
+    {
+      "name": "original-from",
+      "group": "original",
+      "source": "enum E: int { case A = 1; } $e = E::from(1); return 0;\n",
+      "stdout": ""
+    },
+    {
+      "name": "original-interfaces",
+      "group": "original",
+      "source": "interface I { function read(): int; } enum E implements I { case A; function read(): int { return 1; } } return 0;\n",
+      "stdout": ""
+    },
+    {
+      "name": "original-methods",
+      "group": "original",
+      "source": "enum E { case A; function read(): int { return 1; } } return 0;\n",
+      "stdout": ""
+    },
+    {
+      "name": "original-nullable",
+      "group": "original",
+      "source": "enum E { case A; } $e ?E = E::A; return 0;\n",
+      "stdout": ""
+    },
+    {
+      "name": "original-result",
+      "group": "original",
+      "source": "enum E { case A; } function make(): result<E> { return E::A; } $e = make(); return 0;\n",
+      "stdout": ""
+    },
+    {
+      "name": "original-string_backing",
+      "group": "original",
+      "source": "enum E: string { case A = \"a\"; } return 0;\n",
+      "stdout": ""
+    },
+    {
+      "name": "original-tryFrom",
+      "group": "original",
+      "source": "enum E: int { case A = 1; } $e = E::tryFrom(1); return 0;\n",
+      "stdout": ""
+    },
+    {
+      "name": "pseudo-name",
+      "group": "extension",
+      "source": "enum E:int {case A=0;case B=7;} $e=E::B;echo $e->name;",
+      "stdout": "B"
+    },
+    {
+      "name": "pseudo-value",
+      "group": "extension",
+      "source": "enum E:int {case A=0;case B=7;} $e=E::B;echo $e->value;",
+      "stdout": "7"
+    },
+    {
+      "name": "method-call",
+      "group": "extension",
+      "source": "enum E{case A;function read():int{return 7;}}$e=E::A;echo $e->read();",
+      "stdout": "7"
+    },
+    {
+      "name": "interface-call",
+      "group": "extension",
+      "source": "interface I{function read():int;}enum E implements I{case A;function read():int{return 7;}}function read(I $v):int{return $v->read();}echo read(E::A);",
+      "stdout": "7"
+    },
+    {
+      "name": "class-field",
+      "group": "field",
+      "source": "enum E:int {case A=0;case B=7;} class C{public E $v=E::B;}$c=new C();echo enum_name($c->v);",
+      "stdout": "B"
+    },
+    {
+      "name": "class-ctor",
+      "group": "field",
+      "source": "enum E:int {case A=0;case B=7;} class C{public E $v=E::A;function __construct(E $v){$this->v=$v;}}$c=new C(E::B);echo enum_name($c->v);",
+      "stdout": "B"
+    },
+    {
+      "name": "class-implicit-field",
+      "group": "implicit",
+      "source": "enum E:int {case A=0;case B=7;} class C{public E $v;}$c=new C();echo enum_name($c->v);",
+      "stdout": "A"
+    },
+    {
+      "name": "class-ctor-no-default",
+      "group": "implicit",
+      "source": "enum E:int {case A=0;case B=7;} class C{public E $v;function __construct(E $v){$this->v=$v;}}$c=new C(E::B);echo enum_name($c->v);",
+      "stdout": "B"
+    },
+    {
+      "name": "struct-field",
+      "group": "field",
+      "source": "enum E:int {case A=0;case B=7;} struct C{public E $v=E::B;}$c=new C();echo enum_name($c->v);",
+      "stdout": "B"
+    },
+    {
+      "name": "struct-ctor",
+      "group": "field",
+      "source": "enum E:int {case A=0;case B=7;} struct C{public E $v=E::A;function __construct(E $v){$this->v=$v;}}$c=new C(E::B);echo enum_name($c->v);",
+      "stdout": "B"
+    },
+    {
+      "name": "struct-implicit-field",
+      "group": "implicit",
+      "source": "enum E:int {case A=0;case B=7;} struct C{public E $v;}$c=new C();echo enum_name($c->v);",
+      "stdout": "A"
+    },
+    {
+      "name": "struct-ctor-no-default",
+      "group": "implicit",
+      "source": "enum E:int {case A=0;case B=7;} struct C{public E $v;function __construct(E $v){$this->v=$v;}}$c=new C(E::B);echo enum_name($c->v);",
+      "stdout": "B"
+    },
+    {
+      "name": "parameter-default",
+      "group": "default",
+      "source": "enum E:int {case A=0;case B=7;} function choose(E $v=E::B):E{return $v;}echo enum_name(choose());",
+      "stdout": "B"
+    },
+    {
+      "name": "parameter-explicit",
+      "group": "default",
+      "source": "enum E:int {case A=0;case B=7;} function choose(E $v=E::A):E{return $v;}echo enum_name(choose(E::B));",
+      "stdout": "B"
+    },
+    {
+      "name": "imported-default",
+      "group": "default",
+      "source": "namespace Lib;enum E:int{case A=0;case B=7;}function choose(E $v=E::B):E{return $v;}namespace App;use function Lib\\choose;use Lib\\E as Alias;$v=choose();echo enum_name($v);",
+      "stdout": "B"
+    },
+    {
+      "name": "nullable-field",
+      "group": "field",
+      "source": "enum E:int {case A=0;case B=7;} class C{public nullable<E> $v=null;}$c=new C();$out E=E::B;$v=$c->v;if(take($out,$v)){return 2;}echo enum_name($out);",
+      "stdout": "B"
+    },
+    {
+      "name": "result-field",
+      "group": "field",
+      "source": "enum E:int {case A=0;case B=7;} class C{public result<E> $v=E::B;}$c=new C();$r=$c->v;$out E=E::A;$err error;if(!take($out,$err,$r)){return 2;}echo enum_name($out);",
+      "stdout": "B"
+    },
+    {
+      "name": "literal-case",
+      "group": "constant",
+      "source": "enum E:int{case B=7;}echo enum_name(E::B);",
+      "stdout": "B"
+    },
+    {
+      "name": "signed-case",
+      "group": "constant",
+      "source": "enum E:int{case B=-7;}echo enum_name(E::B);",
+      "stdout": "B"
+    },
+    {
+      "name": "named-case",
+      "group": "constant",
+      "source": "const N=7;enum E:int{case B=N;}echo enum_name(E::B);",
+      "stdout": "B"
+    },
+    {
+      "name": "arithmetic-case",
+      "group": "constant",
+      "source": "enum E:int{case B=3+4;}echo enum_name(E::B);",
+      "stdout": "B"
+    },
+    {
+      "name": "case-reference",
+      "group": "constant",
+      "source": "enum E:int{case A=7;case B=E::A;}echo enum_name(E::B);",
+      "stdout": "B"
+    },
+    {
+      "name": "class-constant-case",
+      "group": "constant",
+      "source": "class C{const N=7;}enum E:int{case B=C::N;}echo enum_name(E::B);",
+      "stdout": "B"
+    },
+    {
+      "name": "equality",
+      "group": "control",
+      "source": "enum E:int {case A=0;case B=7;} $a=E::A;$b=E::B;if($a===E::B||$a===$b||$a!==E::A){return 2;}echo enum_name($b);",
+      "stdout": "B"
+    },
+    {
+      "name": "switch",
+      "group": "control",
+      "source": "enum E:int {case A=0;case B=7;} $e=E::B;switch($e){case E::A:echo \"bad\";break;case E::B:echo \"B\";break;}",
+      "stdout": "B"
+    },
+    {
+      "name": "match",
+      "group": "control",
+      "source": "enum E:int {case A=0;case B=7;} $e=E::B;$s=match($e){E::A=>\"bad\",E::B=>\"B\"};echo $s;",
+      "stdout": "B"
+    },
+    {
+      "name": "selection",
+      "group": "control",
+      "source": "enum E:int {case A=0;case B=7;} $e=true?E::B:E::A;echo enum_name($e);",
+      "stdout": "B"
+    },
+    {
+      "name": "implicit-local",
+      "group": "implicit",
+      "source": "enum E:int {case A=0;case B=7;} $e E;echo enum_name($e);",
+      "stdout": "A"
+    },
+    {
+      "name": "class-set",
+      "group": "intentional",
+      "source": "enum E:int{case A=0;case B=7;} class C{public E $v;function __construct(set:$v){}}$c=new C(E::B);echo enum_name($c->v);",
+      "stdout": "B"
+    },
+    {
+      "name": "struct-set",
+      "group": "intentional",
+      "source": "enum E:int{case A=0;case B=7;} struct C{public E $v;function __construct(set:$v){}}$c=new C(E::B);echo enum_name($c->v);",
+      "stdout": "B"
+    },
+    {
+      "name": "match-default",
+      "group": "control",
+      "source": "enum E:int{case A=0;case B=7;} $e=E::B;$s=match($e){E::A=>\"bad\",E::B=>\"B\",default=>\"bad\"};echo $s;",
+      "stdout": "B"
+    },
+    {
+      "name": "numeric-match",
+      "group": "generic-gap",
+      "source": "$v=7;echo match($v){0=>\"bad\",7=>\"B\"};",
+      "stdout": "B"
+    },
+    {
+      "name": "original-nullable-observed",
+      "group": "adapted",
+      "source": "enum E{case A;}$e ?E=E::A;echo \"A\";",
+      "stdout": "A"
+    },
+    {
+      "name": "original-result-observed",
+      "group": "adapted",
+      "source": "enum E{case A;}function make():result<E>{return E::A;}$e=make();echo \"A\";",
+      "stdout": "A"
+    },
+    {
+      "name": "equality-observed",
+      "group": "adapted",
+      "source": "enum E:int{case A=0;case B=7;} $a=E::A;$b=E::B;echo ($a!==$b&&$a===E::A)?\"B\":\"bad\";",
+      "stdout": "B"
+    },
+    {
+      "name": "nullable-field-name-first",
+      "group": "adapted",
+      "source": "enum E:int{case A=0;case B=7;} class C{public $v nullable<E> =null;}$c=new C();$v=$c->v;$out E=E::B;take($out,$v);echo enum_name($out);",
+      "stdout": "B"
+    },
+    {
+      "name": "result-field-name-first",
+      "group": "adapted",
+      "source": "enum E:int{case A=0;case B=7;} class C{public $v result<E> =E::B;}$c=new C();$r=$c->v;$out E=E::A;$err error;take($out,$err,$r);echo enum_name($out);",
+      "stdout": "B"
+    },
+    {
+      "name": "imported-default-observed",
+      "group": "adapted",
+      "source": "namespace Lib;enum E:int{case A=0;case B=7;}function choose(E $v=E::B):E{return $v;}function label(E $v):string{return enum_name($v);}namespace App;use function Lib\\choose;use function Lib\\label;$v=choose();echo label($v);",
+      "stdout": "B"
+    },
+    {
+      "name": "selection-observed",
+      "group": "adapted",
+      "source": "enum E:int{case A=0;case B=7;} $e E=true?E::B:E::A;echo enum_name($e);",
+      "stdout": "B"
+    },
+    {
+      "name": "wrapper-control",
+      "group": "control",
+      "source": "enum E:int{case A=0;case B=7;} $n nullable<E> =E::B;$r result<E> =E::B;$out E=E::A;$err error;take($out,$n);echo enum_name($out);take($out,$err,$r);echo enum_name($out);",
+      "stdout": "BB"
+    }
+  ]
+}

@@ -83,6 +83,12 @@ application manifests forbid templates. No full matrix or native compiler rebuil
   rows are replaced by state-sensitive positive checks; the earlier report stays
   evidence of the original gap.
 
+## Subsequent compatibility audit
+
+The [closeout audit](enum_compatibility_closeout.md) reconciles the original eight
+V-D08 probes but records VD08-A01, missing default-less-match failure transport
+under default prelowering. V-D08 remains partial for discussion.
+
 ## Remaining boundaries
 
 Equality, lifted operators, wrapper conditions, indexed operations, broader selection

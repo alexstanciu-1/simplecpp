@@ -9,13 +9,15 @@ syntax and collection → shared semantic preparation → C++ generation. Other
 frontends should normalize toward the same PHS-shaped concepts. LLVM is a parked
 experiment retained for regressions, not a second semantic development path.
 
-Current repair checkpoint: [sentinel Result enum carriers](planning/enum_sentinel_carriers.md),
+Current verification checkpoint: [V-D08 compatibility closeout audit](planning/enum_compatibility_closeout.md),
 58/64 original issues resolved (90.625%): 55 implemented/repaired (including
 harnesses) and three contract/environment reconciliations. V-R08 is now partial: all
 24 APIs pass disabled-provider source/build proofs; enabled GTK/WebKitGTK and GUI
 acceptance remain unavailable. V-D08 is also partial: nullable and all three Result enum
 carriers, three enum helpers and state-correct plain wrapper presence pass with default prelowering;
-wider extensions and indexed/general probes remain separate.
+The audit reconciles the original eight extension probes but finds VD08-A01:
+default-less match lacks concrete failure transport for enum and integer selectors.
+V-D08 closure is held for discussion; wider extensions and indexed/general probes remain separate.
 Four other original issues remain open. Supplementary
 BS-R01 also remains closed.
 
