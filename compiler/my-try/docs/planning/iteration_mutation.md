@@ -21,7 +21,7 @@ unsupported status in `specs/array_semantics.md` remains until all family and
 lifetime proofs land. The vector checkpoint below is an implementation milestone,
 not V-D01 closeout.
 
-## Runtime findings and ownership
+## Baseline runtime findings and ownership
 
 - `scpp/value_iteration.hpp` delegates to non-owning ranges. Vector traversal uses
   wrapper/index access; table traversal retains raw table/entry positions. There
@@ -232,3 +232,46 @@ proofs, not a native compiler rebuild. Mixed source iteration still uses its old
 path and is not covered by the dynamic completion claim. Remaining work includes
 mixed COW rebinding, source-owner/temporary lifetime and retained default-prelowering
 proofs, the native-vector mutation audit, focused costs, and normative/catalog closeout.
+
+### Mixed COW binding checkpoint
+
+The shared binding owner now retains typed cursor subscriptions as well as the
+preservation notifications. Mixed COW detachment allocates a clone and its traversal
+state before retargeting this binding's live cursors. Internal detachment no longer
+uses whole-variable assignment and does not preserve remaining entries. Frozen
+cursors retain their saved entries; independent mixed copies keep their own
+subscriptions. Traversal does not add mixed table shared ownership or change its
+COW count. The same binding owner continues to serve dynamic without COW retargeting.
+
+Mixed whole-variable assignment/move prepares preservation before releasing either
+payload. Copy assignment finishes cloning before replacing its destination.
+Potentially throwing preservation is no longer hidden behind mixed assignment/move
+`noexcept` declarations. Destruction still transfers live table storage through the
+preallocated table retirement shell without allocation or throwing. Unique mixed
+table ownership also participates in replacement/lifetime preservation.
+
+Dev002 evidence:
+
+- `20261022-iteration-mixed-01`: fixture compilation failed because its standalone
+  include set did not declare the `shared` convenience factory. The fixture now uses
+  `std::make_shared`; no implementation change was needed for that failure.
+- `20261022-iteration-mixed-02`: runtime acceptance passes for COW followed by a live
+  value write, preservation after append, independent-copy mutation, source
+  replacement/move, simultaneously active bindings, and failed preservation after
+  COW detachment. It checks unchanged shared-owner counts at traversal start.
+- `20261022-iteration-mixed-sanitized-01`: the runtime object **and** probe are built
+  with ASan/UBSan. All runtime checks pass, including unique mixed table destruction,
+  and the earlier vector/hash/dynamic controls. The harness now uses this stronger
+  instrumentation by default.
+- `20261022-iteration-mixed-prelower-01`: 39 source programs plus the existing
+  iteration/indexing contract suites pass. All programs use default prelowering and
+  cold/warm execution; warm builds compile zero units and do not link. Eight new
+  mixed cases cover COW/live visibility, independent copies, replacement, reference
+  aliases, nested independent bindings, removal, reference-parameter calls, and a
+  copy introduced after the loop starts.
+
+All evidence directories are under `/home/alex-ai/curl/`. All four source families
+now use the preservation protocol. V-D01 is still open pending the source-owner
+lifetime and retained-default-prelowering acceptance, native mutation audit,
+focused layout/timing measurements and normative/catalog closeout. Mixed's added
+optional binding state must be included in those measurements.

@@ -1,5 +1,6 @@
 #include "scpp/mixed_t.hpp"
 #include "scpp/hash_t.hpp"
+#include "scpp/bound_iteration.hpp"
 #include "scpp/cast.hpp"
 #include "scpp/memory.hpp"
 #include "scpp/runtime_error.hpp"
@@ -229,7 +230,10 @@ mixed_t::mixed_t(std::weak_ptr<hash_t<mixed_t>> value) noexcept
 mixed_t::~mixed_t() { destroy(); }
 
 mixed_t::mixed_t(const mixed_t &other) : type_(kind_t::null_v) { *this = other.clone(); }
-mixed_t::mixed_t(mixed_t &&other)      noexcept : type_(kind_t::null_v) { move_construct(std::move(other)); }
+mixed_t::mixed_t(mixed_t &&other) : type_(kind_t::null_v) {
+	other.preserve_iteration();
+	move_construct(std::move(other));
+}
 
 // ============================================================
 // Assignment operators
@@ -237,39 +241,38 @@ mixed_t::mixed_t(mixed_t &&other)      noexcept : type_(kind_t::null_v) { move_c
 
 mixed_t &mixed_t::operator=(const mixed_t &other) {
 	if (this == &other) return *this;
-	assert_kind_change_allowed(other.kind());
-	destroy();
-	*this = other.clone();
-	return *this;
+	mixed_t copy(other);
+	return (*this = std::move(copy));
 }
 
-mixed_t &mixed_t::operator=(mixed_t &&other) noexcept {
+mixed_t &mixed_t::operator=(mixed_t &&other) {
 	if (this == &other) return *this;
 	assert_kind_change_allowed(other.kind());
 	other.assert_not_borrowed("move-source");
+	iteration_detail::preserve({iteration_.get(), other.iteration_.get()});
 	destroy();
 	move_construct(std::move(other));
 	return *this;
 }
 
-mixed_t &mixed_t::operator=(null_t)    noexcept { assert_kind_change_allowed(kind_t::null_v); destroy(); type_ = kind_t::null_v; return *this; }
-mixed_t &mixed_t::operator=(nullopt_t) noexcept { assert_kind_change_allowed(kind_t::null_v); destroy(); type_ = kind_t::null_v; return *this; }
-mixed_t &mixed_t::operator=(nullptr_t) noexcept { assert_kind_change_allowed(kind_t::null_v); destroy(); type_ = kind_t::null_v; return *this; }
+mixed_t &mixed_t::operator=(null_t)    { assert_kind_change_allowed(kind_t::null_v); replace_storage(); type_ = kind_t::null_v; return *this; }
+mixed_t &mixed_t::operator=(nullopt_t) { assert_kind_change_allowed(kind_t::null_v); replace_storage(); type_ = kind_t::null_v; return *this; }
+mixed_t &mixed_t::operator=(nullptr_t) { assert_kind_change_allowed(kind_t::null_v); replace_storage(); type_ = kind_t::null_v; return *this; }
 
-mixed_t &mixed_t::operator=(const bool_t &value) noexcept {
+mixed_t &mixed_t::operator=(const bool_t &value) {
 	if (type_ == kind_t::bool_v) { bool_value_ = value; return *this; }
 	assert_kind_change_allowed(kind_t::bool_v);
-	destroy(); type_ = kind_t::bool_v; new (&bool_value_) bool_t(value); return *this;
+	replace_storage(); type_ = kind_t::bool_v; new (&bool_value_) bool_t(value); return *this;
 }
-mixed_t &mixed_t::operator=(const int_t<> &value) noexcept {
+mixed_t &mixed_t::operator=(const int_t<> &value) {
 	if (type_ == kind_t::int_v) { int_value_ = value; return *this; }
 	assert_kind_change_allowed(kind_t::int_v);
-	destroy(); type_ = kind_t::int_v; new (&int_value_) int_t<>(value); return *this;
+	replace_storage(); type_ = kind_t::int_v; new (&int_value_) int_t<>(value); return *this;
 }
-mixed_t &mixed_t::operator=(const float_t &value) noexcept {
+mixed_t &mixed_t::operator=(const float_t &value) {
 	if (type_ == kind_t::float_v) { float_value_ = value; return *this; }
 	assert_kind_change_allowed(kind_t::float_v);
-	destroy(); type_ = kind_t::float_v; new (&float_value_) float_t(value); return *this;
+	replace_storage(); type_ = kind_t::float_v; new (&float_value_) float_t(value); return *this;
 }
 mixed_t &mixed_t::operator=(const string_t &value) {
 	if (type_ == kind_t::string_v) {
@@ -277,40 +280,40 @@ mixed_t &mixed_t::operator=(const string_t &value) {
 		return *this;
 	}
 	assert_kind_change_allowed(kind_t::string_v);
-	destroy(); type_ = kind_t::string_v;
+	replace_storage(); type_ = kind_t::string_v;
 	new (&string_value_) unique_p<string_t>(unique<string_t>(value));
 	return *this;
 }
 mixed_t &mixed_t::operator=(const char *value) { return (*this = string_t{value}); }
-mixed_t &mixed_t::operator=(bool value)           noexcept { return (*this = bool_t{value});  }
-mixed_t &mixed_t::operator=(std::int64_t value)   noexcept { return (*this = int_t<>{value});   }
-mixed_t &mixed_t::operator=(double value)          noexcept { return (*this = float_t{value}); }
+mixed_t &mixed_t::operator=(bool value)           { return (*this = bool_t{value});  }
+mixed_t &mixed_t::operator=(std::int64_t value)   { return (*this = int_t<>{value});   }
+mixed_t &mixed_t::operator=(double value)          { return (*this = float_t{value}); }
 
-mixed_t &mixed_t::operator=(unique_p<hash_t<mixed_t>> value) noexcept {
+mixed_t &mixed_t::operator=(unique_p<hash_t<mixed_t>> value) {
 	assert_kind_change_allowed(kind_t::table_v);
-	destroy(); type_ = kind_t::table_v;
+	replace_storage(); type_ = kind_t::table_v;
 	new (&table_value_) unique_p<hash_t<mixed_t>>(std::move(value));
 	return *this;
 }
-mixed_t &mixed_t::operator=(shared_p<hash_t<mixed_t>> value) noexcept {
+mixed_t &mixed_t::operator=(shared_p<hash_t<mixed_t>> value) {
 	assert_kind_change_allowed(kind_t::shared_table_v);
-	destroy(); type_ = kind_t::shared_table_v;
+	replace_storage(); type_ = kind_t::shared_table_v;
 	new (&shared_table_value_) shared_p<hash_t<mixed_t>>(std::move(value));
 	return *this;
 }
-mixed_t &mixed_t::operator=(weak_p<hash_t<mixed_t>> value) noexcept {
+mixed_t &mixed_t::operator=(weak_p<hash_t<mixed_t>> value) {
 	assert_kind_change_allowed(kind_t::weak_table_v);
-	destroy(); type_ = kind_t::weak_table_v;
+	replace_storage(); type_ = kind_t::weak_table_v;
 	new (&weak_table_value_) weak_p<hash_t<mixed_t>>(std::move(value));
 	return *this;
 }
-mixed_t &mixed_t::operator=(std::unique_ptr<hash_t<mixed_t>> value) noexcept {
+mixed_t &mixed_t::operator=(std::unique_ptr<hash_t<mixed_t>> value) {
 	return (*this = unique_p<hash_t<mixed_t>>(std::move(value)));
 }
-mixed_t &mixed_t::operator=(std::shared_ptr<hash_t<mixed_t>> value) noexcept {
+mixed_t &mixed_t::operator=(std::shared_ptr<hash_t<mixed_t>> value) {
 	return (*this = shared_p<hash_t<mixed_t>>(std::move(value)));
 }
-mixed_t &mixed_t::operator=(std::weak_ptr<hash_t<mixed_t>> value) noexcept {
+mixed_t &mixed_t::operator=(std::weak_ptr<hash_t<mixed_t>> value) {
 	return (*this = weak_p<hash_t<mixed_t>>(std::move(value)));
 }
 
@@ -574,26 +577,12 @@ mixed_t &mixed_t::operator>>=(const mixed_t &right) { return apply_compound_assi
 // Helper: resolve table pointer for the three ownership variants.
 // For mutable access, also autovivifies null -> unique table.
 namespace {
-void ensure_unique_table_storage(mixed_t &self) {
-	if (self.kind() != mixed_t::kind_t::shared_table_v) {
-		return;
-	}
-	auto *shared_value = self.shared_table_if();
-	if (shared_value == nullptr) {
-		return;
-	}
-	if (shared_value->use_count() <= 1) {
-		return;
-	}
-	auto detached = shared_p<hash_t<mixed_t>>(std::make_shared<hash_t<mixed_t>>(**shared_value));
-	self = std::move(detached);
-}
 
 hash_t<mixed_t> *resolve_table_mut(mixed_t &self) {
 	if (self.kind() == mixed_t::kind_t::null_v) {
 		self = shared<hash_t<mixed_t>>();
 	}
-	ensure_unique_table_storage(self);
+	self.detach_shared_table_for_write();
 	return self.table_if();
 }
 const hash_t<mixed_t> *resolve_table_const(const mixed_t &self) noexcept {
@@ -995,6 +984,29 @@ bool_t operator||(const mixed_t &left, const mixed_t &right) {
 // ============================================================
 // Internal helpers
 // ============================================================
+
+void mixed_t::preserve_iteration() {
+	iteration_detail::preserve({iteration_.get()});
+}
+
+void mixed_t::replace_storage() {
+	preserve_iteration();
+	destroy();
+}
+
+std::shared_ptr<iteration_detail::binding<hash_t<mixed_t>>> mixed_t::iteration_binding() const {
+	if (!iteration_) iteration_ = std::make_shared<iteration_detail::binding<hash_t<mixed_t>>>();
+	return iteration_;
+}
+
+// COW is an internal storage change, not replacement of this source binding.
+// Allocate the clone and its traversal state before retargeting any live cursor.
+void mixed_t::detach_shared_table_for_write() {
+	if (type_ != kind_t::shared_table_v || shared_table_value_.use_count() <= 1) return;
+	auto detached = shared_p<hash_t<mixed_t>>(std::make_shared<hash_t<mixed_t>>(*shared_table_value_));
+	if (iteration_) iteration_->retarget(*detached);
+	shared_table_value_ = std::move(detached);
+}
 
 void mixed_t::destroy() noexcept {
 	assert_not_borrowed("destroy");

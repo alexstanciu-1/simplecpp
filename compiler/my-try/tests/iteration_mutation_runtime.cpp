@@ -296,6 +296,91 @@ void prove_dynamic_bindings() {
 	failure.detach();
 }
 
+scpp::mixed_t mixed_sequence() {
+	scpp::mixed_t source{std::make_shared<scpp::hash_t<scpp::mixed_t>>()};
+	source.append(scpp::mixed_t{scpp::int_t<>{1}});
+	source.append(scpp::mixed_t{scpp::int_t<>{2}});
+	source.append(scpp::mixed_t{scpp::int_t<>{3}});
+	return source;
+}
+
+void prove_mixed_bindings() {
+	using integer = scpp::int_t<>;
+	using value = scpp::mixed_t;
+	for (int operation = 0; operation < 4; ++operation) {
+		auto source = mixed_sequence();
+		auto copy = source;
+		std::vector<std::int64_t> actual;
+		for (auto entry : scpp::value_iteration(source)) {
+			auto current = read_integer(entry.value_copy());
+			actual.push_back(current);
+			if (current != 1) continue;
+			assert(source.shared_table_if()->use_count() == 2);
+			if (operation == 0) {
+				source[integer{1}] = integer{20};
+				source.append(value{integer{4}});
+				source[integer{2}] = integer{30};
+			} else if (operation == 1) {
+				copy.append(value{integer{4}});
+				source[integer{1}] = integer{20};
+			} else if (operation == 2) {
+				source = scpp::null;
+				copy[integer{1}] = integer{20};
+			} else {
+				auto moved = std::move(source);
+				moved[integer{1}] = integer{20};
+			}
+		}
+		assert((actual == (operation < 2 ? std::vector<std::int64_t>{1, 20, 3}
+			: std::vector<std::int64_t>{1, 2, 3})));
+	}
+	auto source = mixed_sequence();
+	auto copy = source;
+	auto left_range = scpp::value_iteration(source);
+	auto right_range = scpp::value_iteration(copy);
+	auto left = left_range.begin();
+	auto right = right_range.begin();
+	assert(read_integer((*left).value_copy()) == 1);
+	assert(read_integer((*right).value_copy()) == 1);
+	source[integer{1}] = integer{20};
+	source.append(value{integer{4}});
+	copy[integer{1}] = integer{200};
+	++left;
+	++right;
+	assert(read_integer((*left).value_copy()) == 20);
+	assert(read_integer((*right).value_copy()) == 200);
+
+	struct failing_observer final : scpp::iteration_detail::observer {
+		void prepare() override { throw std::runtime_error("mixed binding preservation failure"); }
+		void commit() noexcept override {}
+		void cancel() noexcept override {}
+	} failure;
+	auto failing_source = mixed_sequence();
+	auto independent = failing_source;
+	failing_source.iteration_binding()->attach(failure);
+	auto range = scpp::value_iteration(failing_source);
+	auto cursor = range.begin();
+	assert(read_integer((*cursor).value_copy()) == 1);
+	failing_source[integer{1}] = integer{20}; // Detach and rebind before the failure.
+	bool threw = false;
+	try { failing_source = scpp::null; } catch (const std::runtime_error &) { threw = true; }
+	assert(threw && failing_source.is_hash().native_value());
+	failing_source[integer{1}] = integer{30};
+	++cursor;
+	assert(read_integer((*cursor).value_copy()) == 30);
+	assert(read_integer(independent[integer{1}]) == 2);
+	failure.detach();
+
+	value unique_source{std::make_unique<scpp::hash_t<value>>(*independent.table_if())};
+	std::vector<std::int64_t> unique_values;
+	for (auto entry : scpp::value_iteration(unique_source)) {
+		auto current = read_integer(entry.value_copy());
+		unique_values.push_back(current);
+		if (current == 1) unique_source = scpp::null;
+	}
+	assert((unique_values == std::vector<std::int64_t>{1, 2, 3}));
+}
+
 // Runtime-first, bounds-safe probes. Do not exercise dangling table iterators
 // until the source-lifetime protocol exists.
 int main(int argc, char **) {
@@ -345,4 +430,5 @@ int main(int argc, char **) {
 	prove_packed_preservation<scpp::mixed_t>();
 	prove_packed_preservation<scpp::detail::dynamic_value>();
 	prove_dynamic_bindings();
+	prove_mixed_bindings();
 }

@@ -12,6 +12,9 @@
 namespace scpp::hash_detail {
 template <typename Value> class packed_table;
 }
+namespace scpp::iteration_detail {
+template<class Table> class binding;
+}
 
 namespace scpp::detail {
 
@@ -26,7 +29,7 @@ private:
 	using payload_type = std::variant<std::monostate, bool_t, int_t<>, float_t,
 		std::unique_ptr<string_t>, std::shared_ptr<table_type>>;
 	payload_type payload_;
-	mutable std::shared_ptr<iteration_detail::observers> iteration_;
+	mutable std::shared_ptr<iteration_detail::binding<table_type>> iteration_;
 	explicit dynamic_value(std::shared_ptr<table_type> table) noexcept;
 	static payload_type copy_payload(const payload_type &source);
 
@@ -43,7 +46,7 @@ public:
 	dynamic_value &operator=(const dynamic_value &other);
 	dynamic_value &operator=(dynamic_value &&other);
 	~dynamic_value();
-	[[nodiscard]] std::shared_ptr<iteration_detail::observers> iteration_binding() const;
+	[[nodiscard]] std::shared_ptr<iteration_detail::binding<table_type>> iteration_binding() const;
 
 	[[nodiscard]] static dynamic_value make_container();
 	[[nodiscard]] kind_t kind() const noexcept;

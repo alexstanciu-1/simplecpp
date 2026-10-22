@@ -10,6 +10,14 @@ sys.path.insert(0, str(APP / 'tools'))
 from test_runner import CommandRunner, Task, run_tasks
 
 CASES = {
+    'mixed-cow-live': ('$xs mixed = [1,2,3];$copy=$xs;foreach($xs as $v){$n int=$v;echo $n,",";if($n===1){$xs[1]=20;$xs[]=4;$xs[2]=30;}}echo ":",$copy[1];', '1,20,3,:2'),
+    'mixed-independent-copy': ('$xs mixed = [1,2,3];$copy=$xs;foreach($xs as $v){$n int=$v;echo $n,",";if($n===1){$copy[]=4;$xs[1]=20;}}', '1,20,3,'),
+    'mixed-replace': ('$xs mixed = [1,2,3];$copy=$xs;foreach($xs as $v){$n int=$v;echo $n;if($n===1){$xs=null;$copy[1]=20;}}', '123'),
+    'mixed-reference-alias': ('$xs mixed = [1,2,3];$alias =& $xs;foreach($xs as $v){$n int=$v;echo $n,",";if($n===1){$alias[1]=20;$alias[]=4;$alias[2]=30;}}', '1,20,3,'),
+    'mixed-two-bindings': ('$xs mixed = [1,2,3];$copy=$xs;foreach($xs as $v){$n int=$v;echo $n,",";if($n===1){$xs[1]=20;$xs[]=4;foreach($copy as $inner){$m int=$inner;echo "[",$m,"]";if($m===1){$copy[1]=200;}}}}', '1,[1][200][3]20,3,'),
+    'mixed-remove-iteration': ('$xs mixed = [1,2,3];$copy=$xs;foreach($xs as $v){$n int=$v;echo $n;if($n===1){unset($xs[1]);$xs[2]=30;}}echo ":",$copy[1];', '123:2'),
+    'mixed-call': ('function change(mixed &$xs):void{$xs[1]=20;$xs[]=4;$xs[2]=30;}$xs mixed = [1,2,3];$copy=$xs;foreach($xs as $v){$n int=$v;echo $n,",";if($n===1){change($xs);}}', '1,20,3,'),
+    'mixed-late-copy': ('$xs mixed = [1,2,3];foreach($xs as $v){$n int=$v;echo $n,",";if($n===1){$copy=$xs;$xs[1]=20;$xs[]=4;echo "[",$copy[1],"]";}}', '1,[2]20,3,'),
     'dynamic-shallow': ('$child dynamic = {n:2};$xs dynamic = [0,$child];$first=true;foreach($xs as $v){if($first){$first=false;echo "A";$xs[]=3;$child["n"]=20;}else{echo $v["n"];}}', 'A20'),
     'dynamic-two-bindings': ('$xs dynamic = [1,2];$alias=$xs;foreach($xs as $v){$n int=$v;echo $n;if($n===1){foreach($alias as $inner){$m int=$inner;echo "[",$m,"]";if($m===1){$xs=null;$alias[1]=20;}}}}', '1[1][20]2'),
     'dynamic-remove-nested': ('function key(string $s):string{echo $s;return $s;}$d dynamic = {a:{b:1,c:2}};unset($d[key("a")][key("b")]);echo $d["a"]["c"];', 'ab2'),

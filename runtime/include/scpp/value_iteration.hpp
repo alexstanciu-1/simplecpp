@@ -9,7 +9,7 @@
 namespace scpp {
 
 // Direct vector/hash traversal preserves remaining entries before structural writes.
-// Dynamic bindings also observe replacement; mixed COW binding integration is pending.
+// Boxed bindings additionally observe replacement; mixed bindings follow COW detachment.
 template <typename T>
 auto value_iteration(const vector_t<T> &source) {
 	return source.value_range();
@@ -26,7 +26,7 @@ inline auto value_iteration(const mixed_t &source) {
 		throw std::runtime_error("foreach: mixed requires a table; cross-family and weak iteration are deferred");
 	const auto *table = source.table_if();
 	if (!table) throw std::runtime_error("foreach: absent mixed table");
-	return foreach_range(*table);
+	return iteration_detail::bound_range<hash_t<mixed_t>>(*table, source.iteration_binding());
 }
 
 inline auto value_iteration(const detail::dynamic_value &source) {

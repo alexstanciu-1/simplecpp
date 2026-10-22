@@ -1,5 +1,6 @@
 #include "scpp/support/dynamic_value.hpp"
 #include "scpp/hash_t.hpp"
+#include "scpp/bound_iteration.hpp"
 #include <stdexcept>
 #include <type_traits>
 
@@ -55,8 +56,8 @@ dynamic_value &dynamic_value::operator=(dynamic_value &&other) {
 	return *this;
 }
 
-std::shared_ptr<iteration_detail::observers> dynamic_value::iteration_binding() const {
-	if (!iteration_) iteration_ = std::make_shared<iteration_detail::observers>();
+std::shared_ptr<iteration_detail::binding<dynamic_value::table_type>> dynamic_value::iteration_binding() const {
+	if (!iteration_) iteration_ = std::make_shared<iteration_detail::binding<table_type>>();
 	return iteration_;
 }
 

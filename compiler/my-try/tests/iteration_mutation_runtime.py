@@ -16,9 +16,14 @@ args = parser.parse_args()
 out = args.results.resolve()
 out.mkdir(parents=True, exist_ok=False)
 with CommandRunner(out / 'logs', ROOT, jobs=12) as runner:
-    cpp = CppFixtureCompiler(runner, ROOT, out, pch=False, runtime=True)
-    cpp.flags.extend(['-std=c++23', '-fsanitize=address,undefined',
-                      '-fno-sanitize-recover=undefined'])
+    sanitizer_flags = ['-fsanitize=address,undefined', '-fno-sanitize-recover=undefined',
+                       '-fno-omit-frame-pointer']
+    runtime_object = out / 'sanitized-runtime.o'
+    runner.run('runtime-build-sanitized', ['clang++', '-std=c++23', *sanitizer_flags,
+        '-DSCPP_LANGUAGE_TARGET_PHP=1', '-I', ROOT / 'runtime/include', '-pthread', '-c',
+        ROOT / 'runtime/include/core/runtime.cpp', '-o', runtime_object], timeout=240)
+    cpp = CppFixtureCompiler(runner, ROOT, out, pch=False, runtime=True, runtime_object=runtime_object)
+    cpp.flags.extend(['-std=c++23', *sanitizer_flags])
 
     def check():
         exe = out / 'iteration-mutation'

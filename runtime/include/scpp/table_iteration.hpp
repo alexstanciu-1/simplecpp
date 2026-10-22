@@ -64,6 +64,13 @@ public:
 		source_->attach(*this);
 	}
 	~table_range() override { detach(); }
+	void rebind(const std::shared_ptr<table_source<Table>> &source) noexcept {
+		if (preserved_) return;
+		detach();
+		source_ = source;
+		source_->attach(*this);
+		skip_dead();
+	}
 	void prepare() override {
 		if (prepared_ || preserved_) return;
 		const auto &table = *source_->live;

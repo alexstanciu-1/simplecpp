@@ -1178,9 +1178,13 @@ public:
 
 	iteration_detail::table_range<packed_table, mixed_t, Value> value_range() const
 		requires std::copy_constructible<Value> {
+		return iteration_detail::table_range<packed_table, mixed_t, Value>(iteration_source());
+	}
+
+	std::shared_ptr<iteration_detail::table_source<packed_table>> iteration_source() const {
 		if (!iteration_) iteration_ = std::make_shared<iteration_detail::table_source<packed_table>>(
 			const_cast<packed_table &>(*this));
-		return iteration_detail::table_range<packed_table, mixed_t, Value>(iteration_);
+		return iteration_;
 	}
 
 	[[nodiscard]] bool_t empty() const noexcept {
@@ -1639,6 +1643,7 @@ public:
 	hash_t &operator=(const hash_t &) = default;
 	hash_t &operator=(hash_t &&) = default;
 	using storage_type::value_range;
+	using storage_type::iteration_source;
 
 	using storage_type::empty;
 	using storage_type::size;
