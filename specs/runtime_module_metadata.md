@@ -819,7 +819,23 @@ no absolute paths or traversal. Libraries are logical linker names, not flags or
 shell commands. Definitions are `NAME=VALUE` tokens (identifier names and nonempty
 alphanumeric/underscore/dot/minus values); conflicting values reject configuration.
 Modules cannot override the PHP language-target definition. Arbitrary flags, build
-scripts, package installation and additional search roots are outside this contract.
+scripts, package installation and module-supplied search roots are outside this contract.
+
+The optional `providers` array admits only `ui` and `webview` as bounded host SDK
+requirements. It contains no commands, flags or search paths. Before retaining the
+startup catalog, the host resolves those requirements through the existing project
+provider resolver. Unresolved requirements reject publication rather than silently
+selecting disabled implementations. The current native consumer is Linux/Clang;
+other platform build transport remains outside this integration.
+
+The authenticated publication may carry host-resolved `compile_options`,
+`link_options` and `diagnostics`. These fields are not accepted from module JSON.
+SDK options are restricted to absolute include/library search paths, logical
+libraries, threading and the Linux export-dynamic flag. Native consumers validate
+them and incorporate them in their normal compile/link cache identities. Missing
+SDK packages preserve the provider's disabled definitions and actionable
+diagnostics; successful disabled-provider builds do not prove GUI availability.
+Existing three-field build publications remain readable with empty SDK options.
 
 The selected closure contributes sources once in dependency-first order and libraries
 in consumer-before-dependency order. Repeated entries are deduplicated; identical

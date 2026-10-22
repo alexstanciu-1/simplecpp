@@ -114,7 +114,7 @@ final class Runtime_Catalog_Reader
 		$reader->begin_object();
 		while ($reader->next_property()) {
 			$name = $reader->property_name();
-			if (($name !== 'sources') && ($name !== 'libraries') && ($name !== 'definitions')) {
+			if (($name !== 'sources') && ($name !== 'libraries') && ($name !== 'definitions') && ($name !== 'providers')) {
 				$reader->reject('Unknown runtime build field: ' . $name);
 			}
 			$values /** vector<string> */ = [];
@@ -122,6 +122,7 @@ final class Runtime_Catalog_Reader
 			while ($reader->next_element()) { $values[] = self::name($reader); }
 			if ($name === 'sources') { $result->sources = $values; }
 			elseif ($name === 'libraries') { $result->libraries = $values; }
+			elseif ($name === 'providers') { $result->providers = $values; }
 			else { $result->definitions = $values; }
 		}
 		Runtime_Build_Contract::validate($result);

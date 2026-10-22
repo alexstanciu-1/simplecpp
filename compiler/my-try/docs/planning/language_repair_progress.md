@@ -10,9 +10,15 @@ syntax and policy/design issues. Operator signatures are not separate closed iss
 | --- | ---: |
 | Implemented or already repaired (including harnesses), then verified | 55 |
 | Contract/environment reconciled and verified | 3 |
-| Partially implemented and verified | 0 |
-| Other issues not yet closed | 6 |
+| Partially implemented and verified | 1 |
+| Other issues not yet closed | 5 |
 | Total | 64 |
+
+The [V-R08 batch](ui_webview_integration.md) implements all 24 UI/WebView source APIs
+and host build integration. Its default-prelowered disabled-provider, snapshot and
+recovery proofs pass; enabled GTK/WebKitGTK build and GUI acceptance remain unavailable.
+V-R08 is therefore partial, not an extra closure. The V-D07/V-D08 source audit
+does not close either issue.
 
 Resolved: **58/64 = 90.625%** (by issue count). This is not an
 engineering-effort estimate. The completed async/tasks goal closed S12 and V-R02 (+3.125 points). The subsequent [V-D06 goal](finally_value_transfers.md) closes finally value/loop transfers and default-prelowered exception transport (+1.5625 points). S05 does not certify explicit callable storage under default prelowering. Remaining architecture/runtime/project issues can be
@@ -22,7 +28,7 @@ much larger than fixture repairs. There is no defensible weighted effort percent
 | --- | ---: | ---: | ---: | ---: |
 | Simple fix | 13 | 0 | 0 | 13 |
 | Light discussion | 17 | 0 | 0 | 17 |
-| Normal discussion | 28 | 0 | 6 | 34 |
+| Normal discussion | 28 | 1 | 5 | 34 |
 
 V-L06 now admits the final two scalar float identity forms and re-verifies its
 original carrier cases. S04's unchanged original process fixture passes through

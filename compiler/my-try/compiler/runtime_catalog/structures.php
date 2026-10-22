@@ -227,6 +227,12 @@ final class runtime_module_spec
 /** Portable build requirements, independent of source AST and native cache state. */
 final class runtime_cpp_build_spec
 {
+	/** Named host-resolved SDK requirements; executable metadata is forbidden. */
+	public array $providers /** vector<string> */ = [];
+	/** Host-resolved arguments, never accepted from module JSON. */
+	public array $compile_options /** vector<string> */ = [];
+	public array $link_options /** vector<string> */ = [];
+	public array $diagnostics /** vector<string> */ = [];
 	public array $sources /** vector<string> */ = [];
 	public array $libraries /** vector<string> */ = [];
 	public array $definitions /** vector<string> */ = [];

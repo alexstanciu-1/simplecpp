@@ -59,7 +59,7 @@ final class Native_CPP_Commands
 	}
 
 	/** Link-only configuration: preserve object/library order and compile/PCH recipes. */
-	public static function link(native_cpp_toolchain $config, array $flags /** vector<string> */, array $objects /** vector<string> */, array $libraries /** vector<string> */): array /** vector<string> */
+	public static function link(native_cpp_toolchain $config, array $flags /** vector<string> */, array $objects /** vector<string> */, array $libraries /** vector<string> */, array $provider_options /** vector<string> */ = []): array /** vector<string> */
 	{
 		$result /** vector<string> */ = $flags;
 		$result[] = '-fuse-ld=' . $config->linker;
@@ -72,6 +72,7 @@ final class Native_CPP_Commands
 		foreach ($libraries as $library) {
 			$result[] = '-l' . $library;
 		}
+		foreach ($provider_options as $option) { $result[] = $option; }
 		return $result;
 	}
 

@@ -13,6 +13,9 @@ final class CPP_Runtime_Build
 		foreach ($input->modules as $module) {
 			$modules[] = $module;
 			$requirements /** runtime_cpp_build_spec */ = $module->cpp_build;
+			if (q_count($requirements->providers) !== 0) { throw new \RuntimeException('Runtime provider requirements need host resolution before publication'); }
+			foreach ($requirements->compile_options as $option) { $result->compile_options[] = $option; }
+			foreach ($requirements->diagnostics as $diagnostic) { $result->diagnostics[] = $diagnostic; }
 			foreach ($requirements->sources as $source) {
 				if (!isset($seen_sources[$source])) { $result->sources[] = $source; $seen_sources[$source] = true; }
 			}
@@ -31,6 +34,7 @@ final class CPP_Runtime_Build
 		for ($index = q_count($modules) - 1; $index >= 0; $index -= 1) {
 			$consumer /** runtime_module_spec */ = $modules[$index];
 			$consumer_requirements /** runtime_cpp_build_spec */ = $consumer->cpp_build;
+			foreach ($consumer_requirements->link_options as $option) { $result->link_options[] = $option; }
 			foreach ($consumer_requirements->libraries as $library) {
 				if (!isset($seen_libraries[$library])) { $result->libraries[] = $library; $seen_libraries[$library] = true; }
 			}

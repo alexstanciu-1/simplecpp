@@ -597,7 +597,12 @@
         "Agree binding/evaluation and pack/reference contracts before expanding admission"
       ],
       "next_action": "Discuss named binding and unpacking independently from reference default/variadic semantics; retain positional regression proofs.",
-      "simple_batch_eligible": false
+      "simple_batch_eligible": false,
+      "compatibility_audit": {
+        "date": "2026-10-22",
+        "report": "ui_webview_integration.md",
+        "scope": "Pinned v0.1 source/catalog audit only; no issue closure or fresh baseline execution claim."
+      }
     },
     {
       "id": "S13",
@@ -647,7 +652,12 @@
         "Agree enum extension semantics and interaction with method/interface foundations and payload capabilities."
       ],
       "next_action": "Discuss extensions individually after the bounded enum implementation; retain existing explicit enum_name/value/from_value support.",
-      "simple_batch_eligible": false
+      "simple_batch_eligible": false,
+      "compatibility_audit": {
+        "date": "2026-10-22",
+        "report": "ui_webview_integration.md",
+        "scope": "Pinned v0.1 source/catalog audit only; no issue closure or fresh baseline execution claim."
+      }
     },
     {
       "id": "V-P01",
@@ -1299,10 +1309,17 @@
         "webview_close"
       ],
       "dependencies": [],
-      "next_action": "Agree module/type integration; run headless admission/build checks first, then a separately authorized suitable GUI smoke. Do not classify absent module as merely unavailable display.",
+      "next_action": "Run enabled GTK/WebKitGTK build and isolated GUI load/message/reply/shutdown proofs on a suitably provisioned host; source/module exposure is implemented. Keep general error-condition transport VR08-H01 separate.",
       "acceptance": "Explicit contract disposition for every listed public name, followed by signature/behavior/provider integration proofs for retained APIs.",
       "simple_batch_eligible": false,
-      "eligibility_reason": "Provider, type and integration decisions remain; not a proven metadata-only repair."
+      "eligibility_reason": "Source/build integration is implemented and verified within its headless scope; enabled-provider acceptance remains explicit.",
+      "repair_status": "partially-implemented-and-verified",
+      "repair": {
+        "date": "2026-10-22",
+        "report": "ui_webview_integration.md",
+        "evidence": "vr08-evidence.tar.gz",
+        "scope": "All 24 source APIs, shared handles, host SDK build resolution and default-prelowered disabled-provider cold/warm/recovery proofs pass on dev002. Enabled GTK/WebKitGTK build and GUI lifecycle proofs remain unavailable; do not claim those from disabled-provider success."
+      }
     },
     {
       "id": "V-D11",
