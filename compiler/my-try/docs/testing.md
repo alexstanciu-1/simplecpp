@@ -1,6 +1,14 @@
 # Test runners
 Doc Status: supporting
 
+[V-D01 mutation/lifetime acceptance](planning/iteration_mutation.md) runs on dev002:
+`iteration_mutation_runtime.py`, `iteration_mutation_prelower.py`,
+`iteration_mutation_retained.py`, and `iteration_mutation_cost.py` under
+`compiler/my-try/tests/`, each with `--results FRESH_DIRECTORY`. The source harness
+also accepts repeated `--case NAME` and `--sanitize`; runtime instrumentation includes
+the runtime object. These are focused default-prelowering proofs, not a native
+compiler rebuild or full matrix.
+
 The [read-only owned pack proof](planning/readonly_packs.md) runs on dev002 with
 `python3 compiler/my-try/tests/readonly_pack_prelower.py --results FRESH_DIRECTORY`.
 It covers canonical scalar calls, value snapshots without caller aliases, read-only

@@ -288,8 +288,15 @@
       "dependencies": [
         "Agree semantics and lifetime/invalidation design before implementation"
       ],
-      "next_action": "Discuss supported mutation policy; do not classify unspecified runtime outcomes as implementation defects.",
-      "simple_batch_eligible": false
+      "next_action": "Closed for four-family value iteration: live until first structural mutation/replacement, then preserve remaining shallow entries. Reference foreach, escaping element references, concurrency and collection callback policy remain separate.",
+      "simple_batch_eligible": false,
+      "repair_status": "implemented-and-verified",
+      "repair_evidence": {
+        "date": "2026-10-22",
+        "report": "iteration_mutation.md",
+        "results": "iteration_mutation_results.json",
+        "scope": "Vector/hash/mixed/dynamic runtime mutation, COW and binding lifetime; 46 default-prelowered source programs, two contract suites, runtime/lifetime sanitizer proofs, six retained publications and measured traversal costs on dev002."
+      }
     },
     {
       "id": "V-R01",

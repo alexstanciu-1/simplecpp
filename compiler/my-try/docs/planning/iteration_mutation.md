@@ -16,10 +16,11 @@ changes and mixed COW detachment alone are not logical structural mutations.
 Independent mixed copies must remain independent; dynamic aliases retain shared
 container identity. Destructors must remain nonthrowing.
 
-This is the agreed target, not a claim of complete implementation. The normative
-unsupported status in `specs/array_semantics.md` remains until all family and
-lifetime proofs land. The vector checkpoint below is an implementation milestone,
-not V-D01 closeout.
+Status: **implemented and verified — 2026-10-22**. All acceptance gates below
+are complete within the agreed four-family value-iteration scope. The normative
+contract is in `specs/array_semantics.md`; reference foreach remains separate.
+Earlier checkpoints below retain their dated limitations and failures. The final
+acceptance and cost sections supersede their pending-work statements.
 
 ## Baseline runtime findings and ownership
 
@@ -302,3 +303,50 @@ container. Source-visible append/removal/resize/clear/replacement go through the
 registered runtime owners. Capacity changes remain nonstructural. Arbitrary native
 code mutating exposed `native_value()` storage is outside this source-language
 contract; no unconditional freeze was added to mutable native access.
+
+### Final acceptance and costs — 2026-10-22
+
+`20261022-iteration-final-01` passes all **46 source programs and two existing
+contract suites** with default prelowering. Cold/warm execution passes and warm
+builds compile zero units without linking. The lifetime/sanitizer and retained
+proofs above complete the remaining acceptance gates. The final 23 compiler,
+runtime and test file hashes match dev002 (`vd01-final-manifest.json`); the compact
+[evidence record](iteration_mutation_results.json) retains those identities.
+No native compiler rebuild or full matrix was run.
+
+`20261022-iteration-cost-final` checks exact vector copy counts for 1,024 entries:
+zero at loop entry, one current-value copy, 1,023 remaining copies on the first
+append, and zero additional preservation copies on the next append. Each cursor
+preserves its own remaining entries; nested active cursors multiply that cost.
+The initial cost fixture had a missing `<>` on the dynamic alias; `cost-01` preserves
+that fixture-only failure, corrected in `cost-02` and the final run.
+
+On dev002, measured wrapper sizes are vector<int> 40 bytes, hash<int> 168 bytes,
+mixed 40 bytes and dynamic 40 bytes. Each wrapper now retains an optional shared
+state handle; source/cursor state is allocated lazily and kept for lifetime safety.
+Moves of all four families can throw during preservation. Generic containers may
+therefore copy rather than move these wrappers on relocation; whole-application
+allocation and relocation performance is not claimed by this check.
+
+The optimized vector microbenchmark compares the old borrowed range and protected
+range in the same binary, with warmed registration state, median of seven samples:
+
+| Entries | Borrowed ns/loop | Protected ns/loop |
+| ---: | ---: | ---: |
+| 0 | 0.32 | 7.90 |
+| 1 | 0.70 | 9.01 |
+| 16 | 3.09 | 30.06 |
+| 1,024 | 151.90 | 1,678.00 |
+| 65,536 | 8,426.81 | 90,231.00 |
+
+The large-loop protected cost is about 1.38–1.64 ns/entry, roughly 11x the synthetic
+borrowed sum (which is easier to optimize). This is a real scalar traversal overhead,
+not a whole-program slowdown estimate. The design avoids an O(n) entry snapshot at
+loop start but does not make protected traversal free. These timings exclude first
+registration allocation, boxed conversion and application body costs; they do not
+measure compiler speed or establish a performance guarantee. Future optimization
+must preserve the live-before-mutation and failure-before-mutation contract.
+
+V-D01 is closed. CH06-REF-01 remains open: preserving values does not implement
+write-through reference iteration or its required rejection guards. Arbitrary native
+storage writes and concurrent mutation remain outside the approved source contract.
