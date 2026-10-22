@@ -29,8 +29,9 @@ dynamic_value::payload_type dynamic_value::copy_payload(const payload_type &sour
 dynamic_value::dynamic_value(const dynamic_value &other)
 	: payload_(copy_payload(other.payload_)) {}
 
-dynamic_value::dynamic_value(dynamic_value &&other) noexcept
-	: payload_(std::move(other.payload_)) {
+dynamic_value::dynamic_value(dynamic_value &&other) {
+	iteration_detail::preserve({other.iteration_.get()});
+	payload_ = std::move(other.payload_);
 	other.payload_.emplace<std::monostate>();
 }
 
@@ -43,14 +44,20 @@ dynamic_value &dynamic_value::operator=(const dynamic_value &other) {
 	return *this;
 }
 
-dynamic_value &dynamic_value::operator=(dynamic_value &&other) noexcept {
+dynamic_value &dynamic_value::operator=(dynamic_value &&other) {
 	static_assert(std::is_nothrow_move_assignable_v<payload_type>);
 	static_assert(std::is_nothrow_move_constructible_v<payload_type>);
 	if (this != &other) {
+		iteration_detail::preserve({iteration_.get(), other.iteration_.get()});
 		payload_ = std::move(other.payload_);
 		other.payload_.emplace<std::monostate>();
 	}
 	return *this;
+}
+
+std::shared_ptr<iteration_detail::observers> dynamic_value::iteration_binding() const {
+	if (!iteration_) iteration_ = std::make_shared<iteration_detail::observers>();
+	return iteration_;
 }
 
 dynamic_value dynamic_value::make_container() {

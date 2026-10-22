@@ -3,12 +3,13 @@
 #include "scpp/foreach.hpp"
 #include "scpp/dynamic_t.hpp"
 #include "scpp/support/dynamic_value.hpp"
+#include "scpp/bound_iteration.hpp"
 #include <stdexcept>
 
 namespace scpp {
 
 // Direct vector/hash traversal preserves remaining entries before structural writes.
-// Boxed-source bindings still need replacement/COW integration below.
+// Dynamic bindings also observe replacement; mixed COW binding integration is pending.
 template <typename T>
 auto value_iteration(const vector_t<T> &source) {
 	return source.value_range();
@@ -29,7 +30,7 @@ inline auto value_iteration(const mixed_t &source) {
 }
 
 inline auto value_iteration(const detail::dynamic_value &source) {
-	return detail::const_entry_range(source.get_table());
+	return iteration_detail::bound_range<detail::dynamic_value::table_type>(source.get_table(), source.iteration_binding());
 }
 
 } // namespace scpp

@@ -243,6 +243,59 @@ void prove_packed_preservation() {
 	assert(keys == "ab" && sum == 3);
 }
 
+void prove_dynamic_bindings() {
+	using value = scpp::detail::dynamic_value;
+	using integer = scpp::int_t<>;
+	for (int operation = 0; operation < 4; ++operation) {
+		auto source = value::make_container();
+		(void)source.get_table().append(value{integer{1}});
+		(void)source.get_table().append(value{integer{2}});
+		(void)source.get_table().append(value{integer{3}});
+		auto alias = source;
+		std::vector<std::int64_t> actual;
+		for (auto entry : scpp::value_iteration(source)) {
+			auto current = read_integer(entry.value_copy());
+			actual.push_back(current);
+			if (current != 1) continue;
+			if (operation == 0) {
+				alias.get_table().set(integer{1}, value{integer{20}});
+				(void)alias.get_table().append(value{integer{4}});
+				alias.get_table().set(integer{2}, value{integer{30}});
+			} else if (operation == 1) {
+				source = value{integer{9}};
+				alias.get_table().set(integer{1}, value{integer{20}});
+			} else if (operation == 2) {
+				alias = value{};
+				source.get_table().set(integer{1}, value{integer{20}});
+			} else {
+				auto moved = std::move(source);
+				moved.get_table().set(integer{1}, value{integer{20}});
+			}
+		}
+		assert((actual == (operation == 0 || operation == 2
+			? std::vector<std::int64_t>{1, 20, 3} : std::vector<std::int64_t>{1, 2, 3})));
+	}
+	struct failing_observer final : scpp::iteration_detail::observer {
+		void prepare() override { throw std::runtime_error("binding preservation failure"); }
+		void commit() noexcept override {}
+		void cancel() noexcept override {}
+	} failure;
+	auto source = value::make_container();
+	(void)source.get_table().append(value{integer{1}});
+	(void)source.get_table().append(value{integer{2}});
+	source.iteration_binding()->attach(failure);
+	auto range = scpp::value_iteration(source);
+	auto cursor = range.begin();
+	assert(read_integer((*cursor).value_copy()) == 1);
+	bool threw = false;
+	try { source = value{}; } catch (const std::runtime_error &) { threw = true; }
+	assert(threw && source.kind() == value::kind_t::table_v);
+	source.get_table().set(integer{1}, value{integer{20}});
+	++cursor;
+	assert(read_integer((*cursor).value_copy()) == 20);
+	failure.detach();
+}
+
 // Runtime-first, bounds-safe probes. Do not exercise dangling table iterators
 // until the source-lifetime protocol exists.
 int main(int argc, char **) {
@@ -291,4 +344,5 @@ int main(int argc, char **) {
 	prove_hash_preservation();
 	prove_packed_preservation<scpp::mixed_t>();
 	prove_packed_preservation<scpp::detail::dynamic_value>();
+	prove_dynamic_bindings();
 }

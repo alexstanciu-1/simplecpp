@@ -9,6 +9,11 @@ final class CPP_Keyed_Path
 		bool $removing, bool $emptiness = false, ?truthiness_decision $presence = null,
 		?canonical_type_use $result = null): string
 	{
+		$definition = Type_Queries::canonical($path->root->require_preparation()->type)->definition();
+		if ($removing && CPP_Concrete_Index::active($context)
+			&& (($definition instanceof mixed_semantics) || ($definition instanceof dynamic_semantics))) {
+			return self::boxed_removal($path, $context);
+		}
 		if ($context->specialization_engine !== null && !CPP_Concrete_Index::active($context)) {
 			throw new \RuntimeException('prelower_templates: keyed probes/removal require a concrete adapter');
 		}
@@ -79,5 +84,35 @@ final class CPP_Keyed_Path
 		}
 		if ($removing) { $text .= CPP_Sequence::result('', $context); }
 		return $text . CPP_Sequence::close($context);
+	}
+
+	/** Keep lazy key sequencing here; compiled helpers re-resolve native prefixes without exporting pointers. */
+	private static function boxed_removal(prepared_keyed_path $path, cpp_generation_context $context): string
+	{
+		$id = $context->next_temporary;
+		$context->next_temporary++;
+		$root = 'keyed_root_' . $id;
+		$binding = CPP_Declarations::bind_storage_receiver($path->root, $context);
+		$text = CPP_Sequence::open('void', $context) . $binding->statements
+			. 'auto& ' . $root . ' = ' . $binding->value . '; ';
+		$types /** vector<canonical_type_use> */ = [$path->root->require_preparation()->type];
+		$arguments = $root;
+		$position = 0;
+		$emitter = new CPP_Syntax($context);
+		foreach ($path->steps as $step)
+		{
+			$ready = CPP_Concrete_Index::reference('native_keyed_path_ready', $types, null, $context);
+			$text .= 'if (!' . $ready . '(' . $arguments . ')) { ' . CPP_Sequence::result('', $context) . '} ';
+			$key = 'keyed_key_' . $id . '_' . $position;
+			$conversion = $step->key_conversion;
+			$key_syntax /** expression_node */ = $step->syntax->index;
+			$text .= CPP_Declarations::type($conversion->target_type, $context) . ' ' . $key . ' = '
+				. CPP_Declarations::conversion($emitter->expression($key_syntax), $conversion, $context) . '; ';
+			$types[] = $conversion->target_type;
+			$arguments .= ', ' . $key;
+			$position++;
+		}
+		$erase = CPP_Concrete_Index::reference('native_keyed_path_erase', $types, null, $context);
+		return $text . $erase . '(' . $arguments . '); ' . CPP_Sequence::result('', $context) . CPP_Sequence::close($context);
 	}
 }

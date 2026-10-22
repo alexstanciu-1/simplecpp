@@ -100,7 +100,7 @@ final class CPP_Concrete_Index
 		$path_write = ($helper === 'native_index_path_append') || ($helper === 'native_index_path_store');
 		$pointer = ($helper === 'keyed_ready') || ($helper === 'keyed_lookup') || ($helper === 'keyed_child') || ($helper === 'keyed_probe');
 		$mutable_receiver = $path_write || ($helper === 'index_store') || ($helper === 'index_append') || ($helper === 'index_path_descend')
-			|| ($helper === 'keyed_descend') || ($helper === 'keyed_erase');
+			|| ($helper === 'keyed_descend') || ($helper === 'keyed_erase') || ($helper === 'native_keyed_path_erase');
 		$context = new cpp_generation_context($engine);
 		$parameters = '';
 		$arguments = '';
@@ -130,6 +130,7 @@ final class CPP_Concrete_Index
 		$output = 'void';
 		if ($helper === 'keyed_ready') { $output = 'bool'; }
 		if ($helper === 'keyed_probe') { $output = 'bool'; }
+		if ($helper === 'native_keyed_path_ready') { $output = 'bool'; }
 		if ($request->result !== null) {
 			$mapping = CPP_Types::representation($request->result, $context);
 			CPP_Types::record_dependencies($mapping, $context);
@@ -142,6 +143,9 @@ final class CPP_Concrete_Index
 		$declaration = "#pragma once\n" . CPP_Artifacts::includes($context->headers, '') . 'namespace scpp { ' . $signature . "; }\n";
 		$operation = 'return scpp::' . $helper . '(' . $arguments . ')'
 			. ($helper === 'keyed_probe' ? '.native_value()' : '') . ';';
+		if (($helper === 'native_keyed_path_ready') || ($helper === 'native_keyed_path_erase')) {
+			$operation = self::native_keyed_path($operands, $helper === 'native_keyed_path_erase');
+		}
 		if ($path_write) {
 			$native_context = new cpp_generation_context();
 			$append = $helper === 'native_index_path_append';
@@ -175,5 +179,27 @@ final class CPP_Concrete_Index
 			. $signature . ' { ' . $operation . " } }\n";
 		$layout_dependencies /** hash<bool> */ = [];
 		return new cpp_specialization_entry($name, 'specializations/' . $name . '.hpp', $declaration, $body, $layout_dependencies);
+	}
+
+	/** Resolve each prefix inside one compiled call; no native element address crosses the boundary. */
+	private static function native_keyed_path(array $operands /** vector<string> */, bool $removing): string
+	{
+		$count = q_count($operands);
+		$prefix_count = $count - ($removing ? 2 : 1);
+		$text = 'const auto* keyed_parent_0 = &(' . $operands[0] . '); ';
+		for ($index = 1; $index <= $prefix_count; $index++) {
+			$text .= 'const auto* keyed_parent_' . $index . ' = scpp::keyed_child(keyed_parent_'
+				. ($index - 1) . ', ' . $operands[$index] . ', true); ';
+		}
+		$parent = 'keyed_parent_' . $prefix_count;
+		if (!$removing) { return $text . 'return scpp::keyed_ready(' . $parent . ', true);'; }
+		$key = $operands[$count - 1];
+		$text .= 'if (!scpp::keyed_lookup(' . $parent . ', ' . $key . ', true)) return; ';
+		$text .= 'auto& keyed_target_0 = ' . $operands[0] . '; ';
+		for ($index = 1; $index <= $prefix_count; $index++) {
+			$text .= 'auto& keyed_target_' . $index . ' = scpp::keyed_descend(keyed_target_'
+				. ($index - 1) . ', ' . $operands[$index] . '); ';
+		}
+		return $text . 'scpp::keyed_erase(keyed_target_' . $prefix_count . ', ' . $key . ');';
 	}
 }

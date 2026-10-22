@@ -181,3 +181,54 @@ Next: boxed-source binding subscriptions and COW retargeting, followed by source
 lifetime/retained and focused performance acceptance. Native mutable vector
 storage coverage remains open. Reference iteration and callback policies remain
 separate.
+
+### Dynamic binding and boxed-removal checkpoint
+
+`bound_iteration.hpp` adds a binding subscription around the existing table range.
+The table subscription observes structural changes through any shared alias; the
+binding subscription observes replacement/move of the iterated dynamic variable.
+Replacing another alias does not freeze the traversal. Dynamic copy operations do
+not copy subscriptions. Move/assignment can propagate preservation failure before
+changing either payload; destruction remains nonthrowing. Dynamic layout now also
+contains optional binding state and needs inclusion in the final layout/cost review.
+
+Default-prelowering probes exposed two compiler prerequisites:
+
+- The existing conversion bridge admitted required mixed int/string extraction but
+  rejected the corresponding prepared dynamic operation. Its existing admission
+  check now accepts both boxed families for these two targets, using the same native
+  renderer. Exact required-int errors remain distinct from explicit coercive casts.
+- Boxed `unset` published a native child pointer as a concrete application pointer.
+  The user approved bounded boxed-removal transport. The existing concrete index
+  owner now renders native prefix-readiness and removal helpers. Application code
+  retains lazy key sequencing and snapshots; each helper re-resolves the prefix
+  inside compiled code. No native child pointer crosses the application boundary.
+  The helpers retain existing missing-key, null-root and COW behavior. This does not
+  claim general boxed presence/emptiness or reference transport support.
+
+Dev002 evidence:
+
+- `20261022-iteration-dynamic-01`: runtime/header-sanitized acceptance passes for
+  shared alias mutation, own/other binding replacement, moves, and injected binding
+  preservation failure; vector and direct-table controls also pass.
+- `20261022-iteration-dynamic-prelower-01`: historical failures at implicit extraction.
+  `-02`: five dynamic mutation programs passed after bridge admission; removal
+  exposed the native/concrete pointer mismatch. These failures remain recorded.
+- `20261022-iteration-dynamic-prelower-03`: eight focused dynamic programs pass,
+  including required string extraction, an existing typed loop variable, and
+  conversion failure before the next body with finally cleanup and prior value intact.
+- `20261022-iteration-boxed-removal-01`: seven removal programs pass, covering nested
+  paths, absent/null prefixes skipping later keys, root/prefix replacement during
+  key evaluation, and mixed COW removal without iteration.
+- `20261022-iteration-dynamic-integrated-01`: all 31 source programs meet expected
+  outcomes with default prelowering, cold/warm execution and no warm recompilation
+  or relink. Includes two bindings to one dynamic table and shared child identity
+  after preservation. One program intentionally exits with a required-int error.
+- `20261022-iteration-contracts-01`: existing iteration and indexing PHP contract
+  suites pass; the harness also runs the dynamic removal source control.
+
+All directories above are under `/home/alex-ai/curl/`. These are generated-program
+proofs, not a native compiler rebuild. Mixed source iteration still uses its old
+path and is not covered by the dynamic completion claim. Remaining work includes
+mixed COW rebinding, source-owner/temporary lifetime and retained default-prelowering
+proofs, the native-vector mutation audit, focused costs, and normative/catalog closeout.

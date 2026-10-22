@@ -426,7 +426,8 @@ final class CPP_Runtime_Operations
 			return true;
 		}
 		if ($decision->operation === conversion_operation::boxed_extract) {
-			return (Type_Queries::canonical($decision->source_type)->definition() instanceof mixed_semantics)
+			$source = Type_Queries::canonical($decision->source_type)->definition();
+			return (($source instanceof mixed_semantics) || ($source instanceof dynamic_semantics))
 				&& ($decision->target_type->matches(Language_Types::integer(Model::$language_scope))
 					|| $decision->target_type->matches(Language_Types::string_type(Model::$language_scope)));
 		}
