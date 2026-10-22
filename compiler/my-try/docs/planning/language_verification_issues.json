@@ -568,8 +568,18 @@
       "dependencies": [
         "Agree saved return ownership/reference transport and crossing control-flow semantics"
       ],
-      "next_action": "Discuss extension of the bounded finally transfer model; keep it separate from supported scalar/void behavior.",
-      "simple_batch_eligible": false
+      "next_action": "Closed within the approved V-D06 scope. Reference returns crossing finally and transfers escaping finally remain rejected. Multiple/union catches and other wider exception/async domains remain separate; preserve original rejection evidence.",
+      "simple_batch_eligible": false,
+      "repair_status": "implemented-and-verified",
+      "repair_evidence": {
+        "date": "2026-10-22",
+        "report": "finally_value_transfers.md",
+        "archives": [
+          "vd06-exception-evidence.tar.gz",
+          "vd06-finally-evidence.tar.gz"
+        ],
+        "scope": "Default-prelowered throw/catch/finally; supported non-reference value returns; crossing break/continue; snapshots, identity, cleanup and async sequencing. Dev002: 52 cold/warm source cases, seven sanitizer cases, disk rejection/repair/fresh parity, 37 ordinary programs and both task repeated-error pool cases. Unrelated callable-boundary harness failure remains VD06-H01."
+      }
     },
     {
       "id": "V-D07",

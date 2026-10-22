@@ -9,15 +9,18 @@ syntax and collection → shared semantic preparation → C++ generation. Other
 frontends should normalize toward the same PHS-shaped concepts. LLVM is a parked
 experiment retained for regressions, not a second semantic development path.
 
-Current repair checkpoint: [async execution and publication verification](planning/async_tasks.md),
-57/64 original issues resolved (89.0625%): 54 implemented/repaired (including
+Current repair checkpoint: [exception and finally value/loop transfers](planning/finally_value_transfers.md),
+58/64 original issues resolved (90.625%): 55 implemented/repaired (including
 harnesses) and three contract/environment reconciliations. Supplementary BS-R01 also remains closed.
 
 The completed [async/tasks goal](planning/async_tasks.md) closes S12 and V-R02
 with dev002 default-prelowered source/runtime and retained-publication proofs.
 All 21 task names and approved typed/boxed signature groups are verified. Boxed
-custom placement remains explicitly unsupported in v0.2; source exception
-transport and wider transfer/project domains remain separate. The
+custom placement remains explicitly unsupported in v0.2. The subsequent
+[V-D06 goal](planning/finally_value_transfers.md) verifies source
+exception transport, value returns and crossing loop exits through finally, including
+async sequencing. Reference returns crossing finally and transfers escaping finally
+remain rejected. Wider transfer/project domains remain separate. The
 [acceptance inventory](planning/task_acceptance_inventory.md) records exact limits.
 
 S10/V-R06 add invalidation-checked spans and FNV-1a64 with versioned keys, verified

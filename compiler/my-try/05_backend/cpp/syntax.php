@@ -51,8 +51,8 @@ final class CPP_Syntax
 			$previous_return = $this->context->return_type;
 			$previous_async = $this->context->asynchronous;
 			$this->context->asynchronous = false;
-			$previous_finally = $this->context->finally_return;
-			$this->context->finally_return = null;
+			$previous_finally = $this->context->finally_exit;
+			$this->context->finally_exit = null;
 			$capture_parts /** vector<string> */ = [];
 			$body_work = object_cast($closure->require_body()->work(), anonymous_body_work::class);
 			$captures /** Storage<prepared_capture> */ = $body_work->captures;
@@ -67,7 +67,7 @@ final class CPP_Syntax
 			finally {
 				$this->context->return_type = $previous_return;
 				$this->context->asynchronous = $previous_async;
-				$this->context->finally_return = $previous_finally;
+				$this->context->finally_exit = $previous_finally;
 			}
 			// Value bindings stay read-only in preparation; mutable permits shared-payload APIs and callable invocation.
 			$qualifier = q_count($capture_parts) === 0 ? '' : ' mutable';
@@ -335,7 +335,6 @@ final class CPP_Syntax
 	private function generate_try(try_node $node): string
 	{
 		if ($node->finalizer !== null) {
-			$this->require_native_operation('finally operation');
 			return CPP_Finally::generate($node, $this->context);
 		}
 		return $this->generate_protected($node);
@@ -348,6 +347,9 @@ final class CPP_Syntax
 			return $this->generate_block($node->body);
 		}
 		$handler /** catch_node */ = $node->handler;
+		if ($this->context->asynchronous) {
+			return $this->generate_async_protected($node, $handler);
+		}
 		if ($this->context->concrete_types()) {
 			$binding = $handler->binding->require_preparation();
 			$request = new cpp_runtime_operation(cpp_runtime_operation_kind::exception_catch);
@@ -371,6 +373,34 @@ final class CPP_Syntax
 			. 'if (!' . $value . ") { throw; }\n"
 			. $this->initialized_binding($binding, 'std::move(' . $value . ')')
 			. CPP_Generator::generate_statements($handler->body, $this->context) . "}\n";
+	}
+
+	/** C++ forbids suspension inside catch: retain the binding, then enter its source scope. */
+	private function generate_async_protected(try_node $node, catch_node $handler): string
+	{
+		$binding = $handler->binding->require_preparation();
+		$type = CPP_Declarations::type($binding->type, $this->context);
+		$id = $this->context->next_temporary;
+		$this->context->next_temporary++;
+		$value = 'async_caught_value_' . $id;
+		$matched = 'async_caught_match_' . $id;
+		$handler_capture = '';
+		if ($this->context->concrete_types()) {
+			$request = new cpp_runtime_operation(cpp_runtime_operation_kind::exception_catch);
+			$request->result = $binding->type;
+			$handler_capture = 'catch (...) { ' . $value . ' = ' . CPP_Runtime_Operations::invoke($request, [], $this->context, '') . '; ';
+		} else {
+			$this->context->headers['lang/php/php_exceptions.hpp'] = true;
+			$payload = CPP_Types::payload($binding->type);
+			CPP_Types::record_dependencies($payload, $this->context);
+			$caught = 'async_caught_' . $id;
+			$handler_capture = 'catch (const ::scpp::php::thrown_object& ' . $caught . ') { ' . $value
+				. ' = ::scpp::php::catch_as<' . $payload->spelling . '>(' . $caught . '); if (!' . $value . ') { throw; } ';
+		}
+		return '{ ' . $type . ' ' . $value . '; bool ' . $matched . " = false;\ntry "
+			. $this->generate_block($node->body) . $handler_capture . $matched . " = true; }\nif (" . $matched . ") {\n"
+			. $this->initialized_binding($binding, 'static_cast<' . $type . '&&>(' . $value . ')')
+			. CPP_Generator::generate_statements($handler->body, $this->context) . "}\n}\n";
 	}
 
 	public function generate_block(statement_body_node $node): string
@@ -569,7 +599,8 @@ final class CPP_Syntax
 		if (weakref_get($facts->target) !== $expected) {
 			throw new \RuntimeException('Prepared control transfer disagrees with emission target');
 		}
-		return $facts->transfer_kind === control_transfer_kind::break_construct ? "break;\n" : "continue;\n";
+		return CPP_Finally::replay_transfer($this->context->finally_exit, $expected,
+			$facts->transfer_kind === control_transfer_kind::continue_loop);
 	}
 
 	public function generate_integer_literal(integer_literal_node $node): string

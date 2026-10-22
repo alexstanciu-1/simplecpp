@@ -1,9 +1,11 @@
 # V-D06 exception transport and finally exits
 Doc Status: planning
 
-Approved goal, 2026-10-22. Baseline: 57/64 original issues resolved. V-D06 remains
-open until the approved acceptance scope below is verified. This plan does not
-change normative semantics before implementation and proof.
+Completed goal, 2026-10-22. Baseline: 57/64 original issues resolved. V-D06 closes
+within the approved scope: 58/64 (90.625%), six open and none partial. The normative
+exception contract and catalog now record value returns and crossing loop transfers.
+The initial implementation-order notes and checkpoints below are historical; the
+final acceptance table is the current evidence boundary.
 
 ## Approved scope
 
@@ -81,3 +83,61 @@ print the original worker error, then report completion.
 The unsupported-boundary suite retires only its throw/catch rejection rows; finally
 and unrelated rejections remain. Full identity/lifetime and finally acceptance
 still belong to the active goal. V-D06 is not closed by this checkpoint.
+
+
+## Final acceptance — 2026-10-22
+
+The shared preparation model retains original loop targets and records which exits
+cross each protected region. Finalizer bodies keep a hard outward-transfer boundary.
+`cpp_finally_exit` names the backend's combined return/loop-exit context. Pending
+values use ordinary prepared conversions; no per-family return algorithm or runtime
+semantics was introduced. The concrete storage request reuses specialization and
+layout publication to keep exception/optional storage inline, without heap allocation
+for the saved-exit owner or template headers in application units.
+
+Async protected scopes use the existing owned coroutine invocation. Async catch
+matching retains the shared object, then enters the source handler outside the
+native catch block so it can suspend. These adaptations preserve source scope and
+cleanup, rather than treating synchronous proof as async coverage.
+
+| Requirement | Authoritative proof |
+| --- | --- |
+| Canonical throw/catch, foreign guard bypass, once-only evaluation and exception identity | `exception_prelower.py`: callee/rethrow/once/absent/guard cases plus native pointer-identity observer through nested throw/finally/catch |
+| Non-reference values and snapshots | vector/hash, mixed COW, dynamic shared identity, nullable/null, Result payload/error, false sentinel, inline record, enum, callable, shared/unique/weak cases; async container snapshot |
+| Cleanup and replacement precedence | protected reverse cleanup, unique-owner destruction once, discarded pending owner, finalizer replacement of return/exception/loop exit, handled inner failure and return-evaluation failure |
+| Loop targets | while/for/do-while, switch break versus enclosing-loop continue, nested crossing regions, loops local to protected/finalizer bodies; suspended nested continue |
+| Reference/escaping-finalizer restrictions | Nine retained invalid edits include reference returns, return/break/continue escaping finally and nested forbidden return |
+| Retained/fresh publication | Six valid edits cover values, loop transfers, handlers, async and removal; failed disk readiness, repair/replay manifests and fresh-output parity all pass |
+| Default prelowering | 52 source cases pass production cold/warm execution; all 52 archived application manifests forbid templates and warm builds compile/link zero units |
+| Lifetimes and undefined behavior | Seven ASan/UBSan source builds pass: unique lifetime/discard, reverse cleanup, weak lifetime, identity and two suspended handler/transfer cases |
+| Ordinary-mode regression | `records.py --suite finally --no-pch`: 37 programs pass, plus its admission/recovery checks; no compiler rebuild |
+| Tasks integration | Both repeated-error source joins pass for pool sizes 0/2; final lifecycle subset also passes both module controls |
+
+Final directories on dev002: `20261022-vd06-finally-final`,
+`20261022-vd06-ordinary-finally-01` and `20261022-vd06-tasks-final`.
+[Final and historical evidence](vd06-finally-evidence.tar.gz), SHA-256:
+`9959286b7a6de3be8f0fe664b0d5c20a5cb61d1b9c147f9c1bda73dc1c92b365`.
+The final source hash manifest matches the committed candidate. The closeout audit
+also read all 52 application manifests and representative cleanup/identity/retained
+logs, not only the success summaries. Build caches/binaries are excluded.
+
+Earlier runs preserve the async C++ rejection that prompted sequencing repairs,
+the unrelated `isset(unique)` prelowering gap (the corrected fixture uses ordinary
+handle truth testing), loop-local visibility and explicit-sentinel authoring mistakes,
+and the test-provider metadata failure. A malformed Python filter failed before
+creating a results directory; it changed no compiler behavior. These failed attempts
+are not counted as successful execution.
+
+### Separate limits and follow-up
+
+- Reference returns crossing finally and transfers escaping a finalizer remain
+  rejected by explicit agreement. Local finalizer loops and nested callable returns
+  retain their existing independent rules.
+- Multiple/union catches, source exception subclasses, `new Exception(...)`, bare
+  rethrow, throw expressions/chaining, broader async task storage and LLVM remain
+  outside this goal. No full matrix or native compiler rebuild was run.
+- **VD06-H01:** the broader `prelower_contracts.py` run stops at its callable `local`
+  case's `std::function<` ordinary-output expectation. This is outside the exception
+  slice; its failure is archived and no suite-wide pass is claimed. The throw/catch/
+  finally rejection rows were retired in favor of the focused positive/recovery
+  proofs. Other existing prelowering gaps, including value probes, remain explicit.

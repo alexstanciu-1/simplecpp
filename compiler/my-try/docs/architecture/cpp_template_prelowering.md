@@ -38,7 +38,7 @@ Source publication readiness and successful native readiness are distinct.
 Runtime and middleware implementations still use templates. Only application inputs
 must be template-free. Metadata registration alone is not a support claim; consult
 the [representation/operation coverage matrix](../../../../specs/planning/runtime_template_capability_matrix_2026_10_19.md#current-coverage-contract--2026-10-20).
-Callable storage, object tests/casts, weak observation, finally transport,
+Callable storage, object tests/casts, weak observation,
 match without a default, and specified boxed/runtime helper paths still reject
 until concrete transports exist. Ordinary mode retains its existing semantics.
 
@@ -223,5 +223,8 @@ tasks provider; the compiler does not maintain a second batch registry.
 
 Source `throw`/`catch` now use canonical Exception operations through the compiled
 runtime-operation bridge. Matching preserves the shared object; runtime guard and
-unmatched exceptions propagate. Finally remains separate at this checkpoint. See
+unmatched exceptions propagate. `CPP_Finally` publishes inline saved-exit storage
+through the existing specialization/layout owners. Protected async bodies use
+owned coroutine invocation; async handler bodies run after native catch matching
+so they can suspend. Return and loop exits resume after cleanup. See
 the [V-D06 evidence](../planning/finally_value_transfers.md).

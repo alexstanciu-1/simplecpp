@@ -488,8 +488,8 @@ final class CPP_Generator
 	public static function generate_return(return_node $syntax, cpp_generation_context $context): string
 	{
 		$value = self::return_value($syntax, $context);
-		if ($context->finally_return !== null) {
-			$pending /** cpp_finally_return */ = $context->finally_return;
+		if ($context->finally_exit !== null) {
+			$pending /** cpp_finally_exit */ = $context->finally_exit;
 			return CPP_Finally::capture_return($pending, $value);
 		}
 		return "\t" . ($context->asynchronous ? 'co_return' : 'return') . ($value === '' ? '' : ' ' . $value) . ";\n";

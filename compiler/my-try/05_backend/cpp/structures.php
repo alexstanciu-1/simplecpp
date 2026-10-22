@@ -137,9 +137,14 @@ enum cpp_record_state {
 	case complete;
 }
 
-/** Invocation-local pending return transport for one emitted protected lambda. */
-final class cpp_finally_return
+/** Invocation-local pending return/loop-transfer transport for one emitted protected lambda. */
+final class cpp_finally_exit
 {
+	public bool $asynchronous = false;
+	public string $transfer = '';
+	public ?breakable_node $break_target = null;
+	public ?loop_node $continue_target = null;
+	public bool $concrete = false;
 	public string $flag;
 	public ?string $value = null;
 }
@@ -162,7 +167,7 @@ final class cpp_generation_context
 		return $this->specialization_engine !== null;
 	}
 
-	public ?cpp_finally_return $finally_return = null;
+	public ?cpp_finally_exit $finally_exit = null;
 	/** Invocation selection of backend-owned, no-argument shared allocation functions. */
 	public array $outlined_shared_allocations /** hash<bool> */ = [];
 	public array $compiler_helpers /** hash<prepared_compiler_call> */ = [];
@@ -232,6 +237,7 @@ final class cpp_program {
 enum cpp_runtime_operation_kind {
 	case exception_throw;
 	case exception_catch;
+	case finally_storage;
 	case property_read;
 	case property_write;
 	case property_target;

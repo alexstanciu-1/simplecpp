@@ -1028,8 +1028,10 @@ and explicit native validation gate. These extensions are not implied by its clo
   shared preparation failure records, token/source provenance and CLI presentation.
   Existing message-based rejection/publication guards remain valid; do not widen the
   chapter closeout into a cross-stage diagnostic redesign.
-- Finally transport for reference, record/container/wrapper and owning-handle returns;
-  break/continue crossing protected regions; transfers escaping finally.
+- Reference returns crossing finally and transfers escaping finally remain rejected.
+  Non-reference value returns and crossing protected-region break/continue are
+  implemented by [V-D06](../planning/finally_value_transfers.md), including default
+  prelowering and async sequencing; the historical Chapter 13 limits are superseded.
 - Multiple/union catches, source exception subclasses/runtime inheritance, runtime
   constructor metadata (`new Exception`), bare rethrow, throw expressions and chaining.
 - Static exception-effect analysis, expanded runtime-handle ownership/identity APIs,

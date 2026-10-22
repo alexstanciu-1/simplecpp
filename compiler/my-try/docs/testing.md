@@ -119,7 +119,7 @@ supplies direct/concrete counters and output failure-prefix equivalence.
 
 `python3 compiler/my-try/tests/prelower_contracts.py --results FRESH_DIRECTORY`
 checks concrete rejection for callable locals, parameters, results, fields and nested
-containers, plus object tests/casts, weak creation/locking, source throw/catch/finally,
+containers, plus object tests/casts, weak creation/locking,
 match without a default, wider boxed extraction, runtime-backed conditions/value
 probes and enum helpers. Repair cases include supported integer/boolean
 conditions and explicit-default match emission and replay.
@@ -420,8 +420,18 @@ executable hash distinguish the tested source/overlay from an earlier revision.
 Test-owned native instrumentation executes only after byte equality of its complete
 uninstrumented base. A missing successful summary keeps the closeout gate open.
 
+`python3 compiler/my-try/tests/exception_prelower.py --results FRESH`
+verifies V-D06 with default-prelowered cold/warm builds, seven focused sanitizer
+cases, saved value/exception state, async cleanup, loop transfers and disk
+rejection/repair/fresh parity. `--case NAME` selects a focused subset. The native
+identity fixture observes pointer identity only; application semantics stay in PHS.
+The task lifecycle runner additionally executes repeated-error joins for pool 0/2.
+See [scope and dated evidence](planning/finally_value_transfers.md). The older
+`prelower_contracts.py` suite currently stops at its stale callable-storage ordinary
+spelling expectation; that failure is separate, not a passing V-D06 proof.
+
 `python3 compiler/my-try/tests/records.py --suite finally --no-pch --results FRESH`
-checks scalar/void delayed returns, nested exception propagation/replacement, cleanup
+checks value/void delayed returns, nested exception propagation/replacement, cleanup
 order, local versus crossing transfers, source closure isolation and incremental
 rejection/repair. It compiles generated programs; no native compiler rebuild is implied.
 

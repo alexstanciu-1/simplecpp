@@ -13,7 +13,7 @@ Final acceptance closes both, reaching 57/64 (89.0625%), a gain of 3.125 percent
 | Typed vector/hash submissions and placement | Value/void work, contexts, prefilled/cross-carrier targets, independent int/string keys and inferred nullable keys have default-prelowered proof. Explicit nullable-string targets also have success/error/omission proof. |
 | Error callbacks and publication | Replacement/omission, coordinator dispatch, ordered publication context/options and unordered synchronization proved in the bounded forms below. |
 | Transfer restrictions | Typed payload/capture rejection and bounded scalar boxed task admission proved. Literal/index transport now passes fixture-free source tests; capture permission is unchanged. |
-| Lifecycle acceptance | Native lifecycle evidence and production-source timeout, active cancellation, shutdown/error precedence and module opt-in pass. Source repeated-error joins remain blocked by the separately deferred exception transport; no source-level closure is claimed. |
+| Lifecycle acceptance | Native lifecycle evidence and production-source timeout, active cancellation, shutdown/error precedence and module opt-in pass. The subsequent V-D06 goal now proves source repeated-error joins for pool sizes 0/2; see finally_value_transfers.md. Earlier blocked checkpoints remain historical. |
 | Final closure | Complete: 57/64 original issues closed. Boxed custom placement is explicitly unsupported in v0.2; separate source exception transport is not claimed. |
 
 The [task acceptance inventory](task_acceptance_inventory.md) maps installed

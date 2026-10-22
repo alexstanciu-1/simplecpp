@@ -41,7 +41,8 @@ missing v0.1 compatibility feature.
 
 Unordered publication intentionally excludes contexts, timeout, replacement handlers,
 batching and hash input, as its own normative contract states. Source exception
-syntax, general thread-safety analysis, shared mutable transfer, merge callbacks,
+syntax is now verified by [V-D06](finally_value_transfers.md). General thread-safety
+analysis, shared mutable transfer, merge callbacks,
 wider async methods/closures and async task storage remain separate scope items.
 
 ## Completion gates
@@ -54,7 +55,7 @@ wider async methods/closures and async task storage remain separate scope items.
 | Source timeout, active cancellation and shutdown | Proved with default prelowering on dev002. Cancellation's source test uses status plus a bounded delay; deterministic concurrency assertions remain in native proofs. |
 | Module opt-in and immutable startup configuration | Proved in separate fresh compiler processes; metadata hot reload is rejected. |
 | Boxed source construction/index usability | Bounded repair verified by 112 fixture-free source execution cases plus retained edits; see the approved boxed prelowering checkpoint. |
-| Repeated-error source join | Real boxed worker/handler failures retain and rethrow on repeated joins in both pool modes under ASan/UBSan; source throw/catch transport remains explicitly separate. Expected source rejection is not an execution pass. |
+| Repeated-error source join | Native boxed worker/handler repeated failures remain proved under ASan/UBSan. The subsequent V-D06 goal also verifies source throw/catch transport and both pool-size repeated-error source cases; see finally_value_transfers.md. Historical expected rejection was not an execution pass. |
 | Boxed custom placement scope | Closed by explicit user decision: null index/target slots only; boxed custom callbacks and prefilled targets remain unsupported in v0.2, matching the v0.1 implementation boundary. |
 | Retained rejection/repair/fresh parity | Existing task/boxed contract suites cover admission, replacement, type-family edits and recovery; new transport edits require focused retained checks. |
 | Wider project workflow | `prism.json` default worker-pool configuration belongs to existing `bin/project_services.php`; this audit verifies compiler module requirements and runtime controls, not a fresh end-to-end project configuration proof. |
