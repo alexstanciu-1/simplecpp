@@ -70,18 +70,16 @@ final class CPP_Initializer_Buffer
 		return new cpp_specialization_entry($name, $header, $declaration, $implementation, $layout_dependencies);
 	}
 
-	public static function reference(data_construction_node $node, initialization_binding $binding,
-		cpp_generation_context $context): string
+	/** Literal and call-pack consumers supply settled contracts, never synthetic syntax. */
+	public static function reference(initialization_binding $binding, ?canonical_type_use $key_type,
+		canonical_type_use $value_type, cpp_generation_context $context): string
 	{
-		$entries /** Storage<data_entry_node> */ = $node->entries;
-		if ($entries->is_empty()) { throw new \LogicException('Initializer buffer requires nonempty input'); }
 		$request = new cpp_runtime_operation(cpp_runtime_operation_kind::initialize_buffer);
 		$request->initialization = $binding;
 		$request->result = $binding->target();
 		$inputs /** Storage<canonical_type_use> */ = $request->inputs;
-		$first = $entries[0]->require_preparation();
-		if ($first->key_conversion !== null) { $inputs->append($first->key_conversion->target_type); }
-		$inputs->append($first->value_conversion->target_type);
+		if ($key_type !== null) { $inputs->append($key_type); }
+		$inputs->append($value_type);
 		$entry = CPP_Runtime_Operations::reference($request, $context);
 		return 'scpp::internal::' . $entry->name;
 	}

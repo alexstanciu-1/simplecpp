@@ -601,7 +601,7 @@
       "dependencies": [
         "Agree binding/evaluation and pack/reference contracts before expanding admission"
       ],
-      "next_action": "Discuss VD07-A02 concrete nonempty value-pack construction first, then VD07-A01 reference defaults and VD07-A03 accepted read-only reference-pack spelling. Named/unpacking extensions reject in pinned v0.1 too; do not infer write-through from accepted reference-pack reads.",
+      "next_action": "VD07-A02 scalar value-pack transport is repaired and verified. Discuss VD07-A01 reference defaults and VD07-A03 accepted read-only reference-pack spelling next; wider element types and other variadic bridges stay separate.",
       "simple_batch_eligible": false,
       "compatibility_audit": {
         "date": "2026-10-22",
@@ -625,7 +625,14 @@
           {
             "id": "VD07-A02",
             "title": "Nonempty value packs lack concrete initialization transport",
-            "owner": "CPP_Declarations call sequencing and initializer transport"
+            "owner": "CPP_Declarations call sequencing and initializer transport",
+            "status": "implemented-and-verified",
+            "report": "value_pack_transport.md",
+            "evidence": [
+              "20261022-value-pack-acceptance",
+              "20261022-value-pack-audit"
+            ],
+            "scope": "Canonical int/float/bool/string packs for source free/static/instance calls; snapshots, owned storage, cleanup, sanitizer and retained/cold-warm proofs. No runtime changes; wider packs and other bridges separate."
           },
           {
             "id": "VD07-A03",

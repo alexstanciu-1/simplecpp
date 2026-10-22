@@ -4,8 +4,10 @@ Doc Status: planning
 The [2026-10-22 V-D07 audit](../planning/call_compatibility_audit.md) distinguishes
 baseline-unsupported named/unpacking forms from executable reference defaults and
 read-only reference-pack spellings. Nonempty value packs expose VD07-A02 under
-default prelowering; ordinary-mode historical pack proofs below do not close that
-transport gap. V-D07 remains open; no call-contract expansion is authorized by the audit.
+default prelowering. The subsequent [VD07-A02 repair](../planning/value_pack_transport.md)
+verifies canonical scalar packs through source free/static/instance calls, with
+snapshots, owned storage and cleanup. Wider packs and other bridges stay separate;
+V-D07 remains open for reference defaults and reference-pack spelling.
 
 
 > **Important: LLVM is deferred by default. Work on the direct LLVM backend only when the user explicitly requests it. The v0.2 default scope is Frontend + C++ S2S.**

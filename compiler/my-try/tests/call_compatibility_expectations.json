@@ -120,9 +120,10 @@
     "stdout": "6"
   },
   "v02-pack-control": {
-    "stage": "build",
-    "supported": false,
-    "source_sha256": "e440024306dd4378b0b79465c414e233fc592b6cac11d3124e999e699a5aae1e"
+    "stage": "executed",
+    "supported": true,
+    "source_sha256": "e440024306dd4378b0b79465c414e233fc592b6cac11d3124e999e699a5aae1e",
+    "stdout": "6"
   },
   "v01-pack-empty-control": {
     "stage": "executed",
@@ -257,9 +258,10 @@
     "source_sha256": "2a4ab66028a83500dd85f61cdf34cf09e4d79e10a22c23c7726e51867a95007a"
   },
   "v02-value-pack-write": {
-    "stage": "build",
-    "supported": false,
-    "source_sha256": "2a4ab66028a83500dd85f61cdf34cf09e4d79e10a22c23c7726e51867a95007a"
+    "stage": "executed",
+    "supported": true,
+    "source_sha256": "2a4ab66028a83500dd85f61cdf34cf09e4d79e10a22c23c7726e51867a95007a",
+    "stdout": "9:3"
   },
   "v01-alias-order": {
     "stage": "executed",
@@ -431,9 +433,10 @@
     "stdout": "9:3"
   },
   "v02-value-pack-local-copy": {
-    "stage": "build",
-    "supported": false,
-    "source_sha256": "c488ca2caaf6f3feb9939e1c3991e7e9c5099fa04654f35a2c27ac8d9ad6a4e9"
+    "stage": "executed",
+    "supported": true,
+    "source_sha256": "c488ca2caaf6f3feb9939e1c3991e7e9c5099fa04654f35a2c27ac8d9ad6a4e9",
+    "stdout": "9:3"
   },
   "v01-pack-snapshot": {
     "stage": "executed",
@@ -442,9 +445,10 @@
     "stdout": "12:2"
   },
   "v02-pack-snapshot": {
-    "stage": "build",
-    "supported": false,
-    "source_sha256": "1f1d80b233329787e36c044ee218aafe152aaf49e363cdbfbc946ae74d6bdc0b"
+    "stage": "executed",
+    "supported": true,
+    "source_sha256": "1f1d80b233329787e36c044ee218aafe152aaf49e363cdbfbc946ae74d6bdc0b",
+    "stdout": "12:2"
   },
   "v01-method-pack": {
     "stage": "build",
@@ -452,9 +456,10 @@
     "source_sha256": "017d3df7a6daea55f1d4791df5ae33150359bbd8cdf7f6dccd6d26c12bc68189"
   },
   "v02-method-pack": {
-    "stage": "build",
-    "supported": false,
-    "source_sha256": "017d3df7a6daea55f1d4791df5ae33150359bbd8cdf7f6dccd6d26c12bc68189"
+    "stage": "executed",
+    "supported": true,
+    "source_sha256": "017d3df7a6daea55f1d4791df5ae33150359bbd8cdf7f6dccd6d26c12bc68189",
+    "stdout": "5"
   },
   "v01-static-pack": {
     "stage": "executed",
@@ -463,8 +468,9 @@
     "stdout": "5"
   },
   "v02-static-pack": {
-    "stage": "build",
-    "supported": false,
-    "source_sha256": "7512f2e02378853c57f1895319ccd58bb6f94832d7f2387e302481ccbf7d181a"
+    "stage": "executed",
+    "supported": true,
+    "source_sha256": "7512f2e02378853c57f1895319ccd58bb6f94832d7f2387e302481ccbf7d181a",
+    "stdout": "5"
   }
 }

@@ -647,6 +647,7 @@ final class CPP_Declarations
 		$transfer_checks = '';
 		$packed_names = '';
 		$packed_separator = '';
+		$packed_values /** vector<string> */ = [];
 		foreach ($prepared_arguments as $index => $prepared_argument)
 		{
 			$parameter_index /** int */ = $facts->fixed_count;
@@ -674,6 +675,7 @@ final class CPP_Declarations
 				$separator = ', ';
 			}
 			else {
+				$packed_values[] = $name;
 				$packed_names .= $packed_separator . $name;
 				$packed_separator = ', ';
 			}
@@ -691,7 +693,9 @@ final class CPP_Declarations
 		$text .= $transfer_checks;
 		if ($facts->variadic_parameter !== null) {
 			$pack /** callable_parameter */ = $facts->variadic_parameter;
-			$names .= $separator . self::type($pack->type, $context) . '{' . $packed_names . '}';
+			$names .= $separator . (($context->concrete_types() && (q_count($packed_values) > 0))
+				? self::concrete_value_pack($pack, $packed_values, $context)
+				: self::type($pack->type, $context) . '{' . $packed_names . '}');
 		}
 
 		if ($transport !== null) {
@@ -710,6 +714,36 @@ final class CPP_Declarations
 		$names = CPP_Callsites::arguments($callsite, $names);
 		$text .= CPP_Sequence::result($reference . '(' . $names . ')', $context, $return_reference !== '') . CPP_Sequence::close($context);
 		return $text;
+	}
+
+	/** Construct an owned pack only after every explicit argument snapshot has settled. */
+	private static function concrete_value_pack(callable_parameter $parameter, array $values /** vector<string> */,
+		cpp_generation_context $context): string
+	{
+		$element /** canonical_type_use */ = $parameter->element_type;
+		$language = Model::$language_scope;
+		if (!$element->matches(Language_Types::integer($language))
+			&& !$element->matches(Language_Types::floating($language))
+			&& !$element->matches(Language_Types::boolean($language))
+			&& !$element->matches(Language_Types::string_type($language)))
+		{
+			throw new \RuntimeException('prelower_templates: wider value-pack elements require separate transport');
+		}
+		$binding = Model::$initialization_contracts->existing($parameter->type, false);
+		if ($binding === null)
+		{
+			throw new \LogicException('Prepared value pack requires its list initialization binding');
+		}
+		$buffer_type = CPP_Initializer_Buffer::reference($binding, null, $element, $context);
+		$buffer = 'call_pack_' . $context->next_temporary;
+		$context->next_temporary++;
+		$text = CPP_Sequence::open(self::type($parameter->type, $context), $context)
+			. $buffer_type . ' ' . $buffer . '(' . q_count($values) . '); ';
+		foreach ($values as $value)
+		{
+			$text .= $buffer . '.append(&(' . $value . ')); ';
+		}
+		return $text . CPP_Sequence::result($buffer . '.finish()', $context) . CPP_Sequence::close($context);
 	}
 
 	/** One full expression keeps argument/owner temporaries alive without retaining a borrow. */

@@ -148,7 +148,8 @@ final class CPP_Data_Construction
 		cpp_generation_context $context): string
 	{
 		if (CPP_Initializer_Buffer::active($context)) {
-			return self::emit_sequence($node, $binding, $context, CPP_Initializer_Buffer::reference($node, $binding, $context), '', '');
+			return self::emit_sequence($node, $binding, $context,
+				CPP_Initializer_Buffer::reference($binding, $binding->key(), $binding->value(), $context), '', '');
 		}
 		$factory = self::reference($binding, $context);
 		$parameters /** Storage<callable_parameter> */ = $binding->factory()->signature()->parameters;

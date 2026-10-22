@@ -1,6 +1,12 @@
 # V-D05 / V-D07 compatibility audit
 Doc Status: planning
 
+## Current follow-up
+
+The subsequent [VD07-A02 repair](value_pack_transport.md) supplies scalar value-pack
+transport with dev002 default-prelowered snapshots/cleanup proofs. V-D07 remains
+open for A01/A03; the audit findings and failures below are historical evidence.
+
 ## Outcome — 2026-10-22
 
 V-D05 is reconciled within the v0.1 compatibility milestone: neither static

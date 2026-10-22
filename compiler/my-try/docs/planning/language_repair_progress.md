@@ -32,7 +32,9 @@ prelowering and closes V-D08 (+1.5625 percentage points). Wider extensions stay 
 
 The [V-D05/V-D07 call audit](call_compatibility_audit.md) reconciles V-D05 against
 pinned v0.1 execution/build evidence (+1.5625 points). V-D07 remains open: reference
-defaults, nonempty value-pack prelowering and reference-pack spelling need discussion.
+defaults and reference-pack spelling need discussion. The subsequent
+[VD07-A02 repair](value_pack_transport.md) verifies scalar value-pack prelowering
+without adding an original-issue closure.
 The remaining original entries are V-D01, V-D07, S02 and partial V-R08.
 
 Resolved: **60/64 = 93.75%** (by issue count). This is not an

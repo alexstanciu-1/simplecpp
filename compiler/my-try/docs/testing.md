@@ -1,6 +1,13 @@
 # Test runners
 Doc Status: supporting
 
+The [scalar value-pack proof](planning/value_pack_transport.md) runs with
+`python3 compiler/my-try/tests/value_pack_prelower.py --results FRESH_DIRECTORY`
+on dev002: default-prelowered scalar source calls, snapshots/cleanup, five sanitizer
+cases, initializer controls and retained/cold-warm publication. Wider packs and
+other variadic bridges remain outside this proof.
+
+
 Async checks use the shared runner on dev002:
 `python3 compiler/my-try/tests/async_execution.py --results FRESH_DIRECTORY` covers
 default-prelowered cold/warm execution, four production sanitizer cases, an ordinary
