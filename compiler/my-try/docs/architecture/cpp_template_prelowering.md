@@ -38,7 +38,7 @@ Source publication readiness and successful native readiness are distinct.
 Runtime and middleware implementations still use templates. Only application inputs
 must be template-free. Metadata registration alone is not a support claim; consult
 the [representation/operation coverage matrix](../../../../specs/planning/runtime_template_capability_matrix_2026_10_19.md#current-coverage-contract--2026-10-20).
-Callable storage, object tests/casts, weak observation, source exception transport,
+Callable storage, object tests/casts, weak observation, finally transport,
 match without a default, and specified boxed/runtime helper paths still reject
 until concrete transports exist. Ordinary mode retains its existing semantics.
 
@@ -220,3 +220,8 @@ before returning the application's exit status. Exceptional exit also drains wor
 and preserves the original application failure. Ordinary tasks programs reuse the
 same entry-support implementation. Retention and join bookkeeping belong to the
 tasks provider; the compiler does not maintain a second batch registry.
+
+Source `throw`/`catch` now use canonical Exception operations through the compiled
+runtime-operation bridge. Matching preserves the shared object; runtime guard and
+unmatched exceptions propagate. Finally remains separate at this checkpoint. See
+the [V-D06 evidence](../planning/finally_value_transfers.md).

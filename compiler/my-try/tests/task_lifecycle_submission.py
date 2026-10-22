@@ -28,7 +28,7 @@ for pool in [0,2]:
  source='function launch():void{$v vector<int> = [1];task_start($v,1,function(int $n):int{dt_sleep_ms(30);echo "W";return $n;});}'+setup+'launch();echo "M";'
  cases['shutdown-pool-'+str(pool)]=(source,b'MW',False)
  source=setup+'$v vector<int> = [1];$b=task_start($v,1,function(int $n):int{throw Exception::make("worker");});for($i=0;$i<2;++$i){try{task_join($b);return 2;}catch(Exception $e){echo $e->get_message();}}echo task_done($b);'
- blocked['repeated-error-pool-'+str(pool)]=(source,'prelower_templates: throw operation requires concrete transport')
+ cases['repeated-error-pool-'+str(pool)]=(source,b'workerworker1',False)
 for pool in [0,2]:
  setup='task_set_worker_pool_size('+str(pool)+');'
  source='function launch():void{$v vector<int> = [1];task_start($v,1,function(int $n):int{dt_sleep_ms(30);$z=0;return 1%$z;});}'+setup+'launch();'

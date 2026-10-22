@@ -244,8 +244,18 @@ final class CPP_Syntax
 	public function statement(statement_node $node): string
 	{
 		if ($node instanceof throw_node) {
-			$this->require_native_operation('throw operation');
 			$throw_statement = object_cast($node, throw_node::class);
+			if ($this->context->concrete_types()) {
+				$type = Language_Types::exception_type(Model::$language_scope);
+				$request = new cpp_runtime_operation(cpp_runtime_operation_kind::exception_throw);
+				$inputs /** Storage<canonical_type_use> */ = $request->inputs;
+				$inputs->append($type);
+				$value = 'throw_value_' . $this->context->next_temporary;
+				$this->context->next_temporary++;
+				return '{ ' . CPP_Declarations::type($type, $this->context) . ' ' . $value . ' = '
+					. $this->expression($throw_statement->expression) . '; '
+					. CPP_Runtime_Operations::invoke($request, [$value], $this->context, '') . "; }\n";
+			}
 			$this->context->headers['lang/php/php_exceptions.hpp'] = true;
 			return 'throw ::scpp::php::make_thrown(' . $this->expression($throw_statement->expression) . ");\n";
 		}
@@ -337,8 +347,16 @@ final class CPP_Syntax
 		if ($node->handler === null) {
 			return $this->generate_block($node->body);
 		}
-		$this->require_native_operation('catch operation');
 		$handler /** catch_node */ = $node->handler;
+		if ($this->context->concrete_types()) {
+			$binding = $handler->binding->require_preparation();
+			$request = new cpp_runtime_operation(cpp_runtime_operation_kind::exception_catch);
+			$request->result = $binding->type;
+			$value = CPP_Runtime_Operations::invoke($request, [], $this->context, '');
+			return 'try ' . $this->generate_block($node->body) . "catch (...) {\n"
+				. $this->initialized_binding($binding, $value)
+				. CPP_Generator::generate_statements($handler->body, $this->context) . "}\n";
+		}
 		$this->context->headers['lang/php/php_exceptions.hpp'] = true;
 		$id = $this->context->next_temporary;
 		$this->context->next_temporary++;

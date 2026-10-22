@@ -26,8 +26,6 @@ $cases['object_test'] = [$object_prefix . '$b B; return $b instanceof C ? 1 : 0;
 $cases['object_cast'] = [$object_prefix . '$b B; $c = object_cast($b, C::class); return 0;', '::scpp::checked_object_cast<', 'object type operation requires concrete transport'];
 $cases['derive_weak'] = ['class C {} $c C; $w = weak($c); return 0;', '::scpp::weak(', 'ownership observation requires concrete transport'];
 $cases['lock_weak'] = ['class C {} $w weak<C>; $c = lock($w); return 0;', '.lock()', 'ownership observation requires concrete transport'];
-$cases['throw'] = ['$e Exception; throw $e;', '::scpp::php::make_thrown(', 'throw operation requires concrete transport'];
-$cases['catch'] = ['try { return 0; } catch (Exception $e) { return 1; }', '::scpp::php::catch_as<', 'catch operation requires concrete transport'];
 $cases['finally'] = ['try { return 0; } finally {}', 'std::optional<', 'finally operation requires concrete transport'];
 $cases['match_failure'] = ['return match (3) { 1 => 7, 2 => 8 };', 'throw std::runtime_error("Unhandled match expression")', 'match failure operation requires concrete transport'];
 $cases['boxed_extract'] = ['$a mixed = 7.0; $b float = $a; return 0;', 'scpp::required_cast<', 'boxed extraction requires concrete transport'];

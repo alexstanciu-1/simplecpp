@@ -230,6 +230,8 @@ final class cpp_program {
 
 /** Backend recipes retain settled identities, never syntax or generation workers. */
 enum cpp_runtime_operation_kind {
+	case exception_throw;
+	case exception_catch;
 	case property_read;
 	case property_write;
 	case property_target;
