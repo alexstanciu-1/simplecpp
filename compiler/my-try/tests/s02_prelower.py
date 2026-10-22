@@ -13,7 +13,9 @@ from test_runner import CommandRunner, Task, TaskFailures, run_tasks
 
 parser = argparse.ArgumentParser(description=__doc__)
 parser.add_argument('--results', required=True, type=Path)
-out = parser.parse_args().results.resolve()
+parser.add_argument('--project', action='store_true')
+args = parser.parse_args()
+out = args.results.resolve()
 out.mkdir(parents=True, exist_ok=False)
 manifest = json.loads((APP / 'tests/legacy_compatibility_strict_s02.json').read_text())
 
@@ -39,7 +41,12 @@ with CommandRunner(out / 'logs', ROOT, jobs=12) as runner:
         source.mkdir(parents=True)
         (source / 'main.phs').write_bytes(companion)
         published = folder / 'published'
-        runner.run(name + '-publish', ['php', APP / 'tests/s02_publish.php', folder])
+        if args.project:
+            (source / 'prism.json').write_text(json.dumps(dict(entrypoint='main.phs',
+                runtime=dict(languages=dict(php=dict(profile='strict')), modules=['datetime', 'filesystem', 'io']))))
+            runner.run(name + '-publish', ['php', APP / 'main.php', '--project', source, '--output', published])
+        else:
+            runner.run(name + '-publish', ['php', APP / 'tests/s02_publish.php', folder])
         assert json.loads((published / '.scpp-output.manifest').read_text())['application_templates'] == 'forbidden'
         expected = info['expect']['run']
         builds = {}
@@ -72,5 +79,5 @@ with CommandRunner(out / 'logs', ROOT, jobs=12) as runner:
             dict(name=row.name, error=row.error) for row in failure.outcomes]), indent=2) + '\n')
         raise
 (out / 'summary.json').write_text(json.dumps(dict(passed=True, legacy_syntax='deferred',
-    default_prelowering=True, publication='compiler API with explicit metadata modules; not project configuration',
+    default_prelowering=True, publication='project' if args.project else 'compiler API with explicit metadata modules; not project configuration',
     cases=[row.value for row in outcomes]), indent=2) + '\n')
