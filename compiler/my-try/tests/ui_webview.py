@@ -46,7 +46,7 @@ webview_close($view); echo "all-api";
     'failure': '''
 $app ui_app = null; $error error;
 if(take($app,$error,ui_app_create())){return 2;}
-if($error->get_message()===""){return 3;}
+if(!$error){return 3;}
 $window ui_window = null;
 if(take($window,$error,ui_window_create($app,"test",10,10))){return 4;}
 $view webview = null;

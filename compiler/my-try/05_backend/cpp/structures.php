@@ -242,6 +242,7 @@ enum cpp_runtime_operation_kind {
 	case property_read;
 	case property_write;
 	case property_target;
+	case error_condition;
 	case wrapper_presence;
 	case wrapper_isset;
 	case enum_helper;

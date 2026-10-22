@@ -18,7 +18,8 @@ The [V-R08 batch](ui_webview_integration.md) implements all 24 UI/WebView APIs.
 The subsequent [enabled Linux acceptance](strict_gui_closeout.md) closes its remaining
 GTK/WebKitGTK execution gate on dev002 with default prelowering, real replies,
 snapshots/lifetime, retained recovery and same-cache SDK selection transitions.
-Other platforms and the prior error-condition gap remain separate; the subsequent
+Other platforms remain separate. The [error-condition repair](error_conditions.md)
+closes supplementary VR08-H01; the subsequent
 [project IO/presence repair](project_io_handle_presence.md) closes S02-H01 and VR08-H02. The V-D07/V-D08 source audit
 does not close either issue. The subsequent [enum-wrapper slice](enum_wrappers.md)
 implements nullable/structured Result enum payloads and makes V-D08 partial.
@@ -49,7 +50,8 @@ companions and excludes deferred legacy syntax from this strict milestone. It is
 not a legacy implementation claim. V-R08 enabled Linux acceptance closes the final
 original entry. Supplementary
 S02-H01 project IO selection and VR08-H02 concrete handle/null comparison are now
-[repaired and verified](project_io_handle_presence.md); prior VR08-H01 remains separate.
+[repaired and verified](project_io_handle_presence.md); VR08-H01 is also
+[repaired and verified](error_conditions.md) without changing the original ledger count.
 
 Resolved: **64/64 = 100%** (strict-milestone dispositions, including S02 exclusion). This is not an
 engineering-effort estimate. The completed async/tasks goal closed S12 and V-R02 (+3.125 points). The subsequent [V-D06 goal](finally_value_transfers.md) closes finally value/loop transfers and default-prelowered exception transport (+1.5625 points). S05 does not certify explicit callable storage under default prelowering. Remaining architecture/runtime/project issues can be

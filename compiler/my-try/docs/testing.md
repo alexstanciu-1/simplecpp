@@ -2048,3 +2048,11 @@ Project IO and concrete presence checks (dev002, default prelowering):
 
 Use a separate fresh directory for each command. GUI cases require GTK/WebKitGTK,
 Xvfb and dbus. See [scope and evidence](planning/project_io_handle_presence.md).
+
+Error-condition transport (dev002): run
+`python3 compiler/my-try/tests/error_condition_prelower.py --results FRESH`, then
+`python3 compiler/my-try/tests/error_condition_retained.py --results OTHER_FRESH`.
+The first probes native runtime behavior before default-prelowered source execution;
+`--baseline` instead requires the historical publication rejection. GUI regressions
+are `ui_webview.py` with isolated disabled SDK discovery and `ui_webview_enabled.py`
+with the installed SDKs. See [scope and exact evidence](planning/error_conditions.md).

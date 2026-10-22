@@ -7,7 +7,8 @@ The frozen v0.2 audit has 105 passed checks, 5 failed, 6 blocked and 3 explicitl
 
 Current follow-up repair status: [64/64 strict-milestone dispositions resolved (100%)](language_repair_progress.md),
 including [enabled Linux V-R08 acceptance](strict_gui_closeout.md) on dev002.
-Supplementary S02-H01 and VR08-H02 are [repaired](project_io_handle_presence.md); this is not a gap-free language claim. V-D08 closes through the enum payload,
+Supplementary S02-H01 and VR08-H02 are [repaired](project_io_handle_presence.md),
+and VR08-H01 is [repaired](error_conditions.md); this is not a gap-free language claim. V-D08 closes through the enum payload,
 helper and sentinel-carrier repairs, the [compatibility audit](enum_compatibility_closeout.md),
 and [VD08-A01 default-less match transport](match_failure_transport.md). Wider enum
 extensions remain separate. The [call audit](call_compatibility_audit.md) reconciles

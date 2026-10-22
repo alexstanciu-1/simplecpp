@@ -98,8 +98,8 @@ handle/null-comparison and concrete operation owners; no repair is authorized he
 The snapshot acceptance instead uses `webview_load_html` on the cleared handle and
 checks the error result, proving absence without claiming null-comparison support.
 
-The previously recorded VR08-H01 general error-condition transport gap remains
-separate and was not reverified here. Other platforms, broader UI features, and
+The previously recorded VR08-H01 general error-condition transport gap was not
+reverified here; the subsequent [error-condition goal](error_conditions.md) repairs it. Other platforms, broader UI features, and
 legacy comment syntax remain outside this closeout.
 
 ## Current milestone disposition
@@ -109,5 +109,4 @@ and five contract/environment/scope reconciliations. S02 is explicitly a scope
 exclusion, not legacy syntax implementation. V-R08 closes within the agreed Linux
 provider scope. The historical S02-H01 and VR08-H02 findings above are subsequently
 [repaired and verified](project_io_handle_presence.md) on dev002 with default
-prelowering. The frozen results retain the original failure evidence. VR08-H01
-remains separate; 100% of this original ledger does not mean a gap-free compiler.
+prelowering. The frozen results retain the original failure evidence. VR08-H01 is also [subsequently repaired](error_conditions.md); 100% of this original ledger does not mean a gap-free compiler.

@@ -159,6 +159,9 @@ final class CPP_Declarations
 			self::type($decision->source_type, $context);
 			return '(' . $expression . ').native_value()';
 		}
+		if ($context->concrete_types() && ($decision->operation === truthiness_operation::error_condition)) {
+			return CPP_Runtime_Operations::error_condition($decision->source_type, $expression, $context);
+		}
 		if (($decision->operation === truthiness_operation::callable_presence)
 			|| ($decision->operation === truthiness_operation::scalar_condition)
 			|| ($decision->operation === truthiness_operation::boxed_condition)

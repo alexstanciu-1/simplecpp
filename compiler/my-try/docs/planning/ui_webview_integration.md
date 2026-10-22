@@ -28,7 +28,7 @@ dev002 with GTK 3.24.41/WebKitGTK 2.52.6 and default prelowering. Native/source 
 execution, acknowledged replies, snapshots, cleanup, retained recovery and SDK cache
 transitions close the original issue. The subsequent
 [presence repair](project_io_handle_presence.md) closes VR08-H02 concrete handle/null
-comparison; prior VR08-H01 remains separate. The historical unavailable-host statements below
+comparison; the [error-condition repair](error_conditions.md) also closes VR08-H01. The historical unavailable-host statements below
 record the earlier checkpoint; they are superseded by this enabled acceptance.
 
 ## Historical source-integration evidence and then-remaining acceptance
@@ -64,12 +64,14 @@ coverage. GUI load/message/reply/shutdown and enabled GTK/WebKitGTK build proofs
 remain unavailable on this host. Do not count disabled-provider successes as those
 proofs. No full matrix or native compiler rebuild was run.
 
-### Separate finding VR08-H01
+### Historical finding VR08-H01 — subsequently repaired
 
 `20261022-vr08-source-02/logs/failure-publish.stderr` records that direct `!$error`
 conditions reject during default prelowering with `runtime condition requires
 concrete transport`. The UI failure probe uses the existing get_message accessor
-instead. This general error-condition transport gap is not repaired in V-R08.
+instead. This general error-condition transport gap was not repaired in V-R08.
+The subsequent [VR08-H01 goal](error_conditions.md) repairs it and restores the
+direct assertion, with both disabled-provider and enabled GUI execution verified.
 The first harness attempt also had a runner-call error, and the second attempt had
 a bytes/string assertion mismatch; those were fixture mistakes, not compiler gaps.
 

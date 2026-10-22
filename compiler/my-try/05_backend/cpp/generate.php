@@ -709,6 +709,8 @@ final class CPP_Generator
 				. self::source_name('case', $enum_value->selected_case->name);
 		}
 		if ($value instanceof no_error_constant_value) {
+			// The immutable no-error value is the ordinary default error state.
+			if ($context->concrete_types()) { return CPP_Declarations::type_for($value->type, $context, cpp_type_requirement::stored_value) . '{}'; }
 			return CPP_Declarations::type($value->type, $context) . '::no_error';
 		}
 		if ($value instanceof sentinel_constant_value)

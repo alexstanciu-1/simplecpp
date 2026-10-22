@@ -110,6 +110,7 @@ final class CPP_Runtime_Operations
 			|| ($request->kind === cpp_runtime_operation_kind::output)
 			|| ($request->kind === cpp_runtime_operation_kind::runtime_call)
 			|| ($request->kind === cpp_runtime_operation_kind::take)
+			|| ($request->kind === cpp_runtime_operation_kind::error_condition)
 			|| ($request->kind === cpp_runtime_operation_kind::wrapper_presence)
 			|| ($request->kind === cpp_runtime_operation_kind::wrapper_isset)
 			|| ($request->kind === cpp_runtime_operation_kind::property_read)
@@ -267,6 +268,10 @@ final class CPP_Runtime_Operations
 		if ($request->kind === cpp_runtime_operation_kind::enum_helper) {
 			$facts /** prepared_enum_call */ = $request->enum_helper;
 			return CPP_Compiler_Functions::native_expression($facts, $arguments[0], $context);
+		}
+		if ($request->kind === cpp_runtime_operation_kind::error_condition) {
+			$context->headers['lang/php/operators/conditional/condition_truthiness.hpp'] = true;
+			return 'scpp::php::condition_truthy(' . $arguments[0] . ')';
 		}
 		if ($request->kind === cpp_runtime_operation_kind::wrapper_isset) {
 			$context->headers['lang/php/operators/isset/isset.hpp'] = true;
@@ -470,18 +475,24 @@ final class CPP_Runtime_Operations
 		return self::invoke($request, [$operand], $context, '');
 	}
 
+	/** Observe the prepared error state; transport does not grant other truthiness contracts. */
+	public static function error_condition(canonical_type_use $type, string $expression, cpp_generation_context $context): string
+	{
+		return self::boolean_observation($type, $expression, cpp_runtime_operation_kind::error_condition, $context);
+	}
+
 	public static function wrapper_presence(canonical_type_use $type, string $expression, cpp_generation_context $context): string
 	{
-		return self::wrapper_observation($type, $expression, cpp_runtime_operation_kind::wrapper_presence, $context);
+		return self::boolean_observation($type, $expression, cpp_runtime_operation_kind::wrapper_presence, $context);
 	}
 
 	/** Sentinel-aware probe presence is separate from checked payload availability. */
 	public static function wrapper_isset(canonical_type_use $type, string $expression, cpp_generation_context $context): string
 	{
-		return self::wrapper_observation($type, $expression, cpp_runtime_operation_kind::wrapper_isset, $context);
+		return self::boolean_observation($type, $expression, cpp_runtime_operation_kind::wrapper_isset, $context);
 	}
 
-	private static function wrapper_observation(canonical_type_use $type, string $expression,
+	private static function boolean_observation(canonical_type_use $type, string $expression,
 		cpp_runtime_operation_kind $operation, cpp_generation_context $context): string
 	{
 		$request = new cpp_runtime_operation($operation);

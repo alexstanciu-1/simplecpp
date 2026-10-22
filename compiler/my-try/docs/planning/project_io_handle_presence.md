@@ -68,7 +68,8 @@ fixture assumptions without changing runtime semantics.
 
 Both supplementary findings are repaired. The original ledger stays at 64/64
 strict-milestone dispositions: this adds no original issue closures. Legacy syntax,
-VR08-H01, weak-handle extensions and other GUI platforms remain separate.
+weak-handle extensions and other GUI platforms remain separate. VR08-H01 was
+outside this goal and is [subsequently repaired](error_conditions.md).
 
 [Compact results](project_io_presence_results.json) and the
 [evidence archive](project_io_presence_evidence/README.md) preserve final source

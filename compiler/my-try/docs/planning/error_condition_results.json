@@ -1,0 +1,164 @@
+{
+  "date": "2026-10-22",
+  "issue": "VR08-H01",
+  "status": "repaired",
+  "host": "alex-ai@dev002.travelfuse.ro",
+  "default_prelowering": true,
+  "runtime_changes": false,
+  "full_matrix": false,
+  "native_compiler_rebuilt": false,
+  "approved_prerequisite": "Concrete error::$no_error constant emission",
+  "archive_sha256": "d392350c6584a0896094b1389752e72eec98240bacec25c2f6d76faa2f366af2",
+  "source_sha256": {
+    "compiler/my-try/05_backend/cpp/declarations.php": "4bd13f5c4a8c5e435198760540ab59b84233e0d039dc184be15901d9bf0dc37b",
+    "compiler/my-try/05_backend/cpp/generate.php": "7263243649f00d66c9f54beb85ba6fe8703927b0b99940fd16db1d75636112e4",
+    "compiler/my-try/05_backend/cpp/runtime_operations.php": "1f0b70c706decf70cf137041623501d0c8b2e77f6c74362df647456535c68138",
+    "compiler/my-try/05_backend/cpp/structures.php": "eecb12ad469b272e75d2e2026b7452990856e5d0d696d63bb31b9583946a76c9",
+    "compiler/my-try/tests/error_condition_runtime.cpp": "4152162052cc0fec332ec8f09c217f4dfcd2d0b95a89b3bd85d8636b47bb4ed7",
+    "compiler/my-try/tests/error_condition_prelower.py": "703761480aed521dc393c9b18b3c03a51979f5bad28edfeb98314be9ade8fb94",
+    "compiler/my-try/tests/error_condition_retained.php": "3d5d3ee446289ce65e3de522efd4d6bba445daf9b46e99a2f1236d9a94efb5ed",
+    "compiler/my-try/tests/error_condition_retained.py": "b890522d2dec19a893307be1fe5594875b82795fc6005b03bd765f553c7463a3",
+    "compiler/my-try/tests/ui_webview.py": "8126407a2c6615c7a74c7ab5a6c34226b824f78c449c0319994f95561ce351c5",
+    "compiler/my-try/tests/ui_webview_enabled.py": "9719d36ab80cadd292fabade04d4a0d8ee68365c5d89bdc1d856528b35042997",
+    "compiler/my-try/tests/fixtures/ui_webview/enabled.phs.in": "b767132160bfb03870f77eb077cb5da71a2002f40e8cfc38d24b951e303a2682"
+  },
+  "summaries": {
+    "20261022-error-condition-baseline/summary.json": {
+      "passed": true,
+      "runtime": true,
+      "baseline": true,
+      "cases": [
+        "states",
+        "sequencing",
+        "take"
+      ],
+      "default_prelowering": true
+    },
+    "20261022-error-condition-contracts/summary.json": {
+      "passed": true,
+      "generated_programs": 17,
+      "cpp_pch": false,
+      "native_compiler_rebuilt": false
+    },
+    "20261022-error-condition-final/summary.json": {
+      "passed": true,
+      "runtime": true,
+      "baseline": false,
+      "cases": [
+        "states",
+        "sequencing",
+        "take"
+      ],
+      "default_prelowering": true
+    },
+    "20261022-error-condition-gui/summary.json": {
+      "passed": true,
+      "sdk_versions": "3.24.41\n2.52.6\n",
+      "native_provider": true,
+      "source_cases": [
+        "html",
+        "app",
+        "url",
+        "failure"
+      ],
+      "default_prelowering": true,
+      "integration": false
+    },
+    "20261022-error-condition-retained-02/summary.json": {
+      "passed": true,
+      "publications": [
+        {
+          "published": "/home/alex-ai/curl/20261022-error-condition-retained-02/source-published-0",
+          "expected": "absent"
+        },
+        {
+          "published": "/home/alex-ai/curl/20261022-error-condition-retained-02/source-published-1",
+          "expected": "present"
+        },
+        {
+          "published": "/home/alex-ai/curl/20261022-error-condition-retained-02/source-published-2",
+          "expected": "present"
+        },
+        {
+          "published": "/home/alex-ai/curl/20261022-error-condition-retained-02/source-published-3",
+          "expected": "absent"
+        },
+        {
+          "published": "/home/alex-ai/curl/20261022-error-condition-retained-02/source-published-4",
+          "expected": "present"
+        },
+        {
+          "published": "/home/alex-ai/curl/20261022-error-condition-retained-02/source-fresh",
+          "expected": "present"
+        }
+      ],
+      "invalid_error_operations_rejected": 4,
+      "recovery": true,
+      "fresh_equivalence": true
+    },
+    "20261022-error-condition-retained-closeout/summary.json": {
+      "passed": true,
+      "publications": [
+        {
+          "published": "/home/alex-ai/curl/20261022-error-condition-retained-closeout/source-published-0",
+          "expected": "absent"
+        },
+        {
+          "published": "/home/alex-ai/curl/20261022-error-condition-retained-closeout/source-published-1",
+          "expected": "present"
+        },
+        {
+          "published": "/home/alex-ai/curl/20261022-error-condition-retained-closeout/source-published-2",
+          "expected": "present"
+        },
+        {
+          "published": "/home/alex-ai/curl/20261022-error-condition-retained-closeout/source-published-3",
+          "expected": "absent"
+        },
+        {
+          "published": "/home/alex-ai/curl/20261022-error-condition-retained-closeout/source-published-4",
+          "expected": "present"
+        },
+        {
+          "published": "/home/alex-ai/curl/20261022-error-condition-retained-closeout/source-fresh",
+          "expected": "present"
+        }
+      ],
+      "invalid_error_operations_rejected": 4,
+      "recovery": true,
+      "fresh_equivalence": true
+    },
+    "20261022-error-condition-retained-final/summary.json": {
+      "passed": true,
+      "publications": [
+        {
+          "published": "/home/alex-ai/curl/20261022-error-condition-retained-final/source-published-0",
+          "expected": "absent"
+        },
+        {
+          "published": "/home/alex-ai/curl/20261022-error-condition-retained-final/source-published-1",
+          "expected": "present"
+        },
+        {
+          "published": "/home/alex-ai/curl/20261022-error-condition-retained-final/source-published-2",
+          "expected": "present"
+        },
+        {
+          "published": "/home/alex-ai/curl/20261022-error-condition-retained-final/source-published-3",
+          "expected": "absent"
+        },
+        {
+          "published": "/home/alex-ai/curl/20261022-error-condition-retained-final/source-published-4",
+          "expected": "present"
+        },
+        {
+          "published": "/home/alex-ai/curl/20261022-error-condition-retained-final/source-fresh",
+          "expected": "present"
+        }
+      ],
+      "invalid_error_operations_rejected": 4,
+      "recovery": true,
+      "fresh_equivalence": true
+    }
+  }
+}

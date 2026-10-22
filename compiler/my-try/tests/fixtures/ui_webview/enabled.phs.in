@@ -24,6 +24,7 @@ try {
 	// A failed load must preserve the populated output destination.
 	$value = true;
 	if (take($value, $error, webview_load_app($view, "missing-app")) || !$value) { return 5; }
+	if (!$error) { return 27; }
 	@@LOAD@@
 	$ready = false;
 	$started = false;
