@@ -242,6 +242,7 @@ enum cpp_runtime_operation_kind {
 	case property_write;
 	case property_target;
 	case wrapper_presence;
+	case enum_helper;
 	case ownership_observation;
 	case take;
 	case concrete_member;
@@ -268,6 +269,7 @@ final class cpp_callsite
 
 final class cpp_runtime_operation
 {
+	public ?prepared_enum_call $enum_helper = null;
 	public ?ownership_observation_kind $ownership_observation = null;
 	public ?cpp_callsite $callsite = null;
 	public ?registered_property $property = null;

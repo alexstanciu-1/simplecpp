@@ -31,6 +31,33 @@ final class CPP_Compiler_Functions
 		return 'helpers/' . $kind . '_' . CPP_Artifacts::component($name);
 	}
 
+	/** Concrete calls reuse ordinary argument snapshots and the existing operation bridge. */
+	public static function transport(prepared_enum_call $facts): cpp_runtime_operation
+	{
+		$request = new cpp_runtime_operation(cpp_runtime_operation_kind::enum_helper);
+		$request->enum_helper = $facts;
+		$request->result = $facts->result_type;
+		$inputs /** Storage<canonical_type_use> */ = $request->inputs;
+		$inputs->append($facts->input_type);
+		return $request;
+	}
+
+	public static function identity(prepared_enum_call $facts): string
+	{
+		$key = self::helper_kind($facts) . ':' . self::owner_name($facts);
+		$cases /** Keyed_Storage<prepared_enum_case> */ = $facts->enumeration->cases;
+		foreach ($cases as $case_value) { $key .= ':' . $case_value->name . '=' . $case_value->decimal; }
+		return $key;
+	}
+
+	/** One helper algorithm serves ordinary artifacts and compiled implementations. */
+	public static function native_expression(prepared_enum_call $facts, string $argument, cpp_generation_context $context): string
+	{
+		$input = CPP_Declarations::type($facts->input_type, $context);
+		$output = CPP_Declarations::type($facts->result_type, $context);
+		return '([](' . $input . ' value) -> ' . $output . ' { ' . self::body($facts, $context) . ' })(' . $argument . ')';
+	}
+
 	public static function reference(prepared_compiler_call $specialization, cpp_generation_context $context): string
 	{
 		if ($context->concrete_types()) { throw new \RuntimeException('prelower_templates: compiler helper requires concrete transport'); }

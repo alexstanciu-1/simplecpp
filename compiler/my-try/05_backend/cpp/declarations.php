@@ -607,6 +607,9 @@ final class CPP_Declarations
 			}
 			return CPP_Runtime_Operations::call($facts, $arguments, $context, $callsite);
 		}
+		if (($transport === null) && $context->concrete_types() && ($facts->specialization instanceof prepared_enum_call)) {
+			$transport = CPP_Compiler_Functions::transport(object_cast($facts->specialization, prepared_enum_call::class));
+		}
 		$parameters /** Storage<callable_parameter> */ = $facts->signature->parameters;
 		$prepared_arguments /** Storage<prepared_call_argument> */ = $facts->arguments;
 		if (q_count($prepared_arguments) === 1) {

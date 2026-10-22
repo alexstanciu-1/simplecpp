@@ -16,6 +16,7 @@ final class CPP_Runtime_Operations
 	{
 		// Preserve the existing identity seed while retiring the old indexed-write fields.
 		$key = $request->kind_name() . ':' . $request->spelling . ':store';
+		if ($request->enum_helper !== null) { $key .= ':' . CPP_Compiler_Functions::identity($request->enum_helper); }
 		if ($request->ownership_observation !== null) {
 			$observation /** ownership_observation_kind */ = $request->ownership_observation;
 			$key .= ':' . Ownership_Observation_Kind_Name::text($observation);
@@ -256,6 +257,10 @@ final class CPP_Runtime_Operations
 			return $request->ownership_observation === ownership_observation_kind::derive_weak
 				? '::scpp::weak(' . $arguments[0] . ')' : '(' . $arguments[0] . ').lock()';
 		}
+		if ($request->kind === cpp_runtime_operation_kind::enum_helper) {
+			$facts /** prepared_enum_call */ = $request->enum_helper;
+			return CPP_Compiler_Functions::native_expression($facts, $arguments[0], $context);
+		}
 		if ($request->kind === cpp_runtime_operation_kind::wrapper_presence) {
 			return '(' . $arguments[0] . ').has_value()';
 		}
@@ -459,7 +464,8 @@ final class CPP_Runtime_Operations
 		$request->result = Model::$type_catalog->registry()->use(Model::$type_catalog->canonical('bool')->type_id());
 		$inputs /** Storage<canonical_type_use> */ = $request->inputs;
 		$inputs->append($type);
-		return '(' . self::invoke($request, [$expression], $context, '') . ').native_value()';
+		$operand = 'static_cast<const ' . CPP_Declarations::type($type, $context) . '&>(' . $expression . ')';
+		return '(' . self::invoke($request, [$operand], $context, '') . ').native_value()';
 	}
 
 	/** Borrow within the full expression, including any temporary that owns a nested reference. */

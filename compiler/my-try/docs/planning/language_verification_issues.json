@@ -651,7 +651,7 @@
       "dependencies": [
         "Agree enum extension semantics and interaction with method/interface foundations and payload capabilities."
       ],
-      "next_action": "Discuss remaining enum extensions separately. Preserve VD08-H01 enum helper and VD08-H02 wrapper value-probe concrete transport gaps; sentinel Result carriers, lifted operators and reflection/method/string-backing extensions remain deferred.",
+      "next_action": "Discuss sentinel Result enum carriers and remaining enum extensions individually; helper/presence transport VD08-H01/H02 is repaired for the approved enum/plain-wrapper domain. Keep indexed/general probes, lifted operators and reflection/method/string-backing extensions separate.",
       "simple_batch_eligible": false,
       "compatibility_audit": {
         "date": "2026-10-22",
@@ -665,7 +665,16 @@
         "20261022-vd08-runtime-01",
         "20261022-vd08-baseline-01"
       ],
-      "repair_scope": "nullable<E> / ?E and structured result<E> for unit/int/fixed-width enums; default-prelowered states, snapshots, take, checked extraction and exact-enum fallback verified. No runtime changes."
+      "repair_scope": "nullable<E> / ?E and structured result<E> for unit/int/fixed-width enums; default-prelowered states, snapshots, take, checked extraction and exact-enum fallback verified. No runtime changes.",
+      "helper_transport_repair": {
+        "report": "enum_helper_transport.md",
+        "evidence": [
+          "20261022-vd08h-first",
+          "20261022-vd08h-final"
+        ],
+        "status": "implemented-and-verified",
+        "scope": "Three enum helpers and plain nullable/structured Result enum isset under default prelowering; no runtime changes."
+      }
     },
     {
       "id": "V-P01",

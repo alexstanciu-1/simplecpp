@@ -90,7 +90,11 @@ expanded-01 exposed the wrapper value-probe gap. The first standalone container
 regression invocation omitted its required output directory; corrected execution
 passes in `20261022-vd08-container-control` and the consolidated harness.
 
-## Separate remaining gaps
+## Gaps recorded at this checkpoint
+
+The subsequent [helper/presence transport slice](enum_helper_transport.md) repairs
+VD08-H01 and VD08-H02 for the approved enum/plain-wrapper domain. The original
+observations below remain historical evidence; wider gaps remain deferred.
 
 - **VD08-H01:** `enum_name(E::A)` rejects under default prelowering with
   `compiler helper requires concrete transport`. Ordinary enum metadata helper

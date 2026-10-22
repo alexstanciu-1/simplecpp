@@ -42,6 +42,13 @@ Callable storage, object tests/casts, weak observation,
 match without a default, and specified boxed/runtime helper paths still reject
 until concrete transports exist. Ordinary mode retains its existing semantics.
 
+Enum name/value/reverse-value calls reuse settled `prepared_enum_call` facts and
+ordinary ordered argument snapshots through the existing compiled-operation bridge.
+One helper body serves both ordinary and compiled implementations; application units
+see only concrete signatures. Plain nullable/structured Result enum `isset` selects
+value presence without enabling payload truthiness. The bridge borrows once for the
+full expression. See [bounded proof and limits](../planning/enum_helper_transport.md).
+
 Prepared `take`, nullable/Result construction and required extraction, and wrapper
 usable-value coalescing use the existing compiled operation bridge. Provider
 wrappers adapt their payload representation at the compiled boundary, preserving

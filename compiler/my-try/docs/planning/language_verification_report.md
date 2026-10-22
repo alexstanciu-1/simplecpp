@@ -8,8 +8,8 @@ The frozen v0.2 audit has 105 passed checks, 5 failed, 6 blocked and 3 explicitl
 Current follow-up repair status: [58/64 resolved (90.625%)](language_repair_progress.md),
 with [V-R08 partially implemented and verified](ui_webview_integration.md); enabled
 GUI/provider proof remains outstanding. [V-D08 enum wrappers](enum_wrappers.md) are
-also partially implemented and verified; helper/value-probe transport and wider enum
-extensions remain separate. Four other original issues remain open. The audit tables below retain
+also partially implemented and verified. [Helper/presence transport](enum_helper_transport.md)
+now repairs VD08-H01/H02 for their bounded domain; wider enum extensions remain separate. Four other original issues remain open. The audit tables below retain
 the original frozen results; dated repair closeouts record subsequent changes.
 
 ## Scope and provenance

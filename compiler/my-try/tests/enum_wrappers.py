@@ -27,10 +27,8 @@ CASES.update({
  'presence':BASE+'$v ?E;if(isset($v)){return 2;}$v=E::A;if(!isset($v)){return 3;}$r result<E> =E::A;if(!isset($r)){return 4;}$r=error::make("failed");if(isset($r)){return 5;}echo "AA";',
  'extract':BASE+'$v ?E=E::A;$r result<E> =E::B;$a E=$v;$b E=$r;echo $a===E::A?"A":"bad";echo $b===E::B?"A":"bad";',
 })
-DEFERRED={
- 'presence':CASES.pop('presence'),
- 'enum-helper':BASE+'echo enum_name(E::A);',
-}
+DEFERRED={}
+CASES['enum-helper']=BASE+'echo enum_name(E::A);echo enum_name(enum_from_value(E::class,enum_value(E::A)));'
 CASES['default-empty']=BASE+'$v ?E;$out E=E::B;if(take($out,$v)){return 2;}echo $out===E::B?"A":"bad";$v=E::A;if(!take($out,$v)){return 3;}echo $out===E::A?"A":"bad";'
 FAILURES={
  'empty-extract':BASE+'$v ?E=null;$out E=$v;echo "wrong";',
