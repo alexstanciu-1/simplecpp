@@ -13,13 +13,13 @@ Current verification checkpoint: [S02 / V-R08 closeout](planning/strict_gui_clos
 64/64 original dispositions resolved for the strict milestone (100%): 59
 implemented/repaired and five contract/environment/scope reconciliations. S02 is an
 exclusion with six migrated proofs, not legacy syntax implementation. V-R08 now
-passes enabled Linux GTK/WebKitGTK GUI acceptance on dev002 with default prelowering. Supplementary S02-H01 project IO selection and VR08-H02 concrete
-handle/null comparison remain open; prior VR08-H01 and other platforms stay separate.
+passes enabled Linux GTK/WebKitGTK GUI acceptance on dev002 with default prelowering. The subsequent [project IO/presence repair](planning/project_io_handle_presence.md) closes
+supplementary S02-H01 and VR08-H02; prior VR08-H01 and other platforms stay separate.
 V-D08 is closed within its compatibility scope:
 enum carriers/helpers and default-less match pass default-prelowered execution,
 state, snapshot and cleanup checks. The [audit](planning/enum_compatibility_closeout.md)
 keeps baseline-unsupported extensions and intentional v0.2 changes explicit.
-V-D05 is reconciled as a baseline-unsupported extension. Legacy syntax remains deferred; S02-H01 project IO selection is a separate open gap. Value iteration now preserves remaining
+V-D05 is reconciled as a baseline-unsupported extension. Legacy syntax remains deferred; explicit project IO selection is now verified. Value iteration now preserves remaining
 entries before structural mutation; reference foreach remains separate. The [VD07-A02 repair](planning/value_pack_transport.md) verifies concrete scalar
 value packs. [Read-only and writable reference defaults](planning/reference_defaults.md) now pass
 binding/snapshot/lifetime proofs, closing VD07-A01 in canonical scalar scope.

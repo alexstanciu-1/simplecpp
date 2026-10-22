@@ -2037,3 +2037,14 @@ static/shared CMake configurations, aggregate/direct/core consumers and shared
 string-pool identity. Optional process/regex executions and MySQL/legacy adapter
 compilation are included; no database connection test is implied. Run on dev002.
 See [results and boundaries](planning/callback_composition.md).
+
+Project IO and concrete presence checks (dev002, default prelowering):
+
+- `python3 compiler/my-try/tests/s02_prelower.py --project --results FRESH`
+- `python3 compiler/my-try/tests/project_io_selection.py --results FRESH`
+- `python3 compiler/my-try/tests/handle_null_prelower.py --results FRESH`
+- `python3 compiler/my-try/tests/handle_null_retained.py --results FRESH`
+- `python3 compiler/my-try/tests/ui_webview_enabled.py --results FRESH`
+
+Use a separate fresh directory for each command. GUI cases require GTK/WebKitGTK,
+Xvfb and dbus. See [scope and evidence](planning/project_io_handle_presence.md).

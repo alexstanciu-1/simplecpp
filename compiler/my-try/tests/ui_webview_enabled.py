@@ -85,6 +85,7 @@ window.scpp.invoke('error',null).then(function(){window.scpp.invoke('bad',null);
             (assets / 'index.html').write_text(page)
             if name == 'html':
                 load = '$result=webview_load_html($view,clear_view($view,' + json.dumps(page) + '));'
+                load += 'if($view!==null){return 20;}'
                 load += 'if(!take($value,$error,$result)){return 21;}'
                 load += 'if(take($value,$error,webview_load_html($view,"absent"))){return 20;}'
             elif name == 'app':

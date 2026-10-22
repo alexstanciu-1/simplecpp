@@ -107,5 +107,7 @@ legacy comment syntax remain outside this closeout.
 **64/64 original strict-milestone dispositions resolved**: 59 implemented/repaired
 and five contract/environment/scope reconciliations. S02 is explicitly a scope
 exclusion, not legacy syntax implementation. V-R08 closes within the agreed Linux
-provider scope. S02-H01 and VR08-H02 remain genuine supplementary findings for the
-next discussion; 100% of this original ledger does not mean a gap-free compiler.
+provider scope. The historical S02-H01 and VR08-H02 findings above are subsequently
+[repaired and verified](project_io_handle_presence.md) on dev002 with default
+prelowering. The frozen results retain the original failure evidence. VR08-H01
+remains separate; 100% of this original ledger does not mean a gap-free compiler.

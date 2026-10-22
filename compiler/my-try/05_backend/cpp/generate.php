@@ -904,8 +904,18 @@ final class CPP_Generator
 			// Preparation admits one nullable/owning handle and one non-storable null sentinel.
 			// Presence is independent of payload identity and evaluates the value once.
 			$value = $left;
+			$value_index = 0;
 			if (Type_Queries::canonical($decision->operands[0]->source_type)->family() === type_family::null_sentinel) {
 				$value = $right;
+				$value_index = 1;
+			}
+			if ($context->concrete_types()) {
+				$presence = CPP_Runtime_Operations::wrapper_presence(
+					$decision->operands[$value_index]->source_type, $value, $context);
+				if ($decision->operation === operator_operation::presence_is_null) {
+					$presence = '!(' . $presence . ')';
+				}
+				return CPP_Declarations::type($decision->result_type, $context) . '(' . $presence . ')';
 			}
 			$presence = '(' . $value . ').has_value()';
 			if ($decision->operation === operator_operation::presence_is_null) {

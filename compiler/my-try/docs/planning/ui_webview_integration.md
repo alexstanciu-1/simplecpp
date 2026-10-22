@@ -26,8 +26,9 @@ native consumer remains Linux/Clang; other platforms require their own build pro
 [V-R08 enabled Linux acceptance](strict_gui_closeout.md) now passes on provisioned
 dev002 with GTK 3.24.41/WebKitGTK 2.52.6 and default prelowering. Native/source GUI
 execution, acknowledged replies, snapshots, cleanup, retained recovery and SDK cache
-transitions close the original issue. VR08-H02 concrete handle/null comparison and
-prior VR08-H01 remain separate. The historical unavailable-host statements below
+transitions close the original issue. The subsequent
+[presence repair](project_io_handle_presence.md) closes VR08-H02 concrete handle/null
+comparison; prior VR08-H01 remains separate. The historical unavailable-host statements below
 record the earlier checkpoint; they are superseded by this enabled acceptance.
 
 ## Historical source-integration evidence and then-remaining acceptance

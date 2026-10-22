@@ -31,16 +31,45 @@ Dev002 evidence under `/home/alex-ai/curl/`:
 This closes the project-entry gap. It does not enable legacy comment declarations;
 S02's strict-milestone exclusion and original compatibility evidence remain intact.
 
-## VR08-H02 — implementation under verification
+## VR08-H02 — implemented and verified
 
 Prepared strict null comparisons now use the existing compiled presence operation
 under default prelowering, rather than calling native has_value on concrete storage.
 Both operand orders retain the correct source type and return the concrete boolean
 representation. Ordinary lowering and semantic admission remain unchanged.
 
-Initial controls pass for nullable int (including present zero), source shared
-handles, unique moves and temporary/once-only results. IO/GUI fixtures are being
-verified separately, including closed handles remaining present until cleared.
-A control fixture needed whitespace before `=` after a generic type. Another
-incorrectly expected an error Result from reading a closed IO resource; the runtime
-correctly throws. These fixture mistakes do not authorize runtime changes.
+Dev002 acceptance covers strict `===` and `!==` against null in both operand
+orders for nullable int, source shared/unique handles, IO resources, ui_app,
+ui_window, ui_event and webview. Absent, populated, copied, cleared and temporary
+values preserve snapshots and once-only evaluation. Closing IO/window/webview or
+exiting the app preserves handle presence; explicit null assignment clears it.
+Presence is not a test of resource usability.
+
+- `20261022-handle-null-controls`: nullable/source-handle and unique-move controls.
+- `20261022-handle-null-runtime-final`: IO and enabled GTK/WebKitGTK handle proofs.
+- `20261022-handle-null-retained`: six publications, four invalid-comparison
+  rejection/recovery cycles and fresh/retained equivalence.
+- `20261022-handle-null-gui-regression`: native smoke plus four existing GUI cases,
+  including the restored original `$view!==null` snapshot assertion.
+- `20261022-handle-null-contracts`: existing nullable, ownership and runtime-handle
+  PHP contract suites pass.
+
+All executable publications above use default prelowering, forbid application
+templates and pass cold/warm builds; warm builds compile zero units without linking.
+GTK 3.24.41 and WebKitGTK 2.52.6 were used on dev002. No runtime implementation,
+native compiler rebuild or full matrix change/run was needed.
+
+Initial fixture failures remain archived: whitespace was needed between a generic
+closing `>` and `=`, a closed IO read throws rather than returning an error Result,
+and GUI stdout needed isolation from display diagnostics. Acceptance corrects these
+fixture assumptions without changing runtime semantics.
+
+## Closeout
+
+Both supplementary findings are repaired. The original ledger stays at 64/64
+strict-milestone dispositions: this adds no original issue closures. Legacy syntax,
+VR08-H01, weak-handle extensions and other GUI platforms remain separate.
+
+[Compact results](project_io_presence_results.json) and the
+[evidence archive](project_io_presence_evidence/README.md) preserve final source
+hashes, summaries, commands, historical fixture failures and publication evidence.

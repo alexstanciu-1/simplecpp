@@ -1137,7 +1137,7 @@
       "dependencies": [
         "User explicitly reopens legacy syntax scope."
       ],
-      "next_action": "Reconciled outside the strict milestone; legacy syntax remains deferred. Six declaration-only companions pass default prelowering on dev002. S02-H01 project IO module selection remains a separate discussion item.",
+      "next_action": "Reconciled outside the strict milestone; legacy syntax remains deferred. Six declaration-only companions pass default prelowering on dev002. S02-H01 project IO selection is subsequently repaired and verified through project mode; see project_io_handle_presence.md.",
       "simple_batch_eligible": false,
       "repair_status": "reconciled-and-verified",
       "repair_evidence": {
@@ -1442,7 +1442,7 @@
         "webview_close"
       ],
       "dependencies": [],
-      "next_action": "Closed in agreed Linux scope with enabled GTK/WebKitGTK and default-prelowered GUI proofs on dev002. Discuss supplementary VR08-H02 handle/null comparison separately; keep prior VR08-H01 and other platforms separate.",
+      "next_action": "Closed in agreed Linux scope with enabled GTK/WebKitGTK and default-prelowered GUI proofs on dev002. Supplementary VR08-H02 handle/null comparison is subsequently repaired; see project_io_handle_presence.md. Keep prior VR08-H01 and other platforms separate.",
       "acceptance": "Explicit contract disposition for every listed public name, followed by signature/behavior/provider integration proofs for retained APIs.",
       "simple_batch_eligible": false,
       "eligibility_reason": "Original source/build integration and enabled Linux acceptance are verified; supplementary compiler gaps and other platforms remain separate.",
