@@ -9,15 +9,16 @@ syntax and collection → shared semantic preparation → C++ generation. Other
 frontends should normalize toward the same PHS-shaped concepts. LLVM is a parked
 experiment retained for regressions, not a second semantic development path.
 
-Current verification checkpoint: [V-D01 value-iteration mutation](planning/iteration_mutation.md),
-62/64 original issues resolved (96.88%): 58 implemented/repaired (including
-harnesses) and four contract/environment reconciliations. V-R08 remains partial:
+Current verification checkpoint: [S02 strict-scope reconciliation](planning/strict_gui_closeout.md),
+63/64 original dispositions resolved for the strict milestone (98.44%): 58
+implemented/repaired and five contract/environment/scope reconciliations. S02 is an
+exclusion with six migrated proofs, not legacy syntax implementation. V-R08 remains partial:
 all 24 APIs pass disabled-provider source/build proofs; enabled GTK/WebKitGTK and
 GUI acceptance remain unavailable. V-D08 is closed within its compatibility scope:
 enum carriers/helpers and default-less match pass default-prelowered execution,
 state, snapshot and cleanup checks. The [audit](planning/enum_compatibility_closeout.md)
 keeps baseline-unsupported extensions and intentional v0.2 changes explicit.
-V-D05 is reconciled as a baseline-unsupported extension. S02 remains open as deferred legacy syntax. Value iteration now preserves remaining
+V-D05 is reconciled as a baseline-unsupported extension. Legacy syntax remains deferred; S02-H01 project IO selection is a separate open gap. Value iteration now preserves remaining
 entries before structural mutation; reference foreach remains separate. The [VD07-A02 repair](planning/value_pack_transport.md) verifies concrete scalar
 value packs. [Read-only and writable reference defaults](planning/reference_defaults.md) now pass
 binding/snapshot/lifetime proofs, closing VD07-A01 in canonical scalar scope.

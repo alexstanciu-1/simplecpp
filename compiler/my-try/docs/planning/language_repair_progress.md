@@ -9,9 +9,9 @@ syntax and policy/design issues. Operator signatures are not separate closed iss
 | Status | Issues |
 | --- | ---: |
 | Implemented or already repaired (including harnesses), then verified | 58 |
-| Contract/environment reconciled and verified | 4 |
+| Contract/environment/strict-scope reconciled and verified | 5 |
 | Partially implemented and verified | 1 |
-| Other issues not yet closed | 1 |
+| Other issues not yet closed | 0 |
 | Total | 64 |
 
 The [V-R08 batch](ui_webview_integration.md) implements all 24 UI/WebView source APIs
@@ -42,10 +42,12 @@ binding/snapshots/lifetime, with escaping default references rejected. The prece
 without adding an original-issue closure.
 The [V-D01 repair](iteration_mutation.md) closes four-family mutation during value
 iteration (+1.5625 points), including COW, lifetime, retained recovery and measured
-costs. Reference foreach remains separate. The remaining original entries are S02
-and partial V-R08.
+costs. Reference foreach remains separate. The [S02 reconciliation](strict_gui_closeout.md) verifies all six migrated
+companions and excludes deferred legacy syntax from this strict milestone. It is
+not a legacy implementation claim. Partial V-R08 is the remaining original entry;
+supplementary S02-H01 project IO selection remains open for discussion.
 
-Resolved: **62/64 = 96.88%** (by issue count). This is not an
+Resolved: **63/64 = 98.44%** (strict-milestone dispositions, including S02 exclusion). This is not an
 engineering-effort estimate. The completed async/tasks goal closed S12 and V-R02 (+3.125 points). The subsequent [V-D06 goal](finally_value_transfers.md) closes finally value/loop transfers and default-prelowered exception transport (+1.5625 points). S05 does not certify explicit callable storage under default prelowering. Remaining architecture/runtime/project issues can be
 much larger than fixture repairs. There is no defensible weighted effort percentage.
 
@@ -53,7 +55,7 @@ much larger than fixture repairs. There is no defensible weighted effort percent
 | --- | ---: | ---: | ---: | ---: |
 | Simple fix | 13 | 0 | 0 | 13 |
 | Light discussion | 17 | 0 | 0 | 17 |
-| Normal discussion | 32 | 1 | 1 | 34 |
+| Normal discussion | 33 | 1 | 0 | 34 |
 
 V-L06 now admits the final two scalar float identity forms and re-verifies its
 original carrier cases. S04's unchanged original process fixture passes through

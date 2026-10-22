@@ -1137,8 +1137,15 @@
       "dependencies": [
         "User explicitly reopens legacy syntax scope."
       ],
-      "next_action": "Keep original failures separate from declaration-only migration evidence; no repair in the strict verification goal.",
-      "simple_batch_eligible": false
+      "next_action": "Reconciled outside the strict milestone; legacy syntax remains deferred. Six declaration-only companions pass default prelowering on dev002. S02-H01 project IO module selection remains a separate discussion item.",
+      "simple_batch_eligible": false,
+      "repair_status": "reconciled-and-verified",
+      "repair_evidence": {
+        "date": "2026-10-22",
+        "report": "strict_gui_closeout.md",
+        "results": "s02_closeout_results.json",
+        "scope": "Strict-scope exclusion, not legacy syntax implementation. Six migrated companions preserve original oracles; direct compiler API publication only. S02-H01 remains explicit."
+      }
     },
     {
       "id": "V-D10",
