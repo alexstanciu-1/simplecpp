@@ -188,9 +188,8 @@ final class Callable_Contracts
 				continue;
 			}
 			if ($parameter->access === storage_access::read_only) {
-				if (($parameter->mode !== passing_mode::reference) || ($parameter->element_type !== null)
-					|| ($parameter->default_value !== null)) {
-					throw new \RuntimeException('S2S const parameters require a fixed reference without a default');
+				if (($parameter->mode !== passing_mode::reference) || ($parameter->element_type !== null)) {
+					throw new \RuntimeException('S2S const parameters require a fixed reference');
 				}
 			}
 			if ($variadic_seen) {
@@ -203,8 +202,8 @@ final class Callable_Contracts
 				}
 			}
 			if ($parameter->default_value !== null) {
-				if ($parameter->mode !== passing_mode::value) {
-					throw new \RuntimeException('S2S reference parameter defaults are deferred');
+				if (($parameter->mode !== passing_mode::value) && ($parameter->access !== storage_access::read_only)) {
+					throw new \RuntimeException('S2S writable reference parameter defaults are deferred');
 				}
 				$optional_seen = true;
 			}

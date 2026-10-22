@@ -31,8 +31,10 @@ verifies that failure path, matched execution, snapshots and cleanup with defaul
 prelowering and closes V-D08 (+1.5625 percentage points). Wider extensions stay separate.
 
 The [V-D05/V-D07 call audit](call_compatibility_audit.md) reconciles V-D05 against
-pinned v0.1 execution/build evidence (+1.5625 points). V-D07 remains open: reference
-defaults and reference-pack spelling need discussion. The subsequent
+pinned v0.1 execution/build evidence (+1.5625 points). V-D07 remains open: writable reference
+defaults and reference-pack spelling need discussion. The
+[read-only default slice](reference_defaults.md) verifies the canonical scalar
+binding/snapshot/lifetime contract without closing A01 entirely. The preceding
 [VD07-A02 repair](value_pack_transport.md) verifies scalar value-pack prelowering
 without adding an original-issue closure.
 The remaining original entries are V-D01, V-D07, S02 and partial V-R08.

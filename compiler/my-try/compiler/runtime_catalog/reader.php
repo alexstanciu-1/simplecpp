@@ -526,6 +526,10 @@ final class Runtime_Catalog_Reader
 		if (($result->name === '') || !$typed || !$passing) {
 			$reader->reject('Missing runtime parameter field');
 		}
+		if (($result->default_value !== null) && ($result->mode === passing_mode::reference))
+		{
+			$reader->reject('Runtime reference parameter defaults remain deferred');
+		}
 		if ($result->requires_copy && (($result->mode !== passing_mode::value) || $result->variadic)) {
 			$reader->reject('Runtime copy requirements need fixed value parameters');
 		}

@@ -205,9 +205,10 @@
     "stdout": "7"
   },
   "v02-const-ref-default-omitted": {
-    "stage": "generation",
-    "supported": false,
-    "source_sha256": "dffeef9d480f9f5410b57ee40e7e13cde58bccec0d1c755352c36697fd301777"
+    "stage": "executed",
+    "supported": true,
+    "source_sha256": "dffeef9d480f9f5410b57ee40e7e13cde58bccec0d1c755352c36697fd301777",
+    "stdout": "7"
   },
   "v01-ref-control": {
     "stage": "executed",
@@ -389,9 +390,10 @@
     "stdout": "3:7"
   },
   "v02-const-ref-default-explicit": {
-    "stage": "generation",
-    "supported": false,
-    "source_sha256": "2983ae378e56a9845d12e1504012d5f3fe632b881fc20a39855c30bc36cce0db"
+    "stage": "executed",
+    "supported": true,
+    "source_sha256": "2983ae378e56a9845d12e1504012d5f3fe632b881fc20a39855c30bc36cce0db",
+    "stdout": "3:7"
   },
   "v01-const-ref-string-default": {
     "stage": "executed",
@@ -400,9 +402,10 @@
     "stdout": "saved"
   },
   "v02-const-ref-string-default": {
-    "stage": "generation",
-    "supported": false,
-    "source_sha256": "53340069486ac07e1acad4b8fec8a8c81b2cfd72387b0b52a8aba966d8ca6639"
+    "stage": "executed",
+    "supported": true,
+    "source_sha256": "53340069486ac07e1acad4b8fec8a8c81b2cfd72387b0b52a8aba966d8ca6639",
+    "stdout": "saved"
   },
   "v01-method-const-ref-default": {
     "stage": "executed",
@@ -411,9 +414,10 @@
     "stdout": "7"
   },
   "v02-method-const-ref-default": {
-    "stage": "generation",
-    "supported": false,
-    "source_sha256": "f1c7a35e5321f5573d7a8c0294bf71b457e7a4d7a421672f4aca65b16006e3b5"
+    "stage": "executed",
+    "supported": true,
+    "source_sha256": "f1c7a35e5321f5573d7a8c0294bf71b457e7a4d7a421672f4aca65b16006e3b5",
+    "stdout": "7"
   },
   "v01-ref-pack-read": {
     "stage": "executed",

@@ -128,14 +128,43 @@ In particular, `const shared<T>&` does not mean `shared<const T>`. Future pointe
 member/method operations must preserve the source access-path contract deliberately;
 the C++ handle qualifier alone is not sufficient.
 
-The bounded source slice admits fixed explicit reference parameters only. By-value
-`const T $value`, const-reference returns, parameter defaults, variadics, temporary
+The bounded source slice admits fixed reference parameters, with the omitted-default
+exception defined below. By-value
+`const T $value`, const-reference returns, writable reference defaults, variadics, temporary
 binding, closures and broader const type/local syntax remain deferred. Methods now
 share the [fixed read-only reference contract](instance_methods_v0_2.md#shared-method-parameters--2026-10-07);
 constructors retain their separate bounded parameter admission. The
 read-only flag is part of the callable contract; changing it invalidates dependent
 callers and the affected body. C++ signatures, borrowed argument temporaries and
 local native aliases preserve `const T&` without taking an owning snapshot.
+
+## Read-only reference defaults — 2026-10-22
+
+Named free functions and source static/instance methods may give a fixed
+`const T &$value` parameter a literal default for canonical `int`, `float`, `bool`
+or `string`. The existing scalar-literal default conversion rules apply, including
+an optional numeric sign. This does not admit arbitrary default expressions,
+reference-pack defaults, enum/container/wrapper defaults, anonymous-callable
+defaults or constructor/provider/callback bridge extensions.
+
+An explicit argument still borrows exact-type stable storage without copying or
+converting it. A default does not permit explicit temporaries or container-interior
+borrows. Aliases remain live: later arguments or other writable aliases can change
+that storage. Earlier ordinary value arguments retain their normal snapshots.
+
+An omitted argument instead initializes fresh, owned call-local storage from the
+prepared default and binds a read-only reference to that storage. Explicit argument
+evaluation/conversion remains once-only and left-to-right; omitted defaults are
+materialized afterward in parameter order, before invocation. Storage survives the
+whole synchronous call, including nested forwarding, and is released on completion
+or unwinding. Returning an ordinary value copies its normal value semantics before
+the storage is released. No static shared default storage is introduced.
+
+Read-only writes and mutable forwarding remain rejected. The borrowed storage must
+not escape: const-reference returns and escaping borrowed captures remain rejected.
+Writable reference-default declarations remain unsupported even when a particular
+call supplies an explicit argument; that compatibility question is separate.
+Required parameters after optional parameters remain rejected.
 
 ## v0.2 bounded closure borrows — 2026-10-09
 

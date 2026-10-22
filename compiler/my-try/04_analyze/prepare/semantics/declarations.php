@@ -107,6 +107,14 @@ final class Declaration_Preparation
 			Capability_Preparation::require_concrete_value($facts->signature->return_type, $context);
 		}
 		self::prepare_parameters($syntax->signature_syntax, $facts, $context, $expected);
+		$parameters /** Storage<callable_parameter> */ = $facts->signature->parameters;
+		foreach ($parameters as $parameter)
+		{
+			if (($parameter->mode === passing_mode::reference) && ($parameter->default_value !== null))
+			{
+				throw new \RuntimeException('Anonymous reference parameter defaults remain deferred');
+			}
+		}
 		Reference_Preparation::prepare_signature($syntax->signature_syntax, $facts->signature);
 		Callable_Contracts::validate($facts->signature);
 		return $facts;

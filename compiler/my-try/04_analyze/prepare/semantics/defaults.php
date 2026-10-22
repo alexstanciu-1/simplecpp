@@ -78,7 +78,16 @@ final class Parameter_Defaults
 		preparation_context $context): prepared_parameter_default
 	{
 		if ($parameter->mode !== passing_mode::value) {
-			throw new \RuntimeException('S2S reference parameter defaults are deferred');
+			if (($parameter->mode !== passing_mode::reference) || ($parameter->access !== storage_access::read_only)) {
+				throw new \RuntimeException('S2S writable reference parameter defaults are deferred');
+			}
+			$language = Model::$language_scope;
+			if (!$parameter->type->matches(Language_Types::integer($language))
+				&& !$parameter->type->matches(Language_Types::floating($language))
+				&& !$parameter->type->matches(Language_Types::boolean($language))
+				&& !$parameter->type->matches(Language_Types::string_type($language))) {
+				throw new \RuntimeException('S2S read-only reference defaults require canonical scalar types');
+			}
 		}
 		$value /** prepared_constant_expression */;
 		if (Type_Queries::is_enum($parameter->type)) {

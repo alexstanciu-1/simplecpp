@@ -1,6 +1,12 @@
 # Test runners
 Doc Status: supporting
 
+The [read-only reference-default proof](planning/reference_defaults.md) uses
+`python3 compiler/my-try/tests/reference_default_prelower.py --results FRESH_DIRECTORY`
+on dev002: explicit binding versus omitted ownership, alias/snapshot behavior,
+lifetime sanitizers, exclusion gates and retained/cold-warm publication.
+
+
 The [scalar value-pack proof](planning/value_pack_transport.md) runs with
 `python3 compiler/my-try/tests/value_pack_prelower.py --results FRESH_DIRECTORY`
 on dev002: default-prelowered scalar source calls, snapshots/cleanup, five sanitizer

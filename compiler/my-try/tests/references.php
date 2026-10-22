@@ -90,7 +90,7 @@ references_check($first->declaration !== $second->declaration && $returned->conv
 
 $rejections = [
 	['function bad(const int $x): void {}', 'fixed reference'],
-	['function bad(const int &$x = 1): void {}', 'reference parameter defaults'],
+	['function bad(int &$x = 1): void {}', 'reference parameter defaults'],
 	['function bad(const int &...$x): void {}', 'variadic parameters'],
 	['function &bad(const int &$x): int { return $x; }', 'const-reference returns'],
 	['function read(const int &$x): int { return $x; } $n = read(1);', 'stable storage'],

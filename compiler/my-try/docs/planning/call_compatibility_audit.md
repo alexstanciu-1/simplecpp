@@ -5,7 +5,8 @@ Doc Status: planning
 
 The subsequent [VD07-A02 repair](value_pack_transport.md) supplies scalar value-pack
 transport with dev002 default-prelowered snapshots/cleanup proofs. V-D07 remains
-open for A01/A03; the audit findings and failures below are historical evidence.
+open for writable A01 defaults and A03. The [read-only A01 slice](reference_defaults.md)
+is now verified. The audit findings and failures below are historical evidence.
 
 ## Outcome — 2026-10-22
 

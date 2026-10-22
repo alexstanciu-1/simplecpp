@@ -155,6 +155,8 @@ final class CPP_Declarations
 			return 'static_cast<bool>((' . $expression . ').has_value())';
 		}
 		if ($decision->operation === truthiness_operation::boolean_identity) {
+			// Reading a borrowed bool's member requires its definition, not just the signature's forward declaration.
+			self::type($decision->source_type, $context);
 			return '(' . $expression . ').native_value()';
 		}
 		if (($decision->operation === truthiness_operation::callable_presence)
@@ -687,7 +689,9 @@ final class CPP_Declarations
 			$context->next_temporary++;
 			$text .= self::type_for($parameters[$index]->type, $context, cpp_type_requirement::stored_value) . ' ' . $name . ' = ' . self::parameter_default($default_value, $context) . ";\n";
 			if ($transport !== null) { $physical_arguments[] = $name; }
-			$names .= $separator . self::move($name, $parameters[$index]->type, $context);
+			// An omitted read-only reference borrows this call-local owner until invocation completes.
+			$names .= $separator . ($parameters[$index]->mode === passing_mode::reference
+				? $name : self::move($name, $parameters[$index]->type, $context));
 			$separator = ', ';
 		}
 		$text .= $transfer_checks;

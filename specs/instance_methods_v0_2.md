@@ -69,7 +69,9 @@ Named arguments are deferred to CH15. Static calls now have their own bounded
 Instance and static methods on both classes and structs use the ordinary function
 parameter contract, including fixed by-value parameters, writable `T &$value` and
 read-only `const T &$value` references, and a typed trailing `T ...$values` pack.
-Native references require exact compatible stable storage; no implicit conversions,
+The [read-only literal-default rule](native_reference_safety.md#read-only-reference-defaults--2026-10-22)
+also applies to fixed canonical scalar reference parameters on source methods.
+Explicit native reference arguments require exact compatible stable storage; no implicit conversions,
 temporary binding or heap-interior borrowing are introduced. Read-only access is
 enforced during preparation, including forwarding, aliases and container mutation,
 under [the existing reference rules](native_reference_safety.md).

@@ -601,7 +601,7 @@
       "dependencies": [
         "Agree binding/evaluation and pack/reference contracts before expanding admission"
       ],
-      "next_action": "VD07-A02 scalar value-pack transport is repaired and verified. Discuss VD07-A01 reference defaults and VD07-A03 accepted read-only reference-pack spelling next; wider element types and other variadic bridges stay separate.",
+      "next_action": "VD07-A02 scalar packs and VD07-A01 read-only scalar reference defaults are verified. Discuss writable reference-default declarations and VD07-A03 accepted read-only reference-pack spelling; wider defaults/packs and other bridges remain separate.",
       "simple_batch_eligible": false,
       "compatibility_audit": {
         "date": "2026-10-22",
@@ -620,7 +620,14 @@
           {
             "id": "VD07-A01",
             "title": "Executable reference-default declarations reject",
-            "owner": "parameter-default preparation and call lifetime/binding"
+            "owner": "parameter-default preparation and call lifetime/binding",
+            "status": "partially-implemented-and-verified",
+            "report": "reference_defaults.md",
+            "evidence": [
+              "20261022-ref-default-final",
+              "20261022-ref-default-audit"
+            ],
+            "scope": "Read-only canonical scalar literal defaults on source free/static/instance calls; explicit exact borrows, call-local omitted owners, snapshots, cleanup and no escaping references. Writable defaults separate."
           },
           {
             "id": "VD07-A02",
