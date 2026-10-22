@@ -35,6 +35,11 @@ final class Runtime_Build_Contract
 
 	public static function validate(runtime_cpp_build_spec $spec): void
 	{
+		foreach ($spec->providers as $provider) {
+			if (($provider !== 'ui') && ($provider !== 'webview')) { throw new \RuntimeException('Unknown runtime SDK provider'); }
+		}
+		self::options($spec->compile_options, false);
+		self::options($spec->link_options, true);
 		foreach ($spec->sources as $source) {
 			if (!string_byte_ends_with($source, '.cpp')) { throw new \RuntimeException('Runtime provider source requires .cpp'); }
 			foreach (q_explode('/', $source) as $component) {
@@ -64,11 +69,38 @@ final class Runtime_Build_Contract
 		}
 	}
 
+	/** Only SDK search paths, libraries and the existing Linux threading/link flags. */
+	public static function options(array $values /** vector<string> */, bool $link): void
+	{
+		$path_next = false;
+		foreach ($values as $value) {
+			for ($index = 0; $index < string_byte_len($value); $index++) {
+				$byte = string_byte_at($value, $index);
+				if (($byte === 0) || ($byte === 10) || ($byte === 13)) { throw new \RuntimeException('Invalid runtime SDK option bytes'); }
+			}
+			if ($path_next) {
+				if (!string_byte_starts_with($value, '/')) { throw new \RuntimeException('Runtime SDK search path must be absolute'); }
+				$path_next = false; continue;
+			}
+			if (($value === '-pthread') || ($link && ($value === '-Wl,--export-dynamic'))) { continue; }
+			$prefix = $link ? '-L' : '-I';
+			if (($value === $prefix) || (!$link && ($value === '-isystem'))) { $path_next = true; continue; }
+			if (string_byte_starts_with($value, $prefix . '/')) { continue; }
+			if ($link && string_byte_starts_with($value, '-l')) { self::token(string_byte_slice($value, 2, string_byte_len($value) - 2)); continue; }
+			throw new \RuntimeException('Unsupported runtime SDK option: ' . $value);
+		}
+		if ($path_next) { throw new \RuntimeException('Missing runtime SDK search path'); }
+	}
+
 	public static function encode(runtime_cpp_build_spec $spec): string
 	{
 		self::validate($spec);
+		if (q_count($spec->providers) !== 0) { throw new \RuntimeException('Unresolved runtime SDK provider'); }
 		return '{"sources":' . self::strings($spec->sources) . ',"libraries":' . self::strings($spec->libraries)
-			. ',"definitions":' . self::strings($spec->definitions) . '}';
+			. ',"definitions":' . self::strings($spec->definitions)
+			. ',"compile_options":' . self::strings($spec->compile_options)
+			. ',"link_options":' . self::strings($spec->link_options)
+			. ',"diagnostics":' . self::strings($spec->diagnostics) . '}';
 	}
 
 	private static function strings(array $values /** vector<string> */): string

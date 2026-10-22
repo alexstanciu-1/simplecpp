@@ -15,6 +15,10 @@
 #include <cassert>
 #include <cstdint>
 
+namespace scpp::iteration_detail {
+template<class Table> class binding;
+}
+
 namespace scpp {
 
 template <typename T_VALUE, typename T_KEY> class hash_t;
@@ -51,6 +55,7 @@ private:
 	// Keep lifecycle metadata beside the tag so it occupies the union's alignment
 	// padding instead of adding another aligned word after the payload.
 	mutable std::uint16_t borrow_count_ = 0;
+	mutable std::shared_ptr<iteration_detail::binding<hash_t<mixed_t>>> iteration_;
 
 	union {
 		bool_t bool_value_;
@@ -63,6 +68,8 @@ private:
 	};
 
 	void destroy() noexcept;
+	void preserve_iteration();
+	void replace_storage();
 	void assert_kind_change_allowed(kind_t target_kind) const noexcept;
 	void assert_not_borrowed(const char *operation) const noexcept;
 	void acquire_scalar_borrow() const noexcept;
@@ -95,29 +102,31 @@ public:
 	~mixed_t();
 
 	mixed_t(const mixed_t &other);
-	mixed_t(mixed_t &&other) noexcept;
+	mixed_t(mixed_t &&other);
 	mixed_t &operator=(const mixed_t &other);
-	mixed_t &operator=(mixed_t &&other) noexcept;
+	mixed_t &operator=(mixed_t &&other);
 
-	mixed_t &operator=(null_t) noexcept;
-	mixed_t &operator=(nullopt_t) noexcept;
-	mixed_t &operator=(nullptr_t) noexcept;
-	mixed_t &operator=(const bool_t &value) noexcept;
-	mixed_t &operator=(const int_t<> &value) noexcept;
-	mixed_t &operator=(const float_t &value) noexcept;
+	mixed_t &operator=(null_t);
+	mixed_t &operator=(nullopt_t);
+	mixed_t &operator=(nullptr_t);
+	mixed_t &operator=(const bool_t &value);
+	mixed_t &operator=(const int_t<> &value);
+	mixed_t &operator=(const float_t &value);
 	mixed_t &operator=(const string_t &value);
 	mixed_t &operator=(const char *value);
-	mixed_t &operator=(bool value) noexcept;
-	mixed_t &operator=(std::int64_t value) noexcept;
-	mixed_t &operator=(double value) noexcept;
-	mixed_t &operator=(unique_p<hash_t<mixed_t>> value) noexcept;
-	mixed_t &operator=(shared_p<hash_t<mixed_t>> value) noexcept;
-	mixed_t &operator=(weak_p<hash_t<mixed_t>> value) noexcept;
-	mixed_t &operator=(std::unique_ptr<hash_t<mixed_t>> value) noexcept;
-	mixed_t &operator=(std::shared_ptr<hash_t<mixed_t>> value) noexcept;
-	mixed_t &operator=(std::weak_ptr<hash_t<mixed_t>> value) noexcept;
+	mixed_t &operator=(bool value);
+	mixed_t &operator=(std::int64_t value);
+	mixed_t &operator=(double value);
+	mixed_t &operator=(unique_p<hash_t<mixed_t>> value);
+	mixed_t &operator=(shared_p<hash_t<mixed_t>> value);
+	mixed_t &operator=(weak_p<hash_t<mixed_t>> value);
+	mixed_t &operator=(std::unique_ptr<hash_t<mixed_t>> value);
+	mixed_t &operator=(std::shared_ptr<hash_t<mixed_t>> value);
+	mixed_t &operator=(std::weak_ptr<hash_t<mixed_t>> value);
 
 	[[nodiscard]] mixed_t clone() const;
+	[[nodiscard]] std::shared_ptr<iteration_detail::binding<hash_t<mixed_t>>> iteration_binding() const;
+	void detach_shared_table_for_write();
 
 	// Observers
 	[[nodiscard]] mixed_type type() const noexcept;

@@ -78,7 +78,16 @@ final class Parameter_Defaults
 		preparation_context $context): prepared_parameter_default
 	{
 		if ($parameter->mode !== passing_mode::value) {
-			throw new \RuntimeException('S2S reference parameter defaults are deferred');
+			if ($parameter->mode !== passing_mode::reference) {
+				throw new \RuntimeException('S2S parameter defaults require value or fixed reference parameters');
+			}
+			$language = Model::$language_scope;
+			if (!$parameter->type->matches(Language_Types::integer($language))
+				&& !$parameter->type->matches(Language_Types::floating($language))
+				&& !$parameter->type->matches(Language_Types::boolean($language))
+				&& !$parameter->type->matches(Language_Types::string_type($language))) {
+				throw new \RuntimeException('S2S reference defaults require canonical scalar types');
+			}
 		}
 		$value /** prepared_constant_expression */;
 		$handle_default = Ownership_Conversions::role($parameter->type) !== null;

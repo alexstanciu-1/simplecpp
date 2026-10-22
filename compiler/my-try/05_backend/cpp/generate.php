@@ -488,8 +488,8 @@ final class CPP_Generator
 	public static function generate_return(return_node $syntax, cpp_generation_context $context): string
 	{
 		$value = self::return_value($syntax, $context);
-		if ($context->finally_return !== null) {
-			$pending /** cpp_finally_return */ = $context->finally_return;
+		if ($context->finally_exit !== null) {
+			$pending /** cpp_finally_exit */ = $context->finally_exit;
 			return CPP_Finally::capture_return($pending, $value);
 		}
 		return "\t" . ($context->asynchronous ? 'co_return' : 'return') . ($value === '' ? '' : ' ' . $value) . ";\n";
@@ -709,6 +709,8 @@ final class CPP_Generator
 				. self::source_name('case', $enum_value->selected_case->name);
 		}
 		if ($value instanceof no_error_constant_value) {
+			// The immutable no-error value is the ordinary default error state.
+			if ($context->concrete_types()) { return CPP_Declarations::type_for($value->type, $context, cpp_type_requirement::stored_value) . '{}'; }
 			return CPP_Declarations::type($value->type, $context) . '::no_error';
 		}
 		if ($value instanceof sentinel_constant_value)
@@ -904,8 +906,18 @@ final class CPP_Generator
 			// Preparation admits one nullable/owning handle and one non-storable null sentinel.
 			// Presence is independent of payload identity and evaluates the value once.
 			$value = $left;
+			$value_index = 0;
 			if (Type_Queries::canonical($decision->operands[0]->source_type)->family() === type_family::null_sentinel) {
 				$value = $right;
+				$value_index = 1;
+			}
+			if ($context->concrete_types()) {
+				$presence = CPP_Runtime_Operations::wrapper_presence(
+					$decision->operands[$value_index]->source_type, $value, $context);
+				if ($decision->operation === operator_operation::presence_is_null) {
+					$presence = '!(' . $presence . ')';
+				}
+				return CPP_Declarations::type($decision->result_type, $context) . '(' . $presence . ')';
 			}
 			$presence = '(' . $value . ').has_value()';
 			if ($decision->operation === operator_operation::presence_is_null) {

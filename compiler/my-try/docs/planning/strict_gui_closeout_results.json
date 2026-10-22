@@ -1,0 +1,68 @@
+{
+  "date": "2026-10-22",
+  "status": "accepted-with-separate-findings",
+  "host": "dev002",
+  "sdk": {
+    "gtk": "3.24.41",
+    "webkitgtk": "2.52.6"
+  },
+  "default_prelowering": true,
+  "compiler_runtime_implementation_changes": false,
+  "full_matrix": false,
+  "native_compiler_rebuilt": false,
+  "archive": "strict_gui_evidence/acceptance.tar.gz",
+  "archive_sha256": "9ae71fa550cf8c98b8b62fe9f8ee2185981a9645635c4709d5f2e0052f55af91",
+  "evidence": {
+    "s02": "20261022-s02-prelower-02",
+    "enabled_native": "20261022-vr08-enabled-native-01",
+    "enabled_source": "20261022-vr08-enabled-source-02",
+    "enabled_source_disabled_and_provider_regressions": "20261022-vr08-enabled-final-01 (retained fixture failed; remaining gates passed)",
+    "retained_recovery_fresh": "20261022-vr08-retained-final",
+    "sdk_same_cache_selection": "20261022-vr08-sdk-selection-02"
+  },
+  "original_ledger": {
+    "implemented_verified": 59,
+    "reconciled_verified": 5,
+    "partial": 0,
+    "open": 0,
+    "scope": "64 strict-milestone dispositions; S02 legacy syntax remains deferred"
+  },
+  "separate_findings": [
+    {
+      "id": "S02-H01",
+      "owner": "project runtime module selection",
+      "status": "open-discussion",
+      "finding": "prism.json rejects io; direct compiler API selection passes all six companions"
+    },
+    {
+      "id": "VR08-H02",
+      "owner": "concrete runtime-handle null comparison lowering",
+      "status": "open-discussion",
+      "finding": "$view !== null emits native has_value() on concrete webview storage and fails C++ compilation"
+    },
+    {
+      "id": "VR08-H01",
+      "status": "previously-recorded-separate",
+      "finding": "General error-condition transport remains outside this goal; not reverified or repaired here"
+    }
+  ],
+  "verified_focused_source_sha256": {
+    "compiler/my-try/tests/s02_prelower.py": "0bcf9a8b299369af8bb5ccc56f466ef93c46b8831be0b23335e015dcddcca889",
+    "compiler/my-try/tests/s02_publish.php": "684035dc0127aa549b6e098341cf02ba134ae6f1004f6edd9d495ca42fe3543d",
+    "compiler/my-try/tests/ui_webview_enabled.py": "b7bb75eabedac58ea9068ca577dcf3b143ad6d83f13cfbedb9f3ac226151ecb6",
+    "compiler/my-try/tests/ui_webview_retained.php": "de44c0661b8e8b1328d5ab35c49f5d651011a112e5e25d75a91ff83d6b472ae7",
+    "compiler/my-try/tests/ui_webview_selection.py": "8c69bc3c16b506e9fc03f1fc8b3c36414a0130ace6857cfd5936b21d69d8bcf7",
+    "compiler/my-try/tests/fixtures/ui_webview/enabled.phs.in": "af0133703b8057f06ca30f226332fb73704d0f2b7d6d18b4a9c5e632aa5436b3",
+    "compiler/my-try/main.php": "d8aae38598278012d91cae1d4956d2b5064e1de715bb51eea94846507d1b8708",
+    "compiler/my-try/host/project.php": "4f27f77e84570f1072f1f07230b4e3547f34fc7aee79c7f73784eebcf4423ef4",
+    "compiler/my-try/host/runtime_build.php": "63e89d61a2de4ec666b53e40d755fa796e23456240dace2118310ace98f70696",
+    "bin/project_services.php": "a9ab8f62b469e58cdef63f8411eede322bab18e2eef0bf89ea8f6b52f23a9367",
+    "runtime/metadata/modules/ui.json": "8f7aac03593bf5db522e87ff37967d802df62dea5e4cc801ffa1715c700a0638",
+    "runtime/metadata/modules/webview.json": "6ce4a1f81d51a99b8cc37a8b0da90f0d6df8d584aaf8c6181578482cc775bb98",
+    "runtime/metadata/modules/io.json": "e7f5e68a9269f858f5696de51c0f30ab30405c9eb541ff729b65a2de77240bdb",
+    "runtime/include/modules/ui/ui.cpp": "6b6e205f04518b9e34801ca7c6b102b02140e80a31b42d746dfb0fc4998e0f9f",
+    "runtime/include/modules/ui/ui.hpp": "0bbbfb501bdb505ef02822ee1523725abc6407401dd3107f423d9ec56462b8d4",
+    "runtime/include/modules/webview/webview.cpp": "fb907112fa64a787088c8031f3d58c77ba43c1ae02293bab1a565c70209a10fe",
+    "runtime/include/modules/webview/webview.hpp": "6524aef30a24e78403cb218097fa38c7f10982e142c4900140337540cf2d9f2c"
+  }
+}

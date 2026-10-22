@@ -5,9 +5,11 @@ Doc Status: planning
 
 [Catalog and workflow](README.md) · [Source merge ledger](source_merge.json)
 
-Requires calls, control flow and lifetime. Bounded throw/catch and exceptional cleanup
-and scalar/void-return finally are implemented below. General transfer replay and
-non-scalar return transport remain deferred.
+Requires calls, control flow and lifetime. The [V-D06 extension](../planning/finally_value_transfers.md)
+adds default-prelowered exception transport, supported non-reference value returns
+and crossing break/continue through finally, including async sequencing. Reference
+returns crossing finally and transfers escaping finally remain rejected. Dated
+2026-10-16 checkpoints below retain their historical scope and evidence.
 
 Order is a discussion sequence, not a claim that every row is a prerequisite. Split combined examples before implementation.
 
@@ -223,7 +225,7 @@ Edit these rows as work proceeds. Imported source support is recorded below, ind
 | RSL-ERROR-01 | implemented-bounded | `error::make("bad", 12, "input.phs")`, getters and `error -> result<T>` | proved | proved | deferred | 17 generated programs, 13 preparation rejections and incremental repair; `tests/error_values.php`; general runtime `new` remains excluded |
 | [ERR-THROW-001](#err-throw-001) | implemented-bounded | `throw Exception::make("x");` | proved | proved | deferred | Canonical shared Exception and source descendants; `tests/exceptions.php` and `tests/exception_hierarchy.py`; runtime `new` excluded |
 | [ERR-TRY-001](#err-try-001) | implemented-bounded | `try { f(); } catch (Exception $e) { }` | proved | proved | deferred | One handler, nested/callee propagation, handler scope, RAII cleanup and outer reporting; bounded finally added below |
-| [ERR-FINALLY-001](#err-finally-001) | implemented-bounded | `try { return 1; } finally { g(); }` | proved | proved | deferred | Scalar/void pending returns, exception precedence and RAII cleanup; `tests/finally.php`; crossing loop transfers and other return families deferred |
+| [ERR-FINALLY-001](#err-finally-001) | implemented-bounded | `try { return 1; } finally { g(); }` | proved | proved | deferred | Value/void pending returns, crossing loop transfers, exception precedence and cleanup; ordinary `tests/finally.php` plus default-prelowered `tests/exception_prelower.py`; reference returns and escaping-finally transfers rejected |
 | [NOTE-047](#note-047) | closed-bounded | `throw 3;`, `try {} finally { return 1; }` | proved | publication blocked on rejection | deferred | Static rejection/recovery proved; uniform file/line/column delivery remains CH13-DIAG-01 |
 ## ERR-THROW-001
 
@@ -301,7 +303,7 @@ try { f(); } catch (const ::scpp::php::thrown_object& __t) { if (auto __caught =
 
 ## ERR-FINALLY-001
 
-**v0.2 decision / target C++:** Implemented within the [bounded finally slice](#bounded-finally--2026-10-16). The imported v1 lowering below is historical; v0.2 uses prepared regions and native lambda exits, with internal finalizer loop transfers allowed.
+**v0.2 decision / target C++:** The [V-D06 extension](../planning/finally_value_transfers.md) supersedes the return-family and crossing-transfer limits of the [earlier bounded slice](#bounded-finally--2026-10-16). The imported v1 lowering below is historical; v0.2 uses prepared regions and native lambda exits, with internal finalizer loop transfers allowed.
 
 ### Imported version 1
 

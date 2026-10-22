@@ -23,7 +23,7 @@ Priorities are recommendations, not new release gates or authorization to implem
 
 | # | Priority | Remaining work / current boundary | Dependency or owning debt |
 | --- | --- | --- | --- |
-| 1 | G | Iteration mutation/replacement policy: aliases, visited values, COW, owner lifetime, normal/exceptional exits; snapshot proposal undecided. | CH06-ITER-01; array semantics + container mutation owners. |
+| 1 | Closed | Value-iteration mutation/replacement: live until first structural mutation, then preserve remaining entries; aliases, COW, lifetime and exits verified. | CH06-ITER-01 / [V-D01](../planning/iteration_mutation.md), closed 2026-10-22; reference safety remains item 2. |
 | 2 | G | Reference foreach: guarded loop-scoped element binding, write-through/COW, source replacement, non-escape, key independence; still disabled. | CH06-REF-01; 1 → runtime safety foundation → compiler integration. |
 | 3 | P1 | Structured diagnostics: source origins, file/line/column, invalid-language versus unsupported categories; messages exist. | CH13-DIAG-01; source provenance + shared preparation + presentation. |
 | 4 | P2 | Advisory warnings: retained non-fatal delivery, publication/retraction, reference-return/performance advice; Clang stderr is not this API. | CH07-WARN-01; coordinate with 3, do not add an emitter-only path. |
@@ -117,6 +117,11 @@ this deferral. This adds no final-catalog gate and does not change read-only ref
 See [the owning debt](15_blocking_debt.md#readonly-instance-fields--ch15-readonly-fields-01).
 
 ## Recommended sequence and first bounded slice
+
+Update 2026-10-22: item 1 is complete through [V-D01](../planning/iteration_mutation.md),
+including runtime/source proofs and measured costs. Item 2 remains separate and
+reference foreach stays disabled. The proposal below is historical and superseded
+for value iteration; it does not reopen the completed implementation.
 
 Start with **1: CH06-ITER-01 policy/ownership design**, then agree **2's runtime
 foundation** before compiler reference-foreach integration. These are the existing

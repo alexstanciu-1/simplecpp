@@ -21,6 +21,22 @@ final class CPP_Initializer_Buffer
 		return $mapping->spelling;
 	}
 
+	/** Boxed tables store native boxed elements; generic containers store substituted physical values. */
+	private static function native_elements(initialization_binding $binding): bool
+	{
+		$definition = Type_Queries::canonical($binding->target())->definition();
+		return ($definition instanceof mixed_semantics) || ($definition instanceof dynamic_semantics);
+	}
+
+	private static function element_type(canonical_type_use $type, initialization_binding $binding,
+		cpp_generation_context $context, CPP_Specializations $engine): string
+	{
+		if (!self::native_elements($binding)) { return self::physical_type($type, $context, $engine, $binding->is_keyed()); }
+		$mapping = CPP_Types::representation($type);
+		CPP_Types::record_dependencies($mapping, $context);
+		return $mapping->spelling;
+	}
+
 	/** Empty initialization still invokes the selected factory, not an assumed default constructor. */
 	public static function empty_entry(cpp_runtime_operation $request, CPP_Specializations $engine): cpp_specialization_entry
 	{
@@ -30,7 +46,7 @@ final class CPP_Initializer_Buffer
 		$factory = CPP_Data_Construction::reference($binding, $context, $engine);
 		$parameters /** Storage<callable_parameter> */ = $binding->factory()->signature()->parameters;
 		$input = object_cast(Type_Queries::canonical($parameters[0]->type), applied_template_type::class);
-		$element = self::physical_type($input->arguments()[0], $context, $engine, $binding->is_keyed());
+		$element = self::element_type($input->arguments()[0], $binding, $context, $engine);
 		// Keep the registered input-view binding, substituting its element's physical representation.
 		$input_binding = Model::$cpp_type_bindings->definition($input->definition()->definition_id());
 		$context->headers[$input_binding->header()] = true;
@@ -54,18 +70,16 @@ final class CPP_Initializer_Buffer
 		return new cpp_specialization_entry($name, $header, $declaration, $implementation, $layout_dependencies);
 	}
 
-	public static function reference(data_construction_node $node, initialization_binding $binding,
-		cpp_generation_context $context): string
+	/** Literal and call-pack consumers supply settled contracts, never synthetic syntax. */
+	public static function reference(initialization_binding $binding, ?canonical_type_use $key_type,
+		canonical_type_use $value_type, cpp_generation_context $context): string
 	{
-		$entries /** Storage<data_entry_node> */ = $node->entries;
-		if ($entries->is_empty()) { throw new \LogicException('Initializer buffer requires nonempty input'); }
 		$request = new cpp_runtime_operation(cpp_runtime_operation_kind::initialize_buffer);
 		$request->initialization = $binding;
 		$request->result = $binding->target();
 		$inputs /** Storage<canonical_type_use> */ = $request->inputs;
-		$first = $entries[0]->require_preparation();
-		if ($first->key_conversion !== null) { $inputs->append($first->key_conversion->target_type); }
-		$inputs->append($first->value_conversion->target_type);
+		if ($key_type !== null) { $inputs->append($key_type); }
+		$inputs->append($value_type);
 		$entry = CPP_Runtime_Operations::reference($request, $context);
 		return 'scpp::internal::' . $entry->name;
 	}
@@ -99,7 +113,7 @@ final class CPP_Initializer_Buffer
 		$input = object_cast(Type_Queries::canonical($parameters[0]->type), applied_template_type::class);
 		$element_type = $input->arguments()[0];
 		CPP_Opaque_Representation::require_native_type($element_type);
-		$element = self::physical_type($element_type, $native_context, $engine, $binding->is_keyed());
+		$element = self::element_type($element_type, $binding, $native_context, $engine);
 		$native_result = self::physical_type($result, $native_context, $engine, true);
 		$mapping = CPP_Types::representation($result, new cpp_generation_context($engine));
 		$name = CPP_Runtime_Operations::name($request);
@@ -112,7 +126,11 @@ final class CPP_Initializer_Buffer
 			CPP_Opaque_Representation::require_native_type($type);
 			if ($position !== 0) { $signature .= ', '; $values .= ', '; }
 			$signature .= 'const void* p' . $position;
-			$values .= '*std::launder(static_cast<const ' . self::physical_type($type, $native_context, $engine, false) . '*>(p' . $position . '))';
+			$value = '*std::launder(static_cast<const ' . self::physical_type($type, $native_context, $engine, false) . '*>(p' . $position . '))';
+			if (self::native_elements($binding)) {
+				$value = CPP_Wrapper_Transport::payload_value($type, $value, false, $engine, $native_context);
+			}
+			$values .= $value;
 		}
 		// Match the ordinary append expression exactly: lvalue for list entries, aggregate prvalue for keyed entries.
 		if ($binding->is_keyed()) { $values = $element . '{' . $values . '}'; }

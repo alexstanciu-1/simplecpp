@@ -1,20 +1,23 @@
 # Async suspension and strict tasks integration
 Doc Status: planning
 
-Active approved goal: S12 and V-R02. Baseline was 55/64 original issues closed.
-The S12 closeout below advances this to 56/64; V-R02 is partial and remains active.
+Completed approved goal: S12 and V-R02. Baseline was 55/64 original issues closed.
+Final acceptance closes both, reaching 57/64 (89.0625%), a gain of 3.125 percentage points.
 
 ## Current acceptance status — 2026-10-21
 
 | Requirement | Current evidence and remaining work |
 | --- | --- |
 | S12 suspension, sequencing, cleanup and restrictions | Closed by the source/runtime/retained proofs below. |
-| Runtime-owned task types, controls and all 21 API names | Bounded source paths exist; final complete API/opt-in audit remains. |
+| Runtime-owned task types, controls and all 21 API names | All 21 names and separate mixed/dynamic batch handles are installed; the acceptance inventory records signature boundaries and source/runtime proofs. Module opt-in is verified. |
 | Typed vector/hash submissions and placement | Value/void work, contexts, prefilled/cross-carrier targets, independent int/string keys and inferred nullable keys have default-prelowered proof. Explicit nullable-string targets also have success/error/omission proof. |
 | Error callbacks and publication | Replacement/omission, coordinator dispatch, ordered publication context/options and unordered synchronization proved in the bounded forms below. |
-| Transfer restrictions | Typed payload and capture rejection proved. Boxed input and boxed result-family admission still require runtime audit and source integration; do not broaden transfer permission implicitly. |
-| Lifecycle acceptance | Native concurrency/cancellation/timeout/shutdown evidence exists. Production-source handled/unhandled timeout passes; cancellation, repeated-error joins and shutdown/module-selection audit remains. |
-| Final closure | Still 56/64 original issues closed. V-R02 remains partial until the remaining scope is proved. |
+| Transfer restrictions | Typed payload/capture rejection and bounded scalar boxed task admission proved. Literal/index transport now passes fixture-free source tests; capture permission is unchanged. |
+| Lifecycle acceptance | Native lifecycle evidence and production-source timeout, active cancellation, shutdown/error precedence and module opt-in pass. The subsequent V-D06 goal now proves source repeated-error joins for pool sizes 0/2; see finally_value_transfers.md. Earlier blocked checkpoints remain historical. |
+| Final closure | Complete: 57/64 original issues closed. Boxed custom placement is explicitly unsupported in v0.2; separate source exception transport is not claimed. |
+
+The [task acceptance inventory](task_acceptance_inventory.md) maps installed
+signature groups to proof owners and remaining gates.
 
 Historical checkpoints below retain their then-current boundaries; they do not
 supersede this summary. The nullable identity/prelowering issue remains separate.
@@ -967,3 +970,192 @@ kind explicitly; the failing assertion remains archived.
 
 [Boxed adapter evidence](task-boxed-adapters-evidence.tar.gz), SHA-256:
 `61226d6f94f0b7c63b3e1314b271d5f703b32cbcefeb37d4252c8e76195d19b4`. Final source hashes verified; no full matrix or native compiler rebuild.
+
+## Boxed task source admission checkpoint — 2026-10-21
+
+Installed 16 mixed/dynamic run/start signatures (with/without worker context and
+error handler), a runtime-owned `task_dynamic_batch`, and five dynamic lifecycle
+control overloads. A named `boxed_results` generic contract resolves its family
+once at registration and checks selected inferred results during shared preparation.
+It accepts canonical bool/int/float/string, void and the matching boxed family;
+containers, wrappers, fixed-width types and the opposite family reject before
+publication. Existing exact replacement-or-void requirements constrain handlers.
+General payload and capture-transfer classification is unchanged.
+
+Dev002 default-prelowered evidence:
+
+- `20261021-task-boxed-source-03`: all 64 source execution cases passed, cold/warm,
+  covering both families, run/start, worker contexts, six result forms and nested
+  input/worker-result rejection. The retained task failed due to a fixture's
+  `vector<int>=>` tokenization; the corrected fixture passes in the later runs.
+- `...-04`: all 24 replacement/omission/nested-handler cases and retained checks
+  passed. Five malformed metadata cases, eight invalid result types, rejection /
+  repair / replay and family/void edits versus fresh publication are covered.
+- `...-05`: dynamic caller-mutation snapshots, repeated joins, done/status/progress
+  and cancellation after completion passed. This is not active-cancellation proof.
+- `...-06`: mixed caller-variable replacement snapshots and the same controls
+  passed. Native mixed mutation evidence remains in the prior runtime checkpoint.
+- `20261021-task-boxed-typed-regression`: existing typed task metadata rejection,
+  repair/replay and placement edits versus fresh publication passed.
+
+Thus 90 distinct execution cases passed across the focused runs; these are not a
+full matrix or native compiler proof. All successful warm builds compiled/linked
+zero files, and publication manifests forbid application templates. Native fixture
+functions supply input tables and read/mutate dynamic values; production task
+metadata, callbacks, handle transport and lifecycle calls are used unchanged.
+
+Separate general boxed-operation blockers exposed by these tests:
+
+1. `...-01`: mixed literal initialization passes concrete wrapper elements to a
+   native `initializer_list<mixed_t>`; dynamic scalar literal construction lacks
+   an adapter. Both fail before task execution.
+2. `...-02`: dynamic index read unwraps the receiver but leaves its mixed key in
+   concrete storage, so the native `null_index_read` call cannot bind.
+3. `...-05`: mixed index store similarly leaves key/value arguments in concrete
+   storage while unwrapping the receiver.
+
+These failures remain archived and unfixed; successful fixture-backed task checks
+do not close them. Repair belongs to general initializer/conversion/runtime-operation
+transport owners and must not be hidden in task-specific adapters. Source boxed
+construction/index usability and the final lifecycle/module/API audit remain open.
+V-R02 remains partial and overall progress remains 56/64 (87.5%).
+
+[Evidence archive](task-boxed-source-evidence.tar.gz), SHA-256:
+`f5258050e0c5135cd3ea3998533beea553001aa843def5b9c64b4a29190da939`.
+The archive preserves the failed probes, corrected fixtures, logs, publication
+manifests and final verified source hashes, including the initial contracts-only
+run that lacked the dev002 PHP PATH setup.
+
+## Production lifecycle acceptance checkpoint — 2026-10-21
+
+Nine additional source execution cases passed on dev002 with default prelowering,
+cold/warm builds and zero warm compile/link work:
+
+- Active cancellation with pool sizes 0 and 2: main observes worker status before
+  cancelling; retained progress observes stop requested, fewer than all 100 items
+  completed, zero active workers and a completed batch. The worker uses a bounded
+  delay; this is source integration evidence, supplementing the deterministic native
+  cancellation proof, not a scheduling/timing guarantee.
+- Dropped handles with pool sizes 0 and 2: main prints before delayed work, and
+  generated cleanup joins the work before process exit.
+- Unhandled background errors with both pool settings report at shutdown; when
+  main also fails, its division error retains precedence over the worker modulo error.
+- Publication caps batches at one item, reports three published items/three batches,
+  and exposes all eight measurement APIs with nonnegative timing/counter values.
+
+The metadata audit checks all 21 free API names and task build requirements.
+Separate fresh processes prove task names absent without opt-in and available with
+opt-in; changing startup catalogs after compilation rejects without changing output.
+Initial audit attempts incorrectly treated compiler reset as permission to change
+startup metadata; those harness failures are preserved, and no compiler change was
+made. Final corrected module checks pass in `...-04` and `...-05`.
+
+The repeated-error source probes remain **blocked**, not accepted tests: both fail
+at publication with `prelower_templates: throw operation requires concrete transport`.
+`CPP_Syntax::generate_protected` also explicitly rejects catch transport in this
+mode. The harness records these as `known_blockers`; its successful expected-rejection
+checks do not prove repeated-error source behavior. Native repeated joins/errors
+remain independently verified in the earlier runtime checkpoint. This is the
+previously deferred general exception-transport prerequisite, not a task scheduler
+failure, and has not been silently folded into task implementation.
+
+[Evidence archive](task-lifecycle-acceptance-evidence.tar.gz), SHA-256:
+`6640f8eeaaeba8a2241425115eaba22d42142f2d3ee394b8e4c584c95c368784`.
+Includes `20261021-task-lifecycle-acceptance-01` through `-05`, source fixtures,
+publication manifests, success/failure logs and final source hashes.
+
+Remaining completion audit: reconcile documented signature boundaries against the
+metadata and current evidence; keep boxed initializer/index and source exception
+transport gaps explicit. V-R02 remains partial; overall closure is 56/64.
+
+## Approved boxed prelowering repair — 2026-10-21
+
+The user authorized repairs through the existing initializer, conversion and
+concrete-index owners; exception transport remains separate. No runtime changes.
+
+- Boxed scalar/null construction now consistently selects the existing compiled
+  conversion operation. Shared preparation still owns the admitted scalar domain.
+- Boxed initializer buffers use native boxed elements, including keyed entries;
+  generic vector/hash buffers retain substituted concrete elements.
+- Boxed reads/writes adapt all native operands and preserve owned read results.
+- Nested store/append executes as one compiled path operation, reusing
+  `CPP_Index_Write::resolve_path` for validation before mutable descent. No native
+  child reference is reinterpreted as a concrete wrapper reference or allowed to
+  escape. Source key/RHS evaluation remains in the existing sequencing owner.
+
+Dev002 `20261021-boxed-prelower-02` passed **100 source execution cases** without
+native input/access fixtures, including all 90 task cases and ten literal/index
+cases. `...-03` passed **12 additional cases**: initializer order, mixed copy-on-write,
+dynamic sharing, nested append, key/RHS order, root replacement during RHS, and
+ordinary/boxed typed-container initializer regressions. Both runs used default
+prelowering, verified template-free application manifests and zero warm compile/link
+work. Retained tests additionally cover nested mixed/dynamic edits and typed
+initializer edits versus fresh output, plus admission rejection/repair/replay.
+
+`...-01` preserves the initial nested-write failure: per-step helpers attempted to
+return native child references as wrapper references. The final whole-path helper
+repairs that ownership error; no runtime algorithm or source semantics changed.
+Indexed updates/compounds, broader keyed probes and additional extraction domains
+are not claimed by this store/append/read slice.
+
+[Evidence archive](boxed-prelower-evidence.tar.gz), SHA-256:
+`f9c18ead4f096e2544d3ee5792b27d12396ba5efc7a6b7cde9a72a01eed746d1`.
+Includes original failures, final fixture-free sources/module descriptors, logs,
+publication manifests and verified source hashes. The earlier fixture-backed
+checkpoint remains historical evidence, not the final source-acceptance boundary.
+
+The bounded boxed-source prerequisite is complete. The final goal audit must
+reconcile the explicitly separate source exception restriction and signature scope;
+V-R02 is not marked closed by this checkpoint.
+
+## Final evidence audit and remaining scope decision — 2026-10-21
+
+All 33 SHA-256 archive references in this report matched their committed files.
+The audit inspected saved summaries and execution/publication logs, including
+S12's disk rejection/repair/retirement/fresh proof, rather than treating metadata
+rows or historical prose as proof. A remaining weak runtime check was strengthened:
+`verify_boxed_family` now starts actual failing workers and actual failing handlers,
+then joins each twice, for mixed/dynamic and pool sizes 0/2. This replaces reliance
+on manually injected failure state for the full boxed start/join route (the earlier
+low-level lifecycle test remains). Dev002 ASan/UBSan and leak checking pass.
+The initial native probe used the source helper name rather than the provider's
+`configure_default_worker_pool`; that authoring failure is preserved.
+
+[Final runtime audit evidence](task-final-audit-evidence.tar.gz), SHA-256:
+`35fbd114ea73d5d59f25c755da31c98b565a663a25a4a02120f546462b3ffab3`.
+
+Source throw/catch/finally prelowering remains explicitly separate, as agreed;
+no claim is made that the source repeated-error fixture executes. Native error
+retention plus source unhandled-error propagation are distinct proved facts.
+
+One acceptance ambiguity still needs a user decision: typed vector/hash inputs
+support custom index callbacks and prefilled targets; boxed mixed/dynamic inputs
+currently expose null index/target placeholders only. The normative general
+placement prose does not explicitly exclude boxed inputs. The earlier bounded
+boxed snapshot approval did not settle all placement/result-family combinations.
+Consequently this audit does **not** silently classify boxed custom placement as
+an intentional language restriction or declare V-R02 complete. The user has been
+asked whether to retain it in this goal for design/implementation or explicitly
+defer it and close the verified bounded scope. No implementation is authorized
+by the audit itself, and V-R02 remains partial pending that decision.
+
+
+## Acceptance closeout — 2026-10-21
+
+The user explicitly chose to keep boxed custom index callbacks and prefilled
+result targets unsupported in v0.2, and to finish this goal without that extension.
+Both `v0.1.77` and `release/0.1.78` have identical relevant task code: boxed
+run/start accept null index/target slots only. Their implementation summary limits
+boxed input to base calls and custom placement to typed vector/hash inputs.
+The normative task contract now makes this boundary explicit. The earlier open
+scope question and unadopted design proposal remain historical evidence.
+
+The acceptance inventory reconciles all 21 names and the approved signature groups
+with dev002 default-prelowered source, runtime, lifecycle and retained/fresh proofs.
+The preceding checkpoint audited 33 archive references; this documentation-only
+closeout rechecked all 34 references, including the final runtime audit archive,
+without rerunning compilation. S12 and
+V-R02 are implemented and verified within the agreed scope: 57/64 issues resolved,
+zero partial and seven open. Source exception transport, wider project workflow
+proof and transfer domains excluded above remain explicit; no passing source
+throw/catch proof, exhaustive generic-domain proof or full matrix is inferred.

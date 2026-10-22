@@ -1,6 +1,47 @@
 # Test runners
 Doc Status: supporting
 
+[S02/V-R08 closeout](planning/strict_gui_closeout.md): run `tests/s02_prelower.py`
+for the six declaration-only companions; `tests/ui_webview_enabled.py --integration`
+for real Linux GUI/native/source/retained/disabled-provider acceptance; and
+`tests/ui_webview_selection.py` for same-cache SDK transitions. Paths are under
+`compiler/my-try/`; each command takes `--results FRESH_DIRECTORY`. GUI checks need
+GTK/WebKitGTK development packages, Xvfb and D-Bus. `--retained-source EXISTING_HTML_CASE`
+reruns retained acceptance independently. Do not equate disabled-provider success
+with enabled GUI proof. Compiler/runtime gaps are listed separately in the report.
+
+[V-D01 mutation/lifetime acceptance](planning/iteration_mutation.md) runs on dev002:
+`iteration_mutation_runtime.py`, `iteration_mutation_prelower.py`,
+`iteration_mutation_retained.py`, and `iteration_mutation_cost.py` under
+`compiler/my-try/tests/`, each with `--results FRESH_DIRECTORY`. The source harness
+also accepts repeated `--case NAME` and `--sanitize`; runtime instrumentation includes
+the runtime object. These are focused default-prelowering proofs, not a native
+compiler rebuild or full matrix.
+
+The [read-only owned pack proof](planning/readonly_packs.md) runs on dev002 with
+`python3 compiler/my-try/tests/readonly_pack_prelower.py --results FRESH_DIRECTORY`.
+It covers canonical scalar calls, value snapshots without caller aliases, read-only
+mutation/escape gates, cleanup/sanitizers and retained/cold-warm publication. Optional
+`--baseline PINNED_CHECKOUT` records v0.1 observations without equating recording
+success with executable support.
+
+The [reference-default proof](planning/reference_defaults.md) uses
+`python3 compiler/my-try/tests/reference_default_prelower.py --results FRESH_DIRECTORY`
+on dev002: explicit binding versus omitted ownership, alias/snapshot behavior,
+lifetime sanitizers, exclusion gates and retained/cold-warm publication.
+`python3 compiler/my-try/tests/writable_reference_default_prelower.py --results FRESH_DIRECTORY`
+adds fresh mutable defaults, explicit write-back and reference-result lifetime gates.
+Its optional `--baseline PINNED_CHECKOUT` records 24 v0.1 observations; recording
+success is distinct from source support. Both suites retain their exclusion gates.
+
+
+The [scalar value-pack proof](planning/value_pack_transport.md) runs with
+`python3 compiler/my-try/tests/value_pack_prelower.py --results FRESH_DIRECTORY`
+on dev002: default-prelowered scalar source calls, snapshots/cleanup, five sanitizer
+cases, initializer controls and retained/cold-warm publication. Wider packs and
+other variadic bridges remain outside this proof.
+
+
 Async checks use the shared runner on dev002:
 `python3 compiler/my-try/tests/async_execution.py --results FRESH_DIRECTORY` covers
 default-prelowered cold/warm execution, four production sanitizer cases, an ordinary
@@ -431,8 +472,18 @@ production concrete builder checks the complete transitive template-free header
 closure. The accompanying PHP contracts check canonical aliases, source shadowing,
 invalid roots, ancestry removal and incremental repair/fresh agreement.
 
+`python3 compiler/my-try/tests/exception_prelower.py --results FRESH`
+verifies V-D06 with default-prelowered cold/warm builds, seven focused sanitizer
+cases, saved value/exception state, async cleanup, loop transfers and disk
+rejection/repair/fresh parity. `--case NAME` selects a focused subset. The native
+identity fixture observes pointer identity only; application semantics stay in PHS.
+The task lifecycle runner additionally executes repeated-error joins for pool 0/2.
+See [scope and dated evidence](planning/finally_value_transfers.md). The older
+`prelower_contracts.py` suite currently stops at its stale callable-storage ordinary
+spelling expectation; that failure is separate, not a passing V-D06 proof.
+
 `python3 compiler/my-try/tests/records.py --suite finally --no-pch --results FRESH`
-checks scalar/void delayed returns, nested exception propagation/replacement, cleanup
+checks value/void delayed returns, nested exception propagation/replacement, cleanup
 order, local versus crossing transfers, source closure isolation and incremental
 rejection/repair. It compiles generated programs; no native compiler rebuild is implied.
 
@@ -2019,3 +2070,22 @@ static/shared CMake configurations, aggregate/direct/core consumers and shared
 string-pool identity. Optional process/regex executions and MySQL/legacy adapter
 compilation are included; no database connection test is implied. Run on dev002.
 See [results and boundaries](planning/callback_composition.md).
+
+Project IO and concrete presence checks (dev002, default prelowering):
+
+- `python3 compiler/my-try/tests/s02_prelower.py --project --results FRESH`
+- `python3 compiler/my-try/tests/project_io_selection.py --results FRESH`
+- `python3 compiler/my-try/tests/handle_null_prelower.py --results FRESH`
+- `python3 compiler/my-try/tests/handle_null_retained.py --results FRESH`
+- `python3 compiler/my-try/tests/ui_webview_enabled.py --results FRESH`
+
+Use a separate fresh directory for each command. GUI cases require GTK/WebKitGTK,
+Xvfb and dbus. See [scope and evidence](planning/project_io_handle_presence.md).
+
+Error-condition transport (dev002): run
+`python3 compiler/my-try/tests/error_condition_prelower.py --results FRESH`, then
+`python3 compiler/my-try/tests/error_condition_retained.py --results OTHER_FRESH`.
+The first probes native runtime behavior before default-prelowered source execution;
+`--baseline` instead requires the historical publication rejection. GUI regressions
+are `ui_webview.py` with isolated disabled SDK discovery and `ui_webview_enabled.py`
+with the installed SDKs. See [scope and exact evidence](planning/error_conditions.md).

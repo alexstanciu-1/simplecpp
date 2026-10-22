@@ -16,6 +16,7 @@ final class CPP_Runtime_Operations
 	{
 		// Preserve the existing identity seed while retiring the old indexed-write fields.
 		$key = $request->kind_name() . ':' . $request->spelling . ':store';
+		if ($request->enum_helper !== null) { $key .= ':' . CPP_Compiler_Functions::identity($request->enum_helper); }
 		if ($request->ownership_observation !== null) {
 			$observation /** ownership_observation_kind */ = $request->ownership_observation;
 			$key .= ':' . Ownership_Observation_Kind_Name::text($observation);
@@ -118,7 +119,9 @@ final class CPP_Runtime_Operations
 			|| ($request->kind === cpp_runtime_operation_kind::output)
 			|| ($request->kind === cpp_runtime_operation_kind::runtime_call)
 			|| ($request->kind === cpp_runtime_operation_kind::take)
+			|| ($request->kind === cpp_runtime_operation_kind::error_condition)
 			|| ($request->kind === cpp_runtime_operation_kind::wrapper_presence)
+			|| ($request->kind === cpp_runtime_operation_kind::wrapper_isset)
 			|| ($request->kind === cpp_runtime_operation_kind::property_read)
 			|| ($request->kind === cpp_runtime_operation_kind::property_write)
 			|| ($request->kind === cpp_runtime_operation_kind::property_target)
@@ -190,7 +193,10 @@ final class CPP_Runtime_Operations
 					. '::new(destination) ' . $native_result . '(' . $expression . '); }, addresses);';
 			}
 		}
-		$prototype = ($request->kind === cpp_runtime_operation_kind::exception_throw ? '[[noreturn]] ' : '') . $output . ' ' . $name . '(' . $signature . ')';
+		$never_returns = ($request->kind === cpp_runtime_operation_kind::exception_throw)
+			|| ($request->kind === cpp_runtime_operation_kind::match_failure);
+		$prototype = ($never_returns ? '[[noreturn]] ' : '')
+			. $output . ' ' . $name . '(' . $signature . ')';
 		$header = 'specializations/' . $name . '.hpp';
 		$declaration = "#pragma once\n" . CPP_Artifacts::includes($declaration_headers, '')
 			. 'namespace scpp::internal { ' . $prototype . "; }\n";
@@ -231,15 +237,20 @@ final class CPP_Runtime_Operations
 	private static function native_operation(cpp_runtime_operation $request, array $arguments /** vector<string> */,
 		cpp_generation_context $context): string
 	{
+		if ($request->kind === cpp_runtime_operation_kind::match_failure) {
+			$context->headers['stdexcept'] = true;
+			return 'throw std::runtime_error("Unhandled match expression")';
+		}
 		if ($request->kind === cpp_runtime_operation_kind::exception_throw) {
 			$context->headers['lang/php/php_exceptions.hpp'] = true;
 			return 'throw ::scpp::php::make_thrown(' . $arguments[0] . ')';
 		}
 		if ($request->kind === cpp_runtime_operation_kind::exception_catch) {
 			$context->headers['lang/php/php_exceptions.hpp'] = true;
-			$result /** canonical_type_use */ = $request->result;
-			$payload = CPP_Types::payload($result);
+			$type /** canonical_type_use */ = $request->result;
+			$payload = CPP_Types::payload($type);
 			CPP_Types::record_dependencies($payload, $context);
+			// Called only inside an active catch. Foreign failures resume untouched.
 			return '([]() { try { throw; } catch (const ::scpp::php::thrown_object& caught) { '
 				. 'auto value = ::scpp::php::catch_as<' . $payload->spelling . '>(caught); '
 				. 'if (!value) { throw; } return value; } }())';
@@ -271,6 +282,18 @@ final class CPP_Runtime_Operations
 			$context->headers['scpp/weak_p.hpp'] = true;
 			return $request->ownership_observation === ownership_observation_kind::derive_weak
 				? '::scpp::weak(' . $arguments[0] . ')' : '(' . $arguments[0] . ').lock()';
+		}
+		if ($request->kind === cpp_runtime_operation_kind::enum_helper) {
+			$facts /** prepared_enum_call */ = $request->enum_helper;
+			return CPP_Compiler_Functions::native_expression($facts, $arguments[0], $context);
+		}
+		if ($request->kind === cpp_runtime_operation_kind::error_condition) {
+			$context->headers['lang/php/operators/conditional/condition_truthiness.hpp'] = true;
+			return 'scpp::php::condition_truthy(' . $arguments[0] . ')';
+		}
+		if ($request->kind === cpp_runtime_operation_kind::wrapper_isset) {
+			$context->headers['lang/php/operators/isset/isset.hpp'] = true;
+			return 'scpp::php::isset(' . $arguments[0] . ')';
 		}
 		if ($request->kind === cpp_runtime_operation_kind::wrapper_presence) {
 			return '(' . $arguments[0] . ').has_value()';
@@ -425,12 +448,11 @@ final class CPP_Runtime_Operations
 		$engine = $context->specialization_engine;
 		if ($engine === null) { return false; }
 		if ($decision->operation === conversion_operation::boxed_wrap) {
-			return (Type_Queries::canonical($decision->target_type)->definition() instanceof mixed_semantics)
-				&& ($decision->source_type->matches(Language_Types::integer(Model::$language_scope))
-					|| $decision->source_type->matches(Language_Types::string_type(Model::$language_scope)));
+			return true;
 		}
 		if ($decision->operation === conversion_operation::boxed_extract) {
-			return (Type_Queries::canonical($decision->source_type)->definition() instanceof mixed_semantics)
+			$source = Type_Queries::canonical($decision->source_type)->definition();
+			return (($source instanceof mixed_semantics) || ($source instanceof dynamic_semantics))
 				&& ($decision->target_type->matches(Language_Types::integer(Model::$language_scope))
 					|| $decision->target_type->matches(Language_Types::string_type(Model::$language_scope)));
 		}
@@ -486,13 +508,32 @@ final class CPP_Runtime_Operations
 		return self::invoke($request, [$operand], $context, '');
 	}
 
+	/** Observe the prepared error state; transport does not grant other truthiness contracts. */
+	public static function error_condition(canonical_type_use $type, string $expression, cpp_generation_context $context): string
+	{
+		return self::boolean_observation($type, $expression, cpp_runtime_operation_kind::error_condition, $context);
+	}
+
 	public static function wrapper_presence(canonical_type_use $type, string $expression, cpp_generation_context $context): string
 	{
-		$request = new cpp_runtime_operation(cpp_runtime_operation_kind::wrapper_presence);
+		return self::boolean_observation($type, $expression, cpp_runtime_operation_kind::wrapper_presence, $context);
+	}
+
+	/** Sentinel-aware probe presence is separate from checked payload availability. */
+	public static function wrapper_isset(canonical_type_use $type, string $expression, cpp_generation_context $context): string
+	{
+		return self::boolean_observation($type, $expression, cpp_runtime_operation_kind::wrapper_isset, $context);
+	}
+
+	private static function boolean_observation(canonical_type_use $type, string $expression,
+		cpp_runtime_operation_kind $operation, cpp_generation_context $context): string
+	{
+		$request = new cpp_runtime_operation($operation);
 		$request->result = Model::$type_catalog->registry()->use(Model::$type_catalog->canonical('bool')->type_id());
 		$inputs /** Storage<canonical_type_use> */ = $request->inputs;
 		$inputs->append($type);
-		return '(' . self::invoke($request, [$expression], $context, '') . ').native_value()';
+		$operand = 'static_cast<const ' . CPP_Declarations::type($type, $context) . '&>(' . $expression . ')';
+		return '(' . self::invoke($request, [$operand], $context, '') . ').native_value()';
 	}
 
 	/** Borrow within the full expression, including any temporary that owns a nested reference. */

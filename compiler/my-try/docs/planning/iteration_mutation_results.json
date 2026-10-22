@@ -1,0 +1,98 @@
+{
+  "date": "2026-10-22",
+  "host": "alex-ai@dev002.travelfuse.ro",
+  "checkout": "/home/alex-ai/curl/20261020-work",
+  "status": "passed",
+  "default_prelowering": true,
+  "native_compiler_rebuilt": false,
+  "full_matrix": false,
+  "evidence_root": "/home/alex-ai/curl",
+  "runs": {
+    "runtime_sanitized": "20261022-iteration-mixed-sanitized-01",
+    "source_final": "20261022-iteration-final-01",
+    "source_lifetime_sanitized": "20261022-iteration-lifetime-01",
+    "retained": "20261022-iteration-retained-01",
+    "cost": "20261022-iteration-cost-final"
+  },
+  "counts": {
+    "source_cases": 46,
+    "existing_contract_suites": 2,
+    "sanitized_lifetime_cases": 7,
+    "retained_publications": 6
+  },
+  "cost": {
+    "method": "Clang -O2, median of seven samples, old borrowed and protected vector ranges in one binary; warmed registration state; focused microbenchmark only",
+    "sizes_bytes": {
+      "vector_int": 40,
+      "hash_int": 168,
+      "mixed": 40,
+      "dynamic": 40
+    },
+    "nothrow_move_all_four": false,
+    "copy_counts_1024_entries": {
+      "loop_entry": 0,
+      "current_value": 1,
+      "first_append": 1023,
+      "second_append": 0
+    },
+    "nanoseconds_per_loop": [
+      {
+        "entries": 0,
+        "borrowed": 0.315211,
+        "protected": 7.90379
+      },
+      {
+        "entries": 1,
+        "borrowed": 0.702153,
+        "protected": 9.00736
+      },
+      {
+        "entries": 16,
+        "borrowed": 3.08627,
+        "protected": 30.056
+      },
+      {
+        "entries": 1024,
+        "borrowed": 151.903,
+        "protected": 1678
+      },
+      {
+        "entries": 65536,
+        "borrowed": 8426.81,
+        "protected": 90231
+      }
+    ]
+  },
+  "verified_source_sha256": {
+    "compiler/my-try/05_backend/cpp/concrete_index.php": "1797ef558dcc493587c217701322eaee8df73659b4814568883026fe95a01713",
+    "compiler/my-try/05_backend/cpp/keyed_paths.php": "0cf594508faa17ef24d273b3d872dc2cd350984ec4a59b2f6e3481c416dbe560",
+    "compiler/my-try/05_backend/cpp/runtime_operations.php": "2b92d4ec3d7fe03e730947fd9f9b40cb099e72348660ce590bb06edc9498d289",
+    "compiler/my-try/05_backend/cpp/syntax.php": "ffba5ba2ce689556e7274fd72039049d018d7e227100b7a21b517ac2f6912816",
+    "compiler/my-try/tests/iteration_mutation_cost.cpp": "efeefcbfa3fb004bc9e0252903d300b1a07a7c6de72534761334b52371fc5cd4",
+    "compiler/my-try/tests/iteration_mutation_cost.py": "d78b67402a1b35f38c5c432555bca761e09827abcf0c6ee6ab08236e6da14a64",
+    "compiler/my-try/tests/iteration_mutation_prelower.py": "037523bc6abd1bd6a51837b64f4394fe22c1e787ba7a9dbf65c4e1d773b86c2b",
+    "compiler/my-try/tests/iteration_mutation_retained.php": "652db8044e8725c03f2b3bfb893d6a3499b219d44fbcca6403e3406bdec04661",
+    "compiler/my-try/tests/iteration_mutation_retained.py": "f881ac5c975060819c0eb2afc2e92deffdd3e979bdaf94a0d4b3eb262435382b",
+    "compiler/my-try/tests/iteration_mutation_runtime.cpp": "0743775739e05aba0df26970253443f6dd1f5b35a6392d537b4fba1da7297fb5",
+    "compiler/my-try/tests/iteration_mutation_runtime.py": "19c7c0b4490527f73a548cdb43c4e35f6fd0455f15b62ada5a47354342bdbb0c",
+    "runtime/include/lang/php/support/php_value.hpp": "1c3e62d53fe7a10e5d220e7fd939b38f3dda43d361569fd7eb8b4777ab710dea",
+    "runtime/include/scpp/bound_iteration.hpp": "8e0abf831f3a5306f4bd38f8260809a1f6dfcee7eed44cad45b64cb7c801f595",
+    "runtime/include/scpp/iteration_preservation.hpp": "f6537c023cb679fcca9e3262631296c4055ae6f2107e289ac1fc1441a3895a5c",
+    "runtime/include/scpp/support/dynamic_value.cpp": "0990f9677e0a3a0d57afb0a76fbdbc573cbabc22e823038f73f293e96c46bb3c",
+    "runtime/include/scpp/support/dynamic_value.hpp": "77b88faa87efe29b1aa9a18b6580d6de704e2bb8e386fe35c453d933303892af",
+    "runtime/include/scpp/support/hash_t.hpp": "641d2cb233f78f582b18b99eec7bde0ad006672665a52a36c876cf08c91cc3a0",
+    "runtime/include/scpp/support/mixed_t.cpp": "3f05dfa93ed1027a16b2c78c7d5b81e1bcbc67bef4b2aee407d0d3bfbdaa6716",
+    "runtime/include/scpp/support/mixed_t.hpp": "689d64d681bb3dc9040625154a7a0a4052289cbfe85be630d4cc911c31bedf48",
+    "runtime/include/scpp/table_iteration.hpp": "6ef050548e0c0f95a450803e53c6948ccf700203f7925f4ae13a637868faa720",
+    "runtime/include/scpp/value_iteration.hpp": "5b5672b412af3480ef7cf57b6a8b4d51722eab0f325df1077947ce85941fe873",
+    "runtime/include/scpp/vector_iteration.hpp": "c5e237d7c86061e1b886c90158d8736b3cd179a4ff9bffde25e4fa666766072e",
+    "runtime/include/scpp/vector_t.hpp": "387598e83f1e6e7a1d98af1bb2dbfd746d90bb3e30def59fe40e8712ef81ae15"
+  },
+  "exclusions": [
+    "reference foreach",
+    "escaping element references",
+    "concurrent mutation",
+    "collection callback policy",
+    "arbitrary native storage mutation"
+  ]
+}

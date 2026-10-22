@@ -3,6 +3,7 @@ namespace scpp\compiler;
 
 // Host adapter only: project JSON/policies stay with the existing project service owner.
 require_once dirname(__DIR__, 3) . '/bin/project_services.php';
+require_once __DIR__ . '/runtime_build.php';
 
 final class Project_Compilation
 {
@@ -31,7 +32,9 @@ final class Project_Compilation
 			throw new \RuntimeException('The v0.2 project compiler requires runtime.languages.php.profile=strict');
 		}
 		$modules = array_values(array_unique(array_merge(['core', 'strings'], $this->config['runtime']['modules'])));
-		Compiler_Lifecycle::configure_runtime(Runtime_Catalog_Loader::load(dirname(__DIR__, 3) . '/runtime/metadata/modules', $modules));
+		$metadata = Runtime_Catalog_Loader::load(dirname(__DIR__, 3) . '/runtime/metadata/modules', $modules);
+		Host_Runtime_Build::resolve($metadata);
+		Compiler_Lifecycle::configure_runtime($metadata);
 		$inputs = new Storage();
 		foreach ($this->contexts as $root => $context) {
 			if ($context['config']['libraries'] !== []) { throw new \RuntimeException('Native library project integration remains outside the v0.2 project slice'); }

@@ -1,28 +1,67 @@
 # Overall discovered-issue repair progress
 Doc Status: supporting
 
-Snapshot: 2026-10-21, after [V-L07 bounded completion](vl07_completion.md) and
+Snapshot: 2026-10-22, after [V-L07 bounded completion](vl07_completion.md) and
 [V-L06 / S04 closeout](float_identity.md) and [V-L11 / V-D14 text](carrier_text.md), followed by [S06 conditionals](s06_unbraced_conditionals.md) and [S07 predicates](s07_mixed_predicates.md). The [S09 search](s09_byte_search.md) and [replacement](s09_substr_replace.md) slices are complete. The [closure batch](closure_batch.md) closes S09-B1, V-R07 and V-H10; the [regex batch](regex_replacement.md) also closes V-R04 and V-R09. The [platform/alias batch](platform_alias.md) closes V-D09 and V-D12. The [boxed/selection batch](boxed_selection.md) closes V-L09 and V-L10. The [compact-layout batch](compact_layout_shifts.md) now closes V-L01 and V-L02, plus supplementary BS-R01. The [callback/composition batch](callback_composition.md) closes V-R05 and V-R11. The [tokenizer/IO batch](tokenizer_io.md) closes S11 and S13 with default prelowering verified. The [strict curl batch](curl_integration.md) closes V-R03 and V-E02. The [debug/closure batch](scalar_debug_closure_reconciliation.md) implements S08 and reconciles S05 as an intentional v0.2 restriction. The [project/startup batch](project_startup_metadata.md) implements V-P01 and reconciles V-D10. The [checked span/hash batch](span_hash.md) implements S10 and V-R06. The [verification environment batch](verification_environment.md) reconciles V-E01 and closes V-E03 with a real isolated database proof. The [trait/ownership batch](trait_ownership.md) closes V-D03 and V-D04. The [collection/advisory batch](collection_advisories.md) closes V-D11 and V-D15. This covers all 64 original entries in
 [the issue ledger](language_verification_issues.json), including deferred legacy
 syntax and policy/design issues. Operator signatures are not separate closed issues.
 
 | Status | Issues |
 | --- | ---: |
-| Implemented or already repaired (including harnesses), then verified | 53 |
-| Contract/environment reconciled and verified | 3 |
-| Partially implemented and verified | 1 |
-| Other issues not yet closed | 7 |
+| Implemented or already repaired (including harnesses), then verified | 59 |
+| Contract/environment/strict-scope reconciled and verified | 5 |
+| Partially implemented and verified | 0 |
+| Other issues not yet closed | 0 |
 | Total | 64 |
 
-Resolved: **56/64 = 87.5%** (by issue count). This is not an
-engineering-effort estimate. The current async/tasks goal has closed S12 (+1.5625 points so far); V-R02 is partial. Its remaining callback/transfer work must pass before the goal reaches the intended +3.125 points. S05 does not certify explicit callable storage under default prelowering. Remaining architecture/runtime/project issues can be
+The [V-R08 batch](ui_webview_integration.md) implements all 24 UI/WebView APIs.
+The subsequent [enabled Linux acceptance](strict_gui_closeout.md) closes its remaining
+GTK/WebKitGTK execution gate on dev002 with default prelowering, real replies,
+snapshots/lifetime, retained recovery and same-cache SDK selection transitions.
+Other platforms remain separate. The [error-condition repair](error_conditions.md)
+closes supplementary VR08-H01; the subsequent
+[project IO/presence repair](project_io_handle_presence.md) closes S02-H01 and VR08-H02. The V-D07/V-D08 source audit
+does not close either issue. The subsequent [enum-wrapper slice](enum_wrappers.md)
+implements nullable/structured Result enum payloads and makes V-D08 partial.
+The subsequent [helper/presence transport slice](enum_helper_transport.md) repairs
+VD08-H01/H02 for three helpers and plain enum wrappers. Wider extensions and
+indexed/general probes remain separate. The [sentinel-carrier slice](enum_sentinel_carriers.md)
+adds falseable/boolean Result enum state transport and true-sentinel presence;
+these bounded repairs add no original issue closure. The [closeout audit](enum_compatibility_closeout.md)
+reconciles all eight original probes but confirms VD08-A01, shared default-less-match
+failure transport. The subsequent [VD08-A01 repair](match_failure_transport.md)
+verifies that failure path, matched execution, snapshots and cleanup with default
+prelowering and closes V-D08 (+1.5625 percentage points). Wider extensions stay separate.
+
+The [V-D05/V-D07 call audit](call_compatibility_audit.md) reconciles V-D05 against
+pinned v0.1 execution/build evidence (+1.5625 points). The subsequent
+[read-only owned pack repair](readonly_packs.md) closes VD07-A03 and V-D07 within
+the agreed compatibility scope (+1.5625 points). Named arguments/unpacking remain
+baseline-unsupported extensions; wider packs/defaults and bridges remain separate.
+The [reference-default repair](reference_defaults.md)
+closes VD07-A01 in canonical scalar scope: read-only and writable defaults preserve
+binding/snapshots/lifetime, with escaping default references rejected. The preceding
+[VD07-A02 repair](value_pack_transport.md) verifies scalar value-pack prelowering
+without adding an original-issue closure.
+The [V-D01 repair](iteration_mutation.md) closes four-family mutation during value
+iteration (+1.5625 points), including COW, lifetime, retained recovery and measured
+costs. Reference foreach remains separate. The [S02 reconciliation](strict_gui_closeout.md) verifies all six migrated
+companions and excludes deferred legacy syntax from this strict milestone. It is
+not a legacy implementation claim. V-R08 enabled Linux acceptance closes the final
+original entry. Supplementary
+S02-H01 project IO selection and VR08-H02 concrete handle/null comparison are now
+[repaired and verified](project_io_handle_presence.md); VR08-H01 is also
+[repaired and verified](error_conditions.md) without changing the original ledger count.
+
+Resolved: **64/64 = 100%** (strict-milestone dispositions, including S02 exclusion). This is not an
+engineering-effort estimate. The completed async/tasks goal closed S12 and V-R02 (+3.125 points). The subsequent [V-D06 goal](finally_value_transfers.md) closes finally value/loop transfers and default-prelowered exception transport (+1.5625 points). S05 does not certify explicit callable storage under default prelowering. Remaining architecture/runtime/project issues can be
 much larger than fixture repairs. There is no defensible weighted effort percentage.
 
 | Original handling class | Fully closed | Partial | Not closed | Total |
 | --- | ---: | ---: | ---: | ---: |
 | Simple fix | 13 | 0 | 0 | 13 |
 | Light discussion | 17 | 0 | 0 | 17 |
-| Normal discussion | 26 | 1 | 7 | 34 |
+| Normal discussion | 34 | 0 | 0 | 34 |
 
 V-L06 now admits the final two scalar float identity forms and re-verifies its
 original carrier cases. S04's unchanged original process fixture passes through
@@ -84,8 +123,11 @@ status; the dated reports retain those historical counts.
 S12 now closes through [async suspension and publication proof](async_tasks.md):
 unchanged strict source, default-prelowered production builds, suspension/lifetime
 and ordered/lazy evaluation, plus retained disk rejection/repair/retirement/fresh
-parity. V-R02 has verified handles/controls and shutdown; batch/callback admission
-remain open; the bounded transfer-model prerequisite is authorized.
+parity. V-R02 closes all 21 names and the approved typed/boxed signature groups,
+including callbacks, coordinator errors, lifecycle and retained/fresh proofs.
+Boxed custom placement remains explicitly unsupported in v0.2 by user decision;
+V-D06 now also verifies source exception transport and repeated-error joins; wider transfer/project domains remain separate.
+See the [acceptance inventory](task_acceptance_inventory.md) for exact boundaries.
 
 ## Inside V-L07
 

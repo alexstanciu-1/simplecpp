@@ -5,11 +5,15 @@
 #include "scpp/float_t.hpp"
 #include "scpp/null_t.hpp"
 #include "scpp/string_t.hpp"
+#include "scpp/iteration_preservation.hpp"
 #include <memory>
 #include <variant>
 
 namespace scpp::hash_detail {
 template <typename Value> class packed_table;
+}
+namespace scpp::iteration_detail {
+template<class Table> class binding;
 }
 
 namespace scpp::detail {
@@ -25,6 +29,7 @@ private:
 	using payload_type = std::variant<std::monostate, bool_t, int_t<>, float_t,
 		std::unique_ptr<string_t>, std::shared_ptr<table_type>>;
 	payload_type payload_;
+	mutable std::shared_ptr<iteration_detail::binding<table_type>> iteration_;
 	explicit dynamic_value(std::shared_ptr<table_type> table) noexcept;
 	static payload_type copy_payload(const payload_type &source);
 
@@ -37,10 +42,11 @@ public:
 	explicit dynamic_value(const string_t &value);
 	dynamic_value(const mixed_t &) = delete;
 	dynamic_value(const dynamic_value &other);
-	dynamic_value(dynamic_value &&other) noexcept;
+	dynamic_value(dynamic_value &&other);
 	dynamic_value &operator=(const dynamic_value &other);
-	dynamic_value &operator=(dynamic_value &&other) noexcept;
+	dynamic_value &operator=(dynamic_value &&other);
 	~dynamic_value();
+	[[nodiscard]] std::shared_ptr<iteration_detail::binding<table_type>> iteration_binding() const;
 
 	[[nodiscard]] static dynamic_value make_container();
 	[[nodiscard]] kind_t kind() const noexcept;

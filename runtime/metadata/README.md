@@ -117,6 +117,17 @@ separate provider sources. Process declares its provider; regex declares its pro
 and pcre2-8. Tests/runtime_module_build.py and tests/runtime_assets.py under my-try
 prove these paths without rebuilding the compiler itself.
 
+The optional ui/webview catalogs expose the 24 existing strict preview helpers.
+Webview depends on ui; `ui_event_webview` is selected with webview. Project-mode
+compilation resolves their named SDK requirements using the existing host provider
+resolver before retaining metadata. Custom PHP hosts must call
+`Host_Runtime_Build::resolve($input)` from `compiler/my-try/host/runtime_build.php`
+before configuration. Unresolved SDK requests reject publication. Resolved options
+and diagnostics are published once and validated by native consumers; they are
+not executable module JSON fields. Linux/Clang integration is currently verified
+only with disabled providers: enabled GTK/WebKitGTK and GUI proofs remain explicit
+in the [V-R08 report](../../compiler/my-try/docs/planning/ui_webview_integration.md).
+
 The [closeout audit](../../compiler/my-try/docs/planning/runtime_module_closeout.md)
 classifies every current module owner, remaining strict-map surface and residual
 named compiler rules. Deferred APIs must not be added as speculative executable rows.

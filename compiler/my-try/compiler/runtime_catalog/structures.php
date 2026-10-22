@@ -112,6 +112,13 @@ final class runtime_replacement_spec
 	public string $replacement_name = '';
 }
 
+/** Scalar or matching boxed-family result requirement in startup metadata. */
+final class runtime_boxed_result_spec
+{
+	public string $result_name = '';
+	public string $family_name = '';
+}
+
 final class runtime_function_spec extends runtime_signature_spec
 {
 	/** Provider permits synchronous readonly borrowing in place of value snapshots. */
@@ -123,10 +130,12 @@ final class runtime_function_spec extends runtime_signature_spec
 	public array $type_parameters /** vector<string> */ = [];
 	public array $transfer_types /** vector<string> */ = [];
 	public Storage $replacement_results /** Storage<runtime_replacement_spec> */;
+	public Storage $boxed_results /** Storage<runtime_boxed_result_spec> */;
 	public function __construct()
 	{
 		parent::__construct();
 		$this->replacement_results = new Storage /** Storage<runtime_replacement_spec> */();
+		$this->boxed_results = new Storage /** Storage<runtime_boxed_result_spec> */();
 	}
 }
 
@@ -221,6 +230,12 @@ final class runtime_module_spec
 /** Portable build requirements, independent of source AST and native cache state. */
 final class runtime_cpp_build_spec
 {
+	/** Named host-resolved SDK requirements; executable metadata is forbidden. */
+	public array $providers /** vector<string> */ = [];
+	/** Host-resolved arguments, never accepted from module JSON. */
+	public array $compile_options /** vector<string> */ = [];
+	public array $link_options /** vector<string> */ = [];
+	public array $diagnostics /** vector<string> */ = [];
 	public array $sources /** vector<string> */ = [];
 	public array $libraries /** vector<string> */ = [];
 	public array $definitions /** vector<string> */ = [];

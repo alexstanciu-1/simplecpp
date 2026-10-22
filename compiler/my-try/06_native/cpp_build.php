@@ -10,6 +10,7 @@ final class Native_CPP_Build
 	private string $linker_key;
 	private array $flags /** vector<string> */ = [];
 	private array $libraries /** vector<string> */ = [];
+	private array $provider_link_options /** vector<string> */ = [];
 	private native_cpp_result $report;
 	private bool $invoked = false;
 	private ?Native_Dependency_Inputs $dependency_inputs = null;
@@ -65,6 +66,8 @@ final class Native_CPP_Build
 			if (!$document->has('runtime_build')) { throw new \RuntimeException('Publication lacks runtime build requirements; republish with the current compiler'); }
 			$build_inputs = Native_CPP_Publication::runtime_inputs($document->member('runtime_build'));
 			$this->libraries = $build_inputs->libraries;
+			$this->provider_link_options = $build_inputs->link_options;
+			foreach ($build_inputs->diagnostics as $diagnostic) { $this->report->diagnostics .= $diagnostic . "\n"; }
 			$units /** vector<string> */ = [];
 			$checked_units /** hash<bool> */ = [];
 			$layout_probes /** vector<string> */ = [];
@@ -94,6 +97,7 @@ final class Native_CPP_Build
 			}
 			$runtime = fs_require_realpath($this->config->runtime_include);
 			$this->flags = Native_CPP_Commands::flags($this->config, $runtime, $build_inputs->definitions);
+			foreach ($build_inputs->compile_options as $option) { $this->flags[] = $option; }
 			$version_arguments /** vector<string> */ = ['--version'];
 			$version = $this->invoke($version_arguments);
 			self::require_success($version);
@@ -235,7 +239,7 @@ final class Native_CPP_Build
 	/** Link state records actual linker dependencies in addition to exact ordered object membership. */
 	private function link(array $objects /** vector<string> */): native_cpp_artifact
 	{
-		$command = Native_CPP_Commands::link($this->config, $this->flags, $objects, $this->libraries);
+		$command = Native_CPP_Commands::link($this->config, $this->flags, $objects, $this->libraries, $this->provider_link_options);
 		$base = content_sha256($this->tool_key . $this->linker_key . self::arguments_key($command) . self::inputs_key($objects));
 		$dependencies_path = 'link-inputs/' . $base . '.d';
 		$previous = fs_output_read($this->root, $dependencies_path);

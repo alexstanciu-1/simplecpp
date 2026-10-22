@@ -42,6 +42,18 @@ final class Value_Probe_Preparation
 			if (($definition instanceof callable_type_definition) || ($definition instanceof closure_type_definition)) {
 				$facts->presence = Condition_Truthiness::decide($probe_type);
 			}
+			// Enum probes observe wrapper state, never the payload's truthiness.
+			$payload = Nullable_Conversions::payload($probe_type);
+			$result_role = Result_Conversions::role($probe_type);
+			if ($result_role !== null) { $payload = Result_Conversions::require_payload($probe_type, $result_role); }
+			if (($facts->path === null) && ($payload !== null) && Type_Queries::is_enum($payload)) {
+				$facts->presence = new truthiness_decision();
+				$facts->presence->source_type = $probe_type;
+				$facts->presence->operation = truthiness_operation::value_presence;
+				if (($result_role !== null) && ($result_role->result_family() === result_kind::boolean_sentinels)) {
+					$facts->presence->operation = truthiness_operation::sentinel_presence;
+				}
+			}
 			return $facts;
 		}
 		finally { $context->statement_assignment = $previous; }

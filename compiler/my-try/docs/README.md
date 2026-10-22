@@ -9,16 +9,33 @@ syntax and collection → shared semantic preparation → C++ generation. Other
 frontends should normalize toward the same PHS-shaped concepts. LLVM is a parked
 experiment retained for regressions, not a second semantic development path.
 
-Current repair checkpoint: [async execution and publication verification](planning/async_tasks.md),
-56/64 original issues resolved (87.5%): 53 implemented/repaired (including
-harnesses) and three contract/environment reconciliations. Supplementary BS-R01 also remains closed.
+Current verification checkpoint: [S02 / V-R08 closeout](planning/strict_gui_closeout.md),
+64/64 original dispositions resolved for the strict milestone (100%): 59
+implemented/repaired and five contract/environment/scope reconciliations. S02 is an
+exclusion with six migrated proofs, not legacy syntax implementation. V-R08 now
+passes enabled Linux GTK/WebKitGTK GUI acceptance on dev002 with default prelowering. The subsequent [project IO/presence repair](planning/project_io_handle_presence.md) closes
+supplementary S02-H01 and VR08-H02. The [error-condition repair](planning/error_conditions.md)
+also closes VR08-H01, including its approved no-error constant prerequisite. Other platforms stay separate.
+V-D08 is closed within its compatibility scope:
+enum carriers/helpers and default-less match pass default-prelowered execution,
+state, snapshot and cleanup checks. The [audit](planning/enum_compatibility_closeout.md)
+keeps baseline-unsupported extensions and intentional v0.2 changes explicit.
+V-D05 is reconciled as a baseline-unsupported extension. Legacy syntax remains deferred; explicit project IO selection is now verified. Value iteration now preserves remaining
+entries before structural mutation; reference foreach remains separate. The [VD07-A02 repair](planning/value_pack_transport.md) verifies concrete scalar
+value packs. [Read-only and writable reference defaults](planning/reference_defaults.md) now pass
+binding/snapshot/lifetime proofs, closing VD07-A01 in canonical scalar scope.
+[Read-only owned compatibility packs](planning/readonly_packs.md) close VD07-A03
+and V-D07 in the agreed scalar scope; wider extensions remain explicit. Supplementary BS-R01 remains closed.
 
-The active [async/tasks goal](planning/async_tasks.md) closes S12 with dev002
-execution and retained disk-publication proofs. V-R02 is partial: handles, controls
-and shutdown are verified. Callable transfer capability and provider admission are
-verified. All five submission/synchronization names have bounded typed source paths,
-including real unordered-worker synchronization. Custom placement, error/timeout
-options, boxed inputs and the final acceptance audit remain open.
+The completed [async/tasks goal](planning/async_tasks.md) closes S12 and V-R02
+with dev002 default-prelowered source/runtime and retained-publication proofs.
+All 21 task names and approved typed/boxed signature groups are verified. Boxed
+custom placement remains explicitly unsupported in v0.2. The subsequent
+[V-D06 goal](planning/finally_value_transfers.md) verifies source
+exception transport, value returns and crossing loop exits through finally, including
+async sequencing. Reference returns crossing finally and transfers escaping finally
+remain rejected. Wider transfer/project domains remain separate. The
+[acceptance inventory](planning/task_acceptance_inventory.md) records exact limits.
 
 S10/V-R06 add invalidation-checked spans and FNV-1a64 with versioned keys, verified
 on dev002 with default prelowering. Wider uint64 equality and explicit copyable-value
@@ -149,7 +166,7 @@ cache/PCH consumer. See [asset checks](testing.md) and the current
 | Container defaults and legacy examples | [Known targets, key normalization and remaining gates](catalog/06_containers.md#construction-defaults-and-legacy-reconciliation--2026-10-05) |
 | Contextual literal preparation | [Expected types, ordered entry conversions and deferred execution](catalog/06_containers.md#contextual-literal-preparation--2026-10-05) |
 | Chapter 05 closeout and debt | [Bounded conclusion and reconciled contracts](catalog/05_dynamic_boundaries.md#positive-pass-conclusion--2026-10-04) |
-| Current handoff | [CH12 bounded closeout](catalog/12_closures.md#bounded-closeout-and-current-handoff--2026-10-16): all 13 imported cards and selected callable extensions are covered within their bounds. Focused PHP/generated-program evidence, historical native follow-up and the current workspace smoke have distinct scopes; complete CH12 native parity/rejection/incremental coverage remains unclaimed. Existing CH15 deferrals and unsupported borrowing/wrapper boundaries remain unchanged. [CH13 bounded closeout](catalog/13_errors.md#bounded-closeout-and-native-gate--2026-10-16) passed PHS conversion/native compilation, 68 feature executions with PHP/native parity, 52 rejection/recovery cases and four native edit proofs. NOTE-047 is reconciled; expanded diagnostics/transfers/return families remain deferred. [CH14 bounded closeout](catalog/14_output_runtime.md#bounded-closeout-and-native-gate--2026-10-16) passed compiler PHS conversion/native build and focused native artifact, publication, runtime-linkage and incremental proofs. Legal shadowing is preserved; deferred diagnostic/runtime/cache extensions remain explicit. [CH15 reconciliation](catalog/15_review.md) proposes iteration-policy/guard-ownership design first; implementation awaits prioritization. |
+| Current handoff | [CH12 bounded closeout](catalog/12_closures.md#bounded-closeout-and-current-handoff--2026-10-16): all 13 imported cards and selected callable extensions are covered within their bounds. Focused PHP/generated-program evidence, historical native follow-up and the current workspace smoke have distinct scopes; complete CH12 native parity/rejection/incremental coverage remains unclaimed. Existing CH15 deferrals and unsupported borrowing/wrapper boundaries remain unchanged. [CH13 bounded closeout](catalog/13_errors.md#bounded-closeout-and-native-gate--2026-10-16) passed PHS conversion/native compilation, 68 feature executions with PHP/native parity, 52 rejection/recovery cases and four native edit proofs. NOTE-047 is reconciled; expanded diagnostics/transfers/return families remain deferred. [CH14 bounded closeout](catalog/14_output_runtime.md#bounded-closeout-and-native-gate--2026-10-16) passed compiler PHS conversion/native build and focused native artifact, publication, runtime-linkage and incremental proofs. Legal shadowing is preserved; deferred diagnostic/runtime/cache extensions remain explicit. [CH15 reconciliation](catalog/15_review.md): value-mutation policy and V-D01 implementation are complete; reference-foreach guard ownership remains separate. |
 | CH11 closeout | [CH11 reconciliation](catalog/11_inheritance.md#remaining-work-reconciliation--2026-10-08) resolves all 25 original progress rows within their bounds and adds six explicit ownership/type-access rows. Concrete/abstract/interface inheritance, parent construction, direct traits with instance/static members and constants, static called-type execution, derived data construction, shared/interface handles and class/struct weak upcasts execute. [Unique ancestry transfers](catalog/11_inheritance.md#unique-ancestry-transfers--2026-10-08) now consume moved values or owned call results through bases with proven virtual destruction. [Constructor visibility](catalog/11_inheritance.md#constructor-visibility--2026-10-08) now shares access checks and keyed allocation across new/data/base construction. [Nested trait uses](catalog/11_inheritance.md#nested-trait-uses--2026-10-08) now execute with origin deduplication; [abstract trait requirements](catalog/11_inheritance.md#abstract-trait-requirements--2026-10-08) now execute through separate requirement signatures and selected method decisions, including abstract propagation and reference-return cycle checks. [Checked object access](catalog/11_inheritance.md#checked-object-access--2026-10-08) now shares one prepared path for explicit shared casts and literal instanceof. [Shared selection joins](catalog/11_inheritance.md#shared-selection-joins--2026-10-08) now select a supplied base/interface for ternary, Elvis and coalescing without sibling inference. [Interface weak handles](catalog/11_inheritance.md#interface-weak-handles--2026-10-08) now reuse derivation, locking and ancestry conversion without new runtime carriers. [Shared cross-casts](catalog/11_inheritance.md#shared-cross-casts--2026-10-08) now admit potentially overlapping interface views through the existing checked-access path, with observed finality and polymorphism. [Non-public destructors](catalog/11_inheritance.md#non-public-destructors--2026-10-08) now use independent lifecycle work and preparation-time cleanup access checks. [Shared callable variance](planning/callable_variance.md) now executes through directional adaptations and distinct required/implementation dispatch bindings, with bridges defined in source implementation units; seven extensions are deferred in the CH15 scope register, inherited final-method interface forwarding is implemented and interface-qualified static dispatch is now explicitly deferred to CH15; the later [V-D03/V-D04 closeout](planning/trait_ownership.md) enables bounded trait lifecycle and unique/weak selections with default prelowering; other CH15 limits remain separate. The current handoff supersedes historical checkpoint next steps. The requested [CH11 native checkpoint](portability/conversion_review.md#latest-native-checkpoint--2026-10-08-chapter-11) now passes cumulative validation, 1,569 chapter artifact comparisons and 518 generated-program executions; its documented rejection/incremental limits and STAN/LLVM exclusions remain explicit. |
 | Earlier proposals and proof checkpoints | [Archive](archive/README.md) |
 

@@ -21,15 +21,15 @@ final class Result_Conversions
 			|| $type->matches(Model::$type_catalog->boolean_sentinel_type(true));
 	}
 
-	/** Exact transport admission comes from registration, not a list of payload families. */
+	/** Exact transport admission reads completed source or registered provider capabilities. */
 	public static function require_payload(canonical_type_use $type, result_semantics $role): canonical_type_use
 	{
 		$application = object_cast(Type_Queries::canonical($type), applied_template_type::class);
 		$payload = $role->payload_type($application);
-		$definition = Type_Queries::canonical($payload)->definition();
+		$capabilities = new Capability_Facts();
 		if ($type->by_value() || $payload->by_value()
-			|| !$definition->declares_capability(generic_contract::result_payload)) {
-			throw new \RuntimeException('S2S Result operations require an unmodified type registered for result_payload');
+			|| !$capabilities->has_capability($payload, generic_contract::result_payload)) {
+			throw new \RuntimeException('S2S Result operations require an unmodified type with result_payload capability');
 		}
 		return $payload;
 	}

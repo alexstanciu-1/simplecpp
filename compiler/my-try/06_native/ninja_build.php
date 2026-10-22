@@ -82,6 +82,7 @@ final class Native_Ninja_Build
 			$runtime = fs_require_realpath($this->config->runtime_include);
 			self::path($runtime);
 			$flags = Native_CPP_Commands::flags($this->config, $runtime, $requirements->definitions);
+			foreach ($requirements->compile_options as $option) { $flags[] = $option; }
 			// Separate identities: replacing a linker must not dirty compile commands.
 			$this->write_changed('compiler.identity', self::identity($this->config->compiler) . self::identity('/usr/bin/env'));
 			$this->write_changed('linker.identity', self::identity($this->config->linker));
@@ -116,7 +117,7 @@ final class Native_Ninja_Build
 			}
 
 			$executable = 'app';
-			$link = Native_CPP_Commands::link($this->config, $flags, $objects, $requirements->libraries);
+			$link = Native_CPP_Commands::link($this->config, $flags, $objects, $requirements->libraries, $requirements->link_options);
 			$link[] = '-Xlinker'; $link[] = '--dependency-file'; $link[] = '-Xlinker'; $link[] = $executable . '.d';
 			$link[] = '-o'; $link[] = $executable;
 			$graph .= $this->edge('link', $link, $executable, $objects, [$this->root . '/compiler.identity', $this->root . '/linker.identity']);

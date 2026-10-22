@@ -768,6 +768,8 @@ final class reference_cycle_vertex
 final class prepared_finally
 {
 	public bool $captures_return = false;
+	public bool $captures_break = false;
+	public bool $captures_continue = false;
 	public bool $can_fall_through = true;
 }
 
@@ -779,6 +781,8 @@ final class preparation_context
 	/** Current protected region; nested callable preparation starts with a fresh context. */
 	public ?prepared_finally $finally_region = null;
 	public bool $finally_return_forbidden = false;
+	public ?breakable_node $finally_break_target = null;
+	public ?loop_node $finally_continue_target = null;
 	public ?collected_member_owner $member_owner = null;
 	/** Concrete implementation context, independent of lexical access/receiver ownership. */
 	public ?collected_record $called_type = null;

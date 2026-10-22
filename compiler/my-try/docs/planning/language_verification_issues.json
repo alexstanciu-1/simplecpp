@@ -102,7 +102,7 @@
       "dependencies": [
         "Agree retained callable/suspension model and execution flow before implementation."
       ],
-      "next_action": "Closed within the approved S12 contract; V-R02 task integration remains separate and active.",
+      "next_action": "Closed within the approved S12 contract; V-R02 integration is also closed by the final acceptance review.",
       "simple_batch_eligible": false,
       "repair_status": "implemented-and-verified",
       "repair_evidence": {
@@ -288,8 +288,15 @@
       "dependencies": [
         "Agree semantics and lifetime/invalidation design before implementation"
       ],
-      "next_action": "Discuss supported mutation policy; do not classify unspecified runtime outcomes as implementation defects.",
-      "simple_batch_eligible": false
+      "next_action": "Closed for four-family value iteration: live until first structural mutation/replacement, then preserve remaining shallow entries. Reference foreach, escaping element references, concurrency and collection callback policy remain separate.",
+      "simple_batch_eligible": false,
+      "repair_status": "implemented-and-verified",
+      "repair_evidence": {
+        "date": "2026-10-22",
+        "report": "iteration_mutation.md",
+        "results": "iteration_mutation_results.json",
+        "scope": "Vector/hash/mixed/dynamic runtime mutation, COW and binding lifetime; 46 default-prelowered source programs, two contract suites, runtime/lifetime sanitizer proofs, six retained publications and measured traversal costs on dev002."
+      }
     },
     {
       "id": "V-R01",
@@ -471,8 +478,13 @@
       "dependencies": [
         "Agree the deferred semantic contract before implementation"
       ],
-      "next_action": "Discuss the responsible ownership/selection contract; do not reclassify as a simple syntax repair.",
-      "simple_batch_eligible": false
+      "next_action": "Closed as a verified compatibility reconciliation. Static interface declarations/implementation selection remain separately deferred design extensions; concrete static and interface instance calls are supported controls.",
+      "simple_batch_eligible": false,
+      "repair_status": "reconciled-and-verified",
+      "repair_report": "call_compatibility_audit.md",
+      "repair_evidence": [
+        "20261022-call-audit-final"
+      ]
     },
     {
       "id": "V-H08",
@@ -568,8 +580,18 @@
       "dependencies": [
         "Agree saved return ownership/reference transport and crossing control-flow semantics"
       ],
-      "next_action": "Discuss extension of the bounded finally transfer model; keep it separate from supported scalar/void behavior.",
-      "simple_batch_eligible": false
+      "next_action": "Closed within the approved V-D06 scope. Reference returns crossing finally and transfers escaping finally remain rejected. Multiple/union catches and other wider exception/async domains remain separate; preserve original rejection evidence.",
+      "simple_batch_eligible": false,
+      "repair_status": "implemented-and-verified",
+      "repair_evidence": {
+        "date": "2026-10-22",
+        "report": "finally_value_transfers.md",
+        "archives": [
+          "vd06-exception-evidence.tar.gz",
+          "vd06-finally-evidence.tar.gz"
+        ],
+        "scope": "Default-prelowered throw/catch/finally; supported non-reference value returns; crossing break/continue; snapshots, identity, cleanup and async sequencing. Dev002: 52 cold/warm source cases, seven sanitizer cases, disk rejection/repair/fresh parity, 37 ordinary programs and both task repeated-error pool cases. Unrelated callable-boundary harness failure remains VD06-H01."
+      }
     },
     {
       "id": "V-D07",
@@ -586,8 +608,68 @@
       "dependencies": [
         "Agree binding/evaluation and pack/reference contracts before expanding admission"
       ],
-      "next_action": "Discuss named binding and unpacking independently from reference default/variadic semantics; retain positional regression proofs.",
-      "simple_batch_eligible": false
+      "next_action": "Closed within the agreed v0.1 compatibility scope: VD07-A01 scalar defaults, VD07-A02 value packs and VD07-A03 read-only owned compatibility packs are verified. Named arguments/unpacking remain baseline-unsupported extensions; true aliasing packs, wider defaults/packs and other bridges remain separate.",
+      "simple_batch_eligible": false,
+      "repair_status": "implemented-and-verified",
+      "repair_evidence": {
+        "date": "2026-10-22",
+        "report": "readonly_packs.md",
+        "archives": ["readonly-pack-evidence.tar.gz"],
+        "scope": "Canonical scalar source free/static/instance calls; read-only owned pack compatibility, snapshots, cleanup, mutation/escape rejection, retained recovery and cold/warm default-prelowered dev002 proof. A01/A02 evidence remains in their reports; wider extensions remain separate."
+      },
+      "compatibility_audit": {
+        "date": "2026-10-22",
+        "report": "ui_webview_integration.md",
+        "scope": "Pinned v0.1 source/catalog audit only; no issue closure or fresh baseline execution claim."
+      },
+      "compatibility_closeout_audit": {
+        "report": "call_compatibility_audit.md",
+        "status": "audit-complete-bounded-gaps-repaired",
+        "evidence": [
+          "20261022-call-audit-01",
+          "20261022-call-audit-followup",
+          "20261022-call-audit-final"
+        ],
+        "gaps": [
+          {
+            "id": "VD07-A01",
+            "title": "Executable reference-default declarations reject",
+            "owner": "parameter-default preparation and call lifetime/binding",
+            "status": "implemented-and-verified",
+            "report": "reference_defaults.md",
+            "evidence": [
+              "20261022-ref-default-final",
+              "20261022-ref-default-audit",
+              "20261022-writable-default-final",
+              "20261022-writable-default-retained-final",
+              "20261022-writable-default-readonly-final",
+              "20261022-writable-default-audit-final"
+            ],
+            "scope": "Read-only and writable canonical scalar literal defaults on source free/static/instance calls; explicit exact borrows/write-back, fresh call-local omitted owners, snapshots and cleanup. Omitted reference-return origins reject; explicit origins remain supported. Wider defaults and other bridges separate."
+          },
+          {
+            "id": "VD07-A02",
+            "title": "Nonempty value packs lack concrete initialization transport",
+            "owner": "CPP_Declarations call sequencing and initializer transport",
+            "status": "implemented-and-verified",
+            "report": "value_pack_transport.md",
+            "evidence": [
+              "20261022-value-pack-acceptance",
+              "20261022-value-pack-audit"
+            ],
+            "scope": "Canonical int/float/bool/string packs for source free/static/instance calls; snapshots, owned storage, cleanup, sanitizer and retained/cold-warm proofs. No runtime changes; wider packs and other bridges separate."
+          },
+          {
+            "id": "VD07-A03",
+            "title": "Accepted read-only reference-pack spelling needs explicit disposition",
+            "owner": "parameter passing/variadic contract",
+            "status": "implemented-and-verified",
+            "report": "readonly_packs.md",
+            "evidence": ["20261022-readonly-pack-01", "20261022-readonly-pack-rejection-final", "20261022-readonly-pack-value-regression", "20261022-readonly-pack-audit"],
+            "scope": "Read-only owned canonical scalar value packs; no caller aliasing. Named free/static/instance source calls, value snapshots, independent copies, cleanup and rejected writes/escaping references. Wider elements and other bridges separate."
+          }
+        ]
+      }
     },
     {
       "id": "S13",
@@ -636,8 +718,72 @@
       "dependencies": [
         "Agree enum extension semantics and interaction with method/interface foundations and payload capabilities."
       ],
-      "next_action": "Discuss extensions individually after the bounded enum implementation; retain existing explicit enum_name/value/from_value support.",
-      "simple_batch_eligible": false
+      "next_action": "Closed within the v0.1 compatibility scope. Reflection, string backing, methods/interfaces, broader constants, wrapper operators/conditions and indexed/general selection remain separate extensions.",
+      "simple_batch_eligible": false,
+      "compatibility_audit": {
+        "date": "2026-10-22",
+        "report": "ui_webview_integration.md",
+        "scope": "Pinned v0.1 source/catalog audit only; no issue closure or fresh baseline execution claim."
+      },
+      "repair_status": "implemented-and-verified",
+      "repair_report": "match_failure_transport.md",
+      "repair_evidence": [
+        "20261022-vd08-final",
+        "20261022-vd08-runtime-01",
+        "20261022-vd08-baseline-01",
+        "20261022-vd08-a01-01",
+        "20261022-vd08-a01-audit"
+      ],
+      "repair_scope": "nullable<E> / ?E and structured result<E> for unit/int/fixed-width enums; default-prelowered states, snapshots, take, checked extraction and exact-enum fallback verified. No runtime changes. Subsequent helper/sentinel/audit and VD08-A01 proofs close the bounded compatibility issue; deferred extensions remain explicit.",
+      "helper_transport_repair": {
+        "report": "enum_helper_transport.md",
+        "evidence": [
+          "20261022-vd08h-first",
+          "20261022-vd08h-final"
+        ],
+        "status": "implemented-and-verified",
+        "scope": "Three enum helpers and plain nullable/structured Result enum isset under default prelowering; no runtime changes."
+      },
+      "sentinel_carrier_repair": {
+        "status": "implemented-and-verified",
+        "report": "enum_sentinel_carriers.md",
+        "evidence": [
+          "20261022-vd08s-baseline",
+          "20261022-vd08s-runtime-02",
+          "20261022-vd08s-source-02",
+          "20261022-vd08s-wrapper-controls"
+        ],
+        "scope": "result_or_false<E> and result_or_bool<E>; explicit sentinel spelling, true-sentinel isset, take, checked extraction, exact-enum falseable fallback, snapshots and retained recovery. No runtime changes."
+      },
+      "compatibility_closeout_audit": {
+        "report": "enum_compatibility_closeout.md",
+        "status": "audit-complete-followup-repaired",
+        "evidence": [
+          "20261022-vd08-audit-01",
+          "20261022-vd08-audit-followup",
+          "20261022-vd08-audit-final"
+        ],
+        "original_probes": {
+          "repaired": 2,
+          "deferred_not_supported_in_v01": 6
+        },
+        "observations": 96,
+        "v01_executed": 22,
+        "v02_executed": 27,
+        "intentional_changes": [
+          "No implicit enum default",
+          "Initialize enum fields before constructor body; use explicit defaults or set:"
+        ],
+        "discovered_gap_repair": {
+          "id": "VD08-A01",
+          "title": "Default-less match requires concrete failure transport",
+          "owner": "CPP_Syntax match emission and compiled exception/operation transport",
+          "finding": "Pinned v0.1 executes enum and integer match without default. Default-prelowered v0.2 rejects with match failure operation requires concrete transport. Explicit-default controls pass.",
+          "status": "implemented-and-verified",
+          "scope": "Authorized compiler-only match_failure bridge; native failure identity, snapshots, cleanup and retained publication verified. No runtime changes.",
+          "report": "match_failure_transport.md"
+        }
+      }
     },
     {
       "id": "V-P01",
@@ -991,8 +1137,15 @@
       "dependencies": [
         "User explicitly reopens legacy syntax scope."
       ],
-      "next_action": "Keep original failures separate from declaration-only migration evidence; no repair in the strict verification goal.",
-      "simple_batch_eligible": false
+      "next_action": "Reconciled outside the strict milestone; legacy syntax remains deferred. Six declaration-only companions pass default prelowering on dev002. S02-H01 project IO selection is subsequently repaired and verified through project mode; see project_io_handle_presence.md.",
+      "simple_batch_eligible": false,
+      "repair_status": "reconciled-and-verified",
+      "repair_evidence": {
+        "date": "2026-10-22",
+        "report": "strict_gui_closeout.md",
+        "results": "s02_closeout_results.json",
+        "scope": "Strict-scope exclusion, not legacy syntax implementation. Six migrated companions preserve original oracles; direct compiler API publication only. S02-H01 remains explicit."
+      }
     },
     {
       "id": "V-D10",
@@ -1058,19 +1211,22 @@
         "task_publish_deferred_flush_count"
       ],
       "dependencies": [],
-      "next_action": "Complete batch/callback integration using the authorized callable-transfer capability; preserve original absence evidence.",
+      "next_action": "Closed within the approved scope. Boxed custom-index/prefilled-target arguments remain explicitly unsupported in v0.2 by user decision; source exception transport remains separate. Preserve original absence evidence.",
       "acceptance": "All documented in-scope signatures admitted through ordinary metadata, exact behavior/error and production-provider build proofs, with explicit decisions for held contracts.",
       "simple_batch_eligible": false,
       "eligibility_reason": "Requires contract or module integration discussion; name-resolution probes do not prove a metadata-only repair.",
-      "repair_status": "partially-implemented-and-verified",
+      "repair_status": "implemented-and-verified",
       "repair_evidence": {
         "date": "2026-10-21",
         "report": "async_tasks.md",
         "archives": [
           "tasks-metadata-evidence.tar.gz",
-          "tasks-shutdown-evidence.tar.gz"
+          "tasks-shutdown-evidence.tar.gz",
+          "task-lifecycle-acceptance-evidence.tar.gz",
+          "boxed-prelower-evidence.tar.gz",
+          "task-final-audit-evidence.tar.gz"
         ],
-        "scope": "Sixteen fixed functions, runtime handles, progress/error observations and background shutdown verified. Five batch/callback APIs and transfer capability remain open."
+        "scope": "All 21 API names and approved typed/boxed signature groups verified on dev002 with default prelowering: callback transfer, placement, coordinator errors, lifecycle/module checks, boxed source transport and retained/fresh parity. Final acceptance is recorded in async_tasks.md and task_acceptance_inventory.md. Boxed custom placement is explicitly unsupported; source exception transport and wider transfer/project domains remain separate."
       }
     },
     {
@@ -1286,10 +1442,23 @@
         "webview_close"
       ],
       "dependencies": [],
-      "next_action": "Agree module/type integration; run headless admission/build checks first, then a separately authorized suitable GUI smoke. Do not classify absent module as merely unavailable display.",
+      "next_action": "Closed in agreed Linux scope with enabled GTK/WebKitGTK and default-prelowered GUI proofs on dev002. Supplementary VR08-H02 handle/null comparison is subsequently repaired; see project_io_handle_presence.md. VR08-H01 is subsequently repaired and verified; see error_conditions.md. Other platforms remain separate.",
       "acceptance": "Explicit contract disposition for every listed public name, followed by signature/behavior/provider integration proofs for retained APIs.",
       "simple_batch_eligible": false,
-      "eligibility_reason": "Provider, type and integration decisions remain; not a proven metadata-only repair."
+      "eligibility_reason": "Original source/build integration and enabled Linux acceptance are verified; supplementary compiler gaps and other platforms remain separate.",
+      "repair_status": "implemented-and-verified",
+      "acceptance_closeout": {
+        "date": "2026-10-22",
+        "report": "strict_gui_closeout.md",
+        "results": "strict_gui_closeout_results.json",
+        "scope": "Enabled Linux GTK/WebKitGTK native/source execution, replies acknowledged by JavaScript, snapshots, lifecycle, retained recovery and SDK cache transitions on dev002. S02-H01, VR08-H02 and prior VR08-H01 remain separate."
+      },
+      "repair": {
+        "date": "2026-10-22",
+        "report": "ui_webview_integration.md",
+        "evidence": "vr08-evidence.tar.gz",
+        "scope": "All 24 source APIs, shared handles, host SDK build resolution and default-prelowered disabled-provider cold/warm/recovery proofs pass on dev002. Enabled GTK/WebKitGTK build and GUI lifecycle proofs remain unavailable; do not claim those from disabled-provider success."
+      }
     },
     {
       "id": "V-D11",

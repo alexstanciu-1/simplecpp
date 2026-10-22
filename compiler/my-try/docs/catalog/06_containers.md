@@ -10,9 +10,8 @@ Requires values, expressions and basic calls. Establish reads versus writes befo
 **The agreed bounded positive pass is complete; see the closeout inventory below.**
 The dated checkpoints below retain their historical scope; earlier references to
 CH06-MIX-DYN-01 being open are superseded by its current status below.
-CH06-ITER-01 has moved to
-[the final blocking-debt chapter](15_blocking_debt.md); its broader design review
-no longer blocks this chapter. Safe runtime rejection remains an immediate
+CH06-ITER-01 value-mutation support is now complete; see the
+[V-D01 acceptance report](../planning/iteration_mutation.md). Safe runtime rejection remains an immediate
 prerequisite for enabling reference foreach, not a deferred safety promise.
 Reference foreach remains disabled; its safety foundation and later integration
 are deferred to [CH06-REF-01 in Chapter 15](15_blocking_debt.md#ch06-ref-01--reference-foreach-safety-foundation).
@@ -50,7 +49,7 @@ This consolidates existing deferrals; it does not transfer new blockers to Chapt
 
 | Remaining work | Owner / prerequisite |
 | --- | --- |
-| Mutation/replacement during iteration; reference foreach | Chapter 15: CH06-ITER-01 and CH06-REF-01. Reference foreach stays disabled; current value iteration does not promise mutation safety. |
+| Mutation/replacement during iteration; reference foreach | Chapter 15: CH06-ITER-01 and CH06-REF-01. Value mutation is covered by the agreed live-then-preserved contract; reference foreach stays disabled. |
 | Library redesign/migration and dynamic `->` | Chapter 15: CH15-LIB-DYN-01 and CH15-DYNAMIC-PROP-01 |
 | User-defined initialization factories, property-driven construction | Chapters 10–11 method/interface model plus Chapter 07 input-view non-escape; recognized opt-in and concrete-target rules already documented |
 | Function-valued entries | Chapter 12 callable/capture model and CH15-CALLABLE-01 review |
@@ -832,7 +831,7 @@ runtime cursor improvement is justified; do not optimize by retaining unsafe int
 references or copying full containers. This is non-blocking first-pass debt.
 
 The following checkpoint implements bounded value iteration. **CH06-MIX-DYN-01
-blocks chapter closeout; CH06-ITER-01 blocks final catalog completion.**
+blocks chapter closeout; CH06-ITER-01 value-mutation acceptance is now complete.**
 
 </details>
 
@@ -896,65 +895,20 @@ refresh proof. The same 1,225 prior exports remain unchanged.
 
 #### CH06-ITER-01 — mutation during iteration
 
-Status: **open; transferred to the final blocking-debt chapter**, at the user's
-explicit request on 2026-10-05. [Chapter 15](15_blocking_debt.md#ch06-iter-01--mutation-policy)
-owns the final completion gate, after the feature chapters and rest break. Mutation
-semantics are deferred for discussion, not waived. The shallow-entry-snapshot
-proposal was not adopted; do not implement it as a default or hidden safety fallback.
+Status: **closed for value iteration — 2026-10-22**. The user agreed live
+traversal until first structural mutation or binding replacement, then preservation
+of each cursor's remaining shallow entries before mutation. The
+[normative contract](../../../../specs/array_semantics.md#mutation-during-value-iteration)
+now covers vector/hash/mixed/dynamic, aliases/calls, COW, source lifetime and failure
+before mutation. No unconditional entry snapshot is introduced.
 
-Before admitting mutation during iteration, decide the effects of replacing the
-source, inserting/appending/removing entries, changing existing values and mutation
-through aliases or calls. Specify which entries/values are visited, iterator and
-owner lifetime, invalidation handling, and failure behavior. A borrowed range alone
-is not proof of safety; by-value element binding is not a collection snapshot.
-
-Revisit more performant options with the user, including stable cursors,
-generation-checked iteration or other owner-managed traversal. Compare their
-runtime/storage and native compilation costs before choosing; no option is approved
-by this note. The agreed interim reference-iteration policy is runtime rejection
-before unsafe structural mutation or source replacement, with existing-element
-updates allowed. Guard implementation, alias/call coverage, copy-on-write handling
-and exit cleanup remain prerequisites for enabling reference iteration; this note
-does not claim they are implemented. Existing value iteration remains bounded to
-non-mutating sources. Do not silently adopt snapshot or live-traversal semantics.
-
-**First alternative to evaluate — snapshot on structural mutation (user proposal).**
-Types supporting foreach would cooperate with active traversal cursors. Start
-ordinary traversal without copying entries. Before a mutation changes keys,
-membership/order or invalidates traversal storage, notify affected cursors and
-preserve a shallow entry snapshot; only then commit the mutation. Existing cursors
-resume from their saved positions on preserved entries; subsequent loops start from
-the changed container. This is a discussion candidate, not an approved implementation
-or a reinstatement of unconditional entry snapshots. CH06-ITER-01 remains blocking
-for final catalog completion, not Chapter 06 design closeout.
-
-Assessment and decisions still required:
-
-- The common non-mutating path avoids O(n) entry copying, but active-cursor
-  registration/lifetime management and mutation checks have a cost. The first
-  structural change pays for preserving entries. Measure before promising gains.
-- This freezes entries at the first structural mutation, not at loop entry.
-  Existing-value updates before that point can be observed; whether later updates
-  are isolated must be an explicit language decision. Shared objects inside copied
-  entries keep their ordinary shared identity; do not imply a recursive deep clone.
-- Define the event beyond literal key changes: append/insert/remove, clear/reorder,
-  storage relocation and source replacement/destruction may affect traversal.
-  Replacement may instead be handled by retaining the old iterable owner; choose
-  that policy explicitly rather than accidentally following the new wrapper value.
-- Notification belongs at the mutation/storage owner so changes through aliases,
-  calls and dynamic handles cannot bypass it. Coordinate with mixed COW so copying
-  a distinct wrapper does not unnecessarily freeze unaffected traversals.
-- Preserve current/next position and termination state; do not replay consumed
-  entries or leave an old range end/entry pointer active after switching storage.
-  Nested/concurrent-in-the-same-thread cursors may share a full snapshot while keeping
-  independent positions, or preserve remaining entries separately; compare costs.
-- Snapshot preparation must finish before the structural write. If allocation or
-  entry copying fails, leave the structural mutation uncommitted and existing cursors
-  valid; already evaluated source expressions are not rolled back. Cursor registration
-  must release on completion, break, return and exceptions.
-- A post-write generation counter alone cannot implement pre-write preservation.
-  The present owner/index const ranges need an owner-aware cursor/mutation protocol.
-  This would not, by itself, make unsynchronized cross-thread mutation safe.
+The [V-D01 implementation and acceptance report](../planning/iteration_mutation.md)
+records runtime sanitizers, default-prelowered cold/warm programs, retained recovery,
+cleanup and focused layout/timing evidence. Cursor registration has measurable cost;
+this is not a claim of cost-free borrowing. CH06-REF-01 remains separate and open:
+reference foreach is still rejected and its pre-invalidation guards are not delivered
+by value preservation. Arbitrary native storage mutation and concurrent mutation
+remain outside this source contract.
 
 ### Container function boundaries — 2026-10-05
 
@@ -1073,7 +1027,7 @@ Edit these rows as work proceeds. Imported source support is recorded below, ind
 | [ARR-APPEND-001](#arr-append-001) | bounded-support | `$a vector<int> = []; $a[] = 1;` | passed | passed | deferred | Vector, integer-key hash, mixed and dynamic; string-key hash rejects |
 | [FUNC-DECL-003B](#func-decl-003b) | bounded-support | `function f(vector<int> $a): void {}` | passed | passed | deferred | Strict typed-container signature/copy/return proofs; legacy annotation syntax excluded |
 | [FUNC-ARG-001](#func-arg-001) | bounded-support | `f($x[0]);` | passed | passed | deferred | Ordinary non-creating value read; reference parameters reject indexed arguments |
-| [CTRL-FOREACH-001](#ctrl-foreach-001) | bounded-support | `foreach ($items as $item) { }` | passed | passed | deferred | All four families; non-mutating value iteration; CH06-ITER-01 moved to final catalog review |
+| [CTRL-FOREACH-001](#ctrl-foreach-001) | bounded-support | `foreach ($items as $item) { }` | passed | passed | deferred | All four families; live-then-preserved value mutation verified; reference foreach separate |
 | [CTRL-FOREACH-002](#ctrl-foreach-002) | bounded-support | `foreach ($items as $k => $v) { }` | passed | passed | deferred | Typed keys/values, loop-local key, existing value reuse; no snapshots |
 | [CTRL-FOREACH-003](#ctrl-foreach-003) | deferred | `foreach ($items as &$item) { $item++; }` | unverified | unverified | deferred | Disabled; safety foundation deferred to Chapter 15, CH06-REF-01 |
 | [CTRL-FOREACH-004](#ctrl-foreach-004) | deferred | `foreach ($items as $key => &$item) { if ($key > 1) $item++; }` | unverified | unverified | deferred | Disabled under the same Chapter 15 safety gate |
@@ -1136,7 +1090,7 @@ ERROR
 
 ## CTRL-FOREACH-001
 
-**v0.2 decision / target C++:** [Shared value iteration](#value-foreach--2026-10-05), through a checked const-entry range and prepared value binding; mutation/replacement remains unsupported, with broader policy review blocking final catalog completion under [Chapter 15](15_blocking_debt.md).
+**v0.2 decision / target C++:** [Shared value iteration](#value-foreach--2026-10-05), through owner-retained value ranges and prepared value binding; mutation/replacement follows the [live-then-preserved contract](../../../../specs/array_semantics.md#mutation-during-value-iteration), verified by [V-D01](../planning/iteration_mutation.md). Reference foreach remains separate.
 
 ### Imported version 1
 

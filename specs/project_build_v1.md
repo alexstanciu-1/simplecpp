@@ -1036,7 +1036,7 @@ The FastCGI host expects a handwritten `scpp::fcgi::http_handle(const scpp::fcgi
 
 Legacy list-style `runtime.languages` remains accepted as a compatibility shape and defaults PHP to profile `legacy`.
 
-Current default behavior enables the `json`, `filesystem`, and `datetime` runtime modules. `mysqli`, `regex` and managed `process` remain opt-in. Unsupported language or module names must fail clearly during build configuration.
+Current default behavior enables the `json`, `filesystem`, and `datetime` runtime modules. `io`, `mysqli`, `regex` and managed `process` remain opt-in. Unsupported language or module names must fail clearly during build configuration. The `io` module selects the existing IO metadata and its core runtime dependency; it does not add a separate IO provider translation unit.
 
 The [managed process API](builtins/process.md) requires `runtime.modules` to include
 `process`; Linux builds link its thread support. File locks belong to the ordinary

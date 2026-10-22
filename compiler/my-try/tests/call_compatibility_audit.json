@@ -1,0 +1,268 @@
+{
+  "cases": [
+    {
+      "name": "positional",
+      "group": "named",
+      "source": "function f(int $a,int $b=2):int{return $a*10+$b;}echo f(1,3);",
+      "stdout": "13"
+    },
+    {
+      "name": "default",
+      "group": "named",
+      "source": "function f(int $a,int $b=2):int{return $a*10+$b;}echo f(1);",
+      "stdout": "12"
+    },
+    {
+      "name": "named-order",
+      "group": "named",
+      "source": "function f(int $a,int $b=2):int{return $a*10+$b;}echo f(a:1,b:3);",
+      "stdout": "13"
+    },
+    {
+      "name": "named-reorder",
+      "group": "named",
+      "source": "function f(int $a,int $b=2):int{return $a*10+$b;}echo f(b:3,a:1);",
+      "stdout": "13"
+    },
+    {
+      "name": "named-omitted",
+      "group": "named",
+      "source": "function f(int $a,int $b=2):int{return $a*10+$b;}echo f(a:1);",
+      "stdout": "12"
+    },
+    {
+      "name": "named-duplicate",
+      "group": "named",
+      "source": "function f(int $a,int $b=2):int{return $a*10+$b;}echo f(a:1,a:3);",
+      "stdout": "INVALID"
+    },
+    {
+      "name": "named-unknown",
+      "group": "named",
+      "source": "function f(int $a,int $b=2):int{return $a*10+$b;}echo f(c:1);",
+      "stdout": "INVALID"
+    },
+    {
+      "name": "named-mixed",
+      "group": "named",
+      "source": "function f(int $a,int $b=2):int{return $a*10+$b;}echo f(1,b:3);",
+      "stdout": "13"
+    },
+    {
+      "name": "named-positional-after",
+      "group": "named",
+      "source": "function f(int $a,int $b=2):int{return $a*10+$b;}echo f(a:1,3);",
+      "stdout": "INVALID"
+    },
+    {
+      "name": "named-effects",
+      "group": "named",
+      "source": "function f(int $a,int $b=2):int{return $a*10+$b;}function next(int &$n):int{++$n;return $n;}$n=0;echo f(b:next($n),a:next($n)),\":\",$n;",
+      "stdout": "21:2"
+    },
+    {
+      "name": "method-named",
+      "group": "named",
+      "source": "class C{function f(int $a,int $b=2):int{return $a*10+$b;}}$c=new C();echo $c->f(b:3,a:1);",
+      "stdout": "13"
+    },
+    {
+      "name": "pack-control",
+      "group": "unpack",
+      "source": "function f(int $a,int $b=2):int{return $a*10+$b;}function sum(int $base,int ...$xs):int{foreach($xs as $x){$base+=$x;}return $base;}echo sum(1,2,3);",
+      "stdout": "6"
+    },
+    {
+      "name": "pack-empty-control",
+      "group": "unpack",
+      "source": "function f(int $a,int $b=2):int{return $a*10+$b;}function sum(int $base,int ...$xs):int{foreach($xs as $x){$base+=$x;}return $base;}echo sum(1);",
+      "stdout": "1"
+    },
+    {
+      "name": "unpack",
+      "group": "unpack",
+      "source": "function f(int $a,int $b=2):int{return $a*10+$b;}function sum(int $base,int ...$xs):int{foreach($xs as $x){$base+=$x;}return $base;} $xs vector<int> =[2,3];echo sum(1,...$xs);",
+      "stdout": "6"
+    },
+    {
+      "name": "unpack-empty",
+      "group": "unpack",
+      "source": "function f(int $a,int $b=2):int{return $a*10+$b;}function sum(int $base,int ...$xs):int{foreach($xs as $x){$base+=$x;}return $base;}$xs vector<int> =[];echo sum(1,...$xs);",
+      "stdout": "1"
+    },
+    {
+      "name": "unpack-fixed",
+      "group": "unpack",
+      "source": "function f(int $a,int $b=2):int{return $a*10+$b;}function sum(int $base,int ...$xs):int{foreach($xs as $x){$base+=$x;}return $base;}$xs vector<int> =[1,3];echo f(...$xs);",
+      "stdout": "13"
+    },
+    {
+      "name": "method-unpack",
+      "group": "unpack",
+      "source": "class C{function sum(int ...$xs):int{$n=0;foreach($xs as $x){$n+=$x;}return $n;}}$c=new C();$xs vector<int> =[2,3];echo $c->sum(...$xs);",
+      "stdout": "5"
+    },
+    {
+      "name": "ref-default-explicit",
+      "group": "ref-default",
+      "source": "function bump(int &$n=7):int{++$n;return $n;}$n=3;echo bump($n),\":\",$n;",
+      "stdout": "4:4"
+    },
+    {
+      "name": "ref-default-omitted",
+      "group": "ref-default",
+      "source": "function bump(int &$n=7):int{++$n;return $n;}echo bump(),\":\",bump();",
+      "stdout": "8:8"
+    },
+    {
+      "name": "const-ref-default-omitted",
+      "group": "ref-default",
+      "source": "function read(const int &$n=7):int{return $n;}echo read();",
+      "stdout": "7"
+    },
+    {
+      "name": "ref-control",
+      "group": "controls",
+      "source": "function bump(int &$n):int{++$n;return $n;}$n=3;echo bump($n),\":\",$n;",
+      "stdout": "4:4"
+    },
+    {
+      "name": "ref-pack-write",
+      "group": "ref-pack",
+      "source": "function bump(int &...$xs):int{$xs[0]=9;return $xs[0];}$n=3;echo bump($n),\":\",$n;",
+      "stdout": "9:9"
+    },
+    {
+      "name": "ref-pack-alias",
+      "group": "ref-pack",
+      "source": "function bump(int &...$xs):int{$xs[0]=9;return $xs[0];}$n=3;echo bump($n,$n),\":\",$n;",
+      "stdout": "9:9"
+    },
+    {
+      "name": "ref-pack-empty",
+      "group": "ref-pack",
+      "source": "function size(int &...$xs):int{return count($xs);}echo size();",
+      "stdout": "0"
+    },
+    {
+      "name": "value-pack-write",
+      "group": "controls",
+      "source": "function bump(int ...$xs):int{$xs[0]=9;return $xs[0];}$n=3;echo bump($n),\":\",$n;",
+      "stdout": "9:3"
+    },
+    {
+      "name": "alias-order",
+      "group": "controls",
+      "source": "function next(int &$n):int{++$n;return $n;}function f(int $a,int &$b,int $c):void{echo $a,\":\",$b,\":\",$c;}$n=1;f($n,$n,next($n));echo \":\",$n;",
+      "stdout": "1:2:2:2"
+    },
+    {
+      "name": "static-interface-concrete",
+      "group": "static-interface",
+      "source": "interface I{static function f():int;}class C implements I{static function f():int{return 7;}}echo C::f();",
+      "stdout": "7"
+    },
+    {
+      "name": "static-interface-qualified",
+      "group": "static-interface",
+      "source": "interface I{static function f():int;}class C implements I{static function f():int{return 7;}}$i I=new C();echo $i::f();",
+      "stdout": "7"
+    },
+    {
+      "name": "static-interface-name",
+      "group": "static-interface",
+      "source": "interface I{static function f():int;}class C implements I{static function f():int{return 7;}}echo I::f();",
+      "stdout": "7"
+    },
+    {
+      "name": "static-interface-expression",
+      "group": "static-interface",
+      "source": "interface I{static function f():int;}class C implements I{static function f():int{return 7;}}function make():I{return new C();}echo make()::f();",
+      "stdout": "7"
+    },
+    {
+      "name": "interface-instance-control",
+      "group": "controls",
+      "source": "interface I{function f():int;}class C implements I{function f():int{return 7;}}$i I=new C();echo $i->f();",
+      "stdout": "7"
+    },
+    {
+      "name": "concrete-static-control",
+      "group": "controls",
+      "source": "class C{static function f(int $n=7):int{return $n;}}$c=new C();echo C::f(),\":\",$c::f();",
+      "stdout": "7:7"
+    },
+    {
+      "name": "qualifier-effects",
+      "group": "controls",
+      "source": "class C{static function f(int $n):int{return $n;}}function make(int &$n):C{$n+=4;return new C();}function arg(int &$n):int{$n+=5;return $n;}$n=0;echo make($n)::f(arg($n)),\":\",$n;",
+      "stdout": "9:9"
+    },
+    {
+      "name": "interface-empty-concrete",
+      "group": "static-interface",
+      "source": "interface I{}class C implements I{static function f():int{return 7;}}echo C::f();",
+      "stdout": "7"
+    },
+    {
+      "name": "interface-empty-qualified",
+      "group": "static-interface",
+      "source": "interface I{}class C implements I{static function f():int{return 7;}}$i I=new C();echo $i::f();",
+      "stdout": "7"
+    },
+    {
+      "name": "interface-empty-expression",
+      "group": "static-interface",
+      "source": "interface I{}class C implements I{static function f():int{return 7;}}function make():I{return new C();}echo make()::f();",
+      "stdout": "7"
+    },
+    {
+      "name": "const-ref-default-explicit",
+      "group": "ref-default",
+      "source": "function read(const int &$n=7):int{return $n;}$n=3;echo read($n),\":\",read();",
+      "stdout": "3:7"
+    },
+    {
+      "name": "const-ref-string-default",
+      "group": "ref-default",
+      "source": "function read(const string &$s=\"saved\"):string{return $s;}echo read();",
+      "stdout": "saved"
+    },
+    {
+      "name": "method-const-ref-default",
+      "group": "ref-default",
+      "source": "class C{function read(const int &$n=7):int{return $n;}}$c=new C();echo $c->read();",
+      "stdout": "7"
+    },
+    {
+      "name": "ref-pack-read",
+      "group": "ref-pack",
+      "source": "function sum(int &...$xs):int{$n=0;foreach($xs as $x){$n+=$x;}return $n;}$n=3;echo sum($n,$n),\":\",$n;",
+      "stdout": "6:3"
+    },
+    {
+      "name": "value-pack-local-copy",
+      "group": "controls",
+      "source": "function bump(int ...$xs):int{$copy=$xs;$copy[0]=9;return $copy[0];}$n=3;echo bump($n),\":\",$n;",
+      "stdout": "9:3"
+    },
+    {
+      "name": "pack-snapshot",
+      "group": "controls",
+      "source": "function next(int &$n):int{++$n;return $n;}function show(int ...$xs):void{foreach($xs as $x){echo $x;}}$n=1;show($n,next($n));echo \":\",$n;",
+      "stdout": "12:2"
+    },
+    {
+      "name": "method-pack",
+      "group": "controls",
+      "source": "class C{function sum(int ...$xs):int{$n=0;foreach($xs as $x){$n+=$x;}return $n;}}$c=new C();echo $c->sum(2,3);",
+      "stdout": "5"
+    },
+    {
+      "name": "static-pack",
+      "group": "controls",
+      "source": "class C{static function sum(int ...$xs):int{$n=0;foreach($xs as $x){$n+=$x;}return $n;}}echo C::sum(2,3);",
+      "stdout": "5"
+    }
+  ]
+}

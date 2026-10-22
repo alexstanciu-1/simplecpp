@@ -61,12 +61,42 @@ automatic nullable/Result unwrapping, destructuring and by-reference bindings re
 outside this implementation slice. Ordinary `break`, `continue` and `return` apply;
 an iteration body alone cannot satisfy a required return because the source can be empty.
 
-**Mutation/replacement during iteration is unresolved and unsupported in this slice.**
-This includes mutations through aliases or calls. No shallow/deep collection snapshot
-is introduced; copying the current element is not a snapshot of all entries. Neither
-live-mutation behavior nor a particular rejection/checking policy is promised here.
-CH06-ITER-01 blocks final catalog closeout in Chapter 15 until the user agrees on semantics and a suitable
-performant lifetime/invalidation design. It does not block non-mutating value iteration.
+### Mutation during value iteration
+
+For vector, hash, mixed tables and dynamic containers, traversal starts live. Each
+body receives a value copy at its turn. Updating an existing value before its turn
+is visible until the traversal is preserved. The first logical structural mutation
+(insertion, successful removal, changed-size resize, clear of a nonempty source) or
+replacement/move of the iterated binding preserves each affected traversal's
+remaining shallow key/value entries **before** committing the change. Consumed
+entries are not replayed and newly inserted entries are not visited by that traversal.
+Later writes do not change its preserved values. Shared objects within copied values
+keep their ordinary identity; preservation is not a deep clone.
+
+Each nested traversal has its own position. A traversal started after a mutation
+sees the changed source. Missing-key removal, same-size resize and capacity changes
+alone do not preserve traversal. COW detachment alone is also nonstructural: a mixed
+traversal follows its original binding through detachment, while independent mixed
+copies remain independent. Dynamic aliases share structural changes; replacing a
+separate alias rebinds only that alias. These rules also apply to mutations through
+ordinary reference parameters and calls.
+
+All affected traversals must finish preservation preparation before the mutation
+commits. If preservation allocation or copying fails, the mutation remains
+uncommitted and the traversals remain live and valid; already evaluated source
+expressions are not rolled back. This does not strengthen the exception guarantees
+of a mutation that fails later, after preservation succeeds.
+
+The source expression is evaluated once. Temporary and field-source owners remain
+alive for traversal. Source destruction cannot leave a dangling traversal; remaining
+storage is retained without throwing from destruction. Normal exhaustion, break,
+continue, return and exceptions release traversal state through ordinary cleanup.
+No collection-wide entry snapshot is taken at loop entry.
+
+This contract covers source-visible operations through the registered container
+owners, not arbitrary native code mutating exposed storage. Reference foreach,
+escaping element references, concurrent mutation and collection-callback iteration
+policies remain separate; by-reference foreach stays rejected.
 
 ## 2. Core model
 

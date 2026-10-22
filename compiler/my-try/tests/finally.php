@@ -11,6 +11,9 @@ $executions = [];
 $native_cases = [];
 $log = 'class Log { static int $n = 0; } data struct Item { int $id; function __destruct() { $id = $this->id; Log::$n = Log::$n * 10 + $id; } } ';
 $cases = [
+ 'cross_break' => ['while(true){try{break;}finally{echo "F";}}',0,'F'],
+ 'cross_continue' => ['$n=0;while($n<2){try{++$n;continue;}finally{echo $n;}}',0,'12'],
+ 'value_return' => ['function f():vector<int>{try{return [7];}finally{echo "F";}}$v=f();echo $v[0];',0,'F7'],
 	'normal' => ['$n = 0; try { $n = 1; } finally { $n = $n * 10 + 2; } return $n === 12 ? 0 : 1;', 0],
 	'always_throw' => ['function f(): int { try {} finally { throw Exception::make("F"); } } try { $n = f(); } catch (Exception $e) { return 0; } return 1;', 0],
 	'return_evaluation' => ['function next(int &$n): int { $n++; return $n; } function f(int &$n): int { try { return next($n); } finally { $n = $n * 10 + 2; } } $n = 0; $v = f($n); return $v === 1 && $n === 12 ? 0 : 1;', 0],
@@ -49,17 +52,10 @@ $cases = [
 $rejections = [
 	'try {}', 'try {} finally {} finally {}', 'try {} finally {} catch (Exception $e) {}',
 	'try {} finally { return 1; }',
-	'while (true) { try { break; } finally {} }',
-	'while (true) { try { continue; } finally {} }',
-	'while (true) { try {} catch (Exception $e) { break; } finally {} }',
 	'while (true) { try {} finally { break; } }',
 	'while (true) { try {} finally { continue; } }',
 	'try {} finally { try { return 1; } finally {} }',
-	'try { while (true) { try { break; } finally {} } } finally {}',
 	'function &f(int &$n): int { try { return $n; } finally {} } $n = 1; $a =& f($n);',
-	'function f(): vector<int> { try { return [1]; } finally {} } $v = f();',
-	'function f(): Exception { try { return Exception::make("x"); } finally {} } $v = f();',
-	'function f(): result<int> { try { return 1; } finally {} } $v = f();',
 	'try { $n = 7; } finally { echo $n; }',
 	'try {} catch (Exception $e) {} finally { $m = $e->get_message(); }',
 	'try {} finally { $n = 7; } echo $n;',
@@ -105,7 +101,7 @@ try {
 	$compiler->init([$directory]);
 	$compiler->exec_cpp();
 	$before = CPP_Probe::text(Model::$cpp_files);
-	foreach (['try {} finally { return 1; }', 'while (true) { try { break; } finally {} }', 'try {} finally {} finally {}'] as $bad) {
+	foreach (['try {} finally { return 1; }', 'while (true) { try {} finally { break; } }', 'try {} finally {} finally {}'] as $bad) {
 		file_put_contents($path, $bad);
 		$rejected = false;
 		try { $compiler->update_cpp([$path]); } catch (\RuntimeException $error) { $rejected = true; }

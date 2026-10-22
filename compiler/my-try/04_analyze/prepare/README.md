@@ -422,7 +422,8 @@ normalization differs from mixed/mixed kind comparison. Nullable null comparison
 keep their separate presence-check path. Runtime table/weak-carrier comparison
 limits and the approved empty-carrier repair are recorded in chapter 05.
 
-`Result_Conversions` in `conversions/results.php` selects exact registered `result_payload` wrapping,
+`Result_Conversions` in `conversions/results.php` selects exact `result_payload` wrapping
+through settled `Capability_Facts`, including completed source enum declarations,
 same-type copies and explicit legacy false/true state construction. The three Result
 families retain distinct identities. Boolean payloads are not sentinels; canonical
 singleton constant types distinguish `false_sentinel`/`true_sentinel`, while `nullopt`
@@ -431,7 +432,15 @@ payload required-value extraction at assignment/argument/return boundaries recor
 `result_extract`; the backend copies the guarded payload. Non-value states throw,
 failed stores preserve targets and reference arguments never implicitly extract.
 Result probes admit these payloads through the existing semantic role. Conditions
-additionally require the payload's truthiness contract, rejecting vector/hash payloads.
+additionally require the payload's truthiness contract, rejecting vector/hash and
+enum payloads. Enum admission covers all three Result families, preserving explicit
+sentinel construction and exact payload identity. Enum wrapper probes attach
+value presence, or sentinel-aware presence for the boolean-sentinel family; the
+latter admits true-sentinel isset without granting payload extraction or conditions.
+Nullable value/extraction boundaries also admit exact enums, and
+`?E` shares ordinary nullable application identity. Neither path grants enum
+truthiness or lifted operators. Existing type-application preparation observes
+declaration capabilities; conversion queries read those settled facts.
 `result_condition` facts use the shared runtime truthiness helper for
 all condition consumers, while probes keep their independent runtime authorities.
 Logical operators and explicit casts

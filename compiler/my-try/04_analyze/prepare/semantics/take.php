@@ -19,7 +19,7 @@ final class Take_Preparation
 			$alternative_type /** nullable<canonical_type_use> */ = null;
 			if ($payload !== null)
 			{
-				Nullable_Conversions::require_scalar_payload($payload);
+				Nullable_Conversions::require_extractable_payload($payload);
 				$facts->operation = take_operation::nullable_value;
 			}
 			else

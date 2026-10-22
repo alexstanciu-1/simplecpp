@@ -20,7 +20,12 @@ The [compact decision inventory](15_review.md) indexes all debt recorded here in
 priorities and dependencies. It reconciles the current implementation at `82659125`;
 no implementation or new validation run is claimed by this review.
 
-Only CH06-ITER-01 and CH06-REF-01 are explicitly final-catalog blockers. Other entries
+Update 2026-10-22: CH06-ITER-01 is closed for value iteration by
+[V-D01](../planning/iteration_mutation.md). CH06-REF-01 remains a final-catalog
+blocker; reference foreach is still disabled. The following recommendation records
+the earlier review, superseded for value mutation.
+
+At that review, CH06-ITER-01 and CH06-REF-01 were the explicit final-catalog blockers. Other entries
 retain their existing deferred/non-blocking or unclassified status even when listed
 under the historical blocking-inventory heading. Recommended first slice:
 **CH15-ITER-DESIGN-01**, a mutation-policy and guard-ownership decision before runtime
@@ -34,7 +39,7 @@ chapter does not make them v0.2 release gates.
 
 | Debt | Origin | Status | Final completion requirement |
 | --- | --- | --- | --- |
-| CH06-ITER-01 — mutation/replacement during iteration | [Chapter 06](06_containers.md#ch06-iter-01--mutation-during-iteration) | Open; blocks final catalog completion, not Chapter 06 design closeout | Agree the long-term policy, reconcile contracts, implement required changes and prove behavior/safety |
+| CH06-ITER-01 — mutation/replacement during iteration | [Chapter 06](06_containers.md#ch06-iter-01--mutation-during-iteration) | Closed for value iteration, 2026-10-22 | Live until structural mutation/replacement, then preserve remaining shallow entries; runtime/source/lifetime/retained/cost proofs in [V-D01](../planning/iteration_mutation.md). Reference safety remains CH06-REF-01. |
 | CH06-REF-01 — reference foreach safety foundation | [CTRL-FOREACH-003/004](06_containers.md#ctrl-foreach-003) | Open; reference foreach stays disabled; final-catalog blocker | Establish runtime guards and binding lifetime/COW guarantees before compiler integration |
 | CH15-LIB-DYN-01 — library redesign and mixed/dynamic migration | [Chapter 06](06_containers.md) | Deferred by user; does not block core type migration | Review library-owned models, adapt affected APIs and prove enabled/disabled paths |
 | CH15-DYNAMIC-PROP-01 — dynamic `->` | [Chapters 05/06](06_containers.md) | Deferred by user; not part of core family/JSON integration | Agree property semantics and implement shared prepared access with runtime checks and proofs |
@@ -586,13 +591,15 @@ a side effect of inspection. This records the requirement, not an implemented AP
 
 ## CH06-ITER-01 — mutation policy
 
-Transferred here by user decision on 2026-10-05. Review structural mutation and
-source replacement during value and reference iteration, including changes through
-aliases/calls, visited entries/values, owner lifetime, copy-on-write and invalidation.
-Compare performance and implementation costs. Chapter 06 retains the detailed
-snapshot-on-first-structural-mutation alternative; it is a candidate, not an approved
-implementation. In reference iteration, preserving a snapshot must not silently
-lose the binding's write-through relationship to the intended source.
+**Closed for value iteration — 2026-10-22.** The approved live-then-preserved
+contract and four-family implementation are verified on dev002 with default
+prelowering. See the [normative contract](../../../../specs/array_semantics.md#mutation-during-value-iteration)
+and [V-D01 acceptance/cost report](../planning/iteration_mutation.md). The earlier
+snapshot-on-mutation proposal is now adopted for remaining shallow values at first
+structural mutation/replacement, not as an unconditional entry snapshot.
+
+Reference iteration remains CH06-REF-01; value preservation must not silently
+replace a reference binding's intended write-through relationship.
 
 Agreed interim direction for reference foreach:
 
@@ -607,12 +614,8 @@ Agreed interim direction for reference foreach:
 
 This records an agreed implementation direction, not delivered runtime protection.
 The safety guard and focused proofs remain prerequisites for enabling reference
-foreach. Deferring the broader policy does not expand existing value-iteration
-support beyond its bounded non-mutating contract.
-
-Close this item only after an explicit policy decision, updates to the owning
-normative specifications, required compiler/runtime work, and focused proofs for
-normal/exceptional exits, alias mutation, source replacement and binding validity.
+foreach. These reference requirements remain open even though value-mutation
+semantics and their implementation are complete.
 
 ## CH06-REF-01 — reference foreach safety foundation
 
@@ -1028,8 +1031,10 @@ and explicit native validation gate. These extensions are not implied by its clo
   shared preparation failure records, token/source provenance and CLI presentation.
   Existing message-based rejection/publication guards remain valid; do not widen the
   chapter closeout into a cross-stage diagnostic redesign.
-- Finally transport for reference, record/container/wrapper and owning-handle returns;
-  break/continue crossing protected regions; transfers escaping finally.
+- Reference returns crossing finally and transfers escaping finally remain rejected.
+  Non-reference value returns and crossing protected-region break/continue are
+  implemented by [V-D06](../planning/finally_value_transfers.md), including default
+  prelowering and async sequencing; the historical Chapter 13 limits are superseded.
 - Multiple/union catches, arbitrary runtime-class inheritance, direct runtime
   construction (`new Exception`), bare rethrow, throw expressions and chaining.
 - Static exception-effect analysis, expanded runtime-handle ownership/identity APIs,

@@ -76,6 +76,8 @@ enum truthiness_operation
 	case scalar_condition;
 	case nullable_condition;
 	case value_presence;
+	/** Probe presence includes the true sentinel; it does not imply a payload. */
+	case sentinel_presence;
 	case callable_presence;
 	case result_condition;
 	case error_condition;

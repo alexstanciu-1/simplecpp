@@ -18,12 +18,13 @@ final class Native_CPP_Publication
 	/** Consume the authenticated publication, never reopen module catalogs during a build. */
 	public static function runtime_inputs(\scpp\Json_View $view): runtime_cpp_build_spec
 	{
-		if (($view->kind() !== 'object') || ($view->size() !== 3)) {
+		if (($view->kind() !== 'object') || (($view->size() !== 3) && ($view->size() !== 6))) {
 			throw new \RuntimeException('Invalid runtime build publication');
 		}
 		$result = new runtime_cpp_build_spec();
-		foreach (['sources', 'libraries', 'definitions'] as $name)
+		foreach (['sources', 'libraries', 'definitions', 'compile_options', 'link_options', 'diagnostics'] as $name)
 		{
+			if (($view->size() === 3) && (($name === 'compile_options') || ($name === 'link_options') || ($name === 'diagnostics'))) { continue; }
 			$items = $view->member($name);
 			if ($items->kind() !== 'array') {
 				throw new \RuntimeException('Runtime build entries require arrays');
@@ -38,9 +39,10 @@ final class Native_CPP_Publication
 			elseif ($name === 'libraries') {
 				$result->libraries = $values;
 			}
-			else {
-				$result->definitions = $values;
-			}
+			elseif ($name === 'definitions') { $result->definitions = $values; }
+			elseif ($name === 'compile_options') { $result->compile_options = $values; }
+			elseif ($name === 'link_options') { $result->link_options = $values; }
+			else { $result->diagnostics = $values; }
 		}
 		Runtime_Build_Contract::validate($result);
 		return $result;

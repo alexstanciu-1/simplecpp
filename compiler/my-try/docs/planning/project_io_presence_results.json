@@ -1,0 +1,447 @@
+{
+  "date": "2026-10-22",
+  "host": "alex-ai@dev002.travelfuse.ro",
+  "status": {
+    "S02-H01": "repaired",
+    "VR08-H02": "repaired"
+  },
+  "default_prelowering": true,
+  "runtime_changes": false,
+  "full_matrix": false,
+  "native_compiler_rebuild": false,
+  "remaining_separate": [
+    "legacy syntax",
+    "VR08-H01",
+    "weak-handle extensions",
+    "other GUI platforms"
+  ],
+  "archive_sha256": "181bf793f7d7c019b18d6f8703ddb9f489d1605ad5c207aa9cde861df09e1af6",
+  "verified_inputs_sha256": {
+    "bin/project_services.php": "ef9dc0ad91c2e32f5717c88cfc555e4964f808131aef32492846a83c460f1228",
+    "compiler/my-try/05_backend/cpp/generate.php": "045fa27ae583f75fbb737fb9093d3bf2296f2b8f7e2e35e7eec1607c8d603ad5",
+    "compiler/my-try/05_backend/cpp/runtime_operations.php": "2b92d4ec3d7fe03e730947fd9f9b40cb099e72348660ce590bb06edc9498d289",
+    "compiler/my-try/tests/s02_prelower.py": "a6d9db96e3fade3fc3b4531553b2e0bd814c1130a19e7991272469da1926ab79",
+    "compiler/my-try/tests/project_io_selection.py": "64519ec82735b43bc388ae25eb03ec63d215d234e08dfec1756a94b933b26a2d",
+    "compiler/my-try/tests/handle_null_prelower.py": "61c5793b2548f732a0fa10137404090d95afab0f9f5c9a28e75d07bed5e0ad97",
+    "compiler/my-try/tests/handle_null_retained.php": "dff57342ff414db0ec8d088db8f7c3862b0c12d8e7a7a4ad51f98b340668afe7",
+    "compiler/my-try/tests/handle_null_retained.py": "727f94ff611d04b1024597dc2a169d927a52a88b954db2fe455f53cb188510fe",
+    "compiler/my-try/tests/ui_webview_enabled.py": "9719d36ab80cadd292fabade04d4a0d8ee68365c5d89bdc1d856528b35042997"
+  },
+  "acceptance_summaries": {
+    "20261022-s02-project-01/summary.json": {
+      "passed": true,
+      "legacy_syntax": "deferred",
+      "default_prelowering": true,
+      "publication": "project",
+      "cases": [
+        {
+          "case": {
+            "source": "tests/php/datetime/strict_level_01/strict_datetime_001_datetime_surface.phs",
+            "metadata": "tests/php/datetime/strict_level_01/strict_datetime_001_datetime_surface.test-info.json",
+            "profile": "strict",
+            "feature": "datetime",
+            "lane": "source",
+            "source_variant": "compiler/my-try/tests/compatibility_variants/s02/strict_datetime_001_datetime_surface.phs",
+            "migration": "Replace inline comment type declarations with strict declarations only."
+          },
+          "passed": true,
+          "declaration_replacements": 3,
+          "builds": {
+            "cold": {
+              "executable": "/home/alex-ai/curl/20261022-s02-project-01/strict_datetime_001_datetime_surface/cache/artifacts/b054359bd6408e14535062421e4843c5864b888c2342e12f9d05fdeb5f212456.bin",
+              "compiled": 5,
+              "reused": 0,
+              "pch_built": 0,
+              "linked": 1,
+              "layouts_built": 2,
+              "layouts_reused": 0
+            },
+            "warm": {
+              "executable": "/home/alex-ai/curl/20261022-s02-project-01/strict_datetime_001_datetime_surface/cache/artifacts/b054359bd6408e14535062421e4843c5864b888c2342e12f9d05fdeb5f212456.bin",
+              "compiled": 0,
+              "reused": 5,
+              "pch_built": 0,
+              "linked": 0,
+              "layouts_built": 0,
+              "layouts_reused": 2
+            }
+          },
+          "original_sha256": "a1ff8834434a2b73a3076e037cfaf74c0d199b927924bd7bd032a000e8b5f727",
+          "companion_sha256": "6d964e1c04ebb196f342185d532d48526341ce928c46ecf15f2e0ca2fa2dafa1",
+          "metadata_sha256": "142e1d5409e85243e43bf773c3b112ca9de72a8348c321b7f66d30636b16ea5f"
+        },
+        {
+          "case": {
+            "source": "tests/php/datetime/strict_level_01/strict_datetime_002_common_format.phs",
+            "metadata": "tests/php/datetime/strict_level_01/strict_datetime_002_common_format.test-info.json",
+            "profile": "strict",
+            "feature": "datetime",
+            "lane": "source",
+            "source_variant": "compiler/my-try/tests/compatibility_variants/s02/strict_datetime_002_common_format.phs",
+            "migration": "Replace inline comment type declarations with strict declarations only."
+          },
+          "passed": true,
+          "declaration_replacements": 2,
+          "builds": {
+            "cold": {
+              "executable": "/home/alex-ai/curl/20261022-s02-project-01/strict_datetime_002_common_format/cache/artifacts/02ec117225db43306553a6341d34aa653725d29d12ff025a90f4498451c48b9c.bin",
+              "compiled": 5,
+              "reused": 0,
+              "pch_built": 0,
+              "linked": 1,
+              "layouts_built": 2,
+              "layouts_reused": 0
+            },
+            "warm": {
+              "executable": "/home/alex-ai/curl/20261022-s02-project-01/strict_datetime_002_common_format/cache/artifacts/02ec117225db43306553a6341d34aa653725d29d12ff025a90f4498451c48b9c.bin",
+              "compiled": 0,
+              "reused": 5,
+              "pch_built": 0,
+              "linked": 0,
+              "layouts_built": 0,
+              "layouts_reused": 2
+            }
+          },
+          "original_sha256": "236ccc15e3a863d59d325517f54624830958588bb71721a88106d6c4ec708938",
+          "companion_sha256": "2df311afa74d99493da7cc98c09b362e20a960691cd26ff6993d0e612ac7462e",
+          "metadata_sha256": "a6284809922314339bbe1a5b7c9a3564daf76addefd5307b0b5090a8a7587deb"
+        },
+        {
+          "case": {
+            "source": "tests/php/filesystem/strict_level_01/strict_filesystem_001_fs_surface.phs",
+            "metadata": "tests/php/filesystem/strict_level_01/strict_filesystem_001_fs_surface.test-info.json",
+            "profile": "strict",
+            "feature": "filesystem",
+            "lane": "source",
+            "source_variant": "compiler/my-try/tests/compatibility_variants/s02/strict_filesystem_001_fs_surface.phs",
+            "migration": "Replace inline comment type declarations with strict declarations only."
+          },
+          "passed": true,
+          "declaration_replacements": 7,
+          "builds": {
+            "cold": {
+              "executable": "/home/alex-ai/curl/20261022-s02-project-01/strict_filesystem_001_fs_surface/cache/artifacts/23c718e340f6218a464ca5c3a9eded5c39b74779df22d26c4f933fe3bd767240.bin",
+              "compiled": 5,
+              "reused": 0,
+              "pch_built": 0,
+              "linked": 1,
+              "layouts_built": 3,
+              "layouts_reused": 0
+            },
+            "warm": {
+              "executable": "/home/alex-ai/curl/20261022-s02-project-01/strict_filesystem_001_fs_surface/cache/artifacts/23c718e340f6218a464ca5c3a9eded5c39b74779df22d26c4f933fe3bd767240.bin",
+              "compiled": 0,
+              "reused": 5,
+              "pch_built": 0,
+              "linked": 0,
+              "layouts_built": 0,
+              "layouts_reused": 3
+            }
+          },
+          "original_sha256": "9c11e8f56ffcefcbcd705ba107ff6649c3659ee17d14cad612f8915397914146",
+          "companion_sha256": "dccc0f36ee32fbf8ea0401b0d54a9174a9f4512030dff29f31757c8bb21da9b9",
+          "metadata_sha256": "b07a8155f1d7abcf25120e1e17cc86bd5eaacd43012c27045af181864b0edeb8"
+        },
+        {
+          "case": {
+            "source": "tests/php/filesystem/strict_level_01/strict_filesystem_002_fs_error_paths.phs",
+            "metadata": "tests/php/filesystem/strict_level_01/strict_filesystem_002_fs_error_paths.test-info.json",
+            "profile": "strict",
+            "feature": "filesystem",
+            "lane": "source",
+            "source_variant": "compiler/my-try/tests/compatibility_variants/s02/strict_filesystem_002_fs_error_paths.phs",
+            "migration": "Replace inline comment type declarations with strict declarations only."
+          },
+          "passed": true,
+          "declaration_replacements": 4,
+          "builds": {
+            "cold": {
+              "executable": "/home/alex-ai/curl/20261022-s02-project-01/strict_filesystem_002_fs_error_paths/cache/artifacts/31e040535d4218f6da202e8fcfd53262e817fd5be341b0b3ac878e396b93b659.bin",
+              "compiled": 5,
+              "reused": 0,
+              "pch_built": 0,
+              "linked": 1,
+              "layouts_built": 3,
+              "layouts_reused": 0
+            },
+            "warm": {
+              "executable": "/home/alex-ai/curl/20261022-s02-project-01/strict_filesystem_002_fs_error_paths/cache/artifacts/31e040535d4218f6da202e8fcfd53262e817fd5be341b0b3ac878e396b93b659.bin",
+              "compiled": 0,
+              "reused": 5,
+              "pch_built": 0,
+              "linked": 0,
+              "layouts_built": 0,
+              "layouts_reused": 3
+            }
+          },
+          "original_sha256": "23c582507c4374acbdb91986a38d5a48fb5655ed98737684ffd23cd375c9a99e",
+          "companion_sha256": "3e248e6322a6d9a95ea3a0868f6d6524443ff3e17fb7033d2988cc2fe1e23033",
+          "metadata_sha256": "0ac1f521e3c429cc809dfa8b1eda5339b3cce5cf7db09205e100f1917e7cdf82"
+        },
+        {
+          "case": {
+            "source": "tests/php/io/strict_level_01/strict_io_001_io_surface.phs",
+            "metadata": "tests/php/io/strict_level_01/strict_io_001_io_surface.test-info.json",
+            "profile": "strict",
+            "feature": "io",
+            "lane": "source",
+            "source_variant": "compiler/my-try/tests/compatibility_variants/s02/strict_io_001_io_surface.phs",
+            "migration": "Replace inline comment type declarations with strict declarations only."
+          },
+          "passed": true,
+          "declaration_replacements": 8,
+          "builds": {
+            "cold": {
+              "executable": "/home/alex-ai/curl/20261022-s02-project-01/strict_io_001_io_surface/cache/artifacts/c3359f937797de33be2b5c75a64c05daa213e1e071248bcad685cf393ee03704.bin",
+              "compiled": 5,
+              "reused": 0,
+              "pch_built": 0,
+              "linked": 1,
+              "layouts_built": 2,
+              "layouts_reused": 0
+            },
+            "warm": {
+              "executable": "/home/alex-ai/curl/20261022-s02-project-01/strict_io_001_io_surface/cache/artifacts/c3359f937797de33be2b5c75a64c05daa213e1e071248bcad685cf393ee03704.bin",
+              "compiled": 0,
+              "reused": 5,
+              "pch_built": 0,
+              "linked": 0,
+              "layouts_built": 0,
+              "layouts_reused": 2
+            }
+          },
+          "original_sha256": "ae98988cbb30c1b1e15f7e25d1320211c9e44871fc2ae348049fe6e0a0dbc60c",
+          "companion_sha256": "0eddef553ba7cf4c6a90b83751f5e4cfbbaa8d67e56774a83c91d489683ff691",
+          "metadata_sha256": "60bea992048287f6ba04d54fa4f36e8501a25f4419f80c4e36fbfcec135a9bab"
+        },
+        {
+          "case": {
+            "source": "tests/php/io/strict_level_01/strict_io_002_io_open_failure.phs",
+            "metadata": "tests/php/io/strict_level_01/strict_io_002_io_open_failure.test-info.json",
+            "profile": "strict",
+            "feature": "io",
+            "lane": "source",
+            "source_variant": "compiler/my-try/tests/compatibility_variants/s02/strict_io_002_io_open_failure.phs",
+            "migration": "Replace inline comment type declarations with strict declarations only."
+          },
+          "passed": true,
+          "declaration_replacements": 1,
+          "builds": {
+            "cold": {
+              "executable": "/home/alex-ai/curl/20261022-s02-project-01/strict_io_002_io_open_failure/cache/artifacts/32dbc64ea94627ed5a44a0338987fae69ee0cae5229d0d81b4632825a51b1013.bin",
+              "compiled": 5,
+              "reused": 0,
+              "pch_built": 0,
+              "linked": 1,
+              "layouts_built": 2,
+              "layouts_reused": 0
+            },
+            "warm": {
+              "executable": "/home/alex-ai/curl/20261022-s02-project-01/strict_io_002_io_open_failure/cache/artifacts/32dbc64ea94627ed5a44a0338987fae69ee0cae5229d0d81b4632825a51b1013.bin",
+              "compiled": 0,
+              "reused": 5,
+              "pch_built": 0,
+              "linked": 0,
+              "layouts_built": 0,
+              "layouts_reused": 2
+            }
+          },
+          "original_sha256": "e34fde5d87d8a62bba10ab6ee0f3177e4d4cd73d9334a8f8e53a31c92c6b0ea2",
+          "companion_sha256": "5e60200e0e13d0d427d203c1cbe36796027112f7ba699978f28ffb3c9a5daaef",
+          "metadata_sha256": "21bebeacd630e2a343844f11876c6bda3a2e06093d94ca217e019e27d979f796"
+        }
+      ]
+    },
+    "20261022-project-io-selection/summary.json": {
+      "passed": true,
+      "observations": [
+        {
+          "stage": "io-cold",
+          "build": {
+            "executable": "/home/alex-ai/curl/20261022-project-io-selection/cache/artifacts/fa8ab681539e7fa8c85eee27eb03ac861a932551ffa212474d3297a93e91d47b.bin",
+            "compiled": 4,
+            "reused": 0,
+            "pch_built": 0,
+            "linked": 1,
+            "layouts_built": 2,
+            "layouts_reused": 0
+          },
+          "providers": [
+            "core/runtime.cpp"
+          ]
+        },
+        {
+          "stage": "io-warm",
+          "build": {
+            "executable": "/home/alex-ai/curl/20261022-project-io-selection/cache/artifacts/fa8ab681539e7fa8c85eee27eb03ac861a932551ffa212474d3297a93e91d47b.bin",
+            "compiled": 0,
+            "reused": 4,
+            "pch_built": 0,
+            "linked": 0,
+            "layouts_built": 0,
+            "layouts_reused": 2
+          },
+          "providers": [
+            "core/runtime.cpp"
+          ]
+        },
+        {
+          "stage": "empty-cold",
+          "build": {
+            "executable": "/home/alex-ai/curl/20261022-project-io-selection/cache/artifacts/1ad29cc48913992afb6ab97a789cced5f5db9f4578b8c4a11b72bd9c433f8ddb.bin",
+            "compiled": 3,
+            "reused": 1,
+            "pch_built": 0,
+            "linked": 1,
+            "layouts_built": 1,
+            "layouts_reused": 0
+          },
+          "providers": [
+            "core/runtime.cpp"
+          ]
+        },
+        {
+          "stage": "empty-warm",
+          "build": {
+            "executable": "/home/alex-ai/curl/20261022-project-io-selection/cache/artifacts/1ad29cc48913992afb6ab97a789cced5f5db9f4578b8c4a11b72bd9c433f8ddb.bin",
+            "compiled": 0,
+            "reused": 4,
+            "pch_built": 0,
+            "linked": 0,
+            "layouts_built": 0,
+            "layouts_reused": 1
+          },
+          "providers": [
+            "core/runtime.cpp"
+          ]
+        },
+        {
+          "stage": "defaults-cold",
+          "build": {
+            "executable": "/home/alex-ai/curl/20261022-project-io-selection/cache/artifacts/5cb8414b2dbd9f0c45fc9d2f27d0b591152fff7e71c00be202571582336d2975.bin",
+            "compiled": 6,
+            "reused": 1,
+            "pch_built": 0,
+            "linked": 1,
+            "layouts_built": 1,
+            "layouts_reused": 0
+          },
+          "providers": [
+            "core/runtime.cpp",
+            "modules/json/document.cpp",
+            "modules/json/json.cpp",
+            "modules/datetime/datetime.cpp"
+          ]
+        },
+        {
+          "stage": "defaults-warm",
+          "build": {
+            "executable": "/home/alex-ai/curl/20261022-project-io-selection/cache/artifacts/5cb8414b2dbd9f0c45fc9d2f27d0b591152fff7e71c00be202571582336d2975.bin",
+            "compiled": 0,
+            "reused": 7,
+            "pch_built": 0,
+            "linked": 0,
+            "layouts_built": 0,
+            "layouts_reused": 1
+          },
+          "providers": [
+            "core/runtime.cpp",
+            "modules/json/document.cpp",
+            "modules/json/json.cpp",
+            "modules/datetime/datetime.cpp"
+          ]
+        },
+        {
+          "stage": "restored-io-cold",
+          "build": {
+            "executable": "/home/alex-ai/curl/20261022-project-io-selection/cache/artifacts/fa8ab681539e7fa8c85eee27eb03ac861a932551ffa212474d3297a93e91d47b.bin",
+            "compiled": 0,
+            "reused": 4,
+            "pch_built": 0,
+            "linked": 0,
+            "layouts_built": 0,
+            "layouts_reused": 2
+          },
+          "providers": [
+            "core/runtime.cpp"
+          ]
+        },
+        {
+          "stage": "restored-io-warm",
+          "build": {
+            "executable": "/home/alex-ai/curl/20261022-project-io-selection/cache/artifacts/fa8ab681539e7fa8c85eee27eb03ac861a932551ffa212474d3297a93e91d47b.bin",
+            "compiled": 0,
+            "reused": 4,
+            "pch_built": 0,
+            "linked": 0,
+            "layouts_built": 0,
+            "layouts_reused": 2
+          },
+          "providers": [
+            "core/runtime.cpp"
+          ]
+        }
+      ]
+    },
+    "20261022-handle-null-controls/summary.json": {
+      "passed": true,
+      "cases": [
+        "controls"
+      ],
+      "default_prelowering": true
+    },
+    "20261022-handle-null-runtime-final/summary.json": {
+      "passed": true,
+      "cases": [
+        "io",
+        "gui"
+      ],
+      "default_prelowering": true
+    },
+    "20261022-handle-null-retained/summary.json": {
+      "passed": true,
+      "publications": [
+        {
+          "published": "/home/alex-ai/curl/20261022-handle-null-retained/source-published-0",
+          "expected": "absent"
+        },
+        {
+          "published": "/home/alex-ai/curl/20261022-handle-null-retained/source-published-1",
+          "expected": "absent"
+        },
+        {
+          "published": "/home/alex-ai/curl/20261022-handle-null-retained/source-published-2",
+          "expected": "present"
+        },
+        {
+          "published": "/home/alex-ai/curl/20261022-handle-null-retained/source-published-3",
+          "expected": "present"
+        },
+        {
+          "published": "/home/alex-ai/curl/20261022-handle-null-retained/source-published-4",
+          "expected": "absent"
+        },
+        {
+          "published": "/home/alex-ai/curl/20261022-handle-null-retained/source-fresh",
+          "expected": "absent"
+        }
+      ],
+      "invalid_null_comparisons_rejected": 4,
+      "recovery": true,
+      "fresh_equivalence": true
+    },
+    "20261022-handle-null-gui-regression/summary.json": {
+      "passed": true,
+      "sdk_versions": "3.24.41\n2.52.6\n",
+      "native_provider": true,
+      "source_cases": [
+        "html",
+        "app",
+        "url",
+        "failure"
+      ],
+      "default_prelowering": true,
+      "integration": false
+    }
+  }
+}

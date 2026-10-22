@@ -146,7 +146,7 @@ Examples:
 
 ### Result wrapper states
 
-For supported scalar, boxed and explicit callable payloads, `isset` observes the Result state:
+For supported scalar, enum, boxed and explicit callable payloads, `isset` observes the Result state:
 value payloads and the true sentinel are present; failure and false sentinels are
 absent. A successful Result carrying boxed null is still in its value state.
 Probing the extracted box directly instead reports null as absent.

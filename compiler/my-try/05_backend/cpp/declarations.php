@@ -145,12 +145,22 @@ final class CPP_Declarations
 		if ($decision->operation === truthiness_operation::always_true) {
 			return '(static_cast<void>(' . $expression . '), true)';
 		}
+		if ($decision->operation === truthiness_operation::sentinel_presence) {
+			if ($context->concrete_types()) { return CPP_Runtime_Operations::wrapper_isset($decision->source_type, $expression, $context); }
+			$context->headers['lang/php/operators/isset/isset.hpp'] = true;
+			return '(scpp::php::isset(' . $expression . ')).native_value()';
+		}
 		if ($decision->operation === truthiness_operation::value_presence) {
 			if ($context->concrete_types()) { return CPP_Runtime_Operations::wrapper_presence($decision->source_type, $expression, $context); }
 			return 'static_cast<bool>((' . $expression . ').has_value())';
 		}
 		if ($decision->operation === truthiness_operation::boolean_identity) {
+			// Reading a borrowed bool's member requires its definition, not just the signature's forward declaration.
+			self::type($decision->source_type, $context);
 			return '(' . $expression . ').native_value()';
+		}
+		if ($context->concrete_types() && ($decision->operation === truthiness_operation::error_condition)) {
+			return CPP_Runtime_Operations::error_condition($decision->source_type, $expression, $context);
 		}
 		if (($decision->operation === truthiness_operation::callable_presence)
 			|| ($decision->operation === truthiness_operation::scalar_condition)
@@ -181,13 +191,7 @@ final class CPP_Declarations
 			$entry = object_cast(weakref_get($storage->declaration), collected_name::class);
 			$parameter = $storage->contract;
 			$parts .= $separator . self::parameter_type($parameter, $context, $prototype) . ' ' . CPP_Generator::local_name($entry);
-			if ($prototype && ($syntax instanceof function_node) && ($parameter->default_value !== null)) {
-				$parts .= ' = ' . self::parameter_default($parameter->default_value, $context);
-			}
-			elseif ($prototype && ($parameter->element_type !== null)) {
-				// An empty tail is implicit in source; this also permits preceding C++ defaults.
-				$parts .= ' = ' . self::type($parameter->type, $context) . '{}';
-			}
+			// Source calls materialize every default and pack; C++ declarations carry no defaults.
 			$separator = ', ';
 		}
 
@@ -622,6 +626,9 @@ final class CPP_Declarations
 			}
 			return CPP_Runtime_Operations::call($facts, $arguments, $context, $callsite);
 		}
+		if (($transport === null) && $context->concrete_types() && ($facts->specialization instanceof prepared_enum_call)) {
+			$transport = CPP_Compiler_Functions::transport(object_cast($facts->specialization, prepared_enum_call::class));
+		}
 		$parameters /** Storage<callable_parameter> */ = $facts->signature->parameters;
 		$prepared_arguments /** Storage<prepared_call_argument> */ = $facts->arguments;
 		if (q_count($prepared_arguments) === 1) {
@@ -654,6 +661,7 @@ final class CPP_Declarations
 		$transfer_checks = '';
 		$packed_names = '';
 		$packed_separator = '';
+		$packed_values /** vector<string> */ = [];
 		foreach ($prepared_arguments as $index => $prepared_argument)
 		{
 			$parameter_index /** int */ = $facts->fixed_count;
@@ -668,19 +676,22 @@ final class CPP_Declarations
 			$borrow = $prepared_argument->borrow_snapshot;
 			$reference = (($boundary === value_boundary_operation::bind_reference) || $borrow) ? '&' : '';
 
-			$qualifier = (($parameter->access === storage_access::read_only) || $borrow) ? 'const ' : '';
+			// Pack access constrains the completed vector, not its owned element snapshots.
+			$read_only_input = ($parameter->element_type === null) && ($parameter->access === storage_access::read_only);
+			$qualifier = ($read_only_input || $borrow) ? 'const ' : '';
 			$argument_requirement = self::signature_requirement(false, ($boundary === value_boundary_operation::bind_reference) || $borrow);
 			$text .= "\t" . $qualifier . self::type_for($argument_type, $context, $argument_requirement) . $reference . ' ' . $name . ' = ' . $value . ";\n";
 			if ($parameter->requires_transfer) { $transfer_checks .= $name . ".require_transfer();\n"; }
 			if ($transport !== null) { $physical_arguments[] = $name; }
 			if ($boundary === value_boundary_operation::consume_value) {
-				$name = self::move($name, $argument_type, $context, $parameter->access === storage_access::read_only);
+				$name = self::move($name, $argument_type, $context, $read_only_input);
 			}
 			if ($index < $facts->fixed_count) {
 				$names .= $separator . $name;
 				$separator = ', ';
 			}
 			else {
+				$packed_values[] = $name;
 				$packed_names .= $packed_separator . $name;
 				$packed_separator = ', ';
 			}
@@ -692,13 +703,17 @@ final class CPP_Declarations
 			$context->next_temporary++;
 			$text .= self::type_for($parameters[$index]->type, $context, cpp_type_requirement::stored_value) . ' ' . $name . ' = ' . self::parameter_default($default_value, $context) . ";\n";
 			if ($transport !== null) { $physical_arguments[] = $name; }
-			$names .= $separator . self::move($name, $parameters[$index]->type, $context);
+			// An omitted reference borrows this call-local owner until invocation completes.
+			$names .= $separator . ($parameters[$index]->mode === passing_mode::reference
+				? $name : self::move($name, $parameters[$index]->type, $context));
 			$separator = ', ';
 		}
 		$text .= $transfer_checks;
 		if ($facts->variadic_parameter !== null) {
 			$pack /** callable_parameter */ = $facts->variadic_parameter;
-			$names .= $separator . self::type($pack->type, $context) . '{' . $packed_names . '}';
+			$names .= $separator . (($context->concrete_types() && (q_count($packed_values) > 0))
+				? self::concrete_value_pack($pack, $packed_values, $context)
+				: self::type($pack->type, $context) . '{' . $packed_names . '}');
 		}
 
 		if ($transport !== null) {
@@ -717,6 +732,36 @@ final class CPP_Declarations
 		$names = CPP_Callsites::arguments($callsite, $names);
 		$text .= CPP_Sequence::result($reference . '(' . $names . ')', $context, $return_reference !== '') . CPP_Sequence::close($context);
 		return $text;
+	}
+
+	/** Construct an owned pack only after every explicit argument snapshot has settled. */
+	private static function concrete_value_pack(callable_parameter $parameter, array $values /** vector<string> */,
+		cpp_generation_context $context): string
+	{
+		$element /** canonical_type_use */ = $parameter->element_type;
+		$language = Model::$language_scope;
+		if (!$element->matches(Language_Types::integer($language))
+			&& !$element->matches(Language_Types::floating($language))
+			&& !$element->matches(Language_Types::boolean($language))
+			&& !$element->matches(Language_Types::string_type($language)))
+		{
+			throw new \RuntimeException('prelower_templates: wider value-pack elements require separate transport');
+		}
+		$binding = Model::$initialization_contracts->existing($parameter->type, false);
+		if ($binding === null)
+		{
+			throw new \LogicException('Prepared value pack requires its list initialization binding');
+		}
+		$buffer_type = CPP_Initializer_Buffer::reference($binding, null, $element, $context);
+		$buffer = 'call_pack_' . $context->next_temporary;
+		$context->next_temporary++;
+		$text = CPP_Sequence::open(self::type($parameter->type, $context), $context)
+			. $buffer_type . ' ' . $buffer . '(' . q_count($values) . '); ';
+		foreach ($values as $value)
+		{
+			$text .= $buffer . '.append(&(' . $value . ')); ';
+		}
+		return $text . CPP_Sequence::result($buffer . '.finish()', $context) . CPP_Sequence::close($context);
 	}
 
 	/** One full expression keeps argument/owner temporaries alive without retaining a borrow. */

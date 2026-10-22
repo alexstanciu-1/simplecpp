@@ -274,8 +274,58 @@ selected result expression executes. Ordinary typed value arguments and returns
 accept that result; it cannot initialize a storage reference.
 
 Result admission is independent of condition truthiness and selector admission.
-This extension does not admit enum conditions, enum Elvis operands, enum `??`
-results or enum payloads in nullable/Result wrappers. Those remain separate slices.
+This extension does not admit enum conditions or enum Elvis operands. The bounded
+nullable/Result value boundaries and exact-enum `??` fallback are specified below.
+
+### 3.2.1 v0.2 nullable and Result enum payloads
+
+Unit, int-backed and fixed-integer-backed enums may be payloads of `nullable<E>`
+and all three Result families: `result<E>`, `result_or_false<E>` and
+`result_or_bool<E>`. `?E` denotes exactly the same nullable type as `nullable<E>`;
+it does not erase absence or lower to a bare enum. Values preserve the exact
+nominal enum identity and its backing representation. Integers and another enum's
+cases do not implicitly initialize or replace the payload.
+
+Nullable values contain either absence or an enum case. Result values contain
+either an enum case or a genuine structured error. Falseable Results contain a
+case or a false sentinel; boolean-sentinel Results contain a case, a false sentinel
+or a true sentinel. A zero-backed case is a
+successful payload. Nullable default initialization is empty; this does not add
+implicit bare-enum or Result default initialization. Required storage and existing
+explicit-initializer rules remain in force.
+
+Ordinary exact-type initialization, assignment, by-value parameters, returns and
+same-wrapper copying reuse the existing wrapper boundaries. Required extraction
+checks the state and throws on absence or failure. Existing-output `take` preserves
+the output on failure, copies the case on success, and clears the structured error
+output after successful Result extraction. Its source is evaluated and snapshotted
+once before write-back. Both existing take spellings have the same behavior.
+
+`nullable<E> ?? E`, `result<E> ?? E` and `result_or_false<E> ?? E` return the exact enum value; the fallback
+is evaluated only for a non-value state. There is no integer fallback conversion
+or cross-enum join. Same-wrapper fallback and other selection extensions are not
+added here. `result_or_bool` remains rejected on either side of `??`. Enum
+truthiness, wrapper conditions and lifted equality/arithmetic remain separate.
+
+Sentinel construction uses the existing explicit `false_sentinel` / `true_sentinel`
+spelling. Bare bool literals or variables do not initialize non-bool enum payloads.
+Existing null-to-false-sentinel conversion remains available. Families do not
+implicitly convert into one another; structured errors do not initialize sentinel
+families. Required extraction throws for either boolean sentinel, including true.
+
+For `result_or_bool<E>`, value-state `take` copies the enum and leaves the boolean
+output unchanged. A sentinel leaves the enum output unchanged, assigns the boolean
+output and returns that sentinel's boolean value. Therefore a true return does not
+by itself establish that an enum was extracted. For `result_or_false<E>`, failed
+`take` preserves the enum output and returns false. Sources remain unconsumed.
+
+`isset` observes state independently of payload extraction: enum payloads and the
+true sentinel are present; false sentinels, absence and structured errors are not.
+Neither probe copies nor consumes the source. This does not grant wrapper conditions
+or emptiness. Default-prelowered helper and plain-wrapper presence proofs are
+recorded in `compiler/my-try/docs/planning/enum_helper_transport.md` and
+`compiler/my-try/docs/planning/enum_sentinel_carriers.md`; indexed/general probes
+remain separate.
 
 ### 3.3 v0.2 explicit enum parameter defaults
 

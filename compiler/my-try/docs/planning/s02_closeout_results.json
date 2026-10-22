@@ -1,0 +1,113 @@
+{
+  "passed": true,
+  "legacy_syntax": "deferred",
+  "default_prelowering": true,
+  "publication": "compiler API with explicit metadata modules; not project configuration",
+  "cases": [
+    {
+      "case": {
+        "source": "tests/php/datetime/strict_level_01/strict_datetime_001_datetime_surface.phs",
+        "metadata": "tests/php/datetime/strict_level_01/strict_datetime_001_datetime_surface.test-info.json",
+        "profile": "strict",
+        "feature": "datetime",
+        "lane": "source",
+        "source_variant": "compiler/my-try/tests/compatibility_variants/s02/strict_datetime_001_datetime_surface.phs",
+        "migration": "Replace inline comment type declarations with strict declarations only."
+      },
+      "passed": true,
+      "declaration_replacements": 3,
+      "original_sha256": "a1ff8834434a2b73a3076e037cfaf74c0d199b927924bd7bd032a000e8b5f727",
+      "companion_sha256": "6d964e1c04ebb196f342185d532d48526341ce928c46ecf15f2e0ca2fa2dafa1",
+      "metadata_sha256": "142e1d5409e85243e43bf773c3b112ca9de72a8348c321b7f66d30636b16ea5f"
+    },
+    {
+      "case": {
+        "source": "tests/php/datetime/strict_level_01/strict_datetime_002_common_format.phs",
+        "metadata": "tests/php/datetime/strict_level_01/strict_datetime_002_common_format.test-info.json",
+        "profile": "strict",
+        "feature": "datetime",
+        "lane": "source",
+        "source_variant": "compiler/my-try/tests/compatibility_variants/s02/strict_datetime_002_common_format.phs",
+        "migration": "Replace inline comment type declarations with strict declarations only."
+      },
+      "passed": true,
+      "declaration_replacements": 2,
+      "original_sha256": "236ccc15e3a863d59d325517f54624830958588bb71721a88106d6c4ec708938",
+      "companion_sha256": "2df311afa74d99493da7cc98c09b362e20a960691cd26ff6993d0e612ac7462e",
+      "metadata_sha256": "a6284809922314339bbe1a5b7c9a3564daf76addefd5307b0b5090a8a7587deb"
+    },
+    {
+      "case": {
+        "source": "tests/php/filesystem/strict_level_01/strict_filesystem_001_fs_surface.phs",
+        "metadata": "tests/php/filesystem/strict_level_01/strict_filesystem_001_fs_surface.test-info.json",
+        "profile": "strict",
+        "feature": "filesystem",
+        "lane": "source",
+        "source_variant": "compiler/my-try/tests/compatibility_variants/s02/strict_filesystem_001_fs_surface.phs",
+        "migration": "Replace inline comment type declarations with strict declarations only."
+      },
+      "passed": true,
+      "declaration_replacements": 7,
+      "original_sha256": "9c11e8f56ffcefcbcd705ba107ff6649c3659ee17d14cad612f8915397914146",
+      "companion_sha256": "dccc0f36ee32fbf8ea0401b0d54a9174a9f4512030dff29f31757c8bb21da9b9",
+      "metadata_sha256": "b07a8155f1d7abcf25120e1e17cc86bd5eaacd43012c27045af181864b0edeb8"
+    },
+    {
+      "case": {
+        "source": "tests/php/filesystem/strict_level_01/strict_filesystem_002_fs_error_paths.phs",
+        "metadata": "tests/php/filesystem/strict_level_01/strict_filesystem_002_fs_error_paths.test-info.json",
+        "profile": "strict",
+        "feature": "filesystem",
+        "lane": "source",
+        "source_variant": "compiler/my-try/tests/compatibility_variants/s02/strict_filesystem_002_fs_error_paths.phs",
+        "migration": "Replace inline comment type declarations with strict declarations only."
+      },
+      "passed": true,
+      "declaration_replacements": 4,
+      "original_sha256": "23c582507c4374acbdb91986a38d5a48fb5655ed98737684ffd23cd375c9a99e",
+      "companion_sha256": "3e248e6322a6d9a95ea3a0868f6d6524443ff3e17fb7033d2988cc2fe1e23033",
+      "metadata_sha256": "0ac1f521e3c429cc809dfa8b1eda5339b3cce5cf7db09205e100f1917e7cdf82"
+    },
+    {
+      "case": {
+        "source": "tests/php/io/strict_level_01/strict_io_001_io_surface.phs",
+        "metadata": "tests/php/io/strict_level_01/strict_io_001_io_surface.test-info.json",
+        "profile": "strict",
+        "feature": "io",
+        "lane": "source",
+        "source_variant": "compiler/my-try/tests/compatibility_variants/s02/strict_io_001_io_surface.phs",
+        "migration": "Replace inline comment type declarations with strict declarations only."
+      },
+      "passed": true,
+      "declaration_replacements": 8,
+      "original_sha256": "ae98988cbb30c1b1e15f7e25d1320211c9e44871fc2ae348049fe6e0a0dbc60c",
+      "companion_sha256": "0eddef553ba7cf4c6a90b83751f5e4cfbbaa8d67e56774a83c91d489683ff691",
+      "metadata_sha256": "60bea992048287f6ba04d54fa4f36e8501a25f4419f80c4e36fbfcec135a9bab"
+    },
+    {
+      "case": {
+        "source": "tests/php/io/strict_level_01/strict_io_002_io_open_failure.phs",
+        "metadata": "tests/php/io/strict_level_01/strict_io_002_io_open_failure.test-info.json",
+        "profile": "strict",
+        "feature": "io",
+        "lane": "source",
+        "source_variant": "compiler/my-try/tests/compatibility_variants/s02/strict_io_002_io_open_failure.phs",
+        "migration": "Replace inline comment type declarations with strict declarations only."
+      },
+      "passed": true,
+      "declaration_replacements": 1,
+      "original_sha256": "e34fde5d87d8a62bba10ab6ee0f3177e4d4cd73d9334a8f8e53a31c92c6b0ea2",
+      "companion_sha256": "5e60200e0e13d0d427d203c1cbe36796027112f7ba699978f28ffb3c9a5daaef",
+      "metadata_sha256": "21bebeacd630e2a343844f11876c6bda3a2e06093d94ca217e019e27d979f796"
+    }
+  ],
+  "date": "2026-10-22",
+  "host": "dev002",
+  "evidence": "/home/alex-ai/curl/20261022-s02-prelower-02",
+  "original_source_and_metadata_match_baseline": "75de94c71e37060c564b6ade19850b7686bd457a",
+  "separate_gap": "S02-H01: prism.json rejects io module; explicit compiler API metadata selection passes",
+  "harness_sha256": {
+    "compiler/my-try/tests/s02_prelower.py": "0bcf9a8b299369af8bb5ccc56f466ef93c46b8831be0b23335e015dcddcca889",
+    "compiler/my-try/tests/s02_publish.php": "684035dc0127aa549b6e098341cf02ba134ae6f1004f6edd9d495ca42fe3543d"
+  }
+}

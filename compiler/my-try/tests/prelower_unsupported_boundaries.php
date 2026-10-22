@@ -28,9 +28,6 @@ $cases['boxed_extract'] = ['$a mixed = 7.0; $b float = $a; return 0;', 'scpp::re
 $cases['boxed_condition'] = ['$a mixed = 7; if ($a) { return 1; } return 0;', 'condition_truthy(', 'runtime condition requires concrete transport'];
 $cases['scalar_condition'] = ['$a = "hello"; if ($a) { return 1; } return 0;', 'condition_truthy(', 'runtime condition requires concrete transport'];
 $cases['value_probe'] = ['$a dynamic; $v = empty($a); return 0;', 'scpp::php::empty(', 'value probe operation requires concrete transport'];
-$cases['enum_name'] = ['enum E { case A; } $name = enum_name(E::A); return 0;', 'helpers/', 'compiler helper requires concrete transport'];
-$cases['enum_value'] = ['enum E { case A; } $value = enum_value(E::A); return 0;', 'helpers/', 'compiler helper requires concrete transport'];
-$cases['enum_from_value'] = ['enum E { case A; } $value = enum_from_value(E::class, 0); return 0;', 'helpers/', 'compiler helper requires concrete transport'];
 foreach ($cases as $name => [$source, $native_spelling, $diagnostic]) {
 	Compiler_Lifecycle::reset();
 	file_put_contents($path, $source);

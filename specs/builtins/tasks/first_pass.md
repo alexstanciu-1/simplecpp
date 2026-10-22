@@ -200,6 +200,13 @@ Default result placement:
 
 Custom index behavior:
 
+In v0.2, custom index callbacks and pre-populated result targets are supported
+only for typed vector/hash inputs. For mixed/dynamic inputs, both `index` and
+`result` arguments must be omitted or `null`; non-null arguments are unsupported
+and rejected during source preparation. This restriction applies to both
+`task_run` and `task_start`, including typed or boxed explicit targets. Boxed
+custom placement is not a v0.2 commitment.
+
 - custom index callbacks run coordinator-side in the first pass
 - custom index creates an explicitly keyed result shape
 - duplicate custom keys overwrite earlier values silently in the first pass; a warning surface is deferred

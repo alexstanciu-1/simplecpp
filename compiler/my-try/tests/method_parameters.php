@@ -24,11 +24,13 @@ foreach (['class', 'struct'] as $kind) {
 		$setup = $mode === 'static' ? '' : '$c = new C(); ';
 		$call = $mode === 'static' ? 'C::f' : '$c->f';
 		foreach ([
+			'writable_default' => ['int &$n = 7', 'int', '++$n; return $n;', '$n = 3; $first = CALL($n); return $first + CALL() + $n;', 16],
 			'write' => ['int &$n', 'void', '$n += 2;', '$n = 7; CALL($n); return $n;', 9],
 			'alias' => ['int &$n', 'void', '$a =& $n; $a = 9;', '$n = 7; $a =& $n; CALL($a); return $n;', 9],
 			'observation' => ['const int &$read, int &$write', 'int', '$write = 9; return $read;', '$n = 7; return CALL($n, $n);', 9],
 			'snapshot' => ['int $copy, int &$write', 'int', '$write = 9; return $copy;', '$n = 7; $copy = CALL($n, $n); return $copy + $n;', 16],
 			'forward_read' => ['const int &$n', 'int', '$a =& $n; return read($a);', 'function read(const int &$n): int { return $n; } $n = 9; return CALL($n);', 9],
+			'readonly_pack' => ['int &...$values', 'int', '$sum = 0; foreach ($values as $v) { $sum += $v; } return $sum;', 'return CALL(2, 3, 4);', 9],
 			'pack' => ['int ...$values', 'int', '$sum = 0; foreach ($values as $v) { $sum += $v; } return $sum;', 'return CALL(2, 3, 4);', 9],
 			'empty_pack' => ['int ...$values', 'int', '$sum = 0; foreach ($values as $v) { $sum += $v; } return $sum;', 'return CALL();', 0],
 			'default_pack' => ['int $start = 9, int ...$values', 'int', 'foreach ($values as $v) { $start += $v; } return $start;', 'return CALL();', 9],
@@ -55,10 +57,9 @@ foreach (['class', 'struct'] as $kind) {
 			['const int &$n', 'void', '$a =& $n; $a += 1;', '$n = 1; CALL($n);'],
 			['const int &$n', 'void', 'write($n);', 'function write(int &$n): void { $n = 9; } $n = 1; CALL($n);'],
 			['const vector<int> &$v', 'void', '$v[] = 9;', '$v vector<int> = []; CALL($v);'],
-			['int &...$values', 'void', '', ''],
+			['int &...$values', 'void', '$values[]=1;', 'CALL();'],
 			['int ...$values = 1', 'void', '', ''],
 			['int ...$values, int $n', 'void', '', ''],
-			['int &$n = 1', 'void', '', ''],
 		] as [$parameters, $return_type, $body, $program]) {
 			$failed = false;
 			try {

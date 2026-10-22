@@ -1,6 +1,21 @@
 # 04. Functions, parameters and calls
 Doc Status: planning
 
+The [2026-10-22 V-D07 audit](../planning/call_compatibility_audit.md) distinguishes
+baseline-unsupported named/unpacking forms from executable reference defaults and
+read-only reference-pack spellings. Nonempty value packs expose VD07-A02 under
+default prelowering. The subsequent [VD07-A02 repair](../planning/value_pack_transport.md)
+verifies canonical scalar packs through source free/static/instance calls, with
+snapshots, owned storage and cleanup. Wider packs and other bridges stay separate;
+The [reference-default repair](../planning/reference_defaults.md) admits read-only
+and writable canonical scalar literal defaults with fresh call-local ownership,
+explicit caller binding and rejected escaping default references. VD07-A01 is
+verified in this scope. The [read-only owned pack repair](../planning/readonly_packs.md)
+closes VD07-A03 and V-D07 in the agreed compatibility scope. The `&...` spelling
+creates value snapshots with read-only pack access, never caller-element aliases.
+Wider packs/bridges and baseline-unsupported named arguments/unpacking remain separate.
+
+
 > **Important: LLVM is deferred by default. Work on the direct LLVM backend only when the user explicitly requests it. The v0.2 default scope is Frontend + C++ S2S.**
 
 [Catalog and workflow](README.md) · [Source merge ledger](source_merge.json)

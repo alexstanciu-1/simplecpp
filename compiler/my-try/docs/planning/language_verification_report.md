@@ -5,9 +5,21 @@ Verification closeout: evidence through checkpoint 75. All planned checks and di
 
 The frozen v0.2 audit has 105 passed checks, 5 failed, 6 blocked and 3 explicitly deferred across 36 language families. A passed audit check can establish a complete inventory or reproduce intended rejection; it does not necessarily mean every feature in that family is implemented. No compiler/runtime fixes were made by this verification goal.
 
-Current follow-up repair status: [55/64 resolved (85.9375%)](language_repair_progress.md),
-including [V-D11/V-D15](collection_advisories.md). The audit tables below retain
-the original frozen results; dated repair closeouts record subsequent changes.
+Current follow-up repair status: [64/64 strict-milestone dispositions resolved (100%)](language_repair_progress.md),
+including [enabled Linux V-R08 acceptance](strict_gui_closeout.md) on dev002.
+Supplementary S02-H01 and VR08-H02 are [repaired](project_io_handle_presence.md),
+and VR08-H01 is [repaired](error_conditions.md); this is not a gap-free language claim. V-D08 closes through the enum payload,
+helper and sentinel-carrier repairs, the [compatibility audit](enum_compatibility_closeout.md),
+and [VD08-A01 default-less match transport](match_failure_transport.md). Wider enum
+extensions remain separate. The [call audit](call_compatibility_audit.md) reconciles
+V-D05. The subsequent default/value-pack repairs and [read-only owned pack
+closeout](readonly_packs.md) close V-D07 within its agreed compatibility scope.
+The [V-D01 repair](iteration_mutation.md) closes mutation during value iteration.
+[S02](strict_gui_closeout.md) is reconciled as a strict-scope exclusion with six
+migrated proofs; legacy syntax remains deferred and supplementary S02-H01 project
+IO selection now passes project-mode verification. The audit
+tables below retain the original frozen results; dated repair closeouts record
+subsequent changes.
 
 ## Scope and provenance
 

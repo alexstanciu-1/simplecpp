@@ -38,9 +38,8 @@ Source publication readiness and successful native readiness are distinct.
 Runtime and middleware implementations still use templates. Only application inputs
 must be template-free. Metadata registration alone is not a support claim; consult
 the [representation/operation coverage matrix](../../../../specs/planning/runtime_template_capability_matrix_2026_10_19.md#current-coverage-contract--2026-10-20).
-Callable storage, weak observation,
-match without a default, and specified boxed/runtime helper paths still reject
-until concrete transports exist. Ordinary mode retains its existing semantics.
+Remaining concrete-operation limits are tracked in the coverage matrix; ordinary
+mode retains the same source semantics.
 
 Object tests and checked casts consume `prepared_object_type` through a compiled
 runtime operation. The key includes operation, source type and target payload
@@ -57,14 +56,24 @@ explicitly requires native payloads. Thus empty hash construction returns the sa
 physical representation used for stored hashes. See [object hashes](../../../../specs/portability/object_hashes.md)
 for cross-route proofs and the portable carrier's restrictions.
 
-Source exception hierarchies, throw/catch and bounded scalar/void finally now use
+Source exception hierarchies, throw/catch and value/loop-transfer finally use
 compiled exception operations. The runtime payload base exposes a template-free
 inheritance interface; typed extraction and shared ownership stay in middleware.
-Finally uses layout-probed inline exception state and pending scalar storage.
+Finally uses the unified layout-probed storage for pending exceptions and values,
+including non-reference values, loop transfers and async sequencing.
 Inherited zero-argument runtime methods on `$this` borrow the original payload
 through a compiled member bridge without manufacturing a shared owner. Root
 message behavior and the bounded source contract are defined in
 [exceptions](../../../../specs/exceptions_v0_2.md).
+
+Enum name/value/reverse-value calls reuse settled `prepared_enum_call` facts and
+ordinary ordered argument snapshots through the existing compiled-operation bridge.
+One helper body serves both ordinary and compiled implementations; application units
+see only concrete signatures. Plain enum-wrapper `isset` selects value presence
+for nullable/structured/falseable Results, or sentinel-aware presence for boolean
+Results. The latter invokes the existing runtime isset authority; it does not
+replace payload availability used by extraction or coalescing. Both bridges borrow
+once for the full expression without enabling payload truthiness. See [bounded proof and limits](../planning/enum_helper_transport.md).
 
 Prepared `take`, nullable/Result construction and required extraction, and wrapper
 usable-value coalescing use the existing compiled operation bridge. Provider
@@ -83,13 +92,20 @@ concrete element representations. Reading a vector field for indexing uses a val
 snapshot; indexed writes, updates, compounds, reference escape, static properties
 and wider field types remain outside this transport slice. Prepared mixed-to-int
 and mixed-to-string extraction uses the existing required-cast implementation in
-the compiled conversion bridge. Canonical int/string-to-mixed wrapping uses that
-same bridge. Mixed null-index reads adapt the receiver and key and return an owned
-mixed result, preserving once-only ordered evaluation and existing key semantics.
+the compiled conversion bridge. Prepared scalar/null wrapping into mixed or dynamic uses that
+same bridge. Boxed null-index reads adapt the receiver and key and return an owned
+result in the same family, preserving once-only ordered evaluation and existing key semantics.
+Boxed initializer buffers store native boxed elements; generic containers retain
+substituted concrete elements. Direct boxed writes unwrap their key/value operands.
+Nested boxed store/append stays inside one compiled helper: source keys and RHS are
+already snapshotted, then the existing path owner validates the entire path before
+mutable descent and the final write. Native interior references never cross into
+application wrapper references. This preserves mixed copy-on-write and dynamic
+shared identity without changing runtime algorithms.
 Concrete registered provider value/read-only vector<string> parameters copy to
 native elements; inferred generic contracts keep substituted physical types.
-Mutable provider references reject pending explicit write-back transport. Wider
-boxed domains and index writes remain separate. See [curl integration](../planning/curl_integration.md).
+Mutable provider references reject pending explicit write-back transport. Boxed extraction beyond the existing int/string slice, indexed updates/compounds,
+and broader keyed probes remain separate. See [curl integration](../planning/curl_integration.md).
 
 ## Existing owners
 
@@ -237,3 +253,11 @@ before returning the application's exit status. Exceptional exit also drains wor
 and preserves the original application failure. Ordinary tasks programs reuse the
 same entry-support implementation. Retention and join bookkeeping belong to the
 tasks provider; the compiler does not maintain a second batch registry.
+
+Source `throw`/`catch` now use canonical Exception operations through the compiled
+runtime-operation bridge. Matching preserves the shared object; runtime guard and
+unmatched exceptions propagate. `CPP_Finally` publishes inline saved-exit storage
+through the existing specialization/layout owners. Protected async bodies use
+owned coroutine invocation; async handler bodies run after native catch matching
+so they can suspend. Return and loop exits resume after cleanup. See
+the [V-D06 evidence](../planning/finally_value_transfers.md).

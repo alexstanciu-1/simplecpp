@@ -14,6 +14,26 @@ The catalog's bounded closeouts and Chapter 15 deferrals still
 bound the supported language surface.
 This does not establish exhaustive language, lifetime, incremental or performance coverage.
 
+## Remote integration — 2026-10-22
+
+The merge of `origin/v0.2/develop` through `96c86d3f6` preserves the local
+source exception hierarchy, Storage payload transport and object identity keys
+alongside the incoming broader `finally` storage and mixed/dynamic index paths.
+The incoming handle/null presence transport passes the focused prelowered
+controls fixture. That defect is therefore no longer an outstanding implementation
+blocker, although full compiler scope lookup and self-bootstrap have not been
+rerun after this merge. The AST/trait contract and null-return ownership blockers
+from the checkpoint below remain unaddressed; Storage_Cursor widening stays out
+of scope.
+
+Merge validation passes the exception hierarchy, Storage and portable object-key
+suites, selected cold/warm `finally` and async cases, handle/null controls,
+mixed/dynamic/hash iteration and retained field-owner cases, and error-condition
+transport. Results are under `/tmp/merge-20261022-*`. The async-handler-finally
+sanitized build is unverified: its layout probe hits LeakSanitizer's ptrace
+restriction in this environment, including a retry with outer leak detection
+disabled. Its ordinary cold/warm prelowered builds and executions pass.
+
 ## PHP-hosted bootstrap after qualified-name dispatch — 2026-10-21
 
 The latest retry uses `46d9e35e` plus the PHP qualified-name refactor.

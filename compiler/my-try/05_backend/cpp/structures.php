@@ -143,9 +143,14 @@ enum cpp_record_state {
 	case complete;
 }
 
-/** Invocation-local pending return transport for one emitted protected lambda. */
-final class cpp_finally_return
+/** Invocation-local pending return/loop-transfer transport for one emitted protected lambda. */
+final class cpp_finally_exit
 {
+	public bool $asynchronous = false;
+	public string $transfer = '';
+	public ?breakable_node $break_target = null;
+	public ?loop_node $continue_target = null;
+	public bool $concrete = false;
 	public string $flag;
 	public ?string $value = null;
 }
@@ -168,7 +173,7 @@ final class cpp_generation_context
 		return $this->specialization_engine !== null;
 	}
 
-	public ?cpp_finally_return $finally_return = null;
+	public ?cpp_finally_exit $finally_exit = null;
 	/** Invocation selection of backend-owned, no-argument shared allocation functions. */
 	public array $outlined_shared_allocations /** hash<bool> */ = [];
 	public array $compiler_helpers /** hash<prepared_compiler_call> */ = [];
@@ -237,12 +242,16 @@ final class cpp_program {
 /** Backend recipes retain settled identities, never syntax or generation workers. */
 enum cpp_runtime_operation_kind {
 	case exception_throw;
+	case match_failure;
 	case exception_catch;
-	case exception_state;
+	case finally_storage;
 	case property_read;
 	case property_write;
 	case property_target;
+	case error_condition;
 	case wrapper_presence;
+	case wrapper_isset;
+	case enum_helper;
 	case ownership_observation;
 	case object_type;
 	case take;
@@ -270,6 +279,7 @@ final class cpp_callsite
 
 final class cpp_runtime_operation
 {
+	public ?prepared_enum_call $enum_helper = null;
 	public ?ownership_observation_kind $ownership_observation = null;
 	public ?prepared_object_type $object_type = null;
 	public ?cpp_callsite $callsite = null;

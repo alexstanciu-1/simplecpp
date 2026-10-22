@@ -41,18 +41,11 @@ final class Exception_Preparation
 		if ($context->reference_return_parameter !== null) {
 			throw new \RuntimeException('Reference returns through finally are deferred');
 		}
-		$type = $context->return_type;
-		if ($type !== null) {
-			if (!Conversion_Preparation::is_scalar($type)
-				&& (Type_Queries::canonical($type)->family() !== type_family::no_value)) {
-				throw new \RuntimeException('Finally supports only scalar or void return transport');
-			}
-		}
 		$region /** prepared_finally */ = $context->finally_region;
 		$region->captures_return = true;
 	}
 
-	/** Isolate transfer targets at each finally boundary, preserving nested local loops. */
+	/** Protected exits retain targets; the finalizer establishes a hard outward-transfer boundary. */
 	public static function prepare_try(try_node $node, preparation_context $context): statement_completion
 	{
 		if ($node->finalizer === null) {
@@ -60,16 +53,20 @@ final class Exception_Preparation
 		}
 		$outer_region = $context->finally_region;
 		$outer_forbidden = $context->finally_return_forbidden;
+		$outer_finally_break = $context->finally_break_target;
+		$outer_finally_continue = $context->finally_continue_target;
 		$outer_break = $context->break_target;
 		$outer_continue = $context->continue_target;
 		$facts = new prepared_finally();
 		$context->finally_region = $facts;
-		$context->break_target = null;
-		$context->continue_target = null;
+		$context->finally_break_target = $outer_break;
+		$context->finally_continue_target = $outer_continue;
 		try
 		{
 			$protected_completion = self::prepare_protected($node, $context);
 			$context->finally_return_forbidden = true;
+			$context->break_target = null;
+			$context->continue_target = null;
 			$finalizer /** block_node */ = $node->finalizer;
 			$final_completion = Body_Preparation::prepare_block($finalizer, $context);
 			$result = Completion_Preparation::finalized($protected_completion, $final_completion);
@@ -78,11 +75,21 @@ final class Exception_Preparation
 			if (($outer_region !== null) && $facts->captures_return) {
 				$outer_region->captures_return = true;
 			}
+			if ($outer_region !== null) {
+				if (($facts->captures_break) && ($outer_break === $outer_finally_break)) {
+					$outer_region->captures_break = true;
+				}
+				if (($facts->captures_continue) && ($outer_continue === $outer_finally_continue)) {
+					$outer_region->captures_continue = true;
+				}
+			}
 			return $result;
 		}
 		finally {
 			$context->finally_region = $outer_region;
 			$context->finally_return_forbidden = $outer_forbidden;
+			$context->finally_break_target = $outer_finally_break;
+			$context->finally_continue_target = $outer_finally_continue;
 			$context->break_target = $outer_break;
 			$context->continue_target = $outer_continue;
 		}

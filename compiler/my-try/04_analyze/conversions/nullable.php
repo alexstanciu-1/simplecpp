@@ -19,16 +19,20 @@ final class Nullable_Conversions
 		return $role->payload_type(object_cast($canonical, applied_template_type::class));
 	}
 
-	public static function require_scalar_payload(canonical_type_use $payload): void
+	public static function require_extractable_payload(canonical_type_use $payload): void
 	{
-		if ($payload->by_value() || !Conversion_Preparation::is_scalar($payload)) {
-			throw new \RuntimeException('S2S nullable value operations require a scalar payload');
+		if ($payload->by_value() || (!Conversion_Preparation::is_scalar($payload) && !Type_Queries::is_enum($payload))) {
+			throw new \RuntimeException('S2S nullable extraction requires a scalar or enum payload');
 		}
 	}
 
 	/** Value boundaries and presence do not require a payload truthiness contract. */
 	public static function require_value_payload(canonical_type_use $payload): void
 	{
+		if (!$payload->by_value() && Type_Queries::is_enum($payload))
+		{
+			return;
+		}
 		if ((Type_Queries::source_record($payload) !== null)
 			&& (Type_Queries::record_storage($payload) === record_storage_kind::inline_value)) {
 			return;

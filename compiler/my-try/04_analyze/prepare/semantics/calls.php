@@ -92,6 +92,8 @@ final class Call_Preparation
 			if ($last->element_type !== null) {
 				$facts->variadic_parameter = $last;
 				$facts->fixed_count -= 1;
+				// Packs use the same registered list construction contract as vector literals.
+				Initialization_Preparation::binding($last->type, initialization_shape::positional, $context);
 			}
 		}
 		if (($facts->variadic_parameter === null) && (q_count($arguments) > $facts->fixed_count)) {
@@ -142,6 +144,10 @@ final class Call_Preparation
 
 		if ($facts->signature->reference_return !== null) {
 			$origin /** reference_return_contract */ = $facts->signature->reference_return;
+			// A reference result needs caller storage, never a call-local default owner.
+			if ($origin->parameter_index() >= q_count($arguments)) {
+				throw new \RuntimeException('Reference return cannot escape omitted default storage');
+			}
 			$facts->place = $arguments[$origin->parameter_index()]->require_preparation()->place;
 		}
 		return $facts;
