@@ -13,6 +13,35 @@ a = p.parse_args()
 out = a.results.resolve()
 out.mkdir(parents=True, exist_ok=False)
 cases = {
+    'temporary-owners': ('''class Lifetime { public static int $destroyed=0; }
+class Owner { public int $value=7; function __destruct(){Lifetime::$destroyed++;} }
+function make_work():function<int(int)> {
+ $owner=new Owner();return function(int $n)use($owner):int{return $owner->value+$n;};
+}
+function make_publish():function<void(int)> {
+ $owner=new Owner();return function(int $n)use($owner):void{if($n !== $owner->value+1){throw Exception::make("owner lost");}};
+}
+$items vector<int> = [1];$count=task_run_publish_unordered($items,1,make_work(),make_publish());
+echo $count,":",Lifetime::$destroyed;
+''', '1:2', None),
+    'worker-failure': ('''class State {public int $started=0;public int $published=0;}
+$state=new State();$items vector<int> = [1,2];
+try {task_run_publish_unordered($items,1,function(int $n)use($state):int {
+ task_synchronize(function()use($state):void{$state->started++;});throw Exception::make("worker");
+},function(int $n)use($state):void{$state->published++;});}
+catch(Exception $e){echo $e->get_message(),":";}
+echo $state->started,":",$state->published,":";
+echo task_run_publish_unordered($items,1,fn(int $n):int=>$n,function(int $n)use($state):void{$state->published++;}),":",$state->published;
+''', 'worker:1:0:2:2', None),
+    'publisher-failure': ('''class State {public int $started=0;public int $published=0;}
+$state=new State();$items vector<int> = [1,2];
+try {task_run_publish_unordered($items,1,function(int $n)use($state):int {
+ task_synchronize(function()use($state):void{$state->started++;});return $n;
+},function(int $n)use($state):void{$state->published++;throw Exception::make("publisher");});}
+catch(Exception $e){echo $e->get_message(),":";}
+echo $state->started,":",$state->published,":";
+echo task_run_publish_unordered($items,1,fn(int $n):int=>$n,function(int $n)use($state):void{$state->published++;}),":",$state->published;
+''', 'publisher:1:1:2:3', None),
     'identity': ('''class Item { public int $visits=0; }
 class Totals { public int $published=0; public int $matched=0; }
 $item=new Item();$totals=new Totals();$items vector<Item> = [$item,$item];

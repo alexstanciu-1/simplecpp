@@ -67,6 +67,12 @@ payload and borrowed capture rejections. From the repository root,
 `tests/portability/retained_type_lookup.py --results FRESH --mode ordinary --mode concrete`
 executes the extracted production lookup helper under the admitted joined API.
 These checks do not rebuild the compiler natively or prove whole-compiler race freedom.
+The shared source suite also covers temporary callback owners and worker/publisher
+exception/recovery in both modes. `task_joined_runtime.py --results FRESH` forces
+two workers to overlap and checks shared-owner lifetime, join-before-rethrow and
+recovery with per-call threads and the shared pool, under ASan/UBSan/leak detection.
+LeakSanitizer requires execution outside a ptrace sandbox. Source native cleanup
+observations do not impose identical PHP cleanup timing.
 
 `python3 tools/bootstrap_probe.py --results FRESH` (paths relative to compiler/my-try)
 snapshots/converts the compiler plus existing native proof driver, assembles framework

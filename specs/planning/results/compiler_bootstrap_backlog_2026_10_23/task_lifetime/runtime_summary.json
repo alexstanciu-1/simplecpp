@@ -1,0 +1,13 @@
+{
+  "passed": true,
+  "scope": "runtime ownership and join/error protocol",
+  "pool_sizes": [
+    0,
+    2
+  ],
+  "cases": [
+    "success",
+    "worker_failure",
+    "publisher_failure"
+  ]
+}

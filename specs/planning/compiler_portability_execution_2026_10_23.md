@@ -1168,3 +1168,21 @@ Retry /tmp/compiler-bootstrap-task-policy-02: 74.18 s wall / 341684 KiB RSS
 (333.7 MiB) / 312 MiB PHP heap. First required-file initialization blocker and aggregate
 diagnostic texts unchanged. No fatal/OOM, emission or native compiler rebuild.
 See results/compiler_bootstrap_backlog_2026_10_23/task_policy/README.md.
+
+## TASK-01 lifetime and failure acceptance closure
+
+No production changes after c53a66687. task_joined_shared now passes 12 tasks in
+/tmp/task-joined-shared-02, adding temporary callback owners and source worker/publisher
+exception/recovery in both modes. The deterministic source failure tests use one
+worker; the separate native proof forces two workers through a barrier and delays one
+before completion. Under per-call threads and a two-worker shared pool, success and
+both failure paths join all resident work, preserve original errors, release captured
+shared owners and permit a subsequent batch. ASan/UBSan/leak checks pass in
+/tmp/task-joined-lifetime-01; fixture/tasks.cpp instrumentation does not extend to the
+runner's unsanitized fixture-runtime object. See task_lifetime evidence.
+
+This closes accepted TASK-01 and the TASK-02 dependent execution scope, not a
+whole-compiler concurrency audit. No bootstrap rerun for test-only changes; latest
+production checkpoint remains 74.18 s / 333.7 MiB RSS / 312 MiB PHP heap, with required
+file-field initialization first. Remaining source/converter, SELF-01 and CH15 work
+remain open. Exact PHP cleanup timing is not required by the native lifetime proof.

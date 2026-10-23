@@ -274,4 +274,8 @@ with invocation-local results and standalone bypass. PHP parser identity/failure
 proofs and extracted-helper legacy overlap/ThreadSanitizer pass; the reader-unlocked
 negative control reports a race. Both v0.2 extracted-helper executions now pass
 after TASK-01 policy integration. This closes the bounded lookup repair, without
-claiming whole-parser race freedom. TASK-01 shared-owner lifetime/failure proofs remain.
+claiming whole-parser race freedom. TASK-01 shared-owner lifetime/failure proofs now
+pass: both source modes exercise temporary owners and exception/recovery; a sanitized
+runtime fixture forces two workers to overlap and checks join-before-rethrow and
+owner release under per-call threads and the shared pool. Accepted TASK-01 scope is
+complete; whole-compiler bootstrap and CH15 remain separate.

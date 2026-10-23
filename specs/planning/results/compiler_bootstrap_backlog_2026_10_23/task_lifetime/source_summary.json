@@ -1,0 +1,15 @@
+{
+  "passed": true,
+  "cases": [
+    "temporary-owners",
+    "worker-failure",
+    "publisher-failure",
+    "identity",
+    "isolated-payload",
+    "joined-borrow"
+  ],
+  "modes": [
+    "ordinary",
+    "concrete"
+  ]
+}
