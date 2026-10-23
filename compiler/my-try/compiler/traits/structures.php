@@ -4,16 +4,11 @@ namespace scpp\compiler;
 /** Independent working syntax paired with its authored provenance. */
 final class trait_member_instance
 {
-	/** @reference.source authored trait collection */
-	public collected_name $origin;
-	/** @reference.source trait_instance.collection */
-	public collected_name $working;
-
-	public function __construct(collected_name $origin, collected_name $working)
-	{
-		$this->origin = $origin;
-		$this->working = $working;
-	}
+	public function __construct(
+		/** @reference.source authored trait collection */
+		public collected_name $origin,
+		/** @reference.source trait_instance.collection */
+		public collected_name $working) {}
 }
 
 /** A consumer owns syntax, collection, scopes and a private token snapshot as one unit. */

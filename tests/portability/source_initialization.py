@@ -30,7 +30,17 @@ namespace scpp\compiler;
 enum change_state { case added; }
 class module {}
 class file { public string $path = 'input.phs'; }
-class parsed_file {}
+class scope {}
+class collected_file {}
+class collected_name {}
+class fixture_body {
+    public function __construct(public scope $owner) {}
+    public function body_scope(): scope { return $this->owner; }
+}
+class file_node {
+    public function __construct(public fixture_body $body) {}
+    public function single_body(): fixture_body { return $this->body; }
+}
 class ast_node { public int $value = 0; }
 class return_node extends ast_node { public ?ast_node $value_node = null; }
 ''' + declaration(APP / '01_prepare_inputs/structures.php', 'final class source_record') + '\n'
@@ -38,6 +48,8 @@ for label in ['final class token', 'final class retained_token_range', 'final cl
     source += declaration(APP / '02_tokenize/structures.php', label) + '\n'
 source += declaration(APP / 'compiler/structures.php', 'enum work_state') + '\n'
 source += declaration(APP / 'compiler/structures.php', 'final class source_work') + '\n'
+source += declaration(APP / '03_parse/structures/structures.php', 'final class parsed_file') + '\n'
+source += declaration(APP / 'compiler/traits/structures.php', 'final class trait_member_instance') + '\n'
 source += declaration(iterators, 'interface child_iterator_i') + '\n'
 source += declaration(iterators, 'abstract class children_iterator') + '\n'
 source += declaration(iterators, 'final class pair_children_iterator') + '\n'
@@ -65,9 +77,28 @@ $rows->append(new token(0, 1, '>')); $rows->append(new token(1, 1, '>'));
 echo ':', $tokens->file === $snapshot ? 'file' : 'bad', ':', $tokens->content, ':', $tokens->operator_text_at(0);
 $other_tokens = new token_list($snapshot, '');
 echo ':', q_count($other_tokens->tokens);
+$lookup_scope = new scope();
+$scope_store /** Storage<scope> */ = new Storage();
+$scope_store->append($lookup_scope);
+$collection = new collected_file();
+$root = new file_node(new fixture_body($lookup_scope));
+$parsed = new parsed_file($tokens, $root, $collection, $scope_store);
+echo ':', $parsed->tokens === $tokens ? 'tokens' : 'bad';
+echo ':', $parsed->root === $root ? 'root' : 'bad';
+echo ':', $parsed->collection === $collection ? 'collection' : 'bad';
+echo ':', $parsed->source_file() === $snapshot ? 'source' : 'bad';
+echo ':', $parsed->root_scope() === $lookup_scope ? 'scope' : 'bad';
+echo ':', $parsed->complete ? 'bad' : 'pending';
+$scope_store->append(new scope());
+echo ':', q_count($parsed->scopes);
+$origin = new collected_name(); $working = new collected_name();
+$member = new trait_member_instance($origin, $working);
+echo ':', $member->origin === $origin ? 'origin' : 'bad';
+echo ':', $member->working === $working ? 'working' : 'bad';
 '''
 (out / 'source/main.php').write_text(source)
 expected = b'input.phs:changed:0:3:1:7:7:3:same:distinct:source:record:4:file:>>:>>:0'
+expected += b':tokens:root:collection:source:scope:pending:2:origin:working'
 with CommandRunner(out / 'logs', ROOT) as runner:
     assert runner.run('host', ['php8.5', '-r', 'foreach(array_slice($argv,1) as $path){require $path;}',
                              TOOLS / 'runtime/bootstrap.php', APP / 'helpers/storage_abstract.php',

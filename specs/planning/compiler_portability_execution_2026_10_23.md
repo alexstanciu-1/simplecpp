@@ -1205,3 +1205,16 @@ Final bootstrap /tmp/compiler-bootstrap-required-inputs-02: 74.73 s wall /
 collection initialization; aggregate message set unchanged. No fatal/OOM, emission
 or native compiler rebuild. COPY-01 helper proposal remains pending; independent
 required-constructor/staged-field inventory continues.
+
+## INIT-01 collection constructor migration
+
+Reuse existing promotion/set lowering for Symbol_Collector collection/source_scope,
+Parser tokens, collected_name collection, parsed_file inputs and trait_member_instance
+origin/working. Parent constructor calls and algorithmically initialized workers are
+unchanged. Six focused PHP collection/trait checks pass. Bootstrap conversion succeeds;
+preparation first advances from collection to syntax_node. Measured 73.72 s wall /
+342324 KiB RSS / 312 MiB PHP heap. Evidence: collection_initialization. Extracted parsed_file and trait_member_instance component proof passes PHP, legacy
+native and ordinary/concrete v0.2 output, including identity and aliased scope storage.
+This does not prove native execution of the full parser/collector. The next syntax_node
+constructor calls parent before its assignment; that ordering decision remains pending.
+No end-to-end bootstrap success claimed.

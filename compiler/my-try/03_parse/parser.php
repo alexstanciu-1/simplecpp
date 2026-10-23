@@ -8,15 +8,13 @@ namespace scpp\compiler;
 
 final class Parser
 {
-	private token_list $tokens;
 	private ?scope $target_scope = null;
 	private ?parsed_file $previous = null;
 	private ?scope $global = null;
 	private ?parsed_file $parsed_result = null;
 
-	public function __construct(token_list $tokens, ?scope $target_scope = null, ?parsed_file $previous = null, ?scope $global = null)
+	public function __construct(private token_list $tokens, ?scope $target_scope = null, ?parsed_file $previous = null, ?scope $global = null)
 	{
-		$this->tokens = $tokens;
 		$this->target_scope = $target_scope;
 		$this->previous = $previous;
 		$this->global = $global;

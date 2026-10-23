@@ -39,12 +39,6 @@ abstract class collected_name
 
 	/** Legacy combined-pipeline flags. The incremental parse path uses change_status and revision. */
 	public int $changes = 0;
-	/**
-	 * Backlink to the owning occurrence collection.
-	 * @reference.source parsed_file.collection
-	 * @reference.weak
-	 */
-	public collected_file $collection;
 	/** @storage.index collected_file.entries */
 	public int $local_index;
 	public string $name;
@@ -58,10 +52,9 @@ abstract class collected_name
 	/** @storage.index token_list.tokens */
 	public int $token_index;
 
-	public function __construct(collected_file $collection)
-	{
-		$this->collection = $collection;
-	}
+	public function __construct(
+		/** Backlink to the owning occurrence collection. @reference.source parsed_file.collection @reference.weak */
+		public collected_file $collection) {}
 
 	/** Concrete records own exactly one typed link to the existing syntax graph. */
 	abstract public function syntax(): ast_node;

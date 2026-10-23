@@ -5,15 +5,12 @@ namespace scpp\compiler;
 
 final class Symbol_Collector
 {
-	private collected_file $collection;
 	private ?scope $global = null;
-	private scope $source_scope;
 
 	/** Retain symbol rows and occurrences until the parser selects reused or replaced bodies. */
-	public function __construct(collected_file $collection, token_list $tokens, scope $source_scope, ?scope $global, int $revision)
+	public function __construct(private collected_file $collection, token_list $tokens,
+		private scope $source_scope, ?scope $global, int $revision)
 	{
-		$this->collection = $collection;
-		$this->source_scope = $source_scope;
 		$this->global = $global;
 		$collection->set_tokens($tokens);
 		$collection->revision = $revision;
