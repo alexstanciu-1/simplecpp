@@ -1,0 +1,19 @@
+interface Self_View { function keep(): Base_Record; }
+class Base_Record implements Self_View {
+ public int $value = 4;
+ public function keep(): Base_Record { return $this; }
+ public function pass(): int { return read_value($this); }
+ public function copy_local(): Base_Record { $saved = $this; return $saved; }
+}
+class Derived_Record extends Base_Record { public int $other = 7; }
+function read_value(Base_Record $item): int { return $item->value; }
+$owner = new Derived_Record();
+$view Self_View = $owner;
+$retained = $view->keep();
+$second = $owner->copy_local();
+$owner->value = 9;
+echo $retained->value, ":", $owner->pass();
+$owner = null;
+$view = null;
+$retained->value = 12;
+echo ":", $second->value;

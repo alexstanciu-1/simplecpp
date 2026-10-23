@@ -67,7 +67,13 @@ paused.
 
 ## SELF-01 — shared class self values
 
-**Core v0.2 support accepted; implementation paused.**
+**Core semantics accepted; runtime/prelowering redesign awaiting approval.**
+
+Reuse experiment on 2026-10-23 passes ordinary execution but fails the prelowering
+template-free token gate because shared_self's inherited header exposes templates.
+The experiment was removed. See the [bounded redesign and evidence](results/compiler_bootstrap_backlog_2026_10_23/shared_self_reuse/README.md).
+A template-free observer facade requires shared-allocation/adoption registration;
+this cannot be claimed as direct reuse of enable_shared_from_this alone.
 
 Keep ordinary portable PHP `$this` spelling. For an instance with an existing live
 shared owner, using `$this` as an ordinary value acquires another shared handle to
@@ -982,7 +988,7 @@ discussion while independent work continues. Deferred debts remain deferred.
 | Item | Subject | Decision state / dependency |
 | --- | --- | --- |
 | CH15-RUNTIME-TYPE-METADATA-01 | Compiler-wide registry/type-use audit and remediation | First-class final-catalog blocker; inventory early, repair by owning slice, prove ordinary/prelowered parity; not closed by discovery alone. |
-| SELF-01 | Shared class self acquisition, including prelowering | Core v0.2 support accepted; implementation paused. |
+| SELF-01 | Shared class self acquisition, including prelowering | Semantics accepted; ordinary reuse proof passes, concrete inherited-base template gate fails. Runtime facade/registration redesign awaiting approval; experiment removed. |
 | SELF-02 | Struct self: receiver, value copy and distinct shared retention | Core v0.2 receiver/value support accepted; shared retention deferred as SELF-DEBT-01; paused. |
 | COPY-01 | `_struct_` / `_struct_copy_` portable value protocol | Converter work accepted; first proof is `cpp_specialization_ref`; may consume SELF-02; paused. |
 | INIT-01 | Promoted required constructor inputs and explicit valid defaults | Bounded v0.2 set mapping and switch_label source migration implemented with cross-route proofs; promotion plus explicit parent call remains under discussion; inventory C03; in progress. |

@@ -532,3 +532,24 @@ RSS / 451.0 MiB PHP heap. AST-01's nonvirtual inherited-method diagnostic disapp
 no new diagnostic text. The first remaining failure is the existing nullable-value
 boundary limitation (NULL-01/02). No fatal/OOM, emission or native compiler rebuild.
 Evidence: results/compiler_bootstrap_backlog_2026_10_23/virtual_defaults.
+
+## SELF-01 — reuse proof reveals a runtime/prelowering redesign
+
+The temporary acquisition slice passed ordinary native execution (14.99 s) for
+returned self through a base/interface, self arguments, local assignment, identity
+and retention. Prelowered native build failed (18.73 s) the template-free token gate:
+shared_self.hpp introduces templates through the inherited application-visible base.
+Moving acquisition to a concrete runtime-operation helper does not hide that base.
+The production experiment was removed; no incomplete ordinary-only feature remains.
+No new bootstrap measurement is claimed. Current production remains 5951486e7.
+
+The existing observer relies on std::enable_shared_from_this being an accessible
+base of the managed type. An opaque wrapper alone loses automatic registration.
+A template-free observer facade therefore needs coordinated control-block binding
+at shared allocation/adoption, preserving copy/move/assignment and adjusted-address
+aliasing. This crosses runtime allocation/self state and both compiler transports.
+The bounded design, risks, exclusions and exact proof are recorded in
+results/compiler_bootstrap_backlog_2026_10_23/shared_self_reuse/README.md.
+Approval is required under the repository's wide-refactor rule. Independent work
+can continue, starting with struct self-value support; shared-struct retention stays
+deferred. Existing constructor-promotion/parent-order question also remains open.
