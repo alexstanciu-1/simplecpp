@@ -1,0 +1,1 @@
+struct Point { public uint32 $entry_id=0; public function _struct_copy_():Point { return $this; } } $a Point=new Point();$a->entry_id=7;$b Point=$a->_struct_copy_();$b->entry_id=9;echo $a->entry_id,":",$b->entry_id;
