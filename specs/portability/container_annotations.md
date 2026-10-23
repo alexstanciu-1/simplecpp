@@ -31,15 +31,28 @@ No backticks belong inside the actual type comment.
 - Public/private/protected annotated array properties preserve their visibility.
   This is syntax preservation, not a claim that every target visibility check is
   enforced. Ordinary scalar/private-field coverage is unchanged.
-- Existing nullable field and nullable promoted-array forms use this same parser.
-  The PHP `?` supplies nullability. This does not add generic method signatures or
-  nonnullable array promotion.
+- Nullable array fields, ordinary/promoted constructor parameters, class/trait
+  method parameters and returns require a complete target annotation:
+  `?array $items /** ?vector<int> */ = null`. Both question marks describe the same
+  single absence layer; conversion emits `nullable<vector<int>>` once. A nullable
+  PHP carrier with a payload-only comment, or a nonnullable carrier with a nullable
+  comment, is rejected. This deliberately replaces the earlier payload-only comment
+  convention. Nullable array defaults remain `null`; nonnullable typed `[]`
+  defaults follow [their own contract](empty_parameter_defaults.md).
 
 PHP input annotations now emit [native PHS type syntax](map_iteration.md), e.g.
 `private $folders vector<vector<int>> = [];`. Type doc comments are not needed in
 the generated PHS.
 Converter fingerprints include the parser source so changes invalidate generated
 output. Missing type annotations still fail; documentary `@var` is not inferred.
+
+`tests/portability/nullable_container_annotations.py --results FRESH` checks both
+converter targets, all these declaration sites, mismatch rejection and PHP/legacy
+native absence versus present-empty behavior. v0.2 native value-boundary execution
+is explicitly blocked by the scalar/inline-record nullable payload restriction,
+tracked by NULL-01/02. The test records that diagnostic in both C++ modes; it must
+become an execution proof when those compiler entries are implemented. Container
+interface signatures remain outside the converter's proved profile.
 
 ## Meaning and authoring limits
 

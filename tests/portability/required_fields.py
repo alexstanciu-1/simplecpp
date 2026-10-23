@@ -128,7 +128,7 @@ echo $record->ratio < $next->ratio ? 'float' : 'bad', "\n";
             'class Bad { public array $value; }',
             'class Bad { public array $value /** Storage<Row, false> */; }',
             'class Bad { public ?Row $value; }',
-            'class Bad { public ?array $value /** vector<Row> */; }',
+            'class Bad { public ?array $value /** ?vector<Row> */; }',
             'class Bad { public int|string $value; }',
         ]
         for body in cases:

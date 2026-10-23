@@ -287,8 +287,7 @@ final class Converter {
 			}
 			return $nullable ? 'nullable<' . $match[1] . '>' : $match[1];
 		}
-		if ($nullable && $type[0] === T_ARRAY) { $this->fail($type[2], 'nullable containers are unsupported at this signature site'); }
-		if ($return && $type[0] === T_ARRAY) { return $this->containerAnnotation($this->significant()); }
+		if ($return && $type[0] === T_ARRAY) { return $this->arrayAnnotation($this->significant(), $nullable); }
 		$excluded = ['mixed', 'object', 'iterable', 'never', 'self', 'parent', 'static',
 			'null', 'false', 'true', 'array', 'callable'];
 		if (!$return) { $excluded[] = 'void'; }
@@ -315,8 +314,11 @@ final class Converter {
 		$optionalSeen = false;
 		if (($this->tokens[$this->nextSignificant($this->position)][1] ?? '') !== ')') {
 			do {
-				$container = ($this->tokens[$this->nextSignificant($this->position)][0] ?? null) === T_ARRAY;
-				if ($container) { $this->significant(); $type = ''; }
+				$typePosition = $this->nextSignificant($this->position);
+				$nullableArray = ($this->tokens[$typePosition][1] ?? '') === '?'
+					&& ($this->tokens[$this->nextSignificant($typePosition + 1)][0] ?? null) === T_ARRAY;
+				$container = $nullableArray || ($this->tokens[$typePosition][0] ?? null) === T_ARRAY;
+				if ($container) { if ($nullableArray) { $this->significant(); } $this->significant(); $type = ''; }
 				else { $type = $this->signatureType(false, true); }
 				$parameter = $this->significant();
 				if ($parameter[0] !== T_VARIABLE) { $this->fail($parameter[2], 'expected named parameter'); }
@@ -331,7 +333,7 @@ final class Converter {
 				}
 				if ($container) {
 					if (!$containerReturn) { $this->fail($line, 'container interface parameters require a separately proved contract'); }
-					$type = $this->containerAnnotation($this->significant());
+					$type = $this->arrayAnnotation($this->significant(), $nullableArray);
 				}
 				$objectHash = $type === '\\SplObjectStorage';
 				if ($objectHash) {
@@ -367,7 +369,8 @@ final class Converter {
 		}
 		$this->expect(':');
 		$return = $this->signatureType(true);
-		if (!$containerReturn && (str_starts_with($return, 'vector<') || str_starts_with($return, 'hash<') || str_starts_with($return, 'Storage<') || str_starts_with($return, 'Keyed_Storage<') || str_starts_with($return, 'Key_Storage_List<') || str_starts_with($return, 'Storage_Cursor<'))) {
+		$returnPayload = str_starts_with($return, 'nullable<') ? substr($return, 9, -1) : $return;
+		if (!$containerReturn && (str_starts_with($returnPayload, 'vector<') || str_starts_with($returnPayload, 'hash<') || str_starts_with($returnPayload, 'Storage<') || str_starts_with($returnPayload, 'Keyed_Storage<') || str_starts_with($returnPayload, 'Key_Storage_List<') || str_starts_with($returnPayload, 'Storage_Cursor<'))) {
 			$this->fail($line, 'container interface returns require a separately proved native contract');
 		}
 		return $visibility . ($static ? ' static' : '') . ' function ' . $name[1] . '(' . implode(', ', $parameters) . '): ' . $return;
@@ -386,6 +389,18 @@ final class Converter {
 		$signature = $this->methodSignature($line, $visibility, $static, true, $parameterNames);
 		$this->expect('{');
 		return new Node('method', $signature, $line, $this->localBody($parameterNames));
+	}
+
+	/** PHP and its complete target annotation describe the same single absence layer. */
+	private function arrayAnnotation(array $token, bool $nullable): string {
+		if ($token[0] !== T_DOC_COMMENT) { $this->fail($token[2], 'expected explicit container type annotation'); }
+		$annotatedNullable = preg_match('~^/\*\*\s*\?~', $token[1]) === 1;
+		if ($annotatedNullable !== $nullable) {
+			$this->fail($token[2], 'PHP array nullability must match its complete annotation: ?array requires ?vector or ?hash; array requires vector or hash');
+		}
+		if ($annotatedNullable) { $token[1] = preg_replace('~^(/\*\*\s*)\?~', '$1', $token[1], 1); }
+		$payload = $this->containerAnnotation($token);
+		return $nullable ? 'nullable<' . $payload . '>' : $payload;
 	}
 
 	/** Parse explicit recursive containers once for every supported declaration site. */
@@ -476,9 +491,9 @@ final class Converter {
 				$mappedType = $this->storageAnnotation($this->significant(), $mappedType);
 			}
 			if ($type[0] === T_ARRAY) {
-				$mappedType = $this->containerAnnotation($this->significant());
+				$mappedType = $this->arrayAnnotation($this->significant(), $nullable);
 			}
-			$typeName = $nullable ? 'nullable<' . $mappedType . '>' : $mappedType;
+			$typeName = $nullable && $type[0] !== T_ARRAY ? 'nullable<' . $mappedType . '>' : $mappedType;
 			$default = '';
 			$separator = $this->significant();
 			if ($separator[1] === '=') {
@@ -707,22 +722,21 @@ final class Converter {
 			if ($type[0] === T_ARRAY) {
 				$field = $this->significant();
 				if ($field[0] !== T_VARIABLE) { $this->fail($field[2], 'expected named list property'); }
-				$vector = $this->containerAnnotation($this->significant());
+				$containerType = $this->arrayAnnotation($this->significant(), $nullable);
 				if (!$nullable && ($this->tokens[$this->nextSignificant($this->position)][1] ?? '') === ';') {
 					$this->expect(';');
-					$fields[] = new Node('property', $visibility . ' ' . $field[1] . ' ' . $vector . ';', $at);
+					$fields[] = new Node('property', $visibility . ' ' . $field[1] . ' ' . $containerType . ';', $at);
 					continue;
 				}
 				$this->expect('=');
 				if ($nullable) { $this->expect('null'); }
 				else { $this->expect('['); $this->expect(']'); }
 				$this->expect(';');
-				$nativeType = $nullable ? 'nullable<' . $vector . '>' : $vector;
 				// Native default construction is the same empty hash. An explicit static
 				// hash literal currently lowers to an invalid namespace-scope capturing lambda.
-				$initializer = ($static && !$nullable && str_starts_with($vector, 'hash<'))
+				$initializer = ($static && !$nullable && str_starts_with($containerType, 'hash<'))
 					? '' : ' = ' . ($nullable ? 'null' : '[]');
-				$fields[] = new Node('property', $visibility . ' ' . $field[1] . ' ' . $nativeType . $initializer . ';', $at);
+				$fields[] = new Node('property', $visibility . ' ' . $field[1] . ' ' . $containerType . $initializer . ';', $at);
 				continue;
 			}
 			if (!in_array($type[0], [T_STRING, T_NAME_QUALIFIED, T_NAME_FULLY_QUALIFIED], true)) {

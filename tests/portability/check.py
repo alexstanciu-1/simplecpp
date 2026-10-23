@@ -66,7 +66,7 @@ def main():
             ('class Bad { public function __construct($item) {} }', 'type'),
             ('class Bad { public function __construct(array $items /** vector<int> */ = [1]) {} }', 'container parameter defaults require typed []'),
             ('class Bad { public function __construct(int &$item) {} }', 'parameter'),
-            ('class Bad { public function f(): ?array /** vector<int> */ { return null; } }', 'nullable container'),
+            ('class Bad { public function f(): ?array /** vector<int> */ { return null; } }', 'nullability must match'),
             ('interface Bad { public function f(): ?Thing; }', 'interface returns'),
             ('enum_name();', 'wrong argument count'),
             ('class Bad { public function f(array $items): void {} }', 'container'),

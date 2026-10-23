@@ -613,7 +613,7 @@ Agreed on 2026-10-23; implementation paused:
 
 ## CONVERT-02 — complete nullable container annotations
 
-**Spelling direction accepted on 2026-10-23; implementation paused.**
+**Converter convention implemented; v0.2 nullable execution remains with NULL-01/02.**
 
 Use `?array $contracts /** ?vector<generic_contract> */ = null`. The annotation
 describes the complete target type, not just a payload whose nullability is supplied
@@ -622,8 +622,11 @@ not two nested wrappers. Nonnullable arrays use `array ... /** vector<T> */`.
 Validate consistency; migrate the former `?array ... /** vector<T> */` convention
 explicitly rather than silently changing its interpretation. The actual first source
 is template_type_parameter's contracts/dependencies in 03_parse/types/model.php.
-Current converter support is not claimed; its existing constructor path takes
-nullability from ?array and expects a vector/hash payload annotation.
+Implementation update: fields, ordinary/promoted constructor parameters and class/trait
+method parameters/returns now require matching complete annotations. Both converter
+targets and PHP/legacy native absence/present-empty behavior are proved. The v0.2
+fixture records the existing nullable value-boundary payload restriction in both
+C++ modes; NULL-01/02 must replace that blocker proof with successful execution.
 
 ## NULL-02 — definition- and capability-based nullable support
 
@@ -987,7 +990,7 @@ discussion while independent work continues. Deferred debts remain deferred.
 | OWN-DEBT-01 | PHP strong carriers versus native weak lifetime | Deferred; no demonstrated compiler failure; no exact emulation planned; PHP-only cleanup may be considered; not a new gate. |
 | SOURCE-01 | Private fields and numeric boundaries | Same-name private instance fields with C++ lookup accepted; explicit portable base views; source-owned algorithm checks independent of compiler contracts; paused. |
 | CONVERT-01 | Empty container expressions and method defaults | Explicit doc-comment type required; registered containers accept typed [] by default. Parameter defaults use the same rule; reuse audit complete, revised 4–8x; Typed defaults and annotated expressions have PHP/legacy/v0.2 proofs; explicit empty-only provider binding passes ordinary/prelowered generic and Storage proofs. Remaining retained/provider edge verification stays open; see execution ledger; inventory C01/C02; in progress. |
-| CONVERT-02 | Complete nullable array target annotations using ?vector | Spelling agreed; consistency validation and migration/proofs pending; paused. |
+| CONVERT-02 | Complete nullable array target annotations using ?vector | Converter consistency validation and compiler-source migration implemented; both output targets and PHP/legacy execution proved. v0.2 nullable value-boundary execution remains with NULL-01/02. |
 | BIND-01 | Publication/digest APIs and JSON pull-reader exposure | Metadata-first leaves, shared-reader factory and facade tracing accepted; inventory B01/B02/B03; implementation/proofs pending. |
 | CURSOR-01 | Storage_Cursor registration and safe read widening | Metadata-driven relationship and explanatory diagnostics accepted; runtime constructor scope recorded above; implementation paused. |
 | VERIFY-01 | Reconcile remaining diagnostics and retry measured bootstrap | After agreed slices; historical failures are not fresh defects. |

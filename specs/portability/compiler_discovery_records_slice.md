@@ -1,6 +1,10 @@
 # Source discovery records and nullable lists
 Doc Status: supporting
 
+Current annotation spelling below follows CONVERT-02: both the PHP array carrier
+and its complete target comment carry `?`. Earlier proof revisions used payload-only
+comments; the migration preserves their generated native type.
+
 The remaining `read_sources/data/structures.php` declarations are portable:
 `source_folder`, `source_scan_task`, `file_change`, `MAX_SOURCE_FILE_ID` and
 `source_file`. The ready set now contains fourteen production files. Only managed
@@ -9,8 +13,8 @@ removing them restores the previous declaration bytes.
 
 ## Local conversion additions
 
-- Nullable list property: `public ?array $file_names /** vector<string> */ = null;`.
-- Nullable promoted list parameter: `public readonly ?array $file_names /** vector<string> */ = null`.
+- Nullable list property: `public ?array $file_names /** ?vector<string> */ = null;`.
+- Nullable promoted list parameter: `public readonly ?array $file_names /** ?vector<string> */ = null`.
 - Nullable scalar/named properties initialized to null, including `?Source_Buffer`.
 - File-scope integer-literal constant declarations, preserving the source-ID limit.
 

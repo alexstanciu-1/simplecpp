@@ -14,7 +14,10 @@ Generated PHS uses `public function file_ids(): vector<int>`, with no type-comme
 workaround. The shared recursive parser also accepts hash and nested-vector return
 annotations. An unannotated `array` return remains an error; the converter does not
 inspect return expressions or callers to guess its element/key types. Generic
-array parameters and general nullable/union method types are not added here.
+array parameters and general nullable/union method types were not added by that
+slice. The later [complete nullable-array convention](container_annotations.md)
+adds explicitly annotated nullable array returns on class/trait methods; it does
+not expand interface signatures or admit union types.
 
 Private/protected initialized scalar fields now preserve their visibility through
 the existing field parser. This enables the private entry-file ID used by Source_Set.

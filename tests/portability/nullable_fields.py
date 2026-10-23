@@ -18,8 +18,8 @@ def main():
         src = Path(temp) / 'php'; src.mkdir()
         output = Path(temp) / 'out'
         for body in [
-            'class Good { public ?array $names /** vector<string> */ = null; }',
-            'class Good { public function __construct(public readonly ?array $names /** vector<string> */ = null) {} }',
+            'class Good { public ?array $names /** ?vector<string> */ = null; }',
+            'class Good { public function __construct(public readonly ?array $names /** ?vector<string> */ = null) {} }',
             'class Good { public ?Good $other = null; }',
             'const LIMIT = 0xffffffff;',
             'class Good { private array $rows /** vector< vector<int> > */ = []; }',
@@ -31,10 +31,10 @@ def main():
             run('check.php', src)
             run('convert.php', src, output)
         for body in [
-            'class Bad { public function __construct(public array $names /** vector<string> */ = []) {} }',
+            'class Bad { public function __construct(public array $names /** vector<string> */ = [1]) {} }',
             'class Bad { public ?array $names = null; }',
-            'class Bad { public ?array $names /** vector<mixed> */ = null; }',
-            'class Bad { public ?array $names /** vector<string> */ = []; }',
+            'class Bad { public ?array $names /** ?vector<mixed> */ = null; }',
+            'class Bad { public ?array $names /** ?vector<string> */ = []; }',
             'class Bad { public ?Bad $other = 1; }',
             'class Bad { public function __construct(public ?array $names = null) {} }',
             'const LIMIT = 1 + 2;',

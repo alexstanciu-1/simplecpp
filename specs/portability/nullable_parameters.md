@@ -23,10 +23,15 @@ Nullable parameters permit only null defaults. Ordinary nonnullable `bool` param
 also accept matching `true`/`false` literal defaults. Nonnullable `int` parameters now
 have a separate [integer literal default contract](integer_method_defaults.md).
 Implicitly nullable `T $x = null`, non-null defaults on nullable parameters,
-nullable containers, mixed/object, unions, by-reference/variadic
+mixed/object, unions, by-reference/variadic
 parameters and arbitrary default expressions remain rejected. Constructor handling
 keeps its existing contract; nullable callback parameters and nullable interface
 returns are not added by this slice. General object-property unset is not added.
+
+Later update: annotated nullable PHP arrays now use the
+[complete nullable-container convention](container_annotations.md), including
+method parameters and returns. PHP/legacy native behavior is proved; v0.2 nullable
+container value boundaries remain tracked by NULL-01/02.
 
 ## Typed payload boundary
 

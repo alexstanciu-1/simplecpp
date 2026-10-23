@@ -446,8 +446,8 @@ final class template_type_parameter
 	 * definitions pass an explicit list, including an empty list when no provider
 	 * capability requirement is currently known.
 	 */
-	public function __construct(string $name, ?array $contracts /** vector<generic_contract> */ = null,
-		?canonical_type_use $default_type = null, ?array $dependencies /** vector<generic_contract> */ = null)
+	public function __construct(string $name, ?array $contracts /** ?vector<generic_contract> */ = null,
+		?canonical_type_use $default_type = null, ?array $dependencies /** ?vector<generic_contract> */ = null)
 	{
 		if ($name === '') {
 			throw new \InvalidArgumentException('Template parameter name must not be empty');

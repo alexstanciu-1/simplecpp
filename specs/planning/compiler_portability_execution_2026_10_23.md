@@ -188,3 +188,34 @@ template_type_parameter constructor comments and matching fixtures. Keep nullabl
 formation/operations in NULL-01/02; annotation acceptance does not prove native
 nullable-container execution. No additional registry or compiler protocol is needed
 for this source/converter convention change.
+
+## CONVERT-02 implementation and evidence
+
+The converter now shares complete-array-annotation checking across properties,
+ordinary/promoted constructors, method parameters and returns. `?array` requires
+`?vector` or `?hash`; nonnullable `array` rejects a nullable comment. Existing
+recursive payload parsing is reused, producing one nullable wrapper. Container
+interface signatures remain rejected, including nullable returns. The compiler's
+two template_type_parameter comments and current guides/fixtures are migrated.
+
+`/tmp/nullable-annotations-03` passes both-target declaration/mismatch checks and
+PHP/current-legacy native execution for omission, absence, present empty arrays,
+constructor input, ordinary-method input and return. Both v0.2 modes reproduce
+`S2S nullable value boundary requires a scalar or inline record payload`; this is
+explicit pending NULL-01/02 execution coverage, not a passing native behavior claim.
+The first fixture attempt missed project initialization; it was corrected before
+the passing execution. No compiler nullable semantics were changed for the converter.
+
+`/tmp/nullable-conversion-scan-02` converts all 255 production compiler files plus
+four driver/proof files for both targets. Existing empty-annotation and nullable
+field rejection/non-publication checks pass. All 259 v0.2 PHS outputs match the
+last measured bootstrap input except one previously committed explanatory comment
+in prepare/data/structures; the exact comment replacement was checked. No emitted
+compiler code changes. Therefore no new full-bootstrap timing is claimed: the last
+measured checkpoint remains 198.90 s / 432.3 MiB RSS / 422.5 MiB PHP heap and AST-01.
+The initial byte-equality assertion correctly exposed that comment-only difference;
+the final comparison records it explicitly rather than silently ignoring all comments.
+
+CONVERT-02 spelling/consistency work is complete. Its native v0.2 execution proof
+must be upgraded when NULL-01/02 remove the payload restriction. INIT-01 is next;
+CONVERT-01's remaining retained/provider edge verification stays on the final gate.
