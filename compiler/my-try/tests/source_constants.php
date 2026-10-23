@@ -75,6 +75,17 @@ foreach ([
 	$compiler->tokenize(); $compiler->parse(); constant_failure($compiler, $message);
 }
 
+// Uninitialized storage is private; required reads and child inspection must fail.
+$pending_constant = new namespace_constant_node();
+$read_failed = false;
+try { $pending_constant->require_initializer(); }
+catch (\LogicException $error) { $read_failed = true; }
+constant_check($read_failed, 'Uninitialized constant read succeeded');
+$read_failed = false;
+try { $pending_constant->children()->current(); }
+catch (\LogicException $error) { $read_failed = true; }
+constant_check($read_failed, 'Uninitialized constant inspection silently skipped its child');
+
 // Constant consumers use ordinary declaration dependencies, including transitive aliases.
 $main = 'namespace App; use const Lib\LIMIT; const ANSWER = LIMIT; function read(): int { return ANSWER; } return read();';
 $library = 'namespace Lib; const LIMIT = 7;';
@@ -83,14 +94,24 @@ $source = Model::sources()[0]; $lib = Model::sources()[1];
 $alias = $source->parsed->root->single_body()->declarations[0];
 $definition = $lib->parsed->root->single_body()->declarations[0];
 $identity = $definition->occurrence(); $work = $identity->preparation; $version = $work->version;
-$initializer = $definition->initializer;
+$initializer = $definition->require_initializer();
 $original = CPP_Output::encode(Model::$cpp_files);
 constant_edit($compiler, $lib, $library); $compiler->prepare(true); $compiler->cpp();
-constant_check($definition->initializer === $initializer && $identity->preparation === $work && $work->version === $version,
+constant_check($definition->require_initializer() === $initializer && $identity->preparation === $work && $work->version === $version,
 	'No-op replaced constant syntax/work');
 constant_check(CPP_Output::encode(Model::$cpp_files) === $original, 'No-op changed output');
 $compiler->cleanup_tokens(); $compiler->prepare(true); $compiler->cpp();
 constant_check(CPP_Output::encode(Model::$cpp_files) === $original, 'Token cleanup changed constant facts/output');
+
+// Failed replacement does not clear the last complete initializer or declaration identity.
+$parse_failed = false;
+try { constant_edit($compiler, $lib, 'namespace Lib; const LIMIT = ;'); }
+catch (\RuntimeException $error) { $parse_failed = true; }
+constant_check($parse_failed && ($definition->require_initializer() === $initializer)
+	&& ($definition->occurrence() === $identity), 'Failed parse replaced constant identity/initializer');
+constant_edit($compiler, $lib, $library); $compiler->prepare(true); $compiler->cpp();
+constant_check(CPP_Output::encode(Model::$cpp_files) === $original, 'Parse-failure repair changed output');
+
 
 constant_edit($compiler, $lib, 'namespace Lib; const LIMIT = 9;');
 $failed = false;
@@ -133,7 +154,18 @@ $source = Model::sources()[0]; $parse_failed = false;
 try { constant_edit($compiler, $source, 'const NEW_VALUE = ; return 7;'); }
 catch (\RuntimeException $error) { $parse_failed = true; }
 constant_check($parse_failed, 'Malformed initializer passed');
+$partial_entries = Model::$global_scope->constants_named('NEW_VALUE');
+constant_check(count($partial_entries) === 1, 'Failed expression lost the earlier constant collection');
+$partial_identity = $partial_entries[0];
+$partial_syntax = $partial_identity->syntax();
+$read_failed = false;
+try { $partial_syntax->require_initializer(); }
+catch (\LogicException $error) { $read_failed = true; }
+constant_check($read_failed, 'Malformed new declaration acquired a fabricated initializer');
+
 constant_edit($compiler, $source, 'const NEW_VALUE = 7; return NEW_VALUE;'); $compiler->prepare(true); $compiler->cpp();
+constant_check(Model::$global_scope->constants_named('NEW_VALUE')[0] === $partial_identity
+	&& ($partial_identity->syntax() === $partial_syntax), 'Parse repair replaced collected constant identity');
 $outputs['constant_parse_repair'] = CPP_Output::encode(Model::$cpp_files);
 
 $compiler = constant_project(['main.phs' => 'namespace A; const UNUSED = 1; return 7;',

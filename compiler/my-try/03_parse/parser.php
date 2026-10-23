@@ -936,8 +936,8 @@ final class Parser_Run
 		$this->select_scope($saved_scope);
 		$this->expect(';');
 		$same = $this->same_tokens($old_start, $old_end, $start, $this->position);
-		if ($same) { $this->retain_range($constant->initializer, $initializer->start_token()); }
-		else { $constant->initializer = $initializer; }
+		if ($same) { $this->retain_range($constant->require_initializer(), $initializer->start_token()); }
+		else { $constant->set_initializer($initializer); }
 		$this->finish_declaration($constant, $start, $same);
 		return $constant;
 	}

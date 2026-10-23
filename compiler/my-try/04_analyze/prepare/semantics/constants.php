@@ -28,8 +28,9 @@ final class Constant_Preparation
 		if ($candidate_count !== 1) {
 			throw new \RuntimeException('S2S duplicate constant name: ' . $entry->name);
 		}
-		Preparation_Cleanup::tree($syntax->initializer);
-		$value = Constant_Expression_Preparation::evaluate($syntax->initializer, $context);
+		$initializer = $syntax->require_initializer();
+		Preparation_Cleanup::tree($initializer);
+		$value = Constant_Expression_Preparation::evaluate($initializer, $context);
 		if (!$value->type->matches($context->integer) && !$value->type->matches($context->floating)
 			&& !$value->type->matches($context->boolean) && !$value->type->matches($context->string_type)) {
 			throw new \RuntimeException('S2S source constants require bool, int, float or string in a constant initializer');

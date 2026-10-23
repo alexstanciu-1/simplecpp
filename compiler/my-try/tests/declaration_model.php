@@ -74,7 +74,7 @@ $constructor->set_parsed_body(new function_body_node($local_scope));
 $type->methods->append($constructor);
 $constant = new member_constant_node();
 $constant->name = 'same';
-$constant->initializer = new integer_literal_node();
+$constant->set_initializer(new integer_literal_node());
 $type->constants->append($constant);
 $use = new trait_use_node();
 $use->traits->append(new named_type_node());
@@ -108,7 +108,7 @@ declaration_model_check(($function instanceof callable_declaration_node) && ($me
 declaration_model_check($function->signature_scope() !== $method->signature_scope(), 'Callables share a mutable signature scope');
 $namespace_constant = new namespace_constant_node();
 $namespace_constant->name = 'same';
-$namespace_constant->initializer = new integer_literal_node();
+$namespace_constant->set_initializer(new integer_literal_node());
 declaration_model_check(($constant instanceof constant_declaration_node) && ($namespace_constant instanceof constant_declaration_node), 'Constants lost their common syntax');
 $value = new integer_constant_value();
 $value->decimal = '7';

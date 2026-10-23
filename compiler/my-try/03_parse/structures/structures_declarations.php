@@ -293,7 +293,22 @@ abstract class constant_declaration_node extends declaration_node
 	use Preparation_Facts;
 	private ?prepared_source_constant $prepared_facts = null;
 	public string $name;
-	public expression_node $initializer;
+	/** Absent while the parser collects a new declaration before its expression. */
+	private ?expression_node $initializer_value = null;
+
+	public function require_initializer(): expression_node
+	{
+		$value = $this->initializer_value;
+		if ($value === null) {
+			throw new \LogicException('Constant initializer is not available');
+		}
+		return $value;
+	}
+
+	public function set_initializer(expression_node $value): void
+	{
+		$this->initializer_value = $value;
+	}
 
 	public function require_preparation(): prepared_source_constant
 	{
@@ -308,7 +323,7 @@ abstract class constant_declaration_node extends declaration_node
 	public function maintain(node_maintenance_worker_i $worker): void
 	{
 		$worker->enter($this);
-		$worker->edge($this, $this->initializer);
+		$worker->edge($this, $this->require_initializer());
 	}
 }
 

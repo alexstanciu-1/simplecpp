@@ -1,0 +1,8 @@
+{
+  "compiler/my-try/03_parse/parser.php": "8dae077ed8b9eee44e86031e100379da8b1c5b8c2fd92e97e6226880a325e132",
+  "compiler/my-try/03_parse/structures/structures_declarations.php": "7a712bef2ae4c729e803f28c713f91e0152302f4ce58d502e48fd510200cc3f8",
+  "compiler/my-try/03_parse/structures/iterators.php": "2310868abd64eeaf0cef3fd1c61be33e1c7444234e5c04837f11a914ab17845d",
+  "compiler/my-try/04_analyze/prepare/semantics/constants.php": "94280d6685ed5969f7a9fd6929dce9c87dd10f2d0c11e23a1c8e98fe03e85c9c",
+  "compiler/my-try/tests/source_constants.php": "7548680d57d51484b822cf451a04e1ae3ed70fc2bc0e325918819f6dc3d63a5d",
+  "tests/portability/constant_initializer.py": "3196275b49acce885166a0012a758e8ba9d6f4cb9dc95a4c0f29b139e64b3fc9"
+}

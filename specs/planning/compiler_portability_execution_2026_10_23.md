@@ -1539,3 +1539,22 @@ removed, none added. First remaining blocker is required constant initializer.
 The parser collects that node before parsing its initializer and preserves identity
 on reuse. Stopped before a cross-owner construction/publication reorder or extension
 of staged-field conversion to the inherited AST field. Discussion required.
+
+## Constant initializer source-owned staged storage
+
+User approved nullable private backing and required checked getter/setter in PHP.
+constant_declaration_node now owns initializer_value; parser retains its collection,
+expression parsing and final retain/replace order. Preparation/maintenance/iterator
+read through require_initializer. Optional variable/property initializers unchanged.
+No converter, runtime, semantic or ownership protocol extension.
+
+Actual compiler tests prove early read/child failure, unchanged syntax/work retention,
+failed replacement preserving old initializer/occurrence, early collection of a new
+malformed declaration, and repair reusing exact occurrence and syntax identity.
+Focused extracted production accessor/traversal fixture passes PHP and legacy,
+ordinary and concrete native modes (20.85/23.08/20.51 s). Scope of dependency doubles
+and fixture-only corrections recorded in constant_initializer evidence.
+
+Bootstrap 1:16.06 / 354792 KiB RSS / 324 MiB PHP heap removes the required initializer
+diagnostic and adds none. First remaining blocker is required type_syntax
+initialization. Stopped before fixing it as requested; no full native compiler claim.

@@ -169,3 +169,17 @@ portable authoring still uses the explicit normalization for both routes. Do not
 replace nullable widening with a checked required-value cast. The cross-route
 `tests/portability/nullable_objects.py` checks identity, absence and both branch
 orders; the direct inference proof is `compiler/my-try/tests/nullable_objects.py`.
+
+## Required staged fields through explicit source accessors
+
+For inherited fields outside the bounded `_uninitialized_` converter rewrite,
+authored PHP can use private `?T` storage initialized to null, a required `T` setter,
+and a getter that checks absence and throws before returning `T`. This represents
+construction state internally; it does not expose optional data to consumers.
+Constant AST initializer storage is a proved example. Its parser keeps collection
+before expression parsing, and updates the field only after successful parsing.
+Failed replacement retains the previous expression; readers and child traversal
+must use the checked getter rather than silently treating absence as no child.
+See `tests/portability/constant_initializer.py` and the dated constant_initializer
+bootstrap evidence. This is source authoring using existing constructs, not automatic
+converter inference or a change to required-field language contracts.

@@ -201,7 +201,7 @@ final class constant_children_iterator extends children_iterator
 	{
 		if ($this->consumed) { return null; }
 		$this->consumed = true;
-		return $this->source->initializer;
+		return $this->source->require_initializer();
 	}
 }
 

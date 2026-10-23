@@ -53,8 +53,8 @@ member_owner_check($owner->syntax()->member_scope()->methods_named('read') === [
 $constant = new member_constant_node();
 $constant->name = 'read';
 $constant->set_span(0, 1);
-$constant->initializer = new integer_literal_node();
-$constant->initializer->set_span(0, 1);
+$constant->set_initializer(new integer_literal_node());
+$constant->require_initializer()->set_span(0, 1);
 $node->constants->append($constant);
 $collector->collect_constant($constant, $node->member_scope(), 0, $owner);
 member_owner_check(weakref_get($constant->occurrence()->member_owner) === $owner, 'Constant lost shared owner role');
