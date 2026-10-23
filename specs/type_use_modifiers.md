@@ -75,9 +75,8 @@ the following normal path. A `result_or_bool` true sentinel does not assign a pa
 so its boolean result cannot establish required-local assignment.
 
 This bounded analysis does not correlate a saved boolean variable with an earlier
-extraction, infer facts through arbitrary comparisons/calls, or fold constants. It
-does not widen the payload types admitted by `take`; generic nullable payload support
-remains a separate consumer integration.
+extraction, infer facts through arbitrary comparisons/calls, or fold constants. Payload admission remains operation-specific; the capability-based nullable take
+rule is defined in error_values_and_take.md.
 
 Inline records retain a genuine optional payload: `?Struct` is `nullable<Struct>`,
 and `?value<Class>` is `nullable<value<Class>>`. Absence differs from a present
@@ -125,7 +124,7 @@ payload default construction or copying. Reference parameters remain invariant.
 Storage capability does not grant implicit truthiness: optional payloads without an
 admitted condition contract require explicit presence tests or extraction. This
 revision does not add container covariance, wrapper-delegated indexing, interior
-borrows or broader `take` output admission. Required/nullable class-handle boundaries use the migration described above;
+borrows. `take` separately requires exact writable output storage and copy capability. Required/nullable class-handle boundaries use the migration described above;
 initialization and remaining consumer integration are still open.
 
 Agreed 2026-10-02 for the my-try v0.2 frontend.

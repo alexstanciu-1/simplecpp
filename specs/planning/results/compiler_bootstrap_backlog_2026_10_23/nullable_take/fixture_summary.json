@@ -1,0 +1,87 @@
+[
+  {
+    "name": "provider-ordinary",
+    "passed": true,
+    "seconds": 28.653410776001692
+  },
+  {
+    "name": "provider-concrete",
+    "passed": true,
+    "seconds": 38.32450906300073
+  },
+  {
+    "name": "containers-ordinary",
+    "passed": true,
+    "seconds": 28.441617650001717
+  },
+  {
+    "name": "containers-concrete",
+    "passed": true,
+    "seconds": 38.21041344099649
+  },
+  {
+    "name": "records-ordinary",
+    "passed": true,
+    "seconds": 28.63341291100369
+  },
+  {
+    "name": "records-concrete",
+    "passed": true,
+    "seconds": 33.36409789699974
+  },
+  {
+    "name": "handles-ordinary",
+    "passed": true,
+    "seconds": 31.819458508995012
+  },
+  {
+    "name": "handles-concrete",
+    "passed": true,
+    "seconds": 32.2725622739963
+  },
+  {
+    "name": "noncopy-ordinary",
+    "passed": true,
+    "seconds": 0.7167732559973956
+  },
+  {
+    "name": "noncopy-concrete",
+    "passed": true,
+    "seconds": 0.7468785680030123
+  },
+  {
+    "name": "inexact-ordinary",
+    "passed": true,
+    "seconds": 0.735768348997226
+  },
+  {
+    "name": "inexact-concrete",
+    "passed": true,
+    "seconds": 0.8007777829989209
+  },
+  {
+    "name": "base-output-ordinary",
+    "passed": true,
+    "seconds": 0.5118357780011138
+  },
+  {
+    "name": "base-output-concrete",
+    "passed": true,
+    "seconds": 0.5204877389987814
+  },
+  {
+    "name": "explicit-shared-ordinary",
+    "passed": true,
+    "seconds": 0.5368881999966106
+  },
+  {
+    "name": "explicit-shared-concrete",
+    "passed": true,
+    "seconds": 0.5946362280010362
+  },
+  {
+    "name": "retained",
+    "passed": true,
+    "seconds": 0.6498425839963602
+  }
+]

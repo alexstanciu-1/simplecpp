@@ -19,7 +19,7 @@ final class Take_Preparation
 			$alternative_type /** nullable<canonical_type_use> */ = null;
 			if ($payload !== null)
 			{
-				Nullable_Conversions::require_extractable_payload($payload);
+				Nullable_Conversions::require_value_payload($payload);
 				$facts->operation = take_operation::nullable_value;
 			}
 			else
@@ -43,6 +43,7 @@ final class Take_Preparation
 				throw new \RuntimeException('S2S take does not support source storage modifiers');
 			}
 			$payload_type /** canonical_type_use */ = $payload;
+			Capability_Preparation::require_copy($payload_type, $context);
 			$value = self::output($syntax->value_binding, $payload_type, $context);
 			if ($alternative_type === null)
 			{

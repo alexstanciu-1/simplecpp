@@ -40,5 +40,5 @@
         "wrappers",
         "take"
     ],
-    "notes": "Covers the unified php::take helper across nullable, result_or_false, result, and result_or_bool wrappers."
+    "notes": "Covers php::take across nullable values, erased optional shared handles, result_or_false, result, and result_or_bool; verifies unchanged absent output and shared identity/self-aliasing."
 }

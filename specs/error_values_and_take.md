@@ -63,7 +63,7 @@ parameters of the exact selected branch types; the two outputs must name distinc
 declarations (aliasing between reference parameters is not analyzed). Payloads are
 supported for scalars, exact `mixed`/`dynamic`, explicit callables and typed vector/hash Result payloads.
 Nullable and all three Result families also admit exact enum payloads;
-nullable take otherwise retains its scalar domain. Enum payloads use the same
+nullable take uses the capability-based rule below. Enum payloads use the same
 state/output rules above, including true-sentinel take without enum write-back. See [enum wrapper boundaries](compact_layout_types.md#321-v02-nullable-and-result-enum-payloads).
 Wrapped null/false are successful payloads, not wrapper failure.
 Likewise, an absent callable is a successful payload: `take` returns true, replaces
@@ -141,7 +141,7 @@ Value admission is distinct from truthiness: typed vector/hash payloads have no
 condition contract, so a Result containing one also rejects in conditions and Elvis
 during preparation. `empty` still does not unwrap any Result automatically. Extract
 first and then inspect the container. No new reference extraction, implicit family
-conversion, nullable-container support or direct-container selection rule is added.
+conversion, direct-container selection rule is added by that Result slice.
 
 ## Required-local success paths — v0.2, 2026-10-23
 
@@ -165,3 +165,20 @@ of an initially uninitialized value output. Already initialized outputs keep the
 previous value on non-payload paths, as specified above. Saved boolean variables,
 arbitrary boolean comparisons and ordinary function calls do not carry extraction
 correlations. No new out-parameter or nullable-payload admission protocol is implied.
+
+## Capability-based nullable take — v0.2, 2026-10-23
+
+Nullable extraction accepts payloads through the existing `value_storable` and
+`copyable_value` contracts. The source wrapper must also be copyable. Outputs remain
+existing writable storage of the exact payload type; assignability is provided by the
+existing copyable-value/memberwise-copy contract. Storage capability alone does not
+grant extraction, and empty state does not bypass the copy requirement of this operation.
+No payload default constructor is required: an already initialized non-defaultable
+struct can be the output. Empty/present tests remain independent of copyability.
+
+Successful take copies inline values/containers and preserves shared object identity.
+Absence leaves the output unchanged. Optional class/interface types use their native
+shared-handle representation with the same presence/extraction behavior. Explicit
+ownership handles do not become nullable sources for this frontend operation merely
+because they can be empty. No output covariance, move extraction, interior reference
+or wrapper-delegated container operations are introduced.

@@ -2233,3 +2233,11 @@ true-sentinel behavior, negative correlation cases and retained guard edit recov
 Its fixture opts an existing shared runtime provider into result_payload using a
 private metadata copy; it does not alter production provider capabilities. The
 portable local_assignment proof also exercises the transient condition-path owner.
+
+`python3 compiler/my-try/tests/nullable_take.py --results FRESH` tests capability-based
+nullable extraction in ordinary and prelowered modes: value/container copies, shared
+class/interface identity, nested registered provider payloads, exact-type/noncopyable
+rejections and retained capability-change recovery. `python3 tests/portability/nullable_take.py
+--results FRESH` checks portable take_nullable array-copy and class-identity behavior
+in PHP, legacy native and both v0.2 modes. The existing runtime wrapper take fixture
+also covers native shared-handle presence, unchanged absent outputs and self-aliasing.

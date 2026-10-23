@@ -36,6 +36,17 @@ int main() {
 	assert(scpp::php::take(value, nullable_value).native_value() == false);
 	assert(value.native_value() == 7);
 
+	const scpp::shared_p<int> empty_handle;
+	const scpp::shared_p<int> present_handle(std::make_shared<int>(17));
+	scpp::shared_p<int> handle_output(std::make_shared<int>(3));
+	const auto previous_handle = handle_output;
+	assert(!scpp::php::take(handle_output, empty_handle).native_value());
+	assert(handle_output.get() == previous_handle.get());
+	assert(scpp::php::take(handle_output, present_handle).native_value());
+	assert(handle_output.get() == present_handle.get());
+	assert(scpp::php::take(handle_output, handle_output).native_value());
+	assert(*handle_output.get() == 17);
+
 	scpp::result_or_false<scpp::int_t<>> falseable_value(scpp::int_t<>(11));
 	assert(scpp::php::take(value, falseable_value).native_value() == true);
 	assert(value.native_value() == 11);

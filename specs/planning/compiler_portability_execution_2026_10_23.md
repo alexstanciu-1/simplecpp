@@ -996,3 +996,36 @@ owners. No fatal/OOM, emission or native compiler rebuild. The isolated producti
 scpp_portability_lock_empty factory still reproduces the out read-before-assignment
 diagnostic (/tmp/take-empty-lock-probe-01). Its empty required-handle contract belongs
 to the pending runtime ownership/binding audit, not conditional take assignment.
+
+## NULL-02 capability-based nullable take
+
+Reused nullable formation's value_storable gate and copyable_value (including copy
+assignment) rather than a scalar/enum whitelist. Outputs retain exact type/writable
+storage checks; source snapshots/copies remain unchanged. Runtime nullable<T> already
+provides generic value behavior. Added the same extraction semantics for erased
+optional shared handles. The first concrete handle proof exposed a transport mismatch;
+both output address and adapter unpacking now consult CPP_Wrapper_Transport::payload
+to distinguish physical wrappers from erased optional handles. No new capability,
+semantic family whitelist or lifetime protocol.
+
+/tmp/nullable-take-03 passes 17 tasks across both modes, including nested registered
+tray<tray<int>>, vectors/hashes, non-defaultable structs, class/interface identity,
+noncopyability/exactness rejections and retained capability recovery. The additional
+nullable value<Class> control passes both modes in /tmp/nullable-take-inline-01.
+/tmp/nullable-take-result-regression-01 passes all 23 conditional Result tasks. The
+existing runtime take helper fixture, extended for shared absence/identity/self-alias,
+passes under /tmp/nullable-take-runtime-01.
+
+/tmp/nullable-take-portable-04 passes PHP, legacy native and both v0.2 modes using
+take_nullable. Early fixture attempts exposed unsupported generic nullable local
+annotations and used an unsupported free-function authoring form. The final static
+method uses supported ?array parameter annotation. The local annotation grammar gap
+is recorded as a converter limitation, not fixed by this adaptation. Evidence is in
+results/compiler_bootstrap_backlog_2026_10_23/nullable_take/. Nested Result<nullable<T>>
+capability/transport, runtime empty-handle contracts and broader CH15 work remain open.
+
+Bootstrap /tmp/compiler-bootstrap-nullable-take-01: 77.21 s wall time /
+341,376 KiB RSS (333.4 MiB) / 312 MiB PHP allocation. Preparation still fails first
+on required file-field initialization. Aggregate diagnostic texts are unchanged
+from the prior conditional-take checkpoint. No fatal/OOM, emission or native compiler
+rebuild. These early-failure measurements do not establish full-bootstrap performance.

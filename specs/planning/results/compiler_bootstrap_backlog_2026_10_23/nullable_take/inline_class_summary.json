@@ -1,0 +1,12 @@
+[
+  {
+    "name": "inline-class-ordinary",
+    "passed": true,
+    "seconds": 13.770504309999524
+  },
+  {
+    "name": "inline-class-concrete",
+    "passed": true,
+    "seconds": 18.435044218000257
+  }
+]

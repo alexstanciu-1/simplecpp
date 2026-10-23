@@ -254,3 +254,10 @@ carry transient true/false assignment facts to if/loop/conditional branches. Bot
 behavior/retained tests and production helper parity pass. This supersedes the pending
 take-success item; runtime empty-handle contracts and generic nullable take remain
 separate OWN-01/NULL-02 work. No new extraction semantics or retained model was added.
+
+NULL-02 nullable-take execution: the old payload whitelist is replaced by existing
+storage/copy capabilities, with exact mutable outputs. Reused runtime optional-value
+assignment plus an erased shared-handle overload; prelower output pointers now use
+the existing physical-wrapper query. Nested generic provider, inline/shared records,
+noncopyability and retained recovery proofs pass. Nested Result<nullable<T>> and the
+converter's generic nullable local-comment grammar remain unresolved follow-ups.

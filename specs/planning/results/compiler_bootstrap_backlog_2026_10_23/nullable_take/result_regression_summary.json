@@ -1,0 +1,117 @@
+[
+  {
+    "name": "paths-ordinary",
+    "passed": true,
+    "seconds": 27.702329881998594
+  },
+  {
+    "name": "paths-concrete",
+    "passed": true,
+    "seconds": 28.91976258300565
+  },
+  {
+    "name": "plain-ordinary",
+    "passed": true,
+    "seconds": 0.6942155310025555
+  },
+  {
+    "name": "plain-concrete",
+    "passed": true,
+    "seconds": 0.6752007480026805
+  },
+  {
+    "name": "saved-ordinary",
+    "passed": true,
+    "seconds": 0.6995725400047377
+  },
+  {
+    "name": "saved-concrete",
+    "passed": true,
+    "seconds": 0.6820597730038571
+  },
+  {
+    "name": "false-arm-ordinary",
+    "passed": true,
+    "seconds": 0.6881366490051732
+  },
+  {
+    "name": "false-arm-concrete",
+    "passed": true,
+    "seconds": 0.7229255700003705
+  },
+  {
+    "name": "or-shortcut-ordinary",
+    "passed": true,
+    "seconds": 0.9332273050022195
+  },
+  {
+    "name": "or-shortcut-concrete",
+    "passed": true,
+    "seconds": 0.7072530489967903
+  },
+  {
+    "name": "and-after-ordinary",
+    "passed": true,
+    "seconds": 0.7267056160053471
+  },
+  {
+    "name": "and-after-concrete",
+    "passed": true,
+    "seconds": 0.8027954360004514
+  },
+  {
+    "name": "argument-leak-ordinary",
+    "passed": true,
+    "seconds": 0.5314605060048052
+  },
+  {
+    "name": "argument-leak-concrete",
+    "passed": true,
+    "seconds": 0.5419153520051623
+  },
+  {
+    "name": "comparison-leak-ordinary",
+    "passed": true,
+    "seconds": 0.607391274003021
+  },
+  {
+    "name": "comparison-leak-concrete",
+    "passed": true,
+    "seconds": 0.5787286030026735
+  },
+  {
+    "name": "while-zero-ordinary",
+    "passed": true,
+    "seconds": 0.5435731219986337
+  },
+  {
+    "name": "while-zero-concrete",
+    "passed": true,
+    "seconds": 0.5630655029963236
+  },
+  {
+    "name": "do-break-ordinary",
+    "passed": true,
+    "seconds": 0.5303731390013127
+  },
+  {
+    "name": "do-break-concrete",
+    "passed": true,
+    "seconds": 0.6128389720033738
+  },
+  {
+    "name": "sentinel-ordinary",
+    "passed": true,
+    "seconds": 0.5527098019956611
+  },
+  {
+    "name": "sentinel-concrete",
+    "passed": true,
+    "seconds": 0.5105072250007652
+  },
+  {
+    "name": "retained",
+    "passed": true,
+    "seconds": 0.4745247489991016
+  }
+]

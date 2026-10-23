@@ -118,3 +118,14 @@ new truthiness and arbitrary source-template admission are non-goals.
   nullable identity, and restoring the capability restores admission.
 - Ordinary and prelowered native execution agree; portable PHP/v0.1 evidence must
   cover the actual compiler witness. No proof is claimed by this source audit.
+
+## Nullable take execution update
+
+The scalar/enum-only extractable gate is removed. Take reuses value_storable formation,
+explicit payload/source copy checks, exact output type and writable-place admission.
+The existing runtime nullable<T> assignment path already handles values/containers.
+Optional nominal handles require an overload for their erased shared representation.
+Prelower output transport now uses CPP_Wrapper_Transport::payload: physical wrappers
+use concrete payload outputs, erased optional handles use native shared storage. No
+payload-name whitelist or new capability is introduced. Nested Result<nullable<T>>
+capability/transport is still a separate unresolved item.

@@ -1235,3 +1235,19 @@ determine whether true establishes the output. No retained model, CFG or saved-b
 correlation was introduced. Conditional-expression branches consume their condition
 facts without promising arbitrary result-boolean inference. Generic nullable take
 admission remains NULL-02; empty required runtime handles remain OWN-01/NULL-01.
+
+## NULL-02 nullable take update and converter limitation
+
+Capability-based nullable take is implemented using existing storage/copy contracts,
+exact writable outputs and the existing physical-wrapper transport query. Ordinary
+and prelowered proofs include class/interface identity, copyable non-defaultable
+structs, nested vector/hash values and an unfamiliar registered nested tray provider.
+Explicit ownership inputs, noncopyable payloads and mismatched outputs still reject.
+Nested Result<nullable<T>> remains open.
+
+Portable proof setup exposed a distinct converter limitation: generic nullable local
+comments such as `/** ?vector<int> */` and `/** nullable<vector<int>> */` reject.
+Simple nominal nullable local comments remain supported. The proof uses an existing
+`?array` parameter with `/** ?vector<int> */` instead. Record the generic nullable-local
+annotation grammar gap under converter limitations for follow-up; do not treat this
+source workaround as completion of converter nullable annotation coverage.

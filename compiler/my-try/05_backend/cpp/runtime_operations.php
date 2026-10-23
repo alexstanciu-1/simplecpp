@@ -75,7 +75,7 @@ final class CPP_Runtime_Operations
 			$operand = new cpp_runtime_operand($input, $expressions[$position]);
 			// Source constructors consume application representations, not native unwrapped values.
 			$parts[] = ($context->concrete_types() && (CPP_Source_Calls::construction_transport($request)
-				|| (($request->kind === cpp_runtime_operation_kind::take) && ($position === 0))))
+				|| (self::take_application_output($request) && ($position === 0))))
 				? '&(' . $operand->expression . ')' : self::address($operand, $context);
 		}
 		if (CPP_Source_Calls::construction_key_type($request) !== '') {
@@ -143,7 +143,7 @@ final class CPP_Runtime_Operations
 			CPP_Opaque_Representation::require_native_type($input);
 			$input_context = $native_context;
 			if (CPP_Source_Calls::construction_transport($request)
-				|| (($request->kind === cpp_runtime_operation_kind::take) && ($position === 0))) {
+				|| (self::take_application_output($request) && ($position === 0))) {
 				$input_context = new cpp_generation_context($engine);
 			}
 			$native = CPP_Declarations::type($input, $input_context);
@@ -222,6 +222,14 @@ final class CPP_Runtime_Operations
 			. '::operation_result{}, +[](void* destination, const void* input) { '
 			. 'const auto& invoke = *static_cast<const Operation*>(input); ::new(destination) ' . $native
 			. '(invoke()); }, &operation); } }(operation);';
+	}
+
+	/** Physical wrapper payloads use concrete outputs; erased optional handles use native storage. */
+	private static function take_application_output(cpp_runtime_operation $request): bool
+	{
+		if ($request->kind !== cpp_runtime_operation_kind::take) { return false; }
+		$inputs /** Storage<canonical_type_use> */ = $request->inputs;
+		return CPP_Wrapper_Transport::payload($inputs[$inputs->count() - 1]) !== null;
 	}
 
 	private static function mutable_input(cpp_runtime_operation $request, int $position): bool

@@ -1189,3 +1189,15 @@ to the pending runtime ownership/binding audit, not conditional take assignment.
 
 Focused both-mode behavior/retained proofs and PHP/legacy-native helper parity pass.
 See the [evidence](../../../../specs/planning/results/compiler_bootstrap_backlog_2026_10_23/take_assignment/README.md).
+
+## Capability-based nullable take checkpoint — 2026-10-23
+
+Bootstrap /tmp/compiler-bootstrap-nullable-take-01: 77.21 s wall time /
+341,376 KiB RSS (333.4 MiB) / 312 MiB PHP allocation. Preparation still fails first
+on required file-field initialization. Aggregate diagnostic texts are unchanged
+from the prior conditional-take checkpoint. No fatal/OOM, emission or native compiler
+rebuild. These early-failure measurements do not establish full-bootstrap performance.
+
+Focused generic-provider, record, shared-handle and retained proofs pass; portable
+take_nullable passes PHP and both native routes. See the
+[evidence](../../../../specs/planning/results/compiler_bootstrap_backlog_2026_10_23/nullable_take/README.md).

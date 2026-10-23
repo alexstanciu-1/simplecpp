@@ -3,6 +3,7 @@
 #include "scpp/bool_t.hpp"
 #include "scpp/error_t.hpp"
 #include "scpp/nullable.hpp"
+#include "scpp/shared_p.hpp"
 #include "scpp/result.hpp"
 #include "scpp/result_or_bool.hpp"
 #include "scpp/result_or_false.hpp"
@@ -18,6 +19,17 @@ template <typename T>
 	}
 
 	out_value = source.require_value("php::take(nullable)");
+	return bool_t(true);
+}
+
+// Optional class/interface values use the same shared handle as required values.
+// Frontend admission supplies nullability; absence still preserves the output.
+template <typename T>
+[[nodiscard]] inline bool_t take(shared_p<T> &out_value, const shared_p<T> &source) {
+	if (!source.has_value().native_value()) {
+		return bool_t(false);
+	}
+	out_value = source;
 	return bool_t(true);
 }
 
