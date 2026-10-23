@@ -193,9 +193,15 @@ final class prepared_object_construction extends prepared_expression
 	public ?prepared_call $runtime_factory = null;
 }
 
-/** One syntax family, with distinct settled sequence-factory and typed-record contracts. */
+/** One syntax family; each variant retains its selected initialization contract. */
 abstract class prepared_data_construction extends prepared_expression
 {
+}
+
+/** Empty-only initialization retains the ordinary resolved construction call. */
+final class prepared_empty_construction extends prepared_data_construction
+{
+	public prepared_object_construction $construction;
 }
 
 final class prepared_sequence_construction extends prepared_data_construction

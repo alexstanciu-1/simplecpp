@@ -139,8 +139,10 @@ final class Parameter_Defaults
 			|| ($syntax->source_representation($context->collection->token_snapshot()) !== data_source_representation::php_like)) {
 			throw new \RuntimeException('S2S container parameter defaults require contextual [] on a value parameter');
 		}
-		// Require a registered sequence factory, not merely a default-constructible record.
-		Initialization_Preparation::binding($parameter->type, initialization_shape::empty_brackets, $context);
+		// Require an explicit initialization registration, not merely default construction.
+		if (!Data_Construction_Preparation::empty_only($parameter->type)) {
+			Initialization_Preparation::binding($parameter->type, initialization_shape::empty_brackets, $context);
+		}
 		Capability_Preparation::require_copy($parameter->type, $context);
 		return new prepared_property_parameter_default(Property_Defaults::prepare($syntax, $parameter->type, $context));
 	}

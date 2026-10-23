@@ -139,6 +139,10 @@ final class CPP_Data_Construction
 		if ($prepared instanceof prepared_record_construction) {
 			return self::record($node, object_cast($prepared, prepared_record_construction::class), $context);
 		}
+		if ($prepared instanceof prepared_empty_construction) {
+			$arguments = new Storage /** Storage<expression_node> */();
+			return CPP_Record_Construction::object(object_cast($prepared, prepared_empty_construction::class)->construction, $arguments, $context);
+		}
 		$binding = object_cast($prepared, prepared_sequence_construction::class)->binding;
 		if ($context->specialization_engine !== null) {
 			return CPP_Runtime_Operations::initialize($node, $binding, $context);

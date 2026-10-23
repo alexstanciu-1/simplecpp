@@ -142,3 +142,49 @@ No OOM/fatal or emission. The aggregate `S2S new requires a source struct or cla
 diagnostic disappears after target-correct empty expression emission; no new message
 text appears. Saved evidence is under results/compiler_bootstrap_backlog_2026_10_23/
 empty_expressions. This is not completion of all CONVERT-01 provider/default proofs.
+
+## CONVERT-01 empty-only binding design
+
+The user selected an explicit empty-only binding using existing default construction;
+nonempty literals remain excluded. The [concrete bounded design](compiler_empty_only_binding_2026_10_23.md)
+separates this registration from sequence-input recipes and reuses runtime factory
+call preparation/emission, including template prelowering. One prepared-data variant
+retains the resolved construction. The implementation now registers
+`empty_initialization: "default"`, shares runtime construction-call preparation
+with `new`, and delegates settled emission to the same call path in both C++ modes.
+Storage, Keyed_Storage and Key_Storage_List opt in explicitly. Sequence recipes and
+empty-only registration cannot coexist; nonempty inputs require a sequence binding.
+
+`/tmp/empty-provider-03` passes nine tasks: unfamiliar generic-provider and three
+Storage-family native executions in both modes, invalid source/recovery, missing
+opt-in, missing factory, conflicting recipes and unusable zero-argument construction.
+The provider counter establishes one factory call per omitted argument and none
+for an explicit argument. The Storage default proves independent initial state.
+`/tmp/empty-defaults-regression-03` passes all five existing sequence-default tasks.
+These tests ran concurrently, so their task times are not bootstrap measurements.
+Both used the shared runner's CLI fallback after sandbox FPM socket binding failed.
+First attempts exposed fixture mistakes (configuration after reset and an absent
+Key_Storage_List::count method), then a too-generic rejection diagnostic; all were
+corrected before the final pass. No claim of native compiler rebuilding follows.
+
+Measured checkpoint `/tmp/compiler-bootstrap-empty-provider-03`: conversion 4.60 s,
+195,060 KiB RSS; 269 PHS files / 1,962,586 bytes. Bootstrap 198.90 s,
+442,724 KiB RSS (432.3 MiB), 422.5 MiB PHP heap. Preparation stops on the same
+AST-01 diagnostic; no added/removed diagnostic text relative to empty_expressions,
+no fatal/OOM and no emission. Saved results are under
+results/compiler_bootstrap_backlog_2026_10_23/empty_provider. This closes the bounded
+empty-only integration slice, not the whole backlog or remaining CONVERT-01 edges.
+
+## CONVERT-02 reuse before implementation
+
+The recursive Container_Type parser already owns explicit vector/hash payload
+spelling. Array carrier validation belongs in the converter's containerAnnotation
+helper, reused by method, constructor and return parsing. Constructor parsing
+currently wraps a payload-only comment based on PHP's question mark; ordinary
+method parameters reject nullable arrays earlier in signatureType. The bounded
+change should parse one complete annotated target, compare its outer nullability
+with the PHP carrier, and emit one existing nullable wrapper. Migrate actual
+template_type_parameter constructor comments and matching fixtures. Keep nullable
+formation/operations in NULL-01/02; annotation acceptance does not prove native
+nullable-container execution. No additional registry or compiler protocol is needed
+for this source/converter convention change.

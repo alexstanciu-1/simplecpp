@@ -16,6 +16,15 @@ This does not establish exhaustive language, lifetime, incremental or performanc
 
 ## Accepted-backlog bootstrap checkpoint — 2026-10-23
 
+The latest [empty-only provider checkpoint](../../../../specs/planning/results/compiler_bootstrap_backlog_2026_10_23/empty_provider/README.md)
+adds explicit registered `[]` construction through existing provider factories.
+An unfamiliar provider and Storage-family fixtures pass ordinary/prelowered native
+execution, fresh omitted defaults, admission and retained recovery. The measured
+PHP-hosted bootstrap takes 198.90 s / 432.3 MiB peak RSS / 422.5 MiB PHP heap;
+conversion takes 4.60 s. It still stops at AST-01, with no diagnostic text changes
+from the prior empty-expression checkpoint. No OOM/fatal, emission or native
+compiler rebuild. These results do not close the remaining accepted backlog.
+
 The typed empty parameter-default slice now passes PHP, the current legacy S2S route
 and v0.2 ordinary/prelowered native fixtures. The converter preserves explicit PHP
 array annotations; both routes reuse their existing typed construction paths. A

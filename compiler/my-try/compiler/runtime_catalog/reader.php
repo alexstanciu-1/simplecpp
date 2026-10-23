@@ -255,6 +255,10 @@ final class Runtime_Catalog_Reader
 				$kind = true;
 			}
 			elseif ($key === 'construction') { $result->construction = self::name($reader); }
+			elseif ($key === 'empty_initialization') {
+				if (self::name($reader) !== 'default') { $reader->reject('empty_initialization requires default'); }
+				$result->empty_initialization = true;
+			}
 			elseif ($key === 'default_constructible') { $result->default_constructible = $reader->read_boolean(); }
 			elseif ($key === 'storage')
 			{

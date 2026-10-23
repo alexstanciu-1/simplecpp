@@ -27,6 +27,23 @@ final class Data_Construction_Preparation
 			throw new \RuntimeException('S2S data construction with effective storage modifiers is deferred');
 		}
 		$shape = self::shape($node, $context->collection->token_snapshot());
+		if (self::empty_only($target)) {
+			if ($shape !== initialization_shape::empty_brackets) {
+				throw new \RuntimeException('Registered empty-only initialization accepts [] only; nonempty literals require a sequence binding');
+			}
+			$arguments = new Storage /** Storage<expression_node> */();
+			$factory = Model::$type_catalog->registry()->runtime_construction(Type_Queries::canonical($target)->definition());
+			$construction /** prepared_object_construction */;
+			try { $construction = Object_Construction_Preparation::runtime_factory($target, $factory, $arguments, $context); }
+			catch (\RuntimeException $error) {
+				throw new \RuntimeException('Empty-only initialization requires a usable zero-argument construction: ' . $error->getMessage());
+			}
+			$empty = new prepared_empty_construction();
+			$empty->construction = $construction;
+			$empty->type = $construction->type;
+			$empty->value_origin = $construction->value_origin;
+			return $empty;
+		}
 		$binding = Initialization_Preparation::binding($target, $shape, $context);
 		$facts = new prepared_sequence_construction();
 		$facts->binding = $binding;
@@ -41,6 +58,11 @@ final class Data_Construction_Preparation
 		}
 		finally { $context->statement_assignment = $statement_assignment; }
 		return $facts;
+	}
+
+	public static function empty_only(canonical_type_use $target): bool
+	{
+		return Model::$type_catalog->registry()->runtime_empty_initialization(Type_Queries::canonical($target)->definition());
 	}
 
 	/** Empty brackets are the only case needing the original delimiter. */

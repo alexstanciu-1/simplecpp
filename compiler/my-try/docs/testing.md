@@ -68,6 +68,12 @@ progress to that blocker; raw errors and snapshot hashes remain in the result fo
 defaults and retained rejection/recovery in ordinary/prelowered output. The cross-route
 companion is `tests/portability/empty_defaults.py` from the repository root.
 
+`python3 tests/empty_provider.py --results FRESH` proves explicit empty-only
+initialization using an unfamiliar generic provider and all three Storage families,
+in ordinary and prelowered native output. Counted factory calls verify fresh omitted
+defaults and explicit-argument behavior; negative metadata/input cases and retained
+recovery verify that default construction or indexing alone does not grant literals.
+
 ## Conservative call snapshot elision
 
 `python3 compiler/my-try/tests/call_snapshot_borrow.py --results FRESH` checks

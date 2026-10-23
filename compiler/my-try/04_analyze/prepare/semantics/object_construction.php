@@ -35,15 +35,7 @@ final class Object_Construction_Preparation
 		$source_arguments /** Storage<expression_node> */ = $node->arguments;
 		$factory = Model::$type_catalog->registry()->runtime_construction(Type_Queries::canonical($target)->definition());
 		if ($factory !== '') {
-			$call = Runtime_Call_Preparation::prepare(Model::$runtime_callables->methods_named($target, $factory, true), $source_arguments, $context, $target);
-			if (!$call->type->matches($target)) { throw new \RuntimeException('Runtime construction factory must return the exact owner type'); }
-			$facts = new prepared_object_construction();
-			$facts->value_origin = expression_value_origin::fresh_construction;
-			$facts->constructed_type = $target;
-			$facts->type = $target;
-			$facts->storage = record_storage_kind::inline_value;
-			$facts->runtime_factory = $call;
-			return $facts;
+			return self::runtime_factory($target, $factory, $source_arguments, $context);
 		}
 		if ($target->by_value() || (Type_Queries::source_record($target) === null)) {
 			throw new \RuntimeException('S2S new requires a source struct or class');
@@ -87,6 +79,21 @@ final class Object_Construction_Preparation
 		$facts->type = $result;
 		$facts->storage = Type_Queries::record_storage($result);
 		$facts->constructor_call = $call;
+		return $facts;
+	}
+
+	/** Shared source-new and registered empty initialization factory admission. */
+	public static function runtime_factory(canonical_type_use $target, string $factory,
+		Storage $source_arguments /** Storage<expression_node> */, preparation_context $context): prepared_object_construction
+	{
+		$call = Runtime_Call_Preparation::prepare(Model::$runtime_callables->methods_named($target, $factory, true), $source_arguments, $context, $target);
+		if (!$call->type->matches($target)) { throw new \RuntimeException('Runtime construction factory must return the exact owner type'); }
+		$facts = new prepared_object_construction();
+		$facts->value_origin = expression_value_origin::fresh_construction;
+		$facts->constructed_type = $target;
+		$facts->type = $target;
+		$facts->storage = record_storage_kind::inline_value;
+		$facts->runtime_factory = $call;
 		return $facts;
 	}
 

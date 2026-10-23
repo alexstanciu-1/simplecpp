@@ -52,7 +52,9 @@ spread, property shorthand and method definitions are not introduced by this sta
 A by-value parameter of a registered container type may declare `= []`. The
 parameter supplies the concrete target, including its generic arguments. Selection
 uses the same registered initialization protocol as an ordinary typed empty value:
-positional when available, otherwise keyed. There is no vector/hash name whitelist.
+positional when available, otherwise keyed; an explicit empty-only provider
+registration instead selects its ordinary zero-argument construction factory.
+There is no vector/hash name whitelist.
 Each omitted argument constructs a fresh empty value through that factory; an
 explicit argument does not evaluate the default. Copy and transport requirements
 remain those of the parameter's ordinary value boundary.
@@ -530,7 +532,10 @@ above separately admits keyed record inputs):
 - Nonempty positional input requires the list interface.
 - Nonempty arrow-keyed input and all named-brace input require the keyed interface.
 - Empty `[]` selects the list interface if available, otherwise the keyed interface
-  with zero entries. A target supporting neither rejects during preparation.
+  with zero entries. A provider may instead register empty-only construction through
+  its existing zero-argument construction factory. This separate registration
+  admits neither nonempty input nor `{}`, and cannot coexist with sequence recipes.
+  A target supporting neither initialization route rejects during preparation.
 - Empty `{}` always requires the keyed interface. Thus `vector<int>::{}` rejects,
   while `hash<int>::[]` is an empty hash construction.
 - Empty mixed construction produces an empty table payload, not null. Empty dynamic

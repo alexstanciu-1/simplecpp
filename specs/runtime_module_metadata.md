@@ -405,7 +405,19 @@ it grants no source constructor body or inheritance behavior. Omission forbids `
 Independent `default_constructible: true` permits implicit empty field construction;
 the provider guarantees that native default construction yields the appropriate
 independent initial state. This flag defaults to false and does not infer a factory.
-Neither option grants indexing, iteration or array-literal initialization.
+Neither option alone grants indexing, iteration or array-literal initialization.
+An additional `empty_initialization: "default"` explicitly admits typed empty
+brackets through the registered construction factory. It requires `construction`
+and inline storage; it does not require an initializer-list adapter. Shared
+preparation resolves the factory with zero supplied arguments, using its ordinary
+parameter defaults and exact owner return contract. Missing or ambiguous applicable
+overloads reject before emission. The `default_constructible` flag remains a
+separate guarantee about native implicit field construction.
+
+This empty-only registration admits contextual `[]`, explicit `Type::[]` and
+value-parameter `= []` defaults. Each evaluation invokes construction anew. It does
+not admit nonempty literals or `{}`. Combining it with sequence `initialization`
+recipes is rejected at configuration time; there is no implicit precedence rule.
 
 A registered exact unary `empty` overload can serve the plain `empty(value)` probe;
 shared preparation requires a bool result and retains the selected call. Indexed
@@ -570,7 +582,9 @@ parameter names to exact closed types. It expresses protocol constraints, not
 enumerated applications: the hash recipes above apply to every `Value`. Unknown
 parameters, unresolved types and overlapping same-shape recipes reject startup.
 Empty brackets retain the existing list-first/keyed-fallback rule; braces are keyed.
-No recipes means no construction opt-in.
+Without recipes, sequence initialization is unavailable. A separate
+`empty_initialization: "default"` registration admits only empty brackets as
+described above.
 
 Each type with recipes requires exactly one entry in the module's separate
 `cpp_initialization` array, keyed by the type's `id`:

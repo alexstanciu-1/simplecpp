@@ -12,6 +12,7 @@
       "storage": "inline",
       "construction": "make",
       "default_constructible": true,
+      "empty_initialization": "default",
       "parameters": [
         {
           "name": "Record",
@@ -51,6 +52,7 @@
       "storage": "inline",
       "construction": "make",
       "default_constructible": true,
+      "empty_initialization": "default",
       "parameters": [
         {
           "name": "Record",
@@ -90,6 +92,7 @@
       "storage": "inline",
       "construction": "make",
       "default_constructible": true,
+      "empty_initialization": "default",
       "parameters": [
         {
           "name": "Record",

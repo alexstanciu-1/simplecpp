@@ -1046,17 +1046,26 @@ final class Type_Registry implements type_capability_query
 	private array $runtime_storage_policies /** hash<record_storage_kind, int> */ = [];
 	private array $runtime_construction_names /** hash<string, int> */ = [];
 	private array $runtime_default_construction /** hash<bool, int> */ = [];
+	private array $runtime_empty_initialization /** hash<bool, int> */ = [];
 
-	public function register_runtime_construction(type_definition_i $definition, string $factory, bool $default_constructible): void
+	public function register_runtime_construction(type_definition_i $definition, string $factory, bool $default_constructible,
+		bool $empty_initialization): void
 	{
 		$this->runtime_construction_names[$definition->definition_id()] = $factory;
 		$this->runtime_default_construction[$definition->definition_id()] = $default_constructible;
+		$this->runtime_empty_initialization[$definition->definition_id()] = $empty_initialization;
 	}
 
 	public function runtime_construction(type_definition_i $definition): string
 	{
 		$key = $definition->definition_id();
 		return isset($this->runtime_construction_names[$key]) ? $this->runtime_construction_names[$key] : '';
+	}
+
+	public function runtime_empty_initialization(type_definition_i $definition): bool
+	{
+		$key = $definition->definition_id();
+		return isset($this->runtime_empty_initialization[$key]) && $this->runtime_empty_initialization[$key];
 	}
 
 	public function runtime_default_constructible(type_definition_i $definition): bool

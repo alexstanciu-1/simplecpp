@@ -36,6 +36,8 @@ final class runtime_type_definition_spec
 	/** Explicit native default and source-new factory opt-ins. */
 	public bool $default_constructible = false;
 	public string $construction = '';
+	/** Explicit empty brackets through the registered construction factory. */
+	public bool $empty_initialization = false;
 	public record_storage_kind $storage = record_storage_kind::inline_value;
 	public array $capabilities /** vector<generic_contract> */ = [];
 	public Storage $parameters /** Storage<runtime_type_parameter_spec> */;

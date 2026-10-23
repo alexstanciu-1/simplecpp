@@ -90,8 +90,13 @@ final class Runtime_Type_Registration
 		if (($recipe->construction !== '') || $recipe->default_constructible) {
 			if ($recipe->storage !== record_storage_kind::inline_value) { throw new \RuntimeException('Runtime construction requires inline provider storage'); }
 		}
+		if ($recipe->empty_initialization) {
+			if ($recipe->construction === '') { throw new \RuntimeException('Empty initialization requires a registered construction factory'); }
+			$initialization /** Storage<runtime_initialization_spec> */ = $recipe->initialization;
+			if (!$initialization->is_empty()) { throw new \RuntimeException('Empty-only and sequence initialization registrations conflict'); }
+		}
 		$definition = $this->register_definition($recipe, $parameters);
-		$this->types->registry()->register_runtime_construction($definition, $recipe->construction, $recipe->default_constructible);
+		$this->types->registry()->register_runtime_construction($definition, $recipe->construction, $recipe->default_constructible, $recipe->empty_initialization);
 		$this->types->registry()->register_runtime_storage($definition, $recipe->storage);
 		$this->types->source()->expose_type($name, $definition);
 		$this->types->providers()->register($definition, 'simple_cpp.runtime.' . $this->owners[$name], $recipe->identity);
