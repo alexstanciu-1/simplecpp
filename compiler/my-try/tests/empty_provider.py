@@ -53,7 +53,8 @@ provider['functions'] = [
 provider['cpp'] = [{'id': 'empty.make', 'symbol': 'make', 'header': str(header)},
                    {'id': 'empty.calls', 'symbol': 'empty_proof::factory_calls', 'header': str(header)}]
 (modules / 'empty_proof.json').write_text(json.dumps(provider))
-source = '''function grow(vessel<int> $values = []): int {
+source = '''class VesselHolder { public $values vessel<int> = []; }
+function grow(vessel<int> $values = []): int {
  $values[] = 7;
  $sum = 0;
  foreach ($values as $value) { $sum += $value; }
@@ -63,6 +64,11 @@ echo factory_calls(), ":", grow(), ":", factory_calls(), ":", grow(), ":", facto
 $explicit vessel<int> = vessel<int>::[];
 $explicit[] = 2;
 echo grow($explicit), ":", factory_calls();
+$first = new VesselHolder(); $second = new VesselHolder();
+$first->values[] = 11;
+$first_sum = 0; foreach ($first->values as $value) { $first_sum += $value; }
+$second_sum = 0; foreach ($second->values as $value) { $second_sum += $value; }
+echo ":", $first_sum, ":", $second_sum, ":", factory_calls();
 '''
 storage_source = '''class Item { public int $value = 1; }
 function fresh(Storage<Item> $items = []): int {
@@ -74,17 +80,25 @@ $c Key_Storage_List<Item> = [];
 echo fresh(), ":", fresh(), ":", $a->count(), ":", $b->count(), ":", count($c->items());
 '''
 with CommandRunner(out / 'logs', ROOT) as runner:
-    def check(mode, storage=False):
-        label = ('storage-' if storage else 'provider-') + mode
+    publisher = out / 'publish.php'
+    publisher.write_text((APP / 'tests/async_tasks_publish.php').read_text()
+                         .replace("dirname(__DIR__) . '/boot.php'", repr(str(APP / 'boot.php')))
+                         .replace('$compiler->exec_cpp($publication);',
+                                  '$compiler->exec_cpp($publication, new cpp_lowering_policy((int)$argv[5]));'))
+    def check(mode, storage=False, level=2):
+        label = ('storage-' if storage else 'provider-') + mode + '-O' + str(level)
         folder = out / label
         (folder / 'source').mkdir(parents=True)
         (folder / 'source/main.phs').write_text(storage_source if storage else source)
-        runner.run(label + '-publish', ['php8.5', APP / 'tests/async_tasks_publish.php', folder,
-                                       modules, 'compiler' if storage else 'empty_proof', mode])
+        runner.run(label + '-publish', ['php8.5', publisher, folder,
+                                       modules, 'compiler' if storage else 'empty_proof', mode, str(level)])
+        if not storage:
+            emitted = '\n'.join(p.read_text() for p in (folder / 'published').rglob('*.cpp'))
+            assert ('record_VesselHolder::record_VesselHolder()' in emitted) == (level < 2)
         build = json.loads(runner.run(label + '-build', ['php8.5', APP / 'tools/build_cpp.php',
                                                        folder / 'published', folder / 'cache'], timeout=300))
         actual = runner.run(label + '-execute', [build['executable']]).decode()
-        expected = '1:1:0:0:0' if storage else '0:7:1:7:2:9:3'
+        expected = '1:1:0:0:0' if storage else '0:7:1:7:2:9:3:11:0:5'
         assert actual == expected, (actual, expected)
 
     def reject_registration(case):
@@ -113,9 +127,9 @@ with CommandRunner(out / 'logs', ROOT) as runner:
         error = (out / 'logs' / (case + '.stderr')).read_text()
         assert diagnostic in error, error
 
-    run_tasks([Task(('storage-' if storage else 'provider-') + mode,
-                    lambda mode=mode, storage=storage: check(mode, storage))
-               for storage in [False, True] for mode in ['ordinary', 'concrete']] +
+    run_tasks([Task(('storage-' if storage else 'provider-') + mode + '-O' + str(level),
+                    lambda mode=mode, storage=storage, level=level: check(mode, storage, level))
+               for storage in [False, True] for mode in ['ordinary', 'concrete'] for level in [0, 2]] +
               [Task('contracts', lambda: runner.run('contracts',
                   ['php8.5', APP / 'tests/empty_provider.php', out / 'contracts', modules]))] +
               [Task(case, lambda case=case: reject_registration(case))

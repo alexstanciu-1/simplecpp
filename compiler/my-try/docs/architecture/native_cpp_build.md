@@ -68,7 +68,9 @@ though the emitted C++ profile is identical.
 The first latency pattern outlines default constructors for ordinary non-inherited
 classes without authored constructors, data initialization, abstract/virtual lifecycle
 or authored destructors. Every instance field must have an explicit constant default
-or an empty typed vector/hash construction, with at least one container default.
+or an empty construction with a prepared sequence or empty-only initialization
+contract, with at least one such construction default. Eligibility uses the settled
+initialization plan, independently of the registered type name.
 Keep the original expressions and order in a member-initializer list; emit the
 constructor in the declaring source's existing implementation group. Uninitialized
 fields are excluded to preserve C++ value-initialization behavior. Authored methods,

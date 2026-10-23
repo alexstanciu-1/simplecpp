@@ -1218,3 +1218,13 @@ native and ordinary/concrete v0.2 output, including identity and aliased scope s
 This does not prove native execution of the full parser/collector. The next syntax_node
 constructor calls parent before its assignment; that ordering decision remains pending.
 No end-to-end bootstrap success claimed.
+
+## CH15 default-constructor outlining name gate
+
+Reuse settled sequence/empty-only construction plans and property-default emission;
+remove vector/hash identity checks from CPP_Default_Constructors. No source admission
+or provider protocol change. Thirteen provider/Storage/admission checks pass across
+O0/O2 and ordinary/concrete output; retained policy regression passes. Evidence:
+registry_outlining. Bootstrap 77.17 s / 342424 KiB RSS / 312 MiB PHP heap, same first
+syntax_node blocker and diagnostic set. The remaining registry audit stays blocking;
+transfer admission cannot be replaced with copying/storage capability alone.

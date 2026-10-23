@@ -21,7 +21,7 @@ Additional policy/transport groups beyond the old four-gate inventory:
 | Owner | Finding | Disposition |
 | --- | --- | --- |
 | Transfer_Preparation::classify | vector/hash recursive transfer plus a mixed-key exception | TASK-01 / CH15: retain isolation semantics, replace family gates with truthful registered transfer facts; copyability alone is insufficient. |
-| CPP_Lowering_Policy | vector/hash restriction on outlining empty default fields | Optimization eligibility, not source admission. Review registered construction/representation facts before broadening; do not label all other container defaults unsupported. |
+| CPP_Default_Constructors | vector/hash restriction on outlining empty default fields | Repaired using settled prepared_sequence_construction / prepared_empty_construction plans. Existing emitter preserves expressions and field order. Unfamiliar-provider execution proof covers ordinary/prelowered O0/O2; broader audit remains open. |
 | CPP_Provider_Properties | int/string, read-only bool/mixed and vector<string> transport | Existing bounded provider ABI; generalization must preserve read/write and representation restrictions. No blanket permission from storage capability. |
 | CPP_Wrapper_Transport | explicit vector/hash recursion for provider/native payload conversion | Reuse NULL-01 consumer audit; distinguish actual provider reconstruction from identity transport. No arbitrary wrapper erasure or duplicate semantic model. |
 | Typed Iterator consumers | exact registered Iterator identity in relationships/admission | Review intrinsic protocol publication separately from CURSOR-01 safe constructor relation. |

@@ -50,9 +50,11 @@ final class CPP_Default_Constructors
 			$construction = object_cast($default_value, prepared_construction_property_default::class)->construction;
 			$entries /** Storage<data_entry_node> */ = $construction->entries;
 			if (!$entries->is_empty()) { return 'nonempty-container-default'; }
-			if (!($construction->require_data_preparation() instanceof prepared_sequence_construction)) { return 'nonsequence-default'; }
-			$definition = Type_Queries::canonical($field->type)->definition();
-			if (($definition !== Model::$type_catalog->definition('hash')) && ($definition !== Model::$type_catalog->definition('vector'))) { return 'unsupported-container-default'; }
+			// Preparation has already selected the registered initialization contract.
+			// Moving that expression to an owning unit does not require a type-name gate.
+			$prepared = $construction->require_data_preparation();
+			if (!($prepared instanceof prepared_sequence_construction)
+				&& !($prepared instanceof prepared_empty_construction)) { return 'nonsequence-default'; }
 			$found_container = true;
 		}
 		return $found_container ? 'outlined' : 'no-container-default';

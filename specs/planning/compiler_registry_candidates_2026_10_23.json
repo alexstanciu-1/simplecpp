@@ -1210,7 +1210,7 @@
       "candidate_kind": "named_registry_lookup",
       "subject": "vector",
       "excerpt": "if (($definition !== Model::$type_catalog->definition('hash')) && ($definition !== Model::$type_catalog->definition('vector'))) { return 'unsupported-container-default'; }",
-      "disposition": "repair/design pending; do not infer new provider semantics",
+      "disposition": "Resolved: name gate removed; CPP_Default_Constructors uses settled sequence/empty-only preparation plans. Historical location; see registry audit execution evidence.",
       "parked": false,
       "classification": "optimization eligibility allowlist; not semantic rejection",
       "owner": "CH15 C++ outlining policy"
