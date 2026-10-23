@@ -34,11 +34,15 @@ container redesign. The detailed entries below retain their contracts and proven
 
 ## Blocking inventory
 
+Update 2026-10-23: CH15-RUNTIME-TYPE-METADATA-01 is now an open final-catalog
+blocker by explicit user decision, expanded to the whole compiler type-use audit.
+
 Non-blocking follow-ups are recorded separately below; their presence in this
 chapter does not make them v0.2 release gates.
 
 | Debt | Origin | Status | Final completion requirement |
 | --- | --- | --- | --- |
+| CH15-RUNTIME-TYPE-METADATA-01 — compiler-wide registry/type-use audit | User decision, 2026-10-23; capability-based nullable review | Open; final-catalog blocker | Audit compiler/my-try type consumers, remove unjustified hard-coded type gates through owning registry/capability protocols, justify intrinsic roles, and prove ordinary/prelowered parity. |
 | CH06-ITER-01 — mutation/replacement during iteration | [Chapter 06](06_containers.md#ch06-iter-01--mutation-during-iteration) | Closed for value iteration, 2026-10-22 | Live until structural mutation/replacement, then preserve remaining shallow entries; runtime/source/lifetime/retained/cost proofs in [V-D01](../planning/iteration_mutation.md). Reference safety remains CH06-REF-01. |
 | CH06-REF-01 — reference foreach safety foundation | [CTRL-FOREACH-003/004](06_containers.md#ctrl-foreach-003) | Open; reference foreach stays disabled; final-catalog blocker | Establish runtime guards and binding lifetime/COW guarantees before compiler integration |
 | CH15-LIB-DYN-01 — library redesign and mixed/dynamic migration | [Chapter 06](06_containers.md) | Deferred by user; does not block core type migration | Review library-owned models, adapt affected APIs and prove enabled/disabled paths |
@@ -202,6 +206,37 @@ All four helpers are registered. Independent goldens and Clang/GCC executions pa
 both used libstdc++, so a second standard-library execution remains unverified.
 
 ### CH15-RUNTIME-TYPE-METADATA-01 — review metadata-driven types, not hardcoded families
+
+**Status: open; final-catalog blocking debt by explicit user decision, 2026-10-23.**
+
+Expand the earlier metadata review to all of `compiler/my-try/`. Type identities,
+definitions, storage and registered capabilities/protocols must reach consumers
+through the shared type model, not scattered name comparisons, reconstructed
+identities or per-type allowlists. Capability-based nullable support is one concrete
+motivation. The previous four-gate inventory below is historical, not the completion
+boundary for this expanded audit. No implementation is authorized by recording it.
+
+Audit registration, source/runtime type formation, nested generic applications,
+conversions/nullability, ownership/copy/transfer admission, overload/member lookup,
+retained invalidation, and ordinary C++/template-prelowered lowering. Inventory parked
+LLVM findings without resuming implementation there. Tests and diagnostic strings
+are evidence, not automatic hard-coding defects.
+
+Keep legitimate definitions and language-intrinsic roles in their owning registry
+or semantic protocols. Distinguishing semantic kinds is not itself a defect.
+Source-derived capabilities remain in completed declaration facts, accessed through
+existing queries; do not create duplicate registry caches or a second semantic model.
+
+Completion requires a source-located inventory classifying each occurrence as
+legitimate registration/intrinsic behavior, a registered identity/role query, or an
+unjustified hard-coded policy. Assign an owner and disposition to every finding and
+remediate unjustified cases with reusable definition/capability/protocol queries.
+Prove unfamiliar registered types and nested applications work without new consumer
+branches, including capability rejection, retained updates and ordinary/prelowered
+parity where relevant. Unresolved exceptions need explicit disposition; do not
+silently omit them to close this blocker. Existing foundations need not be rebuilt.
+
+Historical foundation checkpoints follow; their narrower scope does not close this debt.
 
 2026-10-10 audit: definitions, storage, copy dependencies, members and existing
 initialization/indexing/iteration recipes are now metadata-driven. Four named
@@ -1117,3 +1152,20 @@ including failure/recovery, before restoring the source modifiers.
 Non-goals for this deferral: no new readonly semantics, parser/validator relaxation,
 deep immutability, semantic widening or Storage_Cursor widening. Existing read-only
 references, runtime constants and rejection fixtures retain their contracts.
+
+### CH15-SHARED-PROVIDER-CONSTRUCTION-01 — generic shared runtime construction
+
+Doc status: planning debt. User request, 2026-10-23, from BIND-01 JSON reader review.
+Deferred review; not a new final-catalog blocker and not implementation authorization.
+
+Review generic metadata-driven `new` for registered shared runtime classes. Current
+runtime construction registration admits inline provider storage only, and prepared
+runtime construction records inline storage. Determine the truthful shared factory,
+identity, non-null result, failure and ownership contracts before extending that path.
+Reuse registered definitions and ordinary/prelowered preparation; no json_pull_reader
+name special case or converter-dependent semantics. Include unsupported constructor
+and storage diagnostics and tests of fresh identity and shared aliases.
+
+BIND-01 will review an ordinary shared-returning runtime factory first. This debt
+must not gate that factory route if existing runtime-call contracts suffice. Source
+class construction and broader ownership-modified construction are separate scopes.

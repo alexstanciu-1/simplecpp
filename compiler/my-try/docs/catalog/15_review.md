@@ -1,6 +1,15 @@
 # Chapter 15 — compact decision inventory
 Doc Status: planning
 
+Update 2026-10-23: CH15-RUNTIME-TYPE-METADATA-01 (group 7 below) is now an
+explicit final-catalog blocker covering all compiler/my-try type consumers, beyond
+the historical four runtime-family gates. See the [owning debt](15_blocking_debt.md#ch15-runtime-type-metadata-01--review-metadata-driven-types-not-hardcoded-families)
+for scope, required dispositions and closure proofs. No audit execution is claimed.
+
+Update 2026-10-23: [CH15-SHARED-PROVIDER-CONSTRUCTION-01](15_blocking_debt.md#ch15-shared-provider-construction-01--generic-shared-runtime-construction)
+records deferred review of generic shared-provider constructors. BIND-01 reviews
+an ordinary shared-returning factory first; this is not a new release gate.
+
 Review date: 2026-10-16. Implementation baseline: `82659125` (Chapter 14 native
 closeout). This is the complete grouped index of the debt currently recorded in
 [Chapter 15](15_blocking_debt.md), including its unnamed CH07/09/13/14 follow-ups.
