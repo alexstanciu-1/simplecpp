@@ -33,7 +33,7 @@ template <typename T> struct initializer<tray<T>> {
 
 // The provider implements only the operations promised by its metadata.
 namespace scpp {
-template <typename T> T checked_index_read(const protocol_proof::tray<T> &source, const int_t<> &key) {
+template <typename T, typename K> T checked_index_read(const protocol_proof::tray<T> &source, const K &key) {
 	return source.entries.at(key);
 }
 template <typename T> void index_store(protocol_proof::tray<T> &target, const int_t<> &key, const T &value) {

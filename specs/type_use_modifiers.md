@@ -53,6 +53,21 @@ Record presence/conditions follow the [v0.2 probe amendment](count_empty_isset_c
 inline records are always present/truthy and nullable records delegate to that rule.
 `empty` is not a presence operation and rejects both record forms.
 
+### Capability-based optional values — 2026-10-23
+
+Optional value boundaries use the payload's registered `value_storable` capability,
+not a scalar/record/container-name whitelist. Exact wrapping, copying, checked
+extraction, null defaults and existing conditional/coalescing selections apply to
+admitted generic values, including nested applications. Copying still requires the
+existing `copyable_value` contract. Absence and explicit presence tests do not require
+payload default construction or copying. Reference parameters remain invariant.
+
+Storage capability does not grant implicit truthiness: optional payloads without an
+admitted condition contract require explicit presence tests or extraction. This
+revision does not add container covariance, wrapper-delegated indexing, interior
+borrows or broader `take` output admission. Required/nullable class-handle identity
+and composed ancestry conversions remain the separate migration described above.
+
 Agreed 2026-10-02 for the my-try v0.2 frontend.
 
 `value<T>` requests value storage. When the type registry already identifies `T`

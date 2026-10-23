@@ -697,3 +697,45 @@ RSS, 269 PHS files / 1,962,398 bytes. Bootstrap 200.18 s / 470,180 KiB (459.2 Mi
 RSS / 451.0 MiB PHP heap. Diagnostic set unchanged, nullable-value boundary first;
 no fatal/OOM, emission or native compiler rebuild. Evidence:
 results/compiler_bootstrap_backlog_2026_10_23/nullable_representation.
+
+
+## NULL-02 generic optional value boundaries
+
+Reuse inspection confirmed that nullable formation already requires value_storable,
+copy dependencies recurse through registered template arguments, value boundaries
+already distinguish empty construction from copying, and both backends already
+implement exact optional-value wrapping/extraction. Replaced the scalar/enum/inline
+record admission whitelist with the existing settled Capability_Facts query. No new
+retained model, payload-name cases or backend protocol is introduced. Condition
+admission separately preserves established scalar/source-record behavior and rejects
+unregistered payload truthiness; storage capability is not condition permission.
+Generic take/output assignment, nested Result payload capability, optional-class
+consumers and variance are not implemented by this slice.
+
+`/tmp/nullable-values-03` passes ordinary and prelowered native execution (19.28 s /
+25.88 s), plus four negative preparation cases. It covers vectors, hashes, nested
+vectors and a distinct registered tray/tray<tray<int>> provider, independent copies,
+null defaults, exact argument/return extraction, lazy coalesce, conditional values,
+and the actual template_type_parameter absent-versus-empty contract-list algorithm
+with an enum payload. Empty nullable<vector<Noncopyable>> requires neither payload
+copying nor a valid default constructor; copying it rejects. References remain exact.
+The first concrete attempt exposed the test provider's ordinary-only integer key
+signature; the provider fixture now accepts the substituted key type. No production
+indexing or transport change was necessary. The second pass preceded the expanded
+contract-list/noncopyable-empty witnesses.
+
+`/tmp/nullable-values-portable-01` upgrades the existing CONVERT-02 expected-blocker
+fixture to successful PHP, legacy native and ordinary/prelowered native behavior for
+fields, promotion, defaults, arguments and returns. Five adjacent preparation suites
+(nullable, records, conversions, probes, capabilities) pass. The initial defaults
+invocation omitted its required output-directory argument; the proper runner exposed
+its stale container rejection expectation. Replaced that with a noncopyable default
+rejection, which passes retained recovery in `/tmp/nullable-values-default-contracts-02`.
+Existing scalar null-default native controls also pass in both modes. These checks
+prove generated programs, not a natively rebuilt compiler.
+
+Measured `/tmp/compiler-bootstrap-nullable-values-01`: conversion 4.72 s / 194,824 KiB
+RSS, 269 PHS files / 1,962,525 bytes. Bootstrap 208.90 s / 478,356 KiB (467.1 MiB)
+RSS / 459.0 MiB PHP heap. The nullable-value payload whitelist diagnostic disappears;
+no diagnostic text is added. Ownership-boundary admission is now first. No fatal/OOM,
+emission or native compiler rebuild. Evidence: results/compiler_bootstrap_backlog_2026_10_23/nullable_values.

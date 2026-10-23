@@ -29,16 +29,11 @@ final class Nullable_Conversions
 	/** Value boundaries and presence do not require a payload truthiness contract. */
 	public static function require_value_payload(canonical_type_use $payload): void
 	{
-		if (!$payload->by_value() && Type_Queries::is_enum($payload))
-		{
-			return;
-		}
-		if ((Type_Queries::source_record($payload) !== null)
-			&& (Type_Queries::record_storage($payload) === record_storage_kind::inline_value)) {
-			return;
-		}
-		if ($payload->by_value() || !Conversion_Preparation::is_scalar($payload)) {
-			throw new \RuntimeException('S2S nullable value boundary requires a scalar or inline record payload');
+		// Formation has already completed payload capabilities. Copying and consuming
+		// remain the value-boundary owner's responsibility, not a nullable type list.
+		$query = new Capability_Facts();
+		if (!$query->has_capability($payload, generic_contract::value_storable)) {
+			throw new \RuntimeException('S2S nullable value boundary requires value_storable');
 		}
 	}
 

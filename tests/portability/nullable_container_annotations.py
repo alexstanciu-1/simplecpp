@@ -47,12 +47,11 @@ with CommandRunner(out / 'logs', ROOT) as runner:
         folder = out / mode
         (folder / 'source').mkdir(parents=True)
         (folder / 'source/main.phs').write_bytes((out / 'v02/main.phs').read_bytes())
-        # NULL-01/02 own payload admission. Retain the actual diagnostic as evidence;
-        # this fixture must become an execution proof when those entries are implemented.
         runner.run(mode + '-publish', ['php8.5', APP / 'tests/async_tasks_publish.php', folder,
-                                       ROOT / 'runtime/metadata/modules', 'core', mode], expected=255)
-        error = (out / 'logs' / (mode + '-publish.stderr')).read_text()
-        assert 'S2S nullable value boundary requires a scalar or inline record payload' in error, error
+                                       ROOT / 'runtime/metadata/modules', 'core', mode])
+        build = json.loads(runner.run(mode + '-build', ['php8.5', APP / 'tools/build_cpp.php',
+                                                       folder / 'published', folder / 'cache'], timeout=300))
+        assert runner.run(mode + '-execute', [build['executable']]) == b'absent:present:null:present'
     run_tasks([Task(mode, lambda mode=mode: native(mode)) for mode in ['ordinary', 'concrete']])
 (out / 'summary.json').write_text(json.dumps({'conversion': 'passed', 'php_legacy': 'passed',
-                                            'v02_execution': 'blocked_pending_NULL_01_02'}, indent=2) + '\n')
+                                            'v02_execution': 'passed_both_modes'}, indent=2) + '\n')

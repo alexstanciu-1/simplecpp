@@ -631,7 +631,7 @@ Agreed on 2026-10-23; implementation paused:
 
 ## CONVERT-02 — complete nullable container annotations
 
-**Converter convention implemented; v0.2 nullable execution remains with NULL-01/02.**
+**Converter convention and PHP/legacy/ordinary/prelowered execution proved.**
 
 Use `?array $contracts /** ?vector<generic_contract> */ = null`. The annotation
 describes the complete target type, not just a payload whose nullability is supplied
@@ -642,13 +642,15 @@ explicitly rather than silently changing its interpretation. The actual first so
 is template_type_parameter's contracts/dependencies in 03_parse/types/model.php.
 Implementation update: fields, ordinary/promoted constructor parameters and class/trait
 method parameters/returns now require matching complete annotations. Both converter
-targets and PHP/legacy native absence/present-empty behavior are proved. The v0.2
-fixture records the existing nullable value-boundary payload restriction in both
-C++ modes; NULL-01/02 must replace that blocker proof with successful execution.
+targets and PHP/legacy native absence/present-empty behavior are proved. NULL-02
+capability-based value admission now upgrades the same v0.2 fixture to successful
+native execution in both C++ modes.
 
 ## NULL-02 — definition- and capability-based nullable support
 
-**General design direction accepted on 2026-10-23; implementation paused.**
+**General design direction accepted on 2026-10-23; capability-based value-boundary
+slice implemented. Class-handle consumers, generic take and nested Result transport
+remain open; see the execution ledger for measured evidence.**
 
 Replace the scalar/enum/record payload-family whitelist with admission based on the
 resolved type definition, storage representation and operation capabilities. Do not
@@ -680,7 +682,9 @@ present empty vector selects no requirements. Prove this distinction, exact wrap
 defaults, assignment/argument/return boundaries, copying and checked extraction.
 Additional proofs should cover a class handle, a supported nested generic value,
 and noncopyable rejection/capability propagation in both output modes. These are
-required future proofs, not current support claims. CONVERT-02 only addresses spelling.
+partly proved by the nullable-values and portable annotation fixtures: the contract-list
+absence distinction, nested built-in/provider values and noncopyable rejection pass.
+Class-handle support and wider operation/retained coverage remain open.
 
 ## OWN-01 — ownership edges of required object contracts
 
@@ -1017,12 +1021,12 @@ discussion while independent work continues. Deferred debts remain deferred.
 | TASK-02 | Retained-type lookup synchronization in portable PHP | Source race path identified; same-lock lookup repair direction accepted; native concurrency proofs pending; paused. |
 | AST-01 | Explicit concrete virtual methods and portable PHP intent | Core support and converter mapping with `#[\Virtual]` / `#[\Override]` implemented; PHP/legacy/ordinary/prelowered and retained proofs pass; inventory A01; see execution ledger. |
 | NULL-01 | Node versus ?Node frontend contracts, shared lowering | Direction accepted; four-consumer reuse audit complete; revised 12–20x; bounded presence/representation design and proofs pending; inventory A02; paused. |
-| NULL-02 | Definition- and capability-based nullable operations | Capability/consumer reuse audit complete; revised 4–8x incremental to shared NULL-01 model; vector is a proof case, not a whitelist extension; inventory D03; paused. |
+| NULL-02 | Definition- and capability-based nullable operations | Capability/consumer reuse audit complete; revised 4–8x incremental to shared NULL-01 model; generic exact value boundaries now use value_storable; both-mode and portable container proofs pass. Class-handle, take and nested Result work remains; inventory D03; in progress. |
 | OWN-01 | Weak locks, moved-from unique/shared handles and runtime result guarantees | Ownership and explicit-handle spelling agreed; weak-expiry parity deferred under OWN-DEBT-01; paused. |
 | OWN-DEBT-01 | PHP strong carriers versus native weak lifetime | Deferred; no demonstrated compiler failure; no exact emulation planned; PHP-only cleanup may be considered; not a new gate. |
 | SOURCE-01 | Private fields and numeric boundaries | Same-name private instance fields implemented with C++ lookup and portable base-view proofs; numeric site audit remains, with source-owned checks independent of compiler contracts; in progress. |
 | CONVERT-01 | Empty container expressions and method defaults | Explicit doc-comment type required; registered containers accept typed [] by default. Parameter defaults use the same rule; reuse audit complete, revised 4–8x; Typed defaults and annotated expressions have PHP/legacy/v0.2 proofs; explicit empty-only provider binding passes ordinary/prelowered generic and Storage proofs. Remaining retained/provider edge verification stays open; see execution ledger; inventory C01/C02; in progress. |
-| CONVERT-02 | Complete nullable array target annotations using ?vector | Converter consistency validation and compiler-source migration implemented; both output targets and PHP/legacy execution proved. v0.2 nullable value-boundary execution remains with NULL-01/02. |
+| CONVERT-02 | Complete nullable array target annotations using ?vector | Converter consistency validation and compiler-source migration implemented; both output targets and PHP/legacy/ordinary/prelowered execution proved after capability-based nullable value admission. |
 | BIND-01 | Publication/digest APIs and JSON pull-reader exposure | Eleven output leaves registered and legacy-proved; ten v0.2-proved, read extraction depends on NULL-02. Shared-reader factory and fourteen methods execute on legacy/ordinary/prelowered v0.2; shared-member checks reuse existing receiver/argument sequencing. B03 lookup resolved by rooted map targets and legacy call emission; body dependencies remain under OWN/NULL; inventory B01/B02/B03; in progress. |
 | CURSOR-01 | Storage_Cursor registration and safe read widening | Metadata-driven relationship and explanatory diagnostics accepted; runtime constructor scope recorded above; implementation paused. |
 | VERIFY-01 | Reconcile remaining diagnostics and retry measured bootstrap | After agreed slices; historical failures are not fresh defects. |

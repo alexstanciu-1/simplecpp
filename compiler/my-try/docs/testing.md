@@ -98,6 +98,15 @@ native and both v0.2 modes execute. Its small native helper definitions isolate 
 full facade bodies retain their separate runtime/capability obligations. The existing
 `tests/portability/string_split.py` covers real byte-construction facade regression.
 
+`python3 tests/nullable_values.py --results FRESH` checks capability-based optional
+vectors, hashes and an unfamiliar registered nested provider in both output modes.
+It covers exact wrapping/extraction, independent copies, null defaults, lazy fallback,
+the absent-versus-empty contract-list witness, noncopyable empty state, and rejection
+of unsupported truthiness, mismatched payloads/references and copies. From the repo
+root, `python3 tests/portability/nullable_container_annotations.py --results FRESH`
+compares PHP, legacy native and both v0.2 executions of nullable container fields,
+promotion, arguments, defaults and returns.
+
 `python3 tests/nullable_handle_representation.py --results FRESH` tests registry-formed
 nullable class handles before source nullability migration: distinct semantic/nested
 keys and signature comparisons, equal native handle storage, concrete pointer/lifetime

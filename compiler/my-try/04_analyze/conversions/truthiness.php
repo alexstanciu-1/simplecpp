@@ -71,6 +71,9 @@ final class Condition_Truthiness
 			if (Type_Queries::source_record($payload) !== null) {
 				$decision->operation = truthiness_operation::value_presence;
 			}
+			elseif (!Conversion_Preparation::is_scalar($payload)) {
+				throw new \RuntimeException('Nullable payload conditions require an admitted truthiness contract; use explicit presence or extraction');
+			}
 			return $decision;
 		}
 		if (!Conversion_Preparation::is_scalar($source)) {

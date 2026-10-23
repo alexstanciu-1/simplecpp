@@ -17,7 +17,7 @@ foreach ([false, true] as $prelower) {
 	foreach ([
 		'function read(?string $value = "present"): void {}' => 'nullable parameter defaults require null',
 		'function read(string $value = null): void {}' => 'parameter defaults require scalar literals',
-		'function read(?vector<int> $value = null): void {}' => 'nullable value boundary requires',
+		'struct Item { unique<int> $owner; } function read(?vector<Item> $value = null): void {}' => 'copyable_value',
 	] as $source => $diagnostic) {
 		file_put_contents($path, $source);
 		foreach ([[$path], []] as $changed) {
