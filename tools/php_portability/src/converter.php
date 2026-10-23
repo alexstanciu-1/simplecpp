@@ -438,6 +438,15 @@ final class Converter {
 	/** Local type spelling only; declarations, assignability and identity belong to the target. */
 	private function localAnnotation(array $token): string {
 		$annotation = $token[1];
+		// One absence layer around an existing explicit container grammar. The target
+		// still owns payload capabilities; the converter does not resolve these types.
+		if (preg_match('~^/\*\*\s*(?:\?\s*(.+)|nullable\s*<\s*(.+)\s*>)\s*\*/$~D', $annotation, $match)) {
+			$payload = trim(($match[1] ?? '') !== '' ? $match[1] : $match[2]);
+			if (str_contains($payload, '<')) {
+				return 'nullable<' . $this->containerAnnotation(
+					[T_DOC_COMMENT, '/** ' . $payload . ' */', $token[2]], true) . '>';
+			}
+		}
 		if (preg_match('~^/\*\*\s*(?:vector|hash|Storage|Keyed_Storage|Key_Storage_List|Storage_Cursor)\s*<~', $annotation)) {
 			return $this->containerAnnotation($token, true);
 		}

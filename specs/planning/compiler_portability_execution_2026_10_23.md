@@ -1228,3 +1228,14 @@ O0/O2 and ordinary/concrete output; retained policy regression passes. Evidence:
 registry_outlining. Bootstrap 77.17 s / 342424 KiB RSS / 312 MiB PHP heap, same first
 syntax_node blocker and diagnostic set. The remaining registry audit stays blocking;
 transfer admission cannot be replaced with copying/storage capability alone.
+
+## Converter nullable local annotations
+
+Reuse the existing explicit container grammar behind one local nullable layer.
+Both ?vector/hash and nullable<vector/hash> forms now convert, including nested
+payloads. Existing parser restrictions remain; no target semantic change. PHP,
+legacy native and ordinary/prelowered v0.2 nullable_take proofs pass; annotation
+admission/rejection checks pass for both converter targets. Evidence: nullable_locals.
+Bootstrap 1:14.20 wall / 342344 KiB RSS / 312 MiB PHP heap, same syntax_node blocker and
+diagnostic set. This closes the recorded generic nullable-local container grammar gap,
+not arbitrary user-template annotations or all remaining NULL-01/02 consumers.

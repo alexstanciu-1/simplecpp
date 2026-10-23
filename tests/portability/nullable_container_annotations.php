@@ -12,6 +12,10 @@ foreach (['v0.1', 'v0.2'] as $target) {
 		'class Box { public function accept(?array $items /** ?vector<int> */): void {} }',
 		'class Box { public function items(): ?array /** ?vector<int> */ { return null; } }',
 		'trait Lists { public function items(): ?array /** ?vector<int> */ { return null; } } class Box { use Lists; }',
+		'$items /** ?vector<int> */ = null;',
+		'$items /** nullable< vector<int> > */ = null;',
+		'$items /** ?hash<vector<int>, string> */ = null;',
+		'$items /** nullable<hash<vector<int>, string>> */ = null;',
 	] as $source) {
 		$output = $converter->convert('<?php ' . $source, 'valid.php');
 		if (!str_contains($output, 'nullable<') || str_contains($output, 'nullable<nullable<')) {
@@ -42,6 +46,12 @@ foreach (['v0.1', 'v0.2'] as $target) {
 		'class Box { public ?array $items /** ?vector< */ = null; }',
 		'interface Lists { public function items(): ?array /** ?vector<int> */; }',
 		'interface Lists { public function accept(?array $items /** ?vector<int> */): void; }',
+		'$items /** ??vector<int> */ = null;',
+		'$items /** nullable<nullable<vector<int>>> */ = null;',
+		'$items /** ?vector<int, string> */ = null;',
+		'$items /** ?vector<int> trailing */ = null;',
+		'$items /** nullable<vector<int> */ = null;',
+		'$items /** ?vector<void> */ = null;',
 	] as $source) {
 		try { $converter->convert('<?php ' . $source, 'invalid.php'); }
 		catch (RuntimeException $error) { continue; }

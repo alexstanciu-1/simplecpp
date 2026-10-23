@@ -1256,12 +1256,13 @@ handles preserve sharing. Focused provider/state/retained tests and output_read 
 PHP, legacy and ordinary/prelowered v0.2 pass. No conditional result_payload protocol
 or runtime ABI change was needed.
 
-Portable proof setup exposed a distinct converter limitation: generic nullable local
-comments such as `/** ?vector<int> */` and `/** nullable<vector<int>> */` reject.
-Simple nominal nullable local comments remain supported. The proof uses an existing
-`?array` parameter with `/** ?vector<int> */` instead. Record the generic nullable-local
-annotation grammar gap under converter limitations for follow-up; do not treat this
-source workaround as completion of converter nullable annotation coverage.
+The generic nullable-local annotation gap is repaired for the existing explicit
+container grammar: `/** ?vector<int> */` and `/** nullable<vector<int>> */` reuse
+Container_Type parsing, including nested vector/hash payloads. The portable nullable
+extraction proof now exercises these locals across PHP, legacy native, ordinary
+v0.2 and prelowering. This does not add arbitrary user-template annotation syntax,
+nested nullable layers, or direct nullable literal construction. Type capability
+validation remains in the target compiler.
 
 ## OWN-01 empty lock factory — provisionally approved
 

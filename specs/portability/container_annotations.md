@@ -40,6 +40,14 @@ No backticks belong inside the actual type comment.
   convention. Nullable array defaults remain `null`; nonnullable typed `[]`
   defaults follow [their own contract](empty_parameter_defaults.md).
 
+Nullable locals also accept `/** ?vector<int> */` and the equivalent
+`/** nullable<vector<int>> */`, including existing nested container payloads such
+as `?hash<vector<int>, string>`. The converter removes one outer absence marker,
+then reuses the same container parser. It does not infer element types or add
+arbitrary user-template syntax. Repeated nullable layers and malformed payloads
+remain rejected. Initialize from null or an explicitly typed payload local; this
+slice does not add direct nullable container literal construction.
+
 PHP input annotations now emit [native PHS type syntax](map_iteration.md), e.g.
 `private $folders vector<vector<int>> = [];`. Type doc comments are not needed in
 the generated PHS.
@@ -48,10 +56,9 @@ output. Missing type annotations still fail; documentary `@var` is not inferred.
 
 `tests/portability/nullable_container_annotations.py --results FRESH` checks both
 converter targets, all these declaration sites, mismatch rejection and PHP/legacy
-native absence versus present-empty behavior. v0.2 native value-boundary execution
-is explicitly blocked by the scalar/inline-record nullable payload restriction,
-tracked by NULL-01/02. The test records that diagnostic in both C++ modes; it must
-become an execution proof when those compiler entries are implemented. Container
+native absence versus present-empty behavior. The harness now includes v0.2 execution
+in ordinary and prelowered modes. `nullable_take.py` additionally proves nullable
+local vectors and nested hashes across PHP and all three native routes. Container
 interface signatures remain outside the converter's proved profile.
 
 ## Meaning and authoring limits
