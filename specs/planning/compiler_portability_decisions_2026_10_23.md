@@ -454,9 +454,9 @@ boundaries. Exact internal representation remains implementation design work.
 
 ## TASK-02 — synchronize retained-type association lookup
 
-**Separate portable PHP concurrency fix accepted for the backlog; implementation paused.**
+**Source synchronization repair implemented; v0.2 native proof still depends on TASK-01.**
 
-The source-inspected reader path is Parser -> previous_member_owner/previous_enum ->
+The original source-inspected reader path was Parser -> previous_member_owner/previous_enum ->
 scope::source_types_named -> Source_Type_Declarations::declaration. It starts from
 a file-local scope but reads the shared declarations hash without the publication
 lock. Concurrent new-type registration inserts into that same hash inside
@@ -468,9 +468,8 @@ file while another file registers a new type. This is a source-inspected race pa
 not a reproduced runtime failure. It exists independently of v0.2 admission and
 belongs to the portable compiler source; sequential PHP execution hides the overlap.
 
-Repair direction when resumed: obtain retained declaration handles while holding
-the same batch publication lock, then continue exclusively owned per-source work
-outside the lock. Preserve standalone parsing and avoid recursive task_synchronize.
+The collector now obtains retained declaration handles while holding the same batch
+publication lock, then continues exclusively owned per-source work outside the lock. Preserve standalone parsing and avoid recursive task_synchronize.
 Choose the truthful lookup/collector boundary during implementation; do not lock the
 entire parse, deep-copy declarations, or add implicit synchronization to every hash.
 
@@ -483,8 +482,12 @@ phase separation from analysis/external readers, not whole-program race-freedom 
 Proofs must deliberately overlap retained class/enum lookup with new registrations,
 preserve declaration identity, exercise standalone parsing and failure/join behavior,
 and cover native concurrency (race detection where available) across both routes.
-No test or fix was performed during the audit. TASK-01 admission success alone is
-not proof that this source defect is fixed.
+The implementation now has PHP retained class/enum/new-registration/failure/retry
+and standalone proofs. Extracted production helper code passes native legacy overlap
+and ThreadSanitizer; removing only the reader lock triggers the sanitizer. Both v0.2
+modes reject shared callback captures under the pending TASK-01 admission policy.
+Keep TASK-02 partially complete until those route proofs execute. TASK-01 admission
+success alone will not be proof of the source synchronization repair.
 
 Evidence: 03_parse/parser.php (previous enum/member-owner calls),
 03_parse/collect/collect.php (previous lookup and synchronized registration),
@@ -1023,7 +1026,7 @@ discussion while independent work continues. Deferred debts remain deferred.
 | LOCAL-01 | Class-local definite assignment and existing struct defaults | Structured local flow implemented with per-exit pending storage facts; both-mode behavioral/retained proofs and PHP/legacy-native composition proof pass. Struct defaults preserved; direct take success conditions, negation, lazy operators and branch/loop consumers now integrated. Focused proofs pass; runtime empty-handle contracts remain OWN-01 work. |
 | INIT-02 | `_uninitialized_` required fields, staged assignment and checked reads | Nullable backing and checked accessors accepted; reuse audit complete, 6–12x retained; bounded source/converter proofs pending; no new language feature approved; paused. |
 | TASK-01 | Bounded shared-handle task admission in v0.2 | Joined API rules accepted; reuse audit complete, revised 8–12x; bounded API-policy/callback-permission design accepted; implementation/proofs pending; inventory D04; paused. |
-| TASK-02 | Retained-type lookup synchronization in portable PHP | Source race path identified; same-lock lookup repair direction accepted; native concurrency proofs pending; paused. |
+| TASK-02 | Retained-type lookup synchronization in portable PHP | Collector snapshot repair implemented; PHP retained/standalone and legacy overlap/ThreadSanitizer proofs pass, unlocked negative control detects race. Both v0.2 modes remain blocked on TASK-01 capture admission; partially complete. |
 | AST-01 | Explicit concrete virtual methods and portable PHP intent | Core support and converter mapping with `#[\Virtual]` / `#[\Override]` implemented; PHP/legacy/ordinary/prelowered and retained proofs pass; inventory A01; see execution ledger. |
 | NULL-01 | Node versus ?Node frontend contracts, shared lowering | Direction accepted; four-consumer reuse audit complete; revised 12–20x; coordinated integration approved; distinct source identities, checked boundaries, receiver and directional adaptation proofs pass. Optional object casts/tests and checked index-key consumers now pass both-mode proofs; required field direct initialization now enforced; local definite assignment now has focused proofs; source adaptation and remaining consumers are blocking; inventory A02; in progress. |
 | NULL-02 | Definition- and capability-based nullable operations | Capability/consumer reuse audit complete; revised 4–8x incremental to shared NULL-01 model; generic exact value boundaries now use value_storable; both-mode and portable container proofs pass. Class-handle and capability-based take plus nested nullable Result boundaries have focused proofs; remaining consumers and final reconciliation stay open; inventory D03; in progress. |
@@ -1269,3 +1272,16 @@ The native facade and output suite initialize through the factory. Existing allo
 locking, aliasing, transfer and cleanup machinery is reused. **At the end of the goal,
 review with the user whether to keep this factory; implementation is not that final
 decision.** Reservation-field direct initialization remains a separate source issue.
+
+## Legacy callback-loop emission defect found during TASK-02 proof
+
+Observed in /tmp/retained-lookup-portable-03 and -04: converted PHS retains a for loop
+inside the unordered work closure, but legacy generated C++ contains only its final
+return. This is a legacy generator defect, not a PHP-to-PHS conversion failure. The
+initial native exit/worker-count check was therefore insufficient and is not counted
+as concurrency evidence. The corrected fixture delegates to an ordinary typed method,
+asserts registry growth as well as work totals, and inspects the emitted work entry
+before adding a scheduling barrier. Production compiler callbacks already delegate
+work; this proof does not establish all possible closure bodies are safe. Record the
+silent-emission defect for a focused legacy generator audit/repair; no generator fix
+was included in the source synchronization slice.

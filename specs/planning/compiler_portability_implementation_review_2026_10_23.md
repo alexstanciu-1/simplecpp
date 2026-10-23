@@ -268,3 +268,9 @@ resource-free token through the existing runtime allocation path. Ordinary requi
 references need no special admission. PHP/legacy/ordinary/prelowered lifecycle and
 full output-binding proofs pass; final retention of the API must be reviewed with
 the user at goal completion. Reservation direct field initialization remains open.
+
+TASK-02 implementation: collector lookup now reuses publication synchronization,
+with invocation-local results and standalone bypass. PHP parser identity/failure
+proofs and extracted-helper legacy overlap/ThreadSanitizer pass; the reader-unlocked
+negative control reports a race. Both v0.2 executions still await TASK-01 shared
+callback admission. Do not call the task closed or infer whole-parser race freedom.

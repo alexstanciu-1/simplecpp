@@ -1,0 +1,20 @@
+[
+  {
+    "name": "legacy",
+    "seconds": 19.16979085299681,
+    "passed": true,
+    "error": null
+  },
+  {
+    "name": "ordinary",
+    "seconds": 1.8542477660012082,
+    "passed": false,
+    "error": "RuntimeError: ordinary-publish: expected exit 0, got 255; see /tmp/retained-lookup-portable-05/logs"
+  },
+  {
+    "name": "concrete",
+    "seconds": 1.9363850439985981,
+    "passed": false,
+    "error": "RuntimeError: concrete-publish: expected exit 0, got 255; see /tmp/retained-lookup-portable-05/logs"
+  }
+]

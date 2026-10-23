@@ -1237,3 +1237,24 @@ Bootstrap /tmp/compiler-bootstrap-lock-empty-01: 74.35 s wall / 341280 KiB RSS
 initialization. Removes required-local out diagnostic; adds none. No fatal/OOM,
 emission or native compiler rebuild. Reservation initialization and other backlog
 items remain. **The final goal review must ask whether to keep this factory.**
+
+## TASK-02 synchronized retained association snapshots
+
+Collector-owned retained_types now takes the same publication lock as registration,
+returns declaration handles through a transient source_type_snapshot, and releases
+before source-local reconciliation. Standalone lookup remains direct. No new retained
+state, runtime synchronization protocol or task semantic permission. PHP identity,
+new registration/failure/retry and standalone regressions pass. Extracted-helper
+legacy native overlap/ThreadSanitizer passes; removing only reader synchronization
+reproduces a data race. Both v0.2 modes reject shared callback captures, so TASK-02
+remains partial pending TASK-01. See
+[evidence](../../../../specs/planning/results/compiler_bootstrap_backlog_2026_10_23/retained_lookup/README.md).
+
+A first native fixture silently lost its callback for-loop in legacy emission; its
+pass was discarded as concurrency evidence. Converted PHS preserved the loop. This
+legacy generator defect is recorded separately; the corrected typed-method fixture
+asserts work totals and registry growth and adds a four-worker scheduling barrier.
+
+Bootstrap /tmp/compiler-bootstrap-retained-lookup-01: 73.71 s wall / 341916 KiB RSS
+(333.9 MiB) / 312 MiB PHP allocation. First required-file initialization blocker and
+aggregate diagnostic set unchanged. No fatal/OOM, emission or native compiler rebuild.

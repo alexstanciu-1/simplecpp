@@ -61,7 +61,7 @@ final class Symbol_Collector
 	/** Reuse the same declaration kind; a kind edit replaces its nominal identity. */
 	public function previous_member_owner(scope $scope, string $name, type_declaration_kind $kind): ?type_declaration_node
 	{
-		foreach ($scope->source_types_named($name) as $entry) {
+		foreach ($this->retained_types($scope, $name) as $entry) {
 			if (!($entry instanceof collected_member_owner)) {
 				continue;
 			}
@@ -78,7 +78,7 @@ final class Symbol_Collector
 	/** Enum reconciliation never reuses another source type's syntax, even under the same spelling. */
 	public function previous_enum(scope $scope, string $name): ?enum_node
 	{
-		foreach ($scope->source_types_named($name) as $entry) {
+		foreach ($this->retained_types($scope, $name) as $entry) {
 			if ($entry instanceof collected_enum) {
 				if ($this->unseen($entry)) {
 					return object_cast($entry, collected_enum::class)->enum_syntax();
@@ -86,6 +86,17 @@ final class Symbol_Collector
 			}
 		}
 		return null;
+	}
+
+	/** Snapshot shared associations under publication's lock, then reconcile source-local syntax. */
+	private function retained_types(scope $scope, string $name): array /** vector<collected_type_definition> */
+	{
+		if ($this->global === null) { return $scope->source_types_named($name); }
+		$snapshot = new source_type_snapshot();
+		task_synchronize(function () use ($scope, $name, $snapshot): void {
+			$snapshot->declarations = $scope->source_types_named($name);
+		});
+		return $snapshot->declarations;
 	}
 
 	public function previous_constant(scope $scope, string $name): ?constant_declaration_node

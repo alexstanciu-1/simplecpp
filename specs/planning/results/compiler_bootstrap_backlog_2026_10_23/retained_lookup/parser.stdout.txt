@@ -1,0 +1,1 @@
+Retained class/enum lookup, new publication, failure/retry and standalone parsing passed

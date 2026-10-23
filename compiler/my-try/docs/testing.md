@@ -2248,3 +2248,14 @@ rejections and retained capability-change recovery. `python3 tests/portability/n
 --results FRESH` checks portable take_nullable array-copy and class-identity behavior
 in PHP, legacy native and both v0.2 modes. The existing runtime wrapper take fixture
 also covers native shared-handle presence, unchanged absent outputs and self-aliasing.
+
+`python3 tests/portability/retained_type_lookup.py --results FRESH --mode legacy --sanitize`
+(from the repository root) extracts the production collector snapshot helper, exercises
+concurrent native hash readers/registrations, forces four callbacks to overlap, and
+checks a ThreadSanitizer negative control with only the reader lock removed. The helper
+is unchanged; barrier/control instrumentation belongs only to generated test artifacts.
+The runtime library is not sanitizer-instrumented. Without --mode, both v0.2 routes are
+also attempted and currently fail on the pending TASK-01 shared-capture policy; failures
+are recorded in summary.json, not counted as native passes. Actual parser identity and
+failure/retry/standalone coverage is tests/retained_type_lookup.php (pass a fresh source
+directory), alongside parse_collection.php and collected_roles.php.

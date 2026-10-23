@@ -1,0 +1,17 @@
+[
+  {
+    "name": "parse_collection",
+    "seconds": 0.49978244000521954,
+    "passed": true
+  },
+  {
+    "name": "collected_roles",
+    "seconds": 0.4587593719988945,
+    "passed": true
+  },
+  {
+    "name": "collected_query_dispatch",
+    "seconds": 0.43143205600063084,
+    "passed": true
+  }
+]

@@ -140,3 +140,20 @@ Native proof must exercise the extracted production helper alongside registratio
 under the same scheduler lock, plus full retained parse/standalone PHP controls.
 Do not equate the sequential PHP proof with concurrent safety or mark TASK-02 done
 before the native overlap proof is available. No implementation in this audit update.
+
+## TASK-02 source implementation checkpoint
+
+Symbol_Collector::retained_types now snapshots under the writer's existing batch lock,
+with a direct standalone path. source_type_snapshot is an invocation-local result
+carrier because the portable converter accepts by-value callback captures only.
+No new retained state, lock ownership or semantic task permission. Parser regressions
+and actual retained class/enum/new registration/failure/retry tests pass. An extracted
+production-helper/native-hash fixture passes legacy native with a four-callback barrier
+and ThreadSanitizer; the reader-unlocked negative control produces a data race.
+Only generated fixture scheduling/control instrumentation is modified; production
+helper and scope/registry policy remain source-authored.
+
+Both v0.2 modes still reject the fixture's shared callback captures. TASK-02 stays
+partially complete until TASK-01 permits the accepted joined shared pattern and this
+fixture executes in both modes. The task runtime library was not itself instrumented
+in this sanitizer run; generated lookup/hash/read/write/callback code was instrumented.

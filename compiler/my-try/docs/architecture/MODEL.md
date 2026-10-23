@@ -97,6 +97,11 @@ Previous lexical scopes remain in the collection's retirement inventory until th
 successful whole-parse join has retired semantic work and removed frontend entries.
 Failed parsing retains old and partial body/scope identities for retry. Namespace
 interning and declaration publication use the existing synchronized parser protocol.
+Retained class/enum lookup snapshots source-declaration associations under that same
+batch publication lock in Symbol_Collector, then reconciles source-local syntax after
+unlocking. The invocation-local source_type_snapshot carries only the returned handles;
+it is not retained model state. Standalone collectors bypass task synchronization,
+matching the existing writer path. Scope and registry queries do not acquire locks.
 
 Only applicable name-bearing syntax has an occurrence backlink. Retained names are
 independent of token indexes. Duplicate names remain distinct candidates. The

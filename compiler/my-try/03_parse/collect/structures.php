@@ -6,6 +6,12 @@
  */
 namespace scpp\compiler;
 
+/** Invocation-local result of a synchronized source-type association lookup. */
+final class source_type_snapshot
+{
+	public array $declarations /** vector<collected_type_definition> */ = [];
+}
+
 enum collected_name_kind
 {
 	case record_declaration;
