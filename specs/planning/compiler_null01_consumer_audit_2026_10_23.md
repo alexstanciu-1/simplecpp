@@ -138,3 +138,18 @@ Escalate before a wide redesign if physical wrapper transport cannot be generali
 within its existing owner, or retained consumers prove representation-keyed elsewhere.
 No runtime optional-storage redesign or compiler awareness of the converter is needed
 by the inspected paths. Existing source contracts still need their agreed amendments.
+
+## Qualified static property/constant consumer follow-up
+
+Expression-qualified member references still used record_payload after instance
+methods had moved to receiver_payload. This misclassified ?Class as a runtime
+wrapper during nominal lookup. Reuse receiver_payload at that lookup boundary;
+leave the qualifier's prepared type and evaluation untouched. No presence conversion
+or dereference is introduced. Static calls already reuse the correct query.
+
+Absent nullable derived qualifiers now select inherited static properties/constants,
+preserve qualifier-before-RHS effects and permit updates in ordinary and concrete
+output. Retained static-member tests pass after migrating absent class fixtures to
+?C = null. Negative member fixtures construct their receiver so definite assignment
+cannot mask their intended member-rule rejection. This is the existing Simple C++
+static qualification contract, not a claim that PHP permits null::member evaluation.

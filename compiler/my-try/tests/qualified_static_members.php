@@ -33,7 +33,10 @@ foreach (['class', 'struct'] as $kind) {
 		'private_this' => '$c = new C(); return $c->go();',
 		'lazy' => 'function produce(int &$n): C { $n += 1; return new C(); } $n = 9; $v = false ? produce($n)::LIMIT : 0; return $n;',
 	] as $name => $program) {
-		$program = str_replace($kind === 'class' ? 'shared<C>' : 'value<C>', 'C', $program);
+		// An absent class qualifier uses the nullable frontend contract.
+		$program = $kind === 'class'
+			? str_replace('$c shared<C>;', '$c ?C = null;', $program)
+			: str_replace('value<C>', 'C', $program);
 		$output = qualified_member_source($kind . ' C { static int $n = 1; const LIMIT = 5; private static int $hidden = 4; private const SECRET = 5; function go(): int { return $this::$hidden + $this::SECRET; } } ' . $program);
 		if (isset($argv[1])) {
 			$path = $argv[1] . '/' . $kind . '_' . $name . '.cpp';
@@ -66,13 +69,13 @@ foreach (['qualifier_failure', 'rhs_failure'] as $name) {
 foreach ([
 	'class C { const LIMIT = 5; } function produce(): C { return new C(); } const BAD = produce()::LIMIT;',
 	'class C { const LIMIT = 5; } function produce(): C { return new C(); } class D { int $n = produce()::LIMIT; }',
-	'class C { const LIMIT = 5; } $c C; switch (5) { case $c::LIMIT: break; }',
-	'class C { const LIMIT = 5; } $c C; $v = match (5) { $c::LIMIT => 1, default => 2 };',
-	'class C { const LIMIT = 5; } $c C; $c::LIMIT = 1;',
-	'class C { int $n; } $c C; $c::$n = 1;',
-	'class C { private static int $n; } $c C; $c::$n = 1;',
-	'class C { private const LIMIT = 5; } $c C; return $c::LIMIT;',
-	'class C { static int $n; } $c C; $a =& $c::$n;',
+	'class C { const LIMIT = 5; } $c = new C(); switch (5) { case $c::LIMIT: break; }',
+	'class C { const LIMIT = 5; } $c = new C(); $v = match (5) { $c::LIMIT => 1, default => 2 };',
+	'class C { const LIMIT = 5; } $c = new C(); $c::LIMIT = 1;',
+	'class C { int $n; } $c = new C(); $c::$n = 1;',
+	'class C { private static int $n; } $c = new C(); $c::$n = 1;',
+	'class C { private const LIMIT = 5; } $c = new C(); return $c::LIMIT;',
+	'class C { static int $n; } $c = new C(); $a =& $c::$n;',
 	'$c dynamic = {}; return $c::LIMIT;',
 	'$c mixed = []; return $c::$n;',
 ] as $source) {
@@ -89,7 +92,7 @@ $entry_path = $directory . '/main.phs';
 try {
 	$declaration = 'namespace Types; class C { const LIMIT = 5; static int $n = 4; }';
 	file_put_contents($type_path, $declaration);
-	file_put_contents($entry_path, 'use Types\\C; $c C; return $c::$n + $c::LIMIT;');
+	file_put_contents($entry_path, 'use Types\\C; $c ?C = null; return $c::$n + $c::LIMIT;');
 	Compiler_Lifecycle::reset();
 	$compiler = new Compiler(new cpp_lowering_options(false));
 	$compiler->init([$directory]);

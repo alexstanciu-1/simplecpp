@@ -1318,3 +1318,14 @@ Expression qualification must evaluate/discard without dereference under the sta
 member contract; optional nominal lookup is therefore an outstanding NULL-01
 consumer, not a reason to initialize a dummy object or weaken definite assignment.
 Production and original regression unchanged in this finding; fix/reproof pending.
+
+## NULL-01 nullable static member selection repair
+
+The preceding finding is repaired by reusing receiver_payload in Member_Preparation,
+matching static method lookup without altering qualifier evaluation or identity.
+Absent nullable inherited property/constant/call/update and effect-order execution
+passes ordinary/concrete output. Both static-member retained checks pass; negative
+fixtures now initialize their receiver so unrelated local checks cannot mask them.
+Evidence: nullable_static. Bootstrap 1:14.47 / 342944 KiB RSS / 312 MiB PHP heap,
+same first syntax_node blocker and diagnostic set. Remaining NULL-01 consumers and
+full regression reconciliation stay open.

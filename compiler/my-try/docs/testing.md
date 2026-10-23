@@ -2282,3 +2282,8 @@ executes static narrow-integer, nullable, string and container type-default init
 in ordinary/prelowered output. `tests/portability/type_identity_bounds.py --results FRESH`
 adds the restored uint32 static endpoint and production allocator/rollover methods across
 PHP and both native routes. Existing static_members.php covers retained regeneration.
+
+`python3 compiler/my-try/tests/nullable_static_qualification.py --results FRESH`
+checks absent nullable class qualifiers for inherited static properties, constants,
+methods and updates, including qualifier/RHS ordering in ordinary and concrete
+output. `qualified_static_members.php` retains edit/recovery/reset coverage.

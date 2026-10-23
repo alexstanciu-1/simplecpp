@@ -1306,3 +1306,9 @@ inside a captureless function scope. Existing sequencing conversions remain unch
 ordinary/prelowered native checks and the restored portable uint32 initializer pass.
 This closes the observed non-local capture-default lambda blocker. It does not admit
 new static initializer syntax; nonconstant container literals remain excluded.
+
+NULL-01 static-qualifier follow-up: Member_Preparation now reuses receiver_payload
+for nullable nominal identity, matching method lookup. Qualifier evaluation remains
+discard-only, with no presence check. Native ordinary/concrete absent-derived
+property/constant/method/update and ordering proofs pass; retained static-member
+checks pass with nullable absent-class fixtures. No language contract expansion.

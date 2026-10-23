@@ -128,7 +128,7 @@ final class Member_Preparation
 		$type /** canonical_type_use */;
 		if ($syntax->qualifier !== null) {
 			$value = Method_Preparation::base($syntax->qualifier, $context);
-			$type = Type_Queries::record_payload($value->type);
+			$type = Type_Queries::receiver_payload($value->type);
 			if ((Type_Queries::source_record($type) === null)
 				&& (Type_Queries::canonical($type)->definition()->origin() !== type_definition_origin::runtime)) {
 				throw new \RuntimeException('Expression qualification requires a concrete class or struct');
