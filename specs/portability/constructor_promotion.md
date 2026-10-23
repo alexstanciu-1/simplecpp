@@ -29,15 +29,26 @@ fields and failure before successful construction. It also constructs the actual
 compiler switch_label in PHP. Native fixture execution is not a native rebuild of
 the whole compiler or its AST hierarchy.
 
-## Open inherited-constructor boundary
+## Bounded inherited-constructor contract
 
-Promotion combined with an explicit `parent::__construct(...)` is not yet proved
-portable. Legacy expansion places assignments before that call; its generator
-recognizes a base initializer only at the first statement. The native base constructor
-also runs before child property initialization, unlike PHP promotion's placement
-before the authored body. Moving the call could change child-state observations.
-Source adaptation versus a bounded no-child-observation convention remains under
-discussion. This slice does not reorder parent calls or claim that combination.
+Promotion may accompany a leading standalone `parent::__construct(...)` call when
+the parent and argument evaluation cannot observe child state or publish the
+partially constructed receiver. Authors must audit that requirement; the converter
+does not infer parent behavior. PHP initializes promoted fields before the body;
+native base construction precedes child initialization. Required behavior must be
+independent of that difference, including failures and callbacks. Exact cleanup
+timing is not promised.
+
+For the legacy target, the converter leaves this leading parent call ahead of its
+own generated promotion assignments so the generator recognizes the base initializer.
+Comments and whitespace may precede the call. No authored statement is reordered;
+a later, conditional or embedded parent call is not hoisted. v0.2 continues using
+`set:` parameters and its existing base-construction machinery. This introduces no
+Simple C++ semantics and does not infer initialization from body assignments.
+
+The focused fixture proves a required promoted object with a nondefault parent,
+shared identity after mutation, and parent field initialization across PHP, legacy,
+and both v0.2 modes. Root constructor ordering and failure proofs remain covered.
 
 The facade's `same_exception` helper now uses v0.2 shared-object identity admission.
 The production source_initialization.py portability fixture executes same/distinct

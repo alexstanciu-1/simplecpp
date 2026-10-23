@@ -17,11 +17,20 @@ out = p.parse_args().results.resolve()
 (out / 'source').mkdir(parents=True, exist_ok=False)
 source = '''<?php
 class Node { public int $value = 13; }
-class Holder { public function __construct(public Node $node) {} }
+class Parent_Holder {
+ public int $base = 0;
+ public function __construct(int $base) { $this->base = $base; }
+}
+class Holder extends Parent_Holder {
+ public function __construct(public Node $node) {
+  // Parent does not inspect child state or publish this.
+  parent::__construct(7);
+ }
+}
 $object = new Node();
 $holder = new Holder($object);
 $object->value = 17;
-echo $holder->node->value, ':';
+echo $holder->node->value, ':', $holder->base, ':';
 enum Choice { case first; case second; }
 final class Record {
  public int $computed = 10;
@@ -44,13 +53,14 @@ $chosen_default = new Default_Choice();
 echo $chosen_default->choice === Choice::first ? 'default' : 'bad', ':';
 '''
 (out / 'source/main.php').write_text(source)
-expected = b'17:arg5:arg7:second:10:6:7:unchanged:assigned:default:'
+expected = b'17:7:arg5:arg7:second:10:6:7:unchanged:assigned:default:'
 with CommandRunner(out / 'logs', ROOT) as runner:
     def portable():
         assert runner.run('php', ['php8.5', out / 'source/main.php']) == expected
         runner.run('convert-legacy', ['php8.5', TOOLS / 'convert.php', out / 'source', out / 'legacy'])
         emitted = (out / 'legacy/main.phs').read_text()
         assert 'set:$choice' not in emitted and '$this->choice = $choice;' in emitted
+        assert emitted.index('parent::__construct(7)') < emitted.index('$this->node = $node;')
         runner.run('init', ['php8.5', ROOT / 'bin/scpp.php', 'init', '--php-profile=strict'], out / 'legacy', cli_reason='CLI fixture setup')
         config = json.loads((out / 'legacy/prism.json').read_text())
         config['runtime']['modules'] = ['compiler']
@@ -59,11 +69,30 @@ with CommandRunner(out / 'logs', ROOT) as runner:
         runner.run('legacy-build', ['php8.5', ROOT / 'bin/scpp.php', 'build', '--build-runtime', '--no-stan'], out / 'legacy', timeout=300, cli_reason='CLI fixture build')
         assert runner.run('legacy-run', [out / 'legacy/.prism/build/main']) == expected
 
+    def structural_order():
+        controls = out / 'order-source'
+        controls.mkdir()
+        (controls / 'main.php').write_text("""<?php
+class Base { public function __construct(int $value) {} }
+class Later extends Base {
+ public function __construct(public int $value) { echo 'first'; parent::__construct($value); }
+}
+class Conditional extends Base {
+ public function __construct(public int $value) { if ($value > 0) { parent::__construct($value); } }
+}
+""")
+        runner.run('order-convert', ['php8.5', TOOLS / 'convert.php', controls, out / 'order-legacy'])
+        text = (out / 'order-legacy/main.phs').read_text()
+        later = text[text.index('class Later'):text.index('class Conditional')]
+        assert later.index('$this->value = $value;') < later.index('echo') < later.index('parent::__construct')
+        conditional = text[text.index('class Conditional'):]
+        assert conditional.index('$this->value = $value;') < conditional.index('if') < conditional.index('parent::__construct')
+
     def actual_source():
         assert runner.run('switch-label-php', ['php8.5', '-r',
             'require $argv[1]; $label = new scpp\\compiler\\switch_label(scpp\\compiler\\switch_label_kind::fallback); '
             'echo ($label->label_kind === scpp\\compiler\\switch_label_kind::fallback && $label->value === null) ? "ok" : "bad";', APP / 'boot.php']) == b'ok'
-    run_tasks([Task('portable', portable), Task('actual-source', actual_source)])
+    run_tasks([Task('portable', portable), Task('actual-source', actual_source), Task('structural-order', structural_order)])
     runner.run('convert-v02', ['php8.5', TOOLS / 'convert.php', out / 'source', out / 'v02', '--target=v0.2'])
     emitted = (out / 'v02/main.phs').read_text()
     assert 'set:$choice' in emitted and 'set:$seed = 3' in emitted

@@ -1,0 +1,5 @@
+{
+  "tools/php_portability/src/converter.php": "24ff9f303d0ae819c5b8d5cb71d41748b7664eab1e1150cffcd141db84e1e378",
+  "compiler/my-try/03_parse/collect/structures.php": "532d6753e1c85ab1706db31e6c706c998426d4c770b4dd37b37b429d1fc3f6b6",
+  "tests/portability/constructor_promotion.py": "39e386025272e1a65d1baa79989312ff0f812e97f0cc3e13b3ce8c05ce5e7823"
+}

@@ -547,9 +547,33 @@ final class Converter {
 		}
 		$this->expect(')');
 		$this->expect('{');
-		$assignments = array_merge($assignments, $this->localBody($parameterNames));
+		$assignments = $this->constructorBody($assignments, $this->localBody($parameterNames));
 		$fields[] = new Node('method', 'public function __construct(' . implode(', ', $parameters) . ')', $line, $assignments);
 		return $fields;
+	}
+
+	/** Keep an explicit leading base initializer visible to the legacy generator.
+	 * Portable promotion requires parent execution/arguments not to observe child state.
+	 * Only generated assignments move; authored statements retain their order.
+	 */
+	private function constructorBody(array $assignments, array $body): array {
+		if ($assignments === []) { return $body; }
+		$significant = [];
+		foreach ($body as $index => $node) {
+			if ($node->kind === 'comment' || ($node->kind === 'token' && trim($node->text) === '')) { continue; }
+			$significant[] = $index;
+			if (count($significant) === 2) { break; }
+		}
+		if (count($significant) === 2) {
+			$call = $body[$significant[0]];
+			$end = $body[$significant[1]];
+			if ($call->kind === 'call' && strtolower($call->text) === 'parent::__construct'
+				&& $end->kind === 'token' && $end->text === ';') {
+				$after = $significant[1] + 1;
+				return array_merge(array_slice($body, 0, $after), $assignments, array_slice($body, $after));
+			}
+		}
+		return array_merge($assignments, $body);
 	}
 
 	/** New callable scope; this is lexical bookkeeping, not symbol/type resolution. */

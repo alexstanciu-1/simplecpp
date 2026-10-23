@@ -1484,3 +1484,16 @@ no-child-observation contract for parent execution and its argument evaluation.
 Keep authored body statements in order; do not infer initialization from assignments
 or make required fields nullable to bypass checks. Awaiting approval for that
 additional converter boundary before modifying these source constructors.
+
+## Approved bounded parent-constructor promotion
+
+User approved the preceding converter proposal. Existing constructor Node assembly
+now preserves a complete leading parent call before generated legacy promotion
+assignments; authored statements are not reordered. Adapted the three audited
+collected source-callable/constant/enum syntax links to private PHP promotion.
+Portable constructor contract records parent/argument no-child-observation duties.
+PHP, legacy and both v0.2 modes pass; separate structural controls and retained
+compiler recovery pass. Evidence: parent_promotion. Bootstrap 1:19.80 / 350156 KiB
+peak RSS / 320 MiB PHP heap remains blocked in preparation on other required-field
+initializations, including other syntax_node declarations. No wider adaptation or
+compiler semantic change in this slice.

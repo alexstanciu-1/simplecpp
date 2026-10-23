@@ -148,13 +148,11 @@ abstract class collected_reference extends collected_name
 /** Shared source identity; semantic work never needs to pretend a member is a free function. */
 abstract class collected_source_callable extends collected_definition implements callable_target_i
 {
-	/** @reference.source parsed_file.root (syntax graph) */
-	private callable_declaration_node $syntax_node;
-
-	public function __construct(collected_file $collection, callable_declaration_node $node)
+	public function __construct(collected_file $collection,
+		/** @reference.source parsed_file.root (syntax graph) */
+		private callable_declaration_node $syntax_node)
 	{
 		parent::__construct($collection);
-		$this->syntax_node = $node;
 	}
 
 	public function syntax(): ast_node
@@ -221,11 +219,9 @@ final class collected_constant extends collected_definition implements constant_
 	public function qualified_name(): string { return $this->scope_qualified_name(); }
 
 	public ?collected_member_owner $member_owner /** weak<collected_member_owner> */ = null;
-	private constant_declaration_node $syntax_node;
-	public function __construct(collected_file $collection, constant_declaration_node $node)
+	public function __construct(collected_file $collection, private constant_declaration_node $syntax_node)
 	{
 		parent::__construct($collection);
-		$this->syntax_node = $node;
 	}
 	public function syntax(): constant_declaration_node { return $this->syntax_node; }
 	public function kind(): collected_name_kind { return collected_name_kind::constant_declaration; }
@@ -241,13 +237,11 @@ abstract class collected_type_definition extends collected_definition
 
 final class collected_enum extends collected_type_definition
 {
-	/** @reference.source parsed_file.root (syntax graph) */
-	private enum_node $syntax_node;
-
-	public function __construct(collected_file $collection, enum_node $node)
+	public function __construct(collected_file $collection,
+		/** @reference.source parsed_file.root (syntax graph) */
+		private enum_node $syntax_node)
 	{
 		parent::__construct($collection);
-		$this->syntax_node = $node;
 	}
 
 	public function syntax(): ast_node
