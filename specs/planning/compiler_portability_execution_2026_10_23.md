@@ -324,3 +324,35 @@ RuntimeShallowSourceGenerator; the new free function needs legacy symbol/contrac
 exposure too. Test unstarted/restarted errors, alias state, input ownership and
 startup/protocol failures on both routes and prelowering. Do not mark the underlying
 unique parser copyable or enable generic shared-provider `new`.
+
+## BIND-01 JSON reader factory and exposure slice
+
+Added the accepted fresh shared factory and fourteen existing instance bindings;
+legacy symbols/contracts and the shallow free-function declaration match the
+runtime's shared_p boundary. The facade uses the factory and keeps its start/Result
+translation unchanged. Parser ownership and failure semantics are unchanged.
+
+`/tmp/json-reader-bindings-02` executes all methods on legacy (19.78 s) and ordinary
+v0.2 (23.23 s): shared alias advancement, independent factories, owned input,
+before-start errors, failed-start/restart rejection, scalar values, nested traversal,
+consumer rejection and terminal protocol errors. `/tmp/json-reader-facade-01` passes
+the existing PHP/native consumer, native reader protocol and document regression.
+The FPM socket is unavailable in this sandbox; the shared runner uses CLI fallback.
+
+Concrete prelowering is explicitly **blocked**, not executed: the same full fixture
+reaches CPP_Concrete_Members::entry's existing rejection of shared runtime members
+with arguments. Ordinary calls already retain/check the receiver before evaluating
+arguments. Concrete provider handles deliberately expose no payload pointer in
+application headers (CPP_Types::application_pointee), so removing that rejection
+would lose the early check and currently discard method arguments. A follow-up
+must reuse selected_call argument sequencing and add a backend-owned check bridge
+before arguments, keeping provider payloads hidden. This is missing backend support,
+not a reason to change the factory, copy the parser, expose its payload or grant
+new source ownership semantics. Reference/variadic runtime member transport remains
+outside this reader slice. BIND-01 remains open for this bridge and facade tracing.
+
+Measured bootstrap `/tmp/compiler-bootstrap-json-reader-01`: conversion 4.73 s /
+194,804 KiB RSS; bootstrap 200.67 s / 455,508 KiB (444.8 MiB) RSS / 434.5 MiB
+PHP heap. The unresolved reader type diagnostic disappears; none are added.
+First blocker remains AST-01, with no fatal/OOM, emission or native compiler rebuild.
+Evidence: results/compiler_bootstrap_backlog_2026_10_23/json_reader.

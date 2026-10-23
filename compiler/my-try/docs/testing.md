@@ -81,6 +81,14 @@ staged promotion and discard. v0.2 `result<nullable<string>>` extraction remains
 explicit NULL-02 blocker test; the other ten leaves execute. Do not report the
 blocker reproduction as successful read support.
 
+`python3 tests/json_pull_reader.py --results FRESH` executes the factory and all
+fourteen reader methods on legacy and ordinary v0.2. Alias advancement, owned input,
+independent instances and start/protocol failures are covered. The concrete task
+reproduces the known shared-runtime-member argument sequencing blocker; it does not
+execute the reader. Replace that expected blocker with execution when repaired.
+`python3 tests/portability/json_reader.py --results FRESH` from the repository root
+covers the PHP/native facade and native reader/document regressions.
+
 ## Conservative call snapshot elision
 
 `python3 compiler/my-try/tests/call_snapshot_borrow.py --results FRESH` checks

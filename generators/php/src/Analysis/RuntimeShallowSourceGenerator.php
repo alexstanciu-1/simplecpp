@@ -419,6 +419,7 @@ final class RuntimeShallowSourceGenerator
 				'curl_strerror' => ['return' => 'string', 'params' => [['name' => 'code', 'type' => 'int']]],
 			],
 			'strict' => [
+				'json_pull_reader_create' => ['return' => 'json_pull_reader', 'params' => []],
 				'scpp_output_root' => ['return' => 'result<string>', 'params' => [['name' => 'path', 'type' => 'string']]],
 				'scpp_output_permissions' => ['return' => 'result<int>', 'params' => [['name' => 'root', 'type' => 'string'], ['name' => 'relative', 'type' => 'string']]],
 				'scpp_input_digest' => ['return' => 'result<string>', 'params' => [['name' => 'path', 'type' => 'string']]],

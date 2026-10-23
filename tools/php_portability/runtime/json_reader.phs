@@ -4,7 +4,7 @@ namespace scpp;
 class Json_Reader {
     private json_pull_reader $reader;
     public function __construct(string $text, string $file, int $limit) {
-        $this->reader = new json_pull_reader();
+        $this->reader = \json_pull_reader_create();
         $out bool = false;
         $failure error;
         if (!take($out, $failure, $this->reader->start($text, $file, $limit))) {

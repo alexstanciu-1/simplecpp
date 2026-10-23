@@ -51,6 +51,19 @@
 		"contract_authority_source": "default_missing_contract"
 	},
 	"symbol_contracts": {
+		"json_pull_reader_create": {
+			"contract_status": "complete",
+			"signature_status": "known",
+			"source_consumption_status": "blocked",
+			"min_arity": 0,
+			"max_arity": 0,
+			"parameter_type_refs": [],
+			"parameter_names": [],
+			"parameter_passing": [],
+			"return_type_ref": "json_pull_reader",
+			"blocked_reason": "module_call_frontend_lowering_not_wired",
+			"contract_authority_source": "specs/builtins/json/json_pull_reader_create.md"
+		},
 		"json_document_parse": {
 			"contract_status": "complete",
 			"signature_status": "known",

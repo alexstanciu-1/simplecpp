@@ -17,7 +17,15 @@ This does not establish exhaustive language, lifetime, incremental or performanc
 
 ## Accepted-backlog bootstrap checkpoint — 2026-10-23
 
-The latest [output-binding checkpoint](../../../../specs/planning/results/compiler_bootstrap_backlog_2026_10_23/output_bindings/README.md)
+The latest [JSON reader checkpoint](../../../../specs/planning/results/compiler_bootstrap_backlog_2026_10_23/json_reader/README.md)
+adds the shared factory and fourteen method bindings. Legacy/ordinary v0.2 execute
+the protocol; existing PHP/native facade and reader/document regressions pass.
+Concrete prelowering remains blocked on shared runtime member argument sequencing.
+Bootstrap takes 200.67 s / 444.8 MiB RSS / 434.5 MiB PHP heap. The unresolved reader
+type diagnostic disappears, with no new diagnostic text. AST-01 remains first;
+there is no OOM/fatal, emission or native compiler rebuild.
+
+The earlier [output-binding checkpoint](../../../../specs/planning/results/compiler_bootstrap_backlog_2026_10_23/output_bindings/README.md)
 registers eleven existing publication/digest leaves. All execute on legacy; ten
 execute in ordinary/prelowered v0.2. Read extraction remains blocked by nullable's
 missing result_payload capability (NULL-02), with its exact nested return preserved.

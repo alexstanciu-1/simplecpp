@@ -22,3 +22,9 @@ immutable storage and outlive their originating document handle.
 `json_document_parse`, `json_document_root` and the `json_node_*` accessors
 belong to the JSON module. Duplicate decoded keys fail with `duplicate_key`,
 not last-value-wins. There is no mutation or serialization API in this slice.
+
+## Typed pull reading
+
+The [pull-reader protocol](pull_reader.md) supports forward-only typed consumers.
+[json_pull_reader_create](json_pull_reader_create.md) allocates its shared handle;
+`start` initializes owned input once. Handle copies share cursor state.

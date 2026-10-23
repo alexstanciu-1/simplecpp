@@ -3,6 +3,7 @@
 #include "scpp/bool_t.hpp"
 #include "scpp/int_t.hpp"
 #include "scpp/result.hpp"
+#include "scpp/shared_p.hpp"
 #include <charconv>
 #include <memory>
 #include <unordered_set>
@@ -183,4 +184,10 @@ public:
 	result<bool_t> finish_document() { return invoke([&] { cursor_->finish_document(); return bool_t(true); }); }
 	result<bool_t> reject(const string_t &message) { return invoke([&] { cursor_->reject(message); return bool_t(false); }); }
 };
+namespace json {
+// Allocate a fresh shared wrapper; parsing begins only through start().
+inline shared_p<json_pull_reader> pull_reader_create() {
+	return shared_p<json_pull_reader>(std::make_shared<json_pull_reader>());
+}
+}
 }

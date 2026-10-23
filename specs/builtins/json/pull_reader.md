@@ -59,7 +59,7 @@ Native `scpp::json::pull_reader` shares the existing lexical scanner and exposes
 `read_error` with category, position, path and detail. The language-boundary
 `scpp::json_pull_reader` returns `result<T>`; non-value operations return successful
 `result<bool>` containing true. Its one-shot `start(text,file,limit)` initializes a
-default-created handle. Only JSON/protocol failures are translated, not allocation
+handle allocated by [json_pull_reader_create()](json_pull_reader_create.md). Only JSON/protocol failures are translated, not allocation
 failures. The portability facade maps Result errors to its exception family.
 
 The reader owns source bytes, active container frames and duplicate-key sets for
@@ -79,4 +79,7 @@ test pool for native reader protocol/lifetime checks, unchanged document regress
 tests, and one PHP-to-native typed-record consumer. It checks expected values,
 schema failures, terminal state, private publication and a shared syntax corpus.
 It uses the current checkout and bypasses legacy STAN for the portable compiler
-fixture. It does not rebuild the my-try compiler or claim catalog registration.
+fixture. It does not rebuild the my-try compiler. The separate
+`compiler/my-try/tests/json_pull_reader.py` proves registered factory/method bindings
+on legacy and ordinary v0.2; concrete prelowering currently records the shared
+runtime member argument sequencing blocker.
