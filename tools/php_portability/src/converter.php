@@ -522,8 +522,13 @@ final class Converter {
 				? ($readonly ? '/** PHP readonly; native usage contract. */ ' : '') . $visibility[1] . ' ' . $field[1] . ' ' . $typeName . ';'
 				: $visibility[1] . ' ' . ($readonly ? 'readonly ' : '') . $typeName . ' ' . $field[1] . ';';
 			if ($promoted) { $fields[] = new Node('property', $property, $line); }
-			$parameters[] = $typeName . ' ' . $field[1] . $default;
-			if ($promoted) { $assignments[] = new Node('initialization', '$this->' . substr($field[1], 1) . ' = ' . $field[1] . ';', $line); }
+			if ($promoted && $this->target === 'v0.2') {
+				// The declared field supplies the type; initialization precedes the body.
+				$parameters[] = 'set:' . $field[1] . $default;
+			} else {
+				$parameters[] = $typeName . ' ' . $field[1] . $default;
+				if ($promoted) { $assignments[] = new Node('initialization', '$this->' . substr($field[1], 1) . ' = ' . $field[1] . ';', $line); }
+			}
 			if ($separator[1] === ')') { --$this->position; break; }
 			if ($separator[1] !== ',') { $this->fail($separator[2], 'expected promoted parameter separator'); }
 		}

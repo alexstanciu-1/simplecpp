@@ -978,7 +978,7 @@ discussion while independent work continues. Deferred debts remain deferred.
 | SELF-01 | Shared class self acquisition, including prelowering | Core v0.2 support accepted; implementation paused. |
 | SELF-02 | Struct self: receiver, value copy and distinct shared retention | Core v0.2 receiver/value support accepted; shared retention deferred as SELF-DEBT-01; paused. |
 | COPY-01 | `_struct_` / `_struct_copy_` portable value protocol | Converter work accepted; first proof is `cpp_specialization_ref`; may consume SELF-02; paused. |
-| INIT-01 | Promoted required constructor inputs and explicit valid defaults | Direction accepted; inventory C03; implementation paused. |
+| INIT-01 | Promoted required constructor inputs and explicit valid defaults | Bounded v0.2 set mapping and switch_label source migration implemented with cross-route proofs; promotion plus explicit parent call remains under discussion; inventory C03; in progress. |
 | LOCAL-01 | Class-local definite assignment and existing struct defaults | Bounded local flow checks accepted; no general init inference or deferred struct lifetime; direct-init required fields; paused. |
 | INIT-02 | `_uninitialized_` required fields, staged assignment and checked reads | Nullable backing and checked accessors accepted; reuse audit complete, 6–12x retained; bounded source/converter proofs pending; no new language feature approved; paused. |
 | TASK-01 | Bounded shared-handle task admission in v0.2 | Joined API rules accepted; reuse audit complete, revised 8–12x; bounded API-policy/callback-permission design accepted; implementation/proofs pending; inventory D04; paused. |

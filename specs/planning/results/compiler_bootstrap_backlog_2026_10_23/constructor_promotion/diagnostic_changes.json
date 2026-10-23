@@ -1,0 +1,12 @@
+{
+  "added": [],
+  "removed": [
+    "Property requires set: initialization before the constructor body: label_kind",
+    "Property requires set: initialization before the constructor body: lifetime",
+    "Property requires set: initialization before the constructor body: mode",
+    "Property requires set: initialization before the constructor body: operation",
+    "Property requires set: initialization before the constructor body: selected_operation",
+    "Property requires set: initialization before the constructor body: source_kind",
+    "Property requires set: initialization before the constructor body: visibility"
+  ]
+}

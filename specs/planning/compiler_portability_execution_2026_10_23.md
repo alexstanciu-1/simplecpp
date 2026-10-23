@@ -219,3 +219,63 @@ the final comparison records it explicitly rather than silently ignoring all com
 CONVERT-02 spelling/consistency work is complete. Its native v0.2 execution proof
 must be upgraded when NULL-01/02 remove the payload restriction. INIT-01 is next;
 CONVERT-01's remaining retained/provider edge verification stays on the final gate.
+
+## INIT-01 reuse and bounded implementation
+
+Reuse: constructorDeclaration already has explicit promotion association, property
+types, defaults and body nodes. Native Constructor_Preparation already resolves
+`set:` against existing properties and owns default precedence, base ordering and
+initialization before the body. Legacy Generator::extractParentConstructorArgs only
+recognizes an explicit base call as the first body statement. No new retained model
+or core syntax is needed for ordinary promotion mapping.
+
+The converter now emits separate properties plus `set:` parameters for v0.2;
+the legacy target retains typed parameters plus assignments. Actual switch_label
+uses PHP promotion for its required label_kind, with no fabricated enum default.
+Arbitrary body assignments are not rewritten. Root-class enum/default/private-field,
+mixed ordinary/promoted parameter and effect-order proofs pass PHP and legacy native
+plus both v0.2 modes in `/tmp/constructor-promotion-06`. The separate checked-arithmetic
+failure proof also passes PHP and all three native modes: the initialized enum and
+explicit property default are observed before failure, and no later body/caller
+effect executes. This proves the bounded slice, not the open parent combination.
+
+Open parent combination: `/tmp/constructor-promotion-02` proves the legacy native
+failure when promotion inserts assignments before an explicit parent call. PHP
+passes. Actual async_task_type_definition at 03_parse/types/model.php:345 has this
+shape. Reordering could alter child-state observations, so the user has been asked
+to choose source adaptation or a bounded no-child-observation contract. No reorder
+has been implemented; this combination remains open while independent work proceeds.
+
+The first fixture had a reserved C++ local name, corrected before behavioral proof.
+Attempts 03/04 exposed unrelated framework admission: removing unused string facade
+inputs left the exception facade's shared-identity helper failure. Focused probes
+in `/tmp/promotion-diagnostic-01` through `03` show ordinary/set integer arithmetic
+and exception classes prepare, but the free same_exception shared-object comparison
+hits integer-operator admission. Preserve this evidence under NULL-01/OWN-01 and
+BIND-03; do not repair identity semantics as constructor/converter work.
+
+`/tmp/promotion-empty-defaults-01` passes PHP/legacy and both v0.2 modes with promoted
+typed container defaults, including fresh omission and explicit arguments. The
+constructor fixture was consolidated by removing an unused parent declaration;
+the failing explicit-parent case remains recorded above, not claimed as passed.
+
+Measured `/tmp/compiler-bootstrap-promotion-01`: conversion 4.66 s / 194,972 KiB RSS;
+269 PHS files / 1,956,338 bytes. PHP-hosted bootstrap 190.83 s / 440,544 KiB RSS
+(430.2 MiB), 420.5 MiB heap. Seven property-requires-set diagnostic texts disappear,
+including label_kind; none are added. AST-01 remains first. No fatal/OOM, emission
+or native compiler rebuild. Evidence: results/compiler_bootstrap_backlog_2026_10_23/
+constructor_promotion. INIT-01 remains open for the parent combination; this is a
+validated bounded slice, not backlog completion.
+
+## BIND-01 next independent reuse slice
+
+Eleven existing leaves in runtime/include/modules/filesystem/output_files.hpp map
+to the facade's scpp_output_* and scpp_input_digest calls. Legacy signatures are
+already explicit in RuntimeShallowSourceGenerator's strict inventory. Register
+matching signatures and C++ symbols in filesystem.json; no source inference,
+new ownership type or cleanup protocol is needed for these leaves. Preserve
+result<nullable<string>> for output_read and direct string for output_sha256;
+absence, failure and unchanged are separate outcomes. Existing result extraction
+and prelowered runtime-call transport should carry them. Prove those outcomes and
+staged promotion/close using existing runtime behavior before claiming BIND-01
+closure. This work is independent of the open constructor-parent convention.

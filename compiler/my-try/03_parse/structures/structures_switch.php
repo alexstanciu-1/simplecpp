@@ -67,13 +67,11 @@ final class switch_label extends ast_node
 	use Node_Source_Span;
 	use Preparation_Facts;
 
-	public switch_label_kind $label_kind;
 	public ?expression_node $value = null;
 	private ?prepared_switch_label $prepared_facts = null;
 
-	public function __construct(switch_label_kind $label_kind)
+	public function __construct(public switch_label_kind $label_kind)
 	{
-		$this->label_kind = $label_kind;
 	}
 
 	public function kind(): node_kind { return node_kind::switch_label; }

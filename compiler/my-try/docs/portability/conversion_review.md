@@ -16,7 +16,16 @@ This does not establish exhaustive language, lifetime, incremental or performanc
 
 ## Accepted-backlog bootstrap checkpoint — 2026-10-23
 
-The latest [empty-only provider checkpoint](../../../../specs/planning/results/compiler_bootstrap_backlog_2026_10_23/empty_provider/README.md)
+The latest [constructor-promotion checkpoint](../../../../specs/planning/results/compiler_bootstrap_backlog_2026_10_23/constructor_promotion/README.md)
+uses converter-emitted `set:` inputs and PHP promotion for switch_label's required
+enum. Root-class construction/order/failure and typed-container defaults pass PHP,
+legacy native and both v0.2 modes. Bootstrap takes 190.83 s / 430.2 MiB peak RSS /
+420.5 MiB PHP heap; seven property-requires-set diagnostic texts disappear and none
+are added. AST-01 remains first; no OOM/fatal or emission. Promotion with explicit
+parent construction remains an open portable boundary, and no native compiler
+rebuild is claimed.
+
+The earlier [empty-only provider checkpoint](../../../../specs/planning/results/compiler_bootstrap_backlog_2026_10_23/empty_provider/README.md)
 adds explicit registered `[]` construction through existing provider factories.
 An unfamiliar provider and Storage-family fixtures pass ordinary/prelowered native
 execution, fresh omitted defaults, admission and retained recovery. The measured
