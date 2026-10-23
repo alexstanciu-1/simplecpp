@@ -1306,3 +1306,15 @@ pass ordinary/concrete output, static_members retained checks pass. Evidence:
 static_initializer. Old qualified-static test failure reproduces with parent emitter;
 fixture reconciliation remains separate. Bootstrap 1:14.18 / 342952 KiB RSS /
 312 MiB PHP heap, same first syntax_node blocker and diagnostic set.
+
+## NULL-01 regression reconciliation finding
+
+Qualified static-member regression still normalizes empty shared class locals to
+required C, which LOCAL-01 correctly rejects. Reuse audit confirms redundant
+shared<Class> remains forbidden; the correct absent qualifier is ?C = null.
+A candidate fixture using that spelling instead fails Unknown runtime static
+property. Evidence static_initializer/qualified_nullable_candidate.php and stderr.
+Expression qualification must evaluate/discard without dereference under the static
+member contract; optional nominal lookup is therefore an outstanding NULL-01
+consumer, not a reason to initialize a dummy object or weaken definite assignment.
+Production and original regression unchanged in this finding; fix/reproof pending.
