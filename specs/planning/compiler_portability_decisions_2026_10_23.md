@@ -877,8 +877,9 @@ retained-recovery proofs; see the execution ledger.
 
 Implementation checkpoint: eleven output leaves are registered; legacy executes all,
 v0.2 has focused execution evidence for all eleven, including output_read after
-nullable Result integration. The combined suite now stops on the independent required
-lock-handle initialization contract; do not claim an end-to-end publication pass.
+nullable Result integration. After the provisionally approved fs_lock_empty factory, the combined suite also
+passes across legacy and both v0.2 modes. Full compiler publication remains blocked
+by its separate source initialization and other backlog items.
 JSON factory/method bindings now execute on both routes and in prelowering.
 Facade lookup failures are resolved by rooted converter targets; body dependencies
 remain under OWN/NULL. See the execution ledger.
@@ -1026,12 +1027,12 @@ discussion while independent work continues. Deferred debts remain deferred.
 | AST-01 | Explicit concrete virtual methods and portable PHP intent | Core support and converter mapping with `#[\Virtual]` / `#[\Override]` implemented; PHP/legacy/ordinary/prelowered and retained proofs pass; inventory A01; see execution ledger. |
 | NULL-01 | Node versus ?Node frontend contracts, shared lowering | Direction accepted; four-consumer reuse audit complete; revised 12–20x; coordinated integration approved; distinct source identities, checked boundaries, receiver and directional adaptation proofs pass. Optional object casts/tests and checked index-key consumers now pass both-mode proofs; required field direct initialization now enforced; local definite assignment now has focused proofs; source adaptation and remaining consumers are blocking; inventory A02; in progress. |
 | NULL-02 | Definition- and capability-based nullable operations | Capability/consumer reuse audit complete; revised 4–8x incremental to shared NULL-01 model; generic exact value boundaries now use value_storable; both-mode and portable container proofs pass. Class-handle and capability-based take plus nested nullable Result boundaries have focused proofs; remaining consumers and final reconciliation stay open; inventory D03; in progress. |
-| OWN-01 | Weak locks, moved-from unique/shared handles and runtime result guarantees | Ownership and explicit-handle spelling agreed; weak-expiry parity deferred under OWN-DEBT-01; paused. |
+| OWN-01 | Weak locks, moved-from unique/shared handles and runtime result guarantees | Explicit-handle spelling, optional weak-lock results and provisional required empty-lock factory implemented with focused proofs; other ownership consumers remain; weak-expiry parity deferred under OWN-DEBT-01. |
 | OWN-DEBT-01 | PHP strong carriers versus native weak lifetime | Deferred; no demonstrated compiler failure; no exact emulation planned; PHP-only cleanup may be considered; not a new gate. |
 | SOURCE-01 | Private fields and numeric boundaries | Same-name private instance fields implemented with C++ lookup and portable base-view proofs; numeric site audit remains, with source-owned checks independent of compiler contracts; in progress. |
 | CONVERT-01 | Empty container expressions and method defaults | Explicit doc-comment type required; registered containers accept typed [] by default. Parameter defaults use the same rule; reuse audit complete, revised 4–8x; Typed defaults and annotated expressions have PHP/legacy/v0.2 proofs; explicit empty-only provider binding passes ordinary/prelowered generic and Storage proofs. Remaining retained/provider edge verification stays open; see execution ledger; inventory C01/C02; in progress. |
 | CONVERT-02 | Complete nullable array target annotations using ?vector | Converter consistency validation and compiler-source migration implemented; both output targets and PHP/legacy/ordinary/prelowered execution proved after capability-based nullable value admission. |
-| BIND-01 | Publication/digest APIs and JSON pull-reader exposure | Eleven output leaves registered and legacy-proved; all eleven individually v0.2-proved; combined publication flow still blocked on required lock-handle initialization. Shared-reader factory and fourteen methods execute on legacy/ordinary/prelowered v0.2; shared-member checks reuse existing receiver/argument sequencing. B03 lookup resolved by rooted map targets and legacy call emission; body dependencies remain under OWN/NULL; inventory B01/B02/B03; in progress. |
+| BIND-01 | Publication/digest APIs and JSON pull-reader exposure | Eleven output leaves registered and legacy-proved; all eleven individually v0.2-proved; combined output binding flow also passes after fs_lock_empty; full compiler bootstrap remains open. Shared-reader factory and fourteen methods execute on legacy/ordinary/prelowered v0.2; shared-member checks reuse existing receiver/argument sequencing. B03 lookup resolved by rooted map targets and legacy call emission; body dependencies remain under OWN/NULL; inventory B01/B02/B03; in progress. |
 | CURSOR-01 | Storage_Cursor registration and safe read widening | Metadata-driven relationship and explanatory diagnostics accepted; runtime constructor scope recorded above; implementation paused. |
 | VERIFY-01 | Reconcile remaining diagnostics and retry measured bootstrap | After agreed slices; historical failures are not fresh defects. |
 | DOC-01 | Reconcile stale portability guidance | After relevant decisions; inventory S01. |
@@ -1258,3 +1259,13 @@ Simple nominal nullable local comments remain supported. The proof uses an exist
 `?array` parameter with `/** ?vector<int> */` instead. Record the generic nullable-local
 annotation grammar gap under converter limitations for follow-up; do not treat this
 source workaround as completion of converter nullable annotation coverage.
+
+## OWN-01 empty lock factory — provisionally approved
+
+The user approved fs_lock_empty(): file_lock_handle, a present resource-free native
+token matching PHP lock_empty's object carrier. It does not weaken required-object
+initialization, add a source constructor or introduce implicit out-parameter rules.
+The native facade and output suite initialize through the factory. Existing allocation,
+locking, aliasing, transfer and cleanup machinery is reused. **At the end of the goal,
+review with the user whether to keep this factory; implementation is not that final
+decision.** Reservation-field direct initialization remains a separate source issue.

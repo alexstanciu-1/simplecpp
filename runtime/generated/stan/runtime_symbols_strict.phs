@@ -54,6 +54,7 @@ function fs_get(string $path): result<string> {}
 function fs_is_dir(string $path): bool {}
 function fs_is_file(string $path): bool {}
 function fs_is_link(string $path): bool {}
+function fs_lock_empty(): file_lock_handle {}
 function fs_lock_release(file_lock_handle $handle): result<bool> {}
 function fs_lock_transfer(file_lock_handle $handle): result<file_lock_handle> {}
 function fs_lock_try(file_lock_handle &$out, string $path, bool $shared = false): result<bool> {}
@@ -103,6 +104,7 @@ function json_node_member(json_node $node, string $key): result<json_node> {}
 function json_node_number(json_node $node): result<string> {}
 function json_node_size(json_node $node): result<int> {}
 function json_node_string(json_node $node): result<string> {}
+function json_pull_reader_create(): json_pull_reader {}
 function jss_tokenize(string $source): token_buffer {}
 function jss_tokenize_buffer(string $source): token_buffer {}
 function layout_alignof(mixed $type_name): int {}
@@ -289,6 +291,24 @@ namespace scpp;
 
 class json_document
 {
+}
+
+class json_pull_reader
+{
+	public function start(string $text, string $file, int $limit): result<bool> {}
+	public function kind(): result<string> {}
+	public function property_name(): result<string> {}
+	public function read_string(): result<string> {}
+	public function read_number(): result<string> {}
+	public function begin_object(): result<bool> {}
+	public function begin_array(): result<bool> {}
+	public function next_property(): result<bool> {}
+	public function next_element(): result<bool> {}
+	public function read_boolean(): result<bool> {}
+	public function read_null(): result<bool> {}
+	public function finish_document(): result<bool> {}
+	public function read_integer(): result<int> {}
+	public function reject(string $message): result<bool> {}
 }
 
 class json_node

@@ -11,7 +11,10 @@ final class ScppStrictRuntimeCatalogTest
 {
 	public function run(): int
 	{
+		$generated = (new RuntimeShallowSourceGenerator())->generate(resolve_repo_root(), 'strict');
 		$catalog = new StanPhpRuntimeFunctionCatalog();
+		$this->assertSame('file_lock_handle', $catalog->returnType('fs_lock_empty'), 'Empty token factory return contract');
+		$this->assertSame('filesystem', $catalog->requiredModule('fs_lock_empty'), 'Empty token factory module ownership');
 		foreach (['json_document_parse' => 'result<json_document>', 'json_document_root' => 'result<json_node>',
 			'json_node_kind' => 'result<string>', 'json_node_size' => 'result<int>', 'json_node_at' => 'result<json_node>',
 			'json_node_key' => 'result<string>', 'json_node_has' => 'result<bool>', 'json_node_member' => 'result<json_node>',
@@ -38,7 +41,6 @@ final class ScppStrictRuntimeCatalogTest
 		$this->assertSame('result<string>', $catalog->returnType('fs_read_snapshot'), 'fs_read_snapshot return contract');
 		$this->assertSame('filesystem', $catalog->requiredModule('fs_read_snapshot'), 'fs_read_snapshot module ownership');
 
-		$generated = (new RuntimeShallowSourceGenerator())->generate(resolve_repo_root(), 'strict');
 		$strictRuntimeSymbols = $this->read(resolve_repo_root() . '/runtime/generated/stan/runtime_symbols_strict.phs');
 		$this->assertContains('public function get_message(): string', $strictRuntimeSymbols, 'captured errors should expose their message to STAN');
 		$this->assertSame('strict', $generated['profile'], 'strict shallow runtime generation should complete');

@@ -13,6 +13,7 @@
         "json_node_boolean": "json::node_boolean",
         "json_node_number": "json::node_number",
         "json_node_int": "json::node_int",
+        "fs_lock_empty": "fs::lock_empty",
         "fs_lock_try": "fs::lock_try",
         "fs_lock_release": "fs::lock_release",
         "fs_lock_transfer": "fs::lock_transfer",

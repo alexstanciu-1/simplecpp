@@ -310,6 +310,19 @@
 			"blocked_reason": "module_call_frontend_lowering_not_wired",
 			"contract_authority_source": "specs/builtins/json/json_node_int.md"
 		},
+		"fs_lock_empty": {
+			"contract_status": "complete",
+			"signature_status": "known",
+			"source_consumption_status": "blocked",
+			"min_arity": 0,
+			"max_arity": 0,
+			"parameter_type_refs": [],
+			"parameter_names": [],
+			"parameter_passing": [],
+			"return_type_ref": "file_lock_handle",
+			"blocked_reason": "module_call_frontend_lowering_not_wired",
+			"contract_authority_source": "specs/builtins/filesystem/fs_lock_empty.md"
+		},
 		"fs_lock_try": {
 			"contract_status": "complete",
 			"signature_status": "known",

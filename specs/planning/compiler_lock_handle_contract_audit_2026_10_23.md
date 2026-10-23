@@ -30,7 +30,7 @@ Evidence owners:
   preparation stops at the required lock argument before fs_lock_try. The last
   recorded run is /tmp/result-nullable-output-suite-01; legacy passes.
 
-## Recommended bounded runtime API addition (pending discussion)
+## Bounded runtime API addition (approved provisionally)
 
 Expose fs_lock_empty(): file_lock_handle as a factory for a present, descriptor-free
 token. The PHP facade already implements exactly that logical carrier. Native
@@ -49,8 +49,8 @@ separate token presence from descriptor ownership. Specify the no-OS factory as
 platform-independent; existing lock operations continue reporting unsupported
 platform errors. Allocation failures propagate as existing runtime allocations do.
 
-This is an additive public runtime factory and a clarification of the empty-token
-contract, so obtain discussion before implementing it. It changes neither the
+The user approved implementation of this additive factory, with a decision on
+keeping it explicitly deferred until the end of the goal. Preserve that review gate. It changes neither the
 Simple C++ class contract nor OS locking/cleanup policy. Do not silently change the
 existing nullable native-pointer overload behavior or broaden source APIs.
 
@@ -74,3 +74,12 @@ this only if nullable pointer absence is intended to be the public source protoc
 The reservation's constructor-body assignment to a required field is a separate
 INIT/source conversion obligation: a token factory alone does not establish direct
 field initialization for that class. Do not claim complete bootstrap closure here.
+
+## Implementation disposition
+
+fs_lock_empty is implemented through ordinary runtime bindings in both routes. Native
+lock_try/transfer reuse the factory's existing allocation path; no OS policy changes.
+The portable native lock_empty facade now returns this required object. PHP already
+provided the same carrier behavior. Generated strict shallow metadata was regenerated,
+including previously registered JSON reader entries absent from the stale artifact.
+No legacy STAN analysis was enabled for builds.

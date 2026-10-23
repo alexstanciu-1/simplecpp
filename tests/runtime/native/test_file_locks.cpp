@@ -83,8 +83,18 @@ int main(int argc, char **argv) {
 		{ std::ofstream file(name); file << "persistent contents"; }
 		struct stat before {};
 		check(::stat(name.c_str(), &before) == 0, "stat failed");
-		lock_handle owner;
+		lock_handle owner = fs::lock_empty();
+		check(owner.get() != nullptr, "empty factory returned an absent token");
+		auto initial_alias = owner;
+		check(acquired(fs::lock_release(owner)), "fresh token release failed");
+		check(acquired(fs::lock_release(owner)), "fresh token repeated release failed");
+		check(owner.get() == initial_alias.get(), "release replaced a fresh token");
+		check(fs::lock_transfer(owner).has_error().native_value(), "fresh token transferred a resource");
+		check(fs::lock_try(owner, string_t("")).has_error().native_value(), "fresh token accepted invalid path");
+		check(owner.get() == initial_alias.get(), "failed acquisition replaced fresh token");
 		check(acquired(fs::lock_try(owner, path)), "writer acquire failed");
+		check(owner.get() != initial_alias.get(), "acquisition did not publish its new token");
+		check(acquired(fs::lock_release(initial_alias)), "fresh old alias affected acquired token");
 		auto alias = owner;
 		check(fs::lock_try(owner, path).has_error().native_value(), "occupied output accepted");
 		in_child([&] {

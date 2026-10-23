@@ -262,3 +262,9 @@ the existing physical-wrapper query. Nested generic provider, inline/shared reco
 noncopyability and retained recovery proofs pass. Nested Result<nullable<T>> is now implemented through nullable transport registration,
 existing recursive wrapper transport and prepared outer-state probes. The converter's
 generic nullable local-comment grammar remains unresolved.
+
+OWN-01 lock integration: provisionally approved fs_lock_empty creates a present
+resource-free token through the existing runtime allocation path. Ordinary required
+references need no special admission. PHP/legacy/ordinary/prelowered lifecycle and
+full output-binding proofs pass; final retention of the API must be reviewed with
+the user at goal completion. Reservation direct field initialization remains open.

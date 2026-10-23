@@ -1061,3 +1061,18 @@ an additive fs_lock_empty factory using existing private construction and shared
 return transport, keeping ordinary required-object rules intact. The alternative
 nullable API would require wider invariant-reference/source propagation. Public
 factory/platform disposition is pending discussion; no runtime/compiler fix made.
+
+## OWN-01 provisional empty lock factory
+
+User approved fs_lock_empty with an explicit end-of-goal keep/remove review. The runtime
+factory returns a present descriptor-free token, reusing existing allocation; try and
+transfer share that path. Both binding catalogs and the portable facade are updated.
+No compiler semantic changes. The full output suite passes on all native routes;
+PHP/native facade lifecycle, native process/cleanup and regenerated catalog checks pass.
+See [evidence](results/compiler_bootstrap_backlog_2026_10_23/lock_empty/README.md).
+
+Bootstrap /tmp/compiler-bootstrap-lock-empty-01: 74.35 s wall / 341280 KiB RSS
+(333.3 MiB) / 312 MiB PHP allocation. First failure remains required file-field
+initialization. Removes required-local out diagnostic; adds none. No fatal/OOM,
+emission or native compiler rebuild. Reservation initialization and other backlog
+items remain. **The final goal review must ask whether to keep this factory.**

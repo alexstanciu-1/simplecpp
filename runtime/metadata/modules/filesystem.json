@@ -5,6 +5,7 @@
   "types": [{"id":"filesystem.file_lock_handle","name":"file_lock_handle","kind":"class","storage":"shared","capabilities":["result_payload"]}],
   "cpp_types": [{"id":"filesystem.file_lock_handle","symbol":"scpp::fs::file_lock","header":"modules/filesystem/file_lock.hpp"}],
   "functions": [
+    {"id":"filesystem.fs_lock_empty","name":"fs_lock_empty","parameters":[],"returns":"file_lock_handle"},
     {"id":"filesystem.fs_is_windows","name":"fs_is_windows","parameters":[],"returns":"bool"},
     {"id":"filesystem.fs_lock_try","name":"fs_lock_try","parameters":[{"name":"out","type":"file_lock_handle","passing":"reference"},{"name":"path","type":"string","passing":"value"},{"name":"shared","type":"bool","passing":"value","default":{"bool":false}}],"returns":{"name":"result","arguments":["bool"]}},
     {"id":"filesystem.fs_lock_release","name":"fs_lock_release","parameters":[{"name":"handle","type":"file_lock_handle","passing":"value"}],"returns":{"name":"result","arguments":["bool"]}},
@@ -41,6 +42,7 @@
     {"id":"filesystem.scpp_output_promote","name":"scpp_output_promote","parameters":[{"name":"root","type":"string","passing":"value"},{"name":"stage","type":"string","passing":"value"},{"name":"relative","type":"string","passing":"value"},{"name":"expected","type":"string","passing":"value"},{"name":"executable","type":"bool","passing":"value"}],"returns":{"name":"result","arguments":["bool"]}}
   ],
   "cpp": [
+    {"id":"filesystem.fs_lock_empty","symbol":"scpp::fs::lock_empty","header":"modules/filesystem/file_lock.hpp"},
     {"id":"filesystem.fs_is_windows","symbol":"scpp::fs::is_windows","header":"modules/filesystem/filesystem.hpp"},
     {"id":"filesystem.fs_lock_try","symbol":"scpp::fs::lock_try","header":"modules/filesystem/file_lock.hpp"},
     {"id":"filesystem.fs_lock_release","symbol":"scpp::fs::lock_release","header":"modules/filesystem/file_lock.hpp"},

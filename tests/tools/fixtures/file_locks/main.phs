@@ -1,8 +1,8 @@
 // Run by test_scpp_file_locks.py in an isolated Linux project.
 function lock_check(string $path): bool {
-	$lock file_lock_handle;
-	$next file_lock_handle;
-	$other file_lock_handle;
+	$lock file_lock_handle = fs_lock_empty();
+	$next file_lock_handle = fs_lock_empty();
+	$other file_lock_handle = fs_lock_empty();
 	$err error;
 	$ok bool = false;
 	if (!take($ok, $err, fs_lock_try($lock, $path)) || !$ok) { return false; }

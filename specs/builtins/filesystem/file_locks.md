@@ -15,6 +15,15 @@ representation. Function/method parameters, returns and typed fields may use it;
 an authored by-reference output parameter refers to the handle slot. Generated
 headers use the runtime declaration and must not emit `class file_lock_handle;`.
 
+`fs_lock_empty(): file_lock_handle` creates a present token with no open descriptor.
+It does not acquire a lock or touch the filesystem. Each call returns a distinct
+token; ordinary allocation exceptions may propagate. This factory works on every
+platform. Resource absence is distinct from object absence: required source handles
+must be initialized, for example `$lock file_lock_handle = fs_lock_empty();`.
+Releasing this token is harmless; transferring it fails because it owns no lock.
+A successful acquisition replaces the output slot with its new token, leaving aliases
+of the original empty token empty. Failure or contention preserves the output slot.
+
 `fs_lock_try(file_lock_handle &$out, string $path, bool $shared = false): result<bool>`
 returns success(true) on acquisition, success(false) on contention, and an error
 on invalid state/path, open failure or other OS failure. The output must be empty
@@ -51,7 +60,7 @@ network-filesystem/distributed guarantee. Symlinks follow normal open resolution
 the application owns stable path selection. No upgrades, fairness, or blocking API.
 Applications needing a blocking wait retry contention, sleep, and stop on errors.
 
-On non-Linux builds every public operation returns an unsupported-platform error.
+On non-Linux builds lock acquisition, release and transfer return an unsupported-platform error.
 The public header remains portable; unsupported calls never report successful locks.
 
 ## Reference disposition
@@ -67,7 +76,7 @@ The public header remains portable; unsupported calls never report successful lo
 ## Exposure and compile plan
 
 Strict names forward through `php_runtime_symbols_strict.json` to
-`scpp::fs::lock_try`, `lock_release`, `lock_transfer`. Normalized contracts in
+`scpp::fs::lock_empty`, `lock_try`, `lock_release`, `lock_transfer`. Normalized contracts in
 `php_runtime_symbol_contracts_strict.json` own signature metadata. Shallow STAN
 generation derives parameter names, reference modes and optional arity from them.
 `file_lock_handle` is the source alias of `scpp::fs::file_lock`, held using the

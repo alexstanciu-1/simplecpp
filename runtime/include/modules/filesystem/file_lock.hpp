@@ -20,11 +20,13 @@ private:
 	std::int64_t owner_pid_ = 0;
 	bool held_ = false;
 
+	friend shared_p<file_lock> lock_empty();
 	friend result<bool_t> lock_try(shared_p<file_lock> &, const string_t &, const bool_t &);
 	friend result<bool_t> lock_release(const shared_p<file_lock> &);
 	friend result<shared_p<file_lock>> lock_transfer(const shared_p<file_lock> &);
 };
 
+[[nodiscard]] shared_p<file_lock> lock_empty();
 [[nodiscard]] result<bool_t> lock_try(shared_p<file_lock> &out, const string_t &path, const bool_t &shared = bool_t(false));
 [[nodiscard]] result<bool_t> lock_release(const shared_p<file_lock> &handle);
 [[nodiscard]] result<shared_p<file_lock>> lock_transfer(const shared_p<file_lock> &handle);

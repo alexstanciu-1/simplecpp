@@ -17,7 +17,7 @@ source = '''function exercise(): int {
 $problem error;
 $root string = "";
 $held bool = false;
-$lock file_lock_handle;
+$lock file_lock_handle = fs_lock_empty();
 if (!take($held, $problem, fs_lock_try($lock, __LOCK__, false))) { return 1; }
 if (!$held) { return 2; }
 if (!take($root, $problem, scpp_output_root(__ROOT__))) { return 3; }

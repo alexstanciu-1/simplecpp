@@ -36,6 +36,10 @@ int apply_lock(int descriptor, int operation) noexcept {
 
 } // namespace file_lock_detail
 
+shared_p<file_lock> lock_empty() {
+	return shared_p<file_lock>(std::shared_ptr<file_lock>(new file_lock()));
+}
+
 file_lock::~file_lock() {
 #if defined(__linux__)
 	const int saved_errno = errno;
@@ -61,7 +65,7 @@ result<bool_t> lock_try(shared_p<file_lock> &out, const string_t &path, const bo
 	}
 
 	// Allocate the token before acquiring OS resources; every later failure has RAII cleanup.
-	auto candidate = shared_p<file_lock>(std::shared_ptr<file_lock>(new file_lock()));
+	auto candidate = lock_empty();
 	const bool reader = shared.native_value();
 	const int flags = O_CLOEXEC | O_NONBLOCK | (reader ? O_RDONLY : O_RDWR | O_CREAT);
 	int descriptor;
@@ -131,7 +135,7 @@ result<shared_p<file_lock>> lock_transfer(const shared_p<file_lock> &handle) {
 	if (handle->owner_pid_ != ::getpid()) {
 		return file_lock_detail::failure("fs_lock_transfer", "inherited lock cannot be transferred by this process");
 	}
-	auto next = shared_p<file_lock>(std::shared_ptr<file_lock>(new file_lock()));
+	auto next = lock_empty();
 	next->owner_pid_ = handle->owner_pid_;
 	next->descriptor_ = std::exchange(handle->descriptor_, -1);
 	next->held_ = std::exchange(handle->held_, false);

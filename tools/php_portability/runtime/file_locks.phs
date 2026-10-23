@@ -1,7 +1,6 @@
 // Portable facade: operational errors throw; contention remains false.
 function scpp_portability_lock_empty(): file_lock_handle {
-    $out file_lock_handle;
-    return $out;
+    return fs_lock_empty();
 }
 function scpp_portability_lock_try(file_lock_handle &$out, string $path, bool $shared): bool {
     $acquired bool = false;
