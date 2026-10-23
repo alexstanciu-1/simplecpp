@@ -356,3 +356,52 @@ Measured bootstrap `/tmp/compiler-bootstrap-json-reader-01`: conversion 4.73 s /
 PHP heap. The unresolved reader type diagnostic disappears; none are added.
 First blocker remains AST-01, with no fatal/OOM, emission or native compiler rebuild.
 Evidence: results/compiler_bootstrap_backlog_2026_10_23/json_reader.
+
+## BIND-01 concrete shared runtime receivers — reuse and repair
+
+Reuse audit: prepared_method_receiver already records retain_shared;
+CPP_Declarations::selected_call already sequences its prefix before snapshots;
+CPP_Opaque_Representation already owns native storage and unwrap; and
+CPP_Concrete_Members already maps parameters and Result transport. A check-only
+free overload on the opaque representation is sufficient. No new retained records,
+source contract, callback/ownership rules or provider names are needed.
+
+The representation now emits require_receiver(const concrete_handle&) for runtime
+nominal shared handles, delegating to checked native operator-> without exposing
+its pointer. Call lowering retains and checks before arguments in both modes.
+The member adapter forwards existing prepared arguments instead of rejecting shared
+calls with parameters. Reference results, variadics and borrowed-this arguments
+remain outside this slice; mutable provider write-back is not generalized.
+
+`/tmp/json-reader-prelower-01` passes legacy, ordinary and concrete execution of
+all fourteen reader methods. `/tmp/runtime-member-prelower-02` passes six unrelated
+provider cases: null-check-before-side-effects, receiver replacement during argument
+evaluation, generic scalar calls and observed shared inputs, in both v0.2 modes.
+Earlier failed fixture attempts used unsupported explicit member template syntax
+and expected a diagnostic code not printed by the native entry; those fixture
+expectations were corrected to supported inferred calls and the actual error message.
+The former JSON concrete-blocker test is now positive execution.
+
+The existing runtime_handles.py suite also passes (`/tmp/runtime-handles-receiver-01`):
+four preparation/metadata suites and seven native handle/identity/property/member/
+Result/container checks. No provider-specific compiler conditions were added.
+
+## BIND-03 next reuse finding (source audit, not yet a behavioral proof)
+
+The converter function-map branch in src/converter.php emits the selected target
+name verbatim. Map entries for scpp_portability_strlen/output_root/process_spawn
+and their siblings name ordinary global source facade functions, unlike runtime
+registry leaves. Converted compiler consumers live in scpp\compiler and currently
+call these names without a root qualifier. specs/namespaces_v0_2.md explicitly
+forbids fallback to unrelated global user functions; Observed_Lookup::functions
+correctly follows namespace scopes. The bootstrap's unresolved-function error is
+raised on an empty lookup set, before callable argument checking. This identifies
+a converter target-qualification candidate, not a need to duplicate facade functions
+in binding metadata or change native namespace semantics. Next: prove a rooted
+mapped call from a namespace on both routes and v0.2 modes, verify converter cache
+invalidation, then separately trace the facades' known body/capability dependencies.
+
+Measured receiver checkpoint `/tmp/compiler-bootstrap-reader-prelower-01`:
+conversion 4.73 s; bootstrap 199.64 s / 455,704 KiB (445.0 MiB) peak RSS /
+434.5 MiB PHP heap. Same diagnostic texts, AST-01 first, no fatal/OOM or emission.
+Evidence: results/compiler_bootstrap_backlog_2026_10_23/reader_prelowering.

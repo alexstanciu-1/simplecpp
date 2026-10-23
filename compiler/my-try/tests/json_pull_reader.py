@@ -79,13 +79,6 @@ with CommandRunner(out / 'logs', ROOT) as runner:
         folder = out / mode
         (folder / 'source').mkdir(parents=True)
         (folder / 'source/main.phs').write_text(source)
-        if mode == 'concrete':
-            # Keep the complete behavioral fixture: this is a recorded blocker,
-            # not a claim that concrete reader execution passes.
-            runner.run(mode + '-publish', ['php8.5', APP / 'tests/async_tasks_publish.php', folder,
-                                           ROOT / 'runtime/metadata/modules', 'json', mode], expected=255)
-            assert 'Concrete shared runtime members with arguments require receiver-check sequencing' in (out / 'logs/concrete-publish.stderr').read_text()
-            return
         if mode == 'legacy':
             project = folder / 'source'
             runner.run(mode + '-init', ['php8.5', ROOT / 'bin/scpp.php', 'init', '--php-profile=strict'], project, cli_reason='CLI fixture setup')
@@ -104,5 +97,5 @@ with CommandRunner(out / 'logs', ROOT) as runner:
                                                            folder / 'published', folder / 'cache'], timeout=300))
             executable = build['executable']
         assert runner.run(mode + '-run', [executable]) == b'0'
-    run_tasks([Task(mode if mode != 'concrete' else 'concrete-known-blocker', lambda mode=mode: check(mode)) for mode in ['legacy', 'ordinary', 'concrete']])
-(out / 'summary.json').write_text(json.dumps({'legacy': 'executed', 'ordinary': 'executed', 'concrete': 'blocked: shared runtime member argument receiver-check sequencing'}, indent=2) + '\n')
+    run_tasks([Task(mode, lambda mode=mode: check(mode)) for mode in ['legacy', 'ordinary', 'concrete']])
+(out / 'summary.json').write_text(json.dumps({'legacy': 'executed', 'ordinary': 'executed', 'concrete': 'executed'}, indent=2) + '\n')

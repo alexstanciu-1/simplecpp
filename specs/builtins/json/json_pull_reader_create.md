@@ -22,7 +22,6 @@ The binding lowers to `scpp::json::pull_reader_create` in
 `modules/json/pull_reader.hpp`, returning the existing `shared_p` handle. It does
 not introduce generic shared-provider constructor support.
 
-Focused binding proof: `compiler/my-try/tests/json_pull_reader.py`. Legacy and
-ordinary v0.2 execute the protocol fixture. Concrete template prelowering currently
-stops at the existing shared-runtime-member argument sequencing limitation; the
-test records that blocker rather than claiming concrete execution succeeds.
+Focused binding proof: `compiler/my-try/tests/json_pull_reader.py`. Legacy, ordinary v0.2
+and concrete template prelowering execute the protocol fixture. Shared receiver
+checks precede argument evaluation, and copying a reader handle preserves identity.

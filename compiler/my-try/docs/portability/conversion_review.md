@@ -17,7 +17,14 @@ This does not establish exhaustive language, lifetime, incremental or performanc
 
 ## Accepted-backlog bootstrap checkpoint — 2026-10-23
 
-The latest [JSON reader checkpoint](../../../../specs/planning/results/compiler_bootstrap_backlog_2026_10_23/json_reader/README.md)
+The latest [shared-receiver checkpoint](../../../../specs/planning/results/compiler_bootstrap_backlog_2026_10_23/reader_prelowering/README.md)
+closes the JSON reader prelowering gap. All fourteen methods now execute on legacy
+and both v0.2 modes. An unrelated provider proves null-check ordering and receiver
+retention during argument-side replacement. Existing runtime-handle regressions pass.
+Bootstrap takes 199.64 s / 445.0 MiB RSS / 434.5 MiB PHP heap, with unchanged
+diagnostic texts and AST-01 first. No fatal/OOM, emission or native compiler rebuild.
+
+The earlier [JSON reader checkpoint](../../../../specs/planning/results/compiler_bootstrap_backlog_2026_10_23/json_reader/README.md)
 adds the shared factory and fourteen method bindings. Legacy/ordinary v0.2 execute
 the protocol; existing PHP/native facade and reader/document regressions pass.
 Concrete prelowering remains blocked on shared runtime member argument sequencing.

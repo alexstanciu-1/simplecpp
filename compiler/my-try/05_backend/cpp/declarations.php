@@ -557,9 +557,10 @@ final class CPP_Declarations
 			$context->next_temporary++;
 			$binding = $receiver->lifetime === method_receiver_lifetime::borrow_inline ? 'auto& ' : 'auto ';
 			$prefix = $binding . $name . ' = ' . $value . ";\n";
-			if (($receiver->lifetime === method_receiver_lifetime::retain_shared) && !$concrete_shared) {
+			if ($receiver->lifetime === method_receiver_lifetime::retain_shared) {
 				// Check before evaluating arguments; the retained handle owns the selected object.
-				$prefix .= '(void)' . $name . ".operator->();\n";
+				$prefix .= $concrete_shared ? 'scpp::internal::require_receiver(' . $name . ");\n"
+					: '(void)' . $name . ".operator->();\n";
 			}
 			$target = weakref_get($facts->target);
 			if ($target instanceof runtime_function_definition) {

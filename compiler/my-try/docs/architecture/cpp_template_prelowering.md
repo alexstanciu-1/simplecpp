@@ -81,6 +81,14 @@ wrappers adapt their payload representation at the compiled boundary, preserving
 null, false, true and error states. Concrete runtime member results use that same
 owned-result transport. Provider-owned nominal handles do not expose their native
 pointee headers to application units; source-owned pointee interfaces are retained.
+Shared runtime instance calls retain the selected handle and invoke a check-only
+`require_receiver` overload before argument evaluation. The opaque representation
+owns this bridge; it delegates to the native handle's checked arrow operation and
+exposes no payload pointer. Selected calls keep their existing ordered snapshots,
+and concrete member adapters forward the prepared arguments. JSON reader and an
+unrelated noncopyable ticket provider have ordinary/concrete execution proofs;
+reference results, variadic transport and borrowed `$this` arguments retain their
+existing exclusions. No source semantic or retained preparation protocol is added.
 Error and mixed storage select concrete boundaries through their core metadata
 recipes. See the [tokenizer/IO verification report](../planning/tokenizer_io.md)
 for the bounded proof scope and remaining acceptance work.

@@ -211,10 +211,21 @@ final class CPP_Opaque_Representation
 		$declaration = $identity_key->declaration_prefix . $declaration . $identity_key->declaration;
 		$implementation .= $identity_key->implementation;
 
+		// A provider payload remains hidden. This check bridge preserves the ordinary
+		// receiver-before-arguments ordering without returning its native pointer.
+		$footer = "}; ";
+		if (Type_Queries::is_nominal_handle($type)
+			&& (Type_Queries::canonical($type)->definition()->origin() === type_definition_origin::runtime)) {
+			$footer .= 'void require_receiver(const ' . $name . "& value); ";
+			$implementation .= 'void require_receiver(const ' . $name
+				. '& value) { (void)unwrap(value).operator->(); }' . "\n";
+		}
+		$footer .= "}\n";
+
 		$declaration .= '~' . $name . "() noexcept;\n";
 		$implementation .= 'static_assert(std::is_nothrow_destructible_v<' . $native . ">);\n"
 			. $name . '::~' . $name . "() noexcept { std::destroy_at(&unwrap(*this)); }\n}\n";
 		return new cpp_specialization_entry($name, 'specializations/' . $name . '.hpp',
-			$declaration, $implementation, $mapping->headers, $aliases, $probe, "}; }\n");
+			$declaration, $implementation, $mapping->headers, $aliases, $probe, $footer);
 	}
 }

@@ -1,0 +1,44 @@
+{
+  "reader": {
+    "legacy": "executed",
+    "ordinary": "executed",
+    "concrete": "executed"
+  },
+  "receiver": [
+    {
+      "name": "retained-ordinary",
+      "seconds": 25.242256624998845,
+      "passed": true
+    },
+    {
+      "name": "retained-concrete",
+      "seconds": 24.741041045999737,
+      "passed": true
+    },
+    {
+      "name": "null-ordinary",
+      "seconds": 25.44458580799983,
+      "passed": true
+    },
+    {
+      "name": "null-concrete",
+      "seconds": 24.632768945000862,
+      "passed": true
+    },
+    {
+      "name": "observed-ordinary",
+      "seconds": 20.735442162000254,
+      "passed": true
+    },
+    {
+      "name": "observed-concrete",
+      "seconds": 24.385202321998804,
+      "passed": true
+    }
+  ],
+  "runtime_handles": {
+    "results": "/tmp/runtime-handles-receiver-01",
+    "preparation_suites_passed": 4,
+    "native_cases_passed": 7
+  }
+}

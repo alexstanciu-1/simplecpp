@@ -81,5 +81,4 @@ schema failures, terminal state, private publication and a shared syntax corpus.
 It uses the current checkout and bypasses legacy STAN for the portable compiler
 fixture. It does not rebuild the my-try compiler. The separate
 `compiler/my-try/tests/json_pull_reader.py` proves registered factory/method bindings
-on legacy and ordinary v0.2; concrete prelowering currently records the shared
-runtime member argument sequencing blocker.
+on legacy, ordinary v0.2 and concrete prelowering.

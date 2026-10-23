@@ -1,0 +1,24 @@
+Command exited with non-zero status 1
+	Command being timed: "php8.5 -d opcache.enable_cli=0 -d xdebug.mode=off -d memory_limit=4G /home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/tools/bootstrap_probe.php /home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try /tmp/compiler-bootstrap-reader-prelower-01/phpp /tmp/compiler-bootstrap-reader-prelower-01/bootstrap.json"
+	User time (seconds): 198.24
+	System time (seconds): 1.39
+	Percent of CPU this job got: 99%
+	Elapsed (wall clock) time (h:mm:ss or m:ss): 3:19.64
+	Average shared text size (kbytes): 0
+	Average unshared data size (kbytes): 0
+	Average stack size (kbytes): 0
+	Average total size (kbytes): 0
+	Maximum resident set size (kbytes): 455704
+	Average resident set size (kbytes): 0
+	Major (requiring I/O) page faults: 0
+	Minor (reclaiming a frame) page faults: 316104
+	Voluntary context switches: 18
+	Involuntary context switches: 399
+	Swaps: 0
+	File system inputs: 0
+	File system outputs: 8
+	Socket messages sent: 0
+	Socket messages received: 0
+	Signals delivered: 0
+	Page size (bytes): 4096
+	Exit status: 1
