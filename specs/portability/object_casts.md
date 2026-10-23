@@ -119,10 +119,12 @@ and `instanceof`, keyed by operation, source type and target payload. Templates 
 runtime type checks remain in middleware; application fragments use concrete calls.
 The input is evaluated once and borrowed through the caller's full expression.
 
-This does not widen v0.2 admission: nullable ownership wrappers, unrelated records,
-nonpolymorphic narrowing, bare null, dynamic targets and weak/unique operands remain
-outside its supported contract. Lock a weak link first. The broader PHP/v0.1 nullable
-carrier is not a claim of v0.2 nullable-wrapper support.
+Nullable class/interface inputs are admitted: instanceof returns false on absence,
+and object_cast fails with invalid_object_cast. The prepared input retains its
+optional source identity; both output modes reuse existing shared-handle transport.
+Unrelated records, nonpolymorphic narrowing, bare null, dynamic targets and weak/unique
+operands remain outside the supported contract. Lock a weak link first. Redundant
+optional wrappers on explicit ownership types remain rejected.
 
 `python3 tests/portability/object_cast_common.py --results FRESH` checks common PHP
 and v0.1 execution, legacy alias emission, ordinary/concrete v0.2 identity and

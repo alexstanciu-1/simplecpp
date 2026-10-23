@@ -17,7 +17,15 @@ This does not establish exhaustive language, lifetime, incremental or performanc
 
 ## Accepted-backlog bootstrap checkpoint — 2026-10-23
 
-The latest [object nullability checkpoint](../../../../specs/planning/results/compiler_bootstrap_backlog_2026_10_23/nullable_objects/README.md)
+The latest [nullable consumer checkpoint](../../../../specs/planning/results/compiler_bootstrap_backlog_2026_10_23/nullable_consumers/README.md)
+admits optional object casts/tests and checked optional key arguments using existing
+runtime and prelowered protocols. PHP/legacy parity, both-mode focused tests and 33
+native cast regressions pass. Bootstrap takes 200.43 s / 474.8 MiB RSS / 465 MiB PHP
+heap. Object-operation and indexed-key diagnostics disappear; none are added. Class-self
+retention is first and remains separately gated. No fatal/OOM, emission or native
+compiler rebuild. Required initialization and remaining consumers are still blocking.
+
+The earlier [object nullability checkpoint](../../../../specs/planning/results/compiler_bootstrap_backlog_2026_10_23/nullable_objects/README.md)
 preserves source Node/?Node identity and composes checked presence with ancestry.
 Both output modes pass value/reference/receiver/directional-adaptation and retained
 proofs; PHP/legacy parity and 86 adjacent native regression programs pass. Bootstrap

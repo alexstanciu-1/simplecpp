@@ -1,0 +1,7 @@
+{
+  "removed": [
+    "Object type operation requires a shared handle",
+    "S2S indexed access keys require int, string, shared record or mixed"
+  ],
+  "added": []
+}

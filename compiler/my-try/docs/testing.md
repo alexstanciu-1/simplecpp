@@ -106,6 +106,14 @@ close required-field/local initialization or every optional consumer. From the r
 root, `python3 tests/portability/nullable_objects.py --results FRESH` compares PHP,
 legacy and both v0.2 native routes using supported nullable local annotations.
 
+`python3 tests/nullable_keys.py --results FRESH` proves checked optional key arguments
+for reads/writes, nested paths, probes and removal, including absence before write
+value evaluation. Both output modes run, alongside existing key-domain rejection
+checks. From the repo root, `python3 tests/portability/object_cast_common.py --results FRESH`
+includes optional class/interface inputs, absent tests/casts and runtime mismatch,
+with PHP/legacy parity and both native modes. `records.py --suite object_types`
+retains the broader object-type regression corpus.
+
 `python3 tests/nullable_values.py --results FRESH` checks capability-based optional
 vectors, hashes and an unfamiliar registered nested provider in both output modes.
 It covers exact wrapping/extraction, independent copies, null defaults, lazy fallback,

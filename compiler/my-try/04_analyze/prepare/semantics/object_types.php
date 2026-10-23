@@ -13,12 +13,15 @@ final class Object_Type_Preparation
 		if (!($target_owner instanceof collected_record) && !($target_owner instanceof collected_interface)) {
 			throw new \RuntimeException('Object type target must be a source class, struct or interface');
 		}
-		$role = Ownership_Conversions::role($value->type);
+		// These operations already test presence: instanceof returns false and the
+		// checked cast fails on absence. Interpret ownership without erasing the operand's type.
+		$observed = Type_Queries::nullable_handle_payload($value->type) ?? $value->type;
+		$role = Ownership_Conversions::role($observed);
 		if ($role === null) { throw new \RuntimeException('Object type operation requires a shared handle'); }
 		if ($role->ownership_family() !== ownership_kind::shared) {
 			throw new \RuntimeException('Object type operation requires a shared handle');
 		}
-		$source = Ownership_Conversions::payload($value->type);
+		$source = Ownership_Conversions::payload($observed);
 		self::require_relationship($source, $target, $context);
 		$facts = new prepared_object_type();
 		$facts->operation = $syntax->operation;

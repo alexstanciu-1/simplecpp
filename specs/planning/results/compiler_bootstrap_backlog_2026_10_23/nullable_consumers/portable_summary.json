@@ -1,0 +1,8 @@
+{
+  "passed": true,
+  "native_cases": 10,
+  "legacy": true,
+  "php": true,
+  "nullable_object_inputs": true,
+  "native_compiler_rebuilt": false
+}

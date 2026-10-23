@@ -471,9 +471,12 @@ a cast possible. Unsupported relationships and nonpolymorphic narrowing fail dur
 preparation even when the input is empty. Ancestry, finality and polymorphism are observed
 dependencies, so edits invalidate consumers.
 
+Optional class/interface operands use the same presence-aware operations: instanceof
+returns false on absence, while object_cast fails with invalid_object_cast. Their
+optional semantic identity is retained independently of shared storage representation.
 Unrelated-record casts, unique/weak handles, inline values, bare-null operands,
-dynamic targets, automatic flow narrowing and nullable ownership wrappers are outside
-this bounded slice. Runtime mismatch is a valid value-dependent failure, not a reason
+dynamic targets and automatic flow narrowing are outside this bounded slice. Redundant
+optional wrappers on explicit ownership types remain rejected. Runtime mismatch is a valid value-dependent failure, not a reason
 to reject a statically admissible base-to-derived operation.
 
 ## Weak derived/base upcasts

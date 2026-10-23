@@ -24,10 +24,8 @@ final class Indexing_Preparation
 		}
 		$signature = self::signature($receiver, $declaration, $context);
 		Capability_Preparation::require_copy($signature->value, $context);
-		self::require_key_domain($operands[1], $context);
 		$decision = self::decision($receiver, $signature, $declaration->operation());
-		$decision->operands[] = Conversion_Preparation::decide($operands[1], $signature->key, conversion_context::argument,
-			new Conversion_Relationships($context));
+		$decision->operands[] = self::key_conversion($operands[1], $signature->key, $context);
 		return $decision;
 	}
 
@@ -133,9 +131,7 @@ final class Indexing_Preparation
 			{
 				$key_node /** expression_node */ = $target->index;
 				$key = Expression_Preparation::prepare($key_node, $context);
-				self::require_key_domain($key->type, $context);
-				$decision->operands[] = Conversion_Preparation::decide($key->type, $signature->key, conversion_context::argument,
-					new Conversion_Relationships($context));
+				$decision->operands[] = self::key_conversion($key->type, $signature->key, $context);
 			}
 			$facts->decision = $decision;
 			$facts->nested_type = $signature->nested;
@@ -168,12 +164,10 @@ final class Indexing_Preparation
 			}
 			$key_node /** expression_node */ = $index->index;
 			$key = Expression_Preparation::prepare($key_node, $context);
-			self::require_key_domain($key->type, $context);
 			$step = new prepared_index_path_step();
 			$step->syntax = $index;
 			$step->element_type = $element;
-			$step->key_conversion = Conversion_Preparation::decide($key->type, $signature->key, conversion_context::argument,
-				new Conversion_Relationships($context));
+			$step->key_conversion = self::key_conversion($key->type, $signature->key, $context);
 			$path /** Storage<prepared_index_path_step> */ = $facts->path;
 			$path->append($step);
 			return $step->element_type;
@@ -215,6 +209,16 @@ final class Indexing_Preparation
 			return;
 		}
 		throw new \RuntimeException('S2S indexed storage requires local, parameter or field storage');
+	}
+
+	/** Optional inputs cross the same checked value boundary as a typed key argument. */
+	public static function key_conversion(canonical_type_use $source, canonical_type_use $target,
+		preparation_context $context): conversion_decision
+	{
+		$payload = Nullable_Conversions::payload($source);
+		self::require_key_domain($payload ?? $source, $context);
+		return Conversion_Preparation::decide($source, $target, conversion_context::argument,
+			new Conversion_Relationships($context));
 	}
 
 	/** No PHP bool/float/null key coercion; unknown mixed payloads remain runtime checked. */

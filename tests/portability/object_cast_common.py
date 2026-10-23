@@ -24,8 +24,8 @@ with CommandRunner(out/'logs',ROOT) as r:
  'identity':(phs,expected,None),
  'weak':('class P {public int $n=7;} $p=new P();$w=weak($p);$held=object_cast(lock($w),P::class);$held->n=9;echo $p->n;',b'9',None),
  'struct':('interface I {function read():int;} struct B implements I {int $n=7;function read():int{return $this->n;}} struct C extends B {} $c shared<C> =new C();$b shared<B> =$c;$out=object_cast($b,C::class);$out->n=9;echo $c->n, ":", $b instanceof C ? 1 : 0;',b'9:1',None),
- 'empty':('class P {} $p P; $out=object_cast($p,P::class);',b'','Object cast requires a present compatible object'),
- 'mismatch':('interface I {} class A implements I {} class B implements I {} $a I=new A();$out=object_cast($a,B::class);',b'','Object cast requires a present compatible object'),
+ 'empty':('class P {} $p ?P = null; $out=object_cast($p,P::class);',b'','Object cast requires a present compatible object'),
+ 'mismatch':('interface I {} class A implements I {} class B implements I {} $a ?I=new A();$out=object_cast($a,B::class);',b'','Object cast requires a present compatible object'),
  }
  def check(name,mode,data):
   src,stdout,error=data;folder=out/(name+'-'+mode);(folder/'source').mkdir(parents=True);(folder/'source/main.phs').write_text(src)
@@ -39,4 +39,4 @@ with CommandRunner(out/'logs',ROOT) as r:
  contracts=out/'contracts';contracts.mkdir()
  tasks.append(Task('semantic-contracts',lambda:r.run('semantic-contracts',['php8.5',APP/'tests/object_types.php',contracts])))
  run_tasks(tasks,jobs=12)
-(out/'result.json').write_text(json.dumps({'passed':True,'native_cases':10,'legacy':True,'php':True,'semantics_unchanged':True,'native_compiler_rebuilt':False},indent=2))
+(out/'result.json').write_text(json.dumps({'passed':True,'native_cases':10,'legacy':True,'php':True,'nullable_object_inputs':True,'native_compiler_rebuilt':False},indent=2))

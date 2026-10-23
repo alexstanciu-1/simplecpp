@@ -1,0 +1,32 @@
+[
+  {
+    "name": "values-ordinary",
+    "passed": true,
+    "seconds": 22.13034696700197
+  },
+  {
+    "name": "values-concrete",
+    "passed": true,
+    "seconds": 26.76941326999804
+  },
+  {
+    "name": "missing-ordinary",
+    "passed": true,
+    "seconds": 21.435417466003855
+  },
+  {
+    "name": "missing-concrete",
+    "passed": true,
+    "seconds": 23.347208111998043
+  },
+  {
+    "name": "indexing",
+    "passed": true,
+    "seconds": 2.0067876999964938
+  },
+  {
+    "name": "contracts",
+    "passed": true,
+    "seconds": 0.7543899189986405
+  }
+]

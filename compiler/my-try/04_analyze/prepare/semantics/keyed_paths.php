@@ -56,7 +56,6 @@ final class Keyed_Path_Preparation
 		}
 		$key_syntax /** expression_node */ = $syntax->index;
 		$key = Expression_Preparation::prepare($key_syntax, $context);
-		Indexing_Preparation::require_key_domain($key->type, $context);
 		$key_target = $signature->key;
 		if (Boxed_Conversions::is_mixed($key->type)) {
 			// Preserve unknown key kinds for nonthrowing probes / checked removal.
@@ -65,8 +64,7 @@ final class Keyed_Path_Preparation
 		$step = new prepared_keyed_step();
 		$step->syntax = $syntax;
 		$step->element_type = $element;
-		$step->key_conversion = Conversion_Preparation::decide($key->type, $key_target, conversion_context::argument,
-			new Conversion_Relationships($context));
+		$step->key_conversion = Indexing_Preparation::key_conversion($key->type, $key_target, $context);
 		$steps /** Storage<prepared_keyed_step> */ = $path->steps;
 		$steps->append($step);
 		return $element;

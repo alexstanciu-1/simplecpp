@@ -70,6 +70,17 @@ defines lazy keys and safe prefix re-resolution; the [removal contract](array_se
 defines no-op versus error behavior. Vector-element removal, bare-variable unset,
 properties, multiple operands and weak/cross-family paths remain gated.
 
+## Optional key inputs
+
+A typed optional key expression uses the existing checked by-value argument conversion
+into the selected operation's required key type. Its payload must satisfy the existing
+key-domain rules, and any object ancestry conversion must be independently admitted.
+Absence fails before that indexed step or a write's value expression; it does not
+become a null key. This applies to reads, writes, nested paths, probes and removal,
+while preserving lazy probe-key evaluation. It does not admit nullable stored key
+types or PHP bool/float/null key coercion. The focused nullable_keys.py proof covers
+ordinary and prelowered execution, identity upcasts and failure ordering.
+
 ## Runtime and legacy boundary
 
 The existing [runtime string-index reservation](../runtime/specs/spec.md) remains
