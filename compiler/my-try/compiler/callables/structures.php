@@ -3,6 +3,8 @@
 /* Callable contracts have no source-storage requirement or backend spelling. */
 namespace scpp\compiler;
 
+enum task_transfer_policy { case none; case isolated_transfer; case joined_shared; }
+
 /** Lookup identity need not have an argument-independent signature. */
 interface callable_definition_i extends preparation_lookup_candidate_i {}
 
@@ -121,7 +123,7 @@ final class runtime_application_pattern extends runtime_type_pattern
 final class runtime_pattern_parameter
 {
 	public bool $requires_copy = false;
-	public bool $requires_transfer = false;
+	public task_transfer_policy $transfer_policy = task_transfer_policy::none;
 	public bool $variadic = false;
 	public ?prepared_literal_parameter_default $default_value = null;
 	public function __construct(public runtime_type_pattern $type, public passing_mode $mode,
@@ -164,6 +166,7 @@ final class runtime_generic_contract
 {
 	public int $owner_parameter_count = 0;
 	public int $type_parameter_count = 0;
+	public task_transfer_policy $transfer_policy = task_transfer_policy::isolated_transfer;
 	public array $transfer_positions /** vector<int> */ = [];
 	public Storage $replacement_results /** Storage<runtime_replacement_requirement> */;
 	public Storage $boxed_results /** Storage<runtime_boxed_result_requirement> */;
@@ -194,7 +197,7 @@ final class callable_parameter
 {
 	/** Runtime provider requires copying even when the argument is moved. */
 	public bool $requires_copy = false;
-	public bool $requires_transfer = false;
+	public task_transfer_policy $transfer_policy = task_transfer_policy::none;
 	public canonical_type_use $type;
 	public passing_mode $mode;
 	public storage_access $access = storage_access::writable;

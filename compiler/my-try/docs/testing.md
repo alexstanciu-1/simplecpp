@@ -61,8 +61,12 @@ passing this suite does not prove source task creation or callback transfer.
 permissions through ordinary and concrete erasure, nested callable captures,
 parameter/return copies and provider adaptation. An empty nested callable denies
 both permissions. Existing isolated-transfer rejection and retained repair remain
-controls. Permission transport is not proof of joined task API admission or native
-compiler concurrency; those require TASK-01 metadata/payload integration and TASK-02.
+controls. `task_joined_shared.py --results FRESH` additionally verifies joined API
+shared input/result identity and synchronized updates in both modes, with isolated
+payload and borrowed capture rejections. From the repository root,
+`tests/portability/retained_type_lookup.py --results FRESH --mode ordinary --mode concrete`
+executes the extracted production lookup helper under the admitted joined API.
+These checks do not rebuild the compiler natively or prove whole-compiler race freedom.
 
 `python3 tools/bootstrap_probe.py --results FRESH` (paths relative to compiler/my-try)
 snapshots/converts the compiler plus existing native proof driver, assembles framework

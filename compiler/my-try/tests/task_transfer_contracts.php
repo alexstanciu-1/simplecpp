@@ -3,6 +3,24 @@ namespace scpp\compiler;
 require_once dirname(__DIR__) . '/boot.php';
 require_once __DIR__ . '/cpp_probe.php';
 $schema = json_decode(file_get_contents($argv[1] . '/task_transfer_probe.json'), true);
+foreach (['unknown', 'conflict', 'reference', 'variadic', 'default', 'scalar', 'nested'] as $case) {
+	$bad = $schema;
+	$parameter = $bad['functions'][1]['parameters'][0];
+	unset($parameter['requires_transfer']);
+	$parameter['transfer_policy'] = 'joined_shared';
+	if ($case === 'unknown') { $parameter['transfer_policy'] = 'unrestricted'; }
+	elseif ($case === 'conflict') { $parameter['requires_transfer'] = true; }
+	elseif ($case === 'reference') { $parameter['passing'] = 'reference'; }
+	elseif ($case === 'variadic') { $parameter['variadic'] = true; }
+	elseif ($case === 'default') { $parameter['default'] = ['int'=>0]; }
+	elseif ($case === 'scalar') { $parameter['type'] = 'int'; }
+	else { $parameter['type']['callable']['parameters'] = [$parameter]; }
+	$bad['functions'][1]['parameters'][0] = $parameter;
+	$failed = false;
+	try { Runtime_Catalog_Reader::decode(json_encode($bad), 'invalid-joined.json'); }
+	catch (\RuntimeException $error) { $failed = true; }
+	if (!$failed) { throw new \LogicException('Invalid joined policy accepted: ' . $case); }
+}
 foreach (['reference', 'variadic', 'default', 'scalar', 'nested', 'non_boolean'] as $case) {
 	$bad = $schema;
 	$parameter = $bad['functions'][1]['parameters'][0];

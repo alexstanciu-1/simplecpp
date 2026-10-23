@@ -63,10 +63,18 @@ final class Transfer_Preparation
 		throw new \RuntimeException('Boxed task result must be void, a canonical scalar or the matching boxed family');
 	}
 
-	public static function require_payload(canonical_type_use $type): void
+	public static function permits(capture_transfer $permission, task_transfer_policy $policy): bool
+	{
+		if ($policy === task_transfer_policy::none) { return false; }
+		if ($permission === capture_transfer::owned_value) { return true; }
+		return ($policy === task_transfer_policy::joined_shared) && ($permission === capture_transfer::shared_value);
+	}
+
+	public static function require_payload(canonical_type_use $type,
+		task_transfer_policy $policy): void
 	{
 		if (Type_Queries::canonical($type)->family() === type_family::no_value) { return; }
-		if (self::classify($type) !== capture_transfer::owned_value) {
+		if (!self::permits(self::classify($type), $policy)) {
 			throw new \RuntimeException('Task payload type is not transferable');
 		}
 	}

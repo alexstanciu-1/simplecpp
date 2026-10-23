@@ -1145,3 +1145,26 @@ Bootstrap /tmp/compiler-bootstrap-task-permissions-01: 75.94 s wall /
 342272 KiB RSS (334.3 MiB) / 312 MiB PHP heap. Same first required-file initialization
 failure and aggregate diagnostic texts as retained_lookup. No fatal/OOM, emission
 or native compiler rebuild.
+
+## TASK-01 API policy integration and TASK-02 execution closure
+
+Registered parameter contracts now carry task_transfer_policy instead of a Boolean.
+Legacy requires_transfer metadata maps to isolated admission; explicit transfer_policy
+selects isolated_transfer or joined_shared. Generic payload requirements independently
+carry their policy. Registration, exact callable contracts, substitution, preparation
+and emitted guards preserve it. Only the unordered joined API selects shared admission
+in the production catalog. No scheduler or synchronization redesign.
+
+23 callback tasks, six shared payload/identity/rejection tasks, extended metadata
+rejection and six existing submission/regression tasks pass. The production extracted
+retained lookup helper now executes in ordinary and concrete v0.2 modes as well as PHP.
+Together with prior legacy overlap/TSAN and unlocked race-control evidence, this closes
+TASK-02's bounded repair. TASK-01 still needs explicit shared-owner lifetime and
+worker/publisher failure proof closure; no whole-compiler race-freedom claim.
+
+Initial bootstrap conversion rejected unnecessary enum parameter defaults in the new
+internal methods; all callers already supplied policy, so defaults were removed.
+Retry /tmp/compiler-bootstrap-task-policy-02: 74.18 s wall / 341684 KiB RSS
+(333.7 MiB) / 312 MiB PHP heap. First required-file initialization blocker and aggregate
+diagnostic texts unchanged. No fatal/OOM, emission or native compiler rebuild.
+See results/compiler_bootstrap_backlog_2026_10_23/task_policy/README.md.

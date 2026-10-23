@@ -1,0 +1,27 @@
+{
+  "passed": true,
+  "cases": [
+    "joined-execute",
+    "reject-joined-empty",
+    "joined-permission",
+    "joined-intersection",
+    "generic",
+    "reject-order",
+    "containers",
+    "owned",
+    "shared",
+    "nested",
+    "reject-transfer",
+    "ordinary-joined-execute",
+    "ordinary-reject-joined-empty",
+    "ordinary-joined-permission",
+    "ordinary-joined-intersection",
+    "ordinary-generic",
+    "ordinary-reject-order",
+    "ordinary-containers",
+    "ordinary-owned",
+    "ordinary-shared",
+    "ordinary-nested",
+    "ordinary-reject-transfer"
+  ]
+}

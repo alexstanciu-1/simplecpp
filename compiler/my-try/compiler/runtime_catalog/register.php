@@ -293,8 +293,8 @@ final class Runtime_Catalog_Registration
 		}
 		$result->mode = $spec->mode;
 		$result->requires_copy = $spec->requires_copy;
-		$result->requires_transfer = $spec->requires_transfer;
-		if ($result->requires_transfer && !($registry->type($result->type->type_id())->definition() instanceof callable_type_definition)) {
+		$result->transfer_policy = $spec->transfer_policy;
+		if (($result->transfer_policy !== task_transfer_policy::none) && !($registry->type($result->type->type_id())->definition() instanceof callable_type_definition)) {
 			throw new \RuntimeException('Runtime transfer requirements need callable parameters');
 		}
 		$result->access = $spec->access;

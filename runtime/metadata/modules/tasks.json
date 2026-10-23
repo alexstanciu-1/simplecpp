@@ -1389,6 +1389,7 @@
         "R",
         "P"
       ],
+      "transfer_policy": "joined_shared",
       "transfer_types": [
         "T",
         "R"
@@ -1430,7 +1431,7 @@
             }
           },
           "passing": "value",
-          "requires_transfer": true
+          "transfer_policy": "joined_shared"
         },
         {
           "name": "publish",
@@ -1451,7 +1452,7 @@
             }
           },
           "passing": "value",
-          "requires_transfer": true
+          "transfer_policy": "joined_shared"
         }
       ],
       "returns": "int"

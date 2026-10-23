@@ -1246,8 +1246,10 @@ before source-local reconciliation. Standalone lookup remains direct. No new ret
 state, runtime synchronization protocol or task semantic permission. PHP identity,
 new registration/failure/retry and standalone regressions pass. Extracted-helper
 legacy native overlap/ThreadSanitizer passes; removing only reader synchronization
-reproduces a data race. Both v0.2 modes reject shared callback captures, so TASK-02
-remains partial pending TASK-01. See
+reproduces a data race. The subsequent TASK-01 policy integration admits the shared
+callbacks and both v0.2 extracted-helper executions pass in
+/tmp/task-policy-retained-lookup-01. The bounded lookup repair is complete; this
+does not establish whole-compiler concurrency safety. See the initial
 [evidence](../../../../specs/planning/results/compiler_bootstrap_backlog_2026_10_23/retained_lookup/README.md).
 
 A first native fixture silently lost its callback for-loop in legacy emission; its

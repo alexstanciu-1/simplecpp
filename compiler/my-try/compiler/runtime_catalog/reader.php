@@ -473,7 +473,7 @@ final class Runtime_Catalog_Reader
 				$reader->begin_array();
 				while ($reader->next_element()) {
 					$parameter = self::parameter($reader);
-					if (($parameter->default_value !== null) || ($parameter->mode === passing_mode::observation) || $parameter->requires_copy || $parameter->requires_transfer) {
+					if (($parameter->default_value !== null) || ($parameter->mode === passing_mode::observation) || $parameter->requires_copy || ($parameter->transfer_policy !== task_transfer_policy::none)) {
 						$reader->reject('Callable type inputs do not support defaults, observation or provider requirements');
 					}
 					$inputs->append($parameter);
@@ -487,11 +487,20 @@ final class Runtime_Catalog_Reader
 	}
 
 	/** Decode explicit passing intent without inventing defaults or inferred types. */
+	private static function transfer_policy(\scpp\Json_Reader $reader): task_transfer_policy
+	{
+		$name = $reader->read_string();
+		if ($name === 'isolated_transfer') { return task_transfer_policy::isolated_transfer; }
+		if ($name === 'joined_shared') { return task_transfer_policy::joined_shared; }
+		throw new \RuntimeException('Unknown task transfer policy: ' . $name);
+	}
+
 	private static function parameter(\scpp\Json_Reader $reader): runtime_parameter_spec
 	{
 		$result = new runtime_parameter_spec();
 		$typed = false;
 		$passing = false;
+		$transfer_declared = false;
 		$reader->begin_object();
 		while ($reader->next_property())
 		{
@@ -505,7 +514,12 @@ final class Runtime_Catalog_Reader
 			}
 			elseif ($key === 'default') { $result->default_value = self::default_spec($reader); }
 			elseif ($key === 'requires_copy') { $result->requires_copy = $reader->read_boolean(); }
-			elseif ($key === 'requires_transfer') { $result->requires_transfer = $reader->read_boolean(); }
+			elseif (($key === 'requires_transfer') || ($key === 'transfer_policy')) {
+				if ($transfer_declared) { $reader->reject('Duplicate or conflicting transfer policy'); }
+				$transfer_declared = true;
+				$result->transfer_policy = $key === 'transfer_policy' ? self::transfer_policy($reader)
+					: ($reader->read_boolean() ? task_transfer_policy::isolated_transfer : task_transfer_policy::none);
+			}
 			elseif ($key === 'variadic') { $result->variadic = $reader->read_boolean(); }
 			elseif ($key === 'passing')
 			{
@@ -540,7 +554,7 @@ final class Runtime_Catalog_Reader
 		if ($result->requires_copy && (($result->mode !== passing_mode::value) || $result->variadic)) {
 			$reader->reject('Runtime copy requirements need fixed value parameters');
 		}
-		if ($result->requires_transfer && (($result->mode !== passing_mode::value) || $result->variadic
+		if (($result->transfer_policy !== task_transfer_policy::none) && (($result->mode !== passing_mode::value) || $result->variadic
 			|| ($result->type->callable === null) || ($result->default_value !== null))) {
 			$reader->reject('Runtime transfer requirements need fixed callable value parameters without defaults');
 		}
@@ -605,6 +619,7 @@ final class Runtime_Catalog_Reader
 				$reader->begin_array();
 				while ($reader->next_element()) { $relations->append(self::replacement_result($reader)); }
 			}
+			elseif ($key === 'transfer_policy') { $result->transfer_policy = self::transfer_policy($reader); }
 			elseif ($key === 'transfer_types') {
 				$reader->begin_array();
 				while ($reader->next_element()) { $result->transfer_types[] = self::name($reader); }
@@ -634,6 +649,9 @@ final class Runtime_Catalog_Reader
 		}
 		if (($result->identity === '') || ($result->name === '') || !$returns || !$parameters) {
 			$reader->reject('Missing runtime function field');
+		}
+		if (($result->transfer_policy === task_transfer_policy::joined_shared) && (q_count($result->transfer_types) === 0)) {
+			$reader->reject('Joined payload transfer policy requires transfer_types');
 		}
 		if ((q_count($result->transfer_types) > 0) && (q_count($result->type_parameters) === 0)) {
 			$reader->reject('Transfer type requirements need a generic function');

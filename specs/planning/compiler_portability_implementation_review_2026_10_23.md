@@ -272,5 +272,6 @@ the user at goal completion. Reservation direct field initialization remains ope
 TASK-02 implementation: collector lookup now reuses publication synchronization,
 with invocation-local results and standalone bypass. PHP parser identity/failure
 proofs and extracted-helper legacy overlap/ThreadSanitizer pass; the reader-unlocked
-negative control reports a race. Both v0.2 executions still await TASK-01 shared
-callback admission. Do not call the task closed or infer whole-parser race freedom.
+negative control reports a race. Both v0.2 extracted-helper executions now pass
+after TASK-01 policy integration. This closes the bounded lookup repair, without
+claiming whole-parser race freedom. TASK-01 shared-owner lifetime/failure proofs remain.

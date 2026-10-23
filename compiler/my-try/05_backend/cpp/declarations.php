@@ -711,7 +711,11 @@ final class CPP_Declarations
 			$qualifier = ($read_only_input || $borrow) ? 'const ' : '';
 			$argument_requirement = self::signature_requirement(false, ($boundary === value_boundary_operation::bind_reference) || $borrow);
 			$text .= "\t" . $qualifier . self::type_for($argument_type, $context, $argument_requirement) . $reference . ' ' . $name . ' = ' . $value . ";\n";
-			if ($parameter->requires_transfer) { $transfer_checks .= $name . ".require_transfer();\n"; }
+			if ($parameter->transfer_policy !== task_transfer_policy::none) {
+				$policy = $parameter->transfer_policy === task_transfer_policy::joined_shared ? 'joined_shared' : 'isolated_transfer';
+				$context->headers['scpp/task_permissions.hpp'] = true;
+				$transfer_checks .= $name . '.require_transfer(scpp::task_policy::' . $policy . ");\n";
+			}
 			if ($transport !== null) { $physical_arguments[] = $name; }
 			if ($boundary === value_boundary_operation::consume_value) {
 				$name = self::move($name, $argument_type, $context, $read_only_input);

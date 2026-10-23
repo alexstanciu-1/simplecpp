@@ -31,6 +31,7 @@ final class Runtime_Catalog_Patterns
 			$positions[$name] = q_count($positions);
 		}
 		$result = new runtime_generic_contract();
+		$result->transfer_policy = $spec->transfer_policy;
 		$result->type_parameter_count = q_count($positions);
 		$result->owner_parameter_count = $owner_count;
 		$parameters /** Storage<runtime_pattern_parameter> */ = $result->parameters;
@@ -67,7 +68,7 @@ final class Runtime_Catalog_Patterns
 			$parameter = new runtime_pattern_parameter($pattern, $input->mode, $input->access);
 			$parameter->variadic = $input->variadic;
 			$parameter->requires_copy = $input->requires_copy;
-			$parameter->requires_transfer = $input->requires_transfer;
+			$parameter->transfer_policy = $input->transfer_policy;
 			if ($input->default_value !== null) {
 				if ($input->mode !== passing_mode::value) { throw new \RuntimeException('Runtime defaults require value parameters'); }
 				$default_spec /** runtime_default_spec */ = $input->default_value;
@@ -197,7 +198,7 @@ final class Runtime_Catalog_Patterns
 			$parameter = new runtime_pattern_parameter($pattern, $input->mode, $input->access);
 			$parameter->variadic = $input->variadic;
 			$parameter->requires_copy = $input->requires_copy;
-			$parameter->requires_transfer = $input->requires_transfer;
+			$parameter->transfer_policy = $input->transfer_policy;
 			$parameters->append($parameter);
 		}
 		if ($closed) { return new runtime_concrete_pattern(Runtime_Catalog_Registration::type($spec, $types)); }

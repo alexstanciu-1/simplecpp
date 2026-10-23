@@ -19,6 +19,23 @@ must prevent concurrent runs from sharing an unprotected destination. Worker or
 publisher failure joins all started work before rethrowing; already published
 results remain visible. No publication-order or rollback guarantee is made.
 
+### v0.2 shared-object admission
+
+Input/result values and the work/publish callback environments may retain source
+class/interface shared handles. The joined call keeps these owners alive through
+completion or failure. Both callbacks may execute on worker threads; serialized
+publication does not imply execution on the caller thread. Shared reads and writes
+must obey programmer-owned synchronization: use task_synchronize for access that
+must serialize with publication, or another valid application protocol. No automatic
+race-freedom analysis is promised. Arbitrary borrowed captures, weak/unique handles
+and runtime resource handles do not gain task admission.
+
+This is scoped to the joined unordered API. Passing a callback here does not upgrade
+its permission for task_run, task_start or other isolated-transfer consumers.
+Ordinary invocation and synchronous task_synchronize retain their existing lifetime
+and context rules. PHP's sequential implementation preserves required behavior,
+without promising identical scheduling or cleanup timing.
+
 Placement: runtime/include/modules/tasks/tasks.hpp, beside the existing task family.
 Implementation reuses task_run worker lifecycle and adds one batch-local mutex;
 no new thread pool. Generic callbacks require a header template. One instantiation

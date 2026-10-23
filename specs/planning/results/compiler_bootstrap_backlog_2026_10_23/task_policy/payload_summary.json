@@ -1,0 +1,12 @@
+{
+  "passed": true,
+  "cases": [
+    "identity",
+    "isolated-payload",
+    "joined-borrow"
+  ],
+  "modes": [
+    "ordinary",
+    "concrete"
+  ]
+}

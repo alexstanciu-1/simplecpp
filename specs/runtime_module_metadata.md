@@ -181,8 +181,18 @@ This does not satisfy `requires_transfer`, which retains its isolated-transfer
 meaning. Nested callable environments intersect their permissions; erasure, copies
 and provider adaptation must preserve the full result without upgrading it.
 Runtime resource handles, unique/weak ownership and arbitrary borrowed captures
-gain no permission from this distinction. API metadata admission for joined shared
-tasks is a separate integration step; carrier support alone does not enable it.
+gain no permission from this distinction.
+
+A fixed callable parameter may instead declare `"transfer_policy": "joined_shared"`
+or `"transfer_policy": "isolated_transfer"`. The latter has the same requirement as
+`requires_transfer: true`. Declaring both forms rejects, including an explicit false
+legacy flag. Unknown policies reject. The same fixed-value/no-default restrictions
+apply; these requirements cannot appear inside structural callable signatures.
+The joined policy admits the supported owned environments and source shared-object
+environments. It does not inspect shared-object fields for whole-program race freedom.
+The API must own a joined lifetime; metadata is a trusted provider contract, not a
+way to turn a detached operation into a joined one. Work and publish parameters of
+task_run_publish_unordered select joined_shared; other task APIs remain isolated.
 
 ### Bounded generic payload transfer and result mapping
 
@@ -190,8 +200,13 @@ A generic function may list inferred parameter names in `transfer_types`. Shared
 preparation checks the selected bindings before materializing the result. This is
 a requirement on the selected contract, not an overload ranking rule. Owned
 scalar/string/enum values and recursively owned vector/hash and nullable/Result
-payloads qualify under the bounded transfer classification; shared objects,
-resources, callable payloads and unclassified boxed payloads reject. Void may be
+payloads qualify under the default isolated transfer classification. A function
+with transfer_types may set `"transfer_policy": "joined_shared"` to additionally
+admit source shared-object handles and their supported container/wrapper composition.
+The function policy selects payload admission, independently of each callback
+parameter's requirement. Resources, callable payloads and unclassified boxed
+payloads still reject. A joined payload policy without transfer_types rejects.
+Void may be
 listed for a callback result, since it transfers no value. These requirements do
 not authorize arbitrary callback captures or general thread-safe body execution.
 

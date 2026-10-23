@@ -25,8 +25,12 @@ module['functions'].append({'id':'probe.generic','name':'probe_generic','type_pa
 module['cpp'].append({'id':'probe.generic','symbol':'task_transfer_probe::generic','header':str(APP/'tests/fixtures/task_transfer/provider.hpp')})
 module['functions'].append({'id':'probe.after','name':'probe_after','parameters':[{'name':'callback','type':{'callable':{'parameters':[],'returns':'int'}},'passing':'value','requires_transfer':True},{'name':'marker','type':'int','passing':'value'}],'returns':'int'})
 module['cpp'].append({'id':'probe.after','symbol':'task_transfer_probe::after','header':str(APP/'tests/fixtures/task_transfer/provider.hpp')})
+module['functions'].append({'id':'probe.joined','name':'probe_joined_execute','parameters':[{'name':'callback','type':{'callable':{'parameters':[],'returns':'int'}},'passing':'value','transfer_policy':'joined_shared'}],'returns':'int'})
+module['cpp'].append({'id':'probe.joined','symbol':'task_transfer_probe::joined_execute','header':str(APP/'tests/fixtures/task_transfer/provider.hpp')})
 (metadata/'task_transfer_probe.json').write_text(json.dumps(module,indent=2)+'\n')
 cases = {
+    'joined-execute': ('class Box{public int $n=7;}$b=new Box();echo probe_joined_execute(function() use ($b):int{return $b->n;});$f function<int()> = function() use ($b):int{return $b->n;};echo probe_joined_execute($f),probe_allowed($f),$f();', '777'),
+    'reject-joined-empty': ('$f function<int()>;probe_joined_execute($f);', ''),
     'joined-permission': ('function pass(function<int()> $f):function<int()>{return $f;}class Box{public int $n=7;}$b=new Box();$f function<int()> = function() use ($b):int{return $b->n;};$g function<int()> = function() use ($f):int{return $f();};echo probe_joined_allowed(pass($g)),probe_allowed(pass($g)),$g();', '17'),
     'joined-intersection': ('class Box{public int $n=7;}$b=new Box();$f function<int()> = function() use ($b):int{return $b->n;};$empty function<int()>;$g function<int()> = function() use ($f,$empty):int{return $f();};echo probe_joined_allowed($g),probe_allowed($g),$g();', '7'),
     'generic': ('echo probe_generic(fn():string=>"owned");', 'owned'),

@@ -26,4 +26,7 @@ template <typename Callback> auto generic(Callback callback) {
 template <typename Callback> scpp::int_t<> after(Callback callback, scpp::int_t<>) {
  return execute(callback);
 }
+template <typename Callback> scpp::int_t<> joined_execute(Callback callback) {
+ return execute(callback);
+}
 }

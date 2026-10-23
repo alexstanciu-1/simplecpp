@@ -1,0 +1,10 @@
+{
+  "passed": true,
+  "cases": [
+    "worker-error",
+    "erased-capture",
+    "unordered-empty",
+    "publisher-context-guard",
+    "unordered"
+  ]
+}

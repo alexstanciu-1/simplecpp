@@ -275,7 +275,7 @@ final class Runtime_Call_Preparation
 			Transfer_Preparation::require_boxed_result($inference->bindings[$boxed_result->result_position], $boxed_result->family_type);
 		}
 		foreach ($contract->transfer_positions as $position) {
-			Transfer_Preparation::require_payload($inference->bindings[$position]);
+			Transfer_Preparation::require_payload($inference->bindings[$position], $contract->transfer_policy);
 		}
 		$result = new callable_signature();
 		$result->return_type = Runtime_Pattern_Preparation::substitute($contract->return_type, $inference, $context);
@@ -297,7 +297,7 @@ final class Runtime_Call_Preparation
 					$pattern->variadic, $context);
 			}
 			$parameter->requires_copy = $pattern->requires_copy;
-			$parameter->requires_transfer = $pattern->requires_transfer;
+			$parameter->transfer_policy = $pattern->transfer_policy;
 			if ($pattern->default_value !== null) {
 				$default_value /** prepared_literal_parameter_default */ = $pattern->default_value;
 				if (!$default_value->result_type()->matches($parameter->type)) {

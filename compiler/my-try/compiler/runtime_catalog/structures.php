@@ -82,7 +82,7 @@ final class runtime_parameter_spec
 {
 	/** Provider copies the input independently of caller-side value transport. */
 	public bool $requires_copy = false;
-	public bool $requires_transfer = false;
+	public task_transfer_policy $transfer_policy = task_transfer_policy::none;
 	public bool $variadic = false;
 	public ?runtime_default_spec $default_value = null;
 	public string $name = '';
@@ -130,6 +130,7 @@ final class runtime_function_spec extends runtime_signature_spec
 	public string $name = '';
 	public array $qualified_aliases /** vector<string> */ = [];
 	public array $type_parameters /** vector<string> */ = [];
+	public task_transfer_policy $transfer_policy = task_transfer_policy::isolated_transfer;
 	public array $transfer_types /** vector<string> */ = [];
 	public Storage $replacement_results /** Storage<runtime_replacement_spec> */;
 	public Storage $boxed_results /** Storage<runtime_boxed_result_spec> */;

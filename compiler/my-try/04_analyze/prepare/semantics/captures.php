@@ -67,7 +67,8 @@ final class Capture_Preparation
 
 
 	/** Reject known forbidden environments; erased callable values retain a runtime guard. */
-	public static function require_transfer(canonical_type_use $type, preparation_context $context): void
+	public static function require_transfer(canonical_type_use $type, preparation_context $context,
+		task_transfer_policy $policy): void
 	{
 		if (!(Type_Queries::canonical($type)->definition() instanceof closure_type_definition)) { return; }
 		$identity = Model::$type_catalog->closures()->identity($type);
@@ -75,10 +76,10 @@ final class Capture_Preparation
 		$body = object_cast($identity->syntax()->require_body()->work(), anonymous_body_work::class);
 		$captures /** Storage<prepared_capture> */ = $body->captures;
 		foreach ($captures as $capture) {
-			if (($capture->transfer === capture_transfer::forbidden) || ($capture->transfer === capture_transfer::shared_value)) {
+			if (($capture->transfer !== capture_transfer::callable_value) && !Transfer_Preparation::permits($capture->transfer, $policy)) {
 				throw new \RuntimeException('Task callback captures are not transferable');
 			}
-			if ($capture->transfer === capture_transfer::callable_value) { self::require_transfer($capture->type, $context); }
+			if ($capture->transfer === capture_transfer::callable_value) { self::require_transfer($capture->type, $context, $policy); }
 		}
 	}
 
