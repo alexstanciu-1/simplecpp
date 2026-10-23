@@ -1710,3 +1710,15 @@ STAN ERROR
 **Diagnostics:** STAN must report a build-blocking contract mismatch when an implementation drops or adds source-level const compared with the declared interface or abstract method parameter.
 
 **Notes:** This does not turn the generator into a full overload resolver.
+
+## Private instance-field redeclaration — 2026-10-23
+
+The [inheritance contract](../../../../specs/inheritance_v0_2.md#layout-and-lookup)
+now admits independent same-name private instance fields in base/derived records.
+Lookup selects the nearest field using the receiver's static type, then checks
+access; it does not retry an inaccessible child name against a base field. Parent
+`$this` access and explicit base views retain the base declaration. Public/protected
+hiding and static-field redeclaration remain outside this extension. Per-owner
+layouts, prepared declaration identities and constructor initialization are reused.
+Focused tests: `tests/private_fields.py` and repository-root
+`tests/portability/private_fields.py`; see the accepted-backlog execution ledger.

@@ -98,6 +98,14 @@ native and both v0.2 modes execute. Its small native helper definitions isolate 
 full facade bodies retain their separate runtime/capability obligations. The existing
 `tests/portability/string_split.py` covers real byte-construction facade regression.
 
+`python3 tests/private_fields.py --results FRESH` checks private-field access and
+public/protected/static exclusions with retained rejection/recovery in both v0.2
+modes, plus independent struct subobject construction. The companion
+`python3 tests/portability/private_fields.py --results FRESH` from the repository root
+executes a three-level class hierarchy and explicit base view on PHP, legacy and
+both v0.2 modes. `records.py --suite inheritance --results FRESH` is the adjacent
+inheritance regression suite.
+
 ## Conservative call snapshot elision
 
 `python3 compiler/my-try/tests/call_snapshot_borrow.py --results FRESH` checks

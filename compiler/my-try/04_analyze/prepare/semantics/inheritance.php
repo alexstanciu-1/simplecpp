@@ -61,13 +61,30 @@ final class Inheritance_Preparation
 	{
 		$properties /** Storage<property_node> */ = Member_Inventory::properties(object_cast($syntax->occurrence(), collected_member_owner::class));
 		foreach ($properties as $property) {
-			self::require_new_name($base, $property->name, preparation_lookup_kind::property_name, $context);
+			self::require_property_name($base, $property, $context);
 		}
 		// Method redeclarations require completed contracts, not layout-time signature cycles.
 		$constants /** Storage<member_constant_node> */ = Member_Inventory::constants(object_cast($syntax->occurrence(), collected_member_owner::class));
 		foreach ($constants as $constant) {
 			self::require_new_name($base, $constant->name, preparation_lookup_kind::constant, $context);
 		}
+	}
+
+	/** Private instance declarations own independent base/child storage; lookup still hides. */
+	private static function require_property_name(collected_record $base, property_node $property,
+		preparation_context $context): void
+	{
+		$matches = Inherited_Lookup::members($base, $property->name, preparation_lookup_kind::property_name, $context);
+		if (q_count($matches) === 0) { return; }
+		if ((q_count($matches) === 1)
+			&& !Member_Preparation::is_static($property->modifiers)
+			&& (Member_Preparation::visibility($property->modifiers) === member_visibility::private_access)) {
+			$selected = $matches[0];
+			$context->worker->require_declaration($context->owner, $selected->declaring_type);
+			$inherited = object_cast($selected->member, collected_field::class)->syntax()->require_preparation();
+			if (!$inherited->static_member && ($inherited->visibility === member_visibility::private_access)) { return; }
+		}
+		throw new \RuntimeException('Inherited member redeclaration is deferred: ' . $property->name);
 	}
 
 	private static function require_new_name(collected_record $base, string $name, preparation_lookup_kind $kind,

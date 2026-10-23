@@ -21,6 +21,17 @@ prove native behavior at new-capability and component checkpoints. Compare meani
 results, using exact bytes only where the contract needs them. Defer unions and
 more elaborate layouts until a concrete need or optimization pass.
 
+## Private fields in inheritance
+
+Base and derived classes may declare independent same-name private instance fields.
+Keep each owner's constructor and ordinary `$this` accesses local to that owner.
+For a parent method inspecting a child-typed receiver, use an explicitly base-typed
+local (for example `$base /** Base_Record */ = $child;`) before accessing the base
+private field. PHP lexical-private lookup and Simple C++ static-receiver lookup
+then select the same storage. Simple C++ rejects an inaccessible child field rather
+than retrying the base. Public/protected hiding and static-field redeclaration are
+not covered by this portability rule. See [inheritance](../inheritance_v0_2.md).
+
 ## Mapped function identity
 
 The function map names the exact target for a portable operation. Global source

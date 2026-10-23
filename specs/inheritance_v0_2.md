@@ -16,10 +16,22 @@ An inherited static property has one storage location owned by that declaring ty
 Ordinary methods retain fixed, non-virtual dispatch unless implementing an inherited
 virtual contract established by an abstract method.
 
-Same-category redeclaration of any inherited property, nonvirtual instance method or constant
-is rejected in this first slice, including private inherited names. Cross-category
-names remain independent. Constructors/destructors are lifecycle declarations,
-not ordinary inherited members subject to this collision rule.
+A private instance property may reuse the name of an inherited private instance
+property. Each declaration retains independent storage and constructor initialization
+in its declaring base/child subobject. This applies to the class and struct record
+layouts covered by this contract. Other inherited property redeclarations remain
+rejected, including static properties and public/protected hiding. Nonvirtual instance
+method and constant redeclarations remain rejected under their existing contracts.
+Cross-category names remain independent. Constructors/destructors are lifecycle
+declarations, not ordinary inherited members subject to this collision rule.
+
+Property lookup uses the receiver's static type and selects the nearest declaration
+before checking access. An inaccessible child property does not cause retry against
+a private base property. A parent method's ordinary `$this` access selects its own
+field; accessing a child-typed receiver from that parent instead selects the child's
+field and fails private access. An explicit base-typed view selects the base field.
+Portable PHP must author that base view where PHP's lexical private lookup would
+otherwise differ. No implicit receiver cast or lexical-private fallback is added.
 
 ## Access
 

@@ -1,0 +1,47 @@
+{
+  "portable": [
+    {
+      "name": "legacy",
+      "seconds": 20.340239679997467,
+      "passed": true
+    },
+    {
+      "name": "ordinary",
+      "seconds": 16.325236790002236,
+      "passed": true
+    },
+    {
+      "name": "concrete",
+      "seconds": 18.170815997000318,
+      "passed": true
+    }
+  ],
+  "native_and_recovery": [
+    {
+      "name": "preparation",
+      "seconds": 0.9061725819992716,
+      "passed": true
+    },
+    {
+      "name": "ordinary",
+      "seconds": 15.031540085001325,
+      "passed": true
+    },
+    {
+      "name": "concrete",
+      "seconds": 16.763999671999045,
+      "passed": true
+    }
+  ],
+  "inheritance": {
+    "passed": true,
+    "generated_programs": 59,
+    "cpp_pch": true,
+    "native_compiler_rebuilt": false
+  },
+  "cross_file_recovery": {
+    "results": "/tmp/private-fields-retained-03",
+    "passed": true,
+    "seconds": 0.95
+  }
+}

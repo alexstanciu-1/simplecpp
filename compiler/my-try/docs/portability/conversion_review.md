@@ -17,7 +17,15 @@ This does not establish exhaustive language, lifetime, incremental or performanc
 
 ## Accepted-backlog bootstrap checkpoint — 2026-10-23
 
-The latest [facade qualification checkpoint](../../../../specs/planning/results/compiler_bootstrap_backlog_2026_10_23/facade_qualification/README.md)
+The latest [private-field checkpoint](../../../../specs/planning/results/compiler_bootstrap_backlog_2026_10_23/private_fields/README.md)
+admits independent same-name private instance fields using existing static-type
+lookup and declaring-owner access. PHP/legacy/both-v0.2 proofs, retained cross-file
+visibility recovery and all 59 inheritance regressions pass. Bootstrap takes
+210.63 s / 453.5 MiB RSS / 442.5 MiB PHP heap. The inherited position-field diagnostic
+disappears; none are added. AST-01 stays first, with no fatal/OOM, emission or native
+compiler rebuild. Numeric SOURCE-01 sites remain separate audit work.
+
+The earlier [facade qualification checkpoint](../../../../specs/planning/results/compiler_bootstrap_backlog_2026_10_23/facade_qualification/README.md)
 roots global mapped source calls and preserves their root in legacy C++ emission.
 PHP/legacy/both-v0.2 lookup and cache proofs pass, as does the full existing portable
 string-splitting regression. Fourteen unresolved facade-function diagnostics disappear;

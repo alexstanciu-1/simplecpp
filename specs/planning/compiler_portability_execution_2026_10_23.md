@@ -444,3 +444,48 @@ none are added. AST-01 remains first. No fatal/OOM, emission or native compiler
 rebuild. Evidence: results/compiler_bootstrap_backlog_2026_10_23/facade_qualification.
 B03 lookup classification is resolved; facade body failures remain their own
 OWN/NULL dependencies, rather than duplicate runtime registrations.
+
+## SOURCE-01 private instance fields — reuse and implementation
+
+Reuse audit: Inherited_Lookup selects the nearest declaration independently of access;
+Expression_Preparation resolves against the receiver's static payload type and then
+checks the original declaring owner's access; prepared_field retains declaration
+identity; record layouts and constructor set inputs are per owner. Base layout
+preparation alone had a blanket inherited-name rejection. Legacy C++ already keeps
+base/child storage separate. No field flattening, new lookup mode or converter-aware
+semantics are needed.
+
+Inheritance_Preparation now admits a collision only when both selected declarations
+are private instance properties. It observes the original ancestor declaration before
+reading prepared visibility/storage. Static properties, public/protected hiding,
+method and constant collision rules are unchanged. Existing class-to-class and
+struct-to-struct layouts share this rule. The normative inheritance contract now
+states lookup-before-access, no base retry, independent storage and explicit portable
+base views. This is the accepted source-admission extension, not a historical v0.1
+bug claim.
+
+`/tmp/private-fields-portable-01` passes host PHP, legacy native, ordinary v0.2 and
+prelowered v0.2: a three-level class chain, separate constructor values/mutation and
+a parent method accessing a child through an explicit base-typed local.
+`/tmp/private-fields-native-01` passes independent struct constructor set inputs with
+different field types in both modes, plus nine rejection cases and repeated
+rejection/recovery in both modes. Parent access through a child-typed receiver rejects
+the selected child's private field; inaccessible access never falls back to the base.
+Public/protected/static exclusions remain checked. Compiler source position fields
+in children_iterator and pair_children_iterator can now retain their authored names.
+Algorithm-specific uint32 checks remain a separate SOURCE-01 numeric audit; no
+mechanical checks or numeric policy changes were added.
+
+Adjacent regression `/tmp/private-fields-inheritance-01`: all 59 generated inheritance
+programs pass, including retained constructor/default/body edits and access exclusions.
+
+Cross-file retained proof `/tmp/private-fields-retained-03` also passes in both modes:
+editing only an ancestor from private to public invalidates an unchanged descendant;
+restoring private recovers identical output. The first fixture attempt lacked explicit
+multi-file entry selection; the final one selects main.phs.
+
+Measured `/tmp/compiler-bootstrap-private-fields-01`: conversion 4.64 s / 195,012 KiB
+RSS; bootstrap 210.63 s / 464,404 KiB (453.5 MiB) RSS / 442.5 MiB PHP heap.
+The inherited position-field diagnostic disappears; none are added. AST-01 stays
+first, no fatal/OOM, emission or native compiler rebuild. Evidence:
+results/compiler_bootstrap_backlog_2026_10_23/private_fields.
