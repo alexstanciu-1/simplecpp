@@ -406,7 +406,7 @@ final class CPP_Runtime_Operations
 		$request = new cpp_runtime_operation(cpp_runtime_operation_kind::construct_default);
 		$request->construction = $facts;
 		$request->result = $facts->type;
-		return self::invoke($request, [], $context, '');
+		return self::invoke($request, /** vector<string> */ [], $context, '');
 	}
 
 	public static function initialize(data_construction_node $node, initialization_binding $binding,
@@ -419,7 +419,7 @@ final class CPP_Runtime_Operations
 		$request = new cpp_runtime_operation(cpp_runtime_operation_kind::initialize_empty);
 		$request->initialization = $binding;
 		$request->result = $binding->target();
-		return self::invoke($request, [], $context, '');
+		return self::invoke($request, /** vector<string> */ [], $context, '');
 	}
 
 	public static function write_key(canonical_type_use $type, string $key, cpp_generation_context $context): string

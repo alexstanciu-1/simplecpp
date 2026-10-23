@@ -370,7 +370,7 @@ final class CPP_Syntax
 		if ($this->context->concrete_types()) {
 			$request = new cpp_runtime_operation(cpp_runtime_operation_kind::exception_catch);
 			$request->result = $binding->type;
-			$handler_capture = 'catch (...) { ' . $value . ' = ' . CPP_Runtime_Operations::invoke($request, [], $this->context, '') . '; ';
+			$handler_capture = 'catch (...) { ' . $value . ' = ' . CPP_Runtime_Operations::invoke($request, /** vector<string> */ [], $this->context, '') . '; ';
 		} else {
 			$this->context->headers['lang/php/php_exceptions.hpp'] = true;
 			$payload = CPP_Types::payload($binding->type);
@@ -486,7 +486,7 @@ final class CPP_Syntax
 		if ($fallback === '') {
 			if ($this->context->concrete_types()) {
 				$request = new cpp_runtime_operation(cpp_runtime_operation_kind::match_failure);
-				$fallback = CPP_Runtime_Operations::invoke($request, [], $this->context, '') . '; ';
+				$fallback = CPP_Runtime_Operations::invoke($request, /** vector<string> */ [], $this->context, '') . '; ';
 			}
 			else {
 				$this->context->headers['stdexcept'] = true;

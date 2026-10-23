@@ -30,7 +30,7 @@ final class CPP_Exceptions
 		$request->result = $binding->type;
 		$syntax = new CPP_Syntax($context);
 		return 'try ' . $syntax->generate_block($node->body) . "catch (...) {\n"
-			. $syntax->initialized_binding($binding, CPP_Runtime_Operations::invoke($request, [], $context, ''))
+			. $syntax->initialized_binding($binding, CPP_Runtime_Operations::invoke($request, /** vector<string> */ [], $context, ''))
 			. CPP_Generator::generate_statements($handler->body, $context) . "}\n";
 	}
 }

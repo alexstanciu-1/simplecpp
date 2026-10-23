@@ -31,7 +31,9 @@ final class Converter {
 	private array $borrowedLocals = [];
 	private array $parameterLocals = [];
 
-	public function __construct(private array $map) {}
+	public function __construct(private array $map, private string $target = 'v0.1') {
+		if (!in_array($target, ['v0.1', 'v0.2'], true)) { throw new \InvalidArgumentException('Unsupported conversion target: ' . $target); }
+	}
 
 	public function convert(string $source, string $path): string {
 		$source = (new Import_Policy($this->map))->prepare($source, $path);
@@ -1016,7 +1018,7 @@ final class Converter {
 	}
 
 	/** @return list<Node> */
-	private function sequence(?string $closing): array {
+	private function sequence(?string $closing, bool $annotatedArray = false): array {
 		$nodes = [];
 		// Declaration-local hints belong to one exact initializer token, never later uses.
 		$constructionTypes = [];
@@ -1029,7 +1031,7 @@ final class Converter {
 			if ($id === T_DOC_COMMENT && ($this->tokens[$this->nextSignificant($this->position)][1] ?? '') === '[') {
 				$type = $this->containerAnnotation([$id, $text, $line]);
 				$this->expect('['); $this->expect(']');
-				$nodes[] = new Node('call', 'new ' . $type, $line);
+				$nodes[] = new Node('empty_container', $type, $line);
 				continue;
 			}
 			if ($id === T_DOC_COMMENT && str_contains($text, '@scpp-struct')) {
@@ -1201,7 +1203,8 @@ final class Converter {
 					}
 					if (($this->tokens[$after][1] ?? '') === '=') {
 						$initializer = $this->nextSignificant($after + 1);
-						if (($this->tokens[$initializer][0] ?? null) === T_NEW) {
+						if (($this->tokens[$initializer][0] ?? null) === T_NEW
+							|| (in_array($this->tokens[$initializer][1] ?? '', ['[', '('], true) && (str_starts_with($type, 'vector<') || str_starts_with($type, 'hash<')))) {
 							$constructionTypes[$initializer] = $type;
 						}
 					}
@@ -1258,7 +1261,25 @@ final class Converter {
 				continue;
 			}
 			if ($id === 0 && in_array($text, ['(', '{', '['], true)) {
-				$nodes[] = new Node('group', $text, $line, $this->sequence(match ($text) { '(' => ')', '[' => ']', default => '}' }));
+				$childAnnotated = false;
+				if ($text === '(') {
+					$childAnnotated = $annotatedArray || isset($constructionTypes[$this->position - 1]);
+					unset($constructionTypes[$this->position - 1]);
+				}
+				if ($text === '[') {
+					$opening = $this->position - 1;
+					$previous = $opening - 1;
+					while ($previous >= 0 && in_array($this->tokens[$previous][0], [T_WHITESPACE, T_COMMENT, T_DOC_COMMENT], true)) { --$previous; }
+					$before = $this->tokens[$previous] ?? [0, '', $line];
+					$index = in_array($before[0], [T_VARIABLE, T_STRING], true) || in_array($before[1], [')', ']', '}'], true);
+					// Only direct literal nesting inherits explicit array intent; calls and indexes do not.
+					$childAnnotated = !$index && ($annotatedArray || isset($constructionTypes[$opening]));
+					unset($constructionTypes[$opening]);
+					if (!$index && !$childAnnotated && ($this->tokens[$this->nextSignificant($this->position)][1] ?? '') === ']') {
+						$this->fail($line, 'empty container expression requires an explicit vector/hash annotation or an annotated local declaration');
+					}
+				}
+				$nodes[] = new Node('group', $text, $line, $this->sequence(match ($text) { '(' => ')', '[' => ']', default => '}' }, $childAnnotated));
 				continue;
 			}
 			$allowed = [T_WHITESPACE, T_COMMENT, T_DOC_COMMENT, T_VARIABLE, T_LNUMBER, T_CONSTANT_ENCAPSED_STRING,
@@ -1280,6 +1301,7 @@ final class Converter {
 		$body = '';
 		foreach ($node->children as $child) { $body .= $this->emit($child); }
 		return match ($node->kind) {
+			'empty_container' => $this->target === 'v0.2' ? $node->text . '::[]' : 'new ' . $node->text . '()',
 			'file', 'body' => $body,
 			'enum' => 'enum ' . $node->text . ' {' . $body . '}',
 			'method' => $node->text . ' {' . $body . '}',

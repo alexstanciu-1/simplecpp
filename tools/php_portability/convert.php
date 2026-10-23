@@ -6,7 +6,18 @@ require_once __DIR__ . '/src/project_cache.php';
 
 // CLI owns IO and incremental publication; the converter only transforms a file.
 try {
-	if ($argc < 3 || $argc > 4 || ($argc === 4 && $argv[3] !== '--stats')) { throw new RuntimeException('Usage: php convert.php SOURCE_DIRECTORY OUTPUT_DIRECTORY [--stats]'); }
+	$usage = 'Usage: php convert.php SOURCE_DIRECTORY OUTPUT_DIRECTORY [--stats] [--target=v0.1|v0.2]';
+	if ($argc < 3) { throw new RuntimeException($usage); }
+	$stats = false;
+	$conversionTarget = 'v0.1';
+	$targetSeen = false;
+	foreach (array_slice($argv, 3) as $option) {
+		if ($option === '--stats' && !$stats) { $stats = true; }
+		elseif (str_starts_with($option, '--target=') && !$targetSeen) {
+			$conversionTarget = substr($option, 9);
+			$targetSeen = true;
+		} else { throw new RuntimeException($usage); }
+	}
 	$source = realpath($argv[1]);
 	if ($source === false || !is_dir($source)) { throw new RuntimeException('Source directory does not exist'); }
 	if (!is_dir($argv[2]) && !mkdir($argv[2], 0777, true)) { throw new RuntimeException('Cannot create output directory'); }
@@ -35,8 +46,8 @@ try {
 		}
 	}
 	$map = require __DIR__ . '/function_map.php';
-	$version = hash('sha256', file_get_contents(__FILE__) . file_get_contents(__DIR__ . '/src/converter.php') . file_get_contents(__DIR__ . '/src/container_type.php') . file_get_contents(__DIR__ . '/src/import_policy.php') . file_get_contents(__DIR__ . '/src/exception_policy.php') . file_get_contents(__DIR__ . '/src/declaration_index.php') . file_get_contents(__DIR__ . '/src/project_cache.php') . serialize($map));
-	$converter = new scpp\portability\Converter($map);
+	$version = hash('sha256', file_get_contents(__FILE__) . file_get_contents(__DIR__ . '/src/converter.php') . file_get_contents(__DIR__ . '/src/container_type.php') . file_get_contents(__DIR__ . '/src/import_policy.php') . file_get_contents(__DIR__ . '/src/exception_policy.php') . file_get_contents(__DIR__ . '/src/declaration_index.php') . file_get_contents(__DIR__ . '/src/project_cache.php') . serialize($map) . $conversionTarget);
+	$converter = new scpp\portability\Converter($map, $conversionTarget);
 	$cache = new scpp\portability\Project_Cache($source, $output, $map);
 	$indexed = $cache->scan();
 	$index = new scpp\portability\Declaration_Index($indexed);
@@ -84,10 +95,10 @@ try {
 		if (is_file($path) && !unlink($path)) { throw new RuntimeException('Cannot remove obsolete output'); }
 	}
 	ksort($files);
-	$publish($manifestPath, json_encode(['version' => 1, 'files' => $files], JSON_PRETTY_PRINT | JSON_THROW_ON_ERROR) . "\n");
+	$publish($manifestPath, json_encode(['version' => 1, 'target' => $conversionTarget, 'files' => $files], JSON_PRETTY_PRINT | JSON_THROW_ON_ERROR) . "\n");
 	$cache->publish($publish);
 	$report = ['converted' => $converted, 'reused' => $reused, 'removed' => count($removed)];
-	if ($argc === 4) { $report['cache'] = $cache->stats; }
+	if ($stats) { $report['cache'] = $cache->stats; }
 	echo json_encode($report, JSON_THROW_ON_ERROR), "\n";
 } catch (Throwable $error) {
 	fwrite(STDERR, $error->getMessage() . "\n");

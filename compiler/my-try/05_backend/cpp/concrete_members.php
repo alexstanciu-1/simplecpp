@@ -159,6 +159,6 @@ final class CPP_Concrete_Members
 		return new cpp_specialization_entry($name, 'specializations/' . $name . '.hpp',
 			"#pragma once\n" . CPP_Artifacts::includes($public_headers, '') . 'namespace scpp::internal { ' . $prototype . "; }\n",
 			CPP_Artifacts::includes($headers, '') . "#include <new>\n#include <type_traits>\nnamespace scpp::internal { "
-				. $prototype . ' { ' . $body . " } }\n", []);
+				. $prototype . ' { ' . $body . " } }\n", /** hash<bool> */ []);
 	}
 }

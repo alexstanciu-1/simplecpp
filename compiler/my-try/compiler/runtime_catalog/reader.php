@@ -612,7 +612,7 @@ final class Runtime_Catalog_Reader
 				while ($reader->next_element()) {
 					$names[] = self::name($reader);
 				}
-				if ($names === []) { $reader->reject('Generic type parameter list must not be empty'); }
+				if (q_count($names) === 0) { $reader->reject('Generic type parameter list must not be empty'); }
 				$result->type_parameters = $names;
 			}
 			elseif ($key === 'parameters')

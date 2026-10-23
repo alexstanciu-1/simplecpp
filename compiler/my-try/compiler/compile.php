@@ -272,7 +272,7 @@ final class Compiler
 	public function prepare(bool $require_entry = false): void
 	{
 		if (Model::$rebuild_required) {
-			$this->sync([]);
+			$this->sync(/** vector<string> */ []);
 		}
 		$sources /** Storage<collected_file> */ = new Storage();
 		foreach (Model::sources() as $record)
@@ -393,7 +393,7 @@ final class Compiler
 	private function frontend(frontend_operation $operation): void
 	{
 		if (Model::$rebuild_required) {
-			$this->sync([]);
+			$this->sync(/** vector<string> */ []);
 			return;
 		}
 		self::require_modules();

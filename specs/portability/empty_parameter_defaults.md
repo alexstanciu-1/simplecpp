@@ -36,3 +36,19 @@ containers, retained rejection/recovery and a distinct generic provider with cou
 factory invocations in both C++ modes. Broader provider integration and standalone
 annotated empty expressions remain open under CONVERT-01; this checkpoint does not
 close the whole backlog item.
+
+## Standalone empty expressions and output targets
+
+Use `/** vector<T> */ []` or `/** hash<T> */ []` for a standalone empty PHP array,
+including call arguments, returns and whole-field replacement. A directly annotated
+local initializer needs no second comment; nested literals inherit that explicit
+structural intent. Callee/member types are not inferred. Missing intent rejects;
+ordinary append/index syntax remains distinct from an array literal.
+
+The converter defaults to `--target=v0.1`; select `--target=v0.2` for the newer
+compiler. Legacy output uses its existing named construction; v0.2 output uses
+`Type::[]` and the registered initialization path. This converter-only route choice
+adds no native language rule. Source-only token caching remains shared; emitted
+output fingerprints include the target, and target switches republish as needed.
+The cross-route proof covers empty argument/local expressions, target switching,
+warm reuse and invalid-target non-publication in addition to defaults.

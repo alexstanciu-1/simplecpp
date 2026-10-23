@@ -7,14 +7,24 @@ require_once __DIR__ . '/src/project_cache.php';
 // Read-only source validation. Emission is exercised in memory and discarded;
 // there is no independent approximation of the converter's accepted language.
 try {
-	if ($argc !== 2 && !($argc === 4 && $argv[2] === '--cache')) {
-		throw new RuntimeException('Usage: php check.php SOURCE_DIRECTORY [--cache EXISTING_OUTPUT_DIRECTORY]');
+	$usage = 'Usage: php check.php SOURCE_DIRECTORY [--cache EXISTING_OUTPUT_DIRECTORY] [--target=v0.1|v0.2]';
+	if ($argc < 2) { throw new RuntimeException($usage); }
+	$cachePath = null;
+	$conversionTarget = 'v0.1';
+	$targetSeen = false;
+	for ($i = 2; $i < $argc; ++$i) {
+		$option = $argv[$i];
+		if ($option === '--cache' && $cachePath === null && isset($argv[$i + 1])) { $cachePath = $argv[++$i]; }
+		elseif (str_starts_with($option, '--target=') && !$targetSeen) {
+			$conversionTarget = substr($option, 9);
+			$targetSeen = true;
+		} else { throw new RuntimeException($usage); }
 	}
 	$source = realpath($argv[1]);
 	if ($source === false || !is_dir($source)) { throw new RuntimeException('Source directory does not exist'); }
 	$output = null;
-	if ($argc === 4) {
-		$output = realpath($argv[3]);
+	if ($cachePath !== null) {
+		$output = realpath($cachePath);
 		if ($output === false || !is_dir($output)) { throw new RuntimeException('Cache directory does not exist'); }
 		if ($source === $output || str_starts_with($output . '/', $source . '/') || str_starts_with($source . '/', $output . '/')) {
 			throw new RuntimeException('Source and cache trees must be separate');
@@ -24,7 +34,7 @@ try {
 	$cache = new scpp\portability\Project_Cache($source, $output, $map);
 	$files = $cache->scan();
 	$index = new scpp\portability\Declaration_Index($files);
-	$converter = new scpp\portability\Converter($map);
+	$converter = new scpp\portability\Converter($map, $conversionTarget);
 	foreach ($files as $relative => $entry) {
 		// PHP lint catches compile-time PHP errors beyond token parsing, without
 		// executing authored code or loading its dependencies/framework.

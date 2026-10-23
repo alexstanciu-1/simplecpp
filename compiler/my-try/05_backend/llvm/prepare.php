@@ -98,7 +98,7 @@ final class LLVM_Preparation_Run
 			$entries /** Storage<collected_name> */ = $file->source->entries;
 			foreach ($file->source->root->single_body()->body->statements as $statement) {
 				if (!(($statement->kind() === node_kind::function_declaration) || ($statement->kind() === node_kind::type_declaration))) {
-					$this->register($file, null, []);
+					$this->register($file, null, /** vector<string> */ []);
 					break;
 				}
 			}
@@ -110,7 +110,7 @@ final class LLVM_Preparation_Run
 				}
 				if ($entry->kind() === collected_name_kind::function_declaration) {
 					if (q_count(object_cast($entry, collected_function::class)->callable_syntax()->template_parameters) === 0) {
-						$this->register($file, $entry, []);
+						$this->register($file, $entry, /** vector<string> */ []);
 					}
 				}
 			}

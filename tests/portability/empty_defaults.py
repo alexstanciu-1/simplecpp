@@ -13,7 +13,7 @@ parser = argparse.ArgumentParser(description=__doc__)
 parser.add_argument('--results', type=Path, required=True)
 out = parser.parse_args().results.resolve()
 (out / 'source').mkdir(parents=True, exist_ok=False)
-expected = b'1:1:3:2:0:0'
+expected = b'1:1:3:2:0:0:1:0'
 (out / 'source/main.php').write_text('''<?php
 class Bag {
     public function __construct(public array $items /** vector<int> */ = []) {}
@@ -25,7 +25,9 @@ class Bag {
 $bag = new Bag();
 $other = new Bag();
 $values /** vector<int> */ = [1, 2];
-echo $bag->grow(), ':', $bag->grow(), ':', $bag->grow($values), ':', q_count($values), ':', q_count($bag->items), ':', q_count($other->items);
+echo $bag->grow(), ':', $bag->grow(), ':', $bag->grow($values), ':', q_count($values), ':', q_count($bag->items), ':', q_count($other->items), ':', $bag->grow(/** vector<int> */ []), ':';
+$empty /** hash<int> */ = /** hash<int> */ [];
+echo q_count($empty);
 ''')
 with CommandRunner(out / 'logs', ROOT) as runner:
     def portable():
@@ -48,6 +50,21 @@ with CommandRunner(out / 'logs', ROOT) as runner:
         runner.run('legacy-build', ['php8.5', ROOT / 'bin/scpp.php', 'build', '--build-runtime', '--no-stan'], out / 'legacy', timeout=240, cli_reason='CLI fixture build')
         assert runner.run('legacy-run', [out / 'legacy/.prism/build/main']) == expected
     run_tasks([Task('portable', portable)])
+    legacy_bytes = (out / 'legacy/main.phs').read_bytes()
+    runner.run('check-v02', ['php8.5', ROOT / 'tools/php_portability/check.php', out / 'source', '--target=v0.2', '--cache', out / 'legacy'])
+    converted = json.loads(runner.run('convert-v02', ['php8.5', ROOT / 'tools/php_portability/convert.php', out / 'source', out / 'legacy', '--target=v0.2', '--stats']))
+    assert converted['converted'] == 1 and converted['reused'] == 0
+    v02_bytes = (out / 'legacy/main.phs').read_bytes()
+    assert v02_bytes != legacy_bytes
+    warm = json.loads(runner.run('convert-v02-warm', ['php8.5', ROOT / 'tools/php_portability/convert.php', out / 'source', out / 'legacy', '--target=v0.2']))
+    assert warm['reused'] == 1 and warm['converted'] == 0
+    runner.run('convert-back', ['php8.5', ROOT / 'tools/php_portability/convert.php', out / 'source', out / 'legacy'])
+    assert (out / 'legacy/main.phs').read_bytes() == legacy_bytes
+    runner.run('convert-final', ['php8.5', ROOT / 'tools/php_portability/convert.php', out / 'source', out / 'legacy', '--target=v0.2'])
+    assert (out / 'legacy/main.phs').read_bytes() == v02_bytes
+    before = {str(p.relative_to(out / 'legacy')): p.read_bytes() for p in (out / 'legacy').rglob('*') if p.is_file()}
+    runner.run('invalid-target', ['php8.5', ROOT / 'tools/php_portability/convert.php', out / 'source', out / 'legacy', '--target=missing'], expected=1)
+    assert before == {str(p.relative_to(out / 'legacy')): p.read_bytes() for p in (out / 'legacy').rglob('*') if p.is_file()}
 
     def native(mode):
         folder = out / mode

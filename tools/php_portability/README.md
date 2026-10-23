@@ -19,6 +19,8 @@ php tools/php_portability/check.php SOURCE_DIRECTORY
 php tools/php_portability/check.php SOURCE_DIRECTORY --cache EXISTING_OUTPUT_DIRECTORY
 php tools/php_portability/convert.php SOURCE_DIRECTORY OUTPUT_DIRECTORY
 php tools/php_portability/convert.php SOURCE_DIRECTORY OUTPUT_DIRECTORY --stats
+php tools/php_portability/convert.php SOURCE_DIRECTORY OUTPUT_DIRECTORY --target=v0.2
+php tools/php_portability/check.php SOURCE_DIRECTORY --target=v0.2
 php tools/php_portability/install_native_runtime.php OUTPUT_DIRECTORY
 php -d auto_prepend_file="$PWD/tools/php_portability/runtime/bootstrap.php" tests/portability/fixtures/take.php
 python3 tests/portability/run.py
@@ -26,6 +28,20 @@ python3 tests/portability/prologues.py
 python3 tests/portability/native_runtime.py
 python3 tests/portability/check.py
 ```
+
+`--target=v0.1` is the default output route. `--target=v0.2` selects v0.2 syntax
+where the existing routes differ: an annotated standalone empty array emits
+`vector<T>::[]` / `hash<T>::[]` for v0.2 and the existing named construction for the
+legacy route. This changes emitted spelling, not PHP behavior or the shared portable
+contract. The conversion manifest records the target; its fingerprint includes the
+selection, so changing targets cannot reuse stale output. Token/index caches remain
+source-only. `check.php` accepts the same target and never publishes changes.
+
+Empty array expressions require explicit type intent. A directly annotated local
+supplies it, including nested literals in its initializer; otherwise annotate the
+empty expression itself. Parameter/field defaults use their explicit declaration.
+No receiver/callee inference is added. Append slots (`$items[] = ...`) are not empty
+literals. See [empty defaults](../../specs/portability/empty_parameter_defaults.md).
 
 `function_map.php` is the authoritative function policy: internal PHP implementation,
 native target spelling and arity. Every portable file

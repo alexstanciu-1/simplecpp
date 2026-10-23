@@ -82,7 +82,7 @@ final class LLVM_Legacy_Name_Preparation
 			while (true)
 			{
 				$current_scope = Scope_Lookup::visible($current_scope);
-				$function_candidates = [];
+				$function_candidates = /** vector<collected_function> */ [];
 				$function_candidates = $current_scope->functions_named($entry->name);
 				if (q_count($function_candidates) !== 0) {
 					break;

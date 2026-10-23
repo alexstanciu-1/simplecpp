@@ -39,7 +39,7 @@ for key, value in {
 project = out / 'phpp'
 with CommandRunner(out / 'logs', ROOT) as runner:
     def probe():
-        runner.run('convert', ['/usr/bin/time', '-v', '-o', out / 'convert.time', 'php8.5', ROOT / 'tools/php_portability/convert.php', source, project], timeout=300)
+        runner.run('convert', ['/usr/bin/time', '-v', '-o', out / 'convert.time', 'php8.5', ROOT / 'tools/php_portability/convert.php', source, project, '--target=v0.2'], timeout=300)
         runner.run('framework', ['php8.5', ROOT / 'tools/php_portability/install_native_runtime.php', project, '--filesystem', '--os', '--json'])
         (project / 'prism.json').write_text(json.dumps({'entrypoint': 'main.phs', 'runtime': {'languages': {'php': {'profile': 'strict'}}, 'modules': ['compiler', 'filesystem', 'tasks', 'process', 'datetime', 'json']}}))
         phs = list(project.rglob('*.phs'))

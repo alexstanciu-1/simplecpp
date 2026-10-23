@@ -528,7 +528,7 @@ abstract class abstract_template_type_definition extends semantic_type_definitio
 		array $capabilities /** vector<generic_contract> */)
 	{
 		parent::__construct($identity, $source_name, $origin, $capabilities);
-		if ($parameters === []) {
+		if (q_count($parameters) === 0) {
 			throw new \InvalidArgumentException('Template definition requires at least one type parameter');
 		}
 
