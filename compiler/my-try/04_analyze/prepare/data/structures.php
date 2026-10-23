@@ -790,6 +790,8 @@ final class preparation_context
 	/** Required local storage still awaiting a successful assignment on this path. */
 	public array $pending_locals /** vector<prepared_source_storage> */ = [];
 	public bool $assignment_path_reachable = true;
+	/** Last expression's conditional facts; null means both outcomes share pending_locals. */
+	public ?local_condition_paths $condition_paths = null;
 	public bool $asynchronous = false;
 	public int $suspension_count = 0;
 	/** Current protected region; nested callable preparation starts with a fresh context. */
@@ -824,6 +826,13 @@ final class preparation_context
 	public canonical_type_use $boolean;
 	public canonical_type_use $floating;
 	public canonical_type_use $string_type;
+}
+
+/** Invocation-local expression outcomes; never attached to retained expression facts. */
+final class local_condition_paths
+{
+	public array $when_true /** vector<prepared_source_storage> */ = [];
+	public array $when_false /** vector<prepared_source_storage> */ = [];
 }
 
 /** Transient completion summary; describes normal exit, independently of return requirements. */

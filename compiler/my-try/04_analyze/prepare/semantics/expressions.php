@@ -17,6 +17,7 @@ final class Expression_Preparation
 		?canonical_type_use $expected_type, expression_consumer $consumer): prepared_expression
 	{
 		$suspension_start = $context->suspension_count;
+		$condition_paths /** nullable<local_condition_paths> */ = null;
 		if ($node instanceof await_expression_node) {
 			$awaited = object_cast($node, await_expression_node::class);
 			$awaited->set_preparation(Async_Preparation::await_value($awaited->operand, $context));
@@ -112,10 +113,12 @@ final class Expression_Preparation
 		elseif ($node instanceof unary_expression_node) {
 			$unary = object_cast($node, unary_expression_node::class);
 			$unary->set_preparation(self::prepare_unary($unary, $context));
+			$condition_paths = $context->condition_paths;
 		}
 		elseif ($node instanceof binary_expression_node) {
 			$binary = object_cast($node, binary_expression_node::class);
 			$binary->set_preparation(self::prepare_binary($binary, $context));
+			$condition_paths = $context->condition_paths;
 		}
 		elseif ($node instanceof cast_expression_node) {
 			$cast = object_cast($node, cast_expression_node::class);
@@ -152,10 +155,12 @@ final class Expression_Preparation
 		elseif ($node instanceof take_expression_node) {
 			$take_expression = object_cast($node, take_expression_node::class);
 			$take_expression->set_preparation(Take_Preparation::prepare($take_expression, $context));
+			$condition_paths = $context->condition_paths;
 		}
 		else {
 			throw new \RuntimeException('Preparation is not supported for this node');
 		}
+		$context->condition_paths = $condition_paths;
 		$result = $node->require_preparation();
 		$result->suspends = $context->suspension_count !== $suspension_start;
 		if (Type_Queries::canonical($result->type)->definition() instanceof async_task_type_definition) {

@@ -1017,7 +1017,7 @@ discussion while independent work continues. Deferred debts remain deferred.
 | SELF-02 | Struct self: receiver, value copy and distinct shared retention | Core receiver/value support implemented and proved in both v0.2 modes; shared retention remains SELF-DEBT-01; portable copies remain COPY-01. |
 | COPY-01 | `_struct_` / `_struct_copy_` portable value protocol | Converter work accepted; first proof is `cpp_specialization_ref`; may consume SELF-02; paused. |
 | INIT-01 | Promoted required constructor inputs and explicit valid defaults | Bounded v0.2 set mapping and switch_label source migration implemented with cross-route proofs; promotion plus explicit parent call remains under discussion; inventory C03; in progress. |
-| LOCAL-01 | Class-local definite assignment and existing struct defaults | Structured local flow implemented with per-exit pending storage facts; both-mode behavioral/retained proofs and PHP/legacy-native composition proof pass. Struct defaults preserved; take success-path integration remains open; in progress. |
+| LOCAL-01 | Class-local definite assignment and existing struct defaults | Structured local flow implemented with per-exit pending storage facts; both-mode behavioral/retained proofs and PHP/legacy-native composition proof pass. Struct defaults preserved; direct take success conditions, negation, lazy operators and branch/loop consumers now integrated. Focused proofs pass; runtime empty-handle contracts remain OWN-01 work. |
 | INIT-02 | `_uninitialized_` required fields, staged assignment and checked reads | Nullable backing and checked accessors accepted; reuse audit complete, 6–12x retained; bounded source/converter proofs pending; no new language feature approved; paused. |
 | TASK-01 | Bounded shared-handle task admission in v0.2 | Joined API rules accepted; reuse audit complete, revised 8–12x; bounded API-policy/callback-permission design accepted; implementation/proofs pending; inventory D04; paused. |
 | TASK-02 | Retained-type lookup synchronization in portable PHP | Source race path identified; same-lock lookup repair direction accepted; native concurrency proofs pending; paused. |
@@ -1224,3 +1224,14 @@ negation/lazy conditions and early failure exits. In particular, result_or_bool 
 sentinels do not assign the payload. No implicit ordinary out-parameter protocol or
 general boolean-variable correlation should be inferred. The file-lock empty factory
 is a separate runtime ownership/default-contract audit item.
+
+## LOCAL-01 conditional extraction integration — 2026-10-23
+
+The preceding take-success follow-up is implemented through invocation-local
+local_condition_paths and the existing expression/condition dispatch. Ordinary
+expressions discard child correlations; only direct take and supported logical
+composition publish outcome facts. Runtime result semantics, not payload names,
+determine whether true establishes the output. No retained model, CFG or saved-bool
+correlation was introduced. Conditional-expression branches consume their condition
+facts without promising arbitrary result-boolean inference. Generic nullable take
+admission remains NULL-02; empty required runtime handles remain OWN-01/NULL-01.

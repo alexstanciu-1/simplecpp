@@ -31,8 +31,10 @@ class prepared_source_storage {}
 class preparation_context {
  public array $pending_locals /** vector<prepared_source_storage> */ = [];
  public bool $assignment_path_reachable = true;
+ public ?local_condition_paths $condition_paths = null;
 }
 ''' + declaration(APP / '04_analyze/prepare/data/structures.php', 'final class statement_completion') + '\n'
+source += declaration(APP / '04_analyze/prepare/data/structures.php', 'final class local_condition_paths') + '\n'
 source += (APP / '04_analyze/prepare/semantics/completion.php').read_text().split('namespace scpp\\compiler;', 1)[1]
 source += r'''
 $a = new prepared_source_storage(); $b = new prepared_source_storage();
@@ -58,9 +60,14 @@ $context->pending_locals = $single;
 $context->assignment_path_reachable = false;
 Local_Assignment::require_read($a, 'unreachable', $context);
 echo Local_Assignment::contains($transfer->break_pending, $b) ? '1' : '0';
+$paths = Local_Assignment::condition($context);
+$paths->when_true = Local_Assignment::without($paths->when_true, $a);
+Local_Assignment::publish_condition($paths, $context);
+echo Local_Assignment::contains($context->pending_locals, $a) ? ':1' : ':bad';
+echo Local_Assignment::contains($paths->when_true, $a) ? ':bad' : ':0';
 '''
 (out / 'source/main.php').write_text(source)
-expected = b'1:1:1:1:0:1'
+expected = b'1:1:1:1:0:1:1:0'
 with CommandRunner(out / 'logs', ROOT) as runner:
     assert runner.run('host', ['php8.5', '-r', 'require $argv[1]; require $argv[2];', TOOLS / 'runtime/bootstrap.php', out / 'source/main.php']) == expected
     for route in ['v0.1', 'v0.2']:

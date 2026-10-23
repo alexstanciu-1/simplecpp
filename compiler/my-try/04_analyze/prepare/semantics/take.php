@@ -61,6 +61,17 @@ final class Take_Preparation
 				}
 			}
 			Capability_Preparation::require_copy($source->type, $context);
+			$context->condition_paths = null;
+			// A boolean-true sentinel is not a payload assignment.
+			if ($facts->operation !== take_operation::boolean_result) {
+				$name = object_cast($syntax->value_binding, variable_reference_node::class)->name;
+				$targets = $context->locals->named($name);
+				if (Local_Assignment::contains($context->pending_locals, $targets[0])) {
+					$paths = Local_Assignment::condition($context);
+					$paths->when_true = Local_Assignment::without($paths->when_true, $targets[0]);
+					Local_Assignment::publish_condition($paths, $context);
+				}
+			}
 			return $facts;
 		}
 		finally {

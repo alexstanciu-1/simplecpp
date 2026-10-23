@@ -123,9 +123,31 @@ final class Local_Assignment
 
 	public static function assigned(prepared_source_storage $storage, preparation_context $context): void
 	{
+		$context->pending_locals = self::without($context->pending_locals, $storage);
+	}
+
+	public static function without(array $pending /** vector<prepared_source_storage> */,
+		prepared_source_storage $storage): array /** vector<prepared_source_storage> */
+	{
 		$result /** vector<prepared_source_storage> */ = [];
-		foreach ($context->pending_locals as $candidate) { if ($candidate !== $storage) { $result[] = $candidate; } }
-		$context->pending_locals = $result;
+		foreach ($pending as $candidate) { if ($candidate !== $storage) { $result[] = $candidate; } }
+		return $result;
+	}
+
+	/** Ordinary values carry no correlation between their truth and side effects. */
+	public static function condition(preparation_context $context): local_condition_paths
+	{
+		if ($context->condition_paths !== null) { return $context->condition_paths; }
+		$result = new local_condition_paths();
+		$result->when_true = $context->pending_locals;
+		$result->when_false = $context->pending_locals;
+		return $result;
+	}
+
+	public static function publish_condition(local_condition_paths $paths, preparation_context $context): void
+	{
+		$context->condition_paths = $paths;
+		$context->pending_locals = self::merge(true, $paths->when_true, true, $paths->when_false);
 	}
 
 	public static function require_read(prepared_source_storage $storage, string $name, preparation_context $context): void

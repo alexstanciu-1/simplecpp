@@ -19,6 +19,11 @@ final class Loop_Preparation
 			$context->alias_declarations_allowed = false;
 			$facts = $syntax->body_runs_first() ? new prepared_loop() : self::prepare_header($syntax, $context);
 			$entry = $context->pending_locals;
+			if ($facts->condition !== null) {
+				$paths = Local_Assignment::condition($context);
+				$entry = $paths->when_false;
+				$context->pending_locals = $paths->when_true;
+			}
 			$reachable = $context->assignment_path_reachable;
 			if ($facts->iteration !== null) {
 				Iteration_Preparation::enter($facts->iteration, $context);
@@ -39,7 +44,7 @@ final class Loop_Preparation
 			}
 			$has_test = ($facts->condition !== null) || ($facts->iteration !== null);
 			$result = Completion_Preparation::loop($body, $syntax->body_runs_first(), $has_test);
-			$test_pending = $syntax->body_runs_first() ? $context->pending_locals : $entry;
+			$test_pending = $syntax->body_runs_first() ? Local_Assignment::condition($context)->when_false : $entry;
 			$test_reachable = !$syntax->body_runs_first() || $body->can_fall_through || $body->can_continue;
 			$result->normal_pending = Local_Assignment::merge($body->can_break, $body->break_pending,
 				$has_test && $test_reachable, $test_pending);

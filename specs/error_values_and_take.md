@@ -142,3 +142,26 @@ condition contract, so a Result containing one also rejects in conditions and El
 during preparation. `empty` still does not unwrap any Result automatically. Extract
 first and then inspect the container. No new reference extraction, implicit family
 conversion, nullable-container support or direct-container selection rule is added.
+
+## Required-local success paths — v0.2, 2026-10-23
+
+Output binding is a write, not a read of its prior value. For admitted nullable,
+falseable and structured-error payloads, a direct true `take` condition establishes
+assignment of a required local output. False leaves the value output unchanged.
+Logical negation swaps these facts; lazy `&&`/`||` route them to the executing operand.
+If/loop tests and conditional-expression branches use the resulting path facts.
+
+```php
+$out json_node;
+$failure error;
+if (!take($out, $failure, json_node_member($parent, $name))) {
+    throw Exception::make("missing member");
+}
+consume($out);
+```
+
+A true `result_or_bool` sentinel is not payload success and establishes no assignment
+of an initially uninitialized value output. Already initialized outputs keep their
+previous value on non-payload paths, as specified above. Saved boolean variables,
+arbitrary boolean comparisons and ordinary function calls do not carry extraction
+correlations. No new out-parameter or nullable-payload admission protocol is implied.

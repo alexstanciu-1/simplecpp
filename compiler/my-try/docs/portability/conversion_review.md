@@ -1175,3 +1175,17 @@ interpreting these numbers as a full-bootstrap performance improvement.
 Structured assignment, both-mode retained recovery and PHP/legacy-native composition
 proofs pass. LOCAL-01 remains open for conditional take success facts. See the
 [evidence](../../../../specs/planning/results/compiler_bootstrap_backlog_2026_10_23/local_assignment/README.md).
+
+## Conditional take assignment checkpoint — 2026-10-23
+
+Bootstrap /tmp/compiler-bootstrap-take-assignment-01: 75.10 s wall time /
+339,992 KiB RSS (332.0 MiB) / 310 MiB PHP allocation. Preparation fails first on
+required file-field initialization. Aggregate diagnostic texts are unchanged from
+the prior local-assignment checkpoint; this does not measure individual repaired
+owners. No fatal/OOM, emission or native compiler rebuild. The isolated production
+scpp_portability_lock_empty factory still reproduces the out read-before-assignment
+diagnostic (/tmp/take-empty-lock-probe-01). Its empty required-handle contract belongs
+to the pending runtime ownership/binding audit, not conditional take assignment.
+
+Focused both-mode behavior/retained proofs and PHP/legacy-native helper parity pass.
+See the [evidence](../../../../specs/planning/results/compiler_bootstrap_backlog_2026_10_23/take_assignment/README.md).

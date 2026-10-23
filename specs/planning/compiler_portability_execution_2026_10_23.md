@@ -967,3 +967,32 @@ aggregate diagnostic is "Required local may be read before assignment: out"; non
 are removed. Facade take success-flow and empty-handle contracts remain open. No
 fatal/OOM, emission or native compiler rebuild. The earlier rejection point prevents
 interpreting these numbers as a full-bootstrap performance improvement.
+
+## LOCAL-01 conditional extraction integration
+
+Reuse: take operation facts already distinguish payload success from boolean sentinels.
+Added invocation-local local_condition_paths to existing expression preparation. Only
+direct take and admitted logical composition publish correlations; ordinary expressions
+discard child correlations. If/loop/conditional branches use these paths. This keeps
+state out of retained facts and avoids a second AST traversal/CFG. The documented
+extraction semantics are unchanged. Saved booleans, arbitrary comparisons/calls and
+constant folding remain outside the bounded analysis. Generic nullable take is NULL-02.
+
+/tmp/take-assignment-03 passes all 23 tasks, including native success/failure and
+true-sentinel controls, negative correlations and retained guard edit/reject/revert/reset.
+The fixture privately opts one shared runtime provider into result_payload; production
+metadata is unchanged. /tmp/take-local-regression-01 passes all 67 local-assignment
+tasks. Existing take preparation passes in /tmp/take-assignment-retained-01. Production
+condition-path composition passes PHP, legacy native and both v0.2 modes in
+/tmp/take-assignment-portable-01. Initial fixture true-sentinel spelling and runtime
+catalog configuration ordering were corrected; no language widening for those fixtures.
+Evidence: results/compiler_bootstrap_backlog_2026_10_23/take_assignment/.
+
+Bootstrap /tmp/compiler-bootstrap-take-assignment-01: 75.10 s wall time /
+339,992 KiB RSS (332.0 MiB) / 310 MiB PHP allocation. Preparation fails first on
+required file-field initialization. Aggregate diagnostic texts are unchanged from
+the prior local-assignment checkpoint; this does not measure individual repaired
+owners. No fatal/OOM, emission or native compiler rebuild. The isolated production
+scpp_portability_lock_empty factory still reproduces the out read-before-assignment
+diagnostic (/tmp/take-empty-lock-probe-01). Its empty required-handle contract belongs
+to the pending runtime ownership/binding audit, not conditional take assignment.

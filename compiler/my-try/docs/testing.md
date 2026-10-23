@@ -2226,3 +2226,10 @@ lazy expressions, captures/references and shadowing. Struct defaults stay separa
 `python3 tests/portability/local_assignment.py --results FRESH` extracts production
 completion composition and checks vector snapshot/identity behavior in PHP, legacy
 native and both v0.2 modes. It is a component proof, not a native compiler rebuild.
+
+`python3 compiler/my-try/tests/take_assignment.py --results FRESH` covers required
+output success paths, negation/lazy operators, if/loop/ternary consumers, failure and
+true-sentinel behavior, negative correlation cases and retained guard edit recovery.
+Its fixture opts an existing shared runtime provider into result_payload using a
+private metadata copy; it does not alter production provider capabilities. The
+portable local_assignment proof also exercises the transient condition-path owner.

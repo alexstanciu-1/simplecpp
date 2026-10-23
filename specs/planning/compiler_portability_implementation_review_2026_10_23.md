@@ -248,3 +248,9 @@ negation/lazy conditions and early failure exits. In particular, result_or_bool 
 sentinels do not assign the payload. No implicit ordinary out-parameter protocol or
 general boolean-variable correlation should be inferred. The file-lock empty factory
 is a separate runtime ownership/default-contract audit item.
+
+Conditional take follow-up: direct success, logical negation and lazy operators now
+carry transient true/false assignment facts to if/loop/conditional branches. Both-mode
+behavior/retained tests and production helper parity pass. This supersedes the pending
+take-success item; runtime empty-handle contracts and generic nullable take remain
+separate OWN-01/NULL-02 work. No new extraction semantics or retained model was added.

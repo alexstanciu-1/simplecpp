@@ -78,3 +78,12 @@ the RHS from the path that executes it; if/loop/conditional branches consume tho
 facts. Store no interprocedural effects and infer no relationship through a saved
 boolean variable. Reuse registry result semantics and prepared operations, not type
 names. Generic nullable payload admission remains the separate NULL-02 consumer.
+
+## Conditional integration implemented
+
+The planned invocation-local true/false facts now flow through direct take, logical
+negation, short-circuit operators, if/loop tests and conditional-expression branches.
+The generic expression dispatcher resets child correlations, preventing calls or
+comparisons from accidentally inheriting them. result_or_bool deliberately contributes
+no payload-success fact. This implements existing extraction semantics; generic
+nullable payload admission and runtime empty-handle contracts remain separate work.

@@ -139,10 +139,11 @@ final class Body_Preparation
 		$condition /** expression_node */ = $syntax->condition;
 		$facts = self::prepare_condition($condition, $context);
 		$syntax->set_preparation($facts);
-		$entry = $context->pending_locals;
+		$paths = Local_Assignment::condition($context);
 		$reachable = $context->assignment_path_reachable;
+		$context->pending_locals = $paths->when_true;
 		$taken = self::prepare_block($syntax->body, $context);
-		$context->pending_locals = $entry;
+		$context->pending_locals = $paths->when_false;
 		$context->assignment_path_reachable = $reachable;
 		$unmatched = Local_Assignment::normal($context);
 		if ($syntax->next_arm !== null)

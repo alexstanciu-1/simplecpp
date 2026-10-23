@@ -28,6 +28,14 @@ final class Operator_Preparation
 		$context->statement_assignment = false;
 		try {
 			$operand = Expression_Preparation::prepare($syntax->operand, $context);
+			$operand_paths = $context->condition_paths;
+			$context->condition_paths = null;
+			if (($source_operator === operator_kind::logical_not) && ($operand_paths !== null)) {
+				$paths = new local_condition_paths();
+				$paths->when_true = $operand_paths->when_false;
+				$paths->when_false = $operand_paths->when_true;
+				Local_Assignment::publish_condition($paths, $context);
+			}
 			$facts = new prepared_unary_expression();
 			$facts->decision = self::decide($source_operator, [$operand->type], operator_context::expression, $context);
 			$facts->type = $facts->decision->result_type;
@@ -50,11 +58,28 @@ final class Operator_Preparation
 		try
 		{
 			$left = Expression_Preparation::prepare($syntax->left, $context);
-			$left_pending = $context->pending_locals;
-			$right = Expression_Preparation::prepare($syntax->right, $context);
-			if (($source_operator === operator_kind::logical_and) || ($source_operator === operator_kind::logical_or)) {
-				$context->pending_locals = Local_Assignment::merge(true, $left_pending, true, $context->pending_locals);
+			$lazy = ($source_operator === operator_kind::logical_and) || ($source_operator === operator_kind::logical_or);
+			$left_paths /** nullable<local_condition_paths> */ = null;
+			if ($lazy) {
+				$left_paths = Local_Assignment::condition($context);
+				$context->pending_locals = $source_operator === operator_kind::logical_and
+					? $left_paths->when_true : $left_paths->when_false;
 			}
+			$right = Expression_Preparation::prepare($syntax->right, $context);
+			if ($left_paths !== null) {
+				$right_paths = Local_Assignment::condition($context);
+				$paths = new local_condition_paths();
+				if ($source_operator === operator_kind::logical_and) {
+					$paths->when_true = $right_paths->when_true;
+					$paths->when_false = Local_Assignment::merge(true, $left_paths->when_false, true, $right_paths->when_false);
+				}
+				else {
+					$paths->when_true = Local_Assignment::merge(true, $left_paths->when_true, true, $right_paths->when_true);
+					$paths->when_false = $right_paths->when_false;
+				}
+				Local_Assignment::publish_condition($paths, $context);
+			}
+			else { $context->condition_paths = null; }
 			$decision = self::decide($source_operator, [$left->type, $right->type], operator_context::expression, $context);
 			$facts = new prepared_binary_expression();
 			$facts->decision = $decision;

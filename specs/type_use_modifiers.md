@@ -67,11 +67,17 @@ new lifetime protocol is introduced. Optional objects and explicit ownership han
 retain their existing empty/default contracts. Converter-owned `_uninitialized_`
 properties are separate from this local flow rule.
 
-Implementation boundary: v0.2 does not yet propagate successful `take` into the
-required-local assignment facts. Its outputs are write-only bindings, but a later
-required-local read still rejects unless ordinary assignment established the value.
-This is a missing integration of the existing conditional-extraction contract, not
-a requirement to invent a dummy object or change that contract.
+For admitted `take` payloads, direct success conditions establish assignment on the
+payload-success path. Negation swaps paths; short-circuit `&&`/`||` prepare the RHS
+from its executing path. `if`, loop tests and conditional-expression branches consume
+these facts. Thus `if (!take(...)) { throw ...; }` establishes its required output for
+the following normal path. A `result_or_bool` true sentinel does not assign a payload,
+so its boolean result cannot establish required-local assignment.
+
+This bounded analysis does not correlate a saved boolean variable with an earlier
+extraction, infer facts through arbitrary comparisons/calls, or fold constants. It
+does not widen the payload types admitted by `take`; generic nullable payload support
+remains a separate consumer integration.
 
 Inline records retain a genuine optional payload: `?Struct` is `nullable<Struct>`,
 and `?value<Class>` is `nullable<value<Class>>`. Absence differs from a present
