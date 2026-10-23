@@ -38,8 +38,9 @@ unwrapping would likewise weaken reference and retained signature identity.
    resolving the optional payload's members. Reference compatibility stays exact.
    Existing callable adaptation gains only the accepted directional by-value presence
    relation; no throwing narrowing adapter or container covariance is admitted.
-5. Required field initialization checks constructor-success boundaries, including
-   inherited storage and early returns. Required class locals use LOCAL-01's existing
+5. Required field initialization enforces the agreed direct-initialization contract
+   before constructor bodies, including inherited storage. Early returns cannot bypass
+   that check; this is not general constructor-body assignment inference. Required class locals use LOCAL-01's existing
    completion machinery for definite assignment. Hidden empty initialization must not
    escape as a readable required object. _uninitialized_ remains converter backing
    storage/accessors, not a native type state.

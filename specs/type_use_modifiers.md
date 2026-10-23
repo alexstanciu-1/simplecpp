@@ -23,11 +23,13 @@ invariant, including nullability. Interfaces follow the same contract.
 By-value override parameters may broaden required to optional, and results may
 strengthen optional to required, composed with admitted ancestry. Reverse directions
 reject; an override bridge never inserts a potentially failing absence check.
-Initialization and other consumers are still being migrated: this boundary slice does
-not yet prove definite assignment of required class locals, required fields on every
-constructor exit, or the presence guarantees of every registered runtime API. These
-remain blocking NULL-01/LOCAL-01 integration work, not permission to read empty required
-storage. The execution ledger records precise current proof scope.
+Required object fields have no empty source default. They require direct initialization
+through an explicit default, an authored set: input or a required synthesized data
+input. Body assignment is not a substitute, even if every exit appears to assign.
+Inherited construction must preserve the same invariant. Static required object
+fields need an explicit initializer. Native backing storage does not grant a readable
+source value. Required-local definite assignment, other consumers and the presence
+guarantees of every registered runtime API remain blocking NULL-01/LOCAL-01 work. The execution ledger records precise current proof scope.
 
 Inline records retain a genuine optional payload: `?Struct` is `nullable<Struct>`,
 and `?value<Class>` is `nullable<value<Class>>`. Absence differs from a present

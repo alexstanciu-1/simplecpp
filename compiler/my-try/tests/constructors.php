@@ -53,7 +53,7 @@ foreach (['class', 'struct'] as $kind) {
 		'data_storage' => ['public int $n; public function __construct(set:$n) {}', '$c ' . ($kind === 'class' ? 'value<C>' : 'shared<C>') . ' = {n:9}; return $c->n;', 9],
 		'order' => ['public int $n; public function __construct(int $a, int $b) { $this->n = $a * 10 + $b; }', 'function bump(int &$n): int { $n += 1; return $n; } $n = 0; $c = new C(bump($n), bump($n)); return $c->n;', 12],
 		'data_order' => ['public int $n; public function __construct(int $a, int $b) { $this->n = $a * 10 + $b; }', 'function bump(int &$n): int { $n += 1; return $n; } $n = 0; $c C = {b:bump($n), a:bump($n)}; return $c->n;', 21],
-		'shared_handle' => ['public C $peer; public int $n; public function __construct(set:$n, C $other) { $this->peer = $other; }', '$none C; $a = new C(7, $none); $b = new C(9, $a); $b->peer->n = 8; return $a->n;', 8],
+		'shared_handle' => ['public ?C $peer = null; public int $n; public function __construct(set:$n, ?C $other) { $this->peer = $other; }', '$none ?C = null; $a = new C(7, $none); $b = new C(9, $a); $b->peer->n = 8; return $a->n;', 8],
 		'nullable' => ['public ?int $n = null; public function __construct(set:$n) {}', '$c = new C(); return $c->n ?? 9;', 9],
 		'fresh_default' => ['public dynamic $d = {n:9}; public function __construct(set:$d) {}', '$a = new C(); $b = new C(); $da = $a->d; $db = $b->d; $da["n"] = 7; $n int = $db["n"]; return $n;', 9],
 	];
@@ -80,7 +80,7 @@ foreach (['class', 'struct'] as $kind) {
 }
 
 foreach ([
-	'contextual_set' => ['data class set { int $n; } data class C { set $item; function __construct(set $item) { $this->item = $item; } } $c C = {item:{n:9}}; return $c->item->n;', 9],
+	'contextual_set' => ['data class set { int $n; } data class C { ?set $item = null; function __construct(set $item) { $this->item = $item; } } $c C = {item:{n:9}}; return $c->item->n;', 9],
 	'enum_set' => ['enum E { case A; case B; } data struct C { public E $e; function __construct(set:$e) {} } $c = new C(E::B); $e = $c->e; return $e === E::B ? 9 : 1;', 9],
 	'no_data_opt_in' => ['class C { public int $n; function __construct(set:$n) {} } $c = new C(9); return $c->n;', 9],
 ] as $name => [$source, $expected]) {

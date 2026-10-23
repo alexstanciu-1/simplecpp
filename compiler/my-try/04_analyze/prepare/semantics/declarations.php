@@ -313,6 +313,9 @@ final class Declaration_Preparation
 		if ($type === null) { throw new \RuntimeException('Property without a default requires an explicit type'); }
 		$prepared->type = $type;
 		Type_Lifecycle_Preparation::require_storage($type, $context);
+		if (($prepared->default_value === null) && !$allows_required && Type_Queries::is_nominal_handle($type)) {
+			throw new \RuntimeException('Required object property needs direct initialization: ' . $field->name);
+		}
 		if (($field->initializer === null) && (Type_Queries::canonical($type)->definition() instanceof enum_type_definition)) {
 			if (!$allows_required) {
 				throw new \RuntimeException('S2S enum-valued fields await explicit field initialization');

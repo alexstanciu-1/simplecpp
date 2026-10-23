@@ -50,6 +50,11 @@ final class CPP_Runtime_Operations
 			$key .= ':payload=' . CPP_Opaque_Representation::identity($construction->constructed_type)
 				. ':storage=' . Record_Storage_Kind_Name::text($storage);
 		}
+		if ($request->record_construction !== null) {
+			$record = $request->record_construction;
+			$key .= ':record=' . CPP_Opaque_Representation::identity($record->payload_type)
+				. ':' . Record_Storage_Kind_Name::text($record->storage);
+		}
 		if ($request->binding !== null) { $key .= ':' . $request->binding->target()->key() . ':' . $request->binding->symbol() . ':' . $request->binding->header() . ($request->binding->native_payloads ? ':native_payloads' : ''); }
 		if ($request->initialization !== null) { $key .= ':' . CPP_Data_Construction::binding_identity($request->initialization); }
 		if ($request->decision !== null) { $key .= ':' . $request->decision->operation_name(); }
@@ -69,7 +74,7 @@ final class CPP_Runtime_Operations
 		foreach ($inputs as $position => $input) {
 			$operand = new cpp_runtime_operand($input, $expressions[$position]);
 			// Source constructors consume application representations, not native unwrapped values.
-			$parts[] = ($context->concrete_types() && (($request->kind === cpp_runtime_operation_kind::construct_call)
+			$parts[] = ($context->concrete_types() && (CPP_Source_Calls::construction_transport($request)
 				|| (($request->kind === cpp_runtime_operation_kind::take) && ($position === 0))))
 				? '&(' . $operand->expression . ')' : self::address($operand, $context);
 		}
@@ -126,7 +131,7 @@ final class CPP_Runtime_Operations
 			|| ($request->kind === cpp_runtime_operation_kind::property_write)
 			|| ($request->kind === cpp_runtime_operation_kind::property_target)
 			|| ($request->kind === cpp_runtime_operation_kind::construct_default)
-			|| ($request->kind === cpp_runtime_operation_kind::construct_call)) { $implementation_engine = $engine; }
+			|| CPP_Source_Calls::construction_transport($request)) { $implementation_engine = $engine; }
 		$native_context = new cpp_generation_context();
 		$native_context->implementation_engine = $implementation_engine;
 		$signature = '';
@@ -137,7 +142,7 @@ final class CPP_Runtime_Operations
 		foreach ($inputs as $position => $input) {
 			CPP_Opaque_Representation::require_native_type($input);
 			$input_context = $native_context;
-			if (($request->kind === cpp_runtime_operation_kind::construct_call)
+			if (CPP_Source_Calls::construction_transport($request)
 				|| (($request->kind === cpp_runtime_operation_kind::take) && ($position === 0))) {
 				$input_context = new cpp_generation_context($engine);
 			}
@@ -221,6 +226,7 @@ final class CPP_Runtime_Operations
 
 	private static function mutable_input(cpp_runtime_operation $request, int $position): bool
 	{
+		if ($request->record_construction !== null) { return true; }
 		if ($request->kind === cpp_runtime_operation_kind::take) {
 			$inputs /** Storage<canonical_type_use> */ = $request->inputs;
 			return $position < $inputs->count() - 1;
@@ -306,6 +312,7 @@ final class CPP_Runtime_Operations
 			$inputs /** Storage<canonical_type_use> */ = $request->inputs;
 			return CPP_Declarations::output($arguments[0], $inputs[0], $context);
 		}
+		if ($request->kind === cpp_runtime_operation_kind::construct_record) { return CPP_Data_Construction::native_record($request, $arguments, $context); }
 		if ($request->kind === cpp_runtime_operation_kind::construct_call) { return CPP_Source_Calls::native_construction($request, $arguments, $context); }
 		if ($request->kind === cpp_runtime_operation_kind::construct_default) {
 			$facts /** prepared_object_construction */ = $request->construction;

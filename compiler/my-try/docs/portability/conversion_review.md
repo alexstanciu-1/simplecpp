@@ -17,7 +17,16 @@ This does not establish exhaustive language, lifetime, incremental or performanc
 
 ## Accepted-backlog bootstrap checkpoint — 2026-10-23
 
-The latest [nullable consumer checkpoint](../../../../specs/planning/results/compiler_bootstrap_backlog_2026_10_23/nullable_consumers/README.md)
+The latest [required-field checkpoint](../../../../specs/planning/results/compiler_bootstrap_backlog_2026_10_23/required_fields/README.md)
+rejects empty defaults for required object fields and reuses direct initialization.
+Data construction now uses existing concrete construction transport in prelowered
+mode. Both-mode focused tests, portable promotion parity and 60 native constructor
+regressions pass. Bootstrap stops earlier on compiler-source required fields at
+80.25 s / 332.5 MiB RSS / 310 MiB PHP heap; no fatal/OOM, emission or native compiler
+rebuild. Direct constructor/source adaptation and converter-owned staged fields remain
+work; lower time/memory are not performance gains. Required-local flow remains open.
+
+The earlier [nullable consumer checkpoint](../../../../specs/planning/results/compiler_bootstrap_backlog_2026_10_23/nullable_consumers/README.md)
 admits optional object casts/tests and checked optional key arguments using existing
 runtime and prelowered protocols. PHP/legacy parity, both-mode focused tests and 33
 native cast regressions pass. Bootstrap takes 200.43 s / 474.8 MiB RSS / 465 MiB PHP

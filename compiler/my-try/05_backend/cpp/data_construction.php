@@ -242,8 +242,50 @@ final class CPP_Data_Construction
 			}
 			$ordered .= ($ordered === '' ? '' : ', ') . CPP_Declarations::move($arguments[$position], $parameter->type, $context);
 		}
+		if ($context->concrete_types()) {
+			$request = new cpp_runtime_operation(cpp_runtime_operation_kind::construct_record);
+			$request->record_construction = $facts;
+			$request->result = $facts->type;
+			$types /** Storage<canonical_type_use> */ = $request->inputs;
+			$values /** vector<string> */ = [];
+			foreach ($inputs as $position => $input) {
+				$types->append($input->parameter->type);
+				$values[] = $arguments[$position];
+			}
+			$key = '';
+			$constructor = weakref_get($facts->contract->constructor);
+			if ($constructor !== null) {
+				$key = CPP_Record_Construction::key($constructor);
+				if ($key !== '') {
+					$name = 'record_key_' . $context->next_temporary;
+					$context->next_temporary++;
+					$text .= 'auto ' . $name . ' = ' . $key . ";\n";
+					$key = $name;
+				}
+			}
+			$value = CPP_Runtime_Operations::invoke($request, $values, $context, $key);
+			return $text . CPP_Sequence::result($value, $context) . CPP_Sequence::close($context);
+		}
 		$callee = CPP_Record_Construction::allocation($facts->type, $facts->payload_type, $facts->storage, $context);
 		return $text . CPP_Sequence::result($callee . '(' . $ordered . ')', $context) . CPP_Sequence::close($context);
+	}
+
+	/** Middleware allocates the settled record; inputs are already evaluated source snapshots. */
+	public static function native_record(cpp_runtime_operation $request, array $arguments /** vector<string> */,
+		cpp_generation_context $context): string
+	{
+		$facts /** prepared_record_construction */ = $request->record_construction;
+		$payload = CPP_Types::payload($facts->payload_type, $context);
+		CPP_Types::record_dependencies($payload, $context);
+		$ordered = '';
+		if (weakref_get($facts->contract->constructor) === null) { $ordered = $payload->spelling . '::scpp_data_tag{}'; }
+		elseif (CPP_Source_Calls::construction_key_type($request) !== '') { $ordered = 'construction_key_value'; }
+		foreach ($arguments as $value) {
+			$context->headers['utility'] = true;
+			$ordered .= ($ordered === '' ? '' : ', ') . 'std::move(' . $value . ')';
+		}
+		$callee = CPP_Record_Construction::allocation($facts->type, $facts->payload_type, $facts->storage, $context);
+		return $callee . '(' . $ordered . ')';
 	}
 
 	/** This overload initializes members directly; supplied inputs never execute member defaults. */

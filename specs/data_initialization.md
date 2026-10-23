@@ -333,7 +333,9 @@ agreement. Implementation availability remains tracked in Chapter 10.
 Without an authored constructor, the compiler synthesizes typed construction inputs
 from public instance properties in declaration order. Each supplied entry initializes
 its corresponding property. For an omitted property, use its explicit default first,
-then its established type default, otherwise require the input. An absent class handle
+then its established type default, otherwise require the input. Required class/interface
+fields have no empty source default and therefore require an input. Optional object
+fields and explicit ownership handles retain their absence defaults; an absent handle
 does not allocate a pointee. No implicit enum case or other invented default is allowed.
 Non-public properties are excluded from synthesized inputs, not silently exposed.
 Static members are excluded from inputs. Derived data initialization selects either

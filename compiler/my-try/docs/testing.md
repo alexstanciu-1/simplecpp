@@ -106,6 +106,13 @@ close required-field/local initialization or every optional consumer. From the r
 root, `python3 tests/portability/nullable_objects.py --results FRESH` compares PHP,
 legacy and both v0.2 native routes using supported nullable local annotations.
 
+`python3 tests/required_fields.py --results FRESH` checks direct initialization of
+required object fields, synthesized/authored/private data construction, inherited
+construction, preserved struct defaults and both-mode rejection of missing required
+inputs. It also retains a valid local predeclaration; it does not establish unsafe
+local-read diagnosis. The portable constructor_promotion.py runner includes a required
+object field with identity preserved across PHP, legacy and both v0.2 modes.
+
 `python3 tests/nullable_keys.py --results FRESH` proves checked optional key arguments
 for reads/writes, nested paths, probes and removal, including absence before write
 value evaluation. Both output modes run, alongside existing key-domain rejection

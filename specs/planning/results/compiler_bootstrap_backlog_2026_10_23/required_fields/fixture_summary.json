@@ -1,0 +1,82 @@
+[
+  {
+    "name": "values-ordinary",
+    "passed": true,
+    "seconds": 15.867056957999012
+  },
+  {
+    "name": "values-concrete",
+    "passed": true,
+    "seconds": 17.795800707994204
+  },
+  {
+    "name": "plain-ordinary",
+    "passed": true,
+    "seconds": 0.613985882999259
+  },
+  {
+    "name": "plain-concrete",
+    "passed": true,
+    "seconds": 0.6477186830015853
+  },
+  {
+    "name": "static-ordinary",
+    "passed": true,
+    "seconds": 0.6244027220018324
+  },
+  {
+    "name": "static-concrete",
+    "passed": true,
+    "seconds": 0.6490203069988638
+  },
+  {
+    "name": "body-ordinary",
+    "passed": true,
+    "seconds": 0.6887246889964445
+  },
+  {
+    "name": "body-concrete",
+    "passed": true,
+    "seconds": 0.6704951759966207
+  },
+  {
+    "name": "early-ordinary",
+    "passed": true,
+    "seconds": 0.671080248997896
+  },
+  {
+    "name": "early-concrete",
+    "passed": true,
+    "seconds": 0.6643725280009676
+  },
+  {
+    "name": "data-missing-ordinary",
+    "passed": true,
+    "seconds": 0.6940537670016056
+  },
+  {
+    "name": "data-missing-concrete",
+    "passed": true,
+    "seconds": 0.670443761999195
+  },
+  {
+    "name": "struct-default-ordinary",
+    "passed": true,
+    "seconds": 0.4169629980024183
+  },
+  {
+    "name": "struct-default-concrete",
+    "passed": true,
+    "seconds": 0.3896576350016403
+  },
+  {
+    "name": "inherited-ordinary",
+    "passed": true,
+    "seconds": 0.4108510189980734
+  },
+  {
+    "name": "inherited-concrete",
+    "passed": true,
+    "seconds": 0.3752409410008113
+  }
+]

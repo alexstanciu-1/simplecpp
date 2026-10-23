@@ -16,6 +16,12 @@ p.add_argument('--results', type=Path, required=True)
 out = p.parse_args().results.resolve()
 (out / 'source').mkdir(parents=True, exist_ok=False)
 source = '''<?php
+class Node { public int $value = 13; }
+class Holder { public function __construct(public Node $node) {} }
+$object = new Node();
+$holder = new Holder($object);
+$object->value = 17;
+echo $holder->node->value, ':';
 enum Choice { case first; case second; }
 final class Record {
  public int $computed = 10;
@@ -38,7 +44,7 @@ $chosen_default = new Default_Choice();
 echo $chosen_default->choice === Choice::first ? 'default' : 'bad', ':';
 '''
 (out / 'source/main.php').write_text(source)
-expected = b'arg5:arg7:second:10:6:7:unchanged:assigned:default:'
+expected = b'17:arg5:arg7:second:10:6:7:unchanged:assigned:default:'
 with CommandRunner(out / 'logs', ROOT) as runner:
     def portable():
         assert runner.run('php', ['php8.5', out / 'source/main.php']) == expected

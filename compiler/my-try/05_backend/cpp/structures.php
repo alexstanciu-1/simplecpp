@@ -261,6 +261,7 @@ enum cpp_runtime_operation_kind {
 	case concrete_mutation;
 	case construct_default;
 	case construct_call;
+	case construct_record;
 	case observation;
 	case runtime_call;
 	case output;
@@ -287,6 +288,7 @@ final class cpp_runtime_operation
 	public ?prepared_call $call = null;
 	public ?prepared_iteration $iteration = null;
 	public ?prepared_object_construction $construction = null;
+	public ?prepared_record_construction $record_construction = null;
 	public function kind_name(): string { return enum_name($this->kind); }
 	public Storage $inputs /** Storage<canonical_type_use> */;
 	public ?canonical_type_use $result = null;

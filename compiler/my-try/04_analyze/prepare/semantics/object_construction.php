@@ -100,7 +100,8 @@ final class Object_Construction_Preparation
 	/** Bounded default-construction proof; record dependencies include nested value fields. */
 	public static function supports_default(canonical_type_use $type, preparation_context $context, bool $base_subobject = false): bool
 	{
-		if (Type_Queries::is_nominal_handle($type)) { return true; }
+		// Empty backing storage is not a valid default value for a required object.
+		if (Type_Queries::is_nominal_handle($type)) { return false; }
 		if (Ownership_Conversions::role($type) !== null) {
 			return true;
 		}

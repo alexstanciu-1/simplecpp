@@ -32,12 +32,23 @@ final class CPP_Source_Calls
 		return CPP_Declarations::selected_call($call, $arguments, $context, '', $facts->type, '', $request);
 	}
 
+	/** Both authored calls and settled data inputs pass concrete source representations. */
+	public static function construction_transport(cpp_runtime_operation $request): bool
+	{
+		return ($request->kind === cpp_runtime_operation_kind::construct_call)
+			|| ($request->kind === cpp_runtime_operation_kind::construct_record);
+	}
+
 	/** The public key type is transportable; only the authorized caller may mint it. */
 	public static function construction_key_type(cpp_runtime_operation $request): string
 	{
-		if ($request->kind !== cpp_runtime_operation_kind::construct_call) { return ''; }
-		$call /** prepared_call */ = $request->call;
-		$method = object_cast(weakref_get($call->target), collected_method::class);
+		$method /** nullable<collected_method> */ = null;
+		if ($request->record_construction !== null) { $method = weakref_get($request->record_construction->contract->constructor); }
+		elseif ($request->kind === cpp_runtime_operation_kind::construct_call) {
+			$call /** prepared_call */ = $request->call;
+			$method = object_cast(weakref_get($call->target), collected_method::class);
+		}
+		if ($method === null) { return ''; }
 		if (!CPP_Record_Construction::keyed($method)) { return ''; }
 		return CPP_Generator::source_name('record', $method->declaring_type()->qualified_name()) . '::scpp_construction_key';
 	}
