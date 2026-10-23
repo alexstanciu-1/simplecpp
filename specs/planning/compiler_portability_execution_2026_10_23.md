@@ -1050,3 +1050,14 @@ Bootstrap /tmp/compiler-bootstrap-result-nullable-01: 74.34 s wall time /
 file-field set: initialization. Aggregate Result payload-capability diagnostic is
 removed; none added. No fatal/OOM, emission or native compiler rebuild. Runtime handle
 contracts, source initialization adaptations, other consumers and CH15 remain open.
+
+## OWN-01 lock-handle contract audit (no implementation)
+
+The [lock audit](compiler_lock_handle_contract_audit_2026_10_23.md) identifies an
+existing PHP/native carrier mismatch: PHP lock_empty returns a present resource-free
+object; the native facade returns an unassigned required handle. Native runtime
+already supports present released tokens but exposes no factory for them. Recommend
+an additive fs_lock_empty factory using existing private construction and shared
+return transport, keeping ordinary required-object rules intact. The alternative
+nullable API would require wider invariant-reference/source propagation. Public
+factory/platform disposition is pending discussion; no runtime/compiler fix made.

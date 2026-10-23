@@ -122,3 +122,21 @@ Metadata selects isolated versus joined-shared requirements; callback permission
 preserved through erasure and checked at the consumer without upgrading it. Existing
 synchronize context/lifetime rules remain separate. Representation details and proofs
 remain implementation work; no implementation authorized. Estimate remains 8–12x.
+
+## TASK-02 implementation boundary revalidated
+
+At the current checkout, Symbol_Collector already owns the publication-mode decision:
+register_source_type calls define_source_type directly when global is null, otherwise
+inside task_synchronize. Reuse that same decision for a private retained-type snapshot
+helper called by previous_member_owner and previous_enum. The helper should copy the
+vector returned by scope::source_types_named while holding the batch lock, then return
+it before unseen/kind/syntax reconciliation. This keeps mutable source work outside
+the critical section and leaves Scope/Source_Type_Declarations as data/query owners.
+Neither caller is currently inside a synchronized callback; avoid acquiring the lock
+inside define_source_type or publish, which already run within writer critical sections.
+
+This is an existing source synchronization protocol, not TASK-01 semantic permission.
+Native proof must exercise the extracted production helper alongside registrations
+under the same scheduler lock, plus full retained parse/standalone PHP controls.
+Do not equate the sequential PHP proof with concurrent safety or mark TASK-02 done
+before the native overlap proof is available. No implementation in this audit update.
