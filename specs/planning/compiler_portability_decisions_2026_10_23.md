@@ -67,13 +67,15 @@ paused.
 
 ## SELF-01 — shared class self values
 
-**Core semantics accepted; runtime/prelowering redesign awaiting approval.**
+**Core semantics accepted; v0.2-specific observer first slice authorized and proved.**
 
-Reuse experiment on 2026-10-23 passes ordinary execution but fails the prelowering
-template-free token gate because shared_self's inherited header exposes templates.
-The experiment was removed. See the [bounded redesign and evidence](results/compiler_bootstrap_backlog_2026_10_23/shared_self_reuse/README.md).
-A template-free observer facade requires shared-allocation/adoption registration;
-this cannot be claimed as direct reuse of enable_shared_from_this alone.
+The original v0.1 reuse experiment failed the template-free inherited-header gate.
+The user subsequently selected a v0.2-specific observer using prepared construction
+facts and existing specialization/layout machinery, leaving v0.1 untouched. The first
+slice passes inherited/interface retention and final release in ordinary/concrete
+output; native observer lifecycle and retained compiler recovery also pass. See
+[checkpoint](results/compiler_bootstrap_backlog_2026_10_23/source_self/README.md).
+Native adoption outside source construction and full SELF-01 acceptance remain open.
 
 Keep ordinary portable PHP `$this` spelling. For an instance with an existing live
 shared owner, using `$this` as an ordinary value acquires another shared handle to
@@ -89,7 +91,7 @@ passing themselves into node operations.
 The existing v0.1 generator emits `this->retain_self(this)` for ordinary class values
 and adds a virtual `scpp::shared_self` base. The runtime acquires the existing weak
 control-block observer and creates an aliasing shared handle to the adjusted address.
-Use that mechanism as the implementation starting point, not a second ownership system.
+Use its behavior as evidence; v0.2 uses its own prepared construction-bound observer while retaining the existing shared control block.
 
 Accepted boundaries:
 
@@ -1019,7 +1021,7 @@ discussion while independent work continues. Deferred debts remain deferred.
 | Item | Subject | Decision state / dependency |
 | --- | --- | --- |
 | CH15-RUNTIME-TYPE-METADATA-01 | Compiler-wide registry/type-use audit and remediation | First-class final-catalog blocker; inventory early, repair by owning slice, prove ordinary/prelowered parity; not closed by discovery alone. |
-| SELF-01 | Shared class self acquisition, including prelowering | Semantics accepted; ordinary reuse proof passes, concrete inherited-base template gate fails. Runtime facade/registration redesign awaiting approval; experiment removed. |
+| SELF-01 | Shared class self acquisition, including prelowering | v0.2-specific observer first slice passes ordinary/concrete inherited retention and release; uses prepared construction and internal layout specialization, leaving v0.1 unchanged. Broader adoption and full acceptance remain open. |
 | SELF-02 | Struct self: receiver, value copy and distinct shared retention | Core receiver/value support implemented and proved in both v0.2 modes; shared retention remains SELF-DEBT-01; portable copies remain COPY-01. |
 | COPY-01 | `_struct_` / `_struct_copy_` portable value protocol | Converter work accepted; first proof is `cpp_specialization_ref`; may consume SELF-02; paused. |
 | INIT-01 | Promoted required constructor inputs and explicit valid defaults | Bounded v0.2 set mapping and switch_label source migration implemented with cross-route proofs; promotion plus explicit parent call remains under discussion; inventory C03; in progress. |

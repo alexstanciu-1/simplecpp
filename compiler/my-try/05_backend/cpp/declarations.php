@@ -467,6 +467,10 @@ final class CPP_Declarations
 			$text .= $separator . 'public virtual ' . CPP_Generator::source_name('record', $interface->qualified_name());
 			$separator = ', ';
 		}
+		$kind = $owner->syntax()->declaration_kind;
+		if (($kind === type_declaration_kind::class_type) || ($kind === type_declaration_kind::interface_type)) {
+			$text .= $separator . 'public virtual ' . CPP_Self::base($context);
+		}
 		return $text . "\n{\n";
 	}
 

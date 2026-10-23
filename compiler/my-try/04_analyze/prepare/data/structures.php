@@ -312,7 +312,7 @@ final class prepared_interpolation_value extends prepared_expression {
 }
 
 /** Receiver access and receiver values have different representations, not different owners. */
-enum variable_reference_operation { case storage; case receiver; case receiver_value; }
+enum variable_reference_operation { case storage; case receiver; case receiver_value; case shared_self; }
 
 /** A resolved reference always has a declaration; no literal fields belong here. */
 final class prepared_variable_reference extends prepared_expression {

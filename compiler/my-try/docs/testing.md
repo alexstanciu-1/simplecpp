@@ -1,6 +1,15 @@
 # Test runners
 Doc Status: supporting
 
+`python3 compiler/my-try/tests/shared_self.py --results FRESH` (from the repository
+root) proves v0.2 source construction/binding, inherited/interface self acquisition,
+argument/local transport, retention after releasing original owners and final
+destruction in ordinary/concrete modes. It also checks lifecycle rejection and
+retained recovery. `tests/runtime/native/test_source_self.cpp` checks native observer
+copy/assignment and adjusted-address owner identity; `test_shared_self.cpp` remains
+the unchanged v0.1 control. This is the first source-class self slice, not broad
+native adoption or whole-compiler bootstrap acceptance.
+
 [S02/V-R08 closeout](planning/strict_gui_closeout.md): run `tests/s02_prelower.py`
 for the six declaration-only companions; `tests/ui_webview_enabled.py --integration`
 for real Linux GUI/native/source/retained/disabled-provider acceptance; and

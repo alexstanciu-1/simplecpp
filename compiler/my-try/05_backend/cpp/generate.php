@@ -1313,6 +1313,7 @@ final class CPP_Generator
 		$target = object_cast(weakref_get($reference->declaration), collected_name::class);
 		if ($reference->operation === variable_reference_operation::receiver) { return 'this'; }
 		if ($reference->operation === variable_reference_operation::receiver_value) { return '(*this)'; }
+		if ($reference->operation === variable_reference_operation::shared_self) { return CPP_Self::acquire($reference, $context); }
 		return self::local_name($target);
 	}
 

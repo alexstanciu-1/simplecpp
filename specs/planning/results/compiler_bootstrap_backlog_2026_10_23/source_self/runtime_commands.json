@@ -1,0 +1,64 @@
+[
+  {
+    "name": "shared_self-build",
+    "command": [
+      "clang++-18",
+      "-std=c++20",
+      "-I",
+      "/home/alexv/__AI/simple_cpp/simple_cpp_01/runtime/include",
+      "/home/alexv/__AI/simple_cpp/simple_cpp_01/tests/runtime/native/test_shared_self.cpp",
+      "-o",
+      "/tmp/source-self-runtime-01/shared_self",
+      "-ldl"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 1.312,
+    "code": 0,
+    "expected": 0,
+    "executor": "subprocess",
+    "executor_reason": "subprocess"
+  },
+  {
+    "name": "shared_self-run",
+    "command": [
+      "/tmp/source-self-runtime-01/shared_self"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 0.005,
+    "code": 0,
+    "expected": 0,
+    "executor": "subprocess",
+    "executor_reason": "subprocess"
+  },
+  {
+    "name": "source_self-build",
+    "command": [
+      "clang++-18",
+      "-std=c++20",
+      "-I",
+      "/home/alexv/__AI/simple_cpp/simple_cpp_01/runtime/include",
+      "/home/alexv/__AI/simple_cpp/simple_cpp_01/tests/runtime/native/test_source_self.cpp",
+      "-o",
+      "/tmp/source-self-runtime-01/source_self",
+      "-ldl"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 1.446,
+    "code": 0,
+    "expected": 0,
+    "executor": "subprocess",
+    "executor_reason": "subprocess"
+  },
+  {
+    "name": "source_self-run",
+    "command": [
+      "/tmp/source-self-runtime-01/source_self"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 0.005,
+    "code": 0,
+    "expected": 0,
+    "executor": "subprocess",
+    "executor_reason": "subprocess"
+  }
+]

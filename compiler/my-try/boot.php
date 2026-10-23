@@ -201,6 +201,7 @@ require_once __DIR__ . '/05_backend/cpp/physical_interfaces.php';
 require_once __DIR__ . '/05_backend/cpp/opaque_representation.php';
 require_once __DIR__ . '/05_backend/cpp/callsites.php';
 require_once __DIR__ . '/05_backend/cpp/runtime_operations.php';
+require_once __DIR__ . '/05_backend/cpp/self.php';
 require_once __DIR__ . '/05_backend/cpp/wrapper_transport.php';
 require_once __DIR__ . '/05_backend/cpp/provider_properties.php';
 require_once __DIR__ . '/05_backend/cpp/concrete_members.php';

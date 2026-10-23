@@ -85,6 +85,12 @@ final class CPP_Record_Construction
 		}
 		$context->headers['scpp/memory.hpp'] = true;
 		$helper = $storage === record_storage_kind::unique ? 'unique' : 'shared';
+		$source = Type_Queries::source_record($payload_type);
+		if (($storage === record_storage_kind::shared) && ($source !== null)
+			&& ($source->syntax()->declaration_kind === type_declaration_kind::class_type)) {
+			$context->headers['scpp/source_self.hpp'] = true;
+			$helper = 'source_shared';
+		}
 		return '::scpp::' . $helper . '<' . $payload->spelling . '>';
 	}
 

@@ -1,0 +1,12 @@
+{
+  "compiler/my-try/05_backend/cpp/self.php": "58fc6810666eec6ea8e24f629e8057246ac59eea586a1c66f22de94f115433e6",
+  "compiler/my-try/05_backend/cpp/runtime_operations.php": "3e2dc01861cf77ffa95ed93408508ecdea432bcee71ad2b5a3671d65bb1f1f79",
+  "compiler/my-try/05_backend/cpp/data_construction.php": "8932b3a6709959a522e1c1aa38b71643760475ee465de8c7b9fcf62e5233f27b",
+  "compiler/my-try/05_backend/cpp/policy.php": "1b407960c35c83708b47a136d45aa2dc67b56b4cfa05720b1260be2dff742296",
+  "compiler/my-try/05_backend/cpp/declarations.php": "1401bf475a93bc647009f3da6d308284f1ee21633e4c8b8bbfcae0f59543b6e9",
+  "compiler/my-try/04_analyze/prepare/semantics/methods.php": "50e6b663f31f6a7f350c83ab29eecf6de94dda0d19dbeee1572f3e3735e81856",
+  "runtime/include/scpp/source_self.hpp": "9ff5d24d40a4f29acd88c7551c45fd76376d1d2e9f3a1a089d68a0844824f4f5",
+  "compiler/my-try/tests/shared_self.py": "174a73e201a6beb43940d3146d3eff576abf833bd041355d2d1ee395b6b72c3b",
+  "compiler/my-try/tests/shared_self.php": "b6ef421977441c8283aec80160994367d7c1c540e4c9412cfa31c992f892fc14",
+  "tests/runtime/native/test_source_self.cpp": "89e383d75aa6b7a54e802e7962f5baebdf66a67a56e079b715104e755ccb9d9c"
+}

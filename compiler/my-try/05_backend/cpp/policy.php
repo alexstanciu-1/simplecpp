@@ -114,7 +114,12 @@ final class CPP_Shared_Allocations
 	public static function definition(collected_record $record, cpp_generation_context $context): string
 	{
 		$context->headers['scpp/memory.hpp'] = true;
-		return self::signature($record) . "\n{\n\treturn ::scpp::shared<"
+		$helper = 'shared';
+		if ($record->syntax()->declaration_kind === type_declaration_kind::class_type) {
+			$context->headers['scpp/source_self.hpp'] = true;
+			$helper = 'source_shared';
+		}
+		return self::signature($record) . "\n{\n\treturn ::scpp::" . $helper . '<'
 			. CPP_Generator::source_name('record', $record->qualified_name()) . ">();\n}\n\n";
 	}
 }

@@ -241,6 +241,8 @@ final class cpp_program {
 
 /** Backend recipes retain settled identities, never syntax or generation workers. */
 enum cpp_runtime_operation_kind {
+	case self_storage;
+	case self_acquire;
 	case exception_throw;
 	case match_failure;
 	case exception_catch;

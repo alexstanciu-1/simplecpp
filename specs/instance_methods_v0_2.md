@@ -8,6 +8,30 @@ storage/copy differences remain unchanged. Availability is tracked in the
 
 ## Fixed instance calls
 
+### Shared class self values — 2026-10-23
+
+In an ordinary source-class instance method, `$this` used as a value acquires a
+shared handle to the same instance and existing owner. Assignment, by-value
+arguments and returns use ordinary shared-value conversions. Inherited methods
+preserve both the owner and the adjusted receiver address; no object is cloned.
+The acquired handle can outlive the handle that originally invoked the method.
+
+Direct owning acquisition in constructors/destructors rejects during preparation.
+Acquisition without a live registered shared owner fails at runtime, including
+indirect acquisition before shared construction completes. Inline/unique ownership
+is not promoted. Borrowed receiver capture behavior is unchanged, and ordinary
+strong-reference cycles are not prevented automatically.
+
+The initial implementation binds source-class owners through v0.2 shared
+construction, including outlined allocation. Its native observer and prelowered
+layout use the same lifecycle policy: new object copies/moves start unbound;
+assignment preserves the destination's owner. v0.1 retains its existing mechanism.
+Native factories bypassing v0.2 source construction do not automatically bind an
+observer; broader native adoption integration remains outside this first slice.
+Ordinary/prelowered inherited retention and final release are exercised by
+`compiler/my-try/tests/shared_self.py`. This is bounded feature evidence, not a
+completed native compiler bootstrap or full SELF-01 acceptance claim.
+
 ### Property declaration spelling
 
 Class/struct instance and static properties accept both `public vector<int> $items;`
@@ -130,8 +154,8 @@ shared struct handle. The receiver itself is never moved from implicitly.
 Rebinding `$this`, borrowing it into a new native reference and returning a native
 reference to it remain rejected by the existing receiver/reference restrictions.
 Borrowed receiver captures remain borrowed; a value copy produced inside the bounded
-closure follows ordinary value rules. Class owning-self support is a separate slice;
-this struct extension does not promote inline or unique ownership to shared ownership.
+closure follows ordinary value rules. Neither struct self copying nor class self
+acquisition promotes inline or unique ownership to shared ownership.
 The converter-owned `_struct_copy_` protocol is separate from this native capability. The
 [bounded closure receiver contract](language/closures.md#v02-borrowed-receiver-captures)
 additionally permits explicit `use ($this)` and automatic arrow receiver capture:

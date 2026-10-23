@@ -105,14 +105,22 @@ final class Method_Preparation
 		return Expression_Preparation::prepare($syntax, $context);
 	}
 
-	/** Struct self remains an existing place; ordinary value boundaries enforce copying. */
+	/** Struct self is a copyable place; class self acquires ownership as an ordinary value. */
 	public static function self_value(preparation_context $context): prepared_variable_reference
 	{
 		$receiver = $context->receiver;
 		if ($receiver === null) { throw new \RuntimeException('$this requires an instance body'); }
 		$value_type = Model::$type_catalog->registry()->use($receiver->type->type_id());
 		if (Type_Queries::is_nominal_handle($value_type)) {
-			throw new \RuntimeException('Class self values require shared-owner retention support');
+			$method = object_cast(weakref_get($receiver->declaration), collected_method::class);
+			if (($method->name === '__construct') || ($method->name === '__destruct')) {
+				throw new \RuntimeException('Shared self acquisition is forbidden during construction or destruction');
+			}
+			$reference = new prepared_variable_reference();
+			$reference->operation = variable_reference_operation::shared_self;
+			$reference->type = $value_type;
+			$reference->declaration = $receiver->declaration;
+			return $reference;
 		}
 		$reference = new prepared_variable_reference();
 		$reference->operation = variable_reference_operation::receiver_value;

@@ -14,6 +14,9 @@ final class CPP_Specializations
 
 	public function request_operation(cpp_runtime_operation $request): cpp_specialization_ref
 	{
+		if ($request->kind === cpp_runtime_operation_kind::self_storage) {
+			return $this->intern(CPP_Self::storage_entry($request, $this));
+		}
 		if ($request->kind === cpp_runtime_operation_kind::finally_storage) {
 			return $this->intern(CPP_Finally::storage_entry($request, $this));
 		}

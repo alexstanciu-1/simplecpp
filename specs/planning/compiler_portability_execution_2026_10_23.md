@@ -1431,3 +1431,22 @@ preservation and incremental conversion. Structural controls pass both targets.
 Evidence: staged_marker. Bootstrap 1:20.10 / 343808 KiB RSS / 314 MiB heap, identical
 failure object to type_children checkpoint. Full INIT-02, COPY-01 and production
 rollout remain open. No new native semantics or completed-goal claim.
+
+## SELF-01 v0.2-specific observer first slice
+
+User authorized a v0.2-specific design after the reuse audit; v0.1 remains untouched.
+Prepared self acquisition is separate from receiver borrowing and struct self copying.
+Source shared construction (including outlined allocation) binds an inline weak-owner
+observer after successful construction. CPP_Self uses the existing specialization
+engine/layout probes; concrete acquisition borrows payload storage and returns an
+owned handle facade. No global shared_p/adoption rewrite or extra observer allocation.
+
+First source proof: inherited/interface acquisition, assignment/arguments, retained
+mutation after original handles clear, and destruction after final release pass both
+modes. Runtime copy/move construction resets observer, assignment preserves destination,
+and adjusted receiver views preserve owner identity; original v0.1 control passes.
+Struct-self/native/preparation regressions and shared-self retained recovery pass.
+Initial concrete attempt exposed payload-versus-handle transport and was corrected.
+Bootstrap 1:15.87 / 349960 KiB RSS / 320 MiB heap removes the class-self diagnostic,
+adds none; other blockers remain. Evidence: source_self. This completes the requested
+first proof, not full SELF-01/native adoption or the overall backlog goal.

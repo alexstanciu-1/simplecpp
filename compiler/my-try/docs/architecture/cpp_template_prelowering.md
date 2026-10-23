@@ -117,6 +117,18 @@ and broader keyed probes remain separate. See [curl integration](../planning/cur
 
 ## Existing owners
 
+Source-class self retention uses prepared `shared_self` acquisition and construction
+facts. `CPP_Self` requests an internal layout-probed observer through the existing
+specialization engine; application classes share its template-free virtual base.
+Native observer storage contains a weak owner without a separate heap allocation.
+Both constructor transport and outlined allocation bind after successful source
+construction. Acquisition borrows the raw source payload and returns the usual
+owned handle facade. It does not interpret `this` as handle storage. v0.1's
+`shared_self` implementation and generic shared-pointer transport remain unchanged.
+Broader native adoption bypassing source construction is not integrated by this slice.
+See [the source contract](../../../../specs/instance_methods_v0_2.md#shared-class-self-values--2026-10-23)
+and `tests/shared_self.py` for inherited lifetime and retained-recovery proofs.
+
 `CPP_Callback_Transport` provides owned callable storage for fixed value parameter
 lists, including zero inputs and void results. Provider adapters own their callback
 copy, allowing it to survive the compiled helper's return. This is a transport

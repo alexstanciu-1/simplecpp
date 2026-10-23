@@ -15,7 +15,8 @@ $invalid = [
  ['struct S { function &bad(S &$s): S { return $this; } }', 'reference'],
  ['struct S { function bad(): void { $this = new S(); } }', '$this'],
  ['struct S { static function bad(): S { return $this; } } S::bad();', 'instance body'],
- ['class C { function bad(): C { return $this; } }', 'shared-owner retention'],
+ ['class C { public function __construct() { consume($this); } } function consume(C $v): void {}', 'construction or destruction'],
+ ['class C { public function __destruct() { consume($this); } } function consume(C $v): void {}', 'construction or destruction'],
  ['abstract struct S { function snapshot(): S { return $this; } }', 'Abstract type'],
 ];
 foreach ([false, true] as $prelower) {

@@ -117,6 +117,7 @@ final class CPP_Runtime_Operations
 		// alone consumes its original scalar representation.
 		$implementation_engine /** nullable<CPP_Specializations> */ = null;
 		if (($request->kind === cpp_runtime_operation_kind::binary)
+			|| ($request->kind === cpp_runtime_operation_kind::self_acquire)
 			|| ($request->kind === cpp_runtime_operation_kind::conversion)
 			|| ($request->kind === cpp_runtime_operation_kind::observation)
 			|| ($request->kind === cpp_runtime_operation_kind::object_type)
@@ -146,7 +147,12 @@ final class CPP_Runtime_Operations
 				|| (self::take_application_output($request) && ($position === 0))) {
 				$input_context = new cpp_generation_context($engine);
 			}
-			$native = CPP_Declarations::type($input, $input_context);
+			// Self acquisition borrows the source payload, not a stored handle facade.
+			if ($request->kind === cpp_runtime_operation_kind::self_acquire) {
+				$payload = CPP_Types::payload($input, $input_context);
+				CPP_Types::record_dependencies($payload, $input_context);
+				$native = $payload->spelling;
+			} else { $native = CPP_Declarations::type($input, $input_context); }
 			foreach ($input_context->headers as $header => $used) { $native_context->headers[$header] = true; }
 			$mutable_input = self::mutable_input($request, $position);
 			$qualifier = $mutable_input ? '' : 'const ';
@@ -234,6 +240,7 @@ final class CPP_Runtime_Operations
 
 	private static function mutable_input(cpp_runtime_operation $request, int $position): bool
 	{
+		if ($request->kind === cpp_runtime_operation_kind::self_acquire) { return true; }
 		if ($request->record_construction !== null) { return true; }
 		if ($request->kind === cpp_runtime_operation_kind::take) {
 			$inputs /** Storage<canonical_type_use> */ = $request->inputs;
@@ -251,6 +258,10 @@ final class CPP_Runtime_Operations
 	private static function native_operation(cpp_runtime_operation $request, array $arguments /** vector<string> */,
 		cpp_generation_context $context): string
 	{
+		if ($request->kind === cpp_runtime_operation_kind::self_acquire) {
+			$context->headers['scpp/source_self.hpp'] = true;
+			return '::scpp::retain_source_self(&' . $arguments[0] . ')';
+		}
 		if ($request->kind === cpp_runtime_operation_kind::match_failure) {
 			$context->headers['stdexcept'] = true;
 			return 'throw std::runtime_error("Unhandled match expression")';
