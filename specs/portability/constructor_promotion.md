@@ -39,7 +39,7 @@ before the authored body. Moving the call could change child-state observations.
 Source adaptation versus a bounded no-child-observation convention remains under
 discussion. This slice does not reorder parent calls or claim that combination.
 
-Exception-facade integration is a separate pending boundary: the facade's
-`same_exception` helper currently reaches v0.2 integer checking for shared-object
-identity. Constructor failure proofs use checked arithmetic and do not establish
-that unrelated facade's full admission.
+The facade's `same_exception` helper now uses v0.2 shared-object identity admission.
+The production source_initialization.py portability fixture executes same/distinct
+exception comparisons through PHP, legacy and both v0.2 modes. Constructor failure
+proofs remain separate; this does not prove every exception-facade operation.

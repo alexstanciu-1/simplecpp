@@ -146,6 +146,8 @@ enum operator_operation {
 	case integer_equal;
 	case integer_not_equal;
 	case integer_identical;
+	case shared_identical;
+	case shared_not_identical;
 	case scalar_identical;
 	case scalar_not_identical;
 	case integer_not_identical;

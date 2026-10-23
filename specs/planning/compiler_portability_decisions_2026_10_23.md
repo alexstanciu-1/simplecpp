@@ -1189,11 +1189,11 @@ v0.1 restrictions do not admit a general nullable-field/method rewrite in struct
 Prove an existing route-safe source/helper representation or leave that form unsupported;
 never extend Simple C++ solely for INIT-02. Both route and prelowering proofs remain pending.
 
-## Remaining ownership-consumer witness — direct source initialization checkpoint
+## Ownership identity consumer — resolved after direct source initialization checkpoint
 
-The assembled framework function scpp_portability_same_exception still fails v0.2
-preparation on its object-identity comparison (reported as canonical-int operands).
-Retained owner inspection isolates it from the production cursor fixture. Audit the
-existing identity contract and runtime/ordinary/prelowered machinery before repairing
-this consumer; do not infer general object structural equality from PHP support.
-Evidence: results/compiler_bootstrap_backlog_2026_10_23/direct_source_init.
+The assembled framework's scpp_portability_same_exception failure was missing v0.2
+admission for an existing runtime/profile contract. Shared_Identity now uses registry
+ownership roles, optional payload interpretation and observed ancestry; both emitters
+reuse runtime strict identity. Both-mode execution, pair rejections, retained ancestry
+edit/recovery and PHP/legacy facade parity pass. Ordinary structural comparison,
+unique identity and unrelated interface views are not widened by this slice.

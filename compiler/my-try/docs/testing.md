@@ -2207,6 +2207,12 @@ with the installed SDKs. See [scope and exact evidence](planning/error_condition
 From the repository root, `python3 tests/portability/source_initialization.py --results FRESH`
 extracts production source_record and the pair cursor with their cursor protocol.
 PHP, legacy and both v0.2 outputs preserve identity and traversal. Small dependency
-owners isolate this component; v0.2 includes only its two needed exception classes,
-not the full framework's currently blocked object-identity helper. AST/invariant and
+owners isolate this component; both routes include the full exception framework and
+execute its same/distinct exception-identity helper. AST/invariant and
 lifecycle_handoff tests cover the wider source adaptation in PHP.
+
+`python3 tests/shared_identity.py --results FRESH` (from compiler/my-try) checks shared
+object identity, compatible interface/base views, optional absence, operand snapshots,
+explicit shared struct handles, invalid pair rejection and retained relationship
+edit/recovery/reset. The portable source_initialization.py runner also exercises the
+framework identity helper across PHP, legacy and both v0.2 modes.

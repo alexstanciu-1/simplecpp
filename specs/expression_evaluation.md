@@ -425,3 +425,21 @@ text, fixed-width carrier payloads, nested carriers or object/container text.
 Existing boxed and indexed text contracts remain separate. Assignment, argument
 passing, equality, explicit casts, echo and interpolation do not acquire these
 text-context conversions.
+
+## v0.2 shared object identity — 2026-10-23
+
+The frontend admits the existing [shared strict-identity contract](../runtime/specs/spec.md#7a-shared-strict-identity-semantics-with-php-adapter-exposure)
+for `===` and `!==` on shared object handles, including optional class/interface
+values and explicit shared struct handles. Payload types must match or have an
+admitted base/derived relationship in either direction. Ancestry is checked during
+preparation and observed for invalidation; the backend does not resolve relationships.
+Unrelated views and shared/nonshared pairs reject with an identity-specific diagnostic.
+
+Both operands retain their original type and absence state. Evaluation snapshots
+left before right, exactly once. No checked nullable extraction, pointee copy,
+structural field comparison or ownership transfer is introduced. Compatible absent
+handles compare identical; a present handle differs from absence. Native identity
+uses the adjusted compatible base pointer. Ordinary `==`/`!=`, weak observation and
+unique-handle identity admission are not added by this slice. Explicit null comparisons
+continue through the existing presence operation. Both native output modes use the
+existing runtime helper; prelowering keeps templates in middleware.

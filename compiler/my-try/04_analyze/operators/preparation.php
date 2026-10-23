@@ -113,6 +113,8 @@ final class Operator_Preparation
 			|| ($source_operator === operator_kind::pre_decrement) || ($source_operator === operator_kind::post_decrement)) {
 			return Mutation_Preparation::decide($source_operator, $operands, $context);
 		}
+		$shared_identity = Shared_Identity::try_decide($source_operator, $operands, $context);
+		if ($shared_identity !== null) { return $shared_identity; }
 		$wrapper_equality = Wrapper_Equality::try_decide($source_operator, $operands, $operator_context, $context);
 		if ($wrapper_equality !== null) {
 			return $wrapper_equality;

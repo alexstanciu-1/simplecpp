@@ -1009,12 +1009,14 @@ final class CPP_Generator
 		elseif (($decision->operation === operator_operation::integer_identical)
 			|| ($decision->operation === operator_operation::wrapper_identical)
 			|| ($decision->operation === operator_operation::scalar_identical)
+			|| ($decision->operation === operator_operation::shared_identical)
 			|| ($decision->operation === operator_operation::boxed_identical)) {
 			$spelling = 'scpp::php::identical';
 		}
 		elseif (($decision->operation === operator_operation::integer_not_identical)
 			|| ($decision->operation === operator_operation::wrapper_not_identical)
 			|| ($decision->operation === operator_operation::scalar_not_identical)
+			|| ($decision->operation === operator_operation::shared_not_identical)
 			|| ($decision->operation === operator_operation::boxed_not_identical)) {
 			$spelling = 'scpp::php::not_identical';
 		}
@@ -1138,8 +1140,10 @@ final class CPP_Generator
 		if (($decision->operation === operator_operation::integer_identical)
 			|| ($decision->operation === operator_operation::wrapper_identical)
 			|| ($decision->operation === operator_operation::scalar_identical)
+			|| ($decision->operation === operator_operation::shared_identical)
 			|| ($decision->operation === operator_operation::wrapper_not_identical)
 			|| ($decision->operation === operator_operation::scalar_not_identical)
+			|| ($decision->operation === operator_operation::shared_not_identical)
 			|| ($decision->operation === operator_operation::integer_not_identical)
 			|| ($decision->operation === operator_operation::boxed_identical)
 			|| ($decision->operation === operator_operation::boxed_not_identical)) {

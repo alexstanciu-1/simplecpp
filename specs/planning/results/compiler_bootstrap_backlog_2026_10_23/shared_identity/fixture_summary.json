@@ -1,0 +1,42 @@
+[
+  {
+    "name": "identity-ordinary",
+    "passed": true,
+    "seconds": 24.623890743998345
+  },
+  {
+    "name": "identity-concrete",
+    "passed": true,
+    "seconds": 23.722057885999675
+  },
+  {
+    "name": "unrelated-ordinary",
+    "passed": true,
+    "seconds": 0.5233832330050063
+  },
+  {
+    "name": "unrelated-concrete",
+    "passed": true,
+    "seconds": 0.5364723050006432
+  },
+  {
+    "name": "weak-ordinary",
+    "passed": true,
+    "seconds": 0.5538494909997098
+  },
+  {
+    "name": "weak-concrete",
+    "passed": true,
+    "seconds": 0.5322639890000573
+  },
+  {
+    "name": "scalar-ordinary",
+    "passed": true,
+    "seconds": 0.5494519999992917
+  },
+  {
+    "name": "scalar-concrete",
+    "passed": true,
+    "seconds": 0.537173762000748
+  }
+]

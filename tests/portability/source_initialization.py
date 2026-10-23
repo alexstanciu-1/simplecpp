@@ -50,9 +50,13 @@ $cursor = new pair_children_iterator($left, $right);
 foreach ($cursor as $key => $item) { echo $key, ':', $item->value, ':'; }
 $second = new pair_children_iterator($right, $left);
 foreach ($second as $item) { echo $item->value, ':'; }
+$signal = new \LogicException('message');
+$other_signal = new \LogicException('message');
+echo same_exception($signal, $signal) ? 'same:' : 'bad:';
+echo same_exception($signal, $other_signal) ? 'bad' : 'distinct';
 '''
 (out / 'source/main.php').write_text(source)
-expected = b'input.phs:changed:0:3:1:7:7:3:'
+expected = b'input.phs:changed:0:3:1:7:7:3:same:distinct'
 with CommandRunner(out / 'logs', ROOT) as runner:
     assert runner.run('host', ['php8.5', '-r', 'require $argv[1]; require $argv[2];', TOOLS / 'runtime/bootstrap.php', out / 'source/main.php']) == expected
     for route in ['v0.1', 'v0.2']:
@@ -73,11 +77,8 @@ with CommandRunner(out / 'logs', ROOT) as runner:
             folder = out / mode
             (folder / 'source').mkdir(parents=True)
             shutil.copyfile(out / 'v0.2/main.phs', folder / 'source/main.phs')
-            # This fixture uses only the exception declarations from the assembled framework.
-            framework = out / 'v0.2/scpp_framework/exceptions.phs'
-            (folder / 'source/exceptions.phs').write_text(
-                declaration(framework, 'class scpp_portability_exception ') + '\n' +
-                declaration(framework, 'class scpp_portability_logic_exception ') + '\n')
+            # Include the full exception framework, including its identity helper.
+            shutil.copyfile(out / 'v0.2/scpp_framework/exceptions.phs', folder / 'source/exceptions.phs')
             runner.run(mode + '-publish', ['php8.5', APP / 'tests/async_tasks_publish.php', folder,
                                            ROOT / 'runtime/metadata/modules', 'compiler', mode])
             manifest = json.loads((folder / 'published/.scpp-output.manifest').read_text())

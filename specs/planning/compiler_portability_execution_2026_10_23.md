@@ -895,3 +895,28 @@ file field in another owner. The first-field diagnostic disappears; no diagnosti
 text is added. Repeated file/source diagnostics are aggregated across owners, so
 this does not measure how many declarations were repaired. No fatal/OOM, emission or
 native compiler rebuild; required-field source migration and other backlog work remain.
+
+
+## Shared object identity admission
+
+Reuse: existing runtime section 7a defines compatible shared identity, including
+nullable absence and adjusted base pointers. Shared_Identity now admits that contract
+using registry ownership roles and observed ancestry, then existing binary transport
+and runtime helpers. No runtime or new equality semantics. Unique/weak identity and
+structural equality stay outside this slice.
+
+Both native modes pass same/distinct objects, compatible views, nullable absence,
+explicit shared structs, evaluation order and single evaluation; invalid unrelated,
+weak and scalar pairs reject. Retained ancestry edit/reject/revert/reset passes in
+both modes. The existing operator suite passes. The production-component portability
+fixture now loads the complete exception framework and executes same_exception in
+PHP, legacy native and both v0.2 modes. This supersedes the prior declaration subset.
+Evidence: results/compiler_bootstrap_backlog_2026_10_23/shared_identity/.
+
+Bootstrap: 78.92 s wall time / 341,820 KiB RSS (333.8 MiB) / 312 MiB
+PHP peak allocation. Preparation still fails first on required initialization of a
+file field. The aggregated diagnostic texts are unchanged from the preceding source
+adaptation checkpoint: the integer-operation diagnostic remains at other sites.
+The focused exception-helper execution proves this repair; aggregate text alone
+cannot identify repaired owners. No fatal/OOM, emission or native compiler rebuild.
+Required fields, local flow and the remaining backlog remain open.

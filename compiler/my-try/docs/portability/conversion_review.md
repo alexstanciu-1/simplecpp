@@ -1148,3 +1148,16 @@ using default prelowering. Run `tools/native_validate.py --reference-advisories
 --types-only --no-stan --no-pch --compiler-optimization O2` with the normal target,
 revision and result arguments. The closeout records source hashes and portability
 adaptations; this does not replace earlier broader checkpoints.
+
+## Shared identity checkpoint — 2026-10-23
+
+Bootstrap: 78.92 s wall time / 341,820 KiB RSS (333.8 MiB) / 312 MiB
+PHP peak allocation. Preparation still fails first on required initialization of a
+file field. The aggregated diagnostic texts are unchanged from the preceding source
+adaptation checkpoint: the integer-operation diagnostic remains at other sites.
+The focused exception-helper execution proves this repair; aggregate text alone
+cannot identify repaired owners. No fatal/OOM, emission or native compiler rebuild.
+Required fields, local flow and the remaining backlog remain open.
+
+Compatible shared identity now passes focused PHP, legacy native, ordinary and
+prelowered v0.2 exception-helper execution. See the [evidence](../../../../specs/planning/results/compiler_bootstrap_backlog_2026_10_23/shared_identity/README.md).
