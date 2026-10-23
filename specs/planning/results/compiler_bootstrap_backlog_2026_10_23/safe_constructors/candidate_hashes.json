@@ -1,0 +1,9 @@
+{
+  "03_parse/collect/structures.php": "89823f687df56d9d435f1640e56c99eb214bd4405295e7aa29f6c36cd5f7bbec",
+  "03_parse/scopes/namespaces.php": "c026bd626fe52715e7dea233decda11813028d5292a06f1fa1293fa46a3a4aff",
+  "03_parse/structures/structures_specialization.php": "84a997dcd499f2ee8b75a9854bb7b89aa4c0b42e34328477ee5c763989134f59",
+  "03_parse/types/catalog.php": "ff7e32eaeecf292e5d08b56389cd4915b78a35c6190dd270529cf4955bdb6f05",
+  "03_parse/types/model.php": "7fee17963122329b9278b6d39309fd27766b165afd4013cc72de2b9220a9abc7",
+  "04_analyze/prepare/file.php": "9cb6876c11a7ef3e70497198ee515bdacb4ec66201b21dca556b7b36f5aaf739",
+  "05_backend/cpp/syntax.php": "2cbf081b81d9f055fe5293f9b149c4f8779dcc7c88127e145be389fc1eaf2056"
+}

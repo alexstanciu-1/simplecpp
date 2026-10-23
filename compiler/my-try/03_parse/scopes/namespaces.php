@@ -4,14 +4,7 @@ namespace scpp\compiler;
 /** Canonical source namespace; path ancestry is not lexical user-symbol fallback. */
 final class namespace_identity
 {
-	private string $qualified_path;
-	private scope $members;
-
-	public function __construct(string $path, scope $members)
-	{
-		$this->qualified_path = $path;
-		$this->members = $members;
-	}
+	public function __construct(private string $qualified_path, private scope $members) {}
 
 	public function path(): string
 	{

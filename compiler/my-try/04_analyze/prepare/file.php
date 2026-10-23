@@ -5,14 +5,7 @@ namespace scpp\compiler;
 
 final class File_Preparation
 {
-	private collected_file $source;
-	private scope $language;
-
-	public function __construct(collected_file $source, scope $language_scope)
-	{
-		$this->source = $source;
-		$this->language = $language_scope;
-	}
+	public function __construct(private collected_file $source, private scope $language) {}
 
 	/** Standalone callers use the same incremental worker and selections as the compiler. */
 	public function prepare(): prepared_file

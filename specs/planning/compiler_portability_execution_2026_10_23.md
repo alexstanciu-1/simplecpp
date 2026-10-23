@@ -1497,3 +1497,23 @@ compiler recovery pass. Evidence: parent_promotion. Bootstrap 1:19.80 / 350156 K
 peak RSS / 320 MiB PHP heap remains blocked in preparation on other required-field
 initializations, including other syntax_node declarations. No wider adaptation or
 compiler semantic change in this slice.
+
+## Safe PHP constructor batch and helper-owned initialization boundary
+
+User authorized continued safe constructor adaptation under the same portable rule.
+Promoted inputs in 23 constructors: ten collected syntax owners/references, anonymous
+callable syntax identity, seven canonical type variants, and five assignment-only
+worker/namespace/provider/conditional constructors. Audited parent chains only store
+collection or validate/store numeric identity; no child-state observation/publication.
+No converter, generator, runtime or semantic changes. Focused type catalog, namespace,
+collected-role, callable, standalone preparation and retained proofs pass; portable
+constructor proofs pass PHP, legacy and both v0.2 modes including failure controls.
+Evidence: safe_constructors.
+
+Bootstrap 1:26.60 / 351180 KiB RSS / 320 MiB PHP heap: 11 distinct diagnostic messages
+removed, none added. syntax_node cleared; first remaining failure is signature_syntax.
+Stopped at Callable_Syntax's trait-owned required objects created through an initializing
+helper. Existing promotion cannot express these as-is, and the bounded staged-field
+converter excludes trait/inherited ownership. Discuss source factory/construction
+inputs versus a bounded converter capability before changing the protocol. Remaining
+safe opportunities are not claimed exhausted; broader construction redesign is paused.

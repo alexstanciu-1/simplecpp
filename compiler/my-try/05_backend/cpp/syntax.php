@@ -5,12 +5,7 @@ namespace scpp\compiler;
 
 final class CPP_Syntax
 {
-	private cpp_generation_context $context;
-
-	public function __construct(cpp_generation_context $context)
-	{
-		$this->context = $context;
-	}
+	public function __construct(private cpp_generation_context $context) {}
 
 	/** Native-only handlers must reject before emitting operands or exposing runtime headers. */
 	private function require_native_operation(string $operation): void

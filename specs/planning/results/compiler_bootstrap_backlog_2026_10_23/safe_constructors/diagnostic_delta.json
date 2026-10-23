@@ -1,0 +1,16 @@
+{
+  "removed": [
+    "Property requires set: initialization before the constructor body: arm_kind",
+    "Property requires set: initialization before the constructor body: boolean_definition_data",
+    "Property requires set: initialization before the constructor body: context",
+    "Property requires set: initialization before the constructor body: floating_definition_data",
+    "Property requires set: initialization before the constructor body: integer_definition_data",
+    "Property requires set: initialization before the constructor body: members",
+    "Property requires set: initialization before the constructor body: no_value_definition_data",
+    "Property requires set: initialization before the constructor body: nominal_definition_data",
+    "Property requires set: initialization before the constructor body: null_definition",
+    "Property requires set: initialization before the constructor body: syntax_node",
+    "Property requires set: initialization before the constructor body: template_definition_data"
+  ],
+  "added": []
+}

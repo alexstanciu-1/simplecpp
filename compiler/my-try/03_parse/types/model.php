@@ -782,12 +782,9 @@ abstract class canonical_type implements canonical_type_i
 
 final class null_type extends canonical_type
 {
-	private null_type_definition $null_definition;
-
-	public function __construct(int $identity, null_type_definition $null_definition)
+	public function __construct(int $identity, private null_type_definition $null_definition)
 	{
 		parent::__construct($identity);
-		$this->null_definition = $null_definition;
 	}
 	public function family(): type_family { return type_family::null_sentinel; }
 	public function definition(): type_definition_i { return $this->null_definition; }
@@ -795,12 +792,9 @@ final class null_type extends canonical_type
 
 final class boolean_type extends canonical_type
 {
-	private boolean_type_definition $boolean_definition_data;
-
-	public function __construct(int $identity, boolean_type_definition $definition)
+	public function __construct(int $identity, private boolean_type_definition $boolean_definition_data)
 	{
 		parent::__construct($identity);
-		$this->boolean_definition_data = $definition;
 	}
 
 	public function family(): type_family
@@ -821,12 +815,9 @@ final class boolean_type extends canonical_type
 
 final class integer_type extends canonical_type
 {
-	private integer_type_definition $integer_definition_data;
-
-	public function __construct(int $identity, integer_type_definition $definition)
+	public function __construct(int $identity, private integer_type_definition $integer_definition_data)
 	{
 		parent::__construct($identity);
-		$this->integer_definition_data = $definition;
 	}
 
 	public function family(): type_family
@@ -847,12 +838,9 @@ final class integer_type extends canonical_type
 
 final class floating_type extends canonical_type
 {
-	private floating_type_definition $floating_definition_data;
-
-	public function __construct(int $identity, floating_type_definition $definition)
+	public function __construct(int $identity, private floating_type_definition $floating_definition_data)
 	{
 		parent::__construct($identity);
-		$this->floating_definition_data = $definition;
 	}
 
 	public function family(): type_family
@@ -873,12 +861,9 @@ final class floating_type extends canonical_type
 
 final class nominal_type extends canonical_type
 {
-	private abstract_nominal_type_definition $nominal_definition_data;
-
-	public function __construct(int $identity, abstract_nominal_type_definition $definition)
+	public function __construct(int $identity, private abstract_nominal_type_definition $nominal_definition_data)
 	{
 		parent::__construct($identity);
-		$this->nominal_definition_data = $definition;
 	}
 
 	public function family(): type_family
@@ -899,12 +884,9 @@ final class nominal_type extends canonical_type
 
 final class no_value_type extends canonical_type
 {
-	private no_value_type_definition $no_value_definition_data;
-
-	public function __construct(int $identity, no_value_type_definition $definition)
+	public function __construct(int $identity, private no_value_type_definition $no_value_definition_data)
 	{
 		parent::__construct($identity);
-		$this->no_value_definition_data = $definition;
 	}
 
 	public function family(): type_family
@@ -926,15 +908,10 @@ final class no_value_type extends canonical_type
 /** One canonical specialization of a template definition and exact ordered type arguments. */
 final class applied_template_type extends canonical_type
 {
-	private abstract_template_type_definition $template_definition_data;
-	private array $argument_types /** vector<canonical_type_use> */;
-
-	public function __construct(int $identity, abstract_template_type_definition $definition,
-		array $arguments /** vector<canonical_type_use> */)
+	public function __construct(int $identity, private abstract_template_type_definition $template_definition_data,
+		private array $argument_types /** vector<canonical_type_use> */)
 	{
 		parent::__construct($identity);
-		$this->template_definition_data = $definition;
-		$this->argument_types = $arguments;
 	}
 
 	public function family(): type_family

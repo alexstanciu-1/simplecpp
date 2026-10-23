@@ -228,7 +228,6 @@ final class if_node extends statement_node
 	use Node_Source_Span;
 	use Preparation_Facts;
 
-	public if_arm_kind $arm_kind;
 	public ?expression_node $condition = null;
 	/** @ownership owner */
 	public block_node $body;
@@ -236,10 +235,7 @@ final class if_node extends statement_node
 	public ?if_node $next_arm = null;
 	private ?prepared_condition $prepared_facts = null;
 
-	public function __construct(if_arm_kind $arm_kind)
-	{
-		$this->arm_kind = $arm_kind;
-	}
+	public function __construct(public if_arm_kind $arm_kind) {}
 
 	public function kind(): node_kind
 	{

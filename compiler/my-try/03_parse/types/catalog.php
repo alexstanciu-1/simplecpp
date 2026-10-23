@@ -191,14 +191,8 @@ final class runtime_type_provider
 
 final class runtime_type_modifier_provider
 {
-	private type_use_modifier_kind $modifier_kind;
-	private runtime_type_provider_identity $provider_identity;
-
-	public function __construct(type_use_modifier_kind $kind, runtime_type_provider_identity $identity)
-	{
-		$this->modifier_kind = $kind;
-		$this->provider_identity = $identity;
-	}
+	public function __construct(private type_use_modifier_kind $modifier_kind,
+		private runtime_type_provider_identity $provider_identity) {}
 
 	public function kind(): type_use_modifier_kind
 	{

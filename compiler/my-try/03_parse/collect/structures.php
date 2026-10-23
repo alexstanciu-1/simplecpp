@@ -267,13 +267,11 @@ abstract class collected_member_owner extends collected_type_definition
 	public ?type_relationship_work $relationship_work = null;
 	public ?type_contract_work $contract_work = null;
 	public ?type_lifecycle_work $lifecycle_work = null;
-	/** @reference.source parsed_file.root (syntax graph) */
-	private type_declaration_node $syntax_node;
-
-	public function __construct(collected_file $collection, type_declaration_node $node)
+	public function __construct(collected_file $collection,
+		/** @reference.source parsed_file.root (syntax graph) */
+		private type_declaration_node $syntax_node)
 	{
 		parent::__construct($collection);
-		$this->syntax_node = $node;
 	}
 
 	public function syntax(): type_declaration_node
@@ -319,13 +317,11 @@ final class collected_trait extends collected_member_owner
 
 final class collected_field extends collected_declaration implements preparation_lookup_candidate_i
 {
-	/** @reference.source parsed_file.root (syntax graph) */
-	private property_node $syntax_node;
-
-	public function __construct(collected_file $collection, property_node $node)
+	public function __construct(collected_file $collection,
+		/** @reference.source parsed_file.root (syntax graph) */
+		private property_node $syntax_node)
 	{
 		parent::__construct($collection);
-		$this->syntax_node = $node;
 	}
 
 	public function syntax(): property_node
@@ -341,13 +337,11 @@ final class collected_field extends collected_declaration implements preparation
 
 final class collected_parameter extends collected_declaration
 {
-	/** @reference.source parsed_file.root (syntax graph) */
-	private parameter_node $syntax_node;
-
-	public function __construct(collected_file $collection, parameter_node $node)
+	public function __construct(collected_file $collection,
+		/** @reference.source parsed_file.root (syntax graph) */
+		private parameter_node $syntax_node)
 	{
 		parent::__construct($collection);
-		$this->syntax_node = $node;
 	}
 
 	public function syntax(): parameter_node
@@ -363,13 +357,11 @@ final class collected_parameter extends collected_declaration
 
 final class collected_variable extends collected_declaration
 {
-	/** @reference.source parsed_file.root (syntax graph) */
-	private variable_declaration_node $syntax_node;
-
-	public function __construct(collected_file $collection, variable_declaration_node $node)
+	public function __construct(collected_file $collection,
+		/** @reference.source parsed_file.root (syntax graph) */
+		private variable_declaration_node $syntax_node)
 	{
 		parent::__construct($collection);
-		$this->syntax_node = $node;
 	}
 
 	public function syntax(): variable_declaration_node
@@ -390,13 +382,11 @@ final class collected_call_reference extends collected_reference
 		$collector->index_call_reference($this);
 	}
 
-	/** @reference.source parsed_file.root (syntax graph) */
-	private call_node $syntax_node;
-
-	public function __construct(collected_file $collection, call_node $node)
+	public function __construct(collected_file $collection,
+		/** @reference.source parsed_file.root (syntax graph) */
+		private call_node $syntax_node)
 	{
 		parent::__construct($collection);
-		$this->syntax_node = $node;
 	}
 
 	public function syntax(): call_node
@@ -417,13 +407,11 @@ final class collected_field_reference extends collected_reference
 		$collector->index_field_reference($this);
 	}
 
-	/** @reference.source parsed_file.root (syntax graph) */
-	private field_access_node $syntax_node;
-
-	public function __construct(collected_file $collection, field_access_node $node)
+	public function __construct(collected_file $collection,
+		/** @reference.source parsed_file.root (syntax graph) */
+		private field_access_node $syntax_node)
 	{
 		parent::__construct($collection);
-		$this->syntax_node = $node;
 	}
 
 	public function syntax(): field_access_node
@@ -444,13 +432,11 @@ final class collected_variable_reference extends collected_reference
 		$collector->index_variable_reference($this);
 	}
 
-	/** @reference.source parsed_file.root (syntax graph) */
-	private variable_reference_node $syntax_node;
-
-	public function __construct(collected_file $collection, variable_reference_node $node)
+	public function __construct(collected_file $collection,
+		/** @reference.source parsed_file.root (syntax graph) */
+		private variable_reference_node $syntax_node)
 	{
 		parent::__construct($collection);
-		$this->syntax_node = $node;
 	}
 
 	public function syntax(): variable_reference_node
@@ -471,13 +457,11 @@ final class collected_constant_reference extends collected_reference
 		$collector->index_constant_reference($this);
 	}
 
-	/** @reference.source parsed_file.root (syntax graph) */
-	private constant_reference_node $syntax_node;
-
-	public function __construct(collected_file $collection, constant_reference_node $node)
+	public function __construct(collected_file $collection,
+		/** @reference.source parsed_file.root (syntax graph) */
+		private constant_reference_node $syntax_node)
 	{
 		parent::__construct($collection);
-		$this->syntax_node = $node;
 	}
 
 	public function syntax(): constant_reference_node
@@ -498,13 +482,11 @@ final class collected_type_reference extends collected_reference
 		$collector->index_type_reference($this);
 	}
 
-	/** @reference.source parsed_file.root (syntax graph) */
-	private named_type_node $syntax_node;
-
-	public function __construct(collected_file $collection, named_type_node $node)
+	public function __construct(collected_file $collection,
+		/** @reference.source parsed_file.root (syntax graph) */
+		private named_type_node $syntax_node)
 	{
 		parent::__construct($collection);
-		$this->syntax_node = $node;
 	}
 
 	public function syntax(): named_type_node
@@ -530,13 +512,11 @@ final class collected_variable_write extends collected_name
 		$collector->index_variable_write($this);
 	}
 
-	/** @reference.source parsed_file.root (syntax graph) */
-	private variable_reference_node $syntax_node;
-
-	public function __construct(collected_file $collection, variable_reference_node $node)
+	public function __construct(collected_file $collection,
+		/** @reference.source parsed_file.root (syntax graph) */
+		private variable_reference_node $syntax_node)
 	{
 		parent::__construct($collection);
-		$this->syntax_node = $node;
 	}
 
 	public function syntax(): variable_reference_node
@@ -557,17 +537,15 @@ final class anonymous_callable_identity implements callable_target_i
 	public function signature(): callable_signature { return $this->signature_work->require_facts()->signature; }
 	public ?anonymous_signature_work $signature_work = null;
 	private collected_file $source_collection /** weak<collected_file> */;
-	private closure_node $syntax_node;
 	/** Stable, non-reused position within the owning collection's anonymous inventory. */
 	public int $local_index;
 	public int $revision = 0;
 	/** Frontend membership tombstone, not preparation state. */
 	public bool $deleted = false;
 
-	public function __construct(collected_file $collection, closure_node $syntax)
+	public function __construct(collected_file $collection, private closure_node $syntax_node)
 	{
 		$this->source_collection = weak($collection);
-		$this->syntax_node = $syntax;
 	}
 
 	public function collection(): collected_file
