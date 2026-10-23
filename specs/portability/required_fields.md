@@ -56,3 +56,29 @@ constructor assignments, static publication/replacement, and retained old object
 identity. It never consumes uninitialized fields. Evidence is recorded in
 [the capability checkpoint](../planning/compiler_migration/results/required-fields-01/README.md).
 No compiler-ready files are added; custom Storage bindings remain separate work.
+
+## Explicit staged class fields
+
+The converter supports `public Payload $item /** _uninitialized_ */;` for a
+class payload declared in the same file and a class owner without inheritance.
+The field may remain absent after construction. Direct same-class `$this->item`
+value reads and standalone whole-field assignments become private nullable storage
+and checked accessors. A read before assignment fails; a null write fails without
+resetting the previous value. Class reads preserve shared identity. The private
+setter accepts nullable input internally so its explicit guard runs before any
+required-value extraction; this does not make the original field nullable.
+
+Adapt outside/unresolved receivers to explicit authored methods. Generated storage
+is private and the original field is removed, so unreplaced external access cannot
+bypass checking. Projection/mutation, assignment expressions, probes/removal and
+nested callable receiver uses require source adaptation. Trait-owned/inherited
+fields and unresolved/cross-file payloads are not admitted by this bounded slice.
+Struct payload copying and struct owners remain separate unfinished work. No new
+Simple C++ uninitialized value or annotation is introduced.
+
+`python3 tests/portability/staged_marker.py --results FRESH` checks PHP, v0.1 with
+`--no-stan`, and ordinary/concrete v0.2 execution. It covers early read, class
+identity, self replacement, failed null writes, throwing RHS evaluated once with
+previous state preserved, successful replacement, incremental conversion and
+structural rejection controls. Exception class/message and cleanup timing parity
+are not promised. This is not a whole-compiler native bootstrap or a STAN proof.

@@ -7,8 +7,11 @@ require_once __DIR__ . "/import_policy.php";
 require_once __DIR__ . "/exception_policy.php";
 require_once __DIR__ . "/declaration_index.php";
 require_once __DIR__ . "/container_type.php";
+require_once __DIR__ . "/staged_fields.php";
 
 final class Node {
+	public ?Staged_Field $staged = null;
+	public string $path = '';
 	/** @param list<Node> $children */
 	public function __construct(
 		public string $kind,
@@ -78,6 +81,7 @@ final class Converter {
 		}
 		$this->position = 1;
 		$tree = new Node('file', '', 1, $this->sequence(null));
+		Staged_Fields::lower($tree);
 		return $this->emit($tree);
 	}
 
@@ -633,6 +637,7 @@ final class Converter {
 
 	/** Reference-class fields preserve explicit types; no value-record or nullability inference. */
 	private function referenceClass(int $line, bool $final = false, bool $abstract = false): Node {
+		$classPath = $this->path;
 		$name = $this->significant();
 		if ($name[0] !== T_STRING) { $this->fail($line, 'expected class name'); }
 		if (str_starts_with(strtolower($name[1]), 'scpp_portability_')) { $this->fail($line, 'reserved native framework class prefix'); }
@@ -664,7 +669,9 @@ final class Converter {
 			[$id, $text, $at] = $this->tokens[$this->position++];
 			if ($text === '}') {
 				$this->inClass = $previousClass;
-				return new Node($abstract ? 'abstract_class' : ($final ? 'final_class' : 'class'), $className, $line, $fields);
+				$result = new Node($abstract ? 'abstract_class' : ($final ? 'final_class' : 'class'), $className, $line, $fields);
+				$result->path = $classPath;
+				return $result;
 			}
 			if ($id === T_DOC_COMMENT && trim($text) === '/** @scpp-no-export */') {
 				$this->skipHostDeclaration($at, true);
@@ -783,6 +790,16 @@ final class Converter {
 			if ($field[0] !== T_VARIABLE) { $this->fail($field[2], 'expected named property'); }
 			$annotationAt = $this->nextSignificant($this->position);
 			$annotation = $this->tokens[$annotationAt] ?? [0, '', $at];
+			if ($annotation[0] === T_DOC_COMMENT && trim($annotation[1]) === '/** _uninitialized_ */') {
+				if ($this->validatingTrait) { $this->fail($at, 'trait-owned staged fields require explicit source accessors'); }
+				if ($nullable || $static) { $this->fail($at, '_uninitialized_ requires a required instance field'); }
+				$this->position = $annotationAt + 1;
+				$this->expect(';');
+				$marked = new Node('staged_property', '', $at);
+				$marked->staged = new Staged_Field(substr($field[1], 1), $type[1], $this->path, $at);
+				$fields[] = $marked;
+				continue;
+			}
 			if ($annotation[0] === T_DOC_COMMENT && preg_match('~^/\*\*\s*weak\s*<~', $annotation[1])) {
 				if (!preg_match('~^/\*\*\s*weak<([^<>]+)>\s*\*/$~D', $annotation[1], $match)) {
 					$this->fail($at, 'weak field requires one literal object type');

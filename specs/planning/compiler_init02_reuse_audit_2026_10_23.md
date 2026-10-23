@@ -1,8 +1,8 @@
 # INIT-02 staged-field converter reuse audit
 Doc Status: planning
 
-2026-10-23. Initial source audit, followed by the explicit layout proof below;
-automatic marker conversion is not implemented.
+2026-10-23. Initial source audit, followed by explicit layout and bounded class-marker
+proofs below; full INIT-02 acceptance remains incomplete.
 This refines the accepted nullable-storage/checked-accessor direction. INIT-02 stays
 converter/source-owned; no native uninitialized value or compiler annotation is added.
 
@@ -180,3 +180,21 @@ Class/struct payload classification and explicit struct copies remain governed b
 COPY-01; unresolved payload kinds need explicit source adaptation, not PHP-reference
 semantics guessed from a named type. The 6–12x estimate remains: the class Node reuse
 avoids a token preprocessor, but these place and origin distinctions still need work.
+
+## Bounded class-marker implementation checkpoint
+
+`Staged_Fields` now transforms completed class Nodes for same-class `$this` reads
+and standalone whole writes, using nullable storage and checked methods. Same-file
+class payloads only; inheritance/trait ownership and unresolved payloads reject.
+Probes/removal and nested callable scopes reject rather than becoming ordinary reads.
+The generated declarations use the converter's normalized `nullable<T>` form;
+an initial raw `?T` helper signature incorrectly became required on v0.1 and was
+corrected without a generator/runtime change. Null setter input is explicitly checked
+before storing, avoiding premature native wrapper extraction.
+
+`tests/portability/staged_marker.py` passes PHP, legacy, ordinary and concrete modes
+with early reads, identity, self replacement, invalid null writes, throwing RHS once,
+preserved previous state, replacement and unchanged incremental output. Structural
+rejections cover both targets. Evidence lives under the staged_marker checkpoint.
+Full INIT-02 remains open: COPY-01 struct integration, broader acceptance review and
+production lifecycle rollout are not established by this class-only proof.

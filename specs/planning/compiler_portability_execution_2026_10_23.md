@@ -1420,3 +1420,14 @@ nesting, but probes/removal fold places into opaque strings; declaration origin 
 closure receiver scope also need preservation/rejection. Updated the INIT-02 reuse
 audit with concrete parser owners and safety requirements. No marker implementation
 or completed INIT-02 claim; no production change or bootstrap checkpoint in this audit.
+
+## INIT-02 bounded class-marker checkpoint
+
+Converter-owned Staged_Fields transforms completed class Nodes to private nullable
+storage and checked value accessors. Class payloads declared in the same file only;
+unsupported places, traits/inheritance and unresolved payloads require adaptation.
+PHP/v0.1/ordinary/concrete proof passes, including null-write and throwing-RHS state
+preservation and incremental conversion. Structural controls pass both targets.
+Evidence: staged_marker. Bootstrap 1:20.10 / 343808 KiB RSS / 314 MiB heap, identical
+failure object to type_children checkpoint. Full INIT-02, COPY-01 and production
+rollout remain open. No new native semantics or completed-goal claim.
