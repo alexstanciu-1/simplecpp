@@ -32,6 +32,38 @@ under the historical blocking-inventory heading. Recommended first slice:
 implementation. It remains a proposal awaiting prioritization, not an approved
 container redesign. The detailed entries below retain their contracts and provenance.
 
+## CH15-LOWERING-SIMPLIFICATION-01 — use v0.2 prepared facts, learn from v0.1
+
+Recorded by user request, 2026-10-23, during the class `$this` design review.
+Status: open audit/simplification debt for Chapter 15; no additional blocking
+designation or implementation authorization is implied.
+
+Audit `compiler/my-try/` C++ lowering for complexity inherited from v0.1's
+type-blind generator. Use v0.1 to learn required behavior, edge cases and useful
+runtime mechanisms, not as an implementation template. v0.2 must exploit its
+prepared types, ownership, receiver lifetimes, selected calls and construction
+facts to choose simpler lowering through the existing specialization machinery.
+Preserve agreed source contracts; identical generated code or runtime mechanism
+across compiler versions is not a requirement.
+
+For each candidate, identify the owning prepared fact/process, compare direct
+fact-driven lowering with the inherited approach, and assess complexity, runtime
+cost and ordinary/prelowered parity. Simplify redundant inference, duplicated
+decisions and unnecessary compatibility plumbing without moving semantic analysis
+into emission. Prefer existing runtime operations and concrete transport; do not
+replace a shared runtime subsystem merely to reproduce a legacy mechanism.
+
+Class self retention is the motivating example: compare v0.2 construction-bound
+owner observation and concrete retention helpers against reuse of v0.1's inherited
+`enable_shared_from_this` mechanism. This debt does not approve either design,
+eliminate necessary lifetime state or relax the template-free application boundary.
+
+Completion evidence: reviewed candidate inventory with justified retain/simplify
+decisions; bounded accepted changes with behavioral, lifetime and retained-build
+proofs where relevant; measured cost for performance-sensitive changes. Coordinate
+with CH15-RUNTIME-TYPE-METADATA-01 rather than duplicating its registry audit.
+Wide cross-owner redesigns still require discussion before implementation.
+
 ## Blocking inventory
 
 Update 2026-10-23: CH15-RUNTIME-TYPE-METADATA-01 is now an open final-catalog

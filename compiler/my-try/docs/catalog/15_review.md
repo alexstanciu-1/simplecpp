@@ -1,6 +1,12 @@
 # Chapter 15 — compact decision inventory
 Doc Status: planning
 
+Update 2026-10-23: [CH15-LOWERING-SIMPLIFICATION-01](15_blocking_debt.md#ch15-lowering-simplification-01--use-v02-prepared-facts-learn-from-v01)
+adds an open lowering audit: exploit v0.2 prepared facts and existing prelowering,
+learning behavior from v0.1 without copying its type-blind implementation structure.
+Review alongside the registry audit; no new blocking designation or implementation
+approval is implied. Class self retention motivates the review, not a mandated design.
+
 Update 2026-10-23: CH15-RUNTIME-TYPE-METADATA-01 (group 7 below) is now an
 explicit final-catalog blocker covering all compiler/my-try type consumers, beyond
 the historical four runtime-family gates. See the [owning debt](15_blocking_debt.md#ch15-runtime-type-metadata-01--review-metadata-driven-types-not-hardcoded-families)
