@@ -45,14 +45,6 @@ final class retained_token_range
 /** One file's appended source/token storage and the current input range; no scanner state. */
 final class token_list
 {
-	/**
-	 * Source dependency, selected from the owning module.
-	 * @reference.source source_record.file
-	 */
-	public file $file;
-
-	/** Authoritative source snapshot for this token list and all its spans. */
-	public string $content;
 	/** Current input in appended storage; byte offsets in tokens already include content_offset. */
 	public int $first_token = 0;
 	public int $end_token = 0;
@@ -66,7 +58,8 @@ final class token_list
 	 */
 	public Storage $tokens /** Storage<token> */;
 
-	public function __construct()
+	/** Source dependency and authoritative bytes for all spans. @reference.source source_record.file */
+	public function __construct(public file $file, public string $content)
 	{
 		$this->tokens = new Storage /** Storage<token> */();
 		$this->retained_ranges = new Storage /** Storage<retained_token_range> */();

@@ -8,13 +8,9 @@ namespace scpp\compiler;
 
 final class Tokenizer
 {
-	private file $source;
 	private string $content = '';
 
-	public function __construct(file $file)
-	{
-		$this->source = $file;
-	}
+	public function __construct(private file $source) {}
 
 	/** Scan source into token spans; trivia remains in source bytes, not syntax tokens. */
 	public function tokenize(?string $full_path = null): token_list
@@ -29,10 +25,8 @@ final class Tokenizer
 		}
 		// Retain the exact source snapshot used by every token span.
 		$this->content = $this->source->content;
-		$result = new token_list();
+		$result = new token_list($this->source, $this->content);
 		$tokens /** Storage<token> */ = $result->tokens;
-		$result->file = $this->source;
-		$result->content = $this->content;
 
 		$length = string_byte_len($this->content);
 		$offset = 0;

@@ -1,0 +1,3 @@
+Publication: isolation, reversed completion, visibility, identity and duplicate rejection passed
+Queue: out-of-order completion, sealed membership, ownership and failure barrier passed
+Queue: exclusive source ownership and snapshot provenance passed

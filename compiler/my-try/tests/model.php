@@ -333,7 +333,7 @@ final class Model_Test
 	/** Inject a historical hole to prove occurrence IDs use Storage's assigned position. */
 	private static function check_assigned_position(): void
 	{
-		$source = new token_list();
+		$source = new token_list(new file(), 'name');
 		$token = new token(0, 4, 'name');
 		$source->tokens[] = $token;
 		$scope = new scope();

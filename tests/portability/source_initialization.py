@@ -30,11 +30,14 @@ namespace scpp\compiler;
 enum change_state { case added; }
 class module {}
 class file { public string $path = 'input.phs'; }
-class token_list {}
 class parsed_file {}
 class ast_node { public int $value = 0; }
 class return_node extends ast_node { public ?ast_node $value_node = null; }
 ''' + declaration(APP / '01_prepare_inputs/structures.php', 'final class source_record') + '\n'
+for label in ['final class token', 'final class retained_token_range', 'final class token_list']:
+    source += declaration(APP / '02_tokenize/structures.php', label) + '\n'
+source += declaration(APP / 'compiler/structures.php', 'enum work_state') + '\n'
+source += declaration(APP / 'compiler/structures.php', 'final class source_work') + '\n'
 source += declaration(iterators, 'interface child_iterator_i') + '\n'
 source += declaration(iterators, 'abstract class children_iterator') + '\n'
 source += declaration(iterators, 'final class pair_children_iterator') + '\n'
@@ -54,11 +57,21 @@ $signal = new \LogicException('message');
 $other_signal = new \LogicException('message');
 echo same_exception($signal, $signal) ? 'same:' : 'bad:';
 echo same_exception($signal, $other_signal) ? 'bad' : 'distinct';
+$work = new source_work($snapshot, $record, 4);
+echo ':', $work->source === $snapshot ? 'source' : 'bad', ':', $work->record === $record ? 'record' : 'bad', ':', $work->position;
+$tokens = new token_list($snapshot, '>>');
+$rows /** Storage<token> */ = $tokens->tokens;
+$rows->append(new token(0, 1, '>')); $rows->append(new token(1, 1, '>'));
+echo ':', $tokens->file === $snapshot ? 'file' : 'bad', ':', $tokens->content, ':', $tokens->operator_text_at(0);
+$other_tokens = new token_list($snapshot, '');
+echo ':', q_count($other_tokens->tokens);
 '''
 (out / 'source/main.php').write_text(source)
-expected = b'input.phs:changed:0:3:1:7:7:3:same:distinct'
+expected = b'input.phs:changed:0:3:1:7:7:3:same:distinct:source:record:4:file:>>:>>:0'
 with CommandRunner(out / 'logs', ROOT) as runner:
-    assert runner.run('host', ['php8.5', '-r', 'require $argv[1]; require $argv[2];', TOOLS / 'runtime/bootstrap.php', out / 'source/main.php']) == expected
+    assert runner.run('host', ['php8.5', '-r', 'foreach(array_slice($argv,1) as $path){require $path;}',
+                             TOOLS / 'runtime/bootstrap.php', APP / 'helpers/storage_abstract.php',
+                             APP / 'helpers/storage.php', out / 'source/main.php']) == expected
     for route in ['v0.1', 'v0.2']:
         runner.run(route + '-convert', ['php8.5', TOOLS / 'convert.php', out / 'source', out / route, '--target=' + route])
     for route in ['v0.1', 'v0.2']:

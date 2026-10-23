@@ -1,0 +1,7 @@
+{
+  "compared_to": "compiler-bootstrap-task-policy-02",
+  "added": [],
+  "removed": [],
+  "previous_first": "Property requires set: initialization before the constructor body: file",
+  "first": "Property requires set: initialization before the constructor body: collection"
+}

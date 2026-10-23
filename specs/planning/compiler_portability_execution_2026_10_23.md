@@ -1186,3 +1186,22 @@ whole-compiler concurrency audit. No bootstrap rerun for test-only changes; late
 production checkpoint remains 74.18 s / 333.7 MiB RSS / 312 MiB PHP heap, with required
 file-field initialization first. Remaining source/converter, SELF-01 and CH15 work
 remain open. Exact PHP cleanup timing is not required by the native lifetime proof.
+
+## INIT-01 required source input migration
+
+source_work now receives source/record/position before queue publication; Tokenizer
+receives source by promotion; token_list receives file/content at tokenization and
+private-snapshot creation. Existing converter promotion emits set parameters. These
+values were available at creation, so no _uninitialized_ protocol or new flow analysis
+is appropriate. Synthetic token-list test constructors now supply their inputs.
+
+PHP tokenizer/publication/retained/AST-invariant checks pass. Extended extracted-record
+source_initialization passes PHP, legacy native and both v0.2 modes. model.php still
+fails its fixed registry-root count assertion before the changed fixture; a HEAD-source
+overlay reproduces it. Keep that test reconciliation open. Evidence: required_inputs.
+
+Final bootstrap /tmp/compiler-bootstrap-required-inputs-02: 74.73 s wall /
+341924 KiB RSS (333.9 MiB) / 312 MiB PHP heap. First blocker advances from file to
+collection initialization; aggregate message set unchanged. No fatal/OOM, emission
+or native compiler rebuild. COPY-01 helper proposal remains pending; independent
+required-constructor/staged-field inventory continues.

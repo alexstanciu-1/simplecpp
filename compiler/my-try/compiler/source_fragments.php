@@ -7,9 +7,7 @@ final class Source_Fragments
 	/** Mutable token rows must not alias the authored source's cleanup/rebasing buffer. */
 	public static function snapshot(token_list $source): token_list
 	{
-		$result = new token_list();
-		$result->file = $source->file;
-		$result->content = $source->content;
+		$result = new token_list($source->file, $source->content);
 		$result->first_token = $source->first_token;
 		$result->end_token = $source->end_token;
 		$result->content_offset = $source->content_offset;

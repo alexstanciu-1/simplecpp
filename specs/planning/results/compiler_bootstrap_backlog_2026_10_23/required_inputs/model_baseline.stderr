@@ -1,0 +1,6 @@
+PHP Fatal error:  Uncaught RuntimeException: Canonical built-in type roots were not initialized exactly once in /tmp/required-inputs-model-baseline-02/model.php:78
+Stack trace:
+#0 /tmp/required-inputs-model-baseline-02/model.php(15): scpp\compiler\Model_Test::check_type_roots()
+#1 /tmp/required-inputs-model-baseline-02/model.php(456): scpp\compiler\Model_Test::run()
+#2 {main}
+  thrown in /tmp/required-inputs-model-baseline-02/model.php on line 78

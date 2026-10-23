@@ -30,12 +30,9 @@ final class Source_Work_Queue
 			}
 		}
 		$this->sources[$record] = true;
-		$work = new source_work();
-		$work->source = $source;
-		$work->record = $record;
+		$work = new source_work($source, $record, q_count($this->pending));
 		$work->previous = $record->parsed;
 		$work->tokens = $tokens;
-		$work->position = q_count($this->pending);
 		$this->pending[] = $work;
 	}
 
