@@ -88,7 +88,7 @@ final class type_declaration_children_iterator extends children_iterator
 				return $this->source->base_class;
 			}
 		}
-		while (true)
+		for (;;)
 		{
 			if ($this->cursor !== null) {
 				if ($this->cursor->valid()) {

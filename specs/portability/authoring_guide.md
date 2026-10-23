@@ -545,3 +545,10 @@ lookup or symbol resolution.
 
 Proofs: `tests/portability/empty_container_annotations.php` and
 `tests/portability/typed_hash_construction.py --results FRESH`.
+
+For an unconditional loop whose non-fallthrough behavior is needed to establish a
+function's return completeness, use `for (;;)`. Current v0.2 completion analysis
+recognizes an omitted loop test but conservatively treats `while (true)` as tested.
+This is a source adaptation to current analysis, not a PHP semantic difference or
+a request for converter constant folding. The production type-declaration child
+iterator is covered by `tests/portability/type_children.py` across all routes.

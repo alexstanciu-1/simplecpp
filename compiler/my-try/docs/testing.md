@@ -2300,3 +2300,8 @@ edit, no-change retry, recovery and preparation-reset agreement in both modes.
 `python3 tests/portability/storage_cursor.py --results FRESH` verifies the same portable
 PHP cursor behavior against legacy native and both v0.2 output modes: base-view
 identity, sparse keys, shared cursor advancement and retention after source return.
+
+`python3 tests/portability/type_children.py --results FRESH` extracts the production
+child iterator protocol and type-declaration traversal, supplies minimal owner records,
+and verifies ordered base/collection children plus empty traversal in PHP, legacy
+native and ordinary/concrete v0.2 output. It guards the conditionless-loop source form.

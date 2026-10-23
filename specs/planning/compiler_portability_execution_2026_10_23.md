@@ -1402,3 +1402,12 @@ was adapted to supported nullable PHP syntax after converter rejection; retained
 rerun passes. Evidence: cursor_diagnostics. Bootstrap 1:15.90 / 343416 KiB RSS /
 314 MiB PHP heap, unchanged preparation diagnostic set. Bounded CURSOR-01 complete;
 full bootstrap, other backlog work and blocking CH15 closure remain open.
+
+## SOURCE-01 unconditional type-child traversal
+
+Located newly exposed read_next failure in type_declaration_children_iterator. Actual
+extracted method passes PHP/legacy but v0.2 conservatively sees a while(true) exit.
+Reuse existing conditionless-loop completion via equivalent PHP for (;;) spelling;
+no analyzer/converter extension. Production extraction proof passes all routes and
+empty/ordered traversal. Evidence: type_children. Bootstrap 1:16.22 / 343628 KiB RSS /
+314 MiB PHP heap: read_next diagnostic removed, none added; first syntax_node remains.

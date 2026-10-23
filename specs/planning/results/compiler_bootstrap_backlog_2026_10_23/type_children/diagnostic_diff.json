@@ -1,0 +1,6 @@
+{
+  "added": [],
+  "removed": [
+    "S2S non-void function read_next can reach the end without returning a value"
+  ]
+}
