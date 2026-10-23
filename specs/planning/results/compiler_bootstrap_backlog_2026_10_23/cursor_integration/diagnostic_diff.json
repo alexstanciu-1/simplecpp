@@ -1,0 +1,8 @@
+{
+  "added": [
+    "S2S non-void function read_next can reach the end without returning a value"
+  ],
+  "removed": [
+    "S2S needs one resolved template type for Storage_Cursor"
+  ]
+}

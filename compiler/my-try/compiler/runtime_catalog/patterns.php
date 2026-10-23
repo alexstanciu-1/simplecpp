@@ -104,6 +104,14 @@ final class Runtime_Catalog_Patterns
 			$requirements->append(new runtime_replacement_requirement(
 				$positions[$relation->result_name], $positions[$relation->replacement_name]));
 		}
+		$shared_requirements /** Storage<runtime_shared_conversion_requirement> */ = $result->shared_conversions;
+		foreach ($spec->shared_conversions as $relation) {
+			if (!isset($positions[$relation->from_name]) || !isset($positions[$relation->to_name])) {
+				throw new \RuntimeException('Unknown shared conversion type parameter');
+			}
+			$shared_requirements->append(new runtime_shared_conversion_requirement(
+				$positions[$relation->from_name], $positions[$relation->to_name]));
+		}
 		$boxed_requirements /** Storage<runtime_boxed_result_requirement> */ = $result->boxed_results;
 		foreach ($spec->boxed_results as $boxed_result) {
 			if (!isset($positions[$boxed_result->result_name])) {

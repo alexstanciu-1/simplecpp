@@ -105,6 +105,26 @@
         "copyable_value",
         "value_storable"
       ]
+    },
+    {
+      "id": "compiler.Storage_Cursor",
+      "name": "Storage_Cursor",
+      "kind": "class",
+      "storage": "inline",
+      "construction": "make",
+      "default_constructible": true,
+      "parameters": [
+        {
+          "name": "Record",
+          "requires": [
+            "shared_record"
+          ]
+        }
+      ],
+      "capabilities": [
+        "copyable_value",
+        "value_storable"
+      ]
     }
   ],
   "cpp_types": [
@@ -134,6 +154,17 @@
       "id": "compiler.Key_Storage_List",
       "symbol": "scpp::compiler::Key_Storage_List",
       "header": "modules/compiler/bindings.hpp",
+      "arguments": [
+        {
+          "parameter": "Record",
+          "representation": "payload"
+        }
+      ]
+    },
+    {
+      "id": "compiler.Storage_Cursor",
+      "symbol": "scpp::compiler::Storage_Cursor",
+      "header": "modules/compiler/storage_cursor.hpp",
       "arguments": [
         {
           "parameter": "Record",
@@ -586,6 +617,97 @@
           }
         ]
       }
+    },
+    {
+      "id": "compiler.Storage_Cursor.make",
+      "name": "make",
+      "member": {
+        "owner": "Storage_Cursor",
+        "dispatch": "static"
+      },
+      "parameters": [
+        {
+          "name": "source",
+          "type": {
+            "name": "Storage",
+            "arguments": [
+              {
+                "parameter": "Source"
+              }
+            ]
+          },
+          "passing": "value"
+        }
+      ],
+      "returns": {
+        "name": "Storage_Cursor",
+        "arguments": [
+          {
+            "parameter": "Record"
+          }
+        ]
+      },
+      "type_parameters": [
+        "Source"
+      ],
+      "shared_conversions": [
+        {
+          "from": "Source",
+          "to": "Record"
+        }
+      ]
+    },
+    {
+      "id": "compiler.Storage_Cursor.current",
+      "name": "current",
+      "member": {
+        "owner": "Storage_Cursor",
+        "dispatch": "instance"
+      },
+      "parameters": [],
+      "returns": {
+        "parameter": "Record"
+      }
+    },
+    {
+      "id": "compiler.Storage_Cursor.key",
+      "name": "key",
+      "member": {
+        "owner": "Storage_Cursor",
+        "dispatch": "instance"
+      },
+      "parameters": [],
+      "returns": "int"
+    },
+    {
+      "id": "compiler.Storage_Cursor.valid",
+      "name": "valid",
+      "member": {
+        "owner": "Storage_Cursor",
+        "dispatch": "instance"
+      },
+      "parameters": [],
+      "returns": "bool"
+    },
+    {
+      "id": "compiler.Storage_Cursor.next",
+      "name": "next",
+      "member": {
+        "owner": "Storage_Cursor",
+        "dispatch": "instance"
+      },
+      "parameters": [],
+      "returns": "void"
+    },
+    {
+      "id": "compiler.Storage_Cursor.rewind",
+      "name": "rewind",
+      "member": {
+        "owner": "Storage_Cursor",
+        "dispatch": "instance"
+      },
+      "parameters": [],
+      "returns": "void"
     }
   ],
   "cpp": [
@@ -708,6 +830,36 @@
       "id": "compiler.Key_Storage_List.items",
       "symbol": "items",
       "header": "modules/compiler/bindings.hpp"
+    },
+    {
+      "id": "compiler.Storage_Cursor.make",
+      "symbol": "make",
+      "header": "modules/compiler/storage_cursor.hpp"
+    },
+    {
+      "id": "compiler.Storage_Cursor.current",
+      "symbol": "current",
+      "header": "modules/compiler/storage_cursor.hpp"
+    },
+    {
+      "id": "compiler.Storage_Cursor.key",
+      "symbol": "key",
+      "header": "modules/compiler/storage_cursor.hpp"
+    },
+    {
+      "id": "compiler.Storage_Cursor.valid",
+      "symbol": "valid",
+      "header": "modules/compiler/storage_cursor.hpp"
+    },
+    {
+      "id": "compiler.Storage_Cursor.next",
+      "symbol": "next",
+      "header": "modules/compiler/storage_cursor.hpp"
+    },
+    {
+      "id": "compiler.Storage_Cursor.rewind",
+      "symbol": "rewind",
+      "header": "modules/compiler/storage_cursor.hpp"
     }
   ]
 }

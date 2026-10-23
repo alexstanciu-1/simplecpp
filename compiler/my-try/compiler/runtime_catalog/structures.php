@@ -121,6 +121,13 @@ final class runtime_boxed_result_spec
 	public string $family_name = '';
 }
 
+/** Directed shared-handle conversion required by a provider operation. */
+final class runtime_shared_conversion_spec
+{
+	public string $from_name = '';
+	public string $to_name = '';
+}
+
 final class runtime_function_spec extends runtime_signature_spec
 {
 	/** Provider permits synchronous readonly borrowing in place of value snapshots. */
@@ -134,11 +141,13 @@ final class runtime_function_spec extends runtime_signature_spec
 	public array $transfer_types /** vector<string> */ = [];
 	public Storage $replacement_results /** Storage<runtime_replacement_spec> */;
 	public Storage $boxed_results /** Storage<runtime_boxed_result_spec> */;
+	public Storage $shared_conversions /** Storage<runtime_shared_conversion_spec> */;
 	public function __construct()
 	{
 		parent::__construct();
 		$this->replacement_results = new Storage /** Storage<runtime_replacement_spec> */();
 		$this->boxed_results = new Storage /** Storage<runtime_boxed_result_spec> */();
+		$this->shared_conversions = new Storage /** Storage<runtime_shared_conversion_spec> */();
 	}
 }
 

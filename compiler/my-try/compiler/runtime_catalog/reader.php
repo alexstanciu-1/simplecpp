@@ -614,6 +614,11 @@ final class Runtime_Catalog_Reader
 				$reader->begin_array();
 				while ($reader->next_element()) { $boxed_results->append(self::boxed_result($reader)); }
 			}
+			elseif ($key === 'shared_conversions') {
+				$relations /** Storage<runtime_shared_conversion_spec> */ = $result->shared_conversions;
+				$reader->begin_array();
+				while ($reader->next_element()) { $relations->append(self::shared_conversion($reader)); }
+			}
 			elseif ($key === 'replacement_results') {
 				$relations /** Storage<runtime_replacement_spec> */ = $result->replacement_results;
 				$reader->begin_array();
@@ -656,6 +661,10 @@ final class Runtime_Catalog_Reader
 		if ((q_count($result->transfer_types) > 0) && (q_count($result->type_parameters) === 0)) {
 			$reader->reject('Transfer type requirements need a generic function');
 		}
+		$shared_conversions /** Storage<runtime_shared_conversion_spec> */ = $result->shared_conversions;
+		if (!$shared_conversions->is_empty() && (q_count($result->type_parameters) === 0)) {
+			$reader->reject('Shared conversion requirements need a generic function');
+		}
 		$replacement_results /** Storage<runtime_replacement_spec> */ = $result->replacement_results;
 		if (!$replacement_results->is_empty() && (q_count($result->type_parameters) === 0)) {
 			$reader->reject('Replacement result requirements need a generic function');
@@ -673,6 +682,22 @@ final class Runtime_Catalog_Reader
 					$reader->reject('Snapshot borrowing requires fixed explicit value inputs');
 				}
 			}
+		}
+		return $result;
+	}
+
+	private static function shared_conversion(\scpp\Json_Reader $reader): runtime_shared_conversion_spec
+	{
+		$result = new runtime_shared_conversion_spec();
+		$reader->begin_object();
+		while ($reader->next_property()) {
+			$key = $reader->property_name();
+			if ($key === 'from') { $result->from_name = self::name($reader); }
+			elseif ($key === 'to') { $result->to_name = self::name($reader); }
+			else { $reader->reject('Unknown shared conversion field: ' . $key); }
+		}
+		if (($result->from_name === '') || ($result->to_name === '')) {
+			$reader->reject('Shared conversion requires from and to type parameters');
 		}
 		return $result;
 	}

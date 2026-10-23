@@ -36,6 +36,8 @@ public:
 	Storage_Cursor() = default; // Required fields may be populated before publication.
 	template<class U> requires std::convertible_to<typename Storage<U>::record_handle, handle>
 	explicit Storage_Cursor(Storage<U> source) : cursor_(std::make_shared<source_cursor<U>>(std::move(source))) {}
+	template<class U> requires std::convertible_to<typename Storage<U>::record_handle, handle>
+	static Storage_Cursor make(Storage<U> source) { return Storage_Cursor(std::move(source)); }
 	[[nodiscard]] scpp::bool_t valid() const { if (!cursor_) throw std::logic_error("Storage cursor is not initialized"); return scpp::bool_t(cursor_->valid()); }
 	[[nodiscard]] handle current() const { require_valid(); return cursor_->current(); }
 	[[nodiscard]] scpp::int_t<> key() const { require_valid(); return scpp::int_t<>(cursor_->key()); }

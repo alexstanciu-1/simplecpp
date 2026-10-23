@@ -2287,3 +2287,8 @@ PHP and both native routes. Existing static_members.php covers retained regenera
 checks absent nullable class qualifiers for inherited static properties, constants,
 methods and updates, including qualifier/RHS ordering in ordinary and concrete
 output. `qualified_static_members.php` retains edit/recovery/reset coverage.
+
+`python3 compiler/my-try/tests/storage_cursor.py --results FRESH` checks metadata-driven
+cursor class widening and identity/traversal in ordinary/concrete output, plus reverse,
+unrelated, nullable and unique record rejection. This is the initial CURSOR-01 slice;
+additional interface/retained/portable proofs remain in its active reuse audit.

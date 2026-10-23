@@ -423,8 +423,8 @@ copyability of the underlying record.
 
 Runtime types with inline provider storage may opt into `new` through an optional
 `construction` member name. It must resolve to registered static factories on the
-same owner, with no extra type parameters and an exact owner return type preserving
-all owner arguments. Startup rejects missing or malformed factories. Construction
+same owner, with an exact owner return type preserving all owner arguments. Additional
+input-inferred type parameters are permitted under the ordinary generic callable rules. Startup rejects missing or malformed factories. Construction
 reuses ordinary runtime call matching, argument defaults and prepared boundaries;
 it grants no source constructor body or inheritance behavior. Omission forbids `new`.
 Independent `default_constructible: true` permits implicit empty field construction;
@@ -1083,3 +1083,24 @@ The provider checks the contents of a valid boxed result at runtime: only scalar
 values, including null, may cross this boundary. This does not authorize boxed
 captures or change general payload transfer classification. Metadata installation
 rejects unknown fields, missing fields, unknown variables and fixed-function use.
+
+## Directed shared conversion requirements
+
+Generic runtime callables may declare `shared_conversions`, for example
+`[{"from":"Source","to":"Record"}]`. Both names must resolve to declared type
+parameters (including owner parameters). The callable must have input-inferred
+`type_parameters`. Missing names, unknown fields or unresolved parameters reject at
+startup. Each relation is checked after exact structural inference, before ordinary
+argument admission; it does not participate in overload ranking.
+
+Both inferred types must carry shared ownership without a nullable wrapper. The
+existing ownership conversion rules must prove identity or a safe same-family upcast,
+including observed base/interface ancestry. This never converts the enclosing
+containers, performs a runtime downcast or extracts nullable payloads. A provider
+operation must actually implement the declared relationship. No generic variance
+is inferred from element ancestry.
+
+`Storage_Cursor<Record>` uses this contract for its registered `make` factory from
+`Storage<Source>`. Its native constructor retains the source and widens yielded
+handles. Copies share cursor position; membership mutation during traversal remains
+outside its contract. Existing cursor applications are not mutually convertible.

@@ -162,6 +162,12 @@ final class runtime_boxed_result_requirement
 	}
 }
 
+/** Provider constraint on inferred handles, not conversion of the enclosing containers. */
+final class runtime_shared_conversion_requirement
+{
+	public function __construct(public int $from_position, public int $to_position) {}
+}
+
 final class runtime_generic_contract
 {
 	public int $owner_parameter_count = 0;
@@ -170,6 +176,7 @@ final class runtime_generic_contract
 	public array $transfer_positions /** vector<int> */ = [];
 	public Storage $replacement_results /** Storage<runtime_replacement_requirement> */;
 	public Storage $boxed_results /** Storage<runtime_boxed_result_requirement> */;
+	public Storage $shared_conversions /** Storage<runtime_shared_conversion_requirement> */;
 	public runtime_type_pattern $return_type;
 	public Storage $parameters /** Storage<runtime_pattern_parameter> */;
 	public function __construct()
@@ -177,6 +184,7 @@ final class runtime_generic_contract
 		$this->parameters = new Storage /** Storage<runtime_pattern_parameter> */();
 		$this->replacement_results = new Storage /** Storage<runtime_replacement_requirement> */();
 		$this->boxed_results = new Storage /** Storage<runtime_boxed_result_requirement> */();
+		$this->shared_conversions = new Storage /** Storage<runtime_shared_conversion_requirement> */();
 	}
 }
 

@@ -1312,3 +1312,8 @@ for nullable nominal identity, matching method lookup. Qualifier evaluation rema
 discard-only, with no presence check. Native ordinary/concrete absent-derived
 property/constant/method/update and ordering proofs pass; retained static-member
 checks pass with nullable absent-class fixtures. No language contract expansion.
+
+CURSOR-01 implementation checkpoint: shared_conversions metadata, inferred factory
+inputs and cursor runtime bindings now pass initial ordinary/prelowered class-widening
+proofs. Full validation/diagnostic scope remains open; see the cursor reuse audit and
+execution ledger. No mutable container covariance or cursor-to-cursor conversion added.

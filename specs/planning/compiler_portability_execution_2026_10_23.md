@@ -1361,3 +1361,15 @@ constraint in callable metadata, checked after structural inference. Existing ru
 cursor test passes freshly (1.32 s), proving retained membership and traversal behavior,
 not v0.2 metadata/prelowering integration. Implementation/proofs remain pending; no
 new semantics or broader generic covariance authorized. No production change/bootstrap.
+
+## CURSOR-01 first metadata/factory integration
+
+Reuse audited owner/input inference and observed shared ancestry through positional
+shared_conversions requirements. Register cursor members and a make adapter forwarding
+to the existing native constructor. Permit additional inferred factory inputs while
+retaining exact owner return checks. Ten ordinary/concrete native and rejection tasks
+pass; catalog regressions pass. Evidence: cursor_integration. Remaining interface,
+renamed-provider, malformed/missing metadata diagnostics, retained ancestry and portable
+proofs stay open. Bootstrap 1:18.28 / 343704 KiB RSS / 312 MiB PHP heap: unresolved
+Storage_Cursor template diagnostic removed; non-void read_next completion diagnostic
+newly exposed. First syntax_node blocker unchanged. No fix to that new blocker yet.

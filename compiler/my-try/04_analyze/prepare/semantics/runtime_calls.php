@@ -263,6 +263,19 @@ final class Runtime_Call_Preparation
 		if (q_count($inference->bindings) !== $contract->type_parameter_count) {
 			throw new \LogicException('Incomplete runtime type inference');
 		}
+		foreach ($contract->shared_conversions as $requirement) {
+			$source = $inference->bindings[$requirement->from_position];
+			$destination = $inference->bindings[$requirement->to_position];
+			$source_role = Ownership_Conversions::role($source);
+			$destination_role = Ownership_Conversions::role($destination);
+			if (($source_role === null) || ($destination_role === null)
+				|| ($source_role->ownership_family() !== ownership_kind::shared)
+				|| ($destination_role->ownership_family() !== ownership_kind::shared)) {
+				throw new \RuntimeException('Runtime shared conversion requires nonnullable shared handles');
+			}
+			Ownership_Conversions::decide($source, $destination, conversion_context::argument,
+				new Conversion_Relationships($context));
+		}
 		foreach ($contract->replacement_results as $requirement) {
 			$result_type = $inference->bindings[$requirement->result_position];
 			$replacement_type = $inference->bindings[$requirement->replacement_position];

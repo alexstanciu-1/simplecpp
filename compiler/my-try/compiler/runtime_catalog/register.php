@@ -143,7 +143,7 @@ final class Runtime_Catalog_Registration
 						if ($member === null) { continue; }
 						if (($member->owner->name !== $recipe->name) || ($function->name !== $recipe->construction)) { continue; }
 						$found = true;
-						if (!$member->static_member || (q_count($function->type_parameters) !== 0)) {
+						if (!$member->static_member) {
 							throw new \RuntimeException('Runtime construction requires an owner-bound static factory');
 						}
 						$returned = $function->return_type;

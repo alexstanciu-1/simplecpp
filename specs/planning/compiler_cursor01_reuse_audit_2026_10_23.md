@@ -57,7 +57,8 @@ suggest a PHS annotation that has no authored syntax.
 
 ## Remaining proofs and workload
 
-Runtime substrate is proven; metadata/preparation integration is unimplemented.
+Runtime substrate is proven. The first metadata/preparation slice is implemented;
+full CURSOR-01 verification and explanatory diagnostic reconciliation remain open.
 Remaining scope is medium (roughly 4–7 small bounded slices), reduced from 5–10 by
 existing owner/input inference and runtime transport. This is not a completion claim.
 
@@ -70,3 +71,20 @@ bootstrap only after implementation and focused proofs; no new bootstrap for thi
 
 If concrete transport reveals a new class-self/lifetime facade requirement, stop that
 dependent slice for discussion; do not widen the accepted runtime constructor scope.
+
+## First integration slice
+
+`shared_conversions` records declared from/to names and resolves them to positional
+requirements beside existing generic callable constraints. Runtime call instantiation
+uses shared ownership admission with observed relationships; matching remains pure.
+The source argument remains Storage<Source>. Registered construction now permits
+ordinary input-inferred variables while requiring the exact owner return type.
+The cursor exposes make/current/key/valid/next/rewind through compiler metadata;
+make forwards to the existing constrained native constructor.
+
+Ten focused tasks pass: ordinary/concrete native class widening and aliased record
+mutation, plus reverse, unrelated, nullable-record and unique-record rejection in
+both output modes. Catalog/type catalog regressions pass. Interface, renamed-provider,
+missing-contract diagnostic, retained ancestry and portable-route proofs remain open.
+The initial catalog regression invocation lacked its required output directory; the
+corrected invocation passes. No production workaround was needed for that harness error.
