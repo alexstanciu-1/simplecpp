@@ -1383,3 +1383,12 @@ including no-change retry, restore equality and preparation-reset equality. Evid
 cursor_integration/provider_summary.json and retained.stdout. Missing-contract
 source/target diagnostics and portable-route parity remain open. Test-only slice;
 no bootstrap rerun, latest production timing remains 1:18.28 / 343704 KiB RSS.
+
+## CURSOR-01 portable behavior proof
+
+New tests/portability/storage_cursor.py passes PHP plus legacy/ordinary/concrete native
+routes (21.80/24.53/23.76 s). Actual host helpers and registered native cursor preserve
+record identity, sparse positions, aliased cursor state and source retention after
+return. One test-only duplicate-declaration annotation was corrected. Evidence:
+cursor_integration/portable_summary.json and portable_host.stdout. No production
+change/bootstrap rerun. Missing-contract/source-target diagnostics remain open.

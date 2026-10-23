@@ -2296,3 +2296,7 @@ additional interface/retained/portable proofs remain in its active reuse audit.
 The cursor harness also runs original/renamed metadata with exact/base/interface
 records, malformed constraint rejection, and storage_cursor_retained.php for ancestry
 edit, no-change retry, recovery and preparation-reset agreement in both modes.
+
+`python3 tests/portability/storage_cursor.py --results FRESH` verifies the same portable
+PHP cursor behavior against legacy native and both v0.2 output modes: base-view
+identity, sparse keys, shared cursor advancement and retention after source return.

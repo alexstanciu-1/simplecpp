@@ -97,3 +97,11 @@ catalog ingestion. The retained test removes/restores the base relation across f
 checks rejection again without further edits, compares recovery output and resets
 preparation in both modes. All pass. This validates observed ancestry dependencies,
 not just a fresh-build relation query. Production code unchanged for this follow-up.
+
+## Portable route follow-up
+
+Same authored cursor fixture now passes PHP, legacy native and ordinary/concrete
+v0.2. It uses actual host helpers and runtime bindings, and verifies retained source,
+shared traversal position, sparse keys and base-view record identity. The typed local
+is declared once and subsequently assigned. Missing-contract/source-target diagnostics
+remain open; this proof does not close that requirement or the full bootstrap.

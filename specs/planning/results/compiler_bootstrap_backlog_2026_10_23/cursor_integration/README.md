@@ -30,3 +30,12 @@ so the preceding production bootstrap measurement remains current.
 
 Remaining CURSOR-01 work: explicit missing-contract/source-target diagnostics,
 portable PHP/legacy parity, and any unproven metadata/ownership boundary cases.
+
+Portable follow-up: tests/portability/storage_cursor.py uses the real PHP Storage
+and Storage_Cursor helpers, then converts the same authored source to v0.1/v0.2.
+PHP and legacy native (21.80 s), ordinary (24.53 s) and concrete (23.76 s) agree on
+5:0:5:2:7:end. It proves base-view mutation preserves record identity, sparse keys,
+aliases share cursor position, and returning only the cursor retains source membership.
+The first attempt repeated a local type annotation at reassignment; v0.2 correctly
+rejected duplicate declaration. The fixture now assigns the existing typed local.
+No production fix was needed; no new bootstrap checkpoint.
