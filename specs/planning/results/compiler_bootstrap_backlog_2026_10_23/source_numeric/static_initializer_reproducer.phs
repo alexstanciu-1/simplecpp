@@ -1,0 +1,83 @@
+final class Type_Identity {
+	public static function maximum(): int {
+		return (int)4294967295;
+	}
+
+	public static function require_valid(int $identity, string $description): void {
+		if (($identity <= 0) || ($identity > self::maximum())) {
+			throw new \scpp_portability_range_exception($description . ' must be a positive uint32');
+		}
+	}
+}
+class Identity_Proof {
+ private $next_definition_id uint32 = 4294967294;
+ private $next_type_id uint32 = 4294967294;
+ private bool $definition_ids_exhausted = false;
+ private bool $type_ids_exhausted = false;
+ public function definition(): int { return $this->allocate_definition_id(); }
+ public function concrete(): int { return $this->allocate_type_id(); }
+private function allocate_definition_id(): int {
+		if ($this->definition_ids_exhausted) {
+			throw new \scpp_portability_overflow_exception('Type definition identity space exhausted');
+		}
+		$identity = (int)$this->next_definition_id;
+		if ($identity === Type_Identity::maximum()) {
+			$this->definition_ids_exhausted = true;
+		}
+		else {
+			$this->next_definition_id = $identity + 1;
+		}
+		return (int)$identity;
+	}
+private function allocate_type_id(): int {
+		if ($this->type_ids_exhausted) {
+			throw new \scpp_portability_overflow_exception('Canonical type identity space exhausted');
+		}
+		$identity = (int)$this->next_type_id;
+		if ($identity === Type_Identity::maximum()) {
+			$this->type_ids_exhausted = true;
+		}
+		else {
+			$this->next_type_id = $identity + 1;
+		}
+		return (int)$identity;
+	}
+}
+class source_record { public $revision uint32 = 17; }
+class module {
+ public $revision uint32 = 19;
+ public $sources hash<source_record> = [];
+}
+class Model {
+ public static $revision uint32 = 4294967295;
+ public static $modules hash<module>;
+}
+class Lifecycle_Proof {
+public static function next_revision(): int {
+		if ((int)Model::$revision === 4294967295)
+		{
+			foreach (Model::$modules  as $module) {
+				$module->revision = 0;
+				foreach ($module->sources  as $source) {
+					$source->revision = 0;
+				}
+			}
+			Model::$revision = 0;
+		}
+		Model::$revision = (int)Model::$revision + 1;
+		return (int)Model::$revision;
+	}
+}
+$ids = new Identity_Proof();
+echo $ids->definition(), ':', $ids->definition(), ':';
+try { echo $ids->definition(); } catch (\scpp_portability_exception $__scpp_portability_exception_1) {if ($__scpp_portability_exception_1->matches(128)) {$error = $__scpp_portability_exception_1; echo 'exhausted:'; }else { throw $__scpp_portability_exception_1; }}
+echo $ids->concrete(), ':', $ids->concrete(), ':';
+try { echo $ids->concrete(); } catch (\scpp_portability_exception $__scpp_portability_exception_2) {if ($__scpp_portability_exception_2->matches(128)) {$error = $__scpp_portability_exception_2; echo 'exhausted'; }else { throw $__scpp_portability_exception_2; }}
+$module_value = new module(); $source_value = new source_record();
+$sources hash<source_record> = [];
+$sources['file'] = $source_value;
+$module_value->sources = $sources;
+$modules hash<module> = [];
+$modules['module'] = $module_value;
+Model::$modules = $modules;
+echo ':', Lifecycle_Proof::next_revision(), ':', $module_value->revision, ':', $source_value->revision;

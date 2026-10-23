@@ -1,0 +1,5 @@
+PHP Fatal error:  Uncaught LogicException: C++ binding count changed in /tmp/source-numeric-catalog-baseline-01/test.php:11
+Stack trace:
+#0 /tmp/source-numeric-catalog-baseline-01/test.php(43): scpp\compiler\type_catalog_check()
+#1 {main}
+  thrown in /tmp/source-numeric-catalog-baseline-01/test.php on line 11

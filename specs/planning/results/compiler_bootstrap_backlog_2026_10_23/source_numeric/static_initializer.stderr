@@ -1,0 +1,5 @@
+Native compilation failed: /tmp/type-identity-bounds-after-03/concrete/published/units/n6d61696e/n6d61696e2e706873.cpp:85:133: error: non-local lambda expression cannot have a capture-default
+   85 | scpp::internal::concrete_n_uint32_f41e85e9e04a45a45af4208e74e419affde8715341a80cb5694f7c2aa7671758 record_Model::field_revision = ([&]() -> scpp::internal::concrete_n_uint32_f41e85e9e04a45a45af4208e74e419affde8715341a80cb5694f7c2aa7671758 { const auto& runtime_input_0 = static_cast<scpp::internal::concrete_n_int_ebd4c8f08856c4fac31841078980c195a23599b423d11ba32ba63ece111aa421>(4294967295LL); return scpp::internal::runtime_conversion_499a7c4926b6b72ca4e1f8399ab5047c19f84ea3d29fc22c0925e0dde384386e((runtime_input_0).address()); }());
+      |                                                                                                                                     ^
+1 error generated.
+

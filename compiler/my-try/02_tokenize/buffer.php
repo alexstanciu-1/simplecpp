@@ -21,10 +21,10 @@ final class Token_Buffer
 			throw new \RuntimeException('Retained token buffer exceeds uint32 capacity');
 		}
 		// Narrow only after checking the complete appended range.
-		$offset /** uint32 */ = $prefix_length;
+		$offset = $prefix_length;
 		$storage /** Storage<token> */ = $previous->tokens;
 		foreach ($rows as $row) {
-			$row->offset += $offset;
+			$row->offset = (int)$row->offset + $offset;
 			$storage->append($row);
 		}
 		$incoming->content = $previous->content . $incoming->content;

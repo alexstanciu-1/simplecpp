@@ -1283,3 +1283,15 @@ factory counts are unaffected. The reproducible registry_audit.py tool refreshes
 byte-stable, not a full semantic audit. Evidence: registry_default.
 Bootstrap 1:14.80 wall / 342620 KiB RSS / 312 MiB PHP heap; same syntax_node first blocker
 and diagnostic set. Remaining CH15 operations and nonlexical inventory stay open.
+
+## SOURCE-01 numeric boundary repair
+
+Audit and source-owned fixes in compiler_source_numeric_audit_2026_10_23.md. One
+initial-token byte-capacity gate; int comparison/arithmetic before already-bounded
+uint32 ID/counter/revision/offset stores. Baseline legacy allocator wrapped to zero;
+v0.2 rejected narrow arithmetic. Fixed extracted allocators, revision rollover and
+token append pass PHP and all native routes. Capacity/recovery and focused PHP checks
+pass. Evidence: source_numeric. Type-catalog count failure reproduces unchanged; a new
+prelower static-initializer capture-default lambda bug is recorded separately.
+Bootstrap 1:14.22 wall / 342396 KiB RSS / 312 MiB PHP heap; first syntax_node unchanged.
+No whole-compiler native or full regression success claimed.

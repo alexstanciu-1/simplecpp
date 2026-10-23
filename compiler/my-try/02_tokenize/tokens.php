@@ -25,10 +25,13 @@ final class Tokenizer
 		}
 		// Retain the exact source snapshot used by every token span.
 		$this->content = $this->source->content;
+		$length = string_byte_len($this->content);
+		if ($length > 4294967295) {
+			throw new \RuntimeException('Source token buffer exceeds uint32 capacity');
+		}
 		$result = new token_list($this->source, $this->content);
 		$tokens /** Storage<token> */ = $result->tokens;
 
-		$length = string_byte_len($this->content);
 		$offset = 0;
 
 		while ($offset < $length)

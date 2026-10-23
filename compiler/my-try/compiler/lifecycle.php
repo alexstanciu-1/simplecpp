@@ -45,7 +45,7 @@ final class Compiler_Lifecycle
 			}
 			Model::$revision = 0;
 		}
-		Model::$revision++;
+		Model::$revision = (int)Model::$revision + 1;
 		return (int)Model::$revision;
 	}
 

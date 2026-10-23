@@ -48,6 +48,7 @@ for label in ['final class token', 'final class retained_token_range', 'final cl
     source += declaration(APP / '02_tokenize/structures.php', label) + '\n'
 source += declaration(APP / 'compiler/structures.php', 'enum work_state') + '\n'
 source += declaration(APP / 'compiler/structures.php', 'final class source_work') + '\n'
+source += declaration(APP / '02_tokenize/buffer.php', 'final class Token_Buffer') + '\n'
 source += declaration(APP / '03_parse/structures/structures.php', 'final class parsed_file') + '\n'
 source += declaration(APP / 'compiler/traits/structures.php', 'final class trait_member_instance') + '\n'
 source += declaration(iterators, 'interface child_iterator_i') + '\n'
@@ -95,11 +96,20 @@ $origin = new collected_name(); $working = new collected_name();
 $member = new trait_member_instance($origin, $working);
 echo ':', $member->origin === $origin ? 'origin' : 'bad';
 echo ':', $member->working === $working ? 'working' : 'bad';
+$prefix = new token_list($snapshot, 'prefix');
+Token_Buffer::append($tokens, $prefix);
+$appended /** Storage<token> */ = $tokens->tokens;
+echo ':', $appended[0]->offset, ':', $appended[1]->offset, ':', $tokens->content;
 '''
 (out / 'source/main.php').write_text(source)
 expected = b'input.phs:changed:0:3:1:7:7:3:same:distinct:source:record:4:file:>>:>>:0'
 expected += b':tokens:root:collection:source:scope:pending:2:origin:working'
+expected += b':6:7:prefix>>'
 with CommandRunner(out / 'logs', ROOT) as runner:
+    publisher = out / 'publish.php'
+    publisher.write_text((APP / 'tests/async_tasks_publish.php').read_text()
+                         .replace("dirname(__DIR__) . '/boot.php'", repr(str(APP / 'boot.php')))
+                         .replace('[$argv[3]]', "[$argv[3], 'strings']"))
     assert runner.run('host', ['php8.5', '-r', 'foreach(array_slice($argv,1) as $path){require $path;}',
                              TOOLS / 'runtime/bootstrap.php', APP / 'helpers/storage_abstract.php',
                              APP / 'helpers/storage.php', out / 'source/main.php']) == expected
@@ -123,7 +133,7 @@ with CommandRunner(out / 'logs', ROOT) as runner:
             shutil.copyfile(out / 'v0.2/main.phs', folder / 'source/main.phs')
             # Include the full exception framework, including its identity helper.
             shutil.copyfile(out / 'v0.2/scpp_framework/exceptions.phs', folder / 'source/exceptions.phs')
-            runner.run(mode + '-publish', ['php8.5', APP / 'tests/async_tasks_publish.php', folder,
+            runner.run(mode + '-publish', ['php8.5', publisher, folder,
                                            ROOT / 'runtime/metadata/modules', 'compiler', mode])
             manifest = json.loads((folder / 'published/.scpp-output.manifest').read_text())
             assert manifest['application_templates'] == ('allowed' if mode == 'ordinary' else 'forbidden')

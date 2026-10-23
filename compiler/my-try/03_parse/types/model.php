@@ -1305,7 +1305,8 @@ final class Type_Registry implements type_capability_query
 		$type = new applied_template_type($this->allocate_type_id(), $definition, $complete_arguments);
 		$this->register_type($type);
 		$index->publish($type);
-		$this->applied_type_count++;
+		// Every application already consumed a checked canonical type identity.
+		$this->applied_type_count = (int)$this->applied_type_count + 1;
 		return $type;
 	}
 
@@ -1572,12 +1573,12 @@ final class Type_Registry implements type_capability_query
 		if ($this->definition_ids_exhausted) {
 			throw new \OverflowException('Type definition identity space exhausted');
 		}
-		$identity = $this->next_definition_id;
+		$identity = (int)$this->next_definition_id;
 		if ($identity === Type_Identity::maximum()) {
 			$this->definition_ids_exhausted = true;
 		}
 		else {
-			$this->next_definition_id++;
+			$this->next_definition_id = $identity + 1;
 		}
 		return (int)$identity;
 	}
@@ -1587,12 +1588,12 @@ final class Type_Registry implements type_capability_query
 		if ($this->type_ids_exhausted) {
 			throw new \OverflowException('Canonical type identity space exhausted');
 		}
-		$identity = $this->next_type_id;
+		$identity = (int)$this->next_type_id;
 		if ($identity === Type_Identity::maximum()) {
 			$this->type_ids_exhausted = true;
 		}
 		else {
-			$this->next_type_id++;
+			$this->next_type_id = $identity + 1;
 		}
 		return (int)$identity;
 	}

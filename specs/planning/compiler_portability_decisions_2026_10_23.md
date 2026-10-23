@@ -1286,3 +1286,17 @@ before adding a scheduling barrier. Production compiler callbacks already delega
 work; this proof does not establish all possible closure bodies are safe. Record the
 silent-emission defect for a focused legacy generator audit/repair; no generator fix
 was included in the source synchronization slice.
+
+## SOURCE-01 numeric audit execution
+
+See [the numeric audit](compiler_source_numeric_audit_2026_10_23.md). Initial token
+input now has one uint32 byte-capacity check; already-bounded token append, type-ID
+allocation, application counting and revision rollover use int arithmetic before
+compact storage. Extracted allocator probes confirmed and repaired legacy ID wrap to
+zero and v0.2 narrow-arithmetic rejection. Native/static-initializer and type-catalog
+regression follow-ups remain; no converter-specific compiler checking was added.
+
+New observed v0.2 backend blocker: static uint32 literal initialization emits a
+non-local capture-default conversion lambda in prelowered output. Reproducer and
+native diagnostics are saved with source_numeric evidence. Keep this as required
+backlog work, separate from the source arithmetic repairs.
