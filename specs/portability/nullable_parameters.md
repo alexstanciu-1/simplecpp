@@ -154,3 +154,18 @@ Normalized object-handle null defaults now use existing empty-storage initializa
 in v0.2; see the [handle-default contract](../type_use_modifiers.md#null-defaults-for-handle-parameters--2026-10-21).
 The bound is copyable handle parameters. Explicit raw null call arguments remain
 outside this slice; pass a typed empty handle when supplying the argument explicitly.
+
+## Nullable conditional branch normalization
+
+Portable PHP must explicitly normalize differing object payload types before a
+ternary join. For `?Derived` and `Base`, a typed helper returning `?Base` can widen
+the optional branch without extracting an absent value. Keep that call inside the
+branch to preserve lazy evaluation. Example: `true ? Values::widen($maybe) : $base`,
+where `widen(?Derived $value): ?Base { return $value; }`.
+
+The legacy runtime cannot deduce a result for the direct `?Derived`/`Base` pair.
+v0.2 now forms `?Base` through its existing ancestry and nullable registry owners;
+portable authoring still uses the explicit normalization for both routes. Do not
+replace nullable widening with a checked required-value cast. The cross-route
+`tests/portability/nullable_objects.py` checks identity, absence and both branch
+orders; the direct inference proof is `compiler/my-try/tests/nullable_objects.py`.

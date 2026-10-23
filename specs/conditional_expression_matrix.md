@@ -112,6 +112,15 @@ and of the destination receiving the expression. Ordinary classes and explicitly
 shared structs use the same rule; a record paired with an implemented interface
 produces the interface handle. Preparation observes ancestry dependencies.
 
+For full ternary and Elvis, required and optional nominal object branches use
+that same supplied-payload ancestry rule. If either branch is optional, the result
+is optional even when the branch supplying the base type is required: `?Derived`
+paired with `Base` produces `?Base`, in either branch order. Absence and object
+identity are preserved. This forms the nullable application of the selected base;
+it does not require a branch already spelled `?Base`. Reference arguments still
+require the exact resulting type. This clarification does not change scalar-wrapper
+coalescing or decide additional optional-fallback coalescing forms.
+
 No unseen common ancestor/interface is inferred for siblings. Such branches must
 first be explicitly normalized to a chosen handle type. Inline
 record joins, bare-null branch inference and wrapper-payload widening are not

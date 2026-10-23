@@ -51,6 +51,20 @@ $fallback Base = $wide ?? $derived;
 if ($fallback->value !== 9) { return 6; }
 $selected ?Base = true ? $base : $derived;
 if ($selected->value !== 9) { return 7; }
+function optional_base_reference(?Base &$value): void {}
+$required_base Base = $derived;
+$joined = true ? $maybe : $required_base;
+optional_base_reference($joined);
+if ($joined !== $derived) { return 10; }
+$reversed = false ? $required_base : $maybe;
+optional_base_reference($reversed);
+if ($reversed !== $derived) { return 11; }
+$missing = true ? $none : $required_base;
+optional_base_reference($missing);
+if ($missing !== null) { return 12; }
+$elvis = $none ?: $required_base;
+optional_base_reference($elvis);
+if ($elvis !== $derived) { return 13; }
 
 
 interface Consumer { function accept(Derived $value): ?Base; }
@@ -62,7 +76,10 @@ $returned ?Base = $consumer->accept($derived);
 if ($returned === null) { return 5; }
 '''
 expected = "9:9:9:1:7"
-negative = {'required-local': ('class Node {} $n Node = null;', 'Required object boundary rejects null'),
+negative = {'optional-siblings': ('class Base {} class Left extends Base {} class Right extends Base {} '
+                                '$left ?Left = null; $right = new Right(); $joined = true ? $left : $right;',
+                                'sibling inference is deferred'),
+ 'required-local': ('class Node {} $n Node = null;', 'Required object boundary rejects null'),
  'required-return': ('class Node {} function f(): Node { return null; } f();',
                      'Required object boundary rejects null'),
  'required-argument': ('class Node {} function f(Node $n): void {} f(null);',

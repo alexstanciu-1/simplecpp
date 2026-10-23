@@ -1239,3 +1239,14 @@ admission/rejection checks pass for both converter targets. Evidence: nullable_l
 Bootstrap 1:14.20 wall / 342344 KiB RSS / 312 MiB PHP heap, same syntax_node blocker and
 diagnostic set. This closes the recorded generic nullable-local container grammar gap,
 not arbitrary user-template annotations or all remaining NULL-01/02 consumers.
+
+## NULL-01 supplied-base optional conditional joins
+
+Conditional/Elvis joins now intern the optional form of the existing supplied-payload
+ownership join. ?Derived/Base no longer requires a preexisting ?Base branch. Fifteen
+focused tasks pass, including exact-reference inference checks, absence/identity,
+sibling rejection and existing retained/conversion regressions. Portable PHP uses
+explicit nullable branch widening because direct legacy deduction fails; normalized
+PHP/legacy/ordinary/concrete proofs pass. Evidence: nullable_selection.
+Bootstrap 1:14.31 wall / 342132 KiB RSS / 312 MiB PHP heap, same syntax_node blocker and
+diagnostic set. Optional-fallback coalescing remains open; no unseen-base inference.

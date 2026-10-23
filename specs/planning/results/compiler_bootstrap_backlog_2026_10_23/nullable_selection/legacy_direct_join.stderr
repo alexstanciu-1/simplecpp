@@ -1,0 +1,13 @@
+Project mode: strict. Prefer supported Prism++ patterns over standard PHP assumptions.
+Compile note in main.phs:18: in instantiation of function template specialization 'scpp::ternary_eval<(lambda at ../generated/main.cpp:69:34), (lambda at ../generated/main.cpp:69:97), (lambda at ../generated/main.cpp:69:140)>' requested here
+Generated location: .prism/generated/main.cpp:69:21
+Compile note in main.phs:21: in instantiation of function template specialization 'scpp::ternary_eval<(lambda at ../generated/main.cpp:73:35), (lambda at ../generated/main.cpp:73:98), (lambda at ../generated/main.cpp:73:140)>' requested here
+Generated location: .prism/generated/main.cpp:73:22
+Compile note in main.phs:23: in instantiation of function template specialization 'scpp::ternary_eval<(lambda at ../generated/main.cpp:76:35), (lambda at ../generated/main.cpp:76:99), (lambda at ../generated/main.cpp:76:145)>' requested here
+Generated location: .prism/generated/main.cpp:76:22
+Raw compiler excerpt:
+main.cpp:69:21: note: in instantiation of function template specialization 'scpp::ternary_eval<(lambda at ../generated/main.cpp:69:34), (lambda at ../generated/main.cpp:69:97), (lambda at ../generated/main.cpp:69:140)>' requested here
+main.cpp:73:22: note: in instantiation of function template specialization 'scpp::ternary_eval<(lambda at ../generated/main.cpp:73:35), (lambda at ../generated/main.cpp:73:98), (lambda at ../generated/main.cpp:73:140)>' requested here
+main.cpp:76:22: note: in instantiation of function template specialization 'scpp::ternary_eval<(lambda at ../generated/main.cpp:76:35), (lambda at ../generated/main.cpp:76:99), (lambda at ../generated/main.cpp:76:145)>' requested here
+Run 'scpp error' for more details.
+Run 'scpp full-error' for the saved JSON report.
