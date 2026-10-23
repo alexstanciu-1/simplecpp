@@ -1,0 +1,47 @@
+{
+  "initial_native": [
+    {
+      "name": "ordinary",
+      "seconds": 16.28189626099993,
+      "passed": true
+    },
+    {
+      "name": "concrete",
+      "seconds": 19.457337118001305,
+      "passed": true
+    }
+  ],
+  "methods": {
+    "passed": true,
+    "generated_programs": 26,
+    "cpp_pch": true,
+    "native_compiler_rebuilt": false
+  },
+  "inheritance": {
+    "passed": true,
+    "generated_programs": 59,
+    "cpp_pch": true,
+    "native_compiler_rebuilt": false
+  },
+  "captures": {
+    "passed": true,
+    "generated_programs": 44,
+    "cpp_pch": true,
+    "native_compiler_rebuilt": false
+  },
+  "expanded_native": {
+    "results": "/tmp/struct-self-core-03",
+    "ordinary_seconds": 21.34,
+    "prelowered_seconds": 26.7,
+    "native_passed": true,
+    "precursor_negative_harness_passed": false,
+    "reason": "Uncalled static method was not materialized; corrected preparation probe invokes it."
+  },
+  "corrected_preparation": {
+    "results": "/tmp/struct-self-preparation-05",
+    "passed": true,
+    "negative_cases": 8,
+    "modes": 2,
+    "cross_file_layout_recovery": true
+  }
+}

@@ -1,0 +1,8 @@
+{
+  "removed": [
+    "$this is only a member receiver or explicit receiver capture"
+  ],
+  "added": [
+    "Class self values require shared-owner retention support"
+  ]
+}

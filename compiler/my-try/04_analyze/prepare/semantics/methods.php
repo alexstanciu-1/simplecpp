@@ -5,15 +5,15 @@ namespace scpp\compiler;
 
 final class Method_Preparation
 {
-	public static function receiver(collected_method $method): prepared_receiver
+	public static function receiver(collected_method $method, preparation_context $context): prepared_receiver
 	{
 		$record = object_cast($method->declaring_type(), collected_record::class);
 		$receiver = new prepared_receiver();
 		$receiver->declaration = weak($method);
-		$type = Model::$type_catalog->registry()->canonical(Source_Types::definition($record));
-		$receiver->type = Model::$type_catalog->registry()->use($type->type_id());
+		$scope = object_cast(weakref_get($record->scope), scope::class);
+		$receiver->type = Type_Preparation::resolve_name($scope, $record->name, $context, false);
 		if (Type_Queries::is_nominal_handle($receiver->type)) {
-			$receiver->type = Model::$type_catalog->registry()->use($type->type_id(), true);
+			$receiver->type = Model::$type_catalog->registry()->use($receiver->type->type_id(), true);
 		}
 		return $receiver;
 	}
@@ -80,10 +80,10 @@ final class Method_Preparation
 			return;
 		}
 		$context->worker->require_declaration($context->owner, $method->declaring_type());
-		if (!$facts->static_member) { $facts->receiver = self::receiver($method); }
+		if (!$facts->static_member) { $facts->receiver = self::receiver($method, $context); }
 	}
 
-	/** $this is usable only as a fixed member receiver, never as an escaping ordinary value. */
+	/** Member receiver access borrows the original instance without making a value copy. */
 	public static function base(expression_node $syntax, preparation_context $context): prepared_expression
 	{
 		if ($syntax instanceof variable_reference_node)
@@ -94,6 +94,7 @@ final class Method_Preparation
 				$receiver = $context->receiver;
 				if ($receiver === null) { throw new \RuntimeException('$this requires an instance body'); }
 				$reference = new prepared_variable_reference();
+				$reference->operation = variable_reference_operation::receiver;
 				$reference->type = $receiver->type;
 				$reference->declaration = $receiver->declaration;
 				$reference->place = new prepared_place($receiver, null, true);
@@ -102,6 +103,23 @@ final class Method_Preparation
 			}
 		}
 		return Expression_Preparation::prepare($syntax, $context);
+	}
+
+	/** Struct self remains an existing place; ordinary value boundaries enforce copying. */
+	public static function self_value(preparation_context $context): prepared_variable_reference
+	{
+		$receiver = $context->receiver;
+		if ($receiver === null) { throw new \RuntimeException('$this requires an instance body'); }
+		$value_type = Model::$type_catalog->registry()->use($receiver->type->type_id());
+		if (Type_Queries::is_nominal_handle($value_type)) {
+			throw new \RuntimeException('Class self values require shared-owner retention support');
+		}
+		$reference = new prepared_variable_reference();
+		$reference->operation = variable_reference_operation::receiver_value;
+		$reference->type = $value_type;
+		$reference->declaration = $receiver->declaration;
+		$reference->place = new prepared_place($receiver, null, true);
+		return $reference;
 	}
 
 	public static function call(call_node $syntax, preparation_context $context): prepared_call

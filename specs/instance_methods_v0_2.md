@@ -120,8 +120,19 @@ on exceptions. This is retention of the same instance, not cloning.
 
 An inline whole-storage receiver is borrowed for the call; do not copy it merely to
 invoke a method. Mutations affect that storage. `$this` is the current instance and
-is permitted as a fixed property/method receiver; copying, returning, passing or
-rebinding `$this` is not enabled by this slice. The
+is permitted as a fixed property/method receiver. For a struct, `$this` is also an
+existing value place: ordinary assignment, by-value arguments and by-value returns
+copy it under the normal copy-capability rules. Copies are memberwise, preserving
+shared-field identity and each value field's own copy semantics. A method invoked
+through `shared<S>` still produces an `S` value at an `S` boundary, not a retained
+shared struct handle. The receiver itself is never moved from implicitly.
+
+Rebinding `$this`, borrowing it into a new native reference and returning a native
+reference to it remain rejected by the existing receiver/reference restrictions.
+Borrowed receiver captures remain borrowed; a value copy produced inside the bounded
+closure follows ordinary value rules. Class owning-self support is a separate slice;
+this struct extension does not promote inline or unique ownership to shared ownership.
+The converter-owned `_struct_copy_` protocol is separate from this native capability. The
 [bounded closure receiver contract](language/closures.md#v02-borrowed-receiver-captures)
 additionally permits explicit `use ($this)` and automatic arrow receiver capture:
 these borrow the instance within the current invocation, without copying or retaining it.

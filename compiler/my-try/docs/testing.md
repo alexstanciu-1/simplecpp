@@ -98,6 +98,13 @@ native and both v0.2 modes execute. Its small native helper definitions isolate 
 full facade bodies retain their separate runtime/capability obligations. The existing
 `tests/portability/string_split.py` covers real byte-construction facade regression.
 
+`python3 tests/struct_self.py --results FRESH` proves struct self assignment,
+by-value arguments/returns, receiver mutation, shared fields, value-container copies,
+inherited/shared-allocated struct snapshots and borrowed closures in both output modes.
+It rejects noncopyable self values, native reference escapes, rebinding, static use,
+abstract complete values and pending class self; retained layout edits must reject and
+recover. Portable `_struct_copy_` parity belongs to the separate converter proof.
+
 `python3 tests/virtual_defaults.py --results FRESH` proves explicit concrete virtual
 slots through inherited/default, base/interface, trait and parent calls, with vector
 signatures in ordinary and template-prelowered output. It also checks invalid markers,

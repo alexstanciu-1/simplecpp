@@ -236,6 +236,14 @@ branches, including capability rejection, retained updates and ordinary/prelower
 parity where relevant. Unresolved exceptions need explicit disposition; do not
 silently omit them to close this blocker. Existing foundations need not be rebuilt.
 
+2026-10-23 SELF-02 finding: receiver preparation called Source_Types::definition,
+which creates a fresh nominal definition rather than looking up the published one.
+Struct self copy exposed unequal canonical IDs for the same collected declaration.
+Method/constructor receiver preparation now reuses the existing observed type lookup.
+Audit the remaining factory calls in Member_Preparation and Inheritance_Preparation
+for the same identity reconstruction risk; their classification/remediation is still
+open. This local receiver repair does not close the registry audit.
+
 Historical foundation checkpoints follow; their narrower scope does not close this debt.
 
 2026-10-10 audit: definitions, storage, copy dependencies, members and existing

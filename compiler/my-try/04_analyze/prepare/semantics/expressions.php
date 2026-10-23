@@ -404,7 +404,7 @@ final class Expression_Preparation
 	/** Resolve source-order locals without modifying the retained declaration inventory. */
 	public static function prepare_reference(variable_reference_node $node, preparation_context $context): prepared_variable_reference
 	{
-		if ($node->name === 'this') { throw new \RuntimeException('$this is only a member receiver or explicit receiver capture'); }
+		if ($node->name === 'this') { return Method_Preparation::self_value($context); }
 		$entry = $node->occurrence();
 		$locals = $context->locals;
 		$targets /** vector<prepared_source_storage> */ = $locals->named($entry->name);

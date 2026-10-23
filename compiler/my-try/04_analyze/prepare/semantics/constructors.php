@@ -72,7 +72,7 @@ final class Constructor_Preparation
 		$facts = new prepared_source_callable();
 		$facts->visibility = Member_Preparation::visibility($syntax->modifiers);
 		$facts->signature->return_type = Language_Types::no_value(Model::$language_scope);
-		$facts->receiver = Method_Preparation::receiver($entry);
+		$facts->receiver = Method_Preparation::receiver($entry, $context);
 		$contract = new record_initialization_contract();
 		$contract->constructor = weak($entry);
 		$facts->initialization = $contract;

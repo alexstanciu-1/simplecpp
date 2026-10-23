@@ -553,3 +553,55 @@ results/compiler_bootstrap_backlog_2026_10_23/shared_self_reuse/README.md.
 Approval is required under the repository's wide-refactor rule. Independent work
 can continue, starting with struct self-value support; shared-struct retention stays
 deferred. Existing constructor-promotion/parent-order question also remains open.
+
+## SELF-02 — struct self values using existing copy boundaries
+
+Reuse audit: prepared_receiver/prepared_place already model the original instance;
+Value_Boundary_Preparation enforces normal copy capability and keeps receiver places
+out of implicit move consumption. Existing receiver places are borrow-restricted,
+so this slice does not widen native reference admission. Member receiver calls and
+borrowed closure captures retain their existing behavior.
+
+Prepared variable references now explicitly distinguish local storage, member
+receiver access and receiver-value access. Struct self values emit dereferenced
+receiver storage; ordinary value boundaries perform the copy. No new runtime wrapper
+or shared-struct retention is introduced. Shared class self remains separately blocked
+on the recorded runtime/prelowering redesign; portable struct copying remains COPY-01.
+
+The first proof exposed duplicate nominal identities: Method_Preparation created a
+new source definition for its receiver, different from the published signature type.
+Receiver setup now uses Type_Preparation's existing observed lookup in the declaring
+record's scope (without requesting layout recursively). Both ordinary method and
+constructor receiver creation share it. Self-value setup reuses that receiver identity.
+This is a local repair to receiver preparation, not a second registry or name-based
+equality relaxation. Other Source_Types::definition consumers remain CH15 audit inputs.
+
+Expanded native proof passes in ordinary and prelowered modes: local/argument/return
+copies, member mutation, vector value isolation, shared-field identity, inherited
+base snapshots, shared-allocated struct snapshots and copies produced inside borrowed
+receiver closures. Eight negative cases and cross-file noncopyable-layout recovery
+pass in both modes. The static negative probe must invoke its method because static
+bodies are materialized on demand; the corrected probe does so.
+
+Focused native evidence: `/tmp/struct-self-core-02` passes the initial program in
+both modes; `/tmp/struct-self-core-03` passes the expanded native program in both
+modes (21.34 s ordinary, 26.70 s concrete), while its earlier static negative test
+needed invocation. Corrected `/tmp/struct-self-preparation-05` passes all eight
+negative cases and repeated/cross-file recovery in both modes. Existing suites:
+`/tmp/struct-self-method-regression-01` (26),
+`/tmp/struct-self-inheritance-regression-01` (59), and
+`/tmp/struct-self-capture-regression-01` (44) all pass.
+
+CH15 follow-up: source definition creation is not an identity lookup. Remaining
+Source_Types::definition calls in Member_Preparation and Inheritance_Preparation
+must be classified in the final registry audit. Do not replace identity checks with
+name equivalence or infer that receiver repair closes the broader registry debt.
+
+Measured `/tmp/compiler-bootstrap-struct-self-01`: conversion 4.68 s / 195,112 KiB
+RSS, 269 PHS files / 1,960,733 bytes. Bootstrap 206.26 s / 469,752 KiB (458.7 MiB)
+RSS / 451.0 MiB PHP heap. The nullable-value boundary remains first; only the generic
+self diagnostic changes to the precise pending class-retention diagnostic.
+No fatal/OOM, emission or native compiler rebuild. Evidence:
+results/compiler_bootstrap_backlog_2026_10_23/struct_self.
+SELF-02 native value support is implemented; COPY-01 parity and SELF-01 redesign
+are separate pending work. Shared-struct retention stays deferred.

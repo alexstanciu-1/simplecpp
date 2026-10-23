@@ -17,7 +17,15 @@ This does not establish exhaustive language, lifetime, incremental or performanc
 
 ## Accepted-backlog bootstrap checkpoint — 2026-10-23
 
-The latest [explicit virtual checkpoint](../../../../specs/planning/results/compiler_bootstrap_backlog_2026_10_23/virtual_defaults/README.md)
+The latest [struct self checkpoint](../../../../specs/planning/results/compiler_bootstrap_backlog_2026_10_23/struct_self/README.md)
+adds native struct self copies through existing value boundaries and repairs receiver
+type identity reuse. Both output modes pass focused copy/mutation/recovery proofs;
+129 existing method/inheritance/capture programs pass. Bootstrap takes 206.26 s /
+458.7 MiB RSS / 451.0 MiB PHP heap. The nullable-value boundary remains first; the
+self diagnostic now identifies pending class retention specifically. No fatal/OOM,
+emission or native compiler rebuild. Portable copy parity remains COPY-01.
+
+The earlier [explicit virtual checkpoint](../../../../specs/planning/results/compiler_bootstrap_backlog_2026_10_23/virtual_defaults/README.md)
 adds concrete virtual default methods and portable Virtual/Override intent using
 existing dispatch and prelowering paths. PHP/legacy/both-v0.2 proofs, retained marker
 removal/recovery and all 32 abstract-dispatch regressions pass. Bootstrap takes

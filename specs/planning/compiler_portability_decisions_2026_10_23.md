@@ -123,7 +123,13 @@ Evidence inspected, not newly executed during this discussion:
 
 ## SELF-02 — struct and non-default storage self
 
-**Core v0.2 receiver/value support accepted on 2026-10-23; implementation paused.**
+**Core v0.2 receiver/value support implemented with ordinary/prelowered proofs.**
+
+SELF-02 uses existing copy-capability boundaries and borrow-restricted receiver
+places. Reference creation/escape remains gated. Receiver setup now reuses the
+published type through observed lookup, avoiding duplicate nominal identities.
+See the execution ledger for rejection/recovery and regression evidence. COPY-01
+portable behavior and shared-struct retention are separate claims.
 
 Separate the current receiver from a value passed across a boundary. A struct method
 operates on the existing struct; `$this->field = ...` must mutate that receiver, not
@@ -989,7 +995,7 @@ discussion while independent work continues. Deferred debts remain deferred.
 | --- | --- | --- |
 | CH15-RUNTIME-TYPE-METADATA-01 | Compiler-wide registry/type-use audit and remediation | First-class final-catalog blocker; inventory early, repair by owning slice, prove ordinary/prelowered parity; not closed by discovery alone. |
 | SELF-01 | Shared class self acquisition, including prelowering | Semantics accepted; ordinary reuse proof passes, concrete inherited-base template gate fails. Runtime facade/registration redesign awaiting approval; experiment removed. |
-| SELF-02 | Struct self: receiver, value copy and distinct shared retention | Core v0.2 receiver/value support accepted; shared retention deferred as SELF-DEBT-01; paused. |
+| SELF-02 | Struct self: receiver, value copy and distinct shared retention | Core receiver/value support implemented and proved in both v0.2 modes; shared retention remains SELF-DEBT-01; portable copies remain COPY-01. |
 | COPY-01 | `_struct_` / `_struct_copy_` portable value protocol | Converter work accepted; first proof is `cpp_specialization_ref`; may consume SELF-02; paused. |
 | INIT-01 | Promoted required constructor inputs and explicit valid defaults | Bounded v0.2 set mapping and switch_label source migration implemented with cross-route proofs; promotion plus explicit parent call remains under discussion; inventory C03; in progress. |
 | LOCAL-01 | Class-local definite assignment and existing struct defaults | Bounded local flow checks accepted; no general init inference or deferred struct lifetime; direct-init required fields; paused. |

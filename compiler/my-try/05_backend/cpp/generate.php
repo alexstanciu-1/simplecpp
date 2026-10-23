@@ -1307,7 +1307,8 @@ final class CPP_Generator
 	public static function generate_reference(prepared_variable_reference $reference, cpp_generation_context $context): string
 	{
 		$target = object_cast(weakref_get($reference->declaration), collected_name::class);
-		if ($target instanceof collected_method) { return 'this'; }
+		if ($reference->operation === variable_reference_operation::receiver) { return 'this'; }
+		if ($reference->operation === variable_reference_operation::receiver_value) { return '(*this)'; }
 		return self::local_name($target);
 	}
 
