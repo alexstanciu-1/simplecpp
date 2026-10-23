@@ -1,0 +1,6 @@
+{
+  "compiler/my-try/03_parse/parser.php": "d7af08ce05b75374d53865e717550c56ba17f6ba77e48ce256e6d6082ab6f7dd",
+  "compiler/my-try/03_parse/structures/structures_declarations.php": "56f684c10dc52bf20ffff9cd84b4f223a1bd1a7d61343ea95d34d005f2b97978",
+  "compiler/my-try/tests/callable_construction.php": "981476c7728263038d4b2861f2b9d45b960db8c7f12731f886cd47bfaa1170dd",
+  "tests/portability/callable_construction.py": "63a1e274bed8dc838bbb725555a7c0751e64d11c9935ffe7a1f2cf512c4f367a"
+}

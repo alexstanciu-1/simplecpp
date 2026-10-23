@@ -54,3 +54,17 @@ The facade's `same_exception` helper now uses v0.2 shared-object identity admiss
 The production source_initialization.py portability fixture executes same/distinct
 exception comparisons through PHP, legacy and both v0.2 modes. Constructor failure
 proofs remain separate; this does not prove every exception-facade operation.
+
+## Required objects created by a helper
+
+When a shared initialization helper allocates required object fields, an existing
+source-only alternative is to accept those objects as promoted constructor inputs.
+Move duplicate field declarations out of traits into their consuming owners. A
+concrete factory can allocate fresh inputs and invoke the constructor; the body
+then configures already-initialized objects without publishing an incomplete node.
+The compiler Callable_Syntax adaptation proves this shape through focused extracted
+production constructors on both routes, with actual host scope/reuse checks.
+See `tests/portability/callable_construction.py` and the dated callable_construction
+evidence. This does not authorize helper-body inference or nullable substitutes.
+Use a descriptive factory name such as fresh_node: an authored create method hides
+the legacy generator's unqualified create<T> allocation helper.

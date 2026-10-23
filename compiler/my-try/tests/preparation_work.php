@@ -113,7 +113,7 @@ $parsed->root->single_body()->body->syntax_changed = false;
 
 // Retirement dispatch must unlink every role, including both directions of dependencies.
 // A member uses the same work classes, without becoming a namespace function or property.
-$method = new method_node();
+$method = method_node::fresh_node();
 $method->name = 'value';
 $method->set_span($record->start_token(), $record->end_token());
 $method_scope = new scope();

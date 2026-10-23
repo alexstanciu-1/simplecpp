@@ -1517,3 +1517,25 @@ helper. Existing promotion cannot express these as-is, and the bounded staged-fi
 converter excludes trait/inherited ownership. Discuss source factory/construction
 inputs versus a bounded converter capability before changing the protocol. Remaining
 safe opportunities are not claimed exhausted; broader construction redesign is paused.
+
+## Callable_Syntax source-only construction inputs
+
+User approved explicit promoted signature/scope inputs and factories. Required
+properties now belong to the consuming callable-declaration/closure classes;
+closure body scope is also promoted. Shared helper configures already-owned inputs.
+Concrete fresh_node factories allocate fresh objects; parser reuse branches remain
+unchanged. No compiler, converter, runtime or language extension. Factory spelling
+avoids the legacy unqualified create<T> helper collision found during proof.
+
+Actual host identity/scope checks and six focused AST/retained regressions pass.
+Extracted production constructors/factories pass PHP, legacy, ordinary and concrete
+native modes (21.81/23.13/23.83 s native tasks). Scope dependency doubles bound the
+native fixture; actual scope behavior is proved on the host. Existing closures.php
+std::function text assertion fails identically against unchanged baseline source;
+recorded separately, not fixed or counted passing. Evidence: callable_construction.
+
+Bootstrap 1:21.76 / 354308 KiB peak RSS / 324 MiB PHP heap: signature_syntax diagnostic
+removed, none added. First remaining blocker is required constant initializer.
+The parser collects that node before parsing its initializer and preserves identity
+on reuse. Stopped before a cross-owner construction/publication reorder or extension
+of staged-field conversion to the inherited AST field. Discussion required.

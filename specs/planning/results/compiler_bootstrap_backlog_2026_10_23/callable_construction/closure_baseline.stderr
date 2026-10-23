@@ -1,0 +1,4 @@
+PHP Fatal error:  Uncaught LogicException: Explicit callable boundary was not emitted in /tmp/callable-closure-baseline-01/closures.php:98
+Stack trace:
+#0 {main}
+  thrown in /tmp/callable-closure-baseline-01/closures.php on line 98

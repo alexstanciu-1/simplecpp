@@ -38,26 +38,17 @@ trait Callable_Syntax
 		return $this->body;
 	}
 
-	/** Single owner of authored parameter/return syntax, shared in shape with future expressions. */
-	public callable_signature_syntax $signature_syntax;
 	public ?function_body_node $body = null;
 	/** Preserve replaced executable ownership until join-ordered semantic retirement. */
 	public Storage $retired_bodies /** Storage<function_body_node> */;
 	/** A failed later parse may retain an earlier body; this is not current-file completion. */
 	private bool $parsed_definition = false;
-	/**
-	 * Scope introduced and owned by this callable; parent wiring belongs to parsing.
-	 * @ownership owner
-	 */
-	private scope $owned_signature_scope;
 
-	/** Allocate only the concrete node's ordered syntax collections. */
-	private function initialize_callable_syntax(): void
+	/** Initialize collections and configure the already-owned signature scope. */
+	private function initialize_callable_state(): void
 	{
 		$this->retired_bodies = new Storage /** Storage<function_body_node> */();
-		$this->owned_signature_scope = new scope();
 		$this->owned_signature_scope->mark_function();
-		$this->signature_syntax = new callable_signature_syntax();
 	}
 
 	/** Query construction state without reading a potentially uninitialized required field. */
@@ -139,9 +130,13 @@ abstract class callable_declaration_node extends declaration_node implements cal
 	public string $name;
 	public array $template_parameters /** hash<int> */ = [];
 
-	public function __construct()
+	public function __construct(
+		/** Single owner of authored parameter/return syntax. */
+		public callable_signature_syntax $signature_syntax,
+		/** Owned scope; parent wiring belongs to parsing. @ownership owner */
+		private scope $owned_signature_scope)
 	{
-		$this->initialize_callable_syntax();
+		$this->initialize_callable_state();
 	}
 
 	public function require_preparation(): prepared_source_callable
@@ -183,6 +178,15 @@ final class closure_capture_node extends ast_node
 /** Anonymous expression syntax; semantic identity and executable preparation follow separately. */
 final class closure_node extends expression_node implements callable_syntax_owner_i
 {
+	/** Allocate fresh callable-owned inputs before publishing the node. */
+	public static function fresh_node(): closure_node
+	{
+		$signature = new callable_signature_syntax();
+		$signature_scope = new scope();
+		$body_scope = new scope();
+		return new closure_node($signature, $signature_scope, $body_scope);
+	}
+
 	use Node_Source_Span;
 	use Callable_Syntax;
 	use Preparation_Facts;
@@ -205,14 +209,16 @@ final class closure_node extends expression_node implements callable_syntax_owne
 		$this->source_identity = weak($identity);
 	}
 
-	/** Nested bodies survive reuse of their enclosing body without another scope scan. */
-	private scope $owned_body_scope;
-
-	public function __construct()
+	public function __construct(
+		/** Single owner of authored parameter/return syntax. */
+		public callable_signature_syntax $signature_syntax,
+		/** Owned scope; parent wiring belongs to parsing. @ownership owner */
+		private scope $owned_signature_scope,
+		/** Owned nested-body scope, retained across body reuse. @ownership owner */
+		private scope $owned_body_scope)
 	{
-		$this->initialize_callable_syntax();
+		$this->initialize_callable_state();
 		$this->captures = new Storage /** Storage<closure_capture_node> */();
-		$this->owned_body_scope = new scope();
 		$this->owned_body_scope->set_parent($this->signature_scope());
 		$this->owned_body_scope->mark_function();
 	}
@@ -241,6 +247,13 @@ final class closure_node extends expression_node implements callable_syntax_owne
 /** Free-function semantics remain separate from member receiver/modifier semantics. */
 final class function_node extends callable_declaration_node
 {
+	/** Allocate fresh callable-owned inputs before publishing the node. */
+	public static function fresh_node(): function_node
+	{
+		$signature = new callable_signature_syntax();
+		$signature_scope = new scope();
+		return new function_node($signature, $signature_scope);
+	}
 
 	public function collect(Symbol_Collector $collector, scope $scope, int $index): void
 	{
@@ -257,6 +270,14 @@ final class function_node extends callable_declaration_node
 /** Syntax foundation only; member signature/receiver preparation is a later slice. */
 final class method_node extends callable_declaration_node
 {
+	/** Allocate fresh callable-owned inputs before publishing the node. */
+	public static function fresh_node(): method_node
+	{
+		$signature = new callable_signature_syntax();
+		$signature_scope = new scope();
+		return new method_node($signature, $signature_scope);
+	}
+
 	public array $modifiers /** vector<declaration_modifier> */ = [];
 
 	public function kind(): node_kind

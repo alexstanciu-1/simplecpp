@@ -41,7 +41,7 @@ member_owner_check(Type_Queries::source_declaration($use) === $owner, 'Interface
 member_owner_check(Type_Queries::source_record($use) === null, 'Interface acquired record layout');
 member_owner_check($node->preparation() === null, 'Collection manufactured layout facts');
 
-$method = new method_node();
+$method = method_node::fresh_node();
 $method->name = 'read';
 $method->set_span(0, 1);
 $method->set_bodyless_declaration();

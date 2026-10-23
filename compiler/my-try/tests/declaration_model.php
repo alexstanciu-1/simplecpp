@@ -60,14 +60,14 @@ $inferred_property = new property_node();
 $inferred_property->name = 'inferred';
 $inferred_property->initializer = new integer_literal_node();
 $type->properties->append($inferred_property);
-$method = new method_node();
+$method = method_node::fresh_node();
 $method->name = 'same';
 $method->modifiers = [declaration_modifier::public_access, declaration_modifier::abstract_declaration];
 declaration_model_check(!$method->has_parsed_definition(), 'Unparsed method is already complete');
 $method->set_bodyless_declaration();
 declaration_model_check($method->has_parsed_definition() && !$method->has_parsed_body(), 'Bodyless completion was lost');
 $type->methods->append($method);
-$constructor = new method_node();
+$constructor = method_node::fresh_node();
 $constructor->name = '__construct';
 $local_scope = new scope();
 $constructor->set_parsed_body(new function_body_node($local_scope));
@@ -103,7 +103,7 @@ foreach ([type_declaration_kind::class_type, type_declaration_kind::struct_type,
 	declaration_model_check($type->preparation() === null, 'Syntax manufactured prepared storage');
 }
 
-$function = new function_node();
+$function = function_node::fresh_node();
 declaration_model_check(($function instanceof callable_declaration_node) && ($method instanceof callable_declaration_node), 'Callables lost their common syntax');
 declaration_model_check($function->signature_scope() !== $method->signature_scope(), 'Callables share a mutable signature scope');
 $namespace_constant = new namespace_constant_node();

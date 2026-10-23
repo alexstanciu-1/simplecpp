@@ -45,8 +45,8 @@ rejected(function () use ($assignment, $literal): void {
 rejected(function () use ($assignment, $type): void {
 	$assignment->value = $type;
 }, \TypeError::class);
-$function = new function_node(new scope());
-$method = new method_node();
+$function = function_node::fresh_node();
+$method = method_node::fresh_node();
 $anonymous_signature = new callable_signature_syntax();
 if (($function->signature_syntax === $method->signature_syntax)
 	|| ($function->signature_syntax->parameters === $method->signature_syntax->parameters)

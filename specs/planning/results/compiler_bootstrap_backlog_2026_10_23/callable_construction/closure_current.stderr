@@ -1,0 +1,4 @@
+PHP Fatal error:  Uncaught LogicException: Explicit callable boundary was not emitted in /home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/tests/closures.php:98
+Stack trace:
+#0 {main}
+  thrown in /home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/tests/closures.php on line 98

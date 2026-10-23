@@ -1,0 +1,30 @@
+[
+  {
+    "name": "callable_construction",
+    "seconds": 0.44482969000091543
+  },
+  {
+    "name": "ast_invariants",
+    "seconds": 0.48116321500128834
+  },
+  {
+    "name": "declaration_model",
+    "seconds": 0.4987856279985863
+  },
+  {
+    "name": "member_owners",
+    "seconds": 0.47004351400391897
+  },
+  {
+    "name": "preparation_work",
+    "seconds": 0.46897484399960376
+  },
+  {
+    "name": "callables",
+    "seconds": 0.49555822100228397
+  },
+  {
+    "name": "closure_model",
+    "seconds": 0.5714857749990188
+  }
+]

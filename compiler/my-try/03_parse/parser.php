@@ -1339,13 +1339,13 @@ final class Parser_Run
 		$function /** callable_declaration_node */;
 		if ($record === null) {
 			$previous = $this->collector->previous_function($declaration_scope, $function_name);
-			if ($previous === null) { $function = new function_node(); }
+			if ($previous === null) { $function = function_node::fresh_node(); }
 			else { $function = $previous; }
 		}
 		else {
 			$declaration_scope = $registration_scope ?? $record->syntax()->member_scope();
 			$previous = $this->collector->previous_method($declaration_scope, $function_name);
-			if ($previous === null) { $function = new method_node(); }
+			if ($previous === null) { $function = method_node::fresh_node(); }
 			else { $function = $previous; }
 			object_cast($function, method_node::class)->modifiers = $modifiers;
 		}
@@ -1464,7 +1464,7 @@ final class Parser_Run
 	{
 		$arrow = $this->text() === 'fn';
 		$start = $this->expect($arrow ? 'fn' : 'function');
-		$closure = new closure_node();
+		$closure = closure_node::fresh_node();
 		$closure->syntax_kind = $arrow ? closure_syntax_kind::arrow : closure_syntax_kind::explicit_closure;
 		$closure->set_span($start, $start);
 		$this->collector->collect_anonymous_callable($closure);
