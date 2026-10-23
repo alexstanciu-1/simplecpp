@@ -1,0 +1,18 @@
+{
+  "representation": {
+    "passed": true,
+    "builds": [
+      "O0",
+      "O2",
+      "ASan+UBSan"
+    ],
+    "application_template_free": true,
+    "source_nullability_enabled": false
+  },
+  "runtime_regression": {
+    "results": "/tmp/nullable-handle-runtime-regression-01",
+    "preparation_suites": 4,
+    "native_programs": 7,
+    "passed": true
+  }
+}

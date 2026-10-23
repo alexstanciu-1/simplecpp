@@ -654,3 +654,46 @@ RSS, 269 PHS files / 1,961,038 bytes. Bootstrap 199.10 s / 470,052 KiB (459.0 Mi
 RSS / 451.0 MiB PHP heap. Diagnostic text set unchanged, nullable-value boundary
 first; no fatal/OOM, emission or native compiler rebuild. Evidence:
 results/compiler_bootstrap_backlog_2026_10_23/nullable_ownership.
+
+## NULL-01 representation foundation — distinct semantics, shared handle storage
+
+Reuse audit confirmed that canonical nullable applications, exact storage matching,
+Preparation_Changes signature comparisons and opaque specialization naming already
+retain semantic identities. Native storage mapping and wrapper transport were the
+owners that incorrectly assumed every nullable application implied an optional payload
+wrapper. They now use a pure Type_Queries::nullable_handle_payload interpretation
+based on nullable semantics and the payload's registered/default shared-storage role.
+This query does not make is_nominal_handle return true for a nullable application.
+
+CPP_Types maps nullable default handles to the same native storage recipe/pointee as
+the payload, while concrete representation keys remain based on the original semantic
+application. CPP_Wrapper_Transport treats their native bytes as handles rather than
+calling has_value/require_value; provider vector transport admits that same handle
+interpretation. Scalar/inline optional storage remains a physical optional wrapper.
+No frontend normalization, required/null conversion, member admission, override rule
+or initialization guarantee is changed by this foundation alone.
+
+`/tmp/nullable-handle-representation-03` passes O0/O2 and ASan+UBSan builds plus an
+explicit application-token check. Its model uses the registry to form nullable<Node>,
+proves distinct exact-reference and nested vector identities with the same native
+storage, distinct concrete keys, parameter/return signature comparison, and a renamed
+nullable definition. Actual generated concrete handles preserve object identity and
+retention, default absence and vector provider round trips with present/absent elements.
+The fixture uses the compiler's generated empty Node header; provider test code is
+separate from template-free application code. The precursor signature fixture supplied
+constructor arguments to a constructor-less test record; corrected code assigns its
+actual typed fields. This was a test setup issue, not a production semantic change.
+
+These are model/representation proofs, not source NULL-01 completion or whole retained
+invalidation coverage. Source Node/?Node still normalizes until conversion, receiver
+and initialization consumers can enforce the accepted distinction coherently. The
+next slice must compose checked presence with existing ownership conversion and retain
+invariant references. COPY-01 and pending SELF-01 redesign remain independent.
+
+Adjacent `/tmp/nullable-handle-runtime-regression-01` passes four preparation suites
+and seven native handle programs. Measured
+`/tmp/compiler-bootstrap-nullable-representation-01`: conversion 4.69 s / 194,968 KiB
+RSS, 269 PHS files / 1,962,398 bytes. Bootstrap 200.18 s / 470,180 KiB (459.2 MiB)
+RSS / 451.0 MiB PHP heap. Diagnostic set unchanged, nullable-value boundary first;
+no fatal/OOM, emission or native compiler rebuild. Evidence:
+results/compiler_bootstrap_backlog_2026_10_23/nullable_representation.

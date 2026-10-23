@@ -98,6 +98,13 @@ native and both v0.2 modes execute. Its small native helper definitions isolate 
 full facade bodies retain their separate runtime/capability obligations. The existing
 `tests/portability/string_split.py` covers real byte-construction facade regression.
 
+`python3 tests/nullable_handle_representation.py --results FRESH` tests registry-formed
+nullable class handles before source nullability migration: distinct semantic/nested
+keys and signature comparisons, equal native handle storage, concrete pointer/lifetime
+behavior and provider vector round trips. It runs O0/O2/ASan+UBSan and checks that the
+application token stream is template-free. This does not prove source Node/?Node
+admission or end-to-end retained source edits, which remain NULL-01 consumer work.
+
 `python3 tests/nullable_ownership.py --results FRESH` checks role-driven redundant
 nullable-owner rejection in the registry and all ordinary source type boundaries,
 including retained rejection/recovery in both modes. Native controls retain empty

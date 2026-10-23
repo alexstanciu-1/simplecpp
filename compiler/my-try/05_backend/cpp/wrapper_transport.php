@@ -24,7 +24,8 @@ final class CPP_Wrapper_Transport
 		$application = object_cast($canonical, applied_template_type::class);
 		$arguments /** vector<canonical_type_use> */ = $application->arguments();
 		$element = $arguments[0];
-		if (!$element->matches(Language_Types::string_type(Model::$language_scope)) && !Type_Queries::is_nominal_handle($element)) {
+		if (!$element->matches(Language_Types::string_type(Model::$language_scope)) && !Type_Queries::is_nominal_handle($element)
+			&& (Type_Queries::nullable_handle_payload($element) === null)) {
 			throw new \RuntimeException('prelower_templates: provider vector transport requires string or shared-record elements');
 		}
 		$target = $compose ? CPP_Types::implementation_representation($type, $engine) : CPP_Types::representation($type);
@@ -97,6 +98,8 @@ final class CPP_Wrapper_Transport
 
 	public static function payload(canonical_type_use $type): ?canonical_type_use
 	{
+		// Semantic optionality need not introduce a physical payload wrapper.
+		if (Type_Queries::nullable_handle_payload($type) !== null) { return null; }
 		$canonical = Type_Queries::canonical($type);
 		if (!($canonical instanceof applied_template_type)) { return null; }
 		$application = object_cast($canonical, applied_template_type::class);

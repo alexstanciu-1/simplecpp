@@ -567,7 +567,14 @@ The spelling and bounded usage above are implemented; broad bootstrap completion
 
 ## NULL-01 — distinct frontend nullability for class handles
 
-**Direction accepted on 2026-10-23; implementation paused.**
+**Direction accepted on 2026-10-23; representation foundation implemented, source/consumer integration pending.**
+
+Registry-formed nullable<Node> now retains distinct semantic/reference/specialization
+identity while native representation uses Node's existing shared handle. Concrete
+storage and nested provider-vector round trips pass O0/O2/sanitizers and the
+application template-free token gate. Scalar/inline optional storage remains wrapped.
+This is not source Node/?Node enforcement: source normalization, value-boundary,
+receiver/override and initialization migration remain pending. See execution ledger.
 
 Node and ?Node are distinct frontend contracts even when both lower to the same
 shared-handle representation. Node requires a present compatible object; ?Node

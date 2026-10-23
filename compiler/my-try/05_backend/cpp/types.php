@@ -60,6 +60,10 @@ final class CPP_Types
 	private static function native_representation_for(canonical_type_use $type_use, cpp_type_requirement $requirement,
 		?cpp_generation_context $context, ?CPP_Specializations $argument_engine): cpp_type
 	{
+		$optional_handle = Type_Queries::nullable_handle_payload($type_use);
+		if ($optional_handle !== null) {
+			return self::native_representation_for($optional_handle, $requirement, $context, $argument_engine);
+		}
 		// Passing/copying the stored handle does not inspect its payload. Other
 		// representations retain their complete-type requirements.
 		if ($requirement === cpp_type_requirement::stored_value) {
@@ -292,6 +296,8 @@ final class CPP_Types
 	/** Resolve the existing storage owner's recipe without introducing a second type registry. */
 	public static function stored_recipe(canonical_type_use $type): ?cpp_type_recipe
 	{
+		$optional_handle = Type_Queries::nullable_handle_payload($type);
+		if ($optional_handle !== null) { return self::stored_recipe($optional_handle); }
 		if ($type->by_value()) { return Model::$cpp_type_bindings->modifier(type_use_modifier_kind::by_value)->recipe(); }
 		$definition = Type_Queries::canonical($type)->definition();
 		if (Type_Queries::is_nominal_handle($type)) { $definition = Model::$type_catalog->definition('shared'); }
@@ -322,6 +328,8 @@ final class CPP_Types
 	/** A physical pointer interface identifies its payload through the installed recipe. */
 	public static function pointee(canonical_type_use $type): ?canonical_type_use
 	{
+		$optional_handle = Type_Queries::nullable_handle_payload($type);
+		if ($optional_handle !== null) { return self::pointee($optional_handle); }
 		$recipe = self::stored_recipe($type);
 		if ($recipe === null) { return null; }
 		if ($recipe->pointee_modified_type) {

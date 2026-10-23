@@ -17,7 +17,15 @@ This does not establish exhaustive language, lifetime, incremental or performanc
 
 ## Accepted-backlog bootstrap checkpoint — 2026-10-23
 
-The latest [nullable ownership checkpoint](../../../../specs/planning/results/compiler_bootstrap_backlog_2026_10_23/nullable_ownership/README.md)
+The latest [nullable representation checkpoint](../../../../specs/planning/results/compiler_bootstrap_backlog_2026_10_23/nullable_representation/README.md)
+proves distinct nullable class semantic/concrete keys with shared native handle
+storage and provider vector transport. O0/O2/sanitizers, application template-free
+checking and runtime-handle regressions pass. Bootstrap takes 200.18 s / 459.2 MiB
+RSS / 451.0 MiB PHP heap with unchanged diagnostics; nullable-value boundary remains
+first. No fatal/OOM, emission or native compiler rebuild. Source Node/?Node identity
+and required-boundary enforcement remain pending consumer integration.
+
+The earlier [nullable ownership checkpoint](../../../../specs/planning/results/compiler_bootstrap_backlog_2026_10_23/nullable_ownership/README.md)
 rejects redundant optional wrappers on explicit ownership handles through registry
 roles. Registry/source/recovery proofs and empty-state native controls pass in both
 output modes, plus 18 updated regression programs. Bootstrap takes 199.10 s /

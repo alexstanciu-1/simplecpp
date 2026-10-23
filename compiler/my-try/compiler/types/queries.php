@@ -55,6 +55,18 @@ final class Type_Queries
 		return self::source_declaration($type) instanceof collected_interface;
 	}
 
+	/** Optional default handles preserve nullable identity while sharing handle absence storage. */
+	public static function nullable_handle_payload(canonical_type_use $type): ?canonical_type_use
+	{
+		if ($type->by_value()) { return null; }
+		$canonical = self::canonical($type);
+		$definition = $canonical->definition();
+		if (!($definition instanceof nullable_semantics)) { return null; }
+		$payload = object_cast($definition, nullable_semantics::class)->payload_type(
+			object_cast($canonical, applied_template_type::class));
+		return self::is_nominal_handle($payload) ? $payload : null;
+	}
+
 	/** Nominal enum identity stays distinct from its prepared integer storage. */
 	public static function is_enum(canonical_type_use $type): bool
 	{
