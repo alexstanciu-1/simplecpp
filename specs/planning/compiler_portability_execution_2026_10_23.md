@@ -1351,3 +1351,13 @@ specialization preparation during recovery. Evidence: catalog_reconciliation/
 model_after_graph_repair.stderr. No LLVM changes or full model-suite pass; this
 remaining backend limitation is excluded from frontend/C++ completion claims.
 Test-only change, so no new bootstrap checkpoint.
+
+## CURSOR-01 reuse analysis and runtime baseline
+
+Recorded compiler_cursor01_reuse_audit_2026_10_23.md. Existing owner/input generic
+inference, registered factory construction, observed ancestry and concrete runtime
+call transport cover most machinery. Missing feature is a directed shared conversion
+constraint in callable metadata, checked after structural inference. Existing runtime
+cursor test passes freshly (1.32 s), proving retained membership and traversal behavior,
+not v0.2 metadata/prelowering integration. Implementation/proofs remain pending; no
+new semantics or broader generic covariance authorized. No production change/bootstrap.
