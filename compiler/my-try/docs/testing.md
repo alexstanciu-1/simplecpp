@@ -2292,3 +2292,7 @@ output. `qualified_static_members.php` retains edit/recovery/reset coverage.
 cursor class widening and identity/traversal in ordinary/concrete output, plus reverse,
 unrelated, nullable and unique record rejection. This is the initial CURSOR-01 slice;
 additional interface/retained/portable proofs remain in its active reuse audit.
+
+The cursor harness also runs original/renamed metadata with exact/base/interface
+records, malformed constraint rejection, and storage_cursor_retained.php for ancestry
+edit, no-change retry, recovery and preparation-reset agreement in both modes.

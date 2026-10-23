@@ -1373,3 +1373,13 @@ renamed-provider, malformed/missing metadata diagnostics, retained ancestry and 
 proofs stay open. Bootstrap 1:18.28 / 343704 KiB RSS / 312 MiB PHP heap: unresolved
 Storage_Cursor template diagnostic removed; non-void read_next completion diagnostic
 newly exposed. First syntax_node blocker unchanged. No fix to that new blocker yet.
+
+## CURSOR-01 interface/provider/retained proofs
+
+Extend existing native fixture with exact and interface cursors; execute original
+and renamed metadata in both output modes. Fifteen tasks pass, including malformed
+relation catalog rejection. Separate retained ancestry test passes both modes,
+including no-change retry, restore equality and preparation-reset equality. Evidence:
+cursor_integration/provider_summary.json and retained.stdout. Missing-contract
+source/target diagnostics and portable-route parity remain open. Test-only slice;
+no bootstrap rerun, latest production timing remains 1:18.28 / 343704 KiB RSS.

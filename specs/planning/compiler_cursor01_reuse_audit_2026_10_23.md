@@ -84,7 +84,16 @@ make forwards to the existing constrained native constructor.
 
 Ten focused tasks pass: ordinary/concrete native class widening and aliased record
 mutation, plus reverse, unrelated, nullable-record and unique-record rejection in
-both output modes. Catalog/type catalog regressions pass. Interface, renamed-provider,
-missing-contract diagnostic, retained ancestry and portable-route proofs remain open.
+both output modes. Catalog/type catalog regressions pass. Interface, renamed-provider and retained ancestry proofs now pass (follow-up below);
+missing-contract diagnostics and portable-route proofs remain open.
 The initial catalog regression invocation lacked its required output directory; the
 corrected invocation passes. No production workaround was needed for that harness error.
+
+## Provider and retained follow-up
+
+Class/base and interface widening execute in ordinary/concrete modes with original
+and renamed metadata source exposures. Three malformed relation forms reject at
+catalog ingestion. The retained test removes/restores the base relation across files,
+checks rejection again without further edits, compares recovery output and resets
+preparation in both modes. All pass. This validates observed ancestry dependencies,
+not just a fresh-build relation query. Production code unchanged for this follow-up.
