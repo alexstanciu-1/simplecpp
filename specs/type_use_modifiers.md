@@ -3,19 +3,21 @@ Doc Status: normative
 
 ## v0.2 nullable records and handle normalization — 2026-10-07
 
-Nullable spelling does not add an absence layer to an ownership handle. `?Class`
-normalizes to the ordinary class handle. `?shared<Struct>`, `?unique<T>` and
-`?weak<T>` normalize to the corresponding already-nullable handles. Explicit
-`nullable<Handle>` follows the same rule. Normalization preserves exact semantic
-type/storage identity, copy/transfer restrictions and reference compatibility;
-it is not merely identical C++ spelling. No `nullable<shared<T>>` or equivalent
-second absence layer is generated for these source forms.
+Explicit ownership handles have one spelling for their possibly-empty contract.
+`shared<T>`, `unique<T>` and `weak<T>` may carry absence under their existing
+ownership rules. As of the accepted 2026-10-23 revision, applying `?` or `nullable<>`
+directly to an explicit ownership handle is rejected as redundant. This applies
+through the nullable and ownership semantic roles, including registered definitions
+with different names; no second absence layer is introduced. Existing rejection of
+redundant storage overrides (`shared<Class>`, `value<Struct>`) remains in force.
+Weak handles still require explicit locking where presence/access requires it;
+unique handles remain empty-but-valid after an admitted explicit move.
 
-The redundant nullable spelling is accepted because it describes absence. Existing
-rejections of redundant storage overrides (`shared<Class>`, `value<Struct>`) remain;
-adding `?` does not legalize an otherwise invalid inner type. Weak handles still
-require explicit locking for presence/truthiness or access where the current
-compiler contract requires it.
+The earlier class-handle normalization remains the implementation baseline pending
+the separate NULL-01 contract/consumer migration: `?Class` currently normalizes to
+the ordinary class handle. The accepted distinction between required Class and
+nullable Class is tracked in the portability backlog; the ownership-spelling revision
+above does not claim that required class boundaries have already been implemented.
 
 Inline records retain a genuine optional payload: `?Struct` is `nullable<Struct>`,
 and `?value<Class>` is `nullable<value<Class>>`. Absence differs from a present

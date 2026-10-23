@@ -17,7 +17,15 @@ This does not establish exhaustive language, lifetime, incremental or performanc
 
 ## Accepted-backlog bootstrap checkpoint — 2026-10-23
 
-The latest [struct self checkpoint](../../../../specs/planning/results/compiler_bootstrap_backlog_2026_10_23/struct_self/README.md)
+The latest [nullable ownership checkpoint](../../../../specs/planning/results/compiler_bootstrap_backlog_2026_10_23/nullable_ownership/README.md)
+rejects redundant optional wrappers on explicit ownership handles through registry
+roles. Registry/source/recovery proofs and empty-state native controls pass in both
+output modes, plus 18 updated regression programs. Bootstrap takes 199.10 s /
+459.0 MiB RSS / 451.0 MiB PHP heap with unchanged diagnostics; nullable-value boundary
+remains first. No fatal/OOM, emission or native compiler rebuild. Required class
+nullability and the explicit-handle isset prelowering gap remain separate work.
+
+The earlier [struct self checkpoint](../../../../specs/planning/results/compiler_bootstrap_backlog_2026_10_23/struct_self/README.md)
 adds native struct self copies through existing value boundaries and repairs receiver
 type identity reuse. Both output modes pass focused copy/mutation/recovery proofs;
 129 existing method/inheritance/capture programs pass. Bootstrap takes 206.26 s /

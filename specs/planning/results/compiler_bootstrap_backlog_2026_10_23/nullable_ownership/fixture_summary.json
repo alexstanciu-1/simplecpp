@@ -1,0 +1,25 @@
+{
+  "core": [
+    {
+      "name": "preparation",
+      "seconds": 1.6012946070004546,
+      "passed": true
+    },
+    {
+      "name": "ordinary",
+      "seconds": 13.935640052000963,
+      "passed": true
+    },
+    {
+      "name": "concrete",
+      "seconds": 17.96826665700064,
+      "passed": true
+    }
+  ],
+  "regression": {
+    "passed": true,
+    "generated_programs": 18,
+    "cpp_pch": true,
+    "native_compiler_rebuilt": false
+  }
+}

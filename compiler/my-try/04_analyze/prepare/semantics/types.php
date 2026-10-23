@@ -194,7 +194,7 @@ final class Type_Preparation
 		$registry->validate_application_arity($definition, q_count($arguments));
 		if ($definition instanceof nullable_semantics) {
 			$payload = $arguments[0];
-			if (Ownership_Conversions::role($payload) !== null) { return $payload; }
+			if (Type_Queries::is_nominal_handle($payload)) { return $payload; }
 		}
 		$application = $registry->intern_application($definition, $arguments, new Capability_Preparation($context));
 		return $registry->use($application->type_id());

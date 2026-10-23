@@ -20,6 +20,15 @@ function nullable_handles_source(string $source): string
 $results = [];
 foreach (['C', 'shared<S>', 'unique<C>', 'unique<S>', 'weak<C>', 'weak<S>'] as $index => $handle) {
 	foreach (['?' . $handle, 'nullable<' . $handle . '>'] as $spelling => $type) {
+		if ($handle !== 'C') {
+			try {
+				nullable_handles_source('class C {} struct S {} function bad(' . $type . ' $value): void {}');
+				throw new \LogicException('Redundant ownership nullable spelling accepted');
+			} catch (\RuntimeException $error) {
+				if (!str_contains($error->getMessage(), 'redundant nullable wrapper')) { throw $error; }
+			}
+			$type = $handle;
+		}
 		$observe = str_starts_with($handle, 'weak') ? 'if (lock($a)) { return 1; }' : 'if (isset($a)) { return 1; }';
 		$source = 'class C {} struct S {} function accept(' . $type . ' &$v): void {} '
 			. '$a ' . $handle . ' = null; accept($a); $b ' . $type . ' = null; accept($b); ' . $observe . ' return 0;';
@@ -34,8 +43,8 @@ foreach (['C', 'shared<S>', 'unique<C>', 'unique<S>', 'weak<C>', 'weak<S>'] as $
 }
 foreach ([
 	'present' => 'class C { int $n = 9; } function make(): ?C { return new C(); } function id(nullable<C> $c): C { return $c; } $c ?C = id(make()); return $c->n;',
-	'weak_lock' => 'class C { int $n = 9; } $c = new C(); $w ?weak<C> = weak($c); $held = lock($w); $c = null; return $held->n;',
-	'unique_move' => 'class C { int $n = 9; } $c ?unique<C> = new C(); $owned nullable<unique<C>> = move($c); return $owned->n;',
+	'weak_lock' => 'class C { int $n = 9; } $c = new C(); $w weak<C> = weak($c); $held = lock($w); $c = null; return $held->n;',
+	'unique_move' => 'class C { int $n = 9; } $c unique<C> = new C(); $owned unique<C> = move($c); return $owned->n;',
 	'fields' => 'class C { int $n = 9; } class Holder { ?C $a = null; nullable<C> $b = null; } $h = new Holder(); $h->a = new C(); $c = $h->a; return $c->n;',
 	'nested_spelling' => 'class C { int $n = 9; } $c nullable<nullable<C>> = new C(); return $c->n;',
 ] as $name => $source) {

@@ -98,6 +98,12 @@ native and both v0.2 modes execute. Its small native helper definitions isolate 
 full facade bodies retain their separate runtime/capability obligations. The existing
 `tests/portability/string_split.py` covers real byte-construction facade regression.
 
+`python3 tests/nullable_ownership.py --results FRESH` checks role-driven redundant
+nullable-owner rejection in the registry and all ordinary source type boundaries,
+including retained rejection/recovery in both modes. Native controls retain empty
+shared/unique/weak behavior using boolean conditions and weak locking. The prelowered
+`isset` explicit-handle gap remains a separate NULL/OWN consumer issue.
+
 `python3 tests/struct_self.py --results FRESH` proves struct self assignment,
 by-value arguments/returns, receiver mutation, shared fields, value-container copies,
 inherited/shared-allocated struct snapshots and borrowed closures in both output modes.

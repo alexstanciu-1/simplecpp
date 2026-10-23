@@ -1504,6 +1504,10 @@ final class Type_Registry implements type_capability_query
 		array $arguments /** vector<canonical_type_use> */, ?type_capability_query $capabilities = null): array /** vector<canonical_type_use> */
 	{
 		$complete = $this->complete_application_arguments($definition, $arguments);
+		if (($definition instanceof nullable_semantics)
+			&& ($this->type($complete[0]->type_id())->definition() instanceof ownership_semantics)) {
+			throw new \InvalidArgumentException('Explicit ownership handles already permit absence; remove the redundant nullable wrapper');
+		}
 		if ($definition instanceof ownership_semantics) {
 			$payload = $this->type($complete[0]->type_id());
 			$ownership_family = object_cast($definition, ownership_semantics::class)->ownership_family();

@@ -605,3 +605,52 @@ No fatal/OOM, emission or native compiler rebuild. Evidence:
 results/compiler_bootstrap_backlog_2026_10_23/struct_self.
 SELF-02 native value support is implemented; COPY-01 parity and SELF-01 redesign
 are separate pending work. Shared-struct retention stays deferred.
+
+## NULL-01/OWN-01 formation boundary — redundant nullable ownership
+
+Reuse audit: nullable_semantics and ownership_semantics already identify the exact
+roles; Type_Registry::validate_application owns formation before interning; both
+nullable syntaxes share Type_Preparation::application. No new registry, family-name
+list or per-type nullable implementation is needed. The existing early handle
+normalization must distinguish explicit ownership from nominal default shared storage.
+
+The registry now rejects nullable applications whose immediate payload definition
+has ownership semantics. Source preparation lets those applications reach registry
+validation instead of normalizing them away. Both ?owner<T> and nullable<owner<T>>
+reject in locals, properties, parameters, returns and nested generic arguments.
+This implements the accepted single-spelling rule for possibly-empty shared/unique/
+weak handles. Required Node versus ?Node identity/transport remains the next larger
+NULL-01 slice; nominal normalization is explicitly not claimed fixed here.
+
+The native control fixture found a separate existing prelowering gap: isset on
+explicit handles falls through the native-only value-probe path. Record this under
+NULL/OWN consumer integration. The control now uses admitted boolean conditions to
+observe empty shared/moved-from unique values, plus weak locking and retained object
+identity. No isset implementation change or weakened template-free guard was made.
+Existing PHP/legacy syntax may accept redundant nullable ownership; portable source
+must use the single explicit handle spelling. The full compiler source/metadata scan
+found no immediate redundant ownership wrapper use to migrate in this slice.
+
+`/tmp/nullable-owner-core-02` passes registry-role tests (including renamed nullable
+and ownership definitions), 30 source-admission cases with repeated rejection/recovery
+in each output mode, and ordinary/prelowered empty-state native controls (13.94 s /
+17.97 s). Invalid registry applications leave application counts unchanged.
+`/tmp/nullable-owner-regression-01` passes all 18 generated programs after migrating
+explicit ownership examples to the accepted single spelling. Nominal class controls
+still describe the historical normalization pending the next NULL-01 slice.
+
+Next NULL-01 integration stays with the existing owners: preserve nullable's canonical
+application, distinguish presence from ownership queries, and let native representation
+map optional class handles to the same stored handle without changing semantic keys.
+Conversion_Preparation currently dispatches ownership before nullable policy, and
+conversion_decision stores a single operation. Checked presence plus ancestry must
+be composed explicitly there; semantic compatibility cannot be inferred from common
+C++ spelling. Wrapper transport's has_value/require_value assumptions need the shared
+representation distinction, not per-call bypasses. No implementation of those broader
+consumers is claimed by this formation slice.
+
+Measured `/tmp/compiler-bootstrap-nullable-owner-01`: conversion 4.99 s / 195,052 KiB
+RSS, 269 PHS files / 1,961,038 bytes. Bootstrap 199.10 s / 470,052 KiB (459.0 MiB)
+RSS / 451.0 MiB PHP heap. Diagnostic text set unchanged, nullable-value boundary
+first; no fatal/OOM, emission or native compiler rebuild. Evidence:
+results/compiler_bootstrap_backlog_2026_10_23/nullable_ownership.

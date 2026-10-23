@@ -118,3 +118,18 @@ ownership_rejects(fn() => $registry->define_ownership('TwoTargets', type_definit
 ownership_rejects(fn() => $registry->define_ownership('DefaultTarget', type_definition_origin::runtime,
 	[new template_type_parameter('A', [], $integer)], ownership_kind::shared), 'exactly one');
 echo "Ownership model: roles, all nine direct-nesting rejections, modifiers, identities, capabilities and bindings passed\n";
+
+// Semantic roles govern nullable ownership rejection, including renamed definitions.
+$optional = $registry->define_nullable('MaybeSlot', type_definition_origin::runtime,
+	nominal_type_kind::structure, [new template_type_parameter('Item', [])], []);
+foreach ($families as $name => $kind) {
+	$renamed_owner = $registry->define_ownership('Owner_' . $name, type_definition_origin::runtime,
+		[new template_type_parameter('Item', [])], $kind);
+	$handle = $registry->use($registry->intern_application($renamed_owner, [$integer])->type_id());
+	foreach ([$optional, $catalog->definition('nullable')] as $outer) {
+		$before = $registry->application_count();
+		ownership_rejects(fn() => $registry->intern_application($outer, [$handle]), 'redundant nullable wrapper');
+		ownership_check($registry->application_count() === $before, 'Invalid nullable owner published an identity');
+	}
+}
+echo "Nullable ownership rejection uses roles, including renamed definitions\n";

@@ -677,7 +677,13 @@ required future proofs, not current support claims. CONVERT-02 only addresses sp
 
 ## OWN-01 — ownership edges of required object contracts
 
-**Direction accepted on 2026-10-23; implementation paused.**
+**Direction accepted on 2026-10-23; partially implemented.**
+
+The formation slice now rejects redundant nullable wrappers around explicit ownership
+through registry semantic roles, including renamed registered definitions. Empty
+handle/weak-lock/moved-from unique controls pass in both output modes. Required
+class boundaries, optional weak-lock results and the remaining ownership consumers
+still await NULL-01 integration; this is not OWN-01 completion.
 
 - Ordinary Node requires a live compatible object; ?Node admits absence. Explicit
   ownership handles retain their existing possibly-empty protocols rather than
