@@ -116,6 +116,7 @@ enum declaration_modifier
 	case static_member;
 	case abstract_declaration;
 	case override_declaration;
+	case virtual_declaration;
 	case final_declaration;
 	case readonly_declaration;
 }

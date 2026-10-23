@@ -1232,9 +1232,13 @@ final class Parser_Run
 			if ($text === '#[') {
 				$this->position++;
 				if ($this->text() === '\\') { $this->position++; }
-				$this->expect('Override');
+				$attribute = $this->text();
+				if ($attribute === 'Override') { $modifier = declaration_modifier::override_declaration; }
+				elseif ($attribute === 'Virtual') { $modifier = declaration_modifier::virtual_declaration; }
+				else { throw new \RuntimeException('Expected Override or Virtual method attribute'); }
+				$this->position++;
 				$this->expect(']');
-				$result[] = declaration_modifier::override_declaration;
+				$result[] = $modifier;
 				continue;
 			}
 			if ($text === 'public') { $modifier = declaration_modifier::public_access; }

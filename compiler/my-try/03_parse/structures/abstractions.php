@@ -25,21 +25,25 @@ abstract class ast_node implements ast_node_i
 	public abstract function start_token(): int;
 	public abstract function end_token(): int;
 
+	#[\Virtual]
 	public function optional_occurrence(): ?collected_name
 	{
 		return null;
 	}
 
+	#[\Virtual]
 	public function occurrence(): collected_name
 	{
 		return $this->optional_occurrence();
 	}
 
+	#[\Virtual]
 	public function attach_occurrence(collected_name $entry): void
 	{
 		throw new \LogicException('This syntax does not collect names');
 	}
 
+	#[\Virtual]
 	public function clear_preparation(): void
 	{
 	}
@@ -67,6 +71,7 @@ abstract class type_node extends ast_node
 abstract class expression_node extends ast_node
 {
 	/** Shared expression view; specialized facts use distinctly named concrete accessors. */
+	#[\Virtual]
 	public function require_preparation(): prepared_expression
 	{
 		throw new \RuntimeException('Prepared expression facts are not supported for this node');
@@ -137,6 +142,7 @@ abstract class loop_node extends breakable_node
 		return $this->prepared_facts;
 	}
 
+	#[\Virtual]
 	public function body_runs_first(): bool
 	{
 		return false;

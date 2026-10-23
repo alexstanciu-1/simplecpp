@@ -87,4 +87,8 @@ function same_exception(\Throwable $left, \Throwable $right): bool {
 
 }
 
-namespace { require_once __DIR__ . '/global_functions.php'; }
+namespace {
+#[\Attribute(\Attribute::TARGET_METHOD)]
+final class Virtual {}
+require_once __DIR__ . '/global_functions.php';
+}

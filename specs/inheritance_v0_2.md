@@ -150,6 +150,16 @@ inside an explicitly abstract type. It establishes a virtual contract. Every con
 descendant must implement all inherited abstract obligations. An abstract intermediate
 may leave obligations unimplemented or redeclare a virtual method abstract.
 
+A zero-argument `#[\Virtual]` marker on a public/protected concrete instance method
+establishes a new virtual contract with a default body. A descendant may inherit that
+body unchanged. It must not be static, private, abstract or final, and must not be a
+constructor or destructor. Use `#[\Override]` for an inherited virtual/interface
+contract; repeating `Virtual` on an existing contract or combining the markers is
+invalid. Abstract/interface methods already establish their contracts without this
+marker. Ordinary unmarked methods do not become virtual merely because they have
+bodies. These rules apply equally to ordinary and template-prelowered output;
+runtime-template payloads in signatures do not imply generic virtual source methods.
+
 An implementation of an inherited virtual method remains virtual automatically.
 Optional `#[\Override]` asserts that such a target exists; reject it otherwise.
 The bounded contract permits shared-value variance as specified below; all other

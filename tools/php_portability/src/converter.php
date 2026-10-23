@@ -666,14 +666,24 @@ final class Converter {
 				$fields[] = new Node('comment', $text, $at);
 				continue;
 			}
+			$attributes = [];
+			if ($id === T_ATTRIBUTE) {
+				--$this->position;
+				$attributes = Method_Attributes::read($this->tokens, $this->position, $this->path);
+				[$id, $text, $at] = $this->significant();
+			}
 			// Visibility and abstractness are independent modifiers; normalize their source order.
 			$visibility = '';
 			$abstractMethod = false;
+			$finalMethod = false;
 			$type = [$id, $text, $at];
-			while (in_array($type[0], [T_PUBLIC, T_PRIVATE, T_PROTECTED, T_ABSTRACT], true)) {
+			while (in_array($type[0], [T_PUBLIC, T_PRIVATE, T_PROTECTED, T_ABSTRACT, T_FINAL], true)) {
 				if ($type[0] === T_ABSTRACT) {
 					if ($abstractMethod) { $this->fail($type[2], 'duplicate abstract modifier'); }
 					$abstractMethod = true;
+				} elseif ($type[0] === T_FINAL) {
+					if ($finalMethod) { $this->fail($type[2], 'duplicate final modifier'); }
+					$finalMethod = true;
 				} else {
 					if ($visibility !== '') { $this->fail($type[2], 'duplicate or conflicting member visibility'); }
 					$visibility = $type[1];
@@ -681,11 +691,24 @@ final class Converter {
 				$type = $this->significant();
 			}
 			if ($visibility === '') { $this->fail($at, 'expected explicit member visibility'); }
+			$methodName = $this->tokens[$this->nextSignificant($this->position)][1] ?? '';
+			if ($attributes !== [] && ($type[0] !== T_FUNCTION || str_starts_with($methodName, '__'))) {
+				$this->fail($at, 'method markers require ordinary instance methods');
+			}
+			if (in_array('\\Virtual', $attributes, true) && ($abstractMethod || $finalMethod || $visibility === 'private' || count($attributes) !== 1)) {
+				$this->fail($at, 'Virtual requires a non-final public/protected concrete instance method');
+			}
+			if ($finalMethod && ($abstractMethod || $type[0] !== T_FUNCTION || str_starts_with($methodName, '__'))) {
+				$this->fail($at, 'final requires an ordinary concrete method');
+			}
+			$methodPrefix = '';
+			foreach ($attributes as $attribute) { $methodPrefix .= '#[' . $attribute . '] '; }
+			$methodPrefix .= $visibility . ($finalMethod ? ' final' : '');
 			if ($abstractMethod) {
 				// methodSignature owns the function token and the complete required signature.
 				--$this->position;
 				if (!$abstract || $visibility === 'private') { $this->fail($at, 'abstract methods require a public/protected member of an abstract class'); }
-				$signature = $this->methodSignature($at, $visibility . ' abstract', false);
+				$signature = $this->methodSignature($at, $methodPrefix . ' abstract', false);
 				$this->expect(';');
 				$fields[] = new Node('abstract_method', $signature . ';', $at);
 				continue;
@@ -696,7 +719,7 @@ final class Converter {
 					array_push($fields, ...$this->constructorDeclaration($at));
 				} else {
 					--$this->position;
-					$fields[] = $this->method($at, $visibility, false);
+					$fields[] = $this->method($at, $methodPrefix, false);
 				}
 				continue;
 			}

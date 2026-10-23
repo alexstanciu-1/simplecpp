@@ -44,7 +44,7 @@ final class Type_Contract_Preparation
 			$decision->method = weak($method);
 			$decision->abstract_method = $signature->abstract_method;
 			$decision->final_method = $signature->final_method;
-			$decision->virtual_method = $signature->abstract_method
+			$decision->virtual_method = $signature->abstract_method || $signature->explicit_virtual
 				|| ($relations->typed_iterator && Iterator_Preparation::method_name($syntax->name));
 			if ($signature->abstract_method && !$facts->abstract_type) {
 				throw new \RuntimeException('Abstract method requires an abstract declaring type');
@@ -52,6 +52,12 @@ final class Type_Contract_Preparation
 			$matches /** vector<inherited_member_candidate> */ = [];
 			if (($base !== null) && ($syntax->name !== '__construct') && ($syntax->name !== '__destruct')) {
 				$matches = Inherited_Lookup::members($base, $syntax->name, preparation_lookup_kind::method_name, $context);
+			}
+			if ($signature->explicit_virtual) {
+				if (q_count($matches) !== 0) { throw new \RuntimeException('Virtual starts a new slot; use Override for inherited methods'); }
+				foreach ($facts->interface_requirements as $requirement) {
+					if ($requirement->name === $syntax->name) { throw new \RuntimeException('Virtual starts a new slot; interface methods already establish a contract'); }
+				}
 			}
 			if (q_count($matches) !== 0) {
 				if (q_count($matches) !== 1) { throw new \RuntimeException('Ambiguous inherited method contract'); }

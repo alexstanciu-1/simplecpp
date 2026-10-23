@@ -32,6 +32,10 @@ final class Method_Preparation
 			if ($modifier === declaration_modifier::abstract_declaration) { $facts->abstract_method = true; }
 			elseif ($modifier === declaration_modifier::final_declaration) { $facts->final_method = true; }
 			elseif ($modifier === declaration_modifier::override_declaration) { $facts->override_assertion = true; }
+			elseif ($modifier === declaration_modifier::virtual_declaration) {
+				if ($facts->explicit_virtual) { throw new \RuntimeException('Duplicate Virtual attribute'); }
+				$facts->explicit_virtual = true;
+			}
 			else { $ordinary[] = $modifier; }
 		}
 		Member_Preparation::validate_modifiers($ordinary, true);
@@ -43,6 +47,10 @@ final class Method_Preparation
 				throw new \RuntimeException('Interface methods require public bodyless instance contracts');
 			}
 			$facts->abstract_method = true;
+		}
+		if ($facts->explicit_virtual && ($facts->abstract_method || $facts->static_member || $facts->final_method
+			|| $facts->override_assertion || $destructor || ($facts->visibility === member_visibility::private_access))) {
+			throw new \RuntimeException('Virtual requires a new non-final public/protected concrete instance method');
 		}
 		if ($facts->abstract_method === $syntax->has_parsed_body()) {
 			throw new \RuntimeException('Abstract methods require no body; concrete methods require a body');

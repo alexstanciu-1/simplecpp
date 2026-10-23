@@ -489,3 +489,46 @@ RSS; bootstrap 210.63 s / 464,404 KiB (453.5 MiB) RSS / 442.5 MiB PHP heap.
 The inherited position-field diagnostic disappears; none are added. AST-01 stays
 first, no fatal/OOM, emission or native compiler rebuild. Evidence:
 results/compiler_bootstrap_backlog_2026_10_23/private_fields.
+
+## AST-01 — explicit virtual defaults: reuse and implementation
+
+Reuse audit: prepared source callable signatures own modifier intent; Type Contract
+Preparation already owns virtual slots, inherited/default bodies, final checks,
+interface bridges and parent-call selection. CPP_Dispatch already emits nonabstract
+slot bodies. This slice adds explicit Virtual signature intent, includes it in
+retained signature comparisons, and feeds the existing contract decision. No emitter,
+new template protocol or generic source-method model is needed.
+
+The converter carries rooted zero-argument Virtual/Override attributes through
+ordinary methods and direct traits, with local structural restrictions only. The
+same marker scanner participates in declaration indexing and both cache fingerprints;
+PHP's framework supplies a method-targeted Virtual marker. PHP inheritance remains
+PHP's responsibility and native signature/slot checking remains compiler-owned.
+
+A host reflection audit found six converted AST roots needing markers: ast_node's
+four occurrence/preparation hooks, expression_node::require_preparation and
+loop_node::body_runs_first. They are now marked. Storage_Abstract::public_key also
+has a concrete override in host PHP, but is runtime-bound rather than converted;
+it does not need a new generated source slot. Existing interface/abstract contracts
+and unrelated methods are unchanged.
+
+Core proofs pass in both output modes: inherited default invocation, base/interface
+dispatch, direct trait implementation, final override, explicit parent invocation
+and vector parameter/result transport. Retained proof removes only the ancestor's
+marker, rejects the unchanged descendant and recovers identical output when restored.
+Focused rejection/converter regression and measured bootstrap evidence follow below.
+
+Final evidence: `/tmp/virtual-defaults-core-02`, `/tmp/virtual-defaults-preparation-03`,
+`/tmp/virtual-defaults-portable-03`, and `/tmp/virtual-defaults-regression-01` pass.
+The extended preparation proof has fifteen rejection cases in both modes, plus
+ancestor-only marker removal/recovery. Portable proofs include ten structural
+rejections/collision cases, method-target reflection and warm converter reuse.
+All 32 existing abstract-dispatch generated programs pass. The initial portable
+fixture used the reserved C++ local name `default`; the final fixture uses `fallback`.
+
+Measured `/tmp/compiler-bootstrap-virtual-defaults-01`: conversion 4.65 s / 195,064 KiB
+RSS, 269 PHS files / 1,959,421 bytes. Bootstrap 199.05 s / 472,348 KiB (461.3 MiB)
+RSS / 451.0 MiB PHP heap. AST-01's nonvirtual inherited-method diagnostic disappears;
+no new diagnostic text. The first remaining failure is the existing nullable-value
+boundary limitation (NULL-01/02). No fatal/OOM, emission or native compiler rebuild.
+Evidence: results/compiler_bootstrap_backlog_2026_10_23/virtual_defaults.

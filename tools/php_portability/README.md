@@ -137,3 +137,19 @@ eight host checks; active coverage is 89 files, including native layout, resourc
 
 [Typed string joining](../../specs/portability/string_join.md) exposes `q_implode`
 for explicit string vectors through the existing target `implode` binding.
+
+### Explicit virtual default methods
+
+Use zero-argument `#[\Virtual]` on a public/protected concrete non-final instance
+method that starts a virtual contract, and `#[\Override]` on descendants when an
+assertion is desired. Both names must be fully qualified; grouped/argument-bearing
+attributes are outside this portable subset. Constructors, destructors, static
+methods and fields cannot carry these markers. The portable runtime supplies the
+method-targeted `Virtual` attribute; PHP itself supplies `Override`.
+
+The converter preserves intent, including markers on directly expanded trait
+methods, without resolving inheritance or signatures. The native compiler checks
+contracts. v0.1 retains its broad virtual class dispatch; v0.2 uses explicit intent
+and existing abstract/interface contracts. A final overriding method is supported.
+The six AST default hooks in `03_parse/structures/abstractions.php` use this protocol.
+Proof: `python3 tests/portability/virtual_defaults.py --results /tmp/virtual-proof`.

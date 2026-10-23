@@ -1,0 +1,54 @@
+{
+  "core": [
+    {
+      "name": "preparation",
+      "seconds": 1.080051403001562,
+      "passed": true
+    },
+    {
+      "name": "ordinary",
+      "seconds": 17.847149010001885,
+      "passed": true
+    },
+    {
+      "name": "concrete",
+      "seconds": 20.047090822001337,
+      "passed": true
+    }
+  ],
+  "portable": [
+    {
+      "name": "markers",
+      "seconds": 0.7468184819990711,
+      "passed": true
+    },
+    {
+      "name": "legacy",
+      "seconds": 22.542751971999678,
+      "passed": true
+    },
+    {
+      "name": "ordinary",
+      "seconds": 20.166684493000503,
+      "passed": true
+    },
+    {
+      "name": "concrete",
+      "seconds": 22.489568211000005,
+      "passed": true
+    }
+  ],
+  "regression": {
+    "passed": true,
+    "generated_programs": 32,
+    "cpp_pch": true,
+    "native_compiler_rebuilt": false
+  },
+  "extended_preparation": {
+    "path": "/tmp/virtual-defaults-preparation-03",
+    "passed": true,
+    "rejections": 15,
+    "output_modes": 2,
+    "cross_file_recovery": true
+  }
+}

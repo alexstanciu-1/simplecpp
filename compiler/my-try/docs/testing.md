@@ -98,6 +98,15 @@ native and both v0.2 modes execute. Its small native helper definitions isolate 
 full facade bodies retain their separate runtime/capability obligations. The existing
 `tests/portability/string_split.py` covers real byte-construction facade regression.
 
+`python3 tests/virtual_defaults.py --results FRESH` proves explicit concrete virtual
+slots through inherited/default, base/interface, trait and parent calls, with vector
+signatures in ordinary and template-prelowered output. It also checks invalid markers,
+signature/finality exclusions and retained ancestor-only marker removal/recovery.
+`python3 tests/portability/virtual_defaults.py --results FRESH` from the repository root
+adds PHP/legacy/both-v0.2 parity, method marker reflection, direct-trait collision
+indexing, structural marker rejections and warm converter reuse. The broader existing
+`records.py --suite abstract_dispatch` suite remains the adjacent regression gate.
+
 `python3 tests/private_fields.py --results FRESH` checks private-field access and
 public/protected/static exclusions with retained rejection/recovery in both v0.2
 modes, plus independent struct subobject construction. The companion

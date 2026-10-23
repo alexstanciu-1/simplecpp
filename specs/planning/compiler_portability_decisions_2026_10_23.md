@@ -482,7 +482,7 @@ runtime/include/scpp/support/hash_t.hpp.
 
 ## AST-01 — explicitly virtual methods with default bodies
 
-**Core feature direction accepted on 2026-10-23; implementation paused.**
+**Core feature direction accepted on 2026-10-23; bounded implementation and focused cross-route/prelowered proofs complete. See execution ledger for measured bootstrap status.**
 
 Allow an explicitly virtual instance method to establish a dispatch contract while
 retaining its concrete default body. The portable PHP converter carries explicit
@@ -494,7 +494,7 @@ Actual needs include ast_node::clear_preparation and occurrence hooks,
 expression_node::require_preparation, and loop_node::body_runs_first. Preserve useful
 defaults and trait-supplied overrides instead of making every default abstract.
 children/kind/maintain already have interface/abstract contracts. v0.1 broadly emits
-virtual class instance methods; v0.2 currently establishes slots through abstract,
+virtual class instance methods; Before this slice, v0.2 established slots through abstract,
 interface and existing special protocols, rejecting ordinary concrete-method hiding.
 This is an agreed extension of the owning contract, not a demonstrated violation
 of the current v0.2 specification.
@@ -506,8 +506,8 @@ Ordinary and template-prelowered output must consume the same semantic decision.
 Concrete parameter/return transport must preserve slot/override compatibility and
 any bridges; an emitted default body must not turn a virtual call into fixed dispatch.
 
-Prelowering is technically compatible with this direction, but not yet proved for
-the new source feature. Required proofs in both modes: inherited default invocation,
+The bounded ordinary/prelowered fixture now proves the new source feature.
+Proofs in both modes cover: inherited default invocation,
 derived override through a base/interface handle, a trait-supplied implementation,
 explicit parent invocation, final/signature rejection, and virtual signatures using
 admitted template payloads. Do not infer support for arbitrary generic source classes
@@ -538,12 +538,11 @@ final class PreparedNode extends BaseNode
 }
 ```
 
-Virtual is a project attribute to implement, not a claim that PHP supplies a built-in
+Virtual is a project attribute, not a claim that PHP supplies a built-in
 Virtual attribute. The portable framework should supply its method-targeted marker;
 ordinary PHP dispatch already permits the override. The converter explicitly
 recognizes and preserves/maps the intent for each route; v0.1 retains its existing
-virtual dispatch and v0.2 records the explicit contract in preparation. Current
-converter/parser support is not claimed by this decision.
+virtual dispatch and v0.2 records the explicit contract in preparation. Converter/parser support is now implemented with focused route proofs.
 
 Use a zero-argument marker on public/protected nonstatic concrete instance
 methods, excluding constructors/destructors. Abstract/interface methods already
@@ -552,7 +551,7 @@ overrides remain virtual without repeating Virtual. Override stays optional unde
 the existing language contract, but is recommended in portable source. Reject
 contradictory combinations such as Virtual with abstract, static or final on the
 new-slot declaration; an overriding implementation may be final under existing rules.
-The spelling and bounded usage above are agreed; implementation remains paused.
+The spelling and bounded usage above are implemented; broad bootstrap completion remains a separate claim.
 
 ## NULL-01 — distinct frontend nullability for class handles
 
@@ -991,7 +990,7 @@ discussion while independent work continues. Deferred debts remain deferred.
 | INIT-02 | `_uninitialized_` required fields, staged assignment and checked reads | Nullable backing and checked accessors accepted; reuse audit complete, 6–12x retained; bounded source/converter proofs pending; no new language feature approved; paused. |
 | TASK-01 | Bounded shared-handle task admission in v0.2 | Joined API rules accepted; reuse audit complete, revised 8–12x; bounded API-policy/callback-permission design accepted; implementation/proofs pending; inventory D04; paused. |
 | TASK-02 | Retained-type lookup synchronization in portable PHP | Source race path identified; same-lock lookup repair direction accepted; native concurrency proofs pending; paused. |
-| AST-01 | Explicit concrete virtual methods and portable PHP intent | Core support and converter mapping with `#[\Virtual]` / `#[\Override]` agreed; ordinary/prelowered proofs pending; inventory A01; paused. |
+| AST-01 | Explicit concrete virtual methods and portable PHP intent | Core support and converter mapping with `#[\Virtual]` / `#[\Override]` implemented; PHP/legacy/ordinary/prelowered and retained proofs pass; inventory A01; see execution ledger. |
 | NULL-01 | Node versus ?Node frontend contracts, shared lowering | Direction accepted; four-consumer reuse audit complete; revised 12–20x; bounded presence/representation design and proofs pending; inventory A02; paused. |
 | NULL-02 | Definition- and capability-based nullable operations | Capability/consumer reuse audit complete; revised 4–8x incremental to shared NULL-01 model; vector is a proof case, not a whitelist extension; inventory D03; paused. |
 | OWN-01 | Weak locks, moved-from unique/shared handles and runtime result guarantees | Ownership and explicit-handle spelling agreed; weak-expiry parity deferred under OWN-DEBT-01; paused. |

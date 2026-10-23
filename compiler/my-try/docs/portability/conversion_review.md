@@ -17,7 +17,15 @@ This does not establish exhaustive language, lifetime, incremental or performanc
 
 ## Accepted-backlog bootstrap checkpoint — 2026-10-23
 
-The latest [private-field checkpoint](../../../../specs/planning/results/compiler_bootstrap_backlog_2026_10_23/private_fields/README.md)
+The latest [explicit virtual checkpoint](../../../../specs/planning/results/compiler_bootstrap_backlog_2026_10_23/virtual_defaults/README.md)
+adds concrete virtual default methods and portable Virtual/Override intent using
+existing dispatch and prelowering paths. PHP/legacy/both-v0.2 proofs, retained marker
+removal/recovery and all 32 abstract-dispatch regressions pass. Bootstrap takes
+199.05 s / 461.3 MiB RSS / 451.0 MiB PHP heap. The nonvirtual inherited-method
+diagnostic disappears, with no new diagnostic text. The existing nullable-value
+boundary limitation is now first. No fatal/OOM, emission or native compiler rebuild.
+
+The earlier [private-field checkpoint](../../../../specs/planning/results/compiler_bootstrap_backlog_2026_10_23/private_fields/README.md)
 admits independent same-name private instance fields using existing static-type
 lookup and declaring-owner access. PHP/legacy/both-v0.2 proofs, retained cross-file
 visibility recovery and all 59 inheritance regressions pass. Bootstrap takes

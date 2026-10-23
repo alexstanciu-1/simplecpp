@@ -14,7 +14,8 @@ final class Preparation_Changes
 		if ($old->visibility !== $current->visibility) { return false; }
 		if ($old->static_member !== $current->static_member) { return false; }
 		if (($old->abstract_method !== $current->abstract_method) || ($old->final_method !== $current->final_method)
-			|| ($old->override_assertion !== $current->override_assertion)) { return false; }
+			|| ($old->override_assertion !== $current->override_assertion)
+			|| ($old->explicit_virtual !== $current->explicit_virtual)) { return false; }
 		if (!self::same_reference_return($old->signature->reference_return, $current->signature->reference_return)) {
 			return false;
 		}

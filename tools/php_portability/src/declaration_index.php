@@ -3,6 +3,8 @@ declare(strict_types=1);
 
 namespace scpp\portability;
 
+require_once __DIR__ . "/method_attributes.php";
+
 /** File-local declaration facts and direct trait expansion, never expression/type resolution. */
 final class Declaration_Index {
 	private array $declarations = [];
@@ -84,6 +86,7 @@ final class Declaration_Index {
 				++$i;
 				continue;
 			}
+			Method_Attributes::read($tokens, $i, $path);
 			while (in_array($tokens[$i][0], [T_PUBLIC, T_PROTECTED, T_PRIVATE, T_STATIC, T_FINAL, T_ABSTRACT, T_READONLY], true)) {
 				$i = self::skip($tokens, $i + 1);
 			}

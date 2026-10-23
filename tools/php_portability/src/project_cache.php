@@ -18,7 +18,7 @@ final class Project_Cache {
 	private string $statePath;
 
 	public function __construct(private string $source, private ?string $output, private array $map) {
-		$this->version = hash('sha256', PHP_VERSION_ID . file_get_contents(__FILE__) . file_get_contents(__DIR__ . '/declaration_index.php')
+		$this->version = hash('sha256', PHP_VERSION_ID . file_get_contents(__FILE__) . file_get_contents(__DIR__ . '/declaration_index.php') . file_get_contents(__DIR__ . '/method_attributes.php')
 			. file_get_contents(__DIR__ . '/import_policy.php') . serialize($map));
 		// An in-memory scan uses the same discovery/import/token/index rules, without
 		// reading or publishing persistent state. Used by the read-only check command.
