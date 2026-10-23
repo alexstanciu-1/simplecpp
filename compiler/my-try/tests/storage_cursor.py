@@ -57,6 +57,13 @@ def renamed(value):
         return {'Storage': 'Record_Bag', 'Storage_Cursor': 'Record_View'}[value]
     return value
 renamed_catalog = private_catalog('renamed', renamed(catalog))
+exact_data = copy.deepcopy(catalog)
+exact_factory = next(f for f in exact_data['functions'] if f['id'] == 'compiler.Storage_Cursor.make')
+exact_factory.pop('type_parameters')
+exact_factory.pop('shared_conversions')
+exact_factory['parameters'][0]['type']['arguments'][0]['parameter'] = 'Record'
+exact_catalog = private_catalog('exact-only', exact_data)
+
 malformed = {}
 for label, relation, diagnostic in [
     ('unknown-name', {'from': 'Missing', 'to': 'Record'}, 'Unknown shared conversion type parameter'),
@@ -87,6 +94,18 @@ with CommandRunner(out / 'logs', ROOT) as runner:
         runner.run(label, ['php8.5', APP / 'tests/async_tasks_publish.php', folder, ROOT / 'runtime/metadata/modules', 'compiler', mode], expected=255)
         error = (out / 'logs' / (label + '.stderr')).read_text()
         assert diagnostic in error, error
+        if name in ['reverse', 'unrelated']:
+            assert ('Base -> Derived' if name == 'reverse' else 'Other -> Base') in error, error
+    def missing_contract(mode):
+        label = 'missing-contract-' + mode
+        folder = out / label
+        (folder / 'source').mkdir(parents=True)
+        (folder / 'source/main.phs').write_text('class Base {} class Derived extends Base {} $rows Storage<Derived> = []; $cursor = new Storage_Cursor<Base>($rows);')
+        runner.run(label, ['php8.5', APP / 'tests/async_tasks_publish.php', folder, exact_catalog, 'compiler', mode], expected=255)
+        error = (out / 'logs' / (label + '.stderr')).read_text()
+        for text in ['Storage_Cursor<Base>', 'Storage<Derived>', 'Element ancestry does not imply container conversion', 'binding metadata']:
+            assert text in error, error
+
     def reject_metadata(label, metadata, diagnostic):
         folder = out / label
         (folder / 'source').mkdir(parents=True)
@@ -96,6 +115,7 @@ with CommandRunner(out / 'logs', ROOT) as runner:
     run_tasks([Task('retained', lambda: runner.run('retained', ['php8.5', APP / 'tests/storage_cursor_retained.php', out / 'retained']))] +
               [Task(mode + ('-renamed' if rename else ''), lambda mode=mode, rename=rename: check(mode, rename))
                for rename in [False, True] for mode in ['ordinary', 'concrete']] +
+              [Task('missing-contract-' + mode, lambda mode=mode: missing_contract(mode)) for mode in ['ordinary', 'concrete']] +
               [Task(label, lambda label=label, pair=pair: reject_metadata(label, *pair)) for label, pair in malformed.items()] +
               [Task(name + '-' + mode, lambda name=name, mode=mode, pair=pair: reject(name, mode, *pair))
                for name, pair in negative.items() for mode in ['ordinary', 'concrete']])

@@ -34,7 +34,8 @@ final class Ownership_Conversions
 
 	/** Same-family ancestry conversions preserve ownership; unique targets require safe deletion. */
 	public static function decide(canonical_type_use $source, canonical_type_use $target,
-		conversion_context $context, ?conversion_relationship_query $relationships = null): conversion_decision
+		conversion_context $context, ?conversion_relationship_query $relationships = null,
+		?string $diagnostic_context = null): conversion_decision
 	{
 		if ($source->matches($target)) {
 			return Conversion_Preparation::operation($source, $target, $context, conversion_operation::identity);
@@ -68,6 +69,6 @@ final class Ownership_Conversions
 				}
 			}
 		}
-		throw new \RuntimeException('S2S ownership boundary requires matching handles, a proven safe same-family upcast, or null storage initialization/assignment');
+		throw new \RuntimeException(($diagnostic_context ?? '') . 'S2S ownership boundary requires matching handles, a proven safe same-family upcast, or null storage initialization/assignment');
 	}
 }

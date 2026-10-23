@@ -66,3 +66,23 @@ final class Diagnostic_Reporting
 		return $text;
 	}
 }
+
+/** Render settled semantic identity for errors without backend spellings or type inference. */
+final class Type_Descriptions
+{
+	public static function text(canonical_type_use $type): string
+	{
+		$canonical = Type_Queries::canonical($type);
+		$text = $canonical->definition()->name();
+		if ($canonical instanceof applied_template_type) {
+			$application = object_cast($canonical, applied_template_type::class);
+			$text .= '<';
+			foreach ($application->arguments() as $index => $argument) {
+				if ($index !== 0) { $text .= ', '; }
+				$text .= self::text($argument);
+			}
+			$text .= '>';
+		}
+		return $type->by_value() ? 'value<' . $text . '>' : $text;
+	}
+}

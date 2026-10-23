@@ -18,7 +18,7 @@ final class Runtime_Call_Preparation
 
 	public static function prepare(array $targets /** vector<callable_definition_i> */,
 		Storage $arguments /** Storage<expression_node> */, preparation_context $context,
-		?canonical_type_use $runtime_owner = null): prepared_call
+		?canonical_type_use $runtime_owner = null, bool $construction = false): prepared_call
 	{
 		$observing = false;
 		$consuming = false;
@@ -53,6 +53,16 @@ final class Runtime_Call_Preparation
 			$inference = new runtime_type_bindings();
 		}
 		if ($selected === null) {
+			if ($construction && ($runtime_owner !== null)) {
+				$inputs = '';
+				foreach ($arguments as $index => $argument) {
+					if ($index !== 0) { $inputs .= ', '; }
+					$inputs .= Type_Descriptions::text($argument->require_preparation()->type);
+				}
+				throw new \RuntimeException('No registered construction contract for '
+					. Type_Descriptions::text($runtime_owner) . ' from (' . $inputs . '). '
+					. 'Element ancestry does not imply container conversion; binding metadata must declare a compatible constructor relationship.');
+			}
 			throw new \RuntimeException('S2S runtime call requires one exact signature or a unique checked-payload signature; use explicit argument types');
 		}
 		if ($inference === null) { throw new \LogicException('Selected runtime call lost inference'); }
@@ -266,15 +276,17 @@ final class Runtime_Call_Preparation
 		foreach ($contract->shared_conversions as $requirement) {
 			$source = $inference->bindings[$requirement->from_position];
 			$destination = $inference->bindings[$requirement->to_position];
+			$relation_description = 'Runtime shared conversion ' . Type_Descriptions::text($source)
+				. ' -> ' . Type_Descriptions::text($destination) . ': ';
 			$source_role = Ownership_Conversions::role($source);
 			$destination_role = Ownership_Conversions::role($destination);
 			if (($source_role === null) || ($destination_role === null)
 				|| ($source_role->ownership_family() !== ownership_kind::shared)
 				|| ($destination_role->ownership_family() !== ownership_kind::shared)) {
-				throw new \RuntimeException('Runtime shared conversion requires nonnullable shared handles');
+				throw new \RuntimeException($relation_description . 'requires nonnullable shared handles');
 			}
 			Ownership_Conversions::decide($source, $destination, conversion_context::argument,
-				new Conversion_Relationships($context));
+				new Conversion_Relationships($context), $relation_description);
 		}
 		foreach ($contract->replacement_results as $requirement) {
 			$result_type = $inference->bindings[$requirement->result_position];

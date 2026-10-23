@@ -86,7 +86,7 @@ final class Object_Construction_Preparation
 	public static function runtime_factory(canonical_type_use $target, string $factory,
 		Storage $source_arguments /** Storage<expression_node> */, preparation_context $context): prepared_object_construction
 	{
-		$call = Runtime_Call_Preparation::prepare(Model::$runtime_callables->methods_named($target, $factory, true), $source_arguments, $context, $target);
+		$call = Runtime_Call_Preparation::prepare(Model::$runtime_callables->methods_named($target, $factory, true), $source_arguments, $context, $target, true);
 		if (!$call->type->matches($target)) { throw new \RuntimeException('Runtime construction factory must return the exact owner type'); }
 		$facts = new prepared_object_construction();
 		$facts->value_origin = expression_value_origin::fresh_construction;

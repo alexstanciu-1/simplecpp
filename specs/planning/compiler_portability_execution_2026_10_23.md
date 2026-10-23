@@ -1392,3 +1392,13 @@ record identity, sparse positions, aliased cursor state and source retention aft
 return. One test-only duplicate-declaration annotation was corrected. Evidence:
 cursor_integration/portable_summary.json and portable_host.stdout. No production
 change/bootstrap rerun. Missing-contract/source-target diagnostics remain open.
+
+## CURSOR-01 diagnostic completion
+
+Failed construction identifies owner/input applications and missing compatible metadata;
+shared conversion failures identify source/target elements without changing admission.
+All 18 cursor tasks pass, plus prior portable route parity. A new empty-string default
+was adapted to supported nullable PHP syntax after converter rejection; retained proof
+rerun passes. Evidence: cursor_diagnostics. Bootstrap 1:15.90 / 343416 KiB RSS /
+314 MiB PHP heap, unchanged preparation diagnostic set. Bounded CURSOR-01 complete;
+full bootstrap, other backlog work and blocking CH15 closure remain open.

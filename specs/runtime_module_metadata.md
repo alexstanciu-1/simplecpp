@@ -1104,3 +1104,9 @@ is inferred from element ancestry.
 `Storage<Source>`. Its native constructor retains the source and widens yielded
 handles. Copies share cursor position; membership mutation during traversal remains
 outside its contract. Existing cursor applications are not mutually convertible.
+
+A failed registered construction reports its owner application and supplied argument
+types. The diagnostic explains that element ancestry alone does not authorize a
+container conversion and that a compatible constructor relationship must be declared
+in binding metadata. A declared shared conversion failing admission instead reports
+its inferred source and destination types and the ownership/ancestry requirement.

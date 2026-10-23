@@ -1,6 +1,9 @@
 # CURSOR-01 reuse analysis
 Doc Status: planning
 
+**Current status:** accepted bounded integration and required route/diagnostic proofs
+are complete; whole-compiler bootstrap and CH15 closure remain separate.
+
 Accepted scope is constructor Storage_Cursor<T>(Storage<U>) with safe shared-record
 U -> T, ordinary and template-prelowered output. No mutable Storage covariance,
 conversion between cursor applications, new lifetime model or general constructor
@@ -105,3 +108,18 @@ v0.2. It uses actual host helpers and runtime bindings, and verifies retained so
 shared traversal position, sparse keys and base-view record identity. The typed local
 is declared once and subsequently assigned. Missing-contract/source-target diagnostics
 remain open; this proof does not close that requirement or the full bootstrap.
+
+## Diagnostic completion
+
+Type_Descriptions renders existing canonical identities without type inference or
+backend spelling. Failed construction names owner and supplied argument applications
+and explains the missing compatible metadata contract. Shared-conversion failures
+name both inferred element types; original ownership admission remains the validator.
+
+An exact-only factory control rejects Storage<Derived> for Storage_Cursor<Base>,
+with both types and the missing-contract explanation in ordinary/concrete output.
+This intentionally removes the independent Source parameter as well as its relation:
+leaving two independent generic parameters unconstrained would advertise a different
+provider API rather than remove widening support. It must not trigger a hidden cursor
+name rule. All 18 current cursor tasks pass, including renamed providers and retained
+ancestry recovery. Earlier open-proof statements above describe prior checkpoints.
