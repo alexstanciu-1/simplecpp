@@ -116,8 +116,10 @@ owner-copy operations preserve independent reads/writes and whole replacement.
 A throwing RHS leaves previous class storage intact. No new native protocol needed.
 
 Current production PHP contains no explicit `_uninitialized_` declarations.
-`Parser_Run::$current_scope` is a concrete later-assignment candidate: construction
-leaves it unset, and `parse()` assigns source_scope before parsing bodies. Other
+`Parser_Run::$current_scope` was the first concrete later-assignment candidate: its
+parsing entry paths select a scope after construction. It now uses explicit private
+nullable backing with checked current_scope()/select_scope() accessors. The source
+adaptation preserves nested scope save/restore and does not depend on marker rewriting. Other
 Parser_Run fields such as parsed/collector are established by constructor algorithms;
 that is not itself a reason to mark them staged. Review each lifecycle separately.
 
@@ -125,3 +127,9 @@ Next: bounded marker facts/access rewriting, hygiene and unsupported-use diagnos
 This proof does not establish transparent access parity, invalid-null-write behavior,
 struct-owner support or the final COPY-01 protocol. It uses the already-admitted
 explicit scalar-record copy operation, not a pending struct-method implementation.
+
+The production parser accessor bodies are extracted by staged_storage.py and execute
+on PHP, legacy native and ordinary/prelowered v0.2, proving early failure and selected
+scope identity through save/change/restore. PHP parser/AST/trait/retained lookup and
+namespace lifecycle regressions cover the actual parser call sites. This remains a
+source adaptation, not automatic marker implementation or a native parser rebuild.

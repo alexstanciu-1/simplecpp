@@ -50,7 +50,7 @@ final class Parser_Run
 	private token_list $tokens;
 	private bool $reuse_previous = false;
 	private Storage $scopes /** Storage<scope> */;
-	private scope $current_scope;
+	private ?scope $current_scope_value = null;
 	private scope $source_scope;
 	private Symbol_Collector $collector;
 	private parsed_file $parsed;
@@ -153,6 +153,21 @@ final class Parser_Run
 		$this->collector = new Symbol_Collector($collection, $tokens, $file_scope, $global, $revision);
 	}
 
+	/** Parsing selects a scope after construction; no uninitialized value may escape. */
+	private function current_scope(): scope
+	{
+		if ($this->current_scope_value === null) {
+			throw new \LogicException('Parser scope has not been selected');
+		}
+		return $this->current_scope_value;
+	}
+
+	private function select_scope(scope $selected): void
+	{
+		if ($selected === null) { throw new \LogicException('Parser scope must be present'); }
+		$this->current_scope_value = $selected;
+	}
+
 	/** Keep old and new scopes owned on failure; select the next successful file inventory separately. */
 	private function retain_scope(scope $retained_scope): void
 	{
@@ -170,7 +185,7 @@ final class Parser_Run
 	/** Reparse selected member spans into a private collection; the caller supplies ownership, not name resolution. */
 	public function parse_member_fragments(collected_record $consumer, Storage $origins /** Storage<declaration_node> */): parsed_file
 	{
-		$this->current_scope = $this->source_scope;
+		$this->select_scope($this->source_scope);
 		$this->retain_scope($this->source_scope);
 		$root = $this->parsed->root;
 		$body = $root->single_body();
@@ -315,9 +330,9 @@ final class Parser_Run
 	private function parse_source_body(namespace_body_node $namespace_body, bool $braced, int $source_start): void
 	{
 		$this->source_scope = $namespace_body->body_scope();
-		$this->current_scope = new scope();
-		$this->current_scope->set_parent($this->source_scope);
-		$this->retain_scope($this->current_scope);
+		$this->select_scope(new scope());
+		$this->current_scope()->set_parent($this->source_scope);
+		$this->retain_scope($this->current_scope());
 		$published /** nullable<scope> */ = null;
 		if ($this->shared_publication) {
 			$published = $this->source_scope->published_scope();
@@ -326,7 +341,7 @@ final class Parser_Run
 		$body_start = $this->position;
 		$old_body = $namespace_body->body;
 		$old_statements /** Storage<statement_node> */ = $old_body->statements;
-		$body = new function_body_node($this->current_scope);
+		$body = new function_body_node($this->current_scope());
 		$statements /** Storage<statement_node> */ = $body->statements;
 		$declarations /** Storage<declaration_node> */ = new Storage();
 		$imports /** Storage<import_node> */ = new Storage();
@@ -793,7 +808,7 @@ final class Parser_Run
 		}
 		$start = $this->position++;
 		$binding = $this->variable_reference($start);
-		$binding->collect_write($this->collector, $this->current_scope, $start);
+		$binding->collect_write($this->collector, $this->current_scope(), $start);
 		return $binding;
 	}
 
@@ -915,10 +930,10 @@ final class Parser_Run
 		$constant->name = $name;
 		$this->collector->collect_constant($constant, $declaration_scope, $name_index, $record);
 		$this->expect('=');
-		$saved_scope = $this->current_scope;
-		$this->current_scope = $declaration_scope;
+		$saved_scope = $this->current_scope();
+		$this->select_scope($declaration_scope);
 		$initializer = $this->expression();
-		$this->current_scope = $saved_scope;
+		$this->select_scope($saved_scope);
 		$this->expect(';');
 		$same = $this->same_tokens($old_start, $old_end, $start, $this->position);
 		if ($same) { $this->retain_range($constant->initializer, $initializer->start_token()); }
@@ -958,8 +973,8 @@ final class Parser_Run
 		}
 		$cases /** Storage<enum_case_node> */ = new Storage();
 		$this->expect('{');
-		$saved_scope = $this->current_scope;
-		$this->current_scope = $this->source_scope;
+		$saved_scope = $this->current_scope();
+		$this->select_scope($this->source_scope);
 		while ($this->text() !== '}') {
 			$case_start = $this->expect('case');
 			if (!$this->identifier()) {
@@ -976,7 +991,7 @@ final class Parser_Run
 			$case_node->set_span($case_start, $this->position);
 			$cases->append($case_node);
 		}
-		$this->current_scope = $saved_scope;
+		$this->select_scope($saved_scope);
 		$this->expect('}');
 		$same = $this->same_tokens($old_start, $old_end, $start, $this->position);
 		if ($same) {
@@ -1001,7 +1016,7 @@ final class Parser_Run
 	/** Register the common type identity, then reconcile its declared member categories. */
 	private function type_declaration(): type_declaration_node
 	{
-		if ($this->current_scope->is_function()) {
+		if ($this->current_scope()->is_function()) {
 			throw new \RuntimeException($this->error_message('Local record declarations are not supported yet'));
 		}
 		$start = $this->position;
@@ -1203,10 +1218,10 @@ final class Parser_Run
 		$initializer /** nullable<expression_node> */ = null;
 		if ($this->text() === '=') {
 			$this->position++;
-			$saved_scope = $this->current_scope;
-			$this->current_scope = $scope;
+			$saved_scope = $this->current_scope();
+			$this->select_scope($scope);
 			$initializer = $this->expression();
-			$this->current_scope = $saved_scope;
+			$this->select_scope($saved_scope);
 		}
 		$this->expect(';');
 		$same = $this->same_tokens($old_start, $old_end, $start, $this->position);
@@ -1274,7 +1289,7 @@ final class Parser_Run
 	private function callable_declaration(?collected_member_owner $record, array $modifiers /** vector<declaration_modifier> */, int $source_start, ?scope $registration_scope = null): callable_declaration_node
 	{
 		$token_rows /** Storage<token> */ = $this->tokens->tokens;
-		if ($this->current_scope->is_function()) {
+		if ($this->current_scope()->is_function()) {
 			throw new \RuntimeException($this->error_message('Nested function declarations are not implemented'));
 		}
 		$start = $source_start < 0 ? $this->position : $source_start;
@@ -1454,7 +1469,7 @@ final class Parser_Run
 		$closure->set_span($start, $start);
 		$this->collector->collect_anonymous_callable($closure);
 		$signature_scope = $closure->signature_scope();
-		$signature_scope->set_parent($this->current_scope);
+		$signature_scope->set_parent($this->current_scope());
 		// Keep parameter observers valid even when parsing fails before the node is attached.
 		$this->retain_scope($signature_scope);
 		$signature = $closure->signature_syntax;
@@ -1478,7 +1493,7 @@ final class Parser_Run
 				}
 				$variable_start = $this->position++;
 				$capture->variable = $this->variable_reference($variable_start);
-				$capture->variable->collect($this->collector, $this->current_scope, $variable_start);
+				$capture->variable->collect($this->collector, $this->current_scope(), $variable_start);
 				$this->finish_node($capture, $capture_start);
 				$captures->append($capture);
 				if ($this->text() !== ',') { break; }
@@ -1497,10 +1512,10 @@ final class Parser_Run
 			$body_start = $this->position;
 			$body = new function_body_node($body_scope);
 			$return_statement = new return_node();
-			$enclosing = $this->current_scope;
-			$this->current_scope = $body_scope;
+			$enclosing = $this->current_scope();
+			$this->select_scope($body_scope);
 			try { $return_statement->expression = $this->expression(); }
-			finally { $this->current_scope = $enclosing; }
+			finally { $this->select_scope($enclosing); }
 			$this->finish_node($return_statement, $body_start);
 			$statements /** Storage<statement_node> */ = $body->statements;
 			$statements->append($return_statement);
@@ -1587,8 +1602,8 @@ final class Parser_Run
 		$start = $this->expect('{');
 		$body = new function_body_node($scope);
 		$children /** Storage<statement_node> */ = $body->statements;
-		$enclosing = $this->current_scope;
-		$this->current_scope = $scope;
+		$enclosing = $this->current_scope();
+		$this->select_scope($scope);
 		try {
 			while (($this->text() !== '}') && ($this->text() !== '')) {
 				$statement = $this->statement();
@@ -1597,7 +1612,7 @@ final class Parser_Run
 			$this->expect('}');
 		}
 		finally {
-			$this->current_scope = $enclosing;
+			$this->select_scope($enclosing);
 		}
 		$this->finish_node($body, $start);
 		return $body;
@@ -1680,14 +1695,14 @@ final class Parser_Run
 		$handler = new catch_node();
 		$binding = new variable_declaration_node();
 		$binding_start = $this->position;
-		$binding->type_syntax = $this->type_syntax($this->current_scope);
+		$binding->type_syntax = $this->type_syntax($this->current_scope());
 		if (!string_byte_starts_with($this->text(), '$')) {
 			throw new \RuntimeException('Catch requires a simple local binding');
 		}
 		$name_position = $this->position++;
 		$binding->name = $this->name_at($name_position);
 		$this->finish_node($binding, $binding_start);
-		$binding->collect($this->collector, $this->current_scope, $name_position);
+		$binding->collect($this->collector, $this->current_scope(), $name_position);
 		$this->expect(')');
 		$handler->binding = $binding;
 		$handler->body = $this->statement_block();
@@ -1701,7 +1716,7 @@ final class Parser_Run
 		$start = $this->position++;
 		$declaration = new variable_declaration_node();
 		$declaration->name = $this->name_at($start);
-		$type = $this->type_syntax($this->current_scope);
+		$type = $this->type_syntax($this->current_scope());
 		$declaration->type_syntax = $this->text() === '['
 			? object_cast($this->array_type($type), type_node::class)
 			: object_cast($type, type_node::class);
@@ -1715,7 +1730,7 @@ final class Parser_Run
 		}
 		if ($terminated) { $this->expect(';'); }
 		$this->finish_node($declaration, $start);
-		$declaration->collect($this->collector, $this->current_scope, $start);
+		$declaration->collect($this->collector, $this->current_scope(), $start);
 		return $declaration;
 	}
 
@@ -1916,7 +1931,7 @@ final class Parser_Run
 
 	private function object_type_target(): type_node
 	{
-		$target = $this->type_syntax($this->current_scope);
+		$target = $this->type_syntax($this->current_scope());
 		if (!($target instanceof named_type_node)) {
 			throw new \RuntimeException($this->error_message('Object type operation requires a literal named target'));
 		}
@@ -2046,7 +2061,7 @@ final class Parser_Run
 		if ($this->data_construction_ahead())
 		{
 			$start = $this->position;
-			$target = $this->type_syntax($this->current_scope);
+			$target = $this->type_syntax($this->current_scope());
 			$this->expect('::');
 			return $this->data_construction($start, $target);
 		}
@@ -2099,7 +2114,7 @@ final class Parser_Run
 			if (($type_end >= 0) && ($this->text_at_offset($type_end) === '::'))
 			{
 				$start = $this->position;
-				$owner_type = $this->type_syntax($this->current_scope);
+				$owner_type = $this->type_syntax($this->current_scope());
 				$this->expect('::');
 				if (!$this->identifier() && !string_byte_starts_with($this->text(), '$')) {
 					throw new \RuntimeException($this->error_message('Expected static member name'));
@@ -2124,7 +2139,7 @@ final class Parser_Run
 			$constant = new constant_reference_node();
 			$constant->name = $this->source_name();
 			$this->finish_node($constant, $start);
-			$constant->collect($this->collector, $this->current_scope, $start);
+			$constant->collect($this->collector, $this->current_scope(), $start);
 			return $constant;
 		}
 		$start = $this->position;
@@ -2139,10 +2154,10 @@ final class Parser_Run
 				$offset++;
 			}
 			if ($this->text_at_offset($offset) === '=') {
-				$variable->collect_write($this->collector, $this->current_scope, $start);
+				$variable->collect_write($this->collector, $this->current_scope(), $start);
 			}
 			else {
-				$variable->collect($this->collector, $this->current_scope, $start);
+				$variable->collect($this->collector, $this->current_scope(), $start);
 			}
 			$node = $variable;
 		}
@@ -2260,7 +2275,7 @@ final class Parser_Run
 			$variable = new variable_reference_node();
 			$variable->name = $name;
 			$this->finish_node($variable, $start);
-			$variable->collect($this->collector, $this->current_scope, $start);
+			$variable->collect($this->collector, $this->current_scope(), $start);
 			$part = new interpolation_value_node();
 			$part->expression = $variable;
 			$part->byte_offset = $first;
@@ -2373,7 +2388,7 @@ final class Parser_Run
 	{
 		$start = $this->expect('(');
 		$cast = new cast_expression_node();
-		$cast->target_type = $this->type_syntax($this->current_scope);
+		$cast->target_type = $this->type_syntax($this->current_scope());
 		$this->expect(')');
 		$cast->operand = $this->unary_expression();
 		$this->finish_node($cast, $start);
@@ -2485,7 +2500,7 @@ final class Parser_Run
 				$invocation->callee = $base;
 				$invocation->arguments = $this->call_arguments();
 				$this->finish_node($invocation, $start);
-				$invocation->collect($this->collector, $this->current_scope, $start);
+				$invocation->collect($this->collector, $this->current_scope(), $start);
 				$base = $invocation;
 				continue;
 			}
@@ -2529,7 +2544,7 @@ final class Parser_Run
 				$field->name = $this->name_at($field_index);
 				$this->finish_node($field, $start);
 				$base = $field;
-				$field->collect($this->collector, $this->current_scope, $field_index);
+				$field->collect($this->collector, $this->current_scope(), $field_index);
 				continue;
 			}
 			$this->position++;
@@ -2561,7 +2576,7 @@ final class Parser_Run
 				$type_name = $this->source_name();
 				$type = $this->named_type($type_start, $type_name);
 				$template_arguments->append($type);
-				$type->collect($this->collector, $this->current_scope, $type_start);
+				$type->collect($this->collector, $this->current_scope(), $type_start);
 				if ($this->text() !== ',') {
 					break;
 				}
@@ -2572,7 +2587,7 @@ final class Parser_Run
 		}
 		$call->arguments = $this->call_arguments();
 		$this->finish_node($call, $start);
-		$call->collect($this->collector, $this->current_scope, $start);
+		$call->collect($this->collector, $this->current_scope(), $start);
 		return $call;
 	}
 
@@ -2601,7 +2616,7 @@ final class Parser_Run
 	{
 		$start = $this->position++;
 		$node = new object_construction_node();
-		$node->target_type = $this->type_syntax($this->current_scope);
+		$node->target_type = $this->type_syntax($this->current_scope());
 		$this->expect('(');
 		$arguments /** Storage<expression_node> */ = $node->arguments;
 		if ($this->text() !== ')')

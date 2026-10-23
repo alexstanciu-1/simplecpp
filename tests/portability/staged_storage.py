@@ -78,8 +78,38 @@ $owner->set_point($read);
 $replaced = $owner->point();
 echo $replaced->value;
 '''
+parser_source = (APP / '03_parse/parser.php').read_text()
+def parser_method(name):
+    start = parser_source.index('private function ' + name + '(')
+    opening = parser_source.index('{', start)
+    end, depth = opening + 1, 1
+    while depth:
+        depth += (parser_source[end] == '{') - (parser_source[end] == '}')
+        end += 1
+    return parser_source[start:end]
+
+backing = 'private ?scope $current_scope_value = null;'
+assert backing in parser_source
+source += '\nclass scope {}\nclass Parser_Scope_Proof {\n' + backing + '\n'
+source += parser_method('current_scope') + '\n' + parser_method('select_scope')
+source += r'''
+ public function read(): scope { return $this->current_scope(); }
+ public function select(scope $value): void { $this->select_scope($value); }
+}
+$parser_scope = new Parser_Scope_Proof();
+try { $early_scope = $parser_scope->read(); echo ':bad'; }
+catch (\LogicException $error) { echo ':scope-empty'; }
+$outer = new scope(); $inner = new scope();
+$parser_scope->select($outer);
+$saved = $parser_scope->read();
+$parser_scope->select($inner);
+echo $parser_scope->read() === $inner ? ':inner' : ':bad';
+$parser_scope->select($saved);
+echo $parser_scope->read() === $outer ? ':restored' : ':bad';
+'''
 (out / 'source/main.php').write_text(source)
 expected = b'node-empty:point-empty:argument-empty:nullable:same:9:replaced:write-failed:retained:3:3:11'
+expected += b':scope-empty:inner:restored'
 with CommandRunner(out / 'logs', ROOT) as runner:
     assert runner.run('host', ['php8.5', '-r', 'foreach(array_slice($argv,1) as $path){require $path;}',
                              TOOLS / 'runtime/bootstrap.php', out / 'source/main.php']) == expected

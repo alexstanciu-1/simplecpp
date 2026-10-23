@@ -1261,3 +1261,14 @@ tests/portability/staged_storage.py; evidence staged_storage_layout. Identity, e
 reads, replacement, failed RHS preservation and independent explicit struct copies pass.
 Automatic marker/access rewriting and its rejection/hygiene/null-write/retained proofs
 remain open. No production change, so no new bootstrap checkpoint for this test slice.
+
+## INIT-02 explicit Parser_Run scope adaptation
+
+The audited post-construction current_scope now has private nullable storage,
+checked reads and required whole-value selection. All assignment/read call sites
+preserve existing scope transitions. Nine PHP parser/trait/AST/namespace/retained
+checks pass; extracted production accessor methods pass PHP and all three native
+routes. Evidence: parser_scope. This is authorized explicit source adaptation;
+automatic marker rewriting, field-place classification and remaining INIT-02 proofs
+stay open. Bootstrap 1:14.42 wall / 342388 KiB RSS / 312 MiB PHP heap, same first
+syntax_node blocker and diagnostic set.
