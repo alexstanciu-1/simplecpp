@@ -133,3 +133,50 @@ on PHP, legacy native and ordinary/prelowered v0.2, proving early failure and se
 scope identity through save/change/restore. PHP parser/AST/trait/retained lookup and
 namespace lifecycle regressions cover the actual parser call sites. This remains a
 source adaptation, not automatic marker implementation or a native parser rebuild.
+
+## Implementation-owner follow-up: reuse the class Node tree
+
+Inspection of the current converter identifies a stronger reuse point than a token
+preprocessor. `referenceClass()` already collects the full property/method list before
+returning its class Node; `method()`/`localBody()` retain grouped bodies and `emit()`
+visits them recursively. Run a bounded staged-field transformation on that completed
+class representation, before emission. This sees declarations after methods without
+adding PHP symbol/type inference or a second token parser.
+
+Declaration parsing must retain the marker, original visibility, payload spelling and
+origin path as explicit field facts rather than emitting an ordinary property string.
+Use the proven nullable backing/checking layout. Track only the containing class's
+unambiguous direct fields and `$this` receivers. Trait-expanded tokens retain original
+paths, but Nodes currently retain only line numbers: preserve the relevant origin
+before admitting or rejecting trait-owned fields. Inheritance must not be inferred
+from a spelling match. Generated names need collision checks for fields AND methods;
+the current reserved temporary check covers source variables only.
+
+The class tree is not yet a complete place model. `property_access` represents only
+`->field` beside its receiver. Standalone writes need a same-level assignment/RHS
+boundary; all nested groups must preserve evaluation order. Do not rewrite field
+reads recursively before classifying their enclosing use: that could turn a mutation
+into an update of a copied value or make a presence probe throw.
+
+Specific existing parser owners requiring attention:
+
+- `issetProbe()` folds its path into one opaque `probe` string. A generic child-Node
+  walk cannot see its field uses. Keep a structural path or reject a locally identified
+  marked path before this information is discarded. Bare-field isset already rejects;
+  keyed probes can hide the staged field inside a longer path.
+- `keyedRemoval()` similarly owns removal places; `referenceLocal()` owns borrowing.
+  They must not bypass staged-field rejection through opaque emitted text.
+- `closure()` is represented as a method-shaped Node. Nested callable receiver scope
+  cannot inherit the enclosing class's marked-field map blindly. Unsupported `$this`
+  capture forms should reject rather than receive an implicit lifetime protocol.
+- Ordinary by-reference call compatibility still belongs to the downstream compiler;
+  converter structural rewriting must not claim to resolve arbitrary callee signatures.
+  A synthesized by-value getter cannot serve as writable storage.
+
+This is a local converter-model refinement, not a new compiler retained model or
+language contract. Declaration/synthesis alone is not a safe usable implementation;
+first vertical slice must include reads, whole writes and rejection paths together.
+Class/struct payload classification and explicit struct copies remain governed by
+COPY-01; unresolved payload kinds need explicit source adaptation, not PHP-reference
+semantics guessed from a named type. The 6–12x estimate remains: the class Node reuse
+avoids a token preprocessor, but these place and origin distinctions still need work.

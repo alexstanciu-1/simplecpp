@@ -1411,3 +1411,12 @@ Reuse existing conditionless-loop completion via equivalent PHP for (;;) spellin
 no analyzer/converter extension. Production extraction proof passes all routes and
 empty/ordered traversal. Evidence: type_children. Bootstrap 1:16.22 / 343628 KiB RSS /
 314 MiB PHP heap: read_next diagnostic removed, none added; first syntax_node remains.
+
+## INIT-02 converter ownership refinement
+
+Current-source audit identifies completed referenceClass Node trees as the bounded
+rewrite owner, avoiding a new token preprocessor. Method groups already preserve
+nesting, but probes/removal fold places into opaque strings; declaration origin and
+closure receiver scope also need preservation/rejection. Updated the INIT-02 reuse
+audit with concrete parser owners and safety requirements. No marker implementation
+or completed INIT-02 claim; no production change or bootstrap checkpoint in this audit.
