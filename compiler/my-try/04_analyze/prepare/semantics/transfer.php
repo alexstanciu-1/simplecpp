@@ -12,6 +12,13 @@ final class Transfer_Preparation
 		if (($definition instanceof callable_type_definition) || ($definition instanceof closure_type_definition)) {
 			return capture_transfer::callable_value;
 		}
+		if (Type_Queries::record_storage($type) === record_storage_kind::shared) {
+			$payload = Type_Queries::record_payload($type);
+			if (Type_Queries::is_source_class($payload)
+				|| (Type_Queries::source_declaration($payload) instanceof collected_interface)) {
+				return capture_transfer::shared_value;
+			}
+		}
 		$family = $canonical->family();
 		if (($family === type_family::boolean) || ($family === type_family::integer)
 			|| ($family === type_family::floating) || ($family === type_family::null_sentinel)
@@ -28,14 +35,17 @@ final class Transfer_Preparation
 				|| ($definition === Model::$type_catalog->definition('hash'))
 				|| ($definition instanceof nullable_type_definition) || ($definition instanceof result_type_definition)) {
 				$application = object_cast($canonical, applied_template_type::class);
+				$permission = capture_transfer::owned_value;
 				foreach ($application->arguments() as $index => $argument) {
 					// The hash key protocol already restricts mixed keys to keyable scalars.
 					if (($definition === Model::$type_catalog->definition('hash')) && ($index === 1)) {
 						if (Type_Queries::canonical($argument)->definition() instanceof mixed_semantics) { continue; }
 					}
-					if (self::classify($argument) !== capture_transfer::owned_value) { return capture_transfer::forbidden; }
+					$argument_permission = self::classify($argument);
+					if ($argument_permission === capture_transfer::shared_value) { $permission = capture_transfer::shared_value; }
+					elseif ($argument_permission !== capture_transfer::owned_value) { return capture_transfer::forbidden; }
 				}
-				return capture_transfer::owned_value;
+				return $permission;
 			}
 		}
 		return capture_transfer::forbidden;

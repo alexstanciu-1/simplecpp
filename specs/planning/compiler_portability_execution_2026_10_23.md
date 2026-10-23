@@ -1124,3 +1124,24 @@ sequential reruns each of the current and baseline binaries pass in
 is unresolved; do not claim a proven pre-existing defect or a clean full-suite run.
 The first sandboxed run could not execute LeakSanitizer under ptrace; the second run
 was outside that restriction with leak detection enabled.
+
+## TASK-01 compiler permission transport
+
+Shared source class/interface captures now carry joined-only permission using
+existing record-storage/payload queries. Existing recursive owned-container
+classification propagates that restriction; isolated payload/known-closure checks
+still reject it. Closure erasure, nested captures, provider adapters and concrete
+callable facades preserve the full runtime permission value. The dependency-free
+task_permissions header keeps templates out of application declarations.
+
+All 19 task_transfer tasks pass in /tmp/task-permissions-transport-02, including
+new joined-only/nested-empty controls and prior isolated rejection/retained repair.
+Initial header-dependency and metadata fixture-order failures were corrected;
+see results/compiler_bootstrap_backlog_2026_10_23/task_permissions/README.md.
+API metadata selection and shared payload/callback admission remain pending;
+this does not close TASK-01 or the pending TASK-02 v0.2 execution proofs.
+
+Bootstrap /tmp/compiler-bootstrap-task-permissions-01: 75.94 s wall /
+342272 KiB RSS (334.3 MiB) / 312 MiB PHP heap. Same first required-file initialization
+failure and aggregate diagnostic texts as retained_lookup. No fatal/OOM, emission
+or native compiler rebuild.

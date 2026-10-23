@@ -75,7 +75,7 @@ final class Capture_Preparation
 		$body = object_cast($identity->syntax()->require_body()->work(), anonymous_body_work::class);
 		$captures /** Storage<prepared_capture> */ = $body->captures;
 		foreach ($captures as $capture) {
-			if ($capture->transfer === capture_transfer::forbidden) {
+			if (($capture->transfer === capture_transfer::forbidden) || ($capture->transfer === capture_transfer::shared_value)) {
 				throw new \RuntimeException('Task callback captures are not transferable');
 			}
 			if ($capture->transfer === capture_transfer::callable_value) { self::require_transfer($capture->type, $context); }

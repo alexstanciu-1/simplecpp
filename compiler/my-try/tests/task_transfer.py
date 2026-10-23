@@ -18,7 +18,7 @@ out.mkdir(parents=True, exist_ok=False)
 metadata = out / 'metadata'
 shutil.copytree(ROOT / 'runtime/metadata/modules', metadata)
 module = {'version':1, 'module':'task_transfer_probe', 'dependencies':['core'], 'functions':[], 'cpp':[]}
-for name, result in [('allowed','bool'), ('execute','int')]:
+for name, result in [('allowed','bool'), ('execute','int'), ('joined_allowed','bool')]:
     module['functions'].append({'id':'probe.'+name,'name':'probe_'+name,'parameters':[{'name':'callback','type':{'callable':{'parameters':[],'returns':'int'}},'passing':'value','requires_transfer':name == 'execute'}],'returns':result})
     module['cpp'].append({'id':'probe.'+name,'symbol':'task_transfer_probe::'+name,'header':str(APP/'tests/fixtures/task_transfer/provider.hpp')})
 module['functions'].append({'id':'probe.generic','name':'probe_generic','type_parameters':['R'],'parameters':[{'name':'callback','type':{'callable':{'parameters':[],'returns':{'parameter':'R'}}},'passing':'value','requires_transfer':True}],'returns':{'parameter':'R'}})
@@ -27,6 +27,8 @@ module['functions'].append({'id':'probe.after','name':'probe_after','parameters'
 module['cpp'].append({'id':'probe.after','symbol':'task_transfer_probe::after','header':str(APP/'tests/fixtures/task_transfer/provider.hpp')})
 (metadata/'task_transfer_probe.json').write_text(json.dumps(module,indent=2)+'\n')
 cases = {
+    'joined-permission': ('function pass(function<int()> $f):function<int()>{return $f;}class Box{public int $n=7;}$b=new Box();$f function<int()> = function() use ($b):int{return $b->n;};$g function<int()> = function() use ($f):int{return $f();};echo probe_joined_allowed(pass($g)),probe_allowed(pass($g)),$g();', '17'),
+    'joined-intersection': ('class Box{public int $n=7;}$b=new Box();$f function<int()> = function() use ($b):int{return $b->n;};$empty function<int()>;$g function<int()> = function() use ($f,$empty):int{return $f();};echo probe_joined_allowed($g),probe_allowed($g),$g();', '7'),
     'generic': ('echo probe_generic(fn():string=>"owned");', 'owned'),
     'reject-order': ('function mark():int{echo 42;return 0;}class Box{public int $n=7;}$b=new Box();$f function<int()> = function() use ($b):int{return $b->n;};probe_after($f,mark());', '42'),
     'containers': ('$v vector<int> = [40,2];$h hash<int> = {"n":0};$n ?int=0;$f function<int()> = function() use ($v,$h,$n):int{return $v[0]+$v[1]+$h["n"]+($n??0);};echo probe_execute($f);', '42'),

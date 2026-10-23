@@ -73,11 +73,16 @@ final class CPP_Syntax
 			$qualifier = q_count($capture_parts) === 0 ? '' : ' mutable';
 			$result_type = CPP_Declarations::return_type($facts->signature, $this->context, false);
 			$callback = '[' . q_implode(', ', $capture_parts) . '](' . q_implode(', ', $parts) . ')' . $qualifier . ' -> ' . $result_type . " {\n" . $body . '}';
-			$permission = 'true';
+			$this->context->headers['scpp/task_permissions.hpp'] = true;
+			$permission = 'scpp::task_permissions::isolated_and_joined';
 			foreach ($captures as $capture) {
-				if ($capture->transfer === capture_transfer::forbidden) { $permission = 'false'; break; }
+				if ($capture->transfer === capture_transfer::forbidden) { $permission = 'scpp::task_permissions::none'; break; }
+				if ($capture->transfer === capture_transfer::shared_value) {
+					$permission = 'scpp::intersect_task_permissions(' . $permission . ', scpp::task_permissions::joined_shared)';
+				}
 				if ($capture->transfer === capture_transfer::callable_value) {
-					$permission .= ' && ' . CPP_Generator::local_name(object_cast(weakref_get($capture->declaration), collected_name::class)) . '.transfer_allowed()';
+					$permission = 'scpp::intersect_task_permissions(' . $permission . ', '
+						. CPP_Generator::local_name(object_cast(weakref_get($capture->declaration), collected_name::class)) . '.transfer_permissions())';
 				}
 			}
 			$forwarded /** vector<string> */ = [];
@@ -88,11 +93,12 @@ final class CPP_Syntax
 			}
 			// The closure owns its permission, so nesting and later erasure observe the
 			// captured callable value rather than the current outer variable.
-			return '([&]() { auto callback = ' . $callback . '; bool transferable = ' . $permission . '; '
-				. 'struct closure_value { decltype(callback) body; bool transferable; '
-				. 'bool transfer_allowed() const { return transferable; } '
+			return '([&]() { auto callback = ' . $callback . '; auto permissions = ' . $permission . '; '
+				. 'struct closure_value { decltype(callback) body; scpp::task_permissions permissions; '
+				. 'scpp::task_permissions transfer_permissions() const { return permissions; } '
+				. 'bool transfer_allowed() const { return scpp::permits_task(permissions, scpp::task_policy::isolated_transfer); } '
 				. $result_type . ' operator()(' . q_implode(', ', $parts) . ') { return this->body(' . q_implode(', ', $forwarded) . '); } }; '
-				. 'return closure_value{static_cast<decltype(callback)&&>(callback), transferable}; }())';
+				. 'return closure_value{static_cast<decltype(callback)&&>(callback), permissions}; }())';
 		}
 		if ($node instanceof object_type_node) {
 			$object_type = object_cast($node, object_type_node::class);

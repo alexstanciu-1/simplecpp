@@ -174,6 +174,16 @@ can still be invoked where no transfer requirement exists. This contract adds no
 general thread-safety analysis and does not authorize shared mutable or resource
 captures. Unknown capture domains remain denied pending their own contract.
 
+The callable carrier distinguishes consumer requirements from environment
+permissions. Source class/interface handles captured by value may carry
+`joined_shared` permission, including through owned nullable/container wrappers.
+This does not satisfy `requires_transfer`, which retains its isolated-transfer
+meaning. Nested callable environments intersect their permissions; erasure, copies
+and provider adaptation must preserve the full result without upgrading it.
+Runtime resource handles, unique/weak ownership and arbitrary borrowed captures
+gain no permission from this distinction. API metadata admission for joined shared
+tasks is a separate integration step; carrier support alone does not enable it.
+
 ### Bounded generic payload transfer and result mapping
 
 A generic function may list inferred parameter names in `transfer_types`. Shared

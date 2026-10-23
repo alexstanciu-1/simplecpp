@@ -57,6 +57,13 @@ passing this suite does not prove source task creation or callback transfer.
 
 ## Portable compiler bootstrap and empty defaults
 
+`python3 tests/task_transfer.py --results FRESH` also checks joined-only capture
+permissions through ordinary and concrete erasure, nested callable captures,
+parameter/return copies and provider adaptation. An empty nested callable denies
+both permissions. Existing isolated-transfer rejection and retained repair remain
+controls. Permission transport is not proof of joined task API admission or native
+compiler concurrency; those require TASK-01 metadata/payload integration and TASK-02.
+
 `python3 tools/bootstrap_probe.py --results FRESH` (paths relative to compiler/my-try)
 snapshots/converts the compiler plus existing native proof driver, assembles framework
 PHS and runs production PHP-hosted project stages. GNU time records wall time/peak RSS;

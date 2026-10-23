@@ -471,7 +471,7 @@ abstract class prepared_source_storage extends prepared_storage {
 	public collected_name $declaration /** weak<collected_name> */;
 }
 
-enum capture_transfer { case forbidden; case owned_value; case callable_value; }
+enum capture_transfer { case forbidden; case owned_value; case shared_value; case callable_value; }
 
 /** A capture binding is distinct from its source, whether copied or borrowed. */
 final class prepared_capture extends prepared_source_storage {

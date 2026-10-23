@@ -7,6 +7,9 @@ namespace task_transfer_probe {
 template <typename Callback> scpp::bool_t allowed(Callback callback) {
  return scpp::bool_t(callback.transfer_allowed());
 }
+template <typename Callback> scpp::bool_t joined_allowed(Callback callback) {
+ return scpp::bool_t(callback.transfer_allowed(scpp::task_policy::joined_shared));
+}
 template <typename Callback> scpp::int_t<> execute(Callback callback) {
  // Admission must check the provider contract before entering this function.
  scpp::int_t<> value;

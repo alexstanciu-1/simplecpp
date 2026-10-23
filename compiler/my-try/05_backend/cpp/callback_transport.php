@@ -34,11 +34,11 @@ final class CPP_Callback_Transport
 		}
 		$result = CPP_Declarations::type($signature->return_type, $context);
 		$storage = CPP_Declarations::type($type, $context);
-		return '([&]() -> ' . $storage . ' { auto callback = ' . $expression . '; bool transferable = callback.transfer_allowed(); using Captures = decltype(callback); '
+		return '([&]() -> ' . $storage . ' { auto callback = ' . $expression . '; auto permissions = callback.transfer_permissions(); using Captures = decltype(callback); '
 			. 'return ' . $storage . '(new Captures(static_cast<Captures&&>(callback)), '
 			. '+[](void* state' . $declarations . ') -> ' . $result . ' { return (*static_cast<Captures*>(state))(' . $arguments . '); }, '
 			. '+[](const void* state) -> void* { return new Captures(*static_cast<const Captures*>(state)); }, '
-			. '+[](void* state) { delete static_cast<Captures*>(state); }, transferable); }())';
+			. '+[](void* state) { delete static_cast<Captures*>(state); }, permissions); }())';
 	}
 
 	/** Provider-native payloads are adapted at the existing runtime call boundary. */
@@ -94,9 +94,9 @@ final class CPP_Callback_Transport
 				: 'return result; ');
 		}
 		// The adapter may outlive the operation helper: never retain its stack inputs.
-		return '([&]() { auto provider_callback = (' . $expression . '); bool transferable = provider_callback.transfer_allowed(); '
+		return '([&]() { auto provider_callback = (' . $expression . '); auto permissions = provider_callback.transfer_permissions(); '
 			. 'return scpp::internal::carry_callback_transfer<' . $result_type . '(' . q_implode(', ', $input_types) . ')>([callback = static_cast<decltype(provider_callback)&&>(provider_callback)]('
-			. $declarations . ') mutable -> ' . $result_type . ' { ' . $body . '}, transferable); }())';
+			. $declarations . ') mutable -> ' . $result_type . ' { ' . $body . '}, permissions); }())';
 	}
 
 	public static function interface(canonical_type_use $type, string $name, string $native,
@@ -117,10 +117,11 @@ final class CPP_Callback_Transport
 		}
 		$result = CPP_Declarations::type($signature->return_type, $context);
 		$interface = new cpp_type_interface();
+		$context->headers['scpp/task_permissions.hpp'] = true;
 		$interface->declaration_prefix = CPP_Artifacts::includes($context->headers, '');
 		$inputs = 'void* state, ' . $result . ' (*call)(void*' . $types . '), void* (*copy)(const void*), void (*destroy)(void*)';
-		$interface->declaration = $name . '(' . $inputs . " , bool transferable);\n"
-			. $result . ' operator()(' . $declarations . ") const;\nexplicit operator bool() const;\nbool transfer_allowed() const;\nvoid require_transfer() const;\n";
+		$interface->declaration = $name . '(' . $inputs . " , scpp::task_permissions permissions);\n"
+			. $result . ' operator()(' . $declarations . ") const;\nexplicit operator bool() const;\nscpp::task_permissions transfer_permissions() const;\nbool transfer_allowed(scpp::task_policy policy = scpp::task_policy::isolated_transfer) const;\nvoid require_transfer(scpp::task_policy policy = scpp::task_policy::isolated_transfer) const;\n";
 		$owner = 'callback_owner_' . $name;
 		$interface->implementation = 'struct ' . $owner . ' { void* state; '
 			. $result . ' (*call)(void*' . $types . '); void* (*copy)(const void*); void (*destroy)(void*); '
@@ -129,12 +130,13 @@ final class CPP_Callback_Transport
 			. $owner . '(' . $owner . '&& other) noexcept : state(other.state), call(other.call), copy(other.copy), destroy(other.destroy) { other.state = nullptr; } '
 			. '~' . $owner . '() { if (state) destroy(state); } '
 			. $result . ' operator()(' . $declarations . ') const { return call(state' . ($arguments === '' ? '' : ', ' . $arguments) . '); } }; '
-			. $name . '::' . $name . '(' . $inputs . ', bool transferable) { ' . $owner . ' owner(state, call, copy, destroy); '
-			. '::new(address()) ' . $native . '(std::move(owner), transferable); }' . "\n"
+			. $name . '::' . $name . '(' . $inputs . ', scpp::task_permissions permissions) { ' . $owner . ' owner(state, call, copy, destroy); '
+			. '::new(address()) ' . $native . '(std::move(owner), permissions); }' . "\n"
 			. $result . ' ' . $name . '::operator()(' . $declarations . ') const { return unwrap(*this)(' . $arguments . '); }' . "\n"
 			. $name . '::operator bool() const { return static_cast<bool>(unwrap(*this)); }' . "\n"
-			. 'bool ' . $name . '::transfer_allowed() const { return unwrap(*this).transfer_allowed(); }' . "\n"
-			. 'void ' . $name . '::require_transfer() const { unwrap(*this).require_transfer(); }' . "\n";
+			. 'scpp::task_permissions ' . $name . '::transfer_permissions() const { return unwrap(*this).transfer_permissions(); }' . "\n"
+			. 'bool ' . $name . '::transfer_allowed(scpp::task_policy policy) const { return unwrap(*this).transfer_allowed(policy); }' . "\n"
+			. 'void ' . $name . '::require_transfer(scpp::task_policy policy) const { unwrap(*this).require_transfer(policy); }' . "\n";
 		return $interface;
 	}
 }
