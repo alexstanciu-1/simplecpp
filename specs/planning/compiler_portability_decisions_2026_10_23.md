@@ -280,7 +280,7 @@ converter work; accepting PHP syntax alone does not establish native initializat
 ## INIT-02 — `_uninitialized_` required fields with staged assignment
 
 **Portable behavior and nullable-storage/accessor direction accepted on 2026-10-23;
-implementation paused. No new Simple C++ initialization feature is approved.**
+implementation active under the accepted backlog goal. No new Simple C++ initialization feature is approved.**
 
 Portable spelling:
 
@@ -1024,7 +1024,7 @@ discussion while independent work continues. Deferred debts remain deferred.
 | COPY-01 | `_struct_` / `_struct_copy_` portable value protocol | Converter work accepted; first proof is `cpp_specialization_ref`; may consume SELF-02; paused. |
 | INIT-01 | Promoted required constructor inputs and explicit valid defaults | Bounded v0.2 set mapping and switch_label source migration implemented with cross-route proofs; promotion plus explicit parent call remains under discussion; inventory C03; in progress. |
 | LOCAL-01 | Class-local definite assignment and existing struct defaults | Structured local flow implemented with per-exit pending storage facts; both-mode behavioral/retained proofs and PHP/legacy-native composition proof pass. Struct defaults preserved; direct take success conditions, negation, lazy operators and branch/loop consumers now integrated. Focused proofs pass; runtime empty-handle contracts remain OWN-01 work. |
-| INIT-02 | `_uninitialized_` required fields, staged assignment and checked reads | Nullable backing and checked accessors accepted; reuse audit complete, 6–12x retained; bounded source/converter proofs pending; no new language feature approved; paused. |
+| INIT-02 | `_uninitialized_` required fields, staged assignment and checked reads | Nullable backing and checked accessors accepted; reuse audit complete, 6–12x retained; explicit class-owner backing/accessor proofs pass for class/scalar-struct payloads on both routes and prelowering; marker/access rewriting and remaining acceptance proofs pending; no new language feature approved; in progress. |
 | TASK-01 | Bounded shared-handle task admission in v0.2 | Accepted bounded scope complete: metadata policy, payload/capture admission, ordinary/prelowered transport, identity and isolated/borrow rejection pass. Temporary shared owners and worker/publisher failures pass both source modes; forced-overlap sanitizer proof verifies joining and owner release with per-call threads and shared pool. No whole-compiler race-freedom claim; inventory D04. |
 | TASK-02 | Retained-type lookup synchronization in portable PHP | Bounded repair complete: PHP retained/standalone, legacy overlap/ThreadSanitizer and unlocked race control pass; ordinary and concrete v0.2 extracted-helper executions now pass after TASK-01 admission. This is not a whole-compiler race-freedom claim. |
 | AST-01 | Explicit concrete virtual methods and portable PHP intent | Core support and converter mapping with `#[\Virtual]` / `#[\Override]` implemented; PHP/legacy/ordinary/prelowered and retained proofs pass; inventory A01; see execution ledger. |

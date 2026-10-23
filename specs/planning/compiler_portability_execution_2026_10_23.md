@@ -1250,3 +1250,14 @@ explicit nullable branch widening because direct legacy deduction fails; normali
 PHP/legacy/ordinary/concrete proofs pass. Evidence: nullable_selection.
 Bootstrap 1:14.31 wall / 342132 KiB RSS / 312 MiB PHP heap, same syntax_node blocker and
 diagnostic set. Optional-fallback coalescing remains open; no unseen-base inference.
+
+## INIT-02 explicit layout acceptance prerequisite
+
+No production marker declarations found. Parser_Run.current_scope is a later-stage
+assignment candidate; constructor-computed inputs remain a separate source decision.
+The explicit private-nullable backing/checking layout now passes PHP, legacy native,
+ordinary v0.2 and concrete prelowering for class and scalar-struct payloads. Proof:
+tests/portability/staged_storage.py; evidence staged_storage_layout. Identity, early
+reads, replacement, failed RHS preservation and independent explicit struct copies pass.
+Automatic marker/access rewriting and its rejection/hygiene/null-write/retained proofs
+remain open. No production change, so no new bootstrap checkpoint for this test slice.

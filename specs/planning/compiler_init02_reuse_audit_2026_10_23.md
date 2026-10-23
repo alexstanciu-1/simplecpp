@@ -1,7 +1,8 @@
 # INIT-02 staged-field converter reuse audit
 Doc Status: planning
 
-2026-10-23. Source inspection only; no implementation, execution proofs or bootstrap.
+2026-10-23. Initial source audit, followed by the explicit layout proof below;
+automatic marker conversion is not implemented.
 This refines the accepted nullable-storage/checked-accessor direction. INIT-02 stays
 converter/source-owned; no native uninitialized value or compiler annotation is added.
 
@@ -103,3 +104,24 @@ Implementation order when authorized:
 No change to Simple C++ semantics is proposed by INIT-02. It strengthens the portable
 PHP conversion guarantee for explicitly marked staged fields. Exact exception class,
 message or cleanup timing is not promised; dependencies on those need separate review.
+
+## Explicit layout proof and source inventory
+
+The active implementation goal now has a passing explicit layout proof in
+`tests/portability/staged_storage.py`, with evidence under
+`results/compiler_bootstrap_backlog_2026_10_23/staged_storage_layout/`. PHP, legacy
+native and ordinary/concrete v0.2 pass for a class owner with class and scalar struct
+payloads. Checked reads fail before assignment; class reads retain identity; struct
+owner-copy operations preserve independent reads/writes and whole replacement.
+A throwing RHS leaves previous class storage intact. No new native protocol needed.
+
+Current production PHP contains no explicit `_uninitialized_` declarations.
+`Parser_Run::$current_scope` is a concrete later-assignment candidate: construction
+leaves it unset, and `parse()` assigns source_scope before parsing bodies. Other
+Parser_Run fields such as parsed/collector are established by constructor algorithms;
+that is not itself a reason to mark them staged. Review each lifecycle separately.
+
+Next: bounded marker facts/access rewriting, hygiene and unsupported-use diagnostics.
+This proof does not establish transparent access parity, invalid-null-write behavior,
+struct-owner support or the final COPY-01 protocol. It uses the already-admitted
+explicit scalar-record copy operation, not a pending struct-method implementation.
