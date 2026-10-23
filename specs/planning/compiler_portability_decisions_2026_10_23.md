@@ -1188,3 +1188,12 @@ struct payloads inside a class from struct owners: current value-record grammar 
 v0.1 restrictions do not admit a general nullable-field/method rewrite in structs.
 Prove an existing route-safe source/helper representation or leave that form unsupported;
 never extend Simple C++ solely for INIT-02. Both route and prelowering proofs remain pending.
+
+## Remaining ownership-consumer witness — direct source initialization checkpoint
+
+The assembled framework function scpp_portability_same_exception still fails v0.2
+preparation on its object-identity comparison (reported as canonical-int operands).
+Retained owner inspection isolates it from the production cursor fixture. Audit the
+existing identity contract and runtime/ordinary/prelowered machinery before repairing
+this consumer; do not infer general object structural equality from PHP support.
+Evidence: results/compiler_bootstrap_backlog_2026_10_23/direct_source_init.

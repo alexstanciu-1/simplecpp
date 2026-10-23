@@ -70,17 +70,15 @@ final class source_record
 	public int $revision /** uint32 */ = 0;
 	/** @reference.weak Model.modules */
 	public module $module_reference /** weak<module> */;
-	/** Current published input and its optional completed stages. @ownership owner */
-	public file $file;
 	/** Current input range and retained token/source storage. */
 	public ?token_list $tokens = null;
 	public ?parsed_file $parsed = null;
 
-	public function __construct(module $owner, file $snapshot)
+	/** Own the published input before deriving its path and weak module link. */
+	public function __construct(module $owner, public file $file)
 	{
 		$this->module_reference = weak($owner);
-		$this->path = $snapshot->path;
-		$this->file = $snapshot;
+		$this->path = $file->path;
 	}
 
 	/** Acquire the module while constructing an IO path from this relative identity. */

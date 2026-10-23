@@ -208,14 +208,10 @@ final class constant_children_iterator extends children_iterator
 /** Inspect explicit type syntax followed by ordered entries, without copying membership. */
 final class data_construction_children_iterator extends children_iterator
 {
-	private data_construction_node $source;
 	private bool $target_read = false;
 	private int $next_entry = 0;
 
-	public function __construct(data_construction_node $source)
-	{
-		$this->source = $source;
-	}
+	public function __construct(private data_construction_node $source) {}
 
 	/** The optional type precedes entries in both source forms. */
 	protected function read_next(): ?ast_node
@@ -239,13 +235,9 @@ final class data_construction_children_iterator extends children_iterator
 /** Key absence skips only the key edge; the value is always required. */
 final class data_entry_children_iterator extends children_iterator
 {
-	private data_entry_node $source;
 	private int $next_field = 0;
 
-	public function __construct(data_entry_node $source)
-	{
-		$this->source = $source;
-	}
+	public function __construct(private data_entry_node $source) {}
 
 	/** Expose original entry order to independent inspection cursors. */
 	protected function read_next(): ?ast_node
@@ -279,13 +271,9 @@ final class nullable_type_children_iterator extends children_iterator
 /** Inspect a conditional through its named owning edges without copying children. */
 final class if_children_iterator extends children_iterator
 {
-	private if_node $source;
 	private int $next_field = 0;
 
-	public function __construct(if_node $source)
-	{
-		$this->source = $source;
-	}
+	public function __construct(private if_node $source) {}
 
 	/** An absent condition is valid only for the final else arm. */
 	protected function read_next(): ?ast_node
@@ -311,15 +299,9 @@ final class if_children_iterator extends children_iterator
 /** Two named syntax edges in source order, without a temporary child collection. */
 final class pair_children_iterator extends children_iterator
 {
-	private ast_node $first;
-	private ast_node $second;
 	private int $position = 0;
 
-	public function __construct(ast_node $first, ast_node $second)
-	{
-		$this->first = $first;
-		$this->second = $second;
-	}
+	public function __construct(private ast_node $first, private ast_node $second) {}
 
 	/** Inspect source order without a temporary child collection. */
 	protected function read_next(): ?ast_node
@@ -339,15 +321,13 @@ final class pair_children_iterator extends children_iterator
 /** Independent inspection cursors borrow the three typed for-clause collections. */
 final class for_children_iterator extends children_iterator
 {
-	private for_node $source;
 	private Storage_Cursor $initialization /** Storage_Cursor<statement_node> */;
 	private Storage_Cursor $conditions /** Storage_Cursor<expression_node> */;
 	private Storage_Cursor $updates /** Storage_Cursor<expression_node> */;
 	private bool $body_read = false;
 
-	public function __construct(for_node $source)
+	public function __construct(private for_node $source)
 	{
-		$this->source = $source;
 		$this->initialization = new Storage_Cursor /** Storage_Cursor<statement_node> */($source->initialization);
 		$this->conditions = new Storage_Cursor /** Storage_Cursor<expression_node> */($source->conditions);
 		$this->updates = new Storage_Cursor /** Storage_Cursor<expression_node> */($source->updates);
@@ -385,13 +365,11 @@ final class for_children_iterator extends children_iterator
 /** Switch syntax exposes its selector before its existing ordered group storage. */
 final class switch_children_iterator extends children_iterator
 {
-	private switch_node $source;
 	private Storage_Cursor $groups /** Storage_Cursor<switch_case_group> */;
 	private bool $selector_read = false;
 
-	public function __construct(switch_node $source)
+	public function __construct(private switch_node $source)
 	{
-		$this->source = $source;
 		$this->groups = new Storage_Cursor /** Storage_Cursor<switch_case_group> */($source->groups);
 	}
 
@@ -412,13 +390,11 @@ final class switch_children_iterator extends children_iterator
 /** A group's labels precede its one shared statement body. */
 final class switch_group_children_iterator extends children_iterator
 {
-	private switch_case_group $source;
 	private Storage_Cursor $labels /** Storage_Cursor<switch_label> */;
 	private bool $body_read = false;
 
-	public function __construct(switch_case_group $source)
+	public function __construct(private switch_case_group $source)
 	{
-		$this->source = $source;
 		$this->labels = new Storage_Cursor /** Storage_Cursor<switch_label> */($source->labels);
 	}
 
@@ -438,10 +414,9 @@ final class switch_group_children_iterator extends children_iterator
 
 final class switch_label_children_iterator extends children_iterator
 {
-	private switch_label $source;
 	private bool $value_read = false;
 
-	public function __construct(switch_label $source) { $this->source = $source; }
+	public function __construct(private switch_label $source) {}
 
 	protected function read_next(): ?ast_node
 	{
@@ -492,13 +467,9 @@ final class coalesce_expression_children_iterator extends children_iterator
 /** Inspect the two or three owning expressions without duplicating shorthand's left. */
 final class conditional_expression_children_iterator extends children_iterator
 {
-	private conditional_expression_node $source;
 	private int $next_field = 0;
 
-	public function __construct(conditional_expression_node $source)
-	{
-		$this->source = $source;
-	}
+	public function __construct(private conditional_expression_node $source) {}
 
 	protected function read_next(): ?ast_node
 	{
@@ -521,13 +492,11 @@ final class conditional_expression_children_iterator extends children_iterator
 /** Preserve source arm order even when default is written before ordinary arms. */
 final class match_children_iterator extends children_iterator
 {
-	private match_expression_node $source;
 	private Storage_Cursor $arms /** Storage_Cursor<match_arm_node> */;
 	private bool $selector_read = false;
 
-	public function __construct(match_expression_node $source)
+	public function __construct(private match_expression_node $source)
 	{
-		$this->source = $source;
 		$this->arms = new Storage_Cursor /** Storage_Cursor<match_arm_node> */($source->arms);
 	}
 
@@ -550,13 +519,11 @@ final class match_children_iterator extends children_iterator
 
 final class match_arm_children_iterator extends children_iterator
 {
-	private match_arm_node $source;
 	private Storage_Cursor $labels /** Storage_Cursor<expression_node> */;
 	private bool $result_read = false;
 
-	public function __construct(match_arm_node $source)
+	public function __construct(private match_arm_node $source)
 	{
-		$this->source = $source;
 		$this->labels = new Storage_Cursor /** Storage_Cursor<expression_node> */($source->labels);
 	}
 
@@ -635,13 +602,9 @@ final class storage_children_iterator extends children_iterator
 /** Retain the source and visit its named fields in grammar order. */
 final class parameter_children_iterator extends children_iterator
 {
-	private parameter_node $source;
 	private int $next_field = 0;
 
-	public function __construct(parameter_node $source)
-	{
-		$this->source = $source;
-	}
+	public function __construct(private parameter_node $source) {}
 
 	/** Read the next named field only when requested. */
 	protected function read_next(): ?ast_node
@@ -663,13 +626,9 @@ final class parameter_children_iterator extends children_iterator
 /** Retain the source and visit its named fields in grammar order. */
 final class binary_expression_children_iterator extends children_iterator
 {
-	private binary_expression_node $source;
 	private int $next_field = 0;
 
-	public function __construct(binary_expression_node $source)
-	{
-		$this->source = $source;
-	}
+	public function __construct(private binary_expression_node $source) {}
 
 	/** Read the next named field only when requested. */
 	protected function read_next(): ?ast_node
@@ -690,13 +649,9 @@ final class binary_expression_children_iterator extends children_iterator
 /** Retain explicit target syntax followed by the converted operand. */
 final class cast_expression_children_iterator extends children_iterator
 {
-	private cast_expression_node $source;
 	private int $next_field = 0;
 
-	public function __construct(cast_expression_node $source)
-	{
-		$this->source = $source;
-	}
+	public function __construct(private cast_expression_node $source) {}
 
 	protected function read_next(): ?ast_node
 	{
@@ -716,13 +671,9 @@ final class cast_expression_children_iterator extends children_iterator
 /** Retain the source and visit its named fields in grammar order. */
 final class assignment_expression_children_iterator extends children_iterator
 {
-	private assignment_expression_node $source;
 	private int $next_field = 0;
 
-	public function __construct(assignment_expression_node $source)
-	{
-		$this->source = $source;
-	}
+	public function __construct(private assignment_expression_node $source) {}
 
 	/** Read the next named field only when requested. */
 	protected function read_next(): ?ast_node
@@ -743,13 +694,9 @@ final class assignment_expression_children_iterator extends children_iterator
 /** Retain the source and visit its named fields in grammar order. */
 final class expression_statement_children_iterator extends children_iterator
 {
-	private expression_statement_node $source;
 	private bool $consumed = false;
 
-	public function __construct(expression_statement_node $source)
-	{
-		$this->source = $source;
-	}
+	public function __construct(private expression_statement_node $source) {}
 
 	/** Read the next named field only when requested. */
 	protected function read_next(): ?ast_node
@@ -765,13 +712,9 @@ final class expression_statement_children_iterator extends children_iterator
 /** Retain the source and visit its named fields in grammar order. */
 final class return_children_iterator extends children_iterator
 {
-	private return_node $source;
 	private bool $consumed = false;
 
-	public function __construct(return_node $source)
-	{
-		$this->source = $source;
-	}
+	public function __construct(private return_node $source) {}
 
 	/** Read the next named field only when requested. */
 	protected function read_next(): ?ast_node
@@ -787,14 +730,10 @@ final class return_children_iterator extends children_iterator
 /** Retain the source and visit its named fields in grammar order. */
 final class variable_declaration_children_iterator extends children_iterator
 {
-	private variable_declaration_node $source;
 	/** Next named-field position; optional fields still occupy their grammar slot. */
 	private int $next_field = 0;
 
-	public function __construct(variable_declaration_node $source)
-	{
-		$this->source = $source;
-	}
+	public function __construct(private variable_declaration_node $source) {}
 
 	/** Skip absent optional children without treating them as the end of traversal. */
 	protected function read_next(): ?ast_node
@@ -824,13 +763,9 @@ final class variable_declaration_children_iterator extends children_iterator
 /** Retain the source and visit its named fields in grammar order. */
 final class array_type_children_iterator extends children_iterator
 {
-	private array_type_node $source;
 	private int $next_field = 0;
 
-	public function __construct(array_type_node $source)
-	{
-		$this->source = $source;
-	}
+	public function __construct(private array_type_node $source) {}
 
 	/** Read the next named field only when requested. */
 	protected function read_next(): ?ast_node
@@ -851,13 +786,9 @@ final class array_type_children_iterator extends children_iterator
 /** Retain the constructor name followed by its ordered type arguments. */
 final class template_application_type_children_iterator extends children_iterator
 {
-	private template_application_type_node $source;
 	private int $next_child = 0;
 
-	public function __construct(template_application_type_node $source)
-	{
-		$this->source = $source;
-	}
+	public function __construct(private template_application_type_node $source) {}
 
 	protected function read_next(): ?ast_node
 	{
@@ -878,13 +809,9 @@ final class template_application_type_children_iterator extends children_iterato
 /** Retain the single type operand owned by a source type-use modifier. */
 final class type_use_modifier_children_iterator extends children_iterator
 {
-	private type_use_modifier_node $source;
 	private bool $read = false;
 
-	public function __construct(type_use_modifier_node $source)
-	{
-		$this->source = $source;
-	}
+	public function __construct(private type_use_modifier_node $source) {}
 
 	protected function read_next(): ?ast_node
 	{
@@ -899,13 +826,9 @@ final class type_use_modifier_children_iterator extends children_iterator
 /** Retain the source and visit its named fields in grammar order. */
 final class index_children_iterator extends children_iterator
 {
-	private index_node $source;
 	private int $next_field = 0;
 
-	public function __construct(index_node $source)
-	{
-		$this->source = $source;
-	}
+	public function __construct(private index_node $source) {}
 
 	/** Read the next named field only when requested. */
 	protected function read_next(): ?ast_node
@@ -926,13 +849,9 @@ final class index_children_iterator extends children_iterator
 /** Retain the source and visit its named fields in grammar order. */
 final class property_children_iterator extends children_iterator
 {
-	private property_node $source;
 	private int $next_field = 0;
 
-	public function __construct(property_node $source)
-	{
-		$this->source = $source;
-	}
+	public function __construct(private property_node $source) {}
 
 	/** Read the next named field only when requested. */
 	protected function read_next(): ?ast_node
@@ -954,13 +873,9 @@ final class property_children_iterator extends children_iterator
 /** Retain the source and visit its named fields in grammar order. */
 final class field_access_children_iterator extends children_iterator
 {
-	private field_access_node $source;
 	private bool $consumed = false;
 
-	public function __construct(field_access_node $source)
-	{
-		$this->source = $source;
-	}
+	public function __construct(private field_access_node $source) {}
 
 	/** Read the next named field only when requested. */
 	protected function read_next(): ?ast_node
@@ -984,14 +899,10 @@ enum namespace_body_children_stage
 /** Independent source owner plus explicit grammar stage and collection progress. */
 final class namespace_body_children_iterator extends children_iterator
 {
-	private namespace_body_node $source;
 	private namespace_body_children_stage $stage = namespace_body_children_stage::imports;
 	private ?storage_children_iterator $collection_cursor = null;
 
-	public function __construct(namespace_body_node $source)
-	{
-		$this->source = $source;
-	}
+	public function __construct(private namespace_body_node $source) {}
 
 	/** Resume the current collection or named field; exhausted collections move to the next stage. */
 	protected function read_next(): ?ast_node
@@ -1073,15 +984,11 @@ enum call_children_stage
 /** Independent source owner plus explicit grammar stage and collection progress. */
 final class call_children_iterator extends children_iterator
 {
-	private call_node $source;
 	private call_children_stage $stage = call_children_stage::callee;
 	private ?storage_children_iterator $template_arguments_cursor = null;
 	private ?storage_children_iterator $arguments_cursor = null;
 
-	public function __construct(call_node $source)
-	{
-		$this->source = $source;
-	}
+	public function __construct(private call_node $source) {}
 
 	/** Resume the current collection or named field; exhausted collections move to the next stage. */
 	protected function read_next(): ?ast_node
@@ -1159,14 +1066,12 @@ final class closure_capture_children_iterator extends children_iterator
 /** Independent source owner plus explicit grammar stage and collection progress. */
 final class callable_children_iterator extends children_iterator
 {
-	private callable_syntax_owner_i $source;
 	private callable_children_stage $stage = callable_children_stage::parameters;
 	private ?storage_children_iterator $sequence_cursor = null;
 
-	public function __construct(callable_syntax_owner_i $source,
+	public function __construct(private callable_syntax_owner_i $source,
 		private ?Storage $captures /** Storage<closure_capture_node> */ = null)
 	{
-		$this->source = $source;
 	}
 
 	/** Resume the current collection or named field; exhausted collections move to the next stage. */
@@ -1220,13 +1125,9 @@ final class callable_children_iterator extends children_iterator
 /** Inspect the one owned unary operand lazily. */
 final class unary_expression_children_iterator extends children_iterator
 {
-	private unary_expression_node $source;
 	private bool $consumed = false;
 
-	public function __construct(unary_expression_node $source)
-	{
-		$this->source = $source;
-	}
+	public function __construct(private unary_expression_node $source) {}
 
 	/** Read the next named field only when requested. */
 	protected function read_next(): ?ast_node
@@ -1242,13 +1143,9 @@ final class unary_expression_children_iterator extends children_iterator
 /** Inspect the one owned mutation target lazily. */
 final class mutation_expression_children_iterator extends children_iterator
 {
-	private mutation_expression_node $source;
 	private bool $consumed = false;
 
-	public function __construct(mutation_expression_node $source)
-	{
-		$this->source = $source;
-	}
+	public function __construct(private mutation_expression_node $source) {}
 
 	/** Read the next named field only when requested. */
 	protected function read_next(): ?ast_node
@@ -1264,13 +1161,9 @@ final class mutation_expression_children_iterator extends children_iterator
 /** Inspect the compound target and RHS in source order. */
 final class compound_assignment_expression_children_iterator extends children_iterator
 {
-	private compound_assignment_expression_node $source;
 	private int $next_field = 0;
 
-	public function __construct(compound_assignment_expression_node $source)
-	{
-		$this->source = $source;
-	}
+	public function __construct(private compound_assignment_expression_node $source) {}
 
 	/** Read the next named field only when requested. */
 	protected function read_next(): ?ast_node
@@ -1325,13 +1218,9 @@ final class foreach_children_iterator extends children_iterator
 
 final class interpolation_value_children_iterator extends children_iterator
 {
-	private interpolation_value_node $source;
 	private bool $consumed = false;
 
-	public function __construct(interpolation_value_node $source)
-	{
-		$this->source = $source;
-	}
+	public function __construct(private interpolation_value_node $source) {}
 
 	/** Read the next named field only when requested. */
 	protected function read_next(): ?ast_node
@@ -1348,12 +1237,8 @@ final class interpolation_value_children_iterator extends children_iterator
 final class throw_children_iterator extends children_iterator
 {
 	private bool $consumed = false;
-	private throw_node $source;
 
-	public function __construct(throw_node $source)
-	{
-		$this->source = $source;
-	}
+	public function __construct(private throw_node $source) {}
 
 	/** Inspect the required operand once without creating a child collection. */
 	protected function read_next(): ?ast_node
@@ -1369,13 +1254,9 @@ final class throw_children_iterator extends children_iterator
 /** Read the protected body and present clauses lazily, in grammar order. */
 final class try_children_iterator extends children_iterator
 {
-	private try_node $source;
 	private int $next_field = 0;
 
-	public function __construct(try_node $source)
-	{
-		$this->source = $source;
-	}
+	public function __construct(private try_node $source) {}
 
 	protected function read_next(): ?ast_node
 	{

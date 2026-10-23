@@ -1,0 +1,2 @@
+S2S integer binary operation requires canonical int operands
+scpp\compiler\source_callable_body_work scpp_portability_same_exception: S2S integer binary operation requires canonical int operands

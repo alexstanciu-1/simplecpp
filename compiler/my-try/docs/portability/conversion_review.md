@@ -17,7 +17,15 @@ This does not establish exhaustive language, lifetime, incremental or performanc
 
 ## Accepted-backlog bootstrap checkpoint — 2026-10-23
 
-The latest [required-field checkpoint](../../../../specs/planning/results/compiler_bootstrap_backlog_2026_10_23/required_fields/README.md)
+The latest [direct source initialization checkpoint](../../../../specs/planning/results/compiler_bootstrap_backlog_2026_10_23/direct_source_init/README.md)
+uses existing promotion/set: conversion for source_record and 33 AST cursors. PHP
+AST/lifecycle checks and a bounded production-code PHP/legacy/both-v0.2 fixture pass.
+The fixture excludes the unused full-framework object-identity helper, whose v0.2
+blocker is recorded separately. Bootstrap takes 78.39 s / 332.8 MiB RSS / 310 MiB
+PHP heap; the first-field diagnostic disappears, while other required file/source
+owners remain. No fatal/OOM, emission or native compiler rebuild.
+
+The earlier [required-field checkpoint](../../../../specs/planning/results/compiler_bootstrap_backlog_2026_10_23/required_fields/README.md)
 rejects empty defaults for required object fields and reuses direct initialization.
 Data construction now uses existing concrete construction transport in prelowered
 mode. Both-mode focused tests, portable promotion parity and 60 native constructor

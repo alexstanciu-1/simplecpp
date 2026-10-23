@@ -2201,3 +2201,12 @@ The first probes native runtime behavior before default-prelowered source execut
 `--baseline` instead requires the historical publication rejection. GUI regressions
 are `ui_webview.py` with isolated disabled SDK discovery and `ui_webview_enabled.py`
 with the installed SDKs. See [scope and exact evidence](planning/error_conditions.md).
+
+## Production direct-initialization adaptation
+
+From the repository root, `python3 tests/portability/source_initialization.py --results FRESH`
+extracts production source_record and the pair cursor with their cursor protocol.
+PHP, legacy and both v0.2 outputs preserve identity and traversal. Small dependency
+owners isolate this component; v0.2 includes only its two needed exception classes,
+not the full framework's currently blocked object-identity helper. AST/invariant and
+lifecycle_handoff tests cover the wider source adaptation in PHP.
