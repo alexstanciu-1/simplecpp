@@ -343,6 +343,8 @@ final class Converter {
 					$value = $this->significant();
 					if ($nullable && strtolower($value[1]) === 'null') {
 						$declaration .= ' = null';
+					} elseif ($container && !$nullable) {
+						$declaration .= $this->emptyContainerDefault($value);
 					} elseif ($type === 'bool' && in_array(strtolower($value[1]), ['true', 'false'], true)) {
 						$declaration .= ' = ' . strtolower($value[1]);
 					} elseif ($type === 'int') {
@@ -367,6 +369,14 @@ final class Converter {
 			$this->fail($line, 'container interface returns require a separately proved native contract');
 		}
 		return $visibility . ($static ? ' static' : '') . ' function ' . $name[1] . '(' . implode(', ', $parameters) . '): ' . $return;
+	}
+
+	/** An explicit PHP array annotation supplies the native default's target type. */
+	private function emptyContainerDefault(array $opening): string {
+		if ($opening[1] !== '[') { $this->fail($opening[2], 'container parameter defaults require typed []'); }
+		$closing = $this->significant();
+		if ($closing[1] !== ']') { $this->fail($closing[2], 'container parameter defaults require typed []'); }
+		return ' = []';
 	}
 
 	private function method(int $line, string $visibility, bool $static): Node {
@@ -473,8 +483,10 @@ final class Converter {
 				$value = $this->significant();
 				if ($nullable && strtolower($value[1]) === 'null') {
 					$default = ' = null';
+				} elseif ($type[0] === T_ARRAY && !$nullable) {
+					$default = $this->emptyContainerDefault($value);
 				} elseif ($type[0] === T_ARRAY) {
-					$this->fail($value[2], 'constructor containers require explicit arguments; only nullable defaults may be null');
+					$this->fail($value[2], 'nullable container parameter defaults require null');
 				} elseif ($type[1] === 'int' && $value[0] === T_LNUMBER) {
 					$default = ' = ' . $value[1];
 				} elseif ($type[1] === 'bool' && in_array(strtolower($value[1]), ['true', 'false'], true)) {

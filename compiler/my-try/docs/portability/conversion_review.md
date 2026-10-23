@@ -14,6 +14,21 @@ The catalog's bounded closeouts and Chapter 15 deferrals still
 bound the supported language surface.
 This does not establish exhaustive language, lifetime, incremental or performance coverage.
 
+## Accepted-backlog bootstrap checkpoint — 2026-10-23
+
+The typed empty parameter-default slice now passes PHP, the current legacy S2S route
+and v0.2 ordinary/prelowered native fixtures. The converter preserves explicit PHP
+array annotations; both routes reuse their existing typed construction paths. A
+counted generic provider also passes v0.2 default factory invocation tests.
+
+The [measured checkpoint](../../../../specs/planning/results/compiler_bootstrap_backlog_2026_10_23/README.md)
+converts/assembles 269 PHS files (1,958,956 bytes). Conversion takes 4.67 s / 189.2 MiB
+peak RSS. PHP-hosted bootstrap takes 193.79 s / 431.5 MiB RSS, with 422.5 MiB peak PHP
+heap. Sync/parsing completes at 4.081 s; preparation fails first on the known AST-01
+nonvirtual inherited redeclaration. No fatal/OOM, emission or native compiler rebuild.
+The accepted backlog is active; remaining diagnostics are not repaired by this slice.
+Older exclusions below describe their historical checkpoints.
+
 ## Remote integration — 2026-10-22
 
 The merge of `origin/v0.2/develop` through `96c86d3f6` preserves the local

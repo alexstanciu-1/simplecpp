@@ -339,6 +339,9 @@ Priority note:
 - `empty($a[k])` lowers through the runtime `empty(...)` helper for the resulting value; under the current supported subset it is true only for `null`, `""`, and empty array/table values
 - the normative cross-runtime contract is defined in `specs/count_empty_isset_contract.md`
 
+### Typed empty parameter defaults
+- A parameter explicitly declared as vector/hash may use `[]` as its default. The generator passes that locally declared type to the existing typed initializer path. This is a narrow structural rule, not symbol resolution or expression type inference. Defaults remain declaration-only; each omission evaluates a fresh native empty value.
+
 ### Typed vectors
 - `/** vector<T> */ []` lowers to `vector_t<T>{}`
 - `/** vector<T> */ [e1, e2, ...]` lowers to `vector_t<T>{e1, e2, ...}`

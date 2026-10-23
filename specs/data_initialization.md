@@ -47,6 +47,20 @@ spread, property shorthand and method definitions are not introduced by this sta
 `[]` is an empty bracket initializer whose target protocol must be resolved;
 `{}` is an empty keyed initializer. Empty input still requires a known target type.
 
+### Typed empty parameter defaults
+
+A by-value parameter of a registered container type may declare `= []`. The
+parameter supplies the concrete target, including its generic arguments. Selection
+uses the same registered initialization protocol as an ordinary typed empty value:
+positional when available, otherwise keyed. There is no vector/hash name whitelist.
+Each omitted argument constructs a fresh empty value through that factory; an
+explicit argument does not evaluate the default. Copy and transport requirements
+remain those of the parameter's ordinary value boundary.
+
+This default subset does not admit arbitrary default-constructible records,
+nonempty constructions, arbitrary calls, or container reference defaults. Provider
+metadata's callable-default schema is separate from source parameter syntax.
+
 Braces introduce data construction in expression positions and remain blocks in
 statement positions. Parenthesize a standalone brace expression to disambiguate it
 from a block. There are only two representation categories: PHP-like and JS-like.

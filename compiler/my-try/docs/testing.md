@@ -55,6 +55,19 @@ checks the fixed tasks handle/control bindings with default-prelowered cold/warm
 builds and retained rejection/recovery. Its batch factory is a test provider;
 passing this suite does not prove source task creation or callback transfer.
 
+## Portable compiler bootstrap and empty defaults
+
+`python3 tools/bootstrap_probe.py --results FRESH` (paths relative to compiler/my-try)
+snapshots/converts the compiler plus existing native proof driver, assembles framework
+PHS and runs production PHP-hosted project stages. GNU time records wall time/peak RSS;
+PHP records peak heap, completed stages and failure. It does not build a native compiler.
+Run in isolation for comparable measurements. A failed preparation run measures only
+progress to that blocker; raw errors and snapshot hashes remain in the result folder.
+
+`python3 tests/empty_defaults.py --results FRESH` exercises typed container parameter
+defaults and retained rejection/recovery in ordinary/prelowered output. The cross-route
+companion is `tests/portability/empty_defaults.py` from the repository root.
+
 ## Conservative call snapshot elision
 
 `python3 compiler/my-try/tests/call_snapshot_borrow.py --results FRESH` checks

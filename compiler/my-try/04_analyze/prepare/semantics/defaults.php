@@ -89,6 +89,9 @@ final class Parameter_Defaults
 				throw new \RuntimeException('S2S reference defaults require canonical scalar types');
 			}
 		}
+		if ($syntax instanceof data_construction_node) {
+			return self::empty_construction(object_cast($syntax, data_construction_node::class), $parameter, $context);
+		}
 		$value /** prepared_constant_expression */;
 		$handle_default = Ownership_Conversions::role($parameter->type) !== null;
 		if (Type_Queries::is_enum($parameter->type)) {
@@ -124,6 +127,22 @@ final class Parameter_Defaults
 			$value->type, $parameter->type, $handle_default ? conversion_context::assignment : conversion_context::argument);
 		Capability_Preparation::require_copy($parameter->type, $context);
 		return $facts;
+	}
+
+	/** Source empty defaults share the declaration construction facts used by constructors. */
+	private static function empty_construction(data_construction_node $syntax, callable_parameter $parameter,
+		preparation_context $context): prepared_parameter_default
+	{
+		$entries /** Storage<data_entry_node> */ = $syntax->entries;
+		if (($parameter->mode !== passing_mode::value) || !$entries->is_empty()
+			|| ($syntax->target_type !== null)
+			|| ($syntax->source_representation($context->collection->token_snapshot()) !== data_source_representation::php_like)) {
+			throw new \RuntimeException('S2S container parameter defaults require contextual [] on a value parameter');
+		}
+		// Require a registered sequence factory, not merely a default-constructible record.
+		Initialization_Preparation::binding($parameter->type, initialization_shape::empty_brackets, $context);
+		Capability_Preparation::require_copy($parameter->type, $context);
+		return new prepared_property_parameter_default(Property_Defaults::prepare($syntax, $parameter->type, $context));
 	}
 
 	/** An optional single sign belongs to the literal domain, not general unary evaluation. */

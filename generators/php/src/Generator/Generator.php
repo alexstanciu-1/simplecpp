@@ -3162,7 +3162,7 @@ final class Generator
 			}
 			$rendered = $type . ' ' . $this->renderParamName($param, false);
 			if (!$param->isVariadic && $includeDefaults && $param->default !== null) {
-				$rendered .= ' = ' . $this->renderExpr($param->default, $namespacePhp);
+				$rendered .= ' = ' . $this->renderParameterDefault($param, $namespacePhp);
 			}
 			$out[] = $rendered;
 		}
@@ -3554,7 +3554,7 @@ final class Generator
 			}
 			$rendered = $type . ' ' . $this->localCppName($param->name);
 			if (!$param->isVariadic && $includeDefaults && $param->default !== null) {
-				$rendered .= ' = ' . $this->renderExpr($param->default, $namespacePhp);
+				$rendered .= ' = ' . $this->renderParameterDefault($param, $namespacePhp);
 			}
 			$out[] = $rendered;
 		}
@@ -4139,6 +4139,18 @@ final class Generator
 
 	 */
 
+	/** Empty container defaults use only the parameter's locally declared type. */
+	private function renderParameterDefault(ParamDecl $param, ?string $namespacePhp): string
+	{
+		$default = $param->default;
+		if ($param->type !== null && is_object($default) && (($default->kind ?? null) === AstKind::ARRAY)
+			&& ($default->children === [])
+			&& ($this->mapTypedVectorLocalType($param->type) !== null || $this->mapTypedHashLocalType($param->type) !== null)) {
+			return $this->renderInitializerExpr($default, $param->type, $namespacePhp);
+		}
+		return $this->renderExpr($default, $namespacePhp);
+	}
+
 	private function renderParams(array $params, bool $includeDefaults, ?string $namespacePhp, array $paramPassModes = [], bool $useStorageNames = false): string
 	{
 		$out = [];
@@ -4155,7 +4167,7 @@ final class Generator
 			}
 			$rendered = $type . ' ' . $name;
 			if (!$param->isVariadic && $includeDefaults && $param->default !== null) {
-				$rendered .= ' = ' . $this->renderExpr($param->default, $namespacePhp);
+				$rendered .= ' = ' . $this->renderParameterDefault($param, $namespacePhp);
 			}
 			$out[] = $rendered;
 		}
