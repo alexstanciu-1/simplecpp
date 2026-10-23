@@ -275,7 +275,7 @@
     },
     {
       "path": "compiler/my-try/03_parse/types/model.php",
-      "line": 1330,
+      "line": 1339,
       "candidate_kind": "semantic_kind_test",
       "subject": "abstract_nominal_type_definition",
       "excerpt": "if ($definition instanceof abstract_nominal_type_definition) {",
@@ -284,7 +284,7 @@
     },
     {
       "path": "compiler/my-try/03_parse/types/model.php",
-      "line": 1340,
+      "line": 1349,
       "candidate_kind": "semantic_kind_test",
       "subject": "ownership_semantics",
       "excerpt": "if ($type->definition() instanceof ownership_semantics) {",
@@ -293,7 +293,7 @@
     },
     {
       "path": "compiler/my-try/03_parse/types/model.php",
-      "line": 1364,
+      "line": 1373,
       "candidate_kind": "semantic_kind_test",
       "subject": "abstract_nominal_type_definition",
       "excerpt": "if ($definition instanceof abstract_nominal_type_definition) {",
@@ -302,7 +302,7 @@
     },
     {
       "path": "compiler/my-try/03_parse/types/model.php",
-      "line": 1372,
+      "line": 1381,
       "candidate_kind": "semantic_kind_test",
       "subject": "abstract_template_type_definition",
       "excerpt": "if ($definition instanceof abstract_template_type_definition) {",
@@ -311,7 +311,25 @@
     },
     {
       "path": "compiler/my-try/03_parse/types/model.php",
-      "line": 1498,
+      "line": 1507,
+      "candidate_kind": "semantic_kind_test",
+      "subject": "nullable_semantics",
+      "excerpt": "if (($definition instanceof nullable_semantics)",
+      "disposition": "pending source review",
+      "parked": false
+    },
+    {
+      "path": "compiler/my-try/03_parse/types/model.php",
+      "line": 1508,
+      "candidate_kind": "semantic_kind_test",
+      "subject": "ownership_semantics",
+      "excerpt": "&& ($this->type($complete[0]->type_id())->definition() instanceof ownership_semantics)) {",
+      "disposition": "pending source review",
+      "parked": false
+    },
+    {
+      "path": "compiler/my-try/03_parse/types/model.php",
+      "line": 1511,
       "candidate_kind": "semantic_kind_test",
       "subject": "ownership_semantics",
       "excerpt": "if ($definition instanceof ownership_semantics) {",
@@ -320,7 +338,7 @@
     },
     {
       "path": "compiler/my-try/03_parse/types/model.php",
-      "line": 1505,
+      "line": 1518,
       "candidate_kind": "semantic_kind_test",
       "subject": "ownership_semantics",
       "excerpt": "if ($payload->definition() instanceof ownership_semantics) {",
@@ -329,7 +347,7 @@
     },
     {
       "path": "compiler/my-try/03_parse/types/model.php",
-      "line": 1516,
+      "line": 1529,
       "candidate_kind": "semantic_kind_test",
       "subject": "abstract_nominal_type_definition",
       "excerpt": "if ($payload_definition instanceof abstract_nominal_type_definition) {",
@@ -388,9 +406,7 @@
       "subject": "shared",
       "excerpt": "return object_cast(Model::$type_catalog->definition('shared'), ownership_semantics::class);",
       "disposition": "retain intrinsic intent; review caller/role centralization in full audit",
-      "parked": false,
-      "classification": "registered canonical identity for intrinsic type, ABI or representation role",
-      "owner": "04_analyze/conversions/ownership.php"
+      "parked": false
     },
     {
       "path": "compiler/my-try/04_analyze/conversions/ownership.php",
@@ -403,7 +419,7 @@
     },
     {
       "path": "compiler/my-try/04_analyze/conversions/preparation.php",
-      "line": 55,
+      "line": 57,
       "candidate_kind": "semantic_kind_test",
       "subject": "callable_type_definition",
       "excerpt": "if ($target_definition instanceof callable_type_definition) {",
@@ -430,15 +446,6 @@
     },
     {
       "path": "compiler/my-try/04_analyze/conversions/truthiness.php",
-      "line": 12,
-      "candidate_kind": "semantic_kind_test",
-      "subject": "closure_type_definition",
-      "excerpt": "if (($definition instanceof callable_type_definition) || ($definition instanceof closure_type_definition)) {",
-      "disposition": "pending source review",
-      "parked": false
-    },
-    {
-      "path": "compiler/my-try/04_analyze/conversions/truthiness.php",
       "line": 15,
       "candidate_kind": "semantic_kind_test",
       "subject": "callable_type_definition",
@@ -448,18 +455,9 @@
     },
     {
       "path": "compiler/my-try/04_analyze/operators/preparation.php",
-      "line": 190,
+      "line": 221,
       "candidate_kind": "semantic_kind_test",
       "subject": "callable_type_definition",
-      "excerpt": "|| ($definition instanceof callable_type_definition) || ($definition instanceof closure_type_definition)",
-      "disposition": "pending source review",
-      "parked": false
-    },
-    {
-      "path": "compiler/my-try/04_analyze/operators/preparation.php",
-      "line": 190,
-      "candidate_kind": "semantic_kind_test",
-      "subject": "closure_type_definition",
       "excerpt": "|| ($definition instanceof callable_type_definition) || ($definition instanceof closure_type_definition)",
       "disposition": "pending source review",
       "parked": false
@@ -475,7 +473,7 @@
     },
     {
       "path": "compiler/my-try/04_analyze/prepare/semantics/bodies.php",
-      "line": 247,
+      "line": 263,
       "candidate_kind": "semantic_kind_test",
       "subject": "enum_type_definition",
       "excerpt": "if (Type_Queries::canonical($binding->type)->definition() instanceof enum_type_definition) {",
@@ -484,7 +482,7 @@
     },
     {
       "path": "compiler/my-try/04_analyze/prepare/semantics/bodies.php",
-      "line": 261,
+      "line": 277,
       "candidate_kind": "semantic_kind_test",
       "subject": "closure_type_definition",
       "excerpt": "if (Type_Queries::canonical($value->type)->definition() instanceof closure_type_definition) {",
@@ -520,7 +518,7 @@
     },
     {
       "path": "compiler/my-try/04_analyze/prepare/semantics/captures.php",
-      "line": 38,
+      "line": 39,
       "candidate_kind": "spelling_comparison",
       "subject": "this",
       "excerpt": "if ($name === 'this') {",
@@ -529,7 +527,7 @@
     },
     {
       "path": "compiler/my-try/04_analyze/prepare/semantics/captures.php",
-      "line": 71,
+      "line": 73,
       "candidate_kind": "semantic_kind_test",
       "subject": "closure_type_definition",
       "excerpt": "if (!(Type_Queries::canonical($type)->definition() instanceof closure_type_definition)) { return; }",
@@ -538,7 +536,7 @@
     },
     {
       "path": "compiler/my-try/04_analyze/prepare/semantics/captures.php",
-      "line": 88,
+      "line": 90,
       "candidate_kind": "semantic_kind_test",
       "subject": "closure_type_definition",
       "excerpt": "if (!(Type_Queries::canonical($type)->definition() instanceof closure_type_definition)) { return $result; }",
@@ -570,9 +568,7 @@
       "subject": "vector",
       "excerpt": "|| ($definition === Model::$type_catalog->definition('vector'))",
       "disposition": "repair/design pending; do not infer new provider semantics",
-      "parked": false,
-      "classification": "operation allowlist requiring registry-owned capability/protocol",
-      "owner": "CH15 cleanup registration"
+      "parked": false
     },
     {
       "path": "compiler/my-try/04_analyze/prepare/semantics/cleanup.php",
@@ -581,9 +577,7 @@
       "subject": "hash",
       "excerpt": "|| ($definition === Model::$type_catalog->definition('hash'));",
       "disposition": "repair/design pending; do not infer new provider semantics",
-      "parked": false,
-      "classification": "operation allowlist requiring registry-owned capability/protocol",
-      "owner": "CH15 cleanup registration"
+      "parked": false
     },
     {
       "path": "compiler/my-try/04_analyze/prepare/semantics/compiler_calls.php",
@@ -614,7 +608,7 @@
     },
     {
       "path": "compiler/my-try/04_analyze/prepare/semantics/declarations.php",
-      "line": 316,
+      "line": 319,
       "candidate_kind": "semantic_kind_test",
       "subject": "enum_type_definition",
       "excerpt": "if (($field->initializer === null) && (Type_Queries::canonical($type)->definition() instanceof enum_type_definition)) {",
@@ -637,13 +631,11 @@
       "subject": "int",
       "excerpt": "if ($backing !== Model::$type_catalog->definition('int')) {",
       "disposition": "retain intrinsic intent; review caller/role centralization in full audit",
-      "parked": false,
-      "classification": "registered canonical identity for intrinsic type, ABI or representation role",
-      "owner": "04_analyze/prepare/semantics/enums.php"
+      "parked": false
     },
     {
       "path": "compiler/my-try/04_analyze/prepare/semantics/expressions.php",
-      "line": 161,
+      "line": 166,
       "candidate_kind": "semantic_kind_test",
       "subject": "async_task_type_definition",
       "excerpt": "if (Type_Queries::canonical($result->type)->definition() instanceof async_task_type_definition) {",
@@ -652,7 +644,7 @@
     },
     {
       "path": "compiler/my-try/04_analyze/prepare/semantics/expressions.php",
-      "line": 459,
+      "line": 475,
       "candidate_kind": "semantic_kind_test",
       "subject": "callable_type_definition",
       "excerpt": "if ($definition instanceof callable_type_definition) { return Call_Preparation::prepare(object_cast($definition, callable_type_definition::class), $syntax->arguments, $context); }",
@@ -669,44 +661,8 @@
       "parked": false
     },
     {
-      "path": "compiler/my-try/04_analyze/prepare/semantics/iterator.php",
-      "line": 9,
-      "candidate_kind": "spelling_comparison",
-      "subject": "key",
-      "excerpt": "return ($name === 'current') || ($name === 'key') || ($name === 'valid') || ($name === 'next') || ($name === 'rewind');",
-      "disposition": "pending source review",
-      "parked": false
-    },
-    {
-      "path": "compiler/my-try/04_analyze/prepare/semantics/iterator.php",
-      "line": 9,
-      "candidate_kind": "spelling_comparison",
-      "subject": "valid",
-      "excerpt": "return ($name === 'current') || ($name === 'key') || ($name === 'valid') || ($name === 'next') || ($name === 'rewind');",
-      "disposition": "pending source review",
-      "parked": false
-    },
-    {
-      "path": "compiler/my-try/04_analyze/prepare/semantics/iterator.php",
-      "line": 9,
-      "candidate_kind": "spelling_comparison",
-      "subject": "next",
-      "excerpt": "return ($name === 'current') || ($name === 'key') || ($name === 'valid') || ($name === 'next') || ($name === 'rewind');",
-      "disposition": "pending source review",
-      "parked": false
-    },
-    {
-      "path": "compiler/my-try/04_analyze/prepare/semantics/iterator.php",
-      "line": 9,
-      "candidate_kind": "spelling_comparison",
-      "subject": "rewind",
-      "excerpt": "return ($name === 'current') || ($name === 'key') || ($name === 'valid') || ($name === 'next') || ($name === 'rewind');",
-      "disposition": "pending source review",
-      "parked": false
-    },
-    {
       "path": "compiler/my-try/04_analyze/prepare/semantics/object_construction.php",
-      "line": 130,
+      "line": 138,
       "candidate_kind": "semantic_kind_test",
       "subject": "callable_type_definition",
       "excerpt": "|| ($definition instanceof callable_type_definition)",
@@ -714,37 +670,13 @@
       "parked": false
     },
     {
-      "path": "compiler/my-try/04_analyze/prepare/semantics/object_construction.php",
-      "line": 131,
-      "candidate_kind": "named_registry_lookup",
-      "subject": "vector",
-      "excerpt": "|| ($definition === Model::$type_catalog->definition('vector'))",
-      "disposition": "repair/design pending; do not infer new provider semantics",
-      "parked": false,
-      "classification": "operation allowlist requiring registry-owned construction query",
-      "owner": "CONVERT-01 / CH15 construction"
-    },
-    {
-      "path": "compiler/my-try/04_analyze/prepare/semantics/object_construction.php",
-      "line": 132,
-      "candidate_kind": "named_registry_lookup",
-      "subject": "hash",
-      "excerpt": "|| ($definition === Model::$type_catalog->definition('hash'))",
-      "disposition": "repair/design pending; do not infer new provider semantics",
-      "parked": false,
-      "classification": "operation allowlist requiring registry-owned construction query",
-      "owner": "CONVERT-01 / CH15 construction"
-    },
-    {
       "path": "compiler/my-try/04_analyze/prepare/semantics/object_types.php",
-      "line": 29,
+      "line": 32,
       "candidate_kind": "named_registry_lookup",
       "subject": "shared",
       "excerpt": "$definition = object_cast(Model::$type_catalog->definition('shared'), abstract_template_type_definition::class);",
       "disposition": "retain intrinsic intent; review caller/role centralization in full audit",
-      "parked": false,
-      "classification": "registered canonical identity for intrinsic type, ABI or representation role",
-      "owner": "04_analyze/prepare/semantics/object_types.php"
+      "parked": false
     },
     {
       "path": "compiler/my-try/04_analyze/prepare/semantics/reference_cycles.php",
@@ -762,9 +694,7 @@
       "subject": "Iterator",
       "excerpt": "if (Type_Queries::canonical($interface_syntax->require_preparation())->definition() === Model::$type_catalog->definition('Iterator')) {",
       "disposition": "review role publication; no automatic container covariance",
-      "parked": false,
-      "classification": "named language protocol identity",
-      "owner": "typed Iterator relationship/admission"
+      "parked": false
     },
     {
       "path": "compiler/my-try/04_analyze/prepare/semantics/runtime_calls.php",
@@ -804,16 +734,7 @@
     },
     {
       "path": "compiler/my-try/04_analyze/prepare/semantics/transfer.php",
-      "line": 12,
-      "candidate_kind": "semantic_kind_test",
-      "subject": "closure_type_definition",
-      "excerpt": "if (($definition instanceof callable_type_definition) || ($definition instanceof closure_type_definition)) {",
-      "disposition": "pending source review",
-      "parked": false
-    },
-    {
-      "path": "compiler/my-try/04_analyze/prepare/semantics/transfer.php",
-      "line": 21,
+      "line": 28,
       "candidate_kind": "semantic_kind_test",
       "subject": "abstract_nominal_type_definition",
       "excerpt": "if ($definition instanceof abstract_nominal_type_definition) {",
@@ -822,29 +743,25 @@
     },
     {
       "path": "compiler/my-try/04_analyze/prepare/semantics/transfer.php",
-      "line": 27,
+      "line": 34,
       "candidate_kind": "named_registry_lookup",
       "subject": "vector",
       "excerpt": "if (($definition === Model::$type_catalog->definition('vector'))",
       "disposition": "repair/design pending; do not infer new provider semantics",
-      "parked": false,
-      "classification": "recursive transfer allowlist and hash-key special policy",
-      "owner": "TASK-01 / CH15 transfer"
+      "parked": false
     },
     {
       "path": "compiler/my-try/04_analyze/prepare/semantics/transfer.php",
-      "line": 28,
+      "line": 35,
       "candidate_kind": "named_registry_lookup",
       "subject": "hash",
       "excerpt": "|| ($definition === Model::$type_catalog->definition('hash'))",
       "disposition": "repair/design pending; do not infer new provider semantics",
-      "parked": false,
-      "classification": "recursive transfer allowlist and hash-key special policy",
-      "owner": "TASK-01 / CH15 transfer"
+      "parked": false
     },
     {
       "path": "compiler/my-try/04_analyze/prepare/semantics/transfer.php",
-      "line": 29,
+      "line": 36,
       "candidate_kind": "semantic_kind_test",
       "subject": "nullable_type_definition",
       "excerpt": "|| ($definition instanceof nullable_type_definition) || ($definition instanceof result_type_definition)) {",
@@ -853,27 +770,16 @@
     },
     {
       "path": "compiler/my-try/04_analyze/prepare/semantics/transfer.php",
-      "line": 29,
-      "candidate_kind": "semantic_kind_test",
-      "subject": "result_type_definition",
-      "excerpt": "|| ($definition instanceof nullable_type_definition) || ($definition instanceof result_type_definition)) {",
-      "disposition": "pending source review",
-      "parked": false
-    },
-    {
-      "path": "compiler/my-try/04_analyze/prepare/semantics/transfer.php",
-      "line": 33,
+      "line": 41,
       "candidate_kind": "named_registry_lookup",
       "subject": "hash",
       "excerpt": "if (($definition === Model::$type_catalog->definition('hash')) && ($index === 1)) {",
       "disposition": "repair/design pending; do not infer new provider semantics",
-      "parked": false,
-      "classification": "recursive transfer allowlist and hash-key special policy",
-      "owner": "TASK-01 / CH15 transfer"
+      "parked": false
     },
     {
       "path": "compiler/my-try/04_analyze/prepare/semantics/transfer.php",
-      "line": 34,
+      "line": 42,
       "candidate_kind": "semantic_kind_test",
       "subject": "mixed_semantics",
       "excerpt": "if (Type_Queries::canonical($argument)->definition() instanceof mixed_semantics) { continue; }",
@@ -887,9 +793,7 @@
       "subject": "shared",
       "excerpt": "if (($selected !== Model::$type_catalog->definition('shared'))",
       "disposition": "retain intrinsic intent; review caller/role centralization in full audit",
-      "parked": false,
-      "classification": "registered canonical identity for intrinsic type, ABI or representation role",
-      "owner": "04_analyze/prepare/semantics/types.php"
+      "parked": false
     },
     {
       "path": "compiler/my-try/04_analyze/prepare/semantics/types.php",
@@ -898,9 +802,7 @@
       "subject": "unique",
       "excerpt": "&& ($selected !== Model::$type_catalog->definition('unique'))) {",
       "disposition": "retain intrinsic intent; review caller/role centralization in full audit",
-      "parked": false,
-      "classification": "registered canonical identity for intrinsic type, ABI or representation role",
-      "owner": "04_analyze/prepare/semantics/types.php"
+      "parked": false
     },
     {
       "path": "compiler/my-try/04_analyze/prepare/semantics/types.php",
@@ -909,24 +811,29 @@
       "subject": "vector",
       "excerpt": "$definition = object_cast(Model::$type_catalog->definition('vector'), abstract_template_type_definition::class);",
       "disposition": "retain intrinsic intent; review caller/role centralization in full audit",
-      "parked": false,
-      "classification": "registered canonical identity for intrinsic type, ABI or representation role",
-      "owner": "04_analyze/prepare/semantics/types.php"
+      "parked": false
     },
     {
       "path": "compiler/my-try/04_analyze/prepare/semantics/types.php",
-      "line": 118,
+      "line": 70,
       "candidate_kind": "named_registry_lookup",
       "subject": "nullable",
       "excerpt": "$definition = object_cast(Model::$type_catalog->definition('nullable'), abstract_template_type_definition::class);",
       "disposition": "retain intrinsic intent; review caller/role centralization in full audit",
-      "parked": false,
-      "classification": "registered canonical identity for intrinsic type, ABI or representation role",
-      "owner": "04_analyze/prepare/semantics/types.php"
+      "parked": false
     },
     {
       "path": "compiler/my-try/04_analyze/prepare/semantics/types.php",
-      "line": 157,
+      "line": 126,
+      "candidate_kind": "named_registry_lookup",
+      "subject": "nullable",
+      "excerpt": "$definition = object_cast(Model::$type_catalog->definition('nullable'), abstract_template_type_definition::class);",
+      "disposition": "retain intrinsic intent; review caller/role centralization in full audit",
+      "parked": false
+    },
+    {
+      "path": "compiler/my-try/04_analyze/prepare/semantics/types.php",
+      "line": 165,
       "candidate_kind": "semantic_kind_test",
       "subject": "abstract_template_type_definition",
       "excerpt": "if (!($definition instanceof abstract_template_type_definition)) {",
@@ -935,7 +842,7 @@
     },
     {
       "path": "compiler/my-try/04_analyze/prepare/semantics/types.php",
-      "line": 184,
+      "line": 192,
       "candidate_kind": "semantic_kind_test",
       "subject": "callable_type_definition",
       "excerpt": "if (Type_Queries::canonical($argument)->definition() instanceof callable_type_definition) {",
@@ -944,29 +851,25 @@
     },
     {
       "path": "compiler/my-try/04_analyze/prepare/semantics/types.php",
-      "line": 186,
+      "line": 194,
       "candidate_kind": "named_registry_lookup",
       "subject": "vector",
       "excerpt": "if (($definition !== Model::$type_catalog->definition('vector'))",
       "disposition": "replace by explicit registered storage permission; design pending",
-      "parked": false,
-      "classification": "callable payload allowlist",
-      "owner": "TASK-01 / CH15 callable storage"
+      "parked": false
     },
     {
       "path": "compiler/my-try/04_analyze/prepare/semantics/types.php",
-      "line": 187,
+      "line": 195,
       "candidate_kind": "named_registry_lookup",
       "subject": "hash",
       "excerpt": "&& ($definition !== Model::$type_catalog->definition('hash'))",
       "disposition": "replace by explicit registered storage permission; design pending",
-      "parked": false,
-      "classification": "callable payload allowlist",
-      "owner": "TASK-01 / CH15 callable storage"
+      "parked": false
     },
     {
       "path": "compiler/my-try/04_analyze/prepare/semantics/types.php",
-      "line": 188,
+      "line": 196,
       "candidate_kind": "semantic_kind_test",
       "subject": "result_semantics",
       "excerpt": "&& !($definition instanceof result_semantics)) {",
@@ -975,16 +878,7 @@
     },
     {
       "path": "compiler/my-try/04_analyze/prepare/semantics/types.php",
-      "line": 195,
-      "candidate_kind": "semantic_kind_test",
-      "subject": "nullable_semantics",
-      "excerpt": "if ($definition instanceof nullable_semantics) {",
-      "disposition": "pending source review",
-      "parked": false
-    },
-    {
-      "path": "compiler/my-try/04_analyze/prepare/semantics/types.php",
-      "line": 221,
+      "line": 225,
       "candidate_kind": "semantic_kind_test",
       "subject": "concrete_type_definition_i",
       "excerpt": "if (!($definition instanceof concrete_type_definition_i)) {",
@@ -993,14 +887,12 @@
     },
     {
       "path": "compiler/my-try/04_analyze/prepare/semantics/types.php",
-      "line": 257,
+      "line": 261,
       "candidate_kind": "named_registry_lookup",
       "subject": "Iterator",
       "excerpt": "if (Type_Queries::canonical($type)->definition() === Model::$type_catalog->definition('Iterator')) {",
       "disposition": "review role publication; no automatic container covariance",
-      "parked": false,
-      "classification": "named language protocol identity",
-      "owner": "typed Iterator relationship/admission"
+      "parked": false
     },
     {
       "path": "compiler/my-try/04_analyze/prepare/semantics/unions.php",
@@ -1022,23 +914,12 @@
     },
     {
       "path": "compiler/my-try/04_analyze/prepare/semantics/value_probes.php",
-      "line": 42,
-      "candidate_kind": "semantic_kind_test",
-      "subject": "closure_type_definition",
-      "excerpt": "if (($definition instanceof callable_type_definition) || ($definition instanceof closure_type_definition)) {",
-      "disposition": "pending source review",
-      "parked": false
-    },
-    {
-      "path": "compiler/my-try/04_analyze/prepare/semantics/value_probes.php",
       "line": 68,
       "candidate_kind": "named_registry_lookup",
       "subject": "vector",
       "excerpt": "|| ($definition === Model::$type_catalog->definition('vector'))",
       "disposition": "repair/design pending; do not infer new provider semantics",
-      "parked": false,
-      "classification": "emptiness allowlist requiring registered protocol",
-      "owner": "CH15 value probes"
+      "parked": false
     },
     {
       "path": "compiler/my-try/04_analyze/prepare/semantics/value_probes.php",
@@ -1047,24 +928,13 @@
       "subject": "hash",
       "excerpt": "|| ($definition === Model::$type_catalog->definition('hash')))) { return; }",
       "disposition": "repair/design pending; do not infer new provider semantics",
-      "parked": false,
-      "classification": "emptiness allowlist requiring registered protocol",
-      "owner": "CH15 value probes"
-    },
-    {
-      "path": "compiler/my-try/04_analyze/prepare/semantics/value_probes.php",
-      "line": 74,
-      "candidate_kind": "semantic_kind_test",
-      "subject": "callable_type_definition",
-      "excerpt": "if (($definition instanceof callable_type_definition) || ($definition instanceof closure_type_definition)) { return; }",
-      "disposition": "pending source review",
       "parked": false
     },
     {
       "path": "compiler/my-try/04_analyze/prepare/semantics/value_probes.php",
       "line": 74,
       "candidate_kind": "semantic_kind_test",
-      "subject": "closure_type_definition",
+      "subject": "callable_type_definition",
       "excerpt": "if (($definition instanceof callable_type_definition) || ($definition instanceof closure_type_definition)) { return; }",
       "disposition": "pending source review",
       "parked": false
@@ -1098,27 +968,9 @@
     },
     {
       "path": "compiler/my-try/05_backend/cpp/concrete_index.php",
-      "line": 34,
-      "candidate_kind": "semantic_kind_test",
-      "subject": "dynamic_semantics",
-      "excerpt": "return !$path->is_empty() && (($definition instanceof mixed_semantics) || ($definition instanceof dynamic_semantics));",
-      "disposition": "pending source review",
-      "parked": false
-    },
-    {
-      "path": "compiler/my-try/05_backend/cpp/concrete_index.php",
       "line": 102,
       "candidate_kind": "semantic_kind_test",
       "subject": "mixed_semantics",
-      "excerpt": "$boxed_elements = ($receiver_definition instanceof mixed_semantics) || ($receiver_definition instanceof dynamic_semantics);",
-      "disposition": "pending source review",
-      "parked": false
-    },
-    {
-      "path": "compiler/my-try/05_backend/cpp/concrete_index.php",
-      "line": 102,
-      "candidate_kind": "semantic_kind_test",
-      "subject": "dynamic_semantics",
       "excerpt": "$boxed_elements = ($receiver_definition instanceof mixed_semantics) || ($receiver_definition instanceof dynamic_semantics);",
       "disposition": "pending source review",
       "parked": false
@@ -1142,28 +994,10 @@
       "parked": false
     },
     {
-      "path": "compiler/my-try/05_backend/cpp/initializer_buffer.php",
-      "line": 28,
-      "candidate_kind": "semantic_kind_test",
-      "subject": "dynamic_semantics",
-      "excerpt": "return ($definition instanceof mixed_semantics) || ($definition instanceof dynamic_semantics);",
-      "disposition": "pending source review",
-      "parked": false
-    },
-    {
       "path": "compiler/my-try/05_backend/cpp/keyed_paths.php",
       "line": 14,
       "candidate_kind": "semantic_kind_test",
       "subject": "mixed_semantics",
-      "excerpt": "&& (($definition instanceof mixed_semantics) || ($definition instanceof dynamic_semantics))) {",
-      "disposition": "pending source review",
-      "parked": false
-    },
-    {
-      "path": "compiler/my-try/05_backend/cpp/keyed_paths.php",
-      "line": 14,
-      "candidate_kind": "semantic_kind_test",
-      "subject": "dynamic_semantics",
       "excerpt": "&& (($definition instanceof mixed_semantics) || ($definition instanceof dynamic_semantics))) {",
       "disposition": "pending source review",
       "parked": false
@@ -1205,17 +1039,6 @@
       "parked": false
     },
     {
-      "path": "compiler/my-try/05_backend/cpp/policy.php",
-      "line": 55,
-      "candidate_kind": "named_registry_lookup",
-      "subject": "vector",
-      "excerpt": "if (($definition !== Model::$type_catalog->definition('hash')) && ($definition !== Model::$type_catalog->definition('vector'))) { return 'unsupported-container-default'; }",
-      "disposition": "Resolved: name gate removed; CPP_Default_Constructors uses settled sequence/empty-only preparation plans. Historical location; see registry audit execution evidence.",
-      "parked": false,
-      "classification": "optimization eligibility allowlist; not semantic rejection",
-      "owner": "CH15 C++ outlining policy"
-    },
-    {
       "path": "compiler/my-try/05_backend/cpp/provider_properties.php",
       "line": 27,
       "candidate_kind": "semantic_kind_test",
@@ -1231,9 +1054,7 @@
       "subject": "vector",
       "excerpt": "&& ($canonical->definition() === Model::$type_catalog->definition('vector'))) {",
       "disposition": "repair/design pending; do not infer new provider semantics",
-      "parked": false,
-      "classification": "bounded provider transport allowlist",
-      "owner": "CH15 provider property transport"
+      "parked": false
     },
     {
       "path": "compiler/my-try/05_backend/cpp/runtime_catalog.php",
@@ -1264,7 +1085,7 @@
     },
     {
       "path": "compiler/my-try/05_backend/cpp/runtime_operations.php",
-      "line": 321,
+      "line": 336,
       "candidate_kind": "semantic_kind_test",
       "subject": "callable_type_definition",
       "excerpt": "$arguments[$position] = Type_Queries::canonical($input)->definition() instanceof callable_type_definition",
@@ -1273,7 +1094,7 @@
     },
     {
       "path": "compiler/my-try/05_backend/cpp/runtime_operations.php",
-      "line": 326,
+      "line": 341,
       "candidate_kind": "semantic_kind_test",
       "subject": "callable_type_definition",
       "excerpt": "if (Type_Queries::canonical($input)->definition() instanceof callable_type_definition) {",
@@ -1282,7 +1103,7 @@
     },
     {
       "path": "compiler/my-try/05_backend/cpp/runtime_operations.php",
-      "line": 455,
+      "line": 477,
       "candidate_kind": "semantic_kind_test",
       "subject": "mixed_semantics",
       "excerpt": "return (($source instanceof mixed_semantics) || ($source instanceof dynamic_semantics))",
@@ -1291,23 +1112,12 @@
     },
     {
       "path": "compiler/my-try/05_backend/cpp/runtime_operations.php",
-      "line": 455,
-      "candidate_kind": "semantic_kind_test",
-      "subject": "dynamic_semantics",
-      "excerpt": "return (($source instanceof mixed_semantics) || ($source instanceof dynamic_semantics))",
-      "disposition": "pending source review",
-      "parked": false
-    },
-    {
-      "path": "compiler/my-try/05_backend/cpp/runtime_operations.php",
-      "line": 532,
+      "line": 555,
       "candidate_kind": "named_registry_lookup",
       "subject": "bool",
       "excerpt": "$request->result = Model::$type_catalog->registry()->use(Model::$type_catalog->canonical('bool')->type_id());",
       "disposition": "retain intrinsic intent; review caller/role centralization in full audit",
-      "parked": false,
-      "classification": "registered canonical identity for intrinsic type, ABI or representation role",
-      "owner": "05_backend/cpp/runtime_operations.php"
+      "parked": false
     },
     {
       "path": "compiler/my-try/05_backend/cpp/runtime_type_bindings.php",
@@ -1343,24 +1153,20 @@
       "subject": "void",
       "excerpt": "$bindings->bind_definition($types->definition('void'), 'void', '');",
       "disposition": "retain intrinsic intent; review caller/role centralization in full audit",
-      "parked": false,
-      "classification": "registered canonical identity for intrinsic type, ABI or representation role",
-      "owner": "05_backend/cpp/type_bindings_catalog.php"
+      "parked": false
     },
     {
       "path": "compiler/my-try/05_backend/cpp/types.php",
-      "line": 91,
+      "line": 95,
       "candidate_kind": "named_registry_lookup",
       "subject": "shared",
       "excerpt": "$owner = Model::$type_catalog->definition('shared');",
       "disposition": "retain intrinsic intent; review caller/role centralization in full audit",
-      "parked": false,
-      "classification": "registered canonical identity for intrinsic type, ABI or representation role",
-      "owner": "05_backend/cpp/types.php"
+      "parked": false
     },
     {
       "path": "compiler/my-try/05_backend/cpp/types.php",
-      "line": 157,
+      "line": 161,
       "candidate_kind": "semantic_kind_test",
       "subject": "callable_type_definition",
       "excerpt": "&& !($definition instanceof callable_type_definition) && !($definition instanceof async_task_type_definition)) {",
@@ -1369,16 +1175,7 @@
     },
     {
       "path": "compiler/my-try/05_backend/cpp/types.php",
-      "line": 157,
-      "candidate_kind": "semantic_kind_test",
-      "subject": "async_task_type_definition",
-      "excerpt": "&& !($definition instanceof callable_type_definition) && !($definition instanceof async_task_type_definition)) {",
-      "disposition": "pending source review",
-      "parked": false
-    },
-    {
-      "path": "compiler/my-try/05_backend/cpp/types.php",
-      "line": 166,
+      "line": 170,
       "candidate_kind": "semantic_kind_test",
       "subject": "async_task_type_definition",
       "excerpt": "if ($definition instanceof async_task_type_definition) {",
@@ -1387,7 +1184,7 @@
     },
     {
       "path": "compiler/my-try/05_backend/cpp/types.php",
-      "line": 176,
+      "line": 180,
       "candidate_kind": "semantic_kind_test",
       "subject": "callable_type_definition",
       "excerpt": "if ($definition instanceof callable_type_definition) {",
@@ -1396,18 +1193,16 @@
     },
     {
       "path": "compiler/my-try/05_backend/cpp/types.php",
-      "line": 297,
+      "line": 303,
       "candidate_kind": "named_registry_lookup",
       "subject": "shared",
       "excerpt": "if (Type_Queries::is_nominal_handle($type)) { $definition = Model::$type_catalog->definition('shared'); }",
       "disposition": "retain intrinsic intent; review caller/role centralization in full audit",
-      "parked": false,
-      "classification": "registered canonical identity for intrinsic type, ABI or representation role",
-      "owner": "05_backend/cpp/types.php"
+      "parked": false
     },
     {
       "path": "compiler/my-try/05_backend/cpp/types.php",
-      "line": 298,
+      "line": 304,
       "candidate_kind": "semantic_kind_test",
       "subject": "callable_type_definition",
       "excerpt": "elseif (($definition->origin() === type_definition_origin::source) || ($definition instanceof callable_type_definition) || ($definition instanceof async_task_type_definition)) { return null; }",
@@ -1416,16 +1211,7 @@
     },
     {
       "path": "compiler/my-try/05_backend/cpp/types.php",
-      "line": 298,
-      "candidate_kind": "semantic_kind_test",
-      "subject": "async_task_type_definition",
-      "excerpt": "elseif (($definition->origin() === type_definition_origin::source) || ($definition instanceof callable_type_definition) || ($definition instanceof async_task_type_definition)) { return null; }",
-      "disposition": "pending source review",
-      "parked": false
-    },
-    {
-      "path": "compiler/my-try/05_backend/cpp/types.php",
-      "line": 315,
+      "line": 321,
       "candidate_kind": "semantic_kind_test",
       "subject": "callable_type_definition",
       "excerpt": "if ((Type_Queries::canonical($type)->definition() instanceof callable_type_definition)",
@@ -1434,7 +1220,7 @@
     },
     {
       "path": "compiler/my-try/05_backend/cpp/types.php",
-      "line": 316,
+      "line": 322,
       "candidate_kind": "semantic_kind_test",
       "subject": "async_task_type_definition",
       "excerpt": "|| (Type_Queries::canonical($type)->definition() instanceof async_task_type_definition)) { return true; }",
@@ -1443,7 +1229,7 @@
     },
     {
       "path": "compiler/my-try/05_backend/cpp/types.php",
-      "line": 353,
+      "line": 361,
       "candidate_kind": "semantic_kind_test",
       "subject": "callable_type_definition",
       "excerpt": "if (($definition->origin() === type_definition_origin::source) || ($definition instanceof callable_type_definition) || ($definition instanceof async_task_type_definition)) {",
@@ -1452,16 +1238,7 @@
     },
     {
       "path": "compiler/my-try/05_backend/cpp/types.php",
-      "line": 353,
-      "candidate_kind": "semantic_kind_test",
-      "subject": "async_task_type_definition",
-      "excerpt": "if (($definition->origin() === type_definition_origin::source) || ($definition instanceof callable_type_definition) || ($definition instanceof async_task_type_definition)) {",
-      "disposition": "pending source review",
-      "parked": false
-    },
-    {
-      "path": "compiler/my-try/05_backend/cpp/types.php",
-      "line": 395,
+      "line": 403,
       "candidate_kind": "spelling_comparison",
       "subject": "string",
       "excerpt": "if (($type->family() === type_family::nominal) && ($definition->name() === 'string')) {",
@@ -1475,9 +1252,7 @@
       "subject": "vector",
       "excerpt": "|| ($canonical->definition() !== Model::$type_catalog->definition('vector'))) { return false; }",
       "disposition": "repair/design pending; do not infer new provider semantics",
-      "parked": false,
-      "classification": "family-specific provider conversion/transport implementation",
-      "owner": "NULL-01 / CH15 provider transport"
+      "parked": false
     },
     {
       "path": "compiler/my-try/05_backend/cpp/wrapper_transport.php",
@@ -1486,35 +1261,29 @@
       "subject": "vector",
       "excerpt": "|| ($canonical->definition() !== Model::$type_catalog->definition('vector'))) { return $expression; }",
       "disposition": "repair/design pending; do not infer new provider semantics",
-      "parked": false,
-      "classification": "family-specific provider conversion/transport implementation",
-      "owner": "NULL-01 / CH15 provider transport"
+      "parked": false
     },
     {
       "path": "compiler/my-try/05_backend/cpp/wrapper_transport.php",
-      "line": 49,
+      "line": 50,
       "candidate_kind": "named_registry_lookup",
       "subject": "vector",
       "excerpt": "if ($definition === Model::$type_catalog->definition('vector')) {",
       "disposition": "repair/design pending; do not infer new provider semantics",
-      "parked": false,
-      "classification": "family-specific provider conversion/transport implementation",
-      "owner": "NULL-01 / CH15 provider transport"
+      "parked": false
     },
     {
       "path": "compiler/my-try/05_backend/cpp/wrapper_transport.php",
-      "line": 53,
+      "line": 54,
       "candidate_kind": "named_registry_lookup",
       "subject": "hash",
       "excerpt": "elseif ($definition === Model::$type_catalog->definition('hash')) {",
       "disposition": "repair/design pending; do not infer new provider semantics",
-      "parked": false,
-      "classification": "family-specific provider conversion/transport implementation",
-      "owner": "NULL-01 / CH15 provider transport"
+      "parked": false
     },
     {
       "path": "compiler/my-try/05_backend/cpp/wrapper_transport.php",
-      "line": 63,
+      "line": 64,
       "candidate_kind": "semantic_kind_test",
       "subject": "nullable_type_definition",
       "excerpt": "if ($definition instanceof nullable_type_definition) { $body .= 'return ' . $target->spelling . '(scpp::null);'; }",
@@ -1523,7 +1292,7 @@
     },
     {
       "path": "compiler/my-try/05_backend/cpp/wrapper_transport.php",
-      "line": 104,
+      "line": 107,
       "candidate_kind": "semantic_kind_test",
       "subject": "nullable_type_definition",
       "excerpt": "if ($definition instanceof nullable_type_definition) {",
@@ -1532,7 +1301,7 @@
     },
     {
       "path": "compiler/my-try/05_backend/cpp/wrapper_transport.php",
-      "line": 107,
+      "line": 110,
       "candidate_kind": "semantic_kind_test",
       "subject": "result_type_definition",
       "excerpt": "if ($definition instanceof result_type_definition) {",
@@ -1541,7 +1310,7 @@
     },
     {
       "path": "compiler/my-try/05_backend/cpp/wrapper_transport.php",
-      "line": 124,
+      "line": 127,
       "candidate_kind": "semantic_kind_test",
       "subject": "nullable_type_definition",
       "excerpt": "if ($definition instanceof nullable_type_definition) {",
@@ -1553,24 +1322,6 @@
       "line": 27,
       "candidate_kind": "spelling_comparison",
       "subject": "compile_options",
-      "excerpt": "if (($view->size() === 3) && (($name === 'compile_options') || ($name === 'link_options') || ($name === 'diagnostics'))) { continue; }",
-      "disposition": "pending source review",
-      "parked": false
-    },
-    {
-      "path": "compiler/my-try/06_native/cpp_publication.php",
-      "line": 27,
-      "candidate_kind": "spelling_comparison",
-      "subject": "link_options",
-      "excerpt": "if (($view->size() === 3) && (($name === 'compile_options') || ($name === 'link_options') || ($name === 'diagnostics'))) { continue; }",
-      "disposition": "pending source review",
-      "parked": false
-    },
-    {
-      "path": "compiler/my-try/06_native/cpp_publication.php",
-      "line": 27,
-      "candidate_kind": "spelling_comparison",
-      "subject": "diagnostics",
       "excerpt": "if (($view->size() === 3) && (($name === 'compile_options') || ($name === 'link_options') || ($name === 'diagnostics'))) { continue; }",
       "disposition": "pending source review",
       "parked": false
@@ -1627,9 +1378,7 @@
       "subject": "int",
       "excerpt": "$maximum->type = $types->registry()->use($types->canonical('int')->type_id());",
       "disposition": "retain intrinsic intent; review caller/role centralization in full audit",
-      "parked": false,
-      "classification": "registered canonical identity for intrinsic type, ABI or representation role",
-      "owner": "compiler/constants/language.php"
+      "parked": false
     },
     {
       "path": "compiler/my-try/compiler/constants/language.php",
@@ -1638,9 +1387,7 @@
       "subject": "error",
       "excerpt": "$no_error->type = $types->registry()->use($types->canonical('error')->type_id());",
       "disposition": "retain intrinsic intent; review caller/role centralization in full audit",
-      "parked": false,
-      "classification": "registered canonical identity for intrinsic type, ABI or representation role",
-      "owner": "compiler/constants/language.php"
+      "parked": false
     },
     {
       "path": "compiler/my-try/compiler/indexing/contracts.php",
@@ -1649,9 +1396,7 @@
       "subject": "mixed",
       "excerpt": "$mixed = contract_type_reference::concrete($registry->use($types->canonical('mixed')->type_id()));",
       "disposition": "retain intrinsic intent; review caller/role centralization in full audit",
-      "parked": false,
-      "classification": "registered canonical identity for intrinsic type, ABI or representation role",
-      "owner": "compiler/indexing/contracts.php"
+      "parked": false
     },
     {
       "path": "compiler/my-try/compiler/initialization/catalog.php",
@@ -1660,9 +1405,7 @@
       "subject": "string",
       "excerpt": "$string_type = $registry->use($types->canonical('string')->type_id());",
       "disposition": "retain intrinsic intent; review caller/role centralization in full audit",
-      "parked": false,
-      "classification": "registered canonical identity for intrinsic type, ABI or representation role",
-      "owner": "compiler/initialization/catalog.php"
+      "parked": false
     },
     {
       "path": "compiler/my-try/compiler/initialization/catalog.php",
@@ -1671,9 +1414,7 @@
       "subject": "mixed",
       "excerpt": "$mixed = $registry->use($types->canonical('mixed')->type_id());",
       "disposition": "retain intrinsic intent; review caller/role centralization in full audit",
-      "parked": false,
-      "classification": "registered canonical identity for intrinsic type, ABI or representation role",
-      "owner": "compiler/initialization/catalog.php"
+      "parked": false
     },
     {
       "path": "compiler/my-try/compiler/initialization/structures.php",
@@ -1691,9 +1432,7 @@
       "subject": "mixed",
       "excerpt": "$mixed = contract_type_reference::concrete($registry->use($types->canonical('mixed')->type_id()));",
       "disposition": "retain intrinsic intent; review caller/role centralization in full audit",
-      "parked": false,
-      "classification": "registered canonical identity for intrinsic type, ABI or representation role",
-      "owner": "compiler/iteration/contracts.php"
+      "parked": false
     },
     {
       "path": "compiler/my-try/compiler/runtime_catalog/patterns.php",
@@ -1706,18 +1445,16 @@
     },
     {
       "path": "compiler/my-try/compiler/runtime_catalog/patterns.php",
-      "line": 44,
+      "line": 45,
       "candidate_kind": "named_registry_lookup",
       "subject": "vector",
       "excerpt": "object_cast($types->definition('vector'), abstract_template_type_definition::class);",
       "disposition": "retain intrinsic intent; review caller/role centralization in full audit",
-      "parked": false,
-      "classification": "registered canonical identity for intrinsic type, ABI or representation role",
-      "owner": "compiler/runtime_catalog/patterns.php"
+      "parked": false
     },
     {
       "path": "compiler/my-try/compiler/runtime_catalog/patterns.php",
-      "line": 132,
+      "line": 133,
       "candidate_kind": "semantic_kind_test",
       "subject": "abstract_template_type_definition",
       "excerpt": "if (!($definition instanceof abstract_template_type_definition)) {",
@@ -1726,47 +1463,18 @@
     },
     {
       "path": "compiler/my-try/compiler/runtime_catalog/patterns.php",
-      "line": 182,
+      "line": 183,
       "candidate_kind": "named_registry_lookup",
       "subject": "vector",
       "excerpt": "if ($input->variadic) { object_cast($types->definition('vector'), abstract_template_type_definition::class); }",
       "disposition": "retain intrinsic intent; review caller/role centralization in full audit",
-      "parked": false,
-      "classification": "registered canonical identity for intrinsic type, ABI or representation role",
-      "owner": "compiler/runtime_catalog/patterns.php"
+      "parked": false
     },
     {
       "path": "compiler/my-try/compiler/runtime_catalog/reader.php",
       "line": 117,
       "candidate_kind": "spelling_comparison",
       "subject": "sources",
-      "excerpt": "if (($name !== 'sources') && ($name !== 'libraries') && ($name !== 'definitions') && ($name !== 'providers')) {",
-      "disposition": "pending source review",
-      "parked": false
-    },
-    {
-      "path": "compiler/my-try/compiler/runtime_catalog/reader.php",
-      "line": 117,
-      "candidate_kind": "spelling_comparison",
-      "subject": "libraries",
-      "excerpt": "if (($name !== 'sources') && ($name !== 'libraries') && ($name !== 'definitions') && ($name !== 'providers')) {",
-      "disposition": "pending source review",
-      "parked": false
-    },
-    {
-      "path": "compiler/my-try/compiler/runtime_catalog/reader.php",
-      "line": 117,
-      "candidate_kind": "spelling_comparison",
-      "subject": "definitions",
-      "excerpt": "if (($name !== 'sources') && ($name !== 'libraries') && ($name !== 'definitions') && ($name !== 'providers')) {",
-      "disposition": "pending source review",
-      "parked": false
-    },
-    {
-      "path": "compiler/my-try/compiler/runtime_catalog/reader.php",
-      "line": 117,
-      "candidate_kind": "spelling_comparison",
-      "subject": "providers",
       "excerpt": "if (($name !== 'sources') && ($name !== 'libraries') && ($name !== 'definitions') && ($name !== 'providers')) {",
       "disposition": "pending source review",
       "parked": false
@@ -1854,7 +1562,7 @@
     },
     {
       "path": "compiler/my-try/compiler/runtime_catalog/reader.php",
-      "line": 308,
+      "line": 312,
       "candidate_kind": "spelling_comparison",
       "subject": "value",
       "excerpt": "if ($name === 'value') { $result->value = self::type($reader); $value_seen = true; }",
@@ -1863,7 +1571,7 @@
     },
     {
       "path": "compiler/my-try/compiler/runtime_catalog/reader.php",
-      "line": 309,
+      "line": 313,
       "candidate_kind": "spelling_comparison",
       "subject": "key",
       "excerpt": "elseif ($name === 'key') { $result->key = self::type($reader); }",
@@ -1872,7 +1580,7 @@
     },
     {
       "path": "compiler/my-try/compiler/runtime_catalog/reader.php",
-      "line": 310,
+      "line": 314,
       "candidate_kind": "spelling_comparison",
       "subject": "nested",
       "excerpt": "elseif ($name === 'nested') { $result->nested = self::type($reader); $nested_seen = true; }",
@@ -1881,7 +1589,7 @@
     },
     {
       "path": "compiler/my-try/compiler/runtime_catalog/reader.php",
-      "line": 311,
+      "line": 315,
       "candidate_kind": "spelling_comparison",
       "subject": "where",
       "excerpt": "elseif ($name === 'where') {",
@@ -1890,7 +1598,7 @@
     },
     {
       "path": "compiler/my-try/compiler/runtime_catalog/reader.php",
-      "line": 333,
+      "line": 337,
       "candidate_kind": "spelling_comparison",
       "subject": "key",
       "excerpt": "if ($name === 'key') { $result->key = self::type($reader); $key_seen = true; }",
@@ -1899,7 +1607,7 @@
     },
     {
       "path": "compiler/my-try/compiler/runtime_catalog/reader.php",
-      "line": 334,
+      "line": 338,
       "candidate_kind": "spelling_comparison",
       "subject": "value",
       "excerpt": "elseif ($name === 'value') { $result->value = self::type($reader); $value_seen = true; }",
@@ -1908,7 +1616,7 @@
     },
     {
       "path": "compiler/my-try/compiler/runtime_catalog/reader.php",
-      "line": 350,
+      "line": 354,
       "candidate_kind": "spelling_comparison",
       "subject": "key",
       "excerpt": "if ($name === 'key') { $result->key = self::type($reader); $key_seen = true; }",
@@ -1917,7 +1625,7 @@
     },
     {
       "path": "compiler/my-try/compiler/runtime_catalog/reader.php",
-      "line": 351,
+      "line": 355,
       "candidate_kind": "spelling_comparison",
       "subject": "value",
       "excerpt": "elseif ($name === 'value') { $result->value = self::type($reader); $value_seen = true; }",
@@ -1926,7 +1634,7 @@
     },
     {
       "path": "compiler/my-try/compiler/runtime_catalog/reader.php",
-      "line": 352,
+      "line": 356,
       "candidate_kind": "spelling_comparison",
       "subject": "nested",
       "excerpt": "elseif ($name === 'nested') { $result->nested = self::type($reader); $nested_seen = true; }",
@@ -1935,7 +1643,7 @@
     },
     {
       "path": "compiler/my-try/compiler/runtime_catalog/reader.php",
-      "line": 353,
+      "line": 357,
       "candidate_kind": "spelling_comparison",
       "subject": "path",
       "excerpt": "elseif ($name === 'path') { $result->path = self::type($reader); }",
@@ -1944,7 +1652,7 @@
     },
     {
       "path": "compiler/my-try/compiler/runtime_catalog/reader.php",
-      "line": 354,
+      "line": 358,
       "candidate_kind": "spelling_comparison",
       "subject": "write",
       "excerpt": "elseif ($name === 'write') { $result->write = $reader->read_boolean(); }",
@@ -1953,7 +1661,7 @@
     },
     {
       "path": "compiler/my-try/compiler/runtime_catalog/reader.php",
-      "line": 355,
+      "line": 359,
       "candidate_kind": "spelling_comparison",
       "subject": "probes",
       "excerpt": "elseif ($name === 'probes') { $result->probes = $reader->read_boolean(); }",
@@ -1962,7 +1670,7 @@
     },
     {
       "path": "compiler/my-try/compiler/runtime_catalog/reader.php",
-      "line": 356,
+      "line": 360,
       "candidate_kind": "spelling_comparison",
       "subject": "removal",
       "excerpt": "elseif ($name === 'removal') { $result->removal = $reader->read_boolean(); }",
@@ -1971,7 +1679,7 @@
     },
     {
       "path": "compiler/my-try/compiler/runtime_catalog/reader.php",
-      "line": 357,
+      "line": 361,
       "candidate_kind": "spelling_comparison",
       "subject": "read",
       "excerpt": "elseif ($name === 'read') {",
@@ -1980,7 +1688,7 @@
     },
     {
       "path": "compiler/my-try/compiler/runtime_catalog/reader.php",
-      "line": 362,
+      "line": 366,
       "candidate_kind": "spelling_comparison",
       "subject": "append",
       "excerpt": "elseif ($name === 'append') {",
@@ -1989,7 +1697,7 @@
     },
     {
       "path": "compiler/my-try/compiler/runtime_catalog/reader.php",
-      "line": 466,
+      "line": 470,
       "candidate_kind": "spelling_comparison",
       "subject": "returns",
       "excerpt": "if ($name === 'returns') { $result->return_type = self::type($reader); $returns = true; }",
@@ -1998,7 +1706,7 @@
     },
     {
       "path": "compiler/my-try/compiler/runtime_catalog/reader.php",
-      "line": 467,
+      "line": 471,
       "candidate_kind": "spelling_comparison",
       "subject": "parameters",
       "excerpt": "elseif ($name === 'parameters') {",
@@ -2007,7 +1715,25 @@
     },
     {
       "path": "compiler/my-try/compiler/runtime_catalog/reader.php",
-      "line": 706,
+      "line": 493,
+      "candidate_kind": "spelling_comparison",
+      "subject": "isolated_transfer",
+      "excerpt": "if ($name === 'isolated_transfer') { return task_transfer_policy::isolated_transfer; }",
+      "disposition": "pending source review",
+      "parked": false
+    },
+    {
+      "path": "compiler/my-try/compiler/runtime_catalog/reader.php",
+      "line": 494,
+      "candidate_kind": "spelling_comparison",
+      "subject": "joined_shared",
+      "excerpt": "if ($name === 'joined_shared') { return task_transfer_policy::joined_shared; }",
+      "disposition": "pending source review",
+      "parked": false
+    },
+    {
+      "path": "compiler/my-try/compiler/runtime_catalog/reader.php",
+      "line": 728,
       "candidate_kind": "spelling_comparison",
       "subject": "static",
       "excerpt": "if (($name !== 'static') && ($name !== 'instance')) {",
@@ -2016,16 +1742,7 @@
     },
     {
       "path": "compiler/my-try/compiler/runtime_catalog/reader.php",
-      "line": 706,
-      "candidate_kind": "spelling_comparison",
-      "subject": "instance",
-      "excerpt": "if (($name !== 'static') && ($name !== 'instance')) {",
-      "disposition": "pending source review",
-      "parked": false
-    },
-    {
-      "path": "compiler/my-try/compiler/runtime_catalog/reader.php",
-      "line": 709,
+      "line": 731,
       "candidate_kind": "spelling_comparison",
       "subject": "static",
       "excerpt": "$result->static_member = $name === 'static';",
@@ -2039,9 +1756,7 @@
       "subject": "int",
       "excerpt": "$value->type = $types->registry()->use($types->canonical('int')->type_id());",
       "disposition": "retain intrinsic intent; review caller/role centralization in full audit",
-      "parked": false,
-      "classification": "registered canonical identity for intrinsic type, ABI or representation role",
-      "owner": "compiler/runtime_catalog/register.php"
+      "parked": false
     },
     {
       "path": "compiler/my-try/compiler/runtime_catalog/register.php",
@@ -2057,24 +1772,6 @@
       "line": 170,
       "candidate_kind": "spelling_comparison",
       "subject": "self",
-      "excerpt": "if (($name === '') || ($name === 'self') || ($name === 'parent') || ($name === 'static')) {",
-      "disposition": "pending source review",
-      "parked": false
-    },
-    {
-      "path": "compiler/my-try/compiler/runtime_catalog/register.php",
-      "line": 170,
-      "candidate_kind": "spelling_comparison",
-      "subject": "parent",
-      "excerpt": "if (($name === '') || ($name === 'self') || ($name === 'parent') || ($name === 'static')) {",
-      "disposition": "pending source review",
-      "parked": false
-    },
-    {
-      "path": "compiler/my-try/compiler/runtime_catalog/register.php",
-      "line": 170,
-      "candidate_kind": "spelling_comparison",
-      "subject": "static",
       "excerpt": "if (($name === '') || ($name === 'self') || ($name === 'parent') || ($name === 'static')) {",
       "disposition": "pending source review",
       "parked": false
@@ -2111,7 +1808,7 @@
       "line": 297,
       "candidate_kind": "semantic_kind_test",
       "subject": "callable_type_definition",
-      "excerpt": "if ($result->requires_transfer && !($registry->type($result->type->type_id())->definition() instanceof callable_type_definition)) {",
+      "excerpt": "if (($result->transfer_policy !== task_transfer_policy::none) && !($registry->type($result->type->type_id())->definition() instanceof callable_type_definition)) {",
       "disposition": "pending source review",
       "parked": false
     },
@@ -2122,9 +1819,7 @@
       "subject": "vector",
       "excerpt": "$vector_definition = object_cast($types->definition('vector'), abstract_template_type_definition::class);",
       "disposition": "retain intrinsic intent; review caller/role centralization in full audit",
-      "parked": false,
-      "classification": "registered canonical identity for intrinsic type, ABI or representation role",
-      "owner": "compiler/runtime_catalog/register.php"
+      "parked": false
     },
     {
       "path": "compiler/my-try/compiler/scope_publication.php",
@@ -2140,15 +1835,6 @@
       "line": 20,
       "candidate_kind": "spelling_comparison",
       "subject": ".",
-      "excerpt": "if (($name === '.') || ($name === '..')) { throw new \\RuntimeException('Invalid logical module name'); }",
-      "disposition": "pending source review",
-      "parked": false
-    },
-    {
-      "path": "compiler/my-try/compiler/sources.php",
-      "line": 20,
-      "candidate_kind": "spelling_comparison",
-      "subject": "..",
       "excerpt": "if (($name === '.') || ($name === '..')) { throw new \\RuntimeException('Invalid logical module name'); }",
       "disposition": "pending source review",
       "parked": false
@@ -2182,7 +1868,16 @@
     },
     {
       "path": "compiler/my-try/compiler/types/queries.php",
-      "line": 61,
+      "line": 64,
+      "candidate_kind": "semantic_kind_test",
+      "subject": "nullable_semantics",
+      "excerpt": "if (!($definition instanceof nullable_semantics)) { return null; }",
+      "disposition": "pending source review",
+      "parked": false
+    },
+    {
+      "path": "compiler/my-try/compiler/types/queries.php",
+      "line": 86,
       "candidate_kind": "semantic_kind_test",
       "subject": "enum_type_definition",
       "excerpt": "return self::canonical($type)->definition() instanceof enum_type_definition;",
@@ -2191,10 +1886,306 @@
     },
     {
       "path": "compiler/my-try/compiler/types/queries.php",
-      "line": 74,
+      "line": 99,
       "candidate_kind": "semantic_kind_test",
       "subject": "closure_type_definition",
       "excerpt": "if ($definition instanceof closure_type_definition) { return null; }",
+      "disposition": "pending source review",
+      "parked": false
+    }
+  ],
+  "retired_candidates": [
+    {
+      "path": "compiler/my-try/04_analyze/conversions/truthiness.php",
+      "line": 12,
+      "candidate_kind": "semantic_kind_test",
+      "subject": "closure_type_definition",
+      "excerpt": "if (($definition instanceof callable_type_definition) || ($definition instanceof closure_type_definition)) {",
+      "disposition": "pending source review",
+      "parked": false
+    },
+    {
+      "path": "compiler/my-try/04_analyze/operators/preparation.php",
+      "line": 190,
+      "candidate_kind": "semantic_kind_test",
+      "subject": "closure_type_definition",
+      "excerpt": "|| ($definition instanceof callable_type_definition) || ($definition instanceof closure_type_definition)",
+      "disposition": "pending source review",
+      "parked": false
+    },
+    {
+      "path": "compiler/my-try/04_analyze/prepare/semantics/iterator.php",
+      "line": 9,
+      "candidate_kind": "spelling_comparison",
+      "subject": "key",
+      "excerpt": "return ($name === 'current') || ($name === 'key') || ($name === 'valid') || ($name === 'next') || ($name === 'rewind');",
+      "disposition": "pending source review",
+      "parked": false
+    },
+    {
+      "path": "compiler/my-try/04_analyze/prepare/semantics/iterator.php",
+      "line": 9,
+      "candidate_kind": "spelling_comparison",
+      "subject": "valid",
+      "excerpt": "return ($name === 'current') || ($name === 'key') || ($name === 'valid') || ($name === 'next') || ($name === 'rewind');",
+      "disposition": "pending source review",
+      "parked": false
+    },
+    {
+      "path": "compiler/my-try/04_analyze/prepare/semantics/iterator.php",
+      "line": 9,
+      "candidate_kind": "spelling_comparison",
+      "subject": "next",
+      "excerpt": "return ($name === 'current') || ($name === 'key') || ($name === 'valid') || ($name === 'next') || ($name === 'rewind');",
+      "disposition": "pending source review",
+      "parked": false
+    },
+    {
+      "path": "compiler/my-try/04_analyze/prepare/semantics/iterator.php",
+      "line": 9,
+      "candidate_kind": "spelling_comparison",
+      "subject": "rewind",
+      "excerpt": "return ($name === 'current') || ($name === 'key') || ($name === 'valid') || ($name === 'next') || ($name === 'rewind');",
+      "disposition": "pending source review",
+      "parked": false
+    },
+    {
+      "path": "compiler/my-try/04_analyze/prepare/semantics/object_construction.php",
+      "line": 131,
+      "candidate_kind": "named_registry_lookup",
+      "subject": "vector",
+      "excerpt": "|| ($definition === Model::$type_catalog->definition('vector'))",
+      "disposition": "Resolved: core vector/hash default construction registered through existing default_constructible metadata; no name fallback remains.",
+      "parked": false,
+      "classification": "operation allowlist requiring registry-owned construction query",
+      "owner": "CONVERT-01 / CH15 construction"
+    },
+    {
+      "path": "compiler/my-try/04_analyze/prepare/semantics/object_construction.php",
+      "line": 132,
+      "candidate_kind": "named_registry_lookup",
+      "subject": "hash",
+      "excerpt": "|| ($definition === Model::$type_catalog->definition('hash'))",
+      "disposition": "Resolved: core vector/hash default construction registered through existing default_constructible metadata; no name fallback remains.",
+      "parked": false,
+      "classification": "operation allowlist requiring registry-owned construction query",
+      "owner": "CONVERT-01 / CH15 construction"
+    },
+    {
+      "path": "compiler/my-try/04_analyze/prepare/semantics/transfer.php",
+      "line": 12,
+      "candidate_kind": "semantic_kind_test",
+      "subject": "closure_type_definition",
+      "excerpt": "if (($definition instanceof callable_type_definition) || ($definition instanceof closure_type_definition)) {",
+      "disposition": "pending source review",
+      "parked": false
+    },
+    {
+      "path": "compiler/my-try/04_analyze/prepare/semantics/transfer.php",
+      "line": 29,
+      "candidate_kind": "semantic_kind_test",
+      "subject": "result_type_definition",
+      "excerpt": "|| ($definition instanceof nullable_type_definition) || ($definition instanceof result_type_definition)) {",
+      "disposition": "pending source review",
+      "parked": false
+    },
+    {
+      "path": "compiler/my-try/04_analyze/prepare/semantics/types.php",
+      "line": 195,
+      "candidate_kind": "semantic_kind_test",
+      "subject": "nullable_semantics",
+      "excerpt": "if ($definition instanceof nullable_semantics) {",
+      "disposition": "pending source review",
+      "parked": false
+    },
+    {
+      "path": "compiler/my-try/04_analyze/prepare/semantics/value_probes.php",
+      "line": 42,
+      "candidate_kind": "semantic_kind_test",
+      "subject": "closure_type_definition",
+      "excerpt": "if (($definition instanceof callable_type_definition) || ($definition instanceof closure_type_definition)) {",
+      "disposition": "pending source review",
+      "parked": false
+    },
+    {
+      "path": "compiler/my-try/04_analyze/prepare/semantics/value_probes.php",
+      "line": 74,
+      "candidate_kind": "semantic_kind_test",
+      "subject": "closure_type_definition",
+      "excerpt": "if (($definition instanceof callable_type_definition) || ($definition instanceof closure_type_definition)) { return; }",
+      "disposition": "pending source review",
+      "parked": false
+    },
+    {
+      "path": "compiler/my-try/05_backend/cpp/concrete_index.php",
+      "line": 34,
+      "candidate_kind": "semantic_kind_test",
+      "subject": "dynamic_semantics",
+      "excerpt": "return !$path->is_empty() && (($definition instanceof mixed_semantics) || ($definition instanceof dynamic_semantics));",
+      "disposition": "pending source review",
+      "parked": false
+    },
+    {
+      "path": "compiler/my-try/05_backend/cpp/concrete_index.php",
+      "line": 102,
+      "candidate_kind": "semantic_kind_test",
+      "subject": "dynamic_semantics",
+      "excerpt": "$boxed_elements = ($receiver_definition instanceof mixed_semantics) || ($receiver_definition instanceof dynamic_semantics);",
+      "disposition": "pending source review",
+      "parked": false
+    },
+    {
+      "path": "compiler/my-try/05_backend/cpp/initializer_buffer.php",
+      "line": 28,
+      "candidate_kind": "semantic_kind_test",
+      "subject": "dynamic_semantics",
+      "excerpt": "return ($definition instanceof mixed_semantics) || ($definition instanceof dynamic_semantics);",
+      "disposition": "pending source review",
+      "parked": false
+    },
+    {
+      "path": "compiler/my-try/05_backend/cpp/keyed_paths.php",
+      "line": 14,
+      "candidate_kind": "semantic_kind_test",
+      "subject": "dynamic_semantics",
+      "excerpt": "&& (($definition instanceof mixed_semantics) || ($definition instanceof dynamic_semantics))) {",
+      "disposition": "pending source review",
+      "parked": false
+    },
+    {
+      "path": "compiler/my-try/05_backend/cpp/policy.php",
+      "line": 55,
+      "candidate_kind": "named_registry_lookup",
+      "subject": "vector",
+      "excerpt": "if (($definition !== Model::$type_catalog->definition('hash')) && ($definition !== Model::$type_catalog->definition('vector'))) { return 'unsupported-container-default'; }",
+      "disposition": "Resolved: name gate removed; CPP_Default_Constructors uses settled sequence/empty-only preparation plans. Historical location; see registry audit execution evidence.",
+      "parked": false,
+      "classification": "optimization eligibility allowlist; not semantic rejection",
+      "owner": "CH15 C++ outlining policy"
+    },
+    {
+      "path": "compiler/my-try/05_backend/cpp/runtime_operations.php",
+      "line": 455,
+      "candidate_kind": "semantic_kind_test",
+      "subject": "dynamic_semantics",
+      "excerpt": "return (($source instanceof mixed_semantics) || ($source instanceof dynamic_semantics))",
+      "disposition": "pending source review",
+      "parked": false
+    },
+    {
+      "path": "compiler/my-try/05_backend/cpp/types.php",
+      "line": 157,
+      "candidate_kind": "semantic_kind_test",
+      "subject": "async_task_type_definition",
+      "excerpt": "&& !($definition instanceof callable_type_definition) && !($definition instanceof async_task_type_definition)) {",
+      "disposition": "pending source review",
+      "parked": false
+    },
+    {
+      "path": "compiler/my-try/05_backend/cpp/types.php",
+      "line": 298,
+      "candidate_kind": "semantic_kind_test",
+      "subject": "async_task_type_definition",
+      "excerpt": "elseif (($definition->origin() === type_definition_origin::source) || ($definition instanceof callable_type_definition) || ($definition instanceof async_task_type_definition)) { return null; }",
+      "disposition": "pending source review",
+      "parked": false
+    },
+    {
+      "path": "compiler/my-try/05_backend/cpp/types.php",
+      "line": 353,
+      "candidate_kind": "semantic_kind_test",
+      "subject": "async_task_type_definition",
+      "excerpt": "if (($definition->origin() === type_definition_origin::source) || ($definition instanceof callable_type_definition) || ($definition instanceof async_task_type_definition)) {",
+      "disposition": "pending source review",
+      "parked": false
+    },
+    {
+      "path": "compiler/my-try/06_native/cpp_publication.php",
+      "line": 27,
+      "candidate_kind": "spelling_comparison",
+      "subject": "link_options",
+      "excerpt": "if (($view->size() === 3) && (($name === 'compile_options') || ($name === 'link_options') || ($name === 'diagnostics'))) { continue; }",
+      "disposition": "pending source review",
+      "parked": false
+    },
+    {
+      "path": "compiler/my-try/06_native/cpp_publication.php",
+      "line": 27,
+      "candidate_kind": "spelling_comparison",
+      "subject": "diagnostics",
+      "excerpt": "if (($view->size() === 3) && (($name === 'compile_options') || ($name === 'link_options') || ($name === 'diagnostics'))) { continue; }",
+      "disposition": "pending source review",
+      "parked": false
+    },
+    {
+      "path": "compiler/my-try/compiler/runtime_catalog/reader.php",
+      "line": 117,
+      "candidate_kind": "spelling_comparison",
+      "subject": "libraries",
+      "excerpt": "if (($name !== 'sources') && ($name !== 'libraries') && ($name !== 'definitions') && ($name !== 'providers')) {",
+      "disposition": "pending source review",
+      "parked": false
+    },
+    {
+      "path": "compiler/my-try/compiler/runtime_catalog/reader.php",
+      "line": 117,
+      "candidate_kind": "spelling_comparison",
+      "subject": "definitions",
+      "excerpt": "if (($name !== 'sources') && ($name !== 'libraries') && ($name !== 'definitions') && ($name !== 'providers')) {",
+      "disposition": "pending source review",
+      "parked": false
+    },
+    {
+      "path": "compiler/my-try/compiler/runtime_catalog/reader.php",
+      "line": 117,
+      "candidate_kind": "spelling_comparison",
+      "subject": "providers",
+      "excerpt": "if (($name !== 'sources') && ($name !== 'libraries') && ($name !== 'definitions') && ($name !== 'providers')) {",
+      "disposition": "pending source review",
+      "parked": false
+    },
+    {
+      "path": "compiler/my-try/compiler/runtime_catalog/reader.php",
+      "line": 706,
+      "candidate_kind": "spelling_comparison",
+      "subject": "instance",
+      "excerpt": "if (($name !== 'static') && ($name !== 'instance')) {",
+      "disposition": "pending source review",
+      "parked": false
+    },
+    {
+      "path": "compiler/my-try/compiler/runtime_catalog/register.php",
+      "line": 170,
+      "candidate_kind": "spelling_comparison",
+      "subject": "parent",
+      "excerpt": "if (($name === '') || ($name === 'self') || ($name === 'parent') || ($name === 'static')) {",
+      "disposition": "pending source review",
+      "parked": false
+    },
+    {
+      "path": "compiler/my-try/compiler/runtime_catalog/register.php",
+      "line": 170,
+      "candidate_kind": "spelling_comparison",
+      "subject": "static",
+      "excerpt": "if (($name === '') || ($name === 'self') || ($name === 'parent') || ($name === 'static')) {",
+      "disposition": "pending source review",
+      "parked": false
+    },
+    {
+      "path": "compiler/my-try/compiler/runtime_catalog/register.php",
+      "line": 297,
+      "candidate_kind": "semantic_kind_test",
+      "subject": "callable_type_definition",
+      "excerpt": "if ($result->requires_transfer && !($registry->type($result->type->type_id())->definition() instanceof callable_type_definition)) {",
+      "disposition": "pending source review",
+      "parked": false
+    },
+    {
+      "path": "compiler/my-try/compiler/sources.php",
+      "line": 20,
+      "candidate_kind": "spelling_comparison",
+      "subject": "..",
+      "excerpt": "if (($name === '.') || ($name === '..')) { throw new \\RuntimeException('Invalid logical module name'); }",
       "disposition": "pending source review",
       "parked": false
     }

@@ -1272,3 +1272,14 @@ routes. Evidence: parser_scope. This is authorized explicit source adaptation;
 automatic marker rewriting, field-place classification and remaining INIT-02 proofs
 stay open. Bootstrap 1:14.42 wall / 342388 KiB RSS / 312 MiB PHP heap, same first
 syntax_node blocker and diagnostic set.
+
+## CH15 registered default construction and inventory refresh
+
+Core vector/hash implicit construction now uses existing default_constructible
+metadata rather than name gates in supports_default. Fourteen provider/core/control
+checks pass in ordinary/prelowered O0/O2 output; absent metadata rejects and explicit
+factory counts are unaffected. The reproducible registry_audit.py tool refreshes
+255 stage/core files to 181 current and 32 retired/changed candidates; a repeat is
+byte-stable, not a full semantic audit. Evidence: registry_default.
+Bootstrap 1:14.80 wall / 342620 KiB RSS / 312 MiB PHP heap; same syntax_node first blocker
+and diagnostic set. Remaining CH15 operations and nonlexical inventory stay open.

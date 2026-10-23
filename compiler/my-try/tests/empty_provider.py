@@ -54,6 +54,7 @@ provider['cpp'] = [{'id': 'empty.make', 'symbol': 'make', 'header': str(header)}
                    {'id': 'empty.calls', 'symbol': 'empty_proof::factory_calls', 'header': str(header)}]
 (modules / 'empty_proof.json').write_text(json.dumps(provider))
 source = '''class VesselHolder { public $values vessel<int> = []; }
+class ImplicitDefaults { public $values vessel<int>; public $items vector<int>; public $lookup hash<int>; }
 function grow(vessel<int> $values = []): int {
  $values[] = 7;
  $sum = 0;
@@ -69,6 +70,9 @@ $first->values[] = 11;
 $first_sum = 0; foreach ($first->values as $value) { $first_sum += $value; }
 $second_sum = 0; foreach ($second->values as $value) { $second_sum += $value; }
 echo ":", $first_sum, ":", $second_sum, ":", factory_calls();
+$implicit = new ImplicitDefaults();
+$implicit_sum = 0; foreach ($implicit->values as $value) { $implicit_sum += $value; }
+echo ":", $implicit_sum, ":", count($implicit->items), ":", count($implicit->lookup), ":", factory_calls();
 '''
 storage_source = '''class Item { public int $value = 1; }
 function fresh(Storage<Item> $items = []): int {
@@ -98,7 +102,7 @@ with CommandRunner(out / 'logs', ROOT) as runner:
         build = json.loads(runner.run(label + '-build', ['php8.5', APP / 'tools/build_cpp.php',
                                                        folder / 'published', folder / 'cache'], timeout=300))
         actual = runner.run(label + '-execute', [build['executable']]).decode()
-        expected = '1:1:0:0:0' if storage else '0:7:1:7:2:9:3:11:0:5'
+        expected = '1:1:0:0:0' if storage else '0:7:1:7:2:9:3:11:0:5:0:0:0:5'
         assert actual == expected, (actual, expected)
 
     def reject_registration(case):
@@ -112,6 +116,11 @@ with CommandRunner(out / 'logs', ROOT) as runner:
         if case == 'no-opt-in':
             definition.pop('empty_initialization')
             diagnostic = 'target does not support initialization shape'
+        elif case == 'no-default-opt-in':
+            definition.pop('default_constructible')
+            (folder / 'source/main.phs').write_text(
+                'class Holder { public $value vessel<int>; public function __construct() {} } new Holder();')
+            diagnostic = 'Property requires set: initialization before the constructor body'
         elif case == 'no-factory':
             definition.pop('construction')
             diagnostic = 'Empty initialization requires a registered construction factory'
@@ -133,5 +142,5 @@ with CommandRunner(out / 'logs', ROOT) as runner:
               [Task('contracts', lambda: runner.run('contracts',
                   ['php8.5', APP / 'tests/empty_provider.php', out / 'contracts', modules]))] +
               [Task(case, lambda case=case: reject_registration(case))
-               for case in ['no-opt-in', 'no-factory', 'conflicting-recipes', 'required-argument']])
+               for case in ['no-opt-in', 'no-default-opt-in', 'no-factory', 'conflicting-recipes', 'required-argument']])
 (out / 'summary.json').write_text(json.dumps({'passed': True}) + '\n')

@@ -136,8 +136,6 @@ final class Object_Construction_Preparation
 		$definition = Type_Queries::canonical($type)->definition();
 		return Model::$type_catalog->registry()->runtime_default_constructible($definition)
 			|| ($definition instanceof callable_type_definition)
-			|| ($definition === Model::$type_catalog->definition('vector'))
-			|| ($definition === Model::$type_catalog->definition('hash'))
 			|| $type->matches(Language_Types::error_type(Model::$language_scope));
 	}
 

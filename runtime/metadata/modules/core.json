@@ -7,6 +7,7 @@
     {"id":"core.Exception","name":"Exception","kind":"class","storage":"shared","capabilities":[]},
     {
       "id": "core.vector", "name": "vector", "kind": "class",
+      "default_constructible": true,
       "initialization": [{"value": {"parameter":"Value"}, "nested": {"parameter":"Value"}}],
       "indexing": {
         "key": "int", "value": {"parameter": "Value"}, "nested": {"parameter": "Value"},
@@ -20,6 +21,7 @@
     },
     {
       "id": "core.hash", "name": "hash", "kind": "class", "construction": "make",
+      "default_constructible": true,
       "initialization": [
         {"value": {"parameter":"Value"}, "nested": {"parameter":"Value"}, "where": {"Key":"int"}},
         {"key": {"parameter":"Key"}, "value": {"parameter":"Value"}, "nested": {"parameter":"Value"}}
