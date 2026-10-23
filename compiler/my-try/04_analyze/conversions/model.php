@@ -34,6 +34,7 @@ enum conversion_operation
 	case unique_upcast;
 	case nullable_wrap;
 	case nullable_extract;
+	case nullable_map;
 	case result_wrap;
 	case result_error;
 	case result_false;
@@ -62,6 +63,8 @@ final class conversion_decision
 	public canonical_type_use $result_type;
 	public conversion_context $context;
 	public conversion_operation $operation;
+	/** Optional presence composition retains an independently validated payload conversion. */
+	public ?conversion_decision $payload_conversion = null;
 
 	public function requires_cast(): bool
 	{

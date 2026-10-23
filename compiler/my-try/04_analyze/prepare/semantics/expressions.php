@@ -501,11 +501,11 @@ final class Expression_Preparation
 	{
 		$base = $syntax->base;
 		$value = Method_Preparation::base($base, $context);
-		$storage = Type_Queries::record_storage($value->type);
+		$storage = Type_Queries::receiver_storage($value->type);
 		if ($storage === record_storage_kind::weak) {
 			throw new \RuntimeException('S2S weak member access requires an explicit lock');
 		}
-		$payload = Type_Queries::record_payload($value->type);
+		$payload = Type_Queries::receiver_payload($value->type);
 		$field = self::resolve_property($payload, $syntax->occurrence()->name, $context);
 		if ($field->static_member) { throw new \RuntimeException('Instance access requires an instance property'); }
 		$facts = new prepared_field_access();

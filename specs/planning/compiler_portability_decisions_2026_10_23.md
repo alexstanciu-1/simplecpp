@@ -567,14 +567,15 @@ The spelling and bounded usage above are implemented; broad bootstrap completion
 
 ## NULL-01 — distinct frontend nullability for class handles
 
-**Direction accepted on 2026-10-23; representation foundation implemented, source/consumer integration pending.**
+**Coordinated integration approved on 2026-10-23; source identity, checked value boundaries, receivers and directional adaptation implemented in a partial slice. Initialization and remaining consumers are still blocking.**
 
 Registry-formed nullable<Node> now retains distinct semantic/reference/specialization
 identity while native representation uses Node's existing shared handle. Concrete
 storage and nested provider-vector round trips pass O0/O2/sanitizers and the
 application template-free token gate. Scalar/inline optional storage remains wrapped.
-This is not source Node/?Node enforcement: source normalization, value-boundary,
-receiver/override and initialization migration remain pending. See execution ledger.
+The subsequent approved integration removes source normalization and adds checked
+value boundaries, optional receiver interpretation and directional callable adaptation.
+Initialization and broader consumer migration remain pending. See execution ledger.
 
 Node and ?Node are distinct frontend contracts even when both lower to the same
 shared-handle representation. Node requires a present compatible object; ?Node
@@ -598,7 +599,7 @@ route as part of common-ground proofs. Do not introduce implicit nullability thr
 a `Node $node = null` default. Required-field uninitialized storage remains hidden
 under INIT-02; it cannot escape as a readable Node value.
 
-Before implementing this cross-owner change, review required-field/local initialization,
+The approved [coordinated design](compiler_null01_integration_design_2026_10_23.md) covers required-field/local initialization,
 runtime binding boundaries, and ownership operations
 such as weak locking and moved-from handles. Extending this exact rule to every explicit
 shared/unique/weak spelling is not decided merely by accepting Node versus ?Node.
@@ -606,7 +607,7 @@ Specify the smallest coherent slice and its v0.1/v0.2 ordinary/prelowered proofs
 
 ### Accepted reference, override and value-boundary rules
 
-Agreed on 2026-10-23; implementation paused:
+Agreed on 2026-10-23; value/reference/adaptation slice implemented, full integration pending:
 
 - References are invariant in frontend type including nullability, even when native
   storage representations match. Keep existing readonly-reference/reference-result
@@ -693,8 +694,9 @@ Class-handle support and wider operation/retained coverage remain open.
 The formation slice now rejects redundant nullable wrappers around explicit ownership
 through registry semantic roles, including renamed registered definitions. Empty
 handle/weak-lock/moved-from unique controls pass in both output modes. Required
-class boundaries, optional weak-lock results and the remaining ownership consumers
-still await NULL-01 integration; this is not OWN-01 completion.
+class boundary checks and optional weak-lock results now participate in NULL-01
+integration. Required initialization and remaining ownership consumers are still open;
+this is not OWN-01 completion.
 
 - Ordinary Node requires a live compatible object; ?Node admits absence. Explicit
   ownership handles retain their existing possibly-empty protocols rather than
@@ -1020,7 +1022,7 @@ discussion while independent work continues. Deferred debts remain deferred.
 | TASK-01 | Bounded shared-handle task admission in v0.2 | Joined API rules accepted; reuse audit complete, revised 8–12x; bounded API-policy/callback-permission design accepted; implementation/proofs pending; inventory D04; paused. |
 | TASK-02 | Retained-type lookup synchronization in portable PHP | Source race path identified; same-lock lookup repair direction accepted; native concurrency proofs pending; paused. |
 | AST-01 | Explicit concrete virtual methods and portable PHP intent | Core support and converter mapping with `#[\Virtual]` / `#[\Override]` implemented; PHP/legacy/ordinary/prelowered and retained proofs pass; inventory A01; see execution ledger. |
-| NULL-01 | Node versus ?Node frontend contracts, shared lowering | Direction accepted; four-consumer reuse audit complete; revised 12–20x; bounded presence/representation design and proofs pending; inventory A02; paused. |
+| NULL-01 | Node versus ?Node frontend contracts, shared lowering | Direction accepted; four-consumer reuse audit complete; revised 12–20x; coordinated integration approved; distinct source identities, checked boundaries, receiver and directional adaptation proofs pass. Required initialization and remaining consumers are blocking; inventory A02; in progress. |
 | NULL-02 | Definition- and capability-based nullable operations | Capability/consumer reuse audit complete; revised 4–8x incremental to shared NULL-01 model; generic exact value boundaries now use value_storable; both-mode and portable container proofs pass. Class-handle, take and nested Result work remains; inventory D03; in progress. |
 | OWN-01 | Weak locks, moved-from unique/shared handles and runtime result guarantees | Ownership and explicit-handle spelling agreed; weak-expiry parity deferred under OWN-DEBT-01; paused. |
 | OWN-DEBT-01 | PHP strong carriers versus native weak lifetime | Deferred; no demonstrated compiler failure; no exact emulation planned; PHP-only cleanup may be considered; not a new gate. |

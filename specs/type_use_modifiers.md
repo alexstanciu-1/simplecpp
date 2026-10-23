@@ -1,7 +1,7 @@
 # Type-use storage modifiers
 Doc Status: normative
 
-## v0.2 nullable records and handle normalization — 2026-10-07
+## v0.2 nullable records and distinct object contracts — revised 2026-10-23
 
 Explicit ownership handles have one spelling for their possibly-empty contract.
 `shared<T>`, `unique<T>` and `weak<T>` may carry absence under their existing
@@ -13,11 +13,21 @@ redundant storage overrides (`shared<Class>`, `value<Struct>`) remains in force.
 Weak handles still require explicit locking where presence/access requires it;
 unique handles remain empty-but-valid after an admitted explicit move.
 
-The earlier class-handle normalization remains the implementation baseline pending
-the separate NULL-01 contract/consumer migration: `?Class` currently normalizes to
-the ordinary class handle. The accepted distinction between required Class and
-nullable Class is tracked in the portability backlog; the ownership-spelling revision
-above does not claim that required class boundaries have already been implemented.
+`Class` and `?Class` now retain distinct frontend identities while sharing the same
+native shared-handle storage. Known null to a required object assignment, argument,
+return or default rejects. Optional objects accept null. Optional-to-required value
+boundaries check presence before entry/replacement and preserve object identity;
+permitted derived-to-base adaptation composes with that check. References remain
+invariant, including nullability. Interfaces follow the same contract.
+
+By-value override parameters may broaden required to optional, and results may
+strengthen optional to required, composed with admitted ancestry. Reverse directions
+reject; an override bridge never inserts a potentially failing absence check.
+Initialization and other consumers are still being migrated: this boundary slice does
+not yet prove definite assignment of required class locals, required fields on every
+constructor exit, or the presence guarantees of every registered runtime API. These
+remain blocking NULL-01/LOCAL-01 integration work, not permission to read empty required
+storage. The execution ledger records precise current proof scope.
 
 Inline records retain a genuine optional payload: `?Struct` is `nullable<Struct>`,
 and `?value<Class>` is `nullable<value<Class>>`. Absence differs from a present
@@ -42,7 +52,7 @@ Reset destroys any present payload. `=== null` / `!== null` inspect presence wit
 extracting or copying the payload. An inline class payload still carries its explicit
 `value<Class>` storage identity; no handle/inline conversion is implied.
 
-Implementation checkpoints are tracked in CH10. Handle normalization and the bounded
+Implementation checkpoints are tracked in CH10. Object presence and the bounded
 inline-record value operations above are enabled through shared preparation and
 existing runtime lowering. Exact nullable-record selections follow the
 [selection matrix](conditional_expression_matrix.md#v02-nullable-inline-record-selections--2026-10-07).
@@ -65,8 +75,8 @@ payload default construction or copying. Reference parameters remain invariant.
 Storage capability does not grant implicit truthiness: optional payloads without an
 admitted condition contract require explicit presence tests or extraction. This
 revision does not add container covariance, wrapper-delegated indexing, interior
-borrows or broader `take` output admission. Required/nullable class-handle identity
-and composed ancestry conversions remain the separate migration described above.
+borrows or broader `take` output admission. Required/nullable class-handle boundaries use the migration described above;
+initialization and remaining consumer integration are still open.
 
 Agreed 2026-10-02 for the my-try v0.2 frontend.
 
@@ -126,16 +136,15 @@ destination requires them. Source syntax alone never suppresses a required conve
 
 ## Null defaults for handle parameters — 2026-10-21
 
-A copyable by-value ownership-handle parameter may declare `= null`. Omission
-initializes empty parameter storage using the existing null storage-initialization
-conversion. Nullable spelling remains normalized: `?Class $x = null` and
-`Class $x = null` have the same strict-PHS meaning. Class/interface shared handles
-and weak observers use their existing copy rules; unique defaults remain excluded
-by the current default-copy requirement. Non-null handle defaults remain deferred.
+A copyable explicit ownership-handle parameter may declare `= null` under its
+existing possibly-empty contract. Unique defaults remain excluded by the current
+default-copy requirement. Non-null handle defaults remain deferred.
 
-This default does not widen explicit argument or return conversion: a typed empty
-handle may be passed, but a raw `null` call argument remains rejected. Reference
-defaults and ownership transfer rules are unchanged.
+Ordinary object parameters require `?Class` (or `?Interface`) for a null default;
+`Class $x = null` rejects. Optional objects also accept explicit null arguments and
+returns. Explicit ownership handles keep their separate argument/return policy;
+this object-contract revision does not widen it. Reference defaults and ownership
+transfer rules are unchanged.
 
 ## v0.2 ownership composition — 2026-10-06
 
@@ -294,10 +303,10 @@ limited to proven class/struct/interface ancestry upcasts, as specified in
 extend lifetime.
 
 `lock(expression)` accepts exact `weak<T>` and returns its shared representation:
-bare `T` for classes/interfaces and `shared<T>` for structs. `weak($view)` accepts
-the corresponding default shared class/interface handle as well. A successful
+`?T` for classes/interfaces and `shared<T>` for structs. `weak($view)` accepts
+the corresponding required or optional default shared class/interface handle as well. A successful
 lock acquires ownership of the same object. An empty or expired weak returns empty
-shared, not an exception or an additional nullable wrapper. Both operations evaluate
+storage, not an exception or an additional physical nullable wrapper. Both operations evaluate
 their single operand exactly once and produce non-addressable handle values. They
 are language ownership operations, not user-overloadable calls or general member
 dispatch. The helper spelling does not enable source `$observer->lock()`.

@@ -64,6 +64,14 @@ final class Type_Preparation
 		}
 		catch (\InvalidArgumentException $error) { throw new \RuntimeException($error->getMessage()); }
 	}
+	/** Operations that may fail to acquire an object publish the same optional contract as source syntax. */
+	public static function nullable_of(canonical_type_use $payload, preparation_context $context): canonical_type_use
+	{
+		$definition = object_cast(Model::$type_catalog->definition('nullable'), abstract_template_type_definition::class);
+		$arguments /** vector<canonical_type_use> */ = [$payload];
+		return self::application($definition, $arguments, $context);
+	}
+
 	/** Named syntax resolves through the existing lexical/publication scope chain. */
 	public static function type(type_node $node, preparation_context $context): canonical_type_use
 	{
@@ -176,7 +184,7 @@ final class Type_Preparation
 		}
 	}
 
-	/** Both nullable spellings normalize handle absence before interning a wrapper. */
+	/** Both nullable spellings preserve frontend absence contracts through registry identity. */
 	private static function application(abstract_template_type_definition $definition,
 		array $arguments /** vector<canonical_type_use> */, preparation_context $context): canonical_type_use
 	{
@@ -192,10 +200,6 @@ final class Type_Preparation
 		}
 		$registry = Model::$type_catalog->registry();
 		$registry->validate_application_arity($definition, q_count($arguments));
-		if ($definition instanceof nullable_semantics) {
-			$payload = $arguments[0];
-			if (Type_Queries::is_nominal_handle($payload)) { return $payload; }
-		}
 		$application = $registry->intern_application($definition, $arguments, new Capability_Preparation($context));
 		return $registry->use($application->type_id());
 	}

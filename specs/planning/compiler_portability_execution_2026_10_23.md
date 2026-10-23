@@ -739,3 +739,57 @@ RSS, 269 PHS files / 1,962,525 bytes. Bootstrap 208.90 s / 478,356 KiB (467.1 Mi
 RSS / 459.0 MiB PHP heap. The nullable-value payload whitelist diagnostic disappears;
 no diagnostic text is added. Ownership-boundary admission is now first. No fatal/OOM,
 emission or native compiler rebuild. Evidence: results/compiler_bootstrap_backlog_2026_10_23/nullable_values.
+
+
+## NULL-01 coordinated integration approved; source boundary slice
+
+The fresh five-case probe at bf5a667bf confirmed the remaining mismatch in both
+output modes: ?Node raw-null arguments/returns reject, but required null assignment
+and nullable storage passed to a required reference admit. The user approved the
+coordinated design in compiler_null01_integration_design_2026_10_23.md after the
+cross-owner review. SELF-01 remains separately gated. Saved pre-change evidence:
+results/compiler_bootstrap_backlog_2026_10_23/null01_integration.
+
+The source type owner now interns nullable nominal handles without normalization.
+Conversion decisions compose nullable presence with a separately validated payload
+conversion; only existing exact identities and object ancestry are admitted. Ordinary
+and concrete emission evaluate once and reuse native shared storage. Literal null to
+required assignment/argument/return/default boundaries rejects. Nullable receivers
+have explicit payload/storage interpretation, without changing global ownership roles
+or exact matching. Invariant references reuse existing storage checks. Callable
+adaptation admits directional optional broadening plus ancestry, never throwing
+narrowing. Optional base selections reuse supplied types; required fallback coalesce
+uses the existing ownership join. Synthesized optional common-base types and optional
+fallback coalescing remain unimplemented consumer work, not silently inferred rules.
+
+Weak derivation accepts required/optional default shared handles without retention;
+weak class/interface locking now publishes nullable object identity. Explicit ownership
+families retain their existing spelling and empty-state behavior. Required class
+local reads, constructor-success field checks, general nullable identity/probe/object
+cast consumers and runtime API presence guarantees are not claimed complete.
+
+`/tmp/nullable-objects-06` passes 14 tasks: positive and empty-extraction native
+execution in both modes, nine negative boundaries/override cases, and two-mode
+retained cross-file signature edit/rejection/revert/reset. Ordinary positive 22.29 s,
+concrete positive 23.82 s. Checked absence fails before callee output. Present copies,
+upcasts, optional fields/receivers, interface adaptation, weak acquisition, lazy
+coalesce and conditional results preserve identity. Initial failure-test assertions
+expected the runtime code in stderr, but the program entry reports only the message;
+the corrected assertion checks that actual error surface and absence of callee output.
+
+`/tmp/nullable-objects-portable-02` passes PHP, legacy native and both v0.2 modes.
+The initial fixture used unsupported ?Class local annotations; corrected to the
+existing nullable<Class> annotation spelling without expanding converter grammar.
+`/tmp/nullable-objects-value-regression-01` passes both-mode generic nullable values.
+Six adjacent preparation suites pass, after class cleanup/weak-owner fixtures that
+intentionally assign null were migrated to optional declarations. Native regressions
+pass 54 upcast/ownership programs and 32 abstract-dispatch programs. Broader historical
+normalization fixtures still need systematic migration; no full-suite claim is made.
+
+Measured `/tmp/compiler-bootstrap-nullable-objects-01`: conversion 4.67 s / 195,104 KiB
+RSS, 269 PHS files / 1,968,322 bytes. Preparation 185.57 s / 457,108 KiB (446.4 MiB)
+RSS / 436.5 MiB PHP heap. Old ownership-boundary diagnostic disappears. Added:
+object-type operation requires shared handle, nullable indexed-key admission, and
+required object boundary rejects null. The first is now the next consumer blocker.
+No fatal/OOM, C++ emission or native compiler rebuild; a faster failed preparation is
+not a throughput improvement claim. Saved evidence: results/compiler_bootstrap_backlog_2026_10_23/nullable_objects.

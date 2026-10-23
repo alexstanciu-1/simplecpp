@@ -18,18 +18,19 @@ final class Ownership_Observation_Preparation
 			$diagnostic = 'S2S weak derivation requires shared ownership';
 		}
 		$value = Expression_Preparation::prepare($syntax->operand, $context);
-		$role = Ownership_Conversions::role($value->type);
+		$observed = Type_Queries::nullable_handle_payload($value->type) ?? $value->type;
+		$role = Ownership_Conversions::role($observed);
 		if ($role === null) {
 			throw new \RuntimeException($diagnostic);
 		}
 		if ($role->ownership_family() !== $input_family) {
 			throw new \RuntimeException($diagnostic);
 		}
-		$payload = Ownership_Conversions::payload($value->type);
+		$payload = Ownership_Conversions::payload($observed);
 		$facts = new prepared_ownership_observation();
 		$facts->operation = $syntax->operation;
 		if (($syntax->operation === ownership_observation_kind::lock_shared) && Type_Queries::is_nominal_handle($payload)) {
-			$facts->type = $payload;
+			$facts->type = Type_Preparation::nullable_of($payload, $context);
 			return $facts;
 		}
 		$definition = object_cast(Model::$type_catalog->definition($result_name), abstract_template_type_definition::class);

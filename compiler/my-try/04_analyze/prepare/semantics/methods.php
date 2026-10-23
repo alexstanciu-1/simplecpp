@@ -139,7 +139,7 @@ final class Method_Preparation
 		}
 		$base /** expression_node */ = $syntax->receiver;
 		$value = self::base($base, $context);
-		$payload = Type_Queries::record_payload($value->type);
+		$payload = Type_Queries::receiver_payload($value->type);
 		$declaration = Type_Queries::source_declaration($payload);
 		$runtime = Type_Queries::canonical($payload)->definition()->origin() === type_definition_origin::runtime;
 		if ($runtime && $syntax->static_qualification) {
@@ -170,7 +170,7 @@ final class Method_Preparation
 	/** Source and provider methods retain/borrow receivers under the same lifetime rules. */
 	private static function instance_receiver(prepared_expression $value, canonical_type_use $payload): prepared_method_receiver
 	{
-		$storage = Type_Queries::record_storage($value->type);
+		$storage = Type_Queries::receiver_storage($value->type);
 		if ($value->place !== null) { Reference_Preparation::require_mutable_contents($value->place, $value->type); }
 		$lifetime = method_receiver_lifetime::retain_shared;
 		if ($storage !== record_storage_kind::shared)

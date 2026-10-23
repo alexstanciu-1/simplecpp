@@ -31,7 +31,13 @@ final class Coalesce_Expression_Preparation
 				$facts->presence = coalesce_presence::wrapper_value;
 			}
 			$relationships = new Conversion_Relationships($context);
-			if ((Ownership_Conversions::role($left->type) !== null) || (Ownership_Conversions::role($fallback->type) !== null)) {
+			if ((Type_Queries::nullable_handle_payload($left->type) !== null)
+				&& Type_Queries::is_nominal_handle($fallback->type)) {
+				$facts->type = Selection_Result_Preparation::ownership_join($selected_type, $fallback->type, $context);
+				$facts->fallback_conversion = Conversion_Preparation::decide($fallback->type, $facts->type,
+					conversion_context::conditional_branch, $relationships);
+			}
+			elseif ((Ownership_Conversions::role($left->type) !== null) || (Ownership_Conversions::role($fallback->type) !== null)) {
 				$facts->type = Selection_Result_Preparation::ownership_join($left->type, $fallback->type, $context);
 				$facts->presence = coalesce_presence::handle_presence;
 				Ownership_Conversions::require_presence($left->type);

@@ -1,0 +1,12 @@
+{
+    "ordinary\/optional_return_null": "S2S ownership boundary requires matching handles, a proven safe same-family upcast, or null storage initialization\/assignment\n",
+    "ordinary\/optional_argument_null": "S2S ownership boundary requires matching handles, a proven safe same-family upcast, or null storage initialization\/assignment\n",
+    "ordinary\/required_assignment_null": "accepted",
+    "ordinary\/typed_empty_optional_return": "accepted",
+    "ordinary\/nullable_required_reference": "accepted",
+    "concrete\/optional_return_null": "S2S ownership boundary requires matching handles, a proven safe same-family upcast, or null storage initialization\/assignment\n",
+    "concrete\/optional_argument_null": "S2S ownership boundary requires matching handles, a proven safe same-family upcast, or null storage initialization\/assignment\n",
+    "concrete\/required_assignment_null": "accepted",
+    "concrete\/typed_empty_optional_return": "accepted",
+    "concrete\/nullable_required_reference": "accepted"
+}

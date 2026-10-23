@@ -1,0 +1,10 @@
+{
+  "removed": [
+    "S2S ownership boundary requires matching handles, a proven safe same-family upcast, or null storage initialization/assignment"
+  ],
+  "added": [
+    "Object type operation requires a shared handle",
+    "Required object boundary rejects null; declare a nullable object type",
+    "S2S indexed access keys require int, string, shared record or mixed"
+  ]
+}

@@ -519,15 +519,17 @@ remove either guarantee invalidate existing conversions.
 
 ## Interface handles and calls
 
-A bare interface type denotes an absent-or-present shared handle, with the same
-copying, presence, null-assignment and checked dereference behavior as a class handle.
-`?I` and `nullable<I>` normalize to `I`; there is no nested absence wrapper.
+An interface type has the same required/optional frontend distinction as a class:
+`I` requires a present object and `?I` / `nullable<I>` permits absence. Their native
+shared storage is identical, without a second physical optional wrapper. The
+[type-use contract](type_use_modifiers.md) describes checked boundaries, invariant
+references and the remaining initialization implementation obligations.
 Interfaces cannot be allocated or stored inline. Explicit `shared<I>` is redundant;
 `value<I>` and `unique<I>` are not admitted in
 this bounded slice.
 
 `weak<I>` is an ordinary non-owning interface observer. `weak($view)` derives it
-explicitly from an `I` handle, and `lock($observer)` returns `I`, possibly empty.
+explicitly from an `I` or `?I` handle, and `lock($observer)` returns `?I`, possibly empty.
 Neither derivation nor weak upcasting allocates, copies a payload or extends its
 lifetime. A successful lock acquires ownership of the same object/control block.
 Weak handles require explicit locking before presence tests or method calls;

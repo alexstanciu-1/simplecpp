@@ -27,7 +27,7 @@ foreach ([
 	'assignment' => [$classes . '$c = new C(); $b B; $b = $c; $b->n = 9; return $c->n;', 9],
 	'argument' => [$classes . 'function set_value(B $b): void { $b->n = 9; } $c = new C(); set_value($c); return $c->n;', 9],
 	'return' => [$classes . 'function produce(): B { return new C(); } $b = produce(); return $b->n;', 1],
-	'empty' => [$classes . '$c C; $b B = $c; return isset($b) ? 1 : 9;', 9],
+	'empty' => [$classes . '$c ?C = null; $b ?B = $c; return isset($b) ? 1 : 9;', 9],
 	'property' => [$classes . 'class Holder { B $b; } $h = new Holder(); $c = new C(); $h->b = $c; $h->b->n = 9; return $c->n;', 9],
 	'method' => [$classes . 'class Ops { function pass(C $c): B { return $c; } static function read(B $b): int { return $b->n; } } $o = new Ops(); $c = new C(); $b = $o->pass($c); $b->n = 9; return Ops::read($c);', 9],
 	'shared_struct' => ['struct B { int $n = 1; } struct C extends B {} $c shared<C> = new C(); $b shared<B> = $c; $b->n = 9; return $c->n;', 9],
@@ -35,7 +35,7 @@ foreach ([
 	'element_inputs' => [$classes . '$c = new C(); $bs vector<B> = [$c]; $bs[] = $c; $bs[0] = $c; $b = $bs[1]; $b->n = 9; return $c->n;', 9],
 	'iteration' => [$classes . '$c = new C(); $cs vector<C> = [$c]; $b B; foreach ($cs as $b) { $b->n = 9; } return $c->n;', 9],
 	'virtual' => ['abstract class B { abstract function read(): int; } class C extends B { function read(): int { return 9; } } $c = new C(); $b B = $c; return $b->read();', 9],
-	'cleanup' => ['class Log { static int $n = 0; } class B { function __destruct() { Log::$n += 1; } } class C extends B { function __destruct() { Log::$n += 8; } } $c = new C(); $b B = $c; $c = null; if (Log::$n !== 0) { return 101; } $b = null; return Log::$n;', 9],
+	'cleanup' => ['class Log { static int $n = 0; } class B { function __destruct() { Log::$n += 1; } } class C extends B { function __destruct() { Log::$n += 8; } } $c ?C = new C(); $b ?B = $c; $c = null; if (Log::$n !== 0) { return 101; } $b = null; return Log::$n;', 9],
 ] as $name => [$source, $expected]) { upcast_export($name, upcast_source($source), $expected); }
 // A pure conversion caller must not read settled ancestry without registering dependencies.
 $registry = Model::$type_catalog->registry();
@@ -49,7 +49,7 @@ catch (\RuntimeException $expected) {}
 // Weak boundaries reuse the ancestry decision without acquiring a strong owner.
 foreach (['class', 'struct'] as $kind) {
 	$records = $kind . ' B { int $n = 1; } ' . $kind . ' M extends B {} ' . $kind . ' C extends M {} ';
-	$owner = $kind === 'class' ? '$c = new C(); ' : '$c shared<C> = new C(); ';
+	$owner = $kind === 'class' ? '$c ?C = new C(); ' : '$c shared<C> = new C(); ';
 	foreach ([
 		'identity' => [$owner . '$w = weak($c); $b weak<B> = $w; $held = lock($b); $held->n = 9; return $c->n;', 9],
 		'assignment' => [$owner . '$b weak<B>; $b = weak($c); $held = lock($b); return $held->n;', 1],
@@ -127,7 +127,7 @@ foreach ([
 	$classes . 'function replace(B &$b): void {} $c = new C(); replace($c);',
 	$classes . 'function inspect(const B &$b): void {} $c = new C(); inspect($c);',
 	$classes . '$c = new C(); $b B =& $c;',
-	'struct B {} struct C extends B {} $c C; $b B = $c;',
+	'struct B {} struct C extends B {} $c ?C = null; $b ?B = $c;',
 	'struct B {} struct C extends B {} $c C; $b shared<B> = $c;',
 	'struct B {} struct C extends B {} $c unique<C>; $b unique<B> = move($c);',
 	'abstract class B {} class C extends B {} $c unique<C>; $b unique<B> = move($c);',
@@ -148,7 +148,7 @@ try {
 	$child_text = 'class C extends B {}';
 	file_put_contents($child_path, $child_text);
 	foreach ([
-		'assignment' => '$c C; $b B = $c; return isset($b) ? 1 : 9;',
+		'assignment' => '$c ?C = null; $b ?B = $c; return isset($b) ? 1 : 9;',
 		'argument' => 'function accept(B $b): int { return isset($b) ? 1 : 9; } $c C; return accept($c);',
 		'return' => 'function convert(C $c): B { return $c; } $c C; $b = convert($c); return isset($b) ? 1 : 9;',
 		'weak_assignment' => '$c weak<C>; $b weak<B> = $c; return isset(lock($b)) ? 1 : 9;',

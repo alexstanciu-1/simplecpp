@@ -373,6 +373,10 @@ final class CPP_Runtime_Operations
 		if ($request->kind === cpp_runtime_operation_kind::conversion) {
 			$conversion /** conversion_decision */ = $request->conversion;
 			$engine /** CPP_Specializations */ = $context->implementation_engine;
+			if ((Type_Queries::nullable_handle_payload($conversion->source_type) !== null)
+				|| (Type_Queries::nullable_handle_payload($conversion->target_type) !== null)) {
+				return CPP_Declarations::conversion($arguments[0], $conversion, $context);
+			}
 			if (($conversion->operation === conversion_operation::nullable_wrap)
 				|| ($conversion->operation === conversion_operation::result_wrap)) {
 				$payload = CPP_Wrapper_Transport::payload_value($conversion->source_type, $arguments[0], true, $engine, $context);
@@ -460,6 +464,7 @@ final class CPP_Runtime_Operations
 			|| ($decision->operation === conversion_operation::nullable_empty)
 			|| ($decision->operation === conversion_operation::nullable_wrap)
 			|| ($decision->operation === conversion_operation::nullable_extract)
+			|| ($decision->operation === conversion_operation::nullable_map)
 			|| ($decision->operation === conversion_operation::result_wrap)
 			|| ($decision->operation === conversion_operation::result_extract)
 			|| ($decision->operation === conversion_operation::result_error)

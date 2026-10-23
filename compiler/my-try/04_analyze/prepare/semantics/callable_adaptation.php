@@ -16,8 +16,11 @@ final class Callable_Adaptation
 
 	private static function same_conversion(conversion_decision $left, conversion_decision $right): bool
 	{
-		return ($left->operation === $right->operation) && $left->source_type->matches($right->source_type)
-			&& $left->target_type->matches($right->target_type);
+		if (($left->operation !== $right->operation) || !$left->source_type->matches($right->source_type)
+			|| !$left->target_type->matches($right->target_type)) { return false; }
+		if ($left->payload_conversion === null) { return $right->payload_conversion === null; }
+		if ($right->payload_conversion === null) { return false; }
+		return self::same_conversion($left->payload_conversion, $right->payload_conversion);
 	}
 
 	/** Invariant consumers do not supply an ancestry query. */
@@ -65,6 +68,16 @@ final class Callable_Adaptation
 			return Conversion_Preparation::operation($source, $target, $context, conversion_operation::identity);
 		}
 		if (!$allow_shared || ($relationships === null)) { return null; }
+		$source_payload = Type_Queries::nullable_handle_payload($source);
+		$target_payload = Type_Queries::nullable_handle_payload($target);
+		if (($source_payload !== null) || ($target_payload !== null)) {
+			// An adapter may broaden acceptance, never insert a failing absence check.
+			if ($target_payload === null) { return null; }
+			$actual = $source_payload ?? $source;
+			if (!Type_Queries::is_nominal_handle($actual)) { return null; }
+			if (!$actual->matches($target_payload) && !$relationships->is_subtype($actual, $target_payload)) { return null; }
+			return Nullable_Conversions::decide($source, $target, $context, $relationships);
+		}
 		$source_role = Ownership_Conversions::role($source);
 		$target_role = Ownership_Conversions::role($target);
 		if (($source_role === null) || ($target_role === null)) { return null; }

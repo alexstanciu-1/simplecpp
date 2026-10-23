@@ -67,6 +67,19 @@ final class Type_Queries
 		return self::is_nominal_handle($payload) ? $payload : null;
 	}
 
+	/** Member selection interprets optional handle storage without weakening type identity. */
+	public static function receiver_payload(canonical_type_use $type): canonical_type_use
+	{
+		$payload = self::nullable_handle_payload($type);
+		return self::record_payload($payload ?? $type);
+	}
+
+	public static function receiver_storage(canonical_type_use $type): record_storage_kind
+	{
+		$payload = self::nullable_handle_payload($type);
+		return self::record_storage($payload ?? $type);
+	}
+
 	/** Nominal enum identity stays distinct from its prepared integer storage. */
 	public static function is_enum(canonical_type_use $type): bool
 	{

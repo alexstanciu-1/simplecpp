@@ -13,7 +13,7 @@ final class Reference_Preparation
 		if ($place->root_storage() instanceof prepared_capture) {
 			$capture = object_cast($place->root_storage(), prepared_capture::class);
 			if ($capture->borrow === null) {
-				if ((Type_Queries::record_storage($receiver) === record_storage_kind::shared)
+				if ((Type_Queries::receiver_storage($receiver) === record_storage_kind::shared)
 					|| Boxed_Conversions::is_dynamic($receiver)) { return storage_access::writable; }
 			}
 		}

@@ -37,9 +37,9 @@ final class Nullable_Conversions
 		}
 	}
 
-	/** Only exact payload boundaries; cross-payload lifting remains a separate slice. */
+	/** Presence composes only exact payload identity or already-admitted handle ancestry. */
 	public static function decide(canonical_type_use $source, canonical_type_use $target,
-		conversion_context $context): conversion_decision
+		conversion_context $context, ?conversion_relationship_query $relationships = null): conversion_decision
 	{
 		$source_payload = self::payload($source);
 		$target_payload = self::payload($target);
@@ -48,26 +48,31 @@ final class Nullable_Conversions
 			throw new \RuntimeException('S2S nullable boundaries do not support storage modifiers');
 		}
 		if ($source_payload !== null) { self::require_value_payload($source_payload); }
+		if ($target_payload !== null) { self::require_value_payload($target_payload); }
+		if (self::is_null($source) && ($target_payload !== null)) {
+			return Conversion_Preparation::operation($source, $target, $context, conversion_operation::nullable_empty);
+		}
+		if ($source->matches($target)) {
+			return Conversion_Preparation::operation($source, $target, $context, conversion_operation::identity);
+		}
+		$actual = $source_payload ?? $source;
+		$expected = $target_payload ?? $target;
+		$payload_conversion /** nullable<conversion_decision> */ = null;
+		if (!$actual->matches($expected)) {
+			if (!Type_Queries::is_nominal_handle($actual) || !Type_Queries::is_nominal_handle($expected)) {
+				throw new \RuntimeException('S2S nullable boundary requires the same payload type or a proven object upcast');
+			}
+			$payload_conversion = Ownership_Conversions::decide($actual, $expected, $context, $relationships);
+		}
+		$operation = conversion_operation::nullable_extract;
 		if ($target_payload !== null) {
-			self::require_value_payload($target_payload);
-			if (self::is_null($source)) {
-				return Conversion_Preparation::operation($source, $target, $context, conversion_operation::nullable_empty);
-			}
-			if ($source->matches($target)) {
-				return Conversion_Preparation::operation($source, $target, $context, conversion_operation::identity);
-			}
-			if ($source->matches($target_payload)) {
-				return Conversion_Preparation::operation($source, $target, $context, conversion_operation::nullable_wrap);
-			}
+			$operation = $source_payload === null ? conversion_operation::nullable_wrap : conversion_operation::nullable_map;
 		}
-		elseif ($source_payload !== null) {
-			if ($source_payload->matches($target)) {
-				// Explicit casts retain the runtime's string exception; required boundaries never do.
-				$operation = $context === conversion_context::explicit_cast
-					? conversion_operation::explicit_runtime_cast : conversion_operation::nullable_extract;
-				return Conversion_Preparation::operation($source, $target, $context, $operation);
-			}
+		elseif ($context === conversion_context::explicit_cast) {
+			$operation = conversion_operation::explicit_runtime_cast;
 		}
-		throw new \RuntimeException('S2S nullable boundary requires the same payload type');
+		$decision = Conversion_Preparation::operation($source, $target, $context, $operation);
+		$decision->payload_conversion = $payload_conversion;
+		return $decision;
 	}
 }

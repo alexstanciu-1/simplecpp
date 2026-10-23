@@ -17,7 +17,17 @@ This does not establish exhaustive language, lifetime, incremental or performanc
 
 ## Accepted-backlog bootstrap checkpoint — 2026-10-23
 
-The latest [generic nullable value checkpoint](../../../../specs/planning/results/compiler_bootstrap_backlog_2026_10_23/nullable_values/README.md)
+The latest [object nullability checkpoint](../../../../specs/planning/results/compiler_bootstrap_backlog_2026_10_23/nullable_objects/README.md)
+preserves source Node/?Node identity and composes checked presence with ancestry.
+Both output modes pass value/reference/receiver/directional-adaptation and retained
+proofs; PHP/legacy parity and 86 adjacent native regression programs pass. Bootstrap
+fails during preparation at 185.57 s / 446.4 MiB RSS / 436.5 MiB PHP heap, without
+fatal/OOM or emission. The ownership-boundary diagnostic disappears; optional object
+type operations, index-key admission and required-null source declarations remain.
+Required-field/local initialization and remaining consumers are still blocking NULL-01
+work. The compiler has not been rebuilt natively at this checkpoint.
+
+The earlier [generic nullable value checkpoint](../../../../specs/planning/results/compiler_bootstrap_backlog_2026_10_23/nullable_values/README.md)
 replaces payload-family admission with value_storable capability queries. Ordinary
 and prelowered generic/nested-provider tests pass; nullable container annotations
 now execute in PHP, legacy native and both v0.2 modes. Bootstrap takes 208.90 s /

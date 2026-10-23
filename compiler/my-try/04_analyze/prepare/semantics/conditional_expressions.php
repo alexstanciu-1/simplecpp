@@ -41,6 +41,15 @@ final class Conditional_Expression_Preparation
 	private static function join(canonical_type_use $selected, canonical_type_use $fallback,
 		preparation_context $context): canonical_type_use
 	{
+		$selected_handle = Type_Queries::nullable_handle_payload($selected);
+		$fallback_handle = Type_Queries::nullable_handle_payload($fallback);
+		if (($selected_handle !== null) || ($fallback_handle !== null)) {
+			$joined = Selection_Result_Preparation::ownership_join($selected_handle ?? $selected,
+				$fallback_handle ?? $fallback, $context);
+			if (($selected_handle !== null) && $selected_handle->matches($joined)) { return $selected; }
+			if (($fallback_handle !== null) && $fallback_handle->matches($joined)) { return $fallback; }
+			throw new \RuntimeException('Nullable object selection requires an optional branch carrying the selected base type');
+		}
 		if ((Ownership_Conversions::role($selected) !== null) || (Ownership_Conversions::role($fallback) !== null)) {
 			return Selection_Result_Preparation::ownership_join($selected, $fallback, $context);
 		}

@@ -40,6 +40,9 @@ final class Ownership_Conversions
 			return Conversion_Preparation::operation($source, $target, $context, conversion_operation::identity);
 		}
 		if (Nullable_Conversions::is_null($source)) {
+			if (Type_Queries::is_nominal_handle($target)) {
+				throw new \RuntimeException('Required object boundary rejects null; declare a nullable object type');
+			}
 			if ((self::role($target) !== null) && ($context === conversion_context::assignment)) {
 				return Conversion_Preparation::operation($source, $target, $context, conversion_operation::ownership_empty);
 			}

@@ -62,6 +62,13 @@ final class CPP_Declarations
 		if (CPP_Runtime_Operations::concrete_conversion($decision, $context)) {
 			return CPP_Runtime_Operations::convert($expression, $decision, $context);
 		}
+		if ((($decision->operation === conversion_operation::nullable_wrap)
+			|| ($decision->operation === conversion_operation::nullable_extract)
+			|| ($decision->operation === conversion_operation::nullable_map))
+			&& ((Type_Queries::nullable_handle_payload($decision->source_type) !== null)
+				|| (Type_Queries::nullable_handle_payload($decision->target_type) !== null))) {
+			return self::nullable_handle_conversion($expression, $decision, $context);
+		}
 		if ($decision->operation === conversion_operation::callable_wrap) {
 			if ($context->concrete_types()) { return CPP_Callback_Transport::wrap($expression, $decision->target_type, $context); }
 			return '([&]() { auto callback = ' . $expression . '; bool transferable = callback.transfer_allowed(); return '
@@ -137,6 +144,28 @@ final class CPP_Declarations
 		}
 
 		throw new \RuntimeException('C++ conversion operation is not implemented');
+	}
+
+	/** Shared storage carries optional presence without a second physical wrapper. */
+	private static function nullable_handle_conversion(string $expression, conversion_decision $decision,
+		cpp_generation_context $context): string
+	{
+		$target = self::type($decision->target_type, $context);
+		$value = 'nullable_value';
+		$converted = $value;
+		if ($decision->payload_conversion !== null) {
+			$converted = self::conversion($value, $decision->payload_conversion, $context);
+		}
+		$prefix = '([&]() -> ' . $target . ' { auto ' . $value . ' = ' . $expression . '; ';
+		if ($decision->operation === conversion_operation::nullable_extract) {
+			$context->headers['scpp/runtime_error.hpp'] = true;
+			$prefix .= 'if (!static_cast<bool>(' . $value . '.has_value())) { throw scpp::runtime_error('
+				. '"nullable required-value extraction", "invalid_nullable_unwrap_empty", "nullable", "required value"); } ';
+		}
+		elseif ($decision->operation === conversion_operation::nullable_map) {
+			$prefix .= 'if (!static_cast<bool>(' . $value . '.has_value())) { return ' . $target . '{}; } ';
+		}
+		return $prefix . 'return ' . $target . '{' . $converted . '}; }())';
 	}
 
 	/** Render the prepared condition operation using the established runtime authority. */

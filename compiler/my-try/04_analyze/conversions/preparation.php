@@ -38,15 +38,17 @@ final class Conversion_Preparation
 		if ((Result_Conversions::role($source) !== null) || (Result_Conversions::role($target) !== null)) {
 			return Result_Conversions::decide($source, $target, $context);
 		}
+		if ((Nullable_Conversions::payload($source) !== null) || (Nullable_Conversions::payload($target) !== null)) {
+			return Nullable_Conversions::decide($source, $target, $context, $relationships);
+		}
 		if ((Ownership_Conversions::role($source) !== null) || (Ownership_Conversions::role($target) !== null)) {
 			return Ownership_Conversions::decide($source, $target, $context, $relationships);
 		}
 		if (Boxed_Conversions::is_boxed($source) || Boxed_Conversions::is_boxed($target)) {
 			return Boxed_Conversions::decide($source, $target, $context);
 		}
-		if ((Nullable_Conversions::payload($source) !== null) || (Nullable_Conversions::payload($target) !== null)
-			|| Nullable_Conversions::is_null($source)) {
-			return Nullable_Conversions::decide($source, $target, $context);
+		if (Nullable_Conversions::is_null($source)) {
+			return Nullable_Conversions::decide($source, $target, $context, $relationships);
 		}
 		if ($source->matches($target)) {
 			return self::operation($source, $target, $context, conversion_operation::identity);

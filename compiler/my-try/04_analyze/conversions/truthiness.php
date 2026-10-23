@@ -68,7 +68,8 @@ final class Condition_Truthiness
 			$decision = new truthiness_decision();
 			$decision->source_type = $source;
 			$decision->operation = truthiness_operation::nullable_condition;
-			if (Type_Queries::source_record($payload) !== null) {
+			if ((Type_Queries::source_record($payload) !== null)
+				|| (Type_Queries::nullable_handle_payload($source) !== null)) {
 				$decision->operation = truthiness_operation::value_presence;
 			}
 			elseif (!Conversion_Preparation::is_scalar($payload)) {
