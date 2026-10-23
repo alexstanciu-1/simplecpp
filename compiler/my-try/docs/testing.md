@@ -91,6 +91,13 @@ methods plus observed shared arguments cross the existing member transport.
 `python3 tests/portability/json_reader.py --results FRESH` from the repository root
 covers the PHP/native facade and native reader/document regressions.
 
+From the repository root, `python3 tests/portability/facade_qualification.py --results FRESH`
+checks mapped source-root function identity against namespace shadowing, arity-selected
+substring targets, prior-map output invalidation and warm cache reuse. PHP, legacy
+native and both v0.2 modes execute. Its small native helper definitions isolate lookup;
+full facade bodies retain their separate runtime/capability obligations. The existing
+`tests/portability/string_split.py` covers real byte-construction facade regression.
+
 ## Conservative call snapshot elision
 
 `python3 compiler/my-try/tests/call_snapshot_borrow.py --results FRESH` checks

@@ -8204,6 +8204,10 @@ final class Generator
 		if (($expr->kind ?? null) === AstKind::NAME) {
 			$name = (string) ($expr->children['name'] ?? 'call');
 			$flags = (int) ($expr->flags ?? 0);
+			// Source-root calls must not be captured by a same-name namespace member.
+			if ($flags === 0 || str_starts_with($name, '\\')) {
+				return '::scpp::' . str_replace('\\', '::', ltrim($name, '\\'));
+			}
 			return $this->renderSymbolPath($name, $flags, true);
 		}
 		return $this->renderExpr($expr, $namespacePhp);

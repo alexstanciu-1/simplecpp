@@ -1,0 +1,19 @@
+{
+  "removed": [
+    "S2S needs one resolved function for scpp_portability_byte_from_int",
+    "S2S needs one resolved function for scpp_portability_fs_mtime",
+    "S2S needs one resolved function for scpp_portability_fs_read_text",
+    "S2S needs one resolved function for scpp_portability_fs_require_realpath",
+    "S2S needs one resolved function for scpp_portability_fs_scan",
+    "S2S needs one resolved function for scpp_portability_input_digest",
+    "S2S needs one resolved function for scpp_portability_json_quote",
+    "S2S needs one resolved function for scpp_portability_output_digest",
+    "S2S needs one resolved function for scpp_portability_output_read",
+    "S2S needs one resolved function for scpp_portability_output_root",
+    "S2S needs one resolved function for scpp_portability_output_write",
+    "S2S needs one resolved function for scpp_portability_process_spawn",
+    "S2S needs one resolved function for scpp_portability_same_exception",
+    "S2S needs one resolved function for scpp_portability_strlen"
+  ],
+  "added": []
+}

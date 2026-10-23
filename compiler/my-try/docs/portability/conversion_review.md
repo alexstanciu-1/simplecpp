@@ -17,7 +17,14 @@ This does not establish exhaustive language, lifetime, incremental or performanc
 
 ## Accepted-backlog bootstrap checkpoint — 2026-10-23
 
-The latest [shared-receiver checkpoint](../../../../specs/planning/results/compiler_bootstrap_backlog_2026_10_23/reader_prelowering/README.md)
+The latest [facade qualification checkpoint](../../../../specs/planning/results/compiler_bootstrap_backlog_2026_10_23/facade_qualification/README.md)
+roots global mapped source calls and preserves their root in legacy C++ emission.
+PHP/legacy/both-v0.2 lookup and cache proofs pass, as does the full existing portable
+string-splitting regression. Fourteen unresolved facade-function diagnostics disappear;
+none are added. Bootstrap takes 214.69 s / 453.8 MiB RSS / 442.5 MiB PHP heap.
+AST-01 remains first, with no fatal/OOM, emission or native compiler rebuild.
+
+The earlier [shared-receiver checkpoint](../../../../specs/planning/results/compiler_bootstrap_backlog_2026_10_23/reader_prelowering/README.md)
 closes the JSON reader prelowering gap. All fourteen methods now execute on legacy
 and both v0.2 modes. An unrelated provider proves null-check ordering and receiver
 retention during argument-side replacement. Existing runtime-handle regressions pass.

@@ -1,0 +1,34 @@
+{
+  "lookup": {
+    "scope": "lookup fixture, not full facade body admission",
+    "php": "passed",
+    "cache": "old map invalidated; warm reuse verified for both targets",
+    "native": [
+      {
+        "name": "legacy",
+        "seconds": 22.88367741700131,
+        "passed": true
+      },
+      {
+        "name": "ordinary",
+        "seconds": 20.707579945999896,
+        "passed": true
+      },
+      {
+        "name": "concrete",
+        "seconds": 20.391005399000278,
+        "passed": true
+      }
+    ]
+  },
+  "strings": {
+    "passed": true,
+    "valid_cases": 12,
+    "arity_rejections": 3,
+    "native_type_rejections": 1,
+    "empty_separator_cases_per_layer": 2,
+    "portable_value_error_catch": "not supported; separate host and raw-native probes",
+    "source_sha256": "d9ae06507500308d4c9cae231ecd08351c7a8d5614e9a9485e6112fe86c43a21",
+    "stan": "skipped"
+  }
+}

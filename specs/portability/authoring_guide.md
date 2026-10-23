@@ -21,6 +21,18 @@ prove native behavior at new-capability and component checkpoints. Compare meani
 results, using exact bytes only where the contract needs them. Defer unions and
 more elaborate layouts until a concrete need or optimization pass.
 
+## Mapped function identity
+
+The function map names the exact target for a portable operation. Global source
+facades use rooted targets such as `\scpp_portability_strlen`; a call from a
+namespace must not bind to a same-name function in that namespace. Registered
+runtime builtins retain their existing language-scope bindings. Both converter
+routes preserve these identities; changes to the map invalidate converted outputs
+through the existing version fingerprint. This is structural mapping, not global
+symbol resolution in the converter. `tests/portability/facade_qualification.py`
+checks root identity under namespace shadowing, overload mapping and cache reuse.
+Full facade admission still depends on each facade's body and runtime modules.
+
 ## Start from the right source
 
 Keep `<?php` and ordinary PHP syntax. Type comments are for executable PHP input;

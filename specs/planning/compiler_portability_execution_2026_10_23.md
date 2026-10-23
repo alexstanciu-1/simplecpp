@@ -405,3 +405,42 @@ Measured receiver checkpoint `/tmp/compiler-bootstrap-reader-prelower-01`:
 conversion 4.73 s; bootstrap 199.64 s / 455,704 KiB (445.0 MiB) peak RSS /
 434.5 MiB PHP heap. Same diagnostic texts, AST-01 first, no fatal/OOM or emission.
 Evidence: results/compiler_bootstrap_backlog_2026_10_23/reader_prelowering.
+
+## BIND-03 mapped source facade qualification
+
+Reuse analysis confirmed that map targets already accept rooted names and the
+conversion cache fingerprints serialized map contents. Rooted all 34 global source
+facade target spellings in function_map.php, including the two-argument substring
+overload. Registered builtin target spellings remain governed by their existing
+mapping. No symbol inference, namespace fallback or duplicate binding was added.
+
+The shadowing proof also exposed a legacy emitter bug: renderNameExpr discarded
+source-root qualification, allowing C++ lookup to see a same-name namespace member.
+It now renders explicitly rooted source calls under ::scpp. This uses the existing
+AST name flag and target namespace convention; no new language semantics.
+
+The focused fixture checks PHP results, both conversion targets, prior-map cache
+invalidation, warm reuse, and legacy/ordinary/prelowered native behavior with a
+same-name namespace shadow. Its three small helper definitions isolate lookup;
+it does not claim full framework admission. The existing string_split.py suite
+passes full PHP/native conversion including real rooted byte-construction facade
+calls (`/tmp/facade-string-regression-01`). Early lookup fixture failures included
+unsupported uppercase portable namespace/free-function authoring and source includes;
+these were corrected to ordinary project composition and native test declarations.
+The missing string operations in that fixture were caused by selecting core alone;
+they exist in strings metadata, and the final fixture enables that module.
+
+Final focused lookup evidence: `/tmp/facade-qualification-08`, all routes and cache
+checks pass. v0.2 explicitly loads strings metadata in this low-level fixture;
+production Project_Compilation already includes strings automatically. Legacy
+exposes these operations through its core surface, not a strings project module.
+The helper bodies call the real string operations, with a same-name namespace
+shadow proving that the rooted target wins. No string metadata changes were needed.
+
+Measured `/tmp/compiler-bootstrap-facade-root-01`: conversion 4.60 s / 195,040 KiB
+RSS; bootstrap 214.69 s / 464,688 KiB (453.8 MiB) RSS / 442.5 MiB PHP heap.
+All fourteen unresolved scpp_portability function diagnostic texts disappear;
+none are added. AST-01 remains first. No fatal/OOM, emission or native compiler
+rebuild. Evidence: results/compiler_bootstrap_backlog_2026_10_23/facade_qualification.
+B03 lookup classification is resolved; facade body failures remain their own
+OWN/NULL dependencies, rather than duplicate runtime registrations.

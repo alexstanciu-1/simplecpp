@@ -1,0 +1,20 @@
+{
+    "elapsed_seconds": 214.341310196,
+    "peak_php_bytes": 463994880,
+    "last_stage": "prepare",
+    "events": [
+        {
+            "stage": "initialize",
+            "seconds": 0.305139041
+        },
+        {
+            "stage": "sync",
+            "seconds": 4.0800247
+        }
+    ],
+    "failure": {
+        "class": "RuntimeException",
+        "message": "Nonvirtual inherited member redeclaration is deferred\nS2S ownership boundary requires matching handles, a proven safe same-family upcast, or null storage initialization/assignment\n$this is only a member receiver or explicit receiver capture\nS2S integer binary operation requires canonical int operands\nS2S runtime call requires one exact signature or a unique checked-payload signature; use explicit argument types\nProperty requires set: initialization before the constructor body: arm_kind\nS2S enum-valued fields await explicit field initialization\nProjected method receiver lifetime is deferred\nS2S needs one resolved template type for Storage_Cursor\nInherited member redeclaration is deferred: position\nS2S nullable value boundary requires a scalar or inline record payload\nObject narrowing requires a polymorphic source\nProperty requires set: initialization before the constructor body: modifier_kind\nProperty requires set: initialization before the constructor body: definition_origin\nProperty requires set: initialization before the constructor body: number_format\nProperty requires set: initialization before the constructor body: nominal_kind_data\nProperty requires set: initialization before the constructor body: result_kind_data\nProperty requires set: initialization before the constructor body: family_kind\nS2S value probes require a scalar, nullable scalar, Result scalar, mixed, registered container or null\nS2S mutation requires canonical int, float or boxed storage\nS2S enum comparison requires the same enum type\nProperty requires set: initialization before the constructor body: kind\nS2S assignment requires stable storage or an indexed shared receiver\nProperty requires set: initialization before the constructor body: artifact_kind\nS2S data construction requires a known concrete target\nTask payload type is not transferable\nS2S Result operations require an unmodified type with result_payload capability\nS2S Result construction requires an exact payload, same wrapper type, structured error or supported explicit sentinel\nS2S conditional branches require supported scalar value types or enums\nS2S indexed storage requires local, parameter or field storage\nOwnership selection requires two same-family handles\nS2S non-void function prepare can reach the end without returning a value\n"
+    },
+    "fatal": null
+}
