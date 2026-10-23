@@ -1097,3 +1097,30 @@ asserts work totals and registry growth and adds a four-worker scheduling barrie
 Bootstrap /tmp/compiler-bootstrap-retained-lookup-01: 73.71 s wall / 341916 KiB RSS
 (333.9 MiB) / 312 MiB PHP allocation. First required-file initialization blocker and
 aggregate diagnostic set unchanged. No fatal/OOM, emission or native compiler rebuild.
+
+## TASK-01 runtime permission carrier foundation
+
+The existing callable_t and provider transfer_callback now carry explicit task
+permissions independently of the consumer's isolated/joined policy. Boolean callers
+retain their old isolated meaning; existing true grants the owned environment both
+policies. Queries/guards default to isolated admission. Copies preserve permissions;
+erased empty and moved-from values cannot claim permission. Provider adaptation can
+carry the full permission value without upgrading it. A shared-capturing runtime
+fixture passes ordinary invocation and joined checking while rejecting isolated
+checking after copies, provider adaptation and erasure.
+
+This is the runtime foundation only: compiler metadata, preparation, closure emission
+and concrete facade transport still need the coordinated policy integration. No
+source shared-task admission or TASK-02 v0.2 completion is claimed. No bootstrap
+checkpoint was run for this runtime-only change.
+
+Existing task_transfer.py passes all 15 tasks (ordinary/concrete cold/warm and
+metadata rejection) in /tmp/task-permissions-existing-transfer-01. Runtime sanitizer
+checks in /tmp/task-permissions-runtime-02 pass callable transfer, existing async,
+shutdown and ownership. The coordinator test failed with an empty-vector access
+during the parallel run. The unchanged HEAD-header baseline passes, and three
+sequential reruns each of the current and baseline binaries pass in
+/tmp/task-permissions-coordinator-recheck-01. The cause of the intermittent failure
+is unresolved; do not claim a proven pre-existing defect or a clean full-suite run.
+The first sandboxed run could not execute LeakSanitizer under ptrace; the second run
+was outside that restriction with leak detection enabled.

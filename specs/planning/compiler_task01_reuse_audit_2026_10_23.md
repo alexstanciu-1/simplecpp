@@ -123,6 +123,37 @@ preserved through erasure and checked at the consumer without upgrading it. Exis
 synchronize context/lifetime rules remain separate. Representation details and proofs
 remain implementation work; no implementation authorized. Estimate remains 8–12x.
 
+## TASK-01 consumer trace at implementation restart
+
+Source inspection at `6d7a3fd13` confirms the following coordinated edit surface.
+This is reuse evidence, not a passing execution proof. The later accepted-backlog
+implementation goal authorizes implementation of the bounded design above; the
+historical statements that implementation was paused describe the discussion stage.
+
+| Owner | Existing path to reuse | Required preservation |
+| --- | --- | --- |
+| Runtime catalog | `reader.php`, `structures.php`, `patterns.php`, `register.php` | Existing `requires_transfer` remains isolated admission; reject invalid policy declarations rather than silently weakening them. Carry policy through both concrete registration and generic substitution. |
+| Callable contracts | `compiler/callables/structures.php`, `catalog.php` | Required callback policy belongs to parameter contracts. Exact erased-contract comparison and fixed-value/default restrictions must include it. Environment permissions remain separate from signature identity. |
+| Payload preparation | `Runtime_Call_Preparation` checks `transfer_positions` before constructing the substituted signature | Apply the registered policy at this existing check. Changing callback checking alone cannot admit shared input/result records. |
+| Capture preparation | `Transfer_Preparation`, `Capture_Preparation` | Retain copy and borrow checks; distinguish shared-only admission from isolated admission and recursively preserve nested callable restrictions. |
+| Call preparation | `Call_Preparation` consumes parameter `requires_transfer` | Known closures reject statically under the consumer's required policy; erased values retain a runtime check. |
+| Ordinary lowering | `syntax.php`, `declarations.php` | Closure environment construction, erasure and generated provider guards must use the same permission carrier. Calling a joined API must never upgrade that carrier. |
+| Concrete transport | `callback_transport.php` | Carry permissions through constructor ABI, provider adaptation and generated query/guard forwarding; the present Boolean constructor/query would discard a second permission. |
+| Runtime carrier | `scpp/callable_t.hpp` | Both `callable_t` and `transfer_callback` preserve permissions. Empty and moved-from erased callables must not gain permission; copies preserve it. |
+
+Implementation representation should use the existing carrier with explicit
+isolated/joined permission bits, intersected across captures; no second callable
+abstraction is needed. The generated concrete facade must carry the full permission
+value, not reconstruct it from the historical isolated Boolean query. Keep the old
+isolated query/guard meaning when introducing policy-aware consumers.
+
+First behavioral proof must exercise one shared-capturing callback ordinarily,
+through the joined API, and through a rejecting isolated API, in both lowering modes.
+Add nested erased-callable controls so a copy/provider round trip cannot elevate
+permissions. Re-run the pending retained-lookup v0.2 proofs after admission works.
+No production changes, new bootstrap measurement or task execution are claimed by
+this trace. Scheduler, publication context and synchronization ownership remain unchanged.
+
 ## TASK-02 implementation boundary revalidated
 
 At the current checkout, Symbol_Collector already owns the publication-mode decision:

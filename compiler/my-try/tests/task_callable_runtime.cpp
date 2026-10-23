@@ -33,6 +33,30 @@ int main() {
 	callback blocked_copy = pass(blocked);
 	rejected(blocked_copy);
 	assert(blocked_copy(1) == 8); // Rejection is at transfer, not ordinary invocation.
+	using scpp::task_permissions;
+	using scpp::task_policy;
+	callback joined(std::function<int(int)>([shared](int x) { return *shared+x; }), task_permissions::joined_shared);
+	callback joined_copy = pass(joined);
+	joined_copy.require_transfer(task_policy::joined_shared);
+	rejected(joined_copy);
+	assert(joined_copy(2) == 9);
+	auto adapted = scpp::internal::carry_callback_transfer<int(int)>(
+		[joined_copy](int x) { return joined_copy(x); }, joined_copy.transfer_permissions());
+	callback erased(std::function<int(int)>(adapted), adapted.transfer_permissions());
+	erased.require_transfer(task_policy::joined_shared);
+	rejected(erased);
+	assert(erased(3) == 10);
+	callback joined_moved = std::move(erased);
+	assert(!erased.transfer_allowed(task_policy::joined_shared));
+	joined_moved.require_transfer(task_policy::joined_shared);
+	rejected(joined_moved);
+	callback false_claim(std::function<int(int)>(), task_permissions::isolated_and_joined);
+	assert(!false_claim.transfer_allowed(task_policy::joined_shared));
+	rejected(false_claim);
+	assert(scpp::intersect_task_permissions(task_permissions::isolated_and_joined,
+		task_permissions::joined_shared) == task_permissions::joined_shared);
+	assert(scpp::intersect_task_permissions(task_permissions::joined_shared,
+		task_permissions::none) == task_permissions::none);
 	moved = blocked_copy;
 	rejected(moved);
 	callback good_again(std::function<int(int)>([](int x) { return x*2; }), true);
