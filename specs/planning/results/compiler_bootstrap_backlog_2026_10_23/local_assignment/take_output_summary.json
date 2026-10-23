@@ -1,0 +1,12 @@
+[
+  {
+    "name": "take-output-ordinary",
+    "passed": true,
+    "seconds": 20.16990446500131
+  },
+  {
+    "name": "take-output-concrete",
+    "passed": true,
+    "seconds": 23.185849575995235
+  }
+]

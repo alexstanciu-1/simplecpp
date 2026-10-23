@@ -17,17 +17,34 @@ final class Loop_Preparation
 		{
 			// Body aliases are lexical; loop-header alias declarations remain a separate slice.
 			$context->alias_declarations_allowed = false;
-			$facts = self::prepare_header($syntax, $context);
+			$facts = $syntax->body_runs_first() ? new prepared_loop() : self::prepare_header($syntax, $context);
+			$entry = $context->pending_locals;
+			$reachable = $context->assignment_path_reachable;
+			if ($facts->iteration !== null) {
+				Iteration_Preparation::enter($facts->iteration, $context);
+			}
 			$context->alias_declarations_allowed = $outer_alias_permission;
 			$syntax->set_preparation($facts);
 			$context->break_target = $syntax;
 			$context->continue_target = $syntax;
 			$body = Body_Preparation::prepare_block($syntax->body, $context);
+			$context->pending_locals = Local_Assignment::merge($body->can_fall_through, $body->normal_pending,
+				$body->can_continue, $body->continue_pending);
+			$context->assignment_path_reachable = $reachable && ($body->can_fall_through || $body->can_continue);
 			if ($syntax instanceof for_node) {
 				self::for_continuation(object_cast($syntax, for_node::class), $context);
 			}
-			return Completion_Preparation::loop($body, $syntax->body_runs_first(),
-				($facts->condition !== null) || ($facts->iteration !== null));
+			if ($syntax->body_runs_first()) {
+				$facts->condition = self::condition_header(object_cast($syntax, do_while_node::class)->condition, $context)->condition;
+			}
+			$has_test = ($facts->condition !== null) || ($facts->iteration !== null);
+			$result = Completion_Preparation::loop($body, $syntax->body_runs_first(), $has_test);
+			$test_pending = $syntax->body_runs_first() ? $context->pending_locals : $entry;
+			$test_reachable = !$syntax->body_runs_first() || $body->can_fall_through || $body->can_continue;
+			$result->normal_pending = Local_Assignment::merge($body->can_break, $body->break_pending,
+				$has_test && $test_reachable, $test_pending);
+			Local_Assignment::resume($result, $reachable, $context);
+			return $result;
 		}
 		finally {
 			$context->alias_declarations_allowed = $outer_alias_permission;

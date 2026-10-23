@@ -15,6 +15,8 @@ final class Switch_Preparation
 		$has_default = false;
 		$values /** hash<bool> */ = [];
 		$paths = new statement_completion(false);
+		$entry = $context->pending_locals;
+		$reachable = $context->assignment_path_reachable;
 		try
 		{
 			$groups /** Storage<switch_case_group> */ = $syntax->groups;
@@ -35,11 +37,16 @@ final class Switch_Preparation
 						$values[$key] = true;
 					}
 				}
+				$context->pending_locals = $entry;
+				$context->assignment_path_reachable = $reachable;
+				$incoming = Completion_Preparation::alternatives($paths, Local_Assignment::normal($context));
+				Local_Assignment::resume($incoming, $reachable, $context);
 				$body = Body_Preparation::prepare_block($group->body, $context);
-				$paths = Completion_Preparation::sequence(
-					Completion_Preparation::alternatives($paths, new statement_completion(true)), $body);
+				$paths = Completion_Preparation::sequence($incoming, $body);
 			}
-			return Completion_Preparation::selection($paths, $has_default);
+			$result = Completion_Preparation::selection($paths, $has_default, $entry);
+			Local_Assignment::resume($result, $reachable, $context);
+			return $result;
 		}
 		finally { $context->break_target = $outer_break; }
 	}

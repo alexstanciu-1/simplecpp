@@ -54,6 +54,19 @@ final class Iteration_Preparation
 		return $facts;
 	}
 
+	/** Runtime binds values only on paths that actually enter the loop body. */
+	public static function enter(prepared_iteration $iteration, preparation_context $context): void
+	{
+		$bindings /** vector<prepared_binding> */ = [$iteration->value];
+		if ($iteration->key !== null) { $bindings[] = $iteration->key; }
+		foreach ($bindings as $binding) {
+			$declaration = object_cast(weakref_get($binding->declaration), collected_name::class);
+			$targets = $context->locals->named($declaration->name);
+			if (q_count($targets) !== 1) { throw new \LogicException('Iteration binding lost its local storage'); }
+			Local_Assignment::assigned($targets[0], $context);
+		}
+	}
+
 	/** An implicit iteration value uses the same assignment conversion as an ordinary write. */
 	private static function bind(variable_reference_node $syntax, canonical_type_use $source,
 		bool $fresh, preparation_context $context): prepared_binding

@@ -202,7 +202,7 @@ final class Expression_Preparation
 				$variable = object_cast($target, variable_reference_node::class);
 				if (!$statement_assignment) {
 					// Resolve before the RHS: nested writes cannot establish their own target.
-					self::prepare_reference($variable, $context);
+					self::resolve_reference($variable, $context);
 				}
 				$facts->binding = Body_Preparation::prepare_local_storage($variable->occurrence(), null, $node->value, $context);
 			}
@@ -403,6 +403,17 @@ final class Expression_Preparation
 
 	/** Resolve source-order locals without modifying the retained declaration inventory. */
 	public static function prepare_reference(variable_reference_node $node, preparation_context $context): prepared_variable_reference
+	{
+		$reference = self::resolve_reference($node, $context);
+		if ($node->name !== 'this') {
+			$targets = $context->locals->named($node->name);
+			Local_Assignment::require_read($targets[0], $node->name, $context);
+		}
+		return $reference;
+	}
+
+	/** Destination lookup is not a value read. */
+	public static function resolve_reference(variable_reference_node $node, preparation_context $context): prepared_variable_reference
 	{
 		if ($node->name === 'this') { return Method_Preparation::self_value($context); }
 		$entry = $node->occurrence();

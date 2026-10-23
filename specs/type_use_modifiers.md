@@ -28,8 +28,50 @@ through an explicit default, an authored set: input or a required synthesized da
 input. Body assignment is not a substitute, even if every exit appears to assign.
 Inherited construction must preserve the same invariant. Static required object
 fields need an explicit initializer. Native backing storage does not grant a readable
-source value. Required-local definite assignment, other consumers and the presence
-guarantees of every registered runtime API remain blocking NULL-01/LOCAL-01 work. The execution ledger records precise current proof scope.
+source value. Required-local definite assignment follows the bounded rules below.
+Remaining ownership/cleanup consumers and the presence guarantees of registered
+runtime APIs remain blocking NULL-01/OWN-01 work. The execution ledger records
+precise current proof scope.
+
+### Required class locals — v0.2, 2026-10-23
+
+A required class/interface local may be declared without an initializer. Such a
+local has no readable source value until successful assignment on every reachable
+incoming path. Unused declarations are legal. Native empty shared-handle backing is
+an implementation detail, not a nullable source contract.
+
+```php
+$node Node;
+if ($condition) { $node = left_node(); }
+else { $node = right_node(); }
+consume($node); // both normal incoming paths assigned
+```
+
+Reads include receivers, arguments, reference binding and closure capture. A plain
+assignment destination is not a read, but its RHS is checked before the destination
+becomes initialized. Branches that return/throw do not contribute to later normal
+reads. Lazy operands and selection arms cannot initialize sibling paths. Loop exit
+checks account for zero iterations, breaks and continues; do-while conditions follow
+the body. This is structured definite assignment, not constant-condition folding or
+whole-program control-flow/effect analysis.
+
+Catch and finally reads conservatively use facts from before the protected body:
+an operation may throw before an assignment completes. Successful finally assignments
+apply to resumed exits. Unreachable syntax still undergoes ordinary semantic checking,
+but creates no reachable read-before-assignment requirement. Function/reference calls
+are not an implicit out-parameter initialization protocol.
+
+Struct locals retain ordinary default construction. If no valid default construction
+exists, direct initialization is required; no raw unconstructed struct storage or
+new lifetime protocol is introduced. Optional objects and explicit ownership handles
+retain their existing empty/default contracts. Converter-owned `_uninitialized_`
+properties are separate from this local flow rule.
+
+Implementation boundary: v0.2 does not yet propagate successful `take` into the
+required-local assignment facts. Its outputs are write-only bindings, but a later
+required-local read still rejects unless ordinary assignment established the value.
+This is a missing integration of the existing conditional-extraction contract, not
+a requirement to invent a dummy object or change that contract.
 
 Inline records retain a genuine optional payload: `?Struct` is `nullable<Struct>`,
 and `?value<Class>` is `nullable<value<Class>>`. Absence differs from a present

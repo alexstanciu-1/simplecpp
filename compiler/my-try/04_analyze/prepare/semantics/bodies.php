@@ -8,6 +8,15 @@ final class Body_Preparation
 	/** Analysis owns statement dispatch, fact attachment and completion composition. */
 	public static function prepare_statement(statement_node $node, preparation_context $context): statement_completion
 	{
+		$reachable = $context->assignment_path_reachable;
+		$result = self::dispatch_statement($node, $context);
+		if ($result->can_fall_through) { $result->normal_pending = $context->pending_locals; }
+		Local_Assignment::resume($result, $reachable, $context);
+		return $result;
+	}
+
+	private static function dispatch_statement(statement_node $node, preparation_context $context): statement_completion
+	{
 		if ($node instanceof throw_node) {
 			return Exception_Preparation::prepare_throw(object_cast($node, throw_node::class), $context);
 		}
@@ -46,12 +55,12 @@ final class Body_Preparation
 		if ($node instanceof control_transfer_node) {
 			$transfer = object_cast($node, control_transfer_node::class);
 			$transfer->set_preparation(Control_Transfer_Preparation::prepare($transfer, $context));
-			return Completion_Preparation::transfer($transfer->transfer_kind());
+			return Completion_Preparation::transfer($transfer->transfer_kind(), $context);
 		}
 		if ($node instanceof return_node) {
 			$return_statement = object_cast($node, return_node::class);
 			$return_statement->set_preparation(self::prepare_return($return_statement, $context));
-			return Completion_Preparation::returned();
+			return Completion_Preparation::returned($context);
 		}
 		if ($node instanceof expression_statement_node) {
 			self::prepare_expression_statement(object_cast($node, expression_statement_node::class), $context);
@@ -90,7 +99,7 @@ final class Body_Preparation
 	public static function prepare_statements(statement_body_node $body,
 			preparation_context $context, int $start = 0): statement_completion
 	{
-		$result = new statement_completion(true);
+		$result = Local_Assignment::normal($context);
 		$nodes /** Storage<statement_node> */ = $body->statements;
 		foreach ($nodes as $index => $node)
 		{
@@ -130,8 +139,12 @@ final class Body_Preparation
 		$condition /** expression_node */ = $syntax->condition;
 		$facts = self::prepare_condition($condition, $context);
 		$syntax->set_preparation($facts);
+		$entry = $context->pending_locals;
+		$reachable = $context->assignment_path_reachable;
 		$taken = self::prepare_block($syntax->body, $context);
-		$unmatched = new statement_completion(true);
+		$context->pending_locals = $entry;
+		$context->assignment_path_reachable = $reachable;
+		$unmatched = Local_Assignment::normal($context);
 		if ($syntax->next_arm !== null)
 		{
 			$next /** if_node */ = $syntax->next_arm;
@@ -140,7 +153,9 @@ final class Body_Preparation
 			}
 			$unmatched = self::prepare_if($next, $context);
 		}
-		return Completion_Preparation::alternatives($taken, $unmatched);
+		$result = Completion_Preparation::alternatives($taken, $unmatched);
+		Local_Assignment::resume($result, $reachable, $context);
+		return $result;
 	}
 
 	/** All structured tests share condition truthiness, never explicit bool conversion. */
@@ -264,6 +279,12 @@ final class Body_Preparation
 					: Storage_Lifetimes::place(Reference_Preparation::storage_place($previous[0]), $context);
 				Storage_Lifetimes::require_destination(Capture_Preparation::borrowed_lifetimes($value->type, $context), $destination, $context);
 			}
+		}
+		if ($value === null) {
+			if (Type_Queries::is_nominal_handle($binding->type)) { $context->pending_locals[] = $binding; }
+		}
+		elseif ($binding->resolved_kind === binding_kind::assignment) {
+			Local_Assignment::assigned($previous[0], $context);
 		}
 		return $binding;
 	}

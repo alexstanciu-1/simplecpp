@@ -1,0 +1,327 @@
+[
+  {
+    "name": "values-ordinary",
+    "passed": true,
+    "seconds": 22.882085163997544
+  },
+  {
+    "name": "values-concrete",
+    "passed": true,
+    "seconds": 27.94161902099586
+  },
+  {
+    "name": "transfers-ordinary",
+    "passed": true,
+    "seconds": 24.90519110000605
+  },
+  {
+    "name": "transfers-concrete",
+    "passed": true,
+    "seconds": 24.773463575002097
+  },
+  {
+    "name": "read-ordinary",
+    "passed": true,
+    "seconds": 0.7395973279999453
+  },
+  {
+    "name": "read-concrete",
+    "passed": true,
+    "seconds": 0.7080201029966702
+  },
+  {
+    "name": "branch-ordinary",
+    "passed": true,
+    "seconds": 0.6753659160021925
+  },
+  {
+    "name": "branch-concrete",
+    "passed": true,
+    "seconds": 0.7165520479975385
+  },
+  {
+    "name": "self-rhs-ordinary",
+    "passed": true,
+    "seconds": 0.6555210039950907
+  },
+  {
+    "name": "self-rhs-concrete",
+    "passed": true,
+    "seconds": 0.6653170759964269
+  },
+  {
+    "name": "sibling-ordinary",
+    "passed": true,
+    "seconds": 0.7083442990042386
+  },
+  {
+    "name": "sibling-concrete",
+    "passed": true,
+    "seconds": 0.7198115669962135
+  },
+  {
+    "name": "zero-while-ordinary",
+    "passed": true,
+    "seconds": 0.5557278070045868
+  },
+  {
+    "name": "zero-while-concrete",
+    "passed": true,
+    "seconds": 0.505218338999839
+  },
+  {
+    "name": "zero-for-ordinary",
+    "passed": true,
+    "seconds": 0.5297334990027593
+  },
+  {
+    "name": "zero-for-concrete",
+    "passed": true,
+    "seconds": 0.5170663370008697
+  },
+  {
+    "name": "continue-ordinary",
+    "passed": true,
+    "seconds": 0.5289187860034872
+  },
+  {
+    "name": "continue-concrete",
+    "passed": true,
+    "seconds": 0.5182126540021272
+  },
+  {
+    "name": "break-ordinary",
+    "passed": true,
+    "seconds": 0.5295926649996545
+  },
+  {
+    "name": "break-concrete",
+    "passed": true,
+    "seconds": 0.5938936679958715
+  },
+  {
+    "name": "for-update-ordinary",
+    "passed": true,
+    "seconds": 0.9912787610010128
+  },
+  {
+    "name": "for-update-concrete",
+    "passed": true,
+    "seconds": 0.8635168269975111
+  },
+  {
+    "name": "switch-entry-ordinary",
+    "passed": true,
+    "seconds": 1.1404452249989845
+  },
+  {
+    "name": "switch-entry-concrete",
+    "passed": true,
+    "seconds": 0.8116374429955613
+  },
+  {
+    "name": "switch-missing-ordinary",
+    "passed": true,
+    "seconds": 1.035493007999321
+  },
+  {
+    "name": "switch-missing-concrete",
+    "passed": true,
+    "seconds": 1.0390187410012004
+  },
+  {
+    "name": "catch-ordinary",
+    "passed": true,
+    "seconds": 0.9594278959993972
+  },
+  {
+    "name": "catch-concrete",
+    "passed": true,
+    "seconds": 1.0441822779976064
+  },
+  {
+    "name": "finally-read-ordinary",
+    "passed": true,
+    "seconds": 0.9418872609967366
+  },
+  {
+    "name": "finally-read-concrete",
+    "passed": true,
+    "seconds": 0.8664910099978442
+  },
+  {
+    "name": "lazy-and-ordinary",
+    "passed": true,
+    "seconds": 0.8804434519988718
+  },
+  {
+    "name": "lazy-and-concrete",
+    "passed": true,
+    "seconds": 0.676210904995969
+  },
+  {
+    "name": "lazy-or-ordinary",
+    "passed": true,
+    "seconds": 0.8997251190012321
+  },
+  {
+    "name": "lazy-or-concrete",
+    "passed": true,
+    "seconds": 0.8665024820002145
+  },
+  {
+    "name": "ternary-ordinary",
+    "passed": true,
+    "seconds": 0.885885869996855
+  },
+  {
+    "name": "ternary-concrete",
+    "passed": true,
+    "seconds": 0.6887038119966746
+  },
+  {
+    "name": "ternary-sibling-ordinary",
+    "passed": true,
+    "seconds": 0.6992474289945676
+  },
+  {
+    "name": "ternary-sibling-concrete",
+    "passed": true,
+    "seconds": 0.755958649002423
+  },
+  {
+    "name": "coalesce-ordinary",
+    "passed": true,
+    "seconds": 0.6999592729989672
+  },
+  {
+    "name": "coalesce-concrete",
+    "passed": true,
+    "seconds": 0.6529447069988237
+  },
+  {
+    "name": "capture-ordinary",
+    "passed": true,
+    "seconds": 0.7096576459953212
+  },
+  {
+    "name": "capture-concrete",
+    "passed": true,
+    "seconds": 0.7158708089991705
+  },
+  {
+    "name": "arrow-ordinary",
+    "passed": true,
+    "seconds": 0.6640319409998483
+  },
+  {
+    "name": "arrow-concrete",
+    "passed": true,
+    "seconds": 0.6081050830034656
+  },
+  {
+    "name": "reference-ordinary",
+    "passed": true,
+    "seconds": 0.7225258560065413
+  },
+  {
+    "name": "reference-concrete",
+    "passed": true,
+    "seconds": 0.63667659299972
+  },
+  {
+    "name": "ref-arg-ordinary",
+    "passed": true,
+    "seconds": 0.6075042729935376
+  },
+  {
+    "name": "ref-arg-concrete",
+    "passed": true,
+    "seconds": 0.7346395049971761
+  },
+  {
+    "name": "foreach-zero-ordinary",
+    "passed": true,
+    "seconds": 0.6012147630026448
+  },
+  {
+    "name": "foreach-zero-concrete",
+    "passed": true,
+    "seconds": 0.692796769006236
+  },
+  {
+    "name": "shadow-ordinary",
+    "passed": true,
+    "seconds": 0.7007921999975224
+  },
+  {
+    "name": "shadow-concrete",
+    "passed": true,
+    "seconds": 0.6518795860029059
+  },
+  {
+    "name": "catch-empty-ordinary",
+    "passed": true,
+    "seconds": 0.6278807900016545
+  },
+  {
+    "name": "catch-empty-concrete",
+    "passed": true,
+    "seconds": 0.5803346289976616
+  },
+  {
+    "name": "finally-branch-ordinary",
+    "passed": true,
+    "seconds": 0.6586039809990325
+  },
+  {
+    "name": "finally-branch-concrete",
+    "passed": true,
+    "seconds": 0.6317003820004174
+  },
+  {
+    "name": "finally-break-ordinary",
+    "passed": true,
+    "seconds": 0.6431107180032996
+  },
+  {
+    "name": "finally-break-concrete",
+    "passed": true,
+    "seconds": 0.6517810929944972
+  },
+  {
+    "name": "match-sibling-ordinary",
+    "passed": true,
+    "seconds": 0.6120799810014432
+  },
+  {
+    "name": "match-sibling-concrete",
+    "passed": true,
+    "seconds": 0.7287252429960063
+  },
+  {
+    "name": "match-branch-ordinary",
+    "passed": true,
+    "seconds": 0.5902357360027963
+  },
+  {
+    "name": "match-branch-concrete",
+    "passed": true,
+    "seconds": 0.5863994980027201
+  },
+  {
+    "name": "do-shadow-ordinary",
+    "passed": true,
+    "seconds": 0.5433602449993487
+  },
+  {
+    "name": "do-shadow-concrete",
+    "passed": true,
+    "seconds": 0.5402384940025513
+  },
+  {
+    "name": "retained",
+    "passed": true,
+    "seconds": 0.6364135019975947
+  }
+]

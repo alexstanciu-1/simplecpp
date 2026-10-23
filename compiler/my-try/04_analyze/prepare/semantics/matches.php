@@ -19,6 +19,8 @@ final class Match_Preparation
 				throw new \RuntimeException('S2S match requires at least one result arm');
 			}
 			$facts = new prepared_match_expression();
+			$entry = $context->pending_locals;
+			$joined /** vector<prepared_source_storage> */ = [];
 			$has_result = false;
 			$has_default = false;
 			foreach ($arms as $arm)
@@ -34,7 +36,9 @@ final class Match_Preparation
 				foreach ($labels as $label) {
 					$arm_facts->labels[] = Selection_Preparation::label($label, $selector->type, $context, 'match label');
 				}
+				$context->pending_locals = $entry;
 				$result = Expression_Preparation::prepare($arm->result, $context);
+				$joined = Local_Assignment::merge($has_result, $joined, true, $context->pending_locals);
 				if (!$has_result) {
 					$facts->type = Selection_Result_Preparation::begin($result->type, $context, 'match');
 					$has_result = true;
@@ -42,6 +46,7 @@ final class Match_Preparation
 				$arm_facts->conversion = Selection_Result_Preparation::branch($result->type, $facts->type, 'match');
 				$arm->set_preparation($arm_facts);
 			}
+			$context->pending_locals = $joined;
 			return $facts;
 		}
 		finally {

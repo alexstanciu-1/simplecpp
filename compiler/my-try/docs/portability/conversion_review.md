@@ -1161,3 +1161,17 @@ Required fields, local flow and the remaining backlog remain open.
 
 Compatible shared identity now passes focused PHP, legacy native, ordinary and
 prelowered v0.2 exception-helper execution. See the [evidence](../../../../specs/planning/results/compiler_bootstrap_backlog_2026_10_23/shared_identity/README.md).
+
+## Local definite-assignment checkpoint — 2026-10-23
+
+Final bootstrap /tmp/compiler-bootstrap-local-assignment-02: 74.09 s wall time /
+339,964 KiB RSS (332.0 MiB) / 310 MiB PHP allocation. Preparation still stops first
+on required file-field initialization. Against shared_identity, the only added
+aggregate diagnostic is "Required local may be read before assignment: out"; none
+are removed. Facade take success-flow and empty-handle contracts remain open. No
+fatal/OOM, emission or native compiler rebuild. The earlier rejection point prevents
+interpreting these numbers as a full-bootstrap performance improvement.
+
+Structured assignment, both-mode retained recovery and PHP/legacy-native composition
+proofs pass. LOCAL-01 remains open for conditional take success facts. See the
+[evidence](../../../../specs/planning/results/compiler_bootstrap_backlog_2026_10_23/local_assignment/README.md).

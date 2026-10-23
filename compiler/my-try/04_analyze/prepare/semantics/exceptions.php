@@ -63,13 +63,19 @@ final class Exception_Preparation
 		$context->finally_continue_target = $outer_continue;
 		try
 		{
+			$entry = $context->pending_locals;
+			$reachable = $context->assignment_path_reachable;
 			$protected_completion = self::prepare_protected($node, $context);
+			// Any protected operation may throw before its assignment completes.
+			$context->pending_locals = $entry;
+			$context->assignment_path_reachable = $reachable;
 			$context->finally_return_forbidden = true;
 			$context->break_target = null;
 			$context->continue_target = null;
 			$finalizer /** block_node */ = $node->finalizer;
 			$final_completion = Body_Preparation::prepare_block($finalizer, $context);
 			$result = Completion_Preparation::finalized($protected_completion, $final_completion);
+			Local_Assignment::resume($result, $reachable, $context);
 			$facts->can_fall_through = $result->can_fall_through;
 			$node->set_preparation($facts);
 			if (($outer_region !== null) && $facts->captures_return) {
@@ -98,11 +104,15 @@ final class Exception_Preparation
 	/** Catch and protected locals occupy sibling lifetime regions. */
 	private static function prepare_protected(try_node $node, preparation_context $context): statement_completion
 	{
+		$entry = $context->pending_locals;
+		$reachable = $context->assignment_path_reachable;
 		$protected_completion = Body_Preparation::prepare_block($node->body, $context);
 		if ($node->handler === null) {
 			return $protected_completion;
 		}
 		$handler /** catch_node */ = $node->handler;
+		$context->pending_locals = $entry;
+		$context->assignment_path_reachable = $reachable;
 		$enclosing = $context->locals;
 		$context->locals = new local_environment($enclosing);
 		try
@@ -110,9 +120,12 @@ final class Exception_Preparation
 			$binding = $handler->binding;
 			$facts = Body_Preparation::prepare_local_storage($binding->occurrence(), $binding->type_syntax, null, $context);
 			self::require_exception($facts->type, $context);
+			Local_Assignment::assigned($facts, $context);
 			$binding->set_preparation($facts);
 			$handled = Body_Preparation::prepare_statements($handler->body, $context, 0);
-			return Completion_Preparation::alternatives($protected_completion, $handled);
+			$result = Completion_Preparation::alternatives($protected_completion, $handled);
+			Local_Assignment::resume($result, $reachable, $context);
+			return $result;
 		}
 		finally {
 			$context->locals = $enclosing;

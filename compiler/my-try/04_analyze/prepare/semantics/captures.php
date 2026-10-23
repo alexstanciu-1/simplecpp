@@ -30,6 +30,7 @@ final class Capture_Preparation
 			$bindings /** vector<prepared_source_storage> */ = $context->locals->named($name);
 			if (q_count($bindings) !== 1) { throw new \RuntimeException('Capture requires an established local: ' . $name); }
 			$binding = $bindings[0];
+			Local_Assignment::require_read($binding, $name, $context);
 			$capture = new prepared_capture();
 			$capture->declaration = $binding->declaration;
 			$capture->type = $binding->storage_type();

@@ -228,3 +228,23 @@ classification, hygiene, rejection and route proofs remain real converter work.
 Use explicit PHP accessors for unresolved receivers. First prove class owners with
 class and copyable struct payloads; struct-owner layout remains constrained by the
 existing converter/v0.1 record contract. No native feature expansion is authorized.
+
+## LOCAL-01 implementation checkpoint
+
+The accepted 6–10x integration now has a bounded implementation and proofs. Existing
+statement completion carries per-exit pending storage identities; the existing body,
+loop, switch and exception owners compose them without a second traversal or CFG.
+Do-while ordering and conditional-expression isolation are included. The proof includes
+PHP/native execution of the production composition owner, both-mode source behavior,
+retained recovery and the existing native control-flow programs. No struct lifetime
+redesign, constant-condition solver or interprocedural exception analysis was added.
+Remaining required-handle cleanup/runtime guarantees stay with NULL-01/OWN-01.
+
+LOCAL-01 continuation: the first measured bootstrap exposed runtime-facade outputs
+initialized by successful `take`. Output binding now uses write-only lookup, but
+truth-conditioned assignment facts are not implemented yet. Do not mark LOCAL-01
+complete: integrate the already documented nullable/Result success rules, including
+negation/lazy conditions and early failure exits. In particular, result_or_bool true
+sentinels do not assign the payload. No implicit ordinary out-parameter protocol or
+general boolean-variable correlation should be inferred. The file-lock empty factory
+is a separate runtime ownership/default-contract audit item.

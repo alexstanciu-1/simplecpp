@@ -928,3 +928,42 @@ exception owners in compiler_local01_completion_integration_2026_10_23.md. Concr
 hazards are write-only nested target lookup, do-while header preparation order, and
 runtime-initialized catch/iteration bindings. These are part of the accepted bounded
 flow integration; no implementation or additional bootstrap result is claimed yet.
+
+## LOCAL-01 structured assignment implementation
+
+Extended existing completion with transient pending storage facts for normal, return,
+break and continue paths. Branch/lazy-expression isolation, loop and switch joins,
+conservative catch/finally entry, successful finally writes, reference/capture reads
+and runtime catch/iteration binding entry are covered. Do-while conditions now prepare
+after body/continue paths while retaining lexical scope. No CFG, retained assignment
+cache, effect analysis or deferred struct lifetime. Ordinary write targets and take
+outputs use storage lookup without value-read admission.
+
+65 focused tasks pass in /tmp/local-assignment-03; the same tasks re-pass in -04.
+Two added take-output fixtures needed the json metadata module; corrected focused
+retry /tmp/local-assignment-take-01 passes both native modes. Production completion
+composition passes PHP, legacy native and both v0.2 modes in
+/tmp/local-assignment-portable-02. Explicit vector annotations corrected the first
+legacy fixture's property-array literals; no implementation change was needed.
+
+137 existing generated control-flow programs pass under
+/tmp/local-assignment-control-native-01. The encompassing control_flow.py suite is
+not green: incremental_cpp's prototype-default assertion and specialization_dispatch's
+unprepared-expression check fail identically on archived baseline 8299abaee.
+Saved baseline/current diagnostics remain regression debt. Evidence is in
+results/compiler_bootstrap_backlog_2026_10_23/local_assignment/.
+
+LOCAL-01 remains in progress. Existing take semantics conditionally initialize outputs;
+truth-conditioned assignment facts must still connect that guarantee to subsequent
+reads, including !take early failure exits and lazy conditions. A true result_or_bool
+sentinel does not establish the payload. Empty file-lock factories separately expose
+the pending runtime ownership/default-contract audit. Do not invent dummy objects or
+change those contracts merely to bypass the check.
+
+Final bootstrap /tmp/compiler-bootstrap-local-assignment-02: 74.09 s wall time /
+339,964 KiB RSS (332.0 MiB) / 310 MiB PHP allocation. Preparation still stops first
+on required file-field initialization. Against shared_identity, the only added
+aggregate diagnostic is "Required local may be read before assignment: out"; none
+are removed. Facade take success-flow and empty-handle contracts remain open. No
+fatal/OOM, emission or native compiler rebuild. The earlier rejection point prevents
+interpreting these numbers as a full-bootstrap performance improvement.

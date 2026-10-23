@@ -16,12 +16,16 @@ final class Conditional_Expression_Preparation
 				$syntax->true_branch === null ? expression_consumer::selection_branch : expression_consumer::value);
 			$facts = new prepared_conditional_expression();
 			$facts->truthiness = Condition_Truthiness::decide($condition->type);
+			$entry = $context->pending_locals;
 			$selected /** prepared_expression */ = $condition;
 			if ($syntax->true_branch !== null) {
 				$branch /** expression_node */ = $syntax->true_branch;
 				$selected = Expression_Preparation::prepare_for_consumer($branch, $context, null, expression_consumer::selection_branch);
 			}
+			$taken = $context->pending_locals;
+			$context->pending_locals = $entry;
 			$fallback = Expression_Preparation::prepare_for_consumer($syntax->fallback, $context, null, expression_consumer::selection_branch);
+			$context->pending_locals = Local_Assignment::merge(true, $taken, true, $context->pending_locals);
 			$facts->type = self::join($selected->type, $fallback->type, $context);
 			$relationships = new Conversion_Relationships($context);
 			$facts->true_conversion = Conversion_Preparation::decide($selected->type, $facts->type, conversion_context::conditional_branch, $relationships);

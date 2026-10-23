@@ -1017,12 +1017,12 @@ discussion while independent work continues. Deferred debts remain deferred.
 | SELF-02 | Struct self: receiver, value copy and distinct shared retention | Core receiver/value support implemented and proved in both v0.2 modes; shared retention remains SELF-DEBT-01; portable copies remain COPY-01. |
 | COPY-01 | `_struct_` / `_struct_copy_` portable value protocol | Converter work accepted; first proof is `cpp_specialization_ref`; may consume SELF-02; paused. |
 | INIT-01 | Promoted required constructor inputs and explicit valid defaults | Bounded v0.2 set mapping and switch_label source migration implemented with cross-route proofs; promotion plus explicit parent call remains under discussion; inventory C03; in progress. |
-| LOCAL-01 | Class-local definite assignment and existing struct defaults | Bounded local flow checks accepted; no general init inference or deferred struct lifetime; direct-init required fields; paused. |
+| LOCAL-01 | Class-local definite assignment and existing struct defaults | Structured local flow implemented with per-exit pending storage facts; both-mode behavioral/retained proofs and PHP/legacy-native composition proof pass. Struct defaults preserved; take success-path integration remains open; in progress. |
 | INIT-02 | `_uninitialized_` required fields, staged assignment and checked reads | Nullable backing and checked accessors accepted; reuse audit complete, 6–12x retained; bounded source/converter proofs pending; no new language feature approved; paused. |
 | TASK-01 | Bounded shared-handle task admission in v0.2 | Joined API rules accepted; reuse audit complete, revised 8–12x; bounded API-policy/callback-permission design accepted; implementation/proofs pending; inventory D04; paused. |
 | TASK-02 | Retained-type lookup synchronization in portable PHP | Source race path identified; same-lock lookup repair direction accepted; native concurrency proofs pending; paused. |
 | AST-01 | Explicit concrete virtual methods and portable PHP intent | Core support and converter mapping with `#[\Virtual]` / `#[\Override]` implemented; PHP/legacy/ordinary/prelowered and retained proofs pass; inventory A01; see execution ledger. |
-| NULL-01 | Node versus ?Node frontend contracts, shared lowering | Direction accepted; four-consumer reuse audit complete; revised 12–20x; coordinated integration approved; distinct source identities, checked boundaries, receiver and directional adaptation proofs pass. Optional object casts/tests and checked index-key consumers now pass both-mode proofs; required field direct initialization now enforced; local definite assignment, source adaptation and remaining consumers are blocking; inventory A02; in progress. |
+| NULL-01 | Node versus ?Node frontend contracts, shared lowering | Direction accepted; four-consumer reuse audit complete; revised 12–20x; coordinated integration approved; distinct source identities, checked boundaries, receiver and directional adaptation proofs pass. Optional object casts/tests and checked index-key consumers now pass both-mode proofs; required field direct initialization now enforced; local definite assignment now has focused proofs; source adaptation and remaining consumers are blocking; inventory A02; in progress. |
 | NULL-02 | Definition- and capability-based nullable operations | Capability/consumer reuse audit complete; revised 4–8x incremental to shared NULL-01 model; generic exact value boundaries now use value_storable; both-mode and portable container proofs pass. Class-handle, take and nested Result work remains; inventory D03; in progress. |
 | OWN-01 | Weak locks, moved-from unique/shared handles and runtime result guarantees | Ownership and explicit-handle spelling agreed; weak-expiry parity deferred under OWN-DEBT-01; paused. |
 | OWN-DEBT-01 | PHP strong carriers versus native weak lifetime | Deferred; no demonstrated compiler failure; no exact emulation planned; PHP-only cleanup may be considered; not a new gate. |
@@ -1197,3 +1197,30 @@ ownership roles, optional payload interpretation and observed ancestry; both emi
 reuse runtime strict identity. Both-mode execution, pair rejections, retained ancestry
 edit/recovery and PHP/legacy facade parity pass. Ordinary structural comparison,
 unique identity and unrelated interface views are not widened by this slice.
+
+## LOCAL-01 execution checkpoint — 2026-10-23
+
+The previously accepted completion-owner design is now implemented. Transient local
+storage identities carry pending-assignment facts through normal/return/break/continue
+exits. Reads, reference admission and captures check them; writes establish them only
+after RHS/conversion preparation. Branches, lazy expressions, loops, switch and finally
+reuse their existing traversal and completion algebra. Do-while preparation now follows
+body-before-condition order while preserving lexical scope. Catch/iteration variables
+are initialized on their runtime entry paths. Struct default construction is unchanged.
+
+65 focused tasks pass, including ordinary/prelowered execution, negative cases and
+retained edit/reject/revert/reset. Production completion code passes an extracted
+PHP/legacy-native/both-v0.2 proof. 137 existing generated control-flow programs pass.
+Two broader historical checks fail identically on archived HEAD 8299abaee; their debt
+is retained, not declared green. See local_assignment evidence under the execution
+results. Runtime API presence and required-handle cleanup/reset remain OWN-01/NULL-01
+consumers; this local initialization slice does not close those guarantees.
+
+LOCAL-01 continuation: the first measured bootstrap exposed runtime-facade outputs
+initialized by successful `take`. Output binding now uses write-only lookup, but
+truth-conditioned assignment facts are not implemented yet. Do not mark LOCAL-01
+complete: integrate the already documented nullable/Result success rules, including
+negation/lazy conditions and early failure exits. In particular, result_or_bool true
+sentinels do not assign the payload. No implicit ordinary out-parameter protocol or
+general boolean-variable correlation should be inferred. The file-lock empty factory
+is a separate runtime ownership/default-contract audit item.

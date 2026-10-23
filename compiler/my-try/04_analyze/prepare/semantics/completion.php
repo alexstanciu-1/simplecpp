@@ -12,21 +12,28 @@ final class Completion_Preparation
 		$result->can_return = $protected_completion->can_return && $finalizer->can_fall_through;
 		$result->can_break = $protected_completion->can_break && $finalizer->can_fall_through;
 		$result->can_continue = $protected_completion->can_continue && $finalizer->can_fall_through;
+		$result->normal_pending = Local_Assignment::remaining($protected_completion->normal_pending, $finalizer->normal_pending);
+		$result->return_pending = Local_Assignment::remaining($protected_completion->return_pending, $finalizer->normal_pending);
+		$result->break_pending = Local_Assignment::remaining($protected_completion->break_pending, $finalizer->normal_pending);
+		$result->continue_pending = Local_Assignment::remaining($protected_completion->continue_pending, $finalizer->normal_pending);
 		return $result;
 	}
 
-	public static function returned(): statement_completion
+	public static function returned(preparation_context $context): statement_completion
 	{
 		$result = new statement_completion(false);
 		$result->can_return = true;
+		$result->return_pending = $context->pending_locals;
 		return $result;
 	}
 
-	public static function transfer(control_transfer_kind $kind): statement_completion
+	public static function transfer(control_transfer_kind $kind, preparation_context $context): statement_completion
 	{
 		$result = new statement_completion(false);
 		$result->can_break = $kind === control_transfer_kind::break_construct;
 		$result->can_continue = $kind === control_transfer_kind::continue_loop;
+		$result->break_pending = $context->pending_locals;
+		$result->continue_pending = $context->pending_locals;
 		return $result;
 	}
 
@@ -37,6 +44,10 @@ final class Completion_Preparation
 		$result->can_return = $first->can_return || ($first->can_fall_through && $second->can_return);
 		$result->can_break = $first->can_break || ($first->can_fall_through && $second->can_break);
 		$result->can_continue = $first->can_continue || ($first->can_fall_through && $second->can_continue);
+		$result->normal_pending = $second->normal_pending;
+		$result->return_pending = Local_Assignment::merge($first->can_return, $first->return_pending, $first->can_fall_through && $second->can_return, $second->return_pending);
+		$result->break_pending = Local_Assignment::merge($first->can_break, $first->break_pending, $first->can_fall_through && $second->can_break, $second->break_pending);
+		$result->continue_pending = Local_Assignment::merge($first->can_continue, $first->continue_pending, $first->can_fall_through && $second->can_continue, $second->continue_pending);
 		return $result;
 	}
 
@@ -47,15 +58,23 @@ final class Completion_Preparation
 		$result->can_return = $left->can_return || $right->can_return;
 		$result->can_break = $left->can_break || $right->can_break;
 		$result->can_continue = $left->can_continue || $right->can_continue;
+		$result->normal_pending = Local_Assignment::merge($left->can_fall_through, $left->normal_pending, $right->can_fall_through, $right->normal_pending);
+		$result->return_pending = Local_Assignment::merge($left->can_return, $left->return_pending, $right->can_return, $right->return_pending);
+		$result->break_pending = Local_Assignment::merge($left->can_break, $left->break_pending, $right->can_break, $right->break_pending);
+		$result->continue_pending = Local_Assignment::merge($left->can_continue, $left->continue_pending, $right->can_continue, $right->continue_pending);
 		return $result;
 	}
 
 	/** Selection consumes its breaks, preserving transfers to an enclosing loop. */
-	public static function selection(statement_completion $paths, bool $has_default): statement_completion
+	public static function selection(statement_completion $paths, bool $has_default, array $entry /** vector<prepared_source_storage> */): statement_completion
 	{
 		$result = new statement_completion(!$has_default || $paths->can_fall_through || $paths->can_break);
 		$result->can_return = $paths->can_return;
 		$result->can_continue = $paths->can_continue;
+		$result->return_pending = $paths->return_pending;
+		$result->continue_pending = $paths->continue_pending;
+		$result->normal_pending = Local_Assignment::merge($paths->can_fall_through, $paths->normal_pending, $paths->can_break, $paths->break_pending);
+		$result->normal_pending = Local_Assignment::merge($paths->can_fall_through || $paths->can_break, $result->normal_pending, !$has_default, $entry);
 		return $result;
 	}
 
@@ -65,6 +84,67 @@ final class Completion_Preparation
 		$test_reachable = !$body_first || $body->can_fall_through || $body->can_continue;
 		$result = new statement_completion($body->can_break || ($has_test && $test_reachable));
 		$result->can_return = $body->can_return;
+		$result->return_pending = $body->return_pending;
 		return $result;
+	}
+}
+
+/** Invocation-local definite assignment; storage identity, not source spelling. */
+final class Local_Assignment
+{
+	public static function contains(array $pending /** vector<prepared_source_storage> */, prepared_source_storage $storage): bool
+	{
+		foreach ($pending as $candidate) { if ($candidate === $storage) { return true; } }
+		return false;
+	}
+
+	/** A local is pending if any reachable incoming path still requires assignment. */
+	public static function merge(bool $left_reachable, array $left /** vector<prepared_source_storage> */,
+		bool $right_reachable, array $right /** vector<prepared_source_storage> */): array /** vector<prepared_source_storage> */
+	{
+		$result /** vector<prepared_source_storage> */ = [];
+		if ($left_reachable) { $result = $left; }
+		if ($right_reachable) {
+			foreach ($right as $storage) {
+				if (!self::contains($result, $storage)) { $result[] = $storage; }
+			}
+		}
+		return $result;
+	}
+
+	/** Successful finally assignments remove obligations from each resumed exit. */
+	public static function remaining(array $pending /** vector<prepared_source_storage> */,
+		array $after /** vector<prepared_source_storage> */): array /** vector<prepared_source_storage> */
+	{
+		$result /** vector<prepared_source_storage> */ = [];
+		foreach ($pending as $storage) { if (self::contains($after, $storage)) { $result[] = $storage; } }
+		return $result;
+	}
+
+	public static function assigned(prepared_source_storage $storage, preparation_context $context): void
+	{
+		$result /** vector<prepared_source_storage> */ = [];
+		foreach ($context->pending_locals as $candidate) { if ($candidate !== $storage) { $result[] = $candidate; } }
+		$context->pending_locals = $result;
+	}
+
+	public static function require_read(prepared_source_storage $storage, string $name, preparation_context $context): void
+	{
+		if ($context->assignment_path_reachable && self::contains($context->pending_locals, $storage)) {
+			throw new \RuntimeException('Required local may be read before assignment: ' . $name);
+		}
+	}
+
+	public static function normal(preparation_context $context): statement_completion
+	{
+		$result = new statement_completion(true);
+		$result->normal_pending = $context->pending_locals;
+		return $result;
+	}
+
+	public static function resume(statement_completion $completion, bool $entry_reachable, preparation_context $context): void
+	{
+		$context->pending_locals = $completion->normal_pending;
+		$context->assignment_path_reachable = $entry_reachable && $completion->can_fall_through;
 	}
 }

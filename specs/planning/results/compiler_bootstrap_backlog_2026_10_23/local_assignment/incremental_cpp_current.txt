@@ -1,0 +1,5 @@
+PHP Fatal error:  Uncaught LogicException: Defaults must appear only in the prototype in /home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/tests/incremental_cpp.php:9
+Stack trace:
+#0 /home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/tests/incremental_cpp.php(175): scpp\compiler\cpp_check()
+#1 {main}
+  thrown in /home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/tests/incremental_cpp.php on line 9

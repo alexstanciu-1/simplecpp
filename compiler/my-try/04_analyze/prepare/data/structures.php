@@ -787,6 +787,9 @@ final class prepared_finally
 /** Invocation-local preparation data; never published into AST records or source scopes. */
 final class preparation_context
 {
+	/** Required local storage still awaiting a successful assignment on this path. */
+	public array $pending_locals /** vector<prepared_source_storage> */ = [];
+	public bool $assignment_path_reachable = true;
 	public bool $asynchronous = false;
 	public int $suspension_count = 0;
 	/** Current protected region; nested callable preparation starts with a fresh context. */
@@ -826,6 +829,10 @@ final class preparation_context
 /** Transient completion summary; describes normal exit, independently of return requirements. */
 final class statement_completion
 {
+	public array $normal_pending /** vector<prepared_source_storage> */ = [];
+	public array $return_pending /** vector<prepared_source_storage> */ = [];
+	public array $break_pending /** vector<prepared_source_storage> */ = [];
+	public array $continue_pending /** vector<prepared_source_storage> */ = [];
 	public bool $can_fall_through;
 	public bool $can_return = false;
 	public bool $can_break = false;

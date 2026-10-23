@@ -13,7 +13,9 @@ final class Coalesce_Expression_Preparation
 		try
 		{
 			$left = Expression_Preparation::prepare_for_consumer($syntax->left, $context, null, expression_consumer::selection_branch);
+			$selected_pending = $context->pending_locals;
 			$fallback = Expression_Preparation::prepare_for_consumer($syntax->fallback, $context, null, expression_consumer::selection_branch);
+			$context->pending_locals = Local_Assignment::merge(true, $selected_pending, true, $context->pending_locals);
 			self::require_admitted_family($left->type);
 			self::require_admitted_family($fallback->type);
 			$facts = new prepared_coalesce_expression();

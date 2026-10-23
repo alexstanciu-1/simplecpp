@@ -2216,3 +2216,13 @@ object identity, compatible interface/base views, optional absence, operand snap
 explicit shared struct handles, invalid pair rejection and retained relationship
 edit/recovery/reset. The portable source_initialization.py runner also exercises the
 framework identity helper across PHP, legacy and both v0.2 modes.
+
+## Required local definite assignment — 2026-10-23
+
+`python3 compiler/my-try/tests/local_assignment.py --results FRESH` runs ordinary and
+prelowered positive executions, read-before-assignment rejections and retained
+edit/reject/revert/reset recovery. It covers branch/loop/switch/exception completion,
+lazy expressions, captures/references and shadowing. Struct defaults stay separate.
+`python3 tests/portability/local_assignment.py --results FRESH` extracts production
+completion composition and checks vector snapshot/identity behavior in PHP, legacy
+native and both v0.2 modes. It is a component proof, not a native compiler rebuild.

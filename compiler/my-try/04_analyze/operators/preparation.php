@@ -50,7 +50,11 @@ final class Operator_Preparation
 		try
 		{
 			$left = Expression_Preparation::prepare($syntax->left, $context);
+			$left_pending = $context->pending_locals;
 			$right = Expression_Preparation::prepare($syntax->right, $context);
+			if (($source_operator === operator_kind::logical_and) || ($source_operator === operator_kind::logical_or)) {
+				$context->pending_locals = Local_Assignment::merge(true, $left_pending, true, $context->pending_locals);
+			}
 			$decision = self::decide($source_operator, [$left->type, $right->type], operator_context::expression, $context);
 			$facts = new prepared_binary_expression();
 			$facts->decision = $decision;
