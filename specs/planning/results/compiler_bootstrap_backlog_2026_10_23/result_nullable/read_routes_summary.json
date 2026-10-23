@@ -1,0 +1,17 @@
+[
+  {
+    "name": "read-binding-ordinary",
+    "passed": true,
+    "seconds": 17.644685770996148
+  },
+  {
+    "name": "read-binding-concrete",
+    "passed": true,
+    "seconds": 23.864861113004736
+  },
+  {
+    "name": "read-binding-legacy",
+    "passed": true,
+    "seconds": 22.26178312000411
+  }
+]

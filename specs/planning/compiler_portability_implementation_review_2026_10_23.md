@@ -259,5 +259,6 @@ NULL-02 nullable-take execution: the old payload whitelist is replaced by existi
 storage/copy capabilities, with exact mutable outputs. Reused runtime optional-value
 assignment plus an erased shared-handle overload; prelower output pointers now use
 the existing physical-wrapper query. Nested generic provider, inline/shared records,
-noncopyability and retained recovery proofs pass. Nested Result<nullable<T>> and the
-converter's generic nullable local-comment grammar remain unresolved follow-ups.
+noncopyability and retained recovery proofs pass. Nested Result<nullable<T>> is now implemented through nullable transport registration,
+existing recursive wrapper transport and prepared outer-state probes. The converter's
+generic nullable local-comment grammar remains unresolved.

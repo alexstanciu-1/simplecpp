@@ -876,7 +876,9 @@ retained-recovery proofs; see the execution ledger.
 ## BIND-01 — initial runtime exposure review
 
 Implementation checkpoint: eleven output leaves are registered; legacy executes all,
-v0.2 executes ten with output_read extraction blocked on NULL-02 result_payload.
+v0.2 has focused execution evidence for all eleven, including output_read after
+nullable Result integration. The combined suite now stops on the independent required
+lock-handle initialization contract; do not claim an end-to-end publication pass.
 JSON factory/method bindings now execute on both routes and in prelowering.
 Facade lookup failures are resolved by rooted converter targets; body dependencies
 remain under OWN/NULL. See the execution ledger.
@@ -1023,13 +1025,13 @@ discussion while independent work continues. Deferred debts remain deferred.
 | TASK-02 | Retained-type lookup synchronization in portable PHP | Source race path identified; same-lock lookup repair direction accepted; native concurrency proofs pending; paused. |
 | AST-01 | Explicit concrete virtual methods and portable PHP intent | Core support and converter mapping with `#[\Virtual]` / `#[\Override]` implemented; PHP/legacy/ordinary/prelowered and retained proofs pass; inventory A01; see execution ledger. |
 | NULL-01 | Node versus ?Node frontend contracts, shared lowering | Direction accepted; four-consumer reuse audit complete; revised 12–20x; coordinated integration approved; distinct source identities, checked boundaries, receiver and directional adaptation proofs pass. Optional object casts/tests and checked index-key consumers now pass both-mode proofs; required field direct initialization now enforced; local definite assignment now has focused proofs; source adaptation and remaining consumers are blocking; inventory A02; in progress. |
-| NULL-02 | Definition- and capability-based nullable operations | Capability/consumer reuse audit complete; revised 4–8x incremental to shared NULL-01 model; generic exact value boundaries now use value_storable; both-mode and portable container proofs pass. Class-handle, take and nested Result work remains; inventory D03; in progress. |
+| NULL-02 | Definition- and capability-based nullable operations | Capability/consumer reuse audit complete; revised 4–8x incremental to shared NULL-01 model; generic exact value boundaries now use value_storable; both-mode and portable container proofs pass. Class-handle and capability-based take plus nested nullable Result boundaries have focused proofs; remaining consumers and final reconciliation stay open; inventory D03; in progress. |
 | OWN-01 | Weak locks, moved-from unique/shared handles and runtime result guarantees | Ownership and explicit-handle spelling agreed; weak-expiry parity deferred under OWN-DEBT-01; paused. |
 | OWN-DEBT-01 | PHP strong carriers versus native weak lifetime | Deferred; no demonstrated compiler failure; no exact emulation planned; PHP-only cleanup may be considered; not a new gate. |
 | SOURCE-01 | Private fields and numeric boundaries | Same-name private instance fields implemented with C++ lookup and portable base-view proofs; numeric site audit remains, with source-owned checks independent of compiler contracts; in progress. |
 | CONVERT-01 | Empty container expressions and method defaults | Explicit doc-comment type required; registered containers accept typed [] by default. Parameter defaults use the same rule; reuse audit complete, revised 4–8x; Typed defaults and annotated expressions have PHP/legacy/v0.2 proofs; explicit empty-only provider binding passes ordinary/prelowered generic and Storage proofs. Remaining retained/provider edge verification stays open; see execution ledger; inventory C01/C02; in progress. |
 | CONVERT-02 | Complete nullable array target annotations using ?vector | Converter consistency validation and compiler-source migration implemented; both output targets and PHP/legacy/ordinary/prelowered execution proved after capability-based nullable value admission. |
-| BIND-01 | Publication/digest APIs and JSON pull-reader exposure | Eleven output leaves registered and legacy-proved; ten v0.2-proved, read extraction depends on NULL-02. Shared-reader factory and fourteen methods execute on legacy/ordinary/prelowered v0.2; shared-member checks reuse existing receiver/argument sequencing. B03 lookup resolved by rooted map targets and legacy call emission; body dependencies remain under OWN/NULL; inventory B01/B02/B03; in progress. |
+| BIND-01 | Publication/digest APIs and JSON pull-reader exposure | Eleven output leaves registered and legacy-proved; all eleven individually v0.2-proved; combined publication flow still blocked on required lock-handle initialization. Shared-reader factory and fourteen methods execute on legacy/ordinary/prelowered v0.2; shared-member checks reuse existing receiver/argument sequencing. B03 lookup resolved by rooted map targets and legacy call emission; body dependencies remain under OWN/NULL; inventory B01/B02/B03; in progress. |
 | CURSOR-01 | Storage_Cursor registration and safe read widening | Metadata-driven relationship and explanatory diagnostics accepted; runtime constructor scope recorded above; implementation paused. |
 | VERIFY-01 | Reconcile remaining diagnostics and retry measured bootstrap | After agreed slices; historical failures are not fresh defects. |
 | DOC-01 | Reconcile stale portability guidance | After relevant decisions; inventory S01. |
@@ -1243,7 +1245,12 @@ exact writable outputs and the existing physical-wrapper transport query. Ordina
 and prelowered proofs include class/interface identity, copyable non-defaultable
 structs, nested vector/hash values and an unfamiliar registered nested tray provider.
 Explicit ownership inputs, noncopyable payloads and mismatched outputs still reject.
-Nested Result<nullable<T>> remains open.
+Nested Result<nullable<T>> now uses nullable registration's result_payload opt-in and
+existing recursive wrapper transport. Plain wrapper presence uses prepared outer-state
+observations across payload families. Copyability remains conditional; optional class
+handles preserve sharing. Focused provider/state/retained tests and output_read across
+PHP, legacy and ordinary/prelowered v0.2 pass. No conditional result_payload protocol
+or runtime ABI change was needed.
 
 Portable proof setup exposed a distinct converter limitation: generic nullable local
 comments such as `/** ?vector<int> */` and `/** nullable<vector<int>> */` reject.

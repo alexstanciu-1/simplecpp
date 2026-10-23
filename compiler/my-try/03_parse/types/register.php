@@ -93,9 +93,12 @@ final class Type_Definition_Registration
 		$nullable_parameters /** vector<template_type_parameter> */ = [
 			new template_type_parameter('Value', $value_storable, null, $copy_dependencies),
 		];
+		// Result stores the nullable wrapper as a value; payload copying remains conditional.
+		$nullable_capabilities /** vector<generic_contract> */ = [generic_contract::copyable_value,
+			generic_contract::value_storable, generic_contract::result_payload];
 		$nullable = $registry->define_nullable('nullable', type_definition_origin::runtime,
 			nominal_type_kind::class_type, $nullable_parameters,
-			$copyable_storage);
+			$nullable_capabilities);
 		self::install_template($source, $providers, $nullable, 'nullable');
 
 		$result_families /** hash<result_kind> */ = [

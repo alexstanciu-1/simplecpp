@@ -77,9 +77,12 @@ recovery verify that default construction or indexing alone does not grant liter
 `python3 tests/output_bindings.py --results FRESH` executes the internal output-file
 bindings on legacy and ordinary/prelowered v0.2 routes, under an exclusive lock.
 It distinguishes absent/empty/unchanged/failure outcomes and covers digest, permissions,
-staged promotion and discard. v0.2 `result<nullable<string>>` extraction remains an
-explicit NULL-02 blocker test; the other ten leaves execute. Do not report the
-blocker reproduction as successful read support.
+staged promotion and discard. Its full v0.2 flow currently stops at the separate
+uninitialized required lock-handle argument. The obsolete read exclusion is removed.
+`python3 tests/result_nullable.py --results FRESH` independently executes the read
+binding (missing/empty/present/error) in ordinary/prelowered and legacy native modes,
+checks the PHP helper, and covers nullable Result states, unfamiliar providers,
+shared handles, noncopyable rejection and retained capability recovery.
 
 `python3 tests/json_pull_reader.py --results FRESH` executes the factory and all
 fourteen reader methods on legacy, ordinary v0.2 and concrete prelowering. Alias

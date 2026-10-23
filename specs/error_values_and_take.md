@@ -182,3 +182,18 @@ shared-handle representation with the same presence/extraction behavior. Explici
 ownership handles do not become nullable sources for this frontend operation merely
 because they can be empty. No output covariance, move extraction, interior reference
 or wrapper-delegated container operations are introduced.
+
+## Nullable payloads inside Result — v0.2
+
+The registered nullable wrapper declares `result_payload` independently of whether
+its inner type declares that capability. Copy operations still require the nullable
+value's recursively computed `copyable_value`. This admits exact `result<?T>`,
+`result_or_false<?T>` and `result_or_bool<?T>` payload boundaries without granting
+Result transport to unrelated types or adding implicit multi-step construction.
+
+A successful Result can contain an empty nullable. `isset` observes the outer wrapper
+state; `take` succeeds and copies that empty nullable into the output. Outer failure
+preserves the old output. Boolean sentinel behavior is unchanged: a true sentinel is
+present but does not assign the payload. These rules also apply when `?T` uses shared
+handle storage. An explicit typed nullable value distinguishes successful absence
+from an outer false/null sentinel; no new ambiguous literal rule is introduced.

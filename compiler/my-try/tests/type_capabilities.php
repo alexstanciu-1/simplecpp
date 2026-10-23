@@ -55,6 +55,9 @@ foreach ([[$copy, []], [[generic_contract::copyable_value, generic_contract::cop
 }
 $unregistered = $registry->define_nominal('opaque_value', type_definition_origin::runtime, nominal_type_kind::structure, $storage);
 $opaque = $registry->use($registry->canonical($unregistered)->type_id());
+$optional_opaque = capability_apply(object_cast(Model::$type_catalog->definition('nullable'), abstract_template_type_definition::class), [$opaque]);
+capability_check($registry->has_capability($optional_opaque, generic_contract::result_payload), 'Nullable wrapper transport incorrectly depends on inner Result admission');
+capability_check(!$registry->has_capability($optional_opaque, generic_contract::copyable_value), 'Nullable transport granted payload copying');
 $opaque_result = capability_apply(object_cast(Model::$type_catalog->definition('result'), abstract_template_type_definition::class), [$opaque]);
 $failed = false;
 try { Result_Conversions::require_payload($opaque_result, Result_Conversions::role($opaque_result)); }

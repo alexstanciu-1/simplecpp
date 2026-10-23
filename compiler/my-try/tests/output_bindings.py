@@ -88,15 +88,6 @@ with CommandRunner(out / 'logs', ROOT) as runner:
         (folder / 'source').mkdir(parents=True)
         data = folder / 'data'
         text = source.replace('__ROOT__', json.dumps(str(data))).replace('__LOCK__', json.dumps(str(folder / 'data.lock')))
-        if mode != 'legacy':
-            # Keep the exact read contract registered; its extraction is separately
-            # blocked on NULL-02, not replaced with a sentinel or weaker return type.
-            # NULL-02 must remove this exclusion and replace read_boundary with execution.
-            text = '\n'.join(line for line in text.splitlines()
-                             if not any(marker in line for marker in [
-                                 'scpp_output_read(', 'take($text, $contents)', '$text !==',
-                             ]))
-            text = text.replace('absent:empty:', 'read-pending:')
         (folder / 'source/main.phs').write_text(text)
         if mode == 'legacy':
             project = folder / 'source'
@@ -115,19 +106,8 @@ with CommandRunner(out / 'logs', ROOT) as runner:
             build = json.loads(runner.run(mode + '-build', ['php8.5', APP / 'tools/build_cpp.php',
                                                            folder / 'published', folder / 'cache'], timeout=300))
             executable = build['executable']
-        wanted = expected if mode == 'legacy' else expected.replace(b'absent:empty:', b'read-pending:')
+        wanted = expected
         assert runner.run(mode + '-run', [executable]) == wanted
         assert list(data.iterdir()) == [], list(data.iterdir())
-    def read_boundary(mode):
-        label = 'read-pending-' + mode
-        folder = out / label
-        (folder / 'source').mkdir(parents=True)
-        (folder / 'source/main.phs').write_text('$value nullable<string> = null; $problem error; '
-            'if (take($value, $problem, scpp_output_read("/unused", "file"))) { echo "ok"; }')
-        runner.run(label, ['php8.5', APP / 'tests/async_tasks_publish.php', folder,
-                          ROOT / 'runtime/metadata/modules', 'filesystem', mode], expected=255)
-        assert 'Result operations require an unmodified type with result_payload capability' in (out / 'logs' / (label + '.stderr')).read_text()
-    run_tasks([Task(mode, lambda mode=mode: check(mode)) for mode in ['legacy', 'ordinary', 'concrete']] +
-              [Task('read-pending-' + mode, lambda mode=mode: read_boundary(mode))
-               for mode in ['ordinary', 'concrete']])
-(out / 'summary.json').write_text(json.dumps({'legacy_leaves': '11 passed', 'v02_leaves': '10 passed', 'v02_read': 'blocked on NULL-02 result_payload', 'expected_legacy': expected.decode()}, indent=2) + '\n')
+    run_tasks([Task(mode, lambda mode=mode: check(mode)) for mode in ['legacy', 'ordinary', 'concrete']])
+(out / 'summary.json').write_text(json.dumps({'legacy_leaves': '11 passed', 'v02_leaves': '11 passed', 'expected': expected.decode()}, indent=2) + '\n')

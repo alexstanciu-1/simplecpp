@@ -128,4 +128,23 @@ Optional nominal handles require an overload for their erased shared representat
 Prelower output transport now uses CPP_Wrapper_Transport::payload: physical wrappers
 use concrete payload outputs, erased optional handles use native shared storage. No
 payload-name whitelist or new capability is introduced. Nested Result<nullable<T>>
-capability/transport is still a separate unresolved item.
+capability/transport is implemented in the follow-up below.
+
+## Nested nullable Result reuse and execution
+
+Nullable itself can opt into registered Result transport; inner result_payload is
+not required because it is the wrapper being stored. Existing conditional copy
+capabilities still gate copying. The proposed conditional result_payload extension
+is unnecessary: the registration model remains unchanged. Runtime result_core already
+stores the entire optional value, and CPP_Wrapper_Transport recursively adapts it.
+Prelowering needed to restrict its erased-handle conversion shortcut to nullable
+operations so Result wrap/extract retains the outer wrapper. Plain wrapper isset now
+reuses the prepared presence operation formerly limited to enum payloads.
+
+Ordinary/prelowered state, sentinel, unfamiliar-provider, shared-handle, copyability
+and retained recovery proofs pass; the actual output_read binding passes alongside
+legacy native and PHP helper behavior. No new lifetime protocol or runtime wrapper.
+Non-goals: implicit composed Result construction, Result-of-Result admission, keyed
+probe expansion, explicit-owner probes, lock-handle default changes and source syntax
+for arbitrary provider registration. Remaining NULL-02 work must audit those consumers
+against the accepted backlog rather than infer completion from this slice.

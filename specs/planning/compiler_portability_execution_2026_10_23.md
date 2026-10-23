@@ -1029,3 +1029,24 @@ Bootstrap /tmp/compiler-bootstrap-nullable-take-01: 77.21 s wall time /
 on required file-field initialization. Aggregate diagnostic texts are unchanged
 from the prior conditional-take checkpoint. No fatal/OOM, emission or native compiler
 rebuild. These early-failure measurements do not establish full-bootstrap performance.
+
+## NULL-02 nested nullable Result integration
+
+Reused nullable registration's unconditional transport opt-in, conditional copying,
+runtime result_core storage and recursive prelower transport. No capability-model or
+runtime ABI change. Restricted the optional-handle conversion shortcut to nullable
+operations, preserving Result's outer wrapper. Plain wrapper isset now publishes the
+existing outer-state presence fact for all admitted payloads rather than enum only.
+
+Focused ordinary/concrete state/provider/handle/sentinel/copyability proofs pass;
+retained payload edits reject and recover in both modes. Actual output_read agrees
+with legacy native and the PHP helper. The full output suite no longer excludes
+reads but still rejects its uninitialized required lock argument in v0.2; legacy
+passes. No full-publication success claim. See
+[dated evidence](results/compiler_bootstrap_backlog_2026_10_23/result_nullable/README.md).
+
+Bootstrap /tmp/compiler-bootstrap-result-nullable-01: 74.34 s wall time /
+341424 KiB RSS (333.4 MiB) / 312 MiB PHP allocation. First blocker remains required
+file-field set: initialization. Aggregate Result payload-capability diagnostic is
+removed; none added. No fatal/OOM, emission or native compiler rebuild. Runtime handle
+contracts, source initialization adaptations, other consumers and CH15 remain open.

@@ -1,0 +1,67 @@
+[
+  {
+    "name": "read-binding-ordinary",
+    "passed": true,
+    "seconds": 28.47001208999427
+  },
+  {
+    "name": "read-binding-concrete",
+    "passed": true,
+    "seconds": 35.96243314599997
+  },
+  {
+    "name": "sentinels-ordinary",
+    "passed": true,
+    "seconds": 28.54570376400079
+  },
+  {
+    "name": "sentinels-concrete",
+    "passed": true,
+    "seconds": 35.671858708999935
+  },
+  {
+    "name": "states-ordinary",
+    "passed": true,
+    "seconds": 30.123192473998643
+  },
+  {
+    "name": "states-concrete",
+    "passed": true,
+    "seconds": 35.861074535001535
+  },
+  {
+    "name": "provider-ordinary",
+    "passed": true,
+    "seconds": 28.989032709003368
+  },
+  {
+    "name": "provider-concrete",
+    "passed": true,
+    "seconds": 38.62512358999811
+  },
+  {
+    "name": "handles-ordinary",
+    "passed": true,
+    "seconds": 28.04238923200319
+  },
+  {
+    "name": "handles-concrete",
+    "passed": true,
+    "seconds": 34.69602755999949
+  },
+  {
+    "name": "noncopy-ordinary",
+    "passed": true,
+    "seconds": 0.6761725129981642
+  },
+  {
+    "name": "noncopy-concrete",
+    "passed": true,
+    "seconds": 0.6703761740063783
+  },
+  {
+    "name": "registry",
+    "passed": true,
+    "seconds": 0.4035003299941309
+  }
+]

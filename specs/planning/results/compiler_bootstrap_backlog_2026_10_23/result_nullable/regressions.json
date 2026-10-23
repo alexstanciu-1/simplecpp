@@ -1,0 +1,22 @@
+{
+  "passed": [
+    "type_capabilities",
+    "results",
+    "take",
+    "result_containers",
+    "nullable_take",
+    "enum_wrapper_retained",
+    "value_probes"
+  ],
+  "locations": [
+    "/tmp/result-nullable-regression-01",
+    "/tmp/result-nullable-regression-02"
+  ],
+  "setup_corrections": "First invocation omitted required output directories and named a nonexistent enum_wrappers.php. Corrected invocations pass; no production change for setup failures.",
+  "full_output_suite": {
+    "location": "/tmp/result-nullable-output-suite-01",
+    "legacy": "passed",
+    "ordinary": "Required local may be read before assignment: lock",
+    "concrete": "Required local may be read before assignment: lock"
+  }
+}

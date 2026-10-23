@@ -36,7 +36,7 @@ namespace scpp {
 template <typename T, typename K> T checked_index_read(const protocol_proof::tray<T> &source, const K &key) {
 	return source.entries.at(key);
 }
-template <typename T> void index_store(protocol_proof::tray<T> &target, const int_t<> &key, const T &value) {
+template <typename T, typename K> void index_store(protocol_proof::tray<T> &target, const K &key, const T &value) {
 	target.entries.at(key) = value;
 }
 template <typename T> void index_append(protocol_proof::tray<T> &target, const T &value) {
