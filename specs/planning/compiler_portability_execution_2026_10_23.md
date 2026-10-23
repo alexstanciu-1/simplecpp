@@ -920,3 +920,11 @@ adaptation checkpoint: the integer-operation diagnostic remains at other sites.
 The focused exception-helper execution proves this repair; aggregate text alone
 cannot identify repaired owners. No fatal/OOM, emission or native compiler rebuild.
 Required fields, local flow and the remaining backlog remain open.
+
+## LOCAL-01 completion integration audit
+
+Mapped the existing local-storage, reference lookup, structured completion, loop and
+exception owners in compiler_local01_completion_integration_2026_10_23.md. Concrete
+hazards are write-only nested target lookup, do-while header preparation order, and
+runtime-initialized catch/iteration bindings. These are part of the accepted bounded
+flow integration; no implementation or additional bootstrap result is claimed yet.
