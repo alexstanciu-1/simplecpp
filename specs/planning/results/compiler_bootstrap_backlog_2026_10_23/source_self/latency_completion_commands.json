@@ -1,0 +1,29 @@
+[
+  {
+    "name": "build",
+    "command": [
+      "php8.5",
+      "/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/tools/build_cpp.php",
+      "/tmp/source-self-acceptance-02/concrete-outlined/published",
+      "/tmp/source-self-acceptance-02/concrete-outlined/cache"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 18.095,
+    "code": 0,
+    "expected": 0,
+    "executor": "cli",
+    "executor_reason": "FPM startup failed: [23-Oct-2026 20:48:13] NOTICE: [pool runner0] 'user' directive is ignored when FPM is not running as root\n[23-Oct-2026 20:48:13] NOTICE: [pool runner1] 'user' directive is ignored when FPM is not running as root\n[23-Oct-2026 20:48:13] NOTICE: [pool runner2] 'user' directive is ignored when FPM is not running as root\n[23-Oct-2026 20:48:13] NOTICE: [pool runner3] 'user' directive is ignored when FPM is not running as root\n[23-Oct-2026 20:48:13] NOTICE: [pool runner4] 'user' directive is ignored when FPM is not running as root\n[23-Oct-2026 20:48:13] NOTICE: [pool runner5] 'user' directive is ignored when FPM is not running as root\n[23-Oct-2026 20:48:13] NOTICE: [pool runner6] 'user' directive is ignored when FPM is not running as root\n[23-Oct-2026 20:48:13] NOTICE: [pool runner7] 'user' directive is ignored when FPM is not running as root\n[23-Oct-2026 20:48:13] NOTICE: [pool runner8] 'user' directive is ignored when FPM is not running as root\n[23-Oct-2026 20:48:13] NOTICE: [pool runner9] 'user' directive is ignored when FPM is not running as root\n[23-Oct-2026 20:48:13] NOTICE: [pool runner10] 'user' directive is ignored when FPM is not running as root\n[23-Oct-2026 20:48:13] NOTICE: [pool runner11] 'user' directive is ignored when FPM is not running as root\n[23-Oct-2026 20:48:13] WARNING: failed to change socket attribute\n[23-Oct-2026 20:48:13] ERROR: unable to bind listening socket for address '/tmp/my-try-fpm-_j6h0uyb/0.sock': Operation not permitted (1)\n[23-Oct-2026 20:48:13] ERROR: FPM initialization failed"
+  },
+  {
+    "name": "execute",
+    "command": [
+      "/tmp/source-self-acceptance-02/concrete-outlined/cache/artifacts/73393d317bed4eb5514be886e2a679ef4e4c257873181b2edf292616992e2b91.bin"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 0.003,
+    "code": 0,
+    "expected": 0,
+    "executor": "subprocess",
+    "executor_reason": "subprocess"
+  }
+]

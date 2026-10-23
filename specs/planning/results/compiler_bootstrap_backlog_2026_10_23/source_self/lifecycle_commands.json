@@ -1,0 +1,66 @@
+[
+  {
+    "name": "normal-build",
+    "command": [
+      "clang++-18",
+      "-std=c++20",
+      "-I",
+      "/home/alexv/__AI/simple_cpp/simple_cpp_01/runtime/include",
+      "/home/alexv/__AI/simple_cpp/simple_cpp_01/tests/runtime/native/test_source_self.cpp",
+      "-o",
+      "/tmp/source-self-lifecycle-01/normal",
+      "-ldl"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 1.448,
+    "code": 0,
+    "expected": 0,
+    "executor": "subprocess",
+    "executor_reason": "subprocess"
+  },
+  {
+    "name": "normal-run",
+    "command": [
+      "/tmp/source-self-lifecycle-01/normal"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 0.005,
+    "code": 0,
+    "expected": 0,
+    "executor": "subprocess",
+    "executor_reason": "subprocess"
+  },
+  {
+    "name": "ubsan-build",
+    "command": [
+      "clang++-18",
+      "-std=c++20",
+      "-I",
+      "/home/alexv/__AI/simple_cpp/simple_cpp_01/runtime/include",
+      "/home/alexv/__AI/simple_cpp/simple_cpp_01/tests/runtime/native/test_source_self.cpp",
+      "-o",
+      "/tmp/source-self-lifecycle-01/ubsan",
+      "-ldl",
+      "-fsanitize=undefined",
+      "-fno-sanitize-recover=all"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 1.59,
+    "code": 0,
+    "expected": 0,
+    "executor": "subprocess",
+    "executor_reason": "subprocess"
+  },
+  {
+    "name": "ubsan-run",
+    "command": [
+      "/tmp/source-self-lifecycle-01/ubsan"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 0.006,
+    "code": 0,
+    "expected": 0,
+    "executor": "subprocess",
+    "executor_reason": "subprocess"
+  }
+]

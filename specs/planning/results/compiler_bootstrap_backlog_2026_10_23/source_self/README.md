@@ -49,8 +49,35 @@ was unavailable, so the shared runner used its normal CLI fallback.
 
 ## Remaining acceptance
 
-Full SELF-01 remains open beyond this requested first proof: native adoption review,
-additional lifecycle/closure interactions, source-layout costs and broader integration.
+Full SELF-01 remains open beyond these bounded proofs: broader native adoption,
+escaping closure ownership, source-layout costs and broader integration.
 Do not infer whole-program lifetime analysis or exact PHP cleanup timing from these
 native proofs. Shared-struct retention remains deferred. Bootstrap is still blocked
 on the existing independent preparation diagnostics.
+
+## Follow-up acceptance and construction audit
+
+Production base 58094bcae; only tests and evidence changed. Both output modes pass
+with optimization policies 2 and 0, including acquisition inside an immediately
+invoked borrowed closure and retention through ordinary outlined allocation.
+Expected output: `9:9:12:0:12:12:1:17:2:5`. Retained recovery passes (0.70 s);
+ordinary policies 0/2 take 19.37/19.47 s and concrete policy 2 takes 21.01 s.
+Concrete policy 0 initially stopped on an incorrect test expectation: separate
+allocation outlining is ordinary-only; concrete construction already uses middleware.
+After correcting that assertion, its existing publication built and executed in
+18.10 s. No compiler/runtime repair was needed. See acceptance_commands.json and
+latency_completion_commands.json; this was a targeted completion, not a complete
+second matrix rerun.
+
+Native lifecycle tests pass normally and under UBSan (1.45/1.60 s): acquisition
+fails during constructor/destructor transitions, throwing construction releases
+members, move assignment preserves both owner identities, and ordinary native
+shared construction remains explicitly unbound. Reviewed source allocation paths
+converge on the prepared source construction bridge or outlined allocation.
+Compiler Storage-family runtime allocations create internal bookkeeping, not source
+records. No source-record adoption bypass was found in those paths; this is not an
+exhaustive audit of arbitrary native integrations and adds no adoption API.
+
+No bootstrap rerun for this test-only follow-up. Latest production measurement stays
+75.87 s / 349960 KiB peak RSS / 320 MiB PHP heap, with required-field initialization
+still blocking preparation.

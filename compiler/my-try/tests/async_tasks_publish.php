@@ -7,5 +7,5 @@ try {
 	$compiler = new Compiler(new cpp_lowering_options(($argv[4] ?? '') !== 'ordinary'));
 	$compiler->init([$argv[1] . '/source']);
 	$compiler->select_entry('main', 'main.phs');
-	$compiler->exec_cpp($publication);
+	$compiler->exec_cpp($publication, new cpp_lowering_policy((int)($argv[5] ?? 2)));
 } finally { $publication->close(); }

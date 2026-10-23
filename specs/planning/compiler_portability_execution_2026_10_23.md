@@ -1450,3 +1450,37 @@ Initial concrete attempt exposed payload-versus-handle transport and was correct
 Bootstrap 1:15.87 / 349960 KiB RSS / 320 MiB heap removes the class-self diagnostic,
 adds none; other blockers remain. Evidence: source_self. This completes the requested
 first proof, not full SELF-01/native adoption or the overall backlog goal.
+
+## SELF-01 follow-up acceptance
+
+Inherited retained self now also passes borrowed immediate closures and both lowering
+policies in both output modes. Native lifetime transitions, failed construction and
+move-assignment ownership pass normally and under UBSan. Corrected a test-only
+assumption that concrete mode uses ordinary allocation outlining; completed the
+remaining concrete latency build/run without production changes. Reviewed source
+construction/adoption paths reveal no bypass in compiler Storage bookkeeping.
+Evidence: source_self follow-up files. General native adoption remains outside this
+bounded proof. No bootstrap rerun; latest production measurement remains 75.87 s /
+349960 KiB peak RSS / 320 MiB PHP heap.
+
+## Required child-field constructor audit
+
+User approved safe PHP-site adaptation, not arbitrary constructor reordering.
+collected_source_callable's parent chain (collected_definition ->
+collected_declaration -> collected_name) ends in a constructor that only stores
+collection. Promoting syntax_node is behavior-preserving for this chain: no parent
+virtual calls, child observation or escaping receiver, and a plain collection
+argument. collected_constant and collected_enum have the same simple shape.
+No source adaptation has been applied yet: legacy converter promotion prepends
+assignments ahead of the explicit parent call; the v0.1 generator only extracts a
+first-statement parent call. Historical constructor-promotion-02 proves PHP success
+and legacy native failure for this combination. Existing async_task_type_definition
+also combines promotion with explicit parent construction; that chain needs its own
+audit, not blanket approval from the collected-name case.
+
+A bounded converter rule is proposed for discussion: preserve a leading parent call
+ahead of converter-generated promotion assignments, with an explicit portable
+no-child-observation contract for parent execution and its argument evaluation.
+Keep authored body statements in order; do not infer initialization from assignments
+or make required fields nullable to bypass checks. Awaiting approval for that
+additional converter boundary before modifying these source constructors.
