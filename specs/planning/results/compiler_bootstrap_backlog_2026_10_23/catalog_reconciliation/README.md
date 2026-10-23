@@ -24,3 +24,15 @@ LLVM-backed fixture has not prompted any LLVM implementation changes.
 
 No bootstrap rerun: only tests/docs changed; the latest production checkpoint is
 nullable_static (74.47 seconds, 342944 KiB RSS, 312 MiB PHP heap).
+
+Graph follow-up: the AST structure directory is now recognized as the owning data
+area (including callable_signature_syntax, which deliberately is not an ast_node).
+The standalone namespace_identity record is also admitted; its file shares a
+namespace registry, so the whole file is not exempted. A negative control passes an
+unconstructed Compiler worker to the checker and requires worker-retention rejection.
+Recursive field initialization checks remain unchanged.
+
+With this test repair, model.php gets through graph validation, source initialization,
+restart and failure checks, then fails in check_preparation_recovery at the parked
+LLVM_Preparation_Run::prepare_instance (Object not found, prepare.php:239). See
+model_after_graph_repair.stderr. No full model pass or LLVM repair is claimed.

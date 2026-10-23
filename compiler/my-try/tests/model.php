@@ -10,6 +10,7 @@ final class Model_Test
 	/** Verify publication and shared graph links across numeric Storage boundaries. */
 	public static function run(): void
 	{
+		self::check_worker_rejection();
 		$compiler = new Compiler(new cpp_lowering_options(false));
 		$compiler->init([dirname(__DIR__) . '/tests/samples/01_base']);
 		$type_catalog = self::check_type_roots();
@@ -399,7 +400,8 @@ final class Model_Test
 			return;
 		}
 		$type = new \ReflectionClass($value);
-		if (!in_array(basename($type->getFileName()), [
+		$syntax_record = dirname($type->getFileName()) === dirname(__DIR__) . '/03_parse/structures';
+		if (!$syntax_record && !($value instanceof namespace_identity) && !in_array(basename($type->getFileName()), [
 			'structures.php', 'structures_specialization.php', 'model.php', 'catalog.php',
 			'type_bindings_catalog.php',
 		], true)) {
@@ -416,6 +418,18 @@ final class Model_Test
 			}
 			self::check_graph($property->getValue($value), $seen);
 		}
+	}
+
+	/** AST records may move between structure files; stage workers must still reject. */
+	private static function check_worker_rejection(): void
+	{
+		$worker = (new \ReflectionClass(Compiler::class))->newInstanceWithoutConstructor();
+		try { self::check_graph($worker, new \SplObjectStorage()); }
+		catch (\RuntimeException $error) {
+			if (str_contains($error->getMessage(), 'Worker retained in model:')) { return; }
+			throw $error;
+		}
+		throw new \LogicException('Graph validation accepted a retained compiler worker');
 	}
 
 	/** Failed files must not publish partially built token or syntax records. */

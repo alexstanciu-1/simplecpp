@@ -1340,3 +1340,14 @@ startup fixture loads more modules/signatures: inventory proves 43 definitions,
 record-file allowlist rejecting function_node in structures_declarations.php.
 Graph-check reconciliation remains open, not a model-suite pass. Evidence:
 catalog_reconciliation. Test/docs only; latest bootstrap remains nullable_static.
+
+## Model graph regression classifier reconciliation
+
+Reuse the existing recursive graph checker, admit the parser's structures directory
+and the separate namespace_identity record, retain field-initialization checks.
+A Compiler-worker negative control verifies worker rejection still applies. The
+suite advances through graph/source/restart checks, then fails inside parked LLVM
+specialization preparation during recovery. Evidence: catalog_reconciliation/
+model_after_graph_repair.stderr. No LLVM changes or full model-suite pass; this
+remaining backend limitation is excluded from frontend/C++ completion claims.
+Test-only change, so no new bootstrap checkpoint.
