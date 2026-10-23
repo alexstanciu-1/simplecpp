@@ -40,7 +40,14 @@ type_catalog_check($registry->application_count() === 0, 'Registration eagerly m
 type_catalog_check($catalog->source()->type_count() === 28, 'Source exposure count changed');
 type_catalog_check($catalog->source()->modifier_count() === 1, 'Source modifier count changed');
 type_catalog_check($catalog->providers()->count() === 11, 'Runtime provider count changed');
-type_catalog_check($bindings->definition_count() === 26, 'C++ binding count changed');
+// Core supplies 25 definition recipes plus one modifier; four intrinsic definitions
+// (void and the three literal sentinels) are installed by the backend owner.
+type_catalog_check($bindings->definition_count() === 29, 'C++ binding count changed');
+foreach ([false => 'scpp::false_sentinel_t', true => 'scpp::true_sentinel_t'] as $value => $name) {
+	$sentinel = $registry->type($catalog->boolean_sentinel_type((bool)$value)->type_id())->definition();
+	type_catalog_check($bindings->definition($sentinel->definition_id())->name() === $name,
+		'Boolean literal sentinel lost its distinct C++ binding');
+}
 type_catalog_check($registry->type($catalog->null_type()->type_id())->family() === type_family::null_sentinel,
 	'Null literal lost its distinct sentinel identity');
 type_catalog_rejects(fn() => $catalog->definition('null'));

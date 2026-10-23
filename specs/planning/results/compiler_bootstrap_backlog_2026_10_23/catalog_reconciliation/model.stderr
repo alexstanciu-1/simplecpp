@@ -1,0 +1,15 @@
+PHP Fatal error:  Uncaught RuntimeException: Worker retained in model: scpp\compiler\function_node in /home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/tests/model.php:406
+Stack trace:
+#0 /home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/tests/model.php(387): scpp\compiler\Model_Test::check_graph()
+#1 /home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/tests/model.php(417): scpp\compiler\Model_Test::check_graph()
+#2 /home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/tests/model.php(387): scpp\compiler\Model_Test::check_graph()
+#3 /home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/tests/model.php(417): scpp\compiler\Model_Test::check_graph()
+#4 /home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/tests/model.php(417): scpp\compiler\Model_Test::check_graph()
+#5 /home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/tests/model.php(417): scpp\compiler\Model_Test::check_graph()
+#6 /home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/tests/model.php(387): scpp\compiler\Model_Test::check_graph()
+#7 /home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/tests/model.php(417): scpp\compiler\Model_Test::check_graph()
+#8 /home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/tests/model.php(387): scpp\compiler\Model_Test::check_graph()
+#9 /home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/tests/model.php(42): scpp\compiler\Model_Test::check_graph()
+#10 /home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/tests/model.php(458): scpp\compiler\Model_Test::run()
+#11 {main}
+  thrown in /home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/tests/model.php on line 406

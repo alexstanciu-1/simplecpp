@@ -1329,3 +1329,14 @@ fixtures now initialize their receiver so unrelated local checks cannot mask the
 Evidence: nullable_static. Bootstrap 1:14.47 / 342944 KiB RSS / 312 MiB PHP heap,
 same first syntax_node blocker and diagnostic set. Remaining NULL-01 consumers and
 full regression reconciliation stay open.
+
+## Catalog regression expectation reconciliation
+
+Audited core metadata/backend binding ownership: 25 core definition recipes + four
+intrinsics = 29, with value modifier counted separately. Corrected type_catalog
+expectation and added boolean-sentinel binding checks; full test passes. Model
+startup fixture loads more modules/signatures: inventory proves 43 definitions,
+46 types and 14 demanded applications. Its corrected counts expose an obsolete
+record-file allowlist rejecting function_node in structures_declarations.php.
+Graph-check reconciliation remains open, not a model-suite pass. Evidence:
+catalog_reconciliation. Test/docs only; latest bootstrap remains nullable_static.

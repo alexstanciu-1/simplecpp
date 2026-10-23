@@ -68,13 +68,15 @@ final class Model_Test
 		echo "Model: data-only graph, Storage boundaries, sharing, failure publication and reset passed\n";
 	}
 
-	/** Verify lifecycle-owned semantic/backend roots before active facts migrate to them. */
+	/** Verify lifecycle-owned roots after default module signatures are registered. */
 	private static function check_type_roots(): registered_type_catalog
 	{
 		$catalog = Model::$type_catalog;
 		$registry = $catalog->registry();
-		if (($registry->definition_count() !== 26) || ($registry->type_count() !== 17)
-			|| ($registry->application_count() !== 0)) {
+		// 27 intrinsic + 10 selected runtime + 4 callable + 2 initializer definitions.
+		// Their 32 concrete identities and 14 demanded signature applications total 46.
+		if (($registry->definition_count() !== 43) || ($registry->type_count() !== 46)
+			|| ($registry->application_count() !== 14)) {
 			throw new \RuntimeException('Canonical built-in type roots were not initialized exactly once');
 		}
 		$vector = $catalog->definition('vector');
