@@ -1300,3 +1300,9 @@ New observed v0.2 backend blocker: static uint32 literal initialization emits a
 non-local capture-default conversion lambda in prelowered output. Reproducer and
 native diagnostics are saved with source_numeric evidence. Keep this as required
 backlog work, separate from the source arithmetic repairs.
+
+Static-initializer follow-up: the backend now emits the already-prepared initializer
+inside a captureless function scope. Existing sequencing conversions remain unchanged;
+ordinary/prelowered native checks and the restored portable uint32 initializer pass.
+This closes the observed non-local capture-default lambda blocker. It does not admit
+new static initializer syntax; nonconstant container literals remain excluded.

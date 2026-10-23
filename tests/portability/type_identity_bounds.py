@@ -39,7 +39,7 @@ class module {
  public array $sources /** hash<source_record> */ = [];
 }
 class Model {
- public static int $revision /** uint32 */;
+ public static int $revision /** uint32 */ = 4294967295;
  public static array $modules /** hash<module> */ = [];
 }
 class Lifecycle_Proof {
@@ -47,7 +47,6 @@ class Lifecycle_Proof {
 source += extract('public static function next_revision(', (APP / 'compiler/lifecycle.php').read_text())
 source += '\n}\n'
 source += r'''$ids = new Identity_Proof();
-Model::$revision = 4294967295;
 echo $ids->definition(), ':', $ids->definition(), ':';
 try { echo $ids->definition(); }
 catch (\OverflowException $error) { echo 'exhausted:'; }

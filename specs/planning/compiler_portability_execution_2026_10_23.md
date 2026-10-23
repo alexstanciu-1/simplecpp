@@ -1295,3 +1295,14 @@ pass. Evidence: source_numeric. Type-catalog count failure reproduces unchanged;
 prelower static-initializer capture-default lambda bug is recorded separately.
 Bootstrap 1:14.22 wall / 342396 KiB RSS / 312 MiB PHP heap; first syntax_node unchanged.
 No whole-compiler native or full regression success claimed.
+
+## Static initializer emission repair
+
+Reuse prepared defaults/conversions inside a captureless function scope owned by
+CPP_Declarations static definitions. Fixes concrete uint32 initialization's invalid
+namespace-scope capture-default lambda without changing source admission. Restored
+allocator/revision proof passes PHP and all native routes; focused static values
+pass ordinary/concrete output, static_members retained checks pass. Evidence:
+static_initializer. Old qualified-static test failure reproduces with parent emitter;
+fixture reconciliation remains separate. Bootstrap 1:14.18 / 342952 KiB RSS /
+312 MiB PHP heap, same first syntax_node blocker and diagnostic set.

@@ -514,11 +514,18 @@ final class CPP_Declarations
 			$entry = object_cast(weakref_get($field->declaration), collected_name::class);
 			$text .= self::type($field->type, $context) . ' ' . CPP_Generator::source_name('record', $record->qualified_name())
 				. '::' . CPP_Generator::source_name('field', $entry->name);
-			if ($field->default_value !== null) { $text .= ' = ' . self::property_default($field->default_value, $context); }
+			if ($field->default_value !== null) { $text .= ' = ' . self::static_initializer($field, $context); }
 			else { $text .= '{}'; }
 			$text .= ";\n";
 		}
 		return $text;
+	}
+
+	/** Namespace-scope storage gives sequenced conversions/construction a function scope. */
+	private static function static_initializer(prepared_field $field, cpp_generation_context $context): string
+	{
+		return '([]() -> ' . self::type($field->type, $context) . ' { return '
+			. self::property_default($field->default_value, $context) . '; }())';
 	}
 
 	public static function static_property(prepared_static_property $facts, cpp_generation_context $context): string

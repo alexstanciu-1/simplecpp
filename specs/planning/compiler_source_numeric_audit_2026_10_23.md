@@ -45,6 +45,7 @@ of all four changed production files reproduces that failure in
 open; do not call the full type-catalog suite green. Initial fixture type/local-name
 collisions and static-index assignment were corrected before final execution.
 
-Remaining acceptance includes the static-initializer backend repair and regression
-reconciliation. This audit does not expand source uint32 checks into a blanket policy
+The static-initializer backend repair now passes the restored literal-initializer
+fixture across routes, plus ordinary/prelowered scalar/nullable/string/type-default
+execution (see static_initializer evidence). Regression reconciliation remains open. This audit does not expand source uint32 checks into a blanket policy
 or claim native execution of all production numeric consumers.

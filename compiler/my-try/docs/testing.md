@@ -2276,3 +2276,9 @@ also attempted and currently fail on the pending TASK-01 shared-capture policy; 
 are recorded in summary.json, not counted as native passes. Actual parser identity and
 failure/retry/standalone coverage is tests/retained_type_lookup.php (pass a fresh source
 directory), alongside parse_collection.php and collected_roles.php.
+
+`python3 compiler/my-try/tests/static_initializers.py --results FRESH` (repository root)
+executes static narrow-integer, nullable, string and container type-default initialization
+in ordinary/prelowered output. `tests/portability/type_identity_bounds.py --results FRESH`
+adds the restored uint32 static endpoint and production allocator/rollover methods across
+PHP and both native routes. Existing static_members.php covers retained regeneration.
