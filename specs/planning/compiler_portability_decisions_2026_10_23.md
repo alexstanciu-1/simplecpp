@@ -844,6 +844,10 @@ execution before claiming support. No implementation yet.
 
 ## BIND-01 — initial runtime exposure review
 
+Implementation checkpoint: eleven output leaves are registered; legacy executes all,
+v0.2 executes ten with output_read extraction blocked on NULL-02 result_payload.
+JSON factory and facade dependency work remain open. See the execution ledger.
+
 Source inspection, 2026-10-23; recommendations, not implementation authorization:
 
 - B01: eleven publication/digest leaves already exist in filesystem/output_files.hpp.
@@ -991,7 +995,7 @@ discussion while independent work continues. Deferred debts remain deferred.
 | SOURCE-01 | Private fields and numeric boundaries | Same-name private instance fields with C++ lookup accepted; explicit portable base views; source-owned algorithm checks independent of compiler contracts; paused. |
 | CONVERT-01 | Empty container expressions and method defaults | Explicit doc-comment type required; registered containers accept typed [] by default. Parameter defaults use the same rule; reuse audit complete, revised 4–8x; Typed defaults and annotated expressions have PHP/legacy/v0.2 proofs; explicit empty-only provider binding passes ordinary/prelowered generic and Storage proofs. Remaining retained/provider edge verification stays open; see execution ledger; inventory C01/C02; in progress. |
 | CONVERT-02 | Complete nullable array target annotations using ?vector | Converter consistency validation and compiler-source migration implemented; both output targets and PHP/legacy execution proved. v0.2 nullable value-boundary execution remains with NULL-01/02. |
-| BIND-01 | Publication/digest APIs and JSON pull-reader exposure | Metadata-first leaves, shared-reader factory and facade tracing accepted; inventory B01/B02/B03; implementation/proofs pending. |
+| BIND-01 | Publication/digest APIs and JSON pull-reader exposure | Eleven output leaves registered and legacy-proved; ten v0.2-proved, read extraction depends on NULL-02. Shared-reader factory and facade tracing remain; inventory B01/B02/B03; in progress. |
 | CURSOR-01 | Storage_Cursor registration and safe read widening | Metadata-driven relationship and explanatory diagnostics accepted; runtime constructor scope recorded above; implementation paused. |
 | VERIFY-01 | Reconcile remaining diagnostics and retry measured bootstrap | After agreed slices; historical failures are not fresh defects. |
 | DOC-01 | Reconcile stale portability guidance | After relevant decisions; inventory S01. |

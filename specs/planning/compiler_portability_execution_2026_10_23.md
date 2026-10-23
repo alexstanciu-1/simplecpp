@@ -279,3 +279,48 @@ absence, failure and unchanged are separate outcomes. Existing result extraction
 and prelowered runtime-call transport should carry them. Prove those outcomes and
 staged promotion/close using existing runtime behavior before claiming BIND-01
 closure. This work is independent of the open constructor-parent convention.
+
+## BIND-01 output-file registration slice
+
+Filesystem metadata now registers all eleven existing leaves with exact signatures
+and existing C++ symbols. No runtime behavior, facade cleanup, core result semantics
+or compiler dispatch code was changed. `/tmp/output-bindings-02` executes all eleven
+on legacy and ten on ordinary/prelowered v0.2 output, including lock-held mutations,
+empty/unchanged/failure distinctions, digest, permissions, promotion and discard.
+The first legacy fixture used top-level integer returns, which its entry wrapper
+does not transport; assertions now live in an ordinary typed function.
+
+The read leaf remains a real dependent blocker: result<nullable<string>> extraction
+fails Result_Conversions::require_payload because nullable lacks result_payload.
+The exact return type remains registered. Two focused tests reproduce the error;
+they are not positive read-execution proofs and must be upgraded with NULL-02.
+No string sentinel, nullable-specific name branch or unconditional capability
+expansion was added to bypass this dependency.
+
+`/tmp/output-adapter-reuse-01` reruns the existing PHP adapter fixture under an
+exclusive lock, covering missing/empty files, binary contents, edited-output refusal,
+path protections, SHA-256 boundary sizes and Output_Stage alias/close behavior.
+This plus the new direct binding tests does not claim full converted facade admission:
+the separately recorded shared-identity helper and other BIND-03 surfaces remain.
+
+Measured `/tmp/compiler-bootstrap-output-bindings-01`: conversion 4.65 s /
+194,992 KiB RSS; PHP-hosted bootstrap 191.17 s / 441,568 KiB RSS (431.2 MiB),
+422.5 MiB heap. All eleven unresolved output-leaf diagnostic texts disappear;
+the expected result_payload capability diagnostic is added. AST-01 remains first.
+No fatal/OOM, emission or native compiler rebuild. Evidence is saved under
+results/compiler_bootstrap_backlog_2026_10_23/output_bindings. BIND-01 remains open:
+read execution depends on NULL-02, JSON factory/method exposure is next, and facade
+dependencies still require BIND-03 tracing.
+
+## BIND-01 JSON reader reuse before implementation
+
+The native json_pull_reader in modules/json/pull_reader.hpp already owns a unique
+parser and start-once state. Its fourteen methods return existing scalar Result
+types; the parser owns input bytes. Reuse these methods unchanged. Add a free
+json_pull_reader_create() allocation adapter returning a fresh shared wrapper,
+register the shared provider type and methods in json.json, and replace only the
+facade allocation expression. Legacy class-method stubs already exist in
+RuntimeShallowSourceGenerator; the new free function needs legacy symbol/contract
+exposure too. Test unstarted/restarted errors, alias state, input ownership and
+startup/protocol failures on both routes and prelowering. Do not mark the underlying
+unique parser copyable or enable generic shared-provider `new`.

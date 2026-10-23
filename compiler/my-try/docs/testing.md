@@ -74,6 +74,13 @@ in ordinary and prelowered native output. Counted factory calls verify fresh omi
 defaults and explicit-argument behavior; negative metadata/input cases and retained
 recovery verify that default construction or indexing alone does not grant literals.
 
+`python3 tests/output_bindings.py --results FRESH` executes the internal output-file
+bindings on legacy and ordinary/prelowered v0.2 routes, under an exclusive lock.
+It distinguishes absent/empty/unchanged/failure outcomes and covers digest, permissions,
+staged promotion and discard. v0.2 `result<nullable<string>>` extraction remains an
+explicit NULL-02 blocker test; the other ten leaves execute. Do not report the
+blocker reproduction as successful read support.
+
 ## Conservative call snapshot elision
 
 `python3 compiler/my-try/tests/call_snapshot_borrow.py --results FRESH` checks

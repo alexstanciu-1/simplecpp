@@ -5,6 +5,17 @@ Doc Status: planning
 Scope: reuse, overlap with NULL-01, and incremental work for accepted nullable
 payload capabilities. This does not close the compiler-wide CH15 audit.
 
+Implementation-time evidence from BIND-01: output_read's registered return is
+`result<nullable<string>>`, matching its existing native and legacy contracts.
+Result_Conversions::require_payload correctly queries the `result_payload`
+capability; nullable's definition currently declares only value_storable and
+copyable_value. Both v0.2 modes reject extraction. Do not weaken the binding or
+special-case strings. Review the generic nullable transport opt-in and ordinary/
+prelowered nested-wrapper handling with NULL-02, including unfamiliar admissible
+payloads and copy constraints. Conditional result_payload dependencies are currently
+forbidden by template_type_parameter, so capability spelling alone is not a proof
+of the intended generic transport policy. The legacy binding executes successfully.
+
 ## Existing foundation
 
 - 03_parse/types/register.php installs nullable with a value_storable formation

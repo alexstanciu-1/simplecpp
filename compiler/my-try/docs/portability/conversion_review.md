@@ -2,8 +2,9 @@
 Doc Status: supporting
 
 PHP behavior, conversion to PHS, native compiler execution and generated-program
-execution are separate claims. The current bounded native checkpoint passes all four.
-The latest focused gate covers retained reference advisory PHP/native parity;
+execution are separate claims. The historical bounded native checkpoint below passes
+all four for its pinned revision; accepted-backlog changes are not a new native
+compiler rebuild. That focused gate covers retained reference advisory PHP/native parity;
 the earlier gate covers native prelowering and accounting. The preceding
 O2 ordinary gate covers Chapter 14, as detailed below. The historical
 cumulative checkpoint covers the implemented Chapter 05–11 slices, including
@@ -16,7 +17,15 @@ This does not establish exhaustive language, lifetime, incremental or performanc
 
 ## Accepted-backlog bootstrap checkpoint — 2026-10-23
 
-The latest [constructor-promotion checkpoint](../../../../specs/planning/results/compiler_bootstrap_backlog_2026_10_23/constructor_promotion/README.md)
+The latest [output-binding checkpoint](../../../../specs/planning/results/compiler_bootstrap_backlog_2026_10_23/output_bindings/README.md)
+registers eleven existing publication/digest leaves. All execute on legacy; ten
+execute in ordinary/prelowered v0.2. Read extraction remains blocked by nullable's
+missing result_payload capability (NULL-02), with its exact nested return preserved.
+Bootstrap takes 191.17 s / 431.2 MiB RSS / 422.5 MiB PHP heap. Eleven unresolved
+function diagnostics disappear; the expected capability diagnostic is added.
+AST-01 remains first, with no OOM/fatal, emission or native compiler rebuild.
+
+The earlier [constructor-promotion checkpoint](../../../../specs/planning/results/compiler_bootstrap_backlog_2026_10_23/constructor_promotion/README.md)
 uses converter-emitted `set:` inputs and PHP promotion for switch_label's required
 enum. Root-class construction/order/failure and typed-container defaults pass PHP,
 legacy native and both v0.2 modes. Bootstrap takes 190.83 s / 430.2 MiB peak RSS /

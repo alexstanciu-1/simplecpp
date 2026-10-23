@@ -1,0 +1,18 @@
+{
+  "added": [
+    "S2S Result operations require an unmodified type with result_payload capability"
+  ],
+  "removed": [
+    "S2S needs one resolved function for \\scpp_output_discard",
+    "S2S needs one resolved function for \\scpp_output_promote",
+    "S2S needs one resolved function for \\scpp_output_stage",
+    "S2S needs one resolved function for scpp_input_digest",
+    "S2S needs one resolved function for scpp_output_digest",
+    "S2S needs one resolved function for scpp_output_permissions",
+    "S2S needs one resolved function for scpp_output_read",
+    "S2S needs one resolved function for scpp_output_remove",
+    "S2S needs one resolved function for scpp_output_root",
+    "S2S needs one resolved function for scpp_output_sha256",
+    "S2S needs one resolved function for scpp_output_write"
+  ]
+}

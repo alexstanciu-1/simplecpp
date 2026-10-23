@@ -1,0 +1,6 @@
+{
+  "legacy_leaves": "11 passed",
+  "v02_leaves": "10 passed",
+  "v02_read": "blocked on NULL-02 result_payload",
+  "expected_legacy": "absent:empty:unchanged:failure:digest:promote:unchanged:discard0"
+}

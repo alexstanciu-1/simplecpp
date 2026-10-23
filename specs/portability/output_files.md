@@ -37,10 +37,20 @@ arbitrary paths, recursive deletion and cross-platform guarantees.
 
 Placement: PHP facade in `tools/php_portability/runtime/output_files.php`, native
 filesystem mechanisms in `runtime/include/modules/filesystem/output_files.hpp`,
-PHS error bridge installed with `--filesystem`. Internal `scpp_output_*` bindings
-are for the portability framework; this does not register new my-try source APIs.
+PHS error bridge installed with `--filesystem`. Internal `scpp_output_*` and
+`scpp_input_digest` bindings are for the portability framework; v0.2 now registers
+the existing leaves through filesystem runtime metadata. This is exposure of the
+established mechanisms, not a new general filesystem-compatibility API.
 Native code is header-only for this bounded tooling slice, selected through the
 filesystem module. No extra link/crypto library is required.
+
+Binding status: `compiler/my-try/tests/output_bindings.py --results FRESH` exercises
+all eleven leaves on the legacy route and ten in ordinary/prelowered v0.2 output.
+The exact `result<nullable<string>>` read signature is registered, but v0.2 read
+extraction currently lacks nullable's `result_payload` capability. NULL-02 owns
+that remaining operation admission/transport proof. Do not substitute a sentinel
+string or collapse absence into failure. The test reproduces this blocker separately;
+it must become an execution test when the capability work is complete.
 
 ## Staged native output — 2026-10-06
 
