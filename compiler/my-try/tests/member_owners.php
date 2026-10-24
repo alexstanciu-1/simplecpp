@@ -20,7 +20,7 @@ $tokens = (new Tokenizer($source))->tokenize();
 $local_scope = new scope();
 $local_scope->set_parent(Model::$global_scope);
 $root = new file_node($local_scope);
-$collection = new collected_file($tokens);
+$collection = new collected_file($tokens, $root);
 $collector = new Symbol_Collector($collection, $tokens, $local_scope, null, 1);
 $node = new type_declaration_node();
 $node->name = 'Contract';

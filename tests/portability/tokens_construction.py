@@ -37,6 +37,7 @@ source = r"""<?php
 namespace scpp\compiler;
 class file {}
 class scope {}
+class file_node { public int $marker = 0; }
 class anonymous_callable_identity {}
 class preparation_owner {}
 class collected_name {}
@@ -44,7 +45,7 @@ class collected_name {}
 for cls in ['token', 'retained_token_range', 'token_list']:
     source += declaration(APP / '02_tokenize/structures.php', 'final class ' + cls) + '\n'
 source += declaration(APP / '02_tokenize/buffer.php', 'final class Token_Buffer') + '\n'
-source += 'class parsed_file { public function __construct(public token_list $tokens) {} }\n'
+source += 'class parsed_file {\n' + method(declaration(APP / '03_parse/structures/structures.php', 'final class parsed_file'), 'public function __construct') + '\n}\n'
 cleanup = declaration(APP / '03_parse/token_cleanup.php', 'final class Token_Cleanup')
 source += 'final class Token_Cleanup {\n'
 for name in ['public function __construct', 'private function delta', 'public function token_index']:
@@ -82,7 +83,9 @@ $first = new token(0, 2, 'ab'); $old_rows->append($first); $old->end_token = 1;
 $current = new token_list($input, 'cd');
 $current_rows /** Storage<token> */ = $current->tokens;
 $second = new token(0, 2, 'cd'); $current_rows->append($second); $current->end_token = 1;
-$prior = new parsed_file($old);
+$root = new file_node();
+$prior_collection = new collected_file($old, $root);
+$prior = new parsed_file($old, $root, $prior_collection, new Storage /** Storage<scope> */());
 $run = new Parser_Run($current, null, $prior);
 echo $run->snapshot() === $current ? 'same' : 'bad';
 echo ':', $run->current_position(), ':', $current->content, ':', Token_Cleanup::$calls;
@@ -90,7 +93,7 @@ $joined /** Storage<token> */ = $current->tokens;
 echo ':', $joined[0] === $first ? 'old' : 'bad';
 echo ':', $joined[1] === $second ? 'new' : 'bad';
 echo ':', $second->offset, ':', q_count($current->retained_ranges);
-$collection = new collected_file($current);
+$collection = new collected_file($current, $root);
 echo ':', $collection->token_snapshot() === $current ? 'collection' : 'bad';
 $collection->set_tokens($old);
 echo ':', $collection->token_snapshot() === $old ? 'rebound' : 'bad';
@@ -103,9 +106,17 @@ echo ':', $cleanup->token_index(1);
 $fresh = new token_list($input, '');
 $fresh_run = new Parser_Run($fresh);
 echo ':', $fresh_run->snapshot() === $fresh ? 'fresh' : 'bad', ':', $fresh_run->current_position();
+echo ':', $collection->root === $prior->root ? 'shared-root' : 'bad';
+$root->marker = 17;
+echo ':', $collection->root->marker, ':', $prior->root->marker;
+$revived = new file_node();
+$prior->root = $revived;
+$prior_collection->root = $revived;
+echo ':', $prior->root === $prior_collection->root ? 'revived' : 'bad';
+echo ':', $collection->root === $root ? 'old-root' : 'bad';
 """
 (out / 'source/main.php').write_text(source)
-expected = b'same:1:abcd:1:old:new:2:0:collection:rebound:0:0:-1:fresh:0'
+expected = b'same:1:abcd:1:old:new:2:0:collection:rebound:0:0:-1:fresh:0:shared-root:17:17:revived:old-root'
 with CommandRunner(out / 'logs', ROOT) as runner:
     publisher = out / 'publish.php'
     publisher.write_text((APP / 'tests/async_tasks_publish.php').read_text()

@@ -1614,3 +1614,21 @@ Bootstrap 1:32.14 / 355240 KiB RSS / 324 MiB PHP heap removes tokens diagnostic 
 exposes source_scope initialization. First remaining diagnostic is root requiring
 set initialization before constructor body. Stopped without fixing either. Timing
 overlaps initial native proof work; no isolated performance comparison claimed.
+
+## Collection root constructor promotion — 2026-10-24
+
+User approved collected_file root promotion. Reuses existing set/shared-input
+machinery; parser creates root and initializes span in the same order, then passes
+it to collection and parsed_file. Revival and collector finalization remain intact.
+Manual fixtures adapted; ownership intent retained without a new lifetime protocol.
+
+Focused production-constructor fixture passes PHP, legacy and both v0.2 native
+modes. Five AST/collection/cleanup/indexing tests plus incremental preparation pass.
+New retained assertions prove collection identity and synchronized fresh root on
+revival. Existing model LLVM and enum_model task-callback failures reproduce on
+isolated HEAD baseline, not repaired. Evidence: root_construction.
+
+Bootstrap 1:13.81 / 355260 KiB peak RSS / 324 MiB PHP heap advances first diagnostic
+to runtime_metadata required initialization. Unique aggregate messages unchanged
+because root errors remain for other owners. Stopped at the next blocker without
+fixing it; no full bootstrap claim.

@@ -340,7 +340,7 @@ final class Model_Test
 		$token = new token(0, 4, 'name');
 		$source->tokens[] = $token;
 		$scope = new scope();
-		$collector = new Symbol_Collector(new collected_file($source), $source, $scope, null, 1);
+		$collector = new Symbol_Collector(new collected_file($source, new file_node($scope)), $source, $scope, null, 1);
 		$node = new variable_reference_node();
 		$node->name = 'name';
 		$node->set_span(0, 1);

@@ -573,12 +573,6 @@ final class collected_file
 	public \SplObjectStorage $preparation_changes /** hash<bool, preparation_owner> */;
 	public int $revision /** uint32 */ = 0;
 	/**
-	 * Convenience mirror of parsed_file.root; not a second AST owner.
-	 * @reference.source parsed_file.root (syntax graph)
-	 * @reference.weak
-	 */
-	public file_node $root;
-	/**
 	 * Numeric storage of collected_name records.
 	 * @storage.owner
 	 */
@@ -622,7 +616,9 @@ final class collected_file
 	public array $pending_bindings /** vector<int> */ = [];
 
 	/** @storage.reference model.tokens */
-	public function __construct(private token_list $tokens)
+	public function __construct(private token_list $tokens,
+		/** Convenience mirror, not a second AST owner. @reference.source parsed_file.root @reference.weak */
+		public file_node $root)
 	{
 		$this->anonymous_callables = new Storage /** Storage<anonymous_callable_identity> */();
 		$this->retired_scopes = new Storage /** Storage<scope> */();

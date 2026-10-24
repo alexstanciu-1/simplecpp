@@ -93,3 +93,13 @@ operation for later updates. This is input promotion, not staged-field conversio
 and token operations across routes. Its Parser_Run extraction stops after cursor
 placement, with an AST-cleanup stand-in; actual token_cleanup, token_generations
 and indexing host tests cover whole-parser retention and recovery separately.
+
+## Collection root already created by the parser
+
+collected_file also promotes its required file_node root. Parser_Run creates and
+initializes that root at the original point, then supplies it to both collected_file
+and parsed_file. Collector finalization and deletion/reappearance still update the
+existing root mirrors in place; promotion does not change ownership or weak intent.
+The token construction fixture includes both production constructors and shared
+root identity/mutation/replacement checks. The actual incremental preparation test
+checks retained collection identity and synchronized replacement roots on revival.

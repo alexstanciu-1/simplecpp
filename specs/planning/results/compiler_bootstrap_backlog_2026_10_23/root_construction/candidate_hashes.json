@@ -1,0 +1,6 @@
+{
+  "compiler/my-try/03_parse/parser.php": "b44bf85aaeebade59bae4da89f085f5034f25224ae1046cfc32c79591dcefa19",
+  "compiler/my-try/03_parse/collect/structures.php": "f396ef6f2547d78d2afb480da7f62863682fe396bb9737d35ee3e2ff5361199a",
+  "compiler/my-try/tests/incremental_preparation.php": "c75e9f1fe38f9d42921215cec87ccf14c3099b7b47d1faab8fdbc9cb2e82d500",
+  "tests/portability/tokens_construction.py": "06e3b15039fe7d6a1bfd9fd2a1e91dea3802e858a807ce2e267684db4be1bcfb"
+}

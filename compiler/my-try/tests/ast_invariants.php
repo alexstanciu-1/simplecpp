@@ -74,7 +74,7 @@ if (($literal->start_token() !== 1) || ($literal->end_token() !== 2)) {
 rejected(function () use ($literal): void {
 	$literal->require_preparation();
 }, \TypeError::class);
-$entry = new collected_variable_write(new collected_file(new token_list(new file(), '')), $target);
+$entry = new collected_variable_write(new collected_file(new token_list(new file(), ''), new file_node(new scope())), $target);
 $target->attach_occurrence($entry);
 rejected(function () use ($target, $entry): void {
 	$target->attach_occurrence($entry);
@@ -142,7 +142,7 @@ if (($trace->nodes !== [$binary, $assignment, $target, $literal, $right]) || ($b
 	throw new \LogicException('Node-owned maintenance lost grammar order or visited a node twice');
 }
 // Work guards use canonical owner state; no per-expression deletion fields are needed.
-$source = new collected_file(new token_list(new file(), ''));
+$source = new collected_file(new token_list(new file(), ''), new file_node(new scope()));
 $work_scope = new scope();
 $work_body = new function_body_node($work_scope);
 $owner = new file_body_work($source, $work_body);

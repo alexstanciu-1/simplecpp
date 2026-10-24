@@ -1,0 +1,8 @@
+PHP Fatal error:  Uncaught LogicException: task_synchronize requires an unordered work callback; nesting is unsupported in /home/alexv/__AI/simple_cpp/simple_cpp_01/tools/php_portability/runtime/tasks.php:14
+Stack trace:
+#0 /home/alexv/__AI/simple_cpp/simple_cpp_01/tools/php_portability/runtime/global_functions.php(15): scpp\task_synchronize()
+#1 /home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/03_parse/collect/collect.php(93): task_synchronize()
+#2 /home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/03_parse/collect/collect.php(61): scpp\compiler\Symbol_Collector->retained_types()
+#3 /tmp/root-construction-baseline-01/enum_model.php(125): scpp\compiler\Symbol_Collector->previous_member_owner()
+#4 {main}
+  thrown in /home/alexv/__AI/simple_cpp/simple_cpp_01/tools/php_portability/runtime/tasks.php on line 14

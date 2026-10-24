@@ -1,0 +1,9 @@
+PHP Fatal error:  Uncaught UnexpectedValueException: Object not found in /home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/05_backend/llvm/prepare.php:236
+Stack trace:
+#0 /home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/05_backend/llvm/prepare.php(119): scpp\compiler\LLVM_Preparation_Run->prepare_instance()
+#1 /home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/05_backend/llvm/prepare.php(40): scpp\compiler\LLVM_Preparation_Run->prepare_program()
+#2 /tmp/root-construction-baseline-01/model.php(270): scpp\compiler\LLVM_Preparation->prepare_program()
+#3 /tmp/root-construction-baseline-01/model.php(68): scpp\compiler\Model_Test::check_preparation_recovery()
+#4 /tmp/root-construction-baseline-01/model.php(472): scpp\compiler\Model_Test::run()
+#5 {main}
+  thrown in /home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/05_backend/llvm/prepare.php on line 236

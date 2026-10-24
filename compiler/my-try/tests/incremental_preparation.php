@@ -172,6 +172,8 @@ try
 	Compiler_Lifecycle::reset_preparation();
 	$compiler->prepare();
 	preparation_check($inspect->body->work()->version === ($inspect_version + 2), 'Explicit reset failed to select existing owners');
+	$retained_collection = $c->parsed->collection;
+	$retired_root = $c->parsed->root;
 	$c->changes = change_state::deleted;
 	$compiler->parse();
 	$compiler->prepare();
@@ -179,6 +181,9 @@ try
 	preparation_edit($compiler, $c, '$again = 4; return $again;');
 	$compiler->prepare();
 	preparation_check($c->parsed->collection->root->single_body()->body->work()->state === preparation_state::ready, 'Deleted file could not reappear after cleanup');
+	preparation_check($c->parsed->collection === $retained_collection, 'Reappearance replaced the retained collection');
+	preparation_check($c->parsed->root === $retained_collection->root, 'Reappearance split the root mirrors');
+	preparation_check($c->parsed->root !== $retired_root, 'Reappearance reused the retired root');
 }
 finally {
 	foreach (glob($directory . '/*') as $path) {

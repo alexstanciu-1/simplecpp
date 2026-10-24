@@ -110,8 +110,7 @@ final class Parser_Run
 		if ($previous === null) {
 			$root = new file_node($file_scope);
 			$root->set_span(0, 0);
-			$new_collection = new collected_file($tokens);
-			$new_collection->root = $root;
+			$new_collection = new collected_file($tokens, $root);
 			$this->parsed = new parsed_file($tokens, $root, $new_collection, new Storage /** Storage<scope> */());
 		}
 		else

@@ -149,7 +149,7 @@ final class AST_Test
 		$node->require_type_syntax()->set_span(1, 2);
 		$node->set_span(0, 3);
 		$scope = new scope();
-		$collector = new Symbol_Collector(new collected_file($tokens), $tokens, $scope, null, 1);
+		$collector = new Symbol_Collector(new collected_file($tokens, $syntax->root), $tokens, $scope, null, 1);
 		$node->collect($collector, $scope, 0);
 		$position = $node->occurrence()->local_index;
 		self::check($scope->has_variables());

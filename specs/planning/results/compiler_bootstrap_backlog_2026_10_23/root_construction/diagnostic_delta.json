@@ -1,0 +1,7 @@
+{
+  "removed_unique": [],
+  "added_unique": [],
+  "first_before": "Property requires set: initialization before the constructor body: root",
+  "first_after": "Required object property needs direct initialization: runtime_metadata",
+  "note": "Aggregate messages deduplicate same-name fields; root remains for another owner."
+}
