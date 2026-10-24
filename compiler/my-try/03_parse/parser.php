@@ -2538,8 +2538,7 @@ final class Parser_Run
 					$base = $call;
 					continue;
 				}
-				$field = new field_access_node();
-				$field->base = $base;
+				$field = new field_access_node($base);
 				$field_index = $this->position++;
 				$field->name = $this->name_at($field_index);
 				$this->finish_node($field, $start);
@@ -2548,8 +2547,7 @@ final class Parser_Run
 				continue;
 			}
 			$this->position++;
-			$access = new index_node();
-			$access->base = $base;
+			$access = new index_node($base);
 			if ($this->text() !== ']') {
 				$access->index = $this->expression();
 			}

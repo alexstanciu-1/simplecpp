@@ -1,0 +1,6 @@
+{
+  "compiler/my-try/03_parse/parser.php": "57a18c6e60f4ae3af9a1c5633ec7d1950a4e58375d737653f56938c19ce74676",
+  "compiler/my-try/03_parse/structures/structures_specialization.php": "9ca51307e5c2904a0a3d9b1b36b1d5ccaa45db7bc9685abbab2f813c49128531",
+  "compiler/my-try/tests/specialization_dispatch.php": "be1d3ce14bc31eabd8e9e2de12a138a2cccc33b4e5931994d10d3ea6593b29e9",
+  "tests/portability/access_base_construction.py": "fa41e103c5194c9306e3a5a0552a6f615c850fc0ce63e37474c47e36c14b97ad"
+}

@@ -68,3 +68,14 @@ See `tests/portability/callable_construction.py` and the dated callable_construc
 evidence. This does not authorize helper-body inference or nullable substitutes.
 Use a descriptive factory name such as fresh_node: an authored create method hides
 the legacy generator's unqualified create<T> allocation helper.
+
+## Required access receivers already available at allocation
+
+The compiler's index_node and field_access_node accept their required base through
+promoted expression_node constructor inputs. Parser access_suffix passes the same
+existing receiver at the original allocation point; subsequent token consumption,
+index parsing, span finalization and collection remain in order. No nullable backing
+is needed for an input already available before construction. The source fixture
+`tests/portability/access_base_construction.py` proves exact receiver identity and
+child/maintenance traversal through PHP, legacy and both v0.2 output modes; actual
+parser/indexing tests cover retained recovery separately.

@@ -95,7 +95,7 @@ $fact_pairs = [
 	[new variable_declaration_node(), new prepared_binding()],
 	[new call_node(), new prepared_call()],
 	[new assignment_expression_node(), new prepared_assignment()],
-	[new field_access_node(), new prepared_field_access()],
+	[new field_access_node(new variable_reference_node()), new prepared_field_access()],
 ];
 foreach ($fact_pairs as $pair)
 {

@@ -1519,7 +1519,9 @@ final class index_node extends assignable_expression_node
 		return $this->prepared_facts;
 	}
 
-	public expression_node $base;
+	public function __construct(public expression_node $base)
+	{
+	}
 	/** Absence means zero explicit arguments, with no built-in append interpretation. */
 	public ?expression_node $index = null;
 
@@ -1557,7 +1559,9 @@ final class field_access_node extends assignable_expression_node
 
 	private ?prepared_field_access $prepared_facts = null;
 
-	public expression_node $base;
+	public function __construct(public expression_node $base)
+	{
+	}
 	/** Stored name used by collection/resolution and generation; never recovered from tokens. */
 	public string $name;
 

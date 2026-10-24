@@ -1581,3 +1581,19 @@ end-to-end case; actual fixed-array parsing remains covered by AST proof.
 Evidence: required_type_syntax. Bootstrap 1:19.29 / 355740 KiB RSS / 324 MiB PHP heap
 removes type_syntax diagnostic and adds none. Stopped at required base initialization
 without fixing it, as requested.
+
+## Access base constructor promotion — 2026-10-24
+
+User approved promoting index_node and field_access_node base inputs. Parser passes
+existing receiver at original allocation point; parsing/collection order and exact
+shared identity remain unchanged. Reuses existing conversion and construction
+machinery, with no new semantics or nullable backing. Updated manual test allocation.
+
+Extracted production proof passes PHP, legacy and both v0.2 native modes; actual
+reference_model, grouping and indexing/retained-recovery tests pass. Existing
+dispatch diagnostic expectation fails equally in isolated HEAD baseline, before
+changed fixture allocation; recorded separately. Evidence: access_base_construction.
+
+Bootstrap 1:14.66 / 355224 KiB peak RSS / 324 MiB PHP heap removes required base
+initialization diagnostic and adds none. Stopped at tokens requiring set:
+initialization before constructor body. No next-blocker fix or full bootstrap claim.
