@@ -1,0 +1,27 @@
+[
+  {
+    "name": "tokenizer",
+    "seconds": 0.6946963469963521,
+    "passed": true
+  },
+  {
+    "name": "token_generations",
+    "seconds": 0.5400252050021663,
+    "passed": true
+  },
+  {
+    "name": "token_cleanup",
+    "seconds": 0.6873824830108788,
+    "passed": true
+  },
+  {
+    "name": "indexing",
+    "seconds": 2.4528280569938943,
+    "passed": true
+  },
+  {
+    "name": "reference_model",
+    "seconds": 0.6082787600025767,
+    "passed": true
+  }
+]

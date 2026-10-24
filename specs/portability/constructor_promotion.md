@@ -79,3 +79,17 @@ is needed for an input already available before construction. The source fixture
 `tests/portability/access_base_construction.py` proves exact receiver identity and
 child/maintenance traversal through PHP, legacy and both v0.2 output modes; actual
 parser/indexing tests cover retained recovery separately.
+
+## Token handles used during construction
+
+Parser_Run, Token_Cleanup and collected_file promote their existing token_list
+input. Parser_Run retains the supplied handle before its body; token cleanup,
+append, retained-range reset and cursor placement remain in their original order.
+Those operations mutate the same token list without observing the new worker or
+rebinding the constructor parameter. collected_file retains its explicit set_tokens
+operation for later updates. This is input promotion, not staged-field conversion.
+
+`tests/portability/tokens_construction.py` checks extracted production constructors
+and token operations across routes. Its Parser_Run extraction stops after cursor
+placement, with an AST-cleanup stand-in; actual token_cleanup, token_generations
+and indexing host tests cover whole-parser retention and recovery separately.

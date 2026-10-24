@@ -1,0 +1,8 @@
+{
+  "removed": [
+    "Property requires set: initialization before the constructor body: tokens"
+  ],
+  "added": [
+    "Property requires set: initialization before the constructor body: source_scope"
+  ]
+}

@@ -47,7 +47,6 @@ final class Parser
 /** One file worker; collector methods execute synchronously inside this parser. */
 final class Parser_Run
 {
-	private token_list $tokens;
 	private bool $reuse_previous = false;
 	private Storage $scopes /** Storage<scope> */;
 	private ?scope $current_scope_value = null;
@@ -60,7 +59,7 @@ final class Parser_Run
 	private \SplObjectStorage $claimed_bodies /** hash<bool, namespace_body_node> */;
 
 	/** Establish the retained file and symbol inventory before any declaration can be registered. */
-	public function __construct(token_list $tokens, ?scope $target_scope = null, ?parsed_file $previous = null, ?scope $global = null)
+	public function __construct(private token_list $tokens, ?scope $target_scope = null, ?parsed_file $previous = null, ?scope $global = null)
 	{
 		if ($previous !== null) {
 			if (($tokens !== $previous->tokens) && ($tokens->first_token === 0) && ($tokens->content_offset === 0)) {
@@ -69,7 +68,6 @@ final class Parser_Run
 			}
 		}
 		$tokens->retained_ranges = new Storage /** Storage<retained_token_range> */();
-		$this->tokens = $tokens;
 		$this->position = $tokens->first_token;
 		$this->scopes = new Storage /** Storage<scope> */();
 		$this->shared_publication = $global !== null;

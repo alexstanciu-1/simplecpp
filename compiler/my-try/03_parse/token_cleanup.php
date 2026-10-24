@@ -5,11 +5,8 @@ namespace scpp\compiler;
 
 final class Token_Cleanup implements node_maintenance_worker_i
 {
-	private token_list $tokens;
-
-	public function __construct(token_list $tokens)
+	public function __construct(private token_list $tokens)
 	{
-		$this->tokens = $tokens;
 	}
 
 	/** Incomplete/deleted inventories retain provenance until their normal recovery/deletion work. */

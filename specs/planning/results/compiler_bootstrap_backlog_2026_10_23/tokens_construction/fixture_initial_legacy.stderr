@@ -1,0 +1,14 @@
+Project mode: strict. Prefer supported Prism++ patterns over standard PHP assumptions.
+Compile error in main.phs:137: redefinition of 'position' as different kind of symbol
+Generated location: .prism/generated/main.hpp:135:18
+Compile note in main.phs:125: previous definition is here
+Generated location: .prism/generated/main.hpp:129:10
+Compile error in main.phs:137: redefinition of 'position' as different kind of symbol
+Generated location: .prism/generated/main.cpp:219:21
+Additional remapped diagnostics: 5
+Raw compiler excerpt:
+main.hpp:135:18: error: redefinition of 'position' as different kind of symbol
+main.hpp:129:10: note: previous definition is here
+main.cpp:219:21: error: redefinition of 'position' as different kind of symbol
+Run 'scpp error' for more details.
+Run 'scpp full-error' for the saved JSON report.

@@ -1,0 +1,6 @@
+{
+  "compiler/my-try/03_parse/parser.php": "b40ccaf3d97cacc93629ca6e6005a698dbd9b20faae2370308ad349cf3198deb",
+  "compiler/my-try/03_parse/token_cleanup.php": "0bf330e360160e46f7927b074f42e2fc1475314113c5727b243fe743bc8f7295",
+  "compiler/my-try/03_parse/collect/structures.php": "336d2f8922fe001b42fe54bfb848afd41b33ecbcede023e1555fae0aa3813b42",
+  "tests/portability/tokens_construction.py": "5518fdc97f7eb66b4f550bf8bffeb72bd50e8ac63b26e8d5e13382732a83219e"
+}

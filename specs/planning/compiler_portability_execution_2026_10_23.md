@@ -1597,3 +1597,20 @@ changed fixture allocation; recorded separately. Evidence: access_base_construct
 Bootstrap 1:14.66 / 355224 KiB peak RSS / 324 MiB PHP heap removes required base
 initialization diagnostic and adds none. Stopped at tokens requiring set:
 initialization before constructor body. No next-blocker fix or full bootstrap claim.
+
+## Token input constructor promotion — 2026-10-24
+
+User approved all three audited tokens inputs: Parser_Run, Token_Cleanup and
+collected_file. Reuses existing promotion and shared identity; preserves cleanup,
+append, range reset, cursor placement and collection order. No new semantics.
+
+Five actual host tests pass, including token compaction, retained identity and
+malformed-input recovery. Extracted production token-input fixture passes PHP,
+legacy and both v0.2 native modes. Parser_Run prefix and AST-cleanup double limit
+the native fixture; whole parser is covered on host. Fixture-only field/method
+collision corrected before all-route pass. Evidence: tokens_construction.
+
+Bootstrap 1:32.14 / 355240 KiB RSS / 324 MiB PHP heap removes tokens diagnostic and
+exposes source_scope initialization. First remaining diagnostic is root requiring
+set initialization before constructor body. Stopped without fixing either. Timing
+overlaps initial native proof work; no isolated performance comparison claimed.
