@@ -144,9 +144,9 @@ final class AST_Test
 		$syntax = $parser->parse();
 		$node = new variable_declaration_node();
 		$node->name = 'canonical_name';
-		$node->type_syntax = new named_type_node();
-		$node->type_syntax->name = 'int';
-		$node->type_syntax->set_span(1, 2);
+		$node->set_type_syntax(new named_type_node());
+		$node->require_type_syntax()->name = 'int';
+		$node->require_type_syntax()->set_span(1, 2);
 		$node->set_span(0, 3);
 		$scope = new scope();
 		$collector = new Symbol_Collector(new collected_file($tokens), $tokens, $scope, null, 1);

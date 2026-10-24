@@ -70,11 +70,11 @@ final class Body_Preparation
 			$variable = object_cast($node, variable_declaration_node::class);
 			if ($variable->binds_reference) {
 				$variable->set_preparation(Reference_Preparation::bind(
-					$variable->occurrence(), $variable->type_syntax, $variable->initializer, $context));
+					$variable->occurrence(), $variable->require_type_syntax(), $variable->initializer, $context));
 				return new statement_completion(true);
 			}
 			$variable->set_preparation(self::prepare_local_storage(
-				$variable->occurrence(), $variable->type_syntax, $variable->initializer, $context));
+				$variable->occurrence(), $variable->require_type_syntax(), $variable->initializer, $context));
 			return new statement_completion(true);
 		}
 		throw new \RuntimeException('Preparation is not supported for this node');

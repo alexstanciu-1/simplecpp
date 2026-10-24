@@ -1,0 +1,5 @@
+PHP Fatal error:  Uncaught LogicException: Canonical vector<int> identity lost its definition, argument or exact reuse in /home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/tests/constructed_type.php:11
+Stack trace:
+#0 /home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/tests/constructed_type.php(110): scpp\compiler\constructed_check()
+#1 {main}
+  thrown in /home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/tests/constructed_type.php on line 11

@@ -124,7 +124,7 @@ final class LLVM_Legacy_Template_File_Checker
 	{
 		if ($node instanceof variable_declaration_node) {
 			$declaration = object_cast($node, variable_declaration_node::class);
-			$this->store($declaration, $declaration->type_syntax, $declaration->initializer);
+			$this->store($declaration, $declaration->require_type_syntax(), $declaration->initializer);
 		}
 		elseif ($node->kind() === node_kind::return_statement) {
 			$syntax = object_cast($node, return_node::class);

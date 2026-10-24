@@ -21,7 +21,7 @@ trait LLVM_Statements
 			}
 			if ($statement->kind() === node_kind::variable_declaration) {
 				$declaration = object_cast($statement, variable_declaration_node::class);
-				$this->to_llvm_store($declaration, $declaration->type_syntax, null, $declaration->initializer);
+				$this->to_llvm_store($declaration, $declaration->require_type_syntax(), null, $declaration->initializer);
 			}
 			elseif ($statement->kind() === node_kind::return_statement) {
 				$this->to_llvm_return_statement($statement);

@@ -1,0 +1,15 @@
+PHP Fatal error:  Uncaught RuntimeException: Required object boundary rejects null; declare a nullable object type
+ in /home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/04_analyze/prepare/worker.php:977
+Stack trace:
+#0 /home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/04_analyze/prepare/worker.php(118): scpp\compiler\Preparation_Worker->require_success()
+#1 /home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/compiler/preparation.php(14): scpp\compiler\Preparation_Worker->prepare()
+#2 /home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/compiler/compile.php(306): scpp\compiler\Preparation_Run::prepare()
+#3 /home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/compiler/compile.php(174): scpp\compiler\Compiler->prepare()
+#4 /tmp/required-type-baseline-01/exceptions.php(52): scpp\compiler\Compiler->exec_cpp()
+#5 {main}
+
+Next RuntimeException: catch_lifetime: Required object boundary rejects null; declare a nullable object type
+ in /tmp/required-type-baseline-01/exceptions.php:53
+Stack trace:
+#0 {main}
+  thrown in /tmp/required-type-baseline-01/exceptions.php on line 53

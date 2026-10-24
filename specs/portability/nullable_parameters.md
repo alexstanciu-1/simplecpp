@@ -183,3 +183,11 @@ must use the checked getter rather than silently treating absence as no child.
 See `tests/portability/constant_initializer.py` and the dated constant_initializer
 bootstrap evidence. This is source authoring using existing constructs, not automatic
 converter inference or a change to required-field language contracts.
+
+The same source-owned protocol covers the required `type_syntax` fields of local
+variable declarations and callable input type nodes. Their parser assignment points
+remain unchanged. Required type children use checked getters, while genuinely
+optional parameter/property type annotations retain their nullable contracts.
+`tests/portability/required_type_syntax.py` proves the extracted accessor/traversal
+protocol across both routes; `compiler/my-try/tests/required_type_syntax.php` checks
+actual parser no-op identity and malformed-type recovery in both output modes.

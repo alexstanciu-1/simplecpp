@@ -118,7 +118,7 @@ final class Exception_Preparation
 		try
 		{
 			$binding = $handler->binding;
-			$facts = Body_Preparation::prepare_local_storage($binding->occurrence(), $binding->type_syntax, null, $context);
+			$facts = Body_Preparation::prepare_local_storage($binding->occurrence(), $binding->require_type_syntax(), null, $context);
 			self::require_exception($facts->type, $context);
 			Local_Assignment::assigned($facts, $context);
 			$binding->set_preparation($facts);

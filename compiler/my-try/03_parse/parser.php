@@ -1695,7 +1695,7 @@ final class Parser_Run
 		$handler = new catch_node();
 		$binding = new variable_declaration_node();
 		$binding_start = $this->position;
-		$binding->type_syntax = $this->type_syntax($this->current_scope());
+		$binding->set_type_syntax($this->type_syntax($this->current_scope()));
 		if (!string_byte_starts_with($this->text(), '$')) {
 			throw new \RuntimeException('Catch requires a simple local binding');
 		}
@@ -1717,9 +1717,9 @@ final class Parser_Run
 		$declaration = new variable_declaration_node();
 		$declaration->name = $this->name_at($start);
 		$type = $this->type_syntax($this->current_scope());
-		$declaration->type_syntax = $this->text() === '['
+		$declaration->set_type_syntax($this->text() === '['
 			? object_cast($this->array_type($type), type_node::class)
-			: object_cast($type, type_node::class);
+			: object_cast($type, type_node::class));
 		if ($this->text() === '=') {
 			$this->position++;
 			$declaration->binds_reference = $this->text() === '&';
@@ -2666,7 +2666,7 @@ final class Parser_Run
 					$input_start = $this->position;
 					$input = new callable_input_type_node();
 					if ($this->text() === 'const') { $input->access = storage_access::read_only; $this->position++; }
-					$input->type_syntax = $this->type_syntax($lookup_scope);
+					$input->set_type_syntax($this->type_syntax($lookup_scope));
 					if ($this->text() === '&') { $input->mode = passing_mode::reference; $this->position++; }
 					if ($this->text() === '...') { $input->variadic = true; $this->position++; }
 					$this->finish_node($input, $input_start);

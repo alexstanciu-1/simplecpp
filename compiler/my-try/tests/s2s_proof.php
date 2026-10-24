@@ -248,8 +248,8 @@ final class S2S_Proof
 		$statements /** Storage<statement_node> */ = $prepared_files[0]->source->root->single_body()->body->statements;
 		$first = object_cast($statements[0], variable_declaration_node::class);
 		$second = object_cast($statements[1], variable_declaration_node::class);
-		$first_syntax = object_cast($first->type_syntax, template_application_type_node::class);
-		$second_syntax = object_cast($second->type_syntax, template_application_type_node::class);
+		$first_syntax = object_cast($first->require_type_syntax(), template_application_type_node::class);
+		$second_syntax = object_cast($second->require_type_syntax(), template_application_type_node::class);
 		$first_use = $first_syntax->require_preparation();
 		$second_use = $second_syntax->require_preparation();
 		if (($first_use === $second_use) || (!$first_use->matches($second_use))) {
@@ -272,10 +272,10 @@ final class S2S_Proof
 			throw new \LogicException('Nullable lost shared interning or payload identity');
 		}
 		$by_value = object_cast($statements[7], variable_declaration_node::class);
-		$by_value_use = $by_value->type_syntax->require_preparation();
+		$by_value_use = $by_value->require_type_syntax()->require_preparation();
 		$nested_value = object_cast($statements[8], variable_declaration_node::class);
 		$nested_value_type = object_cast(Type_Queries::canonical(
-			$nested_value->type_syntax->require_preparation()), applied_template_type::class);
+			$nested_value->require_type_syntax()->require_preparation()), applied_template_type::class);
 		$nested_value_arguments /** vector<canonical_type_use> */ = $nested_value_type->arguments();
 		if (($by_value_use->by_value())
 			|| ($by_value_use->type_id() !== Language_Types::integer(Model::$language_scope)->type_id())

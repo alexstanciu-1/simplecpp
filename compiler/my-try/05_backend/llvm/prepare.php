@@ -200,10 +200,7 @@ final class LLVM_Preparation_Run
 			return object_cast($declaration, collected_parameter::class)->syntax()->type_syntax;
 		}
 		$binding = object_cast($declaration, collected_variable::class)->syntax();
-		if ($binding->type_syntax === null) {
-			throw new \RuntimeException('LLVM preparation requires an explicitly typed variable');
-		}
-		return $binding->type_syntax;
+		return $binding->require_type_syntax();
 	}
 
 	/** Prepare storage and calls in one concrete context; local source indexes remain unchanged. */

@@ -1186,7 +1186,22 @@ final class variable_declaration_node extends statement_node
 
 	/** Stored name used by collection/resolution and generation; never recovered from tokens. */
 	public string $name;
-	public type_node $type_syntax;
+	/** Required syntax, assigned after this node is allocated by the parser. */
+	private ?type_node $type_syntax_value = null;
+
+	public function require_type_syntax(): type_node
+	{
+		$value = $this->type_syntax_value;
+		if ($value === null) {
+			throw new \LogicException('Required type syntax is not available');
+		}
+		return $value;
+	}
+
+	public function set_type_syntax(type_node $value): void
+	{
+		$this->type_syntax_value = $value;
+	}
 	public ?expression_node $initializer = null;
 	public bool $binds_reference = false;
 
@@ -1218,7 +1233,7 @@ final class variable_declaration_node extends statement_node
 	public function maintain(node_maintenance_worker_i $worker): void
 	{
 		$worker->enter($this);
-		$worker->edge($this, $this->type_syntax);
+		$worker->edge($this, $this->require_type_syntax());
 		if ($this->initializer !== null) {
 			$worker->edge($this, $this->initializer);
 		}
@@ -1268,7 +1283,22 @@ final class array_type_node extends type_node
 final class callable_input_type_node extends ast_node
 {
 	use Node_Source_Span;
-	public type_node $type_syntax;
+	/** Required syntax, assigned after this node is allocated by the parser. */
+	private ?type_node $type_syntax_value = null;
+
+	public function require_type_syntax(): type_node
+	{
+		$value = $this->type_syntax_value;
+		if ($value === null) {
+			throw new \LogicException('Required type syntax is not available');
+		}
+		return $value;
+	}
+
+	public function set_type_syntax(type_node $value): void
+	{
+		$this->type_syntax_value = $value;
+	}
 	public passing_mode $mode = passing_mode::value;
 	public storage_access $access = storage_access::writable;
 	public bool $variadic = false;
@@ -1277,7 +1307,7 @@ final class callable_input_type_node extends ast_node
 	public function maintain(node_maintenance_worker_i $worker): void
 	{
 		$worker->enter($this);
-		$worker->edge($this, $this->type_syntax);
+		$worker->edge($this, $this->require_type_syntax());
 	}
 }
 

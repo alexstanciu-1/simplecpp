@@ -28,11 +28,11 @@ try {
 	$statements = Model::syntax_files()[0]->root->single_body()->body->statements;
 	$a = $statements[0];
 	$b = $statements[1];
-	nullable_check($a->type_syntax instanceof nullable_type_node, 'Nullable shorthand syntax was lost');
-	nullable_check($a->type_syntax->require_preparation()->matches($b->type_syntax->require_preparation()),
+	nullable_check($a->require_type_syntax() instanceof nullable_type_node, 'Nullable shorthand syntax was lost');
+	nullable_check($a->require_type_syntax()->require_preparation()->matches($b->require_type_syntax()->require_preparation()),
 		'Shorthand and explicit nullable split canonical identity');
-	$children = iterator_to_array($a->type_syntax->children());
-	nullable_check(count($children) === 1 && $children[0] === $a->type_syntax->payload,
+	$children = iterator_to_array($a->require_type_syntax()->children());
+	nullable_check(count($children) === 1 && $children[0] === $a->require_type_syntax()->payload,
 		'Nullable inspection missed its payload');
 	$stable = Model::$global_scope->functions_named('stable')[0]->syntax()->body->work();
 	$version = $stable->version;
@@ -41,11 +41,11 @@ try {
 		&& $coalesce->fallback instanceof coalesce_expression_node, 'Coalescing must associate right');
 	$coalesce_children = iterator_to_array($coalesce->children());
 	nullable_check($coalesce_children === [$coalesce->left, $coalesce->fallback], 'Coalesce inspection order changed');
-	nullable_check($coalesce->require_preparation()->type->matches($statements[2]->type_syntax->require_preparation()),
+	nullable_check($coalesce->require_preparation()->type->matches($statements[2]->require_type_syntax()->require_preparation()),
 		'Coalesce result retained the nullable carrier');
 	foreach ([3, 4] as $position) {
 		$join = $statements[$position]->initializer->require_preparation();
-		nullable_check($join->type->matches($a->type_syntax->require_preparation()), 'Conditional join depends on branch order');
+		nullable_check($join->type->matches($a->require_type_syntax()->require_preparation()), 'Conditional join depends on branch order');
 		nullable_check(!$join->addressable(), 'Conditional join exposed a borrowed result');
 	}
 	$invalid = str_replace('source(): ?int { return 3;', 'source(): ?float { return 3.5;', $valid);
@@ -94,8 +94,8 @@ try {
 	$syntax = $root->single_body()->body->statements[0];
 	$coalesce = $root->single_body()->body->statements[2]->initializer;
 	Preparation_Cleanup::tree($root);
-	nullable_check($syntax->preparation() === null && $syntax->type_syntax->preparation() === null
-		&& $syntax->type_syntax->payload->preparation() === null && $syntax->initializer->preparation() === null,
+	nullable_check($syntax->preparation() === null && $syntax->require_type_syntax()->preparation() === null
+		&& $syntax->require_type_syntax()->payload->preparation() === null && $syntax->initializer->preparation() === null,
 		'Nullable cleanup missed attached facts');
 	nullable_check($coalesce->preparation() === null && $coalesce->left->preparation() === null
 		&& $coalesce->fallback->preparation() === null, 'Coalesce cleanup missed attached facts');

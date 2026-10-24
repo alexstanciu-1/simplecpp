@@ -1558,3 +1558,26 @@ and fixture-only corrections recorded in constant_initializer evidence.
 Bootstrap 1:16.06 / 354792 KiB RSS / 324 MiB PHP heap removes the required initializer
 diagnostic and adds none. First remaining blocker is required type_syntax
 initialization. Stopped before fixing it as requested; no full native compiler claim.
+
+## Required type_syntax source accessors — 2026-10-24
+
+User approved checked accessors for variable_declaration_node and
+callable_input_type_node. Each now owns private nullable backing with a required
+getter/setter. Existing parser assignment points, collection, spans and input insertion
+order are unchanged. Preparation/maintenance/iterators use the getter; genuinely
+optional parameter/property types remain optional. Parked LLVM direct reads updated
+mechanically only, with no LLVM development or validation claim.
+
+Focused extracted production accessor/traversal proof passes PHP, legacy and both
+v0.2 native modes (24.35/26.55/23.73 s tasks). Actual AST, traversal, nullable,
+qualified-lookup and callable-input tests pass. Dedicated both-mode retained test
+proves no-op node/type identity and malformed-type recovery retaining function owner
+and generated output. Two broader tests fail identically against isolated baseline:
+constructed_type canonical vector identity expectation, and exceptions catch_lifetime
+null rejection. Recorded separately, not repaired or counted passing. A fixed-array
+preparation gate encountered by the new fixture was avoided using vector for its
+end-to-end case; actual fixed-array parsing remains covered by AST proof.
+
+Evidence: required_type_syntax. Bootstrap 1:19.29 / 355740 KiB RSS / 324 MiB PHP heap
+removes type_syntax diagnostic and adds none. Stopped at required base initialization
+without fixing it, as requested.

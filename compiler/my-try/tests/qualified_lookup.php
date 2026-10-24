@@ -126,7 +126,7 @@ $syntax_file->content = 'namespace Client; function probe(?\\Lib\\Box $x): ?\\Li
 $syntax = (new Parser((new Tokenizer($syntax_file))->tokenize()))->parse();
 $function = $syntax->root->single_body()->declarations[0];
 qualified_check($function->signature_syntax->return_type->payload->name === '\\Lib\\Box', 'Nullable return lost qualified payload');
-qualified_check($function->body->statements[0]->type_syntax->payload->name === '\\Lib\\Box', 'Nullable local lookahead lost qualified payload');
-qualified_check($function->body->statements[1]->type_syntax->arguments[0]->name === '\\Lib\\Box', 'Template payload lost qualified name');
+qualified_check($function->body->statements[0]->require_type_syntax()->payload->name === '\\Lib\\Box', 'Nullable local lookahead lost qualified payload');
+qualified_check($function->body->statements[1]->require_type_syntax()->arguments[0]->name === '\\Lib\\Box', 'Template payload lost qualified name');
 
 echo "Qualified lookup: authored paths, exact pools, kinds, pure lookup, misses, addition, move and repair passed\n";

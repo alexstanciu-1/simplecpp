@@ -34,7 +34,7 @@ final class Structure_Access_Test
 		$children = iterator_to_array($function->children());
 		self::check($children === [$function->signature_syntax->parameters[0], $function->signature_syntax->parameters[1], $function->signature_syntax->return_type, $function->body], 'Function grammar order changed');
 		self::check(iterator_to_array($call->children()) === [$call->arguments[0], $call->arguments[1]], 'Call order changed');
-		self::check(iterator_to_array($binding->children()) === [$binding->type_syntax, $call], 'Declaration order changed');
+		self::check(iterator_to_array($binding->children()) === [$binding->require_type_syntax(), $call], 'Declaration order changed');
 		self::check($call->name === 'add' && $function->name === 'add' && $binding->name === 'x', 'Saved names missing');
 		self::check($binding->preparation() === null, 'Parsing prepared facts');
 		$one = $function->children();

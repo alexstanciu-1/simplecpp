@@ -71,8 +71,8 @@ PHS;
 	$statements = $syntax->root->single_body()->body->statements;
 	$first = object_cast($statements[0], variable_declaration_node::class);
 	$second = object_cast($statements[1], variable_declaration_node::class);
-	$first_syntax = object_cast($first->type_syntax, template_application_type_node::class);
-	$second_syntax = object_cast($second->type_syntax, template_application_type_node::class);
+	$first_syntax = object_cast($first->require_type_syntax(), template_application_type_node::class);
+	$second_syntax = object_cast($second->require_type_syntax(), template_application_type_node::class);
 	constructed_check(($first_syntax->definition->name === 'vector')
 		&& (q_count($first_syntax->arguments) === 1)
 		&& ($first_syntax->arguments[0] instanceof named_type_node),
@@ -86,7 +86,7 @@ PHS;
 		&& (object_cast($first_syntax->arguments[0], named_type_node::class)->occurrence()->name === 'int'),
 		'Constructed-type traversal or collected name occurrences lost source order');
 	$by_value = object_cast($statements[7], variable_declaration_node::class);
-	$by_value_syntax = object_cast($by_value->type_syntax, type_use_modifier_node::class);
+	$by_value_syntax = object_cast($by_value->require_type_syntax(), type_use_modifier_node::class);
 	$modifier_children /** vector<ast_node> */ = [];
 	foreach ($by_value_syntax->children() as $child) {
 		$modifier_children[] = $child;
@@ -118,7 +118,7 @@ PHS;
 		'Redundant value<T> did not normalize to its operand type');
 	$nested_value = object_cast($statements[8], variable_declaration_node::class);
 	$nested_value_type = object_cast(Type_Queries::canonical(
-		$nested_value->type_syntax->require_preparation()), applied_template_type::class);
+		$nested_value->require_type_syntax()->require_preparation()), applied_template_type::class);
 	constructed_check($nested_value_type === $vector_int,
 		'Redundant nested modifier split the canonical application');
 
@@ -158,14 +158,14 @@ PHS;
 	file_put_contents($path, str_replace('value<int>', 'int', $source));
 	$compiler->update_cpp([$path]);
 	$plain_statement = object_cast(Model::syntax_files()[0]->root->single_body()->body->statements[7], variable_declaration_node::class);
-	constructed_check(($plain_statement->type_syntax instanceof named_type_node)
+	constructed_check(($plain_statement->require_type_syntax() instanceof named_type_node)
 		&& (CPP_Probe::text(Model::$cpp_files) === $text)
 		&& (Model::$type_catalog->registry()->application_count() === $initial_applications + 8),
 		'Redundant modifier removal changed semantic identity or C++ output');
 	file_put_contents($path, $source);
 	$compiler->update_cpp([$path]);
 	$explicit_statement = object_cast(Model::syntax_files()[0]->root->single_body()->body->statements[7], variable_declaration_node::class);
-	constructed_check(($explicit_statement->type_syntax instanceof type_use_modifier_node)
+	constructed_check(($explicit_statement->require_type_syntax() instanceof type_use_modifier_node)
 		&& (CPP_Probe::text(Model::$cpp_files) === $text)
 		&& (Model::$type_catalog->registry()->application_count() === $initial_applications + 8),
 		'Redundant modifier restoration lost AST spelling or canonical reuse');
@@ -197,7 +197,7 @@ PHS;
 	$compiler = new Compiler(new cpp_lowering_options(false));
 	$compiler->init([$directory]);
 	$compiler->exec_cpp();
-	$normalized = Model::syntax_files()[0]->root->single_body()->body->statements[0]->type_syntax->require_preparation();
+	$normalized = Model::syntax_files()[0]->root->single_body()->body->statements[0]->require_type_syntax()->require_preparation();
 	constructed_check($normalized->matches(Language_Types::integer(Model::$language_scope))
 		&& !str_contains(CPP_Probe::text(Model::$cpp_files), 'value_p'),
 		'Redundant nested value modifiers stopped normalizing to int');

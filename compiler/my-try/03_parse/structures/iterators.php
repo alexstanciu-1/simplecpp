@@ -746,7 +746,7 @@ final class variable_declaration_children_iterator extends children_iterator
 			switch ($field)
 			{
 				case 0:
-					$child = $this->source->type_syntax;
+					$child = $this->source->require_type_syntax();
 					break;
 				case 1:
 					$child = $this->source->initializer;
@@ -950,7 +950,7 @@ final class callable_input_type_children_iterator extends children_iterator
 	{
 		if (!$this->pending) { return null; }
 		$this->pending = false;
-		return $this->source->type_syntax;
+		return $this->source->require_type_syntax();
 	}
 }
 

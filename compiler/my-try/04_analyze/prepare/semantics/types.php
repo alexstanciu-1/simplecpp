@@ -84,7 +84,7 @@ final class Type_Preparation
 			$contracts /** Storage<callable_parameter> */ = $signature->parameters;
 			$parameters /** Storage<callable_input_type_node> */ = $callable->inputs;
 			foreach ($parameters as $parameter) {
-				$input = Declaration_Preparation::parameter_contract(self::type($parameter->type_syntax, $context),
+				$input = Declaration_Preparation::parameter_contract(self::type($parameter->require_type_syntax(), $context),
 					$parameter->mode, $parameter->access, $parameter->variadic, $context);
 				$inputs[] = $input;
 				$contracts->append($input);

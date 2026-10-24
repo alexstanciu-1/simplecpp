@@ -1,0 +1,19 @@
+{
+  "compiler/my-try/03_parse/parser.php": "1ac494bf664196eee126a8c9d797c7c6d4ad6ad0295c8d8a7890f932873de511",
+  "compiler/my-try/03_parse/structures/iterators.php": "4426bba878e225f3ff6417a0e3c3dd413e6937d520fe7b2506f624d3e5324685",
+  "compiler/my-try/03_parse/structures/structures_specialization.php": "c94c6d79c679c3f87f2181e70e86059165f40bc074646e2d69a0da4e460ce618",
+  "compiler/my-try/04_analyze/prepare/semantics/bodies.php": "cbe543df5a6bbc4fdb916e9030b8deaf5d880cb6e327fa3b0580f82d0d15b93a",
+  "compiler/my-try/04_analyze/prepare/semantics/exceptions.php": "598baf3ad89e43459c82a45322a13fcc1c55aa32f66feb767bb14495a432c1c3",
+  "compiler/my-try/04_analyze/prepare/semantics/types.php": "92231494a8e0dd5ebd15fd567507e55c238b251cb51bb81779f2326ffc310132",
+  "compiler/my-try/05_backend/llvm/legacy_templates.php": "09ad81f86e93609b0c2ae32c7960bae68193a4b7cb750c1c18884930d33a7bcf",
+  "compiler/my-try/05_backend/llvm/prepare.php": "c41378fd7b483a7fee7e04a7760476218d3d16515209e3e4b1c9b155e08ac514",
+  "compiler/my-try/05_backend/llvm/statements.php": "e539e9ecbf243e454506f297a046fe59ef8daf1fcf38efaff2848c87a022a871",
+  "compiler/my-try/tests/ast.php": "d74d620272258c7192878d8921c3cfcdcfa1764ff2cc8d5e341ddb3dd7076f9f",
+  "compiler/my-try/tests/constructed_type.php": "3bd953e1319eb368977a314e99e4cc517f0bca5036cdb313325866b5d9f18eeb",
+  "compiler/my-try/tests/nullable.php": "cf03ce66f91e7f296867c5e4c515df70d03e925d8037e4c05cbfa84cbf3834c7",
+  "compiler/my-try/tests/qualified_lookup.php": "ddb39dbbf2d882630675884196fb03f95b82bfb409257260a7004eb515102fdf",
+  "compiler/my-try/tests/s2s_proof.php": "6b7b3d8db4be839b6fae866b9cf3fb7bb45a5df47892ebf2b9eca2910b910610",
+  "compiler/my-try/tests/structure_access.php": "c43f63f98d0599460236fa7be8fa278480c9e4b62140578b11e7d3ab4609fe46",
+  "compiler/my-try/tests/required_type_syntax.php": "44d83a240f0fb0c1ab119dd903747197a555cf0358ee11600b8a3774540ff824",
+  "tests/portability/required_type_syntax.py": "7204bd5fdaa2b72799e89cdf873f12579733a8592bd4c38ae32c6b01ab69cc4e"
+}
