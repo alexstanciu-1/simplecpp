@@ -82,6 +82,11 @@ scaling require the separate O2 compiler benchmark. The runtime's
 vector/hash traversal and post-join mutation preservation; it also supports a
 standalone ThreadSanitizer build.
 
+`python3 compiler/my-try/tests/implementation_partition.py --results FRESH` checks
+large-class output sizes, unchanged warm artifacts, a one-partition method edit,
+static storage linkage and execution in both ordinary and concrete modes. Full
+compiler layout-probe partitioning and native timings are separate measured proofs.
+
 Concurrency benchmark reports also inventory generated `.cpp` and `.hpp` sizes:
 flag files above 200 KB and use 100 KB as the smaller advisory header threshold.
 Correlate large files with per-unit Clang time and memory, including layout probes;

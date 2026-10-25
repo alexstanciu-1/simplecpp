@@ -40,5 +40,7 @@ The checks used PHP CLI fallback because sandbox socket creation prevented PHP-F
 startup. No C++ compiler invocation, native compiler rebuild, performance benchmark,
 or compiler incremental/MT investigation was performed for this extraction.
 
-Automatic unit splitting and multi-file classes remain
-[CH15 debt](../catalog/15_blocking_debt.md#ch15-cpp-group-split-01--automatic-implementation-unit-splitting).
+This records the original extraction checkpoint. Automatic implementation-unit and
+layout-probe partitioning was subsequently authorized on 2026-10-25; see the
+[current policy](../architecture/cpp_template_prelowering.md). Multi-file source
+classes and cost-aware refinements remain CH15 debt.

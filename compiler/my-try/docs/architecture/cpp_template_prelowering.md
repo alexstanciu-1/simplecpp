@@ -198,6 +198,18 @@ Artifact assembly, layout ordering and filesystem publication remain serial.
 Failed tasks do not publish partial fragment replacements. Warm fragments still
 replay their canonical demands through the existing specialization path.
 
+Oversized source implementation groups split at whole-definition boundaries using
+stable callable/record identity digest prefixes, with a 180 KB target including
+preambles. Small sources retain their original path. Type-owned static storage
+remains in the original source unit in source order; neither a function nor ordered
+storage is split textually. A single oversized definition remains an explicit size
+review item. Native compile costs and duplicated includes still require measurement.
+Layout probes split at complete layout requests within each dependency depth,
+also targeting 180 KB. Manifest order remains depth-first, then part order, so
+existing consumers resolve all prerequisite macros before later levels. Adding a
+request may rebalance subsequent parts within its depth; this adds no persistent
+assignment registry or parallel native layout scheduler.
+
 Layout probes determine native size/alignment and special-member traits. Source copy
 permission still comes from prepared capabilities. Dependent layouts follow the existing
 generated-header graph, with explicit rejection of unsupported cycles. A layout match

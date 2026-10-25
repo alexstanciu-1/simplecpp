@@ -1,0 +1,106 @@
+{
+  "jobs": 1,
+  "intervals": [
+    {
+      "from": "init-start",
+      "to": "sync-start",
+      "seconds": 0.054000139236450195
+    },
+    {
+      "from": "sync-start",
+      "to": "prepare-start",
+      "seconds": 4.972007513046265
+    },
+    {
+      "from": "prepare-start",
+      "to": "emit-start",
+      "seconds": 8.235012531280518
+    },
+    {
+      "from": "emit-start",
+      "to": "profile-render-start",
+      "seconds": 0.03400015830993652
+    },
+    {
+      "from": "profile-render-start",
+      "to": "profile-headers-start",
+      "seconds": 11.344017028808594
+    },
+    {
+      "from": "profile-headers-start",
+      "to": "profile-groups-start",
+      "seconds": 0.4090006351470947
+    },
+    {
+      "from": "profile-groups-start",
+      "to": "profile-groups-end",
+      "seconds": 0.8100013732910156
+    },
+    {
+      "from": "profile-groups-end",
+      "to": "profile-layout-depths-start",
+      "seconds": 0.8130011558532715
+    },
+    {
+      "from": "profile-layout-depths-start",
+      "to": "profile-specializations-start",
+      "seconds": 0.0
+    },
+    {
+      "from": "profile-specializations-start",
+      "to": "profile-sort-start",
+      "seconds": 4.751007080078125
+    },
+    {
+      "from": "profile-sort-start",
+      "to": "profile-specialization-assembly-start",
+      "seconds": 0.4790008068084717
+    },
+    {
+      "from": "profile-specialization-assembly-start",
+      "to": "profile-layout-output-start",
+      "seconds": 0.06599998474121094
+    },
+    {
+      "from": "profile-layout-output-start",
+      "to": "profile-implementation-output-start",
+      "seconds": 0.003000020980834961
+    },
+    {
+      "from": "profile-implementation-output-start",
+      "to": "profile-generation-end",
+      "seconds": 0.006999969482421875
+    },
+    {
+      "from": "profile-generation-end",
+      "to": "profile-publication-manifest-end",
+      "seconds": 26.489039182662964
+    },
+    {
+      "from": "profile-publication-manifest-end",
+      "to": "profile-publication-preflight-end",
+      "seconds": 0.08599996566772461
+    },
+    {
+      "from": "profile-publication-preflight-end",
+      "to": "profile-publication-journal-end",
+      "seconds": 0.6090009212493896
+    },
+    {
+      "from": "profile-publication-journal-end",
+      "to": "profile-publication-writes-start",
+      "seconds": 0.00800013542175293
+    },
+    {
+      "from": "profile-publication-writes-start",
+      "to": "profile-publication-writes-end",
+      "seconds": 0.5500006675720215
+    },
+    {
+      "from": "profile-publication-writes-end",
+      "to": "done",
+      "seconds": 0.04400014877319336
+    }
+  ],
+  "time": "\tCommand being timed: \"/home/alex-ai/compiler-self-o2-20261025/partition-profile-candidate04/compiler-release\"\n\tUser time (seconds): 38.05\n\tSystem time (seconds): 21.86\n\tPercent of CPU this job got: 99%\n\tElapsed (wall clock) time (h:mm:ss or m:ss): 0:59.92\n\tAverage shared text size (kbytes): 0\n\tAverage unshared data size (kbytes): 0\n\tAverage stack size (kbytes): 0\n\tAverage total size (kbytes): 0\n\tMaximum resident set size (kbytes): 1006004\n\tAverage resident set size (kbytes): 0\n\tMajor (requiring I/O) page faults: 0\n\tMinor (reclaiming a frame) page faults: 16076548\n\tVoluntary context switches: 152\n\tInvoluntary context switches: 237\n\tSwaps: 0\n\tFile system inputs: 0\n\tFile system outputs: 154960\n\tSocket messages sent: 0\n\tSocket messages received: 0\n\tSignals delivered: 0\n\tPage size (bytes): 4096\n\tExit status: 0\n"
+}

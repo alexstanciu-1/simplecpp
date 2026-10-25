@@ -1,6 +1,9 @@
 # my-try compiler
 Doc Status: supporting
 
+The [generated-unit partitioning and concurrency profile](../../../specs/planning/results/compiler_partition_profile_2026_10_25/README.md)
+records bounded source/layout splitting and the remaining serial manifest cost.
+
 Optional [lowering diagnostics](architecture/lowering_report.md) expose artifact
 sizes, direct consumers, fragment header contributions and outlining decisions.
 

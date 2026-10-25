@@ -126,6 +126,7 @@ final class cpp_artifact {
 /** Transient assembled implementation unit; no semantic owners or scheduling/cache state. */
 final class cpp_implementation_group
 {
+	public bool $initialization_ordered = false;
 	// TODO CH15-READONLY-FIELDS-01: restore readonly enforcement for identity and file_name.
 	// Constructor-only writes remain a convention; see docs/catalog/15_blocking_debt.md.
 	public string $text = '';
@@ -135,6 +136,28 @@ final class cpp_implementation_group
 	public function __construct(public string $identity, public string $file_name)
 	{
 	}
+}
+
+/** Invocation-local source membership and partition inputs; not semantic indexes. */
+final class cpp_implementation_source
+{
+	public Storage $owners /** Storage<preparation_owner> */;
+	public function __construct() { $this->owners = new Storage /** Storage<preparation_owner> */(); }
+}
+
+final class cpp_implementation_parts
+{
+	public Storage $parts /** Storage<cpp_implementation_group> */;
+	public function __construct() { $this->parts = new Storage /** Storage<cpp_implementation_group> */(); }
+}
+
+/** A bounded probe within one already settled dependency depth. */
+final class cpp_layout_batch
+{
+	public string $declarations = '';
+	public string $statements = '';
+	public int $bytes = 0;
+	public function __construct(public int $depth, public int $part) {}
 }
 
 /** Invocation-local progress for ordering complete by-value struct definitions. */

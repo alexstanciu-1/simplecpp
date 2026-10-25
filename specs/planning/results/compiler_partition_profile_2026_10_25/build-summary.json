@@ -1,0 +1,119 @@
+{
+  "units": 734,
+  "layout_probes": 27,
+  "layout_compile_seconds": 27.235,
+  "layout_max_seconds": 1.882,
+  "layout_commands": [
+    {
+      "name": "layout-build-0",
+      "seconds": 1.516
+    },
+    {
+      "name": "layout-build-1",
+      "seconds": 1.383
+    },
+    {
+      "name": "layout-build-2",
+      "seconds": 1.348
+    },
+    {
+      "name": "layout-build-3",
+      "seconds": 0.919
+    },
+    {
+      "name": "layout-build-4",
+      "seconds": 0.692
+    },
+    {
+      "name": "layout-build-5",
+      "seconds": 0.684
+    },
+    {
+      "name": "layout-build-6",
+      "seconds": 0.684
+    },
+    {
+      "name": "layout-build-7",
+      "seconds": 0.831
+    },
+    {
+      "name": "layout-build-8",
+      "seconds": 0.659
+    },
+    {
+      "name": "layout-build-9",
+      "seconds": 0.693
+    },
+    {
+      "name": "layout-build-10",
+      "seconds": 0.689
+    },
+    {
+      "name": "layout-build-11",
+      "seconds": 0.694
+    },
+    {
+      "name": "layout-build-12",
+      "seconds": 0.69
+    },
+    {
+      "name": "layout-build-13",
+      "seconds": 0.692
+    },
+    {
+      "name": "layout-build-14",
+      "seconds": 0.675
+    },
+    {
+      "name": "layout-build-15",
+      "seconds": 0.696
+    },
+    {
+      "name": "layout-build-16",
+      "seconds": 0.682
+    },
+    {
+      "name": "layout-build-17",
+      "seconds": 0.684
+    },
+    {
+      "name": "layout-build-18",
+      "seconds": 0.692
+    },
+    {
+      "name": "layout-build-19",
+      "seconds": 0.826
+    },
+    {
+      "name": "layout-build-20",
+      "seconds": 1.296
+    },
+    {
+      "name": "layout-build-21",
+      "seconds": 1.196
+    },
+    {
+      "name": "layout-build-22",
+      "seconds": 1.251
+    },
+    {
+      "name": "layout-build-23",
+      "seconds": 1.515
+    },
+    {
+      "name": "layout-build-24",
+      "seconds": 1.881
+    },
+    {
+      "name": "layout-build-25",
+      "seconds": 1.785
+    },
+    {
+      "name": "layout-build-26",
+      "seconds": 1.882
+    }
+  ],
+  "compile_link_pool_seconds": 47.97504550218582,
+  "jobs": 32,
+  "host_publish": 42.208
+}

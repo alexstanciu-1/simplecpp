@@ -1104,7 +1104,10 @@ artifacts with duplicate identity/path rejection; it does not generate or write 
 The CLI/native transport is versioned independently from semantic identity.
 
 `generate_program` emits one header per callable and record, initial per-source
-implementation groups, and `entry.cpp`. The single-file `generate` adapter delegates
+implementation groups, and `entry.cpp`. Oversized groups partition complete definitions
+using backend-owned digest prefixes; ordered static storage keeps source order.
+Source membership, partition inputs and bounded layout batches are invocation-local
+assembly records, not retained semantic owners. The single-file `generate` adapter delegates
 to that same path. Includes come from live fragment dependencies recorded while
 rendering resolved calls and type representations, including nested template arguments.
 There is no all-project declaration header or combined-output renderer.

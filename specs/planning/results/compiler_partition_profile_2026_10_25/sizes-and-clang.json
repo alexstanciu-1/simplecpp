@@ -1,0 +1,565 @@
+{
+  "threshold_bytes": {
+    "cpp": 200000,
+    "hpp": 100000
+  },
+  "clang_compile_jobs": 32,
+  "clang_units": 734,
+  "slowest_clang_units": [
+    {
+      "file": "runtime/include/core/runtime.cpp",
+      "bytes": 482,
+      "clang_wall_seconds": 16.04,
+      "clang_peak_rss_kib": 385684
+    },
+    {
+      "file": "specializations/containers_bd8.cpp",
+      "bytes": 108773,
+      "clang_wall_seconds": 7.22,
+      "clang_peak_rss_kib": 287840
+    },
+    {
+      "file": "specializations/containers_b18.cpp",
+      "bytes": 70789,
+      "clang_wall_seconds": 7.2,
+      "clang_peak_rss_kib": 283496
+    },
+    {
+      "file": "specializations/containers_b4c.cpp",
+      "bytes": 68188,
+      "clang_wall_seconds": 7.0,
+      "clang_peak_rss_kib": 285612
+    },
+    {
+      "file": "specializations/containers_b7f.cpp",
+      "bytes": 76433,
+      "clang_wall_seconds": 6.97,
+      "clang_peak_rss_kib": 287880
+    },
+    {
+      "file": "specializations/containers_b2e.cpp",
+      "bytes": 89543,
+      "clang_wall_seconds": 6.86,
+      "clang_peak_rss_kib": 275456
+    },
+    {
+      "file": "specializations/containers_bd0.cpp",
+      "bytes": 126129,
+      "clang_wall_seconds": 6.85,
+      "clang_peak_rss_kib": 284676
+    },
+    {
+      "file": "specializations/containers_b16.cpp",
+      "bytes": 78163,
+      "clang_wall_seconds": 6.84,
+      "clang_peak_rss_kib": 277412
+    },
+    {
+      "file": "specializations/containers_b69.cpp",
+      "bytes": 77861,
+      "clang_wall_seconds": 6.79,
+      "clang_peak_rss_kib": 280832
+    },
+    {
+      "file": "specializations/containers_b75.cpp",
+      "bytes": 110813,
+      "clang_wall_seconds": 6.72,
+      "clang_peak_rss_kib": 285588
+    },
+    {
+      "file": "specializations/containers_baa.cpp",
+      "bytes": 83300,
+      "clang_wall_seconds": 6.7,
+      "clang_peak_rss_kib": 279880
+    },
+    {
+      "file": "specializations/containers_bd9.cpp",
+      "bytes": 71929,
+      "clang_wall_seconds": 6.62,
+      "clang_peak_rss_kib": 274308
+    },
+    {
+      "file": "specializations/containers_bec.cpp",
+      "bytes": 73837,
+      "clang_wall_seconds": 6.58,
+      "clang_peak_rss_kib": 270740
+    },
+    {
+      "file": "specializations/containers_b36.cpp",
+      "bytes": 76041,
+      "clang_wall_seconds": 6.52,
+      "clang_peak_rss_kib": 274944
+    },
+    {
+      "file": "specializations/containers_b61.cpp",
+      "bytes": 78897,
+      "clang_wall_seconds": 6.41,
+      "clang_peak_rss_kib": 284548
+    }
+  ],
+  "largest_compiled_units": [
+    {
+      "file": "units/n6d61696e/n636f6d70696c65722f72756e74696d655f636174616c6f672f72656769737465722e706873.cpp",
+      "bytes": 177479,
+      "clang_wall_seconds": 0.58,
+      "clang_peak_rss_kib": 120772,
+      "source_hint": "compiler/runtime_catalog/register.phs"
+    },
+    {
+      "file": "units/n6d61696e/n30355f6261636b656e642f6370702f74797065732e706873.cpp",
+      "bytes": 176361,
+      "clang_wall_seconds": 0.58,
+      "clang_peak_rss_kib": 122000,
+      "source_hint": "05_backend/cpp/types.phs"
+    },
+    {
+      "file": "units/n6d61696e/n30355f6261636b656e642f6370702f6f70617175655f726570726573656e746174696f6e2e706873_ba.cpp",
+      "bytes": 168802,
+      "clang_wall_seconds": 1.07,
+      "clang_peak_rss_kib": 135216,
+      "source_hint": "05_backend/cpp/opaque_representation.phs"
+    },
+    {
+      "file": "units/n6d61696e/n30345f616e616c797a652f707265706172652f73656d616e746963732f72756e74696d655f63616c6c732e706873.cpp",
+      "bytes": 167950,
+      "clang_wall_seconds": 0.88,
+      "clang_peak_rss_kib": 120204,
+      "source_hint": "04_analyze/prepare/semantics/runtime_calls.phs"
+    },
+    {
+      "file": "units/n6d61696e/n30345f616e616c797a652f6f70657261746f72732f7072657061726174696f6e2e706873.cpp",
+      "bytes": 167339,
+      "clang_wall_seconds": 0.93,
+      "clang_peak_rss_kib": 116536,
+      "source_hint": "04_analyze/operators/preparation.phs"
+    },
+    {
+      "file": "units/n6d61696e/n30335f70617273652f74797065732f636174616c6f672e706873.cpp",
+      "bytes": 167215,
+      "clang_wall_seconds": 0.74,
+      "clang_peak_rss_kib": 116480,
+      "source_hint": "03_parse/types/catalog.phs"
+    },
+    {
+      "file": "units/n6d61696e/n30355f6261636b656e642f6370702f696e6465785f77726974652e706873.cpp",
+      "bytes": 164276,
+      "clang_wall_seconds": 0.92,
+      "clang_peak_rss_kib": 123392,
+      "source_hint": "05_backend/cpp/index_write.phs"
+    },
+    {
+      "file": "units/n6d61696e/n30365f6e61746976652f6e696e6a615f6275696c642e706873.cpp",
+      "bytes": 162251,
+      "clang_wall_seconds": 0.58,
+      "clang_peak_rss_kib": 124972,
+      "source_hint": "06_native/ninja_build.phs"
+    },
+    {
+      "file": "units/n6d61696e/n30355f6261636b656e642f6370702f636f6e63726574655f696e6465782e706873.cpp",
+      "bytes": 156656,
+      "clang_wall_seconds": 0.72,
+      "clang_peak_rss_kib": 127148,
+      "source_hint": "05_backend/cpp/concrete_index.phs"
+    },
+    {
+      "file": "units/n6d61696e/n30345f616e616c797a652f707265706172652f73656d616e746963732f6d6574686f64732e706873.cpp",
+      "bytes": 156139,
+      "clang_wall_seconds": 0.83,
+      "clang_peak_rss_kib": 122004,
+      "source_hint": "04_analyze/prepare/semantics/methods.phs"
+    },
+    {
+      "file": "units/n6d61696e/n636f6d70696c65722f72756e74696d655f636174616c6f672f7061747465726e732e706873.cpp",
+      "bytes": 155898,
+      "clang_wall_seconds": 0.44,
+      "clang_peak_rss_kib": 117504,
+      "source_hint": "compiler/runtime_catalog/patterns.phs"
+    },
+    {
+      "file": "units/n6d61696e/n636f6d70696c65722f6f75747075745f7075626c69636174696f6e2e706873.cpp",
+      "bytes": 154391,
+      "clang_wall_seconds": 0.56,
+      "clang_peak_rss_kib": 120740,
+      "source_hint": "compiler/output_publication.phs"
+    },
+    {
+      "file": "units/n6d61696e/n30335f70617273652f7061727365722e706873_bd.cpp",
+      "bytes": 150566,
+      "clang_wall_seconds": 1.02,
+      "clang_peak_rss_kib": 117448,
+      "source_hint": "03_parse/parser.phs"
+    },
+    {
+      "file": "units/n6d61696e/n30355f6261636b656e642f6370702f7370656369616c697a6174696f6e732e706873.cpp",
+      "bytes": 150022,
+      "clang_wall_seconds": 0.6,
+      "clang_peak_rss_kib": 120304,
+      "source_hint": "05_backend/cpp/specializations.phs"
+    },
+    {
+      "file": "units/n6d61696e/n30345f616e616c797a652f707265706172652f73656d616e746963732f74797065732e706873.cpp",
+      "bytes": 148030,
+      "clang_wall_seconds": 0.75,
+      "clang_peak_rss_kib": 118960,
+      "source_hint": "04_analyze/prepare/semantics/types.phs"
+    }
+  ],
+  "outputs": {
+    "published": {
+      "file_count": 6937,
+      "largest_cpp": [
+        {
+          "file": "specializations/layout_part_18.cpp",
+          "bytes": 180095
+        },
+        {
+          "file": "specializations/layout_part_11.cpp",
+          "bytes": 179636
+        },
+        {
+          "file": "specializations/layout_part_1.cpp",
+          "bytes": 179350
+        },
+        {
+          "file": "specializations/layout_part_2.cpp",
+          "bytes": 179288
+        },
+        {
+          "file": "specializations/layout_part_7.cpp",
+          "bytes": 179285
+        },
+        {
+          "file": "specializations/layout_part_3.cpp",
+          "bytes": 179170
+        },
+        {
+          "file": "specializations/layout_part_4.cpp",
+          "bytes": 179003
+        },
+        {
+          "file": "specializations/layout_1_part_1.cpp",
+          "bytes": 178970
+        },
+        {
+          "file": "specializations/layout_part_6.cpp",
+          "bytes": 178938
+        },
+        {
+          "file": "specializations/layout_part_14.cpp",
+          "bytes": 178914
+        }
+      ],
+      "largest_hpp": [
+        {
+          "file": "types/n736370705c636f6d70696c65725c5061727365725f52756e.hpp",
+          "bytes": 58472
+        },
+        {
+          "file": "types/n736370705c636f6d70696c65725c547970655f5265676973747279.hpp",
+          "bytes": 54135
+        },
+        {
+          "file": "types/n736370705c636f6d70696c65725c5072657061726174696f6e5f576f726b6572.hpp",
+          "bytes": 46906
+        },
+        {
+          "file": "types/n736370705c636f6d70696c65725c4350505f53796e746178.hpp",
+          "bytes": 40109
+        },
+        {
+          "file": "types/n736370705c636f6d70696c65725c53796d626f6c5f436f6c6c6563746f72.hpp",
+          "bytes": 39134
+        },
+        {
+          "file": "types/n736370705c636f6d70696c65725c4350505f47656e657261746f72.hpp",
+          "bytes": 33632
+        },
+        {
+          "file": "types/n736370705c636f6d70696c65725c73636f7065.hpp",
+          "bytes": 24865
+        },
+        {
+          "file": "types/n736370705c636f6d70696c65725c4350505f4465636c61726174696f6e73.hpp",
+          "bytes": 24037
+        },
+        {
+          "file": "types/n736370705c636f6d70696c65725c63616c6c61626c655f6465636c61726174696f6e5f6e6f6465.hpp",
+          "bytes": 21921
+        },
+        {
+          "file": "types/n736370705c636f6d70696c65725c636c6f737572655f6e6f6465.hpp",
+          "bytes": 21292
+        }
+      ],
+      "over_200kb": [],
+      "headers_over_100kb": []
+    },
+    "measure-1/published": {
+      "file_count": 6783,
+      "largest_cpp": [
+        {
+          "file": "specializations/layout_part_12.cpp",
+          "bytes": 179863
+        },
+        {
+          "file": "specializations/layout_1_part_2.cpp",
+          "bytes": 179816
+        },
+        {
+          "file": "specializations/layout_part_7.cpp",
+          "bytes": 179765
+        },
+        {
+          "file": "specializations/layout_part_8.cpp",
+          "bytes": 179753
+        },
+        {
+          "file": "specializations/layout_part_4.cpp",
+          "bytes": 179617
+        },
+        {
+          "file": "specializations/layout_part_1.cpp",
+          "bytes": 179556
+        },
+        {
+          "file": "specializations/layout_part_14.cpp",
+          "bytes": 179248
+        },
+        {
+          "file": "specializations/layout_part_6.cpp",
+          "bytes": 179084
+        },
+        {
+          "file": "specializations/layout_part_2.cpp",
+          "bytes": 179075
+        },
+        {
+          "file": "specializations/layout_part_3.cpp",
+          "bytes": 178981
+        }
+      ],
+      "largest_hpp": [
+        {
+          "file": "types/n736370705c636f6d70696c65725c5061727365725f52756e.hpp",
+          "bytes": 58472
+        },
+        {
+          "file": "types/n736370705c636f6d70696c65725c547970655f5265676973747279.hpp",
+          "bytes": 47616
+        },
+        {
+          "file": "types/n736370705c636f6d70696c65725c5072657061726174696f6e5f576f726b6572.hpp",
+          "bytes": 44202
+        },
+        {
+          "file": "types/n736370705c636f6d70696c65725c4350505f53796e746178.hpp",
+          "bytes": 40109
+        },
+        {
+          "file": "types/n736370705c636f6d70696c65725c53796d626f6c5f436f6c6c6563746f72.hpp",
+          "bytes": 39134
+        },
+        {
+          "file": "types/n736370705c636f6d70696c65725c4350505f47656e657261746f72.hpp",
+          "bytes": 32335
+        },
+        {
+          "file": "types/n736370705c636f6d70696c65725c73636f7065.hpp",
+          "bytes": 24865
+        },
+        {
+          "file": "types/n736370705c636f6d70696c65725c4350505f4465636c61726174696f6e73.hpp",
+          "bytes": 24037
+        },
+        {
+          "file": "types/n736370705c636f6d70696c65725c63616c6c61626c655f6465636c61726174696f6e5f6e6f6465.hpp",
+          "bytes": 21921
+        },
+        {
+          "file": "types/n736370705c636f6d70696c65725c636c6f737572655f6e6f6465.hpp",
+          "bytes": 21292
+        }
+      ],
+      "over_200kb": [],
+      "headers_over_100kb": []
+    },
+    "measure-32/published": {
+      "file_count": 6783,
+      "largest_cpp": [
+        {
+          "file": "specializations/layout_part_12.cpp",
+          "bytes": 179863
+        },
+        {
+          "file": "specializations/layout_1_part_2.cpp",
+          "bytes": 179816
+        },
+        {
+          "file": "specializations/layout_part_7.cpp",
+          "bytes": 179765
+        },
+        {
+          "file": "specializations/layout_part_8.cpp",
+          "bytes": 179753
+        },
+        {
+          "file": "specializations/layout_part_4.cpp",
+          "bytes": 179617
+        },
+        {
+          "file": "specializations/layout_part_1.cpp",
+          "bytes": 179556
+        },
+        {
+          "file": "specializations/layout_part_14.cpp",
+          "bytes": 179248
+        },
+        {
+          "file": "specializations/layout_part_6.cpp",
+          "bytes": 179084
+        },
+        {
+          "file": "specializations/layout_part_2.cpp",
+          "bytes": 179075
+        },
+        {
+          "file": "specializations/layout_part_3.cpp",
+          "bytes": 178981
+        }
+      ],
+      "largest_hpp": [
+        {
+          "file": "types/n736370705c636f6d70696c65725c5061727365725f52756e.hpp",
+          "bytes": 58472
+        },
+        {
+          "file": "types/n736370705c636f6d70696c65725c547970655f5265676973747279.hpp",
+          "bytes": 47616
+        },
+        {
+          "file": "types/n736370705c636f6d70696c65725c5072657061726174696f6e5f576f726b6572.hpp",
+          "bytes": 44202
+        },
+        {
+          "file": "types/n736370705c636f6d70696c65725c4350505f53796e746178.hpp",
+          "bytes": 40109
+        },
+        {
+          "file": "types/n736370705c636f6d70696c65725c53796d626f6c5f436f6c6c6563746f72.hpp",
+          "bytes": 39134
+        },
+        {
+          "file": "types/n736370705c636f6d70696c65725c4350505f47656e657261746f72.hpp",
+          "bytes": 32335
+        },
+        {
+          "file": "types/n736370705c636f6d70696c65725c73636f7065.hpp",
+          "bytes": 24865
+        },
+        {
+          "file": "types/n736370705c636f6d70696c65725c4350505f4465636c61726174696f6e73.hpp",
+          "bytes": 24037
+        },
+        {
+          "file": "types/n736370705c636f6d70696c65725c63616c6c61626c655f6465636c61726174696f6e5f6e6f6465.hpp",
+          "bytes": 21921
+        },
+        {
+          "file": "types/n736370705c636f6d70696c65725c636c6f737572655f6e6f6465.hpp",
+          "bytes": 21292
+        }
+      ],
+      "over_200kb": [],
+      "headers_over_100kb": []
+    },
+    "measure-repeat/published": {
+      "file_count": 6783,
+      "largest_cpp": [
+        {
+          "file": "specializations/layout_part_12.cpp",
+          "bytes": 179863
+        },
+        {
+          "file": "specializations/layout_1_part_2.cpp",
+          "bytes": 179816
+        },
+        {
+          "file": "specializations/layout_part_7.cpp",
+          "bytes": 179765
+        },
+        {
+          "file": "specializations/layout_part_8.cpp",
+          "bytes": 179753
+        },
+        {
+          "file": "specializations/layout_part_4.cpp",
+          "bytes": 179617
+        },
+        {
+          "file": "specializations/layout_part_1.cpp",
+          "bytes": 179556
+        },
+        {
+          "file": "specializations/layout_part_14.cpp",
+          "bytes": 179248
+        },
+        {
+          "file": "specializations/layout_part_6.cpp",
+          "bytes": 179084
+        },
+        {
+          "file": "specializations/layout_part_2.cpp",
+          "bytes": 179075
+        },
+        {
+          "file": "specializations/layout_part_3.cpp",
+          "bytes": 178981
+        }
+      ],
+      "largest_hpp": [
+        {
+          "file": "types/n736370705c636f6d70696c65725c5061727365725f52756e.hpp",
+          "bytes": 58472
+        },
+        {
+          "file": "types/n736370705c636f6d70696c65725c547970655f5265676973747279.hpp",
+          "bytes": 47616
+        },
+        {
+          "file": "types/n736370705c636f6d70696c65725c5072657061726174696f6e5f576f726b6572.hpp",
+          "bytes": 44202
+        },
+        {
+          "file": "types/n736370705c636f6d70696c65725c4350505f53796e746178.hpp",
+          "bytes": 40109
+        },
+        {
+          "file": "types/n736370705c636f6d70696c65725c53796d626f6c5f436f6c6c6563746f72.hpp",
+          "bytes": 39134
+        },
+        {
+          "file": "types/n736370705c636f6d70696c65725c4350505f47656e657261746f72.hpp",
+          "bytes": 32335
+        },
+        {
+          "file": "types/n736370705c636f6d70696c65725c73636f7065.hpp",
+          "bytes": 24865
+        },
+        {
+          "file": "types/n736370705c636f6d70696c65725c4350505f4465636c61726174696f6e73.hpp",
+          "bytes": 24037
+        },
+        {
+          "file": "types/n736370705c636f6d70696c65725c63616c6c61626c655f6465636c61726174696f6e5f6e6f6465.hpp",
+          "bytes": 21921
+        },
+        {
+          "file": "types/n736370705c636f6d70696c65725c636c6f737572655f6e6f6465.hpp",
+          "bytes": 21292
+        }
+      ],
+      "over_200kb": [],
+      "headers_over_100kb": []
+    }
+  }
+}

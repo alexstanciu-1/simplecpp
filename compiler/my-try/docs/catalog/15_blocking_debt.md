@@ -865,19 +865,17 @@ multi-file classes and compiler incremental/MT redesign remain deferred.
 
 ### CH15-CPP-GROUP-SPLIT-01 — automatic implementation-unit splitting
 
-Deferred by user decision on 2026-10-16. Prepare an explicit implementation-group
-assembly boundary in the C++ backend, but preserve today's source-based membership
-and artifact paths. Automatic size/cost-based splitting, hash buckets, persistent
-assignment maps, rebalancing, and one-function-per-unit policies are not part of the
-immediate work. This debt must not block Ninja/Clang/Mold integration.
+Resumed by user request on 2026-10-25. The backend now partitions oversized
+implementation groups by stable definition identity, keeping ordered static storage
+in the original unit. Layout probes split within existing dependency depths; native
+consumers still execute probes serially. No semantic preparation policy, source
+multi-file class feature or persistent grouping registry is introduced.
 
-The C++ backend owns any future grouping policy, using existing prepared fragments;
-shared semantic preparation must not acquire native compilation policy. Before
-resuming, agree stable group/member identities and rules for add/delete/move edits.
-Evaluate individual Clang latency against the 2–3 second p80 target, duplicated
-header/template work, clean-build throughput, rebuild spread, and application
-performance. One expensive function may remain slow even after its group is split.
-See the [lowering and toolchain plan](../planning/clang_units_and_mold.md).
+Remaining review: individually oversized functions/ordered storage, cost-aware
+partitioning beyond byte size, split/merge churn at the threshold, parallel layout
+actions and include duplication versus clean-build throughput. The native consumer
+continues its existing cache validation protocol. See the
+[artifact partitioning and concurrency profile](../../../../specs/planning/results/compiler_partition_profile_2026_10_25/README.md).
 
 ### CH15-PARTIAL-TYPE-01 — multi-file class declarations
 

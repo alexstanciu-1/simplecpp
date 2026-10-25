@@ -76,8 +76,8 @@ constructor in the declaring source's existing implementation group. Uninitializ
 fields are excluded to preserve C++ value-initialization behavior. Authored methods,
 copy/move/destruction and source contracts are unchanged.
 O2/O3 keep the previous generated form. `record_definition_text` holds type-owned
-static storage, outlined constructors and allocation definitions. Automatic splitting
-is deferred.
+static storage, outlined constructors and allocation definitions. Oversized function
+groups may split; ordered type-owned storage stays in the source unit.
 
 The second latency pattern emits a no-argument shared-allocation function for the
 same eligible classes, declared after the type and defined in its existing `.cpp`.
@@ -161,7 +161,8 @@ broader depfile path handling and long link response files remain
 The implementation follows the upstream [Ninja manual](https://ninja-build.org/manual.html)
 for command freshness, compilation depfiles, explicit dependencies and escaping.
 This integration changes neither C++ grouping/emission nor compiler incremental/MT
-internals. Automatic splitting and multi-file classes remain deferred.
+internals. Later backend-owned implementation splitting is independent of this
+consumer; multi-file source classes remain deferred.
 
 Focused evidence: `python3 compiler/my-try/tests/ninja_build.py --results FRESH`.
 This runs the PHP-hosted builder and real Clang/Ninja-generated executables, not a
@@ -351,8 +352,8 @@ cache validation on warm builds.
 
 This protocol is host-executed and Linux/Clang only. Probes run in manifest order;
 each receives all previously resolved layout headers. The specialization engine groups
-concrete layout requests by dependency depth, allowing outer native templates to
-contain concrete inner owners. Prior header contents participate in the existing
+concrete layout requests by dependency depth and bounded parts within a depth,
+allowing outer native templates to contain concrete inner owners. Prior header contents participate in the existing
 dependency scan/cache; source publication remains immutable. Grouped headers and
 all-prior-batch inclusion conservatively couple consumers; finer partitioning remains
 follow-up work. Acyclic source-record headers participate through the same generated-header dependency

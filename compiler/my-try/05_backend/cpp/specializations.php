@@ -203,8 +203,8 @@ final class CPP_Specializations
 		$artifacts->append(new cpp_artifact('specializations:base-header', cpp_artifact_kind::header, 'specializations/base.hpp', CPP_Entry_Support::base_header()));
 		$artifacts->append(new cpp_artifact('specializations:base', cpp_artifact_kind::translation_unit, 'specializations/base.cpp', CPP_Entry_Support::base_body()));
 		$implementations /** hash<string> */ = [];
-		$layout_declarations /** hash<string,int> */ = [];
-		$layout_statements /** hash<string,int> */ = [];
+		$layout_current /** hash<cpp_layout_batch,int> */ = [];
+		$layout_batches /** Storage<cpp_layout_batch> */ = new Storage();
 		$depths = $this->layout_depths($artifacts);
 		$maximum_depth = 0;
 		$entries /** Storage<cpp_specialization_entry> */ = $this->entries;
@@ -227,12 +227,22 @@ final class CPP_Specializations
 			$entry = $entries[$id];
 			$depth = $depths[$entry->name];
 			if ($depth > $maximum_depth) { $maximum_depth = $depth; }
-			if (!isset($layout_declarations[$depth])) {
-				$layout_declarations[$depth] = '';
-				$layout_statements[$depth] = '';
+			if (($entry->layout_declarations !== '') || ($entry->layout_statements !== '')) {
+				$size = string_byte_len($entry->layout_declarations) + string_byte_len($entry->layout_statements);
+				if (!isset($layout_current[$depth])) {
+					$layout_current[$depth] = new cpp_layout_batch($depth, 0);
+					$layout_batches->append($layout_current[$depth]);
+				}
+				$batch = $layout_current[$depth];
+				if (($batch->bytes > 0) && ($batch->bytes + $size > 180000)) {
+					$batch = new cpp_layout_batch($depth, $batch->part + 1);
+					$layout_current[$depth] = $batch;
+					$layout_batches->append($batch);
+				}
+				$batch->declarations .= $entry->layout_declarations;
+				$batch->statements .= $entry->layout_statements;
+				$batch->bytes += $size;
 			}
-			$layout_declarations[$depth] .= $entry->layout_declarations;
-			$layout_statements[$depth] .= $entry->layout_statements;
 			if ($entry->member_owner === '') {
 				$prefix = '';
 				$members = '';
@@ -255,16 +265,16 @@ final class CPP_Specializations
 			if (!isset($implementations[$bucket])) { $implementations[$bucket] = ''; }
 			$implementations[$bucket] .= '#include "' . $entry->header . '"' . "\n" . $entry->implementation . "\n";
 		}
+		// Preserve topological order; the existing native consumer resolves probes in manifest order.
 		for ($depth = 0; $depth <= $maximum_depth; $depth++) {
-			if (!isset($layout_statements[$depth])) {
-				continue;
+			foreach ($layout_batches as $batch) {
+				if (($batch->depth !== $depth) || ($batch->statements === '')) { continue; }
+				$probe = '#include <cstdio>' . "\n" . '#include <type_traits>' . "\n" . $batch->declarations
+					. 'int main() { std::printf("// scpp-native-layout-v1\\n");' . "\n" . $batch->statements . "}\n";
+				$suffix = ($depth === 0 ? '' : '_' . $depth) . ($batch->part === 0 ? '' : '_part_' . $batch->part);
+				$artifacts->append(new cpp_artifact('specializations:layout' . ($depth === 0 ? '' : ':' . $depth) . ($batch->part === 0 ? '' : ':part:' . $batch->part),
+					cpp_artifact_kind::layout_probe, 'specializations/layout' . $suffix . '.cpp', $probe));
 			}
-			$statements = $layout_statements[$depth];
-			if ($statements === '') { continue; }
-			$probe = '#include <cstdio>' . "\n" . '#include <type_traits>' . "\n" . $layout_declarations[$depth]
-				. 'int main() { std::printf("// scpp-native-layout-v1\\n");' . "\n" . $statements . "}\n";
-			$artifacts->append(new cpp_artifact('specializations:layout' . ($depth === 0 ? '' : ':' . $depth), cpp_artifact_kind::layout_probe,
-				'specializations/layout' . ($depth === 0 ? '' : '_' . $depth) . '.cpp', $probe));
 		}
 		foreach ($implementations as $bucket => $implementation) {
 			$artifacts->append(new cpp_artifact('specializations:implementation:' . $bucket, cpp_artifact_kind::translation_unit,

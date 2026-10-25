@@ -1,0 +1,38 @@
+[
+  {
+    "name": "result_model",
+    "seconds": 0.573,
+    "code": 0,
+    "expected": 0
+  },
+  {
+    "name": "trait_instances",
+    "seconds": 0.695,
+    "code": 0,
+    "expected": 0
+  },
+  {
+    "name": "callable_instances",
+    "seconds": 0.793,
+    "code": 0,
+    "expected": 0
+  },
+  {
+    "name": "async_retained",
+    "seconds": 0.995,
+    "code": 0,
+    "expected": 0
+  },
+  {
+    "name": "concurrent_stages",
+    "seconds": 1.555,
+    "code": 0,
+    "expected": 0
+  },
+  {
+    "name": "contextual_closures",
+    "seconds": 1.872,
+    "code": 0,
+    "expected": 0
+  }
+]
