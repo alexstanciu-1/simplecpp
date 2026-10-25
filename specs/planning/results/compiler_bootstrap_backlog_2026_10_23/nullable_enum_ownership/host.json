@@ -1,0 +1,17 @@
+[
+  {
+    "name": "type_catalog",
+    "seconds": 0.47842201800085604,
+    "passed": true
+  },
+  {
+    "name": "type_capabilities",
+    "seconds": 0.4881320350104943,
+    "passed": true
+  },
+  {
+    "name": "incremental_preparation",
+    "seconds": 0.5956008379871491,
+    "passed": true
+  }
+]

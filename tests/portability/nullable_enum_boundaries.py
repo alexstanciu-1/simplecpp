@@ -20,6 +20,8 @@ start = model.index('$registered_storage = $this->runtime_storage($definition);'
 value_check = model[start:model.index('\n\t\tif ($definition instanceof', start)]
 start = model.index('if (!$type_use->by_value()) {', model.index('public function has_registered_capability('))
 capability_check = model[start:model.index('\n\t\tif (!$definition->declares_capability', start)]
+start = model.index('$runtime_storage = record_storage_kind::inline_value;', model.index('public function validate_application('))
+ownership_check = model[start:model.index('\n\t\t\tif ($payload_definition->origin()', start)]
 indexing = (APP / 'compiler/indexing/contracts.php').read_text()
 start = indexing.index('if ($store_operation !== null) {')
 store_check = indexing[start:indexing.index('\n\t}\n', start)]
@@ -50,6 +52,9 @@ class Proof {
 """ + capability_check + r"""
   return false;
  }
+ public function ownership_check(Definition $payload_definition): void {
+""" + ownership_check + r"""
+ }
  public static function store_check(?operator_operation $store_operation): void {
 """ + store_check + r"""
  }
@@ -60,9 +65,11 @@ $proof->use_check($definition, false);
 $absent = $proof->capability_check($definition, $by_value, generic_contract::copyable_value);
 echo $proof->reads === 0 && !$absent ? 'lazy:' : 'bad:';
 $proof->use_check($definition, true);
+$proof->ownership_check($definition);
 echo !$proof->value_check($definition) && !$proof->capability_check($definition, $by_handle, generic_contract::copyable_value) ? 'absent:' : 'bad:';
 $proof->storage = record_storage_kind::inline_value;
 $proof->use_check($definition, true);
+$proof->ownership_check($definition);
 echo $proof->value_check($definition) && !$proof->capability_check($definition, $by_handle, generic_contract::copyable_value) ? 'inline:' : 'bad:';
 $proof->storage = record_storage_kind::shared;
 try { $proof->use_check($definition, true); echo 'bad:'; }
@@ -70,12 +77,14 @@ catch (\InvalidArgumentException $error) { echo 'rejected:'; }
 echo !$proof->value_check($definition) && $proof->capability_check($definition, $by_handle, generic_contract::copyable_value)
  && $proof->capability_check($definition, $by_handle, generic_contract::value_storable)
  && !$proof->capability_check($definition, $by_handle, generic_contract::other) ? 'shared:' : 'bad:';
+try { $proof->ownership_check($definition); echo 'bad:'; }
+catch (\InvalidArgumentException $ownership_error) { echo 'ownership-checked:'; }
 Proof::store_check(null); Proof::store_check(operator_operation::index_store);
 try { Proof::store_check(operator_operation::index_checked_read); echo 'bad'; }
 catch (\InvalidArgumentException $store_error) { echo 'store-checked'; }
 """
 (out / 'source/main.php').write_text(source)
-expected = b'lazy:absent:inline:rejected:shared:store-checked'
+expected = b'lazy:absent:inline:rejected:shared:ownership-checked:store-checked'
 with CommandRunner(out / 'logs', ROOT) as runner:
     publisher = out / 'publish.php'
     publisher.write_text((APP / 'tests/async_tasks_publish.php').read_text()

@@ -1511,8 +1511,11 @@ final class Type_Registry implements type_capability_query
 				throw new \InvalidArgumentException('Ownership wrappers require an unmodified payload type');
 			}
 			$payload_definition = $payload->definition();
-			if ($this->runtime_storage($payload_definition) === record_storage_kind::shared) {
-				throw new \InvalidArgumentException('Opaque runtime handle ownership transformations are not registered');
+			$runtime_storage = record_storage_kind::inline_value;
+			if (take_nullable($runtime_storage, $this->runtime_storage($payload_definition))) {
+				if ($runtime_storage === record_storage_kind::shared) {
+					throw new \InvalidArgumentException('Opaque runtime handle ownership transformations are not registered');
+				}
 			}
 			if ($payload_definition->origin() === type_definition_origin::source) {
 				if ($payload_definition instanceof abstract_nominal_type_definition) {

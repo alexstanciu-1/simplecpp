@@ -1,0 +1,20 @@
+{
+    "elapsed_seconds": 115.551332402,
+    "peak_php_bytes": 610795520,
+    "last_stage": "prepare",
+    "events": [
+        {
+            "stage": "initialize",
+            "seconds": 0.307722592
+        },
+        {
+            "stage": "sync",
+            "seconds": 3.916657098
+        }
+    ],
+    "failure": {
+        "class": "RuntimeException",
+        "message": "S2S runtime call requires one exact signature or a unique checked-payload signature; use explicit argument types\nS2S data construction requires a known concrete target\nRequired object boundary rejects null; declare a nullable object type\nS2S conditional branches require supported scalar value types or enums\nS2S ownership boundary requires matching handles, a proven safe same-family upcast, or null storage initialization/assignment\nObject narrowing requires a polymorphic source\nRequired local may be read before assignment: enum_type\nProjected method receiver lifetime is deferred\nS2S non-void function derives_from can reach the end without returning a value\nS2S local initializer is already declared in this scope\nOwnership selection requires two same-family handles\nS2S indexed storage requires local, parameter or field storage\nS2S needs an established local declaration for native\nS2S non-void function prepare can reach the end without returning a value\nS2S assignment requires stable storage or an indexed shared receiver\nS2S enum comparison requires the same enum type\n"
+    },
+    "fatal": null
+}

@@ -1,0 +1,289 @@
+[
+  {
+    "kind": "scpp\\compiler\\source_callable_body_work",
+    "file": "03_parse/types/model.phs",
+    "name": "scpp\\compiler\\Type_Registry::validate_application",
+    "token": 7292,
+    "message": "S2S enum comparison requires the same enum type"
+  },
+  {
+    "kind": "scpp\\compiler\\source_callable_body_work",
+    "file": "05_backend/cpp/generate.phs",
+    "name": "scpp\\compiler\\CPP_Generator::generate_program",
+    "token": 259,
+    "message": "S2S runtime call requires one exact signature or a unique checked-payload signature; use explicit argument types"
+  },
+  {
+    "kind": "scpp\\compiler\\source_callable_body_work",
+    "file": "06_native/cpp_build.phs",
+    "name": "scpp\\compiler\\Native_CPP_Build::build",
+    "token": 144,
+    "message": "S2S data construction requires a known concrete target"
+  },
+  {
+    "kind": "scpp\\compiler\\source_callable_body_work",
+    "file": "06_native/cpp_build.phs",
+    "name": "scpp\\compiler\\Native_CPP_Build::require_template_free",
+    "token": 2058,
+    "message": "S2S data construction requires a known concrete target"
+  },
+  {
+    "kind": "scpp\\compiler\\source_callable_body_work",
+    "file": "06_native/ninja_build.phs",
+    "name": "scpp\\compiler\\Native_Ninja_Build::compile_edge",
+    "token": 1413,
+    "message": "S2S data construction requires a known concrete target"
+  },
+  {
+    "kind": "scpp\\compiler\\source_callable_body_work",
+    "file": "compiler/callables/catalog.phs",
+    "name": "scpp\\compiler\\Runtime_Callables::register_function",
+    "token": 552,
+    "message": "S2S runtime call requires one exact signature or a unique checked-payload signature; use explicit argument types"
+  },
+  {
+    "kind": "scpp\\compiler\\source_callable_body_work",
+    "file": "compiler/callables/catalog.phs",
+    "name": "scpp\\compiler\\Runtime_Callables::register_generic",
+    "token": 617,
+    "message": "S2S runtime call requires one exact signature or a unique checked-payload signature; use explicit argument types"
+  },
+  {
+    "kind": "scpp\\compiler\\source_callable_body_work",
+    "file": "scpp_framework/json_document.phs",
+    "name": "scpp\\json_read",
+    "token": 498,
+    "message": "Required object boundary rejects null; declare a nullable object type"
+  },
+  {
+    "kind": "scpp\\compiler\\source_callable_body_work",
+    "file": "04_analyze/prepare/changes.phs",
+    "name": "scpp\\compiler\\Preparation_Changes::restore_fields",
+    "token": 964,
+    "message": "S2S conditional branches require supported scalar value types or enums"
+  },
+  {
+    "kind": "scpp\\compiler\\source_callable_body_work",
+    "file": "04_analyze/prepare/semantics/bodies.phs",
+    "name": "scpp\\compiler\\Body_Preparation::prepare_local_storage",
+    "token": 1126,
+    "message": "S2S conditional branches require supported scalar value types or enums"
+  },
+  {
+    "kind": "scpp\\compiler\\source_callable_body_work",
+    "file": "04_analyze/prepare/semantics/call_snapshots.phs",
+    "name": "scpp\\compiler\\Call_Snapshot_Preparation::prepare",
+    "token": 12,
+    "message": "Object narrowing requires a polymorphic source"
+  },
+  {
+    "kind": "scpp\\compiler\\source_callable_body_work",
+    "file": "04_analyze/prepare/semantics/data_construction.phs",
+    "name": "scpp\\compiler\\Record_Construction_Preparation::prepare",
+    "token": 730,
+    "message": "Object narrowing requires a polymorphic source"
+  },
+  {
+    "kind": "scpp\\compiler\\source_callable_body_work",
+    "file": "04_analyze/operators/preparation.phs",
+    "name": "scpp\\compiler\\Operator_Preparation::prepare_binary",
+    "token": 250,
+    "message": "S2S conditional branches require supported scalar value types or enums"
+  },
+  {
+    "kind": "scpp\\compiler\\source_callable_body_work",
+    "file": "04_analyze/prepare/semantics/async.phs",
+    "name": "scpp\\compiler\\Async_Preparation::call",
+    "token": 313,
+    "message": "S2S ownership boundary requires matching handles, a proven safe same-family upcast, or null storage initialization/assignment"
+  },
+  {
+    "kind": "scpp\\compiler\\source_callable_body_work",
+    "file": "04_analyze/prepare/semantics/compiler_calls.phs",
+    "name": "scpp\\compiler\\Compiler_Call_Preparation::prepare",
+    "token": 78,
+    "message": "Required local may be read before assignment: enum_type"
+  },
+  {
+    "kind": "scpp\\compiler\\source_callable_body_work",
+    "file": "04_analyze/prepare/semantics/loops.phs",
+    "name": "scpp\\compiler\\Loop_Preparation::prepare",
+    "token": 12,
+    "message": "S2S conditional branches require supported scalar value types or enums"
+  },
+  {
+    "kind": "scpp\\compiler\\source_callable_body_work",
+    "file": "04_analyze/prepare/semantics/members.phs",
+    "name": "scpp\\compiler\\Member_Preparation::derives_from",
+    "token": 571,
+    "message": "S2S non-void function derives_from can reach the end without returning a value"
+  },
+  {
+    "kind": "scpp\\compiler\\source_callable_body_work",
+    "file": "04_analyze/prepare/semantics/references.phs",
+    "name": "scpp\\compiler\\Reference_Preparation::bind",
+    "token": 246,
+    "message": "S2S conditional branches require supported scalar value types or enums"
+  },
+  {
+    "kind": "scpp\\compiler\\source_callable_body_work",
+    "file": "04_analyze/prepare/semantics/iterator.phs",
+    "name": "scpp\\compiler\\Iterator_Preparation::method",
+    "token": 55,
+    "message": "Projected method receiver lifetime is deferred"
+  },
+  {
+    "kind": "scpp\\compiler\\source_callable_body_work",
+    "file": "05_backend/cpp/concrete_iteration.phs",
+    "name": "scpp\\compiler\\CPP_Concrete_Iteration::entry",
+    "token": 83,
+    "message": "S2S data construction requires a known concrete target"
+  },
+  {
+    "kind": "scpp\\compiler\\source_callable_body_work",
+    "file": "05_backend/cpp/data_construction.phs",
+    "name": "scpp\\compiler\\CPP_Data_Construction::generate",
+    "token": 990,
+    "message": "Object narrowing requires a polymorphic source"
+  },
+  {
+    "kind": "scpp\\compiler\\source_callable_body_work",
+    "file": "05_backend/cpp/generate.phs",
+    "name": "scpp\\compiler\\CPP_Generator::generate_storage",
+    "token": 3540,
+    "message": "S2S local initializer is already declared in this scope"
+  },
+  {
+    "kind": "scpp\\compiler\\source_callable_body_work",
+    "file": "05_backend/cpp/initializer_buffer.phs",
+    "name": "scpp\\compiler\\CPP_Initializer_Buffer::reference",
+    "token": 541,
+    "message": "S2S runtime call requires one exact signature or a unique checked-payload signature; use explicit argument types"
+  },
+  {
+    "kind": "scpp\\compiler\\source_callable_body_work",
+    "file": "05_backend/cpp/opaque_representation.phs",
+    "name": "scpp\\compiler\\CPP_Opaque_Representation::representation",
+    "token": 41,
+    "message": "S2S conditional branches require supported scalar value types or enums"
+  },
+  {
+    "kind": "scpp\\compiler\\source_callable_body_work",
+    "file": "05_backend/cpp/opaque_representation.phs",
+    "name": "scpp\\compiler\\CPP_Opaque_Representation::entry",
+    "token": 802,
+    "message": "Ownership selection requires two same-family handles"
+  },
+  {
+    "kind": "scpp\\compiler\\source_callable_body_work",
+    "file": "05_backend/cpp/policy.phs",
+    "name": "scpp\\compiler\\CPP_Default_Constructors::decision",
+    "token": 120,
+    "message": "Object narrowing requires a polymorphic source"
+  },
+  {
+    "kind": "scpp\\compiler\\source_callable_body_work",
+    "file": "05_backend/cpp/runtime_operations.phs",
+    "name": "scpp\\compiler\\CPP_Runtime_Operations::entry",
+    "token": 975,
+    "message": "S2S needs an established local declaration for native"
+  },
+  {
+    "kind": "scpp\\compiler\\source_callable_body_work",
+    "file": "05_backend/cpp/runtime_operations.phs",
+    "name": "scpp\\compiler\\CPP_Runtime_Operations::call",
+    "token": 5162,
+    "message": "Projected method receiver lifetime is deferred"
+  },
+  {
+    "kind": "scpp\\compiler\\source_callable_body_work",
+    "file": "05_backend/cpp/self.phs",
+    "name": "scpp\\compiler\\CPP_Self::acquire",
+    "token": 75,
+    "message": "Projected method receiver lifetime is deferred"
+  },
+  {
+    "kind": "scpp\\compiler\\source_callable_body_work",
+    "file": "05_backend/cpp/types.phs",
+    "name": "scpp\\compiler\\CPP_Types::representation_for",
+    "token": 115,
+    "message": "Ownership selection requires two same-family handles"
+  },
+  {
+    "kind": "scpp\\compiler\\source_callable_body_work",
+    "file": "06_native/cpp_publication.phs",
+    "name": "scpp\\compiler\\Native_CPP_Publication::runtime_inputs",
+    "token": 109,
+    "message": "S2S data construction requires a known concrete target"
+  },
+  {
+    "kind": "scpp\\compiler\\source_callable_body_work",
+    "file": "05_backend/cpp/runtime_catalog.phs",
+    "name": "scpp\\compiler\\CPP_Runtime_Catalog::install",
+    "token": 971,
+    "message": "S2S indexed storage requires local, parameter or field storage"
+  },
+  {
+    "kind": "scpp\\compiler\\source_callable_body_work",
+    "file": "compiler/initialization/catalog.phs",
+    "name": "scpp\\compiler\\Initialization_Registration::install",
+    "token": 499,
+    "message": "S2S data construction requires a known concrete target"
+  },
+  {
+    "kind": "scpp\\compiler\\source_callable_body_work",
+    "file": "compiler/indexing/contracts.phs",
+    "name": "scpp\\compiler\\Indexing_Registration::install",
+    "token": 391,
+    "message": "S2S data construction requires a known concrete target"
+  },
+  {
+    "kind": "scpp\\compiler\\source_callable_body_work",
+    "file": "compiler/iteration/contracts.phs",
+    "name": "scpp\\compiler\\Iteration_Registration::install",
+    "token": 153,
+    "message": "S2S data construction requires a known concrete target"
+  },
+  {
+    "kind": "scpp\\compiler\\source_callable_body_work",
+    "file": "05_backend/cpp/data_construction.phs",
+    "name": "scpp\\compiler\\CPP_Initialization_Registration::install",
+    "token": 89,
+    "message": "S2S data construction requires a known concrete target"
+  },
+  {
+    "kind": "scpp\\compiler\\source_callable_body_work",
+    "file": "compiler/callables/instances.phs",
+    "name": "scpp\\compiler\\Callable_Instances::obtain",
+    "token": 12,
+    "message": "S2S runtime call requires one exact signature or a unique checked-payload signature; use explicit argument types"
+  },
+  {
+    "kind": "scpp\\compiler\\source_callable_body_work",
+    "file": "compiler/preparation.phs",
+    "name": "scpp\\compiler\\Preparation_Run::prepare",
+    "token": 12,
+    "message": "S2S non-void function prepare can reach the end without returning a value"
+  },
+  {
+    "kind": "scpp\\compiler\\source_callable_body_work",
+    "file": "compiler/runtime_catalog/patterns.phs",
+    "name": "scpp\\compiler\\Runtime_Catalog_Patterns::type",
+    "token": 1051,
+    "message": "S2S runtime call requires one exact signature or a unique checked-payload signature; use explicit argument types"
+  },
+  {
+    "kind": "scpp\\compiler\\source_callable_body_work",
+    "file": "compiler/runtime_catalog/register.phs",
+    "name": "scpp\\compiler\\Runtime_Catalog_Registration::resolve",
+    "token": 304,
+    "message": "S2S assignment requires stable storage or an indexed shared receiver"
+  },
+  {
+    "kind": "scpp\\compiler\\source_callable_body_work",
+    "file": "compiler/runtime_catalog/register.phs",
+    "name": "scpp\\compiler\\Runtime_Catalog_Registration::type",
+    "token": 1719,
+    "message": "Projected method receiver lifetime is deferred"
+  }
+]

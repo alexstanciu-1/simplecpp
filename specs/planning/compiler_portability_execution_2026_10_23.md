@@ -1811,3 +1811,16 @@ Final bootstrap: 1:58.36 / 614012 KiB RSS / 582.5 MiB PHP heap. Same 16 diagnost
 categories; first remains same-enum comparison elsewhere. Focused proofs establish
 the audited sites, not elimination of the entire category. Stopped before expanding
 the slice; native compiler and second-generation acceptance remain outstanding.
+
+## Nullable enum ownership validation — 2026-10-25
+
+A partial host-only owner audit located validate_application's optional runtime
+storage comparison. User approved the same PHP-only take_nullable fix. Extended
+production-branch proof passes PHP/v0.1/both v0.2 modes, including absent/inline
+acceptance and shared rejection; three host suites pass. No new semantics.
+[Evidence](results/compiler_bootstrap_backlog_2026_10_23/nullable_enum_ownership/README.md).
+
+Bootstrap: 1:55.96 / 614812 KiB RSS / 582.5 MiB heap. Same 16 categories, first now
+runtime-call signature matching. Enum comparison remains later, so its category
+is not cleared. Stopped before further fixes; native and second-generation
+acceptance remain outstanding.
