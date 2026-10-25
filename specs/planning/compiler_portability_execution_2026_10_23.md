@@ -1785,3 +1785,16 @@ scan and scalar filesystem success/failure tests; type/incremental host suites p
 Bootstrap: 2:16.98 / 612960 KiB RSS / 580.5 MiB heap. Diagnostics 19 -> 17; canonical-int
 and Result-construction categories clear. First blocker now unsupported value probes.
 Stopped before fixing it; native compiler and second-generation validation outstanding.
+
+## Approved enum presence — 2026-10-25
+
+Added plain/keyed enum isset through existing prepared always-true observations and
+keyed lookup machinery. Normative contract updated; empty/conditions stay rejected.
+Focused tests exposed a concrete keyed-wrapper presence bug; attaching existing
+wrapper presence facts to keyed leaves repairs absent/error/sentinel state handling
+without new adapters. Both output modes and host probe/incremental checks pass.
+[Evidence](results/compiler_bootstrap_backlog_2026_10_23/enum_presence/README.md).
+
+Final bootstrap: 2:01.15 / 614692 KiB RSS / 582.5 MiB heap. Categories 17 -> 16;
+first blocker now same-enum comparison. Stopped before fixing it; native compiler
+and second-generation acceptance remain outstanding.

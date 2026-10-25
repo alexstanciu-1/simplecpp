@@ -324,8 +324,9 @@ true sentinel are present; false sentinels, absence and structured errors are no
 Neither probe copies nor consumes the source. This does not grant wrapper conditions
 or emptiness. Default-prelowered helper and plain-wrapper presence proofs are
 recorded in `compiler/my-try/docs/planning/enum_helper_transport.md` and
-`compiler/my-try/docs/planning/enum_sentinel_carriers.md`; indexed/general probes
-remain separate.
+`compiler/my-try/docs/planning/enum_sentinel_carriers.md`. Plain and keyed enum
+presence is admitted by the [2026-10-25 probe amendment](count_empty_isset_contract.md#v02-enum-presence--2026-10-25);
+it preserves lazy lookup and does not grant enum conditions or emptiness.
 
 ### 3.3 v0.2 explicit enum parameter defaults
 

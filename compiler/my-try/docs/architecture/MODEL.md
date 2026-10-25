@@ -782,6 +782,12 @@ for that operation family; the emitter consumes the decisions without type disco
 `value_probe_node` owns one operand and an `isset`/`empty` enum kind. Prepared probe
 facts retain the admitted operation and boolean value type; workers own admission
 and the runtime helpers own the distinct presence/emptiness semantics.
+Plain enum presence retains the existing always-true observation, which still evaluates
+its operand once. Keyed paths establish leaf existence first. Nullable/Result leaves
+retain their explicit wrapper presence decision too, so concrete carriers do not
+accidentally fall through a generic native probe as always-present records. Ordinary
+and prelowered output reuse existing keyed lookup and wrapper adapters; no enum
+condition or emptiness permission follows from presence admission.
 `take_expression_node` owns source, value binding and optional alternative binding.
 Assignment and helper spellings share this node. `prepared_take` records the admitted
 wrapper operation; preparation validates existing output places and copy capability.

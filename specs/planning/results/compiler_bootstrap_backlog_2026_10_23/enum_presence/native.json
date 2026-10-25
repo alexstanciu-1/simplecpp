@@ -1,0 +1,27 @@
+[
+  {
+    "name": "ordinary",
+    "seconds": 20.142685800994514,
+    "passed": true
+  },
+  {
+    "name": "concrete",
+    "seconds": 26.666188972012606,
+    "passed": true
+  },
+  {
+    "name": "plain-empty",
+    "seconds": 0.51831891600159,
+    "passed": true
+  },
+  {
+    "name": "keyed-empty",
+    "seconds": 0.5615755970065948,
+    "passed": true
+  },
+  {
+    "name": "condition",
+    "seconds": 0.5258867939992342,
+    "passed": true
+  }
+]

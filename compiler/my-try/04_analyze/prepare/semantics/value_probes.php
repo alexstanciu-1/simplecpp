@@ -42,11 +42,18 @@ final class Value_Probe_Preparation
 			if (($definition instanceof callable_type_definition) || ($definition instanceof closure_type_definition)) {
 				$facts->presence = Condition_Truthiness::decide($probe_type);
 			}
+			// An enum case is present independently of its backing value. Keyed lookup
+			// still establishes leaf existence before this observation is evaluated.
+			if (Type_Queries::is_enum($probe_type)) {
+				$facts->presence = new truthiness_decision();
+				$facts->presence->source_type = $probe_type;
+				$facts->presence->operation = truthiness_operation::always_true;
+			}
 			// Wrapper probes observe outer state, never the payload's truthiness or presence.
 			$payload = Nullable_Conversions::payload($probe_type);
 			$result_role = Result_Conversions::role($probe_type);
 			if ($result_role !== null) { $payload = Result_Conversions::require_payload($probe_type, $result_role); }
-			if (($facts->path === null) && ($payload !== null)) {
+			if ($payload !== null) {
 				$facts->presence = new truthiness_decision();
 				$facts->presence->source_type = $probe_type;
 				$facts->presence->operation = truthiness_operation::value_presence;
@@ -75,6 +82,7 @@ final class Value_Probe_Preparation
 		if ($type->by_value()) {
 			throw new \RuntimeException('S2S probes do not support effective storage modifiers');
 		}
+		if (Type_Queries::is_enum($type)) { return; }
 		$payload = Nullable_Conversions::payload($type);
 		if (Ownership_Conversions::role($type) !== null) {
 			Ownership_Conversions::require_presence($type);

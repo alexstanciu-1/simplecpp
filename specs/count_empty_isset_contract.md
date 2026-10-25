@@ -70,6 +70,19 @@ null comparisons are rejected during preparation. Legacy runtime weak observers
 do not grant source-level permission or keep the observed object alive.
 Ownership handles do not acquire a `count` contract.
 
+### v0.2 enum presence — 2026-10-25
+
+`isset` accepts initialized plain enum values and enum-valued keyed leaves.
+Every initialized enum case is present, independently of its backing value: zero,
+negative values and the first unit-enum case are not absence. Plain operands are
+evaluated exactly once, preserving their effects before returning true.
+
+Keyed probes require successful lookup before observing the enum value. Missing
+keys return false without inserting entries; nested keys remain lazy and later key
+expressions are not evaluated after a missing prefix. Existing nullable/Result leaf
+state rules remain authoritative. Presence does not copy or consume the enum.
+This admission does not grant enum conditions, `empty`, or `count`.
+
 ### v0.2 callable presence
 
 Explicit `function<R(Args...)>` storage is present exactly when it contains a

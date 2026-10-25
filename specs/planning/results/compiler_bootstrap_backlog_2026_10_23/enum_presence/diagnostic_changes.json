@@ -1,0 +1,8 @@
+{
+  "previous": 17,
+  "current": 16,
+  "removed": [
+    "S2S value probes require a scalar, nullable scalar, Result scalar, mixed, registered container or null"
+  ],
+  "added": []
+}

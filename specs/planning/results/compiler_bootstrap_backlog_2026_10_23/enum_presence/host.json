@@ -1,0 +1,17 @@
+[
+  {
+    "name": "value_probes",
+    "seconds": 0.9501007790095173,
+    "passed": true
+  },
+  {
+    "name": "type_capabilities",
+    "seconds": 0.4496303200139664,
+    "passed": true
+  },
+  {
+    "name": "incremental_preparation",
+    "seconds": 0.5613771500065923,
+    "passed": true
+  }
+]
