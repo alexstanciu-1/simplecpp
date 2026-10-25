@@ -1734,3 +1734,15 @@ Bootstrap: 2:55.38 / 610504 KiB RSS / 578.5 MiB heap. First failure moves to obj
 narrowing requiring a polymorphic source. Same 19 diagnostic categories remain,
 including other projected receiver sites. No new semantics introduced; native and
 second-generation compiler validation remain outstanding.
+
+## Static-member fact narrowing audit — 2026-10-25
+
+User requested audit/proposal before implementation. Confirmed the actual mixed
+static-member path has enum, constant and property alternatives while its generic
+prepared_expression base is nonpolymorphic. Existing rules correctly reject
+narrowing; neither abstract PHP spelling nor a polymorphic descendant fixes that.
+[Proposal](compiler_static_member_facts_audit_2026_10_25.md): node-owned private typed
+alternatives, concrete publication, checked accessors, existing generic upcast and
+cleanup entrypoints, no duplicated base fact or new language semantics. Includes
+consumer/writer map, reuse, alternatives, medium workload and required proofs.
+No source implementation or repeated bootstrap in this audit; design awaits discussion.
