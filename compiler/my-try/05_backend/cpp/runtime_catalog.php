@@ -139,17 +139,22 @@ final class CPP_Runtime_Catalog
 	/** Callable installation follows both semantic and type-binding installation. */
 	public static function install(runtime_catalog_input $input): void
 	{
-		Model::$cpp_property_bindings = new \SplObjectStorage /** hash<runtime_cpp_spec, runtime_property_definition> */();
-		foreach ($input->modules as $module) {
-			foreach ($module->cpp_properties as $property_binding) {
-				$property = Model::$runtime_members->property_identity($property_binding->identity);
-				Model::$cpp_property_bindings[$property] = $property_binding;
-			}
-			foreach ($module->cpp as $binding) {
-				$target = Model::$runtime_callables->function_definition($binding->identity);
-				Model::$cpp_callable_bindings->bind_function($target, $binding->symbol, $binding->header, $binding->source_context, $binding->native_payloads);
+		$properties /** hash<runtime_cpp_spec, runtime_property_definition> */ = new \SplObjectStorage /** hash<runtime_cpp_spec, runtime_property_definition> */();
+		Model::$cpp_property_bindings = $properties;
+		// Installation callees do not observe this map; publish partial state on failure too.
+		try {
+			foreach ($input->modules as $module) {
+				foreach ($module->cpp_properties as $property_binding) {
+					$property = Model::$runtime_members->property_identity($property_binding->identity);
+					$properties[$property] = $property_binding;
+				}
+				foreach ($module->cpp as $binding) {
+					$target = Model::$runtime_callables->function_definition($binding->identity);
+					Model::$cpp_callable_bindings->bind_function($target, $binding->symbol, $binding->header, $binding->source_context, $binding->native_payloads);
+				}
 			}
 		}
+		finally { Model::$cpp_property_bindings = $properties; }
 	}
 
 	public static function property(registered_property $property, cpp_generation_context $context): string

@@ -1893,3 +1893,13 @@ reproduce on unchanged parent sources and are documented separately.
 Owner-instrumented bootstrap 1:29.97 / 633292 KiB RSS / 600.5 MiB heap; categories
 7 -> 3, five failing owners. Auditing a source-only local map publication for static
 indexing; JSON contract and nonpolymorphic narrowing remain separate discussion items.
+
+## Local runtime property-map publication — 2026-10-25
+
+Local object-keyed hash plus finally publication preserves success/failure state;
+installation callees do not observe the working map. Production-method identity,
+ordering and failure proof passes both routes; three host suites pass.
+[Evidence](results/compiler_bootstrap_backlog_2026_10_23/static_property_map/README.md).
+Standard bootstrap 1:30.31 / 633432 KiB RSS / 600.5 MiB heap; categories 3 -> 2.
+JSON binding and nonpolymorphic narrowing remain; snapshot syntax-based recognition
+is being tested independently.

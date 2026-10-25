@@ -1,0 +1,20 @@
+{
+    "elapsed_seconds": 89.897788597,
+    "peak_php_bytes": 629669888,
+    "last_stage": "prepare",
+    "events": [
+        {
+            "stage": "initialize",
+            "seconds": 0.304961303
+        },
+        {
+            "stage": "sync",
+            "seconds": 3.930804128
+        }
+    ],
+    "failure": {
+        "class": "RuntimeException",
+        "message": "Required object boundary rejects null; declare a nullable object type\nObject narrowing requires a polymorphic source\n"
+    },
+    "fatal": null
+}

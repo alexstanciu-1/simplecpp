@@ -1,0 +1,17 @@
+[
+  {
+    "name": "runtime_types",
+    "seconds": 1.3602423050033394,
+    "passed": true
+  },
+  {
+    "name": "runtime_protocols",
+    "seconds": 0.9734590979933273,
+    "passed": true
+  },
+  {
+    "name": "incremental_preparation",
+    "seconds": 0.7132683579984587,
+    "passed": true
+  }
+]
