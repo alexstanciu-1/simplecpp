@@ -1209,3 +1209,43 @@ and storage diagnostics and tests of fresh identity and shared aliases.
 BIND-01 will review an ordinary shared-returning runtime factory first. This debt
 must not gate that factory route if existing runtime-call contracts suffice. Source
 class construction and broader ownership-modified construction are separate scopes.
+
+## CH15-REQUIRED-FIELD-INIT-01 — temporary bootstrap initialization exception
+
+Status: open review debt requested 2026-10-25. The user requested a temporary
+initialization relaxation to reach the native compiler milestone. Exact scope is
+awaiting clarification; no relaxation has been implemented by this debt entry.
+This entry does not silently change normative required/nullable contracts or add
+a new milestone blocker. Review the exception before declaring final language
+initialization policy settled.
+
+Proposed bounded scope: required nominal shared-object instance/static fields may
+start with empty storage (omitted initializer or explicit null). Preserve Node vs
+?Node frontend identity, ordinary later null-write rejection, and required callable
+boundaries. Whether the user wants a broader relaxation is still an open question.
+Struct/provider/enum defaults and ownership-family contracts remain separate.
+
+Reuse findings: Declaration_Preparation::prepare_field_value and
+Constructor_Preparation::signature own the current direct/set-initialization gates.
+Property_Defaults currently routes explicit null through ordinary assignment
+conversion. CPP_Declarations already emits default-initialized member handles and
+{} static definitions when no default exists. Do not globally change
+Object_Construction_Preparation::supports_default or nullable conversion rules just
+to admit field storage: those are also consumed by unrelated construction and
+parameter/default contracts. A field-specific fact/policy must retain ordinary and
+template-prelowering parity, including outlined constructors and synthesized data.
+
+Audit premature-use behavior explicitly. shared_p::operator-> and deref check
+presence, but arrow() exposes the raw pointer and copying an empty handle is not
+itself a checked read. Existing runtime checks therefore do not prove PHP-style
+failure on every uninitialized field read. Decide the temporary author obligation,
+error behavior and eventual static/runtime checks rather than claiming enforcement
+that has not been implemented. Check constructor set: default propagation so an
+empty storage exception does not silently permit ordinary null arguments.
+
+Closure review: settle omitted versus explicit-null defaults, instance/static and
+inherited fields, data construction, required argument/return/write boundaries,
+premature read/use, incremental invalidation, ordinary/prelowered code generation,
+and portable PHP behavior. Either retire the exception and complete source
+adaptations, or document/test the deliberately retained language contract. Do not
+claim proof from a successful compiler bootstrap alone.
