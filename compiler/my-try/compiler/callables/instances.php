@@ -32,7 +32,8 @@ final class Callable_Instances
 		$lexical = new scope();
 		$lexical->set_parent(weakref_get($origin->scope));
 		$members /** Storage<declaration_node> */ = new Storage();
-		$members->append($origin->callable_syntax());
+		$member /** declaration_node */ = $origin->callable_syntax();
+		$members->append($member);
 		$run = new Parser_Run(Source_Fragments::snapshot($origin->token_snapshot()), $lexical);
 		$parsed = $run->parse_member_fragments(object_cast($declaring, collected_record::class), $members);
 		$declarations /** Storage<declaration_node> */ = $parsed->root->single_body()->declarations;

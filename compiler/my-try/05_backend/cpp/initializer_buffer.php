@@ -78,7 +78,10 @@ final class CPP_Initializer_Buffer
 		$request->initialization = $binding;
 		$request->result = $binding->target();
 		$inputs /** Storage<canonical_type_use> */ = $request->inputs;
-		if ($key_type !== null) { $inputs->append($key_type); }
+		if ($key_type !== null) {
+			$required_key /** canonical_type_use */ = $key_type;
+			$inputs->append($required_key);
+		}
 		$inputs->append($value_type);
 		$entry = CPP_Runtime_Operations::reference($request, $context);
 		return 'scpp::internal::' . $entry->name;

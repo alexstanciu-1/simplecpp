@@ -1,0 +1,8 @@
+{
+  "before_count": 16,
+  "after_count": 16,
+  "before_first": "S2S runtime call requires one exact signature or a unique checked-payload signature; use explicit argument types",
+  "after_first": "S2S data construction requires a known concrete target",
+  "removed": [],
+  "added": []
+}

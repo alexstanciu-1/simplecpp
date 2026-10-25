@@ -86,7 +86,8 @@ final class Runtime_Callables
 		Callable_Contracts::validate($signature);
 		$target = new registered_function($key, $name, $signature);
 		$functions /** Keyed_Storage<runtime_function_definition> */ = $this->functions;
-		$functions->add($key, $target);
+		$entry /** runtime_function_definition */ = $target;
+		$functions->add($key, $entry);
 		return $target;
 	}
 
@@ -96,7 +97,8 @@ final class Runtime_Callables
 		$this->require_unused_key($key);
 		$target = new registered_generic_function($key, $name, $contract);
 		$functions /** Keyed_Storage<runtime_function_definition> */ = $this->functions;
-		$functions->add($key, $target);
+		$entry /** runtime_function_definition */ = $target;
+		$functions->add($key, $entry);
 		return $target;
 	}
 

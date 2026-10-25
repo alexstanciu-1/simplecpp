@@ -1841,3 +1841,17 @@ Nine previously reported owners contain untyped foreach list literals. Minimal p
 show typed vector<string> locals prepare/emit in both modes, while bare literals fail.
 Recommend source annotations and original evaluation order, no inference redesign.
 No production fixes or bootstrap rerun. [Evidence](results/compiler_bootstrap_backlog_2026_10_23/foreach_literal_audit/README.md).
+
+## Approved runtime argument views — 2026-10-25
+
+Applied PHP-only typed locals at the five audited owners, reusing safe upcast and
+checked nullable extraction. Extracted production statements pass PHP/v0.1/both
+v0.2 native proofs for identity, insertion order and absent-key handling. Host
+callable_instances, runtime_payload_calls and incremental_preparation pass.
+[Evidence](results/compiler_bootstrap_backlog_2026_10_23/runtime_argument_views/README.md).
+
+Bootstrap: 1:49.77 / 625588 KiB RSS / 592.5 MiB heap. Same 16 diagnostic categories,
+first now data construction without a concrete target. Runtime-call matching remains
+later, so category elimination is not claimed. Stopped before the previously audited
+foreach literal source fixes; native compiler and second-generation acceptance remain
+outstanding.

@@ -1,0 +1,17 @@
+[
+  {
+    "name": "callable_instances",
+    "seconds": 0.6933309939922765,
+    "passed": true
+  },
+  {
+    "name": "runtime_payload_calls",
+    "seconds": 1.1523619129729923,
+    "passed": true
+  },
+  {
+    "name": "incremental_preparation",
+    "seconds": 0.6017734979977831,
+    "passed": true
+  }
+]

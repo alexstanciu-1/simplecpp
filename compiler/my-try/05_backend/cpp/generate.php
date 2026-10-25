@@ -89,7 +89,8 @@ final class CPP_Generator
 						continue;
 					}
 					if ($definition instanceof collected_interface) {
-						$ordered->append(object_cast(object_cast($definition, collected_interface::class)->contract_work, type_contract_work::class));
+						$contract_owner /** preparation_owner */ = object_cast(object_cast($definition, collected_interface::class)->contract_work, type_contract_work::class);
+						$ordered->append($contract_owner);
 					}
 					else { $ordered->append(object_cast($definition->preparation_work_owner(), preparation_owner::class)); }
 					if ($node instanceof callable_declaration_node) {
