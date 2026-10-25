@@ -25,7 +25,7 @@ with tempfile.TemporaryDirectory(prefix="scpp-json-document-") as directory:
     assert analysis.returncode == 0, analysis.stdout + analysis.stderr
     report = json.loads((project / ".prism/cache/stan_report.json").read_text())
     assert report["compile_error_count"] == 0 and report["stan_error_count"] == 0, report
-    (project / "main.phs").write_text('$diag json_parse_error = null;\njson_document_parse("null", $diag, "bad depth");\n')
+    (project / "main.phs").write_text('$diag ?json_parse_error = null;\njson_document_parse("null", $diag, "bad depth");\n')
     rejected = run("build")
     assert rejected.returncode != 0, rejected.stdout + rejected.stderr
     analysis = run("stan")

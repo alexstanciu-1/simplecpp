@@ -6,7 +6,7 @@ Reference target: JSON schema reading, not a PHP builtin compatibility alias.
 
 ## Signature and behavior
 
-`json_document_parse(string text, json_parse_error &diagnostic, int max_depth = 128): result<json_document>`
+`json_document_parse(string text, ?json_parse_error &diagnostic, int max_depth = 128): result<json_document>`
 
 Parses one complete UTF-8 JSON document into an immutable handle. On success diagnostic is null; on parse failure the result is an error and diagnostic carries category, byte_offset and message. Default max_depth is 128; allowed range is 1..256. No partial document is exposed.
 

@@ -1,5 +1,5 @@
 use json_node as Node;
-$diagnostic json_parse_error;
+$diagnostic ?json_parse_error = null;
 $document json_document = json_document_parse('{"items":[17,true,"ok"],"nothing":null}', $diagnostic);
 if (isset($diagnostic)) { return 1; }
 $root Node = json_document_root($document);

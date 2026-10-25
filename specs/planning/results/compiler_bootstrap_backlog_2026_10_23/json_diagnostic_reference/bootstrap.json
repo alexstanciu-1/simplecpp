@@ -1,0 +1,20 @@
+{
+    "elapsed_seconds": 91.342676124,
+    "peak_php_bytes": 629669888,
+    "last_stage": "prepare",
+    "events": [
+        {
+            "stage": "initialize",
+            "seconds": 0.307225037
+        },
+        {
+            "stage": "sync",
+            "seconds": 4.067713572
+        }
+    ],
+    "failure": {
+        "class": "RuntimeException",
+        "message": "Object narrowing requires a polymorphic source\n"
+    },
+    "fatal": null
+}

@@ -60,7 +60,7 @@ class Json_View {
 }
 function json_read(string $text): Json_View {
     $document json_document;
-    $diagnostic json_parse_error = null;
+    $diagnostic ?json_parse_error = null;
     $failure error;
     if (!take($document, $failure, json_document_parse($text, $diagnostic, 128))) {
         throw new \scpp_portability_json_exception('Invalid JSON');

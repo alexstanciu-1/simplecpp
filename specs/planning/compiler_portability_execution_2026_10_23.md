@@ -1915,3 +1915,12 @@ three failing owners in two categories: JSON required-null binding and construct
 fact narrowing. Broad PHP-source pass reduced categories 16 -> 2. Stop for discussion
 of binding correction and coordinated construction-fact publication/accessors; native
 compiler and second-generation acceptance remain outstanding.
+
+## Nullable JSON diagnostic binding — 2026-10-25
+
+Approved nullable output-reference correction matches existing runtime behavior.
+Wrapper/current API fixtures updated. v0.1/both v0.2 native proofs pass success,
+failure, reset and retained diagnostic identity.
+[Evidence](results/compiler_bootstrap_backlog_2026_10_23/json_diagnostic_reference/README.md).
+Bootstrap 1:31.76 / 633640 KiB RSS / 600.5 MiB heap: JSON failure clears, only
+construction-fact narrowing remains. Approved typed-facts work continues.

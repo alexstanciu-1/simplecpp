@@ -9,7 +9,7 @@ foreach ([
 	'$value = new json_document();',
 	'$value = new file_lock_handle();',
 	'$handle process_handle; $wrong int = process_poll($handle);',
-	'$diagnostic json_parse_error; $value = json_document_parse("null", $diagnostic, "wrong");',
+	'$diagnostic ?json_parse_error = null; $value = json_document_parse("null", $diagnostic, "wrong");',
 	'$handle file_lock_handle; fs_lock_try($handle, 17);',
 	'$output process_output; $output->exit_code = "wrong";',
 	'$node json_node; $node->unknown = 1;',

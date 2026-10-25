@@ -6,7 +6,7 @@ echo manifest_status('{"source_folders":[false]}'), "\n";
 echo manifest_status('[]'), "\n";
 echo manifest_status('{}'), "\n";
 $doc json_document;
-$diag json_parse_error = null;
+$diag ?json_parse_error = null;
 $err error;
 if (take($doc, $err, json_document_parse('{"0":"first","01":false,"n":9223372036854775808}', $diag))) {
     $holder = new Document_Holder();

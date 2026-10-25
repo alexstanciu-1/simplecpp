@@ -26,7 +26,7 @@
     {"id":"json.json_pull_reader.finish_document","name":"finish_document","member":{"owner":"json_pull_reader","dispatch":"instance"},"parameters":[],"returns":{"name":"result","arguments":["bool"]}},
     {"id":"json.json_pull_reader.reject","name":"reject","member":{"owner":"json_pull_reader","dispatch":"instance"},"parameters":[{"name":"message","type":"string","passing":"value"}],"returns":{"name":"result","arguments":["bool"]}},
 
-    {"id":"json.json_document_parse","name":"json_document_parse","parameters":[{"name":"text","type":"string","passing":"value"},{"name":"diagnostic","type":"json_parse_error","passing":"reference"},{"name":"max_depth","type":"int","passing":"value","default":{"int":128}}],"returns":{"name":"result","arguments":["json_document"]}},
+    {"id":"json.json_document_parse","name":"json_document_parse","parameters":[{"name":"text","type":"string","passing":"value"},{"name":"diagnostic","type":{"name":"nullable","arguments":["json_parse_error"]},"passing":"reference"},{"name":"max_depth","type":"int","passing":"value","default":{"int":128}}],"returns":{"name":"result","arguments":["json_document"]}},
     {"id":"json.json_document_root","name":"json_document_root","parameters":[{"name":"document","type":"json_document","passing":"value"}],"returns":{"name":"result","arguments":["json_node"]}},
     {"id":"json.json_node_kind","name":"json_node_kind","parameters":[{"name":"node","type":"json_node","passing":"value"}],"returns":{"name":"result","arguments":["string"]}},
     {"id":"json.json_node_size","name":"json_node_size","parameters":[{"name":"node","type":"json_node","passing":"value"}],"returns":{"name":"result","arguments":["int"]}},

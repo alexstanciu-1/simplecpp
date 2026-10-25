@@ -32,7 +32,7 @@ Use `take(...)`. Public aliases are `json_document`, `json_node`, `json_parse_er
 
 | Function | Return / meaning |
 | --- | --- |
-| `json_document_parse(string text, json_parse_error &diagnostic, int max_depth = 128)` | `result<json_document>` |
+| `json_document_parse(string text, ?json_parse_error &diagnostic, int max_depth = 128)` | `result<json_document>` |
 | `json_document_root(json_document document)` | `result<json_node>` |
 | `json_node_kind(json_node node)` | `result<string>`: `null`, `boolean`, `number`, `string`, `array`, `object` |
 | `json_node_size(json_node node)` | `result<int>`: array length or distinct object member count |

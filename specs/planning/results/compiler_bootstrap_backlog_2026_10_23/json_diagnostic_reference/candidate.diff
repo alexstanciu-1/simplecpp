@@ -1,0 +1,65 @@
+diff --git a/runtime/metadata/modules/json.json b/runtime/metadata/modules/json.json
+index c4d0644f7..e031e526b 100644
+--- a/runtime/metadata/modules/json.json
++++ b/runtime/metadata/modules/json.json
+@@ -26,7 +26,7 @@
+     {"id":"json.json_pull_reader.finish_document","name":"finish_document","member":{"owner":"json_pull_reader","dispatch":"instance"},"parameters":[],"returns":{"name":"result","arguments":["bool"]}},
+     {"id":"json.json_pull_reader.reject","name":"reject","member":{"owner":"json_pull_reader","dispatch":"instance"},"parameters":[{"name":"message","type":"string","passing":"value"}],"returns":{"name":"result","arguments":["bool"]}},
+ 
+-    {"id":"json.json_document_parse","name":"json_document_parse","parameters":[{"name":"text","type":"string","passing":"value"},{"name":"diagnostic","type":"json_parse_error","passing":"reference"},{"name":"max_depth","type":"int","passing":"value","default":{"int":128}}],"returns":{"name":"result","arguments":["json_document"]}},
++    {"id":"json.json_document_parse","name":"json_document_parse","parameters":[{"name":"text","type":"string","passing":"value"},{"name":"diagnostic","type":{"name":"nullable","arguments":["json_parse_error"]},"passing":"reference"},{"name":"max_depth","type":"int","passing":"value","default":{"int":128}}],"returns":{"name":"result","arguments":["json_document"]}},
+     {"id":"json.json_document_root","name":"json_document_root","parameters":[{"name":"document","type":"json_document","passing":"value"}],"returns":{"name":"result","arguments":["json_node"]}},
+     {"id":"json.json_node_kind","name":"json_node_kind","parameters":[{"name":"node","type":"json_node","passing":"value"}],"returns":{"name":"result","arguments":["string"]}},
+     {"id":"json.json_node_size","name":"json_node_size","parameters":[{"name":"node","type":"json_node","passing":"value"}],"returns":{"name":"result","arguments":["int"]}},
+diff --git a/specs/builtins/json/document.md b/specs/builtins/json/document.md
+index 0e44e6eea..cc1888f87 100644
+--- a/specs/builtins/json/document.md
++++ b/specs/builtins/json/document.md
+@@ -32,7 +32,7 @@ Use `take(...)`. Public aliases are `json_document`, `json_node`, `json_parse_er
+ 
+ | Function | Return / meaning |
+ | --- | --- |
+-| `json_document_parse(string text, json_parse_error &diagnostic, int max_depth = 128)` | `result<json_document>` |
++| `json_document_parse(string text, ?json_parse_error &diagnostic, int max_depth = 128)` | `result<json_document>` |
+ | `json_document_root(json_document document)` | `result<json_node>` |
+ | `json_node_kind(json_node node)` | `result<string>`: `null`, `boolean`, `number`, `string`, `array`, `object` |
+ | `json_node_size(json_node node)` | `result<int>`: array length or distinct object member count |
+diff --git a/specs/builtins/json/json_document_parse.md b/specs/builtins/json/json_document_parse.md
+index 9fb6c4ba2..c427857d0 100644
+--- a/specs/builtins/json/json_document_parse.md
++++ b/specs/builtins/json/json_document_parse.md
+@@ -6,7 +6,7 @@ Reference target: JSON schema reading, not a PHP builtin compatibility alias.
+ 
+ ## Signature and behavior
+ 
+-`json_document_parse(string text, json_parse_error &diagnostic, int max_depth = 128): result<json_document>`
++`json_document_parse(string text, ?json_parse_error &diagnostic, int max_depth = 128): result<json_document>`
+ 
+ Parses one complete UTF-8 JSON document into an immutable handle. On success diagnostic is null; on parse failure the result is an error and diagnostic carries category, byte_offset and message. Default max_depth is 128; allowed range is 1..256. No partial document is exposed.
+ 
+diff --git a/tests/tools/fixtures/json_document/schema.phs b/tests/tools/fixtures/json_document/schema.phs
+index 845e9e36f..1cc616d0e 100644
+--- a/tests/tools/fixtures/json_document/schema.phs
++++ b/tests/tools/fixtures/json_document/schema.phs
+@@ -1,7 +1,7 @@
+ // Schema validation owns list/nonempty/string requirements; parsing keeps shape.
+ function manifest_status(string $text): string {
+     $document json_document;
+-    $diagnostic json_parse_error = null;
++    $diagnostic ?json_parse_error = null;
+     $error error;
+     if (!take($document, $error, json_document_parse($text, $diagnostic))) { return "parse"; }
+     $root json_node;
+diff --git a/tools/php_portability/runtime/json_document.phs b/tools/php_portability/runtime/json_document.phs
+index 1f951ba26..bef61bc46 100644
+--- a/tools/php_portability/runtime/json_document.phs
++++ b/tools/php_portability/runtime/json_document.phs
+@@ -60,7 +60,7 @@ class Json_View {
+ }
+ function json_read(string $text): Json_View {
+     $document json_document;
+-    $diagnostic json_parse_error = null;
++    $diagnostic ?json_parse_error = null;
+     $failure error;
+     if (!take($document, $failure, json_document_parse($text, $diagnostic, 128))) {
+         throw new \scpp_portability_json_exception('Invalid JSON');

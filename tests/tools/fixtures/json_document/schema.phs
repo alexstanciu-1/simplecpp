@@ -1,7 +1,7 @@
 // Schema validation owns list/nonempty/string requirements; parsing keeps shape.
 function manifest_status(string $text): string {
     $document json_document;
-    $diagnostic json_parse_error = null;
+    $diagnostic ?json_parse_error = null;
     $error error;
     if (!take($document, $error, json_document_parse($text, $diagnostic))) { return "parse"; }
     $root json_node;
