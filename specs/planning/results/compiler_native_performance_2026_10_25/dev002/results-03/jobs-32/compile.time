@@ -1,0 +1,23 @@
+	Command being timed: "python3 /home/alex-ai/compiler-self-o2-20261025/monitor.py /home/alex-ai/compiler-self-o2-20261025/cache/artifacts/4b43ad943392b8df879fd412187826434c40e103597d81cf6014694304b42d65.bin /home/alex-ai/compiler-self-o2-20261025/results-03/jobs-32/threads.json"
+	User time (seconds): 67.60
+	System time (seconds): 50.50
+	Percent of CPU this job got: 105%
+	Elapsed (wall clock) time (h:mm:ss or m:ss): 1:51.77
+	Average shared text size (kbytes): 0
+	Average unshared data size (kbytes): 0
+	Average stack size (kbytes): 0
+	Average total size (kbytes): 0
+	Maximum resident set size (kbytes): 809468
+	Average resident set size (kbytes): 0
+	Major (requiring I/O) page faults: 0
+	Minor (reclaiming a frame) page faults: 32718677
+	Voluntary context switches: 2458
+	Involuntary context switches: 538
+	Swaps: 0
+	File system inputs: 0
+	File system outputs: 149088
+	Socket messages sent: 0
+	Socket messages received: 0
+	Signals delivered: 0
+	Page size (bytes): 4096
+	Exit status: 0

@@ -1,0 +1,22 @@
+[
+  {
+    "name": "clang-profile",
+    "command": [
+      "/usr/bin/time",
+      "-v",
+      "-o",
+      "/home/alex-ai/compiler-self-o2-20261025/clang-profile/build.time",
+      "php8.5",
+      "/home/alex-ai/compiler-self-o2-20261025/clang-profile/build.php",
+      "/home/alex-ai/compiler-self-o2-20261025/results-03/published",
+      "/home/alex-ai/compiler-self-o2-20261025/clang-profile/cache",
+      "-O2"
+    ],
+    "cwd": "/home/alex-ai/compiler-self-o2-20261025/repo",
+    "seconds": 384.34,
+    "code": 0,
+    "expected": 0,
+    "executor": "subprocess",
+    "executor_reason": "subprocess"
+  }
+]

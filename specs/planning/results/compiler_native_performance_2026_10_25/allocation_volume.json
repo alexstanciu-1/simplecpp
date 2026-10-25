@@ -1,0 +1,633 @@
+{
+  "total_requested_bytes": 580192188902,
+  "allocation_calls": 477356407,
+  "last_timestamp": 651369,
+  "binary_base": 97483813240832,
+  "top": [
+    {
+      "bytes": 54606192744,
+      "calls": 604212,
+      "stack": [
+        "0x7abe2a4bb903",
+        "scpp::internal::concrete_n_string_cb09c05d430d526c57669be36f53eaef91a464df3207777c50c6507bd74edd80::concrete_n_string_cb09c05d430d526c57669be36f53eaef91a464df3207777c50c6507bd74edd80",
+        "record_scppUqcompilerUqTokenizer::implementation_scppUqcompilerUqTokenizer__method_tokenU_end",
+        "record_scppUqcompilerUqTokenizer::implementation_scppUqcompilerUqTokenizer__method_tokenize",
+        "record_scppUqcompilerUqTokenizer::method_tokenize",
+        "record_scppUqcompilerUqSourceU_Frontend::implementation_run_for_type_scppUqcompilerUqSourceU_Frontend",
+        "record_scppUqcompilerUqCompiler::implementation_scppUqcompilerUqCompiler__method_frontend",
+        "scpp::internal::concrete_n_scpp_compiler_source_work_cf015c0b606b7c541b4ac517e05006655e8f6b6a057a59cf4bdb7aee2cd9d05f std::__invoke_impl<scpp::internal::concrete_n_scpp_compiler_source_work_cf015c0b606b7c541b4ac517e05006655e8f6b6a057a59cf4bdb7aee2cd9d05f, scpp::internal::callback_owner_concrete_n__function_806_n_806_n_w__69b7919f4ba51569b8ba8c53187c4e123f65dde1feb1a3a96afe69512544518e&, scpp::internal::concrete_n_scpp_compiler_source_work_cf015c0b606b7c541b4ac517e05006655e8f6b6a057a59cf4bdb7aee2cd9d05f>",
+        "std::_Function_handler<scpp::internal::concrete_n_scpp_compiler_source_work_cf015c0b606b7c541b4ac517e05006655e8f6b6a057a59cf4bdb7aee2cd9d05f ",
+        "scpp::callable_t<scpp::internal::concrete_n_scpp_compiler_source_work_cf015c0b606b7c541b4ac517e05006655e8f6b6a057a59cf4bdb7aee2cd9d05f ",
+        "std::_Function_handler<void ",
+        "std::thread::_State_impl<std::thread::_Invoker<std::tuple<scpp::tasks::detail::execute_worker_batch",
+        "0x7abe2a4ecdb3",
+        "0x7abe2a09cb83",
+        "0x7abe2a129ecb"
+      ]
+    },
+    {
+      "bytes": 45208723173,
+      "calls": 4490,
+      "stack": [
+        "0x7abe2a4bb903",
+        "std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::reserve",
+        "std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > std::__str_concat<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > >",
+        "scpp::internal::runtime_binary_b504b469e9c28a36d02ad90b3ce2cc602653a0abcae20c46c88e80cffceb8c48",
+        "record_scppUqcompilerUqCPPU_Specializations::implementation_scppUqcompilerUqCPPU_Specializations__method_appendU_artifacts",
+        "record_scppUqcompilerUqCPPU_Specializations::method_appendU_artifacts",
+        "record_scppUqcompilerUqCPPU_Generator::implementation_scppUqcompilerUqCPPU_Generator__method_generateU_program",
+        "record_scppUqcompilerUqCPPU_Generator::method_generateU_program",
+        "record_scppUqcompilerUqCompiler::implementation_scppUqcompilerUqCompiler__method_cpp",
+        "record_scppUqcompilerUqCompiler::method_cpp",
+        "record_scppUqcompilerUqCompiler::implementation_scppUqcompilerUqCompiler__method_execU_cpp",
+        "record_scppUqcompilerUqCompiler::method_execU_cpp",
+        "application_body",
+        "scpp::internal::run_application",
+        "0x7abe2a02a1c9",
+        "0x7abe2a02a28a",
+        "_start"
+      ]
+    },
+    {
+      "bytes": 45208723173,
+      "calls": 4490,
+      "stack": [
+        "0x7abe2a4bb903",
+        "scpp::internal::concrete_n_string_cb09c05d430d526c57669be36f53eaef91a464df3207777c50c6507bd74edd80::concrete_n_string_cb09c05d430d526c57669be36f53eaef91a464df3207777c50c6507bd74edd80",
+        "record_scppUqcompilerUqCPPU_Specializations::implementation_scppUqcompilerUqCPPU_Specializations__method_appendU_artifacts",
+        "record_scppUqcompilerUqCPPU_Specializations::method_appendU_artifacts",
+        "record_scppUqcompilerUqCPPU_Generator::implementation_scppUqcompilerUqCPPU_Generator__method_generateU_program",
+        "record_scppUqcompilerUqCPPU_Generator::method_generateU_program",
+        "record_scppUqcompilerUqCompiler::implementation_scppUqcompilerUqCompiler__method_cpp",
+        "record_scppUqcompilerUqCompiler::method_cpp",
+        "record_scppUqcompilerUqCompiler::implementation_scppUqcompilerUqCompiler__method_execU_cpp",
+        "record_scppUqcompilerUqCompiler::method_execU_cpp",
+        "application_body",
+        "scpp::internal::run_application",
+        "0x7abe2a02a1c9",
+        "0x7abe2a02a28a",
+        "_start"
+      ]
+    },
+    {
+      "bytes": 45193418401,
+      "calls": 4489,
+      "stack": [
+        "0x7abe2a4bb903",
+        "scpp::internal::concrete_n_string_cb09c05d430d526c57669be36f53eaef91a464df3207777c50c6507bd74edd80::concrete_n_string_cb09c05d430d526c57669be36f53eaef91a464df3207777c50c6507bd74edd80",
+        "record_scppUqcompilerUqCPPU_Specializations::implementation_scppUqcompilerUqCPPU_Specializations__method_appendU_artifacts",
+        "record_scppUqcompilerUqCPPU_Specializations::method_appendU_artifacts",
+        "record_scppUqcompilerUqCPPU_Generator::implementation_scppUqcompilerUqCPPU_Generator__method_generateU_program",
+        "record_scppUqcompilerUqCPPU_Generator::method_generateU_program",
+        "record_scppUqcompilerUqCompiler::implementation_scppUqcompilerUqCompiler__method_cpp",
+        "record_scppUqcompilerUqCompiler::method_cpp",
+        "record_scppUqcompilerUqCompiler::implementation_scppUqcompilerUqCompiler__method_execU_cpp",
+        "record_scppUqcompilerUqCompiler::method_execU_cpp",
+        "application_body",
+        "scpp::internal::run_application",
+        "0x7abe2a02a1c9",
+        "0x7abe2a02a28a",
+        "_start"
+      ]
+    },
+    {
+      "bytes": 45193418401,
+      "calls": 4489,
+      "stack": [
+        "0x7abe2a4bb903",
+        "scpp::internal::concrete_n_string_cb09c05d430d526c57669be36f53eaef91a464df3207777c50c6507bd74edd80::concrete_n_string_cb09c05d430d526c57669be36f53eaef91a464df3207777c50c6507bd74edd80",
+        "record_scppUqcompilerUqCPPU_Specializations::implementation_scppUqcompilerUqCPPU_Specializations__method_appendU_artifacts",
+        "record_scppUqcompilerUqCPPU_Specializations::method_appendU_artifacts",
+        "record_scppUqcompilerUqCPPU_Generator::implementation_scppUqcompilerUqCPPU_Generator__method_generateU_program",
+        "record_scppUqcompilerUqCPPU_Generator::method_generateU_program",
+        "record_scppUqcompilerUqCompiler::implementation_scppUqcompilerUqCompiler__method_cpp",
+        "record_scppUqcompilerUqCompiler::method_cpp",
+        "record_scppUqcompilerUqCompiler::implementation_scppUqcompilerUqCompiler__method_execU_cpp",
+        "record_scppUqcompilerUqCompiler::method_execU_cpp",
+        "application_body",
+        "scpp::internal::run_application",
+        "0x7abe2a02a1c9",
+        "0x7abe2a02a28a",
+        "_start"
+      ]
+    },
+    {
+      "bytes": 22781542097,
+      "calls": 6230,
+      "stack": [
+        "0x7abe2a4bb903",
+        "std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::reserve",
+        "std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > std::__str_concat<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > >",
+        "scpp::internal::runtime_binary_b504b469e9c28a36d02ad90b3ce2cc602653a0abcae20c46c88e80cffceb8c48",
+        "record_scppUqcompilerUqOutputU_Publication::implementation_scppUqcompilerUqOutputU_Publication__method_publish",
+        "record_scppUqcompilerUqOutputU_Publication::method_publish",
+        "record_scppUqcompilerUqCompiler::implementation_scppUqcompilerUqCompiler__method_cpp",
+        "record_scppUqcompilerUqCompiler::method_cpp",
+        "record_scppUqcompilerUqCompiler::implementation_scppUqcompilerUqCompiler__method_execU_cpp",
+        "record_scppUqcompilerUqCompiler::method_execU_cpp",
+        "application_body",
+        "scpp::internal::run_application",
+        "0x7abe2a02a1c9",
+        "0x7abe2a02a28a",
+        "_start"
+      ]
+    },
+    {
+      "bytes": 22781542097,
+      "calls": 6230,
+      "stack": [
+        "0x7abe2a4bb903",
+        "scpp::internal::concrete_n_string_cb09c05d430d526c57669be36f53eaef91a464df3207777c50c6507bd74edd80::concrete_n_string_cb09c05d430d526c57669be36f53eaef91a464df3207777c50c6507bd74edd80",
+        "record_scppUqcompilerUqOutputU_Publication::implementation_scppUqcompilerUqOutputU_Publication__method_publish",
+        "record_scppUqcompilerUqOutputU_Publication::method_publish",
+        "record_scppUqcompilerUqCompiler::implementation_scppUqcompilerUqCompiler__method_cpp",
+        "record_scppUqcompilerUqCompiler::method_cpp",
+        "record_scppUqcompilerUqCompiler::implementation_scppUqcompilerUqCompiler__method_execU_cpp",
+        "record_scppUqcompilerUqCompiler::method_execU_cpp",
+        "application_body",
+        "scpp::internal::run_application",
+        "0x7abe2a02a1c9",
+        "0x7abe2a02a28a",
+        "_start"
+      ]
+    },
+    {
+      "bytes": 22776458823,
+      "calls": 6229,
+      "stack": [
+        "0x7abe2a4bb903",
+        "scpp::internal::concrete_n_string_cb09c05d430d526c57669be36f53eaef91a464df3207777c50c6507bd74edd80::concrete_n_string_cb09c05d430d526c57669be36f53eaef91a464df3207777c50c6507bd74edd80",
+        "record_scppUqcompilerUqOutputU_Publication::implementation_scppUqcompilerUqOutputU_Publication__method_publish",
+        "record_scppUqcompilerUqOutputU_Publication::method_publish",
+        "record_scppUqcompilerUqCompiler::implementation_scppUqcompilerUqCompiler__method_cpp",
+        "record_scppUqcompilerUqCompiler::method_cpp",
+        "record_scppUqcompilerUqCompiler::implementation_scppUqcompilerUqCompiler__method_execU_cpp",
+        "record_scppUqcompilerUqCompiler::method_execU_cpp",
+        "application_body",
+        "scpp::internal::run_application",
+        "0x7abe2a02a1c9",
+        "0x7abe2a02a28a",
+        "_start"
+      ]
+    },
+    {
+      "bytes": 22776458823,
+      "calls": 6229,
+      "stack": [
+        "0x7abe2a4bb903",
+        "scpp::internal::concrete_n_string_cb09c05d430d526c57669be36f53eaef91a464df3207777c50c6507bd74edd80::concrete_n_string_cb09c05d430d526c57669be36f53eaef91a464df3207777c50c6507bd74edd80",
+        "record_scppUqcompilerUqOutputU_Publication::implementation_scppUqcompilerUqOutputU_Publication__method_publish",
+        "record_scppUqcompilerUqOutputU_Publication::method_publish",
+        "record_scppUqcompilerUqCompiler::implementation_scppUqcompilerUqCompiler__method_cpp",
+        "record_scppUqcompilerUqCompiler::method_cpp",
+        "record_scppUqcompilerUqCompiler::implementation_scppUqcompilerUqCompiler__method_execU_cpp",
+        "record_scppUqcompilerUqCompiler::method_execU_cpp",
+        "application_body",
+        "scpp::internal::run_application",
+        "0x7abe2a02a1c9",
+        "0x7abe2a02a28a",
+        "_start"
+      ]
+    },
+    {
+      "bytes": 12027773465,
+      "calls": 4438,
+      "stack": [
+        "0x7abe2a4bb903",
+        "_ZN4scpp6hash_tINS_8internal82concrete_n_string_cb09c05d430d526c57669be36f53eaef91a464df3207777c50c6507bd74edd80ENS1_79concrete_n_int_ebd4c8f08856c4fac31841078980c195a23599b423d11ba32ba63ece111aa421EE3setERKS3_RKS2_Qaasr3stdE8copyableIT0_Esr3stdE8copyableIT_E",
+        "record_scppUqcompilerUqCPPU_Specializations::implementation_scppUqcompilerUqCPPU_Specializations__method_appendU_artifacts",
+        "record_scppUqcompilerUqCPPU_Specializations::method_appendU_artifacts",
+        "record_scppUqcompilerUqCPPU_Generator::implementation_scppUqcompilerUqCPPU_Generator__method_generateU_program",
+        "record_scppUqcompilerUqCPPU_Generator::method_generateU_program",
+        "record_scppUqcompilerUqCompiler::implementation_scppUqcompilerUqCompiler__method_cpp",
+        "record_scppUqcompilerUqCompiler::method_cpp",
+        "record_scppUqcompilerUqCompiler::implementation_scppUqcompilerUqCompiler__method_execU_cpp",
+        "record_scppUqcompilerUqCompiler::method_execU_cpp",
+        "application_body",
+        "scpp::internal::run_application",
+        "0x7abe2a02a1c9",
+        "0x7abe2a02a28a",
+        "_start"
+      ]
+    },
+    {
+      "bytes": 12027773465,
+      "calls": 4438,
+      "stack": [
+        "0x7abe2a4bb903",
+        "std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::reserve",
+        "std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > std::__str_concat<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > >",
+        "scpp::internal::runtime_binary_b504b469e9c28a36d02ad90b3ce2cc602653a0abcae20c46c88e80cffceb8c48",
+        "record_scppUqcompilerUqCPPU_Specializations::implementation_scppUqcompilerUqCPPU_Specializations__method_appendU_artifacts",
+        "record_scppUqcompilerUqCPPU_Specializations::method_appendU_artifacts",
+        "record_scppUqcompilerUqCPPU_Generator::implementation_scppUqcompilerUqCPPU_Generator__method_generateU_program",
+        "record_scppUqcompilerUqCPPU_Generator::method_generateU_program",
+        "record_scppUqcompilerUqCompiler::implementation_scppUqcompilerUqCompiler__method_cpp",
+        "record_scppUqcompilerUqCompiler::method_cpp",
+        "record_scppUqcompilerUqCompiler::implementation_scppUqcompilerUqCompiler__method_execU_cpp",
+        "record_scppUqcompilerUqCompiler::method_execU_cpp",
+        "application_body",
+        "scpp::internal::run_application",
+        "0x7abe2a02a1c9",
+        "0x7abe2a02a28a",
+        "_start"
+      ]
+    },
+    {
+      "bytes": 12023809020,
+      "calls": 4435,
+      "stack": [
+        "0x7abe2a4bb903",
+        "scpp::internal::concrete_n_string_cb09c05d430d526c57669be36f53eaef91a464df3207777c50c6507bd74edd80::concrete_n_string_cb09c05d430d526c57669be36f53eaef91a464df3207777c50c6507bd74edd80",
+        "record_scppUqcompilerUqCPPU_Specializations::implementation_scppUqcompilerUqCPPU_Specializations__method_appendU_artifacts",
+        "record_scppUqcompilerUqCPPU_Specializations::method_appendU_artifacts",
+        "record_scppUqcompilerUqCPPU_Generator::implementation_scppUqcompilerUqCPPU_Generator__method_generateU_program",
+        "record_scppUqcompilerUqCPPU_Generator::method_generateU_program",
+        "record_scppUqcompilerUqCompiler::implementation_scppUqcompilerUqCompiler__method_cpp",
+        "record_scppUqcompilerUqCompiler::method_cpp",
+        "record_scppUqcompilerUqCompiler::implementation_scppUqcompilerUqCompiler__method_execU_cpp",
+        "record_scppUqcompilerUqCompiler::method_execU_cpp",
+        "application_body",
+        "scpp::internal::run_application",
+        "0x7abe2a02a1c9",
+        "0x7abe2a02a28a",
+        "_start"
+      ]
+    },
+    {
+      "bytes": 12023809020,
+      "calls": 4435,
+      "stack": [
+        "0x7abe2a4bb903",
+        "scpp::internal::concrete_n_string_cb09c05d430d526c57669be36f53eaef91a464df3207777c50c6507bd74edd80::concrete_n_string_cb09c05d430d526c57669be36f53eaef91a464df3207777c50c6507bd74edd80",
+        "record_scppUqcompilerUqCPPU_Specializations::implementation_scppUqcompilerUqCPPU_Specializations__method_appendU_artifacts",
+        "record_scppUqcompilerUqCPPU_Specializations::method_appendU_artifacts",
+        "record_scppUqcompilerUqCPPU_Generator::implementation_scppUqcompilerUqCPPU_Generator__method_generateU_program",
+        "record_scppUqcompilerUqCPPU_Generator::method_generateU_program",
+        "record_scppUqcompilerUqCompiler::implementation_scppUqcompilerUqCompiler__method_cpp",
+        "record_scppUqcompilerUqCompiler::method_cpp",
+        "record_scppUqcompilerUqCompiler::implementation_scppUqcompilerUqCompiler__method_execU_cpp",
+        "record_scppUqcompilerUqCompiler::method_execU_cpp",
+        "application_body",
+        "scpp::internal::run_application",
+        "0x7abe2a02a1c9",
+        "0x7abe2a02a28a",
+        "_start"
+      ]
+    },
+    {
+      "bytes": 11198753208,
+      "calls": 127263,
+      "stack": [
+        "0x7abe2a4bb903",
+        "scpp::internal::concrete_n_string_cb09c05d430d526c57669be36f53eaef91a464df3207777c50c6507bd74edd80::concrete_n_string_cb09c05d430d526c57669be36f53eaef91a464df3207777c50c6507bd74edd80",
+        "record_scppUqcompilerUqTokenizer::implementation_scppUqcompilerUqTokenizer__method_tokenU_end",
+        "record_scppUqcompilerUqTokenizer::implementation_scppUqcompilerUqTokenizer__method_tokenize",
+        "record_scppUqcompilerUqTokenizer::method_tokenize",
+        "record_scppUqcompilerUqSourceU_Frontend::implementation_run_for_type_scppUqcompilerUqSourceU_Frontend",
+        "record_scppUqcompilerUqCompiler::implementation_scppUqcompilerUqCompiler__method_frontend",
+        "scpp::internal::concrete_n_scpp_compiler_source_work_cf015c0b606b7c541b4ac517e05006655e8f6b6a057a59cf4bdb7aee2cd9d05f std::__invoke_impl<scpp::internal::concrete_n_scpp_compiler_source_work_cf015c0b606b7c541b4ac517e05006655e8f6b6a057a59cf4bdb7aee2cd9d05f, scpp::internal::callback_owner_concrete_n__function_806_n_806_n_w__69b7919f4ba51569b8ba8c53187c4e123f65dde1feb1a3a96afe69512544518e&, scpp::internal::concrete_n_scpp_compiler_source_work_cf015c0b606b7c541b4ac517e05006655e8f6b6a057a59cf4bdb7aee2cd9d05f>",
+        "std::_Function_handler<scpp::internal::concrete_n_scpp_compiler_source_work_cf015c0b606b7c541b4ac517e05006655e8f6b6a057a59cf4bdb7aee2cd9d05f ",
+        "scpp::callable_t<scpp::internal::concrete_n_scpp_compiler_source_work_cf015c0b606b7c541b4ac517e05006655e8f6b6a057a59cf4bdb7aee2cd9d05f ",
+        "std::_Function_handler<void ",
+        "std::thread::_State_impl<std::thread::_Invoker<std::tuple<scpp::tasks::detail::execute_worker_batch",
+        "0x7abe2a4ecdb3",
+        "0x7abe2a09cb83",
+        "0x7abe2a129ecb"
+      ]
+    },
+    {
+      "bytes": 6721753622,
+      "calls": 74744,
+      "stack": [
+        "0x7abe2a4bb903",
+        "scpp::internal::concrete_n_string_cb09c05d430d526c57669be36f53eaef91a464df3207777c50c6507bd74edd80::concrete_n_string_cb09c05d430d526c57669be36f53eaef91a464df3207777c50c6507bd74edd80",
+        "record_scppUqcompilerUqTokenizer::implementation_scppUqcompilerUqTokenizer__method_triviaU_end",
+        "record_scppUqcompilerUqTokenizer::implementation_scppUqcompilerUqTokenizer__method_tokenize",
+        "record_scppUqcompilerUqTokenizer::method_tokenize",
+        "record_scppUqcompilerUqSourceU_Frontend::implementation_run_for_type_scppUqcompilerUqSourceU_Frontend",
+        "record_scppUqcompilerUqCompiler::implementation_scppUqcompilerUqCompiler__method_frontend",
+        "scpp::internal::concrete_n_scpp_compiler_source_work_cf015c0b606b7c541b4ac517e05006655e8f6b6a057a59cf4bdb7aee2cd9d05f std::__invoke_impl<scpp::internal::concrete_n_scpp_compiler_source_work_cf015c0b606b7c541b4ac517e05006655e8f6b6a057a59cf4bdb7aee2cd9d05f, scpp::internal::callback_owner_concrete_n__function_806_n_806_n_w__69b7919f4ba51569b8ba8c53187c4e123f65dde1feb1a3a96afe69512544518e&, scpp::internal::concrete_n_scpp_compiler_source_work_cf015c0b606b7c541b4ac517e05006655e8f6b6a057a59cf4bdb7aee2cd9d05f>",
+        "std::_Function_handler<scpp::internal::concrete_n_scpp_compiler_source_work_cf015c0b606b7c541b4ac517e05006655e8f6b6a057a59cf4bdb7aee2cd9d05f ",
+        "scpp::callable_t<scpp::internal::concrete_n_scpp_compiler_source_work_cf015c0b606b7c541b4ac517e05006655e8f6b6a057a59cf4bdb7aee2cd9d05f ",
+        "std::_Function_handler<void ",
+        "std::thread::_State_impl<std::thread::_Invoker<std::tuple<scpp::tasks::detail::execute_worker_batch",
+        "0x7abe2a4ecdb3",
+        "0x7abe2a09cb83",
+        "0x7abe2a129ecb"
+      ]
+    },
+    {
+      "bytes": 4176071040,
+      "calls": 5911,
+      "stack": [
+        "0x7abe2a4bb903",
+        "scpp::internal::concrete_n_string_cb09c05d430d526c57669be36f53eaef91a464df3207777c50c6507bd74edd80::concrete_n_string_cb09c05d430d526c57669be36f53eaef91a464df3207777c50c6507bd74edd80",
+        "record_scppUqcompilerUqOutputU_Publication::implementation_scppUqcompilerUqOutputU_Publication__method_publish",
+        "record_scppUqcompilerUqOutputU_Publication::method_publish",
+        "record_scppUqcompilerUqCompiler::implementation_scppUqcompilerUqCompiler__method_cpp",
+        "record_scppUqcompilerUqCompiler::method_cpp",
+        "record_scppUqcompilerUqCompiler::implementation_scppUqcompilerUqCompiler__method_execU_cpp",
+        "record_scppUqcompilerUqCompiler::method_execU_cpp",
+        "application_body",
+        "scpp::internal::run_application",
+        "0x7abe2a02a1c9",
+        "0x7abe2a02a28a",
+        "_start"
+      ]
+    },
+    {
+      "bytes": 4176071040,
+      "calls": 5911,
+      "stack": [
+        "0x7abe2a4bb903",
+        "std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::reserve",
+        "std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > std::__str_concat<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > >",
+        "scpp::internal::runtime_binary_b504b469e9c28a36d02ad90b3ce2cc602653a0abcae20c46c88e80cffceb8c48",
+        "record_scppUqcompilerUqOutputU_Publication::implementation_scppUqcompilerUqOutputU_Publication__method_publish",
+        "record_scppUqcompilerUqOutputU_Publication::method_publish",
+        "record_scppUqcompilerUqCompiler::implementation_scppUqcompilerUqCompiler__method_cpp",
+        "record_scppUqcompilerUqCompiler::method_cpp",
+        "record_scppUqcompilerUqCompiler::implementation_scppUqcompilerUqCompiler__method_execU_cpp",
+        "record_scppUqcompilerUqCompiler::method_execU_cpp",
+        "application_body",
+        "scpp::internal::run_application",
+        "0x7abe2a02a1c9",
+        "0x7abe2a02a28a",
+        "_start"
+      ]
+    },
+    {
+      "bytes": 4174741567,
+      "calls": 5910,
+      "stack": [
+        "0x7abe2a4bb903",
+        "scpp::internal::concrete_n_string_cb09c05d430d526c57669be36f53eaef91a464df3207777c50c6507bd74edd80::concrete_n_string_cb09c05d430d526c57669be36f53eaef91a464df3207777c50c6507bd74edd80",
+        "record_scppUqcompilerUqOutputU_Publication::implementation_scppUqcompilerUqOutputU_Publication__method_publish",
+        "record_scppUqcompilerUqOutputU_Publication::method_publish",
+        "record_scppUqcompilerUqCompiler::implementation_scppUqcompilerUqCompiler__method_cpp",
+        "record_scppUqcompilerUqCompiler::method_cpp",
+        "record_scppUqcompilerUqCompiler::implementation_scppUqcompilerUqCompiler__method_execU_cpp",
+        "record_scppUqcompilerUqCompiler::method_execU_cpp",
+        "application_body",
+        "scpp::internal::run_application",
+        "0x7abe2a02a1c9",
+        "0x7abe2a02a28a",
+        "_start"
+      ]
+    },
+    {
+      "bytes": 4174741567,
+      "calls": 5910,
+      "stack": [
+        "0x7abe2a4bb903",
+        "scpp::internal::concrete_n_string_cb09c05d430d526c57669be36f53eaef91a464df3207777c50c6507bd74edd80::concrete_n_string_cb09c05d430d526c57669be36f53eaef91a464df3207777c50c6507bd74edd80",
+        "record_scppUqcompilerUqOutputU_Publication::implementation_scppUqcompilerUqOutputU_Publication__method_publish",
+        "record_scppUqcompilerUqOutputU_Publication::method_publish",
+        "record_scppUqcompilerUqCompiler::implementation_scppUqcompilerUqCompiler__method_cpp",
+        "record_scppUqcompilerUqCompiler::method_cpp",
+        "record_scppUqcompilerUqCompiler::implementation_scppUqcompilerUqCompiler__method_execU_cpp",
+        "record_scppUqcompilerUqCompiler::method_execU_cpp",
+        "application_body",
+        "scpp::internal::run_application",
+        "0x7abe2a02a1c9",
+        "0x7abe2a02a28a",
+        "_start"
+      ]
+    },
+    {
+      "bytes": 3756829610,
+      "calls": 41750,
+      "stack": [
+        "0x7abe2a4bb903",
+        "scpp::internal::concrete_n_string_cb09c05d430d526c57669be36f53eaef91a464df3207777c50c6507bd74edd80::concrete_n_string_cb09c05d430d526c57669be36f53eaef91a464df3207777c50c6507bd74edd80",
+        "record_scppUqcompilerUqTokenizer::implementation_scppUqcompilerUqTokenizer__method_triviaU_end",
+        "record_scppUqcompilerUqTokenizer::implementation_scppUqcompilerUqTokenizer__method_tokenize",
+        "record_scppUqcompilerUqTokenizer::method_tokenize",
+        "record_scppUqcompilerUqSourceU_Frontend::implementation_run_for_type_scppUqcompilerUqSourceU_Frontend",
+        "record_scppUqcompilerUqCompiler::implementation_scppUqcompilerUqCompiler__method_frontend",
+        "scpp::internal::concrete_n_scpp_compiler_source_work_cf015c0b606b7c541b4ac517e05006655e8f6b6a057a59cf4bdb7aee2cd9d05f std::__invoke_impl<scpp::internal::concrete_n_scpp_compiler_source_work_cf015c0b606b7c541b4ac517e05006655e8f6b6a057a59cf4bdb7aee2cd9d05f, scpp::internal::callback_owner_concrete_n__function_806_n_806_n_w__69b7919f4ba51569b8ba8c53187c4e123f65dde1feb1a3a96afe69512544518e&, scpp::internal::concrete_n_scpp_compiler_source_work_cf015c0b606b7c541b4ac517e05006655e8f6b6a057a59cf4bdb7aee2cd9d05f>",
+        "std::_Function_handler<scpp::internal::concrete_n_scpp_compiler_source_work_cf015c0b606b7c541b4ac517e05006655e8f6b6a057a59cf4bdb7aee2cd9d05f ",
+        "scpp::callable_t<scpp::internal::concrete_n_scpp_compiler_source_work_cf015c0b606b7c541b4ac517e05006655e8f6b6a057a59cf4bdb7aee2cd9d05f ",
+        "std::_Function_handler<void ",
+        "std::thread::_State_impl<std::thread::_Invoker<std::tuple<scpp::tasks::detail::execute_worker_batch",
+        "0x7abe2a4ecdb3",
+        "0x7abe2a09cb83",
+        "0x7abe2a129ecb"
+      ]
+    },
+    {
+      "bytes": 3722462931,
+      "calls": 41367,
+      "stack": [
+        "0x7abe2a4bb903",
+        "scpp::internal::concrete_n_string_cb09c05d430d526c57669be36f53eaef91a464df3207777c50c6507bd74edd80::concrete_n_string_cb09c05d430d526c57669be36f53eaef91a464df3207777c50c6507bd74edd80",
+        "record_scppUqcompilerUqTokenizer::implementation_scppUqcompilerUqTokenizer__method_triviaU_end",
+        "record_scppUqcompilerUqTokenizer::implementation_scppUqcompilerUqTokenizer__method_tokenize",
+        "record_scppUqcompilerUqTokenizer::method_tokenize",
+        "record_scppUqcompilerUqSourceU_Frontend::implementation_run_for_type_scppUqcompilerUqSourceU_Frontend",
+        "record_scppUqcompilerUqCompiler::implementation_scppUqcompilerUqCompiler__method_frontend",
+        "scpp::internal::concrete_n_scpp_compiler_source_work_cf015c0b606b7c541b4ac517e05006655e8f6b6a057a59cf4bdb7aee2cd9d05f std::__invoke_impl<scpp::internal::concrete_n_scpp_compiler_source_work_cf015c0b606b7c541b4ac517e05006655e8f6b6a057a59cf4bdb7aee2cd9d05f, scpp::internal::callback_owner_concrete_n__function_806_n_806_n_w__69b7919f4ba51569b8ba8c53187c4e123f65dde1feb1a3a96afe69512544518e&, scpp::internal::concrete_n_scpp_compiler_source_work_cf015c0b606b7c541b4ac517e05006655e8f6b6a057a59cf4bdb7aee2cd9d05f>",
+        "std::_Function_handler<scpp::internal::concrete_n_scpp_compiler_source_work_cf015c0b606b7c541b4ac517e05006655e8f6b6a057a59cf4bdb7aee2cd9d05f ",
+        "scpp::callable_t<scpp::internal::concrete_n_scpp_compiler_source_work_cf015c0b606b7c541b4ac517e05006655e8f6b6a057a59cf4bdb7aee2cd9d05f ",
+        "std::_Function_handler<void ",
+        "std::thread::_State_impl<std::thread::_Invoker<std::tuple<scpp::tasks::detail::execute_worker_batch",
+        "0x7abe2a4ecdb3",
+        "0x7abe2a09cb83",
+        "0x7abe2a129ecb"
+      ]
+    },
+    {
+      "bytes": 3722203515,
+      "calls": 41364,
+      "stack": [
+        "0x7abe2a4bb903",
+        "scpp::internal::concrete_n_string_cb09c05d430d526c57669be36f53eaef91a464df3207777c50c6507bd74edd80::concrete_n_string_cb09c05d430d526c57669be36f53eaef91a464df3207777c50c6507bd74edd80",
+        "record_scppUqcompilerUqTokenizer::implementation_scppUqcompilerUqTokenizer__method_tokenU_end",
+        "record_scppUqcompilerUqTokenizer::implementation_scppUqcompilerUqTokenizer__method_tokenize",
+        "record_scppUqcompilerUqTokenizer::method_tokenize",
+        "record_scppUqcompilerUqSourceU_Frontend::implementation_run_for_type_scppUqcompilerUqSourceU_Frontend",
+        "record_scppUqcompilerUqCompiler::implementation_scppUqcompilerUqCompiler__method_frontend",
+        "scpp::internal::concrete_n_scpp_compiler_source_work_cf015c0b606b7c541b4ac517e05006655e8f6b6a057a59cf4bdb7aee2cd9d05f std::__invoke_impl<scpp::internal::concrete_n_scpp_compiler_source_work_cf015c0b606b7c541b4ac517e05006655e8f6b6a057a59cf4bdb7aee2cd9d05f, scpp::internal::callback_owner_concrete_n__function_806_n_806_n_w__69b7919f4ba51569b8ba8c53187c4e123f65dde1feb1a3a96afe69512544518e&, scpp::internal::concrete_n_scpp_compiler_source_work_cf015c0b606b7c541b4ac517e05006655e8f6b6a057a59cf4bdb7aee2cd9d05f>",
+        "std::_Function_handler<scpp::internal::concrete_n_scpp_compiler_source_work_cf015c0b606b7c541b4ac517e05006655e8f6b6a057a59cf4bdb7aee2cd9d05f ",
+        "scpp::callable_t<scpp::internal::concrete_n_scpp_compiler_source_work_cf015c0b606b7c541b4ac517e05006655e8f6b6a057a59cf4bdb7aee2cd9d05f ",
+        "std::_Function_handler<void ",
+        "std::thread::_State_impl<std::thread::_Invoker<std::tuple<scpp::tasks::detail::execute_worker_batch",
+        "0x7abe2a4ecdb3",
+        "0x7abe2a09cb83",
+        "0x7abe2a129ecb"
+      ]
+    },
+    {
+      "bytes": 3722203515,
+      "calls": 41364,
+      "stack": [
+        "0x7abe2a4bb903",
+        "scpp::internal::concrete_n_string_cb09c05d430d526c57669be36f53eaef91a464df3207777c50c6507bd74edd80::concrete_n_string_cb09c05d430d526c57669be36f53eaef91a464df3207777c50c6507bd74edd80",
+        "record_scppUqcompilerUqTokenizer::implementation_scppUqcompilerUqTokenizer__method_tokenize",
+        "record_scppUqcompilerUqTokenizer::method_tokenize",
+        "record_scppUqcompilerUqSourceU_Frontend::implementation_run_for_type_scppUqcompilerUqSourceU_Frontend",
+        "record_scppUqcompilerUqCompiler::implementation_scppUqcompilerUqCompiler__method_frontend",
+        "scpp::internal::concrete_n_scpp_compiler_source_work_cf015c0b606b7c541b4ac517e05006655e8f6b6a057a59cf4bdb7aee2cd9d05f std::__invoke_impl<scpp::internal::concrete_n_scpp_compiler_source_work_cf015c0b606b7c541b4ac517e05006655e8f6b6a057a59cf4bdb7aee2cd9d05f, scpp::internal::callback_owner_concrete_n__function_806_n_806_n_w__69b7919f4ba51569b8ba8c53187c4e123f65dde1feb1a3a96afe69512544518e&, scpp::internal::concrete_n_scpp_compiler_source_work_cf015c0b606b7c541b4ac517e05006655e8f6b6a057a59cf4bdb7aee2cd9d05f>",
+        "std::_Function_handler<scpp::internal::concrete_n_scpp_compiler_source_work_cf015c0b606b7c541b4ac517e05006655e8f6b6a057a59cf4bdb7aee2cd9d05f ",
+        "scpp::callable_t<scpp::internal::concrete_n_scpp_compiler_source_work_cf015c0b606b7c541b4ac517e05006655e8f6b6a057a59cf4bdb7aee2cd9d05f ",
+        "std::_Function_handler<void ",
+        "std::thread::_State_impl<std::thread::_Invoker<std::tuple<scpp::tasks::detail::execute_worker_batch",
+        "0x7abe2a4ecdb3",
+        "0x7abe2a09cb83",
+        "0x7abe2a129ecb"
+      ]
+    },
+    {
+      "bytes": 2915892217,
+      "calls": 32206,
+      "stack": [
+        "0x7abe2a4bb903",
+        "scpp::internal::concrete_n_string_cb09c05d430d526c57669be36f53eaef91a464df3207777c50c6507bd74edd80::concrete_n_string_cb09c05d430d526c57669be36f53eaef91a464df3207777c50c6507bd74edd80",
+        "record_scppUqcompilerUqTokenizer::implementation_scppUqcompilerUqTokenizer__method_blockU_commentU_end",
+        "record_scppUqcompilerUqTokenizer::implementation_scppUqcompilerUqTokenizer__method_triviaU_end",
+        "record_scppUqcompilerUqTokenizer::implementation_scppUqcompilerUqTokenizer__method_tokenize",
+        "record_scppUqcompilerUqTokenizer::method_tokenize",
+        "record_scppUqcompilerUqSourceU_Frontend::implementation_run_for_type_scppUqcompilerUqSourceU_Frontend",
+        "record_scppUqcompilerUqCompiler::implementation_scppUqcompilerUqCompiler__method_frontend",
+        "scpp::internal::concrete_n_scpp_compiler_source_work_cf015c0b606b7c541b4ac517e05006655e8f6b6a057a59cf4bdb7aee2cd9d05f std::__invoke_impl<scpp::internal::concrete_n_scpp_compiler_source_work_cf015c0b606b7c541b4ac517e05006655e8f6b6a057a59cf4bdb7aee2cd9d05f, scpp::internal::callback_owner_concrete_n__function_806_n_806_n_w__69b7919f4ba51569b8ba8c53187c4e123f65dde1feb1a3a96afe69512544518e&, scpp::internal::concrete_n_scpp_compiler_source_work_cf015c0b606b7c541b4ac517e05006655e8f6b6a057a59cf4bdb7aee2cd9d05f>",
+        "std::_Function_handler<scpp::internal::concrete_n_scpp_compiler_source_work_cf015c0b606b7c541b4ac517e05006655e8f6b6a057a59cf4bdb7aee2cd9d05f ",
+        "scpp::callable_t<scpp::internal::concrete_n_scpp_compiler_source_work_cf015c0b606b7c541b4ac517e05006655e8f6b6a057a59cf4bdb7aee2cd9d05f ",
+        "std::_Function_handler<void ",
+        "std::thread::_State_impl<std::thread::_Invoker<std::tuple<scpp::tasks::detail::execute_worker_batch",
+        "0x7abe2a4ecdb3",
+        "0x7abe2a09cb83",
+        "0x7abe2a129ecb"
+      ]
+    },
+    {
+      "bytes": 1559093714,
+      "calls": 17411,
+      "stack": [
+        "0x7abe2a4bb903",
+        "scpp::internal::concrete_n_string_cb09c05d430d526c57669be36f53eaef91a464df3207777c50c6507bd74edd80::concrete_n_string_cb09c05d430d526c57669be36f53eaef91a464df3207777c50c6507bd74edd80",
+        "record_scppUqcompilerUqTokenizer::implementation_scppUqcompilerUqTokenizer__method_tokenU_end",
+        "record_scppUqcompilerUqTokenizer::implementation_scppUqcompilerUqTokenizer__method_tokenize",
+        "record_scppUqcompilerUqTokenizer::method_tokenize",
+        "record_scppUqcompilerUqSourceU_Frontend::implementation_run_for_type_scppUqcompilerUqSourceU_Frontend",
+        "record_scppUqcompilerUqCompiler::implementation_scppUqcompilerUqCompiler__method_frontend",
+        "scpp::internal::concrete_n_scpp_compiler_source_work_cf015c0b606b7c541b4ac517e05006655e8f6b6a057a59cf4bdb7aee2cd9d05f std::__invoke_impl<scpp::internal::concrete_n_scpp_compiler_source_work_cf015c0b606b7c541b4ac517e05006655e8f6b6a057a59cf4bdb7aee2cd9d05f, scpp::internal::callback_owner_concrete_n__function_806_n_806_n_w__69b7919f4ba51569b8ba8c53187c4e123f65dde1feb1a3a96afe69512544518e&, scpp::internal::concrete_n_scpp_compiler_source_work_cf015c0b606b7c541b4ac517e05006655e8f6b6a057a59cf4bdb7aee2cd9d05f>",
+        "std::_Function_handler<scpp::internal::concrete_n_scpp_compiler_source_work_cf015c0b606b7c541b4ac517e05006655e8f6b6a057a59cf4bdb7aee2cd9d05f ",
+        "scpp::callable_t<scpp::internal::concrete_n_scpp_compiler_source_work_cf015c0b606b7c541b4ac517e05006655e8f6b6a057a59cf4bdb7aee2cd9d05f ",
+        "std::_Function_handler<void ",
+        "std::thread::_State_impl<std::thread::_Invoker<std::tuple<scpp::tasks::detail::execute_worker_batch",
+        "0x7abe2a4ecdb3",
+        "0x7abe2a09cb83",
+        "0x7abe2a129ecb"
+      ]
+    },
+    {
+      "bytes": 1361707008,
+      "calls": 4110,
+      "stack": [
+        "0x7abe2a4bb903",
+        "void std::vector<scpp::internal::concrete_n_scpp_compiler_preparation_lookup_bde4d549220c4d7162591d767bc1348cfd6efb652272e3b4d3fabe10c75a6fd4, std::allocator<scpp::internal::concrete_n_scpp_compiler_preparation_lookup_bde4d549220c4d7162591d767bc1348cfd6efb652272e3b4d3fabe10c75a6fd4> >::_M_realloc_insert<scpp::internal::concrete_n_scpp_compiler_preparation_lookup_bde4d549220c4d7162591d767bc1348cfd6efb652272e3b4d3fabe10c75a6fd4 const&>",
+        "void scpp::hash_t<scpp::internal::concrete_n_bool_186b6fb4c7e65e0a2d027fe4a8eb785f77810b58584e99fc5cb73047a04b3bac, scpp::internal::concrete_n_scpp_compiler_preparation_lookup_bde4d549220c4d7162591d767bc1348cfd6efb652272e3b4d3fabe10c75a6fd4>::insert_or_assign_key<scpp::internal::concrete_n_scpp_compiler_preparation_lookup_bde4d549220c4d7162591d767bc1348cfd6efb652272e3b4d3fabe10c75a6fd4 const&>",
+        "scpp::index_store",
+        "record_scppUqcompilerUqPreparationU_Worker::implementation_scppUqcompilerUqPreparationU_Worker__method_changedU_lookups",
+        "record_scppUqcompilerUqPreparationU_Worker::implementation_scppUqcompilerUqPreparationU_Worker__method_prepare",
+        "record_scppUqcompilerUqPreparationU_Worker::method_prepare",
+        "record_scppUqcompilerUqPreparationU_Run::implementation_prepare_for_type_scppUqcompilerUqPreparationU_Run",
+        "record_scppUqcompilerUqCompiler::implementation_scppUqcompilerUqCompiler__method_prepare",
+        "record_scppUqcompilerUqCompiler::implementation_scppUqcompilerUqCompiler__method_execU_cpp",
+        "record_scppUqcompilerUqCompiler::method_execU_cpp",
+        "application_body",
+        "scpp::internal::run_application",
+        "0x7abe2a02a1c9",
+        "0x7abe2a02a28a",
+        "_start"
+      ]
+    },
+    {
+      "bytes": 906698332,
+      "calls": 4125,
+      "stack": [
+        "0x7abe2a4bb903",
+        "std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::reserve",
+        "std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > std::__str_concat<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > >",
+        "scpp::internal::runtime_binary_b504b469e9c28a36d02ad90b3ce2cc602653a0abcae20c46c88e80cffceb8c48",
+        "record_scppUqcompilerUqCPPU_Specializations::implementation_scppUqcompilerUqCPPU_Specializations__method_appendU_artifacts",
+        "record_scppUqcompilerUqCPPU_Specializations::method_appendU_artifacts",
+        "record_scppUqcompilerUqCPPU_Generator::implementation_scppUqcompilerUqCPPU_Generator__method_generateU_program",
+        "record_scppUqcompilerUqCPPU_Generator::method_generateU_program",
+        "record_scppUqcompilerUqCompiler::implementation_scppUqcompilerUqCompiler__method_cpp",
+        "record_scppUqcompilerUqCompiler::method_cpp",
+        "record_scppUqcompilerUqCompiler::implementation_scppUqcompilerUqCompiler__method_execU_cpp",
+        "record_scppUqcompilerUqCompiler::method_execU_cpp",
+        "application_body",
+        "scpp::internal::run_application",
+        "0x7abe2a02a1c9",
+        "0x7abe2a02a28a",
+        "_start"
+      ]
+    },
+    {
+      "bytes": 906698332,
+      "calls": 4125,
+      "stack": [
+        "0x7abe2a4bb903",
+        "_ZN4scpp6hash_tINS_8internal82concrete_n_string_cb09c05d430d526c57669be36f53eaef91a464df3207777c50c6507bd74edd80ENS1_79concrete_n_int_ebd4c8f08856c4fac31841078980c195a23599b423d11ba32ba63ece111aa421EE3setERKS3_RKS2_Qaasr3stdE8copyableIT0_Esr3stdE8copyableIT_E",
+        "record_scppUqcompilerUqCPPU_Specializations::implementation_scppUqcompilerUqCPPU_Specializations__method_appendU_artifacts",
+        "record_scppUqcompilerUqCPPU_Specializations::method_appendU_artifacts",
+        "record_scppUqcompilerUqCPPU_Generator::implementation_scppUqcompilerUqCPPU_Generator__method_generateU_program",
+        "record_scppUqcompilerUqCPPU_Generator::method_generateU_program",
+        "record_scppUqcompilerUqCompiler::implementation_scppUqcompilerUqCompiler__method_cpp",
+        "record_scppUqcompilerUqCompiler::method_cpp",
+        "record_scppUqcompilerUqCompiler::implementation_scppUqcompilerUqCompiler__method_execU_cpp",
+        "record_scppUqcompilerUqCompiler::method_execU_cpp",
+        "application_body",
+        "scpp::internal::run_application",
+        "0x7abe2a02a1c9",
+        "0x7abe2a02a28a",
+        "_start"
+      ]
+    },
+    {
+      "bytes": 906262678,
+      "calls": 4123,
+      "stack": [
+        "0x7abe2a4bb903",
+        "scpp::internal::concrete_n_string_cb09c05d430d526c57669be36f53eaef91a464df3207777c50c6507bd74edd80::concrete_n_string_cb09c05d430d526c57669be36f53eaef91a464df3207777c50c6507bd74edd80",
+        "record_scppUqcompilerUqCPPU_Specializations::implementation_scppUqcompilerUqCPPU_Specializations__method_appendU_artifacts",
+        "record_scppUqcompilerUqCPPU_Specializations::method_appendU_artifacts",
+        "record_scppUqcompilerUqCPPU_Generator::implementation_scppUqcompilerUqCPPU_Generator__method_generateU_program",
+        "record_scppUqcompilerUqCPPU_Generator::method_generateU_program",
+        "record_scppUqcompilerUqCompiler::implementation_scppUqcompilerUqCompiler__method_cpp",
+        "record_scppUqcompilerUqCompiler::method_cpp",
+        "record_scppUqcompilerUqCompiler::implementation_scppUqcompilerUqCompiler__method_execU_cpp",
+        "record_scppUqcompilerUqCompiler::method_execU_cpp",
+        "application_body",
+        "scpp::internal::run_application",
+        "0x7abe2a02a1c9",
+        "0x7abe2a02a28a",
+        "_start"
+      ]
+    },
+    {
+      "bytes": 906262678,
+      "calls": 4123,
+      "stack": [
+        "0x7abe2a4bb903",
+        "scpp::internal::concrete_n_string_cb09c05d430d526c57669be36f53eaef91a464df3207777c50c6507bd74edd80::concrete_n_string_cb09c05d430d526c57669be36f53eaef91a464df3207777c50c6507bd74edd80",
+        "record_scppUqcompilerUqCPPU_Specializations::implementation_scppUqcompilerUqCPPU_Specializations__method_appendU_artifacts",
+        "record_scppUqcompilerUqCPPU_Specializations::method_appendU_artifacts",
+        "record_scppUqcompilerUqCPPU_Generator::implementation_scppUqcompilerUqCPPU_Generator__method_generateU_program",
+        "record_scppUqcompilerUqCPPU_Generator::method_generateU_program",
+        "record_scppUqcompilerUqCompiler::implementation_scppUqcompilerUqCompiler__method_cpp",
+        "record_scppUqcompilerUqCompiler::method_cpp",
+        "record_scppUqcompilerUqCompiler::implementation_scppUqcompilerUqCompiler__method_execU_cpp",
+        "record_scppUqcompilerUqCompiler::method_execU_cpp",
+        "application_body",
+        "scpp::internal::run_application",
+        "0x7abe2a02a1c9",
+        "0x7abe2a02a28a",
+        "_start"
+      ]
+    }
+  ]
+}

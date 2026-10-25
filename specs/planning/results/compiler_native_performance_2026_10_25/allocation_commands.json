@@ -1,0 +1,19 @@
+[
+  {
+    "name": "heap",
+    "command": [
+      "heaptrack",
+      "--raw",
+      "--record-only",
+      "-o",
+      "/tmp/compiler-native-o2-heap-raw-01/heap",
+      "/tmp/compiler-native-o2-01/cache/artifacts/e47c547e4e2f0f548c75d7bf32fa57c7949f7665814983ff1d1c5ef0c40783f2.bin"
+    ],
+    "cwd": "/tmp/compiler-native-o2-heap-raw-01",
+    "seconds": 651.949,
+    "code": 0,
+    "expected": 0,
+    "executor": "subprocess",
+    "executor_reason": "subprocess"
+  }
+]

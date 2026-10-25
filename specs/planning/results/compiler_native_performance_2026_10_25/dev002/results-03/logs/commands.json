@@ -1,0 +1,98 @@
+[
+  {
+    "name": "convert-driver",
+    "command": [
+      "php8.5",
+      "/home/alex-ai/compiler-self-o2-20261025/repo/tools/php_portability/convert.php",
+      "/home/alex-ai/compiler-self-o2-20261025/driver-source",
+      "/home/alex-ai/compiler-self-o2-20261025/driver-phs",
+      "--target=v0.2"
+    ],
+    "cwd": "/home/alex-ai/compiler-self-o2-20261025/repo",
+    "seconds": 0.124,
+    "code": 0,
+    "expected": 0,
+    "executor": "cli",
+    "executor_reason": "PHP CLI/FPM versions differ"
+  },
+  {
+    "name": "publish",
+    "command": [
+      "/usr/bin/time",
+      "-v",
+      "-o",
+      "/home/alex-ai/compiler-self-o2-20261025/results-03/publish.time",
+      "php8.5",
+      "-d",
+      "memory_limit=4G",
+      "-r",
+      "require $argv[1]; require $argv[2];",
+      "/home/alex-ai/compiler-self-o2-20261025/repo/compiler/my-try/boot.php",
+      "/home/alex-ai/compiler-self-o2-20261025/driver-source/main.php"
+    ],
+    "cwd": "/home/alex-ai/compiler-self-o2-20261025/results-03/host",
+    "seconds": 60.865,
+    "code": 0,
+    "expected": 0,
+    "executor": "subprocess",
+    "executor_reason": "subprocess"
+  },
+  {
+    "name": "build-o2",
+    "command": [
+      "/usr/bin/time",
+      "-v",
+      "-o",
+      "/home/alex-ai/compiler-self-o2-20261025/results-03/build.time",
+      "php8.5",
+      "/home/alex-ai/compiler-self-o2-20261025/results-03/build.php",
+      "/home/alex-ai/compiler-self-o2-20261025/results-03/published",
+      "/home/alex-ai/compiler-self-o2-20261025/cache",
+      "-O2"
+    ],
+    "cwd": "/home/alex-ai/compiler-self-o2-20261025/repo",
+    "seconds": 369.37,
+    "code": 0,
+    "expected": 0,
+    "executor": "subprocess",
+    "executor_reason": "subprocess"
+  },
+  {
+    "name": "self-32",
+    "command": [
+      "/usr/bin/time",
+      "-v",
+      "-o",
+      "/home/alex-ai/compiler-self-o2-20261025/results-03/jobs-32/compile.time",
+      "python3",
+      "/home/alex-ai/compiler-self-o2-20261025/monitor.py",
+      "/home/alex-ai/compiler-self-o2-20261025/cache/artifacts/4b43ad943392b8df879fd412187826434c40e103597d81cf6014694304b42d65.bin",
+      "/home/alex-ai/compiler-self-o2-20261025/results-03/jobs-32/threads.json"
+    ],
+    "cwd": "/home/alex-ai/compiler-self-o2-20261025/results-03/jobs-32",
+    "seconds": 111.776,
+    "code": 0,
+    "expected": 0,
+    "executor": "subprocess",
+    "executor_reason": "subprocess"
+  },
+  {
+    "name": "self-1",
+    "command": [
+      "/usr/bin/time",
+      "-v",
+      "-o",
+      "/home/alex-ai/compiler-self-o2-20261025/results-03/jobs-1/compile.time",
+      "python3",
+      "/home/alex-ai/compiler-self-o2-20261025/monitor.py",
+      "/home/alex-ai/compiler-self-o2-20261025/cache/artifacts/4b43ad943392b8df879fd412187826434c40e103597d81cf6014694304b42d65.bin",
+      "/home/alex-ai/compiler-self-o2-20261025/results-03/jobs-1/threads.json"
+    ],
+    "cwd": "/home/alex-ai/compiler-self-o2-20261025/results-03/jobs-1",
+    "seconds": 113.58,
+    "code": 0,
+    "expected": 0,
+    "executor": "subprocess",
+    "executor_reason": "subprocess"
+  }
+]

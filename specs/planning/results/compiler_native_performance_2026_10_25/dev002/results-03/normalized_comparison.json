@@ -1,0 +1,15 @@
+{
+  "files_one": 6276,
+  "files_32": 6276,
+  "renames": {
+    "concrete_n__function_3_n_806_n_w__922cf01f676fa29964ca819cdcf45c4fd7410e0fc46e47e5eb1bfc7fc010bcef": "concrete_n__function_3_n_763_n_w__c7b244545de671bd30b8df6d96333b51ab7fcea57669ecbd5b175663bec76dfa",
+    "concrete_n__function_806_n_806_n_w__69b7919f4ba51569b8ba8c53187c4e123f65dde1feb1a3a96afe69512544518e": "concrete_n__function_763_n_763_n_w__4bae905f3d7547d1661605c68ae2f47f8a2bfc1fe001f91403939fbce7e780f8",
+    "runtime_runtime_call_420001472963410207a285ee41e6d43e1cd9f0cf608f2b04a706034587d97cb2": "runtime_runtime_call_6ea54558bfca75e2f23b8a30b52de739839fa51fd2c7ded817214d091e6c2257"
+  },
+  "remaining_after_symbol_normalization": [
+    "specializations/containers.cpp"
+  ],
+  "remaining_equal_line_multisets": {
+    "specializations/containers.cpp": true
+  }
+}

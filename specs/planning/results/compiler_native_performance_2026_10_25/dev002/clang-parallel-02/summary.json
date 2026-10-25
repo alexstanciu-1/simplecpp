@@ -1,0 +1,8 @@
+{
+  "jobs": 32,
+  "compile_actions": 250,
+  "compile_wall_seconds_from_action_intervals": 159.72703409194946,
+  "all_objects_match_serial_build": true,
+  "executable_matches_serial_build": true,
+  "note": "Compile pool succeeded; diagnostic linker forwarding was corrected and link retried without recompilation."
+}

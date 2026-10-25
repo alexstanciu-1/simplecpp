@@ -1,0 +1,23 @@
+	Command being timed: "php8.5 /tmp/compiler-native-o2-01/build.php /tmp/compiler-bootstrap-native-transport-01/published /tmp/compiler-native-o2-01/cache -O2"
+	User time (seconds): 511.96
+	System time (seconds): 206.50
+	Percent of CPU this job got: 102%
+	Elapsed (wall clock) time (h:mm:ss or m:ss): 11:42.30
+	Average shared text size (kbytes): 0
+	Average unshared data size (kbytes): 0
+	Average stack size (kbytes): 0
+	Average total size (kbytes): 0
+	Maximum resident set size (kbytes): 2501528
+	Average resident set size (kbytes): 0
+	Major (requiring I/O) page faults: 107
+	Minor (reclaiming a frame) page faults: 8651524
+	Voluntary context switches: 603473
+	Involuntary context switches: 4872
+	Swaps: 0
+	File system inputs: 5272
+	File system outputs: 3417504
+	Socket messages sent: 0
+	Socket messages received: 0
+	Signals delivered: 0
+	Page size (bytes): 4096
+	Exit status: 0

@@ -1,0 +1,47 @@
+[
+  {
+    "stage": "init",
+    "event": "enter",
+    "seconds": 0.2590492019953672
+  },
+  {
+    "stage": "init",
+    "event": "leave",
+    "seconds": 0.3389337800035719
+  },
+  {
+    "stage": "syncU_live",
+    "event": "enter",
+    "seconds": 0.3407516010047402
+  },
+  {
+    "stage": "syncU_live",
+    "event": "leave",
+    "seconds": 1.698085779993562
+  },
+  {
+    "stage": "prepare",
+    "event": "enter",
+    "seconds": 1.6986164379923139
+  },
+  {
+    "stage": "prepare",
+    "event": "leave",
+    "seconds": 63.45207918298547
+  },
+  {
+    "stage": "cpp",
+    "event": "enter",
+    "seconds": 63.45267599300132
+  },
+  {
+    "stage": "cpp",
+    "event": "leave",
+    "seconds": 251.572574935999
+  },
+  {
+    "stage": "process",
+    "event": "exit",
+    "seconds": 251.7646834269981
+  }
+]
