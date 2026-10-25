@@ -47,3 +47,21 @@ This runs PHP assertions and writes IR plus expected execution data. It does not
 compile the compiler itself. The broader test runner can compile/run those programs
 when requested. Historical implementation detail is retained in
 [the backend checkpoint](../../docs/archive/llvm_backend_checkpoint.md).
+
+## Parking boundary — 2026-10-25
+
+The user authorized removing this prototype from the C++ bootstrap scope. Files
+moved from `05_backend/llvm/` here; algorithms are preserved. `LLVM_Prototype`
+owns host-only output/reset/emission. Compiler's existing LLVM entrypoints are
+host-only wrappers marked `@scpp-no-export`. Shared Model/lifecycle no longer own
+prototype outputs. Host tests inspect `LLVM_Prototype::$files`.
+
+`boot.php` still loads this prototype for explicitly selected host regressions.
+The bootstrap snapshot copies active stages and excludes `prototypes/`; its small
+`bootstrap_driver.php.in` compiles PHS directories to C++ artifacts, without old
+LLVM proof branches. Native LLVM validation is parked; `native_validate.py` requires
+`--types-only`. This is not completion of native compiler bootstrap validation.
+
+Shared C++ lifecycle resets no longer alter prototype output. Explicit prototype
+entrypoints/reset own that state, clearing it before frontend work to avoid publishing
+stale LLVM output when a prototype compilation fails.

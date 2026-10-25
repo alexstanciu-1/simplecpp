@@ -1,0 +1,12 @@
+[
+  {
+    "name": "scalar",
+    "seconds": 49.74598118700669,
+    "passed": true
+  },
+  {
+    "name": "shared",
+    "seconds": 49.94850453501567,
+    "passed": true
+  }
+]

@@ -66,6 +66,8 @@ def main():
     parser.add_argument('--php-executor', choices=('auto', 'fpm', 'cli'), default='auto',
                         help='PHP backend: auto prefers FPM with CLI fallback (default)')
     args = parser.parse_args()
+    if not args.types_only:
+        parser.error('Native LLVM validation is parked; use --types-only for the C++ compiler')
     if sum((args.chapter13, args.chapter14, args.prelower_accounting, args.reference_advisories)) > 1:
         parser.error("Select one focused native gate")
     if (args.chapter13 or args.chapter14 or args.prelower_accounting or args.reference_advisories) and (not args.types_only or not args.no_stan):
@@ -116,10 +118,6 @@ def validate(args, target, results, logs, started, runner):
     recovery = results / 'recovery'
     recovery.mkdir(exist_ok=args.resume)
     (recovery / 'main.phs').write_text('return 0;')
-    pipeline = results / 'pipeline'
-    pipeline.mkdir(exist_ok=args.resume)
-    (pipeline / 'a.phs').write_text('function ready(): int { return 1; }')
-    (pipeline / 'b.phs').write_text('$')
     driver = (APP / 'tests/native_driver.php.in').read_text()
     catalog_directory = results / 'runtime-catalogs'
     shutil.copytree(ROOT / 'runtime/metadata/modules', catalog_directory, dirs_exist_ok=args.resume)
@@ -132,9 +130,7 @@ def validate(args, target, results, logs, started, runner):
     shutil.copyfile(APP / 'tests/cpp_probe.php', source / 'cpp_probe.php')
     driver = (driver.replace('__REQUEST_FILE__', php_literal('request.txt'))
               .replace('__RUNTIME_CATALOG_DIR__', php_literal(catalog_directory))
-              .replace('__RECOVERY_DIR__', php_literal(recovery))
-              .replace('__PIPELINE_DIR__', php_literal(pipeline))
-              .replace('__RUN_LLVM_PROOFS__', 'false' if args.types_only else 'true'))
+              .replace('__RECOVERY_DIR__', php_literal(recovery)))
     (source / 'main.php').write_text(driver)
     hashes = {str(p.relative_to(source)): hashlib.sha256(p.read_bytes()).hexdigest() for p in source.rglob('*.php')}
     (results / 'source_hashes.json').write_text(json.dumps(hashes, indent=2) + '\n')

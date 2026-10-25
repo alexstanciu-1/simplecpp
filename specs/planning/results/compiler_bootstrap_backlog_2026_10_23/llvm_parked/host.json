@@ -1,0 +1,32 @@
+[
+  {
+    "name": "pipeline",
+    "seconds": 0.8545002420141827,
+    "passed": true
+  },
+  {
+    "name": "incremental_smoke",
+    "seconds": 0.741741738980636,
+    "passed": true
+  },
+  {
+    "name": "source_constants",
+    "seconds": 1.7131781739881262,
+    "passed": true
+  },
+  {
+    "name": "namespaces",
+    "seconds": 1.5629543949908111,
+    "passed": true
+  },
+  {
+    "name": "incremental_preparation",
+    "seconds": 0.8580901809909847,
+    "passed": true
+  },
+  {
+    "name": "lifecycle_handoff",
+    "seconds": 0.8011037659889553,
+    "passed": true
+  }
+]

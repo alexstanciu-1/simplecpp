@@ -2,6 +2,13 @@
 // Host-only measured bootstrap: the compiler and project adapter own all processing.
 require $argv[1] . '/boot.php';
 require $argv[1] . '/host/project.php';
+/** Publish the settled C++ bundle so successful bootstrap output can be built. */
+function publish_bootstrap_cpp(\scpp\compiler\Compiler $compiler, string $directory): void
+{
+	$publication = new \scpp\compiler\Output_Publication($directory);
+	try { $compiler->cpp($publication); }
+	finally { $publication->close(); }
+}
 $started = hrtime(true);
 $stage = 'initialize';
 $events = [];
@@ -23,7 +30,7 @@ try {
 			'sync' => $compiler->sync([]),
 			'prepare' => $compiler->prepare(true),
 			'validate' => $project->validate(),
-			'emit' => $compiler->cpp(),
+			'emit' => publish_bootstrap_cpp($compiler, dirname($argv[3]) . '/published'),
 		};
 		$events[] = ['stage' => $stage, 'seconds' => (hrtime(true) - $started) / 1e9];
 		echo json_encode(end($events)) . "\n";

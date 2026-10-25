@@ -35,8 +35,8 @@ final class LLVM_Test
 		foreach ($cases as $name => [$source, $exit_code])
 		{
 			$compiler = self::compile($directory . '/' . $name, $source);
-			$module = Model::$llvm_files[0];
-			if ((count(Model::$llvm_files) !== 1) || !$module->functions[0]->is_entry || ($module->globals !== []) || ($module->external_functions !== []) || ($module->types !== []) || ($module->metadata !== [])) {
+			$module = LLVM_Prototype::$files[0];
+			if ((count(LLVM_Prototype::$files) !== 1) || !$module->functions[0]->is_entry || ($module->globals !== []) || ($module->external_functions !== []) || ($module->types !== []) || ($module->metadata !== [])) {
 				throw new \RuntimeException('Incorrect output module structure');
 			}
 			$file = Model::collected_files()[0];
@@ -201,7 +201,7 @@ final class LLVM_Test
 			$compiler->exec_llvm();
 		}
 		catch (\Throwable $error) {
-			if (!Model::$llvm_files->is_empty()) {
+			if (!LLVM_Prototype::$files->is_empty()) {
 				throw new \LogicException('Failed generation published output', 0, $error);
 			}
 			throw $error;

@@ -1703,3 +1703,21 @@ Host type/operator/metadata/retained suites and portable enum-default native pro
 pass. [Evidence](results/compiler_bootstrap_backlog_2026_10_23/enum_defaults/README.md)
 records both measured bootstrap attempts and newly reachable diagnostics.
 Native compiler and second-generation acceptance remain incomplete.
+
+## LLVM prototype parking — 2026-10-25
+
+User authorized parking the prototype outside the C++ compiler milestone. Moved
+backend sources to prototypes/llvm; its state/emission now belong to LLVM_Prototype.
+Preserved host entrypoints as explicitly non-exported wrappers and migrated host
+output readers. Shared Model/lifecycle have no prototype output dependency.
+
+Historical native LLVM driver is parked; native_validate requires --types-only.
+Dedicated bootstrap driver compiles requested directories and publishes complete
+prelowered C++ output. PHP-hosted bootstrap can publish a successful compiler build.
+Six host suites and two driver-generated native programs pass. Exclusion check
+proves prototype/proof classes absent from 255 converted files.
+[Evidence](results/compiler_bootstrap_backlog_2026_10_23/llvm_parked/README.md).
+
+Final bootstrap: 2:51.58 / 610192 KiB RSS / 578.5 MiB heap, 19 distinct preparation
+messages. Projected receiver lifetime remains first. No native compiler build/run
+or second-generation success claimed; those goal requirements remain active.

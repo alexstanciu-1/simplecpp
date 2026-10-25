@@ -160,9 +160,10 @@ final class Compiler
 		return $result;
 	}
 
-	/** Parked legacy LLVM entry remains available only for existing regression callers. */
+	/** @scpp-no-export */
 	public function exec_llvm(): void
 	{
+		LLVM_Prototype::reset();
 		$this->sync_live();
 		$this->llvm();
 	}
@@ -175,9 +176,10 @@ final class Compiler
 		$this->cpp($publication, $policy);
 	}
 
-	/** Apply file notifications, then rerun all existing resolution/preparation and generation. */
+	/** @scpp-no-export */
 	public function update_llvm(array $paths /** vector<string> */): void
 	{
+		LLVM_Prototype::reset();
 		$this->sync($paths);
 		$this->llvm();
 	}
@@ -202,7 +204,6 @@ final class Compiler
 			Model::$full_sync_pending = true;
 		}
 		Compiler_Lifecycle::reset_cpp();
-		Compiler_Lifecycle::reset_llvm();
 		Model::$prepared_entry = null;
 		Model::$prepared_files = new Storage /** Storage<prepared_file> */();
 		Model::$diagnostics = new Storage /** Storage<compiler_diagnostic> */();
@@ -315,7 +316,6 @@ final class Compiler
 		}
 		catch (\Throwable $error) {
 			Model::$rebuild_required = true;
-			Compiler_Lifecycle::reset_llvm();
 			throw $error;
 		}
 	}
@@ -355,19 +355,10 @@ final class Compiler
 		}
 	}
 
-	/** Run parked LLVM preparation and emit modules for existing regression callers. */
+	/** @scpp-no-export */
 	public function llvm(): void
 	{
-		Compiler_Lifecycle::reset_llvm();
-		$policy = new llvm_policy();
-		$sources /** Storage<collected_file> */ = new Storage();
-		foreach (Model::collected_files() as $source) {
-			if ($source->source_file()->changes !== \scpp\compiler\SYNC_DELETED) {
-				$sources->append($source);
-			}
-		}
-		$prepared_files = (new LLVM_Preparation())->prepare_program($sources, $policy);
-		Model::$llvm_files = (new LLVM_Generator())->generate($prepared_files, $policy);
+		LLVM_Prototype::emit();
 	}
 
 	/** Scanning selects filesystem changes; explicit notifications can additionally force reads. */
@@ -399,7 +390,6 @@ final class Compiler
 		self::require_modules();
 		if ($operation === frontend_operation::parse) {
 			Compiler_Lifecycle::reset_cpp();
-			Compiler_Lifecycle::reset_llvm();
 		}
 		if ($this->jobs < 1) {
 			throw new \LogicException('Compiler job limit must be positive');

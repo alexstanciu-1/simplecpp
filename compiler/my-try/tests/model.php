@@ -14,18 +14,18 @@ final class Model_Test
 		$compiler = new Compiler(new cpp_lowering_options(false));
 		$compiler->init([dirname(__DIR__) . '/tests/samples/01_base']);
 		$type_catalog = self::check_type_roots();
-		foreach ([Model::tokens(), Model::syntax_files(), Model::collected_files(), Model::$llvm_files] as $storage) {
+		foreach ([Model::tokens(), Model::syntax_files(), Model::collected_files(), LLVM_Prototype::$files] as $storage) {
 			if (!$storage instanceof Storage) {
 				throw new \RuntimeException('Model collection is not Storage');
 			}
 		}
-		$empty_output = Model::$llvm_files;
+		$empty_output = LLVM_Prototype::$files;
 		$compiler->exec_llvm();
 		if (Model::$type_catalog !== $type_catalog) {
 			throw new \RuntimeException('Ordinary compilation replaced canonical type roots');
 		}
 		self::check_source_type_association($type_catalog);
-		if ((count(Model::$modules) !== 1) || (count(Model::tokens()) !== 2) || (count(Model::syntax_files()) !== 2) || (count(Model::collected_files()) !== 2) || (count(Model::$llvm_files) !== 2)) {
+		if ((count(Model::$modules) !== 1) || (count(Model::tokens()) !== 2) || (count(Model::syntax_files()) !== 2) || (count(Model::collected_files()) !== 2) || (count(LLVM_Prototype::$files) !== 2)) {
 			throw new \RuntimeException('Unexpected model collection counts');
 		}
 		foreach (Model::tokens() as $position => $tokens)
@@ -39,25 +39,25 @@ final class Model_Test
 		}
 		$seen = new \SplObjectStorage();
 		foreach ([Model::$modules, Model::tokens(), Model::syntax_files(), Model::$global_scope,
-			Model::$type_catalog, Model::$cpp_type_bindings, Model::collected_files(), Model::$llvm_files] as $root) {
+			Model::$type_catalog, Model::$cpp_type_bindings, Model::collected_files(), LLVM_Prototype::$files] as $root) {
 			self::check_graph($root, $seen);
 		}
-		if ((Model::$llvm_files === $empty_output) || !$empty_output->is_empty()) {
+		if ((LLVM_Prototype::$files === $empty_output) || !$empty_output->is_empty()) {
 			throw new \RuntimeException('Generation did not publish a separate result');
 		}
 
-		$old_output = Model::$llvm_files;
+		$old_output = LLVM_Prototype::$files;
 		$compiler->init([]);
 		if ((Model::$type_catalog === $type_catalog)
 			|| (Model::$type_catalog->source_declarations()->count() !== 0)) {
 			throw new \RuntimeException('Compilation reset retained canonical source type roots');
 		}
-		foreach ([Model::tokens(), Model::syntax_files(), Model::collected_files(), Model::$llvm_files] as $storage) {
+		foreach ([Model::tokens(), Model::syntax_files(), Model::collected_files(), LLVM_Prototype::$files] as $storage) {
 			if (!$storage->is_empty()) {
 				throw new \RuntimeException('Reset retained previous rows');
 			}
 		}
-		if ((Model::$llvm_files === $old_output) || (count($old_output) !== 2)) {
+		if ((LLVM_Prototype::$files === $old_output) || (count($old_output) !== 2)) {
 			throw new \RuntimeException('Reset altered the previously retained result');
 		}
 		self::check_failure($compiler, '$', true);
@@ -185,7 +185,7 @@ final class Model_Test
 				throw new \LogicException('Preparation reuse altered retained output');
 			}
 		}
-		$old_output = Model::$llvm_files;
+		$old_output = LLVM_Prototype::$files;
 		$old_scope = Model::$global_scope;
 		$old_tokens = Model::tokens()[0];
 		$old_content = $old_tokens->content;
@@ -198,7 +198,7 @@ final class Model_Test
 		}
 		catch (\RuntimeException $expected) {
 		}
-		foreach ([Model::tokens(), Model::syntax_files(), Model::collected_files(), Model::$llvm_files] as $store) {
+		foreach ([Model::tokens(), Model::syntax_files(), Model::collected_files(), LLVM_Prototype::$files] as $store) {
 			if (!$store->is_empty()) {
 				throw new \LogicException('Stale downstream result');
 			}
@@ -224,12 +224,12 @@ final class Model_Test
 		}
 		catch (\RuntimeException $expected) {
 		}
-		if (Model::syntax_files()[0]->complete || !Model::$llvm_files->is_empty()) {
+		if (Model::syntax_files()[0]->complete || !LLVM_Prototype::$files->is_empty()) {
 			throw new \LogicException('Parse failure retained stale output');
 		}
 		$compiler->exec_llvm();
 		$compiler->parse();
-		if (!Model::$llvm_files->is_empty() || count(Model::syntax_files()) !== 2) {
+		if (!LLVM_Prototype::$files->is_empty() || count(Model::syntax_files()) !== 2) {
 			throw new \LogicException('Successful parse retained stale LLVM');
 		}
 	}
@@ -264,7 +264,7 @@ final class Model_Test
 			catch (\RuntimeException $expected) {
 				$failed = true;
 			}
-			if (!$failed || serialize($prepared) !== $before || !Model::$llvm_files->is_empty()) {
+			if (!$failed || serialize($prepared) !== $before || !LLVM_Prototype::$files->is_empty()) {
 				throw new \LogicException('Failed preparation published output or altered retained results');
 			}
 			$recovered = $worker->prepare_program($good, new llvm_policy());

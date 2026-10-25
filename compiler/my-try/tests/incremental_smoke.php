@@ -6,7 +6,7 @@ require_once dirname(__DIR__) . '/boot.php';
 function smoke_output(): array /** hash<string> */
 {
 	$result /** hash<string> */ = [];
-	foreach (Model::$llvm_files as $output) {
+	foreach (LLVM_Prototype::$files as $output) {
 		$result[$output->file_name] = $output->text;
 	}
 	return $result;

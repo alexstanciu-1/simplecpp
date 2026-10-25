@@ -229,18 +229,18 @@ require_once __DIR__ . '/05_backend/cpp/syntax.php';
 require_once __DIR__ . '/05_backend/cpp/finally.php';
 require_once __DIR__ . '/05_backend/cpp/exceptions.php';
 // Parked LLVM preparation and generation remain loaded for regression entrypoints.
-require_once __DIR__ . '/05_backend/llvm/structures.php';
-require_once __DIR__ . '/05_backend/llvm/legacy_names.php';
-require_once __DIR__ . '/05_backend/llvm/legacy_templates.php';
-require_once __DIR__ . '/05_backend/llvm/text.php';
-require_once __DIR__ . '/05_backend/llvm/names.php';
-require_once __DIR__ . '/05_backend/llvm/prepare.php';
-require_once __DIR__ . '/05_backend/llvm/structs.php';
-require_once __DIR__ . '/05_backend/llvm/expressions.php';
-require_once __DIR__ . '/05_backend/llvm/statements.php';
-require_once __DIR__ . '/05_backend/llvm/functions.php';
-require_once __DIR__ . '/05_backend/llvm/write.php';
-require_once __DIR__ . '/05_backend/llvm/generate.php';
+require_once __DIR__ . '/prototypes/llvm/structures.php';
+require_once __DIR__ . '/prototypes/llvm/legacy_names.php';
+require_once __DIR__ . '/prototypes/llvm/legacy_templates.php';
+require_once __DIR__ . '/prototypes/llvm/text.php';
+require_once __DIR__ . '/prototypes/llvm/names.php';
+require_once __DIR__ . '/prototypes/llvm/prepare.php';
+require_once __DIR__ . '/prototypes/llvm/structs.php';
+require_once __DIR__ . '/prototypes/llvm/expressions.php';
+require_once __DIR__ . '/prototypes/llvm/statements.php';
+require_once __DIR__ . '/prototypes/llvm/functions.php';
+require_once __DIR__ . '/prototypes/llvm/write.php';
+require_once __DIR__ . '/prototypes/llvm/generate.php';
 require_once __DIR__ . '/06_native/structures.php';
 require_once __DIR__ . '/06_native/run.php';
 require_once __DIR__ . '/06_native/cpp_structures.php';
@@ -274,3 +274,6 @@ require_once __DIR__ . '/04_analyze/prepare/project_evidence.php';
 // Host composition supplies the location once; native entrypoints do the same.
 Compiler_Lifecycle::configure_runtime(Runtime_Catalog_Loader::load(
 	dirname(__DIR__, 2) . '/runtime/metadata/modules', ['core', 'json', 'strings', 'datetime', 'filesystem']));
+
+require_once __DIR__ . '/prototypes/llvm/prototype.php';
+LLVM_Prototype::reset();

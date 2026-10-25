@@ -19,17 +19,13 @@ source = out / 'source'
 source.mkdir()
 for stage in STAGES:
     shutil.copytree(APP / stage, source / stage)
-for name in ['reference_advisory_proof.php', 's2s_proof.php', 'cpp_probe.php']:
-    shutil.copyfile(APP / 'tests' / name, source / name)
 def php_string(value):
     return "'" + str(value).replace('\\', '\\\\').replace("'", "\\'") + "'"
-driver = (APP / 'tests/native_driver.php.in').read_text()
+driver = (APP / 'tests/bootstrap_driver.php.in').read_text()
 for key, value in {
     '__REQUEST_FILE__': php_string('request.txt'),
+    '__OUTPUT_FILE__': php_string('output.txt'),
     '__RUNTIME_CATALOG_DIR__': php_string(ROOT / 'runtime/metadata/modules'),
-    '__RECOVERY_DIR__': php_string(out / 'recovery'),
-    '__PIPELINE_DIR__': php_string(out / 'pipeline'),
-    '__RUN_LLVM_PROOFS__': 'false',
 }.items():
     driver = driver.replace(key, value)
 (source / 'main.php').write_text(driver)

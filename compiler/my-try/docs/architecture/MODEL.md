@@ -1136,7 +1136,7 @@ separate files and compiles them separately rather than flattening into a unity 
 tokens, failure and deletion policy. [Ownership](ownership.md) owns reference intent;
 [Storage](../storage/STORAGE.md) owns membership semantics.
 
-The [LLVM experiment](../../05_backend/llvm/README.md) retains separate token-indexed
+The [LLVM experiment](../../prototypes/llvm/README.md) retains separate token-indexed
 name/template preparation only for regressions. Its maps and native type choices
 must not define shared semantics. Future LLVM development must consume shared facts.
 

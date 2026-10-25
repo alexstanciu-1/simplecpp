@@ -27,7 +27,7 @@ final class Host_Report
 			$this->dump_node($syntax->root, 0, $syntax->tokens);
 		}
 		$this->dump_collection();
-		foreach (Model::$llvm_files as $output) {
+		foreach (LLVM_Prototype::$files as $output) {
 			echo "\nLLVM: " . htmlspecialchars($output->file_name, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') . "\n";
 			echo htmlspecialchars($output->text, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
 		}
@@ -64,7 +64,7 @@ final class Host_Report
 	{
 		$runner = new Native_Runner();
 		try {
-			$result = $runner->run(Model::$llvm_files);
+			$result = $runner->run(LLVM_Prototype::$files);
 			$runner->dump($result);
 		}
 		catch (\Throwable $error) {

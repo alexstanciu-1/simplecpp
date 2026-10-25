@@ -77,7 +77,7 @@ try
 	}
 	sync_check(Model::syntax_files()[0] === $kept && !$kept->complete, 'Failed parse did not retain incomplete mutable identity');
 	sync_check(Model::$modules[$directory]->sources['a.phs']->file->content === substr($kept->tokens->content, $kept->tokens->content_offset), 'Failed candidate changed published source');
-	sync_check(Model::$llvm_files->is_empty(), 'Failed update retained generated output');
+	sync_check(LLVM_Prototype::$files->is_empty(), 'Failed update retained generated output');
 
 	// Duplicate definitions survive sync; deleting one makes lookup unambiguous again.
 	file_put_contents($a, 'function value(): int { return 4; } function value(): int { return 5; }');
@@ -98,7 +98,7 @@ try
 	file_put_contents($a, 'function value(): int { return 6; }');
 	$compiler->update_llvm([$a]);
 	sync_check(sync_function('value')->change_status === change_state::added, 'Historical tombstone participated in matching');
-	sync_check(count(Model::$llvm_files) === 2, 'Deleted file was generated');
+	sync_check(count(LLVM_Prototype::$files) === 2, 'Deleted file was generated');
 	$compiler->sync([]);
 	sync_check(sync_function('value')->change_status === change_state::added, 'No-op unexpectedly reparsed the source');
 	// New-file duplicates must not erase another file's contribution on deletion.

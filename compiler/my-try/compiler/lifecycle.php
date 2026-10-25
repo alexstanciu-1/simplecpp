@@ -101,7 +101,6 @@ final class Compiler_Lifecycle
 		Model::$namespaces = new Namespace_Registry(Model::$language_scope);
 		Model::$global_scope = Model::$namespaces->register('')->published_scope();
 		self::reset_cpp();
-		self::reset_llvm();
 		self::$syntax_initialized = true;
 		Model::$rebuild_required = false;
 	}
@@ -140,8 +139,6 @@ final class Compiler_Lifecycle
 		CPP_Runtime_Catalog::install(Model::require_runtime_metadata());
 		Model::$namespaces = new Namespace_Registry(Model::$language_scope);
 		Model::$global_scope = Model::$namespaces->register('')->published_scope();
-
-		self::reset_llvm();
 	}
 
 	/** Replace semantic and backend type roots together at a full syntax identity boundary. */
@@ -275,8 +272,4 @@ final class Compiler_Lifecycle
 		Model::$cpp_files = new Storage /** Storage<cpp_artifact> */();
 	}
 
-	public static function reset_llvm(): void
-	{
-		Model::$llvm_files = new Storage /** Storage<llvm_module> */();
-	}
 }

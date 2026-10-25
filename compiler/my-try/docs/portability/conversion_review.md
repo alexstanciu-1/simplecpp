@@ -15,6 +15,19 @@ The catalog's bounded closeouts and Chapter 15 deferrals still
 bound the supported language surface.
 This does not establish exhaustive language, lifetime, incremental or performance coverage.
 
+## C++ bootstrap / parked LLVM — 2026-10-25
+
+`prototypes/llvm/` retains the host-only experiment. Its output state belongs to
+`LLVM_Prototype`; active compiler/lifecycle state has no LLVM output dependency.
+Host LLVM wrappers remain explicitly non-exported. Native LLVM validation is parked;
+use `native_validate.py --types-only` for the historical C++ fixture harness.
+`bootstrap_probe.py` instead uses `tests/bootstrap_driver.php.in` without test-proof
+sources. The native entry reads an input directory from request.txt and an output
+directory from output.txt, then publishes through the existing output protocol.
+The PHP-hosted probe also publishes successful C++ output for the native build step.
+Representative native programs and second-generation compilation remain acceptance
+requirements; parking the prototype does not satisfy them.
+
 ## Accepted-backlog bootstrap checkpoint — 2026-10-23
 
 The [temporary empty-field storage checkpoint](../../../../specs/planning/results/compiler_bootstrap_backlog_2026_10_23/empty_initial_storage/README.md)

@@ -32,7 +32,7 @@ try
 	catch (\RuntimeException $expected) {
 		$failed = true;
 	}
-	if (!$failed || count(Model::syntax_files()) !== 0 || count(Model::tokens()) !== 1 || !Model::$llvm_files->is_empty()) {
+	if (!$failed || count(Model::syntax_files()) !== 0 || count(Model::tokens()) !== 1 || !LLVM_Prototype::$files->is_empty()) {
 		throw new \LogicException('Tokenization failure did not stop at the phase barrier');
 	}
 	unlink($directory . '/b.phs');

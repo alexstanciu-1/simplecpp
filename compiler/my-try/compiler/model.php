@@ -67,11 +67,6 @@ final class Model
 	public static Iteration_Contracts $iteration_contracts;
 	public static CPP_Callable_Bindings $cpp_callable_bindings;
 	public static \SplObjectStorage $cpp_property_bindings /** hash<runtime_cpp_spec, runtime_property_definition> */;
-	/**
-	 * Numeric storage of llvm_module records, including their LLVM text.
-	 * @storage.owner
-	 */
-	public static Storage $llvm_files /** Storage<llvm_module> */;
 	/** Complete source preparation for C++ generation. @storage.owner */
 	public static Storage $prepared_files /** Storage<prepared_file> */;
 	public static ?program_entry_selection $entry_selection = null;

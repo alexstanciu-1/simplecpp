@@ -209,7 +209,7 @@ FIELDS = [('compiler/my-try/03_parse/structures/structures_specialization.php',
   'kind',
   'structure'),
  ('compiler/my-try/compiler/callables/structures.php', 'callable_parameter', 'passing_mode', 'mode', 'value')]
-FIELDS.append(('compiler/my-try/05_backend/llvm/structures.php', 'llvm_parameter', 'passing_mode', 'mode', 'value'))
+FIELDS.append(('compiler/my-try/prototypes/llvm/structures.php', 'llvm_parameter', 'passing_mode', 'mode', 'value'))
 import re
 enums = {}
 for stage in ['03_parse', '04_analyze', '05_backend/cpp', 'compiler']:

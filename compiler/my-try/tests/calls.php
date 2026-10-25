@@ -142,11 +142,11 @@ final class Calls_Test
 			if (serialize(Model::collected_files()) !== $before) {
 				throw new \RuntimeException('Preparation changed retained source or collection');
 			}
-			$caller = Model::$llvm_files[0];
+			$caller = LLVM_Prototype::$files[0];
 			if (($name === 'template_unused') && (count($caller->functions) !== 1)) {
 				throw new \RuntimeException('Unused template emitted executable code');
 			}
-			if (($name === 'template_reuse') && (count(Model::$llvm_files[1]->functions) !== 1)) {
+			if (($name === 'template_reuse') && (count(LLVM_Prototype::$files[1]->functions) !== 1)) {
 				throw new \RuntimeException('Repeated template use emitted duplicate implementations');
 			}
 			if (($caller->external_functions !== $expected_external) || (preg_match_all('/\bcall (?:void|i32) @/', $caller->text) !== $expected_calls)) {
@@ -157,13 +157,13 @@ final class Calls_Test
 					throw new \RuntimeException('Arguments were not evaluated in source order');
 				}
 			}
-			if (isset(Model::$llvm_files[1]) && (Model::$llvm_files[1]->external_functions !== [])) {
+			if (isset(LLVM_Prototype::$files[1]) && (LLVM_Prototype::$files[1]->external_functions !== [])) {
 				throw new \RuntimeException('Unused dependency added to provider');
 			}
-			foreach (Model::$llvm_files as $module) {
+			foreach (LLVM_Prototype::$files as $module) {
 				file_put_contents($folder . '/' . $module->file_name, $module->text);
 			}
-			$result = (new Native_Runner())->run(Model::$llvm_files);
+			$result = (new Native_Runner())->run(LLVM_Prototype::$files);
 			if (($result->build->exit_code !== 0) || ($result->execution?->exit_code !== $expected_exit)) {
 				throw new \RuntimeException('Native call test failed: ' . $name . ' ' . $result->build->stderr);
 			}

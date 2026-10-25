@@ -205,7 +205,7 @@ historical, including statements of what was “current” at their recorded che
 | `03_parse/collect/` | Symbol registration called by the parser |
 | `04_analyze/prepare/` | Shared semantic work and attached facts |
 | `05_backend/cpp/` | Retained C++ fragments and final text |
-| `05_backend/llvm/` | Parked LLVM preparation/emission |
+| `prototypes/llvm/` | Host-only parked LLVM preparation/emission |
 | `06_native/` | Compilation/execution of generated programs |
 | `compiler/` | Model, lifecycle, scheduling, publication and shared types |
 | `helpers/`, `tools/`, `tests/` | Host collections, tooling and regression evidence |
