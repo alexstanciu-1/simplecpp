@@ -1957,3 +1957,16 @@ execution and retained replay. Default-complete and inline-value requirements re
 Full PHP-hosted bootstrap now PASSES: 1:45.27 / 796580 KiB RSS / 757 MiB heap,
 including complete C++ emission. Native compiler build at -O0 proceeds separately;
 representative compiler runs and second-generation proof remain outstanding.
+
+## First native compiler build and timeout audit — 2026-10-25
+
+The published compiler reaches native compilation. Initial -O0 build stops after
+7:33.34 / 1063852 KiB RSS with an uninformative interruption. Same-cache logging
+confirms the 120-second per-action deadline on 15.3 MB specializations/containers.cpp.
+Temporary host-only 600-second allowance (production unchanged) yields Clang errors
+in 3:43.08 / 2026416 KiB RSS, with timed_out=false. Three errors represent two cases:
+nullable concrete string conversion to native string, and native str::split vector
+result transport into vector<concrete string>. CH15 records deadline/configuration
+and diagnostic debt. [Evidence](results/compiler_bootstrap_backlog_2026_10_23/native_first_build/README.md).
+No native executable; representative and second-generation proofs remain outstanding.
+Stop before fixing the new composed-transport boundary failures.

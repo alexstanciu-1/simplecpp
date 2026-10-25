@@ -1256,3 +1256,14 @@ premature read/use, incremental invalidation, ordinary/prelowered code generatio
 and portable PHP behavior. Either retire the exception and complete source
 adaptations, or document/test the deliberately retained language contract. Do not
 claim proof from a successful compiler bootstrap alone.
+
+### CH15-NATIVE-ACTION-TIMEOUT-01 — Native action deadline and interruption diagnostics
+
+The first full compiler native build reaches a 15.3 MB concrete containers unit and
+hits Native_CPP_Build's hardcoded 120-second subprocess deadline. Host-only outcome
+logging confirms timed_out=true; the public diagnostic merely says Native process
+interrupted and loses command/timeout context. Provide an explicit bounded build
+setting and report the failed action/reason without bypassing checks. Review large
+implementation-group costs independently; do not infer OOM from an interruption.
+A temporary 600-second host-only allowance exposed three Clang errors in composed
+string transport without timing out (3:43.08 / 2026416 KiB peak RSS on cached retry). [Evidence](../../../../specs/planning/results/compiler_bootstrap_backlog_2026_10_23/native_first_build/README.md).
