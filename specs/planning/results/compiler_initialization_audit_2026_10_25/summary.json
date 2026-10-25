@@ -1,0 +1,17 @@
+{
+  "scope": "Source files in latest bootstrap source_hashes; lexical declared required non-scalar fields, not semantic errors. Includes enum/weak/provider/parked controls. Promoted/defaulted/nullable fields excluded.",
+  "fields": 331,
+  "owners": 195,
+  "groups": {
+    "A_INPUT": 54,
+    "B_FACTORY": 17,
+    "C_STAGED_OR_BUILDER": 156,
+    "DEFAULT_OR_INPUT": 28,
+    "EXISTING_WEAK": 33,
+    "PROVIDER_REVIEW": 9,
+    "C_STAGED": 15,
+    "PARKED": 17,
+    "B_ORDERED_FACTORY": 2
+  },
+  "warning": "Groups are conservative source-shape triage; reviewed owner-family recommendations are in the linked audit. Not 331 confirmed failures or 331 final patch decisions."
+}
