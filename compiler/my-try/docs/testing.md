@@ -2345,3 +2345,17 @@ native and ordinary/concrete v0.2 output. It guards the conditionless-loop sourc
 cycles, required cycle rejection and retry on the same invocation-local worker.
 Run through the shared runner; native scaling evidence lives in the
 [performance checkpoint](../../../specs/planning/results/compiler_performance_2026_10_25/README.md).
+
+`python3 compiler/my-try/tests/native_concurrency.py --results FRESH` proves real
+Clang overlap bounded by jobs, jobs=1 versus jobs=4 execution, warm reuse, failed
+readiness, child termination, stage cleanup and retry. `prelower_native_boundary.py`
+exercises strict token validation and PCH policy with four native process slots.
+`tests/portability/process_handle_types.php` checks explicit facade type spellings
+in both converter targets; it is a conversion proof, not native execution.
+
+### Portable dependency-rule parser
+
+`python3 tests/portability/native_depfiles.py --results FRESH` checks actual compiler
+PHP source and the legacy-native route with escaped paths, continuations, malformed
+input, byte paths and a long wrapped rule. The production pool report records the
+same fixture's ordinary/concrete v0.2 execution and a differential parser check.

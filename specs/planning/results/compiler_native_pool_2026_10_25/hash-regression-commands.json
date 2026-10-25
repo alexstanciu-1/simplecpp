@@ -1,0 +1,156 @@
+[
+  {
+    "name": "cpp-runtime-build",
+    "command": [
+      "clang++-18",
+      "-std=c++23",
+      "-Wshadow",
+      "-DSCPP_LANGUAGE_TARGET_PHP=1",
+      "-I",
+      "/home/alexv/__AI/simple_cpp/simple_cpp_01/runtime/include",
+      "-pthread",
+      "-c",
+      "/home/alexv/__AI/simple_cpp/simple_cpp_01/runtime/include/core/runtime.cpp",
+      "-o",
+      "/tmp/hash-churn-regressions/fixture-runtime.o"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 7.686,
+    "code": 0,
+    "expected": 0,
+    "executor": "subprocess",
+    "executor_reason": "subprocess"
+  },
+  {
+    "name": "test_concurrent_value_iteration",
+    "command": [
+      "clang++-18",
+      "-std=c++20",
+      "-Wshadow",
+      "-I",
+      "/home/alexv/__AI/simple_cpp/simple_cpp_01/runtime/include",
+      "-DSCPP_LANGUAGE_TARGET_PHP=1",
+      "-pthread",
+      "-std=c++23",
+      "-O2",
+      "/home/alexv/__AI/simple_cpp/simple_cpp_01/tests/runtime/native/test_concurrent_value_iteration.cpp",
+      "/tmp/hash-churn-regressions/fixture-runtime.o",
+      "-o",
+      "/tmp/hash-churn-regressions/test_concurrent_value_iteration"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 4.312,
+    "code": 0,
+    "expected": 0,
+    "executor": "subprocess",
+    "executor_reason": "subprocess"
+  },
+  {
+    "name": "test_concurrent_value_iteration-run",
+    "command": [
+      "/tmp/hash-churn-regressions/test_concurrent_value_iteration"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 0.021,
+    "code": 0,
+    "expected": 0,
+    "executor": "subprocess",
+    "executor_reason": "subprocess"
+  },
+  {
+    "name": "test_packed_table_storage",
+    "command": [
+      "clang++-18",
+      "-std=c++20",
+      "-Wshadow",
+      "-I",
+      "/home/alexv/__AI/simple_cpp/simple_cpp_01/runtime/include",
+      "-DSCPP_LANGUAGE_TARGET_PHP=1",
+      "-pthread",
+      "-std=c++23",
+      "-O2",
+      "/home/alexv/__AI/simple_cpp/simple_cpp_01/tests/runtime/native/test_packed_table_storage.cpp",
+      "/tmp/hash-churn-regressions/fixture-runtime.o",
+      "-o",
+      "/tmp/hash-churn-regressions/test_packed_table_storage"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 7.1,
+    "code": 0,
+    "expected": 0,
+    "executor": "subprocess",
+    "executor_reason": "subprocess"
+  },
+  {
+    "name": "test_packed_table_storage-run",
+    "command": [
+      "/tmp/hash-churn-regressions/test_packed_table_storage"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 0.005,
+    "code": 0,
+    "expected": 0,
+    "executor": "subprocess",
+    "executor_reason": "subprocess"
+  },
+  {
+    "name": "test_hash_churn",
+    "command": [
+      "clang++-18",
+      "-std=c++20",
+      "-Wshadow",
+      "-I",
+      "/home/alexv/__AI/simple_cpp/simple_cpp_01/runtime/include",
+      "-DSCPP_LANGUAGE_TARGET_PHP=1",
+      "-pthread",
+      "-std=c++23",
+      "-O2",
+      "/home/alexv/__AI/simple_cpp/simple_cpp_01/tests/runtime/native/test_hash_churn.cpp",
+      "/tmp/hash-churn-regressions/fixture-runtime.o",
+      "-o",
+      "/tmp/hash-churn-regressions/test_hash_churn"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 7.421,
+    "code": 0,
+    "expected": 0,
+    "executor": "subprocess",
+    "executor_reason": "subprocess"
+  },
+  {
+    "name": "test_hash_churn-run",
+    "command": [
+      "/tmp/hash-churn-regressions/test_hash_churn"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 0.515,
+    "code": 0,
+    "expected": 0,
+    "executor": "subprocess",
+    "executor_reason": "subprocess"
+  },
+  {
+    "name": "test_hash_t",
+    "command": [
+      "clang++-18",
+      "-std=c++20",
+      "-Wshadow",
+      "-I",
+      "/home/alexv/__AI/simple_cpp/simple_cpp_01/runtime/include",
+      "-DSCPP_LANGUAGE_TARGET_PHP=1",
+      "-pthread",
+      "-std=c++23",
+      "-O2",
+      "/home/alexv/__AI/simple_cpp/simple_cpp_01/tests/runtime/native/test_hash_t.cpp",
+      "/tmp/hash-churn-regressions/fixture-runtime.o",
+      "-o",
+      "/tmp/hash-churn-regressions/test_hash_t"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 8.589,
+    "code": 1,
+    "expected": 0,
+    "executor": "subprocess",
+    "executor_reason": "subprocess"
+  }
+]

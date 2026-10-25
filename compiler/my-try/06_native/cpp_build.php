@@ -4,6 +4,7 @@ namespace scpp\compiler;
 /** Disk consumer only. No syntax, preparation scheduling or emitter callbacks. */
 final class Native_CPP_Build
 {
+	use Native_Compile_Actions;
 	private native_cpp_config $config;
 	private string $root;
 	private string $tool_key;
@@ -21,6 +22,7 @@ final class Native_CPP_Build
 		$this->report = new native_cpp_result();
 		$this->root = fs_output_root($config->cache_directory);
 		if (!string_byte_starts_with($config->compiler, '/')) { throw new \RuntimeException('Native compiler must be absolute'); }
+		if ($config->jobs < 1) { throw new \RuntimeException('Native jobs must be positive'); }
 		$policy = new cpp_lowering_policy($config->optimization);
 	}
 
@@ -39,7 +41,8 @@ final class Native_CPP_Build
 			if (!$cache_lock->acquire($this->root . '/.scpp-native.lock', false)) { throw new \RuntimeException('Native cache is busy'); }
 			$owner = fs_output_read($this->root, '.scpp-native.owner');
 			if ($owner !== null) {
-				if ($owner !== "scpp-native-cache-v1\n") { throw new \RuntimeException('Unknown native cache owner'); }
+				$owner_text /** string */ = $owner;
+				if ($owner_text !== "scpp-native-cache-v1\n") { throw new \RuntimeException('Unknown native cache owner'); }
 			}
 			else {
 				if ((fs_output_read($this->root, '.scpp-native.status') !== null)
@@ -137,19 +140,22 @@ final class Native_CPP_Build
 				if (!$pch->reused) { $this->report->pch_built++; }
 				$pch_path = $pch->path;
 			}
-			$objects /** vector<string> */ = [];
+			$requests /** Storage<native_compile_request> */ = new Storage();
 			foreach ($build_inputs->sources as $provider) {
 				$provider_path = fs_require_realpath($runtime . '/' . $provider);
 				if (!string_byte_starts_with($provider_path, $runtime . '/')) { throw new \RuntimeException('Runtime provider source escapes its root'); }
 				$runtime_command = Native_CPP_Commands::provider($this->flags, $provider_path);
-				$runtime_object = $this->compile_action($runtime_command, 'o', false);
-				$this->record_object($runtime_object);
-				$objects[] = $runtime_object->path;
+				$requests->append(new native_compile_request($runtime_command, 'o'));
 			}
 			foreach ($units as $unit) {
 				$command = Native_CPP_Commands::implementation($this->flags, $source_root, $pch_path, $unit);
 				foreach ($layout_headers as $layout_header) { $command[] = '-include'; $command[] = $layout_header; }
-				$artifact = $this->compile_action($command, 'o', false, isset($checked_units[$unit]));
+				$requests->append(new native_compile_request($command, 'o', false, isset($checked_units[$unit])));
+			}
+			$this->compile_actions($requests, $this->config->jobs);
+			$objects /** vector<string> */ = [];
+			foreach ($requests as $request) {
+				$artifact /** native_cpp_artifact */ = $request->artifact;
 				$this->record_object($artifact);
 				$objects[] = $artifact->path;
 			}
@@ -168,74 +174,6 @@ final class Native_CPP_Build
 	{
 		if ($artifact->reused) { $this->report->reused++; }
 		else { $this->report->compiled++; }
-	}
-
-	/** Reuse described dependency discovery, otherwise scan through Clang. */
-	private function compile_action(array $command /** vector<string> */, string $suffix, bool $force, bool $template_free = false): native_cpp_artifact
-	{
-		$inputs /** nullable<Native_Dependency_Inputs> */ = $this->dependency_inputs;
-		// Strict application validation always observes fresh transitive dependencies.
-		if ($template_free) {
-			$inputs = null;
-		}
-		$discovery = '';
-		if ($inputs !== null) {
-			$source = $command[q_count($command) - 1];
-			$discovery = $inputs->discovery_key($this->tool_key . self::arguments_key($command), $source);
-			$previous = $inputs->previous($discovery);
-			if ($previous !== '') {
-				$key = content_sha256($this->tool_key . self::arguments_key($command) . $inputs->inputs_key($previous));
-				return $this->action($command, $key, $suffix, $force, false);
-			}
-		}
-		$scan /** vector<string> */ = [];
-		$pch_inputs /** vector<string> */ = [];
-		$skip = false;
-		foreach ($command as $argument) {
-			if ($skip) { $pch_inputs[] = $argument; $skip = false; continue; }
-			if ($argument === '-include-pch') {
-				$scan[] = '-include'; $scan[] = $this->root . '/runtime-pch.hpp'; $skip = true; continue;
-			}
-			if ($argument !== '-c') { $scan[] = $argument; }
-		}
-		$scan[] = '-M'; $scan[] = '-MT'; $scan[] = 'output';
-		$observed = $this->invoke($scan);
-		self::require_success($observed);
-		$paths /** vector<string> */ = Native_Depfiles::paths($observed->stdout, $this->root);
-		foreach ($pch_inputs as $path) { $paths[] = $path; }
-		$input_key = '';
-		if ($inputs !== null) { $input_key = $inputs->inputs_key($inputs->remember($discovery, $paths)); }
-		else { $input_key = self::inputs_key($paths); }
-		$key = content_sha256($this->tool_key . self::arguments_key($command) . $input_key);
-		if ($template_free) {
-			$key = content_sha256("scpp-template-free-tokens-v1\n" . $key);
-		}
-		return $this->action($command, $key, $suffix, $force, false, $template_free);
-	}
-
-	/** Ask Clang for active tokens, including macro expansion and transitive provider headers. */
-	private function require_template_free(array $command /** vector<string> */): void
-	{
-		$tokens /** vector<string> */ = [];
-		foreach ($command as $argument) {
-			if ($argument !== '-c') {
-				$tokens[] = $argument;
-			}
-		}
-		$token_scan_arguments /** vector<string> */ = ['-fsyntax-only', '-Xclang', '-dump-tokens'];
-		foreach ($token_scan_arguments as $argument) {
-			$tokens[] = $argument;
-		}
-		$result = $this->invoke($tokens);
-		self::require_success($result);
-		$text = "\n" . $result->stderr;
-		if (q_strpos($text, "\ntemplate 'template'\t") !== false) {
-			throw new \RuntimeException('prelower_templates: template token in application input (including provider headers): '
-				. $command[q_count($command) - 1]);
-		}
-		if (q_strpos($text, "\neof ''\t") === false) {
-			throw new \RuntimeException('prelower_templates: Clang did not provide a complete application token stream');
-		}
 	}
 
 	/** Link state records actual linker dependencies in addition to exact ordered object membership. */
@@ -287,7 +225,7 @@ final class Native_CPP_Build
 		return new native_cpp_artifact($path, $digest, true);
 	}
 
-	private function action(array $command /** vector<string> */, string $key, string $suffix, bool $force, bool $executable, bool $template_free = false): native_cpp_artifact
+	private function action(array $command /** vector<string> */, string $key, string $suffix, bool $force, bool $executable): native_cpp_artifact
 	{
 		if (!$force) {
 			$cached = $this->cached($key, $suffix);
@@ -295,9 +233,6 @@ final class Native_CPP_Build
 		}
 		$relative = 'artifacts/' . $key . '.' . $suffix;
 		$expected = $this->begin_action($key, $suffix);
-		if ($template_free) {
-			$this->require_template_free($command);
-		}
 		$stage = new \scpp\Output_Stage($this->root);
 		try {
 			$execution_command /** vector<string> */ = $command;
@@ -370,19 +305,29 @@ final class Native_CPP_Build
 
 	private function invoke_program(string $executable, array $arguments /** vector<string> */): native_process_result
 	{
-		$args /** vector<string> */ = Native_CPP_Commands::environment($executable);
-		foreach ($arguments as $argument) { $args[] = $argument; }
-		$handle = process_spawn('/usr/bin/env', $args, '', 120000, $this->root);
+		$handle = $this->start_program($executable, $arguments);
 		try {
 			while (!process_poll($handle)) { dt_sleep_ms(1); }
-			$output = process_output($handle);
-			$result = new native_process_result();
-			$result->exit_code = $output->exit_code;
-			$result->stdout = $output->stdout_text;
-			$result->stderr = $output->stderr_text;
-			if ($output->timed_out || $output->stopped || ($output->signal !== 0)) { throw new \RuntimeException('Native process interrupted: ' . $result->stderr); }
-			return $result;
+			return self::completed_process($handle);
 		} finally { process_close($handle); }
+	}
+
+	private function start_program(string $executable, array $arguments /** vector<string> */): \scpp\Process_Handle
+	{
+		$args /** vector<string> */ = Native_CPP_Commands::environment($executable);
+		foreach ($arguments as $argument) { $args[] = $argument; }
+		return process_spawn('/usr/bin/env', $args, '', 120000, $this->root);
+	}
+
+	private static function completed_process(\scpp\Process_Handle $handle): native_process_result
+	{
+		$output = process_output($handle);
+		$result = new native_process_result();
+		$result->exit_code = $output->exit_code;
+		$result->stdout = $output->stdout_text;
+		$result->stderr = $output->stderr_text;
+		if ($output->timed_out || $output->stopped || ($output->signal !== 0)) { throw new \RuntimeException('Native process interrupted: ' . $result->stderr); }
+		return $result;
 	}
 
 	private static function require_success(native_process_result $result): void

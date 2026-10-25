@@ -37,6 +37,9 @@ def main():
                            published, cache, runtime, '/usr/bin/clang++']
                 if not pch:
                     command.append('--no-pch')
+                else:
+                    command.append('/usr/bin/ld')
+                command.extend(['0', '4'])
                 result = runner.run(name, command, expected=expected, cli_reason='Native build')
                 if expected:
                     assert (cache / '.scpp-native.status').read_text() == 'pending\n'
@@ -81,7 +84,7 @@ def main():
             runner.run('ordinary-publish', ['php', APP / 'main.php', '--s2s', source, '--no-prelower-templates',
                        '--output', target], cli_reason='Publication CLI contract')
             command = ['php', APP / 'tests/fixtures/native_cache_driver.php', target,
-                       out / 'ordinary-cache', ROOT / 'runtime/include', '/usr/bin/clang++']
+                       out / 'ordinary-cache', ROOT / 'runtime/include', '/usr/bin/clang++', '/usr/bin/ld', '0', '4']
             built = json.loads(runner.run('ordinary-pch', command, cli_reason='Native build'))
             assert built['pch_built'] == 1, built
             runner.run('ordinary-execute', [built['executable']])

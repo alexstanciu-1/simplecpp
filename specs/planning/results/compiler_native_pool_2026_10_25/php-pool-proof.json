@@ -1,0 +1,45 @@
+{
+  "passed": true,
+  "observations": [
+    {
+      "jobs": 1,
+      "seconds": 23.416799764992902,
+      "maximum_overlap": 1,
+      "result": {
+        "executable": "/tmp/compiler-native-concurrency-03/cache-1/artifacts/a185ef504bbbfd3e7abdf8e4f7b13b20b6d827ce5b3a3eaed7f306e5c87074b5.bin",
+        "compiled": 8,
+        "reused": 0,
+        "pch_built": 0,
+        "linked": 1
+      },
+      "warm": {
+        "executable": "/tmp/compiler-native-concurrency-03/cache-1/artifacts/a185ef504bbbfd3e7abdf8e4f7b13b20b6d827ce5b3a3eaed7f306e5c87074b5.bin",
+        "compiled": 0,
+        "reused": 8,
+        "pch_built": 0,
+        "linked": 0
+      }
+    },
+    {
+      "jobs": 4,
+      "seconds": 10.875339959020494,
+      "maximum_overlap": 4,
+      "result": {
+        "executable": "/tmp/compiler-native-concurrency-03/cache-4/artifacts/a225ff506a0efa7961ed296e5998b58fdd3ef3b3abd534aa6383e2359b9f731b.bin",
+        "compiled": 8,
+        "reused": 0,
+        "pch_built": 0,
+        "linked": 1
+      },
+      "warm": {
+        "executable": "/tmp/compiler-native-concurrency-03/cache-4/artifacts/a225ff506a0efa7961ed296e5998b58fdd3ef3b3abd534aa6383e2359b9f731b.bin",
+        "compiled": 0,
+        "reused": 8,
+        "pch_built": 0,
+        "linked": 0
+      }
+    }
+  ],
+  "failure_retry": true,
+  "native_compiler_rebuilt": false
+}

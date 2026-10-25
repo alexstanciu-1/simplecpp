@@ -76,7 +76,7 @@ def main():
                     native_other=native_seconds-sum(phases.values()), compiled=compiled, result=result))
                 (output / 'observations.json').write_text(json.dumps(observations, indent=2) + '\n')
 
-            all_units = ['runtime.cpp', 'document.cpp', 'datetime.cpp', 'entry.cpp', *[unit(n) for n in ['read.phs', 'forward.phs', 'identity.phs', 'unrelated.phs']]]
+            all_units = ['runtime.cpp', 'document.cpp', 'datetime.cpp', 'json.cpp', 'entry.cpp', *[unit(n) for n in ['read.phs', 'forward.phs', 'identity.phs', 'unrelated.phs']]]
             build('cold', all_units, 7, pch=1)
             if '-Wshadow' not in (output / 'logs/cold-build.stderr').read_text():
                 raise RuntimeError('Successful native build lost legal-shadowing diagnostics')
@@ -88,7 +88,7 @@ def main():
             (source / 'read.phs').write_text(sources['read.phs'].replace('$value + $offset', '$value + $offset + 1'))
             build('body', [unit('read.phs')], 8)
             (source / 'read.phs').write_text(sources['read.phs'].replace('$offset = 0', '$offset = 2'))
-            build('default', [unit('read.phs'), 'entry.cpp'], 9)
+            build('default', ['entry.cpp'], 9)
             (source / 'read.phs').write_text(sources['read.phs'].replace('$offset = 0', '$offset = 2, int $extra = 0'))
             build('signature', [unit('read.phs'), 'entry.cpp'], 9)
             (source / 'type.phs').write_text('struct Box { int $value; int $extra; }')

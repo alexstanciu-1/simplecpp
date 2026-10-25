@@ -1,0 +1,61 @@
+[
+  {
+    "name": "cpp-runtime-build",
+    "command": [
+      "clang++-18",
+      "-std=c++23",
+      "-Wshadow",
+      "-DSCPP_LANGUAGE_TARGET_PHP=1",
+      "-I",
+      "/home/alexv/__AI/simple_cpp/simple_cpp_01/runtime/include",
+      "-pthread",
+      "-c",
+      "/home/alexv/__AI/simple_cpp/simple_cpp_01/runtime/include/core/runtime.cpp",
+      "-o",
+      "/tmp/hash-existing-regression/fixture-runtime.o"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 7.961,
+    "code": 0,
+    "expected": 0,
+    "executor": "subprocess",
+    "executor_reason": "subprocess"
+  },
+  {
+    "name": "test_hash_t",
+    "command": [
+      "clang++-18",
+      "-std=c++20",
+      "-Wshadow",
+      "-I",
+      "/home/alexv/__AI/simple_cpp/simple_cpp_01/runtime/include",
+      "-DSCPP_LANGUAGE_TARGET_PHP=1",
+      "-pthread",
+      "-std=c++23",
+      "-O2",
+      "/home/alexv/__AI/simple_cpp/simple_cpp_01/tests/runtime/native/test_hash_t.cpp",
+      "/tmp/hash-existing-regression/fixture-runtime.o",
+      "/home/alexv/__AI/simple_cpp/simple_cpp_01/runtime/include/modules/json/json.cpp",
+      "-o",
+      "/tmp/hash-existing-regression/test_hash_t"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 11.057,
+    "code": 0,
+    "expected": 0,
+    "executor": "subprocess",
+    "executor_reason": "subprocess"
+  },
+  {
+    "name": "test_hash_t-run",
+    "command": [
+      "/tmp/hash-existing-regression/test_hash_t"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 0.004,
+    "code": 0,
+    "expected": 0,
+    "executor": "subprocess",
+    "executor_reason": "subprocess"
+  }
+]

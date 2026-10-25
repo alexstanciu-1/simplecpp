@@ -6,6 +6,7 @@ try {
 	$config->pch = ($argv[5] ?? '') !== '--no-pch'; // This cache fixture explicitly exercises PCH by default.
 	if ($argc > 5) { if ($argv[5] !== '--no-pch') { $config->linker = $argv[5]; } }
 	if ($argc > 6) { $config->linker_threads = (int)$argv[6]; }
+	if ($argc > 7) { $config->jobs = (int)$argv[7]; }
 	$result = (new Native_CPP_Build($config))->build($argv[1]);
 	fwrite(STDERR, $result->diagnostics);
 	echo json_encode(['executable' => $result->executable, 'compiled' => $result->compiled,

@@ -1,0 +1,45 @@
+{
+  "passed": true,
+  "observations": [
+    {
+      "jobs": 1,
+      "seconds": 23.88287176299491,
+      "maximum_overlap": 1,
+      "result": {
+        "executable": "/tmp/compiler-native-pool-lines-proof/cache-1/artifacts/5340fdb73a80cecc9e5b2f4b90949f9c7de4c213f11d0245e72262af3963ac8b.bin",
+        "compiled": 8,
+        "reused": 0,
+        "pch_built": 0,
+        "linked": 1
+      },
+      "warm": {
+        "executable": "/tmp/compiler-native-pool-lines-proof/cache-1/artifacts/5340fdb73a80cecc9e5b2f4b90949f9c7de4c213f11d0245e72262af3963ac8b.bin",
+        "compiled": 0,
+        "reused": 8,
+        "pch_built": 0,
+        "linked": 0
+      }
+    },
+    {
+      "jobs": 4,
+      "seconds": 10.939416187989991,
+      "maximum_overlap": 4,
+      "result": {
+        "executable": "/tmp/compiler-native-pool-lines-proof/cache-4/artifacts/13809abf679de1529a996e43a611293b0e1d39c7670545f2c166949a6d5a7946.bin",
+        "compiled": 8,
+        "reused": 0,
+        "pch_built": 0,
+        "linked": 1
+      },
+      "warm": {
+        "executable": "/tmp/compiler-native-pool-lines-proof/cache-4/artifacts/13809abf679de1529a996e43a611293b0e1d39c7670545f2c166949a6d5a7946.bin",
+        "compiled": 0,
+        "reused": 8,
+        "pch_built": 0,
+        "linked": 0
+      }
+    }
+  ],
+  "failure_retry": true,
+  "native_compiler_rebuilt": false
+}

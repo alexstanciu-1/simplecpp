@@ -3,6 +3,10 @@ Doc Status: supporting
 
 The [generated-unit partitioning and concurrency profile](../../../specs/planning/results/compiler_partition_profile_2026_10_25/README.md)
 records bounded source/layout splitting and the remaining serial manifest cost.
+The subsequent [performance slices](../../../specs/planning/results/compiler_performance_2026_10_25/README.md)
+remove that manifest cost and measure preparation/rendering overlap. The
+[production native pool checkpoint](../../../specs/planning/results/compiler_native_pool_2026_10_25/README.md)
+tracks actual Clang concurrency, coordinator costs and correctness repairs.
 
 Optional [lowering diagnostics](architecture/lowering_report.md) expose artifact
 sizes, direct consumers, fragment header contributions and outlining decisions.

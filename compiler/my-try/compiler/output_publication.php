@@ -29,11 +29,12 @@ final class Output_Publication
 				}
 			}
 			else {
+				$status_text /** string */ = $status;
 				if (string_byte_starts_with($status, 'scpp-output-v1:ready:')) {
 					if ($manifest === null) {
 						throw new \RuntimeException('Ready output manifest is missing');
 					}
-					if ($status !== 'scpp-output-v1:ready:' . content_sha256($manifest) . "\n") {
+					if ($status_text !== 'scpp-output-v1:ready:' . content_sha256($manifest) . "\n") {
 						throw new \RuntimeException('Ready output manifest was modified');
 					}
 					$this->load_inventory($manifest, false);
@@ -165,7 +166,8 @@ final class Output_Publication
 		if (($status === null) || ($manifest === null)) {
 			throw new \RuntimeException('Output has no ready revision');
 		}
-		if ($status !== 'scpp-output-v1:ready:' . content_sha256($manifest) . "\n") {
+		$status_text /** string */ = $status;
+		if ($status_text !== 'scpp-output-v1:ready:' . content_sha256($manifest) . "\n") {
 			throw new \RuntimeException('Output revision is pending or failed');
 		}
 		return $manifest;

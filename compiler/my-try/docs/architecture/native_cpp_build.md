@@ -333,6 +333,26 @@ file; cached linking rechecks those library/startup/script inputs as well. First
 metadata associates the completed artifact with the discovered dependency key,
 without copying the executable. Permissions are checked before binary cache reuse.
 
+## Bounded native process scheduling
+
+`native_cpp_config::jobs` and `build_cpp.php --jobs=N` bound independent Clang
+processes (default 1). `Native_Compile_Actions` is part of the native-build owner;
+its invocation-local requests advance through discovery, strict token validation
+when required, and compilation. Slots refill as requests finish. Layout probes,
+PCH prerequisites and the final link remain ordered.
+
+The coordinator alone queries/mutates dependency caches, begins actions, promotes
+staged outputs and publishes ready metadata. Identical in-flight action keys share
+one leader. Results, successful diagnostics and link inputs are collected in input
+order. The same request path handles jobs=1 and prerequisite compilation; scheduling
+does not alter action keys or skip strict transitive token/dependency checks.
+Failures leave native readiness pending. Child handles close before output stages
+and build locks; valid completed actions remain reusable on retry.
+
+Process handles have an explicit portable type binding from the host facade to the
+existing runtime `process_handle`. Required disk-marker comparisons use checked
+string locals after null guards, preserving the same PHP and native marker bytes.
+
 ## Runtime layout actions
 
 Published `layout_probe` artifacts are compiled and linked through the existing
@@ -399,3 +419,10 @@ Concrete prelowered publications currently use `Native_CPP_Build`. The optional
 Ninja consumer rejects them explicitly until it supports layout probes and strict
 application closure validation. Shared-allocation outlining remains ordinary-only;
 concrete construction continues through the existing prepared transport.
+
+Dependency-rule parsing splits Clang's Make output into physical lines before byte
+scanning. Escaped newline continuations share the same path and parser state;
+the first unescaped rule ending stops consumption. This preserves byte paths and
+avoids repeatedly copying a complete dependency rule through value arguments.
+See the [production pool measurements](../../../../specs/planning/results/compiler_native_pool_2026_10_25/README.md)
+for native execution, failure/retry and performance evidence.

@@ -23,6 +23,8 @@ abstract class native_cpp_toolchain
 final class native_cpp_config extends native_cpp_toolchain
 {
 	public string $cache_directory;
+	/** Maximum independent Clang processes; layout/link prerequisites remain ordered. */
+	public int $jobs = 1;
 	/** Explicit opt-in: runtime changes require a fresh cache directory. */
 	public bool $runtime_snapshot = false;
 	public function __construct(string $compiler, string $runtime_include, string $cache_directory)
@@ -81,4 +83,24 @@ final class native_cpp_artifact
 final class native_cpp_input {
 	public string $digest = '';
 	public array $includes /** vector<string> */ = [];
+}
+
+/** Invocation-local process phase; no semantic/preparation state enters native scheduling. */
+enum native_compile_phase { case discovery; case validation; case compilation; case finished; }
+
+final class native_compile_request
+{
+	public native_compile_phase $phase = native_compile_phase::discovery;
+	public ?\scpp\Process_Handle $process = null;
+	public ?\scpp\Output_Stage $stage = null;
+	public ?native_cpp_artifact $artifact = null;
+	public ?native_compile_request $leader = null;
+	public ?Native_Dependency_Inputs $inputs = null;
+	public array $pch_inputs /** vector<string> */ = [];
+	public string $discovery = '';
+	public string $key = '';
+	public string $expected = '';
+	public string $diagnostics = '';
+	public function __construct(public array $command /** vector<string> */, public string $suffix,
+		public bool $force = false, public bool $template_free = false) {}
 }

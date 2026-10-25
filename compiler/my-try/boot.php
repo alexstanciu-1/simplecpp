@@ -249,6 +249,7 @@ require_once __DIR__ . '/06_native/depfiles.php';
 require_once __DIR__ . '/06_native/dependency_inputs.php';
 require_once __DIR__ . '/06_native/cpp_commands.php';
 require_once __DIR__ . '/06_native/cpp_publication.php';
+require_once __DIR__ . '/06_native/compile_actions.php';
 require_once __DIR__ . '/06_native/cpp_build.php';
 require_once __DIR__ . '/06_native/ninja_build.php';
 require_once __DIR__ . '/compiler/model.php';
