@@ -5,6 +5,7 @@ namespace scpp\portability;
 
 require_once __DIR__ . "/import_policy.php";
 require_once __DIR__ . "/exception_policy.php";
+require_once __DIR__ . "/type_names.php";
 require_once __DIR__ . "/declaration_index.php";
 require_once __DIR__ . "/container_type.php";
 require_once __DIR__ . "/staged_fields.php";
@@ -300,7 +301,7 @@ final class Converter {
 			$this->fail($type[2], 'expected explicit scalar or named method type' . ($return ? ', or void return' : ''));
 		}
 		if ($nullable && strtolower($type[1]) === 'void') { $this->fail($type[2], 'nullable void is unsupported'); }
-		$mapped = Exception_Policy::name($type[1]);
+		$mapped = Type_Names::name($type[1]);
 		if ($return && $mapped === '\\SplObjectStorage') { $mapped = $this->objectHashAnnotation($this->significant()); }
 		if ($return && in_array($mapped, ['Storage', 'Keyed_Storage', 'Key_Storage_List', 'Storage_Cursor'], true)) {
 			$mapped = $this->storageAnnotation($this->significant(), $mapped);
@@ -466,11 +467,11 @@ final class Converter {
 		}
 		if (preg_match('~^/\*\*\s*nullable<\s*(\\\\?[a-zA-Z_][a-zA-Z_0-9]*(?:\\\\[a-zA-Z_][a-zA-Z_0-9]*)*)\s*>\s*\*/$~D', $annotation, $match)
 			&& !in_array(strtolower($match[1]), ['vector', 'hash', 'storage', 'keyed_storage', 'key_storage_list', 'storage_cursor', 'nullable', 'result_or_false', 'result_or_bool', 'mixed', 'dynamic', 'array', 'object', 'void', 'null', 'true', 'false', 'never', 'iterable', 'callable', 'self', 'parent', 'static'], true)) {
-			return 'nullable<' . Exception_Policy::name($match[1]) . '>';
+			return 'nullable<' . Type_Names::name($match[1]) . '>';
 		}
 		if (preg_match('~^/\*\*\s*(\\\\?[a-zA-Z_][a-zA-Z_0-9]*(?:\\\\[a-zA-Z_][a-zA-Z_0-9]*)*)\s*\*/$~D', $annotation, $match)
 			&& !in_array(strtolower($match[1]), ['vector', 'hash', 'storage', 'keyed_storage', 'key_storage_list', 'storage_cursor', 'nullable', 'result_or_false', 'result_or_bool', 'mixed', 'dynamic', 'array', 'object', 'void', 'null', 'true', 'false', 'never', 'iterable', 'callable', 'self', 'parent', 'static'], true)) {
-			return Exception_Policy::name($match[1]);
+			return Type_Names::name($match[1]);
 		}
 		$this->fail($token[2], 'unsupported local type annotation');
 	}
@@ -496,7 +497,7 @@ final class Converter {
 				|| in_array(strtolower($type[1]), ['mixed', 'object', 'iterable', 'void', 'never', 'self', 'parent', 'static'], true)) {
 				$this->fail($type[2], 'expected scalar or named promoted type');
 			}
-			$mappedType = Exception_Policy::name($type[1]);
+			$mappedType = Type_Names::name($type[1]);
 			$field = $this->significant();
 			if ($field[0] !== T_VARIABLE) { $this->fail($field[2], 'expected promoted parameter name'); }
 			$parameterNames[] = $field[1];
@@ -873,7 +874,7 @@ final class Converter {
 					$this->fail($at, 'required field needs a concrete scalar or named type');
 				}
 				$this->expect(';');
-				$fields[] = new Node('property', $visibility . ' ' . Exception_Policy::name($type[1]) . ' ' . $field[1] . ';', $at);
+				$fields[] = new Node('property', $visibility . ' ' . Type_Names::name($type[1]) . ' ' . $field[1] . ';', $at);
 				continue;
 			}
 			$this->expect('=');
@@ -890,7 +891,7 @@ final class Converter {
 				if (!$valid || in_array(strtolower($type[1]), ['mixed', 'object', 'iterable', 'void', 'never', 'self', 'parent', 'static'], true)) { $this->fail($at, 'nullable property requires null or a matching scalar literal'); }
 				if ($value[1] !== 'null' && $type[1] === 'string') { $value[1] = $this->stringLiteral($value); }
 				$this->expect(';');
-				$fields[] = new Node('property', $visibility . ' ' . $field[1] . ' nullable<' . Exception_Policy::name($type[1]) . '> = ' . ($integerDefault ?? $value[1]) . ';', $at);
+				$fields[] = new Node('property', $visibility . ' ' . $field[1] . ' nullable<' . Type_Names::name($type[1]) . '> = ' . ($integerDefault ?? $value[1]) . ';', $at);
 				continue;
 			}
 			$valid = match ($type[1]) {

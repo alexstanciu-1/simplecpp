@@ -12,6 +12,12 @@ function string_byte_from_int(int $value): string {
 }
 
 function string_byte_len(string $text): int { return \strlen($text); }
+function string_byte_find(string $text, string $needle, int $offset = 0): int|false {
+    if ($offset < 0 || $offset > \strlen($text)) {
+        throw new \ValueError('Byte search offset must be within the input');
+    }
+    return \strpos($text, $needle, $offset);
+}
 function string_byte_starts_with(string $text, string $prefix): bool { return \str_starts_with($text, $prefix); }
 function string_byte_ends_with(string $text, string $suffix): bool { return \str_ends_with($text, $suffix); }
 function string_utf8_is_valid(string $text): bool { return \mb_check_encoding($text, 'UTF-8'); }

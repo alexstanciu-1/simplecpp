@@ -49,6 +49,7 @@ function sequence_filter(array $input, \Closure $predicate): array { return \scp
 function keyed_map(array $input, \Closure $callback): array { return \scpp\keyed_map($input, $callback); }
 function keyed_filter(array $input, \Closure $predicate): array { return \scpp\keyed_filter($input, $predicate); }
 function string_byte_len(string $text): int { return \scpp\string_byte_len($text); }
+function string_byte_find(string $text, string $needle, int $offset = 0): int|false { return \scpp\string_byte_find($text, $needle, $offset); }
 function string_byte_starts_with(string $text, string $prefix): bool { return \scpp\string_byte_starts_with($text, $prefix); }
 function string_byte_ends_with(string $text, string $suffix): bool { return \scpp\string_byte_ends_with($text, $suffix); }
 function string_utf8_is_valid(string $text): bool { return \scpp\string_utf8_is_valid($text); }

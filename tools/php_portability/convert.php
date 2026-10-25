@@ -46,7 +46,7 @@ try {
 		}
 	}
 	$map = require __DIR__ . '/function_map.php';
-	$version = hash('sha256', file_get_contents(__FILE__) . file_get_contents(__DIR__ . '/src/converter.php') . file_get_contents(__DIR__ . '/src/staged_fields.php') . file_get_contents(__DIR__ . '/src/container_type.php') . file_get_contents(__DIR__ . '/src/import_policy.php') . file_get_contents(__DIR__ . '/src/exception_policy.php') . file_get_contents(__DIR__ . '/src/declaration_index.php') . file_get_contents(__DIR__ . '/src/method_attributes.php') . file_get_contents(__DIR__ . '/src/project_cache.php') . serialize($map) . $conversionTarget);
+	$version = hash('sha256', file_get_contents(__FILE__) . file_get_contents(__DIR__ . '/src/converter.php') . file_get_contents(__DIR__ . '/src/staged_fields.php') . file_get_contents(__DIR__ . '/src/container_type.php') . file_get_contents(__DIR__ . '/src/import_policy.php') . file_get_contents(__DIR__ . '/src/exception_policy.php') . file_get_contents(__DIR__ . '/src/type_names.php') . file_get_contents(__DIR__ . '/src/declaration_index.php') . file_get_contents(__DIR__ . '/src/method_attributes.php') . file_get_contents(__DIR__ . '/src/project_cache.php') . serialize($map) . $conversionTarget);
 	$converter = new scpp\portability\Converter($map, $conversionTarget);
 	$cache = new scpp\portability\Project_Cache($source, $output, $map);
 	$indexed = $cache->scan();

@@ -51,6 +51,7 @@ return [
 	'keyed_map' => array ( 'php' => 'scpp\\keyed_map', 'target' => 'keyed_map', 'arity' => 2, ),
 	'keyed_filter' => array ( 'php' => 'scpp\\keyed_filter', 'target' => 'keyed_filter', 'arity' => 2, ),
 	'string_byte_len' => array ( 'php' => 'scpp\\string_byte_len', 'target' => 'string_byte_len', 'arity' => 1, ),
+	'string_byte_find' => ['php' => 'scpp\\string_byte_find', 'target' => 'string_byte_find', 'arity' => [2, 3]],
 	'string_byte_starts_with' => array ( 'php' => 'scpp\\string_byte_starts_with', 'target' => 'str_starts_with', 'arity' => 2, ),
 	'string_byte_ends_with' => array ( 'php' => 'scpp\\string_byte_ends_with', 'target' => 'str_ends_with', 'arity' => 2, ),
 	'string_utf8_is_valid' => array ( 'php' => 'scpp\\string_utf8_is_valid', 'target' => 'scpp_portability_utf8_valid', 'arity' => 1, ),

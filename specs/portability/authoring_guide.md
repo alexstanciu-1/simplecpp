@@ -563,3 +563,19 @@ recognizes an omitted loop test but conservatively treats `while (true)` as test
 This is a source adaptation to current analysis, not a PHP semantic difference or
 a request for converter constant folding. The production type-declaration child
 iterator is covered by `tests/portability/type_children.py` across all routes.
+
+## Explicit process handles
+
+The rooted host facade type `\scpp\Process_Handle` maps structurally to the
+existing runtime `\process_handle` in explicit method parameters/returns,
+constructor promotion, instance fields and named local annotations. Nullable
+forms retain their ordinary absence contract. Unqualified user types are not
+remapped. This supports storing a `process_spawn()` result before polling/closing
+it; it adds no process construction, lifetime or synchronization semantics.
+`tools/php_portability/src/type_names.php` owns this fixed binding and delegates
+existing exception names to their policy. Conversion cache identity includes it.
+
+`string_byte_find(text, needle[, offset])` binds the existing native byte search.
+It returns a byte offset or false, accepts arbitrary bytes, and rejects offsets
+outside `[0, byte_length]`. Use it for protocol markers such as Clang token dumps;
+`q_strpos` remains the UTF-8 text facade and keeps its validation policy.
