@@ -173,13 +173,18 @@ final class CPP_Runtime_Operations
 		$expression = self::native_operation($request, $arguments, $native_context);
 		$output = 'void';
 		$declaration_headers /** hash<bool> */ = [];
+		$declaration_forwards /** hash<bool> */ = [];
 		$body = $unpack . $expression . ';';
 		if ($request->result !== null) {
 			CPP_Opaque_Representation::require_native_type($request->result);
 			$native_result = CPP_Declarations::type($request->result, $native_context);
-			$mapping = CPP_Types::representation($request->result, new cpp_generation_context($engine));
+			// A bridge returns stored values; its prototype never inspects a class pointee.
+			// Requiring the pointee here cycles through fields initialized by this bridge.
+			$mapping = CPP_Types::representation_for($request->result, cpp_type_requirement::stored_value,
+				new cpp_generation_context($engine));
 			$output = $mapping->spelling;
 			$declaration_headers = $mapping->headers;
+			$declaration_forwards = $mapping->forward_declarations;
 			$body = $unpack . 'return ' . $expression . ';';
 			if ((($request->kind === cpp_runtime_operation_kind::observation)
 				|| ($request->kind === cpp_runtime_operation_kind::object_type)
@@ -210,7 +215,7 @@ final class CPP_Runtime_Operations
 		$prototype = ($never_returns ? '[[noreturn]] ' : '')
 			. $output . ' ' . $name . '(' . $signature . ')';
 		$header = 'specializations/' . $name . '.hpp';
-		$declaration = "#pragma once\n" . CPP_Artifacts::includes($declaration_headers, '')
+		$declaration = "#pragma once\n" . CPP_Artifacts::preamble($declaration_headers, $declaration_forwards, '')
 			. 'namespace scpp::internal { ' . $prototype . "; }\n";
 		$implementation = CPP_Artifacts::includes($native_context->headers, '') . "#include <memory>\n#include <new>\n"
 			. 'namespace scpp::internal { ' . $prototype . ' { ' . $body . " } }\n";

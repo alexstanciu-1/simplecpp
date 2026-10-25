@@ -171,6 +171,24 @@ results construct in final storage. Source evaluation order, temporary lifetime 
 cleanup remain with existing emitters. The scalar unary rendering used by the general
 path stays in the ordinary operation emitter; it is not a container-family recipe.
 
+`CPP_Specializations` distributes implementation definitions across up to 256
+`specializations/containers_bXX.cpp` units. The first two hexadecimal digits of
+SHA-256 over the canonical specialization name select the bucket; entries within
+each bucket retain name order. Each definition has one owner, and additional demand
+does not move existing definitions. Headers and topological layout probes retain
+their existing ownership. The manifest lists only occupied buckets; ordinary
+publication retires obsolete buckets and the former `containers.cpp`. This is a
+fixed partition policy, not a hard byte-size limit. It increases translation-unit
+count and repeated header parsing in exchange for parallel build opportunities and
+smaller invalidation groups. Ordinary output is unaffected.
+
+Runtime operation prototypes request `stored_value` completeness for their result.
+Concrete handle storage is complete, while its class pointee need not be: including
+that class before declaring a null-conversion bridge creates a cycle when a field
+initializer calls the same bridge. Native operation bodies retain their complete
+dependencies. The runtime-type binding suite compiles conversion headers in isolation
+and checks partition stability, warm publication and obsolete-file cleanup.
+
 Layout probes determine native size/alignment and special-member traits. Source copy
 permission still comes from prepared capabilities. Dependent layouts follow the existing
 generated-header graph, with explicit rejection of unsupported cycles. A layout match

@@ -1,0 +1,288 @@
+[
+  {
+    "name": "self-publish",
+    "command": [
+      "php8.5",
+      "/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/tests/async_tasks_publish.php",
+      "/tmp/specialization-partitions-bindings-04/self-initialization",
+      "/home/alexv/__AI/simple_cpp/simple_cpp_01/runtime/metadata/modules",
+      "compiler",
+      "concrete"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 0.466,
+    "code": 0,
+    "expected": 0,
+    "executor": "cli",
+    "executor_reason": "FPM startup failed: [25-Oct-2026 15:23:56] NOTICE: [pool runner0] 'user' directive is ignored when FPM is not running as root\n[25-Oct-2026 15:23:56] NOTICE: [pool runner1] 'user' directive is ignored when FPM is not running as root\n[25-Oct-2026 15:23:56] NOTICE: [pool runner2] 'user' directive is ignored when FPM is not running as root\n[25-Oct-2026 15:23:56] NOTICE: [pool runner3] 'user' directive is ignored when FPM is not running as root\n[25-Oct-2026 15:23:56] NOTICE: [pool runner4] 'user' directive is ignored when FPM is not running as root\n[25-Oct-2026 15:23:56] NOTICE: [pool runner5] 'user' directive is ignored when FPM is not running as root\n[25-Oct-2026 15:23:56] NOTICE: [pool runner6] 'user' directive is ignored when FPM is not running as root\n[25-Oct-2026 15:23:56] NOTICE: [pool runner7] 'user' directive is ignored when FPM is not running as root\n[25-Oct-2026 15:23:56] NOTICE: [pool runner8] 'user' directive is ignored when FPM is not running as root\n[25-Oct-2026 15:23:56] NOTICE: [pool runner9] 'user' directive is ignored when FPM is not running as root\n[25-Oct-2026 15:23:56] NOTICE: [pool runner10] 'user' directive is ignored when FPM is not running as root\n[25-Oct-2026 15:23:56] NOTICE: [pool runner11] 'user' directive is ignored when FPM is not running as root\n[25-Oct-2026 15:23:56] WARNING: failed to change socket attribute\n[25-Oct-2026 15:23:56] ERROR: unable to bind listening socket for address '/tmp/my-try-fpm-29zae50k/0.sock': Operation not permitted (1)\n[25-Oct-2026 15:23:56] ERROR: FPM initialization failed"
+  },
+  {
+    "name": "partition-stability",
+    "command": [
+      "php8.5",
+      "/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/tests/specialization_partitions.php",
+      "/tmp/specialization-partitions-bindings-04/publication"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 1.561,
+    "code": 0,
+    "expected": 0,
+    "executor": "cli",
+    "executor_reason": "FPM startup failed: [25-Oct-2026 15:23:56] NOTICE: [pool runner0] 'user' directive is ignored when FPM is not running as root\n[25-Oct-2026 15:23:56] NOTICE: [pool runner1] 'user' directive is ignored when FPM is not running as root\n[25-Oct-2026 15:23:56] NOTICE: [pool runner2] 'user' directive is ignored when FPM is not running as root\n[25-Oct-2026 15:23:56] NOTICE: [pool runner3] 'user' directive is ignored when FPM is not running as root\n[25-Oct-2026 15:23:56] NOTICE: [pool runner4] 'user' directive is ignored when FPM is not running as root\n[25-Oct-2026 15:23:56] NOTICE: [pool runner5] 'user' directive is ignored when FPM is not running as root\n[25-Oct-2026 15:23:56] NOTICE: [pool runner6] 'user' directive is ignored when FPM is not running as root\n[25-Oct-2026 15:23:56] NOTICE: [pool runner7] 'user' directive is ignored when FPM is not running as root\n[25-Oct-2026 15:23:56] NOTICE: [pool runner8] 'user' directive is ignored when FPM is not running as root\n[25-Oct-2026 15:23:56] NOTICE: [pool runner9] 'user' directive is ignored when FPM is not running as root\n[25-Oct-2026 15:23:56] NOTICE: [pool runner10] 'user' directive is ignored when FPM is not running as root\n[25-Oct-2026 15:23:56] NOTICE: [pool runner11] 'user' directive is ignored when FPM is not running as root\n[25-Oct-2026 15:23:56] WARNING: failed to change socket attribute\n[25-Oct-2026 15:23:56] ERROR: unable to bind listening socket for address '/tmp/my-try-fpm-29zae50k/0.sock': Operation not permitted (1)\n[25-Oct-2026 15:23:56] ERROR: FPM initialization failed"
+  },
+  {
+    "name": "bindings",
+    "command": [
+      "php",
+      "/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/tests/runtime_type_bindings.php",
+      "/tmp/specialization-partitions-bindings-04/generated"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 2.046,
+    "code": 0,
+    "expected": 0,
+    "executor": "cli",
+    "executor_reason": "FPM startup failed: [25-Oct-2026 15:23:56] NOTICE: [pool runner0] 'user' directive is ignored when FPM is not running as root\n[25-Oct-2026 15:23:56] NOTICE: [pool runner1] 'user' directive is ignored when FPM is not running as root\n[25-Oct-2026 15:23:56] NOTICE: [pool runner2] 'user' directive is ignored when FPM is not running as root\n[25-Oct-2026 15:23:56] NOTICE: [pool runner3] 'user' directive is ignored when FPM is not running as root\n[25-Oct-2026 15:23:56] NOTICE: [pool runner4] 'user' directive is ignored when FPM is not running as root\n[25-Oct-2026 15:23:56] NOTICE: [pool runner5] 'user' directive is ignored when FPM is not running as root\n[25-Oct-2026 15:23:56] NOTICE: [pool runner6] 'user' directive is ignored when FPM is not running as root\n[25-Oct-2026 15:23:56] NOTICE: [pool runner7] 'user' directive is ignored when FPM is not running as root\n[25-Oct-2026 15:23:56] NOTICE: [pool runner8] 'user' directive is ignored when FPM is not running as root\n[25-Oct-2026 15:23:56] NOTICE: [pool runner9] 'user' directive is ignored when FPM is not running as root\n[25-Oct-2026 15:23:56] NOTICE: [pool runner10] 'user' directive is ignored when FPM is not running as root\n[25-Oct-2026 15:23:56] NOTICE: [pool runner11] 'user' directive is ignored when FPM is not running as root\n[25-Oct-2026 15:23:56] WARNING: failed to change socket attribute\n[25-Oct-2026 15:23:56] ERROR: unable to bind listening socket for address '/tmp/my-try-fpm-831fth27/0.sock': Operation not permitted (1)\n[25-Oct-2026 15:23:56] ERROR: FPM initialization failed"
+  },
+  {
+    "name": "layout-build-0",
+    "command": [
+      "clang++",
+      "-std=c++23",
+      "-g0",
+      "-I/home/alexv/__AI/simple_cpp/simple_cpp_01/runtime/include",
+      "-I/tmp/specialization-partitions-bindings-04/generated",
+      "/tmp/specialization-partitions-bindings-04/generated/specializations/layout.cpp",
+      "-o",
+      "/tmp/specialization-partitions-bindings-04/layout-0"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 0.97,
+    "code": 0,
+    "expected": 0,
+    "executor": "subprocess",
+    "executor_reason": "subprocess"
+  },
+  {
+    "name": "layout-run-0",
+    "command": [
+      "/tmp/specialization-partitions-bindings-04/layout-0"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 0.004,
+    "code": 0,
+    "expected": 0,
+    "executor": "subprocess",
+    "executor_reason": "subprocess"
+  },
+  {
+    "name": "layout-build-1",
+    "command": [
+      "clang++",
+      "-std=c++23",
+      "-g0",
+      "-I/home/alexv/__AI/simple_cpp/simple_cpp_01/runtime/include",
+      "-I/tmp/specialization-partitions-bindings-04/generated",
+      "-include",
+      "/tmp/specialization-partitions-bindings-04/layout-0.hpp",
+      "/tmp/specialization-partitions-bindings-04/generated/specializations/layout_1.cpp",
+      "-o",
+      "/tmp/specialization-partitions-bindings-04/layout-1"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 0.232,
+    "code": 0,
+    "expected": 0,
+    "executor": "subprocess",
+    "executor_reason": "subprocess"
+  },
+  {
+    "name": "layout-run-1",
+    "command": [
+      "/tmp/specialization-partitions-bindings-04/layout-1"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 0.004,
+    "code": 0,
+    "expected": 0,
+    "executor": "subprocess",
+    "executor_reason": "subprocess"
+  },
+  {
+    "name": "O0-build",
+    "command": [
+      "clang++",
+      "-std=c++23",
+      "-g0",
+      "-I/home/alexv/__AI/simple_cpp/simple_cpp_01/runtime/include",
+      "-I/tmp/specialization-partitions-bindings-04/generated",
+      "-include",
+      "/tmp/specialization-partitions-bindings-04/layout-0.hpp",
+      "-include",
+      "/tmp/specialization-partitions-bindings-04/layout-1.hpp",
+      "-O0",
+      "/tmp/specialization-partitions-bindings-04/generated/specializations/containers_b4b.cpp",
+      "/tmp/specialization-partitions-bindings-04/generated/specializations/containers_ba9.cpp",
+      "/tmp/specialization-partitions-bindings-04/generated/specializations/containers_bcf.cpp",
+      "/tmp/specialization-partitions-bindings-04/generated/specializations/containers_bde.cpp",
+      "/tmp/specialization-partitions-bindings-04/generated/proof.cpp",
+      "-o",
+      "/tmp/specialization-partitions-bindings-04/O0"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 3.365,
+    "code": 0,
+    "expected": 0,
+    "executor": "subprocess",
+    "executor_reason": "subprocess"
+  },
+  {
+    "name": "O0-run",
+    "command": [
+      "env",
+      "ASAN_OPTIONS=detect_leaks=0",
+      "/tmp/specialization-partitions-bindings-04/O0"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 0.007,
+    "code": 0,
+    "expected": 0,
+    "executor": "subprocess",
+    "executor_reason": "subprocess"
+  },
+  {
+    "name": "O2-build",
+    "command": [
+      "clang++",
+      "-std=c++23",
+      "-g0",
+      "-I/home/alexv/__AI/simple_cpp/simple_cpp_01/runtime/include",
+      "-I/tmp/specialization-partitions-bindings-04/generated",
+      "-include",
+      "/tmp/specialization-partitions-bindings-04/layout-0.hpp",
+      "-include",
+      "/tmp/specialization-partitions-bindings-04/layout-1.hpp",
+      "-O2",
+      "/tmp/specialization-partitions-bindings-04/generated/specializations/containers_b4b.cpp",
+      "/tmp/specialization-partitions-bindings-04/generated/specializations/containers_ba9.cpp",
+      "/tmp/specialization-partitions-bindings-04/generated/specializations/containers_bcf.cpp",
+      "/tmp/specialization-partitions-bindings-04/generated/specializations/containers_bde.cpp",
+      "/tmp/specialization-partitions-bindings-04/generated/proof.cpp",
+      "-o",
+      "/tmp/specialization-partitions-bindings-04/O2"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 3.455,
+    "code": 0,
+    "expected": 0,
+    "executor": "subprocess",
+    "executor_reason": "subprocess"
+  },
+  {
+    "name": "O2-run",
+    "command": [
+      "env",
+      "ASAN_OPTIONS=detect_leaks=0",
+      "/tmp/specialization-partitions-bindings-04/O2"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 0.007,
+    "code": 0,
+    "expected": 0,
+    "executor": "subprocess",
+    "executor_reason": "subprocess"
+  },
+  {
+    "name": "sanitized-build",
+    "command": [
+      "clang++",
+      "-std=c++23",
+      "-g0",
+      "-I/home/alexv/__AI/simple_cpp/simple_cpp_01/runtime/include",
+      "-I/tmp/specialization-partitions-bindings-04/generated",
+      "-include",
+      "/tmp/specialization-partitions-bindings-04/layout-0.hpp",
+      "-include",
+      "/tmp/specialization-partitions-bindings-04/layout-1.hpp",
+      "-O1",
+      "-fsanitize=address,undefined",
+      "-fno-omit-frame-pointer",
+      "/tmp/specialization-partitions-bindings-04/generated/specializations/containers_b4b.cpp",
+      "/tmp/specialization-partitions-bindings-04/generated/specializations/containers_ba9.cpp",
+      "/tmp/specialization-partitions-bindings-04/generated/specializations/containers_bcf.cpp",
+      "/tmp/specialization-partitions-bindings-04/generated/specializations/containers_bde.cpp",
+      "/tmp/specialization-partitions-bindings-04/generated/proof.cpp",
+      "-o",
+      "/tmp/specialization-partitions-bindings-04/sanitized"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 3.767,
+    "code": 0,
+    "expected": 0,
+    "executor": "subprocess",
+    "executor_reason": "subprocess"
+  },
+  {
+    "name": "sanitized-run",
+    "command": [
+      "env",
+      "ASAN_OPTIONS=detect_leaks=0",
+      "/tmp/specialization-partitions-bindings-04/sanitized"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 0.016,
+    "code": 0,
+    "expected": 0,
+    "executor": "subprocess",
+    "executor_reason": "subprocess"
+  },
+  {
+    "name": "self-build",
+    "command": [
+      "php8.5",
+      "/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/tools/build_cpp.php",
+      "/tmp/specialization-partitions-bindings-04/self-initialization/published",
+      "/tmp/specialization-partitions-bindings-04/self-initialization/cache",
+      "-O2"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 31.952,
+    "code": 0,
+    "expected": 0,
+    "executor": "cli",
+    "executor_reason": "FPM startup failed: [25-Oct-2026 15:23:56] NOTICE: [pool runner0] 'user' directive is ignored when FPM is not running as root\n[25-Oct-2026 15:23:56] NOTICE: [pool runner1] 'user' directive is ignored when FPM is not running as root\n[25-Oct-2026 15:23:56] NOTICE: [pool runner2] 'user' directive is ignored when FPM is not running as root\n[25-Oct-2026 15:23:56] NOTICE: [pool runner3] 'user' directive is ignored when FPM is not running as root\n[25-Oct-2026 15:23:56] NOTICE: [pool runner4] 'user' directive is ignored when FPM is not running as root\n[25-Oct-2026 15:23:56] NOTICE: [pool runner5] 'user' directive is ignored when FPM is not running as root\n[25-Oct-2026 15:23:56] NOTICE: [pool runner6] 'user' directive is ignored when FPM is not running as root\n[25-Oct-2026 15:23:56] NOTICE: [pool runner7] 'user' directive is ignored when FPM is not running as root\n[25-Oct-2026 15:23:56] NOTICE: [pool runner8] 'user' directive is ignored when FPM is not running as root\n[25-Oct-2026 15:23:56] NOTICE: [pool runner9] 'user' directive is ignored when FPM is not running as root\n[25-Oct-2026 15:23:56] NOTICE: [pool runner10] 'user' directive is ignored when FPM is not running as root\n[25-Oct-2026 15:23:56] NOTICE: [pool runner11] 'user' directive is ignored when FPM is not running as root\n[25-Oct-2026 15:23:56] WARNING: failed to change socket attribute\n[25-Oct-2026 15:23:56] ERROR: unable to bind listening socket for address '/tmp/my-try-fpm-29zae50k/0.sock': Operation not permitted (1)\n[25-Oct-2026 15:23:56] ERROR: FPM initialization failed"
+  },
+  {
+    "name": "self-run",
+    "command": [
+      "/tmp/specialization-partitions-bindings-04/self-initialization/cache/artifacts/efccb280e45e3f61ebe639f60b074df6ce8a9bb77c6a193ab8537448a7463c38.bin"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 0.004,
+    "code": 0,
+    "expected": 0,
+    "executor": "subprocess",
+    "executor_reason": "subprocess"
+  },
+  {
+    "name": "self-header-0",
+    "command": [
+      "clang++",
+      "-std=c++23",
+      "-I/home/alexv/__AI/simple_cpp/simple_cpp_01/runtime/include",
+      "-I/tmp/specialization-partitions-bindings-04/self-initialization/published",
+      "-include",
+      "/tmp/specialization-partitions-bindings-04/self-initialization/cache/artifacts/a9546ad080c0f645eae4c4c6768ba16687629301299c72427dd09b12ae0ee5d8.hpp",
+      "-x",
+      "c++",
+      "-fsyntax-only",
+      "/tmp/specialization-partitions-bindings-04/self-initialization/published/specializations/runtime_conversion_60b6878cfd5edfe7ecd0fdba10ca86baa2a943e44e8064325befefc52c7f382d.hpp"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 0.044,
+    "code": 0,
+    "expected": 0,
+    "executor": "subprocess",
+    "executor_reason": "subprocess"
+  }
+]

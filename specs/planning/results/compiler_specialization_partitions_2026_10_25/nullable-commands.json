@@ -1,0 +1,232 @@
+[
+  {
+    "name": "bindings",
+    "command": [
+      "php",
+      "/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/tests/nullable_handle_representation.php",
+      "/tmp/specialization-partitions-nullable-01/generated"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 0.397,
+    "code": 0,
+    "expected": 0,
+    "executor": "cli",
+    "executor_reason": "FPM startup failed: [25-Oct-2026 15:17:25] NOTICE: [pool runner0] 'user' directive is ignored when FPM is not running as root\n[25-Oct-2026 15:17:25] NOTICE: [pool runner1] 'user' directive is ignored when FPM is not running as root\n[25-Oct-2026 15:17:25] NOTICE: [pool runner2] 'user' directive is ignored when FPM is not running as root\n[25-Oct-2026 15:17:25] NOTICE: [pool runner3] 'user' directive is ignored when FPM is not running as root\n[25-Oct-2026 15:17:25] NOTICE: [pool runner4] 'user' directive is ignored when FPM is not running as root\n[25-Oct-2026 15:17:25] NOTICE: [pool runner5] 'user' directive is ignored when FPM is not running as root\n[25-Oct-2026 15:17:25] NOTICE: [pool runner6] 'user' directive is ignored when FPM is not running as root\n[25-Oct-2026 15:17:25] NOTICE: [pool runner7] 'user' directive is ignored when FPM is not running as root\n[25-Oct-2026 15:17:25] NOTICE: [pool runner8] 'user' directive is ignored when FPM is not running as root\n[25-Oct-2026 15:17:25] NOTICE: [pool runner9] 'user' directive is ignored when FPM is not running as root\n[25-Oct-2026 15:17:25] NOTICE: [pool runner10] 'user' directive is ignored when FPM is not running as root\n[25-Oct-2026 15:17:25] NOTICE: [pool runner11] 'user' directive is ignored when FPM is not running as root\n[25-Oct-2026 15:17:25] WARNING: failed to change socket attribute\n[25-Oct-2026 15:17:25] ERROR: unable to bind listening socket for address '/tmp/my-try-fpm-mw_4o7ob/0.sock': Operation not permitted (1)\n[25-Oct-2026 15:17:25] ERROR: FPM initialization failed"
+  },
+  {
+    "name": "layout-build-0",
+    "command": [
+      "clang++",
+      "-std=c++23",
+      "-g0",
+      "-I/home/alexv/__AI/simple_cpp/simple_cpp_01/runtime/include",
+      "-I/tmp/specialization-partitions-nullable-01/generated",
+      "/tmp/specialization-partitions-nullable-01/generated/specializations/layout.cpp",
+      "-o",
+      "/tmp/specialization-partitions-nullable-01/layout-0"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 1.096,
+    "code": 0,
+    "expected": 0,
+    "executor": "subprocess",
+    "executor_reason": "subprocess"
+  },
+  {
+    "name": "layout-run-0",
+    "command": [
+      "/tmp/specialization-partitions-nullable-01/layout-0"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 0.004,
+    "code": 0,
+    "expected": 0,
+    "executor": "subprocess",
+    "executor_reason": "subprocess"
+  },
+  {
+    "name": "layout-build-1",
+    "command": [
+      "clang++",
+      "-std=c++23",
+      "-g0",
+      "-I/home/alexv/__AI/simple_cpp/simple_cpp_01/runtime/include",
+      "-I/tmp/specialization-partitions-nullable-01/generated",
+      "-include",
+      "/tmp/specialization-partitions-nullable-01/layout-0.hpp",
+      "/tmp/specialization-partitions-nullable-01/generated/specializations/layout_1.cpp",
+      "-o",
+      "/tmp/specialization-partitions-nullable-01/layout-1"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 0.955,
+    "code": 0,
+    "expected": 0,
+    "executor": "subprocess",
+    "executor_reason": "subprocess"
+  },
+  {
+    "name": "layout-run-1",
+    "command": [
+      "/tmp/specialization-partitions-nullable-01/layout-1"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 0.004,
+    "code": 0,
+    "expected": 0,
+    "executor": "subprocess",
+    "executor_reason": "subprocess"
+  },
+  {
+    "name": "application-tokens",
+    "command": [
+      "clang++",
+      "-std=c++23",
+      "-g0",
+      "-I/home/alexv/__AI/simple_cpp/simple_cpp_01/runtime/include",
+      "-I/tmp/specialization-partitions-nullable-01/generated",
+      "-include",
+      "/tmp/specialization-partitions-nullable-01/layout-0.hpp",
+      "-include",
+      "/tmp/specialization-partitions-nullable-01/layout-1.hpp",
+      "-fsyntax-only",
+      "-Xclang",
+      "-dump-tokens",
+      "/tmp/specialization-partitions-nullable-01/generated/proof.cpp"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 0.056,
+    "code": 0,
+    "expected": 0,
+    "executor": "subprocess",
+    "executor_reason": "subprocess"
+  },
+  {
+    "name": "O0-build",
+    "command": [
+      "clang++",
+      "-std=c++23",
+      "-g0",
+      "-I/home/alexv/__AI/simple_cpp/simple_cpp_01/runtime/include",
+      "-I/tmp/specialization-partitions-nullable-01/generated",
+      "-include",
+      "/tmp/specialization-partitions-nullable-01/layout-0.hpp",
+      "-include",
+      "/tmp/specialization-partitions-nullable-01/layout-1.hpp",
+      "-O0",
+      "/tmp/specialization-partitions-nullable-01/generated/specializations/containers_b6b.cpp",
+      "/tmp/specialization-partitions-nullable-01/generated/specializations/containers_bad.cpp",
+      "/tmp/specialization-partitions-nullable-01/generated/specializations/containers_bea.cpp",
+      "/tmp/specialization-partitions-nullable-01/generated/provider.cpp",
+      "/tmp/specialization-partitions-nullable-01/generated/proof.cpp",
+      "-o",
+      "/tmp/specialization-partitions-nullable-01/O0"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 4.63,
+    "code": 0,
+    "expected": 0,
+    "executor": "subprocess",
+    "executor_reason": "subprocess"
+  },
+  {
+    "name": "O0-run",
+    "command": [
+      "env",
+      "ASAN_OPTIONS=detect_leaks=0",
+      "/tmp/specialization-partitions-nullable-01/O0"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 0.007,
+    "code": 0,
+    "expected": 0,
+    "executor": "subprocess",
+    "executor_reason": "subprocess"
+  },
+  {
+    "name": "O2-build",
+    "command": [
+      "clang++",
+      "-std=c++23",
+      "-g0",
+      "-I/home/alexv/__AI/simple_cpp/simple_cpp_01/runtime/include",
+      "-I/tmp/specialization-partitions-nullable-01/generated",
+      "-include",
+      "/tmp/specialization-partitions-nullable-01/layout-0.hpp",
+      "-include",
+      "/tmp/specialization-partitions-nullable-01/layout-1.hpp",
+      "-O2",
+      "/tmp/specialization-partitions-nullable-01/generated/specializations/containers_b6b.cpp",
+      "/tmp/specialization-partitions-nullable-01/generated/specializations/containers_bad.cpp",
+      "/tmp/specialization-partitions-nullable-01/generated/specializations/containers_bea.cpp",
+      "/tmp/specialization-partitions-nullable-01/generated/provider.cpp",
+      "/tmp/specialization-partitions-nullable-01/generated/proof.cpp",
+      "-o",
+      "/tmp/specialization-partitions-nullable-01/O2"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 5.14,
+    "code": 0,
+    "expected": 0,
+    "executor": "subprocess",
+    "executor_reason": "subprocess"
+  },
+  {
+    "name": "O2-run",
+    "command": [
+      "env",
+      "ASAN_OPTIONS=detect_leaks=0",
+      "/tmp/specialization-partitions-nullable-01/O2"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 0.007,
+    "code": 0,
+    "expected": 0,
+    "executor": "subprocess",
+    "executor_reason": "subprocess"
+  },
+  {
+    "name": "sanitized-build",
+    "command": [
+      "clang++",
+      "-std=c++23",
+      "-g0",
+      "-I/home/alexv/__AI/simple_cpp/simple_cpp_01/runtime/include",
+      "-I/tmp/specialization-partitions-nullable-01/generated",
+      "-include",
+      "/tmp/specialization-partitions-nullable-01/layout-0.hpp",
+      "-include",
+      "/tmp/specialization-partitions-nullable-01/layout-1.hpp",
+      "-O1",
+      "-fsanitize=address,undefined",
+      "-fno-omit-frame-pointer",
+      "/tmp/specialization-partitions-nullable-01/generated/specializations/containers_b6b.cpp",
+      "/tmp/specialization-partitions-nullable-01/generated/specializations/containers_bad.cpp",
+      "/tmp/specialization-partitions-nullable-01/generated/specializations/containers_bea.cpp",
+      "/tmp/specialization-partitions-nullable-01/generated/provider.cpp",
+      "/tmp/specialization-partitions-nullable-01/generated/proof.cpp",
+      "-o",
+      "/tmp/specialization-partitions-nullable-01/sanitized"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 6.551,
+    "code": 0,
+    "expected": 0,
+    "executor": "subprocess",
+    "executor_reason": "subprocess"
+  },
+  {
+    "name": "sanitized-run",
+    "command": [
+      "env",
+      "ASAN_OPTIONS=detect_leaks=0",
+      "/tmp/specialization-partitions-nullable-01/sanitized"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 0.013,
+    "code": 0,
+    "expected": 0,
+    "executor": "subprocess",
+    "executor_reason": "subprocess"
+  }
+]

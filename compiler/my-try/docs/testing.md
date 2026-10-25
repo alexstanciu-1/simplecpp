@@ -1,6 +1,13 @@
 # Test runners
 Doc Status: supporting
 
+`python3 compiler/my-try/tests/runtime_type_bindings.py --results FRESH` also checks
+stable specialization partitions, obsolete monolith/bucket cleanup, warm publication,
+and independent conversion-header compilation for self-referential nullable fields.
+The [partition benchmark](../../../specs/planning/results/compiler_specialization_partitions_2026_10_25/README.md)
+records full compiler workload O2 timing and the native compiler smoke proof.
+
+
 `python3 compiler/my-try/tests/shared_self.py --results FRESH` (from the repository
 root) proves v0.2 source construction/binding, inherited/interface self acquisition,
 argument/local transport, retention after releasing original owners and final

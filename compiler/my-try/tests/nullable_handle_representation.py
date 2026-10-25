@@ -37,7 +37,7 @@ def main():
                                  ('sanitized', ['-O1', '-fsanitize=address,undefined', '-fno-omit-frame-pointer'])]:
                 binary = out / label
                 runner.run(label + '-build', [*base, *includes, *flags,
-                    folder / 'specializations/containers.cpp', folder / 'provider.cpp', folder / 'proof.cpp', '-o', binary])
+                    *sorted((folder / 'specializations').glob('containers_*.cpp')), folder / 'provider.cpp', folder / 'proof.cpp', '-o', binary])
                 runner.run(label + '-run', ['env', 'ASAN_OPTIONS=detect_leaks=0', binary])
         run_tasks([Task('nullable-handle-representation', proof)])
     (out / 'summary.json').write_text(json.dumps({'passed': True, 'builds': ['O0', 'O2', 'ASan+UBSan'], 'application_template_free': True, 'source_nullability_enabled': False}, indent=2) + '\n')

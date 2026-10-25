@@ -188,12 +188,12 @@ final class CPP_Specializations
 		return $result;
 	}
 
-	/** Group implementation work, as in the accounting proof; headers remain per representation. */
+	/** Stable identity buckets distribute implementations independently of discovery order. */
 	public function append_artifacts(Storage $artifacts /** Storage<cpp_artifact> */): void
 	{
 		$artifacts->append(new cpp_artifact('specializations:base-header', cpp_artifact_kind::header, 'specializations/base.hpp', CPP_Entry_Support::base_header()));
 		$artifacts->append(new cpp_artifact('specializations:base', cpp_artifact_kind::translation_unit, 'specializations/base.cpp', CPP_Entry_Support::base_body()));
-		$implementation = '';
+		$implementations /** hash<string> */ = [];
 		$layout_declarations /** hash<string,int> */ = [];
 		$layout_statements /** hash<string,int> */ = [];
 		$depths = $this->layout_depths($artifacts);
@@ -241,7 +241,10 @@ final class CPP_Specializations
 						"#pragma once\nnamespace scpp::internal { struct " . $entry->name . "; }\n"));
 				}
 			}
-			$implementation .= '#include "' . $entry->header . '"' . "\n" . $entry->implementation . "\n";
+			// Fixed digest prefixes avoid moving unrelated definitions when demand changes.
+			$bucket = 'b' . string_byte_slice(content_sha256($entry->name), 0, 2);
+			if (!isset($implementations[$bucket])) { $implementations[$bucket] = ''; }
+			$implementations[$bucket] .= '#include "' . $entry->header . '"' . "\n" . $entry->implementation . "\n";
 		}
 		for ($depth = 0; $depth <= $maximum_depth; $depth++) {
 			if (!isset($layout_statements[$depth])) {
@@ -254,9 +257,9 @@ final class CPP_Specializations
 			$artifacts->append(new cpp_artifact('specializations:layout' . ($depth === 0 ? '' : ':' . $depth), cpp_artifact_kind::layout_probe,
 				'specializations/layout' . ($depth === 0 ? '' : '_' . $depth) . '.cpp', $probe));
 		}
-		if ($implementation !== '') {
-			$artifacts->append(new cpp_artifact('specializations:implementation', cpp_artifact_kind::translation_unit,
-			'specializations/containers.cpp', $implementation));
+		foreach ($implementations as $bucket => $implementation) {
+			$artifacts->append(new cpp_artifact('specializations:implementation:' . $bucket, cpp_artifact_kind::translation_unit,
+				'specializations/containers_' . $bucket . '.cpp', $implementation));
 		}
 	}
 }

@@ -1,0 +1,65 @@
+[
+  {
+    "name": "convert",
+    "command": [
+      "/usr/bin/time",
+      "-v",
+      "-o",
+      "/tmp/compiler-partition-bootstrap-02/convert.time",
+      "php8.5",
+      "/home/alexv/__AI/simple_cpp/simple_cpp_01/tools/php_portability/convert.php",
+      "/tmp/compiler-partition-bootstrap-02/source",
+      "/tmp/compiler-partition-bootstrap-02/phpp",
+      "--target=v0.2"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 4.403,
+    "code": 0,
+    "expected": 0,
+    "executor": "subprocess",
+    "executor_reason": "subprocess"
+  },
+  {
+    "name": "framework",
+    "command": [
+      "php8.5",
+      "/home/alexv/__AI/simple_cpp/simple_cpp_01/tools/php_portability/install_native_runtime.php",
+      "/tmp/compiler-partition-bootstrap-02/phpp",
+      "--filesystem",
+      "--os",
+      "--json"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 0.187,
+    "code": 0,
+    "expected": 0,
+    "executor": "cli",
+    "executor_reason": "FPM startup failed: [25-Oct-2026 15:23:26] NOTICE: [pool runner0] 'user' directive is ignored when FPM is not running as root\n[25-Oct-2026 15:23:26] NOTICE: [pool runner1] 'user' directive is ignored when FPM is not running as root\n[25-Oct-2026 15:23:26] NOTICE: [pool runner2] 'user' directive is ignored when FPM is not running as root\n[25-Oct-2026 15:23:26] NOTICE: [pool runner3] 'user' directive is ignored when FPM is not running as root\n[25-Oct-2026 15:23:26] NOTICE: [pool runner4] 'user' directive is ignored when FPM is not running as root\n[25-Oct-2026 15:23:26] NOTICE: [pool runner5] 'user' directive is ignored when FPM is not running as root\n[25-Oct-2026 15:23:26] NOTICE: [pool runner6] 'user' directive is ignored when FPM is not running as root\n[25-Oct-2026 15:23:26] NOTICE: [pool runner7] 'user' directive is ignored when FPM is not running as root\n[25-Oct-2026 15:23:26] NOTICE: [pool runner8] 'user' directive is ignored when FPM is not running as root\n[25-Oct-2026 15:23:26] NOTICE: [pool runner9] 'user' directive is ignored when FPM is not running as root\n[25-Oct-2026 15:23:26] NOTICE: [pool runner10] 'user' directive is ignored when FPM is not running as root\n[25-Oct-2026 15:23:26] NOTICE: [pool runner11] 'user' directive is ignored when FPM is not running as root\n[25-Oct-2026 15:23:26] WARNING: failed to change socket attribute\n[25-Oct-2026 15:23:26] ERROR: unable to bind listening socket for address '/tmp/my-try-fpm-16366cmo/0.sock': Operation not permitted (1)\n[25-Oct-2026 15:23:26] ERROR: FPM initialization failed"
+  },
+  {
+    "name": "bootstrap",
+    "command": [
+      "/usr/bin/time",
+      "-v",
+      "-o",
+      "/tmp/compiler-partition-bootstrap-02/bootstrap.time",
+      "php8.5",
+      "-d",
+      "opcache.enable_cli=0",
+      "-d",
+      "xdebug.mode=off",
+      "-d",
+      "memory_limit=4G",
+      "/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/tools/bootstrap_probe.php",
+      "/home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try",
+      "/tmp/compiler-partition-bootstrap-02/phpp",
+      "/tmp/compiler-partition-bootstrap-02/bootstrap.json"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 107.763,
+    "code": 0,
+    "expected": 0,
+    "executor": "subprocess",
+    "executor_reason": "subprocess"
+  }
+]
