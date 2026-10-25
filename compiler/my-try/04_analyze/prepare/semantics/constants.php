@@ -72,28 +72,36 @@ final class Constant_Expression_Preparation
 			return $reference->require_constant_reference_preparation()->value;
 		}
 		if ($syntax instanceof integer_literal_node) {
-			$facts = object_cast(Expression_Preparation::prepare($syntax, $context), prepared_integer_literal::class);
+			$integer_syntax = object_cast($syntax, integer_literal_node::class);
+			Expression_Preparation::prepare($integer_syntax, $context);
+			$facts = $integer_syntax->require_integer_literal_preparation();
 			$value = new integer_constant_value();
 			$value->type = $facts->type;
 			$value->decimal = $facts->decimal;
 			return $value;
 		}
 		if ($syntax instanceof float_literal_node) {
-			$floating = object_cast(Expression_Preparation::prepare($syntax, $context), prepared_float_literal::class);
+			$float_syntax = object_cast($syntax, float_literal_node::class);
+			Expression_Preparation::prepare($float_syntax, $context);
+			$floating = $float_syntax->require_float_literal_preparation();
 			$float_value = new float_constant_value();
 			$float_value->type = $floating->type;
 			$float_value->decimal = $floating->decimal;
 			return $float_value;
 		}
 		if ($syntax instanceof boolean_literal_node) {
-			$boolean = object_cast(Expression_Preparation::prepare($syntax, $context), prepared_boolean_literal::class);
+			$boolean_syntax = object_cast($syntax, boolean_literal_node::class);
+			Expression_Preparation::prepare($boolean_syntax, $context);
+			$boolean = $boolean_syntax->require_boolean_literal_preparation();
 			$bool_value = new boolean_constant_value();
 			$bool_value->type = $boolean->type;
 			$bool_value->value = $boolean->value;
 			return $bool_value;
 		}
 		if ($syntax instanceof string_literal_node) {
-			$string = object_cast(Expression_Preparation::prepare($syntax, $context), prepared_string_literal::class);
+			$string_syntax = object_cast($syntax, string_literal_node::class);
+			Expression_Preparation::prepare($string_syntax, $context);
+			$string = $string_syntax->require_string_literal_preparation();
 			$string_value = new string_constant_value();
 			$string_value->type = $string->type;
 			$string_value->value = $string->value;

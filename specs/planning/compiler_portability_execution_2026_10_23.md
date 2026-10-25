@@ -1746,3 +1746,14 @@ alternatives, concrete publication, checked accessors, existing generic upcast a
 cleanup entrypoints, no duplicated base fact or new language semantics. Includes
 consumer/writer map, reuse, alternatives, medium workload and required proofs.
 No source implementation or repeated bootstrap in this audit; design awaits discussion.
+
+## Concrete literal fact accessors — 2026-10-25
+
+Independent of pending static-member representation approval, four scalar constant
+branches reuse existing concrete syntax/fact accessors. Same preparation call and
+order; no retained protocol changes. Extracted production branches pass PHP,
+v0.1 native and both v0.2 modes, proving values, type identity and call counts.
+Three host suites pass; broader enum reference-default failure reproduces with the
+baseline implementation. [Evidence](results/compiler_bootstrap_backlog_2026_10_23/literal_accessors/README.md).
+Bootstrap: 3:20.80 / 610412 KiB RSS / 578.5 MiB heap; same 19 diagnostic categories,
+first object narrowing. Mixed static-member proposal remains awaiting approval.

@@ -1,0 +1,26 @@
+[
+  {
+    "name": "incremental_preparation",
+    "seconds": 1.204,
+    "code": 0,
+    "expected": 0
+  },
+  {
+    "name": "source_constants",
+    "seconds": 2.293,
+    "code": 0,
+    "expected": 0
+  },
+  {
+    "name": "enums",
+    "seconds": 4.002,
+    "code": 255,
+    "expected": 0
+  },
+  {
+    "name": "property_defaults",
+    "seconds": 4.902,
+    "code": 0,
+    "expected": 0
+  }
+]
