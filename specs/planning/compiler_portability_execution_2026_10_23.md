@@ -1903,3 +1903,15 @@ ordering and failure proof passes both routes; three host suites pass.
 Standard bootstrap 1:30.31 / 633432 KiB RSS / 600.5 MiB heap; categories 3 -> 2.
 JSON binding and nonpolymorphic narrowing remain; snapshot syntax-based recognition
 is being tested independently.
+
+## Snapshot syntax recognition — 2026-10-25
+
+Source syntax identifies scalar literals and variable references without narrowing
+nonpolymorphic facts. Existing conversion/place/effect guards remain unchanged.
+All nine snapshot borrowing checks and extracted PHP/v0.1/both v0.2 native proofs pass.
+[Evidence](results/compiler_bootstrap_backlog_2026_10_23/source_snapshots/README.md).
+Owner-instrumented bootstrap 1:28.80 / 633492 KiB RSS / 600.5 MiB heap confirms only
+three failing owners in two categories: JSON required-null binding and construction
+fact narrowing. Broad PHP-source pass reduced categories 16 -> 2. Stop for discussion
+of binding correction and coordinated construction-fact publication/accessors; native
+compiler and second-generation acceptance remain outstanding.

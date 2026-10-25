@@ -77,8 +77,20 @@ source += "class Key_Entry { public function __construct(public expression_node 
 source += "class Key_Proof { public static function read(Key_Entry $entry, preparation_context $context): string {\n" + key_branch + "\nreturn $key;\n}}\n"
 source += "echo Key_Proof::read(new Key_Entry($string_syntax), $context), ':';\n"
 source += 'echo Expression_Preparation::$calls;\n'
+snapshot = (APP / '04_analyze/prepare/semantics/call_snapshots.php').read_text()
+start = snapshot.index('private static function is_scalar_literal(')
+helper = snapshot[start:snapshot.rfind('\n}')]
+source += 'class Snapshot_Proof { public static function scalar(expression_node $node): bool { return self::is_scalar_literal($node); }\n' + helper + '\n}\n'
+source += r"""
+class unknown_expression_node extends expression_node {
+ public function require_preparation(): prepared_expression { throw new \LogicException('Unused fixture facts'); }
+}
+echo Snapshot_Proof::scalar($integer_syntax) && Snapshot_Proof::scalar($float_syntax)
+ && Snapshot_Proof::scalar($boolean_syntax) && Snapshot_Proof::scalar($string_syntax)
+ && !Snapshot_Proof::scalar(new unknown_expression_node()) ? ':shape' : ':bad';
+"""
 (out / 'source/main.php').write_text(source)
-expected = b'42:same:1.5:same:true:same:hello:same:hello:5'
+expected = b'42:same:1.5:same:true:same:hello:same:hello:5:shape'
 with CommandRunner(out / 'logs', ROOT) as runner:
     publisher = out / 'publish.php'
     publisher.write_text((APP / 'tests/async_tasks_publish.php').read_text()

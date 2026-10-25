@@ -1,0 +1,68 @@
+diff --git a/compiler/my-try/04_analyze/prepare/semantics/call_snapshots.php b/compiler/my-try/04_analyze/prepare/semantics/call_snapshots.php
+index 00cb1d30e..2364435f2 100644
+--- a/compiler/my-try/04_analyze/prepare/semantics/call_snapshots.php
++++ b/compiler/my-try/04_analyze/prepare/semantics/call_snapshots.php
+@@ -22,12 +22,13 @@ final class Call_Snapshot_Preparation
+ 			if ($argument->boundary !== value_boundary_operation::copy_value) { return; }
+ 			$conversion = $argument->require_conversion();
+ 			if ($conversion->operation !== conversion_operation::identity) { return; }
+-			$value = $syntax[$argument->source_index]->require_preparation();
++			$argument_syntax = $syntax[$argument->source_index];
++			$value = $argument_syntax->require_preparation();
+ 			$family = Type_Queries::canonical($value->type)->family();
+ 			if (!$value->type->matches($string_type) && ($family !== type_family::integer)
+ 				&& ($family !== type_family::boolean) && ($family !== type_family::floating)) { return; }
+-			if ($value instanceof prepared_literal) { continue; }
+-			if (!($value instanceof prepared_variable_reference)) { return; }
++			if (self::is_scalar_literal($argument_syntax)) { continue; }
++			if (!($argument_syntax instanceof variable_reference_node)) { return; }
+ 			$place = $value->place;
+ 			if ($place === null) { return; }
+ 			if (!$place->borrowable() || ($place->base() !== null)) { return; }
+@@ -36,10 +37,18 @@ final class Call_Snapshot_Preparation
+ 		// Borrow only existing strings. Scalar and literal temporaries keep ordinary
+ 		// value transport, and the source call still evaluates arguments in order.
+ 		foreach ($arguments as $argument) {
+-			$value = $syntax[$argument->source_index]->require_preparation();
+-			if (($value instanceof prepared_variable_reference) && $value->type->matches($string_type)) {
++			$argument_syntax = $syntax[$argument->source_index];
++			$value = $argument_syntax->require_preparation();
++			if (($argument_syntax instanceof variable_reference_node) && $value->type->matches($string_type)) {
+ 				$argument->borrow_snapshot = true;
+ 			}
+ 		}
+ 	}
++
++	/** Source literal nodes own the scalar literal facts; no fact-base narrowing is needed. */
++	private static function is_scalar_literal(expression_node $syntax): bool
++	{
++		return ($syntax instanceof integer_literal_node) || ($syntax instanceof float_literal_node)
++			|| ($syntax instanceof boolean_literal_node) || ($syntax instanceof string_literal_node);
++	}
+ }
+diff --git a/tests/portability/literal_fact_accessors.py b/tests/portability/literal_fact_accessors.py
+index f74449e0d..21ad689ca 100644
+--- a/tests/portability/literal_fact_accessors.py
++++ b/tests/portability/literal_fact_accessors.py
+@@ -77,8 +77,20 @@ source += "class Key_Entry { public function __construct(public expression_node
+ source += "class Key_Proof { public static function read(Key_Entry $entry, preparation_context $context): string {\n" + key_branch + "\nreturn $key;\n}}\n"
+ source += "echo Key_Proof::read(new Key_Entry($string_syntax), $context), ':';\n"
+ source += 'echo Expression_Preparation::$calls;\n'
++snapshot = (APP / '04_analyze/prepare/semantics/call_snapshots.php').read_text()
++start = snapshot.index('private static function is_scalar_literal(')
++helper = snapshot[start:snapshot.rfind('\n}')]
++source += 'class Snapshot_Proof { public static function scalar(expression_node $node): bool { return self::is_scalar_literal($node); }\n' + helper + '\n}\n'
++source += r"""
++class unknown_expression_node extends expression_node {
++ public function require_preparation(): prepared_expression { throw new \LogicException('Unused fixture facts'); }
++}
++echo Snapshot_Proof::scalar($integer_syntax) && Snapshot_Proof::scalar($float_syntax)
++ && Snapshot_Proof::scalar($boolean_syntax) && Snapshot_Proof::scalar($string_syntax)
++ && !Snapshot_Proof::scalar(new unknown_expression_node()) ? ':shape' : ':bad';
++"""
+ (out / 'source/main.php').write_text(source)
+-expected = b'42:same:1.5:same:true:same:hello:same:hello:5'
++expected = b'42:same:1.5:same:true:same:hello:same:hello:5:shape'
+ with CommandRunner(out / 'logs', ROOT) as runner:
+     publisher = out / 'publish.php'
+     publisher.write_text((APP / 'tests/async_tasks_publish.php').read_text()

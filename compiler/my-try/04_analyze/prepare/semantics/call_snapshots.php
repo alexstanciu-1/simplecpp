@@ -22,12 +22,13 @@ final class Call_Snapshot_Preparation
 			if ($argument->boundary !== value_boundary_operation::copy_value) { return; }
 			$conversion = $argument->require_conversion();
 			if ($conversion->operation !== conversion_operation::identity) { return; }
-			$value = $syntax[$argument->source_index]->require_preparation();
+			$argument_syntax = $syntax[$argument->source_index];
+			$value = $argument_syntax->require_preparation();
 			$family = Type_Queries::canonical($value->type)->family();
 			if (!$value->type->matches($string_type) && ($family !== type_family::integer)
 				&& ($family !== type_family::boolean) && ($family !== type_family::floating)) { return; }
-			if ($value instanceof prepared_literal) { continue; }
-			if (!($value instanceof prepared_variable_reference)) { return; }
+			if (self::is_scalar_literal($argument_syntax)) { continue; }
+			if (!($argument_syntax instanceof variable_reference_node)) { return; }
 			$place = $value->place;
 			if ($place === null) { return; }
 			if (!$place->borrowable() || ($place->base() !== null)) { return; }
@@ -36,10 +37,18 @@ final class Call_Snapshot_Preparation
 		// Borrow only existing strings. Scalar and literal temporaries keep ordinary
 		// value transport, and the source call still evaluates arguments in order.
 		foreach ($arguments as $argument) {
-			$value = $syntax[$argument->source_index]->require_preparation();
-			if (($value instanceof prepared_variable_reference) && $value->type->matches($string_type)) {
+			$argument_syntax = $syntax[$argument->source_index];
+			$value = $argument_syntax->require_preparation();
+			if (($argument_syntax instanceof variable_reference_node) && $value->type->matches($string_type)) {
 				$argument->borrow_snapshot = true;
 			}
 		}
+	}
+
+	/** Source literal nodes own the scalar literal facts; no fact-base narrowing is needed. */
+	private static function is_scalar_literal(expression_node $syntax): bool
+	{
+		return ($syntax instanceof integer_literal_node) || ($syntax instanceof float_literal_node)
+			|| ($syntax instanceof boolean_literal_node) || ($syntax instanceof string_literal_node);
 	}
 }
