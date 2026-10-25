@@ -176,10 +176,10 @@ final class Native_Ninja_Build
 			return;
 		}
 		$scan = fs_scan($this->root);
-		if ($scan === false) {
+		$entries /** vector<string> */ = [];
+		if (!take_false($entries, $scan)) {
 			throw new \RuntimeException('Cannot inspect Ninja directory');
 		}
-		$entries /** vector<string> */ = $scan;
 		foreach ($entries as $entry) {
 			if (($entry !== '.') && ($entry !== '..') && ($entry !== '.scpp-ninja.lock')) {
 				throw new \RuntimeException('Ninja requires an empty, dedicated build directory');

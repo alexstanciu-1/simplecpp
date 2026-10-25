@@ -1,0 +1,9 @@
+{
+  "previous": 19,
+  "current": 17,
+  "removed": [
+    "S2S Result construction requires an exact payload, same wrapper type, structured error or supported explicit sentinel",
+    "S2S integer binary operation requires canonical int operands"
+  ],
+  "added": []
+}

@@ -960,7 +960,7 @@ final class canonical_type_use
 
 	public function matches(canonical_type_use $other): bool
 	{
-		return ($this->identity === $other->identity) && ($this->use_by_value === $other->use_by_value);
+		return ($this->type_id() === $other->type_id()) && ($this->use_by_value === $other->use_by_value);
 	}
 }
 

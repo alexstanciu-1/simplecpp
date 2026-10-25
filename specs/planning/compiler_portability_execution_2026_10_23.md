@@ -1772,3 +1772,16 @@ Bootstrap: 3:11.95 / 612668 KiB RSS / 580.5 MiB heap. First diagnostic now canon
 binary operands; same 19 categories, including narrowing elsewhere. This resolves
 the approved static-member design decision; native and second-generation compiler
 acceptance remain outstanding.
+
+## Canonical identity and scan failure boundaries — 2026-10-25
+
+Implemented approved PHP fixes using type_id() and take_false. The real failure-path
+proof exposed plain false in filesystem Result bindings; after user approval,
+scan/size/mtime now use the existing common false_sentinel spelling. No compiler
+semantic changes. PHP, v0.1 and both v0.2 native modes pass empty/populated/missing
+scan and scalar filesystem success/failure tests; type/incremental host suites pass.
+[Evidence](results/compiler_bootstrap_backlog_2026_10_23/canonical_identity_scan/README.md).
+
+Bootstrap: 2:16.98 / 612960 KiB RSS / 580.5 MiB heap. Diagnostics 19 -> 17; canonical-int
+and Result-construction categories clear. First blocker now unsupported value probes.
+Stopped before fixing it; native compiler and second-generation validation outstanding.
