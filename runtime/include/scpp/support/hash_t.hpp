@@ -84,6 +84,26 @@ using hash_index_variant_t = std::variant<
 	flat_hash_index_t<std::uint32_t>
 >;
 
+// Buckets store physical entry positions, not bucket offsets. Erased entries
+// retain their positions, so index width must be independent of live capacity.
+[[nodiscard]] inline hash_index_variant_t index_for_entries(std::size_t count) {
+	if (count <= 256) return flat_hash_index_t<std::uint8_t>{};
+	if (count <= 65536) return flat_hash_index_t<std::uint16_t>{};
+	return flat_hash_index_t<std::uint32_t>{};
+}
+
+[[nodiscard]] inline bool index_holds_entries(const hash_index_variant_t &index, std::size_t count) {
+	return std::visit([&](const auto &idx) {
+		using I = std::decay_t<decltype(idx)>;
+		if constexpr (std::is_same_v<I, std::monostate>) {
+			return false;
+		} else {
+			using position_t = typename std::decay_t<decltype(idx.buckets_)>::value_type;
+			return count == 0 || count - 1 <= std::numeric_limits<position_t>::max();
+		}
+	}, index);
+}
+
 [[nodiscard]] inline std::size_t index_capacity(const hash_index_variant_t &index) noexcept {
 	std::size_t capacity = 0;
 	std::visit([&](const auto &idx) {
@@ -296,8 +316,11 @@ private:
 	hash_detail::hash_index_variant_t hash_index_;
 	std::size_t live_size_ = 0;
 
-	void check_and_rehash() {
-		if (std::holds_alternative<std::monostate>(hash_index_)) return;
+	bool check_and_rehash() {
+		if (std::holds_alternative<std::monostate>(hash_index_)) {
+			rehash(4);
+			return true;
+		}
 		std::uint32_t cap = 0;
 		std::uint32_t sz = 0;
 		std::uint32_t del = 0;
@@ -309,21 +332,16 @@ private:
 				del = idx.deleted_count_;
 			}
 		}, hash_index_);
-		if (sz + del >= (cap * 3) / 4) {
+		if (sz + del >= (cap * 3) / 4 || !hash_detail::index_holds_entries(hash_index_, values_.size())) {
 			const auto next_capacity = (sz >= cap / 2) ? cap * 2 : cap;
 			rehash(next_capacity == 0 ? 4 : next_capacity);
+			return true;
 		}
+		return false;
 	}
 
 	void rehash(std::uint32_t next_capacity) {
-		hash_detail::hash_index_variant_t next_index;
-		if (next_capacity <= 256) {
-			next_index.template emplace<hash_detail::flat_hash_index_t<std::uint8_t>>();
-		} else if (next_capacity <= 65536) {
-			next_index.template emplace<hash_detail::flat_hash_index_t<std::uint16_t>>();
-		} else {
-			next_index.template emplace<hash_detail::flat_hash_index_t<std::uint32_t>>();
-		}
+		auto next_index = hash_detail::index_for_entries(values_.size());
 
 		std::visit([&](auto &idx) {
 			using I = std::decay_t<decltype(idx)>;
@@ -352,10 +370,8 @@ private:
 	}
 
 	void add_to_index(const T_KEY &key, std::uint32_t physical_index) {
-		if (std::holds_alternative<std::monostate>(hash_index_)) {
-			rehash(4);
-		}
-		check_and_rehash();
+		// Rebuilding includes the newly appended live entry already.
+		if (check_and_rehash()) return;
 		std::visit([&](auto &idx) {
 			using I = std::decay_t<decltype(idx)>;
 			if constexpr (!std::is_same_v<I, std::monostate>) {
@@ -365,6 +381,9 @@ private:
 				while (idx.ctrl_bytes_[bucket] < 128
 					&& idx.ctrl_bytes_[bucket] != static_cast<std::uint8_t>(hash_detail::ctrl_state_t::deleted)) {
 					bucket = (bucket + 1) % idx.capacity_;
+				}
+				if (idx.ctrl_bytes_[bucket] == static_cast<std::uint8_t>(hash_detail::ctrl_state_t::deleted)) {
+					--idx.deleted_count_;
 				}
 				idx.ctrl_bytes_[bucket] = fingerprint;
 				idx.buckets_[bucket] = static_cast<typename decltype(idx.buckets_)::value_type>(physical_index);
@@ -904,8 +923,11 @@ private:
 		rehash(count > 0 ? count * 2 : 4);
 	}
 
-	void check_and_rehash() {
-		if (std::holds_alternative<std::monostate>(hash_index_)) return;
+	bool check_and_rehash() {
+		if (std::holds_alternative<std::monostate>(hash_index_)) {
+			rehash(4);
+			return true;
+		}
 		std::uint32_t cap = 0;
 		std::uint32_t sz = 0;
 		std::uint32_t del = 0;
@@ -917,21 +939,16 @@ private:
 				del = idx.deleted_count_;
 			}
 		}, hash_index_);
-		if (sz + del >= (cap * 3) / 4) {
+		if (sz + del >= (cap * 3) / 4 || !hash_detail::index_holds_entries(hash_index_, values_.size())) {
 			const auto next_capacity = (sz >= cap / 2) ? cap * 2 : cap;
 			rehash(next_capacity == 0 ? 4 : next_capacity);
+			return true;
 		}
+		return false;
 	}
 
 	void rehash(std::uint32_t next_capacity) {
-		hash_detail::hash_index_variant_t next_index;
-		if (next_capacity <= 256) {
-			next_index.template emplace<hash_detail::flat_hash_index_t<std::uint8_t>>();
-		} else if (next_capacity <= 65536) {
-			next_index.template emplace<hash_detail::flat_hash_index_t<std::uint16_t>>();
-		} else {
-			next_index.template emplace<hash_detail::flat_hash_index_t<std::uint32_t>>();
-		}
+		auto next_index = hash_detail::index_for_entries(values_.size());
 
 		auto &keys = std::get<native_keys_t>(keys_);
 		std::visit([&](auto &idx) {
@@ -961,7 +978,8 @@ private:
 	}
 
 	void add_to_index(std::uint32_t key, std::uint32_t physical_index) {
-		check_and_rehash();
+		// Rebuilding includes the newly appended live entry already.
+		if (check_and_rehash()) return;
 		std::visit([&](auto &idx) {
 			using I = std::decay_t<decltype(idx)>;
 			if constexpr (!std::is_same_v<I, std::monostate>) {
@@ -971,6 +989,9 @@ private:
 				while (idx.ctrl_bytes_[bucket] < 128
 					&& idx.ctrl_bytes_[bucket] != static_cast<std::uint8_t>(hash_detail::ctrl_state_t::deleted)) {
 					bucket = (bucket + 1) % idx.capacity_;
+				}
+				if (idx.ctrl_bytes_[bucket] == static_cast<std::uint8_t>(hash_detail::ctrl_state_t::deleted)) {
+					--idx.deleted_count_;
 				}
 				idx.ctrl_bytes_[bucket] = fingerprint;
 				idx.buckets_[bucket] = static_cast<typename decltype(idx.buckets_)::value_type>(physical_index);

@@ -80,6 +80,10 @@ add_executable(test_hash_t test_hash_t.cpp)
 target_link_libraries(test_hash_t PRIVATE scpp_runtime scpp_runtime_test_support)
 add_test(NAME scpp_test_hash_t COMMAND test_hash_t)
 
+add_executable(test_hash_churn test_hash_churn.cpp)
+target_link_libraries(test_hash_churn PRIVATE scpp_runtime scpp_runtime_test_support)
+add_test(NAME scpp_test_hash_churn COMMAND test_hash_churn)
+
 # Tagged dynamic storage foundation; public alias migration is still pending.
 add_executable(test_dynamic_value test_dynamic_value.cpp)
 target_link_libraries(test_dynamic_value PRIVATE scpp_runtime scpp_runtime_test_support)
