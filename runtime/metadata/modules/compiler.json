@@ -135,7 +135,8 @@
       "arguments": [
         {
           "parameter": "Record",
-          "representation": "payload"
+          "representation": "payload",
+          "layout": "declaration"
         }
       ]
     },
@@ -146,7 +147,8 @@
       "arguments": [
         {
           "parameter": "Record",
-          "representation": "payload"
+          "representation": "payload",
+          "layout": "declaration"
         }
       ]
     },
@@ -157,7 +159,8 @@
       "arguments": [
         {
           "parameter": "Record",
-          "representation": "payload"
+          "representation": "payload",
+          "layout": "declaration"
         }
       ]
     },
@@ -168,7 +171,8 @@
       "arguments": [
         {
           "parameter": "Record",
-          "representation": "payload"
+          "representation": "payload",
+          "layout": "declaration"
         }
       ]
     }

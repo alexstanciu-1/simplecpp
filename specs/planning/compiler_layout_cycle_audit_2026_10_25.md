@@ -1,7 +1,7 @@
 # Bootstrap concrete-layout dependency proposal
 Doc Status: planning
 
-Status: audited proposal; implementation awaits agreement. Baseline 77f853ce3.
+Status: approved by user on 2026-10-25; implemented with focused proofs and successful PHP-hosted C++ publication. Baseline 77f853ce3.
 [Evidence](results/compiler_bootstrap_backlog_2026_10_23/layout_cycle_audit/README.md).
 
 ## Finding
@@ -64,3 +64,5 @@ replace the full compiler acceptance criteria with an ordinary-only build.
 This proposal extends the binding model across metadata and backend ownership areas;
 compiler/my-try/AGENTS.md requires agreement on the new retained protocol before
 implementation. No production fixes were made during this audit.
+
+Implementation evidence: [layout requirements](results/compiler_bootstrap_backlog_2026_10_23/layout_requirements/README.md).

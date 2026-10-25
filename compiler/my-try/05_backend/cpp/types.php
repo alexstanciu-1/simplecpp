@@ -46,10 +46,10 @@ final class CPP_Types
 	}
 
 	/** Native outer implementation with concrete physical arguments, using the same registry bindings. */
-	public static function implementation_representation(canonical_type_use $type_use, CPP_Specializations $engine): cpp_type
+	public static function implementation_representation(canonical_type_use $type_use, CPP_Specializations $engine, bool $layout_probe = false): cpp_type
 	{
 		$requirement = self::pointee($type_use) !== null ? cpp_type_requirement::declaration : cpp_type_requirement::complete;
-		return self::native_representation_for($type_use, $requirement, null, $engine);
+		return self::native_representation_for($type_use, $requirement, null, $engine, $layout_probe);
 	}
 
 	/** Static members belong to the outer payload with the same composed arguments as storage. */
@@ -59,11 +59,11 @@ final class CPP_Types
 	}
 
 	private static function native_representation_for(canonical_type_use $type_use, cpp_type_requirement $requirement,
-		?cpp_generation_context $context, ?CPP_Specializations $argument_engine): cpp_type
+		?cpp_generation_context $context, ?CPP_Specializations $argument_engine, bool $layout_probe = false): cpp_type
 	{
 		$optional_handle = Type_Queries::nullable_handle_payload($type_use);
 		if ($optional_handle !== null) {
-			return self::native_representation_for($optional_handle, $requirement, $context, $argument_engine);
+			return self::native_representation_for($optional_handle, $requirement, $context, $argument_engine, $layout_probe);
 		}
 		// Passing/copying the stored handle does not inspect its payload. Other
 		// representations retain their complete-type requirements.
@@ -73,7 +73,7 @@ final class CPP_Types
 		}
 		// Runtime value wrappers may inspect the payload's layout/traits at instantiation.
 		$payload_requirement = $type_use->by_value() ? cpp_type_requirement::complete : $requirement;
-		$result = self::unmodified_representation($type_use, $payload_requirement, $context, $argument_engine);
+		$result = self::unmodified_representation($type_use, $payload_requirement, $context, $argument_engine, $layout_probe);
 		// A selected concrete representation already owns the complete stored type.
 		if ($result->opaque) { return $result; }
 		if (Type_Queries::is_nominal_handle($type_use)) {
@@ -150,7 +150,7 @@ final class CPP_Types
 	/** Resolve the canonical core; recursive arguments contribute their own direct headers. */
 	private static function unmodified_representation(canonical_type_use $type_use,
 		cpp_type_requirement $requirement, ?cpp_generation_context $context = null,
-		?CPP_Specializations $argument_engine = null): cpp_type
+		?CPP_Specializations $argument_engine = null, bool $layout_probe = false): cpp_type
 	{
 		$type = Type_Queries::canonical($type_use);
 		$definition = $type->definition();
@@ -205,7 +205,7 @@ final class CPP_Types
 			$application = object_cast($type, applied_template_type::class);
 			$binding = Model::$cpp_type_bindings->definition($definition->definition_id());
 			$no_payloads /** hash<cpp_type,int> */ = [];
-			$result = self::native_recipe($binding->recipe(), $application->arguments(), null, $context, $argument_engine, $no_payloads);
+			$result = self::native_recipe($binding->recipe(), $application->arguments(), null, $context, $argument_engine, $no_payloads, $layout_probe);
 			$result->literal = cpp_literal_kind::none;
 			return $result;
 		}
@@ -252,7 +252,7 @@ final class CPP_Types
 	/** Render structured runtime binding data; argument interpretation never depends on family names. */
 	private static function native_recipe(cpp_type_recipe $recipe, array $arguments /** vector<canonical_type_use> */,
 		?cpp_type $modified, ?cpp_generation_context $context, ?CPP_Specializations $engine,
-		array $payloads /** hash<cpp_type,int> */): cpp_type
+		array $payloads /** hash<cpp_type,int> */, bool $layout_probe = false): cpp_type
 	{
 		$result = new cpp_type();
 		$result->spelling = $recipe->symbol;
@@ -275,7 +275,13 @@ final class CPP_Types
 				}
 				else {
 					$type_argument = $arguments[$argument->position];
-					if (($engine !== null) && ($recipe->pointee_position === $argument->position)) {
+					if ($layout_probe && $argument->layout_declaration) {
+						$layout_context = new cpp_generation_context($engine);
+						$mapping = $argument->payload
+							? self::payload_for($type_argument, cpp_type_requirement::declaration, $layout_context)
+							: self::representation_for($type_argument, cpp_type_requirement::stored_value, $layout_context);
+					}
+					elseif (($engine !== null) && ($recipe->pointee_position === $argument->position)) {
 						$mapping = self::unmodified_representation($type_argument, cpp_type_requirement::declaration, new cpp_generation_context($engine));
 					}
 					else {

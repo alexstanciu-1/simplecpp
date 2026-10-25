@@ -44,8 +44,8 @@
   ],
   "cpp_types": [
     {"id":"core.Exception","symbol":"scpp::php::exception_payload","header":"lang/php/exception_payload.hpp"},
-    {"id": "core.vector", "symbol": "scpp::vector_t", "header": "scpp/vector_t.hpp"},
-    {"id": "core.hash", "symbol": "scpp::hash_t", "header": "scpp/hash_t.hpp"},
+    {"id": "core.vector", "symbol": "scpp::vector_t", "header": "scpp/vector_t.hpp", "arguments":[{"parameter":"Value","representation":"stored","layout":"declaration"}]},
+    {"id": "core.hash", "symbol": "scpp::hash_t", "header": "scpp/hash_t.hpp", "arguments":[{"parameter":"Value","representation":"stored","layout":"declaration"},{"parameter":"Key","representation":"stored","layout":"declaration"}]},
     {"id":"core.representation.bool","type":"bool","literal_interface":"scalar","concrete_boundary":true,"symbol":"scpp::bool_t","header":"scpp/bool_t.hpp"},
     {"id":"core.representation.int","type":"int","literal_interface":"scalar","symbol":"scpp::int_t","header":"scpp/int_t.hpp","arguments":[]},
     {"id":"core.representation.float","type":"float","literal_interface":"scalar","concrete_boundary":true,"symbol":"scpp::float_t","header":"scpp/float_t.hpp"},
@@ -66,7 +66,7 @@
     {"id":"core.representation.result_or_false","type":"result_or_false","symbol":"scpp::result_or_false","header":"scpp/result_or_false.hpp"},
     {"id":"core.representation.result_or_bool","type":"result_or_bool","symbol":"scpp::result_or_bool","header":"scpp/result_or_bool.hpp"},
     {"id":"core.representation.shared","type":"shared","pointee":"Target","symbol":"scpp::shared_p","header":"scpp/shared_p.hpp","arguments":[{"parameter":"Target","representation":"payload"}]},
-    {"id":"core.representation.weak","type":"weak","symbol":"scpp::weak_p","header":"scpp/weak_p.hpp","arguments":[{"parameter":"Target","representation":"payload"}]},
+    {"id":"core.representation.weak","type":"weak","symbol":"scpp::weak_p","header":"scpp/weak_p.hpp","arguments":[{"parameter":"Target","representation":"payload","layout":"declaration"}]},
     {"id":"core.representation.unique","type":"unique","pointee":"Target","symbol":"scpp::unique_p","header":"scpp/unique_p.hpp","arguments":[{"parameter":"Target","representation":"payload"}]},
     {"id":"core.representation.value","modifier":"value","pointee_modified_type":true,"symbol":"scpp::value_p","header":"scpp/value_p.hpp","arguments":[{"modified_type":true,"representation":"payload"}]}
   ],

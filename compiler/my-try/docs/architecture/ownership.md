@@ -458,3 +458,14 @@ batch; a generated representation header becomes usable after its layout probe.
 Cycles reject before output publication. The native builder resolves/cache-validates
 batches in publication order. Preparation, source identity and registry ownership
 remain unchanged; no retained semantic dependency registry was added.
+
+## Provider layout argument requirements
+
+C++ binding argument records retain the provider's declaration-only layout permission,
+independent of stored/payload spelling and pointer interfaces. CPP_Types resolves the
+same native type twice where needed: conservative operation dependencies and the
+provider-admitted layout requirements. CPP_Opaque_Representation stores layout aliases
+and layout dependencies on the existing specialization entry, while implementation
+text keeps complete operation dependencies. No second type identity, dependency graph,
+or global layout cache is added. Stored inline values keep complete layouts; a handle's
+payload declaration is sufficient only where its actual representation admits it.

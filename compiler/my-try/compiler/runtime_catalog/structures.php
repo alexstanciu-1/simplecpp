@@ -185,6 +185,8 @@ final class runtime_cpp_type_spec extends runtime_cpp_spec
 
 final class runtime_cpp_argument_spec
 {
+	/** Provider permits declaration-only layout inspection of this argument. */
+	public bool $layout_declaration = false;
 	public string $native_name = '';
 	public string $parameter = '';
 	public bool $modified_type = false;

@@ -1126,8 +1126,14 @@ proof does not implement the following extensions or transfer ownership away fro
 their current guides:
 
 - Structured source-origin/category diagnostics: existing **CH13-DIAG-01**.
-- More permissive template/handle incomplete-type dependencies: C++ type/declaration
-  requirements and per-runtime binding proofs; conservative includes remain valid.
+- Broader incomplete-type dependencies: the approved bootstrap slice now carries
+  per-argument layout requirements in C++ binding metadata and separates layout
+  probes from operation dependencies. Storage-family payloads, weak payloads and
+  stored vector/hash arguments have focused native proofs. Unregistered providers
+  stay conservative; recursive inline-value containers and broader provider traits
+  still require their own proofs. See the
+  [layout contract](../../../../specs/runtime_module_metadata.md) and
+  [bootstrap audit](../../../../specs/planning/compiler_layout_cycle_audit_2026_10_25.md).
 - Broader optional-module and toolchain coverage, a checked current-build/run reader,
   parallel native actions and garbage collection: native build/publication owners.
 - Automatic runtime refresh: **CH15-NATIVE-RUNTIME-IDENTITY-01**; validation cost:

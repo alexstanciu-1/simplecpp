@@ -501,6 +501,23 @@ argument cannot select a semantic representation. Other fields and multiple targ
 are rejected. Non-type arguments and recursively authored native-template expressions
 are outside this bounded recipe vocabulary.
 
+A formal-parameter argument may set `layout: "declaration"` (default `"complete"`).
+This is a native layout-probe requirement, independent of semantic capabilities,
+ownership, payload/stored spelling and `pointee`. It must not change the native type
+spelling. For a payload argument it permits a forward-declared source record; for a
+stored argument it still requires the complete stored value representation, while
+allowing a nominal handle's record payload to remain incomplete. Inline struct/union
+values retain their complete-layout requirement. Nested representations keep their own
+binding requirements; the permission is not recursively granted to all payloads.
+Native and modifier arguments cannot set this field. Other spellings reject.
+
+An opted-in provider must support size/alignment and all emitted lifecycle trait
+queries with those declarations. Layout alias dependencies use this permission;
+compiled operation and destruction implementations retain their complete native
+dependencies. Providers without the field remain conservative. This does not remove
+cycle checking or permit recursively embedded by-value layouts. Per-provider native
+proofs are required before opting bindings in.
+
 Modifier bindings require explicit arguments; only they can use `modified_type`.
 That argument requires payload representation so it cannot recursively apply its
 own modifier. The existing value modifier's normalization and source admission stay

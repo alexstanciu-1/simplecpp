@@ -1947,3 +1947,13 @@ per-binding argument layout requirements, separate from full operation dependenc
 [design and scope](compiler_layout_cycle_audit_2026_10_25.md). No production changes.
 Instrumented full retry 1:41.84 / 765104 KiB RSS / 726 MiB heap. Await design agreement;
 native compiler and second generation remain unproved.
+
+## Provider-admitted layout requirements — 2026-10-25
+
+Approved per-argument metadata and separate physical layout/operation dependencies
+implemented. Five focused tasks pass, including recursive ordinary/concrete native
+execution and retained replay. Default-complete and inline-value requirements remain.
+[Evidence](results/compiler_bootstrap_backlog_2026_10_23/layout_requirements/README.md).
+Full PHP-hosted bootstrap now PASSES: 1:45.27 / 796580 KiB RSS / 757 MiB heap,
+including complete C++ emission. Native compiler build at -O0 proceeds separately;
+representative compiler runs and second-generation proof remain outstanding.

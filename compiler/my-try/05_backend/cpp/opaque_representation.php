@@ -124,6 +124,11 @@ final class CPP_Opaque_Representation
 		$prefix = 'SCPP_LAYOUT_' . $name;
 		$includes = CPP_Artifacts::preamble($mapping->headers, $mapping->forward_declarations, '');
 		$aliases = $includes . 'using ' . $native . ' = ' . $mapping->spelling . ";\n";
+		// Layout admission is provider metadata; operations keep their full native dependencies.
+		$layout_mapping = $compose_arguments ? CPP_Types::implementation_representation($type, $engine, true) : $mapping;
+		if ($layout_mapping->spelling !== $mapping->spelling) { throw new \LogicException('Layout requirement changed native representation'); }
+		$layout_aliases = CPP_Artifacts::preamble($layout_mapping->headers, $layout_mapping->forward_declarations, '')
+			. 'using ' . $native . ' = ' . $mapping->spelling . ";\n";
 		$copyable = $capabilities->has_capability($type, generic_contract::copyable_value);
 		$probe = 'std::printf("#define ' . $prefix . '_SIZE %zu\\n#define ' . $prefix . '_ALIGN %zu\\n", sizeof('
 			. $native . '), alignof(' . $native . "));\n";
@@ -231,6 +236,6 @@ final class CPP_Opaque_Representation
 		$implementation .= 'static_assert(std::is_nothrow_destructible_v<' . $native . ">);\n"
 			. $name . '::~' . $name . "() noexcept { std::destroy_at(&unwrap(*this)); }\n}\n";
 		return new cpp_specialization_entry($name, 'specializations/' . $name . '.hpp',
-			$declaration, $implementation, $mapping->headers, $aliases, $probe, $footer);
+			$declaration, $implementation, $layout_mapping->headers, $layout_aliases, $probe, $footer);
 	}
 }

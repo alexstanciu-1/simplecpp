@@ -122,6 +122,7 @@ final class CPP_Runtime_Type_Bindings
 		foreach ($arguments as $argument_spec) {
 			$argument = new cpp_type_argument_binding();
 			$argument->payload = $argument_spec->payload;
+			$argument->layout_declaration = $argument_spec->layout_declaration;
 			if ($argument_spec->native_name !== '') {
 				CPP_Runtime_Catalog::spelling($argument_spec->native_name, false);
 				if ($argument_spec->header !== '') { CPP_Runtime_Catalog::spelling($argument_spec->header, true); }

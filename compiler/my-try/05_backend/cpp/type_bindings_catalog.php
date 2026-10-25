@@ -8,6 +8,7 @@ enum cpp_type_argument_kind { case native_type; case parameter; case modified_ty
 /** Resolved physical argument; semantic identity and admission stay in the registry. */
 final class cpp_type_argument_binding
 {
+	public bool $layout_declaration = false;
 	public cpp_type_argument_kind $kind = cpp_type_argument_kind::native_type;
 	public int $position = 0;
 	public string $native_name = '';

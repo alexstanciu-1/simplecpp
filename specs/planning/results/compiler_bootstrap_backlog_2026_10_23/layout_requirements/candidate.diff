@@ -1,0 +1,305 @@
+diff --git a/compiler/my-try/05_backend/cpp/opaque_representation.php b/compiler/my-try/05_backend/cpp/opaque_representation.php
+index dc37e0309..51c902c22 100644
+--- a/compiler/my-try/05_backend/cpp/opaque_representation.php
++++ b/compiler/my-try/05_backend/cpp/opaque_representation.php
+@@ -124,6 +124,11 @@ final class CPP_Opaque_Representation
+ 		$prefix = 'SCPP_LAYOUT_' . $name;
+ 		$includes = CPP_Artifacts::preamble($mapping->headers, $mapping->forward_declarations, '');
+ 		$aliases = $includes . 'using ' . $native . ' = ' . $mapping->spelling . ";\n";
++		// Layout admission is provider metadata; operations keep their full native dependencies.
++		$layout_mapping = $compose_arguments ? CPP_Types::implementation_representation($type, $engine, true) : $mapping;
++		if ($layout_mapping->spelling !== $mapping->spelling) { throw new \LogicException('Layout requirement changed native representation'); }
++		$layout_aliases = CPP_Artifacts::preamble($layout_mapping->headers, $layout_mapping->forward_declarations, '')
++			. 'using ' . $native . ' = ' . $mapping->spelling . ";\n";
+ 		$copyable = $capabilities->has_capability($type, generic_contract::copyable_value);
+ 		$probe = 'std::printf("#define ' . $prefix . '_SIZE %zu\\n#define ' . $prefix . '_ALIGN %zu\\n", sizeof('
+ 			. $native . '), alignof(' . $native . "));\n";
+@@ -231,6 +236,6 @@ final class CPP_Opaque_Representation
+ 		$implementation .= 'static_assert(std::is_nothrow_destructible_v<' . $native . ">);\n"
+ 			. $name . '::~' . $name . "() noexcept { std::destroy_at(&unwrap(*this)); }\n}\n";
+ 		return new cpp_specialization_entry($name, 'specializations/' . $name . '.hpp',
+-			$declaration, $implementation, $mapping->headers, $aliases, $probe, $footer);
++			$declaration, $implementation, $layout_mapping->headers, $layout_aliases, $probe, $footer);
+ 	}
+ }
+diff --git a/compiler/my-try/05_backend/cpp/runtime_type_bindings.php b/compiler/my-try/05_backend/cpp/runtime_type_bindings.php
+index e1abb6443..2d987f953 100644
+--- a/compiler/my-try/05_backend/cpp/runtime_type_bindings.php
++++ b/compiler/my-try/05_backend/cpp/runtime_type_bindings.php
+@@ -122,6 +122,7 @@ final class CPP_Runtime_Type_Bindings
+ 		foreach ($arguments as $argument_spec) {
+ 			$argument = new cpp_type_argument_binding();
+ 			$argument->payload = $argument_spec->payload;
++			$argument->layout_declaration = $argument_spec->layout_declaration;
+ 			if ($argument_spec->native_name !== '') {
+ 				CPP_Runtime_Catalog::spelling($argument_spec->native_name, false);
+ 				if ($argument_spec->header !== '') { CPP_Runtime_Catalog::spelling($argument_spec->header, true); }
+diff --git a/compiler/my-try/05_backend/cpp/type_bindings_catalog.php b/compiler/my-try/05_backend/cpp/type_bindings_catalog.php
+index 9c30078a5..a861e8641 100644
+--- a/compiler/my-try/05_backend/cpp/type_bindings_catalog.php
++++ b/compiler/my-try/05_backend/cpp/type_bindings_catalog.php
+@@ -8,6 +8,7 @@ enum cpp_type_argument_kind { case native_type; case parameter; case modified_ty
+ /** Resolved physical argument; semantic identity and admission stay in the registry. */
+ final class cpp_type_argument_binding
+ {
++	public bool $layout_declaration = false;
+ 	public cpp_type_argument_kind $kind = cpp_type_argument_kind::native_type;
+ 	public int $position = 0;
+ 	public string $native_name = '';
+diff --git a/compiler/my-try/05_backend/cpp/types.php b/compiler/my-try/05_backend/cpp/types.php
+index dcb66a71a..5fd8c0426 100644
+--- a/compiler/my-try/05_backend/cpp/types.php
++++ b/compiler/my-try/05_backend/cpp/types.php
+@@ -46,10 +46,10 @@ final class CPP_Types
+ 	}
+ 
+ 	/** Native outer implementation with concrete physical arguments, using the same registry bindings. */
+-	public static function implementation_representation(canonical_type_use $type_use, CPP_Specializations $engine): cpp_type
++	public static function implementation_representation(canonical_type_use $type_use, CPP_Specializations $engine, bool $layout_probe = false): cpp_type
+ 	{
+ 		$requirement = self::pointee($type_use) !== null ? cpp_type_requirement::declaration : cpp_type_requirement::complete;
+-		return self::native_representation_for($type_use, $requirement, null, $engine);
++		return self::native_representation_for($type_use, $requirement, null, $engine, $layout_probe);
+ 	}
+ 
+ 	/** Static members belong to the outer payload with the same composed arguments as storage. */
+@@ -59,11 +59,11 @@ final class CPP_Types
+ 	}
+ 
+ 	private static function native_representation_for(canonical_type_use $type_use, cpp_type_requirement $requirement,
+-		?cpp_generation_context $context, ?CPP_Specializations $argument_engine): cpp_type
++		?cpp_generation_context $context, ?CPP_Specializations $argument_engine, bool $layout_probe = false): cpp_type
+ 	{
+ 		$optional_handle = Type_Queries::nullable_handle_payload($type_use);
+ 		if ($optional_handle !== null) {
+-			return self::native_representation_for($optional_handle, $requirement, $context, $argument_engine);
++			return self::native_representation_for($optional_handle, $requirement, $context, $argument_engine, $layout_probe);
+ 		}
+ 		// Passing/copying the stored handle does not inspect its payload. Other
+ 		// representations retain their complete-type requirements.
+@@ -73,7 +73,7 @@ final class CPP_Types
+ 		}
+ 		// Runtime value wrappers may inspect the payload's layout/traits at instantiation.
+ 		$payload_requirement = $type_use->by_value() ? cpp_type_requirement::complete : $requirement;
+-		$result = self::unmodified_representation($type_use, $payload_requirement, $context, $argument_engine);
++		$result = self::unmodified_representation($type_use, $payload_requirement, $context, $argument_engine, $layout_probe);
+ 		// A selected concrete representation already owns the complete stored type.
+ 		if ($result->opaque) { return $result; }
+ 		if (Type_Queries::is_nominal_handle($type_use)) {
+@@ -150,7 +150,7 @@ final class CPP_Types
+ 	/** Resolve the canonical core; recursive arguments contribute their own direct headers. */
+ 	private static function unmodified_representation(canonical_type_use $type_use,
+ 		cpp_type_requirement $requirement, ?cpp_generation_context $context = null,
+-		?CPP_Specializations $argument_engine = null): cpp_type
++		?CPP_Specializations $argument_engine = null, bool $layout_probe = false): cpp_type
+ 	{
+ 		$type = Type_Queries::canonical($type_use);
+ 		$definition = $type->definition();
+@@ -205,7 +205,7 @@ final class CPP_Types
+ 			$application = object_cast($type, applied_template_type::class);
+ 			$binding = Model::$cpp_type_bindings->definition($definition->definition_id());
+ 			$no_payloads /** hash<cpp_type,int> */ = [];
+-			$result = self::native_recipe($binding->recipe(), $application->arguments(), null, $context, $argument_engine, $no_payloads);
++			$result = self::native_recipe($binding->recipe(), $application->arguments(), null, $context, $argument_engine, $no_payloads, $layout_probe);
+ 			$result->literal = cpp_literal_kind::none;
+ 			return $result;
+ 		}
+@@ -252,7 +252,7 @@ final class CPP_Types
+ 	/** Render structured runtime binding data; argument interpretation never depends on family names. */
+ 	private static function native_recipe(cpp_type_recipe $recipe, array $arguments /** vector<canonical_type_use> */,
+ 		?cpp_type $modified, ?cpp_generation_context $context, ?CPP_Specializations $engine,
+-		array $payloads /** hash<cpp_type,int> */): cpp_type
++		array $payloads /** hash<cpp_type,int> */, bool $layout_probe = false): cpp_type
+ 	{
+ 		$result = new cpp_type();
+ 		$result->spelling = $recipe->symbol;
+@@ -275,7 +275,13 @@ final class CPP_Types
+ 				}
+ 				else {
+ 					$type_argument = $arguments[$argument->position];
+-					if (($engine !== null) && ($recipe->pointee_position === $argument->position)) {
++					if ($layout_probe && $argument->layout_declaration) {
++						$layout_context = new cpp_generation_context($engine);
++						$mapping = $argument->payload
++							? self::payload_for($type_argument, cpp_type_requirement::declaration, $layout_context)
++							: self::representation_for($type_argument, cpp_type_requirement::stored_value, $layout_context);
++					}
++					elseif (($engine !== null) && ($recipe->pointee_position === $argument->position)) {
+ 						$mapping = self::unmodified_representation($type_argument, cpp_type_requirement::declaration, new cpp_generation_context($engine));
+ 					}
+ 					else {
+diff --git a/compiler/my-try/compiler/runtime_catalog/reader.php b/compiler/my-try/compiler/runtime_catalog/reader.php
+index bdbff078e..0763d3ea7 100644
+--- a/compiler/my-try/compiler/runtime_catalog/reader.php
++++ b/compiler/my-try/compiler/runtime_catalog/reader.php
+@@ -807,6 +807,7 @@ final class Runtime_Catalog_Reader
+ 		$result = new runtime_cpp_argument_spec();
+ 		$targets = 0;
+ 		$representation = false;
++		$layout = false;
+ 		$reader->begin_object();
+ 		while ($reader->next_property()) {
+ 			$key = $reader->property_name();
+@@ -818,6 +819,12 @@ final class Runtime_Catalog_Reader
+ 				$targets++;
+ 			}
+ 			elseif ($key === 'header') { $result->header = self::name($reader); }
++			elseif ($key === 'layout') {
++				$requirement = self::name($reader);
++				if (($requirement !== 'complete') && ($requirement !== 'declaration')) { $reader->reject('Unknown C++ argument layout requirement'); }
++				$result->layout_declaration = $requirement === 'declaration';
++				$layout = true;
++			}
+ 			elseif ($key === 'representation') {
+ 				$mode = self::name($reader);
+ 				if (($mode !== 'stored') && ($mode !== 'payload')) { $reader->reject('Unknown C++ argument representation'); }
+@@ -826,6 +833,7 @@ final class Runtime_Catalog_Reader
+ 			}
+ 			else { $reader->reject('Unknown C++ type argument field: ' . $key); }
+ 		}
++		if ($layout && ($result->parameter === '')) { $reader->reject('C++ argument layout requires a formal parameter'); }
+ 		if ($targets !== 1) { $reader->reject('C++ type argument requires exactly one target'); }
+ 		if ($result->native_name !== '') {
+ 			if ($representation) { $reader->reject('Native C++ argument cannot select semantic representation'); }
+diff --git a/compiler/my-try/compiler/runtime_catalog/structures.php b/compiler/my-try/compiler/runtime_catalog/structures.php
+index b54a4b003..14ba522d8 100644
+--- a/compiler/my-try/compiler/runtime_catalog/structures.php
++++ b/compiler/my-try/compiler/runtime_catalog/structures.php
+@@ -185,6 +185,8 @@ final class runtime_cpp_type_spec extends runtime_cpp_spec
+ 
+ final class runtime_cpp_argument_spec
+ {
++	/** Provider permits declaration-only layout inspection of this argument. */
++	public bool $layout_declaration = false;
+ 	public string $native_name = '';
+ 	public string $parameter = '';
+ 	public bool $modified_type = false;
+diff --git a/compiler/my-try/docs/architecture/ownership.md b/compiler/my-try/docs/architecture/ownership.md
+index 7e5b6aa0a..fda06dd08 100644
+--- a/compiler/my-try/docs/architecture/ownership.md
++++ b/compiler/my-try/docs/architecture/ownership.md
+@@ -458,3 +458,14 @@ batch; a generated representation header becomes usable after its layout probe.
+ Cycles reject before output publication. The native builder resolves/cache-validates
+ batches in publication order. Preparation, source identity and registry ownership
+ remain unchanged; no retained semantic dependency registry was added.
++
++## Provider layout argument requirements
++
++C++ binding argument records retain the provider's declaration-only layout permission,
++independent of stored/payload spelling and pointer interfaces. CPP_Types resolves the
++same native type twice where needed: conservative operation dependencies and the
++provider-admitted layout requirements. CPP_Opaque_Representation stores layout aliases
++and layout dependencies on the existing specialization entry, while implementation
++text keeps complete operation dependencies. No second type identity, dependency graph,
++or global layout cache is added. Stored inline values keep complete layouts; a handle's
++payload declaration is sufficient only where its actual representation admits it.
+diff --git a/compiler/my-try/tests/runtime_type_bindings.php b/compiler/my-try/tests/runtime_type_bindings.php
+index 851769ce9..661d95804 100644
+--- a/compiler/my-try/tests/runtime_type_bindings.php
++++ b/compiler/my-try/tests/runtime_type_bindings.php
+@@ -76,6 +76,9 @@ function binding_rejection(array $core, array $provider, string $message, runtim
+ 	binding_check(Model::require_runtime_metadata() === $installed, 'Valid configuration recovery lost installed input');
+ }
+ foreach ($invalids as [$bad,$message]) { binding_rejection($bad, $custom_schema, $message, $input); }
++$bad=$core; $bad['cpp_types'][$shared_row]['arguments'][0]['layout']='unknown'; binding_rejection($bad, $custom_schema, 'Unknown C++ argument layout requirement', $input);
++$bad=$core; $bad['cpp_types'][$integer_row]['arguments']=[['native'=>'int','layout'=>'declaration']]; binding_rejection($bad, $custom_schema, 'layout requires a formal parameter', $input);
++$bad=$core; $bad['cpp_types'][$value_row]['arguments'][0]['layout']='declaration'; binding_rejection($bad, $custom_schema, 'layout requires a formal parameter', $input);
+ $provider_invalids = [];
+ $bad=$custom_schema; array_pop($bad['cpp_types']); $provider_invalids[]=[$bad,'type binding count mismatch'];
+ $bad=$custom_schema; $bad['cpp_types'][0]['id']='proof.absent'; $provider_invalids[]=[$bad,'Missing runtime type binding'];
+diff --git a/runtime/metadata/modules/compiler.json b/runtime/metadata/modules/compiler.json
+index 0ac375228..f7638d25e 100644
+--- a/runtime/metadata/modules/compiler.json
++++ b/runtime/metadata/modules/compiler.json
+@@ -135,7 +135,8 @@
+       "arguments": [
+         {
+           "parameter": "Record",
+-          "representation": "payload"
++          "representation": "payload",
++          "layout": "declaration"
+         }
+       ]
+     },
+@@ -146,7 +147,8 @@
+       "arguments": [
+         {
+           "parameter": "Record",
+-          "representation": "payload"
++          "representation": "payload",
++          "layout": "declaration"
+         }
+       ]
+     },
+@@ -157,7 +159,8 @@
+       "arguments": [
+         {
+           "parameter": "Record",
+-          "representation": "payload"
++          "representation": "payload",
++          "layout": "declaration"
+         }
+       ]
+     },
+@@ -168,7 +171,8 @@
+       "arguments": [
+         {
+           "parameter": "Record",
+-          "representation": "payload"
++          "representation": "payload",
++          "layout": "declaration"
+         }
+       ]
+     }
+diff --git a/runtime/metadata/modules/core.json b/runtime/metadata/modules/core.json
+index 48cc13fa6..f83affd91 100644
+--- a/runtime/metadata/modules/core.json
++++ b/runtime/metadata/modules/core.json
+@@ -44,8 +44,8 @@
+   ],
+   "cpp_types": [
+     {"id":"core.Exception","symbol":"scpp::php::exception_payload","header":"lang/php/exception_payload.hpp"},
+-    {"id": "core.vector", "symbol": "scpp::vector_t", "header": "scpp/vector_t.hpp"},
+-    {"id": "core.hash", "symbol": "scpp::hash_t", "header": "scpp/hash_t.hpp"},
++    {"id": "core.vector", "symbol": "scpp::vector_t", "header": "scpp/vector_t.hpp", "arguments":[{"parameter":"Value","representation":"stored","layout":"declaration"}]},
++    {"id": "core.hash", "symbol": "scpp::hash_t", "header": "scpp/hash_t.hpp", "arguments":[{"parameter":"Value","representation":"stored","layout":"declaration"},{"parameter":"Key","representation":"stored","layout":"declaration"}]},
+     {"id":"core.representation.bool","type":"bool","literal_interface":"scalar","concrete_boundary":true,"symbol":"scpp::bool_t","header":"scpp/bool_t.hpp"},
+     {"id":"core.representation.int","type":"int","literal_interface":"scalar","symbol":"scpp::int_t","header":"scpp/int_t.hpp","arguments":[]},
+     {"id":"core.representation.float","type":"float","literal_interface":"scalar","concrete_boundary":true,"symbol":"scpp::float_t","header":"scpp/float_t.hpp"},
+@@ -66,7 +66,7 @@
+     {"id":"core.representation.result_or_false","type":"result_or_false","symbol":"scpp::result_or_false","header":"scpp/result_or_false.hpp"},
+     {"id":"core.representation.result_or_bool","type":"result_or_bool","symbol":"scpp::result_or_bool","header":"scpp/result_or_bool.hpp"},
+     {"id":"core.representation.shared","type":"shared","pointee":"Target","symbol":"scpp::shared_p","header":"scpp/shared_p.hpp","arguments":[{"parameter":"Target","representation":"payload"}]},
+-    {"id":"core.representation.weak","type":"weak","symbol":"scpp::weak_p","header":"scpp/weak_p.hpp","arguments":[{"parameter":"Target","representation":"payload"}]},
++    {"id":"core.representation.weak","type":"weak","symbol":"scpp::weak_p","header":"scpp/weak_p.hpp","arguments":[{"parameter":"Target","representation":"payload","layout":"declaration"}]},
+     {"id":"core.representation.unique","type":"unique","pointee":"Target","symbol":"scpp::unique_p","header":"scpp/unique_p.hpp","arguments":[{"parameter":"Target","representation":"payload"}]},
+     {"id":"core.representation.value","modifier":"value","pointee_modified_type":true,"symbol":"scpp::value_p","header":"scpp/value_p.hpp","arguments":[{"modified_type":true,"representation":"payload"}]}
+   ],
+diff --git a/specs/runtime_module_metadata.md b/specs/runtime_module_metadata.md
+index 648dd1d47..20f04bad1 100644
+--- a/specs/runtime_module_metadata.md
++++ b/specs/runtime_module_metadata.md
+@@ -501,6 +501,23 @@ argument cannot select a semantic representation. Other fields and multiple targ
+ are rejected. Non-type arguments and recursively authored native-template expressions
+ are outside this bounded recipe vocabulary.
+ 
++A formal-parameter argument may set `layout: "declaration"` (default `"complete"`).
++This is a native layout-probe requirement, independent of semantic capabilities,
++ownership, payload/stored spelling and `pointee`. It must not change the native type
++spelling. For a payload argument it permits a forward-declared source record; for a
++stored argument it still requires the complete stored value representation, while
++allowing a nominal handle's record payload to remain incomplete. Inline struct/union
++values retain their complete-layout requirement. Nested representations keep their own
++binding requirements; the permission is not recursively granted to all payloads.
++Native and modifier arguments cannot set this field. Other spellings reject.
++
++An opted-in provider must support size/alignment and all emitted lifecycle trait
++queries with those declarations. Layout alias dependencies use this permission;
++compiled operation and destruction implementations retain their complete native
++dependencies. Providers without the field remain conservative. This does not remove
++cycle checking or permit recursively embedded by-value layouts. Per-provider native
++proofs are required before opting bindings in.
++
+ Modifier bindings require explicit arguments; only they can use `modified_type`.
+ That argument requires payload representation so it cannot recursively apply its
+ own modifier. The existing value modifier's normalization and source admission stay

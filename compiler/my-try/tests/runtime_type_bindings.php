@@ -76,6 +76,9 @@ function binding_rejection(array $core, array $provider, string $message, runtim
 	binding_check(Model::require_runtime_metadata() === $installed, 'Valid configuration recovery lost installed input');
 }
 foreach ($invalids as [$bad,$message]) { binding_rejection($bad, $custom_schema, $message, $input); }
+$bad=$core; $bad['cpp_types'][$shared_row]['arguments'][0]['layout']='unknown'; binding_rejection($bad, $custom_schema, 'Unknown C++ argument layout requirement', $input);
+$bad=$core; $bad['cpp_types'][$integer_row]['arguments']=[['native'=>'int','layout'=>'declaration']]; binding_rejection($bad, $custom_schema, 'layout requires a formal parameter', $input);
+$bad=$core; $bad['cpp_types'][$value_row]['arguments'][0]['layout']='declaration'; binding_rejection($bad, $custom_schema, 'layout requires a formal parameter', $input);
 $provider_invalids = [];
 $bad=$custom_schema; array_pop($bad['cpp_types']); $provider_invalids[]=[$bad,'type binding count mismatch'];
 $bad=$custom_schema; $bad['cpp_types'][0]['id']='proof.absent'; $provider_invalids[]=[$bad,'Missing runtime type binding'];

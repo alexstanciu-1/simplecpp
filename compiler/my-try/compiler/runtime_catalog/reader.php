@@ -807,6 +807,7 @@ final class Runtime_Catalog_Reader
 		$result = new runtime_cpp_argument_spec();
 		$targets = 0;
 		$representation = false;
+		$layout = false;
 		$reader->begin_object();
 		while ($reader->next_property()) {
 			$key = $reader->property_name();
@@ -818,6 +819,12 @@ final class Runtime_Catalog_Reader
 				$targets++;
 			}
 			elseif ($key === 'header') { $result->header = self::name($reader); }
+			elseif ($key === 'layout') {
+				$requirement = self::name($reader);
+				if (($requirement !== 'complete') && ($requirement !== 'declaration')) { $reader->reject('Unknown C++ argument layout requirement'); }
+				$result->layout_declaration = $requirement === 'declaration';
+				$layout = true;
+			}
 			elseif ($key === 'representation') {
 				$mode = self::name($reader);
 				if (($mode !== 'stored') && ($mode !== 'payload')) { $reader->reject('Unknown C++ argument representation'); }
@@ -826,6 +833,7 @@ final class Runtime_Catalog_Reader
 			}
 			else { $reader->reject('Unknown C++ type argument field: ' . $key); }
 		}
+		if ($layout && ($result->parameter === '')) { $reader->reject('C++ argument layout requires a formal parameter'); }
 		if ($targets !== 1) { $reader->reject('C++ type argument requires exactly one target'); }
 		if ($result->native_name !== '') {
 			if ($representation) { $reader->reject('Native C++ argument cannot select semantic representation'); }
