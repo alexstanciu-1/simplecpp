@@ -1,0 +1,79 @@
+[
+  {
+    "kind": "scpp\\compiler\\source_callable_body_work",
+    "file": "scpp_framework/json_document.phs",
+    "name": "scpp\\json_read",
+    "token": 498,
+    "message": "Required object boundary rejects null; declare a nullable object type"
+  },
+  {
+    "kind": "scpp\\compiler\\source_callable_body_work",
+    "file": "04_analyze/prepare/semantics/call_snapshots.phs",
+    "name": "scpp\\compiler\\Call_Snapshot_Preparation::prepare",
+    "token": 12,
+    "message": "Object narrowing requires a polymorphic source"
+  },
+  {
+    "kind": "scpp\\compiler\\source_callable_body_work",
+    "file": "05_backend/cpp/data_construction.phs",
+    "name": "scpp\\compiler\\CPP_Data_Construction::generate",
+    "token": 998,
+    "message": "Object narrowing requires a polymorphic source"
+  },
+  {
+    "kind": "scpp\\compiler\\source_callable_body_work",
+    "file": "05_backend/cpp/opaque_representation.phs",
+    "name": "scpp\\compiler\\CPP_Opaque_Representation::entry",
+    "token": 818,
+    "message": "S2S data construction requires a known concrete target"
+  },
+  {
+    "kind": "scpp\\compiler\\source_callable_body_work",
+    "file": "05_backend/cpp/policy.phs",
+    "name": "scpp\\compiler\\CPP_Default_Constructors::decision",
+    "token": 120,
+    "message": "Object narrowing requires a polymorphic source"
+  },
+  {
+    "kind": "scpp\\compiler\\source_callable_body_work",
+    "file": "05_backend/cpp/runtime_operations.phs",
+    "name": "scpp\\compiler\\CPP_Runtime_Operations::native_operation",
+    "token": 2239,
+    "message": "S2S enum comparison requires the same enum type"
+  },
+  {
+    "kind": "scpp\\compiler\\source_callable_body_work",
+    "file": "05_backend/cpp/runtime_catalog.phs",
+    "name": "scpp\\compiler\\CPP_Runtime_Catalog::install",
+    "token": 971,
+    "message": "S2S indexed storage requires local, parameter or field storage"
+  },
+  {
+    "kind": "scpp\\compiler\\source_callable_body_work",
+    "file": "compiler/runtime_catalog/patterns.phs",
+    "name": "scpp\\compiler\\Runtime_Catalog_Patterns::type",
+    "token": 1051,
+    "message": "S2S runtime call requires one exact signature or a unique checked-payload signature; use explicit argument types"
+  },
+  {
+    "kind": "scpp\\compiler\\source_callable_body_work",
+    "file": "compiler/traits/materialization.phs",
+    "name": "scpp\\compiler\\Trait_Materialization::build",
+    "token": 91,
+    "message": "S2S runtime call requires one exact signature or a unique checked-payload signature; use explicit argument types"
+  },
+  {
+    "kind": "scpp\\compiler\\source_callable_body_work",
+    "file": "compiler/types/queries.phs",
+    "name": "scpp\\compiler\\Type_Queries::is_nominal_handle",
+    "token": 258,
+    "message": "S2S enum comparison requires the same enum type"
+  },
+  {
+    "kind": "scpp\\compiler\\source_callable_body_work",
+    "file": "compiler/types/queries.phs",
+    "name": "scpp\\compiler\\Type_Queries::nullable_handle_payload",
+    "token": 344,
+    "message": "Ownership selection requires two same-family handles"
+  }
+]

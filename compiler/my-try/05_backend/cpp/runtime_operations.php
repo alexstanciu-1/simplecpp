@@ -596,10 +596,11 @@ final class CPP_Runtime_Operations
 		if (($facts->signature->reference_return !== null) || ($facts->variadic_parameter !== null)) {
 			throw new \RuntimeException('prelower_templates: reference-result/variadic call transport is not yet implemented');
 		}
-		if ($facts->signature->parameters->is_empty()) {
+		$parameters /** Storage<callable_parameter> */ = $facts->signature->parameters;
+		if ($parameters->is_empty()) {
 			return self::value_call($facts, $arguments, $context, $callsite);
 		}
-		foreach ($facts->signature->parameters as $parameter) {
+		foreach ($parameters as $parameter) {
 			if ($parameter->mode !== passing_mode::observation) {
 				return self::value_call($facts, $arguments, $context, $callsite);
 			}
@@ -608,7 +609,6 @@ final class CPP_Runtime_Operations
 		$target = object_cast(weakref_get($facts->target), runtime_function_definition::class);
 		$request->binding = Model::$cpp_callable_bindings->function_binding($target);
 		if (Type_Queries::canonical($facts->type)->family() !== type_family::no_value) { $request->result = $facts->type; }
-		$parameters /** Storage<callable_parameter> */ = $facts->signature->parameters;
 		$prepared_arguments /** Storage<prepared_call_argument> */ = $facts->arguments;
 		if (q_count($prepared_arguments) > 1) { throw new \RuntimeException('prelower_templates: multiple observation inputs need a sequencing contract'); }
 		if (q_count($parameters) !== q_count($prepared_arguments)) { throw new \RuntimeException('prelower_templates: default call inputs are not yet implemented'); }

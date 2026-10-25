@@ -1,0 +1,5 @@
+PHP Fatal error:  Uncaught LogicException: Expected rejection: does not support in /tmp/source-receivers-baseline-01/test.php:19
+Stack trace:
+#0 /tmp/source-receivers-baseline-01/test.php(88): scpp\compiler\initialization_rejects()
+#1 {main}
+  thrown in /tmp/source-receivers-baseline-01/test.php on line 19

@@ -1,0 +1,20 @@
+{
+    "elapsed_seconds": 89.640143682,
+    "peak_php_bytes": 623378432,
+    "last_stage": "prepare",
+    "events": [
+        {
+            "stage": "initialize",
+            "seconds": 0.304846544
+        },
+        {
+            "stage": "sync",
+            "seconds": 3.910052733
+        }
+    ],
+    "failure": {
+        "class": "RuntimeException",
+        "message": "Required object boundary rejects null; declare a nullable object type\nObject narrowing requires a polymorphic source\nS2S data construction requires a known concrete target\nS2S indexed storage requires local, parameter or field storage\nS2S enum comparison requires the same enum type\nS2S runtime call requires one exact signature or a unique checked-payload signature; use explicit argument types\nOwnership selection requires two same-family handles\n"
+    },
+    "fatal": null
+}

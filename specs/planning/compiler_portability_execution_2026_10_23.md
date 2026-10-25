@@ -1874,3 +1874,12 @@ specialization_dispatch failure reproduces unchanged on baseline.
 Bootstrap 1:32.91 / 627072 KiB RSS / 592.5 MiB heap; categories 15 -> 11. JSON required
 reference initialization cannot be repaired by null/omitted/nullable local spellings;
 left unchanged while independent source work continues.
+
+## Shared receivers and typed key facts — 2026-10-25
+
+Named shared Storage/returned-record locals, explicit weak target publication,
+typed string-key facts and unconditional outlives loop. Both cross-route proof sets
+pass; four host suites pass, initialization-suite failure reproduces on baseline.
+[Evidence](results/compiler_bootstrap_backlog_2026_10_23/source_receivers/README.md).
+Completed owner-instrumented bootstrap: 1:30.05 / 628908 KiB RSS / 594.5 MiB heap;
+categories 11 -> 7. Current owner evidence guides remaining source work.

@@ -22,6 +22,8 @@ assert (APP / 'compiler/callables/catalog.php').read_text().count(registration) 
 owner = snippet('05_backend/cpp/generate.php', '$contract_owner /** preparation_owner */', '\n\t\t\t\t\t}')
 key = snippet('05_backend/cpp/initializer_buffer.php', 'if ($key_type !== null)', '\n\t\t$entry = CPP_Runtime_Operations::reference')
 member = snippet('compiler/callables/instances.php', '$member /** declaration_node */', '\n\t\t$run = new Parser_Run')
+receiver = snippet('05_backend/cpp/self.php', '$inputs /** Storage<canonical_type_use> */ = $request->inputs;', '\n\t\t$entry = CPP_Runtime_Operations::reference')
+assert '$facts->target = weak($definition);' in (APP / '04_analyze/prepare/semantics/async.php').read_text()
 source = r"""<?php
 namespace scpp\compiler;
 class runtime_function_definition { public int $value = 0; }
@@ -37,7 +39,24 @@ class Origin {
  public function __construct(private callable_declaration_node $syntax) {}
  public function callable_syntax(): callable_declaration_node { return $this->syntax; }
 }
+interface callable_definition_i { public function name(): string; }
+class compiler_function_definition implements callable_definition_i {
+ public string $label = 'before';
+ public function name(): string { return $this->label; }
+}
+class prepared_call { public callable_definition_i $target /** weak<callable_definition_i> */; }
+class Request {
+ public Storage $inputs /** Storage<canonical_type_use> */;
+ public function __construct() { $this->inputs = new Storage /** Storage<canonical_type_use> */(); }
+}
+class Reference { public function __construct(public canonical_type_use $type) {} }
 class Proof {
+ public static function retain_input(Request $request, Reference $reference): void {
+""" + receiver + r"""
+ }
+ public static function attach(prepared_call $facts, compiler_function_definition $definition): void {
+  $facts->target = weak($definition);
+ }
 public static function put_function(Keyed_Storage $functions /** Keyed_Storage<runtime_function_definition> */, string $key, registered_function $target): void {
 """ + registration + r"""
 }
@@ -79,10 +98,20 @@ $members /** Storage<declaration_node> */ = new Storage();
 $syntax = new callable_declaration_node();
 Proof::put_member($members, new Origin($syntax));
 $syntax_view = $members[0]; $syntax_view->value = 10;
-echo $syntax->value === 10 ? 'member' : 'bad';
+echo $syntax->value === 10 ? 'member:' : 'bad:';
+$request = new Request();
+Proof::retain_input($request, new Reference($value_type));
+$stored_inputs /** Storage<canonical_type_use> */ = $request->inputs;
+$stored_input = $stored_inputs[0]; $stored_input->value = 21;
+echo $value_type->value === 21 ? 'receiver:' : 'bad:';
+$definition = new compiler_function_definition(); $facts = new prepared_call();
+Proof::attach($facts, $definition);
+$definition->label = 'weak';
+$observed /** callable_definition_i */ = weakref_get($facts->target);
+echo $observed->name();
 """
 (out / 'source/main.php').write_text(source)
-expected = b'functions:owner:inputs:member'
+expected = b'functions:owner:inputs:member:receiver:weak'
 with CommandRunner(out / 'logs', ROOT) as runner:
     publisher = out / 'publish.php'
     publisher.write_text((APP / 'tests/async_tasks_publish.php').read_text()

@@ -23,7 +23,8 @@ final class CPP_Self
 		}
 		$request = new cpp_runtime_operation(cpp_runtime_operation_kind::self_acquire);
 		$request->result = $reference->type;
-		$request->inputs->append($reference->type);
+		$inputs /** Storage<canonical_type_use> */ = $request->inputs;
+		$inputs->append($reference->type);
 		$entry = CPP_Runtime_Operations::reference($request, $context);
 		return 'scpp::internal::' . $entry->name . '(this)';
 	}

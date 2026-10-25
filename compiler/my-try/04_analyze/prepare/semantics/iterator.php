@@ -15,8 +15,9 @@ final class Iterator_Preparation
 		$method = object_cast($matches[0]->member, collected_method::class);
 		$signature = Call_Preparation::require_signature($method, $context);
 		$facts = $method->callable_syntax()->require_preparation();
+		$parameters /** Storage<callable_parameter> */ = $signature->parameters;
 		if ($facts->static_member || ($facts->visibility !== member_visibility::public_access)
-			|| !$signature->parameters->is_empty() || ($signature->reference_return !== null)) {
+			|| !$parameters->is_empty() || ($signature->reference_return !== null)) {
 			throw new \RuntimeException('Iterator methods require public zero-argument instance value signatures: ' . $name);
 		}
 		return $method;

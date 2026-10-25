@@ -10,7 +10,7 @@ final class Storage_Lifetimes
 	{
 		$current = $destination->region;
 		$order = $destination->order;
-		while (true) {
+		for (;;) {
 			if ($current === $source->region) { return $source->order <= $order; }
 			if ($current->parent === null) { return false; }
 			$order = $current->entered_at;

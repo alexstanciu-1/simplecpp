@@ -51,7 +51,7 @@ final class Async_Preparation
 			$signature->return_type = $specialization->awaited->type;
 			// Await consumes its task directly; it has no ordinary copy/conversion boundary.
 			$facts = new prepared_call();
-			$facts->target = $definition;
+			$facts->target = weak($definition);
 			$facts->signature = $signature;
 			$facts->type = $signature->return_type;
 			$facts->value_origin = expression_value_origin::owned_call_result;

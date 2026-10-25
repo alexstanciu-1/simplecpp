@@ -133,7 +133,9 @@ final class Record_Construction_Preparation
 			if (!($entry->key instanceof string_literal_node)) {
 				throw new \RuntimeException('S2S record construction requires literal string keys');
 			}
-			$key = object_cast(Expression_Preparation::prepare($entry->key, $context), prepared_string_literal::class)->value;
+			$key_node = object_cast($entry->key, string_literal_node::class);
+			Expression_Preparation::prepare($key_node, $context);
+			$key = $key_node->require_string_literal_preparation()->value;
 			if (!isset($positions[$key])) {
 				throw new \RuntimeException('S2S unknown record construction input: ' . $key);
 			}

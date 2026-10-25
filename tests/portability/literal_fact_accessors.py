@@ -70,9 +70,15 @@ ${kind}_syntax = new {kind}_literal_node(${kind}_facts);
 ${kind}_value = Constant_Proof::evaluate(${kind}_syntax, $context);
 echo ${kind}_value->text(), ':', ${kind}_value->type === ${kind}_facts->type ? 'same' : 'bad', ':';
 """
+construction = (APP / '04_analyze/prepare/semantics/data_construction.php').read_text()
+start = construction.index('$key_node = object_cast($entry->key, string_literal_node::class);')
+key_branch = construction[start:construction.index('\n\t\t\tif (!isset($positions', start)]
+source += "class Key_Entry { public function __construct(public expression_node $key) {} }\n"
+source += "class Key_Proof { public static function read(Key_Entry $entry, preparation_context $context): string {\n" + key_branch + "\nreturn $key;\n}}\n"
+source += "echo Key_Proof::read(new Key_Entry($string_syntax), $context), ':';\n"
 source += 'echo Expression_Preparation::$calls;\n'
 (out / 'source/main.php').write_text(source)
-expected = b'42:same:1.5:same:true:same:hello:same:4'
+expected = b'42:same:1.5:same:true:same:hello:same:hello:5'
 with CommandRunner(out / 'logs', ROOT) as runner:
     publisher = out / 'publish.php'
     publisher.write_text((APP / 'tests/async_tasks_publish.php').read_text()

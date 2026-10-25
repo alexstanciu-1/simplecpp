@@ -114,7 +114,8 @@ final class Runtime_Catalog_Registration
 					$signature->parameters = $parameters;
 					$result->register_function($function->identity, $function->name, $signature);
 				}
-				$result->function_definition($function->identity)->snapshot_borrow_safe = $function->snapshot_borrow_safe;
+				$registered = $result->function_definition($function->identity);
+				$registered->snapshot_borrow_safe = $function->snapshot_borrow_safe;
 				foreach ($function->qualified_aliases as $qualifier) {
 					if ($member_owner !== null) { throw new \RuntimeException('Runtime members cannot expose qualified aliases'); }
 					self::validate_qualifier($qualifier);
@@ -258,13 +259,13 @@ final class Runtime_Catalog_Registration
 			return $registry->use($registry->canonical($callable_definition)->type_id());
 		}
 		if ($spec->parameter !== '') { throw new \RuntimeException('Type parameter requires a generic runtime contract'); }
+		$items /** Storage<runtime_type_spec> */ = $spec->arguments;
 		if ($spec->name === 'null') {
-			if (!$spec->arguments->is_empty()) { throw new \RuntimeException('Null runtime type does not accept arguments'); }
+			if (!$items->is_empty()) { throw new \RuntimeException('Null runtime type does not accept arguments'); }
 			return $types->null_type();
 		}
 		$definition = $types->definition($spec->name);
 		$registry = $types->registry();
-		$items /** Storage<runtime_type_spec> */ = $spec->arguments;
 		if ($definition instanceof abstract_template_type_definition)
 		{
 			$arguments /** vector<canonical_type_use> */ = [];
