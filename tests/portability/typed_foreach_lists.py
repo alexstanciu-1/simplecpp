@@ -14,6 +14,7 @@ p.add_argument('--results', type=Path, required=True)
 out = p.parse_args().results.resolve()
 (out / 'source').mkdir(parents=True, exist_ok=False)
 lists = {
+ '05_backend/cpp/opaque_representation.php': ['special_operations'],
  '06_native/cpp_build.php': ['search_arguments', 'token_scan_arguments'],
  '06_native/ninja_build.php': ['dependency_arguments'],
  '05_backend/cpp/concrete_iteration.php': ['layout_roles', 'range_methods', 'entry_methods'],
@@ -37,7 +38,7 @@ for path, names in lists.items():
         index += 1
 source += '}\n' + calls
 (out / 'source/main.php').write_text(source)
-expected = ("-E|-v|-x|c++|/dev/null|\n-fsyntax-only|-Xclang|-dump-tokens|\n"
+expected = ("default|copy|move|copy_assign|move_assign|\n-E|-v|-x|c++|/dev/null|\n-fsyntax-only|-Xclang|-dump-tokens|\n"
             "-MD|-MF|target.d|-MQ|target|-o|target|\nentry|sentinel|iterator|range|\n"
             "begin|end|\nkey|value_copy|\nsources|libraries|definitions|compile_options|link_options|diagnostics|\n"
             + "mixed|dynamic|\n" * 4).encode()

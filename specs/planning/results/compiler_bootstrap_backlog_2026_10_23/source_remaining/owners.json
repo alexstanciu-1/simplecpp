@@ -1,0 +1,37 @@
+[
+  {
+    "kind": "scpp\\compiler\\source_callable_body_work",
+    "file": "scpp_framework/json_document.phs",
+    "name": "scpp\\json_read",
+    "token": 498,
+    "message": "Required object boundary rejects null; declare a nullable object type"
+  },
+  {
+    "kind": "scpp\\compiler\\source_callable_body_work",
+    "file": "04_analyze/prepare/semantics/call_snapshots.phs",
+    "name": "scpp\\compiler\\Call_Snapshot_Preparation::prepare",
+    "token": 12,
+    "message": "Object narrowing requires a polymorphic source"
+  },
+  {
+    "kind": "scpp\\compiler\\source_callable_body_work",
+    "file": "05_backend/cpp/data_construction.phs",
+    "name": "scpp\\compiler\\CPP_Data_Construction::generate",
+    "token": 998,
+    "message": "Object narrowing requires a polymorphic source"
+  },
+  {
+    "kind": "scpp\\compiler\\source_callable_body_work",
+    "file": "05_backend/cpp/policy.phs",
+    "name": "scpp\\compiler\\CPP_Default_Constructors::decision",
+    "token": 120,
+    "message": "Object narrowing requires a polymorphic source"
+  },
+  {
+    "kind": "scpp\\compiler\\source_callable_body_work",
+    "file": "05_backend/cpp/runtime_catalog.phs",
+    "name": "scpp\\compiler\\CPP_Runtime_Catalog::install",
+    "token": 971,
+    "message": "S2S indexed storage requires local, parameter or field storage"
+  }
+]

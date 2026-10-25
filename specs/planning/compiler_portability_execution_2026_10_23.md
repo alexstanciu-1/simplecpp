@@ -1883,3 +1883,13 @@ pass; four host suites pass, initialization-suite failure reproduces on baseline
 [Evidence](results/compiler_bootstrap_backlog_2026_10_23/source_receivers/README.md).
 Completed owner-instrumented bootstrap: 1:30.05 / 628908 KiB RSS / 594.5 MiB heap;
 categories 11 -> 7. Current owner evidence guides remaining source work.
+
+## Remaining portable source boundaries — 2026-10-25
+
+Applied remaining list/optional-enum/nullable-return/base-argument PHP adaptations.
+Three cross-route proof sets pass; five host suites pass. Two additional host failures
+reproduce on unchanged parent sources and are documented separately.
+[Evidence](results/compiler_bootstrap_backlog_2026_10_23/source_remaining/README.md).
+Owner-instrumented bootstrap 1:29.97 / 633292 KiB RSS / 600.5 MiB heap; categories
+7 -> 3, five failing owners. Auditing a source-only local map publication for static
+indexing; JSON contract and nonpolymorphic narrowing remain separate discussion items.

@@ -306,7 +306,8 @@ final class CPP_Runtime_Operations
 		if ($request->kind === cpp_runtime_operation_kind::ownership_observation) {
 			$context->headers['scpp/memory.hpp'] = true;
 			$context->headers['scpp/weak_p.hpp'] = true;
-			return $request->ownership_observation === ownership_observation_kind::derive_weak
+			$observation /** ownership_observation_kind */ = $request->ownership_observation;
+			return $observation === ownership_observation_kind::derive_weak
 				? '::scpp::weak(' . $arguments[0] . ')' : '(' . $arguments[0] . ').lock()';
 		}
 		if ($request->kind === cpp_runtime_operation_kind::enum_helper) {

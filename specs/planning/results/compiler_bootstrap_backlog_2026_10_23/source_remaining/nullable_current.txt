@@ -1,0 +1,11 @@
+PHP Fatal error:  Uncaught RuntimeException: Required object boundary rejects null; declare a nullable object type
+ in /home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/04_analyze/prepare/worker.php:989
+Stack trace:
+#0 /home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/04_analyze/prepare/worker.php(119): scpp\compiler\Preparation_Worker->require_success()
+#1 /home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/compiler/preparation.php(14): scpp\compiler\Preparation_Worker->prepare()
+#2 /home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/compiler/compile.php(307): scpp\compiler\Preparation_Run::prepare()
+#3 /home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/compiler/compile.php(175): scpp\compiler\Compiler->prepare()
+#4 /home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/tests/nullable_handles.php(16): scpp\compiler\Compiler->exec_cpp()
+#5 /home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/tests/nullable_handles.php(35): scpp\compiler\nullable_handles_source()
+#6 {main}
+  thrown in /home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/04_analyze/prepare/worker.php on line 989

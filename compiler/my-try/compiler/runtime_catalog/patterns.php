@@ -159,7 +159,8 @@ final class Runtime_Catalog_Patterns
 		for ($index = $count; $index < $template_definition->arity(); $index++) {
 			$default_type = $template_definition->parameter($index)->default_type();
 			if ($default_type === null) { throw new \LogicException('Missing registered template default'); }
-			$arguments->append(new runtime_concrete_pattern($default_type));
+			$default_pattern /** runtime_type_pattern */ = new runtime_concrete_pattern($default_type);
+			$arguments->append($default_pattern);
 			$closed[] = $default_type;
 		}
 		if (q_count($closed) === q_count($arguments)) {

@@ -1,0 +1,9 @@
+PHP Fatal error:  Uncaught RuntimeException: bad.json: byte 223 at $["functions"][0]["parameters"][0]: Runtime reference parameter defaults remain deferred in /home/alexv/__AI/simple_cpp/simple_cpp_01/tools/php_portability/runtime/json_reader.php:20
+Stack trace:
+#0 /home/alexv/__AI/simple_cpp/simple_cpp_01/tools/php_portability/runtime/json_reader.php(117): scpp\Json_Reader->fail()
+#1 /home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/compiler/runtime_catalog/reader.php(552): scpp\Json_Reader->reject()
+#2 /home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/compiler/runtime_catalog/reader.php(647): scpp\compiler\Runtime_Catalog_Reader::parameter()
+#3 /home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/compiler/runtime_catalog/reader.php(45): scpp\compiler\Runtime_Catalog_Reader::function_spec()
+#4 /tmp/source-patterns-baseline-01/test.php(56): scpp\compiler\Runtime_Catalog_Reader::decode()
+#5 {main}
+  thrown in /home/alexv/__AI/simple_cpp/simple_cpp_01/tools/php_portability/runtime/json_reader.php on line 20

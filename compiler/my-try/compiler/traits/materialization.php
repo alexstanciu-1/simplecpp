@@ -25,9 +25,18 @@ final class Trait_Materialization
 		$origins /** Storage<declaration_node> */ = new Storage();
 		$properties /** Storage<property_node> */ = $syntax->properties;
 		$methods /** Storage<method_node> */ = $syntax->methods;
-		foreach ($properties as $property) { $origins->append($property); }
-		foreach ($methods as $method) { $origins->append($method); }
-		foreach ($constants as $constant) { $origins->append($constant); }
+		foreach ($properties as $property) {
+			$property_origin /** declaration_node */ = $property;
+			$origins->append($property_origin);
+		}
+		foreach ($methods as $method) {
+			$method_origin /** declaration_node */ = $method;
+			$origins->append($method_origin);
+		}
+		foreach ($constants as $constant) {
+			$constant_origin /** declaration_node */ = $constant;
+			$origins->append($constant_origin);
+		}
 		$lexical = new scope();
 		$lexical->set_parent(weakref_get($origin->scope));
 		$tokens = Source_Fragments::snapshot($origin->token_snapshot());

@@ -163,7 +163,8 @@ final class CPP_Opaque_Representation
 		}
 		$implementation .= $name . '::' . $name . '(operation_result, void (*construct)(void*, const void*), const void* input) { construct(address(), input); }' . "\n";
 		// Native traits govern the physical special members; semantic copy permission is independent.
-		foreach (['default', 'copy', 'move', 'copy_assign', 'move_assign'] as $operation) {
+		$special_operations /** vector<string> */ = ['default', 'copy', 'move', 'copy_assign', 'move_assign'];
+		foreach ($special_operations as $operation) {
 			$trait = '';
 			$signature = '';
 			$body = '';

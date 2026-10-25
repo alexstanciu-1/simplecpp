@@ -24,6 +24,7 @@ key = snippet('05_backend/cpp/initializer_buffer.php', 'if ($key_type !== null)'
 member = snippet('compiler/callables/instances.php', '$member /** declaration_node */', '\n\t\t$run = new Parser_Run')
 receiver = snippet('05_backend/cpp/self.php', '$inputs /** Storage<canonical_type_use> */ = $request->inputs;', '\n\t\t$entry = CPP_Runtime_Operations::reference')
 assert '$facts->target = weak($definition);' in (APP / '04_analyze/prepare/semantics/async.php').read_text()
+trait_members = snippet('compiler/traits/materialization.php', 'foreach ($properties as $property)', '\n\t\t$lexical = new scope();')
 source = r"""<?php
 namespace scpp\compiler;
 class runtime_function_definition { public int $value = 0; }
@@ -35,6 +36,9 @@ class collected_interface { public function __construct(public type_contract_wor
 class canonical_type_use { public int $value = 0; }
 class declaration_node { public int $value = 0; }
 class callable_declaration_node extends declaration_node {}
+class property_node extends declaration_node {}
+class method_node extends declaration_node {}
+class member_constant_node extends declaration_node {}
 class Origin {
  public function __construct(private callable_declaration_node $syntax) {}
  public function callable_syntax(): callable_declaration_node { return $this->syntax; }
@@ -51,6 +55,9 @@ class Request {
 }
 class Reference { public function __construct(public canonical_type_use $type) {} }
 class Proof {
+ public static function trait_members(Storage $origins /** Storage<declaration_node> */, Storage $properties /** Storage<property_node> */, Storage $methods /** Storage<method_node> */, Storage $constants /** Storage<member_constant_node> */): void {
+""" + trait_members + r"""
+ }
  public static function retain_input(Request $request, Reference $reference): void {
 """ + receiver + r"""
  }
@@ -108,10 +115,23 @@ $definition = new compiler_function_definition(); $facts = new prepared_call();
 Proof::attach($facts, $definition);
 $definition->label = 'weak';
 $observed /** callable_definition_i */ = weakref_get($facts->target);
-echo $observed->name();
+echo $observed->name(), ':';
+$origins /** Storage<declaration_node> */ = new Storage();
+$properties /** Storage<property_node> */ = new Storage();
+$methods /** Storage<method_node> */ = new Storage();
+$constants /** Storage<member_constant_node> */ = new Storage();
+$property = new property_node(); $property->value = 1;
+$method = new method_node(); $method->value = 2;
+$constant = new member_constant_node(); $constant->value = 3;
+$properties->append($property); $methods->append($method); $constants->append($constant);
+Proof::trait_members($origins, $properties, $methods, $constants);
+$member_order = 0;
+foreach ($origins as $origin) { $member_order = $member_order * 10 + $origin->value; }
+$constant_view = $origins[2]; $constant_view->value = 4;
+echo $member_order === 123 && $constant->value === 4 ? 'traits' : 'bad';
 """
 (out / 'source/main.php').write_text(source)
-expected = b'functions:owner:inputs:member:receiver:weak'
+expected = b'functions:owner:inputs:member:receiver:weak:traits'
 with CommandRunner(out / 'logs', ROOT) as runner:
     publisher = out / 'publish.php'
     publisher.write_text((APP / 'tests/async_tasks_publish.php').read_text()

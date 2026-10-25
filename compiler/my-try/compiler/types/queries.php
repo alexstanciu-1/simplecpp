@@ -48,8 +48,9 @@ final class Type_Queries
 	{
 		if ($type->by_value()) { return false; }
 		$definition = self::canonical($type)->definition();
-		if (Model::$type_catalog->registry()->runtime_storage($definition) === record_storage_kind::shared) {
-			return true;
+		$storage = record_storage_kind::inline_value;
+		if (take_nullable($storage, Model::$type_catalog->registry()->runtime_storage($definition))) {
+			if ($storage === record_storage_kind::shared) { return true; }
 		}
 		if (self::is_source_class($type)) { return true; }
 		return self::source_declaration($type) instanceof collected_interface;
@@ -64,7 +65,8 @@ final class Type_Queries
 		if (!($definition instanceof nullable_semantics)) { return null; }
 		$payload = object_cast($definition, nullable_semantics::class)->payload_type(
 			object_cast($canonical, applied_template_type::class));
-		return self::is_nominal_handle($payload) ? $payload : null;
+		if (self::is_nominal_handle($payload)) { return $payload; }
+		return null;
 	}
 
 	/** Member selection interprets optional handle storage without weakening type identity. */
