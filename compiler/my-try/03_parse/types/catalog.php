@@ -48,7 +48,7 @@ final class source_type_exposure
 final class source_type_modifier_exposure
 {
 	private string $source_name;
-	private type_use_modifier_kind $modifier_kind;
+	private type_use_modifier_kind $modifier_kind = type_use_modifier_kind::by_value;
 
 	public function __construct(string $name, type_use_modifier_kind $kind)
 	{

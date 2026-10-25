@@ -136,7 +136,7 @@ abstract class semantic_type_definition implements type_definition_i
 {
 	private int $identity /** uint32 */;
 	private string $source_name;
-	private type_definition_origin $definition_origin;
+	private type_definition_origin $definition_origin = type_definition_origin::language;
 	private array $declared_capabilities /** vector<generic_contract> */;
 
 	public function __construct(int $identity, string $source_name, type_definition_origin $origin,
@@ -256,7 +256,7 @@ final class integer_type_definition extends semantic_type_definition implements 
 
 final class floating_type_definition extends semantic_type_definition implements concrete_type_definition_i
 {
-	private floating_format $number_format;
+	private floating_format $number_format = floating_format::binary;
 	private int $stored_bits /** uint32 */;
 	private int $precision /** uint32 */;
 
@@ -303,7 +303,7 @@ final class floating_type_definition extends semantic_type_definition implements
 /** A nominal identity; source members and derived facts retain their existing owners. */
 abstract class abstract_nominal_type_definition extends semantic_type_definition implements concrete_type_definition_i
 {
-	private nominal_type_kind $nominal_kind_data;
+	private nominal_type_kind $nominal_kind_data = nominal_type_kind::structure;
 
 	public function __construct(int $identity, string $source_name, type_definition_origin $origin,
 		nominal_type_kind $nominal_kind, array $capabilities /** vector<generic_contract> */)
@@ -518,7 +518,7 @@ final class template_type_parameter
 /** A template is a definition recipe and never a concrete type by itself. */
 abstract class abstract_template_type_definition extends semantic_type_definition
 {
-	private nominal_type_kind $result_kind_data;
+	private nominal_type_kind $result_kind_data = nominal_type_kind::structure;
 	private array $ordered_parameters /** vector<template_type_parameter> */;
 	private int $minimum_arity /** uint32 */;
 
@@ -656,7 +656,7 @@ interface result_semantics
 /** All result families share a recipe shape; workers own their distinct operation policies. */
 final class result_type_definition extends abstract_template_type_definition implements result_semantics
 {
-	private result_kind $family_kind;
+	private result_kind $family_kind = result_kind::structured_error;
 
 	public function __construct(int $identity, string $source_name, type_definition_origin $origin,
 		nominal_type_kind $result_type_kind, array $parameters /** vector<template_type_parameter> */,
@@ -701,7 +701,7 @@ interface ownership_semantics
 /** Fixed family capabilities cannot accidentally make unique handles copyable. */
 final class ownership_type_definition extends abstract_template_type_definition implements ownership_semantics
 {
-	private ownership_kind $family_kind;
+	private ownership_kind $family_kind = ownership_kind::shared;
 
 	/** Copying a handle does not require copying its target; operation workers own access/transfer. */
 	public function __construct(int $identity, string $source_name, type_definition_origin $origin,

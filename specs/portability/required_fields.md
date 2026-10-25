@@ -10,6 +10,12 @@ exception does not change PHP validation. Assign before any use on both routes.
 Existing promoted inputs and explicit checked nullable storage remain valid and
 provide stronger local guarantees.
 
+Enum fields use an explicit existing case when a default is acceptable, for example
+`public Mode $mode = Mode::first;`. Constructor/builder assignments still establish
+the intended final value. Do not add a sentinel case or assume that the converter
+or language implicitly chooses the first case. The temporary shared-object storage
+exception does not apply to enum fields.
+
 Ordinary class instance/static fields can omit an initializer while retaining an
 explicit scalar or literal named type. Annotated vector/hash fields can also omit
 an initializer. Visibility is preserved; no type resolution is added.

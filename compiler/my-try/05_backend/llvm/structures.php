@@ -132,7 +132,7 @@ final class llvm_local
 
 /** Signature passing contract plus the declaration-owned storage it supplies. */
 final class llvm_parameter {
-	public passing_mode $mode;
+	public passing_mode $mode = passing_mode::value;
 	/** @reference.source llvm_prepared_function.locals */
 	public llvm_local $local;
 	/** Preparation-owned value; emission copies it into llvm_function.parameters.

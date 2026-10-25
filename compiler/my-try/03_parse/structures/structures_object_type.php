@@ -14,7 +14,7 @@ final class object_type_node extends expression_node
 	use Node_Source_Span;
 	use Preparation_Facts;
 
-	public object_type_operation $operation;
+	public object_type_operation $operation = object_type_operation::checked_cast;
 	public expression_node $operand;
 	public type_node $target_type;
 	private ?prepared_object_type $prepared_facts = null;

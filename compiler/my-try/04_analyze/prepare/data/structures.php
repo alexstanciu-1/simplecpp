@@ -78,13 +78,13 @@ final class prepared_move extends prepared_expression
 /** Handle-valued observation result, never a place or an implicit pointee conversion. */
 final class prepared_ownership_observation extends prepared_expression
 {
-	public ownership_observation_kind $operation;
+	public ownership_observation_kind $operation = ownership_observation_kind::derive_weak;
 }
 
 /** Settled object access contract; backend never rediscovers ancestry or RTTI support. */
 final class prepared_object_type extends prepared_expression
 {
-	public object_type_operation $operation;
+	public object_type_operation $operation = object_type_operation::checked_cast;
 	public canonical_type_use $target_payload;
 }
 
@@ -187,7 +187,7 @@ final class prepared_index_expression extends prepared_expression
 final class prepared_object_construction extends prepared_expression
 {
 	public canonical_type_use $constructed_type;
-	public record_storage_kind $storage;
+	public record_storage_kind $storage = record_storage_kind::inline_value;
 	public ?prepared_call $constructor_call = null;
 	/** Provider factories share runtime call admission and physical transport. */
 	public ?prepared_call $runtime_factory = null;
@@ -244,7 +244,7 @@ final class prepared_record_construction extends prepared_data_construction
 {
 	public record_initialization_contract $contract;
 	public canonical_type_use $payload_type;
-	public record_storage_kind $storage;
+	public record_storage_kind $storage = record_storage_kind::inline_value;
 }
 
 /** Conversions belong to the consuming entry, not synthetic cast syntax. */
@@ -260,7 +260,7 @@ enum take_operation { case nullable_value; case false_result; case error_result;
 
 final class prepared_take extends prepared_expression
 {
-	public take_operation $operation;
+	public take_operation $operation = take_operation::nullable_value;
 }
 
 /** Constant expression values used by defaults; not every constant is a literal. */
@@ -332,7 +332,7 @@ final class prepared_constant_reference extends prepared_expression {
 final class prepared_value_probe extends prepared_expression
 {
 	public ?prepared_call $runtime_call = null;
-	public value_probe_kind $operation;
+	public value_probe_kind $operation = value_probe_kind::isset;
 	public ?prepared_keyed_path $path = null;
 	/** Present when this type's isset contract is exactly its condition/presence operation. */
 	public ?truthiness_decision $presence = null;
@@ -400,9 +400,9 @@ enum coalesce_presence
 /** Owned selected-value domain; wrapper extraction occurs only after presence. */
 final class prepared_coalesce_expression extends prepared_expression
 {
-	public coalesce_presence $presence;
-	public value_boundary_operation $left_boundary;
-	public value_boundary_operation $fallback_boundary;
+	public coalesce_presence $presence = coalesce_presence::always;
+	public value_boundary_operation $left_boundary = value_boundary_operation::copy_value;
+	public value_boundary_operation $fallback_boundary = value_boundary_operation::copy_value;
 	/** Source to selected-value domain; identity for direct scalar/mixed inputs. */
 	public conversion_decision $left_extraction;
 	/** Selected-value domain to the joined result; independent of extraction. */
@@ -414,8 +414,8 @@ final class prepared_coalesce_expression extends prepared_expression
 final class prepared_conditional_expression extends prepared_expression
 {
 	public truthiness_decision $truthiness;
-	public value_boundary_operation $true_boundary;
-	public value_boundary_operation $fallback_boundary;
+	public value_boundary_operation $true_boundary = value_boundary_operation::copy_value;
+	public value_boundary_operation $fallback_boundary = value_boundary_operation::copy_value;
 	public conversion_decision $true_conversion;
 	public conversion_decision $fallback_conversion;
 }
@@ -442,7 +442,7 @@ final class prepared_compound_assignment_expression extends prepared_expression 
 	public ?prepared_index_target $indexed_target = null;
 	public operator_decision $decision;
 	public conversion_decision $write_back;
-	public compound_write_back $write_back_mode;
+	public compound_write_back $write_back_mode = compound_write_back::converted_assignment;
 }
 
 /** Mutation returns a value snapshot; target syntax retains its resolved storage identity. */
@@ -496,7 +496,7 @@ final class prepared_binding extends prepared_source_storage {
 	/** Alias declarations retain the original place, never a second owning root. */
 	public ?prepared_place $alias_target = null;
 	public canonical_type_use $type;
-	public binding_kind $resolved_kind;
+	public binding_kind $resolved_kind = binding_kind::unresolved;
 	/** Absent for alias bindings, uninitialized storage and inferred value declarations. */
 	public ?conversion_decision $conversion = null;
 	public function storage_type(): canonical_type_use { return $this->type; }
@@ -661,7 +661,7 @@ final class prepared_field_access extends prepared_expression {
 	/** @reference.source property_node.prepared_facts */
 	public prepared_property_storage $field;
 	public canonical_type_use $record_type;
-	public record_storage_kind $receiver_storage;
+	public record_storage_kind $receiver_storage = record_storage_kind::inline_value;
 }
 
 final class prepared_static_property extends prepared_expression
@@ -728,7 +728,7 @@ final class prepared_call_argument
 	public bool $borrow_snapshot = false;
 	/** Runtime argument's position in the original syntax; compile-time inputs are omitted. */
 	public int $source_index;
-	public value_boundary_operation $boundary;
+	public value_boundary_operation $boundary = value_boundary_operation::copy_value;
 	public ?conversion_decision $conversion = null;
 
 	public function require_conversion(): conversion_decision
@@ -892,7 +892,7 @@ final class prepared_switch_label
 /** Semantic transfer identity; the enclosing syntax tree owns its target. */
 final class prepared_control_transfer
 {
-	public control_transfer_kind $transfer_kind;
+	public control_transfer_kind $transfer_kind = control_transfer_kind::break_construct;
 	/** @reference.weak @reference.source enclosing syntax */
 	public breakable_node $target /** weak<breakable_node> */;
 }
@@ -971,7 +971,7 @@ final class preparation_lookup
 {
 	public scope $lookup_scope;
 	public string $name;
-	public preparation_lookup_kind $kind;
+	public preparation_lookup_kind $kind = preparation_lookup_kind::property_name;
 	public array $candidates /** vector<preparation_lookup_candidate_i> */ = [];
 	public \SplObjectStorage $dependents /** hash<bool, preparation_owner> */;
 

@@ -9,7 +9,7 @@ final class value_probe_node extends expression_node
 {
 	use Node_Source_Span;
 	use Preparation_Facts;
-	public value_probe_kind $probe_kind;
+	public value_probe_kind $probe_kind = value_probe_kind::isset;
 	public expression_node $operand;
 	private ?prepared_value_probe $prepared_facts = null;
 	public function kind(): node_kind { return node_kind::value_probe; }

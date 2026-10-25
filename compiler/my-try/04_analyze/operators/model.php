@@ -165,8 +165,8 @@ final class operator_decision {
 	public array $operand_extractions /** vector<conversion_decision> */ = [];
 	public ?truthiness_decision $truthiness = null;
 	public array $operand_truthiness /** vector<truthiness_decision> */ = [];
-	public operator_kind $source_operator;
-	public operator_operation $operation;
+	public operator_kind $source_operator = operator_kind::index;
+	public operator_operation $operation = operator_operation::wrapper_equal;
 	public array $operands /** vector<conversion_decision> */ = [];
 	public canonical_type_use $result_type;
 }

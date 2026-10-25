@@ -1381,7 +1381,7 @@ final class type_use_modifier_node extends type_node
 
 	private ?canonical_type_use $prepared_facts = null;
 	public string $name;
-	public type_use_modifier_kind $modifier;
+	public type_use_modifier_kind $modifier = type_use_modifier_kind::by_value;
 	public type_node $operand;
 
 	public function kind(): node_kind

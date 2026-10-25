@@ -61,8 +61,8 @@ final class conversion_decision
 	public canonical_type_use $source_type;
 	public canonical_type_use $target_type;
 	public canonical_type_use $result_type;
-	public conversion_context $context;
-	public conversion_operation $operation;
+	public conversion_context $context = conversion_context::assignment;
+	public conversion_operation $operation = conversion_operation::callable_wrap;
 	/** Optional presence composition retains an independently validated payload conversion. */
 	public ?conversion_decision $payload_conversion = null;
 
@@ -91,5 +91,5 @@ enum truthiness_operation
 final class truthiness_decision
 {
 	public canonical_type_use $source_type;
-	public truthiness_operation $operation;
+	public truthiness_operation $operation = truthiness_operation::boolean_identity;
 }

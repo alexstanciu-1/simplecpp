@@ -14,7 +14,7 @@ final class ownership_observation_node extends expression_node
 	use Node_Source_Span;
 	use Preparation_Facts;
 
-	public ownership_observation_kind $operation;
+	public ownership_observation_kind $operation = ownership_observation_kind::derive_weak;
 	public expression_node $operand;
 	private ?prepared_ownership_observation $prepared_facts = null;
 

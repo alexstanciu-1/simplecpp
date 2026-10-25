@@ -70,7 +70,7 @@ final class cpp_type {
 	public string $spelling;
 	public array $headers /** hash<bool> */ = [];
 	public array $forward_declarations /** hash<bool> */ = [];
-	public cpp_literal_kind $literal;
+	public cpp_literal_kind $literal = cpp_literal_kind::signed_integer;
 }
 
 /** Transient result of flattening one assignment step into surrounding statements. */
@@ -93,7 +93,7 @@ final class cpp_artifact {
 	/** Assembly-only generated header dependencies; copied from emission facts, never parsed from text. */
 	public array $header_dependencies /** hash<bool> */ = [];
 	public string $identity;
-	private cpp_artifact_kind $artifact_kind;
+	private cpp_artifact_kind $artifact_kind = cpp_artifact_kind::translation_unit;
 	public string $file_name;
 	public string $text;
 	/** Explicit preamble dependencies; unknown adapters retain the scanning fallback. */

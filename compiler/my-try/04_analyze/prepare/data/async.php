@@ -6,7 +6,7 @@ enum await_operation { case suspend; case synchronous_wait; }
 final class prepared_await extends prepared_expression
 {
 	public canonical_type_use $task_type;
-	public await_operation $operation;
+	public await_operation $operation = await_operation::suspend;
 }
 
 final class prepared_async_call extends prepared_compiler_call

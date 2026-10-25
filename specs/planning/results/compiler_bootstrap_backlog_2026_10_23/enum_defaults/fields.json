@@ -1,0 +1,330 @@
+[
+  {
+    "file": "compiler/my-try/03_parse/structures/structures_specialization.php",
+    "line": 1384,
+    "type": "type_use_modifier_kind",
+    "field": "modifier",
+    "first_case": "by_value",
+    "class": "type_use_modifier_node"
+  },
+  {
+    "file": "compiler/my-try/03_parse/structures/structures_object_type.php",
+    "line": 17,
+    "type": "object_type_operation",
+    "field": "operation",
+    "first_case": "checked_cast",
+    "class": "object_type_node"
+  },
+  {
+    "file": "compiler/my-try/03_parse/structures/structures_probes.php",
+    "line": 12,
+    "type": "value_probe_kind",
+    "field": "probe_kind",
+    "first_case": "isset",
+    "class": "value_probe_node"
+  },
+  {
+    "file": "compiler/my-try/03_parse/structures/structures_ownership_observation.php",
+    "line": 17,
+    "type": "ownership_observation_kind",
+    "field": "operation",
+    "first_case": "derive_weak",
+    "class": "ownership_observation_node"
+  },
+  {
+    "file": "compiler/my-try/03_parse/types/catalog.php",
+    "line": 51,
+    "type": "type_use_modifier_kind",
+    "field": "modifier_kind",
+    "first_case": "by_value",
+    "class": "source_type_modifier_exposure"
+  },
+  {
+    "file": "compiler/my-try/03_parse/types/model.php",
+    "line": 139,
+    "type": "type_definition_origin",
+    "field": "definition_origin",
+    "first_case": "language",
+    "class": "semantic_type_definition"
+  },
+  {
+    "file": "compiler/my-try/03_parse/types/model.php",
+    "line": 259,
+    "type": "floating_format",
+    "field": "number_format",
+    "first_case": "binary",
+    "class": "floating_type_definition"
+  },
+  {
+    "file": "compiler/my-try/03_parse/types/model.php",
+    "line": 306,
+    "type": "nominal_type_kind",
+    "field": "nominal_kind_data",
+    "first_case": "structure",
+    "class": "abstract_nominal_type_definition"
+  },
+  {
+    "file": "compiler/my-try/03_parse/types/model.php",
+    "line": 521,
+    "type": "nominal_type_kind",
+    "field": "result_kind_data",
+    "first_case": "structure",
+    "class": "abstract_template_type_definition"
+  },
+  {
+    "file": "compiler/my-try/03_parse/types/model.php",
+    "line": 659,
+    "type": "result_kind",
+    "field": "family_kind",
+    "first_case": "structured_error",
+    "class": "result_type_definition"
+  },
+  {
+    "file": "compiler/my-try/03_parse/types/model.php",
+    "line": 704,
+    "type": "ownership_kind",
+    "field": "family_kind",
+    "first_case": "shared",
+    "class": "ownership_type_definition"
+  },
+  {
+    "file": "compiler/my-try/04_analyze/conversions/model.php",
+    "line": 64,
+    "type": "conversion_context",
+    "field": "context",
+    "first_case": "assignment",
+    "class": "conversion_decision"
+  },
+  {
+    "file": "compiler/my-try/04_analyze/conversions/model.php",
+    "line": 65,
+    "type": "conversion_operation",
+    "field": "operation",
+    "first_case": "callable_wrap",
+    "class": "conversion_decision"
+  },
+  {
+    "file": "compiler/my-try/04_analyze/conversions/model.php",
+    "line": 94,
+    "type": "truthiness_operation",
+    "field": "operation",
+    "first_case": "boolean_identity",
+    "class": "truthiness_decision"
+  },
+  {
+    "file": "compiler/my-try/04_analyze/operators/model.php",
+    "line": 168,
+    "type": "operator_kind",
+    "field": "source_operator",
+    "first_case": "index",
+    "class": "operator_decision"
+  },
+  {
+    "file": "compiler/my-try/04_analyze/operators/model.php",
+    "line": 169,
+    "type": "operator_operation",
+    "field": "operation",
+    "first_case": "wrapper_equal",
+    "class": "operator_decision"
+  },
+  {
+    "file": "compiler/my-try/04_analyze/prepare/data/async.php",
+    "line": 9,
+    "type": "await_operation",
+    "field": "operation",
+    "first_case": "suspend",
+    "class": "prepared_await"
+  },
+  {
+    "file": "compiler/my-try/04_analyze/prepare/data/structures.php",
+    "line": 81,
+    "type": "ownership_observation_kind",
+    "field": "operation",
+    "first_case": "derive_weak",
+    "class": "prepared_ownership_observation"
+  },
+  {
+    "file": "compiler/my-try/04_analyze/prepare/data/structures.php",
+    "line": 87,
+    "type": "object_type_operation",
+    "field": "operation",
+    "first_case": "checked_cast",
+    "class": "prepared_object_type"
+  },
+  {
+    "file": "compiler/my-try/04_analyze/prepare/data/structures.php",
+    "line": 190,
+    "type": "record_storage_kind",
+    "field": "storage",
+    "first_case": "inline_value",
+    "class": "prepared_object_construction"
+  },
+  {
+    "file": "compiler/my-try/04_analyze/prepare/data/structures.php",
+    "line": 247,
+    "type": "record_storage_kind",
+    "field": "storage",
+    "first_case": "inline_value",
+    "class": "prepared_record_construction"
+  },
+  {
+    "file": "compiler/my-try/04_analyze/prepare/data/structures.php",
+    "line": 263,
+    "type": "take_operation",
+    "field": "operation",
+    "first_case": "nullable_value",
+    "class": "prepared_take"
+  },
+  {
+    "file": "compiler/my-try/04_analyze/prepare/data/structures.php",
+    "line": 335,
+    "type": "value_probe_kind",
+    "field": "operation",
+    "first_case": "isset",
+    "class": "prepared_value_probe"
+  },
+  {
+    "file": "compiler/my-try/04_analyze/prepare/data/structures.php",
+    "line": 403,
+    "type": "coalesce_presence",
+    "field": "presence",
+    "first_case": "always",
+    "class": "prepared_coalesce_expression"
+  },
+  {
+    "file": "compiler/my-try/04_analyze/prepare/data/structures.php",
+    "line": 404,
+    "type": "value_boundary_operation",
+    "field": "left_boundary",
+    "first_case": "copy_value",
+    "class": "prepared_coalesce_expression"
+  },
+  {
+    "file": "compiler/my-try/04_analyze/prepare/data/structures.php",
+    "line": 405,
+    "type": "value_boundary_operation",
+    "field": "fallback_boundary",
+    "first_case": "copy_value",
+    "class": "prepared_coalesce_expression"
+  },
+  {
+    "file": "compiler/my-try/04_analyze/prepare/data/structures.php",
+    "line": 417,
+    "type": "value_boundary_operation",
+    "field": "true_boundary",
+    "first_case": "copy_value",
+    "class": "prepared_conditional_expression"
+  },
+  {
+    "file": "compiler/my-try/04_analyze/prepare/data/structures.php",
+    "line": 418,
+    "type": "value_boundary_operation",
+    "field": "fallback_boundary",
+    "first_case": "copy_value",
+    "class": "prepared_conditional_expression"
+  },
+  {
+    "file": "compiler/my-try/04_analyze/prepare/data/structures.php",
+    "line": 445,
+    "type": "compound_write_back",
+    "field": "write_back_mode",
+    "first_case": "converted_assignment",
+    "class": "prepared_compound_assignment_expression"
+  },
+  {
+    "file": "compiler/my-try/04_analyze/prepare/data/structures.php",
+    "line": 499,
+    "type": "binding_kind",
+    "field": "resolved_kind",
+    "first_case": "unresolved",
+    "class": "prepared_binding"
+  },
+  {
+    "file": "compiler/my-try/04_analyze/prepare/data/structures.php",
+    "line": 664,
+    "type": "record_storage_kind",
+    "field": "receiver_storage",
+    "first_case": "inline_value",
+    "class": "prepared_field_access"
+  },
+  {
+    "file": "compiler/my-try/04_analyze/prepare/data/structures.php",
+    "line": 731,
+    "type": "value_boundary_operation",
+    "field": "boundary",
+    "first_case": "copy_value",
+    "class": "prepared_call_argument"
+  },
+  {
+    "file": "compiler/my-try/04_analyze/prepare/data/structures.php",
+    "line": 895,
+    "type": "control_transfer_kind",
+    "field": "transfer_kind",
+    "first_case": "break_construct",
+    "class": "prepared_control_transfer"
+  },
+  {
+    "file": "compiler/my-try/04_analyze/prepare/data/structures.php",
+    "line": 974,
+    "type": "preparation_lookup_kind",
+    "field": "kind",
+    "first_case": "property_name",
+    "class": "preparation_lookup"
+  },
+  {
+    "file": "compiler/my-try/05_backend/cpp/type_bindings_catalog.php",
+    "line": 11,
+    "type": "cpp_type_argument_kind",
+    "field": "kind",
+    "first_case": "native_type",
+    "class": "cpp_type_argument_binding"
+  },
+  {
+    "file": "compiler/my-try/05_backend/cpp/type_bindings_catalog.php",
+    "line": 68,
+    "type": "type_use_modifier_kind",
+    "field": "modifier_kind",
+    "first_case": "by_value",
+    "class": "cpp_type_modifier_binding"
+  },
+  {
+    "file": "compiler/my-try/05_backend/cpp/structures.php",
+    "line": 73,
+    "type": "cpp_literal_kind",
+    "field": "literal",
+    "first_case": "signed_integer",
+    "class": "cpp_type"
+  },
+  {
+    "file": "compiler/my-try/05_backend/cpp/structures.php",
+    "line": 96,
+    "type": "cpp_artifact_kind",
+    "field": "artifact_kind",
+    "first_case": "translation_unit",
+    "class": "cpp_artifact"
+  },
+  {
+    "file": "compiler/my-try/compiler/runtime_catalog/structures.php",
+    "line": 35,
+    "type": "nominal_type_kind",
+    "field": "kind",
+    "first_case": "structure",
+    "class": "runtime_type_definition_spec"
+  },
+  {
+    "file": "compiler/my-try/compiler/callables/structures.php",
+    "line": 210,
+    "type": "passing_mode",
+    "field": "mode",
+    "first_case": "value",
+    "class": "callable_parameter"
+  },
+  {
+    "file": "compiler/my-try/05_backend/llvm/structures.php",
+    "line": 135,
+    "class": "llvm_parameter",
+    "type": "passing_mode",
+    "field": "mode",
+    "first_case": "value"
+  }
+]

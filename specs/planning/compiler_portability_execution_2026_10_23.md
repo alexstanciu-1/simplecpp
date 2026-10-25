@@ -1692,3 +1692,14 @@ Bootstrap: 2:22.29 / 511888 KiB RSS / 486.5 MiB heap. Enum initialization is fir
 Native compiler build/run and second-generation proof remain incomplete.
 Next reuse audit has identified 40 active enum fields without explicit defaults;
 parked LLVM and generated build sources excluded. No enum source changes in this slice.
+
+## Explicit enum defaults — 2026-10-25
+
+41 PHP fields explicitly select existing enum cases; constructors/builders retain
+final assignments. Reuses existing constants/conversion/lowering, without sentinel
+cases or language changes. Includes one parked llvm_parameter mode record because
+the old bootstrap converted LLVM too. User subsequently authorized prototype parking.
+Host type/operator/metadata/retained suites and portable enum-default native proofs
+pass. [Evidence](results/compiler_bootstrap_backlog_2026_10_23/enum_defaults/README.md)
+records both measured bootstrap attempts and newly reachable diagnostics.
+Native compiler and second-generation acceptance remain incomplete.

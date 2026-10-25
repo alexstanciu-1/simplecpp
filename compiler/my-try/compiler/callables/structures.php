@@ -207,7 +207,7 @@ final class callable_parameter
 	public bool $requires_copy = false;
 	public task_transfer_policy $transfer_policy = task_transfer_policy::none;
 	public canonical_type_use $type;
-	public passing_mode $mode;
+	public passing_mode $mode = passing_mode::value;
 	public storage_access $access = storage_access::writable;
 	/** For a variadic parameter, type is vector storage and element_type is its input type. */
 	public ?canonical_type_use $element_type = null;

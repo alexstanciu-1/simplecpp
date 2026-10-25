@@ -32,7 +32,7 @@ final class runtime_type_definition_spec
 	public ?runtime_iteration_spec $iteration = null;
 	public string $identity = '';
 	public string $name = '';
-	public nominal_type_kind $kind;
+	public nominal_type_kind $kind = nominal_type_kind::structure;
 	/** Explicit native default and source-new factory opt-ins. */
 	public bool $default_constructible = false;
 	public string $construction = '';

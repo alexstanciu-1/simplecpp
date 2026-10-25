@@ -1,0 +1,42 @@
+[
+  {
+    "name": "runtime_catalog",
+    "seconds": 0.86,
+    "passed": true
+  },
+  {
+    "name": "type_catalog",
+    "seconds": 0.455,
+    "passed": true
+  },
+  {
+    "name": "production-defaults",
+    "seconds": 0.39,
+    "passed": true
+  },
+  {
+    "name": "type_capabilities",
+    "seconds": 0.494,
+    "passed": true
+  },
+  {
+    "name": "incremental_preparation",
+    "seconds": 0.595,
+    "passed": true
+  },
+  {
+    "name": "conversions",
+    "seconds": 0.777,
+    "passed": true
+  },
+  {
+    "name": "runtime_type_bindings",
+    "seconds": 1.86,
+    "passed": true
+  },
+  {
+    "name": "operators",
+    "seconds": 2.222,
+    "passed": true
+  }
+]
