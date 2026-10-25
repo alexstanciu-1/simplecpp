@@ -888,8 +888,13 @@ There is no parallel enum registry or new Model root. `enum_definition_work` use
 the ordinary scheduler. `prepared_enum` retains canonical identity, optional source
 backing, selected integer storage and ordered exact-decimal case snapshots. Capability
 queries require completion and read these facts. `static_member_reference_node`
-owns named owner-type syntax; preparation selects an enum case and retains its
-snapshot. Cases are not namespace constants. C++ owns scoped-enum spelling and
+owns named owner-type or expression-qualifier syntax. Member preparation publishes
+one of three private typed alternatives: enum-case, constant-reference or static-property
+facts. Typed setters replace all prior alternatives only after construction/checks;
+generic expression queries upcast the same retained object. Checked concrete accessors
+never downcast prepared_expression. Existing maintenance cleanup clears every slot.
+There is no duplicate generic slot, discriminator or new polymorphic base contract.
+Enum references retain their selected case snapshot. Cases are not namespace constants. C++ owns scoped-enum spelling and
 type-header artifacts; shared exact-integer validation never stores C++ strings.
 
 Restricted unions retain `union_type` as their declaration kind and reuse inline

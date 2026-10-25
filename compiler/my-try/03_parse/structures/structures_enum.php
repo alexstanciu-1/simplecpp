@@ -61,27 +61,91 @@ final class enum_node extends declaration_node
 final class static_member_reference_node extends assignable_expression_node
 {
 	use Node_Source_Span;
-	use Preparation_Facts;
 
 	public ?type_node $owner_type = null;
 	public ?expression_node $qualifier = null;
 	/** Includes the source $ prefix for a property; constants/cases have no prefix. */
 	public string $member_name;
-	private ?prepared_expression $prepared_facts = null;
+	private ?prepared_enum_case_reference $enum_case_facts = null;
+	private ?prepared_constant_reference $constant_facts = null;
+	private ?prepared_static_property $property_facts = null;
 
 	public function kind(): node_kind
 	{
 		return node_kind::static_member_reference;
 	}
 
+	/** Exactly one typed alternative is retained after successful publication. */
+	public function preparation(): ?prepared_expression
+	{
+		if ($this->enum_case_facts !== null) { return $this->enum_case_facts; }
+		if ($this->constant_facts !== null) { return $this->constant_facts; }
+		return $this->property_facts;
+	}
+
 	public function require_preparation(): prepared_expression
 	{
-		return $this->prepared_facts;
+		$facts = $this->preparation();
+		if ($facts === null) { throw new \LogicException('Static member has no preparation'); }
+		return $facts;
+	}
+
+	public function clear_preparation(): void
+	{
+		$this->enum_case_facts = null;
+		$this->constant_facts = null;
+		$this->property_facts = null;
+	}
+
+	public function set_enum_case_preparation(prepared_enum_case_reference $facts): void
+	{
+		$this->clear_preparation();
+		$this->enum_case_facts = $facts;
+	}
+
+	public function optional_enum_case_preparation(): ?prepared_enum_case_reference
+	{
+		return $this->enum_case_facts;
 	}
 
 	public function enum_case_preparation(): prepared_enum_case_reference
 	{
-		return object_cast($this->prepared_facts, prepared_enum_case_reference::class);
+		if ($this->enum_case_facts === null) { throw new \LogicException('Static member has no enum_case preparation'); }
+		return $this->enum_case_facts;
+	}
+
+	public function set_constant_preparation(prepared_constant_reference $facts): void
+	{
+		$this->clear_preparation();
+		$this->constant_facts = $facts;
+	}
+
+	public function optional_constant_preparation(): ?prepared_constant_reference
+	{
+		return $this->constant_facts;
+	}
+
+	public function constant_preparation(): prepared_constant_reference
+	{
+		if ($this->constant_facts === null) { throw new \LogicException('Static member has no constant preparation'); }
+		return $this->constant_facts;
+	}
+
+	public function set_property_preparation(prepared_static_property $facts): void
+	{
+		$this->clear_preparation();
+		$this->property_facts = $facts;
+	}
+
+	public function optional_property_preparation(): ?prepared_static_property
+	{
+		return $this->property_facts;
+	}
+
+	public function property_preparation(): prepared_static_property
+	{
+		if ($this->property_facts === null) { throw new \LogicException('Static member has no property preparation'); }
+		return $this->property_facts;
 	}
 
 	/** Compile-time type consumers must not discard an expression qualifier's effects. */

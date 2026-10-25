@@ -1757,3 +1757,18 @@ Three host suites pass; broader enum reference-default failure reproduces with t
 baseline implementation. [Evidence](results/compiler_bootstrap_backlog_2026_10_23/literal_accessors/README.md).
 Bootstrap: 3:20.80 / 610412 KiB RSS / 578.5 MiB heap; same 19 diagnostic categories,
 first object narrowing. Mixed static-member proposal remains awaiting approval.
+
+## Approved static-member typed facts — 2026-10-25
+
+Implemented the approved three-alternative representation on static-member syntax,
+concrete preparation publication and checked consumer access. Generic views retain
+identity; existing cleanup clears all slots. No language or prelowering changes.
+Production-method portable proof passes PHP/v0.1/both v0.2 modes; actual-node cleanup
+and relevant host static-member/constant/default/incremental checks pass. Baseline
+static-redeclaration failure and corrected harness invocation are documented in
+[evidence](results/compiler_bootstrap_backlog_2026_10_23/static_member_facts/README.md).
+
+Bootstrap: 3:11.95 / 612668 KiB RSS / 580.5 MiB heap. First diagnostic now canonical-int
+binary operands; same 19 categories, including narrowing elsewhere. This resolves
+the approved static-member design decision; native and second-generation compiler
+acceptance remain outstanding.

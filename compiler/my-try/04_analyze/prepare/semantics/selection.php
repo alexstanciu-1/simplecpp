@@ -23,10 +23,14 @@ final class Selection_Preparation
 		if (!$value->type->matches($selector)) {
 			throw new \RuntimeException('S2S ' . $role . ' requires the selector enum type');
 		}
-		if (!($value instanceof prepared_enum_case_reference)) {
+		if (!($syntax instanceof static_member_reference_node)) {
 			throw new \RuntimeException('S2S ' . $role . ' requires a constant enum case reference');
 		}
-		$reference = object_cast($value, prepared_enum_case_reference::class);
+		$member = object_cast($syntax, static_member_reference_node::class);
+		if ($member->optional_enum_case_preparation() === null) {
+			throw new \RuntimeException('S2S ' . $role . ' requires a constant enum case reference');
+		}
+		$reference = $member->enum_case_preparation();
 		$enumeration = new prepared_enum_selection();
 		$enumeration->type = $selector;
 		$enumeration->selected_case = $reference->selected_case;

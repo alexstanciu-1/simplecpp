@@ -643,10 +643,9 @@ final class CPP_Declarations
 
 	public static function member_reference(static_member_reference_node $syntax, cpp_generation_context $context): string
 	{
-		$facts = $syntax->require_preparation();
 		$value = '';
-		if ($facts instanceof prepared_constant_reference) { $value = CPP_Generator::generate_constant(object_cast($facts, prepared_constant_reference::class), $context); }
-		elseif ($facts instanceof prepared_static_property) { $value = self::static_property(object_cast($facts, prepared_static_property::class), $context); }
+		if ($syntax->optional_constant_preparation() !== null) { $value = CPP_Generator::generate_constant($syntax->constant_preparation(), $context); }
+		elseif ($syntax->optional_property_preparation() !== null) { $value = self::static_property($syntax->property_preparation(), $context); }
 		else { $value = CPP_Enums::reference($syntax->enum_case_preparation(), $context); }
 		if ($syntax->qualifier === null) { return $value; }
 		// The comma expression preserves the member's value category without returning a borrow.

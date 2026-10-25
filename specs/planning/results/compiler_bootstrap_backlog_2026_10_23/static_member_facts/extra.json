@@ -1,0 +1,12 @@
+[
+  {
+    "name": "baseline",
+    "seconds": 0.5354305900109466,
+    "expected_result": true
+  },
+  {
+    "name": "nullable_defaults",
+    "seconds": 0.7502743039804045,
+    "expected_result": true
+  }
+]

@@ -636,7 +636,7 @@ final class CPP_Generator
 			if ($member->qualifier !== null) {
 				$statements = CPP_Declarations::qualifier_evaluation($member->qualifier, $context);
 			}
-			$name = CPP_Declarations::static_property(object_cast($member->require_preparation(), prepared_static_property::class), $context);
+			$name = CPP_Declarations::static_property($member->property_preparation(), $context);
 		}
 		elseif ($target !== null) {
 			if ($target->require_preparation()->addressable()) {

@@ -92,7 +92,7 @@ final class Expression_Preparation
 		}
 		elseif ($node instanceof static_member_reference_node) {
 			$member = object_cast($node, static_member_reference_node::class);
-			$member->set_preparation(Member_Preparation::reference($member, $context));
+			Member_Preparation::prepare_reference($member, $context);
 		}
 		elseif ($node instanceof constant_reference_node) {
 			$constant = object_cast($node, constant_reference_node::class);
@@ -237,18 +237,24 @@ final class Expression_Preparation
 			$context->statement_assignment = $statement_assignment;
 		}
 		$place = $target->require_preparation();
-		if (!($place instanceof prepared_field_access) && !($place instanceof prepared_static_property)) {
+		if ($target instanceof static_member_reference_node) {
+			$static_target = object_cast($target, static_member_reference_node::class);
+			if ($static_target->optional_property_preparation() === null) {
+				throw new \RuntimeException('Assignment requires mutable property storage, not a constant');
+			}
+		}
+		elseif (!($target instanceof field_access_node)) {
 			throw new \RuntimeException('Assignment requires mutable property storage, not a constant');
 		}
 		if ($place->addressable()) {
 			Reference_Preparation::require_writable($place->place);
 		}
 		else {
-			if (!($target instanceof field_access_node) || !($place instanceof prepared_field_access)) {
+			if (!($target instanceof field_access_node)) {
 				throw new \RuntimeException('S2S assignment requires stable storage');
 			}
 			$field_target = object_cast($target, field_access_node::class);
-			$field_value = object_cast($place, prepared_field_access::class);
+			$field_value = $field_target->require_field_access_preparation();
 			if (!($field_target->base instanceof index_node)
 				|| ($field_value->receiver_storage !== record_storage_kind::shared)) {
 				throw new \RuntimeException('S2S assignment requires stable storage or an indexed shared receiver');
@@ -263,8 +269,9 @@ final class Expression_Preparation
 		}
 		$binding = new prepared_property_assignment();
 		$binding->type = $place->type;
-		if ($place instanceof prepared_field_access) {
-			$field_place = object_cast($place, prepared_field_access::class);
+		if ($target instanceof field_access_node) {
+			$field_syntax = object_cast($target, field_access_node::class);
+			$field_place = $field_syntax->require_field_access_preparation();
 			$binding->destination = $field_place->field;
 			$record = Type_Queries::source_record(Type_Queries::record_payload($field_place->record_type));
 			if ($record !== null) {
@@ -272,7 +279,8 @@ final class Expression_Preparation
 			}
 		}
 		else {
-			$binding->destination = object_cast($place, prepared_static_property::class)->field;
+			$static_syntax = object_cast($target, static_member_reference_node::class);
+			$binding->destination = $static_syntax->property_preparation()->field;
 		}
 		$value = self::prepare($initializer, $context, $binding->type);
 		$binding->conversion = Conversion_Preparation::decide(

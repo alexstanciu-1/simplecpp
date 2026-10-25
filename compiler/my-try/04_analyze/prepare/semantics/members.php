@@ -123,7 +123,7 @@ final class Member_Preparation
 		}
 	}
 
-	public static function reference(static_member_reference_node $syntax, preparation_context $context): prepared_expression
+	public static function prepare_reference(static_member_reference_node $syntax, preparation_context $context): void
 	{
 		$type /** canonical_type_use */;
 		if ($syntax->qualifier !== null) {
@@ -142,16 +142,16 @@ final class Member_Preparation
 			$runtime_property = Runtime_Pattern_Preparation::property($type, $property_name, $context);
 			if ($runtime_property !== null) {
 				if (!$runtime_property->static_member) { throw new \RuntimeException('Qualified property access requires one static property'); }
-				return self::static_property($runtime_property, $type);
+				$syntax->set_property_preparation(self::static_property($runtime_property, $type)); return;
 			}
 		}
 		if (!$property && (Type_Queries::canonical($type)->definition()->origin() === type_definition_origin::runtime)) {
 			$runtime_constant = Model::$runtime_members->constant($type, $syntax->member_name);
 			if ($runtime_constant === null) { throw new \RuntimeException('Unknown runtime member constant: ' . $syntax->member_name); }
-			return self::constant_reference($runtime_constant);
+			$syntax->set_constant_preparation(self::constant_reference($runtime_constant)); return;
 		}
 		if ($record === null) {
-			if (!$property) { return Enum_Preparation::reference($syntax, $context); }
+			if (!$property) { $syntax->set_enum_case_preparation(Enum_Preparation::reference($syntax, $context)); return; }
 			// Installed readonly constants such as error::$no_error keep their registered contract.
 			if ($syntax->qualifier !== null) { throw new \RuntimeException('Unknown runtime static property'); }
 			$owner_syntax = $syntax->require_type_owner();
@@ -160,7 +160,7 @@ final class Member_Preparation
 			$lookup_scope = object_cast(weakref_get($owner->occurrence()->scope), scope::class);
 			$installed = Observed_Lookup::constants($lookup_scope, $owner->name . '::' . $syntax->member_name, $context);
 			if (q_count($installed) !== 1) { throw new \RuntimeException('Unknown installed static member'); }
-			return self::constant_reference($installed[0]);
+			$syntax->set_constant_preparation(self::constant_reference($installed[0])); return;
 		}
 		if (!$property) {
 			$targets = Inherited_Lookup::members($record, $syntax->member_name, preparation_lookup_kind::constant, $context);
@@ -171,7 +171,7 @@ final class Member_Preparation
 			$constant = object_cast($target, collected_constant::class);
 			$context->worker->require_declaration($context->owner, $constant);
 			self::require_access($constant->syntax()->require_preparation()->visibility, $selected->declaring_type, $context);
-			return self::constant_reference($constant);
+			$syntax->set_constant_preparation(self::constant_reference($constant)); return;
 		}
 		$context->worker->require_declaration($context->owner, $record);
 		$name = string_byte_slice($syntax->member_name, 1, string_byte_len($syntax->member_name) - 1);
@@ -183,7 +183,7 @@ final class Member_Preparation
 		if (!$field->static_member) { throw new \RuntimeException('Qualified property access requires one static property'); }
 		self::require_access($field->visibility, $selected_field->declaring_type, $context);
 		$declaring_type = Model::$type_catalog->registry()->canonical(Source_Types::definition($selected_field->declaring_type));
-		return self::static_property($field, Model::$type_catalog->registry()->use($declaring_type->type_id()));
+		$syntax->set_property_preparation(self::static_property($field, Model::$type_catalog->registry()->use($declaring_type->type_id()))); return;
 	}
 
 	private static function static_property(prepared_property_storage $field, canonical_type_use $owner): prepared_static_property

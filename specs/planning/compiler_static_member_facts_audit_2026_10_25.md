@@ -1,7 +1,8 @@
 # Static-member prepared-facts portability audit
 Doc Status: planning
 
-Status: proposal only; user requested audit and proposal before implementation.
+Status: approved by user on 2026-10-25; implementation and proof recorded in the
+execution ledger. The sections below preserve the audited proposal.
 Baseline: 7bccf89df. No source-language contract changes proposed.
 
 ## Finding
@@ -122,6 +123,8 @@ not Simple C++ cast, nullability, inheritance or ownership semantics.
 5. Measured full bootstrap after implementation. Other generic prepared_expression
    narrowing sites may remain; do not claim universal resolution from this slice.
 
-No implementation or new bootstrap was performed for this audit. Latest measured
-run remains projected_locals: 175.38 s, 610504 KiB RSS, 578.5 MiB PHP heap,
+At audit time no implementation or new bootstrap was performed. Its measured
+baseline was projected_locals: 175.38 s, 610504 KiB RSS, 578.5 MiB PHP heap,
 19 diagnostic categories; native compiler and second-generation proof incomplete.
+
+Implementation evidence: [static-member facts](results/compiler_bootstrap_backlog_2026_10_23/static_member_facts/README.md).

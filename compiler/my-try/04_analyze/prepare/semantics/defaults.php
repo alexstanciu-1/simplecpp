@@ -98,7 +98,9 @@ final class Parameter_Defaults
 			if (!($syntax instanceof static_member_reference_node)) {
 				throw new \RuntimeException('S2S enum parameter defaults require a constant enum case reference');
 			}
-			$reference = object_cast(Expression_Preparation::prepare($syntax, $context), prepared_enum_case_reference::class);
+			$enum_syntax = object_cast($syntax, static_member_reference_node::class);
+			Expression_Preparation::prepare($enum_syntax, $context);
+			$reference = $enum_syntax->enum_case_preparation();
 			if (!$reference->type->matches($parameter->type)) {
 				throw new \RuntimeException('S2S enum parameter default requires the same enum type');
 			}

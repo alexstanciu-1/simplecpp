@@ -1,0 +1,44 @@
+[
+  {
+    "name": "nullable_defaults",
+    "seconds": 0.727,
+    "code": 255,
+    "expected": 0
+  },
+  {
+    "name": "static_redeclarations",
+    "seconds": 0.86,
+    "code": 255,
+    "expected": 0
+  },
+  {
+    "name": "incremental_preparation",
+    "seconds": 0.977,
+    "code": 0,
+    "expected": 0
+  },
+  {
+    "name": "source_constants",
+    "seconds": 1.932,
+    "code": 0,
+    "expected": 0
+  },
+  {
+    "name": "qualified_static_members",
+    "seconds": 2.711,
+    "code": 0,
+    "expected": 0
+  },
+  {
+    "name": "static_members",
+    "seconds": 3.591,
+    "code": 0,
+    "expected": 0
+  },
+  {
+    "name": "property_defaults",
+    "seconds": 4.276,
+    "code": 0,
+    "expected": 0
+  }
+]

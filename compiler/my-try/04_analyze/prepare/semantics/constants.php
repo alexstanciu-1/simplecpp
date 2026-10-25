@@ -51,11 +51,12 @@ final class Constant_Expression_Preparation
 			return $null_value;
 		}
 		if ($syntax instanceof static_member_reference_node) {
-			object_cast($syntax, static_member_reference_node::class)->require_type_owner();
-			$static_value = Expression_Preparation::prepare($syntax, $context);
-			if ($static_value instanceof prepared_constant_reference) { return object_cast($static_value, prepared_constant_reference::class)->value; }
-			if ($static_value instanceof prepared_enum_case_reference) {
-				$enum_reference = object_cast($static_value, prepared_enum_case_reference::class);
+			$member = object_cast($syntax, static_member_reference_node::class);
+			$member->require_type_owner();
+			Expression_Preparation::prepare($member, $context);
+			if ($member->optional_constant_preparation() !== null) { return $member->constant_preparation()->value; }
+			if ($member->optional_enum_case_preparation() !== null) {
+				$enum_reference = $member->enum_case_preparation();
 				$enum_value = new enum_constant_value();
 				$enum_value->type = $enum_reference->type;
 				$enum_value->selected_case = $enum_reference->selected_case;
@@ -168,8 +169,9 @@ final class Integer_Constants
 	public static function value(expression_node $syntax): string
 	{
 		if ($syntax instanceof static_member_reference_node) {
-			object_cast($syntax, static_member_reference_node::class)->require_type_owner();
-			return self::reference(object_cast($syntax->require_preparation(), prepared_constant_reference::class));
+			$member = object_cast($syntax, static_member_reference_node::class);
+			$member->require_type_owner();
+			return self::reference($member->constant_preparation());
 		}
 		if ($syntax instanceof integer_literal_node) {
 			return object_cast($syntax, integer_literal_node::class)->require_integer_literal_preparation()->decimal;
