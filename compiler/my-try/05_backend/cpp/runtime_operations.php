@@ -420,6 +420,10 @@ final class CPP_Runtime_Operations
 				return '(' . $arguments[0] . ').require_value("' . $message . '")';
 			}
 			$operand = $arguments[0];
+			if ($conversion->operation === conversion_operation::explicit_runtime_cast) {
+				// Runtime casts consume native payloads, including lifted wrapper casts.
+				$operand = CPP_Wrapper_Transport::provider_value($conversion->source_type, $operand, false, $engine, $context);
+			}
 			if ($conversion->operation === conversion_operation::unique_upcast) {
 				$context->headers['utility'] = true;
 				$operand = 'std::move(' . $operand . ')';

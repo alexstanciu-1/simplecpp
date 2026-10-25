@@ -1,0 +1,34 @@
+{
+    "elapsed_seconds": 123.252225257,
+    "peak_php_bytes": 793919488,
+    "last_stage": "emit",
+    "events": [
+        {
+            "stage": "initialize",
+            "seconds": 0.406542904
+        },
+        {
+            "stage": "sync",
+            "seconds": 5.957987495
+        },
+        {
+            "stage": "prepare",
+            "seconds": 106.490339143
+        },
+        {
+            "stage": "validate",
+            "seconds": 107.007351966
+        },
+        {
+            "stage": "emit",
+            "seconds": 123.252132924
+        }
+    ],
+    "failure": null,
+    "fatal": {
+        "type": 2,
+        "message": "lstat(): Lstat failed for /tmp/compiler-bootstrap-native-transport-01/published/.scpp-output.manifest",
+        "file": "/home/alexv/__AI/simple_cpp/simple_cpp_01/tools/php_portability/runtime/output_files.php",
+        "line": 73
+    }
+}

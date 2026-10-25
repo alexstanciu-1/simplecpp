@@ -112,6 +112,11 @@ application wrapper references. This preserves mixed copy-on-write and dynamic
 shared identity without changing runtime algorithms.
 Concrete registered provider value/read-only vector<string> parameters copy to
 native elements; inferred generic contracts keep substituted physical types.
+Prepared explicit runtime casts use the existing recursive provider transport to
+unwrap composed payloads before calling the native cast. Presence, sentinel and
+error behavior remain owned by the runtime cast. Native-payload split bindings use
+the same bridge for returned vector elements. `tests/native_value_transport.py`
+proves ordinary/concrete execution, carrier states and evaluation order.
 Mutable provider references reject pending explicit write-back transport. Boxed extraction beyond the existing int/string slice, indexed updates/compounds,
 and broader keyed probes remain separate. See [curl integration](../planning/curl_integration.md).
 

@@ -1970,3 +1970,13 @@ result transport into vector<concrete string>. CH15 records deadline/configurati
 and diagnostic debt. [Evidence](results/compiler_bootstrap_backlog_2026_10_23/native_first_build/README.md).
 No native executable; representative and second-generation proofs remain outstanding.
 Stop before fixing the new composed-transport boundary failures.
+
+## Native value transport repair — 2026-10-25
+
+Existing recursive provider transport now feeds explicit runtime casts, and both
+split bindings opt into native-payload transport. Six ordinary/concrete focused
+tasks pass. Full PHP-hosted bootstrap passes in 2:03.79 / 796076 KiB RSS /
+757.14 MiB PHP heap (early overlap with focused tests).
+[Evidence](results/compiler_bootstrap_backlog_2026_10_23/native_value_transport/README.md).
+Native build retry follows with the existing temporary host-only deadline allowance;
+compiler execution and second generation remain outstanding.

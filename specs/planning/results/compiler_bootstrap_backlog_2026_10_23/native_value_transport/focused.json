@@ -1,0 +1,32 @@
+[
+  {
+    "name": "ordinary-carriers",
+    "error": null,
+    "seconds": 21.321197224984644
+  },
+  {
+    "name": "ordinary-cast",
+    "error": null,
+    "seconds": 25.71001324398094
+  },
+  {
+    "name": "ordinary-split",
+    "error": null,
+    "seconds": 25.568482410017168
+  },
+  {
+    "name": "concrete-carriers",
+    "error": null,
+    "seconds": 26.607250367989764
+  },
+  {
+    "name": "concrete-cast",
+    "error": null,
+    "seconds": 26.413680945988744
+  },
+  {
+    "name": "concrete-split",
+    "error": null,
+    "seconds": 26.649560924997786
+  }
+]

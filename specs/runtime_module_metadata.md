@@ -228,7 +228,8 @@ retain owned captures and preserve transfer permission. Task context/error handl
 preserve shared identity; this transport grants no capture-transfer permission.
 Ordinary emission already uses the provider's native types. The policy does not
 permit reference write-back, alter source signatures, or weaken template-free
-application inputs. Only reviewed task batch bindings currently opt in.
+application inputs. Reviewed task batch and string split bindings opt in; split
+returns a native vector whose elements must cross the same payload boundary.
 
 ### Scalar parameter defaults
 
