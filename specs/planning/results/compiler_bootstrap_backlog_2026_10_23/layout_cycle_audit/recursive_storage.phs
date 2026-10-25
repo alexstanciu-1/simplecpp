@@ -1,0 +1,1 @@
+class Node { public $children Storage<Node>; public function __construct() { $this->children = new Storage<Node>(); } } $node = new Node();

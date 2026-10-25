@@ -1,0 +1,9 @@
+PHP Fatal error:  Uncaught RuntimeException: Concrete layout dependencies contain a generated header cycle in /home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/05_backend/cpp/specializations.php:182
+Stack trace:
+#0 /home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/05_backend/cpp/specializations.php(199): scpp\compiler\CPP_Specializations->layout_depths()
+#1 /home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/05_backend/cpp/generate.php(274): scpp\compiler\CPP_Specializations->append_artifacts()
+#2 /home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/compiler/compile.php(334): scpp\compiler\CPP_Generator->generate_program()
+#3 /home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/compiler/compile.php(176): scpp\compiler\Compiler->cpp()
+#4 /home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/tests/async_tasks_publish.php(10): scpp\compiler\Compiler->exec_cpp()
+#5 {main}
+  thrown in /home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/05_backend/cpp/specializations.php on line 182

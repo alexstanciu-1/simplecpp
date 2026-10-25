@@ -1937,3 +1937,13 @@ Bootstrap 1:42.11 / 761252 KiB RSS / 722 MiB heap now completes semantic prepara
 and project validation. Next blocker is emission: generated concrete-layout header
 cycle. Stop before changing layout dependencies. Native compiler and second-generation
 acceptance remain outstanding.
+
+## Concrete layout-cycle audit — 2026-10-25
+
+Captured seven cyclic header components; recursive Storage<Self> is a minimal
+ordinary-pass/concrete-reject reproducer. Native incomplete-record layout and runtime
+operation proof passes. Source recursive ownership need not change. Propose explicit
+per-binding argument layout requirements, separate from full operation dependencies;
+[design and scope](compiler_layout_cycle_audit_2026_10_25.md). No production changes.
+Instrumented full retry 1:41.84 / 765104 KiB RSS / 726 MiB heap. Await design agreement;
+native compiler and second generation remain unproved.

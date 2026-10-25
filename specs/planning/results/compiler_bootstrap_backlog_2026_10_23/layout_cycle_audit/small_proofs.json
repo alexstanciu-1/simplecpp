@@ -1,0 +1,17 @@
+[
+  {
+    "name": "native",
+    "error": null,
+    "seconds": 2.3123781949980184
+  },
+  {
+    "name": "ordinary",
+    "error": null,
+    "seconds": 13.946160872990731
+  },
+  {
+    "name": "concrete",
+    "error": null,
+    "seconds": 0.46402202401077375
+  }
+]
