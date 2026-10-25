@@ -21,6 +21,17 @@ for label in ['32-hash','32-hash-warm','1-hash','32-lines','32-lines-warm','1-li
  events=sorted([(r['started'],1) for r in group]+[(r['ended'],-1) for r in group]);live=peak=0
  for _,d in events:live+=d;peak=max(peak,live)
  result.update(label=label,phases=phase,maximum_clang_overlap=peak,mean_clang_overlap=sum(r['seconds'] for r in group)/result['tree']['seconds'])
+ regular=[];layout=[]
+ for r in group:
+  source=next((a for a in r['arguments'] if a.endswith('.cpp')),None)
+  if source is None:continue
+  (layout if '/specializations/layout' in source else regular).append(r)
+ if regular:
+  first=min(r['started'] for r in regular);last=max(r['ended'] for r in regular)
+  result['regular_action_elapsed_seconds']=last-first
+  result['regular_mean_clang_overlap']=sum(r['seconds'] for r in regular)/(last-first)
+  if layout:result['layout_prerequisite_elapsed_seconds']=first-min(r['started'] for r in layout)
+
  results.append(result)
 published=b/'performance-native07/published'
 sizes={suffix:sorted([{'path':str(p.relative_to(published)),'bytes':p.stat().st_size} for p in published.rglob('*'+suffix)],key=lambda r:r['bytes'],reverse=True)[:10] for suffix in ['.cpp','.hpp']}

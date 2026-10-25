@@ -1,0 +1,58 @@
+{
+  "one": {
+    "objects": 763,
+    "total_user_seconds": 646.12,
+    "total_system_seconds": 41.06,
+    "largest_rss_object": {
+      "run": "one",
+      "source": "/home/alex-ai/compiler-self-o2-20261025/repo/runtime/include/core/runtime.cpp",
+      "user_seconds": 8.17,
+      "system_seconds": 0.25,
+      "peak_rss_kib": 389124,
+      "time_file": "527410.time",
+      "exit": 0
+    }
+  },
+  "pool": {
+    "objects": 763,
+    "total_user_seconds": 726.99,
+    "total_system_seconds": 42.63,
+    "largest_rss_object": {
+      "run": "pool",
+      "source": "/home/alex-ai/compiler-self-o2-20261025/repo/runtime/include/core/runtime.cpp",
+      "user_seconds": 9.1,
+      "system_seconds": 0.21,
+      "peak_rss_kib": 388556,
+      "time_file": "517780.time",
+      "exit": 0
+    }
+  },
+  "lines": {
+    "objects": 763,
+    "total_user_seconds": 1074.34,
+    "total_system_seconds": 54.230000000000004,
+    "largest_rss_object": {
+      "run": "lines",
+      "source": "/home/alex-ai/compiler-self-o2-20261025/repo/runtime/include/core/runtime.cpp",
+      "user_seconds": 9.58,
+      "system_seconds": 0.25,
+      "peak_rss_kib": 389116,
+      "time_file": "537650.time",
+      "exit": 0
+    }
+  },
+  "self": {
+    "objects": 763,
+    "total_user_seconds": 1084.26,
+    "total_system_seconds": 54.46,
+    "largest_rss_object": {
+      "run": "self",
+      "source": "/home/alex-ai/compiler-self-o2-20261025/repo/runtime/include/core/runtime.cpp",
+      "user_seconds": 9.59,
+      "system_seconds": 0.26,
+      "peak_rss_kib": 389120,
+      "time_file": "548450.time",
+      "exit": 0
+    }
+  }
+}

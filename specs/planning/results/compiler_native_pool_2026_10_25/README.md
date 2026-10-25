@@ -1,8 +1,9 @@
 # Production native-build concurrency and coordinator costs
 Doc Status: planning
 
-Performance goal remains active. This report is a checkpoint; the sequential
-comparison and line-parser candidate measurements are still running.
+Completed performance slice. The sequential comparison, optimized production
+build, current-source self-build and second-generation execution checks all pass.
+Implementation commits: `b1b85f8a5`, `43915a6a6`, `7b5b3f03e`.
 
 ## Ownership and reuse
 
@@ -48,23 +49,42 @@ not external object-only replay timings.
 
 | Candidate | Jobs | Cold seconds | Warm seconds | Maximum Clang overlap |
 | --- | ---: | ---: | ---: | ---: |
+| Process pool + hash repair | 1 | 1132.56 | — | 1 |
 | Process pool + hash repair | 32 | 201.99 | 155.88 | 28 (cold) |
+| Pool + hash repair + line parser | 32 | 116.20 | 50.42 | 32 |
 
-Cold summed process-tree peak RSS: 3,629,187,072 bytes. This sums resident pages
+The matched pool comparison gives a 5.61× cold speedup from concurrency. The
+line parser then reduces cold elapsed time by 42.5% at 32 jobs, and warm elapsed
+by 67.7%. Together these changes yield 9.75× versus the one-job reference.
+These are single non-overlapping trials on a fixed publication, not confidence
+intervals; cache directories differ by candidate/job count. The parser candidate
+builds the same candidate-07 publication for this comparison.
+
+Pool-only cold summed process-tree peak RSS: 3,629,187,072 bytes. The line-parser
+candidate peaks at 6,005,182,464 bytes (5.59 GiB), versus 468,951,040 bytes for the
+one-job reference. Increased overlap increases simultaneous memory demand. This sums resident pages
 across processes and can double-count shared mappings; it is not unique physical
 memory. `/usr/bin/time`'s separate maximum RSS is not the simultaneous process-tree
-peak. Cold total user/system CPU: 1006.25 / 245.36 seconds.
+peak. Pool-only cold total user/system CPU: 1006.25 / 245.36 seconds; optimized cold:
+1265.69 / 262.67 seconds. Overall CPU utilization rises from 619% to 1314%.
+More concurrent commands can each take more CPU/wall time because of contention;
+the elapsed-time result is the relevant throughput comparison.
 
 Cold actions: 763 dependency scans, 763 object compilations (including 27 layout
-objects), 473 template checks, 28 links. Summed command wall times are 53.34,
+objects), 473 template checks, 28 links. Pool-only summed command wall times are 53.34,
 778.49, 158.37 and 1.31 seconds respectively; overlapping durations do not sum to
-build elapsed time. Maximum object command: 9.33 seconds for runtime
-`core/runtime.cpp`. Maximum template check: 1.15 seconds; dependency scan: 0.18.
+build elapsed time. Pool-only maximum object command: 9.33 seconds for runtime
+`core/runtime.cpp`. Optimized maximum: 9.84 seconds for that same runtime unit,
+with 389,116 KiB peak RSS. Optimized maximum template check: 1.18 seconds;
+dependency scan: 0.22. Per-object CPU and RSS are retained in
+`native-pool-object-resources.json.gz`; complete selected Clang action intervals
+and arguments are in `native-pool-clang.json.gz`. The readable aggregate is
+`native-pool-resource-summary.json`.
 
 Largest generated CPP: 179,939 bytes (`specializations/layout_part_17.cpp`). Largest
 HPP: 58,472 bytes (`Parser_Run`). No generated CPP/HPP exceeds 200,000 bytes.
 
-## Next measured slice
+## Dependency parser slice
 
 The dependency parser previously copied the entire Make rule into value arguments
 for each byte access and length query. It now splits once into physical lines and
@@ -95,3 +115,35 @@ check matches previous results and diagnostic messages exactly.
 Recipes capture the isolated `/home/alex-ai/compiler-self-o2-20261025` server
 workspace. Runtime-changing candidate 07 rebuilt all objects; candidate 08 may reuse
 objects only with identical generated headers and sources, since runtime is unchanged.
+
+## Final native proof
+
+The optimized native compiler builds its own current converted source through the
+production builder in 116.74 seconds, using 32 jobs and O2 (5.59 GiB summed tree
+RSS). That resulting second-generation compiler publishes and natively builds the
+representative program in both ordinary and concrete modes; each executes with
+expected output `71`. This is representative execution evidence, not a claim that
+the whole language test catalog was rerun.
+
+A separate 513-unit native test injects `static_assert(false)` so dependency and
+token scans succeed before object compilation fails. Failure keeps readiness
+pending and removes staged outputs. Repair and retry build and execute successfully.
+The full failure/retry sequence takes 2.82 seconds. PHP-hosted invalidation and
+pool failure/retry tests also pass after the line-parser change.
+
+## Remaining performance limits and next design boundary
+
+Observed mean Clang overlap across the whole cold run rises from 4.91 to 11.73.
+Within the regular object-action window it rises from 5.95 to 16.80; maximum
+observed overlap is 32. This verifies actual work overlap, not merely creation of
+32 workers. The serial layout prerequisite window still costs 35.40 seconds;
+the regular action window takes 79.35 seconds. Warm runs still perform fresh
+strict dependency scans and revalidate artifact/input digests (50.42 seconds total).
+The current data does not isolate individual remaining coordinator functions.
+
+Parallelizing independent layout probes would require an explicit dependency
+contract owned by the C++ backend, carried through publication, and consumed by
+the native scheduler. Filename/declaration-order inference is not a sufficient
+contract. That is a separate cross-owner design discussion under the compiler's
+operating rules. Profiling remaining warm coordinator costs is another possible
+follow-up; these measurements do not authorize weaker freshness checks.

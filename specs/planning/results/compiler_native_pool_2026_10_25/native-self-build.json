@@ -1,0 +1,12 @@
+{
+  "jobs": 32,
+  "executable": "/home/alex-ai/compiler-self-o2-20261025/native-pool-cache-lines-self-32/artifacts/7d0663997361ccef4fb5513c5f90c050ae65c96a2675dcd0ae7319d0d486adac.bin",
+  "time": "\tCommand being timed: \"python3 /home/alex-ai/compiler-self-o2-20261025/native_tree_time.py /home/alex-ai/compiler-self-o2-20261025/native-pool-32-lines-self/tree.json /home/alex-ai/compiler-self-o2-20261025/performance-native08/compiler-release\"\n\tUser time (seconds): 1276.61\n\tSystem time (seconds): 262.66\n\tPercent of CPU this job got: 1318%\n\tElapsed (wall clock) time (h:mm:ss or m:ss): 1:56.76\n\tAverage shared text size (kbytes): 0\n\tAverage unshared data size (kbytes): 0\n\tAverage stack size (kbytes): 0\n\tAverage total size (kbytes): 0\n\tMaximum resident set size (kbytes): 389120\n\tAverage resident set size (kbytes): 0\n\tMajor (requiring I/O) page faults: 78\n\tMinor (reclaiming a frame) page faults: 29295290\n\tVoluntary context switches: 71611\n\tInvoluntary context switches: 17022\n\tSwaps: 0\n\tFile system inputs: 8\n\tFile system outputs: 5959288\n\tSocket messages sent: 0\n\tSocket messages received: 0\n\tSignals delivered: 0\n\tPage size (bytes): 4096\n\tExit status: 0\n",
+  "tree": {
+    "seconds": 116.74089566245675,
+    "exit": 0,
+    "peak_tree_rss_bytes": 5997346816,
+    "maximum_descendants": 96,
+    "samples": 932
+  }
+}

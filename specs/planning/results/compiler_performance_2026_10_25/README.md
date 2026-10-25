@@ -1,8 +1,10 @@
 # Compiler performance goal — first measured slices
 Doc Status: planning
 
-Baseline: `fceb29c2e`. Work remains active, particularly production native-build
-concurrency. No language semantics, compound-assignment lowering, runtime string
+Baseline: `fceb29c2e`. This records the first slices; subsequent production
+native-build concurrency and completed goal evidence are in the
+[native pool report](../compiler_native_pool_2026_10_25/README.md).
+No language semantics, compound-assignment lowering, runtime string
 semantics or filesystem publication protocol changed in these slices.
 
 ## Reuse and changes

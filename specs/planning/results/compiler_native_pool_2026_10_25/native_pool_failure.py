@@ -3,7 +3,7 @@ import json,shutil,hashlib,sys
 base=Path('/home/alex-ai/compiler-self-o2-20261025');root=base/'repo';out=base/'native-pool-native-failure';out.mkdir();published=out/'published';shutil.copytree(base/'native-pool-many-fixed/published',published)
 manifest=published/'.scpp-output.manifest';status=published/'.scpp-output.status';entry=published/'entry.cpp'
 original_manifest=manifest.read_bytes();original_status=status.read_bytes();original_entry=entry.read_bytes()
-entry.write_bytes(b'#error native_pool_failure\n'+original_entry)
+entry.write_bytes(b'static_assert(false, "native_pool_failure");\n'+original_entry)
 changed=json.loads(original_manifest)
 for row in changed['files']:
  if row['path']=='entry.cpp':row['sha256']=hashlib.sha256(entry.read_bytes()).hexdigest()
