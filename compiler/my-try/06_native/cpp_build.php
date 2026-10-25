@@ -117,7 +117,8 @@ final class Native_CPP_Build
 				$inputs = new Native_Dependency_Inputs($this->root, $runtime, $source_root, $files);
 				if ($inputs->complete) {
 					$search /** vector<string> */ = $this->flags;
-					foreach (['-E', '-v', '-x', 'c++', '/dev/null'] as $argument) { $search[] = $argument; }
+					$search_arguments /** vector<string> */ = ['-E', '-v', '-x', 'c++', '/dev/null'];
+					foreach ($search_arguments as $argument) { $search[] = $argument; }
 					$search_result = $this->invoke($search);
 					self::require_success($search_result);
 					$inputs->observe_search($search_result->stderr);
@@ -221,7 +222,8 @@ final class Native_CPP_Build
 				$tokens[] = $argument;
 			}
 		}
-		foreach (['-fsyntax-only', '-Xclang', '-dump-tokens'] as $argument) {
+		$token_scan_arguments /** vector<string> */ = ['-fsyntax-only', '-Xclang', '-dump-tokens'];
+		foreach ($token_scan_arguments as $argument) {
 			$tokens[] = $argument;
 		}
 		$result = $this->invoke($tokens);

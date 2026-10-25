@@ -22,7 +22,8 @@ final class Native_CPP_Publication
 			throw new \RuntimeException('Invalid runtime build publication');
 		}
 		$result = new runtime_cpp_build_spec();
-		foreach (['sources', 'libraries', 'definitions', 'compile_options', 'link_options', 'diagnostics'] as $name)
+		$runtime_fields /** vector<string> */ = ['sources', 'libraries', 'definitions', 'compile_options', 'link_options', 'diagnostics'];
+		foreach ($runtime_fields as $name)
 		{
 			if (($view->size() === 3) && (($name === 'compile_options') || ($name === 'link_options') || ($name === 'diagnostics'))) { continue; }
 			$items = $view->member($name);

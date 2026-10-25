@@ -49,7 +49,8 @@ final class CPP_Concrete_Iteration
 		$implementation = $aliases . "#include <memory>\n#include <new>\nnamespace scpp::internal {\n";
 		$probe = '';
 		// These are backend artifacts, not new semantic types or registry entries.
-		foreach (['entry', 'sentinel', 'iterator', 'range'] as $role)
+		$layout_roles /** vector<string> */ = ['entry', 'sentinel', 'iterator', 'range'];
+		foreach ($layout_roles as $role)
 		{
 			$type = $name . '_' . $role;
 			$physical = 'native_' . $type;
@@ -72,7 +73,8 @@ final class CPP_Concrete_Iteration
 				. $type . '::~' . $type . "() noexcept { std::destroy_at(&unwrap(*this)); }\n";
 			if ($role === 'range')
 			{
-				foreach (['begin', 'end'] as $method)
+				$range_methods /** vector<string> */ = ['begin', 'end'];
+				foreach ($range_methods as $method)
 				{
 					$result = $name . ($method === 'begin' ? '_iterator' : '_sentinel');
 					$declaration .= $result . ' ' . $method . "();\n";
@@ -91,7 +93,8 @@ final class CPP_Concrete_Iteration
 			}
 			elseif ($role === 'entry')
 			{
-				foreach (['key', 'value_copy'] as $method)
+				$entry_methods /** vector<string> */ = ['key', 'value_copy'];
+				foreach ($entry_methods as $method)
 				{
 					$mapping = $method === 'key' ? $key : $value;
 					$semantic = $method === 'key' ? $facts->key_type : $facts->value_type;

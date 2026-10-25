@@ -100,7 +100,8 @@ final class Indexing_Registration
 		$mixed = contract_type_reference::concrete($registry->use($types->canonical('mixed')->type_id()));
 		$declarations /** Storage<indexing_declaration> */ = new Storage();
 		Runtime_Protocol_Registration::indexing($input, $types, $declarations);
-		foreach (['mixed', 'dynamic'] as $name) {
+		$boxed_names /** vector<string> */ = ['mixed', 'dynamic'];
+		foreach ($boxed_names as $name) {
 			$nested = contract_type_reference::concrete($registry->use($types->canonical($name)->type_id()));
 			$declarations->append(new indexing_declaration($types->definition($name), $mixed, $nested,
 				operator_operation::index_null_read, operator_operation::index_store, index_append_policy::allowed, $nested, $nested, true, true));

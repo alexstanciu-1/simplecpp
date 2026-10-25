@@ -53,7 +53,8 @@ final class Iteration_Registration
 		$mixed = contract_type_reference::concrete($registry->use($types->canonical('mixed')->type_id()));
 		$declarations /** Storage<iteration_declaration> */ = new Storage();
 		Runtime_Protocol_Registration::iteration($input, $types, $declarations);
-		foreach (['mixed', 'dynamic'] as $name) {
+		$boxed_names /** vector<string> */ = ['mixed', 'dynamic'];
+		foreach ($boxed_names as $name) {
 			$element = contract_type_reference::concrete($registry->use($types->canonical($name)->type_id()));
 			$declarations->append(new iteration_declaration($types->definition($name), $mixed, $element));
 		}

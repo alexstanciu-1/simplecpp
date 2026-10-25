@@ -192,7 +192,8 @@ final class Native_Ninja_Build
 	private function compile_edge(array $command /** vector<string> */, string $output, array $inputs /** vector<string> */, string $pch): string
 	{
 		$arguments /** vector<string> */ = $command;
-		foreach (['-MD', '-MF', $output . '.d', '-MQ', $output, '-o', $output] as $argument) {
+		$dependency_arguments /** vector<string> */ = ['-MD', '-MF', $output . '.d', '-MQ', $output, '-o', $output];
+		foreach ($dependency_arguments as $argument) {
 			$arguments[] = $argument;
 		}
 		$dependencies /** vector<string> */ = [$this->root . '/compiler.identity'];

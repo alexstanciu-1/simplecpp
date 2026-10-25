@@ -1855,3 +1855,12 @@ first now data construction without a concrete target. Runtime-call matching rem
 later, so category elimination is not claimed. Stopped before the previously audited
 foreach literal source fixes; native compiler and second-generation acceptance remain
 outstanding.
+
+## Typed foreach source lists — 2026-10-25
+
+Broad PHP-source authorization: 11 string-list foreach expressions now use typed
+vector<string> locals at the original evaluation point. Extracted lists pass exact
+ordered-output proofs in PHP/v0.1/both v0.2 native modes.
+[Evidence](results/compiler_bootstrap_backlog_2026_10_23/typed_foreach_lists/README.md).
+Bootstrap 1:40.77 / 625804 KiB RSS / 592.5 MiB heap; categories 16 -> 15, construction
+target category clears. Required-null boundary first; independent source work continues.

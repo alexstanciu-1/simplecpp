@@ -85,7 +85,8 @@ final class Initialization_Registration
 		$boxed = contract_type_reference::concrete($mixed);
 		$unconstrained /** hash<canonical_type_use, int> */ = [];
 		Runtime_Protocol_Registration::initialization($input, $types, $contracts);
-		foreach (['mixed', 'dynamic'] as $name) {
+		$boxed_names /** vector<string> */ = ['mixed', 'dynamic'];
+		foreach ($boxed_names as $name) {
 			$nested = contract_type_reference::concrete($registry->use($types->canonical($name)->type_id()));
 			$contracts->register(new initialization_declaration($types->definition($name), $nested, null, $nested,
 				$unconstrained, 'simple_cpp.' . $name . '.list'));
