@@ -1,0 +1,6 @@
+PHP Fatal error:  Uncaught RuntimeException: Prepared expression facts are not supported for this node in /home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/03_parse/structures/abstractions.php:77
+Stack trace:
+#0 /home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/05_backend/cpp/syntax.php(22): scpp\compiler\expression_node->require_preparation()
+#1 /home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/tests/specialization_dispatch.php(73): scpp\compiler\CPP_Syntax->expression()
+#2 {main}
+  thrown in /home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/03_parse/structures/abstractions.php on line 77

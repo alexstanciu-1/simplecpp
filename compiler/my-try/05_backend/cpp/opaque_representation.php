@@ -12,7 +12,10 @@ final class CPP_Opaque_Representation
 
 	public static function representation(canonical_type_use $type, CPP_Specializations $engine, bool $compose_arguments = false): cpp_type
 	{
-		$entry = $engine->entry($compose_arguments ? $engine->request_composed($type) : $engine->request_opaque($type));
+		$request /** cpp_specialization_ref */;
+		if ($compose_arguments) { $request = $engine->request_composed($type); }
+		else { $request = $engine->request_opaque($type); }
+		$entry = $engine->entry($request);
 		$mapping = new cpp_type();
 		$mapping->spelling = 'scpp::internal::' . $entry->name;
 		$mapping->headers[$entry->header] = true;
@@ -130,7 +133,8 @@ final class CPP_Opaque_Representation
 			. 'private: unsigned char storage_[' . $prefix . "_SIZE];\npublic:\n"
 			. "void* address() noexcept { return storage_; }\nconst void* address() const noexcept { return storage_; }\n";
 		$payload /** nullable<cpp_type> */ = null;
-		$pointee = $compose_arguments ? CPP_Types::application_pointee($type) : null;
+		$pointee /** nullable<canonical_type_use> */ = null;
+		if ($compose_arguments) { $pointee = CPP_Types::application_pointee($type); }
 		$implementation_headers /** hash<bool> */ = [];
 		if (Type_Queries::is_nominal_handle($type)
 			&& (Type_Queries::canonical($type)->definition()->origin() === type_definition_origin::source)) {

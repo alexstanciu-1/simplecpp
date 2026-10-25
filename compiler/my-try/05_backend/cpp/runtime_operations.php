@@ -147,6 +147,7 @@ final class CPP_Runtime_Operations
 				|| (self::take_application_output($request) && ($position === 0))) {
 				$input_context = new cpp_generation_context($engine);
 			}
+			$native /** string */ = '';
 			// Self acquisition borrows the source payload, not a stored handle facade.
 			if ($request->kind === cpp_runtime_operation_kind::self_acquire) {
 				$payload = CPP_Types::payload($input, $input_context);

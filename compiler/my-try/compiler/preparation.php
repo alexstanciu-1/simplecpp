@@ -7,7 +7,7 @@ final class Preparation_Run
 	/** Successful rounds publish only after every demanded implementation has settled. */
 	public static function prepare(Storage $sources /** Storage<collected_file> */, scope $language): Storage /** Storage<prepared_file> */
 	{
-		while (true)
+		for (;;)
 		{
 			$worker = new Preparation_Worker($language);
 			try {

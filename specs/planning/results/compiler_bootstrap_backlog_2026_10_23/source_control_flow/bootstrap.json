@@ -1,0 +1,20 @@
+{
+    "elapsed_seconds": 92.510393982,
+    "peak_php_bytes": 621281280,
+    "last_stage": "prepare",
+    "events": [
+        {
+            "stage": "initialize",
+            "seconds": 0.30629701
+        },
+        {
+            "stage": "sync",
+            "seconds": 3.901392819
+        }
+    ],
+    "failure": {
+        "class": "RuntimeException",
+        "message": "Required object boundary rejects null; declare a nullable object type\nS2S ownership boundary requires matching handles, a proven safe same-family upcast, or null storage initialization/assignment\nObject narrowing requires a polymorphic source\nProjected method receiver lifetime is deferred\nS2S non-void function outlives can reach the end without returning a value\nS2S data construction requires a known concrete target\nS2S indexed storage requires local, parameter or field storage\nS2S enum comparison requires the same enum type\nS2S runtime call requires one exact signature or a unique checked-payload signature; use explicit argument types\nS2S assignment requires stable storage or an indexed shared receiver\nOwnership selection requires two same-family handles\n"
+    },
+    "fatal": null
+}

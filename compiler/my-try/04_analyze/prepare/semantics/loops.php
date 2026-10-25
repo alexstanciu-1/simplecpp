@@ -44,7 +44,9 @@ final class Loop_Preparation
 			}
 			$has_test = ($facts->condition !== null) || ($facts->iteration !== null);
 			$result = Completion_Preparation::loop($body, $syntax->body_runs_first(), $has_test);
-			$test_pending = $syntax->body_runs_first() ? Local_Assignment::condition($context)->when_false : $entry;
+			$test_pending /** vector<prepared_source_storage> */ = [];
+			if ($syntax->body_runs_first()) { $test_pending = Local_Assignment::condition($context)->when_false; }
+			else { $test_pending = $entry; }
 			$test_reachable = !$syntax->body_runs_first() || $body->can_fall_through || $body->can_continue;
 			$result->normal_pending = Local_Assignment::merge($body->can_break, $body->break_pending,
 				$has_test && $test_reachable, $test_pending);

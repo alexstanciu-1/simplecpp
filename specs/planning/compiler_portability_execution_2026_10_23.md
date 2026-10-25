@@ -1864,3 +1864,13 @@ ordered-output proofs in PHP/v0.1/both v0.2 native modes.
 [Evidence](results/compiler_bootstrap_backlog_2026_10_23/typed_foreach_lists/README.md).
 Bootstrap 1:40.77 / 625804 KiB RSS / 592.5 MiB heap; categories 16 -> 15, construction
 target category clears. Required-null boundary first; independent source work continues.
+
+## Portable source control flow — 2026-10-25
+
+Explicit branches/local names and unconditional for loops reuse current semantics.
+Cross-route order/selection/retry proof passes; six host suites pass. Synthetic
+specialization_dispatch failure reproduces unchanged on baseline.
+[Evidence](results/compiler_bootstrap_backlog_2026_10_23/source_control_flow/README.md).
+Bootstrap 1:32.91 / 627072 KiB RSS / 592.5 MiB heap; categories 15 -> 11. JSON required
+reference initialization cannot be repaired by null/omitted/nullable local spellings;
+left unchanged while independent source work continues.

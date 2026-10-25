@@ -131,8 +131,9 @@ final class Preparation_Changes
 		$store /** Key_Storage_List<prepared_field> */ = $facts->fields;
 		$static_store /** Key_Storage_List<prepared_field> */ = $facts->static_fields;
 		foreach ($nodes as $node) {
-			$fields /** vector<prepared_field> */ = Member_Preparation::is_static($node->modifiers)
-				? $static_store->named($node->name) : $store->named($node->name);
+			$fields /** vector<prepared_field> */ = [];
+			if (Member_Preparation::is_static($node->modifiers)) { $fields = $static_store->named($node->name); }
+			else { $fields = $store->named($node->name); }
 			$node->set_preparation($fields[0]);
 		}
 	}

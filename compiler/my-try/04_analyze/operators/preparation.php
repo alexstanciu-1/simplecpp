@@ -62,8 +62,8 @@ final class Operator_Preparation
 			$left_paths /** nullable<local_condition_paths> */ = null;
 			if ($lazy) {
 				$left_paths = Local_Assignment::condition($context);
-				$context->pending_locals = $source_operator === operator_kind::logical_and
-					? $left_paths->when_true : $left_paths->when_false;
+				if ($source_operator === operator_kind::logical_and) { $context->pending_locals = $left_paths->when_true; }
+				else { $context->pending_locals = $left_paths->when_false; }
 			}
 			$right = Expression_Preparation::prepare($syntax->right, $context);
 			if ($left_paths !== null) {

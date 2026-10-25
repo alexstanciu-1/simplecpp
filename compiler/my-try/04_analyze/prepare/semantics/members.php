@@ -84,7 +84,7 @@ final class Member_Preparation
 	public static function derives_from(collected_member_owner $type, collected_member_owner $base, preparation_context $context): bool
 	{
 		$current /** collected_member_owner */ = $type;
-		while (true) {
+		for (;;) {
 			if ($current === $base) { return true; }
 			$relations = $context->worker->require_relationships($current, $context);
 			$parent = weakref_get($relations->base);

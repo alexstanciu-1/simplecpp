@@ -58,8 +58,9 @@ final class Reference_Preparation
 			throw new \RuntimeException('S2S reference binding requires an initializer');
 		}
 		$locals = $context->locals;
-		$existing /** vector<prepared_source_storage> */ = $type_syntax === null
-			? $locals->named($entry->name) : $locals->local_named($entry->name);
+		$existing /** vector<prepared_source_storage> */ = [];
+		if ($type_syntax === null) { $existing = $locals->named($entry->name); }
+		else { $existing = $locals->local_named($entry->name); }
 		if (q_count($existing) !== 0) {
 			throw new \RuntimeException('S2S reference binding requires a new local; rebinding is not supported');
 		}

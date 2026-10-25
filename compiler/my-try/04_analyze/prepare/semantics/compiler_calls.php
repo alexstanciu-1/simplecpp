@@ -34,9 +34,15 @@ final class Compiler_Call_Preparation
 				? ' requires Type::class and one integer argument' : ' requires exactly one enum argument'));
 		}
 		$enum_type /** canonical_type_use */;
-		if ($from_value) { $enum_type = self::type_argument($arguments[0], $context); }
-		$argument = Expression_Preparation::prepare_for_consumer($arguments[$source_index], $context, null, expression_consumer::consuming_argument);
-		if (!$from_value) { $enum_type = $argument->type; }
+		$argument /** prepared_expression */;
+		if ($from_value) {
+			$enum_type = self::type_argument($arguments[0], $context);
+			$argument = Expression_Preparation::prepare_for_consumer($arguments[$source_index], $context, null, expression_consumer::consuming_argument);
+		}
+		else {
+			$argument = Expression_Preparation::prepare_for_consumer($arguments[$source_index], $context, null, expression_consumer::consuming_argument);
+			$enum_type = $argument->type;
+		}
 		if (!Type_Queries::is_enum($enum_type)) {
 			throw new \RuntimeException('S2S ' . $definition->name() . ' requires an enum argument or target');
 		}

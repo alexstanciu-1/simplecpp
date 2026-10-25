@@ -210,9 +210,9 @@ final class Body_Preparation
 			$locals->initializing_name = $previous_initializing;
 		}
 
-		$previous /** vector<prepared_source_storage> */ = $type_syntax === null
-			? $locals->named($entry->name)
-			: $before_initializer;
+		$previous /** vector<prepared_source_storage> */ = [];
+		if ($type_syntax === null) { $previous = $locals->named($entry->name); }
+		else { $previous = $before_initializer; }
 		if (($type_syntax !== null) || (q_count($previous) === 0))
 		{
 			$binding->resolved_kind = binding_kind::declaration;

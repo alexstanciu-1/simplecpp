@@ -1,0 +1,32 @@
+[
+    {
+        "case": "null_initializer",
+        "concrete": false,
+        "result": "Required object boundary rejects null; declare a nullable object type\n"
+    },
+    {
+        "case": "null_initializer",
+        "concrete": true,
+        "result": "Required object boundary rejects null; declare a nullable object type\n"
+    },
+    {
+        "case": "no_initializer",
+        "concrete": false,
+        "result": "Required local may be read before assignment: diagnostic\n"
+    },
+    {
+        "case": "no_initializer",
+        "concrete": true,
+        "result": "Required local may be read before assignment: diagnostic\n"
+    },
+    {
+        "case": "nullable_reference",
+        "concrete": false,
+        "result": "S2S reference arguments require stable storage of the exact parameter type\n"
+    },
+    {
+        "case": "nullable_reference",
+        "concrete": true,
+        "result": "S2S reference arguments require stable storage of the exact parameter type\n"
+    }
+]

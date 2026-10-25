@@ -440,11 +440,11 @@ final class CPP_Generator
 			return CPP_Declarations::type_for($binding->type, $context, cpp_type_requirement::stored_value) . ' ' . $name;
 		}
 
-		$initializer /** expression_node */ = $initializer;
+		$value_node /** expression_node */ = $initializer;
 		$previous = $context->suspending_expression;
-		$context->suspending_expression = $initializer->require_preparation()->suspends;
+		$context->suspending_expression = $value_node->require_preparation()->suspends;
 		try {
-			$value = (new CPP_Syntax($context))->expression($initializer);
+			$value = (new CPP_Syntax($context))->expression($value_node);
 			return self::generate_storage_value($binding, $name, $value, $explicit_type, $context);
 		}
 		finally { $context->suspending_expression = $previous; }
