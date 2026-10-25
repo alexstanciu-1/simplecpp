@@ -563,9 +563,8 @@ public:
 
 	iteration_detail::table_range<hash_t, T_KEY, T_VALUE> value_range() const
 		requires(std::copy_constructible<T_KEY> && std::copy_constructible<T_VALUE>) {
-		if (!iteration_) iteration_ = std::make_shared<iteration_detail::table_source<hash_t>>(
-			const_cast<hash_t &>(*this));
-		return iteration_detail::table_range<hash_t, T_KEY, T_VALUE>(iteration_);
+		return iteration_detail::table_range<hash_t, T_KEY, T_VALUE>(iteration_detail::read_source(
+			iteration_, const_cast<hash_t &>(*this)));
 	}
 
 	[[nodiscard]] bool_t empty() const noexcept {
@@ -1194,9 +1193,7 @@ public:
 	}
 
 	std::shared_ptr<iteration_detail::table_source<packed_table>> iteration_source() const {
-		if (!iteration_) iteration_ = std::make_shared<iteration_detail::table_source<packed_table>>(
-			const_cast<packed_table &>(*this));
-		return iteration_;
+		return iteration_detail::read_source(iteration_, const_cast<packed_table &>(*this));
 	}
 
 	[[nodiscard]] bool_t empty() const noexcept {

@@ -24,6 +24,12 @@ target_link_libraries(test_sentinels PRIVATE scpp_runtime scpp_runtime_test_supp
 
 # Registers the executables with CTest for repeatable smoke execution.
 enable_testing()
+find_package(Threads REQUIRED)
+add_executable(test_concurrent_value_iteration test_concurrent_value_iteration.cpp)
+target_link_libraries(test_concurrent_value_iteration PRIVATE scpp_runtime Threads::Threads)
+target_compile_features(test_concurrent_value_iteration PRIVATE cxx_std_20)
+add_test(NAME scpp_test_concurrent_value_iteration COMMAND test_concurrent_value_iteration)
+set_tests_properties(scpp_test_concurrent_value_iteration PROPERTIES TIMEOUT 60)
 if(CMAKE_SYSTEM_NAME STREQUAL "Linux")
 	# Exercise the lock implementation without unrelated filesystem/JSON linkage.
 	add_executable(test_file_locks test_file_locks.cpp

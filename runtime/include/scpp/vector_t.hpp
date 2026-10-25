@@ -77,9 +77,8 @@ public:
 	// The range owns the traversal; the optional source state retains storage
 	// only if the wrapper dies before the traversal finishes.
 	iteration_detail::vector_range<T> value_range() const requires std::copy_constructible<T> {
-		if (!iteration_) iteration_ = std::make_shared<iteration_detail::vector_source<T>>(
-			const_cast<std::vector<T> &>(value_));
-		return iteration_detail::vector_range<T>(iteration_);
+		return iteration_detail::vector_range<T>(iteration_detail::read_source(
+			iteration_, const_cast<std::vector<T> &>(value_)));
 	}
 
 	vector_t(std::initializer_list<T> init)

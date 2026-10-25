@@ -532,6 +532,11 @@ assignment rather than relying on the historical `php::clean` helper spelling.
 - implementation is adapted from the donor `mem_container` storage design, but generated code must target `hash_t` only
 - `find()` is the non-inserting lookup API and returns `maybe_value_t`
 - `at()` is checked non-inserting access and follows throw-style semantics on miss
+- The value-iteration protocol's lazy source publication and subscription links
+  support independent concurrent readers of one stable typed vector/hash wrapper.
+  Each traversal remains owned by its reader. This protects hidden bookkeeping,
+  not element writes, container mutation/destruction, or boxed binding replacement;
+  callers still own synchronization for those operations.
 - `foreach_range(const hash_t<T, K>&)` borrows the original hash and uses its const
   entry iterators, preserving order and skipping removed slots without copying
   membership. Entries expose copied values or const value references, never mutable
