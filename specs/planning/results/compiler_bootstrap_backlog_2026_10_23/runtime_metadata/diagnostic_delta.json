@@ -1,0 +1,8 @@
+{
+  "removed": [
+    "Required object property needs direct initialization: runtime_metadata"
+  ],
+  "added": [
+    "Required object property needs direct initialization: global_scope"
+  ]
+}

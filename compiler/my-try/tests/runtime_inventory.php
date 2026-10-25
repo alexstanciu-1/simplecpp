@@ -14,7 +14,7 @@ if ($build->sources !== ['core/runtime.cpp', 'modules/process/process.cpp', 'mod
 	throw new \LogicException('Production module build closure changed');
 }
 Compiler_Lifecycle::reset();
-if (Model::$runtime_metadata !== $input || Model::$type_catalog->definition('process_handle') === $before) {
+if (Model::require_runtime_metadata() !== $input || Model::$type_catalog->definition('process_handle') === $before) {
 	throw new \LogicException('Production reset lost retained input/fresh type identities');
 }
 echo "Production runtime catalogs compose and reset\n";

@@ -14,7 +14,21 @@ final class Model
 	/** Published advisory snapshot; reset before source/semantic changes. */
 	public static Storage $diagnostics /** Storage<compiler_diagnostic> */;
 	/** Startup metadata survives semantic resets; no stage performs catalog IO. */
-	public static runtime_catalog_input $runtime_metadata;
+	private static ?runtime_catalog_input $runtime_metadata_value = null;
+
+	public static function require_runtime_metadata(): runtime_catalog_input
+	{
+		if (self::$runtime_metadata_value === null) {
+			throw new \LogicException('Runtime metadata has not been configured');
+		}
+		return self::$runtime_metadata_value;
+	}
+
+	/** Storage publication only; Compiler_Lifecycle owns startup validation and policy. */
+	public static function set_runtime_metadata(runtime_catalog_input $input): void
+	{
+		self::$runtime_metadata_value = $input;
+	}
 	/**
 	 * Modules in input order followed by deleted records; one store owns both key lookup and iteration.
 	 * @storage.owner

@@ -25,7 +25,7 @@ $schema['functions'][] = ['id' => 'observation.single', 'name' => 'inspect_uniqu
 	'parameters' => [['name' => 'input', 'type' => $types[1], 'passing' => 'observe']], 'returns' => 'int'];
 $schema['cpp'][] = ['id' => 'observation.single', 'symbol' => 'scpp::count', 'header' => 'operators/count/count.hpp'];
 $input = new runtime_catalog_input();
-foreach (Model::$runtime_metadata->modules as $module) {
+foreach (Model::require_runtime_metadata()->modules as $module) {
 	$input->modules->add($module->name, $module);
 }
 $input->modules->add('observation', Runtime_Catalog_Reader::decode(json_encode($schema), 'observation.json'));
@@ -39,7 +39,7 @@ $candidate->modules->add('observation', Runtime_Catalog_Reader::decode(json_enco
 $failed = false;
 try { Compiler_Lifecycle::configure_runtime($candidate); }
 catch (\RuntimeException $error) { $failed = str_contains($error->getMessage(), 'one fixed readonly input'); }
-observation_check($failed && Model::$runtime_metadata === $input, 'Invalid observation contract was published');
+observation_check($failed && Model::require_runtime_metadata() === $input, 'Invalid observation contract was published');
 
 $invalid = $schema;
 $invalid['functions'][1]['parameters'][0]['passing'] = 'value';
@@ -49,7 +49,7 @@ $candidate->modules->add('observation', Runtime_Catalog_Reader::decode(json_enco
 $failed = false;
 try { Compiler_Lifecycle::configure_runtime($candidate); }
 catch (\RuntimeException $error) { $failed = str_contains($error->getMessage(), 'cannot mix observation'); }
-observation_check($failed && Model::$runtime_metadata === $input, 'Mixed consuming/observing overloads were published');
+observation_check($failed && Model::require_runtime_metadata() === $input, 'Mixed consuming/observing overloads were published');
 
 /** Exercise shared preparation and artifact lowering, not a test-only emitter. */
 function observation_compile(string $source): string

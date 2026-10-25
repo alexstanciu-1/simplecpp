@@ -42,7 +42,7 @@ foreach ($invalids as [$bad,$message]) {
 		$candidate->modules->add('callback_proof',Runtime_Catalog_Reader::decode(json_encode($bad),'bad.json'));
 		Compiler_Lifecycle::configure_runtime($candidate);
 	} catch (\Throwable $error) { $failed=str_contains($error->getMessage(),$message); }
-	callback_check($failed && Model::$runtime_metadata===$input,'Bad callback metadata: '.$message);
+	callback_check($failed && Model::require_runtime_metadata()===$input,'Bad callback metadata: '.$message);
 }
 function callback_compile(string $source): string {
 	Compiler_Lifecycle::reset();

@@ -128,8 +128,8 @@ catch (\Exception $error) { $failed = true; }
 filesystem_check($failed, 'Unselected filesystem module leaked');
 Compiler_Lifecycle::reset();
 $original = Model::$runtime_callables->function_definition('filesystem.fs_get');
-$metadata = Model::$runtime_metadata;
+$metadata = Model::require_runtime_metadata();
 Compiler_Lifecycle::reset_syntax();
 filesystem_check($original !== Model::$runtime_callables->function_definition('filesystem.fs_get'), 'Stale filesystem identity');
-filesystem_check($metadata === Model::$runtime_metadata, 'Metadata was not retained across reset');
+filesystem_check($metadata === Model::require_runtime_metadata(), 'Metadata was not retained across reset');
 echo "Runtime filesystem passed\n";

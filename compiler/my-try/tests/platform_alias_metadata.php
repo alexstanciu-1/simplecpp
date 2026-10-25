@@ -19,14 +19,14 @@ $metadata=[];
 foreach(['["php","php"]','["self"]','["parent"]','["static"]','["9bad"]','["a::b"]','["a\\\\b"]','[""]'] as $aliases){
  $bad=new runtime_catalog_input();$error='';
  try{$bad->modules->add('core',Runtime_Catalog_Reader::decode(str_replace('["php"]',$aliases,$core),'invalid.json'));Compiler_Lifecycle::configure_runtime($bad);}catch(\RuntimeException $e){$error=$e->getMessage();}
- platform_check($error!==''&&Model::$runtime_metadata===$custom,'Invalid alias configuration published');$metadata[]=$error;
+ platform_check($error!==''&&Model::require_runtime_metadata()===$custom,'Invalid alias configuration published');$metadata[]=$error;
 }
 $bad=new runtime_catalog_input();$error='';
 try{
  $bad->modules->add('core',Runtime_Catalog_Reader::decode(str_replace('"member":{"owner":"Exception","dispatch":"static"}', '"qualified_aliases":["php"],"member":{"owner":"Exception","dispatch":"static"}',$core),'member.json'));
  Compiler_Lifecycle::configure_runtime($bad);
 }catch(\RuntimeException $e){$error=$e->getMessage();}
-platform_check(str_contains($error,'members cannot expose')&&Model::$runtime_metadata===$custom,'Member alias admitted');$metadata[]=$error;
+platform_check(str_contains($error,'members cannot expose')&&Model::require_runtime_metadata()===$custom,'Member alias admitted');$metadata[]=$error;
 file_put_contents($out.'/custom.cpp',platform_compile('$n float=clock_probe::microtime(true);if($n<=0.0){return 1;}'));
 $targets=Model::$runtime_callables->qualified_named('clock_probe','microtime');
 platform_check(count($targets)===2&&$targets[0]===Model::$runtime_callables->function_definition('core.microtime.0'),'Alias copied identity');

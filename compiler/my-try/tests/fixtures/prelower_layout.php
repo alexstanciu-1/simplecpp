@@ -9,7 +9,7 @@ $revision = (int)$argv[3];
 $alignment = (int)($argv[4] ?? 8);
 $broken = (int)($argv[5] ?? 0);
 $metadata = new runtime_catalog_input();
-foreach (Model::$runtime_metadata->modules as $module) { $metadata->modules->add($module->name, $module); }
+foreach (Model::require_runtime_metadata()->modules as $module) { $metadata->modules->add($module->name, $module); }
 $metadata->modules->add('type_proof', Runtime_Catalog_Reader::decode(file_get_contents(dirname(__DIR__) . '/runtime_types.json'), 'type_proof.json'));
 Compiler_Lifecycle::configure_runtime($metadata);
 if (!is_dir($source)) { mkdir($source); }

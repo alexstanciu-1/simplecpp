@@ -37,8 +37,8 @@ $context = new preparation_context();
 $context->worker = new Preparation_Worker(Model::$language_scope);
 $isolated_registry = new Type_Registry();
 $isolated_types = Type_Definition_Registration::install($isolated_registry);
-Runtime_Type_Registration::install(Model::$runtime_metadata, $isolated_types);
-Initialization_Registration::install($isolated_types, Model::$runtime_metadata);
+Runtime_Type_Registration::install(Model::require_runtime_metadata(), $isolated_types);
+Initialization_Registration::install($isolated_types, Model::require_runtime_metadata());
 initialization_check($isolated_registry->application_count() === 0, 'Installation eagerly instantiated input types');
 initialization_check(Model::$language_scope->types_named('initializer_list') === []
 	&& Model::$language_scope->types_named('initializer_entry') === [], 'Unsafe input types became source-visible');

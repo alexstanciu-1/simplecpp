@@ -37,7 +37,7 @@ foreach ([$variable, $vector] as $index => $pattern) {
 	$schema['cpp'][] = ['id' => 'proof.overlap' . $index, 'symbol' => 'scpp::count', 'header' => 'operators/count/count.hpp'];
 }
 $input = new runtime_catalog_input();
-foreach (Model::$runtime_metadata->modules as $module) { $input->modules->add($module->name, $module); }
+foreach (Model::require_runtime_metadata()->modules as $module) { $input->modules->add($module->name, $module); }
 $input->modules->add('proof', Runtime_Catalog_Reader::decode(json_encode($schema), 'proof.json'));
 Compiler_Lifecycle::configure_runtime($input);
 
@@ -57,7 +57,7 @@ foreach ($invalid_rows as $row) {
 	$failed = false;
 	try { Compiler_Lifecycle::configure_runtime($candidate); }
 	catch (\Throwable $error) { $failed = true; }
-	generic_check($failed && Model::$runtime_metadata === $input, 'Invalid generic metadata replaced configuration');
+	generic_check($failed && Model::require_runtime_metadata() === $input, 'Invalid generic metadata replaced configuration');
 }
 $duplicate = $schemas[0];
 $duplicate['id'] = 'proof.duplicate';
@@ -73,7 +73,7 @@ $candidate->modules->add('proof', Runtime_Catalog_Reader::decode(json_encode($in
 $failed = false;
 try { Compiler_Lifecycle::configure_runtime($candidate); }
 catch (\RuntimeException $error) { $failed = str_contains($error->getMessage(), 'Duplicate runtime overload'); }
-generic_check($failed && Model::$runtime_metadata === $input, 'Alpha-equivalent runtime recipe was accepted');
+generic_check($failed && Model::require_runtime_metadata() === $input, 'Alpha-equivalent runtime recipe was accepted');
 
 /** Compile with the same retained catalog input across semantic resets. */
 function generic_compile(string $source): Compiler
@@ -137,9 +137,9 @@ generic_check(weakref_get($first->target) === weakref_get($second->target), 'Spe
 generic_check($first->signature !== $second->signature, 'Provider cached a single concrete signature');
 generic_check(!$first->signature->parameters[0]->type->matches($second->signature->parameters[0]->type), 'Inferred payload types collapsed');
 $old = Model::$runtime_callables->function_definition('core.count.vector');
-$metadata = Model::$runtime_metadata;
+$metadata = Model::require_runtime_metadata();
 Compiler_Lifecycle::reset_syntax();
-generic_check(Model::$runtime_metadata === $metadata, 'Generic reset reread metadata');
+generic_check(Model::require_runtime_metadata() === $metadata, 'Generic reset reread metadata');
 $failed = false;
 try { Model::$cpp_callable_bindings->function_binding($old); }
 catch (\LogicException $error) { $failed = true; }

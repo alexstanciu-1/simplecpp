@@ -14,7 +14,7 @@ $schema = ['version'=>1,'module'=>'allocation_probe','dependencies'=>['core'],
 	'cpp'=>[['id'=>'probe.begin','symbol'=>'snapshot_probe::begin','header'=>$header],
 		['id'=>'probe.end','symbol'=>'snapshot_probe::end','header'=>$header]]];
 $input = new runtime_catalog_input();
-foreach (Model::$runtime_metadata->modules as $module) { $input->modules->add($module->name, $module); }
+foreach (Model::require_runtime_metadata()->modules as $module) { $input->modules->add($module->name, $module); }
 $input->modules->add('allocation_probe', Runtime_Catalog_Reader::decode(json_encode($schema), 'allocation-probe.json'));
 Compiler_Lifecycle::configure_runtime($input);
 $program = 'function other():string{return "a";} $s string="' . str_repeat('a', 65536) . '";'

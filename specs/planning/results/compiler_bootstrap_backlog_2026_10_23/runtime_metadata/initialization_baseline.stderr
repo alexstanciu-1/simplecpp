@@ -1,0 +1,5 @@
+PHP Fatal error:  Uncaught LogicException: Expected rejection: does not support in /tmp/runtime-metadata-baseline-01/initialization.php:19
+Stack trace:
+#0 /tmp/runtime-metadata-baseline-01/initialization.php(88): scpp\compiler\initialization_rejects()
+#1 {main}
+  thrown in /tmp/runtime-metadata-baseline-01/initialization.php on line 19

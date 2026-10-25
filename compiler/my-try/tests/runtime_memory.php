@@ -47,10 +47,10 @@ foreach (['memory_get_usage(1);', 'memory_get_peak_usage("true");',
 	}
 }
 Compiler_Lifecycle::reset();
-$metadata = Model::$runtime_metadata;
+$metadata = Model::require_runtime_metadata();
 $original = Model::$runtime_callables->function_definition('core.memory_get_usage.0');
 Compiler_Lifecycle::reset_syntax();
-if ($metadata !== Model::$runtime_metadata || $original === Model::$runtime_callables->function_definition('core.memory_get_usage.0')) {
+if ($metadata !== Model::require_runtime_metadata() || $original === Model::$runtime_callables->function_definition('core.memory_get_usage.0')) {
 	throw new \LogicException('Memory catalog reset did not preserve metadata with fresh identities');
 }
 echo "Runtime memory passed\n";

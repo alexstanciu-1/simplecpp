@@ -17,7 +17,7 @@ foreach ([
 		$candidate->modules->add('core', Runtime_Catalog_Reader::decode($invalid, 'core.json'));
 		Compiler_Lifecycle::configure_runtime($candidate);
 	} catch (\Throwable $error) { $rejected = true; }
-	if (!$rejected || Model::$runtime_metadata !== $base) { throw new \LogicException('Invalid context changed runtime configuration'); }
+	if (!$rejected || Model::require_runtime_metadata() !== $base) { throw new \LogicException('Invalid context changed runtime configuration'); }
 }
 // A different source spelling uses the same binding: no dbg-name special case.
 $renamed = str_replace('"name":"dbg"', '"name":"inspect_scalar"', $core);

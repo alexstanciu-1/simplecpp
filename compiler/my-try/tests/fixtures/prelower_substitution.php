@@ -19,7 +19,7 @@ $indexing = $initializers || ($argv[6] ?? '') === 'indexing';
 $members = $indexing || ($argv[6] ?? '') === 'members';
 $fields = $members || (($argv[6] ?? '') === 'fields') || $source_arguments;
 $metadata = new runtime_catalog_input();
-foreach (Model::$runtime_metadata->modules as $module) { $metadata->modules->add($module->name, $module); }
+foreach (Model::require_runtime_metadata()->modules as $module) { $metadata->modules->add($module->name, $module); }
 $metadata->modules->add('type_proof', Runtime_Catalog_Reader::decode(file_get_contents(dirname(__DIR__) . '/runtime_types.json'), 'type_proof.json'));
 if ($iteration) { $metadata->modules->add('protocol_proof', Runtime_Catalog_Reader::decode(file_get_contents(dirname(__DIR__) . '/runtime_protocols.json'), 'protocol_proof.json')); }
 Compiler_Lifecycle::configure_runtime($metadata);

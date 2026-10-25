@@ -1,0 +1,4 @@
+PHP Fatal error:  Uncaught LogicException: Null expression binding changed storage admission in /home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/tests/runtime_inventory.php:41
+Stack trace:
+#0 {main}
+  thrown in /home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/tests/runtime_inventory.php on line 41

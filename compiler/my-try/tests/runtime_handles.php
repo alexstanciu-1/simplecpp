@@ -74,7 +74,7 @@ foreach (['duplicate', 'owner', 'property_duplicate', 'property_type', 'property
 	catch (\RuntimeException $error) {
 		$failed = true;
 	}
-	handle_check($failed && (Model::$runtime_metadata === $input), 'Invalid member constant configuration was published');
+	handle_check($failed && (Model::require_runtime_metadata() === $input), 'Invalid member constant configuration was published');
 }
 $cases = [
 	'properties' => <<<'PHS'
@@ -206,6 +206,6 @@ handle_check(Model::$type_catalog->registry()->has_capability(Model::$type_catal
 	Model::$type_catalog->canonical('ticket')->type_id()), generic_contract::copyable_value),
 	'Registered handle is not copyable');
 Compiler_Lifecycle::reset_syntax();
-handle_check((Model::$runtime_metadata === $input) && (Model::$type_catalog->definition('ticket') !== $old),
+handle_check((Model::require_runtime_metadata() === $input) && (Model::$type_catalog->definition('ticket') !== $old),
 	'Handle reset did not rebuild identities from retained input');
 echo "Runtime handles passed\n";

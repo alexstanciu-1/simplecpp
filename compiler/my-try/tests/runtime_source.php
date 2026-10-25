@@ -128,8 +128,8 @@ foreach ([
 }
 source_check(source_compile($cases['index']) !== '', 'Source recovery failed');
 $old = Model::$type_catalog->definition('source_buffer');
-$metadata = Model::$runtime_metadata;
+$metadata = Model::require_runtime_metadata();
 Compiler_Lifecycle::reset_syntax();
-source_check((Model::$type_catalog->definition('source_buffer') !== $old) && (Model::$runtime_metadata === $metadata),
+source_check((Model::$type_catalog->definition('source_buffer') !== $old) && (Model::require_runtime_metadata() === $metadata),
 	'Source reset lost retained metadata or reused type identity');
 echo "Runtime source passed\n";

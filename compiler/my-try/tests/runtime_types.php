@@ -32,7 +32,7 @@ runtime_type_check($core_types->source()->type_or_null('parcel') === null
 
 $empty_input = new runtime_catalog_input();
 Compiler_Lifecycle::configure_runtime($empty_input);
-runtime_type_check(Model::$runtime_metadata === $empty_input, 'Protocols still require unselected named containers');
+runtime_type_check(Model::require_runtime_metadata() === $empty_input, 'Protocols still require unselected named containers');
 Compiler_Lifecycle::configure_runtime($input);
 
 $schema = json_decode($text, true, 512, JSON_THROW_ON_ERROR);
@@ -77,7 +77,7 @@ foreach ($invalids as [$invalid, $message]) {
 	catch (\Throwable $error) {
 		$failed = str_contains($error->getMessage(), $message);
 	}
-	runtime_type_check($failed && Model::$runtime_metadata === $input, 'Bad metadata was accepted/wrong diagnostic: ' . $message);
+	runtime_type_check($failed && Model::require_runtime_metadata() === $input, 'Bad metadata was accepted/wrong diagnostic: ' . $message);
 }
 
 Compiler_Lifecycle::reset();
@@ -104,7 +104,7 @@ runtime_type_check(!$registry->has_capability($noncopy, generic_contract::copyab
 	&& $registry->has_capability($noncopy, generic_contract::value_storable)
 	&& $registry->has_capability($noncopy, generic_contract::result_payload), 'Formation and capability dependency conflated');
 Compiler_Lifecycle::reset_syntax();
-runtime_type_check(Model::$runtime_metadata === $input && Model::$type_catalog->definition('parcel') !== $parcel,
+runtime_type_check(Model::require_runtime_metadata() === $input && Model::$type_catalog->definition('parcel') !== $parcel,
 	'Reset reread metadata or reused semantic definitions');
 
 /** Exercise ordinary preparation/emission and the retained no-op path. */

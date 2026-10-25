@@ -60,7 +60,7 @@ $reference = ['name'=>'trace','type'=>'int','passing'=>'reference'];
 payload_row($schema, 'probe_pair', ['int','string',$reference], 'int', 'pair');
 payload_row($schema, 'probe_pair', ['string','int',$reference], 'int', 'pair');
 $input = new runtime_catalog_input();
-foreach (Model::$runtime_metadata->modules as $module) {
+foreach (Model::require_runtime_metadata()->modules as $module) {
 	$input->modules->add($module->name, $module);
 }
 $input->modules->add('payload_probe', Runtime_Catalog_Reader::decode(json_encode($schema), 'payload_probe.json'));

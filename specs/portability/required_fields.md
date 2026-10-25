@@ -1,6 +1,11 @@
 # Required fields without initializers
 Doc Status: supporting
 
+The omitted-initializer checkpoint below describes structural conversion and the
+legacy route. v0.2 separately enforces required-object initialization: instance
+inputs use the [constructor contract](constructor_promotion.md); static startup
+objects use explicit nullable storage with checked access as described below.
+
 Ordinary class instance/static fields can omit an initializer while retaining an
 explicit scalar or literal named type. Annotated vector/hash fields can also omit
 an initializer. Visibility is preserved; no type resolution is added.
@@ -82,3 +87,23 @@ identity, self replacement, failed null writes, throwing RHS evaluated once with
 previous state preserved, successful replacement, incremental conversion and
 structural rejection controls. Exception class/message and cleanup timing parity
 are not promised. This is not a whole-compiler native bootstrap or a STAN proof.
+
+## Authored static startup storage
+
+A required static object populated by a startup method is not a constructor input.
+Use private static ?T backing initialized to null, a required checked getter, and
+a setter accepting T. This uses existing private/static/nullable language contracts;
+it needs no converter-generated staged-field protocol or startup-order inference.
+
+Model runtime metadata uses this pattern. Compiler_Lifecycle validates privately
+before its existing final publication point calls set_runtime_metadata; consumers
+call require_runtime_metadata. Semantic resets retain the same input. The storage
+setter is not a second configuration API; startup validation and live-replacement
+policy remain lifecycle-owned. An early getter throws instead of returning a dummy
+empty catalog. No catalog IO or lazy loading occurs in the accessor.
+
+`tests/portability/runtime_metadata.py` extracts the actual storage/accessors and
+proves early failure, identity, mutation visibility, throwing replacement preserving
+old state, and replacement across PHP, legacy and ordinary/concrete native modes.
+The payload is a dependency double; actual runtime_catalog, runtime_type_bindings
+and startup_metadata host tests prove validation and reset/publication policy.

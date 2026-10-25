@@ -140,8 +140,8 @@ catch (\Exception $error) { $failed = true; }
 regex_check($failed, 'Unselected regex module leaked');
 Compiler_Lifecycle::reset();
 $original = Model::$runtime_callables->function_definition('regex.match.2');
-$metadata = Model::$runtime_metadata;
+$metadata = Model::require_runtime_metadata();
 Compiler_Lifecycle::reset_syntax();
 regex_check($original !== Model::$runtime_callables->function_definition('regex.match.2'), 'Stale regex identity');
-regex_check($metadata === Model::$runtime_metadata, 'Regex metadata was not retained');
+regex_check($metadata === Model::require_runtime_metadata(), 'Regex metadata was not retained');
 echo "Runtime regex passed\n";

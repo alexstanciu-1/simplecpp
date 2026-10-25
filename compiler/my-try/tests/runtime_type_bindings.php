@@ -70,10 +70,10 @@ function binding_rejection(array $core, array $provider, string $message, runtim
 		Compiler_Lifecycle::configure_runtime($candidate);
 	} catch (\Throwable $error) { $diagnostic = $error->getMessage(); }
 	binding_check(str_contains($diagnostic, $message), 'Expected rejection: '.$message.'; received: '.$diagnostic);
-	binding_check(Model::$runtime_metadata === $installed, 'Rejected candidate replaced installed metadata');
+	binding_check(Model::require_runtime_metadata() === $installed, 'Rejected candidate replaced installed metadata');
 	// A failed candidate must not poison subsequent validation of the valid input.
 	Compiler_Lifecycle::configure_runtime($installed);
-	binding_check(Model::$runtime_metadata === $installed, 'Valid configuration recovery lost installed input');
+	binding_check(Model::require_runtime_metadata() === $installed, 'Valid configuration recovery lost installed input');
 }
 foreach ($invalids as [$bad,$message]) { binding_rejection($bad, $custom_schema, $message, $input); }
 $provider_invalids = [];
@@ -103,7 +103,7 @@ $artifact_snapshot=[]; foreach ($artifacts as $artifact) { $artifact_snapshot[$a
 // The installed recipes belong to the new registry; immutable input survives its reset.
 $definition_before=Model::$type_catalog->definition('closed');
 Compiler_Lifecycle::reset();
-binding_check(Model::$runtime_metadata===$candidate && Model::$type_catalog->definition('closed')!==$definition_before, 'Recipe configuration did not survive identity reset');
+binding_check(Model::require_runtime_metadata()===$candidate && Model::$type_catalog->definition('closed')!==$definition_before, 'Recipe configuration did not survive identity reset');
 // Recovery also preserves demanded output across fresh registry identities.
 $replayed_registry = Model::$type_catalog->registry();
 $replayed_integer = $replayed_registry->use(Model::$type_catalog->canonical('int')->type_id());

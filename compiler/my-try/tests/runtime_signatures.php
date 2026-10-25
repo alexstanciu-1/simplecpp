@@ -81,7 +81,7 @@ foreach ($invalids as [$bad,$message]) {
 		$candidate->modules->add('signature_proof',Runtime_Catalog_Reader::decode(json_encode($bad),'bad.json'));
 		Compiler_Lifecycle::configure_runtime($candidate);
 	} catch (\Throwable $error) { $failed=str_contains($error->getMessage(),$message); }
-	signature_check($failed && Model::$runtime_metadata===$input,'Bad default metadata: '.$message);
+	signature_check($failed && Model::require_runtime_metadata()===$input,'Bad default metadata: '.$message);
 }
 function signature_compile(string $text): string {
 	Compiler_Lifecycle::reset();

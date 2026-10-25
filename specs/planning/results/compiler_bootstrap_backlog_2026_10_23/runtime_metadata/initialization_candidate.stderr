@@ -1,0 +1,5 @@
+PHP Fatal error:  Uncaught LogicException: Expected rejection: does not support in /home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/tests/initialization.php:19
+Stack trace:
+#0 /home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/tests/initialization.php(88): scpp\compiler\initialization_rejects()
+#1 {main}
+  thrown in /home/alexv/__AI/simple_cpp/simple_cpp_01/compiler/my-try/tests/initialization.php on line 19

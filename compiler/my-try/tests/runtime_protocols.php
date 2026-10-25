@@ -58,7 +58,7 @@ foreach ($invalids as [$bad, $message]) {
 		Compiler_Lifecycle::configure_runtime($candidate);
 	}
 	catch (\Throwable $error) { $failed = str_contains($error->getMessage(), $message); }
-	protocol_check($failed && Model::$runtime_metadata === $input, 'Invalid metadata published: ' . $message);
+	protocol_check($failed && Model::require_runtime_metadata() === $input, 'Invalid metadata published: ' . $message);
 }
 
 function protocol_compile(string $source): string
@@ -110,7 +110,7 @@ $old_definition = Model::$type_catalog->definition('tray');
 protocol_check(Model::$indexing_contracts->lookup($old_definition) !== null
 	&& Model::$iteration_contracts->lookup($old_definition) !== null, 'Missing provider protocols');
 Compiler_Lifecycle::reset_syntax();
-protocol_check(Model::$runtime_metadata === $input && Model::$type_catalog->definition('tray') !== $old_definition
+protocol_check(Model::require_runtime_metadata() === $input && Model::$type_catalog->definition('tray') !== $old_definition
 	&& Model::$indexing_contracts->lookup($old_definition) === null, 'Protocol reset reused old canonical identity');
 
 foreach ([

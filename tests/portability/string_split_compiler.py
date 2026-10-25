@@ -62,7 +62,7 @@ $first = CPP_Output::encode(Model::$cpp_files);
 $compiler->prepare();
 $compiler->cpp();
 if (CPP_Output::encode(Model::$cpp_files) !== $first) { throw new \\LogicException('Repeated output changed'); }
-echo Runtime_Build_Contract::encode(CPP_Runtime_Build::requirements(Model::$runtime_metadata)), "\\n";
+echo Runtime_Build_Contract::encode(CPP_Runtime_Build::requirements(Model::require_runtime_metadata())), "\\n";
 echo $first;
 '''.replace('__CATALOG__', php_literal(catalogs))
         source = out / 'source'

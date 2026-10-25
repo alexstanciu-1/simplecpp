@@ -14,7 +14,7 @@ final class CPP_Generator
 
 	private static function native_entry(string $body): string
 	{
-		$modules /** Keyed_Storage<runtime_module_spec> */ = Model::$runtime_metadata->modules;
+		$modules /** Keyed_Storage<runtime_module_spec> */ = Model::require_runtime_metadata()->modules;
 		if (isset($modules['tasks'])) {
 			return CPP_Entry_Support::base_body(false) . self::compiled_entry($body);
 		}

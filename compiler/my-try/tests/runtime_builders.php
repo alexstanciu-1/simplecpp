@@ -152,8 +152,8 @@ foreach ([
 }
 builder_check(builder_compile($cases['text']) !== '', 'Builder recovery failed');
 $old = Model::$type_catalog->definition('text_builder');
-$metadata = Model::$runtime_metadata;
+$metadata = Model::require_runtime_metadata();
 Compiler_Lifecycle::reset_syntax();
-builder_check(Model::$type_catalog->definition('text_builder') !== $old && Model::$runtime_metadata === $metadata,
+builder_check(Model::$type_catalog->definition('text_builder') !== $old && Model::require_runtime_metadata() === $metadata,
 	'Builder reset did not retain metadata with fresh type identities');
 echo "Runtime builders passed\n";

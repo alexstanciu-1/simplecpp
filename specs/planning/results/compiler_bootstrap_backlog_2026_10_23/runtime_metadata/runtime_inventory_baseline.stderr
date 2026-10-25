@@ -1,0 +1,4 @@
+PHP Fatal error:  Uncaught LogicException: Null expression binding changed storage admission in /tmp/runtime-metadata-baseline-01/runtime_inventory.php:41
+Stack trace:
+#0 {main}
+  thrown in /tmp/runtime-metadata-baseline-01/runtime_inventory.php on line 41

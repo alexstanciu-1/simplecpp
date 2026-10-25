@@ -8,7 +8,7 @@ $composed=$mode==='composed';
 $alternate=($argv[4]??'')==='alternate';
 $output_proof=($argv[5]??'')==='output';
 $metadata=new runtime_catalog_input();
-foreach(Model::$runtime_metadata->modules as $module){
+foreach(Model::require_runtime_metadata()->modules as $module){
 	if($alternate && $module->name==='core'){
 		$module=Runtime_Catalog_Reader::decode(file_get_contents(dirname(__DIR__,3).'/runtime/metadata/modules/core.json'),'core.json');
 		$binding=$module->cpp_types['core.representation.shared'];

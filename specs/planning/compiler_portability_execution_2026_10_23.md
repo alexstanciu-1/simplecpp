@@ -1632,3 +1632,23 @@ Bootstrap 1:13.81 / 355260 KiB peak RSS / 324 MiB PHP heap advances first diagno
 to runtime_metadata required initialization. Unique aggregate messages unchanged
 because root errors remain for other owners. Stopped at the next blocker without
 fixing it; no full bootstrap claim.
+
+## Runtime metadata checked static storage — 2026-10-25
+
+User approved private static nullable backing and requested compile/run recap.
+Model stores runtime_metadata_value and exposes checked required getter/storage
+setter. Lifecycle validation and final publication point remain unchanged; resets
+retain the exact input. All active readers/fixtures use getter. Reuses existing
+static/private/nullable support; no compiler/converter/runtime extension.
+
+Production accessor fixture passes PHP, legacy and both v0.2 native modes. Actual
+catalog/type-binding/startup/cleanup tests pass. Initialization and runtime_inventory
+expectation failures reproduce on isolated HEAD baseline. Evidence: runtime_metadata.
+
+Bootstrap 1:36.26 / 354944 KiB RSS / 324 MiB PHP heap removes runtime_metadata and
+exposes global_scope required initialization. Stopped there. Fresh aggregate has
+85 initialization strings and 11 other operation strings; these are deduplicated
+messages, not independent bug/site counts. Evidence README records remaining
+preparation families, unreached native emission/build/run acceptance and separate
+CH15 registry audit final-catalog blocker. Recommended next step is a batch reuse/
+lifecycle audit of remaining initialization owners before further fixes.

@@ -169,7 +169,7 @@ $artifacts->append(new cpp_artifact('proof:support', cpp_artifact_kind::translat
 $artifacts->append(new cpp_artifact('proof:entry', cpp_artifact_kind::translation_unit, 'entry.cpp', "int source_lifecycle_proof();\nint main() { return source_lifecycle_proof(); }\n"));
 $publisher = new Output_Publication($output);
 try {
-	$publisher->publish($artifacts, CPP_Runtime_Build::requirements(Model::$runtime_metadata), $concrete);
+	$publisher->publish($artifacts, CPP_Runtime_Build::requirements(Model::require_runtime_metadata()), $concrete);
 }
 finally {
 	$publisher->close();

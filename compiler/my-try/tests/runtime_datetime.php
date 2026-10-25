@@ -95,8 +95,8 @@ datetime_check($failed, 'Unselected datetime module leaked');
 
 Compiler_Lifecycle::reset();
 $original = Model::$runtime_callables->function_definition('datetime.dt_monotonic_ns');
-$metadata = Model::$runtime_metadata;
+$metadata = Model::require_runtime_metadata();
 Compiler_Lifecycle::reset_syntax();
 datetime_check($original !== Model::$runtime_callables->function_definition('datetime.dt_monotonic_ns'), 'Stale datetime identity');
-datetime_check($metadata === Model::$runtime_metadata, 'Metadata was not retained across reset');
+datetime_check($metadata === Model::require_runtime_metadata(), 'Metadata was not retained across reset');
 echo "Runtime datetime passed\n";

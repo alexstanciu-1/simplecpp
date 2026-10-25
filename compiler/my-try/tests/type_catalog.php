@@ -28,7 +28,7 @@ $registry = new Type_Registry();
 $catalog = Type_Definition_Registration::install($registry);
 $core_input = new runtime_catalog_input();
 $core_modules /** Keyed_Storage<runtime_module_spec> */ = $core_input->modules;
-$startup_modules /** Keyed_Storage<runtime_module_spec> */ = Model::$runtime_metadata->modules;
+$startup_modules /** Keyed_Storage<runtime_module_spec> */ = Model::require_runtime_metadata()->modules;
 $core_modules->add('core', $startup_modules['core']);
 Runtime_Type_Registration::install($core_input, $catalog);
 $bindings = CPP_Type_Binding_Registration::install($catalog);

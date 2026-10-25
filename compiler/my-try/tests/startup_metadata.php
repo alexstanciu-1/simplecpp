@@ -36,7 +36,7 @@ $replacement = Runtime_Catalog_Loader::load($root . '/metadata', ['core']);
 $rejected = false;
 try { Compiler_Lifecycle::configure_runtime($replacement); }
 catch (\LogicException $error) { $rejected = str_contains($error->getMessage(), 'before compilation'); }
-startup_check($rejected && Model::$runtime_metadata === $input, 'Live replacement changed startup metadata');
+startup_check($rejected && Model::require_runtime_metadata() === $input, 'Live replacement changed startup metadata');
 file_put_contents($root . '/source/main.phs', '$v vector<vector<int>> = [[1],[2]]; echo count($v), "\\n";');
 // Invalid disk bytes prove source notifications do not reload the provider.
 $changed_bytes = file_get_contents($root . '/metadata/core.json');
@@ -45,7 +45,7 @@ $publication = new Output_Publication($root . '/edited');
 try { $compiler->update_cpp([$root . '/source/main.phs'], $publication); } finally { $publication->close(); }
 startup_check(Model::$runtime_callables->function_definition('core.strlen') === $target, 'Source edit replaced provider identity');
 Compiler_Lifecycle::reset_syntax();
-startup_check(Model::$runtime_metadata === $input, 'Syntax reset replaced metadata snapshot');
+startup_check(Model::require_runtime_metadata() === $input, 'Syntax reset replaced metadata snapshot');
 startup_check(Model::$runtime_callables->function_definition('core.strlen') !== $target, 'Syntax reset reused stale callable identity');
 $rejected = false;
 try { Model::$cpp_callable_bindings->function_binding($target); } catch (\LogicException $error) { $rejected = true; }

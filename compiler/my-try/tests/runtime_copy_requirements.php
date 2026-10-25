@@ -70,7 +70,7 @@ foreach ([$plain, $fixed] as $row)
 	$schema['cpp'][] = ['id'=>$row['id'], 'symbol'=>'copy_probe::consume', 'header'=>__DIR__.'/runtime_copy_support.hpp'];
 }
 $input = new runtime_catalog_input();
-foreach (Model::$runtime_metadata->modules as $module) {
+foreach (Model::require_runtime_metadata()->modules as $module) {
 	$input->modules->add($module->name, $module);
 }
 $input->modules->add('copy_probe', Runtime_Catalog_Reader::decode(json_encode($schema), 'copy-probe.json'));

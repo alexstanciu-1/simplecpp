@@ -333,7 +333,7 @@ final class Compiler
 			$entry /** prepared_file */ = Model::$prepared_entry;
 			$output = (new CPP_Generator(Model::$cpp_output_program, $this->cpp_lowering, $policy))->generate_program($prepared, $entry);
 			if ($publication !== null) {
-				$publication->publish($output, CPP_Runtime_Build::requirements(Model::$runtime_metadata),
+				$publication->publish($output, CPP_Runtime_Build::requirements(Model::require_runtime_metadata()),
 					Model::$cpp_output_program->prelower_templates, $policy);
 			}
 		}

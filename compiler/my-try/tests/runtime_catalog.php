@@ -38,7 +38,7 @@ foreach ([
 	$failed = false;
 	try { Runtime_Catalog_Reader::decode($invalid, 'invalid.json'); }
 	catch (\RuntimeException $error) { $failed = true; }
-	catalog_check($failed && Model::$runtime_metadata === $input, 'Invalid schema changed configuration');
+	catalog_check($failed && Model::require_runtime_metadata() === $input, 'Invalid schema changed configuration');
 }
 
 foreach ([
@@ -55,7 +55,7 @@ foreach ([
 	$failed = false;
 	try { Compiler_Lifecycle::configure_runtime($candidate); }
 	catch (\Throwable $error) { $failed = true; }
-	catalog_check($failed && Model::$runtime_metadata === $input, 'Invalid contract changed configuration');
+	catalog_check($failed && Model::require_runtime_metadata() === $input, 'Invalid contract changed configuration');
 }
 
 // The selected module set shares one constant namespace, even without callable collisions.
@@ -66,7 +66,7 @@ $duplicate->modules->add('other', Runtime_Catalog_Reader::decode(
 $failed = false;
 try { Compiler_Lifecycle::configure_runtime($duplicate); }
 catch (\RuntimeException $error) { $failed = str_contains($error->getMessage(), 'Duplicate runtime constant'); }
-catalog_check($failed && Model::$runtime_metadata === $input, 'Cross-module constant collision was published');
+catalog_check($failed && Model::require_runtime_metadata() === $input, 'Cross-module constant collision was published');
 
 file_put_contents($directory . '/core.json', str_replace('"dependencies": []', '"dependencies": ["json"]', $core));
 file_put_contents($directory . '/json.json', $json);
@@ -81,10 +81,10 @@ Compiler_Lifecycle::reset();
 $target = Model::$runtime_callables->function_definition('core.strlen');
 $constant = Model::$language_scope->constants_named('CATALOG_MIN')[0];
 catalog_check($constant->value()->value_key() === '-9223372036854775808', 'Exact minimum lost');
-$metadata = Model::$runtime_metadata;
+$metadata = Model::require_runtime_metadata();
 Compiler_Lifecycle::reset_syntax();
 $replacement = Model::$runtime_callables->function_definition('core.strlen');
-catalog_check($target !== $replacement && Model::$runtime_metadata === $metadata, 'Reset did not reuse decoded input with fresh identities');
+catalog_check($target !== $replacement && Model::require_runtime_metadata() === $metadata, 'Reset did not reuse decoded input with fresh identities');
 catalog_check($constant !== Model::$language_scope->constants_named('CATALOG_MIN')[0], 'Constant identity survived type reset');
 catalog_check(Model::$language_scope->constants_named('CATALOG_MAX')[0]->value()->value_key() === '9223372036854775807', 'Exact maximum lost');
 $failed = false;
