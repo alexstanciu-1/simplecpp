@@ -69,7 +69,8 @@ trait Callable_Syntax
 	{
 		if ($this->body !== null) {
 			$retired /** Storage<function_body_node> */ = $this->retired_bodies;
-			$retired->append($this->body);
+			$retired_body /** function_body_node */ = $this->body;
+			$retired->append($retired_body);
 		}
 		$this->body = null;
 		$this->parsed_definition = true;

@@ -17,7 +17,16 @@ This does not establish exhaustive language, lifetime, incremental or performanc
 
 ## Accepted-backlog bootstrap checkpoint — 2026-10-23
 
-The latest [direct source initialization checkpoint](../../../../specs/planning/results/compiler_bootstrap_backlog_2026_10_23/direct_source_init/README.md)
+The [temporary empty-field storage checkpoint](../../../../specs/planning/results/compiler_bootstrap_backlog_2026_10_23/empty_initial_storage/README.md)
+implements the user-approved initial-storage-only exception. Required frontend types
+and ordinary value boundaries remain strict; authors must initialize before use.
+24 focused checks and PHP/legacy/both-v0.2 portable proofs pass. Bootstrap reaches
+24 distinct preparation diagnostics in 184.33 s / 499.91 MiB RSS / 486.5 MiB PHP heap.
+No native compiler rebuild or second-generation proof yet. CH15-REQUIRED-FIELD-INIT-01
+owns review of this temporary policy. Earlier required-field rejection evidence
+below is historical where it conflicts with this exception.
+
+The earlier [direct source initialization checkpoint](../../../../specs/planning/results/compiler_bootstrap_backlog_2026_10_23/direct_source_init/README.md)
 uses existing promotion/set: conversion for source_record and 33 AST cursors. PHP
 AST/lifecycle checks and a bounded production-code PHP/legacy/both-v0.2 fixture pass.
 The fixture excludes the unused full-framework object-identity helper, whose v0.2

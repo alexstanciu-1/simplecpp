@@ -1,0 +1,27 @@
+[
+  {
+    "name": "declaration_model",
+    "seconds": 0.5257280800142325,
+    "passed": true
+  },
+  {
+    "name": "member_owners",
+    "seconds": 0.4882921710086521,
+    "passed": true
+  },
+  {
+    "name": "namespace_bodies",
+    "seconds": 0.5236874599941075,
+    "passed": true
+  },
+  {
+    "name": "closure_model",
+    "seconds": 0.6625346770160832,
+    "passed": true
+  },
+  {
+    "name": "interpolation",
+    "seconds": 1.010497637995286,
+    "passed": true
+  }
+]

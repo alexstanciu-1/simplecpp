@@ -310,8 +310,9 @@ final class Parser_Run
 			}
 			// Own the scope before the temporary expires; namespace bodies observe it weakly.
 			$this->retain_scope($local_scope);
-			$selected = new namespace_body_node($local_scope);
-			$bodies->append($selected);
+			$created_body = new namespace_body_node($local_scope);
+			$bodies->append($created_body);
+			$selected = $created_body;
 		}
 		else {
 			$this->retain_scope($selected->body_scope());
@@ -360,11 +361,13 @@ final class Parser_Run
 				continue;
 			}
 			if ($this->text() === 'const') {
-				$declarations->append($this->constant_declaration(null, /** vector<declaration_modifier> */ [], -1));
+				$constant_declaration /** declaration_node */ = $this->constant_declaration(null, /** vector<declaration_modifier> */ [], -1);
+				$declarations->append($constant_declaration);
 				continue;
 			}
 			if ($this->text() === 'enum') {
-				$declarations->append($this->enum_declaration());
+				$enum_declaration /** declaration_node */ = $this->enum_declaration();
+				$declarations->append($enum_declaration);
 				continue;
 			}
 			$node = $this->statement();
@@ -751,14 +754,16 @@ final class Parser_Run
 			$next = $this->text_at_offset(1);
 			if (string_byte_starts_with($this->text(), '$') && (($next === '\\') || $this->nullable_declaration_ahead() || (Source_Text::identifier($next)
 				&& ($next !== 'and') && ($next !== 'or') && ($next !== 'xor')))) {
-				$initialization->append($this->variable_declaration(false));
+				$initializer /** statement_node */ = $this->variable_declaration(false);
+				$initialization->append($initializer);
 			}
 			else {
 				$item_start = $this->position;
 				$item = new expression_statement_node();
 				$item->expression = $this->expression();
 				$this->finish_node($item, $item_start);
-				$initialization->append($item);
+				$initializer_statement /** statement_node */ = $item;
+				$initialization->append($initializer_statement);
 			}
 			if ($this->text() !== ',') { break; }
 			$this->position++;
@@ -1515,7 +1520,8 @@ final class Parser_Run
 			finally { $this->select_scope($enclosing); }
 			$this->finish_node($return_statement, $body_start);
 			$statements /** Storage<statement_node> */ = $body->statements;
-			$statements->append($return_statement);
+			$returned_statement /** statement_node */ = $return_statement;
+			$statements->append($returned_statement);
 			$this->finish_node($body, $body_start);
 			$closure->set_parsed_body($body);
 		}
@@ -2278,7 +2284,8 @@ final class Parser_Run
 			$part->byte_offset = $first;
 			$part->byte_length = $offset - $first;
 			$this->finish_node($part, $start);
-			$parts->append($part);
+			$value_part /** interpolation_part_node */ = $part;
+			$parts->append($value_part);
 			$insertions++;
 			$segment = $offset;
 		}
@@ -2301,7 +2308,8 @@ final class Parser_Run
 		$part->byte_length = $length;
 		$this->finish_node($part, $start);
 		$parts /** Storage<interpolation_part_node> */ = $parent->parts;
-		$parts->append($part);
+		$text_part /** interpolation_part_node */ = $part;
+		$parts->append($text_part);
 	}
 
 	/** Recognize cast syntax without moving the parser or collecting speculative type names. */

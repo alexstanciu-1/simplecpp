@@ -1,0 +1,20 @@
+{
+    "elapsed_seconds": 166.967560047,
+    "peak_php_bytes": 510132224,
+    "last_stage": "prepare",
+    "events": [
+        {
+            "stage": "initialize",
+            "seconds": 0.384075025
+        },
+        {
+            "stage": "sync",
+            "seconds": 4.493302499
+        }
+    ],
+    "failure": {
+        "class": "RuntimeException",
+        "message": "S2S assignment requires stable storage or an indexed shared receiver\nS2S enum-valued fields await explicit field initialization\nProjected method receiver lifetime is deferred\nObject narrowing requires a polymorphic source\nProperty requires set: initialization before the constructor body: modifier_kind\nProperty requires set: initialization before the constructor body: definition_origin\nProperty requires set: initialization before the constructor body: number_format\nProperty requires set: initialization before the constructor body: nominal_kind_data\nProperty requires set: initialization before the constructor body: result_kind_data\nProperty requires set: initialization before the constructor body: family_kind\nS2S integer binary operation requires canonical int operands\nS2S value probes require a scalar, nullable scalar, Result scalar, mixed, registered container or null\nS2S enum comparison requires the same enum type\nProperty requires set: initialization before the constructor body: kind\nS2S runtime call requires one exact signature or a unique checked-payload signature; use explicit argument types\nProperty requires set: initialization before the constructor body: artifact_kind\nS2S data construction requires a known concrete target\nS2S Result construction requires an exact payload, same wrapper type, structured error or supported explicit sentinel\nRequired object boundary rejects null; declare a nullable object type\nS2S conditional branches require supported scalar value types or enums\nS2S non-void function derives_from can reach the end without returning a value\nS2S indexed storage requires local, parameter or field storage\nOwnership selection requires two same-family handles\nS2S non-void function prepare can reach the end without returning a value\n"
+    },
+    "fatal": null
+}

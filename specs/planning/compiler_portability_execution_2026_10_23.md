@@ -1666,3 +1666,15 @@ Evidence: [empty_initial_storage](results/compiler_bootstrap_backlog_2026_10_23/
 Bootstrap: 3:04.33 / 511908 KiB RSS / 486.5 MiB heap. Distinct preparation messages
 fall from 96 to 24. Required shared-field errors clear; enum fields and operation
 contracts remain. Full native compiler and second-generation acceptance pending.
+
+## Explicit Storage argument boundaries — 2026-10-25
+
+Reuse existing typed-local checked extraction/upcasts before exact runtime calls.
+Source-only parser, retired-body and constant-index adaptations preserve collection
+order/identity. Extracted production-method PHP/v0.1/both-v0.2 proof and five affected
+host tests pass. [Evidence](results/compiler_bootstrap_backlog_2026_10_23/storage_arguments/README.md)
+includes partial source-location audit (interrupted; not performance evidence).
+
+Uninstrumented bootstrap: 2:47.41 / 511328 KiB RSS / 486.5 MiB heap. Still 24
+aggregate diagnostic strings; first is now stable-storage assignment. Further
+runtime-call sites remain. Native build and second-generation proof are pending.

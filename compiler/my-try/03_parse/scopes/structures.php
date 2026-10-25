@@ -181,7 +181,8 @@ final class scope
 		}
 		if ($entry instanceof collected_constant) {
 			$constants /** Key_Storage_List<constant_target_i> */ = $this->constants;
-			$constants->remove($entry->name, object_cast($entry, collected_constant::class));
+			$constant_target /** constant_target_i */ = object_cast($entry, collected_constant::class);
+			$constants->remove($entry->name, $constant_target);
 		}
 		$variables->remove($entry->name, $entry);
 		foreach ($types->named($entry->name) as $definition) {

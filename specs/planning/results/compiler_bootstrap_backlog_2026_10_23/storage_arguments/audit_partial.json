@@ -1,0 +1,1605 @@
+[
+  {
+    "kind": "scpp\\compiler\\record_definition_work",
+    "file": "03_parse/structures/structures_object_type.phs",
+    "name": "scpp\\compiler\\object_type_node",
+    "token": 17,
+    "message": "S2S enum-valued fields await explicit field initialization"
+  },
+  {
+    "kind": "scpp\\compiler\\source_callable_signature_work",
+    "file": "03_parse/structures/structures_object_type.phs",
+    "name": "scpp\\compiler\\object_type_node::set_span",
+    "token": 23,
+    "message": "S2S enum-valued fields await explicit field initialization"
+  },
+  {
+    "kind": "scpp\\compiler\\source_callable_signature_work",
+    "file": "03_parse/structures/structures_object_type.phs",
+    "name": "scpp\\compiler\\object_type_node::start_token",
+    "token": 79,
+    "message": "S2S enum-valued fields await explicit field initialization"
+  },
+  {
+    "kind": "scpp\\compiler\\source_callable_signature_work",
+    "file": "03_parse/structures/structures_object_type.phs",
+    "name": "scpp\\compiler\\object_type_node::end_token",
+    "token": 96,
+    "message": "S2S enum-valued fields await explicit field initialization"
+  },
+  {
+    "kind": "scpp\\compiler\\source_callable_signature_work",
+    "file": "03_parse/structures/structures_object_type.phs",
+    "name": "scpp\\compiler\\object_type_node::preparation",
+    "token": 121,
+    "message": "S2S enum-valued fields await explicit field initialization"
+  },
+  {
+    "kind": "scpp\\compiler\\source_callable_signature_work",
+    "file": "03_parse/structures/structures_object_type.phs",
+    "name": "scpp\\compiler\\object_type_node::set_preparation",
+    "token": 138,
+    "message": "S2S enum-valued fields await explicit field initialization"
+  },
+  {
+    "kind": "scpp\\compiler\\source_callable_signature_work",
+    "file": "03_parse/structures/structures_object_type.phs",
+    "name": "scpp\\compiler\\object_type_node::clear_preparation",
+    "token": 155,
+    "message": "S2S enum-valued fields await explicit field initialization"
+  },
+  {
+    "kind": "scpp\\compiler\\source_callable_signature_work",
+    "file": "03_parse/structures/structures_object_type.phs",
+    "name": "scpp\\compiler\\object_type_node::kind",
+    "token": 191,
+    "message": "S2S enum-valued fields await explicit field initialization"
+  },
+  {
+    "kind": "scpp\\compiler\\source_callable_signature_work",
+    "file": "03_parse/structures/structures_object_type.phs",
+    "name": "scpp\\compiler\\object_type_node::require_preparation",
+    "token": 205,
+    "message": "S2S enum-valued fields await explicit field initialization"
+  },
+  {
+    "kind": "scpp\\compiler\\source_callable_signature_work",
+    "file": "03_parse/structures/structures_object_type.phs",
+    "name": "scpp\\compiler\\object_type_node::require_object_type_preparation",
+    "token": 219,
+    "message": "S2S enum-valued fields await explicit field initialization"
+  },
+  {
+    "kind": "scpp\\compiler\\source_callable_signature_work",
+    "file": "03_parse/structures/structures_object_type.phs",
+    "name": "scpp\\compiler\\object_type_node::maintain",
+    "token": 233,
+    "message": "S2S enum-valued fields await explicit field initialization"
+  },
+  {
+    "kind": "scpp\\compiler\\source_callable_signature_work",
+    "file": "03_parse/structures/structures_object_type.phs",
+    "name": "scpp\\compiler\\object_type_node::children",
+    "token": 273,
+    "message": "S2S enum-valued fields await explicit field initialization"
+  },
+  {
+    "kind": "scpp\\compiler\\record_definition_work",
+    "file": "03_parse/structures/structures_ownership_observation.phs",
+    "name": "scpp\\compiler\\ownership_observation_node",
+    "token": 17,
+    "message": "S2S enum-valued fields await explicit field initialization"
+  },
+  {
+    "kind": "scpp\\compiler\\source_callable_signature_work",
+    "file": "03_parse/structures/structures_ownership_observation.phs",
+    "name": "scpp\\compiler\\ownership_observation_node::set_span",
+    "token": 23,
+    "message": "S2S enum-valued fields await explicit field initialization"
+  },
+  {
+    "kind": "scpp\\compiler\\source_callable_signature_work",
+    "file": "03_parse/structures/structures_ownership_observation.phs",
+    "name": "scpp\\compiler\\ownership_observation_node::start_token",
+    "token": 79,
+    "message": "S2S enum-valued fields await explicit field initialization"
+  },
+  {
+    "kind": "scpp\\compiler\\source_callable_signature_work",
+    "file": "03_parse/structures/structures_ownership_observation.phs",
+    "name": "scpp\\compiler\\ownership_observation_node::end_token",
+    "token": 96,
+    "message": "S2S enum-valued fields await explicit field initialization"
+  },
+  {
+    "kind": "scpp\\compiler\\source_callable_signature_work",
+    "file": "03_parse/structures/structures_ownership_observation.phs",
+    "name": "scpp\\compiler\\ownership_observation_node::preparation",
+    "token": 121,
+    "message": "S2S enum-valued fields await explicit field initialization"
+  },
+  {
+    "kind": "scpp\\compiler\\source_callable_signature_work",
+    "file": "03_parse/structures/structures_ownership_observation.phs",
+    "name": "scpp\\compiler\\ownership_observation_node::set_preparation",
+    "token": 138,
+    "message": "S2S enum-valued fields await explicit field initialization"
+  },
+  {
+    "kind": "scpp\\compiler\\source_callable_signature_work",
+    "file": "03_parse/structures/structures_ownership_observation.phs",
+    "name": "scpp\\compiler\\ownership_observation_node::clear_preparation",
+    "token": 155,
+    "message": "S2S enum-valued fields await explicit field initialization"
+  },
+  {
+    "kind": "scpp\\compiler\\source_callable_signature_work",
+    "file": "03_parse/structures/structures_ownership_observation.phs",
+    "name": "scpp\\compiler\\ownership_observation_node::kind",
+    "token": 187,
+    "message": "S2S enum-valued fields await explicit field initialization"
+  },
+  {
+    "kind": "scpp\\compiler\\source_callable_signature_work",
+    "file": "03_parse/structures/structures_ownership_observation.phs",
+    "name": "scpp\\compiler\\ownership_observation_node::require_preparation",
+    "token": 201,
+    "message": "S2S enum-valued fields await explicit field initialization"
+  },
+  {
+    "kind": "scpp\\compiler\\source_callable_signature_work",
+    "file": "03_parse/structures/structures_ownership_observation.phs",
+    "name": "scpp\\compiler\\ownership_observation_node::require_observation_preparation",
+    "token": 215,
+    "message": "S2S enum-valued fields await explicit field initialization"
+  },
+  {
+    "kind": "scpp\\compiler\\source_callable_signature_work",
+    "file": "03_parse/structures/structures_ownership_observation.phs",
+    "name": "scpp\\compiler\\ownership_observation_node::maintain",
+    "token": 229,
+    "message": "S2S enum-valued fields await explicit field initialization"
+  },
+  {
+    "kind": "scpp\\compiler\\source_callable_signature_work",
+    "file": "03_parse/structures/structures_ownership_observation.phs",
+    "name": "scpp\\compiler\\ownership_observation_node::children",
+    "token": 258,
+    "message": "S2S enum-valued fields await explicit field initialization"
+  },
+  {
+    "kind": "scpp\\compiler\\record_definition_work",
+    "file": "03_parse/structures/structures_probes.phs",
+    "name": "scpp\\compiler\\value_probe_node",
+    "token": 17,
+    "message": "S2S enum-valued fields await explicit field initialization"
+  },
+  {
+    "kind": "scpp\\compiler\\source_callable_signature_work",
+    "file": "03_parse/structures/structures_probes.phs",
+    "name": "scpp\\compiler\\value_probe_node::set_span",
+    "token": 23,
+    "message": "S2S enum-valued fields await explicit field initialization"
+  },
+  {
+    "kind": "scpp\\compiler\\source_callable_signature_work",
+    "file": "03_parse/structures/structures_probes.phs",
+    "name": "scpp\\compiler\\value_probe_node::start_token",
+    "token": 79,
+    "message": "S2S enum-valued fields await explicit field initialization"
+  },
+  {
+    "kind": "scpp\\compiler\\source_callable_signature_work",
+    "file": "03_parse/structures/structures_probes.phs",
+    "name": "scpp\\compiler\\value_probe_node::end_token",
+    "token": 96,
+    "message": "S2S enum-valued fields await explicit field initialization"
+  },
+  {
+    "kind": "scpp\\compiler\\source_callable_signature_work",
+    "file": "03_parse/structures/structures_probes.phs",
+    "name": "scpp\\compiler\\value_probe_node::preparation",
+    "token": 121,
+    "message": "S2S enum-valued fields await explicit field initialization"
+  },
+  {
+    "kind": "scpp\\compiler\\source_callable_signature_work",
+    "file": "03_parse/structures/structures_probes.phs",
+    "name": "scpp\\compiler\\value_probe_node::set_preparation",
+    "token": 138,
+    "message": "S2S enum-valued fields await explicit field initialization"
+  },
+  {
+    "kind": "scpp\\compiler\\source_callable_signature_work",
+    "file": "03_parse/structures/structures_probes.phs",
+    "name": "scpp\\compiler\\value_probe_node::clear_preparation",
+    "token": 155,
+    "message": "S2S enum-valued fields await explicit field initialization"
+  },
+  {
+    "kind": "scpp\\compiler\\source_callable_signature_work",
+    "file": "03_parse/structures/structures_probes.phs",
+    "name": "scpp\\compiler\\value_probe_node::kind",
+    "token": 187,
+    "message": "S2S enum-valued fields await explicit field initialization"
+  },
+  {
+    "kind": "scpp\\compiler\\source_callable_signature_work",
+    "file": "03_parse/structures/structures_probes.phs",
+    "name": "scpp\\compiler\\value_probe_node::require_preparation",
+    "token": 201,
+    "message": "S2S enum-valued fields await explicit field initialization"
+  },
+  {
+    "kind": "scpp\\compiler\\source_callable_signature_work",
+    "file": "03_parse/structures/structures_probes.phs",
+    "name": "scpp\\compiler\\value_probe_node::require_probe_preparation",
+    "token": 217,
+    "message": "S2S enum-valued fields await explicit field initialization"
+  },
+  {
+    "kind": "scpp\\compiler\\source_callable_signature_work",
+    "file": "03_parse/structures/structures_probes.phs",
+    "name": "scpp\\compiler\\value_probe_node::maintain",
+    "token": 231,
+    "message": "S2S enum-valued fields await explicit field initialization"
+  },
+  {
+    "kind": "scpp\\compiler\\source_callable_signature_work",
+    "file": "03_parse/structures/structures_probes.phs",
+    "name": "scpp\\compiler\\value_probe_node::children",
+    "token": 260,
+    "message": "S2S enum-valued fields await explicit field initialization"
+  },
+  {
+    "kind": "scpp\\compiler\\record_definition_work",
+    "file": "03_parse/structures/structures_specialization.phs",
+    "name": "scpp\\compiler\\type_use_modifier_node",
+    "token": 9722,
+    "message": "S2S enum-valued fields await explicit field initialization"
+  },
+  {
+    "kind": "scpp\\compiler\\source_callable_signature_work",
+    "file": "03_parse/structures/structures_specialization.phs",
+    "name": "scpp\\compiler\\type_use_modifier_node::set_span",
+    "token": 9728,
+    "message": "S2S enum-valued fields await explicit field initialization"
+  },
+  {
+    "kind": "scpp\\compiler\\source_callable_signature_work",
+    "file": "03_parse/structures/structures_specialization.phs",
+    "name": "scpp\\compiler\\type_use_modifier_node::start_token",
+    "token": 9784,
+    "message": "S2S enum-valued fields await explicit field initialization"
+  },
+  {
+    "kind": "scpp\\compiler\\source_callable_signature_work",
+    "file": "03_parse/structures/structures_specialization.phs",
+    "name": "scpp\\compiler\\type_use_modifier_node::end_token",
+    "token": 9801,
+    "message": "S2S enum-valued fields await explicit field initialization"
+  },
+  {
+    "kind": "scpp\\compiler\\source_callable_signature_work",
+    "file": "03_parse/structures/structures_specialization.phs",
+    "name": "scpp\\compiler\\type_use_modifier_node::preparation",
+    "token": 9826,
+    "message": "S2S enum-valued fields await explicit field initialization"
+  },
+  {
+    "kind": "scpp\\compiler\\source_callable_signature_work",
+    "file": "03_parse/structures/structures_specialization.phs",
+    "name": "scpp\\compiler\\type_use_modifier_node::set_preparation",
+    "token": 9843,
+    "message": "S2S enum-valued fields await explicit field initialization"
+  },
+  {
+    "kind": "scpp\\compiler\\source_callable_signature_work",
+    "file": "03_parse/structures/structures_specialization.phs",
+    "name": "scpp\\compiler\\type_use_modifier_node::clear_preparation",
+    "token": 9860,
+    "message": "S2S enum-valued fields await explicit field initialization"
+  },
+  {
+    "kind": "scpp\\compiler\\source_callable_signature_work",
+    "file": "03_parse/structures/structures_specialization.phs",
+    "name": "scpp\\compiler\\type_use_modifier_node::kind",
+    "token": 9896,
+    "message": "S2S enum-valued fields await explicit field initialization"
+  },
+  {
+    "kind": "scpp\\compiler\\source_callable_signature_work",
+    "file": "03_parse/structures/structures_specialization.phs",
+    "name": "scpp\\compiler\\type_use_modifier_node::children",
+    "token": 9910,
+    "message": "S2S enum-valued fields await explicit field initialization"
+  },
+  {
+    "kind": "scpp\\compiler\\source_callable_signature_work",
+    "file": "03_parse/structures/structures_specialization.phs",
+    "name": "scpp\\compiler\\type_use_modifier_node::maintain",
+    "token": 9926,
+    "message": "S2S enum-valued fields await explicit field initialization"
+  },
+  {
+    "kind": "scpp\\compiler\\source_callable_signature_work",
+    "file": "03_parse/structures/structures_specialization.phs",
+    "name": "scpp\\compiler\\type_use_modifier_node::require_preparation",
+    "token": 9955,
+    "message": "S2S enum-valued fields await explicit field initialization"
+  },
+  {
+    "kind": "scpp\\compiler\\source_callable_signature_work",
+    "file": "03_parse/types/catalog.phs",
+    "name": "scpp\\compiler\\source_type_modifier_exposure::__construct",
+    "token": 161,
+    "message": "Property requires set: initialization before the constructor body: modifier_kind"
+  },
+  {
+    "kind": "scpp\\compiler\\type_contract_work",
+    "file": "03_parse/types/catalog.phs",
+    "name": "scpp\\compiler\\source_type_modifier_exposure",
+    "token": 149,
+    "message": "Property requires set: initialization before the constructor body: modifier_kind"
+  },
+  {
+    "kind": "scpp\\compiler\\source_callable_signature_work",
+    "file": "03_parse/types/model.phs",
+    "name": "scpp\\compiler\\semantic_type_definition::__construct",
+    "token": 473,
+    "message": "Property requires set: initialization before the constructor body: definition_origin"
+  },
+  {
+    "kind": "scpp\\compiler\\type_contract_work",
+    "file": "03_parse/types/model.phs",
+    "name": "scpp\\compiler\\semantic_type_definition",
+    "token": 448,
+    "message": "Property requires set: initialization before the constructor body: definition_origin"
+  },
+  {
+    "kind": "scpp\\compiler\\type_contract_work",
+    "file": "03_parse/types/model.phs",
+    "name": "scpp\\compiler\\boolean_type_definition",
+    "token": 761,
+    "message": "Property requires set: initialization before the constructor body: definition_origin"
+  },
+  {
+    "kind": "scpp\\compiler\\type_contract_work",
+    "file": "03_parse/types/model.phs",
+    "name": "scpp\\compiler\\integer_type_definition",
+    "token": 804,
+    "message": "Property requires set: initialization before the constructor body: definition_origin"
+  },
+  {
+    "kind": "scpp\\compiler\\type_contract_work",
+    "file": "03_parse/types/model.phs",
+    "name": "scpp\\compiler\\floating_type_definition",
+    "token": 966,
+    "message": "Property requires set: initialization before the constructor body: definition_origin"
+  },
+  {
+    "kind": "scpp\\compiler\\source_callable_signature_work",
+    "file": "03_parse/types/model.phs",
+    "name": "scpp\\compiler\\floating_type_definition::__construct",
+    "token": 986,
+    "message": "Property requires set: initialization before the constructor body: number_format"
+  },
+  {
+    "kind": "scpp\\compiler\\type_contract_work",
+    "file": "03_parse/types/model.phs",
+    "name": "scpp\\compiler\\abstract_nominal_type_definition",
+    "token": 1170,
+    "message": "Property requires set: initialization before the constructor body: definition_origin"
+  },
+  {
+    "kind": "scpp\\compiler\\source_callable_signature_work",
+    "file": "03_parse/types/model.phs",
+    "name": "scpp\\compiler\\abstract_nominal_type_definition::__construct",
+    "token": 1182,
+    "message": "Property requires set: initialization before the constructor body: nominal_kind_data"
+  },
+  {
+    "kind": "scpp\\compiler\\type_contract_work",
+    "file": "03_parse/types/model.phs",
+    "name": "scpp\\compiler\\nominal_type_definition",
+    "token": 1274,
+    "message": "Property requires set: initialization before the constructor body: definition_origin"
+  },
+  {
+    "kind": "scpp\\compiler\\type_contract_work",
+    "file": "03_parse/types/model.phs",
+    "name": "scpp\\compiler\\closure_type_definition",
+    "token": 1281,
+    "message": "Property requires set: initialization before the constructor body: definition_origin"
+  },
+  {
+    "kind": "scpp\\compiler\\type_contract_work",
+    "file": "03_parse/types/model.phs",
+    "name": "scpp\\compiler\\async_task_type_definition",
+    "token": 1288,
+    "message": "Property requires set: initialization before the constructor body: definition_origin"
+  },
+  {
+    "kind": "scpp\\compiler\\type_contract_work",
+    "file": "03_parse/types/model.phs",
+    "name": "scpp\\compiler\\callable_type_definition",
+    "token": 1358,
+    "message": "Property requires set: initialization before the constructor body: definition_origin"
+  },
+  {
+    "kind": "scpp\\compiler\\type_contract_work",
+    "file": "03_parse/types/model.phs",
+    "name": "scpp\\compiler\\enum_type_definition",
+    "token": 1556,
+    "message": "Property requires set: initialization before the constructor body: definition_origin"
+  },
+  {
+    "kind": "scpp\\compiler\\type_contract_work",
+    "file": "03_parse/types/model.phs",
+    "name": "scpp\\compiler\\mixed_type_definition",
+    "token": 1609,
+    "message": "Property requires set: initialization before the constructor body: definition_origin"
+  },
+  {
+    "kind": "scpp\\compiler\\type_contract_work",
+    "file": "03_parse/types/model.phs",
+    "name": "scpp\\compiler\\dynamic_type_definition",
+    "token": 1656,
+    "message": "Property requires set: initialization before the constructor body: definition_origin"
+  },
+  {
+    "kind": "scpp\\compiler\\type_contract_work",
+    "file": "03_parse/types/model.phs",
+    "name": "scpp\\compiler\\no_value_type_definition",
+    "token": 1703,
+    "message": "Property requires set: initialization before the constructor body: definition_origin"
+  },
+  {
+    "kind": "scpp\\compiler\\type_contract_work",
+    "file": "03_parse/types/model.phs",
+    "name": "scpp\\compiler\\abstract_template_type_definition",
+    "token": 2136,
+    "message": "Property requires set: initialization before the constructor body: definition_origin"
+  },
+  {
+    "kind": "scpp\\compiler\\source_callable_signature_work",
+    "file": "03_parse/types/model.phs",
+    "name": "scpp\\compiler\\abstract_template_type_definition::__construct",
+    "token": 2157,
+    "message": "Property requires set: initialization before the constructor body: result_kind_data"
+  },
+  {
+    "kind": "scpp\\compiler\\type_contract_work",
+    "file": "03_parse/types/model.phs",
+    "name": "scpp\\compiler\\template_type_definition",
+    "token": 2535,
+    "message": "Property requires set: initialization before the constructor body: definition_origin"
+  },
+  {
+    "kind": "scpp\\compiler\\type_contract_work",
+    "file": "03_parse/types/model.phs",
+    "name": "scpp\\compiler\\nullable_type_definition",
+    "token": 2556,
+    "message": "Property requires set: initialization before the constructor body: definition_origin"
+  },
+  {
+    "kind": "scpp\\compiler\\type_contract_work",
+    "file": "03_parse/types/model.phs",
+    "name": "scpp\\compiler\\result_type_definition",
+    "token": 2747,
+    "message": "Property requires set: initialization before the constructor body: definition_origin"
+  },
+  {
+    "kind": "scpp\\compiler\\source_callable_signature_work",
+    "file": "03_parse/types/model.phs",
+    "name": "scpp\\compiler\\result_type_definition::__construct",
+    "token": 2759,
+    "message": "Property requires set: initialization before the constructor body: family_kind"
+  },
+  {
+    "kind": "scpp\\compiler\\type_contract_work",
+    "file": "03_parse/types/model.phs",
+    "name": "scpp\\compiler\\ownership_type_definition",
+    "token": 2965,
+    "message": "Property requires set: initialization before the constructor body: definition_origin"
+  },
+  {
+    "kind": "scpp\\compiler\\source_callable_signature_work",
+    "file": "03_parse/types/model.phs",
+    "name": "scpp\\compiler\\ownership_type_definition::__construct",
+    "token": 2977,
+    "message": "Property requires set: initialization before the constructor body: family_kind"
+  },
+  {
+    "kind": "scpp\\compiler\\type_contract_work",
+    "file": "03_parse/types/model.phs",
+    "name": "scpp\\compiler\\null_type_definition",
+    "token": 3198,
+    "message": "Property requires set: initialization before the constructor body: definition_origin"
+  },
+  {
+    "kind": "scpp\\compiler\\record_definition_work",
+    "file": "04_analyze/conversions/model.phs",
+    "name": "scpp\\compiler\\conversion_decision",
+    "token": 157,
+    "message": "S2S enum-valued fields await explicit field initialization"
+  },
+  {
+    "kind": "scpp\\compiler\\source_callable_signature_work",
+    "file": "04_analyze/conversions/model.phs",
+    "name": "scpp\\compiler\\conversion_decision::operation_name",
+    "token": 161,
+    "message": "S2S enum-valued fields await explicit field initialization"
+  },
+  {
+    "kind": "scpp\\compiler\\source_callable_signature_work",
+    "file": "04_analyze/conversions/model.phs",
+    "name": "scpp\\compiler\\conversion_decision::requires_cast",
+    "token": 207,
+    "message": "S2S enum-valued fields await explicit field initialization"
+  },
+  {
+    "kind": "scpp\\compiler\\record_definition_work",
+    "file": "04_analyze/conversions/model.phs",
+    "name": "scpp\\compiler\\truthiness_decision",
+    "token": 260,
+    "message": "S2S enum-valued fields await explicit field initialization"
+  },
+  {
+    "kind": "scpp\\compiler\\record_definition_work",
+    "file": "04_analyze/operators/model.phs",
+    "name": "scpp\\compiler\\operator_decision",
+    "token": 443,
+    "message": "S2S enum-valued fields await explicit field initialization"
+  },
+  {
+    "kind": "scpp\\compiler\\source_callable_signature_work",
+    "file": "04_analyze/operators/model.phs",
+    "name": "scpp\\compiler\\operator_decision::operation_name",
+    "token": 447,
+    "message": "S2S enum-valued fields await explicit field initialization"
+  },
+  {
+    "kind": "scpp\\compiler\\record_definition_work",
+    "file": "04_analyze/prepare/data/async.phs",
+    "name": "scpp\\compiler\\prepared_await",
+    "token": 17,
+    "message": "S2S enum-valued fields await explicit field initialization"
+  },
+  {
+    "kind": "scpp\\compiler\\record_definition_work",
+    "file": "04_analyze/prepare/data/structures.phs",
+    "name": "scpp\\compiler\\prepared_ownership_observation",
+    "token": 204,
+    "message": "S2S enum-valued fields await explicit field initialization"
+  },
+  {
+    "kind": "scpp\\compiler\\record_definition_work",
+    "file": "04_analyze/prepare/data/structures.phs",
+    "name": "scpp\\compiler\\prepared_object_type",
+    "token": 215,
+    "message": "S2S enum-valued fields await explicit field initialization"
+  },
+  {
+    "kind": "scpp\\compiler\\record_definition_work",
+    "file": "04_analyze/prepare/data/structures.phs",
+    "name": "scpp\\compiler\\prepared_object_construction",
+    "token": 720,
+    "message": "S2S enum-valued fields await explicit field initialization"
+  },
+  {
+    "kind": "scpp\\compiler\\record_definition_work",
+    "file": "04_analyze/prepare/data/structures.phs",
+    "name": "scpp\\compiler\\prepared_record_construction",
+    "token": 962,
+    "message": "S2S enum-valued fields await explicit field initialization"
+  },
+  {
+    "kind": "scpp\\compiler\\record_definition_work",
+    "file": "04_analyze/prepare/data/structures.phs",
+    "name": "scpp\\compiler\\prepared_take",
+    "token": 1022,
+    "message": "S2S enum-valued fields await explicit field initialization"
+  },
+  {
+    "kind": "scpp\\compiler\\record_definition_work",
+    "file": "04_analyze/prepare/data/structures.phs",
+    "name": "scpp\\compiler\\prepared_value_probe",
+    "token": 1278,
+    "message": "S2S enum-valued fields await explicit field initialization"
+  },
+  {
+    "kind": "scpp\\compiler\\record_definition_work",
+    "file": "04_analyze/prepare/data/structures.phs",
+    "name": "scpp\\compiler\\prepared_coalesce_expression",
+    "token": 1475,
+    "message": "S2S enum-valued fields await explicit field initialization"
+  },
+  {
+    "kind": "scpp\\compiler\\record_definition_work",
+    "file": "04_analyze/prepare/data/structures.phs",
+    "name": "scpp\\compiler\\prepared_conditional_expression",
+    "token": 1506,
+    "message": "S2S enum-valued fields await explicit field initialization"
+  },
+  {
+    "kind": "scpp\\compiler\\record_definition_work",
+    "file": "04_analyze/prepare/data/structures.phs",
+    "name": "scpp\\compiler\\prepared_compound_assignment_expression",
+    "token": 1570,
+    "message": "S2S enum-valued fields await explicit field initialization"
+  },
+  {
+    "kind": "scpp\\compiler\\record_definition_work",
+    "file": "04_analyze/prepare/data/structures.phs",
+    "name": "scpp\\compiler\\prepared_binding",
+    "token": 1783,
+    "message": "S2S enum-valued fields await explicit field initialization"
+  },
+  {
+    "kind": "scpp\\compiler\\source_callable_signature_work",
+    "file": "04_analyze/prepare/data/structures.phs",
+    "name": "scpp\\compiler\\prepared_binding::storage_type",
+    "token": 1824,
+    "message": "S2S enum-valued fields await explicit field initialization"
+  },
+  {
+    "kind": "scpp\\compiler\\record_definition_work",
+    "file": "04_analyze/prepare/data/structures.phs",
+    "name": "scpp\\compiler\\prepared_field_access",
+    "token": 2483,
+    "message": "S2S enum-valued fields await explicit field initialization"
+  },
+  {
+    "kind": "scpp\\compiler\\record_definition_work",
+    "file": "04_analyze/prepare/data/structures.phs",
+    "name": "scpp\\compiler\\prepared_call_argument",
+    "token": 2685,
+    "message": "S2S enum-valued fields await explicit field initialization"
+  },
+  {
+    "kind": "scpp\\compiler\\source_callable_signature_work",
+    "file": "04_analyze/prepare/data/structures.phs",
+    "name": "scpp\\compiler\\prepared_call_argument::require_conversion",
+    "token": 2712,
+    "message": "S2S enum-valued fields await explicit field initialization"
+  },
+  {
+    "kind": "scpp\\compiler\\record_definition_work",
+    "file": "04_analyze/prepare/data/structures.phs",
+    "name": "scpp\\compiler\\prepared_control_transfer",
+    "token": 3331,
+    "message": "S2S enum-valued fields await explicit field initialization"
+  },
+  {
+    "kind": "scpp\\compiler\\source_callable_signature_work",
+    "file": "04_analyze/prepare/data/structures.phs",
+    "name": "scpp\\compiler\\preparation_lookup::__construct",
+    "token": 3762,
+    "message": "Property requires set: initialization before the constructor body: kind"
+  },
+  {
+    "kind": "scpp\\compiler\\type_contract_work",
+    "file": "04_analyze/prepare/data/structures.phs",
+    "name": "scpp\\compiler\\preparation_lookup",
+    "token": 3727,
+    "message": "Property requires set: initialization before the constructor body: kind"
+  },
+  {
+    "kind": "scpp\\compiler\\record_definition_work",
+    "file": "05_backend/cpp/structures.phs",
+    "name": "scpp\\compiler\\cpp_type",
+    "token": 203,
+    "message": "S2S enum-valued fields await explicit field initialization"
+  },
+  {
+    "kind": "scpp\\compiler\\source_callable_signature_work",
+    "file": "05_backend/cpp/structures.phs",
+    "name": "scpp\\compiler\\cpp_artifact::__construct",
+    "token": 325,
+    "message": "Property requires set: initialization before the constructor body: artifact_kind"
+  },
+  {
+    "kind": "scpp\\compiler\\type_contract_work",
+    "file": "05_backend/cpp/structures.phs",
+    "name": "scpp\\compiler\\cpp_artifact",
+    "token": 279,
+    "message": "Property requires set: initialization before the constructor body: artifact_kind"
+  },
+  {
+    "kind": "scpp\\compiler\\record_definition_work",
+    "file": "05_backend/cpp/type_bindings_catalog.phs",
+    "name": "scpp\\compiler\\cpp_type_argument_binding",
+    "token": 20,
+    "message": "S2S enum-valued fields await explicit field initialization"
+  },
+  {
+    "kind": "scpp\\compiler\\source_callable_signature_work",
+    "file": "05_backend/cpp/type_bindings_catalog.phs",
+    "name": "scpp\\compiler\\cpp_type_modifier_binding::__construct",
+    "token": 270,
+    "message": "Property requires set: initialization before the constructor body: modifier_kind"
+  },
+  {
+    "kind": "scpp\\compiler\\type_contract_work",
+    "file": "05_backend/cpp/type_bindings_catalog.phs",
+    "name": "scpp\\compiler\\cpp_type_modifier_binding",
+    "token": 258,
+    "message": "Property requires set: initialization before the constructor body: modifier_kind"
+  },
+  {
+    "kind": "scpp\\compiler\\record_definition_work",
+    "file": "05_backend/llvm/structures.phs",
+    "name": "scpp\\compiler\\llvm_parameter",
+    "token": 378,
+    "message": "S2S enum-valued fields await explicit field initialization"
+  },
+  {
+    "kind": "scpp\\compiler\\record_definition_work",
+    "file": "compiler/callables/structures.phs",
+    "name": "scpp\\compiler\\callable_parameter",
+    "token": 874,
+    "message": "S2S enum-valued fields await explicit field initialization"
+  },
+  {
+    "kind": "scpp\\compiler\\source_callable_signature_work",
+    "file": "compiler/runtime_catalog/structures.phs",
+    "name": "scpp\\compiler\\runtime_type_definition_spec::__construct",
+    "token": 193,
+    "message": "Property requires set: initialization before the constructor body: kind"
+  },
+  {
+    "kind": "scpp\\compiler\\type_contract_work",
+    "file": "compiler/runtime_catalog/structures.phs",
+    "name": "scpp\\compiler\\runtime_type_definition_spec",
+    "token": 105,
+    "message": "Property requires set: initialization before the constructor body: kind"
+  },
+  {
+    "kind": "scpp\\compiler\\source_callable_body_work",
+    "file": "03_parse/parser.phs",
+    "name": "scpp\\compiler\\Parser_Run::select_namespace_body",
+    "token": 1781,
+    "message": "S2S runtime call requires one exact signature or a unique checked-payload signature; use explicit argument types"
+  },
+  {
+    "kind": "scpp\\compiler\\source_callable_body_work",
+    "file": "03_parse/parser.phs",
+    "name": "scpp\\compiler\\Parser_Run::parse_source_body",
+    "token": 2086,
+    "message": "S2S runtime call requires one exact signature or a unique checked-payload signature; use explicit argument types"
+  },
+  {
+    "kind": "scpp\\compiler\\source_callable_body_work",
+    "file": "03_parse/parser.phs",
+    "name": "scpp\\compiler\\Parser_Run::for_statement",
+    "token": 5243,
+    "message": "S2S runtime call requires one exact signature or a unique checked-payload signature; use explicit argument types"
+  },
+  {
+    "kind": "scpp\\compiler\\source_callable_body_work",
+    "file": "03_parse/parser.phs",
+    "name": "scpp\\compiler\\Parser_Run::constant_declaration",
+    "token": 6292,
+    "message": "S2S assignment requires stable storage or an indexed shared receiver"
+  },
+  {
+    "kind": "scpp\\compiler\\source_callable_body_work",
+    "file": "03_parse/parser.phs",
+    "name": "scpp\\compiler\\Parser_Run::callable_declaration",
+    "token": 9378,
+    "message": "S2S assignment requires stable storage or an indexed shared receiver"
+  },
+  {
+    "kind": "scpp\\compiler\\source_callable_body_work",
+    "file": "03_parse/parser.phs",
+    "name": "scpp\\compiler\\Parser_Run::closure_expression",
+    "token": 10712,
+    "message": "S2S runtime call requires one exact signature or a unique checked-payload signature; use explicit argument types"
+  },
+  {
+    "kind": "scpp\\compiler\\source_callable_body_work",
+    "file": "03_parse/parser.phs",
+    "name": "scpp\\compiler\\Parser_Run::object_type_test",
+    "token": 13738,
+    "message": "S2S enum-valued fields await explicit field initialization"
+  },
+  {
+    "kind": "scpp\\compiler\\source_callable_body_work",
+    "file": "03_parse/parser.phs",
+    "name": "scpp\\compiler\\Parser_Run::primary_expression",
+    "token": 14303,
+    "message": "S2S enum-valued fields await explicit field initialization"
+  },
+  {
+    "kind": "scpp\\compiler\\source_callable_body_work",
+    "file": "03_parse/parser.phs",
+    "name": "scpp\\compiler\\Parser_Run::string_expression",
+    "token": 15740,
+    "message": "S2S runtime call requires one exact signature or a unique checked-payload signature; use explicit argument types"
+  },
+  {
+    "kind": "scpp\\compiler\\source_callable_body_work",
+    "file": "03_parse/parser.phs",
+    "name": "scpp\\compiler\\Parser_Run::interpolation_text",
+    "token": 16279,
+    "message": "S2S runtime call requires one exact signature or a unique checked-payload signature; use explicit argument types"
+  },
+  {
+    "kind": "scpp\\compiler\\source_callable_body_work",
+    "file": "03_parse/parser.phs",
+    "name": "scpp\\compiler\\Parser_Run::type_syntax",
+    "token": 18428,
+    "message": "S2S enum-valued fields await explicit field initialization"
+  },
+  {
+    "kind": "scpp\\compiler\\source_callable_body_work",
+    "file": "03_parse/scopes/structures.phs",
+    "name": "scpp\\compiler\\scope::imports_named",
+    "token": 502,
+    "message": "Projected method receiver lifetime is deferred"
+  },
+  {
+    "kind": "scpp\\compiler\\source_callable_body_work",
+    "file": "03_parse/scopes/structures.phs",
+    "name": "scpp\\compiler\\scope::unregister",
+    "token": 829,
+    "message": "S2S runtime call requires one exact signature or a unique checked-payload signature; use explicit argument types"
+  },
+  {
+    "kind": "scpp\\compiler\\source_callable_body_work",
+    "file": "03_parse/scopes/structures.phs",
+    "name": "scpp\\compiler\\scope::has_functions",
+    "token": 1551,
+    "message": "Projected method receiver lifetime is deferred"
+  },
+  {
+    "kind": "scpp\\compiler\\source_callable_body_work",
+    "file": "03_parse/scopes/structures.phs",
+    "name": "scpp\\compiler\\scope::has_variables",
+    "token": 1570,
+    "message": "Projected method receiver lifetime is deferred"
+  },
+  {
+    "kind": "scpp\\compiler\\source_callable_body_work",
+    "file": "03_parse/structures/iterators.phs",
+    "name": "scpp\\compiler\\enum_children_iterator::read_next",
+    "token": 629,
+    "message": "Projected method receiver lifetime is deferred"
+  },
+  {
+    "kind": "scpp\\compiler\\source_callable_body_work",
+    "file": "03_parse/structures/iterators.phs",
+    "name": "scpp\\compiler\\value_probe_children_iterator::read_next",
+    "token": 2002,
+    "message": "S2S enum-valued fields await explicit field initialization"
+  },
+  {
+    "kind": "scpp\\compiler\\source_callable_body_work",
+    "file": "03_parse/structures/iterators.phs",
+    "name": "scpp\\compiler\\type_use_modifier_children_iterator::read_next",
+    "token": 3532,
+    "message": "S2S enum-valued fields await explicit field initialization"
+  },
+  {
+    "kind": "scpp\\compiler\\source_callable_body_work",
+    "file": "03_parse/structures/structures_declarations.phs",
+    "name": "scpp\\compiler\\callable_declaration_node::set_bodyless_declaration",
+    "token": 450,
+    "message": "S2S runtime call requires one exact signature or a unique checked-payload signature; use explicit argument types"
+  },
+  {
+    "kind": "scpp\\compiler\\source_callable_body_work",
+    "file": "03_parse/structures/structures_declarations.phs",
+    "name": "scpp\\compiler\\closure_node::set_bodyless_declaration",
+    "token": 1280,
+    "message": "S2S runtime call requires one exact signature or a unique checked-payload signature; use explicit argument types"
+  },
+  {
+    "kind": "scpp\\compiler\\source_callable_body_work",
+    "file": "03_parse/structures/structures_enum.phs",
+    "name": "scpp\\compiler\\static_member_reference_node::enum_case_preparation",
+    "token": 650,
+    "message": "Object narrowing requires a polymorphic source"
+  },
+  {
+    "kind": "scpp\\compiler\\source_callable_body_work",
+    "file": "03_parse/structures/structures_object_type.phs",
+    "name": "scpp\\compiler\\object_type_children_iterator::read_next",
+    "token": 316,
+    "message": "S2S enum-valued fields await explicit field initialization"
+  },
+  {
+    "kind": "scpp\\compiler\\source_callable_body_work",
+    "file": "03_parse/structures/structures_ownership_observation.phs",
+    "name": "scpp\\compiler\\ownership_observation_children_iterator::read_next",
+    "token": 301,
+    "message": "S2S enum-valued fields await explicit field initialization"
+  },
+  {
+    "kind": "scpp\\compiler\\source_callable_body_work",
+    "file": "03_parse/types/catalog.phs",
+    "name": "scpp\\compiler\\Source_Type_Exposures::expose_modifier",
+    "token": 361,
+    "message": "Property requires set: initialization before the constructor body: modifier_kind"
+  },
+  {
+    "kind": "scpp\\compiler\\source_callable_body_work",
+    "file": "03_parse/types/model.phs",
+    "name": "scpp\\compiler\\integer_type_definition::__construct",
+    "token": 820,
+    "message": "Property requires set: initialization before the constructor body: definition_origin"
+  },
+  {
+    "kind": "scpp\\compiler\\source_callable_body_work",
+    "file": "03_parse/types/model.phs",
+    "name": "scpp\\compiler\\async_task_type_definition::__construct",
+    "token": 1298,
+    "message": "Property requires set: initialization before the constructor body: nominal_kind_data"
+  },
+  {
+    "kind": "scpp\\compiler\\source_callable_body_work",
+    "file": "03_parse/types/model.phs",
+    "name": "scpp\\compiler\\callable_type_definition::__construct",
+    "token": 1370,
+    "message": "Property requires set: initialization before the constructor body: nominal_kind_data"
+  },
+  {
+    "kind": "scpp\\compiler\\source_callable_body_work",
+    "file": "03_parse/types/model.phs",
+    "name": "scpp\\compiler\\enum_type_definition::__construct",
+    "token": 1562,
+    "message": "Property requires set: initialization before the constructor body: nominal_kind_data"
+  },
+  {
+    "kind": "scpp\\compiler\\source_callable_body_work",
+    "file": "03_parse/types/model.phs",
+    "name": "scpp\\compiler\\mixed_type_definition::__construct",
+    "token": 1617,
+    "message": "Property requires set: initialization before the constructor body: nominal_kind_data"
+  },
+  {
+    "kind": "scpp\\compiler\\source_callable_body_work",
+    "file": "03_parse/types/model.phs",
+    "name": "scpp\\compiler\\dynamic_type_definition::__construct",
+    "token": 1664,
+    "message": "Property requires set: initialization before the constructor body: nominal_kind_data"
+  },
+  {
+    "kind": "scpp\\compiler\\source_callable_body_work",
+    "file": "03_parse/types/model.phs",
+    "name": "scpp\\compiler\\nullable_type_definition::__construct",
+    "token": 2564,
+    "message": "Property requires set: initialization before the constructor body: result_kind_data"
+  },
+  {
+    "kind": "scpp\\compiler\\source_callable_body_work",
+    "file": "03_parse/types/model.phs",
+    "name": "scpp\\compiler\\canonical_type_use::matches",
+    "token": 3975,
+    "message": "S2S integer binary operation requires canonical int operands"
+  },
+  {
+    "kind": "scpp\\compiler\\source_callable_body_work",
+    "file": "03_parse/types/model.phs",
+    "name": "scpp\\compiler\\Type_Registry::register_runtime_storage",
+    "token": 4458,
+    "message": "S2S value probes require a scalar, nullable scalar, Result scalar, mixed, registered container or null"
+  },
+  {
+    "kind": "scpp\\compiler\\source_callable_body_work",
+    "file": "03_parse/types/model.phs",
+    "name": "scpp\\compiler\\Type_Registry::runtime_storage",
+    "token": 4573,
+    "message": "S2S value probes require a scalar, nullable scalar, Result scalar, mixed, registered container or null"
+  },
+  {
+    "kind": "scpp\\compiler\\source_callable_body_work",
+    "file": "03_parse/types/model.phs",
+    "name": "scpp\\compiler\\Type_Registry::define_callable",
+    "token": 4735,
+    "message": "S2S enum-valued fields await explicit field initialization"
+  },
+  {
+    "kind": "scpp\\compiler\\source_callable_body_work",
+    "file": "03_parse/types/model.phs",
+    "name": "scpp\\compiler\\Type_Registry::define_boolean",
+    "token": 5074,
+    "message": "Property requires set: initialization before the constructor body: definition_origin"
+  },
+  {
+    "kind": "scpp\\compiler\\source_callable_body_work",
+    "file": "03_parse/types/model.phs",
+    "name": "scpp\\compiler\\Type_Registry::define_null",
+    "token": 5122,
+    "message": "Property requires set: initialization before the constructor body: definition_origin"
+  },
+  {
+    "kind": "scpp\\compiler\\source_callable_body_work",
+    "file": "03_parse/types/model.phs",
+    "name": "scpp\\compiler\\Type_Registry::define_floating",
+    "token": 5235,
+    "message": "Property requires set: initialization before the constructor body: number_format"
+  },
+  {
+    "kind": "scpp\\compiler\\source_callable_body_work",
+    "file": "03_parse/types/model.phs",
+    "name": "scpp\\compiler\\Type_Registry::define_nominal",
+    "token": 5298,
+    "message": "Property requires set: initialization before the constructor body: nominal_kind_data"
+  },
+  {
+    "kind": "scpp\\compiler\\source_callable_body_work",
+    "file": "03_parse/types/model.phs",
+    "name": "scpp\\compiler\\Type_Registry::define_closure",
+    "token": 5351,
+    "message": "Property requires set: initialization before the constructor body: nominal_kind_data"
+  },
+  {
+    "kind": "scpp\\compiler\\source_callable_body_work",
+    "file": "03_parse/types/model.phs",
+    "name": "scpp\\compiler\\Type_Registry::define_no_value",
+    "token": 5562,
+    "message": "Property requires set: initialization before the constructor body: definition_origin"
+  },
+  {
+    "kind": "scpp\\compiler\\source_callable_body_work",
+    "file": "03_parse/types/model.phs",
+    "name": "scpp\\compiler\\Type_Registry::define_template",
+    "token": 5613,
+    "message": "Property requires set: initialization before the constructor body: result_kind_data"
+  },
+  {
+    "kind": "scpp\\compiler\\source_callable_body_work",
+    "file": "03_parse/types/model.phs",
+    "name": "scpp\\compiler\\Type_Registry::define_result",
+    "token": 5735,
+    "message": "Property requires set: initialization before the constructor body: family_kind"
+  },
+  {
+    "kind": "scpp\\compiler\\source_callable_body_work",
+    "file": "03_parse/types/model.phs",
+    "name": "scpp\\compiler\\Type_Registry::define_ownership",
+    "token": 5801,
+    "message": "Property requires set: initialization before the constructor body: family_kind"
+  },
+  {
+    "kind": "scpp\\compiler\\source_callable_body_work",
+    "file": "03_parse/types/model.phs",
+    "name": "scpp\\compiler\\Type_Registry::use",
+    "token": 6203,
+    "message": "S2S enum comparison requires the same enum type"
+  },
+  {
+    "kind": "scpp\\compiler\\source_callable_body_work",
+    "file": "03_parse/types/model.phs",
+    "name": "scpp\\compiler\\Type_Registry::is_value_type",
+    "token": 6403,
+    "message": "S2S enum comparison requires the same enum type"
+  },
+  {
+    "kind": "scpp\\compiler\\source_callable_body_work",
+    "file": "03_parse/types/model.phs",
+    "name": "scpp\\compiler\\Type_Registry::has_registered_capability",
+    "token": 6684,
+    "message": "S2S enum comparison requires the same enum type"
+  },
+  {
+    "kind": "scpp\\compiler\\source_callable_body_work",
+    "file": "03_parse/types/model.phs",
+    "name": "scpp\\compiler\\Type_Registry::validate_application",
+    "token": 7221,
+    "message": "Property requires set: initialization before the constructor body: definition_origin"
+  },
+  {
+    "kind": "scpp\\compiler\\source_callable_body_work",
+    "file": "04_analyze/prepare/data/callable_adaptation.phs",
+    "name": "scpp\\compiler\\prepared_callable_adaptation::is_identity",
+    "token": 25,
+    "message": "S2S enum-valued fields await explicit field initialization"
+  },
+  {
+    "kind": "scpp\\compiler\\source_callable_body_work",
+    "file": "04_analyze/prepare/data/structures.phs",
+    "name": "scpp\\compiler\\prepared_place::__construct",
+    "token": 261,
+    "message": "S2S enum-valued fields await explicit field initialization"
+  },
+  {
+    "kind": "scpp\\compiler\\source_callable_body_work",
+    "file": "04_analyze/prepare/data/structures.phs",
+    "name": "scpp\\compiler\\prepared_place::access",
+    "token": 530,
+    "message": "S2S enum-valued fields await explicit field initialization"
+  },
+  {
+    "kind": "scpp\\compiler\\source_callable_body_work",
+    "file": "04_analyze/prepare/data/structures.phs",
+    "name": "scpp\\compiler\\prepared_parameter::storage_type",
+    "token": 1858,
+    "message": "S2S enum-valued fields await explicit field initialization"
+  },
+  {
+    "kind": "scpp\\compiler\\source_callable_body_work",
+    "file": "04_analyze/prepare/data/structures.phs",
+    "name": "scpp\\compiler\\prepared_literal_parameter_default::result_type",
+    "token": 1928,
+    "message": "S2S enum-valued fields await explicit field initialization"
+  },
+  {
+    "kind": "scpp\\compiler\\source_callable_body_work",
+    "file": "04_analyze/prepare/data/structures.phs",
+    "name": "scpp\\compiler\\prepared_property_parameter_default::result_type",
+    "token": 1965,
+    "message": "S2S enum-valued fields await explicit field initialization"
+  },
+  {
+    "kind": "scpp\\compiler\\source_callable_body_work",
+    "file": "04_analyze/prepare/data/structures.phs",
+    "name": "scpp\\compiler\\prepared_construction_property_default::value_type",
+    "token": 2319,
+    "message": "S2S enum-valued fields await explicit field initialization"
+  },
+  {
+    "kind": "scpp\\compiler\\source_callable_body_work",
+    "file": "04_analyze/prepare/data/structures.phs",
+    "name": "scpp\\compiler\\prepared_assignment::destination_type",
+    "token": 3836,
+    "message": "S2S enum-valued fields await explicit field initialization"
+  },
+  {
+    "kind": "scpp\\compiler\\source_callable_body_work",
+    "file": "04_analyze/prepare/data/structures.phs",
+    "name": "scpp\\compiler\\prepared_index_assignment::destination_type",
+    "token": 3917,
+    "message": "S2S enum-valued fields await explicit field initialization"
+  },
+  {
+    "kind": "scpp\\compiler\\source_callable_body_work",
+    "file": "04_analyze/prepare/worker.phs",
+    "name": "scpp\\compiler\\Preparation_Worker::prepare",
+    "token": 353,
+    "message": "S2S assignment requires stable storage or an indexed shared receiver"
+  },
+  {
+    "kind": "scpp\\compiler\\source_callable_body_work",
+    "file": "04_analyze/prepare/worker.phs",
+    "name": "scpp\\compiler\\Preparation_Worker::prepare_anonymous",
+    "token": 2383,
+    "message": "S2S assignment requires stable storage or an indexed shared receiver"
+  },
+  {
+    "kind": "scpp\\compiler\\source_callable_body_work",
+    "file": "04_analyze/prepare/worker.phs",
+    "name": "scpp\\compiler\\Preparation_Worker::settle_members",
+    "token": 5360,
+    "message": "S2S assignment requires stable storage or an indexed shared receiver"
+  },
+  {
+    "kind": "scpp\\compiler\\source_callable_body_work",
+    "file": "04_analyze/prepare/worker.phs",
+    "name": "scpp\\compiler\\Preparation_Worker::rebuild_body",
+    "token": 5536,
+    "message": "S2S assignment requires stable storage or an indexed shared receiver"
+  },
+  {
+    "kind": "scpp\\compiler\\source_callable_body_work",
+    "file": "04_analyze/prepare/worker.phs",
+    "name": "scpp\\compiler\\Preparation_Worker::prepare_callable_body",
+    "token": 6137,
+    "message": "S2S assignment requires stable storage or an indexed shared receiver"
+  },
+  {
+    "kind": "scpp\\compiler\\source_callable_body_work",
+    "file": "04_analyze/prepare/worker.phs",
+    "name": "scpp\\compiler\\Preparation_Worker::settle_parameters",
+    "token": 6252,
+    "message": "S2S assignment requires stable storage or an indexed shared receiver"
+  },
+  {
+    "kind": "scpp\\compiler\\source_callable_body_work",
+    "file": "04_analyze/prepare/worker.phs",
+    "name": "scpp\\compiler\\Preparation_Worker::settle_fields",
+    "token": 6307,
+    "message": "S2S assignment requires stable storage or an indexed shared receiver"
+  },
+  {
+    "kind": "scpp\\compiler\\source_callable_body_work",
+    "file": "04_analyze/prepare/worker.phs",
+    "name": "scpp\\compiler\\Preparation_Worker::observe",
+    "token": 6864,
+    "message": "Property requires set: initialization before the constructor body: kind"
+  },
+  {
+    "kind": "scpp\\compiler\\source_callable_body_work",
+    "file": "04_analyze/prepare/worker.phs",
+    "name": "scpp\\compiler\\Preparation_Worker::detach_retired_work",
+    "token": 7389,
+    "message": "S2S assignment requires stable storage or an indexed shared receiver"
+  },
+  {
+    "kind": "scpp\\compiler\\source_callable_body_work",
+    "file": "04_analyze/prepare/worker.phs",
+    "name": "scpp\\compiler\\Preparation_Worker::retire",
+    "token": 7867,
+    "message": "S2S assignment requires stable storage or an indexed shared receiver"
+  },
+  {
+    "kind": "scpp\\compiler\\source_callable_body_work",
+    "file": "05_backend/cpp/generate.phs",
+    "name": "scpp\\compiler\\CPP_Generator::generate_program",
+    "token": 259,
+    "message": "S2S runtime call requires one exact signature or a unique checked-payload signature; use explicit argument types"
+  },
+  {
+    "kind": "scpp\\compiler\\source_callable_body_work",
+    "file": "05_backend/cpp/generate.phs",
+    "name": "scpp\\compiler\\CPP_Generator::validate_record_dependencies",
+    "token": 3286,
+    "message": "S2S value probes require a scalar, nullable scalar, Result scalar, mixed, registered container or null"
+  },
+  {
+    "kind": "scpp\\compiler\\source_callable_body_work",
+    "file": "05_backend/cpp/specializations.phs",
+    "name": "scpp\\compiler\\CPP_Specializations::request_observation",
+    "token": 358,
+    "message": "S2S enum-valued fields await explicit field initialization"
+  },
+  {
+    "kind": "scpp\\compiler\\source_callable_body_work",
+    "file": "05_backend/cpp/specializations.phs",
+    "name": "scpp\\compiler\\CPP_Specializations::append_artifacts",
+    "token": 1239,
+    "message": "Property requires set: initialization before the constructor body: artifact_kind"
+  },
+  {
+    "kind": "scpp\\compiler\\source_callable_body_work",
+    "file": "05_backend/cpp/syntax.phs",
+    "name": "scpp\\compiler\\CPP_Syntax::render_expression",
+    "token": 115,
+    "message": "S2S enum-valued fields await explicit field initialization"
+  },
+  {
+    "kind": "scpp\\compiler\\source_callable_body_work",
+    "file": "05_backend/cpp/syntax.phs",
+    "name": "scpp\\compiler\\CPP_Syntax::generate_index",
+    "token": 1746,
+    "message": "S2S enum-valued fields await explicit field initialization"
+  },
+  {
+    "kind": "scpp\\compiler\\source_callable_body_work",
+    "file": "05_backend/cpp/syntax.phs",
+    "name": "scpp\\compiler\\CPP_Syntax::generate_protected",
+    "token": 2638,
+    "message": "S2S enum-valued fields await explicit field initialization"
+  },
+  {
+    "kind": "scpp\\compiler\\source_callable_body_work",
+    "file": "05_backend/cpp/syntax.phs",
+    "name": "scpp\\compiler\\CPP_Syntax::generate_async_protected",
+    "token": 2858,
+    "message": "S2S enum-valued fields await explicit field initialization"
+  },
+  {
+    "kind": "scpp\\compiler\\source_callable_body_work",
+    "file": "05_backend/cpp/syntax.phs",
+    "name": "scpp\\compiler\\CPP_Syntax::initialized_binding",
+    "token": 4531,
+    "message": "S2S enum-valued fields await explicit field initialization"
+  },
+  {
+    "kind": "scpp\\compiler\\source_callable_body_work",
+    "file": "05_backend/cpp/syntax.phs",
+    "name": "scpp\\compiler\\CPP_Syntax::generate_control_transfer",
+    "token": 4825,
+    "message": "S2S enum-valued fields await explicit field initialization"
+  },
+  {
+    "kind": "scpp\\compiler\\source_callable_body_work",
+    "file": "05_backend/cpp/syntax.phs",
+    "name": "scpp\\compiler\\CPP_Syntax::generate_take_expression",
+    "token": 4946,
+    "message": "S2S enum-valued fields await explicit field initialization"
+  },
+  {
+    "kind": "scpp\\compiler\\source_callable_body_work",
+    "file": "05_backend/cpp/syntax.phs",
+    "name": "scpp\\compiler\\CPP_Syntax::generate_value_probe",
+    "token": 5328,
+    "message": "S2S enum-valued fields await explicit field initialization"
+  },
+  {
+    "kind": "scpp\\compiler\\source_callable_body_work",
+    "file": "05_backend/cpp/syntax.phs",
+    "name": "scpp\\compiler\\CPP_Syntax::generate_coalesce_expression",
+    "token": 5550,
+    "message": "S2S enum-valued fields await explicit field initialization"
+  },
+  {
+    "kind": "scpp\\compiler\\source_callable_body_work",
+    "file": "05_backend/cpp/syntax.phs",
+    "name": "scpp\\compiler\\CPP_Syntax::generate_conditional_expression",
+    "token": 5982,
+    "message": "S2S enum-valued fields await explicit field initialization"
+  },
+  {
+    "kind": "scpp\\compiler\\source_callable_body_work",
+    "file": "05_backend/cpp/type_bindings_catalog.phs",
+    "name": "scpp\\compiler\\CPP_Type_Bindings::bind_definition",
+    "token": 399,
+    "message": "S2S enum-valued fields await explicit field initialization"
+  },
+  {
+    "kind": "scpp\\compiler\\source_callable_body_work",
+    "file": "05_backend/cpp/type_bindings_catalog.phs",
+    "name": "scpp\\compiler\\CPP_Type_Bindings::bind_modifier",
+    "token": 562,
+    "message": "Property requires set: initialization before the constructor body: modifier_kind"
+  },
+  {
+    "kind": "scpp\\compiler\\source_callable_body_work",
+    "file": "05_backend/llvm/generate.phs",
+    "name": "scpp\\compiler\\LLVM_Generator::generate",
+    "token": 11,
+    "message": "S2S enum-valued fields await explicit field initialization"
+  },
+  {
+    "kind": "scpp\\compiler\\source_callable_body_work",
+    "file": "05_backend/llvm/generate.phs",
+    "name": "scpp\\compiler\\LLVM_Function_Generator::to_llvm_call_expression",
+    "token": 1295,
+    "message": "S2S enum-valued fields await explicit field initialization"
+  },
+  {
+    "kind": "scpp\\compiler\\source_callable_body_work",
+    "file": "05_backend/llvm/generate.phs",
+    "name": "scpp\\compiler\\LLVM_Function_Generator::generate",
+    "token": 2570,
+    "message": "S2S enum-valued fields await explicit field initialization"
+  },
+  {
+    "kind": "scpp\\compiler\\source_callable_body_work",
+    "file": "05_backend/llvm/prepare.phs",
+    "name": "scpp\\compiler\\LLVM_Preparation_Run::prepare_instance",
+    "token": 1505,
+    "message": "S2S enum-valued fields await explicit field initialization"
+  },
+  {
+    "kind": "scpp\\compiler\\source_callable_body_work",
+    "file": "06_native/cpp_build.phs",
+    "name": "scpp\\compiler\\Native_CPP_Build::build",
+    "token": 144,
+    "message": "S2S data construction requires a known concrete target"
+  },
+  {
+    "kind": "scpp\\compiler\\source_callable_body_work",
+    "file": "06_native/cpp_build.phs",
+    "name": "scpp\\compiler\\Native_CPP_Build::require_template_free",
+    "token": 2058,
+    "message": "S2S data construction requires a known concrete target"
+  },
+  {
+    "kind": "scpp\\compiler\\source_callable_body_work",
+    "file": "06_native/ninja_build.phs",
+    "name": "scpp\\compiler\\Native_Ninja_Build::admit",
+    "token": 1248,
+    "message": "S2S integer binary operation requires canonical int operands"
+  },
+  {
+    "kind": "scpp\\compiler\\source_callable_body_work",
+    "file": "06_native/ninja_build.phs",
+    "name": "scpp\\compiler\\Native_Ninja_Build::compile_edge",
+    "token": 1408,
+    "message": "S2S data construction requires a known concrete target"
+  },
+  {
+    "kind": "scpp\\compiler\\source_callable_body_work",
+    "file": "compiler/callables/catalog.phs",
+    "name": "scpp\\compiler\\Runtime_Callables::register_function",
+    "token": 552,
+    "message": "S2S runtime call requires one exact signature or a unique checked-payload signature; use explicit argument types"
+  },
+  {
+    "kind": "scpp\\compiler\\source_callable_body_work",
+    "file": "compiler/callables/catalog.phs",
+    "name": "scpp\\compiler\\Runtime_Callables::register_generic",
+    "token": 617,
+    "message": "S2S runtime call requires one exact signature or a unique checked-payload signature; use explicit argument types"
+  },
+  {
+    "kind": "scpp\\compiler\\source_callable_body_work",
+    "file": "compiler/indexing/contracts.phs",
+    "name": "scpp\\compiler\\indexing_declaration::__construct",
+    "token": 70,
+    "message": "S2S enum comparison requires the same enum type"
+  },
+  {
+    "kind": "scpp\\compiler\\source_callable_body_work",
+    "file": "scpp_framework/filesystem.phs",
+    "name": "scpp_portability_fs_scan",
+    "token": 383,
+    "message": "S2S Result construction requires an exact payload, same wrapper type, structured error or supported explicit sentinel"
+  },
+  {
+    "kind": "scpp\\compiler\\source_callable_body_work",
+    "file": "scpp_framework/filesystem.phs",
+    "name": "scpp_portability_fs_size",
+    "token": 434,
+    "message": "S2S Result construction requires an exact payload, same wrapper type, structured error or supported explicit sentinel"
+  },
+  {
+    "kind": "scpp\\compiler\\source_callable_body_work",
+    "file": "scpp_framework/filesystem.phs",
+    "name": "scpp_portability_fs_mtime",
+    "token": 478,
+    "message": "S2S Result construction requires an exact payload, same wrapper type, structured error or supported explicit sentinel"
+  },
+  {
+    "kind": "scpp\\compiler\\source_callable_body_work",
+    "file": "scpp_framework/json_document.phs",
+    "name": "scpp\\json_read",
+    "token": 498,
+    "message": "Required object boundary rejects null; declare a nullable object type"
+  },
+  {
+    "kind": "scpp\\compiler\\source_callable_body_work",
+    "file": "04_analyze/prepare/changes.phs",
+    "name": "scpp\\compiler\\Preparation_Changes::same_signature",
+    "token": 12,
+    "message": "S2S enum-valued fields await explicit field initialization"
+  },
+  {
+    "kind": "scpp\\compiler\\source_callable_body_work",
+    "file": "04_analyze/prepare/changes.phs",
+    "name": "scpp\\compiler\\Preparation_Changes::restore_fields",
+    "token": 964,
+    "message": "S2S conditional branches require supported scalar value types or enums"
+  },
+  {
+    "kind": "scpp\\compiler\\source_callable_body_work",
+    "file": "04_analyze/conversions/truthiness.phs",
+    "name": "scpp\\compiler\\Condition_Truthiness::decide",
+    "token": 12,
+    "message": "S2S enum-valued fields await explicit field initialization"
+  },
+  {
+    "kind": "scpp\\compiler\\source_callable_body_work",
+    "file": "04_analyze/prepare/semantics/bodies.phs",
+    "name": "scpp\\compiler\\Body_Preparation::prepare_local_storage",
+    "token": 1126,
+    "message": "S2S enum-valued fields await explicit field initialization"
+  },
+  {
+    "kind": "scpp\\compiler\\source_callable_body_work",
+    "file": "04_analyze/conversions/preparation.phs",
+    "name": "scpp\\compiler\\Conversion_Preparation::operation",
+    "token": 845,
+    "message": "S2S enum-valued fields await explicit field initialization"
+  },
+  {
+    "kind": "scpp\\compiler\\source_callable_body_work",
+    "file": "04_analyze/conversions/boxed.phs",
+    "name": "scpp\\compiler\\Boxed_Conversions::container_input",
+    "token": 12,
+    "message": "S2S enum-valued fields await explicit field initialization"
+  },
+  {
+    "kind": "scpp\\compiler\\source_callable_body_work",
+    "file": "04_analyze/conversions/preparation.phs",
+    "name": "scpp\\compiler\\Conversion_Preparation::decide",
+    "token": 12,
+    "message": "S2S enum-valued fields await explicit field initialization"
+  },
+  {
+    "kind": "scpp\\compiler\\source_callable_body_work",
+    "file": "04_analyze/prepare/semantics/cleanup.phs",
+    "name": "scpp\\compiler\\Cleanup_Preparation::prepare",
+    "token": 12,
+    "message": "S2S enum-valued fields await explicit field initialization"
+  },
+  {
+    "kind": "scpp\\compiler\\source_callable_body_work",
+    "file": "04_analyze/prepare/semantics/constants.phs",
+    "name": "scpp\\compiler\\Constant_Expression_Preparation::evaluate",
+    "token": 302,
+    "message": "Object narrowing requires a polymorphic source"
+  },
+  {
+    "kind": "scpp\\compiler\\source_callable_body_work",
+    "file": "04_analyze/prepare/semantics/calls.phs",
+    "name": "scpp\\compiler\\Call_Preparation::admit",
+    "token": 331,
+    "message": "S2S enum-valued fields await explicit field initialization"
+  },
+  {
+    "kind": "scpp\\compiler\\source_callable_body_work",
+    "file": "04_analyze/prepare/semantics/constructors.phs",
+    "name": "scpp\\compiler\\Constructor_Preparation::prepare_base",
+    "token": 12,
+    "message": "S2S assignment requires stable storage or an indexed shared receiver"
+  },
+  {
+    "kind": "scpp\\compiler\\source_callable_body_work",
+    "file": "04_analyze/prepare/semantics/constructors.phs",
+    "name": "scpp\\compiler\\Constructor_Preparation::signature",
+    "token": 418,
+    "message": "S2S enum-valued fields await explicit field initialization"
+  },
+  {
+    "kind": "scpp\\compiler\\source_callable_body_work",
+    "file": "04_analyze/prepare/semantics/async.phs",
+    "name": "scpp\\compiler\\Async_Preparation::signature",
+    "token": 60,
+    "message": "S2S enum-valued fields await explicit field initialization"
+  },
+  {
+    "kind": "scpp\\compiler\\source_callable_body_work",
+    "file": "04_analyze/prepare/semantics/declarations.phs",
+    "name": "scpp\\compiler\\Declaration_Preparation::prepare_parameters",
+    "token": 427,
+    "message": "S2S enum-valued fields await explicit field initialization"
+  },
+  {
+    "kind": "scpp\\compiler\\source_callable_body_work",
+    "file": "04_analyze/prepare/semantics/declarations.phs",
+    "name": "scpp\\compiler\\Declaration_Preparation::prepare_anonymous",
+    "token": 669,
+    "message": "S2S enum-valued fields await explicit field initialization"
+  },
+  {
+    "kind": "scpp\\compiler\\source_callable_body_work",
+    "file": "04_analyze/prepare/semantics/constructors.phs",
+    "name": "scpp\\compiler\\Constructor_Preparation::synthesized_inputs",
+    "token": 1136,
+    "message": "S2S enum-valued fields await explicit field initialization"
+  },
+  {
+    "kind": "scpp\\compiler\\source_callable_body_work",
+    "file": "04_analyze/prepare/semantics/declarations.phs",
+    "name": "scpp\\compiler\\Declaration_Preparation::prepare_field_value",
+    "token": 2333,
+    "message": "S2S enum-valued fields await explicit field initialization"
+  },
+  {
+    "kind": "scpp\\compiler\\source_callable_body_work",
+    "file": "04_analyze/prepare/semantics/exceptions.phs",
+    "name": "scpp\\compiler\\Exception_Preparation::prepare_protected",
+    "token": 575,
+    "message": "S2S enum-valued fields await explicit field initialization"
+  },
+  {
+    "kind": "scpp\\compiler\\source_callable_body_work",
+    "file": "04_analyze/prepare/semantics/async.phs",
+    "name": "scpp\\compiler\\Async_Preparation::await_value",
+    "token": 163,
+    "message": "S2S enum-valued fields await explicit field initialization"
+  },
+  {
+    "kind": "scpp\\compiler\\source_callable_body_work",
+    "file": "04_analyze/prepare/semantics/captures.phs",
+    "name": "scpp\\compiler\\Capture_Preparation::prepare",
+    "token": 12,
+    "message": "S2S value probes require a scalar, nullable scalar, Result scalar, mixed, registered container or null"
+  },
+  {
+    "kind": "scpp\\compiler\\source_callable_body_work",
+    "file": "04_analyze/prepare/semantics/expressions.phs",
+    "name": "scpp\\compiler\\Expression_Preparation::prepare_for_consumer",
+    "token": 51,
+    "message": "S2S enum-valued fields await explicit field initialization"
+  },
+  {
+    "kind": "scpp\\compiler\\source_callable_body_work",
+    "file": "04_analyze/operators/indexing.phs",
+    "name": "scpp\\compiler\\Indexing_Preparation::require_storage_receiver",
+    "token": 1225,
+    "message": "S2S enum-valued fields await explicit field initialization"
+  },
+  {
+    "kind": "scpp\\compiler\\source_callable_body_work",
+    "file": "04_analyze/prepare/semantics/iteration.phs",
+    "name": "scpp\\compiler\\Iteration_Preparation::enter",
+    "token": 416,
+    "message": "S2S enum-valued fields await explicit field initialization"
+  }
+]

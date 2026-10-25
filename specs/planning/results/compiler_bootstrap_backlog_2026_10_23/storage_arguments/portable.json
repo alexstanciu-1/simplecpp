@@ -1,0 +1,17 @@
+[
+  {
+    "name": "legacy",
+    "seconds": 23.25221962700016,
+    "passed": true
+  },
+  {
+    "name": "ordinary",
+    "seconds": 24.392856927996036,
+    "passed": true
+  },
+  {
+    "name": "concrete",
+    "seconds": 25.14014994300669,
+    "passed": true
+  }
+]
