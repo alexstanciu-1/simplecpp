@@ -1,0 +1,62 @@
+[
+    {
+        "case": "derived_append",
+        "concrete": false,
+        "result": "S2S runtime call requires one exact signature or a unique checked-payload signature; use explicit argument types\n"
+    },
+    {
+        "case": "derived_append",
+        "concrete": true,
+        "result": "S2S runtime call requires one exact signature or a unique checked-payload signature; use explicit argument types\n"
+    },
+    {
+        "case": "derived_append_view",
+        "concrete": false,
+        "result": "PASS"
+    },
+    {
+        "case": "derived_append_view",
+        "concrete": true,
+        "result": "PASS"
+    },
+    {
+        "case": "derived_add",
+        "concrete": false,
+        "result": "S2S runtime call requires one exact signature or a unique checked-payload signature; use explicit argument types\n"
+    },
+    {
+        "case": "derived_add",
+        "concrete": true,
+        "result": "S2S runtime call requires one exact signature or a unique checked-payload signature; use explicit argument types\n"
+    },
+    {
+        "case": "derived_add_view",
+        "concrete": false,
+        "result": "PASS"
+    },
+    {
+        "case": "derived_add_view",
+        "concrete": true,
+        "result": "PASS"
+    },
+    {
+        "case": "nullable_append",
+        "concrete": false,
+        "result": "S2S runtime call requires one exact signature or a unique checked-payload signature; use explicit argument types\n"
+    },
+    {
+        "case": "nullable_append",
+        "concrete": true,
+        "result": "S2S runtime call requires one exact signature or a unique checked-payload signature; use explicit argument types\n"
+    },
+    {
+        "case": "nullable_append_view",
+        "concrete": false,
+        "result": "PASS"
+    },
+    {
+        "case": "nullable_append_view",
+        "concrete": true,
+        "result": "PASS"
+    }
+]

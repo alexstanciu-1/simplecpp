@@ -1824,3 +1824,12 @@ Bootstrap: 1:55.96 / 614812 KiB RSS / 582.5 MiB heap. Same 16 categories, first 
 runtime-call signature matching. Enum comparison remains later, so its category
 is not cleared. Stopped before further fixes; native and second-generation
 acceptance remain outstanding.
+
+## Runtime-call argument audit — 2026-10-25
+
+Audited candidate sites in the five previously observed failing owners. Generic
+Storage methods require their already-bound element identity; source derived/nullable
+arguments differ. Six minimal shapes in both output modes prove explicit typed locals
+reuse existing upcast/checked-extraction support. Recommend PHP-only boundary locals,
+then native identity/order proofs and measured bootstrap. No production fixes yet.
+[Audit](results/compiler_bootstrap_backlog_2026_10_23/runtime_argument_audit/README.md).
