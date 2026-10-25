@@ -1980,3 +1980,12 @@ tasks pass. Full PHP-hosted bootstrap passes in 2:03.79 / 796076 KiB RSS /
 [Evidence](results/compiler_bootstrap_backlog_2026_10_23/native_value_transport/README.md).
 Native build retry follows with the existing temporary host-only deadline allowance;
 compiler execution and second generation remain outstanding.
+
+## First native compiler success — 2026-10-25
+
+Native compiler built and linked at -O0: 8:30.13 / 2419340 KiB RSS, with temporary
+host-only 600-second action deadline. Six cached objects and three layouts reused.
+It compiled scalar, shared-identity and string-container programs whose resulting
+executables produced expected output. Both previous Clang transport errors cleared.
+[Evidence](results/compiler_bootstrap_backlog_2026_10_23/native_compiler_first_success/README.md).
+Second-generation publication/build/execution is now the remaining acceptance step.
