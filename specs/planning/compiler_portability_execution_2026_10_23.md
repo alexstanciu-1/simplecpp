@@ -1798,3 +1798,16 @@ without new adapters. Both output modes and host probe/incremental checks pass.
 Final bootstrap: 2:01.15 / 614692 KiB RSS / 582.5 MiB heap. Categories 17 -> 16;
 first blocker now same-enum comparison. Stopped before fixing it; native compiler
 and second-generation acceptance remain outstanding.
+
+## Nullable enum source boundaries — 2026-10-25
+
+Applied approved PHP-only required locals and take_nullable in three Type_Registry
+methods and indexing_declaration construction. Nested if statements preserve lazy
+lookup across routes; a native v0.1 proof caught unwanted evaluation in an initial
+combined logical expression. PHP/v0.1/both v0.2 modes and three host suites pass.
+No language or compiler changes. [Evidence](results/compiler_bootstrap_backlog_2026_10_23/nullable_enum_source/README.md).
+
+Final bootstrap: 1:58.36 / 614012 KiB RSS / 582.5 MiB PHP heap. Same 16 diagnostic
+categories; first remains same-enum comparison elsewhere. Focused proofs establish
+the audited sites, not elimination of the entire category. Stopped before expanding
+the slice; native compiler and second-generation acceptance remain outstanding.

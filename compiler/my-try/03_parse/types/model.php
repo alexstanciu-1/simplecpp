@@ -1310,8 +1310,13 @@ final class Type_Registry implements type_capability_query
 	{
 		$type = $this->type($type_id);
 		$definition = $type->definition();
-		if ($by_value && ($this->runtime_storage($definition) === record_storage_kind::shared)) {
-			throw new \InvalidArgumentException('Opaque runtime shared payload does not permit value storage');
+		if ($by_value) {
+			$runtime_storage = record_storage_kind::inline_value;
+			if (take_nullable($runtime_storage, $this->runtime_storage($definition))) {
+				if ($runtime_storage === record_storage_kind::shared) {
+					throw new \InvalidArgumentException('Opaque runtime shared payload does not permit value storage');
+				}
+			}
 		}
 		if ($by_value && ($definition->origin() === type_definition_origin::source)) {
 			if ($definition instanceof abstract_nominal_type_definition) {
@@ -1346,7 +1351,8 @@ final class Type_Registry implements type_capability_query
 		$definition = $type->definition();
 		$registered_storage = $this->runtime_storage($definition);
 		if ($registered_storage !== null) {
-			return $registered_storage === record_storage_kind::inline_value;
+			$storage /** record_storage_kind */ = $registered_storage;
+			return $storage === record_storage_kind::inline_value;
 		}
 		if ($definition instanceof abstract_nominal_type_definition) {
 			$nominal = object_cast($definition, abstract_nominal_type_definition::class);
@@ -1394,9 +1400,14 @@ final class Type_Registry implements type_capability_query
 		if ($definition->origin() === type_definition_origin::source) {
 			throw new \LogicException('Source type capabilities require completed declaration preparation');
 		}
-		if (!$type_use->by_value() && ($this->runtime_storage($definition) === record_storage_kind::shared)) {
-			if (($capability === generic_contract::copyable_value) || ($capability === generic_contract::value_storable)) {
-				return true;
+		if (!$type_use->by_value()) {
+			$runtime_storage = record_storage_kind::inline_value;
+			if (take_nullable($runtime_storage, $this->runtime_storage($definition))) {
+				if ($runtime_storage === record_storage_kind::shared) {
+					if (($capability === generic_contract::copyable_value) || ($capability === generic_contract::value_storable)) {
+						return true;
+					}
+				}
 			}
 		}
 		if (!$definition->declares_capability($capability)) {

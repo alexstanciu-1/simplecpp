@@ -20,7 +20,8 @@ final class indexing_declaration
 			throw new \InvalidArgumentException('Index read contract requires a value-read operation');
 		}
 		if ($store_operation !== null) {
-			if ($store_operation !== operator_operation::index_store) {
+			$store /** operator_operation */ = $store_operation;
+			if ($store !== operator_operation::index_store) {
 				throw new \InvalidArgumentException('Index write contract requires an indexed store operation');
 			}
 		}
