@@ -919,7 +919,10 @@ final class Parser_Run
 		if ($previous !== null) { $constant = $previous; }
 		elseif ($record === null) { $constant = new namespace_constant_node(); }
 		else { $constant = new member_constant_node(); }
-		if ($constant instanceof member_constant_node) { object_cast($constant, member_constant_node::class)->modifiers = $modifiers; }
+		if ($constant instanceof member_constant_node) {
+			$member_constant = object_cast($constant, member_constant_node::class);
+			$member_constant->modifiers = $modifiers;
+		}
 		if ($previous === null) { $constant->set_span($start, $start); }
 		$old_start = -1;
 		$old_end = -1;
@@ -1349,7 +1352,8 @@ final class Parser_Run
 			$previous = $this->collector->previous_method($declaration_scope, $function_name);
 			if ($previous === null) { $function = method_node::fresh_node(); }
 			else { $function = $previous; }
-			object_cast($function, method_node::class)->modifiers = $modifiers;
+			$method = object_cast($function, method_node::class);
+			$method->modifiers = $modifiers;
 		}
 		if ($previous === null) {
 			$function->set_span($start, $start);

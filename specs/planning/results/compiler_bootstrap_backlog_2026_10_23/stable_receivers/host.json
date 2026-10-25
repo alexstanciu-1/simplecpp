@@ -1,0 +1,37 @@
+[
+  {
+    "name": "declaration_model",
+    "seconds": 0.4805688159831334,
+    "passed": true
+  },
+  {
+    "name": "member_owners",
+    "seconds": 0.4440745949978009,
+    "passed": true
+  },
+  {
+    "name": "source_constants",
+    "seconds": 1.1068994409870356,
+    "passed": true
+  },
+  {
+    "name": "incremental_preparation",
+    "seconds": 0.5586575669876765,
+    "passed": true
+  },
+  {
+    "name": "lifecycle_handoff",
+    "seconds": 0.5055325550201815,
+    "passed": true
+  },
+  {
+    "name": "preparation_recovery",
+    "seconds": 0.6868328970158473,
+    "passed": true
+  },
+  {
+    "name": "preparation_work",
+    "seconds": 0.449626422021538,
+    "passed": true
+  }
+]

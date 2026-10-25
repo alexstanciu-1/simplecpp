@@ -66,7 +66,8 @@ final class Preparation_Worker
 		foreach ($sources as $source) {
 			if (!$source->deleted) {
 				if ($source->prepared !== null) {
-					$source->prepared->entry_body = null;
+					$prepared_source /** prepared_file */ = $source->prepared;
+					$prepared_source->entry_body = null;
 				}
 				$this->select($source);
 			}
@@ -132,8 +133,9 @@ final class Preparation_Worker
 				continue;
 			}
 			if ($source->prepared === null) {
-				$source->prepared = new prepared_file();
-				$source->prepared->source = $source;
+				$created_preparation = new prepared_file();
+				$created_preparation->source = $source;
+				$source->prepared = $created_preparation;
 			}
 			$prepared /** prepared_file */ = $source->prepared;
 			$prepared->entry_body = weak(Program_Preparation::source_body($source));
@@ -147,7 +149,8 @@ final class Preparation_Worker
 				if ($entry instanceof collected_source_callable) {
 					$callable = object_cast($entry, collected_source_callable::class);
 					if (Callable_Inventory::deferred_body($callable) && $callable->callable_syntax()->has_parsed_body()) {
-						$callable->callable_syntax()->require_body()->syntax_changed = false;
+						$callable_body = $callable->callable_syntax()->require_body();
+						$callable_body->syntax_changed = false;
 					}
 				}
 			}
@@ -378,7 +381,8 @@ final class Preparation_Worker
 		if ($syntax->require_body()->work() === null) { $syntax->require_body()->attach_work(new anonymous_body_work($identity)); }
 		$body /** body_work */ = $syntax->require_body()->work();
 		if ($captures !== null) {
-			object_cast($body, anonymous_body_work::class)->captures = $captures;
+			$anonymous_body = object_cast($body, anonymous_body_work::class);
+			$anonymous_body->captures = $captures;
 			$body->state = preparation_state::pending;
 			// Newly supplied creation-site facts permit retry after an earlier scheduled attempt.
 			unset($this->attempt_failed[$body]);
@@ -792,7 +796,10 @@ final class Preparation_Worker
 	{
 		if ($owner instanceof anonymous_signature_work) {
 			$parameters /** Storage<parameter_node> */ = object_cast($owner, anonymous_signature_work::class)->anonymous_identity()->syntax()->signature_syntax->parameters;
-			foreach ($parameters as $parameter) { $parameter->occurrence()->change_status = change_state::unchanged; }
+			foreach ($parameters as $parameter) {
+				$parameter_entry = $parameter->occurrence();
+				$parameter_entry->change_status = change_state::unchanged;
+			}
 			return;
 		}
 		if ($owner instanceof type_semantic_work) { return; }
@@ -803,7 +810,8 @@ final class Preparation_Worker
 			$this->settle_fields(object_cast($owner, record_definition_work::class)->record_definition());
 		}
 		elseif (($owner instanceof constant_definition_work) || ($owner instanceof enum_definition_work)) {
-			object_cast($owner, declaration_work::class)->required_declaration()->change_status = change_state::unchanged;
+			$declaration = object_cast($owner, declaration_work::class)->required_declaration();
+			$declaration->change_status = change_state::unchanged;
 		}
 		else { throw new \LogicException('Unsupported declaration work role'); }
 	}
@@ -834,7 +842,8 @@ final class Preparation_Worker
 				$context->locals->add($name, $capture);
 			}
 			Body_Preparation::prepare_callable_statements($owner->executable_body(), $signature->require_facts(), $context, 0, '<closure>');
-			$owner->executable_body()->syntax_changed = false;
+			$executable_body = $owner->executable_body();
+			$executable_body->syntax_changed = false;
 			return;
 		}
 		if ($owner instanceof source_callable_body_work) {
@@ -899,7 +908,8 @@ final class Preparation_Worker
 		$this->require_declaration($owner, $entry);
 		Preparation_Cleanup::tree($syntax->require_body());
 		Body_Preparation::prepare_body($syntax, $context);
-		$syntax->require_body()->syntax_changed = false;
+		$prepared_body = $syntax->require_body();
+		$prepared_body->syntax_changed = false;
 	}
 
 	private function prepare_file_body(file_body_work $owner, preparation_context $context): void
@@ -916,7 +926,8 @@ final class Preparation_Worker
 		$entry->change_status = change_state::unchanged;
 		$parameters /** Storage<parameter_node> */ = $entry->callable_syntax()->signature_syntax->parameters;
 		foreach ($parameters as $parameter) {
-			$parameter->occurrence()->change_status = change_state::unchanged;
+			$parameter_entry = $parameter->occurrence();
+			$parameter_entry->change_status = change_state::unchanged;
 		}
 	}
 
@@ -926,7 +937,8 @@ final class Preparation_Worker
 		$entry->change_status = change_state::unchanged;
 		$fields /** Storage<property_node> */ = Member_Inventory::properties($entry);
 		foreach ($fields as $field) {
-			$field->occurrence()->change_status = change_state::unchanged;
+			$field_entry = $field->occurrence();
+			$field_entry->change_status = change_state::unchanged;
 		}
 	}
 
@@ -1122,12 +1134,14 @@ final class Preparation_Worker
 				continue;
 			}
 			if ($entry->preparation_work_owner() !== null) {
-				object_cast($entry, collected_definition::class)->preparation = null;
+				$definition = object_cast($entry, collected_definition::class);
+				$definition->preparation = null;
 			}
 			if ($entry instanceof collected_member_owner) {
-				object_cast($entry, collected_member_owner::class)->relationship_work = null;
-				object_cast($entry, collected_member_owner::class)->contract_work = null;
-				object_cast($entry, collected_member_owner::class)->lifecycle_work = null;
+				$member_owner = object_cast($entry, collected_member_owner::class);
+				$member_owner->relationship_work = null;
+				$member_owner->contract_work = null;
+				$member_owner->lifecycle_work = null;
 			}
 			if ($entry instanceof collected_source_callable) {
 				$function = object_cast($entry, collected_source_callable::class)->callable_syntax();
@@ -1139,7 +1153,8 @@ final class Preparation_Worker
 		$bodies /** Storage<namespace_body_node> */ = $source->root->retired_namespace_bodies;
 		if (!$bodies->is_empty()) {
 			if ($source->prepared !== null) {
-				$source->prepared->entry_body = null;
+				$prepared_source /** prepared_file */ = $source->prepared;
+				$prepared_source->entry_body = null;
 			}
 		}
 		foreach ($bodies as $namespace_body) {
@@ -1181,10 +1196,17 @@ final class Preparation_Worker
 			$anonymous->facts = null;
 			$anonymous->expected_type = null;
 		}
-		if ($owner instanceof type_lifecycle_work) { object_cast($owner, type_lifecycle_work::class)->facts = null; }
-		if ($owner instanceof type_contract_work) { object_cast($owner, type_contract_work::class)->facts = null; }
+		if ($owner instanceof type_lifecycle_work) {
+			$lifecycle = object_cast($owner, type_lifecycle_work::class);
+			$lifecycle->facts = null;
+		}
+		if ($owner instanceof type_contract_work) {
+			$contract = object_cast($owner, type_contract_work::class);
+			$contract->facts = null;
+		}
 		if ($owner instanceof type_relationship_work) {
-			object_cast($owner, type_relationship_work::class)->facts = null;
+			$relationship = object_cast($owner, type_relationship_work::class);
+			$relationship->facts = null;
 		}
 		$owner->change_status = change_state::deleted;
 		$owner->source->preparation_changes[$owner] = true;

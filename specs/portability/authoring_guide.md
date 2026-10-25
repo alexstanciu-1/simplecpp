@@ -32,6 +32,17 @@ then select the same storage. Simple C++ rejects an inaccessible child field rat
 than retrying the base. Public/protected hiding and static-field redeclaration are
 not covered by this portability rule. See [inheritance](../inheritance_v0_2.md).
 
+## Stable receivers for mutation
+
+Bind a class handle returned by a call or checked cast to a local before writing
+its fields. For example, use `$member = object_cast($node, Member_Node::class);`
+then `$member->flags = $flags;`. For an optional object field already guarded for
+presence, an explicitly required local supplies the existing checked conversion.
+The local retains the same class object; it does not copy its fields. Keep these
+locals scoped to the mutation and preserve the original evaluation order.
+Do not apply this aliasing rule to inline structs or value containers, whose local
+copies may detach mutation from the original storage.
+
 ## Mapped function identity
 
 The function map names the exact target for a portable operation. Global source

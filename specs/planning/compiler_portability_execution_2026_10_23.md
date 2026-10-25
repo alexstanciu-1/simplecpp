@@ -1678,3 +1678,17 @@ includes partial source-location audit (interrupted; not performance evidence).
 Uninstrumented bootstrap: 2:47.41 / 511328 KiB RSS / 486.5 MiB heap. Still 24
 aggregate diagnostic strings; first is now stable-storage assignment. Further
 runtime-call sites remain. Native build and second-generation proof are pending.
+
+## Retained class mutation receivers — 2026-10-25
+
+Source-only locals retain call/cast/guarded-optional object results before mutation.
+Parser modifiers, preparation retirement/settlement and base initialization reuse
+existing class handle semantics; no value-container or struct copy substitution.
+Seven affected host tests and PHP/v0.1/both-v0.2 mutation/identity proof pass.
+[Evidence](results/compiler_bootstrap_backlog_2026_10_23/stable_receivers/README.md).
+
+Bootstrap: 2:22.29 / 511888 KiB RSS / 486.5 MiB heap. Enum initialization is first;
+24 distinct diagnostics remain, including other stable-storage assignment sites.
+Native compiler build/run and second-generation proof remain incomplete.
+Next reuse audit has identified 40 active enum fields without explicit defaults;
+parked LLVM and generated build sources excluded. No enum source changes in this slice.

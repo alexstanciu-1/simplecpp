@@ -52,7 +52,8 @@ final class Constructor_Preparation
 			}
 		}
 		finally { $context->receiver = $receiver; }
-		$syntax->require_body()->base_initialization = $facts;
+		$constructor_body = $syntax->require_body();
+		$constructor_body->base_initialization = $facts;
 		return $source_call === null ? 0 : 1;
 	}
 
