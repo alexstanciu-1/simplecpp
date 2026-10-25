@@ -1410,12 +1410,85 @@ final class type_use_modifier_node extends type_node
 final class data_construction_node extends expression_node
 {
 	use Node_Source_Span;
-	use Preparation_Facts;
+	private ?prepared_record_construction $record_facts = null;
+	private ?prepared_empty_construction $empty_facts = null;
+	private ?prepared_sequence_construction $sequence_facts = null;
 
-	private ?prepared_data_construction $prepared_facts = null;
+	/** Unprepared means all absent; successful publication retains exactly one alternative. */
+	public function preparation(): ?prepared_expression
+	{
+		if ($this->record_facts !== null) { return $this->record_facts; }
+		if ($this->empty_facts !== null) { return $this->empty_facts; }
+		return $this->sequence_facts;
+	}
 
-	public function require_preparation(): prepared_expression { return $this->prepared_facts; }
-	public function require_data_preparation(): prepared_data_construction { return $this->prepared_facts; }
+	public function require_preparation(): prepared_expression { return $this->require_data_preparation(); }
+
+	public function require_data_preparation(): prepared_data_construction
+	{
+		if ($this->record_facts !== null) { return $this->record_facts; }
+		if ($this->empty_facts !== null) { return $this->empty_facts; }
+		if ($this->sequence_facts !== null) { return $this->sequence_facts; }
+		throw new \LogicException('Data construction has no preparation');
+	}
+
+	public function clear_preparation(): void
+	{
+		$this->record_facts = null;
+		$this->empty_facts = null;
+		$this->sequence_facts = null;
+	}
+
+	public function set_record_preparation(prepared_record_construction $facts): void
+	{
+		$this->clear_preparation();
+		$this->record_facts = $facts;
+	}
+
+	public function optional_record_preparation(): ?prepared_record_construction
+	{
+		return $this->record_facts;
+	}
+
+	public function require_record_preparation(): prepared_record_construction
+	{
+		if ($this->record_facts === null) { throw new \LogicException('Data construction has no record preparation'); }
+		return $this->record_facts;
+	}
+
+	public function set_empty_preparation(prepared_empty_construction $facts): void
+	{
+		$this->clear_preparation();
+		$this->empty_facts = $facts;
+	}
+
+	public function optional_empty_preparation(): ?prepared_empty_construction
+	{
+		return $this->empty_facts;
+	}
+
+	public function require_empty_preparation(): prepared_empty_construction
+	{
+		if ($this->empty_facts === null) { throw new \LogicException('Data construction has no empty preparation'); }
+		return $this->empty_facts;
+	}
+
+	public function set_sequence_preparation(prepared_sequence_construction $facts): void
+	{
+		$this->clear_preparation();
+		$this->sequence_facts = $facts;
+	}
+
+	public function optional_sequence_preparation(): ?prepared_sequence_construction
+	{
+		return $this->sequence_facts;
+	}
+
+	public function require_sequence_preparation(): prepared_sequence_construction
+	{
+		if ($this->sequence_facts === null) { throw new \LogicException('Data construction has no sequence preparation'); }
+		return $this->sequence_facts;
+	}
 
 	public ?type_node $target_type = null;
 	public Storage $entries /** Storage<data_entry_node> */;

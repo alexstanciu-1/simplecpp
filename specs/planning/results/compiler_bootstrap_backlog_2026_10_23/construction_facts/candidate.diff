@@ -1,0 +1,221 @@
+diff --git a/compiler/my-try/03_parse/structures/structures_specialization.php b/compiler/my-try/03_parse/structures/structures_specialization.php
+index 0a275bea9..0e25457ee 100644
+--- a/compiler/my-try/03_parse/structures/structures_specialization.php
++++ b/compiler/my-try/03_parse/structures/structures_specialization.php
+@@ -1410,12 +1410,85 @@ final class type_use_modifier_node extends type_node
+ final class data_construction_node extends expression_node
+ {
+ 	use Node_Source_Span;
+-	use Preparation_Facts;
++	private ?prepared_record_construction $record_facts = null;
++	private ?prepared_empty_construction $empty_facts = null;
++	private ?prepared_sequence_construction $sequence_facts = null;
++
++	/** Unprepared means all absent; successful publication retains exactly one alternative. */
++	public function preparation(): ?prepared_expression
++	{
++		if ($this->record_facts !== null) { return $this->record_facts; }
++		if ($this->empty_facts !== null) { return $this->empty_facts; }
++		return $this->sequence_facts;
++	}
++
++	public function require_preparation(): prepared_expression { return $this->require_data_preparation(); }
+ 
+-	private ?prepared_data_construction $prepared_facts = null;
++	public function require_data_preparation(): prepared_data_construction
++	{
++		if ($this->record_facts !== null) { return $this->record_facts; }
++		if ($this->empty_facts !== null) { return $this->empty_facts; }
++		if ($this->sequence_facts !== null) { return $this->sequence_facts; }
++		throw new \LogicException('Data construction has no preparation');
++	}
+ 
+-	public function require_preparation(): prepared_expression { return $this->prepared_facts; }
+-	public function require_data_preparation(): prepared_data_construction { return $this->prepared_facts; }
++	public function clear_preparation(): void
++	{
++		$this->record_facts = null;
++		$this->empty_facts = null;
++		$this->sequence_facts = null;
++	}
++
++	public function set_record_preparation(prepared_record_construction $facts): void
++	{
++		$this->clear_preparation();
++		$this->record_facts = $facts;
++	}
++
++	public function optional_record_preparation(): ?prepared_record_construction
++	{
++		return $this->record_facts;
++	}
++
++	public function require_record_preparation(): prepared_record_construction
++	{
++		if ($this->record_facts === null) { throw new \LogicException('Data construction has no record preparation'); }
++		return $this->record_facts;
++	}
++
++	public function set_empty_preparation(prepared_empty_construction $facts): void
++	{
++		$this->clear_preparation();
++		$this->empty_facts = $facts;
++	}
++
++	public function optional_empty_preparation(): ?prepared_empty_construction
++	{
++		return $this->empty_facts;
++	}
++
++	public function require_empty_preparation(): prepared_empty_construction
++	{
++		if ($this->empty_facts === null) { throw new \LogicException('Data construction has no empty preparation'); }
++		return $this->empty_facts;
++	}
++
++	public function set_sequence_preparation(prepared_sequence_construction $facts): void
++	{
++		$this->clear_preparation();
++		$this->sequence_facts = $facts;
++	}
++
++	public function optional_sequence_preparation(): ?prepared_sequence_construction
++	{
++		return $this->sequence_facts;
++	}
++
++	public function require_sequence_preparation(): prepared_sequence_construction
++	{
++		if ($this->sequence_facts === null) { throw new \LogicException('Data construction has no sequence preparation'); }
++		return $this->sequence_facts;
++	}
+ 
+ 	public ?type_node $target_type = null;
+ 	public Storage $entries /** Storage<data_entry_node> */;
+diff --git a/compiler/my-try/04_analyze/prepare/semantics/data_construction.php b/compiler/my-try/04_analyze/prepare/semantics/data_construction.php
+index 226afc415..f9d4422d2 100644
+--- a/compiler/my-try/04_analyze/prepare/semantics/data_construction.php
++++ b/compiler/my-try/04_analyze/prepare/semantics/data_construction.php
+@@ -6,7 +6,7 @@ namespace scpp\compiler;
+ final class Data_Construction_Preparation
+ {
+ 	public static function prepare(data_construction_node $node, preparation_context $context,
+-		?canonical_type_use $expected_type): prepared_data_construction
++		?canonical_type_use $expected_type): void
+ 	{
+ 		$target = $expected_type;
+ 		if ($node->target_type !== null) { $target = Type_Preparation::type($node->target_type, $context); }
+@@ -17,7 +17,9 @@ final class Data_Construction_Preparation
+ 			$saved_assignment = $context->statement_assignment;
+ 			$context->statement_assignment = false;
+ 			try {
+-				return Record_Construction_Preparation::prepare($node, $target, $context);
++				$record = Record_Construction_Preparation::prepare($node, $target, $context);
++				$node->set_record_preparation($record);
++				return;
+ 			}
+ 			finally {
+ 				$context->statement_assignment = $saved_assignment;
+@@ -42,7 +44,8 @@ final class Data_Construction_Preparation
+ 			$empty->construction = $construction;
+ 			$empty->type = $construction->type;
+ 			$empty->value_origin = $construction->value_origin;
+-			return $empty;
++			$node->set_empty_preparation($empty);
++			return;
+ 		}
+ 		$binding = Initialization_Preparation::binding($target, $shape, $context);
+ 		$facts = new prepared_sequence_construction();
+@@ -57,7 +60,7 @@ final class Data_Construction_Preparation
+ 			}
+ 		}
+ 		finally { $context->statement_assignment = $statement_assignment; }
+-		return $facts;
++		$node->set_sequence_preparation($facts);
+ 	}
+ 
+ 	public static function empty_only(canonical_type_use $target): bool
+diff --git a/compiler/my-try/04_analyze/prepare/semantics/expressions.php b/compiler/my-try/04_analyze/prepare/semantics/expressions.php
+index 8d3e56004..33eb6cf99 100644
+--- a/compiler/my-try/04_analyze/prepare/semantics/expressions.php
++++ b/compiler/my-try/04_analyze/prepare/semantics/expressions.php
+@@ -60,7 +60,7 @@ final class Expression_Preparation
+ 		}
+ 		elseif ($node instanceof data_construction_node) {
+ 			$construction = object_cast($node, data_construction_node::class);
+-			$construction->set_preparation(Data_Construction_Preparation::prepare($construction, $context, $expected_type));
++			Data_Construction_Preparation::prepare($construction, $context, $expected_type);
+ 		}
+ 		elseif ($node instanceof null_literal_node) {
+ 			$null_literal = object_cast($node, null_literal_node::class);
+diff --git a/compiler/my-try/05_backend/cpp/data_construction.php b/compiler/my-try/05_backend/cpp/data_construction.php
+index e03a357c5..486a758ba 100644
+--- a/compiler/my-try/05_backend/cpp/data_construction.php
++++ b/compiler/my-try/05_backend/cpp/data_construction.php
+@@ -142,15 +142,16 @@ final class CPP_Data_Construction
+ 	/** Input backing and each entry's snapshots stay inside this synchronous construction call. */
+ 	public static function generate(data_construction_node $node, cpp_generation_context $context): string
+ 	{
+-		$prepared = $node->require_data_preparation();
+-		if ($prepared instanceof prepared_record_construction) {
+-			return self::record($node, object_cast($prepared, prepared_record_construction::class), $context);
++		$record = $node->optional_record_preparation();
++		if ($record !== null) {
++			return self::record($node, $record, $context);
+ 		}
+-		if ($prepared instanceof prepared_empty_construction) {
++		$empty = $node->optional_empty_preparation();
++		if ($empty !== null) {
+ 			$arguments = new Storage /** Storage<expression_node> */();
+-			return CPP_Record_Construction::object(object_cast($prepared, prepared_empty_construction::class)->construction, $arguments, $context);
++			return CPP_Record_Construction::object($empty->construction, $arguments, $context);
+ 		}
+-		$binding = object_cast($prepared, prepared_sequence_construction::class)->binding;
++		$binding = $node->require_sequence_preparation()->binding;
+ 		if ($context->specialization_engine !== null) {
+ 			return CPP_Runtime_Operations::initialize($node, $binding, $context);
+ 		}
+diff --git a/compiler/my-try/05_backend/cpp/policy.php b/compiler/my-try/05_backend/cpp/policy.php
+index cae683e25..08ef21cf0 100644
+--- a/compiler/my-try/05_backend/cpp/policy.php
++++ b/compiler/my-try/05_backend/cpp/policy.php
+@@ -52,9 +52,9 @@ final class CPP_Default_Constructors
+ 			if (!$entries->is_empty()) { return 'nonempty-container-default'; }
+ 			// Preparation has already selected the registered initialization contract.
+ 			// Moving that expression to an owning unit does not require a type-name gate.
+-			$prepared = $construction->require_data_preparation();
+-			if (!($prepared instanceof prepared_sequence_construction)
+-				&& !($prepared instanceof prepared_empty_construction)) { return 'nonsequence-default'; }
++			$construction->require_data_preparation();
++			if (($construction->optional_sequence_preparation() === null)
++				&& ($construction->optional_empty_preparation() === null)) { return 'nonsequence-default'; }
+ 			$found_container = true;
+ 		}
+ 		return $found_container ? 'outlined' : 'no-container-default';
+diff --git a/compiler/my-try/docs/architecture/ast_layout.md b/compiler/my-try/docs/architecture/ast_layout.md
+index 19af9f9b4..36f378725 100644
+--- a/compiler/my-try/docs/architecture/ast_layout.md
++++ b/compiler/my-try/docs/architecture/ast_layout.md
+@@ -181,12 +181,16 @@ name occurrences. `literal_spelling(token_list)` normalizes bare identifiers to
+ quoted spelling for the ordinary string decoder; no data-notation branch is added
+ to preparation. Quoted and bare keys retain their real source spans.
+ 
+-The construction attaches `prepared_data_construction` (binding and result type);
+-each entry attaches `prepared_data_entry` (optional key conversion and required value
+-conversion). Existing maintenance clears these facts. Syntax remains the sole ordered
+-entry/expression graph. `Data_Construction_Preparation` owns contextual typing and
+-factory-binding selection; neither node has a processing hook. Source lifetime
+-enforcement and C++ construction remain deferred.
++The construction owns three nullable typed fact slots: record, empty-only and
++sequence construction. Successful preparation publishes exactly one fully built
++alternative; generic expression/data views upcast that same object. Typed setters
++replace the active alternative and neutral cleanup clears all slots. No duplicate
++generic handle or kind tag is retained. Backends read settled typed accessors rather
++than narrowing the nonpolymorphic fact base. Each entry attaches `prepared_data_entry`
++(optional key conversion and required value conversion). Syntax remains the sole
++ordered entry/expression graph. `Data_Construction_Preparation` owns contextual typing,
++contract selection and publication; neither node has a processing hook. Ordinary and
++template-prelowered C++ consume the same facts and preserve entry order.
+ The parked LLVM reader only adapts to the renamed positional entry structure;
+ it rejects keyed/brace/explicit-target constructions and gains no new lowering.
+ 

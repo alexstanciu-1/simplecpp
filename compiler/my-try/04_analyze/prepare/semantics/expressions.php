@@ -60,7 +60,7 @@ final class Expression_Preparation
 		}
 		elseif ($node instanceof data_construction_node) {
 			$construction = object_cast($node, data_construction_node::class);
-			$construction->set_preparation(Data_Construction_Preparation::prepare($construction, $context, $expected_type));
+			Data_Construction_Preparation::prepare($construction, $context, $expected_type);
 		}
 		elseif ($node instanceof null_literal_node) {
 			$null_literal = object_cast($node, null_literal_node::class);

@@ -1,0 +1,12 @@
+[
+  {
+    "name": "ordinary",
+    "seconds": 17.5575309030246,
+    "passed": true
+  },
+  {
+    "name": "concrete",
+    "seconds": 19.97743398399325,
+    "passed": true
+  }
+]

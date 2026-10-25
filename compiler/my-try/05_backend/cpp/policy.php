@@ -52,9 +52,9 @@ final class CPP_Default_Constructors
 			if (!$entries->is_empty()) { return 'nonempty-container-default'; }
 			// Preparation has already selected the registered initialization contract.
 			// Moving that expression to an owning unit does not require a type-name gate.
-			$prepared = $construction->require_data_preparation();
-			if (!($prepared instanceof prepared_sequence_construction)
-				&& !($prepared instanceof prepared_empty_construction)) { return 'nonsequence-default'; }
+			$construction->require_data_preparation();
+			if (($construction->optional_sequence_preparation() === null)
+				&& ($construction->optional_empty_preparation() === null)) { return 'nonsequence-default'; }
 			$found_container = true;
 		}
 		return $found_container ? 'outlined' : 'no-container-default';

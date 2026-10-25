@@ -1924,3 +1924,16 @@ failure, reset and retained diagnostic identity.
 [Evidence](results/compiler_bootstrap_backlog_2026_10_23/json_diagnostic_reference/README.md).
 Bootstrap 1:31.76 / 633640 KiB RSS / 600.5 MiB heap: JSON failure clears, only
 construction-fact narrowing remains. Approved typed-facts work continues.
+
+## Typed construction-fact publication — 2026-10-25
+
+Approved three-alternative node-owned storage and checked accessors replace generic
+fact downcasts. Preparation publishes concrete facts; backend consumers keep existing
+construction semantics. PHP/v0.1/both v0.2 representation proofs and ordinary/concrete
+execution/outlined-default behavior pass. Four focused host suites pass; historical
+data_records recursive required-input failure reproduces on the parent revision.
+[Evidence](results/compiler_bootstrap_backlog_2026_10_23/construction_facts/README.md).
+Bootstrap 1:42.11 / 761252 KiB RSS / 722 MiB heap now completes semantic preparation
+and project validation. Next blocker is emission: generated concrete-layout header
+cycle. Stop before changing layout dependencies. Native compiler and second-generation
+acceptance remain outstanding.

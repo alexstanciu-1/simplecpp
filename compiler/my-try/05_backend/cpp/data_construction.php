@@ -142,15 +142,16 @@ final class CPP_Data_Construction
 	/** Input backing and each entry's snapshots stay inside this synchronous construction call. */
 	public static function generate(data_construction_node $node, cpp_generation_context $context): string
 	{
-		$prepared = $node->require_data_preparation();
-		if ($prepared instanceof prepared_record_construction) {
-			return self::record($node, object_cast($prepared, prepared_record_construction::class), $context);
+		$record = $node->optional_record_preparation();
+		if ($record !== null) {
+			return self::record($node, $record, $context);
 		}
-		if ($prepared instanceof prepared_empty_construction) {
+		$empty = $node->optional_empty_preparation();
+		if ($empty !== null) {
 			$arguments = new Storage /** Storage<expression_node> */();
-			return CPP_Record_Construction::object(object_cast($prepared, prepared_empty_construction::class)->construction, $arguments, $context);
+			return CPP_Record_Construction::object($empty->construction, $arguments, $context);
 		}
-		$binding = object_cast($prepared, prepared_sequence_construction::class)->binding;
+		$binding = $node->require_sequence_preparation()->binding;
 		if ($context->specialization_engine !== null) {
 			return CPP_Runtime_Operations::initialize($node, $binding, $context);
 		}

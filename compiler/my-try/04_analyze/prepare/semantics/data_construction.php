@@ -6,7 +6,7 @@ namespace scpp\compiler;
 final class Data_Construction_Preparation
 {
 	public static function prepare(data_construction_node $node, preparation_context $context,
-		?canonical_type_use $expected_type): prepared_data_construction
+		?canonical_type_use $expected_type): void
 	{
 		$target = $expected_type;
 		if ($node->target_type !== null) { $target = Type_Preparation::type($node->target_type, $context); }
@@ -17,7 +17,9 @@ final class Data_Construction_Preparation
 			$saved_assignment = $context->statement_assignment;
 			$context->statement_assignment = false;
 			try {
-				return Record_Construction_Preparation::prepare($node, $target, $context);
+				$record = Record_Construction_Preparation::prepare($node, $target, $context);
+				$node->set_record_preparation($record);
+				return;
 			}
 			finally {
 				$context->statement_assignment = $saved_assignment;
@@ -42,7 +44,8 @@ final class Data_Construction_Preparation
 			$empty->construction = $construction;
 			$empty->type = $construction->type;
 			$empty->value_origin = $construction->value_origin;
-			return $empty;
+			$node->set_empty_preparation($empty);
+			return;
 		}
 		$binding = Initialization_Preparation::binding($target, $shape, $context);
 		$facts = new prepared_sequence_construction();
@@ -57,7 +60,7 @@ final class Data_Construction_Preparation
 			}
 		}
 		finally { $context->statement_assignment = $statement_assignment; }
-		return $facts;
+		$node->set_sequence_preparation($facts);
 	}
 
 	public static function empty_only(canonical_type_use $target): bool

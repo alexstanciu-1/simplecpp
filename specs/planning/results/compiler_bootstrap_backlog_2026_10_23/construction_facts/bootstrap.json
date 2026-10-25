@@ -1,0 +1,33 @@
+{
+    "elapsed_seconds": 101.681281272,
+    "peak_php_bytes": 757071872,
+    "last_stage": "emit",
+    "events": [
+        {
+            "stage": "initialize",
+            "seconds": 0.307398082
+        },
+        {
+            "stage": "sync",
+            "seconds": 3.905414666
+        },
+        {
+            "stage": "prepare",
+            "seconds": 87.402440384
+        },
+        {
+            "stage": "validate",
+            "seconds": 87.92061278
+        }
+    ],
+    "failure": {
+        "class": "RuntimeException",
+        "message": "Concrete layout dependencies contain a generated header cycle"
+    },
+    "fatal": {
+        "type": 2,
+        "message": "lstat(): Lstat failed for /tmp/compiler-bootstrap-construction-facts-01/published/.scpp-output.status",
+        "file": "/home/alexv/__AI/simple_cpp/simple_cpp_01/tools/php_portability/runtime/output_files.php",
+        "line": 73
+    }
+}
