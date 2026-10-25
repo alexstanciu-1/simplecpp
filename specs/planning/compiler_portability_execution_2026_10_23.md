@@ -1833,3 +1833,11 @@ arguments differ. Six minimal shapes in both output modes prove explicit typed l
 reuse existing upcast/checked-extraction support. Recommend PHP-only boundary locals,
 then native identity/order proofs and measured bootstrap. No production fixes yet.
 [Audit](results/compiler_bootstrap_backlog_2026_10_23/runtime_argument_audit/README.md).
+
+## Foreach literal target audit — 2026-10-25
+
+While runtime argument fixes await approval, audited the next construction category.
+Nine previously reported owners contain untyped foreach list literals. Minimal probes
+show typed vector<string> locals prepare/emit in both modes, while bare literals fail.
+Recommend source annotations and original evaluation order, no inference redesign.
+No production fixes or bootstrap rerun. [Evidence](results/compiler_bootstrap_backlog_2026_10_23/foreach_literal_audit/README.md).

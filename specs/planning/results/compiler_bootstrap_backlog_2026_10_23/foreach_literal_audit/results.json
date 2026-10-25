@@ -1,0 +1,22 @@
+[
+    {
+        "case": "bare_foreach",
+        "concrete": false,
+        "result": "S2S data construction requires a known concrete target\n"
+    },
+    {
+        "case": "bare_foreach",
+        "concrete": true,
+        "result": "S2S data construction requires a known concrete target\n"
+    },
+    {
+        "case": "typed_foreach",
+        "concrete": false,
+        "result": "PASS"
+    },
+    {
+        "case": "typed_foreach",
+        "concrete": true,
+        "result": "PASS"
+    }
+]
