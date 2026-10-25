@@ -595,6 +595,8 @@ final class prepared_field extends prepared_property_storage {
 	public collected_name $declaration /** weak<collected_name> */;
 	public member_visibility $visibility = member_visibility::public_access;
 	public ?prepared_property_default $default_value = null;
+	/** Temporary field-only absence storage; never a required-value parameter default. */
+	public bool $empty_initial_storage = false;
 }
 
 /** Declaration-owned typed default boundary; concrete forms distinguish constants from construction. */

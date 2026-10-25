@@ -1652,3 +1652,17 @@ messages, not independent bug/site counts. Evidence README records remaining
 preparation families, unreached native emission/build/run acceptance and separate
 CH15 registry audit final-catalog blocker. Recommended next step is a batch reuse/
 lifecycle audit of remaining initialization owners before further fixes.
+
+## Temporary required-field empty storage — 2026-10-25
+
+User approved initial-storage-only relaxation and native plus second-generation
+acceptance. Declaration preparation retains a field fact; construction consumers
+reuse a field-specific query without weakening required value defaults or nullable
+conversions. Existing C++ empty-handle lowering suffices. CH15 review debt and
+normative temporary scope recorded, including premature-use author obligation.
+
+24 focused checks pass; portable PHP/v0.1/both v0.2 modes preserve shared identity.
+Evidence: [empty_initial_storage](results/compiler_bootstrap_backlog_2026_10_23/empty_initial_storage/README.md).
+Bootstrap: 3:04.33 / 511908 KiB RSS / 486.5 MiB heap. Distinct preparation messages
+fall from 96 to 24. Required shared-field errors clear; enum fields and operation
+contracts remain. Full native compiler and second-generation acceptance pending.

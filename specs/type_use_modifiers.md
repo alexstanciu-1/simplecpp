@@ -15,7 +15,7 @@ unique handles remain empty-but-valid after an admitted explicit move.
 
 `Class` and `?Class` now retain distinct frontend identities while sharing the same
 native shared-handle storage. Known null to a required object assignment, argument,
-return or default rejects. Optional objects accept null. Optional-to-required value
+return or ordinary value default rejects (the temporary field-storage exception below is separate). Optional objects accept null. Optional-to-required value
 boundaries check presence before entry/replacement and preserve object identity;
 permitted derived-to-base adaptation composes with that check. References remain
 invariant, including nullability. Interfaces follow the same contract.
@@ -23,12 +23,31 @@ invariant, including nullability. Interfaces follow the same contract.
 By-value override parameters may broaden required to optional, and results may
 strengthen optional to required, composed with admitted ancestry. Reverse directions
 reject; an override bridge never inserts a potentially failing absence check.
-Required object fields have no empty source default. They require direct initialization
-through an explicit default, an authored set: input or a required synthesized data
-input. Body assignment is not a substitute, even if every exit appears to assign.
-Inherited construction must preserve the same invariant. Static required object
-fields need an explicit initializer. Native backing storage does not grant a readable
-source value. Required-local definite assignment follows the bounded rules below.
+### Temporary required-field storage exception — 2026-10-25
+
+For the compiler bootstrap milestone, required nominal shared-object instance and
+static fields may begin with empty backing storage, either with no initializer or
+with an explicit literal `null` field initializer. This is a temporary field-storage
+exception, tracked by CH15-REQUIRED-FIELD-INIT-01, not a conversion from null to a
+required object value. It also applies to such fields in struct owners and to
+inherited fields; it does not make struct payloads or enums nullable/defaultable.
+
+The declared type remains required and distinct from its nullable form. Ordinary
+later null assignments, required arguments/returns and invariant references retain
+their existing checks. An empty field initializer supplies no callable parameter
+default: authored set: inputs and public synthesized data inputs remain required
+unless they have an independently valid value default. Non-public fields may keep
+empty initial storage without becoming synthesized public inputs.
+
+Using an uninitialized required field is invalid; the temporary rule relies on the
+author to assign before use and does not provide field definite-assignment analysis
+or PHP-style read checks on every copy. Existing shared dereference guards remain,
+but are not a proof that every premature use is diagnosed. No valid object or dummy
+registry identity is manufactured. The C++ backend uses the existing empty handle
+representation in ordinary and prelowered output. Required-local definite assignment
+is unchanged. Review/retire this exception under the named CH15 debt after the
+bootstrap milestone.
+
 Remaining ownership/cleanup consumers and the presence guarantees of registered
 runtime APIs remain blocking NULL-01/OWN-01 work. The execution ledger records
 precise current proof scope.

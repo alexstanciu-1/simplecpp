@@ -303,7 +303,15 @@ final class Declaration_Preparation
 		if ($field->type_syntax !== null) {
 			$type = Type_Preparation::type($field->require_type_syntax(), $context);
 		}
-		if ($field->initializer !== null) {
+		// CH15-REQUIRED-FIELD-INIT-01: field storage may start empty without
+		// changing its required type or granting null conversion at other boundaries.
+		if ($type !== null) {
+			if (Type_Queries::is_nominal_handle($type)) {
+				$prepared->empty_initial_storage = ($field->initializer === null)
+					|| ($field->initializer instanceof null_literal_node);
+			}
+		}
+		if (($field->initializer !== null) && !$prepared->empty_initial_storage) {
 			if ($prepared->static_member && ($field->initializer instanceof data_construction_node)) {
 				throw new \RuntimeException('Static properties require type defaults or constant expressions');
 			}
@@ -313,7 +321,7 @@ final class Declaration_Preparation
 		if ($type === null) { throw new \RuntimeException('Property without a default requires an explicit type'); }
 		$prepared->type = $type;
 		Type_Lifecycle_Preparation::require_storage($type, $context);
-		if (($prepared->default_value === null) && !$allows_required && Type_Queries::is_nominal_handle($type)) {
+		if (($prepared->default_value === null) && !$allows_required && !$prepared->empty_initial_storage && Type_Queries::is_nominal_handle($type)) {
 			throw new \RuntimeException('Required object property needs direct initialization: ' . $field->name);
 		}
 		if (($field->initializer === null) && (Type_Queries::canonical($type)->definition() instanceof enum_type_definition)) {

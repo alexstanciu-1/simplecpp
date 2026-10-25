@@ -1,4 +1,4 @@
-"""Required object fields use direct initialization; struct defaults remain distinct."""
+"""Temporary field-only empty object storage; required values and struct defaults remain distinct."""
 import argparse
 import json
 import sys
@@ -36,14 +36,49 @@ echo $holder->node->value, ":", $child->node->value, ":", $data->node->value,
  ":", $value->node->value, ":", $default->number, ":", $local->value, ":", $private->node->value;
 ''', b'7:7:7:7:3:7:7'),
 }
+cases['temporary-storage'] = ('''class Node { public int $value = 9; }
+interface Named { public function number(): int; }
+class NamedNode implements Named { public function number(): int { return 4; } }
+class Holder {
+ public Node $node = null;
+ public static Node $shared;
+ public static Node $explicit = null;
+ private Node $hidden;
+ public Named $contract;
+ public function __construct() { return; }
+ public function install(Node $n): void { $this->node = $n; $this->hidden = $n; }
+ public function read(): Node { return $this->hidden; }
+}
+class Plain { public Node $node; }
+class Base { public function __construct() {} }
+class Child extends Base { public Node $node = null; }
+class Body { public Node $node; public function __construct(Node $n) { $this->node = $n; } }
+class Optional { public ?Node $node = null; }
+class Slot { public Node $node = null; }
+$node = new Node();
+$holder = new Holder(); $holder->install($node); Holder::$shared = $node; Holder::$explicit = $node;
+$holder->contract = new NamedNode();
+$plain = new Plain(); $plain->node = $node;
+$child = new Child(); $child->node = $node;
+$body = new Body($node);
+$optional = new Optional(); $optional->node = $node; $optional->node = null;
+$slot = new Slot(); $slot->node = $node;
+echo $holder->node === $node ? 'same' : 'bad';
+echo ':', $holder->read()->value, ':', Holder::$shared->value, ':', $holder->contract->number();
+echo ':', $plain->node->value, ':', $child->node->value, ':', $body->node->value, ':', $slot->node->value;
+echo ':', $optional->node === null ? 'optional' : 'bad';
+''', b'same:9:9:4:9:9:9:9:optional')
 negative = {
- 'plain': ('class Node {} class Holder { public Node $node; }', 'Required object property needs direct initialization'),
- 'static': ('class Node {} class Holder { public static Node $node; }', 'Required object property needs direct initialization'),
- 'body': ('class Node {} class Holder { public Node $node; public function __construct(Node $n) { $this->node = $n; } }', 'Property requires set: initialization'),
- 'early': ('class Node {} class Holder { public Node $node; public function __construct() { return; } }', 'Property requires set: initialization'),
+ 'later-write': ('class Node {} class Holder { public Node $node = null; } $h = new Holder(); $h->node = null;', 'rejects null'),
+ 'later-static-write': ('class Node {} class Holder { public static Node $node = null; } Holder::$node = null;', 'rejects null'),
+ 'argument': ('class Node {} function consume(Node $node): void {} consume(null);', 'rejects null'),
+ 'return': ('class Node {} function make(): Node { return null; }', 'rejects null'),
+ 'set-missing': ('class Node {} class Holder { public Node $node = null; public function __construct(set:$node) {} } $h = new Holder();', 'required'),
+ 'set-null': ('class Node {} class Holder { public Node $node = null; public function __construct(set:$node) {} } $h = new Holder(null);', 'rejects null'),
+ 'data-null-default-missing': ('class Node {} data class Holder { public Node $node = null; } $h Holder = {};', 'required'),
+ 'inline-null': ('struct Value { public int $n; } class Holder { public Value $value = null; }', 'same payload type'),
  'data-missing': ('class Node {} data class Holder { public Node $node; } $h Holder = {};', 'required'),
  'struct-default': ('class Node {} struct Value { public Node $node; public function __construct(set:$node) {} } $v Value;', 'explicit initializer'),
- 'inherited': ('class Node {} class Base { public function __construct() {} } class Child extends Base { public Node $node; }', 'Required object property needs direct initialization'),
 }
 with CommandRunner(out / 'logs', ROOT) as runner:
     def check(name, mode, data):

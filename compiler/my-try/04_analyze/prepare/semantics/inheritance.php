@@ -47,7 +47,7 @@ final class Inheritance_Preparation
 		$fields /** Key_Storage_List<prepared_field> */ = $facts->fields;
 		foreach ($fields->items() as $field) {
 			if ($field->default_value === null) {
-				if (!Object_Construction_Preparation::supports_default($field->type, $context)) {
+				if (!Object_Construction_Preparation::supports_field_storage($field, $context)) {
 					throw new \RuntimeException('Inherited construction requires default-constructible child properties');
 				}
 			}

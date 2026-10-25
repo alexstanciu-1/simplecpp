@@ -1171,3 +1171,13 @@ pending-exception state use existing specialization requests and layout probes.
 The active handler owns the transport while a compiled typed catch acquires the
 same shared payload; unmatched and foreign exceptions propagate. No new retained
 semantic lifetime structure or native compiler validation is implied.
+
+### Temporary empty field storage — 2026-10-25
+
+`prepared_field::empty_initial_storage` records the temporary required shared-object
+field exception from `specs/type_use_modifiers.md`. Declaration preparation owns
+literal-null/omitted-initializer admission; constructor, inherited-constructor and
+record-default checks share `supports_field_storage`. It is not a value default:
+required synthesized public/set inputs and ordinary value conversions remain strict.
+C++ uses existing default-empty shared storage without a new emitter protocol.
+CH15-REQUIRED-FIELD-INIT-01 owns review/retirement and premature-use limitations.

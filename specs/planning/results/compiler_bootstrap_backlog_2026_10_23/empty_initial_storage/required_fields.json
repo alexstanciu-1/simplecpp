@@ -1,0 +1,122 @@
+[
+  {
+    "name": "values-ordinary",
+    "passed": true,
+    "seconds": 18.08907726997859
+  },
+  {
+    "name": "values-concrete",
+    "passed": true,
+    "seconds": 20.056192929012468
+  },
+  {
+    "name": "temporary-storage-ordinary",
+    "passed": true,
+    "seconds": 18.624613836000208
+  },
+  {
+    "name": "temporary-storage-concrete",
+    "passed": true,
+    "seconds": 20.703384588006884
+  },
+  {
+    "name": "later-write-ordinary",
+    "passed": true,
+    "seconds": 0.641210770001635
+  },
+  {
+    "name": "later-write-concrete",
+    "passed": true,
+    "seconds": 0.650291294005001
+  },
+  {
+    "name": "later-static-write-ordinary",
+    "passed": true,
+    "seconds": 0.6846510100003798
+  },
+  {
+    "name": "later-static-write-concrete",
+    "passed": true,
+    "seconds": 0.6883259739843197
+  },
+  {
+    "name": "argument-ordinary",
+    "passed": true,
+    "seconds": 0.6718249869882129
+  },
+  {
+    "name": "argument-concrete",
+    "passed": true,
+    "seconds": 0.6587382059951779
+  },
+  {
+    "name": "return-ordinary",
+    "passed": true,
+    "seconds": 0.6494902230042499
+  },
+  {
+    "name": "return-concrete",
+    "passed": true,
+    "seconds": 0.6675788160064258
+  },
+  {
+    "name": "set-missing-ordinary",
+    "passed": true,
+    "seconds": 0.48398414798430167
+  },
+  {
+    "name": "set-missing-concrete",
+    "passed": true,
+    "seconds": 0.5007545330154244
+  },
+  {
+    "name": "set-null-ordinary",
+    "passed": true,
+    "seconds": 0.4989619239931926
+  },
+  {
+    "name": "set-null-concrete",
+    "passed": true,
+    "seconds": 0.4834433759970125
+  },
+  {
+    "name": "data-null-default-missing-ordinary",
+    "passed": true,
+    "seconds": 0.47371558501617983
+  },
+  {
+    "name": "data-null-default-missing-concrete",
+    "passed": true,
+    "seconds": 0.49502537699299864
+  },
+  {
+    "name": "inline-null-ordinary",
+    "passed": true,
+    "seconds": 0.4934727899963036
+  },
+  {
+    "name": "inline-null-concrete",
+    "passed": true,
+    "seconds": 0.4982103430083953
+  },
+  {
+    "name": "data-missing-ordinary",
+    "passed": true,
+    "seconds": 0.3899826849810779
+  },
+  {
+    "name": "data-missing-concrete",
+    "passed": true,
+    "seconds": 0.3813407009874936
+  },
+  {
+    "name": "struct-default-ordinary",
+    "passed": true,
+    "seconds": 0.4105453460069839
+  },
+  {
+    "name": "struct-default-concrete",
+    "passed": true,
+    "seconds": 0.41758219301118515
+  }
+]

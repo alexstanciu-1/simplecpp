@@ -122,8 +122,8 @@ final class Constructor_Preparation
 		}
 		foreach ($fields->items() as $field) {
 			$name = object_cast(weakref_get($field->declaration), collected_name::class)->name;
-			if (!isset($initialized[$name]) && ($field->default_value === null)) {
-				if (!Object_Construction_Preparation::supports_default($field->type, $context)) {
+			if (!isset($initialized[$name])) {
+				if (!Object_Construction_Preparation::supports_field_storage($field, $context)) {
 					throw new \RuntimeException('Property requires set: initialization before the constructor body: ' . $name);
 				}
 			}
@@ -162,7 +162,7 @@ final class Constructor_Preparation
 			if ($field->visibility === member_visibility::public_access) {
 				$inputs->add($name, new record_initialization_input($name, $parameter, $field));
 			}
-			elseif ($parameter->default_value === null) {
+			elseif (($parameter->default_value === null) && !$field->empty_initial_storage) {
 				throw new \RuntimeException('Non-public property requires a default or an authored constructor: ' . $name);
 			}
 		}

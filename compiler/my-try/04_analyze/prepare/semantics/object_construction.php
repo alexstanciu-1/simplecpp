@@ -97,6 +97,13 @@ final class Object_Construction_Preparation
 		return $facts;
 	}
 
+	/** Field initialization includes temporary empty storage, unlike required value defaults. */
+	public static function supports_field_storage(prepared_field $field, preparation_context $context): bool
+	{
+		if (($field->default_value !== null) || $field->empty_initial_storage) { return true; }
+		return self::supports_default($field->type, $context);
+	}
+
 	/** Bounded default-construction proof; record dependencies include nested value fields. */
 	public static function supports_default(canonical_type_use $type, preparation_context $context, bool $base_subobject = false): bool
 	{
@@ -154,10 +161,7 @@ final class Object_Construction_Preparation
 		}
 		$fields /** Key_Storage_List<prepared_field> */ = $layout->fields;
 		foreach ($fields->items() as $field) {
-			if ($field->default_value !== null) {
-				continue;
-			}
-			if (!self::supports_default($field->type, $context)) {
+			if (!self::supports_field_storage($field, $context)) {
 				return false;
 			}
 		}

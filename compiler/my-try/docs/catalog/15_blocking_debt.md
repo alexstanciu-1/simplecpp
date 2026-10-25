@@ -1213,16 +1213,17 @@ class construction and broader ownership-modified construction are separate scop
 ## CH15-REQUIRED-FIELD-INIT-01 — temporary bootstrap initialization exception
 
 Status: open review debt requested 2026-10-25. The user requested a temporary
-initialization relaxation to reach the native compiler milestone. Exact scope is
-awaiting clarification; no relaxation has been implemented by this debt entry.
+initialization relaxation to reach the native compiler milestone. User confirmed
+initial-storage-only scope and a native compiler plus second-generation proof on
+2026-10-25. Implementation/validation is tracked in the execution ledger.
 This entry does not silently change normative required/nullable contracts or add
 a new milestone blocker. Review the exception before declaring final language
 initialization policy settled.
 
-Proposed bounded scope: required nominal shared-object instance/static fields may
+Agreed bounded scope: required nominal shared-object instance/static fields may
 start with empty storage (omitted initializer or explicit null). Preserve Node vs
 ?Node frontend identity, ordinary later null-write rejection, and required callable
-boundaries. Whether the user wants a broader relaxation is still an open question.
+boundaries. No broader nullable-assignment relaxation was authorized.
 Struct/provider/enum defaults and ownership-family contracts remain separate.
 
 Reuse findings: Declaration_Preparation::prepare_field_value and

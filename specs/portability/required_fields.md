@@ -2,9 +2,13 @@
 Doc Status: supporting
 
 The omitted-initializer checkpoint below describes structural conversion and the
-legacy route. v0.2 separately enforces required-object initialization: instance
-inputs use the [constructor contract](constructor_promotion.md); static startup
-objects use explicit nullable storage with checked access as described below.
+legacy route. v0.2 now has a temporary field-only empty-storage exception under
+[type-use modifiers](../type_use_modifiers.md#temporary-required-field-storage-exception--2026-10-25).
+Executable PHP should omit the initializer on required typed fields: PHP itself
+does not permit a literal null default on a nonnullable object property. The PHS
+exception does not change PHP validation. Assign before any use on both routes.
+Existing promoted inputs and explicit checked nullable storage remain valid and
+provide stronger local guarantees.
 
 Ordinary class instance/static fields can omit an initializer while retaining an
 explicit scalar or literal named type. Annotated vector/hash fields can also omit
