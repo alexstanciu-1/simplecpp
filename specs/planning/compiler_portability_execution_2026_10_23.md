@@ -1721,3 +1721,16 @@ proves prototype/proof classes absent from 255 converted files.
 Final bootstrap: 2:51.58 / 610192 KiB RSS / 578.5 MiB heap, 19 distinct preparation
 messages. Projected receiver lifetime remains first. No native compiler build/run
 or second-generation success claimed; those goal requirements remain active.
+
+## Shared-state provider receiver locals — 2026-10-25
+
+Scope queries and enum child traversal now use typed locals. Runtime reuse audit
+confirms Key_Storage_List membership and Storage_Cursor advancement are shared;
+these local copies retain identity and progress. Extended cursor proof passes PHP,
+v0.1 native and both v0.2 modes; four host AST/scope suites pass.
+[Evidence](results/compiler_bootstrap_backlog_2026_10_23/projected_locals/README.md).
+
+Bootstrap: 2:55.38 / 610504 KiB RSS / 578.5 MiB heap. First failure moves to object
+narrowing requiring a polymorphic source. Same 19 diagnostic categories remain,
+including other projected receiver sites. No new semantics introduced; native and
+second-generation compiler validation remain outstanding.

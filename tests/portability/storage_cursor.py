@@ -17,6 +17,16 @@ source = r'''<?php
 namespace scpp\compiler;
 class Cursor_Node { public int $value = 0; }
 class Cursor_Child extends Cursor_Node {}
+final class Cursor_Field {
+ public function __construct(private Storage_Cursor $cursor /** Storage_Cursor<Cursor_Node> */) {}
+ public function read_next(): ?Cursor_Node {
+  $cursor /** Storage_Cursor<Cursor_Node> */ = $this->cursor;
+  if (!$cursor->valid()) { return null; }
+  $node = $cursor->current();
+  $cursor->next();
+  return $node;
+ }
+}
 final class Cursor_Proof {
  public static function retained(): Storage_Cursor /** Storage_Cursor<Cursor_Node> */ {
   $rows = new Storage /** Storage<Cursor_Child> */();
@@ -41,9 +51,15 @@ $current = $cursor->current();
 echo $cursor->key(), ':', $current->value, ':';
 $cursor->next();
 echo $alias->valid() ? 'live' : 'end';
+echo ':';
+$field = new Cursor_Field(Cursor_Proof::retained());
+$first /** Cursor_Node */ = $field->read_next();
+$last /** Cursor_Node */ = $field->read_next();
+echo $first->value, ':', $last->value, ':';
+echo $field->read_next() === null ? 'end' : 'live';
 '''
 (out / 'source/main.php').write_text(source)
-expected = b'5:0:5:2:7:end'
+expected = b'5:0:5:2:7:end:5:5:7:end'
 with CommandRunner(out / 'logs', ROOT) as runner:
     assert runner.run('host', ['php8.5', '-r', 'foreach(array_slice($argv,1) as $path){require $path;}',
                              TOOLS / 'runtime/bootstrap.php', APP / 'helpers/storage_abstract.php', APP / 'helpers/storage.php', APP / 'helpers/storage_cursor.php', out / 'source/main.php']) == expected

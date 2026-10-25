@@ -1,0 +1,22 @@
+[
+  {
+    "name": "ast",
+    "seconds": 0.899579682998592,
+    "passed": true
+  },
+  {
+    "name": "namespace_bodies",
+    "seconds": 0.8573299910058267,
+    "passed": true
+  },
+  {
+    "name": "namespaces",
+    "seconds": 1.796362353983568,
+    "passed": true
+  },
+  {
+    "name": "incremental_preparation",
+    "seconds": 1.0479097639909014,
+    "passed": true
+  }
+]

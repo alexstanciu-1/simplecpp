@@ -146,11 +146,12 @@ final class enum_children_iterator extends children_iterator
 				return $this->source->backing_type;
 			}
 		}
-		if (!$this->case_cursor->valid()) {
+		$case_cursor /** Storage_Cursor<enum_case_node> */ = $this->case_cursor;
+		if (!$case_cursor->valid()) {
 			return null;
 		}
-		$case_node = $this->case_cursor->current();
-		$this->case_cursor->next();
+		$case_node = $case_cursor->current();
+		$case_cursor->next();
 		return $case_node;
 	}
 }

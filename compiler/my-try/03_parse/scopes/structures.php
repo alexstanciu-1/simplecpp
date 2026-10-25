@@ -103,7 +103,8 @@ final class scope
 	public function has_import_environment(): bool { return $this->import_environment; }
 	public function imports_named(string $name): array /** vector<import_node> */
 	{
-		return $this->imports->named($name);
+		$imports /** Key_Storage_List<import_node> */ = $this->imports;
+		return $imports->named($name);
 	}
 
 	public function is_function(): bool
@@ -291,12 +292,14 @@ final class scope
 
 	public function has_functions(): bool
 	{
-		return !$this->functions->is_empty();
+		$functions /** Key_Storage_List<collected_function> */ = $this->functions;
+		return !$functions->is_empty();
 	}
 
 	public function has_variables(): bool
 	{
-		return !$this->variables->is_empty();
+		$variables /** Key_Storage_List<collected_name> */ = $this->variables;
+		return !$variables->is_empty();
 	}
 
 	public function set_publication(scope $global): void
