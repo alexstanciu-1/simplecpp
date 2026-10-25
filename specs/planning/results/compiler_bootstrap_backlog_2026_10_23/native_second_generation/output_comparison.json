@@ -1,0 +1,13 @@
+{
+  "files_first": 6276,
+  "files_second": 6276,
+  "renames": {
+    "concrete_n__function_3_n_806_n_w__922cf01f676fa29964ca819cdcf45c4fd7410e0fc46e47e5eb1bfc7fc010bcef": "concrete_n__function_3_n_801_n_w__48b1f2f03835aaeb085dc7c123225cda44335efd18324b147ffa4ac2ae8410a7",
+    "concrete_n__function_806_n_806_n_w__69b7919f4ba51569b8ba8c53187c4e123f65dde1feb1a3a96afe69512544518e": "concrete_n__function_801_n_801_n_w__60c8285cf85729b553f86ae11f651d310ae3afa999202960d4aba726406737dd",
+    "runtime_runtime_call_420001472963410207a285ee41e6d43e1cd9f0cf608f2b04a706034587d97cb2": "runtime_runtime_call_7cedc2b6ae162159e27a7803c712d04b811f4fc50f0e1379850f86fff7939ee9"
+  },
+  "remaining_after_symbol_normalization": [
+    "specializations/containers.cpp"
+  ],
+  "containers_equal_line_multiset_after_renames": true
+}

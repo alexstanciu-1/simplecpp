@@ -1989,3 +1989,17 @@ It compiled scalar, shared-identity and string-container programs whose resultin
 executables produced expected output. Both previous Clang transport errors cleared.
 [Evidence](results/compiler_bootstrap_backlog_2026_10_23/native_compiler_first_success/README.md).
 Second-generation publication/build/execution is now the remaining acceptance step.
+
+## Second-generation acceptance complete — 2026-10-25
+
+The native compiler successfully recompiled the converted compiler: 11:58.99 /
+823104 KiB RSS. Output contains 6276 C++ files; name-normalized comparison finds
+only helper ordering differences. Its output built and linked at -O0 in 8:23.74 /
+2418532 KiB RSS, using the same temporary host-only deadline allowance. The resulting
+second-generation compiler compiled all three representative programs; their native
+executables passed arithmetic, shared-identity and string-container checks.
+[Evidence and recipes](results/compiler_bootstrap_backlog_2026_10_23/native_second_generation/README.md).
+
+The compile/run bootstrap goal is complete. This does not close CH15 or claim
+optimized performance/exhaustive correctness. Review of the provisional fs_lock_empty
+factory and temporary initialization exception remains separate, as agreed.

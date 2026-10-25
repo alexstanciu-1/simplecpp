@@ -1,0 +1,22 @@
+[
+  {
+    "name": "audit",
+    "command": [
+      "/usr/bin/time",
+      "-v",
+      "-o",
+      "/tmp/compiler-native-generation2-build-01/build.time",
+      "php8.5",
+      "/tmp/compiler-native-generation2-build-01/build.php",
+      "/tmp/compiler-native-generation2-01/published",
+      "/tmp/compiler-native-layout-01/cache",
+      "-O0"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 503.75,
+    "code": 0,
+    "expected": 0,
+    "executor": "subprocess",
+    "executor_reason": "subprocess"
+  }
+]
