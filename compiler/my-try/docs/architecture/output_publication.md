@@ -61,7 +61,10 @@ translation-unit membership. The manifest also contains `cpp_policy` and `runtim
 `sources`, `libraries` and `definitions` arrays from the selected module closure.
 The backend supplies these requirements through the coordinator; publication does
 not load catalogs or choose build policy. The ready digest covers both artifacts
-and requirements. No-op manifests retain inode/mtime too; the status
+and requirements. Manifest rows are assembled in artifact order and joined once with the portable
+string-vector join; native lowering must not repeatedly copy a growing manifest.
+This preserves exact serialization and the existing publication protocol.
+No-op manifests retain inode/mtime too; the status
 file may change each attempt. `Compiler::cpp()` publishes Model output and acknowledges
 preparation changes only after disk success. Failure leaves retry obligations intact.
 

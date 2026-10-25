@@ -68,7 +68,8 @@ final class Output_Publication
 		$next /** Keyed_Storage<cpp_artifact> */ = new Keyed_Storage();
 		$identities /** hash<bool> */ = [];
 		$hashes /** hash<string> */ = [];
-		$manifest = '{"format":"scpp-output-manifest-v1","files":[';
+		// Join ordered rows once: native compound concatenation copies its old value.
+		$manifest_rows /** vector<string> */ = [];
 		$separator = '';
 		$units = 0;
 		foreach ($artifacts as $artifact)
@@ -82,7 +83,7 @@ final class Output_Publication
 			$next->add($path, $artifact);
 			$digest = content_sha256($artifact->text);
 			$hashes[$path] = $digest;
-			$manifest .= $separator . '{"path":' . json_quote($path) . ',"sha256":' . json_quote($digest)
+			$manifest_rows[] = $separator . '{"path":' . json_quote($path) . ',"sha256":' . json_quote($digest)
 				. ',"id":' . json_quote($artifact->identity) . ',"kind":' . json_quote($artifact->kind_name())
 				. ',"includes":' . CPP_Artifacts::includes_json($artifact) . '}';
 			$separator = ',';
@@ -95,7 +96,8 @@ final class Output_Publication
 		}
 		$selected_policy = $policy ?? new cpp_lowering_policy();
 		$template_policy = $template_free_application ? 'forbidden' : 'allowed';
-		$manifest .= '],"application_templates":' . json_quote($template_policy)
+		$manifest = '{"format":"scpp-output-manifest-v1","files":[' . q_implode('', $manifest_rows)
+			. '],"application_templates":' . json_quote($template_policy)
 			. ',"cpp_policy":' . json_quote($selected_policy->identity()) . ',"runtime_build":' . Runtime_Build_Contract::encode($runtime) . "}\n";
 		$current /** hash<string> */ = [];
 		$owned /** Keyed_Storage<output_file_ownership> */ = $this->owned;

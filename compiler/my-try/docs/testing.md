@@ -2340,3 +2340,8 @@ identity, sparse keys, shared cursor advancement and retention after source retu
 child iterator protocol and type-declaration traversal, supplies minimal owner records,
 and verifies ordered base/collection children plus empty traversal in PHP, legacy
 native and ordinary/concrete v0.2 output. It guards the conditionless-loop source form.
+
+`tests/layout_depths.php` checks layout dependency depths, irrelevant source-header
+cycles, required cycle rejection and retry on the same invocation-local worker.
+Run through the shared runner; native scaling evidence lives in the
+[performance checkpoint](../../../specs/planning/results/compiler_performance_2026_10_25/README.md).

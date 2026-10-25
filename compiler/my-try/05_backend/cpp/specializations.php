@@ -140,63 +140,6 @@ final class CPP_Specializations
 		return $order;
 	}
 
-	/** Native headers need no generated layout; generated headers use the emitter's dependency facts. */
-	private static function required_depth(array $dependencies /** hash<bool> */, array $known /** hash<bool> */,
-		array $depths /** hash<int> */): int
-	{
-		$depth = 0;
-		foreach ($dependencies as $header => $used) {
-			if (!isset($known[$header])) { continue; }
-			if (!isset($depths[$header])) { return -1; }
-			if ($depths[$header] > $depth) { $depth = $depths[$header]; }
-		}
-		return $depth;
-	}
-
-	/** Topological layout batches include shared source headers, not source method bodies. */
-	private function layout_depths(Storage $artifacts /** Storage<cpp_artifact> */): array /** hash<int> */
-	{
-		$known /** hash<bool> */ = [];
-		$depths /** hash<int> */ = [];
-		$entries /** Storage<cpp_specialization_entry> */ = $this->entries;
-		$required /** hash<bool> */ = [];
-		foreach ($entries as $entry) {
-			$known[$entry->header] = true;
-			foreach ($entry->layout_dependencies as $header => $used) { $required[$header] = true; }
-		}
-		// Only headers reached by layout requirements participate; unrelated includes are not layout work.
-		$required_before = 0;
-		do {
-			$required_before = q_count($required);
-			foreach ($artifacts as $artifact) {
-				if (($artifact->kind() !== cpp_artifact_kind::header) || !isset($required[$artifact->file_name])) { continue; }
-				$known[$artifact->file_name] = true;
-				foreach ($artifact->header_dependencies as $header => $used) { $required[$header] = true; }
-			}
-		} while (q_count($required) !== $required_before);
-		while (q_count($depths) < q_count($known)) {
-			$before = q_count($depths);
-			foreach ($artifacts as $artifact) {
-				if (!isset($known[$artifact->file_name]) || isset($depths[$artifact->file_name])) { continue; }
-				$depth = self::required_depth($artifact->header_dependencies, $known, $depths);
-				if ($depth >= 0) { $depths[$artifact->file_name] = $depth; }
-			}
-			foreach ($entries as $entry) {
-				// Member fragments share the owning type header; only its layout entry determines readiness.
-				if ($entry->member_owner !== '') { continue; }
-				if (isset($depths[$entry->header])) { continue; }
-				$depth = self::required_depth($entry->layout_dependencies, $known, $depths);
-				if ($depth >= 0) { $depths[$entry->header] = $depth + ($entry->layout_statements === '' ? 0 : 1); }
-			}
-			if (q_count($depths) === $before) { throw new \RuntimeException('Concrete layout dependencies contain a generated header cycle'); }
-		}
-		$result /** hash<int> */ = [];
-		foreach ($entries as $entry) {
-			$result[$entry->name] = $depths[$entry->header] - ($entry->layout_statements === '' ? 0 : 1);
-		}
-		return $result;
-	}
-
 	/** Stable identity buckets distribute implementations independently of discovery order. */
 	public function append_artifacts(Storage $artifacts /** Storage<cpp_artifact> */): void
 	{
@@ -205,7 +148,8 @@ final class CPP_Specializations
 		$implementations /** hash<string> */ = [];
 		$layout_current /** hash<cpp_layout_batch,int> */ = [];
 		$layout_batches /** Storage<cpp_layout_batch> */ = new Storage();
-		$depths = $this->layout_depths($artifacts);
+		$layout_depths = new CPP_Layout_Depths();
+		$depths = $layout_depths->resolve($artifacts, $this->entries);
 		$maximum_depth = 0;
 		$entries /** Storage<cpp_specialization_entry> */ = $this->entries;
 		$order = $this->emission_order();

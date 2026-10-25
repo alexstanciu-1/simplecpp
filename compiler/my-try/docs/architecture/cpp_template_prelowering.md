@@ -122,6 +122,12 @@ and broader keyed probes remain separate. See [curl integration](../planning/cur
 
 ## Existing owners
 
+`CPP_Layout_Depths` owns invocation-local dependency calculation maps. The
+specialization coordinator invokes it after joining render workers. It reads the
+existing artifact/entry dependencies and preserves reached-header filtering and
+cycle checks without copying whole maps for each dependency set. No semantic facts
+or new retained registry are introduced.
+
 Source-class self retention uses prepared `shared_self` acquisition and construction
 facts. `CPP_Self` requests an internal layout-probed observer through the existing
 specialization engine; application classes share its template-free virtual base.

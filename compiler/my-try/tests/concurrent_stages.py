@@ -14,4 +14,4 @@ out.mkdir(parents=True, exist_ok=False)
 with CommandRunner(out / 'logs', ROOT) as runner:
     run_tasks([Task(name, lambda name=name: runner.run(name,
         ['php8.5', APP / 'tests' / (name + '.php'), out / name], timeout=300))
-        for name in ['concurrent_stages', 'callable_instances', 'trait_instances', 'async_retained', 'result_model', 'contextual_closures']])
+        for name in ['layout_depths', 'concurrent_stages', 'callable_instances', 'trait_instances', 'async_retained', 'result_model', 'contextual_closures']])

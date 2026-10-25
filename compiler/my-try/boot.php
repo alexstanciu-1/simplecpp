@@ -195,6 +195,7 @@ require_once __DIR__ . '/05_backend/cpp/output.php';
 require_once __DIR__ . '/05_backend/cpp/lowering_report.php';
 require_once __DIR__ . '/05_backend/cpp/artifacts.php';
 require_once __DIR__ . '/05_backend/cpp/types.php';
+require_once __DIR__ . '/05_backend/cpp/layout_depths.php';
 require_once __DIR__ . '/05_backend/cpp/specializations.php';
 require_once __DIR__ . '/05_backend/cpp/entry_support.php';
 require_once __DIR__ . '/05_backend/cpp/physical_interfaces.php';

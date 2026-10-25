@@ -279,3 +279,7 @@ The [V-D11/V-D15 closeout](planning/collection_advisories.md) restores six colle
 helpers with bounded concrete callbacks and retained reference advisories. It records
 default-prelowered production checks, focused native diagnostic parity and separate
 initializer/indexing/callback gaps.
+
+The [performance goal checkpoint](../../../specs/planning/results/compiler_performance_2026_10_25/README.md)
+records manifest/layout optimizations, measured native scaling and the remaining
+production native-build scheduler work.

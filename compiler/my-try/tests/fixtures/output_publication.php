@@ -41,6 +41,18 @@ $root = $argv[1];
 $first = ['entry.cpp' => 'first', 'decl.hpp' => 'stable', 'old.cpp' => 'obsolete'];
 publication_write($root, $first);
 Output_Publication::require_ready($root);
+// Exact bytes are part of readiness/cache identity, including ordered rows and final newline.
+$expected_rows = [];
+foreach ($first as $path => $text) {
+	$expected_rows[] = ['path' => $path, 'sha256' => hash('sha256', $text), 'id' => $path,
+		'kind' => str_ends_with($path, '.hpp') ? 'header' : 'translation_unit', 'includes' => null];
+}
+$expected_manifest = json_encode(['format' => 'scpp-output-manifest-v1', 'files' => $expected_rows,
+	'application_templates' => 'allowed', 'cpp_policy' => 'cpp-lowering-v1:execution',
+	'runtime_build' => ['sources' => [], 'libraries' => [], 'definitions' => [],
+		'compile_options' => [], 'link_options' => [], 'diagnostics' => []]], JSON_UNESCAPED_SLASHES) . "\n";
+publication_check(file_get_contents($root . '/.scpp-output.manifest') === $expected_manifest,
+	'Manifest serialization changed bytes or artifact order');
 $paths = [...array_keys($first), '.scpp-output.manifest'];
 foreach ($paths as $path) { touch($root . '/' . $path, 1000000000); }
 $before = publication_stats($root, $paths);
