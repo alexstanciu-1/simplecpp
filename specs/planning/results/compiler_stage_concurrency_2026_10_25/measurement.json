@@ -1,0 +1,187 @@
+{
+  "tsan_smoke": "pass",
+  "1": {
+    "stages_seconds": {
+      "init-start": 0.053999900817871094,
+      "sync-start": 4.936001777648926,
+      "prepare-start": 8.117002964019775,
+      "emit-start": 47.68301773071289
+    },
+    "concurrency": {
+      "init-start": {
+        "max_threads": 1,
+        "max_active_threads": 1,
+        "sampled_cpu_seconds": 0.09,
+        "sampled_seconds": 0.10022548586130142
+      },
+      "sync-start": {
+        "max_threads": 2,
+        "max_active_threads": 1,
+        "sampled_cpu_seconds": 4.65,
+        "sampled_seconds": 4.918941508978605
+      },
+      "prepare-start": {
+        "max_threads": 2,
+        "max_active_threads": 1,
+        "sampled_cpu_seconds": 5.74,
+        "sampled_seconds": 8.126850251108408
+      },
+      "emit-start": {
+        "max_threads": 2,
+        "max_active_threads": 1,
+        "sampled_cpu_seconds": 47.53,
+        "sampled_seconds": 47.661177422851324
+      },
+      "done": {
+        "max_threads": 1,
+        "max_active_threads": 1,
+        "sampled_cpu_seconds": 0.11,
+        "sampled_seconds": 0.10037636011838913
+      }
+    },
+    "time": "\tCommand being timed: \"python3 /home/alex-ai/compiler-self-o2-20261025/concurrency_monitor.py /home/alex-ai/compiler-self-o2-20261025/concurrency-07/compiler-release /home/alex-ai/compiler-self-o2-20261025/concurrency-07/jobs-1/threads.json\"\n\tUser time (seconds): 38.06\n\tSystem time (seconds): 23.10\n\tPercent of CPU this job got: 100%\n\tElapsed (wall clock) time (h:mm:ss or m:ss): 1:01.05\n\tAverage shared text size (kbytes): 0\n\tAverage unshared data size (kbytes): 0\n\tAverage stack size (kbytes): 0\n\tAverage total size (kbytes): 0\n\tMaximum resident set size (kbytes): 988496\n\tAverage resident set size (kbytes): 0\n\tMajor (requiring I/O) page faults: 0\n\tMinor (reclaiming a frame) page faults: 17057872\n\tVoluntary context switches: 884\n\tInvoluntary context switches: 233\n\tSwaps: 0\n\tFile system inputs: 0\n\tFile system outputs: 150368\n\tSocket messages sent: 0\n\tSocket messages received: 0\n\tSignals delivered: 0\n\tPage size (bytes): 4096\n\tExit status: 0\n"
+  },
+  "2": {
+    "stages_seconds": {
+      "init-start": 0.04999995231628418,
+      "sync-start": 2.528000831604004,
+      "prepare-start": 6.587002515792847,
+      "emit-start": 43.03501558303833
+    },
+    "concurrency": {
+      "init-start": {
+        "max_threads": 1,
+        "max_active_threads": 1,
+        "sampled_cpu_seconds": 0.09,
+        "sampled_seconds": 0.10024768859148026
+      },
+      "sync-start": {
+        "max_threads": 3,
+        "max_active_threads": 2,
+        "sampled_cpu_seconds": 4.46,
+        "sampled_seconds": 2.508397899568081
+      },
+      "prepare-start": {
+        "max_threads": 3,
+        "max_active_threads": 2,
+        "sampled_cpu_seconds": 4.95,
+        "sampled_seconds": 6.527056779712439
+      },
+      "emit-start": {
+        "max_threads": 3,
+        "max_active_threads": 2,
+        "sampled_cpu_seconds": 48.78,
+        "sampled_seconds": 43.12059710174799
+      },
+      "done": {
+        "max_threads": 1,
+        "max_active_threads": 1,
+        "sampled_cpu_seconds": 0.11,
+        "sampled_seconds": 0.10034411400556564
+      }
+    },
+    "time": "\tCommand being timed: \"python3 /home/alex-ai/compiler-self-o2-20261025/concurrency_monitor.py /home/alex-ai/compiler-self-o2-20261025/concurrency-07/compiler-release /home/alex-ai/compiler-self-o2-20261025/concurrency-07/jobs-2/threads.json\"\n\tUser time (seconds): 39.69\n\tSystem time (seconds): 23.43\n\tPercent of CPU this job got: 120%\n\tElapsed (wall clock) time (h:mm:ss or m:ss): 0:52.49\n\tAverage shared text size (kbytes): 0\n\tAverage unshared data size (kbytes): 0\n\tAverage stack size (kbytes): 0\n\tAverage total size (kbytes): 0\n\tMaximum resident set size (kbytes): 989604\n\tAverage resident set size (kbytes): 0\n\tMajor (requiring I/O) page faults: 0\n\tMinor (reclaiming a frame) page faults: 17151892\n\tVoluntary context switches: 1075\n\tInvoluntary context switches: 295\n\tSwaps: 0\n\tFile system inputs: 176\n\tFile system outputs: 150336\n\tSocket messages sent: 0\n\tSocket messages received: 0\n\tSignals delivered: 0\n\tPage size (bytes): 4096\n\tExit status: 0\n"
+  },
+  "32": {
+    "stages_seconds": {
+      "init-start": 0.05200004577636719,
+      "sync-start": 1.0220003128051758,
+      "prepare-start": 5.121001958847046,
+      "emit-start": 36.76901340484619
+    },
+    "concurrency": {
+      "init-start": {
+        "max_threads": 1,
+        "max_active_threads": 1,
+        "sampled_cpu_seconds": 0.09,
+        "sampled_seconds": 0.10022373497486115
+      },
+      "sync-start": {
+        "max_threads": 33,
+        "max_active_threads": 10,
+        "sampled_cpu_seconds": 2.23,
+        "sampled_seconds": 1.0094845369458199
+      },
+      "prepare-start": {
+        "max_threads": 33,
+        "max_active_threads": 1,
+        "sampled_cpu_seconds": 4.37,
+        "sampled_seconds": 5.126398552209139
+      },
+      "emit-start": {
+        "max_threads": 33,
+        "max_active_threads": 32,
+        "sampled_cpu_seconds": 58.230000000000004,
+        "sampled_seconds": 36.72483280673623
+      },
+      "done": {
+        "max_threads": 1,
+        "max_active_threads": 1,
+        "sampled_cpu_seconds": 0.11,
+        "sampled_seconds": 0.10036338865756989
+      }
+    },
+    "time": "\tCommand being timed: \"python3 /home/alex-ai/compiler-self-o2-20261025/concurrency_monitor.py /home/alex-ai/compiler-self-o2-20261025/concurrency-07/compiler-release /home/alex-ai/compiler-self-o2-20261025/concurrency-07/jobs-32/threads.json\"\n\tUser time (seconds): 59.54\n\tSystem time (seconds): 22.58\n\tPercent of CPU this job got: 190%\n\tElapsed (wall clock) time (h:mm:ss or m:ss): 0:43.20\n\tAverage shared text size (kbytes): 0\n\tAverage unshared data size (kbytes): 0\n\tAverage stack size (kbytes): 0\n\tAverage total size (kbytes): 0\n\tMaximum resident set size (kbytes): 994136\n\tAverage resident set size (kbytes): 0\n\tMajor (requiring I/O) page faults: 0\n\tMinor (reclaiming a frame) page faults: 16208842\n\tVoluntary context switches: 10761\n\tInvoluntary context switches: 816\n\tSwaps: 0\n\tFile system inputs: 0\n\tFile system outputs: 150296\n\tSocket messages sent: 0\n\tSocket messages received: 0\n\tSignals delivered: 0\n\tPage size (bytes): 4096\n\tExit status: 0\n"
+  },
+  "32-repeat": {
+    "stages_seconds": {
+      "init-start": 0.051000118255615234,
+      "sync-start": 1.0470004081726074,
+      "prepare-start": 5.0800018310546875,
+      "emit-start": 35.88601303100586
+    },
+    "concurrency": {
+      "init-start": {
+        "max_threads": 1,
+        "max_active_threads": 1,
+        "sampled_cpu_seconds": 0.09,
+        "sampled_seconds": 0.10022856295108795
+      },
+      "sync-start": {
+        "max_threads": 33,
+        "max_active_threads": 8,
+        "sampled_cpu_seconds": 2.16,
+        "sampled_seconds": 1.0058988071978092
+      },
+      "prepare-start": {
+        "max_threads": 33,
+        "max_active_threads": 1,
+        "sampled_cpu_seconds": 4.24,
+        "sampled_seconds": 5.123238209635019
+      },
+      "emit-start": {
+        "max_threads": 33,
+        "max_active_threads": 32,
+        "sampled_cpu_seconds": 57.72,
+        "sampled_seconds": 35.83487023040652
+      },
+      "done": {
+        "max_threads": 1,
+        "max_active_threads": 1,
+        "sampled_cpu_seconds": 0.1,
+        "sampled_seconds": 0.10033854842185974
+      }
+    },
+    "time": "\tCommand being timed: \"python3 /home/alex-ai/compiler-self-o2-20261025/concurrency_monitor.py /home/alex-ai/compiler-self-o2-20261025/concurrency-07/compiler-release /home/alex-ai/compiler-self-o2-20261025/concurrency-07/jobs-32-repeat/threads.json\"\n\tUser time (seconds): 60.53\n\tSystem time (seconds): 22.07\n\tPercent of CPU this job got: 195%\n\tElapsed (wall clock) time (h:mm:ss or m:ss): 0:42.30\n\tAverage shared text size (kbytes): 0\n\tAverage unshared data size (kbytes): 0\n\tAverage stack size (kbytes): 0\n\tAverage total size (kbytes): 0\n\tMaximum resident set size (kbytes): 994544\n\tAverage resident set size (kbytes): 0\n\tMajor (requiring I/O) page faults: 0\n\tMinor (reclaiming a frame) page faults: 16159686\n\tVoluntary context switches: 8762\n\tInvoluntary context switches: 714\n\tSwaps: 0\n\tFile system inputs: 0\n\tFile system outputs: 150304\n\tSocket messages sent: 0\n\tSocket messages received: 0\n\tSignals delivered: 0\n\tPage size (bytes): 4096\n\tExit status: 0\n"
+  },
+  "output_comparison": {
+    "2": {
+      "files": 6531,
+      "different_files": 0,
+      "missing_files": 0
+    },
+    "32": {
+      "files": 6531,
+      "different_files": 13,
+      "missing_files": 5
+    },
+    "32-repeat": {
+      "files": 6531,
+      "different_files": 12,
+      "missing_files": 5
+    }
+  },
+  "smoke_concrete": "7:10",
+  "smoke_ordinary": "7:10",
+  "tsan_full": "pass"
+}

@@ -227,6 +227,19 @@ final class cpp_fragment
 }
 
 /** Retained fragments are keyed by independent signature/body preparation identities. */
+/** Invocation-local source batch. No retained fragment keeps this task or its engine. */
+final class cpp_render_batch
+{
+	public Storage $owners /** Storage<preparation_owner> */;
+	public cpp_program $output;
+	public ?CPP_Specializations $specializations = null;
+	public function __construct(public collected_file $source)
+	{
+		$this->owners = new Storage /** Storage<preparation_owner> */();
+		$this->output = new cpp_program();
+	}
+}
+
 final class cpp_program {
 	public bool $prelower_templates = false;
 	public string $policy_identity = '';

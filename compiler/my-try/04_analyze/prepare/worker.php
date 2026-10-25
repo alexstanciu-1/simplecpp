@@ -6,6 +6,11 @@ namespace scpp\compiler;
 final class Preparation_Worker
 {
 	private scope $language;
+	private bool $parallel_body = false;
+	private ?collected_file $parallel_source = null;
+	private Storage $subscription_resets /** Storage<preparation_subscription_reset> */;
+	private Storage $private_lookups /** Storage<preparation_lookup> */;
+	private \SplObjectStorage $completed /** hash<bool, preparation_owner> */;
 	private Storage $instance_requests /** Storage<callable_instance_request> */;
 	/** Identity-tagged control signal, never a user diagnostic or retained work field. */
 	private \RuntimeException $materialization_signal;
@@ -20,6 +25,9 @@ final class Preparation_Worker
 	public function __construct(scope $language)
 	{
 		$this->language = $language;
+		$this->subscription_resets = new Storage /** Storage<preparation_subscription_reset> */();
+		$this->private_lookups = new Storage /** Storage<preparation_lookup> */();
+		$this->completed = new \SplObjectStorage /** hash<bool, preparation_owner> */();
 		$this->instance_requests = new Storage /** Storage<callable_instance_request> */();
 		$this->materialization_signal = new \RuntimeException('Callable materialization requires the coordinator');
 		$this->attempt_failed = new \SplObjectStorage /** hash<bool, preparation_owner> */();
@@ -54,13 +62,13 @@ final class Preparation_Worker
 			$requests->append(new callable_instance_request($origin, $called));
 			throw $this->materialization_signal;
 		}
-		$this->select_callable($instance->working->callable_syntax());
+		if (!$this->parallel_body) { $this->select_callable($instance->working->callable_syntax()); }
 		$this->require_declaration($owner, $instance->working);
 		return $instance->working;
 	}
 
 	/** After coordinator-ordered retirement, fresh/update runs share selection and execution. */
-	public function prepare(Storage $sources /** Storage<collected_file> */): Storage /** Storage<prepared_file> */
+	public function prepare(Storage $sources /** Storage<collected_file> */, int $jobs = 1): Storage /** Storage<prepared_file> */
 	{
 		$this->prepare_relationships($sources);
 		foreach ($sources as $source) {
@@ -89,32 +97,23 @@ final class Preparation_Worker
 		}
 		$this->changed_lookups();
 
-		// Contract processing may schedule more contracts; identity sets coalesce notifications.
-		while (q_count($this->contracts) !== 0)
-		{
-			foreach ($this->contracts as $owner /** @object-key */)
+		do {
+			// Contract processing may schedule more contracts; identity sets coalesce notifications.
+			while (q_count($this->contracts) !== 0)
 			{
-				try {
-					$this->contract($owner);
+				foreach ($this->contracts as $owner /** @object-key */)
+				{
+					try {
+						$this->contract($owner);
+					}
+					catch (\RuntimeException $error) {
+						// Failure is retained on owners; independent declarations may still settle.
+					}
+					break;
 				}
-				catch (\RuntimeException $error) {
-					// Failure is retained on owners; independent declarations may still settle.
-				}
-				break;
 			}
-		}
-		while (q_count($this->callable_bodies) !== 0) {
-			foreach ($this->callable_bodies as $owner /** @object-key */) {
-				// Native iteration borrows the key slot; retain the work before erasing it.
-				$selected_body /** body_work */ = $owner;
-				unset($this->callable_bodies[$selected_body]);
-				$this->body($selected_body);
-				break;
-			}
-		}
-		foreach ($this->file_bodies as $owner /** @object-key */) {
-			$this->body($owner);
-		}
+			$this->parallel_bodies($jobs);
+		} while ((q_count($this->contracts) !== 0) || (q_count($this->callable_bodies) !== 0) || (q_count($this->file_bodies) !== 0));
 
 		$this->require_success();
 		// Only settled call facts participate; failure uses ordinary retained retry/publication guards.
@@ -156,6 +155,99 @@ final class Preparation_Worker
 			}
 		}
 		return $result;
+	}
+
+	/** Each task owns source-local facts; no shared reverse edge changes until the join. */
+	private function parallel_bodies(int $jobs): void
+	{
+		$batches /** vector<preparation_body_batch> */ = [];
+		$by_source /** hash<preparation_body_batch, collected_file> */ = new \SplObjectStorage /** hash<preparation_body_batch, collected_file> */();
+		$selected /** Storage<body_work> */ = new Storage();
+		foreach ($this->callable_bodies as $owner /** @object-key */) { $selected->append($owner); }
+		foreach ($this->file_bodies as $owner /** @object-key */) { $selected->append(object_cast($owner, body_work::class)); }
+		foreach ($selected as $owner) {
+			$source = $owner->source;
+			if (!isset($by_source[$source])) {
+				$batch = new preparation_body_batch($source);
+				$by_source[$source] = $batch;
+				$batches[] = $batch;
+			}
+			$members /** Storage<body_work> */ = $by_source[$source]->bodies;
+			$members->append($owner);
+		}
+		$this->callable_bodies = new \SplObjectStorage /** hash<bool, body_work> */();
+		$this->file_bodies = new \SplObjectStorage /** hash<bool, file_body_work> */();
+		$language = $this->language;
+		$registry = Model::$type_catalog->registry();
+		$closures = Model::$type_catalog->closures();
+		$registry->parallel_access(true);
+		$closures->parallel_access(true);
+		Model::$namespaces->parallel_access(true);
+		Model::$initialization_contracts->parallel_access(true);
+		try {
+			task_run_publish_unordered($batches, $jobs,
+				function (preparation_body_batch $batch) use ($language): preparation_body_batch {
+					$worker = new Preparation_Worker($language);
+					$worker->parallel_body = true;
+					$worker->parallel_source = $batch->source;
+					$batch->worker = $worker;
+					foreach ($batch->bodies as $body) {
+						$worker->owners[$body] = true;
+						try { $worker->body($body); }
+						catch (\RuntimeException $error) {
+							if (!$worker->is_materialization_yield($error)) { throw $error; }
+							$serial /** Storage<body_work> */ = $batch->serial_bodies;
+							$serial->append($body);
+						}
+					}
+					return $batch;
+				}, function (preparation_body_batch $batch): bool { return true; });
+		} finally {
+			Model::$initialization_contracts->parallel_access(false);
+			Model::$namespaces->parallel_access(false);
+			$closures->parallel_access(false);
+			$registry->parallel_access(false);
+		}
+		// Remove all old subscriptions before publishing any replacements.
+		foreach ($batches as $batch) {
+			$worker /** Preparation_Worker */ = $batch->worker;
+			foreach ($worker->subscription_resets as $reset) {
+				foreach ($reset->dependencies as $target /** @object-key */) { unset($target->dependents[$reset->owner]); }
+				foreach ($reset->lookups as $lookup /** @object-key */) {
+					unset($lookup->dependents[$reset->owner]);
+					if (q_count($lookup->dependents) === 0) { $lookup->lookup_scope->remove_preparation_lookup($lookup); }
+				}
+			}
+		}
+		foreach ($batches as $batch) {
+			$worker /** Preparation_Worker */ = $batch->worker;
+			foreach ($worker->completed as $owner /** @object-key */) {
+				$owner->version++;
+				$owner->source->preparation_changes[$owner] = true;
+			}
+			foreach ($worker->owners as $owner /** @object-key */) {
+				$this->owners[$owner] = true;
+				foreach ($owner->dependencies as $target /** @object-key */) {
+					$target->dependents[$owner] = true;
+					$owner->dependencies[$target] = $target->version;
+				}
+				$lookups /** hash<bool, preparation_lookup> */ = $owner->lookups;
+				$owner->lookups = new \SplObjectStorage /** hash<bool, preparation_lookup> */();
+				foreach ($lookups as $lookup /** @object-key */) { $this->observe($lookup->lookup_scope, $lookup->name, $lookup->kind, $owner); }
+			}
+			$requests /** Storage<callable_instance_request> */ = $this->instance_requests;
+			foreach ($worker->instance_requests as $request) { $requests->append($request); }
+		}
+		foreach ($batches as $batch) {
+			$worker /** Preparation_Worker */ = $batch->worker;
+			foreach ($worker->attempt_failed as $owner /** @object-key */) { $this->failure($owner, $owner->failure_message); }
+		}
+		$pending_instances /** Storage<callable_instance_request> */ = $this->instance_requests;
+		if (!$pending_instances->is_empty()) { throw $this->materialization_signal; }
+		// Unsettled declaration demands are handled with the ordinary serial scheduler after join.
+		foreach ($batches as $batch) {
+			foreach ($batch->serial_bodies as $body) { $this->body($body); }
+		}
 	}
 
 	/** Analysis-only checkpoint; the same scheduler settles relations without claiming layout readiness. */
@@ -361,6 +453,7 @@ final class Preparation_Worker
 	public function prepare_anonymous(anonymous_callable_identity $identity, preparation_owner $consumer,
 		?Storage $captures /** Storage<prepared_capture> */ = null, ?canonical_type_use $expected_type = null): void
 	{
+		if ($this->parallel_body && ($identity->collection() !== $this->parallel_source)) { throw $this->materialization_signal; }
 		if ($identity->signature_work === null) { $identity->signature_work = new anonymous_signature_work($identity); }
 		$signature /** anonymous_signature_work */ = $identity->signature_work;
 		if ($captures !== null) {
@@ -520,11 +613,15 @@ final class Preparation_Worker
 			return $this->record_owner(object_cast($entry, collected_record::class));
 		}
 		if ($entry instanceof collected_constant) {
-			if ($entry->preparation === null) { $entry->preparation = new constant_definition_work(object_cast($entry, collected_constant::class)); }
+			if ($entry->preparation === null) {
+				if ($this->parallel_body) { throw $this->materialization_signal; }
+				$entry->preparation = new constant_definition_work(object_cast($entry, collected_constant::class));
+			}
 			return $entry->preparation;
 		}
 		if ($entry instanceof collected_enum) {
 			if ($entry->preparation === null) {
+				if ($this->parallel_body) { throw $this->materialization_signal; }
 				$entry->preparation = new enum_definition_work(object_cast($entry, collected_enum::class));
 			}
 			return $entry->preparation;
@@ -535,6 +632,7 @@ final class Preparation_Worker
 	public function callable_owner(collected_source_callable $entry): source_callable_signature_work
 	{
 		if ($entry->preparation === null) {
+			if ($this->parallel_body) { throw $this->materialization_signal; }
 			$entry->preparation = new source_callable_signature_work($entry);
 		}
 		return object_cast($entry->preparation, source_callable_signature_work::class);
@@ -543,6 +641,7 @@ final class Preparation_Worker
 	public function relationship_owner(collected_member_owner $entry): type_relationship_work
 	{
 		if ($entry->relationship_work === null) {
+			if ($this->parallel_body) { throw $this->materialization_signal; }
 			$entry->relationship_work = new type_relationship_work($entry);
 		}
 		return $entry->relationship_work;
@@ -550,13 +649,19 @@ final class Preparation_Worker
 
 	public function contract_owner(collected_member_owner $entry): type_contract_work
 	{
-		if ($entry->contract_work === null) { $entry->contract_work = new type_contract_work($entry); }
+		if ($entry->contract_work === null) {
+			if ($this->parallel_body) { throw $this->materialization_signal; }
+			$entry->contract_work = new type_contract_work($entry);
+		}
 		return $entry->contract_work;
 	}
 
 	public function lifecycle_owner(collected_member_owner $entry): type_lifecycle_work
 	{
-		if ($entry->lifecycle_work === null) { $entry->lifecycle_work = new type_lifecycle_work($entry); }
+		if ($entry->lifecycle_work === null) {
+			if ($this->parallel_body) { throw $this->materialization_signal; }
+			$entry->lifecycle_work = new type_lifecycle_work($entry);
+		}
 		return $entry->lifecycle_work;
 	}
 
@@ -585,6 +690,7 @@ final class Preparation_Worker
 	public function record_owner(collected_record $entry): contract_work
 	{
 		if ($entry->preparation === null) {
+			if ($this->parallel_body) { throw $this->materialization_signal; }
 			$entry->preparation = new record_definition_work($entry);
 		}
 		return $entry->preparation;
@@ -602,7 +708,7 @@ final class Preparation_Worker
 	public function depend_contract(preparation_owner $owner, contract_work $target): void
 	{
 		$owner->dependencies[$target] = $target->version;
-		$target->dependents[$owner] = true;
+		if (!$this->parallel_body) { $target->dependents[$owner] = true; }
 	}
 
 	/** Register the dependency before demanding completed facts; failed facts are never consumed. */
@@ -634,6 +740,13 @@ final class Preparation_Worker
 	/** Preserve dependency ownership while replacing only the selected owner's registrations. */
 	private function detach_dependencies(preparation_owner $owner): void
 	{
+		if ($this->parallel_body) {
+			$resets /** Storage<preparation_subscription_reset> */ = $this->subscription_resets;
+			$resets->append(new preparation_subscription_reset($owner));
+			$owner->dependencies = new \SplObjectStorage /** hash<int, contract_work> */();
+			$owner->lookups = new \SplObjectStorage /** hash<bool, preparation_lookup> */();
+			return;
+		}
 		foreach ($owner->dependencies as $target /** @object-key */) {
 			unset($target->dependents[$owner]);
 		}
@@ -650,6 +763,13 @@ final class Preparation_Worker
 	/** Rebuild selected signatures/layout facts; only effective changes propagate to consumers. */
 	public function contract(contract_work $owner): void
 	{
+		if ($this->parallel_body && ($owner instanceof anonymous_signature_work) && ($owner->source !== $this->parallel_source)) {
+			throw $this->materialization_signal;
+		}
+		if ($this->parallel_body && !($owner instanceof anonymous_signature_work)) {
+			if (!Preparation_Status::complete($owner)) { throw $this->materialization_signal; }
+			return;
+		}
 		Preparation_Status::require_active($owner);
 		if (Preparation_Status::source_changed($owner)) {
 			$this->schedule($owner);
@@ -674,6 +794,7 @@ final class Preparation_Worker
 				}
 			}
 			catch (\RuntimeException $error) {
+				if ($this->parallel_body && $this->is_materialization_yield($error)) { $owner->state = preparation_state::pending; throw $error; }
 				$this->failure($owner, $error->getMessage());
 				throw $error;
 			}
@@ -693,14 +814,16 @@ final class Preparation_Worker
 			$this->settle($owner);
 			$this->settle_members($owner);
 			if ($changed || $recovering) {
-				$owner->version++;
-				$owner->source->preparation_changes[$owner] = true;
-				foreach ($owner->dependents as $dependent /** @object-key */) {
-					$this->schedule($dependent);
+				if ($this->parallel_body) { $this->completed[$owner] = true; }
+				else {
+					$owner->version++;
+					$owner->source->preparation_changes[$owner] = true;
+					foreach ($owner->dependents as $dependent /** @object-key */) { $this->schedule($dependent); }
 				}
 			}
 		}
 		catch (\RuntimeException $error) {
+			if ($this->parallel_body && $this->is_materialization_yield($error)) { $owner->state = preparation_state::pending; throw $error; }
 			$this->failure($owner, $error->getMessage());
 			throw $error;
 		}
@@ -717,8 +840,11 @@ final class Preparation_Worker
 		{
 			$this->rebuild_body($owner, $context);
 			$this->settle($owner);
-			$owner->version++;
-			$owner->source->preparation_changes[$owner] = true;
+			if ($this->parallel_body) { $this->completed[$owner] = true; }
+			else {
+				$owner->version++;
+				$owner->source->preparation_changes[$owner] = true;
+			}
 		}
 		catch (\RuntimeException $error) {
 			if ($this->is_materialization_yield($error)) {
@@ -945,6 +1071,14 @@ final class Preparation_Worker
 	/** Propagate through reverse links once; unchanged signatures do not hide later recovery. */
 	private function failure(preparation_owner $owner, string $message): void
 	{
+		if ($this->parallel_body) {
+			$this->attempt_failed[$owner] = true;
+			$owner->failed = true;
+			$owner->failure_message = $message;
+			$owner->state = preparation_state::pending;
+			$owner->change_status = change_state::changed;
+			return;
+		}
 		$this->attempt_failed[$owner] = true;
 		$owner->state = preparation_state::pending;
 		$pending /** Storage<preparation_owner> */ = new Storage();
@@ -1032,14 +1166,26 @@ final class Preparation_Worker
 				break;
 			}
 		}
+		if ($existing === null && $this->parallel_body) {
+			foreach ($this->private_lookups as $candidate) {
+				if (($candidate->lookup_scope === $scope) && ($candidate->name === $name) && ($candidate->kind === $kind)) {
+					$existing = $candidate;
+					break;
+				}
+			}
+		}
 		if ($existing === null) {
 			$existing = new preparation_lookup($scope, $name, $kind);
 			$existing->candidates = $this->candidates($existing);
-			$scope->add_preparation_lookup($existing);
+			if ($this->parallel_body) {
+				$private_lookups /** Storage<preparation_lookup> */ = $this->private_lookups;
+				$created_lookup /** preparation_lookup */ = $existing;
+				$private_lookups->append($created_lookup);
+			} else { $scope->add_preparation_lookup($existing); }
 		}
 		$lookup /** preparation_lookup */ = $existing;
 		$owner->lookups[$lookup] = true;
-		$lookup->dependents[$owner] = true;
+		if (!$this->parallel_body) { $lookup->dependents[$owner] = true; }
 	}
 
 	/** Project typed pools into one identity snapshot; value vectors are not covariant. */

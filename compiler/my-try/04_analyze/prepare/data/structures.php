@@ -967,6 +967,31 @@ final class local_environment
 }
 
 /** Name-pool observation also represents absent or ambiguous lookup results. */
+/** Invocation-local subscription replacement, merged only after the body join. */
+final class preparation_subscription_reset
+{
+	public \SplObjectStorage $dependencies /** hash<int, contract_work> */;
+	public \SplObjectStorage $lookups /** hash<bool, preparation_lookup> */;
+	public function __construct(public preparation_owner $owner)
+	{
+		$this->dependencies = $owner->dependencies;
+		$this->lookups = $owner->lookups;
+	}
+}
+
+/** One source owns its selected bodies and all nested anonymous work during a batch. */
+final class preparation_body_batch
+{
+	public Storage $bodies /** Storage<body_work> */;
+	public Storage $serial_bodies /** Storage<body_work> */;
+	public ?Preparation_Worker $worker = null;
+	public function __construct(public collected_file $source)
+	{
+		$this->bodies = new Storage /** Storage<body_work> */();
+		$this->serial_bodies = new Storage /** Storage<body_work> */();
+	}
+}
+
 final class preparation_lookup
 {
 	public scope $lookup_scope;

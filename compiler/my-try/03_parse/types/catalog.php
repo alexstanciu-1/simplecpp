@@ -337,15 +337,38 @@ final class source_closure_association
 	public function identity(): anonymous_callable_identity { return weakref_get($this->source_identity); }
 }
 
+/** Invocation-local result of synchronized closure-index access. */
+final class closure_identity_result
+{
+	public ?anonymous_callable_identity $identity = null;
+}
+
 /** Non-owning type-to-callable index; no anonymous names enter source lookup. */
 final class Source_Closure_Types
 {
+	private bool $parallel = false;
+	public function parallel_access(bool $enabled): void { $this->parallel = $enabled; }
+
 	private array $associations /** hash<source_closure_association, int> */ = [];
 	public function register(canonical_type_use $type, anonymous_callable_identity $identity): void
+	{
+		if (!$this->parallel) { $this->register_serial($type, $identity); return; }
+		$index = $this;
+		task_synchronize(function () use ($index, $type, $identity): void { $index->register_serial($type, $identity); });
+	}
+	private function register_serial(canonical_type_use $type, anonymous_callable_identity $identity): void
 	{
 		$this->associations[$type->type_id()] = new source_closure_association($identity);
 	}
 	public function identity(canonical_type_use $type): anonymous_callable_identity
+	{
+		if (!$this->parallel) { return $this->identity_serial($type); }
+		$index = $this;
+		$result = new closure_identity_result();
+		task_synchronize(function () use ($index, $type, $result): void { $result->identity = $index->identity_serial($type); });
+		return $result->identity;
+	}
+	private function identity_serial(canonical_type_use $type): anonymous_callable_identity
 	{
 		$key = $type->type_id();
 		if (!isset($this->associations[$key])) { throw new \RuntimeException('Expression is not a concrete callable value'); }

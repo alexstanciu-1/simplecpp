@@ -7,6 +7,31 @@ incremental scheduler across collected files after parsing/collection has joined
 No separate resolution pass precedes it. LLVM preparation remains
 [parked](../../05_backend/llvm/README.md).
 
+`Compiler::$jobs` also budgets executable-body preparation. Each round settles
+declaration contracts serially, then claims selected bodies by source collection.
+The same algorithm runs at one worker. A body task owns its source's contexts and
+nested anonymous facts; shared declaration queries consume completed contracts
+without re-entering the scheduler. Missing work and cross-source anonymous demands
+yield for serial settlement after the join. Called-type materialization remains
+with `Preparation_Run`, which coalesces identical demands between rounds.
+
+Tasks replace their own forward observations but retain the old subscriptions in
+invocation-local reset records. After join, the coordinator removes old reverse
+edges, publishes completed versions and source change sets, canonicalizes lookup
+subscriptions and propagates failures. Newly scheduled work gets another round;
+entry selection, cycle checks and whole-program publication follow completion.
+Neither retained work nor syntax retains a task/worker. Registry read snapshots
+and short synchronized identity publication preserve canonical types; capability
+queries run outside the publication lock. Namespace misses and closure-index access
+use that same joined-batch synchronization boundary.
+Source nominal identities are created by collection under its publication lock.
+`Source_Types::definition()` only reads the existing declaring-scope definition
+and provenance association; `self`/`static` and field-owner queries cannot allocate
+another nominal identity during a body batch.
+Initializer bindings validate a private factory candidate before synchronizing
+the final lookup and publication. Concurrent misses reuse one published binding;
+capability queries never run while holding the publication lock.
+
 ## Ownership
 
 Member access uses a common declaring-type owner and `member_visibility`, separately

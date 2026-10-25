@@ -5,8 +5,20 @@ namespace scpp\compiler;
 
 final class Source_Types
 {
-	/** Preserve declaration provenance while constructing one shared type identity. */
+	/** Read the identity already published by collection, without allocating another type. */
 	public static function definition(collected_type_definition $entry): abstract_nominal_type_definition
+	{
+		$declaring_scope /** scope */ = weakref_get($entry->scope);
+		foreach ($declaring_scope->types_named($entry->name) as $definition) {
+			if ($definition->origin() !== type_definition_origin::source) { continue; }
+			$declaration = Model::$type_catalog->source_declarations()->declaration($definition->definition_id());
+			if ($declaration === $entry) { return object_cast($definition, abstract_nominal_type_definition::class); }
+		}
+		throw new \LogicException('Source type definition has not been published');
+	}
+
+	/** Collection-only creation; the collector publishes under its existing shared lock. */
+	public static function create_definition(collected_type_definition $entry): abstract_nominal_type_definition
 	{
 		if ($entry instanceof collected_trait) {
 			$type = Model::$type_catalog->define_source_trait($entry->qualified_name(),

@@ -22,11 +22,20 @@ final class namespace_identity
 	}
 }
 
+/** Invocation-local result of synchronized namespace access. */
+final class namespace_registration_result
+{
+	public ?namespace_identity $identity = null;
+}
+
 /** Model-owned namespace identities; parallel parser callers hold the publication lock.
- * Sequential preparation may intern lookup-only pools after the whole parse join.
+ * Preparation body batches synchronize lookup-only interning after the whole parse join.
  */
 final class Namespace_Registry
 {
+	private bool $parallel = false;
+	public function parallel_access(bool $enabled): void { $this->parallel = $enabled; }
+
 	private Keyed_Storage $identities /** Keyed_Storage<namespace_identity> */;
 	private scope $language;
 
@@ -38,6 +47,17 @@ final class Namespace_Registry
 
 	/** Intern canonical paths only; syntax and relative-name resolution belong to their workers. */
 	public function register(string $path): namespace_identity
+	{
+		if (!$this->parallel) { return $this->register_serial($path); }
+		$registry = $this;
+		$result = new namespace_registration_result();
+		task_synchronize(function () use ($registry, $path, $result): void {
+			$result->identity = $registry->register_serial($path);
+		});
+		return $result->identity;
+	}
+
+	private function register_serial(string $path): namespace_identity
 	{
 		$identities /** Keyed_Storage<namespace_identity> */ = $this->identities;
 		if (isset($identities[$path])) {
@@ -69,6 +89,17 @@ final class Namespace_Registry
 	}
 
 	public function find(string $path): ?namespace_identity
+	{
+		if (!$this->parallel) { return $this->find_serial($path); }
+		$registry = $this;
+		$result = new namespace_registration_result();
+		task_synchronize(function () use ($registry, $path, $result): void {
+			$result->identity = $registry->find_serial($path);
+		});
+		return $result->identity;
+	}
+
+	private function find_serial(string $path): ?namespace_identity
 	{
 		$identities /** Keyed_Storage<namespace_identity> */ = $this->identities;
 		if (isset($identities[$path])) { return $identities[$path]; }

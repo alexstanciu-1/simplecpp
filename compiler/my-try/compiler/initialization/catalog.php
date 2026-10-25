@@ -3,8 +3,17 @@
 /* Installed declarations and instantiated contracts share the type-registry lifetime. */
 namespace scpp\compiler;
 
+/** Invocation-local result of synchronized initialization binding publication. */
+final class initialization_binding_result
+{
+	public ?initialization_binding $binding = null;
+}
+
 final class Initialization_Contracts
 {
+	private bool $parallel = false;
+	public function parallel_access(bool $enabled): void { $this->parallel = $enabled; }
+
 	private Storage $declarations /** Storage<initialization_declaration> */;
 	private Keyed_Storage $bindings /** Keyed_Storage<initialization_binding> */;
 	private template_type_definition $sequence_definition;
@@ -51,13 +60,47 @@ final class Initialization_Contracts
 	}
 
 	public function candidates(): Storage /** Storage<initialization_declaration> */ { return $this->declarations; }
+	/** Read after the preparation join; the catalog retains ownership. */
+	public function published_bindings(): Keyed_Storage /** Keyed_Storage<initialization_binding> */ { return $this->bindings; }
 
 	public function existing(canonical_type_use $target, bool $keyed): ?initialization_binding
+	{
+		if (!$this->parallel) { return $this->existing_serial($target, $keyed); }
+		$contracts = $this;
+		$result = new initialization_binding_result();
+		task_synchronize(function () use ($contracts, $target, $keyed, $result): void {
+			$result->binding = $contracts->existing_serial($target, $keyed);
+		});
+		return $result->binding;
+	}
+
+	private function existing_serial(canonical_type_use $target, bool $keyed): ?initialization_binding
 	{
 		$bindings /** Keyed_Storage<initialization_binding> */ = $this->bindings;
 		$key = self::binding_key($target, $keyed);
 		if (!isset($bindings[$key])) { return null; }
 		return $bindings[$key];
+	}
+
+	/** Semantic validation precedes this transaction; concurrent misses reuse its winner. */
+	public function intern(initialization_binding $candidate, Runtime_Callables $callables): initialization_binding
+	{
+		if (!$this->parallel) { return $this->intern_serial($candidate, $callables); }
+		$contracts = $this;
+		$result = new initialization_binding_result();
+		task_synchronize(function () use ($contracts, $candidate, $callables, $result): void {
+			$result->binding = $contracts->intern_serial($candidate, $callables);
+		});
+		return $result->binding;
+	}
+
+	private function intern_serial(initialization_binding $candidate, Runtime_Callables $callables): initialization_binding
+	{
+		$existing = $this->existing_serial($candidate->target(), $candidate->is_keyed());
+		if ($existing !== null) { return $existing; }
+		$callables->publish_static_factory(object_cast($candidate->factory(), registered_static_factory::class));
+		$this->publish($candidate);
+		return $candidate;
 	}
 
 	public function publish(initialization_binding $binding): void

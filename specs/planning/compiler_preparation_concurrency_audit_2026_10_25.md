@@ -1,8 +1,9 @@
 # Preparation concurrency audit and proposed first slice
 Doc Status: planning
 
-Status: audited proposal, **not implemented**. User requested investigation/improvement
-of per-source preparation concurrency. This document is not a language contract.
+Status: implemented and validated for bounded per-source preparation and emission. User approved serial contract settlement, per-source parallel
+bodies and coordinator publication, then explicitly requested threaded emission too.
+This document is not a language contract.
 
 ## Finding
 
@@ -43,7 +44,8 @@ programmer-synchronized shared data; they do not make these mutations thread-saf
    Preserve retirement/trait/materialization barriers.
 2. **Batch selected executable bodies by owning source.** Claim each body exactly
    once. Each task owns its contexts and body/anonymous-syntax work. Use the existing
-   joined task runner and caller-side publication callback, with `Compiler::$jobs`.
+   joined task runner with `Compiler::$jobs`; publish graph changes on the
+   coordinator after the call returns.
    Files provide scheduling and locality, not a replacement semantic ownership model.
 3. **Provide a settled-contract read phase.** Body queries consume completed facts
    without re-entering the mutating contract scheduler. Unexpected missing work or a
@@ -64,7 +66,9 @@ programmer-synchronized shared data; they do not make these mutations thread-saf
 
 No new source-language semantics or converter behavior is proposed. Parallel contract
 settlement, a new whole-program thread-safety analysis, duplicate type registries,
-parallel emission, and changing incremental invalidation rules are non-goals.
+and changing incremental invalidation rules are non-goals. Parallel emission was
+subsequently authorized as a separate stage: private source rendering engines and
+fragment maps, with joined coordinator merging and serial artifact publication.
 
 ## Complexity and proof boundary
 
@@ -80,7 +84,9 @@ semantics, diagnostics, identity and cold/warm/edit/failure recovery; exercise c
 and cancellation after worker failure. Run native race checks where supported, plus
 ordinary/concrete output and bootstrap acceptance. PHP alone cannot prove concurrency.
 
-**Decision needed before implementation:** approve the serial-contract / parallel-body
-slice and its coordinator-owned publication boundary. Repository rules require
-cross-owner redesigns to be discussed first; no production concurrency changes were
-made during this audit.
+The user approved this boundary. Native O2 execution, full 32-worker ThreadSanitizer,
+retained recovery and 1/2/32-worker measurements pass. The 32-worker run takes
+43.20 seconds versus 61.05 seconds at one worker. Serial assembly, numeric-ID-based
+callable output names and oversized generated units remain follow-up work. See
+[dated evidence and limitations](results/compiler_stage_concurrency_2026_10_25/README.md).
+PHP task callbacks still run sequentially; PHP alone is not the concurrency proof.

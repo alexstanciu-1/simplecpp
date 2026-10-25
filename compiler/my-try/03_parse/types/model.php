@@ -1016,9 +1016,40 @@ interface type_capability_query
 	public function has_capability(canonical_type_use $type_use, generic_contract $capability): bool;
 }
 
+/** Invocation-local result of a short registry publication callback. */
+final class type_registry_result
+{
+	public ?canonical_type_i $type = null;
+	public ?type_definition_i $definition = null;
+	public ?applied_template_type $application = null;
+	public ?callable_type_definition $callable = null;
+	public ?async_task_type_definition $asynchronous = null;
+	public ?closure_type_definition $closure = null;
+}
+
 /** Own numeric identities, canonical concrete types and exact template application reuse. */
 final class Type_Registry implements type_capability_query
 {
+	private bool $parallel = false;
+	private array $read_types /** hash<canonical_type_i, int> */ = [];
+	private array $read_definitions /** hash<type_definition_i, int> */ = [];
+	private array $read_concrete_types /** hash<int, int> */ = [];
+
+	/** Coordinator-only phase boundary. Immutable snapshots serve the hot read path. */
+	public function parallel_access(bool $enabled): void
+	{
+		if ($enabled) {
+			$this->read_types = $this->types;
+			$this->read_definitions = $this->definitions;
+			$this->read_concrete_types = $this->concrete_types;
+		} else {
+			$this->read_types = /** hash<canonical_type_i, int> */ [];
+			$this->read_definitions = /** hash<type_definition_i, int> */ [];
+			$this->read_concrete_types = /** hash<int, int> */ [];
+		}
+		$this->parallel = $enabled;
+	}
+
 	/** Explicit provider storage is independent of nominal kind and payload capabilities. */
 	private array $runtime_storage_policies /** hash<record_storage_kind, int> */ = [];
 	private array $runtime_construction_names /** hash<string, int> */ = [];
@@ -1077,6 +1108,17 @@ final class Type_Registry implements type_capability_query
 	private array $async_task_types /** hash<async_task_type_definition> */ = [];
 	public function define_async_task(canonical_type_use $value): async_task_type_definition
 	{
+		if (!$this->parallel) { return $this->define_async_task_serial($value); }
+		$registry = $this;
+		$result = new type_registry_result();
+		task_synchronize(function () use ($registry, $result, $value): void {
+			$result->asynchronous = $registry->define_async_task_serial($value);
+		});
+		return $result->asynchronous;
+	}
+
+	private function define_async_task_serial(canonical_type_use $value): async_task_type_definition
+	{
 		$key = $value->type_id() . ':' . ($value->by_value() ? 'v' : 'n');
 		if (isset($this->async_task_types[$key])) { return $this->async_task_types[$key]; }
 		$definition = new async_task_type_definition($this->allocate_definition_id(), '<async:' . $key . '>', $value);
@@ -1084,7 +1126,19 @@ final class Type_Registry implements type_capability_query
 		$this->async_task_types[$key] = $definition;
 		return $definition;
 	}
-	public function define_callable(canonical_type_use $result, array $inputs /** vector<callable_parameter> */,
+	public function define_callable(canonical_type_use $result_type, array $inputs /** vector<callable_parameter> */,
+		?reference_return_contract $reference_return = null): callable_type_definition
+	{
+		if (!$this->parallel) { return $this->define_callable_serial($result_type, $inputs, $reference_return); }
+		$registry = $this;
+		$result = new type_registry_result();
+		task_synchronize(function () use ($registry, $result, $result_type, $inputs, $reference_return): void {
+			$result->callable = $registry->define_callable_serial($result_type, $inputs, $reference_return);
+		});
+		return $result->callable;
+	}
+
+	private function define_callable_serial(canonical_type_use $result, array $inputs /** vector<callable_parameter> */,
 		?reference_return_contract $reference_return = null): callable_type_definition
 	{
 		$key = $result->type_id() . ':' . ($result->by_value() ? 'v' : 'n');
@@ -1166,6 +1220,17 @@ final class Type_Registry implements type_capability_query
 	}
 
 	public function define_closure(): closure_type_definition
+	{
+		if (!$this->parallel) { return $this->define_closure_serial(); }
+		$registry = $this;
+		$result = new type_registry_result();
+		task_synchronize(function () use ($registry, $result): void {
+			$result->closure = $registry->define_closure_serial();
+		});
+		return $result->closure;
+	}
+
+	private function define_closure_serial(): closure_type_definition
 	{
 		$id = $this->allocate_definition_id();
 		$capabilities /** vector<generic_contract> */ = [generic_contract::value_storable, generic_contract::copyable_value];
@@ -1252,11 +1317,25 @@ final class Type_Registry implements type_capability_query
 	/** Reuse the sole concrete type belonging to a non-template definition. */
 	public function canonical(concrete_type_definition_i $definition): canonical_type_i
 	{
+		$semantic = object_cast($definition, type_definition_i::class);
+		$this->require_registered_definition($semantic);
+		$id = $semantic->definition_id();
+		if (isset($this->read_concrete_types[$id])) { return $this->read_types[$this->read_concrete_types[$id]]; }
+		if (!$this->parallel) { return $this->canonical_serial($definition); }
+		$registry = $this;
+		$result = new type_registry_result();
+		task_synchronize(function () use ($registry, $result, $definition): void {
+			$result->type = $registry->canonical_serial($definition);
+		});
+		return $result->type;
+	}
+
+	private function canonical_serial(concrete_type_definition_i $definition): canonical_type_i
+	{
 		$semantic_definition = object_cast($definition, type_definition_i::class);
-		$this->require_registered_definition($semantic_definition);
 		$definition_id = $semantic_definition->definition_id();
 		if (isset($this->concrete_types[$definition_id])) {
-			return $this->type($this->concrete_types[$definition_id]);
+			return $this->types[$this->concrete_types[$definition_id]];
 		}
 
 		$type = $definition->create_canonical_type($this->allocate_type_id());
@@ -1269,7 +1348,20 @@ final class Type_Registry implements type_capability_query
 	public function intern_application(abstract_template_type_definition $definition,
 		array $arguments /** vector<canonical_type_use> */, ?type_capability_query $capabilities = null): applied_template_type
 	{
+		// Capability queries may demand preparation; never run them under publication's mutex.
 		$complete_arguments = $this->validate_application($definition, $arguments, $capabilities);
+		if (!$this->parallel) { return $this->intern_application_serial($definition, $complete_arguments); }
+		$registry = $this;
+		$result = new type_registry_result();
+		task_synchronize(function () use ($registry, $definition, $complete_arguments, $result): void {
+			$result->application = $registry->intern_application_serial($definition, $complete_arguments);
+		});
+		return $result->application;
+	}
+
+	private function intern_application_serial(abstract_template_type_definition $definition,
+		array $complete_arguments /** vector<canonical_type_use> */): applied_template_type
+	{
 		$index = $this->application_index->child($definition->definition_id(), false);
 		foreach ($complete_arguments as $argument) {
 			$index = $index->child($argument->type_id(), $argument->by_value());
@@ -1289,6 +1381,18 @@ final class Type_Registry implements type_capability_query
 
 	public function definition(int $definition_id): type_definition_i
 	{
+		if (isset($this->read_definitions[$definition_id])) { return $this->read_definitions[$definition_id]; }
+		if (!$this->parallel) { return $this->definition_serial($definition_id); }
+		$registry = $this;
+		$result = new type_registry_result();
+		task_synchronize(function () use ($registry, $result, $definition_id): void {
+			$result->definition = $registry->definition_serial($definition_id);
+		});
+		return $result->definition;
+	}
+
+	private function definition_serial(int $definition_id): type_definition_i
+	{
 		Type_Identity::require_valid($definition_id, 'Type definition identity');
 		if (!isset($this->definitions[$definition_id])) {
 			throw new \OutOfBoundsException('Unknown type definition identity');
@@ -1297,6 +1401,18 @@ final class Type_Registry implements type_capability_query
 	}
 
 	public function type(int $type_id): canonical_type_i
+	{
+		if (isset($this->read_types[$type_id])) { return $this->read_types[$type_id]; }
+		if (!$this->parallel) { return $this->type_serial($type_id); }
+		$registry = $this;
+		$result = new type_registry_result();
+		task_synchronize(function () use ($registry, $result, $type_id): void {
+			$result->type = $registry->type_serial($type_id);
+		});
+		return $result->type;
+	}
+
+	private function type_serial(int $type_id): canonical_type_i
 	{
 		Type_Identity::require_valid($type_id, 'Canonical type identity');
 		if (!isset($this->types[$type_id])) {
@@ -1450,11 +1566,13 @@ final class Type_Registry implements type_capability_query
 
 	private function require_registered_definition(type_definition_i $definition): void
 	{
-		$definition_id = $definition->definition_id();
-		if ((!isset($this->definitions[$definition_id]))
-			|| ($this->definitions[$definition_id] !== $definition)) {
+		$registered /** type_definition_i */;
+		try {
+			$registered = $this->definition($definition->definition_id());
+		} catch (\OutOfBoundsException $error) {
 			throw new \InvalidArgumentException('Type definition belongs to another registry');
 		}
+		if ($registered !== $definition) { throw new \InvalidArgumentException('Type definition belongs to another registry'); }
 	}
 
 	/** Validate supplied arguments and append the definition's trailing defaults. */

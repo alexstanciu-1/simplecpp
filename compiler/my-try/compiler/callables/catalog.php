@@ -121,12 +121,19 @@ final class Runtime_Callables
 	public function register_static_factory(string $key, canonical_type_use $owner,
 		callable_signature $signature): registered_static_factory
 	{
-		$definitions /** Keyed_Storage<registered_static_factory> */ = $this->definitions;
-		$this->require_unused_key($key);
-		Callable_Contracts::validate($signature);
 		$target = new registered_static_factory($key, $owner, $signature);
-		$definitions->add($key, $target);
+		$this->publish_static_factory($target);
 		return $target;
+	}
+
+	/** Publish a prepared factory candidate without changing its identity or signature. */
+	public function publish_static_factory(registered_static_factory $target): void
+	{
+		$definitions /** Keyed_Storage<registered_static_factory> */ = $this->definitions;
+		$key = $target->key();
+		$this->require_unused_key($key);
+		Callable_Contracts::validate($target->signature());
+		$definitions->add($key, $target);
 	}
 
 	public function definition(string $key): registered_static_factory

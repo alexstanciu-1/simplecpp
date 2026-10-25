@@ -116,6 +116,13 @@ final class CPP_Record_Construction
 
 final class CPP_Data_Construction
 {
+	/** Coordinator publication makes the adapter catalog read-only during source rendering. */
+	public static function publish_bindings(): void
+	{
+		$bindings /** Keyed_Storage<initialization_binding> */ = Model::$initialization_contracts->published_bindings();
+		foreach ($bindings as $binding) { self::bind($binding); }
+	}
+
 	/** Factory registration keys contain transient type IDs; output names use resolved native bindings. */
 	public static function binding_identity(initialization_binding $binding): string
 	{
@@ -128,6 +135,14 @@ final class CPP_Data_Construction
 	public static function reference(initialization_binding $binding, cpp_generation_context $context,
 		?CPP_Specializations $implementation_engine = null): string
 	{
+		self::bind($binding);
+		$factory = object_cast($binding->factory(), registered_static_factory::class);
+		return CPP_Callables::runtime_reference($factory, $context, $implementation_engine);
+	}
+
+	/** Standalone serial consumers retain the same adapter installation path. */
+	private static function bind(initialization_binding $binding): void
+	{
 		$factory = object_cast($binding->factory(), registered_static_factory::class);
 		$catalog = Model::$cpp_callable_bindings;
 		if (!$catalog->contains($factory)) {
@@ -136,7 +151,6 @@ final class CPP_Data_Construction
 			$member = $binding->is_keyed() ? 'from_key_value' : 'from_list';
 			$catalog->bind_adapter($factory, $adapter->name(), $member, $adapter->header());
 		}
-		return CPP_Callables::runtime_reference($factory, $context, $implementation_engine);
 	}
 
 	/** Input backing and each entry's snapshots stay inside this synchronous construction call. */

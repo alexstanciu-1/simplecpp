@@ -49,7 +49,7 @@ final class CPP_Generator
 	}
 
 	/** One partitioning path for single-source and multi-source programs. */
-	public function generate_program(Storage $files /** Storage<prepared_file> */, prepared_file $entry_file): Storage /** Storage<cpp_artifact> */
+	public function generate_program(Storage $files /** Storage<prepared_file> */, prepared_file $entry_file, int $jobs = 1): Storage /** Storage<cpp_artifact> */
 	{
 		$this->specializations = null;
 		if ($this->program->prelower_templates) { $this->specializations = new CPP_Specializations(); }
@@ -160,12 +160,7 @@ final class CPP_Generator
 				}
 			}
 		}
-		foreach ($definitions as $owner) {
-			$this->render($owner);
-		}
-		foreach ($bodies as $owner) {
-			$this->render($owner);
-		}
+		$this->render_sources($definitions, $bodies, $jobs);
 
 		$result /** Storage<cpp_artifact> */ = new Storage();
 		$record_context = new cpp_generation_context($this->specializations);
@@ -274,6 +269,49 @@ final class CPP_Generator
 			$this->specializations->append_artifacts($result);
 		}
 		return $result;
+	}
+
+	/** Private source rendering; shared cache and canonical artifact publication happen after join. */
+	private function render_sources(Storage $definitions /** Storage<preparation_owner> */,
+		Storage $bodies /** Storage<preparation_owner> */, int $jobs): void
+	{
+		CPP_Data_Construction::publish_bindings();
+		$batches /** vector<cpp_render_batch> */ = [];
+		$by_source /** hash<cpp_render_batch, collected_file> */ = new \SplObjectStorage /** hash<cpp_render_batch, collected_file> */();
+		$selected /** Storage<preparation_owner> */ = new Storage();
+		foreach ($definitions as $owner) { $selected->append($owner); }
+		foreach ($bodies as $owner) { $selected->append($owner); }
+		foreach ($selected as $owner) {
+			$source = $owner->source;
+			if (!isset($by_source[$source])) {
+				$batch = new cpp_render_batch($source);
+				$by_source[$source] = $batch;
+				$batches[] = $batch;
+			}
+			$members /** Storage<preparation_owner> */ = $by_source[$source]->owners;
+			$members->append($owner);
+		}
+		$policy = $this->policy;
+		$options = new cpp_lowering_options($this->program->prelower_templates);
+		foreach ($batches as $batch) {
+			$batch->output->outlined_shared_allocations = $this->program->outlined_shared_allocations;
+		}
+		task_run_publish_unordered($batches, $jobs,
+			function (cpp_render_batch $batch) use ($policy, $options): cpp_render_batch {
+				$worker = new CPP_Generator($batch->output, $options, $policy);
+				if ($options->prelower_templates) { $worker->specializations = new CPP_Specializations(); }
+				foreach ($batch->owners as $owner) { $worker->render($owner); }
+				$batch->specializations = $worker->specializations;
+				return $batch;
+			}, function (cpp_render_batch $batch): bool { return true; });
+		foreach ($batches as $batch) {
+			foreach ($batch->owners as $owner) {
+				$this->program->fragments[$owner] = $batch->output->fragments[$owner];
+			}
+			if ($batch->specializations !== null) {
+				$this->specializations->merge($batch->specializations);
+			}
+		}
 	}
 
 	/** Deleted owners cannot retain fragments even when there is no remaining file to emit. */

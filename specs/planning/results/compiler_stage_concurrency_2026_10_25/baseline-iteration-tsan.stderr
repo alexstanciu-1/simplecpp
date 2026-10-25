@@ -1,0 +1,52 @@
+/usr/bin/llvm-symbolizer-18: error: '[stack]': No such file or directory
+==================
+WARNING: ThreadSanitizer: data race (pid=11)
+  Write of size 8 at 0x7fffffffdef0 by thread T1:
+    #0 std::enable_if<__and_<std::__not_<std::__is_tuple_like<scpp::iteration_detail::vector_source<int>*>>, std::is_move_constructible<scpp::iteration_detail::vector_source<int>*>, std::is_move_assignable<scpp::iteration_detail::vector_source<int>*>>::value, void>::type std::swap<scpp::iteration_detail::vector_source<int>*>(scpp::iteration_detail::vector_source<int>*&, scpp::iteration_detail::vector_source<int>*&) /usr/bin/../lib/gcc/x86_64-linux-gnu/13/../../../../include/c++/13/bits/move.h:199:11 (test+0xe41f9) (BuildId: e3a1c2d6036233cd8f41ef7339d2a3c8869c9f00)
+    #1 std::__shared_ptr<scpp::iteration_detail::vector_source<int>, (__gnu_cxx::_Lock_policy)2>::swap(std::__shared_ptr<scpp::iteration_detail::vector_source<int>, (__gnu_cxx::_Lock_policy)2>&) /usr/bin/../lib/gcc/x86_64-linux-gnu/13/../../../../include/c++/13/bits/shared_ptr_base.h:1686:2 (test+0xe41f9)
+    #2 std::__shared_ptr<scpp::iteration_detail::vector_source<int>, (__gnu_cxx::_Lock_policy)2>::operator=(std::__shared_ptr<scpp::iteration_detail::vector_source<int>, (__gnu_cxx::_Lock_policy)2>&&) /usr/bin/../lib/gcc/x86_64-linux-gnu/13/../../../../include/c++/13/bits/shared_ptr_base.h:1620:31 (test+0xe41f9)
+    #3 std::shared_ptr<scpp::iteration_detail::vector_source<int>>::operator=(std::shared_ptr<scpp::iteration_detail::vector_source<int>>&&) /usr/bin/../lib/gcc/x86_64-linux-gnu/13/../../../../include/c++/13/bits/shared_ptr.h:440:27 (test+0xe41f9)
+    #4 scpp::vector_t<int>::value_range() const requires std::copy_constructible<T> /tmp/runtime-concurrent-iteration-baseline/include/scpp/vector_t.hpp:80:31 (test+0xe41f9)
+    #5 auto scpp::value_iteration<int>(scpp::vector_t<int> const&) /home/alexv/__AI/simple_cpp/simple_cpp_01/runtime/include/scpp/value_iteration.hpp:15:16 (test+0xe270e) (BuildId: e3a1c2d6036233cd8f41ef7339d2a3c8869c9f00)
+    #6 main::$_0::operator()() const /home/alexv/__AI/simple_cpp/simple_cpp_01/tests/runtime/native/test_concurrent_value_iteration.cpp:19:21 (test+0xe270e)
+    #7 void std::__invoke_impl<void, main::$_0>(std::__invoke_other, main::$_0&&) /usr/bin/../lib/gcc/x86_64-linux-gnu/13/../../../../include/c++/13/bits/invoke.h:61:14 (test+0xe270e)
+    #8 std::__invoke_result<main::$_0>::type std::__invoke<main::$_0>(main::$_0&&) /usr/bin/../lib/gcc/x86_64-linux-gnu/13/../../../../include/c++/13/bits/invoke.h:96:14 (test+0xe270e)
+    #9 void std::thread::_Invoker<std::tuple<main::$_0>>::_M_invoke<0ul>(std::_Index_tuple<0ul>) /usr/bin/../lib/gcc/x86_64-linux-gnu/13/../../../../include/c++/13/bits/std_thread.h:292:13 (test+0xe270e)
+    #10 std::thread::_Invoker<std::tuple<main::$_0>>::operator()() /usr/bin/../lib/gcc/x86_64-linux-gnu/13/../../../../include/c++/13/bits/std_thread.h:299:11 (test+0xe270e)
+    #11 std::thread::_State_impl<std::thread::_Invoker<std::tuple<main::$_0>>>::_M_run() /usr/bin/../lib/gcc/x86_64-linux-gnu/13/../../../../include/c++/13/bits/std_thread.h:244:13 (test+0xe270e)
+    #12 <null> <null> (libstdc++.so.6+0xecdb3) (BuildId: 753c6c8608b61d4e67be8f0c890e03e0aa046b8b)
+
+  Previous read of size 8 at 0x7fffffffdef0 by thread T2:
+    #0 std::__shared_ptr<scpp::iteration_detail::vector_source<int>, (__gnu_cxx::_Lock_policy)2>::operator bool() const /usr/bin/../lib/gcc/x86_64-linux-gnu/13/../../../../include/c++/13/bits/shared_ptr_base.h:1670:16 (test+0xe4106) (BuildId: e3a1c2d6036233cd8f41ef7339d2a3c8869c9f00)
+    #1 scpp::vector_t<int>::value_range() const requires std::copy_constructible<T> /tmp/runtime-concurrent-iteration-baseline/include/scpp/vector_t.hpp:80:8 (test+0xe4106)
+    #2 auto scpp::value_iteration<int>(scpp::vector_t<int> const&) /home/alexv/__AI/simple_cpp/simple_cpp_01/runtime/include/scpp/value_iteration.hpp:15:16 (test+0xe270e) (BuildId: e3a1c2d6036233cd8f41ef7339d2a3c8869c9f00)
+    #3 main::$_0::operator()() const /home/alexv/__AI/simple_cpp/simple_cpp_01/tests/runtime/native/test_concurrent_value_iteration.cpp:19:21 (test+0xe270e)
+    #4 void std::__invoke_impl<void, main::$_0>(std::__invoke_other, main::$_0&&) /usr/bin/../lib/gcc/x86_64-linux-gnu/13/../../../../include/c++/13/bits/invoke.h:61:14 (test+0xe270e)
+    #5 std::__invoke_result<main::$_0>::type std::__invoke<main::$_0>(main::$_0&&) /usr/bin/../lib/gcc/x86_64-linux-gnu/13/../../../../include/c++/13/bits/invoke.h:96:14 (test+0xe270e)
+    #6 void std::thread::_Invoker<std::tuple<main::$_0>>::_M_invoke<0ul>(std::_Index_tuple<0ul>) /usr/bin/../lib/gcc/x86_64-linux-gnu/13/../../../../include/c++/13/bits/std_thread.h:292:13 (test+0xe270e)
+    #7 std::thread::_Invoker<std::tuple<main::$_0>>::operator()() /usr/bin/../lib/gcc/x86_64-linux-gnu/13/../../../../include/c++/13/bits/std_thread.h:299:11 (test+0xe270e)
+    #8 std::thread::_State_impl<std::thread::_Invoker<std::tuple<main::$_0>>>::_M_run() /usr/bin/../lib/gcc/x86_64-linux-gnu/13/../../../../include/c++/13/bits/std_thread.h:244:13 (test+0xe270e)
+    #9 <null> <null> (libstdc++.so.6+0xecdb3) (BuildId: 753c6c8608b61d4e67be8f0c890e03e0aa046b8b)
+
+  Location is stack of main thread.
+
+  Location is global '??' at 0x7ffffffde000 ([stack]+0x1fef0)
+
+  Thread T1 (tid=13, running) created by main thread at:
+    #0 pthread_create <null> (test+0x616ff) (BuildId: e3a1c2d6036233cd8f41ef7339d2a3c8869c9f00)
+    #1 std::thread::_M_start_thread(std::unique_ptr<std::thread::_State, std::default_delete<std::thread::_State>>, void (*)()) <null> (libstdc++.so.6+0xeceb0) (BuildId: 753c6c8608b61d4e67be8f0c890e03e0aa046b8b)
+    #2 void std::allocator_traits<std::allocator<std::jthread>>::construct<std::jthread, main::$_0>(std::allocator<std::jthread>&, std::jthread*, main::$_0&&) /usr/bin/../lib/gcc/x86_64-linux-gnu/13/../../../../include/c++/13/bits/alloc_traits.h:540:4 (test+0xe1e33) (BuildId: e3a1c2d6036233cd8f41ef7339d2a3c8869c9f00)
+    #3 void std::vector<std::jthread, std::allocator<std::jthread>>::_M_realloc_insert<main::$_0>(__gnu_cxx::__normal_iterator<std::jthread*, std::vector<std::jthread, std::allocator<std::jthread>>>, main::$_0&&) /usr/bin/../lib/gcc/x86_64-linux-gnu/13/../../../../include/c++/13/bits/vector.tcc:468:4 (test+0xe1e33)
+    #4 std::jthread& std::vector<std::jthread, std::allocator<std::jthread>>::emplace_back<main::$_0>(main::$_0&&) /usr/bin/../lib/gcc/x86_64-linux-gnu/13/../../../../include/c++/13/bits/vector.tcc:123:4 (test+0xe1e33)
+    #5 main /home/alexv/__AI/simple_cpp/simple_cpp_01/tests/runtime/native/test_concurrent_value_iteration.cpp:15:54 (test+0xe1e33)
+
+  Thread T2 (tid=14, running) created by main thread at:
+    #0 pthread_create <null> (test+0x616ff) (BuildId: e3a1c2d6036233cd8f41ef7339d2a3c8869c9f00)
+    #1 std::thread::_M_start_thread(std::unique_ptr<std::thread::_State, std::default_delete<std::thread::_State>>, void (*)()) <null> (libstdc++.so.6+0xeceb0) (BuildId: 753c6c8608b61d4e67be8f0c890e03e0aa046b8b)
+    #2 void std::allocator_traits<std::allocator<std::jthread>>::construct<std::jthread, main::$_0>(std::allocator<std::jthread>&, std::jthread*, main::$_0&&) /usr/bin/../lib/gcc/x86_64-linux-gnu/13/../../../../include/c++/13/bits/alloc_traits.h:540:4 (test+0xe1e33) (BuildId: e3a1c2d6036233cd8f41ef7339d2a3c8869c9f00)
+    #3 void std::vector<std::jthread, std::allocator<std::jthread>>::_M_realloc_insert<main::$_0>(__gnu_cxx::__normal_iterator<std::jthread*, std::vector<std::jthread, std::allocator<std::jthread>>>, main::$_0&&) /usr/bin/../lib/gcc/x86_64-linux-gnu/13/../../../../include/c++/13/bits/vector.tcc:468:4 (test+0xe1e33)
+    #4 std::jthread& std::vector<std::jthread, std::allocator<std::jthread>>::emplace_back<main::$_0>(main::$_0&&) /usr/bin/../lib/gcc/x86_64-linux-gnu/13/../../../../include/c++/13/bits/vector.tcc:123:4 (test+0xe1e33)
+    #5 main /home/alexv/__AI/simple_cpp/simple_cpp_01/tests/runtime/native/test_concurrent_value_iteration.cpp:15:54 (test+0xe1e33)
+
+SUMMARY: ThreadSanitizer: data race /tmp/runtime-concurrent-iteration-baseline/include/scpp/vector_t.hpp:80:31 in scpp::vector_t<int>::value_range() const requires std::copy_constructible<T>
+==================

@@ -1,0 +1,17 @@
+{
+  "purpose": "Thread activity only: 5ms sampling; overlapping diagnostic work; not a timing benchmark",
+  "stages": {
+    "sync-start": {
+      "max_threads": 33,
+      "max_active_threads": 30
+    },
+    "prepare-start": {
+      "max_threads": 33,
+      "max_active_threads": 30
+    },
+    "emit-start": {
+      "max_threads": 33,
+      "max_active_threads": 32
+    }
+  }
+}

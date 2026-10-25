@@ -233,7 +233,7 @@ final class Symbol_Collector
 
 	private static function define_source_type(collected_type_definition $entry, scope $scope): void
 	{
-		$definition = Source_Types::definition($entry);
+		$definition = Source_Types::create_definition($entry);
 		$scope->register_type_as($entry->name, object_cast($definition, type_definition_i::class));
 	}
 

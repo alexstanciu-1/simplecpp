@@ -83,6 +83,15 @@ final class CPP_Specializations
 		return $entries[(int)$reference->entry_id];
 	}
 
+	/** Joined worker results share canonical names, never invocation-local entry IDs. */
+	public function merge(CPP_Specializations $other): void
+	{
+		$entries /** Storage<cpp_specialization_entry> */ = $other->entries;
+		foreach ($entries as $entry) {
+			if (!isset($this->names[$entry->name])) { $this->install($entry); }
+		}
+	}
+
 	/** Avoid rendering an already requested entry; this index owns no separate semantic facts. */
 	public function find(string $name): ?cpp_specialization_entry
 	{

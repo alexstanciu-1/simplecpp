@@ -1,0 +1,36 @@
+[
+  {
+    "name": "build",
+    "command": [
+      "clang++",
+      "-std=c++20",
+      "-O1",
+      "-g",
+      "-fsanitize=thread",
+      "-pthread",
+      "-I",
+      "/home/alexv/__AI/simple_cpp/simple_cpp_01/runtime/include",
+      "/home/alexv/__AI/simple_cpp/simple_cpp_01/tests/runtime/native/test_concurrent_value_iteration.cpp",
+      "-o",
+      "/tmp/runtime-concurrent-iteration-02/test"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 4.1,
+    "code": 0,
+    "expected": 0,
+    "executor": "subprocess",
+    "executor_reason": "subprocess"
+  },
+  {
+    "name": "run",
+    "command": [
+      "/tmp/runtime-concurrent-iteration-02/test"
+    ],
+    "cwd": "/home/alexv/__AI/simple_cpp/simple_cpp_01",
+    "seconds": 0.202,
+    "code": 0,
+    "expected": 0,
+    "executor": "subprocess",
+    "executor_reason": "subprocess"
+  }
+]

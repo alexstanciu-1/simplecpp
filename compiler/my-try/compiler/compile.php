@@ -304,7 +304,7 @@ final class Compiler
 		try {
 			Compiler_Lifecycle::retire_deleted_sources($sources, Model::$language_scope);
 			Trait_Composition::synchronize($sources, Model::$language_scope);
-			$prepared = Preparation_Run::prepare($sources, Model::$language_scope);
+			$prepared = Preparation_Run::prepare($sources, Model::$language_scope, $this->jobs);
 			$entry = Program_Preparation::entry($prepared, Model::$entry_selection, $require_entry);
 			Model::$prepared_files = $prepared;
 			Model::$prepared_entry = $entry;
@@ -331,7 +331,7 @@ final class Compiler
 		$output /** Storage<cpp_artifact> */;
 		try {
 			$entry /** prepared_file */ = Model::$prepared_entry;
-			$output = (new CPP_Generator(Model::$cpp_output_program, $this->cpp_lowering, $policy))->generate_program($prepared, $entry);
+			$output = (new CPP_Generator(Model::$cpp_output_program, $this->cpp_lowering, $policy))->generate_program($prepared, $entry, $this->jobs);
 			if ($publication !== null) {
 				$publication->publish($output, CPP_Runtime_Build::requirements(Model::require_runtime_metadata()),
 					Model::$cpp_output_program->prelower_templates, $policy);

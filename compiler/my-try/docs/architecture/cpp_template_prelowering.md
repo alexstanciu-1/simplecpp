@@ -189,6 +189,15 @@ initializer calls the same bridge. Native operation bodies retain their complete
 dependencies. The runtime-type binding suite compiles conversion headers in isolation
 and checks partition stability, warm publication and obsolete-file cleanup.
 
+Changed fragments render in source batches using `Compiler::$jobs`. Each batch has
+a private `cpp_program` and specialization engine; prepared semantic facts are
+read-only. Before rendering, the coordinator installs C++ initializer adapters
+from the settled semantic binding catalog. After all tasks join, it publishes fragment replacements
+and merges specialization entries by canonical name, never worker-local entry ID.
+Artifact assembly, layout ordering and filesystem publication remain serial.
+Failed tasks do not publish partial fragment replacements. Warm fragments still
+replay their canonical demands through the existing specialization path.
+
 Layout probes determine native size/alignment and special-member traits. Source copy
 permission still comes from prepared capabilities. Dependent layouts follow the existing
 generated-header graph, with explicit rejection of unsupported cycles. A layout match

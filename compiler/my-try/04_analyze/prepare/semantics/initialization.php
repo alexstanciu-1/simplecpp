@@ -43,11 +43,10 @@ final class Initialization_Preparation
 		$parameters /** Storage<callable_parameter> */ = $signature->parameters;
 		$parameters->append($parameter);
 		$identity = $selected->factory_key() . ':' . Initialization_Contracts::binding_key($target, $selected->is_keyed());
-		$factory = Model::$runtime_callables->register_static_factory($identity, $target, $signature);
+		$factory = new registered_static_factory($identity, $target, $signature);
 		$binding = new initialization_binding($target, $value, $key_type, $nested, $factory);
 		self::validate($binding, $signature, $context);
-		$contracts->publish($binding);
-		return $binding;
+		return $contracts->intern($binding, Model::$runtime_callables);
 	}
 
 	/** Validate an established signature; future source completion stays at the caller. */

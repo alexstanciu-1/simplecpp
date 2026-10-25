@@ -5,6 +5,14 @@ The compiler has one incremental path. A fresh build starts with empty retained
 state and processes all work; later runs select affected work through the same
 owners. `Model` holds static roots shared by Compiler instances. Workers are transient.
 
+Preparation and C++ rendering use invocation-local source batches. Preparation
+subscription resets and task results are not model roots: their coordinator merges
+observations after join and releases the batch. During body preparation the type
+registry holds immutable read snapshots while new identities publish under the
+joined task lock; snapshots are discarded after join. A batch may temporarily own
+its worker, but retained syntax, contracts and fragments never do. C++ workers own
+private fragment maps and specialization engines, merged only after successful join.
+
 | Root/owner | Retained data |
 | --- | --- |
 | `Model::$modules` | Ordered keyed modules; each owns sources keyed by module-relative path |

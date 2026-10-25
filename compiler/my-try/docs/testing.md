@@ -73,6 +73,20 @@ passing this suite does not prove source task creation or callback transfer.
 
 ## Portable compiler bootstrap and empty defaults
 
+`python3 compiler/my-try/tests/concurrent_stages.py --results FRESH` (from the
+repository root) checks source-batched preparation/rendering, cold/warm artifact
+parity, shared application/callable demands and failed-edit recovery in both
+output modes. PHP executes task callbacks sequentially; native worker overlap and
+scaling require the separate O2 compiler benchmark. The runtime's
+`tests/runtime/native/test_concurrent_value_iteration.cpp` stresses shared const
+vector/hash traversal and post-join mutation preservation; it also supports a
+standalone ThreadSanitizer build.
+
+Concurrency benchmark reports also inventory generated `.cpp` and `.hpp` sizes:
+flag files above 200 KB and use 100 KB as the smaller advisory header threshold.
+Correlate large files with per-unit Clang time and memory, including layout probes;
+these are review thresholds, not compiler rejection limits.
+
 `python3 tests/task_transfer.py --results FRESH` also checks joined-only capture
 permissions through ordinary and concrete erasure, nested callable captures,
 parameter/return copies and provider adaptation. An empty nested callable denies
