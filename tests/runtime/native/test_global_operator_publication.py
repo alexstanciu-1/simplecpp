@@ -47,6 +47,12 @@ with tempfile.TemporaryDirectory(prefix='scpp-operator-publication-') as directo
     boxed_plan=json.loads(subprocess.check_output([str(sdk/'tools/scpp_api_generator')],input=json.dumps(boxed_request),text=True))
     assert boxed_plan['writeback_conversion']['kind']=='checked_saved_value'
     assert boxed_plan['writeback_conversion']['api'] in manifest['apis']
+    peer_request={'action':'resolve_operator','metadata':logical_request['metadata'],
+                  'request':{'operation':'add','left':'int64','right':'mixed'}}
+    peer_plan=json.loads(subprocess.check_output([str(sdk/'tools/scpp_api_generator')],input=json.dumps(peer_request),text=True))
+    assert peer_plan['api'] in manifest['apis']
+    peer_left=peer_plan['left_conversion']['expression'].replace('${value}','scpp::int64(3)')
+    peer_expression=peer_plan['function']+'('+peer_left+',value)'
     (stage/'main.cpp').write_text('''#include "scpp/operators/add_int64.hpp"
 #include "scpp/operators/equal_mixed.hpp"
 #include "scpp/operators/add_mixed.hpp"
@@ -110,6 +116,7 @@ int main() {
         && scpp::numeric_add(value,value).get_int().native_value()==14
         && scpp::numeric_divide(scpp::dynamic(scpp::float64(12)),scpp::dynamic(scpp::int64(3))).get_float().native_value()==4
         && BOXED_WRITEBACK(scpp::dynamic(scpp::int64(10)),scpp::dynamic(scpp::int64(13))).get_int().native_value()==13
+        && PEER_EXPRESSION.get_int().native_value()==10
         && destination.native_value()==13
         && old.get_int().native_value()==1 && updated.get_int().native_value()==2
         && reset_value.native_value()==0.0
@@ -121,7 +128,7 @@ int main() {
         && scpp::cast_uint64(scpp::string("18446744073709551615")).native_value()==18446744073709551615ULL
         && static_cast<bool>(scpp::numeric_less(scpp::float64(1.0),scpp::float64(2.0))) ? 0 : 1;
 }
-'''.replace('LOGICAL_NOT_EXPRESSION',logical_expression).replace('COMPOUND_CALCULATION',compound_plan['calculation']['function']).replace('BOXED_WRITEBACK',boxed_plan['writeback_conversion']['function']))
+'''.replace('LOGICAL_NOT_EXPRESSION',logical_expression).replace('COMPOUND_CALCULATION',compound_plan['calculation']['function']).replace('BOXED_WRITEBACK',boxed_plan['writeback_conversion']['function']).replace('PEER_EXPRESSION',peer_expression))
     flags = ['-fsanitize=address,undefined', '-fno-sanitize-recover=all'] if args.sanitize else []
     subprocess.run(['clang++','-std=c++23','-O2',*flags,'-I'+str(sdk/'public'),str(stage/'main.cpp'),
         str(sdk/'lib/libcore.a'),'-fuse-ld=mold','-o',str(stage/'proof')], check=True)

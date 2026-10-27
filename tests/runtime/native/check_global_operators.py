@@ -22,7 +22,7 @@ for left,right,selected in [('int8','int8','int8'),('int8','int16','int64'),('ui
     for a,b in [(left,right),(right,left)]:
         plan=resolve(a,b)
         assert plan['operand_type']==selected and plan['result_type']==selected
-for a,b in [('int8','uint8'),('uint64','int64'),('boolean','int32'),('null','int32'),('string','int64'),('mixed','int64')]:
+for a,b in [('int8','uint8'),('uint64','int64'),('boolean','int32'),('null','int32'),('string','int64'),('mixed','uint64')]:
     resolve(a,b,error='Unsupported operator')
 assert resolve('mixed','mixed','equal')['result_type']=='boolean'
 resolve('mixed','dynamic','equal',error='Unsupported operator')

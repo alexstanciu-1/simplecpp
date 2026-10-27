@@ -24,6 +24,7 @@ parser.add_argument('--unary', action='store_true', help='Measure canonical and 
 parser.add_argument('--updates', action='store_true', help='Measure borrowed updates with owned results')
 parser.add_argument('--boxed-arithmetic', action='store_true', help='Measure homogeneous boxed arithmetic')
 parser.add_argument('--boxed-compounds', action='store_true', help='Measure saved-kind compound replacement')
+parser.add_argument('--boxed-peers', action='store_true', help='Measure scalar boxing plus existing boxed arithmetic')
 args = parser.parse_args()
 public = '''#include "scpp/operators/add_int64.hpp"
 #include "scpp/operators/equal_mixed.hpp"
@@ -79,6 +80,9 @@ if args.boxed_arithmetic:
 if args.boxed_compounds:
     public = '#include "scpp/operators/numeric_compound_replacement_dynamic.hpp"\nscpp::dynamic replacement(const scpp::dynamic &old,const scpp::dynamic &result) { return scpp::numeric_compound_replacement(old,result); }\n'
     native = '#include "operators/arithmetic/boxed_numeric.hpp"\nscpp::detail::dynamic_value replacement(const scpp::detail::dynamic_value &old,const scpp::detail::dynamic_value &result) { auto checked=old; scpp::detail::assign_numeric_result(checked,result); return checked; }\n'
+if args.boxed_peers:
+    public = '#include "scpp/operators/add_dynamic.hpp"\nscpp::dynamic add(const scpp::int64 &a,const scpp::dynamic &b) { const auto left=scpp::dynamic(a); return scpp::numeric_add(left,b); }\n'
+    native = '#include "operators/arithmetic/boxed_numeric.hpp"\nscpp::detail::dynamic_value add(const scpp::int_t<> &a,const scpp::detail::dynamic_value &b) { const auto left=scpp::detail::dynamic_value(a); return left+b; }\n'
 rows = []
 with tempfile.TemporaryDirectory(prefix='scpp-operator-cost-') as directory:
     stage = Path(directory)
@@ -100,6 +104,7 @@ with tempfile.TemporaryDirectory(prefix='scpp-operator-cost-') as directory:
     if args.updates: adapters = ['post_increment_dynamic']
     if args.boxed_arithmetic: adapters = ['add_dynamic']
     if args.boxed_compounds: adapters = ['numeric_compound_replacement_dynamic']
+    if args.boxed_peers: adapters = []  # No new runtime implementation for this plan.
     cases += [(f'adapter_{identity}', root/f'runtime/include/scpp/generated/public_{identity}.cpp', ['public','include']) for identity in adapters]
     for name, path, includes in cases:
         command = [args.compiler, '-std=c++23', '-O2', *['-I'+str(root/'runtime'/i) for i in includes]]

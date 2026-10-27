@@ -26,7 +26,7 @@ namespace scpp::api_generation
     static const value &validated_registry(const value &metadata)
     {
         const auto &registry = metadata.at("global_operators");
-        fields_only(registry, "types domains groups operations compounds", "global operators");
+        fields_only(registry, "types domains groups operations compounds operand_conversions", "global operators");
         for (const auto *field : {"types", "domains", "groups", "operations"}) {
             if (registry.at(field).type != value::kind::object)
                 throw std::runtime_error("Operator registry requires objects");
@@ -131,6 +131,26 @@ namespace scpp::api_generation
                 registry.at("types").at(type.text());
                 if (!published.insert(type.text()).second)
                     throw std::runtime_error("Duplicate operator publication");
+            }
+        }
+        if (registry.has("operand_conversions")) {
+            const auto &conversions = registry.at("operand_conversions");
+            if (conversions.type != value::kind::object) throw std::runtime_error("Operand conversions require an object");
+            for (const auto &[target, conversion] : conversions.fields) {
+                registry.at("types").at(target);
+                fields_only(conversion, "sources expression header", "operand conversion");
+                conversion.at("header").text();
+                const auto expression = conversion.at("expression").text();
+                const std::string marker = "${value}";
+                const auto position = expression.find(marker);
+                if (position == std::string::npos || expression.find(marker, position + marker.size()) != std::string::npos)
+                    throw std::runtime_error("Operand conversion requires exactly one value marker");
+                std::set<std::string> seen;
+                for (const auto &source : domains(conversion.at("sources"))) {
+                    registry.at("types").at(source);
+                    if (source == target || !seen.insert(source).second)
+                        throw std::runtime_error("Duplicate or identity operand conversion");
+                }
             }
         }
         if (registry.has("compounds")) {
@@ -271,21 +291,36 @@ namespace scpp::api_generation
         throw std::runtime_error("Unsupported operator operand domains; explicit cast required");
     }
 
+    static value operand_conversion(const value &metadata, const std::string &source, const std::string &target)
+    {
+        value request = value::object(); request["source"] = source; request["target"] = target;
+        if (source == target) { request["kind"] = "identity"; return request; }
+        const auto &registry = metadata.at("global_operators");
+        if (registry.has("operand_conversions") && registry.at("operand_conversions").has(target)) {
+            const auto &recipe = registry.at("operand_conversions").at(target);
+            if (contains(recipe.at("sources"), source)) {
+                request["kind"] = "expression"; request["expression"] = recipe.at("expression");
+                request["header"] = recipe.at("header");
+                return request;
+            }
+        }
+        auto plan = resolve_conversion(metadata, request);
+        plan["kind"] = "call";
+        return plan;
+    }
+
     value resolve_operator(const value &metadata, const value &request)
     {
         const auto &registry = validated_registry(metadata);
         const auto &operation = registry.at("operations").at(request.at("operation").text());
         const auto functions = (operation.has("function_set") || operation.has("pair_function_set")) ? expand_function_sets(metadata) : value::object();
         if (operation.get("form", "binary") == "unary") return resolve_unary_operator(registry, request, functions);
-        return resolve_registered_operator(registry, request, functions);
-    }
-
-    static value compound_conversion(const value &metadata, const std::string &source, const std::string &target)
-    {
-        value request = value::object(); request["source"] = source; request["target"] = target;
-        if (source == target) { request["kind"] = "identity"; return request; }
-        auto plan = resolve_conversion(metadata, request);
-        plan["kind"] = "call";
+        auto plan = resolve_registered_operator(registry, request, functions);
+        if (plan.has("operand_type")) {
+            const auto selected = plan.at("operand_type").text();
+            plan["left_conversion"] = operand_conversion(metadata, request.at("left").text(), selected);
+            plan["right_conversion"] = operand_conversion(metadata, request.at("right").text(), selected);
+        }
         return plan;
     }
 
@@ -309,9 +344,9 @@ namespace scpp::api_generation
         value out = value::object();
         out["operation"] = name; out["target"] = target; out["right"] = right; out["result_type"] = target;
         out["kind"] = "ordered_compound"; out["calculation"] = plan;
-        out["left_conversion"] = compound_conversion(metadata, target, plan.at("operand_type").text());
-        out["right_conversion"] = compound_conversion(metadata, right, plan.at("operand_type").text());
-        out["writeback_conversion"] = compound_conversion(metadata, plan.at("result_type").text(), target);
+        out["left_conversion"] = operand_conversion(metadata, target, plan.at("operand_type").text());
+        out["right_conversion"] = operand_conversion(metadata, right, plan.at("operand_type").text());
+        out["writeback_conversion"] = operand_conversion(metadata, plan.at("result_type").text(), target);
         if (selected_rule->has("writeback_function_set")) {
             const auto identity = selected_rule->at("writeback_function_set").text() + "_" + target;
             const auto functions = expand_function_sets(metadata);

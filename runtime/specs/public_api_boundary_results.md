@@ -1375,3 +1375,36 @@ Isolated single compile-only observations after validation, reproduced with
 | Public dynamic replacement caller | 0.0605 | 21,088 |
 | Native dynamic replacement caller | 3.6724 | 3,615,391 |
 | Private dynamic replacement adapter | 4.3058 | 3,691,565 |
+
+## B2i — canonical numeric peers reuse boxed implementations
+
+Two metadata operand-conversion recipes use the existing mixed/dynamic public
+constructors. Thirty-six admitted binary scalar-peer plans and eighteen boxed
+compound plans reuse the existing arithmetic and checked replacement implementations.
+Common-operand plans now expose both conversion steps. No extra per-pair adapters,
+new runtime implementations or core rebuilds are required; generation retains 329
+implementation units and updates only the publication metadata identity.
+
+Public execution proofs cover both binary operand orders, left snapshots before RHS
+mutation, compound stored-kind success/rejection, unchanged failure-side effects,
+owned results and zero allocations on successful numeric paths. Narrow/unsigned,
+bool/string/null and cross-family peers remain rejected, as do float remainder and
+plain scalar compound destinations with boxed RHS. Missing boxing recipes, duplicate
+sources and repeated/missing expression value markers reject in metadata checks.
+
+Seven release metadata regressions pass (8.28 s). The combined public execution proof
+passes under ASan/UBSan with leak detection, followed by six additional metadata
+regressions (30.68 s). Sealed relocation/import proofs pass in both modes, resolving
+and compiling a scalar-peer operation from the relocated tool and metadata with zero
+application implementation units.
+
+Generator-only rebuilds: release 5.70 s, peak child RSS 136,428 KiB; sanitized
+12.54 s, 276,624 KiB. Whole expanded execution-proof compile and link: release
+3.0994 s, sanitized 7.3265 s. These larger proof timings are not small caller
+benchmarks; release overlapped other generation/build work and sanitizer validation
+overlap/load can affect the measurements.
+
+Isolated single compile-only scalar-boxing/addition caller measurements after all
+validation (`measure_global_operators.py --boxed-peers`): public **0.0589 s**,
+**21,006 preprocessed bytes**; native **3.7016 s**, **3,615,338 bytes**. No private
+adapter compile is needed for this slice because it introduces no new adapter.

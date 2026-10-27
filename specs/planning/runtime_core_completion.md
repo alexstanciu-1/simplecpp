@@ -16,7 +16,7 @@ each slice. The original inventory is a baseline, not a current completion count
 | A1 | Complete for the agreed ordinary numeric domain | Specialized and boxed extensions remain in B2/E, not implied by A1. |
 | A2 | Complete for the agreed checked scalar conversions | Carrier conversion is C; ownership casts are D. |
 | B1 | Complete for the agreed scalar-facing truth/text/identity/observation scope | Carrier forms remain C; boxed arithmetic and access completion are not B1 credit. |
-| B2 | Binary canonical/boxed bitwise and checked shifts, canonical power, numeric spaceship, numeric unary, scalar logical negation, prefix/postfix updates, canonical numeric compound plans and homogeneous boxed arithmetic/compounds implemented | Text compounds and admitted numeric scalar peers; carrier variants remain C. |
+| B2 | Binary canonical/boxed bitwise and checked shifts, canonical power, numeric spaceship, numeric unary, scalar logical negation, prefix/postfix updates, canonical numeric compound plans and boxed arithmetic/compounds including canonical numeric peers implemented | Text compounds; carrier variants remain C. |
 | C | Policy agreed; completion pending | Four carrier families, state-preserving operations/conversions and conditional lifecycle. |
 | D | Pending | Ownership, application targets and source Exception transport gaps. |
 | E | Existing vector/hash/boxed foundations; incomplete | Capability/access/initialization/cursor gaps and identity key-allocation debt. |
@@ -168,10 +168,10 @@ core contract; full frontend adoption remains excluded.
 
 ## Next implementation work
 
-Continue B2 with text compound protocols and admitted numeric scalar peers
-using existing operator metadata and native error authorities. Boxed bitwise/shift
-compounds remain source-deferred and are not an implicit extension of this goal. Canonical numeric compound plans
-now reuse the published calculations and casts.
+Continue B2 with text compound protocols using existing operator metadata and
+native error authorities. Numeric scalar-peer arithmetic and compounds are covered.
+Boxed bitwise/shift compounds remain source-deferred and are not an implicit extension
+of this goal. Canonical numeric compound plans reuse the published calculations and casts.
 Proceed to C with the accepted one-layer carrier rules; the first complete carrier
 path must be reviewed before D/F expansion. Do not treat existing native template
 instantiations as source admission or skip state/lifetime proofs to close a row.
@@ -594,3 +594,18 @@ changed in this audit.
 Numeric scalar-peer arithmetic/compounds and text replacement remain required B2
 work. Carrier forms remain C; this audit does not waive those families or the review
 gate before ownership/callback expansion.
+
+## Active-goal progress — B2i canonical numeric scalar peers
+
+Binary arithmetic now admits canonical int/float peers for mixed and dynamic in both
+orders, with integer-only remainder. Thirty-six binary plans select the ten existing
+boxed arithmetic implementations. Eighteen boxed-destination compound plans reuse
+the same arithmetic and saved-kind replacement APIs. Two metadata operand recipes
+use existing public constructors; no new runtime adapter or template is published.
+
+Plans explicitly describe left/right operand conversions and preserve sequencing.
+Public proofs exercise both binary orders with RHS mutation of the original left,
+all compound numeric kind pairings, failure effects and zero successful allocations.
+Cross-family, bool/string, fixed-width/unsigned peers, float remainder and native
+scalar destinations with boxed RHS remain rejected. This closes the admitted numeric
+scalar-peer arithmetic/compound gap; text compound work remains B2 and carriers C.

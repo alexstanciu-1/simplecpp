@@ -2098,14 +2098,18 @@
           {
             "target": "mixed",
             "right": [
-              "mixed"
+              "mixed",
+              "int64",
+              "float64"
             ],
             "writeback_function_set": "numeric_compound_replacement"
           },
           {
             "target": "dynamic",
             "right": [
-              "dynamic"
+              "dynamic",
+              "int64",
+              "float64"
             ],
             "writeback_function_set": "numeric_compound_replacement"
           }
@@ -2130,14 +2134,18 @@
           {
             "target": "mixed",
             "right": [
-              "mixed"
+              "mixed",
+              "int64",
+              "float64"
             ],
             "writeback_function_set": "numeric_compound_replacement"
           },
           {
             "target": "dynamic",
             "right": [
-              "dynamic"
+              "dynamic",
+              "int64",
+              "float64"
             ],
             "writeback_function_set": "numeric_compound_replacement"
           }
@@ -2162,14 +2170,18 @@
           {
             "target": "mixed",
             "right": [
-              "mixed"
+              "mixed",
+              "int64",
+              "float64"
             ],
             "writeback_function_set": "numeric_compound_replacement"
           },
           {
             "target": "dynamic",
             "right": [
-              "dynamic"
+              "dynamic",
+              "int64",
+              "float64"
             ],
             "writeback_function_set": "numeric_compound_replacement"
           }
@@ -2194,14 +2206,18 @@
           {
             "target": "mixed",
             "right": [
-              "mixed"
+              "mixed",
+              "int64",
+              "float64"
             ],
             "writeback_function_set": "numeric_compound_replacement"
           },
           {
             "target": "dynamic",
             "right": [
-              "dynamic"
+              "dynamic",
+              "int64",
+              "float64"
             ],
             "writeback_function_set": "numeric_compound_replacement"
           }
@@ -2219,14 +2235,16 @@
           {
             "target": "mixed",
             "right": [
-              "mixed"
+              "mixed",
+              "int64"
             ],
             "writeback_function_set": "numeric_compound_replacement"
           },
           {
             "target": "dynamic",
             "right": [
-              "dynamic"
+              "dynamic",
+              "int64"
             ],
             "writeback_function_set": "numeric_compound_replacement"
           }
@@ -2681,6 +2699,58 @@
             "right": "dynamic",
             "selection": "same_or_maximum",
             "domain": "dynamic"
+          },
+          {
+            "left": [
+              "signed",
+              "floating"
+            ],
+            "left_types": [
+              "int64",
+              "float64"
+            ],
+            "right": "mixed",
+            "selection": "maximum",
+            "domain": "mixed"
+          },
+          {
+            "left": "mixed",
+            "right": [
+              "signed",
+              "floating"
+            ],
+            "right_types": [
+              "int64",
+              "float64"
+            ],
+            "selection": "maximum",
+            "domain": "mixed"
+          },
+          {
+            "left": [
+              "signed",
+              "floating"
+            ],
+            "left_types": [
+              "int64",
+              "float64"
+            ],
+            "right": "dynamic",
+            "selection": "maximum",
+            "domain": "dynamic"
+          },
+          {
+            "left": "dynamic",
+            "right": [
+              "signed",
+              "floating"
+            ],
+            "right_types": [
+              "int64",
+              "float64"
+            ],
+            "selection": "maximum",
+            "domain": "dynamic"
           }
         ]
       },
@@ -2708,6 +2778,50 @@
             "left": "dynamic",
             "right": "dynamic",
             "selection": "same_or_maximum",
+            "domain": "dynamic"
+          },
+          {
+            "left": [
+              "signed"
+            ],
+            "left_types": [
+              "int64"
+            ],
+            "right": "mixed",
+            "selection": "maximum",
+            "domain": "mixed"
+          },
+          {
+            "left": "mixed",
+            "right": [
+              "signed"
+            ],
+            "right_types": [
+              "int64"
+            ],
+            "selection": "maximum",
+            "domain": "mixed"
+          },
+          {
+            "left": [
+              "signed"
+            ],
+            "left_types": [
+              "int64"
+            ],
+            "right": "dynamic",
+            "selection": "maximum",
+            "domain": "dynamic"
+          },
+          {
+            "left": "dynamic",
+            "right": [
+              "signed"
+            ],
+            "right_types": [
+              "int64"
+            ],
+            "selection": "maximum",
             "domain": "dynamic"
           }
         ]
@@ -3275,6 +3389,24 @@
           "dynamic"
         ],
         "operand_passing": "ref"
+      }
+    },
+    "operand_conversions": {
+      "mixed": {
+        "sources": [
+          "int64",
+          "float64"
+        ],
+        "expression": "scpp::mixed(${value})",
+        "header": "scpp/mixed.hpp"
+      },
+      "dynamic": {
+        "sources": [
+          "int64",
+          "float64"
+        ],
+        "expression": "scpp::dynamic(${value})",
+        "header": "scpp/dynamic.hpp"
       }
     }
   },

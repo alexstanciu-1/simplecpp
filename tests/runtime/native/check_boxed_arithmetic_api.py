@@ -19,10 +19,11 @@ for operation in ['add', 'subtract', 'multiply', 'divide', 'remainder']:
         for right in ['mixed', 'dynamic', 'int64', 'float64', 'boolean', 'string', 'null']:
             data = {'action':'resolve_operator', 'metadata':metadata,
                     'request':{'operation':operation, 'left':left, 'right':right}}
-            plan = call(data, None if left == right else 'Unsupported operator')
+            valid = left == right or right == 'int64' or right == 'float64' and operation != 'remainder'
+            plan = call(data, None if valid else 'Unsupported operator')
             if plan:
                 assert plan['operand_type'] == plan['result_type'] == left
-                assert plan['conversion'] == 'identity'
+                assert plan['conversion'] == ('identity' if left == right else 'ordered_operand_conversion')
                 assert plan['evaluation'] == 'ordered_eager_left_then_right'
                 assert plan['api'] == operation+'_'+left
                 apis.append(plan['api'])

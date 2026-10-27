@@ -670,3 +670,25 @@ destination; native diagnostic ownership and kind rules remain unchanged. Succes
 numeric storage stays inline with zero allocations. The same recipes serve all five
 arithmetic compounds without per-operator or operand-pair implementations. Text,
 scalar-peer, carrier and indexed destination protocols remain separate work.
+
+## Operator operand conversion recipes
+
+Common-operand binary plans now include `left_conversion` and `right_conversion`.
+The consumer snapshots/converts the left before evaluating/converting the right,
+then calls the selected backend. Compounds use the same conversion owner while
+retaining their separate write-back protocol.
+
+`global_operators.operand_conversions` may associate a target with explicit
+`sources`, a focused public `header`, and an `expression` containing exactly one
+`${value}` marker. Substitute the saved operand, not its unevaluated source
+expression. Duplicate sources and identity overrides reject. Nonidentity conversions
+without a matching recipe use the checked conversion registry; identity remains a
+no-op. These recipes describe operator operands, not permission for implicit
+assignment, arbitrary casts or other operation groups.
+
+Two constructor recipes box canonical int64/float64 into mixed/dynamic. Arithmetic
+rules select the existing same-family backend for either scalar-peer order; remainder
+admits only int64 peers. Boxed destinations accept those peers for the corresponding
+compound and retain the saved-kind replacement check. Scalar destinations with boxed
+RHS, cross-family boxing and extra fixed-width/bool/string peers are not admitted.
+No new implementation units or operator-pair overloads are generated.
