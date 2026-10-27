@@ -2789,3 +2789,31 @@ errors, not new runtime key semantics. No runtime-core rebuild occurred. Public
 headers/metadata/publication are unchanged, so this slice does not claim new factory
 publication or reuse coverage. Concrete factory bindings and keyed entry transport
 remain next work.
+
+## E11: concrete positional factories (2026-10-28)
+
+Four ordinary family recipes expose static from_list scopes over E9 buffers and
+the E10 native adapter. Mixed/dynamic factories and buffers are runtime-owned;
+typed vector and integer-keyed hash factories are generated on application demand.
+The scopes cannot be instantiated/copied/moved, so no per-call factory wrapper
+object is allocated. Ordinary class/static-method generation suffices.
+
+The public-only application fixture passes release and ASan/UBSan/LSan: all four
+empty/nonempty constructions, ordered typed entries, independent parent containers,
+nested mixed value/dynamic identity behavior, retained results beyond input lifetime,
+incomplete-input rejection and injected partial string-copy failure. Empty typed
+outputs allocate zero times; the long-string vector case allocates 3 times, matching
+the native E10 proof. String-key hash list helpers reject; their helper default of
+int64 does not alter the source hash default.
+
+Runtime imports and application sealed reuse produce no duplicate implementation
+units. All four factory headers compile independently. Four metadata checks pass
+(1.61s); the older owning-buffer fixture also passes sanitized compilation/lifetime
+and reuse with mixed/dynamic buffers imported from runtime. Its emitted-unit assertion
+now subtracts imported identities instead of requiring four local definitions.
+
+Parallel generated application compilation (maximum eight workers): 3.1937s release
+/ 4.5106s sanitized; public caller: 0.1488s / 0.2064s. These are fixture timings, not
+a native/public caller comparison. Core rebuilt once per configuration. Keyed
+factory publication, immutable entry lifecycle, duplicate validation and semantic
+non-escape/source integration remain unproven by this positional slice.

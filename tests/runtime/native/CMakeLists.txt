@@ -557,3 +557,6 @@ add_test(NAME scpp_check_initializer_buffer COMMAND ${Python3_EXECUTABLE}
 add_executable(test_initializer_adaptation test_initializer_adaptation.cpp)
 target_link_libraries(test_initializer_adaptation PRIVATE scpp_runtime_core)
 add_test(NAME scpp_test_initializer_adaptation COMMAND test_initializer_adaptation)
+
+add_test(NAME scpp_check_list_initializers COMMAND ${Python3_EXECUTABLE}
+  ${CMAKE_CURRENT_SOURCE_DIR}/check_list_initializers.py --tool $<TARGET_FILE:scpp_api_generator>)

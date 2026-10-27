@@ -3229,5 +3229,180 @@
         ]
       }
     ]
+  },
+  "vector_list_initializer": {
+    "parameters": [
+      "T"
+    ],
+    "native": "scpp::data_initializer<scpp::vector_t<${public:T}>>",
+    "includes": [
+      "scpp/data_initializer_typed.hpp"
+    ],
+    "requires_capabilities": {
+      "T": [
+        "copy_storage"
+      ]
+    },
+    "classes": [
+      {
+        "id": "self",
+        "name": "${name}",
+        "native": "${native_type}",
+        "lifecycle": {
+          "default": "disabled",
+          "copy": "disabled",
+          "move": "disabled",
+          "destroy": "native"
+        },
+        "methods": [
+          {
+            "name": "from_list",
+            "static": true,
+            "returns": "vector<${type:T}>",
+            "parameters": [
+              {
+                "name": "input",
+                "type": "initializer_buffer<${type:T}>",
+                "passing": "const_ref"
+              }
+            ],
+            "expression": "${native_type}::from_list_adapted(${native:input}.view(), [](const ${public:T} &value) -> const ${public:T} & { return value; })",
+            "transport": "native"
+          }
+        ]
+      }
+    ]
+  },
+  "hash_list_initializer": {
+    "parameters": [
+      "V",
+      "K"
+    ],
+    "native": "scpp::data_initializer<scpp::hash_t<${public:V}, ${public:K}>>",
+    "includes": [
+      "scpp/data_initializer_typed.hpp",
+      "scpp/detail/concrete_keys.hpp"
+    ],
+    "requires_capabilities": {
+      "V": [
+        "copy_storage"
+      ],
+      "K": [
+        "integer_key",
+        "typed_hash_key"
+      ]
+    },
+    "classes": [
+      {
+        "id": "self",
+        "name": "${name}",
+        "native": "${native_type}",
+        "lifecycle": {
+          "default": "disabled",
+          "copy": "disabled",
+          "move": "disabled",
+          "destroy": "native"
+        },
+        "methods": [
+          {
+            "name": "from_list",
+            "static": true,
+            "returns": "hash<${type:V},${type:K}>",
+            "parameters": [
+              {
+                "name": "input",
+                "type": "initializer_buffer<${type:V}>",
+                "passing": "const_ref"
+              }
+            ],
+            "expression": "${native_type}::from_list_adapted(${native:input}.view(), [](const ${public:V} &value) -> const ${public:V} & { return value; })",
+            "transport": "native"
+          }
+        ]
+      }
+    ],
+    "defaults": [
+      "int64"
+    ]
+  },
+  "mixed_list_initializer": {
+    "parameters": [],
+    "native": "scpp::data_initializer<scpp::mixed_t>",
+    "includes": [
+      "scpp/data_initializer_mixed.hpp"
+    ],
+    "requires_capabilities": {},
+    "classes": [
+      {
+        "id": "self",
+        "name": "${name}",
+        "native": "${native_type}",
+        "lifecycle": {
+          "default": "disabled",
+          "copy": "disabled",
+          "move": "disabled",
+          "destroy": "native"
+        },
+        "methods": [
+          {
+            "name": "from_list",
+            "static": true,
+            "returns": "mixed",
+            "parameters": [
+              {
+                "name": "input",
+                "type": "initializer_buffer<mixed>",
+                "passing": "const_ref"
+              }
+            ],
+            "expression": "${native_type}::from_list_adapted(${native:input}.view(), [](const ${public:mixed} &value) -> const scpp::mixed_t & { return detail::concrete_access::get<scpp::mixed_t>(value); })",
+            "transport": "native",
+            "uses": [
+              "mixed"
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  "dynamic_list_initializer": {
+    "parameters": [],
+    "native": "scpp::data_initializer<scpp::detail::dynamic_value>",
+    "includes": [
+      "scpp/data_initializer_dynamic.hpp"
+    ],
+    "requires_capabilities": {},
+    "classes": [
+      {
+        "id": "self",
+        "name": "${name}",
+        "native": "${native_type}",
+        "lifecycle": {
+          "default": "disabled",
+          "copy": "disabled",
+          "move": "disabled",
+          "destroy": "native"
+        },
+        "methods": [
+          {
+            "name": "from_list",
+            "static": true,
+            "returns": "dynamic",
+            "parameters": [
+              {
+                "name": "input",
+                "type": "initializer_buffer<dynamic>",
+                "passing": "const_ref"
+              }
+            ],
+            "expression": "${native_type}::from_list_adapted(${native:input}.view(), [](const ${public:dynamic} &value) -> const scpp::detail::dynamic_value & { return detail::concrete_access::get<scpp::detail::dynamic_value>(value); })",
+            "transport": "native",
+            "uses": [
+              "dynamic"
+            ]
+          }
+        ]
+      }
+    ]
   }
 }

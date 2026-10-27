@@ -1754,3 +1754,29 @@ behind their semantic non-escape requirements; no new callback boundary is expos
 Validation: release and ASan/UBSan with leak detection pass; long-string factory
 allocations match at 3 native / 3 adapted. Final focused build took 4.19s release /
 8.35s sanitized. No core rebuild or public API publication change was required.
+
+## E11 — positional factories through ordinary metadata recipes
+
+Publish the existing native factory scopes as concrete classes with static from_list
+methods. Vector and integer-keyed hash recipes are application-demanded; mixed and
+dynamic scopes plus their buffers are runtime-owned. All use the E10 adapter and
+E9 backing, with ordinary generator lifecycle, return transport and publication.
+There are no type-name branches or special initialization emitter paths.
+
+The public-only proof constructs all four families, preserves entry order, verifies
+valid empty containers, rejects incomplete input, retains results beyond buffer
+destruction, injects partial-copy failure and checks independent dynamic parents
+while preserving nested dynamic identity and mixed value semantics. String-key hash
+list helpers reject. The positional helper's integer-key default does not change
+source hash defaults. Runtime buffers now reuse from the SDK in the older input
+fixture, so its generated-unit assertion counts only application-owned demands.
+
+Keyed entry lifecycle, keyed duplicate validation, source interface registration and
+semantic non-escape proof remain unfinished. This completes a positional built-in
+public path within the selected copyable input domain, not all data initialization.
+
+Validation: release and ASan/UBSan/LSan public-only factory, allocation, lifetime
+and sealed-reuse proofs pass. Four factory headers compile independently. Four
+metadata checks pass (1.61s). Application compilation: 3.1937s release / 4.5106s
+sanitized in parallel; caller: 0.1488s / 0.2064s. Core rebuilt once per configuration.
+The older buffer fixture passes with runtime-owned buffer reuse.

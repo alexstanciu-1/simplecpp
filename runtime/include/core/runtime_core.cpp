@@ -406,3 +406,8 @@
 #include "scpp/generated/public_keyed_probe_mixed.cpp"
 #include "scpp/generated/public_keyed_probe_dynamic.cpp"
 #include "scpp/generated/public_reject_empty_operand.cpp"
+
+#include "core/generated/mixed_input.cpp"
+#include "core/generated/dynamic_input.cpp"
+#include "core/generated/mixed_list_initializer.cpp"
+#include "core/generated/dynamic_list_initializer.cpp"

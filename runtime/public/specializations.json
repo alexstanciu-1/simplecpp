@@ -1,6 +1,6 @@
 {
   "abi": "529dd5502370f48d64891818e9439aae72831b990b4027e8abe25c50c1216c21",
-  "api_identity": "658fdc0eddb60c7c083f18c7927ff7d34cfbec1df9d691ce981cb63829548787",
+  "api_identity": "3f411643c7f81beb7e54f662f79c7b683f053c78698c44ef0971e7186084c5fa",
   "apis": {
     "add_dynamic": {
       "header": "scpp/operators/add_dynamic.hpp",
@@ -9282,6 +9282,18 @@
     "public/scpp/dynamic.hpp",
     "include/core/generated/dynamic.cpp",
     "include/scpp/dynamic.hpp",
+    "public/scpp/mixed_input.hpp",
+    "include/core/generated/mixed_input.cpp",
+    "include/scpp/mixed_input.hpp",
+    "public/scpp/mixed_list_initializer.hpp",
+    "include/core/generated/mixed_list_initializer.cpp",
+    "include/scpp/mixed_list_initializer.hpp",
+    "public/scpp/dynamic_input.hpp",
+    "include/core/generated/dynamic_input.cpp",
+    "include/scpp/dynamic_input.hpp",
+    "public/scpp/dynamic_list_initializer.hpp",
+    "include/core/generated/dynamic_list_initializer.cpp",
+    "include/scpp/dynamic_list_initializer.hpp",
     "public/modules/filesystem/scan.hpp",
     "include/modules/filesystem/public_scan.cpp",
     "include/modules/filesystem/scan.hpp",
@@ -10677,6 +10689,8 @@
     "scpp/debug/flags.hpp": "db90f39d85ec543ac05fe8d7df0893793059794037a7d50a33e5fc1f41c84f27",
     "scpp/detail/value_layout.hpp": "278a58716d847ef9efa3af4b145a4ba901ea200d366a678bad3252e0b3e307e6",
     "scpp/dynamic.hpp": "4ecb2aa6babc316e223d9854dd6da7f28a935c3af90cbf050ccfb4a7edc06542",
+    "scpp/dynamic_input.hpp": "742033b6247f6be76e2986d965c22e604abd9b2fac49b561780669521bed08d1",
+    "scpp/dynamic_list_initializer.hpp": "df21caf1288ea4c9ff6d8a3762ee0a1ee4f1cead9f1e53c047224c36c3197a06",
     "scpp/error_value.hpp": "33c4dfbb6c5d919dc35ce1c68cba155211e72de47001f1bf77e3b73a3fa60017",
     "scpp/exception_info.hpp": "b7144992f7d9ae80e8c135123124c05ed57ef0b393e251fffdad577840d8c491",
     "scpp/failure.hpp": "d68ed12de1d0a4a645d15ee85d034123eb4e2b8e3f28c7458775ee69b6e18661",
@@ -10723,6 +10737,8 @@
     "scpp/memory/memory_get_usage.hpp": "d2550916bb0b4af9beb19b6e3c760aea1be9920c69baca8a8dfc3c5bfc011834",
     "scpp/memory/memory_get_usage_real.hpp": "5641521bf4e087f54c40e466bc4f895a4744f7bdae0a3a558e3a459112920d48",
     "scpp/mixed.hpp": "995d535d74b4a4c6d4bf4503a299b20cae97650e15a3ccdaeb97c4e4fde2053f",
+    "scpp/mixed_input.hpp": "fc745e377a0c856d8787cd162274fb9083c828d024e95868967f6e5335f8080b",
+    "scpp/mixed_list_initializer.hpp": "d104bd608ac4834a5ec72c965bd17d48d40bac5fc4a9e241226da523b5fd5e16",
     "scpp/null_t.hpp": "db31e1653226ba1fd7655e2c3a42b92374763f9bfebbc56277d6a4e583f9dbc4",
     "scpp/observations/clean_boolean.hpp": "7b008d427e905459d0bc04f673a4ea427c172377591f944cb37daf8de2366be4",
     "scpp/observations/clean_float64.hpp": "9783a603e85e2dbe2cc20812b8367e6cfcfefa66b5a7b2b9371cb7226f7b86d4",
@@ -10951,6 +10967,10 @@
     "include/core/generated/float64.cpp",
     "include/core/generated/mixed.cpp",
     "include/core/generated/dynamic.cpp",
+    "include/core/generated/mixed_input.cpp",
+    "include/core/generated/mixed_list_initializer.cpp",
+    "include/core/generated/dynamic_input.cpp",
+    "include/core/generated/dynamic_list_initializer.cpp",
     "include/modules/filesystem/public_scan.cpp",
     "include/scpp/generated/public_add_int8.cpp",
     "include/scpp/generated/public_add_int16.cpp",
@@ -11349,6 +11369,26 @@
       "owner": "runtime.core",
       "source": "include/core/generated/dynamic.cpp"
     },
+    "dynamic_list_initializer": {
+      "borrow": "detail::concrete_access::get<${native}>(${value})",
+      "construct": "detail::concrete_access::make<${cpp}, ${native}>(${factory})",
+      "cpp": "scpp::dynamic_list_initializer",
+      "dependencies": [],
+      "header": "scpp/dynamic_list_initializer.hpp",
+      "includes": [
+        "scpp/data_initializer_dynamic.hpp",
+        "scpp/detail/concrete_access.hpp"
+      ],
+      "layout": [
+        1,
+        1
+      ],
+      "name": "dynamic_list_initializer",
+      "native": "scpp::data_initializer<scpp::detail::dynamic_value>",
+      "ordinary_api": "api-v1",
+      "owner": "runtime.core",
+      "source": "include/core/generated/dynamic_list_initializer.cpp"
+    },
     "float64": {
       "borrow": "detail::concrete_access::get<${native}>(${value})",
       "capabilities": [
@@ -11373,6 +11413,52 @@
       "ordinary_api": "api-v1",
       "owner": "runtime.core",
       "source": "include/core/generated/float64.cpp"
+    },
+    "initializer_buffer<dynamic>": {
+      "borrow": "detail::concrete_access::get<${native}>(${value})",
+      "construct": "detail::concrete_access::make<${cpp}, ${native}>(${factory})",
+      "cpp": "scpp::dynamic_input",
+      "dependencies": [
+        "dynamic"
+      ],
+      "header": "scpp/dynamic_input.hpp",
+      "includes": [
+        "scpp/data_initializer_input.hpp",
+        "scpp/detail/concrete_access.hpp",
+        "scpp/dynamic.hpp"
+      ],
+      "layout": [
+        1568,
+        8
+      ],
+      "name": "dynamic_input",
+      "native": "scpp::initializer_buffer<scpp::dynamic>",
+      "ordinary_api": "api-v1",
+      "owner": "runtime.core",
+      "source": "include/core/generated/dynamic_input.cpp"
+    },
+    "initializer_buffer<mixed>": {
+      "borrow": "detail::concrete_access::get<${native}>(${value})",
+      "construct": "detail::concrete_access::make<${cpp}, ${native}>(${factory})",
+      "cpp": "scpp::mixed_input",
+      "dependencies": [
+        "mixed"
+      ],
+      "header": "scpp/mixed_input.hpp",
+      "includes": [
+        "scpp/data_initializer_input.hpp",
+        "scpp/detail/concrete_access.hpp",
+        "scpp/mixed.hpp"
+      ],
+      "layout": [
+        1568,
+        8
+      ],
+      "name": "mixed_input",
+      "native": "scpp::initializer_buffer<scpp::mixed>",
+      "ordinary_api": "api-v1",
+      "owner": "runtime.core",
+      "source": "include/core/generated/mixed_input.cpp"
     },
     "mixed": {
       "borrow": "detail::concrete_access::get<${native}>(${value})",
@@ -11401,6 +11487,26 @@
       "ordinary_api": "api-v1",
       "owner": "runtime.core",
       "source": "include/core/generated/mixed.cpp"
+    },
+    "mixed_list_initializer": {
+      "borrow": "detail::concrete_access::get<${native}>(${value})",
+      "construct": "detail::concrete_access::make<${cpp}, ${native}>(${factory})",
+      "cpp": "scpp::mixed_list_initializer",
+      "dependencies": [],
+      "header": "scpp/mixed_list_initializer.hpp",
+      "includes": [
+        "scpp/data_initializer_mixed.hpp",
+        "scpp/detail/concrete_access.hpp"
+      ],
+      "layout": [
+        1,
+        1
+      ],
+      "name": "mixed_list_initializer",
+      "native": "scpp::data_initializer<scpp::mixed_t>",
+      "ordinary_api": "api-v1",
+      "owner": "runtime.core",
+      "source": "include/core/generated/mixed_list_initializer.cpp"
     },
     "result<vector<string>>": {
       "borrow": "detail::concrete_access::get<${native}>(${value})",

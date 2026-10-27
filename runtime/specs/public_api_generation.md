@@ -1535,3 +1535,25 @@ conversions into this later loop would change failure/effect order. As with othe
 metadata snippets, arbitrary native callbacks are trusted implementation code, not
 a proof of general non-escape. Separate concrete factory bindings remain to be wired
 through public metadata; this helper alone does not publish initialization APIs.
+
+### Concrete positional factory publication
+
+Four ordinary family recipes prelower the existing data_initializer scopes:
+`vector_list_initializer<T>`, `hash_list_initializer<V,K=int64>`,
+`mixed_list_initializer` and `dynamic_list_initializer`. Their concrete classes
+expose only static from_list(input); construction/copy/move are deleted. No factory
+object or boundary heap wrapper is needed. The native factory class remains behind
+the implementation header and the method returns an owned target through normal
+transport. Separate scopes avoid signature/layout cycles with boxed value types.
+
+Typed factories require copyable input and integer-key admission for hash lists.
+The hash helper's int64 default is its own positional-helper default; it does not
+change hash<V>'s string-key default or source initialization-interface selection.
+Mixed/dynamic representation adapters borrow the stored native payload only during
+the synchronous copy. Source conversion/evaluation must already be complete.
+
+Runtime publishes the two non-template boxed factory scopes and their input buffers.
+Application middleware demands typed factories through the same recipes, names,
+probes and sealed reuse mechanism. These are lowering-support identities, not new
+source-visible initialization interfaces. Keyed factories and source non-escape
+checks remain separate work.

@@ -29,7 +29,7 @@ envelope = {'metadata': concrete_types.metadata(root/'runtime'), 'request': requ
 result = subprocess.run([str(args.tool)], input=json.dumps(envelope), text=True, capture_output=True)
 assert result.returncode == 0, result.stderr
 plan = json.loads(result.stdout)
-assert len(plan['units']) == 4
+assert {u['identity'] for u in plan['units']} == set(names)-set(published['types'])
 for unit in plan['units']:
     assert ' view(' not in unit['header'] and 'template' not in unit['header']
     assert unit['probes'][0]['lifecycle'] == {'default': 'disabled', 'copy': 'disabled', 'move': 'disabled', 'destroy': 'native'}

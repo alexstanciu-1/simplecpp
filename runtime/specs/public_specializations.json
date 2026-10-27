@@ -4,7 +4,9 @@
   "roots": [
     "result<vector<string>>",
     "mixed",
-    "dynamic"
+    "dynamic",
+    "mixed_list_initializer",
+    "dynamic_list_initializer"
   ],
   "leaves": {
     "string": {
@@ -16,7 +18,9 @@
   "names": {
     "vector<string>": "vector_string",
     "result<vector<string>>": "result_vector_string",
-    "result_or_false<string>": "result_or_false_string"
+    "result_or_false<string>": "result_or_false_string",
+    "initializer_buffer<mixed>": "mixed_input",
+    "initializer_buffer<dynamic>": "dynamic_input"
   },
   "apis": [
     "fs_scan",
