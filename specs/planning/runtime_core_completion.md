@@ -17,7 +17,7 @@ each slice. The original inventory is a baseline, not a current completion count
 | A2 | Complete for the agreed checked scalar conversions | Carrier conversion is C; ownership casts are D. |
 | B1 | Complete for the agreed scalar-facing truth/text/identity/observation scope | Carrier forms remain C; boxed arithmetic and access completion are not B1 credit. |
 | B2 | Complete for the agreed non-carrier special/mutation and text public paths; closure evidence below | Carrier forms C; indexed retention E; native exception inspection and overflow disposition G. |
-| C | Four carrier recipes with conditional lifecycle; numeric/presence plans, scalar/boxed equality, scalar reconstruction, text, unary/update, canonical arithmetic compounds, bitwise/shift plans, compound power and string relational ordering, Result error identity and sentinel take/state proofs implemented; review pending | Four carrier families, state-preserving operations/conversions and conditional lifecycle. |
+| C | Four carrier recipes with conditional lifecycle; numeric/presence plans, scalar/boxed equality, scalar reconstruction, text, unary/update, canonical arithmetic compounds, bitwise/shift plans, compound power and string relational ordering, Result error identity and sentinel take/state proofs implemented; logical-negation correction pending; review pending | Four carrier families, state-preserving operations/conversions and conditional lifecycle. |
 | D | Pending | Ownership, application targets and source Exception transport gaps. |
 | E | Existing vector/hash/boxed foundations; incomplete | Capability/access/initialization/cursor gaps and identity key-allocation debt. |
 | F | Pending | Callable transport and registered collection algorithms. |
@@ -1229,3 +1229,18 @@ and removal of avoidable long-payload copies remain separate work.
 
 Lazy/selection protocols, scoped observations and the pending source-formation
 boundary remain open before the complete carrier review.
+
+## C24 — logical/selection boundary audit and correction gate
+
+The [logical/selection audit](runtime_core_logical_selection_boundary.md) found a
+mismatch: earlier C3/C15 carrier negation reuses general condition truthiness, whereas
+existing bool/numeric logical-operator contracts require guarded payload extraction.
+Those negation tests are evidence of current implementation, not semantic completion.
+Direct-condition and conversion proofs remain distinct. The user has been asked to
+confirm preservation of guarded rules or an explicit contract revision; no behavior
+is changed while that choice is pending.
+
+The audit separates direct conditions, guarded logical operators, usable-value
+coalescing and ternary/Elvis joins. It identifies an independent exact scalar
+coalescing proof and records the noncopyable inline-record condition gap that scoped
+observations must address. The first complete carrier review remains open.
