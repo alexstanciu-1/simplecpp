@@ -68,6 +68,37 @@ bad = copy.deepcopy(metadata)
 for method in bad['families']['nullable']['classes'][0]['methods']:
     if method.get('name') == 'require_value': method['returns'] = 'self_ref'
 resolve('nullable<int64>', 'int64', meta=bad, error='owned payload')
+def convert(source, target, meta=metadata, error=None):
+    result = subprocess.run([str(args.tool)], input=json.dumps({
+        'action':'resolve_conversion', 'metadata':meta,
+        'names':{'nullable<int64>':'optional_integer'},
+        'request':{'source':source, 'target':target}}), text=True, capture_output=True)
+    if error:
+        assert result.returncode and error in result.stderr, result.stderr
+        return
+    assert result.returncode == 0, result.stderr
+    return json.loads(result.stdout)
+
+for family in ['nullable','result']:
+    for target in metadata['conversions']['bindings']['int64']['targets']:
+        plan = convert(f'{family}<int64>',target)
+        assert plan['kind'] == 'carrier_conversion'
+        assert plan['payload_conversion']['api'] == f'cast_{target}_from_int64'
+        assert plan['states'][0]['conversion']['kind'] == 'checked_payload'
+        assert plan['states'][-1]['conversion']['kind'] == ('expression' if family == 'nullable' and target == 'string' else 'checked_payload')
+assert convert('nullable<int8>','uint16')['payload_conversion']['operand_type'] == 'int64'
+for source,target in [('nullable<vector<string>>','string'), ('result<nullable<int64>>','boolean'),
+                      ('nullable<int64>','result<int64>'), ('nullable<int64>','nullable<int8>')]:
+    convert(source,target,error='Unsupported checked conversion')
+for mutate,message in [
+    (lambda c:c['states'].append({'name':'extra'}), 'final fallback'),
+    (lambda c:c['states'][0].update(test='missing'), 'one observation'),
+    (lambda c:c['states'][1].update(name='payload'), 'Duplicate carrier state'),
+    (lambda c:c['states'][1]['casts']['string'].update(expression='${value}.value()'), 'independent result'),
+]:
+    bad = copy.deepcopy(metadata); mutate(bad['families']['nullable']['carrier'])
+    convert('nullable<int64>','string',meta=bad,error=message)
+print('PASS: one-layer cast plans, nullable string exception, required bool payload and rejected state metadata')
 print('PASS: carrier arithmetic matrix, defaults/names, one-layer limits and descriptor rejection')
 if not args.core: sys.exit(0)
 
@@ -104,6 +135,24 @@ with tempfile.TemporaryDirectory(prefix='scpp-carrier-') as directory:
             const auto right_payload = {right};
             return {calculation['function']}(left_payload, right_payload);
         }}''')
+    for target in ['boolean','int8','string']:
+        plan = convert('nullable<int64>',target)
+        cast = plan['payload_conversion']; headers.add(cast['header'])
+        assert cast['api'] in manifest['apis']
+        projection = plan['projection']['expression'].replace('${value}','source')
+        body = ''
+        for state in plan['states']:
+            conversion = state['conversion']
+            if conversion['kind'] == 'expression':
+                headers.add(conversion['header'])
+                branch = 'return ' + conversion['expression'] + ';'
+            else:
+                branch = f'const auto payload = {projection}; return {cast["function"]}(payload);'
+            if 'test_expression' in state:
+                body += 'if (' + state['test_expression'].replace('${value}','source') + ') { ' + branch + ' }\n'
+            else: body += branch
+        functions.append('static ' + metadata['types'][target]['cpp'] + ' convert_' + target
+                         + '(const scpp::optional_integer &source) { ' + body + ' }')
     code = '\n'.join('#include "'+h+'"' for h in sorted(headers)) + '\n' + '\n'.join(functions)
     code += r'''
 #include "public_api_guard.hpp"
@@ -133,6 +182,11 @@ int main() {
     CHECK(scpp::take(output,copy) && output.native_value() == 12);
     optional zero(int64(0));
     CHECK(zero.has_value() && zero.require_value("zero").native_value() == 0);
+    CHECK(!convert_boolean(zero));
+    CHECK(convert_boolean(copy));
+    CHECK(convert_int8(copy).native_value() == 12);
+    CHECK(convert_string(copy).equals("12"));
+    CHECK(convert_string(absent).byte_size().native_value() == 0);
     CHECK(allocations == before);
     effects = 0; bool caught = false;
     try { (void)run_add(absent,right,effects); } catch (...) { caught = true; }
@@ -140,11 +194,17 @@ int main() {
     caught = false;
     try { (void)run_add(copy,absent,effects); } catch (...) { caught = true; }
     CHECK(caught && effects == 1 && copy.has_value());
+    caught = false;
+    try { (void)convert_boolean(absent); } catch (...) { caught = true; }
+    CHECK(caught && !absent.has_value());
+    optional too_large(int64(128)); caught = false;
+    try { (void)convert_int8(too_large); } catch (...) { caught = true; }
+    CHECK(caught && too_large.require_value("unchanged").native_value() == 128);
     // Extraction returns an owned value that survives mutation/destruction of its carrier.
     int64 retained(0);
     { optional temporary(int64(42)); retained = temporary.require_value("retain"); temporary.reset(); }
     CHECK(retained.native_value() == 42);
-    std::puts("PASS: public nullable arithmetic, ordered failures, take/reset, owned lifetime; success allocations=0");
+    std::puts("PASS: public nullable arithmetic, ordered failures, take/reset, casts, owned lifetime; success allocations=0");
 }
 '''
     caller = work / 'main.cpp'; caller.write_text(code)

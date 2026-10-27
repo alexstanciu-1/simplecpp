@@ -1,5 +1,6 @@
 #include "conversions.hpp"
 #include "names.hpp"
+#include "carriers.hpp"
 #include <set>
 
 namespace scpp::api_generation
@@ -37,7 +38,7 @@ namespace scpp::api_generation
         return r;
     }
 
-    value resolve_conversion(const value &metadata, const value &request)
+    static value resolve_plain_conversion(const value &metadata, const value &request)
     {
         fields_only(request, "source target", "conversion request");
         const auto &r = registry(metadata);
@@ -54,6 +55,39 @@ namespace scpp::api_generation
         out["function"] = "scpp::cast_" + target;
         out["header"] = "scpp/conversions/" + out.at("api").text() + ".hpp";
         out["conversion"] = source == normalized ? "identity" : "lossless_source_normalization";
+        return out;
+    }
+
+    value resolve_conversion(const value &metadata, const value &request, const value &names)
+    {
+        fields_only(request, "source target", "conversion request");
+        const auto &r = registry(metadata);
+        const auto source = request.at("source").text(), target = request.at("target").text();
+        if (r.at("sources").has(source)) return resolve_plain_conversion(metadata, request);
+        validate_carriers(metadata);
+        const auto projection = project_carrier(metadata, source, names);
+        if (projection.type == value::kind::null) throw std::runtime_error("Unsupported checked conversion");
+        value payload = value::object(); payload["source"] = projection.at("target"); payload["target"] = target;
+        // Resolve once against plain conversions; never recursively peel a carrier.
+        const auto calculation = resolve_plain_conversion(metadata, payload);
+        value out = value::object();
+        out["kind"] = "carrier_conversion"; out["source"] = projection.at("source"); out["target"] = target;
+        out["projection"] = projection; out["payload_conversion"] = calculation;
+        out["states"] = value::array();
+        if (projection.has("states")) {
+            for (const auto &state : projection.at("states").items) {
+                value branch = value::object(); branch["name"] = state.at("name");
+                if (state.has("test")) branch["test_expression"] = "${value}." + state.at("test").text() + "()";
+                branch["conversion"] = value::object(); branch["conversion"]["kind"] = "checked_payload";
+                if (state.has("casts") && state.at("casts").has(target)) {
+                    branch["conversion"] = state.at("casts").at(target);
+                    branch["conversion"]["kind"] = "expression";
+                }
+                out["states"].items.push_back(branch);
+            }
+        }
+        out["evaluation"] = "evaluate_source_once_then_select_state";
+        out["failure"] = "throw_without_mutating_source";
         return out;
     }
 

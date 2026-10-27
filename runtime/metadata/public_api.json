@@ -621,7 +621,16 @@
       ],
       "carrier": {
         "payload": "T",
-        "require_value": "require_value"
+        "require_value": "require_value",
+        "states": [
+          {
+            "name": "payload",
+            "test": "has_value"
+          },
+          {
+            "name": "error"
+          }
+        ]
       }
     },
     "nullable": {
@@ -794,7 +803,22 @@
       ],
       "carrier": {
         "payload": "T",
-        "require_value": "require_value"
+        "require_value": "require_value",
+        "states": [
+          {
+            "name": "payload",
+            "test": "has_value"
+          },
+          {
+            "name": "absent",
+            "casts": {
+              "string": {
+                "expression": "scpp::string()",
+                "header": "scpp/string.hpp"
+              }
+            }
+          }
+        ]
       }
     },
     "hash": {

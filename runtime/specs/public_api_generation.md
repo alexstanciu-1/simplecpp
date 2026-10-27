@@ -771,3 +771,35 @@ The initial implementation describes nullable and Result extraction. The executi
 proof covers application-owned `nullable<int64>`; Result state/lifetime execution,
 false/bool-sentinel recipes, conditions, comparisons and conversions remain separate
 completion work. This does not claim the first full carrier review gate has passed.
+
+## Carrier state observations and required-scalar casts
+
+The private `carriers` component owns descriptor validation and checked projection
+for arithmetic and conversion planning. Family state descriptions use an ordered
+`states` array. Each state has a unique `name`; every state except the final fallback
+names a `test` member. A test must be a const, unconditional, zero-argument member
+returning public boolean. This first protocol describes nullable payload/absence
+and Result payload/error without recognizing family names in the resolver.
+
+A state may supply `casts`, keyed by a scalar conversion target. Each recipe is an
+independent result `expression` and focused public `header`; it cannot contain a
+payload substitution. Nullable absence uses this for the empty string result.
+Without an override, conversion requires the checked payload. String exceptions
+are metadata recipes, not target/family-name branches in the generator.
+
+`resolve_conversion` accepts the same envelope-level `names` map as operator
+resolution. For a carrier it returns `kind: carrier_conversion`, the owned
+`projection`, a plain `payload_conversion`, and ordered `states` branches. A branch
+contains a `test_expression` unless it is the fallback, plus either an `expression`
+result recipe or `kind: checked_payload`. With no state descriptors the caller
+uses checked payload conversion directly. The source is evaluated once and stays
+alive during observation/extraction; selected payload conversion then follows its
+existing source-normalization protocol. Factories and casts may throw, but never
+mutate the source or synthesize a Result error.
+
+Plain payload conversion is resolved before returning any state plan. This prevents
+an empty-state override from admitting an otherwise invalid cast and forbids
+recursive carrier peeling. The initial execution proof is nullable<int64> to bool,
+int8 and string; Result state plans are checked, with Result error execution and
+sentinel-family recipes still pending. Same-family reconstruction, conditions and
+state comparisons remain separate completion slices.

@@ -2,6 +2,7 @@
 #include "names.hpp"
 #include "function_sets.hpp"
 #include "conversions.hpp"
+#include "carriers.hpp"
 #include <set>
 
 namespace scpp::api_generation
@@ -198,30 +199,7 @@ namespace scpp::api_generation
             }
             for (const auto &payload : domains(policy.at("payloads"))) registry.at("types").at(payload);
         }
-        for (const auto &[name, family] : metadata.at("families").fields) {
-            if (!family.has("carrier")) continue;
-            const auto &carrier = family.at("carrier");
-            fields_only(carrier, "payload require_value", "carrier descriptor");
-            if (!contains(family.at("parameters"), carrier.at("payload").text()))
-                throw std::runtime_error("Unknown carrier payload parameter");
-            const auto method = carrier.at("require_value").text();
-            authored_name(method);
-            unsigned matches = 0;
-            for (const auto &record : family.at("classes").items) {
-                if (record.get("id") != "self") continue;
-                for (const auto &member : record.at("methods").items) {
-                    if (member.get("name") != method) continue;
-                    const auto &parameters = member.at("parameters").items;
-                    if (member.get("returns") != carrier.at("payload").text()
-                        || !member.yes("const") || member.has("requires_capabilities")
-                        || parameters.size() != 1 || parameters[0].get("type") != "c_string"
-                        || parameters[0].get("passing", "value") != "value")
-                        throw std::runtime_error("Carrier projection must return an owned payload from a const checked member");
-                    ++matches;
-                }
-            }
-            if (matches != 1) throw std::runtime_error("Carrier projection requires one checked member");
-        }
+        validate_carriers(metadata);
         return registry;
     }
 
@@ -411,17 +389,8 @@ namespace scpp::api_generation
             projection["source"] = identity; projection["target"] = identity;
             projection["kind"] = "identity";
             if (!registry.at("types").has(identity)) {
-                const auto binding = types.bind(identity);
-                const auto &family = metadata.at("families").at(binding.type.name);
-                if (!family.has("carrier")) throw std::runtime_error("Operand family has no carrier projection");
-                const auto &carrier = family.at("carrier");
-                for (const auto &[parameter, argument] : binding.arguments)
-                    if (parameter == carrier.at("payload").text()) projection["target"] = argument.canonical();
-                projection["kind"] = "checked_member";
-                projection["header"] = "scpp/" + public_name + ".hpp";
-                projection["cpp"] = "scpp::" + public_name;
-                projection["expression"] = "${value}." + carrier.at("require_value").text() + "(\"operator payload\")";
-                projection["ownership"] = "owned_value";
+                projection = project_carrier(metadata, identity, names);
+                if (projection.type == value::kind::null) throw std::runtime_error("Operand family has no carrier projection");
                 projected = true;
             }
             if (!contains(policy.at("payloads"), projection.at("target").text()))

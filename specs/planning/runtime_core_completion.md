@@ -17,7 +17,7 @@ each slice. The original inventory is a baseline, not a current completion count
 | A2 | Complete for the agreed checked scalar conversions | Carrier conversion is C; ownership casts are D. |
 | B1 | Complete for the agreed scalar-facing truth/text/identity/observation scope | Carrier forms remain C; boxed arithmetic and access completion are not B1 credit. |
 | B2 | Complete for the agreed non-carrier special/mutation and text public paths; closure evidence below | Carrier forms C; indexed retention E; native exception inspection and overflow disposition G. |
-| C | One-layer arithmetic plans implemented; nullable<int64> execution proved | Four carrier families, state-preserving operations/conversions and conditional lifecycle. |
+| C | Arithmetic and required-scalar cast plans implemented; nullable<int64> execution proved | Four carrier families, state-preserving operations/conversions and conditional lifecycle. |
 | D | Pending | Ownership, application targets and source Exception transport gaps. |
 | E | Existing vector/hash/boxed foundations; incomplete | Capability/access/initialization/cursor gaps and identity key-allocation debt. |
 | F | Pending | Callable transport and registered collection algorithms. |
@@ -757,3 +757,26 @@ This is an arithmetic entry slice, not a complete carrier path. Next: state-awar
 nullable truthiness, equality/strict identity and conversions, then review the complete
 path before ownership/callback expansion. Result errors/sentinels, remaining families
 and source frontend adoption are not inferred from the nullable proof.
+
+## C2 — carrier state descriptions and required-scalar casts
+
+The shared private `carriers` owner now validates family descriptors and returns
+checked projections for both arithmetic and conversions. Ordered state descriptions
+name const boolean observation methods and a final fallback. Per-state scalar
+factory recipes express nullable absence-to-empty-string without generator branches
+for nullable or string. Ordinary payload cast admission is checked before selecting
+any state exception; nested payloads are not recursively extracted.
+
+Required-scalar plans cover nullable and Result descriptors. The public-only
+nullable<int64> proof adds explicit bool casts (zero versus absent), checked int8
+narrowing with unchanged source on failure, and string casts including the absence
+exception. These measured success cases allocate zero, and the existing arithmetic,
+take/reset/lifetime and sealed-publication reuse proof remains included. Runtime
+implementation generation is unchanged across all 330 runtime units; only the
+publication metadata identity changes. No runtime-core rebuild was performed.
+
+Remaining before the first complete carrier-path review: conditions, state-aware
+equality/strict identity, and same-family nullable conversion/reconstruction where
+admitted. C still includes Result execution/error transport, sentinel recipes,
+conditional lifecycle and the remaining four-family operation matrix. The new state
+owner is the foundation for these paths, not evidence they are already implemented.

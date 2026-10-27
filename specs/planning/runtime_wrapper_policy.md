@@ -337,3 +337,9 @@ currently covers application-owned nullable<int64>. This is partial W06/W07 prog
 not completion of four-family behavior, conditional lifecycle or W09. The governing
 arithmetic decision is now recorded in expression_evaluation.md. Equality, strict
 identity, conditions and conversions retain their agreed separate state policies.
+
+The C2 checkpoint adds shared carrier state descriptions and one-layer required-
+scalar cast plans. Nullable<int64> bool/int8/string execution, string absence,
+checked narrowing and source preservation are proved. State-preserving same-family
+casts, condition dispatch and comparisons remain pending; explicit bool casts must
+not be mistaken for the condition protocol in later consumers.

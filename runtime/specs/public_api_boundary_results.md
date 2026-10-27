@@ -1520,3 +1520,30 @@ release 6.36s; ASan/UBSan with leak detection 29.46s. The execution proof above 
 separately. Result execution, sentinel carrier recipes, state comparisons,
 conditions/conversions and conditional lifecycle remain pending; neither C nor the
 first complete carrier-path review is closed by these results.
+
+## C2 required-scalar carrier casts
+
+The extended `check_carrier_projection.py --tool <generator> --core <core.a>
+[--sanitize]` proof passes in release and ASan/UBSan with leak detection. New
+execution cases distinguish absent/present-zero bool casts, checked int8 narrowing
+with source preservation, and nullable string absence. These successful casts,
+along with the retained arithmetic/take/reset cases, allocate zero. Error paths are
+excluded from that allocation claim. Application-owned nullable storage still
+reuses its sealed publication with zero newly emitted units.
+
+Single compile-only observations: storage 1.0264s release / 1.2560s sanitized;
+public caller 0.1094s / 0.1596s. Incremental tool builds took 7.88s / 19.45s, with
+lightweight release regressions overlapping the sanitized tool build. No runtime-
+core rebuild or new runtime implementation units were required. All 330 generated
+runtime plans remained identical; publication API identity was refreshed only after
+that comparison. The new shared carrier source is private generator code, not a
+consumer dependency.
+
+Required-value conversion plans for Result are covered by metadata tests, not a
+Result execution claim. Sentinel recipes, conditions, state comparisons and same-
+family reconstruction remain pending. This does not complete the first carrier
+review gate.
+
+Five focused regression suites (metadata, global operators, conversions, compounds
+and carrier projection) passed: release 7.74s; ASan/UBSan with leak detection 40.64s.
+The public-only execution/allocation/lifetime proof ran separately as described above.

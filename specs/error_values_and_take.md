@@ -197,3 +197,28 @@ preserves the old output. Boolean sentinel behavior is unchanged: a true sentine
 present but does not assign the payload. These rules also apply when `?T` uses shared
 handle storage. An explicit typed nullable value distinguishes successful absence
 from an outer false/null sentinel; no new ambiguous literal rule is introduced.
+
+## Required scalar casts from carriers — v0.2, 2026-10-27
+
+For an admitted carrier/payload formation, an explicit cast from nullable or a
+Result-family carrier to a required scalar extracts one checked payload layer and
+then applies the ordinary explicit payload cast. Payload conversion admission is
+checked even when the source could be in a non-value state. There is no recursive
+peeling, fallback numeric value or conversion of a thrown cast failure into an
+in-band Result error. The source is evaluated once and is not mutated.
+
+An explicit bool cast requires a payload. Absent nullable, structured Result error
+and both boolean sentinels therefore fail this cast. This differs from conditions:
+absence/error/false sentinel are false, true sentinel is true, and a successful
+payload follows its condition contract. A present numeric zero has a payload and
+casts to false.
+
+Preserve the existing explicit string-cast exceptions: absent nullable and either
+boolean sentinel produce an empty string; a structured Result error still throws.
+A successful payload uses explicit string formatting, not concatenation/output
+formatting where those differ. Its returned scalar is an owned value.
+
+These required-scalar rules do not grant cross-carrier conversion, arbitrary type
+formation, move extraction or reference escape. Same-family state-preserving casts
+are a separate accepted completion item; runtime public-path coverage and frontend
+adoption are tracked separately.

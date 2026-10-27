@@ -374,7 +374,7 @@ namespace scpp::api_generation
 	{
 		auto input=parse_json(detail::string_access::get(request).native_value()); value output;
 		if (input.get("action")=="resolve_conversion") {
-            output=resolve_conversion(input.at("metadata"),input.at("request"));
+            output=resolve_conversion(input.at("metadata"),input.at("request"), input.has("names") ? input.at("names") : value::object());
         } else if (input.get("action")=="resolve_compound") {
             output=resolve_compound(input.at("metadata"),input.at("request"));
         } else if (input.get("action")=="resolve_operator") {
