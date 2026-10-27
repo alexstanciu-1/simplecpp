@@ -20,8 +20,12 @@ struct data_initializer<detail::dynamic_value> final {
 		return result;
 	}
 	static value_type from_key_value(initializer_list<initializer_entry<value_type, mixed_t>> input) {
+		return from_key_value_adapted(input, [](const initializer_entry<value_type, mixed_t> &entry) -> const initializer_entry<value_type, mixed_t> & { return entry; });
+	}
+	template <typename Input, typename Adapt>
+	static value_type from_key_value_adapted(initializer_list<Input> input, const Adapt &adapt) {
 		auto result = value_type::make_container();
-		initialization_detail::populate_keyed(result.get_table(), input);
+		initialization_detail::populate_keyed_adapted(result.get_table(), input, adapt);
 		return result;
 	}
 };

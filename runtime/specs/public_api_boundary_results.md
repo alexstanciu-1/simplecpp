@@ -2842,3 +2842,22 @@ vector, hash and sentinel lifecycle metadata regressions pass. Only the generato
 needed rebuilding; existing runtime-core implementation output was unchanged.
 Keyed factories and duplicate rejection remain next; source admission and non-escape
 semantics are not inferred from physical storage capabilities.
+
+## E13: private keyed adaptation (2026-10-28)
+
+Typed hash, mixed and dynamic keyed factories share adapted immutable-entry population.
+Existing native entry signatures delegate through identity adaptation; receiver key
+normalization and presence-based duplicate checking remain authoritative. Public
+boxed storage is transported without exposing a borrowed source view. Tests cover
+typed/native compatibility, mixed/dynamic entry adaptation, null-payload duplicates,
+and destruction after a partial-result adapter failure. No public keyed factory is
+published by this slice; source admission, full key-policy matrices and sealed public
+reuse remain separate proof obligations.
+
+Validation: focused release and ASan/UBSan/LSan runs pass. Existing positional
+long-string allocation parity remains 3 native / 3 adapted; this is not a keyed
+allocation measurement. The final release build took 5.53s with core compilation
+already completed during the initial attempt; sanitized build took 46.37s including
+core recompilation. These are build observations, not comparable isolated caller
+costs. The initial compile caught an accidental shared-wrapper edit, corrected before
+both successful test runs. Public keyed compile/allocation costs remain next.

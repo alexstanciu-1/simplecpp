@@ -1809,3 +1809,27 @@ compilation took 1.2039s release / 1.0997s sanitized; public caller 0.1506s / 0.
 Existing conditional, vector, hash and sentinel lifecycle metadata regressions pass.
 Only the generator required rebuilding; existing runtime-core implementation output
 was unchanged. These are single-run fixture costs, not full compiler build timings.
+
+## E13 — shared keyed factory adaptation
+
+The existing keyed population owner now accepts a representation adapter for a
+complete immutable entry. Native identity paths delegate to it, retaining receiver
+normalization and presence-based duplicate rejection. Typed hash, mixed and dynamic
+factories own their temporary result until all entries succeed. The shared-hash
+native path remains on the same identity population helper; no ownership publication
+is added here. Source expressions/conversions still finish before materialization.
+
+The focused native proof exercises public boxed entry transport, typed keys, legacy
+entry calls, duplicate rejection with a null first payload, and tracked destruction
+after a throwing adapter has populated a prefix. This is private bridge coverage;
+public keyed recipes, sealed reuse, normalized-key matrices and keyed allocation
+parity remain for the next publication slice. No generator family exceptions or
+new source key rules were introduced.
+
+Validation: focused release and ASan/UBSan/LSan runs pass. Existing positional
+long-string allocation parity remains 3 native / 3 adapted; this is not a keyed
+allocation measurement. The final release build took 5.53s with core compilation
+already completed during the initial attempt; sanitized build took 46.37s including
+core recompilation. These are build observations, not comparable isolated caller
+costs. The initial compile caught an accidental shared-wrapper edit, corrected before
+both successful test runs. Public keyed compile/allocation costs remain next.

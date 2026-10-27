@@ -104,15 +104,22 @@ void populate_list(Destination &destination, initializer_list<T> input) {
 	populate_list_adapted(destination, input, [](const T &value) -> const T & { return value; });
 }
 
-template <typename Destination, typename V, typename K>
-void populate_keyed(Destination &destination, initializer_list<initializer_entry<V, K>> input) {
+template <typename Destination, typename Input, typename Adapt>
+void populate_keyed_adapted(Destination &destination, initializer_list<Input> input, const Adapt &adapt) {
 	if constexpr (requires { destination.reserve(input.size()); }) destination.reserve(input.size());
-	for (auto entry : input) {
+	for (std::size_t index = 0; index < input.size(); ++index) {
+		auto entry = input.copy_adapted_at(index, adapt);
 		// Presence, not truthiness: null/false values still occupy their normalized key.
 		if (destination.has(entry.key).native_value())
 			throw std::runtime_error("data initialization: duplicate key");
 		destination.set(entry.key, entry.value);
 	}
+}
+
+template <typename Destination, typename V, typename K>
+void populate_keyed(Destination &destination, initializer_list<initializer_entry<V, K>> input) {
+	populate_keyed_adapted(destination, input,
+		[](const initializer_entry<V, K> &entry) -> const initializer_entry<V, K> & { return entry; });
 }
 
 } // namespace initialization_detail

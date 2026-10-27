@@ -32,8 +32,12 @@ struct data_initializer<hash_t<V, K>> final {
 		return result;
 	}
 	static hash_t<V, K> from_key_value(initializer_list<initializer_entry<V, K>> input) {
+		return from_key_value_adapted(input, [](const initializer_entry<V, K> &entry) -> const initializer_entry<V, K> & { return entry; });
+	}
+	template <typename Input, typename Adapt>
+	static hash_t<V, K> from_key_value_adapted(initializer_list<Input> input, const Adapt &adapt) {
 		hash_t<V, K> result;
-		initialization_detail::populate_keyed(result, input);
+		initialization_detail::populate_keyed_adapted(result, input, adapt);
 		return result;
 	}
 };

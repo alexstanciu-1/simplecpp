@@ -18,8 +18,12 @@ struct data_initializer<mixed_t> final {
 		return mixed_t{std::move(storage)};
 	}
 	static mixed_t from_key_value(initializer_list<initializer_entry<mixed_t, mixed_t>> input) {
+		return from_key_value_adapted(input, [](const initializer_entry<mixed_t, mixed_t> &entry) -> const initializer_entry<mixed_t, mixed_t> & { return entry; });
+	}
+	template <typename Input, typename Adapt>
+	static mixed_t from_key_value_adapted(initializer_list<Input> input, const Adapt &adapt) {
 		auto storage = std::make_unique<hash_t<mixed_t>>();
-		initialization_detail::populate_keyed(*storage, input);
+		initialization_detail::populate_keyed_adapted(*storage, input, adapt);
 		return mixed_t{std::move(storage)};
 	}
 };
