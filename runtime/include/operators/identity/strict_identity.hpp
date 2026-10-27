@@ -71,7 +71,7 @@ inline bool_t identical_hash_contents(const hash_t<mixed_t> &left, const hash_t<
 	for (; left_it != left_end && right_it != right_end; ++left_it, ++right_it) {
 		const auto left_entry = *left_it;
 		const auto right_entry = *right_it;
-		if (!identical(left_entry.key(), right_entry.key()).native_value()) {
+		if (!left_entry.key_identical(right_entry)) {
 			return bool_t(false);
 		}
 		if (!identical(left_entry.value_ref(), right_entry.value_ref()).native_value()) {

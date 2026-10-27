@@ -19,7 +19,7 @@ each slice. The original inventory is a baseline, not a current completion count
 | B2 | Complete for the agreed non-carrier special/mutation and text public paths; closure evidence below | Carrier forms C; indexed retention E; native exception inspection and overflow disposition G. |
 | C | Four carrier recipes and bounded scalar operator/selection paths implemented; review pending | Logical-negation correction, broader admitted selection domains, source-formation decision and full carrier review; scoped observations are implemented through C29. |
 | D | Pending | Ownership, application targets and source Exception transport gaps. |
-| E | Existing vector/hash/boxed foundations; incomplete | Nested access, remaining key policies and identity key-allocation debt; conditional lifecycle, cursor fixes, boxed access/probes, and positional/keyed built-in factories are implemented for the tested domains. |
+| E | Existing vector/hash/boxed foundations; incomplete | Typed nested access and remaining key policies; conditional lifecycle, cursor fixes, boxed access/probes, and positional/keyed built-in factories are implemented for the tested domains. |
 | F | Pending | Callable transport and registered collection algorithms. |
 | G | Core utility and scalar debug bindings implemented | Exception/helper gaps and requirement-by-requirement closure audit. |
 
@@ -2015,3 +2015,26 @@ units. Four headers compile independently. Numeric read/writeback allocation cou
 is zero after setup. Single-run existing-only caller compile: 0.0570s public /
 2.5540s native; ordinary-write control: 0.0640s / 2.5909s. Core rebuilt once per
 configuration. Runtime inventory: 398 implementation units, not a coverage ratio.
+
+## E21 — allocation-free stored-key identity
+
+Close the B1c temporary-key debt inside the packed-table representation owner.
+Const entry views compare validated stored key codes directly. The process-wide pool
+already gives equal complete string bytes one stable tagged id, and integer/string
+codes remain distinct under existing storage normalization. Strict table identity
+retains entry-order and recursive-value comparison, without constructing mixed/string
+key temporaries or exposing a borrowed public key. The existing key extraction path
+shares the validated physical-key accessor.
+
+Public identity tests now require zero allocations across repeated short/long/binary
+and nested string-key table comparisons. They preserve embedded-NUL distinctions,
+insertion-order sensitivity, packed/associative equivalence with tombstones, and
+integer/string kind distinctions. Existing scalar/boxed pair matrices remain in the
+same proof. This does not change key ranges, normalization, pool concurrency rules,
+cycle handling or any public signature; it closes the measured key-boxing debt only.
+
+Validation: release and ASan/UBSan/LSan strict-identity and heterogeneous-pair tests
+pass, including zero allocations for the table-key cases. Sealed relocated publication
+continues to reuse the unchanged APIs with no new implementation units. Single-run
+boxed identity caller compile: 0.0566s public / 2.9023s native. Core rebuilt once per
+configuration. No metadata generation or public ABI change was required.

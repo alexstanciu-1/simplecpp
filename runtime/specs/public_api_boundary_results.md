@@ -3008,3 +3008,23 @@ units. Four headers compile independently. Numeric read/writeback allocation cou
 is zero after setup. Single-run existing-only caller compile: 0.0570s public /
 2.5540s native; ordinary-write control: 0.0640s / 2.5909s. Core rebuilt once per
 configuration. Runtime inventory: 398 implementation units, not a coverage ratio.
+
+## E21: eliminate temporary boxed keys during strict identity (2026-10-28)
+
+Packed-table const entry views now compare validated canonical stored key codes.
+The process-wide string pool guarantees a stable tagged identity for complete byte
+strings; strict identity still compares entries in order and recursively compares
+values. No key bytes/reference are exposed to public callers. Existing key extraction
+shares the checked physical-key accessor, including packed bounds validation.
+
+The public proof now requires zero allocations for short, long, embedded-NUL and
+nested string-key comparisons, different key bytes/order, and packed versus associative
+storage with tombstones. Earlier B1c's measured two allocations for one short-string
+key are eliminated. Scalar/boxed pair, NaN and dynamic identity behavior remain tested.
+Key normalization/ranges, pool concurrency and cycle behavior are unchanged.
+
+Validation: release and ASan/UBSan/LSan strict-identity and heterogeneous-pair tests
+pass, including zero allocations for the table-key cases. Sealed relocated publication
+continues to reuse the unchanged APIs with no new implementation units. Single-run
+boxed identity caller compile: 0.0566s public / 2.9023s native. Core rebuilt once per
+configuration. No metadata generation or public ABI change was required.

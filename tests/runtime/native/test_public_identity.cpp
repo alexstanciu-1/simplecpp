@@ -64,6 +64,27 @@ int main() {
         CHECK(strict_identical(first,alias));
     }
     counting=false; CHECK(allocations==0);
-    counting=true; CHECK(strict_identical(a,b)); counting=false;
-    std::printf("PASS: strict identity, both 81-pair boxed matrices, NaN and container distinctions; scalar allocations=0, one-entry mixed-table allocations=%u\n",allocations);
+
+    auto binary_a=make_mixed_table(), binary_b=make_mixed_table(), binary_c=make_mixed_table();
+    binary_a.set(binary,mixed(int64(1))); binary_b.set(string("a\0b",uint64(3)),mixed(int64(1)));
+    binary_c.set(string("a\0c",uint64(3)),mixed(int64(1)));
+    auto nested_a=make_mixed_table(), nested_b=make_mixed_table();
+    nested_a.set(long_text,binary_a); nested_b.set(long_text,binary_b);
+    auto ordered=make_mixed_table(), reversed=make_mixed_table();
+    ordered.set(string("a"),mixed(int64(1))); ordered.set(string("b"),mixed(int64(2)));
+    reversed.set(string("b"),mixed(int64(2))); reversed.set(string("a"),mixed(int64(1)));
+    auto packed=make_mixed_table(), associative=make_mixed_table(), string_key=make_mixed_table();
+    packed.append(mixed(int64(3)));
+    associative.set(string("removed"),mixed{}); associative.set(int64(0),mixed(int64(3)));
+    CHECK(associative.remove(string("removed")));
+    string_key.set(string("x"),mixed(int64(3)));
+    counting=true;
+    for(int i=0;i<100;++i) {
+        CHECK(strict_identical(a,b));
+        CHECK(strict_identical(binary_a,binary_b)); CHECK(strict_not_identical(binary_a,binary_c));
+        CHECK(strict_identical(nested_a,nested_b)); CHECK(strict_not_identical(ordered,reversed));
+        CHECK(strict_identical(packed,associative)); CHECK(strict_not_identical(packed,string_key));
+    }
+    counting=false; CHECK(allocations==0);
+    std::puts("PASS: strict identity matrices, binary/ordered/nested keys, packed/tombstone parity; observation allocations=0");
 }

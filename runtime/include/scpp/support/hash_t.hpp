@@ -1161,15 +1161,15 @@ private:
 		return index < keys.size() && keys[index] != TOMBSTONE_KEY;
 	}
 
-	[[nodiscard]] mixed_t key_from_physical_index(std::uint32_t index) const {
-		if (std::holds_alternative<std::monostate>(keys_)) {
-			return mixed_t(int_t<>{static_cast<std::int64_t>(index)});
-		}
-		const auto &keys = std::get<native_keys_t>(keys_);
-		if (index >= keys.size() || keys[index] == TOMBSTONE_KEY) {
+	[[nodiscard]] key_storage_t key_code_from_physical_index(std::uint32_t index) const {
+		if (!is_live_physical_index(index))
 			throw std::out_of_range("hash_t::key_from_physical_index: invalid entry index");
-		}
-		return hash_detail::dyn_keys::unpack(keys[index]);
+		if (std::holds_alternative<std::monostate>(keys_)) return index;
+		return std::get<native_keys_t>(keys_)[index];
+	}
+
+	[[nodiscard]] mixed_t key_from_physical_index(std::uint32_t index) const {
+		return hash_detail::dyn_keys::unpack(key_code_from_physical_index(index));
 	}
 
 	[[nodiscard]] Value &value_from_physical_index(std::uint32_t index) {
@@ -1310,6 +1310,13 @@ public:
 
 		[[nodiscard]] mixed_t key() const {
 			return owner_->key_from_physical_index(index_);
+		}
+
+		// Stored string ids are canonical in the process-wide pool; the tag keeps
+		// them distinct from integer keys. No boxed key or borrowed bytes escape.
+		[[nodiscard]] bool key_identical(const const_entry_view &other) const {
+			return this->owner_->key_code_from_physical_index(this->index_)
+				== other.owner_->key_code_from_physical_index(other.index_);
 		}
 
 		[[nodiscard]] Value value_copy() const {
