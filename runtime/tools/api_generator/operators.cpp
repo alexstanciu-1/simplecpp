@@ -28,7 +28,7 @@ namespace scpp::api_generation
     static const value &validated_registry(const value &metadata)
     {
         const auto &registry = metadata.at("global_operators");
-        fields_only(registry, "types domains groups operations compounds operand_conversions carrier_projection carrier_comparisons", "global operators");
+        fields_only(registry, "types domains groups operations compounds operand_conversions carrier_projection carrier_comparisons carrier_literals", "global operators");
         for (const auto *field : {"types", "domains", "groups", "operations"}) {
             if (registry.at(field).type != value::kind::object)
                 throw std::runtime_error("Operator registry requires objects");
@@ -227,6 +227,21 @@ namespace scpp::api_generation
                 }
             }
         }
+        if (registry.has("carrier_literals")) {
+            const auto &literals = registry.at("carrier_literals");
+            fields_only(literals, "types operations", "carrier literals");
+            for (const auto &type : domains(literals.at("types"))) registry.at("types").at(type);
+            for (const auto &[name, policy] : literals.at("operations").fields) {
+                const auto &operation = registry.at("operations").at(name);
+                if (operation.get("form", "binary") != "binary" || !operation.has("returns"))
+                    throw std::runtime_error("Literal comparison requires a binary operation with an explicit result type");
+                metadata.at("types").at(operation.at("returns").text());
+                fields_only(policy, "matched unmatched", "carrier literal policy");
+                for (const auto *key : {"matched", "unmatched"})
+                    if (policy.get(key) != "true" && policy.get(key) != "false")
+                        throw std::runtime_error("Invalid carrier literal result");
+            }
+        }
         validate_carriers(metadata);
         return registry;
     }
@@ -409,6 +424,43 @@ namespace scpp::api_generation
         return states;
     }
 
+    static value resolve_carrier_literal(const value &metadata, const value &registry,
+        const value &request, const value &names)
+    {
+        if (!registry.has("carrier_literals")) return value();
+        const auto &policy = registry.at("carrier_literals");
+        if (!policy.at("operations").has(request.at("operation").text())) return value();
+        if (registry.at("types").has(request.at("left").text()) && registry.at("types").has(request.at("right").text()))
+            return value(); // Existing plain scalar/literal plans retain their owner.
+        naming types(metadata_naming_registry(metadata, metadata.at("types"), names));
+        const auto left = types.resolve(request.at("left").text()).first;
+        const auto right = types.resolve(request.at("right").text()).first;
+        const bool literal_left = contains(policy.at("types"), left), literal_right = contains(policy.at("types"), right);
+        if (literal_left == literal_right) return value();
+        const auto projection = project_carrier(metadata, literal_left ? right : left, names);
+        if (projection.type == value::kind::null || !projection.has("states")) return value();
+        const auto literal = literal_left ? left : right;
+        const auto &results = policy.at("operations").at(request.at("operation").text());
+        value out = value::object(); out["states"] = value::array(); bool admitted = false;
+        for (const auto &state : projection.at("states").items) {
+            const bool matches = state.has("literals") && contains(state.at("literals"), literal);
+            admitted |= matches;
+            value branch = value::object(); branch["name"] = state.at("name");
+            if (state.has("test")) branch["test_expression"] = "${value}." + state.at("test").text() + "()";
+            branch["value"] = results.at(matches ? "matched" : "unmatched");
+            out["states"].items.push_back(branch);
+        }
+        if (!admitted) throw std::runtime_error("Unsupported carrier literal comparison");
+        out["kind"] = "carrier_literal_observation"; out["operation"] = request.at("operation");
+        out["left"] = request.at("left"); out["right"] = request.at("right"); out["literal_type"] = literal;
+        out["operand_side"] = literal_left ? "right" : "left";
+        out["operand_type"] = projection.at("source"); out["header"] = projection.at("header"); out["cpp"] = projection.at("cpp");
+        out["result_type"] = registry.at("operations").at(request.at("operation").text()).at("returns");
+        out["evaluation"] = "observe_nonliteral_operand_once"; out["operand_passing"] = "const_ref";
+        out["payload_access"] = "none";
+        return out;
+    }
+
     // Project each operand independently; only the ordinary resolver chooses a
     // payload operation. No wrapper-pair overloads and no recursive extraction.
     value resolve_operator(const value &metadata, const value &request, const value &names)
@@ -427,6 +479,11 @@ namespace scpp::api_generation
             plan["result_type"] = "boolean";
             if (operation.has("result_expression")) plan["result_expression"] = operation.at("result_expression");
             return plan;
+        }
+        if (operation.get("form", "binary") == "binary") {
+            fields_only(request, "operation left right", "operator request");
+            const auto literal = resolve_carrier_literal(metadata, registry, request, names);
+            if (literal.type != value::kind::null) return literal;
         }
         if (operation.get("form", "binary") != "binary"
             || (registry.at("types").has(request.at("left").text())

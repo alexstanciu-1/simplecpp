@@ -17,7 +17,7 @@ each slice. The original inventory is a baseline, not a current completion count
 | A2 | Complete for the agreed checked scalar conversions | Carrier conversion is C; ownership casts are D. |
 | B1 | Complete for the agreed scalar-facing truth/text/identity/observation scope | Carrier forms remain C; boxed arithmetic and access completion are not B1 credit. |
 | B2 | Complete for the agreed non-carrier special/mutation and text public paths; closure evidence below | Carrier forms C; indexed retention E; native exception inspection and overflow disposition G. |
-| C | Nullable numeric path and nullable/Result scalar reconstruction implemented; review pending | Four carrier families, state-preserving operations/conversions and conditional lifecycle. |
+| C | Nullable numeric/presence paths and nullable/Result scalar reconstruction implemented; review pending | Four carrier families, state-preserving operations/conversions and conditional lifecycle. |
 | D | Pending | Ownership, application targets and source Exception transport gaps. |
 | E | Existing vector/hash/boxed foundations; incomplete | Capability/access/initialization/cursor gaps and identity key-allocation debt. |
 | F | Pending | Callable transport and registered collection algorithms. |
@@ -163,7 +163,7 @@ now records the accepted arithmetic, comparison, truthiness and conversion decis
 It records the bare-source `copyable_value` contract, family-specific argument
 requirements, explicit ownership/nullable composition restrictions and supported
 Result-of-nullable states. Uniform one-layer carrier arithmetic/comparisons and checked conversion policies
-are approved but not yet implemented. The accepted scope includes native-only facilities only when required by an included
+are approved and partially implemented as recorded in the current status above. The accepted scope includes native-only facilities only when required by an included
 core contract; full frontend adoption remains excluded.
 
 ## Next implementation work
@@ -870,3 +870,25 @@ C still requires sentinel-family recipes, structured-error strict identity,
 noncopyable/scoped observations, broader payload capabilities and the remaining
 state/lifetime matrix. All 330 existing runtime generation plans remain unchanged;
 this slice requires no runtime-core rebuild.
+
+## C6 — nullable literal-null presence
+
+The literal-null audit follows expression_evaluation.md and type_use_modifiers.md:
+`=== null` and `!== null` observe nullable presence once without copying/extracting
+the payload. The existing my-try presence preparation admits strict forms only;
+Result-to-null is not nullable absence, including Result-of-nullable. Broad native
+strict-identity overloads are not used to invent source admission.
+
+Shared state metadata now declares literal matches; a global operator policy
+selects the strict forms. One generator route handles both operand orders without
+family-name exceptions or payload adapters. Public execution covers nullable<int64>
+and nullable<string>, including a non-SSO payload and once-only evaluation. Ordinary
+null equality and Result/null reject. Nested vector payload presence resolves
+without requiring a vector payload equality API.
+
+This closes the initial nullable literal-null route, not full carrier completion.
+False/true sentinel handling remains with their pending family recipes; ownership
+presence remains D. Strict structured-error identity, conditional lifecycle,
+noncopyable/scoped observation, large-payload condition copy avoidance and the C5
+move-aware error allocation follow-up remain required. The first complete carrier
+review is still open. Existing runtime generation remains 330 identical units.

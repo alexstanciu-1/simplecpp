@@ -41,12 +41,22 @@ namespace scpp::api_generation
                 std::set<std::string> seen;
                 for (std::size_t i = 0; i < states.items.size(); ++i) {
                     const auto &state = states.items[i];
-                    fields_only(state, "name test casts condition comparison_tag reconstruct", "carrier state");
+                    fields_only(state, "name test casts condition comparison_tag reconstruct literals", "carrier state");
                     if (state.has("condition") && state.get("condition") != "payload"
                         && state.get("condition") != "true" && state.get("condition") != "false")
                         throw std::runtime_error("Unknown carrier condition policy");
                     authored_name(state.at("name").text());
                     if (state.has("comparison_tag")) authored_name(state.at("comparison_tag").text());
+                    if (state.has("literals")) {
+                        if (state.at("literals").type != value::kind::array || state.at("literals").items.empty())
+                            throw std::runtime_error("Carrier state literals require a nonempty array");
+                        std::set<std::string> literals;
+                        for (const auto &literal : state.at("literals").items) {
+                            metadata.at("global_operators").at("types").at(literal.text());
+                            if (!literals.insert(literal.text()).second) throw std::runtime_error("Duplicate carrier state literal");
+                        }
+                    }
+
                     if (!seen.insert(state.at("name").text()).second) throw std::runtime_error("Duplicate carrier state");
                     if (state.has("test") == (i + 1 == states.items.size()))
                         throw std::runtime_error("Carrier states require a final fallback only");

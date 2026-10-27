@@ -77,6 +77,24 @@ bad['global_operators']['carrier_comparisons']['operations']['numeric_equal']['s
 resolve('nullable<int64>','nullable<int64>','numeric_equal',meta=bad,error='Payload states require payload comparison')
 resolve('nullable<int64>','nullable<uint64>','numeric_equal',error='Unsupported operator operand domains')
 print('PASS: state-first comparison plans, numeric promotion versus strict identity, explicit error-identity gap and checked ordering')
+for op in ['strict_identical','strict_not_identical']:
+    for carrier in ['nullable<int64>','nullable<string>','nullable<vector<string>>']:
+        for left,right,side in [(carrier,'null','left'),('null',carrier,'right')]:
+            p = resolve(left,right,op)
+            assert p['kind'] == 'carrier_literal_observation'
+            assert p['operand_side'] == side and p['payload_access'] == 'none'
+            assert p['operand_passing'] == 'const_ref'
+            assert p['states'][-1]['value'] == str(op == 'strict_identical').lower()
+    resolve('result<int64>','null',op,error='Unsupported carrier literal comparison')
+    resolve('result<nullable<int64>>','null',op,error='Unsupported carrier literal comparison')
+for op in ['numeric_equal','numeric_not_equal']:
+    resolve('nullable<int64>','null',op,error='Unsupported carrier payload')
+for op in ['equal','not_equal']:
+    resolve('nullable<int64>','null',op,error='Unsupported operator operand type')
+bad = copy.deepcopy(metadata)
+bad['families']['nullable']['carrier']['states'][1]['literals'] = ['null','null']
+resolve('nullable<int64>','null','strict_identical',meta=bad,error='Duplicate carrier state literal')
+print('PASS: strict literal-null presence, both operand orders, no extraction/copy and rejected Result/ordinary routes')
 renamed = copy.deepcopy(metadata)
 renamed['families']['optional_number'] = renamed['families'].pop('nullable')
 renamed['families']['optional_number']['defaults'] = ['int64']
@@ -213,14 +231,14 @@ with tempfile.TemporaryDirectory(prefix='scpp-carrier-') as directory:
     seal_package(sdk, ['core'])
     os.environ['SCPP_API_GENERATOR'] = str(sdk / 'tools/scpp_api_generator')
     request = work / 'request.json'
-    request.write_text(json.dumps({'package':'app.carrier', 'roots':['nullable<int64>','nullable<float64>','result<int64>','result<float64>'],
-                                  'names':{'nullable<int64>':'optional_integer','nullable<float64>':'optional_float','result<int64>':'result_integer','result<float64>':'result_float'}}))
+    request.write_text(json.dumps({'package':'app.carrier', 'roots':['nullable<int64>','nullable<float64>','nullable<string>','result<int64>','result<float64>'],
+                                  'names':{'nullable<int64>':'optional_integer','nullable<float64>':'optional_float','nullable<string>':'optional_text','result<int64>':'result_integer','result<float64>':'result_float'}}))
     app = work / 'app'
     # Storage ABI flags match the SDK. Instrument the generated implementation below.
     manifest = concrete_types.generate(request, app, sdk, [sdk], 'clang++', [])
-    assert len(manifest['sources']) == 4
-    print('Carrier storage bytes:', {key:manifest['types'][key]['layout'][0] for key in ['nullable<int64>','nullable<float64>','result<int64>','result<float64>']})
-    names = {'nullable<int64>':'optional_integer','nullable<float64>':'optional_float','result<int64>':'result_integer','result<float64>':'result_float'}
+    assert len(manifest['sources']) == 5
+    print('Carrier storage bytes:', {key:manifest['types'][key]['layout'][0] for key in ['nullable<int64>','nullable<float64>','nullable<string>','result<int64>','result<float64>']})
+    names = {'nullable<int64>':'optional_integer','nullable<float64>':'optional_float','nullable<string>':'optional_text','result<int64>':'result_integer','result<float64>':'result_float'}
     functions = []
     headers = {'scpp/optional_integer.hpp'}
     for op in ['add','subtract','multiply','divide','remainder','less','compare']:
@@ -319,6 +337,20 @@ with tempfile.TemporaryDirectory(prefix='scpp-carrier-') as directory:
                 else: body += branch
             functions.append('static '+plan['target_cpp']+' reconstruct_'+family+'_'+target_type
                              +'(const '+plan['projection']['cpp']+'& source) { '+body+' }')
+    for op in ['strict_identical','strict_not_identical']:
+        for source_type, suffix in [('int64','integer'),('string','text')]:
+            for side in ['left','right']:
+                source = f'nullable<{source_type}>'
+                plan = resolve(source if side == 'left' else 'null', 'null' if side == 'left' else source, op, names=names)
+                headers.add(plan['header'])
+                body = '++observations; const auto &value = source;\n'
+                for state in plan['states']:
+                    branch = 'return scpp::boolean('+state['value']+');'
+                    if 'test_expression' in state:
+                        body += 'if ('+state['test_expression'].replace('${value}','value')+') { '+branch+' }\n'
+                    else: body += branch
+                functions.append('static scpp::boolean null_'+op+'_'+side+'_'+suffix
+                                 +'(const '+plan['cpp']+'& source, int &observations) { '+body+' }')
     code = '\n'.join('#include "'+h+'"' for h in sorted(headers)) + '\n' + '\n'.join(functions)
     code += r'''
 #include "public_api_guard.hpp"
@@ -334,6 +366,8 @@ int main() {
     using scpp::int64; using optional = scpp::optional_integer;
     optional left(int64(12)), right(int64(3)), absent;
     int effects = 0;
+    const scpp::string long_text("This payload is long enough that copying it requires a heap allocation.");
+    const scpp::optional_text present_text(long_text), absent_text;
     auto before = allocations;
     CHECK(run_add(left,right,effects).native_value() == 15);
     CHECK(run_subtract(left,right,effects).native_value() == 9);
@@ -398,6 +432,26 @@ int main() {
     auto result_widened = reconstruct_result_float64(successful);
     CHECK(result_widened.require_value("result").native_value() == 12.0);
     CHECK(reconstruct_result_int64(result_widened).require_value("roundtrip").native_value() == 12);
+    int observations = 0, evaluations = 0;
+    CHECK(null_strict_identical_left_integer(absent,observations));
+    CHECK(null_strict_identical_right_integer(absent,observations));
+    CHECK(!null_strict_identical_left_integer(zero,observations));
+    CHECK(!null_strict_identical_right_integer(zero,observations));
+    CHECK(null_strict_not_identical_left_integer(zero,observations));
+    CHECK(null_strict_not_identical_right_integer(zero,observations));
+    CHECK(!null_strict_not_identical_left_integer(absent,observations));
+    CHECK(!null_strict_not_identical_right_integer(absent,observations));
+    CHECK(null_strict_identical_left_text(absent_text,observations));
+    CHECK(null_strict_identical_right_text(absent_text,observations));
+    CHECK(!null_strict_identical_left_text(present_text,observations));
+    CHECK(!null_strict_identical_right_text(present_text,observations));
+    CHECK(null_strict_not_identical_left_text(([&]() -> const scpp::optional_text & {
+        ++evaluations; return present_text;
+    })(),observations));
+    CHECK(null_strict_not_identical_right_text(present_text,observations));
+    CHECK(!null_strict_not_identical_left_text(absent_text,observations));
+    CHECK(!null_strict_not_identical_right_text(absent_text,observations));
+    CHECK(observations == 16 && evaluations == 1);
     CHECK(allocations == before);
     effects = 0; bool caught = false;
     try { (void)run_add(absent,right,effects); } catch (...) { caught = true; }
@@ -440,7 +494,7 @@ int main() {
     int64 retained(0);
     { optional temporary(int64(42)); retained = temporary.require_value("retain"); temporary.reset(); }
     CHECK(retained.native_value() == 42);
-    std::puts("PASS: public nullable arithmetic, ordered failures, take/reset, casts, conditions, comparisons, reconstruction, owned lifetime; success allocations=0");
+    std::puts("PASS: public nullable arithmetic, ordered failures, take/reset, casts, conditions, comparisons, reconstruction, literal presence, owned lifetime; success allocations=0");
 }
 '''
     code = code.replace('CONDITION_NOT_ABSENT', negate('nullable<int64>')['result_expression'].replace('${result}', 'observe_condition(absent)'))

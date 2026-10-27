@@ -840,7 +840,10 @@
             "reconstruct": {
               "kind": "state",
               "expression": "${target}()"
-            }
+            },
+            "literals": [
+              "null"
+            ]
           }
         ]
       }
@@ -3719,6 +3722,21 @@
           "same_states": {
             "absent": "false"
           }
+        }
+      }
+    },
+    "carrier_literals": {
+      "types": [
+        "null"
+      ],
+      "operations": {
+        "strict_identical": {
+          "matched": "true",
+          "unmatched": "false"
+        },
+        "strict_not_identical": {
+          "matched": "false",
+          "unmatched": "true"
         }
       }
     }

@@ -1629,3 +1629,32 @@ Eight focused regression tests passed: release 10.10s; ASan/UBSan with leak dete
 Cross-family and recursive conversion remain rejected. Literal-null comparisons,
 strict error identity, sentinel recipes and the remaining lifecycle/observation work
 remain open; neither the first complete carrier review nor full C is closed here.
+
+## C6 nullable literal-null presence
+
+Shared metadata now plans strict null presence in either operand order without
+payload extraction, payload comparison or wrapper snapshots. The public-only proof
+adds application-owned nullable<string> to the four scalar carriers. Present and
+absent integers and long strings cover both strict forms/orders; a side-effecting
+operand verifies single evaluation. All measured successful cases allocate zero.
+Release and ASan/UBSan with leak detection pass, including sealed reuse of all five
+application specializations. Result error reconstruction still measures two separate
+allocations, retaining the C5 follow-up.
+
+Layout probes/native assertions report nullable<string> at 40 bytes; numeric
+nullable types remain 16 bytes and the two Result types remain 96 bytes on this
+target. These are target observations. The route adds no stored state or adapter.
+
+Single compile-only observations: five generated storage units total 5.8091s
+release / 7.6577s sanitized; public caller 0.2519s / 0.4796s. Tool builds were 5.77s /
+14.89s. Lightweight release regressions overlapped part of the sanitized proof;
+these are observational costs, not isolated benchmark comparisons. Runtime-core
+was not rebuilt: all 330 complete generation plans were equal before/after, allowing
+the publication metadata identity to refresh without layout or implementation changes.
+
+Metadata tests cover nested vector payload presence, both operator directions,
+duplicate literal rejection, ordinary nullable/null rejection and Result/null
+rejection (including Result-of-nullable). No broad native identity overload is used
+to extend source admission. Eight focused release regressions passed in 9.68s; the same eight passed under
+ASan/UBSan with leak detection in 55.87s.
+The carrier review and remaining state/lifecycle contracts remain open.

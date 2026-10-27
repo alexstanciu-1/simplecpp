@@ -891,3 +891,24 @@ exceptions, not Result errors. No move from the original source or extra wrapper
 pair runtime implementation is introduced. The initial nullable/Result recipes
 support scalar payload casts; conditional lifecycle, broader payload conversion
 and sentinel families remain separate completion work.
+
+## Literal carrier presence observations
+
+A carrier state may declare `literals`, a nonempty list of registered singleton
+literal types that match that state. `global_operators.carrier_literals` selects
+literal types and operations, with `matched` / `unmatched` boolean results. The
+initial policy admits only strict identity and strict nonidentity against null;
+nullable absence declares the match. Result states do not declare null matches.
+This is independent of payload comparison admission and does not make ordinary
+nullable equality against null valid.
+
+The resolver emits `carrier_literal_observation`, identifying the nonliteral
+`operand_side`, canonical `operand_type`, public header/class, registered result
+type and ordered state tests/results. Its evaluation contract is
+`observe_nonliteral_operand_once`, `operand_passing: const_ref`, and
+`payload_access: none`. Consumers bind the operand once for the duration of the
+observation and test state without copying, extracting or consuming the payload.
+Existing plain scalar/boxed comparisons retain their own operator path. Literal
+presence does not recursively peel Result or other carriers. Boolean sentinels and
+ownership observations require their own admitted metadata; this slice does not
+infer them from the broader native C++ overload set.

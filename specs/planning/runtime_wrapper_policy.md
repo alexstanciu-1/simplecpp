@@ -364,3 +364,10 @@ an exception and leaves source/existing destination unchanged. Four application
 specializations are execution-tested. Error snapshot move construction remains a
 required allocation follow-up (two allocations for the measured non-SSO message),
 alongside the previously recorded lifecycle and observation work.
+
+C6 adds strict literal-null nullable presence plans for both operand orders. They
+bind the nonliteral operand once and observe state without payload copying or
+extraction, independently of payload comparison capability. Ordinary null equality
+and Result/null remain rejected; boolean sentinel and ownership policies are not
+inferred from native overload breadth. The public long-string proof measures zero
+allocations for presence checks. This does not close the full carrier review.
