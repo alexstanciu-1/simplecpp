@@ -1,6 +1,7 @@
 #include "operators.hpp"
 #include "names.hpp"
 #include "function_sets.hpp"
+#include "conversions.hpp"
 #include <set>
 
 namespace scpp::api_generation
@@ -25,7 +26,7 @@ namespace scpp::api_generation
     static const value &validated_registry(const value &metadata)
     {
         const auto &registry = metadata.at("global_operators");
-        fields_only(registry, "types domains groups operations", "global operators");
+        fields_only(registry, "types domains groups operations compounds", "global operators");
         for (const auto *field : {"types", "domains", "groups", "operations"}) {
             if (registry.at(field).type != value::kind::object)
                 throw std::runtime_error("Operator registry requires objects");
@@ -130,6 +131,28 @@ namespace scpp::api_generation
                 registry.at("types").at(type.text());
                 if (!published.insert(type.text()).second)
                     throw std::runtime_error("Duplicate operator publication");
+            }
+        }
+        if (registry.has("compounds")) {
+            const auto &compounds = registry.at("compounds");
+            if (compounds.type != value::kind::object) throw std::runtime_error("Compound registry requires an object");
+            for (const auto &[name, compound] : compounds.fields) {
+                authored_name(name);
+                fields_only(compound, "operation rules", "compound operation");
+                const auto &operation = registry.at("operations").at(compound.at("operation").text());
+                if (operation.get("form", "binary") != "binary") throw std::runtime_error("Compound calculation must be binary");
+                if (compound.at("rules").type != value::kind::array || compound.at("rules").items.empty())
+                    throw std::runtime_error("Compound rules require a nonempty array");
+                std::set<std::pair<std::string, std::string>> pairs;
+                for (const auto &rule : compound.at("rules").items) {
+                    fields_only(rule, "target right", "compound rule");
+                    const auto target = rule.at("target").text();
+                    registry.at("types").at(target);
+                    for (const auto &right : domains(rule.at("right"))) {
+                        registry.at("types").at(right);
+                        if (!pairs.emplace(target, right).second) throw std::runtime_error("Ambiguous compound rule");
+                    }
+                }
             }
         }
         return registry;
@@ -254,6 +277,46 @@ namespace scpp::api_generation
         const auto functions = (operation.has("function_set") || operation.has("pair_function_set")) ? expand_function_sets(metadata) : value::object();
         if (operation.get("form", "binary") == "unary") return resolve_unary_operator(registry, request, functions);
         return resolve_registered_operator(registry, request, functions);
+    }
+
+    static value compound_conversion(const value &metadata, const std::string &source, const std::string &target)
+    {
+        value request = value::object(); request["source"] = source; request["target"] = target;
+        if (source == target) { request["kind"] = "identity"; return request; }
+        auto plan = resolve_conversion(metadata, request);
+        plan["kind"] = "call";
+        return plan;
+    }
+
+    value resolve_compound(const value &metadata, const value &request)
+    {
+        fields_only(request, "operation target right", "compound request");
+        const auto &registry = validated_registry(metadata);
+        const auto name = request.at("operation").text(), target = request.at("target").text(), right = request.at("right").text();
+        const auto &compound = registry.at("compounds").at(name);
+        bool admitted = false;
+        for (const auto &rule : compound.at("rules").items)
+            admitted |= rule.at("target").text() == target && contains(rule.at("right"), right);
+        if (!admitted) throw std::runtime_error("Unsupported compound operands");
+        value calculation = value::object();
+        calculation["operation"] = compound.at("operation"); calculation["left"] = target; calculation["right"] = right;
+        const auto plan = resolve_operator(metadata, calculation);
+        // This first protocol owns plain, same-result-type write-back only. A
+        // conversion that happens to compile cannot authorize destination narrowing.
+        if (plan.get("kind") != "call" || !plan.has("operand_type") || plan.get("result_type") != target)
+            throw std::runtime_error("Compound requires a common-operand calculation returning the destination type");
+        value out = value::object();
+        out["operation"] = name; out["target"] = target; out["right"] = right; out["result_type"] = target;
+        out["kind"] = "ordered_compound"; out["calculation"] = plan;
+        out["left_conversion"] = compound_conversion(metadata, target, plan.at("operand_type").text());
+        out["right_conversion"] = compound_conversion(metadata, right, plan.at("operand_type").text());
+        out["writeback_conversion"] = compound_conversion(metadata, plan.at("result_type").text(), target);
+        out["steps"] = value::array();
+        for (const auto *step : {"capture_destination_and_retain_owners", "snapshot_left", "convert_left", "evaluate_right",
+                 "convert_right", "calculate", "convert_writeback", "commit_destination", "return_value_snapshot"})
+            out["steps"].items.emplace_back(step);
+        out["failure"] = "no_writeback_preserve_prior_effects";
+        return out;
     }
 
     value operator_functions(const value &metadata)

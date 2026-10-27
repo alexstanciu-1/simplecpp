@@ -405,6 +405,8 @@ namespace scpp::api_generation
 		auto input=parse_json(detail::string_access::get(request).native_value()); value output;
 		if (input.get("action")=="resolve_conversion") {
             output=resolve_conversion(input.at("metadata"),input.at("request"));
+        } else if (input.get("action")=="resolve_compound") {
+            output=resolve_compound(input.at("metadata"),input.at("request"));
         } else if (input.get("action")=="resolve_operator") {
             output=resolve_operator(input.at("metadata"),input.at("request"));
         } else if (input.get("action")=="names") {

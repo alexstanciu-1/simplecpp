@@ -16,7 +16,7 @@ each slice. The original inventory is a baseline, not a current completion count
 | A1 | Complete for the agreed ordinary numeric domain | Specialized and boxed extensions remain in B2/E, not implied by A1. |
 | A2 | Complete for the agreed checked scalar conversions | Carrier conversion is C; ownership casts are D. |
 | B1 | Complete for the agreed scalar-facing truth/text/identity/observation scope | Carrier forms remain C; boxed arithmetic and access completion are not B1 credit. |
-| B2 | Binary canonical/boxed bitwise and checked shifts, canonical power, numeric spaceship, numeric unary, scalar logical negation and prefix/postfix updates implemented | Compounds; carrier variants remain C. |
+| B2 | Binary canonical/boxed bitwise and checked shifts, canonical power, numeric spaceship, numeric unary, scalar logical negation, prefix/postfix updates and canonical numeric compound plans implemented | Boxed/text compounds; carrier variants remain C. |
 | C | Policy agreed; completion pending | Four carrier families, state-preserving operations/conversions and conditional lifecycle. |
 | D | Pending | Ownership, application targets and source Exception transport gaps. |
 | E | Existing vector/hash/boxed foundations; incomplete | Capability/access/initialization/cursor gaps and identity key-allocation debt. |
@@ -168,8 +168,9 @@ core contract; full frontend adoption remains excluded.
 
 ## Next implementation work
 
-Continue B2 with compound protocols using existing operator
-metadata and native error authorities.
+Continue B2 with boxed stored-kind and text compound protocols using existing
+operator metadata and native error authorities. Canonical numeric compound plans
+now reuse the published calculations and casts.
 Proceed to C with the accepted one-layer carrier rules; the first complete carrier
 path must be reviewed before D/F expansion. Do not treat existing native template
 instantiations as source admission or skip state/lifetime proofs to close a row.
@@ -527,3 +528,18 @@ old/new snapshots, single destination resolution, invalid boxed kinds preserving
 storage, safe integer boundaries and floating NaN/infinity. Successful operations
 allocate zero times. Source property/index owner capture and carrier updates remain
 D/E/C work; B2 still needs compound snapshot and write-back protocols.
+
+## Active-goal progress — B2f canonical numeric compound plans
+
+The C++ metadata resolver now returns an ordered compound protocol and existing
+calculation/conversion API identities. Eleven canonical integer compounds and four
+float-destination arithmetic operations with int/float RHS yield nineteen admitted
+plans without additional runtime adapters. Directional admission is metadata;
+fixed-width, boxed, carrier and text cases are not silently inferred.
+
+Public-only generated consumers prove destination resolution once, preserving the
+old left before RHS mutation, owned result snapshots, failure before RHS, and no
+compound write-back after RHS/calculation failure. Successful paths allocate zero.
+Publication reuse emits no duplicate definitions. This is runtime-plan evidence,
+not full compiler frontend adoption. Boxed stored-kind validation and text compound
+replacement remain B2 work; carrier write-back remains C and indexed owners E.

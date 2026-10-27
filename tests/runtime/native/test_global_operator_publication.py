@@ -37,6 +37,11 @@ with tempfile.TemporaryDirectory(prefix='scpp-operator-publication-') as directo
     logical_plan=json.loads(subprocess.check_output([str(sdk/'tools/scpp_api_generator')],input=json.dumps(logical_request),text=True))
     assert logical_plan['api']=='condition_truthy_dynamic' and logical_plan['api'] in manifest['apis']
     logical_expression=logical_plan['result_expression'].replace('${result}',logical_plan['function']+'(scpp::dynamic(scpp::boolean(false)))')
+    compound_request={'action':'resolve_compound','metadata':logical_request['metadata'],
+                      'request':{'operation':'add_assign','target':'int64','right':'int64'}}
+    compound_plan=json.loads(subprocess.check_output([str(sdk/'tools/scpp_api_generator')],input=json.dumps(compound_request),text=True))
+    assert compound_plan['calculation']['api'] in manifest['apis']
+    assert compound_plan['left_conversion']['kind']==compound_plan['right_conversion']['kind']=='identity'
     (stage/'main.cpp').write_text('''#include "scpp/operators/add_int64.hpp"
 #include "scpp/operators/equal_mixed.hpp"
 #include "scpp/operators/divide_int64.hpp"
@@ -66,6 +71,11 @@ with tempfile.TemporaryDirectory(prefix='scpp-operator-publication-') as directo
 #include "scpp/identity/strict_identical_boxed_mixed_string.hpp"
 #include "scpp/identity/strict_not_identical_boxed_dynamic_int64.hpp"
 int main() {
+    scpp::int64 destination(10);
+    const auto saved_left=destination;
+    destination=scpp::int64(100); const scpp::int64 saved_right(3);
+    const auto replacement=COMPOUND_CALCULATION(saved_left,saved_right);
+    destination=replacement;
     scpp::mixed value(scpp::int64(7));
     scpp::dynamic updated(scpp::int64(1)); const auto old=scpp::update_post_increment(updated);
     scpp::float64 reset_value(7.0); scpp::clean(reset_value);
@@ -89,6 +99,7 @@ int main() {
         && scpp::numeric_negative(scpp::dynamic(scpp::int64(7))).get_int().native_value()==-7
         && scpp::numeric_complement(scpp::int64(0)).native_value()==-1
         && static_cast<bool>(LOGICAL_NOT_EXPRESSION)
+        && destination.native_value()==13
         && old.get_int().native_value()==1 && updated.get_int().native_value()==2
         && reset_value.native_value()==0.0
         && !static_cast<bool>(scpp::isset(scpp::dynamic{}))
@@ -99,7 +110,7 @@ int main() {
         && scpp::cast_uint64(scpp::string("18446744073709551615")).native_value()==18446744073709551615ULL
         && static_cast<bool>(scpp::numeric_less(scpp::float64(1.0),scpp::float64(2.0))) ? 0 : 1;
 }
-'''.replace('LOGICAL_NOT_EXPRESSION',logical_expression))
+'''.replace('LOGICAL_NOT_EXPRESSION',logical_expression).replace('COMPOUND_CALCULATION',compound_plan['calculation']['function']))
     flags = ['-fsanitize=address,undefined', '-fno-sanitize-recover=all'] if args.sanitize else []
     subprocess.run(['clang++','-std=c++23','-O2',*flags,'-I'+str(sdk/'public'),str(stage/'main.cpp'),
         str(sdk/'lib/libcore.a'),'-fuse-ld=mold','-o',str(stage/'proof')], check=True)

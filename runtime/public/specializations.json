@@ -1,6 +1,6 @@
 {
   "abi": "529dd5502370f48d64891818e9439aae72831b990b4027e8abe25c50c1216c21",
-  "api_identity": "444be355c008fe536a88242e3cd36e9f515afec354925c4be4ed0ce3f081ab65",
+  "api_identity": "24e5e4848c9d6daf9f895e0770be4f5c10c8a21afe25f60aa8bdf9d138ce8ed9",
   "apis": {
     "add_float64": {
       "header": "scpp/operators/add_float64.hpp",

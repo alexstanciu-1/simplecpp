@@ -610,3 +610,30 @@ return references. Integer metadata uses the existing public representation's
 prefix methods; other types borrow mutable native storage. Native boxed kind checks
 and numeric overflow behavior remain unchanged. This is separate from compound
 snapshot/RHS/write-back protocols and does not admit additional fixed widths.
+
+## Ordered compound plans
+
+`global_operators.compounds` associates an operation identity with a binary
+`operation` and nonoverlapping `rules`. Each rule names a `target` type and a
+`right` type or nonempty type list. This admission is directional and independent
+of ordinary binary promotion. The C++ generator has no compound type-name or
+operator-name exceptions.
+
+`resolve_compound` accepts `operation`, `target`, and `right`. It returns the
+existing calculation plan, separate left/right/write-back conversion plans, and
+an ordered `steps` protocol. The consumer captures writable storage and retains
+owners, snapshots/converts the old left before RHS evaluation, computes/converts,
+then commits once and returns an owned value snapshot. On failure it must skip
+write-back without rolling back earlier effects. Identity conversions are explicit;
+nonidentity conversions reuse the checked conversion registry. This is a compiler
+lowering plan, not a two-argument C++ mutation function that could lose RHS ordering.
+
+The first protocol supports common-operand calculations returning the destination
+type. Metadata admits canonical int/int numeric compounds and float destinations
+with int/float RHS for addition, subtraction, multiplication and division. It does
+not infer int-destination/float-RHS admission from an available checked cast.
+Fixed widths, boxed stored-kind checks, text replacement and carriers are not
+admitted by this slice. General destination validation and owner retention remain
+consumer obligations; indexed destinations need their separate access protocol.
+No new runtime implementations are emitted: plans reuse published calculations and
+casts through the existing API inventory.

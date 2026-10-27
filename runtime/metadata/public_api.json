@@ -2078,6 +2078,157 @@
     }
   },
   "global_operators": {
+    "compounds": {
+      "add_assign": {
+        "operation": "add",
+        "rules": [
+          {
+            "target": "int64",
+            "right": [
+              "int64"
+            ]
+          },
+          {
+            "target": "float64",
+            "right": [
+              "int64",
+              "float64"
+            ]
+          }
+        ]
+      },
+      "subtract_assign": {
+        "operation": "subtract",
+        "rules": [
+          {
+            "target": "int64",
+            "right": [
+              "int64"
+            ]
+          },
+          {
+            "target": "float64",
+            "right": [
+              "int64",
+              "float64"
+            ]
+          }
+        ]
+      },
+      "multiply_assign": {
+        "operation": "multiply",
+        "rules": [
+          {
+            "target": "int64",
+            "right": [
+              "int64"
+            ]
+          },
+          {
+            "target": "float64",
+            "right": [
+              "int64",
+              "float64"
+            ]
+          }
+        ]
+      },
+      "divide_assign": {
+        "operation": "divide",
+        "rules": [
+          {
+            "target": "int64",
+            "right": [
+              "int64"
+            ]
+          },
+          {
+            "target": "float64",
+            "right": [
+              "int64",
+              "float64"
+            ]
+          }
+        ]
+      },
+      "remainder_assign": {
+        "operation": "remainder",
+        "rules": [
+          {
+            "target": "int64",
+            "right": [
+              "int64"
+            ]
+          }
+        ]
+      },
+      "bit_and_assign": {
+        "operation": "bit_and",
+        "rules": [
+          {
+            "target": "int64",
+            "right": [
+              "int64"
+            ]
+          }
+        ]
+      },
+      "bit_or_assign": {
+        "operation": "bit_or",
+        "rules": [
+          {
+            "target": "int64",
+            "right": [
+              "int64"
+            ]
+          }
+        ]
+      },
+      "bit_xor_assign": {
+        "operation": "bit_xor",
+        "rules": [
+          {
+            "target": "int64",
+            "right": [
+              "int64"
+            ]
+          }
+        ]
+      },
+      "shift_left_assign": {
+        "operation": "shift_left",
+        "rules": [
+          {
+            "target": "int64",
+            "right": [
+              "int64"
+            ]
+          }
+        ]
+      },
+      "shift_right_assign": {
+        "operation": "shift_right",
+        "rules": [
+          {
+            "target": "int64",
+            "right": [
+              "int64"
+            ]
+          }
+        ]
+      },
+      "power_assign": {
+        "operation": "power",
+        "rules": [
+          {
+            "target": "int64",
+            "right": [
+              "int64"
+            ]
+          }
+        ]
+      }
+    },
     "types": {
       "int8": {
         "domain": "signed",

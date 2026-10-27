@@ -1276,3 +1276,32 @@ This covers value updates, not compound RHS ordering or general source lvalue
 capture. Carrier updates remain C; property/index owner lifetime remains D/E, and
 legacy boxed exception inspection remains G. Compound snapshot/check/write-back is
 still explicitly unfinished B2 work.
+
+## B2f — canonical numeric compound plans
+
+Nineteen admitted directional plans reuse existing numeric, bitwise, shift, power
+and checked-cast implementations. No new runtime adapter or core rebuild is needed.
+The metadata resolver returns ordered capture/snapshot/conversion/evaluation/
+calculation/commit steps. Public-only consumers execute those steps, including an
+RHS that overwrites the destination: an original 10 plus an RHS returning 3 still
+stores 13, even when the RHS first stores 100.
+
+The combined proof covers all nineteen successful plans, destination capture once,
+owned results after later mutation, destination failure suppressing RHS, throwing
+RHS, zero division, negative/overflowing power and invalid shifts. Failed operations
+leave the RHS's store of 100 intact. All successful paths allocate zero. Errors are
+observed as thrown failures; this does not close the previously recorded exception
+inspection gap. Release and ASan/UBSan with leak detection pass.
+
+Single whole-proof compile **and link** costs: release **0.4312 s**, sanitized
+**0.7821 s**. Generator rebuild costs: release **6.98 s**, peak child RSS
+**163,528 KiB**; sanitized **20.57 s**, **531,060 KiB**. These are single observations
+on WSL, not matched compile-only public/native benchmarks. Generation retains the
+same 317 runtime implementation units; only the metadata identity changes in the
+publication manifest. Six focused metadata regressions pass in release (4.35 s) and with
+ASan/UBSan/leak detection (30.17 s). Sealed relocated publication passes in both modes; it resolves the compound plan using its own tool and
+metadata and reuses the existing API definition with zero generated application units.
+
+Reproduce the execution proof with `check_compound_api.py --tool <generator>
+--core <core.a> [--sanitize]`. Fixed widths, boxed stored-kind write-back, text,
+carriers and general indexed owner lifetime remain outside this completed slice.
