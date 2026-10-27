@@ -2461,5 +2461,128 @@
         "returns": "boolean"
       }
     }
+  },
+  "conversions": {
+    "sources": {
+      "int8": "int64",
+      "int16": "int64",
+      "int32": "int64",
+      "int64": "int64",
+      "uint8": "uint64",
+      "uint16": "uint64",
+      "uint32": "uint64",
+      "uint64": "uint64",
+      "float64": "float64",
+      "string": "string"
+    },
+    "bindings": {
+      "int64": {
+        "operand": "scpp::int_t<__INT64_TYPE__>(value.native_value())",
+        "includes": [
+          "scpp/cast.hpp"
+        ],
+        "targets": [
+          "int8",
+          "int16",
+          "int32",
+          "int64",
+          "uint8",
+          "uint16",
+          "uint32",
+          "uint64",
+          "float64"
+        ]
+      },
+      "uint64": {
+        "operand": "scpp::int_t<__UINT64_TYPE__>(value.native_value())",
+        "includes": [
+          "scpp/cast.hpp"
+        ],
+        "targets": [
+          "int8",
+          "int16",
+          "int32",
+          "int64",
+          "uint8",
+          "uint16",
+          "uint32",
+          "uint64",
+          "float64"
+        ]
+      },
+      "float64": {
+        "operand": "scpp::float_t(value.native_value())",
+        "includes": [
+          "scpp/cast.hpp"
+        ],
+        "targets": [
+          "int8",
+          "int16",
+          "int32",
+          "int64",
+          "uint8",
+          "uint16",
+          "uint32",
+          "uint64",
+          "float64"
+        ]
+      },
+      "string": {
+        "operand": "detail::string_access::get(value)",
+        "includes": [
+          "scpp/cast.hpp",
+          "scpp/detail/string_access.hpp"
+        ],
+        "targets": [
+          "int8",
+          "int16",
+          "int32",
+          "int64",
+          "uint8",
+          "uint16",
+          "uint32",
+          "uint64",
+          "float64"
+        ]
+      }
+    },
+    "targets": {
+      "int8": {
+        "expression": "${public:int8}(scpp::cast<scpp::int_t<__INT8_TYPE__>>(${operand}).native_value())",
+        "includes": []
+      },
+      "int16": {
+        "expression": "${public:int16}(scpp::cast<scpp::int_t<__INT16_TYPE__>>(${operand}).native_value())",
+        "includes": []
+      },
+      "int32": {
+        "expression": "${public:int32}(scpp::cast<scpp::int_t<__INT32_TYPE__>>(${operand}).native_value())",
+        "includes": []
+      },
+      "int64": {
+        "expression": "${public:int64}(scpp::cast<scpp::int_t<__INT64_TYPE__>>(${operand}).native_value())",
+        "includes": []
+      },
+      "uint8": {
+        "expression": "${public:uint8}(scpp::cast<scpp::int_t<__UINT8_TYPE__>>(${operand}).native_value())",
+        "includes": []
+      },
+      "uint16": {
+        "expression": "${public:uint16}(scpp::cast<scpp::int_t<__UINT16_TYPE__>>(${operand}).native_value())",
+        "includes": []
+      },
+      "uint32": {
+        "expression": "${public:uint32}(scpp::cast<scpp::int_t<__UINT32_TYPE__>>(${operand}).native_value())",
+        "includes": []
+      },
+      "uint64": {
+        "expression": "${public:uint64}(scpp::cast<scpp::int_t<__UINT64_TYPE__>>(${operand}).native_value())",
+        "includes": []
+      },
+      "float64": {
+        "expression": "${public:float64}(scpp::cast<scpp::float_t>(${operand}).native_value())",
+        "includes": []
+      }
+    }
   }
 }

@@ -270,3 +270,19 @@ publication remain pending. The follow-up native integer parser now uses the tar
 accepts the full uint64 range. The remaining A2 work is metadata-driven public
 conversion admission, generation and publication, including boxed conversions. No carrier,
 ownership, callback or module scope is added by this slice.
+
+## Active-goal progress — A2b numeric-target conversion publication
+
+The existing API generator now accepts metadata-defined checked conversions and
+returns normalized source plans. Numeric-width sources normalize losslessly to
+their signedness family's maximum; string and float64 retain their type. Runtime
+publication provides 36 adapters for four normalized sources and nine numeric
+targets, with ordinary API import/reuse and no template-bearing public headers.
+The generic registry owns admission, normalization and snippets; the shared native
+cast owner remains responsible for value checks. Raw representation access is not
+repurposed as a language cast.
+
+Remaining A2 work: boolean targets/sources, string formatting results, admitted
+boxed conversions, and their complete publication/validation. Carrier conversions
+remain in C. No frontend integration, ownership/callback or module completion is
+claimed. Evidence is in `runtime/specs/public_api_boundary_results.md`.

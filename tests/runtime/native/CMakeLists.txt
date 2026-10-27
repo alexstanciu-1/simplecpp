@@ -354,3 +354,9 @@ add_test(NAME scpp_test_numeric_operators COMMAND test_numeric_operators)
 add_executable(test_checked_scalar_casts test_checked_scalar_casts.cpp)
 target_link_libraries(test_checked_scalar_casts PRIVATE scpp_runtime_core)
 add_test(NAME scpp_test_checked_scalar_casts COMMAND test_checked_scalar_casts)
+
+add_executable(test_public_conversions test_public_conversions.cpp)
+target_link_libraries(test_public_conversions PRIVATE scpp_core_api)
+add_test(NAME scpp_test_public_conversions COMMAND test_public_conversions)
+add_test(NAME scpp_check_conversions COMMAND ${Python3_EXECUTABLE}
+  ${CMAKE_CURRENT_SOURCE_DIR}/check_conversions.py $<TARGET_FILE:scpp_api_generator>)

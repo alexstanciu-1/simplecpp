@@ -336,3 +336,33 @@ All numeric computation delegates to existing `generated_operator_detail` helper
 including checked zero-divisor handling; addition uses the same route now. Existing
 native overflow limitations remain, including signed division overflow. Raw public
 constructors are not advertised as the future checked-cast API.
+
+## Checked conversion recipes
+
+`conversions` uses the same operation emitter and API ownership/publication records
+as ordinary functions and global operators. It has three metadata maps:
+
+- `sources`: original public type to normalized source type. Normalization is one
+  step and must preserve the value; signed integer widths use int64, unsigned widths
+  use uint64, float64 and string retain themselves. These are authored semantic
+  facts, not a generator inference from C++ type names.
+- `bindings`: each normalized source supplies its native `operand` expression,
+  private `includes`, and admitted `targets`. A binding must normalize to itself.
+- `targets`: the checked conversion `expression` and private `includes` for each
+  result type. `${operand}` is substituted from the source binding; ordinary public
+  type substitutions and dependency resolution then use the existing emitter.
+
+`resolve_conversion` accepts `source` and `target`, returning the normalized
+`operand_type`, API identity, function/header and whether lossless normalization is
+needed. Generated signatures take the normalized source. A compiler must evaluate
+once and perform that lossless conversion before the call; raw C++ callers do not
+receive implicit narrow-source overloads. Destination narrowing occurs only inside
+the selected checked native cast. This is separate from representation access used
+by unrelated APIs; existing leaf borrow/construct definitions are unchanged.
+
+The first publication has nine numeric targets and four normalized sources
+(int64, uint64, float64, string): 36 adapters. Each target calls `scpp::cast` so range
+checking, strict parsing, exceptions and accepted floating precision loss remain
+owned by the native cast contract. Public headers contain no templates. Boolean,
+string-result, boxed and carrier conversions remain pending. Neither this registry
+nor a raw C++ representation constructor admits those missing source-language casts.

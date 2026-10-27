@@ -32,7 +32,7 @@ assert len(plan['units']) == 3
 assert 'vector<string>' in plan['types']
 # No type-name dispatch: a newly named family with the same metadata works unchanged.
 renamed=copy.deepcopy(base)
-renamed['metadata']['families']={'sequence':renamed['metadata']['families']['vector']}
+renamed['metadata']['families']['sequence']=renamed['metadata']['families'].pop('vector')
 renamed['request']={'package':'application.middleware','roots':['sequence<string>']}
 renamed['names']={}
 result=invoke(renamed)

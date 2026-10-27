@@ -2,6 +2,7 @@
 #include "value.hpp"
 #include "names.hpp"
 #include "operators.hpp"
+#include "conversions.hpp"
 #include "scpp/detail/string_access.hpp"
 #include <set>
 #include <functional>
@@ -338,7 +339,7 @@ namespace scpp::api_generation
 			leaves_(merged_leaves(input)), names_(input.at("names")), naming_(registry_for(metadata_,leaves_,names_)) {}
 		value run()
 		{
-			fields_only(this->metadata_,"version types families bindings functions capabilities global_operators", "API metadata");
+			fields_only(this->metadata_,"version types families bindings functions capabilities global_operators conversions", "API metadata");
 			if (this->metadata_.at("version").text()!="api-v1") throw std::runtime_error("Unsupported API metadata version");
 			if (this->metadata_.has("capabilities")) {
                 if (this->metadata_.at("capabilities").type != value::kind::object)
@@ -356,7 +357,11 @@ namespace scpp::api_generation
 				this->claim(t.at("name").text(),key+":self");
 			}
 			for (const auto &root : this->request_.at("roots").items) this->materialize(root.text());
-			const auto generated_functions=operator_functions(this->metadata_);
+			auto generated_functions=operator_functions(this->metadata_);
+            for (const auto &[name, function] : conversion_functions(this->metadata_).fields) {
+                if (generated_functions.has(name)) throw std::runtime_error("Duplicate generated API ownership");
+                generated_functions[name] = function;
+            }
             if (this->request_.has("apis")) for (const auto &api : this->request_.at("apis").items) {
                 if (generated_functions.has(api.text()) && this->metadata_.at("functions").has(api.text()))
                     throw std::runtime_error("Duplicate global operator ownership");
@@ -386,7 +391,9 @@ namespace scpp::api_generation
 	string generate(const string &request)
 	{
 		auto input=parse_json(detail::string_access::get(request).native_value()); value output;
-		if (input.get("action")=="resolve_operator") {
+		if (input.get("action")=="resolve_conversion") {
+            output=resolve_conversion(input.at("metadata"),input.at("request"));
+        } else if (input.get("action")=="resolve_operator") {
             output=resolve_operator(input.at("metadata"),input.at("request"));
         } else if (input.get("action")=="names") {
 			naming names(input.at("registry")); output=value::array();

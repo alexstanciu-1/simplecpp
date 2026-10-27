@@ -695,3 +695,43 @@ One eight-job build per configuration: release **20.14 s**, peak child RSS
 **407,128 KiB**; sanitizer **43.81 s**, **608,116 KiB**. These are changed-core/test
 rebuilds, not public-caller or clean compiler timings. Public conversion generation
 and publication remain pending; this closes the native unsigned parsing gap above.
+
+## A2b — normalized numeric-target public conversions (2026-10-27)
+
+The C++ metadata generator now publishes 36 checked adapters: four normalized
+sources (int64, uint64, float64, string) to nine numeric targets. Source integer
+widths normalize losslessly within signedness; destination casts delegate to the
+shared checked native owner. The ordinary operation emitter, generated API
+inventory and sealed import records are reused. No source/target type-name dispatch
+is embedded in the generator.
+
+`test_public_conversions` compiles against public headers only and exercises every
+adapter, unsigned maximum parsing, signedness/range errors, non-finite rejection,
+strict-decimal rejection and accepted unsigned-to-floating precision loss. Its
+100-iteration success loop records **zero allocations**. Native cast boundary tests
+and prior numeric/boxed operator tests remain green. `check_conversions.py` checks
+normalization/admission, malformed normalization, duplicate requests, 36 generated
+units, template-free headers and zero-unit import reuse/conflict rejection.
+
+Seven focused release tests pass in **1.68 s**; the same tests under ASan/UBSan with
+leak detection pass in **10.57 s**. The relocated sealed-package proof now requests
+`cast_uint64_from_string`, generates zero adapters, and runs a public-only caller
+against the moved archive, in release and sanitizer configurations.
+
+Single-observation compile costs (`measure_global_operators.py --conversions`):
+
+| Case | Seconds | Preprocessed bytes |
+| --- | ---: | ---: |
+| Public string parse + floating-to-int8 caller | 0.0520 | 15,516 |
+| Native equivalent caller | 3.1226 | 2,976,498 |
+| Independent string-to-uint64 adapter | 3.1021 | 2,992,006 |
+
+The eight-job changed-core/test/tool release build took **20.65 s**, peak child RSS
+**410,376 KiB**; sanitizer build **47.47 s**, **613,176 KiB**. A later registry
+validation correction rebuilt only the generator object/archive/executable in each
+configuration; those unmeasured tool-only updates are not included in these timings.
+These are not clean compiler build times or stable speedup ratios. Raw caller
+observations are in `compiler/my-try-cpp/build/core-conversions-cost.json`.
+
+Boolean, string-result and boxed conversion publication remain in A2; wrappers
+remain in C. Full compiler frontend adoption is excluded from this goal.
