@@ -1611,3 +1611,10 @@ It rechecks final membership without mutation, then uses existing native COW/ide
 owners for descent and removal. The caller performs lazy key evaluation with removal
 readiness; the final call consumes only saved keys and never executes source callbacks.
 No-op removal does not detach; actual allocation failure is not made transactional.
+
+`index_path_store` and `index_path_append` reuse the saved-key vector for homogeneous
+boxed final commits. Store requires a leaf key; append interprets all saved keys as
+its destination prefix, including an empty prefix for root append. Lowering must
+validate reached keys before evaluating later keys/RHS and convert the value before
+calling. Complete path validation precedes bootstrap/COW; only a root-self RHS needs
+an explicit snapshot. No public interior reference or source callback is exposed.

@@ -1962,3 +1962,32 @@ Core rebuilt once per configuration. Missing paths, missing leaves and null root
 allocate zero times in the focused proof. Runtime inventory: 390 implementation
 units, not a coverage percentage. Carrier decisions and ownership/callback review
 remain pending.
+
+## E19 — homogeneous boxed nested store and append
+
+The existing index-write-path owner now validates the full saved-key destination
+before committing through its existing probe/descent/store/append operations. Mixed
+may bootstrap missing/null tables; dynamic requires existing child containers. One
+shared helper handles store and final append, with a root-self RHS snapshot only when
+the same native object is supplied as both operands. This is value preservation, not
+a full-root transaction; mutation-time allocation failure keeps the existing contract.
+
+Ordinary function sets publish mixed/dynamic index_path_store/index_path_append over
+the existing saved-key vector. Public tests cover three-level paths, invalid-key and
+wrong-kind rejection without partial creation, dynamic missing-child rejection, mixed
+COW and dynamic identity, next-integer append keys, staged invalid-key/RHS behavior,
+RHS root replacement, mixed self snapshots and dynamic self identity (the intentional
+cycle is removed before teardown). Repeated numeric replacements allocate zero times.
+
+These are final commit helpers. Lowering still evaluates and validates each explicit
+key before later keys/RHS, performs the value conversion, and only then calls them.
+Typed heterogeneous paths, field-owner retention, compound existing-only writeback
+and real source-level lowering remain open; no source admission is inferred here.
+
+Validation: release and ASan/UBSan/LSan nested store/append, probe and removal tests
+pass (three runtime checks per configuration). Relocated sealed import emits no new
+units and links all four new APIs. Four headers compile independently. Repeated
+numeric replacement allocates zero times after setup. Single-run four-operation
+caller compilation: 0.0699s public / 2.6039s native. Core rebuilt once per configuration;
+no generator changes were needed. Runtime inventory is 394 implementation units,
+not a completion percentage.

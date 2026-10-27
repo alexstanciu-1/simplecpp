@@ -99,4 +99,32 @@ inline void index_path_check_append(const detail::dynamic_value &receiver, const
 	(void)receiver.get_table();
 }
 
+// Saved-key access is internal representation borrowing, never source evaluation.
+template <typename R, typename KeyAt>
+void index_path_commit_adapted(R &root, std::size_t prefix_count, const KeyAt &key_at,
+	const R &value, bool append) {
+	R *target = &root;
+	for (std::size_t index = 0; index < prefix_count; ++index)
+		target = &index_path_descend(*target, key_at(index));
+	if (append) index_append(*target, value);
+	else index_store(*target, key_at(prefix_count), value);
+}
+
+template <typename R, typename KeyAt>
+void index_path_write_adapted(R &root, std::size_t count, const KeyAt &key_at,
+	const R &value, bool append) {
+	if (!append && count == 0) throw std::logic_error("indexed store requires a saved key");
+	const std::size_t prefix_count = append ? count : count - 1;
+	const R *target = &root;
+	for (std::size_t index = 0; index < prefix_count; ++index)
+		target = &index_path_probe(*target, key_at(index));
+	if (append) index_path_check_append(*target, value);
+	else index_path_check_store(*target, key_at(prefix_count), value);
+	// A public caller may pass the root itself as RHS. Preserve its pre-commit value.
+	if (&root == &value) {
+		const R snapshot(value);
+		index_path_commit_adapted(root, prefix_count, key_at, snapshot, append);
+	} else index_path_commit_adapted(root, prefix_count, key_at, value, append);
+}
+
 } // namespace scpp

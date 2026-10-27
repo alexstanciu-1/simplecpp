@@ -427,3 +427,8 @@
 
 #include "scpp/generated/public_keyed_path_erase_mixed.cpp"
 #include "scpp/generated/public_keyed_path_erase_dynamic.cpp"
+
+#include "scpp/generated/public_index_path_store_mixed.cpp"
+#include "scpp/generated/public_index_path_store_dynamic.cpp"
+#include "scpp/generated/public_index_path_append_mixed.cpp"
+#include "scpp/generated/public_index_path_append_dynamic.cpp"

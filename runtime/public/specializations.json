@@ -1,6 +1,6 @@
 {
   "abi": "529dd5502370f48d64891818e9439aae72831b990b4027e8abe25c50c1216c21",
-  "api_identity": "126b546f92f63381f3dc613c386651cd36d2f91da17a416f36746cdd6021cc63",
+  "api_identity": "32b94b10733e200b9537881015164064708de0d6f5e1e18633e17d978fd71c2c",
   "apis": {
     "add_dynamic": {
       "header": "scpp/operators/add_dynamic.hpp",
@@ -5051,6 +5051,138 @@
         ]
       },
       "source": "include/scpp/generated/public_greater_uint8.cpp"
+    },
+    "index_path_append_dynamic": {
+      "header": "scpp/access/index_path_append_dynamic.hpp",
+      "namespace": "scpp",
+      "operation": {
+        "expression": "scpp::index_path_write_adapted(${native:receiver}, ${native:keys}.size(), [&](std::size_t index) -> const scpp::mixed_t & { return detail::concrete_access::get<scpp::mixed_t>(${native:keys}.at(index)); }, ${native:value}, true)",
+        "includes": [
+          "scpp/index_write_path.hpp"
+        ],
+        "name": "index_path_append",
+        "parameters": [
+          {
+            "name": "receiver",
+            "passing": "ref",
+            "type": "dynamic"
+          },
+          {
+            "name": "keys",
+            "passing": "const_ref",
+            "type": "vector<mixed>"
+          },
+          {
+            "name": "value",
+            "passing": "const_ref",
+            "type": "dynamic"
+          }
+        ],
+        "returns": "void",
+        "uses": [
+          "mixed"
+        ]
+      },
+      "source": "include/scpp/generated/public_index_path_append_dynamic.cpp"
+    },
+    "index_path_append_mixed": {
+      "header": "scpp/access/index_path_append_mixed.hpp",
+      "namespace": "scpp",
+      "operation": {
+        "expression": "scpp::index_path_write_adapted(${native:receiver}, ${native:keys}.size(), [&](std::size_t index) -> const scpp::mixed_t & { return detail::concrete_access::get<scpp::mixed_t>(${native:keys}.at(index)); }, ${native:value}, true)",
+        "includes": [
+          "scpp/index_write_path.hpp"
+        ],
+        "name": "index_path_append",
+        "parameters": [
+          {
+            "name": "receiver",
+            "passing": "ref",
+            "type": "mixed"
+          },
+          {
+            "name": "keys",
+            "passing": "const_ref",
+            "type": "vector<mixed>"
+          },
+          {
+            "name": "value",
+            "passing": "const_ref",
+            "type": "mixed"
+          }
+        ],
+        "returns": "void",
+        "uses": [
+          "mixed"
+        ]
+      },
+      "source": "include/scpp/generated/public_index_path_append_mixed.cpp"
+    },
+    "index_path_store_dynamic": {
+      "header": "scpp/access/index_path_store_dynamic.hpp",
+      "namespace": "scpp",
+      "operation": {
+        "expression": "scpp::index_path_write_adapted(${native:receiver}, ${native:keys}.size(), [&](std::size_t index) -> const scpp::mixed_t & { return detail::concrete_access::get<scpp::mixed_t>(${native:keys}.at(index)); }, ${native:value}, false)",
+        "includes": [
+          "scpp/index_write_path.hpp"
+        ],
+        "name": "index_path_store",
+        "parameters": [
+          {
+            "name": "receiver",
+            "passing": "ref",
+            "type": "dynamic"
+          },
+          {
+            "name": "keys",
+            "passing": "const_ref",
+            "type": "vector<mixed>"
+          },
+          {
+            "name": "value",
+            "passing": "const_ref",
+            "type": "dynamic"
+          }
+        ],
+        "returns": "void",
+        "uses": [
+          "mixed"
+        ]
+      },
+      "source": "include/scpp/generated/public_index_path_store_dynamic.cpp"
+    },
+    "index_path_store_mixed": {
+      "header": "scpp/access/index_path_store_mixed.hpp",
+      "namespace": "scpp",
+      "operation": {
+        "expression": "scpp::index_path_write_adapted(${native:receiver}, ${native:keys}.size(), [&](std::size_t index) -> const scpp::mixed_t & { return detail::concrete_access::get<scpp::mixed_t>(${native:keys}.at(index)); }, ${native:value}, false)",
+        "includes": [
+          "scpp/index_write_path.hpp"
+        ],
+        "name": "index_path_store",
+        "parameters": [
+          {
+            "name": "receiver",
+            "passing": "ref",
+            "type": "mixed"
+          },
+          {
+            "name": "keys",
+            "passing": "const_ref",
+            "type": "vector<mixed>"
+          },
+          {
+            "name": "value",
+            "passing": "const_ref",
+            "type": "mixed"
+          }
+        ],
+        "returns": "void",
+        "uses": [
+          "mixed"
+        ]
+      },
+      "source": "include/scpp/generated/public_index_path_store_mixed.cpp"
     },
     "isset_dynamic": {
       "header": "scpp/observations/isset_dynamic.hpp",
@@ -10624,7 +10756,19 @@
     "include/scpp/access/keyed_path_erase_mixed.hpp",
     "public/scpp/access/keyed_path_erase_dynamic.hpp",
     "include/scpp/generated/public_keyed_path_erase_dynamic.cpp",
-    "include/scpp/access/keyed_path_erase_dynamic.hpp"
+    "include/scpp/access/keyed_path_erase_dynamic.hpp",
+    "public/scpp/access/index_path_store_mixed.hpp",
+    "include/scpp/generated/public_index_path_store_mixed.cpp",
+    "include/scpp/access/index_path_store_mixed.hpp",
+    "public/scpp/access/index_path_store_dynamic.hpp",
+    "include/scpp/generated/public_index_path_store_dynamic.cpp",
+    "include/scpp/access/index_path_store_dynamic.hpp",
+    "public/scpp/access/index_path_append_mixed.hpp",
+    "include/scpp/generated/public_index_path_append_mixed.cpp",
+    "include/scpp/access/index_path_append_mixed.hpp",
+    "public/scpp/access/index_path_append_dynamic.hpp",
+    "include/scpp/generated/public_index_path_append_dynamic.cpp",
+    "include/scpp/access/index_path_append_dynamic.hpp"
   ],
   "generator": "metadata-api-v1",
   "leaves": {
@@ -10804,6 +10948,10 @@
   "public_files": {
     "modules/filesystem/scan.hpp": "12c63684c1896c3de8fd05db1a6ab2a2fbb7eea2a3747ed3de91f44e0e5cf7d7",
     "modules/tasks/worker_pool.hpp": "07fd862bb53ef73be8aec043b5027a4e247723fe8efc4196d8e931ffe820394e",
+    "scpp/access/index_path_append_dynamic.hpp": "b9da764566b07004a46fc5b8678ac9b4f4925a617c3fee129f2206986faee2f0",
+    "scpp/access/index_path_append_mixed.hpp": "fff8df88c56d8b815194b867ae44ed651e85d8df54ccb73565013459f88140c3",
+    "scpp/access/index_path_store_dynamic.hpp": "b47bc248ad019c9519ed519e94d5b17646ea0fe775ff85817d21e3da8bdc50c5",
+    "scpp/access/index_path_store_mixed.hpp": "17443c2b8de7ab2fb703e08fb00697905e0ddac7a32243b84bc90332327849a5",
     "scpp/access/keyed_path_erase_dynamic.hpp": "62d872bb71276875ead38f9509baeadaf94661ff0c391051d9f7d19cbb280917",
     "scpp/access/keyed_path_erase_mixed.hpp": "d4a4637805eec0b917f75e04c4c242d412ec397ceeab9552429848e021548873",
     "scpp/access/keyed_path_probe_dynamic.hpp": "1fbf1cc71cc1fbb00bd1faf1c3a0bfe9f8ac5f75dea15800262763ebfad7cf48",
@@ -11591,7 +11739,11 @@
     "include/scpp/generated/public_keyed_path_probe_mixed.cpp",
     "include/scpp/generated/public_keyed_path_probe_dynamic.cpp",
     "include/scpp/generated/public_keyed_path_erase_mixed.cpp",
-    "include/scpp/generated/public_keyed_path_erase_dynamic.cpp"
+    "include/scpp/generated/public_keyed_path_erase_dynamic.cpp",
+    "include/scpp/generated/public_index_path_store_mixed.cpp",
+    "include/scpp/generated/public_index_path_store_dynamic.cpp",
+    "include/scpp/generated/public_index_path_append_mixed.cpp",
+    "include/scpp/generated/public_index_path_append_dynamic.cpp"
   ],
   "types": {
     "dynamic": {

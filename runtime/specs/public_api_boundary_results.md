@@ -2969,3 +2969,23 @@ Core rebuilt once per configuration. Missing paths, missing leaves and null root
 allocate zero times in the focused proof. Runtime inventory: 390 implementation
 units, not a coverage percentage. Carrier decisions and ownership/callback review
 remain pending.
+
+## E19: public homogeneous boxed store/append (2026-10-28)
+
+A common index-write-path helper validates the complete current path, then commits
+using existing native owners. Metadata publishes store and final append for mixed
+and dynamic over saved vector<mixed> keys. The public-only proof covers three levels,
+mixed bootstrap, dynamic existing-child requirements, validation without partial
+creation, COW versus shared identity, next-key append, staged key/RHS effects and
+root-self aliasing. Mixed self RHS retains its pre-commit value; dynamic keeps identity,
+and the test removes its intentional self edge before leak checking. Allocation/copy
+failure during mutation remains non-transactional. Typed heterogeneous paths, field
+retention, compound writeback and full source lowering remain open.
+
+Validation: release and ASan/UBSan/LSan nested store/append, probe and removal tests
+pass (three runtime checks per configuration). Relocated sealed import emits no new
+units and links all four new APIs. Four headers compile independently. Repeated
+numeric replacement allocates zero times after setup. Single-run four-operation
+caller compilation: 0.0699s public / 2.6039s native. Core rebuilt once per configuration;
+no generator changes were needed. Runtime inventory is 394 implementation units,
+not a completion percentage.

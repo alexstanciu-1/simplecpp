@@ -1904,5 +1904,83 @@
         ]
       }
     }
+  },
+  "index_path_store": {
+    "variants": {
+      "mixed": {},
+      "dynamic": {}
+    },
+    "function": {
+      "namespace": "scpp",
+      "header": "scpp/access/index_path_store_${variant}.hpp",
+      "source": "include/scpp/generated/public_index_path_store_${variant}.cpp",
+      "operation": {
+        "name": "index_path_store",
+        "returns": "void",
+        "parameters": [
+          {
+            "name": "receiver",
+            "type": "${variant}",
+            "passing": "ref"
+          },
+          {
+            "name": "keys",
+            "type": "vector<mixed>",
+            "passing": "const_ref"
+          },
+          {
+            "name": "value",
+            "type": "${variant}",
+            "passing": "const_ref"
+          }
+        ],
+        "expression": "scpp::index_path_write_adapted(${native:receiver}, ${native:keys}.size(), [&](std::size_t index) -> const scpp::mixed_t & { return detail::concrete_access::get<scpp::mixed_t>(${native:keys}.at(index)); }, ${native:value}, false)",
+        "includes": [
+          "scpp/index_write_path.hpp"
+        ],
+        "uses": [
+          "mixed"
+        ]
+      }
+    }
+  },
+  "index_path_append": {
+    "variants": {
+      "mixed": {},
+      "dynamic": {}
+    },
+    "function": {
+      "namespace": "scpp",
+      "header": "scpp/access/index_path_append_${variant}.hpp",
+      "source": "include/scpp/generated/public_index_path_append_${variant}.cpp",
+      "operation": {
+        "name": "index_path_append",
+        "returns": "void",
+        "parameters": [
+          {
+            "name": "receiver",
+            "type": "${variant}",
+            "passing": "ref"
+          },
+          {
+            "name": "keys",
+            "type": "vector<mixed>",
+            "passing": "const_ref"
+          },
+          {
+            "name": "value",
+            "type": "${variant}",
+            "passing": "const_ref"
+          }
+        ],
+        "expression": "scpp::index_path_write_adapted(${native:receiver}, ${native:keys}.size(), [&](std::size_t index) -> const scpp::mixed_t & { return detail::concrete_access::get<scpp::mixed_t>(${native:keys}.at(index)); }, ${native:value}, true)",
+        "includes": [
+          "scpp/index_write_path.hpp"
+        ],
+        "uses": [
+          "mixed"
+        ]
+      }
+    }
   }
 }

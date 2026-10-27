@@ -402,6 +402,10 @@
     "keyed_path_probe_mixed",
     "keyed_path_probe_dynamic",
     "keyed_path_erase_mixed",
-    "keyed_path_erase_dynamic"
+    "keyed_path_erase_dynamic",
+    "index_path_store_mixed",
+    "index_path_store_dynamic",
+    "index_path_append_mixed",
+    "index_path_append_dynamic"
   ]
 }
