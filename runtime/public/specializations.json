@@ -1,6 +1,6 @@
 {
   "abi": "529dd5502370f48d64891818e9439aae72831b990b4027e8abe25c50c1216c21",
-  "api_identity": "8604d8fcf92efbf4cf79ce5d5fde0d17bac2568a32f19a600070855df22b89f0",
+  "api_identity": "06310ae98b67e56a9a09602268ec2eadf3f2a1d2edaa114616243a3908e88da9",
   "apis": {
     "add_dynamic": {
       "header": "scpp/operators/add_dynamic.hpp",
@@ -9222,7 +9222,8 @@
     "boolean": {
       "capabilities": [
         "copy_storage",
-        "move_storage"
+        "move_storage",
+        "default_storage"
       ],
       "construct": "scpp::boolean(${value})",
       "cpp": "scpp::boolean",
@@ -9232,7 +9233,8 @@
     "c_string": {
       "capabilities": [
         "copy_storage",
-        "move_storage"
+        "move_storage",
+        "default_storage"
       ],
       "cpp": "const char *",
       "header": "",
@@ -9242,7 +9244,8 @@
       "borrow": "detail::error_value_access::get(${value})",
       "capabilities": [
         "copy_storage",
-        "move_storage"
+        "move_storage",
+        "default_storage"
       ],
       "construct": "detail::error_value_access::make(${factory})",
       "cpp": "scpp::error_value",
@@ -9256,7 +9259,8 @@
     "int16": {
       "capabilities": [
         "copy_storage",
-        "move_storage"
+        "move_storage",
+        "default_storage"
       ],
       "cpp": "scpp::int16",
       "header": "scpp/integers.hpp",
@@ -9265,7 +9269,8 @@
     "int32": {
       "capabilities": [
         "copy_storage",
-        "move_storage"
+        "move_storage",
+        "default_storage"
       ],
       "cpp": "scpp::int32",
       "header": "scpp/integers.hpp",
@@ -9277,7 +9282,8 @@
         "typed_hash_key",
         "integer_key",
         "copy_storage",
-        "move_storage"
+        "move_storage",
+        "default_storage"
       ],
       "construct": "scpp::int64((${value}).native_value())",
       "cpp": "scpp::int64",
@@ -9290,7 +9296,8 @@
     "int8": {
       "capabilities": [
         "copy_storage",
-        "move_storage"
+        "move_storage",
+        "default_storage"
       ],
       "cpp": "scpp::int8",
       "header": "scpp/integers.hpp",
@@ -9299,7 +9306,8 @@
     "native_double": {
       "capabilities": [
         "copy_storage",
-        "move_storage"
+        "move_storage",
+        "default_storage"
       ],
       "cpp": "double",
       "header": "",
@@ -9308,7 +9316,8 @@
     "null": {
       "capabilities": [
         "copy_storage",
-        "move_storage"
+        "move_storage",
+        "default_storage"
       ],
       "cpp": "scpp::null_t",
       "header": "scpp/null_t.hpp",
@@ -9319,7 +9328,8 @@
       "capabilities": [
         "typed_hash_key",
         "copy_storage",
-        "move_storage"
+        "move_storage",
+        "default_storage"
       ],
       "construct": "detail::string_access::make(${factory})",
       "cpp": "scpp::string",
@@ -9333,7 +9343,8 @@
     "uint16": {
       "capabilities": [
         "copy_storage",
-        "move_storage"
+        "move_storage",
+        "default_storage"
       ],
       "cpp": "scpp::uint16",
       "header": "scpp/integers.hpp",
@@ -9342,7 +9353,8 @@
     "uint32": {
       "capabilities": [
         "copy_storage",
-        "move_storage"
+        "move_storage",
+        "default_storage"
       ],
       "cpp": "scpp::uint32",
       "header": "scpp/integers.hpp",
@@ -9354,7 +9366,8 @@
         "typed_hash_key",
         "integer_key",
         "copy_storage",
-        "move_storage"
+        "move_storage",
+        "default_storage"
       ],
       "construct": "scpp::uint64(${value})",
       "cpp": "scpp::uint64",
@@ -9365,7 +9378,8 @@
     "uint8": {
       "capabilities": [
         "copy_storage",
-        "move_storage"
+        "move_storage",
+        "default_storage"
       ],
       "cpp": "scpp::uint8",
       "header": "scpp/integers.hpp",
@@ -10059,6 +10073,7 @@
       "borrow": "detail::concrete_access::get<${native}>(${value})",
       "capabilities": [
         "copy_storage",
+        "default_storage",
         "move_storage"
       ],
       "construct": "detail::concrete_access::make<${cpp}, ${native}>(${factory})",
@@ -10086,6 +10101,7 @@
       "borrow": "detail::concrete_access::get<${native}>(${value})",
       "capabilities": [
         "copy_storage",
+        "default_storage",
         "move_storage"
       ],
       "construct": "detail::concrete_access::make<${cpp}, ${native}>(${factory})",
@@ -10110,6 +10126,7 @@
       "borrow": "detail::concrete_access::get<${native}>(${value})",
       "capabilities": [
         "copy_storage",
+        "default_storage",
         "move_storage"
       ],
       "construct": "detail::concrete_access::make<${cpp}, ${native}>(${factory})",
@@ -10137,6 +10154,7 @@
       "borrow": "detail::concrete_access::get<${native}>(${value})",
       "capabilities": [
         "copy_storage",
+        "default_storage",
         "move_storage"
       ],
       "construct": "detail::concrete_access::make<${cpp}, ${native}>(${factory})",
@@ -10164,6 +10182,7 @@
       "borrow": "detail::concrete_access::get<${native}>(${value})",
       "capabilities": [
         "copy_storage",
+        "default_storage",
         "move_storage"
       ],
       "construct": "detail::concrete_access::make<${cpp}, ${native}>(${factory})",

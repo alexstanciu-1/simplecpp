@@ -828,7 +828,7 @@ Condition delegation can compose through a nested carrier with a condition
 contract, unlike arithmetic/required casts, which project only one layer. Nesting
 is bounded by the existing type-depth limit. This physical composition does not
 grant source type formation; formation/capability checks remain independently
-required. Owned payload extraction is capability-selected for nullable; the remaining carrier recipes still require copying.
+required. Owned payload extraction is capability-selected for nullable and Result.
 Scoped payload observation and avoiding unnecessary large-payload copies remain
 required completion work; scalar zero-allocation evidence does not cover them.
 
@@ -980,7 +980,7 @@ The first execution proof uses an application optional-storage recipe backed by
 native nullable, with move-only and copyable record descriptors. It proves default
 absence independent of payload default construction, deleted copy APIs, move/reset
 lifetime and publication reuse. The production nullable migration is described below;
-Result and other carrier lifecycle migrations remain pending.
+Sentinel-family lifecycle migrations remain pending.
 
 ## Shared capability facts and production nullable
 
@@ -1012,6 +1012,28 @@ truthiness for an application record or provide scoped payload borrowing yet.
 
 The public proof uses production nullable for move-only and copyable application
 records and nullable<vector<int64>>, including a newly generated inner vector.
-Result/vector/hash still have other copying requirements and incomplete operation
-capabilities. Descriptor propagation alone does not complete those family migrations,
+Vector/hash still have other copying requirements and incomplete operation
+capabilities; Result lifecycle is covered below. Descriptor propagation alone does not complete those family migrations,
 source formation validation, or the first full carrier review.
+
+## Result default and payload lifecycle
+
+`default_storage` declares physical default-constructibility, checked by the existing
+target-probe mechanism. Nullable, empty containers and fixed runtime value families
+advertise their own default guarantee; Result propagates it only when its payload
+has that guarantee. Default storage is separate from copying and movement. It does
+not imply source-language default initialization permission.
+
+Result's default/copy/move lifecycle and payload APIs now use the same conditional
+mechanism as nullable. A non-default-constructible payload deletes Result's default
+constructor without removing explicit success/error constructors. A noncopyable
+payload deletes wrapper copying and omits owned payload extraction/take. Guaranteed
+moves remain available. Error construction, assignment, state observation and owned
+error inspection do not require payload copying or default construction.
+
+Default `result<nullable<T>>` is a successful Result containing an absent nullable,
+even when T cannot be default-constructed or copied. No nested state flattening or
+new borrowed extraction is introduced. Rejected no-error assignment preserves an
+existing success payload. Source result_payload/formation and explicit source
+transfer permissions remain independently required; physical test records do not
+broaden source Result argument admission.

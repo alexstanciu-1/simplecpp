@@ -1801,3 +1801,32 @@ hash/vector operations or all source type arguments are now supported.
 
 All ten final focused regressions also pass under ASan/UBSan with leak detection
 in 59.73s. The first complete carrier review remains open.
+
+## C11 Result conditional default/copy/move lifecycle
+
+Result uses the existing capability mechanism for lifecycle and payload APIs;
+`default_storage` supplies the independent default-construction guarantee. No
+generator source change or build was needed. Full generation/probes refresh the
+inventory while all 332 existing runtime code units remain byte-identical, so the
+runtime-core archives also remain valid without recompilation.
+
+The public proof now generates eight application units, including non-default,
+noncopyable Result payloads and Result-of-nullable. It verifies default success
+containing inner absence, success/error transitions, exactly-once destruction,
+self-move, copyable take output/error behavior and invalid no-error assignment
+preserving a live noncopyable success value. Copy/default misuse fails compilation.
+Source Result argument admission is not inferred from these physical fixture records.
+
+Release and ASan/UBSan with leak detection pass, with sealed publication reuse.
+Measured record and short-error operations allocate zero; the separate nested vector
+copy scenario allocates four times. The four new Result instantiations each measure
+96 bytes on this target, matching native layout probes. These are observations,
+not portable fixed ABI sizes or a zero-allocation claim for long error strings.
+
+Compile-only totals: eight storage units 8.8421s release / 13.1729s sanitized;
+public caller 0.1366s / 0.2306s. Four focused release regressions pass in 4.96s.
+Sentinel families, remaining operator domains, source formation constraints and
+scoped observations remain open, as does the first complete carrier review.
+
+All four focused regressions also pass under ASan/UBSan with leak detection
+in 29.75s.

@@ -40,8 +40,8 @@ compiler. Native C++ traits/probes prove physical bindings, not source admission
 | Callable signatures | Parameter/return/passing-mode and capture/lifetime contracts, not an unconstrained T-shaped callback. |
 
 Initial evidence: the physical vector/hash/nullable/Result recipes required
-copy construction and assignment unconditionally. Nullable is migrated in C10;
-the remaining recipes still need that work. This is a physical coverage limit,
+copy construction and assignment unconditionally. Nullable and Result are migrated in C10/C11;
+vector/hash still need that work. This is a physical coverage limit,
 not proof that the source requires every runtime payload to be copyable. Extend the
 same capability/lifecycle mechanism when implementing admitted noncopyable cases.
 Do not invent user constraint syntax as part of the API generator work.
@@ -399,3 +399,9 @@ presence, while omitting copying/owned extraction/take. Planners reject unavaila
 extraction and validate imported facts through the same owner as generation.
 Generated inner-vector facts and application publication reuse are proved; Result
 and remaining lifecycle/formation/scoped-observation work remain pending.
+
+C11 migrates Result default/copy/move and payload APIs to shared capability facts.
+Error operations stay independent of payload copying/default construction. A default
+Result-of-nullable can succeed with inner absence; non-default payloads delete the
+plain Result default constructor. This physical lifecycle proof does not extend
+source result_payload admission or grant implicit source moves.

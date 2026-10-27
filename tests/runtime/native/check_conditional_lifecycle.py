@@ -29,8 +29,11 @@ leaves = {name:{'cpp':'fixture::'+name, 'header':'fixture_records.hpp', 'owner':
           for name,caps in [('move_record',['move_storage']),('copy_record',['copy_storage','move_storage'])]}
 names = {'nullable<move_record>':'optional_move_record',
          'nullable<copy_record>':'optional_copy_record',
-         'vector<int64>':'integer_vector', 'nullable<vector<int64>>':'optional_integer_vector'}
-request = {'package':'application.optional', 'roots':[key for key in names if key.startswith('nullable<')], 'leaves':leaves, 'names':names}
+         'vector<int64>':'integer_vector', 'nullable<vector<int64>>':'optional_integer_vector',
+         'result<move_record>':'result_move_record', 'result<copy_record>':'result_copy_record',
+         'result<nullable<move_record>>':'result_optional_move',
+         'result<nullable<copy_record>>':'result_optional_copy'}
+request = {'package':'application.optional', 'roots':[key for key in names if key.startswith(('nullable<','result<'))], 'leaves':leaves, 'names':names}
 envelope = {'metadata':metadata,'request':request,'leaves':leaves,'imports':{},'layouts':{},'names':names}
 
 def plan(data=envelope, error=None):
@@ -69,10 +72,21 @@ move = units['nullable<move_record>']
 copy_unit = units['nullable<copy_record>']
 assert move['probes'][0]['lifecycle'] == {'default':'native','copy':'disabled','move':'native','destroy':'native'}
 assert copy_unit['probes'][0]['lifecycle']['copy'] == 'native'
-assert result['types']['nullable<move_record>']['capabilities'] == ['move_storage']
-assert result['types']['nullable<copy_record>']['capabilities'] == ['copy_storage','move_storage']
+result_move = units['result<move_record>']
+assert result_move['probes'][0]['lifecycle'] == {'default':'disabled','copy':'disabled','move':'native','destroy':'native'}
+assert ' require_value(' not in result_move['header'] and ' take(' not in result_move['header']
+assert ' require_error(' in result_move['header'] and ' has_error(' in result_move['header']
+assert result['types']['result<move_record>']['capabilities'] == ['move_storage']
+assert result['types']['result<copy_record>']['capabilities'] == ['copy_storage','move_storage']
+assert result['types']['result<nullable<move_record>>']['capabilities'] == ['default_storage','move_storage']
+assert units['result<nullable<move_record>>']['probes'][0]['lifecycle']['default'] == 'native'
+operation('resolve_conversion',{'source':'result<move_record>','target':'boolean'},'payload access is unavailable')
+operation('resolve_condition',{'source':'result<move_record>'},'payload access is unavailable')
+
+assert result['types']['nullable<move_record>']['capabilities'] == ['default_storage','move_storage']
+assert result['types']['nullable<copy_record>']['capabilities'] == ['copy_storage','default_storage','move_storage']
 for identity in ['vector<int64>','nullable<vector<int64>>']:
-    assert result['types'][identity]['capabilities'] == ['copy_storage','move_storage']
+    assert result['types'][identity]['capabilities'] == ['copy_storage','default_storage','move_storage']
 assert ' require_value(' not in move['header'] and ' take(' not in move['header']
 assert ' require_value(' in copy_unit['header'] and ' take(' in copy_unit['header']
 assert 'template' not in move['header'] and 'requires' not in move['header']
@@ -140,7 +154,7 @@ with tempfile.TemporaryDirectory(prefix='scpp-lifecycle-') as directory:
     (app/'public/fixture_records.hpp').write_text(fixture_header)
     request_file = work/'request.json'; request_file.write_text(json.dumps(request))
     manifest = concrete_types.generate(request_file,app,sdk,[sdk],'clang++',[])
-    assert len(manifest['sources']) == 4
+    assert len(manifest['sources']) == 8
     flags = ['-std=c++23','-O1']
     if args.sanitize: flags += ['-fsanitize=address,undefined','-fno-omit-frame-pointer','-g']
     objects=[]; storage_time=0
@@ -161,6 +175,10 @@ with tempfile.TemporaryDirectory(prefix='scpp-lifecycle-') as directory:
 #include "scpp/optional_move_record.hpp"
 #include "scpp/optional_copy_record.hpp"
 #include "scpp/optional_integer_vector.hpp"
+#include "scpp/result_move_record.hpp"
+#include "scpp/result_copy_record.hpp"
+#include "scpp/result_optional_move.hpp"
+#include "scpp/result_optional_copy.hpp"
 #include "public_api_guard.hpp"
 #include <cstdlib>
 #include <cstdio>
@@ -178,7 +196,16 @@ static_assert(!std::is_copy_assignable_v<scpp::optional_move_record>);
 static_assert(std::is_move_constructible_v<scpp::optional_move_record>);
 static_assert(std::is_move_assignable_v<scpp::optional_move_record>);
 static_assert(std::is_copy_constructible_v<scpp::optional_copy_record>);
+static_assert(!std::is_default_constructible_v<scpp::result_move_record>);
+static_assert(!std::is_copy_constructible_v<scpp::result_move_record>);
+static_assert(!std::is_copy_assignable_v<scpp::result_move_record>);
+static_assert(std::is_move_constructible_v<scpp::result_move_record>);
+static_assert(std::is_move_assignable_v<scpp::result_move_record>);
+static_assert(!std::is_default_constructible_v<scpp::result_copy_record>);
+static_assert(std::is_copy_constructible_v<scpp::result_copy_record>);
+static_assert(std::is_default_constructible_v<scpp::result_optional_move>);
 int main() {
+    const auto failure = scpp::error_value::make(scpp::string("failed"));
     const int before = allocations;
     int destructions = 0;
     {
@@ -201,7 +228,54 @@ int main() {
         auto copied = copyable; copyable.reset();
         CHECK(copied.require_value("copy").value == 42);
     }
+    int result_destructions = 0, nested_destructions = 0;
+    {
+        fixture::move_record first(result_destructions);
+        scpp::result_move_record success(static_cast<fixture::move_record&&>(first));
+        scpp::result_move_record moved(static_cast<scpp::result_move_record&&>(success));
+        scpp::result_move_record destination(failure);
+        CHECK(destination.has_error());
+        CHECK(destination.require_error("failure").get_message().equals("failed"));
+        destination = static_cast<scpp::result_move_record&&>(moved);
+        CHECK(destination.has_value() && result_destructions == 0);
+        destination = failure;
+        CHECK(destination.has_error() && result_destructions == 1);
+        fixture::move_record second(result_destructions);
+        destination = static_cast<fixture::move_record&&>(second);
+        destination = static_cast<scpp::result_move_record&&>(destination);
+        CHECK(destination.has_value() && result_destructions == 1);
+
+        scpp::result_optional_move default_success;
+        CHECK(default_success.has_value()); // Payload is an absent nullable, not a default record.
+        fixture::move_record nested(nested_destructions);
+        scpp::optional_move_record payload(static_cast<fixture::move_record&&>(nested));
+        scpp::result_optional_move nested_result(static_cast<scpp::optional_move_record&&>(payload));
+        payload.reset(); CHECK(nested_destructions == 0 && nested_result.has_value());
+        nested_result = failure;
+        CHECK(nested_destructions == 1 && nested_result.has_error());
+
+        scpp::result_optional_copy copy_default;
+        CHECK(!copy_default.require_value("successful absence").has_value());
+        scpp::result_copy_record copy_result(fixture::copy_record(24));
+        auto copied = copy_result;
+        fixture::copy_record output(3); scpp::error_value error = failure;
+        CHECK(scpp::take(output,error,copied)); CHECK(output.value == 24 && !error.has_error());
+        copied = failure;
+        CHECK(!scpp::take(output,error,copied)); CHECK(output.value == 24 && error.has_error());
+    }
+    CHECK(result_destructions == 2 && nested_destructions == 1);
     CHECK(destructions == 3 && allocations == before);
+    // Rejected error assignment must not destroy a noncopyable success payload.
+    int retained_destructions = 0;
+    {
+        fixture::move_record retained(retained_destructions);
+        scpp::result_move_record value(static_cast<fixture::move_record&&>(retained));
+        bool caught = false;
+        try { value = scpp::error_value{}; } catch (...) { caught = true; }
+        CHECK(caught && value.has_value() && retained_destructions == 0);
+        value = failure; CHECK(value.has_error() && retained_destructions == 1);
+    }
+    CHECK(retained_destructions == 1);
     // A newly generated inner type must publish facts used by its nullable parent.
     const auto nested_before = allocations;
     scpp::integer_vector numbers;
@@ -220,9 +294,10 @@ int main() {
     subprocess.run(['clang++',*flags,str(obj),*[str(o) for o in objects],str(sdk/'lib/libcore.a'),'-pthread','-o',str(executable)],check=True)
     subprocess.run([str(executable)],check=True)
     rejected=work/'rejected.cpp'
-    rejected.write_text('#include "scpp/optional_move_record.hpp"\nvoid copy(scpp::optional_move_record &source) { auto invalid = source; }\n')
+    rejected.write_text('#include "scpp/optional_move_record.hpp"\n#include "scpp/result_move_record.hpp"\n#include "scpp/result_copy_record.hpp"\nvoid copy(scpp::optional_move_record &source) { auto invalid = source; }\nvoid copy_result(scpp::result_move_record &source) { auto invalid = source; }\nvoid default_result() { scpp::result_copy_record invalid; }\n')
     failure=subprocess.run(['clang++',*flags,*public_flags,'-fsyntax-only',str(rejected)],capture_output=True,text=True)
     assert failure.returncode and 'deleted' in failure.stderr, failure.stderr
+    assert 'result_move_record' in failure.stderr and 'result_copy_record' in failure.stderr, failure.stderr
     (app/'lib').mkdir()
     subprocess.run(['ar','rcs',str(app/'lib/liboptional.a'),*[str(o) for o in objects]],check=True)
     seal_package(app,['optional'])
@@ -247,4 +322,4 @@ int main() {
     assert (app/'public/specializations.json').read_bytes() == original_manifest
     assert (app/'public/scpp/optional_move_record.hpp').read_bytes() == original_header
     print('Optional storage bytes:', {key:record['layout'][0] for key,record in manifest['types'].items()})
-    print(f'PASS: public move-only optional lifetime/reset/copy rejection; record-operation allocations=0; sealed reuse; storage compile={storage_time:.4f}s caller compile={caller_time:.4f}s')
+    print(f'PASS: public nullable/Result lifecycle, state transitions and rejected copy/default; record-operation allocations=0; sealed reuse; storage compile={storage_time:.4f}s caller compile={caller_time:.4f}s')
