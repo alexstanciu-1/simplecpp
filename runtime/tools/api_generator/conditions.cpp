@@ -35,6 +35,7 @@ namespace scpp::api_generation
         const auto projection = project_carrier(metadata, canonical, names);
         if (projection.type == value::kind::null || !projection.has("states"))
             throw std::runtime_error("Unsupported condition operand");
+        require_carrier_payload(projection);
         // Admission precedes state dispatch, so absence cannot grant truthiness
         // to a payload with no condition contract. Conditions can delegate through
         // an admitted nested carrier; arithmetic/casts retain their one-layer rule.

@@ -1761,3 +1761,43 @@ copy, false-capability and publication tests. Sanitized storage compilation is
 
 All four focused regressions also pass under ASan/UBSan with leak detection in
 29.22s. Production carrier noncopyable admission remains explicitly pending.
+
+## C10 production nullable and shared capability propagation
+
+The production nullable recipe now uses one capability owner shared with physical
+generation, operation planning and imported fact validation. Copy/move facts are
+registered physical guarantees and can propagate conditionally through family
+arguments. Companion classes do not inherit primary-class guarantees. Nullable
+omits copy/extraction/take for noncopyable records while preserving default absence,
+reset, destruction, guaranteed moves and no-copy literal-null presence plans.
+
+The revised lifecycle proof uses production nullable, not a test-only family. It
+adds a freshly generated vector<int64> and nullable parent, verifies independent
+value copies and effective facts, and reuses all four application storage units
+from a sealed publication. Forged imported capabilities reject in generation and
+planning. False target copyability claims reject without overwriting a publication.
+Metadata tests also check nested noncopyable capability propagation, family admission
+before presence observation, and companion capability isolation.
+
+Release and ASan/UBSan with leak detection pass. Measured record operations allocate
+zero; the separate nested vector copy scenario allocates four times. Target layout
+observations: move-only nullable 16 bytes, copyable-record nullable 8 bytes, vector
+40 bytes, nullable<vector<int64>> 48 bytes. The existing scalar/error carrier proof
+also passes in release, preserving its prior allocation counts (Result error
+reconstruction one, strict error comparison four, direct error comparison zero).
+
+Final production-proof compile observations: four storage units 4.5463s release /
+6.6867s sanitized; public caller 0.1174s / 0.1537s. The existing carrier proof measured
+5.5991s storage / 0.3210s caller in release. Final tool rebuilds were 5.92s release /
+17.57s sanitized, after earlier development builds (7.77s and 5.81s release, 20.25s
+sanitized). Rebuilds stayed tool-only. Full generation/probes refreshed capability
+inventories while all 332 existing generated runtime code units remained byte-equal;
+no runtime-core rebuild was needed.
+
+Ten final focused release regressions pass in 10.32s. Production Result/sentinel
+lifecycle, general source formation constraints and scoped payload observation are
+still incomplete. Physical capability propagation is not a claim that noncopyable
+hash/vector operations or all source type arguments are now supported.
+
+All ten final focused regressions also pass under ASan/UBSan with leak detection
+in 59.73s. The first complete carrier review remains open.

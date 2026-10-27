@@ -178,9 +178,14 @@ full scalar operations and compiler facade migration remain separate work.
 The optional top-level `capabilities` object defines named physical capabilities.
 Each entry has nonempty `checks` (C++ target-probe expressions) and optional private
 `includes`; `${cpp}` and `${native}` refer to the checked representation. Leaf and
-family recipes declare an optional `capabilities` array. These are explicit exposure
-claims, not source-language admission inferred from C++ methods. Family declarations
-travel with their published concrete records.
+family recipes declare an optional `capabilities` array. A family may also declare
+`conditional_capabilities`, mapping capability names to `requires_capabilities`
+conditions on its arguments. The shared capability owner resolves these through
+normalized argument/default bindings and publishes the resulting sorted facts.
+Companion classes do not inherit the primary class's guarantees.
+These are explicit exposure guarantees, not source-language admission or an
+exhaustive discovery of native C++ operations. Missing facts do not prove native
+impossibility. Family facts travel with their published concrete records.
 
 A family or operation can specify `requires_capabilities`, mapping parameter names
 to arrays of capability names. All listed capabilities are required. A failed family
@@ -823,8 +828,8 @@ Condition delegation can compose through a nested carrier with a condition
 contract, unlike arithmetic/required casts, which project only one layer. Nesting
 is bounded by the existing type-depth limit. This physical composition does not
 grant source type formation; formation/capability checks remain independently
-required. The current copy-required family recipes use owned payload extraction.
-Scoped noncopyable observation and avoiding unnecessary large-payload copies remain
+required. Owned payload extraction is capability-selected for nullable; the remaining carrier recipes still require copying.
+Scoped payload observation and avoiding unnecessary large-payload copies remain
 required completion work; scalar zero-allocation evidence does not cover them.
 
 A unary operation may opt into `condition_operand: true` only when it uses the
@@ -974,6 +979,39 @@ separate: suppressing copying must also suppress APIs that inherently copy paylo
 The first execution proof uses an application optional-storage recipe backed by
 native nullable, with move-only and copyable record descriptors. It proves default
 absence independent of payload default construction, deleted copy APIs, move/reset
-lifetime and publication reuse. Production nullable/Result capability propagation
-and operator-planner admission are still pending; this mechanism alone does not
-claim those recipes support noncopyable payloads.
+lifetime and publication reuse. The production nullable migration is described below;
+Result and other carrier lifecycle migrations remain pending.
+
+## Shared capability facts and production nullable
+
+Physical generation, operation planning and import validation share capability
+selection, recursive family propagation and leaf merging. Resolver envelopes may
+supply application `leaves` and `imports` in addition to `names`. Conflicting leaf
+facts reject; imported concrete capabilities must match those derived from the
+current metadata and leaves. Public packages retain effective facts, not unresolved
+conditions. Selected conditional family guarantees contribute their prerequisite
+checks to the existing target probe.
+
+`copy_storage` and `move_storage` are physical constructor/assignment pairs, checked
+with native C++ traits. They do not replace source copyable_value/result_payload or
+ownership formation rules. Runtime leaves declare their guarantees; generated
+families propagate their documented guarantees through parameter conditions.
+
+Nullable uses these facts for copy/move lifecycle, payload construction/assignment,
+owned extraction, value_or and take. Default absence, state observation, reset and
+destruction do not require payload copying/default construction. A noncopyable
+payload therefore produces a usable concrete nullable with deleted copy members
+and no owned extraction/take APIs, while preserving move when guaranteed.
+
+The carrier descriptor may name conditional owned payload access. Its resolved
+projection includes `payload_available`; unavailable projections contain no expression
+naming the omitted method. Arithmetic/comparison, cast and condition consumers require
+availability before selecting an extraction path. Strict literal-null presence uses
+state observation and remains valid without payload extraction. This does not invent
+truthiness for an application record or provide scoped payload borrowing yet.
+
+The public proof uses production nullable for move-only and copyable application
+records and nullable<vector<int64>>, including a newly generated inner vector.
+Result/vector/hash still have other copying requirements and incomplete operation
+capabilities. Descriptor propagation alone does not complete those family migrations,
+source formation validation, or the first full carrier review.

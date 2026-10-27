@@ -1,5 +1,6 @@
 #include "carriers.hpp"
 #include "names.hpp"
+#include "capabilities.hpp"
 #include <set>
 
 namespace scpp::api_generation
@@ -9,7 +10,7 @@ namespace scpp::api_generation
         for (const auto &item : list.items) if (item.text() == name) return true;
         return false;
     }
-    static void validate_owned_member(const value &family, const std::string &method, const std::string &target)
+    static void validate_owned_member(const value &family, const std::string &method, const std::string &target, bool conditional = false)
     {
         authored_name(method);
         unsigned matches = 0;
@@ -19,7 +20,7 @@ namespace scpp::api_generation
                 if (member.get("name") != method) continue;
                 const auto &parameters = member.at("parameters").items;
                 if (member.get("returns") != target
-                    || !member.yes("const") || member.has("requires_capabilities")
+                    || !member.yes("const") || (!conditional && member.has("requires_capabilities"))
                     || parameters.size() != 1 || parameters[0].get("type") != "c_string"
                     || parameters[0].get("passing", "value") != "value")
                     throw std::runtime_error("Carrier projection must return an owned payload from a const checked member");
@@ -37,7 +38,7 @@ namespace scpp::api_generation
             fields_only(carrier, "payload require_value states", "carrier descriptor");
             if (!contains(family.at("parameters"), carrier.at("payload").text()))
                 throw std::runtime_error("Unknown carrier payload parameter");
-            validate_owned_member(family, carrier.at("require_value").text(), carrier.at("payload").text());
+            validate_owned_member(family, carrier.at("require_value").text(), carrier.at("payload").text(), true);
             if (carrier.has("states")) {
                 const auto &states = carrier.at("states");
                 if (states.type != value::kind::array || states.items.empty())
@@ -120,6 +121,12 @@ namespace scpp::api_generation
         }
     }
 
+    void require_carrier_payload(const value &projection)
+    {
+        if (projection.get("payload_available", "true") != "true")
+            throw std::runtime_error("Carrier owned payload access is unavailable for these capabilities");
+    }
+
     value project_carrier(const value &metadata, const std::string &source, const value &names)
     {
         naming types(metadata_naming_registry(metadata, metadata.at("types"), names));
@@ -130,13 +137,24 @@ namespace scpp::api_generation
         if (!family.has("carrier")) return value();
         const auto &carrier = family.at("carrier");
         const auto binding = types.bind(identity);
-        value out = value::object();
+        type_bindings arguments;
+        for (const auto &[parameter, argument] : binding.arguments)
+            arguments[parameter] = type_capabilities(metadata,metadata.at("types"),names,argument.canonical());
+        if (!capabilities_selected(metadata,family,arguments))
+            throw std::runtime_error("Unsatisfied family capabilities: " + identity);
+        const auto guarantees = effective_capabilities(metadata,family,arguments);
+        bool available = false;
+        for (const auto &record : family.at("classes").items) if (record.get("id") == "self")
+            for (const auto &member : record.at("methods").items)
+                if (member.get("name") == carrier.at("require_value").text())
+                    available = capabilities_selected(metadata,member,arguments);
+        value out = value::object(); out["capabilities"] = guarantees; out["payload_available"] = available ? "true" : "false";
         out["source"] = identity; out["family"] = node.name;
         for (const auto &[parameter, argument] : binding.arguments)
             if (parameter == carrier.at("payload").text()) out["target"] = argument.canonical();
         out["kind"] = "checked_member";
         out["header"] = "scpp/" + public_name + ".hpp"; out["cpp"] = "scpp::" + public_name;
-        out["expression"] = "${value}." + carrier.at("require_value").text() + "(\"operator payload\")";
+        if (available) out["expression"] = "${value}." + carrier.at("require_value").text() + "(\"operator payload\")";
         out["ownership"] = "owned_value";
         if (carrier.has("states")) out["states"] = carrier.at("states");
         return out;

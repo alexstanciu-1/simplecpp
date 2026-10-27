@@ -23,32 +23,14 @@ parser.add_argument('--sanitize', action='store_true')
 args = parser.parse_args()
 args.tool = args.tool.resolve()
 metadata = concrete_types.metadata(root / 'runtime')
-# Physical capability facts, not new source-language constraint syntax.
-for name, traits in {'copy_storage':['copy_constructible','copy_assignable'],
-                     'move_storage':['move_constructible','move_assignable']}.items():
-    metadata['capabilities'][name] = {
-        'includes':['type_traits'], 'checks':['std::is_'+trait+'_v<${cpp}>' for trait in traits]}
-recipe = copy.deepcopy(metadata['families']['nullable'])
-# Operator planning remains a separate migration: this proof exercises physical storage.
-del recipe['carrier']
-recipe['checks'] = ['std::is_nothrow_destructible_v<${public:T}>']
-life = recipe['classes'][0]['lifecycle']
-for mode in ['copy','move']:
-    life[mode] = {'requires_capabilities':{'T':[mode+'_storage']}}
-for method in recipe['classes'][0]['methods']:
-    parameters = method.get('parameters', [])
-    if any(p['type'] == 'T' for p in parameters) or method.get('returns') == 'T':
-        capability = 'move_storage' if any(p.get('passing') == 'move_ref' for p in parameters) else 'copy_storage'
-        method['requires_capabilities'] = {'T':[capability]}
-for function in recipe['functions']:
-    if function['name'] == 'take': function['requires_capabilities'] = {'T':['copy_storage']}
-metadata['families']['optional_storage'] = recipe
+# Use the production nullable recipe and its shared capability facts.
 leaves = {name:{'cpp':'fixture::'+name, 'header':'fixture_records.hpp', 'owner':'application.records',
                 'capabilities':caps}
           for name,caps in [('move_record',['move_storage']),('copy_record',['copy_storage','move_storage'])]}
-names = {'optional_storage<move_record>':'optional_move_record',
-         'optional_storage<copy_record>':'optional_copy_record'}
-request = {'package':'application.optional', 'roots':list(names), 'leaves':leaves, 'names':names}
+names = {'nullable<move_record>':'optional_move_record',
+         'nullable<copy_record>':'optional_copy_record',
+         'vector<int64>':'integer_vector', 'nullable<vector<int64>>':'optional_integer_vector'}
+request = {'package':'application.optional', 'roots':[key for key in names if key.startswith('nullable<')], 'leaves':leaves, 'names':names}
 envelope = {'metadata':metadata,'request':request,'leaves':leaves,'imports':{},'layouts':{},'names':names}
 
 def plan(data=envelope, error=None):
@@ -59,12 +41,38 @@ def plan(data=envelope, error=None):
     assert result.returncode == 0, result.stderr
     return json.loads(result.stdout)
 
+def operation(action, request, error=None, meta=metadata, imports=None):
+    data = {'action':action,'metadata':meta,'leaves':leaves,'names':names,'request':request}
+    if imports is not None: data['imports'] = imports
+    return plan(data,error)
+
+presence = operation('resolve_operator',{'operation':'strict_identical','left':'nullable<move_record>','right':'null'})
+assert presence['kind'] == 'carrier_literal_observation' and presence['payload_access'] == 'none'
+operation('resolve_conversion',{'source':'nullable<move_record>','target':'boolean'},'payload access is unavailable')
+operation('resolve_condition',{'source':'nullable<move_record>'},'payload access is unavailable')
+# Capability propagation is computed through the family descriptors, not type-name switches.
+# Hash physical noncopyable storage is a later migration; this is a planning admission check.
+operation('resolve_conversion',{'source':'nullable<hash<move_record>>','target':'boolean'},'payload access is unavailable')
+changed = copy.deepcopy(envelope)
+companion = next(c for c in changed['metadata']['families']['vector']['classes'] if c['id'] != 'self')
+companion['methods'].append({'name':'copy_probe','returns':'void','parameters':[], 'body':'return;',
+                            'requires_capabilities':{companion['id']:['copy_storage']}})
+assert all('copy_probe' not in unit['header'] for unit in plan(changed)['units'])
+changed = copy.deepcopy(envelope)
+changed['metadata']['families']['nullable']['requires_capabilities'] = {'T':['copy_storage']}
+plan(changed,'Unsatisfied family capabilities')
+operation('resolve_operator',{'operation':'strict_identical','left':'nullable<move_record>','right':'null'},
+          'Unsatisfied family capabilities',meta=changed['metadata'])
 result = plan()
 units = {u['identity']:u for u in result['units']}
-move = units['optional_storage<move_record>']
-copy_unit = units['optional_storage<copy_record>']
+move = units['nullable<move_record>']
+copy_unit = units['nullable<copy_record>']
 assert move['probes'][0]['lifecycle'] == {'default':'native','copy':'disabled','move':'native','destroy':'native'}
 assert copy_unit['probes'][0]['lifecycle']['copy'] == 'native'
+assert result['types']['nullable<move_record>']['capabilities'] == ['move_storage']
+assert result['types']['nullable<copy_record>']['capabilities'] == ['copy_storage','move_storage']
+for identity in ['vector<int64>','nullable<vector<int64>>']:
+    assert result['types'][identity]['capabilities'] == ['copy_storage','move_storage']
 assert ' require_value(' not in move['header'] and ' take(' not in move['header']
 assert ' require_value(' in copy_unit['header'] and ' take(' in copy_unit['header']
 assert 'template' not in move['header'] and 'requires' not in move['header']
@@ -72,7 +80,7 @@ assert any('is_move_constructible_v<fixture::move_record>' in c for c in move['c
 assert not any('is_copy_constructible_v<fixture::move_record>' in c for c in move['checks'])
 # Default capability selection is independent of copying and of payload default construction.
 changed = copy.deepcopy(envelope)
-changed['metadata']['families']['optional_storage']['classes'][0]['lifecycle']['default'] = {'requires_capabilities':{'T':['copy_storage']}}
+changed['metadata']['families']['nullable']['classes'][0]['lifecycle']['default'] = {'requires_capabilities':{'T':['copy_storage']}}
 assert plan(changed)['units'][0]['probes'][0]['lifecycle']['default'] == 'disabled'
 for replacement, error in [({},'requires capabilities'),
                            ({'requires_capabilities':{'missing':['copy_storage']}},'Unknown capability parameter'),
@@ -80,10 +88,10 @@ for replacement, error in [({},'requires capabilities'),
                            ({'requires_capabilities':{'T':'copy_storage'}},'capabilities must be an array'),
                            ({'requires_capabilities':{},'fallback':'native'},'unknown field')]:
     changed = copy.deepcopy(envelope)
-    changed['metadata']['families']['optional_storage']['classes'][0]['lifecycle']['copy'] = replacement
+    changed['metadata']['families']['nullable']['classes'][0]['lifecycle']['copy'] = replacement
     plan(changed,error)
 changed = copy.deepcopy(envelope)
-changed['metadata']['families']['optional_storage']['classes'][0]['lifecycle']['destroy'] = {'requires_capabilities':{'T':['copy_storage']}}
+changed['metadata']['families']['nullable']['classes'][0]['lifecycle']['destroy'] = {'requires_capabilities':{'T':['copy_storage']}}
 plan(changed,'Inline storage requires native destruction')
 print('PASS: shared capability selection for lifecycle/methods, resolved probe facts and malformed policy rejection')
 if not args.core: sys.exit(0)
@@ -118,7 +126,7 @@ with tempfile.TemporaryDirectory(prefix='scpp-lifecycle-') as directory:
     work = Path(directory); sdk = work/'sdk'; app = work/'app'
     for folder in ['metadata','include','public']:
         shutil.copytree(root/'runtime'/folder, sdk/folder)
-    # Only add test recipes/capabilities; published runtime layouts/implementations are unchanged.
+    # The SDK uses the production metadata and publication; records are application leaves.
     fixture_metadata = copy.deepcopy(metadata); del fixture_metadata['bindings']
     (sdk/'metadata/public_api.json').write_text(json.dumps(fixture_metadata))
     manifest = json.loads((sdk/'public/specializations.json').read_text())
@@ -132,7 +140,7 @@ with tempfile.TemporaryDirectory(prefix='scpp-lifecycle-') as directory:
     (app/'public/fixture_records.hpp').write_text(fixture_header)
     request_file = work/'request.json'; request_file.write_text(json.dumps(request))
     manifest = concrete_types.generate(request_file,app,sdk,[sdk],'clang++',[])
-    assert len(manifest['sources']) == 2
+    assert len(manifest['sources']) == 4
     flags = ['-std=c++23','-O1']
     if args.sanitize: flags += ['-fsanitize=address,undefined','-fno-omit-frame-pointer','-g']
     objects=[]; storage_time=0
@@ -143,11 +151,19 @@ with tempfile.TemporaryDirectory(prefix='scpp-lifecycle-') as directory:
                         '-I'+str(sdk/'public'),'-I'+str(sdk/'include'),'-c',str(app/source),'-o',str(obj)],check=True)
         storage_time+=time.monotonic()-before
     caller=work/'caller.cpp'
-    caller.write_text(r'''
+    presence_body = ''
+    for state in presence['states']:
+        branch = 'return '+state['value']+';'
+        if 'test_expression' in state:
+            presence_body += 'if ('+state['test_expression'].replace('${value}','value')+') { '+branch+' }'
+        else: presence_body += branch
+    caller.write_text('#include "scpp/optional_move_record.hpp"\nstatic bool absent(const scpp::optional_move_record &value) { '+presence_body+' }\n'+r'''
 #include "scpp/optional_move_record.hpp"
 #include "scpp/optional_copy_record.hpp"
+#include "scpp/optional_integer_vector.hpp"
 #include "public_api_guard.hpp"
 #include <cstdlib>
+#include <cstdio>
 #include <new>
 #include <type_traits>
 static int allocations = 0;
@@ -166,8 +182,8 @@ int main() {
     const int before = allocations;
     int destructions = 0;
     {
-        scpp::optional_move_record absent;
-        CHECK(!absent.has_value()); absent.reset(); CHECK(destructions == 0);
+        scpp::optional_move_record empty_value;
+        CHECK(absent(empty_value)); empty_value.reset(); CHECK(destructions == 0);
         fixture::move_record first(destructions);
         scpp::optional_move_record source(static_cast<fixture::move_record&&>(first));
         scpp::optional_move_record moved(static_cast<scpp::optional_move_record&&>(source));
@@ -179,13 +195,21 @@ int main() {
         assigned = static_cast<scpp::optional_move_record&&>(assigned);
         assigned.reset(); CHECK(destructions == 2);
         fixture::move_record last(destructions);
-        absent = static_cast<fixture::move_record&&>(last);
-        CHECK(absent.has_value());
+        empty_value = static_cast<fixture::move_record&&>(last);
+        CHECK(!absent(empty_value));
         scpp::optional_copy_record copyable(fixture::copy_record(42));
         auto copied = copyable; copyable.reset();
         CHECK(copied.require_value("copy").value == 42);
     }
     CHECK(destructions == 3 && allocations == before);
+    // A newly generated inner type must publish facts used by its nullable parent.
+    const auto nested_before = allocations;
+    scpp::integer_vector numbers;
+    numbers.append(scpp::int64(7));
+    scpp::optional_integer_vector nested(numbers);
+    auto copied_nested = nested; nested.reset(); numbers.clear();
+    CHECK(copied_nested.require_value("nested copy").at(scpp::uint64(0)).native_value() == 7);
+    std::printf("Nested vector copy allocations=%d (separate from record operations)\n", allocations - nested_before);
 }
 ''')
     public_flags=['-I'+str(app/'public'),'-I'+str(sdk/'public'),'-I'+str(root/'tests/runtime/native')]
@@ -204,6 +228,12 @@ int main() {
     seal_package(app,['optional'])
     reused=concrete_types.generate(request_file,work/'consumer',sdk,[sdk,app],'clang++',[])
     assert reused['sources']==[]
+    forged = copy.deepcopy(manifest['types'])
+    forged['nullable<move_record>']['capabilities'].append('copy_storage')
+    operation('resolve_operator',{'operation':'strict_identical','left':'nullable<move_record>','right':'null'},
+              'Conflicting imported capabilities',imports=forged)
+    bad_import = copy.deepcopy(envelope); bad_import['imports'] = forged
+    plan(bad_import,'Conflicting imported capabilities')
     # Declared capabilities must be substantiated by the target, before publication.
     lying = copy.deepcopy(request)
     lying['leaves']['move_record']['capabilities'].append('copy_storage')
@@ -217,4 +247,4 @@ int main() {
     assert (app/'public/specializations.json').read_bytes() == original_manifest
     assert (app/'public/scpp/optional_move_record.hpp').read_bytes() == original_header
     print('Optional storage bytes:', {key:record['layout'][0] for key,record in manifest['types'].items()})
-    print(f'PASS: public move-only optional lifetime/reset/copy rejection; allocations=0; sealed reuse; storage compile={storage_time:.4f}s caller compile={caller_time:.4f}s')
+    print(f'PASS: public move-only optional lifetime/reset/copy rejection; record-operation allocations=0; sealed reuse; storage compile={storage_time:.4f}s caller compile={caller_time:.4f}s')

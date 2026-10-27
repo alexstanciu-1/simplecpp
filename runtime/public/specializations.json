@@ -1,6 +1,6 @@
 {
   "abi": "529dd5502370f48d64891818e9439aae72831b990b4027e8abe25c50c1216c21",
-  "api_identity": "388af9ce3e6edeeead502941bed89ddb4c28b871234f813fd0975255ade2daf9",
+  "api_identity": "8604d8fcf92efbf4cf79ce5d5fde0d17bac2568a32f19a600070855df22b89f0",
   "apis": {
     "add_dynamic": {
       "header": "scpp/operators/add_dynamic.hpp",
@@ -9220,18 +9220,30 @@
   "generator": "metadata-api-v1",
   "leaves": {
     "boolean": {
+      "capabilities": [
+        "copy_storage",
+        "move_storage"
+      ],
       "construct": "scpp::boolean(${value})",
       "cpp": "scpp::boolean",
       "header": "scpp/integers.hpp",
       "owner": "runtime.core"
     },
     "c_string": {
+      "capabilities": [
+        "copy_storage",
+        "move_storage"
+      ],
       "cpp": "const char *",
       "header": "",
       "owner": "runtime.core"
     },
     "error_value": {
       "borrow": "detail::error_value_access::get(${value})",
+      "capabilities": [
+        "copy_storage",
+        "move_storage"
+      ],
       "construct": "detail::error_value_access::make(${factory})",
       "cpp": "scpp::error_value",
       "header": "scpp/error_value.hpp",
@@ -9242,11 +9254,19 @@
       "owner": "runtime.core"
     },
     "int16": {
+      "capabilities": [
+        "copy_storage",
+        "move_storage"
+      ],
       "cpp": "scpp::int16",
       "header": "scpp/integers.hpp",
       "owner": "runtime.core"
     },
     "int32": {
+      "capabilities": [
+        "copy_storage",
+        "move_storage"
+      ],
       "cpp": "scpp::int32",
       "header": "scpp/integers.hpp",
       "owner": "runtime.core"
@@ -9255,7 +9275,9 @@
       "borrow": "scpp::int_t<>(${value}.native_value())",
       "capabilities": [
         "typed_hash_key",
-        "integer_key"
+        "integer_key",
+        "copy_storage",
+        "move_storage"
       ],
       "construct": "scpp::int64((${value}).native_value())",
       "cpp": "scpp::int64",
@@ -9266,16 +9288,28 @@
       "owner": "runtime.core"
     },
     "int8": {
+      "capabilities": [
+        "copy_storage",
+        "move_storage"
+      ],
       "cpp": "scpp::int8",
       "header": "scpp/integers.hpp",
       "owner": "runtime.core"
     },
     "native_double": {
+      "capabilities": [
+        "copy_storage",
+        "move_storage"
+      ],
       "cpp": "double",
       "header": "",
       "owner": "runtime.core"
     },
     "null": {
+      "capabilities": [
+        "copy_storage",
+        "move_storage"
+      ],
       "cpp": "scpp::null_t",
       "header": "scpp/null_t.hpp",
       "owner": "runtime.core"
@@ -9283,7 +9317,9 @@
     "string": {
       "borrow": "detail::string_access::get(${value})",
       "capabilities": [
-        "typed_hash_key"
+        "typed_hash_key",
+        "copy_storage",
+        "move_storage"
       ],
       "construct": "detail::string_access::make(${factory})",
       "cpp": "scpp::string",
@@ -9295,11 +9331,19 @@
       "owner": "runtime.core"
     },
     "uint16": {
+      "capabilities": [
+        "copy_storage",
+        "move_storage"
+      ],
       "cpp": "scpp::uint16",
       "header": "scpp/integers.hpp",
       "owner": "runtime.core"
     },
     "uint32": {
+      "capabilities": [
+        "copy_storage",
+        "move_storage"
+      ],
       "cpp": "scpp::uint32",
       "header": "scpp/integers.hpp",
       "owner": "runtime.core"
@@ -9308,7 +9352,9 @@
       "borrow": "${value}.native_value()",
       "capabilities": [
         "typed_hash_key",
-        "integer_key"
+        "integer_key",
+        "copy_storage",
+        "move_storage"
       ],
       "construct": "scpp::uint64(${value})",
       "cpp": "scpp::uint64",
@@ -9317,6 +9363,10 @@
       "owner": "runtime.core"
     },
     "uint8": {
+      "capabilities": [
+        "copy_storage",
+        "move_storage"
+      ],
       "cpp": "scpp::uint8",
       "header": "scpp/integers.hpp",
       "owner": "runtime.core"
@@ -10007,6 +10057,10 @@
   "types": {
     "dynamic": {
       "borrow": "detail::concrete_access::get<${native}>(${value})",
+      "capabilities": [
+        "copy_storage",
+        "move_storage"
+      ],
       "construct": "detail::concrete_access::make<${cpp}, ${native}>(${factory})",
       "cpp": "scpp::dynamic",
       "dependencies": [],
@@ -10030,6 +10084,10 @@
     },
     "float64": {
       "borrow": "detail::concrete_access::get<${native}>(${value})",
+      "capabilities": [
+        "copy_storage",
+        "move_storage"
+      ],
       "construct": "detail::concrete_access::make<${cpp}, ${native}>(${factory})",
       "cpp": "scpp::float64",
       "dependencies": [],
@@ -10050,6 +10108,10 @@
     },
     "mixed": {
       "borrow": "detail::concrete_access::get<${native}>(${value})",
+      "capabilities": [
+        "copy_storage",
+        "move_storage"
+      ],
       "construct": "detail::concrete_access::make<${cpp}, ${native}>(${factory})",
       "cpp": "scpp::mixed",
       "dependencies": [],
@@ -10073,6 +10135,10 @@
     },
     "result<vector<string>>": {
       "borrow": "detail::concrete_access::get<${native}>(${value})",
+      "capabilities": [
+        "copy_storage",
+        "move_storage"
+      ],
       "construct": "detail::concrete_access::make<${cpp}, ${native}>(${factory})",
       "cpp": "scpp::result_vector_string",
       "dependencies": [
@@ -10096,6 +10162,10 @@
     },
     "vector<string>": {
       "borrow": "detail::concrete_access::get<${native}>(${value})",
+      "capabilities": [
+        "copy_storage",
+        "move_storage"
+      ],
       "construct": "detail::concrete_access::make<${cpp}, ${native}>(${factory})",
       "cpp": "scpp::vector_string",
       "dependencies": [

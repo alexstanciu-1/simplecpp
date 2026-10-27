@@ -100,6 +100,7 @@ namespace scpp::api_generation
         validate_carriers(metadata);
         const auto projection = project_carrier(metadata, source, names);
         if (projection.type == value::kind::null) throw std::runtime_error("Unsupported checked conversion");
+        require_carrier_payload(projection);
         if (!r.at("targets").has(target)) {
             const auto destination = project_carrier(metadata, target, names);
             if (destination.type == value::kind::null) throw std::runtime_error("Unsupported checked conversion");

@@ -1,6 +1,7 @@
 #include "scpp/api_generation.hpp"
 #include "value.hpp"
 #include "names.hpp"
+#include "capabilities.hpp"
 #include "operators.hpp"
 #include "conversions.hpp"
 #include "conditions.hpp"
@@ -44,24 +45,6 @@ namespace scpp::api_generation
 		std::set<std::string> visiting_;
 		std::map<std::string,std::string> class_names_;
 		naming naming_;
-		static value merged_leaves(const value &input)
-		{
-			auto leaves=input.at("metadata").at("types");
-            if (leaves.type!=value::kind::object) throw std::runtime_error("types must be an object");
-            for (const auto &[key, leaf] : leaves.fields) {
-                fields_only(leaf,"cpp header owner native borrow construct includes capabilities", "leaf "+key);
-                leaf.at("cpp").text(); leaf.at("header").text(); leaf.at("owner").text();
-            }
-			for (const auto &[key,v] : input.at("leaves").fields) {
-				fields_only(v,"cpp header owner native borrow construct includes capabilities", "leaf "+key);
-                if (leaves.has(key)) for (const auto &[field, item] : v.fields) {
-                    if (!leaves.at(key).has(field) || json_text(leaves.at(key).at(field))!=json_text(item))
-                        throw std::runtime_error("Conflicting leaf identity: "+key);
-                }
-				if (!leaves.has(key)) leaves[key]=v;
-			}
-			return leaves;
-		}
 		value type(const std::string &text, const std::map<std::string,value> &types)
 		{
 			if (types.contains(text)) return types.at(text);
@@ -76,40 +59,13 @@ namespace scpp::api_generation
 		{
 			return expand(type.get("borrow","${value}"), {{"value",name},{"cpp",type.get("cpp")},{"native",type.get("native")}});
 		}
-        // Capability names are metadata identities; selection never dispatches on a type family.
         void validate_capabilities(const value &record) const
         {
-            if (!record.has("capabilities")) return;
-            const auto &list = record.at("capabilities");
-            if (list.type != value::kind::array) throw std::runtime_error("capabilities must be an array");
-            std::set<std::string> seen;
-            for (const auto &item : list.items) {
-                auto name = item.text();
-                if (!this->metadata_.has("capabilities") || !this->metadata_.at("capabilities").has(name))
-                    throw std::runtime_error("Unknown capability: " + name);
-                if (!seen.insert(name).second) throw std::runtime_error("Duplicate capability: " + name);
-            }
+            scpp::api_generation::validate_capabilities(this->metadata_, record);
         }
         bool selected(const value &record, const std::map<std::string,value> &types) const
         {
-            if (!record.has("requires_capabilities")) return true;
-            const auto &requirements = record.at("requires_capabilities");
-            if (requirements.type != value::kind::object)
-                throw std::runtime_error("requires_capabilities must be an object");
-            bool available = true;
-            for (const auto &[parameter, list] : requirements.fields) {
-                if (!types.contains(parameter)) throw std::runtime_error("Unknown capability parameter: " + parameter);
-                value required = value::object(); required["capabilities"] = list;
-                this->validate_capabilities(required);
-                const auto &type = types.at(parameter);
-                for (const auto &item : list.items) {
-                    bool found = false;
-                    if (type.has("capabilities")) for (const auto &capability : type.at("capabilities").items)
-                        if (capability.text() == item.text()) found = true;
-                    available = available && found;
-                }
-            }
-            return available;
+            return capabilities_selected(this->metadata_, record, types);
         }
         void capability_checks(const value &requirement, const std::map<std::string,value> &types, value &checks, std::set<std::string> &headers)
         {
@@ -229,7 +185,7 @@ namespace scpp::api_generation
 			if (!this->visiting_.insert(canonical).second) throw std::runtime_error("Unresolved layout dependency cycle: "+canonical);
 			auto application=this->naming_.bind(canonical); const auto &recipe=this->metadata_.at("families").at(application.type.name);
 			if (recipe.at("parameters").type!=value::kind::array || recipe.at("classes").type!=value::kind::array || recipe.at("classes").items.empty()) throw std::runtime_error("Family requires parameter and nonempty class arrays");
-            fields_only(recipe,"parameters defaults binding native includes classes functions checks capabilities requires_capabilities carrier", "family "+application.type.name);
+            fields_only(recipe,"parameters defaults binding native includes classes functions checks capabilities conditional_capabilities requires_capabilities carrier", "family "+application.type.name);
 			substitutions context{{"name",name},{"namebase",name.back()=='_'?name.substr(0,name.size()-1):name}};
 			std::map<std::string,value> types;
 			std::set<std::string> public_headers,private_headers,probe_headers;
@@ -256,6 +212,12 @@ namespace scpp::api_generation
 			record["borrow"]="detail::concrete_access::get<${native}>(${value})";
 			record["construct"]="detail::concrete_access::make<${cpp}, ${native}>(${factory})";
 			record["ordinary_api"]=this->metadata_.at("version");
+            this->validate_capabilities(recipe);
+            const auto capabilities=effective_capabilities(this->metadata_,recipe,types);
+            if (!capabilities.items.empty()) record["capabilities"]=capabilities;
+            if (recipe.has("conditional_capabilities"))
+                for (const auto &[capability, condition] : recipe.at("conditional_capabilities").fields)
+                    if (this->selected(condition,types)) this->capability_checks(condition,types,requirements,probe_headers);
             // Native argument/result transports need their representation headers even
             // when emitted in a free-function unit rather than the owning class unit.
             record["includes"]=value::array();
@@ -263,8 +225,6 @@ namespace scpp::api_generation
             transport_headers.insert(private_headers.begin(),private_headers.end());
             transport_headers.insert("scpp/detail/concrete_access.hpp");
             for (const auto &header : transport_headers) record["includes"].items.emplace_back(header);
-            this->validate_capabilities(recipe);
-            if (recipe.has("capabilities")) record["capabilities"]=recipe.at("capabilities");
 			types["self"]=record;
 			context["native_type"]=native;
 			std::string header="namespace scpp {\nnamespace detail { struct concrete_access; }\n", source;
@@ -282,7 +242,7 @@ namespace scpp::api_generation
                 if (!class_ids.insert(id).second) throw std::runtime_error("Duplicate class identity: "+id);
                 if (id=="self" && cpp!=name) throw std::runtime_error("Primary class name must match selected concrete name");
 				this->claim(cpp,canonical+":"+id); header+="class "+cpp+";\n";
-				value t=record; t["cpp"]="scpp::"+cpp; t["native"]=expand(c.at("native").text(),context); types[id]=t; context["public:"+id]="scpp::"+cpp; context["native:"+id]=t.at("native").text();
+				value t=record; if (id!="self") t.fields.erase("capabilities"); t["cpp"]="scpp::"+cpp; t["native"]=expand(c.at("native").text(),context); types[id]=t; context["public:"+id]="scpp::"+cpp; context["native:"+id]=t.at("native").text();
 				value reference=t; reference["cpp"]="scpp::"+cpp+" &"; types[id+"_ref"]=reference;
 			}
 			if (!class_ids.contains("self")) throw std::runtime_error("Missing primary class identity");
@@ -330,7 +290,7 @@ namespace scpp::api_generation
 		}
 	public:
 		explicit generator(const value &input) : api_imports_(input.has("api_imports") ? input.at("api_imports") : value::object()), metadata_(input.at("metadata")), request_(input.at("request")), imports_(input.at("imports")), layouts_(input.at("layouts")),
-			leaves_(merged_leaves(input)), names_(input.at("names")), naming_(metadata_naming_registry(metadata_,leaves_,names_)) {}
+			leaves_(merged_type_leaves(input)), names_(input.at("names")), naming_(metadata_naming_registry(metadata_,leaves_,names_)) {}
 		value run()
 		{
 			fields_only(this->metadata_,"version types families bindings functions capabilities global_operators conversions function_sets conditions", "API metadata");
@@ -346,6 +306,7 @@ namespace scpp::api_generation
                 }
             }
             for (const auto &[key,t] : this->leaves_.fields) { this->validate_capabilities(t); this->claim(t.at("cpp").text(),key); }
+            validate_import_capabilities(this->metadata_,this->leaves_,this->names_,this->imports_);
 			for (const auto &[key,t] : this->imports_.fields) {
 				if (this->naming_.resolve(key).second!=t.at("name").text()) throw std::runtime_error("Conflicting concrete name: "+key);
 				this->claim(t.at("name").text(),key+":self");
@@ -397,6 +358,12 @@ namespace scpp::api_generation
 	string generate(const string &request)
 	{
 		auto input=parse_json(detail::string_access::get(request).native_value()); value output;
+        if (input.get("action").starts_with("resolve_")) {
+            const auto leaves=merged_type_leaves(input);
+            if (input.has("imports")) validate_import_capabilities(input.at("metadata"),leaves,
+                input.has("names") ? input.at("names") : value::object(),input.at("imports"));
+            input["metadata"]["types"]=leaves;
+        }
 		if (input.get("action")=="resolve_condition") {
             output=resolve_condition(input.at("metadata"),input.at("request"), input.has("names") ? input.at("names") : value::object());
         } else if (input.get("action")=="resolve_conversion") {

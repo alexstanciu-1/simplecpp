@@ -17,7 +17,7 @@ each slice. The original inventory is a baseline, not a current completion count
 | A2 | Complete for the agreed checked scalar conversions | Carrier conversion is C; ownership casts are D. |
 | B1 | Complete for the agreed scalar-facing truth/text/identity/observation scope | Carrier forms remain C; boxed arithmetic and access completion are not B1 credit. |
 | B2 | Complete for the agreed non-carrier special/mutation and text public paths; closure evidence below | Carrier forms C; indexed retention E; native exception inspection and overflow disposition G. |
-| C | Nullable numeric/presence paths, nullable/Result scalar reconstruction and Result error identity implemented; review pending | Four carrier families, state-preserving operations/conversions and conditional lifecycle. |
+| C | Nullable conditional lifecycle, numeric/presence paths, nullable/Result scalar reconstruction and Result error identity implemented; review pending | Four carrier families, state-preserving operations/conversions and conditional lifecycle. |
 | D | Pending | Ownership, application targets and source Exception transport gaps. |
 | E | Existing vector/hash/boxed foundations; incomplete | Capability/access/initialization/cursor gaps and identity key-allocation debt. |
 | F | Pending | Callable transport and registered collection algorithms. |
@@ -86,8 +86,9 @@ no equivalent new public path identified. Published/recipe does not mean complet
 | Core utilities, debug and memory | Some per-value storage estimates and predicates; no general utility public surface | Registry helpers in the appendix, debug flags, required value_copy/reset/memory/identity helpers. Distinguish actual accounting semantics from estimated storage bytes. Audit language-adapter dependencies. | E/G |
 
 The recipe registry currently contains exactly seven families: vector, hash,
-nullable, result, float64, mixed and dynamic. The first four all impose copy
-construction/assignment and nothrow-destruction checks. This is a real coverage
+nullable, result, float64, mixed and dynamic. At the original inventory, the first four all imposed copy
+construction/assignment and nothrow-destruction checks. Nullable now uses conditional
+lifecycle and payload APIs (C10); vector/hash/Result retain their blanket checks. This is a real coverage
 restriction: supporting `unique<T>` cannot be fixed by merely adding another name
 to the current copy-required recipes.
 
@@ -952,3 +953,30 @@ observation can remain valid when payload copying is unavailable. Capability
 propagation through nested generated types and imported publications must be proved
 before removing those blanket checks. Source formation rules remain separate from
 these physical C++ capability facts. The first complete carrier review stays open.
+
+## C10 — shared capability owner and production nullable migration
+
+Capability selection/propagation and leaf/import checks now have one C++ owner
+shared by physical generation and carrier planning. Conditional family guarantees
+travel as resolved facts in publications. Imported contradictory claims reject;
+this is not a second registry inferred from native type names.
+
+Production nullable now selects copy/move lifecycle and payload APIs using those
+facts. It supports physical move-only application records without requiring payload
+default construction. Copy/extraction/take are absent when not guaranteed; reset,
+absence and strict null presence remain available. Owned-extraction plans reject
+before referencing an omitted method. This advances the C9 foundation into the real
+recipe rather than retaining a test-only optional family.
+
+The proof includes newly generated vector<int64> inside nullable, effective fact
+propagation, independent copied values and sealed publication reuse. It also rejects
+forged imported capabilities and false target copyability claims without overwriting
+a publication. All 332 existing runtime generated code units remain byte-identical;
+only the runtime capability inventory/fingerprint changes.
+
+Remaining: migrate Result/sentinel lifecycle, finish source formation constraints,
+expand payload domains and provide scoped observations that avoid copies. This
+slice does not make noncopyable hash/vector operations generally usable or close
+those recipes' blanket checks. Source generic copyable_value and result_payload
+remain distinct from physical constructor/assignment guarantees. First complete
+carrier review remains open.

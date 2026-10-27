@@ -545,6 +545,7 @@ namespace scpp::api_generation
             }
             if (!contains(policy.at("payloads"), projection.at("target").text()))
                 throw std::runtime_error("Unsupported carrier payload; only one layer is projected");
+            require_carrier_payload(projection);
             calculation[side] = projection.at("target");
             out[std::string(side) + "_projection"] = projection;
         }

@@ -39,8 +39,9 @@ compiler. Native C++ traits/probes prove physical bindings, not source admission
 | value<T> | Existing storage modifier and normalization rules; not a freely nestable new wrapper family. |
 | Callable signatures | Parameter/return/passing-mode and capture/lifetime contracts, not an unconstrained T-shaped callback. |
 
-Important evidence: the current physical vector/hash/nullable/Result recipes require
-copy construction and assignment unconditionally. This is a physical coverage limit,
+Initial evidence: the physical vector/hash/nullable/Result recipes required
+copy construction and assignment unconditionally. Nullable is migrated in C10;
+the remaining recipes still need that work. This is a physical coverage limit,
 not proof that the source requires every runtime payload to be copyable. Extend the
 same capability/lifecycle mechanism when implementing admitted noncopyable cases.
 Do not invent user constraint syntax as part of the API generator work.
@@ -391,3 +392,10 @@ A physical application optional-storage proof covers noncopyable
 record storage without requiring default construction of the payload. Production
 carrier recipes/planners are not migrated yet: capability propagation and conditional
 owned extraction remain necessary before advertising noncopyable nullable support.
+
+C10 migrates production nullable to shared physical capability facts. Noncopyable
+record storage exposes absence/reset/move (when guaranteed) and literal-null
+presence, while omitting copying/owned extraction/take. Planners reject unavailable
+extraction and validate imported facts through the same owner as generation.
+Generated inner-vector facts and application publication reuse are proved; Result
+and remaining lifecycle/formation/scoped-observation work remain pending.

@@ -9,7 +9,11 @@
     "c_string": {
       "cpp": "const char *",
       "header": "",
-      "owner": "runtime.core"
+      "owner": "runtime.core",
+      "capabilities": [
+        "copy_storage",
+        "move_storage"
+      ]
     },
     "uint64": {
       "cpp": "scpp::uint64",
@@ -20,7 +24,9 @@
       "includes": [],
       "capabilities": [
         "typed_hash_key",
-        "integer_key"
+        "integer_key",
+        "copy_storage",
+        "move_storage"
       ]
     },
     "int64": {
@@ -34,14 +40,20 @@
       ],
       "capabilities": [
         "typed_hash_key",
-        "integer_key"
+        "integer_key",
+        "copy_storage",
+        "move_storage"
       ]
     },
     "boolean": {
       "cpp": "scpp::boolean",
       "header": "scpp/integers.hpp",
       "owner": "runtime.core",
-      "construct": "scpp::boolean(${value})"
+      "construct": "scpp::boolean(${value})",
+      "capabilities": [
+        "copy_storage",
+        "move_storage"
+      ]
     },
     "string": {
       "cpp": "scpp::string",
@@ -54,7 +66,9 @@
         "scpp/detail/string_access.hpp"
       ],
       "capabilities": [
-        "typed_hash_key"
+        "typed_hash_key",
+        "copy_storage",
+        "move_storage"
       ]
     },
     "error_value": {
@@ -66,47 +80,83 @@
       "construct": "detail::error_value_access::make(${factory})",
       "includes": [
         "scpp/detail/error_value_access.hpp"
+      ],
+      "capabilities": [
+        "copy_storage",
+        "move_storage"
       ]
     },
     "null": {
       "cpp": "scpp::null_t",
       "header": "scpp/null_t.hpp",
-      "owner": "runtime.core"
+      "owner": "runtime.core",
+      "capabilities": [
+        "copy_storage",
+        "move_storage"
+      ]
     },
     "native_double": {
       "cpp": "double",
       "header": "",
-      "owner": "runtime.core"
+      "owner": "runtime.core",
+      "capabilities": [
+        "copy_storage",
+        "move_storage"
+      ]
     },
     "int8": {
       "cpp": "scpp::int8",
       "header": "scpp/integers.hpp",
-      "owner": "runtime.core"
+      "owner": "runtime.core",
+      "capabilities": [
+        "copy_storage",
+        "move_storage"
+      ]
     },
     "int16": {
       "cpp": "scpp::int16",
       "header": "scpp/integers.hpp",
-      "owner": "runtime.core"
+      "owner": "runtime.core",
+      "capabilities": [
+        "copy_storage",
+        "move_storage"
+      ]
     },
     "int32": {
       "cpp": "scpp::int32",
       "header": "scpp/integers.hpp",
-      "owner": "runtime.core"
+      "owner": "runtime.core",
+      "capabilities": [
+        "copy_storage",
+        "move_storage"
+      ]
     },
     "uint8": {
       "cpp": "scpp::uint8",
       "header": "scpp/integers.hpp",
-      "owner": "runtime.core"
+      "owner": "runtime.core",
+      "capabilities": [
+        "copy_storage",
+        "move_storage"
+      ]
     },
     "uint16": {
       "cpp": "scpp::uint16",
       "header": "scpp/integers.hpp",
-      "owner": "runtime.core"
+      "owner": "runtime.core",
+      "capabilities": [
+        "copy_storage",
+        "move_storage"
+      ]
     },
     "uint32": {
       "cpp": "scpp::uint32",
       "header": "scpp/integers.hpp",
-      "owner": "runtime.core"
+      "owner": "runtime.core",
+      "capabilities": [
+        "copy_storage",
+        "move_storage"
+      ]
     }
   },
   "families": {
@@ -435,7 +485,23 @@
         "std::is_copy_constructible_v<${public:T}>",
         "std::is_copy_assignable_v<${public:T}>",
         "std::is_nothrow_destructible_v<${public:T}>"
-      ]
+      ],
+      "conditional_capabilities": {
+        "copy_storage": {
+          "requires_capabilities": {
+            "T": [
+              "copy_storage"
+            ]
+          }
+        },
+        "move_storage": {
+          "requires_capabilities": {
+            "T": [
+              "move_storage"
+            ]
+          }
+        }
+      }
     },
     "result": {
       "parameters": [
@@ -671,6 +737,22 @@
             }
           }
         ]
+      },
+      "conditional_capabilities": {
+        "copy_storage": {
+          "requires_capabilities": {
+            "T": [
+              "copy_storage"
+            ]
+          }
+        },
+        "move_storage": {
+          "requires_capabilities": {
+            "T": [
+              "move_storage"
+            ]
+          }
+        }
       }
     },
     "nullable": {
@@ -686,8 +768,20 @@
           "native": "${native_type}",
           "lifecycle": {
             "default": "native",
-            "copy": "native",
-            "move": "native",
+            "copy": {
+              "requires_capabilities": {
+                "T": [
+                  "copy_storage"
+                ]
+              }
+            },
+            "move": {
+              "requires_capabilities": {
+                "T": [
+                  "move_storage"
+                ]
+              }
+            },
             "destroy": "native"
           },
           "methods": [
@@ -701,7 +795,12 @@
                 }
               ],
               "expression": "value",
-              "explicit": true
+              "explicit": true,
+              "requires_capabilities": {
+                "T": [
+                  "copy_storage"
+                ]
+              }
             },
             {
               "name": "operator=",
@@ -713,7 +812,12 @@
                   "passing": "const_ref"
                 }
               ],
-              "body": "${self} = value;\nreturn *this;"
+              "body": "${self} = value;\nreturn *this;",
+              "requires_capabilities": {
+                "T": [
+                  "copy_storage"
+                ]
+              }
             },
             {
               "kind": "constructor",
@@ -725,7 +829,12 @@
                 }
               ],
               "expression": "std::move(value)",
-              "explicit": true
+              "explicit": true,
+              "requires_capabilities": {
+                "T": [
+                  "move_storage"
+                ]
+              }
             },
             {
               "name": "operator=",
@@ -737,7 +846,12 @@
                   "passing": "move_ref"
                 }
               ],
-              "body": "${self} = std::move(value);\nreturn *this;"
+              "body": "${self} = std::move(value);\nreturn *this;",
+              "requires_capabilities": {
+                "T": [
+                  "move_storage"
+                ]
+              }
             },
             {
               "name": "has_value",
@@ -752,7 +866,12 @@
               "returns": "T",
               "parameters": [],
               "const": true,
-              "expression": "${self}.value()"
+              "expression": "${self}.value()",
+              "requires_capabilities": {
+                "T": [
+                  "copy_storage"
+                ]
+              }
             },
             {
               "name": "require_value",
@@ -765,7 +884,12 @@
                 }
               ],
               "const": true,
-              "expression": "${self}.require_value(context)"
+              "expression": "${self}.require_value(context)",
+              "requires_capabilities": {
+                "T": [
+                  "copy_storage"
+                ]
+              }
             },
             {
               "name": "reset",
@@ -785,14 +909,17 @@
                 }
               ],
               "expression": "${self}.value_or(value)",
-              "const": true
+              "const": true,
+              "requires_capabilities": {
+                "T": [
+                  "copy_storage"
+                ]
+              }
             }
           ]
         }
       ],
       "checks": [
-        "std::is_copy_constructible_v<${public:T}>",
-        "std::is_copy_assignable_v<${public:T}>",
         "std::is_nothrow_destructible_v<${public:T}>"
       ],
       "functions": [
@@ -812,7 +939,12 @@
             }
           ],
           "kind": "function",
-          "body": "const ${public:self} snapshot(source);\nif (!snapshot.has_value()) return scpp::boolean(false);\nvalue = snapshot.value(); return scpp::boolean(true);"
+          "body": "const ${public:self} snapshot(source);\nif (!snapshot.has_value()) return scpp::boolean(false);\nvalue = snapshot.value(); return scpp::boolean(true);",
+          "requires_capabilities": {
+            "T": [
+              "copy_storage"
+            ]
+          }
         },
         {
           "name": "was_found",
@@ -874,6 +1006,22 @@
             ]
           }
         ]
+      },
+      "conditional_capabilities": {
+        "copy_storage": {
+          "requires_capabilities": {
+            "T": [
+              "copy_storage"
+            ]
+          }
+        },
+        "move_storage": {
+          "requires_capabilities": {
+            "T": [
+              "move_storage"
+            ]
+          }
+        }
       }
     },
     "hash": {
@@ -1203,7 +1351,29 @@
           "kind": "function",
           "expression": "scpp::boolean(true)"
         }
-      ]
+      ],
+      "conditional_capabilities": {
+        "copy_storage": {
+          "requires_capabilities": {
+            "V": [
+              "copy_storage"
+            ],
+            "K": [
+              "copy_storage"
+            ]
+          }
+        },
+        "move_storage": {
+          "requires_capabilities": {
+            "V": [
+              "move_storage"
+            ],
+            "K": [
+              "move_storage"
+            ]
+          }
+        }
+      }
     },
     "float64": {
       "parameters": [],
@@ -1255,6 +1425,10 @@
             }
           ]
         }
+      ],
+      "capabilities": [
+        "copy_storage",
+        "move_storage"
       ]
     },
     "mixed": {
@@ -1669,6 +1843,10 @@
             "scpp/memory.hpp"
           ]
         }
+      ],
+      "capabilities": [
+        "copy_storage",
+        "move_storage"
       ]
     },
     "dynamic": {
@@ -2114,6 +2292,10 @@
             "scpp/cast.hpp"
           ]
         }
+      ],
+      "capabilities": [
+        "copy_storage",
+        "move_storage"
       ]
     }
   },
@@ -2161,6 +2343,18 @@
       ],
       "checks": [
         "scpp::hash_detail::integer_key<${cpp}>"
+      ]
+    },
+    "copy_storage": {
+      "checks": [
+        "std::is_copy_constructible_v<${cpp}>",
+        "std::is_copy_assignable_v<${cpp}>"
+      ]
+    },
+    "move_storage": {
+      "checks": [
+        "std::is_move_constructible_v<${cpp}>",
+        "std::is_move_assignable_v<${cpp}>"
       ]
     }
   },
