@@ -156,7 +156,7 @@ requires it; comparison snapshots retain their distinct sequencing rules.
 | --- | --- | --- |
 | W01 | Confirm one-layer checked lifting and ordinary payload result; no automatic optional/Result propagation | Agreed 2026-10-27; pending implementation |
 | W02 | Decide whether to broaden cross-carrier arithmetic consistently or preserve only today's bounded source admissions | Agreed 2026-10-27: uniform arithmetic across all four families for otherwise admitted numeric payload pairs |
-| W03 | Confirm reuse of existing state-aware equality, identity, condition, text, take and coalescing policies | Proposed preservation; any simplification changing these contracts needs separate approval |
+| W03 | Confirm reuse of existing state-aware equality, identity, condition, text, take and coalescing policies | Equality/ordering agreed 2026-10-27; strict identity deliberately tightened to preserve states; truthiness/conversion discussion below |
 | W04 | Account for all formation rules in one prepared descriptor path: bare-source default versus runtime parameters, result_payload and forbidden compositions | Confirmed constraints; enforcement audit and metadata integration remain |
 | W05 | Extend conditional lifecycle/operation capabilities, prove an admitted noncopyable payload and reject unavailable copy operations | Pending design; do not conflate this with new user-authored constraint syntax |
 | W06 | Define payload observation/projection transport and demand ownership in the existing C++ generator; no public templates or heap-interior references | Proposed implementation mechanism |
@@ -187,7 +187,7 @@ wrapper equality or every specialized arithmetic operation on new payload domain
 Sources: `specs/expression_evaluation.md`, especially canonical-carrier completion,
 cross-family ordinary equality, mixed numeric equality and strict identity amendments.
 
-Proposed uniform ordinary equality across the four families: validate payload
+Agreed 2026-10-27, pending implementation: uniform ordinary equality across the four families: validate payload
 comparison admission first; evaluate/snapshot whole operands left-to-right; compare
 outer state tags, then invoke payload equality only for two present payloads. A plain
 operand is a payload for this rule. Matching absence states compare equal, matching
@@ -198,22 +198,74 @@ remain errors. Existing narrow literal-sentinel comparisons retain their own rul
 This generalizes the shared mechanism without re-deciding truthiness or parsing text.
 Missing payloads cannot rescue a statically invalid payload comparison.
 
-Proposed ordering (`<`, `<=`, `>`, `>=`, and separately admitted `<=>`): checked
+Agreed 2026-10-27, pending implementation: ordering (`<`, `<=`, `>`, `>=`, and separately admitted `<=>`): checked
 one-layer extraction like arithmetic, followed by the payload's admitted ordering.
 A non-value state throws; do not sort null/errors/sentinels before numbers or strings.
 Boolean/string/numeric admission remains owned by the payload operator group, and
-NaN spaceship behavior remains separately governed. This is a proposal for uniform
-cross-carrier admission, not yet an accepted widening.
+NaN spaceship behavior remains separately governed. Uniform cross-carrier admission is approved within the payload operator's domain;
+this is not a claim of implemented frontend support.
 
-Strict identity needs an explicit discussion checkpoint: current source-visible
-normalization lets a false sentinel be strictly identical to a successful false bool
-payload, although ordinary carrier equality keeps those states distinct. Likewise,
-ordinary equality treats two structured Result errors as equal, whereas strict
-identity inspects error identity metadata. Numeric identity does not promote. Do not
-silently replace these rules with the ordinary-equality state table or claim strict
-identity is universally a stronger version of ==. Preserve existing behavior pending
-an explicit user decision about changing or retaining it.
+Agreed 2026-10-27: strict identity preserves carrier states too. A sentinel is
+not strictly identical to a successful payload with the same scalar value. Compare
+matching state categories first; compare present payloads with their strict identity
+rules, without numeric promotion; compare structured errors using their identity
+metadata. Matching states can still be compared across admitted carrier families;
+this decision adds state preservation, not an unrequested exact-family requirement.
+For pairs admitted by both operators, `a === b` must imply `a == b`; `!==` negates
+strict identity. This intentionally supersedes the old source-visible normalization
+that identified a false sentinel with a successful false payload. Literal null and
+sentinel-specific comparison routes must be audited against this invariant rather
+than used as a back door to the old normalization.
+
+This is an approved semantic change awaiting normative-spec/implementation migration,
+not a statement that the existing strict-identity helpers already obey it.
 
 The compact mechanism remains separate per-operand state observation/extraction plus
 one group policy and one normalized payload operation, not a generated implementation
 for every pair of wrapper types. No implementation goal starts during this discussion.
+
+## Truthiness and conversion discussion
+
+Confirmed current condition rules: absent nullable, Result failure and false sentinel
+are false; true sentinel is true; successful payloads delegate to their admitted
+condition semantics. This does not mean success or presence: a successful zero is
+falsey, while a true sentinel has no payload. Typed vector/hash payloads lack a
+condition contract, so wrapping them does not enable conditions. Shared/unique test
+handle presence; weak requires explicit lock. The user previously chose to preserve
+existing truthiness. This does not create automatic arithmetic-style recursive
+extraction; payload condition delegation needs its own explicit admission.
+
+`empty` is collection-only and rejects these wrappers. Historical conditional-matrix
+text saying empty observes wrapped string zero is superseded by
+`specs/count_empty_isset_contract.md`; do not carry that stale sentence into metadata.
+
+Current native cast lifting (`runtime/include/scpp/cast.hpp`) requires a successful
+payload for ordinary required-value casts, then calls the payload cast. Even an
+explicit bool cast requires a payload: a true result_or_bool sentinel can be truthy
+in a condition yet fail a required bool cast. String conversion has an existing
+exception: absent nullable and false/true sentinel states produce empty string;
+structured Result error still throws. Explicit string cast formatting and text-context
+formatting remain distinct where specified (notably floats). Native helper breadth
+is not automatic source admission.
+
+Proposed conversion policy for discussion:
+
+- Carrier to required scalar: one checked carrier layer, then the selected explicit
+  scalar cast. No recursive peeling or treating error/sentinel states as numbers.
+  Preserve existing explicit string-conversion exceptions as a named text policy.
+- Same-family carrier conversion, where formation and payload conversion are admitted:
+  preserve outer non-value state; convert a successful payload only. Do not turn a
+  thrown cast failure into a Result failure, invent move permissions, or mutate the
+  source. This is a proposed generalization, not a claim that every such conversion
+  exists today.
+- Plain payload into a carrier: retain admitted explicit/exact success construction;
+  distinguish a wrapped bool false from a false sentinel. No implicit multi-step
+  numeric conversion plus wrapping unless separately admitted.
+- Different carrier families: no blanket conversion. Preserve only explicit supported
+  paths; require deliberate error/sentinel handling rather than silently discarding it.
+- Ownership conversions retain target/ancestry/transfer/locking contracts, separate
+  from scalar conversion and carrier lifting.
+
+Open checkpoint: retain the required-payload rule for explicit bool casts (distinct
+from condition truthiness), and retain the existing string-cast exception? Then settle
+same-family payload conversion and nested-condition admission before implementing.
