@@ -954,3 +954,26 @@ compare error presence, message, line and file through the existing native owner
 Ordinary error equality remains a constant state result. The implementation has no
 Result-name or error-tag branch. These state functions do not themselves broaden
 standalone source error-expression admission or expose native templates.
+
+## Capability-selected lifecycle
+
+Each class lifecycle entry (`default`, `copy`, `move`, `destroy`) accepts `native`,
+`disabled`, or `{requires_capabilities: {parameter: [capability, ...]}}`. Conditional
+entries reuse ordinary operation/family capability selection: all declared facts
+must be present for native emission; otherwise the lifecycle operation is deleted.
+Selected capability checks are emitted into the target probe. Copy and move each
+retain the existing paired constructor/assignment contract. This does not expose
+C++ requires clauses or templates in a public header.
+
+The generator resolves these entries before emitting probe metadata, so target
+probing still receives the same native/disabled lifecycle vocabulary. A missing,
+unknown or malformed condition rejects. Destruction must resolve to native because
+inline storage cannot safely omit destruction. Conditional method selection remains
+separate: suppressing copying must also suppress APIs that inherently copy payloads.
+
+The first execution proof uses an application optional-storage recipe backed by
+native nullable, with move-only and copyable record descriptors. It proves default
+absence independent of payload default construction, deleted copy APIs, move/reset
+lifetime and publication reuse. Production nullable/Result capability propagation
+and operator-planner admission are still pending; this mechanism alone does not
+claim those recipes support noncopyable payloads.

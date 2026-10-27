@@ -385,3 +385,9 @@ function. Ordinary equality retains its constant error-state result. Shared meta
 selects owned state projections and the comparator; evaluation snapshots remain
 left-to-right. Eliminating redundant owned state copies is part of scoped-observation
 work, not permission to expose interior references or skip the left snapshot.
+
+C9 adds conditional lifecycle selection through the existing capability mechanism.
+A physical application optional-storage proof covers noncopyable
+record storage without requiring default construction of the payload. Production
+carrier recipes/planners are not migrated yet: capability propagation and conditional
+owned extraction remain necessary before advertising noncopyable nullable support.

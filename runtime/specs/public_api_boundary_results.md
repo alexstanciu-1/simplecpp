@@ -1731,3 +1731,33 @@ with exactly the two new concrete identity functions added.
 All nine focused regressions pass under ASan/UBSan with leak detection in 59.26s.
 The full carrier review remains open; sentinel families, wider payload domains and
 conditional/scoped lifecycle are not closed by this error-identity proof.
+
+## C9 conditional lifecycle foundation
+
+Lifecycle entries now use the existing capability selector and target-check emitter.
+The physical proof adds a test-only optional-storage family backed by native nullable,
+with move-only and copyable application records. It is intentionally separate from
+production carrier planning, whose conditional extraction/capability propagation is
+not yet migrated. Public output has concrete/deleted special members, with no public
+templates or requires clauses; the target driver still receives native/disabled modes.
+
+Release proves default absence without a default-constructible payload, deleted
+copying, move construction/assignment, self-move protection, reset and exactly-once
+resource destruction. The measured execution allocates zero. A forbidden copy fails
+compilation. A false declared copy capability fails the target probe before changing
+an existing header or sealed manifest. Reusing the sealed application specialization
+produces no implementation units. Native/public layout probes report 16-byte move-only
+optional storage and 8-byte copyable optional storage on this target.
+
+Final release compile-only observations: two storage units 2.0375s; public caller
+0.1089s. Initial tool build 6.49s, sanitized tool build 17.44s. Runtime-core and its
+published APIs/layouts were unchanged. An earlier release proof was followed by one
+repeat to validate the added false-capability/publication-preservation case.
+
+ASan/UBSan with leak detection passes the same lifetime, zero-allocation, rejected
+copy, false-capability and publication tests. Sanitized storage compilation is
+2.7078s and caller compilation 0.1460s. Four focused release regressions pass in
+5.19s; they overlapped the sanitized proof, so these are observational timings.
+
+All four focused regressions also pass under ASan/UBSan with leak detection in
+29.22s. Production carrier noncopyable admission remains explicitly pending.

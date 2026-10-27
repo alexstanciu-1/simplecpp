@@ -129,6 +129,30 @@ namespace scpp::api_generation
                 }
             }
         }
+        value lifecycle(const value &policy, const std::map<std::string,value> &types,
+            value &checks, std::set<std::string> &headers)
+        {
+            fields_only(policy,"default copy move destroy", "lifecycle");
+            value resolved = value::object();
+            for (const auto *mode : {"default", "copy", "move", "destroy"}) {
+                const auto &rule = policy.at(mode);
+                if (rule.type == value::kind::object) {
+                    fields_only(rule, "requires_capabilities", "conditional lifecycle");
+                    if (!rule.has("requires_capabilities") || rule.at("requires_capabilities").fields.empty())
+                        throw std::runtime_error("Conditional lifecycle requires capabilities");
+                    const bool enabled = this->selected(rule, types);
+                    resolved[mode] = enabled ? "native" : "disabled";
+                    if (enabled) this->capability_checks(rule, types, checks, headers);
+                } else {
+                    if (rule.text() != "native" && rule.text() != "disabled")
+                        throw std::runtime_error("Unknown lifecycle policy");
+                    resolved[mode] = rule;
+                }
+            }
+            if (resolved.get("destroy") != "native")
+                throw std::runtime_error("Inline storage requires native destruction");
+            return resolved;
+        }
 		// A binding body returns its binding result; owned return transport is outside that lambda.
 		std::string operation(const value &op, substitutions context, const std::map<std::string,value> &types,
 			std::set<std::string> &public_headers, std::set<std::string> &private_headers,
@@ -267,7 +291,8 @@ namespace scpp::api_generation
 				auto alias="native_"+cpp; auto key=canonical+":"+id;
 				auto local=context; local["native_type"]=alias; local["self"]="detail::concrete_access::get<"+alias+">(*this)";
 				this->dependencies(c,probe_headers,context);
-				value probe=value::object(); probe["key"]=key; probe["native"]=native_type; probe["lifecycle"]=c.at("lifecycle"); probes.items.push_back(probe);
+                const auto life=this->lifecycle(c.at("lifecycle"),types,checks,probe_headers);
+				value probe=value::object(); probe["key"]=key; probe["native"]=native_type; probe["lifecycle"]=life; probes.items.push_back(probe);
 				std::string size="1",alignment="1";
 				if (this->layouts_.has(key)) {
 					const auto &layout=this->layouts_.at(key).items; size=layout.at(0).scalar; alignment=layout.at(1).scalar;
@@ -276,9 +301,6 @@ namespace scpp::api_generation
 				source+="using "+alias+" = "+native_type+";\nstatic_assert(sizeof("+alias+")=="+size+" && alignof("+alias+")=="+alignment+");\n";
 				header+="class "+cpp+" final {\n    alignas("+alignment+") unsigned char storage_["+size+"];\n    friend struct detail::concrete_access;\n    "+cpp+"(void (*construct)(void *, const void *), const void *context);\npublic:\n";
 				source+=cpp+"::"+cpp+"(void (*construct)(void *, const void *), const void *context) { construct(this->storage_, context); }\n";
-				const auto &life=c.at("lifecycle"); fields_only(life,"default copy move destroy", "lifecycle");
-				for (const auto &op : {"default","copy","move","destroy"}) if (life.get(op)!="native" && life.get(op)!="disabled") throw std::runtime_error("Unknown lifecycle policy");
-				if (life.get("destroy")!="native") throw std::runtime_error("Inline storage requires native destruction");
 				if (life.get("default")=="native") { header+="    "+cpp+"();\n"; source+=cpp+"::"+cpp+"() { ::new (this->storage_) "+alias+"(); }\n"; }
 				else header+="    "+cpp+"() = delete;\n";
 				for (bool move : {false,true}) {

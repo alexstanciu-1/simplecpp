@@ -928,3 +928,27 @@ must eventually avoid redundant projected copies while retaining the required
 left snapshot against RHS mutation. Do not expose an unguarded interior reference
 or remove operand snapshots merely to reduce the count. This joins the existing
 noncopyable/scoped-observation work; direct error comparison borrows its operands.
+
+## C9 — conditional lifecycle mechanism and physical proof
+
+The generator now applies its existing declared-capability selection to lifecycle
+entries as well as ordinary methods. Target assertions substantiate selected facts;
+resolved native/disabled modes feed the existing probe and publication pipeline.
+No separate trait-discovery or lifecycle-generation mechanism is introduced.
+
+The first physical proof uses application optional storage backed by nullable,
+with a move-only, non-default-constructible record and a copyable peer. The generated
+API deletes copying and copy extraction/take for the first record, while permitting
+absence, move, reset and destruction. It proves resource destruction counts,
+self-move protection, no measured allocations, rejected copy compilation and sealed
+specialization reuse. A false copyability declaration must fail the target probe
+without overwriting the existing publication.
+
+This is foundational C lifecycle progress, not production nullable completion.
+The production recipes still impose blanket copying, and carrier descriptors still
+require unconditional owned payload extraction. Next, migrate capability facts and
+conditional extraction through the shared type/operation owner so absent-state
+observation can remain valid when payload copying is unavailable. Capability
+propagation through nested generated types and imported publications must be proved
+before removing those blanket checks. Source formation rules remain separate from
+these physical C++ capability facts. The first complete carrier review stays open.
