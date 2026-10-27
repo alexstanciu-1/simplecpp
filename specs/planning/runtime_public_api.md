@@ -357,3 +357,24 @@ Small-width/key batch implemented and validated: the public integer family now h
 all eight configured widths; private key adapters cover those exact types. This
 checkpoint does not claim full numeric operators or canonical value-argument demand
 publication. Remaining scope and batch order are tracked in the surface audit.
+
+## Future debt: production executable LTO / ThinLTO evaluation
+
+Review whether and how full LTO or ThinLTO should be offered as an optional
+production executable build configuration after the metadata-driven public API
+boundary is established. Keep the normal fast development build as the baseline;
+this debt does not enable either mode now.
+
+Evaluate cross-boundary optimization between generated adapters, runtime libraries,
+application middleware and application code. Verify the required compilation and
+publication configuration for each participating artifact, including toolchain and
+linker compatibility; do not assume a final executable link flag alone is sufficient.
+Keep differently configured dependency publications distinguishable and reusable.
+
+Compare the baseline, ThinLTO and full LTO using representative production workloads:
+execution time, executable size, allocation behavior, clean/incremental compilation
+and link time, peak build memory, and correctness/sanitizer coverage as applicable.
+Determine whether any runtime gain justifies the production build cost, which
+artifacts must participate, and whether a separate production profile is worthwhile.
+Do not assume that LTO removes boundary overhead or that either option is beneficial
+without measurements.
