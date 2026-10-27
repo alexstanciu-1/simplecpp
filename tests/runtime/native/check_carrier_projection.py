@@ -297,7 +297,7 @@ with tempfile.TemporaryDirectory(prefix='scpp-carrier-') as directory:
     for state in plan['states']:
         if state['condition'] == 'payload':
             projected = plan['projection']['expression'].replace('${value}','source')
-            branch = f'const auto value = {projected}; return {payload["function"]}(value);'
+            branch = 'return '+plan['payload_expression'].replace('${value}','source')+';' if plan['payload_access']=='scoped_operation' else f'const auto value = {projected}; return {payload["function"]}(value);'
         else: branch = 'return scpp::boolean(' + state['condition'] + ');'
         if 'test_expression' in state:
             body += 'if (' + state['test_expression'].replace('${value}','source') + ') { ' + branch + ' }\n'

@@ -31,6 +31,6 @@ public:
     scpp::vector_string require_value(const char * context) const;
     scpp::error_value error() const;
     scpp::error_value require_error(const char * context) const;
-};
+    };
 scpp::boolean take(scpp::vector_string &value, scpp::error_value &error, const scpp::result_vector_string &source);
 }

@@ -23,22 +23,11 @@ namespace scpp::api_generation
         }
     }
 
-    static value condition(const value &metadata, const value &functions, const value &names,
-        const std::string &source, unsigned depth)
+    value callable_condition(const value &metadata, const std::string &canonical)
     {
-        if (depth > 128) throw std::runtime_error("Condition delegation nesting limit exceeded");
-        naming types(metadata_naming_registry(metadata, metadata.at("types"), names));
-        const auto canonical = types.resolve(source).first;
+        const auto functions = expand_function_sets(metadata);
         const auto identity = metadata.at("conditions").at("function_set").text() + "_" + canonical;
         value out = value::object(); out["source"] = canonical; out["result_type"] = "boolean";
-        const auto &registry = metadata.at("conditions");
-        if (registry.has("constants") && registry.at("constants").has(canonical)) {
-            out["kind"] = "constant_after_evaluation";
-            out["value"] = registry.at("constants").at(canonical);
-            out["operand_access"] = "none";
-            out["evaluation"] = "evaluate_source_once";
-            return out;
-        }
         if (functions.has(identity)) {
             const auto &function = functions.at(identity), &signature = function.at("operation");
             const auto &parameters = signature.at("parameters").items;
@@ -50,6 +39,26 @@ namespace scpp::api_generation
             out["evaluation"] = "evaluate_source_once";
             return out;
         }
+        return value();
+    }
+
+    static value condition(const value &metadata, const value &names,
+        const std::string &source, unsigned depth)
+    {
+        if (depth > 128) throw std::runtime_error("Condition delegation nesting limit exceeded");
+        naming types(metadata_naming_registry(metadata, metadata.at("types"), names));
+        const auto canonical = types.resolve(source).first;
+        value out = value::object(); out["source"] = canonical; out["result_type"] = "boolean";
+        const auto &registry = metadata.at("conditions");
+        if (registry.has("constants") && registry.at("constants").has(canonical)) {
+            out["kind"] = "constant_after_evaluation";
+            out["value"] = registry.at("constants").at(canonical);
+            out["operand_access"] = "none";
+            out["evaluation"] = "evaluate_source_once";
+            return out;
+        }
+        const auto callable = callable_condition(metadata, canonical);
+        if (callable.type != value::kind::null) return callable;
         const auto projection = project_carrier(metadata, canonical, names);
         if (projection.type == value::kind::null || !projection.has("states"))
             throw std::runtime_error("Unsupported condition operand");
@@ -57,12 +66,16 @@ namespace scpp::api_generation
         // state need not manufacture an owned payload just to return that constant.
         const bool constant_payload = registry.has("constants")
             && registry.at("constants").has(projection.at("target").text());
-        if (!constant_payload) require_carrier_payload(projection);
-        out["payload_access"] = constant_payload ? "none" : "owned_value";
+        const bool scoped_payload = projection.has("condition_observation")
+            && callable_condition(metadata, projection.at("target").text()).type != value::kind::null;
+        if (!constant_payload && !scoped_payload) require_carrier_payload(projection);
+        out["payload_access"] = constant_payload ? "none" : scoped_payload ? "scoped_operation" : "owned_value";
+        if (scoped_payload)
+            out["payload_expression"] = "${value}." + projection.at("condition_observation").text() + "()";
         // Admission precedes state dispatch, so absence cannot grant truthiness
         // to a payload with no condition contract. Conditions can delegate through
         // an admitted nested carrier; arithmetic/casts retain their one-layer rule.
-        out["payload_condition"] = condition(metadata, functions, names, projection.at("target").text(), depth + 1);
+        out["payload_condition"] = condition(metadata, names, projection.at("target").text(), depth + 1);
         out["kind"] = "carrier_condition"; out["projection"] = projection;
         out["states"] = value::array();
         for (const auto &state : projection.at("states").items) {
@@ -82,6 +95,6 @@ namespace scpp::api_generation
         fields_only(request, "source", "condition request");
         validate_conditions(metadata);
         validate_carriers(metadata);
-        return condition(metadata, expand_function_sets(metadata), names, request.at("source").text(), 0);
+        return condition(metadata, names, request.at("source").text(), 0);
     }
 }

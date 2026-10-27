@@ -44,6 +44,7 @@ namespace scpp::api_generation
 		value api_imports_, api_exports_=value::object();
         value metadata_, request_, imports_, layouts_, leaves_, names_, exports_=value::object(), units_=value::array();
 		std::set<std::string> visiting_;
+        std::set<std::string> required_apis_;
 		std::map<std::string,std::string> class_names_;
 		naming naming_;
 		value type(const std::string &text, const std::map<std::string,value> &types)
@@ -115,6 +116,26 @@ namespace scpp::api_generation
 			std::set<std::string> &public_headers, std::set<std::string> &private_headers,
 			const std::string &owner, std::string &declaration, value &checks, std::set<std::string> &probe_headers)
 		{
+            if (op.has("condition_observation")) {
+                if (owner.empty() || op.get("returns")!="boolean" || !op.yes("const")
+                    || op.yes("static") || op.has("body") || !op.has("expression")
+                    || !op.at("parameters").items.empty() || op.has("transport"))
+                    throw std::runtime_error("Condition observation requires a scoped const boolean method");
+                const auto parameter = op.at("condition_observation").text();
+                const auto found = context.find("type:"+parameter);
+                if (found==context.end()) throw std::runtime_error("Unknown condition observation parameter");
+                const auto call = callable_condition(this->metadata_, found->second);
+                value resolved = op; resolved.fields.erase("condition_observation");
+                // Validate unknown metadata even when the operation is unavailable.
+                fields_only(resolved,"name kind returns parameters const static noexcept explicit expression body transport includes uses requires_capabilities", "operation");
+                if (call.type==value::kind::null) return "";
+                this->required_apis_.insert(call.at("api").text());
+                add_include(private_headers,call.at("header").text());
+                const auto operand = op.at("expression").text();
+                resolved.fields.erase("expression");
+                resolved["body"] = "static_assert(std::is_same_v<decltype((" + operand + ")), const ${public:" + parameter + "} &>);\nconst auto &payload = " + operand + ";\nreturn " + call.at("function").text() + "(payload);";
+                return this->operation(resolved,context,types,public_headers,private_headers,owner,declaration,checks,probe_headers);
+            }
 			if (op.has("parameters") && op.at("parameters").type!=value::kind::array) throw std::runtime_error("parameters must be an array");
             if (op.has("uses") && op.at("uses").type!=value::kind::array) throw std::runtime_error("uses must be an array");
             fields_only(op,"name kind returns parameters const static noexcept explicit expression body transport includes uses requires_capabilities", "operation");
@@ -335,7 +356,13 @@ namespace scpp::api_generation
                 if (generated_functions.has(name)) throw std::runtime_error("Duplicate generated API ownership");
                 generated_functions[name] = function;
             }
-            if (this->request_.has("apis")) for (const auto &api : this->request_.at("apis").items) {
+            auto apis = this->request_.has("apis") ? this->request_.at("apis") : value::array();
+            for (std::size_t index=0; index<apis.items.size() || !this->required_apis_.empty(); ++index) {
+                if (index==apis.items.size()) {
+                    for (const auto &dependency : this->required_apis_) apis.items.emplace_back(dependency);
+                    this->required_apis_.clear();
+                }
+                const auto api = apis.items[index];
                 if (generated_functions.has(api.text()) && this->metadata_.at("functions").has(api.text()))
                     throw std::runtime_error("Duplicate global operator ownership");
                 const auto &f=generated_functions.has(api.text()) ? generated_functions.at(api.text()) : this->metadata_.at("functions").at(api.text());

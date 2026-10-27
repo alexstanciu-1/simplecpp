@@ -129,7 +129,7 @@ renamed=copy.deepcopy(hashes)
 renamed['metadata']['families']['table']=renamed['metadata']['families'].pop('hash')
 renamed['metadata']=json.loads(json.dumps(renamed['metadata']).replace('"integer_key"','"append_key"'))
 renamed['request']['roots']=['table<string,int64>']
-assert ' append(' in invoke(renamed)['units'][-1]['header']
+assert ' append(' in next(u for u in invoke(renamed)['units'] if u['identity']=='table<string,int64>')['header']
 # Nonselected operations do not materialize dependencies or expand snippets.
 skipped=copy.deepcopy(hashes)
 skipped['request']['roots']=['hash<string>']

@@ -804,6 +804,14 @@
               "const": true,
               "transport": "native",
               "expression": "${self}.require_error(context)"
+            },
+            {
+              "name": "observe_payload_condition",
+              "returns": "boolean",
+              "parameters": [],
+              "const": true,
+              "condition_observation": "T",
+              "expression": "${self}.require_value(\"condition observation\")"
             }
           ]
         }
@@ -868,7 +876,8 @@
               "member": "require_error"
             }
           }
-        ]
+        ],
+        "condition_observation": "observe_payload_condition"
       },
       "conditional_capabilities": {
         "copy_storage": {
@@ -1054,6 +1063,14 @@
                   "copy_storage"
                 ]
               }
+            },
+            {
+              "name": "observe_payload_condition",
+              "returns": "boolean",
+              "parameters": [],
+              "const": true,
+              "condition_observation": "T",
+              "expression": "${self}.require_value(\"condition observation\")"
             }
           ]
         }
@@ -1144,7 +1161,8 @@
               "null"
             ]
           }
-        ]
+        ],
+        "condition_observation": "observe_payload_condition"
       },
       "conditional_capabilities": {
         "copy_storage": {
@@ -2668,6 +2686,14 @@
               "returns": "void",
               "expression": "${self}.reset()",
               "parameters": []
+            },
+            {
+              "name": "observe_payload_condition",
+              "returns": "boolean",
+              "parameters": [],
+              "const": true,
+              "condition_observation": "T",
+              "expression": "${self}.require_value(\"condition observation\")"
             }
           ]
         }
@@ -2729,7 +2755,8 @@
               "expression": "${target}::from_false()"
             }
           }
-        ]
+        ],
+        "condition_observation": "observe_payload_condition"
       },
       "conditional_capabilities": {
         "copy_storage": {
@@ -2925,6 +2952,14 @@
               "returns": "void",
               "expression": "${self}.reset()",
               "parameters": []
+            },
+            {
+              "name": "observe_payload_condition",
+              "returns": "boolean",
+              "parameters": [],
+              "const": true,
+              "condition_observation": "T",
+              "expression": "${self}.require_value(\"condition observation\")"
             }
           ]
         }
@@ -3007,7 +3042,8 @@
               "expression": "${target}::from_true()"
             }
           }
-        ]
+        ],
+        "condition_observation": "observe_payload_condition"
       },
       "conditional_capabilities": {
         "copy_storage": {

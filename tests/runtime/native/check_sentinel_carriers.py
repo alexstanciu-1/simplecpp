@@ -37,7 +37,7 @@ def resolve(action, request):
     return invoke({'metadata':metadata,'names':names,'leaves':leaves,'action':action,'request':request})
 
 plan = invoke({'metadata':metadata,'request':request,'names':names,'leaves':leaves,'imports':{},'layouts':{}})
-assert {u['identity'] for u in plan['units']} == set(names) | {'float64'}
+assert {u['identity'] for u in plan['units']} == set(names) | {'float64'} | set(plan['apis'])
 for family in ['result_or_false','result_or_bool']:
     source = family+'<int64>'
     unit = next(u for u in plan['units'] if u['identity']==source)
@@ -88,7 +88,7 @@ for family,prefix in [('result_or_false','false'),('result_or_bool','bool')]:
     condition_call=condition['payload_condition'];headers.add(condition_call['header'])
     projection=condition['projection']['expression'].replace('${value}','source')
     def truth_branch(state):
-        if state['condition']=='payload':return 'const auto payload='+projection+'; return '+condition_call['function']+'(payload);'
+        if state['condition']=='payload':return 'return '+condition['payload_expression'].replace('${value}','source')+';' if condition['payload_access']=='scoped_operation' else 'const auto payload='+projection+'; return '+condition_call['function']+'(payload);'
         return 'return scpp::boolean('+state['condition']+');'
     consumer(prefix+'_condition','scpp::boolean',source,select_states(condition['states'],truth_branch))
     negate=resolve('resolve_operator',{'operation':'logical_not','operand':source})

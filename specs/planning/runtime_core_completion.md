@@ -1363,3 +1363,23 @@ consumed, repeated end advancement without allocation, and rejected end reads.
 They exercise both application-owned vector/hash specializations and the runtime's
 published vector_string implementation. Ownership and callback expansion remain
 behind the first-complete-carrier review gate.
+
+## C28 — scoped callable payload condition observation
+
+All four carrier recipes now expose a checked boolean payload-observation method
+when the existing condition function set has a callable for their payload. The
+method borrows an exact const payload reference internally and returns only boolean.
+The global condition plan still selects outer states first and now uses a scoped
+operation instead of owned extraction for those payload branches. Constant leaf
+observations remain separate; no generic public callback/reference was introduced.
+
+Generation tracks condition helpers as API demands, with ordinary publication and
+reuse. The focused long-string proof covers all four families, absent/error/false/
+true states, source evaluation once, invalid direct payload access and zero repeated
+observation allocations. A nullable retained-error case is a physical runtime proof,
+not a new source Result<error> permission. Release and ASan/UBSan/LSan pass; the
+compiled sentinel regression also passes after adopting the scoped plan.
+
+Nested state-dependent carrier observations still use owned extraction and may copy;
+noncopyable nested observation remains a gap. Broader selection domains and the two
+pending logical/source-formation decisions still prevent complete carrier sign-off.

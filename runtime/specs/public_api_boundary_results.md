@@ -2275,3 +2275,28 @@ Release focused compile costs (storage / public caller): vector two units
 **2.8193s / 0.1233s**; hash five units **10.9426s / 0.1405s**.
 ASan/UBSan with leak detection passes for both expanded proofs. Sanitizer storage /
 public caller costs: vector **3.9181s / 0.1699s**, hash **18.1807s / 0.2034s**.
+
+## C28 — scoped carrier conditions (2026-10-27)
+
+`check_scoped_conditions.py` generates four string carriers and nullable<error_value>.
+It verifies the exact internal const-reference assertion, scoped plan, dependency
+API publication, malformed observation descriptor rejection, renamed-family reuse
+and explicit nested-owned fallback. No primitive condition table was duplicated.
+
+Release and ASan/UBSan with leak detection pass: 100 observations per carrier/state
+allocate zero times after setup for long strings and retained error values; empty
+and "0" strings remain false; source evaluation occurs once and source exceptions
+propagate; bypassing the plan and calling the payload method on absence rejects.
+Public-only compilation and sealed application reuse pass. These are runtime physical
+proofs, not new source formation permissions. Nested no-copy observation is not proved.
+
+Single-run compile costs, five storage units / public caller:
+release **6.8091s / 0.1143s**; sanitizer **7.3907s / 0.1755s**.
+The compiled sentinel regression passes, including state/take/nesting and zero
+success-path allocation checks: storage **11.0566s**, caller **0.3186s**.
+
+The selected runtime-owned carrier is result<vector<string>> and has no callable
+payload condition, so no runtime implementation unit changes. Its generated header
+has a whitespace-only change from omitted-method emission. The sanitizer generator
+build consequently also rebuilt core through the header dependency; no runtime
+semantic/core performance improvement is claimed from this slice.

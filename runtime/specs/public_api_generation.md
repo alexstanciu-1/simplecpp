@@ -1264,3 +1264,29 @@ slots with default-constructed key/value objects, so its public method additiona
 requires default and move storage for both. This is a current implementation limit,
 not a source-language prohibition on removing other admitted payload types; replacing
 that native slot strategy remains container work.
+
+## Scoped callable condition observations
+
+A const boolean method may declare `condition_observation: "T"`. Its expression is
+the checked internal payload access, not an owned result. The existing condition
+function set selects a callable for the canonical parameter type; without one, the
+method is omitted. The generator lowers the selected method through the ordinary
+operation emitter, verifies `decltype((access))` is exactly `const PublicT&`, binds
+that reference inside the method and invokes the existing const-reference boolean
+condition helper. No pointer/reference/callback escapes in the public signature.
+
+A carrier descriptor names that method with `condition_observation`. Validation
+requires exactly one matching const boolean no-argument observation for its payload
+parameter. Condition planning records `payload_access: scoped_operation` and a
+`payload_expression` calling the method. The consumer must use that expression only
+in the present-payload state, rather than manufacture an owned extraction. Original
+state dispatch, one-time source evaluation and constant-condition shortcuts remain.
+
+The selected helper API is a real demand dependency: generation queues it alongside
+explicit APIs, reuses published helpers, and emits an unpublished helper once through
+the same API publication path. It is not merely an untracked private include.
+
+This first scoped path covers registered callable payload conditions. Nested carrier
+payloads retain their existing owned observation path; their state-dependent scoped
+composition is not claimed. Constant leaf observations still need no payload access.
+Direct conditions and guarded logical-operator policy remain separate contracts.

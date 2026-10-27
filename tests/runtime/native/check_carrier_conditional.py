@@ -68,7 +68,7 @@ def truth(p,v):
     if p['kind']=='call':headers.add(p['header']);return p['function']+'('+v+')'
     assert p['kind']=='carrier_condition';headers.add(p['projection']['header']);body=''
     for state in p['states']:
-        branch='return scpp::boolean('+state['condition']+');' if state['condition']!='payload' else 'const auto payload='+p['projection']['expression'].replace('${value}',v)+'; return '+truth(p['payload_condition'],'payload')+';'
+        branch='return scpp::boolean('+state['condition']+');' if state['condition']!='payload' else ('return '+p['payload_expression'].replace('${value}',v)+';' if p['payload_access']=='scoped_operation' else 'const auto payload='+p['projection']['expression'].replace('${value}',v)+'; return '+truth(p['payload_condition'],'payload')+';')
         body+=('if ('+state['test_expression'].replace('${value}',v)+') { '+branch+' } ' if 'test_expression' in state else branch)
     return '([&]() -> scpp::boolean { '+body+' })()'
 def states(source):

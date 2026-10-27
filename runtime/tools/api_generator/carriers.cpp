@@ -35,10 +35,24 @@ namespace scpp::api_generation
         for (const auto &[name, family] : metadata.at("families").fields) {
             if (!family.has("carrier")) continue;
             const auto &carrier = family.at("carrier");
-            fields_only(carrier, "payload require_value states", "carrier descriptor");
+            fields_only(carrier, "payload require_value states condition_observation", "carrier descriptor");
             if (!contains(family.at("parameters"), carrier.at("payload").text()))
                 throw std::runtime_error("Unknown carrier payload parameter");
             validate_owned_member(family, carrier.at("require_value").text(), carrier.at("payload").text(), true);
+            if (carrier.has("condition_observation")) {
+                const auto method = carrier.at("condition_observation").text(); authored_name(method);
+                unsigned matches = 0;
+                for (const auto &record : family.at("classes").items) if (record.get("id")=="self")
+                    for (const auto &member : record.at("methods").items) if (member.get("name")==method) {
+                        if (member.get("condition_observation")!=carrier.at("payload").text()
+                            || member.get("returns")!="boolean" || !member.yes("const")
+                            || member.yes("static") || member.has("requires_capabilities")
+                            || !member.at("parameters").items.empty())
+                            throw std::runtime_error("Carrier condition observation must be a scoped const boolean method");
+                        ++matches;
+                    }
+                if (matches!=1) throw std::runtime_error("Carrier condition observation requires one method");
+            }
             if (carrier.has("states")) {
                 const auto &states = carrier.at("states");
                 if (states.type != value::kind::array || states.items.empty())
@@ -174,6 +188,7 @@ namespace scpp::api_generation
         out["header"] = "scpp/" + public_name + ".hpp"; out["cpp"] = "scpp::" + public_name;
         if (available) out["expression"] = "${value}." + carrier.at("require_value").text() + "(\"operator payload\")";
         out["ownership"] = "owned_value";
+        if (carrier.has("condition_observation")) out["condition_observation"] = carrier.at("condition_observation");
         if (carrier.has("states")) out["states"] = carrier.at("states");
         return out;
     }
