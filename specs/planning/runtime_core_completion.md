@@ -892,3 +892,18 @@ presence remains D. Strict structured-error identity, conditional lifecycle,
 noncopyable/scoped observation, large-payload condition copy avoidance and the C5
 move-aware error allocation follow-up remain required. The first complete carrier
 review is still open. Existing runtime generation remains 330 identical units.
+
+## C7 — move-aware Result error transport
+
+The C5 allocation follow-up is implemented in the shared Result recipe: error
+construction and assignment now accept owned error rvalues as well as const
+references. Reconstruction consumes its owned snapshot, preserving the original
+Result while avoiding a second copy. The generator's existing move-reference
+passing and native-access substitution handle both application-owned and
+runtime-published specializations without new generator logic.
+
+The focused proof checks the application scalar Result and published
+result<vector<string>>, moved-from error reuse, destination metadata lifetime,
+and rejected no-error construction/assignment. Failed assignment preserves the
+existing error. Public storage/layout is unchanged. This closes the extra error
+copy debt, not conditional lifecycle or the wider carrier review.

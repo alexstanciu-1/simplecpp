@@ -517,6 +517,18 @@
               "explicit": true
             },
             {
+              "kind": "constructor",
+              "parameters": [
+                {
+                  "name": "error",
+                  "type": "error_value",
+                  "passing": "move_ref"
+                }
+              ],
+              "expression": "std::move(${native:error})",
+              "explicit": true
+            },
+            {
               "name": "operator=",
               "returns": "self_ref",
               "parameters": [
@@ -527,6 +539,18 @@
                 }
               ],
               "body": "${self} = ${native:error};\nreturn *this;"
+            },
+            {
+              "name": "operator=",
+              "returns": "self_ref",
+              "parameters": [
+                {
+                  "name": "error",
+                  "type": "error_value",
+                  "passing": "move_ref"
+                }
+              ],
+              "body": "${self} = std::move(${native:error});\nreturn *this;"
             },
             {
               "name": "has_value",

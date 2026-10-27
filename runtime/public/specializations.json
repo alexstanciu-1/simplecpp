@@ -1,6 +1,6 @@
 {
   "abi": "529dd5502370f48d64891818e9439aae72831b990b4027e8abe25c50c1216c21",
-  "api_identity": "9c7c495f7fc2aeffc664098792087062479e787322babbee17ad3407004d907e",
+  "api_identity": "7e7f32295f9a17d750bc30c9974c8e4081ddc8a6216eff02b56e39b90db7b248",
   "apis": {
     "add_dynamic": {
       "header": "scpp/operators/add_dynamic.hpp",
@@ -9594,7 +9594,7 @@
     "scpp/operators/subtract_uint32.hpp": "1c4c2c40fd176f2612f625c1b248706349da6cde280978e37a1746c6a78e6dd3",
     "scpp/operators/subtract_uint64.hpp": "ae1feae12bb920a3012b507b97e5c239837bfd748da19859e5c811a17db575ad",
     "scpp/operators/subtract_uint8.hpp": "314e51f6a95bd32595a3e853576d82c7f990526bc0e7aed73ba9d087d32e3826",
-    "scpp/result_vector_string.hpp": "162978d31bfb719e2b8bbb0b6d57162bacd0b53a30f92af1eef7c50b9af0f71e",
+    "scpp/result_vector_string.hpp": "45bfe2a5c202e8c44ed98016960336c8506d1cf5a1975f3d92c169f41228ee0c",
     "scpp/string.hpp": "aac6ff447c6c1135f22cbc12cb0a419c8079df28826de70f0170a07690ec2b69",
     "scpp/text/concat_strings.hpp": "38de27c455eae08bd171ed50b68dd01d781648a430f34914ca989326cdadb301",
     "scpp/text/concat_text_boolean.hpp": "cf8fb9b3c1d634620f2aede468c05c115284dfbbd51d6047dfa2934408f8f7dc",

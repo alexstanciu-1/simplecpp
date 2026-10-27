@@ -240,7 +240,7 @@ with tempfile.TemporaryDirectory(prefix='scpp-carrier-') as directory:
     print('Carrier storage bytes:', {key:manifest['types'][key]['layout'][0] for key in ['nullable<int64>','nullable<float64>','nullable<string>','result<int64>','result<float64>']})
     names = {'nullable<int64>':'optional_integer','nullable<float64>':'optional_float','nullable<string>':'optional_text','result<int64>':'result_integer','result<float64>':'result_float'}
     functions = []
-    headers = {'scpp/optional_integer.hpp'}
+    headers = {'scpp/optional_integer.hpp', 'scpp/result_vector_string.hpp'}
     for op in ['add','subtract','multiply','divide','remainder','less','compare']:
         plan = resolve('nullable<int64>', 'nullable<int64>', op, names=names)
         calculation = plan['calculation']; headers.add(calculation['header'])
@@ -484,12 +484,41 @@ int main() {
     auto converted_failure = reconstruct_result_float64(failed);
     const auto error_allocations = allocations - error_before;
     CHECK(converted_failure.has_error() && failed.has_error());
+    CHECK(error_allocations == 1); // One owned snapshot; destination consumes it.
+    CHECK(failed.require_error("original").get_message().equals("conversion failure"));
     failed = int64(7);
     const auto saved_error = converted_failure.require_error("retained error");
     CHECK(saved_error.get_message().equals("conversion failure"));
     CHECK(saved_error.get_line().native_value() == 17);
     CHECK(saved_error.get_file().equals("sample.phs"));
     std::printf("Result error preservation allocations=%d (separate from success cases)\n",error_allocations);
+    // Explicit transfer consumes an owned error, never an error borrowed from a Result.
+    auto constructor_error = failure;
+    auto assignment_error = failure;
+    auto published_error = failure;
+    auto published_assignment_error = failure;
+    scpp::result_integer assigned_error(int64(42));
+    const auto transfer_before = allocations;
+    scpp::result_integer moved_error(static_cast<scpp::error_value&&>(constructor_error));
+    assigned_error = static_cast<scpp::error_value&&>(assignment_error);
+    scpp::result_vector_string published_failure(static_cast<scpp::error_value&&>(published_error));
+    published_failure = static_cast<scpp::error_value&&>(published_assignment_error);
+    CHECK(allocations == transfer_before);
+    CHECK(moved_error.has_error() && assigned_error.has_error() && published_failure.has_error());
+    constructor_error = scpp::error_value();
+    assignment_error = scpp::error_value();
+    published_error = scpp::error_value();
+    published_assignment_error = scpp::error_value();
+    CHECK(moved_error.require_error("moved constructor").get_message().equals("conversion failure"));
+    CHECK(assigned_error.require_error("moved assignment").get_line().native_value() == 17);
+    CHECK(published_failure.require_error("published move").get_file().equals("sample.phs"));
+    caught = false;
+    try { scpp::result_integer invalid(scpp::error_value{}); } catch (...) { caught = true; }
+    CHECK(caught);
+    caught = false;
+    try { assigned_error = scpp::error_value{}; } catch (...) { caught = true; }
+    CHECK(caught && assigned_error.has_error());
+    CHECK(assigned_error.require_error("failed transfer").get_message().equals("conversion failure"));
     // Extraction returns an owned value that survives mutation/destruction of its carrier.
     int64 retained(0);
     { optional temporary(int64(42)); retained = temporary.require_value("retain"); temporary.reset(); }

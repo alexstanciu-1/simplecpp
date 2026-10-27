@@ -1658,3 +1658,36 @@ rejection (including Result-of-nullable). No broad native identity overload is u
 to extend source admission. Eight focused release regressions passed in 9.68s; the same eight passed under
 ASan/UBSan with leak detection in 55.87s.
 The carrier review and remaining state/lifecycle contracts remain open.
+
+## C7 Result error move construction and assignment
+
+The Result metadata recipe now exposes owned-error move construction and assignment
+alongside the existing const-reference overloads. Full generation/probes still
+produce 330 units, with unchanged type layouts, registered API identities and source
+inventory. Only the published result_vector_string header and its implementation
+change; application Results obtain the same methods from the same recipe.
+
+The public proof verifies scalar Result reconstruction preserves its source while
+reducing the measured non-SSO error-message allocation count from two to one. The
+remaining allocation is the deliberate owned error snapshot. Explicit transfer of
+preconstructed owned errors into application and runtime-published Results allocates
+zero. Both value-to-error and error-to-error assignments, moved-from error reuse,
+retained metadata and rejected no-error construction/assignment are exercised.
+Rejected assignment preserves the previous destination error.
+
+Release metadata/conversion/carrier regressions pass (three tests, 4.50s). The
+public-only execution/lifetime/allocation/publication proof passes separately.
+Single compile-only release observations: five application storage units 6.2376s;
+public caller 0.2762s. The necessary runtime-core rebuild and tool relink cost
+19.82s release / 46.59s sanitized. Unlike C1–C6 plan-only changes, this slice changes
+a generated runtime implementation and cannot reuse the old archive.
+
+ASan/UBSan with leak detection also passes the public proof, including the same
+one-allocation reconstruction and zero-allocation owned transfers. Sanitized
+compile-only observations: five storage units 9.1128s; public caller 0.6599s.
+Both configurations successfully reuse the sealed application specialization
+publication. Conditional lifecycle and strict structured-error identity remain
+separate required work; no broad family-completion claim follows from this fix.
+
+The same three focused regressions pass under ASan/UBSan with leak detection
+in 31.24s. No generator source changes or additional generator builds were needed.

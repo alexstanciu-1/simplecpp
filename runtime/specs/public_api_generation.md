@@ -912,3 +912,18 @@ Existing plain scalar/boxed comparisons retain their own operator path. Literal
 presence does not recursively peel Result or other carriers. Boolean sentinels and
 ownership observations require their own admitted metadata; this slice does not
 infer them from the broader native C++ overload set.
+
+## Owned Result error transfer
+
+The Result family recipe exposes both const-reference and move-reference error
+construction/assignment. A mutable owned `error_value` rvalue is passed through
+its private native access and moved into native Result storage; public headers
+expose only the concrete error type. The existing parameter-passing/snippet
+mechanism owns this behavior; no generator family special case is needed.
+
+State-preserving reconstruction still reads the original Result through a const
+reference and obtains an owned error snapshot. The destination consumes that
+snapshot instead of copying it again. It never moves from the original carrier.
+The existing native real-error check rejects `error_value::no_error`; failed
+assignment must preserve the destination. Moved-from error objects remain valid
+for destruction and assignment; this API does not promise their message contents.

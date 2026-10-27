@@ -22,7 +22,9 @@ public:
     explicit result_vector_string(scpp::vector_string &&value);
     scpp::result_vector_string & operator=(scpp::vector_string &&value);
     explicit result_vector_string(const scpp::error_value &error);
+    explicit result_vector_string(scpp::error_value &&error);
     scpp::result_vector_string & operator=(const scpp::error_value &error);
+    scpp::result_vector_string & operator=(scpp::error_value &&error);
     scpp::boolean has_value() const;
     scpp::boolean has_error() const;
     scpp::vector_string value() const;

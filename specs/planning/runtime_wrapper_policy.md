@@ -371,3 +371,10 @@ extraction, independently of payload comparison capability. Ordinary null equali
 and Result/null remain rejected; boolean sentinel and ownership policies are not
 inferred from native overload breadth. The public long-string proof measures zero
 allocations for presence checks. This does not close the full carrier review.
+
+C7 closes the C5 redundant error-copy follow-up. Result error construction and
+assignment accept owned error rvalues through the ordinary metadata recipe.
+Same-family reconstruction copies the original error once into an owned snapshot,
+then moves that snapshot into its destination. No original carrier is consumed,
+and invalid no-error assignment preserves the destination. Conditional lifecycle,
+structured-error identity and the full carrier review remain open.

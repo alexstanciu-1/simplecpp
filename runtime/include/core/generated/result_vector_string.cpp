@@ -23,7 +23,10 @@ result_vector_string::result_vector_string(scpp::vector_string &&value) { ::new 
 scpp::result_vector_string & result_vector_string::operator=(scpp::vector_string &&value) { return ([&]() -> decltype(auto) { detail::concrete_access::get<native_result_vector_string>(*this) = std::move(value);
 return *this; })(); }
 result_vector_string::result_vector_string(const scpp::error_value &error) { ::new (this->storage_) native_result_vector_string(detail::error_value_access::get(error)); }
+result_vector_string::result_vector_string(scpp::error_value &&error) { ::new (this->storage_) native_result_vector_string(std::move(detail::error_value_access::get(error))); }
 scpp::result_vector_string & result_vector_string::operator=(const scpp::error_value &error) { return ([&]() -> decltype(auto) { detail::concrete_access::get<native_result_vector_string>(*this) = detail::error_value_access::get(error);
+return *this; })(); }
+scpp::result_vector_string & result_vector_string::operator=(scpp::error_value &&error) { return ([&]() -> decltype(auto) { detail::concrete_access::get<native_result_vector_string>(*this) = std::move(detail::error_value_access::get(error));
 return *this; })(); }
 scpp::boolean result_vector_string::has_value() const { return scpp::boolean(([&]() -> decltype(auto) { return detail::concrete_access::get<native_result_vector_string>(*this).has_value().native_value(); })()); }
 scpp::boolean result_vector_string::has_error() const { return scpp::boolean(([&]() -> decltype(auto) { return detail::concrete_access::get<native_result_vector_string>(*this).has_error().native_value(); })()); }
