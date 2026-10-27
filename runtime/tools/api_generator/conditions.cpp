@@ -9,8 +9,18 @@ namespace scpp::api_generation
     {
         if (!metadata.has("conditions")) return;
         const auto &registry = metadata.at("conditions");
-        fields_only(registry, "function_set", "conditions");
+        fields_only(registry, "function_set constants", "conditions");
         metadata.at("function_sets").at(registry.at("function_set").text());
+        if (!registry.has("constants")) return;
+        if (registry.at("constants").type!=value::kind::object)
+            throw std::runtime_error("Condition constants require a type-to-boolean map");
+        const auto functions = expand_function_sets(metadata);
+        for (const auto &[source, constant] : registry.at("constants").fields) {
+            if (!metadata.at("types").has(source) || constant.type!=value::kind::boolean)
+                throw std::runtime_error("Constant condition requires an explicit leaf and boolean value");
+            if (functions.has(registry.at("function_set").text()+"_"+source))
+                throw std::runtime_error("Conflicting constant and callable condition owners");
+        }
     }
 
     static value condition(const value &metadata, const value &functions, const value &names,
@@ -21,6 +31,14 @@ namespace scpp::api_generation
         const auto canonical = types.resolve(source).first;
         const auto identity = metadata.at("conditions").at("function_set").text() + "_" + canonical;
         value out = value::object(); out["source"] = canonical; out["result_type"] = "boolean";
+        const auto &registry = metadata.at("conditions");
+        if (registry.has("constants") && registry.at("constants").has(canonical)) {
+            out["kind"] = "constant_after_evaluation";
+            out["value"] = registry.at("constants").at(canonical);
+            out["operand_access"] = "none";
+            out["evaluation"] = "evaluate_source_once";
+            return out;
+        }
         if (functions.has(identity)) {
             const auto &function = functions.at(identity), &signature = function.at("operation");
             const auto &parameters = signature.at("parameters").items;
@@ -35,7 +53,12 @@ namespace scpp::api_generation
         const auto projection = project_carrier(metadata, canonical, names);
         if (projection.type == value::kind::null || !projection.has("states"))
             throw std::runtime_error("Unsupported condition operand");
-        require_carrier_payload(projection);
+        // Explicit constant observations read no receiver; observing carrier
+        // state need not manufacture an owned payload just to return that constant.
+        const bool constant_payload = registry.has("constants")
+            && registry.at("constants").has(projection.at("target").text());
+        if (!constant_payload) require_carrier_payload(projection);
+        out["payload_access"] = constant_payload ? "none" : "owned_value";
         // Admission precedes state dispatch, so absence cannot grant truthiness
         // to a payload with no condition contract. Conditions can delegate through
         // an admitted nested carrier; arithmetic/casts retain their one-layer rule.

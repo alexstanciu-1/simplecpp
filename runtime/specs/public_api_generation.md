@@ -1213,3 +1213,24 @@ return its converted snapshot if truthy, otherwise evaluate/convert the fallback
 Consumers must implement these branch boundaries; eager argument evaluation is not
 an equivalent runtime API. The planner adds no public callback templates and does
 not make general logical operators synonyms for direct condition conversion.
+
+## Constant condition facts
+
+Optional `conditions.constants` maps explicit canonical leaf identities to boolean
+facts supplied by the owning preparation/metadata producer. The generator requires
+an existing leaf, a boolean value and no competing function-set condition binding.
+It does not infer constant truth from copy/move traits. Inline-record source semantics
+supply true; supporting a false metadata fixture does not change that source contract.
+
+A direct plan has `kind: constant_after_evaluation`, `operand_access: none` and still
+requires source evaluation once, including its failures and side effects. For a
+carrier whose payload has a constant condition, the ordinary state-dispatch plan
+records `payload_access: none`; its payload branch returns the constant without
+calling a possibly unavailable owned extractor. Other carrier conditions retain
+`payload_access: owned_value` and their existing capability checks.
+
+This exposes no interior reference and needs no runtime implementation or template
+callback. Consumers must not extract a payload when the plan says none. Nested
+state-dependent observations cannot use this shortcut merely because a deeper leaf
+is constant. Prepared condition facts remain explicit planner inputs; sealed native
+storage reuse does not synthesize or validate source-language formation facts.

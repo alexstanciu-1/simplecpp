@@ -481,3 +481,6 @@ add_test(NAME scpp_check_carrier_coalesce COMMAND ${Python3_EXECUTABLE}
 
 add_test(NAME scpp_check_carrier_conditional COMMAND ${Python3_EXECUTABLE}
   ${CMAKE_CURRENT_SOURCE_DIR}/check_carrier_conditional.py --tool $<TARGET_FILE:scpp_api_generator>)
+
+add_test(NAME scpp_check_constant_conditions COMMAND ${Python3_EXECUTABLE}
+  ${CMAKE_CURRENT_SOURCE_DIR}/check_constant_conditions.py --tool $<TARGET_FILE:scpp_api_generator>)

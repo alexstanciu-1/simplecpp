@@ -1284,3 +1284,24 @@ Existing condition and payload-construction metadata provide all operations; no
 runtime implementation units are added. This does not resolve the pending logical
 operator question or implement general boxed/record/ownership joins. Scoped
 observations, broader admitted selection domains and source formation remain open.
+
+## C27 — constant observations without payload extraction
+
+Condition metadata can now declare an explicit constant boolean observation for an
+application leaf. The source/preparation owner supplies that fact; the generator
+neither infers it from native traits nor grants general source template eligibility.
+A direct observation still evaluates its source once. A carrier with that payload
+can select the constant using its state predicate, without invoking owned extraction.
+This implements the no-copy observation path required for nullable inline records.
+
+The noncopyable record proof uses a production nullable recipe with deleted payload
+and carrier copy constructors. It checks direct truth, nullable presence, repeated
+observations without moves, reset/destruction once, source evaluation/throw behavior
+and zero allocations. No payload pointer/reference escapes or is exposed at all.
+State-dependent nested noncopyable observation still rejects rather than flattening;
+long-string/error observation copy removal remains unfinished.
+
+Prepared condition facts are supplied to the planner independently of the physical
+storage package. Sealed reuse proves storage reuse, not source-fact inference from a
+published native type. The pending formation-boundary decision is unchanged, as is
+the logical-operator policy question.

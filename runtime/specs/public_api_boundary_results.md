@@ -2181,3 +2181,26 @@ resolved record's capabilities list before tests, with a 2.03s rebuild. Sanitize
 generator build 16.75s. All 341 runtime implementation units are unchanged and core
 was not rebuilt. General boxed/record/ownership joins and scoped observation remain
 open; these bounded proofs do not claim frontend adoption or general selection closure.
+
+## C27 — constant observations of noncopyable records (2026-10-27)
+
+Explicit constant leaf facts produce condition plans that evaluate the source once
+but do not read/copy it. Carrier state dispatch can select that constant without an
+owned payload extractor. The new public proof uses the production nullable recipe
+with deleted payload/carrier copies, checks zero observation moves/allocations,
+100 repeated observations, empty/present/reset states, exactly-once destruction and
+source evaluation/exception propagation. Metadata checks reject conflicting callable
+owners, nonboolean facts and wrapper constants; nested state-dependent noncopyable
+observation still rejects. A renamed carrier keeps the mechanism metadata-driven.
+
+Five focused release regressions pass in 3.52s; five sanitizer regressions pass in
+22.59s. Both compiled public proofs pass, including ASan/UBSan/leak detection and
+sealed storage reuse. One storage unit compiles in 1.2509s release / 1.1444s sanitized;
+caller compiles in 0.1525s / 0.1524s. These are single-run concurrent-validation wall
+times. Generator builds take 1.58s release and 3.10s sanitized. No runtime units or
+publication metadata change, and core is not rebuilt.
+
+Prepared observation facts remain explicit planner inputs. The storage reuse proof
+does not claim those facts are inferred from a native artifact or that general source
+formation is settled. Long-string/error extraction copies and state-dependent scoped
+observations remain debt; no general borrowed interior-reference API is introduced.

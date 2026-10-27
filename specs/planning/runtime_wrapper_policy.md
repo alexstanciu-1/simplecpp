@@ -516,3 +516,13 @@ separate condition; Elvis tests its saved left value once using direct truthines
 Only the selected branch converts. Owned results require physical copying; this does
 not confer source template eligibility or ownership-transfer admission. Wider joins
 remain in the completion backlog.
+
+### Constant observation checkpoint
+
+Explicit constant leaf-condition facts permit nullable inline-record observation
+without copying or accessing its payload. Whole source evaluation and carrier state
+observation still occur. Constants must be boolean facts for explicit leaves and
+cannot override an existing callable condition owner. This is not a generic borrowed
+payload API, implicit truthiness inference, source-formation approval or permission
+to flatten nested carrier states. State-dependent noncopyable observations remain
+separate work.
