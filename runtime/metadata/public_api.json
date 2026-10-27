@@ -2080,31 +2080,40 @@
   "global_operators": {
     "types": {
       "int8": {
-        "domain": "signed"
+        "domain": "signed",
+        "operand": "scpp::int_t<__INT8_TYPE__>(${value}.native_value())"
       },
       "int16": {
-        "domain": "signed"
+        "domain": "signed",
+        "operand": "scpp::int_t<__INT16_TYPE__>(${value}.native_value())"
       },
       "int32": {
-        "domain": "signed"
+        "domain": "signed",
+        "operand": "scpp::int_t<__INT32_TYPE__>(${value}.native_value())"
       },
       "int64": {
-        "domain": "signed"
+        "domain": "signed",
+        "operand": "scpp::int_t<__INT64_TYPE__>(${value}.native_value())"
       },
       "uint8": {
-        "domain": "unsigned"
+        "domain": "unsigned",
+        "operand": "scpp::int_t<__UINT8_TYPE__>(${value}.native_value())"
       },
       "uint16": {
-        "domain": "unsigned"
+        "domain": "unsigned",
+        "operand": "scpp::int_t<__UINT16_TYPE__>(${value}.native_value())"
       },
       "uint32": {
-        "domain": "unsigned"
+        "domain": "unsigned",
+        "operand": "scpp::int_t<__UINT32_TYPE__>(${value}.native_value())"
       },
       "uint64": {
-        "domain": "unsigned"
+        "domain": "unsigned",
+        "operand": "scpp::int_t<__UINT64_TYPE__>(${value}.native_value())"
       },
       "float64": {
-        "domain": "floating"
+        "domain": "floating",
+        "operand": "scpp::float_t(${value}.native_value())"
       },
       "mixed": {
         "domain": "mixed"
@@ -2192,13 +2201,29 @@
             "domain": "dynamic"
           }
         ]
+      },
+      "integer_numeric": {
+        "rules": [
+          {
+            "left": "signed",
+            "right": "signed",
+            "selection": "same_or_maximum",
+            "domain": "signed"
+          },
+          {
+            "left": "unsigned",
+            "right": "unsigned",
+            "selection": "same_or_maximum",
+            "domain": "unsigned"
+          }
+        ]
       }
     },
     "operations": {
       "add": {
         "group": "numeric",
         "name": "numeric_add",
-        "expression": "${public:Selected}(${public:left}.native_value() + ${public:right}.native_value())",
+        "expression": "${public:Selected}(scpp::detail::generated_operator_detail::add(${operand:left}, ${operand:right}).native_value())",
         "publish": [
           "int8",
           "int16",
@@ -2209,6 +2234,9 @@
           "uint32",
           "uint64",
           "float64"
+        ],
+        "includes": [
+          "scpp/generated/operator_detail.hpp"
         ]
       },
       "equal": {
@@ -2236,6 +2264,201 @@
         "includes": [
           "operators/identity/boxed_scalar_equality.hpp"
         ]
+      },
+      "subtract": {
+        "group": "numeric",
+        "name": "numeric_subtract",
+        "expression": "${public:Selected}(scpp::detail::generated_operator_detail::sub(${operand:left}, ${operand:right}).native_value())",
+        "publish": [
+          "int8",
+          "int16",
+          "int32",
+          "int64",
+          "uint8",
+          "uint16",
+          "uint32",
+          "uint64",
+          "float64"
+        ],
+        "includes": [
+          "scpp/generated/operator_detail.hpp"
+        ]
+      },
+      "multiply": {
+        "group": "numeric",
+        "name": "numeric_multiply",
+        "expression": "${public:Selected}(scpp::detail::generated_operator_detail::mul(${operand:left}, ${operand:right}).native_value())",
+        "publish": [
+          "int8",
+          "int16",
+          "int32",
+          "int64",
+          "uint8",
+          "uint16",
+          "uint32",
+          "uint64",
+          "float64"
+        ],
+        "includes": [
+          "scpp/generated/operator_detail.hpp"
+        ]
+      },
+      "divide": {
+        "group": "numeric",
+        "name": "numeric_divide",
+        "expression": "${public:Selected}(scpp::detail::generated_operator_detail::div(${operand:left}, ${operand:right}).native_value())",
+        "publish": [
+          "int8",
+          "int16",
+          "int32",
+          "int64",
+          "uint8",
+          "uint16",
+          "uint32",
+          "uint64",
+          "float64"
+        ],
+        "includes": [
+          "scpp/generated/operator_detail.hpp"
+        ]
+      },
+      "remainder": {
+        "group": "integer_numeric",
+        "name": "numeric_remainder",
+        "expression": "${public:Selected}(scpp::detail::generated_operator_detail::mod(${operand:left}, ${operand:right}).native_value())",
+        "publish": [
+          "int8",
+          "int16",
+          "int32",
+          "int64",
+          "uint8",
+          "uint16",
+          "uint32",
+          "uint64"
+        ],
+        "includes": [
+          "scpp/generated/operator_detail.hpp"
+        ]
+      },
+      "numeric_equal": {
+        "group": "numeric",
+        "name": "numeric_equal",
+        "expression": "scpp::detail::generated_operator_detail::eq(${operand:left}, ${operand:right}).native_value()",
+        "publish": [
+          "int8",
+          "int16",
+          "int32",
+          "int64",
+          "uint8",
+          "uint16",
+          "uint32",
+          "uint64",
+          "float64"
+        ],
+        "includes": [
+          "scpp/generated/operator_detail.hpp"
+        ],
+        "returns": "boolean"
+      },
+      "numeric_not_equal": {
+        "group": "numeric",
+        "name": "numeric_not_equal",
+        "expression": "!(scpp::detail::generated_operator_detail::eq(${operand:left}, ${operand:right}).native_value())",
+        "publish": [
+          "int8",
+          "int16",
+          "int32",
+          "int64",
+          "uint8",
+          "uint16",
+          "uint32",
+          "uint64",
+          "float64"
+        ],
+        "includes": [
+          "scpp/generated/operator_detail.hpp"
+        ],
+        "returns": "boolean"
+      },
+      "less": {
+        "group": "numeric",
+        "name": "numeric_less",
+        "expression": "scpp::detail::generated_operator_detail::lt(${operand:left}, ${operand:right}).native_value()",
+        "publish": [
+          "int8",
+          "int16",
+          "int32",
+          "int64",
+          "uint8",
+          "uint16",
+          "uint32",
+          "uint64",
+          "float64"
+        ],
+        "includes": [
+          "scpp/generated/operator_detail.hpp"
+        ],
+        "returns": "boolean"
+      },
+      "less_equal": {
+        "group": "numeric",
+        "name": "numeric_less_equal",
+        "expression": "scpp::detail::generated_operator_detail::le(${operand:left}, ${operand:right}).native_value()",
+        "publish": [
+          "int8",
+          "int16",
+          "int32",
+          "int64",
+          "uint8",
+          "uint16",
+          "uint32",
+          "uint64",
+          "float64"
+        ],
+        "includes": [
+          "scpp/generated/operator_detail.hpp"
+        ],
+        "returns": "boolean"
+      },
+      "greater": {
+        "group": "numeric",
+        "name": "numeric_greater",
+        "expression": "scpp::detail::generated_operator_detail::lt(${operand:right}, ${operand:left}).native_value()",
+        "publish": [
+          "int8",
+          "int16",
+          "int32",
+          "int64",
+          "uint8",
+          "uint16",
+          "uint32",
+          "uint64",
+          "float64"
+        ],
+        "includes": [
+          "scpp/generated/operator_detail.hpp"
+        ],
+        "returns": "boolean"
+      },
+      "greater_equal": {
+        "group": "numeric",
+        "name": "numeric_greater_equal",
+        "expression": "scpp::detail::generated_operator_detail::le(${operand:right}, ${operand:left}).native_value()",
+        "publish": [
+          "int8",
+          "int16",
+          "int32",
+          "int64",
+          "uint8",
+          "uint16",
+          "uint32",
+          "uint64",
+          "float64"
+        ],
+        "includes": [
+          "scpp/generated/operator_detail.hpp"
+        ],
+        "returns": "boolean"
       }
     }
   }

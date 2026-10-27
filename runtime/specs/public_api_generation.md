@@ -316,3 +316,23 @@ conflicts reject, and repeated local demands emit once. Metadata/ABI/artifact ch
 remain the responsibility of the existing publisher. Native transport descriptors
 carry their private representation dependencies so free-function implementations
 compile independently, not only inside the core implementation bundle.
+
+### Ordinary numeric operation completion (A1)
+
+The global registry now binds add/subtract/multiply/divide, integer remainder and
+six ordinary numeric comparisons. All share numeric normalization; integer remainder
+uses an integer-only domain group. Comparison returns boolean rather than the operand
+type. There is one compiled function per normalized type/operation, not per original
+operand pair. The two equality binding categories remain `numeric_equal`/
+`numeric_not_equal` and boxed `equal`/`not_equal`; source operator spelling/admission
+is a frontend concern, not a new source token parser in this physical tool.
+
+An optional type-level `operand` snippet supplies the operation-specific native
+representation, substituting `${value}`. Operations use `${operand:left}` and
+`${operand:right}`. This separates numeric representation from general transport
+(for example uint64's raw count transport) without changing other API signatures.
+The native type spellings live in metadata, never in a generator type-name switch.
+All numeric computation delegates to existing `generated_operator_detail` helpers,
+including checked zero-divisor handling; addition uses the same route now. Existing
+native overflow limitations remain, including signed division overflow. Raw public
+constructors are not advertised as the future checked-cast API.

@@ -346,3 +346,7 @@ target_link_libraries(test_global_operators PRIVATE scpp_core_api)
 add_test(NAME scpp_test_global_operators COMMAND test_global_operators)
 add_test(NAME scpp_check_global_operators COMMAND ${Python3_EXECUTABLE}
   ${CMAKE_CURRENT_SOURCE_DIR}/check_global_operators.py $<TARGET_FILE:scpp_api_generator>)
+
+add_executable(test_numeric_operators test_numeric_operators.cpp)
+target_link_libraries(test_numeric_operators PRIVATE scpp_core_api)
+add_test(NAME scpp_test_numeric_operators COMMAND test_numeric_operators)

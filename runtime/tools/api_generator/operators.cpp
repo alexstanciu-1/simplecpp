@@ -14,7 +14,7 @@ namespace scpp::api_generation
         }
         for (const auto &[name, type] : registry.at("types").fields) {
             authored_name(name);
-            fields_only(type, "domain", "operator type");
+            fields_only(type, "domain operand", "operator type");
             registry.at("domains").at(type.at("domain").text());
         }
         for (const auto &[name, domain] : registry.at("domains").fields) {
@@ -120,6 +120,16 @@ namespace scpp::api_generation
                 const std::string marker = "${public:Selected}";
                 for (auto position = expression.find(marker); position != std::string::npos; position = expression.find(marker))
                     expression.replace(position, marker.size(), "${public:" + type.text() + "}");
+                for (const auto *argument : {"left", "right"}) {
+                    const std::string token = std::string("${operand:") + argument + "}";
+                    if (expression.find(token) == std::string::npos) continue;
+                    auto operand = registry.at("types").at(type.text()).at("operand").text();
+                    const std::string value_token = "${value}";
+                    for (auto pos = operand.find(value_token); pos != std::string::npos; pos = operand.find(value_token))
+                        operand.replace(pos, value_token.size(), argument);
+                    for (auto pos = expression.find(token); pos != std::string::npos; pos = expression.find(token))
+                        expression.replace(pos, token.size(), operand);
+                }
                 op["uses"] = value::array(); op["uses"].items.push_back(type);
                 op["expression"] = expression;
                 if (operation.has("includes")) op["includes"] = operation.at("includes");

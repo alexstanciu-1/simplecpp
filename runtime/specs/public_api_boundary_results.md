@@ -592,3 +592,51 @@ shared helper; this does not claim the entire legacy fixture is repaired.
 Reproduce the publication proof with
 `python3 tests/runtime/native/test_global_operator_publication.py --core <runtime-build>/libscpp_runtime_core.a --tool <runtime-build>/scpp_api_generator`;
 add `--sanitize` with the instrumented build and sanitizer environment above.
+
+## Core completion goal A1 — ordinary numeric operations (2026-10-27)
+
+The active completion goal's first slice adds ordinary subtraction, multiplication,
+division, integer remainder and six numeric comparisons to the global metadata
+publication path. Addition now delegates to the same native arithmetic owner rather
+than reproducing its expression. There are 98 normalized numeric implementations
+(9 types for 10 operations, 8 integer types for remainder), not original-operand-pair
+implementations. The generator has no numeric type-name branches; metadata describes
+operation-specific native operands separately from general API transport.
+
+Five focused tests pass in release (1.08 s) and ASan/UBSan with leak detection (6.20 s).
+The combined numeric fixture exercises all nine types, zero-divisor error codes,
+negative integer truncation/remainder, unsigned wrap, NaN comparisons, infinity and
+selected widening. The successful-operation loop reports **zero allocations**; setup
+and error paths are excluded. Existing signed-overflow limitations are unchanged;
+this is not a new checked-overflow policy or a claim that undefined native inputs
+are safe. Both integer and floating division adapters compile independently.
+
+The relocated sealed-publication proof additionally reuses division and comparison
+APIs with zero emitted implementation units and runs a linked public-only caller,
+normally and with sanitizers. Metadata checks cover result types, common promotion,
+signed/unsigned rejection, invalid scalar admission and integer-only remainder.
+
+Single-observation compile costs (`measure_global_operators.py --numeric`):
+
+| Case | Seconds | Preprocessed bytes |
+| --- | ---: | ---: |
+| Public integer division + floating comparison caller | 0.0588 | 13,128 |
+| Native equivalent caller | 3.4424 | 3,550,635 |
+| Independent integer division adapter | 3.5499 | 3,562,439 |
+| Independent floating division adapter | 3.3310 | 3,563,212 |
+
+The eight-job focused release rebuild took **22.03 s**, reported peak child RSS
+**408,548 KiB**; the sanitizer rebuild took **44.37 s**, **608,076 KiB**. These are
+changed-core/tool/test build observations, not clean compiler builds. Costs were
+sampled once to limit compilation; do not interpret them as stable speedup ratios.
+Raw caller observations: `compiler/my-try-cpp/build/core-a1-cost.json`.
+
+Reproduction targets: `test_numeric_operators`, `test_global_operators`,
+`test_api_generation`, `scpp_api_generator`; run their CTest cases plus
+`scpp_test_api_metadata` and `scpp_check_global_operators`. Publication proof uses
+`test_global_operator_publication.py` with the matching core archive and tool;
+add `--sanitize` and the sanitizer environment for the instrumented variant.
+
+The revised semantic promotion contract records the frontend's remaining wider-operand
+behavior explicitly. No compiler preparation/lowering migration, new floating widths,
+boxed arithmetic, wrapper lifting or checked-cast API is claimed by A1. A2 is next.

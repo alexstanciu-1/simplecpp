@@ -246,3 +246,12 @@ value API exists, not that source lowering has already migrated to it.
 | `core.count.hash` | Hash recipe count; no permanent hash demand required | E (capabilities) |
 | `core.count.mixed` | Missing boxed count free function | E |
 | `core.count.dynamic` | Missing boxed count free function | E |
+
+## Active-goal progress — A1
+
+Scope recommendations accepted 2026-10-27; implementation goal active. A1 ordinary
+numeric arithmetic/comparison bindings are implemented through the existing global
+metadata mechanism, with integer-only remainder and native zero-divisor checks.
+The normative promotion rule has been revised, with the existing frontend gap
+explicitly recorded. A2 checked conversions is next; no ownership/callback or module
+scope has been added. Validation is recorded in the runtime boundary results.

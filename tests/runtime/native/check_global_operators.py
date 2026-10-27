@@ -49,3 +49,14 @@ invalid=copy.deepcopy(base); invalid['api_imports']={}; invalid['metadata']=chan
 call(invalid,error='Duplicate normalized operator signature')
 assert resolve('mixed','mixed','equal')['conversion']=='identity'
 print('PASS: duplicate normalized signatures reject; boxed operands retain identity')
+
+# A1 shares the same normalization across ordinary arithmetic and comparisons.
+for op in ['subtract','multiply','divide','remainder','numeric_equal','numeric_not_equal','less','less_equal','greater','greater_equal']:
+    plan=resolve('int16','int32',op)
+    assert plan['operand_type']=='int64'
+    assert plan['result_type']==('boolean' if op in ['numeric_equal','numeric_not_equal','less','less_equal','greater','greater_equal'] else 'int64')
+    resolve('int16','uint32',op,error='Unsupported operator')
+    resolve('boolean','int32',op,error='Unsupported operator')
+    if op=='remainder': resolve('float64','float64',op,error='Unsupported operator')
+    else: assert resolve('uint64','float64',op)['operand_type']=='float64'
+print('PASS: A1 arithmetic/comparison normalization and integer-only remainder')

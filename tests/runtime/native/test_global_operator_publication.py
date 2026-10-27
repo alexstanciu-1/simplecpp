@@ -27,17 +27,21 @@ with tempfile.TemporaryDirectory(prefix='scpp-operator-publication-') as directo
     shutil.copy2(args.tool, sdk/'tools/scpp_api_generator')
     seal_package(sdk, ['core'])
     request = stage/'request.json'
-    request.write_text(json.dumps({'package':'app.operators', 'roots':[], 'apis':['add_int64','equal_mixed','add_int64']}))
+    request.write_text(json.dumps({'package':'app.operators', 'roots':[], 'apis':['add_int64','equal_mixed','add_int64','divide_int64','less_float64']}))
     os.environ['SCPP_API_GENERATOR'] = str(sdk/'tools/scpp_api_generator')
     manifest = concrete_types.generate(request, stage/'app', sdk, [sdk], 'clang++', [])
     assert manifest['sources'] == []
-    assert 'add_int64' in manifest['apis'] and 'equal_mixed' in manifest['apis']
+    assert all(x in manifest['apis'] for x in ['add_int64','equal_mixed','divide_int64','less_float64'])
     (stage/'main.cpp').write_text('''#include "scpp/operators/add_int64.hpp"
 #include "scpp/operators/equal_mixed.hpp"
+#include "scpp/operators/divide_int64.hpp"
+#include "scpp/operators/less_float64.hpp"
 int main() {
     scpp::mixed value(scpp::int64(7));
     return scpp::numeric_add(scpp::int64(3),scpp::int64(4)).native_value()==7
-        && static_cast<bool>(scpp::boxed_equal(value,value)) ? 0 : 1;
+        && static_cast<bool>(scpp::boxed_equal(value,value))
+        && scpp::numeric_divide(scpp::int64(8),scpp::int64(2)).native_value()==4
+        && static_cast<bool>(scpp::numeric_less(scpp::float64(1.0),scpp::float64(2.0))) ? 0 : 1;
 }
 ''')
     flags = ['-fsanitize=address,undefined', '-fno-sanitize-recover=all'] if args.sanitize else []

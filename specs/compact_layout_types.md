@@ -500,17 +500,17 @@ This does not introduce source constant-call evaluation.
 
 ## 7. v0.2 integer arithmetic and numeric comparisons
 
-Agreed 2026-10-10. For `+`, `-`, `*`, `/`, `%`, `==`, `!=`, `<`, `<=`,
-`>` and `>=`, integer operands must have the same signedness. Both operands
-convert to the wider declared integer type before computation. Equal widths
-retain that type; `byte` is the `uint8` alias. Canonical `int` is signed 64-bit
+Agreed 2026-10-10; promotion revised 2026-10-27. For `+`, `-`, `*`, `/`, `%`,
+`==`, `!=`, `<`, `<=`, `>` and `>=`, integer operands must have the same signedness.
+Identical integer types retain their type; different widths select the family
+maximum (int64 for signed, uint64 for unsigned) before computation; `byte` is the `uint8` alias. Canonical `int` is signed 64-bit
 and wins the result identity when either operand is canonical `int`.
 
 Arithmetic returns the selected integer type; comparisons return `bool`.
 Spaceship (`<=>`) uses the same operand selection but returns canonical `int`
 with value -1, 0 or 1; it must compare, not subtract.
 
-Examples: `int32 + int64 -> int64`, `uint16 + uint32 -> uint32`,
+Examples: `int32 + int64 -> int64`, `uint16 + uint32 -> uint64`,
 `int32 + int -> int`. Signed/unsigned combinations are preparation errors,
 including `uint32 + 1`, because ordinary integer literals have type `int`.
 An explicit conversion, such as `uint32 + (uint32)1`, establishes a common
@@ -522,8 +522,23 @@ behavior. No new checked overflow, saturation or universal wrapping guarantee is
 introduced; native signed-overflow limitations remain. Assignment, argument and
 return conversions are unchanged by this amendment.
 
+For the ordinary arithmetic/comparison group above, admitted integer/float pairs
+select float64; different admitted floating widths select float64 and identical
+floating types retain their type. Integer remainder remains integer-only. This rule
+does not introduce new float16/float32 types. Documented integer-to-floating precision
+loss is permitted; bool, null and numeric-looking strings do not gain admission.
+Explicit casts establish operand types first and retain their own checked rules.
+
+Implementation checkpoint 2026-10-27: the runtime public metadata resolver and
+normalized arithmetic/comparison functions implement this revised policy. The
+existing my-try frontend still selects the wider integer operand and has narrower
+floating admission; frontend migration is tracked separately. Native helpers accept
+already-normalized operands; their internal widening templates do not own source
+promotion. Specialized operators, including spaceship, require their separately
+admitted domains and are not implemented by this public slice.
+
 This slice does not extend fixed-width unary/mutation/compound operators, bitwise
-operators, shifts, strict identity, floating arithmetic or [power](integer_power.md).
+operators, shifts, strict identity or [power](integer_power.md).
 The my-try frontend keeps their existing admission rules. It selects domains from
 registered integer width/signedness facts; backend representation does not decide
 source promotion. Remaining signed/unsigned, overflow and literal ergonomics are

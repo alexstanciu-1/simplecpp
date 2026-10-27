@@ -318,3 +318,12 @@ sub-slices. Include a review checkpoint after the first complete carrier path an
 ownership/callback expansion. The goal should finish only when each included contract
 has a tested public path or an explicitly user-accepted exclusion. No goal is created
 until the overall scope is settled and implementation is requested.
+
+## Implementation goal activated — 2026-10-27
+
+Both scope recommendations are accepted: native-only facilities enter only when an
+included core contract needs them; complete frontend adoption is a separate goal.
+The runtime-core completion goal is active. Begin with A1 ordinary numeric operations,
+then follow the documented small-slice backlog, testing and committing/pushing each
+coherent slice. Review the first complete carrier path before ownership/callback
+expansion. Existing source/native admission gaps must remain explicit.
