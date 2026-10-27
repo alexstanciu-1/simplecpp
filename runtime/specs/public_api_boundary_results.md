@@ -2887,3 +2887,29 @@ was rerun after import isolation). Parallel application storage compilation took
 fixture timings. Runtime-core rebuilt once per configuration; generator code did not
 change. The runtime now publishes 383 implementation units; this is not a coverage
 percentage.
+
+## E15: keyed factory target-policy proof (2026-10-28)
+
+The keyed fixture now reads SCPP_LANGUAGE_TARGET_PHP from the supplied core's CMake
+cache and uses matching application/probe/reference flags. For PHP mode it generates
+a temporary runtime SDK publication through the ordinary metadata tool before sealing;
+it does not change the ABI field by hand. Generated implementation bytes must match
+the files compiled into the supplied core. The first attempt with the non-PHP
+publication was correctly rejected as an incompatible dependency target ABI.
+
+The public proof checks numeric-string/integer duplicate rejection in PHP mode,
+distinct keys in non-PHP mode, leading-zero string preservation in both, typed entry
+iteration order and incomplete boxed input rejection. Dedicated PHP-enabled release
+and sanitizer builds live under compiler/my-try-cpp/build/php-key-policy; the normal
+compiler dependency configuration remains unchanged. Invoke check_keyed_initializers.py
+with --tool and --core for the matching build, adding --sanitize for its sanitized
+core. The runner rejects missing or unrecognized key-policy configuration.
+
+Validation: non-PHP release and PHP release/ASan/UBSan/LSan public execution and sealed
+reuse pass. Allocation parity remains 9 native / 9 public, with allocation-failure
+cleanup checked. PHP generated application compilation took 4.8618s release / 6.3038s
+sanitized; caller 0.2121s / 0.3584s. Non-PHP release rerun: 4.8334s / 0.2159s. These
+single-run fixture timings exclude runtime generation and core builds. Each new PHP
+core configuration built once; no runtime implementation or generator changes were
+needed. Existing carrier logical-policy and prepared-fact ownership decisions remain
+pending; this proof does not advance ownership/callback implementation past that gate.

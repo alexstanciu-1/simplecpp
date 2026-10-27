@@ -65,6 +65,9 @@ int main()
     integers.append(integer_entry(int64(3), int64(9)));
     auto numbers = integer_factory::from_key_value(integers);
     CHECK(numbers.at(int64(8)) == int64(12) && numbers.at(int64(3)) == int64(9));
+    auto order = numbers.iterate();
+    CHECK(order.valid() && order.key() == int64(8)); order.next();
+    CHECK(order.valid() && order.key() == int64(3)); order.next(); CHECK(!order.valid());
     integer_entries duplicate_int(uint64(2));
     duplicate_int.append(integer_entry(int64(8), int64(0)));
     duplicate_int.append(integer_entry(int64(8), int64(9)));
@@ -107,7 +110,7 @@ int main()
     try { (void)mixed_keyed_initializer::from_key_value(duplicate_m); } catch (...) { failed_m = true; }
     try { (void)dynamic_keyed_initializer::from_key_value(duplicate_d); } catch (...) { failed_d = true; }
     CHECK(failed_m && failed_d);
-    // This SDK uses non-PHP key policy: integer 10 and string "10" stay distinct.
+    // Both SDK policies use the receiving container's normalization.
     mixed_entries keys_m(uint64(3)); dynamic_entries keys_d(uint64(3));
     keys_m.append(mixed_entry(mixed(int64(10)), mixed(int64(1))));
     keys_m.append(mixed_entry(mixed(string("10")), mixed(int64(2))));
@@ -115,10 +118,31 @@ int main()
     keys_d.append(dynamic_entry(mixed(int64(10)), dynamic(int64(1))));
     keys_d.append(dynamic_entry(mixed(string("10")), dynamic(int64(2))));
     keys_d.append(dynamic_entry(mixed(string("08")), dynamic(int64(3))));
+#if SCPP_TEST_PHP_KEYS
+    failed_m = failed_d = false;
+    try { (void)mixed_keyed_initializer::from_key_value(keys_m); } catch (...) { failed_m = true; }
+    try { (void)dynamic_keyed_initializer::from_key_value(keys_d); } catch (...) { failed_d = true; }
+    CHECK(failed_m && failed_d); // "10" and 10 normalize to the same key.
+#else
     auto km = mixed_keyed_initializer::from_key_value(keys_m);
     auto kd = dynamic_keyed_initializer::from_key_value(keys_d);
     CHECK(count(km) == int64(3) && count(kd) == int64(3));
     CHECK(km.get(string("10")).get_int() == int64(2) && kd.get(int64(10)).get_int() == int64(1));
+#endif
+    mixed_entries leading_m(uint64(2)); dynamic_entries leading_d(uint64(2));
+    leading_m.append(mixed_entry(mixed(int64(8)), mixed(int64(1))));
+    leading_m.append(mixed_entry(mixed(string("08")), mixed(int64(2))));
+    leading_d.append(dynamic_entry(mixed(int64(8)), dynamic(int64(1))));
+    leading_d.append(dynamic_entry(mixed(string("08")), dynamic(int64(2))));
+    auto lm = mixed_keyed_initializer::from_key_value(leading_m);
+    auto ld = dynamic_keyed_initializer::from_key_value(leading_d);
+    CHECK(count(lm) == int64(2) && count(ld) == int64(2));
+    CHECK(lm.get(string("08")).get_int() == int64(2) && ld.get(int64(8)).get_int() == int64(1));
+    mixed_entries incomplete_m(uint64(1)); dynamic_entries incomplete_d(uint64(1));
+    failed_m = failed_d = false;
+    try { (void)mixed_keyed_initializer::from_key_value(incomplete_m); } catch (...) { failed_m = true; }
+    try { (void)dynamic_keyed_initializer::from_key_value(incomplete_d); } catch (...) { failed_d = true; }
+    CHECK(failed_m && failed_d);
     for (const auto &bad : {mixed{}, mixed(boolean(false)), mixed(float64(1.5))}) {
         mixed_entries im(uint64(1)); dynamic_entries id(uint64(1));
         im.append(mixed_entry(bad, mixed{})); id.append(dynamic_entry(bad, dynamic{}));

@@ -1867,3 +1867,25 @@ was rerun after import isolation). Parallel application storage compilation took
 fixture timings. Runtime-core rebuilt once per configuration; generator code did not
 change. The runtime now publishes 383 implementation units; this is not a coverage
 percentage.
+
+## E15 — keyed initialization configuration proof
+
+Extend the E14 public fixture to derive key policy from the supplied core's CMake
+configuration and use matching flags in layout probes, application implementations
+and the native allocation reference. It tests both distinct integer/numeric-string
+keys in non-PHP mode and normalized duplicate rejection in PHP mode. Leading-zero
+"08" stays distinct from integer 8 in both modes. Typed hash iteration checks source
+entry order, and incomplete boxed inputs reject before factory materialization.
+
+Separate PHP-enabled release/sanitizer core builds keep the compiler's existing
+non-PHP configuration unchanged. This closes a configuration-specific native public
+proof; it does not implement source factory dispatch or broaden key admission.
+
+Validation: non-PHP release and PHP release/ASan/UBSan/LSan public execution and sealed
+reuse pass. Allocation parity remains 9 native / 9 public, with allocation-failure
+cleanup checked. PHP generated application compilation took 4.8618s release / 6.3038s
+sanitized; caller 0.2121s / 0.3584s. Non-PHP release rerun: 4.8334s / 0.2159s. These
+single-run fixture timings exclude runtime generation and core builds. Each new PHP
+core configuration built once; no runtime implementation or generator changes were
+needed. Existing carrier logical-policy and prepared-fact ownership decisions remain
+pending; this proof does not advance ownership/callback implementation past that gate.

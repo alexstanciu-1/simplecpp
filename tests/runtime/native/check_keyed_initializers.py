@@ -51,7 +51,11 @@ print('PASS: keyed recipes, string-key default, invalid key rejection and runtim
 if not args.core:
     sys.exit(0)
 cache = args.core.resolve().parent/'CMakeCache.txt'
-assert cache.exists() and 'SCPP_LANGUAGE_TARGET_PHP:BOOL=OFF' in cache.read_text(), 'This fixture requires the non-PHP key-policy core build'
+assert cache.exists(), 'Core build configuration is required for the key-policy proof'
+configuration = cache.read_text()
+assert any('SCPP_LANGUAGE_TARGET_PHP:BOOL='+mode in configuration for mode in ['ON', 'OFF'])
+php_keys = 'SCPP_LANGUAGE_TARGET_PHP:BOOL=ON' in configuration
+policy_flags = ['-DSCPP_LANGUAGE_TARGET_PHP=1'] if php_keys else []
 caller = (root/'tests/runtime/native/test_public_keyed_initializers.cpp').read_text()
 with tempfile.TemporaryDirectory(prefix='scpp-keyed-factories-') as directory:
     work = Path(directory)
@@ -61,16 +65,22 @@ with tempfile.TemporaryDirectory(prefix='scpp-keyed-factories-') as directory:
     (sdk/'lib').mkdir(); (sdk/'tools').mkdir()
     shutil.copy2(args.core, sdk/'lib/libcore.a')
     shutil.copy2(args.tool, sdk/'tools/scpp_api_generator')
-    seal_package(sdk, ['core'])
     os.environ['SCPP_API_GENERATOR'] = str(sdk/'tools/scpp_api_generator')
+    if php_keys:
+        # Publish the matching target through the ordinary generator, never relabel a manifest.
+        configured = concrete_types.generate(root/'runtime/specs/public_specializations.json', sdk, sdk, [], 'clang++', policy_flags)
+        for source in configured['sources']:
+            assert (sdk/source).read_bytes() == (root/'runtime'/source).read_bytes(), 'Configured generation changed the implementation compiled into the supplied core'
+    seal_package(sdk, ['core'])
     request_file = work/'request.json'; request_file.write_text(json.dumps(request))
     app = work/'app'
-    manifest = concrete_types.generate(request_file, app, sdk, [sdk], 'clang++', [])
+    manifest = concrete_types.generate(request_file, app, sdk, [sdk], 'clang++', policy_flags)
     for header in ['string_factory', 'integer_factory', 'mixed_keyed_initializer', 'dynamic_keyed_initializer']:
         subprocess.run(['clang++', '-std=c++23', '-I'+str(app/'public'), '-I'+str(sdk/'public'),
                         '-x', 'c++', '-fsyntax-only', '-'], input='#include "scpp/'+header+'.hpp"\n', text=True, check=True)
     flags = ['-fsanitize=address,undefined', '-fno-omit-frame-pointer', '-fno-sanitize-recover=all'] if args.sanitize else []
-    common = ['clang++', '-std=c++23', '-O1' if args.sanitize else '-O2', *flags,
+    common = ['clang++', '-std=c++23', '-O1' if args.sanitize else '-O2', *flags, *policy_flags,
+              '-DSCPP_TEST_PHP_KEYS='+str(int(php_keys)),
               '-I'+str(app/'public'), '-I'+str(sdk/'public')]
     def compile_unit(pair):
         index, source = pair
@@ -90,6 +100,6 @@ with tempfile.TemporaryDirectory(prefix='scpp-keyed-factories-') as directory:
     subprocess.run([str(work/'proof')], check=True)
     (app/'lib').mkdir(); subprocess.run(['ar', 'rcs', str(app/'lib/libfactories.a'), *map(str, objects)], check=True)
     seal_package(app, ['factories'])
-    reused = concrete_types.generate(request_file, work/'reuse', sdk, [sdk, app], 'clang++', [])
+    reused = concrete_types.generate(request_file, work/'reuse', sdk, [sdk, app], 'clang++', policy_flags)
     assert not reused['sources']
-    print(f'PASS: sealed factory reuse; parallel storage compile={storage_time:.4f}s caller compile={caller_time:.4f}s')
+    print(f'PASS: sealed factory reuse (PHP keys={php_keys}); parallel storage compile={storage_time:.4f}s caller compile={caller_time:.4f}s')
