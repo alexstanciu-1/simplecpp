@@ -226,8 +226,8 @@ value API exists, not that source lowering has already migrated to it.
 | `core.dbg.string.value` | Missing public debug function and flags | G |
 | `core.dbg.string.flags` | Missing public debug function and flags | G |
 | `core.vector.append` | Vector recipe/published specialization method equivalent; helper/source mapping remains | E |
-| `core.microtime.0` | Missing focused public helper; retain current registered core ownership pending review | G |
-| `core.microtime.1` | Missing focused public helper; retain current registered core ownership pending review | G |
+| `core.microtime.0` | Published focused core binding, G1 | Complete public path |
+| `core.microtime.1` | Published focused core binding, G1 | Complete public path |
 | `core.vector_reserve.2` | Published helper binding and vector recipe; frontend adoption remains excluded | E |
 | `core.vector_capacity.1` | Published helper binding and vector recipe; frontend adoption remains excluded | E |
 | `core.vector_resize.3` | Published helper binding and vector recipe; frontend adoption remains excluded | E |
@@ -1506,3 +1506,16 @@ family factories, zero-allocation observations and zero-count construction. The 
 can now stage a disposable sealed SDK from `--core`/`--tool`, allowing current-build
 validation without republishing the compiler's pinned dependency package. Defaulted
 and explicit identities still reuse one sealed application specialization.
+
+## Active-goal progress — G1 wall-clock helpers
+
+Publish the two registered microtime overloads through ordinary function metadata,
+using concrete string/float64/boolean types and existing inline return transport.
+Extract the unchanged native provider into a focused private core header; the PHP
+string adapter includes it. Core catalog ownership and source alias rules remain
+unchanged. This is not datetime-module migration or a monotonic timing API.
+
+The bool-false path still throws logic_error. Numeric observations allocate nothing;
+string formatting retains its native allocations, recorded separately. Public-only
+execution, lifetime/sanitizer checks, relocated sealed reuse and focused caller
+compile costs are recorded in the runtime boundary results.

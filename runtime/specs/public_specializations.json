@@ -355,6 +355,8 @@
     "text_greater_equal_string_string",
     "coalesce_require_value",
     "count_mixed",
-    "count_dynamic"
+    "count_dynamic",
+    "microtime_string",
+    "microtime_float"
   ]
 }

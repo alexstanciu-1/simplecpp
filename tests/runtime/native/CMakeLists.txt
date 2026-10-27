@@ -502,3 +502,7 @@ add_test(NAME scpp_check_scoped_conditions COMMAND ${Python3_EXECUTABLE}
 
 add_test(NAME scpp_check_metadata_sections COMMAND ${Python3_EXECUTABLE}
   ${CMAKE_CURRENT_SOURCE_DIR}/check_metadata_sections.py)
+
+add_executable(test_public_microtime test_public_microtime.cpp)
+target_link_libraries(test_public_microtime PRIVATE scpp_core_api)
+add_test(NAME scpp_test_public_microtime COMMAND test_public_microtime)

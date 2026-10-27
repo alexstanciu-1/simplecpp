@@ -25,5 +25,8 @@ when it lacks `microtime`; that missing method is a preparation error. Free sour
 functions named `microtime` follow ordinary function shadowing independently.
 No other `php::` aliases or general namespace behavior is implied.
 
-The provider is `scpp::php::microtime` in `lang/php/support/php_string.hpp`, exposed
-through the core runtime metadata and the public `scpp/lang/php.hpp` umbrella.
+The provider is `scpp::php::microtime` in `scpp/detail/microtime.hpp`, included by
+`lang/php/support/php_string.hpp` and exposed through the core runtime metadata
+and the existing `scpp/lang/php.hpp` umbrella. The concrete public API supplies
+`scpp::microtime` through `scpp/time/microtime_string.hpp` and
+`scpp/time/microtime_float.hpp`; this does not add source namespace spellings.

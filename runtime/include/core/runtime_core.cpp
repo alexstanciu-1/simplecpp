@@ -369,3 +369,6 @@
 
 #include "scpp/generated/public_count_mixed.cpp"
 #include "scpp/generated/public_count_dynamic.cpp"
+
+#include "scpp/generated/public_microtime_string.cpp"
+#include "scpp/generated/public_microtime_float.cpp"

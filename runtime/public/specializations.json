@@ -1,6 +1,6 @@
 {
   "abi": "529dd5502370f48d64891818e9439aae72831b990b4027e8abe25c50c1216c21",
-  "api_identity": "61562cdd33d5be71d6fd927f6a5e22d8e2d4999b57fb24bd54ef13cf38a47bb4",
+  "api_identity": "328ef8be04b36f3c6b978b5ecd41ed99d455303b37100c31c3f5f108419e4d4e",
   "apis": {
     "add_dynamic": {
       "header": "scpp/operators/add_dynamic.hpp",
@@ -5205,6 +5205,44 @@
       },
       "source": "include/scpp/generated/public_logical_xor_boolean.cpp"
     },
+    "microtime_float": {
+      "header": "scpp/time/microtime_float.hpp",
+      "namespace": "scpp",
+      "operation": {
+        "expression": "scpp::php::microtime(scpp::bool_t(as_float.native_value()))",
+        "includes": [
+          "scpp/detail/microtime.hpp"
+        ],
+        "kind": "function",
+        "name": "microtime",
+        "parameters": [
+          {
+            "name": "as_float",
+            "passing": "value",
+            "type": "boolean"
+          }
+        ],
+        "returns": "float64",
+        "transport": "native"
+      },
+      "source": "include/scpp/generated/public_microtime_float.cpp"
+    },
+    "microtime_string": {
+      "header": "scpp/time/microtime_string.hpp",
+      "namespace": "scpp",
+      "operation": {
+        "expression": "scpp::php::microtime()",
+        "includes": [
+          "scpp/detail/microtime.hpp"
+        ],
+        "kind": "function",
+        "name": "microtime",
+        "parameters": [],
+        "returns": "string",
+        "transport": "native"
+      },
+      "source": "include/scpp/generated/public_microtime_string.cpp"
+    },
     "multiply_dynamic": {
       "header": "scpp/operators/multiply_dynamic.hpp",
       "namespace": "scpp",
@@ -9508,7 +9546,13 @@
     "include/scpp/observations/count_mixed.hpp",
     "public/scpp/observations/count_dynamic.hpp",
     "include/scpp/generated/public_count_dynamic.cpp",
-    "include/scpp/observations/count_dynamic.hpp"
+    "include/scpp/observations/count_dynamic.hpp",
+    "public/scpp/time/microtime_string.hpp",
+    "include/scpp/generated/public_microtime_string.cpp",
+    "include/scpp/time/microtime_string.hpp",
+    "public/scpp/time/microtime_float.hpp",
+    "include/scpp/generated/public_microtime_float.cpp",
+    "include/scpp/time/microtime_float.hpp"
   ],
   "generator": "metadata-api-v1",
   "leaves": {
@@ -10036,6 +10080,8 @@
     "scpp/text/concat_text_uint16.hpp": "8a1f174bbbe6e7371f7426c374f424033fa7e11b5f7ebf2f48f518d7296f4a55",
     "scpp/text/concat_text_uint32.hpp": "007baf32ef8ffe91e48447a9b61495617ea6b20158d91e92863540100e82e55d",
     "scpp/text/concat_text_uint8.hpp": "4c7f008e87298a13f0551bba08daaa0b132d346ae96aa9350f1cb43e53b0ddee",
+    "scpp/time/microtime_float.hpp": "e5962900bbb67770b3d11d247430ff4e75bfb68edabb89a0cca54c703725848e",
+    "scpp/time/microtime_string.hpp": "00052b1a102db3a2dea4a7a499ef6fb3ee6ff9ea396f3c7253c1142b8ce63065",
     "scpp/vector_string.hpp": "91b10acc2c907039c8e7cd2a02646884237769c9082580ce40af85f10a811248"
   },
   "sources": [
@@ -10381,7 +10427,9 @@
     "include/scpp/generated/public_text_greater_equal_string_string.cpp",
     "include/scpp/generated/public_coalesce_require_value.cpp",
     "include/scpp/generated/public_count_mixed.cpp",
-    "include/scpp/generated/public_count_dynamic.cpp"
+    "include/scpp/generated/public_count_dynamic.cpp",
+    "include/scpp/generated/public_microtime_string.cpp",
+    "include/scpp/generated/public_microtime_float.cpp"
   ],
   "types": {
     "dynamic": {

@@ -2473,3 +2473,25 @@ storage units, one public caller and links, eight jobs) took **2.1772s release**
 **3.5729s sanitizer**, single runs. These are small fixture builds, not full compiler
 or runtime rebuild timings. Existing runtime archives were reused. The first failed
 release build is excluded from these successful-run times.
+
+## G1 — core wall-clock helpers (2026-10-27)
+
+Ordinary function metadata publishes the two microtime overloads. The native
+provider moved unchanged into `scpp/detail/microtime.hpp`; an exact-text comparison
+against its previous PHP string-adapter definitions passed. This isolates the core
+helper without changing source aliases or migrating the datetime/strings modules.
+
+The guarded public-only test passes in release and ASan/UBSan with leak detection.
+It checks positive numeric epoch samples, bool-false logic_error, eight-digit
+fractional text shape and independent owned text lifetime. It deliberately makes
+no monotonicity assertion. One hundred numeric calls allocate zero times; a string
+call allocated twice on this implementation. String allocations are observed, not
+promised as a cross-platform bound. Each public header independently compiles.
+
+The relocated sealed publication test imports both functions with zero generated
+units and links/runs a public-only caller. Two metadata checks pass in **1.43s**.
+Single isolated compile-only caller costs at clang++ C++23/O2:
+**0.0538s public / 1.6303s native**. These callers exercise both overloads; they are
+not runtime throughput or full build measurements. Release and sanitizer core
+archives were each rebuilt once for the two new implementation units. The existing
+mixed-hash explicit-instantiation warning remains.

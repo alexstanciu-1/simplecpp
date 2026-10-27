@@ -220,6 +220,44 @@
           "operators/coalesce/coalesce.hpp"
         ]
       }
+    },
+    "microtime_string": {
+      "namespace": "scpp",
+      "header": "scpp/time/microtime_string.hpp",
+      "source": "include/scpp/generated/public_microtime_string.cpp",
+      "operation": {
+        "name": "microtime",
+        "returns": "string",
+        "parameters": [],
+        "kind": "function",
+        "transport": "native",
+        "expression": "scpp::php::microtime()",
+        "includes": [
+          "scpp/detail/microtime.hpp"
+        ]
+      }
+    },
+    "microtime_float": {
+      "namespace": "scpp",
+      "header": "scpp/time/microtime_float.hpp",
+      "source": "include/scpp/generated/public_microtime_float.cpp",
+      "operation": {
+        "name": "microtime",
+        "returns": "float64",
+        "parameters": [
+          {
+            "name": "as_float",
+            "type": "boolean",
+            "passing": "value"
+          }
+        ],
+        "kind": "function",
+        "transport": "native",
+        "expression": "scpp::php::microtime(scpp::bool_t(as_float.native_value()))",
+        "includes": [
+          "scpp/detail/microtime.hpp"
+        ]
+      }
     }
   },
   "capabilities": {
