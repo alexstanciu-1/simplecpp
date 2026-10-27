@@ -2709,3 +2709,31 @@ public header compilation and relocated sealed reuse pass. Repeated numeric writ
 and key validation allocate zero times. Single-run public/native caller compilation:
 0.0548s / 2.1175s. Core was rebuilt once per configuration. Broader nested/access
 protocols and the carrier review gate remain open.
+
+## E8: one-step boxed keyed probes and removal (2026-10-28)
+
+Five metadata-generated support functions expose native readiness, leaf probing and
+invalid-empty failure without interior pointers. Both boxed recipes add mixed-key
+removal via the existing checked removal path. No source helper registration or
+generator branch is introduced.
+
+Seven focused release checks pass (1.38s), including existing boxed read/write
+regressions and metadata/publication packaging. The new fixture distinguishes missing
+from stored null for removal, false from null for isset, supported empty/long strings
+from invalid empty leaves, and invalid probe keys from throwing removal keys. It
+checks skipped first-key effects and fresh lookup after root replacement, COW versus
+shared identity, and idempotent missing removal. Repeated probes (including long text)
+and missing removal allocate nothing; cold string-key insertion/interning is not
+measured by this fixture.
+
+Five support headers compile independently. Relocated sealed runtime reuse emits
+zero units and links both probe families and removal methods. Single isolated
+compile-only probe caller: 0.0564s public versus 2.1155s native. Core rebuilt once
+for release. This is a single-step runtime API proof, not nested prefix resolution
+or source-frontend staging coverage; weak-table public construction remains absent.
+
+Validation: seven release runtime/metadata tests pass (1.38s); five boxed access and
+lifetime tests pass with ASan/UBSan and leak detection (0.11s). Independent headers
+and sealed relocation/reuse pass. Single-run probe caller compilation: 0.0564s
+public / 2.1155s native. One core rebuild per configuration. The overall completion
+goal and carrier review gate remain open.

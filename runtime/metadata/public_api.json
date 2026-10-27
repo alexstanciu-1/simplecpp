@@ -450,6 +450,20 @@
           "scpp/index_write.hpp"
         ]
       }
+    },
+    "reject_empty_operand": {
+      "namespace": "scpp",
+      "header": "scpp/access/reject_empty_operand.hpp",
+      "source": "include/scpp/generated/public_reject_empty_operand.cpp",
+      "operation": {
+        "name": "reject_empty_operand",
+        "returns": "void",
+        "parameters": [],
+        "expression": "scpp::detail::throw_invalid_empty()",
+        "includes": [
+          "operators/empty/empty.hpp"
+        ]
+      }
     }
   },
   "capabilities": {

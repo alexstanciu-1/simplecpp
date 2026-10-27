@@ -53,6 +53,9 @@ void dynamic::set(const scpp::int64 &key, const scpp::dynamic &value) { const au
 scpp::index_path_check_store(detail::concrete_access::get<native_dynamic>(*this), native_key, detail::concrete_access::get<scpp::dynamic_t<>>(value));
 if (this == &value) { const auto snapshot = detail::concrete_access::get<scpp::dynamic_t<>>(value); scpp::index_store(detail::concrete_access::get<native_dynamic>(*this), native_key, snapshot); }
 else scpp::index_store(detail::concrete_access::get<native_dynamic>(*this), native_key, detail::concrete_access::get<scpp::dynamic_t<>>(value)); }
+scpp::boolean dynamic::remove(const scpp::mixed &key) { return scpp::boolean(([&]() -> decltype(auto) { const auto native_key = detail::concrete_access::get<scpp::mixed_t>(key);
+if (!scpp::keyed_present(&detail::concrete_access::get<native_dynamic>(*this), native_key, true)) return false;
+scpp::keyed_erase(detail::concrete_access::get<native_dynamic>(*this), native_key); return true; })()); }
 scpp::boolean dynamic::remove(const scpp::int64 &key) { return scpp::boolean(([&]() -> decltype(auto) { const auto native_key = scpp::mixed_t(scpp::int_t<>(key.native_value()));
 if (!scpp::keyed_present(&detail::concrete_access::get<native_dynamic>(*this), native_key, true)) return false;
 scpp::keyed_erase(detail::concrete_access::get<native_dynamic>(*this), native_key); return true; })()); }

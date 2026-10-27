@@ -1483,3 +1483,23 @@ A prepared caller must materialize and validate its key before RHS evaluation,
 then perform the store on current receiver storage after RHS conversion. The
 ordinary eager C++ method call cannot enforce source expression order by itself.
 Receiver/path validity is intentionally not checked by the key-only function.
+
+### Single-step boxed probes and removal
+
+Function sets publish `keyed_ready(receiver, removing)` and
+`keyed_probe(receiver, key, emptiness)` for mixed/dynamic, preserving the native
+mode semantics. They borrow whole receiver/key values only during a call and return
+concrete boolean snapshots; native entry pointers remain internal. A false readiness
+check ends `isset`/removal before key evaluation. For keyed `empty`, the same stop
+uses `reject_empty_operand()`, which preserves the native error authority/code.
+These are lowering-support functions, not additional source builtins.
+
+After a reached key expression, call the probe on current receiver storage. Do not
+cache a child pointer or copied container across source effects. `keyed_probe` tests
+the stored leaf using its presence/emptiness contract, not merely membership. A
+mixed-key `remove` method returns membership success, so deleting stored null still
+returns true. It uses the existing checked removal owner and never creates entries.
+
+This exposes one-step operations. A complete nested prefix resolver, typed-container
+probe capabilities and field-owner retention are separate remaining work. No generic
+borrowed child/reference or source callback is introduced by this slice.

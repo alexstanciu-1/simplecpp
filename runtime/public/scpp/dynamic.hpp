@@ -45,6 +45,7 @@ public:
     scpp::dynamic get(const scpp::int64 &key) const;
     void set(const scpp::mixed &key, const scpp::dynamic &value);
     void set(const scpp::int64 &key, const scpp::dynamic &value);
+    scpp::boolean remove(const scpp::mixed &key);
     scpp::boolean remove(const scpp::int64 &key);
     scpp::dynamic get(const scpp::string &key) const;
     void set(const scpp::string &key, const scpp::dynamic &value);

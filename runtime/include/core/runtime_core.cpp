@@ -400,3 +400,9 @@
 #include "scpp/generated/public_is_float_mixed.cpp"
 
 #include "scpp/generated/public_require_write_key_mixed.cpp"
+
+#include "scpp/generated/public_keyed_ready_mixed.cpp"
+#include "scpp/generated/public_keyed_ready_dynamic.cpp"
+#include "scpp/generated/public_keyed_probe_mixed.cpp"
+#include "scpp/generated/public_keyed_probe_dynamic.cpp"
+#include "scpp/generated/public_reject_empty_operand.cpp"

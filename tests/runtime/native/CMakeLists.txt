@@ -546,3 +546,7 @@ add_test(NAME scpp_test_public_index_read COMMAND test_public_index_read)
 add_executable(test_public_index_write test_public_index_write.cpp)
 target_link_libraries(test_public_index_write PRIVATE scpp_core_api)
 add_test(NAME scpp_test_public_index_write COMMAND test_public_index_write)
+
+add_executable(test_public_keyed_probe test_public_keyed_probe.cpp)
+target_link_libraries(test_public_keyed_probe PRIVATE scpp_core_api)
+add_test(NAME scpp_test_public_keyed_probe COMMAND test_public_keyed_probe)

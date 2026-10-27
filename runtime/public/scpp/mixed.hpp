@@ -44,6 +44,7 @@ public:
     scpp::mixed get(const scpp::int64 &key) const;
     void set(const scpp::mixed &key, const scpp::mixed &value);
     void set(const scpp::int64 &key, const scpp::mixed &value);
+    scpp::boolean remove(const scpp::mixed &key);
     scpp::boolean remove(const scpp::int64 &key);
     scpp::mixed get(const scpp::string &key) const;
     void set(const scpp::string &key, const scpp::mixed &value);

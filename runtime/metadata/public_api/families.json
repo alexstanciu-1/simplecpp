@@ -1963,6 +1963,19 @@
             "parameters": [
               {
                 "name": "key",
+                "type": "self",
+                "passing": "const_ref"
+              }
+            ],
+            "transport": "native",
+            "body": "const auto native_key = ${native:key};\nif (!scpp::keyed_present(&${self}, native_key, true)) return false;\nscpp::keyed_erase(${self}, native_key); return true;"
+          },
+          {
+            "name": "remove",
+            "returns": "boolean",
+            "parameters": [
+              {
+                "name": "key",
                 "type": "int64",
                 "passing": "const_ref"
               }
@@ -2406,6 +2419,19 @@
               }
             ],
             "body": "const auto native_key = scpp::mixed_t(${native:key});\nscpp::index_path_check_store(${self}, native_key, ${native:value});\nif (this == &value) { const auto snapshot = ${native:value}; scpp::index_store(${self}, native_key, snapshot); }\nelse scpp::index_store(${self}, native_key, ${native:value});"
+          },
+          {
+            "name": "remove",
+            "returns": "boolean",
+            "parameters": [
+              {
+                "name": "key",
+                "type": "mixed",
+                "passing": "const_ref"
+              }
+            ],
+            "transport": "native",
+            "body": "const auto native_key = ${native:key};\nif (!scpp::keyed_present(&${self}, native_key, true)) return false;\nscpp::keyed_erase(${self}, native_key); return true;"
           },
           {
             "name": "remove",

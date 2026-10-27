@@ -1725,5 +1725,72 @@
         "expression": "value.is_${variant}()"
       }
     }
+  },
+  "keyed_ready": {
+    "variants": {
+      "mixed": {},
+      "dynamic": {}
+    },
+    "function": {
+      "namespace": "scpp",
+      "header": "scpp/access/keyed_ready_${variant}.hpp",
+      "source": "include/scpp/generated/public_keyed_ready_${variant}.cpp",
+      "operation": {
+        "name": "keyed_ready",
+        "returns": "boolean",
+        "parameters": [
+          {
+            "name": "receiver",
+            "type": "${variant}",
+            "passing": "const_ref"
+          },
+          {
+            "name": "removing",
+            "type": "boolean",
+            "passing": "value"
+          }
+        ],
+        "expression": "scpp::keyed_ready(&${native:receiver}, removing.native_value())",
+        "includes": [
+          "scpp/keyed_path.hpp"
+        ]
+      }
+    }
+  },
+  "keyed_probe": {
+    "variants": {
+      "mixed": {},
+      "dynamic": {}
+    },
+    "function": {
+      "namespace": "scpp",
+      "header": "scpp/access/keyed_probe_${variant}.hpp",
+      "source": "include/scpp/generated/public_keyed_probe_${variant}.cpp",
+      "operation": {
+        "name": "keyed_probe",
+        "returns": "boolean",
+        "parameters": [
+          {
+            "name": "receiver",
+            "type": "${variant}",
+            "passing": "const_ref"
+          },
+          {
+            "name": "key",
+            "type": "mixed",
+            "passing": "const_ref"
+          },
+          {
+            "name": "emptiness",
+            "type": "boolean",
+            "passing": "value"
+          }
+        ],
+        "expression": "scpp::keyed_probe(&${native:receiver}, ${native:key}, emptiness.native_value()).native_value()",
+        "includes": [
+          "scpp/keyed_path.hpp"
+        ]
+      }
+    }
   }
 }

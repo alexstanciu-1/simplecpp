@@ -1,6 +1,6 @@
 {
   "abi": "529dd5502370f48d64891818e9439aae72831b990b4027e8abe25c50c1216c21",
-  "api_identity": "197cd96f3436c2bdc9d64fe8f2a1cdc6f1c0f0510155aa5515559f2a3a2060f0",
+  "api_identity": "df93f1dbe1644e77439c7868bd78b67df683ad4a71f20f54ef84957445ce65f0",
   "apis": {
     "add_dynamic": {
       "header": "scpp/operators/add_dynamic.hpp",
@@ -5132,6 +5132,116 @@
       },
       "source": "include/scpp/generated/public_isset_null.cpp"
     },
+    "keyed_probe_dynamic": {
+      "header": "scpp/access/keyed_probe_dynamic.hpp",
+      "namespace": "scpp",
+      "operation": {
+        "expression": "scpp::keyed_probe(&${native:receiver}, ${native:key}, emptiness.native_value()).native_value()",
+        "includes": [
+          "scpp/keyed_path.hpp"
+        ],
+        "name": "keyed_probe",
+        "parameters": [
+          {
+            "name": "receiver",
+            "passing": "const_ref",
+            "type": "dynamic"
+          },
+          {
+            "name": "key",
+            "passing": "const_ref",
+            "type": "mixed"
+          },
+          {
+            "name": "emptiness",
+            "passing": "value",
+            "type": "boolean"
+          }
+        ],
+        "returns": "boolean"
+      },
+      "source": "include/scpp/generated/public_keyed_probe_dynamic.cpp"
+    },
+    "keyed_probe_mixed": {
+      "header": "scpp/access/keyed_probe_mixed.hpp",
+      "namespace": "scpp",
+      "operation": {
+        "expression": "scpp::keyed_probe(&${native:receiver}, ${native:key}, emptiness.native_value()).native_value()",
+        "includes": [
+          "scpp/keyed_path.hpp"
+        ],
+        "name": "keyed_probe",
+        "parameters": [
+          {
+            "name": "receiver",
+            "passing": "const_ref",
+            "type": "mixed"
+          },
+          {
+            "name": "key",
+            "passing": "const_ref",
+            "type": "mixed"
+          },
+          {
+            "name": "emptiness",
+            "passing": "value",
+            "type": "boolean"
+          }
+        ],
+        "returns": "boolean"
+      },
+      "source": "include/scpp/generated/public_keyed_probe_mixed.cpp"
+    },
+    "keyed_ready_dynamic": {
+      "header": "scpp/access/keyed_ready_dynamic.hpp",
+      "namespace": "scpp",
+      "operation": {
+        "expression": "scpp::keyed_ready(&${native:receiver}, removing.native_value())",
+        "includes": [
+          "scpp/keyed_path.hpp"
+        ],
+        "name": "keyed_ready",
+        "parameters": [
+          {
+            "name": "receiver",
+            "passing": "const_ref",
+            "type": "dynamic"
+          },
+          {
+            "name": "removing",
+            "passing": "value",
+            "type": "boolean"
+          }
+        ],
+        "returns": "boolean"
+      },
+      "source": "include/scpp/generated/public_keyed_ready_dynamic.cpp"
+    },
+    "keyed_ready_mixed": {
+      "header": "scpp/access/keyed_ready_mixed.hpp",
+      "namespace": "scpp",
+      "operation": {
+        "expression": "scpp::keyed_ready(&${native:receiver}, removing.native_value())",
+        "includes": [
+          "scpp/keyed_path.hpp"
+        ],
+        "name": "keyed_ready",
+        "parameters": [
+          {
+            "name": "receiver",
+            "passing": "const_ref",
+            "type": "mixed"
+          },
+          {
+            "name": "removing",
+            "passing": "value",
+            "type": "boolean"
+          }
+        ],
+        "returns": "boolean"
+      },
+      "source": "include/scpp/generated/public_keyed_ready_mixed.cpp"
+    },
     "less_equal_float64": {
       "header": "scpp/operators/less_equal_float64.hpp",
       "namespace": "scpp",
@@ -7338,6 +7448,20 @@
         "transport": "native"
       },
       "source": "include/scpp/generated/public_pre_increment_mixed.cpp"
+    },
+    "reject_empty_operand": {
+      "header": "scpp/access/reject_empty_operand.hpp",
+      "namespace": "scpp",
+      "operation": {
+        "expression": "scpp::detail::throw_invalid_empty()",
+        "includes": [
+          "operators/empty/empty.hpp"
+        ],
+        "name": "reject_empty_operand",
+        "parameters": [],
+        "returns": "void"
+      },
+      "source": "include/scpp/generated/public_reject_empty_operand.cpp"
     },
     "remainder_dynamic": {
       "header": "scpp/operators/remainder_dynamic.hpp",
@@ -10246,7 +10370,22 @@
     "include/scpp/observations/is_float_mixed.hpp",
     "public/scpp/access/require_write_key_mixed.hpp",
     "include/scpp/generated/public_require_write_key_mixed.cpp",
-    "include/scpp/access/require_write_key_mixed.hpp"
+    "include/scpp/access/require_write_key_mixed.hpp",
+    "public/scpp/access/keyed_ready_mixed.hpp",
+    "include/scpp/generated/public_keyed_ready_mixed.cpp",
+    "include/scpp/access/keyed_ready_mixed.hpp",
+    "public/scpp/access/keyed_ready_dynamic.hpp",
+    "include/scpp/generated/public_keyed_ready_dynamic.cpp",
+    "include/scpp/access/keyed_ready_dynamic.hpp",
+    "public/scpp/access/keyed_probe_mixed.hpp",
+    "include/scpp/generated/public_keyed_probe_mixed.cpp",
+    "include/scpp/access/keyed_probe_mixed.hpp",
+    "public/scpp/access/keyed_probe_dynamic.hpp",
+    "include/scpp/generated/public_keyed_probe_dynamic.cpp",
+    "include/scpp/access/keyed_probe_dynamic.hpp",
+    "public/scpp/access/reject_empty_operand.hpp",
+    "include/scpp/generated/public_reject_empty_operand.cpp",
+    "include/scpp/access/reject_empty_operand.hpp"
   ],
   "generator": "metadata-api-v1",
   "leaves": {
@@ -10426,6 +10565,11 @@
   "public_files": {
     "modules/filesystem/scan.hpp": "12c63684c1896c3de8fd05db1a6ab2a2fbb7eea2a3747ed3de91f44e0e5cf7d7",
     "modules/tasks/worker_pool.hpp": "07fd862bb53ef73be8aec043b5027a4e247723fe8efc4196d8e931ffe820394e",
+    "scpp/access/keyed_probe_dynamic.hpp": "908bb00075c07e4d34ef47c4c1e161ed11a9425e3c6fd8cdcd7f0d98b0e5a452",
+    "scpp/access/keyed_probe_mixed.hpp": "280727c35b8a1023bf032366d9bdd5bc5a03119dbab1b4e0c72ff30e1d22c2ad",
+    "scpp/access/keyed_ready_dynamic.hpp": "12b33ca215a7df3b5dbe43cf409ed6763c1b392e4cd9369c0f0ccfd796fdfe8b",
+    "scpp/access/keyed_ready_mixed.hpp": "34f81fbc94e6b5e8fca6b18bb5183d4f0e0af941e49e6e314cb0f68fdba0472e",
+    "scpp/access/reject_empty_operand.hpp": "647799e6644f6dd73d9bc2a38737efa6815025055764692d848bbf879ee2c7fe",
     "scpp/access/require_write_key_mixed.hpp": "38c211792425b188691a235412867c85f5bf9830f7d5267c002614e785b0d1cc",
     "scpp/cli/cli_argc.hpp": "7fdf322903540d54e651893dbeeaf56df4ee599110b8058fa631bf02e01fac17",
     "scpp/cli/cli_args.hpp": "d5cce3701f6ee4f716114d745bda82249f78ffb4df2f3036e97e8a833d6d9a8c",
@@ -10532,7 +10676,7 @@
     "scpp/debug/dbg_value_string.hpp": "c9ba23f768a101ae39f6b73d562ae5d0968f03a3b0817b2ea12267e14471735a",
     "scpp/debug/flags.hpp": "db90f39d85ec543ac05fe8d7df0893793059794037a7d50a33e5fc1f41c84f27",
     "scpp/detail/value_layout.hpp": "278a58716d847ef9efa3af4b145a4ba901ea200d366a678bad3252e0b3e307e6",
-    "scpp/dynamic.hpp": "0eea0c57b1440975c6a31fda9ef6ed9c152a71c47da34b4150819f37d55de9c2",
+    "scpp/dynamic.hpp": "4ecb2aa6babc316e223d9854dd6da7f28a935c3af90cbf050ccfb4a7edc06542",
     "scpp/error_value.hpp": "33c4dfbb6c5d919dc35ce1c68cba155211e72de47001f1bf77e3b73a3fa60017",
     "scpp/exception_info.hpp": "b7144992f7d9ae80e8c135123124c05ed57ef0b393e251fffdad577840d8c491",
     "scpp/failure.hpp": "d68ed12de1d0a4a645d15ee85d034123eb4e2b8e3f28c7458775ee69b6e18661",
@@ -10578,7 +10722,7 @@
     "scpp/memory/memory_get_peak_usage_real.hpp": "38833eadb3985f852ed2214a27954732e12136039bc85678bc708bf595428305",
     "scpp/memory/memory_get_usage.hpp": "d2550916bb0b4af9beb19b6e3c760aea1be9920c69baca8a8dfc3c5bfc011834",
     "scpp/memory/memory_get_usage_real.hpp": "5641521bf4e087f54c40e466bc4f895a4744f7bdae0a3a558e3a459112920d48",
-    "scpp/mixed.hpp": "a2be481c4ccb6bf4681ce039141ceb6f781c1808381a98553b8a6577257bd3e9",
+    "scpp/mixed.hpp": "995d535d74b4a4c6d4bf4503a299b20cae97650e15a3ccdaeb97c4e4fde2053f",
     "scpp/null_t.hpp": "db31e1653226ba1fd7655e2c3a42b92374763f9bfebbc56277d6a4e583f9dbc4",
     "scpp/observations/clean_boolean.hpp": "7b008d427e905459d0bc04f673a4ea427c172377591f944cb37daf8de2366be4",
     "scpp/observations/clean_float64.hpp": "9783a603e85e2dbe2cc20812b8367e6cfcfefa66b5a7b2b9371cb7226f7b86d4",
@@ -11169,7 +11313,12 @@
     "include/scpp/generated/public_is_bool_mixed.cpp",
     "include/scpp/generated/public_is_int_mixed.cpp",
     "include/scpp/generated/public_is_float_mixed.cpp",
-    "include/scpp/generated/public_require_write_key_mixed.cpp"
+    "include/scpp/generated/public_require_write_key_mixed.cpp",
+    "include/scpp/generated/public_keyed_ready_mixed.cpp",
+    "include/scpp/generated/public_keyed_ready_dynamic.cpp",
+    "include/scpp/generated/public_keyed_probe_mixed.cpp",
+    "include/scpp/generated/public_keyed_probe_dynamic.cpp",
+    "include/scpp/generated/public_reject_empty_operand.cpp"
   ],
   "types": {
     "dynamic": {

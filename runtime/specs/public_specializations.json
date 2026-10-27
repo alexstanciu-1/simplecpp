@@ -380,6 +380,11 @@
     "mixed_predicate_bool",
     "mixed_predicate_int",
     "mixed_predicate_float",
-    "require_write_key_mixed"
+    "require_write_key_mixed",
+    "keyed_ready_mixed",
+    "keyed_ready_dynamic",
+    "keyed_probe_mixed",
+    "keyed_probe_dynamic",
+    "reject_empty_operand"
   ]
 }

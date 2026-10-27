@@ -1667,3 +1667,28 @@ public header compilation and relocated sealed reuse pass. Repeated numeric writ
 and key validation allocate zero times. Single-run public/native caller compilation:
 0.0548s / 2.1175s. Core was rebuilt once per configuration. Broader nested/access
 protocols and the carrier review gate remain open.
+
+## E8 — single-step boxed probes and mixed-key removal
+
+Publish native readiness and leaf-probe helpers for each boxed family, plus the
+existing invalid-empty error path. Add mixed-key removal through the same existing
+removal body as integer/string methods. The ordinary function-set and method
+mechanisms suffice; no generator special cases or source builtins are added.
+
+Readiness precedes key evaluation; reached key effects are followed by a fresh
+lookup on current receiver storage. `isset` is null-sensitive, keyed `empty` requires
+an existing string/collection leaf, and removal reports membership (including stored
+null). All calls return owned boolean values and expose no interior pointer.
+
+The public-only proof covers false payload versus missing/null, empty/long strings,
+invalid keys, null/scalar roots, invalid-empty error codes, skipped key effects,
+root replacement during a reached key, mixed COW/dynamic identity during removal,
+missing-removal idempotence and zero repeated probe allocations. Nested prefix
+re-resolution, typed-container probe publication and source frontend staging remain
+unimplemented by this slice. Weak-table public construction is not claimed.
+
+Validation: seven release runtime/metadata tests pass (1.38s); five boxed access and
+lifetime tests pass with ASan/UBSan and leak detection (0.11s). Independent headers
+and sealed relocation/reuse pass. Single-run probe caller compilation: 0.0564s
+public / 2.1155s native. One core rebuild per configuration. The overall completion
+goal and carrier review gate remain open.
