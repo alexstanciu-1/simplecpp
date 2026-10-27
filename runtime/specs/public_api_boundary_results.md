@@ -3046,3 +3046,30 @@ allocated or published. Single-run error-caller compile: 0.4435s focused header 
 1.2257s former aggregate include. Dependency inspection confirms shift validation
 includes neither core/string_support.hpp nor scpp/int_t.hpp. Core rebuilt once per
 configuration; the final cross-library proof rebuilt only its small test caller.
+
+## B3 — same-family boxed ordering (2026-10-28)
+
+The global ordering group now publishes `<`, `<=`, `>` and `>=` for
+mixed/mixed and dynamic/dynamic through the ordinary operator recipes. A private
+relational adapter keeps existing scalar comparisons and delegates boxed operands
+to native numeric-only ordering, preserving the original diagnostic operator.
+No generator type-name branches or operand-pair expansion were added.
+
+Non-goals: cross-family boxes, boxed/plain operands, carrier boxed payloads and
+spaceship admission are unchanged. This closes the same-family ordering gap only;
+it does not complete all remaining boxed or carrier contracts.
+
+Evidence: `check_boxed_ordering_api.py` verifies eight generated APIs, published
+reuse and rejected operand/carrier domains. `test_public_boxed_ordering.cpp`
+passes in release and ASan/UBSan with leak detection: all int/float combinations,
+canonical int64/float64 rounding, signed zero, infinity, NaN, rejection of stored
+null/bool/string/table, unchanged operands and zero allocations on successful
+numeric comparisons. Existing numeric and boxed arithmetic regressions also pass
+in both configurations. Eight standalone public headers compile independently.
+The sealed relocated publication test links and executes all eight APIs in release
+and sanitizers with zero application-generated units.
+
+Single-run caller compile cost (`measure_boxed_ordering_api.py`, clang++ C++23 -O2):
+public **0.0543s**, native **3.1721s**. These are caller translation-unit timings,
+not full runtime rebuild times. Core compiled once per configuration; a test-only
+vexing-parse correction required a caller retry, not another core compilation.

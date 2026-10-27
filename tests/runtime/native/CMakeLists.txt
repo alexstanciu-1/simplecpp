@@ -591,3 +591,9 @@ add_test(NAME scpp_test_public_index_existing COMMAND test_public_index_existing
 add_executable(test_native_value_errors test_native_value_errors.cpp)
 target_link_libraries(test_native_value_errors PRIVATE scpp_runtime_core)
 add_test(NAME scpp_test_native_value_errors COMMAND test_native_value_errors)
+
+add_executable(test_public_boxed_ordering test_public_boxed_ordering.cpp)
+target_link_libraries(test_public_boxed_ordering PRIVATE scpp_core_api)
+add_test(NAME scpp_test_public_boxed_ordering COMMAND test_public_boxed_ordering)
+add_test(NAME scpp_check_boxed_ordering_api COMMAND ${Python3_EXECUTABLE}
+  ${CMAKE_CURRENT_SOURCE_DIR}/check_boxed_ordering_api.py $<TARGET_FILE:scpp_api_generator>)

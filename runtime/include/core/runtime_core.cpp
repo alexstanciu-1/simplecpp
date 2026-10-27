@@ -437,3 +437,12 @@
 #include "scpp/generated/public_index_existing_read_dynamic.cpp"
 #include "scpp/generated/public_index_existing_store_mixed.cpp"
 #include "scpp/generated/public_index_existing_store_dynamic.cpp"
+
+#include "scpp/generated/public_less_mixed.cpp"
+#include "scpp/generated/public_less_dynamic.cpp"
+#include "scpp/generated/public_less_equal_mixed.cpp"
+#include "scpp/generated/public_less_equal_dynamic.cpp"
+#include "scpp/generated/public_greater_mixed.cpp"
+#include "scpp/generated/public_greater_dynamic.cpp"
+#include "scpp/generated/public_greater_equal_mixed.cpp"
+#include "scpp/generated/public_greater_equal_dynamic.cpp"

@@ -410,6 +410,14 @@
     "index_existing_read_mixed",
     "index_existing_read_dynamic",
     "index_existing_store_mixed",
-    "index_existing_store_dynamic"
+    "index_existing_store_dynamic",
+    "less_mixed",
+    "less_dynamic",
+    "less_equal_mixed",
+    "less_equal_dynamic",
+    "greater_mixed",
+    "greater_dynamic",
+    "greater_equal_mixed",
+    "greater_equal_dynamic"
   ]
 }

@@ -1028,6 +1028,18 @@
           "left": "string",
           "right": "string",
           "selection": "ordered_pair"
+        },
+        {
+          "left": "mixed",
+          "right": "mixed",
+          "selection": "same_or_maximum",
+          "domain": "mixed"
+        },
+        {
+          "left": "dynamic",
+          "right": "dynamic",
+          "selection": "same_or_maximum",
+          "domain": "dynamic"
         }
       ]
     }
@@ -1195,7 +1207,7 @@
     "less": {
       "group": "numeric_or_text_order",
       "name": "numeric_less",
-      "expression": "scpp::detail::generated_operator_detail::lt(${operand:left}, ${operand:right}).native_value()",
+      "expression": "scpp::detail::relational_less(${operand:left}, ${operand:right}).native_value()",
       "publish": [
         "int8",
         "int16",
@@ -1205,10 +1217,12 @@
         "uint16",
         "uint32",
         "uint64",
-        "float64"
+        "float64",
+        "mixed",
+        "dynamic"
       ],
       "includes": [
-        "scpp/generated/operator_detail.hpp"
+        "operators/ordering/relational.hpp"
       ],
       "returns": "boolean",
       "pair_function_set": "text_less"
@@ -1216,7 +1230,7 @@
     "less_equal": {
       "group": "numeric_or_text_order",
       "name": "numeric_less_equal",
-      "expression": "scpp::detail::generated_operator_detail::le(${operand:left}, ${operand:right}).native_value()",
+      "expression": "scpp::detail::relational_less_equal(${operand:left}, ${operand:right}).native_value()",
       "publish": [
         "int8",
         "int16",
@@ -1226,10 +1240,12 @@
         "uint16",
         "uint32",
         "uint64",
-        "float64"
+        "float64",
+        "mixed",
+        "dynamic"
       ],
       "includes": [
-        "scpp/generated/operator_detail.hpp"
+        "operators/ordering/relational.hpp"
       ],
       "returns": "boolean",
       "pair_function_set": "text_less_equal"
@@ -1237,7 +1253,7 @@
     "greater": {
       "group": "numeric_or_text_order",
       "name": "numeric_greater",
-      "expression": "scpp::detail::generated_operator_detail::lt(${operand:right}, ${operand:left}).native_value()",
+      "expression": "scpp::detail::relational_greater(${operand:left}, ${operand:right}).native_value()",
       "publish": [
         "int8",
         "int16",
@@ -1247,10 +1263,12 @@
         "uint16",
         "uint32",
         "uint64",
-        "float64"
+        "float64",
+        "mixed",
+        "dynamic"
       ],
       "includes": [
-        "scpp/generated/operator_detail.hpp"
+        "operators/ordering/relational.hpp"
       ],
       "returns": "boolean",
       "pair_function_set": "text_greater"
@@ -1258,7 +1276,7 @@
     "greater_equal": {
       "group": "numeric_or_text_order",
       "name": "numeric_greater_equal",
-      "expression": "scpp::detail::generated_operator_detail::le(${operand:right}, ${operand:left}).native_value()",
+      "expression": "scpp::detail::relational_greater_equal(${operand:left}, ${operand:right}).native_value()",
       "publish": [
         "int8",
         "int16",
@@ -1268,10 +1286,12 @@
         "uint16",
         "uint32",
         "uint64",
-        "float64"
+        "float64",
+        "mixed",
+        "dynamic"
       ],
       "includes": [
-        "scpp/generated/operator_detail.hpp"
+        "operators/ordering/relational.hpp"
       ],
       "returns": "boolean",
       "pair_function_set": "text_greater_equal"

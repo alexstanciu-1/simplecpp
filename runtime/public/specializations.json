@@ -1,6 +1,6 @@
 {
   "abi": "529dd5502370f48d64891818e9439aae72831b990b4027e8abe25c50c1216c21",
-  "api_identity": "29c46c3f1ff8078796aa4e1c71c787e2a0d8410d95b5fd38c1862c1a13239ac8",
+  "api_identity": "ddec763bd7787113079ec62b7cdf7fcb23b5ff74c05507799fb58c60f0b15903",
   "apis": {
     "add_dynamic": {
       "header": "scpp/operators/add_dynamic.hpp",
@@ -4548,13 +4548,69 @@
       },
       "source": "include/scpp/generated/public_getenv.cpp"
     },
+    "greater_dynamic": {
+      "header": "scpp/operators/greater_dynamic.hpp",
+      "namespace": "scpp",
+      "operation": {
+        "expression": "scpp::detail::relational_greater(${native:left}, ${native:right}).native_value()",
+        "includes": [
+          "operators/ordering/relational.hpp"
+        ],
+        "name": "numeric_greater",
+        "parameters": [
+          {
+            "name": "left",
+            "passing": "const_ref",
+            "type": "dynamic"
+          },
+          {
+            "name": "right",
+            "passing": "const_ref",
+            "type": "dynamic"
+          }
+        ],
+        "returns": "boolean",
+        "uses": [
+          "dynamic"
+        ]
+      },
+      "source": "include/scpp/generated/public_greater_dynamic.cpp"
+    },
+    "greater_equal_dynamic": {
+      "header": "scpp/operators/greater_equal_dynamic.hpp",
+      "namespace": "scpp",
+      "operation": {
+        "expression": "scpp::detail::relational_greater_equal(${native:left}, ${native:right}).native_value()",
+        "includes": [
+          "operators/ordering/relational.hpp"
+        ],
+        "name": "numeric_greater_equal",
+        "parameters": [
+          {
+            "name": "left",
+            "passing": "const_ref",
+            "type": "dynamic"
+          },
+          {
+            "name": "right",
+            "passing": "const_ref",
+            "type": "dynamic"
+          }
+        ],
+        "returns": "boolean",
+        "uses": [
+          "dynamic"
+        ]
+      },
+      "source": "include/scpp/generated/public_greater_equal_dynamic.cpp"
+    },
     "greater_equal_float64": {
       "header": "scpp/operators/greater_equal_float64.hpp",
       "namespace": "scpp",
       "operation": {
-        "expression": "scpp::detail::generated_operator_detail::le(scpp::float_t(right.native_value()), scpp::float_t(left.native_value())).native_value()",
+        "expression": "scpp::detail::relational_greater_equal(scpp::float_t(left.native_value()), scpp::float_t(right.native_value())).native_value()",
         "includes": [
-          "scpp/generated/operator_detail.hpp"
+          "operators/ordering/relational.hpp"
         ],
         "name": "numeric_greater_equal",
         "parameters": [
@@ -4580,9 +4636,9 @@
       "header": "scpp/operators/greater_equal_int16.hpp",
       "namespace": "scpp",
       "operation": {
-        "expression": "scpp::detail::generated_operator_detail::le(scpp::int_t<__INT16_TYPE__>(right.native_value()), scpp::int_t<__INT16_TYPE__>(left.native_value())).native_value()",
+        "expression": "scpp::detail::relational_greater_equal(scpp::int_t<__INT16_TYPE__>(left.native_value()), scpp::int_t<__INT16_TYPE__>(right.native_value())).native_value()",
         "includes": [
-          "scpp/generated/operator_detail.hpp"
+          "operators/ordering/relational.hpp"
         ],
         "name": "numeric_greater_equal",
         "parameters": [
@@ -4608,9 +4664,9 @@
       "header": "scpp/operators/greater_equal_int32.hpp",
       "namespace": "scpp",
       "operation": {
-        "expression": "scpp::detail::generated_operator_detail::le(scpp::int_t<__INT32_TYPE__>(right.native_value()), scpp::int_t<__INT32_TYPE__>(left.native_value())).native_value()",
+        "expression": "scpp::detail::relational_greater_equal(scpp::int_t<__INT32_TYPE__>(left.native_value()), scpp::int_t<__INT32_TYPE__>(right.native_value())).native_value()",
         "includes": [
-          "scpp/generated/operator_detail.hpp"
+          "operators/ordering/relational.hpp"
         ],
         "name": "numeric_greater_equal",
         "parameters": [
@@ -4636,9 +4692,9 @@
       "header": "scpp/operators/greater_equal_int64.hpp",
       "namespace": "scpp",
       "operation": {
-        "expression": "scpp::detail::generated_operator_detail::le(scpp::int_t<__INT64_TYPE__>(right.native_value()), scpp::int_t<__INT64_TYPE__>(left.native_value())).native_value()",
+        "expression": "scpp::detail::relational_greater_equal(scpp::int_t<__INT64_TYPE__>(left.native_value()), scpp::int_t<__INT64_TYPE__>(right.native_value())).native_value()",
         "includes": [
-          "scpp/generated/operator_detail.hpp"
+          "operators/ordering/relational.hpp"
         ],
         "name": "numeric_greater_equal",
         "parameters": [
@@ -4664,9 +4720,9 @@
       "header": "scpp/operators/greater_equal_int8.hpp",
       "namespace": "scpp",
       "operation": {
-        "expression": "scpp::detail::generated_operator_detail::le(scpp::int_t<__INT8_TYPE__>(right.native_value()), scpp::int_t<__INT8_TYPE__>(left.native_value())).native_value()",
+        "expression": "scpp::detail::relational_greater_equal(scpp::int_t<__INT8_TYPE__>(left.native_value()), scpp::int_t<__INT8_TYPE__>(right.native_value())).native_value()",
         "includes": [
-          "scpp/generated/operator_detail.hpp"
+          "operators/ordering/relational.hpp"
         ],
         "name": "numeric_greater_equal",
         "parameters": [
@@ -4688,13 +4744,41 @@
       },
       "source": "include/scpp/generated/public_greater_equal_int8.cpp"
     },
+    "greater_equal_mixed": {
+      "header": "scpp/operators/greater_equal_mixed.hpp",
+      "namespace": "scpp",
+      "operation": {
+        "expression": "scpp::detail::relational_greater_equal(${native:left}, ${native:right}).native_value()",
+        "includes": [
+          "operators/ordering/relational.hpp"
+        ],
+        "name": "numeric_greater_equal",
+        "parameters": [
+          {
+            "name": "left",
+            "passing": "const_ref",
+            "type": "mixed"
+          },
+          {
+            "name": "right",
+            "passing": "const_ref",
+            "type": "mixed"
+          }
+        ],
+        "returns": "boolean",
+        "uses": [
+          "mixed"
+        ]
+      },
+      "source": "include/scpp/generated/public_greater_equal_mixed.cpp"
+    },
     "greater_equal_uint16": {
       "header": "scpp/operators/greater_equal_uint16.hpp",
       "namespace": "scpp",
       "operation": {
-        "expression": "scpp::detail::generated_operator_detail::le(scpp::int_t<__UINT16_TYPE__>(right.native_value()), scpp::int_t<__UINT16_TYPE__>(left.native_value())).native_value()",
+        "expression": "scpp::detail::relational_greater_equal(scpp::int_t<__UINT16_TYPE__>(left.native_value()), scpp::int_t<__UINT16_TYPE__>(right.native_value())).native_value()",
         "includes": [
-          "scpp/generated/operator_detail.hpp"
+          "operators/ordering/relational.hpp"
         ],
         "name": "numeric_greater_equal",
         "parameters": [
@@ -4720,9 +4804,9 @@
       "header": "scpp/operators/greater_equal_uint32.hpp",
       "namespace": "scpp",
       "operation": {
-        "expression": "scpp::detail::generated_operator_detail::le(scpp::int_t<__UINT32_TYPE__>(right.native_value()), scpp::int_t<__UINT32_TYPE__>(left.native_value())).native_value()",
+        "expression": "scpp::detail::relational_greater_equal(scpp::int_t<__UINT32_TYPE__>(left.native_value()), scpp::int_t<__UINT32_TYPE__>(right.native_value())).native_value()",
         "includes": [
-          "scpp/generated/operator_detail.hpp"
+          "operators/ordering/relational.hpp"
         ],
         "name": "numeric_greater_equal",
         "parameters": [
@@ -4748,9 +4832,9 @@
       "header": "scpp/operators/greater_equal_uint64.hpp",
       "namespace": "scpp",
       "operation": {
-        "expression": "scpp::detail::generated_operator_detail::le(scpp::int_t<__UINT64_TYPE__>(right.native_value()), scpp::int_t<__UINT64_TYPE__>(left.native_value())).native_value()",
+        "expression": "scpp::detail::relational_greater_equal(scpp::int_t<__UINT64_TYPE__>(left.native_value()), scpp::int_t<__UINT64_TYPE__>(right.native_value())).native_value()",
         "includes": [
-          "scpp/generated/operator_detail.hpp"
+          "operators/ordering/relational.hpp"
         ],
         "name": "numeric_greater_equal",
         "parameters": [
@@ -4776,9 +4860,9 @@
       "header": "scpp/operators/greater_equal_uint8.hpp",
       "namespace": "scpp",
       "operation": {
-        "expression": "scpp::detail::generated_operator_detail::le(scpp::int_t<__UINT8_TYPE__>(right.native_value()), scpp::int_t<__UINT8_TYPE__>(left.native_value())).native_value()",
+        "expression": "scpp::detail::relational_greater_equal(scpp::int_t<__UINT8_TYPE__>(left.native_value()), scpp::int_t<__UINT8_TYPE__>(right.native_value())).native_value()",
         "includes": [
-          "scpp/generated/operator_detail.hpp"
+          "operators/ordering/relational.hpp"
         ],
         "name": "numeric_greater_equal",
         "parameters": [
@@ -4804,9 +4888,9 @@
       "header": "scpp/operators/greater_float64.hpp",
       "namespace": "scpp",
       "operation": {
-        "expression": "scpp::detail::generated_operator_detail::lt(scpp::float_t(right.native_value()), scpp::float_t(left.native_value())).native_value()",
+        "expression": "scpp::detail::relational_greater(scpp::float_t(left.native_value()), scpp::float_t(right.native_value())).native_value()",
         "includes": [
-          "scpp/generated/operator_detail.hpp"
+          "operators/ordering/relational.hpp"
         ],
         "name": "numeric_greater",
         "parameters": [
@@ -4832,9 +4916,9 @@
       "header": "scpp/operators/greater_int16.hpp",
       "namespace": "scpp",
       "operation": {
-        "expression": "scpp::detail::generated_operator_detail::lt(scpp::int_t<__INT16_TYPE__>(right.native_value()), scpp::int_t<__INT16_TYPE__>(left.native_value())).native_value()",
+        "expression": "scpp::detail::relational_greater(scpp::int_t<__INT16_TYPE__>(left.native_value()), scpp::int_t<__INT16_TYPE__>(right.native_value())).native_value()",
         "includes": [
-          "scpp/generated/operator_detail.hpp"
+          "operators/ordering/relational.hpp"
         ],
         "name": "numeric_greater",
         "parameters": [
@@ -4860,9 +4944,9 @@
       "header": "scpp/operators/greater_int32.hpp",
       "namespace": "scpp",
       "operation": {
-        "expression": "scpp::detail::generated_operator_detail::lt(scpp::int_t<__INT32_TYPE__>(right.native_value()), scpp::int_t<__INT32_TYPE__>(left.native_value())).native_value()",
+        "expression": "scpp::detail::relational_greater(scpp::int_t<__INT32_TYPE__>(left.native_value()), scpp::int_t<__INT32_TYPE__>(right.native_value())).native_value()",
         "includes": [
-          "scpp/generated/operator_detail.hpp"
+          "operators/ordering/relational.hpp"
         ],
         "name": "numeric_greater",
         "parameters": [
@@ -4888,9 +4972,9 @@
       "header": "scpp/operators/greater_int64.hpp",
       "namespace": "scpp",
       "operation": {
-        "expression": "scpp::detail::generated_operator_detail::lt(scpp::int_t<__INT64_TYPE__>(right.native_value()), scpp::int_t<__INT64_TYPE__>(left.native_value())).native_value()",
+        "expression": "scpp::detail::relational_greater(scpp::int_t<__INT64_TYPE__>(left.native_value()), scpp::int_t<__INT64_TYPE__>(right.native_value())).native_value()",
         "includes": [
-          "scpp/generated/operator_detail.hpp"
+          "operators/ordering/relational.hpp"
         ],
         "name": "numeric_greater",
         "parameters": [
@@ -4916,9 +5000,9 @@
       "header": "scpp/operators/greater_int8.hpp",
       "namespace": "scpp",
       "operation": {
-        "expression": "scpp::detail::generated_operator_detail::lt(scpp::int_t<__INT8_TYPE__>(right.native_value()), scpp::int_t<__INT8_TYPE__>(left.native_value())).native_value()",
+        "expression": "scpp::detail::relational_greater(scpp::int_t<__INT8_TYPE__>(left.native_value()), scpp::int_t<__INT8_TYPE__>(right.native_value())).native_value()",
         "includes": [
-          "scpp/generated/operator_detail.hpp"
+          "operators/ordering/relational.hpp"
         ],
         "name": "numeric_greater",
         "parameters": [
@@ -4940,13 +5024,41 @@
       },
       "source": "include/scpp/generated/public_greater_int8.cpp"
     },
+    "greater_mixed": {
+      "header": "scpp/operators/greater_mixed.hpp",
+      "namespace": "scpp",
+      "operation": {
+        "expression": "scpp::detail::relational_greater(${native:left}, ${native:right}).native_value()",
+        "includes": [
+          "operators/ordering/relational.hpp"
+        ],
+        "name": "numeric_greater",
+        "parameters": [
+          {
+            "name": "left",
+            "passing": "const_ref",
+            "type": "mixed"
+          },
+          {
+            "name": "right",
+            "passing": "const_ref",
+            "type": "mixed"
+          }
+        ],
+        "returns": "boolean",
+        "uses": [
+          "mixed"
+        ]
+      },
+      "source": "include/scpp/generated/public_greater_mixed.cpp"
+    },
     "greater_uint16": {
       "header": "scpp/operators/greater_uint16.hpp",
       "namespace": "scpp",
       "operation": {
-        "expression": "scpp::detail::generated_operator_detail::lt(scpp::int_t<__UINT16_TYPE__>(right.native_value()), scpp::int_t<__UINT16_TYPE__>(left.native_value())).native_value()",
+        "expression": "scpp::detail::relational_greater(scpp::int_t<__UINT16_TYPE__>(left.native_value()), scpp::int_t<__UINT16_TYPE__>(right.native_value())).native_value()",
         "includes": [
-          "scpp/generated/operator_detail.hpp"
+          "operators/ordering/relational.hpp"
         ],
         "name": "numeric_greater",
         "parameters": [
@@ -4972,9 +5084,9 @@
       "header": "scpp/operators/greater_uint32.hpp",
       "namespace": "scpp",
       "operation": {
-        "expression": "scpp::detail::generated_operator_detail::lt(scpp::int_t<__UINT32_TYPE__>(right.native_value()), scpp::int_t<__UINT32_TYPE__>(left.native_value())).native_value()",
+        "expression": "scpp::detail::relational_greater(scpp::int_t<__UINT32_TYPE__>(left.native_value()), scpp::int_t<__UINT32_TYPE__>(right.native_value())).native_value()",
         "includes": [
-          "scpp/generated/operator_detail.hpp"
+          "operators/ordering/relational.hpp"
         ],
         "name": "numeric_greater",
         "parameters": [
@@ -5000,9 +5112,9 @@
       "header": "scpp/operators/greater_uint64.hpp",
       "namespace": "scpp",
       "operation": {
-        "expression": "scpp::detail::generated_operator_detail::lt(scpp::int_t<__UINT64_TYPE__>(right.native_value()), scpp::int_t<__UINT64_TYPE__>(left.native_value())).native_value()",
+        "expression": "scpp::detail::relational_greater(scpp::int_t<__UINT64_TYPE__>(left.native_value()), scpp::int_t<__UINT64_TYPE__>(right.native_value())).native_value()",
         "includes": [
-          "scpp/generated/operator_detail.hpp"
+          "operators/ordering/relational.hpp"
         ],
         "name": "numeric_greater",
         "parameters": [
@@ -5028,9 +5140,9 @@
       "header": "scpp/operators/greater_uint8.hpp",
       "namespace": "scpp",
       "operation": {
-        "expression": "scpp::detail::generated_operator_detail::lt(scpp::int_t<__UINT8_TYPE__>(right.native_value()), scpp::int_t<__UINT8_TYPE__>(left.native_value())).native_value()",
+        "expression": "scpp::detail::relational_greater(scpp::int_t<__UINT8_TYPE__>(left.native_value()), scpp::int_t<__UINT8_TYPE__>(right.native_value())).native_value()",
         "includes": [
-          "scpp/generated/operator_detail.hpp"
+          "operators/ordering/relational.hpp"
         ],
         "name": "numeric_greater",
         "parameters": [
@@ -5686,13 +5798,69 @@
       },
       "source": "include/scpp/generated/public_keyed_ready_mixed.cpp"
     },
+    "less_dynamic": {
+      "header": "scpp/operators/less_dynamic.hpp",
+      "namespace": "scpp",
+      "operation": {
+        "expression": "scpp::detail::relational_less(${native:left}, ${native:right}).native_value()",
+        "includes": [
+          "operators/ordering/relational.hpp"
+        ],
+        "name": "numeric_less",
+        "parameters": [
+          {
+            "name": "left",
+            "passing": "const_ref",
+            "type": "dynamic"
+          },
+          {
+            "name": "right",
+            "passing": "const_ref",
+            "type": "dynamic"
+          }
+        ],
+        "returns": "boolean",
+        "uses": [
+          "dynamic"
+        ]
+      },
+      "source": "include/scpp/generated/public_less_dynamic.cpp"
+    },
+    "less_equal_dynamic": {
+      "header": "scpp/operators/less_equal_dynamic.hpp",
+      "namespace": "scpp",
+      "operation": {
+        "expression": "scpp::detail::relational_less_equal(${native:left}, ${native:right}).native_value()",
+        "includes": [
+          "operators/ordering/relational.hpp"
+        ],
+        "name": "numeric_less_equal",
+        "parameters": [
+          {
+            "name": "left",
+            "passing": "const_ref",
+            "type": "dynamic"
+          },
+          {
+            "name": "right",
+            "passing": "const_ref",
+            "type": "dynamic"
+          }
+        ],
+        "returns": "boolean",
+        "uses": [
+          "dynamic"
+        ]
+      },
+      "source": "include/scpp/generated/public_less_equal_dynamic.cpp"
+    },
     "less_equal_float64": {
       "header": "scpp/operators/less_equal_float64.hpp",
       "namespace": "scpp",
       "operation": {
-        "expression": "scpp::detail::generated_operator_detail::le(scpp::float_t(left.native_value()), scpp::float_t(right.native_value())).native_value()",
+        "expression": "scpp::detail::relational_less_equal(scpp::float_t(left.native_value()), scpp::float_t(right.native_value())).native_value()",
         "includes": [
-          "scpp/generated/operator_detail.hpp"
+          "operators/ordering/relational.hpp"
         ],
         "name": "numeric_less_equal",
         "parameters": [
@@ -5718,9 +5886,9 @@
       "header": "scpp/operators/less_equal_int16.hpp",
       "namespace": "scpp",
       "operation": {
-        "expression": "scpp::detail::generated_operator_detail::le(scpp::int_t<__INT16_TYPE__>(left.native_value()), scpp::int_t<__INT16_TYPE__>(right.native_value())).native_value()",
+        "expression": "scpp::detail::relational_less_equal(scpp::int_t<__INT16_TYPE__>(left.native_value()), scpp::int_t<__INT16_TYPE__>(right.native_value())).native_value()",
         "includes": [
-          "scpp/generated/operator_detail.hpp"
+          "operators/ordering/relational.hpp"
         ],
         "name": "numeric_less_equal",
         "parameters": [
@@ -5746,9 +5914,9 @@
       "header": "scpp/operators/less_equal_int32.hpp",
       "namespace": "scpp",
       "operation": {
-        "expression": "scpp::detail::generated_operator_detail::le(scpp::int_t<__INT32_TYPE__>(left.native_value()), scpp::int_t<__INT32_TYPE__>(right.native_value())).native_value()",
+        "expression": "scpp::detail::relational_less_equal(scpp::int_t<__INT32_TYPE__>(left.native_value()), scpp::int_t<__INT32_TYPE__>(right.native_value())).native_value()",
         "includes": [
-          "scpp/generated/operator_detail.hpp"
+          "operators/ordering/relational.hpp"
         ],
         "name": "numeric_less_equal",
         "parameters": [
@@ -5774,9 +5942,9 @@
       "header": "scpp/operators/less_equal_int64.hpp",
       "namespace": "scpp",
       "operation": {
-        "expression": "scpp::detail::generated_operator_detail::le(scpp::int_t<__INT64_TYPE__>(left.native_value()), scpp::int_t<__INT64_TYPE__>(right.native_value())).native_value()",
+        "expression": "scpp::detail::relational_less_equal(scpp::int_t<__INT64_TYPE__>(left.native_value()), scpp::int_t<__INT64_TYPE__>(right.native_value())).native_value()",
         "includes": [
-          "scpp/generated/operator_detail.hpp"
+          "operators/ordering/relational.hpp"
         ],
         "name": "numeric_less_equal",
         "parameters": [
@@ -5802,9 +5970,9 @@
       "header": "scpp/operators/less_equal_int8.hpp",
       "namespace": "scpp",
       "operation": {
-        "expression": "scpp::detail::generated_operator_detail::le(scpp::int_t<__INT8_TYPE__>(left.native_value()), scpp::int_t<__INT8_TYPE__>(right.native_value())).native_value()",
+        "expression": "scpp::detail::relational_less_equal(scpp::int_t<__INT8_TYPE__>(left.native_value()), scpp::int_t<__INT8_TYPE__>(right.native_value())).native_value()",
         "includes": [
-          "scpp/generated/operator_detail.hpp"
+          "operators/ordering/relational.hpp"
         ],
         "name": "numeric_less_equal",
         "parameters": [
@@ -5826,13 +5994,41 @@
       },
       "source": "include/scpp/generated/public_less_equal_int8.cpp"
     },
+    "less_equal_mixed": {
+      "header": "scpp/operators/less_equal_mixed.hpp",
+      "namespace": "scpp",
+      "operation": {
+        "expression": "scpp::detail::relational_less_equal(${native:left}, ${native:right}).native_value()",
+        "includes": [
+          "operators/ordering/relational.hpp"
+        ],
+        "name": "numeric_less_equal",
+        "parameters": [
+          {
+            "name": "left",
+            "passing": "const_ref",
+            "type": "mixed"
+          },
+          {
+            "name": "right",
+            "passing": "const_ref",
+            "type": "mixed"
+          }
+        ],
+        "returns": "boolean",
+        "uses": [
+          "mixed"
+        ]
+      },
+      "source": "include/scpp/generated/public_less_equal_mixed.cpp"
+    },
     "less_equal_uint16": {
       "header": "scpp/operators/less_equal_uint16.hpp",
       "namespace": "scpp",
       "operation": {
-        "expression": "scpp::detail::generated_operator_detail::le(scpp::int_t<__UINT16_TYPE__>(left.native_value()), scpp::int_t<__UINT16_TYPE__>(right.native_value())).native_value()",
+        "expression": "scpp::detail::relational_less_equal(scpp::int_t<__UINT16_TYPE__>(left.native_value()), scpp::int_t<__UINT16_TYPE__>(right.native_value())).native_value()",
         "includes": [
-          "scpp/generated/operator_detail.hpp"
+          "operators/ordering/relational.hpp"
         ],
         "name": "numeric_less_equal",
         "parameters": [
@@ -5858,9 +6054,9 @@
       "header": "scpp/operators/less_equal_uint32.hpp",
       "namespace": "scpp",
       "operation": {
-        "expression": "scpp::detail::generated_operator_detail::le(scpp::int_t<__UINT32_TYPE__>(left.native_value()), scpp::int_t<__UINT32_TYPE__>(right.native_value())).native_value()",
+        "expression": "scpp::detail::relational_less_equal(scpp::int_t<__UINT32_TYPE__>(left.native_value()), scpp::int_t<__UINT32_TYPE__>(right.native_value())).native_value()",
         "includes": [
-          "scpp/generated/operator_detail.hpp"
+          "operators/ordering/relational.hpp"
         ],
         "name": "numeric_less_equal",
         "parameters": [
@@ -5886,9 +6082,9 @@
       "header": "scpp/operators/less_equal_uint64.hpp",
       "namespace": "scpp",
       "operation": {
-        "expression": "scpp::detail::generated_operator_detail::le(scpp::int_t<__UINT64_TYPE__>(left.native_value()), scpp::int_t<__UINT64_TYPE__>(right.native_value())).native_value()",
+        "expression": "scpp::detail::relational_less_equal(scpp::int_t<__UINT64_TYPE__>(left.native_value()), scpp::int_t<__UINT64_TYPE__>(right.native_value())).native_value()",
         "includes": [
-          "scpp/generated/operator_detail.hpp"
+          "operators/ordering/relational.hpp"
         ],
         "name": "numeric_less_equal",
         "parameters": [
@@ -5914,9 +6110,9 @@
       "header": "scpp/operators/less_equal_uint8.hpp",
       "namespace": "scpp",
       "operation": {
-        "expression": "scpp::detail::generated_operator_detail::le(scpp::int_t<__UINT8_TYPE__>(left.native_value()), scpp::int_t<__UINT8_TYPE__>(right.native_value())).native_value()",
+        "expression": "scpp::detail::relational_less_equal(scpp::int_t<__UINT8_TYPE__>(left.native_value()), scpp::int_t<__UINT8_TYPE__>(right.native_value())).native_value()",
         "includes": [
-          "scpp/generated/operator_detail.hpp"
+          "operators/ordering/relational.hpp"
         ],
         "name": "numeric_less_equal",
         "parameters": [
@@ -5942,9 +6138,9 @@
       "header": "scpp/operators/less_float64.hpp",
       "namespace": "scpp",
       "operation": {
-        "expression": "scpp::detail::generated_operator_detail::lt(scpp::float_t(left.native_value()), scpp::float_t(right.native_value())).native_value()",
+        "expression": "scpp::detail::relational_less(scpp::float_t(left.native_value()), scpp::float_t(right.native_value())).native_value()",
         "includes": [
-          "scpp/generated/operator_detail.hpp"
+          "operators/ordering/relational.hpp"
         ],
         "name": "numeric_less",
         "parameters": [
@@ -5970,9 +6166,9 @@
       "header": "scpp/operators/less_int16.hpp",
       "namespace": "scpp",
       "operation": {
-        "expression": "scpp::detail::generated_operator_detail::lt(scpp::int_t<__INT16_TYPE__>(left.native_value()), scpp::int_t<__INT16_TYPE__>(right.native_value())).native_value()",
+        "expression": "scpp::detail::relational_less(scpp::int_t<__INT16_TYPE__>(left.native_value()), scpp::int_t<__INT16_TYPE__>(right.native_value())).native_value()",
         "includes": [
-          "scpp/generated/operator_detail.hpp"
+          "operators/ordering/relational.hpp"
         ],
         "name": "numeric_less",
         "parameters": [
@@ -5998,9 +6194,9 @@
       "header": "scpp/operators/less_int32.hpp",
       "namespace": "scpp",
       "operation": {
-        "expression": "scpp::detail::generated_operator_detail::lt(scpp::int_t<__INT32_TYPE__>(left.native_value()), scpp::int_t<__INT32_TYPE__>(right.native_value())).native_value()",
+        "expression": "scpp::detail::relational_less(scpp::int_t<__INT32_TYPE__>(left.native_value()), scpp::int_t<__INT32_TYPE__>(right.native_value())).native_value()",
         "includes": [
-          "scpp/generated/operator_detail.hpp"
+          "operators/ordering/relational.hpp"
         ],
         "name": "numeric_less",
         "parameters": [
@@ -6026,9 +6222,9 @@
       "header": "scpp/operators/less_int64.hpp",
       "namespace": "scpp",
       "operation": {
-        "expression": "scpp::detail::generated_operator_detail::lt(scpp::int_t<__INT64_TYPE__>(left.native_value()), scpp::int_t<__INT64_TYPE__>(right.native_value())).native_value()",
+        "expression": "scpp::detail::relational_less(scpp::int_t<__INT64_TYPE__>(left.native_value()), scpp::int_t<__INT64_TYPE__>(right.native_value())).native_value()",
         "includes": [
-          "scpp/generated/operator_detail.hpp"
+          "operators/ordering/relational.hpp"
         ],
         "name": "numeric_less",
         "parameters": [
@@ -6054,9 +6250,9 @@
       "header": "scpp/operators/less_int8.hpp",
       "namespace": "scpp",
       "operation": {
-        "expression": "scpp::detail::generated_operator_detail::lt(scpp::int_t<__INT8_TYPE__>(left.native_value()), scpp::int_t<__INT8_TYPE__>(right.native_value())).native_value()",
+        "expression": "scpp::detail::relational_less(scpp::int_t<__INT8_TYPE__>(left.native_value()), scpp::int_t<__INT8_TYPE__>(right.native_value())).native_value()",
         "includes": [
-          "scpp/generated/operator_detail.hpp"
+          "operators/ordering/relational.hpp"
         ],
         "name": "numeric_less",
         "parameters": [
@@ -6078,13 +6274,41 @@
       },
       "source": "include/scpp/generated/public_less_int8.cpp"
     },
+    "less_mixed": {
+      "header": "scpp/operators/less_mixed.hpp",
+      "namespace": "scpp",
+      "operation": {
+        "expression": "scpp::detail::relational_less(${native:left}, ${native:right}).native_value()",
+        "includes": [
+          "operators/ordering/relational.hpp"
+        ],
+        "name": "numeric_less",
+        "parameters": [
+          {
+            "name": "left",
+            "passing": "const_ref",
+            "type": "mixed"
+          },
+          {
+            "name": "right",
+            "passing": "const_ref",
+            "type": "mixed"
+          }
+        ],
+        "returns": "boolean",
+        "uses": [
+          "mixed"
+        ]
+      },
+      "source": "include/scpp/generated/public_less_mixed.cpp"
+    },
     "less_uint16": {
       "header": "scpp/operators/less_uint16.hpp",
       "namespace": "scpp",
       "operation": {
-        "expression": "scpp::detail::generated_operator_detail::lt(scpp::int_t<__UINT16_TYPE__>(left.native_value()), scpp::int_t<__UINT16_TYPE__>(right.native_value())).native_value()",
+        "expression": "scpp::detail::relational_less(scpp::int_t<__UINT16_TYPE__>(left.native_value()), scpp::int_t<__UINT16_TYPE__>(right.native_value())).native_value()",
         "includes": [
-          "scpp/generated/operator_detail.hpp"
+          "operators/ordering/relational.hpp"
         ],
         "name": "numeric_less",
         "parameters": [
@@ -6110,9 +6334,9 @@
       "header": "scpp/operators/less_uint32.hpp",
       "namespace": "scpp",
       "operation": {
-        "expression": "scpp::detail::generated_operator_detail::lt(scpp::int_t<__UINT32_TYPE__>(left.native_value()), scpp::int_t<__UINT32_TYPE__>(right.native_value())).native_value()",
+        "expression": "scpp::detail::relational_less(scpp::int_t<__UINT32_TYPE__>(left.native_value()), scpp::int_t<__UINT32_TYPE__>(right.native_value())).native_value()",
         "includes": [
-          "scpp/generated/operator_detail.hpp"
+          "operators/ordering/relational.hpp"
         ],
         "name": "numeric_less",
         "parameters": [
@@ -6138,9 +6362,9 @@
       "header": "scpp/operators/less_uint64.hpp",
       "namespace": "scpp",
       "operation": {
-        "expression": "scpp::detail::generated_operator_detail::lt(scpp::int_t<__UINT64_TYPE__>(left.native_value()), scpp::int_t<__UINT64_TYPE__>(right.native_value())).native_value()",
+        "expression": "scpp::detail::relational_less(scpp::int_t<__UINT64_TYPE__>(left.native_value()), scpp::int_t<__UINT64_TYPE__>(right.native_value())).native_value()",
         "includes": [
-          "scpp/generated/operator_detail.hpp"
+          "operators/ordering/relational.hpp"
         ],
         "name": "numeric_less",
         "parameters": [
@@ -6166,9 +6390,9 @@
       "header": "scpp/operators/less_uint8.hpp",
       "namespace": "scpp",
       "operation": {
-        "expression": "scpp::detail::generated_operator_detail::lt(scpp::int_t<__UINT8_TYPE__>(left.native_value()), scpp::int_t<__UINT8_TYPE__>(right.native_value())).native_value()",
+        "expression": "scpp::detail::relational_less(scpp::int_t<__UINT8_TYPE__>(left.native_value()), scpp::int_t<__UINT8_TYPE__>(right.native_value())).native_value()",
         "includes": [
-          "scpp/generated/operator_detail.hpp"
+          "operators/ordering/relational.hpp"
         ],
         "name": "numeric_less",
         "parameters": [
@@ -10904,7 +11128,31 @@
     "include/scpp/access/index_existing_store_mixed.hpp",
     "public/scpp/access/index_existing_store_dynamic.hpp",
     "include/scpp/generated/public_index_existing_store_dynamic.cpp",
-    "include/scpp/access/index_existing_store_dynamic.hpp"
+    "include/scpp/access/index_existing_store_dynamic.hpp",
+    "public/scpp/operators/less_mixed.hpp",
+    "include/scpp/generated/public_less_mixed.cpp",
+    "include/scpp/operators/less_mixed.hpp",
+    "public/scpp/operators/less_dynamic.hpp",
+    "include/scpp/generated/public_less_dynamic.cpp",
+    "include/scpp/operators/less_dynamic.hpp",
+    "public/scpp/operators/less_equal_mixed.hpp",
+    "include/scpp/generated/public_less_equal_mixed.cpp",
+    "include/scpp/operators/less_equal_mixed.hpp",
+    "public/scpp/operators/less_equal_dynamic.hpp",
+    "include/scpp/generated/public_less_equal_dynamic.cpp",
+    "include/scpp/operators/less_equal_dynamic.hpp",
+    "public/scpp/operators/greater_mixed.hpp",
+    "include/scpp/generated/public_greater_mixed.cpp",
+    "include/scpp/operators/greater_mixed.hpp",
+    "public/scpp/operators/greater_dynamic.hpp",
+    "include/scpp/generated/public_greater_dynamic.cpp",
+    "include/scpp/operators/greater_dynamic.hpp",
+    "public/scpp/operators/greater_equal_mixed.hpp",
+    "include/scpp/generated/public_greater_equal_mixed.cpp",
+    "include/scpp/operators/greater_equal_mixed.hpp",
+    "public/scpp/operators/greater_equal_dynamic.hpp",
+    "include/scpp/generated/public_greater_equal_dynamic.cpp",
+    "include/scpp/operators/greater_equal_dynamic.hpp"
   ],
   "generator": "metadata-api-v1",
   "leaves": {
@@ -11336,11 +11584,14 @@
     "scpp/operators/equal_dynamic.hpp": "fa4ce87ce9de6ef05c3d29780704f6b321bc1b3b68d1d0d167eeff13eab33754",
     "scpp/operators/equal_mixed.hpp": "2d062022a379ee91dc07fbc8b8abedef6f421eb72db3397d3cc4afa3cd418e01",
     "scpp/operators/equal_string.hpp": "5da9d628963321bb26080d646f939b3d90f8dfc1872a23eac3ba78d9c9c18fd6",
+    "scpp/operators/greater_dynamic.hpp": "1ef6b2f64304e10db3c0a18183ba0220c15124f408da96e45ac68b63309802ea",
+    "scpp/operators/greater_equal_dynamic.hpp": "4ec2c546e141b04ff8268b95288e1603266e02f9ed1279a1a4db89ec6477d87c",
     "scpp/operators/greater_equal_float64.hpp": "42b91285e47dde3fec6359e9a5dc3e5e6ea224916926a95590cef8542f360084",
     "scpp/operators/greater_equal_int16.hpp": "867a84d35f5b08d3a1aa5574398a2507c2279ffb009affa627c01b31a2998367",
     "scpp/operators/greater_equal_int32.hpp": "28bcb9cc74015acd8626ccdff7c5981aeea7eb3718c772a7d51e40be0757e375",
     "scpp/operators/greater_equal_int64.hpp": "29fc6d0100b891a126764487a1be88754b69b619aac092ca7f01c20a5592d834",
     "scpp/operators/greater_equal_int8.hpp": "7179b95d2a0b50ea192d5e970d5228a6ec458118d7fa78865f422cf31092774c",
+    "scpp/operators/greater_equal_mixed.hpp": "c07dbd89699f12720f541181c243d98e753cc8ab1755b9543e5668477a8761cb",
     "scpp/operators/greater_equal_uint16.hpp": "3412e59952eed6bf804e8b6f3c0cab13fd2be5317d8d85d55db12f244aac06b5",
     "scpp/operators/greater_equal_uint32.hpp": "f4241cedea30ac9d3b389c99d8595be73a0f998941b9b8d4d79f780a1db63b03",
     "scpp/operators/greater_equal_uint64.hpp": "2cc5d0b54e97b3dbc440c9e8190bc8ee227a3f8371e3b811b26f0c31326c7ba3",
@@ -11350,15 +11601,19 @@
     "scpp/operators/greater_int32.hpp": "7d659f22ab67e8dc7e1ebb1d4600f67dfe3ef621a15224d91bd67f4e8fd5ab83",
     "scpp/operators/greater_int64.hpp": "e38f1f813adf93517f03b31e94343daa53c4a78a7d767ad897925ea0b7cd499d",
     "scpp/operators/greater_int8.hpp": "dbabca6b704b0402a987f41bbff0279a5bd0dad3624255026a42690b4e8b311b",
+    "scpp/operators/greater_mixed.hpp": "30b6110a28586f297c8aca7a1e5de6a114b05f7088b61cf57ffba4be4b1667e7",
     "scpp/operators/greater_uint16.hpp": "7276501cd7e1b072d5949a4030b57618345bdedada7c65d966fa1bce06388d0b",
     "scpp/operators/greater_uint32.hpp": "2621a1f8fba84ca48fab69f5bdf0bf7216a3b0b43fdebf472328815267afd4c0",
     "scpp/operators/greater_uint64.hpp": "714b22b1905ad92495ef1d925c02c71acae5de63e27441e570fbc2f159f37818",
     "scpp/operators/greater_uint8.hpp": "74523ab05ee106e98705b17955bad50f78e226e2aeae4b2ececaf0bdc472dd40",
+    "scpp/operators/less_dynamic.hpp": "e98e81e92c8583139f43696b014b44a81fc4cb9d38ae0f539a9d633a51959b92",
+    "scpp/operators/less_equal_dynamic.hpp": "696c9d303292dca6f4cd7ed8aec5da6122ae270b125f7e7598d080fa8c0e5684",
     "scpp/operators/less_equal_float64.hpp": "589f3a468a0161748f36da04ee0cf2e41d4ca7478648ac50639e104e4192cb17",
     "scpp/operators/less_equal_int16.hpp": "f2d516bd3847312d547ed03e69ead860f15f1e3bd003123d4f9367181dc06b65",
     "scpp/operators/less_equal_int32.hpp": "2b2e9ea3675e42132cfad99b6220332192d86bc3551ec62b03a607c2135bb3d3",
     "scpp/operators/less_equal_int64.hpp": "0b0aa61280110c39cc55f923f41c98d85846508c6106b7c325ebcae916f30b1b",
     "scpp/operators/less_equal_int8.hpp": "7c275faa9424abd0ace1d81c195c0b3dea15d880136b94184bb7ad4060630404",
+    "scpp/operators/less_equal_mixed.hpp": "a9f1007e125e17a26661668350cd1cab57debdd033942ec18817a74962062bc4",
     "scpp/operators/less_equal_uint16.hpp": "0665c9b358c3f2f2fefc7deb391352be1033d2d022c3fd30707111ceec821309",
     "scpp/operators/less_equal_uint32.hpp": "4fdf2e58bc56cdedfc889eb401ae2b219da3265d41bbd6d8cad6cd3f6a1b4e20",
     "scpp/operators/less_equal_uint64.hpp": "bf7b5aa612335f0b59385485d9e2d099667db81bfd00bf6bf6cdacef40bfbcf4",
@@ -11368,6 +11623,7 @@
     "scpp/operators/less_int32.hpp": "36ff236ce17576c6ec1f26f2b9e540aa9c054bc0c2e925c4767799d76ec851a5",
     "scpp/operators/less_int64.hpp": "5e0610f3062be2ef01b4541c385552d1dfc73b743dc08b56e6edd0875b62c59e",
     "scpp/operators/less_int8.hpp": "a00826e3531a0c097d700e9eb81bced22cdbb7184664a92ef68d042a1cbce887",
+    "scpp/operators/less_mixed.hpp": "7ba51bee67d5c655b97c1e025af1bc2e91bb76f9e522e531efbdf9ab0232d509",
     "scpp/operators/less_uint16.hpp": "1f865d9102c54969444eabeb2a1fbae77506422350ff0f88bb91c8ab2c690383",
     "scpp/operators/less_uint32.hpp": "3233ab4c0003ddc2e33c03d0611d0d30d80a002b1a6a0fdb2ba1c5a6136e0ad7",
     "scpp/operators/less_uint64.hpp": "9143ded022e39cb671a31f65695caa3c2a22e6cd34a79461ee20bfd0629a964b",
@@ -11887,7 +12143,15 @@
     "include/scpp/generated/public_index_existing_read_mixed.cpp",
     "include/scpp/generated/public_index_existing_read_dynamic.cpp",
     "include/scpp/generated/public_index_existing_store_mixed.cpp",
-    "include/scpp/generated/public_index_existing_store_dynamic.cpp"
+    "include/scpp/generated/public_index_existing_store_dynamic.cpp",
+    "include/scpp/generated/public_less_mixed.cpp",
+    "include/scpp/generated/public_less_dynamic.cpp",
+    "include/scpp/generated/public_less_equal_mixed.cpp",
+    "include/scpp/generated/public_less_equal_dynamic.cpp",
+    "include/scpp/generated/public_greater_mixed.cpp",
+    "include/scpp/generated/public_greater_dynamic.cpp",
+    "include/scpp/generated/public_greater_equal_mixed.cpp",
+    "include/scpp/generated/public_greater_equal_dynamic.cpp"
   ],
   "types": {
     "dynamic": {
