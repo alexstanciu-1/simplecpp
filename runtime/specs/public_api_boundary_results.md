@@ -1547,3 +1547,28 @@ review gate.
 Five focused regression suites (metadata, global operators, conversions, compounds
 and carrier projection) passed: release 7.74s; ASan/UBSan with leak detection 40.64s.
 The public-only execution/allocation/lifetime proof ran separately as described above.
+
+## C3 carrier conditions and logical negation
+
+The public-only nullable<int64> proof now includes absence, zero, positive/negative
+payload truthiness, logical negation and selected branch execution. It preserves the
+explicit bool-cast distinction, prior arithmetic/cast failure/lifetime checks and
+sealed application specialization reuse. Release and ASan/UBSan with leak detection
+pass; the measured scalar success cases allocate zero. Metadata tests additionally
+check scalar variants, Result state composition, nested Result-of-nullable conditions,
+aliases, incompatible collection payloads and invalid state/function signatures.
+
+Single compile-only observations: generated nullable storage 1.0151s release /
+1.2801s sanitized; public caller 0.1161s / 0.1806s. Initial condition tool rebuild
+was 6.26s; the final sanitized tool rebuild was 21.31s and overlapped lightweight
+release regressions. Existing runtime generation plans remain identical across all
+330 units, so no runtime-core rebuild or new runtime adapters were required.
+
+This is scalar/copy-required public-path evidence. Noncopyable condition observation
+and avoiding unnecessary copies of large payloads remain mandatory C follow-up, not
+covered by the zero-allocation number. Result/sentinel execution and source formation
+validation remain separate from metadata composition. State-aware comparisons and
+same-family reconstruction are still needed before the first complete carrier review.
+
+Eight focused regression tests passed: release 9.24s; ASan/UBSan with leak detection
+47.08s. The public-only carrier execution/allocation/publication proof ran separately.

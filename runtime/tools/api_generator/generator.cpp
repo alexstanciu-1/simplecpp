@@ -3,6 +3,7 @@
 #include "names.hpp"
 #include "operators.hpp"
 #include "conversions.hpp"
+#include "conditions.hpp"
 #include "function_sets.hpp"
 #include "scpp/detail/string_access.hpp"
 #include <set>
@@ -310,7 +311,7 @@ namespace scpp::api_generation
 			leaves_(merged_leaves(input)), names_(input.at("names")), naming_(metadata_naming_registry(metadata_,leaves_,names_)) {}
 		value run()
 		{
-			fields_only(this->metadata_,"version types families bindings functions capabilities global_operators conversions function_sets", "API metadata");
+			fields_only(this->metadata_,"version types families bindings functions capabilities global_operators conversions function_sets conditions", "API metadata");
 			if (this->metadata_.at("version").text()!="api-v1") throw std::runtime_error("Unsupported API metadata version");
 			if (this->metadata_.has("capabilities")) {
                 if (this->metadata_.at("capabilities").type != value::kind::object)
@@ -328,6 +329,7 @@ namespace scpp::api_generation
 				this->claim(t.at("name").text(),key+":self");
 			}
 			for (const auto &root : this->request_.at("roots").items) this->materialize(root.text());
+			validate_conditions(this->metadata_);
 			auto generated_functions=operator_functions(this->metadata_);
             for (const auto &[name, function] : conversion_functions(this->metadata_).fields) {
                 if (generated_functions.has(name)) throw std::runtime_error("Duplicate generated API ownership");
@@ -373,7 +375,9 @@ namespace scpp::api_generation
 	string generate(const string &request)
 	{
 		auto input=parse_json(detail::string_access::get(request).native_value()); value output;
-		if (input.get("action")=="resolve_conversion") {
+		if (input.get("action")=="resolve_condition") {
+            output=resolve_condition(input.at("metadata"),input.at("request"), input.has("names") ? input.at("names") : value::object());
+        } else if (input.get("action")=="resolve_conversion") {
             output=resolve_conversion(input.at("metadata"),input.at("request"), input.has("names") ? input.at("names") : value::object());
         } else if (input.get("action")=="resolve_compound") {
             output=resolve_compound(input.at("metadata"),input.at("request"));

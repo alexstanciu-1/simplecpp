@@ -30,6 +30,7 @@ changed=copy.deepcopy(base)
 recipe=changed['metadata']['function_sets'].pop('condition_truthy')
 recipe['function']['operation']['name']='observe'
 changed['metadata']['function_sets']['observation']=recipe
+changed['metadata']['conditions']['function_set']='observation'
 for operation in changed['metadata']['global_operators']['operations'].values():
     if operation.get('function_set')=='condition_truthy':
         operation['function_set']='observation'

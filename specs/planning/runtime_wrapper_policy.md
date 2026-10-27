@@ -343,3 +343,9 @@ scalar cast plans. Nullable<int64> bool/int8/string execution, string absence,
 checked narrowing and source preservation are proved. State-preserving same-family
 casts, condition dispatch and comparisons remain pending; explicit bool casts must
 not be mistaken for the condition protocol in later consumers.
+
+C3 adds state-driven conditions and carrier logical negation. Literal non-payload
+states bypass extraction; payload states use the existing condition API, including
+admitted nested delegation. Explicit bool casts retain their payload requirement.
+The nullable<int64> execution proof is allocation-free; noncopyable/scoped payload
+observation and large-payload copy avoidance are still mandatory completion work.

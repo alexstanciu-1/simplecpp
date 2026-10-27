@@ -3,6 +3,7 @@
 #include "function_sets.hpp"
 #include "conversions.hpp"
 #include "carriers.hpp"
+#include "conditions.hpp"
 #include <set>
 
 namespace scpp::api_generation
@@ -80,14 +81,20 @@ namespace scpp::api_generation
         }
         for (const auto &[name, operation] : registry.at("operations").fields) {
             authored_name(name); authored_name(operation.at("name").text());
-            fields_only(operation, "form group name expression publish returns includes function_set pair_function_set operands distinct_result result_expression operand_passing operand_conversion_function_set compound_left_snapshot", "global operation");
+            fields_only(operation, "form group name expression publish returns includes function_set pair_function_set operands distinct_result result_expression operand_passing operand_conversion_function_set compound_left_snapshot condition_operand", "global operation");
             const auto form = operation.get("form", "binary");
             if (form != "binary" && form != "unary") throw std::runtime_error("Unknown operator form");
             if (form == "unary") {
-                fields_only(operation, "form name publish returns function_set operands result_expression operand_passing", "unary operation");
+                fields_only(operation, "form name publish returns function_set operands result_expression operand_passing condition_operand", "unary operation");
                 operation.at("function_set").text();
                 operation.at("operands");
             } else registry.at("groups").at(operation.at("group").text());
+            if (operation.has("condition_operand")) {
+                if (!operation.yes("condition_operand") || form != "unary" || operation.get("returns") != "boolean"
+                    || operation.get("operand_passing", "const_ref") != "const_ref"
+                    || operation.get("function_set") != metadata.at("conditions").at("function_set").text())
+                    throw std::runtime_error("Condition operand requires the const unary condition owner");
+            }
             if (operation.has("compound_left_snapshot")) {
                 if (form != "binary" || operation.get("compound_left_snapshot") != "converted")
                     throw std::runtime_error("Unsupported compound left snapshot mode");
@@ -371,6 +378,19 @@ namespace scpp::api_generation
     {
         const auto &registry = validated_registry(metadata);
         const auto &operation = registry.at("operations").at(request.at("operation").text());
+        if (operation.get("form", "binary") == "unary" && operation.yes("condition_operand")
+            && !registry.at("types").has(request.at("operand").text())) {
+            fields_only(request, "operation operand", "unary operator request");
+            if (project_carrier(metadata, request.at("operand").text(), names).type == value::kind::null)
+                return resolve_plain_operator(metadata, registry, request);
+            value condition_request = value::object(); condition_request["source"] = request.at("operand");
+            value plan = value::object(); plan["kind"] = "condition_operator";
+            plan["operation"] = request.at("operation"); plan["operand"] = request.at("operand");
+            plan["condition"] = resolve_condition(metadata, condition_request, names);
+            plan["result_type"] = "boolean";
+            if (operation.has("result_expression")) plan["result_expression"] = operation.at("result_expression");
+            return plan;
+        }
         if (operation.get("form", "binary") != "binary"
             || (registry.at("types").has(request.at("left").text())
                 && registry.at("types").has(request.at("right").text())))

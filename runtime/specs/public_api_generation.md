@@ -803,3 +803,34 @@ recursive carrier peeling. The initial execution proof is nullable<int64> to boo
 int8 and string; Result state plans are checked, with Result error execution and
 sentinel-family recipes still pending. Same-family reconstruction, conditions and
 state comparisons remain separate completion slices.
+
+## Condition plans and carrier negation
+
+`conditions.function_set` names the existing scalar observation function set.
+`resolve_condition` accepts `request: {"source": "..."}` and the usual optional
+`names` envelope. Plain observations must borrow the canonical operand by const
+reference and return boolean; their existing API/header/function is reused.
+
+Carrier states may declare `condition: payload`, `true` or `false`. The resolver
+checks the payload condition contract before returning a plan, then emits an
+ordered state dispatch (`kind: carrier_condition`) with the shared projection and
+`payload_condition`. Literal states do not extract a payload. Payload states follow
+the payload plan, so zero is false even though the carrier is present. Admission
+is not inferred from a non-payload state's literal result: absent vector/hash
+carriers still reject. Required bool casts remain their separate checked protocol.
+
+Condition delegation can compose through a nested carrier with a condition
+contract, unlike arithmetic/required casts, which project only one layer. Nesting
+is bounded by the existing type-depth limit. This physical composition does not
+grant source type formation; formation/capability checks remain independently
+required. The current copy-required family recipes use owned payload extraction.
+Scoped noncopyable observation and avoiding unnecessary large-payload copies remain
+required completion work; scalar zero-allocation evidence does not cover them.
+
+A unary operation may opt into `condition_operand: true` only when it uses the
+configured condition function-set owner, const operand passing and a boolean result.
+For a carrier, its plan becomes `condition_operator`, containing the condition plan
+and the existing optional `result_expression`. Logical negation uses `!${result}`;
+the condition must be evaluated once before that expression. Plain operands keep
+the operation's original explicit admission list. Lazy source branches and operand
+evaluation stay caller-owned, and no wrapper-pair adapter is generated.

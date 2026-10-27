@@ -17,7 +17,7 @@ each slice. The original inventory is a baseline, not a current completion count
 | A2 | Complete for the agreed checked scalar conversions | Carrier conversion is C; ownership casts are D. |
 | B1 | Complete for the agreed scalar-facing truth/text/identity/observation scope | Carrier forms remain C; boxed arithmetic and access completion are not B1 credit. |
 | B2 | Complete for the agreed non-carrier special/mutation and text public paths; closure evidence below | Carrier forms C; indexed retention E; native exception inspection and overflow disposition G. |
-| C | Arithmetic and required-scalar cast plans implemented; nullable<int64> execution proved | Four carrier families, state-preserving operations/conversions and conditional lifecycle. |
+| C | Arithmetic, required-scalar casts and conditions implemented for the initial nullable path | Four carrier families, state-preserving operations/conversions and conditional lifecycle. |
 | D | Pending | Ownership, application targets and source Exception transport gaps. |
 | E | Existing vector/hash/boxed foundations; incomplete | Capability/access/initialization/cursor gaps and identity key-allocation debt. |
 | F | Pending | Callable transport and registered collection algorithms. |
@@ -780,3 +780,32 @@ equality/strict identity, and same-family nullable conversion/reconstruction whe
 admitted. C still includes Result execution/error transport, sentinel recipes,
 conditional lifecycle and the remaining four-family operation matrix. The new state
 owner is the foundation for these paths, not evidence they are already implemented.
+
+## C3 — condition dispatch and carrier logical negation
+
+The condition resolver binds the existing scalar observation function set and the
+shared carrier state/projection descriptors. Payload states delegate; non-payload
+states return their declared boolean literal without extraction. Payload admission
+is checked even for absent states. Admitted nested condition delegation is preserved,
+while arithmetic/cast projection remains one layer. Logical negation composes the
+condition plan with its existing result expression; plain unary admission is unchanged.
+
+The public-only nullable<int64> proof covers absent, zero, positive and negative
+conditions, negation, and branch selection, alongside arithmetic, explicit bool
+casts and failure/lifetime tests. Measured success cases allocate zero. Scalar
+condition variants, nullable/Result state plans, nested Result-of-nullable, aliases,
+unsupported collection conditions and malformed policies are checked in metadata.
+A synthetic true-state family confirms that truthiness does not imply permission
+to bypass the payload requirement of an explicit bool cast.
+
+**Required C follow-up:** the currently copy-required family recipes still use
+owned extraction for payload conditions. Noncopyable observation must not acquire
+a copy requirement; borrowed/scoped observation and large-payload copy costs need
+proof before general family coverage is claimed. This is not waived by the scalar
+zero-allocation measurement. Result/sentinel execution and type-formation coverage
+also remain separate from physical plan composition.
+
+Next for the first complete nullable path: state-aware equality/strict identity and
+same-family conversion/reconstruction. The review gate and full C completion remain
+open. Existing runtime generation still has 330 identical units; no core rebuild or
+new runtime adapter is required by condition planning.

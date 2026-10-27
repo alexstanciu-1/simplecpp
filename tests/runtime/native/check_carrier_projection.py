@@ -98,6 +98,57 @@ for mutate,message in [
 ]:
     bad = copy.deepcopy(metadata); mutate(bad['families']['nullable']['carrier'])
     convert('nullable<int64>','string',meta=bad,error=message)
+def condition(source, meta=metadata, names=None, error=None):
+    result = subprocess.run([str(args.tool)], input=json.dumps({
+        'action':'resolve_condition', 'metadata':meta,
+        'names':names or {'nullable<int64>':'optional_integer'},
+        'request':{'source':source}}), text=True, capture_output=True)
+    if error:
+        assert result.returncode and error in result.stderr, result.stderr
+        return
+    assert result.returncode == 0, result.stderr
+    return json.loads(result.stdout)
+
+def negate(source):
+    result = subprocess.run([str(args.tool)], input=json.dumps({
+        'action':'resolve_operator', 'metadata':metadata,
+        'names':{'nullable<int64>':'optional_integer'},
+        'request':{'operation':'logical_not','operand':source}}), text=True, capture_output=True)
+    assert result.returncode == 0, result.stderr
+    return json.loads(result.stdout)
+
+assert negate('nullable<int64>')['kind'] == 'condition_operator'
+assert negate('result<nullable<int64>>')['condition']['kind'] == 'carrier_condition'
+for scalar in metadata['function_sets']['condition_truthy']['variants']:
+    assert condition(scalar)['api'] == 'condition_truthy_' + scalar
+    if scalar == 'error_value': continue  # Result<error> is not an admitted source formation.
+    for family in ['nullable','result']:
+        p = condition(f'{family}<{scalar}>')
+        assert p['kind'] == 'carrier_condition'
+        assert p['payload_condition']['api'] == 'condition_truthy_' + scalar
+        assert [s['condition'] for s in p['states']] == ['payload','false']
+nested_condition = condition('result<nullable<int64>>')
+assert nested_condition['payload_condition']['payload_condition']['api'] == 'condition_truthy_int64'
+condition('optional_integer')
+for source in ['vector<int64>','nullable<vector<int64>>','result<hash<int64>>','null']:
+    condition(source,error='Unsupported condition operand')
+bad = copy.deepcopy(metadata)
+bad['families']['nullable']['carrier']['states'][1]['condition'] = 'guess'
+condition('nullable<int64>',meta=bad,error='Unknown carrier condition policy')
+bad = copy.deepcopy(metadata)
+del bad['families']['nullable']['carrier']['states'][1]['condition']
+condition('nullable<int64>',meta=bad,error='no condition policy')
+bad = copy.deepcopy(metadata)
+bad['function_sets']['condition_truthy']['function']['operation']['returns'] = 'int64'
+condition('nullable<int64>',meta=bad,error='return boolean')
+# A different family may have a true non-payload state without acquiring a bool cast.
+custom = copy.deepcopy(metadata)
+custom['families']['signal'] = copy.deepcopy(custom['families']['nullable'])
+custom['families']['signal']['defaults'] = ['int64']
+custom['families']['signal']['carrier']['states'][1]['condition'] = 'true'
+assert condition('signal<>',meta=custom)['states'][1]['condition'] == 'true'
+assert convert('signal<>','boolean',meta=custom)['states'][1]['conversion']['kind'] == 'checked_payload'
+print('PASS: scalar/carrier conditions, nested delegation, aliases and rejected payload/state policies')
 print('PASS: one-layer cast plans, nullable string exception, required bool payload and rejected state metadata')
 print('PASS: carrier arithmetic matrix, defaults/names, one-layer limits and descriptor rejection')
 if not args.core: sys.exit(0)
@@ -153,6 +204,19 @@ with tempfile.TemporaryDirectory(prefix='scpp-carrier-') as directory:
             else: body += branch
         functions.append('static ' + metadata['types'][target]['cpp'] + ' convert_' + target
                          + '(const scpp::optional_integer &source) { ' + body + ' }')
+    plan = condition('nullable<int64>')
+    payload = plan['payload_condition']; headers.add(payload['header'])
+    assert payload['api'] in manifest['apis']
+    body = ''
+    for state in plan['states']:
+        if state['condition'] == 'payload':
+            projected = plan['projection']['expression'].replace('${value}','source')
+            branch = f'const auto value = {projected}; return {payload["function"]}(value);'
+        else: branch = 'return scpp::boolean(' + state['condition'] + ');'
+        if 'test_expression' in state:
+            body += 'if (' + state['test_expression'].replace('${value}','source') + ') { ' + branch + ' }\n'
+        else: body += branch
+    functions.append('static scpp::boolean observe_condition(const scpp::optional_integer &source) { ' + body + ' }')
     code = '\n'.join('#include "'+h+'"' for h in sorted(headers)) + '\n' + '\n'.join(functions)
     code += r'''
 #include "public_api_guard.hpp"
@@ -182,6 +246,16 @@ int main() {
     CHECK(scpp::take(output,copy) && output.native_value() == 12);
     optional zero(int64(0));
     CHECK(zero.has_value() && zero.require_value("zero").native_value() == 0);
+    CHECK(CONDITION_NOT_ABSENT);
+    CHECK(!observe_condition(absent));
+    CHECK(!observe_condition(zero));
+    CHECK(observe_condition(copy));
+    optional negative(int64(-1));
+    CHECK(observe_condition(negative));
+    int selected = 0;
+    if (observe_condition(absent)) ++selected;
+    if (observe_condition(copy)) ++selected;
+    CHECK(selected == 1);
     CHECK(!convert_boolean(zero));
     CHECK(convert_boolean(copy));
     CHECK(convert_int8(copy).native_value() == 12);
@@ -204,9 +278,10 @@ int main() {
     int64 retained(0);
     { optional temporary(int64(42)); retained = temporary.require_value("retain"); temporary.reset(); }
     CHECK(retained.native_value() == 42);
-    std::puts("PASS: public nullable arithmetic, ordered failures, take/reset, casts, owned lifetime; success allocations=0");
+    std::puts("PASS: public nullable arithmetic, ordered failures, take/reset, casts, conditions, owned lifetime; success allocations=0");
 }
 '''
+    code = code.replace('CONDITION_NOT_ABSENT', negate('nullable<int64>')['result_expression'].replace('${result}', 'observe_condition(absent)'))
     caller = work / 'main.cpp'; caller.write_text(code)
     flags = ['-fsanitize=address,undefined','-fno-omit-frame-pointer'] if args.sanitize else []
     common = ['clang++','-std=c++23','-O1',*flags,'-I'+str(app/'public'),'-I'+str(sdk/'public')]
