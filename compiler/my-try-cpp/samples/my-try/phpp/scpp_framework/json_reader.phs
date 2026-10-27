@@ -1,0 +1,113 @@
+namespace scpp;
+
+// Native facade: grammar/state belong to the runtime, exception identity to portability.
+class Json_Reader {
+    private json_pull_reader $reader;
+    public function __construct(string $text, string $file, int $limit) {
+        $this->reader = \json_pull_reader_create();
+        $out bool = false;
+        $failure error;
+        if (!take($out, $failure, $this->reader->start($text, $file, $limit))) {
+            throw new \scpp_portability_runtime_exception($failure->get_message());
+        }
+    }
+    public function kind(): string {
+        $out string = '';
+        $failure error;
+        if (!take($out, $failure, $this->reader->kind())) {
+            throw new \scpp_portability_runtime_exception($failure->get_message());
+        }
+        return $out;
+    }
+    public function begin_object(): void {
+        $out bool = false;
+        $failure error;
+        if (!take($out, $failure, $this->reader->begin_object())) {
+            throw new \scpp_portability_runtime_exception($failure->get_message());
+        }
+    }
+    public function begin_array(): void {
+        $out bool = false;
+        $failure error;
+        if (!take($out, $failure, $this->reader->begin_array())) {
+            throw new \scpp_portability_runtime_exception($failure->get_message());
+        }
+    }
+    public function next_property(): bool {
+        $out bool = false;
+        $failure error;
+        if (!take($out, $failure, $this->reader->next_property())) {
+            throw new \scpp_portability_runtime_exception($failure->get_message());
+        }
+        return $out;
+    }
+    public function next_element(): bool {
+        $out bool = false;
+        $failure error;
+        if (!take($out, $failure, $this->reader->next_element())) {
+            throw new \scpp_portability_runtime_exception($failure->get_message());
+        }
+        return $out;
+    }
+    public function property_name(): string {
+        $out string = '';
+        $failure error;
+        if (!take($out, $failure, $this->reader->property_name())) {
+            throw new \scpp_portability_runtime_exception($failure->get_message());
+        }
+        return $out;
+    }
+    public function read_string(): string {
+        $out string = '';
+        $failure error;
+        if (!take($out, $failure, $this->reader->read_string())) {
+            throw new \scpp_portability_runtime_exception($failure->get_message());
+        }
+        return $out;
+    }
+    public function read_number(): string {
+        $out string = '';
+        $failure error;
+        if (!take($out, $failure, $this->reader->read_number())) {
+            throw new \scpp_portability_runtime_exception($failure->get_message());
+        }
+        return $out;
+    }
+    public function read_integer(): int {
+        $out int = 0;
+        $failure error;
+        if (!take($out, $failure, $this->reader->read_integer())) {
+            throw new \scpp_portability_runtime_exception($failure->get_message());
+        }
+        return $out;
+    }
+    public function read_boolean(): bool {
+        $out bool = false;
+        $failure error;
+        if (!take($out, $failure, $this->reader->read_boolean())) {
+            throw new \scpp_portability_runtime_exception($failure->get_message());
+        }
+        return $out;
+    }
+    public function read_null(): void {
+        $out bool = false;
+        $failure error;
+        if (!take($out, $failure, $this->reader->read_null())) {
+            throw new \scpp_portability_runtime_exception($failure->get_message());
+        }
+    }
+    public function finish_document(): void {
+        $out bool = false;
+        $failure error;
+        if (!take($out, $failure, $this->reader->finish_document())) {
+            throw new \scpp_portability_runtime_exception($failure->get_message());
+        }
+    }
+    public function reject(string $message): void {
+        $out bool = false;
+        $failure error;
+        if (!take($out, $failure, $this->reader->reject($message))) {
+            throw new \scpp_portability_runtime_exception($failure->get_message());
+        }
+    }
+}

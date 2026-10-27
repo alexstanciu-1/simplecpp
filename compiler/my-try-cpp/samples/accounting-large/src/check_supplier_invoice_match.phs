@@ -1,0 +1,64 @@
+function sample_supplier_invoice_match(): SupplierInvoiceMatch {
+    $draft SupplierInvoiceMatch = new SupplierInvoiceMatch();
+    $draft->id = "MATCH-001";
+    $draft->invoice_id = "BILL-001";
+    $draft->order_line_id = "PO-L1";
+    $draft->receipt_line_id = "GR-L1";
+    $draft->supplier_id = "SUP-001";
+    $draft->reviewer = "buyer-a";
+    $draft->invoice_quantity = 6;
+    $draft->available_receipt_quantity = 10;
+    $draft->ordered_unit_cost = 500;
+    $draft->invoiced_unit_cost = 510;
+    $draft->tolerance_amount = 100;
+    $draft->tax_amount = 600;
+    $draft->approved = false;
+    $draft->price_override = false;
+    return $draft;
+}
+
+function check_supplier_invoice_match(WorkloadChecks $checks): void {
+    $draft SupplierInvoiceMatch = sample_supplier_invoice_match();
+    $checks->accepted($draft->validate(), "supplier_invoice_match valid draft");
+    $checks->equal($draft->price_variance(), 60, "supplier_invoice_match independent business result");
+    $copy SupplierInvoiceMatch = $draft->copy();
+    $checks->equal(count($draft->differences($copy)), 0, "supplier_invoice_match snapshot equivalence");
+    $checks->expect($draft->describe() === $copy->describe(), "supplier_invoice_match snapshot report");
+    $copy = $draft->copy();
+    $copy->id = "";
+    $checks->rejected($copy->validate(), "supplier_invoice_match.id", "supplier_invoice_match id required");
+    $copy = $draft->copy();
+    $copy->id = "bad\nrow";
+    $checks->rejected($copy->validate(), "supplier_invoice_match.id", "supplier_invoice_match id control");
+    $copy = $draft->copy();
+    $copy->id = DocumentRules::repeat("x", 41);
+    $checks->rejected($copy->validate(), "supplier_invoice_match.id", "supplier_invoice_match id width");
+    $copy = $draft->copy();
+    $copy->id = "MATCH-001-changed";
+    $checks->expect($draft->id === "MATCH-001", "supplier_invoice_match id snapshot isolation");
+    $changes_id vector<string> = $draft->differences($copy);
+    $checks->equal(count($changes_id), 1, "supplier_invoice_match id change count");
+    if (count($changes_id) === 1) {
+        $checks->expect($changes_id[0] === "id", "supplier_invoice_match id change identity");
+    }
+    $copy = $draft->copy();
+    $copy->invoice_quantity = 0;
+    $checks->rejected($copy->validate(), "supplier_invoice_match.invoice_quantity", "supplier_invoice_match invoice_quantity below");
+    $copy = $draft->copy();
+    $copy->invoice_quantity = 1000001;
+    $checks->rejected($copy->validate(), "supplier_invoice_match.invoice_quantity", "supplier_invoice_match invoice_quantity above");
+    $copy = $draft->copy();
+    $copy->available_receipt_quantity = -1;
+    $checks->rejected($copy->validate(), "supplier_invoice_match.available_receipt_quantity", "supplier_invoice_match available_receipt_quantity below");
+    $copy = $draft->copy();
+    $copy->available_receipt_quantity = 1000001;
+    $checks->rejected($copy->validate(), "supplier_invoice_match.available_receipt_quantity", "supplier_invoice_match available_receipt_quantity above");
+    $copy = $draft->copy();
+    $copy->approved = true;
+    $checks->expect($draft->approved === false, "supplier_invoice_match approved snapshot isolation");
+    $changes_approved vector<string> = $draft->differences($copy);
+    $checks->equal(count($changes_approved), 1, "supplier_invoice_match approved change count");
+    if (count($changes_approved) === 1) {
+        $checks->expect($changes_approved[0] === "approved", "supplier_invoice_match approved change identity");
+    }
+}

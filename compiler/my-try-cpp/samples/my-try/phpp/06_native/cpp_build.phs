@@ -1,0 +1,517 @@
+namespace scpp\compiler;
+
+/** Disk consumer only. No syntax, preparation scheduling or emitter callbacks. */
+final class Native_CPP_Build {
+	
+	private function compile_action(vector<string> $command, string $suffix, bool $force): native_cpp_artifact {
+		$requests Storage<native_compile_request> = new Storage<native_compile_request>();
+		$request = new native_compile_request($command, $suffix, $force);
+		$requests->append($request);
+		$this->compile_actions($requests, 1);
+		return $request->artifact;
+	}
+
+	/** A slot follows one request through all phases; finished slots refill immediately. */
+	private function compile_actions(Storage<native_compile_request> $requests, int $jobs): void {
+		$leaders Keyed_Storage<native_compile_request> = new Keyed_Storage<native_compile_request>();
+		$active hash<native_compile_request, int> = [];
+		$next = 0;
+		$slot = 0;
+		$operation = 'admit';
+		try {
+			while (($next < $requests->count()) || (count($active) !== 0)) {
+				while (($next < $requests->count()) && (count($active) < $jobs)) {
+					$slot = $next;
+					$operation = 'admit';
+					$request = $requests[$next];
+					$this->start_discovery($request, $leaders);
+					if ($request->process !== null) { $active[$next] = $request; }
+					$next++;
+				}
+				$progress = false;
+				$finished vector<int> = [];
+				foreach ($active  as $index => $request) {
+					$slot = $index;
+					$operation = 'poll';
+					$handle \process_handle = $request->process;
+					if (!\scpp_portability_process_poll($handle)) { continue; }
+					$result = new native_process_result();
+					$operation = 'read result';
+					try { $result = self::completed_process($handle); } finally { \scpp_portability_process_close($handle); $request->process = null; }
+					self::require_success($result);
+					$operation = 'advance';
+					if ($request->phase === native_compile_phase::discovery) { $operation = 'read dependencies'; }
+					elseif ($request->phase === native_compile_phase::validation) { $operation = 'validate tokens'; }
+					elseif ($request->phase === native_compile_phase::compilation) { $operation = 'publish object'; }
+					$this->advance_compile($request, $result, $leaders);
+					if ($request->process === null) { $finished[] = $index; }
+					$progress = true;
+				}
+				foreach ($finished  as $index) { unset($active[$index]); }
+				if (!$progress && (count($active) !== 0)) { dt_sleep_ms(1); }
+			}
+			$operation = 'collect';
+			$slot = 0;
+			foreach ($requests  as $request) {
+				if ($request->leader !== null) {
+					$leader native_compile_request = $request->leader;
+					$artifact native_cpp_artifact = $leader->artifact;
+					$request->artifact = new native_cpp_artifact($artifact->path, $artifact->digest, true);
+				}
+				$this->report->diagnostics .= $request->diagnostics;
+				$slot++;
+			}
+		} catch (\scpp_portability_exception $__scpp_portability_exception_2) {if ($__scpp_portability_exception_2->matches(1)) {$error = $__scpp_portability_exception_2;
+			throw new \scpp_portability_runtime_exception('Native compile request ' . $slot . ' (' . $operation . '): ' . $error->getMessage());
+		}else { throw $__scpp_portability_exception_2; }} finally {
+			// Close joins/kills children before deleting their staged output or releasing build locks.
+			foreach ($requests  as $request) {
+				if ($request->process !== null) {
+					$handle \process_handle = $request->process;
+					\scpp_portability_process_close($handle);
+					$request->process = null;
+				}
+			}
+			foreach ($requests  as $request) {
+				if ($request->stage !== null) {
+					$stage \scpp\Output_Stage = $request->stage;
+					$stage->close();
+					$request->stage = null;
+				}
+			}
+		}
+	}
+
+	private function start_discovery(native_compile_request $request, Keyed_Storage<native_compile_request> $leaders): void {
+		$command vector<string> = $request->command;
+		$inputs nullable<Native_Dependency_Inputs> = $this->dependency_inputs;
+		if ($request->template_free) { $inputs = null; }
+		$request->inputs = $inputs;
+		if ($inputs !== null) {
+			$source = $command[count($command) - 1];
+			$request->discovery = $inputs->discovery_key($this->tool_key . self::arguments_key($command), $source);
+			$previous = $inputs->previous($request->discovery);
+			if ($previous !== '') {
+				$request->key = scpp_output_sha256($this->tool_key . self::arguments_key($command) . $inputs->inputs_key($previous));
+				$this->resolve_compile($request, $leaders);
+				return;
+			}
+		}
+		$scan vector<string> = [];
+		$skip = false;
+		foreach ($command  as $argument) {
+			if ($skip) { $request->pch_inputs[] = $argument; $skip = false; continue; }
+			if ($argument === '-include-pch') {
+				$scan[] = '-include'; $scan[] = $this->root . '/runtime-pch.hpp'; $skip = true; continue;
+			}
+			if ($argument !== '-c') { $scan[] = $argument; }
+		}
+		$scan[] = '-M'; $scan[] = '-MT'; $scan[] = 'output';
+		$request->process = $this->start_program($this->config->compiler, $scan);
+	}
+
+	private function resolve_compile(native_compile_request $request, Keyed_Storage<native_compile_request> $leaders): void {
+		if (!$request->force) {
+			$cached = $this->cached($request->key, $request->suffix);
+			if ($cached !== null) {
+				$request->artifact = $cached;
+				$request->phase = native_compile_phase::finished;
+				return;
+			}
+		}
+		$identity = $request->key . '.' . $request->suffix;
+		if (isset($leaders[$identity])) {
+			$request->leader = $leaders[$identity];
+			$request->phase = native_compile_phase::finished;
+			return;
+		}
+		$leaders->add($identity, $request);
+		$request->expected = $this->begin_action($request->key, $request->suffix);
+		if ($request->template_free) {
+			$tokens vector<string> = [];
+			foreach ($request->command  as $argument) { if ($argument !== '-c') { $tokens[] = $argument; } }
+			$tokens[] = '-fsyntax-only'; $tokens[] = '-Xclang'; $tokens[] = '-dump-tokens';
+			$request->phase = native_compile_phase::validation;
+			$request->process = $this->start_program($this->config->compiler, $tokens);
+		}
+		else { $this->start_compilation($request); }
+	}
+
+	private function start_compilation(native_compile_request $request): void {
+		$stage = new \scpp\Output_Stage($this->root);
+		$request->stage = $stage;
+		$command vector<string> = $request->command;
+		$command[] = '-o'; $command[] = $stage->path();
+		$request->phase = native_compile_phase::compilation;
+		$request->process = $this->start_program($this->config->compiler, $command);
+	}
+
+	private function advance_compile(native_compile_request $request, native_process_result $result, Keyed_Storage<native_compile_request> $leaders): void {
+		if ($request->phase === native_compile_phase::discovery) {
+			$paths vector<string> = Native_Depfiles::paths($result->stdout, $this->root);
+			foreach ($request->pch_inputs  as $path) { $paths[] = $path; }
+			$input_key = '';
+			$inputs nullable<Native_Dependency_Inputs> = $request->inputs;
+			if ($inputs !== null) { $input_key = $inputs->inputs_key($inputs->remember($request->discovery, $paths)); }
+			else { $input_key = self::inputs_key($paths); }
+			$request->key = scpp_output_sha256($this->tool_key . self::arguments_key($request->command) . $input_key);
+			if ($request->template_free) { $request->key = scpp_output_sha256("scpp-template-free-tokens-v1\n" . $request->key); }
+			$this->resolve_compile($request, $leaders);
+		}
+		elseif ($request->phase === native_compile_phase::validation) {
+			$text = "\n" . $result->stderr;
+			// Clang's token protocol uses ASCII byte markers, not Unicode text coordinates.
+			if (string_byte_find($text, "\ntemplate 'template'\t") !== false) {
+				$command vector<string> = $request->command;
+				throw new \scpp_portability_runtime_exception('prelower_templates: template token in application input (including provider headers): '
+					. $command[count($command) - 1]);
+			}
+			if (string_byte_find($text, "\neof ''\t") === false) { throw new \scpp_portability_runtime_exception('prelower_templates: Clang did not provide a complete application token stream'); }
+			$this->start_compilation($request);
+		}
+		elseif ($request->phase === native_compile_phase::compilation) {
+			$relative = 'artifacts/' . $request->key . '.' . $request->suffix;
+			$stage \scpp\Output_Stage = $request->stage;
+			$stage->promote($relative, $request->expected, false);
+			$digest = \scpp_portability_output_digest($this->root, $relative);
+			$this->save_ready($request->key, $this->root . '/' . $relative, $digest);
+			$request->artifact = new native_cpp_artifact($this->root . '/' . $relative, $digest, false);
+			$request->diagnostics = $result->stderr;
+			$stage->close();
+			$request->stage = null;
+			$request->phase = native_compile_phase::finished;
+		}
+		else { throw new \scpp_portability_logic_exception('Completed process has no native compile phase'); }
+	}
+
+	private native_cpp_config $config;
+	private string $root;
+	private string $tool_key;
+	private string $linker_key;
+	private $flags vector<string> = [];
+	private $libraries vector<string> = [];
+	private $provider_link_options vector<string> = [];
+	private native_cpp_result $report;
+	private bool $invoked = false;
+	private $dependency_inputs nullable<Native_Dependency_Inputs> = null;
+
+	public function __construct(native_cpp_config $config) {
+		$this->config = $config;
+		$this->report = new native_cpp_result();
+		$this->root = \scpp_portability_output_root($config->cache_directory);
+		if (!str_starts_with($config->compiler, '/')) { throw new \scpp_portability_runtime_exception('Native compiler must be absolute'); }
+		if ($config->jobs < 1) { throw new \scpp_portability_runtime_exception('Native jobs must be positive'); }
+		$policy = new cpp_lowering_policy($config->optimization);
+	}
+
+	public function build(string $published): native_cpp_result {
+		if ($this->invoked) { throw new \scpp_portability_logic_exception('Native builder owns one attempt'); }
+		$this->invoked = true;
+		$source_root = \scpp_portability_fs_require_realpath($published);
+		if ($source_root === $this->root) { throw new \scpp_portability_runtime_exception('Native cache must differ from generated source root'); }
+		$source_lock = new \scpp\Lock_Reservation();
+		$cache_lock = new \scpp\Lock_Reservation();
+		try {
+			\scpp_portability_output_read($source_root, '.scpp-output.lock');
+			if (!$source_lock->acquire($source_root . '/.scpp-output.lock', true)) { throw new \scpp_portability_runtime_exception('Source publication is busy'); }
+			\scpp_portability_output_read($this->root, '.scpp-native.lock');
+			if (!$cache_lock->acquire($this->root . '/.scpp-native.lock', false)) { throw new \scpp_portability_runtime_exception('Native cache is busy'); }
+			$owner = \scpp_portability_output_read($this->root, '.scpp-native.owner');
+			if ($owner !== null) {
+				$owner_text string = $owner;
+				if ($owner_text !== "scpp-native-cache-v1\n") { throw new \scpp_portability_runtime_exception('Unknown native cache owner'); }
+			}
+			else {
+				if ((\scpp_portability_output_read($this->root, '.scpp-native.status') !== null)
+					|| (\scpp_portability_output_read($this->root, 'runtime-pch.hpp') !== null)
+					|| fs_is_dir($this->root . '/actions') || fs_is_dir($this->root . '/artifacts')
+					|| fs_is_dir($this->root . '/link-inputs') || fs_is_dir($this->root . '/dependencies')) { throw new \scpp_portability_runtime_exception('Unowned native cache contents'); }
+			}
+			\scpp_portability_output_write($this->root, '.scpp-native.owner', "scpp-native-cache-v1\n");
+			\scpp_portability_output_write($this->root, '.scpp-native.status', "pending\n");
+			$manifest = Output_Publication::require_ready($source_root);
+			$document = \scpp\json_read($manifest);
+			if (!$document->has('application_templates')) {
+				throw new \scpp_portability_runtime_exception('Publication lacks application template policy; republish with the current compiler');
+			}
+			$policy = $document->member('application_templates')->text();
+			if (($policy !== 'allowed') && ($policy !== 'forbidden')) {
+				throw new \scpp_portability_runtime_exception('Unknown application template policy');
+			}
+			$template_free = $policy === 'forbidden';
+			if ($template_free && $this->config->pch) {
+				throw new \scpp_portability_runtime_exception('prelower_templates: runtime PCH is incompatible with template-free application input; select --no-pch');
+			}
+			Native_CPP_Publication::require_policy($document, $this->config->optimization);
+			if (!$document->has('runtime_build')) { throw new \scpp_portability_runtime_exception('Publication lacks runtime build requirements; republish with the current compiler'); }
+			$build_inputs = Native_CPP_Publication::runtime_inputs($document->member('runtime_build'));
+			$this->libraries = $build_inputs->libraries;
+			$this->provider_link_options = $build_inputs->link_options;
+			foreach ($build_inputs->diagnostics  as $diagnostic) { $this->report->diagnostics .= $diagnostic . "\n"; }
+			$units vector<string> = [];
+			$checked_units hash<bool> = [];
+			$layout_probes vector<string> = [];
+			$files = $document->member('files');
+			for ($index = 0; $index < $files->size(); $index++) {
+				$row = $files->at($index);
+				$path = $row->member('path')->text();
+				if (\scpp_portability_output_digest($source_root, $path) !== $row->member('sha256')->text()) { throw new \scpp_portability_runtime_exception('Published artifact changed: ' . $path); }
+				$kind = $row->member('kind')->text();
+				if ($kind === 'translation_unit')
+				{
+					$units[] = $source_root . '/' . $path;
+					if ($template_free && !str_starts_with($path, 'specializations/')) {
+						if (($path !== 'entry.cpp') && !str_starts_with($path, 'units/')) {
+							throw new \scpp_portability_runtime_exception('prelower_templates: unclassified application translation unit: ' . $path);
+						}
+						$checked_units[$source_root . '/' . $path] = true;
+					}
+				}
+				elseif ($kind === 'layout_probe') { $layout_probes[] = $source_root . '/' . $path; }
+				elseif ($kind !== 'header') { throw new \scpp_portability_runtime_exception('Unknown native artifact kind: ' . $kind); }
+			}
+			if (count($units) === 0) { throw new \scpp_portability_runtime_exception('No published translation units'); }
+			$entry_path = $source_root . '/entry.cpp';
+			if ($template_free && !isset($checked_units[$entry_path])) {
+				throw new \scpp_portability_runtime_exception('prelower_templates: missing application entry translation unit');
+			}
+			$runtime = \scpp_portability_fs_require_realpath($this->config->runtime_include);
+			$this->flags = Native_CPP_Commands::flags($this->config, $runtime, $build_inputs->definitions);
+			foreach ($build_inputs->compile_options  as $option) { $this->flags[] = $option; }
+			$version_arguments vector<string> = ['--version'];
+			$version = $this->invoke($version_arguments);
+			self::require_success($version);
+			$this->tool_key = "scpp-native-actions-v2\n" . self::file_digest($this->config->compiler)
+				. self::file_digest('/usr/bin/env') . $version->stdout;
+			// Linker replacement must not invalidate compilation or dependency discovery.
+			$this->linker_key = \scpp_portability_fs_require_realpath($this->config->linker) . ':' . self::file_digest($this->config->linker);
+			$layout_headers vector<string> = [];
+			foreach ($layout_probes  as $probe) {
+				$layout = $this->layout($probe, $source_root, $layout_headers);
+				$layout_headers[] = $layout->path;
+				if ($layout->reused) { $this->report->layouts_reused++; }
+				else { $this->report->layouts_built++; }
+			}
+			\scpp_portability_output_write($this->root, 'runtime-pch.hpp', Native_CPP_Commands::pch_header());
+			if ($this->config->runtime_snapshot) {
+				$inputs = new Native_Dependency_Inputs($this->root, $runtime, $source_root, $files);
+				if ($inputs->complete) {
+					$search vector<string> = $this->flags;
+					$search_arguments vector<string> = ['-E', '-v', '-x', 'c++', '/dev/null'];
+					foreach ($search_arguments  as $argument) { $search[] = $argument; }
+					$search_result = $this->invoke($search);
+					self::require_success($search_result);
+					$inputs->observe_search($search_result->stderr);
+					$this->dependency_inputs = $inputs;
+				}
+			}
+			$pch_path = '';
+			if ($this->config->pch) {
+				$pch_command = Native_CPP_Commands::pch($this->flags, $this->root . '/runtime-pch.hpp');
+				$pch = $this->compile_action($pch_command, 'pch', false);
+				$validation vector<string> = $this->flags;
+				$validation[] = '-include-pch'; $validation[] = $pch->path;
+				$validation[] = '-x'; $validation[] = 'c++'; $validation[] = '-fsyntax-only'; $validation[] = '/dev/null';
+				$check = $this->invoke($validation);
+				if ($check->exit_code !== 0) { $pch = $this->compile_action($pch_command, 'pch', true); }
+				if (!$pch->reused) { $this->report->pch_built++; }
+				$pch_path = $pch->path;
+			}
+			$requests Storage<native_compile_request> = new Storage<native_compile_request>();
+			foreach ($build_inputs->sources  as $provider) {
+				$provider_path = \scpp_portability_fs_require_realpath($runtime . '/' . $provider);
+				if (!str_starts_with($provider_path, $runtime . '/')) { throw new \scpp_portability_runtime_exception('Runtime provider source escapes its root'); }
+				$runtime_command = Native_CPP_Commands::provider($this->flags, $provider_path);
+				$requests->append(new native_compile_request($runtime_command, 'o'));
+			}
+			foreach ($units  as $unit) {
+				$command = Native_CPP_Commands::implementation($this->flags, $source_root, $pch_path, $unit);
+				foreach ($layout_headers  as $layout_header) { $command[] = '-include'; $command[] = $layout_header; }
+				$requests->append(new native_compile_request($command, 'o', false, isset($checked_units[$unit])));
+			}
+			$this->compile_actions($requests, $this->config->jobs);
+			$objects vector<string> = [];
+			foreach ($requests  as $request) {
+				$artifact native_cpp_artifact = $request->artifact;
+				$this->record_object($artifact);
+				$objects[] = $artifact->path;
+			}
+			$link = $this->link($objects);
+			$this->report->executable = $link->path;
+			if (!$link->reused) { $this->report->linked++; }
+			$ready = '{"format":"scpp-native-ready-v1","source":' . \scpp_portability_json_quote(scpp_output_sha256($manifest))
+				. ',"executable":' . \scpp_portability_json_quote($link->path) . ',"sha256":' . \scpp_portability_json_quote($link->digest) . "}\n";
+			\scpp_portability_output_write($this->root, '.scpp-native.status', $ready);
+			return $this->report;
+		} finally { $cache_lock->release(); $source_lock->release(); }
+	}
+
+	private function record_object(native_cpp_artifact $artifact): void {
+		if ($artifact->reused) { $this->report->reused++; }
+		else { $this->report->compiled++; }
+	}
+
+	/** Link state records actual linker dependencies in addition to exact ordered object membership. */
+	private function link(vector<string> $objects): native_cpp_artifact {
+		$command = Native_CPP_Commands::link($this->config, $this->flags, $objects, $this->libraries, $this->provider_link_options);
+		$base = scpp_output_sha256($this->tool_key . $this->linker_key . self::arguments_key($command) . self::inputs_key($objects));
+		$dependencies_path = 'link-inputs/' . $base . '.d';
+		$previous = \scpp_portability_output_read($this->root, $dependencies_path);
+		$dependencies vector<string> = [];
+		if ($previous !== null) { $dependencies = Native_Depfiles::paths($previous, $this->root); }
+		$key = scpp_output_sha256($base . self::inputs_key($dependencies));
+		if ($previous !== null) {
+			$cached = $this->cached($key, 'bin');
+			if ($cached !== null) { return $cached; }
+		}
+		$dep_stage = new \scpp\Output_Stage($this->root);
+		try {
+			$command[] = '-Xlinker'; $command[] = '--dependency-file';
+			$command[] = '-Xlinker'; $command[] = $dep_stage->path();
+			// The first result is provisional until linker inputs are known; never expose it as ready.
+			$artifact = $this->action($command, $key, 'bin', true, true);
+			$dep_text = \scpp_portability_fs_read_text($dep_stage->path());
+			$dependencies = Native_Depfiles::paths($dep_text, $this->root);
+			$final_key = scpp_output_sha256($base . self::inputs_key($dependencies));
+			// Record a small alias to the completed artifact, without copying the executable.
+			$this->save_ready($final_key, $artifact->path, $artifact->digest);
+			\scpp_portability_output_write($this->root, $dependencies_path, $dep_text);
+			return $artifact;
+		} finally { $dep_stage->close(); }
+	}
+
+	private function cached(string $key, string $suffix): nullable<native_cpp_artifact> {
+		$state = \scpp_portability_output_read($this->root, 'actions/' . $key . '.json');
+		if ($state === null) { return null; }
+		$record = \scpp\json_read($state);
+		if ($record->member('format')->text() !== 'scpp-native-action-v1') { throw new \scpp_portability_runtime_exception('Unknown native action metadata'); }
+		if ($record->member('state')->text() === 'pending') { return null; }
+		if ($record->member('state')->text() !== 'ready') { throw new \scpp_portability_runtime_exception('Unknown native action state'); }
+		$path = $record->member('path')->text();
+		if (!str_starts_with($path, $this->root . '/artifacts/') || !str_ends_with($path, '.' . $suffix)) { throw new \scpp_portability_runtime_exception('Invalid cached artifact path'); }
+		$digest = $record->member('sha256')->text();
+		if (string_byte_len($digest) !== 64) { throw new \scpp_portability_runtime_exception('Invalid cached digest'); }
+		$relative = string_byte_slice($path, string_byte_len($this->root) + 1, string_byte_len($path));
+		if (\scpp_portability_output_digest($this->root, $relative) !== $digest) { return null; }
+		$mode = $suffix === 'bin' ? 448 : 384; // Owner-only 0700 / 0600.
+		if (\scpp_portability_output_permissions($this->root, $relative) !== $mode) { return null; }
+		return new native_cpp_artifact($path, $digest, true);
+	}
+
+	private function action(vector<string> $command, string $key, string $suffix, bool $force, bool $executable): native_cpp_artifact {
+		if (!$force) {
+			$cached = $this->cached($key, $suffix);
+			if ($cached !== null) { return $cached; }
+		}
+		$relative = 'artifacts/' . $key . '.' . $suffix;
+		$expected = $this->begin_action($key, $suffix);
+		$stage = new \scpp\Output_Stage($this->root);
+		try {
+			$execution_command vector<string> = $command;
+			$execution_command[] = '-o'; $execution_command[] = $stage->path();
+			$execution = $this->invoke($execution_command);
+			self::require_success($execution);
+			$this->report->diagnostics .= $execution->stderr;
+			$stage->promote($relative, $expected, $executable);
+			$digest = \scpp_portability_output_digest($this->root, $relative);
+			$this->save_ready($key, $this->root . '/' . $relative, $digest);
+			return new native_cpp_artifact($this->root . '/' . $relative, $digest, false);
+		} finally { $stage->close(); }
+	}
+
+	/** Shared ownership and pending-state transition for compiled and generated cache artifacts. */
+	private function begin_action(string $key, string $suffix): string {
+		$relative = 'artifacts/' . $key . '.' . $suffix;
+		$expected = \scpp_portability_output_digest($this->root, $relative);
+		$record = \scpp_portability_output_read($this->root, 'actions/' . $key . '.json');
+		if ($record === null) {
+			if ($expected !== '') { throw new \scpp_portability_runtime_exception('Unowned native output collision'); }
+		}
+		else {
+			$previous = \scpp\json_read($record);
+			if ($previous->member('format')->text() !== 'scpp-native-action-v1') { throw new \scpp_portability_runtime_exception('Unknown native action owner'); }
+		}
+		\scpp_portability_output_write($this->root, 'actions/' . $key . '.json', '{"format":"scpp-native-action-v1","state":"pending"}');
+		return $expected;
+	}
+
+	/** Resolve layouts inside the native owner; never mutate the published source bundle. */
+	private function layout(string $probe, string $source_root, vector<string> $prerequisites): native_cpp_artifact {
+		$command vector<string> = $this->flags;
+		$command[] = '-I'; $command[] = $source_root;
+		foreach ($prerequisites  as $header) { $command[] = '-include'; $command[] = $header; }
+		$command[] = '-c'; $command[] = $probe;
+		$object_file = $this->compile_action($command, 'o', false);
+		$objects vector<string> = [$object_file->path];
+		$executable = $this->link($objects);
+		$key = scpp_output_sha256("scpp-native-layout-v1\n" . $this->tool_key
+			. self::arguments_key($this->flags) . $executable->digest);
+		$cached = $this->cached($key, 'hpp');
+		if ($cached !== null) { return $cached; }
+		$this->begin_action($key, 'hpp');
+		$arguments vector<string> = [];
+		$result = $this->invoke_program($executable->path, $arguments);
+		self::require_success($result);
+		if (!str_starts_with($result->stdout, "// scpp-native-layout-v1\n")) {
+			throw new \scpp_portability_runtime_exception('Invalid native layout probe output');
+		}
+		$relative = 'artifacts/' . $key . '.hpp';
+		\scpp_portability_output_write($this->root, $relative, $result->stdout);
+		$digest = \scpp_portability_output_digest($this->root, $relative);
+		$this->save_ready($key, $this->root . '/' . $relative, $digest);
+		return new native_cpp_artifact($this->root . '/' . $relative, $digest, false);
+	}
+
+	private function save_ready(string $key, string $path, string $digest): void {
+		\scpp_portability_output_write($this->root, 'actions/' . $key . '.json', '{"format":"scpp-native-action-v1","state":"ready","path":'
+			. \scpp_portability_json_quote($path) . ',"sha256":' . \scpp_portability_json_quote($digest) . '}');
+	}
+
+	private function invoke(vector<string> $arguments): native_process_result {
+		return $this->invoke_program($this->config->compiler, $arguments);
+	}
+
+	private function invoke_program(string $executable, vector<string> $arguments): native_process_result {
+		$handle = $this->start_program($executable, $arguments);
+		try {
+			while (!\scpp_portability_process_poll($handle)) { dt_sleep_ms(1); }
+			return self::completed_process($handle);
+		} finally { \scpp_portability_process_close($handle); }
+	}
+
+	private function start_program(string $executable, vector<string> $arguments): \process_handle {
+		$args vector<string> = Native_CPP_Commands::environment($executable);
+		foreach ($arguments  as $argument) { $args[] = $argument; }
+		return \scpp_portability_process_spawn('/usr/bin/env', $args, '', 120000, $this->root);
+	}
+
+	private static function completed_process(\process_handle $handle): native_process_result {
+		$output = \scpp_portability_process_output($handle);
+		$result = new native_process_result();
+		$result->exit_code = $output->exit_code;
+		$result->stdout = $output->stdout_text;
+		$result->stderr = $output->stderr_text;
+		if ($output->timed_out || $output->stopped || ($output->signal !== 0)) { throw new \scpp_portability_runtime_exception('Native process interrupted: ' . $result->stderr); }
+		return $result;
+	}
+
+	private static function require_success(native_process_result $result): void {
+		if ($result->exit_code !== 0) { throw new \scpp_portability_runtime_exception('Native compilation failed: ' . $result->stderr); }
+	}
+	private static function arguments_key(vector<string> $arguments): string {
+		$text = '';
+		foreach ($arguments  as $argument) { $text .= \scpp_portability_json_quote($argument) . "\n"; }
+		return $text;
+	}
+	private static function file_digest(string $path): string {
+		$resolved = \scpp_portability_fs_require_realpath($path);
+		$digest = \scpp_portability_input_digest($resolved);
+		if ($digest === '') { throw new \scpp_portability_runtime_exception('Missing native dependency: ' . $path); }
+		return $digest;
+	}
+	private static function inputs_key(vector<string> $paths): string {
+		$text = '';
+		foreach ($paths  as $path) { $text .= \scpp_portability_json_quote($path) . ':' . self::file_digest($path) . "\n"; }
+		return $text;
+	}
+}

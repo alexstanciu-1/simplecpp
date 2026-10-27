@@ -1,0 +1,64 @@
+function sample_project_milestone(): ProjectMilestone {
+    $draft ProjectMilestone = new ProjectMilestone();
+    $draft->id = "MS-001";
+    $draft->project_id = "JOB-001";
+    $draft->description = "Installation accepted";
+    $draft->customer_reference = "ACCEPT-001";
+    $draft->revenue_account = "revenue";
+    $draft->deferred_account = "accruals";
+    $draft->contract_amount = 100000;
+    $draft->retention_amount = 10000;
+    $draft->invoiced_amount = 50000;
+    $draft->recognized_amount = 40000;
+    $draft->due_period = 3;
+    $draft->completion_basis_points = 8000;
+    $draft->accepted = true;
+    $draft->closed = false;
+    return $draft;
+}
+
+function check_project_milestone(WorkloadChecks $checks): void {
+    $draft ProjectMilestone = sample_project_milestone();
+    $checks->accepted($draft->validate(), "project_milestone valid draft");
+    $checks->equal($draft->unrecognized_amount(), 60000, "project_milestone independent business result");
+    $copy ProjectMilestone = $draft->copy();
+    $checks->equal(count($draft->differences($copy)), 0, "project_milestone snapshot equivalence");
+    $checks->expect($draft->describe() === $copy->describe(), "project_milestone snapshot report");
+    $copy = $draft->copy();
+    $copy->id = "";
+    $checks->rejected($copy->validate(), "project_milestone.id", "project_milestone id required");
+    $copy = $draft->copy();
+    $copy->id = "bad\nrow";
+    $checks->rejected($copy->validate(), "project_milestone.id", "project_milestone id control");
+    $copy = $draft->copy();
+    $copy->id = DocumentRules::repeat("x", 41);
+    $checks->rejected($copy->validate(), "project_milestone.id", "project_milestone id width");
+    $copy = $draft->copy();
+    $copy->id = "MS-001-changed";
+    $checks->expect($draft->id === "MS-001", "project_milestone id snapshot isolation");
+    $changes_id vector<string> = $draft->differences($copy);
+    $checks->equal(count($changes_id), 1, "project_milestone id change count");
+    if (count($changes_id) === 1) {
+        $checks->expect($changes_id[0] === "id", "project_milestone id change identity");
+    }
+    $copy = $draft->copy();
+    $copy->contract_amount = -1;
+    $checks->rejected($copy->validate(), "project_milestone.contract_amount", "project_milestone contract_amount below");
+    $copy = $draft->copy();
+    $copy->contract_amount = 1000000001;
+    $checks->rejected($copy->validate(), "project_milestone.contract_amount", "project_milestone contract_amount above");
+    $copy = $draft->copy();
+    $copy->retention_amount = -1;
+    $checks->rejected($copy->validate(), "project_milestone.retention_amount", "project_milestone retention_amount below");
+    $copy = $draft->copy();
+    $copy->retention_amount = 1000000001;
+    $checks->rejected($copy->validate(), "project_milestone.retention_amount", "project_milestone retention_amount above");
+    $copy = $draft->copy();
+    $copy->accepted = false;
+    $checks->expect($draft->accepted === true, "project_milestone accepted snapshot isolation");
+    $changes_accepted vector<string> = $draft->differences($copy);
+    $checks->equal(count($changes_accepted), 1, "project_milestone accepted change count");
+    if (count($changes_accepted) === 1) {
+        $checks->expect($changes_accepted[0] === "accepted", "project_milestone accepted change identity");
+    }
+}

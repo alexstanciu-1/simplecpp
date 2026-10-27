@@ -1,0 +1,72 @@
+namespace scpp\compiler;
+
+/** Shared type materialization for runtime callable and property recipes. */
+final class Runtime_Pattern_Preparation {
+	public static function owner_arguments(canonical_type_use $owner): runtime_type_bindings {
+		$result = new runtime_type_bindings();
+		$type = Type_Queries::canonical($owner);
+		if ($type instanceof applied_template_type) {
+			$application = object_cast($type, applied_template_type::class);
+			foreach ($application->arguments()  as $index => $argument) {
+				$result->bindings[$index] = $argument;
+			}
+		}
+		return $result;
+	}
+
+	/** Preparation owns substitution and dependencies; the registry retains storage identity. */
+	public static function property(canonical_type_use $owner, string $name, preparation_context $context): nullable<registered_property> {
+		$definition = Model::$runtime_members->property($owner, $name);
+		if ($definition === null) { return null; }
+		$type = self::substitute($definition->type_pattern, self::owner_arguments($owner), $context);
+		Type_Preparation::require_value_type($type);
+		$query = new Capability_Preparation($context);
+		if (!$query->has_capability($type, generic_contract::value_storable)) {
+			throw new \scpp_portability_runtime_exception('Runtime property requires a storable type');
+		}
+		$property = Model::$runtime_members->stored_property($owner, $definition);
+		if ($property !== null) { return $property; }
+		$result = new registered_property($definition, $owner);
+		$result->type = $type;
+		$result->static_member = $definition->static_member;
+		$result->access = $definition->access;
+		Model::$runtime_members->retain_property($result);
+		return $result;
+	}
+
+	/** Materialize selected types using the ordinary registry's capability checks. */
+	public static function substitute(runtime_type_pattern $pattern, runtime_type_bindings $inference, preparation_context $context): canonical_type_use {
+		if ($pattern instanceof runtime_callable_pattern) {
+			$callable = object_cast($pattern, runtime_callable_pattern::class);
+			$result = self::substitute($callable->return_type, $inference, $context);
+			$inputs vector<callable_parameter> = [];
+			foreach ($callable->parameters  as $parameter) {
+				$inputs[] = Declaration_Preparation::parameter_contract(self::substitute($parameter->type, $inference, $context),
+					$parameter->mode, $parameter->access, $parameter->variadic, $context);
+			}
+			Capability_Preparation::require_concrete_value($result, $context);
+			$registry = Model::$type_catalog->registry();
+			$definition = $registry->define_callable($result, $inputs);
+			return $registry->use($registry->canonical($definition)->type_id());
+		}
+		if ($pattern instanceof runtime_concrete_pattern) {
+			return object_cast($pattern, runtime_concrete_pattern::class)->type;
+		}
+		if ($pattern instanceof runtime_variable_pattern) {
+			$variable = object_cast($pattern, runtime_variable_pattern::class);
+			$type = $inference->bindings[$variable->position];
+			if ($variable->void_to_null && (Type_Queries::canonical($type)->family() === type_family::no_value)) {
+				return Model::$type_catalog->null_type();
+			}
+			return $type;
+		}
+		$application = object_cast($pattern, runtime_application_pattern::class);
+		$arguments vector<canonical_type_use> = [];
+		foreach ($application->arguments  as $child) { $arguments[] = self::substitute($child, $inference, $context); }
+		$registry = Model::$type_catalog->registry();
+		try {
+			$type = $registry->intern_application($application->definition, $arguments, new Capability_Preparation($context));
+			return $registry->use($type->type_id());
+		} catch (\scpp_portability_exception $__scpp_portability_exception_1) {if ($__scpp_portability_exception_1->matches(4)) {$error = $__scpp_portability_exception_1; throw new \scpp_portability_runtime_exception($error->getMessage()); }else { throw $__scpp_portability_exception_1; }}
+	}
+}

@@ -1,0 +1,100 @@
+
+/* Source-facing calls, authored bodies and virtual slots have distinct backend identities. */
+namespace scpp\compiler;
+
+final class CPP_Dispatch {
+	public static function slot(collected_member_owner $owner, string $name): string {
+		return CPP_Generator::source_name('dispatch', $owner->qualified_name()) . '__' . CPP_Generator::source_name('method', $name);
+	}
+
+	public static function declaration(callable_signature $signature, string $name, cpp_generation_context $context, bool $prototype): string {
+		$parameters Storage<callable_parameter> = $signature->parameters;
+		$parts = '';
+		$separator = '';
+		foreach ($parameters  as $index => $parameter) {
+			$parts .= $separator . CPP_Declarations::parameter_type($parameter, $context, $prototype) . ' argument_' . $index;
+			$separator = ', ';
+		}
+		return CPP_Declarations::return_type($signature, $context, $prototype) . ' ' . $name . '(' . $parts . ')';
+	}
+
+	private static function arguments(callable_signature $signature, cpp_generation_context $context, nullable<prepared_callable_adaptation> $adaptation = null): string {
+		$text = '';
+		$separator = '';
+		$parameters Storage<callable_parameter> = $signature->parameters;
+		foreach ($parameters  as $index => $parameter) {
+			$value = 'argument_' . $index;
+			if ($parameter->mode === passing_mode::value) {
+				$value = CPP_Declarations::move($value, $parameter->type, $context, $parameter->access === storage_access::read_only);
+			}
+			if ($adaptation !== null) { $value = CPP_Declarations::conversion($value, $adaptation->parameters[$index], $context); }
+			$text .= $separator . $value;
+			$separator = ', ';
+		}
+		return $text;
+	}
+
+	/** Nonvirtual source facade preserves static signature/default selection and ordinary hiding. */
+	public static function method(prepared_method_contract $decision, cpp_generation_context $context, bool $prototype): string {
+		$method = lock($decision->method);
+		$signature = $method->signature();
+		$owner = lock($decision->dispatch_owner);
+		$slot = self::slot($owner, $method->name);
+		$arguments = $prototype ? '' : self::arguments($signature, $context);
+		$qualification = $prototype ? '' : CPP_Generator::source_name('record', $owner->qualified_name()) . '::';
+		$implementation = CPP_Callables::method_name($method);
+		// Fixed delegation also preserves explicit-parent and constructor/destructor dispatch rules.
+		$implementation = CPP_Generator::source_name('record', $method->declaring_type()->qualified_name()) . '::' . $implementation;
+		$text = '';
+		if ($decision->virtual_method && ($prototype || !$decision->abstract_method)) {
+			$text .= ($prototype ? "\tvirtual " : '') . self::declaration($signature, $qualification . $slot, $context, $prototype);
+			if ($prototype) {
+				$text .= ($decision->final_method ? ' final' : '') . ($decision->abstract_method ? ' = 0' : '') . ";\n";
+			}
+			else { $text .= ' { return ' . $implementation . '(' . $arguments . "); }\n"; }
+		}
+		$target = $decision->virtual_method ? $slot : $implementation;
+		return $text . self::declaration($signature, $qualification . CPP_Generator::source_name('method', $method->name), $context, $prototype)
+			. ($prototype ? ";\n" : ' { return ' . $target . '(' . $arguments . "); }\n");
+	}
+
+	public static function bridges(prepared_type_contract $contract, collected_member_owner $owner, cpp_generation_context $context, bool $prototype): string {
+		$text = '';
+		$forwarders Keyed_Storage<prepared_method_contract> = $contract->forwarders;
+		foreach ($forwarders  as $forwarder) { $text .= ($prototype ? "public:\n" : '') . self::method($forwarder, $context, $prototype); }
+		$bindings Storage<prepared_dispatch_binding> = $contract->bindings;
+		foreach ($bindings  as $binding) {
+			if (!$binding->virtual_dispatch) { continue; }
+			$required = lock($binding->required);
+			$implementation = lock($binding->implementation);
+			$required_owner = lock($binding->required_owner);
+			$implementation_owner = lock($binding->implementation_owner);
+			$slot = self::slot($required_owner, $required->name);
+			if ($prototype) {
+				$text .= "public:\n\t" . self::declaration($required->signature(), $slot, $context, true) . " override;\n";
+				continue;
+			}
+			$call = self::slot($implementation_owner, $implementation->name) . '('
+				. self::arguments($required->signature(), $context, $binding->adaptation) . ')';
+			$result = CPP_Declarations::conversion($call, $binding->adaptation->result, $context);
+			$text .= self::declaration($required->signature(), CPP_Generator::source_name('record', $owner->qualified_name()) . '::' . $slot, $context, false)
+				. ' { return ' . $result . "; }\n";
+		}
+		return $text;
+	}
+
+	public static function definitions(collected_member_owner $owner, cpp_generation_context $context): string {
+		$contract = $owner->contract_work->require_facts();
+		$decisions Keyed_Storage<prepared_method_contract> = $contract->methods;
+		$text = '';
+		foreach ($decisions  as $decision) {
+			$method = lock($decision->method);
+			if ($method->callable_syntax()->require_preparation()->static_member
+				|| ($method->name === '__construct') || ($method->name === '__destruct')) { continue; }
+			$text .= self::method($decision, $context, false);
+		}
+		$text .= self::bridges($contract, $owner, $context, false);
+		if ($text !== '') { $context->headers[CPP_Artifacts::type_header($owner->qualified_name())] = true; }
+		return $text;
+	}
+}

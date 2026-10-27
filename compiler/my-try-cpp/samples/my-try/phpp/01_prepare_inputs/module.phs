@@ -1,0 +1,139 @@
+
+/*
+ * Role: discover a module's recursive PHS files.
+ * Call map: Compiler::init_modules -> Module_Loader::configuration/discover.
+ * Flow: sorted depth-first directory traversal -> ordered module file records.
+ */
+namespace scpp\compiler;
+
+final class Module_Loader {
+	/** Resolve complete input privately; invalid configurations preserve the published session. */
+	public static function configuration(Storage<module_input> $inputs): Keyed_Storage<module> {
+		$result Keyed_Storage<module> = new Keyed_Storage<module>();
+		$position = 0;
+		$selected_paths hash<bool, string> = [];
+		foreach ($inputs  as $input) {
+			if (isset($result[$input->name])) {
+				throw new \scpp_portability_logic_exception('Duplicate module key: ' . $input->name);
+			}
+			$resolved = \scpp_portability_fs_require_realpath($input->declared_path);
+			if (!fs_is_dir($resolved)) {
+				throw new \scpp_portability_logic_exception('Module root must be a directory: ' . $input->declared_path);
+			}
+			$candidate = new module($input->declared_path, $resolved, $input->name);
+			$candidate->logical_name = $input->logical_name;
+			$candidate->position = $position;
+			$candidate->disk_source = true;
+			$candidate->selected_sources = $input->selected_sources;
+			if (!$input->selected_sources && count($input->source_paths) !== 0) {
+				throw new \scpp_portability_logic_exception('Source paths require explicit selection');
+			}
+			foreach ($input->source_paths  as $relative) {
+				$full_path = Source_Registry::full_path($candidate, $relative);
+				if ($relative === '' || Source_Registry::normalize($full_path) !== $full_path
+					|| !Module_Loader::contains_path($candidate, $full_path) || fs_is_link($full_path)) {
+					throw new \scpp_portability_logic_exception('Selected source must have a canonical module-relative path: ' . $relative);
+				}
+				if (isset($selected_paths[$full_path])) {
+					throw new \scpp_portability_logic_exception('Selected source has multiple owners: ' . $full_path);
+				}
+				$selected_paths[$full_path] = true;
+				$candidate->source_paths[] = $relative;
+			}
+			$position++;
+			foreach ($result  as $existing) {
+				if (($existing->resolved_path === $resolved) || Module_Loader::contains_path($existing, $resolved) || Module_Loader::contains_path($candidate, $existing->resolved_path)) {
+					if (!$existing->selected_sources || !$candidate->selected_sources) {
+						throw new \scpp_portability_logic_exception('Overlapping module roots require explicit source selection');
+					}
+				}
+			}
+			$result->add($candidate->name, $candidate);
+		}
+		return $result;
+	}
+
+	/** Update module membership directly; only a complete scan can establish deletions. */
+	public static function discover(module $module): void {
+		$revision = Compiler_Lifecycle::next_revision();
+		if ($module->selected_sources) {
+			foreach ($module->source_paths  as $relative) {
+				if (fs_is_file(Source_Registry::full_path($module, $relative))) {
+					self::observe($module, $relative, $revision);
+				}
+			}
+		}
+		else {
+			self::scan($module, '', $revision);
+		}
+		foreach ($module->sources  as $source) {
+			if ((int)$source->revision !== $revision) {
+				$source->changes = change_state::deleted;
+			}
+		}
+	}
+
+	/** Compare directory ancestors, including missing files reported for deletion. */
+	public static function contains_path(module $module, string $path): bool {
+		$root = fs_dirname($module->resolved_path . "/__module_member__");
+		$directory = fs_dirname($path);
+		while ($directory !== $root) {
+			$parent = fs_dirname($directory);
+			if ($parent === $directory) {
+				return false;
+			}
+			$directory = $parent;
+		}
+		return true;
+	}
+
+	/** Folders are traversal context; every file belongs to the module's relative-path index. */
+	private static function scan(module $module, string $folder, int $revision): void {
+		$path = Source_Registry::full_path($module, $folder);
+		$names vector<string> = [];
+		if (!take($names, \scpp_portability_fs_scan($path))) {
+			throw new \scpp_portability_runtime_exception('Cannot scan input folder: ' . $path);
+		}
+		foreach ($names  as $name) {
+			$relative = $folder . $name;
+			$full_path = Source_Registry::full_path($module, $relative);
+			if (fs_is_dir($full_path)) {
+				if (!fs_is_link($full_path)) {
+					self::scan($module, $relative . '/', $revision);
+				}
+				continue;
+			}
+			if (!str_ends_with($name, '.phs') || !fs_is_file($full_path)) {
+				continue;
+			}
+			self::observe($module, $relative, $revision);
+		}
+	}
+
+	/** Reconcile one selected or discovered file through the same stable membership owner. */
+	private static function observe(module $module, string $relative, int $revision): void {
+		$full_path = Source_Registry::full_path($module, $relative);
+		$members Keyed_Storage<source_record> = $module->sources;
+		$mtime = 0;
+		$size = 0;
+		if (!take($mtime, \scpp_portability_fs_mtime($full_path)) || !take($size, \scpp_portability_fs_size($full_path))) {
+			throw new \scpp_portability_runtime_exception('Cannot read file metadata: ' . $full_path);
+		}
+		if (!isset($members[$relative])) {
+			$loaded = new file();
+			$loaded->path = $relative;
+			$loaded->disk_source = true;
+			Source_Registry::add($module, $loaded);
+		}
+		$record = $members[$relative];
+		$record->revision = $revision;
+		if ($record->changes === change_state::deleted) {
+			$record->changes = change_state::added;
+		}
+		elseif (($record->file->mtime !== $mtime) || ($record->file->size !== $size)) {
+			if ($record->changes === change_state::unchanged) {
+				$record->changes = change_state::changed;
+			}
+		}
+	}
+}

@@ -1,0 +1,64 @@
+function sample_warehouse_location(): WarehouseLocation {
+    $draft WarehouseLocation = new WarehouseLocation();
+    $draft->id = "LOC-001";
+    $draft->warehouse = "MAIN";
+    $draft->label = "Receiving aisle";
+    $draft->stock_account = "inventory";
+    $draft->manager = "warehouse-a";
+    $draft->zone = "DRY";
+    $draft->capacity = 1000;
+    $draft->occupied = 200;
+    $draft->reserved_capacity = 50;
+    $draft->reorder_point = 100;
+    $draft->reorder_target = 300;
+    $draft->lead_days = 7;
+    $draft->active = true;
+    $draft->quarantine_only = false;
+    return $draft;
+}
+
+function check_warehouse_location(WorkloadChecks $checks): void {
+    $draft WarehouseLocation = sample_warehouse_location();
+    $checks->accepted($draft->validate(), "warehouse_location valid draft");
+    $checks->equal($draft->free_capacity(), 750, "warehouse_location independent business result");
+    $copy WarehouseLocation = $draft->copy();
+    $checks->equal(count($draft->differences($copy)), 0, "warehouse_location snapshot equivalence");
+    $checks->expect($draft->describe() === $copy->describe(), "warehouse_location snapshot report");
+    $copy = $draft->copy();
+    $copy->id = "";
+    $checks->rejected($copy->validate(), "warehouse_location.id", "warehouse_location id required");
+    $copy = $draft->copy();
+    $copy->id = "bad\nrow";
+    $checks->rejected($copy->validate(), "warehouse_location.id", "warehouse_location id control");
+    $copy = $draft->copy();
+    $copy->id = DocumentRules::repeat("x", 41);
+    $checks->rejected($copy->validate(), "warehouse_location.id", "warehouse_location id width");
+    $copy = $draft->copy();
+    $copy->id = "LOC-001-changed";
+    $checks->expect($draft->id === "LOC-001", "warehouse_location id snapshot isolation");
+    $changes_id vector<string> = $draft->differences($copy);
+    $checks->equal(count($changes_id), 1, "warehouse_location id change count");
+    if (count($changes_id) === 1) {
+        $checks->expect($changes_id[0] === "id", "warehouse_location id change identity");
+    }
+    $copy = $draft->copy();
+    $copy->capacity = 0;
+    $checks->rejected($copy->validate(), "warehouse_location.capacity", "warehouse_location capacity below");
+    $copy = $draft->copy();
+    $copy->capacity = 1000001;
+    $checks->rejected($copy->validate(), "warehouse_location.capacity", "warehouse_location capacity above");
+    $copy = $draft->copy();
+    $copy->occupied = -1;
+    $checks->rejected($copy->validate(), "warehouse_location.occupied", "warehouse_location occupied below");
+    $copy = $draft->copy();
+    $copy->occupied = 1000001;
+    $checks->rejected($copy->validate(), "warehouse_location.occupied", "warehouse_location occupied above");
+    $copy = $draft->copy();
+    $copy->active = false;
+    $checks->expect($draft->active === true, "warehouse_location active snapshot isolation");
+    $changes_active vector<string> = $draft->differences($copy);
+    $checks->equal(count($changes_active), 1, "warehouse_location active change count");
+    if (count($changes_active) === 1) {
+        $checks->expect($changes_active[0] === "active", "warehouse_location active change identity");
+    }
+}

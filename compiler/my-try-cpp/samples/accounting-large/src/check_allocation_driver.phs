@@ -1,0 +1,64 @@
+function sample_allocation_driver(): AllocationDriver {
+    $draft AllocationDriver = new AllocationDriver();
+    $draft->id = "DRIVER-001";
+    $draft->run_id = "ALLOC-RUN";
+    $draft->department = "OPS";
+    $draft->source_account = "operating-expense";
+    $draft->target_account = "cost-of-sales";
+    $draft->basis_label = "floor-area";
+    $draft->weight = 25;
+    $draft->total_weight = 100;
+    $draft->pool_amount = 10000;
+    $draft->assigned_amount = 2500;
+    $draft->period = 1;
+    $draft->rank = 1;
+    $draft->enabled = true;
+    $draft->posted = false;
+    return $draft;
+}
+
+function check_allocation_driver(WorkloadChecks $checks): void {
+    $draft AllocationDriver = sample_allocation_driver();
+    $checks->accepted($draft->validate(), "allocation_driver valid draft");
+    $checks->equal($draft->unassigned_pool(), 7500, "allocation_driver independent business result");
+    $copy AllocationDriver = $draft->copy();
+    $checks->equal(count($draft->differences($copy)), 0, "allocation_driver snapshot equivalence");
+    $checks->expect($draft->describe() === $copy->describe(), "allocation_driver snapshot report");
+    $copy = $draft->copy();
+    $copy->id = "";
+    $checks->rejected($copy->validate(), "allocation_driver.id", "allocation_driver id required");
+    $copy = $draft->copy();
+    $copy->id = "bad\nrow";
+    $checks->rejected($copy->validate(), "allocation_driver.id", "allocation_driver id control");
+    $copy = $draft->copy();
+    $copy->id = DocumentRules::repeat("x", 41);
+    $checks->rejected($copy->validate(), "allocation_driver.id", "allocation_driver id width");
+    $copy = $draft->copy();
+    $copy->id = "DRIVER-001-changed";
+    $checks->expect($draft->id === "DRIVER-001", "allocation_driver id snapshot isolation");
+    $changes_id vector<string> = $draft->differences($copy);
+    $checks->equal(count($changes_id), 1, "allocation_driver id change count");
+    if (count($changes_id) === 1) {
+        $checks->expect($changes_id[0] === "id", "allocation_driver id change identity");
+    }
+    $copy = $draft->copy();
+    $copy->weight = -1;
+    $checks->rejected($copy->validate(), "allocation_driver.weight", "allocation_driver weight below");
+    $copy = $draft->copy();
+    $copy->weight = 1000001;
+    $checks->rejected($copy->validate(), "allocation_driver.weight", "allocation_driver weight above");
+    $copy = $draft->copy();
+    $copy->total_weight = 0;
+    $checks->rejected($copy->validate(), "allocation_driver.total_weight", "allocation_driver total_weight below");
+    $copy = $draft->copy();
+    $copy->total_weight = 1000001;
+    $checks->rejected($copy->validate(), "allocation_driver.total_weight", "allocation_driver total_weight above");
+    $copy = $draft->copy();
+    $copy->enabled = false;
+    $checks->expect($draft->enabled === true, "allocation_driver enabled snapshot isolation");
+    $changes_enabled vector<string> = $draft->differences($copy);
+    $checks->equal(count($changes_enabled), 1, "allocation_driver enabled change count");
+    if (count($changes_enabled) === 1) {
+        $checks->expect($changes_enabled[0] === "enabled", "allocation_driver enabled change identity");
+    }
+}

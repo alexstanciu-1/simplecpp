@@ -1,0 +1,64 @@
+function sample_expense_claim_line(): ExpenseClaimLine {
+    $draft ExpenseClaimLine = new ExpenseClaimLine();
+    $draft->id = "EXP-L1";
+    $draft->claim_id = "EXP-001";
+    $draft->employee_id = "EMP-001";
+    $draft->category = "travel";
+    $draft->receipt_reference = "HOTEL-001";
+    $draft->expense_account = "operating-expense";
+    $draft->gross_amount = 12000;
+    $draft->recoverable_tax = 2000;
+    $draft->personal_amount = 1000;
+    $draft->approved_amount = 10000;
+    $draft->period = 1;
+    $draft->distance_units = 0;
+    $draft->receipt_present = true;
+    $draft->approved = true;
+    return $draft;
+}
+
+function check_expense_claim_line(WorkloadChecks $checks): void {
+    $draft ExpenseClaimLine = sample_expense_claim_line();
+    $checks->accepted($draft->validate(), "expense_claim_line valid draft");
+    $checks->equal($draft->business_expense(), 9000, "expense_claim_line independent business result");
+    $copy ExpenseClaimLine = $draft->copy();
+    $checks->equal(count($draft->differences($copy)), 0, "expense_claim_line snapshot equivalence");
+    $checks->expect($draft->describe() === $copy->describe(), "expense_claim_line snapshot report");
+    $copy = $draft->copy();
+    $copy->id = "";
+    $checks->rejected($copy->validate(), "expense_claim_line.id", "expense_claim_line id required");
+    $copy = $draft->copy();
+    $copy->id = "bad\nrow";
+    $checks->rejected($copy->validate(), "expense_claim_line.id", "expense_claim_line id control");
+    $copy = $draft->copy();
+    $copy->id = DocumentRules::repeat("x", 41);
+    $checks->rejected($copy->validate(), "expense_claim_line.id", "expense_claim_line id width");
+    $copy = $draft->copy();
+    $copy->id = "EXP-L1-changed";
+    $checks->expect($draft->id === "EXP-L1", "expense_claim_line id snapshot isolation");
+    $changes_id vector<string> = $draft->differences($copy);
+    $checks->equal(count($changes_id), 1, "expense_claim_line id change count");
+    if (count($changes_id) === 1) {
+        $checks->expect($changes_id[0] === "id", "expense_claim_line id change identity");
+    }
+    $copy = $draft->copy();
+    $copy->gross_amount = -1;
+    $checks->rejected($copy->validate(), "expense_claim_line.gross_amount", "expense_claim_line gross_amount below");
+    $copy = $draft->copy();
+    $copy->gross_amount = 1000000001;
+    $checks->rejected($copy->validate(), "expense_claim_line.gross_amount", "expense_claim_line gross_amount above");
+    $copy = $draft->copy();
+    $copy->recoverable_tax = -1;
+    $checks->rejected($copy->validate(), "expense_claim_line.recoverable_tax", "expense_claim_line recoverable_tax below");
+    $copy = $draft->copy();
+    $copy->recoverable_tax = 1000000001;
+    $checks->rejected($copy->validate(), "expense_claim_line.recoverable_tax", "expense_claim_line recoverable_tax above");
+    $copy = $draft->copy();
+    $copy->receipt_present = false;
+    $checks->expect($draft->receipt_present === true, "expense_claim_line receipt_present snapshot isolation");
+    $changes_receipt_present vector<string> = $draft->differences($copy);
+    $checks->equal(count($changes_receipt_present), 1, "expense_claim_line receipt_present change count");
+    if (count($changes_receipt_present) === 1) {
+        $checks->expect($changes_receipt_present[0] === "receipt_present", "expense_claim_line receipt_present change identity");
+    }
+}

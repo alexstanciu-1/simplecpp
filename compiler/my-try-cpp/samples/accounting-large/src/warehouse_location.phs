@@ -1,0 +1,125 @@
+// Capacity and minimum-stock policy for a location.
+// Draft values are mutable. Services retain validated copies, never caller handles.
+class WarehouseLocation {
+    public string $id = "";
+    public string $warehouse = "";
+    public string $label = "";
+    public string $stock_account = "";
+    public string $manager = "";
+    public string $zone = "";
+    public int $capacity = 0;
+    public int $occupied = 0;
+    public int $reserved_capacity = 0;
+    public int $reorder_point = 0;
+    public int $reorder_target = 0;
+    public int $lead_days = 0;
+    public bool $active = false;
+    public bool $quarantine_only = false;
+
+    public function validate(): AccountingCheck {
+        if (!DocumentRules::text($this->id, 1, 40)) {
+            return accounting_failure("warehouse_location.id", "id must contain 1..40 printable bytes");
+        }
+        if (!DocumentRules::text($this->warehouse, 1, 80)) {
+            return accounting_failure("warehouse_location.warehouse", "warehouse must contain 1..80 printable bytes");
+        }
+        if (!DocumentRules::text($this->label, 1, 80)) {
+            return accounting_failure("warehouse_location.label", "label must contain 1..80 printable bytes");
+        }
+        if (!DocumentRules::text($this->stock_account, 1, 80)) {
+            return accounting_failure("warehouse_location.stock_account", "stock_account must contain 1..80 printable bytes");
+        }
+        if (!DocumentRules::text($this->manager, 1, 80)) {
+            return accounting_failure("warehouse_location.manager", "manager must contain 1..80 printable bytes");
+        }
+        if (!DocumentRules::text($this->zone, 1, 80)) {
+            return accounting_failure("warehouse_location.zone", "zone must contain 1..80 printable bytes");
+        }
+        if (!DocumentRules::integer($this->capacity, 1, 1000000)) {
+            return accounting_failure("warehouse_location.capacity", "capacity must be in [1, 1000000]");
+        }
+        if (!DocumentRules::integer($this->occupied, 0, 1000000)) {
+            return accounting_failure("warehouse_location.occupied", "occupied must be in [0, 1000000]");
+        }
+        if (!DocumentRules::integer($this->reserved_capacity, 0, 1000000)) {
+            return accounting_failure("warehouse_location.reserved_capacity", "reserved_capacity must be in [0, 1000000]");
+        }
+        if (!DocumentRules::integer($this->reorder_point, 0, 1000000)) {
+            return accounting_failure("warehouse_location.reorder_point", "reorder_point must be in [0, 1000000]");
+        }
+        if (!DocumentRules::integer($this->reorder_target, 0, 1000000)) {
+            return accounting_failure("warehouse_location.reorder_target", "reorder_target must be in [0, 1000000]");
+        }
+        if (!DocumentRules::integer($this->lead_days, 0, 365)) {
+            return accounting_failure("warehouse_location.lead_days", "lead_days must be in [0, 365]");
+        }
+        if ($this->occupied + $this->reserved_capacity > $this->capacity) {
+            return accounting_failure("warehouse_location.capacity", "Location is overcommitted");
+        }
+        if ($this->reorder_point > $this->reorder_target) {
+            return accounting_failure("warehouse_location.reorder", "Reorder point exceeds target");
+        }
+        return accounting_success();
+    }
+
+    public function free_capacity(): int {
+        return $this->capacity - $this->occupied - $this->reserved_capacity;
+    }
+
+    public function copy(): WarehouseLocation {
+        $snapshot WarehouseLocation = new WarehouseLocation();
+        $snapshot->id = $this->id;
+        $snapshot->warehouse = $this->warehouse;
+        $snapshot->label = $this->label;
+        $snapshot->stock_account = $this->stock_account;
+        $snapshot->manager = $this->manager;
+        $snapshot->zone = $this->zone;
+        $snapshot->capacity = $this->capacity;
+        $snapshot->occupied = $this->occupied;
+        $snapshot->reserved_capacity = $this->reserved_capacity;
+        $snapshot->reorder_point = $this->reorder_point;
+        $snapshot->reorder_target = $this->reorder_target;
+        $snapshot->lead_days = $this->lead_days;
+        $snapshot->active = $this->active;
+        $snapshot->quarantine_only = $this->quarantine_only;
+        return $snapshot;
+    }
+
+    public function differences(WarehouseLocation $other): vector<string> {
+        $fields vector<string> = [];
+        if ($this->id !== $other->id) { $fields[] = "id"; }
+        if ($this->warehouse !== $other->warehouse) { $fields[] = "warehouse"; }
+        if ($this->label !== $other->label) { $fields[] = "label"; }
+        if ($this->stock_account !== $other->stock_account) { $fields[] = "stock_account"; }
+        if ($this->manager !== $other->manager) { $fields[] = "manager"; }
+        if ($this->zone !== $other->zone) { $fields[] = "zone"; }
+        if ($this->capacity !== $other->capacity) { $fields[] = "capacity"; }
+        if ($this->occupied !== $other->occupied) { $fields[] = "occupied"; }
+        if ($this->reserved_capacity !== $other->reserved_capacity) { $fields[] = "reserved_capacity"; }
+        if ($this->reorder_point !== $other->reorder_point) { $fields[] = "reorder_point"; }
+        if ($this->reorder_target !== $other->reorder_target) { $fields[] = "reorder_target"; }
+        if ($this->lead_days !== $other->lead_days) { $fields[] = "lead_days"; }
+        if ($this->active !== $other->active) { $fields[] = "active"; }
+        if ($this->quarantine_only !== $other->quarantine_only) { $fields[] = "quarantine_only"; }
+        return $fields;
+    }
+
+    public function describe(): string {
+        $text string = "WarehouseLocation\n";
+        $text .= "id=" . $this->id . "\n";
+        $text .= "warehouse=" . $this->warehouse . "\n";
+        $text .= "label=" . $this->label . "\n";
+        $text .= "stock_account=" . $this->stock_account . "\n";
+        $text .= "manager=" . $this->manager . "\n";
+        $text .= "zone=" . $this->zone . "\n";
+        $text .= "capacity=" . (string)$this->capacity . "\n";
+        $text .= "occupied=" . (string)$this->occupied . "\n";
+        $text .= "reserved_capacity=" . (string)$this->reserved_capacity . "\n";
+        $text .= "reorder_point=" . (string)$this->reorder_point . "\n";
+        $text .= "reorder_target=" . (string)$this->reorder_target . "\n";
+        $text .= "lead_days=" . (string)$this->lead_days . "\n";
+        $text .= "active=" . DocumentRules::flag($this->active) . "\n";
+        $text .= "quarantine_only=" . DocumentRules::flag($this->quarantine_only) . "\n";
+        return $text;
+    }
+}

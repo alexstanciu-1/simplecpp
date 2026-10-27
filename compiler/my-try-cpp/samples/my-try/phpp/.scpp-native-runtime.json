@@ -1,0 +1,15 @@
+{
+    "version": 2,
+    "files": {
+        "exceptions.phs": "596849ad4f2323a47ebb621bb24fa13b96aacfa6593199c69a8161dc6e2f56d4",
+        "strings.phs": "75fddc0abddde1718e4b6028b1b162e56e57012e5836aef8cd1ed338e14ef824",
+        "collections.phs": "f7f13fef75a1f3dc14af1a7f46598e5815712285c3ea6bd08994c99a0b5a0a95",
+        "filesystem.phs": "49af7f77569e076db29d86595bf8fd4e7766bff5aee368e7d9e44d5b2762a201",
+        "output_stage.phs": "43183dcac9538dd6c97ecf957349ea19b49ec06e072061f583a553d90e8ae30d",
+        "json_document.phs": "b05fa2bbd32d4f68829b81d212816c8c2ef8f52291734b2ff7573cfea725e8b8",
+        "json_reader.phs": "5b66908f52b2f897f19aa7290eac034ee96974527bb8d76b1633e49ae9e8d891",
+        "file_locks.phs": "651eee26cf367db74c283ffbcff12477643f5d27bfe4961c23b362c66eefa405",
+        "lock_reservation.phs": "611ac1b90f8b6fbec156f22060a11c8e505cab1972974c4010903c1b287824e7",
+        "processes.phs": "aa8773b07eaab72ca6ad02a5f0686247c1fecee572d086efc3907054088edfe2"
+    }
+}

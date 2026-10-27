@@ -1,0 +1,125 @@
+// Simplified rental commitment, without statutory lease classification.
+// Draft values are mutable. Services retain validated copies, never caller handles.
+class LeaseAgreement {
+    public string $id = "";
+    public string $lessor = "";
+    public string $asset_description = "";
+    public string $expense_account = "";
+    public string $liability_account = "";
+    public string $bank_account = "";
+    public int $period_rent = 0;
+    public int $service_charge = 0;
+    public int $deposit_amount = 0;
+    public int $deposit_recovered = 0;
+    public int $start_period = 0;
+    public int $end_period = 0;
+    public bool $active = false;
+    public bool $renewal_option = false;
+
+    public function validate(): AccountingCheck {
+        if (!DocumentRules::text($this->id, 1, 40)) {
+            return accounting_failure("lease_agreement.id", "id must contain 1..40 printable bytes");
+        }
+        if (!DocumentRules::text($this->lessor, 1, 80)) {
+            return accounting_failure("lease_agreement.lessor", "lessor must contain 1..80 printable bytes");
+        }
+        if (!DocumentRules::text($this->asset_description, 1, 80)) {
+            return accounting_failure("lease_agreement.asset_description", "asset_description must contain 1..80 printable bytes");
+        }
+        if (!DocumentRules::text($this->expense_account, 1, 80)) {
+            return accounting_failure("lease_agreement.expense_account", "expense_account must contain 1..80 printable bytes");
+        }
+        if (!DocumentRules::text($this->liability_account, 1, 80)) {
+            return accounting_failure("lease_agreement.liability_account", "liability_account must contain 1..80 printable bytes");
+        }
+        if (!DocumentRules::text($this->bank_account, 1, 80)) {
+            return accounting_failure("lease_agreement.bank_account", "bank_account must contain 1..80 printable bytes");
+        }
+        if (!DocumentRules::integer($this->period_rent, 0, 1000000000)) {
+            return accounting_failure("lease_agreement.period_rent", "period_rent must be in [0, 1000000000]");
+        }
+        if (!DocumentRules::integer($this->service_charge, 0, 1000000000)) {
+            return accounting_failure("lease_agreement.service_charge", "service_charge must be in [0, 1000000000]");
+        }
+        if (!DocumentRules::integer($this->deposit_amount, 0, 1000000000)) {
+            return accounting_failure("lease_agreement.deposit_amount", "deposit_amount must be in [0, 1000000000]");
+        }
+        if (!DocumentRules::integer($this->deposit_recovered, 0, 1000000000)) {
+            return accounting_failure("lease_agreement.deposit_recovered", "deposit_recovered must be in [0, 1000000000]");
+        }
+        if (!DocumentRules::integer($this->start_period, 1, 1200)) {
+            return accounting_failure("lease_agreement.start_period", "start_period must be in [1, 1200]");
+        }
+        if (!DocumentRules::integer($this->end_period, 1, 1200)) {
+            return accounting_failure("lease_agreement.end_period", "end_period must be in [1, 1200]");
+        }
+        if ($this->deposit_recovered > $this->deposit_amount) {
+            return accounting_failure("lease_agreement.deposit", "Recovered deposit exceeds original");
+        }
+        if ($this->end_period < $this->start_period) {
+            return accounting_failure("lease_agreement.term", "Lease term is reversed");
+        }
+        return accounting_success();
+    }
+
+    public function period_cash_due(): int {
+        return $this->period_rent + $this->service_charge;
+    }
+
+    public function copy(): LeaseAgreement {
+        $snapshot LeaseAgreement = new LeaseAgreement();
+        $snapshot->id = $this->id;
+        $snapshot->lessor = $this->lessor;
+        $snapshot->asset_description = $this->asset_description;
+        $snapshot->expense_account = $this->expense_account;
+        $snapshot->liability_account = $this->liability_account;
+        $snapshot->bank_account = $this->bank_account;
+        $snapshot->period_rent = $this->period_rent;
+        $snapshot->service_charge = $this->service_charge;
+        $snapshot->deposit_amount = $this->deposit_amount;
+        $snapshot->deposit_recovered = $this->deposit_recovered;
+        $snapshot->start_period = $this->start_period;
+        $snapshot->end_period = $this->end_period;
+        $snapshot->active = $this->active;
+        $snapshot->renewal_option = $this->renewal_option;
+        return $snapshot;
+    }
+
+    public function differences(LeaseAgreement $other): vector<string> {
+        $fields vector<string> = [];
+        if ($this->id !== $other->id) { $fields[] = "id"; }
+        if ($this->lessor !== $other->lessor) { $fields[] = "lessor"; }
+        if ($this->asset_description !== $other->asset_description) { $fields[] = "asset_description"; }
+        if ($this->expense_account !== $other->expense_account) { $fields[] = "expense_account"; }
+        if ($this->liability_account !== $other->liability_account) { $fields[] = "liability_account"; }
+        if ($this->bank_account !== $other->bank_account) { $fields[] = "bank_account"; }
+        if ($this->period_rent !== $other->period_rent) { $fields[] = "period_rent"; }
+        if ($this->service_charge !== $other->service_charge) { $fields[] = "service_charge"; }
+        if ($this->deposit_amount !== $other->deposit_amount) { $fields[] = "deposit_amount"; }
+        if ($this->deposit_recovered !== $other->deposit_recovered) { $fields[] = "deposit_recovered"; }
+        if ($this->start_period !== $other->start_period) { $fields[] = "start_period"; }
+        if ($this->end_period !== $other->end_period) { $fields[] = "end_period"; }
+        if ($this->active !== $other->active) { $fields[] = "active"; }
+        if ($this->renewal_option !== $other->renewal_option) { $fields[] = "renewal_option"; }
+        return $fields;
+    }
+
+    public function describe(): string {
+        $text string = "LeaseAgreement\n";
+        $text .= "id=" . $this->id . "\n";
+        $text .= "lessor=" . $this->lessor . "\n";
+        $text .= "asset_description=" . $this->asset_description . "\n";
+        $text .= "expense_account=" . $this->expense_account . "\n";
+        $text .= "liability_account=" . $this->liability_account . "\n";
+        $text .= "bank_account=" . $this->bank_account . "\n";
+        $text .= "period_rent=" . (string)$this->period_rent . "\n";
+        $text .= "service_charge=" . (string)$this->service_charge . "\n";
+        $text .= "deposit_amount=" . (string)$this->deposit_amount . "\n";
+        $text .= "deposit_recovered=" . (string)$this->deposit_recovered . "\n";
+        $text .= "start_period=" . (string)$this->start_period . "\n";
+        $text .= "end_period=" . (string)$this->end_period . "\n";
+        $text .= "active=" . DocumentRules::flag($this->active) . "\n";
+        $text .= "renewal_option=" . DocumentRules::flag($this->renewal_option) . "\n";
+        return $text;
+    }
+}

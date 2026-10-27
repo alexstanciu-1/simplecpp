@@ -1,0 +1,128 @@
+// Issued employee advance with recovery and receipt settlement.
+// Draft values are mutable. Services retain validated copies, never caller handles.
+class EmployeeAdvance {
+    public string $id = "";
+    public string $employee_id = "";
+    public string $purpose = "";
+    public string $bank_reference = "";
+    public string $control_account = "";
+    public string $approver = "";
+    public int $authorized = 0;
+    public int $paid = 0;
+    public int $receipts_settled = 0;
+    public int $cash_returned = 0;
+    public int $period = 0;
+    public int $due_period = 0;
+    public bool $approved = false;
+    public bool $closed = false;
+
+    public function validate(): AccountingCheck {
+        if (!DocumentRules::text($this->id, 1, 40)) {
+            return accounting_failure("employee_advance.id", "id must contain 1..40 printable bytes");
+        }
+        if (!DocumentRules::text($this->employee_id, 1, 80)) {
+            return accounting_failure("employee_advance.employee_id", "employee_id must contain 1..80 printable bytes");
+        }
+        if (!DocumentRules::text($this->purpose, 1, 80)) {
+            return accounting_failure("employee_advance.purpose", "purpose must contain 1..80 printable bytes");
+        }
+        if (!DocumentRules::text($this->bank_reference, 1, 80)) {
+            return accounting_failure("employee_advance.bank_reference", "bank_reference must contain 1..80 printable bytes");
+        }
+        if (!DocumentRules::text($this->control_account, 1, 80)) {
+            return accounting_failure("employee_advance.control_account", "control_account must contain 1..80 printable bytes");
+        }
+        if (!DocumentRules::text($this->approver, 1, 80)) {
+            return accounting_failure("employee_advance.approver", "approver must contain 1..80 printable bytes");
+        }
+        if (!DocumentRules::integer($this->authorized, 0, 1000000000)) {
+            return accounting_failure("employee_advance.authorized", "authorized must be in [0, 1000000000]");
+        }
+        if (!DocumentRules::integer($this->paid, 0, 1000000000)) {
+            return accounting_failure("employee_advance.paid", "paid must be in [0, 1000000000]");
+        }
+        if (!DocumentRules::integer($this->receipts_settled, 0, 1000000000)) {
+            return accounting_failure("employee_advance.receipts_settled", "receipts_settled must be in [0, 1000000000]");
+        }
+        if (!DocumentRules::integer($this->cash_returned, 0, 1000000000)) {
+            return accounting_failure("employee_advance.cash_returned", "cash_returned must be in [0, 1000000000]");
+        }
+        if (!DocumentRules::integer($this->period, 1, 1200)) {
+            return accounting_failure("employee_advance.period", "period must be in [1, 1200]");
+        }
+        if (!DocumentRules::integer($this->due_period, 1, 1200)) {
+            return accounting_failure("employee_advance.due_period", "due_period must be in [1, 1200]");
+        }
+        if ($this->paid > $this->authorized) {
+            return accounting_failure("employee_advance.payment", "Paid advance exceeds authorization");
+        }
+        if ($this->receipts_settled + $this->cash_returned > $this->paid) {
+            return accounting_failure("employee_advance.settlement", "Settlements exceed paid advance");
+        }
+        if ($this->due_period < $this->period) {
+            return accounting_failure("employee_advance.due", "Due period precedes issue");
+        }
+        return accounting_success();
+    }
+
+    public function outstanding_advance(): int {
+        return $this->paid - $this->receipts_settled - $this->cash_returned;
+    }
+
+    public function copy(): EmployeeAdvance {
+        $snapshot EmployeeAdvance = new EmployeeAdvance();
+        $snapshot->id = $this->id;
+        $snapshot->employee_id = $this->employee_id;
+        $snapshot->purpose = $this->purpose;
+        $snapshot->bank_reference = $this->bank_reference;
+        $snapshot->control_account = $this->control_account;
+        $snapshot->approver = $this->approver;
+        $snapshot->authorized = $this->authorized;
+        $snapshot->paid = $this->paid;
+        $snapshot->receipts_settled = $this->receipts_settled;
+        $snapshot->cash_returned = $this->cash_returned;
+        $snapshot->period = $this->period;
+        $snapshot->due_period = $this->due_period;
+        $snapshot->approved = $this->approved;
+        $snapshot->closed = $this->closed;
+        return $snapshot;
+    }
+
+    public function differences(EmployeeAdvance $other): vector<string> {
+        $fields vector<string> = [];
+        if ($this->id !== $other->id) { $fields[] = "id"; }
+        if ($this->employee_id !== $other->employee_id) { $fields[] = "employee_id"; }
+        if ($this->purpose !== $other->purpose) { $fields[] = "purpose"; }
+        if ($this->bank_reference !== $other->bank_reference) { $fields[] = "bank_reference"; }
+        if ($this->control_account !== $other->control_account) { $fields[] = "control_account"; }
+        if ($this->approver !== $other->approver) { $fields[] = "approver"; }
+        if ($this->authorized !== $other->authorized) { $fields[] = "authorized"; }
+        if ($this->paid !== $other->paid) { $fields[] = "paid"; }
+        if ($this->receipts_settled !== $other->receipts_settled) { $fields[] = "receipts_settled"; }
+        if ($this->cash_returned !== $other->cash_returned) { $fields[] = "cash_returned"; }
+        if ($this->period !== $other->period) { $fields[] = "period"; }
+        if ($this->due_period !== $other->due_period) { $fields[] = "due_period"; }
+        if ($this->approved !== $other->approved) { $fields[] = "approved"; }
+        if ($this->closed !== $other->closed) { $fields[] = "closed"; }
+        return $fields;
+    }
+
+    public function describe(): string {
+        $text string = "EmployeeAdvance\n";
+        $text .= "id=" . $this->id . "\n";
+        $text .= "employee_id=" . $this->employee_id . "\n";
+        $text .= "purpose=" . $this->purpose . "\n";
+        $text .= "bank_reference=" . $this->bank_reference . "\n";
+        $text .= "control_account=" . $this->control_account . "\n";
+        $text .= "approver=" . $this->approver . "\n";
+        $text .= "authorized=" . (string)$this->authorized . "\n";
+        $text .= "paid=" . (string)$this->paid . "\n";
+        $text .= "receipts_settled=" . (string)$this->receipts_settled . "\n";
+        $text .= "cash_returned=" . (string)$this->cash_returned . "\n";
+        $text .= "period=" . (string)$this->period . "\n";
+        $text .= "due_period=" . (string)$this->due_period . "\n";
+        $text .= "approved=" . DocumentRules::flag($this->approved) . "\n";
+        $text .= "closed=" . DocumentRules::flag($this->closed) . "\n";
+        return $text;
+    }
+}

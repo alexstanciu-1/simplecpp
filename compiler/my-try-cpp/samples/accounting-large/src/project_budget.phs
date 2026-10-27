@@ -1,0 +1,125 @@
+// Project authorization with independent cost and billing ceilings.
+// Draft values are mutable. Services retain validated copies, never caller handles.
+class ProjectBudget {
+    public string $id = "";
+    public string $customer_id = "";
+    public string $project_name = "";
+    public string $manager = "";
+    public string $cost_account = "";
+    public string $revenue_account = "";
+    public int $cost_budget = 0;
+    public int $cost_actual = 0;
+    public int $cost_committed = 0;
+    public int $contract_value = 0;
+    public int $billed = 0;
+    public int $completion_period = 0;
+    public bool $active = false;
+    public bool $billing_hold = false;
+
+    public function validate(): AccountingCheck {
+        if (!DocumentRules::text($this->id, 1, 40)) {
+            return accounting_failure("project_budget.id", "id must contain 1..40 printable bytes");
+        }
+        if (!DocumentRules::text($this->customer_id, 1, 80)) {
+            return accounting_failure("project_budget.customer_id", "customer_id must contain 1..80 printable bytes");
+        }
+        if (!DocumentRules::text($this->project_name, 1, 80)) {
+            return accounting_failure("project_budget.project_name", "project_name must contain 1..80 printable bytes");
+        }
+        if (!DocumentRules::text($this->manager, 1, 80)) {
+            return accounting_failure("project_budget.manager", "manager must contain 1..80 printable bytes");
+        }
+        if (!DocumentRules::text($this->cost_account, 1, 80)) {
+            return accounting_failure("project_budget.cost_account", "cost_account must contain 1..80 printable bytes");
+        }
+        if (!DocumentRules::text($this->revenue_account, 1, 80)) {
+            return accounting_failure("project_budget.revenue_account", "revenue_account must contain 1..80 printable bytes");
+        }
+        if (!DocumentRules::integer($this->cost_budget, 0, 1000000000)) {
+            return accounting_failure("project_budget.cost_budget", "cost_budget must be in [0, 1000000000]");
+        }
+        if (!DocumentRules::integer($this->cost_actual, 0, 1000000000)) {
+            return accounting_failure("project_budget.cost_actual", "cost_actual must be in [0, 1000000000]");
+        }
+        if (!DocumentRules::integer($this->cost_committed, 0, 1000000000)) {
+            return accounting_failure("project_budget.cost_committed", "cost_committed must be in [0, 1000000000]");
+        }
+        if (!DocumentRules::integer($this->contract_value, 0, 1000000000)) {
+            return accounting_failure("project_budget.contract_value", "contract_value must be in [0, 1000000000]");
+        }
+        if (!DocumentRules::integer($this->billed, 0, 1000000000)) {
+            return accounting_failure("project_budget.billed", "billed must be in [0, 1000000000]");
+        }
+        if (!DocumentRules::integer($this->completion_period, 1, 1200)) {
+            return accounting_failure("project_budget.completion_period", "completion_period must be in [1, 1200]");
+        }
+        if ($this->cost_actual + $this->cost_committed > $this->cost_budget) {
+            return accounting_failure("project_budget.budget", "Actual and committed cost exceed authorization");
+        }
+        if ($this->billed > $this->contract_value) {
+            return accounting_failure("project_budget.billing", "Billing exceeds contract");
+        }
+        return accounting_success();
+    }
+
+    public function uncommitted_budget(): int {
+        return $this->cost_budget - $this->cost_actual - $this->cost_committed;
+    }
+
+    public function copy(): ProjectBudget {
+        $snapshot ProjectBudget = new ProjectBudget();
+        $snapshot->id = $this->id;
+        $snapshot->customer_id = $this->customer_id;
+        $snapshot->project_name = $this->project_name;
+        $snapshot->manager = $this->manager;
+        $snapshot->cost_account = $this->cost_account;
+        $snapshot->revenue_account = $this->revenue_account;
+        $snapshot->cost_budget = $this->cost_budget;
+        $snapshot->cost_actual = $this->cost_actual;
+        $snapshot->cost_committed = $this->cost_committed;
+        $snapshot->contract_value = $this->contract_value;
+        $snapshot->billed = $this->billed;
+        $snapshot->completion_period = $this->completion_period;
+        $snapshot->active = $this->active;
+        $snapshot->billing_hold = $this->billing_hold;
+        return $snapshot;
+    }
+
+    public function differences(ProjectBudget $other): vector<string> {
+        $fields vector<string> = [];
+        if ($this->id !== $other->id) { $fields[] = "id"; }
+        if ($this->customer_id !== $other->customer_id) { $fields[] = "customer_id"; }
+        if ($this->project_name !== $other->project_name) { $fields[] = "project_name"; }
+        if ($this->manager !== $other->manager) { $fields[] = "manager"; }
+        if ($this->cost_account !== $other->cost_account) { $fields[] = "cost_account"; }
+        if ($this->revenue_account !== $other->revenue_account) { $fields[] = "revenue_account"; }
+        if ($this->cost_budget !== $other->cost_budget) { $fields[] = "cost_budget"; }
+        if ($this->cost_actual !== $other->cost_actual) { $fields[] = "cost_actual"; }
+        if ($this->cost_committed !== $other->cost_committed) { $fields[] = "cost_committed"; }
+        if ($this->contract_value !== $other->contract_value) { $fields[] = "contract_value"; }
+        if ($this->billed !== $other->billed) { $fields[] = "billed"; }
+        if ($this->completion_period !== $other->completion_period) { $fields[] = "completion_period"; }
+        if ($this->active !== $other->active) { $fields[] = "active"; }
+        if ($this->billing_hold !== $other->billing_hold) { $fields[] = "billing_hold"; }
+        return $fields;
+    }
+
+    public function describe(): string {
+        $text string = "ProjectBudget\n";
+        $text .= "id=" . $this->id . "\n";
+        $text .= "customer_id=" . $this->customer_id . "\n";
+        $text .= "project_name=" . $this->project_name . "\n";
+        $text .= "manager=" . $this->manager . "\n";
+        $text .= "cost_account=" . $this->cost_account . "\n";
+        $text .= "revenue_account=" . $this->revenue_account . "\n";
+        $text .= "cost_budget=" . (string)$this->cost_budget . "\n";
+        $text .= "cost_actual=" . (string)$this->cost_actual . "\n";
+        $text .= "cost_committed=" . (string)$this->cost_committed . "\n";
+        $text .= "contract_value=" . (string)$this->contract_value . "\n";
+        $text .= "billed=" . (string)$this->billed . "\n";
+        $text .= "completion_period=" . (string)$this->completion_period . "\n";
+        $text .= "active=" . DocumentRules::flag($this->active) . "\n";
+        $text .= "billing_hold=" . DocumentRules::flag($this->billing_hold) . "\n";
+        return $text;
+    }
+}

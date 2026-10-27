@@ -1,0 +1,64 @@
+function sample_landed_cost_charge(): LandedCostCharge {
+    $draft LandedCostCharge = new LandedCostCharge();
+    $draft->id = "LC-001";
+    $draft->receipt_id = "GR-001";
+    $draft->supplier_id = "FREIGHT-01";
+    $draft->charge_type = "freight";
+    $draft->allocation_basis = "value";
+    $draft->clearing_account = "goods-received";
+    $draft->charge_amount = 1200;
+    $draft->allocated_amount = 700;
+    $draft->base_weight = 100;
+    $draft->allocated_weight = 60;
+    $draft->period = 1;
+    $draft->tax_amount = 240;
+    $draft->approved = true;
+    $draft->recoverable_tax = true;
+    return $draft;
+}
+
+function check_landed_cost_charge(WorkloadChecks $checks): void {
+    $draft LandedCostCharge = sample_landed_cost_charge();
+    $checks->accepted($draft->validate(), "landed_cost_charge valid draft");
+    $checks->equal($draft->unallocated_cost(), 500, "landed_cost_charge independent business result");
+    $copy LandedCostCharge = $draft->copy();
+    $checks->equal(count($draft->differences($copy)), 0, "landed_cost_charge snapshot equivalence");
+    $checks->expect($draft->describe() === $copy->describe(), "landed_cost_charge snapshot report");
+    $copy = $draft->copy();
+    $copy->id = "";
+    $checks->rejected($copy->validate(), "landed_cost_charge.id", "landed_cost_charge id required");
+    $copy = $draft->copy();
+    $copy->id = "bad\nrow";
+    $checks->rejected($copy->validate(), "landed_cost_charge.id", "landed_cost_charge id control");
+    $copy = $draft->copy();
+    $copy->id = DocumentRules::repeat("x", 41);
+    $checks->rejected($copy->validate(), "landed_cost_charge.id", "landed_cost_charge id width");
+    $copy = $draft->copy();
+    $copy->id = "LC-001-changed";
+    $checks->expect($draft->id === "LC-001", "landed_cost_charge id snapshot isolation");
+    $changes_id vector<string> = $draft->differences($copy);
+    $checks->equal(count($changes_id), 1, "landed_cost_charge id change count");
+    if (count($changes_id) === 1) {
+        $checks->expect($changes_id[0] === "id", "landed_cost_charge id change identity");
+    }
+    $copy = $draft->copy();
+    $copy->charge_amount = -1;
+    $checks->rejected($copy->validate(), "landed_cost_charge.charge_amount", "landed_cost_charge charge_amount below");
+    $copy = $draft->copy();
+    $copy->charge_amount = 1000000001;
+    $checks->rejected($copy->validate(), "landed_cost_charge.charge_amount", "landed_cost_charge charge_amount above");
+    $copy = $draft->copy();
+    $copy->allocated_amount = -1;
+    $checks->rejected($copy->validate(), "landed_cost_charge.allocated_amount", "landed_cost_charge allocated_amount below");
+    $copy = $draft->copy();
+    $copy->allocated_amount = 1000000001;
+    $checks->rejected($copy->validate(), "landed_cost_charge.allocated_amount", "landed_cost_charge allocated_amount above");
+    $copy = $draft->copy();
+    $copy->approved = false;
+    $checks->expect($draft->approved === true, "landed_cost_charge approved snapshot isolation");
+    $changes_approved vector<string> = $draft->differences($copy);
+    $checks->equal(count($changes_approved), 1, "landed_cost_charge approved change count");
+    if (count($changes_approved) === 1) {
+        $checks->expect($changes_approved[0] === "approved", "landed_cost_charge approved change identity");
+    }
+}

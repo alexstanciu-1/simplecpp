@@ -1,0 +1,122 @@
+// Approved project time expressed as integer minutes.
+// Draft values are mutable. Services retain validated copies, never caller handles.
+class TimeSheetLine {
+    public string $id = "";
+    public string $sheet_id = "";
+    public string $employee_id = "";
+    public string $project_id = "";
+    public string $activity = "";
+    public string $approver = "";
+    public int $minutes_worked = 0;
+    public int $nonbillable_minutes = 0;
+    public int $cost_per_hour = 0;
+    public int $bill_per_hour = 0;
+    public int $period = 0;
+    public int $day_number = 0;
+    public bool $approved = false;
+    public bool $posted = false;
+
+    public function validate(): AccountingCheck {
+        if (!DocumentRules::text($this->id, 1, 40)) {
+            return accounting_failure("time_sheet_line.id", "id must contain 1..40 printable bytes");
+        }
+        if (!DocumentRules::text($this->sheet_id, 1, 80)) {
+            return accounting_failure("time_sheet_line.sheet_id", "sheet_id must contain 1..80 printable bytes");
+        }
+        if (!DocumentRules::text($this->employee_id, 1, 80)) {
+            return accounting_failure("time_sheet_line.employee_id", "employee_id must contain 1..80 printable bytes");
+        }
+        if (!DocumentRules::text($this->project_id, 1, 80)) {
+            return accounting_failure("time_sheet_line.project_id", "project_id must contain 1..80 printable bytes");
+        }
+        if (!DocumentRules::text($this->activity, 1, 80)) {
+            return accounting_failure("time_sheet_line.activity", "activity must contain 1..80 printable bytes");
+        }
+        if (!DocumentRules::text($this->approver, 1, 80)) {
+            return accounting_failure("time_sheet_line.approver", "approver must contain 1..80 printable bytes");
+        }
+        if (!DocumentRules::integer($this->minutes_worked, 1, 1440)) {
+            return accounting_failure("time_sheet_line.minutes_worked", "minutes_worked must be in [1, 1440]");
+        }
+        if (!DocumentRules::integer($this->nonbillable_minutes, 0, 1440)) {
+            return accounting_failure("time_sheet_line.nonbillable_minutes", "nonbillable_minutes must be in [0, 1440]");
+        }
+        if (!DocumentRules::integer($this->cost_per_hour, 0, 1000000)) {
+            return accounting_failure("time_sheet_line.cost_per_hour", "cost_per_hour must be in [0, 1000000]");
+        }
+        if (!DocumentRules::integer($this->bill_per_hour, 0, 1000000)) {
+            return accounting_failure("time_sheet_line.bill_per_hour", "bill_per_hour must be in [0, 1000000]");
+        }
+        if (!DocumentRules::integer($this->period, 1, 1200)) {
+            return accounting_failure("time_sheet_line.period", "period must be in [1, 1200]");
+        }
+        if (!DocumentRules::integer($this->day_number, 1, 31)) {
+            return accounting_failure("time_sheet_line.day_number", "day_number must be in [1, 31]");
+        }
+        if ($this->nonbillable_minutes > $this->minutes_worked) {
+            return accounting_failure("time_sheet_line.minutes", "Nonbillable minutes exceed worked time");
+        }
+        return accounting_success();
+    }
+
+    public function billable_minutes(): int {
+        return $this->minutes_worked - $this->nonbillable_minutes;
+    }
+
+    public function copy(): TimeSheetLine {
+        $snapshot TimeSheetLine = new TimeSheetLine();
+        $snapshot->id = $this->id;
+        $snapshot->sheet_id = $this->sheet_id;
+        $snapshot->employee_id = $this->employee_id;
+        $snapshot->project_id = $this->project_id;
+        $snapshot->activity = $this->activity;
+        $snapshot->approver = $this->approver;
+        $snapshot->minutes_worked = $this->minutes_worked;
+        $snapshot->nonbillable_minutes = $this->nonbillable_minutes;
+        $snapshot->cost_per_hour = $this->cost_per_hour;
+        $snapshot->bill_per_hour = $this->bill_per_hour;
+        $snapshot->period = $this->period;
+        $snapshot->day_number = $this->day_number;
+        $snapshot->approved = $this->approved;
+        $snapshot->posted = $this->posted;
+        return $snapshot;
+    }
+
+    public function differences(TimeSheetLine $other): vector<string> {
+        $fields vector<string> = [];
+        if ($this->id !== $other->id) { $fields[] = "id"; }
+        if ($this->sheet_id !== $other->sheet_id) { $fields[] = "sheet_id"; }
+        if ($this->employee_id !== $other->employee_id) { $fields[] = "employee_id"; }
+        if ($this->project_id !== $other->project_id) { $fields[] = "project_id"; }
+        if ($this->activity !== $other->activity) { $fields[] = "activity"; }
+        if ($this->approver !== $other->approver) { $fields[] = "approver"; }
+        if ($this->minutes_worked !== $other->minutes_worked) { $fields[] = "minutes_worked"; }
+        if ($this->nonbillable_minutes !== $other->nonbillable_minutes) { $fields[] = "nonbillable_minutes"; }
+        if ($this->cost_per_hour !== $other->cost_per_hour) { $fields[] = "cost_per_hour"; }
+        if ($this->bill_per_hour !== $other->bill_per_hour) { $fields[] = "bill_per_hour"; }
+        if ($this->period !== $other->period) { $fields[] = "period"; }
+        if ($this->day_number !== $other->day_number) { $fields[] = "day_number"; }
+        if ($this->approved !== $other->approved) { $fields[] = "approved"; }
+        if ($this->posted !== $other->posted) { $fields[] = "posted"; }
+        return $fields;
+    }
+
+    public function describe(): string {
+        $text string = "TimeSheetLine\n";
+        $text .= "id=" . $this->id . "\n";
+        $text .= "sheet_id=" . $this->sheet_id . "\n";
+        $text .= "employee_id=" . $this->employee_id . "\n";
+        $text .= "project_id=" . $this->project_id . "\n";
+        $text .= "activity=" . $this->activity . "\n";
+        $text .= "approver=" . $this->approver . "\n";
+        $text .= "minutes_worked=" . (string)$this->minutes_worked . "\n";
+        $text .= "nonbillable_minutes=" . (string)$this->nonbillable_minutes . "\n";
+        $text .= "cost_per_hour=" . (string)$this->cost_per_hour . "\n";
+        $text .= "bill_per_hour=" . (string)$this->bill_per_hour . "\n";
+        $text .= "period=" . (string)$this->period . "\n";
+        $text .= "day_number=" . (string)$this->day_number . "\n";
+        $text .= "approved=" . DocumentRules::flag($this->approved) . "\n";
+        $text .= "posted=" . DocumentRules::flag($this->posted) . "\n";
+        return $text;
+    }
+}

@@ -1,0 +1,27 @@
+
+/*
+ * Role: load metadata and source bytes into a file record.
+ * Call map: Tokenizer::tokenize -> File_Loader::init.
+ * Gather metadata and bytes before assigning the loaded fields.
+ */
+namespace scpp\compiler;
+
+final class File_Loader {
+	/** Populate required fields after successful reads; invalidate any previous token backlink. */
+	public static function init(file $file, string $path): void {
+		$mtime = 0;
+		$size = 0;
+		if (!take($mtime, \scpp_portability_fs_mtime($path))) {
+			throw new \scpp_portability_runtime_exception('Cannot read file metadata: ' . $path);
+		}
+		if (!take($size, \scpp_portability_fs_size($path))) {
+			throw new \scpp_portability_runtime_exception('Cannot read file metadata: ' . $path);
+		}
+		$content = \scpp_portability_fs_read_text($path);
+
+		$file->mtime = $mtime;
+		$file->size = $size;
+		$file->content = $content;
+		$file->tokens = null;
+	}
+}

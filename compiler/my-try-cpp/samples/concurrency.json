@@ -1,0 +1,2701 @@
+{
+  "trials": 21,
+  "available_logical_cpus": 12,
+  "method": "Warm filesystem, fresh process each trial; alternating 1/8 jobs. CLOCK_PROCESS_CPUTIME_ID sums CPU across all threads. 100% CPU equals one fully occupied logical CPU. No allocation instrumentation. Whole-stage intervals include coordinator work.",
+  "samples": {
+    "accounting-small": {
+      "summary": {
+        "1": {
+          "discovery": {
+            "wall_us": {
+              "median": 1025,
+              "min": 914,
+              "max": 1193
+            },
+            "cpu_ns": {
+              "median": 259228,
+              "min": 194136,
+              "max": 690184
+            },
+            "peak_workers": {
+              "median": 1,
+              "min": 1,
+              "max": 1
+            },
+            "average_cores": {
+              "median": 0.24394198312236287,
+              "min": 0.19499829205807004,
+              "max": 0.6793149606299212
+            },
+            "cpu_percent": {
+              "median": 24.394198312236288,
+              "min": 19.499829205807004,
+              "max": 67.93149606299212
+            },
+            "worker_budget_percent": {
+              "median": 24.394198312236288,
+              "min": 19.499829205807004,
+              "max": 67.93149606299212
+            }
+          },
+          "reading": {
+            "wall_us": {
+              "median": 562,
+              "min": 518,
+              "max": 797
+            },
+            "cpu_ns": {
+              "median": 94064,
+              "min": 73532,
+              "max": 849138
+            },
+            "peak_workers": {
+              "median": 1,
+              "min": 1,
+              "max": 1
+            },
+            "average_cores": {
+              "median": 0.16994990723562153,
+              "min": 0.13566789667896678,
+              "max": 1.065417816813049
+            },
+            "cpu_percent": {
+              "median": 16.994990723562154,
+              "min": 13.566789667896678,
+              "max": 106.5417816813049
+            },
+            "worker_budget_percent": {
+              "median": 16.994990723562154,
+              "min": 13.566789667896678,
+              "max": 106.5417816813049
+            }
+          }
+        },
+        "8": {
+          "discovery": {
+            "wall_us": {
+              "median": 1005,
+              "min": 907,
+              "max": 1180
+            },
+            "cpu_ns": {
+              "median": 265778,
+              "min": 194095,
+              "max": 829008
+            },
+            "peak_workers": {
+              "median": 1,
+              "min": 1,
+              "max": 1
+            },
+            "average_cores": {
+              "median": 0.26628774422735346,
+              "min": 0.20332680412371135,
+              "max": 0.8248835820895523
+            },
+            "cpu_percent": {
+              "median": 26.628774422735347,
+              "min": 20.332680412371136,
+              "max": 82.48835820895522
+            },
+            "worker_budget_percent": {
+              "median": 3.3285968028419184,
+              "min": 2.541585051546392,
+              "max": 10.311044776119402
+            }
+          },
+          "reading": {
+            "wall_us": {
+              "median": 932,
+              "min": 712,
+              "max": 1168
+            },
+            "cpu_ns": {
+              "median": 1508496,
+              "min": 818396,
+              "max": 2161557
+            },
+            "peak_workers": {
+              "median": 3,
+              "min": 2,
+              "max": 3
+            },
+            "average_cores": {
+              "median": 1.5736288265306122,
+              "min": 1.017545138888889,
+              "max": 1.8698589965397925
+            },
+            "cpu_percent": {
+              "median": 157.3628826530612,
+              "min": 101.7545138888889,
+              "max": 186.98589965397926
+            },
+            "worker_budget_percent": {
+              "median": 19.67036033163265,
+              "min": 12.719314236111112,
+              "max": 23.373237456747407
+            }
+          }
+        }
+      },
+      "trials": {
+        "1": [
+          {
+            "discovery": {
+              "wall_us": 1033,
+              "cpu_ns": 261039,
+              "peak_workers": 1,
+              "average_cores": 0.2526999031945789,
+              "cpu_percent": 25.26999031945789,
+              "worker_budget_percent": 25.26999031945789
+            },
+            "reading": {
+              "wall_us": 652,
+              "cpu_ns": 575979,
+              "peak_workers": 1,
+              "average_cores": 0.8834033742331289,
+              "cpu_percent": 88.34033742331289,
+              "worker_budget_percent": 88.34033742331289
+            }
+          },
+          {
+            "discovery": {
+              "wall_us": 1056,
+              "cpu_ns": 620946,
+              "peak_workers": 1,
+              "average_cores": 0.5880170454545455,
+              "cpu_percent": 58.80170454545455,
+              "worker_budget_percent": 58.80170454545455
+            },
+            "reading": {
+              "wall_us": 518,
+              "cpu_ns": 76762,
+              "peak_workers": 1,
+              "average_cores": 0.1481891891891892,
+              "cpu_percent": 14.81891891891892,
+              "worker_budget_percent": 14.81891891891892
+            }
+          },
+          {
+            "discovery": {
+              "wall_us": 1016,
+              "cpu_ns": 690184,
+              "peak_workers": 1,
+              "average_cores": 0.6793149606299212,
+              "cpu_percent": 67.93149606299212,
+              "worker_budget_percent": 67.93149606299212
+            },
+            "reading": {
+              "wall_us": 539,
+              "cpu_ns": 91603,
+              "peak_workers": 1,
+              "average_cores": 0.16994990723562153,
+              "cpu_percent": 16.994990723562154,
+              "worker_budget_percent": 16.994990723562154
+            }
+          },
+          {
+            "discovery": {
+              "wall_us": 1184,
+              "cpu_ns": 259228,
+              "peak_workers": 1,
+              "average_cores": 0.21894256756756758,
+              "cpu_percent": 21.894256756756757,
+              "worker_budget_percent": 21.894256756756757
+            },
+            "reading": {
+              "wall_us": 562,
+              "cpu_ns": 122614,
+              "peak_workers": 1,
+              "average_cores": 0.2181743772241993,
+              "cpu_percent": 21.817437722419932,
+              "worker_budget_percent": 21.817437722419932
+            }
+          },
+          {
+            "discovery": {
+              "wall_us": 1144,
+              "cpu_ns": 288408,
+              "peak_workers": 1,
+              "average_cores": 0.2521048951048951,
+              "cpu_percent": 25.21048951048951,
+              "worker_budget_percent": 25.21048951048951
+            },
+            "reading": {
+              "wall_us": 549,
+              "cpu_ns": 110404,
+              "peak_workers": 1,
+              "average_cores": 0.20110018214936248,
+              "cpu_percent": 20.110018214936247,
+              "worker_budget_percent": 20.110018214936247
+            }
+          },
+          {
+            "discovery": {
+              "wall_us": 977,
+              "cpu_ns": 194136,
+              "peak_workers": 1,
+              "average_cores": 0.19870624360286593,
+              "cpu_percent": 19.87062436028659,
+              "worker_budget_percent": 19.87062436028659
+            },
+            "reading": {
+              "wall_us": 688,
+              "cpu_ns": 310241,
+              "peak_workers": 1,
+              "average_cores": 0.4509316860465116,
+              "cpu_percent": 45.09316860465116,
+              "worker_budget_percent": 45.09316860465116
+            }
+          },
+          {
+            "discovery": {
+              "wall_us": 1179,
+              "cpu_ns": 637536,
+              "peak_workers": 1,
+              "average_cores": 0.5407430025445292,
+              "cpu_percent": 54.07430025445292,
+              "worker_budget_percent": 54.07430025445292
+            },
+            "reading": {
+              "wall_us": 522,
+              "cpu_ns": 77723,
+              "peak_workers": 1,
+              "average_cores": 0.14889463601532568,
+              "cpu_percent": 14.889463601532569,
+              "worker_budget_percent": 14.889463601532569
+            }
+          },
+          {
+            "discovery": {
+              "wall_us": 961,
+              "cpu_ns": 232198,
+              "peak_workers": 1,
+              "average_cores": 0.24162122788761706,
+              "cpu_percent": 24.162122788761707,
+              "worker_budget_percent": 24.162122788761707
+            },
+            "reading": {
+              "wall_us": 554,
+              "cpu_ns": 84033,
+              "peak_workers": 1,
+              "average_cores": 0.1516841155234657,
+              "cpu_percent": 15.16841155234657,
+              "worker_budget_percent": 15.16841155234657
+            }
+          },
+          {
+            "discovery": {
+              "wall_us": 1018,
+              "cpu_ns": 204277,
+              "peak_workers": 1,
+              "average_cores": 0.20066502946954815,
+              "cpu_percent": 20.066502946954813,
+              "worker_budget_percent": 20.066502946954813
+            },
+            "reading": {
+              "wall_us": 528,
+              "cpu_ns": 84533,
+              "peak_workers": 1,
+              "average_cores": 0.16010037878787878,
+              "cpu_percent": 16.010037878787877,
+              "worker_budget_percent": 16.010037878787877
+            }
+          },
+          {
+            "discovery": {
+              "wall_us": 914,
+              "cpu_ns": 223139,
+              "peak_workers": 1,
+              "average_cores": 0.24413457330415755,
+              "cpu_percent": 24.413457330415756,
+              "worker_budget_percent": 24.413457330415756
+            },
+            "reading": {
+              "wall_us": 530,
+              "cpu_ns": 80243,
+              "peak_workers": 1,
+              "average_cores": 0.15140188679245284,
+              "cpu_percent": 15.140188679245284,
+              "worker_budget_percent": 15.140188679245284
+            }
+          },
+          {
+            "discovery": {
+              "wall_us": 948,
+              "cpu_ns": 231257,
+              "peak_workers": 1,
+              "average_cores": 0.24394198312236287,
+              "cpu_percent": 24.394198312236288,
+              "worker_budget_percent": 24.394198312236288
+            },
+            "reading": {
+              "wall_us": 556,
+              "cpu_ns": 84183,
+              "peak_workers": 1,
+              "average_cores": 0.15140827338129498,
+              "cpu_percent": 15.140827338129498,
+              "worker_budget_percent": 15.140827338129498
+            }
+          },
+          {
+            "discovery": {
+              "wall_us": 1007,
+              "cpu_ns": 203797,
+              "peak_workers": 1,
+              "average_cores": 0.2023803376365442,
+              "cpu_percent": 20.23803376365442,
+              "worker_budget_percent": 20.23803376365442
+            },
+            "reading": {
+              "wall_us": 727,
+              "cpu_ns": 576265,
+              "peak_workers": 1,
+              "average_cores": 0.7926616231086657,
+              "cpu_percent": 79.26616231086658,
+              "worker_budget_percent": 79.26616231086658
+            }
+          },
+          {
+            "discovery": {
+              "wall_us": 1193,
+              "cpu_ns": 264168,
+              "peak_workers": 1,
+              "average_cores": 0.2214316848281643,
+              "cpu_percent": 22.14316848281643,
+              "worker_budget_percent": 22.14316848281643
+            },
+            "reading": {
+              "wall_us": 746,
+              "cpu_ns": 254514,
+              "peak_workers": 1,
+              "average_cores": 0.341171581769437,
+              "cpu_percent": 34.117158176943704,
+              "worker_budget_percent": 34.117158176943704
+            }
+          },
+          {
+            "discovery": {
+              "wall_us": 931,
+              "cpu_ns": 274467,
+              "peak_workers": 1,
+              "average_cores": 0.2948088077336198,
+              "cpu_percent": 29.480880773361978,
+              "worker_budget_percent": 29.480880773361978
+            },
+            "reading": {
+              "wall_us": 598,
+              "cpu_ns": 109434,
+              "peak_workers": 1,
+              "average_cores": 0.183,
+              "cpu_percent": 18.3,
+              "worker_budget_percent": 18.3
+            }
+          },
+          {
+            "discovery": {
+              "wall_us": 1043,
+              "cpu_ns": 249759,
+              "peak_workers": 1,
+              "average_cores": 0.2394621284755513,
+              "cpu_percent": 23.946212847555127,
+              "worker_budget_percent": 23.946212847555127
+            },
+            "reading": {
+              "wall_us": 542,
+              "cpu_ns": 73532,
+              "peak_workers": 1,
+              "average_cores": 0.13566789667896678,
+              "cpu_percent": 13.566789667896678,
+              "worker_budget_percent": 13.566789667896678
+            }
+          },
+          {
+            "discovery": {
+              "wall_us": 982,
+              "cpu_ns": 225687,
+              "peak_workers": 1,
+              "average_cores": 0.22982382892057027,
+              "cpu_percent": 22.982382892057025,
+              "worker_budget_percent": 22.982382892057025
+            },
+            "reading": {
+              "wall_us": 536,
+              "cpu_ns": 96482,
+              "peak_workers": 1,
+              "average_cores": 0.18000373134328357,
+              "cpu_percent": 18.000373134328356,
+              "worker_budget_percent": 18.000373134328356
+            }
+          },
+          {
+            "discovery": {
+              "wall_us": 977,
+              "cpu_ns": 322241,
+              "peak_workers": 1,
+              "average_cores": 0.32982702149437054,
+              "cpu_percent": 32.98270214943705,
+              "worker_budget_percent": 32.98270214943705
+            },
+            "reading": {
+              "wall_us": 568,
+              "cpu_ns": 84363,
+              "peak_workers": 1,
+              "average_cores": 0.14852640845070422,
+              "cpu_percent": 14.852640845070422,
+              "worker_budget_percent": 14.852640845070422
+            }
+          },
+          {
+            "discovery": {
+              "wall_us": 1171,
+              "cpu_ns": 228343,
+              "peak_workers": 1,
+              "average_cores": 0.19499829205807004,
+              "cpu_percent": 19.499829205807004,
+              "worker_budget_percent": 19.499829205807004
+            },
+            "reading": {
+              "wall_us": 566,
+              "cpu_ns": 94064,
+              "peak_workers": 1,
+              "average_cores": 0.16619081272084807,
+              "cpu_percent": 16.619081272084806,
+              "worker_budget_percent": 16.619081272084806
+            }
+          },
+          {
+            "discovery": {
+              "wall_us": 1052,
+              "cpu_ns": 287630,
+              "peak_workers": 1,
+              "average_cores": 0.2734125475285171,
+              "cpu_percent": 27.34125475285171,
+              "worker_budget_percent": 27.34125475285171
+            },
+            "reading": {
+              "wall_us": 627,
+              "cpu_ns": 122904,
+              "peak_workers": 1,
+              "average_cores": 0.19601913875598087,
+              "cpu_percent": 19.601913875598086,
+              "worker_budget_percent": 19.601913875598086
+            }
+          },
+          {
+            "discovery": {
+              "wall_us": 1025,
+              "cpu_ns": 210557,
+              "peak_workers": 1,
+              "average_cores": 0.20542146341463416,
+              "cpu_percent": 20.542146341463415,
+              "worker_budget_percent": 20.542146341463415
+            },
+            "reading": {
+              "wall_us": 606,
+              "cpu_ns": 92413,
+              "peak_workers": 1,
+              "average_cores": 0.15249669966996698,
+              "cpu_percent": 15.249669966996699,
+              "worker_budget_percent": 15.249669966996699
+            }
+          },
+          {
+            "discovery": {
+              "wall_us": 1045,
+              "cpu_ns": 285969,
+              "peak_workers": 1,
+              "average_cores": 0.27365454545454543,
+              "cpu_percent": 27.365454545454543,
+              "worker_budget_percent": 27.365454545454543
+            },
+            "reading": {
+              "wall_us": 797,
+              "cpu_ns": 849138,
+              "peak_workers": 1,
+              "average_cores": 1.065417816813049,
+              "cpu_percent": 106.5417816813049,
+              "worker_budget_percent": 106.5417816813049
+            }
+          }
+        ],
+        "8": [
+          {
+            "discovery": {
+              "wall_us": 1126,
+              "cpu_ns": 299840,
+              "peak_workers": 1,
+              "average_cores": 0.26628774422735346,
+              "cpu_percent": 26.628774422735347,
+              "worker_budget_percent": 3.3285968028419184
+            },
+            "reading": {
+              "wall_us": 932,
+              "cpu_ns": 1527745,
+              "peak_workers": 2,
+              "average_cores": 1.639211373390558,
+              "cpu_percent": 163.9211373390558,
+              "worker_budget_percent": 20.490142167381975
+            }
+          },
+          {
+            "discovery": {
+              "wall_us": 1001,
+              "cpu_ns": 736099,
+              "peak_workers": 1,
+              "average_cores": 0.7353636363636363,
+              "cpu_percent": 73.53636363636363,
+              "worker_budget_percent": 9.192045454545454
+            },
+            "reading": {
+              "wall_us": 712,
+              "cpu_ns": 818396,
+              "peak_workers": 2,
+              "average_cores": 1.1494325842696629,
+              "cpu_percent": 114.94325842696628,
+              "worker_budget_percent": 14.367907303370785
+            }
+          },
+          {
+            "discovery": {
+              "wall_us": 1005,
+              "cpu_ns": 448766,
+              "peak_workers": 1,
+              "average_cores": 0.44653333333333334,
+              "cpu_percent": 44.653333333333336,
+              "worker_budget_percent": 5.581666666666667
+            },
+            "reading": {
+              "wall_us": 917,
+              "cpu_ns": 1194089,
+              "peak_workers": 3,
+              "average_cores": 1.3021690294438386,
+              "cpu_percent": 130.21690294438386,
+              "worker_budget_percent": 16.277112868047983
+            }
+          },
+          {
+            "discovery": {
+              "wall_us": 1180,
+              "cpu_ns": 372169,
+              "peak_workers": 1,
+              "average_cores": 0.3153974576271186,
+              "cpu_percent": 31.539745762711863,
+              "worker_budget_percent": 3.942468220338983
+            },
+            "reading": {
+              "wall_us": 1109,
+              "cpu_ns": 1740743,
+              "peak_workers": 3,
+              "average_cores": 1.5696510369702434,
+              "cpu_percent": 156.96510369702435,
+              "worker_budget_percent": 19.620637962128043
+            }
+          },
+          {
+            "discovery": {
+              "wall_us": 946,
+              "cpu_ns": 261258,
+              "peak_workers": 1,
+              "average_cores": 0.27617124735729387,
+              "cpu_percent": 27.617124735729387,
+              "worker_budget_percent": 3.4521405919661734
+            },
+            "reading": {
+              "wall_us": 1022,
+              "cpu_ns": 1233595,
+              "peak_workers": 2,
+              "average_cores": 1.2070401174168297,
+              "cpu_percent": 120.70401174168298,
+              "worker_budget_percent": 15.088001467710372
+            }
+          },
+          {
+            "discovery": {
+              "wall_us": 950,
+              "cpu_ns": 203428,
+              "peak_workers": 1,
+              "average_cores": 0.21413473684210527,
+              "cpu_percent": 21.413473684210526,
+              "worker_budget_percent": 2.6766842105263158
+            },
+            "reading": {
+              "wall_us": 796,
+              "cpu_ns": 1021920,
+              "peak_workers": 2,
+              "average_cores": 1.283819095477387,
+              "cpu_percent": 128.3819095477387,
+              "worker_budget_percent": 16.047738693467338
+            }
+          },
+          {
+            "discovery": {
+              "wall_us": 983,
+              "cpu_ns": 294458,
+              "peak_workers": 1,
+              "average_cores": 0.2995503560528993,
+              "cpu_percent": 29.955035605289932,
+              "worker_budget_percent": 3.7443794506612416
+            },
+            "reading": {
+              "wall_us": 1027,
+              "cpu_ns": 1439488,
+              "peak_workers": 3,
+              "average_cores": 1.4016436222005841,
+              "cpu_percent": 140.16436222005842,
+              "worker_budget_percent": 17.520545277507303
+            }
+          },
+          {
+            "discovery": {
+              "wall_us": 1079,
+              "cpu_ns": 265778,
+              "peak_workers": 1,
+              "average_cores": 0.24631881371640407,
+              "cpu_percent": 24.631881371640407,
+              "worker_budget_percent": 3.078985171455051
+            },
+            "reading": {
+              "wall_us": 927,
+              "cpu_ns": 1718875,
+              "peak_workers": 3,
+              "average_cores": 1.8542340884573894,
+              "cpu_percent": 185.42340884573895,
+              "worker_budget_percent": 23.17792610571737
+            }
+          },
+          {
+            "discovery": {
+              "wall_us": 970,
+              "cpu_ns": 197227,
+              "peak_workers": 1,
+              "average_cores": 0.20332680412371135,
+              "cpu_percent": 20.332680412371136,
+              "worker_budget_percent": 2.541585051546392
+            },
+            "reading": {
+              "wall_us": 921,
+              "cpu_ns": 1192368,
+              "peak_workers": 3,
+              "average_cores": 1.294644951140065,
+              "cpu_percent": 129.4644951140065,
+              "worker_budget_percent": 16.183061889250812
+            }
+          },
+          {
+            "discovery": {
+              "wall_us": 940,
+              "cpu_ns": 218787,
+              "peak_workers": 1,
+              "average_cores": 0.23275212765957448,
+              "cpu_percent": 23.27521276595745,
+              "worker_budget_percent": 2.909401595744681
+            },
+            "reading": {
+              "wall_us": 1036,
+              "cpu_ns": 1760730,
+              "peak_workers": 3,
+              "average_cores": 1.699546332046332,
+              "cpu_percent": 169.9546332046332,
+              "worker_budget_percent": 21.24432915057915
+            }
+          },
+          {
+            "discovery": {
+              "wall_us": 937,
+              "cpu_ns": 194095,
+              "peak_workers": 1,
+              "average_cores": 0.20714514407684098,
+              "cpu_percent": 20.7145144076841,
+              "worker_budget_percent": 2.5893143009605124
+            },
+            "reading": {
+              "wall_us": 936,
+              "cpu_ns": 1198081,
+              "peak_workers": 2,
+              "average_cores": 1.2800010683760683,
+              "cpu_percent": 128.00010683760684,
+              "worker_budget_percent": 16.000013354700855
+            }
+          },
+          {
+            "discovery": {
+              "wall_us": 1008,
+              "cpu_ns": 223287,
+              "peak_workers": 1,
+              "average_cores": 0.22151488095238095,
+              "cpu_percent": 22.151488095238093,
+              "worker_budget_percent": 2.7689360119047617
+            },
+            "reading": {
+              "wall_us": 864,
+              "cpu_ns": 879159,
+              "peak_workers": 2,
+              "average_cores": 1.017545138888889,
+              "cpu_percent": 101.7545138888889,
+              "worker_budget_percent": 12.719314236111112
+            }
+          },
+          {
+            "discovery": {
+              "wall_us": 1084,
+              "cpu_ns": 666572,
+              "peak_workers": 1,
+              "average_cores": 0.6149188191881919,
+              "cpu_percent": 61.49188191881919,
+              "worker_budget_percent": 7.686485239852399
+            },
+            "reading": {
+              "wall_us": 1156,
+              "cpu_ns": 2161557,
+              "peak_workers": 3,
+              "average_cores": 1.8698589965397925,
+              "cpu_percent": 186.98589965397926,
+              "worker_budget_percent": 23.373237456747407
+            }
+          },
+          {
+            "discovery": {
+              "wall_us": 907,
+              "cpu_ns": 305095,
+              "peak_workers": 1,
+              "average_cores": 0.3363781697905182,
+              "cpu_percent": 33.63781697905182,
+              "worker_budget_percent": 4.2047271223814775
+            },
+            "reading": {
+              "wall_us": 957,
+              "cpu_ns": 1784977,
+              "peak_workers": 3,
+              "average_cores": 1.8651797283176594,
+              "cpu_percent": 186.51797283176595,
+              "worker_budget_percent": 23.314746603970743
+            }
+          },
+          {
+            "discovery": {
+              "wall_us": 998,
+              "cpu_ns": 251068,
+              "peak_workers": 1,
+              "average_cores": 0.2515711422845691,
+              "cpu_percent": 25.157114228456912,
+              "worker_budget_percent": 3.144639278557114
+            },
+            "reading": {
+              "wall_us": 910,
+              "cpu_ns": 1683468,
+              "peak_workers": 3,
+              "average_cores": 1.8499648351648352,
+              "cpu_percent": 184.99648351648352,
+              "worker_budget_percent": 23.12456043956044
+            }
+          },
+          {
+            "discovery": {
+              "wall_us": 1020,
+              "cpu_ns": 259998,
+              "peak_workers": 1,
+              "average_cores": 0.2549,
+              "cpu_percent": 25.490000000000002,
+              "worker_budget_percent": 3.1862500000000002
+            },
+            "reading": {
+              "wall_us": 1033,
+              "cpu_ns": 1733077,
+              "peak_workers": 3,
+              "average_cores": 1.6777124878993224,
+              "cpu_percent": 167.77124878993223,
+              "worker_budget_percent": 20.97140609874153
+            }
+          },
+          {
+            "discovery": {
+              "wall_us": 1135,
+              "cpu_ns": 377143,
+              "peak_workers": 1,
+              "average_cores": 0.3322845814977974,
+              "cpu_percent": 33.22845814977974,
+              "worker_budget_percent": 4.1535572687224676
+            },
+            "reading": {
+              "wall_us": 954,
+              "cpu_ns": 1554177,
+              "peak_workers": 2,
+              "average_cores": 1.629116352201258,
+              "cpu_percent": 162.9116352201258,
+              "worker_budget_percent": 20.363954402515724
+            }
+          },
+          {
+            "discovery": {
+              "wall_us": 1005,
+              "cpu_ns": 829008,
+              "peak_workers": 1,
+              "average_cores": 0.8248835820895523,
+              "cpu_percent": 82.48835820895522,
+              "worker_budget_percent": 10.311044776119402
+            },
+            "reading": {
+              "wall_us": 1168,
+              "cpu_ns": 1928827,
+              "peak_workers": 3,
+              "average_cores": 1.6513929794520548,
+              "cpu_percent": 165.13929794520547,
+              "worker_budget_percent": 20.642412243150684
+            }
+          },
+          {
+            "discovery": {
+              "wall_us": 1030,
+              "cpu_ns": 212928,
+              "peak_workers": 1,
+              "average_cores": 0.206726213592233,
+              "cpu_percent": 20.6726213592233,
+              "worker_budget_percent": 2.5840776699029124
+            },
+            "reading": {
+              "wall_us": 850,
+              "cpu_ns": 1508496,
+              "peak_workers": 3,
+              "average_cores": 1.7747011764705882,
+              "cpu_percent": 177.47011764705883,
+              "worker_budget_percent": 22.183764705882353
+            }
+          },
+          {
+            "discovery": {
+              "wall_us": 1111,
+              "cpu_ns": 236787,
+              "peak_workers": 1,
+              "average_cores": 0.21312961296129612,
+              "cpu_percent": 21.31296129612961,
+              "worker_budget_percent": 2.6641201620162014
+            },
+            "reading": {
+              "wall_us": 784,
+              "cpu_ns": 1233725,
+              "peak_workers": 3,
+              "average_cores": 1.5736288265306122,
+              "cpu_percent": 157.3628826530612,
+              "worker_budget_percent": 19.67036033163265
+            }
+          },
+          {
+            "discovery": {
+              "wall_us": 1164,
+              "cpu_ns": 626031,
+              "peak_workers": 1,
+              "average_cores": 0.5378273195876289,
+              "cpu_percent": 53.78273195876289,
+              "worker_budget_percent": 6.722841494845361
+            },
+            "reading": {
+              "wall_us": 906,
+              "cpu_ns": 1372371,
+              "peak_workers": 3,
+              "average_cores": 1.5147582781456954,
+              "cpu_percent": 151.47582781456953,
+              "worker_budget_percent": 18.93447847682119
+            }
+          }
+        ]
+      }
+    },
+    "accounting-large": {
+      "summary": {
+        "1": {
+          "discovery": {
+            "wall_us": {
+              "median": 3138,
+              "min": 2941,
+              "max": 3892
+            },
+            "cpu_ns": {
+              "median": 927571,
+              "min": 292630,
+              "max": 3234389
+            },
+            "peak_workers": {
+              "median": 1,
+              "min": 1,
+              "max": 1
+            },
+            "average_cores": {
+              "median": 0.2943735322119962,
+              "min": 0.0929279136233725,
+              "max": 0.919382888004548
+            },
+            "cpu_percent": {
+              "median": 29.43735322119962,
+              "min": 9.29279136233725,
+              "max": 91.9382888004548
+            },
+            "worker_budget_percent": {
+              "median": 29.43735322119962,
+              "min": 9.29279136233725,
+              "max": 91.9382888004548
+            }
+          },
+          "reading": {
+            "wall_us": {
+              "median": 2419,
+              "min": 2268,
+              "max": 2952
+            },
+            "cpu_ns": {
+              "median": 250918,
+              "min": 137424,
+              "max": 2047493
+            },
+            "peak_workers": {
+              "median": 1,
+              "min": 1,
+              "max": 1
+            },
+            "average_cores": {
+              "median": 0.09292340607616602,
+              "min": 0.060592592592592594,
+              "max": 0.8519937395659433
+            },
+            "cpu_percent": {
+              "median": 9.292340607616602,
+              "min": 6.059259259259259,
+              "max": 85.19937395659433
+            },
+            "worker_budget_percent": {
+              "median": 9.292340607616602,
+              "min": 6.059259259259259,
+              "max": 85.19937395659433
+            }
+          }
+        },
+        "8": {
+          "discovery": {
+            "wall_us": {
+              "median": 3141,
+              "min": 2824,
+              "max": 4016
+            },
+            "cpu_ns": {
+              "median": 1125189,
+              "min": 379452,
+              "max": 2584721
+            },
+            "peak_workers": {
+              "median": 2,
+              "min": 2,
+              "max": 2
+            },
+            "average_cores": {
+              "median": 0.29736030876494024,
+              "min": 0.13436685552407931,
+              "max": 0.7950541371885573
+            },
+            "cpu_percent": {
+              "median": 29.736030876494024,
+              "min": 13.436685552407932,
+              "max": 79.50541371885573
+            },
+            "worker_budget_percent": {
+              "median": 3.717003859561753,
+              "min": 1.6795856940509915,
+              "max": 9.938176714856967
+            }
+          },
+          "reading": {
+            "wall_us": {
+              "median": 1381,
+              "min": 1093,
+              "max": 2013
+            },
+            "cpu_ns": {
+              "median": 4344898,
+              "min": 3373176,
+              "max": 5552994
+            },
+            "peak_workers": {
+              "median": 6,
+              "min": 5,
+              "max": 8
+            },
+            "average_cores": {
+              "median": 3.0604654275092935,
+              "min": 2.6739855177407676,
+              "max": 3.685240033927057
+            },
+            "cpu_percent": {
+              "median": 306.04654275092935,
+              "min": 267.39855177407674,
+              "max": 368.5240033927057
+            },
+            "worker_budget_percent": {
+              "median": 38.25581784386617,
+              "min": 33.42481897175959,
+              "max": 46.06550042408821
+            }
+          }
+        }
+      },
+      "trials": {
+        "1": [
+          {
+            "discovery": {
+              "wall_us": 3089,
+              "cpu_ns": 750404,
+              "peak_workers": 1,
+              "average_cores": 0.24292780835221756,
+              "cpu_percent": 24.292780835221755,
+              "worker_budget_percent": 24.292780835221755
+            },
+            "reading": {
+              "wall_us": 2540,
+              "cpu_ns": 1402272,
+              "peak_workers": 1,
+              "average_cores": 0.552075590551181,
+              "cpu_percent": 55.207559055118104,
+              "worker_budget_percent": 55.207559055118104
+            }
+          },
+          {
+            "discovery": {
+              "wall_us": 3618,
+              "cpu_ns": 341530,
+              "peak_workers": 1,
+              "average_cores": 0.0943974571586512,
+              "cpu_percent": 9.439745715865119,
+              "worker_budget_percent": 9.439745715865119
+            },
+            "reading": {
+              "wall_us": 2446,
+              "cpu_ns": 974071,
+              "peak_workers": 1,
+              "average_cores": 0.3982301717089125,
+              "cpu_percent": 39.82301717089125,
+              "worker_budget_percent": 39.82301717089125
+            }
+          },
+          {
+            "discovery": {
+              "wall_us": 3102,
+              "cpu_ns": 360062,
+              "peak_workers": 1,
+              "average_cores": 0.11607414571244358,
+              "cpu_percent": 11.607414571244359,
+              "worker_budget_percent": 11.607414571244359
+            },
+            "reading": {
+              "wall_us": 2419,
+              "cpu_ns": 577219,
+              "peak_workers": 1,
+              "average_cores": 0.23861885076477884,
+              "cpu_percent": 23.861885076477883,
+              "worker_budget_percent": 23.861885076477883
+            }
+          },
+          {
+            "discovery": {
+              "wall_us": 3000,
+              "cpu_ns": 1216434,
+              "peak_workers": 1,
+              "average_cores": 0.405478,
+              "cpu_percent": 40.5478,
+              "worker_budget_percent": 40.5478
+            },
+            "reading": {
+              "wall_us": 2385,
+              "cpu_ns": 195275,
+              "peak_workers": 1,
+              "average_cores": 0.08187631027253668,
+              "cpu_percent": 8.187631027253667,
+              "worker_budget_percent": 8.187631027253667
+            }
+          },
+          {
+            "discovery": {
+              "wall_us": 3129,
+              "cpu_ns": 1003565,
+              "peak_workers": 1,
+              "average_cores": 0.3207302652604666,
+              "cpu_percent": 32.07302652604666,
+              "worker_budget_percent": 32.07302652604666
+            },
+            "reading": {
+              "wall_us": 2396,
+              "cpu_ns": 2041377,
+              "peak_workers": 1,
+              "average_cores": 0.8519937395659433,
+              "cpu_percent": 85.19937395659433,
+              "worker_budget_percent": 85.19937395659433
+            }
+          },
+          {
+            "discovery": {
+              "wall_us": 3122,
+              "cpu_ns": 507387,
+              "peak_workers": 1,
+              "average_cores": 0.16251985906470212,
+              "cpu_percent": 16.25198590647021,
+              "worker_budget_percent": 16.25198590647021
+            },
+            "reading": {
+              "wall_us": 2443,
+              "cpu_ns": 171195,
+              "peak_workers": 1,
+              "average_cores": 0.07007572656569791,
+              "cpu_percent": 7.007572656569791,
+              "worker_budget_percent": 7.007572656569791
+            }
+          },
+          {
+            "discovery": {
+              "wall_us": 2941,
+              "cpu_ns": 2380603,
+              "peak_workers": 1,
+              "average_cores": 0.8094535872152329,
+              "cpu_percent": 80.94535872152329,
+              "worker_budget_percent": 80.94535872152329
+            },
+            "reading": {
+              "wall_us": 2268,
+              "cpu_ns": 137424,
+              "peak_workers": 1,
+              "average_cores": 0.060592592592592594,
+              "cpu_percent": 6.059259259259259,
+              "worker_budget_percent": 6.059259259259259
+            }
+          },
+          {
+            "discovery": {
+              "wall_us": 3261,
+              "cpu_ns": 413972,
+              "peak_workers": 1,
+              "average_cores": 0.12694633547991413,
+              "cpu_percent": 12.694633547991414,
+              "worker_budget_percent": 12.694633547991414
+            },
+            "reading": {
+              "wall_us": 2543,
+              "cpu_ns": 418489,
+              "peak_workers": 1,
+              "average_cores": 0.16456508061344868,
+              "cpu_percent": 16.45650806134487,
+              "worker_budget_percent": 16.45650806134487
+            }
+          },
+          {
+            "discovery": {
+              "wall_us": 3032,
+              "cpu_ns": 2626539,
+              "peak_workers": 1,
+              "average_cores": 0.8662727572559367,
+              "cpu_percent": 86.62727572559366,
+              "worker_budget_percent": 86.62727572559366
+            },
+            "reading": {
+              "wall_us": 2563,
+              "cpu_ns": 218808,
+              "peak_workers": 1,
+              "average_cores": 0.08537182988685135,
+              "cpu_percent": 8.537182988685135,
+              "worker_budget_percent": 8.537182988685135
+            }
+          },
+          {
+            "discovery": {
+              "wall_us": 3892,
+              "cpu_ns": 1599549,
+              "peak_workers": 1,
+              "average_cores": 0.4109838129496403,
+              "cpu_percent": 41.09838129496403,
+              "worker_budget_percent": 41.09838129496403
+            },
+            "reading": {
+              "wall_us": 2745,
+              "cpu_ns": 2047493,
+              "peak_workers": 1,
+              "average_cores": 0.7458990892531876,
+              "cpu_percent": 74.58990892531875,
+              "worker_budget_percent": 74.58990892531875
+            }
+          },
+          {
+            "discovery": {
+              "wall_us": 3518,
+              "cpu_ns": 3234389,
+              "peak_workers": 1,
+              "average_cores": 0.919382888004548,
+              "cpu_percent": 91.9382888004548,
+              "worker_budget_percent": 91.9382888004548
+            },
+            "reading": {
+              "wall_us": 2952,
+              "cpu_ns": 250918,
+              "peak_workers": 1,
+              "average_cores": 0.08499932249322494,
+              "cpu_percent": 8.499932249322493,
+              "worker_budget_percent": 8.499932249322493
+            }
+          },
+          {
+            "discovery": {
+              "wall_us": 3452,
+              "cpu_ns": 450136,
+              "peak_workers": 1,
+              "average_cores": 0.13039860950173812,
+              "cpu_percent": 13.039860950173813,
+              "worker_budget_percent": 13.039860950173813
+            },
+            "reading": {
+              "wall_us": 2629,
+              "cpu_ns": 719908,
+              "peak_workers": 1,
+              "average_cores": 0.2738333967287942,
+              "cpu_percent": 27.38333967287942,
+              "worker_budget_percent": 27.38333967287942
+            }
+          },
+          {
+            "discovery": {
+              "wall_us": 3138,
+              "cpu_ns": 537368,
+              "peak_workers": 1,
+              "average_cores": 0.17124537922243468,
+              "cpu_percent": 17.12453792224347,
+              "worker_budget_percent": 17.12453792224347
+            },
+            "reading": {
+              "wall_us": 2473,
+              "cpu_ns": 224468,
+              "peak_workers": 1,
+              "average_cores": 0.09076748887990295,
+              "cpu_percent": 9.076748887990295,
+              "worker_budget_percent": 9.076748887990295
+            }
+          },
+          {
+            "discovery": {
+              "wall_us": 3151,
+              "cpu_ns": 927571,
+              "peak_workers": 1,
+              "average_cores": 0.2943735322119962,
+              "cpu_percent": 29.43735322119962,
+              "worker_budget_percent": 29.43735322119962
+            },
+            "reading": {
+              "wall_us": 2415,
+              "cpu_ns": 2031823,
+              "peak_workers": 1,
+              "average_cores": 0.8413345755693582,
+              "cpu_percent": 84.13345755693582,
+              "worker_budget_percent": 84.13345755693582
+            }
+          },
+          {
+            "discovery": {
+              "wall_us": 3234,
+              "cpu_ns": 705817,
+              "peak_workers": 1,
+              "average_cores": 0.21824891774891775,
+              "cpu_percent": 21.824891774891775,
+              "worker_budget_percent": 21.824891774891775
+            },
+            "reading": {
+              "wall_us": 2596,
+              "cpu_ns": 1696212,
+              "peak_workers": 1,
+              "average_cores": 0.6533944530046225,
+              "cpu_percent": 65.33944530046224,
+              "worker_budget_percent": 65.33944530046224
+            }
+          },
+          {
+            "discovery": {
+              "wall_us": 3194,
+              "cpu_ns": 1685809,
+              "peak_workers": 1,
+              "average_cores": 0.5278049467752035,
+              "cpu_percent": 52.78049467752035,
+              "worker_budget_percent": 52.78049467752035
+            },
+            "reading": {
+              "wall_us": 2305,
+              "cpu_ns": 161056,
+              "peak_workers": 1,
+              "average_cores": 0.06987245119305857,
+              "cpu_percent": 6.987245119305857,
+              "worker_budget_percent": 6.987245119305857
+            }
+          },
+          {
+            "discovery": {
+              "wall_us": 3011,
+              "cpu_ns": 1585689,
+              "peak_workers": 1,
+              "average_cores": 0.5266320159415476,
+              "cpu_percent": 52.66320159415476,
+              "worker_budget_percent": 52.66320159415476
+            },
+            "reading": {
+              "wall_us": 2360,
+              "cpu_ns": 152746,
+              "peak_workers": 1,
+              "average_cores": 0.06472288135593221,
+              "cpu_percent": 6.472288135593221,
+              "worker_budget_percent": 6.472288135593221
+            }
+          },
+          {
+            "discovery": {
+              "wall_us": 3196,
+              "cpu_ns": 2541375,
+              "peak_workers": 1,
+              "average_cores": 0.7951736545682102,
+              "cpu_percent": 79.51736545682103,
+              "worker_budget_percent": 79.51736545682103
+            },
+            "reading": {
+              "wall_us": 2347,
+              "cpu_ns": 148304,
+              "peak_workers": 1,
+              "average_cores": 0.0631887515977844,
+              "cpu_percent": 6.3188751597784405,
+              "worker_budget_percent": 6.3188751597784405
+            }
+          },
+          {
+            "discovery": {
+              "wall_us": 3115,
+              "cpu_ns": 2039509,
+              "peak_workers": 1,
+              "average_cores": 0.6547380417335473,
+              "cpu_percent": 65.47380417335474,
+              "worker_budget_percent": 65.47380417335474
+            },
+            "reading": {
+              "wall_us": 2305,
+              "cpu_ns": 147704,
+              "peak_workers": 1,
+              "average_cores": 0.06407982646420825,
+              "cpu_percent": 6.407982646420825,
+              "worker_budget_percent": 6.407982646420825
+            }
+          },
+          {
+            "discovery": {
+              "wall_us": 2941,
+              "cpu_ns": 315370,
+              "peak_workers": 1,
+              "average_cores": 0.10723223393403604,
+              "cpu_percent": 10.723223393403604,
+              "worker_budget_percent": 10.723223393403604
+            },
+            "reading": {
+              "wall_us": 2404,
+              "cpu_ns": 398423,
+              "peak_workers": 1,
+              "average_cores": 0.16573336106489184,
+              "cpu_percent": 16.573336106489183,
+              "worker_budget_percent": 16.573336106489183
+            }
+          },
+          {
+            "discovery": {
+              "wall_us": 3149,
+              "cpu_ns": 292630,
+              "peak_workers": 1,
+              "average_cores": 0.0929279136233725,
+              "cpu_percent": 9.29279136233725,
+              "worker_budget_percent": 9.29279136233725
+            },
+            "reading": {
+              "wall_us": 2337,
+              "cpu_ns": 217162,
+              "peak_workers": 1,
+              "average_cores": 0.09292340607616602,
+              "cpu_percent": 9.292340607616602,
+              "worker_budget_percent": 9.292340607616602
+            }
+          }
+        ],
+        "8": [
+          {
+            "discovery": {
+              "wall_us": 3141,
+              "cpu_ns": 497308,
+              "peak_workers": 2,
+              "average_cores": 0.15832792104425342,
+              "cpu_percent": 15.83279210442534,
+              "worker_budget_percent": 1.9790990130531676
+            },
+            "reading": {
+              "wall_us": 1632,
+              "cpu_ns": 4476092,
+              "peak_workers": 5,
+              "average_cores": 2.742703431372549,
+              "cpu_percent": 274.2703431372549,
+              "worker_budget_percent": 34.28379289215686
+            }
+          },
+          {
+            "discovery": {
+              "wall_us": 3430,
+              "cpu_ns": 655870,
+              "peak_workers": 2,
+              "average_cores": 0.19121574344023323,
+              "cpu_percent": 19.121574344023323,
+              "worker_budget_percent": 2.3901967930029153
+            },
+            "reading": {
+              "wall_us": 1780,
+              "cpu_ns": 5003359,
+              "peak_workers": 6,
+              "average_cores": 2.810875842696629,
+              "cpu_percent": 281.0875842696629,
+              "worker_budget_percent": 35.13594803370786
+            }
+          },
+          {
+            "discovery": {
+              "wall_us": 2933,
+              "cpu_ns": 401234,
+              "peak_workers": 2,
+              "average_cores": 0.13679986362086602,
+              "cpu_percent": 13.679986362086602,
+              "worker_budget_percent": 1.7099982952608253
+            },
+            "reading": {
+              "wall_us": 1304,
+              "cpu_ns": 3691350,
+              "peak_workers": 6,
+              "average_cores": 2.8307898773006137,
+              "cpu_percent": 283.0789877300614,
+              "worker_budget_percent": 35.38487346625767
+            }
+          },
+          {
+            "discovery": {
+              "wall_us": 3040,
+              "cpu_ns": 786257,
+              "peak_workers": 2,
+              "average_cores": 0.25863717105263156,
+              "cpu_percent": 25.863717105263156,
+              "worker_budget_percent": 3.2329646381578945
+            },
+            "reading": {
+              "wall_us": 1309,
+              "cpu_ns": 4479103,
+              "peak_workers": 6,
+              "average_cores": 3.4217746371275783,
+              "cpu_percent": 342.17746371275786,
+              "worker_budget_percent": 42.77218296409473
+            }
+          },
+          {
+            "discovery": {
+              "wall_us": 3017,
+              "cpu_ns": 937877,
+              "peak_workers": 2,
+              "average_cores": 0.3108641034139874,
+              "cpu_percent": 31.08641034139874,
+              "worker_budget_percent": 3.8858012926748424
+            },
+            "reading": {
+              "wall_us": 1345,
+              "cpu_ns": 4116326,
+              "peak_workers": 7,
+              "average_cores": 3.0604654275092935,
+              "cpu_percent": 306.04654275092935,
+              "worker_budget_percent": 38.25581784386617
+            }
+          },
+          {
+            "discovery": {
+              "wall_us": 2999,
+              "cpu_ns": 2039203,
+              "peak_workers": 2,
+              "average_cores": 0.6799609869956652,
+              "cpu_percent": 67.99609869956652,
+              "worker_budget_percent": 8.499512337445815
+            },
+            "reading": {
+              "wall_us": 1179,
+              "cpu_ns": 4344898,
+              "peak_workers": 7,
+              "average_cores": 3.685240033927057,
+              "cpu_percent": 368.5240033927057,
+              "worker_budget_percent": 46.06550042408821
+            }
+          },
+          {
+            "discovery": {
+              "wall_us": 3040,
+              "cpu_ns": 2357872,
+              "peak_workers": 2,
+              "average_cores": 0.7756157894736843,
+              "cpu_percent": 77.56157894736843,
+              "worker_budget_percent": 9.695197368421054
+            },
+            "reading": {
+              "wall_us": 1377,
+              "cpu_ns": 4169473,
+              "peak_workers": 5,
+              "average_cores": 3.0279397240377635,
+              "cpu_percent": 302.79397240377637,
+              "worker_budget_percent": 37.849246550472046
+            }
+          },
+          {
+            "discovery": {
+              "wall_us": 2824,
+              "cpu_ns": 379452,
+              "peak_workers": 2,
+              "average_cores": 0.13436685552407931,
+              "cpu_percent": 13.436685552407932,
+              "worker_budget_percent": 1.6795856940509915
+            },
+            "reading": {
+              "wall_us": 1520,
+              "cpu_ns": 5500496,
+              "peak_workers": 7,
+              "average_cores": 3.6187473684210527,
+              "cpu_percent": 361.8747368421053,
+              "worker_budget_percent": 45.23434210526316
+            }
+          },
+          {
+            "discovery": {
+              "wall_us": 3799,
+              "cpu_ns": 882129,
+              "peak_workers": 2,
+              "average_cores": 0.23220031587259804,
+              "cpu_percent": 23.220031587259804,
+              "worker_budget_percent": 2.9025039484074755
+            },
+            "reading": {
+              "wall_us": 1774,
+              "cpu_ns": 5462026,
+              "peak_workers": 5,
+              "average_cores": 3.078932356257046,
+              "cpu_percent": 307.8932356257046,
+              "worker_budget_percent": 38.48665445321308
+            }
+          },
+          {
+            "discovery": {
+              "wall_us": 3372,
+              "cpu_ns": 612799,
+              "peak_workers": 2,
+              "average_cores": 0.18173161328588375,
+              "cpu_percent": 18.173161328588375,
+              "worker_budget_percent": 2.271645166073547
+            },
+            "reading": {
+              "wall_us": 2013,
+              "cpu_ns": 5552994,
+              "peak_workers": 5,
+              "average_cores": 2.7585663189269747,
+              "cpu_percent": 275.85663189269746,
+              "worker_budget_percent": 34.48207898658718
+            }
+          },
+          {
+            "discovery": {
+              "wall_us": 3837,
+              "cpu_ns": 1125189,
+              "peak_workers": 2,
+              "average_cores": 0.2932470680218921,
+              "cpu_percent": 29.32470680218921,
+              "worker_budget_percent": 3.665588350273651
+            },
+            "reading": {
+              "wall_us": 1567,
+              "cpu_ns": 4603954,
+              "peak_workers": 5,
+              "average_cores": 2.9380689215060625,
+              "cpu_percent": 293.80689215060625,
+              "worker_budget_percent": 36.72586151882578
+            }
+          },
+          {
+            "discovery": {
+              "wall_us": 3291,
+              "cpu_ns": 587080,
+              "peak_workers": 2,
+              "average_cores": 0.17838954725007597,
+              "cpu_percent": 17.838954725007596,
+              "worker_budget_percent": 2.2298693406259495
+            },
+            "reading": {
+              "wall_us": 1405,
+              "cpu_ns": 4550481,
+              "peak_workers": 6,
+              "average_cores": 3.238776512455516,
+              "cpu_percent": 323.8776512455516,
+              "worker_budget_percent": 40.48470640569395
+            }
+          },
+          {
+            "discovery": {
+              "wall_us": 3195,
+              "cpu_ns": 2129836,
+              "peak_workers": 2,
+              "average_cores": 0.6666153364632238,
+              "cpu_percent": 66.66153364632238,
+              "worker_budget_percent": 8.332691705790298
+            },
+            "reading": {
+              "wall_us": 1566,
+              "cpu_ns": 4308170,
+              "peak_workers": 5,
+              "average_cores": 2.751066411238825,
+              "cpu_percent": 275.1066411238825,
+              "worker_budget_percent": 34.388330140485316
+            }
+          },
+          {
+            "discovery": {
+              "wall_us": 4016,
+              "cpu_ns": 1194199,
+              "peak_workers": 2,
+              "average_cores": 0.29736030876494024,
+              "cpu_percent": 29.736030876494024,
+              "worker_budget_percent": 3.717003859561753
+            },
+            "reading": {
+              "wall_us": 1428,
+              "cpu_ns": 4716462,
+              "peak_workers": 6,
+              "average_cores": 3.302844537815126,
+              "cpu_percent": 330.28445378151264,
+              "worker_budget_percent": 41.28555672268908
+            }
+          },
+          {
+            "discovery": {
+              "wall_us": 2996,
+              "cpu_ns": 650203,
+              "peak_workers": 2,
+              "average_cores": 0.21702369826435247,
+              "cpu_percent": 21.70236982643525,
+              "worker_budget_percent": 2.712796228304406
+            },
+            "reading": {
+              "wall_us": 1141,
+              "cpu_ns": 3373176,
+              "peak_workers": 8,
+              "average_cores": 2.956333041191937,
+              "cpu_percent": 295.63330411919367,
+              "worker_budget_percent": 36.95416301489921
+            }
+          },
+          {
+            "discovery": {
+              "wall_us": 3111,
+              "cpu_ns": 1337791,
+              "peak_workers": 2,
+              "average_cores": 0.43001960784313725,
+              "cpu_percent": 43.001960784313724,
+              "worker_budget_percent": 5.3752450980392155
+            },
+            "reading": {
+              "wall_us": 1433,
+              "cpu_ns": 3988692,
+              "peak_workers": 7,
+              "average_cores": 2.783455687369156,
+              "cpu_percent": 278.3455687369156,
+              "worker_budget_percent": 34.79319609211445
+            }
+          },
+          {
+            "discovery": {
+              "wall_us": 3228,
+              "cpu_ns": 1549813,
+              "peak_workers": 2,
+              "average_cores": 0.480115551425031,
+              "cpu_percent": 48.0115551425031,
+              "worker_budget_percent": 6.001444392812887
+            },
+            "reading": {
+              "wall_us": 1348,
+              "cpu_ns": 4560920,
+              "peak_workers": 6,
+              "average_cores": 3.383471810089021,
+              "cpu_percent": 338.3471810089021,
+              "worker_budget_percent": 42.293397626112764
+            }
+          },
+          {
+            "discovery": {
+              "wall_us": 3118,
+              "cpu_ns": 1675726,
+              "peak_workers": 2,
+              "average_cores": 0.5374361770365619,
+              "cpu_percent": 53.743617703656184,
+              "worker_budget_percent": 6.717952212957023
+            },
+            "reading": {
+              "wall_us": 1253,
+              "cpu_ns": 4239713,
+              "peak_workers": 6,
+              "average_cores": 3.383649640861931,
+              "cpu_percent": 338.36496408619314,
+              "worker_budget_percent": 42.29562051077414
+            }
+          },
+          {
+            "discovery": {
+              "wall_us": 3106,
+              "cpu_ns": 1706590,
+              "peak_workers": 2,
+              "average_cores": 0.5494494526722473,
+              "cpu_percent": 54.94494526722473,
+              "worker_budget_percent": 6.8681181584030915
+            },
+            "reading": {
+              "wall_us": 1181,
+              "cpu_ns": 3790549,
+              "peak_workers": 6,
+              "average_cores": 3.209609652836579,
+              "cpu_percent": 320.9609652836579,
+              "worker_budget_percent": 40.12012066045724
+            }
+          },
+          {
+            "discovery": {
+              "wall_us": 3251,
+              "cpu_ns": 2584721,
+              "peak_workers": 2,
+              "average_cores": 0.7950541371885573,
+              "cpu_percent": 79.50541371885573,
+              "worker_budget_percent": 9.938176714856967
+            },
+            "reading": {
+              "wall_us": 1381,
+              "cpu_ns": 3692774,
+              "peak_workers": 6,
+              "average_cores": 2.6739855177407676,
+              "cpu_percent": 267.39855177407674,
+              "worker_budget_percent": 33.42481897175959
+            }
+          },
+          {
+            "discovery": {
+              "wall_us": 3442,
+              "cpu_ns": 1722261,
+              "peak_workers": 2,
+              "average_cores": 0.5003663567693202,
+              "cpu_percent": 50.036635676932015,
+              "worker_budget_percent": 6.254579459616502
+            },
+            "reading": {
+              "wall_us": 1093,
+              "cpu_ns": 3406672,
+              "peak_workers": 8,
+              "average_cores": 3.1168087831655993,
+              "cpu_percent": 311.6808783165599,
+              "worker_budget_percent": 38.96010978956999
+            }
+          }
+        ]
+      }
+    },
+    "my-try": {
+      "summary": {
+        "1": {
+          "discovery": {
+            "wall_us": {
+              "median": 11661,
+              "min": 11344,
+              "max": 12216
+            },
+            "cpu_ns": {
+              "median": 6465247,
+              "min": 3009398,
+              "max": 8768809
+            },
+            "peak_workers": {
+              "median": 1,
+              "min": 1,
+              "max": 1
+            },
+            "average_cores": {
+              "median": 0.551123676118893,
+              "min": 0.26308226243552757,
+              "max": 0.771834257547751
+            },
+            "cpu_percent": {
+              "median": 55.112367611889304,
+              "min": 26.308226243552756,
+              "max": 77.1834257547751
+            },
+            "worker_budget_percent": {
+              "median": 55.112367611889304,
+              "min": 26.308226243552756,
+              "max": 77.1834257547751
+            }
+          },
+          "reading": {
+            "wall_us": {
+              "median": 6922,
+              "min": 6595,
+              "max": 7662
+            },
+            "cpu_ns": {
+              "median": 4701492,
+              "min": 3063337,
+              "max": 6886921
+            },
+            "peak_workers": {
+              "median": 1,
+              "min": 1,
+              "max": 1
+            },
+            "average_cores": {
+              "median": 0.6772388591800357,
+              "min": 0.4486287100456621,
+              "max": 0.9863078935891845
+            },
+            "cpu_percent": {
+              "median": 67.72388591800357,
+              "min": 44.862871004566216,
+              "max": 98.63078935891845
+            },
+            "worker_budget_percent": {
+              "median": 67.72388591800357,
+              "min": 44.862871004566216,
+              "max": 98.63078935891845
+            }
+          }
+        },
+        "8": {
+          "discovery": {
+            "wall_us": {
+              "median": 7327,
+              "min": 6846,
+              "max": 8241
+            },
+            "cpu_ns": {
+              "median": 6051291,
+              "min": 5197939,
+              "max": 8415414
+            },
+            "peak_workers": {
+              "median": 8,
+              "min": 6,
+              "max": 8
+            },
+            "average_cores": {
+              "median": 0.8366700670765791,
+              "min": 0.7037556187381533,
+              "max": 1.1847689708573843
+            },
+            "cpu_percent": {
+              "median": 83.6670067076579,
+              "min": 70.37556187381533,
+              "max": 118.47689708573843
+            },
+            "worker_budget_percent": {
+              "median": 10.458375838457238,
+              "min": 8.796945234226916,
+              "max": 14.809612135717304
+            }
+          },
+          "reading": {
+            "wall_us": {
+              "median": 2766,
+              "min": 2089,
+              "max": 3224
+            },
+            "cpu_ns": {
+              "median": 10969597,
+              "min": 8308759,
+              "max": 12683212
+            },
+            "peak_workers": {
+              "median": 8,
+              "min": 8,
+              "max": 8
+            },
+            "average_cores": {
+              "median": 4.117062769843906,
+              "min": 3.517023725553062,
+              "max": 4.642054313099042
+            },
+            "cpu_percent": {
+              "median": 411.70627698439057,
+              "min": 351.7023725553062,
+              "max": 464.20543130990416
+            },
+            "worker_budget_percent": {
+              "median": 51.46328462304882,
+              "min": 43.96279656941328,
+              "max": 58.02567891373802
+            }
+          }
+        }
+      },
+      "trials": {
+        "1": [
+          {
+            "discovery": {
+              "wall_us": 11786,
+              "cpu_ns": 8211701,
+              "peak_workers": 1,
+              "average_cores": 0.6967334973697608,
+              "cpu_percent": 69.67334973697608,
+              "worker_budget_percent": 69.67334973697608
+            },
+            "reading": {
+              "wall_us": 7662,
+              "cpu_ns": 4727587,
+              "peak_workers": 1,
+              "average_cores": 0.6170173583920647,
+              "cpu_percent": 61.70173583920647,
+              "worker_budget_percent": 61.70173583920647
+            }
+          },
+          {
+            "discovery": {
+              "wall_us": 11553,
+              "cpu_ns": 6465247,
+              "peak_workers": 1,
+              "average_cores": 0.5596162901410889,
+              "cpu_percent": 55.961629014108894,
+              "worker_budget_percent": 55.961629014108894
+            },
+            "reading": {
+              "wall_us": 7008,
+              "cpu_ns": 3143990,
+              "peak_workers": 1,
+              "average_cores": 0.4486287100456621,
+              "cpu_percent": 44.862871004566216,
+              "worker_budget_percent": 44.862871004566216
+            }
+          },
+          {
+            "discovery": {
+              "wall_us": 11737,
+              "cpu_ns": 5054137,
+              "peak_workers": 1,
+              "average_cores": 0.4306157450796626,
+              "cpu_percent": 43.06157450796626,
+              "worker_budget_percent": 43.06157450796626
+            },
+            "reading": {
+              "wall_us": 6922,
+              "cpu_ns": 5200674,
+              "peak_workers": 1,
+              "average_cores": 0.7513253394972551,
+              "cpu_percent": 75.13253394972551,
+              "worker_budget_percent": 75.13253394972551
+            }
+          },
+          {
+            "discovery": {
+              "wall_us": 11708,
+              "cpu_ns": 6452556,
+              "peak_workers": 1,
+              "average_cores": 0.551123676118893,
+              "cpu_percent": 55.112367611889304,
+              "worker_budget_percent": 55.112367611889304
+            },
+            "reading": {
+              "wall_us": 7155,
+              "cpu_ns": 3267434,
+              "peak_workers": 1,
+              "average_cores": 0.45666443046820404,
+              "cpu_percent": 45.666443046820405,
+              "worker_budget_percent": 45.666443046820405
+            }
+          },
+          {
+            "discovery": {
+              "wall_us": 11746,
+              "cpu_ns": 7451319,
+              "peak_workers": 1,
+              "average_cores": 0.6343707645155797,
+              "cpu_percent": 63.43707645155797,
+              "worker_budget_percent": 63.43707645155797
+            },
+            "reading": {
+              "wall_us": 7080,
+              "cpu_ns": 4280984,
+              "peak_workers": 1,
+              "average_cores": 0.6046587570621469,
+              "cpu_percent": 60.46587570621469,
+              "worker_budget_percent": 60.46587570621469
+            }
+          },
+          {
+            "discovery": {
+              "wall_us": 11677,
+              "cpu_ns": 3397413,
+              "peak_workers": 1,
+              "average_cores": 0.29094913076988954,
+              "cpu_percent": 29.094913076988956,
+              "worker_budget_percent": 29.094913076988956
+            },
+            "reading": {
+              "wall_us": 7616,
+              "cpu_ns": 6161131,
+              "peak_workers": 1,
+              "average_cores": 0.8089720325630252,
+              "cpu_percent": 80.89720325630252,
+              "worker_budget_percent": 80.89720325630252
+            }
+          },
+          {
+            "discovery": {
+              "wall_us": 12071,
+              "cpu_ns": 6634562,
+              "peak_workers": 1,
+              "average_cores": 0.549628199817745,
+              "cpu_percent": 54.9628199817745,
+              "worker_budget_percent": 54.9628199817745
+            },
+            "reading": {
+              "wall_us": 7353,
+              "cpu_ns": 6886921,
+              "peak_workers": 1,
+              "average_cores": 0.9366137630898953,
+              "cpu_percent": 93.66137630898953,
+              "worker_budget_percent": 93.66137630898953
+            }
+          },
+          {
+            "discovery": {
+              "wall_us": 11938,
+              "cpu_ns": 7887013,
+              "peak_workers": 1,
+              "average_cores": 0.6606645166694589,
+              "cpu_percent": 66.0664516669459,
+              "worker_budget_percent": 66.0664516669459
+            },
+            "reading": {
+              "wall_us": 6900,
+              "cpu_ns": 4603904,
+              "peak_workers": 1,
+              "average_cores": 0.667232463768116,
+              "cpu_percent": 66.7232463768116,
+              "worker_budget_percent": 66.7232463768116
+            }
+          },
+          {
+            "discovery": {
+              "wall_us": 11542,
+              "cpu_ns": 5912447,
+              "peak_workers": 1,
+              "average_cores": 0.5122549818055796,
+              "cpu_percent": 51.22549818055796,
+              "worker_budget_percent": 51.22549818055796
+            },
+            "reading": {
+              "wall_us": 6814,
+              "cpu_ns": 3063337,
+              "peak_workers": 1,
+              "average_cores": 0.4495651599647784,
+              "cpu_percent": 44.95651599647784,
+              "worker_budget_percent": 44.95651599647784
+            }
+          },
+          {
+            "discovery": {
+              "wall_us": 11505,
+              "cpu_ns": 5820341,
+              "peak_workers": 1,
+              "average_cores": 0.505896653628857,
+              "cpu_percent": 50.589665362885704,
+              "worker_budget_percent": 50.589665362885704
+            },
+            "reading": {
+              "wall_us": 6823,
+              "cpu_ns": 3629227,
+              "peak_workers": 1,
+              "average_cores": 0.5319107430748937,
+              "cpu_percent": 53.19107430748937,
+              "worker_budget_percent": 53.19107430748937
+            }
+          },
+          {
+            "discovery": {
+              "wall_us": 11439,
+              "cpu_ns": 3009398,
+              "peak_workers": 1,
+              "average_cores": 0.26308226243552757,
+              "cpu_percent": 26.308226243552756,
+              "worker_budget_percent": 26.308226243552756
+            },
+            "reading": {
+              "wall_us": 7010,
+              "cpu_ns": 6197053,
+              "peak_workers": 1,
+              "average_cores": 0.8840303851640513,
+              "cpu_percent": 88.40303851640513,
+              "worker_budget_percent": 88.40303851640513
+            }
+          },
+          {
+            "discovery": {
+              "wall_us": 11831,
+              "cpu_ns": 4137373,
+              "peak_workers": 1,
+              "average_cores": 0.3497061110641535,
+              "cpu_percent": 34.97061110641535,
+              "worker_budget_percent": 34.97061110641535
+            },
+            "reading": {
+              "wall_us": 7079,
+              "cpu_ns": 6301887,
+              "peak_workers": 1,
+              "average_cores": 0.8902227715779065,
+              "cpu_percent": 89.02227715779065,
+              "worker_budget_percent": 89.02227715779065
+            }
+          },
+          {
+            "discovery": {
+              "wall_us": 12216,
+              "cpu_ns": 7091466,
+              "peak_workers": 1,
+              "average_cores": 0.5805063850687623,
+              "cpu_percent": 58.050638506876226,
+              "worker_budget_percent": 58.050638506876226
+            },
+            "reading": {
+              "wall_us": 6595,
+              "cpu_ns": 3181472,
+              "peak_workers": 1,
+              "average_cores": 0.48240667172100077,
+              "cpu_percent": 48.240667172100075,
+              "worker_budget_percent": 48.240667172100075
+            }
+          },
+          {
+            "discovery": {
+              "wall_us": 11573,
+              "cpu_ns": 8102248,
+              "peak_workers": 1,
+              "average_cores": 0.7000991964054264,
+              "cpu_percent": 70.00991964054263,
+              "worker_budget_percent": 70.00991964054263
+            },
+            "reading": {
+              "wall_us": 6804,
+              "cpu_ns": 4701492,
+              "peak_workers": 1,
+              "average_cores": 0.690989417989418,
+              "cpu_percent": 69.09894179894181,
+              "worker_budget_percent": 69.09894179894181
+            }
+          },
+          {
+            "discovery": {
+              "wall_us": 11477,
+              "cpu_ns": 6991144,
+              "peak_workers": 1,
+              "average_cores": 0.6091438529232378,
+              "cpu_percent": 60.91438529232378,
+              "worker_budget_percent": 60.91438529232378
+            },
+            "reading": {
+              "wall_us": 6931,
+              "cpu_ns": 3513878,
+              "peak_workers": 1,
+              "average_cores": 0.5069799451738566,
+              "cpu_percent": 50.69799451738566,
+              "worker_budget_percent": 50.69799451738566
+            }
+          },
+          {
+            "discovery": {
+              "wall_us": 11539,
+              "cpu_ns": 5006796,
+              "peak_workers": 1,
+              "average_cores": 0.4339020712366756,
+              "cpu_percent": 43.390207123667565,
+              "worker_budget_percent": 43.390207123667565
+            },
+            "reading": {
+              "wall_us": 6879,
+              "cpu_ns": 6784812,
+              "peak_workers": 1,
+              "average_cores": 0.9863078935891845,
+              "cpu_percent": 98.63078935891845,
+              "worker_budget_percent": 98.63078935891845
+            }
+          },
+          {
+            "discovery": {
+              "wall_us": 11661,
+              "cpu_ns": 8752724,
+              "peak_workers": 1,
+              "average_cores": 0.7505980619157877,
+              "cpu_percent": 75.05980619157877,
+              "worker_budget_percent": 75.05980619157877
+            },
+            "reading": {
+              "wall_us": 7028,
+              "cpu_ns": 5122633,
+              "peak_workers": 1,
+              "average_cores": 0.7288891576550939,
+              "cpu_percent": 72.88891576550938,
+              "worker_budget_percent": 72.88891576550938
+            }
+          },
+          {
+            "discovery": {
+              "wall_us": 11989,
+              "cpu_ns": 3505809,
+              "peak_workers": 1,
+              "average_cores": 0.2924188005671866,
+              "cpu_percent": 29.24188005671866,
+              "worker_budget_percent": 29.24188005671866
+            },
+            "reading": {
+              "wall_us": 6868,
+              "cpu_ns": 5726531,
+              "peak_workers": 1,
+              "average_cores": 0.8337989225393128,
+              "cpu_percent": 83.37989225393127,
+              "worker_budget_percent": 83.37989225393127
+            }
+          },
+          {
+            "discovery": {
+              "wall_us": 11375,
+              "cpu_ns": 7076286,
+              "peak_workers": 1,
+              "average_cores": 0.622091076923077,
+              "cpu_percent": 62.2091076923077,
+              "worker_budget_percent": 62.2091076923077
+            },
+            "reading": {
+              "wall_us": 6732,
+              "cpu_ns": 4559172,
+              "peak_workers": 1,
+              "average_cores": 0.6772388591800357,
+              "cpu_percent": 67.72388591800357,
+              "worker_budget_percent": 67.72388591800357
+            }
+          },
+          {
+            "discovery": {
+              "wall_us": 11361,
+              "cpu_ns": 8768809,
+              "peak_workers": 1,
+              "average_cores": 0.771834257547751,
+              "cpu_percent": 77.1834257547751,
+              "worker_budget_percent": 77.1834257547751
+            },
+            "reading": {
+              "wall_us": 6819,
+              "cpu_ns": 5162077,
+              "peak_workers": 1,
+              "average_cores": 0.7570137850124652,
+              "cpu_percent": 75.70137850124652,
+              "worker_budget_percent": 75.70137850124652
+            }
+          },
+          {
+            "discovery": {
+              "wall_us": 11344,
+              "cpu_ns": 6033149,
+              "peak_workers": 1,
+              "average_cores": 0.5318361248236954,
+              "cpu_percent": 53.18361248236953,
+              "worker_budget_percent": 53.18361248236953
+            },
+            "reading": {
+              "wall_us": 6679,
+              "cpu_ns": 3969884,
+              "peak_workers": 1,
+              "average_cores": 0.5943829914657883,
+              "cpu_percent": 59.438299146578835,
+              "worker_budget_percent": 59.438299146578835
+            }
+          }
+        ],
+        "8": [
+          {
+            "discovery": {
+              "wall_us": 7354,
+              "cpu_ns": 6953015,
+              "peak_workers": 8,
+              "average_cores": 0.9454738917595866,
+              "cpu_percent": 94.54738917595866,
+              "worker_budget_percent": 11.818423646994832
+            },
+            "reading": {
+              "wall_us": 2735,
+              "cpu_ns": 11336323,
+              "peak_workers": 8,
+              "average_cores": 4.144907861060329,
+              "cpu_percent": 414.4907861060329,
+              "worker_budget_percent": 51.81134826325411
+            }
+          },
+          {
+            "discovery": {
+              "wall_us": 7386,
+              "cpu_ns": 5197939,
+              "peak_workers": 8,
+              "average_cores": 0.7037556187381533,
+              "cpu_percent": 70.37556187381533,
+              "worker_budget_percent": 8.796945234226916
+            },
+            "reading": {
+              "wall_us": 2824,
+              "cpu_ns": 12323342,
+              "peak_workers": 8,
+              "average_cores": 4.363789660056657,
+              "cpu_percent": 436.3789660056657,
+              "worker_budget_percent": 54.54737075070821
+            }
+          },
+          {
+            "discovery": {
+              "wall_us": 8103,
+              "cpu_ns": 7652735,
+              "peak_workers": 8,
+              "average_cores": 0.9444323090213501,
+              "cpu_percent": 94.44323090213501,
+              "worker_budget_percent": 11.805403862766877
+            },
+            "reading": {
+              "wall_us": 2993,
+              "cpu_ns": 12060906,
+              "peak_workers": 8,
+              "average_cores": 4.02970464416973,
+              "cpu_percent": 402.97046441697296,
+              "worker_budget_percent": 50.37130805212162
+            }
+          },
+          {
+            "discovery": {
+              "wall_us": 7442,
+              "cpu_ns": 6401062,
+              "peak_workers": 8,
+              "average_cores": 0.860126578876646,
+              "cpu_percent": 86.0126578876646,
+              "worker_budget_percent": 10.751582235958075
+            },
+            "reading": {
+              "wall_us": 2429,
+              "cpu_ns": 10460426,
+              "peak_workers": 8,
+              "average_cores": 4.306474269246603,
+              "cpu_percent": 430.64742692466035,
+              "worker_budget_percent": 53.830928365582544
+            }
+          },
+          {
+            "discovery": {
+              "wall_us": 7849,
+              "cpu_ns": 7668808,
+              "peak_workers": 8,
+              "average_cores": 0.9770426805962543,
+              "cpu_percent": 97.70426805962543,
+              "worker_budget_percent": 12.21303350745318
+            },
+            "reading": {
+              "wall_us": 2949,
+              "cpu_ns": 11855765,
+              "peak_workers": 8,
+              "average_cores": 4.020266191929467,
+              "cpu_percent": 402.0266191929467,
+              "worker_budget_percent": 50.25332739911834
+            }
+          },
+          {
+            "discovery": {
+              "wall_us": 7408,
+              "cpu_ns": 5556546,
+              "peak_workers": 8,
+              "average_cores": 0.7500737041036717,
+              "cpu_percent": 75.00737041036717,
+              "worker_budget_percent": 9.375921301295897
+            },
+            "reading": {
+              "wall_us": 3224,
+              "cpu_ns": 12255046,
+              "peak_workers": 8,
+              "average_cores": 3.8011929280397023,
+              "cpu_percent": 380.1192928039702,
+              "worker_budget_percent": 47.514911600496276
+            }
+          },
+          {
+            "discovery": {
+              "wall_us": 8241,
+              "cpu_ns": 6146263,
+              "peak_workers": 8,
+              "average_cores": 0.7458151923310278,
+              "cpu_percent": 74.58151923310278,
+              "worker_budget_percent": 9.322689904137848
+            },
+            "reading": {
+              "wall_us": 3072,
+              "cpu_ns": 12683212,
+              "peak_workers": 8,
+              "average_cores": 4.1286497395833335,
+              "cpu_percent": 412.86497395833334,
+              "worker_budget_percent": 51.60812174479167
+            }
+          },
+          {
+            "discovery": {
+              "wall_us": 7255,
+              "cpu_ns": 6051291,
+              "peak_workers": 8,
+              "average_cores": 0.8340855961405927,
+              "cpu_percent": 83.40855961405927,
+              "worker_budget_percent": 10.426069951757409
+            },
+            "reading": {
+              "wall_us": 2154,
+              "cpu_ns": 9175161,
+              "peak_workers": 8,
+              "average_cores": 4.259591922005571,
+              "cpu_percent": 425.9591922005571,
+              "worker_budget_percent": 53.244899025069635
+            }
+          },
+          {
+            "discovery": {
+              "wall_us": 7199,
+              "cpu_ns": 7013834,
+              "peak_workers": 8,
+              "average_cores": 0.9742789276288374,
+              "cpu_percent": 97.42789276288374,
+              "worker_budget_percent": 12.178486595360468
+            },
+            "reading": {
+              "wall_us": 3011,
+              "cpu_ns": 12396476,
+              "peak_workers": 8,
+              "average_cores": 4.117062769843906,
+              "cpu_percent": 411.70627698439057,
+              "worker_budget_percent": 51.46328462304882
+            }
+          },
+          {
+            "discovery": {
+              "wall_us": 6846,
+              "cpu_ns": 5404549,
+              "peak_workers": 8,
+              "average_cores": 0.7894462459830558,
+              "cpu_percent": 78.94462459830558,
+              "worker_budget_percent": 9.868078074788198
+            },
+            "reading": {
+              "wall_us": 2145,
+              "cpu_ns": 9588033,
+              "peak_workers": 8,
+              "average_cores": 4.469945454545455,
+              "cpu_percent": 446.99454545454546,
+              "worker_budget_percent": 55.87431818181818
+            }
+          },
+          {
+            "discovery": {
+              "wall_us": 7156,
+              "cpu_ns": 5987211,
+              "peak_workers": 8,
+              "average_cores": 0.8366700670765791,
+              "cpu_percent": 83.6670067076579,
+              "worker_budget_percent": 10.458375838457238
+            },
+            "reading": {
+              "wall_us": 2984,
+              "cpu_ns": 11288833,
+              "peak_workers": 8,
+              "average_cores": 3.783120978552279,
+              "cpu_percent": 378.3120978552279,
+              "worker_budget_percent": 47.289012231903484
+            }
+          },
+          {
+            "discovery": {
+              "wall_us": 7068,
+              "cpu_ns": 5693985,
+              "peak_workers": 8,
+              "average_cores": 0.8056005942275043,
+              "cpu_percent": 80.56005942275043,
+              "worker_budget_percent": 10.070007427843803
+            },
+            "reading": {
+              "wall_us": 2699,
+              "cpu_ns": 10633065,
+              "peak_workers": 8,
+              "average_cores": 3.9396313449425713,
+              "cpu_percent": 393.96313449425713,
+              "worker_budget_percent": 49.24539181178214
+            }
+          },
+          {
+            "discovery": {
+              "wall_us": 7094,
+              "cpu_ns": 5232391,
+              "peak_workers": 8,
+              "average_cores": 0.7375797857344235,
+              "cpu_percent": 73.75797857344236,
+              "worker_budget_percent": 9.219747321680295
+            },
+            "reading": {
+              "wall_us": 2191,
+              "cpu_ns": 10170741,
+              "peak_workers": 8,
+              "average_cores": 4.642054313099042,
+              "cpu_percent": 464.20543130990416,
+              "worker_budget_percent": 58.02567891373802
+            }
+          },
+          {
+            "discovery": {
+              "wall_us": 7593,
+              "cpu_ns": 6958262,
+              "peak_workers": 8,
+              "average_cores": 0.9164048465692085,
+              "cpu_percent": 91.64048465692085,
+              "worker_budget_percent": 11.455060582115106
+            },
+            "reading": {
+              "wall_us": 2464,
+              "cpu_ns": 10719678,
+              "peak_workers": 8,
+              "average_cores": 4.350518668831169,
+              "cpu_percent": 435.05186688311693,
+              "worker_budget_percent": 54.381483360389616
+            }
+          },
+          {
+            "discovery": {
+              "wall_us": 7542,
+              "cpu_ns": 7372197,
+              "peak_workers": 8,
+              "average_cores": 0.9774856801909307,
+              "cpu_percent": 97.74856801909307,
+              "worker_budget_percent": 12.218571002386634
+            },
+            "reading": {
+              "wall_us": 2772,
+              "cpu_ns": 10731080,
+              "peak_workers": 8,
+              "average_cores": 3.871240981240981,
+              "cpu_percent": 387.1240981240981,
+              "worker_budget_percent": 48.390512265512264
+            }
+          },
+          {
+            "discovery": {
+              "wall_us": 6870,
+              "cpu_ns": 5795382,
+              "peak_workers": 8,
+              "average_cores": 0.8435781659388646,
+              "cpu_percent": 84.35781659388645,
+              "worker_budget_percent": 10.544727074235807
+            },
+            "reading": {
+              "wall_us": 2872,
+              "cpu_ns": 11486662,
+              "peak_workers": 8,
+              "average_cores": 3.999534122562674,
+              "cpu_percent": 399.95341225626737,
+              "worker_budget_percent": 49.99417653203342
+            }
+          },
+          {
+            "discovery": {
+              "wall_us": 7063,
+              "cpu_ns": 5821336,
+              "peak_workers": 8,
+              "average_cores": 0.8242016140450233,
+              "cpu_percent": 82.42016140450234,
+              "worker_budget_percent": 10.302520175562792
+            },
+            "reading": {
+              "wall_us": 2089,
+              "cpu_ns": 8308759,
+              "peak_workers": 8,
+              "average_cores": 3.977385830540929,
+              "cpu_percent": 397.7385830540929,
+              "worker_budget_percent": 49.71732288176161
+            }
+          },
+          {
+            "discovery": {
+              "wall_us": 7103,
+              "cpu_ns": 8415414,
+              "peak_workers": 8,
+              "average_cores": 1.1847689708573843,
+              "cpu_percent": 118.47689708573843,
+              "worker_budget_percent": 14.809612135717304
+            },
+            "reading": {
+              "wall_us": 2766,
+              "cpu_ns": 11315088,
+              "peak_workers": 8,
+              "average_cores": 4.090776572668113,
+              "cpu_percent": 409.0776572668113,
+              "worker_budget_percent": 51.13470715835141
+            }
+          },
+          {
+            "discovery": {
+              "wall_us": 7316,
+              "cpu_ns": 7431609,
+              "peak_workers": 8,
+              "average_cores": 1.0158022143247676,
+              "cpu_percent": 101.58022143247676,
+              "worker_budget_percent": 12.697527679059595
+            },
+            "reading": {
+              "wall_us": 2558,
+              "cpu_ns": 10678843,
+              "peak_workers": 8,
+              "average_cores": 4.174684519155591,
+              "cpu_percent": 417.46845191555906,
+              "worker_budget_percent": 52.18355648944488
+            }
+          },
+          {
+            "discovery": {
+              "wall_us": 7327,
+              "cpu_ns": 5293210,
+              "peak_workers": 8,
+              "average_cores": 0.7224252763750512,
+              "cpu_percent": 72.24252763750512,
+              "worker_budget_percent": 9.03031595468814
+            },
+            "reading": {
+              "wall_us": 3119,
+              "cpu_ns": 10969597,
+              "peak_workers": 8,
+              "average_cores": 3.517023725553062,
+              "cpu_percent": 351.7023725553062,
+              "worker_budget_percent": 43.96279656941328
+            }
+          },
+          {
+            "discovery": {
+              "wall_us": 7389,
+              "cpu_ns": 5991652,
+              "peak_workers": 6,
+              "average_cores": 0.8108880768710245,
+              "cpu_percent": 81.08880768710245,
+              "worker_budget_percent": 10.136100960887806
+            },
+            "reading": {
+              "wall_us": 2632,
+              "cpu_ns": 10913918,
+              "peak_workers": 8,
+              "average_cores": 4.14662537993921,
+              "cpu_percent": 414.66253799392103,
+              "worker_budget_percent": 51.83281724924013
+            }
+          }
+        ]
+      }
+    }
+  }
+}

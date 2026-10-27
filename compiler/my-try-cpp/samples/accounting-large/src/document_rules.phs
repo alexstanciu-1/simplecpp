@@ -1,0 +1,56 @@
+// Validation shared by the large sample's typed document boundaries.
+// Codes and labels are bounded UTF-8 byte strings; control bytes reject so a
+// diagnostic row cannot inject another row into the plain-text audit output.
+class DocumentRules {
+    public static function text(string $value, int $minimum, int $maximum): bool {
+        $length int = strlen($value);
+        if ($length < $minimum || $length > $maximum) { return false; }
+        for ($index int = 0; $index < $length; $index++) {
+            $byte int = string_byte_at($value, $index);
+            if ($byte < 32 || $byte === 127) { return false; }
+        }
+        return true;
+    }
+
+    public static function integer(int $value, int $minimum, int $maximum): bool {
+        return $value >= $minimum && $value <= $maximum;
+    }
+
+    public static function flag(bool $value): string {
+        if ($value) { return "yes"; }
+        return "no";
+    }
+
+    public static function repeat(string $text, int $count): string {
+        $result string = "";
+        for ($index int = 0; $index < $count; $index++) { $result .= $text; }
+        return $result;
+    }
+}
+
+// One journal owner: expanded services prepare a balanced entry and commit their
+// own state only after the original GeneralLedger has accepted the whole entry.
+function document_post(GeneralLedger $ledger, string $reference, string $origin,
+    string $debit_account, string $credit_account, int $amount): AccountingCheck {
+    if ($amount <= 0 || !MoneyRules::accepts($amount)) {
+        return accounting_failure("document.amount", "Positive bounded amount required");
+    }
+    $entry JournalEntry = new JournalEntry();
+    $entry->reference = $reference;
+    $entry->origin = $origin;
+    $entry->period = $ledger->current_period();
+    $entry->add_debit($debit_account, $amount, $origin);
+    $entry->add_credit($credit_account, $amount, $origin);
+    return $ledger->post($entry);
+}
+
+function check_document_rules(WorkloadChecks $checks): void {
+    $checks->expect(DocumentRules::text("client-01", 1, 32), "document identifier");
+    $checks->expect(DocumentRules::text("plată", 1, 32), "document UTF-8 label");
+    $checks->expect(!DocumentRules::text("", 1, 32), "document required identifier");
+    $checks->expect(!DocumentRules::text("two\nrows", 1, 32), "document newline rejection");
+    $checks->expect(!DocumentRules::text("tab\tvalue", 1, 32), "document tab rejection");
+    $checks->expect(DocumentRules::integer(0, 0, 10), "document inclusive lower bound");
+    $checks->expect(DocumentRules::integer(10, 0, 10), "document inclusive upper bound");
+    $checks->expect(!DocumentRules::integer(11, 0, 10), "document upper overflow");
+}

@@ -1,0 +1,155 @@
+
+/* Bounded exception syntax owns named edges, not a second child inventory. */
+namespace scpp\compiler;
+
+final class throw_node extends statement_node {
+	
+	/** Common access preserves the property-free base while spans remain concrete data. */
+	public function set_span(int $first, int $end): void {
+		if (($first < 0) || ($end < $first) || ($end > 4294967295)) {
+			throw new \scpp_portability_logic_exception('AST token span exceeds uint32 bounds');
+		}
+		$this->first_token_index = $first;
+		$this->end_token_index = $end;
+	}
+
+	public function start_token(): int {
+		return (int)$this->first_token_index;
+	}
+
+	public function end_token(): int {
+		return (int)$this->end_token_index;
+	}
+
+	/** Inclusive start in the owning token snapshot. */
+	public $first_token_index uint32;
+	/** Exclusive end: token count is end - first, including zero for an empty span. */
+	public $end_token_index uint32;
+
+
+	public expression_node $expression;
+
+	public function kind(): node_kind {
+		return node_kind::throw_statement;
+	}
+
+	public function children(): child_iterator_i {
+		return new throw_children_iterator($this);
+	}
+
+	public function maintain(node_maintenance_worker_i $worker): void {
+		$worker->enter($this);
+		$worker->edge($this, $this->expression);
+	}
+}
+
+final class catch_node extends ast_node {
+	
+	/** Common access preserves the property-free base while spans remain concrete data. */
+	public function set_span(int $first, int $end): void {
+		if (($first < 0) || ($end < $first) || ($end > 4294967295)) {
+			throw new \scpp_portability_logic_exception('AST token span exceeds uint32 bounds');
+		}
+		$this->first_token_index = $first;
+		$this->end_token_index = $end;
+	}
+
+	public function start_token(): int {
+		return (int)$this->first_token_index;
+	}
+
+	public function end_token(): int {
+		return (int)$this->end_token_index;
+	}
+
+	/** Inclusive start in the owning token snapshot. */
+	public $first_token_index uint32;
+	/** Exclusive end: token count is end - first, including zero for an empty span. */
+	public $end_token_index uint32;
+
+
+	public variable_declaration_node $binding;
+	public block_node $body;
+
+	public function kind(): node_kind {
+		return node_kind::catch_clause;
+	}
+
+	public function children(): child_iterator_i {
+		return new pair_children_iterator($this->binding, $this->body);
+	}
+
+	public function maintain(node_maintenance_worker_i $worker): void {
+		$worker->enter($this);
+		$worker->edge($this, $this->binding);
+		$worker->edge($this, $this->body);
+	}
+}
+
+final class try_node extends statement_node {
+	
+	/** Common access preserves the property-free base while spans remain concrete data. */
+	public function set_span(int $first, int $end): void {
+		if (($first < 0) || ($end < $first) || ($end > 4294967295)) {
+			throw new \scpp_portability_logic_exception('AST token span exceeds uint32 bounds');
+		}
+		$this->first_token_index = $first;
+		$this->end_token_index = $end;
+	}
+
+	public function start_token(): int {
+		return (int)$this->first_token_index;
+	}
+
+	public function end_token(): int {
+		return (int)$this->end_token_index;
+	}
+
+	/** Inclusive start in the owning token snapshot. */
+	public $first_token_index uint32;
+	/** Exclusive end: token count is end - first, including zero for an empty span. */
+	public $end_token_index uint32;
+
+	
+	public function preparation(): nullable<prepared_finally> {
+		return $this->prepared_facts;
+	}
+
+	public function set_preparation(prepared_finally $facts): void {
+		$this->prepared_facts = $facts;
+	}
+
+	public function clear_preparation(): void {
+		$this->prepared_facts = null;
+	}
+
+
+	public block_node $body;
+	public $handler nullable<catch_node> = null;
+	public $finalizer nullable<block_node> = null;
+
+	private $prepared_facts nullable<prepared_finally> = null;
+
+	public function require_preparation(): prepared_finally {
+		return $this->prepared_facts;
+	}
+
+	public function kind(): node_kind {
+		return node_kind::try_statement;
+	}
+
+	public function children(): child_iterator_i {
+		return new try_children_iterator($this);
+	}
+
+	public function maintain(node_maintenance_worker_i $worker): void {
+		$worker->enter($this);
+		$worker->edge($this, $this->body);
+		if ($this->handler !== null) {
+			$worker->edge($this, $this->handler);
+		}
+		if ($this->finalizer !== null) {
+			$worker->edge($this, $this->finalizer);
+		}
+	}
+}

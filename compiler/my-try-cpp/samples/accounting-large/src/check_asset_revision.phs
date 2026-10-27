@@ -1,0 +1,64 @@
+function sample_asset_revision(): AssetRevision {
+    $draft AssetRevision = new AssetRevision();
+    $draft->id = "REV-001";
+    $draft->asset_id = "ASSET-001";
+    $draft->reason = "Condition review";
+    $draft->cost_account = "fixed-assets";
+    $draft->allowance_account = "accumulated-depreciation";
+    $draft->reviewer = "asset-manager";
+    $draft->cost_amount = 100000;
+    $draft->accumulated_depreciation = 20000;
+    $draft->impairment_amount = 5000;
+    $draft->residual_amount = 10000;
+    $draft->remaining_periods = 10;
+    $draft->period = 1;
+    $draft->approved = true;
+    $draft->posted = false;
+    return $draft;
+}
+
+function check_asset_revision(WorkloadChecks $checks): void {
+    $draft AssetRevision = sample_asset_revision();
+    $checks->accepted($draft->validate(), "asset_revision valid draft");
+    $checks->equal($draft->depreciable_remainder(), 65000, "asset_revision independent business result");
+    $copy AssetRevision = $draft->copy();
+    $checks->equal(count($draft->differences($copy)), 0, "asset_revision snapshot equivalence");
+    $checks->expect($draft->describe() === $copy->describe(), "asset_revision snapshot report");
+    $copy = $draft->copy();
+    $copy->id = "";
+    $checks->rejected($copy->validate(), "asset_revision.id", "asset_revision id required");
+    $copy = $draft->copy();
+    $copy->id = "bad\nrow";
+    $checks->rejected($copy->validate(), "asset_revision.id", "asset_revision id control");
+    $copy = $draft->copy();
+    $copy->id = DocumentRules::repeat("x", 41);
+    $checks->rejected($copy->validate(), "asset_revision.id", "asset_revision id width");
+    $copy = $draft->copy();
+    $copy->id = "REV-001-changed";
+    $checks->expect($draft->id === "REV-001", "asset_revision id snapshot isolation");
+    $changes_id vector<string> = $draft->differences($copy);
+    $checks->equal(count($changes_id), 1, "asset_revision id change count");
+    if (count($changes_id) === 1) {
+        $checks->expect($changes_id[0] === "id", "asset_revision id change identity");
+    }
+    $copy = $draft->copy();
+    $copy->cost_amount = -1;
+    $checks->rejected($copy->validate(), "asset_revision.cost_amount", "asset_revision cost_amount below");
+    $copy = $draft->copy();
+    $copy->cost_amount = 1000000001;
+    $checks->rejected($copy->validate(), "asset_revision.cost_amount", "asset_revision cost_amount above");
+    $copy = $draft->copy();
+    $copy->accumulated_depreciation = -1;
+    $checks->rejected($copy->validate(), "asset_revision.accumulated_depreciation", "asset_revision accumulated_depreciation below");
+    $copy = $draft->copy();
+    $copy->accumulated_depreciation = 1000000001;
+    $checks->rejected($copy->validate(), "asset_revision.accumulated_depreciation", "asset_revision accumulated_depreciation above");
+    $copy = $draft->copy();
+    $copy->approved = false;
+    $checks->expect($draft->approved === true, "asset_revision approved snapshot isolation");
+    $changes_approved vector<string> = $draft->differences($copy);
+    $checks->equal(count($changes_approved), 1, "asset_revision approved change count");
+    if (count($changes_approved) === 1) {
+        $checks->expect($changes_approved[0] === "approved", "asset_revision approved change identity");
+    }
+}

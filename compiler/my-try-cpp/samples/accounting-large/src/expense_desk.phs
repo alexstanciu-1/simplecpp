@@ -1,0 +1,99 @@
+class ExpenseDesk {
+    private $employees hash<EmployeeProfile> = [];
+    private $advances hash<EmployeeAdvance> = [];
+    private $claims hash<ExpenseClaimLine> = [];
+
+    public function add_employee(EmployeeProfile $draft): AccountingCheck {
+        $valid AccountingCheck = $draft->validate();
+        if (!$valid->accepted) { return $valid; }
+        if (isset($this->employees[$draft->id])) { return accounting_failure("expense.employee-duplicate", $draft->id); }
+        if ($draft->open_advance !== 0) { return accounting_failure("expense.opening", "New employee starts with no advances"); }
+        $this->employees[$draft->id] = $draft->copy();
+        return accounting_success();
+    }
+
+    public function employee(string $id): EmployeeProfile {
+        if (!isset($this->employees[$id])) { return new EmployeeProfile(); }
+        return $this->employees[$id]->copy();
+    }
+
+    public function advance(string $id): EmployeeAdvance {
+        if (!isset($this->advances[$id])) { return new EmployeeAdvance(); }
+        return $this->advances[$id]->copy();
+    }
+
+    public function issue(GeneralLedger $ledger, EmployeeAdvance $draft): AccountingCheck {
+        $valid AccountingCheck = $draft->validate();
+        if (!$valid->accepted) { return $valid; }
+        if (isset($this->advances[$draft->id])) { return accounting_failure("expense.advance-duplicate", $draft->id); }
+        if (!isset($this->employees[$draft->employee_id])) { return accounting_failure("expense.employee", $draft->employee_id); }
+        $employee EmployeeProfile = $this->employees[$draft->employee_id];
+        if (!$employee->active || $employee->payment_hold || !$draft->approved || $draft->closed) {
+            return accounting_failure("expense.hold", "Employee and advance must be approved for payment");
+        }
+        if ($draft->paid <= 0 || $draft->receipts_settled !== 0 || $draft->cash_returned !== 0 || $draft->paid > $employee->available_advance()) {
+            return accounting_failure("expense.advance-limit", "Fresh advance exceeds available employee limit");
+        }
+        if ($draft->period !== $ledger->current_period() || $draft->period < $employee->start_period || $draft->period > $employee->end_period) {
+            return accounting_failure("expense.period", "Advance must fall within the current employment period");
+        }
+        $posted AccountingCheck = document_post($ledger, "advance:" . $draft->id, "employee-advance", $draft->control_account, "bank", $draft->paid);
+        if (!$posted->accepted) { return $posted; }
+        $this->advances[$draft->id] = $draft->copy();
+        $employee->open_advance += $draft->paid;
+        return accounting_success();
+    }
+
+    public function settle(GeneralLedger $ledger, string $advance_id, ExpenseClaimLine $draft): AccountingCheck {
+        $valid AccountingCheck = $draft->validate();
+        if (!$valid->accepted) { return $valid; }
+        if (isset($this->claims[$draft->id])) { return accounting_failure("expense.claim-duplicate", $draft->id); }
+        if (!isset($this->advances[$advance_id])) { return accounting_failure("expense.advance", $advance_id); }
+        $advance EmployeeAdvance = $this->advances[$advance_id];
+        $employee EmployeeProfile = $this->employees[$advance->employee_id];
+        if ($draft->employee_id !== $advance->employee_id || !$draft->approved || !$draft->receipt_present || $advance->closed) {
+            return accounting_failure("expense.claim-identity", "Approved receipt for the same employee required");
+        }
+        if ($draft->period !== $ledger->current_period()) { return accounting_failure("expense.period", "Claim period is not current"); }
+        $amount int = $draft->approved_amount;
+        if ($amount <= 0 || $amount > $employee->expense_limit || $amount > $advance->outstanding_advance() || $draft->recoverable_tax > $amount) {
+            return accounting_failure("expense.claim-limit", "Claim exceeds advance, employee limit or approved gross");
+        }
+        $entry JournalEntry = new JournalEntry();
+        $entry->reference = "claim:" . $draft->id;
+        $entry->origin = "employee-expense";
+        $entry->period = $ledger->current_period();
+        $net int = $amount - $draft->recoverable_tax;
+        if ($net > 0) { $entry->add_debit($draft->expense_account, $net, "Approved employee expense"); }
+        if ($draft->recoverable_tax > 0) { $entry->add_debit("input-tax", $draft->recoverable_tax, "Recoverable fixture tax"); }
+        $entry->add_credit($advance->control_account, $amount, "Advance settlement");
+        $posted AccountingCheck = $ledger->post($entry);
+        if (!$posted->accepted) { return $posted; }
+        $advance->receipts_settled += $amount;
+        $employee->open_advance -= $amount;
+        $this->claims[$draft->id] = $draft->copy();
+        return accounting_success();
+    }
+
+    public function refund(GeneralLedger $ledger, string $id, string $reference, int $amount): AccountingCheck {
+        if (!isset($this->advances[$id])) { return accounting_failure("expense.advance", $id); }
+        $advance EmployeeAdvance = $this->advances[$id];
+        if ($advance->closed || $amount <= 0 || $amount > $advance->outstanding_advance()) {
+            return accounting_failure("expense.refund", "Refund exceeds the open advance");
+        }
+        $posted AccountingCheck = document_post($ledger, $reference, "advance-refund", "bank", $advance->control_account, $amount);
+        if (!$posted->accepted) { return $posted; }
+        $advance->cash_returned += $amount;
+        $employee EmployeeProfile = $this->employees[$advance->employee_id];
+        $employee->open_advance -= $amount;
+        return accounting_success();
+    }
+
+    public function close(string $id): AccountingCheck {
+        if (!isset($this->advances[$id])) { return accounting_failure("expense.advance", $id); }
+        $advance EmployeeAdvance = $this->advances[$id];
+        if ($advance->closed || $advance->outstanding_advance() !== 0) { return accounting_failure("expense.close", "Only an open cleared advance can close"); }
+        $advance->closed = true;
+        return accounting_success();
+    }
+}

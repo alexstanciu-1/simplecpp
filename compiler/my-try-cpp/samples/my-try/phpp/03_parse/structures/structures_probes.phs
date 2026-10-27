@@ -1,0 +1,115 @@
+
+/* One-value language probes, distinct from ordinary function lookup. */
+namespace scpp\compiler;
+
+enum value_probe_kind { case isset; case empty; }
+
+final class value_probe_node extends expression_node {
+	
+	/** Common access preserves the property-free base while spans remain concrete data. */
+	public function set_span(int $first, int $end): void {
+		if (($first < 0) || ($end < $first) || ($end > 4294967295)) {
+			throw new \scpp_portability_logic_exception('AST token span exceeds uint32 bounds');
+		}
+		$this->first_token_index = $first;
+		$this->end_token_index = $end;
+	}
+
+	public function start_token(): int {
+		return (int)$this->first_token_index;
+	}
+
+	public function end_token(): int {
+		return (int)$this->end_token_index;
+	}
+
+	/** Inclusive start in the owning token snapshot. */
+	public $first_token_index uint32;
+	/** Exclusive end: token count is end - first, including zero for an empty span. */
+	public $end_token_index uint32;
+
+	
+	public function preparation(): nullable<prepared_value_probe> {
+		return $this->prepared_facts;
+	}
+
+	public function set_preparation(prepared_value_probe $facts): void {
+		$this->prepared_facts = $facts;
+	}
+
+	public function clear_preparation(): void {
+		$this->prepared_facts = null;
+	}
+
+	public value_probe_kind $probe_kind = value_probe_kind::isset;
+	public expression_node $operand;
+	private $prepared_facts nullable<prepared_value_probe> = null;
+	public function kind(): node_kind { return node_kind::value_probe; }
+	public function require_preparation(): prepared_expression { return $this->require_probe_preparation(); }
+	public function require_probe_preparation(): prepared_value_probe { return $this->prepared_facts; }
+	public function maintain(node_maintenance_worker_i $worker): void {
+		$worker->enter($this);
+		$worker->edge($this, $this->operand);
+	}
+	public function children(): child_iterator_i { return new value_probe_children_iterator($this); }
+}
+
+/** Reset/removal syntax shares its target edge, not its semantic admission. */
+abstract class cleanup_node extends statement_node {
+	
+	/** Common access preserves the property-free base while spans remain concrete data. */
+	public function set_span(int $first, int $end): void {
+		if (($first < 0) || ($end < $first) || ($end > 4294967295)) {
+			throw new \scpp_portability_logic_exception('AST token span exceeds uint32 bounds');
+		}
+		$this->first_token_index = $first;
+		$this->end_token_index = $end;
+	}
+
+	public function start_token(): int {
+		return (int)$this->first_token_index;
+	}
+
+	public function end_token(): int {
+		return (int)$this->end_token_index;
+	}
+
+	/** Inclusive start in the owning token snapshot. */
+	public $first_token_index uint32;
+	/** Exclusive end: token count is end - first, including zero for an empty span. */
+	public $end_token_index uint32;
+
+	
+	public function preparation(): nullable<prepared_cleanup> {
+		return $this->prepared_facts;
+	}
+
+	public function set_preparation(prepared_cleanup $facts): void {
+		$this->prepared_facts = $facts;
+	}
+
+	public function clear_preparation(): void {
+		$this->prepared_facts = null;
+	}
+
+	public expression_node $target;
+	private $prepared_facts nullable<prepared_cleanup> = null;
+	public function require_preparation(): prepared_cleanup { return $this->prepared_facts; }
+	public function maintain(node_maintenance_worker_i $worker): void {
+		$worker->enter($this);
+		$worker->edge($this, $this->target);
+	}
+	public function children(): child_iterator_i { return new cleanup_children_iterator($this); }
+}
+
+final class unset_node extends cleanup_node {
+	public function kind(): node_kind {
+		return node_kind::unset_statement;
+	}
+}
+
+final class clean_node extends cleanup_node {
+	public function kind(): node_kind {
+		return node_kind::clean_statement;
+	}
+}

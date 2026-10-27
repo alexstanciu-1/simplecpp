@@ -1,0 +1,110 @@
+
+/* Lazy keys with repeatable prefix resolvers, not retained interior pointers. */
+namespace scpp\compiler;
+
+final class CPP_Keyed_Path {
+	public static function generate(prepared_keyed_path $path, cpp_generation_context $context, bool $removing, bool $emptiness = false, nullable<truthiness_decision> $presence = null, nullable<canonical_type_use> $result = null): string {
+		$definition = Type_Queries::canonical($path->root->require_preparation()->type)->definition();
+		if ($removing && CPP_Concrete_Index::active($context)
+			&& (($definition instanceof mixed_semantics) || ($definition instanceof dynamic_semantics))) {
+			return self::boxed_removal($path, $context);
+		}
+		if ($context->specialization_engine !== null && !CPP_Concrete_Index::active($context)) {
+			throw new \scpp_portability_runtime_exception('prelower_templates: keyed probes/removal require a concrete adapter');
+		}
+		if (!CPP_Concrete_Index::active($context)) { $context->headers['scpp/keyed_path.hpp'] = true; }
+		$id = $context->next_temporary;
+		$context->next_temporary++;
+		$emitter = new CPP_Syntax($context);
+		$root = 'keyed_root_' . $id;
+		$steps Storage<prepared_keyed_step> = $path->steps;
+		$root_type = CPP_Declarations::type($path->root->require_preparation()->type, $context);
+		$mode = $removing ? 'true' : 'false';
+		if (!$removing && $result === null) { throw new \scpp_portability_logic_exception('Keyed probe requires its prepared result type'); }
+		$result_type = $removing ? 'void' : CPP_Declarations::type($result, $context);
+		$stop = CPP_Sequence::result('', $context);
+		if (!$removing) { $stop = CPP_Sequence::result($result_type . '{' . ($emptiness ? 'true' : 'false') . '}', $context); }
+		if (!$removing && $emptiness) { $stop = 'scpp::detail::throw_invalid_empty();'; }
+		$binding = CPP_Declarations::bind_storage_receiver($path->root, $context);
+		$text = CPP_Sequence::open($result_type, $context) . $binding->statements . ($removing ? 'auto& ' : 'const auto& ')
+			. $root . ' = ' . $binding->value . '; ';
+		$resolver = 'keyed_resolve_' . $id . '_0';
+		$text .= 'auto ' . $resolver . ' = [&]() -> const ' . $root_type . '* { return &' . $root . '; }; ';
+		$current_type = $path->root->require_preparation()->type;
+		$position = 0;
+		$last = $steps->count() - 1;
+		foreach ($steps  as $step) {
+			if (CPP_Concrete_Index::active($context)) {
+				CPP_Concrete_Index::keyed_step($current_type, $step, $position === $last, $removing, $presence !== null, $context);
+			}
+			$text .= 'if (!scpp::keyed_ready(' . $resolver . '(), ' . $mode . ')) { ' . $stop . ' } ';
+			$key = 'keyed_key_' . $id . '_' . $position;
+			$key_syntax expression_node = $step->syntax->index;
+			$conversion = $step->key_conversion;
+			$text .= CPP_Declarations::type($conversion->target_type, $context) . ' ' . $key . ' = '
+				. CPP_Declarations::conversion($emitter->expression($key_syntax), $conversion, $context) . '; ';
+			if ($position !== $last)
+			{
+				$next = 'keyed_resolve_' . $id . '_' . ($position + 1);
+				$text .= 'auto ' . $next . ' = [&]() -> const ' . CPP_Declarations::type($step->element_type, $context)
+					. '* { return scpp::keyed_child(' . $resolver . '(), ' . $key . ', ' . $mode . '); }; ';
+				$resolver = $next;
+			}
+			elseif (!$removing) {
+				if (($presence !== null) && !Type_Queries::is_nominal_handle($step->element_type)) {
+					$leaf = 'keyed_leaf_' . $id;
+					$text .= 'const auto* ' . $leaf . ' = scpp::keyed_lookup(' . $resolver . '(), ' . $key . ', false); ';
+					$text .= 'if (!' . $leaf . ') { ' . CPP_Sequence::result($result_type . '{false}', $context) . '} ' . CPP_Sequence::result($result_type . '('
+						. CPP_Declarations::truthiness('(*' . $leaf . ')', $presence, $context) . ')', $context);
+				}
+				else {
+					$text .= CPP_Sequence::result($result_type . '(scpp::keyed_probe(' . $resolver . '(), ' . $key . ', ' . ($emptiness ? 'true' : 'false') . '))', $context);
+				}
+			}
+			else
+			{
+				$text .= 'if (!scpp::keyed_present(' . $resolver . '(), ' . $key . ', true)) { ' . CPP_Sequence::result('', $context) . '} ';
+				$parent = $root;
+				for ($prefix = 0; $prefix < $last; $prefix++)
+				{
+					$child = 'keyed_target_' . $id . '_' . $prefix;
+					$text .= 'auto& ' . $child . ' = scpp::keyed_descend(' . $parent . ', keyed_key_' . $id . '_' . $prefix . '); ';
+					$parent = $child;
+				}
+				$text .= 'scpp::keyed_erase(' . $parent . ', ' . $key . '); ';
+			}
+			$current_type = $step->element_type;
+			$position++;
+		}
+		if ($removing) { $text .= CPP_Sequence::result('', $context); }
+		return $text . CPP_Sequence::close($context);
+	}
+
+	/** Keep lazy key sequencing here; compiled helpers re-resolve native prefixes without exporting pointers. */
+	private static function boxed_removal(prepared_keyed_path $path, cpp_generation_context $context): string {
+		$id = $context->next_temporary;
+		$context->next_temporary++;
+		$root = 'keyed_root_' . $id;
+		$binding = CPP_Declarations::bind_storage_receiver($path->root, $context);
+		$text = CPP_Sequence::open('void', $context) . $binding->statements
+			. 'auto& ' . $root . ' = ' . $binding->value . '; ';
+		$types vector<canonical_type_use> = [$path->root->require_preparation()->type];
+		$arguments = $root;
+		$position = 0;
+		$emitter = new CPP_Syntax($context);
+		foreach ($path->steps  as $step) {
+			$ready = CPP_Concrete_Index::reference('native_keyed_path_ready', $types, null, $context);
+			$text .= 'if (!' . $ready . '(' . $arguments . ')) { ' . CPP_Sequence::result('', $context) . '} ';
+			$key = 'keyed_key_' . $id . '_' . $position;
+			$conversion = $step->key_conversion;
+			$key_syntax expression_node = $step->syntax->index;
+			$text .= CPP_Declarations::type($conversion->target_type, $context) . ' ' . $key . ' = '
+				. CPP_Declarations::conversion($emitter->expression($key_syntax), $conversion, $context) . '; ';
+			$types[] = $conversion->target_type;
+			$arguments .= ', ' . $key;
+			$position++;
+		}
+		$erase = CPP_Concrete_Index::reference('native_keyed_path_erase', $types, null, $context);
+		return $text . $erase . '(' . $arguments . '); ' . CPP_Sequence::result('', $context) . CPP_Sequence::close($context);
+	}
+}

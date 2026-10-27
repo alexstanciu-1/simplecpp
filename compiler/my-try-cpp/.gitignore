@@ -1,0 +1,5 @@
+/build/
+/dependencies/
+.scpp-token-cache/
+.scpp-portability-index.json
+/samples/my-try/logs/

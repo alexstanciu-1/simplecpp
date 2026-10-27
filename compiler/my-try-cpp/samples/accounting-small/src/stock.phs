@@ -1,0 +1,252 @@
+class StockLot {
+    public string $reference = "";
+    public int $quantity = 0;
+    public int $unit_cost = 0;
+}
+
+class StockItem {
+    public string $sku = "";
+    public string $description = "";
+    public int $on_hand = 0;
+    public int $reserved = 0;
+    public int $carrying_value = 0;
+    public $lots vector<StockLot> = [];
+}
+
+class StockReservation {
+    public string $reference = "";
+    public string $sku = "";
+    public int $quantity = 0;
+    public bool $released = false;
+}
+
+class StockIssueResult {
+    public bool $accepted = false;
+    public string $code = "";
+    public int $cost = 0;
+    public int $quantity = 0;
+}
+
+class InventoryBook {
+    private $items hash<StockItem> = [];
+    private $item_order vector<string> = [];
+    private $reservations hash<StockReservation> = [];
+    private $movement_references hash<bool> = [];
+
+    public function register_item(string $sku, string $description): AccountingCheck {
+        if ($sku === "" || $description === "") {
+            return accounting_failure("stock.identity", "SKU and description are required");
+        }
+        if (isset($this->items[$sku])) {
+            return accounting_failure("stock.duplicate", $sku);
+        }
+        $item StockItem = new StockItem();
+        $item->sku = $sku;
+        $item->description = $description;
+        $this->items[$sku] = $item;
+        $this->item_order[] = $sku;
+        return accounting_success();
+    }
+
+    public function receive(GeneralLedger $ledger, string $reference, string $sku, int $quantity, int $unit_cost): AccountingCheck {
+        if (!isset($this->items[$sku])) {
+            return accounting_failure("stock.missing", $sku);
+        }
+        if ($reference === "" || isset($this->movement_references[$reference])) {
+            return accounting_failure("stock.reference", $reference);
+        }
+        if ($quantity <= 0 || $unit_cost <= 0) {
+            return accounting_failure("stock.receipt", "Receipt quantity and unit cost must be positive");
+        }
+        $cost AmountResult = MoneyRules::multiply($unit_cost, $quantity);
+        if (!$cost->valid) {
+            return accounting_failure($cost->reason, "Receipt cost exceeds workload limits");
+        }
+        $item StockItem = $this->items[$sku];
+        if ($item->on_hand + $quantity > 1000000) {
+            return accounting_failure("stock.quantity-limit", $sku);
+        }
+        $new_value AmountResult = MoneyRules::add($item->carrying_value, $cost->amount);
+        if (!$new_value->valid) {
+            return accounting_failure($new_value->reason, $sku);
+        }
+        $entry JournalEntry = new JournalEntry();
+        $entry->reference = "stock-receipt:" . $reference;
+        $entry->origin = "inventory";
+        $entry->period = $ledger->current_period();
+        $entry->add_debit("inventory", $cost->amount, $sku);
+        $entry->add_credit("goods-received", $cost->amount, $sku);
+        $check AccountingCheck = $ledger->post($entry);
+        if (!$check->accepted) {
+            return $check;
+        }
+        $lot StockLot = new StockLot();
+        $lot->reference = $reference;
+        $lot->quantity = $quantity;
+        $lot->unit_cost = $unit_cost;
+        $item->lots[] = $lot;
+        $item->on_hand += $quantity;
+        $item->carrying_value = $new_value->amount;
+        $this->movement_references[$reference] = true;
+        return accounting_success();
+    }
+
+    public function reserve(string $reference, string $sku, int $quantity): AccountingCheck {
+        if ($reference === "" || isset($this->reservations[$reference])) {
+            return accounting_failure("reservation.reference", $reference);
+        }
+        if (!isset($this->items[$sku])) {
+            return accounting_failure("stock.missing", $sku);
+        }
+        $item StockItem = $this->items[$sku];
+        if ($quantity <= 0 || $quantity > $item->on_hand - $item->reserved) {
+            return accounting_failure("reservation.unavailable", $sku);
+        }
+        $reservation StockReservation = new StockReservation();
+        $reservation->reference = $reference;
+        $reservation->sku = $sku;
+        $reservation->quantity = $quantity;
+        $this->reservations[$reference] = $reservation;
+        $item->reserved += $quantity;
+        return accounting_success();
+    }
+
+    public function release(string $reference): AccountingCheck {
+        if (!isset($this->reservations[$reference])) {
+            return accounting_failure("reservation.missing", $reference);
+        }
+        $reservation StockReservation = $this->reservations[$reference];
+        if ($reservation->released) {
+            return accounting_failure("reservation.released", $reference);
+        }
+        $item StockItem = $this->items[$reservation->sku];
+        $item->reserved -= $reservation->quantity;
+        $reservation->released = true;
+        return accounting_success();
+    }
+
+    public function quote_issue(string $sku, int $quantity): StockIssueResult {
+        $result StockIssueResult = new StockIssueResult();
+        if (!isset($this->items[$sku])) {
+            $result->code = "stock.missing";
+            return $result;
+        }
+        $item StockItem = $this->items[$sku];
+        if ($quantity <= 0 || $quantity > $item->on_hand - $item->reserved) {
+            $result->code = "stock.unavailable";
+            return $result;
+        }
+        $remaining int = $quantity;
+        foreach ($item->lots as $lot) {
+            if ($remaining === 0) {
+                break;
+            }
+            $used int = $lot->quantity;
+            if ($used > $remaining) {
+                $used = $remaining;
+            }
+            $result->cost += $used * $lot->unit_cost;
+            $remaining -= $used;
+        }
+        if ($remaining !== 0) {
+            $result->code = "stock.lot-mismatch";
+            return $result;
+        }
+        $result->quantity = $quantity;
+        $result->accepted = true;
+        return $result;
+    }
+
+    public function issue(GeneralLedger $ledger, string $reference, string $sku, int $quantity): StockIssueResult {
+        $result StockIssueResult = $this->quote_issue($sku, $quantity);
+        if (!$result->accepted) {
+            return $result;
+        }
+        if ($reference === "" || isset($this->movement_references[$reference])) {
+            $result->accepted = false;
+            $result->code = "stock.reference";
+            return $result;
+        }
+        $entry JournalEntry = new JournalEntry();
+        $entry->reference = "stock-issue:" . $reference;
+        $entry->origin = "inventory";
+        $entry->period = $ledger->current_period();
+        $entry->add_debit("cost-of-sales", $result->cost, $sku);
+        $entry->add_credit("inventory", $result->cost, $sku);
+        $check AccountingCheck = $ledger->post($entry);
+        if (!$check->accepted) {
+            $result->accepted = false;
+            $result->code = $check->code;
+            return $result;
+        }
+        $item StockItem = $this->items[$sku];
+        $remaining int = $quantity;
+        // Indexed traversal changes lot records without structurally mutating a foreach source.
+        for ($index int = 0; $index < count($item->lots); $index++) {
+            if ($remaining === 0) {
+                break;
+            }
+            $lot StockLot = $item->lots[$index];
+            $used int = $lot->quantity;
+            if ($used > $remaining) {
+                $used = $remaining;
+            }
+            $lot->quantity -= $used;
+            $remaining -= $used;
+        }
+        $item->on_hand -= $quantity;
+        $item->carrying_value -= $result->cost;
+        $this->movement_references[$reference] = true;
+        return $result;
+    }
+
+    public function quantity_of(string $sku): int {
+        if (!isset($this->items[$sku])) {
+            return 0;
+        }
+        $item StockItem = $this->items[$sku];
+        return $item->on_hand;
+    }
+
+    public function available_of(string $sku): int {
+        if (!isset($this->items[$sku])) {
+            return 0;
+        }
+        $item StockItem = $this->items[$sku];
+        return $item->on_hand - $item->reserved;
+    }
+
+    public function total_value(): int {
+        $total int = 0;
+        foreach ($this->item_order as $sku) {
+            $item StockItem = $this->items[$sku];
+            $total += $item->carrying_value;
+        }
+        return $total;
+    }
+
+    public function reconcile(GeneralLedger $ledger): AccountingCheck {
+        foreach ($this->item_order as $sku) {
+            $item StockItem = $this->items[$sku];
+            $quantity int = 0;
+            $value int = 0;
+            foreach ($item->lots as $lot) {
+                if ($lot->quantity < 0 || $lot->unit_cost <= 0) {
+                    return accounting_failure("stock.corrupt-lot", $sku);
+                }
+                $quantity += $lot->quantity;
+                $value += $lot->quantity * $lot->unit_cost;
+            }
+            if ($quantity !== $item->on_hand || $value !== $item->carrying_value) {
+                return accounting_failure("stock.control", $sku);
+            }
+            if ($item->reserved < 0 || $item->reserved > $item->on_hand) {
+                return accounting_failure("stock.reserved-control", $sku);
+            }
+        }
+        if ($this->total_value() !== $ledger->balance_of("inventory")) {
+            return accounting_failure("stock.ledger-control", "Inventory does not reconcile with general ledger");
+        }
+        return accounting_success();
+    }
+}

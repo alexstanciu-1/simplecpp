@@ -1,0 +1,125 @@
+// An approved credit with separately controlled net and tax portions.
+// Draft values are mutable. Services retain validated copies, never caller handles.
+class CustomerCredit {
+    public string $id = "";
+    public string $customer_id = "";
+    public string $invoice_id = "";
+    public string $reason = "";
+    public string $revenue_account = "";
+    public string $tax_account = "";
+    public int $net_amount = 0;
+    public int $tax_amount = 0;
+    public int $allocated_net = 0;
+    public int $allocated_tax = 0;
+    public int $period = 0;
+    public int $approval_level = 0;
+    public bool $approved = false;
+    public bool $voided = false;
+
+    public function validate(): AccountingCheck {
+        if (!DocumentRules::text($this->id, 1, 40)) {
+            return accounting_failure("customer_credit.id", "id must contain 1..40 printable bytes");
+        }
+        if (!DocumentRules::text($this->customer_id, 1, 80)) {
+            return accounting_failure("customer_credit.customer_id", "customer_id must contain 1..80 printable bytes");
+        }
+        if (!DocumentRules::text($this->invoice_id, 1, 80)) {
+            return accounting_failure("customer_credit.invoice_id", "invoice_id must contain 1..80 printable bytes");
+        }
+        if (!DocumentRules::text($this->reason, 1, 80)) {
+            return accounting_failure("customer_credit.reason", "reason must contain 1..80 printable bytes");
+        }
+        if (!DocumentRules::text($this->revenue_account, 1, 80)) {
+            return accounting_failure("customer_credit.revenue_account", "revenue_account must contain 1..80 printable bytes");
+        }
+        if (!DocumentRules::text($this->tax_account, 1, 80)) {
+            return accounting_failure("customer_credit.tax_account", "tax_account must contain 1..80 printable bytes");
+        }
+        if (!DocumentRules::integer($this->net_amount, 0, 1000000000)) {
+            return accounting_failure("customer_credit.net_amount", "net_amount must be in [0, 1000000000]");
+        }
+        if (!DocumentRules::integer($this->tax_amount, 0, 1000000000)) {
+            return accounting_failure("customer_credit.tax_amount", "tax_amount must be in [0, 1000000000]");
+        }
+        if (!DocumentRules::integer($this->allocated_net, 0, 1000000000)) {
+            return accounting_failure("customer_credit.allocated_net", "allocated_net must be in [0, 1000000000]");
+        }
+        if (!DocumentRules::integer($this->allocated_tax, 0, 1000000000)) {
+            return accounting_failure("customer_credit.allocated_tax", "allocated_tax must be in [0, 1000000000]");
+        }
+        if (!DocumentRules::integer($this->period, 1, 1200)) {
+            return accounting_failure("customer_credit.period", "period must be in [1, 1200]");
+        }
+        if (!DocumentRules::integer($this->approval_level, 0, 10)) {
+            return accounting_failure("customer_credit.approval_level", "approval_level must be in [0, 10]");
+        }
+        if ($this->allocated_net > $this->net_amount) {
+            return accounting_failure("customer_credit.net", "Allocated net exceeds credit");
+        }
+        if ($this->allocated_tax > $this->tax_amount) {
+            return accounting_failure("customer_credit.tax", "Allocated tax exceeds credit");
+        }
+        return accounting_success();
+    }
+
+    public function unallocated_amount(): int {
+        return $this->net_amount + $this->tax_amount - $this->allocated_net - $this->allocated_tax;
+    }
+
+    public function copy(): CustomerCredit {
+        $snapshot CustomerCredit = new CustomerCredit();
+        $snapshot->id = $this->id;
+        $snapshot->customer_id = $this->customer_id;
+        $snapshot->invoice_id = $this->invoice_id;
+        $snapshot->reason = $this->reason;
+        $snapshot->revenue_account = $this->revenue_account;
+        $snapshot->tax_account = $this->tax_account;
+        $snapshot->net_amount = $this->net_amount;
+        $snapshot->tax_amount = $this->tax_amount;
+        $snapshot->allocated_net = $this->allocated_net;
+        $snapshot->allocated_tax = $this->allocated_tax;
+        $snapshot->period = $this->period;
+        $snapshot->approval_level = $this->approval_level;
+        $snapshot->approved = $this->approved;
+        $snapshot->voided = $this->voided;
+        return $snapshot;
+    }
+
+    public function differences(CustomerCredit $other): vector<string> {
+        $fields vector<string> = [];
+        if ($this->id !== $other->id) { $fields[] = "id"; }
+        if ($this->customer_id !== $other->customer_id) { $fields[] = "customer_id"; }
+        if ($this->invoice_id !== $other->invoice_id) { $fields[] = "invoice_id"; }
+        if ($this->reason !== $other->reason) { $fields[] = "reason"; }
+        if ($this->revenue_account !== $other->revenue_account) { $fields[] = "revenue_account"; }
+        if ($this->tax_account !== $other->tax_account) { $fields[] = "tax_account"; }
+        if ($this->net_amount !== $other->net_amount) { $fields[] = "net_amount"; }
+        if ($this->tax_amount !== $other->tax_amount) { $fields[] = "tax_amount"; }
+        if ($this->allocated_net !== $other->allocated_net) { $fields[] = "allocated_net"; }
+        if ($this->allocated_tax !== $other->allocated_tax) { $fields[] = "allocated_tax"; }
+        if ($this->period !== $other->period) { $fields[] = "period"; }
+        if ($this->approval_level !== $other->approval_level) { $fields[] = "approval_level"; }
+        if ($this->approved !== $other->approved) { $fields[] = "approved"; }
+        if ($this->voided !== $other->voided) { $fields[] = "voided"; }
+        return $fields;
+    }
+
+    public function describe(): string {
+        $text string = "CustomerCredit\n";
+        $text .= "id=" . $this->id . "\n";
+        $text .= "customer_id=" . $this->customer_id . "\n";
+        $text .= "invoice_id=" . $this->invoice_id . "\n";
+        $text .= "reason=" . $this->reason . "\n";
+        $text .= "revenue_account=" . $this->revenue_account . "\n";
+        $text .= "tax_account=" . $this->tax_account . "\n";
+        $text .= "net_amount=" . (string)$this->net_amount . "\n";
+        $text .= "tax_amount=" . (string)$this->tax_amount . "\n";
+        $text .= "allocated_net=" . (string)$this->allocated_net . "\n";
+        $text .= "allocated_tax=" . (string)$this->allocated_tax . "\n";
+        $text .= "period=" . (string)$this->period . "\n";
+        $text .= "approval_level=" . (string)$this->approval_level . "\n";
+        $text .= "approved=" . DocumentRules::flag($this->approved) . "\n";
+        $text .= "voided=" . DocumentRules::flag($this->voided) . "\n";
+        return $text;
+    }
+}

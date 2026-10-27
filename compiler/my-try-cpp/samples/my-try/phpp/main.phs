@@ -1,0 +1,13 @@
+namespace scpp\compiler;
+
+// Native bootstrap entry: the same compiler consumes a directory and returns C++ artifacts.
+$runtime_modules vector<string> = ['core', 'json', 'strings', 'datetime', 'filesystem', 'compiler', 'tasks', 'process'];
+Compiler_Lifecycle::configure_runtime(Runtime_Catalog_Loader::load('../../../../../runtime/metadata/modules', $runtime_modules));
+$directory = \scpp_portability_fs_read_text('request.txt');
+$paths vector<string> = [$directory];
+$compiler = new Compiler(new cpp_lowering_options(true));
+$compiler->init($paths);
+$compiler->select_entry('main', 'main.phs');
+$publication = new Output_Publication(\scpp_portability_fs_read_text('output.txt'));
+try { $compiler->exec_cpp($publication); } finally { $publication->close(); }
+echo 'OK';

@@ -1,0 +1,64 @@
+function sample_lease_agreement(): LeaseAgreement {
+    $draft LeaseAgreement = new LeaseAgreement();
+    $draft->id = "LEASE-001";
+    $draft->lessor = "Example Property";
+    $draft->asset_description = "Workshop unit";
+    $draft->expense_account = "operating-expense";
+    $draft->liability_account = "accruals";
+    $draft->bank_account = "bank";
+    $draft->period_rent = 30000;
+    $draft->service_charge = 2000;
+    $draft->deposit_amount = 60000;
+    $draft->deposit_recovered = 10000;
+    $draft->start_period = 1;
+    $draft->end_period = 24;
+    $draft->active = true;
+    $draft->renewal_option = true;
+    return $draft;
+}
+
+function check_lease_agreement(WorkloadChecks $checks): void {
+    $draft LeaseAgreement = sample_lease_agreement();
+    $checks->accepted($draft->validate(), "lease_agreement valid draft");
+    $checks->equal($draft->period_cash_due(), 32000, "lease_agreement independent business result");
+    $copy LeaseAgreement = $draft->copy();
+    $checks->equal(count($draft->differences($copy)), 0, "lease_agreement snapshot equivalence");
+    $checks->expect($draft->describe() === $copy->describe(), "lease_agreement snapshot report");
+    $copy = $draft->copy();
+    $copy->id = "";
+    $checks->rejected($copy->validate(), "lease_agreement.id", "lease_agreement id required");
+    $copy = $draft->copy();
+    $copy->id = "bad\nrow";
+    $checks->rejected($copy->validate(), "lease_agreement.id", "lease_agreement id control");
+    $copy = $draft->copy();
+    $copy->id = DocumentRules::repeat("x", 41);
+    $checks->rejected($copy->validate(), "lease_agreement.id", "lease_agreement id width");
+    $copy = $draft->copy();
+    $copy->id = "LEASE-001-changed";
+    $checks->expect($draft->id === "LEASE-001", "lease_agreement id snapshot isolation");
+    $changes_id vector<string> = $draft->differences($copy);
+    $checks->equal(count($changes_id), 1, "lease_agreement id change count");
+    if (count($changes_id) === 1) {
+        $checks->expect($changes_id[0] === "id", "lease_agreement id change identity");
+    }
+    $copy = $draft->copy();
+    $copy->period_rent = -1;
+    $checks->rejected($copy->validate(), "lease_agreement.period_rent", "lease_agreement period_rent below");
+    $copy = $draft->copy();
+    $copy->period_rent = 1000000001;
+    $checks->rejected($copy->validate(), "lease_agreement.period_rent", "lease_agreement period_rent above");
+    $copy = $draft->copy();
+    $copy->service_charge = -1;
+    $checks->rejected($copy->validate(), "lease_agreement.service_charge", "lease_agreement service_charge below");
+    $copy = $draft->copy();
+    $copy->service_charge = 1000000001;
+    $checks->rejected($copy->validate(), "lease_agreement.service_charge", "lease_agreement service_charge above");
+    $copy = $draft->copy();
+    $copy->active = false;
+    $checks->expect($draft->active === true, "lease_agreement active snapshot isolation");
+    $changes_active vector<string> = $draft->differences($copy);
+    $checks->equal(count($changes_active), 1, "lease_agreement active change count");
+    if (count($changes_active) === 1) {
+        $checks->expect($changes_active[0] === "active", "lease_agreement active change identity");
+    }
+}

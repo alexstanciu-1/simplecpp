@@ -1,0 +1,64 @@
+function sample_cash_forecast_item(): CashForecastItem {
+    $draft CashForecastItem = new CashForecastItem();
+    $draft->id = "CF-001";
+    $draft->source_document = "INV-001";
+    $draft->counterparty = "CUS-001";
+    $draft->bank_account = "bank";
+    $draft->category = "customer-receipt";
+    $draft->currency = "LOC";
+    $draft->expected_amount = 10000;
+    $draft->settled_amount = 3000;
+    $draft->confidence_basis_points = 8000;
+    $draft->due_period = 2;
+    $draft->priority = 2;
+    $draft->grace_days = 5;
+    $draft->inflow = true;
+    $draft->cancelled = false;
+    return $draft;
+}
+
+function check_cash_forecast_item(WorkloadChecks $checks): void {
+    $draft CashForecastItem = sample_cash_forecast_item();
+    $checks->accepted($draft->validate(), "cash_forecast_item valid draft");
+    $checks->equal($draft->remaining_amount(), 7000, "cash_forecast_item independent business result");
+    $copy CashForecastItem = $draft->copy();
+    $checks->equal(count($draft->differences($copy)), 0, "cash_forecast_item snapshot equivalence");
+    $checks->expect($draft->describe() === $copy->describe(), "cash_forecast_item snapshot report");
+    $copy = $draft->copy();
+    $copy->id = "";
+    $checks->rejected($copy->validate(), "cash_forecast_item.id", "cash_forecast_item id required");
+    $copy = $draft->copy();
+    $copy->id = "bad\nrow";
+    $checks->rejected($copy->validate(), "cash_forecast_item.id", "cash_forecast_item id control");
+    $copy = $draft->copy();
+    $copy->id = DocumentRules::repeat("x", 41);
+    $checks->rejected($copy->validate(), "cash_forecast_item.id", "cash_forecast_item id width");
+    $copy = $draft->copy();
+    $copy->id = "CF-001-changed";
+    $checks->expect($draft->id === "CF-001", "cash_forecast_item id snapshot isolation");
+    $changes_id vector<string> = $draft->differences($copy);
+    $checks->equal(count($changes_id), 1, "cash_forecast_item id change count");
+    if (count($changes_id) === 1) {
+        $checks->expect($changes_id[0] === "id", "cash_forecast_item id change identity");
+    }
+    $copy = $draft->copy();
+    $copy->expected_amount = -1;
+    $checks->rejected($copy->validate(), "cash_forecast_item.expected_amount", "cash_forecast_item expected_amount below");
+    $copy = $draft->copy();
+    $copy->expected_amount = 1000000001;
+    $checks->rejected($copy->validate(), "cash_forecast_item.expected_amount", "cash_forecast_item expected_amount above");
+    $copy = $draft->copy();
+    $copy->settled_amount = -1;
+    $checks->rejected($copy->validate(), "cash_forecast_item.settled_amount", "cash_forecast_item settled_amount below");
+    $copy = $draft->copy();
+    $copy->settled_amount = 1000000001;
+    $checks->rejected($copy->validate(), "cash_forecast_item.settled_amount", "cash_forecast_item settled_amount above");
+    $copy = $draft->copy();
+    $copy->inflow = false;
+    $checks->expect($draft->inflow === true, "cash_forecast_item inflow snapshot isolation");
+    $changes_inflow vector<string> = $draft->differences($copy);
+    $checks->equal(count($changes_inflow), 1, "cash_forecast_item inflow change count");
+    if (count($changes_inflow) === 1) {
+        $checks->expect($changes_inflow[0] === "inflow", "cash_forecast_item inflow change identity");
+    }
+}

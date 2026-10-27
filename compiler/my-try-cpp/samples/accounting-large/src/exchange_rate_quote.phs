@@ -1,0 +1,122 @@
+// Positive rational exchange quote used only by the fictional fixture.
+// Draft values are mutable. Services retain validated copies, never caller handles.
+class ExchangeRateQuote {
+    public string $id = "";
+    public string $base_currency = "";
+    public string $foreign_currency = "";
+    public string $source_name = "";
+    public string $rate_kind = "";
+    public string $approved_by = "";
+    public int $numerator = 0;
+    public int $denominator = 0;
+    public int $period = 0;
+    public int $revision = 0;
+    public int $max_foreign_amount = 0;
+    public int $spread_basis_points = 0;
+    public bool $approved = false;
+    public bool $locked = false;
+
+    public function validate(): AccountingCheck {
+        if (!DocumentRules::text($this->id, 1, 40)) {
+            return accounting_failure("exchange_rate_quote.id", "id must contain 1..40 printable bytes");
+        }
+        if (!DocumentRules::text($this->base_currency, 1, 3)) {
+            return accounting_failure("exchange_rate_quote.base_currency", "base_currency must contain 1..3 printable bytes");
+        }
+        if (!DocumentRules::text($this->foreign_currency, 1, 3)) {
+            return accounting_failure("exchange_rate_quote.foreign_currency", "foreign_currency must contain 1..3 printable bytes");
+        }
+        if (!DocumentRules::text($this->source_name, 1, 80)) {
+            return accounting_failure("exchange_rate_quote.source_name", "source_name must contain 1..80 printable bytes");
+        }
+        if (!DocumentRules::text($this->rate_kind, 1, 80)) {
+            return accounting_failure("exchange_rate_quote.rate_kind", "rate_kind must contain 1..80 printable bytes");
+        }
+        if (!DocumentRules::text($this->approved_by, 1, 80)) {
+            return accounting_failure("exchange_rate_quote.approved_by", "approved_by must contain 1..80 printable bytes");
+        }
+        if (!DocumentRules::integer($this->numerator, 1, 1000000)) {
+            return accounting_failure("exchange_rate_quote.numerator", "numerator must be in [1, 1000000]");
+        }
+        if (!DocumentRules::integer($this->denominator, 1, 1000000)) {
+            return accounting_failure("exchange_rate_quote.denominator", "denominator must be in [1, 1000000]");
+        }
+        if (!DocumentRules::integer($this->period, 1, 1200)) {
+            return accounting_failure("exchange_rate_quote.period", "period must be in [1, 1200]");
+        }
+        if (!DocumentRules::integer($this->revision, 1, 1000000)) {
+            return accounting_failure("exchange_rate_quote.revision", "revision must be in [1, 1000000]");
+        }
+        if (!DocumentRules::integer($this->max_foreign_amount, 1, 1000000)) {
+            return accounting_failure("exchange_rate_quote.max_foreign_amount", "max_foreign_amount must be in [1, 1000000]");
+        }
+        if (!DocumentRules::integer($this->spread_basis_points, 0, 10000)) {
+            return accounting_failure("exchange_rate_quote.spread_basis_points", "spread_basis_points must be in [0, 10000]");
+        }
+        if ($this->base_currency === $this->foreign_currency) {
+            return accounting_failure("exchange_rate_quote.currency", "Rate must connect different currencies");
+        }
+        return accounting_success();
+    }
+
+    public function quote_spread(): int {
+        return $this->numerator - $this->denominator;
+    }
+
+    public function copy(): ExchangeRateQuote {
+        $snapshot ExchangeRateQuote = new ExchangeRateQuote();
+        $snapshot->id = $this->id;
+        $snapshot->base_currency = $this->base_currency;
+        $snapshot->foreign_currency = $this->foreign_currency;
+        $snapshot->source_name = $this->source_name;
+        $snapshot->rate_kind = $this->rate_kind;
+        $snapshot->approved_by = $this->approved_by;
+        $snapshot->numerator = $this->numerator;
+        $snapshot->denominator = $this->denominator;
+        $snapshot->period = $this->period;
+        $snapshot->revision = $this->revision;
+        $snapshot->max_foreign_amount = $this->max_foreign_amount;
+        $snapshot->spread_basis_points = $this->spread_basis_points;
+        $snapshot->approved = $this->approved;
+        $snapshot->locked = $this->locked;
+        return $snapshot;
+    }
+
+    public function differences(ExchangeRateQuote $other): vector<string> {
+        $fields vector<string> = [];
+        if ($this->id !== $other->id) { $fields[] = "id"; }
+        if ($this->base_currency !== $other->base_currency) { $fields[] = "base_currency"; }
+        if ($this->foreign_currency !== $other->foreign_currency) { $fields[] = "foreign_currency"; }
+        if ($this->source_name !== $other->source_name) { $fields[] = "source_name"; }
+        if ($this->rate_kind !== $other->rate_kind) { $fields[] = "rate_kind"; }
+        if ($this->approved_by !== $other->approved_by) { $fields[] = "approved_by"; }
+        if ($this->numerator !== $other->numerator) { $fields[] = "numerator"; }
+        if ($this->denominator !== $other->denominator) { $fields[] = "denominator"; }
+        if ($this->period !== $other->period) { $fields[] = "period"; }
+        if ($this->revision !== $other->revision) { $fields[] = "revision"; }
+        if ($this->max_foreign_amount !== $other->max_foreign_amount) { $fields[] = "max_foreign_amount"; }
+        if ($this->spread_basis_points !== $other->spread_basis_points) { $fields[] = "spread_basis_points"; }
+        if ($this->approved !== $other->approved) { $fields[] = "approved"; }
+        if ($this->locked !== $other->locked) { $fields[] = "locked"; }
+        return $fields;
+    }
+
+    public function describe(): string {
+        $text string = "ExchangeRateQuote\n";
+        $text .= "id=" . $this->id . "\n";
+        $text .= "base_currency=" . $this->base_currency . "\n";
+        $text .= "foreign_currency=" . $this->foreign_currency . "\n";
+        $text .= "source_name=" . $this->source_name . "\n";
+        $text .= "rate_kind=" . $this->rate_kind . "\n";
+        $text .= "approved_by=" . $this->approved_by . "\n";
+        $text .= "numerator=" . (string)$this->numerator . "\n";
+        $text .= "denominator=" . (string)$this->denominator . "\n";
+        $text .= "period=" . (string)$this->period . "\n";
+        $text .= "revision=" . (string)$this->revision . "\n";
+        $text .= "max_foreign_amount=" . (string)$this->max_foreign_amount . "\n";
+        $text .= "spread_basis_points=" . (string)$this->spread_basis_points . "\n";
+        $text .= "approved=" . DocumentRules::flag($this->approved) . "\n";
+        $text .= "locked=" . DocumentRules::flag($this->locked) . "\n";
+        return $text;
+    }
+}

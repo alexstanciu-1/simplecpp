@@ -1,0 +1,32 @@
+namespace scpp\compiler;
+
+/** Exception bridges preserve the native shared payload; application headers expose no templates. */
+final class CPP_Exceptions {
+	public static function generate_throw(throw_node $node, cpp_generation_context $context): string {
+		$expression = (new CPP_Syntax($context))->expression($node->expression);
+		if (!$context->concrete_types()) {
+			$context->headers['lang/php/php_exceptions.hpp'] = true;
+			CPP_Types::record_dependencies(CPP_Types::payload($node->expression->require_preparation()->type), $context);
+			return 'throw ::scpp::php::make_thrown(' . $expression . ");\n";
+		}
+		$request = new cpp_runtime_operation(cpp_runtime_operation_kind::exception_throw);
+		$inputs Storage<canonical_type_use> = $request->inputs;
+		$inputs->append($node->expression->require_preparation()->type);
+		$name = 'throw_value_' . $context->next_temporary;
+		$context->next_temporary++;
+		return '{ const auto& ' . $name . ' = ' . $expression . '; '
+			. CPP_Runtime_Operations::invoke($request, [$name], $context, '') . "; }\n";
+	}
+
+	/** Active exception extraction happens in compiled middleware; foreign/unmatched throws propagate. */
+	public static function generate_catch(try_node $node, cpp_generation_context $context): string {
+		$handler catch_node = $node->handler;
+		$binding = $handler->binding->require_preparation();
+		$request = new cpp_runtime_operation(cpp_runtime_operation_kind::exception_catch);
+		$request->result = $binding->type;
+		$syntax = new CPP_Syntax($context);
+		return 'try ' . $syntax->generate_block($node->body) . "catch (...) {\n"
+			. $syntax->initialized_binding($binding, CPP_Runtime_Operations::invoke($request, vector<string>::[], $context, ''))
+			. CPP_Generator::generate_statements($handler->body, $context) . "}\n";
+	}
+}

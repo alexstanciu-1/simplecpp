@@ -1,0 +1,39 @@
+namespace scpp;
+
+// Close in finally after joining the external writer. Aliases share ownership state.
+final class Output_Stage {
+    private $root string;
+    private $relative string;
+    private $owned bool = true;
+    public function __construct(string $root) {
+        $this->root = $root;
+        $value string = '';
+        $failure error;
+        if (!take($value, $failure, \scpp_output_stage($root))) { throw new \scpp_portability_runtime_exception($failure->get_message()); }
+        $this->relative = $value;
+    }
+    public function path(): string {
+        if (!$this->owned) { throw new \scpp_portability_runtime_exception('Stage is closed'); }
+        return $this->root . '/' . $this->relative;
+    }
+    public function promote(string $relative, string $expected_digest, bool $executable): bool {
+        if (!$this->owned) { throw new \scpp_portability_runtime_exception('Stage is closed'); }
+        $changed bool = false;
+        $failure error;
+        if (!take($changed, $failure, \scpp_output_promote($this->root, $this->relative, $relative, $expected_digest, $executable))) {
+            throw new \scpp_portability_runtime_exception($failure->get_message());
+        }
+        $this->owned = false;
+        return $changed;
+    }
+    public function close(): void {
+        if ($this->owned) {
+            $removed bool = false;
+            $failure error;
+            if (!take($removed, $failure, \scpp_output_discard($this->root, $this->relative))) {
+                throw new \scpp_portability_runtime_exception($failure->get_message());
+            }
+            $this->owned = false;
+        }
+    }
+}

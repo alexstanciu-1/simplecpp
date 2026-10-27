@@ -1,0 +1,61 @@
+
+/* Recognized initialization contracts. No syntax, scheduling or backend spelling. */
+namespace scpp\compiler;
+
+enum initialization_shape : int {
+	case positional = 1;
+	case keyed = 2;
+	case empty_brackets = 3;
+}
+
+/** Registry declaration; a missing key means the list role, not a null key type. */
+final class initialization_declaration {
+	private type_definition_i $target_definition;private contract_type_reference $value_reference;private $key_reference nullable<contract_type_reference>;private contract_type_reference $nested_reference;private $argument_constraints hash<canonical_type_use, int>;private string $factory_identity;public function __construct(set:$target_definition, set:$value_reference, set:$key_reference, set:$nested_reference, set:$argument_constraints, set:$factory_identity) {
+		if ($factory_identity === '') { throw new \scpp_portability_invalid_argument_exception('Initialization factory identity must not be empty'); }
+		if ($target_definition->origin() === type_definition_origin::source) {
+			throw new \scpp_portability_invalid_argument_exception('Source initialization belongs to prepared interface declarations');
+		}
+		$arity = 0;
+		if ($target_definition instanceof abstract_template_type_definition) {
+			$template_definition = object_cast($target_definition, abstract_template_type_definition::class);
+			$arity = $template_definition->arity();
+		}
+		self::require_reference($value_reference, $arity);
+		self::require_reference($nested_reference, $arity);
+		if ($key_reference !== null) { self::require_reference($key_reference, $arity); }
+		foreach ($argument_constraints  as $position => $constraint) {
+			if (($position < 0) || ($position >= $arity)) {
+				throw new \scpp_portability_invalid_argument_exception('Initialization constraint references absent formal');
+			}
+		}
+	}
+
+	private static function require_reference(contract_type_reference $reference, int $arity): void {
+		if ($reference->source() === contract_type_source::argument) {
+			if ($reference->position() >= $arity) {
+				throw new \scpp_portability_invalid_argument_exception('Initialization reference exceeds target arity');
+			}
+		}
+	}
+
+	public function definition(): type_definition_i { return $this->target_definition; }
+	public function value(): contract_type_reference { return $this->value_reference; }
+	public function key(): nullable<contract_type_reference> { return $this->key_reference; }
+	public function nested(): contract_type_reference { return $this->nested_reference; }
+	public function constraints(): hash<canonical_type_use, int> { return $this->argument_constraints; }
+	public function is_keyed(): bool { return $this->key_reference !== null; }
+	public function factory_key(): string { return $this->factory_identity; }
+}
+
+/** Concrete recognized interface arguments; the callable owns the sole signature. */
+final class initialization_binding {
+	private canonical_type_use $target_type;private canonical_type_use $value_type;private $key_type nullable<canonical_type_use>;private canonical_type_use $nested_type;private callable_target_i $factory_target;public function __construct(set:$target_type, set:$value_type, set:$key_type, set:$nested_type, set:$factory_target) {
+	}
+
+	public function target(): canonical_type_use { return $this->target_type; }
+	public function value(): canonical_type_use { return $this->value_type; }
+	public function key(): nullable<canonical_type_use> { return $this->key_type; }
+	public function nested_target(): canonical_type_use { return $this->nested_type; }
+	public function factory(): callable_target_i { return $this->factory_target; }
+	public function is_keyed(): bool { return $this->key_type !== null; }
+}

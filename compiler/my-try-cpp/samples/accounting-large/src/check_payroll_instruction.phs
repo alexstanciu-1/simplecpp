@@ -1,0 +1,64 @@
+function sample_payroll_instruction(): PayrollInstruction {
+    $draft PayrollInstruction = new PayrollInstruction();
+    $draft->id = "PR-001";
+    $draft->employee_id = "EMP-001";
+    $draft->department = "OPS";
+    $draft->wage_account = "operating-expense";
+    $draft->payable_account = "payables";
+    $draft->bank_reference = "SALARY-001";
+    $draft->base_pay = 100000;
+    $draft->overtime_pay = 10000;
+    $draft->bonus_pay = 5000;
+    $draft->employee_deduction = 15000;
+    $draft->employer_charge = 20000;
+    $draft->period = 1;
+    $draft->approved = true;
+    $draft->paid = false;
+    return $draft;
+}
+
+function check_payroll_instruction(WorkloadChecks $checks): void {
+    $draft PayrollInstruction = sample_payroll_instruction();
+    $checks->accepted($draft->validate(), "payroll_instruction valid draft");
+    $checks->equal($draft->net_pay(), 100000, "payroll_instruction independent business result");
+    $copy PayrollInstruction = $draft->copy();
+    $checks->equal(count($draft->differences($copy)), 0, "payroll_instruction snapshot equivalence");
+    $checks->expect($draft->describe() === $copy->describe(), "payroll_instruction snapshot report");
+    $copy = $draft->copy();
+    $copy->id = "";
+    $checks->rejected($copy->validate(), "payroll_instruction.id", "payroll_instruction id required");
+    $copy = $draft->copy();
+    $copy->id = "bad\nrow";
+    $checks->rejected($copy->validate(), "payroll_instruction.id", "payroll_instruction id control");
+    $copy = $draft->copy();
+    $copy->id = DocumentRules::repeat("x", 41);
+    $checks->rejected($copy->validate(), "payroll_instruction.id", "payroll_instruction id width");
+    $copy = $draft->copy();
+    $copy->id = "PR-001-changed";
+    $checks->expect($draft->id === "PR-001", "payroll_instruction id snapshot isolation");
+    $changes_id vector<string> = $draft->differences($copy);
+    $checks->equal(count($changes_id), 1, "payroll_instruction id change count");
+    if (count($changes_id) === 1) {
+        $checks->expect($changes_id[0] === "id", "payroll_instruction id change identity");
+    }
+    $copy = $draft->copy();
+    $copy->base_pay = -1;
+    $checks->rejected($copy->validate(), "payroll_instruction.base_pay", "payroll_instruction base_pay below");
+    $copy = $draft->copy();
+    $copy->base_pay = 1000000001;
+    $checks->rejected($copy->validate(), "payroll_instruction.base_pay", "payroll_instruction base_pay above");
+    $copy = $draft->copy();
+    $copy->overtime_pay = -1;
+    $checks->rejected($copy->validate(), "payroll_instruction.overtime_pay", "payroll_instruction overtime_pay below");
+    $copy = $draft->copy();
+    $copy->overtime_pay = 1000000001;
+    $checks->rejected($copy->validate(), "payroll_instruction.overtime_pay", "payroll_instruction overtime_pay above");
+    $copy = $draft->copy();
+    $copy->approved = false;
+    $checks->expect($draft->approved === true, "payroll_instruction approved snapshot isolation");
+    $changes_approved vector<string> = $draft->differences($copy);
+    $checks->equal(count($changes_approved), 1, "payroll_instruction approved change count");
+    if (count($changes_approved) === 1) {
+        $checks->expect($changes_approved[0] === "approved", "payroll_instruction approved change identity");
+    }
+}

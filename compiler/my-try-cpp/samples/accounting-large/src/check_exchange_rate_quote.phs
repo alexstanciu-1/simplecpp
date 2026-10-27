@@ -1,0 +1,64 @@
+function sample_exchange_rate_quote(): ExchangeRateQuote {
+    $draft ExchangeRateQuote = new ExchangeRateQuote();
+    $draft->id = "FX-001";
+    $draft->base_currency = "LOC";
+    $draft->foreign_currency = "FCY";
+    $draft->source_name = "fixture-table";
+    $draft->rate_kind = "closing";
+    $draft->approved_by = "treasury-a";
+    $draft->numerator = 125;
+    $draft->denominator = 100;
+    $draft->period = 1;
+    $draft->revision = 1;
+    $draft->max_foreign_amount = 1000000;
+    $draft->spread_basis_points = 25;
+    $draft->approved = true;
+    $draft->locked = false;
+    return $draft;
+}
+
+function check_exchange_rate_quote(WorkloadChecks $checks): void {
+    $draft ExchangeRateQuote = sample_exchange_rate_quote();
+    $checks->accepted($draft->validate(), "exchange_rate_quote valid draft");
+    $checks->equal($draft->quote_spread(), 25, "exchange_rate_quote independent business result");
+    $copy ExchangeRateQuote = $draft->copy();
+    $checks->equal(count($draft->differences($copy)), 0, "exchange_rate_quote snapshot equivalence");
+    $checks->expect($draft->describe() === $copy->describe(), "exchange_rate_quote snapshot report");
+    $copy = $draft->copy();
+    $copy->id = "";
+    $checks->rejected($copy->validate(), "exchange_rate_quote.id", "exchange_rate_quote id required");
+    $copy = $draft->copy();
+    $copy->id = "bad\nrow";
+    $checks->rejected($copy->validate(), "exchange_rate_quote.id", "exchange_rate_quote id control");
+    $copy = $draft->copy();
+    $copy->id = DocumentRules::repeat("x", 41);
+    $checks->rejected($copy->validate(), "exchange_rate_quote.id", "exchange_rate_quote id width");
+    $copy = $draft->copy();
+    $copy->id = "FX-001-changed";
+    $checks->expect($draft->id === "FX-001", "exchange_rate_quote id snapshot isolation");
+    $changes_id vector<string> = $draft->differences($copy);
+    $checks->equal(count($changes_id), 1, "exchange_rate_quote id change count");
+    if (count($changes_id) === 1) {
+        $checks->expect($changes_id[0] === "id", "exchange_rate_quote id change identity");
+    }
+    $copy = $draft->copy();
+    $copy->numerator = 0;
+    $checks->rejected($copy->validate(), "exchange_rate_quote.numerator", "exchange_rate_quote numerator below");
+    $copy = $draft->copy();
+    $copy->numerator = 1000001;
+    $checks->rejected($copy->validate(), "exchange_rate_quote.numerator", "exchange_rate_quote numerator above");
+    $copy = $draft->copy();
+    $copy->denominator = 0;
+    $checks->rejected($copy->validate(), "exchange_rate_quote.denominator", "exchange_rate_quote denominator below");
+    $copy = $draft->copy();
+    $copy->denominator = 1000001;
+    $checks->rejected($copy->validate(), "exchange_rate_quote.denominator", "exchange_rate_quote denominator above");
+    $copy = $draft->copy();
+    $copy->approved = false;
+    $checks->expect($draft->approved === true, "exchange_rate_quote approved snapshot isolation");
+    $changes_approved vector<string> = $draft->differences($copy);
+    $checks->equal(count($changes_approved), 1, "exchange_rate_quote approved change count");
+    if (count($changes_approved) === 1) {
+        $checks->expect($changes_approved[0] === "approved", "exchange_rate_quote approved change identity");
+    }
+}

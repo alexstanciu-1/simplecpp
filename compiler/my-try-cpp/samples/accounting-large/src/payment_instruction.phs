@@ -1,0 +1,122 @@
+// An approved disbursement before external bank transmission.
+// Draft values are mutable. Services retain validated copies, never caller handles.
+class PaymentInstruction {
+    public string $id = "";
+    public string $supplier_id = "";
+    public string $invoice_id = "";
+    public string $bank_account = "";
+    public string $beneficiary_reference = "";
+    public string $batch_id = "";
+    public int $invoice_open = 0;
+    public int $payment_amount = 0;
+    public int $discount_amount = 0;
+    public int $fee_amount = 0;
+    public int $period = 0;
+    public int $approval_level = 0;
+    public bool $approved = false;
+    public bool $transmitted = false;
+
+    public function validate(): AccountingCheck {
+        if (!DocumentRules::text($this->id, 1, 40)) {
+            return accounting_failure("payment_instruction.id", "id must contain 1..40 printable bytes");
+        }
+        if (!DocumentRules::text($this->supplier_id, 1, 80)) {
+            return accounting_failure("payment_instruction.supplier_id", "supplier_id must contain 1..80 printable bytes");
+        }
+        if (!DocumentRules::text($this->invoice_id, 1, 80)) {
+            return accounting_failure("payment_instruction.invoice_id", "invoice_id must contain 1..80 printable bytes");
+        }
+        if (!DocumentRules::text($this->bank_account, 1, 80)) {
+            return accounting_failure("payment_instruction.bank_account", "bank_account must contain 1..80 printable bytes");
+        }
+        if (!DocumentRules::text($this->beneficiary_reference, 1, 80)) {
+            return accounting_failure("payment_instruction.beneficiary_reference", "beneficiary_reference must contain 1..80 printable bytes");
+        }
+        if (!DocumentRules::text($this->batch_id, 1, 80)) {
+            return accounting_failure("payment_instruction.batch_id", "batch_id must contain 1..80 printable bytes");
+        }
+        if (!DocumentRules::integer($this->invoice_open, 0, 1000000000)) {
+            return accounting_failure("payment_instruction.invoice_open", "invoice_open must be in [0, 1000000000]");
+        }
+        if (!DocumentRules::integer($this->payment_amount, 0, 1000000000)) {
+            return accounting_failure("payment_instruction.payment_amount", "payment_amount must be in [0, 1000000000]");
+        }
+        if (!DocumentRules::integer($this->discount_amount, 0, 1000000000)) {
+            return accounting_failure("payment_instruction.discount_amount", "discount_amount must be in [0, 1000000000]");
+        }
+        if (!DocumentRules::integer($this->fee_amount, 0, 1000000000)) {
+            return accounting_failure("payment_instruction.fee_amount", "fee_amount must be in [0, 1000000000]");
+        }
+        if (!DocumentRules::integer($this->period, 1, 1200)) {
+            return accounting_failure("payment_instruction.period", "period must be in [1, 1200]");
+        }
+        if (!DocumentRules::integer($this->approval_level, 0, 10)) {
+            return accounting_failure("payment_instruction.approval_level", "approval_level must be in [0, 10]");
+        }
+        if ($this->payment_amount + $this->discount_amount > $this->invoice_open) {
+            return accounting_failure("payment_instruction.settlement", "Settlement exceeds supplier balance");
+        }
+        return accounting_success();
+    }
+
+    public function bank_outflow(): int {
+        return $this->payment_amount + $this->fee_amount;
+    }
+
+    public function copy(): PaymentInstruction {
+        $snapshot PaymentInstruction = new PaymentInstruction();
+        $snapshot->id = $this->id;
+        $snapshot->supplier_id = $this->supplier_id;
+        $snapshot->invoice_id = $this->invoice_id;
+        $snapshot->bank_account = $this->bank_account;
+        $snapshot->beneficiary_reference = $this->beneficiary_reference;
+        $snapshot->batch_id = $this->batch_id;
+        $snapshot->invoice_open = $this->invoice_open;
+        $snapshot->payment_amount = $this->payment_amount;
+        $snapshot->discount_amount = $this->discount_amount;
+        $snapshot->fee_amount = $this->fee_amount;
+        $snapshot->period = $this->period;
+        $snapshot->approval_level = $this->approval_level;
+        $snapshot->approved = $this->approved;
+        $snapshot->transmitted = $this->transmitted;
+        return $snapshot;
+    }
+
+    public function differences(PaymentInstruction $other): vector<string> {
+        $fields vector<string> = [];
+        if ($this->id !== $other->id) { $fields[] = "id"; }
+        if ($this->supplier_id !== $other->supplier_id) { $fields[] = "supplier_id"; }
+        if ($this->invoice_id !== $other->invoice_id) { $fields[] = "invoice_id"; }
+        if ($this->bank_account !== $other->bank_account) { $fields[] = "bank_account"; }
+        if ($this->beneficiary_reference !== $other->beneficiary_reference) { $fields[] = "beneficiary_reference"; }
+        if ($this->batch_id !== $other->batch_id) { $fields[] = "batch_id"; }
+        if ($this->invoice_open !== $other->invoice_open) { $fields[] = "invoice_open"; }
+        if ($this->payment_amount !== $other->payment_amount) { $fields[] = "payment_amount"; }
+        if ($this->discount_amount !== $other->discount_amount) { $fields[] = "discount_amount"; }
+        if ($this->fee_amount !== $other->fee_amount) { $fields[] = "fee_amount"; }
+        if ($this->period !== $other->period) { $fields[] = "period"; }
+        if ($this->approval_level !== $other->approval_level) { $fields[] = "approval_level"; }
+        if ($this->approved !== $other->approved) { $fields[] = "approved"; }
+        if ($this->transmitted !== $other->transmitted) { $fields[] = "transmitted"; }
+        return $fields;
+    }
+
+    public function describe(): string {
+        $text string = "PaymentInstruction\n";
+        $text .= "id=" . $this->id . "\n";
+        $text .= "supplier_id=" . $this->supplier_id . "\n";
+        $text .= "invoice_id=" . $this->invoice_id . "\n";
+        $text .= "bank_account=" . $this->bank_account . "\n";
+        $text .= "beneficiary_reference=" . $this->beneficiary_reference . "\n";
+        $text .= "batch_id=" . $this->batch_id . "\n";
+        $text .= "invoice_open=" . (string)$this->invoice_open . "\n";
+        $text .= "payment_amount=" . (string)$this->payment_amount . "\n";
+        $text .= "discount_amount=" . (string)$this->discount_amount . "\n";
+        $text .= "fee_amount=" . (string)$this->fee_amount . "\n";
+        $text .= "period=" . (string)$this->period . "\n";
+        $text .= "approval_level=" . (string)$this->approval_level . "\n";
+        $text .= "approved=" . DocumentRules::flag($this->approved) . "\n";
+        $text .= "transmitted=" . DocumentRules::flag($this->transmitted) . "\n";
+        return $text;
+    }
+}

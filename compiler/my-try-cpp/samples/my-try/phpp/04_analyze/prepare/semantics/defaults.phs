@@ -1,0 +1,202 @@
+
+/* Declaration-owned defaults reuse constant evaluation and data-construction preparation. */
+namespace scpp\compiler;
+
+/** Property defaults admit constant values or constructions with constant leaves. */
+final class Property_Defaults {
+	/** Validate the default expression family and reuse its existing semantic owner. */
+	public static function prepare(expression_node $syntax, nullable<canonical_type_use> $type, preparation_context $context): prepared_property_default {
+		Preparation_Cleanup::tree($syntax);
+		if ($syntax instanceof data_construction_node) {
+			$construction = object_cast($syntax, data_construction_node::class);
+			self::require_constant_entries($construction, $context);
+			$value = Expression_Preparation::prepare($construction, $context, $type);
+			if ($type === null) { $type = $value->type; }
+			$default_facts = new prepared_construction_property_default();
+			$default_facts->construction = $construction;
+			$default_facts->conversion = Conversion_Preparation::decide($value->type, $type, conversion_context::assignment,
+				new Conversion_Relationships($context));
+			return $default_facts;
+		}
+		$facts = new prepared_constant_property_default();
+		$facts->value = Constant_Expression_Preparation::evaluate($syntax, $context);
+		if ($type === null) {
+			$type = $facts->value->type;
+			if (Nullable_Conversions::is_null($type)) {
+				throw new \scpp_portability_runtime_exception('Property null default requires an explicit type');
+			}
+		}
+		$facts->conversion = Conversion_Preparation::decide(
+			$facts->value->type, $type, conversion_context::assignment);
+		return $facts;
+	}
+
+	/** Defaults admit construction with constant leaves, not arbitrary calls or instance reads. */
+	private static function require_constant_entries(data_construction_node $syntax, preparation_context $context): void {
+		$entries Storage<data_entry_node> = $syntax->entries;
+		foreach ($entries  as $entry) {
+			if ($entry->key !== null) {
+				Constant_Expression_Preparation::evaluate($entry->key, $context);
+			}
+			if ($entry->value instanceof data_construction_node) {
+				self::require_constant_entries(object_cast($entry->value, data_construction_node::class), $context);
+			}
+			else {
+				Constant_Expression_Preparation::evaluate($entry->value, $context);
+			}
+		}
+	}
+
+	/** Defaults affect construction even when field identity and layout are unchanged. */
+	public static function same(nullable<prepared_property_default> $before, nullable<prepared_property_default> $after): bool {
+		if ($before === null) {
+			return $after === null;
+		}
+		if ($after === null) {
+			return false;
+		}
+		if (($before instanceof prepared_constant_property_default) && ($after instanceof prepared_constant_property_default)) {
+			$left = object_cast($before, prepared_constant_property_default::class)->value;
+			$right = object_cast($after, prepared_constant_property_default::class)->value;
+			return $left->type->matches($right->type) && ($left->value_key() === $right->value_key());
+		}
+		// Construction facts are re-prepared with their declaration. Conservatively republish;
+		// never compare mutable expression attachments as if they were immutable snapshots.
+		return false;
+	}
+}
+
+final class Parameter_Defaults {
+	public static function prepare(expression_node $syntax, callable_parameter $parameter, preparation_context $context): prepared_parameter_default {
+		if ($parameter->mode !== passing_mode::value) {
+			if ($parameter->mode !== passing_mode::reference) {
+				throw new \scpp_portability_runtime_exception('S2S parameter defaults require value or fixed reference parameters');
+			}
+			$language = Model::$language_scope;
+			if (!$parameter->type->matches(Language_Types::integer($language))
+				&& !$parameter->type->matches(Language_Types::floating($language))
+				&& !$parameter->type->matches(Language_Types::boolean($language))
+				&& !$parameter->type->matches(Language_Types::string_type($language))) {
+				throw new \scpp_portability_runtime_exception('S2S reference defaults require canonical scalar types');
+			}
+		}
+		if ($syntax instanceof data_construction_node) {
+			return self::empty_construction(object_cast($syntax, data_construction_node::class), $parameter, $context);
+		}
+		$value prepared_constant_expression;
+		$handle_default = Ownership_Conversions::role($parameter->type) !== null;
+		if (Type_Queries::is_enum($parameter->type)) {
+			if (!($syntax instanceof static_member_reference_node)) {
+				throw new \scpp_portability_runtime_exception('S2S enum parameter defaults require a constant enum case reference');
+			}
+			$enum_syntax = object_cast($syntax, static_member_reference_node::class);
+			Expression_Preparation::prepare($enum_syntax, $context);
+			$reference = $enum_syntax->enum_case_preparation();
+			if (!$reference->type->matches($parameter->type)) {
+				throw new \scpp_portability_runtime_exception('S2S enum parameter default requires the same enum type');
+			}
+			$value = $reference;
+		}
+		elseif ((Nullable_Conversions::payload($parameter->type) !== null) || $handle_default) {
+			if (!($syntax instanceof null_literal_node)) {
+				if ($handle_default) { throw new \scpp_portability_runtime_exception('S2S handle parameter defaults require null'); }
+				throw new \scpp_portability_runtime_exception('S2S nullable parameter defaults require null');
+			}
+			$null_literal = object_cast($syntax, null_literal_node::class);
+			Expression_Preparation::prepare($null_literal, $context);
+			$value = $null_literal->require_null_preparation();
+		}
+		elseif (!Conversion_Preparation::is_scalar($parameter->type)) {
+			throw new \scpp_portability_runtime_exception('S2S parameter defaults require scalar value types');
+		}
+		else {
+			$value = self::literal($syntax, $context);
+		}
+		$facts = new prepared_literal_parameter_default();
+		$facts->value = $value;
+		// An omitted handle argument initializes empty parameter storage; it does not
+		// widen the separate explicit-argument or return conversion contracts.
+		$facts->conversion = Conversion_Preparation::decide(
+			$value->type, $parameter->type, $handle_default ? conversion_context::assignment : conversion_context::argument);
+		Capability_Preparation::require_copy($parameter->type, $context);
+		return $facts;
+	}
+
+	/** Source empty defaults share the declaration construction facts used by constructors. */
+	private static function empty_construction(data_construction_node $syntax, callable_parameter $parameter, preparation_context $context): prepared_parameter_default {
+		$entries Storage<data_entry_node> = $syntax->entries;
+		if (($parameter->mode !== passing_mode::value) || !$entries->is_empty()
+			|| ($syntax->target_type !== null)
+			|| ($syntax->source_representation($context->collection->token_snapshot()) !== data_source_representation::php_like)) {
+			throw new \scpp_portability_runtime_exception('S2S container parameter defaults require contextual [] on a value parameter');
+		}
+		// Require an explicit initialization registration, not merely default construction.
+		if (!Data_Construction_Preparation::empty_only($parameter->type)) {
+			Initialization_Preparation::binding($parameter->type, initialization_shape::empty_brackets, $context);
+		}
+		Capability_Preparation::require_copy($parameter->type, $context);
+		return new prepared_property_parameter_default(Property_Defaults::prepare($syntax, $parameter->type, $context));
+	}
+
+	/** An optional single sign belongs to the literal domain, not general unary evaluation. */
+	private static function literal(expression_node $syntax, preparation_context $context): prepared_literal {
+		$literal = $syntax;
+		$sign = '';
+		if ($syntax instanceof unary_expression_node) {
+			$unary = object_cast($syntax, unary_expression_node::class);
+			$sign = $context->collection->token_snapshot()->text_at($unary->operator_token_index);
+			$literal = $unary->operand;
+			if ((($sign !== '+') && ($sign !== '-')) ||
+				!(($literal instanceof integer_literal_node) || ($literal instanceof float_literal_node))) {
+				throw new \scpp_portability_runtime_exception('S2S parameter defaults require scalar literals with optional numeric signs');
+			}
+		}
+		if (!(($literal instanceof integer_literal_node) || ($literal instanceof float_literal_node) ||
+			($literal instanceof boolean_literal_node) || ($literal instanceof string_literal_node))) {
+			throw new \scpp_portability_runtime_exception('S2S parameter defaults require scalar literals');
+		}
+		Expression_Preparation::prepare($literal, $context);
+		$value prepared_literal;
+		if ($literal instanceof integer_literal_node) {
+			$value = object_cast($literal, integer_literal_node::class)->require_integer_literal_preparation();
+		} elseif ($literal instanceof float_literal_node) {
+			$value = object_cast($literal, float_literal_node::class)->require_float_literal_preparation();
+		} elseif ($literal instanceof boolean_literal_node) {
+			$value = object_cast($literal, boolean_literal_node::class)->require_boolean_literal_preparation();
+		} else {
+			$value = object_cast($literal, string_literal_node::class)->require_string_literal_preparation();
+		}
+		if ($sign === '-') {
+			if ($value instanceof prepared_integer_literal) {
+				$integer = new prepared_integer_literal();
+				$integer->type = $value->type;
+				$decimal = object_cast($value, prepared_integer_literal::class)->decimal;
+				$integer->decimal = $decimal === '0' ? '0' : '-' . $decimal;
+				return $integer;
+			}
+			$floating = new prepared_float_literal();
+			$floating->type = $value->type;
+			$floating->decimal = '-' . object_cast($value, prepared_float_literal::class)->decimal;
+			return $floating;
+		}
+		return $value;
+	}
+
+	/** Compare immutable value snapshots, independent of token positions and AST reuse. */
+	public static function same(nullable<prepared_parameter_default> $before, nullable<prepared_parameter_default> $after): bool {
+		if ($before === null) { return $after === null; }
+		if ($after === null) { return false; }
+		if (($before instanceof prepared_property_parameter_default) && ($after instanceof prepared_property_parameter_default)) {
+			return Property_Defaults::same(object_cast($before, prepared_property_parameter_default::class)->value,
+				object_cast($after, prepared_property_parameter_default::class)->value);
+		}
+		if (($before instanceof prepared_type_parameter_default) && ($after instanceof prepared_type_parameter_default)) {
+			return object_cast($before, prepared_type_parameter_default::class)->type->matches(object_cast($after, prepared_type_parameter_default::class)->type);
+		}
+		if (!($before instanceof prepared_literal_parameter_default) || !($after instanceof prepared_literal_parameter_default)) { return false; }
+		$left = object_cast($before, prepared_literal_parameter_default::class)->value;
+		$right = object_cast($after, prepared_literal_parameter_default::class)->value;
+		if (!$left->type->matches($right->type)) { return false; }
+		return $left->value_key() === $right->value_key();
+	}
+}

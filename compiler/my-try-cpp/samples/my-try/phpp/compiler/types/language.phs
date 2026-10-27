@@ -1,0 +1,55 @@
+
+/* Language definitions follow Simple C++ contracts, independently of backend policies. */
+namespace scpp\compiler;
+
+final class Language_Types {
+	/** Publish registered exposures, including provider types and canonical aliases. */
+	public static function install(scope $language_scope): void {
+		foreach (Model::$type_catalog->source()->type_exposures()  as $name => $exposure) {
+			$language_scope->register_type_as($name, Model::$type_catalog->registry()->definition($exposure->definition_id()));
+		}
+	}
+
+	/** Literal defaults use the language definition, independently of source shadowing. */
+	public static function integer(scope $language_scope): canonical_type_use {
+		return self::canonical($language_scope, 'int');
+	}
+
+	/** Boolean defaults use the same language scope as integer defaults. */
+	public static function boolean(scope $language_scope): canonical_type_use {
+		return self::canonical($language_scope, 'bool');
+	}
+
+	/** Floating-point defaults use the same language scope as integer defaults. */
+	public static function floating(scope $language_scope): canonical_type_use {
+		return self::canonical($language_scope, 'float');
+	}
+
+	/** String literals and declarations share one binary-safe language identity. */
+	public static function string_type(scope $language_scope): canonical_type_use {
+		return self::canonical($language_scope, 'string');
+	}
+
+	public static function error_type(scope $language_scope): canonical_type_use {
+		return self::canonical($language_scope, 'error');
+	}
+
+	public static function exception_type(scope $language_scope): canonical_type_use {
+		return self::canonical($language_scope, 'Exception');
+	}
+
+	public static function no_value(scope $language_scope): canonical_type_use {
+		return self::canonical($language_scope, 'void');
+	}
+
+	/** Resolve the published definition and attach only its compact canonical identity. */
+	private static function canonical(scope $language_scope, string $name): canonical_type_use {
+		$types vector<type_definition_i> = $language_scope->types_named($name);
+		if (count($types) !== 1) {
+			throw new \scpp_portability_logic_exception('Missing canonical language type definition');
+		}
+		$definition = object_cast($types[0], concrete_type_definition_i::class);
+		$type = Model::$type_catalog->registry()->canonical($definition);
+		return Model::$type_catalog->registry()->use($type->type_id());
+	}
+}

@@ -1,0 +1,45 @@
+
+/* Output transport consumes final artifacts, never syntax or preparation workers. */
+namespace scpp\compiler;
+
+final class CPP_Output {
+	public static function artifact(Storage<cpp_artifact> $artifacts, string $identity): cpp_artifact {
+		foreach ($artifacts  as $artifact) {
+			if ($artifact->identity === $identity) { return $artifact; }
+		}
+		throw new \scpp_portability_logic_exception('Missing C++ artifact: ' . $identity);
+	}
+	/** Versioned transport for CLI/native consumers; emit every artifact, not index zero. */
+	public static function encode(Storage<cpp_artifact> $artifacts): string {
+		$identities hash<bool> = [];
+		$paths hash<bool> = [];
+		$rows = '';
+		$separator = '';
+		foreach ($artifacts  as $artifact) {
+			if (isset($identities[$artifact->identity]) || isset($paths[$artifact->file_name])) {
+				throw new \scpp_portability_logic_exception('Duplicate C++ artifact identity or path');
+			}
+			$identities[$artifact->identity] = true;
+			$paths[$artifact->file_name] = true;
+			$rows .= $separator . '{"id":' . \scpp_portability_json_quote($artifact->identity)
+				. ',"kind":' . \scpp_portability_json_quote($artifact->kind_name())
+				. ',"path":' . \scpp_portability_json_quote($artifact->file_name)
+				. ',"text":' . \scpp_portability_json_quote($artifact->text)
+				. ',"includes":' . CPP_Artifacts::includes_json($artifact) . '}';
+			$separator = ',';
+		}
+		return '{"format":"scpp-cpp-artifacts-v1","artifacts":[' . $rows . "]}\n";
+	}
+
+	/** Explicit adapter for existing single-unit source probes, never a flattening renderer. */
+	public static function single_unit(Storage<cpp_artifact> $artifacts): cpp_artifact {
+		if (count($artifacts) !== 1) {
+			throw new \scpp_portability_logic_exception('Single-unit inspection requires exactly one C++ artifact');
+		}
+		$artifact = $artifacts[0];
+		if ($artifact->kind() !== cpp_artifact_kind::translation_unit) {
+			throw new \scpp_portability_logic_exception('Single-unit inspection requires a C++ translation unit');
+		}
+		return $artifact;
+	}
+}

@@ -1,0 +1,125 @@
+// Receipt-backed expense net of a bounded personal portion.
+// Draft values are mutable. Services retain validated copies, never caller handles.
+class ExpenseClaimLine {
+    public string $id = "";
+    public string $claim_id = "";
+    public string $employee_id = "";
+    public string $category = "";
+    public string $receipt_reference = "";
+    public string $expense_account = "";
+    public int $gross_amount = 0;
+    public int $recoverable_tax = 0;
+    public int $personal_amount = 0;
+    public int $approved_amount = 0;
+    public int $period = 0;
+    public int $distance_units = 0;
+    public bool $receipt_present = false;
+    public bool $approved = false;
+
+    public function validate(): AccountingCheck {
+        if (!DocumentRules::text($this->id, 1, 40)) {
+            return accounting_failure("expense_claim_line.id", "id must contain 1..40 printable bytes");
+        }
+        if (!DocumentRules::text($this->claim_id, 1, 80)) {
+            return accounting_failure("expense_claim_line.claim_id", "claim_id must contain 1..80 printable bytes");
+        }
+        if (!DocumentRules::text($this->employee_id, 1, 80)) {
+            return accounting_failure("expense_claim_line.employee_id", "employee_id must contain 1..80 printable bytes");
+        }
+        if (!DocumentRules::text($this->category, 1, 80)) {
+            return accounting_failure("expense_claim_line.category", "category must contain 1..80 printable bytes");
+        }
+        if (!DocumentRules::text($this->receipt_reference, 1, 80)) {
+            return accounting_failure("expense_claim_line.receipt_reference", "receipt_reference must contain 1..80 printable bytes");
+        }
+        if (!DocumentRules::text($this->expense_account, 1, 80)) {
+            return accounting_failure("expense_claim_line.expense_account", "expense_account must contain 1..80 printable bytes");
+        }
+        if (!DocumentRules::integer($this->gross_amount, 0, 1000000000)) {
+            return accounting_failure("expense_claim_line.gross_amount", "gross_amount must be in [0, 1000000000]");
+        }
+        if (!DocumentRules::integer($this->recoverable_tax, 0, 1000000000)) {
+            return accounting_failure("expense_claim_line.recoverable_tax", "recoverable_tax must be in [0, 1000000000]");
+        }
+        if (!DocumentRules::integer($this->personal_amount, 0, 1000000000)) {
+            return accounting_failure("expense_claim_line.personal_amount", "personal_amount must be in [0, 1000000000]");
+        }
+        if (!DocumentRules::integer($this->approved_amount, 0, 1000000000)) {
+            return accounting_failure("expense_claim_line.approved_amount", "approved_amount must be in [0, 1000000000]");
+        }
+        if (!DocumentRules::integer($this->period, 1, 1200)) {
+            return accounting_failure("expense_claim_line.period", "period must be in [1, 1200]");
+        }
+        if (!DocumentRules::integer($this->distance_units, 0, 1000000)) {
+            return accounting_failure("expense_claim_line.distance_units", "distance_units must be in [0, 1000000]");
+        }
+        if ($this->recoverable_tax + $this->personal_amount > $this->gross_amount) {
+            return accounting_failure("expense_claim_line.components", "Tax and personal portion exceed claim");
+        }
+        if ($this->approved_amount > $this->gross_amount - $this->personal_amount) {
+            return accounting_failure("expense_claim_line.approval", "Approval exceeds business gross");
+        }
+        return accounting_success();
+    }
+
+    public function business_expense(): int {
+        return $this->gross_amount - $this->recoverable_tax - $this->personal_amount;
+    }
+
+    public function copy(): ExpenseClaimLine {
+        $snapshot ExpenseClaimLine = new ExpenseClaimLine();
+        $snapshot->id = $this->id;
+        $snapshot->claim_id = $this->claim_id;
+        $snapshot->employee_id = $this->employee_id;
+        $snapshot->category = $this->category;
+        $snapshot->receipt_reference = $this->receipt_reference;
+        $snapshot->expense_account = $this->expense_account;
+        $snapshot->gross_amount = $this->gross_amount;
+        $snapshot->recoverable_tax = $this->recoverable_tax;
+        $snapshot->personal_amount = $this->personal_amount;
+        $snapshot->approved_amount = $this->approved_amount;
+        $snapshot->period = $this->period;
+        $snapshot->distance_units = $this->distance_units;
+        $snapshot->receipt_present = $this->receipt_present;
+        $snapshot->approved = $this->approved;
+        return $snapshot;
+    }
+
+    public function differences(ExpenseClaimLine $other): vector<string> {
+        $fields vector<string> = [];
+        if ($this->id !== $other->id) { $fields[] = "id"; }
+        if ($this->claim_id !== $other->claim_id) { $fields[] = "claim_id"; }
+        if ($this->employee_id !== $other->employee_id) { $fields[] = "employee_id"; }
+        if ($this->category !== $other->category) { $fields[] = "category"; }
+        if ($this->receipt_reference !== $other->receipt_reference) { $fields[] = "receipt_reference"; }
+        if ($this->expense_account !== $other->expense_account) { $fields[] = "expense_account"; }
+        if ($this->gross_amount !== $other->gross_amount) { $fields[] = "gross_amount"; }
+        if ($this->recoverable_tax !== $other->recoverable_tax) { $fields[] = "recoverable_tax"; }
+        if ($this->personal_amount !== $other->personal_amount) { $fields[] = "personal_amount"; }
+        if ($this->approved_amount !== $other->approved_amount) { $fields[] = "approved_amount"; }
+        if ($this->period !== $other->period) { $fields[] = "period"; }
+        if ($this->distance_units !== $other->distance_units) { $fields[] = "distance_units"; }
+        if ($this->receipt_present !== $other->receipt_present) { $fields[] = "receipt_present"; }
+        if ($this->approved !== $other->approved) { $fields[] = "approved"; }
+        return $fields;
+    }
+
+    public function describe(): string {
+        $text string = "ExpenseClaimLine\n";
+        $text .= "id=" . $this->id . "\n";
+        $text .= "claim_id=" . $this->claim_id . "\n";
+        $text .= "employee_id=" . $this->employee_id . "\n";
+        $text .= "category=" . $this->category . "\n";
+        $text .= "receipt_reference=" . $this->receipt_reference . "\n";
+        $text .= "expense_account=" . $this->expense_account . "\n";
+        $text .= "gross_amount=" . (string)$this->gross_amount . "\n";
+        $text .= "recoverable_tax=" . (string)$this->recoverable_tax . "\n";
+        $text .= "personal_amount=" . (string)$this->personal_amount . "\n";
+        $text .= "approved_amount=" . (string)$this->approved_amount . "\n";
+        $text .= "period=" . (string)$this->period . "\n";
+        $text .= "distance_units=" . (string)$this->distance_units . "\n";
+        $text .= "receipt_present=" . DocumentRules::flag($this->receipt_present) . "\n";
+        $text .= "approved=" . DocumentRules::flag($this->approved) . "\n";
+        return $text;
+    }
+}

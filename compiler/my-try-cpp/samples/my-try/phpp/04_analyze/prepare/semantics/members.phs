@@ -1,0 +1,191 @@
+
+/* Shared modifier and qualified-member rules; member kinds retain their own semantic owners. */
+namespace scpp\compiler;
+
+final class Member_Preparation {
+	public static function validate_modifiers(vector<declaration_modifier> $modifiers, bool $allow_static): void {
+		$visibility = false;
+		$has_static = false;
+		foreach ($modifiers  as $modifier) {
+			if (($modifier === declaration_modifier::public_access) || ($modifier === declaration_modifier::private_access)
+				|| ($modifier === declaration_modifier::protected_access)) {
+				if ($visibility) { throw new \scpp_portability_runtime_exception('Duplicate or conflicting member visibility'); }
+				$visibility = true;
+			}
+			elseif (($modifier === declaration_modifier::static_member) && $allow_static) {
+				if ($has_static) { throw new \scpp_portability_runtime_exception('Duplicate static modifier'); }
+				$has_static = true;
+			}
+			else { throw new \scpp_portability_runtime_exception('Member requires public, protected or private visibility and supported modifiers'); }
+		}
+	}
+
+	public static function visibility(vector<declaration_modifier> $modifiers): member_visibility {
+		foreach ($modifiers  as $modifier) {
+			if ($modifier === declaration_modifier::private_access) {
+				return member_visibility::private_access;
+			}
+			if ($modifier === declaration_modifier::protected_access) {
+				return member_visibility::protected_access;
+			}
+		}
+		return member_visibility::public_access;
+	}
+
+	public static function is_static(vector<declaration_modifier> $modifiers): bool {
+		foreach ($modifiers  as $modifier) { if ($modifier === declaration_modifier::static_member) { return true; } }
+		return false;
+	}
+
+	/** Qualified lookup needs nominal identity, not completion of the record's instance layout. */
+	public static function owner(type_node $syntax, preparation_context $context): canonical_type_use {
+		if ($syntax instanceof named_type_node) {
+			return self::named_owner(object_cast($syntax, named_type_node::class), $context);
+		}
+		return Type_Preparation::type($syntax, $context);
+	}
+
+	public static function named_owner_is(nullable<type_node> $syntax, string $name): bool {
+		if (!($syntax instanceof named_type_node)) { return false; }
+		return object_cast($syntax, named_type_node::class)->name === $name;
+	}
+
+	private static function named_owner(named_type_node $syntax, preparation_context $context): canonical_type_use {
+		if ($syntax->name === 'static') {
+			if ($context->called_type === null) { throw new \scpp_portability_runtime_exception('static requires a concrete called-type context'); }
+			$type = Model::$type_catalog->registry()->canonical(Source_Types::definition($context->called_type));
+			$syntax->set_preparation(Model::$type_catalog->registry()->use($type->type_id()));
+			return $syntax->require_preparation();
+		}
+		if (($syntax->name === 'self') || ($syntax->name === 'parent')) {
+			$record = $context->member_owner;
+			if ($record === null) { throw new \scpp_portability_runtime_exception('self requires a declaring type context'); }
+			if ($syntax->name === 'parent') {
+				$record = lock($context->worker->require_relationships($record, $context)->base);
+				if ($record === null) { throw new \scpp_portability_runtime_exception('parent requires a concrete base'); }
+			}
+			$type = Model::$type_catalog->registry()->canonical(Source_Types::definition($record));
+			$syntax->set_preparation(Model::$type_catalog->registry()->use($type->type_id()));
+		}
+		else { Type_Preparation::prepare_named_type($syntax, $context, false); }
+		return $syntax->require_preparation();
+	}
+
+	/** Observe ancestry without requiring receiver layout or member signatures. */
+	public static function derives_from(collected_member_owner $type, collected_member_owner $base, preparation_context $context): bool {
+		$current collected_member_owner = $type;
+		for (;;) {
+			if ($current === $base) { return true; }
+			$relations = $context->worker->require_relationships($current, $context);
+			$parent = lock($relations->base);
+			if ($parent === null) { return false; }
+			$current = $parent;
+		}
+	}
+
+	/** Instance receiver restrictions are checked separately from declaring-context access. */
+	public static function accessible(member_visibility $visibility, collected_member_owner $owner, preparation_context $context): bool {
+		if ($visibility === member_visibility::protected_access) {
+			if ($context->member_owner === null) { return false; }
+			return self::derives_from($context->member_owner, $owner, $context);
+		}
+		return ($visibility === member_visibility::public_access) || ($context->member_owner === $owner);
+	}
+
+	/** Match C++ protected-instance access; a descendant cannot use an arbitrary base receiver. */
+	public static function require_instance_access(member_visibility $visibility, collected_member_owner $owner, collected_member_owner $receiver, preparation_context $context): void {
+		self::require_access($visibility, $owner, $context);
+		if ($visibility !== member_visibility::protected_access) { return; }
+		$accessing collected_member_owner = $context->member_owner;
+		if (!self::derives_from($receiver, $accessing, $context)) {
+			throw new \scpp_portability_runtime_exception('Protected instance access requires the accessing type or a descendant receiver');
+		}
+	}
+
+	public static function require_access(member_visibility $visibility, collected_member_owner $owner, preparation_context $context): void {
+		if (!self::accessible($visibility, $owner, $context)) {
+			if ($visibility === member_visibility::protected_access) { throw new \scpp_portability_runtime_exception('Protected member is not accessible here'); }
+			throw new \scpp_portability_runtime_exception('Private member is not accessible here');
+		}
+	}
+
+	public static function prepare_reference(static_member_reference_node $syntax, preparation_context $context): void {
+		$type canonical_type_use;
+		if ($syntax->qualifier !== null) {
+			$value = Method_Preparation::base($syntax->qualifier, $context);
+			$type = Type_Queries::receiver_payload($value->type);
+			if ((Type_Queries::source_record($type) === null)
+				&& (Type_Queries::canonical($type)->definition()->origin() !== type_definition_origin::runtime)) {
+				throw new \scpp_portability_runtime_exception('Expression qualification requires a concrete class or struct');
+			}
+		}
+		else { $type = self::owner($syntax->require_type_owner(), $context); }
+		$record = Type_Queries::source_record($type);
+		$property = str_starts_with($syntax->member_name, '$');
+		if ($property && (Type_Queries::canonical($type)->definition()->origin() === type_definition_origin::runtime)) {
+			$property_name = string_byte_slice($syntax->member_name, 1, string_byte_len($syntax->member_name) - 1);
+			$runtime_property = Runtime_Pattern_Preparation::property($type, $property_name, $context);
+			if ($runtime_property !== null) {
+				if (!$runtime_property->static_member) { throw new \scpp_portability_runtime_exception('Qualified property access requires one static property'); }
+				$syntax->set_property_preparation(self::static_property($runtime_property, $type)); return;
+			}
+		}
+		if (!$property && (Type_Queries::canonical($type)->definition()->origin() === type_definition_origin::runtime)) {
+			$runtime_constant = Model::$runtime_members->constant($type, $syntax->member_name);
+			if ($runtime_constant === null) { throw new \scpp_portability_runtime_exception('Unknown runtime member constant: ' . $syntax->member_name); }
+			$syntax->set_constant_preparation(self::constant_reference($runtime_constant)); return;
+		}
+		if ($record === null) {
+			if (!$property) { $syntax->set_enum_case_preparation(Enum_Preparation::reference($syntax, $context)); return; }
+			// Installed readonly constants such as error::$no_error keep their registered contract.
+			if ($syntax->qualifier !== null) { throw new \scpp_portability_runtime_exception('Unknown runtime static property'); }
+			$owner_syntax = $syntax->require_type_owner();
+			if (!($owner_syntax instanceof named_type_node)) { throw new \scpp_portability_runtime_exception('Unknown installed static member'); }
+			$owner = object_cast($owner_syntax, named_type_node::class);
+			$lookup_scope = object_cast(lock($owner->occurrence()->scope), scope::class);
+			$installed = Observed_Lookup::constants($lookup_scope, $owner->name . '::' . $syntax->member_name, $context);
+			if (count($installed) !== 1) { throw new \scpp_portability_runtime_exception('Unknown installed static member'); }
+			$syntax->set_constant_preparation(self::constant_reference($installed[0])); return;
+		}
+		if (!$property) {
+			$targets = Inherited_Lookup::members($record, $syntax->member_name, preparation_lookup_kind::constant, $context);
+			if (count($targets) !== 1) { throw new \scpp_portability_runtime_exception('Unknown or duplicate member constant'); }
+			$selected = $targets[0];
+			$target = $selected->member;
+			if (!($target instanceof collected_constant)) { throw new \scpp_portability_runtime_exception('Unknown member constant'); }
+			$constant = object_cast($target, collected_constant::class);
+			$context->worker->require_declaration($context->owner, $constant);
+			self::require_access($constant->syntax()->require_preparation()->visibility, $selected->declaring_type, $context);
+			$syntax->set_constant_preparation(self::constant_reference($constant)); return;
+		}
+		$context->worker->require_declaration($context->owner, $record);
+		$name = string_byte_slice($syntax->member_name, 1, string_byte_len($syntax->member_name) - 1);
+		$matches = Inherited_Lookup::members($record, $name, preparation_lookup_kind::property_name, $context);
+		if (count($matches) !== 1) { throw new \scpp_portability_runtime_exception('Qualified property access requires one static property'); }
+		$selected_field = $matches[0];
+		$context->worker->require_declaration($context->owner, $selected_field->declaring_type);
+		$field = object_cast($selected_field->member, collected_field::class)->syntax()->require_preparation();
+		if (!$field->static_member) { throw new \scpp_portability_runtime_exception('Qualified property access requires one static property'); }
+		self::require_access($field->visibility, $selected_field->declaring_type, $context);
+		$declaring_type = Model::$type_catalog->registry()->canonical(Source_Types::definition($selected_field->declaring_type));
+		$syntax->set_property_preparation(self::static_property($field, Model::$type_catalog->registry()->use($declaring_type->type_id()))); return;
+	}
+
+	private static function static_property(prepared_property_storage $field, canonical_type_use $owner): prepared_static_property {
+		$facts = new prepared_static_property();
+		$facts->field = $field;
+		$facts->record_type = $owner;
+		$facts->type = $field->type;
+		// Static storage is stable, but native-reference escape is outside this bounded slice.
+		$facts->place = new prepared_place($field, null, true);
+		return $facts;
+	}
+
+	private static function constant_reference(constant_target_i $target): prepared_constant_reference {
+		$facts = new prepared_constant_reference();
+		$facts->target = weak($target);
+		$facts->value = $target->value();
+		$facts->type = $facts->value->type;
+		return $facts;
+	}
+}

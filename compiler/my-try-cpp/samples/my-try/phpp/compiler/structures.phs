@@ -1,0 +1,36 @@
+namespace scpp\compiler;
+
+/** Hashes authorized by the committed manifest or an interrupted publication journal. */
+final class output_file_ownership {
+	public string $before = '';
+	public string $after = '';
+}
+
+enum work_state {
+	case queued;
+	case running;
+	case published;
+	case failed;
+}
+
+/** Transient compiler work; never retained by Model. */
+final class source_work {
+	/** Prior published parse. */
+	public $previous nullable<parsed_file> = null;
+	/** Existing snapshot for parse-only work, or the private scan result. */
+	public $tokens nullable<token_list> = null;
+	/** Candidate owned until publication; then shared with Model. @ownership owner */
+	public $result nullable<parsed_file> = null;
+	public work_state $state = work_state::queued;
+	/** A file failure is reported after all independent parsing work has joined. */
+	public string $error = '';
+
+	/** Own the candidate snapshot, its publication destination and queue position before dispatch. */
+	public file $source;public source_record $record;public int $position;public function __construct(set:$source, set:$record, set:$position) {}
+}
+
+/** A per-file operation; publication policy stays with the coordinator's caller. */
+enum frontend_operation {
+	case scan;
+	case parse;
+}

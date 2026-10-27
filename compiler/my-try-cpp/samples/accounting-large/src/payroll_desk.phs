@@ -1,0 +1,65 @@
+class PayrollDesk {
+    private $runs hash<PayrollInstruction> = [];
+    private $tax_paid hash<bool> = [];
+
+    public function accrue(GeneralLedger $ledger, EmployeeProfile $employee, PayrollInstruction $draft): AccountingCheck {
+        $employee_valid AccountingCheck = $employee->validate();
+        if (!$employee_valid->accepted) { return $employee_valid; }
+        $valid AccountingCheck = $draft->validate();
+        if (!$valid->accepted) { return $valid; }
+        if (isset($this->runs[$draft->id])) { return accounting_failure("payroll.duplicate", $draft->id); }
+        if (!$employee->active || $employee->payment_hold || !$draft->approved || $draft->paid || $draft->employee_id !== $employee->id) {
+            return accounting_failure("payroll.employee", "Active matching employee and unpaid approved payroll required");
+        }
+        if ($draft->period !== $ledger->current_period() || $draft->period < $employee->start_period || $draft->period > $employee->end_period) {
+            return accounting_failure("payroll.period", "Payroll falls outside current employment period");
+        }
+        $gross int = $draft->base_pay + $draft->overtime_pay + $draft->bonus_pay;
+        $net int = $draft->net_pay();
+        $withholding int = $draft->employee_deduction + $draft->employer_charge;
+        if ($gross <= 0 || !MoneyRules::accepts($gross + $draft->employer_charge)) {
+            return accounting_failure("payroll.amount", "Payroll cost must be positive and bounded");
+        }
+        $entry JournalEntry = new JournalEntry();
+        $entry->reference = "payroll:" . $draft->id;
+        $entry->origin = "fictional-payroll";
+        $entry->period = $draft->period;
+        $entry->add_debit($draft->wage_account, $gross + $draft->employer_charge, "Total employment cost");
+        if ($net > 0) { $entry->add_credit($draft->payable_account, $net, "Net wages payable"); }
+        if ($withholding > 0) { $entry->add_credit("tax-payable", $withholding, "Explicit fixture deductions and charges"); }
+        $posted AccountingCheck = $ledger->post($entry);
+        if (!$posted->accepted) { return $posted; }
+        $this->runs[$draft->id] = $draft->copy();
+        $this->tax_paid[$draft->id] = false;
+        return accounting_success();
+    }
+
+    public function pay(GeneralLedger $ledger, string $id, string $reference): AccountingCheck {
+        if (!isset($this->runs[$id])) { return accounting_failure("payroll.missing", $id); }
+        $run PayrollInstruction = $this->runs[$id];
+        if ($run->paid) { return accounting_failure("payroll.paid", $id); }
+        if ($run->net_pay() === 0) { $run->paid = true; return accounting_success(); }
+        $posted AccountingCheck = document_post($ledger, $reference, "net-wages", $run->payable_account, "bank", $run->net_pay());
+        if (!$posted->accepted) { return $posted; }
+        $run->paid = true;
+        return accounting_success();
+    }
+
+    public function remit(GeneralLedger $ledger, string $id, string $reference): AccountingCheck {
+        if (!isset($this->runs[$id])) { return accounting_failure("payroll.missing", $id); }
+        if ($this->tax_paid[$id]) { return accounting_failure("payroll.remitted", $id); }
+        $run PayrollInstruction = $this->runs[$id];
+        $amount int = $run->employee_deduction + $run->employer_charge;
+        if ($amount > 0) {
+            $posted AccountingCheck = document_post($ledger, $reference, "payroll-deductions", "tax-payable", "bank", $amount);
+            if (!$posted->accepted) { return $posted; }
+        }
+        $this->tax_paid[$id] = true;
+        return accounting_success();
+    }
+
+    public function snapshot(string $id): PayrollInstruction {
+        if (!isset($this->runs[$id])) { return new PayrollInstruction(); }
+        return $this->runs[$id]->copy();
+    }
+}

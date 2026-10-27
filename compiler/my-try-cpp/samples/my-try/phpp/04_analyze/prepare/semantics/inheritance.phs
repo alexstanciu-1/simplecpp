@@ -1,0 +1,86 @@
+
+/* Concrete base-subobject admission; neither member flattening nor implicit source upcasts. */
+namespace scpp\compiler;
+
+final class Inheritance_Preparation {
+	/** Complete the base layout; authored child construction is prepared with its body. */
+	public static function base(collected_record $entry, prepared_record $facts, preparation_context $context): void {
+		$relationships = $context->worker->require_relationships($entry, $context);
+		$base = lock($relationships->base);
+		if ($base === null) { return; }
+		$context->worker->require_declaration($context->owner, $base);
+		$canonical = Model::$type_catalog->registry()->canonical(Source_Types::definition($base));
+		$base_type = Model::$type_catalog->registry()->use($canonical->type_id());
+		if (Type_Queries::is_nominal_handle($base_type)) {
+			$base_type = Model::$type_catalog->registry()->use($canonical->type_id(), true);
+		}
+		$facts->base_type = $base_type;
+		self::reject_redeclarations($entry->syntax(), $base, $context);
+	}
+
+	/** A composed data contract supplies the base directly; other paths need its ordinary default. */
+	public static function require_default_base(prepared_record $facts, preparation_context $context): void {
+		$base_type = $facts->base_type;
+		if ($base_type === null) { return; }
+		if ($facts->initialization !== null) {
+			if ($facts->initialization->base_contract !== null) { return; }
+		}
+		$base collected_record = Type_Queries::source_record($base_type);
+		if (lock($base->syntax()->require_preparation()->constructor) === null) {
+			if (!Object_Construction_Preparation::supports_default($base_type, $context, true)) {
+				throw new \scpp_portability_runtime_exception('Inheritance requires a default-constructible base');
+			}
+		}
+	}
+
+	/** No synthesized callable identity: construction observes the original ancestor signature. */
+	public static function inherit_constructor(prepared_record $facts, preparation_context $context): void {
+		if (($facts->base_type === null) || (lock($facts->constructor) !== null)) { return; }
+		$base collected_record = Type_Queries::source_record($facts->base_type);
+		$constructor = lock($base->syntax()->require_preparation()->constructor);
+		if ($constructor === null) { return; }
+		$fields Key_Storage_List<prepared_field> = $facts->fields;
+		foreach ($fields->items()  as $field) {
+			if ($field->default_value === null) {
+				if (!Object_Construction_Preparation::supports_field_storage($field, $context)) {
+					throw new \scpp_portability_runtime_exception('Inherited construction requires default-constructible child properties');
+				}
+			}
+		}
+		$facts->constructor = weak($constructor);
+	}
+
+	/** Lifecycle methods are not inherited ordinary members; their bodies construct/destroy subobjects. */
+	private static function reject_redeclarations(type_declaration_node $syntax, collected_record $base, preparation_context $context): void {
+		$properties Storage<property_node> = Member_Inventory::properties(object_cast($syntax->occurrence(), collected_member_owner::class));
+		foreach ($properties  as $property) {
+			self::require_property_name($base, $property, $context);
+		}
+		// Method redeclarations require completed contracts, not layout-time signature cycles.
+		$constants Storage<member_constant_node> = Member_Inventory::constants(object_cast($syntax->occurrence(), collected_member_owner::class));
+		foreach ($constants  as $constant) {
+			self::require_new_name($base, $constant->name, preparation_lookup_kind::constant, $context);
+		}
+	}
+
+	/** Private instance declarations own independent base/child storage; lookup still hides. */
+	private static function require_property_name(collected_record $base, property_node $property, preparation_context $context): void {
+		$matches = Inherited_Lookup::members($base, $property->name, preparation_lookup_kind::property_name, $context);
+		if (count($matches) === 0) { return; }
+		if ((count($matches) === 1)
+			&& !Member_Preparation::is_static($property->modifiers)
+			&& (Member_Preparation::visibility($property->modifiers) === member_visibility::private_access)) {
+			$selected = $matches[0];
+			$context->worker->require_declaration($context->owner, $selected->declaring_type);
+			$inherited = object_cast($selected->member, collected_field::class)->syntax()->require_preparation();
+			if (!$inherited->static_member && ($inherited->visibility === member_visibility::private_access)) { return; }
+		}
+		throw new \scpp_portability_runtime_exception('Inherited member redeclaration is deferred: ' . $property->name);
+	}
+
+	private static function require_new_name(collected_record $base, string $name, preparation_lookup_kind $kind, preparation_context $context): void {
+		if (count(Inherited_Lookup::members($base, $name, $kind, $context)) !== 0) {
+			throw new \scpp_portability_runtime_exception('Inherited member redeclaration is deferred: ' . $name);
+		}
+	}
+}

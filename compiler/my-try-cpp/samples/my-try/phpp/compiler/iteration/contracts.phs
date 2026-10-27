@@ -1,0 +1,51 @@
+
+/* Iteration is an independent capability, not inferred from bracket access or spelling. */
+namespace scpp\compiler;
+
+final class iteration_declaration {
+	private type_definition_i $receiver_definition;private contract_type_reference $key_reference;private contract_type_reference $value_reference;public function __construct(set:$receiver_definition, set:$key_reference, set:$value_reference) {
+	}
+
+	public function definition(): type_definition_i {
+		return $this->receiver_definition;
+	}
+
+	public function key(): contract_type_reference {
+		return $this->key_reference;
+	}
+
+	public function value(): contract_type_reference {
+		return $this->value_reference;
+	}
+}
+
+final class Iteration_Contracts {
+	private $declarations Storage<iteration_declaration>;public function __construct(set:$declarations) {
+	}
+
+	/** Only exact registered identities confer iteration capability. */
+	public function lookup(type_definition_i $definition): nullable<iteration_declaration> {
+		foreach ($this->declarations  as $declaration) {
+			if ($declaration->definition() === $definition) {
+				return $declaration;
+			}
+		}
+		return null;
+	}
+}
+
+final class Iteration_Registration {
+	/** Ordinary providers come from metadata; boxed language semantics remain explicit. */
+	public static function install(registered_type_catalog $types, runtime_catalog_input $input): Iteration_Contracts {
+		$registry = $types->registry();
+		$mixed = contract_type_reference::concrete($registry->use($types->canonical('mixed')->type_id()));
+		$declarations Storage<iteration_declaration> = new Storage<iteration_declaration>();
+		Runtime_Protocol_Registration::iteration($input, $types, $declarations);
+		$boxed_names vector<string> = ['mixed', 'dynamic'];
+		foreach ($boxed_names  as $name) {
+			$element = contract_type_reference::concrete($registry->use($types->canonical($name)->type_id()));
+			$declarations->append(new iteration_declaration($types->definition($name), $mixed, $element));
+		}
+		return new Iteration_Contracts($declarations);
+	}
+}

@@ -1,0 +1,122 @@
+// Prospective useful-life and impairment review of an existing asset.
+// Draft values are mutable. Services retain validated copies, never caller handles.
+class AssetRevision {
+    public string $id = "";
+    public string $asset_id = "";
+    public string $reason = "";
+    public string $cost_account = "";
+    public string $allowance_account = "";
+    public string $reviewer = "";
+    public int $cost_amount = 0;
+    public int $accumulated_depreciation = 0;
+    public int $impairment_amount = 0;
+    public int $residual_amount = 0;
+    public int $remaining_periods = 0;
+    public int $period = 0;
+    public bool $approved = false;
+    public bool $posted = false;
+
+    public function validate(): AccountingCheck {
+        if (!DocumentRules::text($this->id, 1, 40)) {
+            return accounting_failure("asset_revision.id", "id must contain 1..40 printable bytes");
+        }
+        if (!DocumentRules::text($this->asset_id, 1, 80)) {
+            return accounting_failure("asset_revision.asset_id", "asset_id must contain 1..80 printable bytes");
+        }
+        if (!DocumentRules::text($this->reason, 1, 80)) {
+            return accounting_failure("asset_revision.reason", "reason must contain 1..80 printable bytes");
+        }
+        if (!DocumentRules::text($this->cost_account, 1, 80)) {
+            return accounting_failure("asset_revision.cost_account", "cost_account must contain 1..80 printable bytes");
+        }
+        if (!DocumentRules::text($this->allowance_account, 1, 80)) {
+            return accounting_failure("asset_revision.allowance_account", "allowance_account must contain 1..80 printable bytes");
+        }
+        if (!DocumentRules::text($this->reviewer, 1, 80)) {
+            return accounting_failure("asset_revision.reviewer", "reviewer must contain 1..80 printable bytes");
+        }
+        if (!DocumentRules::integer($this->cost_amount, 0, 1000000000)) {
+            return accounting_failure("asset_revision.cost_amount", "cost_amount must be in [0, 1000000000]");
+        }
+        if (!DocumentRules::integer($this->accumulated_depreciation, 0, 1000000000)) {
+            return accounting_failure("asset_revision.accumulated_depreciation", "accumulated_depreciation must be in [0, 1000000000]");
+        }
+        if (!DocumentRules::integer($this->impairment_amount, 0, 1000000000)) {
+            return accounting_failure("asset_revision.impairment_amount", "impairment_amount must be in [0, 1000000000]");
+        }
+        if (!DocumentRules::integer($this->residual_amount, 0, 1000000000)) {
+            return accounting_failure("asset_revision.residual_amount", "residual_amount must be in [0, 1000000000]");
+        }
+        if (!DocumentRules::integer($this->remaining_periods, 1, 1200)) {
+            return accounting_failure("asset_revision.remaining_periods", "remaining_periods must be in [1, 1200]");
+        }
+        if (!DocumentRules::integer($this->period, 1, 1200)) {
+            return accounting_failure("asset_revision.period", "period must be in [1, 1200]");
+        }
+        if ($this->accumulated_depreciation + $this->impairment_amount + $this->residual_amount > $this->cost_amount) {
+            return accounting_failure("asset_revision.carrying", "Allowances and residual exceed cost");
+        }
+        return accounting_success();
+    }
+
+    public function depreciable_remainder(): int {
+        return $this->cost_amount - $this->accumulated_depreciation - $this->impairment_amount - $this->residual_amount;
+    }
+
+    public function copy(): AssetRevision {
+        $snapshot AssetRevision = new AssetRevision();
+        $snapshot->id = $this->id;
+        $snapshot->asset_id = $this->asset_id;
+        $snapshot->reason = $this->reason;
+        $snapshot->cost_account = $this->cost_account;
+        $snapshot->allowance_account = $this->allowance_account;
+        $snapshot->reviewer = $this->reviewer;
+        $snapshot->cost_amount = $this->cost_amount;
+        $snapshot->accumulated_depreciation = $this->accumulated_depreciation;
+        $snapshot->impairment_amount = $this->impairment_amount;
+        $snapshot->residual_amount = $this->residual_amount;
+        $snapshot->remaining_periods = $this->remaining_periods;
+        $snapshot->period = $this->period;
+        $snapshot->approved = $this->approved;
+        $snapshot->posted = $this->posted;
+        return $snapshot;
+    }
+
+    public function differences(AssetRevision $other): vector<string> {
+        $fields vector<string> = [];
+        if ($this->id !== $other->id) { $fields[] = "id"; }
+        if ($this->asset_id !== $other->asset_id) { $fields[] = "asset_id"; }
+        if ($this->reason !== $other->reason) { $fields[] = "reason"; }
+        if ($this->cost_account !== $other->cost_account) { $fields[] = "cost_account"; }
+        if ($this->allowance_account !== $other->allowance_account) { $fields[] = "allowance_account"; }
+        if ($this->reviewer !== $other->reviewer) { $fields[] = "reviewer"; }
+        if ($this->cost_amount !== $other->cost_amount) { $fields[] = "cost_amount"; }
+        if ($this->accumulated_depreciation !== $other->accumulated_depreciation) { $fields[] = "accumulated_depreciation"; }
+        if ($this->impairment_amount !== $other->impairment_amount) { $fields[] = "impairment_amount"; }
+        if ($this->residual_amount !== $other->residual_amount) { $fields[] = "residual_amount"; }
+        if ($this->remaining_periods !== $other->remaining_periods) { $fields[] = "remaining_periods"; }
+        if ($this->period !== $other->period) { $fields[] = "period"; }
+        if ($this->approved !== $other->approved) { $fields[] = "approved"; }
+        if ($this->posted !== $other->posted) { $fields[] = "posted"; }
+        return $fields;
+    }
+
+    public function describe(): string {
+        $text string = "AssetRevision\n";
+        $text .= "id=" . $this->id . "\n";
+        $text .= "asset_id=" . $this->asset_id . "\n";
+        $text .= "reason=" . $this->reason . "\n";
+        $text .= "cost_account=" . $this->cost_account . "\n";
+        $text .= "allowance_account=" . $this->allowance_account . "\n";
+        $text .= "reviewer=" . $this->reviewer . "\n";
+        $text .= "cost_amount=" . (string)$this->cost_amount . "\n";
+        $text .= "accumulated_depreciation=" . (string)$this->accumulated_depreciation . "\n";
+        $text .= "impairment_amount=" . (string)$this->impairment_amount . "\n";
+        $text .= "residual_amount=" . (string)$this->residual_amount . "\n";
+        $text .= "remaining_periods=" . (string)$this->remaining_periods . "\n";
+        $text .= "period=" . (string)$this->period . "\n";
+        $text .= "approved=" . DocumentRules::flag($this->approved) . "\n";
+        $text .= "posted=" . DocumentRules::flag($this->posted) . "\n";
+        return $text;
+    }
+}

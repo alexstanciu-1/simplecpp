@@ -1,0 +1,129 @@
+class ProcurementDesk {
+    private $orders hash<PurchaseOrderLine> = [];
+    private $receipts hash<GoodsReceiptLine> = [];
+    private $matches hash<SupplierInvoiceMatch> = [];
+    private $returns hash<SupplierReturn> = [];
+
+    public function order(PurchaseOrderLine $draft): AccountingCheck {
+        $valid AccountingCheck = $draft->validate();
+        if (!$valid->accepted) { return $valid; }
+        if (isset($this->orders[$draft->id])) { return accounting_failure("procurement.duplicate", $draft->id); }
+        if (!$draft->approved || $draft->cancelled || $draft->unit_cost <= 0) {
+            return accounting_failure("procurement.approval", "Approved positive-cost order required");
+        }
+        if ($draft->received !== 0 || $draft->returned !== 0 || $draft->invoiced !== 0) {
+            return accounting_failure("procurement.opening", "New order cannot contain historical movements");
+        }
+        $this->orders[$draft->id] = $draft->copy();
+        return accounting_success();
+    }
+
+    public function order_snapshot(string $id): PurchaseOrderLine {
+        if (!isset($this->orders[$id])) { return new PurchaseOrderLine(); }
+        return $this->orders[$id]->copy();
+    }
+
+    public function receipt_snapshot(string $id): GoodsReceiptLine {
+        if (!isset($this->receipts[$id])) { return new GoodsReceiptLine(); }
+        return $this->receipts[$id]->copy();
+    }
+
+    public function receive(GeneralLedger $ledger, GoodsReceiptLine $draft): AccountingCheck {
+        $valid AccountingCheck = $draft->validate();
+        if (!$valid->accepted) { return $valid; }
+        if (isset($this->receipts[$draft->id])) { return accounting_failure("procurement.receipt-duplicate", $draft->id); }
+        if (!isset($this->orders[$draft->order_line_id])) { return accounting_failure("procurement.order", $draft->order_line_id); }
+        $order PurchaseOrderLine = $this->orders[$draft->order_line_id];
+        if (!$draft->inspected || $draft->quarantined || $draft->matched !== 0 || $draft->period !== $ledger->current_period()) {
+            return accounting_failure("procurement.inspection", "Unmatched inspected current-period goods required");
+        }
+        if ($draft->supplier_id !== $order->supplier_id || $draft->item_code !== $order->item_code || $draft->unit_cost !== $order->unit_cost) {
+            return accounting_failure("procurement.receipt-identity", "Receipt differs from order terms");
+        }
+        $accepted_quantity int = $draft->delivered - $draft->rejected;
+        if ($accepted_quantity <= 0 || $accepted_quantity > $order->ordered - $order->received) {
+            return accounting_failure("procurement.quantity", "Accepted receipt exceeds open order");
+        }
+        $amount AmountResult = MoneyRules::multiply($order->unit_cost, $accepted_quantity);
+        if (!$amount->valid) { return accounting_failure($amount->reason, "Receipt value"); }
+        $posted AccountingCheck = document_post($ledger, "receive:" . $draft->id, "procurement-receipt", "inventory", "goods-received", $amount->amount);
+        if (!$posted->accepted) { return $posted; }
+        $order->received += $accepted_quantity;
+        $this->receipts[$draft->id] = $draft->copy();
+        return accounting_success();
+    }
+
+    public function match_invoice(GeneralLedger $ledger, SupplierInvoiceMatch $draft): AccountingCheck {
+        $valid AccountingCheck = $draft->validate();
+        if (!$valid->accepted) { return $valid; }
+        if (isset($this->matches[$draft->id])) { return accounting_failure("procurement.match-duplicate", $draft->id); }
+        if (!isset($this->receipts[$draft->receipt_line_id])) { return accounting_failure("procurement.receipt", $draft->receipt_line_id); }
+        $receipt GoodsReceiptLine = $this->receipts[$draft->receipt_line_id];
+        $order PurchaseOrderLine = $this->orders[$receipt->order_line_id];
+        if (!$draft->approved || $draft->order_line_id !== $order->id || $draft->supplier_id !== $order->supplier_id) {
+            return accounting_failure("procurement.match-identity", "Approved matching supplier and order required");
+        }
+        $available int = $receipt->delivered - $receipt->rejected - $receipt->matched;
+        if ($draft->invoice_quantity > $available || $draft->available_receipt_quantity !== $available || $draft->ordered_unit_cost !== $order->unit_cost) {
+            return accounting_failure("procurement.match-quantity", "Invoice carries stale receipt or price facts");
+        }
+        $variance int = $draft->price_variance();
+        $absolute_variance int = $variance;
+        if ($absolute_variance < 0) { $absolute_variance = -$absolute_variance; }
+        if ($absolute_variance > $draft->tolerance_amount && !$draft->price_override) {
+            return accounting_failure("procurement.price", "Price variance needs an explicit override");
+        }
+        $receipt_value AmountResult = MoneyRules::multiply($order->unit_cost, $draft->invoice_quantity);
+        $invoice_value AmountResult = MoneyRules::multiply($draft->invoiced_unit_cost, $draft->invoice_quantity);
+        if (!$receipt_value->valid || !$invoice_value->valid || $invoice_value->amount <= 0) {
+            return accounting_failure("procurement.value", "Bounded positive invoice value required");
+        }
+        $entry JournalEntry = new JournalEntry();
+        $entry->reference = "match:" . $draft->id;
+        $entry->origin = "procurement-invoice";
+        $entry->period = $ledger->current_period();
+        $entry->add_debit("goods-received", $receipt_value->amount, "Matched receipt");
+        if ($variance > 0) { $entry->add_debit("operating-expense", $variance, "Purchase price variance"); }
+        if ($variance < 0) { $entry->add_credit("operating-expense", -$variance, "Purchase price variance"); }
+        if ($draft->tax_amount > 0) { $entry->add_debit("input-tax", $draft->tax_amount, "Explicit input tax"); }
+        $entry->add_credit("payables", $invoice_value->amount + $draft->tax_amount, "Supplier liability");
+        $posted AccountingCheck = $ledger->post($entry);
+        if (!$posted->accepted) { return $posted; }
+        $receipt->matched += $draft->invoice_quantity;
+        $order->invoiced += $draft->invoice_quantity;
+        $this->matches[$draft->id] = $draft->copy();
+        return accounting_success();
+    }
+
+    // This slice returns unmatched receipts. Invoiced returns need a separate
+    // supplier-credit workflow and are rejected instead of reducing payables here.
+    public function return_unmatched(GeneralLedger $ledger, SupplierReturn $draft): AccountingCheck {
+        $valid AccountingCheck = $draft->validate();
+        if (!$valid->accepted) { return $valid; }
+        if (isset($this->returns[$draft->id])) { return accounting_failure("procurement.return-duplicate", $draft->id); }
+        if (!isset($this->receipts[$draft->receipt_id])) { return accounting_failure("procurement.receipt", $draft->receipt_id); }
+        $receipt GoodsReceiptLine = $this->receipts[$draft->receipt_id];
+        $available int = $receipt->delivered - $receipt->rejected - $receipt->matched;
+        if (!$draft->approved || $draft->dispatched_quantity <= 0 || $draft->dispatched_quantity > $available || $draft->credited_quantity !== 0) {
+            return accounting_failure("procurement.return-quantity", "Only positive unmatched receipts can be returned");
+        }
+        if ($draft->supplier_id !== $receipt->supplier_id || $draft->item_code !== $receipt->item_code || $draft->unit_cost !== $receipt->unit_cost || $draft->period !== $ledger->current_period()) {
+            return accounting_failure("procurement.return-identity", "Return differs from receipt");
+        }
+        $amount AmountResult = MoneyRules::multiply($receipt->unit_cost, $draft->dispatched_quantity);
+        if (!$amount->valid) { return accounting_failure($amount->reason, "Return value"); }
+        $posted AccountingCheck = document_post($ledger, "return:" . $draft->id, "supplier-return", "goods-received", "inventory", $amount->amount);
+        if (!$posted->accepted) { return $posted; }
+        $receipt->rejected += $draft->dispatched_quantity;
+        $order PurchaseOrderLine = $this->orders[$receipt->order_line_id];
+        $order->returned += $draft->dispatched_quantity;
+        $this->returns[$draft->id] = $draft->copy();
+        return accounting_success();
+    }
+
+    public function unmatched_value(): int {
+        $total int = 0;
+        foreach ($this->receipts as $receipt) { $total += $receipt->unmatched_value(); }
+        return $total;
+    }
+}

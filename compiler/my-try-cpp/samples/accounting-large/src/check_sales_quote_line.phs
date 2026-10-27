@@ -1,0 +1,64 @@
+function sample_sales_quote_line(): SalesQuoteLine {
+    $draft SalesQuoteLine = new SalesQuoteLine();
+    $draft->id = "QUOTE-L1";
+    $draft->quote_id = "QUOTE-001";
+    $draft->customer_id = "CUS-001";
+    $draft->item_code = "PART-A";
+    $draft->description = "Machined bracket";
+    $draft->revenue_account = "revenue";
+    $draft->quantity = 8;
+    $draft->unit_price = 1250;
+    $draft->discount_amount = 500;
+    $draft->tax_amount = 1900;
+    $draft->valid_until_period = 2;
+    $draft->revision = 1;
+    $draft->accepted = false;
+    $draft->cancelled = false;
+    return $draft;
+}
+
+function check_sales_quote_line(WorkloadChecks $checks): void {
+    $draft SalesQuoteLine = sample_sales_quote_line();
+    $checks->accepted($draft->validate(), "sales_quote_line valid draft");
+    $checks->equal($draft->gross_amount(), 11400, "sales_quote_line independent business result");
+    $copy SalesQuoteLine = $draft->copy();
+    $checks->equal(count($draft->differences($copy)), 0, "sales_quote_line snapshot equivalence");
+    $checks->expect($draft->describe() === $copy->describe(), "sales_quote_line snapshot report");
+    $copy = $draft->copy();
+    $copy->id = "";
+    $checks->rejected($copy->validate(), "sales_quote_line.id", "sales_quote_line id required");
+    $copy = $draft->copy();
+    $copy->id = "bad\nrow";
+    $checks->rejected($copy->validate(), "sales_quote_line.id", "sales_quote_line id control");
+    $copy = $draft->copy();
+    $copy->id = DocumentRules::repeat("x", 41);
+    $checks->rejected($copy->validate(), "sales_quote_line.id", "sales_quote_line id width");
+    $copy = $draft->copy();
+    $copy->id = "QUOTE-L1-changed";
+    $checks->expect($draft->id === "QUOTE-L1", "sales_quote_line id snapshot isolation");
+    $changes_id vector<string> = $draft->differences($copy);
+    $checks->equal(count($changes_id), 1, "sales_quote_line id change count");
+    if (count($changes_id) === 1) {
+        $checks->expect($changes_id[0] === "id", "sales_quote_line id change identity");
+    }
+    $copy = $draft->copy();
+    $copy->quantity = 0;
+    $checks->rejected($copy->validate(), "sales_quote_line.quantity", "sales_quote_line quantity below");
+    $copy = $draft->copy();
+    $copy->quantity = 1000001;
+    $checks->rejected($copy->validate(), "sales_quote_line.quantity", "sales_quote_line quantity above");
+    $copy = $draft->copy();
+    $copy->unit_price = -1;
+    $checks->rejected($copy->validate(), "sales_quote_line.unit_price", "sales_quote_line unit_price below");
+    $copy = $draft->copy();
+    $copy->unit_price = 1000001;
+    $checks->rejected($copy->validate(), "sales_quote_line.unit_price", "sales_quote_line unit_price above");
+    $copy = $draft->copy();
+    $copy->accepted = true;
+    $checks->expect($draft->accepted === false, "sales_quote_line accepted snapshot isolation");
+    $changes_accepted vector<string> = $draft->differences($copy);
+    $checks->equal(count($changes_accepted), 1, "sales_quote_line accepted change count");
+    if (count($changes_accepted) === 1) {
+        $checks->expect($changes_accepted[0] === "accepted", "sales_quote_line accepted change identity");
+    }
+}

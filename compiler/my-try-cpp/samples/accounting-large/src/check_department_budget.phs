@@ -1,0 +1,64 @@
+function sample_department_budget(): DepartmentBudget {
+    $draft DepartmentBudget = new DepartmentBudget();
+    $draft->id = "BUD-001";
+    $draft->department = "OPS";
+    $draft->cost_center = "CC-OPS";
+    $draft->expense_account = "operating-expense";
+    $draft->owner = "manager-a";
+    $draft->version_label = "approved-v1";
+    $draft->approved_amount = 200000;
+    $draft->actual_amount = 50000;
+    $draft->committed_amount = 30000;
+    $draft->transferred_in = 10000;
+    $draft->transferred_out = 5000;
+    $draft->period = 1;
+    $draft->approved = true;
+    $draft->frozen = false;
+    return $draft;
+}
+
+function check_department_budget(WorkloadChecks $checks): void {
+    $draft DepartmentBudget = sample_department_budget();
+    $checks->accepted($draft->validate(), "department_budget valid draft");
+    $checks->equal($draft->available_amount(), 125000, "department_budget independent business result");
+    $copy DepartmentBudget = $draft->copy();
+    $checks->equal(count($draft->differences($copy)), 0, "department_budget snapshot equivalence");
+    $checks->expect($draft->describe() === $copy->describe(), "department_budget snapshot report");
+    $copy = $draft->copy();
+    $copy->id = "";
+    $checks->rejected($copy->validate(), "department_budget.id", "department_budget id required");
+    $copy = $draft->copy();
+    $copy->id = "bad\nrow";
+    $checks->rejected($copy->validate(), "department_budget.id", "department_budget id control");
+    $copy = $draft->copy();
+    $copy->id = DocumentRules::repeat("x", 41);
+    $checks->rejected($copy->validate(), "department_budget.id", "department_budget id width");
+    $copy = $draft->copy();
+    $copy->id = "BUD-001-changed";
+    $checks->expect($draft->id === "BUD-001", "department_budget id snapshot isolation");
+    $changes_id vector<string> = $draft->differences($copy);
+    $checks->equal(count($changes_id), 1, "department_budget id change count");
+    if (count($changes_id) === 1) {
+        $checks->expect($changes_id[0] === "id", "department_budget id change identity");
+    }
+    $copy = $draft->copy();
+    $copy->approved_amount = -1;
+    $checks->rejected($copy->validate(), "department_budget.approved_amount", "department_budget approved_amount below");
+    $copy = $draft->copy();
+    $copy->approved_amount = 1000000001;
+    $checks->rejected($copy->validate(), "department_budget.approved_amount", "department_budget approved_amount above");
+    $copy = $draft->copy();
+    $copy->actual_amount = -1;
+    $checks->rejected($copy->validate(), "department_budget.actual_amount", "department_budget actual_amount below");
+    $copy = $draft->copy();
+    $copy->actual_amount = 1000000001;
+    $checks->rejected($copy->validate(), "department_budget.actual_amount", "department_budget actual_amount above");
+    $copy = $draft->copy();
+    $copy->approved = false;
+    $checks->expect($draft->approved === true, "department_budget approved snapshot isolation");
+    $changes_approved vector<string> = $draft->differences($copy);
+    $checks->equal(count($changes_approved), 1, "department_budget approved change count");
+    if (count($changes_approved) === 1) {
+        $checks->expect($changes_approved[0] === "approved", "department_budget approved change identity");
+    }
+}

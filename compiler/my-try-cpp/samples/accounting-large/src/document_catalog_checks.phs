@@ -1,0 +1,35 @@
+function check_document_catalog(WorkloadChecks $checks): void {
+    check_document_rules($checks);
+    check_customer_profile($checks);
+    check_supplier_contract($checks);
+    check_sales_quote_line($checks);
+    check_sales_order_line($checks);
+    check_customer_credit($checks);
+    check_collection_case($checks);
+    check_receipt_allocation($checks);
+    check_purchase_order_line($checks);
+    check_goods_receipt_line($checks);
+    check_supplier_invoice_match($checks);
+    check_supplier_return($checks);
+    check_payment_instruction($checks);
+    check_warehouse_location($checks);
+    check_warehouse_transfer($checks);
+    check_stock_count_line($checks);
+    check_landed_cost_charge($checks);
+    check_employee_profile($checks);
+    check_expense_claim_line($checks);
+    check_employee_advance($checks);
+    check_payroll_instruction($checks);
+    check_project_budget($checks);
+    check_time_sheet_line($checks);
+    check_project_milestone($checks);
+    check_loan_agreement($checks);
+    check_lease_agreement($checks);
+    check_exchange_rate_quote($checks);
+    check_foreign_settlement($checks);
+    check_cash_forecast_item($checks);
+    check_department_budget($checks);
+    check_allocation_driver($checks);
+    check_asset_revision($checks);
+    check_tax_control_line($checks);
+}

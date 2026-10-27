@@ -1,0 +1,994 @@
+{
+    "version": 1,
+    "target": "v0.2",
+    "files": {
+        "01_prepare_inputs\/file.php": {
+            "input": "0385700ffbb0ea9f2a26564ae53cf9110baacc598c0c1d89f6d5f4923bf7b539",
+            "output": "7b285bfd329450909918ecaf37db0ad9c7c824e58ba68475f0c893746d66cd20"
+        },
+        "01_prepare_inputs\/module.php": {
+            "input": "87844499709b9a84840183b509847ce30f0a3db6c9de7766b945f45db5674559",
+            "output": "98c32611e88ae7d9c0d92e793851afa36a2d6b2fbecc3a75c02e02f622fc920e"
+        },
+        "01_prepare_inputs\/structures.php": {
+            "input": "4ec0ae98db2b4a44f8f2a4e9b5b3ad713ed8362917159d31486ad92b3c7b7ee1",
+            "output": "7956935cc00b89d046e5d83a6c6d0d89c6d4263f9cd0a2c7e9bf9e48e7ce1b1f"
+        },
+        "02_tokenize\/buffer.php": {
+            "input": "db1099dcd88aeac4e84212917b738be155ce9554e3d614367a4fdbf379d20292",
+            "output": "aa08da94f5800a1c22e8106848512f318dcba5b65bbb9723df1fea617e698fb0"
+        },
+        "02_tokenize\/structures.php": {
+            "input": "7b52c49ead07341a33a5a8f103374d77c8e9c0b532c23bb924f608024d57ecaa",
+            "output": "5cee84ee16c432e54e1d6dd12293f9f8afb5fe49cc57857e8e144ca6067146b7"
+        },
+        "02_tokenize\/text.php": {
+            "input": "f9c467dfa739528f9fdbfa5ac7894a49ec84a080a2d1047d41b26ea5ac732f16",
+            "output": "cc67e84f9ce21ba0a5a7fa8160edaf74574b1e036a451f1304fa3050615c98b8"
+        },
+        "02_tokenize\/tokens.php": {
+            "input": "e4338b8124132b8c394270bd8570dd53e52c2a56c81cbf15bb448871a892e3e2",
+            "output": "0071c385b4307eed724d6922cbe1b7be973f44c0bc45f519e762f23b2fb4303c"
+        },
+        "03_parse\/collect\/collect.php": {
+            "input": "63f55c00e13ef9b6598651adb9dea1909295c9e8d9d21ac723658c39d58078c4",
+            "output": "558b65dd57ac42564deefef29b5263b8d6343afd20b8a7c9ea10dd2c2f8009cd"
+        },
+        "03_parse\/collect\/retirement.php": {
+            "input": "969e7ed206b441bda8d0033f172b02c56eace13178cabfb231d6e4e8b184e00c",
+            "output": "bd457dcbe71ad678abc0f49622540de00b1d509212bdb8a62f25afe537444fc9"
+        },
+        "03_parse\/collect\/structures.php": {
+            "input": "b3db00fc57a4cd564e8357bab50e23654c6dbf1dd8b2aa8c65b3730d791dc30c",
+            "output": "d1540abb6e283be4145e1b2c43b4cf40cdb58ad1d903480b42abbc925ae0cb8e"
+        },
+        "03_parse\/parser.php": {
+            "input": "8142f4d7c5e9be0880708a5c3946c1db9460fd38676830cf5692984b488c5e9c",
+            "output": "6e28e60954d5ca1238555c71909839ab005f2d6bfb71ef30d960331e61d45dbc"
+        },
+        "03_parse\/scopes\/candidates.php": {
+            "input": "e7afd3ccff3c4fa882521201919476b2569f6d80056fccbdb79e5263a52fba11",
+            "output": "a9fa7a30e371b03c2027d62583ed2529c9d55e696ddf3f893a58a5908f3ab1dc"
+        },
+        "03_parse\/scopes\/lookup.php": {
+            "input": "b7bd4642845ddd7f600960f229af7258fdf05817ac070b405eab1743fb840b9c",
+            "output": "1e1912e6b3ea1e5bd869a5851a2fd5fbf18c8c7256edd45d041deb5f0912deea"
+        },
+        "03_parse\/scopes\/namespaces.php": {
+            "input": "8cb17481dc0b905a18e29c1d5c78bad9ee102e7a20c57c5d0ebe3b8399a2d5d8",
+            "output": "6f2549094498c92169f012c4ae3276dbccaab133071f7de441ffe867aafbcc9e"
+        },
+        "03_parse\/scopes\/structures.php": {
+            "input": "f694dcb77f4eba957644b575785adb6106b00148d9ad75d8208af7b9cafc9d0d",
+            "output": "7220b30514439cf46eea0930d259e96f616e7bc1d596daa7c4cf03fc396844b6"
+        },
+        "03_parse\/structures\/abstractions.php": {
+            "input": "60ddab31095148d772a9f53fc2019f73844f342254f8e790b0ec495c510f6558",
+            "output": "9c71fb2bf30b04c8ad32c7cc72c2e7ee0268bb17a4ef8217e93eb4659212e3c4"
+        },
+        "03_parse\/structures\/iterators.php": {
+            "input": "9eea805cf7dc782edc254b91a67534a6a3b747af8a57b61a1c0ac23e010401a0",
+            "output": "37cfb916921958755d6599cae6916af50aa8ef78dead631563cfde11f055f2dd"
+        },
+        "03_parse\/structures\/structures.php": {
+            "input": "d6649dde94cdf5119290d8156b6f88fe9d13447c03bb27cd754575d8574b4e0e",
+            "output": "cc1ed584e964782f4210a88bbc8635f295af48fe10c64c81b8ff2ba2abe08486"
+        },
+        "03_parse\/structures\/structures_async.php": {
+            "input": "86f53a9fe7bad3694e6dca123447e3962e26a30a61b341b08fdc0c257c708486",
+            "output": "28cdd77b54f4cc46469e94459285a8ceb0b2064bb1e16830fbebb59a33db8137"
+        },
+        "03_parse\/structures\/structures_conditional.php": {
+            "input": "238cce9f281b8f2be61221565aa8abd0cc718be6a42d77fc7f5f3187110ca8ad",
+            "output": "df3ef0795ac9fbc9b21bc68b3ad897636dda70844527c09b8b53a76fd89bf4cd"
+        },
+        "03_parse\/structures\/structures_construction.php": {
+            "input": "9e9af4b107d20538e554c6bab45f1b0e561799ee5b8b635c72e073c6c8143e7c",
+            "output": "7759f24b94ae121eebfa8ae3e62159c57cb195b96a718696d11065df6ea0ef55"
+        },
+        "03_parse\/structures\/structures_declarations.php": {
+            "input": "5e3b45b39f9a27d3705bf47356cf41290ec1e46a3808724725463330c47f0ece",
+            "output": "53b41f2b7f82780b3b767083e9f2ccd8acdaaf47a7cd9e13f04235cb0eebcf5f"
+        },
+        "03_parse\/structures\/structures_enum.php": {
+            "input": "13ea12bfb51925f9bf7dd1e98035dae73a84837059f9df8093e2492ea6732679",
+            "output": "68800c1eb60e408dc6fe77a3a423d61343073c0e50da5e39e196d32067467b8a"
+        },
+        "03_parse\/structures\/structures_exceptions.php": {
+            "input": "4988d67ff907d545b92c982839fe565ca9ab42e47b0248f2deb84e47f4aef243",
+            "output": "c1ce172600c8a4a5b658393fb28baefda3818bf752ab984eb7e46d26c48c12a5"
+        },
+        "03_parse\/structures\/structures_kinds.php": {
+            "input": "47d026f4abb0d37e98415e4391b1f86b88dd9f7d2e6d686a8a60b0d6844ee967",
+            "output": "fcf332f12c0e2ff3a1e8b0bcde421b4a30a17a0a21c124d2fa72ee38b23328d6"
+        },
+        "03_parse\/structures\/structures_loops.php": {
+            "input": "2a18aabe8b3ef4a00ca9b177d93119eec6de60275b0131fad896f26f2545d031",
+            "output": "5183ee57ec524cbddd15b5ed4c0ae3e64866798ed8813064593219941c46d4e0"
+        },
+        "03_parse\/structures\/structures_match.php": {
+            "input": "829774ec2a4d99c3f5e9a4d4f765ed4af8085690dc4d4b5aee0e757472c7f6da",
+            "output": "9519f88e0c7619ddc41e091090072a04b15f6d6ea3c281cdef5e276c17507a5f"
+        },
+        "03_parse\/structures\/structures_move.php": {
+            "input": "011ffacbf640c4093fc2447aed04986f24a646c511ea4928cd2400260cf1505e",
+            "output": "b42f5854a8848c9aa08fee2fe41160eef8fd41b1b665380550e826aab5854fe0"
+        },
+        "03_parse\/structures\/structures_object_type.php": {
+            "input": "297159183587221f3e08fa7baddc69de48f205a47683432a9338b9feefeba05e",
+            "output": "ef801174f40cd001da72f743c9683d02f36781a08995d45135957ae366646f00"
+        },
+        "03_parse\/structures\/structures_ownership_observation.php": {
+            "input": "c02f76d59cfe565efa0f98437ebac6fc927bee4ffed79177378b3085d5ba9f9d",
+            "output": "768676d83eb72eb915047408e8db943563e653c78fbf71590f438e19515beea7"
+        },
+        "03_parse\/structures\/structures_probes.php": {
+            "input": "e70814956324d5a53d7de125fbeb870ab1c60909cfd5cee0b9a647a0e8edd5de",
+            "output": "f0e1245fa4db646cfc0eed34f50325e2ee843c3f32d26ac387d4f29246b43781"
+        },
+        "03_parse\/structures\/structures_specialization.php": {
+            "input": "67b9556dd333eaa4f0364d116b4e403ae02d807a529d786ad7f0b77a7045eb8b",
+            "output": "71db4a9f5421c76b00b98f30e18c700b47e4b6b38219c2f35de52df6a0684aa6"
+        },
+        "03_parse\/structures\/structures_switch.php": {
+            "input": "729d9678afd5cd8ddd2821abb13b24401e597280b73b9473d35b4b2fe28d7f71",
+            "output": "39bf5157b613cbfaec34b567c1ab5fb5ae95f7ac894bace7af0c0689b1c57299"
+        },
+        "03_parse\/structures\/structures_take.php": {
+            "input": "7ecdf698c51de3e72f8696164cfbf1b473e8b59c7b3004ca2590206115780da7",
+            "output": "17cb07f9f02ef8509774cf85b68cbdc8b666cb3727c4e3de683cb68c75de36f9"
+        },
+        "03_parse\/syntax.php": {
+            "input": "68d02e7bd5a5c12e3b9b081458a975fa32500f6107809bc7230d013bcc07dfb2",
+            "output": "3826f5464b2fc7a71e2addb7fd2224b8b82ff779d0e0bd00fdbe30d17a7c6950"
+        },
+        "03_parse\/token_cleanup.php": {
+            "input": "f772955c090649e22bc3ae4d458a41a7e9464d027281ec0419b30d606aec6f4b",
+            "output": "f988c7bd4ceb283ebd6c54cfefc430f146e3eb81868b27900315290157eef227"
+        },
+        "03_parse\/types\/catalog.php": {
+            "input": "6a4839eb166fbef268359e7f086c83e9e39c1d9fa6923138e1fd1107928477b5",
+            "output": "a95c17a8ac14dba7314f1286ff6e9930bb8c80f93290352420f790f0b6c10e9b"
+        },
+        "03_parse\/types\/model.php": {
+            "input": "1a0fce535653b89664effc3a6c89072035fe85343dd5998ec50ba567fd6eedc1",
+            "output": "24f98c583775b1df81843eed43c69bb4eaeb0458be3e478f95d2dc83b370c045"
+        },
+        "03_parse\/types\/register.php": {
+            "input": "880cc8ee95fe6dc52b7cad816c85f74f31104a7204de9a85e8f0d52ada451388",
+            "output": "a612a7468dc543fb8c06dac07add38f3d042761685a7a593bb2c8bb8a8ba74ad"
+        },
+        "04_analyze\/conversions\/booleans.php": {
+            "input": "92c2288610bde6b0fc92482f837c473967325e5d57ba0d82d29414b236e4444b",
+            "output": "1a6e276e20dfa3855234ed06c8551d6ba00e3ae158cc4f8919d209439ba8966a"
+        },
+        "04_analyze\/conversions\/boxed.php": {
+            "input": "0160787137ab158ffc7445ee311b0cdb209ce7dcd653d1b7e26850bd30586420",
+            "output": "e15d510964e9b564a5a91c1d216df8bf5a1ac585fb5b8663970e583378ea91ad"
+        },
+        "04_analyze\/conversions\/floating_points.php": {
+            "input": "c485f5ef6b920ae9e600e4784b22fac30a33a7169dcee409697cd44f27be14b2",
+            "output": "52180e68d8bd04ce14e93a1d526c08977bd40b36ab42a30efb8014e3b633c2a7"
+        },
+        "04_analyze\/conversions\/integers.php": {
+            "input": "43a9c7e21285406200f3639a1e91a43e13a7b950f5c5aaa1dc89bb1ce26eb0cf",
+            "output": "e9bb2f65cd823deacdf989e9ea73b64f5193f3918f7df31ac5a0e333922f3d51"
+        },
+        "04_analyze\/conversions\/model.php": {
+            "input": "ecd7af481f002424ffda1297b13e6d4f1734f796f61d85b028556dc37a323c22",
+            "output": "1672a3b34e19c445e695200a4acdd626a1f2597f34b734b525882f2379f7ea3e"
+        },
+        "04_analyze\/conversions\/nullable.php": {
+            "input": "b2545f365ffc5324647c2d241ae791e5fe25a6730a2d4f8d3d3f19660c5e372b",
+            "output": "c067a26fe57da4c3ba3b95d10f8dcccb83f2a2a982141b9fcbcc4b8f2014e0f5"
+        },
+        "04_analyze\/conversions\/ownership.php": {
+            "input": "bcb7793689940b28f99e3288e369d803284f87536081a4cacdc207f5ae88e925",
+            "output": "aea316bb6708e98c9d273211f587812d293e42097ac8394ad5b2b7fb0e1e40e9"
+        },
+        "04_analyze\/conversions\/preparation.php": {
+            "input": "129a6b14bb6e352db0d1ce88b317c4d10c798d0681a8cea8de77bac71970c767",
+            "output": "acfa5dcec6e963b2c6918caa3e37ca8c8c72b43b93828f5b9eb6c3f5fd57383d"
+        },
+        "04_analyze\/conversions\/results.php": {
+            "input": "775d55ccc00e19075ce866d8c5c217075abd50194dff264216921c74a140d4f9",
+            "output": "2d19104f03617e2987087c96563acf2a1007e18fa67ec3f1cc4c38a64ad4436b"
+        },
+        "04_analyze\/conversions\/strings.php": {
+            "input": "8155212f8c377ed37346d6d5b04ef168531271eeae419c903aac36af88623a06",
+            "output": "aa18bd8aec6273c93ac9af42e1545f8b05049d4ad287f1e827fc05d36491b8b7"
+        },
+        "04_analyze\/conversions\/truthiness.php": {
+            "input": "a6be4cdac9a8db01239d7d6ae288d9d8d010397762511519655e222702112404",
+            "output": "ddf9d3e56110e74ec110bca0d43229e18367fea523e4599a239ecb174ccc9075"
+        },
+        "04_analyze\/operators\/booleans.php": {
+            "input": "dac1398fd9f43c9b9eb6b1a712d9f9a214a3442aaea6dd4ba62808cb8d2a7b10",
+            "output": "dbe6ae770420446970bf138e48bcef6132e482dc258755b4c9c333e8ddd82a26"
+        },
+        "04_analyze\/operators\/boxed.php": {
+            "input": "d8ceeb9a5b556be5885270d36a25177276bcb8da85e2f25e1c10576664c881aa",
+            "output": "2d549c5ff4e34130d3a6f214eca5d66d56c671e3ae0161df384e45a4cf019d5a"
+        },
+        "04_analyze\/operators\/enums.php": {
+            "input": "4b592649c57c461cc83011d24f350bec4e39bf490a69273eceacbb74289dfd83",
+            "output": "2535fdbe018b08f908ad52826f9234580854218b61b8ebad2bd7e648a33b4e1c"
+        },
+        "04_analyze\/operators\/floating_points.php": {
+            "input": "bdbf927f996fb14faec1654b514d82fa6456aea4e3bc82aea85fc3da436122df",
+            "output": "1f5ae62141df56fb839e8e2d6e6f0d9cbd93fd5ebbe6235688d924a53cf2c2cf"
+        },
+        "04_analyze\/operators\/guarded.php": {
+            "input": "720e4dfa68be2d25b4c2cebb95801427ddcff31ef5ba8320a1b4b93e5f875cc5",
+            "output": "86670b5c508008a2263a0cea2e9ead37c9ef77ff9e24f15c1d64ea3a924e7782"
+        },
+        "04_analyze\/operators\/identity.php": {
+            "input": "72aae69d96cf337fa88d59a3d8eaa432785089886dad00b0b37562c8960de445",
+            "output": "fd110c119b6397fdca89f14ead5467adb805ce4bd55a3bccc6a94d710464424a"
+        },
+        "04_analyze\/operators\/indexing.php": {
+            "input": "fccd87cd412294e808314a58033170578defa955e1fcb40e026dd877d00ac911",
+            "output": "d7d7617cead1b9f7d915c5ca7dd88f7e0db8097171083fd24c6e276f111a022e"
+        },
+        "04_analyze\/operators\/indexing_signature.php": {
+            "input": "8c0d893f7f7ed5c3b306a38f501bd8d35d0ece3e86ae55dc8c58b72548775358",
+            "output": "0c8973bb1b861e69c8a52ed92108ee1fb8cba7c8a43b96740c7c8f57b0fcb110"
+        },
+        "04_analyze\/operators\/integers.php": {
+            "input": "a5ce4121440265ca79ee2ff210bfe3c22b4e46c56c18d393e41e1d87506dd572",
+            "output": "350cd850e1f7ca72e758aa30e6d61f4ae6ee648583dbc3ceb95417a95ac45d68"
+        },
+        "04_analyze\/operators\/model.php": {
+            "input": "24ed9b76538c53cec0777cf6251057559124240f682bad6c7078bb626c63e52c",
+            "output": "09618ab887564177be12e340c3a848443107c5309d551483a54ba705fa20d599"
+        },
+        "04_analyze\/operators\/mutations.php": {
+            "input": "ce9906280188331980df5cba991ca698be36f90a7dd19e4949e41f9c910d7ef6",
+            "output": "fb0ee4bc6cdbc0d0f042120cfbbcd31adede7989e34130f568a1718536676a6a"
+        },
+        "04_analyze\/operators\/preparation.php": {
+            "input": "3fa1c7d6e2fb96ea63f9c67f757dddc14597a86673da5d2b5bd51592ee17659c",
+            "output": "0c0b4496511a12d2df179a2048ae2207b4f0d19970856889675e56f0fd78559b"
+        },
+        "04_analyze\/operators\/presence.php": {
+            "input": "dafe07aa4cc6445d03199620a578c5e73531cecb667cb5d2ff539ca1158ca085",
+            "output": "080921afa052d00b113f1e030dadc3b398250fb7bfafa53559c628eed69c5537"
+        },
+        "04_analyze\/operators\/strings.php": {
+            "input": "029d3a41103cf24e76f0570f62d7ae44f5a9af9bd4559ecb6fc872b0bad5b90f",
+            "output": "07488df3774e09be925618bab30abea0be5e56a69c3697b6155a89457bee218d"
+        },
+        "04_analyze\/operators\/wrapper_equality.php": {
+            "input": "41c89721e9c80e91452a3e23a0a4f066bcc5f0b0ab71a88120371115fc32ab48",
+            "output": "47c8bcdcd089748e29927e30423357ea1ee0055d32c90cd517379c3662046cc6"
+        },
+        "04_analyze\/prepare\/changes.php": {
+            "input": "f277bc8d96b4dc147dd20c742d057013682ad88439194c25f3ccba9cd556eef2",
+            "output": "8a8ff67994ecf31880609b62465dcc544e513884ed3568385843f1342d0603a4"
+        },
+        "04_analyze\/prepare\/cleanup.php": {
+            "input": "0bebfc23eda1082ed9e7705281c5b4c9083e802550a334e4dd168633f5217795",
+            "output": "6da32ff60886f40489b9f2cce164636cd79c16b2204f28d46dc37dce53aa32c9"
+        },
+        "04_analyze\/prepare\/data\/async.php": {
+            "input": "bd49d5c0cf09933861bc999745fa56e336eddafc29f8949acfe209a3945c0618",
+            "output": "5c39eaa70589ec3532d667dc28740bde27bdb9549bcbbeeb2146b885e99c188d"
+        },
+        "04_analyze\/prepare\/data\/callable_adaptation.php": {
+            "input": "0ecb96acaa85307c8066d10a0007abb35f1e570e98280a9fa0409a0a93a861a6",
+            "output": "6f01afb0c59a592fbce698cf6fc17aac33600a85acae8a6cf51e50b97b23b190"
+        },
+        "04_analyze\/prepare\/data\/compiler_calls.php": {
+            "input": "7cc18c6335809315a6a97643cc880218e3338cd82b8c0d34a034cad9d71a7763",
+            "output": "d6847bfbd97029132e8c43e812aa3f5ff9be5b7cb0e5bda6e4ccc88867129db0"
+        },
+        "04_analyze\/prepare\/data\/enums.php": {
+            "input": "aa0ec73c099daa71185100eeebd0da5b2781b8405f38af736efe0b557301e306",
+            "output": "ce9de5b1f84acd97c147b10728f1b49655a6544d9c50968df4ebbb9a3f045a6e"
+        },
+        "04_analyze\/prepare\/data\/instance_requests.php": {
+            "input": "b0778de3b4d096aa444e4f262856670eb621d674cfab4036ec6c308099c90c5a",
+            "output": "ef4ed8ea401280535298e726f3e0a7465bb13a319319753f9ff9e82ed00905d2"
+        },
+        "04_analyze\/prepare\/data\/lifetimes.php": {
+            "input": "64a2cb90259e2cfb48de0dfb3a264094a48df14de90fde8458d76bf5fdae3cca",
+            "output": "2b4464ca1abc850e6751f8bdb8db8895bb64dc5936707ab9a7901f2f14ef9e65"
+        },
+        "04_analyze\/prepare\/data\/project_evidence.php": {
+            "input": "45bf83c983c9e056e194cae920eb1e555a71777e1216ff1d79ed117341ca73ac",
+            "output": "26c12722b577a21a0bd846d4b905b271077299777d35d4a5572b8bb6e40a8e59"
+        },
+        "04_analyze\/prepare\/data\/relationships.php": {
+            "input": "4edf22671a22d9c16bcf98e85ceb02de20e54cf27cfadd563ea80c35e324e15d",
+            "output": "3c11ac97b401d5ad491196c49f5706bd36f616579cb3d1f2f9770ede52dcd5a6"
+        },
+        "04_analyze\/prepare\/data\/runtime_calls.php": {
+            "input": "590ddd4d545cbad58a278ce9f1505e9b174a161d5839eb897d9f0a7c0920adf9",
+            "output": "cb46333384d28ab54f5adc3a6ebd4de9655fe500c9c8f792feda061d4ca07656"
+        },
+        "04_analyze\/prepare\/data\/selection.php": {
+            "input": "ddee03762540d0d3bbde6ee92947287d27a69c4b78eaee94ba81389e1f1df9af",
+            "output": "2db186bb1b03c9a13de80a0e19476a5e1dbee59e30d20be7559f6b75dff478da"
+        },
+        "04_analyze\/prepare\/data\/structures.php": {
+            "input": "1d5ee99d9be785fe15bacb798afad987a7232d70ebf91c71fcfeffa0fa33d50c",
+            "output": "e67ec8388bd0e086a11f4b57730bf26a47c2b1f4649b2617e7550e45070dfed4"
+        },
+        "04_analyze\/prepare\/data\/type_lifecycle.php": {
+            "input": "083a41b0d3b7991557fadf539e1701115db3ed80d114974bcbd666037c3371e6",
+            "output": "776ed6c6468b432c203a57c1a09d63e3479a44c646a255585ae6b918a004ca65"
+        },
+        "04_analyze\/prepare\/data\/work_records.php": {
+            "input": "dfebf190050faeedc46d6bceacf86c54f018da4fb461ca61623aa561fe9c947b",
+            "output": "a31d7d76d62a88c2119893c21a93a1c5afda5a4d0e93bdfd03a77604d18bbe75"
+        },
+        "04_analyze\/prepare\/file.php": {
+            "input": "a80375696c2f28226c166cf621ba090ea17c4e391d13638f5a947550363260cf",
+            "output": "b6e5710b0a612d8e713a11ff8ae385a304b93288481be1e2804e8a1720a88805"
+        },
+        "04_analyze\/prepare\/imports.php": {
+            "input": "054ec542217ea850711a79031e4c56642945a00f08f635bfb5541e756bfea411",
+            "output": "fabf3783bd1fd285ac524fc50f9497ebf79bf98f887295e38345b4639c5df97f"
+        },
+        "04_analyze\/prepare\/inherited_lookup.php": {
+            "input": "200c07cbfc5cc84faff1e114c060c84f50995ef04cf735fb8cbe48323101b5a2",
+            "output": "f9dba802812855121f2bcd200e83796649f118834554d84f1bab2845742276ec"
+        },
+        "04_analyze\/prepare\/lookup.php": {
+            "input": "a2b2b2911e39036380d299d41a76048aec46a27b411a397875e12a469f8494d9",
+            "output": "5d0fdd88d974138c6be71160f957bd99d528ef70484156007e9084ac674840ce"
+        },
+        "04_analyze\/prepare\/program.php": {
+            "input": "de9aae56c72136410e253cf11bbd75bd9c277381633b3420c55de7844ff87ab7",
+            "output": "164b327b917775e6034deddaff5ac7e3242e97dff341522373655d5908d7a25e"
+        },
+        "04_analyze\/prepare\/project_evidence.php": {
+            "input": "887f05391abf74935cbecbc89b9b1cf4e4e6324d0094d2054bd0bffc93d76aaf",
+            "output": "8baa48e4052306a01e0b5058b4c668a0c4c306cdfda7ceea9e4f4ced7916c1f3"
+        },
+        "04_analyze\/prepare\/semantics\/advisories.php": {
+            "input": "8bb63b4cbef317a4a70513fa0b0be85314ea2c435826c027ae282e3279105dc0",
+            "output": "ba382dad9437a680bc2416762ddf7b98c15633943867a1b626ba8ae6e939bb4f"
+        },
+        "04_analyze\/prepare\/semantics\/async.php": {
+            "input": "24a53e05b8527ff89092d225384de6259fd7eea769947b67c0ab9905e162a748",
+            "output": "160005bb2b870e4e00c531ab002f8b33578911e96c241f5bd4bc8b36c09b6ab1"
+        },
+        "04_analyze\/prepare\/semantics\/bodies.php": {
+            "input": "dca382e76c413e79ae1b70109556777a05a79db63283c1b846401ffb36126549",
+            "output": "3258f7ebbeea0b3819de79a0863e23f314c6fc92f25bf6f94382e5da5b972c1e"
+        },
+        "04_analyze\/prepare\/semantics\/call_snapshots.php": {
+            "input": "55d13e23a1d5d84934d067e46b456b8da51bad95d23cc6e51305c1b86feee4d0",
+            "output": "6059a936e704b46c6818c1ce5f36fc69a4fcd567706da51e20e6bc1ef4835342"
+        },
+        "04_analyze\/prepare\/semantics\/callable_adaptation.php": {
+            "input": "0ff8c03ab9b2c63cc7c209e9ae7a6681d622fae762dcf4972c4fd749439497e1",
+            "output": "b17d5e5ea3cb844dc875f7e5c504ca6bcc38dcdd31c6ceb602bb5f3f4354bed9"
+        },
+        "04_analyze\/prepare\/semantics\/calls.php": {
+            "input": "78086918974083bccf9c0d6664428eb0a79cf5b93218bb5e902f32f43a63b064",
+            "output": "840019add692e766545cdb9c1248534b10bf2dc6c897924a59d633785aac5c70"
+        },
+        "04_analyze\/prepare\/semantics\/capabilities.php": {
+            "input": "17aa7aa54dd374561002326ecab988da13fce1c171c0786cad14cc32f231088e",
+            "output": "1f159a8314b6caf3747a488016e4d2c6626ef323055a2e1d48f08cdd76012d90"
+        },
+        "04_analyze\/prepare\/semantics\/captures.php": {
+            "input": "8985f00b8241e276e3e8b62a2a343ed5133c408938d5f06c57558739605a158f",
+            "output": "392838d4c0ae9c09c8101a4863df9828009b93a201dc35dd1c24e1fc01e168e0"
+        },
+        "04_analyze\/prepare\/semantics\/cleanup.php": {
+            "input": "0920a73242e87d6fed2251f0feb8c905bc02ff3a0c8b43924f1462b55a796358",
+            "output": "9c7ae43a42f07830419b22e0930cef9c86fa75bf9a21d324e337b1b669ef68c0"
+        },
+        "04_analyze\/prepare\/semantics\/coalesce_expressions.php": {
+            "input": "01ba22fca6b066d6f9ce0e0d740d993042e147837b3490d4ee728d2ebe71ca48",
+            "output": "b6c0281f429c10008eecc06902dc294bcef63cfcbdcc7fef9b08fc4211290564"
+        },
+        "04_analyze\/prepare\/semantics\/compiler_calls.php": {
+            "input": "4ee7ed4f0138d3bd78c4f4286d7d37da0571c17e1c853c6bbe9fae73b0220ac0",
+            "output": "ed5dee7d4bce61a2eb935b23fbb27fbaadc0aa5edf59c126705f0db79296842e"
+        },
+        "04_analyze\/prepare\/semantics\/completion.php": {
+            "input": "91953d17ba5923fff148e8e5a382f871c4ce017ef50bccdd5e2aad1df0f17088",
+            "output": "19593a6d6553081aa0ac4519da299dd903bced01cc4c4311c635ee154d386a14"
+        },
+        "04_analyze\/prepare\/semantics\/conditional_expressions.php": {
+            "input": "e1f7095a11670bb8191cfe5fda7363be3b822b88485cc9a8a4d3196f08533610",
+            "output": "7f4fab52064ce567ed0eb826a28174c700f1139c9219c4487ca92947a0ec5b0a"
+        },
+        "04_analyze\/prepare\/semantics\/constants.php": {
+            "input": "b402e33c82c10221f3f6e809b656517730254c10abf809d6a18b764670c34dc5",
+            "output": "58f8b50300bf055d74ce83197159ac4839884a64073ae3bdff882b44d536b631"
+        },
+        "04_analyze\/prepare\/semantics\/constructors.php": {
+            "input": "a5b26aa64fc6e7af3a7ffcd0c447fe52ec55be9e9c350fb18fed644b235b0aa9",
+            "output": "8325b33f07188a26c1fd8f3c8fc3501f9c1d6e1ad69793429f70847b02f325c9"
+        },
+        "04_analyze\/prepare\/semantics\/contract_types.php": {
+            "input": "6c7c486ddd2fff4351e6fe399c7ce69861e61bb3d035eac10eb983dafa1ec777",
+            "output": "d818f3545c4fcbec7d5a6f62a09504785307545855c98d2828b9aa8250144baa"
+        },
+        "04_analyze\/prepare\/semantics\/conversion_relationships.php": {
+            "input": "fc3bae7584021fdc7641097259baf3eb71e771fc2824794d519e8bb0669fdb63",
+            "output": "6390154a631fc388be3b6b97787bccd9063b4ff4069953c164d763d3aaa6f26c"
+        },
+        "04_analyze\/prepare\/semantics\/data_construction.php": {
+            "input": "6e941f2028cce76a8fc77b47c99895fd5e6473a2c6b454f355aba4ca07e33277",
+            "output": "a8839215ea929919bd09e265100b88687481ac09d4f1d44016afb3f42c288223"
+        },
+        "04_analyze\/prepare\/semantics\/declarations.php": {
+            "input": "12987568c151d7171848007c8bc99d6e46da92297eb8290d66ab4161cc28b07a",
+            "output": "9e86acd53582fcde542a0dacd5ea7ccfd20134cb1f66c4932a6d478fc2e42ef2"
+        },
+        "04_analyze\/prepare\/semantics\/defaults.php": {
+            "input": "47865d1359e70e7ef0688924264c9803ea4e11d1cab37745d316a07a1bd6dc0e",
+            "output": "c398f9095916429686b114f3c0719f495d3d7a325ebe4d3aca0d13fa4db65b63"
+        },
+        "04_analyze\/prepare\/semantics\/enums.php": {
+            "input": "45938316f12fb13f944965393178f74de2f0d865ed574edac0b4813033f94d8d",
+            "output": "067e13531997aca6ca1f1ccfce6edc00a59c177488be59986d022fd7c4441760"
+        },
+        "04_analyze\/prepare\/semantics\/exceptions.php": {
+            "input": "4a982ccf37a3ddfa28bcbbb8bd7d922bdd6a7030f417ee39d34095e8c2403ba8",
+            "output": "e15293eb2394d5fd90df5bdcb9dce34eff107c9efdb1b99f444d9e4dcab4e8a1"
+        },
+        "04_analyze\/prepare\/semantics\/expressions.php": {
+            "input": "ff715bd1689801748453d3b44b959dcc6a1c8513e0151fe9f90c62b6fc809301",
+            "output": "6b5eb811049534377cb8ab5e8a4d88d88d2a2cf8f87d816ae1d23fad9bd12203"
+        },
+        "04_analyze\/prepare\/semantics\/inheritance.php": {
+            "input": "2f63b349da373124d57bf51a967f0c362e4c976b736646e24879a5199a9ebe32",
+            "output": "70d3a4f1f508506e6522359034d13dce5fc62101902ad1f6105f56ecc7a7b9b0"
+        },
+        "04_analyze\/prepare\/semantics\/initialization.php": {
+            "input": "bc69c45ff161f96693772d3a67fda03b8f10b1821d23c4f468968633fa91777c",
+            "output": "4c6d5add02342a5f41b72aa9ebd12d55c282b6f7e6c8b32be9a6892a354c49c8"
+        },
+        "04_analyze\/prepare\/semantics\/iteration.php": {
+            "input": "83c11c66c2b3dbcd9654cac83f66fd55ae4e72c1c1ce541ee7f9505e3c188e6b",
+            "output": "6535908b2ae47577065c98e06c6fbf79c8c6fb05e463c227dfae8dae95ea6ac7"
+        },
+        "04_analyze\/prepare\/semantics\/iterator.php": {
+            "input": "db460dce2ff3c85ab53a8d41bd85027ba49044890daa8ecbb578161453222f05",
+            "output": "129e47d123bb49e11069025da94c95f769e0c0dc48a37484c78c613fe0ffbece"
+        },
+        "04_analyze\/prepare\/semantics\/keyed_paths.php": {
+            "input": "1bfef8708a57b5c3f86d05086bc2f45b2796b2bf732085e39f45bf705946f0db",
+            "output": "8112ca05c77dd5b1c9e17b4cf54899089c6328adbe4a9dde627aeaef0224a89d"
+        },
+        "04_analyze\/prepare\/semantics\/layout_queries.php": {
+            "input": "bd16061df083714477bdd82659631d6b47a813bab8804d6f53edd1d19a267d2b",
+            "output": "755aafc0ca46aeaa338564f2cc5da6afdf5a5fcba1697611fc895b406fc6bc68"
+        },
+        "04_analyze\/prepare\/semantics\/lifetimes.php": {
+            "input": "a98bf1b363748ff7545167a70aa33cda71b45172798b961775ad48b6f79fa26b",
+            "output": "e1ba4e6d17bfe5a8767c529b810e2302ab1a736a482700cd8912a6e20e25f476"
+        },
+        "04_analyze\/prepare\/semantics\/literals.php": {
+            "input": "c52b361f5c86b3370363f39e92ff41bf910b0968bc52f4beee4ed489bfea2ced",
+            "output": "b482755f608cc083635d92d0567b4e8915b177c6ae7a82819ed06593189e0466"
+        },
+        "04_analyze\/prepare\/semantics\/loops.php": {
+            "input": "d194a026895ac696b7165983463f21783c6a049390148d8e01cdc89a5067948c",
+            "output": "7d6baffa13d5cdf458f8dee081d8cda95502e4c55126e8c243422034c7098265"
+        },
+        "04_analyze\/prepare\/semantics\/matches.php": {
+            "input": "3ace7c000d8fd1895ed9e4df41948cd1666128b1ec0e3483a170b3323eb9c33b",
+            "output": "1746f2aa842f35499aa3e97fe81724e2d3d3c6f796694019aad245c4cff8d6bd"
+        },
+        "04_analyze\/prepare\/semantics\/members.php": {
+            "input": "be01aff5e38d366debc8389a34be1b146311adb606d502e3e74ac33afa8edb51",
+            "output": "65579af6210cbced1277b13ae0eace97fdcb97e680672e6b0c31bf436717936b"
+        },
+        "04_analyze\/prepare\/semantics\/methods.php": {
+            "input": "b01ea5a885493fb410a42154771477637ad7951f548cf645844949bdc8415571",
+            "output": "0fa608113c0c21ba2af7cbce04300d3f7a9a315afd607a6744d4158773440589"
+        },
+        "04_analyze\/prepare\/semantics\/moves.php": {
+            "input": "cdf14d409c7545001a3af2e1d1ca7c4d601bf4887e973588c8d1b8c87b46ef1d",
+            "output": "83ff8172b9e4ef66fd1c7c55615c5b2aca79e234858e38aeba5ee7089ddc8791"
+        },
+        "04_analyze\/prepare\/semantics\/object_construction.php": {
+            "input": "d4f30e1bacbc63403fc905720ac09abfe47114ff2cd2e81a7f2a55790cb7c3f8",
+            "output": "f19d40183ed85c47f0dfc8fe23cc461f14bb3dc9effa7f500d2ca022d8b8d3f2"
+        },
+        "04_analyze\/prepare\/semantics\/object_types.php": {
+            "input": "0bbdb85dc6700761c26956eec8ac47a303dfae22e73713e76cc330a5cdaa3516",
+            "output": "5f022f00aee66cf0f550aceee2643ae7d3828b5a55c552240aa21b5abcbb26be"
+        },
+        "04_analyze\/prepare\/semantics\/ownership_observation.php": {
+            "input": "f92b7e4b4591007466351486b0aa28421d3631b3e126a637c243a5eccecae5d8",
+            "output": "3775793ccb7e87fd533e55e3056462f34653e063d7653f33ba3f7e9e3b63d38a"
+        },
+        "04_analyze\/prepare\/semantics\/reference_cycles.php": {
+            "input": "207f53c957b8312127baf02cdf9e8fd76675888d7739335b79e05b2effa0cf80",
+            "output": "fea05d0ad76ba4cf326d5d231bb7a071fd33525a71a2690937344f945eff2534"
+        },
+        "04_analyze\/prepare\/semantics\/references.php": {
+            "input": "da67c6d69e667bd755bce68a4086a71a0178679434d2231fdde42c32281ea430",
+            "output": "7b47ba44d2ec7e9e557c28efff8a98401578b1f6d09f59c5dcb2fadcdbf7f8a9"
+        },
+        "04_analyze\/prepare\/semantics\/relationships.php": {
+            "input": "8024e4083db9dc0cef3575d3b656267d7fb1745f75fb5581ab4c92440fa135bc",
+            "output": "fb7ffc11584ec6c57d0a6ccebd26957579c06284f66125088e6c1f6127817cf3"
+        },
+        "04_analyze\/prepare\/semantics\/runtime_calls.php": {
+            "input": "35219f1d717dcc3de9ff98e07aa054c9f2f235b0098530aad52fc2157fc6cd32",
+            "output": "653e71fcc6d5aa306b912a044bf67ac391d6eb686405e518bd20878c2a08423b"
+        },
+        "04_analyze\/prepare\/semantics\/runtime_patterns.php": {
+            "input": "d4b74e412338836c4a05b776db09206eae440c964b4cf180cc7ddf98e53e6dc1",
+            "output": "5e8878654240ba580c20bbaeaf27268b11bee6586c24296d3ce09b442712a295"
+        },
+        "04_analyze\/prepare\/semantics\/selection.php": {
+            "input": "eabb18f042e3734cfc4450092c83d9c5c47773f063f271c065eaa9d8f59f124c",
+            "output": "192fdd0148989cfbe2a5fa4c92520e55e788718c48ab34994526011f79b78738"
+        },
+        "04_analyze\/prepare\/semantics\/selection_results.php": {
+            "input": "2b773dec995ac7eb35815c94b62f368702ef12799c3011053b6998f465cd8b0f",
+            "output": "291d0671f64514ea843c79487306628e481631d378fe3968a3718ed1356fb2ad"
+        },
+        "04_analyze\/prepare\/semantics\/switches.php": {
+            "input": "cafda04a4baf8cb20876d305aa2b6d1a96132e43557a4bb96a47361a17012536",
+            "output": "982b183cc9a1e514aa33fbdc69cc20305f67031c6ec33a20400e274234419e3b"
+        },
+        "04_analyze\/prepare\/semantics\/take.php": {
+            "input": "47b9574ad8576de5d86acb685918e8743c9a3cd4e9c2d0b1b742f4e9f8d50419",
+            "output": "63b31143f1fc5a304f6586be3d70436ce138e6bd27e68fcf2f608f2c33320e30"
+        },
+        "04_analyze\/prepare\/semantics\/traits.php": {
+            "input": "f3590b196203af68d92845dbc10a44fae0d55ccefe51aa873c765fefd6abad57",
+            "output": "3cd41ef12f5a2ae3443b1e4f30466fb4dd1cee934bffcc8348a31dfa03512b5c"
+        },
+        "04_analyze\/prepare\/semantics\/transfer.php": {
+            "input": "b5ae589adaa08d7a6f5686b5be02894011e77ee137f2e51e51479b107b3d8040",
+            "output": "02de6bd41aee0ab4eacd7372513991275cc1c35fc7a234f5d30a2f3e70d323b5"
+        },
+        "04_analyze\/prepare\/semantics\/transfers.php": {
+            "input": "f3b0e9a39ef13e453ccf1efcdfc788bc0cb489aa4b946923586ccf8dd62eba7d",
+            "output": "f1d0c1c74249ca8248e833ce0d92485d96ff38368a423618702864b28a96a169"
+        },
+        "04_analyze\/prepare\/semantics\/type_contracts.php": {
+            "input": "106907c4263e8c895b974b38bf32d5e077625b1df0a57aade1c813e692e35d95",
+            "output": "58056e6cd374b73ff73ac147952bbb7507eb29034a9ad189396160b8e94a5bf4"
+        },
+        "04_analyze\/prepare\/semantics\/type_lifecycle.php": {
+            "input": "6d2ee20c8fb5ba91c565e8807e3d03274fa4a1833f3f4db6dce225b35f6a27c4",
+            "output": "9d24da2cd62f15e4bc0eeffda46e85cb5c4ac8aaddd99e2c2d17e46eaf16a834"
+        },
+        "04_analyze\/prepare\/semantics\/types.php": {
+            "input": "5424416cff8037379a1b3799b0977b9b1143f9fd0ded1d2bbd944c682aa30078",
+            "output": "9a0fc17e6d045555435ea32d086fa3f9ecec3d42f791cbc91bd622da940fad39"
+        },
+        "04_analyze\/prepare\/semantics\/unions.php": {
+            "input": "633cf9c0f2968ad701ef41e8bcf819b04fb2e7fa5e7397c2e48a727501ff37e9",
+            "output": "3a1ecccf802fa1f05562151f5be10c55c65f33d49788bcc1a601eda15c256542"
+        },
+        "04_analyze\/prepare\/semantics\/value_boundaries.php": {
+            "input": "2d2c574862a3455bb16a0755e79fdbfe210d683d8deaab7cfacc4d3c265dd446",
+            "output": "b62ab7fa81945e9aff045701360d5f17a9df5b824aa2af0efe16d9ef22e72b70"
+        },
+        "04_analyze\/prepare\/semantics\/value_probes.php": {
+            "input": "15c1e5e0f9532d73600dd690846836785aa7f6884f8670d636aebd38bb2d2753",
+            "output": "180451d92b522f7c209db7423157686605852af04915bde020871b6a4e88f393"
+        },
+        "04_analyze\/prepare\/status.php": {
+            "input": "f4c9d2e0906cd80c292cca1c9b2d6c146eb69eb28e7b7d9ced1e2f7ecbc2cae8",
+            "output": "bd996807acb511f06a73b683a21182d56f911bb25cb86edd8478105996b4c62d"
+        },
+        "04_analyze\/prepare\/worker.php": {
+            "input": "2f32cb7aa5ce4ae17f0fe1d45ad0c94048c954b362724e11228de0f5232cd175",
+            "output": "ad17292ab73855a7f069b9bb4b3c28015681f7f3b0c74bd184d463efefecd7fd"
+        },
+        "05_backend\/cpp\/artifacts.php": {
+            "input": "fda8caf4096e9ba7965b89602d564d7593c7eea2e838357542e7e720528e8353",
+            "output": "ff9cb88474358942e0554df4d707d6f80e13e0633d38ac5dbf35bb083a676aba"
+        },
+        "05_backend\/cpp\/async.php": {
+            "input": "5566ac9b710fb8e2fe009ca7a6a84935bc54ea1668076d9d944bbc5747e3d054",
+            "output": "f9310b2b36caca0708c7c8774544928b6c2ba5e924e2ef36b861abcf44566b6f"
+        },
+        "05_backend\/cpp\/callable_bindings.php": {
+            "input": "bf7c537bc534a7d0d930c73231622cbcb5adb05c3c4007f2804cdef8cbb7f7d1",
+            "output": "b1b601f63e897f9c2df303f50f26596c753b09f74aa6458baed965a7ed5a0d31"
+        },
+        "05_backend\/cpp\/callback_transport.php": {
+            "input": "03d22ca619ff7fa158c8a03d640d2a33b5a4bc63c5d6754b7ac45719df380f8c",
+            "output": "de0b0e90f40c3f86561db568b86cfa1eb60ddf85a5d69a5a8edb6ae0395cc5d2"
+        },
+        "05_backend\/cpp\/callsites.php": {
+            "input": "3d4fc2bd5f933e53f8a17533f90f33c03a26e136bbd95e0e751a6834c0693541",
+            "output": "f6fe364bfd4e9c2b0fcb8afecf4781473ba6a30c9454c4798e4a7f6a5b97ecdb"
+        },
+        "05_backend\/cpp\/compiler_functions.php": {
+            "input": "393cad41879ba457d3396fac64c3544c7446decb0f13ce9a6f8f2356e6b37bda",
+            "output": "6c56e79d5be8a86759e15d07acccc67fce1f0393c5d5b922e0f559491db5398f"
+        },
+        "05_backend\/cpp\/concrete_index.php": {
+            "input": "e68f29faea541060c9d972b7c8557b59495063c0d023cb90ffedb78bafffbcfe",
+            "output": "d43ad77aea3006c7e45f2641d975951a4780874f643c82c559c87ec2ad07886f"
+        },
+        "05_backend\/cpp\/concrete_iteration.php": {
+            "input": "ee13a1a87d0d94f3a0df79b863bc832d29b44f7fc15d1eea1aff9f9e70f447d2",
+            "output": "01084ad6fb43680a15bb9558f5d3874eb63f670217ca6c1f4d6bdd9d4309c469"
+        },
+        "05_backend\/cpp\/concrete_members.php": {
+            "input": "f2d014b266fdaa08b7e70312f1106ebce3c392821ee5dafa958050812f0f8068",
+            "output": "46cd77af4ef7431e9375afbe6650e18d1226432e8c43fcd39f8a8515266db303"
+        },
+        "05_backend\/cpp\/concrete_mutations.php": {
+            "input": "ade96fa21767ac99a6f8ad599dd5802cf9cccc7a0c4335ed6c438224283d2233",
+            "output": "932ac044f0c214abcf7a3c3a8441cd158d22fe3d48c9ec02c63aca005dfc5140"
+        },
+        "05_backend\/cpp\/data_construction.php": {
+            "input": "347ac5a6c242f5c3e57aae2c25fa16f4a35f5c22ad1b40070c3b65cd08a8bf2b",
+            "output": "6a5ef63d4a5789ce99a8d3156e77ff738ef76d703d0834420056a1b3a318a8bc"
+        },
+        "05_backend\/cpp\/declarations.php": {
+            "input": "00781dd1995ce0b9820a873935c544c1df9a6f7ece3646a257508f3c2cedb938",
+            "output": "fce12c90f8dcc9b6e2022f5f36d44f322fedbeb576b963f65f411f3693dacf1e"
+        },
+        "05_backend\/cpp\/dispatch.php": {
+            "input": "62430faa2d8e18494f267c55cef0750a53aa4279cf5f616591e4775b38d04d9d",
+            "output": "71f2609680c2214006e88678c1cb4cccaa0dc08a28b1b97ffe3cb734504f2c3a"
+        },
+        "05_backend\/cpp\/entry_support.php": {
+            "input": "7f6df3745ccb410334022474ddd4439bf8dfda2bf485cebb18f3887c7aaea42c",
+            "output": "4870cbf0bf8ea8e2cc80bd1a0190996bd83ce3076ddf1a41589a5e58c4b34cce"
+        },
+        "05_backend\/cpp\/enums.php": {
+            "input": "8f5a3b00e42890e60d000e672c78d3b97121949cfd92142f63c3d0dbd96cce73",
+            "output": "0ca9f0bd2e860386efe56ce845615c11a269e4458227a31ee828e886333df86d"
+        },
+        "05_backend\/cpp\/exceptions.php": {
+            "input": "82d76474f9e90bb47e31d488c2db4fedb3a3a7cb12e2dcb8133bf2b6961a38d8",
+            "output": "de0ee116cd016b90e9ba7b0dc4cbee82ed9df70b8f0c12f192ede7edbcf7ac8a"
+        },
+        "05_backend\/cpp\/finally.php": {
+            "input": "cca674d0f8fc4406222f859869fab1351d81d3e33136adb13a8abf502f392fea",
+            "output": "c55ed143929f3d936a492ff2ce5509abca440522be718c1432c3f3a57311da51"
+        },
+        "05_backend\/cpp\/generate.php": {
+            "input": "882f417fc18d9a74b36a1cb89b5393f36be8417ba0f110534b64cf6e548956d3",
+            "output": "bf38cb7146efa628cad789dcdce399d16559f988f49d8a44540348a58afaf387"
+        },
+        "05_backend\/cpp\/implementation_groups.php": {
+            "input": "9a715851a86b10d0affd05c4564f5e400ae70fe28f363f05f7a62e51c15e119e",
+            "output": "ecec36ada5c6ed000973f72dfeb3ed50ef7db26a053fcb196df343af2fa92e50"
+        },
+        "05_backend\/cpp\/index_write.php": {
+            "input": "c54c2c75390a8827aa8e65f62209b8f57fe9e930ab6ec30d95f59de0f4c89589",
+            "output": "906fb50d29eca0c55bccfd1e2b66ab5c10ed80fa9425a568c2ac923f6d9fa463"
+        },
+        "05_backend\/cpp\/initializer_buffer.php": {
+            "input": "d68c9acdeba51f5381092f1c1ee625f49cbd88625b1a3ad039b267c87ffe4a00",
+            "output": "e1b18b83ee60be60993b0e04a9a72c03a59aa8c103f80c3fd1633114b3b00dc8"
+        },
+        "05_backend\/cpp\/keyed_paths.php": {
+            "input": "61f695e0b63dd4c005defe1d4b656ab5f504214c88fb31088b6fe5cf89b80494",
+            "output": "b4abb0f25d45c2127460cc6e35356e86e72edede188d8927facc382c29c4fa4d"
+        },
+        "05_backend\/cpp\/layout_depths.php": {
+            "input": "132dd62ef13e2f47c90693d37e277adf8d451b13949465807be0fe88c2fc68df",
+            "output": "84b96c85fa447161229ef69c19dc794cbd6ea505f3770d2e6d3a00497555d9ee"
+        },
+        "05_backend\/cpp\/literals.php": {
+            "input": "a5d5b84481d15bb503dc329f4db429005938d32955ae0f11b6f5124ff9de1ad3",
+            "output": "9231edf28bf25223d96671b4d2d5bfedde03c46e96d5aeaa56f185c21220428a"
+        },
+        "05_backend\/cpp\/lowering_report.php": {
+            "input": "352127ca3430a7b628c3e221218d7bc0507fcebb027ba21850a6ae2c5a0362ff",
+            "output": "bb0416cbda986837dcb45c61d28a982934f3fa0f03d0d34547b9108848dc59a3"
+        },
+        "05_backend\/cpp\/opaque_representation.php": {
+            "input": "be66315a68bc15a37f15ac9d6d7dbd245055c91438eb8fcaed5f99dc8c8bfbf3",
+            "output": "ff19761feb1277550017a614852ff4255fc182c28def03bc8929a6d6b19e03b9"
+        },
+        "05_backend\/cpp\/output.php": {
+            "input": "c4f8422e668a4f002b04ba00f00eedb4b2e35091c2067ea4b34a94d460699fcf",
+            "output": "4a02c4c0181c7eb5876ee4c8f424ede6a197abd7ad751d2d6b1b21c38cba313e"
+        },
+        "05_backend\/cpp\/physical_interfaces.php": {
+            "input": "db36a8a6134cd45dfbd7e7a64e7eb004c93a80e33d282bd45bf91f099ec12053",
+            "output": "ca404f4a6b507110580b98dff35e556fedfe3502ca8ab8eb055d8e42ddbb94f6"
+        },
+        "05_backend\/cpp\/policy.php": {
+            "input": "fd43b2a38da32aa5ee9fd1075b822b4c14ff9162c0be3268252fc43c074e74cc",
+            "output": "c1f1744b5f5cb0631a7d97fd19492dfb7bfd4a7501a786354e7ae86c76e32ff2"
+        },
+        "05_backend\/cpp\/provider_properties.php": {
+            "input": "be379e4e63734289be30337e328d81a16b1449ed41d4ed310227abf3dd574483",
+            "output": "8406b90ef86368576845654982cf5fef53471bd5d0dace8cc2523761535e9751"
+        },
+        "05_backend\/cpp\/runtime_build.php": {
+            "input": "36c5a8a1ea243e7a7a2a22b767200100dc2de0c7e4515194f1a83ca6787b789e",
+            "output": "2f41511cbaf9da29635e48eefd8691f02fd394479260e646e12a10dfc1117f36"
+        },
+        "05_backend\/cpp\/runtime_catalog.php": {
+            "input": "835cd94ac1da1a5da3fe25aa6f8b5e71a5ee081bb5b90e0d1876b1540b49aed6",
+            "output": "a267cc831a580c44ead6baf534f27753f75754ab3e2543473f471ac3c8043330"
+        },
+        "05_backend\/cpp\/runtime_operations.php": {
+            "input": "44971f08948e0c439ad36421476c22f79b09f81b2668daee1fc75e626c8658d9",
+            "output": "580561bf0e3f4c88ed3fbe4a27942fd9d9ea65f9df7e8d3ba8ddeda47afe959c"
+        },
+        "05_backend\/cpp\/runtime_type_bindings.php": {
+            "input": "71654016b15bee4b179e88bb9b32f96d0547e505ff13754c4c5e4d7fe0a34f53",
+            "output": "5144ee30541064a4192a20c94a8af8b7ddf2153521e5eb21aab5991cd1086ae8"
+        },
+        "05_backend\/cpp\/selection.php": {
+            "input": "92274a3b693275c53279b6dfd7586ea1247c39a9f467b9a42b4d49c45f6c767d",
+            "output": "9dccf9ba0550ce6965f8c01abdc3cd26f5b0f2713479c4c0c8eaf7c71d153b46"
+        },
+        "05_backend\/cpp\/self.php": {
+            "input": "2a73e3b6170b5c077b665de88f4e43baa577572bc8fec205a25a5e1c87d57fa0",
+            "output": "61242a3a4f1871866195cc777fc506c0eb5c77f6df9582994c7997b5e9e1bf81"
+        },
+        "05_backend\/cpp\/sequence.php": {
+            "input": "4380ac3bbc835130b7a8552c66905caac625b38f4ed8a7b6ce7804e978788274",
+            "output": "bcdf07832f76c7cae5d519103173a75a5386c604a347cbf149de0dd923769fbe"
+        },
+        "05_backend\/cpp\/source_calls.php": {
+            "input": "3a9985c146c444dc73d1724a33ef453be0aba495cf683eb2b9fcd3963849f97f",
+            "output": "e4cc0bb1806d864bad2fcb8969e49ccc54e59b7f729592e6517096c6510c8103"
+        },
+        "05_backend\/cpp\/specializations.php": {
+            "input": "df6e97aafc83e602cdacae4e9f6eab98206953b27e928fa819aeb0696c8af9c7",
+            "output": "1776920f0b6afa249757d41e6caaca0ee0fc25d7adaba971c91b84f2a3249b9c"
+        },
+        "05_backend\/cpp\/structures.php": {
+            "input": "ac5f4c5e683184208f6ff983ca859045cbaa8957347e89bf540d08646c0d575c",
+            "output": "0091534d4cfbb00fef306b843f910f68f9245cf994fef3b58f40e253d84cf4b2"
+        },
+        "05_backend\/cpp\/syntax.php": {
+            "input": "b5252ad8e8833fd2529608cd5c53626e9d1510fcd1b9c403b69eb4d63ce944de",
+            "output": "e4dc1a47a375f4813fad25084775a9b3a27e101aa440e1dec78844b901b8a22c"
+        },
+        "05_backend\/cpp\/type_bindings_catalog.php": {
+            "input": "6540bd2066a8142d2771c798bd96d6881a91dc56102ba8a46589d88192df6343",
+            "output": "a9564df778619385ad5c3df4dff0edd0d1cf6945ed31c23e83daf9251a30c612"
+        },
+        "05_backend\/cpp\/types.php": {
+            "input": "4932b25f9ff22f4e89b357aae6f12c0aa185397eaaacded9607a2ab204f20d16",
+            "output": "d58572b780b80dacd17afb9e69556e90c003de20e0474169f9c468e5ba48b9cd"
+        },
+        "05_backend\/cpp\/wrapper_transport.php": {
+            "input": "61cbf17803054770d092bc247fbafec85e1491c7d8560c4a0862611ceac2b49d",
+            "output": "7669f26de820a01ab4c6968b56fa9a2552f83265244d519f90c8477a0e374574"
+        },
+        "06_native\/compile_actions.php": {
+            "input": "a83b7d038e38d49275ce156c8dc03a2b293563ae83f9ad6e4fa25fb067f86db3",
+            "output": "2388e2243fa0ee8db7d9da2b021a99806e92e97857d2c3571c7e41035f9ed12b"
+        },
+        "06_native\/cpp_build.php": {
+            "input": "35c6ace2c8381e89225ffe02db4289a07f0e9e1a267bd73ac29370839bfee145",
+            "output": "d1b42ae710effbb4730ce8554ab06e7486324319a225e0322e3afe4fedb4fd69"
+        },
+        "06_native\/cpp_commands.php": {
+            "input": "5ede0182262dd716512d47e9ead66170596a023fc711dcee6e893e3f33b40b74",
+            "output": "9360bd573d39ce9f6b57c215859c1a68f806f393eba458e38fc3463746b25a5f"
+        },
+        "06_native\/cpp_publication.php": {
+            "input": "04a664cca53ccadd46cdfb4fac5d385fe699964d21b5afcdef8a29a033d8ba80",
+            "output": "6dc9cfe6fc252d42eaacb7af04be0c295f454d1d148a57fdcf692a94dd7c589e"
+        },
+        "06_native\/cpp_structures.php": {
+            "input": "1c219e094f7db16772cb2a72fc14bdcad456e51f8d62b42d86c57d8077480909",
+            "output": "684753ee6d3814e39562278c3888bf90214a7a2a0c51a27b1033ca89cd9a723b"
+        },
+        "06_native\/dependency_inputs.php": {
+            "input": "31903e94264f17fe33ef42624c59de636f946d90c2ca3c9845a946a7f563b689",
+            "output": "bcdf9edb4dcc417f23faf494d185c2daddc520b416b2fcfd93993379b0909b91"
+        },
+        "06_native\/depfiles.php": {
+            "input": "8e3281f4172c808624e38ca92dad66cbc97d76c6fe556e00698e7b3d94df4d4c",
+            "output": "73ce83e7170642524eb62bd4a895a94f83d328b5b39d14824a66dd6363479b43"
+        },
+        "06_native\/ninja_build.php": {
+            "input": "08d190bb496b451bb0cb063023cb9aa75cb79ac112e65e90d573a9460a6e1562",
+            "output": "1db210d5898f3cbb2dc82ee480645de09cd9ce252e7e5da9cd50fd4ded643747"
+        },
+        "06_native\/run.php": {
+            "input": "ce5490312a4b723baf1aeba69dbb77b056270a12be063c08abd716a9d9d50551",
+            "output": "cbb918b26ae3ae565fb59c49bc8169038bdc2a93bae944b6b8cad4c475a55067"
+        },
+        "06_native\/structures.php": {
+            "input": "1649ec8c5bf61042667546167f972c6f5f9d50b93119ae8ee7f2212690a622f1",
+            "output": "11c923c74aaa13aa87e17d0e2bb3c931d20397914b35f779ee567568b6c81404"
+        },
+        "compiler\/callables\/catalog.php": {
+            "input": "3cb01386ddf509e20dedd2974821fa77ffeccffa66284b0d6401b17ab57e95d5",
+            "output": "364d0c0e3428413371f595b24d33e90e3180a43454ac07fcaca57e43ce4b938e"
+        },
+        "compiler\/callables\/instance_structures.php": {
+            "input": "d1a0b449ce3a7c99623f24ff3499ea63d07cfd2ddb17945a62341f1acf9f3acc",
+            "output": "736fcea0ada02e8845530fbea25942b0dde472ac38bc2db3e6a5c322bba599b8"
+        },
+        "compiler\/callables\/instances.php": {
+            "input": "e85d056267ee5a3305edae30bc5790d32180eeb8ccbe5f6b8f67911fa6a2aa80",
+            "output": "745569b778d5dd7c97c6043108b2a25c8ccb04a56d04b7c0a708016e558d76f5"
+        },
+        "compiler\/callables\/inventory.php": {
+            "input": "78812d8cc1104a53898316971162b4b9ffb8d778d4ba25ffe1f7b2da014c9c86",
+            "output": "9e24074bd663ea368fea564c4462702c756056c53750e9caa2a65f1023f01221"
+        },
+        "compiler\/callables\/language.php": {
+            "input": "d5a0a0703629b451582dc3ae1d607ee8f0c944af80de3ee4ff53333c0ad4f5a5",
+            "output": "6b7189e6481e25e4469777f9a17b406be57ae4eafbc20aed23f4fd91565f106a"
+        },
+        "compiler\/callables\/structures.php": {
+            "input": "ef86948dcefc02aa2d87cb0e0c35e565683f2fefd33f63af2b1a98bf551ab319",
+            "output": "81362e8a73e381fc96ade1238c75d366c0fd9d2e3aa8ad3c5537743a36561e13"
+        },
+        "compiler\/compile.php": {
+            "input": "f8b6466ea0901e25718ebea39c13a906af9bfc3fe99d8dafbafcfbd2452f4710",
+            "output": "69e5e63108d9ac3f103dd0e9dcf98d65bb6d4a03610f08f171f6e95986dd9287"
+        },
+        "compiler\/constants\/language.php": {
+            "input": "d55656a2b755a550aa8687d145e105595aaba10926b07d3eb84322bbe906f7d7",
+            "output": "398fa6fddbb50daad97060fc515315036a377d6ed2e913deb373b5a393be4bed"
+        },
+        "compiler\/constants\/structures.php": {
+            "input": "b47a80a8438f00f01b04f30b9d256748257a457bc06a0c1d5e7647c526841271",
+            "output": "cd4698bcee8d39051a19e1ca4607f14bead1500a0dd4057e13920114f635aa4e"
+        },
+        "compiler\/diagnostics.php": {
+            "input": "11cdd259b9922b9da79b274f5bfac67d024e3de9fb36811942052a86b94c2661",
+            "output": "861d6a39c3758704ca172e898febe1ce62ac0bfacbdb1e98cbc060529a64fa48"
+        },
+        "compiler\/frontend.php": {
+            "input": "9c23f5b354b0b9490bdb4336d0400878acb6b484a90377b0673666792013ca6f",
+            "output": "671416f8b092ef5bd8c268ee425e6d6f1cfd7a17e281ba016386c60fdf9a0748"
+        },
+        "compiler\/host_report.php": {
+            "input": "ac48ba899806ceae48699534437ec64e70ef66c67618a356b1592e8ba0bd4be2",
+            "output": "8da19627e92266b11eee443f502363947df13b28dfd5fe9dcfd68fbe4e639cbb"
+        },
+        "compiler\/indexing\/contracts.php": {
+            "input": "0ed8335096b69b94919b90ab315847950bd5df8ec9a5890b616b464f66d47fa4",
+            "output": "cac8efe8e429c2baf3ef22c68afd843819a36d55ae8947052f5011ba1f34282c"
+        },
+        "compiler\/initialization\/catalog.php": {
+            "input": "693dedc30dc2d3e9ec203c3909e5e7cc42b75e64d5d1617f7ff64e2d7c1da65e",
+            "output": "8a223674e83f4d6b02e0c742aab9a94f87d1b55381675d47c59f8a43507d6146"
+        },
+        "compiler\/initialization\/structures.php": {
+            "input": "a5721744f5980a4a7b0b1ccaae08c30f1251480141df9c1c9e6e87c791fa2fbf",
+            "output": "8c1ea86598e577750b3af61bab995dc02eb3050fa22d745a21e33d901177571e"
+        },
+        "compiler\/iteration\/contracts.php": {
+            "input": "115b6e0faa0454992bd6069f1f7eb5f53dbe64172af686256ef92df0b6397a96",
+            "output": "b18e21633e5642f65359c173dc4a692c4a1af3830eeafd4db08f9c54a3bec01a"
+        },
+        "compiler\/lifecycle.php": {
+            "input": "325aeaa888a8b9e9815617184fa8a1e5c6d107e909a8572e62f32804d5f977d7",
+            "output": "97ac557b01e45e80df6e2c69c31ffc56f41429f51eb36140d325ca0cf891572b"
+        },
+        "compiler\/model.php": {
+            "input": "2d5a2107bbef8e618a68f98c41af94f8ec6d21427afc50aa3bc65fb10980b6a1",
+            "output": "eaddcde88058d84393eec11c0e757401a5e23fba3efef5d4692a5f7de6427e15"
+        },
+        "compiler\/output_publication.php": {
+            "input": "e1e323b20160396752cb394c1fd2bac314aa95c07b6b22549e149cc595a1e4f6",
+            "output": "a183bfd3360a6596aa6691beaa88966fdda4d05a867963f774f70e15585a3487"
+        },
+        "compiler\/preparation.php": {
+            "input": "357b89a690ef1380359c76115c4adc5c8c8b913256749b10df2cd559c0ac4cd4",
+            "output": "840a78b4fb02134c71d0efc49bdce49efcb70a6ea2eab60b2fb5d8a0f47dfaec"
+        },
+        "compiler\/publication.php": {
+            "input": "5c462c1cc03bb8155cbb7d46104c9fccc52343281ccd0115d4e5b065f942f4da",
+            "output": "4a4baa0a75a2f2b4dadcbd2a0aa529b665c5d391f7cd0155218cfd88a8ef165b"
+        },
+        "compiler\/runtime_catalog\/build.php": {
+            "input": "784ec6fea6d3b4586cd467c36560114154ef1696feaef649607bd78ca54f0928",
+            "output": "f0045cb787b8f307908b5c77b329bb03b658b7239a3ae5f1e6c89a4f6574b7db"
+        },
+        "compiler\/runtime_catalog\/defaults.php": {
+            "input": "05e4bba9b911857f5349103b6d40b1869bedefecf00c4a5fe633e970639d360a",
+            "output": "b76f4d3ff68f5b1590c229398300959b64ca046c16b8e428fc5d477f809bd8c7"
+        },
+        "compiler\/runtime_catalog\/load.php": {
+            "input": "22edd96dc04d8c79a8ee635110f2138f40d7e0edea77cd7dc5f5a4a7fa7627c5",
+            "output": "55df25437f4eef397847a1875d4528b6e129903ce7c11f551845a8c491d236de"
+        },
+        "compiler\/runtime_catalog\/members.php": {
+            "input": "64c3634df21697e2f6e3a624084c1a786d8c6cebc531dac4469a2eb5b66b3382",
+            "output": "e6d35ba41469b4175924aa17332c893f94b0b2a192cacbc11e1c00a38f972e71"
+        },
+        "compiler\/runtime_catalog\/patterns.php": {
+            "input": "0fb99581fd6b02afd66a789fa334c4ca8120cf989967d1871429d1a50349f992",
+            "output": "3f4fef6d1c4355cdf4516284234cfcaf1bb023068ceda976bd670bbe15c87bbd"
+        },
+        "compiler\/runtime_catalog\/protocols.php": {
+            "input": "f8e56dcbfbf6bf01fa127f55ab094c9a4109e3000d2e6cad3fea2aed727e42b4",
+            "output": "932919078db0fab21b62dd6fe9e4ef2d8a22f7fd310e12f5acc55be9e7406f3c"
+        },
+        "compiler\/runtime_catalog\/reader.php": {
+            "input": "b9070f88eb861d9c85ea4a71c5623529026227442067bc8f0cbab6d499984a81",
+            "output": "4c3a023ba2ef5756f317ad4dc103778a4f3126b7c91fd311322ce460c879e06f"
+        },
+        "compiler\/runtime_catalog\/register.php": {
+            "input": "1961266553d8249fdc190ca636e72c1adadf3da615361c08ef67d805f720abd6",
+            "output": "655287c1c12189c4cdaf6c8ec0bc7096e48e3b22a59b344b7f11b53b54614b15"
+        },
+        "compiler\/runtime_catalog\/structures.php": {
+            "input": "d5b159d24125de6aa15a9cfa8ea497a0e10e197ef01680cd6ffe8dce61d58284",
+            "output": "717924ce8880d61cc5719ea2f5d6f72ac8380381b81e5c4ada3f831007d1d499"
+        },
+        "compiler\/runtime_catalog\/types.php": {
+            "input": "446bb0a1eac51a595875cd120816afd29d1f3df46adcc01cc69397a4a803bae9",
+            "output": "9b8c7e97c4d4710d9cc28eda94861afe691dab6c46968de6854f0406e9f089da"
+        },
+        "compiler\/scope_publication.php": {
+            "input": "b8b9a63da0a0309b1e0503600e230f896501d572e7f4c4d9bf59c3f01cca5eb7",
+            "output": "fd5f8cc05ba25946508bd166e9b66e440e93644deee925d6dc48e1fb92e1b5fe"
+        },
+        "compiler\/source_fragments.php": {
+            "input": "a906c5e3a4a67011758a63e1dbe20d8fbba1deeba955b695c2c9cfcb739d82d0",
+            "output": "f7bc73d5305ee1a3efaabc8f87917792c2ab6fbe583a3579d6916f457dfa3713"
+        },
+        "compiler\/sources.php": {
+            "input": "e900aa971741538b45bf5779d9b69452015259aba2405bd31dd6653d370d2f3e",
+            "output": "48d029a7d99969f0e28b3b84f08a801844cdbaa05a026390b1428dfa8f065802"
+        },
+        "compiler\/structures.php": {
+            "input": "1b0d71d4e260d8bb44571e87c456f7c96b055c9151ded1911161449704886d2a",
+            "output": "727a07d97a0597b3cbe7d01bf0290a2d330093da94bf07ffb557b9720420839a"
+        },
+        "compiler\/sync\/sources.php": {
+            "input": "e7405e895344d4bbc18547c512026e03bfa98492c6dd0acd20620f85963c80fb",
+            "output": "5f5dc6adf6b24144323f2d647cc705bc92c495916b84f3213ad6b1f2f90e837c"
+        },
+        "compiler\/sync\/structures.php": {
+            "input": "15719588f1fc9b067c609d7c270212f73a3d8e6bdb166fea2d39faca860cb93f",
+            "output": "03c1b586879792b4f29b60c505d340ac54d3d9e2dd7405c55245f60a82ac42a5"
+        },
+        "compiler\/traits\/composition.php": {
+            "input": "6341b72647ad7ea5725ada74f9eecccf4a04651ca5a32fa4e998eb4924bc4231",
+            "output": "7f1b00fc6854ecac2daf296a10bd5685a6b7f137fdb2d76b5e83ffa4262fbfb9"
+        },
+        "compiler\/traits\/inventory.php": {
+            "input": "fca6ff24a1ce98f302915168f2a5a8849d00f5f5d83290c9392c6ec82230e6f7",
+            "output": "4b16f94996038082a3af03360fffe08ca875a0d95e245a7eb5dc83cdfbded414"
+        },
+        "compiler\/traits\/materialization.php": {
+            "input": "c8c7087e1a3ffed3c707947cbe19802a0e7460a8f8c513a7e6dcbc063416f992",
+            "output": "37b745196729725639d5e230a9d4b338b63d15185f09c85a858261d1ad88c2f7"
+        },
+        "compiler\/traits\/structures.php": {
+            "input": "d0c7825495c62d7e284ccd986a97f605ddbf21cd21fc0ce61e93a40a985a4ee8",
+            "output": "0692f77bcd00a9f295ff22c07b0baed81e3fd53e5de07743387258e9ffd0e66a"
+        },
+        "compiler\/types\/contract_reference.php": {
+            "input": "790a910a6bf290dc39a505c0bb4bf6cd94c917864a04091bd610a12a6fe382e0",
+            "output": "b183843fa97c7669adebb60363facafcecad1879a8c224fdac3952b6bc500a82"
+        },
+        "compiler\/types\/language.php": {
+            "input": "be32f9113228ad3fabcfdfb848482ab22b61bb510eb2c753b2c0920451c72903",
+            "output": "d83f7b33d97e02e7be0779980c5dc4609def0506888b3f15058d27ff0d2d7cc9"
+        },
+        "compiler\/types\/queries.php": {
+            "input": "25a308cd1f29e4642ef05b4434be44063775afd4a1ae8a84e73f3eb48112a911",
+            "output": "f6c9a581c89e6bcc56649e185d80ab808adc4b04f3c2ed0b1d3abf74c7443ec5"
+        },
+        "compiler\/types\/source.php": {
+            "input": "e3e5e03772e441b99124c47731348043813fe75104e578524207b5dcd16bb045",
+            "output": "4382b7c6fdfd2140e938160c18349e9375c75743299aafc489cdf1fcab946bda"
+        },
+        "compiler\/types\/structures.php": {
+            "input": "29d4519ee56e2013203e8499df5f05010ef2e33d58bf58cd7b99585df41c36f6",
+            "output": "f2cd8e008567e68734486064e837504c7df53d6bf2b3ec08cb2275ccc2f3b826"
+        },
+        "compiler\/work_queue.php": {
+            "input": "d5cb13433e5616c6b3aca71ee90c548cee9b6283a664bcd87a8f6a7a425b47c4",
+            "output": "4ebb3f74c3cc1ccf8bb1e1068475dededc218b470528e17498d1406dedea23b8"
+        },
+        "main.php": {
+            "input": "6c6e72d78e56f675435033a757a3ca03e83006a066531eeb7614d53b19d95b22",
+            "output": "572ac9ebe100d85670294b7950f9343bb6abcb4e06c820ca10e1d1c603659dba"
+        }
+    }
+}

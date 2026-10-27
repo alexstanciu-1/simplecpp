@@ -1,0 +1,125 @@
+// Explicit fictional tax amounts and recovery; no live rates or filing rules.
+// Draft values are mutable. Services retain validated copies, never caller handles.
+class TaxControlLine {
+    public string $id = "";
+    public string $document_id = "";
+    public string $tax_code = "";
+    public string $jurisdiction = "";
+    public string $control_account = "";
+    public string $return_reference = "";
+    public int $taxable_amount = 0;
+    public int $tax_amount = 0;
+    public int $recoverable_amount = 0;
+    public int $reported_amount = 0;
+    public int $rate_basis_points = 0;
+    public int $period = 0;
+    public bool $input_tax = false;
+    public bool $reported = false;
+
+    public function validate(): AccountingCheck {
+        if (!DocumentRules::text($this->id, 1, 40)) {
+            return accounting_failure("tax_control_line.id", "id must contain 1..40 printable bytes");
+        }
+        if (!DocumentRules::text($this->document_id, 1, 80)) {
+            return accounting_failure("tax_control_line.document_id", "document_id must contain 1..80 printable bytes");
+        }
+        if (!DocumentRules::text($this->tax_code, 1, 80)) {
+            return accounting_failure("tax_control_line.tax_code", "tax_code must contain 1..80 printable bytes");
+        }
+        if (!DocumentRules::text($this->jurisdiction, 1, 80)) {
+            return accounting_failure("tax_control_line.jurisdiction", "jurisdiction must contain 1..80 printable bytes");
+        }
+        if (!DocumentRules::text($this->control_account, 1, 80)) {
+            return accounting_failure("tax_control_line.control_account", "control_account must contain 1..80 printable bytes");
+        }
+        if (!DocumentRules::text($this->return_reference, 1, 80)) {
+            return accounting_failure("tax_control_line.return_reference", "return_reference must contain 1..80 printable bytes");
+        }
+        if (!DocumentRules::integer($this->taxable_amount, 0, 1000000000)) {
+            return accounting_failure("tax_control_line.taxable_amount", "taxable_amount must be in [0, 1000000000]");
+        }
+        if (!DocumentRules::integer($this->tax_amount, 0, 1000000000)) {
+            return accounting_failure("tax_control_line.tax_amount", "tax_amount must be in [0, 1000000000]");
+        }
+        if (!DocumentRules::integer($this->recoverable_amount, 0, 1000000000)) {
+            return accounting_failure("tax_control_line.recoverable_amount", "recoverable_amount must be in [0, 1000000000]");
+        }
+        if (!DocumentRules::integer($this->reported_amount, 0, 1000000000)) {
+            return accounting_failure("tax_control_line.reported_amount", "reported_amount must be in [0, 1000000000]");
+        }
+        if (!DocumentRules::integer($this->rate_basis_points, 0, 10000)) {
+            return accounting_failure("tax_control_line.rate_basis_points", "rate_basis_points must be in [0, 10000]");
+        }
+        if (!DocumentRules::integer($this->period, 1, 1200)) {
+            return accounting_failure("tax_control_line.period", "period must be in [1, 1200]");
+        }
+        if ($this->recoverable_amount > $this->tax_amount) {
+            return accounting_failure("tax_control_line.recovery", "Recovery exceeds tax");
+        }
+        if ($this->reported_amount > $this->tax_amount) {
+            return accounting_failure("tax_control_line.reporting", "Reported amount exceeds tax");
+        }
+        return accounting_success();
+    }
+
+    public function unreported_tax(): int {
+        return $this->tax_amount - $this->reported_amount;
+    }
+
+    public function copy(): TaxControlLine {
+        $snapshot TaxControlLine = new TaxControlLine();
+        $snapshot->id = $this->id;
+        $snapshot->document_id = $this->document_id;
+        $snapshot->tax_code = $this->tax_code;
+        $snapshot->jurisdiction = $this->jurisdiction;
+        $snapshot->control_account = $this->control_account;
+        $snapshot->return_reference = $this->return_reference;
+        $snapshot->taxable_amount = $this->taxable_amount;
+        $snapshot->tax_amount = $this->tax_amount;
+        $snapshot->recoverable_amount = $this->recoverable_amount;
+        $snapshot->reported_amount = $this->reported_amount;
+        $snapshot->rate_basis_points = $this->rate_basis_points;
+        $snapshot->period = $this->period;
+        $snapshot->input_tax = $this->input_tax;
+        $snapshot->reported = $this->reported;
+        return $snapshot;
+    }
+
+    public function differences(TaxControlLine $other): vector<string> {
+        $fields vector<string> = [];
+        if ($this->id !== $other->id) { $fields[] = "id"; }
+        if ($this->document_id !== $other->document_id) { $fields[] = "document_id"; }
+        if ($this->tax_code !== $other->tax_code) { $fields[] = "tax_code"; }
+        if ($this->jurisdiction !== $other->jurisdiction) { $fields[] = "jurisdiction"; }
+        if ($this->control_account !== $other->control_account) { $fields[] = "control_account"; }
+        if ($this->return_reference !== $other->return_reference) { $fields[] = "return_reference"; }
+        if ($this->taxable_amount !== $other->taxable_amount) { $fields[] = "taxable_amount"; }
+        if ($this->tax_amount !== $other->tax_amount) { $fields[] = "tax_amount"; }
+        if ($this->recoverable_amount !== $other->recoverable_amount) { $fields[] = "recoverable_amount"; }
+        if ($this->reported_amount !== $other->reported_amount) { $fields[] = "reported_amount"; }
+        if ($this->rate_basis_points !== $other->rate_basis_points) { $fields[] = "rate_basis_points"; }
+        if ($this->period !== $other->period) { $fields[] = "period"; }
+        if ($this->input_tax !== $other->input_tax) { $fields[] = "input_tax"; }
+        if ($this->reported !== $other->reported) { $fields[] = "reported"; }
+        return $fields;
+    }
+
+    public function describe(): string {
+        $text string = "TaxControlLine\n";
+        $text .= "id=" . $this->id . "\n";
+        $text .= "document_id=" . $this->document_id . "\n";
+        $text .= "tax_code=" . $this->tax_code . "\n";
+        $text .= "jurisdiction=" . $this->jurisdiction . "\n";
+        $text .= "control_account=" . $this->control_account . "\n";
+        $text .= "return_reference=" . $this->return_reference . "\n";
+        $text .= "taxable_amount=" . (string)$this->taxable_amount . "\n";
+        $text .= "tax_amount=" . (string)$this->tax_amount . "\n";
+        $text .= "recoverable_amount=" . (string)$this->recoverable_amount . "\n";
+        $text .= "reported_amount=" . (string)$this->reported_amount . "\n";
+        $text .= "rate_basis_points=" . (string)$this->rate_basis_points . "\n";
+        $text .= "period=" . (string)$this->period . "\n";
+        $text .= "input_tax=" . DocumentRules::flag($this->input_tax) . "\n";
+        $text .= "reported=" . DocumentRules::flag($this->reported) . "\n";
+        return $text;
+    }
+}

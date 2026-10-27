@@ -1,0 +1,125 @@
+// One department share in an integer-weight allocation run.
+// Draft values are mutable. Services retain validated copies, never caller handles.
+class AllocationDriver {
+    public string $id = "";
+    public string $run_id = "";
+    public string $department = "";
+    public string $source_account = "";
+    public string $target_account = "";
+    public string $basis_label = "";
+    public int $weight = 0;
+    public int $total_weight = 0;
+    public int $pool_amount = 0;
+    public int $assigned_amount = 0;
+    public int $period = 0;
+    public int $rank = 0;
+    public bool $enabled = false;
+    public bool $posted = false;
+
+    public function validate(): AccountingCheck {
+        if (!DocumentRules::text($this->id, 1, 40)) {
+            return accounting_failure("allocation_driver.id", "id must contain 1..40 printable bytes");
+        }
+        if (!DocumentRules::text($this->run_id, 1, 80)) {
+            return accounting_failure("allocation_driver.run_id", "run_id must contain 1..80 printable bytes");
+        }
+        if (!DocumentRules::text($this->department, 1, 80)) {
+            return accounting_failure("allocation_driver.department", "department must contain 1..80 printable bytes");
+        }
+        if (!DocumentRules::text($this->source_account, 1, 80)) {
+            return accounting_failure("allocation_driver.source_account", "source_account must contain 1..80 printable bytes");
+        }
+        if (!DocumentRules::text($this->target_account, 1, 80)) {
+            return accounting_failure("allocation_driver.target_account", "target_account must contain 1..80 printable bytes");
+        }
+        if (!DocumentRules::text($this->basis_label, 1, 80)) {
+            return accounting_failure("allocation_driver.basis_label", "basis_label must contain 1..80 printable bytes");
+        }
+        if (!DocumentRules::integer($this->weight, 0, 1000000)) {
+            return accounting_failure("allocation_driver.weight", "weight must be in [0, 1000000]");
+        }
+        if (!DocumentRules::integer($this->total_weight, 1, 1000000)) {
+            return accounting_failure("allocation_driver.total_weight", "total_weight must be in [1, 1000000]");
+        }
+        if (!DocumentRules::integer($this->pool_amount, 0, 1000000000)) {
+            return accounting_failure("allocation_driver.pool_amount", "pool_amount must be in [0, 1000000000]");
+        }
+        if (!DocumentRules::integer($this->assigned_amount, 0, 1000000000)) {
+            return accounting_failure("allocation_driver.assigned_amount", "assigned_amount must be in [0, 1000000000]");
+        }
+        if (!DocumentRules::integer($this->period, 1, 1200)) {
+            return accounting_failure("allocation_driver.period", "period must be in [1, 1200]");
+        }
+        if (!DocumentRules::integer($this->rank, 1, 1000000)) {
+            return accounting_failure("allocation_driver.rank", "rank must be in [1, 1000000]");
+        }
+        if ($this->weight > $this->total_weight) {
+            return accounting_failure("allocation_driver.weight", "Share weight exceeds total");
+        }
+        if ($this->assigned_amount > $this->pool_amount) {
+            return accounting_failure("allocation_driver.amount", "Assigned share exceeds pool");
+        }
+        return accounting_success();
+    }
+
+    public function unassigned_pool(): int {
+        return $this->pool_amount - $this->assigned_amount;
+    }
+
+    public function copy(): AllocationDriver {
+        $snapshot AllocationDriver = new AllocationDriver();
+        $snapshot->id = $this->id;
+        $snapshot->run_id = $this->run_id;
+        $snapshot->department = $this->department;
+        $snapshot->source_account = $this->source_account;
+        $snapshot->target_account = $this->target_account;
+        $snapshot->basis_label = $this->basis_label;
+        $snapshot->weight = $this->weight;
+        $snapshot->total_weight = $this->total_weight;
+        $snapshot->pool_amount = $this->pool_amount;
+        $snapshot->assigned_amount = $this->assigned_amount;
+        $snapshot->period = $this->period;
+        $snapshot->rank = $this->rank;
+        $snapshot->enabled = $this->enabled;
+        $snapshot->posted = $this->posted;
+        return $snapshot;
+    }
+
+    public function differences(AllocationDriver $other): vector<string> {
+        $fields vector<string> = [];
+        if ($this->id !== $other->id) { $fields[] = "id"; }
+        if ($this->run_id !== $other->run_id) { $fields[] = "run_id"; }
+        if ($this->department !== $other->department) { $fields[] = "department"; }
+        if ($this->source_account !== $other->source_account) { $fields[] = "source_account"; }
+        if ($this->target_account !== $other->target_account) { $fields[] = "target_account"; }
+        if ($this->basis_label !== $other->basis_label) { $fields[] = "basis_label"; }
+        if ($this->weight !== $other->weight) { $fields[] = "weight"; }
+        if ($this->total_weight !== $other->total_weight) { $fields[] = "total_weight"; }
+        if ($this->pool_amount !== $other->pool_amount) { $fields[] = "pool_amount"; }
+        if ($this->assigned_amount !== $other->assigned_amount) { $fields[] = "assigned_amount"; }
+        if ($this->period !== $other->period) { $fields[] = "period"; }
+        if ($this->rank !== $other->rank) { $fields[] = "rank"; }
+        if ($this->enabled !== $other->enabled) { $fields[] = "enabled"; }
+        if ($this->posted !== $other->posted) { $fields[] = "posted"; }
+        return $fields;
+    }
+
+    public function describe(): string {
+        $text string = "AllocationDriver\n";
+        $text .= "id=" . $this->id . "\n";
+        $text .= "run_id=" . $this->run_id . "\n";
+        $text .= "department=" . $this->department . "\n";
+        $text .= "source_account=" . $this->source_account . "\n";
+        $text .= "target_account=" . $this->target_account . "\n";
+        $text .= "basis_label=" . $this->basis_label . "\n";
+        $text .= "weight=" . (string)$this->weight . "\n";
+        $text .= "total_weight=" . (string)$this->total_weight . "\n";
+        $text .= "pool_amount=" . (string)$this->pool_amount . "\n";
+        $text .= "assigned_amount=" . (string)$this->assigned_amount . "\n";
+        $text .= "period=" . (string)$this->period . "\n";
+        $text .= "rank=" . (string)$this->rank . "\n";
+        $text .= "enabled=" . DocumentRules::flag($this->enabled) . "\n";
+        $text .= "posted=" . DocumentRules::flag($this->posted) . "\n";
+        return $text;
+    }
+}

@@ -1,0 +1,136 @@
+// Half-away-from-zero rational conversion with bounded integer intermediates.
+function document_ratio(int $amount, int $numerator, int $denominator): AmountResult {
+    $result AmountResult = new AmountResult();
+    if (!MoneyRules::accepts($amount) || $numerator < 0 || $numerator > 1000000 || $denominator <= 0 || $denominator > 1000000) {
+        $result->reason = "ratio.range";
+        return $result;
+    }
+    $magnitude int = $amount;
+    if ($magnitude < 0) { $magnitude = -$magnitude; }
+    $product int = $magnitude * $numerator;
+    $remainder int = $product % $denominator;
+    $rounded int = (int)(($product - $remainder) / $denominator);
+    if ($remainder * 2 >= $denominator) { $rounded += 1; }
+    if ($amount < 0) { $rounded = -$rounded; }
+    if (!MoneyRules::accepts($rounded)) { $result->reason = "ratio.overflow"; return $result; }
+    $result->amount = $rounded;
+    $result->valid = true;
+    return $result;
+}
+
+class TreasuryDesk {
+    private $loans hash<LoanAgreement> = [];
+    private $interest_due hash<int> = [];
+    private $interest_periods hash<bool> = [];
+    private $settlements hash<ForeignSettlement> = [];
+
+    public function add_loan(LoanAgreement $draft): AccountingCheck {
+        $valid AccountingCheck = $draft->validate();
+        if (!$valid->accepted) { return $valid; }
+        if (isset($this->loans[$draft->id])) { return accounting_failure("treasury.duplicate", $draft->id); }
+        if (!$draft->active || $draft->drawn_principal !== 0 || $draft->repaid_principal !== 0) {
+            return accounting_failure("treasury.opening", "Register an active undrawn facility");
+        }
+        $this->loans[$draft->id] = $draft->copy();
+        $this->interest_due[$draft->id] = 0;
+        return accounting_success();
+    }
+
+    public function snapshot(string $id): LoanAgreement {
+        if (!isset($this->loans[$id])) { return new LoanAgreement(); }
+        return $this->loans[$id]->copy();
+    }
+
+    public function draw(GeneralLedger $ledger, string $id, string $reference, int $amount): AccountingCheck {
+        if (!isset($this->loans[$id])) { return accounting_failure("treasury.loan", $id); }
+        $loan LoanAgreement = $this->loans[$id];
+        if (!$loan->active || $amount <= 0 || $amount > $loan->facility_limit - $loan->drawn_principal) {
+            return accounting_failure("treasury.facility", "Draw exceeds remaining non-revolving facility");
+        }
+        $posted AccountingCheck = document_post($ledger, $reference, "loan-draw", $loan->bank_account, $loan->liability_account, $amount);
+        if (!$posted->accepted) { return $posted; }
+        $loan->drawn_principal += $amount;
+        return accounting_success();
+    }
+
+    public function repay(GeneralLedger $ledger, string $id, string $reference, int $amount): AccountingCheck {
+        if (!isset($this->loans[$id])) { return accounting_failure("treasury.loan", $id); }
+        $loan LoanAgreement = $this->loans[$id];
+        if ($amount <= 0 || $amount > $loan->principal_outstanding()) {
+            return accounting_failure("treasury.repayment", "Repayment exceeds outstanding principal");
+        }
+        $posted AccountingCheck = document_post($ledger, $reference, "loan-repayment", $loan->liability_account, $loan->bank_account, $amount);
+        if (!$posted->accepted) { return $posted; }
+        $loan->repaid_principal += $amount;
+        return accounting_success();
+    }
+
+    public function accrue_interest(GeneralLedger $ledger, string $id): AccountingCheck {
+        if (!isset($this->loans[$id])) { return accounting_failure("treasury.loan", $id); }
+        $loan LoanAgreement = $this->loans[$id];
+        $key string = (string)strlen($id) . ":" . $id . ":" . (string)$ledger->current_period();
+        if (isset($this->interest_periods[$key])) { return accounting_failure("treasury.interest-period", $id); }
+        $amount AmountResult = MoneyRules::rate($loan->principal_outstanding(), $loan->period_rate_basis_points);
+        if (!$amount->valid) { return accounting_failure($amount->reason, "Period interest"); }
+        $new_due int = $this->interest_due[$id] + $amount->amount;
+        if (!MoneyRules::accepts($new_due)) { return accounting_failure("treasury.interest-limit", $id); }
+        if ($amount->amount > 0) {
+            $posted AccountingCheck = document_post($ledger, "interest:" . $key, "loan-interest", $loan->interest_account, $loan->liability_account, $amount->amount);
+            if (!$posted->accepted) { return $posted; }
+        }
+        $this->interest_due[$id] = $new_due;
+        $this->interest_periods[$key] = true;
+        return accounting_success();
+    }
+
+    public function pay_interest(GeneralLedger $ledger, string $id, string $reference): AccountingCheck {
+        if (!isset($this->loans[$id])) { return accounting_failure("treasury.loan", $id); }
+        $loan LoanAgreement = $this->loans[$id];
+        $amount int = $this->interest_due[$id];
+        if ($amount <= 0) { return accounting_failure("treasury.no-interest", $id); }
+        $posted AccountingCheck = document_post($ledger, $reference, "interest-payment", $loan->liability_account, $loan->bank_account, $amount);
+        if (!$posted->accepted) { return $posted; }
+        $this->interest_due[$id] = 0;
+        return accounting_success();
+    }
+
+    public function convert(ExchangeRateQuote $quote, int $foreign_amount): AmountResult {
+        $valid AccountingCheck = $quote->validate();
+        $result AmountResult = new AmountResult();
+        if (!$valid->accepted || !$quote->approved) { $result->reason = "treasury.rate"; return $result; }
+        if ($foreign_amount > $quote->max_foreign_amount || $foreign_amount < -$quote->max_foreign_amount) {
+            $result->reason = "treasury.foreign-limit";
+            return $result;
+        }
+        return document_ratio($foreign_amount, $quote->numerator, $quote->denominator);
+    }
+
+    // The opening carrying liability is supplied by the calling invoice workflow.
+    // This operation releases its explicitly allocated carrying portion once.
+    public function settle_foreign(GeneralLedger $ledger, ForeignSettlement $draft): AccountingCheck {
+        $valid AccountingCheck = $draft->validate();
+        if (!$valid->accepted) { return $valid; }
+        if (isset($this->settlements[$draft->id])) { return accounting_failure("treasury.settled", $draft->id); }
+        if (!$draft->approved || $draft->period !== $ledger->current_period() || $draft->foreign_paid <= 0 || $draft->base_released <= 0 || $draft->base_cash_paid <= 0) {
+            return accounting_failure("treasury.settlement", "Approved positive current-period settlement required");
+        }
+        if ($draft->final_settlement) {
+            if ($draft->foreign_paid !== $draft->foreign_due || $draft->base_released !== $draft->base_carrying) {
+                return accounting_failure("treasury.final", "Final settlement must release the entire liability");
+            }
+        }
+        $entry JournalEntry = new JournalEntry();
+        $entry->reference = "foreign:" . $draft->id;
+        $entry->origin = "foreign-settlement";
+        $entry->period = $draft->period;
+        $entry->add_debit("payables", $draft->base_released, "Carrying liability released");
+        $difference int = $draft->realized_loss();
+        if ($difference > 0) { $entry->add_debit("operating-expense", $difference, "Realized exchange loss"); }
+        if ($difference < 0) { $entry->add_credit("interest-income", -$difference, "Realized exchange gain"); }
+        $entry->add_credit("bank", $draft->base_cash_paid, "Settlement cash");
+        $posted AccountingCheck = $ledger->post($entry);
+        if (!$posted->accepted) { return $posted; }
+        $this->settlements[$draft->id] = $draft->copy();
+        return accounting_success();
+    }
+}

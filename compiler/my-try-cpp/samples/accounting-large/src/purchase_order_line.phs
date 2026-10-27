@@ -1,0 +1,128 @@
+// Supplier order commitment and partial receipt state.
+// Draft values are mutable. Services retain validated copies, never caller handles.
+class PurchaseOrderLine {
+    public string $id = "";
+    public string $order_id = "";
+    public string $supplier_id = "";
+    public string $item_code = "";
+    public string $warehouse = "";
+    public string $expense_account = "";
+    public int $ordered = 0;
+    public int $received = 0;
+    public int $returned = 0;
+    public int $unit_cost = 0;
+    public int $invoiced = 0;
+    public int $expected_period = 0;
+    public bool $approved = false;
+    public bool $cancelled = false;
+
+    public function validate(): AccountingCheck {
+        if (!DocumentRules::text($this->id, 1, 40)) {
+            return accounting_failure("purchase_order_line.id", "id must contain 1..40 printable bytes");
+        }
+        if (!DocumentRules::text($this->order_id, 1, 80)) {
+            return accounting_failure("purchase_order_line.order_id", "order_id must contain 1..80 printable bytes");
+        }
+        if (!DocumentRules::text($this->supplier_id, 1, 80)) {
+            return accounting_failure("purchase_order_line.supplier_id", "supplier_id must contain 1..80 printable bytes");
+        }
+        if (!DocumentRules::text($this->item_code, 1, 80)) {
+            return accounting_failure("purchase_order_line.item_code", "item_code must contain 1..80 printable bytes");
+        }
+        if (!DocumentRules::text($this->warehouse, 1, 80)) {
+            return accounting_failure("purchase_order_line.warehouse", "warehouse must contain 1..80 printable bytes");
+        }
+        if (!DocumentRules::text($this->expense_account, 1, 80)) {
+            return accounting_failure("purchase_order_line.expense_account", "expense_account must contain 1..80 printable bytes");
+        }
+        if (!DocumentRules::integer($this->ordered, 1, 1000000)) {
+            return accounting_failure("purchase_order_line.ordered", "ordered must be in [1, 1000000]");
+        }
+        if (!DocumentRules::integer($this->received, 0, 1000000)) {
+            return accounting_failure("purchase_order_line.received", "received must be in [0, 1000000]");
+        }
+        if (!DocumentRules::integer($this->returned, 0, 1000000)) {
+            return accounting_failure("purchase_order_line.returned", "returned must be in [0, 1000000]");
+        }
+        if (!DocumentRules::integer($this->unit_cost, 0, 1000000)) {
+            return accounting_failure("purchase_order_line.unit_cost", "unit_cost must be in [0, 1000000]");
+        }
+        if (!DocumentRules::integer($this->invoiced, 0, 1000000)) {
+            return accounting_failure("purchase_order_line.invoiced", "invoiced must be in [0, 1000000]");
+        }
+        if (!DocumentRules::integer($this->expected_period, 1, 1200)) {
+            return accounting_failure("purchase_order_line.expected_period", "expected_period must be in [1, 1200]");
+        }
+        if ($this->received > $this->ordered) {
+            return accounting_failure("purchase_order_line.receipt", "Receipt exceeds ordered quantity");
+        }
+        if ($this->returned > $this->received) {
+            return accounting_failure("purchase_order_line.return", "Return exceeds received quantity");
+        }
+        if ($this->invoiced > $this->received - $this->returned) {
+            return accounting_failure("purchase_order_line.invoice", "Invoice exceeds retained receipts");
+        }
+        return accounting_success();
+    }
+
+    public function open_commitment(): int {
+        return ($this->ordered - $this->received) * $this->unit_cost;
+    }
+
+    public function copy(): PurchaseOrderLine {
+        $snapshot PurchaseOrderLine = new PurchaseOrderLine();
+        $snapshot->id = $this->id;
+        $snapshot->order_id = $this->order_id;
+        $snapshot->supplier_id = $this->supplier_id;
+        $snapshot->item_code = $this->item_code;
+        $snapshot->warehouse = $this->warehouse;
+        $snapshot->expense_account = $this->expense_account;
+        $snapshot->ordered = $this->ordered;
+        $snapshot->received = $this->received;
+        $snapshot->returned = $this->returned;
+        $snapshot->unit_cost = $this->unit_cost;
+        $snapshot->invoiced = $this->invoiced;
+        $snapshot->expected_period = $this->expected_period;
+        $snapshot->approved = $this->approved;
+        $snapshot->cancelled = $this->cancelled;
+        return $snapshot;
+    }
+
+    public function differences(PurchaseOrderLine $other): vector<string> {
+        $fields vector<string> = [];
+        if ($this->id !== $other->id) { $fields[] = "id"; }
+        if ($this->order_id !== $other->order_id) { $fields[] = "order_id"; }
+        if ($this->supplier_id !== $other->supplier_id) { $fields[] = "supplier_id"; }
+        if ($this->item_code !== $other->item_code) { $fields[] = "item_code"; }
+        if ($this->warehouse !== $other->warehouse) { $fields[] = "warehouse"; }
+        if ($this->expense_account !== $other->expense_account) { $fields[] = "expense_account"; }
+        if ($this->ordered !== $other->ordered) { $fields[] = "ordered"; }
+        if ($this->received !== $other->received) { $fields[] = "received"; }
+        if ($this->returned !== $other->returned) { $fields[] = "returned"; }
+        if ($this->unit_cost !== $other->unit_cost) { $fields[] = "unit_cost"; }
+        if ($this->invoiced !== $other->invoiced) { $fields[] = "invoiced"; }
+        if ($this->expected_period !== $other->expected_period) { $fields[] = "expected_period"; }
+        if ($this->approved !== $other->approved) { $fields[] = "approved"; }
+        if ($this->cancelled !== $other->cancelled) { $fields[] = "cancelled"; }
+        return $fields;
+    }
+
+    public function describe(): string {
+        $text string = "PurchaseOrderLine\n";
+        $text .= "id=" . $this->id . "\n";
+        $text .= "order_id=" . $this->order_id . "\n";
+        $text .= "supplier_id=" . $this->supplier_id . "\n";
+        $text .= "item_code=" . $this->item_code . "\n";
+        $text .= "warehouse=" . $this->warehouse . "\n";
+        $text .= "expense_account=" . $this->expense_account . "\n";
+        $text .= "ordered=" . (string)$this->ordered . "\n";
+        $text .= "received=" . (string)$this->received . "\n";
+        $text .= "returned=" . (string)$this->returned . "\n";
+        $text .= "unit_cost=" . (string)$this->unit_cost . "\n";
+        $text .= "invoiced=" . (string)$this->invoiced . "\n";
+        $text .= "expected_period=" . (string)$this->expected_period . "\n";
+        $text .= "approved=" . DocumentRules::flag($this->approved) . "\n";
+        $text .= "cancelled=" . DocumentRules::flag($this->cancelled) . "\n";
+        return $text;
+    }
+}

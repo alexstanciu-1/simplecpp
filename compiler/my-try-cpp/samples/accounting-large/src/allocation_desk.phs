@@ -1,0 +1,89 @@
+class AllocationDesk {
+    private $budgets hash<DepartmentBudget> = [];
+    private $drivers hash<AllocationDriver> = [];
+    private $runs hash<bool> = [];
+
+    public function add_budget(DepartmentBudget $draft): AccountingCheck {
+        $valid AccountingCheck = $draft->validate();
+        if (!$valid->accepted) { return $valid; }
+        if (isset($this->budgets[$draft->department])) { return accounting_failure("allocation.department-duplicate", $draft->department); }
+        if (!$draft->approved || $draft->frozen || $draft->actual_amount !== 0 || $draft->committed_amount !== 0) {
+            return accounting_failure("allocation.opening", "Fresh approved department budget required");
+        }
+        $this->budgets[$draft->department] = $draft->copy();
+        return accounting_success();
+    }
+
+    public function budget(string $department): DepartmentBudget {
+        if (!isset($this->budgets[$department])) { return new DepartmentBudget(); }
+        return $this->budgets[$department]->copy();
+    }
+
+    public function driver(string $id): AllocationDriver {
+        if (!isset($this->drivers[$id])) { return new AllocationDriver(); }
+        return $this->drivers[$id]->copy();
+    }
+
+    public function allocate(GeneralLedger $ledger, string $reference, vector<AllocationDriver> $drafts): AccountingCheck {
+        if (!DocumentRules::text($reference, 1, 80) || count($drafts) === 0 || count($drafts) > 1000) {
+            return accounting_failure("allocation.request", "Bounded nonempty allocation run required");
+        }
+        if (isset($this->runs[$reference])) { return accounting_failure("allocation.run-duplicate", $reference); }
+        $first AllocationDriver = $drafts[0];
+        $weights vector<int> = [];
+        $ids hash<bool> = [];
+        $departments hash<bool> = [];
+        $weight_total int = 0;
+        foreach ($drafts as $draft) {
+            $valid AccountingCheck = $draft->validate();
+            if (!$valid->accepted) { return $valid; }
+            if (isset($ids[$draft->id]) || isset($this->drivers[$draft->id]) || isset($departments[$draft->department])) {
+                return accounting_failure("allocation.driver-duplicate", "One unique driver per department is required");
+            }
+            if (!isset($this->budgets[$draft->department])) { return accounting_failure("allocation.department", $draft->department); }
+            $budget DepartmentBudget = $this->budgets[$draft->department];
+            if (!$draft->enabled || $draft->posted || $draft->assigned_amount !== 0 || $budget->frozen || !$budget->approved) {
+                return accounting_failure("allocation.state", "Enabled unposted drivers and open budgets required");
+            }
+            if ($draft->run_id !== $reference || $draft->pool_amount !== $first->pool_amount || $draft->source_account !== $first->source_account || $draft->total_weight !== $first->total_weight || $draft->target_account === $draft->source_account) {
+                return accounting_failure("allocation.pool", "Drivers must agree on one pool and source account");
+            }
+            if ($draft->period !== $ledger->current_period() || $budget->period !== $draft->period) {
+                return accounting_failure("allocation.period", "Budget and drivers must use the open period");
+            }
+            $ids[$draft->id] = true;
+            $departments[$draft->department] = true;
+            $weights[] = $draft->weight;
+            $weight_total += $draft->weight;
+        }
+        if ($weight_total !== $first->total_weight || $first->pool_amount <= 0) {
+            return accounting_failure("allocation.weight-total", "Declared total differs from the driver weights");
+        }
+        $split AllocationResult = MoneyAllocation::weighted($first->pool_amount, $weights);
+        if (!$split->valid) { return accounting_failure($split->reason, "Cost allocation"); }
+        $entry JournalEntry = new JournalEntry();
+        $entry->reference = $reference;
+        $entry->origin = "department-allocation";
+        $entry->period = $ledger->current_period();
+        $entry->add_credit($first->source_account, $first->pool_amount, "Cost pool distributed");
+        for ($index int = 0; $index < count($drafts); $index++) {
+            $draft AllocationDriver = $drafts[$index];
+            $budget DepartmentBudget = $this->budgets[$draft->department];
+            $portion int = $split->amounts[$index];
+            if ($portion > $budget->available_amount()) { return accounting_failure("allocation.budget", $draft->department); }
+            if ($portion > 0) { $entry->add_debit($draft->target_account, $portion, $draft->department); }
+        }
+        $posted AccountingCheck = $ledger->post($entry);
+        if (!$posted->accepted) { return $posted; }
+        for ($index int = 0; $index < count($drafts); $index++) {
+            $saved AllocationDriver = $drafts[$index]->copy();
+            $saved->assigned_amount = $split->amounts[$index];
+            $saved->posted = true;
+            $this->drivers[$saved->id] = $saved;
+            $budget DepartmentBudget = $this->budgets[$saved->department];
+            $budget->actual_amount += $saved->assigned_amount;
+        }
+        $this->runs[$reference] = true;
+        return accounting_success();
+    }
+}

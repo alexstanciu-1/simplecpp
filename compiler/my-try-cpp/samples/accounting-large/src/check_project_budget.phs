@@ -1,0 +1,64 @@
+function sample_project_budget(): ProjectBudget {
+    $draft ProjectBudget = new ProjectBudget();
+    $draft->id = "JOB-001";
+    $draft->customer_id = "CUS-001";
+    $draft->project_name = "Workshop installation";
+    $draft->manager = "project-a";
+    $draft->cost_account = "operating-expense";
+    $draft->revenue_account = "revenue";
+    $draft->cost_budget = 500000;
+    $draft->cost_actual = 100000;
+    $draft->cost_committed = 50000;
+    $draft->contract_value = 700000;
+    $draft->billed = 150000;
+    $draft->completion_period = 12;
+    $draft->active = true;
+    $draft->billing_hold = false;
+    return $draft;
+}
+
+function check_project_budget(WorkloadChecks $checks): void {
+    $draft ProjectBudget = sample_project_budget();
+    $checks->accepted($draft->validate(), "project_budget valid draft");
+    $checks->equal($draft->uncommitted_budget(), 350000, "project_budget independent business result");
+    $copy ProjectBudget = $draft->copy();
+    $checks->equal(count($draft->differences($copy)), 0, "project_budget snapshot equivalence");
+    $checks->expect($draft->describe() === $copy->describe(), "project_budget snapshot report");
+    $copy = $draft->copy();
+    $copy->id = "";
+    $checks->rejected($copy->validate(), "project_budget.id", "project_budget id required");
+    $copy = $draft->copy();
+    $copy->id = "bad\nrow";
+    $checks->rejected($copy->validate(), "project_budget.id", "project_budget id control");
+    $copy = $draft->copy();
+    $copy->id = DocumentRules::repeat("x", 41);
+    $checks->rejected($copy->validate(), "project_budget.id", "project_budget id width");
+    $copy = $draft->copy();
+    $copy->id = "JOB-001-changed";
+    $checks->expect($draft->id === "JOB-001", "project_budget id snapshot isolation");
+    $changes_id vector<string> = $draft->differences($copy);
+    $checks->equal(count($changes_id), 1, "project_budget id change count");
+    if (count($changes_id) === 1) {
+        $checks->expect($changes_id[0] === "id", "project_budget id change identity");
+    }
+    $copy = $draft->copy();
+    $copy->cost_budget = -1;
+    $checks->rejected($copy->validate(), "project_budget.cost_budget", "project_budget cost_budget below");
+    $copy = $draft->copy();
+    $copy->cost_budget = 1000000001;
+    $checks->rejected($copy->validate(), "project_budget.cost_budget", "project_budget cost_budget above");
+    $copy = $draft->copy();
+    $copy->cost_actual = -1;
+    $checks->rejected($copy->validate(), "project_budget.cost_actual", "project_budget cost_actual below");
+    $copy = $draft->copy();
+    $copy->cost_actual = 1000000001;
+    $checks->rejected($copy->validate(), "project_budget.cost_actual", "project_budget cost_actual above");
+    $copy = $draft->copy();
+    $copy->active = false;
+    $checks->expect($draft->active === true, "project_budget active snapshot isolation");
+    $changes_active vector<string> = $draft->differences($copy);
+    $checks->equal(count($changes_active), 1, "project_budget active change count");
+    if (count($changes_active) === 1) {
+        $checks->expect($changes_active[0] === "active", "project_budget active change identity");
+    }
+}

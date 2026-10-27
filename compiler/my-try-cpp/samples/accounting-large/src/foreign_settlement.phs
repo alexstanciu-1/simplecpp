@@ -1,0 +1,125 @@
+// A foreign-currency payable with independently supplied base carrying value.
+// Draft values are mutable. Services retain validated copies, never caller handles.
+class ForeignSettlement {
+    public string $id = "";
+    public string $supplier_id = "";
+    public string $invoice_id = "";
+    public string $currency = "";
+    public string $rate_id = "";
+    public string $bank_reference = "";
+    public int $foreign_due = 0;
+    public int $foreign_paid = 0;
+    public int $base_carrying = 0;
+    public int $base_released = 0;
+    public int $base_cash_paid = 0;
+    public int $period = 0;
+    public bool $approved = false;
+    public bool $final_settlement = false;
+
+    public function validate(): AccountingCheck {
+        if (!DocumentRules::text($this->id, 1, 40)) {
+            return accounting_failure("foreign_settlement.id", "id must contain 1..40 printable bytes");
+        }
+        if (!DocumentRules::text($this->supplier_id, 1, 80)) {
+            return accounting_failure("foreign_settlement.supplier_id", "supplier_id must contain 1..80 printable bytes");
+        }
+        if (!DocumentRules::text($this->invoice_id, 1, 80)) {
+            return accounting_failure("foreign_settlement.invoice_id", "invoice_id must contain 1..80 printable bytes");
+        }
+        if (!DocumentRules::text($this->currency, 1, 3)) {
+            return accounting_failure("foreign_settlement.currency", "currency must contain 1..3 printable bytes");
+        }
+        if (!DocumentRules::text($this->rate_id, 1, 80)) {
+            return accounting_failure("foreign_settlement.rate_id", "rate_id must contain 1..80 printable bytes");
+        }
+        if (!DocumentRules::text($this->bank_reference, 1, 80)) {
+            return accounting_failure("foreign_settlement.bank_reference", "bank_reference must contain 1..80 printable bytes");
+        }
+        if (!DocumentRules::integer($this->foreign_due, 0, 1000000000)) {
+            return accounting_failure("foreign_settlement.foreign_due", "foreign_due must be in [0, 1000000000]");
+        }
+        if (!DocumentRules::integer($this->foreign_paid, 0, 1000000000)) {
+            return accounting_failure("foreign_settlement.foreign_paid", "foreign_paid must be in [0, 1000000000]");
+        }
+        if (!DocumentRules::integer($this->base_carrying, 0, 1000000000)) {
+            return accounting_failure("foreign_settlement.base_carrying", "base_carrying must be in [0, 1000000000]");
+        }
+        if (!DocumentRules::integer($this->base_released, 0, 1000000000)) {
+            return accounting_failure("foreign_settlement.base_released", "base_released must be in [0, 1000000000]");
+        }
+        if (!DocumentRules::integer($this->base_cash_paid, 0, 1000000000)) {
+            return accounting_failure("foreign_settlement.base_cash_paid", "base_cash_paid must be in [0, 1000000000]");
+        }
+        if (!DocumentRules::integer($this->period, 1, 1200)) {
+            return accounting_failure("foreign_settlement.period", "period must be in [1, 1200]");
+        }
+        if ($this->foreign_paid > $this->foreign_due) {
+            return accounting_failure("foreign_settlement.foreign", "Foreign payment exceeds liability");
+        }
+        if ($this->base_released > $this->base_carrying) {
+            return accounting_failure("foreign_settlement.carrying", "Release exceeds carrying value");
+        }
+        return accounting_success();
+    }
+
+    public function realized_loss(): int {
+        return $this->base_cash_paid - $this->base_released;
+    }
+
+    public function copy(): ForeignSettlement {
+        $snapshot ForeignSettlement = new ForeignSettlement();
+        $snapshot->id = $this->id;
+        $snapshot->supplier_id = $this->supplier_id;
+        $snapshot->invoice_id = $this->invoice_id;
+        $snapshot->currency = $this->currency;
+        $snapshot->rate_id = $this->rate_id;
+        $snapshot->bank_reference = $this->bank_reference;
+        $snapshot->foreign_due = $this->foreign_due;
+        $snapshot->foreign_paid = $this->foreign_paid;
+        $snapshot->base_carrying = $this->base_carrying;
+        $snapshot->base_released = $this->base_released;
+        $snapshot->base_cash_paid = $this->base_cash_paid;
+        $snapshot->period = $this->period;
+        $snapshot->approved = $this->approved;
+        $snapshot->final_settlement = $this->final_settlement;
+        return $snapshot;
+    }
+
+    public function differences(ForeignSettlement $other): vector<string> {
+        $fields vector<string> = [];
+        if ($this->id !== $other->id) { $fields[] = "id"; }
+        if ($this->supplier_id !== $other->supplier_id) { $fields[] = "supplier_id"; }
+        if ($this->invoice_id !== $other->invoice_id) { $fields[] = "invoice_id"; }
+        if ($this->currency !== $other->currency) { $fields[] = "currency"; }
+        if ($this->rate_id !== $other->rate_id) { $fields[] = "rate_id"; }
+        if ($this->bank_reference !== $other->bank_reference) { $fields[] = "bank_reference"; }
+        if ($this->foreign_due !== $other->foreign_due) { $fields[] = "foreign_due"; }
+        if ($this->foreign_paid !== $other->foreign_paid) { $fields[] = "foreign_paid"; }
+        if ($this->base_carrying !== $other->base_carrying) { $fields[] = "base_carrying"; }
+        if ($this->base_released !== $other->base_released) { $fields[] = "base_released"; }
+        if ($this->base_cash_paid !== $other->base_cash_paid) { $fields[] = "base_cash_paid"; }
+        if ($this->period !== $other->period) { $fields[] = "period"; }
+        if ($this->approved !== $other->approved) { $fields[] = "approved"; }
+        if ($this->final_settlement !== $other->final_settlement) { $fields[] = "final_settlement"; }
+        return $fields;
+    }
+
+    public function describe(): string {
+        $text string = "ForeignSettlement\n";
+        $text .= "id=" . $this->id . "\n";
+        $text .= "supplier_id=" . $this->supplier_id . "\n";
+        $text .= "invoice_id=" . $this->invoice_id . "\n";
+        $text .= "currency=" . $this->currency . "\n";
+        $text .= "rate_id=" . $this->rate_id . "\n";
+        $text .= "bank_reference=" . $this->bank_reference . "\n";
+        $text .= "foreign_due=" . (string)$this->foreign_due . "\n";
+        $text .= "foreign_paid=" . (string)$this->foreign_paid . "\n";
+        $text .= "base_carrying=" . (string)$this->base_carrying . "\n";
+        $text .= "base_released=" . (string)$this->base_released . "\n";
+        $text .= "base_cash_paid=" . (string)$this->base_cash_paid . "\n";
+        $text .= "period=" . (string)$this->period . "\n";
+        $text .= "approved=" . DocumentRules::flag($this->approved) . "\n";
+        $text .= "final_settlement=" . DocumentRules::flag($this->final_settlement) . "\n";
+        return $text;
+    }
+}

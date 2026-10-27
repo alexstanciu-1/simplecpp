@@ -1,0 +1,64 @@
+function sample_loan_agreement(): LoanAgreement {
+    $draft LoanAgreement = new LoanAgreement();
+    $draft->id = "LOAN-001";
+    $draft->lender = "Example Finance";
+    $draft->liability_account = "accruals";
+    $draft->interest_account = "operating-expense";
+    $draft->bank_account = "bank";
+    $draft->currency = "LOC";
+    $draft->facility_limit = 500000;
+    $draft->drawn_principal = 300000;
+    $draft->repaid_principal = 50000;
+    $draft->period_rate_basis_points = 100;
+    $draft->instalments_remaining = 12;
+    $draft->next_due_period = 2;
+    $draft->active = true;
+    $draft->secured = false;
+    return $draft;
+}
+
+function check_loan_agreement(WorkloadChecks $checks): void {
+    $draft LoanAgreement = sample_loan_agreement();
+    $checks->accepted($draft->validate(), "loan_agreement valid draft");
+    $checks->equal($draft->principal_outstanding(), 250000, "loan_agreement independent business result");
+    $copy LoanAgreement = $draft->copy();
+    $checks->equal(count($draft->differences($copy)), 0, "loan_agreement snapshot equivalence");
+    $checks->expect($draft->describe() === $copy->describe(), "loan_agreement snapshot report");
+    $copy = $draft->copy();
+    $copy->id = "";
+    $checks->rejected($copy->validate(), "loan_agreement.id", "loan_agreement id required");
+    $copy = $draft->copy();
+    $copy->id = "bad\nrow";
+    $checks->rejected($copy->validate(), "loan_agreement.id", "loan_agreement id control");
+    $copy = $draft->copy();
+    $copy->id = DocumentRules::repeat("x", 41);
+    $checks->rejected($copy->validate(), "loan_agreement.id", "loan_agreement id width");
+    $copy = $draft->copy();
+    $copy->id = "LOAN-001-changed";
+    $checks->expect($draft->id === "LOAN-001", "loan_agreement id snapshot isolation");
+    $changes_id vector<string> = $draft->differences($copy);
+    $checks->equal(count($changes_id), 1, "loan_agreement id change count");
+    if (count($changes_id) === 1) {
+        $checks->expect($changes_id[0] === "id", "loan_agreement id change identity");
+    }
+    $copy = $draft->copy();
+    $copy->facility_limit = -1;
+    $checks->rejected($copy->validate(), "loan_agreement.facility_limit", "loan_agreement facility_limit below");
+    $copy = $draft->copy();
+    $copy->facility_limit = 1000000001;
+    $checks->rejected($copy->validate(), "loan_agreement.facility_limit", "loan_agreement facility_limit above");
+    $copy = $draft->copy();
+    $copy->drawn_principal = -1;
+    $checks->rejected($copy->validate(), "loan_agreement.drawn_principal", "loan_agreement drawn_principal below");
+    $copy = $draft->copy();
+    $copy->drawn_principal = 1000000001;
+    $checks->rejected($copy->validate(), "loan_agreement.drawn_principal", "loan_agreement drawn_principal above");
+    $copy = $draft->copy();
+    $copy->active = false;
+    $checks->expect($draft->active === true, "loan_agreement active snapshot isolation");
+    $changes_active vector<string> = $draft->differences($copy);
+    $checks->equal(count($changes_active), 1, "loan_agreement active change count");
+    if (count($changes_active) === 1) {
+        $checks->expect($changes_active[0] === "active", "loan_agreement active change identity");
+    }
+}

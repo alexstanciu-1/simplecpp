@@ -1,0 +1,119 @@
+// Count variance captured against a frozen quantity and unit cost.
+// Draft values are mutable. Services retain validated copies, never caller handles.
+class StockCountLine {
+    public string $id = "";
+    public string $count_id = "";
+    public string $item_code = "";
+    public string $location = "";
+    public string $counter = "";
+    public string $approver = "";
+    public int $book_quantity = 0;
+    public int $counted_quantity = 0;
+    public int $unit_cost = 0;
+    public int $tolerance_quantity = 0;
+    public int $period = 0;
+    public int $revision = 0;
+    public bool $recounted = false;
+    public bool $posted = false;
+
+    public function validate(): AccountingCheck {
+        if (!DocumentRules::text($this->id, 1, 40)) {
+            return accounting_failure("stock_count_line.id", "id must contain 1..40 printable bytes");
+        }
+        if (!DocumentRules::text($this->count_id, 1, 80)) {
+            return accounting_failure("stock_count_line.count_id", "count_id must contain 1..80 printable bytes");
+        }
+        if (!DocumentRules::text($this->item_code, 1, 80)) {
+            return accounting_failure("stock_count_line.item_code", "item_code must contain 1..80 printable bytes");
+        }
+        if (!DocumentRules::text($this->location, 1, 80)) {
+            return accounting_failure("stock_count_line.location", "location must contain 1..80 printable bytes");
+        }
+        if (!DocumentRules::text($this->counter, 1, 80)) {
+            return accounting_failure("stock_count_line.counter", "counter must contain 1..80 printable bytes");
+        }
+        if (!DocumentRules::text($this->approver, 1, 80)) {
+            return accounting_failure("stock_count_line.approver", "approver must contain 1..80 printable bytes");
+        }
+        if (!DocumentRules::integer($this->book_quantity, 0, 1000000)) {
+            return accounting_failure("stock_count_line.book_quantity", "book_quantity must be in [0, 1000000]");
+        }
+        if (!DocumentRules::integer($this->counted_quantity, 0, 1000000)) {
+            return accounting_failure("stock_count_line.counted_quantity", "counted_quantity must be in [0, 1000000]");
+        }
+        if (!DocumentRules::integer($this->unit_cost, 0, 1000000)) {
+            return accounting_failure("stock_count_line.unit_cost", "unit_cost must be in [0, 1000000]");
+        }
+        if (!DocumentRules::integer($this->tolerance_quantity, 0, 1000000)) {
+            return accounting_failure("stock_count_line.tolerance_quantity", "tolerance_quantity must be in [0, 1000000]");
+        }
+        if (!DocumentRules::integer($this->period, 1, 1200)) {
+            return accounting_failure("stock_count_line.period", "period must be in [1, 1200]");
+        }
+        if (!DocumentRules::integer($this->revision, 1, 1000000)) {
+            return accounting_failure("stock_count_line.revision", "revision must be in [1, 1000000]");
+        }
+        return accounting_success();
+    }
+
+    public function variance_value(): int {
+        return ($this->counted_quantity - $this->book_quantity) * $this->unit_cost;
+    }
+
+    public function copy(): StockCountLine {
+        $snapshot StockCountLine = new StockCountLine();
+        $snapshot->id = $this->id;
+        $snapshot->count_id = $this->count_id;
+        $snapshot->item_code = $this->item_code;
+        $snapshot->location = $this->location;
+        $snapshot->counter = $this->counter;
+        $snapshot->approver = $this->approver;
+        $snapshot->book_quantity = $this->book_quantity;
+        $snapshot->counted_quantity = $this->counted_quantity;
+        $snapshot->unit_cost = $this->unit_cost;
+        $snapshot->tolerance_quantity = $this->tolerance_quantity;
+        $snapshot->period = $this->period;
+        $snapshot->revision = $this->revision;
+        $snapshot->recounted = $this->recounted;
+        $snapshot->posted = $this->posted;
+        return $snapshot;
+    }
+
+    public function differences(StockCountLine $other): vector<string> {
+        $fields vector<string> = [];
+        if ($this->id !== $other->id) { $fields[] = "id"; }
+        if ($this->count_id !== $other->count_id) { $fields[] = "count_id"; }
+        if ($this->item_code !== $other->item_code) { $fields[] = "item_code"; }
+        if ($this->location !== $other->location) { $fields[] = "location"; }
+        if ($this->counter !== $other->counter) { $fields[] = "counter"; }
+        if ($this->approver !== $other->approver) { $fields[] = "approver"; }
+        if ($this->book_quantity !== $other->book_quantity) { $fields[] = "book_quantity"; }
+        if ($this->counted_quantity !== $other->counted_quantity) { $fields[] = "counted_quantity"; }
+        if ($this->unit_cost !== $other->unit_cost) { $fields[] = "unit_cost"; }
+        if ($this->tolerance_quantity !== $other->tolerance_quantity) { $fields[] = "tolerance_quantity"; }
+        if ($this->period !== $other->period) { $fields[] = "period"; }
+        if ($this->revision !== $other->revision) { $fields[] = "revision"; }
+        if ($this->recounted !== $other->recounted) { $fields[] = "recounted"; }
+        if ($this->posted !== $other->posted) { $fields[] = "posted"; }
+        return $fields;
+    }
+
+    public function describe(): string {
+        $text string = "StockCountLine\n";
+        $text .= "id=" . $this->id . "\n";
+        $text .= "count_id=" . $this->count_id . "\n";
+        $text .= "item_code=" . $this->item_code . "\n";
+        $text .= "location=" . $this->location . "\n";
+        $text .= "counter=" . $this->counter . "\n";
+        $text .= "approver=" . $this->approver . "\n";
+        $text .= "book_quantity=" . (string)$this->book_quantity . "\n";
+        $text .= "counted_quantity=" . (string)$this->counted_quantity . "\n";
+        $text .= "unit_cost=" . (string)$this->unit_cost . "\n";
+        $text .= "tolerance_quantity=" . (string)$this->tolerance_quantity . "\n";
+        $text .= "period=" . (string)$this->period . "\n";
+        $text .= "revision=" . (string)$this->revision . "\n";
+        $text .= "recounted=" . DocumentRules::flag($this->recounted) . "\n";
+        $text .= "posted=" . DocumentRules::flag($this->posted) . "\n";
+        return $text;
+    }
+}

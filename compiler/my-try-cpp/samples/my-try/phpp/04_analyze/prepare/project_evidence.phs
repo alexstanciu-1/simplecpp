@@ -1,0 +1,59 @@
+namespace scpp\compiler;
+
+/** Export selected declarations; never use overload candidate subscriptions as source edges. */
+final class Project_Evidence {
+	public static function collect(Storage<collected_file> $sources): Storage<prepared_source_evidence> {
+		$result Storage<prepared_source_evidence> = new Storage<prepared_source_evidence>();
+		foreach (Callable_Inventory::source_collections($sources)  as $source) {
+			if ($source->deleted) { continue; }
+			$row = new prepared_source_evidence($source);
+			$declarations Storage<collected_definition> = $row->declarations;
+			$references Storage<collected_definition> = $row->references;
+			foreach ($source->entries  as $entry) {
+				if ($entry->change_status === change_state::deleted) { continue; }
+				if ($entry instanceof collected_definition) {
+					if ($entry->is_exported()) {
+						$declarations->append(object_cast($entry, collected_definition::class));
+					}
+				}
+				$target = self::reference($entry);
+				if ($target !== null) { $references->append($target); }
+			}
+			$result->append($row);
+		}
+		return $result;
+	}
+
+	private static function reference(collected_name $entry): nullable<collected_definition> {
+		if ($entry instanceof collected_call_reference) {
+			$call = object_cast($entry, collected_call_reference::class)->syntax();
+			if ($call->preparation() === null) { return null; }
+			$called = lock($call->require_call_preparation()->target);
+			if ($called instanceof collected_method) {
+				return object_cast($called, collected_method::class)->declaring_type();
+			}
+			if ($called instanceof collected_function) {
+				return object_cast($called, collected_function::class);
+			}
+		}
+		elseif ($entry instanceof collected_type_reference) {
+			$type = object_cast($entry, collected_type_reference::class)->syntax();
+			if ($type->preparation() !== null) { return Type_Queries::source_declaration($type->require_preparation()); }
+		}
+		elseif ($entry instanceof collected_constant_reference) {
+			$constant = object_cast($entry, collected_constant_reference::class)->syntax();
+			if ($constant->preparation() === null) { return null; }
+			$resolved = lock($constant->require_constant_reference_preparation()->target);
+			if ($resolved instanceof collected_constant) {
+				$declaration = object_cast($resolved, collected_constant::class);
+				if ($declaration->member_owner !== null) { return lock($declaration->member_owner); }
+				return $declaration;
+			}
+		}
+		elseif ($entry instanceof collected_field_reference) {
+			$field = object_cast($entry, collected_field_reference::class)->syntax();
+			if ($field->preparation() !== null) { return Type_Queries::source_declaration($field->require_field_access_preparation()->record_type); }
+		}
+		return null;
+	}
+}

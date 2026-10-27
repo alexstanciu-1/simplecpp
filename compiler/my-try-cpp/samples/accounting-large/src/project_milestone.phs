@@ -1,0 +1,128 @@
+// Contract milestone approval, invoicing and revenue recognition.
+// Draft values are mutable. Services retain validated copies, never caller handles.
+class ProjectMilestone {
+    public string $id = "";
+    public string $project_id = "";
+    public string $description = "";
+    public string $customer_reference = "";
+    public string $revenue_account = "";
+    public string $deferred_account = "";
+    public int $contract_amount = 0;
+    public int $retention_amount = 0;
+    public int $invoiced_amount = 0;
+    public int $recognized_amount = 0;
+    public int $due_period = 0;
+    public int $completion_basis_points = 0;
+    public bool $accepted = false;
+    public bool $closed = false;
+
+    public function validate(): AccountingCheck {
+        if (!DocumentRules::text($this->id, 1, 40)) {
+            return accounting_failure("project_milestone.id", "id must contain 1..40 printable bytes");
+        }
+        if (!DocumentRules::text($this->project_id, 1, 80)) {
+            return accounting_failure("project_milestone.project_id", "project_id must contain 1..80 printable bytes");
+        }
+        if (!DocumentRules::text($this->description, 1, 80)) {
+            return accounting_failure("project_milestone.description", "description must contain 1..80 printable bytes");
+        }
+        if (!DocumentRules::text($this->customer_reference, 1, 80)) {
+            return accounting_failure("project_milestone.customer_reference", "customer_reference must contain 1..80 printable bytes");
+        }
+        if (!DocumentRules::text($this->revenue_account, 1, 80)) {
+            return accounting_failure("project_milestone.revenue_account", "revenue_account must contain 1..80 printable bytes");
+        }
+        if (!DocumentRules::text($this->deferred_account, 1, 80)) {
+            return accounting_failure("project_milestone.deferred_account", "deferred_account must contain 1..80 printable bytes");
+        }
+        if (!DocumentRules::integer($this->contract_amount, 0, 1000000000)) {
+            return accounting_failure("project_milestone.contract_amount", "contract_amount must be in [0, 1000000000]");
+        }
+        if (!DocumentRules::integer($this->retention_amount, 0, 1000000000)) {
+            return accounting_failure("project_milestone.retention_amount", "retention_amount must be in [0, 1000000000]");
+        }
+        if (!DocumentRules::integer($this->invoiced_amount, 0, 1000000000)) {
+            return accounting_failure("project_milestone.invoiced_amount", "invoiced_amount must be in [0, 1000000000]");
+        }
+        if (!DocumentRules::integer($this->recognized_amount, 0, 1000000000)) {
+            return accounting_failure("project_milestone.recognized_amount", "recognized_amount must be in [0, 1000000000]");
+        }
+        if (!DocumentRules::integer($this->due_period, 1, 1200)) {
+            return accounting_failure("project_milestone.due_period", "due_period must be in [1, 1200]");
+        }
+        if (!DocumentRules::integer($this->completion_basis_points, 0, 10000)) {
+            return accounting_failure("project_milestone.completion_basis_points", "completion_basis_points must be in [0, 10000]");
+        }
+        if ($this->retention_amount > $this->contract_amount) {
+            return accounting_failure("project_milestone.retention", "Retention exceeds milestone");
+        }
+        if ($this->invoiced_amount > $this->contract_amount) {
+            return accounting_failure("project_milestone.invoice", "Invoice exceeds milestone");
+        }
+        if ($this->recognized_amount > $this->contract_amount) {
+            return accounting_failure("project_milestone.recognition", "Recognition exceeds milestone");
+        }
+        return accounting_success();
+    }
+
+    public function unrecognized_amount(): int {
+        return $this->contract_amount - $this->recognized_amount;
+    }
+
+    public function copy(): ProjectMilestone {
+        $snapshot ProjectMilestone = new ProjectMilestone();
+        $snapshot->id = $this->id;
+        $snapshot->project_id = $this->project_id;
+        $snapshot->description = $this->description;
+        $snapshot->customer_reference = $this->customer_reference;
+        $snapshot->revenue_account = $this->revenue_account;
+        $snapshot->deferred_account = $this->deferred_account;
+        $snapshot->contract_amount = $this->contract_amount;
+        $snapshot->retention_amount = $this->retention_amount;
+        $snapshot->invoiced_amount = $this->invoiced_amount;
+        $snapshot->recognized_amount = $this->recognized_amount;
+        $snapshot->due_period = $this->due_period;
+        $snapshot->completion_basis_points = $this->completion_basis_points;
+        $snapshot->accepted = $this->accepted;
+        $snapshot->closed = $this->closed;
+        return $snapshot;
+    }
+
+    public function differences(ProjectMilestone $other): vector<string> {
+        $fields vector<string> = [];
+        if ($this->id !== $other->id) { $fields[] = "id"; }
+        if ($this->project_id !== $other->project_id) { $fields[] = "project_id"; }
+        if ($this->description !== $other->description) { $fields[] = "description"; }
+        if ($this->customer_reference !== $other->customer_reference) { $fields[] = "customer_reference"; }
+        if ($this->revenue_account !== $other->revenue_account) { $fields[] = "revenue_account"; }
+        if ($this->deferred_account !== $other->deferred_account) { $fields[] = "deferred_account"; }
+        if ($this->contract_amount !== $other->contract_amount) { $fields[] = "contract_amount"; }
+        if ($this->retention_amount !== $other->retention_amount) { $fields[] = "retention_amount"; }
+        if ($this->invoiced_amount !== $other->invoiced_amount) { $fields[] = "invoiced_amount"; }
+        if ($this->recognized_amount !== $other->recognized_amount) { $fields[] = "recognized_amount"; }
+        if ($this->due_period !== $other->due_period) { $fields[] = "due_period"; }
+        if ($this->completion_basis_points !== $other->completion_basis_points) { $fields[] = "completion_basis_points"; }
+        if ($this->accepted !== $other->accepted) { $fields[] = "accepted"; }
+        if ($this->closed !== $other->closed) { $fields[] = "closed"; }
+        return $fields;
+    }
+
+    public function describe(): string {
+        $text string = "ProjectMilestone\n";
+        $text .= "id=" . $this->id . "\n";
+        $text .= "project_id=" . $this->project_id . "\n";
+        $text .= "description=" . $this->description . "\n";
+        $text .= "customer_reference=" . $this->customer_reference . "\n";
+        $text .= "revenue_account=" . $this->revenue_account . "\n";
+        $text .= "deferred_account=" . $this->deferred_account . "\n";
+        $text .= "contract_amount=" . (string)$this->contract_amount . "\n";
+        $text .= "retention_amount=" . (string)$this->retention_amount . "\n";
+        $text .= "invoiced_amount=" . (string)$this->invoiced_amount . "\n";
+        $text .= "recognized_amount=" . (string)$this->recognized_amount . "\n";
+        $text .= "due_period=" . (string)$this->due_period . "\n";
+        $text .= "completion_basis_points=" . (string)$this->completion_basis_points . "\n";
+        $text .= "accepted=" . DocumentRules::flag($this->accepted) . "\n";
+        $text .= "closed=" . DocumentRules::flag($this->closed) . "\n";
+        return $text;
+    }
+}

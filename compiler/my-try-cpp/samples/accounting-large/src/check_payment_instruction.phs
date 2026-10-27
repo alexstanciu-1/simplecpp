@@ -1,0 +1,64 @@
+function sample_payment_instruction(): PaymentInstruction {
+    $draft PaymentInstruction = new PaymentInstruction();
+    $draft->id = "PAY-001";
+    $draft->supplier_id = "SUP-001";
+    $draft->invoice_id = "BILL-001";
+    $draft->bank_account = "bank";
+    $draft->beneficiary_reference = "SUP-SETTLE";
+    $draft->batch_id = "BATCH-001";
+    $draft->invoice_open = 18000;
+    $draft->payment_amount = 10000;
+    $draft->discount_amount = 200;
+    $draft->fee_amount = 25;
+    $draft->period = 1;
+    $draft->approval_level = 2;
+    $draft->approved = true;
+    $draft->transmitted = false;
+    return $draft;
+}
+
+function check_payment_instruction(WorkloadChecks $checks): void {
+    $draft PaymentInstruction = sample_payment_instruction();
+    $checks->accepted($draft->validate(), "payment_instruction valid draft");
+    $checks->equal($draft->bank_outflow(), 10025, "payment_instruction independent business result");
+    $copy PaymentInstruction = $draft->copy();
+    $checks->equal(count($draft->differences($copy)), 0, "payment_instruction snapshot equivalence");
+    $checks->expect($draft->describe() === $copy->describe(), "payment_instruction snapshot report");
+    $copy = $draft->copy();
+    $copy->id = "";
+    $checks->rejected($copy->validate(), "payment_instruction.id", "payment_instruction id required");
+    $copy = $draft->copy();
+    $copy->id = "bad\nrow";
+    $checks->rejected($copy->validate(), "payment_instruction.id", "payment_instruction id control");
+    $copy = $draft->copy();
+    $copy->id = DocumentRules::repeat("x", 41);
+    $checks->rejected($copy->validate(), "payment_instruction.id", "payment_instruction id width");
+    $copy = $draft->copy();
+    $copy->id = "PAY-001-changed";
+    $checks->expect($draft->id === "PAY-001", "payment_instruction id snapshot isolation");
+    $changes_id vector<string> = $draft->differences($copy);
+    $checks->equal(count($changes_id), 1, "payment_instruction id change count");
+    if (count($changes_id) === 1) {
+        $checks->expect($changes_id[0] === "id", "payment_instruction id change identity");
+    }
+    $copy = $draft->copy();
+    $copy->invoice_open = -1;
+    $checks->rejected($copy->validate(), "payment_instruction.invoice_open", "payment_instruction invoice_open below");
+    $copy = $draft->copy();
+    $copy->invoice_open = 1000000001;
+    $checks->rejected($copy->validate(), "payment_instruction.invoice_open", "payment_instruction invoice_open above");
+    $copy = $draft->copy();
+    $copy->payment_amount = -1;
+    $checks->rejected($copy->validate(), "payment_instruction.payment_amount", "payment_instruction payment_amount below");
+    $copy = $draft->copy();
+    $copy->payment_amount = 1000000001;
+    $checks->rejected($copy->validate(), "payment_instruction.payment_amount", "payment_instruction payment_amount above");
+    $copy = $draft->copy();
+    $copy->approved = false;
+    $checks->expect($draft->approved === true, "payment_instruction approved snapshot isolation");
+    $changes_approved vector<string> = $draft->differences($copy);
+    $checks->equal(count($changes_approved), 1, "payment_instruction approved change count");
+    if (count($changes_approved) === 1) {
+        $checks->expect($changes_approved[0] === "approved", "payment_instruction approved change identity");
+    }
+}

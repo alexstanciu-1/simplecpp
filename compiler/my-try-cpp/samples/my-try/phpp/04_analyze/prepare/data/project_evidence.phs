@@ -1,0 +1,11 @@
+namespace scpp\compiler;
+
+/** Transient read-only export of settled source identities, never a lookup index. */
+final class prepared_source_evidence {
+	public $declarations Storage<collected_definition>;
+	public $references Storage<collected_definition>;
+	public collected_file $source;public function __construct(set:$source) {
+		$this->declarations = new Storage<collected_definition>();
+		$this->references = new Storage<collected_definition>();
+	}
+}

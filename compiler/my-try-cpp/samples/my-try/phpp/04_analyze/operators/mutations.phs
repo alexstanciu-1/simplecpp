@@ -1,0 +1,195 @@
+
+/* Prepare updates to established storage and retain computation and result-value contracts. */
+namespace scpp\compiler;
+
+final class Mutation_Preparation {
+	/** Resolve a read/write target without using assignment's implicit declaration path. */
+	public static function prepare(mutation_expression_node $syntax, preparation_context $context): prepared_mutation_expression {
+		$target = self::prepare_target($syntax->target, $context);
+		$text = $context->collection->token_snapshot()->text_at($syntax->operator_token_index);
+		$source_operator = operator_kind::pre_increment;
+		if ($text === '++') {
+			$source_operator = $syntax->postfix ? operator_kind::post_increment : operator_kind::pre_increment;
+		}
+		elseif ($text === '--') {
+			$source_operator = $syntax->postfix ? operator_kind::post_decrement : operator_kind::pre_decrement;
+		}
+		else {
+			throw new \scpp_portability_logic_exception('Unexpected mutation token');
+		}
+		$facts = new prepared_mutation_expression();
+		$operands vector<canonical_type_use> = [$target->type];
+		$facts->decision = Operator_Preparation::decide(
+			$source_operator, $operands, operator_context::expression, $context);
+		$facts->type = $facts->decision->result_type;
+		return $facts;
+	}
+
+	/** Share existing-storage validation between unary mutation and compound updates. */
+	public static function prepare_target(expression_node $syntax, preparation_context $context): prepared_expression {
+		if ($syntax instanceof index_node) {
+			Expression_Preparation::prepare($syntax, $context);
+		}
+		if (!($syntax instanceof variable_reference_node)
+			&& !($syntax instanceof field_access_node)
+			&& !($syntax instanceof static_member_reference_node)) {
+			throw new \scpp_portability_runtime_exception('S2S mutation requires an existing local or parameter target, or stable property storage');
+		}
+		$target = Expression_Preparation::prepare($syntax, $context);
+		if (!$target->addressable()) {
+			throw new \scpp_portability_runtime_exception('S2S mutation requires writable storage');
+		}
+		Reference_Preparation::require_writable($target->place);
+		return $target;
+	}
+
+	/** Compute through the ordinary binary candidate, then retain the explicit write-back boundary. */
+	public static function prepare_compound(compound_assignment_expression_node $syntax, preparation_context $context): prepared_compound_assignment_expression {
+		$facts = new prepared_compound_assignment_expression();
+		if ($syntax->target instanceof index_node) {
+			$index = object_cast($syntax->target, index_node::class);
+			$destination = Indexing_Preparation::prepare_target($index, $context);
+			if ($index->index === null) { throw new \scpp_portability_runtime_exception('S2S compound append is not supported'); }
+			$facts->indexed_target = $destination;
+			$facts->type = $destination->decision->result_type;
+		}
+		else {
+			$facts->type = self::prepare_target($syntax->target, $context)->type;
+		}
+		$target_type = $facts->type;
+		$value = self::prepare_compound_value($syntax->value, $context);
+		$text = $context->collection->token_snapshot()->text_at($syntax->operator_token_index);
+		$source_operator = Operator_Preparation::binary_kind(string_byte_slice($text, 0, string_byte_len($text) - 1));
+		$facts->write_back_mode = compound_write_back::converted_assignment;
+		if ($source_operator === operator_kind::concatenation) {
+			if (($facts->indexed_target !== null) && !self::existing_indexed_text_pair($target_type, $value->type)) {
+				throw new \scpp_portability_runtime_exception('S2S extended text operands in indexed compounds remain deferred');
+			}
+			// Text replacement may change a boxed payload kind; numeric stored-kind checks do not apply.
+			if (!String_Conversions::is_string($target_type) && !String_Conversions::is_string_carrier($target_type)
+				&& !Boxed_Conversions::is_boxed($target_type)) {
+				throw new \scpp_portability_runtime_exception('S2S compound concatenation requires string, string-carrier or boxed storage');
+			}
+		}
+		else {
+			if (Boxed_Conversions::is_boxed($target_type)) {
+				$facts->write_back_mode = compound_write_back::boxed_stored_kind;
+			}
+			elseif (Boxed_Conversions::is_boxed($value->type)) {
+				throw new \scpp_portability_runtime_exception('S2S boxed compound assignment into native storage is deferred');
+			}
+		}
+		$operands vector<canonical_type_use> = [$target_type, $value->type];
+		// Widened binary arithmetic does not yet extend the stored-value update contract.
+		if ($source_operator !== operator_kind::concatenation) {
+			foreach ($operands  as $operand) {
+				if ((Type_Queries::canonical($operand)->family() === type_family::integer)
+					&& !$operand->matches($context->integer)) {
+					throw new \scpp_portability_runtime_exception('S2S fixed-width compound assignment is deferred');
+				}
+			}
+		}
+		$facts->decision = Operator_Preparation::decide(
+			$source_operator, $operands, operator_context::compound_assignment, $context);
+		if ($facts->decision->result_type->matches(Language_Types::floating(Model::$language_scope))) {
+			if (count($facts->decision->operand_extractions) === 0) {
+				Floating_Point_Operators::require_compound_operands($source_operator, $operands);
+			}
+			if ($facts->indexed_target !== null) {
+				throw new \scpp_portability_runtime_exception('S2S indexed floating compounds remain deferred');
+			}
+		}
+
+		if (($facts->indexed_target !== null) && (count($facts->decision->operand_extractions) !== 0)) {
+			throw new \scpp_portability_runtime_exception('S2S indexed guarded compounds remain deferred');
+		}
+		$facts->write_back = Conversion_Preparation::decide(
+			$facts->decision->result_type, $target_type, conversion_context::assignment);
+		return $facts;
+	}
+
+	/** A compound RHS is an ordinary value context, never an implicit-local declaration site. */
+	private static function prepare_compound_value(expression_node $syntax, preparation_context $context): prepared_expression {
+		$statement_assignment = $context->statement_assignment;
+		$context->statement_assignment = false;
+		try {
+			return Expression_Preparation::prepare($syntax, $context);
+		} finally {
+			$context->statement_assignment = $statement_assignment;
+		}
+	}
+
+	/** Mutate established canonical numeric or boxed storage; boxed payload validity remains runtime-owned. */
+	public static function decide(operator_kind $source_operator, vector<canonical_type_use> $operands, preparation_context $context): operator_decision {
+		if (count($operands) !== 1) {
+			throw new \scpp_portability_logic_exception('Mutation requires one target');
+		}
+		$integer = $context->integer;
+		$floating = Language_Types::floating(Model::$language_scope);
+		$carrier_payload = self::carrier_payload($operands[0]);
+		$wrapped = $carrier_payload !== null;
+		if ($carrier_payload !== null) {
+			if (!$carrier_payload->matches($integer) && !$carrier_payload->matches($floating)) {
+				throw new \scpp_portability_runtime_exception('S2S carrier mutation requires canonical int or float payload');
+			}
+		}
+		$boxed = Boxed_Conversions::is_boxed($operands[0]) && !$operands[0]->by_value();
+		if (!$operands[0]->matches($integer) && !$operands[0]->matches($floating) && !$boxed && !$wrapped) {
+			throw new \scpp_portability_runtime_exception('S2S mutation requires canonical int, float or boxed storage');
+		}
+		$decision = new operator_decision();
+		$decision->source_operator = $source_operator;
+		$decision->result_type = ($boxed || $wrapped) ? $operands[0]
+			: ($operands[0]->matches($floating) ? $floating : $integer);
+		if ($source_operator === operator_kind::pre_increment) {
+			$decision->operation = operator_operation::scalar_pre_increment;
+			if ($wrapped) { $decision->operation = operator_operation::wrapper_pre_increment; }
+			elseif ($boxed) { $decision->operation = operator_operation::boxed_pre_increment; }
+		}
+		elseif ($source_operator === operator_kind::post_increment) {
+			$decision->operation = operator_operation::scalar_post_increment;
+			if ($wrapped) { $decision->operation = operator_operation::wrapper_post_increment; }
+			elseif ($boxed) { $decision->operation = operator_operation::boxed_post_increment; }
+		}
+		elseif ($source_operator === operator_kind::pre_decrement) {
+			$decision->operation = operator_operation::scalar_pre_decrement;
+			if ($wrapped) { $decision->operation = operator_operation::wrapper_pre_decrement; }
+			elseif ($boxed) { $decision->operation = operator_operation::boxed_pre_decrement; }
+		}
+		elseif ($source_operator === operator_kind::post_decrement) {
+			$decision->operation = operator_operation::scalar_post_decrement;
+			if ($wrapped) { $decision->operation = operator_operation::wrapper_post_decrement; }
+			elseif ($boxed) { $decision->operation = operator_operation::boxed_post_decrement; }
+		}
+		else {
+			throw new \scpp_portability_logic_exception('Unsupported mutation operator');
+		}
+		$decision->operands[] = Conversion_Preparation::decide(
+			$operands[0], $decision->result_type, conversion_context::operator_operand);
+		return $decision;
+	}
+	/** Preserve the previously admitted indexed pairs; new text values need their own write-path proof. */
+	private static function existing_indexed_text_pair(canonical_type_use $target, canonical_type_use $value): bool {
+		if (String_Conversions::is_string_carrier($target)) {
+			return String_Conversions::is_string($value) || String_Conversions::is_string_carrier($value);
+		}
+		return Boxed_Conversions::is_scalar_payload($value) || Boxed_Conversions::is_boxed($value)
+			|| Nullable_Conversions::is_null($value) || String_Conversions::is_string_carrier($value);
+	}
+
+	/** Writable carrier identity stays intact; only the runtime accesses its payload. */
+	private static function carrier_payload(canonical_type_use $source): nullable<canonical_type_use> {
+		if ($source->by_value()) { return null; }
+		$nullable = Nullable_Conversions::payload($source);
+		if ($nullable !== null) { return $nullable; }
+		$role = Result_Conversions::role($source);
+		if ($role === null) { return null; }
+		if (($role->result_family() === result_kind::structured_error)
+			|| ($role->result_family() === result_kind::false_sentinel)
+			|| ($role->result_family() === result_kind::boolean_sentinels)) {
+			return Result_Conversions::require_payload($source, $role);
+		}
+		return null;
+	}
+
+}

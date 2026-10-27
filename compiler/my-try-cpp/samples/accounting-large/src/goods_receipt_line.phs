@@ -1,0 +1,125 @@
+// Inspection, rejection and invoice matching for a physical receipt.
+// Draft values are mutable. Services retain validated copies, never caller handles.
+class GoodsReceiptLine {
+    public string $id = "";
+    public string $receipt_id = "";
+    public string $order_line_id = "";
+    public string $supplier_id = "";
+    public string $item_code = "";
+    public string $lot_id = "";
+    public int $delivered = 0;
+    public int $rejected = 0;
+    public int $matched = 0;
+    public int $unit_cost = 0;
+    public int $period = 0;
+    public int $inspection_score = 0;
+    public bool $inspected = false;
+    public bool $quarantined = false;
+
+    public function validate(): AccountingCheck {
+        if (!DocumentRules::text($this->id, 1, 40)) {
+            return accounting_failure("goods_receipt_line.id", "id must contain 1..40 printable bytes");
+        }
+        if (!DocumentRules::text($this->receipt_id, 1, 80)) {
+            return accounting_failure("goods_receipt_line.receipt_id", "receipt_id must contain 1..80 printable bytes");
+        }
+        if (!DocumentRules::text($this->order_line_id, 1, 80)) {
+            return accounting_failure("goods_receipt_line.order_line_id", "order_line_id must contain 1..80 printable bytes");
+        }
+        if (!DocumentRules::text($this->supplier_id, 1, 80)) {
+            return accounting_failure("goods_receipt_line.supplier_id", "supplier_id must contain 1..80 printable bytes");
+        }
+        if (!DocumentRules::text($this->item_code, 1, 80)) {
+            return accounting_failure("goods_receipt_line.item_code", "item_code must contain 1..80 printable bytes");
+        }
+        if (!DocumentRules::text($this->lot_id, 1, 80)) {
+            return accounting_failure("goods_receipt_line.lot_id", "lot_id must contain 1..80 printable bytes");
+        }
+        if (!DocumentRules::integer($this->delivered, 1, 1000000)) {
+            return accounting_failure("goods_receipt_line.delivered", "delivered must be in [1, 1000000]");
+        }
+        if (!DocumentRules::integer($this->rejected, 0, 1000000)) {
+            return accounting_failure("goods_receipt_line.rejected", "rejected must be in [0, 1000000]");
+        }
+        if (!DocumentRules::integer($this->matched, 0, 1000000)) {
+            return accounting_failure("goods_receipt_line.matched", "matched must be in [0, 1000000]");
+        }
+        if (!DocumentRules::integer($this->unit_cost, 0, 1000000)) {
+            return accounting_failure("goods_receipt_line.unit_cost", "unit_cost must be in [0, 1000000]");
+        }
+        if (!DocumentRules::integer($this->period, 1, 1200)) {
+            return accounting_failure("goods_receipt_line.period", "period must be in [1, 1200]");
+        }
+        if (!DocumentRules::integer($this->inspection_score, 0, 100)) {
+            return accounting_failure("goods_receipt_line.inspection_score", "inspection_score must be in [0, 100]");
+        }
+        if ($this->rejected > $this->delivered) {
+            return accounting_failure("goods_receipt_line.rejection", "Rejected quantity exceeds delivery");
+        }
+        if ($this->matched > $this->delivered - $this->rejected) {
+            return accounting_failure("goods_receipt_line.matching", "Matched quantity exceeds accepted delivery");
+        }
+        return accounting_success();
+    }
+
+    public function unmatched_value(): int {
+        return ($this->delivered - $this->rejected - $this->matched) * $this->unit_cost;
+    }
+
+    public function copy(): GoodsReceiptLine {
+        $snapshot GoodsReceiptLine = new GoodsReceiptLine();
+        $snapshot->id = $this->id;
+        $snapshot->receipt_id = $this->receipt_id;
+        $snapshot->order_line_id = $this->order_line_id;
+        $snapshot->supplier_id = $this->supplier_id;
+        $snapshot->item_code = $this->item_code;
+        $snapshot->lot_id = $this->lot_id;
+        $snapshot->delivered = $this->delivered;
+        $snapshot->rejected = $this->rejected;
+        $snapshot->matched = $this->matched;
+        $snapshot->unit_cost = $this->unit_cost;
+        $snapshot->period = $this->period;
+        $snapshot->inspection_score = $this->inspection_score;
+        $snapshot->inspected = $this->inspected;
+        $snapshot->quarantined = $this->quarantined;
+        return $snapshot;
+    }
+
+    public function differences(GoodsReceiptLine $other): vector<string> {
+        $fields vector<string> = [];
+        if ($this->id !== $other->id) { $fields[] = "id"; }
+        if ($this->receipt_id !== $other->receipt_id) { $fields[] = "receipt_id"; }
+        if ($this->order_line_id !== $other->order_line_id) { $fields[] = "order_line_id"; }
+        if ($this->supplier_id !== $other->supplier_id) { $fields[] = "supplier_id"; }
+        if ($this->item_code !== $other->item_code) { $fields[] = "item_code"; }
+        if ($this->lot_id !== $other->lot_id) { $fields[] = "lot_id"; }
+        if ($this->delivered !== $other->delivered) { $fields[] = "delivered"; }
+        if ($this->rejected !== $other->rejected) { $fields[] = "rejected"; }
+        if ($this->matched !== $other->matched) { $fields[] = "matched"; }
+        if ($this->unit_cost !== $other->unit_cost) { $fields[] = "unit_cost"; }
+        if ($this->period !== $other->period) { $fields[] = "period"; }
+        if ($this->inspection_score !== $other->inspection_score) { $fields[] = "inspection_score"; }
+        if ($this->inspected !== $other->inspected) { $fields[] = "inspected"; }
+        if ($this->quarantined !== $other->quarantined) { $fields[] = "quarantined"; }
+        return $fields;
+    }
+
+    public function describe(): string {
+        $text string = "GoodsReceiptLine\n";
+        $text .= "id=" . $this->id . "\n";
+        $text .= "receipt_id=" . $this->receipt_id . "\n";
+        $text .= "order_line_id=" . $this->order_line_id . "\n";
+        $text .= "supplier_id=" . $this->supplier_id . "\n";
+        $text .= "item_code=" . $this->item_code . "\n";
+        $text .= "lot_id=" . $this->lot_id . "\n";
+        $text .= "delivered=" . (string)$this->delivered . "\n";
+        $text .= "rejected=" . (string)$this->rejected . "\n";
+        $text .= "matched=" . (string)$this->matched . "\n";
+        $text .= "unit_cost=" . (string)$this->unit_cost . "\n";
+        $text .= "period=" . (string)$this->period . "\n";
+        $text .= "inspection_score=" . (string)$this->inspection_score . "\n";
+        $text .= "inspected=" . DocumentRules::flag($this->inspected) . "\n";
+        $text .= "quarantined=" . DocumentRules::flag($this->quarantined) . "\n";
+        return $text;
+    }
+}

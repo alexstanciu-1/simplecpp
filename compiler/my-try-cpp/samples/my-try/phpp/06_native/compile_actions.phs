@@ -1,0 +1,4 @@
+namespace scpp\compiler;
+
+/** Native_CPP_Build's cooperative process scheduler. Cache decisions stay on the caller. */
+

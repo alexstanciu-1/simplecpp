@@ -1,0 +1,64 @@
+function sample_tax_control_line(): TaxControlLine {
+    $draft TaxControlLine = new TaxControlLine();
+    $draft->id = "TAX-L1";
+    $draft->document_id = "BILL-001";
+    $draft->tax_code = "TEST-20";
+    $draft->jurisdiction = "FICTIONAL";
+    $draft->control_account = "input-tax";
+    $draft->return_reference = "RETURN-001";
+    $draft->taxable_amount = 10000;
+    $draft->tax_amount = 2000;
+    $draft->recoverable_amount = 1500;
+    $draft->reported_amount = 1000;
+    $draft->rate_basis_points = 2000;
+    $draft->period = 1;
+    $draft->input_tax = true;
+    $draft->reported = false;
+    return $draft;
+}
+
+function check_tax_control_line(WorkloadChecks $checks): void {
+    $draft TaxControlLine = sample_tax_control_line();
+    $checks->accepted($draft->validate(), "tax_control_line valid draft");
+    $checks->equal($draft->unreported_tax(), 1000, "tax_control_line independent business result");
+    $copy TaxControlLine = $draft->copy();
+    $checks->equal(count($draft->differences($copy)), 0, "tax_control_line snapshot equivalence");
+    $checks->expect($draft->describe() === $copy->describe(), "tax_control_line snapshot report");
+    $copy = $draft->copy();
+    $copy->id = "";
+    $checks->rejected($copy->validate(), "tax_control_line.id", "tax_control_line id required");
+    $copy = $draft->copy();
+    $copy->id = "bad\nrow";
+    $checks->rejected($copy->validate(), "tax_control_line.id", "tax_control_line id control");
+    $copy = $draft->copy();
+    $copy->id = DocumentRules::repeat("x", 41);
+    $checks->rejected($copy->validate(), "tax_control_line.id", "tax_control_line id width");
+    $copy = $draft->copy();
+    $copy->id = "TAX-L1-changed";
+    $checks->expect($draft->id === "TAX-L1", "tax_control_line id snapshot isolation");
+    $changes_id vector<string> = $draft->differences($copy);
+    $checks->equal(count($changes_id), 1, "tax_control_line id change count");
+    if (count($changes_id) === 1) {
+        $checks->expect($changes_id[0] === "id", "tax_control_line id change identity");
+    }
+    $copy = $draft->copy();
+    $copy->taxable_amount = -1;
+    $checks->rejected($copy->validate(), "tax_control_line.taxable_amount", "tax_control_line taxable_amount below");
+    $copy = $draft->copy();
+    $copy->taxable_amount = 1000000001;
+    $checks->rejected($copy->validate(), "tax_control_line.taxable_amount", "tax_control_line taxable_amount above");
+    $copy = $draft->copy();
+    $copy->tax_amount = -1;
+    $checks->rejected($copy->validate(), "tax_control_line.tax_amount", "tax_control_line tax_amount below");
+    $copy = $draft->copy();
+    $copy->tax_amount = 1000000001;
+    $checks->rejected($copy->validate(), "tax_control_line.tax_amount", "tax_control_line tax_amount above");
+    $copy = $draft->copy();
+    $copy->input_tax = false;
+    $checks->expect($draft->input_tax === true, "tax_control_line input_tax snapshot isolation");
+    $changes_input_tax vector<string> = $draft->differences($copy);
+    $checks->equal(count($changes_input_tax), 1, "tax_control_line input_tax change count");
+    if (count($changes_input_tax) === 1) {
+        $checks->expect($changes_input_tax[0] === "input_tax", "tax_control_line input_tax change identity");
+    }
+}

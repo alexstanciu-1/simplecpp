@@ -1,0 +1,30 @@
+namespace scpp;
+
+// Underlying shared handle owns cleanup when the last reservation reference disappears.
+final class Lock_Reservation {
+    private $token file_lock_handle;
+    private $owned bool = false;
+    public function __construct() { $this->token = \scpp_portability_lock_empty(); }
+    public function active(): bool { return $this->owned; }
+    public function acquire(string $path, bool $shared): bool {
+        if ($this->owned) { throw new \scpp_portability_runtime_exception('Reservation is already active'); }
+        $token = \scpp_portability_lock_empty();
+        if (!\scpp_portability_lock_try($token,$path,$shared)) { return false; }
+        $this->token = $token;
+        $this->owned = true;
+        return true;
+    }
+    public function release(): void {
+        if (!$this->owned) { return; }
+        \scpp_portability_lock_release($this->token);
+        $this->owned = false;
+    }
+    public function transfer(): Lock_Reservation {
+        if (!$this->owned) { throw new \scpp_portability_runtime_exception('Reservation is not active'); }
+        $next = new Lock_Reservation();
+        $next->token = \scpp_portability_lock_transfer($this->token);
+        $next->owned = true;
+        $this->owned = false;
+        return $next;
+    }
+}
