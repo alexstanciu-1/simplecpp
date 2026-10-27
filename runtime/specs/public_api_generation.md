@@ -1582,3 +1582,15 @@ both assignment operations. It advertises only construction capability. No mutab
 replacement representation or escaping field reference is introduced. Source field
 syntax and operation admission remain compiler-owned. Keyed factory transport is
 the next step; the entry/buffer recipe alone does not validate duplicate keys.
+
+### Keyed factory publication
+
+`hash_keyed_initializer<V,K=string>`, `mixed_keyed_initializer` and
+`dynamic_keyed_initializer` use ordinary static-method recipes over
+`initializer_buffer<initializer_entry<V,K>>`. The boxed recipes transport public entry
+representations into native entries in the private factory adapter; typed hash entries
+retain their public concrete key/value storage. Duplicate validation and key
+normalization stay in the native receiving container. Runtime-owned boxed factories
+publish their required entries/buffers; typed factories remain application demands.
+Owning input buffers do not expose the source call-scoped view or broaden source
+formation/callback escape permission.

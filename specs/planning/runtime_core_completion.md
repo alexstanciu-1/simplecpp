@@ -7,7 +7,7 @@ not a new semantic registry. No implementation is authorized merely by a row her
 
 ## Current implementation status
 
-Updated 2026-10-27. This summary supersedes unfinished-work statements in the
+Updated 2026-10-28. This summary supersedes unfinished-work statements in the
 chronological checkpoint notes below; those notes retain the evidence and scope of
 each slice. The original inventory is a baseline, not a current completion count.
 
@@ -19,7 +19,7 @@ each slice. The original inventory is a baseline, not a current completion count
 | B2 | Complete for the agreed non-carrier special/mutation and text public paths; closure evidence below | Carrier forms C; indexed retention E; native exception inspection and overflow disposition G. |
 | C | Four carrier recipes and bounded scalar operator/selection paths implemented; review pending | Logical-negation correction, broader admitted selection domains, source-formation decision and full carrier review; scoped observations are implemented through C29. |
 | D | Pending | Ownership, application targets and source Exception transport gaps. |
-| E | Existing vector/hash/boxed foundations; incomplete | Access/initialization/key-policy gaps and identity key-allocation debt; conditional lifecycle, cursor fixes and boxed count are implemented. |
+| E | Existing vector/hash/boxed foundations; incomplete | Nested access, remaining key policies and identity key-allocation debt; conditional lifecycle, cursor fixes, boxed access/probes, and positional/keyed built-in factories are implemented for the tested domains. |
 | F | Pending | Callable transport and registered collection algorithms. |
 | G | Core utility and scalar debug bindings implemented | Exception/helper gaps and requirement-by-requirement closure audit. |
 
@@ -1833,3 +1833,37 @@ already completed during the initial attempt; sanitized build took 46.37s includ
 core recompilation. These are build observations, not comparable isolated caller
 costs. The initial compile caught an accidental shared-wrapper edit, corrected before
 both successful test runs. Public keyed compile/allocation costs remain next.
+
+## E14 — keyed factory publication through ordinary recipes
+
+Publish mixed/dynamic keyed factories, immutable entries and their owning buffers in
+runtime-core. Typed hash factories use the same application-demanded recipe with
+string key default; integer keys remain explicitly selectable. Ordinary class/static
+method, dependent-type and representation adaptation rules suffice; no generator
+family branching was added. All factory parameters are owning buffers passed by const
+reference, and result publication occurs only after successful native construction.
+
+The public-only proof covers typed string/integer and boxed empty/nonempty factories,
+incomplete typed input, duplicate typed/boxed keys (including null/false first values),
+invalid boxed keys, escaped owned results, mixed value semantics and dynamic nested
+identity with independent parent containers. It compares long-string typed-hash native
+and public allocations (9/9), and injects failure at every measured allocation point
+while checking the old destination survives. Empty typed outputs allocate zero times.
+
+This fixture explicitly requires SCPP_LANGUAGE_TARGET_PHP=OFF: integer 10 and string
+"10" remain distinct, as does "08". PHP-enabled normalization remains a separate
+proof obligation; no new key semantics are declared. Source admission, non-escape
+and compiler factory dispatch remain outside this native publication proof.
+
+The earlier assignment-only entry shape fixture now omits imports: its synthetic
+non-copyable entry recipe intentionally contradicts runtime entry buffers. Real
+entry and factory tests continue validating actual published imports.
+
+Validation: release and ASan/UBSan/LSan public-only runtime tests pass, as do independent
+factory-header compilation and sealed runtime/application reuse with no duplicate
+implementation units. Six focused metadata checks pass (the entry shape regression
+was rerun after import isolation). Parallel application storage compilation took
+4.6994s release / 6.0052s sanitized; public caller 0.1825s / 0.2841s. These are single-run
+fixture timings. Runtime-core rebuilt once per configuration; generator code did not
+change. The runtime now publishes 383 implementation units; this is not a coverage
+percentage.

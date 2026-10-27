@@ -3475,5 +3475,138 @@
         ]
       }
     ]
+  },
+  "hash_keyed_initializer": {
+    "parameters": [
+      "V",
+      "K"
+    ],
+    "native": "scpp::data_initializer<scpp::hash_t<${public:V}, ${public:K}>>",
+    "includes": [
+      "scpp/data_initializer_typed.hpp",
+      "scpp/detail/concrete_keys.hpp"
+    ],
+    "requires_capabilities": {
+      "V": [
+        "copy_storage"
+      ],
+      "K": [
+        "typed_hash_key",
+        "copy_storage"
+      ]
+    },
+    "classes": [
+      {
+        "id": "self",
+        "name": "${name}",
+        "native": "${native_type}",
+        "lifecycle": {
+          "default": "disabled",
+          "copy": "disabled",
+          "move": "disabled",
+          "destroy": "native"
+        },
+        "methods": [
+          {
+            "name": "from_key_value",
+            "static": true,
+            "returns": "hash<${type:V},${type:K}>",
+            "parameters": [
+              {
+                "name": "input",
+                "type": "initializer_buffer<initializer_entry<${type:V},${type:K}>>",
+                "passing": "const_ref"
+              }
+            ],
+            "expression": "${native_type}::from_key_value_adapted(${native:input}.view(), [](const auto &entry) -> const scpp::initializer_entry<${public:V}, ${public:K}> & { return detail::concrete_access::get<scpp::initializer_entry<${public:V}, ${public:K}>>(entry); })",
+            "transport": "native"
+          }
+        ]
+      }
+    ],
+    "defaults": [
+      "string"
+    ]
+  },
+  "mixed_keyed_initializer": {
+    "parameters": [],
+    "native": "scpp::data_initializer<scpp::mixed_t>",
+    "includes": [
+      "scpp/data_initializer_mixed.hpp"
+    ],
+    "requires_capabilities": {},
+    "classes": [
+      {
+        "id": "self",
+        "name": "${name}",
+        "native": "${native_type}",
+        "lifecycle": {
+          "default": "disabled",
+          "copy": "disabled",
+          "move": "disabled",
+          "destroy": "native"
+        },
+        "methods": [
+          {
+            "name": "from_key_value",
+            "static": true,
+            "returns": "mixed",
+            "parameters": [
+              {
+                "name": "input",
+                "type": "initializer_buffer<initializer_entry<mixed,mixed>>",
+                "passing": "const_ref"
+              }
+            ],
+            "expression": "${native_type}::from_key_value_adapted(${native:input}.view(), [](const auto &entry) { const auto &stored = detail::concrete_access::get<scpp::initializer_entry<${public:mixed}, ${public:mixed}>>(entry); return scpp::initializer_entry<scpp::mixed_t, scpp::mixed_t>{detail::concrete_access::get<scpp::mixed_t>(stored.key), detail::concrete_access::get<scpp::mixed_t>(stored.value)}; })",
+            "transport": "native",
+            "uses": [
+              "mixed"
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  "dynamic_keyed_initializer": {
+    "parameters": [],
+    "native": "scpp::data_initializer<scpp::detail::dynamic_value>",
+    "includes": [
+      "scpp/data_initializer_dynamic.hpp"
+    ],
+    "requires_capabilities": {},
+    "classes": [
+      {
+        "id": "self",
+        "name": "${name}",
+        "native": "${native_type}",
+        "lifecycle": {
+          "default": "disabled",
+          "copy": "disabled",
+          "move": "disabled",
+          "destroy": "native"
+        },
+        "methods": [
+          {
+            "name": "from_key_value",
+            "static": true,
+            "returns": "dynamic",
+            "parameters": [
+              {
+                "name": "input",
+                "type": "initializer_buffer<initializer_entry<dynamic,mixed>>",
+                "passing": "const_ref"
+              }
+            ],
+            "expression": "${native_type}::from_key_value_adapted(${native:input}.view(), [](const auto &entry) { const auto &stored = detail::concrete_access::get<scpp::initializer_entry<${public:dynamic}, ${public:mixed}>>(entry); return scpp::initializer_entry<scpp::detail::dynamic_value, scpp::mixed_t>{detail::concrete_access::get<scpp::mixed_t>(stored.key), detail::concrete_access::get<scpp::detail::dynamic_value>(stored.value)}; })",
+            "transport": "native",
+            "uses": [
+              "dynamic",
+              "mixed"
+            ]
+          }
+        ]
+      }
+    ]
   }
 }

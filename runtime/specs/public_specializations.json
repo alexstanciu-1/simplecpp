@@ -6,7 +6,9 @@
     "mixed",
     "dynamic",
     "mixed_list_initializer",
-    "dynamic_list_initializer"
+    "dynamic_list_initializer",
+    "mixed_keyed_initializer",
+    "dynamic_keyed_initializer"
   ],
   "leaves": {
     "string": {
@@ -20,7 +22,11 @@
     "result<vector<string>>": "result_vector_string",
     "result_or_false<string>": "result_or_false_string",
     "initializer_buffer<mixed>": "mixed_input",
-    "initializer_buffer<dynamic>": "dynamic_input"
+    "initializer_buffer<dynamic>": "dynamic_input",
+    "initializer_entry<mixed,mixed>": "mixed_entry",
+    "initializer_entry<dynamic,mixed>": "dynamic_entry",
+    "initializer_buffer<initializer_entry<mixed,mixed>>": "mixed_entries",
+    "initializer_buffer<initializer_entry<dynamic,mixed>>": "dynamic_entries"
   },
   "apis": [
     "fs_scan",

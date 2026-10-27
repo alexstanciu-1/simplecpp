@@ -411,3 +411,10 @@
 #include "core/generated/dynamic_input.cpp"
 #include "core/generated/mixed_list_initializer.cpp"
 #include "core/generated/dynamic_list_initializer.cpp"
+
+#include "core/generated/mixed_entry.cpp"
+#include "core/generated/dynamic_entry.cpp"
+#include "core/generated/mixed_entries.cpp"
+#include "core/generated/dynamic_entries.cpp"
+#include "core/generated/mixed_keyed_initializer.cpp"
+#include "core/generated/dynamic_keyed_initializer.cpp"

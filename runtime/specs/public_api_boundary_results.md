@@ -2861,3 +2861,29 @@ already completed during the initial attempt; sanitized build took 46.37s includ
 core recompilation. These are build observations, not comparable isolated caller
 costs. The initial compile caught an accidental shared-wrapper edit, corrected before
 both successful test runs. Public keyed compile/allocation costs remain next.
+
+## E14: public keyed factories (2026-10-28)
+
+Ordinary metadata recipes publish mixed/dynamic keyed factories and their required
+immutable entry/buffer compositions. Typed string/integer hash factories are generated
+and reused by applications. Public-only tests cover empty results, incomplete input,
+duplicate rejection including null/false payloads, invalid boxed key kinds, owned
+results surviving input lifetime, mixed value/dynamic identity, and independent dynamic
+parents. Long-string typed hash allocation parity is 9 native / 9 public; each measured
+allocation failure preserves the existing destination. Empty typed factories allocate
+zero times. Factory headers compile independently and sealed reuse emits no new units.
+
+Key-policy execution here is explicitly non-PHP: integer and numeric-string keys stay
+distinct. The runner verifies the core CMake configuration. PHP-mode normalization,
+source factory dispatch and source non-escape admission are not claimed. The synthetic
+entry-assignment shape test omits imports that contradict its deliberately altered
+recipe; production import validation is unchanged.
+
+Validation: release and ASan/UBSan/LSan public-only runtime tests pass, as do independent
+factory-header compilation and sealed runtime/application reuse with no duplicate
+implementation units. Six focused metadata checks pass (the entry shape regression
+was rerun after import isolation). Parallel application storage compilation took
+4.6994s release / 6.0052s sanitized; public caller 0.1825s / 0.2841s. These are single-run
+fixture timings. Runtime-core rebuilt once per configuration; generator code did not
+change. The runtime now publishes 383 implementation units; this is not a coverage
+percentage.

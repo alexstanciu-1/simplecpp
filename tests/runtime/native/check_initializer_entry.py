@@ -68,6 +68,8 @@ invalid['metadata']['families']['initializer_entry']['classes'][0]['lifecycle'][
 plan(invalid,'Unknown lifecycle policy')
 # Overrides can independently enable assignment even when construction is disabled.
 shape=copy.deepcopy(envelope)
+# Synthetic lifecycle shape has no compatible runtime entry/buffer imports.
+shape['imports']={}
 shape['metadata']['families']['initializer_entry']['classes'][0]['lifecycle'].update(copy='disabled',copy_assignment='native')
 shape['metadata']['families']['initializer_entry']['capabilities']=[]
 shape['request']={'package':'shape.only','roots':['initializer_entry<string>']}
