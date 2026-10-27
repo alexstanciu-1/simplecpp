@@ -43,7 +43,7 @@ for op in ['strict_identical','strict_not_identical']:
                 assert p['header']==published['apis'][p['api']]['header']
     for box in ['mixed','dynamic']:
         assert resolve(op,box,box)['kind']=='call'
-    for a,b in [('int8','int64'),('uint64','float64'),('mixed','int64'),('mixed','dynamic')]:
+    for a,b in [('int8','int64'),('uint64','float64'),('mixed','dynamic')]:
         resolve(op,a,b,error='Unsupported operator')
 changed=copy.deepcopy(metadata)
 changed['global_operators']['operations']['strict_identical']['distinct_result']='true'

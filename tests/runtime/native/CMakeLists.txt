@@ -400,3 +400,9 @@ target_link_libraries(test_public_observations PRIVATE scpp_core_api)
 add_test(NAME scpp_test_public_observations COMMAND test_public_observations)
 add_test(NAME scpp_check_observation_api COMMAND ${Python3_EXECUTABLE}
   ${CMAKE_CURRENT_SOURCE_DIR}/check_observation_api.py $<TARGET_FILE:scpp_api_generator>)
+
+add_executable(test_public_identity_pairs test_public_identity_pairs.cpp)
+target_link_libraries(test_public_identity_pairs PRIVATE scpp_core_api)
+add_test(NAME scpp_test_public_identity_pairs COMMAND test_public_identity_pairs)
+add_test(NAME scpp_check_identity_pairs COMMAND ${Python3_EXECUTABLE}
+  ${CMAKE_CURRENT_SOURCE_DIR}/check_identity_pairs.py $<TARGET_FILE:scpp_api_generator>)

@@ -1,6 +1,6 @@
 {
   "abi": "529dd5502370f48d64891818e9439aae72831b990b4027e8abe25c50c1216c21",
-  "api_identity": "8becd160883075e22ed701e694e15e978b412e552a7cf8a69dbb16ea8ab4a1af",
+  "api_identity": "36d6df94b366ec8d371b3fa02ef07d4255c9cf3d17645cd2fe6b284a27a84e10",
   "apis": {
     "add_float64": {
       "header": "scpp/operators/add_float64.hpp",
@@ -5403,6 +5403,256 @@
       },
       "source": "include/scpp/generated/public_strict_identical_boolean.cpp"
     },
+    "strict_identical_boxed_dynamic_boolean": {
+      "header": "scpp/identity/strict_identical_boxed_dynamic_boolean.hpp",
+      "namespace": "scpp",
+      "operation": {
+        "expression": "scpp::identical(${native:left}, scpp::bool_t(right.native_value())).native_value()",
+        "includes": [
+          "operators/identity/strict_identity.hpp"
+        ],
+        "name": "strict_identical",
+        "parameters": [
+          {
+            "name": "left",
+            "passing": "const_ref",
+            "type": "dynamic"
+          },
+          {
+            "name": "right",
+            "passing": "const_ref",
+            "type": "boolean"
+          }
+        ],
+        "returns": "boolean"
+      },
+      "source": "include/scpp/generated/public_strict_identical_boxed_dynamic_boolean.cpp"
+    },
+    "strict_identical_boxed_dynamic_float64": {
+      "header": "scpp/identity/strict_identical_boxed_dynamic_float64.hpp",
+      "namespace": "scpp",
+      "operation": {
+        "expression": "scpp::identical(${native:left}, scpp::float_t(right.native_value())).native_value()",
+        "includes": [
+          "operators/identity/strict_identity.hpp"
+        ],
+        "name": "strict_identical",
+        "parameters": [
+          {
+            "name": "left",
+            "passing": "const_ref",
+            "type": "dynamic"
+          },
+          {
+            "name": "right",
+            "passing": "const_ref",
+            "type": "float64"
+          }
+        ],
+        "returns": "boolean"
+      },
+      "source": "include/scpp/generated/public_strict_identical_boxed_dynamic_float64.cpp"
+    },
+    "strict_identical_boxed_dynamic_int64": {
+      "header": "scpp/identity/strict_identical_boxed_dynamic_int64.hpp",
+      "namespace": "scpp",
+      "operation": {
+        "expression": "scpp::identical(${native:left}, scpp::int_t<__INT64_TYPE__>(right.native_value())).native_value()",
+        "includes": [
+          "operators/identity/strict_identity.hpp"
+        ],
+        "name": "strict_identical",
+        "parameters": [
+          {
+            "name": "left",
+            "passing": "const_ref",
+            "type": "dynamic"
+          },
+          {
+            "name": "right",
+            "passing": "const_ref",
+            "type": "int64"
+          }
+        ],
+        "returns": "boolean"
+      },
+      "source": "include/scpp/generated/public_strict_identical_boxed_dynamic_int64.cpp"
+    },
+    "strict_identical_boxed_dynamic_null": {
+      "header": "scpp/identity/strict_identical_boxed_dynamic_null.hpp",
+      "namespace": "scpp",
+      "operation": {
+        "expression": "scpp::identical(${native:left}, right).native_value()",
+        "includes": [
+          "operators/identity/strict_identity.hpp"
+        ],
+        "name": "strict_identical",
+        "parameters": [
+          {
+            "name": "left",
+            "passing": "const_ref",
+            "type": "dynamic"
+          },
+          {
+            "name": "right",
+            "passing": "const_ref",
+            "type": "null"
+          }
+        ],
+        "returns": "boolean"
+      },
+      "source": "include/scpp/generated/public_strict_identical_boxed_dynamic_null.cpp"
+    },
+    "strict_identical_boxed_dynamic_string": {
+      "header": "scpp/identity/strict_identical_boxed_dynamic_string.hpp",
+      "namespace": "scpp",
+      "operation": {
+        "expression": "scpp::identical(${native:left}, ${native:right}).native_value()",
+        "includes": [
+          "operators/identity/strict_identity.hpp"
+        ],
+        "name": "strict_identical",
+        "parameters": [
+          {
+            "name": "left",
+            "passing": "const_ref",
+            "type": "dynamic"
+          },
+          {
+            "name": "right",
+            "passing": "const_ref",
+            "type": "string"
+          }
+        ],
+        "returns": "boolean"
+      },
+      "source": "include/scpp/generated/public_strict_identical_boxed_dynamic_string.cpp"
+    },
+    "strict_identical_boxed_mixed_boolean": {
+      "header": "scpp/identity/strict_identical_boxed_mixed_boolean.hpp",
+      "namespace": "scpp",
+      "operation": {
+        "expression": "scpp::identical(${native:left}, scpp::bool_t(right.native_value())).native_value()",
+        "includes": [
+          "operators/identity/strict_identity.hpp"
+        ],
+        "name": "strict_identical",
+        "parameters": [
+          {
+            "name": "left",
+            "passing": "const_ref",
+            "type": "mixed"
+          },
+          {
+            "name": "right",
+            "passing": "const_ref",
+            "type": "boolean"
+          }
+        ],
+        "returns": "boolean"
+      },
+      "source": "include/scpp/generated/public_strict_identical_boxed_mixed_boolean.cpp"
+    },
+    "strict_identical_boxed_mixed_float64": {
+      "header": "scpp/identity/strict_identical_boxed_mixed_float64.hpp",
+      "namespace": "scpp",
+      "operation": {
+        "expression": "scpp::identical(${native:left}, scpp::float_t(right.native_value())).native_value()",
+        "includes": [
+          "operators/identity/strict_identity.hpp"
+        ],
+        "name": "strict_identical",
+        "parameters": [
+          {
+            "name": "left",
+            "passing": "const_ref",
+            "type": "mixed"
+          },
+          {
+            "name": "right",
+            "passing": "const_ref",
+            "type": "float64"
+          }
+        ],
+        "returns": "boolean"
+      },
+      "source": "include/scpp/generated/public_strict_identical_boxed_mixed_float64.cpp"
+    },
+    "strict_identical_boxed_mixed_int64": {
+      "header": "scpp/identity/strict_identical_boxed_mixed_int64.hpp",
+      "namespace": "scpp",
+      "operation": {
+        "expression": "scpp::identical(${native:left}, scpp::int_t<__INT64_TYPE__>(right.native_value())).native_value()",
+        "includes": [
+          "operators/identity/strict_identity.hpp"
+        ],
+        "name": "strict_identical",
+        "parameters": [
+          {
+            "name": "left",
+            "passing": "const_ref",
+            "type": "mixed"
+          },
+          {
+            "name": "right",
+            "passing": "const_ref",
+            "type": "int64"
+          }
+        ],
+        "returns": "boolean"
+      },
+      "source": "include/scpp/generated/public_strict_identical_boxed_mixed_int64.cpp"
+    },
+    "strict_identical_boxed_mixed_null": {
+      "header": "scpp/identity/strict_identical_boxed_mixed_null.hpp",
+      "namespace": "scpp",
+      "operation": {
+        "expression": "scpp::identical(${native:left}, right).native_value()",
+        "includes": [
+          "operators/identity/strict_identity.hpp"
+        ],
+        "name": "strict_identical",
+        "parameters": [
+          {
+            "name": "left",
+            "passing": "const_ref",
+            "type": "mixed"
+          },
+          {
+            "name": "right",
+            "passing": "const_ref",
+            "type": "null"
+          }
+        ],
+        "returns": "boolean"
+      },
+      "source": "include/scpp/generated/public_strict_identical_boxed_mixed_null.cpp"
+    },
+    "strict_identical_boxed_mixed_string": {
+      "header": "scpp/identity/strict_identical_boxed_mixed_string.hpp",
+      "namespace": "scpp",
+      "operation": {
+        "expression": "scpp::identical(${native:left}, ${native:right}).native_value()",
+        "includes": [
+          "operators/identity/strict_identity.hpp"
+        ],
+        "name": "strict_identical",
+        "parameters": [
+          {
+            "name": "left",
+            "passing": "const_ref",
+            "type": "mixed"
+          },
+          {
+            "name": "right",
+            "passing": "const_ref",
+            "type": "string"
+          }
+        ],
+        "returns": "boolean"
+      },
+      "source": "include/scpp/generated/public_strict_identical_boxed_mixed_string.cpp"
+    },
     "strict_identical_dynamic": {
       "header": "scpp/identity/strict_identical_dynamic.hpp",
       "namespace": "scpp",
@@ -5577,6 +5827,256 @@
         "returns": "boolean"
       },
       "source": "include/scpp/generated/public_strict_not_identical_boolean.cpp"
+    },
+    "strict_not_identical_boxed_dynamic_boolean": {
+      "header": "scpp/identity/strict_not_identical_boxed_dynamic_boolean.hpp",
+      "namespace": "scpp",
+      "operation": {
+        "expression": "scpp::not_identical(${native:left}, scpp::bool_t(right.native_value())).native_value()",
+        "includes": [
+          "operators/identity/strict_identity.hpp"
+        ],
+        "name": "strict_not_identical",
+        "parameters": [
+          {
+            "name": "left",
+            "passing": "const_ref",
+            "type": "dynamic"
+          },
+          {
+            "name": "right",
+            "passing": "const_ref",
+            "type": "boolean"
+          }
+        ],
+        "returns": "boolean"
+      },
+      "source": "include/scpp/generated/public_strict_not_identical_boxed_dynamic_boolean.cpp"
+    },
+    "strict_not_identical_boxed_dynamic_float64": {
+      "header": "scpp/identity/strict_not_identical_boxed_dynamic_float64.hpp",
+      "namespace": "scpp",
+      "operation": {
+        "expression": "scpp::not_identical(${native:left}, scpp::float_t(right.native_value())).native_value()",
+        "includes": [
+          "operators/identity/strict_identity.hpp"
+        ],
+        "name": "strict_not_identical",
+        "parameters": [
+          {
+            "name": "left",
+            "passing": "const_ref",
+            "type": "dynamic"
+          },
+          {
+            "name": "right",
+            "passing": "const_ref",
+            "type": "float64"
+          }
+        ],
+        "returns": "boolean"
+      },
+      "source": "include/scpp/generated/public_strict_not_identical_boxed_dynamic_float64.cpp"
+    },
+    "strict_not_identical_boxed_dynamic_int64": {
+      "header": "scpp/identity/strict_not_identical_boxed_dynamic_int64.hpp",
+      "namespace": "scpp",
+      "operation": {
+        "expression": "scpp::not_identical(${native:left}, scpp::int_t<__INT64_TYPE__>(right.native_value())).native_value()",
+        "includes": [
+          "operators/identity/strict_identity.hpp"
+        ],
+        "name": "strict_not_identical",
+        "parameters": [
+          {
+            "name": "left",
+            "passing": "const_ref",
+            "type": "dynamic"
+          },
+          {
+            "name": "right",
+            "passing": "const_ref",
+            "type": "int64"
+          }
+        ],
+        "returns": "boolean"
+      },
+      "source": "include/scpp/generated/public_strict_not_identical_boxed_dynamic_int64.cpp"
+    },
+    "strict_not_identical_boxed_dynamic_null": {
+      "header": "scpp/identity/strict_not_identical_boxed_dynamic_null.hpp",
+      "namespace": "scpp",
+      "operation": {
+        "expression": "scpp::not_identical(${native:left}, right).native_value()",
+        "includes": [
+          "operators/identity/strict_identity.hpp"
+        ],
+        "name": "strict_not_identical",
+        "parameters": [
+          {
+            "name": "left",
+            "passing": "const_ref",
+            "type": "dynamic"
+          },
+          {
+            "name": "right",
+            "passing": "const_ref",
+            "type": "null"
+          }
+        ],
+        "returns": "boolean"
+      },
+      "source": "include/scpp/generated/public_strict_not_identical_boxed_dynamic_null.cpp"
+    },
+    "strict_not_identical_boxed_dynamic_string": {
+      "header": "scpp/identity/strict_not_identical_boxed_dynamic_string.hpp",
+      "namespace": "scpp",
+      "operation": {
+        "expression": "scpp::not_identical(${native:left}, ${native:right}).native_value()",
+        "includes": [
+          "operators/identity/strict_identity.hpp"
+        ],
+        "name": "strict_not_identical",
+        "parameters": [
+          {
+            "name": "left",
+            "passing": "const_ref",
+            "type": "dynamic"
+          },
+          {
+            "name": "right",
+            "passing": "const_ref",
+            "type": "string"
+          }
+        ],
+        "returns": "boolean"
+      },
+      "source": "include/scpp/generated/public_strict_not_identical_boxed_dynamic_string.cpp"
+    },
+    "strict_not_identical_boxed_mixed_boolean": {
+      "header": "scpp/identity/strict_not_identical_boxed_mixed_boolean.hpp",
+      "namespace": "scpp",
+      "operation": {
+        "expression": "scpp::not_identical(${native:left}, scpp::bool_t(right.native_value())).native_value()",
+        "includes": [
+          "operators/identity/strict_identity.hpp"
+        ],
+        "name": "strict_not_identical",
+        "parameters": [
+          {
+            "name": "left",
+            "passing": "const_ref",
+            "type": "mixed"
+          },
+          {
+            "name": "right",
+            "passing": "const_ref",
+            "type": "boolean"
+          }
+        ],
+        "returns": "boolean"
+      },
+      "source": "include/scpp/generated/public_strict_not_identical_boxed_mixed_boolean.cpp"
+    },
+    "strict_not_identical_boxed_mixed_float64": {
+      "header": "scpp/identity/strict_not_identical_boxed_mixed_float64.hpp",
+      "namespace": "scpp",
+      "operation": {
+        "expression": "scpp::not_identical(${native:left}, scpp::float_t(right.native_value())).native_value()",
+        "includes": [
+          "operators/identity/strict_identity.hpp"
+        ],
+        "name": "strict_not_identical",
+        "parameters": [
+          {
+            "name": "left",
+            "passing": "const_ref",
+            "type": "mixed"
+          },
+          {
+            "name": "right",
+            "passing": "const_ref",
+            "type": "float64"
+          }
+        ],
+        "returns": "boolean"
+      },
+      "source": "include/scpp/generated/public_strict_not_identical_boxed_mixed_float64.cpp"
+    },
+    "strict_not_identical_boxed_mixed_int64": {
+      "header": "scpp/identity/strict_not_identical_boxed_mixed_int64.hpp",
+      "namespace": "scpp",
+      "operation": {
+        "expression": "scpp::not_identical(${native:left}, scpp::int_t<__INT64_TYPE__>(right.native_value())).native_value()",
+        "includes": [
+          "operators/identity/strict_identity.hpp"
+        ],
+        "name": "strict_not_identical",
+        "parameters": [
+          {
+            "name": "left",
+            "passing": "const_ref",
+            "type": "mixed"
+          },
+          {
+            "name": "right",
+            "passing": "const_ref",
+            "type": "int64"
+          }
+        ],
+        "returns": "boolean"
+      },
+      "source": "include/scpp/generated/public_strict_not_identical_boxed_mixed_int64.cpp"
+    },
+    "strict_not_identical_boxed_mixed_null": {
+      "header": "scpp/identity/strict_not_identical_boxed_mixed_null.hpp",
+      "namespace": "scpp",
+      "operation": {
+        "expression": "scpp::not_identical(${native:left}, right).native_value()",
+        "includes": [
+          "operators/identity/strict_identity.hpp"
+        ],
+        "name": "strict_not_identical",
+        "parameters": [
+          {
+            "name": "left",
+            "passing": "const_ref",
+            "type": "mixed"
+          },
+          {
+            "name": "right",
+            "passing": "const_ref",
+            "type": "null"
+          }
+        ],
+        "returns": "boolean"
+      },
+      "source": "include/scpp/generated/public_strict_not_identical_boxed_mixed_null.cpp"
+    },
+    "strict_not_identical_boxed_mixed_string": {
+      "header": "scpp/identity/strict_not_identical_boxed_mixed_string.hpp",
+      "namespace": "scpp",
+      "operation": {
+        "expression": "scpp::not_identical(${native:left}, ${native:right}).native_value()",
+        "includes": [
+          "operators/identity/strict_identity.hpp"
+        ],
+        "name": "strict_not_identical",
+        "parameters": [
+          {
+            "name": "left",
+            "passing": "const_ref",
+            "type": "mixed"
+          },
+          {
+            "name": "right",
+            "passing": "const_ref",
+            "type": "string"
+          }
+        ],
+        "returns": "boolean"
+      },
+      "source": "include/scpp/generated/public_strict_not_identical_boxed_mixed_string.cpp"
     },
     "strict_not_identical_dynamic": {
       "header": "scpp/identity/strict_not_identical_dynamic.hpp",
@@ -6713,7 +7213,67 @@
     "include/scpp/observations/clean_float64.hpp",
     "public/scpp/observations/clean_string.hpp",
     "include/scpp/generated/public_clean_string.cpp",
-    "include/scpp/observations/clean_string.hpp"
+    "include/scpp/observations/clean_string.hpp",
+    "public/scpp/identity/strict_identical_boxed_mixed_int64.hpp",
+    "include/scpp/generated/public_strict_identical_boxed_mixed_int64.cpp",
+    "include/scpp/identity/strict_identical_boxed_mixed_int64.hpp",
+    "public/scpp/identity/strict_identical_boxed_mixed_float64.hpp",
+    "include/scpp/generated/public_strict_identical_boxed_mixed_float64.cpp",
+    "include/scpp/identity/strict_identical_boxed_mixed_float64.hpp",
+    "public/scpp/identity/strict_identical_boxed_mixed_boolean.hpp",
+    "include/scpp/generated/public_strict_identical_boxed_mixed_boolean.cpp",
+    "include/scpp/identity/strict_identical_boxed_mixed_boolean.hpp",
+    "public/scpp/identity/strict_identical_boxed_mixed_string.hpp",
+    "include/scpp/generated/public_strict_identical_boxed_mixed_string.cpp",
+    "include/scpp/identity/strict_identical_boxed_mixed_string.hpp",
+    "public/scpp/identity/strict_identical_boxed_mixed_null.hpp",
+    "include/scpp/generated/public_strict_identical_boxed_mixed_null.cpp",
+    "include/scpp/identity/strict_identical_boxed_mixed_null.hpp",
+    "public/scpp/identity/strict_identical_boxed_dynamic_int64.hpp",
+    "include/scpp/generated/public_strict_identical_boxed_dynamic_int64.cpp",
+    "include/scpp/identity/strict_identical_boxed_dynamic_int64.hpp",
+    "public/scpp/identity/strict_identical_boxed_dynamic_float64.hpp",
+    "include/scpp/generated/public_strict_identical_boxed_dynamic_float64.cpp",
+    "include/scpp/identity/strict_identical_boxed_dynamic_float64.hpp",
+    "public/scpp/identity/strict_identical_boxed_dynamic_boolean.hpp",
+    "include/scpp/generated/public_strict_identical_boxed_dynamic_boolean.cpp",
+    "include/scpp/identity/strict_identical_boxed_dynamic_boolean.hpp",
+    "public/scpp/identity/strict_identical_boxed_dynamic_string.hpp",
+    "include/scpp/generated/public_strict_identical_boxed_dynamic_string.cpp",
+    "include/scpp/identity/strict_identical_boxed_dynamic_string.hpp",
+    "public/scpp/identity/strict_identical_boxed_dynamic_null.hpp",
+    "include/scpp/generated/public_strict_identical_boxed_dynamic_null.cpp",
+    "include/scpp/identity/strict_identical_boxed_dynamic_null.hpp",
+    "public/scpp/identity/strict_not_identical_boxed_mixed_int64.hpp",
+    "include/scpp/generated/public_strict_not_identical_boxed_mixed_int64.cpp",
+    "include/scpp/identity/strict_not_identical_boxed_mixed_int64.hpp",
+    "public/scpp/identity/strict_not_identical_boxed_mixed_float64.hpp",
+    "include/scpp/generated/public_strict_not_identical_boxed_mixed_float64.cpp",
+    "include/scpp/identity/strict_not_identical_boxed_mixed_float64.hpp",
+    "public/scpp/identity/strict_not_identical_boxed_mixed_boolean.hpp",
+    "include/scpp/generated/public_strict_not_identical_boxed_mixed_boolean.cpp",
+    "include/scpp/identity/strict_not_identical_boxed_mixed_boolean.hpp",
+    "public/scpp/identity/strict_not_identical_boxed_mixed_string.hpp",
+    "include/scpp/generated/public_strict_not_identical_boxed_mixed_string.cpp",
+    "include/scpp/identity/strict_not_identical_boxed_mixed_string.hpp",
+    "public/scpp/identity/strict_not_identical_boxed_mixed_null.hpp",
+    "include/scpp/generated/public_strict_not_identical_boxed_mixed_null.cpp",
+    "include/scpp/identity/strict_not_identical_boxed_mixed_null.hpp",
+    "public/scpp/identity/strict_not_identical_boxed_dynamic_int64.hpp",
+    "include/scpp/generated/public_strict_not_identical_boxed_dynamic_int64.cpp",
+    "include/scpp/identity/strict_not_identical_boxed_dynamic_int64.hpp",
+    "public/scpp/identity/strict_not_identical_boxed_dynamic_float64.hpp",
+    "include/scpp/generated/public_strict_not_identical_boxed_dynamic_float64.cpp",
+    "include/scpp/identity/strict_not_identical_boxed_dynamic_float64.hpp",
+    "public/scpp/identity/strict_not_identical_boxed_dynamic_boolean.hpp",
+    "include/scpp/generated/public_strict_not_identical_boxed_dynamic_boolean.cpp",
+    "include/scpp/identity/strict_not_identical_boxed_dynamic_boolean.hpp",
+    "public/scpp/identity/strict_not_identical_boxed_dynamic_string.hpp",
+    "include/scpp/generated/public_strict_not_identical_boxed_dynamic_string.cpp",
+    "include/scpp/identity/strict_not_identical_boxed_dynamic_string.hpp",
+    "public/scpp/identity/strict_not_identical_boxed_dynamic_null.hpp",
+    "include/scpp/generated/public_strict_not_identical_boxed_dynamic_null.cpp",
+    "include/scpp/identity/strict_not_identical_boxed_dynamic_null.hpp"
   ],
   "generator": "metadata-api-v1",
   "leaves": {
@@ -6928,6 +7488,16 @@
     "scpp/failure.hpp": "d68ed12de1d0a4a645d15ee85d034123eb4e2b8e3f28c7458775ee69b6e18661",
     "scpp/float64.hpp": "a76d56f1083233730eac2fd274b854108735e02091835736983d34533cb058e3",
     "scpp/identity/strict_identical_boolean.hpp": "4c75ebdf17f99b2f92cd7126b25aed1e63210246506a4ed89684eab5f89506ac",
+    "scpp/identity/strict_identical_boxed_dynamic_boolean.hpp": "c9970a4a0bf5053a0d0601dfb4ae5c8a1262e02a613c34bb41a0ad766a21c3bf",
+    "scpp/identity/strict_identical_boxed_dynamic_float64.hpp": "eb7d75c4cb694b8c02ba7c37c7fb20a1c1d2db66a9b85dbb810a22b126400ccb",
+    "scpp/identity/strict_identical_boxed_dynamic_int64.hpp": "1a13345d281e6583c24d313bb50d23c338c87e109f70ac55db38fd7a50c6ce66",
+    "scpp/identity/strict_identical_boxed_dynamic_null.hpp": "8908efeb56e99f17fc3b1ddb50d81e32b2008835f540776c5f2912366084b32f",
+    "scpp/identity/strict_identical_boxed_dynamic_string.hpp": "e37294469b9b7967e8d68c16d75aa5a1028605c4a2f91a9a20eba59c5bc1c187",
+    "scpp/identity/strict_identical_boxed_mixed_boolean.hpp": "33b4ce0167e316285014ba8b78fcad9e0dd8610dcc5983e203e1b3c32ce4ec95",
+    "scpp/identity/strict_identical_boxed_mixed_float64.hpp": "17bed17b67a359e7d2a5d2ef6228650edd10f58a3ed26b8a3820a931a6fd9ab6",
+    "scpp/identity/strict_identical_boxed_mixed_int64.hpp": "101427f2a8a0171367987eb8bb2cbfa86dc27806deab6edf55e0accc3485dcf2",
+    "scpp/identity/strict_identical_boxed_mixed_null.hpp": "e1fb90e163bc80c2b3686a469e26d28a1df6e0943efebf99193baaad951bbb1b",
+    "scpp/identity/strict_identical_boxed_mixed_string.hpp": "27a07dd73ba061af4529311742128c029905835e1e0e21e69be8d11644d42548",
     "scpp/identity/strict_identical_dynamic.hpp": "212b3a041a77628df12abd542dece3d275f76940ac14213d45af1ebe9716f59d",
     "scpp/identity/strict_identical_float64.hpp": "e4173ee717f08f50fa9eb4d06daaf5e32e63f52cf71065fd8e663ceecc586c11",
     "scpp/identity/strict_identical_int64.hpp": "25ded432979733d3cd444b08db4488b77e918f307e2cd2938aa57d2f4d38ca1d",
@@ -6935,6 +7505,16 @@
     "scpp/identity/strict_identical_null.hpp": "1b36f5aaa461c2db3b99054c17412c16d076c55f9afd8740b0053d046be8703c",
     "scpp/identity/strict_identical_string.hpp": "1bd48b1a0f9f3aba50bcaf9233431ffa7ce8b87156df9d2916c763093fa54d24",
     "scpp/identity/strict_not_identical_boolean.hpp": "c51deb7f5b2a8dac8b0351d9ad77034aa1cb15c51f94454baa113c40fbdd1d30",
+    "scpp/identity/strict_not_identical_boxed_dynamic_boolean.hpp": "f6472aa8bf4d0daeb75b5059997a76792c8bd777f31f0706b5fdb80e0e1869e9",
+    "scpp/identity/strict_not_identical_boxed_dynamic_float64.hpp": "6c2d595a101303ca628368efc70e0abcf554f8b28979c74f0409ed69bb8c8ba5",
+    "scpp/identity/strict_not_identical_boxed_dynamic_int64.hpp": "f16b1ff3a2ee481002fca1d6a90e4a07cc6d92af0597d16f56a62bc0ed7f99a0",
+    "scpp/identity/strict_not_identical_boxed_dynamic_null.hpp": "0c51ba442dba420491f2cb66d10d0fad20fcc69f3ef49c8284c32ab489244f81",
+    "scpp/identity/strict_not_identical_boxed_dynamic_string.hpp": "635e8116dd824c0d034089c7ee956968f1e817207796da263d7464b038c6d30a",
+    "scpp/identity/strict_not_identical_boxed_mixed_boolean.hpp": "d6b9223953a4cc943cf6df56ff4a999e74a24d9b7063461dbc25c63b188404a4",
+    "scpp/identity/strict_not_identical_boxed_mixed_float64.hpp": "85c9bb0e53c266179a4dab0fdcfac761c00c7a5959899d373acc13abd3f624cc",
+    "scpp/identity/strict_not_identical_boxed_mixed_int64.hpp": "483b2288dec954498057d95c228d2105be3fa1d93f3869ecb351e340609ada6d",
+    "scpp/identity/strict_not_identical_boxed_mixed_null.hpp": "3522d6db6b2cbfe3cdbdbdc151a904957a02ddc5b3cd0283b80b677e9a141288",
+    "scpp/identity/strict_not_identical_boxed_mixed_string.hpp": "09b1a767f5edbe66da2c7de93713f138579030a13a0215a9f2021c9255dd1bde",
     "scpp/identity/strict_not_identical_dynamic.hpp": "76e8da655d355cf25063fae704ddf2e8eabe3dda9a69f822be9501149d410fa2",
     "scpp/identity/strict_not_identical_float64.hpp": "017de1f83dbe2e87fede52cb14de7061cd48af42de3a9219459c80b357ff80b5",
     "scpp/identity/strict_not_identical_int64.hpp": "6d6a0c1fe80a65a149b443f92afaa0a5260b7da9cc1559e1a4da659f77aaabde",
@@ -7322,7 +7902,27 @@
     "include/scpp/generated/public_clean_uint64.cpp",
     "include/scpp/generated/public_clean_boolean.cpp",
     "include/scpp/generated/public_clean_float64.cpp",
-    "include/scpp/generated/public_clean_string.cpp"
+    "include/scpp/generated/public_clean_string.cpp",
+    "include/scpp/generated/public_strict_identical_boxed_mixed_int64.cpp",
+    "include/scpp/generated/public_strict_identical_boxed_mixed_float64.cpp",
+    "include/scpp/generated/public_strict_identical_boxed_mixed_boolean.cpp",
+    "include/scpp/generated/public_strict_identical_boxed_mixed_string.cpp",
+    "include/scpp/generated/public_strict_identical_boxed_mixed_null.cpp",
+    "include/scpp/generated/public_strict_identical_boxed_dynamic_int64.cpp",
+    "include/scpp/generated/public_strict_identical_boxed_dynamic_float64.cpp",
+    "include/scpp/generated/public_strict_identical_boxed_dynamic_boolean.cpp",
+    "include/scpp/generated/public_strict_identical_boxed_dynamic_string.cpp",
+    "include/scpp/generated/public_strict_identical_boxed_dynamic_null.cpp",
+    "include/scpp/generated/public_strict_not_identical_boxed_mixed_int64.cpp",
+    "include/scpp/generated/public_strict_not_identical_boxed_mixed_float64.cpp",
+    "include/scpp/generated/public_strict_not_identical_boxed_mixed_boolean.cpp",
+    "include/scpp/generated/public_strict_not_identical_boxed_mixed_string.cpp",
+    "include/scpp/generated/public_strict_not_identical_boxed_mixed_null.cpp",
+    "include/scpp/generated/public_strict_not_identical_boxed_dynamic_int64.cpp",
+    "include/scpp/generated/public_strict_not_identical_boxed_dynamic_float64.cpp",
+    "include/scpp/generated/public_strict_not_identical_boxed_dynamic_boolean.cpp",
+    "include/scpp/generated/public_strict_not_identical_boxed_dynamic_string.cpp",
+    "include/scpp/generated/public_strict_not_identical_boxed_dynamic_null.cpp"
   ],
   "types": {
     "dynamic": {

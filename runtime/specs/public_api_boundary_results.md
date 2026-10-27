@@ -1038,3 +1038,39 @@ Reproduce with `tests/runtime/native/measure_observation_api.py`. The Ninja eigh
 core/tool/new-test rebuild took **21.91 s**, peak child RSS **417,300 KiB**, in release;
 sanitized **52.18 s**, **626,132 KiB**. These are single observations, not statistical
 benchmarks. The existing native hash specialization warning is unchanged.
+
+## B1g — borrowed boxed/plain strict identity
+
+The generic ordered-pair plan retains heterogeneous types instead of coercing both
+to a common box. Twenty concrete implementations cover both identity operators,
+two boxed families and five canonical scalar kinds; reversed operands reuse them
+only after ordered eager evaluation. No runtime semantic changes were required.
+
+Release and ASan/UBSan/leak checks pass:
+- 40 metadata plans, exact signature validation, unsupported-width/cross-family
+  rejection, template-free generated headers and zero-unit reuse;
+- public behavior matrix covering null, bool, integer versus float, signed zero,
+  NaN, long strings, embedded NUL bytes and containers versus plain scalars;
+- zero allocations during comparisons (setup excluded), including long strings;
+- a plan-driven compiled consumer for both operand directions, ordered effects and
+  injected left/right failure suppression;
+- sealed relocated publication and public-only linked reuse.
+
+Seven focused regression tests pass in release (**4.14 s**) and sanitized
+(**14.77 s**). The compiled plan consumer is additional runtime-boundary evidence,
+not proof of frontend migration. Reproduce with `check_identity_pairs.py <tool>
+<core.a> [--sanitize]` and `test_public_identity_pairs`.
+
+Single compile-only observations after other checks completed, using
+`measure_global_operators.py --identity-pairs`:
+
+| Case | Seconds | Preprocessed bytes |
+| --- | ---: | ---: |
+| Public caller | 0.0538 | 18,213 |
+| Native caller | 3.2591 | 3,630,108 |
+| Private boxed/string adapter | 3.4274 | 3,704,547 |
+
+Initial release generator rebuild: **3.51 s**. The subsequent eight-job core/tool/test
+build (including final direction validation) took **38.40 s**, peak child RSS
+**418,188 KiB**. Sanitized build: **65.67 s**, **627,284 KiB**. These are single
+observations; the existing native hash specialization warning is unchanged.

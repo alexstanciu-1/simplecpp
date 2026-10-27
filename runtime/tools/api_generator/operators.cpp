@@ -47,12 +47,14 @@ namespace scpp::api_generation
                 throw std::runtime_error("Operator rules must be an array");
             std::set<std::pair<std::string, std::string>> pairs;
             for (const auto &rule : group.at("rules").items) {
-                fields_only(rule, "left right selection domain", "operator rule");
+                fields_only(rule, "left right selection domain reverse", "operator rule");
                 const auto left = domains(rule.at("left")), right = domains(rule.at("right"));
                 const auto selection = rule.at("selection").text();
-                if (selection != "maximum" && selection != "same_or_maximum" && selection != "same_or_constant")
+                if (selection != "maximum" && selection != "same_or_maximum" && selection != "same_or_constant" && selection != "ordered_pair")
                     throw std::runtime_error("Unknown operator selection policy");
-                if (selection == "same_or_constant") {
+                if (rule.has("reverse") && rule.get("reverse") != "true" && rule.get("reverse") != "false") throw std::runtime_error("Invalid ordered pair argument direction");
+                if (rule.has("reverse") && selection != "ordered_pair") throw std::runtime_error("Only ordered pairs may reverse saved arguments");
+                if (selection == "same_or_constant" || selection == "ordered_pair") {
                     if (rule.has("domain")) throw std::runtime_error("Preserving selection cannot specify a promotion domain");
                 } else registry.at("domains").at(rule.at("domain").text());
                 for (const auto &l : left) for (const auto &r : right) {
@@ -65,7 +67,7 @@ namespace scpp::api_generation
         }
         for (const auto &[name, operation] : registry.at("operations").fields) {
             authored_name(name); authored_name(operation.at("name").text());
-            fields_only(operation, "group name expression publish returns includes function_set operands distinct_result", "global operation");
+            fields_only(operation, "group name expression publish returns includes function_set pair_function_set operands distinct_result", "global operation");
             registry.at("groups").at(operation.at("group").text());
             if (operation.has("expression") == operation.has("function_set"))
                 throw std::runtime_error("Operator needs exactly one expression or function set owner");
@@ -81,6 +83,7 @@ namespace scpp::api_generation
                     if (!allowed.insert(t.text()).second) throw std::runtime_error("Duplicate operator operand admission");
                 }
             }
+            if (operation.has("pair_function_set")) metadata.at("function_sets").at(operation.at("pair_function_set").text());
             bool constant_rule = false;
             for (const auto &rule : registry.at("groups").at(operation.at("group").text()).at("rules").items)
                 constant_rule |= rule.at("selection").text() == "same_or_constant";
@@ -118,6 +121,28 @@ namespace scpp::api_generation
             if (!contains(rule.at("left"), types.at(left).at("domain").text())
                 || !contains(rule.at("right"), types.at(right).at("domain").text())) continue;
             const auto selection = rule.at("selection").text();
+            if (selection == "ordered_pair") {
+                const bool reverse = rule.get("reverse", "false") == "true";
+                const auto first = reverse ? right : left, second = reverse ? left : right;
+                const auto identity = operation.at("pair_function_set").text() + "_" + first + "_" + second;
+                const auto &function = function_sets.at(identity);
+                const auto &signature = function.at("operation");
+                const auto &parameters = signature.at("parameters").items;
+                if (parameters.size() != 2 || parameters[0].at("type").text() != first
+                    || parameters[1].at("type").text() != second
+                    || parameters[0].get("passing") != "const_ref" || parameters[1].get("passing") != "const_ref"
+                    || signature.at("returns").text() != operation.at("returns").text())
+                    throw std::runtime_error("Ordered pair function signature mismatch");
+                value result = value::object();
+                result["operation"] = name; result["left"] = left; result["right"] = right;
+                result["kind"] = "call"; result["api"] = identity;
+                result["function"] = function.at("namespace").text() + "::" + signature.at("name").text();
+                result["header"] = function.at("header"); result["result_type"] = operation.at("returns");
+                result["evaluation"] = "ordered_eager_left_then_right";
+                result["conversion"] = "identity";
+                result["argument_order"] = reverse ? "right_left" : "left_right";
+                return result;
+            }
             if (selection == "same_or_constant" && left != right) {
                 value result = value::object();
                 result["operation"] = name; result["left"] = left; result["right"] = right;
@@ -164,7 +189,7 @@ namespace scpp::api_generation
     {
         const auto &registry = validated_registry(metadata);
         const auto &operation = registry.at("operations").at(request.at("operation").text());
-        const auto functions = operation.has("function_set") ? expand_function_sets(metadata) : value::object();
+        const auto functions = (operation.has("function_set") || operation.has("pair_function_set")) ? expand_function_sets(metadata) : value::object();
         return resolve_registered_operator(registry, request, functions);
     }
 

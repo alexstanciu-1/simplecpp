@@ -408,3 +408,20 @@ Successful observation/reset paths allocate zero times with setup excluded.
 This closes the primitive observation/reset portion of B1; keyed operations,
 container capability completion and carrier rules stay in C/E. Boxed/plain identity
 and explicit fixed-width identity admission remain B1 work.
+
+## Active-goal progress — B1g boxed/plain identity and admission audit
+
+Boxed/plain strict identity preserves both argument types through a generic ordered
+pair recipe selection. The public path reuses the existing native kind-sensitive
+identity authority, without normalizing scalar peers into allocating boxes. Both
+source operand directions share each implementation after ordered eager evaluation.
+
+Admission audit: `Boxed_Operators::decide_comparison` retains the original scalar
+operand for strict comparison, admits matching boxed/canonical scalar/null peers,
+and rejects mixed/dynamic crossings. `compact_layout_types.md` section 7 explicitly
+does not extend fixed-width strict identity; `Scalar_Identity` likewise admits
+canonical scalar kinds. Native fallback templates do not authorize additional widths.
+The metadata continues rejecting these domains rather than inventing new semantics.
+This closes the identified B1 strict-identity gaps; a B1 closure audit still needs
+to account for boxed text conversion. Carrier identity remains C, and mixed-table
+key-allocation debt stays E. Compiler adoption remains excluded from this goal.

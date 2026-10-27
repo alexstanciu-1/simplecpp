@@ -510,3 +510,21 @@ Reset expressions use the public representation's assignment/clear operations;
 they do not detach aliases. Dynamic reset retains the existing binding-only semantics.
 Keyed access, carrier protocols and lazy multi-operand evaluation remain separate;
 a public single-value observation does not grant broad source admission.
+
+## Ordered heterogeneous operator signatures
+
+An `ordered_pair` selection preserves two independently typed arguments instead of
+selecting a common operand type. `pair_function_set` identifies the ordinary recipe
+set; the concrete variant is `<first>_<second>`. Signature validation requires two
+const-reference arguments with those exact types and the declared result type.
+The optional `reverse` field is the text `true` or `false`, and is legal only for
+this selection. It changes **call argument order after evaluation**, never source
+evaluation order. The returned plan has `argument_order` (`left_right`/`right_left`),
+`conversion: identity`, and no misleading common `operand_type`.
+
+Boxed/plain strict identity uses this mechanism: two boxed families times five
+canonical plain kinds, shared by both operand directions. Identity and its negation
+publish twenty implementations total. Native identity observes borrowed payloads;
+it neither boxes plain strings nor copies boxed strings. Mixed/dynamic crossings
+and noncanonical fixed-width operands remain rejected. No family name or scalar
+case is hard-coded in the generator.

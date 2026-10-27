@@ -16,6 +16,7 @@ parser.add_argument('--boxed-integers', action='store_true', help='Measure fixed
 parser.add_argument('--conditions', action='store_true', help='Measure condition observations independently of explicit casts')
 parser.add_argument('--text', action='store_true', help='Measure bounded text conversion plus primitive string concatenation')
 parser.add_argument('--identity', action='store_true', help='Measure canonical and boxed strict identity')
+parser.add_argument('--identity-pairs', action='store_true', help='Measure borrowed boxed/plain identity')
 args = parser.parse_args()
 public = '''#include "scpp/operators/add_int64.hpp"
 #include "scpp/operators/equal_mixed.hpp"
@@ -47,6 +48,9 @@ if args.text:
 if args.identity:
     public = '#include "scpp/identity/strict_identical_float64.hpp"\n#include "scpp/identity/strict_identical_mixed.hpp"\nscpp::boolean scalar(const scpp::float64 &a,const scpp::float64 &b) { return scpp::strict_identical(a,b); }\nscpp::boolean boxed(const scpp::mixed &a,const scpp::mixed &b) { return scpp::strict_identical(a,b); }\n'
     native = '#include "operators/identity/strict_identity.hpp"\nscpp::bool_t scalar(const scpp::float_t &a,const scpp::float_t &b) { return scpp::identical(a,b); }\nscpp::bool_t boxed(const scpp::mixed_t &a,const scpp::mixed_t &b) { return scpp::identical(a,b); }\n'
+if args.identity_pairs:
+    public = '#include "scpp/identity/strict_identical_boxed_mixed_string.hpp"\nscpp::boolean compare(const scpp::mixed &a,const scpp::string &b) { return scpp::strict_identical(a,b); }\n'
+    native = '#include "operators/identity/strict_identity.hpp"\nscpp::bool_t compare(const scpp::mixed_t &a,const scpp::string_t &b) { return scpp::identical(a,b); }\n'
 rows = []
 with tempfile.TemporaryDirectory(prefix='scpp-operator-cost-') as directory:
     stage = Path(directory)
@@ -60,6 +64,7 @@ with tempfile.TemporaryDirectory(prefix='scpp-operator-cost-') as directory:
     if args.conditions: adapters = ['condition_truthy_dynamic']
     if args.text: adapters = ['concat_text_float64']
     if args.identity: adapters = ['strict_identical_mixed']
+    if args.identity_pairs: adapters = ['strict_identical_boxed_mixed_string']
     cases += [(f'adapter_{identity}', root/f'runtime/include/scpp/generated/public_{identity}.cpp', ['public','include']) for identity in adapters]
     for name, path, includes in cases:
         command = [args.compiler, '-std=c++23', '-O2', *['-I'+str(root/'runtime'/i) for i in includes]]

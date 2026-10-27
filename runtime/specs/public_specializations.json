@@ -255,6 +255,26 @@
     "clean_uint64",
     "clean_boolean",
     "clean_float64",
-    "clean_string"
+    "clean_string",
+    "strict_identical_boxed_mixed_int64",
+    "strict_identical_boxed_mixed_float64",
+    "strict_identical_boxed_mixed_boolean",
+    "strict_identical_boxed_mixed_string",
+    "strict_identical_boxed_mixed_null",
+    "strict_identical_boxed_dynamic_int64",
+    "strict_identical_boxed_dynamic_float64",
+    "strict_identical_boxed_dynamic_boolean",
+    "strict_identical_boxed_dynamic_string",
+    "strict_identical_boxed_dynamic_null",
+    "strict_not_identical_boxed_mixed_int64",
+    "strict_not_identical_boxed_mixed_float64",
+    "strict_not_identical_boxed_mixed_boolean",
+    "strict_not_identical_boxed_mixed_string",
+    "strict_not_identical_boxed_mixed_null",
+    "strict_not_identical_boxed_dynamic_int64",
+    "strict_not_identical_boxed_dynamic_float64",
+    "strict_not_identical_boxed_dynamic_boolean",
+    "strict_not_identical_boxed_dynamic_string",
+    "strict_not_identical_boxed_dynamic_null"
   ]
 }
