@@ -31,6 +31,32 @@ Generated files, published dependency snapshots and build output are excluded.
   `const char *bytes`. Do not change declarations merely to adjust their layout.
 - Preserve include order and include only what the file needs.
 
+## Data representation and processing ownership
+
+**Keep each data type responsible for its own representation; move processing into
+the workers that own it.**
+
+Classes and structs may retain constructors/destructors, copy/move operations,
+accessors, checked conversions/casts, local invariant checks and small queries or
+updates concerning their own representation. Do not force data-only structures or
+introduce a companion class just to move these methods out. Inlining is a separate
+implementation choice, not a requirement of this rule.
+
+Stage workers own parsing, collection, analysis, scheduling, reconciliation and
+publication decisions. A data type must not acquire these responsibilities merely
+because it stores the affected fields. Storage implementations may enforce local
+container invariants; that does not make them owners of compiler-stage policy.
+
+**Use friendship only where a worker needs privileged access.** Prefer the normal
+interface when it is sufficient. Do not grant blanket friendship to processing
+classes or expose mutable representation solely to bypass access control. A friend
+remains responsible for preserving the data type's invariants.
+
+For example, a token owns its packed representation, packing-limit checks and
+offset/length/kind accessors. The tokenizer determines token boundaries; the token
+builder enforces ordering and containment within the retained source. Neither
+responsibility requires moving the token's accessors into a separate helper class.
+
 ## Explicit member access
 
 Always qualify current-instance fields and method calls with `this->`, even when
