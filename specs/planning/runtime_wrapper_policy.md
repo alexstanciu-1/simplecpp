@@ -481,3 +481,11 @@ shift counts outside [0,63] fail before compound write-back. Fixed-width, boxed,
 float and nested carrier payloads remain outside this policy. Existing native scalar
 behavior owns valid counts. Carrier power is not inferred from these permissions:
 its separately admitted compound path must not widen binary power admission.
+
+### Compound power implementation checkpoint
+
+Carrier compound permission is independent of binary carrier permission. The
+canonical-int `**=` path uses checked integer power through the shared projection
+worker and compound write-back protocol. Its metadata does not enable binary carrier
+`**`. Error and unavailable states must fail without write-back, preserving earlier
+RHS effects; successful results retain the destination carrier type.

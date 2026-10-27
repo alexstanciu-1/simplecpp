@@ -17,7 +17,7 @@ each slice. The original inventory is a baseline, not a current completion count
 | A2 | Complete for the agreed checked scalar conversions | Carrier conversion is C; ownership casts are D. |
 | B1 | Complete for the agreed scalar-facing truth/text/identity/observation scope | Carrier forms remain C; boxed arithmetic and access completion are not B1 credit. |
 | B2 | Complete for the agreed non-carrier special/mutation and text public paths; closure evidence below | Carrier forms C; indexed retention E; native exception inspection and overflow disposition G. |
-| C | Four carrier recipes with conditional lifecycle; numeric/presence plans, scalar/boxed equality, scalar reconstruction, text, unary/update, canonical arithmetic compounds and bitwise/shift plans, Result error identity and sentinel take/state proofs implemented; review pending | Four carrier families, state-preserving operations/conversions and conditional lifecycle. |
+| C | Four carrier recipes with conditional lifecycle; numeric/presence plans, scalar/boxed equality, scalar reconstruction, text, unary/update, canonical arithmetic compounds, bitwise/shift plans and compound power, Result error identity and sentinel take/state proofs implemented; review pending | Four carrier families, state-preserving operations/conversions and conditional lifecycle. |
 | D | Pending | Ownership, application targets and source Exception transport gaps. |
 | E | Existing vector/hash/boxed foundations; incomplete | Capability/access/initialization/cursor gaps and identity key-allocation debt. |
 | F | Pending | Callable transport and registered collection algorithms. |
@@ -1195,3 +1195,20 @@ its compound extension, while the binary source section does not grant carrier
 accidentally admitting binary carrier power. This is an implementation separation,
 not permission to widen the source contract. Lazy/selection protocols, wider ordering,
 scoped observations and the formation-boundary decision also remain open.
+
+## C22 — independently admitted carrier compound power
+
+Canonical carrier `**=` now uses the ordinary checked integer-power calculation,
+with left snapshot/extraction before RHS and payload reconstruction before commit.
+Negative exponents and overflow do not write back; earlier RHS effects remain. The
+returned value is an independent destination snapshot. Binary carrier `**` remains
+rejected under the narrower binary contract in `integer_power.md`.
+
+The operator owner now has one shared one-layer projection worker. Binary policies
+and compound policies call that worker only after their own admission checks; a
+compound no longer needs to publish its carrier binary counterpart. This repairs
+that distinction without a power-name exception or a separate family mechanism.
+All previously emitted runtime units remain unchanged.
+
+Lazy/selection protocols, wider ordering, scoped observations and the source-formation
+boundary still remain before the complete carrier review.

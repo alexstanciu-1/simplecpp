@@ -1131,8 +1131,8 @@ writable destinations, or new checked-overflow semantics.
 
 ### Checked-payload compound plans
 
-`carrier_targets` also opts a compound into its binary owner's checked carrier
-projection policy. For this path the list bounds both operand payload domains, and
+`carrier_targets` also opts a compound into checked carrier projection for its
+scalar calculation. For this path the list bounds both operand payload domains, and
 an existing ordinary compound rule must admit the projected target/RHS pair. Rules
 requiring saved-kind or different-source write-back are not inferred for carriers.
 This preserves directional admission without repeating a family-pair rule table.
@@ -1149,3 +1149,13 @@ compound `carrier_targets`, with no additional recipe fields or generator branch
 Their ordinary special-operator selector restricts binary payloads to canonical int;
 compound rules enforce that same identity. Physical carrier presence never bypasses
 the ordinary operation domain or the checked shift-count implementation.
+
+### Independent compound calculation admission
+
+Checked-payload `carrier_targets` admission belongs to the compound definition and
+its ordinary directional rules. It no longer requires the binary operation to be
+listed in `carrier_projection.operations`. After admission, binary and compound
+planners share `resolve_projected_binary` for one-layer owned projection and ordinary
+scalar calculation. Binary entrypoints retain their own policy checks. This permits
+a carrier compound without granting its binary source form, as required by checked
+integer power. It adds no implicit cast, payload recursion or saved-kind write-back.

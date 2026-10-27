@@ -2069,3 +2069,32 @@ the combined caller in 3.5903s. These are single-run wall times during concurren
 validation, not isolated comparative benchmarks.
 The compiled ASan/UBSan proof with leak detection also passes, including sealed
 reuse: four storage units 6.2220s, combined caller 7.8840s.
+
+## C22 — carrier compound power with separate binary admission (2026-10-27)
+
+A shared projection worker now serves independently admitted binary and compound
+plans. The compound metadata admits canonical carrier `**=` without adding carrier
+`**` to binary admission. The ordinary power backend and payload reconstruction
+remain unchanged; there is no operation-name exception in the generator.
+
+The power mode of the existing proof covers 12 compound plans, 72 success cases and
+92 failure cases across all four families and plain peers. It checks zero exponent,
+negative base, successful signed boundaries, negative exponents, overflow, missing
+payloads, RHS effects on failure, snapshot independence and zero allocations in the
+successful region. Binary carrier power still rejects. A renamed metadata operation
+reuses the declared `power_int64` backend (the initial fixture incorrectly expected
+a newly named backend; that expectation was corrected).
+
+Seven existing focused release regressions pass in 3.97s; the power metadata proof
+also passes. Eight sanitizer regressions pass in 31.03s. Both compiled power proofs
+pass with ASan/UBSan/leak detection on the sanitized run and sealed application reuse.
+Single-run storage/caller compile times: release 7.7568s / 1.3465s; sanitized
+6.5094s / 1.6755s. Other validation was active, so these are not isolated benchmarks.
+
+Generator rebuild: release 6.57s, sanitized 18.88s. All generated file hashes across
+336 runtime implementation units remain unchanged; core was not rebuilt. The
+existing public special-integer test passes, including exact power error codes,
+component and operation inspection. An optional native `test_pow` invocation was
+not run because that executable was not built in this configuration; its dry-run
+would also rebuild a filesystem unit. The public proof covers this slice without
+that unrelated build, and the missing executable is not counted as a passing test.

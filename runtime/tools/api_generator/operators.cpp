@@ -203,9 +203,7 @@ namespace scpp::api_generation
                     if (operation.has("carrier_operands")) {
                         if (operation.get("compound_left_snapshot")!="converted")
                             throw std::runtime_error("Carrier compound requires converted operand snapshots");
-                    } else if (!registry.has("carrier_projection")
-                        || !contains(registry.at("carrier_projection").at("operations"), compound.at("operation").text()))
-                        throw std::runtime_error("Carrier compound requires a checked payload operation");
+                    }
                     for (const auto &target : domains(compound.at("carrier_targets"))) registry.at("types").at(target);
                 }
                 if (compound.at("rules").type != value::kind::array || compound.at("rules").items.empty())
@@ -610,6 +608,42 @@ namespace scpp::api_generation
         return out;
     }
 
+    // Callers own source admission; this worker only projects one layer and
+    // resolves the ordinary payload calculation under the supplied domain.
+    static value resolve_projected_binary(const value &metadata, const value &registry,
+        const value &request, const value &names, const value &payloads)
+    {
+        naming types(metadata_naming_registry(metadata, metadata.at("types"), names));
+        value out = value::object(), calculation = request;
+        bool projected = false;
+        for (const auto *side : {"left", "right"}) {
+            const auto [identity, public_name] = types.resolve(request.at(side).text());
+            value projection = value::object();
+            projection["source"] = identity; projection["target"] = identity;
+            projection["kind"] = "identity";
+            if (!registry.at("types").has(identity)) {
+                projection = project_carrier(metadata, identity, names);
+                if (projection.type == value::kind::null) throw std::runtime_error("Operand family has no carrier projection");
+                projected = true;
+            }
+            if (!contains(payloads, projection.at("target").text()))
+                throw std::runtime_error("Unsupported carrier payload; only one layer is projected");
+            require_carrier_payload(projection);
+            calculation[side] = projection.at("target");
+            out[std::string(side) + "_projection"] = projection;
+        }
+        if (!projected) return resolve_plain_operator(metadata, registry, calculation);
+        out["calculation"] = resolve_plain_operator(metadata, registry, calculation);
+        out["operation"] = request.at("operation"); out["left"] = request.at("left"); out["right"] = request.at("right");
+        out["result_type"] = out.at("calculation").at("result_type");
+        out["kind"] = "checked_payload_binary";
+        out["steps"] = value::array();
+        for (const auto *step : {"evaluate_left", "project_left", "convert_left", "evaluate_right",
+                 "project_right", "convert_right", "calculate"}) out["steps"].items.emplace_back(step);
+        out["failure"] = "throw_preserve_prior_effects";
+        return out;
+    }
+
     // Project each operand independently; only the ordinary resolver chooses a
     // payload operation. No wrapper-pair overloads and no recursive extraction.
     value resolve_operator(const value &metadata, const value &request, const value &names)
@@ -649,29 +683,8 @@ namespace scpp::api_generation
             || !contains(registry.at("carrier_projection").at("operations"), request.at("operation").text())))
             throw std::runtime_error("Unsupported operator operand type");
         const auto &policy = registry.at(compare ? "carrier_comparisons" : "carrier_projection");
-        naming types(metadata_naming_registry(metadata, metadata.at("types"), names));
-        value out = value::object(), calculation = request;
-        bool projected = false;
-        for (const auto *side : {"left", "right"}) {
-            const auto [identity, public_name] = types.resolve(request.at(side).text());
-            value projection = value::object();
-            projection["source"] = identity; projection["target"] = identity;
-            projection["kind"] = "identity";
-            if (!registry.at("types").has(identity)) {
-                projection = project_carrier(metadata, identity, names);
-                if (projection.type == value::kind::null) throw std::runtime_error("Operand family has no carrier projection");
-                projected = true;
-            }
-            if (!contains(policy.at("payloads"), projection.at("target").text()))
-                throw std::runtime_error("Unsupported carrier payload; only one layer is projected");
-            require_carrier_payload(projection);
-            calculation[side] = projection.at("target");
-            out[std::string(side) + "_projection"] = projection;
-        }
-        if (!projected) return resolve_plain_operator(metadata, registry, calculation);
-        out["calculation"] = resolve_plain_operator(metadata, registry, calculation);
-        out["operation"] = request.at("operation"); out["left"] = request.at("left"); out["right"] = request.at("right");
-        out["result_type"] = out.at("calculation").at("result_type");
+        auto out = resolve_projected_binary(metadata, registry, request, names, policy.at("payloads"));
+        if (out.get("kind")!="checked_payload_binary") return out;
         if (compare) {
             const auto payload = policy.at("payload_state").text();
             const auto &comparison = policy.at("operations").at(request.at("operation").text());
@@ -700,11 +713,6 @@ namespace scpp::api_generation
             out["failure"] = "throw_preserve_prior_effects";
             return out;
         }
-        out["kind"] = "checked_payload_binary";
-        out["steps"] = value::array();
-        for (const auto *step : {"evaluate_left", "project_left", "convert_left", "evaluate_right",
-                 "project_right", "convert_right", "calculate"}) out["steps"].items.emplace_back(step);
-        out["failure"] = "throw_preserve_prior_effects";
         return out;
     }
 
@@ -718,6 +726,7 @@ namespace scpp::api_generation
         for (const auto &rule : compound.at("rules").items)
             if (rule.at("target").text() == target && contains(rule.at("right"), right)) selected_rule = &rule;
         value carrier_rule = value::object(), carrier_writeback;
+        bool checked_carrier_compound = false;
         if (!selected_rule && compound.has("carrier_targets")
             && (!registry.at("types").has(target) || !registry.at("types").has(right))) {
             naming types(metadata_naming_registry(metadata, metadata.at("types"), names));
@@ -745,6 +754,7 @@ namespace scpp::api_generation
                         if (rule.at("target").text()==storage && contains(rule.at("right"), right_storage)
                             && !rule.has("writeback_function_set") && !rule.has("writeback_source")) admitted = true;
                 if (!admitted) throw std::runtime_error("Unsupported compound payload operands");
+                checked_carrier_compound = true;
             }
             carrier_rule["writeback_source"] = storage;
             if (destination.type!=value::kind::null) {
@@ -756,7 +766,9 @@ namespace scpp::api_generation
         if (!selected_rule) throw std::runtime_error("Unsupported compound operands");
         value calculation = value::object();
         calculation["operation"] = compound.at("operation"); calculation["left"] = target; calculation["right"] = right;
-        const auto binary = resolve_operator(metadata, calculation, names);
+        const auto binary = checked_carrier_compound
+            ? resolve_projected_binary(metadata, registry, calculation, names, compound.at("carrier_targets"))
+            : resolve_operator(metadata, calculation, names);
         const bool projected = binary.get("kind")=="checked_payload_binary";
         const auto &plan = projected || binary.get("kind")=="converted_carrier_binary" ? binary.at("calculation") : binary;
         // A differing result needs explicit admission; an available conversion

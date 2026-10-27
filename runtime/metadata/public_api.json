@@ -3237,6 +3237,9 @@
               "int64"
             ]
           }
+        ],
+        "carrier_targets": [
+          "int64"
         ]
       },
       "concat_assign": {
