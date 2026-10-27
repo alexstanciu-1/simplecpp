@@ -366,3 +366,6 @@
 #include "scpp/generated/public_text_greater_equal_string_string.cpp"
 
 #include "scpp/generated/public_coalesce_require_value.cpp"
+
+#include "scpp/generated/public_count_mixed.cpp"
+#include "scpp/generated/public_count_dynamic.cpp"

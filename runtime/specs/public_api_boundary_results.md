@@ -2376,3 +2376,27 @@ The separate native comparison fixture compiled in **2.7827s / 2.7758s** respect
 Both configurations rebuilt core for the shared native helper change. The existing
 mixed-hash instantiation warning remains. Three focused metadata regressions passed
 in **5.76s**; scalar coalescing also retains its 60 success/36 failure planning cases.
+
+## E4 — boxed count publication (2026-10-27)
+
+The existing metadata function-set emitter now publishes focused `count(mixed)`
+and `count(dynamic)` headers/implementations. No new generator branch or native
+behavior was needed. The functions return source `int64` and delegate validation
+to native count helpers; this does not change existing vector/hash API signatures.
+
+`test_public_observations` passes in release and ASan/UBSan with leak detection.
+It checks empty and populated tables (null entries count), all scalar/null/string
+rejections, mixed copy independence and dynamic shared identity. Repeated successful
+count/observation calls allocate zero times after setup; rejection allocations are
+not constrained. Both new headers independently pass public-only guarded compilation.
+Two metadata regressions pass in 1.67s, including 19 observation/reset bindings,
+unsupported demand rejection and zero-unit imported-definition reuse. This is
+metadata reuse evidence, not a new sealed-package relocation test.
+
+Compile-only observation caller, single isolated run after builds completed:
+**0.0537s public / 2.8843s native** at `clang++ -std=c++23 -O2`. The caller exercises
+presence, emptiness and count; this measures header/translation-unit cost, not
+runtime throughput or a full compiler rebuild. A preliminary run overlapped core
+builds and is not used for the comparison. Release and sanitizer core builds each
+ran once because the aggregate gained two implementation units; their elapsed times
+were not benchmarked. The existing mixed-hash explicit-instantiation warning remains.

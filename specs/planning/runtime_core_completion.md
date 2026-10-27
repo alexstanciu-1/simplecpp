@@ -17,9 +17,9 @@ each slice. The original inventory is a baseline, not a current completion count
 | A2 | Complete for the agreed checked scalar conversions | Carrier conversion is C; ownership casts are D. |
 | B1 | Complete for the agreed scalar-facing truth/text/identity/observation scope | Carrier forms remain C; boxed arithmetic and access completion are not B1 credit. |
 | B2 | Complete for the agreed non-carrier special/mutation and text public paths; closure evidence below | Carrier forms C; indexed retention E; native exception inspection and overflow disposition G. |
-| C | Four carrier recipes and bounded scalar operator/selection paths implemented; review pending | Logical-negation correction, scoped observations, broader admitted selection domains, source-formation decision and full carrier review. |
+| C | Four carrier recipes and bounded scalar operator/selection paths implemented; review pending | Logical-negation correction, broader admitted selection domains, source-formation decision and full carrier review; scoped observations are implemented through C29. |
 | D | Pending | Ownership, application targets and source Exception transport gaps. |
-| E | Existing vector/hash/boxed foundations; incomplete | Capability/access/initialization/cursor gaps and identity key-allocation debt. |
+| E | Existing vector/hash/boxed foundations; incomplete | Access/initialization/key-policy gaps and identity key-allocation debt; conditional lifecycle, cursor fixes and boxed count are implemented. |
 | F | Pending | Callable transport and registered collection algorithms. |
 | G | Pending | Remaining core helpers and requirement-by-requirement closure audit. |
 
@@ -257,8 +257,8 @@ value API exists, not that source lowering has already migrated to it.
 | `core.strlen` | Published strlen(string) | Complete baseline |
 | `core.count.vector` | Published count(vector_string), generic vector recipe | E (capabilities) |
 | `core.count.hash` | Hash recipe count; no permanent hash demand required | E (capabilities) |
-| `core.count.mixed` | Missing boxed count free function | E |
-| `core.count.dynamic` | Missing boxed count free function | E |
+| `core.count.mixed` | Published checked count(mixed), E4 | Complete public path |
+| `core.count.dynamic` | Published checked count(dynamic), E4 | Complete public path |
 
 ## Chronological implementation checkpoints
 
@@ -1444,3 +1444,17 @@ This is bounded exact-domain coverage. Broader mixed cross-type joins, record an
 ownership coalescing retain their planned work; no blanket homogeneous boxed-wrapper
 admission is claimed. result_or_bool remains rejected even in an unselected branch.
 The pending logical/source-formation decisions and carrier review remain open.
+
+## Active-goal progress — E4
+
+Publish `count(mixed)` and `count(dynamic)` through the existing observation
+function-set mechanism, returning the canonical source integer (`int64`). Both
+bind the native count authority: tables report logical membership, including null
+entries; null, bool, numeric and string boxes throw. This does not add keyed
+protocols, wrapper forwarding, new countable families or compiler adoption.
+
+The public-only observation test checks empty/populated tables, mixed COW versus
+dynamic identity, unsupported kinds and repeated successful observations with zero
+allocations after setup. Release and sanitizer evidence and focused compile costs
+are recorded in `runtime/specs/public_api_boundary_results.md`. Metadata admission
+and imported-definition reuse checks include the two new published functions.

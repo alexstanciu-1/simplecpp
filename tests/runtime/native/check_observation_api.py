@@ -7,6 +7,7 @@ root=Path(__file__).resolve().parents[3]
 metadata=json.loads((root/'runtime/metadata/public_api.json').read_text())
 published=json.loads((root/'runtime/public/specializations.json').read_text())
 expected={'isset':{'float64','null','mixed','dynamic'},'empty':{'mixed','dynamic'},
+          'count':{'mixed','dynamic'},
           'clean':{'int8','int16','int32','int64','uint8','uint16','uint32','uint64','boolean','float64','string'}}
 for name,types in expected.items():
     assert set(metadata['function_sets'][name]['variants'])==types
@@ -21,13 +22,13 @@ def call(data,error=None):
     assert result.returncode==0,result.stderr
     return json.loads(result.stdout)
 plan=call(base)
-assert len(plan['units'])==17
+assert len(plan['units'])==19
 assert all('template' not in u['header'] for u in plan['units'])
 base['api_imports']=published['apis']
 assert call(base)['units']==[]
 # Existing integer/string presence, string emptiness and boxed reset belong to
 # their type owners; new operation sets must not generate duplicate signatures.
-for api in ['isset_int64','isset_string','empty_string','empty_int64','empty_null','clean_mixed','clean_dynamic','clean_null']:
+for api in ['isset_int64','isset_string','empty_string','empty_int64','empty_null','clean_mixed','clean_dynamic','clean_null','count_string','count_null','count_int64']:
     base['request']['apis']=[api]
     call(base,'Missing metadata field')
-print('PASS: 17 bounded observations/resets, preserved type ownership and zero-unit reuse')
+print('PASS: 19 bounded observations/resets, preserved type ownership and zero-unit reuse')

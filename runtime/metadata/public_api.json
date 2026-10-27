@@ -5481,6 +5481,32 @@
         }
       }
     },
+    "count": {
+      "variants": {
+        "mixed": {},
+        "dynamic": {}
+      },
+      "function": {
+        "namespace": "scpp",
+        "header": "scpp/observations/count_${variant}.hpp",
+        "source": "include/scpp/generated/public_count_${variant}.cpp",
+        "operation": {
+          "name": "count",
+          "returns": "int64",
+          "parameters": [
+            {
+              "name": "value",
+              "type": "${variant}",
+              "passing": "const_ref"
+            }
+          ],
+          "expression": "scpp::int64(scpp::count(${native:value}).native_value())",
+          "includes": [
+            "operators/count/count.hpp"
+          ]
+        }
+      }
+    },
     "empty": {
       "variants": {
         "mixed": {},

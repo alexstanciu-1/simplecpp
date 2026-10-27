@@ -1,6 +1,6 @@
 {
   "abi": "529dd5502370f48d64891818e9439aae72831b990b4027e8abe25c50c1216c21",
-  "api_identity": "917ce2c82a2823c22df6b2ab1dda98a48c4b102928d9d1ca9fbae0879d7fa34f",
+  "api_identity": "17a67331da8467ada160ac1b30aa8695e4ba7930f5710ac1b3ff047eb134f0c4",
   "apis": {
     "add_dynamic": {
       "header": "scpp/operators/add_dynamic.hpp",
@@ -3553,6 +3553,46 @@
         "returns": "boolean"
       },
       "source": "include/scpp/generated/public_condition_truthy_uint8.cpp"
+    },
+    "count_dynamic": {
+      "header": "scpp/observations/count_dynamic.hpp",
+      "namespace": "scpp",
+      "operation": {
+        "expression": "scpp::int64(scpp::count(${native:value}).native_value())",
+        "includes": [
+          "operators/count/count.hpp"
+        ],
+        "name": "count",
+        "parameters": [
+          {
+            "name": "value",
+            "passing": "const_ref",
+            "type": "dynamic"
+          }
+        ],
+        "returns": "int64"
+      },
+      "source": "include/scpp/generated/public_count_dynamic.cpp"
+    },
+    "count_mixed": {
+      "header": "scpp/observations/count_mixed.hpp",
+      "namespace": "scpp",
+      "operation": {
+        "expression": "scpp::int64(scpp::count(${native:value}).native_value())",
+        "includes": [
+          "operators/count/count.hpp"
+        ],
+        "name": "count",
+        "parameters": [
+          {
+            "name": "value",
+            "passing": "const_ref",
+            "type": "mixed"
+          }
+        ],
+        "returns": "int64"
+      },
+      "source": "include/scpp/generated/public_count_mixed.cpp"
     },
     "divide_dynamic": {
       "header": "scpp/operators/divide_dynamic.hpp",
@@ -9462,7 +9502,13 @@
     "include/scpp/operators/text_greater_equal_string_string.hpp",
     "public/scpp/selection/coalesce_require_value.hpp",
     "include/scpp/generated/public_coalesce_require_value.cpp",
-    "include/scpp/selection/coalesce_require_value.hpp"
+    "include/scpp/selection/coalesce_require_value.hpp",
+    "public/scpp/observations/count_mixed.hpp",
+    "include/scpp/generated/public_count_mixed.cpp",
+    "include/scpp/observations/count_mixed.hpp",
+    "public/scpp/observations/count_dynamic.hpp",
+    "include/scpp/generated/public_count_dynamic.cpp",
+    "include/scpp/observations/count_dynamic.hpp"
   ],
   "generator": "metadata-api-v1",
   "leaves": {
@@ -9790,6 +9836,8 @@
     "scpp/observations/clean_uint32.hpp": "3e197baba50ecab7835a5ccbf5ef322c7476fe73c1d5b7c867cac3bddb0975b4",
     "scpp/observations/clean_uint64.hpp": "b6b2a7e71e61a1317ed0de54b9e18946a7606875f37d0ce9b875717d24abbf40",
     "scpp/observations/clean_uint8.hpp": "9ee32a2f29abdfb0bf529e98352f62ad521b2e382fa2049045baf78d63b853a7",
+    "scpp/observations/count_dynamic.hpp": "b66ae61b90d75a46bf4ebbcdcae488dec3271eb7334eb03aceadf2ad694e2203",
+    "scpp/observations/count_mixed.hpp": "5e9bae3b378b7a69471767886ab0c33725b0ee6bcb22f91522f1c0249626d9c2",
     "scpp/observations/empty_dynamic.hpp": "cf293f1a4f4cf0991153e1561f337a43dbc04244ad3455120c87daf2ed977c91",
     "scpp/observations/empty_mixed.hpp": "1ad22bd3bce4a01e13b1565ab89885eee5518f2efdf8933c85dcc2de1ce4226d",
     "scpp/observations/isset_dynamic.hpp": "1dd2958f19c36bc934472c91ca84ae46cc17e73655cede724ed478b28af6471a",
@@ -10331,7 +10379,9 @@
     "include/scpp/generated/public_text_less_equal_string_string.cpp",
     "include/scpp/generated/public_text_greater_string_string.cpp",
     "include/scpp/generated/public_text_greater_equal_string_string.cpp",
-    "include/scpp/generated/public_coalesce_require_value.cpp"
+    "include/scpp/generated/public_coalesce_require_value.cpp",
+    "include/scpp/generated/public_count_mixed.cpp",
+    "include/scpp/generated/public_count_dynamic.cpp"
   ],
   "types": {
     "dynamic": {
