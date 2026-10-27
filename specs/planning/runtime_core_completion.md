@@ -2038,3 +2038,18 @@ pass, including zero allocations for the table-key cases. Sealed relocated publi
 continues to reuse the unchanged APIs with no new implementation units. Single-run
 boxed identity caller compile: 0.0566s public / 2.9023s native. Core rebuilt once per
 configuration. No metadata generation or public ABI change was required.
+
+## E22 — typed access composition audit
+
+A current metadata-only probe confirms vector<vector<int64>> and
+hash<vector<int64>,string> compose, but their public at() returns owned inner wrappers.
+Chaining accessors therefore cannot implement nested writes in place. The new
+[runtime_core_typed_access_boundary.md](runtime_core_typed_access_boundary.md)
+records the missing physical access-protocol composition, current owners, a concrete
+two-step demand and acceptance sequence. It avoids per-shape emitter cases and
+copy-modify-replace as substitutes for actual in-place semantics.
+
+No runtime or generator behavior changed and no compilation was needed. This audit
+narrows the next action: resolve the already-pending prepared-fact ownership decision,
+then implement one two-step physical path using supplied fixture facts. It does not
+move source semantic validation into the API tool or count typed paths as complete.
