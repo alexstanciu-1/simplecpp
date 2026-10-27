@@ -434,3 +434,12 @@ distinction, empty-string sentinel casts, same-family reconstruction and ordered
 numeric extraction for both sentinel families. Non-value states throw in numeric
 operations; they are never propagated as results. This complements the state/take
 and comparison proofs without claiming full source-formation or mutation coverage.
+
+
+### Carrier text implementation checkpoint
+
+Binary text contexts now use the ordinary text formatter after checked payload
+selection, with explicit metadata reuse of empty-string absent/sentinel exceptions.
+True bool payload and true sentinel remain distinct. Both operands retain ordered
+conversion/failure behavior. This covers the bounded canonical carrier payloads;
+carrier compound text write-back remains pending and is not implied by this slice.

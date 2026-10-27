@@ -81,7 +81,7 @@ namespace scpp::api_generation
         }
         for (const auto &[name, operation] : registry.at("operations").fields) {
             authored_name(name); authored_name(operation.at("name").text());
-            fields_only(operation, "form group name expression publish returns includes function_set pair_function_set operands distinct_result result_expression operand_passing operand_conversion_function_set compound_left_snapshot condition_operand", "global operation");
+            fields_only(operation, "form group name expression publish returns includes function_set pair_function_set operands distinct_result result_expression operand_passing operand_conversion_function_set compound_left_snapshot condition_operand carrier_operands", "global operation");
             const auto form = operation.get("form", "binary");
             if (form != "binary" && form != "unary") throw std::runtime_error("Unknown operator form");
             if (form == "unary") {
@@ -94,6 +94,15 @@ namespace scpp::api_generation
                     || operation.get("operand_passing", "const_ref") != "const_ref"
                     || operation.get("function_set") != metadata.at("conditions").at("function_set").text())
                     throw std::runtime_error("Condition operand requires the const unary condition owner");
+            }
+            if (operation.has("carrier_operands")) {
+                const auto &policy = operation.at("carrier_operands");
+                fields_only(policy, "payloads peers state_cast", "carrier operand conversions");
+                if (form!="binary" || !operation.has("operand_conversion_function_set"))
+                    throw std::runtime_error("Carrier operand conversion requires a binary conversion owner");
+                for (const auto *list : {"payloads", "peers"})
+                    for (const auto &type : domains(policy.at(list))) registry.at("types").at(type);
+                metadata.at("conversions").at("targets").at(policy.at("state_cast").text());
             }
             if (operation.has("compound_left_snapshot")) {
                 if (form != "binary" || operation.get("compound_left_snapshot") != "converted")
@@ -412,6 +421,54 @@ namespace scpp::api_generation
         return plan;
     }
 
+    // State exceptions are explicitly selected from the existing cast policy;
+    // present payload formatting still belongs to the operation's conversion owner.
+    static value resolve_converted_carriers(const value &metadata, const value &registry,
+        const value &request, const value &names)
+    {
+        const auto &operation = registry.at("operations").at(request.at("operation").text());
+        const auto &policy = operation.at("carrier_operands");
+        value projected = request, projections = value::object();
+        naming types(metadata_naming_registry(metadata, metadata.at("types"), names));
+        for (const auto *side : {"left", "right"}) {
+            const auto canonical = types.resolve(request.at(side).text()).first;
+            if (registry.at("types").has(canonical)) {
+                if (!contains(policy.at("peers"), canonical))
+                    throw std::runtime_error("Unsupported carrier conversion peer");
+                projected[side] = canonical;
+            } else {
+                auto projection = project_carrier(metadata, canonical, names);
+                if (projection.type==value::kind::null || !contains(policy.at("payloads"), projection.at("target").text()))
+                    throw std::runtime_error("Unsupported carrier conversion payload");
+                if (!projection.has("states"))
+                    throw std::runtime_error("Carrier operand conversion requires state descriptions");
+                require_carrier_payload(projection);
+                projected[side] = projection.at("target"); projections[side] = projection;
+            }
+        }
+        // Validate the ordinary operation first; unavailable states never widen admission.
+        const auto payload_plan = resolve_plain_operator(metadata, registry, projected);
+        const auto target = policy.at("state_cast").text();
+        if (payload_plan.get("operand_type") != target)
+            throw std::runtime_error("Carrier state conversion must match selected operand type");
+        value out = value::object(); out["kind"] = "converted_carrier_binary";
+        out["operation"] = request.at("operation"); out["left"] = request.at("left"); out["right"] = request.at("right");
+        for (const auto *side : {"left", "right"}) {
+            const auto key = std::string(side)+"_conversion";
+            out[key] = projections.has(side)
+                ? carrier_conversion_plan(projections.at(side), payload_plan.at(key), target)
+                : payload_plan.at(key);
+        }
+        value calculation = request; calculation["left"] = target; calculation["right"] = target;
+        out["calculation"] = resolve_plain_operator(metadata, registry, calculation);
+        out["result_type"] = out.at("calculation").at("result_type");
+        out["steps"] = value::array();
+        for (const auto *step : {"evaluate_left", "convert_left", "evaluate_right", "convert_right", "calculate"})
+            out["steps"].items.emplace_back(step);
+        out["failure"] = "throw_preserve_prior_effects";
+        return out;
+    }
+
     static value comparison_states(const value &projection, const std::string &payload)
     {
         value states = value::array();
@@ -524,6 +581,7 @@ namespace scpp::api_generation
                 && registry.at("types").has(request.at("right").text())))
             return resolve_plain_operator(metadata, registry, request);
         fields_only(request, "operation left right", "operator request");
+        if (operation.has("carrier_operands")) return resolve_converted_carriers(metadata, registry, request, names);
         const bool compare = registry.has("carrier_comparisons")
             && registry.at("carrier_comparisons").at("operations").has(request.at("operation").text());
         if (!compare && (!registry.has("carrier_projection")

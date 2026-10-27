@@ -1928,3 +1928,35 @@ of that release execution. Final metadata-only checks pass. Compile-only totals:
 ten storage units 11.1188s release / 14.8055s sanitized; caller 0.3103s / 0.6070s.
 No runtime-core or generator recompilation was required. Full source admission,
 compound/update/lazy protocols and scoped observation remain separate C work.
+
+## C17 — bounded carrier text operand conversion
+
+Concatenation now has a generic metadata-selected carrier operand conversion policy.
+It reuses the state conversion planner shared with explicit casts while retaining
+concat_text as the present-payload formatter. All 336 runtime generated units remain
+byte-identical; the publication identity is refreshed and no core rebuild is needed.
+
+A six-specialization public proof passes in release and ASan/UBSan with leak
+detection. It covers four boolean carrier families, true payload versus true sentinel,
+float text parity with the plain formatter, embedded NUL/non-ASCII bytes, cross-carrier
+text, left failure suppressing RHS work and right failure preserving the destination.
+Measured short success paths and the selected float example allocate zero. Sealed
+application reuse passes. Metadata checks enforce the bounded payload/peer domain
+and reject unsupported nested, boxed, fixed-width and uint64 extensions.
+
+Compile-only proof totals: storage 6.8769s release / 9.5664s sanitized; public caller
+0.1618s / 0.2714s. Initial generator builds take 6.03s / 18.91s. A final review added
+an early rejection for missing carrier state descriptions, matching other state-aware
+owners; its focused negative check requires no generated-runtime recompilation.
+Carrier compound text write-back remains pending. These single-run timings overlap
+other checks and are not isolated comparative benchmarks.
+
+Six focused release regressions pass in 10.81s before the final guard; the final
+release text metadata check also passes. In the overlapping sanitizer regression
+run, five existing checks pass but the newly added negative text check reaches the
+old executable before the final link and fails. The final text check is rerun after
+that build completes; this timing overlap is not counted as a passing final run.
+The final guard-only generator rebuild costs 6.23s release / 15.85s sanitized.
+The final sanitizer text check passes in 15.14s after the rebuilt executable is
+available. Together with the five passing focused regressions and the compiled
+sanitized consumer, this verifies the completed slice; no failing check remains.

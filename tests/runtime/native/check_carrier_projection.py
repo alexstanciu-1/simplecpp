@@ -49,7 +49,7 @@ for bad in ['nullable<boolean>', 'nullable<string>', 'result<nullable<int64>>', 
     resolve(bad, 'int64', error='Unsupported carrier payload')
 resolve('vector<int64>', 'int64', error='no carrier projection')
 resolve('nullable<int64>', 'uint64', error='Unsupported operator operand domains')
-resolve('nullable<int64>', 'nullable<int64>', 'concat', error='Unsupported operator operand type')
+assert resolve('nullable<int64>', 'nullable<int64>', 'concat')['kind'] == 'converted_carrier_binary'
 resolve('nullable<int64>', 'nullable<int64>', 'equal', error='Unsupported operator operand domains')
 for op in ['numeric_equal','numeric_not_equal','strict_identical','strict_not_identical']:
     for left,right in [('nullable<int64>','nullable<int64>'), ('nullable<int64>','int64'),

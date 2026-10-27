@@ -1059,3 +1059,27 @@ families, and strict identity admits its existing distinct-kind constant results
 only after eager snapshots. Native operand adaptation stays in type metadata,
 including the concrete boolean to native bool_t conversion; the generator has no
 boolean/string or carrier-family branches.
+
+
+### Carrier operand conversion contexts
+
+A binary operation with an `operand_conversion_function_set` may explicitly declare
+`carrier_operands`: `payloads`, `peers`, and `state_cast`. The first two select the
+admitted carrier payload and plain-peer identities. Admission is checked before
+state dispatch; one carrier layer is projected. The ordinary operator group still
+selects and validates the normalized calculation.
+
+`state_cast` selects existing non-payload state exceptions from the carrier cast
+policy and must match the calculation's normalized operand type. It does not select
+the payload formatter: present payloads retain the operation's conversion function
+set. The shared carrier conversion planner serves both explicit casts and these
+contexts, avoiding a second state interpretation. Missing state exceptions use
+checked extraction. The returned `converted_carrier_binary` plan converts the left
+operand fully before evaluating/converting the right, then invokes the normalized
+calculation on the owned converted values. Source evaluation remains compiler-owned.
+
+Concatenation uses this mechanism for the bounded canonical carrier text domain;
+its payload formatting uses concat_text, while absent/sentinel states reuse their
+empty-string result. Boxed peers, uint64, fixed-width carrier payloads and nested
+carriers are not admitted by this policy. Compound write-back remains separately
+specified and is not inferred from binary conversion support.

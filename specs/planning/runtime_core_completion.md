@@ -1100,3 +1100,23 @@ and provides a prepared-fact boundary for physical demands. Extracting a shared 
 semantic formation model is a wider cross-owner refactor requiring confirmation.
 The question has been raised; neither direction is silently implemented or credited
 as complete. Scoped observations and other admitted core work can proceed meanwhile.
+
+
+## C17 — carrier text concatenation through operand conversion metadata
+
+Binary concatenation now admits the agreed canonical int/float/bool/string carrier
+payloads and bounded plain text peers. A per-operation metadata policy selects
+payload/peer admission and existing state-cast exceptions; the shared conversion
+planner builds state branches while the ordinary operator's conversion owner formats
+present payloads. No new family/type dispatch or carrier-pair implementations were
+introduced. All 336 existing runtime implementation units remain unchanged.
+
+The public proof covers all four boolean carrier families, float formatting, embedded
+NUL/non-ASCII string bytes, cross-carrier concatenation, true payload versus true
+sentinel, Result failures on either side and failed RHS preserving the destination.
+Metadata checks reject boxed peers, uint64, noncanonical fixed-width carrier payloads,
+nested carriers and containers, and validate the selected normalization target.
+
+This is binary text completion for that bounded domain, not carrier .= completion.
+Compound/update/lazy protocols, wider ordering, scoped observations and the pending
+formation-boundary decision remain before the first complete carrier review.

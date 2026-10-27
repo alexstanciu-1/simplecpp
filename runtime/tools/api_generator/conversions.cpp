@@ -109,6 +109,11 @@ namespace scpp::api_generation
         value payload = value::object(); payload["source"] = projection.at("target"); payload["target"] = target;
         // Resolve once against plain conversions; never recursively peel a carrier.
         const auto calculation = resolve_plain_conversion(metadata, payload);
+        return carrier_conversion_plan(projection, calculation, target);
+    }
+
+    value carrier_conversion_plan(const value &projection, const value &calculation, const std::string &target)
+    {
         value out = value::object();
         out["kind"] = "carrier_conversion"; out["source"] = projection.at("source"); out["target"] = target;
         out["projection"] = projection; out["payload_conversion"] = calculation;
