@@ -1074,3 +1074,34 @@ Initial release generator rebuild: **3.51 s**. The subsequent eight-job core/too
 build (including final direction validation) took **38.40 s**, peak child RSS
 **418,188 KiB**. Sanitized build: **65.67 s**, **627,284 KiB**. These are single
 observations; the existing native hash specialization warning is unchanged.
+
+## B1h — boxed text conversion and B1 checkpoint
+
+Two existing `concat_text` recipe variants publish mixed/dynamic text conversion;
+no generator code changed. Native scalar formatting and the family-specific
+`Array`/`Object` labels remain unchanged. The existing public string owns the result.
+
+The extended public text test verifies boxed null/bool/integer/float/string/container
+kinds, embedded NUL bytes, lifetime after temporary destruction and allocation
+counts. Small selected conversions allocate zero times; each long boxed-string
+conversion allocates exactly once for the owned result, with no extra heap wrapper.
+Five focused tests pass in release (**1.93 s**) and ASan/UBSan/leak mode (**9.78 s**).
+Sealed relocated publication reuses both adapters with zero new implementation units
+and passes a public-only linked consumer in both modes.
+
+Single compile-only observations (`measure_global_operators.py --boxed-text`),
+measured after builds and tests finished:
+
+| Case | Seconds | Preprocessed bytes |
+| --- | ---: | ---: |
+| Public caller | 0.0633 | 20,925 |
+| Native caller | 4.2393 | 3,585,423 |
+| Private dynamic-text adapter | 4.1874 | 3,662,563 |
+
+Eight-job core/tool/text-test rebuild: release **26.46 s**, peak child RSS
+**419,432 KiB**; sanitized **58.02 s**, **627,472 KiB**. These are single observations,
+not statistical speedup claims; the existing native hash warning remains unchanged.
+
+The completion plan now distinguishes current batch status from chronological
+checkpoints. B1's agreed scalar-facing scope is complete; B2 and carrier C remain
+open, as do the later ownership/container/callback/helper batches.

@@ -2942,6 +2942,12 @@
         },
         "null": {
           "operand": "value"
+        },
+        "mixed": {
+          "operand": "${native:value}"
+        },
+        "dynamic": {
+          "operand": "${native:value}"
         }
       },
       "function": {

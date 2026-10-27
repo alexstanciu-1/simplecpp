@@ -275,6 +275,8 @@
     "strict_not_identical_boxed_dynamic_float64",
     "strict_not_identical_boxed_dynamic_boolean",
     "strict_not_identical_boxed_dynamic_string",
-    "strict_not_identical_boxed_dynamic_null"
+    "strict_not_identical_boxed_dynamic_null",
+    "concat_text_mixed",
+    "concat_text_dynamic"
   ]
 }

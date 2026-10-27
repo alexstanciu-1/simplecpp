@@ -285,3 +285,5 @@
 #include "scpp/generated/public_strict_not_identical_boxed_dynamic_boolean.cpp"
 #include "scpp/generated/public_strict_not_identical_boxed_dynamic_string.cpp"
 #include "scpp/generated/public_strict_not_identical_boxed_dynamic_null.cpp"
+#include "scpp/generated/public_concat_text_mixed.cpp"
+#include "scpp/generated/public_concat_text_dynamic.cpp"

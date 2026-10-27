@@ -17,6 +17,7 @@ parser.add_argument('--conditions', action='store_true', help='Measure condition
 parser.add_argument('--text', action='store_true', help='Measure bounded text conversion plus primitive string concatenation')
 parser.add_argument('--identity', action='store_true', help='Measure canonical and boxed strict identity')
 parser.add_argument('--identity-pairs', action='store_true', help='Measure borrowed boxed/plain identity')
+parser.add_argument('--boxed-text', action='store_true', help='Measure boxed text conversion')
 args = parser.parse_args()
 public = '''#include "scpp/operators/add_int64.hpp"
 #include "scpp/operators/equal_mixed.hpp"
@@ -51,6 +52,9 @@ if args.identity:
 if args.identity_pairs:
     public = '#include "scpp/identity/strict_identical_boxed_mixed_string.hpp"\nscpp::boolean compare(const scpp::mixed &a,const scpp::string &b) { return scpp::strict_identical(a,b); }\n'
     native = '#include "operators/identity/strict_identity.hpp"\nscpp::bool_t compare(const scpp::mixed_t &a,const scpp::string_t &b) { return scpp::identical(a,b); }\n'
+if args.boxed_text:
+    public = '#include "scpp/text/concat_text_dynamic.hpp"\nscpp::string text(const scpp::dynamic &v) { return scpp::concat_text(v); }\n'
+    native = '#include "lang/php/support/php_string.hpp"\nscpp::string_t text(const scpp::detail::dynamic_value &v) { return scpp::php::to_string(v); }\n'
 rows = []
 with tempfile.TemporaryDirectory(prefix='scpp-operator-cost-') as directory:
     stage = Path(directory)
@@ -65,6 +69,7 @@ with tempfile.TemporaryDirectory(prefix='scpp-operator-cost-') as directory:
     if args.text: adapters = ['concat_text_float64']
     if args.identity: adapters = ['strict_identical_mixed']
     if args.identity_pairs: adapters = ['strict_identical_boxed_mixed_string']
+    if args.boxed_text: adapters = ['concat_text_dynamic']
     cases += [(f'adapter_{identity}', root/f'runtime/include/scpp/generated/public_{identity}.cpp', ['public','include']) for identity in adapters]
     for name, path, includes in cases:
         command = [args.compiler, '-std=c++23', '-O2', *['-I'+str(root/'runtime'/i) for i in includes]]

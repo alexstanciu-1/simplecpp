@@ -5,6 +5,28 @@ Checkpoint: 2026-10-27, implementation baseline `6a1cb4af2`.
 This is the current completion inventory under [the runtime API migration plan](runtime_public_api.md),
 not a new semantic registry. No implementation is authorized merely by a row here.
 
+## Current implementation status
+
+Updated 2026-10-27. This summary supersedes unfinished-work statements in the
+chronological checkpoint notes below; those notes retain the evidence and scope of
+each slice. The original inventory is a baseline, not a current completion count.
+
+| Batch | Current status | Remaining work |
+| --- | --- | --- |
+| A1 | Complete for the agreed ordinary numeric domain | Specialized and boxed extensions remain in B2/E, not implied by A1. |
+| A2 | Complete for the agreed checked scalar conversions | Carrier conversion is C; ownership casts are D. |
+| B1 | Complete for the agreed scalar-facing truth/text/identity/observation scope | Carrier forms remain C; boxed arithmetic and access completion are not B1 credit. |
+| B2 | Pending | Bitwise, shifts, checked power, unary/update/compound and spaceship. |
+| C | Policy agreed; completion pending | Four carrier families, state-preserving operations/conversions and conditional lifecycle. |
+| D | Pending | Ownership, application targets and source Exception transport gaps. |
+| E | Existing vector/hash/boxed foundations; incomplete | Capability/access/initialization/cursor gaps and identity key-allocation debt. |
+| F | Pending | Callable transport and registered collection algorithms. |
+| G | Pending | Remaining core helpers and requirement-by-requirement closure audit. |
+
+Full frontend adoption and module migration are excluded. The first complete carrier
+path remains a review gate before expanding ownership/callback implementation.
+No completion percentage is inferred from function, header or checkpoint counts.
+
 ## Scope and evidence
 
 Proposed finish line: every currently admitted runtime-core contract has a usable,
@@ -38,7 +60,7 @@ The previous 40% estimate was a judgment, not a measured completion ratio; this
 inventory replaces it as the planning basis. Header/overload counts are not effort
 percentages, and no new weighted percentage is asserted here.
 
-## Current surface and remaining contracts
+## Baseline surface and remaining contracts
 
 Status meanings: **published** = an actual restricted public header/compiled path;
 **recipe** = application demands can generate selected concrete forms; **missing** =
@@ -111,7 +133,7 @@ or the mandatory rewrite scope.
    integration are separate milestones. A source-level proof must eventually exercise
    prepared admission, casts, evaluation order and diagnostics, not merely C++ calls.
 
-## Proposed implementation batches
+## Implementation batches
 
 Each batch is a coherent ownership area, not a mandate for one large commit. Keep
 review points between its sub-slices, use the same emitter/publication protocol, and
@@ -141,28 +163,15 @@ now records the accepted arithmetic, comparison, truthiness and conversion decis
 It records the bare-source `copyable_value` contract, family-specific argument
 requirements, explicit ownership/nullable composition restrictions and supported
 Result-of-nullable states. Uniform one-layer carrier arithmetic/comparisons and checked conversion policies
-are approved but not yet implemented. The remaining goal-scope choices are the
-native-only surface denominator and separation of frontend adoption.
+are approved but not yet implemented. The accepted scope includes native-only facilities only when required by an included
+core contract; full frontend adoption remains excluded.
 
-## Recommended next slice for discussion
+## Next implementation work
 
-**A1: complete ordinary concrete numeric arithmetic and comparisons.** It builds on
-the newly proven resolver, has existing native semantics to bind, and can be checked
-with one focused test matrix rather than a new representation/lifetime mechanism.
-
-Proposed boundary: `-`, `*`, `/`, integer `%`, `==`, `!=`, `<`, `<=`, `>`, `>=` on the
-already published integer widths and float64, using the agreed admission/promotion.
-Comparison results are boolean; `%` remains integer-only. Reuse the runtime's
-zero-divisor and overflow contracts, not raw C++ expressions where they lose checks.
-
-Non-goals: new widths, checked general casts, boxed arithmetic, wrapper lifting,
-bitwise/shifts/power, compound write-back, source compiler integration and wholesale
-migration of the old scalar generator. Keep those named in their owning batches.
-Explicit cast APIs follow as A2; A1 must not advertise raw constructors as checked casts.
-
-Before coding A1, confirm this boundary. No additional language decision appears
-necessary for this bounded group; any native/source inconsistency found while binding
-an operation should be surfaced before changing that operation's semantics.
+Start B2 with a coherent special numeric group using existing operator metadata and native error authorities.
+Proceed to C with the accepted one-layer carrier rules; the first complete carrier
+path must be reviewed before D/F expansion. Do not treat existing native template
+instantiations as source admission or skip state/lifetime proofs to close a row.
 
 ## Validation and completion gates
 
@@ -246,6 +255,11 @@ value API exists, not that source lowering has already migrated to it.
 | `core.count.hash` | Hash recipe count; no permanent hash demand required | E (capabilities) |
 | `core.count.mixed` | Missing boxed count free function | E |
 | `core.count.dynamic` | Missing boxed count free function | E |
+
+## Chronological implementation checkpoints
+
+The following entries record their own checkpoint state. Consult the current status
+summary above for remaining work; earlier “pending” statements are historical.
 
 ## Active-goal progress — A1
 
@@ -425,3 +439,16 @@ The metadata continues rejecting these domains rather than inventing new semanti
 This closes the identified B1 strict-identity gaps; a B1 closure audit still needs
 to account for boxed text conversion. Carrier identity remains C, and mixed-table
 key-allocation debt stays E. Compiler adoption remains excluded from this goal.
+
+## Active-goal progress — B1h boxed concatenation text
+
+Two variants of the existing text recipe publish mixed/dynamic text conversion.
+Native formatting and family-specific container labels remain unchanged; primitive
+string concatenation is still separate. Tests cover null/bool/numeric/string kinds,
+embedded bytes, temporary lifetime and allocation counts. There is no pairwise
+concatenation implementation matrix and no new generator logic.
+
+B1's agreed scalar-facing truth/text/identity/observation surface is implemented.
+Carrier text/identity/truthiness remain C; lazy source evaluation and compound
+write-back still belong to the compiler and B2/C's respective protocols. This is
+not a claim that core completion or all boxed operations are finished.

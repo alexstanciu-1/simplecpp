@@ -528,3 +528,12 @@ publish twenty implementations total. Native identity observes borrowed payloads
 it neither boxes plain strings nor copies boxed strings. Mixed/dynamic crossings
 and noncanonical fixed-width operands remain rejected. No family name or scalar
 case is hard-coded in the generator.
+
+## Boxed text contexts
+
+Mixed and dynamic use two additional variants of `concat_text`, binding the native
+text-context authority through borrowed payload access and owned string transport.
+They are not explicit string casts and do not introduce boxed `+` dispatch.
+Existing native `Array`/`Object` labels and scalar formatting are preserved. Returned
+strings own their bytes; a long boxed string needs one result allocation, not an
+extra boundary wrapper allocation. Carrier text policy remains a separate recipe.

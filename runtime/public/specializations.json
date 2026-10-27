@@ -1,6 +1,6 @@
 {
   "abi": "529dd5502370f48d64891818e9439aae72831b990b4027e8abe25c50c1216c21",
-  "api_identity": "36d6df94b366ec8d371b3fa02ef07d4255c9cf3d17645cd2fe6b284a27a84e10",
+  "api_identity": "834ad83af037cc59eb7533a02b8575c41069afe4744833e0bd140d4de6244cbb",
   "apis": {
     "add_float64": {
       "header": "scpp/operators/add_float64.hpp",
@@ -2364,6 +2364,27 @@
       },
       "source": "include/scpp/generated/public_concat_text_boolean.cpp"
     },
+    "concat_text_dynamic": {
+      "header": "scpp/text/concat_text_dynamic.hpp",
+      "namespace": "scpp",
+      "operation": {
+        "expression": "scpp::php::to_string(${native:value})",
+        "includes": [
+          "lang/php/support/php_string.hpp"
+        ],
+        "name": "concat_text",
+        "parameters": [
+          {
+            "name": "value",
+            "passing": "const_ref",
+            "type": "dynamic"
+          }
+        ],
+        "returns": "string",
+        "transport": "native"
+      },
+      "source": "include/scpp/generated/public_concat_text_dynamic.cpp"
+    },
     "concat_text_float64": {
       "header": "scpp/text/concat_text_float64.hpp",
       "namespace": "scpp",
@@ -2468,6 +2489,27 @@
         "transport": "native"
       },
       "source": "include/scpp/generated/public_concat_text_int8.cpp"
+    },
+    "concat_text_mixed": {
+      "header": "scpp/text/concat_text_mixed.hpp",
+      "namespace": "scpp",
+      "operation": {
+        "expression": "scpp::php::to_string(${native:value})",
+        "includes": [
+          "lang/php/support/php_string.hpp"
+        ],
+        "name": "concat_text",
+        "parameters": [
+          {
+            "name": "value",
+            "passing": "const_ref",
+            "type": "mixed"
+          }
+        ],
+        "returns": "string",
+        "transport": "native"
+      },
+      "source": "include/scpp/generated/public_concat_text_mixed.cpp"
     },
     "concat_text_null": {
       "header": "scpp/text/concat_text_null.hpp",
@@ -7273,7 +7315,13 @@
     "include/scpp/identity/strict_not_identical_boxed_dynamic_string.hpp",
     "public/scpp/identity/strict_not_identical_boxed_dynamic_null.hpp",
     "include/scpp/generated/public_strict_not_identical_boxed_dynamic_null.cpp",
-    "include/scpp/identity/strict_not_identical_boxed_dynamic_null.hpp"
+    "include/scpp/identity/strict_not_identical_boxed_dynamic_null.hpp",
+    "public/scpp/text/concat_text_mixed.hpp",
+    "include/scpp/generated/public_concat_text_mixed.cpp",
+    "include/scpp/text/concat_text_mixed.hpp",
+    "public/scpp/text/concat_text_dynamic.hpp",
+    "include/scpp/generated/public_concat_text_dynamic.cpp",
+    "include/scpp/text/concat_text_dynamic.hpp"
   ],
   "generator": "metadata-api-v1",
   "leaves": {
@@ -7647,11 +7695,13 @@
     "scpp/result_vector_string.hpp": "162978d31bfb719e2b8bbb0b6d57162bacd0b53a30f92af1eef7c50b9af0f71e",
     "scpp/string.hpp": "aac6ff447c6c1135f22cbc12cb0a419c8079df28826de70f0170a07690ec2b69",
     "scpp/text/concat_text_boolean.hpp": "cf8fb9b3c1d634620f2aede468c05c115284dfbbd51d6047dfa2934408f8f7dc",
+    "scpp/text/concat_text_dynamic.hpp": "3a4c61bc54bb9c78a8ad31bea075de0aa7540022c486f472fe459ab487d137f1",
     "scpp/text/concat_text_float64.hpp": "489c5b8553ddaef8424b2a77f2429ed175312252affc0052c35d5bdeb28f3b39",
     "scpp/text/concat_text_int16.hpp": "3d467b734aec8858027625989183b5b69d6068c3627eb51bae1b3d6704cab376",
     "scpp/text/concat_text_int32.hpp": "454ccf2116b0fd7bc896f7de27aea9dc42aa9029ed1cbdb20bfc65b44fe3750e",
     "scpp/text/concat_text_int64.hpp": "1362762b4c4eb7cfcf7f3fd1eab02ebd13eec02e3282a19f9a90e7f738522448",
     "scpp/text/concat_text_int8.hpp": "097730f80d72b1ae9114080aea96b14ccdf9dbe6ebe396266dba74a242ce17b1",
+    "scpp/text/concat_text_mixed.hpp": "3fc5dfa75bbc1d12d9da49a7925da89af2f9bfbb0c1652def734daec4b769af1",
     "scpp/text/concat_text_null.hpp": "67b5fb41ee09ae81a76085c484402bc932af13cab42643a94830e26ae816bd4f",
     "scpp/text/concat_text_string.hpp": "53ff400864bf2decef9e2289a5f2d782e5182ebf263a7212023a85168d75075e",
     "scpp/text/concat_text_uint16.hpp": "8a1f174bbbe6e7371f7426c374f424033fa7e11b5f7ebf2f48f518d7296f4a55",
@@ -7922,7 +7972,9 @@
     "include/scpp/generated/public_strict_not_identical_boxed_dynamic_float64.cpp",
     "include/scpp/generated/public_strict_not_identical_boxed_dynamic_boolean.cpp",
     "include/scpp/generated/public_strict_not_identical_boxed_dynamic_string.cpp",
-    "include/scpp/generated/public_strict_not_identical_boxed_dynamic_null.cpp"
+    "include/scpp/generated/public_strict_not_identical_boxed_dynamic_null.cpp",
+    "include/scpp/generated/public_concat_text_mixed.cpp",
+    "include/scpp/generated/public_concat_text_dynamic.cpp"
   ],
   "types": {
     "dynamic": {
