@@ -345,3 +345,23 @@ Formatting differences from explicit casts, embedded bytes, lifetime, allocation
 and publication reuse are covered. Carrier text behavior remains C. B1 strict
 identity, eager xor, and presence/empty/reset consolidation remain open; source
 sequencing/write-back and full frontend adoption are not claimed by these APIs.
+
+## Active-goal progress — B1c same-type strict identity
+
+Two existing function-set recipes publish 14 adapters for seven same-type domains
+and their negation. Primitive/boxed comparisons preserve kinds and use the native
+identity owner. Tests distinguish ordinary numeric boxed equality from strict
+identity, exercise both 81-pair boxed scalar matrices, NaN/signed zero, complete
+string bytes and native container semantics.
+
+B1 still needs heterogeneous identity planning without promotion or pair explosion,
+boxed/plain admission, eager xor and presence/empty/reset consolidation. Carrier
+state-preserving identity remains C and must not reuse legacy sentinel-as-payload
+normalization unchanged.
+
+Container debt (E): native `identical_hash_contents` obtains keys through
+`packed_table::const_entry_view::key()`, constructing temporary mixed strings. A
+one-entry table with a short string key allocates twice during identity, while
+measured scalar/string/dynamic-identity observations allocate zero. Design a safe
+borrowed/internal key-comparison path with the table owner; preserve key kind,
+complete bytes and order. Do not add public borrowed references as a shortcut.

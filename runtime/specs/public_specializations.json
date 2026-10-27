@@ -223,6 +223,20 @@
     "concat_text_float64",
     "concat_text_boolean",
     "concat_text_string",
-    "concat_text_null"
+    "concat_text_null",
+    "strict_identical_int64",
+    "strict_identical_float64",
+    "strict_identical_boolean",
+    "strict_identical_string",
+    "strict_identical_null",
+    "strict_identical_mixed",
+    "strict_identical_dynamic",
+    "strict_not_identical_int64",
+    "strict_not_identical_float64",
+    "strict_not_identical_boolean",
+    "strict_not_identical_string",
+    "strict_not_identical_null",
+    "strict_not_identical_mixed",
+    "strict_not_identical_dynamic"
   ]
 }

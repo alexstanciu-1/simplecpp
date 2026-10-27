@@ -2796,6 +2796,120 @@
           ]
         }
       }
+    },
+    "strict_identical": {
+      "variants": {
+        "int64": {
+          "left": "scpp::int_t<__INT64_TYPE__>(left.native_value())",
+          "right": "scpp::int_t<__INT64_TYPE__>(right.native_value())"
+        },
+        "float64": {
+          "left": "scpp::float_t(left.native_value())",
+          "right": "scpp::float_t(right.native_value())"
+        },
+        "boolean": {
+          "left": "scpp::bool_t(left.native_value())",
+          "right": "scpp::bool_t(right.native_value())"
+        },
+        "string": {
+          "left": "${native:left}",
+          "right": "${native:right}"
+        },
+        "null": {
+          "left": "left",
+          "right": "right"
+        },
+        "mixed": {
+          "left": "${native:left}",
+          "right": "${native:right}"
+        },
+        "dynamic": {
+          "left": "${native:left}",
+          "right": "${native:right}"
+        }
+      },
+      "function": {
+        "namespace": "scpp",
+        "header": "scpp/identity/strict_identical_${variant}.hpp",
+        "source": "include/scpp/generated/public_strict_identical_${variant}.cpp",
+        "operation": {
+          "name": "strict_identical",
+          "returns": "boolean",
+          "parameters": [
+            {
+              "name": "left",
+              "type": "${variant}",
+              "passing": "const_ref"
+            },
+            {
+              "name": "right",
+              "type": "${variant}",
+              "passing": "const_ref"
+            }
+          ],
+          "expression": "scpp::identical(${variant:left}, ${variant:right}).native_value()",
+          "includes": [
+            "operators/identity/strict_identity.hpp"
+          ]
+        }
+      }
+    },
+    "strict_not_identical": {
+      "variants": {
+        "int64": {
+          "left": "scpp::int_t<__INT64_TYPE__>(left.native_value())",
+          "right": "scpp::int_t<__INT64_TYPE__>(right.native_value())"
+        },
+        "float64": {
+          "left": "scpp::float_t(left.native_value())",
+          "right": "scpp::float_t(right.native_value())"
+        },
+        "boolean": {
+          "left": "scpp::bool_t(left.native_value())",
+          "right": "scpp::bool_t(right.native_value())"
+        },
+        "string": {
+          "left": "${native:left}",
+          "right": "${native:right}"
+        },
+        "null": {
+          "left": "left",
+          "right": "right"
+        },
+        "mixed": {
+          "left": "${native:left}",
+          "right": "${native:right}"
+        },
+        "dynamic": {
+          "left": "${native:left}",
+          "right": "${native:right}"
+        }
+      },
+      "function": {
+        "namespace": "scpp",
+        "header": "scpp/identity/strict_not_identical_${variant}.hpp",
+        "source": "include/scpp/generated/public_strict_not_identical_${variant}.cpp",
+        "operation": {
+          "name": "strict_not_identical",
+          "returns": "boolean",
+          "parameters": [
+            {
+              "name": "left",
+              "type": "${variant}",
+              "passing": "const_ref"
+            },
+            {
+              "name": "right",
+              "type": "${variant}",
+              "passing": "const_ref"
+            }
+          ],
+          "expression": "scpp::not_identical(${variant:left}, ${variant:right}).native_value()",
+          "includes": [
+            "operators/identity/strict_identity.hpp"
+          ]
+        }
+      }
     }
   }
 }

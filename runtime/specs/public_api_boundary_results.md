@@ -899,3 +899,43 @@ Carrier text remains C; B1 strict identity, eager xor and remaining observations
 remain open. Public APIs accept evaluated values; source ordering, captured
 compound destinations and write-back are compiler-owned and not newly implemented
 by this slice.
+
+## B1c — same-type strict identity (2026-10-27)
+
+The existing function-set emitter publishes 14 adapters: identity and its negation
+for canonical int64, float64, boolean, string, null, mixed and dynamic. Native
+identity remains the semantic owner; numeric promotion is not involved. This is
+not a complete heterogeneous identity resolver or a new fixed-width source admission.
+
+`test_public_identity` checks all signatures, both 81-pair boxed scalar matrices,
+ordinary numeric equality versus strict int/float distinction, NaN, signed zero,
+infinity and embedded-NUL bytes. It also checks mixed table contents and dynamic
+shared-object identity. Scalar/string/dynamic-object loops measure **zero allocations**.
+A separate one-entry mixed-table comparison with a string key measures **two
+allocations**, caused by native iterator key materialization. That existing cost is
+recorded as container-batch debt; no allocation-free table claim is made.
+
+Nine focused tests pass in release (**3.21 s**) and under ASan/UBSan/leak detection
+(**15.49 s**). Metadata checks prove same-type signatures and ordinary publication
+reuse. The relocated sealed-runtime proof imports mixed/float identity with zero
+emitted adapters and executes against the relocated archive in both modes.
+
+Single observations (`measure_global_operators.py --identity`):
+
+| Case | Seconds | Preprocessed bytes |
+| --- | ---: | ---: |
+| Public canonical-float + mixed identity caller | 0.0546 | 18,551 |
+| Native equivalent caller | 4.1089 | 3,630,205 |
+| Independent mixed identity adapter | 4.8440 | 3,703,110 |
+
+The initial eight-job release build compiled the changed core but failed on a
+vexing-parse initializer in the test: **27.77 s**, peak child RSS **418,656 KiB**.
+Correcting that test and finishing linking took **0.49 s**, **105,012 KiB**. The
+sanitizer build took **51.39 s**, **625,800 KiB**. Both test executables were rebuilt
+once more after separating the discovered native table allocation cost from scalar
+allocation assertions; those unmeasured test-only builds are excluded above.
+Raw caller observations: `compiler/my-try-cpp/build/core-identity-cost.json`.
+
+Heterogeneous scalar planning, boxed/plain pairs, eager xor and remaining observation
+protocols keep B1 open. Carrier state-preserving identity remains C; publishing these
+same-type paths does not endorse the legacy sentinel-as-payload carrier behavior.

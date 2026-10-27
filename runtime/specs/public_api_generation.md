@@ -427,3 +427,20 @@ concat adapters. Compiler lowering owns left conversion before RHS evaluation,
 captured destination identity and once-only compound write-back; this runtime API
 accepts values already selected/evaluated by that process. Carrier text conversion
 remains in C. Existing boxed/display/interpolation contracts remain separate.
+
+## Same-type strict identity
+
+The `strict_identical` and `strict_not_identical` function sets each publish seven
+same-type variants: canonical int64, float64, boolean, string, null, mixed and dynamic.
+Their ordinary binary signatures preserve each operand's representation and delegate
+to the native identity helper. No arithmetic common-type selection is performed.
+
+These are backend paths, not a complete strict-identity admission resolver. Plain
+heterogeneous scalar pairs, boxed/plain pairs, fixed-width source admission and
+carrier state-aware dispatch remain separate work; do not route them through numeric
+promotion or infer permission from native template overloads. Carrier policy changes
+must be implemented in their shared owner before publishing carrier identity.
+
+Mixed table identity retains native ordered contents comparison; dynamic object
+identity retains native shared-object identity. Publishing the mixed path does not
+claim it is allocation-free: its current key iterator materializes boxed string keys.

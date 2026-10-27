@@ -382,3 +382,9 @@ target_link_libraries(test_public_text PRIVATE scpp_core_api)
 add_test(NAME scpp_test_public_text COMMAND test_public_text)
 add_test(NAME scpp_check_text_api COMMAND ${Python3_EXECUTABLE}
   ${CMAKE_CURRENT_SOURCE_DIR}/check_text_api.py $<TARGET_FILE:scpp_api_generator>)
+
+add_executable(test_public_identity test_public_identity.cpp)
+target_link_libraries(test_public_identity PRIVATE scpp_core_api)
+add_test(NAME scpp_test_public_identity COMMAND test_public_identity)
+add_test(NAME scpp_check_identity_api COMMAND ${Python3_EXECUTABLE}
+  ${CMAKE_CURRENT_SOURCE_DIR}/check_identity_api.py $<TARGET_FILE:scpp_api_generator>)
