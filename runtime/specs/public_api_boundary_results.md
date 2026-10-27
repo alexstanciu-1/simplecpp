@@ -858,3 +858,44 @@ B1 strict identity, context-specific text/concat, eager xor and remaining observ
 protocols are still pending. Carrier and ownership/callable conditions retain their
 C/D/F owners. Lazy source evaluation stays compiler-owned; this slice observes an
 already evaluated value and does not publish templated conditional evaluators.
+
+## B1b — bounded plain-scalar concatenation text (2026-10-27)
+
+The existing function-set mechanism publishes 11 `concat_text` overloads from one
+recipe. It delegates to the native scalar text helper and returns an owned public
+string using existing native transport. No generator code changed. The bounded
+plain domain follows `expression_evaluation.md`; uint64, boxed and carrier variants
+are not implicitly added. Existing public string `+`/`+=` primitives handle the
+converted operands, so no pair matrix is generated.
+
+`test_public_text` proves all signatures, integer extremes within the domain,
+float text versus explicit-cast formatting, boolean/null rules, embedded-NUL byte
+preservation, primitive concat/append and owned lifetime beyond temporary inputs.
+The repeated small integer/bool/null/string loop records **zero allocations**;
+a long string conversion records **one allocation** for the owned result. The
+metadata check verifies the exact bounded domain, absent unsupported API variants,
+existing native result transport and zero-unit import reuse.
+
+Nine focused cases pass in release (**2.64 s**) and ASan/UBSan/leak mode
+(**17.37 s**). The relocated sealed-runtime proof imports `concat_text_float64`,
+generates no adapter and runs against the relocated archive in both configurations.
+
+Single observations (`measure_global_operators.py --text`):
+
+| Case | Seconds | Preprocessed bytes |
+| --- | ---: | ---: |
+| Public float text + primitive concat caller | 0.0589 | 15,175 |
+| Native equivalent caller | 4.4934 | 3,667,786 |
+| Independent float text adapter | 4.5420 | 3,601,749 |
+
+The first native benchmark probe omitted the generated string-operator header and
+failed; the corrected probe includes the same operator owner as the public string
+implementation. Only the successful complete observation is tabulated. Raw results:
+`compiler/my-try-cpp/build/core-text-cost.json`. These are single observations, not
+stable ratios. Eight-job changed-core/test builds took **33.79 s** release
+(**416,188 KiB** peak child RSS) and **52.09 s** sanitized (**624,744 KiB**).
+
+Carrier text remains C; B1 strict identity, eager xor and remaining observations
+remain open. Public APIs accept evaluated values; source ordering, captured
+compound destinations and write-back are compiler-owned and not newly implemented
+by this slice.

@@ -27,11 +27,11 @@ with tempfile.TemporaryDirectory(prefix='scpp-operator-publication-') as directo
     shutil.copy2(args.tool, sdk/'tools/scpp_api_generator')
     seal_package(sdk, ['core'])
     request = stage/'request.json'
-    request.write_text(json.dumps({'package':'app.operators', 'roots':[], 'apis':['add_int64','equal_mixed','add_int64','divide_int64','less_float64','cast_uint64_from_string','cast_string_from_mixed','cast_boolean_from_dynamic','cast_uint64_from_mixed','condition_truthy_string','condition_truthy_dynamic']}))
+    request.write_text(json.dumps({'package':'app.operators', 'roots':[], 'apis':['add_int64','equal_mixed','add_int64','divide_int64','less_float64','cast_uint64_from_string','cast_string_from_mixed','cast_boolean_from_dynamic','cast_uint64_from_mixed','condition_truthy_string','condition_truthy_dynamic','concat_text_float64']}))
     os.environ['SCPP_API_GENERATOR'] = str(sdk/'tools/scpp_api_generator')
     manifest = concrete_types.generate(request, stage/'app', sdk, [sdk], 'clang++', [])
     assert manifest['sources'] == []
-    assert all(x in manifest['apis'] for x in ['add_int64','equal_mixed','divide_int64','less_float64','cast_uint64_from_string','cast_string_from_mixed','cast_boolean_from_dynamic','cast_uint64_from_mixed','condition_truthy_string','condition_truthy_dynamic'])
+    assert all(x in manifest['apis'] for x in ['add_int64','equal_mixed','divide_int64','less_float64','cast_uint64_from_string','cast_string_from_mixed','cast_boolean_from_dynamic','cast_uint64_from_mixed','condition_truthy_string','condition_truthy_dynamic','concat_text_float64'])
     (stage/'main.cpp').write_text('''#include "scpp/operators/add_int64.hpp"
 #include "scpp/operators/equal_mixed.hpp"
 #include "scpp/operators/divide_int64.hpp"
@@ -42,6 +42,7 @@ with tempfile.TemporaryDirectory(prefix='scpp-operator-publication-') as directo
 #include "scpp/conversions/cast_uint64_from_mixed.hpp"
 #include "scpp/conditions/condition_truthy_string.hpp"
 #include "scpp/conditions/condition_truthy_dynamic.hpp"
+#include "scpp/text/concat_text_float64.hpp"
 int main() {
     scpp::mixed value(scpp::int64(7));
     return scpp::numeric_add(scpp::int64(3),scpp::int64(4)).native_value()==7
@@ -50,6 +51,7 @@ int main() {
         && scpp::cast_uint64(scpp::mixed(scpp::float64(9223372036854775808.0))).native_value()==9223372036854775808ULL
         && static_cast<bool>(scpp::condition_truthy(scpp::string("false")))
         && static_cast<bool>(scpp::condition_truthy(scpp::make_dynamic_container()))
+        && scpp::concat_text(scpp::float64(1.23456789)).equals("1.23457")
         && scpp::cast_string(value).equals("7")
         && static_cast<bool>(scpp::cast_boolean(scpp::dynamic(scpp::int64(1))))
         && scpp::cast_uint64(scpp::string("18446744073709551615")).native_value()==18446744073709551615ULL

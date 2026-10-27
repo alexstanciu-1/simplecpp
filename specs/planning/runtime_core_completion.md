@@ -332,3 +332,16 @@ emitter. Publication now rejects generated output-path collisions as well as API
 ownership collisions. B1 remains open: strict identity, context-specific text/concat,
 eager xor and presence/empty/reset consolidation are still pending. Carrier condition
 completion belongs to C; ownership/callable conditions remain in D/F.
+
+## Active-goal progress — B1b bounded plain-scalar concatenation text
+
+The same function-set mechanism now publishes 11 plain `concat_text` variants,
+with context-specific native formatting and owned string return transport. Primitive
+concatenation/append already exists on the public string and is reused, avoiding
+pair combinations. The bounded domain follows `expression_evaluation.md`: uint64,
+boxed values and carrier payloads are not added by this plain-scalar slice.
+
+Formatting differences from explicit casts, embedded bytes, lifetime, allocations
+and publication reuse are covered. Carrier text behavior remains C. B1 strict
+identity, eager xor, and presence/empty/reset consolidation remain open; source
+sequencing/write-back and full frontend adoption are not claimed by these APIs.

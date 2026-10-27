@@ -2738,6 +2738,64 @@
           ]
         }
       }
+    },
+    "concat_text": {
+      "variants": {
+        "int8": {
+          "operand": "scpp::int_t<__INT8_TYPE__>(value.native_value())"
+        },
+        "int16": {
+          "operand": "scpp::int_t<__INT16_TYPE__>(value.native_value())"
+        },
+        "int32": {
+          "operand": "scpp::int_t<__INT32_TYPE__>(value.native_value())"
+        },
+        "int64": {
+          "operand": "scpp::int_t<__INT64_TYPE__>(value.native_value())"
+        },
+        "uint8": {
+          "operand": "scpp::int_t<__UINT8_TYPE__>(value.native_value())"
+        },
+        "uint16": {
+          "operand": "scpp::int_t<__UINT16_TYPE__>(value.native_value())"
+        },
+        "uint32": {
+          "operand": "scpp::int_t<__UINT32_TYPE__>(value.native_value())"
+        },
+        "float64": {
+          "operand": "scpp::float_t(value.native_value())"
+        },
+        "boolean": {
+          "operand": "scpp::bool_t(value.native_value())"
+        },
+        "string": {
+          "operand": "${native:value}"
+        },
+        "null": {
+          "operand": "value"
+        }
+      },
+      "function": {
+        "namespace": "scpp",
+        "header": "scpp/text/concat_text_${variant}.hpp",
+        "source": "include/scpp/generated/public_concat_text_${variant}.cpp",
+        "operation": {
+          "name": "concat_text",
+          "returns": "string",
+          "parameters": [
+            {
+              "name": "value",
+              "type": "${variant}",
+              "passing": "const_ref"
+            }
+          ],
+          "expression": "scpp::php::to_string(${variant:operand})",
+          "transport": "native",
+          "includes": [
+            "lang/php/support/php_string.hpp"
+          ]
+        }
+      }
     }
   }
 }

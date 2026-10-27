@@ -411,3 +411,19 @@ The public surface does not expose arbitrary template conditions. Bare null,
 containers, ownership/callables and carrier specializations are not added by this
 slice; boxed null follows its native runtime dispatch. Existing mixed-table rejection
 and dynamic-object truthiness are preserved. Lazy evaluation remains compiler-owned.
+
+## Bounded concatenation text
+
+The `concat_text` function set publishes 11 admitted plain-source variants:
+int8/16/32/64, uint8/16/32, float64, boolean, string and null. Its shared recipe calls
+the existing PHP scalar text helper and uses native owned-string return transport.
+It is distinct from `cast_string`: float formatting is context-specific. Byte aliases
+resolve to uint8 before API selection. No uint64, boxed or carrier variant is
+silently admitted by this bounded plain-scalar set.
+
+After converting saved operands in source order, callers use the existing public
+string `operator+`, `operator+=` or append primitive. There are no operand-pair
+concat adapters. Compiler lowering owns left conversion before RHS evaluation,
+captured destination identity and once-only compound write-back; this runtime API
+accepts values already selected/evaluated by that process. Carrier text conversion
+remains in C. Existing boxed/display/interpolation contracts remain separate.

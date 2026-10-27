@@ -1,6 +1,6 @@
 {
   "abi": "529dd5502370f48d64891818e9439aae72831b990b4027e8abe25c50c1216c21",
-  "api_identity": "88c4579af65ca9d58e9a16c146364ba5da9136eee3ebe7e2528107f7b8862d02",
+  "api_identity": "2e23dd4a02f9772edb53c66897bd8fd82199b91b9b14f05bf1353c96b8b722fa",
   "apis": {
     "add_float64": {
       "header": "scpp/operators/add_float64.hpp",
@@ -2144,6 +2144,237 @@
         ]
       },
       "source": "include/scpp/generated/public_cast_uint8_from_uint64.cpp"
+    },
+    "concat_text_boolean": {
+      "header": "scpp/text/concat_text_boolean.hpp",
+      "namespace": "scpp",
+      "operation": {
+        "expression": "scpp::php::to_string(scpp::bool_t(value.native_value()))",
+        "includes": [
+          "lang/php/support/php_string.hpp"
+        ],
+        "name": "concat_text",
+        "parameters": [
+          {
+            "name": "value",
+            "passing": "const_ref",
+            "type": "boolean"
+          }
+        ],
+        "returns": "string",
+        "transport": "native"
+      },
+      "source": "include/scpp/generated/public_concat_text_boolean.cpp"
+    },
+    "concat_text_float64": {
+      "header": "scpp/text/concat_text_float64.hpp",
+      "namespace": "scpp",
+      "operation": {
+        "expression": "scpp::php::to_string(scpp::float_t(value.native_value()))",
+        "includes": [
+          "lang/php/support/php_string.hpp"
+        ],
+        "name": "concat_text",
+        "parameters": [
+          {
+            "name": "value",
+            "passing": "const_ref",
+            "type": "float64"
+          }
+        ],
+        "returns": "string",
+        "transport": "native"
+      },
+      "source": "include/scpp/generated/public_concat_text_float64.cpp"
+    },
+    "concat_text_int16": {
+      "header": "scpp/text/concat_text_int16.hpp",
+      "namespace": "scpp",
+      "operation": {
+        "expression": "scpp::php::to_string(scpp::int_t<__INT16_TYPE__>(value.native_value()))",
+        "includes": [
+          "lang/php/support/php_string.hpp"
+        ],
+        "name": "concat_text",
+        "parameters": [
+          {
+            "name": "value",
+            "passing": "const_ref",
+            "type": "int16"
+          }
+        ],
+        "returns": "string",
+        "transport": "native"
+      },
+      "source": "include/scpp/generated/public_concat_text_int16.cpp"
+    },
+    "concat_text_int32": {
+      "header": "scpp/text/concat_text_int32.hpp",
+      "namespace": "scpp",
+      "operation": {
+        "expression": "scpp::php::to_string(scpp::int_t<__INT32_TYPE__>(value.native_value()))",
+        "includes": [
+          "lang/php/support/php_string.hpp"
+        ],
+        "name": "concat_text",
+        "parameters": [
+          {
+            "name": "value",
+            "passing": "const_ref",
+            "type": "int32"
+          }
+        ],
+        "returns": "string",
+        "transport": "native"
+      },
+      "source": "include/scpp/generated/public_concat_text_int32.cpp"
+    },
+    "concat_text_int64": {
+      "header": "scpp/text/concat_text_int64.hpp",
+      "namespace": "scpp",
+      "operation": {
+        "expression": "scpp::php::to_string(scpp::int_t<__INT64_TYPE__>(value.native_value()))",
+        "includes": [
+          "lang/php/support/php_string.hpp"
+        ],
+        "name": "concat_text",
+        "parameters": [
+          {
+            "name": "value",
+            "passing": "const_ref",
+            "type": "int64"
+          }
+        ],
+        "returns": "string",
+        "transport": "native"
+      },
+      "source": "include/scpp/generated/public_concat_text_int64.cpp"
+    },
+    "concat_text_int8": {
+      "header": "scpp/text/concat_text_int8.hpp",
+      "namespace": "scpp",
+      "operation": {
+        "expression": "scpp::php::to_string(scpp::int_t<__INT8_TYPE__>(value.native_value()))",
+        "includes": [
+          "lang/php/support/php_string.hpp"
+        ],
+        "name": "concat_text",
+        "parameters": [
+          {
+            "name": "value",
+            "passing": "const_ref",
+            "type": "int8"
+          }
+        ],
+        "returns": "string",
+        "transport": "native"
+      },
+      "source": "include/scpp/generated/public_concat_text_int8.cpp"
+    },
+    "concat_text_null": {
+      "header": "scpp/text/concat_text_null.hpp",
+      "namespace": "scpp",
+      "operation": {
+        "expression": "scpp::php::to_string(value)",
+        "includes": [
+          "lang/php/support/php_string.hpp"
+        ],
+        "name": "concat_text",
+        "parameters": [
+          {
+            "name": "value",
+            "passing": "const_ref",
+            "type": "null"
+          }
+        ],
+        "returns": "string",
+        "transport": "native"
+      },
+      "source": "include/scpp/generated/public_concat_text_null.cpp"
+    },
+    "concat_text_string": {
+      "header": "scpp/text/concat_text_string.hpp",
+      "namespace": "scpp",
+      "operation": {
+        "expression": "scpp::php::to_string(${native:value})",
+        "includes": [
+          "lang/php/support/php_string.hpp"
+        ],
+        "name": "concat_text",
+        "parameters": [
+          {
+            "name": "value",
+            "passing": "const_ref",
+            "type": "string"
+          }
+        ],
+        "returns": "string",
+        "transport": "native"
+      },
+      "source": "include/scpp/generated/public_concat_text_string.cpp"
+    },
+    "concat_text_uint16": {
+      "header": "scpp/text/concat_text_uint16.hpp",
+      "namespace": "scpp",
+      "operation": {
+        "expression": "scpp::php::to_string(scpp::int_t<__UINT16_TYPE__>(value.native_value()))",
+        "includes": [
+          "lang/php/support/php_string.hpp"
+        ],
+        "name": "concat_text",
+        "parameters": [
+          {
+            "name": "value",
+            "passing": "const_ref",
+            "type": "uint16"
+          }
+        ],
+        "returns": "string",
+        "transport": "native"
+      },
+      "source": "include/scpp/generated/public_concat_text_uint16.cpp"
+    },
+    "concat_text_uint32": {
+      "header": "scpp/text/concat_text_uint32.hpp",
+      "namespace": "scpp",
+      "operation": {
+        "expression": "scpp::php::to_string(scpp::int_t<__UINT32_TYPE__>(value.native_value()))",
+        "includes": [
+          "lang/php/support/php_string.hpp"
+        ],
+        "name": "concat_text",
+        "parameters": [
+          {
+            "name": "value",
+            "passing": "const_ref",
+            "type": "uint32"
+          }
+        ],
+        "returns": "string",
+        "transport": "native"
+      },
+      "source": "include/scpp/generated/public_concat_text_uint32.cpp"
+    },
+    "concat_text_uint8": {
+      "header": "scpp/text/concat_text_uint8.hpp",
+      "namespace": "scpp",
+      "operation": {
+        "expression": "scpp::php::to_string(scpp::int_t<__UINT8_TYPE__>(value.native_value()))",
+        "includes": [
+          "lang/php/support/php_string.hpp"
+        ],
+        "name": "concat_text",
+        "parameters": [
+          {
+            "name": "value",
+            "passing": "const_ref",
+            "type": "uint8"
+          }
+        ],
+        "returns": "string",
+        "transport": "native"
+      },
+      "source": "include/scpp/generated/public_concat_text_uint8.cpp"
     },
     "condition_truthy_boolean": {
       "header": "scpp/conditions/condition_truthy_boolean.hpp",
@@ -5660,7 +5891,40 @@
     "include/scpp/conditions/condition_truthy_string.hpp",
     "public/scpp/conditions/condition_truthy_error_value.hpp",
     "include/scpp/generated/public_condition_truthy_error_value.cpp",
-    "include/scpp/conditions/condition_truthy_error_value.hpp"
+    "include/scpp/conditions/condition_truthy_error_value.hpp",
+    "public/scpp/text/concat_text_int8.hpp",
+    "include/scpp/generated/public_concat_text_int8.cpp",
+    "include/scpp/text/concat_text_int8.hpp",
+    "public/scpp/text/concat_text_int16.hpp",
+    "include/scpp/generated/public_concat_text_int16.cpp",
+    "include/scpp/text/concat_text_int16.hpp",
+    "public/scpp/text/concat_text_int32.hpp",
+    "include/scpp/generated/public_concat_text_int32.cpp",
+    "include/scpp/text/concat_text_int32.hpp",
+    "public/scpp/text/concat_text_int64.hpp",
+    "include/scpp/generated/public_concat_text_int64.cpp",
+    "include/scpp/text/concat_text_int64.hpp",
+    "public/scpp/text/concat_text_uint8.hpp",
+    "include/scpp/generated/public_concat_text_uint8.cpp",
+    "include/scpp/text/concat_text_uint8.hpp",
+    "public/scpp/text/concat_text_uint16.hpp",
+    "include/scpp/generated/public_concat_text_uint16.cpp",
+    "include/scpp/text/concat_text_uint16.hpp",
+    "public/scpp/text/concat_text_uint32.hpp",
+    "include/scpp/generated/public_concat_text_uint32.cpp",
+    "include/scpp/text/concat_text_uint32.hpp",
+    "public/scpp/text/concat_text_float64.hpp",
+    "include/scpp/generated/public_concat_text_float64.cpp",
+    "include/scpp/text/concat_text_float64.hpp",
+    "public/scpp/text/concat_text_boolean.hpp",
+    "include/scpp/generated/public_concat_text_boolean.cpp",
+    "include/scpp/text/concat_text_boolean.hpp",
+    "public/scpp/text/concat_text_string.hpp",
+    "include/scpp/generated/public_concat_text_string.cpp",
+    "include/scpp/text/concat_text_string.hpp",
+    "public/scpp/text/concat_text_null.hpp",
+    "include/scpp/generated/public_concat_text_null.cpp",
+    "include/scpp/text/concat_text_null.hpp"
   ],
   "generator": "metadata-api-v1",
   "leaves": {
@@ -5981,6 +6245,17 @@
     "scpp/operators/subtract_uint8.hpp": "314e51f6a95bd32595a3e853576d82c7f990526bc0e7aed73ba9d087d32e3826",
     "scpp/result_vector_string.hpp": "162978d31bfb719e2b8bbb0b6d57162bacd0b53a30f92af1eef7c50b9af0f71e",
     "scpp/string.hpp": "aac6ff447c6c1135f22cbc12cb0a419c8079df28826de70f0170a07690ec2b69",
+    "scpp/text/concat_text_boolean.hpp": "cf8fb9b3c1d634620f2aede468c05c115284dfbbd51d6047dfa2934408f8f7dc",
+    "scpp/text/concat_text_float64.hpp": "489c5b8553ddaef8424b2a77f2429ed175312252affc0052c35d5bdeb28f3b39",
+    "scpp/text/concat_text_int16.hpp": "3d467b734aec8858027625989183b5b69d6068c3627eb51bae1b3d6704cab376",
+    "scpp/text/concat_text_int32.hpp": "454ccf2116b0fd7bc896f7de27aea9dc42aa9029ed1cbdb20bfc65b44fe3750e",
+    "scpp/text/concat_text_int64.hpp": "1362762b4c4eb7cfcf7f3fd1eab02ebd13eec02e3282a19f9a90e7f738522448",
+    "scpp/text/concat_text_int8.hpp": "097730f80d72b1ae9114080aea96b14ccdf9dbe6ebe396266dba74a242ce17b1",
+    "scpp/text/concat_text_null.hpp": "67b5fb41ee09ae81a76085c484402bc932af13cab42643a94830e26ae816bd4f",
+    "scpp/text/concat_text_string.hpp": "53ff400864bf2decef9e2289a5f2d782e5182ebf263a7212023a85168d75075e",
+    "scpp/text/concat_text_uint16.hpp": "8a1f174bbbe6e7371f7426c374f424033fa7e11b5f7ebf2f48f518d7296f4a55",
+    "scpp/text/concat_text_uint32.hpp": "007baf32ef8ffe91e48447a9b61495617ea6b20158d91e92863540100e82e55d",
+    "scpp/text/concat_text_uint8.hpp": "4c7f008e87298a13f0551bba08daaa0b132d346ae96aa9350f1cb43e53b0ddee",
     "scpp/vector_string.hpp": "cb7a5b60004cebc25e567c0f4bea93dfdfd6e65fdd3e1b4860ef0f08636f93c2"
   },
   "sources": [
@@ -6183,7 +6458,18 @@
     "include/scpp/generated/public_condition_truthy_dynamic.cpp",
     "include/scpp/generated/public_condition_truthy_boolean.cpp",
     "include/scpp/generated/public_condition_truthy_string.cpp",
-    "include/scpp/generated/public_condition_truthy_error_value.cpp"
+    "include/scpp/generated/public_condition_truthy_error_value.cpp",
+    "include/scpp/generated/public_concat_text_int8.cpp",
+    "include/scpp/generated/public_concat_text_int16.cpp",
+    "include/scpp/generated/public_concat_text_int32.cpp",
+    "include/scpp/generated/public_concat_text_int64.cpp",
+    "include/scpp/generated/public_concat_text_uint8.cpp",
+    "include/scpp/generated/public_concat_text_uint16.cpp",
+    "include/scpp/generated/public_concat_text_uint32.cpp",
+    "include/scpp/generated/public_concat_text_float64.cpp",
+    "include/scpp/generated/public_concat_text_boolean.cpp",
+    "include/scpp/generated/public_concat_text_string.cpp",
+    "include/scpp/generated/public_concat_text_null.cpp"
   ],
   "types": {
     "dynamic": {

@@ -376,3 +376,9 @@ target_link_libraries(test_public_conditions PRIVATE scpp_core_api)
 add_test(NAME scpp_test_public_conditions COMMAND test_public_conditions)
 add_test(NAME scpp_check_function_sets COMMAND ${Python3_EXECUTABLE}
   ${CMAKE_CURRENT_SOURCE_DIR}/check_function_sets.py $<TARGET_FILE:scpp_api_generator>)
+
+add_executable(test_public_text test_public_text.cpp)
+target_link_libraries(test_public_text PRIVATE scpp_core_api)
+add_test(NAME scpp_test_public_text COMMAND test_public_text)
+add_test(NAME scpp_check_text_api COMMAND ${Python3_EXECUTABLE}
+  ${CMAKE_CURRENT_SOURCE_DIR}/check_text_api.py $<TARGET_FILE:scpp_api_generator>)

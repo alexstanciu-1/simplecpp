@@ -212,6 +212,17 @@
     "condition_truthy_dynamic",
     "condition_truthy_boolean",
     "condition_truthy_string",
-    "condition_truthy_error_value"
+    "condition_truthy_error_value",
+    "concat_text_int8",
+    "concat_text_int16",
+    "concat_text_int32",
+    "concat_text_int64",
+    "concat_text_uint8",
+    "concat_text_uint16",
+    "concat_text_uint32",
+    "concat_text_float64",
+    "concat_text_boolean",
+    "concat_text_string",
+    "concat_text_null"
   ]
 }

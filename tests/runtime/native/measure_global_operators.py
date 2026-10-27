@@ -14,6 +14,7 @@ parser.add_argument('--conversions', action='store_true', help='Measure checked 
 parser.add_argument('--boxed-conversions', action='store_true', help='Measure owned string and boxed boolean casts')
 parser.add_argument('--boxed-integers', action='store_true', help='Measure fixed-width casts preserving boxed payload origins')
 parser.add_argument('--conditions', action='store_true', help='Measure condition observations independently of explicit casts')
+parser.add_argument('--text', action='store_true', help='Measure bounded text conversion plus primitive string concatenation')
 args = parser.parse_args()
 public = '''#include "scpp/operators/add_int64.hpp"
 #include "scpp/operators/equal_mixed.hpp"
@@ -39,6 +40,9 @@ if args.boxed_integers:
 if args.conditions:
     public = '#include "scpp/conditions/condition_truthy_string.hpp"\n#include "scpp/conditions/condition_truthy_dynamic.hpp"\nscpp::boolean text(const scpp::string &s) { return scpp::condition_truthy(s); }\nscpp::boolean boxed(const scpp::dynamic &d) { return scpp::condition_truthy(d); }\n'
     native = '#include "operators/conditional/condition_truthiness.hpp"\nscpp::bool_t text(const scpp::string_t &s) { return scpp::condition_truthy(s); }\nscpp::bool_t boxed(const scpp::detail::dynamic_value &d) { return scpp::condition_truthy(d); }\n'
+if args.text:
+    public = '#include "scpp/text/concat_text_float64.hpp"\nscpp::string text(const scpp::string &s, const scpp::float64 &f) { return s+scpp::concat_text(f); }\n'
+    native = '#include "lang/php/support/php_string.hpp"\n#include "scpp/generated/operators.hpp"\nscpp::string_t text(const scpp::string_t &s, const scpp::float_t &f) { return s+scpp::php::to_string(f); }\n'
 rows = []
 with tempfile.TemporaryDirectory(prefix='scpp-operator-cost-') as directory:
     stage = Path(directory)
@@ -50,6 +54,7 @@ with tempfile.TemporaryDirectory(prefix='scpp-operator-cost-') as directory:
     if args.boxed_conversions: adapters = ['cast_string_from_mixed']
     if args.boxed_integers: adapters = ['cast_uint64_from_mixed']
     if args.conditions: adapters = ['condition_truthy_dynamic']
+    if args.text: adapters = ['concat_text_float64']
     cases += [(f'adapter_{identity}', root/f'runtime/include/scpp/generated/public_{identity}.cpp', ['public','include']) for identity in adapters]
     for name, path, includes in cases:
         command = [args.compiler, '-std=c++23', '-O2', *['-I'+str(root/'runtime'/i) for i in includes]]
