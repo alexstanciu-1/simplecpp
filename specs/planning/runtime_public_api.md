@@ -181,6 +181,20 @@ Before generating a demanded specialization or operation:
 4. Reject conflicting name claims, duplicate definition ownership and incompatible
    representation/build identities. Do not silently select a different definition.
 
+### Approved API completeness and core linkage — 2026-10-27
+
+For each selected concrete type, publish its complete supported ordinary API,
+including its supported construction, lifecycle, access, mutation and iteration
+operations, rather than only the methods the runtime itself happens to call.
+Operations requiring additional types are generated when demanded. This does not
+add operations forbidden by the owning contracts or eagerly enumerate all type pairs.
+
+The new public API always permits a runtime-core link requirement, including when
+optional modules are disabled. Preserve the existing disabled-module errors. Retain
+header-only behavior only for legacy compatibility consumers during migration.
+Task-specific disabled policy and diagnostic arguments remain owned by tasks; core
+supplies general compiled error machinery and must not acquire task-module policy.
+
 Template freedom applies to the complete operation surface: constructors,
 destructors, indexing, iteration, conversions, callbacks and returned wrappers,
 not merely class declarations. Implementations may instantiate templates privately.
@@ -223,12 +237,12 @@ and compilation units. Measure both instead of assuming one implies the other.
 
 ## Errors and callbacks need explicit choices
 
-The current disabled task API is header-only and includes the full exception
-implementation. Recommendation: the normal public API links core even when tasks
-is disabled, with the same failure emitted by compiled core code and no tasks
-library requirement. Keep the old no-link fallback in the compatibility surface
-until a deliberate compatibility decision retires it. This linking change needs
-approval in its implementation slice; do not silently weaken the failure contract.
+The new disabled task API links core and calls its general compiled error machinery
+from a small task-owned adapter. It requires no tasks implementation library.
+The task adapter owns the disabled-module condition and diagnostic arguments;
+core only constructs and throws the requested runtime error. The legacy template
+API retains its no-link fallback during migration. This linking decision is approved;
+error inspection remains part of the subsequent string/error API slice.
 
 Callbacks should have concrete signatures and retain their required lifetime.
 Evaluate a narrow typed callback/callable representation using existing runtime
