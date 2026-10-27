@@ -1960,3 +1960,27 @@ The final guard-only generator rebuild costs 6.23s release / 15.85s sanitized.
 The final sanitizer text check passes in 15.14s after the rebuilt executable is
 available. Together with the five passing focused regressions and the compiled
 sanitized consumer, this verifies the completed slice; no failing check remains.
+
+## C18 — carrier compound text destinations
+
+Extended the shared ordered compound owner with explicit carrier payload-target
+admission and existing payload reconstruction for write-back. Both carrier string
+destinations and plain string with carrier RHS reuse binary text conversions. Names
+propagate through the common resolver. No runtime implementation units changed and
+no runtime-core rebuild was needed; publication identity was refreshed.
+
+The nine-unit public text proof passes in release and ASan/UBSan with leak detection.
+It includes the four string carriers, absence/false/true-to-payload replacement,
+returned destination snapshots, RHS alias mutation after left conversion, one-time
+member selection, left-error suppression of RHS work, failed RHS conversion and a
+thrown RHS effect after destination mutation. These are public-library consumer
+proofs; general frontend owner retention and indexed destinations are not claimed.
+Short-value successful paths allocate zero, and sealed application reuse passes.
+
+Compile-only totals: storage 11.5412s release / 14.4576s sanitized; public caller
+0.4876s / 0.7673s. Release generator builds took 6.40s initially and 5.88s after a
+local rule-selection correction preserving existing plain-operand diagnostics;
+sanitized generator build took 20.11s. Six focused regressions pass in 12.21s /
+71.10s. An initial negative metadata test encountered the earlier snapshot-mode
+validator; it was adjusted to remove the setting and directly exercise the new
+required-snapshot rule. Timings are single runs with overlapping checks.

@@ -3250,6 +3250,9 @@
             ],
             "writeback_source": "string"
           }
+        ],
+        "carrier_targets": [
+          "string"
         ]
       }
     },

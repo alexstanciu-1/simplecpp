@@ -443,3 +443,13 @@ selection, with explicit metadata reuse of empty-string absent/sentinel exceptio
 True bool payload and true sentinel remain distinct. Both operands retain ordered
 conversion/failure behavior. This covers the bounded canonical carrier payloads;
 carrier compound text write-back remains pending and is not implied by this slice.
+
+
+### Carrier compound text implementation checkpoint
+
+String-carrier `.=` now follows the ordinary capture/converted-snapshot/calculate/
+write-back protocol through explicit metadata admission. Successful write-back
+constructs a payload in the existing carrier; absence and sentinels are not propagated.
+The result is a snapshot of the destination type. Public execution checks preserve
+aliasing order and RHS effects on failure. No indexed or numeric compound permission
+is inferred from this text-only policy.

@@ -1083,3 +1083,25 @@ its payload formatting uses concat_text, while absent/sentinel states reuse thei
 empty-string result. Boxed peers, uint64, fixed-width carrier payloads and nested
 carriers are not admitted by this policy. Compound write-back remains separately
 specified and is not inferred from binary conversion support.
+
+
+### Carrier compound destinations
+
+A compound registry entry may declare `carrier_targets`, listing admitted stored
+payload identities. This requires the binary operation's carrier operand policy
+and converted-left snapshot mode. It does not admit arbitrary numeric compounds or
+infer write-back from an available cast. Plain rules are still selected first.
+
+For an admitted carrier destination, the planner selects its single payload
+reconstruction recipe for `construct_payload` write-back. Non-value state
+reconstruction is intentionally not used: successful text replacement stores the
+calculated string as a value even when the old destination was absent or a sentinel.
+A plain admitted destination with a carrier RHS uses the same binary conversions
+and ordinary write-back. Compound requests now propagate prepared naming bindings
+through the same naming owner as binary/conversion requests.
+
+Both paths reuse the existing ordered compound protocol: capture destination and
+retain owners, snapshot converted left, evaluate/convert RHS, calculate, construct
+write-back, commit, return a snapshot of the destination type. Failures before
+commit perform no compound write-back and preserve earlier RHS side effects. The
+public-library proof does not replace frontend destination/owner preparation.

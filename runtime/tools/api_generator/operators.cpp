@@ -183,9 +183,14 @@ namespace scpp::api_generation
             if (compounds.type != value::kind::object) throw std::runtime_error("Compound registry requires an object");
             for (const auto &[name, compound] : compounds.fields) {
                 authored_name(name);
-                fields_only(compound, "operation rules", "compound operation");
+                fields_only(compound, "operation rules carrier_targets", "compound operation");
                 const auto &operation = registry.at("operations").at(compound.at("operation").text());
                 if (operation.get("form", "binary") != "binary") throw std::runtime_error("Compound calculation must be binary");
+                if (compound.has("carrier_targets")) {
+                    if (!operation.has("carrier_operands") || operation.get("compound_left_snapshot")!="converted")
+                        throw std::runtime_error("Carrier compound requires converted operand snapshots");
+                    for (const auto &target : domains(compound.at("carrier_targets"))) registry.at("types").at(target);
+                }
                 if (compound.at("rules").type != value::kind::array || compound.at("rules").items.empty())
                     throw std::runtime_error("Compound rules require a nonempty array");
                 std::set<std::pair<std::string, std::string>> pairs;
@@ -647,7 +652,7 @@ namespace scpp::api_generation
         return out;
     }
 
-    value resolve_compound(const value &metadata, const value &request)
+    value resolve_compound(const value &metadata, const value &request, const value &names)
     {
         fields_only(request, "operation target right", "compound request");
         const auto &registry = validated_registry(metadata);
@@ -656,10 +661,42 @@ namespace scpp::api_generation
         const value *selected_rule = nullptr;
         for (const auto &rule : compound.at("rules").items)
             if (rule.at("target").text() == target && contains(rule.at("right"), right)) selected_rule = &rule;
+        value carrier_rule = value::object(), carrier_writeback;
+        if (!selected_rule && compound.has("carrier_targets")
+            && (!registry.at("types").has(target) || !registry.at("types").has(right))) {
+            naming types(metadata_naming_registry(metadata, metadata.at("types"), names));
+            const auto canonical = types.resolve(target).first;
+            auto storage = canonical;
+            value destination;
+            if (!registry.at("types").has(canonical)) {
+                destination = project_carrier(metadata, canonical, names);
+                if (destination.type!=value::kind::null) storage = destination.at("target").text();
+            }
+            if (!contains(compound.at("carrier_targets"), storage))
+                throw std::runtime_error("Unsupported compound destination payload");
+            carrier_rule["writeback_source"] = storage;
+            if (destination.type!=value::kind::null) {
+                require_carrier_payload(destination);
+                if (!destination.has("states")) throw std::runtime_error("Carrier write-back requires state descriptions");
+                unsigned constructors = 0;
+                for (const auto &state : destination.at("states").items) {
+                    if (!state.has("reconstruct") || state.at("reconstruct").get("kind")!="payload") continue;
+                    auto expression = state.at("reconstruct").at("expression").text();
+                    expression.replace(expression.find("${target}"), std::string("${target}").size(), destination.at("cpp").text());
+                    carrier_writeback = value::object(); carrier_writeback["kind"] = "construct_payload";
+                    carrier_writeback["expression"] = expression; carrier_writeback["header"] = destination.at("header");
+                    carrier_writeback["source"] = storage; carrier_writeback["target"] = canonical;
+                    ++constructors;
+                }
+                if (constructors!=1) throw std::runtime_error("Carrier write-back requires one payload construction");
+            }
+            selected_rule = &carrier_rule;
+        }
         if (!selected_rule) throw std::runtime_error("Unsupported compound operands");
         value calculation = value::object();
         calculation["operation"] = compound.at("operation"); calculation["left"] = target; calculation["right"] = right;
-        const auto plan = resolve_operator(metadata, calculation);
+        const auto binary = resolve_operator(metadata, calculation, names);
+        const auto &plan = binary.get("kind")=="converted_carrier_binary" ? binary.at("calculation") : binary;
         // A differing result needs explicit admission; an available conversion
         // alone cannot authorize narrowing or replacement of the destination kind.
         const auto writeback_source = selected_rule->get("writeback_source", target);
@@ -668,9 +705,10 @@ namespace scpp::api_generation
         value out = value::object();
         out["operation"] = name; out["target"] = target; out["right"] = right; out["result_type"] = target;
         out["kind"] = "ordered_compound"; out["calculation"] = plan;
-        out["left_conversion"] = plan.at("left_conversion");
-        out["right_conversion"] = plan.at("right_conversion");
-        out["writeback_conversion"] = operand_conversion(metadata, plan.at("result_type").text(), target);
+        out["left_conversion"] = binary.at("left_conversion");
+        out["right_conversion"] = binary.at("right_conversion");
+        out["writeback_conversion"] = carrier_writeback.type!=value::kind::null
+            ? carrier_writeback : operand_conversion(metadata, plan.at("result_type").text(), target);
         if (selected_rule->has("writeback_function_set")) {
             const auto identity = selected_rule->at("writeback_function_set").text() + "_" + target;
             const auto functions = expand_function_sets(metadata);

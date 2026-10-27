@@ -1120,3 +1120,24 @@ nested carriers and containers, and validate the selected normalization target.
 This is binary text completion for that bounded domain, not carrier .= completion.
 Compound/update/lazy protocols, wider ordering, scoped observations and the pending
 formation-boundary decision remain before the first complete carrier review.
+
+
+## C18 — bounded carrier compound text replacement
+
+The shared compound planner now accepts the four string-carrier destinations and
+plain string with an admitted carrier RHS, using explicit `carrier_targets` metadata.
+It reuses binary operand conversions, the destination's existing payload construction
+recipe and the ordinary ordered compound stages. No family-pair code is generated.
+Success replaces absence/sentinel states with a string payload and returns a snapshot
+of the destination type; it does not preserve a non-value state through write-back.
+
+The public proof now has nine application units. It covers all four destinations,
+plain string/carrier RHS, aliased RHS mutation after saved left conversion, returned
+snapshot independence, one-time member selection, failed left conversion, failed RHS
+conversion and thrown RHS work after mutating the destination. Failed compound
+execution preserves prior source effects without committing a calculated value.
+All 336 runtime generated units remain unchanged; runtime-core needs no rebuild.
+
+This completes the bounded binary/compound text plan paths exercised here, not full
+frontend adoption or indexed extension. Numeric carrier compound/update and other
+remaining protocols, scoped observations and the formation decision remain open.

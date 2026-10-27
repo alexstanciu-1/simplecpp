@@ -22,11 +22,12 @@ metadata=concrete_types.metadata(root/'runtime')
 families=['nullable','result','result_or_false','result_or_bool']
 names={f+'<boolean>':'text_boolean_'+str(i) for i,f in enumerate(families)}
 names.update({'nullable<float64>':'optional_float','result<string>':'result_text'})
+for i,f in enumerate(families): names.setdefault(f+'<string>','text_string_'+str(i))
 request={'package':'application.carrier_text','roots':list(names),'names':names}
 
-def resolve(left,right,meta=metadata,error=None):
+def resolve(left,right,meta=metadata,error=None,compound=False):
     p=subprocess.run([str(args.tool)],input=json.dumps({'metadata':meta,'names':names,
-        'action':'resolve_operator','request':{'operation':'concat','left':left,'right':right}}),text=True,capture_output=True)
+        'action':'resolve_compound' if compound else 'resolve_operator','request':{'operation':'concat_assign' if compound else 'concat','target' if compound else 'left':left,'right':right}}),text=True,capture_output=True)
     if error:
         assert p.returncode and error in p.stderr,p.stderr
         return
@@ -99,6 +100,59 @@ result_left=emit('result<boolean>','string');result_right=emit('string','result<
 float_join=emit('nullable<float64>','string');bytes_join=emit('result<string>','string')
 cross_join=emit('result_or_bool<boolean>','nullable<boolean>')
 headers.add('scpp/text/concat_text_float64.hpp')
+
+compound_checks=[];compound_failures=[]
+for family in families:
+    target=family+'<string>'
+    for right in ['string','null','int8','nullable<boolean>','result_or_bool<float64>']:
+        p=resolve(target,right,compound=True)
+        assert p['kind']=='ordered_compound' and p['result_type']==target
+        assert p['writeback_conversion']['kind']=='construct_payload'
+        assert p['steps']==['capture_destination_and_retain_owners','snapshot_converted_left','evaluate_right','convert_right','calculate','convert_writeback','commit_destination','return_value_snapshot']
+    for invalid in ['uint64','mixed','dynamic','nullable<int8>','nullable<nullable<string>>']:
+        resolve(target,invalid,compound=True,error='Unsupported carrier conversion')
+    resolve(family+'<boolean>','string',compound=True,error='Unsupported compound destination payload')
+plain=resolve('string','nullable<boolean>',compound=True)
+assert plain['writeback_conversion']['kind']=='identity'
+changed=copy.deepcopy(metadata);del changed['global_operators']['operations']['concat']['compound_left_snapshot']
+resolve('nullable<string>','string',changed,'requires converted operand snapshots',True)
+changed=copy.deepcopy(metadata)
+del changed['families']['nullable']['carrier']['states'][0]['reconstruct']
+resolve('nullable<string>','string',changed,'requires one payload construction',True)
+
+def emit_compound(target,right):
+    p=resolve(target,right,compound=True);name='update_'+str(len(functions))
+    cpp=lambda t:'scpp::'+names[t] if t in names else metadata['types'][t]['cpp']
+    for t in [target,right]: headers.add('scpp/'+names[t]+'.hpp' if t in names else metadata['types'][t]['header'])
+    headers.add(p['calculation']['header'])
+    a=convert(p['left_conversion'],'(*captured)');b=convert(p['right_conversion'],'right')
+    writeback=p['writeback_conversion']
+    if writeback['kind']=='construct_payload':
+        headers.add(writeback['header']);expression=writeback['expression'].replace('${value}','calculated')
+    else:assert writeback['kind']=='identity';expression='calculated'
+    body='auto *captured=&destination; const auto left_text='+a+'; ++effects; if (mutate) *captured=scpp::string("rhs"); if (fail) throw 17; const auto right_text='+b+'; const auto calculated='+p['calculation']['function']+'(left_text,right_text); const auto prepared='+expression+'; *captured=prepared; return *captured;'
+    functions.append('static '+cpp(target)+' '+name+'('+cpp(target)+' &destination, const '+cpp(right)+' &right, int &effects, bool mutate=false, bool fail=false) { '+body+' }')
+    return name
+
+for family in families:
+    target=family+'<string>';cpp='scpp::'+names[target]
+    fn=emit_compound(target,'string');alias=emit_compound(target,target)
+    rhs_failure=emit_compound(target,'result<boolean>')
+    if family=='nullable': property_update=fn
+    compound_checks += [f'{{ {cpp} destination(string("old")); int effects=0; auto result={fn}(destination,string("!"),effects); CHECK(effects==1 && destination.value().equals("old!") && result.value().equals("old!")); destination=string("later"); CHECK(result.value().equals("old!")); }}',
+                        f'{{ {cpp} destination(string("old")); int effects=0; auto result={alias}(destination,destination,effects,true); CHECK(effects==1 && result.value().equals("oldrhs") && destination.value().equals("oldrhs")); }}']
+    if family!='result':
+        initial=cpp+'()' if family=='nullable' else cpp+'::from_false()'
+        compound_checks.append(f'{{ auto destination={initial}; int effects=0; auto result={fn}(destination,string("new"),effects); CHECK(effects==1 && result.value().equals("new") && destination.has_value()); }}')
+        if family=='result_or_bool':compound_checks.append(f'{{ auto destination={cpp}::from_true(); int effects=0; (void){fn}(destination,string("new"),effects); CHECK(effects==1 && destination.has_value() && destination.value().equals("new")); }}')
+    compound_failures += [f'{{ {cpp} destination(string("old")); int effects=0; bool caught=false; try {{ (void){rhs_failure}(destination,failed,effects); }} catch (...) {{ caught=true; }} CHECK(caught && effects==1 && destination.value().equals("old")); }}',
+                         f'{{ {cpp} destination(string("old")); int effects=0; bool caught=false; try {{ (void){fn}(destination,string("unused"),effects,true,true); }} catch (...) {{ caught=true; }} CHECK(caught && effects==1 && destination.value().equals("rhs")); }}']
+    if family=='result':compound_failures.append(f'{{ {cpp} destination(error_value::make(string("failure"))); int effects=0; bool caught=false; try {{ (void){fn}(destination,string("later"),effects); }} catch (...) {{ caught=true; }} CHECK(caught && effects==0 && destination.has_error()); }}')
+plain_update=emit_compound('string','result_or_bool<boolean>')
+compound_checks.append(f'{{ string destination("a"); int effects=0; CHECK({plain_update}(destination,text_boolean_3(boolean(true)),effects).equals("a1") && destination.equals("a1") && effects==1); }}')
+compound_checks.append(f'{{ struct holder {{ text_string_0 value{{string("member")}}; int captures=0; text_string_0 &select() {{ ++this->captures; return this->value; }} }} owner; int effects=0; auto result={property_update}(owner.select(),string("!"),effects); CHECK(owner.captures==1 && effects==1 && owner.value.value().equals("member!") && result.value().equals("member!")); }}')
+print('PASS: compound carrier destination policy, payload construction, named bindings and rejected write-back widening')
+
 if not args.core:sys.exit(0)
 with tempfile.TemporaryDirectory(prefix='scpp-carrier-text-') as directory:
     work=Path(directory);sdk=work/'sdk';app=work/'app'
@@ -108,7 +162,7 @@ with tempfile.TemporaryDirectory(prefix='scpp-carrier-text-') as directory:
     seal_package(sdk,['core']);os.environ['SCPP_API_GENERATOR']=str(sdk/'tools/scpp_api_generator')
     request_file=work/'request.json';request_file.write_text(json.dumps(request))
     manifest=concrete_types.generate(request_file,app,sdk,[sdk],'clang++',[])
-    assert len(manifest['sources'])==6
+    assert len(manifest['sources'])==9
     code='\n'.join('#include "'+h+'"' for h in sorted(headers))+r'''
 #include "public_api_guard.hpp"
 #include <cstdlib>
@@ -120,7 +174,7 @@ void operator delete(void *p) noexcept { std::free(p); }
 void operator delete(void *p,__SIZE_TYPE__) noexcept { std::free(p); }
 #define CHECK(x) do { if(!(x)) { std::fprintf(stderr,"failed line %d\n",__LINE__);std::abort(); } } while(false)
 '''
-    code+='\n'.join(functions)+'\nint main() { using namespace scpp; int effects=0; const int before=allocations;\n'+'\n'.join(checks)
+    code+='\n'.join(functions)+'\nint main() { using namespace scpp; int effects=0; const int before=allocations;\n'+'\n'.join(checks+compound_checks)
     code+=f'''
 CHECK({cross_join}(text_boolean_3::from_true(),text_boolean_0(boolean(true)),effects).equals("1"));
 const char raw[]={{'a',0,'b',char(0xc3),char(0xa9)}};
@@ -139,9 +193,11 @@ CHECK(rejected && effects==0 && failed.has_error());
 effects=0;rejected=false;string destination("old");
 try {{ destination={result_right}(string("earlier"),failed,effects); }} catch (...) {{ rejected=true; }}
 CHECK(rejected && effects==1 && destination.equals("old") && failed.has_error());
+COMPOUND_FAILURES
 std::puts("PASS: carrier text states, formatting, binary bytes and ordered failures; short success allocations=0");
 }}
 '''
+    code=code.replace('COMPOUND_FAILURES','\n'.join(compound_failures))
     caller=work/'caller.cpp';caller.write_text(code)
     flags=['-std=c++23','-O1']
     if args.sanitize:flags+=['-fsanitize=address,undefined','-fno-omit-frame-pointer']
