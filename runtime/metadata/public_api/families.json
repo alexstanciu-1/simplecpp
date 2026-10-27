@@ -3166,7 +3166,7 @@
     ],
     "requires_capabilities": {
       "T": [
-        "copy_storage"
+        "copy_construct_storage"
       ]
     },
     "classes": [
@@ -3400,6 +3400,77 @@
             "uses": [
               "dynamic"
             ]
+          }
+        ]
+      }
+    ]
+  },
+  "initializer_entry": {
+    "parameters": [
+      "V",
+      "K"
+    ],
+    "defaults": [
+      "string"
+    ],
+    "native": "scpp::initializer_entry<${public:V}, ${public:K}>",
+    "includes": [
+      "scpp/data_initializer_input.hpp"
+    ],
+    "requires_capabilities": {
+      "V": [
+        "copy_construct_storage"
+      ],
+      "K": [
+        "copy_construct_storage"
+      ]
+    },
+    "capabilities": [
+      "copy_construct_storage"
+    ],
+    "classes": [
+      {
+        "id": "self",
+        "name": "${name}",
+        "native": "${native_type}",
+        "lifecycle": {
+          "default": "disabled",
+          "copy": "native",
+          "move": "native",
+          "copy_assignment": "disabled",
+          "move_assignment": "disabled",
+          "destroy": "native"
+        },
+        "methods": [
+          {
+            "kind": "constructor",
+            "parameters": [
+              {
+                "name": "key",
+                "type": "K",
+                "passing": "const_ref"
+              },
+              {
+                "name": "value",
+                "type": "V",
+                "passing": "const_ref"
+              }
+            ],
+            "expression": "key, value"
+          },
+          {
+            "name": "key",
+            "returns": "K",
+            "const": true,
+            "parameters": [],
+            "expression": "(${self}.key)"
+          },
+          {
+            "name": "value",
+            "returns": "V",
+            "const": true,
+            "parameters": [],
+            "expression": "(${self}.value)"
           }
         ]
       }

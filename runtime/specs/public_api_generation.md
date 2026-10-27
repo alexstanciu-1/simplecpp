@@ -1557,3 +1557,28 @@ Application middleware demands typed factories through the same recipes, names,
 probes and sealed reuse mechanism. These are lowering-support identities, not new
 source-visible initialization interfaces. Keyed factories and source non-escape
 checks remain separate work.
+
+### Construction-only storage and assignment overrides
+
+Physical capability recipes may declare an `implies` array of registered capability
+identities. Selection follows these directed implications; declarations/publication
+retain their original explicit facts. Unknown targets, duplicates, malformed arrays
+and cycles reject. Graph validation belongs to the capability owner and runs before
+type resolution. Implication traversal is iterative. Required native trait checks
+still run; implications do not turn physical facts into source-language eligibility.
+
+`copy_storage` implies the new `copy_construct_storage`. The latter checks only
+copy construction, so owning initializer buffers can hold immutable entry values
+without claiming assignment. Buffers still reject inputs lacking copy construction.
+
+Lifecycle `copy`/`move` keep their existing shorthand meaning. Optional
+`copy_assignment`/`move_assignment` rules override only assignment; they accept the
+same native/disabled/capability-conditional forms. Emission and target probes check
+construction and assignment independently. With no override, old output is unchanged.
+
+`initializer_entry<V,K=string>` uses the native const-field record, exposes owned
+key()/value() reads, and enables copy/move construction while deleting default and
+both assignment operations. It advertises only construction capability. No mutable
+replacement representation or escaping field reference is introduced. Source field
+syntax and operation admission remain compiler-owned. Keyed factory transport is
+the next step; the entry/buffer recipe alone does not validate duplicate keys.

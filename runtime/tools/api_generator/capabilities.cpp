@@ -1,11 +1,65 @@
 #include "capabilities.hpp"
 #include "names.hpp"
 #include <set>
+#include <vector>
 
 namespace scpp::api_generation
 {
+    static void validate_registry(const value &metadata)
+    {
+        if (!metadata.has("capabilities")) return;
+        const auto &registry = metadata.at("capabilities");
+        if (registry.type != value::kind::object) throw std::runtime_error("capabilities registry must be an object");
+        for (const auto &[name, recipe] : registry.fields) {
+            authored_name(name);
+            fields_only(recipe, "checks includes implies", "capability " + name);
+            if (recipe.at("checks").type != value::kind::array || recipe.at("checks").items.empty())
+                throw std::runtime_error("Capability requires nonempty checks: " + name);
+            if (!recipe.has("implies")) continue;
+            const auto &edges = recipe.at("implies");
+            if (edges.type != value::kind::array) throw std::runtime_error("Capability implies must be an array");
+            std::set<std::string> seen;
+            for (const auto &edge : edges.items) {
+                const auto target = edge.text();
+                if (!registry.has(target)) throw std::runtime_error("Unknown implied capability: " + target);
+                if (!seen.insert(target).second) throw std::runtime_error("Duplicate implied capability: " + target);
+            }
+        }
+        std::map<std::string, int> states;
+        for (const auto &[root, unused] : registry.fields) {
+            std::vector<std::pair<std::string, bool>> pending{{root, false}};
+            while (!pending.empty()) {
+                const auto [name, finishing] = pending.back(); pending.pop_back();
+                if (finishing) { states[name] = 2; continue; }
+                if (states[name] == 1) throw std::runtime_error("Capability implication cycle: " + name);
+                if (states[name] == 2) continue;
+                states[name] = 1;
+                pending.emplace_back(name, true);
+                const auto &recipe = registry.at(name);
+                if (recipe.has("implies")) for (const auto &edge : recipe.at("implies").items)
+                    pending.emplace_back(edge.text(), false);
+            }
+        }
+    }
+
+    static bool implies(const value &metadata, const std::string &provided, const std::string &required,
+        std::set<std::string> &visited)
+    {
+        std::vector<std::string> pending{provided};
+        while (!pending.empty()) {
+            const auto name = pending.back(); pending.pop_back();
+            if (name == required) return true;
+            if (!visited.insert(name).second) continue;
+            const auto &recipe = metadata.at("capabilities").at(name);
+            if (recipe.has("implies")) for (const auto &edge : recipe.at("implies").items)
+                pending.push_back(edge.text());
+        }
+        return false;
+    }
+
     value merged_type_leaves(const value &input)
     {
+        validate_registry(input.at("metadata"));
         auto leaves = input.at("metadata").at("types");
         if (leaves.type != value::kind::object) throw std::runtime_error("types must be an object");
         for (const auto &[key, leaf] : leaves.fields) {
@@ -55,8 +109,9 @@ namespace scpp::api_generation
             const auto &type = types.at(parameter); validate_capabilities(metadata, type);
             for (const auto &item : list.items) {
                 bool found = false;
+                std::set<std::string> visited;
                 if (type.has("capabilities")) for (const auto &capability : type.at("capabilities").items)
-                    if (capability.text() == item.text()) found = true;
+                    if (implies(metadata, capability.text(), item.text(), visited)) found = true;
                 available = available && found;
             }
         }

@@ -560,3 +560,6 @@ add_test(NAME scpp_test_initializer_adaptation COMMAND test_initializer_adaptati
 
 add_test(NAME scpp_check_list_initializers COMMAND ${Python3_EXECUTABLE}
   ${CMAKE_CURRENT_SOURCE_DIR}/check_list_initializers.py --tool $<TARGET_FILE:scpp_api_generator>)
+
+add_test(NAME scpp_check_initializer_entry COMMAND ${Python3_EXECUTABLE}
+  ${CMAKE_CURRENT_SOURCE_DIR}/check_initializer_entry.py --tool $<TARGET_FILE:scpp_api_generator>)

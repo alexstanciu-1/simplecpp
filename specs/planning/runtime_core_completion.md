@@ -1780,3 +1780,32 @@ and sealed-reuse proofs pass. Four factory headers compile independently. Four
 metadata checks pass (1.61s). Application compilation: 3.1937s release / 4.5106s
 sanitized in parallel; caller: 0.1488s / 0.2064s. Core rebuilt once per configuration.
 The older buffer fixture passes with runtime-owned buffer reuse.
+
+## E12 — immutable entry lifecycle and truthful construction capability
+
+Resolve the E9 native entry mismatch in the physical model: independent assignment
+overrides in lifecycle metadata, and a construction-only capability. Ordinary
+copy_storage implies copy_construct_storage through a generic validated implication
+graph. The buffer requires construction, not assignment. No source capability is
+inferred from those physical facts and the source-formation gate remains open.
+
+The initializer_entry<V,K=string> recipe retains native const fields and returns
+owned key/value reads. Copy/move constructors work; assignment and default
+construction are deleted. Composition with initializer_buffer now preserves ordered
+duplicate entries, owned values beyond input lifetime, failed append recovery and
+partial cleanup without claiming native assignment. Existing shorthand lifecycle
+recipes remain unchanged.
+
+Tests cover implication validation (including transitive/diamond paths and cycle
+rejection), independent/conditional assignment shape, actual immutable native probes,
+public traits and lifetime, allocation-free scalar entries and sealed specialization
+reuse. Assignment-only shape checks are emission tests, not permission to assign the
+immutable native entry. Keyed factory execution and duplicate rejection remain next.
+
+Validation: release and ASan/UBSan with leak detection pass, including independent
+headers, immutable native traits, failed append recovery and sealed application reuse.
+Scalar entries and small input buffers allocate zero times. Parallel generated storage
+compilation took 1.2039s release / 1.0997s sanitized; public caller 0.1506s / 0.1814s.
+Existing conditional, vector, hash and sentinel lifecycle metadata regressions pass.
+Only the generator required rebuilding; existing runtime-core implementation output
+was unchanged. These are single-run fixture costs, not full compiler build timings.

@@ -487,6 +487,9 @@
       "checks": [
         "std::is_copy_constructible_v<${cpp}>",
         "std::is_copy_assignable_v<${cpp}>"
+      ],
+      "implies": [
+        "copy_construct_storage"
       ]
     },
     "move_storage": {
@@ -498,6 +501,11 @@
     "default_storage": {
       "checks": [
         "std::is_default_constructible_v<${cpp}>"
+      ]
+    },
+    "copy_construct_storage": {
+      "checks": [
+        "std::is_copy_constructible_v<${cpp}>"
       ]
     }
   },

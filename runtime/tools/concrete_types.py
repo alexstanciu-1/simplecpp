@@ -169,9 +169,11 @@ def generate(request, output, runtime, dependencies, compiler, flags):
                 for index, probe in enumerate(unit['probes']):
                     alias='N'+str(index)
                     code += 'using '+alias+' = '+probe['native']+';\n'
-                    for mode, traits in {'default':['default_constructible'], 'copy':['copy_constructible','copy_assignable'], 'move':['move_constructible','move_assignable'], 'destroy':['nothrow_destructible']}.items():
-                        if probe['lifecycle'][mode] == 'native':
-                            for trait in traits: code += f'static_assert(std::is_{trait}_v<{alias}>);\n'
+                    for mode, trait in {'default':'default_constructible', 'copy':'copy_constructible',
+                                        'move':'move_constructible', 'destroy':'nothrow_destructible',
+                                        'copy_assignment':'copy_assignable', 'move_assignment':'move_assignable'}.items():
+                        policy = probe['lifecycle'].get(mode, probe['lifecycle'].get(mode.removesuffix('_assignment')))
+                        if policy == 'native': code += f'static_assert(std::is_{trait}_v<{alias}>);\n'
                     code += f'std::printf("%zu %zu\\n", sizeof({alias}), alignof({alias}));\n'
                 code += '}\n'
                 executable=stage/'layout_probe'

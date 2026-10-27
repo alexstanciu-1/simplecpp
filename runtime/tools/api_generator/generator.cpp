@@ -90,9 +90,10 @@ namespace scpp::api_generation
         value lifecycle(const value &policy, const std::map<std::string,value> &types,
             value &checks, std::set<std::string> &headers)
         {
-            fields_only(policy,"default copy move destroy", "lifecycle");
+            fields_only(policy,"default copy move destroy copy_assignment move_assignment", "lifecycle");
             value resolved = value::object();
-            for (const auto *mode : {"default", "copy", "move", "destroy"}) {
+            for (const auto *mode : {"default", "copy", "move", "destroy", "copy_assignment", "move_assignment"}) {
+                if ((std::string(mode) == "copy_assignment" || std::string(mode) == "move_assignment") && !policy.has(mode)) continue;
                 const auto &rule = policy.at(mode);
                 if (rule.type == value::kind::object) {
                     fields_only(rule, "requires_capabilities", "conditional lifecycle");
@@ -325,12 +326,14 @@ namespace scpp::api_generation
 				for (bool move : {false,true}) {
 					auto mode=move?"move":"copy"; auto arg=(move?"":"const ")+cpp+(move?" &&other":" &other");
 					auto rhs="detail::concrete_access::get<"+alias+">(other)"; if(move) rhs="std::move("+rhs+")";
+					const auto assignment=life.get(move ? "move_assignment" : "copy_assignment", life.get(mode));
 					auto tail=life.get(mode)=="native"?";\n":" = delete;\n";
-					header+="    "+cpp+"("+arg+")"+tail+"    "+cpp+" &operator=("+arg+")"+tail;
-					if (life.get(mode)=="native") {
+					auto assignment_tail=assignment=="native"?";\n":" = delete;\n";
+					header+="    "+cpp+"("+arg+")"+tail+"    "+cpp+" &operator=("+arg+")"+assignment_tail;
+					if (life.get(mode)=="native")
 						source+=cpp+"::"+cpp+"("+arg+") { ::new (this->storage_) "+alias+"("+rhs+"); }\n";
+					if (assignment=="native")
 						source+=cpp+" &"+cpp+"::operator=("+arg+") { if (this != &other) "+local.at("self")+" = "+rhs+"; return *this; }\n";
-					}
 				}
 				header+="    ~"+cpp+"() noexcept;\n"; source+=cpp+"::~"+cpp+"() noexcept { "+local.at("self")+".~"+alias+"(); }\n";
 				source+="static_assert(std::is_nothrow_destructible_v<"+alias+">);\n";
@@ -354,16 +357,6 @@ namespace scpp::api_generation
 		{
 			fields_only(this->metadata_,"version types families bindings functions capabilities global_operators conversions function_sets constant_sets conditions selections", "API metadata");
 			if (this->metadata_.at("version").text()!="api-v1") throw std::runtime_error("Unsupported API metadata version");
-			if (this->metadata_.has("capabilities")) {
-                if (this->metadata_.at("capabilities").type != value::kind::object)
-                    throw std::runtime_error("capabilities registry must be an object");
-                for (const auto &[name, recipe] : this->metadata_.at("capabilities").fields) {
-                    authored_name(name);
-                    fields_only(recipe,"checks includes", "capability " + name);
-                    if (recipe.at("checks").type != value::kind::array || recipe.at("checks").items.empty())
-                        throw std::runtime_error("Capability requires nonempty checks: " + name);
-                }
-            }
             for (const auto &[key,t] : this->leaves_.fields) { this->validate_capabilities(t); this->claim(t.at("cpp").text(),key); }
             validate_import_capabilities(this->metadata_,this->leaves_,this->names_,this->imports_);
 			for (const auto &[key,t] : this->imports_.fields) {

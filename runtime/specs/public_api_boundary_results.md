@@ -2817,3 +2817,28 @@ Parallel generated application compilation (maximum eight workers): 3.1937s rele
 a native/public caller comparison. Core rebuilt once per configuration. Keyed
 factory publication, immutable entry lifecycle, duplicate validation and semantic
 non-escape/source integration remain unproven by this positional slice.
+
+## E12: immutable initializer entries (2026-10-28)
+
+A generic capability implication graph and independent copy/move assignment lifecycle
+overrides allow native immutable initializer_entry records to retain their actual
+representation. The buffer now requires copy construction rather than assignment.
+The application-owned entry recipe exposes owned key/value reads, construction and
+destruction, but no default construction or assignment. Existing lifecycle shorthand
+and explicitly exported capability inventories remain unchanged.
+
+Release and ASan/UBSan with leak detection pass the public-only entry/buffer proof:
+immutable traits, string ownership, duplicate/order preservation, escaped owned reads,
+failed-copy recovery and partial-input cleanup. Scalar entries and small buffers
+allocate zero times. Four headers compile independently, and sealed application
+reuse emits no duplicate implementations. Graph checks cover unknown/duplicate edges,
+cycles, transitive and diamond paths; lifecycle checks cover independent and
+conditional assignments. Assignment-only shape checks are emission evidence, not
+a claim that the immutable native record is assignable.
+
+Parallel generated storage compilation: 1.2039s release / 1.0997s sanitized; public
+caller: 0.1506s / 0.1814s (single runs, maximum eight workers). Existing conditional,
+vector, hash and sentinel lifecycle metadata regressions pass. Only the generator
+needed rebuilding; existing runtime-core implementation output was unchanged.
+Keyed factories and duplicate rejection remain next; source admission and non-escape
+semantics are not inferred from physical storage capabilities.
