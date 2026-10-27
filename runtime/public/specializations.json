@@ -1,6 +1,6 @@
 {
   "abi": "529dd5502370f48d64891818e9439aae72831b990b4027e8abe25c50c1216c21",
-  "api_identity": "81715c50add5985ce2da962d12ca7f55f4ed543f942662b6f1b8a9236277319e",
+  "api_identity": "133bab509a4cc10ea60cd3cf0a8a2e7ae5e3e6aa23a0de7de83dbd0fd25801b4",
   "apis": {
     "add_dynamic": {
       "header": "scpp/operators/add_dynamic.hpp",
@@ -3641,6 +3641,108 @@
         "returns": "int64"
       },
       "source": "include/scpp/generated/public_count_mixed.cpp"
+    },
+    "debug_flags": {
+      "constants": [
+        {
+          "expression": "1",
+          "name": "DBG_TYPE",
+          "type": "int64"
+        },
+        {
+          "expression": "2",
+          "name": "DBG_VALUE",
+          "type": "int64"
+        },
+        {
+          "expression": "4",
+          "name": "DBG_SHAPE",
+          "type": "int64"
+        },
+        {
+          "expression": "8",
+          "name": "DBG_FIELDS",
+          "type": "int64"
+        },
+        {
+          "expression": "16",
+          "name": "DBG_KEYS",
+          "type": "int64"
+        },
+        {
+          "expression": "32",
+          "name": "DBG_LEN",
+          "type": "int64"
+        },
+        {
+          "expression": "64",
+          "name": "DBG_SOURCE",
+          "type": "int64"
+        },
+        {
+          "expression": "128",
+          "name": "DBG_CALLER",
+          "type": "int64"
+        },
+        {
+          "expression": "256",
+          "name": "DBG_JSON",
+          "type": "int64"
+        },
+        {
+          "expression": "512",
+          "name": "DBG_RAW",
+          "type": "int64"
+        },
+        {
+          "expression": "1024",
+          "name": "DBG_PTR",
+          "type": "int64"
+        },
+        {
+          "expression": "2048",
+          "name": "DBG_COMPACT",
+          "type": "int64"
+        },
+        {
+          "expression": "65536",
+          "name": "DBG_DEPTH_0",
+          "type": "int64"
+        },
+        {
+          "expression": "131072",
+          "name": "DBG_DEPTH_1",
+          "type": "int64"
+        },
+        {
+          "expression": "262144",
+          "name": "DBG_DEPTH_2",
+          "type": "int64"
+        },
+        {
+          "expression": "524288",
+          "name": "DBG_DEPTH_3",
+          "type": "int64"
+        },
+        {
+          "expression": "1048576",
+          "name": "DBG_DEPTH_4",
+          "type": "int64"
+        },
+        {
+          "expression": "2097152",
+          "name": "DBG_DEPTH_5",
+          "type": "int64"
+        },
+        {
+          "expression": "262343",
+          "name": "DBG_DEFAULT",
+          "type": "int64"
+        }
+      ],
+      "header": "scpp/debug/flags.hpp",
+      "namespace": "scpp::debug",
+      "source": "include/scpp/generated/public_debug_flags.cpp"
     },
     "divide_dynamic": {
       "header": "scpp/operators/divide_dynamic.hpp",
@@ -9754,7 +9856,10 @@
     "include/scpp/memory/memory_get_peak_usage.hpp",
     "public/scpp/memory/memory_get_peak_usage_real.hpp",
     "include/scpp/generated/public_memory_get_peak_usage_real.cpp",
-    "include/scpp/memory/memory_get_peak_usage_real.hpp"
+    "include/scpp/memory/memory_get_peak_usage_real.hpp",
+    "public/scpp/debug/flags.hpp",
+    "include/scpp/generated/public_debug_flags.cpp",
+    "include/scpp/debug/flags.hpp"
   ],
   "generator": "metadata-api-v1",
   "leaves": {
@@ -10029,6 +10134,7 @@
     "scpp/conversions/cast_uint8_from_mixed.hpp": "90929498ce8e129ebde8614f08087909fb8b4c9208f4ca9b0828a86aa04d697b",
     "scpp/conversions/cast_uint8_from_string.hpp": "f27a3c3f0d03b0680a93cbd04efd06652606a53819cf3fae4448136fdc3bf105",
     "scpp/conversions/cast_uint8_from_uint64.hpp": "0903db400fa439a49ae72b456313f87f7949d4c4e5f4f9a60e353169f378206f",
+    "scpp/debug/flags.hpp": "db90f39d85ec543ac05fe8d7df0893793059794037a7d50a33e5fc1f41c84f27",
     "scpp/detail/value_layout.hpp": "278a58716d847ef9efa3af4b145a4ba901ea200d366a678bad3252e0b3e307e6",
     "scpp/dynamic.hpp": "a18578f71dc2ffb64bacba244003580a5316b89dc66a3e749a0dde2d7563ac84",
     "scpp/error_value.hpp": "33c4dfbb6c5d919dc35ce1c68cba155211e72de47001f1bf77e3b73a3fa60017",
@@ -10651,7 +10757,8 @@
     "include/scpp/generated/public_memory_get_usage.cpp",
     "include/scpp/generated/public_memory_get_usage_real.cpp",
     "include/scpp/generated/public_memory_get_peak_usage.cpp",
-    "include/scpp/generated/public_memory_get_peak_usage_real.cpp"
+    "include/scpp/generated/public_memory_get_peak_usage_real.cpp",
+    "include/scpp/generated/public_debug_flags.cpp"
   ],
   "types": {
     "dynamic": {

@@ -21,7 +21,7 @@ each slice. The original inventory is a baseline, not a current completion count
 | D | Pending | Ownership, application targets and source Exception transport gaps. |
 | E | Existing vector/hash/boxed foundations; incomplete | Access/initialization/key-policy gaps and identity key-allocation debt; conditional lifecycle, cursor fixes and boxed count are implemented. |
 | F | Pending | Callable transport and registered collection algorithms. |
-| G | Core wall-clock, CLI, environment/shell and memory bindings implemented | Debug/exception/helper gaps and requirement-by-requirement closure audit. |
+| G | Core utility bindings and debug flags implemented | Debug calls, exception/helper gaps and requirement-by-requirement closure audit. |
 
 Full frontend adoption and module migration are excluded. The first complete carrier
 path remains a review gate before expanding ownership/callback implementation.
@@ -217,14 +217,14 @@ value API exists, not that source lowering has already migrated to it.
 | `core.sequence_filter.vector` | Missing callback/algorithm public path | F |
 | `core.keyed_map.hash` | Missing callback/algorithm public path | F |
 | `core.keyed_filter.hash` | Missing callback/algorithm public path | F |
-| `core.dbg.int.value` | Missing public debug function and flags | G |
-| `core.dbg.int.flags` | Missing public debug function and flags | G |
-| `core.dbg.float.value` | Missing public debug function and flags | G |
-| `core.dbg.float.flags` | Missing public debug function and flags | G |
-| `core.dbg.bool.value` | Missing public debug function and flags | G |
-| `core.dbg.bool.flags` | Missing public debug function and flags | G |
-| `core.dbg.string.value` | Missing public debug function and flags | G |
-| `core.dbg.string.flags` | Missing public debug function and flags | G |
+| `core.dbg.int.value` | Flags published in G5; debug call binding remains | G |
+| `core.dbg.int.flags` | Flags published in G5; debug call binding remains | G |
+| `core.dbg.float.value` | Flags published in G5; debug call binding remains | G |
+| `core.dbg.float.flags` | Flags published in G5; debug call binding remains | G |
+| `core.dbg.bool.value` | Flags published in G5; debug call binding remains | G |
+| `core.dbg.bool.flags` | Flags published in G5; debug call binding remains | G |
+| `core.dbg.string.value` | Flags published in G5; debug call binding remains | G |
+| `core.dbg.string.flags` | Flags published in G5; debug call binding remains | G |
 | `core.vector.append` | Vector recipe/published specialization method equivalent; helper/source mapping remains | E |
 | `core.microtime.0` | Published focused core binding, G1 | Complete public path |
 | `core.microtime.1` | Published focused core binding, G1 | Complete public path |
@@ -1562,3 +1562,17 @@ Preserve process resident/peak byte reporting, the same policy for both bool val
 and zero when measurements are unavailable. This does not promise allocator-internal
 accounting or introduce new memory counters. Tests check public forms, native/public
 allocation parity, independent header use, sanitizers and sealed publication reuse.
+
+## Active-goal progress — G5 constant declarations
+
+Add generic constant sets to the existing C++ API emitter and publication records,
+then publish the 19 core debug flags as concrete constexpr int64 values in
+scpp::debug. Their values are checked against the core catalog. The public namespace
+keeps native compatibility constants distinct. Public-only compile/link/run without
+a runtime archive proves literal initialization; unrelated bool/int32 fixtures prove
+that the generator has no debug-specific type/name branch.
+
+Constant sets reuse request.apis, imported API equality, sealed ownership and ordinary
+output files. Their source unit only validates header declarations, so it is not
+included in the core aggregate. Runtime debug-call overloads are still outstanding;
+this slice does not claim the complete debug surface or change source flag names.

@@ -527,3 +527,6 @@ target_include_directories(test_memory_provider PRIVATE ${CMAKE_CURRENT_SOURCE_D
 add_executable(test_public_memory test_public_memory.cpp $<TARGET_OBJECTS:test_memory_provider>)
 target_link_libraries(test_public_memory PRIVATE scpp_core_api)
 add_test(NAME scpp_test_public_memory COMMAND test_public_memory)
+
+add_test(NAME scpp_check_constant_sets COMMAND ${Python3_EXECUTABLE}
+  ${CMAKE_CURRENT_SOURCE_DIR}/check_constant_sets.py --tool $<TARGET_FILE:scpp_api_generator>)

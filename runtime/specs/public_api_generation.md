@@ -1408,3 +1408,26 @@ spellings. This avoids colliding with the existing native zero-argument function
 in namespace scpp, whose int_t return cannot distinguish a C++ overload. Both APIs
 share the private process-memory provider; no source spelling or accounting semantics
 change. Consumers use the function identity/name in metadata, not a naming guess.
+
+## Constant sets
+
+`constant_sets` is an optional map of API identities to namespace/header/source and
+nonempty `constants` arrays. Each member has `name`, `type` and `expression`, for
+example `{"name":"DBG_TYPE","type":"int64","expression":"1"}`. The C++ emitter
+resolves the public type and emits `inline constexpr scpp::int64 DBG_TYPE{1};` in
+the selected namespace. Expressions are authored metadata C++ snippets; the public
+compiler must accept their literal initialization. This does not infer source-type
+constant eligibility or import private template definitions into the public header.
+
+Constant sets use the existing `request.apis`, API ownership records, output collision
+checks, artifact inventory and sealed reuse path. They cannot share an API identity
+with a function or function set. Empty sets, duplicate member names and malformed
+entries reject. The emitted source is a declaration-check unit that includes its
+public header; inline constants require no runtime archive definition. There is no
+parallel constant publication mechanism or runtime lookup table.
+
+The `debug_flags` set exposes the core catalog's 19 integer flags in `scpp::debug`.
+That namespace avoids colliding with existing native scpp constants. A regression
+checks all values against the catalog. Generated public-only constexpr compilation
+proves the constants introduce no dynamic initialization or boundary allocation.
+Debug-call bindings and their source-location context remain a separate slice.

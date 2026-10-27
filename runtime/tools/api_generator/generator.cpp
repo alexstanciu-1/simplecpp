@@ -352,7 +352,7 @@ namespace scpp::api_generation
 			leaves_(merged_type_leaves(input)), names_(input.at("names")), naming_(metadata_naming_registry(metadata_,leaves_,names_)) {}
 		value run()
 		{
-			fields_only(this->metadata_,"version types families bindings functions capabilities global_operators conversions function_sets conditions selections", "API metadata");
+			fields_only(this->metadata_,"version types families bindings functions capabilities global_operators conversions function_sets constant_sets conditions selections", "API metadata");
 			if (this->metadata_.at("version").text()!="api-v1") throw std::runtime_error("Unsupported API metadata version");
 			if (this->metadata_.has("capabilities")) {
                 if (this->metadata_.at("capabilities").type != value::kind::object)
@@ -373,14 +373,24 @@ namespace scpp::api_generation
 			for (const auto &root : this->request_.at("roots").items) this->materialize(root.text());
 			validate_conditions(this->metadata_);
             validate_selections(this->metadata_);
-			auto generated_functions=operator_functions(this->metadata_);
+			auto generated_apis=operator_functions(this->metadata_);
             for (const auto &[name, function] : conversion_functions(this->metadata_).fields) {
-                if (generated_functions.has(name)) throw std::runtime_error("Duplicate generated API ownership");
-                generated_functions[name] = function;
+                if (generated_apis.has(name)) throw std::runtime_error("Duplicate generated API ownership");
+                generated_apis[name] = function;
             }
             for (const auto &[name, function] : expand_function_sets(this->metadata_).fields) {
-                if (generated_functions.has(name)) throw std::runtime_error("Duplicate generated API ownership");
-                generated_functions[name] = function;
+                if (generated_apis.has(name)) throw std::runtime_error("Duplicate generated API ownership");
+                generated_apis[name] = function;
+            }
+            if (this->metadata_.has("constant_sets")) {
+                if (this->metadata_.at("constant_sets").type != value::kind::object)
+                    throw std::runtime_error("constant_sets must be an object");
+                for (const auto &[name, constants] : this->metadata_.at("constant_sets").fields) {
+                    if (generated_apis.has(name) || this->metadata_.at("functions").has(name))
+                        throw std::runtime_error("Duplicate generated API ownership");
+                    fields_only(constants,"namespace header source constants", "API constant set");
+                    generated_apis[name] = constants;
+                }
             }
             auto apis = this->request_.has("apis") ? this->request_.at("apis") : value::array();
             for (std::size_t index=0; index<apis.items.size() || !this->required_apis_.empty(); ++index) {
@@ -389,10 +399,12 @@ namespace scpp::api_generation
                     this->required_apis_.clear();
                 }
                 const auto api = apis.items[index];
-                if (generated_functions.has(api.text()) && this->metadata_.at("functions").has(api.text()))
+                if (generated_apis.has(api.text()) && this->metadata_.at("functions").has(api.text()))
                     throw std::runtime_error("Duplicate global operator ownership");
-                const auto &f=generated_functions.has(api.text()) ? generated_functions.at(api.text()) : this->metadata_.at("functions").at(api.text());
-				fields_only(f,"namespace header source operation includes", "API function");
+                const auto &f=generated_apis.has(api.text()) ? generated_apis.at(api.text()) : this->metadata_.at("functions").at(api.text());
+				fields_only(f,"namespace header source operation includes constants", "API declaration");
+                if (f.has("operation") == f.has("constants"))
+                    throw std::runtime_error("API declaration requires one function or constant set");
                 if (this->api_exports_.has(api.text())) continue;
                 this->api_exports_[api.text()]=f;
                 if (this->api_imports_.has(api.text())) {
@@ -401,7 +413,24 @@ namespace scpp::api_generation
                     continue;
                 }
 				std::set<std::string> headers,private_headers,probe_headers; std::string declaration; value checks=value::array();
-				auto source=this->operation(f.at("operation"),{}, {},headers,private_headers,"",declaration,checks,probe_headers);
+				std::string source;
+                if (f.has("constants")) {
+                    const auto &constants = f.at("constants");
+                    if (constants.type != value::kind::array || constants.items.empty())
+                        throw std::runtime_error("Constant set requires nonempty constants");
+                    std::set<std::string> names;
+                    for (const auto &constant : constants.items) {
+                        fields_only(constant,"name type expression", "API constant");
+                        const auto name = constant.at("name").text();
+                        authored_name(name);
+                        if (!names.insert(name).second) throw std::runtime_error("Duplicate constant name: " + name);
+                        const auto expression = constant.at("expression").text();
+                        if (expression.empty()) throw std::runtime_error("Constant requires expression");
+                        const auto type = this->type(constant.at("type").text(),{});
+                        add_include(headers,type.get("header"));
+                        declaration += "inline constexpr " + type.at("cpp").text() + " " + name + "{" + expression + "};\n";
+                    }
+                } else source=this->operation(f.at("operation"),{}, {},headers,private_headers,"",declaration,checks,probe_headers);
 				this->dependencies(f,private_headers,{}); add_include(private_headers,f.at("header").text());
 				value unit=value::object(); unit["identity"]=api; unit["header_path"]="public/"+f.at("header").text(); unit["source_path"]=f.at("source"); unit["ready"]="yes";
 				unit["header"]="// Generated by scpp_api_generator.\n#pragma once\n"+includes(headers)+"namespace "+f.at("namespace").text()+" {\n"+declaration+"}\n";

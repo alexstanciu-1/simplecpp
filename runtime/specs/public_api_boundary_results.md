@@ -2578,3 +2578,27 @@ caller. Two metadata checks pass in **1.39s**. Single isolated clang++ C++23/O2
 compile-only caller costs: **0.0519s public / 0.8476s native**. The native comparison
 also benefits from removing the broad PHP common header. Core was rebuilt once per
 configuration; the existing mixed-hash instantiation warning remains.
+
+## G5 — generic constant declarations and debug flags (2026-10-27)
+
+The C++ generator now emits constant sets through the ordinary API output/export
+path. The runtime publishes 19 concrete constexpr int64 debug flags in scpp::debug.
+The focused check matches every value against the core catalog, exercises unrelated
+boolean/int32 constants, rejects empty sets/duplicate members/bad names/empty
+expressions/conflicting API identities, and verifies imported-record equality plus
+zero-unit reuse. Native and concrete debug headers also compile together.
+
+The release constant-set test passes in **0.34s**; three existing metadata/function
+regressions pass in **1.73s**. The same new generation and error cases pass through
+the ASan/UBSan generator with leak detection. The relocated sealed SDK imports
+`debug_flags` with zero generated units and compiles/runs a public-only consumer.
+
+A standalone public-only proof compiles all 19 flags plus two unrelated constants
+using static_assert, compiles their declaration-check units, links and runs without
+any runtime archive in **0.2452s** (single combined compile/link/run setup; timing
+covers the compiler invocation, execution follows separately). Inline constexpr
+initialization introduces no runtime boundary allocation or dynamic initialization.
+No native runtime behavior changed. An initial aggregate include preceded generation
+and failed; it was removed because constant sets need no archive definition. Tool
+builds then completed normally; the existing mixed-hash warning remains. Debug-call
+bindings and source-context forwarding are not claimed complete by this slice.

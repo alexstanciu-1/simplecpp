@@ -748,5 +748,109 @@
     "families": "public_api/families.json",
     "function_sets": "public_api/function_sets.json",
     "global_operators": "public_api/global_operators.json"
+  },
+  "constant_sets": {
+    "debug_flags": {
+      "namespace": "scpp::debug",
+      "header": "scpp/debug/flags.hpp",
+      "source": "include/scpp/generated/public_debug_flags.cpp",
+      "constants": [
+        {
+          "name": "DBG_TYPE",
+          "type": "int64",
+          "expression": "1"
+        },
+        {
+          "name": "DBG_VALUE",
+          "type": "int64",
+          "expression": "2"
+        },
+        {
+          "name": "DBG_SHAPE",
+          "type": "int64",
+          "expression": "4"
+        },
+        {
+          "name": "DBG_FIELDS",
+          "type": "int64",
+          "expression": "8"
+        },
+        {
+          "name": "DBG_KEYS",
+          "type": "int64",
+          "expression": "16"
+        },
+        {
+          "name": "DBG_LEN",
+          "type": "int64",
+          "expression": "32"
+        },
+        {
+          "name": "DBG_SOURCE",
+          "type": "int64",
+          "expression": "64"
+        },
+        {
+          "name": "DBG_CALLER",
+          "type": "int64",
+          "expression": "128"
+        },
+        {
+          "name": "DBG_JSON",
+          "type": "int64",
+          "expression": "256"
+        },
+        {
+          "name": "DBG_RAW",
+          "type": "int64",
+          "expression": "512"
+        },
+        {
+          "name": "DBG_PTR",
+          "type": "int64",
+          "expression": "1024"
+        },
+        {
+          "name": "DBG_COMPACT",
+          "type": "int64",
+          "expression": "2048"
+        },
+        {
+          "name": "DBG_DEPTH_0",
+          "type": "int64",
+          "expression": "65536"
+        },
+        {
+          "name": "DBG_DEPTH_1",
+          "type": "int64",
+          "expression": "131072"
+        },
+        {
+          "name": "DBG_DEPTH_2",
+          "type": "int64",
+          "expression": "262144"
+        },
+        {
+          "name": "DBG_DEPTH_3",
+          "type": "int64",
+          "expression": "524288"
+        },
+        {
+          "name": "DBG_DEPTH_4",
+          "type": "int64",
+          "expression": "1048576"
+        },
+        {
+          "name": "DBG_DEPTH_5",
+          "type": "int64",
+          "expression": "2097152"
+        },
+        {
+          "name": "DBG_DEFAULT",
+          "type": "int64",
+          "expression": "262343"
+        }
+      ]
+    }
   }
 }
