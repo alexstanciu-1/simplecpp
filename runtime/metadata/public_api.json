@@ -1185,12 +1185,11 @@
         "scpp/detail/concrete_keys.hpp"
       ],
       "checks": [
-        "std::is_copy_constructible_v<${public:V}>",
-        "std::is_copy_assignable_v<${public:V}>",
         "std::is_nothrow_destructible_v<${public:V}>",
         "std::is_copy_constructible_v<${public:K}>",
         "std::is_copy_assignable_v<${public:K}>",
-        "std::is_nothrow_destructible_v<${public:K}>"
+        "std::is_nothrow_destructible_v<${public:K}>",
+        "std::is_copy_constructible_v<${public:V}> || std::is_move_constructible_v<${public:V}>"
       ],
       "classes": [
         {
@@ -1199,7 +1198,16 @@
           "native": "${native_type}",
           "lifecycle": {
             "default": "native",
-            "copy": "native",
+            "copy": {
+              "requires_capabilities": {
+                "V": [
+                  "copy_storage"
+                ],
+                "K": [
+                  "copy_storage"
+                ]
+              }
+            },
             "move": "native",
             "destroy": "native"
           },
@@ -1291,7 +1299,12 @@
                 }
               ],
               "expression": "${self}.at(key)",
-              "const": true
+              "const": true,
+              "requires_capabilities": {
+                "V": [
+                  "copy_storage"
+                ]
+              }
             },
             {
               "name": "operator[]",
@@ -1304,7 +1317,12 @@
                 }
               ],
               "expression": "this->at(key)",
-              "const": true
+              "const": true,
+              "requires_capabilities": {
+                "V": [
+                  "copy_storage"
+                ]
+              }
             },
             {
               "name": "find",
@@ -1318,7 +1336,12 @@
               ],
               "expression": "${self}.find(key)",
               "const": true,
-              "transport": "native"
+              "transport": "native",
+              "requires_capabilities": {
+                "V": [
+                  "copy_storage"
+                ]
+              }
             },
             {
               "name": "remove",
@@ -1331,7 +1354,17 @@
                 }
               ],
               "expression": "${self}.remove(key)",
-              "transport": "native"
+              "transport": "native",
+              "requires_capabilities": {
+                "V": [
+                  "default_storage",
+                  "move_storage"
+                ],
+                "K": [
+                  "default_storage",
+                  "move_storage"
+                ]
+              }
             },
             {
               "name": "set",
@@ -1348,7 +1381,15 @@
                   "passing": "const_ref"
                 }
               ],
-              "body": "${self}.set(key, value); return *this;"
+              "body": "${self}.set(key, value); return *this;",
+              "requires_capabilities": {
+                "V": [
+                  "copy_storage"
+                ],
+                "K": [
+                  "copy_storage"
+                ]
+              }
             },
             {
               "name": "append",
@@ -1363,7 +1404,11 @@
               "expression": "${self}.append(value)",
               "requires_capabilities": {
                 "K": [
-                  "integer_key"
+                  "integer_key",
+                  "copy_storage"
+                ],
+                "V": [
+                  "copy_storage"
                 ]
               }
             },
@@ -1382,7 +1427,15 @@
                   "passing": "move_ref"
                 }
               ],
-              "body": "${self}.set(key, std::move(value)); return *this;"
+              "body": "${self}.set(key, std::move(value)); return *this;",
+              "requires_capabilities": {
+                "V": [
+                  "move_storage"
+                ],
+                "K": [
+                  "copy_storage"
+                ]
+              }
             },
             {
               "name": "append",
@@ -1397,7 +1450,11 @@
               "expression": "${self}.append(std::move(value))",
               "requires_capabilities": {
                 "K": [
-                  "integer_key"
+                  "integer_key",
+                  "copy_storage"
+                ],
+                "V": [
+                  "move_storage"
                 ]
               }
             },
@@ -1407,7 +1464,15 @@
               "parameters": [],
               "expression": "${self}.value_range()",
               "const": true,
-              "transport": "native"
+              "transport": "native",
+              "requires_capabilities": {
+                "V": [
+                  "copy_storage"
+                ],
+                "K": [
+                  "copy_storage"
+                ]
+              }
             }
           ]
         },
@@ -1450,7 +1515,15 @@
               "parameters": [],
               "body": "if (!this->valid()) raise_runtime_error(\"Finished iteration\", \"index_out_of_range\", \"core\", \"iteration\");\nauto iterator = ${self}.begin();\n++iterator;"
             }
-          ]
+          ],
+          "requires_capabilities": {
+            "V": [
+              "copy_storage"
+            ],
+            "K": [
+              "copy_storage"
+            ]
+          }
         }
       ],
       "functions": [
@@ -1504,20 +1577,11 @@
               "copy_storage"
             ]
           }
-        },
-        "move_storage": {
-          "requires_capabilities": {
-            "V": [
-              "move_storage"
-            ],
-            "K": [
-              "move_storage"
-            ]
-          }
         }
       },
       "capabilities": [
-        "default_storage"
+        "default_storage",
+        "move_storage"
       ]
     },
     "float64": {

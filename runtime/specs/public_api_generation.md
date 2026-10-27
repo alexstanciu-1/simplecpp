@@ -1251,3 +1251,13 @@ fill resize and copying insertion require copy storage. Moving insertion, indexe
 removal and explicit-capacity compaction require move storage. Native layout probes
 still verify relocatability and nonthrowing destruction; these physical checks do
 not grant source-language template eligibility.
+
+Hash uses the same conditional class/lifecycle mechanism. Owned `at`/`find`, copying
+insertion and cursor operations require copyable payloads; moving insertion requires
+move storage. Integer-key append additionally retains its integer-key requirement.
+The hash itself can move by storage transfer regardless of payload move capabilities.
+Current key storage still requires copyable keys. Native removal resets tombstone
+slots with default-constructed key/value objects, so its public method additionally
+requires default and move storage for both. This is a current implementation limit,
+not a source-language prohibition on removing other admitted payload types; replacing
+that native slot strategy remains container work.

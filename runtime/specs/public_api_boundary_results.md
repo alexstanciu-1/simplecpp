@@ -2226,5 +2226,29 @@ No runtime-core rebuild was needed. Generator builds used Ninja eight jobs.
 
 The first regression assertion incorrectly expected cursor snapshotting on `set()`;
 current native indexed assignment changes the live cursor value. The final proof
-uses structural clear preservation and the separate indexed-write audit remains E
-debt. No native iteration behavior was changed to satisfy this storage slice.
+uses structural clear preservation. E2 subsequently confirmed the indexed-write
+behavior matches `specs/array_semantics.md`; that audit item is closed. No native iteration behavior was changed to satisfy this storage slice.
+
+## E2 — conditional typed-hash storage (2026-10-27)
+
+`check_hash_lifecycle.py` uses production metadata with move-only application records,
+a second record with an empty default state, integer keys and string keys. It checks
+copy/cursor/access omission, integer-only append and default-dependent removal.
+The compiled fixture generates four hashes plus nullable<int64> for owned find.
+
+Release and ASan/UBSan with leak detection pass. Six owned payloads are destroyed
+exactly once across replacement, removal and clear. Whole-container transfer performs
+no payload moves; replacement, remove, transfer and clear allocate zero times after
+setup. Initial insertion/index allocation is outside that zero-allocation region.
+Ordinary copied hash values remain independent, and a cursor preserves entries over
+clear. Public-only headers pass the guard and sealed application reuse emits no
+new sources. Four focused metadata regressions pass in 3.37s.
+
+Single-run storage compilation (five units combined) / public caller:
+release **10.9975s / 0.1308s**; ASan/UBSan **18.8289s / 0.1770s**. These focused
+fixture timings are not full rebuild costs. No generated runtime implementation
+changed and no core rebuild was required. The generator itself needed no changes.
+
+Removal for non-default-constructible key/value storage remains a native tombstone
+limitation, explicitly gated and retained in E backlog; source eligibility and
+application-specific key binding completion are not claimed by these native proofs.

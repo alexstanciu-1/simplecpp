@@ -88,7 +88,7 @@ no equivalent new public path identified. Published/recipe does not mean complet
 The recipe registry currently contains nine families: vector, hash,
 nullable, result, result_or_false, result_or_bool, float64, mixed and dynamic. At the original inventory, the first four all imposed copy
 construction/assignment and nothrow-destruction checks. Nullable and Result now use conditional
-lifecycle and payload APIs (C10/C11); vector follows in E1; hash retains its blanket checks. This is a real coverage
+lifecycle and payload APIs (C10/C11); vector follows in E1 and hash in E2; their remaining native constraints are recorded below. This is a real coverage
 restriction: supporting `unique<T>` cannot be fixed by merely adding another name
 to the current copy-required recipes.
 
@@ -1324,5 +1324,25 @@ hash conditional lifecycle, source initialization, safe access/borrowing and cur
 protocol completion remain. Copy-only native types with explicitly deleted move
 operations need a separate capability/native-cursor review (`std::copy_constructible`
 is stricter than a copy trait). Indexed writes through current `set()` remain visible
-to a live cursor, unlike structural clear preservation; audit that against owning
-iteration semantics before changing it. No ownership/callback expansion occurred.
+to a live cursor, unlike structural clear preservation. E2 confirmed that this is
+required by `specs/array_semantics.md`, Mutation during value iteration; no change is needed. No ownership/callback expansion occurred.
+
+## E2 checkpoint — conditional typed-hash lifecycle
+
+Hash now uses the shared conditional lifecycle, method and companion mechanism.
+Noncopyable values omit copying access, find, copy lifecycle and cursors; moving
+insertion and whole-container transfer remain available. Integer append and key
+capability conditions compose with payload requirements. This slice adds no generator
+branches and does not change native hash representation or source type admission.
+
+The native tombstone implementation assigns `K{}` and `V{}` on removal. Public
+removal now advertises that requirement through default/move capabilities rather
+than emitting an unusable definition for non-default payloads. Removing that native
+restriction remains E work; this checkpoint does not mark generic hash access complete.
+Native `std::copyable` constraints are also stronger than copy traits for explicitly
+nonmovable copy-only records, as noted for vector in E1. Application key policies,
+initializers, safe access and failure guarantees still need their planned work.
+
+The earlier indexed-write cursor concern is resolved: `specs/array_semantics.md`,
+Mutation during value iteration, explicitly requires existing-value updates to remain
+visible before structural preservation. No semantic or native change is needed.
