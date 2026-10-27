@@ -312,15 +312,19 @@ See [the inventory](../../runtime/specs/public_api_inventory.md) and
 [test/build measurements](../../runtime/specs/public_api_boundary_results.md).
 This completes the first slice, not the full runtime inventory or all migration phases.
 
-Next, review complete ordinary string/error/textbuilder signatures and representation
-choices, including source-span dependencies, copying/transfer, allocations and failure
-inspection, before implementing that group. Shared specialization generation and
+The ordinary value signatures and representation choices are approved, including
+source-span dependencies, copying/transfer, allocations and failure inspection.
+Implementation proceeds through the bounded slices in the value plan. Shared specialization generation and
 published reuse remain later work under the agreed mechanism; no parallel semantic
 registry or separate public middleware layer is introduced by this first slice.
 
 ## Inline value storage decision and signature review
 
 Inline, target-probed storage for string, in-band error and textbuilder is approved.
-The [complete proposed value APIs](runtime_core_value_api.md) record lifecycle,
-ordinary operations, exception inspection, source-buffer/span borrowing and remaining
-review decisions. Those signatures are proposals; implementation awaits this review.
+The [approved value APIs](runtime_core_value_api.md) record lifecycle,
+ordinary operations, exception inspection and source-buffer/span borrowing.
+The string implementation is the first value slice; the remaining APIs follow separately.
+
+The value signatures and names are approved, including runtime-only exception capture,
+foreign exception propagation and diagnosed outside-catch misuse. Delivery starts
+with the complete inline string API; see the value plan for the remaining slices.

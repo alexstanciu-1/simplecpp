@@ -1,8 +1,8 @@
 # Inline runtime values: public signature proposal
 Doc Status: planning
 
-Date: 2026-10-27. Status: inline storage approved; signatures and inspection/borrowing
-policies below are proposed for review, not implemented or newly normative semantics.
+Date: 2026-10-27. Status: inline storage, complete signatures and inspection/borrowing policies approved.
+Implementation proceeds in bounded slices; this plan is not semantic authority.
 This refines the [runtime public API plan](runtime_public_api.md).
 
 ## Approved storage decision
@@ -28,7 +28,7 @@ change to those approved value semantics.
 ## Signature conventions and ownership
 
 All declarations below are within `namespace scpp`. Names `error_value` and
-`exception_info` are proposed C++ names; source-language `error` is unchanged.
+`exception_info` are approved C++ names; source-language `error` is unchanged.
 `scpp::error` already names a native Result sentinel, so do not reuse it as a class.
 Private storage is omitted from the declaration listings: each class has generated,
 aligned inline storage and only the access needed by its implementation bridge.
@@ -293,7 +293,7 @@ dependent and must be measured; there is no added heap-allocated facade state.
 Inside a catch, capture obtains the active exception and verifies its actual type
 using existing C++ exception machinery. A foreign exception is rethrown unchanged;
 no wrapping, slicing or catch-all conversion into a runtime error. With no active
-exception, throw a diagnosed runtime misuse error (proposed code
+exception, throw a diagnosed runtime misuse error (code
 `no_active_exception`) rather than executing a bare throw and terminating. Indices
 are checked; invalid indices throw without altering the retained exception. rethrow
 preserves the original exception object/type and captured diagnostics. It throws
@@ -304,7 +304,7 @@ containers or a new directly catchable exception class. Existing typed/standard-
 catches continue working in compatibility code. Trace entries expose the already
 captured module/address data; symbolization and presentation stay in the host layer.
 This inspection API is native-runtime integration, not a new source-language
-exception-handling construct. The exact name/misuse policy remain review decisions.
+exception-handling construct. The names and misuse policy are approved.
 
 ## Implementation gates after signature approval
 
@@ -328,4 +328,14 @@ exception-handling construct. The exact name/misuse policy remain review decisio
 - Prove transitive template-free headers, static/shared linkage, sanitizers and
   focused compile/incremental costs before migrating compiler consumers.
 
-No C++ implementation or existing runtime behavior is changed by this document.
+## Delivery slices
+
+1. Implemented: complete string interface and reusable target-layout probe protocol.
+   Prove lifecycle, allocation costs, header purity and static/shared linkage before
+   extending this representation approach. No compiler facade migration in this slice.
+2. Add error_value and retained exception_info with the approved capture policy.
+3. Add source_buffer/byte_span and textbuilder, including invalidation and transfer tests.
+4. Migrate compiler consumers separately and measure end-to-end build/runtime costs.
+
+The first slice does not implement exception inspection or byte borrowing. Their
+full signatures above remain approved requirements, not currently available APIs.
