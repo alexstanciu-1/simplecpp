@@ -487,3 +487,55 @@ proofs break their cycle edges explicitly and make no collector claim.
 Next discussion: conversions/casts, truthiness and operators. The current slice only
 publishes the already-specified explicit scalar/null crossing between mixed and dynamic;
 it does not settle or expand those broader surfaces.
+
+### Agreed numeric promotion direction (2026-10-27)
+
+Accepted design for the forthcoming global operator metadata; implementation pending.
+Operator admission happens **before** promotion. A conversion ordering is never
+permission to use null, bool or string as a numeric operand.
+
+- Identical numeric operand types retain their type.
+- Different signed integer widths select int64; different unsigned widths select
+  uint64. Byte is the uint8 alias, not a separate promotion family.
+- Different floating widths select float64; integer/floating pairs select float64.
+  This does not itself introduce float16/float32 runtime types.
+- Signed/unsigned integer pairs reject and require an explicit cast. Ordinary
+  integer literals remain signed; there is no value-dependent literal exception.
+- Explicit casts establish operand types before ordinary promotion. For example,
+  int16 plus an operand explicitly cast to int16 stays int16; casting that operand
+  to int32 instead selects int64. Casting the final result is a separate operation.
+- Documented floating precision loss is accepted. This does not authorize unchecked
+  out-of-range integer casts, new overflow behavior or implicit assignment narrowing.
+- Arithmetic returns the selected numeric type; numeric comparisons return bool.
+  Strict identity does not promote. Shifts, power, compound write-back and other
+  special operation contracts remain separately governed, not implicitly expanded.
+
+This changes the current [integer contract](../compact_layout_types.md#7-v02-integer-arithmetic-and-numeric-comparisons),
+which selects the wider operand rather than the family maximum. That normative
+contract and its implementation remain unchanged until the semantic migration.
+The global metadata mechanism should select a common type and reuse same-type
+operations, rather than enumerate every original operand pair. Runtime publication
+and application specialization reuse must use the same mechanism.
+
+#### Admission review findings; nonnumeric decisions still under discussion
+
+- Numeric boxed arithmetic requires int/float payloads; integer boxed bitwise
+  operations reject null, bool, float, string and containers. Present numeric
+  wrapper delegation is not permission to treat an absent payload as zero.
+- [Text contexts](../expression_evaluation.md#bounded-scalar-and-carrier-text-contexts--2026-10-20)
+  explicitly admit literal null and bool for `.`/`.=`: null and false render empty
+  text, true renders `"1"`. This does not grant arithmetic or equality conversions.
+  The current bounded text surface excludes uint64 and has separate carrier rules.
+- [Condition truthiness](../conditional_expression_matrix.md#condition-rule-for-ternary)
+  is separate from casts: strings `""` and `"0"` are false, other strings true.
+  Wrapper absence, errors and sentinels retain their individual contracts.
+- Ordinary boxed scalar equality currently has coercive behavior, including
+  null equal to zero, bool truth comparisons and numeric-string comparisons
+  (`runtime/include/operators/identity/boxed_scalar_equality.hpp`). Do not describe
+  it as uniformly strict or silently change it while publishing the public API.
+- Native string ordering is lexical; boxed ordering is currently numeric-only.
+  A uniform string-ordering proposal would therefore require an explicit extension.
+
+Next decision: retain or deliberately tighten coercive boxed equality. Record the
+chosen operator-group admissions before implementing the global resolver. Native
+helper availability alone does not establish source-level admission.
