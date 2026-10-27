@@ -17,7 +17,7 @@ each slice. The original inventory is a baseline, not a current completion count
 | A2 | Complete for the agreed checked scalar conversions | Carrier conversion is C; ownership casts are D. |
 | B1 | Complete for the agreed scalar-facing truth/text/identity/observation scope | Carrier forms remain C; boxed arithmetic and access completion are not B1 credit. |
 | B2 | Complete for the agreed non-carrier special/mutation and text public paths; closure evidence below | Carrier forms C; indexed retention E; native exception inspection and overflow disposition G. |
-| C | Four carrier recipes with conditional lifecycle; numeric/presence plans, scalar/boxed equality, scalar reconstruction, text, unary/update and canonical arithmetic compound plans, Result error identity and sentinel take/state proofs implemented; review pending | Four carrier families, state-preserving operations/conversions and conditional lifecycle. |
+| C | Four carrier recipes with conditional lifecycle; numeric/presence plans, scalar/boxed equality, scalar reconstruction, text, unary/update, canonical arithmetic compounds and bitwise/shift plans, Result error identity and sentinel take/state proofs implemented; review pending | Four carrier families, state-preserving operations/conversions and conditional lifecycle. |
 | D | Pending | Ownership, application targets and source Exception transport gaps. |
 | E | Existing vector/hash/boxed foundations; incomplete | Capability/access/initialization/cursor gaps and identity key-allocation debt. |
 | F | Pending | Callable transport and registered collection algorithms. |
@@ -1180,3 +1180,18 @@ remain. This is not fixed-width, indexed, nested or boxed-carrier admission.
 
 Special binary/compound groups, lazy protocols, wider ordering, scoped observations
 and the source-formation decision remain open before the complete carrier review.
+
+## C21 — canonical carrier bitwise and shift paths
+
+The existing checked-payload binary and ordered compound mechanisms now cover
+canonical integer `&`, `|`, `^`, `<<`, `>>` and their compound forms across all four
+carrier families and canonical integer peers. This slice only changes metadata
+admission; it introduces no generator branches, runtime overloads or implementation
+units. Existing scalar owners retain valid-count behavior and checked shift errors.
+
+Power remains distinct: `integer_power.md` explicitly admits carrier `**=` through
+its compound extension, while the binary source section does not grant carrier
+`**`. The next power slice must resolve the compound's scalar calculation without
+accidentally admitting binary carrier power. This is an implementation separation,
+not permission to widen the source contract. Lazy/selection protocols, wider ordering,
+scoped observations and the formation-boundary decision also remain open.

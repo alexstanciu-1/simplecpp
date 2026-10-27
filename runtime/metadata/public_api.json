@@ -3167,6 +3167,9 @@
               "int64"
             ]
           }
+        ],
+        "carrier_targets": [
+          "int64"
         ]
       },
       "bit_or_assign": {
@@ -3178,6 +3181,9 @@
               "int64"
             ]
           }
+        ],
+        "carrier_targets": [
+          "int64"
         ]
       },
       "bit_xor_assign": {
@@ -3189,6 +3195,9 @@
               "int64"
             ]
           }
+        ],
+        "carrier_targets": [
+          "int64"
         ]
       },
       "shift_left_assign": {
@@ -3200,6 +3209,9 @@
               "int64"
             ]
           }
+        ],
+        "carrier_targets": [
+          "int64"
         ]
       },
       "shift_right_assign": {
@@ -3211,6 +3223,9 @@
               "int64"
             ]
           }
+        ],
+        "carrier_targets": [
+          "int64"
         ]
       },
       "power_assign": {
@@ -4611,7 +4626,12 @@
         "less_equal",
         "greater",
         "greater_equal",
-        "compare"
+        "compare",
+        "bit_and",
+        "bit_or",
+        "bit_xor",
+        "shift_left",
+        "shift_right"
       ],
       "payloads": [
         "int8",

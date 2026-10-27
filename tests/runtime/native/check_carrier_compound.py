@@ -1,4 +1,4 @@
-"""Canonical carrier arithmetic compounds through shared ordered plans."""
+"""Canonical carrier numeric compounds through shared ordered plans."""
 import argparse
 import copy
 import json
@@ -17,14 +17,15 @@ parser=argparse.ArgumentParser(description=__doc__)
 parser.add_argument('--tool',type=Path,required=True)
 parser.add_argument('--core',type=Path)
 parser.add_argument('--sanitize',action='store_true')
+parser.add_argument('--special',action='store_true',help='Exercise canonical integer bitwise and shifts')
 args=parser.parse_args();args.tool=args.tool.resolve()
 metadata=concrete_types.metadata(root/'runtime')
 public_types={**metadata['types'],**json.loads((root/'runtime/public/specializations.json').read_text())['types']}
 families=['nullable','result','result_or_false','result_or_bool']
-names={f+'<'+t+'>':'compound_'+str(i)+'_'+t for i,f in enumerate(families) for t in ['int64','float64']}
+names={f+'<'+t+'>':'compound_'+str(i)+'_'+t for i,f in enumerate(families) for t in (['int64'] if args.special else ['int64','float64'])}
 request={'package':'application.carrier_compound','roots':list(names),'names':names}
 
-ops=['add','subtract','multiply','divide','remainder']
+ops=['bit_and','bit_or','bit_xor','shift_left','shift_right'] if args.special else ['add','subtract','multiply','divide','remainder']
 def resolve(target,right,op,meta=metadata,error=None):
     p=subprocess.run([str(args.tool)],input=json.dumps({'metadata':meta,'names':names,'action':'resolve_compound',
         'request':{'operation':op+'_assign','target':target,'right':right}}),text=True,capture_output=True)
@@ -37,7 +38,7 @@ plans={}
 for family in families:
     for op in ops:
         for left,right in [('int64','int64'),('float64','int64'),('float64','float64')]:
-            if op=='remainder' and left!='int64':continue
+            if (args.special or op=='remainder') and left!='int64':continue
             for target,rhs in [(family+'<'+left+'>',right),(family+'<'+left+'>',family+'<'+right+'>'),(left,family+'<'+right+'>')]:
                 p=resolve(target,rhs,op);plans[target,rhs,op]=p
                 assert p['kind']=='ordered_compound' and p['result_type']==target
@@ -53,6 +54,22 @@ changed=copy.deepcopy(metadata);changed['global_operators']['compounds']['add_as
 resolve('nullable<int64>','int64','add',changed,error='Unsupported compound payload operands')
 changed=copy.deepcopy(metadata);changed['global_operators']['compounds']['add_assign']['operation']='numeric_equal'
 resolve('nullable<int64>','int64','add',changed,error='requires a checked payload operation')
+if args.special:
+    for op in ops:
+        for left_family in families:
+            for right_family in families:
+                data={'metadata':metadata,'names':names,'action':'resolve_operator','request':{'operation':op,'left':left_family+'<int64>','right':right_family+'<int64>'}}
+                result=subprocess.run([str(args.tool)],input=json.dumps(data),text=True,capture_output=True)
+                assert result.returncode==0,result.stderr
+                plan=json.loads(result.stdout)
+                assert plan['kind']=='checked_payload_binary' and plan['result_type']=='int64'
+                assert plan['steps'].index('project_left')<plan['steps'].index('evaluate_right')
+    for op in ops:
+        for bad in ['float64','int8','uint64','boolean','mixed','dynamic','nullable<int64>']:
+            data={'metadata':metadata,'names':names,'action':'resolve_operator','request':{'operation':op,'left':'nullable<'+bad+'>','right':'int64'}}
+            result=subprocess.run([str(args.tool)],input=json.dumps(data),text=True,capture_output=True)
+            assert result.returncode and 'Unsupported' in result.stderr,result.stderr
+    print('PASS: 80 cross-family binary special plans, ordered extraction and rejected payload widening')
 headers=set();functions=[];checks=[];failures=[]
 def cpp(t):return 'scpp::'+names[t] if t in names else public_types[t]['cpp']
 def payload(t):return t.split('<')[1][:-1] if '<' in t else t
@@ -79,7 +96,7 @@ for (target,right,op),p in plans.items():
       'return_value_snapshot':'return replacement;',
     }
     functions.append('static '+cpp(target)+' '+fn+'('+cpp(target)+' &destination,const '+cpp(right)+' &right,int &captures,int &effects,int mode=0) { '+' '.join(fragments[s] for s in p['steps'])+' }')
-    expected={'add':15,'subtract':9,'multiply':36,'divide':4,'remainder':0}[op]
+    expected={'add':15,'subtract':9,'multiply':36,'divide':4,'remainder':0,'bit_and':0,'bit_or':15,'bit_xor':15,'shift_left':96,'shift_right':1}[op]
     for mode in [0,1]:
         checks.append(f'{{ auto destination={value(target,12)}; int captures=0,effects=0; auto result={fn}(destination,{value(right,3)},captures,effects,{mode}); CHECK(captures==1 && effects==1 && {read(target,"destination")}=={expected} && {read(target,"result")}=={expected}); destination={value(target,8)}; CHECK({read(target,"result")}=={expected}); }}')
     failures.append(f'{{ auto destination={value(target,12)}; int captures=0,effects=0; bool caught=false; try {{ (void){fn}(destination,{value(right,3)},captures,effects,2); }} catch (...) {{ caught=true; }} CHECK(caught && captures==1 && effects==1 && {read(target,"destination")}==100); }}')
@@ -95,9 +112,14 @@ for (target,right,op),p in plans.items():
             rhs=value(right,3) if side=='left' else initial
             state=('destination.has_error() && destination.error().get_line().native_value()==7' if family=='result' else '!destination.has_value()') if side=='left' else read(target,'destination')+'==12'
             failures.append(f'{{ auto destination={init}; int captures=0,effects=0; bool caught=false; try {{ (void){fn}(destination,{rhs},captures,effects); }} catch (...) {{ caught=true; }} CHECK(caught && captures==1 && effects=={0 if side=="left" else 1} && ({state})); }}')
-    if target==right:
+    if args.special and op.startswith('shift_'):
+        for count in [0,63]:
+            checks.append(f'{{ auto destination={value(target,0)}; int captures=0,effects=0; auto result={fn}(destination,{value(right,count)},captures,effects); CHECK(captures==1 && effects==1 && {read(target,"result")}==0); }}')
+        for count in [-1,64,65]:
+            failures.append(f'{{ auto destination={value(target,12)}; int captures=0,effects=0; bool caught=false; try {{ (void){fn}(destination,{value(right,count)},captures,effects,1); }} catch (...) {{ caught=true; }} CHECK(caught && captures==1 && effects==1 && {read(target,"destination")}==100); }}')
+    if target==right and not (args.special and op.startswith('shift_')):
         # RHS aliases the destination and observes its intervening mutation.
-        expected={'add':112,'subtract':-88,'multiply':1200,'divide':0.12 if payload(target)=='float64' else 0,'remainder':12}[op]
+        expected={'add':112,'subtract':-88,'multiply':1200,'divide':0.12 if payload(target)=='float64' else 0,'remainder':12,'bit_and':4,'bit_or':108,'bit_xor':104}[op]
         checks.append(f'{{ auto destination={value(target,12)}; int captures=0,effects=0; auto result={fn}(destination,destination,captures,effects,1); CHECK(captures==1 && effects==1 && {read(target,"result")}=={expected}); }}')
 print(f'PASS: {len(plans)} compound plans, {len(checks)} successful cases, {len(failures)} failure cases; directional admission and renamed family')
 if not args.core:sys.exit(0)
@@ -109,7 +131,7 @@ with tempfile.TemporaryDirectory(prefix='scpp-carrier-compound-') as directory:
     seal_package(sdk,['core']);os.environ['SCPP_API_GENERATOR']=str(sdk/'tools/scpp_api_generator')
     request_file=work/'request.json';request_file.write_text(json.dumps(request))
     manifest=concrete_types.generate(request_file,app,sdk,[sdk],'clang++',[])
-    assert len(manifest['sources'])==8
+    assert len(manifest['sources'])==(4 if args.special else 8)
     code='\n'.join('#include "'+h+'"' for h in sorted(headers))+r'''
 #include "public_api_guard.hpp"
 #include <cstdlib>

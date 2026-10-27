@@ -1143,3 +1143,9 @@ snapshot and conversion, and `project_right` between RHS evaluation and conversi
 The normalized scalar calculation remains unchanged. Carrier destinations reuse the
 single payload construction recipe; plain destinations use ordinary conversion.
 Text's state-aware converted-operand path retains its distinct policy and steps.
+
+Canonical integer bitwise and shifts reuse `carrier_projection.operations` and
+compound `carrier_targets`, with no additional recipe fields or generator branches.
+Their ordinary special-operator selector restricts binary payloads to canonical int;
+compound rules enforce that same identity. Physical carrier presence never bypasses
+the ordinary operation domain or the checked shift-count implementation.

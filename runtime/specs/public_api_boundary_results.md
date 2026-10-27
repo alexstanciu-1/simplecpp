@@ -2047,3 +2047,25 @@ The compiled ASan/UBSan proof with leak detection also passes, including publica
 reuse: storage compile 12.6209s and combined caller compile 39.8109s. Future test
 extensions should keep the executed semantics while avoiding redundant expansion of
 this already large caller matrix.
+
+## C21 — metadata-only canonical carrier bitwise/shifts (2026-10-27)
+
+The existing projection/compound protocols admit the five canonical integer bitwise
+and shift operations through metadata alone. Ninja reports no generator work in both
+release and sanitizer configurations. Regeneration preserves every generated-file
+hash across the 336 runtime implementation units; core is not rebuilt.
+
+The reused compound proof's `--special` mode checks 80 cross-family binary plans,
+60 executable compound plans, 180 success cases and 232 failure cases. It covers all
+four carrier families, plain peers, independent result snapshots, saved-left/RHS
+aliasing, unavailable payloads, prior RHS effects and checked counts -1,64,65 versus
+valid endpoints 0,63. Noncanonical, boxed and nested payloads reject. No binary power
+permission is inferred from the separately admitted carrier compound contract.
+
+Five focused release regressions pass in 7.44s and their ASan/UBSan counterparts in
+43.66s. The compiled release public proof passes with zero allocations in successful
+operations and sealed application reuse: four storage units compile in 6.0050s and
+the combined caller in 3.5903s. These are single-run wall times during concurrent
+validation, not isolated comparative benchmarks.
+The compiled ASan/UBSan proof with leak detection also passes, including sealed
+reuse: four storage units 6.2220s, combined caller 7.8840s.

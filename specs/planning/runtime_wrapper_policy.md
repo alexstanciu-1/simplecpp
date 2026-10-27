@@ -472,3 +472,12 @@ carrier peers use the same rule. No missing state becomes a numeric value. The
 existing ordered compound planner owns snapshot, conversion, computation and commit;
 carrier metadata supplies checked access and payload reconstruction. Returned values
 remain independent snapshots of the destination type.
+
+### Canonical integer bitwise and shift checkpoint
+
+The four carriers now expose checked one-layer binary bitwise/shift plans and ordered
+compound plans for canonical int payloads. Non-value states fail checked extraction;
+shift counts outside [0,63] fail before compound write-back. Fixed-width, boxed,
+float and nested carrier payloads remain outside this policy. Existing native scalar
+behavior owns valid counts. Carrier power is not inferred from these permissions:
+its separately admitted compound path must not widen binary power admission.
