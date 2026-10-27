@@ -167,14 +167,9 @@ def publish(kind, clang, jobs):
     stage = Path(tempfile.mkdtemp(prefix=".publish-", dir=package.parent))
     try:
         shutil.copytree(source / "include", stage / "include")
+        if kind == "runtime":
+            shutil.copytree(source / "public", stage / "public")
         if kind == "middleware":
-            # Re-export only selected public runtime headers, pinned to this publication.
-            mappings = json.loads((source / "types.json").read_text())["mappings"]
-            public_headers = {m["public_runtime_header"] for m in mappings if "public_runtime_header" in m}
-            for header in sorted(public_headers):
-                destination = stage / "include" / header
-                destination.parent.mkdir(parents=True, exist_ok=True)
-                shutil.copy2(runtime / "include" / header, destination)
             # Support alone consumes this private bridge, paired with this publication.
             (stage / "detail").mkdir()
             for header in ("scalar_access.hpp", "string_state.hpp"):
@@ -197,6 +192,15 @@ set_target_properties(compiler_runtime_json PROPERTIES
 add_library(compiler_tasks STATIC IMPORTED)
 set_target_properties(compiler_tasks PROPERTIES
   IMPORTED_LOCATION "${CMAKE_CURRENT_LIST_DIR}/lib/libscpp_tasks.a")
+add_library(compiler_runtime_api INTERFACE IMPORTED)
+set_target_properties(compiler_runtime_api PROPERTIES
+  INTERFACE_INCLUDE_DIRECTORIES "${CMAKE_CURRENT_LIST_DIR}/public"
+  INTERFACE_COMPILE_FEATURES "cxx_std_23"
+  INTERFACE_LINK_LIBRARIES "compiler_runtime_core")
+add_library(compiler_tasks_api INTERFACE IMPORTED)
+set_target_properties(compiler_tasks_api PROPERTIES
+  INTERFACE_LINK_LIBRARIES "compiler_runtime_api;compiler_tasks"
+  INTERFACE_COMPILE_DEFINITIONS "SCPP_HAS_TASKS=1")
 add_library(compiler_runtime INTERFACE IMPORTED)
 add_library(compiler_filesystem STATIC IMPORTED)
 set_target_properties(compiler_filesystem PROPERTIES
@@ -214,7 +218,7 @@ set_target_properties(compiler_runtime PROPERTIES
 set_target_properties(compiler_middleware PROPERTIES
   IMPORTED_LOCATION "${CMAKE_CURRENT_LIST_DIR}/lib/libcompiler_middleware.a"
   INTERFACE_INCLUDE_DIRECTORIES "${CMAKE_CURRENT_LIST_DIR}/include"
-  INTERFACE_LINK_LIBRARIES "$<LINK_ONLY:compiler_runtime>")
+  INTERFACE_LINK_LIBRARIES "compiler_runtime_api;$<LINK_ONLY:compiler_runtime>")
 '''
         (stage / "package.cmake").write_text(cmake)
         (stage / "manifest.json").write_text(json.dumps(

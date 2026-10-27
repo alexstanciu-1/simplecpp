@@ -58,8 +58,9 @@ ctest --test-dir build/compiler --output-on-failure
 
 The compiler Ninja graph contains no runtime or middleware compilation rules.
 The Clang launcher rejects active `template`/`typename` tokens throughout the
-preprocessed compiler include closure, including macro expansions. Only selected template-free runtime public headers are exported through the
-middleware snapshot; the broad runtime include directory remains private. Middleware and runtime may use templates.
+preprocessed compiler include closure, including macro expansions. The runtime publishes its own template-free `public/` include root; middleware
+re-exports its scalar names without copying the headers. The broad runtime include
+directory remains private to middleware/support implementations. Middleware and runtime may use templates.
 This token check enforces the current template boundary, not the whole future
 restricted-C++ or memory-safety policy. Native `int` exits and literal/argv character pointers remain host interfaces.
 The [common runtime surface](docs/common_surface.md) defines concrete scalar types

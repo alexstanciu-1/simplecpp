@@ -36,12 +36,14 @@ with `python3 -B middleware/tools/scalar_types.py`. Configuration and tests reje
 stale output. Runtime generation remains the owner of concrete representation and
 arithmetic; see [runtime-core API rules](../../../runtime/specs/core_public_api.md).
 
-Explicit middleware publication copies the selected runtime's public integer header
-into its include snapshot. The pinned runtime identity pairs that header with its
-compiled implementation. This copy is a dependency snapshot, not a second type
-family or a separately editable implementation. No broad runtime include directory
-is exported to compiler translation units. Boundary tests verify exact type identity,
-byte equality with the pinned header and a template-free include closure.
+The selected runtime publishes its own restricted `public/` include root and compiled
+core. Middleware links its public API target and re-exports scalar names without
+copying runtime headers. The runtime identity pin still pairs declarations with
+implementation. Only the narrow root reaches compiler translation units; the broad
+runtime implementation root stays private to middleware/support. Boundary tests
+verify exact type identity, implementation-header unavailability and template-free
+include closure; relocation tests exercise both enabled and disabled public task
+clients through the published runtime targets.
 
 Each integer keeps native-sized storage, with no allocation or native-pointer cast.
 The runtime's explicit `native_value()` accessor is available, but compiler code

@@ -11,3 +11,5 @@
 #include "../scpp/async_core.cpp"
 
 #include "integers.cpp"
+
+#include "failure.cpp"

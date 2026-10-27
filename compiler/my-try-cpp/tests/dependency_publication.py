@@ -21,8 +21,8 @@ def main():
         runtime.mkdir(parents=True)
         (runtime / "manifest.json").write_text(json.dumps({"identity": "fixture-runtime"}))
         driver.select("runtime", runtime)
-        (runtime / "include/scpp").mkdir(parents=True)
-        (runtime / "include/scpp/integers.hpp").write_text("// fixture public runtime header\n")
+        (runtime / "public/scpp").mkdir(parents=True)
+        (runtime / "public/scpp/integers.hpp").write_text("// fixture public runtime header\n")
         source = driver.PROJECT / "middleware"
         (source / "include").mkdir(parents=True)
         (source / "src").mkdir()
@@ -44,7 +44,8 @@ def main():
         clang = shutil.which("clang++")
         driver.publish("middleware", clang, 8)
         package = driver.selected("middleware")
-        assert (package / "include/scpp/integers.hpp").read_bytes() == (runtime / "include/scpp/integers.hpp").read_bytes()
+        assert not (package / "include/scpp").exists(), "Runtime public headers must stay runtime-owned"
+        assert "compiler_runtime_api" in (package / "package.cmake").read_text()
         archive = package / "lib/libcompiler_middleware.a"
         second = driver.BUILD / "middleware/CMakeFiles/compiler_middleware.dir/second.cpp.o"
         timestamp = second.stat().st_mtime_ns

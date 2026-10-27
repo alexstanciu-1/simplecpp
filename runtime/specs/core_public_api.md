@@ -49,7 +49,7 @@ condition conversion, logical negation and `isset`. Cross-type arithmetic requir
 an explicit conversion. This is deliberately a bounded facade, not the complete
 conversion/operator surface of `int_t` or the language.
 
-`core/integers.cpp` adapts to existing `int_t<Rep>`/`bool_t` shared operators.
+`include/core/integers.cpp` adapts to existing `int_t<Rep>`/`bool_t` shared operators.
 Signed arithmetic retains the existing runtime's domain and limitations; this
 work introduces no new overflow policy. Unsigned wrap, division/remainder errors,
 and explicit representation conversions are inherited. No heap storage is added.
@@ -60,12 +60,13 @@ Run `python3 runtime/tools/concrete_integers.py` to generate and `--check` to ve
 The compiled owner is `scpp_runtime_core`, also included by `core/runtime.cpp`.
 The current representation macros target the repository's Clang/GCC toolchains.
 
-The compiler middleware now re-exports these exact runtime classes. Its generated
-scalar bridge adapts them privately to existing template APIs using `native_value()`;
-there is no second concrete scalar family. Explicit middleware publication copies
-the selected runtime's public integer header into its dependency include snapshot,
-paired with that runtime's compiled core. The compiler checks type identity and
-header equality while keeping implementation headers out of its include closure.
+The definitions live in `runtime/public/scpp/integers.hpp`. New consumers use the
+restricted `scpp_core_api` CMake target (or `scpp_tasks_api` for enabled tasks).
+Compatibility include paths forward to those definitions. The compiler middleware
+re-exports the exact classes and consumes the runtime's published `public/` root;
+it does not copy the integer header or expose the broad implementation include root.
+Its private bridge still adapts concrete values to existing template APIs as needed.
+See [the boundary inventory](public_api_inventory.md) for ownership and migration scope.
 
 ## Scope and next steps
 
@@ -74,7 +75,9 @@ middleware. Strings, containers, general task callbacks and language lowering
 remain outside this migration. The existing `scpp/runtime.hpp` umbrella remains
 available for legacy/template consumers. New focused consumers do not need it.
 
-Tasks-disabled calls retain a header-only exception fallback. That fallback still
-pulls in the existing exception/standard-library machinery; it is an explicit
-compatibility exception to the otherwise template-free include closure. Removing
-it would change disabled linking requirements and is a separate decision.
+The new public API requires core linkage even when optional modules are disabled.
+Task-owned disabled adapters call the general compiled `raise_runtime_error` primitive
+from `scpp/failure.hpp`. Core constructs/throws errors but owns no task-module policy.
+Both task modes have template-free public include closures. The legacy template API
+retains its no-link throwing fallback during migration. Typed public exception
+inspection and string/error representations remain a subsequent slice.

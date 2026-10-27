@@ -63,7 +63,7 @@ def generate():
     header.append('\tboolean isset(boolean value);\n}\n')
     source.append('\tboolean isset(boolean value)\n\t{\n'
                   '\t\treturn scpp::isset(bool_t(value.native_value())).native_value();\n\t}\n}\n')
-    return {ROOT / 'include' / CONFIG['header']: ''.join(header),
+    return {ROOT / 'public' / CONFIG['header']: ''.join(header),
             ROOT / 'include/core/integers.cpp': ''.join(source)}
 
 

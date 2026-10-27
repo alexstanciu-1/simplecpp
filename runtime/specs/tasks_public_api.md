@@ -3,7 +3,7 @@ Doc Status: supporting
 
 ## Worker-pool slice
 
-`modules/tasks/worker_pool.hpp` exposes `scpp::tasks::worker_pool::configure(const
+`runtime/public/modules/tasks/worker_pool.hpp` exposes `scpp::tasks::worker_pool::configure(const
 int64&)`, `size() -> int64` and `shutdown()`. The header uses the runtime-owned
 [concrete integer API](core_public_api.md). Enabled callers need no templates,
 scheduler, callback, batch-state or result-container definitions. The implementation
@@ -21,18 +21,16 @@ the recent focused header, not a change to generated-language or generic task AP
 
 ### Disabled builds
 
-An absent `SCPP_HAS_TASKS` macro still defaults to zero. Concrete configuration preserves
-its header-only throwing fallback, now in `detail/worker_pool_disabled.hpp`, so a
-disabled caller does not need to link the tasks library. It preserves the message,
-`tasks_module_disabled` code, `scpp::tasks` component and
-`task_set_worker_pool_size` operation. As before, the size query and shutdown have
-compiled definitions only; this change does not introduce disabled-mode success
-stubs for those operations. The legacy disabled configuration adapter delegates to
-the same fallback, preserving one diagnostic authority.
+An absent `SCPP_HAS_TASKS` macro defaults to zero. New public callers link runtime
+core through `scpp_core_api`; they need no task library. The task-owned inline
+configuration adapter calls the general compiled error primitive. It preserves
+message, code, component and operation. Error storage/tracing stays private to core;
+task-disabled policy stays in tasks. Both enabled and disabled public headers are
+template-free. Size/shutdown still require enabled compiled definitions when called.
 
-The disabled implementation header is textually included: the exception dependency
-is not hidden from disabled callers. Moving it out of line would change their
-linkage requirements and is outside this slice.
+Legacy `tasks.hpp` callers retain the no-link disabled fallback. Compatibility
+forwarding headers keep existing include paths; the concrete API definitions now
+live only under `runtime/public/`. See [the inventory](public_api_inventory.md).
 
 ### Tests and measurement
 
@@ -41,7 +39,8 @@ inclusion. The enabled caller TU includes only the public header. A separate ful
 API workload proves four-worker concurrency using a barrier, ordered results,
 reuse without additional worker creation, failure propagation and subsequent reuse.
 Configuration checks cover negative, zero and positive counts and repeated shutdown.
-The disabled cases link without the tasks library and verify exact diagnostic fields.
+The public disabled cases link core only and verify exact diagnostic fields through
+a separate compatibility inspector TU. The legacy case links no runtime library.
 
 Run the named targets `test_worker_pool_api`, `test_worker_pool_disabled_default`,
 `test_worker_pool_disabled_explicit` and `test_worker_pool_disabled_umbrella` in a

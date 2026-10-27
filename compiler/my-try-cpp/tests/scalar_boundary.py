@@ -15,9 +15,14 @@ def main():
     include = package / 'include'
     configuration = json.loads((package / 'manifest.json').read_text())['configuration']
     runtime = ROOT / 'dependencies' / configuration['runtime']
-    assert (include / 'scpp/integers.hpp').read_bytes() == (runtime / 'include/scpp/integers.hpp').read_bytes()
+    public = runtime / 'public'
+    assert (public / 'scpp/integers.hpp').is_file()
+    assert not (include / 'scpp').exists(), 'Middleware must not copy runtime headers'
+    includes = ['-I', str(include), '-I', str(public)]
 
     cases = [
+        ('no_runtime_implementation', '#include "scpp/int_t.hpp"\n', 'return 0;', False),
+        ('no_runtime_umbrella', '#include "scpp/runtime.hpp"\n', 'return 0;', False),
         ('same_runtime_types', '#include "scpp_compiler/types.hpp"\n' + ''.join(
             f'static_assert(__is_same(scpp::compiler::{name}, scpp::{name}));\n'
             f'static_assert(__is_same(scpp::compiler_support::{name}, scpp::{name}));\n'
@@ -45,12 +50,12 @@ def main():
         for name, header, body, success in cases:
             source.write_text(header + 'namespace scpp::compiler { int probe() {' + body + '} }\n')
             result = subprocess.run([shutil.which('clang++'), '-std=c++23', '-fsyntax-only',
-                                     '-I', str(include), str(source)], capture_output=True, text=True)
+                                     *includes, str(source)], capture_output=True, text=True)
             assert (result.returncode == 0) == success, name + ': ' + result.stderr
         for header in ['types', 'string', 'textbuilder', 'filesystem', 'datetime', 'io', 'host']:
             source.write_text(f'#include "scpp_compiler/{header}.hpp"\nint main() {{ return 0; }}\n')
             result = subprocess.run([sys.executable, str(ROOT / 'tools/checked_compile.py'),
-                                     shutil.which('clang++'), '-std=c++23', '-I', str(include),
+                                     shutil.which('clang++'), '-std=c++23', *includes,
                                      '-c', str(source), '-o', str(Path(folder) / 'probe.o')],
                                     capture_output=True, text=True)
             assert result.returncode == 0, header + ': ' + result.stderr

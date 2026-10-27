@@ -29,14 +29,14 @@ def main():
             source.write_text(f'#include "{header}"\n'
                               f'void configure() {{ {call}; }}\n')
             command = [args.compiler, '-std=c++23', '-O2', '-DNDEBUG',
-                       f'-DSCPP_HAS_TASKS={enabled}', '-I'+str(include), str(source)]
+                       f'-DSCPP_HAS_TASKS={enabled}', '-I'+str(include.parent / 'public' if label == 'focused' else include), str(source)]
             dependencies = subprocess.check_output([*command, '-M'], text=True)
             if label == 'focused':
                 for forbidden in ('modules/tasks/tasks.hpp', 'scpp/int_t.hpp', 'scpp/detail.hpp', 'scpp/mixed_t.hpp',
                                   'scpp/dynamic_t.hpp', 'scpp/hash_t.hpp', 'scpp/vector_t.hpp'):
                     assert forbidden not in dependencies, (name, forbidden)
             preprocessed = subprocess.check_output([*command, '-E', '-P'])
-            if label == 'focused' and enabled:
+            if label == 'focused':
                 assert not re.search(rb'\b(template|typename)\b', preprocessed), name
             cases[name] = dict(command=command, runs_seconds=[],
                                preprocessed_bytes=len(preprocessed))

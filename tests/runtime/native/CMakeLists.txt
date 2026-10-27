@@ -247,26 +247,35 @@ add_executable(test_pow test_pow.cpp)
 target_link_libraries(test_pow PRIVATE scpp_runtime scpp_runtime_test_support)
 add_test(NAME scpp_test_pow COMMAND test_pow)
 
-# A narrow public task API; the caller TU never includes the generic task adapters.
-add_executable(test_worker_pool_api test_worker_pool_api.cpp worker_pool_workload.cpp)
-target_link_libraries(test_worker_pool_api PRIVATE scpp_tasks)
+# The public caller TU gets no compatibility include roots from the workload.
+add_library(worker_pool_workload OBJECT worker_pool_workload.cpp)
+target_link_libraries(worker_pool_workload PRIVATE scpp_tasks)
+add_executable(test_worker_pool_api test_worker_pool_api.cpp $<TARGET_OBJECTS:worker_pool_workload>)
+target_link_libraries(test_worker_pool_api PRIVATE scpp_tasks_api)
 add_test(NAME scpp_test_worker_pool_api COMMAND test_worker_pool_api)
 set_tests_properties(scpp_test_worker_pool_api PROPERTIES TIMEOUT 30)
 
-# Disabled calls remain header-only, including the default when the macro is absent.
-foreach(mode default explicit umbrella)
-  add_executable(test_worker_pool_disabled_${mode} test_worker_pool_disabled.cpp)
-  target_include_directories(test_worker_pool_disabled_${mode} PRIVATE
-    ${CMAKE_CURRENT_SOURCE_DIR}/../../../runtime/include)
-  target_compile_features(test_worker_pool_disabled_${mode} PRIVATE cxx_std_23)
-  if(NOT mode STREQUAL "default")
+add_library(worker_pool_error_check OBJECT worker_pool_error_check.cpp)
+target_link_libraries(worker_pool_error_check PRIVATE scpp_runtime_configuration)
+add_executable(test_public_failure test_public_failure.cpp $<TARGET_OBJECTS:worker_pool_error_check>)
+target_link_libraries(test_public_failure PRIVATE scpp_core_api)
+add_test(NAME scpp_test_public_failure COMMAND test_public_failure)
+# New disabled callers link only core; exception inspection uses a separate TU.
+foreach(mode default explicit)
+  add_executable(test_worker_pool_disabled_${mode} test_worker_pool_disabled.cpp
+    $<TARGET_OBJECTS:worker_pool_error_check>)
+  target_link_libraries(test_worker_pool_disabled_${mode} PRIVATE scpp_core_api)
+  if(mode STREQUAL "explicit")
     target_compile_definitions(test_worker_pool_disabled_${mode} PRIVATE SCPP_HAS_TASKS=0)
-  endif()
-  if(mode STREQUAL "umbrella")
-    target_compile_definitions(test_worker_pool_disabled_${mode} PRIVATE TEST_TASKS_UMBRELLA=1)
   endif()
   add_test(NAME scpp_test_worker_pool_disabled_${mode} COMMAND test_worker_pool_disabled_${mode})
 endforeach()
+# Preserve the old template API's no-runtime-library fallback independently.
+add_executable(test_worker_pool_disabled_umbrella test_worker_pool_disabled_legacy.cpp
+  $<TARGET_OBJECTS:worker_pool_error_check>)
+target_link_libraries(test_worker_pool_disabled_umbrella PRIVATE scpp_runtime_configuration)
+target_compile_definitions(test_worker_pool_disabled_umbrella PRIVATE SCPP_HAS_TASKS=0)
+add_test(NAME scpp_test_worker_pool_disabled_umbrella COMMAND test_worker_pool_disabled_umbrella)
 
 add_executable(test_concrete_integers test_concrete_integers.cpp)
 target_link_libraries(test_concrete_integers PRIVATE scpp_runtime_core)

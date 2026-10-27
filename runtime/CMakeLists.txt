@@ -25,12 +25,24 @@ set_target_properties(scpp_runtime_core PROPERTIES POSITION_INDEPENDENT_CODE ON)
 # Consumers retain the aggregate target name; implementations have truthful owners.
 add_library(scpp_runtime INTERFACE)
 
+# New public consumers see only this root. Existing targets remain compatibility APIs.
+add_library(scpp_public_configuration INTERFACE)
+target_include_directories(scpp_public_configuration INTERFACE ${CMAKE_CURRENT_SOURCE_DIR}/public)
+target_compile_features(scpp_public_configuration INTERFACE cxx_std_23)
+add_library(scpp_core_api INTERFACE)
+target_link_libraries(scpp_core_api INTERFACE scpp_public_configuration "$<LINK_ONLY:scpp_runtime_core>")
+
+
 # Optional consumers link the tasks owner explicitly.
 add_library(scpp_tasks EXCLUDE_FROM_ALL include/modules/tasks/tasks.cpp)
 target_link_libraries(scpp_tasks PUBLIC scpp_runtime_configuration scpp_runtime_core)
 target_compile_definitions(scpp_tasks PUBLIC SCPP_HAS_TASKS=1)
 find_package(Threads REQUIRED)
 target_link_libraries(scpp_tasks PUBLIC Threads::Threads)
+add_library(scpp_tasks_api INTERFACE)
+target_link_libraries(scpp_tasks_api INTERFACE scpp_core_api "$<LINK_ONLY:scpp_tasks>")
+target_compile_definitions(scpp_tasks_api INTERFACE SCPP_HAS_TASKS=1)
+
 
 add_library(scpp_json
 	include/modules/json/json.cpp

@@ -29,7 +29,7 @@ def main():
     for label, path in (
         ("runtime_source", REPO / "runtime/include/core/runtime_core.cpp"),
         ("runtime_header", REPO / "runtime/include/scpp/string_t.hpp"),
-        ("runtime_public_header", REPO / "runtime/include/scpp/integers.hpp"),
+        ("runtime_public_header", REPO / "runtime/public/scpp/integers.hpp"),
         ("middleware_source", PROJECT / "middleware/src/textbuilder.cpp"),
         ("middleware_header", PROJECT / "middleware/include/scpp_compiler/textbuilder.hpp"),
         ("compiler_source", PROJECT / "src/main.cpp"),

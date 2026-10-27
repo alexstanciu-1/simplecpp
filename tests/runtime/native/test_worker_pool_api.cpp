@@ -1,3 +1,4 @@
+#include "public_api_guard.hpp"
 #include "modules/tasks/worker_pool.hpp"
 
 // Implemented in a separate TU that exercises the existing generic task API.
