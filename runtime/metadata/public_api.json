@@ -2129,6 +2129,9 @@
       },
       "null": {
         "domain": "null"
+      },
+      "error_value": {
+        "domain": "error_value"
       }
     },
     "domains": {
@@ -2155,6 +2158,9 @@
       },
       "null": {
         "maximum": "null"
+      },
+      "error_value": {
+        "maximum": "error_value"
       }
     },
     "groups": {
@@ -2872,6 +2878,29 @@
           "mixed",
           "dynamic"
         ]
+      },
+      "logical_not": {
+        "form": "unary",
+        "name": "condition_truthy",
+        "function_set": "condition_truthy",
+        "publish": [
+          "int64",
+          "float64",
+          "boolean",
+          "mixed",
+          "dynamic",
+          "error_value"
+        ],
+        "operands": [
+          "int64",
+          "float64",
+          "boolean",
+          "mixed",
+          "dynamic",
+          "error_value"
+        ],
+        "returns": "boolean",
+        "result_expression": "!${result}"
       }
     }
   },

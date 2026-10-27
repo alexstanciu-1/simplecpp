@@ -1214,3 +1214,32 @@ core/tool/test rebuilds: release **21.51 s**, **422,036 KiB**; sanitized **48.19
 Two incomplete native probe attempts lacked the direct operator header; only the
 successful corrected probe is reported above. These are single observations, not
 statistical benchmarks. The existing native hash warning is unchanged.
+
+## B2d — logical negation by unary result composition
+
+Six admitted scalar-facing logical-negation plans reuse existing condition APIs and
+public boolean `!`. Unary metadata may specify one `${result}` expression marker;
+clients save the observation result and apply the expression only after success.
+No public header, runtime implementation or core archive changed. The inventory
+updates only its metadata identity, and sealed relocated plan resolution reuses the
+existing condition API without emitting another adapter.
+
+The plan-driven public consumer passes in release and ASan/UBSan/leak mode: canonical
+numeric/bool/error observations, false-like boxed strings, rejected mixed tables,
+truthy dynamic objects, operand evaluation once and failure propagation. Successful
+operations allocate zero times. Metadata tests cover exact admission, missing or
+repeated result markers, binary misuse and an alternative metadata transformation.
+
+Five focused regression cases were checked in both modes. The function-set rename
+fixture initially failed because it renamed the recipe but left its new unary
+reference dangling. The fixture now renames linked operation metadata too; its
+focused rerun passes in release and sanitizer mode. The other four cases passed
+unchanged. Sealed publication/relocation passes in both modes, including resolution
+and compilation of the logical-not plan from the sealed runtime's own metadata.
+
+Single whole-proof compile **and link** observations: release **0.3601 s**, sanitized
+**0.7514 s**. These are not earlier small compile-only caller measurements; other
+focused work was running concurrently. Generator rebuilds: release **3.24 s**, peak
+child RSS **135,280 KiB**; sanitized **8.75 s**, **265,028 KiB**. No runtime-core
+rebuild was needed. Reproduce with `check_logical_not.py --tool <generator>
+--core <core.a> [--sanitize]`.

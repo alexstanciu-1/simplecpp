@@ -580,3 +580,18 @@ complement publishes int64 and both boxed families. Native kind checks and nativ
 integer overflow limitations remain unchanged. In particular this does not invent
 checked negation of the minimum signed integer. Logical negation, updates and carrier
 operations retain their separate admission/state protocols.
+
+## Unary result composition
+
+An optional unary `result_expression` describes a small C++ expression over exactly
+one `${result}` marker. Resolve the observed value first, then substitute that saved
+result; if observation throws, do not evaluate the expression. This supplements the
+existing one-operand evaluation plan and introduces no new runtime implementation.
+The metadata owns the expression; the generator has no hard-coded negation/type rule.
+Normal C++ compilation still validates the expression's result type and syntax.
+
+Logical negation composes the existing `condition_truthy` API with public boolean
+`!`. Its admitted scalar-facing inputs are canonical int64/float64, boolean,
+mixed/dynamic and error_value. String/fixed-width condition helpers do not by
+themselves authorize those unary source operators. Carrier, ownership and callable
+logical admission remain with their respective completion batches.

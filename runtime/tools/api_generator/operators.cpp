@@ -78,14 +78,22 @@ namespace scpp::api_generation
         }
         for (const auto &[name, operation] : registry.at("operations").fields) {
             authored_name(name); authored_name(operation.at("name").text());
-            fields_only(operation, "form group name expression publish returns includes function_set pair_function_set operands distinct_result", "global operation");
+            fields_only(operation, "form group name expression publish returns includes function_set pair_function_set operands distinct_result result_expression", "global operation");
             const auto form = operation.get("form", "binary");
             if (form != "binary" && form != "unary") throw std::runtime_error("Unknown operator form");
             if (form == "unary") {
-                fields_only(operation, "form name publish returns function_set operands", "unary operation");
+                fields_only(operation, "form name publish returns function_set operands result_expression", "unary operation");
                 operation.at("function_set").text();
                 operation.at("operands");
             } else registry.at("groups").at(operation.at("group").text());
+            if (operation.has("result_expression")) {
+                if (form != "unary") throw std::runtime_error("Result expression requires a unary operation");
+                const auto expression = operation.at("result_expression").text();
+                const std::string marker = "${result}";
+                const auto position = expression.find(marker);
+                if (position == std::string::npos || expression.find(marker, position + marker.size()) != std::string::npos)
+                    throw std::runtime_error("Result expression requires exactly one result marker");
+            }
             if (operation.has("expression") == operation.has("function_set"))
                 throw std::runtime_error("Operator needs exactly one expression or function set owner");
             if (operation.has("function_set")) {
@@ -146,6 +154,7 @@ namespace scpp::api_generation
         result["api"] = identity; result["header"] = function.at("header");
         result["function"] = function.at("namespace").text() + "::" + signature.at("name").text();
         result["conversion"] = "identity"; result["evaluation"] = "evaluate_operand_once";
+        if (operation.has("result_expression")) result["result_expression"] = operation.at("result_expression");
         return result;
     }
 

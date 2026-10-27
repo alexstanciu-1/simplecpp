@@ -16,7 +16,7 @@ each slice. The original inventory is a baseline, not a current completion count
 | A1 | Complete for the agreed ordinary numeric domain | Specialized and boxed extensions remain in B2/E, not implied by A1. |
 | A2 | Complete for the agreed checked scalar conversions | Carrier conversion is C; ownership casts are D. |
 | B1 | Complete for the agreed scalar-facing truth/text/identity/observation scope | Carrier forms remain C; boxed arithmetic and access completion are not B1 credit. |
-| B2 | Binary canonical/boxed bitwise and checked shifts, canonical power, numeric spaceship and numeric unary operations implemented | Logical negation and updates/compounds; carrier variants remain C. |
+| B2 | Binary canonical/boxed bitwise and checked shifts, canonical power, numeric spaceship, numeric unary and scalar logical negation implemented | Updates/compounds; carrier variants remain C. |
 | C | Policy agreed; completion pending | Four carrier families, state-preserving operations/conversions and conditional lifecycle. |
 | D | Pending | Ownership, application targets and source Exception transport gaps. |
 | E | Existing vector/hash/boxed foundations; incomplete | Capability/access/initialization/cursor gaps and identity key-allocation debt. |
@@ -168,7 +168,7 @@ core contract; full frontend adoption remains excluded.
 
 ## Next implementation work
 
-Continue B2 with logical negation and update/compound groups using existing operator
+Continue B2 with update/compound groups using existing operator
 metadata and native error authorities.
 Proceed to C with the accepted one-layer carrier rules; the first complete carrier
 path must be reviewed before D/F expansion. Do not treat existing native template
@@ -497,3 +497,18 @@ Native signed-overflow limitations remain unchanged; the tests do not claim chec
 negation of minimum int64. Logical negation's condition admission, updates/compounds
 and carrier variants remain open. Legacy boxed error inspection remains the G gap
 identified in B2a.
+
+## Active-goal progress — B2d scalar-facing logical negation
+
+Unary result composition reuses six existing condition observations and public
+boolean negation; no runtime adapter or core archive rebuild is required. Metadata
+requires one result marker and retains evaluate-once semantics. Plain string and
+fixed-width condition availability does not widen the current logical admission;
+carrier/ownership/callable forms stay with C/D/F. The condition contract explicitly
+separates truthiness from logical-operator admission.
+
+A plan-driven public consumer verifies false-like boxed strings versus explicit
+casts, numeric/bool/error states, rejected mixed containers, truthy dynamic objects,
+operand evaluation once and zero successful allocations. Observation failure must
+propagate before result transformation. B2's remaining scalar-facing work is update
+and compound protocols; broader carrier/ownership behavior remains unfinished.

@@ -424,3 +424,6 @@ target_link_libraries(test_public_unary PRIVATE scpp_core_api)
 add_test(NAME scpp_test_public_unary COMMAND test_public_unary)
 add_test(NAME scpp_check_unary_api COMMAND ${Python3_EXECUTABLE}
   ${CMAKE_CURRENT_SOURCE_DIR}/check_unary_api.py $<TARGET_FILE:scpp_api_generator>)
+
+add_test(NAME scpp_check_logical_not COMMAND ${Python3_EXECUTABLE}
+  ${CMAKE_CURRENT_SOURCE_DIR}/check_logical_not.py --tool $<TARGET_FILE:scpp_api_generator>)
