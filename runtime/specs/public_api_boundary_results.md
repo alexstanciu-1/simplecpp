@@ -1243,3 +1243,36 @@ focused work was running concurrently. Generator rebuilds: release **3.24 s**, p
 child RSS **135,280 KiB**; sanitized **8.75 s**, **265,028 KiB**. No runtime-core
 rebuild was needed. Reproduce with `check_logical_not.py --tool <generator>
 --core <core.a> [--sanitize]`.
+
+## B2e — mutable unary updates with owned snapshots
+
+Sixteen ordinary function-set variants expose prefix/postfix increment/decrement
+for canonical int64/float64 and mixed/dynamic. Unary metadata records `ref` versus
+`const_ref` and distinguishes resolving writable storage once from observing an
+operand once. Exact C++ signatures require mutable storage and return values, not
+references, including native prefix forms whose underlying result is a reference.
+
+Public tests verify signature/return types, aliases, old/new snapshots after later
+mutations, one destination resolution, safe signed boundaries, floating infinity/
+NaN, and rejected boxed kinds leaving original storage unchanged. Successful paths
+allocate zero times. Six release regressions pass (**2.78 s**) with update metadata
+checked separately; seven ASan/UBSan/leak regressions pass (**14.14 s**). Relocated
+sealed publication and a public-only update consumer pass in both modes.
+
+Single compile-only observations after checks, `measure_global_operators.py --updates`:
+
+| Case | Seconds | Preprocessed bytes |
+| --- | ---: | ---: |
+| Public caller | 0.0570 | 21,261 |
+| Native caller | 3.2473 | 3,615,316 |
+| Private dynamic postfix adapter | 3.5488 | 3,691,177 |
+
+Initial generator rebuild: **3.54 s**, peak child RSS **135,908 KiB**. Eight-job
+core/tool/new-test builds: release **23.30 s**, **422,624 KiB**; sanitized **53.65 s**,
+**635,948 KiB**. These are single observations, not statistical benchmarks. Existing
+native hash warnings and signed-overflow limitations remain unchanged.
+
+This covers value updates, not compound RHS ordering or general source lvalue
+capture. Carrier updates remain C; property/index owner lifetime remains D/E, and
+legacy boxed exception inspection remains G. Compound snapshot/check/write-back is
+still explicitly unfinished B2 work.

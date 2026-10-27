@@ -595,3 +595,18 @@ Logical negation composes the existing `condition_truthy` API with public boolea
 mixed/dynamic and error_value. String/fixed-width condition helpers do not by
 themselves authorize those unary source operators. Carrier, ownership and callable
 logical admission remain with their respective completion batches.
+
+## Writable unary operands and update snapshots
+
+Unary `operand_passing` defaults to `const_ref`; `ref` requires the function-set
+signature to borrow mutable storage and produces `resolve_writable_operand_once`
+in the plan. Other passing modes and binary uses of this field reject. The caller
+must resolve and retain valid writable storage; metadata is not a source lvalue
+validator. Public C++ reference signatures enforce mutability at that boundary.
+
+Prefix/postfix increment/decrement publish canonical int64/float64 and both boxed
+families. Each returns an owned value, including prefix forms whose native operators
+return references. Integer metadata uses the existing public representation's
+prefix methods; other types borrow mutable native storage. Native boxed kind checks
+and numeric overflow behavior remain unchanged. This is separate from compound
+snapshot/RHS/write-back protocols and does not admit additional fixed widths.

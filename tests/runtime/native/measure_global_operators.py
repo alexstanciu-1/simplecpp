@@ -21,6 +21,7 @@ parser.add_argument('--boxed-text', action='store_true', help='Measure boxed tex
 parser.add_argument('--special-integers', action='store_true', help='Measure checked power and boxed shift')
 parser.add_argument('--spaceship', action='store_true', help='Measure integer and floating spaceship')
 parser.add_argument('--unary', action='store_true', help='Measure canonical and boxed unary operations')
+parser.add_argument('--updates', action='store_true', help='Measure borrowed updates with owned results')
 args = parser.parse_args()
 public = '''#include "scpp/operators/add_int64.hpp"
 #include "scpp/operators/equal_mixed.hpp"
@@ -67,6 +68,9 @@ if args.spaceship:
 if args.unary:
     public = '#include "scpp/operators/negative_dynamic.hpp"\n#include "scpp/operators/complement_int64.hpp"\nscpp::dynamic negative(const scpp::dynamic &v) { return scpp::numeric_negative(v); }\nscpp::int64 complement(const scpp::int64 &v) { return scpp::numeric_complement(v); }\n'
     native = '#include "scpp/generated/operators.hpp"\n#include "operators/arithmetic/boxed_numeric.hpp"\nscpp::detail::dynamic_value negative(const scpp::detail::dynamic_value &v) { return -v; }\nscpp::int_t<> complement(const scpp::int_t<> &v) { return ~v; }\n'
+if args.updates:
+    public = '#include "scpp/operators/post_increment_dynamic.hpp"\n#include "scpp/operators/pre_increment_int64.hpp"\nscpp::dynamic update(scpp::dynamic &v) { return scpp::update_post_increment(v); }\nscpp::int64 update(scpp::int64 &v) { return scpp::update_pre_increment(v); }\n'
+    native = '#include "operators/arithmetic/boxed_numeric.hpp"\nscpp::detail::dynamic_value update(scpp::detail::dynamic_value &v) { return v++; }\nscpp::int_t<> update(scpp::int_t<> &v) { return ++v; }\n'
 rows = []
 with tempfile.TemporaryDirectory(prefix='scpp-operator-cost-') as directory:
     stage = Path(directory)
@@ -85,6 +89,7 @@ with tempfile.TemporaryDirectory(prefix='scpp-operator-cost-') as directory:
     if args.special_integers: adapters = ['shift_left_mixed']
     if args.spaceship: adapters = ['compare_float64']
     if args.unary: adapters = ['negative_dynamic']
+    if args.updates: adapters = ['post_increment_dynamic']
     cases += [(f'adapter_{identity}', root/f'runtime/include/scpp/generated/public_{identity}.cpp', ['public','include']) for identity in adapters]
     for name, path, includes in cases:
         command = [args.compiler, '-std=c++23', '-O2', *['-I'+str(root/'runtime'/i) for i in includes]]

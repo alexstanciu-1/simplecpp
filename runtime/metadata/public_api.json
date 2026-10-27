@@ -2901,6 +2901,78 @@
         ],
         "returns": "boolean",
         "result_expression": "!${result}"
+      },
+      "pre_increment": {
+        "form": "unary",
+        "name": "update_pre_increment",
+        "function_set": "pre_increment",
+        "publish": [
+          "int64",
+          "float64",
+          "mixed",
+          "dynamic"
+        ],
+        "operands": [
+          "int64",
+          "float64",
+          "mixed",
+          "dynamic"
+        ],
+        "operand_passing": "ref"
+      },
+      "post_increment": {
+        "form": "unary",
+        "name": "update_post_increment",
+        "function_set": "post_increment",
+        "publish": [
+          "int64",
+          "float64",
+          "mixed",
+          "dynamic"
+        ],
+        "operands": [
+          "int64",
+          "float64",
+          "mixed",
+          "dynamic"
+        ],
+        "operand_passing": "ref"
+      },
+      "pre_decrement": {
+        "form": "unary",
+        "name": "update_pre_decrement",
+        "function_set": "pre_decrement",
+        "publish": [
+          "int64",
+          "float64",
+          "mixed",
+          "dynamic"
+        ],
+        "operands": [
+          "int64",
+          "float64",
+          "mixed",
+          "dynamic"
+        ],
+        "operand_passing": "ref"
+      },
+      "post_decrement": {
+        "form": "unary",
+        "name": "update_post_decrement",
+        "function_set": "post_decrement",
+        "publish": [
+          "int64",
+          "float64",
+          "mixed",
+          "dynamic"
+        ],
+        "operands": [
+          "int64",
+          "float64",
+          "mixed",
+          "dynamic"
+        ],
+        "operand_passing": "ref"
       }
     }
   },
@@ -3910,6 +3982,170 @@
           ],
           "transport": "native",
           "expression": "~(${native:value})",
+          "includes": [
+            "operators/arithmetic/boxed_numeric.hpp"
+          ]
+        }
+      }
+    },
+    "pre_increment": {
+      "variants": {
+        "int64": {
+          "body": "return ++(value);",
+          "transport": "public"
+        },
+        "float64": {
+          "body": "return ++(${native:value});",
+          "transport": "native"
+        },
+        "mixed": {
+          "body": "return ++(${native:value});",
+          "transport": "native"
+        },
+        "dynamic": {
+          "body": "return ++(${native:value});",
+          "transport": "native"
+        }
+      },
+      "function": {
+        "namespace": "scpp",
+        "header": "scpp/operators/pre_increment_${variant}.hpp",
+        "source": "include/scpp/generated/public_pre_increment_${variant}.cpp",
+        "operation": {
+          "name": "update_pre_increment",
+          "returns": "${variant}",
+          "parameters": [
+            {
+              "name": "value",
+              "type": "${variant}",
+              "passing": "ref"
+            }
+          ],
+          "transport": "${variant:transport}",
+          "body": "${variant:body}",
+          "includes": [
+            "operators/arithmetic/boxed_numeric.hpp"
+          ]
+        }
+      }
+    },
+    "post_increment": {
+      "variants": {
+        "int64": {
+          "body": "const auto previous = value; ++value; return previous;",
+          "transport": "public"
+        },
+        "float64": {
+          "body": "return (${native:value})++;",
+          "transport": "native"
+        },
+        "mixed": {
+          "body": "return (${native:value})++;",
+          "transport": "native"
+        },
+        "dynamic": {
+          "body": "return (${native:value})++;",
+          "transport": "native"
+        }
+      },
+      "function": {
+        "namespace": "scpp",
+        "header": "scpp/operators/post_increment_${variant}.hpp",
+        "source": "include/scpp/generated/public_post_increment_${variant}.cpp",
+        "operation": {
+          "name": "update_post_increment",
+          "returns": "${variant}",
+          "parameters": [
+            {
+              "name": "value",
+              "type": "${variant}",
+              "passing": "ref"
+            }
+          ],
+          "transport": "${variant:transport}",
+          "body": "${variant:body}",
+          "includes": [
+            "operators/arithmetic/boxed_numeric.hpp"
+          ]
+        }
+      }
+    },
+    "pre_decrement": {
+      "variants": {
+        "int64": {
+          "body": "return --(value);",
+          "transport": "public"
+        },
+        "float64": {
+          "body": "return --(${native:value});",
+          "transport": "native"
+        },
+        "mixed": {
+          "body": "return --(${native:value});",
+          "transport": "native"
+        },
+        "dynamic": {
+          "body": "return --(${native:value});",
+          "transport": "native"
+        }
+      },
+      "function": {
+        "namespace": "scpp",
+        "header": "scpp/operators/pre_decrement_${variant}.hpp",
+        "source": "include/scpp/generated/public_pre_decrement_${variant}.cpp",
+        "operation": {
+          "name": "update_pre_decrement",
+          "returns": "${variant}",
+          "parameters": [
+            {
+              "name": "value",
+              "type": "${variant}",
+              "passing": "ref"
+            }
+          ],
+          "transport": "${variant:transport}",
+          "body": "${variant:body}",
+          "includes": [
+            "operators/arithmetic/boxed_numeric.hpp"
+          ]
+        }
+      }
+    },
+    "post_decrement": {
+      "variants": {
+        "int64": {
+          "body": "const auto previous = value; --value; return previous;",
+          "transport": "public"
+        },
+        "float64": {
+          "body": "return (${native:value})--;",
+          "transport": "native"
+        },
+        "mixed": {
+          "body": "return (${native:value})--;",
+          "transport": "native"
+        },
+        "dynamic": {
+          "body": "return (${native:value})--;",
+          "transport": "native"
+        }
+      },
+      "function": {
+        "namespace": "scpp",
+        "header": "scpp/operators/post_decrement_${variant}.hpp",
+        "source": "include/scpp/generated/public_post_decrement_${variant}.cpp",
+        "operation": {
+          "name": "update_post_decrement",
+          "returns": "${variant}",
+          "parameters": [
+            {
+              "name": "value",
+              "type": "${variant}",
+              "passing": "ref"
+            }
+          ],
+          "transport": "${variant:transport}",
+          "body": "${variant:body}",
           "includes": [
             "operators/arithmetic/boxed_numeric.hpp"
           ]

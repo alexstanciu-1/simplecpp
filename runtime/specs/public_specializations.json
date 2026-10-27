@@ -313,6 +313,22 @@
     "negative_dynamic",
     "complement_int64",
     "complement_mixed",
-    "complement_dynamic"
+    "complement_dynamic",
+    "pre_increment_int64",
+    "pre_increment_float64",
+    "pre_increment_mixed",
+    "pre_increment_dynamic",
+    "post_increment_int64",
+    "post_increment_float64",
+    "post_increment_mixed",
+    "post_increment_dynamic",
+    "pre_decrement_int64",
+    "pre_decrement_float64",
+    "pre_decrement_mixed",
+    "pre_decrement_dynamic",
+    "post_decrement_int64",
+    "post_decrement_float64",
+    "post_decrement_mixed",
+    "post_decrement_dynamic"
   ]
 }

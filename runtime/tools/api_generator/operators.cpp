@@ -78,14 +78,19 @@ namespace scpp::api_generation
         }
         for (const auto &[name, operation] : registry.at("operations").fields) {
             authored_name(name); authored_name(operation.at("name").text());
-            fields_only(operation, "form group name expression publish returns includes function_set pair_function_set operands distinct_result result_expression", "global operation");
+            fields_only(operation, "form group name expression publish returns includes function_set pair_function_set operands distinct_result result_expression operand_passing", "global operation");
             const auto form = operation.get("form", "binary");
             if (form != "binary" && form != "unary") throw std::runtime_error("Unknown operator form");
             if (form == "unary") {
-                fields_only(operation, "form name publish returns function_set operands result_expression", "unary operation");
+                fields_only(operation, "form name publish returns function_set operands result_expression operand_passing", "unary operation");
                 operation.at("function_set").text();
                 operation.at("operands");
             } else registry.at("groups").at(operation.at("group").text());
+            if (operation.has("operand_passing")) {
+                if (form != "unary") throw std::runtime_error("Operand passing requires a unary operation");
+                const auto passing = operation.at("operand_passing").text();
+                if (passing != "const_ref" && passing != "ref") throw std::runtime_error("Unsupported unary operand passing");
+            }
             if (operation.has("result_expression")) {
                 if (form != "unary") throw std::runtime_error("Result expression requires a unary operation");
                 const auto expression = operation.at("result_expression").text();
@@ -142,9 +147,10 @@ namespace scpp::api_generation
         const auto identity = operation.at("function_set").text() + "_" + type;
         const auto &function = function_sets.at(identity), &signature = function.at("operation");
         const auto result_type = operation.get("returns", type);
+        const auto passing = operation.get("operand_passing", "const_ref");
         const auto &parameters = signature.at("parameters").items;
         if (parameters.size() != 1 || parameters[0].at("type").text() != type
-            || parameters[0].get("passing") != "const_ref"
+            || parameters[0].get("passing") != passing
             || signature.at("returns").text() != result_type
             || signature.at("name").text() != operation.at("name").text())
             throw std::runtime_error("Unary function set signature mismatch");
@@ -153,7 +159,8 @@ namespace scpp::api_generation
         result["result_type"] = result_type; result["kind"] = "call";
         result["api"] = identity; result["header"] = function.at("header");
         result["function"] = function.at("namespace").text() + "::" + signature.at("name").text();
-        result["conversion"] = "identity"; result["evaluation"] = "evaluate_operand_once";
+        result["conversion"] = "identity"; result["operand_passing"] = passing;
+        result["evaluation"] = passing == "ref" ? "resolve_writable_operand_once" : "evaluate_operand_once";
         if (operation.has("result_expression")) result["result_expression"] = operation.at("result_expression");
         return result;
     }

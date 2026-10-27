@@ -16,7 +16,7 @@ each slice. The original inventory is a baseline, not a current completion count
 | A1 | Complete for the agreed ordinary numeric domain | Specialized and boxed extensions remain in B2/E, not implied by A1. |
 | A2 | Complete for the agreed checked scalar conversions | Carrier conversion is C; ownership casts are D. |
 | B1 | Complete for the agreed scalar-facing truth/text/identity/observation scope | Carrier forms remain C; boxed arithmetic and access completion are not B1 credit. |
-| B2 | Binary canonical/boxed bitwise and checked shifts, canonical power, numeric spaceship, numeric unary and scalar logical negation implemented | Updates/compounds; carrier variants remain C. |
+| B2 | Binary canonical/boxed bitwise and checked shifts, canonical power, numeric spaceship, numeric unary, scalar logical negation and prefix/postfix updates implemented | Compounds; carrier variants remain C. |
 | C | Policy agreed; completion pending | Four carrier families, state-preserving operations/conversions and conditional lifecycle. |
 | D | Pending | Ownership, application targets and source Exception transport gaps. |
 | E | Existing vector/hash/boxed foundations; incomplete | Capability/access/initialization/cursor gaps and identity key-allocation debt. |
@@ -168,7 +168,7 @@ core contract; full frontend adoption remains excluded.
 
 ## Next implementation work
 
-Continue B2 with update/compound groups using existing operator
+Continue B2 with compound protocols using existing operator
 metadata and native error authorities.
 Proceed to C with the accepted one-layer carrier rules; the first complete carrier
 path must be reviewed before D/F expansion. Do not treat existing native template
@@ -512,3 +512,18 @@ casts, numeric/bool/error states, rejected mixed containers, truthy dynamic obje
 operand evaluation once and zero successful allocations. Observation failure must
 propagate before result transformation. B2's remaining scalar-facing work is update
 and compound protocols; broader carrier/ownership behavior remains unfinished.
+
+## Active-goal progress — B2e prefix/postfix updates
+
+Sixteen function-set variants publish prefix/postfix increment/decrement for the
+canonical numeric types and both boxed families. Unary operand passing now records
+mutable reference requirements and one writable destination resolution. Results are
+owned snapshots: later destination mutation cannot change either prefix or postfix
+results. Existing public integer prefix methods and native numeric/boxed operators
+retain representation ownership and failure behavior.
+
+Tests verify exact mutable signatures and by-value return types, alias updates,
+old/new snapshots, single destination resolution, invalid boxed kinds preserving
+storage, safe integer boundaries and floating NaN/infinity. Successful operations
+allocate zero times. Source property/index owner capture and carrier updates remain
+D/E/C work; B2 still needs compound snapshot and write-back protocols.

@@ -427,3 +427,9 @@ add_test(NAME scpp_check_unary_api COMMAND ${Python3_EXECUTABLE}
 
 add_test(NAME scpp_check_logical_not COMMAND ${Python3_EXECUTABLE}
   ${CMAKE_CURRENT_SOURCE_DIR}/check_logical_not.py --tool $<TARGET_FILE:scpp_api_generator>)
+
+add_executable(test_public_updates test_public_updates.cpp)
+target_link_libraries(test_public_updates PRIVATE scpp_core_api)
+add_test(NAME scpp_test_public_updates COMMAND test_public_updates)
+add_test(NAME scpp_check_update_api COMMAND ${Python3_EXECUTABLE}
+  ${CMAKE_CURRENT_SOURCE_DIR}/check_update_api.py $<TARGET_FILE:scpp_api_generator>)

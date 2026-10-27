@@ -1,6 +1,6 @@
 {
   "abi": "529dd5502370f48d64891818e9439aae72831b990b4027e8abe25c50c1216c21",
-  "api_identity": "fbdfbb3f603e19455151f71970c4c56dc4bac8ec83a35f8df51e31c50ae2dfe8",
+  "api_identity": "444be355c008fe536a88242e3cd36e9f515afec354925c4be4ed0ce3f081ab65",
   "apis": {
     "add_float64": {
       "header": "scpp/operators/add_float64.hpp",
@@ -5913,6 +5913,174 @@
       },
       "source": "include/scpp/generated/public_positive_mixed.cpp"
     },
+    "post_decrement_dynamic": {
+      "header": "scpp/operators/post_decrement_dynamic.hpp",
+      "namespace": "scpp",
+      "operation": {
+        "body": "return (${native:value})--;",
+        "includes": [
+          "operators/arithmetic/boxed_numeric.hpp"
+        ],
+        "name": "update_post_decrement",
+        "parameters": [
+          {
+            "name": "value",
+            "passing": "ref",
+            "type": "dynamic"
+          }
+        ],
+        "returns": "dynamic",
+        "transport": "native"
+      },
+      "source": "include/scpp/generated/public_post_decrement_dynamic.cpp"
+    },
+    "post_decrement_float64": {
+      "header": "scpp/operators/post_decrement_float64.hpp",
+      "namespace": "scpp",
+      "operation": {
+        "body": "return (${native:value})--;",
+        "includes": [
+          "operators/arithmetic/boxed_numeric.hpp"
+        ],
+        "name": "update_post_decrement",
+        "parameters": [
+          {
+            "name": "value",
+            "passing": "ref",
+            "type": "float64"
+          }
+        ],
+        "returns": "float64",
+        "transport": "native"
+      },
+      "source": "include/scpp/generated/public_post_decrement_float64.cpp"
+    },
+    "post_decrement_int64": {
+      "header": "scpp/operators/post_decrement_int64.hpp",
+      "namespace": "scpp",
+      "operation": {
+        "body": "const auto previous = value; --value; return previous;",
+        "includes": [
+          "operators/arithmetic/boxed_numeric.hpp"
+        ],
+        "name": "update_post_decrement",
+        "parameters": [
+          {
+            "name": "value",
+            "passing": "ref",
+            "type": "int64"
+          }
+        ],
+        "returns": "int64",
+        "transport": "public"
+      },
+      "source": "include/scpp/generated/public_post_decrement_int64.cpp"
+    },
+    "post_decrement_mixed": {
+      "header": "scpp/operators/post_decrement_mixed.hpp",
+      "namespace": "scpp",
+      "operation": {
+        "body": "return (${native:value})--;",
+        "includes": [
+          "operators/arithmetic/boxed_numeric.hpp"
+        ],
+        "name": "update_post_decrement",
+        "parameters": [
+          {
+            "name": "value",
+            "passing": "ref",
+            "type": "mixed"
+          }
+        ],
+        "returns": "mixed",
+        "transport": "native"
+      },
+      "source": "include/scpp/generated/public_post_decrement_mixed.cpp"
+    },
+    "post_increment_dynamic": {
+      "header": "scpp/operators/post_increment_dynamic.hpp",
+      "namespace": "scpp",
+      "operation": {
+        "body": "return (${native:value})++;",
+        "includes": [
+          "operators/arithmetic/boxed_numeric.hpp"
+        ],
+        "name": "update_post_increment",
+        "parameters": [
+          {
+            "name": "value",
+            "passing": "ref",
+            "type": "dynamic"
+          }
+        ],
+        "returns": "dynamic",
+        "transport": "native"
+      },
+      "source": "include/scpp/generated/public_post_increment_dynamic.cpp"
+    },
+    "post_increment_float64": {
+      "header": "scpp/operators/post_increment_float64.hpp",
+      "namespace": "scpp",
+      "operation": {
+        "body": "return (${native:value})++;",
+        "includes": [
+          "operators/arithmetic/boxed_numeric.hpp"
+        ],
+        "name": "update_post_increment",
+        "parameters": [
+          {
+            "name": "value",
+            "passing": "ref",
+            "type": "float64"
+          }
+        ],
+        "returns": "float64",
+        "transport": "native"
+      },
+      "source": "include/scpp/generated/public_post_increment_float64.cpp"
+    },
+    "post_increment_int64": {
+      "header": "scpp/operators/post_increment_int64.hpp",
+      "namespace": "scpp",
+      "operation": {
+        "body": "const auto previous = value; ++value; return previous;",
+        "includes": [
+          "operators/arithmetic/boxed_numeric.hpp"
+        ],
+        "name": "update_post_increment",
+        "parameters": [
+          {
+            "name": "value",
+            "passing": "ref",
+            "type": "int64"
+          }
+        ],
+        "returns": "int64",
+        "transport": "public"
+      },
+      "source": "include/scpp/generated/public_post_increment_int64.cpp"
+    },
+    "post_increment_mixed": {
+      "header": "scpp/operators/post_increment_mixed.hpp",
+      "namespace": "scpp",
+      "operation": {
+        "body": "return (${native:value})++;",
+        "includes": [
+          "operators/arithmetic/boxed_numeric.hpp"
+        ],
+        "name": "update_post_increment",
+        "parameters": [
+          {
+            "name": "value",
+            "passing": "ref",
+            "type": "mixed"
+          }
+        ],
+        "returns": "mixed",
+        "transport": "native"
+      },
+      "source": "include/scpp/generated/public_post_increment_mixed.cpp"
+    },
     "power_int64": {
       "header": "scpp/operators/power_int64.hpp",
       "namespace": "scpp",
@@ -5938,6 +6106,174 @@
         "transport": "native"
       },
       "source": "include/scpp/generated/public_power_int64.cpp"
+    },
+    "pre_decrement_dynamic": {
+      "header": "scpp/operators/pre_decrement_dynamic.hpp",
+      "namespace": "scpp",
+      "operation": {
+        "body": "return --(${native:value});",
+        "includes": [
+          "operators/arithmetic/boxed_numeric.hpp"
+        ],
+        "name": "update_pre_decrement",
+        "parameters": [
+          {
+            "name": "value",
+            "passing": "ref",
+            "type": "dynamic"
+          }
+        ],
+        "returns": "dynamic",
+        "transport": "native"
+      },
+      "source": "include/scpp/generated/public_pre_decrement_dynamic.cpp"
+    },
+    "pre_decrement_float64": {
+      "header": "scpp/operators/pre_decrement_float64.hpp",
+      "namespace": "scpp",
+      "operation": {
+        "body": "return --(${native:value});",
+        "includes": [
+          "operators/arithmetic/boxed_numeric.hpp"
+        ],
+        "name": "update_pre_decrement",
+        "parameters": [
+          {
+            "name": "value",
+            "passing": "ref",
+            "type": "float64"
+          }
+        ],
+        "returns": "float64",
+        "transport": "native"
+      },
+      "source": "include/scpp/generated/public_pre_decrement_float64.cpp"
+    },
+    "pre_decrement_int64": {
+      "header": "scpp/operators/pre_decrement_int64.hpp",
+      "namespace": "scpp",
+      "operation": {
+        "body": "return --(value);",
+        "includes": [
+          "operators/arithmetic/boxed_numeric.hpp"
+        ],
+        "name": "update_pre_decrement",
+        "parameters": [
+          {
+            "name": "value",
+            "passing": "ref",
+            "type": "int64"
+          }
+        ],
+        "returns": "int64",
+        "transport": "public"
+      },
+      "source": "include/scpp/generated/public_pre_decrement_int64.cpp"
+    },
+    "pre_decrement_mixed": {
+      "header": "scpp/operators/pre_decrement_mixed.hpp",
+      "namespace": "scpp",
+      "operation": {
+        "body": "return --(${native:value});",
+        "includes": [
+          "operators/arithmetic/boxed_numeric.hpp"
+        ],
+        "name": "update_pre_decrement",
+        "parameters": [
+          {
+            "name": "value",
+            "passing": "ref",
+            "type": "mixed"
+          }
+        ],
+        "returns": "mixed",
+        "transport": "native"
+      },
+      "source": "include/scpp/generated/public_pre_decrement_mixed.cpp"
+    },
+    "pre_increment_dynamic": {
+      "header": "scpp/operators/pre_increment_dynamic.hpp",
+      "namespace": "scpp",
+      "operation": {
+        "body": "return ++(${native:value});",
+        "includes": [
+          "operators/arithmetic/boxed_numeric.hpp"
+        ],
+        "name": "update_pre_increment",
+        "parameters": [
+          {
+            "name": "value",
+            "passing": "ref",
+            "type": "dynamic"
+          }
+        ],
+        "returns": "dynamic",
+        "transport": "native"
+      },
+      "source": "include/scpp/generated/public_pre_increment_dynamic.cpp"
+    },
+    "pre_increment_float64": {
+      "header": "scpp/operators/pre_increment_float64.hpp",
+      "namespace": "scpp",
+      "operation": {
+        "body": "return ++(${native:value});",
+        "includes": [
+          "operators/arithmetic/boxed_numeric.hpp"
+        ],
+        "name": "update_pre_increment",
+        "parameters": [
+          {
+            "name": "value",
+            "passing": "ref",
+            "type": "float64"
+          }
+        ],
+        "returns": "float64",
+        "transport": "native"
+      },
+      "source": "include/scpp/generated/public_pre_increment_float64.cpp"
+    },
+    "pre_increment_int64": {
+      "header": "scpp/operators/pre_increment_int64.hpp",
+      "namespace": "scpp",
+      "operation": {
+        "body": "return ++(value);",
+        "includes": [
+          "operators/arithmetic/boxed_numeric.hpp"
+        ],
+        "name": "update_pre_increment",
+        "parameters": [
+          {
+            "name": "value",
+            "passing": "ref",
+            "type": "int64"
+          }
+        ],
+        "returns": "int64",
+        "transport": "public"
+      },
+      "source": "include/scpp/generated/public_pre_increment_int64.cpp"
+    },
+    "pre_increment_mixed": {
+      "header": "scpp/operators/pre_increment_mixed.hpp",
+      "namespace": "scpp",
+      "operation": {
+        "body": "return ++(${native:value});",
+        "includes": [
+          "operators/arithmetic/boxed_numeric.hpp"
+        ],
+        "name": "update_pre_increment",
+        "parameters": [
+          {
+            "name": "value",
+            "passing": "ref",
+            "type": "mixed"
+          }
+        ],
+        "returns": "mixed",
+        "transport": "native"
+      },
+      "source": "include/scpp/generated/public_pre_increment_mixed.cpp"
     },
     "remainder_int16": {
       "header": "scpp/operators/remainder_int16.hpp",
@@ -8328,7 +8664,55 @@
     "include/scpp/operators/complement_mixed.hpp",
     "public/scpp/operators/complement_dynamic.hpp",
     "include/scpp/generated/public_complement_dynamic.cpp",
-    "include/scpp/operators/complement_dynamic.hpp"
+    "include/scpp/operators/complement_dynamic.hpp",
+    "public/scpp/operators/pre_increment_int64.hpp",
+    "include/scpp/generated/public_pre_increment_int64.cpp",
+    "include/scpp/operators/pre_increment_int64.hpp",
+    "public/scpp/operators/pre_increment_float64.hpp",
+    "include/scpp/generated/public_pre_increment_float64.cpp",
+    "include/scpp/operators/pre_increment_float64.hpp",
+    "public/scpp/operators/pre_increment_mixed.hpp",
+    "include/scpp/generated/public_pre_increment_mixed.cpp",
+    "include/scpp/operators/pre_increment_mixed.hpp",
+    "public/scpp/operators/pre_increment_dynamic.hpp",
+    "include/scpp/generated/public_pre_increment_dynamic.cpp",
+    "include/scpp/operators/pre_increment_dynamic.hpp",
+    "public/scpp/operators/post_increment_int64.hpp",
+    "include/scpp/generated/public_post_increment_int64.cpp",
+    "include/scpp/operators/post_increment_int64.hpp",
+    "public/scpp/operators/post_increment_float64.hpp",
+    "include/scpp/generated/public_post_increment_float64.cpp",
+    "include/scpp/operators/post_increment_float64.hpp",
+    "public/scpp/operators/post_increment_mixed.hpp",
+    "include/scpp/generated/public_post_increment_mixed.cpp",
+    "include/scpp/operators/post_increment_mixed.hpp",
+    "public/scpp/operators/post_increment_dynamic.hpp",
+    "include/scpp/generated/public_post_increment_dynamic.cpp",
+    "include/scpp/operators/post_increment_dynamic.hpp",
+    "public/scpp/operators/pre_decrement_int64.hpp",
+    "include/scpp/generated/public_pre_decrement_int64.cpp",
+    "include/scpp/operators/pre_decrement_int64.hpp",
+    "public/scpp/operators/pre_decrement_float64.hpp",
+    "include/scpp/generated/public_pre_decrement_float64.cpp",
+    "include/scpp/operators/pre_decrement_float64.hpp",
+    "public/scpp/operators/pre_decrement_mixed.hpp",
+    "include/scpp/generated/public_pre_decrement_mixed.cpp",
+    "include/scpp/operators/pre_decrement_mixed.hpp",
+    "public/scpp/operators/pre_decrement_dynamic.hpp",
+    "include/scpp/generated/public_pre_decrement_dynamic.cpp",
+    "include/scpp/operators/pre_decrement_dynamic.hpp",
+    "public/scpp/operators/post_decrement_int64.hpp",
+    "include/scpp/generated/public_post_decrement_int64.cpp",
+    "include/scpp/operators/post_decrement_int64.hpp",
+    "public/scpp/operators/post_decrement_float64.hpp",
+    "include/scpp/generated/public_post_decrement_float64.cpp",
+    "include/scpp/operators/post_decrement_float64.hpp",
+    "public/scpp/operators/post_decrement_mixed.hpp",
+    "include/scpp/generated/public_post_decrement_mixed.cpp",
+    "include/scpp/operators/post_decrement_mixed.hpp",
+    "public/scpp/operators/post_decrement_dynamic.hpp",
+    "include/scpp/generated/public_post_decrement_dynamic.cpp",
+    "include/scpp/operators/post_decrement_dynamic.hpp"
   ],
   "generator": "metadata-api-v1",
   "leaves": {
@@ -8711,7 +9095,23 @@
     "scpp/operators/positive_float64.hpp": "614c28c0d98b48bf50defef079f4d332db2a82e4f5d9eb235b1b8ba7ae38e597",
     "scpp/operators/positive_int64.hpp": "83528723d4d188b49dfc0671f46603f3ce4096d7cb4632d588684f94e7f30ca7",
     "scpp/operators/positive_mixed.hpp": "1172e3f6d25e9c7ea499a28dadb0f05bcdf0395bd89441917540932087654011",
+    "scpp/operators/post_decrement_dynamic.hpp": "8a5a48cb4d2404ec02fda8f287de44bf4917541e01f5ad8e6bc03a931d805497",
+    "scpp/operators/post_decrement_float64.hpp": "a4617b372eb16a58ec5d30f96abf809a771ac183c9489e2324585d464ff2f4c4",
+    "scpp/operators/post_decrement_int64.hpp": "58c77b72111e9ad87f9efcec3bb05eb371776b2bf6c1d8c134a42b8043973b62",
+    "scpp/operators/post_decrement_mixed.hpp": "c42ffbabc7580f587aaf659329e44f00fdb3fedd5e6985e9f7de4c030972cc7b",
+    "scpp/operators/post_increment_dynamic.hpp": "8bb7d57eaf2d61e3693bae1b1e8013cd9ced48179c0fdc270f33429d4abc0b5d",
+    "scpp/operators/post_increment_float64.hpp": "51c4ebeae1fa486bb084448d62b072eb2b5fa645e490f46f9aa6ced73c8e2e45",
+    "scpp/operators/post_increment_int64.hpp": "0dd5c8d3eebe1a49f26207b6d847fffd360e0c4bbd227cdada446b6a0ab5b240",
+    "scpp/operators/post_increment_mixed.hpp": "7bda064eed53e7fe013f0ac0a3ebc9ff054314151223281d888186bc952b444c",
     "scpp/operators/power_int64.hpp": "709cc4022dbed03a6c36954d9405dfc80eed87a4fe36c2646d65c0990995ef2d",
+    "scpp/operators/pre_decrement_dynamic.hpp": "7157e1d94b4c7689dc73938f04cbfe77544459ffb6886f280816523176f7e8c5",
+    "scpp/operators/pre_decrement_float64.hpp": "e1fa394cfacc0bf307737f6078d92935f51bf5ddee98119ccd7416c6dc40910a",
+    "scpp/operators/pre_decrement_int64.hpp": "2f36a0f98f61773bcea67b84a658adb00c8649dc1eda27cb7b60112e8a77a6a3",
+    "scpp/operators/pre_decrement_mixed.hpp": "08e6043f0f31a98d08a4cdfd7f7b3b0311f524f3f95b437102f05324f1119156",
+    "scpp/operators/pre_increment_dynamic.hpp": "1b09a86ed7f99ede9574b2122733e558f7a754ad526a2c525cca1a1fe74fafa2",
+    "scpp/operators/pre_increment_float64.hpp": "0f44453c7a7e4f7777d8ab0e97450da033aba9478d1e6c6870ff505670537adf",
+    "scpp/operators/pre_increment_int64.hpp": "d6350c7f38038fce7ff1e5e4dd263d436be5ab547c22bcb11e520373636234ac",
+    "scpp/operators/pre_increment_mixed.hpp": "219f5e31558fd1c38266d11d869ffe8680ea11e5edf109a02ce09e3bc8577011",
     "scpp/operators/remainder_int16.hpp": "6d7906dc337b2cbd4e08d460f4aa602ad2ca5353b97b9fd520b375abdfe82ed1",
     "scpp/operators/remainder_int32.hpp": "2d850671954752bfc1971f003d602ef2fd906d269cbc8c269b8dd089be5212d1",
     "scpp/operators/remainder_int64.hpp": "1c51b57d9811125f34d2e7025da8353915b00de45084f657c817aff55377df4b",
@@ -9053,7 +9453,23 @@
     "include/scpp/generated/public_negative_dynamic.cpp",
     "include/scpp/generated/public_complement_int64.cpp",
     "include/scpp/generated/public_complement_mixed.cpp",
-    "include/scpp/generated/public_complement_dynamic.cpp"
+    "include/scpp/generated/public_complement_dynamic.cpp",
+    "include/scpp/generated/public_pre_increment_int64.cpp",
+    "include/scpp/generated/public_pre_increment_float64.cpp",
+    "include/scpp/generated/public_pre_increment_mixed.cpp",
+    "include/scpp/generated/public_pre_increment_dynamic.cpp",
+    "include/scpp/generated/public_post_increment_int64.cpp",
+    "include/scpp/generated/public_post_increment_float64.cpp",
+    "include/scpp/generated/public_post_increment_mixed.cpp",
+    "include/scpp/generated/public_post_increment_dynamic.cpp",
+    "include/scpp/generated/public_pre_decrement_int64.cpp",
+    "include/scpp/generated/public_pre_decrement_float64.cpp",
+    "include/scpp/generated/public_pre_decrement_mixed.cpp",
+    "include/scpp/generated/public_pre_decrement_dynamic.cpp",
+    "include/scpp/generated/public_post_decrement_int64.cpp",
+    "include/scpp/generated/public_post_decrement_float64.cpp",
+    "include/scpp/generated/public_post_decrement_mixed.cpp",
+    "include/scpp/generated/public_post_decrement_dynamic.cpp"
   ],
   "types": {
     "dynamic": {
