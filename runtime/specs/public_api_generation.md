@@ -1105,3 +1105,26 @@ retain owners, snapshot converted left, evaluate/convert RHS, calculate, constru
 write-back, commit, return a snapshot of the destination type. Failures before
 commit perform no compound write-back and preserve earlier RHS side effects. The
 public-library proof does not replace frontend destination/owner preparation.
+
+
+### Carrier unary values and updates
+
+A unary operation may declare `carrier_unary` with admitted `payloads` and a
+`result` policy: `payload`, `updated_carrier`, or `old_carrier`. Payload policies
+require the scalar operation's const-reference input; update policies require its
+writable-reference input. Conditions retain their separate state-aware owner and
+cannot also select this checked-payload policy. Payload lists cannot exceed the
+ordinary scalar operation's admission.
+
+The `carrier_unary` plan performs one checked payload projection and calls the
+existing scalar implementation. Value operators return that scalar result. Updates
+capture the destination once, project into an owned local payload, optionally save
+the old carrier for postfix, mutate the local payload and construct/commit payload
+write-back through the shared carrier reconstruction helper. The scalar result must
+preserve payload identity. Prefix returns an updated carrier snapshot; postfix
+returns the saved old carrier. No borrowed result or writable interior reference is
+exposed. Missing payloads fail before mutation or old-carrier copying.
+
+This policy selects canonical numeric carrier values/updates and integer complement;
+it does not grant boxed, fixed-width, nested or arbitrary application payloads, new
+writable destinations, or new checked-overflow semantics.

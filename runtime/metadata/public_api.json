@@ -4350,7 +4350,14 @@
           "float64",
           "mixed",
           "dynamic"
-        ]
+        ],
+        "carrier_unary": {
+          "payloads": [
+            "int64",
+            "float64"
+          ],
+          "result": "payload"
+        }
       },
       "negative": {
         "form": "unary",
@@ -4367,7 +4374,14 @@
           "float64",
           "mixed",
           "dynamic"
-        ]
+        ],
+        "carrier_unary": {
+          "payloads": [
+            "int64",
+            "float64"
+          ],
+          "result": "payload"
+        }
       },
       "complement": {
         "form": "unary",
@@ -4382,7 +4396,13 @@
           "int64",
           "mixed",
           "dynamic"
-        ]
+        ],
+        "carrier_unary": {
+          "payloads": [
+            "int64"
+          ],
+          "result": "payload"
+        }
       },
       "logical_not": {
         "form": "unary",
@@ -4424,7 +4444,14 @@
           "mixed",
           "dynamic"
         ],
-        "operand_passing": "ref"
+        "operand_passing": "ref",
+        "carrier_unary": {
+          "payloads": [
+            "int64",
+            "float64"
+          ],
+          "result": "updated_carrier"
+        }
       },
       "post_increment": {
         "form": "unary",
@@ -4442,7 +4469,14 @@
           "mixed",
           "dynamic"
         ],
-        "operand_passing": "ref"
+        "operand_passing": "ref",
+        "carrier_unary": {
+          "payloads": [
+            "int64",
+            "float64"
+          ],
+          "result": "old_carrier"
+        }
       },
       "pre_decrement": {
         "form": "unary",
@@ -4460,7 +4494,14 @@
           "mixed",
           "dynamic"
         ],
-        "operand_passing": "ref"
+        "operand_passing": "ref",
+        "carrier_unary": {
+          "payloads": [
+            "int64",
+            "float64"
+          ],
+          "result": "updated_carrier"
+        }
       },
       "post_decrement": {
         "form": "unary",
@@ -4478,7 +4519,14 @@
           "mixed",
           "dynamic"
         ],
-        "operand_passing": "ref"
+        "operand_passing": "ref",
+        "carrier_unary": {
+          "payloads": [
+            "int64",
+            "float64"
+          ],
+          "result": "old_carrier"
+        }
       },
       "concat": {
         "group": "scalar_text",

@@ -127,6 +127,24 @@ namespace scpp::api_generation
             throw std::runtime_error("Carrier owned payload access is unavailable for these capabilities");
     }
 
+    value carrier_payload_construction(const value &projection)
+    {
+        if (!projection.has("states")) throw std::runtime_error("Carrier write-back requires state descriptions");
+        value result;
+        unsigned constructors = 0;
+        for (const auto &state : projection.at("states").items) {
+            if (!state.has("reconstruct") || state.at("reconstruct").get("kind")!="payload") continue;
+            auto expression = state.at("reconstruct").at("expression").text();
+            expression.replace(expression.find("${target}"), std::string("${target}").size(), projection.at("cpp").text());
+            result = value::object(); result["kind"] = "construct_payload";
+            result["expression"] = expression; result["header"] = projection.at("header");
+            result["source"] = projection.at("target"); result["target"] = projection.at("source");
+            ++constructors;
+        }
+        if (constructors!=1) throw std::runtime_error("Carrier write-back requires one payload construction");
+        return result;
+    }
+
     value project_carrier(const value &metadata, const std::string &source, const value &names)
     {
         naming types(metadata_naming_registry(metadata, metadata.at("types"), names));

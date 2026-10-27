@@ -453,3 +453,12 @@ constructs a payload in the existing carrier; absence and sentinels are not prop
 The result is a snapshot of the destination type. Public execution checks preserve
 aliasing order and RHS effects on failure. No indexed or numeric compound permission
 is inferred from this text-only policy.
+
+
+### Unary carrier implementation checkpoint
+
+Checked canonical unary numeric values and integer complement now return ordinary
+payload results. Numeric prefix/postfix updates instead preserve carrier storage
+and return updated/old carrier value snapshots. State failures occur before mutation;
+source ownership/target preparation stays compiler-owned. Physical construction is
+shared with compound write-back rather than implemented per carrier family.

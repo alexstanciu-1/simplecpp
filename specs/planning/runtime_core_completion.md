@@ -1141,3 +1141,25 @@ All 336 runtime generated units remain unchanged; runtime-core needs no rebuild.
 This completes the bounded binary/compound text plan paths exercised here, not full
 frontend adoption or indexed extension. Numeric carrier compound/update and other
 remaining protocols, scoped observations and the formation decision remain open.
+
+
+## C19 — unary values and canonical numeric carrier updates
+
+Unary plus/minus, canonical integer complement and canonical integer/float prefix/
+postfix increments/decrements now use explicit per-operation carrier metadata. The
+ordinary scalar owner retains calculation semantics. Updates perform checked owned
+projection, mutate a local payload and use the same carrier payload-construction
+helper as compound text write-back. Prefix/postfix return independent updated/old
+carrier snapshots, respectively. Unavailable states fail before mutation.
+
+The public proof covers 52 operation plans, 52 successful value/snapshot cases and
+65 unavailable-state cases across all four families. It checks source preservation,
+independent returned snapshots and retained structured error message/line/file.
+Metadata rejects noncanonical/fixed-width, boxed, nested and incompatible payloads
+and contradictory mutation/result policies. These tests use ordinary in-range
+numbers; no new integer overflow contract is claimed.
+
+Eight application units reuse the existing scalar publication. All 336 runtime
+implementation units stay unchanged and no core rebuild is required. Numeric
+compound/special-binary/lazy coverage, scoped observations and the pending formation
+boundary still remain before the complete carrier review.

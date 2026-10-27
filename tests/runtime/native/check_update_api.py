@@ -26,9 +26,13 @@ for op in ['pre_increment','post_increment','pre_decrement','post_decrement']:
             assert p['operand_passing']=='ref' and p['evaluation']=='resolve_writable_operand_once'
             assert p['conversion']=='identity'; apis.append(p['api'])
 changed=copy.deepcopy(m)
+# Isolate the ordinary scalar signature check from the independently tested carrier policy.
+del changed['global_operators']['operations']['pre_increment']['carrier_unary']
 changed['global_operators']['operations']['pre_increment']['operand_passing']='const_ref'
 resolve('pre_increment','int64',changed,error='signature mismatch')
 changed=copy.deepcopy(m)
+# Isolate the ordinary scalar signature check from the independently tested carrier policy.
+del changed['global_operators']['operations']['pre_increment']['carrier_unary']
 changed['global_operators']['operations']['pre_increment']['operand_passing']='value'
 resolve('pre_increment','int64',changed,error='Unsupported unary operand passing')
 changed=copy.deepcopy(m)

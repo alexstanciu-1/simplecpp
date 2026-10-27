@@ -1984,3 +1984,33 @@ sanitized generator build took 20.11s. Six focused regressions pass in 12.21s /
 71.10s. An initial negative metadata test encountered the earlier snapshot-mode
 validator; it was adjusted to remove the setting and directly exercise the new
 required-snapshot rule. Timings are single runs with overlapping checks.
+
+## C19 — canonical carrier unary values and updates
+
+Added per-operation checked carrier unary policies for canonical plus/minus,
+integer complement and integer/float prefix/postfix increments/decrements. Updates
+reuse the scalar mutable-reference implementation on an owned local payload and
+the payload-construction helper shared with compound write-back. Prefix/postfix
+results are independent updated/old carrier snapshots. No public/native runtime
+operators were duplicated; all 336 existing generated units are unchanged.
+
+The eight-unit public proof executes 52 successful value/snapshot cases and 65
+unavailable-state cases. It checks preserved source values, returned snapshot
+independence and Result error message/line/file after rejected updates. Successful
+in-range operations allocate zero. Noncanonical, boxed, nested and wrong-kind
+payloads remain rejected. These tests do not establish new integer overflow semantics.
+
+Initial test failures were in fixture/diagnostic assumptions: float64 is a published
+family rather than a metadata leaf; new policy validation precedes the old scalar
+signature check; and the complement expected-value expression used an invalid
+function-style cast of a platform two-word type macro. Fixtures now read published
+type bindings, isolate the intended signature validator, and use expected value -6.
+No production change was required by those failures.
+
+Release public proof passes, with storage compilation 9.6012s and caller 0.8255s;
+sealed reuse passes. Five unchanged release regressions passed initially, and both
+corrected focused checks pass on rerun in 1.95s. All seven sanitizer metadata/regression
+checks pass in 59.97s. Generator builds take 6.41s release / 18.55s sanitized. No
+runtime-core rebuild is needed. Single-run timings overlap other validation work.
+The compiled ASan/UBSan proof with leak detection also passes, including sealed reuse;
+its eight storage units take 12.0278s and its caller takes 1.4830s to compile.

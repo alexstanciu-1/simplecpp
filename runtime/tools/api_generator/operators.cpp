@@ -81,14 +81,27 @@ namespace scpp::api_generation
         }
         for (const auto &[name, operation] : registry.at("operations").fields) {
             authored_name(name); authored_name(operation.at("name").text());
-            fields_only(operation, "form group name expression publish returns includes function_set pair_function_set operands distinct_result result_expression operand_passing operand_conversion_function_set compound_left_snapshot condition_operand carrier_operands", "global operation");
+            fields_only(operation, "form group name expression publish returns includes function_set pair_function_set operands distinct_result result_expression operand_passing operand_conversion_function_set compound_left_snapshot condition_operand carrier_operands carrier_unary", "global operation");
             const auto form = operation.get("form", "binary");
             if (form != "binary" && form != "unary") throw std::runtime_error("Unknown operator form");
             if (form == "unary") {
-                fields_only(operation, "form name publish returns function_set operands result_expression operand_passing condition_operand", "unary operation");
+                fields_only(operation, "form name publish returns function_set operands result_expression operand_passing condition_operand carrier_unary", "unary operation");
                 operation.at("function_set").text();
                 operation.at("operands");
             } else registry.at("groups").at(operation.at("group").text());
+            if (operation.has("carrier_unary")) {
+                const auto &policy = operation.at("carrier_unary");
+                fields_only(policy, "payloads result", "carrier unary policy");
+                if (form!="unary" || operation.has("condition_operand"))
+                    throw std::runtime_error("Carrier unary requires a dedicated unary payload operation");
+                for (const auto &type : domains(policy.at("payloads")))
+                    if (!contains(operation.at("operands"), type)) throw std::runtime_error("Carrier unary payload is outside scalar admission");
+                const auto mode = policy.at("result").text();
+                if (mode!="payload" && mode!="updated_carrier" && mode!="old_carrier")
+                    throw std::runtime_error("Unknown carrier unary result policy");
+                if (operation.get("operand_passing", "const_ref")!=(mode=="payload" ? "const_ref" : "ref"))
+                    throw std::runtime_error("Carrier unary result policy disagrees with operand mutation");
+            }
             if (operation.has("condition_operand")) {
                 if (!operation.yes("condition_operand") || form != "unary" || operation.get("returns") != "boolean"
                     || operation.get("operand_passing", "const_ref") != "const_ref"
@@ -557,6 +570,42 @@ namespace scpp::api_generation
         return out;
     }
 
+    static value resolve_carrier_unary(const value &metadata, const value &registry,
+        const value &request, const value &names)
+    {
+        fields_only(request, "operation operand", "unary operator request");
+        const auto &operation = registry.at("operations").at(request.at("operation").text());
+        const auto &policy = operation.at("carrier_unary");
+        const auto projection = project_carrier(metadata, request.at("operand").text(), names);
+        if (projection.type==value::kind::null || !contains(policy.at("payloads"), projection.at("target").text()))
+            throw std::runtime_error("Unsupported carrier unary payload");
+        require_carrier_payload(projection);
+        value calculation = request; calculation["operand"] = projection.at("target");
+        const auto scalar = resolve_plain_operator(metadata, registry, calculation);
+        value out = value::object(); out["kind"] = "carrier_unary";
+        out["operation"] = request.at("operation"); out["operand"] = projection.at("source");
+        out["projection"] = projection; out["calculation"] = scalar;
+        const auto mode = policy.at("result").text(); out["result_policy"] = mode;
+        out["result_type"] = mode=="payload" ? scalar.at("result_type") : projection.at("source");
+        out["steps"] = value::array();
+        out["steps"].items.emplace_back(mode=="payload" ? "evaluate_operand_once" : "capture_destination_and_retain_owners");
+        out["steps"].items.emplace_back("project_payload");
+        if (mode=="old_carrier") out["steps"].items.emplace_back("snapshot_old_carrier");
+        out["steps"].items.emplace_back("calculate");
+        if (mode!="payload") {
+            if (scalar.at("result_type").text()!=projection.at("target").text())
+                throw std::runtime_error("Carrier update must preserve payload identity");
+            out["writeback_conversion"] = carrier_payload_construction(projection);
+            for (const auto *step : {"construct_writeback", "commit_destination", "return_value_snapshot"})
+                out["steps"].items.emplace_back(step);
+            out["failure"] = "no_writeback_preserve_prior_effects";
+        } else {
+            out["steps"].items.emplace_back("return_payload_value");
+            out["failure"] = "throw_without_mutating_source";
+        }
+        return out;
+    }
+
     // Project each operand independently; only the ordinary resolver chooses a
     // payload operation. No wrapper-pair overloads and no recursive extraction.
     value resolve_operator(const value &metadata, const value &request, const value &names)
@@ -576,6 +625,9 @@ namespace scpp::api_generation
             if (operation.has("result_expression")) plan["result_expression"] = operation.at("result_expression");
             return plan;
         }
+        if (operation.get("form", "binary")=="unary" && operation.has("carrier_unary")
+            && !registry.at("types").has(request.at("operand").text()))
+            return resolve_carrier_unary(metadata, registry, request, names);
         if (operation.get("form", "binary") == "binary") {
             fields_only(request, "operation left right", "operator request");
             const auto literal = resolve_carrier_literal(metadata, registry, request, names);
@@ -677,18 +729,7 @@ namespace scpp::api_generation
             carrier_rule["writeback_source"] = storage;
             if (destination.type!=value::kind::null) {
                 require_carrier_payload(destination);
-                if (!destination.has("states")) throw std::runtime_error("Carrier write-back requires state descriptions");
-                unsigned constructors = 0;
-                for (const auto &state : destination.at("states").items) {
-                    if (!state.has("reconstruct") || state.at("reconstruct").get("kind")!="payload") continue;
-                    auto expression = state.at("reconstruct").at("expression").text();
-                    expression.replace(expression.find("${target}"), std::string("${target}").size(), destination.at("cpp").text());
-                    carrier_writeback = value::object(); carrier_writeback["kind"] = "construct_payload";
-                    carrier_writeback["expression"] = expression; carrier_writeback["header"] = destination.at("header");
-                    carrier_writeback["source"] = storage; carrier_writeback["target"] = canonical;
-                    ++constructors;
-                }
-                if (constructors!=1) throw std::runtime_error("Carrier write-back requires one payload construction");
+                carrier_writeback = carrier_payload_construction(destination);
             }
             selected_rule = &carrier_rule;
         }
