@@ -2522,3 +2522,35 @@ The private fixture initially lacked its C++23 feature setting; fixing its test 
 required only fixture compilation/linking, not another core compilation. Existing
 mixed-hash instantiation warnings remain. No concurrent context mutation contract was
 added, so no new TSan claim is made for the startup setter.
+
+## G3 — environment/shell Result composition (2026-10-27)
+
+The runtime publishes result_or_false<string> plus getenv/shell_exec through ordinary
+metadata and the existing inline Result transport. Native compatibility calls and
+public calls share payload-factory providers; string bytes move directly into their
+respective owned representations. No new generator branch or public callback exists.
+Factories are borrowed for the synchronous call, so factory copy/move cannot throw
+between opening a pipe and establishing its cleanup owner.
+
+Release and ASan/UBSan with leak detection pass. Focused tests cover missing versus
+present-empty environment values, independent long-value ownership after environment
+replacement, embedded-NUL name rejection, shell bytes including NUL, successful empty
+stdout despite nonzero exit status, and retained Result values. The shared capture
+owner is tested with a null pipe (factory not invoked), a throwing payload factory
+(pipe closed once), and a noncopyable/nonmovable factory. Null-pipe behavior is injected
+at that private owner; the test does not rely on nondeterministic OS pipe exhaustion.
+Shell command tests ran on Linux; no new cross-platform shell syntax claim is made.
+
+Missing getenv results allocate zero times after input setup. Long successful values
+allocate **1 native / 1 public** in this fixture. Public headers independently compile.
+The final relocated sealed SDK reuses both APIs and the runtime-owned Result type with
+zero generated units. Three metadata checks passed in **2.52s**. Five affected compiled
+carrier regressions (scoped conditions, text ordering, text operations, coalesce and
+ternary/Elvis) pass, including sealed reuse; their fixtures now honor the published
+Result name instead of requesting an application duplicate.
+
+Single isolated clang++ C++23/O2 caller compile:
+**0.0528s public / 1.9529s native**. Core builds ran for initial publication and again
+for the factory-reference lifetime fix; the native compatibility adapter's missing
+brace was also caught and repaired by its standalone fixture. The existing mixed-hash
+instantiation warning remains. Earlier carrier semantic decision gates are unchanged.

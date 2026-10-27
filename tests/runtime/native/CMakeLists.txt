@@ -513,3 +513,10 @@ target_include_directories(test_cli_provider PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}
 add_executable(test_public_cli test_public_cli.cpp $<TARGET_OBJECTS:test_cli_provider>)
 target_link_libraries(test_public_cli PRIVATE scpp_core_api)
 add_test(NAME scpp_test_public_cli COMMAND test_public_cli)
+
+add_library(test_process_strings_provider OBJECT test_process_strings_provider.cpp)
+target_compile_features(test_process_strings_provider PRIVATE cxx_std_23)
+target_include_directories(test_process_strings_provider PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/../../../runtime/include)
+add_executable(test_public_process_strings test_public_process_strings.cpp $<TARGET_OBJECTS:test_process_strings_provider>)
+target_link_libraries(test_public_process_strings PRIVATE scpp_core_api)
+add_test(NAME scpp_test_public_process_strings COMMAND test_public_process_strings)

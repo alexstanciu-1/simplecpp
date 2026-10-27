@@ -23,6 +23,8 @@ leaves={}
 names={f+'<string>':f+'_text' for f in ['nullable','result','result_or_false','result_or_bool']}
 names['nullable<error_value>']='optional_error'
 for f in ['result','result_or_false','result_or_bool']: names[f+'<nullable<string>>']=f+'_optional_text'
+published_types=json.loads((root/'runtime/public/specializations.json').read_text())['types']
+names.update({identity:published_types[identity]['name'] for identity in names if identity in published_types})
 request={'package':'application.observations','roots':list(names),'leaves':leaves,'names':names}
 envelope={'metadata':metadata,'request':request,'leaves':leaves,'names':names,'imports':{},'layouts':{}}
 def plan(data=envelope,error=None):
@@ -76,7 +78,7 @@ with tempfile.TemporaryDirectory(prefix='scpp-scoped-condition-') as directory:
     (app/'public').mkdir(parents=True)
     request_file=work/'request.json';request_file.write_text(json.dumps(request))
     manifest=concrete_types.generate(request_file,app,sdk,[sdk],'clang++',[])
-    assert len(manifest['sources'])==8,manifest['sources']
+    assert len(manifest['sources'])==sum(identity not in published_types for identity in names),manifest['sources']
     code=''.join('#include "scpp/'+name+'.hpp"\n' for name in names.values())+'#include "public_api_guard.hpp"\n'
     for source,name in names.items():
         code+='static scpp::boolean observe(const scpp::'+name+' &value) { '+observation(conditions[source],'value')+' }\n'
@@ -95,7 +97,7 @@ int main() {
     const auto error=scpp::error_value::make(text);
     scpp::nullable_text optional(text), absent;
     scpp::result_text result(text), failed(error);
-    scpp::result_or_false_text rf(text), fs=scpp::result_or_false_text::from_false();
+    scpp::result_or_false_string rf(text), fs=scpp::result_or_false_string::from_false();
     scpp::result_or_bool_text rb(text), bs=scpp::result_or_bool_text::from_false(), ts=scpp::result_or_bool_text::from_true();
     scpp::optional_error retained(error), no_error(scpp::error_value{});
     scpp::result_optional_text nested(optional), nested_absent(absent), nested_failed(error);

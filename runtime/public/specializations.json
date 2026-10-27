@@ -1,6 +1,6 @@
 {
   "abi": "529dd5502370f48d64891818e9439aae72831b990b4027e8abe25c50c1216c21",
-  "api_identity": "34777f850397ed5196994f7e1a090676aa48a8d4dd0823ebaa56eab67405e5f3",
+  "api_identity": "56edb687285b1c571159b10c3044bbe90c98031577f6f48a3acea5468db78cc1",
   "apis": {
     "add_dynamic": {
       "header": "scpp/operators/add_dynamic.hpp",
@@ -4140,6 +4140,32 @@
       },
       "source": "include/modules/filesystem/public_scan.cpp"
     },
+    "getenv": {
+      "header": "scpp/process/getenv.hpp",
+      "namespace": "scpp",
+      "operation": {
+        "body": "return php::process_detail::getenv_owned<${public:string}>(${native:name}, [](std::string bytes) {\n    return detail::string_access::make([&] { return string_t(std::move(bytes)); });\n});",
+        "includes": [
+          "scpp/detail/process_strings.hpp",
+          "scpp/detail/string_access.hpp"
+        ],
+        "kind": "function",
+        "name": "getenv",
+        "parameters": [
+          {
+            "name": "name",
+            "passing": "const_ref",
+            "type": "string"
+          }
+        ],
+        "returns": "result_or_false<string>",
+        "transport": "native",
+        "uses": [
+          "string"
+        ]
+      },
+      "source": "include/scpp/generated/public_getenv.cpp"
+    },
     "greater_equal_float64": {
       "header": "scpp/operators/greater_equal_float64.hpp",
       "namespace": "scpp",
@@ -7098,6 +7124,32 @@
       },
       "source": "include/scpp/generated/public_remainder_uint8.cpp"
     },
+    "shell_exec": {
+      "header": "scpp/process/shell_exec.hpp",
+      "namespace": "scpp",
+      "operation": {
+        "body": "return php::process_detail::shell_exec_owned<${public:string}>(${native:command}, [](std::string bytes) {\n    return detail::string_access::make([&] { return string_t(std::move(bytes)); });\n});",
+        "includes": [
+          "scpp/detail/process_strings.hpp",
+          "scpp/detail/string_access.hpp"
+        ],
+        "kind": "function",
+        "name": "shell_exec",
+        "parameters": [
+          {
+            "name": "command",
+            "passing": "const_ref",
+            "type": "string"
+          }
+        ],
+        "returns": "result_or_false<string>",
+        "transport": "native",
+        "uses": [
+          "string"
+        ]
+      },
+      "source": "include/scpp/generated/public_shell_exec.cpp"
+    },
     "shift_left_dynamic": {
       "header": "scpp/operators/shift_left_dynamic.hpp",
       "namespace": "scpp",
@@ -9609,7 +9661,16 @@
     "include/scpp/cli/cli_argv.hpp",
     "public/scpp/cli/cli_args.hpp",
     "include/scpp/generated/public_cli_args.cpp",
-    "include/scpp/cli/cli_args.hpp"
+    "include/scpp/cli/cli_args.hpp",
+    "public/scpp/result_or_false_string.hpp",
+    "include/core/generated/result_or_false_string.cpp",
+    "include/scpp/result_or_false_string.hpp",
+    "public/scpp/process/getenv.hpp",
+    "include/scpp/generated/public_getenv.cpp",
+    "include/scpp/process/getenv.hpp",
+    "public/scpp/process/shell_exec.hpp",
+    "include/scpp/generated/public_shell_exec.cpp",
+    "include/scpp/process/shell_exec.hpp"
   ],
   "generator": "metadata-api-v1",
   "leaves": {
@@ -10123,6 +10184,9 @@
     "scpp/operators/text_greater_string_string.hpp": "65e88dadef71ee4ef52cdefc9198dcb552a50297ea0a0f52094c70f38b4c32d4",
     "scpp/operators/text_less_equal_string_string.hpp": "7c528e5646bd8494eeab4e566cc44d258820025b719046a1a1dbc07229eb0af7",
     "scpp/operators/text_less_string_string.hpp": "aaef1bbed67f387b40c4032c2b0497d6627c8755ddccffd8c8182c3ff6e87db2",
+    "scpp/process/getenv.hpp": "68fa6807e18599e7f668982107073cc85fff42f5424a7d48d5b7db9de5c61e72",
+    "scpp/process/shell_exec.hpp": "ea04dc4a09ffc3452ad1d1f61d8317cf7c10fe4ad40bba1e13ff3930145d14a1",
+    "scpp/result_or_false_string.hpp": "826c94310a96f97cf3de2dd032155ba2fd94aa105f2baf323a9728b4b7c64f27",
     "scpp/result_vector_string.hpp": "45bfe2a5c202e8c44ed98016960336c8506d1cf5a1975f3d92c169f41228ee0c",
     "scpp/selection/coalesce_require_value.hpp": "bc7c32011f36fe22fc50a612e323817ee1a9832a6ff6c877b0db4e5e3b7d041c",
     "scpp/string.hpp": "aac6ff447c6c1135f22cbc12cb0a419c8079df28826de70f0170a07690ec2b69",
@@ -10492,7 +10556,10 @@
     "include/scpp/generated/public_microtime_float.cpp",
     "include/scpp/generated/public_cli_argc.cpp",
     "include/scpp/generated/public_cli_argv.cpp",
-    "include/scpp/generated/public_cli_args.cpp"
+    "include/scpp/generated/public_cli_args.cpp",
+    "include/core/generated/result_or_false_string.cpp",
+    "include/scpp/generated/public_getenv.cpp",
+    "include/scpp/generated/public_shell_exec.cpp"
   ],
   "types": {
     "dynamic": {
@@ -10603,6 +10670,34 @@
       "ordinary_api": "api-v1",
       "owner": "runtime.core",
       "source": "include/core/generated/result_vector_string.cpp"
+    },
+    "result_or_false<string>": {
+      "borrow": "detail::concrete_access::get<${native}>(${value})",
+      "capabilities": [
+        "copy_storage",
+        "default_storage",
+        "move_storage"
+      ],
+      "construct": "detail::concrete_access::make<${cpp}, ${native}>(${factory})",
+      "cpp": "scpp::result_or_false_string",
+      "dependencies": [
+        "string"
+      ],
+      "header": "scpp/result_or_false_string.hpp",
+      "includes": [
+        "scpp/detail/concrete_access.hpp",
+        "scpp/result_or_false.hpp",
+        "scpp/string.hpp"
+      ],
+      "layout": [
+        96,
+        8
+      ],
+      "name": "result_or_false_string",
+      "native": "scpp::result_or_false<scpp::string>",
+      "ordinary_api": "api-v1",
+      "owner": "runtime.core",
+      "source": "include/core/generated/result_or_false_string.cpp"
     },
     "vector<string>": {
       "borrow": "detail::concrete_access::get<${native}>(${value})",

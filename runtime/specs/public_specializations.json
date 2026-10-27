@@ -15,7 +15,8 @@
   },
   "names": {
     "vector<string>": "vector_string",
-    "result<vector<string>>": "result_vector_string"
+    "result<vector<string>>": "result_vector_string",
+    "result_or_false<string>": "result_or_false_string"
   },
   "apis": [
     "fs_scan",
@@ -360,6 +361,8 @@
     "microtime_float",
     "cli_argc",
     "cli_argv",
-    "cli_args"
+    "cli_args",
+    "getenv",
+    "shell_exec"
   ]
 }

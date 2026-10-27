@@ -23,6 +23,8 @@ families=['nullable','result','result_or_false','result_or_bool']
 names={f+'<boolean>':'text_boolean_'+str(i) for i,f in enumerate(families)}
 names.update({'nullable<float64>':'optional_float','result<string>':'result_text'})
 for i,f in enumerate(families): names.setdefault(f+'<string>','text_string_'+str(i))
+published_types=json.loads((root/'runtime/public/specializations.json').read_text())['types']
+names.update({identity:published_types[identity]['name'] for identity in names if identity in published_types})
 request={'package':'application.carrier_text','roots':list(names),'names':names}
 
 def resolve(left,right,meta=metadata,error=None,compound=False):
@@ -162,7 +164,7 @@ with tempfile.TemporaryDirectory(prefix='scpp-carrier-text-') as directory:
     seal_package(sdk,['core']);os.environ['SCPP_API_GENERATOR']=str(sdk/'tools/scpp_api_generator')
     request_file=work/'request.json';request_file.write_text(json.dumps(request))
     manifest=concrete_types.generate(request_file,app,sdk,[sdk],'clang++',[])
-    assert len(manifest['sources'])==9
+    assert len(manifest['sources'])==sum(identity not in published_types for identity in names)
     code='\n'.join('#include "'+h+'"' for h in sorted(headers))+r'''
 #include "public_api_guard.hpp"
 #include <cstdlib>

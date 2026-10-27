@@ -19,3 +19,9 @@ This API does not synchronize concurrent process-environment mutation.
 
 The core metadata binds `getenv` to `scpp::php::getenv` in
 `lang/php/php_process.hpp`. Wider process APIs and shell behavior are separate.
+
+The concrete core public binding is `scpp/process/getenv.hpp`, returning
+`result_or_false_string`. The PHP adapter and generated public binding share the
+private payload-factory provider in `scpp/detail/process_strings.hpp`. This preserves
+the existing source contract and constructs the appropriate owned string directly;
+no public native template or callback is exposed.

@@ -21,7 +21,7 @@ each slice. The original inventory is a baseline, not a current completion count
 | D | Pending | Ownership, application targets and source Exception transport gaps. |
 | E | Existing vector/hash/boxed foundations; incomplete | Access/initialization/key-policy gaps and identity key-allocation debt; conditional lifecycle, cursor fixes and boxed count are implemented. |
 | F | Pending | Callable transport and registered collection algorithms. |
-| G | Pending | Remaining core helpers and requirement-by-requirement closure audit. |
+| G | Core wall-clock, CLI and environment/shell bindings implemented | Debug/memory/exception/helper gaps and requirement-by-requirement closure audit. |
 
 Full frontend adoption and module migration are excluded. The first complete carrier
 path remains a review gate before expanding ownership/callback implementation.
@@ -242,8 +242,8 @@ value API exists, not that source lowering has already migrated to it.
 | `core.error.get_message` | Published error_value factory/getter equivalent | C (integration) |
 | `core.error.get_line` | Published error_value factory/getter equivalent | C (integration) |
 | `core.error.get_file` | Published error_value factory/getter equivalent | C (integration) |
-| `core.getenv` | Missing focused public helper; retain current registered core ownership pending review | G |
-| `core.shell_exec` | Missing focused public helper; retain current registered core ownership pending review | G |
+| `core.getenv` | Published core Result/string composition, G3 | Complete public path |
+| `core.shell_exec` | Published core Result/string composition, G3 | Complete public path |
 | `core.cli_argc` | Published focused core reader, G2 | Complete public path |
 | `core.cli_argv` | Published focused core reader, G2 | Complete public path |
 | `core.cli_args` | Published focused core reader, G2 | Complete public path |
@@ -1532,3 +1532,19 @@ caller verifies cross-TU observations, independent snapshots, empty/spaced/long
 arguments, survival after context reset and input lifetime end, zero-allocation count
 queries and native/public snapshot allocation parity. This does not promise concurrent
 context mutation: startup initialization still precedes authored execution.
+
+## Active-goal progress — G3 environment and shell string producers
+
+Publish getenv/shell_exec and runtime-owned result_or_false<string> through ordinary
+metadata. Both native compatibility and concrete public calls use one payload-factory
+provider, preserving false for missing environment variables/pipe-open failure and
+successful empty strings. Capture owns the pipe before reading or constructing the
+payload, including exception cleanup. This is the existing core catalog surface,
+not a wider process-module migration or a new exit-status policy.
+
+Tests cover environment byte ownership, present empty versus absent, embedded-NUL
+name rejection, output NUL preservation, nonzero exit status, null-pipe dispatch,
+throwing payload construction and native/public allocation parity. Existing carrier
+fixtures now respect the runtime-owned result_or_false<string> name and reuse it;
+they must not force an application-owned duplicate of a published specialization.
+The carrier semantic review gates remain open.

@@ -24,6 +24,8 @@ public_types={**metadata['types'],**json.loads((root/'runtime/public/specializat
 payloads=['mixed','dynamic'] if args.boxed else ['int64','float64','boolean','string']
 families=['nullable','result','result_or_false']
 names={f+'<'+t+'>':'select_'+str(i)+'_'+t for i,f in enumerate(families) for t in payloads}
+published_types=json.loads((root/'runtime/public/specializations.json').read_text())['types']
+names.update({identity:published_types[identity]['name'] for identity in names if identity in published_types})
 request={'package':'application.carrier_coalesce','roots':list(names),'names':names}
 
 def resolve(left,right,meta=metadata,error=None):
@@ -125,7 +127,7 @@ with tempfile.TemporaryDirectory(prefix='scpp-carrier-coalesce-') as directory:
     seal_package(sdk,['core']);os.environ['SCPP_API_GENERATOR']=str(sdk/'tools/scpp_api_generator')
     request_file=work/'request.json';request_file.write_text(json.dumps(request))
     manifest=concrete_types.generate(request_file,app,sdk,[sdk],'clang++',[])
-    assert len(manifest['sources'])==len(names)
+    assert len(manifest['sources'])==sum(identity not in published_types for identity in names)
     code='\n'.join('#include "'+h+'"' for h in sorted(headers))+r'''
 #include "public_api_guard.hpp"
 #include <cstdlib>

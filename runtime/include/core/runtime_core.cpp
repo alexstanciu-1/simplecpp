@@ -376,3 +376,7 @@
 #include "scpp/generated/public_cli_argc.cpp"
 #include "scpp/generated/public_cli_argv.cpp"
 #include "scpp/generated/public_cli_args.cpp"
+
+#include "core/generated/result_or_false_string.cpp"
+#include "scpp/generated/public_getenv.cpp"
+#include "scpp/generated/public_shell_exec.cpp"

@@ -46,3 +46,9 @@ Current runtime owner:
 - success command with non-empty stdout
 - success command with empty stdout
 - pipe-open failure returns `false`
+
+The concrete core public binding is `scpp/process/shell_exec.hpp`, returning
+`result_or_false_string`. The PHP adapter and generated public binding share the
+private payload-factory provider in `scpp/detail/process_strings.hpp`. This preserves
+the existing source contract and constructs the appropriate owned string directly;
+no public native template or callback is exposed.

@@ -306,6 +306,58 @@
           "scpp/detail/cli_arguments.hpp"
         ]
       }
+    },
+    "getenv": {
+      "namespace": "scpp",
+      "header": "scpp/process/getenv.hpp",
+      "source": "include/scpp/generated/public_getenv.cpp",
+      "operation": {
+        "name": "getenv",
+        "returns": "result_or_false<string>",
+        "parameters": [
+          {
+            "name": "name",
+            "type": "string",
+            "passing": "const_ref"
+          }
+        ],
+        "kind": "function",
+        "transport": "native",
+        "body": "return php::process_detail::getenv_owned<${public:string}>(${native:name}, [](std::string bytes) {\n    return detail::string_access::make([&] { return string_t(std::move(bytes)); });\n});",
+        "uses": [
+          "string"
+        ],
+        "includes": [
+          "scpp/detail/process_strings.hpp",
+          "scpp/detail/string_access.hpp"
+        ]
+      }
+    },
+    "shell_exec": {
+      "namespace": "scpp",
+      "header": "scpp/process/shell_exec.hpp",
+      "source": "include/scpp/generated/public_shell_exec.cpp",
+      "operation": {
+        "name": "shell_exec",
+        "returns": "result_or_false<string>",
+        "parameters": [
+          {
+            "name": "command",
+            "type": "string",
+            "passing": "const_ref"
+          }
+        ],
+        "kind": "function",
+        "transport": "native",
+        "body": "return php::process_detail::shell_exec_owned<${public:string}>(${native:command}, [](std::string bytes) {\n    return detail::string_access::make([&] { return string_t(std::move(bytes)); });\n});",
+        "uses": [
+          "string"
+        ],
+        "includes": [
+          "scpp/detail/process_strings.hpp",
+          "scpp/detail/string_access.hpp"
+        ]
+      }
     }
   },
   "capabilities": {
