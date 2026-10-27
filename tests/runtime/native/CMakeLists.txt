@@ -370,3 +370,9 @@ target_link_libraries(test_boxed_integer_casts PRIVATE scpp_core_api)
 add_test(NAME scpp_test_boxed_integer_casts COMMAND test_boxed_integer_casts)
 add_test(NAME scpp_check_conversion_coverage COMMAND ${Python3_EXECUTABLE}
   ${CMAKE_CURRENT_SOURCE_DIR}/check_conversion_coverage.py)
+
+add_executable(test_public_conditions test_public_conditions.cpp)
+target_link_libraries(test_public_conditions PRIVATE scpp_core_api)
+add_test(NAME scpp_test_public_conditions COMMAND test_public_conditions)
+add_test(NAME scpp_check_function_sets COMMAND ${Python3_EXECUTABLE}
+  ${CMAKE_CURRENT_SOURCE_DIR}/check_function_sets.py $<TARGET_FILE:scpp_api_generator>)

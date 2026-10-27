@@ -818,3 +818,43 @@ rebuild **54.76 s**, **620,172 KiB**. One build per configuration; generation us
 the already-built tool before adding core source includes. Raw caller observations:
 `compiler/my-try-cpp/build/core-boxed-integer-cost.json`. These timings do not claim
 clean compiler costs or a stable speedup ratio.
+
+## B1a — shared condition-observation recipe (2026-10-27)
+
+A generic metadata function set expands one ordinary function recipe into 14
+condition APIs. It uses the existing native helper, operation emitter and ownership
+inventory; no condition type-name dispatch was added to the generator. Public
+headers are template-free. Publication also rejects generated header/source path
+collisions before returning a plan, preventing distinct APIs from overwriting files.
+
+`test_public_conditions` covers all 14 signatures, numeric zeros/NaN/infinity,
+string false-like values versus strict bool casts, boxed null/scalars, mixed table
+rejection, dynamic object truthiness and error presence. Repeated long-string,
+boxed, numeric and error observations record **zero allocations**. Function-set
+checks cover arbitrary set/function names, one-pass substitutions, unknown/recursive
+markers, collisions and zero-unit publication reuse. Existing metadata/conversion
+checks remain green.
+
+Seven focused release cases pass in **2.61 s**; ASan/UBSan with leak detection passes
+in **17.09 s**. The relocated sealed-runtime proof imports string/dynamic condition
+APIs without emitting adapters and executes them against the relocated archive in
+release and sanitizer configurations.
+
+Single observations (`measure_global_operators.py --conditions`):
+
+| Case | Seconds | Preprocessed bytes |
+| --- | ---: | ---: |
+| Public string/dynamic condition caller | 0.0563 | 21,339 |
+| Native equivalent caller | 3.3187 | 3,503,815 |
+| Independent dynamic condition adapter | 3.4786 | 3,579,623 |
+
+Eight-job changed-core/test build: release **21.42 s**, peak child RSS **414,344 KiB**;
+sanitizer **49.00 s**, **623,064 KiB**. The release generator alone was rebuilt after
+adding output-path collision validation; that unmeasured tool-only update is excluded
+from the release core/test timing. Raw caller observations are in
+`compiler/my-try-cpp/build/core-conditions-cost.json`.
+
+B1 strict identity, context-specific text/concat, eager xor and remaining observation
+protocols are still pending. Carrier and ownership/callable conditions retain their
+C/D/F owners. Lazy source evaluation stays compiler-owned; this slice observes an
+already evaluated value and does not publish templated conditional evaluators.

@@ -1,6 +1,6 @@
 {
   "abi": "529dd5502370f48d64891818e9439aae72831b990b4027e8abe25c50c1216c21",
-  "api_identity": "eaddba5c0cb93eec80f9d087daa9d61680bbaf2df7a0076e03d6abc27e9b9273",
+  "api_identity": "88c4579af65ca9d58e9a16c146364ba5da9136eee3ebe7e2528107f7b8862d02",
   "apis": {
     "add_float64": {
       "header": "scpp/operators/add_float64.hpp",
@@ -2144,6 +2144,286 @@
         ]
       },
       "source": "include/scpp/generated/public_cast_uint8_from_uint64.cpp"
+    },
+    "condition_truthy_boolean": {
+      "header": "scpp/conditions/condition_truthy_boolean.hpp",
+      "namespace": "scpp",
+      "operation": {
+        "expression": "scpp::condition_truthy(scpp::bool_t(value.native_value())).native_value()",
+        "includes": [
+          "operators/conditional/condition_truthiness.hpp"
+        ],
+        "name": "condition_truthy",
+        "parameters": [
+          {
+            "name": "value",
+            "passing": "const_ref",
+            "type": "boolean"
+          }
+        ],
+        "returns": "boolean"
+      },
+      "source": "include/scpp/generated/public_condition_truthy_boolean.cpp"
+    },
+    "condition_truthy_dynamic": {
+      "header": "scpp/conditions/condition_truthy_dynamic.hpp",
+      "namespace": "scpp",
+      "operation": {
+        "expression": "scpp::condition_truthy(${native:value}).native_value()",
+        "includes": [
+          "operators/conditional/condition_truthiness.hpp"
+        ],
+        "name": "condition_truthy",
+        "parameters": [
+          {
+            "name": "value",
+            "passing": "const_ref",
+            "type": "dynamic"
+          }
+        ],
+        "returns": "boolean"
+      },
+      "source": "include/scpp/generated/public_condition_truthy_dynamic.cpp"
+    },
+    "condition_truthy_error_value": {
+      "header": "scpp/conditions/condition_truthy_error_value.hpp",
+      "namespace": "scpp",
+      "operation": {
+        "expression": "scpp::condition_truthy(${native:value}).native_value()",
+        "includes": [
+          "operators/conditional/condition_truthiness.hpp"
+        ],
+        "name": "condition_truthy",
+        "parameters": [
+          {
+            "name": "value",
+            "passing": "const_ref",
+            "type": "error_value"
+          }
+        ],
+        "returns": "boolean"
+      },
+      "source": "include/scpp/generated/public_condition_truthy_error_value.cpp"
+    },
+    "condition_truthy_float64": {
+      "header": "scpp/conditions/condition_truthy_float64.hpp",
+      "namespace": "scpp",
+      "operation": {
+        "expression": "scpp::condition_truthy(scpp::float_t(value.native_value())).native_value()",
+        "includes": [
+          "operators/conditional/condition_truthiness.hpp"
+        ],
+        "name": "condition_truthy",
+        "parameters": [
+          {
+            "name": "value",
+            "passing": "const_ref",
+            "type": "float64"
+          }
+        ],
+        "returns": "boolean"
+      },
+      "source": "include/scpp/generated/public_condition_truthy_float64.cpp"
+    },
+    "condition_truthy_int16": {
+      "header": "scpp/conditions/condition_truthy_int16.hpp",
+      "namespace": "scpp",
+      "operation": {
+        "expression": "scpp::condition_truthy(scpp::int_t<__INT16_TYPE__>(value.native_value())).native_value()",
+        "includes": [
+          "operators/conditional/condition_truthiness.hpp"
+        ],
+        "name": "condition_truthy",
+        "parameters": [
+          {
+            "name": "value",
+            "passing": "const_ref",
+            "type": "int16"
+          }
+        ],
+        "returns": "boolean"
+      },
+      "source": "include/scpp/generated/public_condition_truthy_int16.cpp"
+    },
+    "condition_truthy_int32": {
+      "header": "scpp/conditions/condition_truthy_int32.hpp",
+      "namespace": "scpp",
+      "operation": {
+        "expression": "scpp::condition_truthy(scpp::int_t<__INT32_TYPE__>(value.native_value())).native_value()",
+        "includes": [
+          "operators/conditional/condition_truthiness.hpp"
+        ],
+        "name": "condition_truthy",
+        "parameters": [
+          {
+            "name": "value",
+            "passing": "const_ref",
+            "type": "int32"
+          }
+        ],
+        "returns": "boolean"
+      },
+      "source": "include/scpp/generated/public_condition_truthy_int32.cpp"
+    },
+    "condition_truthy_int64": {
+      "header": "scpp/conditions/condition_truthy_int64.hpp",
+      "namespace": "scpp",
+      "operation": {
+        "expression": "scpp::condition_truthy(scpp::int_t<__INT64_TYPE__>(value.native_value())).native_value()",
+        "includes": [
+          "operators/conditional/condition_truthiness.hpp"
+        ],
+        "name": "condition_truthy",
+        "parameters": [
+          {
+            "name": "value",
+            "passing": "const_ref",
+            "type": "int64"
+          }
+        ],
+        "returns": "boolean"
+      },
+      "source": "include/scpp/generated/public_condition_truthy_int64.cpp"
+    },
+    "condition_truthy_int8": {
+      "header": "scpp/conditions/condition_truthy_int8.hpp",
+      "namespace": "scpp",
+      "operation": {
+        "expression": "scpp::condition_truthy(scpp::int_t<__INT8_TYPE__>(value.native_value())).native_value()",
+        "includes": [
+          "operators/conditional/condition_truthiness.hpp"
+        ],
+        "name": "condition_truthy",
+        "parameters": [
+          {
+            "name": "value",
+            "passing": "const_ref",
+            "type": "int8"
+          }
+        ],
+        "returns": "boolean"
+      },
+      "source": "include/scpp/generated/public_condition_truthy_int8.cpp"
+    },
+    "condition_truthy_mixed": {
+      "header": "scpp/conditions/condition_truthy_mixed.hpp",
+      "namespace": "scpp",
+      "operation": {
+        "expression": "scpp::condition_truthy(${native:value}).native_value()",
+        "includes": [
+          "operators/conditional/condition_truthiness.hpp"
+        ],
+        "name": "condition_truthy",
+        "parameters": [
+          {
+            "name": "value",
+            "passing": "const_ref",
+            "type": "mixed"
+          }
+        ],
+        "returns": "boolean"
+      },
+      "source": "include/scpp/generated/public_condition_truthy_mixed.cpp"
+    },
+    "condition_truthy_string": {
+      "header": "scpp/conditions/condition_truthy_string.hpp",
+      "namespace": "scpp",
+      "operation": {
+        "expression": "scpp::condition_truthy(${native:value}).native_value()",
+        "includes": [
+          "operators/conditional/condition_truthiness.hpp"
+        ],
+        "name": "condition_truthy",
+        "parameters": [
+          {
+            "name": "value",
+            "passing": "const_ref",
+            "type": "string"
+          }
+        ],
+        "returns": "boolean"
+      },
+      "source": "include/scpp/generated/public_condition_truthy_string.cpp"
+    },
+    "condition_truthy_uint16": {
+      "header": "scpp/conditions/condition_truthy_uint16.hpp",
+      "namespace": "scpp",
+      "operation": {
+        "expression": "scpp::condition_truthy(scpp::int_t<__UINT16_TYPE__>(value.native_value())).native_value()",
+        "includes": [
+          "operators/conditional/condition_truthiness.hpp"
+        ],
+        "name": "condition_truthy",
+        "parameters": [
+          {
+            "name": "value",
+            "passing": "const_ref",
+            "type": "uint16"
+          }
+        ],
+        "returns": "boolean"
+      },
+      "source": "include/scpp/generated/public_condition_truthy_uint16.cpp"
+    },
+    "condition_truthy_uint32": {
+      "header": "scpp/conditions/condition_truthy_uint32.hpp",
+      "namespace": "scpp",
+      "operation": {
+        "expression": "scpp::condition_truthy(scpp::int_t<__UINT32_TYPE__>(value.native_value())).native_value()",
+        "includes": [
+          "operators/conditional/condition_truthiness.hpp"
+        ],
+        "name": "condition_truthy",
+        "parameters": [
+          {
+            "name": "value",
+            "passing": "const_ref",
+            "type": "uint32"
+          }
+        ],
+        "returns": "boolean"
+      },
+      "source": "include/scpp/generated/public_condition_truthy_uint32.cpp"
+    },
+    "condition_truthy_uint64": {
+      "header": "scpp/conditions/condition_truthy_uint64.hpp",
+      "namespace": "scpp",
+      "operation": {
+        "expression": "scpp::condition_truthy(scpp::int_t<__UINT64_TYPE__>(value.native_value())).native_value()",
+        "includes": [
+          "operators/conditional/condition_truthiness.hpp"
+        ],
+        "name": "condition_truthy",
+        "parameters": [
+          {
+            "name": "value",
+            "passing": "const_ref",
+            "type": "uint64"
+          }
+        ],
+        "returns": "boolean"
+      },
+      "source": "include/scpp/generated/public_condition_truthy_uint64.cpp"
+    },
+    "condition_truthy_uint8": {
+      "header": "scpp/conditions/condition_truthy_uint8.hpp",
+      "namespace": "scpp",
+      "operation": {
+        "expression": "scpp::condition_truthy(scpp::int_t<__UINT8_TYPE__>(value.native_value())).native_value()",
+        "includes": [
+          "operators/conditional/condition_truthiness.hpp"
+        ],
+        "name": "condition_truthy",
+        "parameters": [
+          {
+            "name": "value",
+            "passing": "const_ref",
+            "type": "uint8"
+          }
+        ],
+        "returns": "boolean"
+      },
+      "source": "include/scpp/generated/public_condition_truthy_uint8.cpp"
     },
     "divide_float64": {
       "header": "scpp/operators/divide_float64.hpp",
@@ -5338,7 +5618,49 @@
     "include/scpp/conversions/cast_uint32_from_dynamic.hpp",
     "public/scpp/conversions/cast_uint64_from_dynamic.hpp",
     "include/scpp/generated/public_cast_uint64_from_dynamic.cpp",
-    "include/scpp/conversions/cast_uint64_from_dynamic.hpp"
+    "include/scpp/conversions/cast_uint64_from_dynamic.hpp",
+    "public/scpp/conditions/condition_truthy_int8.hpp",
+    "include/scpp/generated/public_condition_truthy_int8.cpp",
+    "include/scpp/conditions/condition_truthy_int8.hpp",
+    "public/scpp/conditions/condition_truthy_int16.hpp",
+    "include/scpp/generated/public_condition_truthy_int16.cpp",
+    "include/scpp/conditions/condition_truthy_int16.hpp",
+    "public/scpp/conditions/condition_truthy_int32.hpp",
+    "include/scpp/generated/public_condition_truthy_int32.cpp",
+    "include/scpp/conditions/condition_truthy_int32.hpp",
+    "public/scpp/conditions/condition_truthy_int64.hpp",
+    "include/scpp/generated/public_condition_truthy_int64.cpp",
+    "include/scpp/conditions/condition_truthy_int64.hpp",
+    "public/scpp/conditions/condition_truthy_uint8.hpp",
+    "include/scpp/generated/public_condition_truthy_uint8.cpp",
+    "include/scpp/conditions/condition_truthy_uint8.hpp",
+    "public/scpp/conditions/condition_truthy_uint16.hpp",
+    "include/scpp/generated/public_condition_truthy_uint16.cpp",
+    "include/scpp/conditions/condition_truthy_uint16.hpp",
+    "public/scpp/conditions/condition_truthy_uint32.hpp",
+    "include/scpp/generated/public_condition_truthy_uint32.cpp",
+    "include/scpp/conditions/condition_truthy_uint32.hpp",
+    "public/scpp/conditions/condition_truthy_uint64.hpp",
+    "include/scpp/generated/public_condition_truthy_uint64.cpp",
+    "include/scpp/conditions/condition_truthy_uint64.hpp",
+    "public/scpp/conditions/condition_truthy_float64.hpp",
+    "include/scpp/generated/public_condition_truthy_float64.cpp",
+    "include/scpp/conditions/condition_truthy_float64.hpp",
+    "public/scpp/conditions/condition_truthy_mixed.hpp",
+    "include/scpp/generated/public_condition_truthy_mixed.cpp",
+    "include/scpp/conditions/condition_truthy_mixed.hpp",
+    "public/scpp/conditions/condition_truthy_dynamic.hpp",
+    "include/scpp/generated/public_condition_truthy_dynamic.cpp",
+    "include/scpp/conditions/condition_truthy_dynamic.hpp",
+    "public/scpp/conditions/condition_truthy_boolean.hpp",
+    "include/scpp/generated/public_condition_truthy_boolean.cpp",
+    "include/scpp/conditions/condition_truthy_boolean.hpp",
+    "public/scpp/conditions/condition_truthy_string.hpp",
+    "include/scpp/generated/public_condition_truthy_string.cpp",
+    "include/scpp/conditions/condition_truthy_string.hpp",
+    "public/scpp/conditions/condition_truthy_error_value.hpp",
+    "include/scpp/generated/public_condition_truthy_error_value.cpp",
+    "include/scpp/conditions/condition_truthy_error_value.hpp"
   ],
   "generator": "metadata-api-v1",
   "leaves": {
@@ -5454,6 +5776,20 @@
   "public_files": {
     "modules/filesystem/scan.hpp": "12c63684c1896c3de8fd05db1a6ab2a2fbb7eea2a3747ed3de91f44e0e5cf7d7",
     "modules/tasks/worker_pool.hpp": "07fd862bb53ef73be8aec043b5027a4e247723fe8efc4196d8e931ffe820394e",
+    "scpp/conditions/condition_truthy_boolean.hpp": "fd110caf13cf9eee1f8dabef93d3c875c2e526ce28fa73249df7e1903112be83",
+    "scpp/conditions/condition_truthy_dynamic.hpp": "47a4341d7c07faeefe489859544f53f13684bb7af6383b20edd11ad00e4b92ee",
+    "scpp/conditions/condition_truthy_error_value.hpp": "a82bf525b7fea8e7ba20916a2c52b46c97aeaae73829f01c88371ca60350d50e",
+    "scpp/conditions/condition_truthy_float64.hpp": "59885446654ba2f62db9b346c4a1aa688048133116e4aca2f49e169ddf4803ec",
+    "scpp/conditions/condition_truthy_int16.hpp": "e2b663c6b476218a561d4f26ebea9198b1aa24dbd0b603f58f924dfbce8c9e65",
+    "scpp/conditions/condition_truthy_int32.hpp": "4d7df77fd08981a308f78a42fbcb14dfccdb8c927a90487317dbec31783e2e70",
+    "scpp/conditions/condition_truthy_int64.hpp": "158abdd1a94d8170474681e1968fae535f223b9678a6f00b5aff6493fc20e274",
+    "scpp/conditions/condition_truthy_int8.hpp": "f8641b801c86c1461415d8df7693789a80a2cc2f57b9b4915f439c05b618edaa",
+    "scpp/conditions/condition_truthy_mixed.hpp": "5e47e7fcbde3e0fc4d5344db7b0079c66832bbc0fa3dee8fbbde980d34f6d2b5",
+    "scpp/conditions/condition_truthy_string.hpp": "078d9e398d8a2e6b057b96529f83e350cf79171c202bd65c2150220fdc4c23f4",
+    "scpp/conditions/condition_truthy_uint16.hpp": "c7fdc1e4eb72b5f01615216202009c32e7ba0e30dcf0865e6a8fce31b163845e",
+    "scpp/conditions/condition_truthy_uint32.hpp": "7f6c7d54ade9aed63763861b8a017cd35d7aca70f6f75e924e53d1b0eb7d8004",
+    "scpp/conditions/condition_truthy_uint64.hpp": "2efdde3c56d47b028f8a1072ec20f2a2f57cfcf4f37a7c8716ae6719cd41541f",
+    "scpp/conditions/condition_truthy_uint8.hpp": "9c09f56987fe34c73ef8d1edaf9332321d9c2777a092aaf2d38f4ebc594fde5c",
     "scpp/conversions/cast_boolean_from_boolean.hpp": "a96255feff6e73b818df5b0ca6de70c2f274c90ddda1561b086c55a5bd142247",
     "scpp/conversions/cast_boolean_from_dynamic.hpp": "5d455341fc6c97419f46b8055d67db496e8e87358e4ff5e665901c9061bd8b0a",
     "scpp/conversions/cast_boolean_from_float64.hpp": "838a85e2ddf3d1dea7c975cc42894cb4a0589e3ef06ceb26ee718bd5bb727524",
@@ -5833,7 +6169,21 @@
     "include/scpp/generated/public_cast_uint8_from_dynamic.cpp",
     "include/scpp/generated/public_cast_uint16_from_dynamic.cpp",
     "include/scpp/generated/public_cast_uint32_from_dynamic.cpp",
-    "include/scpp/generated/public_cast_uint64_from_dynamic.cpp"
+    "include/scpp/generated/public_cast_uint64_from_dynamic.cpp",
+    "include/scpp/generated/public_condition_truthy_int8.cpp",
+    "include/scpp/generated/public_condition_truthy_int16.cpp",
+    "include/scpp/generated/public_condition_truthy_int32.cpp",
+    "include/scpp/generated/public_condition_truthy_int64.cpp",
+    "include/scpp/generated/public_condition_truthy_uint8.cpp",
+    "include/scpp/generated/public_condition_truthy_uint16.cpp",
+    "include/scpp/generated/public_condition_truthy_uint32.cpp",
+    "include/scpp/generated/public_condition_truthy_uint64.cpp",
+    "include/scpp/generated/public_condition_truthy_float64.cpp",
+    "include/scpp/generated/public_condition_truthy_mixed.cpp",
+    "include/scpp/generated/public_condition_truthy_dynamic.cpp",
+    "include/scpp/generated/public_condition_truthy_boolean.cpp",
+    "include/scpp/generated/public_condition_truthy_string.cpp",
+    "include/scpp/generated/public_condition_truthy_error_value.cpp"
   ],
   "types": {
     "dynamic": {

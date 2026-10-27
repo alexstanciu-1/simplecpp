@@ -319,3 +319,16 @@ routing of carrier/ownership/container conversions to C/D/E. After this slice's
 validation and publication, A2's scalar scope is complete. B1 scalar truthiness,
 context-specific text conversion, strict identity and observation protocols is next.
 The full goal and the first-carrier review gate remain active.
+
+## Active-goal progress — B1a condition observations
+
+One shared function-set recipe publishes 14 concrete condition observations through
+the ordinary operation emitter/publication path. It preserves native string and
+boxed rules, including truthy "false", false boxed null, rejected mixed tables and
+truthy constructed dynamic objects. Error values delegate to native error presence.
+
+The generic function-set expansion is metadata-only factoring, not another family
+emitter. Publication now rejects generated output-path collisions as well as API
+ownership collisions. B1 remains open: strict identity, context-specific text/concat,
+eager xor and presence/empty/reset consolidation are still pending. Carrier condition
+completion belongs to C; ownership/callable conditions remain in D/F.

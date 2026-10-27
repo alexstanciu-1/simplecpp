@@ -198,6 +198,20 @@
     "cast_uint8_from_dynamic",
     "cast_uint16_from_dynamic",
     "cast_uint32_from_dynamic",
-    "cast_uint64_from_dynamic"
+    "cast_uint64_from_dynamic",
+    "condition_truthy_int8",
+    "condition_truthy_int16",
+    "condition_truthy_int32",
+    "condition_truthy_int64",
+    "condition_truthy_uint8",
+    "condition_truthy_uint16",
+    "condition_truthy_uint32",
+    "condition_truthy_uint64",
+    "condition_truthy_float64",
+    "condition_truthy_mixed",
+    "condition_truthy_dynamic",
+    "condition_truthy_boolean",
+    "condition_truthy_string",
+    "condition_truthy_error_value"
   ]
 }

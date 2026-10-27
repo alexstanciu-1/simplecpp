@@ -386,3 +386,28 @@ String-to-boolean remains strict literal parsing, separate from truthiness.
 Scalar boxing remains in existing generated family constructors; explicit family
 crossing remains in generated `to_dynamic`/`to_mixed` functions. The coverage audit
 tracks these paths without generating duplicate global cast adapters.
+
+## Shared function sets
+
+`function_sets` factors repeated ordinary function descriptors without adding a
+family-specific emitter. Each named set has a `function` descriptor and a `variants`
+object. A variant name plus the set name forms its API identity (`set_variant`).
+`${variant}` substitutes that name in descriptor string values;
+`${variant:key}` substitutes a string binding from the variant. Object keys are
+not substituted. Inserted snippets can contain ordinary operation placeholders
+such as `${native:value}`, resolved later by the existing emitter. Variant expansion
+is one pass; recursive variant placeholders in bindings reject.
+
+Expanded functions pass through the same dependency, transport, API ownership and
+publication machinery as authored functions, normalized operators and conversions.
+Duplicate identities/owners reject. The generator also rejects duplicate output
+paths across generated units before returning a publication plan. This prevents
+independent valid API names from overwriting each other's headers or sources.
+
+The first set is `condition_truthy`, with 14 public overloads: eight integer widths,
+boolean, float64, string, mixed, dynamic and error_value. All delegate to the existing
+native condition helper; string truthiness is separate from strict boolean casts.
+The public surface does not expose arbitrary template conditions. Bare null,
+containers, ownership/callables and carrier specializations are not added by this
+slice; boxed null follows its native runtime dispatch. Existing mixed-table rejection
+and dynamic-object truthiness are preserved. Lazy evaluation remains compiler-owned.

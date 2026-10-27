@@ -13,6 +13,7 @@ parser.add_argument('--numeric', action='store_true', help='Measure ordinary num
 parser.add_argument('--conversions', action='store_true', help='Measure checked numeric/string conversion callers')
 parser.add_argument('--boxed-conversions', action='store_true', help='Measure owned string and boxed boolean casts')
 parser.add_argument('--boxed-integers', action='store_true', help='Measure fixed-width casts preserving boxed payload origins')
+parser.add_argument('--conditions', action='store_true', help='Measure condition observations independently of explicit casts')
 args = parser.parse_args()
 public = '''#include "scpp/operators/add_int64.hpp"
 #include "scpp/operators/equal_mixed.hpp"
@@ -35,6 +36,9 @@ if args.boxed_conversions:
 if args.boxed_integers:
     public = '#include "scpp/conversions/cast_uint64_from_mixed.hpp"\n#include "scpp/conversions/cast_int8_from_dynamic.hpp"\nscpp::uint64 wide(const scpp::mixed &m) { return scpp::cast_uint64(m); }\nscpp::int8 narrow(const scpp::dynamic &d) { return scpp::cast_int8(d); }\n'
     native = '#include "scpp/cast.hpp"\nscpp::int_t<__UINT64_TYPE__> wide(const scpp::mixed_t &m) { return scpp::cast<scpp::int_t<__UINT64_TYPE__>>(m); }\nscpp::int_t<__INT8_TYPE__> narrow(const scpp::detail::dynamic_value &d) { return scpp::cast<scpp::int_t<__INT8_TYPE__>>(d); }\n'
+if args.conditions:
+    public = '#include "scpp/conditions/condition_truthy_string.hpp"\n#include "scpp/conditions/condition_truthy_dynamic.hpp"\nscpp::boolean text(const scpp::string &s) { return scpp::condition_truthy(s); }\nscpp::boolean boxed(const scpp::dynamic &d) { return scpp::condition_truthy(d); }\n'
+    native = '#include "operators/conditional/condition_truthiness.hpp"\nscpp::bool_t text(const scpp::string_t &s) { return scpp::condition_truthy(s); }\nscpp::bool_t boxed(const scpp::detail::dynamic_value &d) { return scpp::condition_truthy(d); }\n'
 rows = []
 with tempfile.TemporaryDirectory(prefix='scpp-operator-cost-') as directory:
     stage = Path(directory)
@@ -45,6 +49,7 @@ with tempfile.TemporaryDirectory(prefix='scpp-operator-cost-') as directory:
     if args.conversions: adapters = ['cast_uint64_from_string']
     if args.boxed_conversions: adapters = ['cast_string_from_mixed']
     if args.boxed_integers: adapters = ['cast_uint64_from_mixed']
+    if args.conditions: adapters = ['condition_truthy_dynamic']
     cases += [(f'adapter_{identity}', root/f'runtime/include/scpp/generated/public_{identity}.cpp', ['public','include']) for identity in adapters]
     for name, path, includes in cases:
         command = [args.compiler, '-std=c++23', '-O2', *['-I'+str(root/'runtime'/i) for i in includes]]

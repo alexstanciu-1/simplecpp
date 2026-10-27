@@ -2671,5 +2671,73 @@
         "includes": []
       }
     }
+  },
+  "function_sets": {
+    "condition_truthy": {
+      "variants": {
+        "int8": {
+          "operand": "scpp::int_t<__INT8_TYPE__>(value.native_value())"
+        },
+        "int16": {
+          "operand": "scpp::int_t<__INT16_TYPE__>(value.native_value())"
+        },
+        "int32": {
+          "operand": "scpp::int_t<__INT32_TYPE__>(value.native_value())"
+        },
+        "int64": {
+          "operand": "scpp::int_t<__INT64_TYPE__>(value.native_value())"
+        },
+        "uint8": {
+          "operand": "scpp::int_t<__UINT8_TYPE__>(value.native_value())"
+        },
+        "uint16": {
+          "operand": "scpp::int_t<__UINT16_TYPE__>(value.native_value())"
+        },
+        "uint32": {
+          "operand": "scpp::int_t<__UINT32_TYPE__>(value.native_value())"
+        },
+        "uint64": {
+          "operand": "scpp::int_t<__UINT64_TYPE__>(value.native_value())"
+        },
+        "float64": {
+          "operand": "scpp::float_t(value.native_value())"
+        },
+        "mixed": {
+          "operand": "${native:value}"
+        },
+        "dynamic": {
+          "operand": "${native:value}"
+        },
+        "boolean": {
+          "operand": "scpp::bool_t(value.native_value())"
+        },
+        "string": {
+          "operand": "${native:value}"
+        },
+        "error_value": {
+          "operand": "${native:value}"
+        }
+      },
+      "function": {
+        "namespace": "scpp",
+        "header": "scpp/conditions/condition_truthy_${variant}.hpp",
+        "source": "include/scpp/generated/public_condition_truthy_${variant}.cpp",
+        "operation": {
+          "name": "condition_truthy",
+          "returns": "boolean",
+          "parameters": [
+            {
+              "name": "value",
+              "type": "${variant}",
+              "passing": "const_ref"
+            }
+          ],
+          "expression": "scpp::condition_truthy(${variant:operand}).native_value()",
+          "includes": [
+            "operators/conditional/condition_truthiness.hpp"
+          ]
+        }
+      }
+    }
   }
 }
