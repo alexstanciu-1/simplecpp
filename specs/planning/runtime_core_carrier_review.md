@@ -23,7 +23,7 @@ The following is a current acceptance map, not a count of historical checkpoints
 | No-copy observations | C27 explicit constant leaf facts avoid extraction for inline-record conditions | C28 covers callable payload conditions; C29 composes nested carrier states, including a noncopyable record fixture with explicit facts. Source fact production remains separate. |
 | Guarded logical operators | Existing contract/compiler audit in the logical-selection note | Known mismatch: new carrier logical_not delegates to general condition conversion. Decision is pending; current green tests must not be used to approve that behavior. Lazy and/or still need the corresponding ordered plan. |
 | Lazy usable-value coalescing | C25 exact scalar policy and short-circuit execution proofs | Metadata admits only int64/float64/boolean/string and three carrier families; wider admitted domains remain. result_or_bool rejection is intentional. |
-| Lazy ternary/Elvis with preserved result state | C26 exact scalar branch joins and short-circuit execution proofs | Exact scalar list remains; admitted record, ownership, boxed/contextual joins are not inferred from this proof. |
+| Lazy ternary/Elvis with preserved result state | C26 exact scalar branch joins and short-circuit execution proofs | C30 also covers exact mixed/dynamic joins. Admitted record, ownership and contextual joins still need their own policies/proofs. |
 | Source formation and publication | Physical probes, canonical demands, sealed specialization reuse | Source definition/application/boundary facts remain distinct from physical storage facts. The prepared-fact ownership decision is pending. |
 
 The review reran the 13 registered carrier/projection/lifecycle/selection/constant

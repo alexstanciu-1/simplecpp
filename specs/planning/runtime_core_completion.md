@@ -1405,3 +1405,23 @@ sealed; it is not an implementation of frontend fact production or source eligib
 This closes the demonstrated nested scoped-observation gap from C28. The pending
 logical-policy/source-formation decisions, broader admitted selection domains and
 full carrier acceptance review remain. Ownership/callback expansion is not unlocked.
+
+## C30 — exact boxed ternary/Elvis selections
+
+The existing exact conditional metadata policy now admits mixed/dynamic payloads,
+covering plain and matching carrier joins through the same resolver. This follows
+`conditional_expression_matrix.md`, including its boxed Result amendment. No
+cross-family joins, boxed/scalar conversions or wrapper-payload widening were added.
+No generator branch or runtime implementation was needed for the extension.
+
+The separate boxed mode in the existing conditional proof covers all four carriers,
+exact branch directions, saved-left Elvis, nonselected throwing branches, preserved
+sentinel/failure states and successful boxed-null payloads. Container cases check
+mixed value independence and rejected condition use, dynamic shared identity and
+truthy empty containers. Existing scalar planning cases remain unchanged.
+
+Boxed coalescing is still outstanding: direct boxed null versus a successful wrapper
+containing boxed null have distinct usable-value rules, and must not inherit ternary
+condition behavior. Inline-record/ownership and contextual joins also retain their
+separate admission/proof work. The pending logical/source-formation decisions and
+complete carrier review remain open.

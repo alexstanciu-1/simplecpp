@@ -1313,3 +1313,17 @@ Generation still omits an observation for unsupported payload conditions. Noncop
 nested observations are available when their condition facts explicitly support this
 path; physical copyability does not manufacture a condition fact. The prepared source
 fact producer and source formation decisions remain separate from these native proofs.
+
+## Exact boxed ternary and Elvis joins
+
+The conditional selection payload list also admits mixed and dynamic. The existing
+exact join forms and ordinary condition/state plans apply without new generator
+branches: plain/plain, carrier/plain, plain/carrier and matching carrier/carrier.
+Both sides must retain the exact payload identity; no mixed/dynamic crossing or
+boxed-to-scalar unwrapping is implied. A full ternary can select a falsey boxed value
+without observing that branch's truthiness. Elvis observes its saved left once and
+only evaluates the fallback if falsey. Mixed container conditions retain their runtime
+rejection; dynamic containers retain their presence/identity behavior.
+
+Coalescing uses a different policy and is unchanged by this extension. In particular,
+boxed null usability must not be inferred from the successful ternary/Elvis proof.

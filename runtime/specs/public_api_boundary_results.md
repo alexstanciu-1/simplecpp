@@ -2328,3 +2328,27 @@ Final-policy validation: six focused metadata tests pass in **8.76s**. ASan/UBSa
 with leak detection passes both compiled proofs and the sealed old-policy rejection.
 Sanitizer storage/public-caller costs: record **2.4146s / 0.1632s**, scoped nested
 **12.0633s / 0.1929s**. No runtime-source or frontend-admission change is implied.
+
+## C30 — exact boxed conditional joins (2026-10-27)
+
+`check_carrier_conditional.py --boxed` uses the existing execution-plan consumer
+with a separate mixed/dynamic domain: **102 value/lazy, 42 failure/state-preservation
+and 20 boxed-kind cases**. All four carriers and exact branch directions are covered.
+Boxed null stays a successful payload when selected by full ternary, but Elvis selects
+a fallback. Mixed containers reject conditions before evaluating the fallback;
+dynamic containers, including empty containers, select the saved left. Mutating an
+extracted mixed table preserves the original value; extracted dynamic tables retain
+shared identity.
+
+Release and ASan/UBSan with leak detection pass, as do public-only compilation and
+sealed reuse. Scalar-valued boxed success cases allocate zero times in the measured
+region. Container construction/mutation and throwing/error cases are outside that
+zero-allocation assertion; this is not a claim that copying arbitrary boxed payloads
+never allocates. The ordinary scalar metadata mode also passes (204 value/lazy and
+84 failure/state cases).
+
+Single-run compile costs for eight generated units / generated public caller:
+release **9.4955s / 2.0366s**; sanitizer **12.2972s / 5.9202s**. This caller contains
+the full generated case matrix and is much larger than the earlier simple callers.
+No generator code changed and no runtime-core rebuild was needed. Coalescing remains
+outside this slice because its boxed-null usability rules differ.
