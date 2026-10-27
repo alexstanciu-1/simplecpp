@@ -2,17 +2,20 @@
 import argparse
 import copy
 import json
+import sys
 from pathlib import Path
 import subprocess
 import tempfile
 import time
 root=Path(__file__).resolve().parents[3]
+sys.path.insert(0,str(root/'runtime/tools'))
+import concrete_types
 p=argparse.ArgumentParser(description=__doc__)
 p.add_argument('--tool',type=Path,required=True)
 p.add_argument('--core',type=Path)
 p.add_argument('--sanitize',action='store_true')
 args=p.parse_args()
-m=json.loads((root/'runtime/metadata/public_api.json').read_text())
+m=concrete_types.load_api_metadata(root/'runtime')
 pub=json.loads((root/'runtime/public/specializations.json').read_text())
 def call(data,error=None):
     r=subprocess.run([str(args.tool)],input=json.dumps(data),text=True,capture_output=True)

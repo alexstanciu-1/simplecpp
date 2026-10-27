@@ -2,18 +2,21 @@
 import argparse
 import copy
 import json
+import sys
 from pathlib import Path
 import subprocess
 import tempfile
 import time
 
 root = Path(__file__).resolve().parents[3]
+sys.path.insert(0,str(root/'runtime/tools'))
+import concrete_types
 parser = argparse.ArgumentParser(description=__doc__)
 parser.add_argument('--tool', type=Path, required=True)
 parser.add_argument('--core', type=Path)
 parser.add_argument('--sanitize', action='store_true')
 args = parser.parse_args()
-metadata = json.loads((root / 'runtime/metadata/public_api.json').read_text())
+metadata = concrete_types.load_api_metadata(root/'runtime')
 publication = json.loads((root / 'runtime/public/specializations.json').read_text())
 
 def call(data, error=None):

@@ -5,7 +5,9 @@ from pathlib import Path
 import subprocess
 import sys
 root=Path(__file__).resolve().parents[3]
-m=json.loads((root/'runtime/metadata/public_api.json').read_text())
+sys.path.insert(0,str(root/'runtime/tools'))
+import concrete_types
+m=concrete_types.load_api_metadata(root/'runtime')
 pub=json.loads((root/'runtime/public/specializations.json').read_text())
 signed=['int8','int16','int32','int64']; unsigned=['uint8','uint16','uint32','uint64']
 types=signed+unsigned+['float64','mixed','dynamic','boolean','string','null']

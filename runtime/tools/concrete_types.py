@@ -64,8 +64,35 @@ def safe_path(root, relative):
     return target
 
 
+def load_api_metadata(runtime):
+    """Assemble disjoint top-level sections; semantic interpretation stays in C++."""
+    directory = runtime/'metadata'
+    data = json.loads((directory/'public_api.json').read_text())
+    if not isinstance(data, dict):
+        raise ValueError('API metadata root must be an object')
+    sections = data.pop('sections', {})
+    if not isinstance(sections, dict):
+        raise ValueError('API metadata sections must be an object')
+    for name, relative in sections.items():
+        if name in data or name == 'sections':
+            raise ValueError('Duplicate API metadata section: '+name)
+        if not isinstance(relative, str) or not relative:
+            raise ValueError('API metadata section path must be a nonempty string')
+        path = Path(relative)
+        if path.is_absolute() or '..' in path.parts:
+            raise ValueError('API metadata section escapes metadata directory: '+relative)
+        target = directory/path
+        if not target.resolve().is_relative_to(directory.resolve()):
+            raise ValueError('API metadata section escapes metadata directory: '+relative)
+        section = json.loads(target.read_text())
+        if not isinstance(section, dict):
+            raise ValueError('API metadata section must be an object: '+name)
+        data[name] = section
+    return data
+
+
 def metadata(runtime):
-    data = json.loads((runtime/'metadata/public_api.json').read_text())
+    data = load_api_metadata(runtime)
     # Bind to the existing metadata representation owner; do not duplicate symbols.
     data['bindings'] = {}
     for path in sorted((runtime/'metadata/modules').glob('*.json')):

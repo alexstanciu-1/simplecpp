@@ -2431,3 +2431,23 @@ Three storage units / caller compile, single runs: release **5.0525s / 0.1663s**
 Both core configurations were rebuilt after the header extraction. The existing
 mixed-hash instantiation warning remains. Metadata/lifecycle checks pass separately;
 these metadata checks are not substitutes for the compiled execution proof.
+
+## Metadata section packaging — 2026-10-27
+
+Split the near-200KB metadata entry point into root (13,224 bytes), families
+(82,836), function sets (50,444) and global operators (39,038). The driver assembles
+one metadata object for the unchanged C++ generator. An exact comparison against
+the pre-split resolved object passes; its canonical API identity is unchanged.
+Regeneration of 343 implementation units changes no generated source, public header
+or specialization manifest.
+
+All 18 affected metadata-reader checks pass in **22.24s**. The new section-loader
+CTest passes in **0.09s**, covering flat compatibility, disjoint ownership, invalid
+paths/shapes, missing files, symlink escape rejection, identity compatibility and
+SDK integrity tracking. The relocated sealed operator publication test passes with
+zero generated units and a public-only linked caller.
+
+No runtime implementation or public declaration changed. There was no runtime/core
+rebuild or new allocation/sanitizer benchmark; existing native proofs remain evidence
+for the identical generated code. The relocation test compiled one public consumer.
+This consolidation adds no semantic coverage to the completion inventory.

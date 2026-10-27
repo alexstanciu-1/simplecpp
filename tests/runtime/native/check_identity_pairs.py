@@ -5,7 +5,9 @@ from pathlib import Path
 import subprocess
 import sys
 root=Path(__file__).resolve().parents[3]
-m=json.loads((root/'runtime/metadata/public_api.json').read_text())
+sys.path.insert(0,str(root/'runtime/tools'))
+import concrete_types
+m=concrete_types.load_api_metadata(root/'runtime')
 pub=json.loads((root/'runtime/public/specializations.json').read_text())
 def call(data,error=None):
     r=subprocess.run([sys.argv[1]],input=json.dumps(data),text=True,capture_output=True)

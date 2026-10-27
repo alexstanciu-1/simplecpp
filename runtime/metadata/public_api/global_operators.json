@@ -1,0 +1,1832 @@
+{
+  "compounds": {
+    "add_assign": {
+      "operation": "add",
+      "rules": [
+        {
+          "target": "int64",
+          "right": [
+            "int64"
+          ]
+        },
+        {
+          "target": "float64",
+          "right": [
+            "int64",
+            "float64"
+          ]
+        },
+        {
+          "target": "mixed",
+          "right": [
+            "mixed",
+            "int64",
+            "float64"
+          ],
+          "writeback_function_set": "numeric_compound_replacement"
+        },
+        {
+          "target": "dynamic",
+          "right": [
+            "dynamic",
+            "int64",
+            "float64"
+          ],
+          "writeback_function_set": "numeric_compound_replacement"
+        }
+      ],
+      "carrier_targets": [
+        "int64",
+        "float64"
+      ]
+    },
+    "subtract_assign": {
+      "operation": "subtract",
+      "rules": [
+        {
+          "target": "int64",
+          "right": [
+            "int64"
+          ]
+        },
+        {
+          "target": "float64",
+          "right": [
+            "int64",
+            "float64"
+          ]
+        },
+        {
+          "target": "mixed",
+          "right": [
+            "mixed",
+            "int64",
+            "float64"
+          ],
+          "writeback_function_set": "numeric_compound_replacement"
+        },
+        {
+          "target": "dynamic",
+          "right": [
+            "dynamic",
+            "int64",
+            "float64"
+          ],
+          "writeback_function_set": "numeric_compound_replacement"
+        }
+      ],
+      "carrier_targets": [
+        "int64",
+        "float64"
+      ]
+    },
+    "multiply_assign": {
+      "operation": "multiply",
+      "rules": [
+        {
+          "target": "int64",
+          "right": [
+            "int64"
+          ]
+        },
+        {
+          "target": "float64",
+          "right": [
+            "int64",
+            "float64"
+          ]
+        },
+        {
+          "target": "mixed",
+          "right": [
+            "mixed",
+            "int64",
+            "float64"
+          ],
+          "writeback_function_set": "numeric_compound_replacement"
+        },
+        {
+          "target": "dynamic",
+          "right": [
+            "dynamic",
+            "int64",
+            "float64"
+          ],
+          "writeback_function_set": "numeric_compound_replacement"
+        }
+      ],
+      "carrier_targets": [
+        "int64",
+        "float64"
+      ]
+    },
+    "divide_assign": {
+      "operation": "divide",
+      "rules": [
+        {
+          "target": "int64",
+          "right": [
+            "int64"
+          ]
+        },
+        {
+          "target": "float64",
+          "right": [
+            "int64",
+            "float64"
+          ]
+        },
+        {
+          "target": "mixed",
+          "right": [
+            "mixed",
+            "int64",
+            "float64"
+          ],
+          "writeback_function_set": "numeric_compound_replacement"
+        },
+        {
+          "target": "dynamic",
+          "right": [
+            "dynamic",
+            "int64",
+            "float64"
+          ],
+          "writeback_function_set": "numeric_compound_replacement"
+        }
+      ],
+      "carrier_targets": [
+        "int64",
+        "float64"
+      ]
+    },
+    "remainder_assign": {
+      "operation": "remainder",
+      "rules": [
+        {
+          "target": "int64",
+          "right": [
+            "int64"
+          ]
+        },
+        {
+          "target": "mixed",
+          "right": [
+            "mixed",
+            "int64"
+          ],
+          "writeback_function_set": "numeric_compound_replacement"
+        },
+        {
+          "target": "dynamic",
+          "right": [
+            "dynamic",
+            "int64"
+          ],
+          "writeback_function_set": "numeric_compound_replacement"
+        }
+      ],
+      "carrier_targets": [
+        "int64"
+      ]
+    },
+    "bit_and_assign": {
+      "operation": "bit_and",
+      "rules": [
+        {
+          "target": "int64",
+          "right": [
+            "int64"
+          ]
+        }
+      ],
+      "carrier_targets": [
+        "int64"
+      ]
+    },
+    "bit_or_assign": {
+      "operation": "bit_or",
+      "rules": [
+        {
+          "target": "int64",
+          "right": [
+            "int64"
+          ]
+        }
+      ],
+      "carrier_targets": [
+        "int64"
+      ]
+    },
+    "bit_xor_assign": {
+      "operation": "bit_xor",
+      "rules": [
+        {
+          "target": "int64",
+          "right": [
+            "int64"
+          ]
+        }
+      ],
+      "carrier_targets": [
+        "int64"
+      ]
+    },
+    "shift_left_assign": {
+      "operation": "shift_left",
+      "rules": [
+        {
+          "target": "int64",
+          "right": [
+            "int64"
+          ]
+        }
+      ],
+      "carrier_targets": [
+        "int64"
+      ]
+    },
+    "shift_right_assign": {
+      "operation": "shift_right",
+      "rules": [
+        {
+          "target": "int64",
+          "right": [
+            "int64"
+          ]
+        }
+      ],
+      "carrier_targets": [
+        "int64"
+      ]
+    },
+    "power_assign": {
+      "operation": "power",
+      "rules": [
+        {
+          "target": "int64",
+          "right": [
+            "int64"
+          ]
+        }
+      ],
+      "carrier_targets": [
+        "int64"
+      ]
+    },
+    "concat_assign": {
+      "operation": "concat",
+      "rules": [
+        {
+          "target": "string",
+          "right": [
+            "int8",
+            "int16",
+            "int32",
+            "int64",
+            "uint8",
+            "uint16",
+            "uint32",
+            "float64",
+            "boolean",
+            "string",
+            "null",
+            "mixed",
+            "dynamic"
+          ]
+        },
+        {
+          "target": "mixed",
+          "right": [
+            "int64",
+            "float64",
+            "boolean",
+            "string",
+            "null",
+            "mixed"
+          ],
+          "writeback_source": "string"
+        },
+        {
+          "target": "dynamic",
+          "right": [
+            "int64",
+            "float64",
+            "boolean",
+            "string",
+            "null",
+            "dynamic"
+          ],
+          "writeback_source": "string"
+        }
+      ],
+      "carrier_targets": [
+        "string"
+      ]
+    }
+  },
+  "types": {
+    "int8": {
+      "domain": "signed",
+      "operand": "scpp::int_t<__INT8_TYPE__>(${value}.native_value())"
+    },
+    "int16": {
+      "domain": "signed",
+      "operand": "scpp::int_t<__INT16_TYPE__>(${value}.native_value())"
+    },
+    "int32": {
+      "domain": "signed",
+      "operand": "scpp::int_t<__INT32_TYPE__>(${value}.native_value())"
+    },
+    "int64": {
+      "domain": "signed",
+      "operand": "scpp::int_t<__INT64_TYPE__>(${value}.native_value())"
+    },
+    "uint8": {
+      "domain": "unsigned",
+      "operand": "scpp::int_t<__UINT8_TYPE__>(${value}.native_value())"
+    },
+    "uint16": {
+      "domain": "unsigned",
+      "operand": "scpp::int_t<__UINT16_TYPE__>(${value}.native_value())"
+    },
+    "uint32": {
+      "domain": "unsigned",
+      "operand": "scpp::int_t<__UINT32_TYPE__>(${value}.native_value())"
+    },
+    "uint64": {
+      "domain": "unsigned",
+      "operand": "scpp::int_t<__UINT64_TYPE__>(${value}.native_value())"
+    },
+    "float64": {
+      "domain": "floating",
+      "operand": "scpp::float_t(${value}.native_value())"
+    },
+    "mixed": {
+      "domain": "mixed",
+      "operand": "${native:${value}}"
+    },
+    "dynamic": {
+      "domain": "dynamic",
+      "operand": "${native:${value}}"
+    },
+    "boolean": {
+      "domain": "boolean",
+      "operand": "scpp::bool_t(${value}.native_value())"
+    },
+    "string": {
+      "domain": "string",
+      "operand": "${native:${value}}"
+    },
+    "null": {
+      "domain": "null"
+    },
+    "error_value": {
+      "domain": "error_value"
+    }
+  },
+  "domains": {
+    "signed": {
+      "maximum": "int64"
+    },
+    "unsigned": {
+      "maximum": "uint64"
+    },
+    "floating": {
+      "maximum": "float64"
+    },
+    "mixed": {
+      "maximum": "mixed"
+    },
+    "dynamic": {
+      "maximum": "dynamic"
+    },
+    "boolean": {
+      "maximum": "boolean"
+    },
+    "string": {
+      "maximum": "string"
+    },
+    "null": {
+      "maximum": "null"
+    },
+    "error_value": {
+      "maximum": "error_value"
+    }
+  },
+  "groups": {
+    "numeric": {
+      "rules": [
+        {
+          "left": "signed",
+          "right": "signed",
+          "selection": "same_or_maximum",
+          "domain": "signed"
+        },
+        {
+          "left": "unsigned",
+          "right": "unsigned",
+          "selection": "same_or_maximum",
+          "domain": "unsigned"
+        },
+        {
+          "left": "floating",
+          "right": "floating",
+          "selection": "same_or_maximum",
+          "domain": "floating"
+        },
+        {
+          "left": "signed",
+          "right": "floating",
+          "selection": "maximum",
+          "domain": "floating"
+        },
+        {
+          "left": "floating",
+          "right": "signed",
+          "selection": "maximum",
+          "domain": "floating"
+        },
+        {
+          "left": "unsigned",
+          "right": "floating",
+          "selection": "maximum",
+          "domain": "floating"
+        },
+        {
+          "left": "floating",
+          "right": "unsigned",
+          "selection": "maximum",
+          "domain": "floating"
+        }
+      ]
+    },
+    "integer_numeric": {
+      "rules": [
+        {
+          "left": "signed",
+          "right": "signed",
+          "selection": "same_or_maximum",
+          "domain": "signed"
+        },
+        {
+          "left": "unsigned",
+          "right": "unsigned",
+          "selection": "same_or_maximum",
+          "domain": "unsigned"
+        }
+      ]
+    },
+    "strict_scalar_identity": {
+      "rules": [
+        {
+          "left": [
+            "signed",
+            "floating",
+            "boolean",
+            "string",
+            "null"
+          ],
+          "right": [
+            "signed",
+            "floating",
+            "boolean",
+            "string",
+            "null"
+          ],
+          "selection": "same_or_constant"
+        },
+        {
+          "left": "mixed",
+          "right": "mixed",
+          "selection": "same_or_maximum",
+          "domain": "mixed"
+        },
+        {
+          "left": "dynamic",
+          "right": "dynamic",
+          "selection": "same_or_maximum",
+          "domain": "dynamic"
+        },
+        {
+          "left": [
+            "mixed",
+            "dynamic"
+          ],
+          "right": [
+            "signed",
+            "floating",
+            "boolean",
+            "string",
+            "null"
+          ],
+          "selection": "ordered_pair",
+          "reverse": "false"
+        },
+        {
+          "left": [
+            "signed",
+            "floating",
+            "boolean",
+            "string",
+            "null"
+          ],
+          "right": [
+            "mixed",
+            "dynamic"
+          ],
+          "selection": "ordered_pair",
+          "reverse": "true"
+        }
+      ]
+    },
+    "eager_truth_xor": {
+      "rules": [
+        {
+          "left": [
+            "signed",
+            "floating"
+          ],
+          "right": [
+            "signed",
+            "floating"
+          ],
+          "selection": "maximum",
+          "domain": "boolean"
+        },
+        {
+          "left": "boolean",
+          "right": "boolean",
+          "selection": "same_or_maximum",
+          "domain": "boolean"
+        }
+      ]
+    },
+    "integer_binary_special": {
+      "rules": [
+        {
+          "left": "signed",
+          "right": "signed",
+          "selection": "same_or_maximum",
+          "domain": "signed"
+        },
+        {
+          "left": "mixed",
+          "right": "mixed",
+          "selection": "same_or_maximum",
+          "domain": "mixed"
+        },
+        {
+          "left": "dynamic",
+          "right": "dynamic",
+          "selection": "same_or_maximum",
+          "domain": "dynamic"
+        }
+      ]
+    },
+    "canonical_integer_power": {
+      "rules": [
+        {
+          "left": "signed",
+          "right": "signed",
+          "selection": "same_or_maximum",
+          "domain": "signed"
+        }
+      ]
+    },
+    "numeric_spaceship": {
+      "rules": [
+        {
+          "left": "signed",
+          "right": "signed",
+          "selection": "same_or_maximum",
+          "domain": "signed"
+        },
+        {
+          "left": "unsigned",
+          "right": "unsigned",
+          "selection": "same_or_maximum",
+          "domain": "unsigned"
+        },
+        {
+          "left": "floating",
+          "right": "floating",
+          "selection": "same_or_maximum",
+          "domain": "floating"
+        },
+        {
+          "left": "signed",
+          "right": "floating",
+          "left_types": [
+            "int64"
+          ],
+          "right_types": [
+            "float64"
+          ],
+          "selection": "maximum",
+          "domain": "floating"
+        },
+        {
+          "left": "floating",
+          "right": "signed",
+          "left_types": [
+            "float64"
+          ],
+          "right_types": [
+            "int64"
+          ],
+          "selection": "maximum",
+          "domain": "floating"
+        }
+      ]
+    },
+    "numeric_boxed_arithmetic": {
+      "rules": [
+        {
+          "left": "signed",
+          "right": "signed",
+          "selection": "same_or_maximum",
+          "domain": "signed"
+        },
+        {
+          "left": "unsigned",
+          "right": "unsigned",
+          "selection": "same_or_maximum",
+          "domain": "unsigned"
+        },
+        {
+          "left": "floating",
+          "right": "floating",
+          "selection": "same_or_maximum",
+          "domain": "floating"
+        },
+        {
+          "left": "signed",
+          "right": "floating",
+          "selection": "maximum",
+          "domain": "floating"
+        },
+        {
+          "left": "floating",
+          "right": "signed",
+          "selection": "maximum",
+          "domain": "floating"
+        },
+        {
+          "left": "unsigned",
+          "right": "floating",
+          "selection": "maximum",
+          "domain": "floating"
+        },
+        {
+          "left": "floating",
+          "right": "unsigned",
+          "selection": "maximum",
+          "domain": "floating"
+        },
+        {
+          "left": "mixed",
+          "right": "mixed",
+          "selection": "same_or_maximum",
+          "domain": "mixed"
+        },
+        {
+          "left": "dynamic",
+          "right": "dynamic",
+          "selection": "same_or_maximum",
+          "domain": "dynamic"
+        },
+        {
+          "left": [
+            "signed",
+            "floating"
+          ],
+          "left_types": [
+            "int64",
+            "float64"
+          ],
+          "right": "mixed",
+          "selection": "maximum",
+          "domain": "mixed"
+        },
+        {
+          "left": "mixed",
+          "right": [
+            "signed",
+            "floating"
+          ],
+          "right_types": [
+            "int64",
+            "float64"
+          ],
+          "selection": "maximum",
+          "domain": "mixed"
+        },
+        {
+          "left": [
+            "signed",
+            "floating"
+          ],
+          "left_types": [
+            "int64",
+            "float64"
+          ],
+          "right": "dynamic",
+          "selection": "maximum",
+          "domain": "dynamic"
+        },
+        {
+          "left": "dynamic",
+          "right": [
+            "signed",
+            "floating"
+          ],
+          "right_types": [
+            "int64",
+            "float64"
+          ],
+          "selection": "maximum",
+          "domain": "dynamic"
+        }
+      ]
+    },
+    "integer_numeric_boxed_arithmetic": {
+      "rules": [
+        {
+          "left": "signed",
+          "right": "signed",
+          "selection": "same_or_maximum",
+          "domain": "signed"
+        },
+        {
+          "left": "unsigned",
+          "right": "unsigned",
+          "selection": "same_or_maximum",
+          "domain": "unsigned"
+        },
+        {
+          "left": "mixed",
+          "right": "mixed",
+          "selection": "same_or_maximum",
+          "domain": "mixed"
+        },
+        {
+          "left": "dynamic",
+          "right": "dynamic",
+          "selection": "same_or_maximum",
+          "domain": "dynamic"
+        },
+        {
+          "left": [
+            "signed"
+          ],
+          "left_types": [
+            "int64"
+          ],
+          "right": "mixed",
+          "selection": "maximum",
+          "domain": "mixed"
+        },
+        {
+          "left": "mixed",
+          "right": [
+            "signed"
+          ],
+          "right_types": [
+            "int64"
+          ],
+          "selection": "maximum",
+          "domain": "mixed"
+        },
+        {
+          "left": [
+            "signed"
+          ],
+          "left_types": [
+            "int64"
+          ],
+          "right": "dynamic",
+          "selection": "maximum",
+          "domain": "dynamic"
+        },
+        {
+          "left": "dynamic",
+          "right": [
+            "signed"
+          ],
+          "right_types": [
+            "int64"
+          ],
+          "selection": "maximum",
+          "domain": "dynamic"
+        }
+      ]
+    },
+    "scalar_text": {
+      "rules": [
+        {
+          "left": [
+            "signed",
+            "unsigned",
+            "floating",
+            "boolean",
+            "string",
+            "null"
+          ],
+          "right": [
+            "signed",
+            "unsigned",
+            "floating",
+            "boolean",
+            "string",
+            "null"
+          ],
+          "left_types": [
+            "int8",
+            "int16",
+            "int32",
+            "int64",
+            "uint8",
+            "uint16",
+            "uint32",
+            "float64",
+            "boolean",
+            "string",
+            "null"
+          ],
+          "right_types": [
+            "int8",
+            "int16",
+            "int32",
+            "int64",
+            "uint8",
+            "uint16",
+            "uint32",
+            "float64",
+            "boolean",
+            "string",
+            "null"
+          ],
+          "selection": "maximum",
+          "domain": "string"
+        },
+        {
+          "left": "mixed",
+          "right": [
+            "signed",
+            "floating",
+            "boolean",
+            "string",
+            "null",
+            "mixed"
+          ],
+          "right_types": [
+            "int64",
+            "float64",
+            "boolean",
+            "string",
+            "null",
+            "mixed"
+          ],
+          "selection": "maximum",
+          "domain": "string"
+        },
+        {
+          "left": [
+            "signed",
+            "floating",
+            "boolean",
+            "string",
+            "null"
+          ],
+          "left_types": [
+            "int64",
+            "float64",
+            "boolean",
+            "string",
+            "null"
+          ],
+          "right": "mixed",
+          "selection": "maximum",
+          "domain": "string"
+        },
+        {
+          "left": "dynamic",
+          "right": [
+            "signed",
+            "floating",
+            "boolean",
+            "string",
+            "null",
+            "dynamic"
+          ],
+          "right_types": [
+            "int64",
+            "float64",
+            "boolean",
+            "string",
+            "null",
+            "dynamic"
+          ],
+          "selection": "maximum",
+          "domain": "string"
+        },
+        {
+          "left": [
+            "signed",
+            "floating",
+            "boolean",
+            "string",
+            "null"
+          ],
+          "left_types": [
+            "int64",
+            "float64",
+            "boolean",
+            "string",
+            "null"
+          ],
+          "right": "dynamic",
+          "selection": "maximum",
+          "domain": "string"
+        }
+      ]
+    },
+    "value_equality": {
+      "rules": [
+        {
+          "left": "mixed",
+          "right": "mixed",
+          "selection": "same_or_maximum",
+          "domain": "mixed"
+        },
+        {
+          "left": "dynamic",
+          "right": "dynamic",
+          "selection": "same_or_maximum",
+          "domain": "dynamic"
+        },
+        {
+          "left": "boolean",
+          "right": "boolean",
+          "selection": "same_or_maximum",
+          "domain": "boolean"
+        },
+        {
+          "left": "string",
+          "right": "string",
+          "selection": "same_or_maximum",
+          "domain": "string"
+        }
+      ]
+    },
+    "numeric_or_text_order": {
+      "rules": [
+        {
+          "left": "signed",
+          "right": "signed",
+          "selection": "same_or_maximum",
+          "domain": "signed"
+        },
+        {
+          "left": "unsigned",
+          "right": "unsigned",
+          "selection": "same_or_maximum",
+          "domain": "unsigned"
+        },
+        {
+          "left": "floating",
+          "right": "floating",
+          "selection": "same_or_maximum",
+          "domain": "floating"
+        },
+        {
+          "left": "signed",
+          "right": "floating",
+          "selection": "maximum",
+          "domain": "floating"
+        },
+        {
+          "left": "floating",
+          "right": "signed",
+          "selection": "maximum",
+          "domain": "floating"
+        },
+        {
+          "left": "unsigned",
+          "right": "floating",
+          "selection": "maximum",
+          "domain": "floating"
+        },
+        {
+          "left": "floating",
+          "right": "unsigned",
+          "selection": "maximum",
+          "domain": "floating"
+        },
+        {
+          "left": "string",
+          "right": "string",
+          "selection": "ordered_pair"
+        }
+      ]
+    }
+  },
+  "operations": {
+    "add": {
+      "group": "numeric_boxed_arithmetic",
+      "name": "numeric_add",
+      "function_set": "add",
+      "publish": [
+        "int8",
+        "int16",
+        "int32",
+        "int64",
+        "uint8",
+        "uint16",
+        "uint32",
+        "uint64",
+        "float64",
+        "mixed",
+        "dynamic"
+      ]
+    },
+    "equal": {
+      "group": "value_equality",
+      "name": "value_equal",
+      "returns": "boolean",
+      "expression": "(${operand:left} == ${operand:right}).native_value()",
+      "publish": [
+        "mixed",
+        "dynamic",
+        "boolean",
+        "string"
+      ],
+      "includes": [
+        "operators/identity/boxed_scalar_equality.hpp"
+      ]
+    },
+    "not_equal": {
+      "group": "value_equality",
+      "name": "value_not_equal",
+      "returns": "boolean",
+      "expression": "(${operand:left} != ${operand:right}).native_value()",
+      "publish": [
+        "mixed",
+        "dynamic",
+        "boolean",
+        "string"
+      ],
+      "includes": [
+        "operators/identity/boxed_scalar_equality.hpp"
+      ]
+    },
+    "subtract": {
+      "group": "numeric_boxed_arithmetic",
+      "name": "numeric_subtract",
+      "function_set": "subtract",
+      "publish": [
+        "int8",
+        "int16",
+        "int32",
+        "int64",
+        "uint8",
+        "uint16",
+        "uint32",
+        "uint64",
+        "float64",
+        "mixed",
+        "dynamic"
+      ]
+    },
+    "multiply": {
+      "group": "numeric_boxed_arithmetic",
+      "name": "numeric_multiply",
+      "function_set": "multiply",
+      "publish": [
+        "int8",
+        "int16",
+        "int32",
+        "int64",
+        "uint8",
+        "uint16",
+        "uint32",
+        "uint64",
+        "float64",
+        "mixed",
+        "dynamic"
+      ]
+    },
+    "divide": {
+      "group": "numeric_boxed_arithmetic",
+      "name": "numeric_divide",
+      "function_set": "divide",
+      "publish": [
+        "int8",
+        "int16",
+        "int32",
+        "int64",
+        "uint8",
+        "uint16",
+        "uint32",
+        "uint64",
+        "float64",
+        "mixed",
+        "dynamic"
+      ]
+    },
+    "remainder": {
+      "group": "integer_numeric_boxed_arithmetic",
+      "name": "numeric_remainder",
+      "function_set": "remainder",
+      "publish": [
+        "int8",
+        "int16",
+        "int32",
+        "int64",
+        "uint8",
+        "uint16",
+        "uint32",
+        "uint64",
+        "mixed",
+        "dynamic"
+      ]
+    },
+    "numeric_equal": {
+      "group": "numeric",
+      "name": "numeric_equal",
+      "expression": "scpp::detail::generated_operator_detail::eq(${operand:left}, ${operand:right}).native_value()",
+      "publish": [
+        "int8",
+        "int16",
+        "int32",
+        "int64",
+        "uint8",
+        "uint16",
+        "uint32",
+        "uint64",
+        "float64"
+      ],
+      "includes": [
+        "scpp/generated/operator_detail.hpp"
+      ],
+      "returns": "boolean"
+    },
+    "numeric_not_equal": {
+      "group": "numeric",
+      "name": "numeric_not_equal",
+      "expression": "!(scpp::detail::generated_operator_detail::eq(${operand:left}, ${operand:right}).native_value())",
+      "publish": [
+        "int8",
+        "int16",
+        "int32",
+        "int64",
+        "uint8",
+        "uint16",
+        "uint32",
+        "uint64",
+        "float64"
+      ],
+      "includes": [
+        "scpp/generated/operator_detail.hpp"
+      ],
+      "returns": "boolean"
+    },
+    "less": {
+      "group": "numeric_or_text_order",
+      "name": "numeric_less",
+      "expression": "scpp::detail::generated_operator_detail::lt(${operand:left}, ${operand:right}).native_value()",
+      "publish": [
+        "int8",
+        "int16",
+        "int32",
+        "int64",
+        "uint8",
+        "uint16",
+        "uint32",
+        "uint64",
+        "float64"
+      ],
+      "includes": [
+        "scpp/generated/operator_detail.hpp"
+      ],
+      "returns": "boolean",
+      "pair_function_set": "text_less"
+    },
+    "less_equal": {
+      "group": "numeric_or_text_order",
+      "name": "numeric_less_equal",
+      "expression": "scpp::detail::generated_operator_detail::le(${operand:left}, ${operand:right}).native_value()",
+      "publish": [
+        "int8",
+        "int16",
+        "int32",
+        "int64",
+        "uint8",
+        "uint16",
+        "uint32",
+        "uint64",
+        "float64"
+      ],
+      "includes": [
+        "scpp/generated/operator_detail.hpp"
+      ],
+      "returns": "boolean",
+      "pair_function_set": "text_less_equal"
+    },
+    "greater": {
+      "group": "numeric_or_text_order",
+      "name": "numeric_greater",
+      "expression": "scpp::detail::generated_operator_detail::lt(${operand:right}, ${operand:left}).native_value()",
+      "publish": [
+        "int8",
+        "int16",
+        "int32",
+        "int64",
+        "uint8",
+        "uint16",
+        "uint32",
+        "uint64",
+        "float64"
+      ],
+      "includes": [
+        "scpp/generated/operator_detail.hpp"
+      ],
+      "returns": "boolean",
+      "pair_function_set": "text_greater"
+    },
+    "greater_equal": {
+      "group": "numeric_or_text_order",
+      "name": "numeric_greater_equal",
+      "expression": "scpp::detail::generated_operator_detail::le(${operand:right}, ${operand:left}).native_value()",
+      "publish": [
+        "int8",
+        "int16",
+        "int32",
+        "int64",
+        "uint8",
+        "uint16",
+        "uint32",
+        "uint64",
+        "float64"
+      ],
+      "includes": [
+        "scpp/generated/operator_detail.hpp"
+      ],
+      "returns": "boolean",
+      "pair_function_set": "text_greater_equal"
+    },
+    "strict_identical": {
+      "group": "strict_scalar_identity",
+      "name": "strict_identical",
+      "function_set": "strict_identical",
+      "publish": [
+        "int64",
+        "float64",
+        "boolean",
+        "string",
+        "null",
+        "mixed",
+        "dynamic"
+      ],
+      "operands": [
+        "int64",
+        "float64",
+        "boolean",
+        "string",
+        "null",
+        "mixed",
+        "dynamic"
+      ],
+      "returns": "boolean",
+      "distinct_result": "false",
+      "pair_function_set": "strict_identical_boxed"
+    },
+    "strict_not_identical": {
+      "group": "strict_scalar_identity",
+      "name": "strict_not_identical",
+      "function_set": "strict_not_identical",
+      "publish": [
+        "int64",
+        "float64",
+        "boolean",
+        "string",
+        "null",
+        "mixed",
+        "dynamic"
+      ],
+      "operands": [
+        "int64",
+        "float64",
+        "boolean",
+        "string",
+        "null",
+        "mixed",
+        "dynamic"
+      ],
+      "returns": "boolean",
+      "distinct_result": "true",
+      "pair_function_set": "strict_not_identical_boxed"
+    },
+    "logical_xor": {
+      "group": "eager_truth_xor",
+      "name": "logical_xor",
+      "expression": "left.native_value() != right.native_value()",
+      "publish": [
+        "boolean"
+      ],
+      "operands": [
+        "int64",
+        "float64",
+        "boolean"
+      ],
+      "returns": "boolean"
+    },
+    "bit_and": {
+      "group": "integer_binary_special",
+      "name": "integer_bit_and",
+      "function_set": "bit_and",
+      "publish": [
+        "int64",
+        "mixed",
+        "dynamic"
+      ],
+      "operands": [
+        "int64",
+        "mixed",
+        "dynamic"
+      ]
+    },
+    "bit_or": {
+      "group": "integer_binary_special",
+      "name": "integer_bit_or",
+      "function_set": "bit_or",
+      "publish": [
+        "int64",
+        "mixed",
+        "dynamic"
+      ],
+      "operands": [
+        "int64",
+        "mixed",
+        "dynamic"
+      ]
+    },
+    "bit_xor": {
+      "group": "integer_binary_special",
+      "name": "integer_bit_xor",
+      "function_set": "bit_xor",
+      "publish": [
+        "int64",
+        "mixed",
+        "dynamic"
+      ],
+      "operands": [
+        "int64",
+        "mixed",
+        "dynamic"
+      ]
+    },
+    "shift_left": {
+      "group": "integer_binary_special",
+      "name": "integer_shift_left",
+      "function_set": "shift_left",
+      "publish": [
+        "int64",
+        "mixed",
+        "dynamic"
+      ],
+      "operands": [
+        "int64",
+        "mixed",
+        "dynamic"
+      ]
+    },
+    "shift_right": {
+      "group": "integer_binary_special",
+      "name": "integer_shift_right",
+      "function_set": "shift_right",
+      "publish": [
+        "int64",
+        "mixed",
+        "dynamic"
+      ],
+      "operands": [
+        "int64",
+        "mixed",
+        "dynamic"
+      ]
+    },
+    "power": {
+      "group": "canonical_integer_power",
+      "name": "integer_power",
+      "function_set": "power",
+      "publish": [
+        "int64"
+      ],
+      "operands": [
+        "int64"
+      ]
+    },
+    "compare": {
+      "group": "numeric_spaceship",
+      "name": "numeric_compare",
+      "expression": "scpp::int64(scpp::numeric_compare(${operand:left}, ${operand:right}).native_value())",
+      "publish": [
+        "int8",
+        "int16",
+        "int32",
+        "int64",
+        "uint8",
+        "uint16",
+        "uint32",
+        "uint64",
+        "float64"
+      ],
+      "operands": [
+        "int8",
+        "int16",
+        "int32",
+        "int64",
+        "uint8",
+        "uint16",
+        "uint32",
+        "uint64",
+        "float64"
+      ],
+      "returns": "int64",
+      "includes": [
+        "operators/ordering/numeric_compare.hpp"
+      ]
+    },
+    "positive": {
+      "form": "unary",
+      "name": "numeric_positive",
+      "function_set": "positive",
+      "publish": [
+        "int64",
+        "float64",
+        "mixed",
+        "dynamic"
+      ],
+      "operands": [
+        "int64",
+        "float64",
+        "mixed",
+        "dynamic"
+      ],
+      "carrier_unary": {
+        "payloads": [
+          "int64",
+          "float64"
+        ],
+        "result": "payload"
+      }
+    },
+    "negative": {
+      "form": "unary",
+      "name": "numeric_negative",
+      "function_set": "negative",
+      "publish": [
+        "int64",
+        "float64",
+        "mixed",
+        "dynamic"
+      ],
+      "operands": [
+        "int64",
+        "float64",
+        "mixed",
+        "dynamic"
+      ],
+      "carrier_unary": {
+        "payloads": [
+          "int64",
+          "float64"
+        ],
+        "result": "payload"
+      }
+    },
+    "complement": {
+      "form": "unary",
+      "name": "numeric_complement",
+      "function_set": "complement",
+      "publish": [
+        "int64",
+        "mixed",
+        "dynamic"
+      ],
+      "operands": [
+        "int64",
+        "mixed",
+        "dynamic"
+      ],
+      "carrier_unary": {
+        "payloads": [
+          "int64"
+        ],
+        "result": "payload"
+      }
+    },
+    "logical_not": {
+      "form": "unary",
+      "name": "condition_truthy",
+      "function_set": "condition_truthy",
+      "publish": [
+        "int64",
+        "float64",
+        "boolean",
+        "mixed",
+        "dynamic",
+        "error_value"
+      ],
+      "operands": [
+        "int64",
+        "float64",
+        "boolean",
+        "mixed",
+        "dynamic",
+        "error_value"
+      ],
+      "returns": "boolean",
+      "result_expression": "!${result}",
+      "condition_operand": true
+    },
+    "pre_increment": {
+      "form": "unary",
+      "name": "update_pre_increment",
+      "function_set": "pre_increment",
+      "publish": [
+        "int64",
+        "float64",
+        "mixed",
+        "dynamic"
+      ],
+      "operands": [
+        "int64",
+        "float64",
+        "mixed",
+        "dynamic"
+      ],
+      "operand_passing": "ref",
+      "carrier_unary": {
+        "payloads": [
+          "int64",
+          "float64"
+        ],
+        "result": "updated_carrier"
+      }
+    },
+    "post_increment": {
+      "form": "unary",
+      "name": "update_post_increment",
+      "function_set": "post_increment",
+      "publish": [
+        "int64",
+        "float64",
+        "mixed",
+        "dynamic"
+      ],
+      "operands": [
+        "int64",
+        "float64",
+        "mixed",
+        "dynamic"
+      ],
+      "operand_passing": "ref",
+      "carrier_unary": {
+        "payloads": [
+          "int64",
+          "float64"
+        ],
+        "result": "old_carrier"
+      }
+    },
+    "pre_decrement": {
+      "form": "unary",
+      "name": "update_pre_decrement",
+      "function_set": "pre_decrement",
+      "publish": [
+        "int64",
+        "float64",
+        "mixed",
+        "dynamic"
+      ],
+      "operands": [
+        "int64",
+        "float64",
+        "mixed",
+        "dynamic"
+      ],
+      "operand_passing": "ref",
+      "carrier_unary": {
+        "payloads": [
+          "int64",
+          "float64"
+        ],
+        "result": "updated_carrier"
+      }
+    },
+    "post_decrement": {
+      "form": "unary",
+      "name": "update_post_decrement",
+      "function_set": "post_decrement",
+      "publish": [
+        "int64",
+        "float64",
+        "mixed",
+        "dynamic"
+      ],
+      "operands": [
+        "int64",
+        "float64",
+        "mixed",
+        "dynamic"
+      ],
+      "operand_passing": "ref",
+      "carrier_unary": {
+        "payloads": [
+          "int64",
+          "float64"
+        ],
+        "result": "old_carrier"
+      }
+    },
+    "concat": {
+      "group": "scalar_text",
+      "name": "concat_strings",
+      "function_set": "concat",
+      "operand_conversion_function_set": "concat_text",
+      "publish": [
+        "string"
+      ],
+      "compound_left_snapshot": "converted",
+      "carrier_operands": {
+        "payloads": [
+          "int64",
+          "float64",
+          "boolean",
+          "string"
+        ],
+        "peers": [
+          "int8",
+          "int16",
+          "int32",
+          "int64",
+          "uint8",
+          "uint16",
+          "uint32",
+          "float64",
+          "boolean",
+          "string",
+          "null"
+        ],
+        "state_cast": "string"
+      }
+    }
+  },
+  "operand_conversions": {
+    "mixed": {
+      "sources": [
+        "int64",
+        "float64",
+        "string"
+      ],
+      "expression": "scpp::mixed(${value})",
+      "header": "scpp/mixed.hpp"
+    },
+    "dynamic": {
+      "sources": [
+        "int64",
+        "float64",
+        "string"
+      ],
+      "expression": "scpp::dynamic(${value})",
+      "header": "scpp/dynamic.hpp"
+    }
+  },
+  "carrier_projection": {
+    "operations": [
+      "add",
+      "subtract",
+      "multiply",
+      "divide",
+      "remainder",
+      "less",
+      "less_equal",
+      "greater",
+      "greater_equal",
+      "compare",
+      "bit_and",
+      "bit_or",
+      "bit_xor",
+      "shift_left",
+      "shift_right"
+    ],
+    "payloads": [
+      "int8",
+      "int16",
+      "int32",
+      "int64",
+      "uint8",
+      "uint16",
+      "uint32",
+      "uint64",
+      "float64",
+      "string"
+    ]
+  },
+  "carrier_comparisons": {
+    "payloads": [
+      "int8",
+      "int16",
+      "int32",
+      "int64",
+      "uint8",
+      "uint16",
+      "uint32",
+      "uint64",
+      "float64",
+      "boolean",
+      "string",
+      "mixed",
+      "dynamic"
+    ],
+    "payload_state": "payload",
+    "operations": {
+      "numeric_equal": {
+        "different_states": "false",
+        "same_states": {
+          "absent": "true",
+          "error": "true",
+          "false": "true",
+          "true": "true"
+        }
+      },
+      "numeric_not_equal": {
+        "different_states": "true",
+        "same_states": {
+          "absent": "false",
+          "error": "false",
+          "false": "false",
+          "true": "false"
+        }
+      },
+      "strict_identical": {
+        "different_states": "false",
+        "same_states": {
+          "absent": "true",
+          "error": {
+            "function_set": "strict_identical"
+          },
+          "false": "true",
+          "true": "true"
+        }
+      },
+      "strict_not_identical": {
+        "different_states": "true",
+        "same_states": {
+          "absent": "false",
+          "error": {
+            "function_set": "strict_not_identical"
+          },
+          "false": "false",
+          "true": "false"
+        }
+      },
+      "equal": {
+        "different_states": "false",
+        "same_states": {
+          "absent": "true",
+          "error": "true",
+          "false": "true",
+          "true": "true"
+        }
+      },
+      "not_equal": {
+        "different_states": "true",
+        "same_states": {
+          "absent": "false",
+          "error": "false",
+          "false": "false",
+          "true": "false"
+        }
+      }
+    }
+  },
+  "carrier_literals": {
+    "types": [
+      "null"
+    ],
+    "operations": {
+      "strict_identical": {
+        "matched": "true",
+        "unmatched": "false"
+      },
+      "strict_not_identical": {
+        "matched": "false",
+        "unmatched": "true"
+      }
+    }
+  }
+}

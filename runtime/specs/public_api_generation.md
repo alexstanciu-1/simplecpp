@@ -1362,3 +1362,27 @@ Filled construction returns through the existing inline-storage owned transport.
 The PHP adapter includes the same provider rather than duplicating its behavior.
 Source evaluation order and fill snapshots belong to the compiler, not these C++
 entry points. There is no vector-specific branch in the API generator.
+
+## Metadata file sections
+
+`metadata/public_api.json` is the package entry point. Its optional `sections`
+object maps a top-level metadata field to one JSON object file relative to the
+metadata directory, for example `"families": "public_api/families.json"`.
+The entry point must not also define that field. Section paths must stay inside
+the metadata directory, including after symlink resolution. Missing files,
+non-object sections, invalid paths and duplicate inline/section ownership reject.
+There are no recursive includes, overlays or precedence rules.
+
+The existing packaging driver `concrete_types.load_api_metadata()` assembles these
+objects; `metadata()` then resolves native bindings from module catalogs as before.
+The C++ generator receives exactly the same complete metadata object. Type rules,
+capability checks, dependency resolution and code generation remain C++-owned.
+Self-contained metadata objects remain accepted for tests and external demands.
+All in-repository readers use the loader rather than assume the entry point holds
+every section inline.
+
+API identity hashes the assembled semantic object, so moving a section without
+changing its content does not invalidate specialization compatibility. SDK sealing
+still hashes all physical metadata files; changing a section changes SDK integrity.
+Keep each authored metadata file below 200KB and split at an existing section
+boundary when needed. This file layout adds no second semantic registry.

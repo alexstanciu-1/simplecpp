@@ -1479,3 +1479,16 @@ runtime-published vector_string exercise helper semantics, partial-construction
 cleanup, nonallocating reserved operations and sealed application reuse. Source
 argument evaluation/value snapshots remain compiler-owned; this slice exposes the
 provider and does not add indexed destinations or alias capture lowering.
+
+## Active-goal progress — metadata packaging consolidation
+
+After E5, the API metadata entry point approached 200KB. Move families, function
+sets and global operator rules into disjoint section files, assembled by the existing
+package loader before C++ generation. The semantic object, API identity, generated
+343 implementation units, public headers and publication manifest remain unchanged.
+The largest authored metadata section is now about 83KB. Update direct test readers
+to use the same loader and retain flat metadata fixtures.
+
+This is a file-layout consolidation supporting the remaining backlog, not additional
+runtime contract coverage. Section validation and sealed relocated publication tests
+prove the packaging boundary; no native runtime implementation changed.

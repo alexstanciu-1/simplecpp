@@ -32,7 +32,7 @@ with tempfile.TemporaryDirectory(prefix='scpp-defaults-composition-') as tempora
         (sdk/folder).symlink_to(package/folder, target_is_directory=True)
     (sdk/'tools').mkdir()
     (sdk/'tools/scpp_api_generator').symlink_to(concrete_types.generator_tool(package))
-    metadata = json.loads((sdk/'metadata/public_api.json').read_text())
+    metadata = concrete_types.load_api_metadata(sdk)
     sequence = copy.deepcopy(metadata['families']['vector'])
     sequence['defaults'] = ['string']
     nested = json.loads(json.dumps(sequence).replace('"T"', '"V"').replace('${public:T}', '${public:V}').replace('${native:T}', '${native:V}'))

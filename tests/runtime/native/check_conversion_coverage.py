@@ -4,11 +4,14 @@ This is a coverage/freshness check, not proof of runtime value behavior or front
 admission. Wrapper/ownership/container conversions have separately tracked owners.
 """
 import json
+import sys
 from pathlib import Path
 
 root = Path(__file__).resolve().parents[3]
+sys.path.insert(0,str(root/'runtime/tools'))
+import concrete_types
 config = json.loads((root/'runtime/specs/config.json').read_text())
-metadata = json.loads((root/'runtime/metadata/public_api.json').read_text())
+metadata = concrete_types.load_api_metadata(root/'runtime')
 publication = json.loads((root/'runtime/public/specializations.json').read_text())
 canonical = {'bool_t':'boolean', 'int_t':'int64', 'float_t':'float64',
              'string_t':'string', 'mixed_t':'mixed', 'null_t':'null'}
