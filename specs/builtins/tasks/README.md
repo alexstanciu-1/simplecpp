@@ -58,3 +58,7 @@ See also:
 - [specs/builtins/tasks/examples.md](/home/alexv/__AI/simple_cpp/simple_cpp_02/specs/builtins/tasks/examples.md)
 - [specs/planning/threading_batch_api_plan_2026_06_08.md](/home/alexv/__AI/simple_cpp/simple_cpp_02/specs/planning/threading_batch_api_plan_2026_06_08.md)
 - [specs/planning/threading_preimplementation_audit_2026_06_12.md](/home/alexv/__AI/simple_cpp/simple_cpp_02/specs/planning/threading_preimplementation_audit_2026_06_12.md)
+
+The supporting [public C++ header boundary](../../../runtime/specs/tasks_public_api.md)
+documents the focused worker-pool interface, disabled-build compatibility and
+compile-cost experiment. It does not change source-language task semantics.

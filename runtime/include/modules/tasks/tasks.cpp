@@ -1,3 +1,4 @@
+#include "worker_pool.hpp"
 #include "tasks.hpp"
 
 #include <deque>

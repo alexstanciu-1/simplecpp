@@ -246,3 +246,24 @@ add_test(NAME scpp_test_storage_cursor COMMAND test_storage_cursor)
 add_executable(test_pow test_pow.cpp)
 target_link_libraries(test_pow PRIVATE scpp_runtime scpp_runtime_test_support)
 add_test(NAME scpp_test_pow COMMAND test_pow)
+
+# A narrow public task API; the caller TU never includes the generic task adapters.
+add_executable(test_worker_pool_api test_worker_pool_api.cpp worker_pool_workload.cpp)
+target_link_libraries(test_worker_pool_api PRIVATE scpp_tasks)
+add_test(NAME scpp_test_worker_pool_api COMMAND test_worker_pool_api)
+set_tests_properties(scpp_test_worker_pool_api PROPERTIES TIMEOUT 30)
+
+# Disabled calls remain header-only, including the default when the macro is absent.
+foreach(mode default explicit umbrella)
+  add_executable(test_worker_pool_disabled_${mode} test_worker_pool_disabled.cpp)
+  target_include_directories(test_worker_pool_disabled_${mode} PRIVATE
+    ${CMAKE_CURRENT_SOURCE_DIR}/../../../runtime/include)
+  target_compile_features(test_worker_pool_disabled_${mode} PRIVATE cxx_std_23)
+  if(NOT mode STREQUAL "default")
+    target_compile_definitions(test_worker_pool_disabled_${mode} PRIVATE SCPP_HAS_TASKS=0)
+  endif()
+  if(mode STREQUAL "umbrella")
+    target_compile_definitions(test_worker_pool_disabled_${mode} PRIVATE TEST_TASKS_UMBRELLA=1)
+  endif()
+  add_test(NAME scpp_test_worker_pool_disabled_${mode} COMMAND test_worker_pool_disabled_${mode})
+endforeach()
