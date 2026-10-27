@@ -352,6 +352,7 @@
     "text_less_string_string",
     "text_less_equal_string_string",
     "text_greater_string_string",
-    "text_greater_equal_string_string"
+    "text_greater_equal_string_string",
+    "coalesce_require_value"
   ]
 }

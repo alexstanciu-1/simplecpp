@@ -17,7 +17,7 @@ each slice. The original inventory is a baseline, not a current completion count
 | A2 | Complete for the agreed checked scalar conversions | Carrier conversion is C; ownership casts are D. |
 | B1 | Complete for the agreed scalar-facing truth/text/identity/observation scope | Carrier forms remain C; boxed arithmetic and access completion are not B1 credit. |
 | B2 | Complete for the agreed non-carrier special/mutation and text public paths; closure evidence below | Carrier forms C; indexed retention E; native exception inspection and overflow disposition G. |
-| C | Four carrier recipes with conditional lifecycle; numeric/presence plans, scalar/boxed equality, scalar reconstruction, text, unary/update, canonical arithmetic compounds, bitwise/shift plans, compound power and string relational ordering, Result error identity and sentinel take/state proofs implemented; logical-negation correction pending; review pending | Four carrier families, state-preserving operations/conversions and conditional lifecycle. |
+| C | Four carrier recipes with conditional lifecycle; numeric/presence plans, scalar/boxed equality, scalar reconstruction, text, unary/update, canonical arithmetic compounds, bitwise/shift plans, compound power, string relational ordering and first scalar coalescing, Result error identity and sentinel take/state proofs implemented; logical-negation correction pending; review pending | Four carrier families, state-preserving operations/conversions and conditional lifecycle. |
 | D | Pending | Ownership, application targets and source Exception transport gaps. |
 | E | Existing vector/hash/boxed foundations; incomplete | Capability/access/initialization/cursor gaps and identity key-allocation debt. |
 | F | Pending | Callable transport and registered collection algorithms. |
@@ -1244,3 +1244,22 @@ The audit separates direct conditions, guarded logical operators, usable-value
 coalescing and ternary/Elvis joins. It identifies an independent exact scalar
 coalescing proof and records the noncopyable inline-record condition gap that scoped
 observations must address. The first complete carrier review remains open.
+
+## C25 — first exact scalar coalescing path
+
+A dedicated selection owner now plans exact canonical int/float/bool/string
+coalescing for plain/plain, admitted carrier/plain and homogeneous carrier pairs.
+Nullable, structured Result and false-sentinel Result are admitted by metadata;
+bool-sentinel Result rejects on either side before runtime selection. Zero, false
+and empty string are usable payloads and never select the fallback merely because
+they are falsey. Both branch types validate before lazy execution.
+
+The plan observes usability, extracts only the selected branch and returns an owned
+payload. If the selected fallback has no payload, one concrete public check delegates
+to the same native error owner used by legacy coalescing. It preserves the documented
+error code/component/operation; no template callback crosses the public boundary.
+The generator has no family-name branch and renamed carrier metadata is tested.
+
+This is a first scalar path, not general coalescing completion. Boxed, record,
+ownership and other admitted joins, ternary/Elvis, scoped observation and the logical
+operator decision remain open. The source-formation boundary is also still pending.

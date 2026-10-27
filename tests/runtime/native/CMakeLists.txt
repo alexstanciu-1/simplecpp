@@ -475,3 +475,6 @@ add_test(NAME scpp_check_carrier_power COMMAND ${Python3_EXECUTABLE}
 
 add_test(NAME scpp_check_carrier_order COMMAND ${Python3_EXECUTABLE}
   ${CMAKE_CURRENT_SOURCE_DIR}/check_carrier_order.py --tool $<TARGET_FILE:scpp_api_generator>)
+
+add_test(NAME scpp_check_carrier_coalesce COMMAND ${Python3_EXECUTABLE}
+  ${CMAKE_CURRENT_SOURCE_DIR}/check_carrier_coalesce.py --tool $<TARGET_FILE:scpp_api_generator>)

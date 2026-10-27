@@ -1170,3 +1170,25 @@ to native string byte ordering. The operation entrypoint remains `less`/`less_eq
 `greater`/`greater_equal` regardless of payload, and numeric public bindings retain
 their existing names. Carrier projection applies only after operation admission;
 adding string to the candidate payload vocabulary does not admit string arithmetic.
+
+## Exact coalescing selection plans
+
+`selections.coalesce` records candidate `payloads`, admitted carrier family-to-payload
+state mappings, admitted structural `forms` and the concrete `require_selected` API.
+A usable state must be an observed payload state from the existing carrier descriptor;
+condition truthiness is not consulted. The error-check signature must borrow boolean
+and return void. Policy has no C++ family-name special cases.
+
+`resolve_coalesce` accepts `left` and `right` type identities and prepared names. It
+validates both branches, exact payload identity and the selected structural join.
+`plain_plain`, `carrier_plain` and `same_carrier` are the initial forms; the last
+requires identical canonical carrier types, not just compatible payloads. The result
+contains each branch's usability expression and owned extraction, a concrete selected
+value check, the plain result identity and ordered steps. Consumers must put RHS
+evaluation inside the fallback path, not supply eager callback arguments.
+
+The ordinary native selected-domain helper and the concrete public check share one
+error implementation. A failed selected branch reports the existing coalesce code,
+component and operator. No error construction recipe is copied into plan consumers.
+This first policy is bounded to canonical scalar payloads; further source joins need
+explicit metadata admission and proofs rather than inference from physical copying.

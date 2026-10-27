@@ -2124,3 +2124,33 @@ times with concurrent validation, not isolated benchmarks. Both builds retain th
 existing ineffective hash explicit-instantiation warning; no new warning was added.
 The compiled ASan/UBSan proof with leak detection also passes, including sealed
 reuse: four storage units 5.9458s, combined caller 3.8547s.
+
+## C25 — exact scalar lazy coalescing (2026-10-27)
+
+The new selection planner validates both branch types and exact join forms before
+emitting usable-value selection stages. It supports canonical scalar plain/plain,
+nullable/result/result_or_false-to-plain, and homogeneous carrier pairs. A renamed
+carrier recipe proves admission is metadata-owned. Result-or-bool on either side,
+widening, cross-family and non-admitted nested payloads reject independently of
+whether fallback would execute. Broader boxed/record/ownership joins remain open.
+
+A single concrete `coalesce_require_value(boolean)` API delegates to the factored
+native selected-domain error check. Existing native coalescing delegates to that
+same check. The public path does not expose callback templates or duplicate error
+construction in consumers. Publication adds one implementation unit (341 total).
+
+Six focused release regressions pass in 3.10s. The compiled public proof passes 60
+success cases and 36 failure cases: successful false/zero/empty payloads skip even
+throwing fallbacks, absent/error/false selects fallback once, both unavailable report
+the exact error code/component/operator, and returned snapshots survive source edits.
+Successful short/scalar paths allocate zero times. Twelve application units seal and
+reuse without source regeneration. Release storage compile 13.4904s; caller 0.6997s.
+
+The first generator compile exposed a mixed `auto` declaration error, corrected by
+separate declarations before any tests passed. Initial failed build 5.53s, corrected
+release build 1.66s; sanitized generator build 17.86s. After publication, release
+core rebuild/relink 19.60s and sanitized 43.53s. Existing hash-instantiation warning
+remains unchanged. Timings are single-run wall times with other validation active,
+not isolated benchmarks. No logical-operator policy change is part of this slice.
+Six sanitizer regressions pass in 20.40s. The compiled ASan/UBSan proof with leak
+detection and sealed reuse also passes: storage 18.0382s, caller 1.5333s.

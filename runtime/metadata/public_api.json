@@ -2929,6 +2929,26 @@
           "vector<string>"
         ]
       }
+    },
+    "coalesce_require_value": {
+      "namespace": "scpp",
+      "header": "scpp/selection/coalesce_require_value.hpp",
+      "source": "include/scpp/generated/public_coalesce_require_value.cpp",
+      "operation": {
+        "name": "coalesce_require_value",
+        "returns": "void",
+        "parameters": [
+          {
+            "name": "usable",
+            "type": "boolean",
+            "passing": "const_ref"
+          }
+        ],
+        "body": "detail::coalesce_require_usable_value(usable.native_value());",
+        "includes": [
+          "operators/coalesce/coalesce.hpp"
+        ]
+      }
     }
   },
   "capabilities": {
@@ -6587,5 +6607,26 @@
   },
   "conditions": {
     "function_set": "condition_truthy"
+  },
+  "selections": {
+    "coalesce": {
+      "payloads": [
+        "int64",
+        "float64",
+        "boolean",
+        "string"
+      ],
+      "carriers": {
+        "nullable": "payload",
+        "result": "payload",
+        "result_or_false": "payload"
+      },
+      "forms": [
+        "plain_plain",
+        "carrier_plain",
+        "same_carrier"
+      ],
+      "require_selected": "coalesce_require_value"
+    }
   }
 }

@@ -497,3 +497,12 @@ including one carrier layer on either side across the four families. Missing pay
 throw rather than acquiring an ordering position. Complete bytes, including embedded
 NUL, follow existing string ordering. String/numeric, string/bool and string spaceship
 remain rejected; the numeric and strict-identity policies are unchanged.
+
+### Exact scalar coalescing implementation checkpoint
+
+Usable-value selection is separate from truthiness. The first public planner admits
+exact canonical scalar plain pairs, nullable/result/result_or_false-to-payload pairs,
+and identical carrier pairs. It returns an owned scalar, lazily evaluates fallback,
+and checks the selected fallback's usable domain before extraction. Result-or-bool,
+cross-family joins, widening and automatic nested peeling are not admitted here.
+This does not settle the pending logical-operator policy.

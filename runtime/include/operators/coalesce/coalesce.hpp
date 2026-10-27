@@ -168,19 +168,22 @@ inline bool_t coalesce_has_usable_value(const Value &value) {
 	}
 }
 
+inline void coalesce_require_usable_value(bool usable) {
+    if (!usable) {
+        throw runtime_error(
+            "scpp::coalesce_eval(): ?? selected a branch with no usable value domain",
+            "coalesce_selected_branch_has_no_usable_value_domain",
+            "php::coalesce_eval", "??"
+        );
+    }
+}
+
 template <typename Value>
 inline void coalesce_require_selected_value_domain(const Value &value) {
-	using value_t = std::remove_cvref_t<Value>;
-	if constexpr (coalesce_wrapper_info_v<value_t>) {
-		if (!value.has_value().native_value()) {
-			throw runtime_error(
-				"scpp::coalesce_eval(): ?? selected a branch with no usable value domain",
-				"coalesce_selected_branch_has_no_usable_value_domain",
-				"php::coalesce_eval",
-				"??"
-			);
-		}
-	}
+    using value_t = std::remove_cvref_t<Value>;
+    if constexpr (coalesce_wrapper_info_v<value_t>) {
+        coalesce_require_usable_value(value.has_value().native_value());
+    }
 }
 
 template <typename Result, typename Value>

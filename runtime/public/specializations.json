@@ -1,6 +1,6 @@
 {
   "abi": "529dd5502370f48d64891818e9439aae72831b990b4027e8abe25c50c1216c21",
-  "api_identity": "446b5e09391324bed4efbccb4f8bc0bafa0b43973f3aed3de470a960ec3cb65a",
+  "api_identity": "c4b3a36472dd572a6eadc945780b6a475a87d650c42109ebe06ca891735f0b08",
   "apis": {
     "add_dynamic": {
       "header": "scpp/operators/add_dynamic.hpp",
@@ -2643,6 +2643,26 @@
         "returns": "void"
       },
       "source": "include/scpp/generated/public_clean_uint8.cpp"
+    },
+    "coalesce_require_value": {
+      "header": "scpp/selection/coalesce_require_value.hpp",
+      "namespace": "scpp",
+      "operation": {
+        "body": "detail::coalesce_require_usable_value(usable.native_value());",
+        "includes": [
+          "operators/coalesce/coalesce.hpp"
+        ],
+        "name": "coalesce_require_value",
+        "parameters": [
+          {
+            "name": "usable",
+            "passing": "const_ref",
+            "type": "boolean"
+          }
+        ],
+        "returns": "void"
+      },
+      "source": "include/scpp/generated/public_coalesce_require_value.cpp"
     },
     "compare_float64": {
       "header": "scpp/operators/compare_float64.hpp",
@@ -9439,7 +9459,10 @@
     "include/scpp/operators/text_greater_string_string.hpp",
     "public/scpp/operators/text_greater_equal_string_string.hpp",
     "include/scpp/generated/public_text_greater_equal_string_string.cpp",
-    "include/scpp/operators/text_greater_equal_string_string.hpp"
+    "include/scpp/operators/text_greater_equal_string_string.hpp",
+    "public/scpp/selection/coalesce_require_value.hpp",
+    "include/scpp/generated/public_coalesce_require_value.cpp",
+    "include/scpp/selection/coalesce_require_value.hpp"
   ],
   "generator": "metadata-api-v1",
   "leaves": {
@@ -9949,6 +9972,7 @@
     "scpp/operators/text_less_equal_string_string.hpp": "7c528e5646bd8494eeab4e566cc44d258820025b719046a1a1dbc07229eb0af7",
     "scpp/operators/text_less_string_string.hpp": "aaef1bbed67f387b40c4032c2b0497d6627c8755ddccffd8c8182c3ff6e87db2",
     "scpp/result_vector_string.hpp": "45bfe2a5c202e8c44ed98016960336c8506d1cf5a1975f3d92c169f41228ee0c",
+    "scpp/selection/coalesce_require_value.hpp": "bc7c32011f36fe22fc50a612e323817ee1a9832a6ff6c877b0db4e5e3b7d041c",
     "scpp/string.hpp": "aac6ff447c6c1135f22cbc12cb0a419c8079df28826de70f0170a07690ec2b69",
     "scpp/text/concat_strings.hpp": "38de27c455eae08bd171ed50b68dd01d781648a430f34914ca989326cdadb301",
     "scpp/text/concat_text_boolean.hpp": "cf8fb9b3c1d634620f2aede468c05c115284dfbbd51d6047dfa2934408f8f7dc",
@@ -10306,7 +10330,8 @@
     "include/scpp/generated/public_text_less_string_string.cpp",
     "include/scpp/generated/public_text_less_equal_string_string.cpp",
     "include/scpp/generated/public_text_greater_string_string.cpp",
-    "include/scpp/generated/public_text_greater_equal_string_string.cpp"
+    "include/scpp/generated/public_text_greater_equal_string_string.cpp",
+    "include/scpp/generated/public_coalesce_require_value.cpp"
   ],
   "types": {
     "dynamic": {
