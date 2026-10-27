@@ -587,3 +587,7 @@ add_test(NAME scpp_test_public_index_path COMMAND test_public_index_path)
 add_executable(test_public_index_existing test_public_index_existing.cpp)
 target_link_libraries(test_public_index_existing PRIVATE scpp_core_api)
 add_test(NAME scpp_test_public_index_existing COMMAND test_public_index_existing)
+
+add_executable(test_native_value_errors test_native_value_errors.cpp)
+target_link_libraries(test_native_value_errors PRIVATE scpp_runtime_core)
+add_test(NAME scpp_test_native_value_errors COMMAND test_native_value_errors)

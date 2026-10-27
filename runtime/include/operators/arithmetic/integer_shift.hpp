@@ -1,6 +1,6 @@
 #pragma once
 
-#include "core/string_support.hpp"
+#include "scpp/native_value_errors.hpp"
 #include <limits>
 #include <type_traits>
 

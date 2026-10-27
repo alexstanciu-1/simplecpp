@@ -2053,3 +2053,26 @@ No runtime or generator behavior changed and no compilation was needed. This aud
 narrows the next action: resolve the already-pending prepared-fact ownership decision,
 then implement one two-step physical path using supplied fixture facts. It does not
 move source semantic validation into the API tool or count typed paths as complete.
+
+## G8 — focused native value/type error owner
+
+ValueError and TypeError now live in a focused private native header. The former
+core/string_support.hpp owner includes it for compatibility; core shift validation
+and process-string helpers include the focused definition directly. Names, inheritance,
+constructors, messages and throw/catch behavior are unchanged. No template-bearing
+native exception is added to the public root, and capture_runtime_exception retains
+its existing runtime_error-only behavior.
+
+This removes an unrelated string/numeric implementation dependency from core error
+sites and prepares the remaining G diagnostic-inspection boundary. It does not publish
+foreign error inspection or source Exception transport. Those signatures/policies
+must remain distinct from the already agreed structured runtime_error capture API.
+
+Validation: four focused release and ASan/UBSan/LSan checks pass (native error types,
+public structured errors, special integers and process strings). A final cross-library
+shift throw is caught as the same native ValueError in release and sanitizer runs.
+Existing error/process allocation checks remain green; no new capture wrapper is
+allocated or published. Single-run error-caller compile: 0.4435s focused header /
+1.2257s former aggregate include. Dependency inspection confirms shift validation
+includes neither core/string_support.hpp nor scpp/int_t.hpp. Core rebuilt once per
+configuration; the final cross-library proof rebuilt only its small test caller.

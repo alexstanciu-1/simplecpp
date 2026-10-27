@@ -1,6 +1,6 @@
 #pragma once
 
-#include "core/string_support.hpp"
+#include "scpp/native_value_errors.hpp"
 #include "scpp/result_or_false.hpp"
 #include "scpp/string_t.hpp"
 #include <cstdio>

@@ -2,6 +2,7 @@
 
 #include "scpp/int_t.hpp"
 #include "scpp/string_t.hpp"
+#include "scpp/native_value_errors.hpp"
 
 #include <array>
 #include <cctype>
@@ -21,16 +22,6 @@ inline const int_t<> PHP_INT_MAX{static_cast<std::int64_t>(std::numeric_limits<s
 inline const int_t<> STR_PAD_LEFT{0};
 inline const int_t<> STR_PAD_RIGHT{1};
 inline const int_t<> STR_PAD_BOTH{2};
-
-class ValueError : public std::runtime_error {
-public:
-	explicit ValueError(const std::string &message) : std::runtime_error(message) {}
-};
-
-class TypeError : public std::runtime_error {
-public:
-	explicit TypeError(const std::string &message) : std::runtime_error(message) {}
-};
 
 inline std::size_t normalize_substr_start(std::size_t size, std::int64_t offset) {
 	if (offset >= 0) {

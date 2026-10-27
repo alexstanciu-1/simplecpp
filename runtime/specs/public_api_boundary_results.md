@@ -3028,3 +3028,21 @@ pass, including zero allocations for the table-key cases. Sealed relocated publi
 continues to reuse the unchanged APIs with no new implementation units. Single-run
 boxed identity caller compile: 0.0566s public / 2.9023s native. Core rebuilt once per
 configuration. No metadata generation or public ABI change was required.
+
+## G8: focused native error definitions (2026-10-28)
+
+ValueError/TypeError definitions moved to a private focused core header; the old
+string-helper owner retains a compatibility include. Checked shift and process-string
+helpers use the focused header directly. Native names, inheritance, construction and
+messages are unchanged, and the public runtime_error-only capture contract is intact.
+This is dependency/ownership preparation for G inspection, not foreign-exception API
+publication or source Exception support.
+
+Validation: four focused release and ASan/UBSan/LSan checks pass (native error types,
+public structured errors, special integers and process strings). A final cross-library
+shift throw is caught as the same native ValueError in release and sanitizer runs.
+Existing error/process allocation checks remain green; no new capture wrapper is
+allocated or published. Single-run error-caller compile: 0.4435s focused header /
+1.2257s former aggregate include. Dependency inspection confirms shift validation
+includes neither core/string_support.hpp nor scpp/int_t.hpp. Core rebuilt once per
+configuration; the final cross-library proof rebuilt only its small test caller.
