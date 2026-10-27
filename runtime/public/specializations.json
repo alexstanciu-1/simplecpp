@@ -1,6 +1,6 @@
 {
   "abi": "529dd5502370f48d64891818e9439aae72831b990b4027e8abe25c50c1216c21",
-  "api_identity": "08f3bc87bdd68ba666842d8a6f2f3020f2cf04470bbba4ae8d3cc9f7b93b0705",
+  "api_identity": "b28e4274287c3d64402d93f1f433cfc97a955ad88ac9b8d441b2d166826b3647",
   "apis": {
     "add_dynamic": {
       "header": "scpp/operators/add_dynamic.hpp",
@@ -5526,6 +5526,58 @@
       },
       "source": "include/scpp/generated/public_not_equal_mixed.cpp"
     },
+    "numeric_compound_replacement_dynamic": {
+      "header": "scpp/operators/numeric_compound_replacement_dynamic.hpp",
+      "namespace": "scpp",
+      "operation": {
+        "body": "auto checked = ${native:saved_left}; scpp::detail::assign_numeric_result(checked, ${native:calculated}); return checked;",
+        "includes": [
+          "operators/arithmetic/boxed_numeric.hpp"
+        ],
+        "name": "numeric_compound_replacement",
+        "parameters": [
+          {
+            "name": "saved_left",
+            "passing": "const_ref",
+            "type": "dynamic"
+          },
+          {
+            "name": "calculated",
+            "passing": "const_ref",
+            "type": "dynamic"
+          }
+        ],
+        "returns": "dynamic",
+        "transport": "native"
+      },
+      "source": "include/scpp/generated/public_numeric_compound_replacement_dynamic.cpp"
+    },
+    "numeric_compound_replacement_mixed": {
+      "header": "scpp/operators/numeric_compound_replacement_mixed.hpp",
+      "namespace": "scpp",
+      "operation": {
+        "body": "auto checked = ${native:saved_left}; scpp::detail::assign_numeric_result(checked, ${native:calculated}); return checked;",
+        "includes": [
+          "operators/arithmetic/boxed_numeric.hpp"
+        ],
+        "name": "numeric_compound_replacement",
+        "parameters": [
+          {
+            "name": "saved_left",
+            "passing": "const_ref",
+            "type": "mixed"
+          },
+          {
+            "name": "calculated",
+            "passing": "const_ref",
+            "type": "mixed"
+          }
+        ],
+        "returns": "mixed",
+        "transport": "native"
+      },
+      "source": "include/scpp/generated/public_numeric_compound_replacement_mixed.cpp"
+    },
     "numeric_equal_float64": {
       "header": "scpp/operators/numeric_equal_float64.hpp",
       "namespace": "scpp",
@@ -9076,7 +9128,13 @@
     "include/scpp/operators/remainder_mixed.hpp",
     "public/scpp/operators/remainder_dynamic.hpp",
     "include/scpp/generated/public_remainder_dynamic.cpp",
-    "include/scpp/operators/remainder_dynamic.hpp"
+    "include/scpp/operators/remainder_dynamic.hpp",
+    "public/scpp/operators/numeric_compound_replacement_mixed.hpp",
+    "include/scpp/generated/public_numeric_compound_replacement_mixed.cpp",
+    "include/scpp/operators/numeric_compound_replacement_mixed.hpp",
+    "public/scpp/operators/numeric_compound_replacement_dynamic.hpp",
+    "include/scpp/generated/public_numeric_compound_replacement_dynamic.cpp",
+    "include/scpp/operators/numeric_compound_replacement_dynamic.hpp"
   ],
   "generator": "metadata-api-v1",
   "leaves": {
@@ -9443,6 +9501,8 @@
     "scpp/operators/negative_mixed.hpp": "77f458beed1a1167921380a90563ddda6776c01fe9805f6fe7ab4875677eb9d5",
     "scpp/operators/not_equal_dynamic.hpp": "ad4da31487738bc443208713f147fdde1943f8541924d8fe3fb6fdbfd66bab81",
     "scpp/operators/not_equal_mixed.hpp": "45e03a1e1e7969f556adf1a5c1e0e10d6288bf774eb19d1b30d84abb7f4dbf6f",
+    "scpp/operators/numeric_compound_replacement_dynamic.hpp": "33c6a6f70e79df28ed95dad4dc1d18008767e54d7b443ad33dbe9c857b10939d",
+    "scpp/operators/numeric_compound_replacement_mixed.hpp": "b45bbd7e5ded50241d375f0d56a1181c5159d094b6615c5091c5c1627b084912",
     "scpp/operators/numeric_equal_float64.hpp": "635e11f1b9fd95629131812d5dcdb467be3d246b3f30729ef823dbd06cf76322",
     "scpp/operators/numeric_equal_int16.hpp": "ee4095a6f31665bec25486d3c3bf706bb092de7626477030b1264af0bcc17f25",
     "scpp/operators/numeric_equal_int32.hpp": "3f76ab4cb363d80a50b633d3f616928927311f9bf4f4063e1be391ac06aeef66",
@@ -9853,7 +9913,9 @@
     "include/scpp/generated/public_divide_mixed.cpp",
     "include/scpp/generated/public_divide_dynamic.cpp",
     "include/scpp/generated/public_remainder_mixed.cpp",
-    "include/scpp/generated/public_remainder_dynamic.cpp"
+    "include/scpp/generated/public_remainder_dynamic.cpp",
+    "include/scpp/generated/public_numeric_compound_replacement_mixed.cpp",
+    "include/scpp/generated/public_numeric_compound_replacement_dynamic.cpp"
   ],
   "types": {
     "dynamic": {

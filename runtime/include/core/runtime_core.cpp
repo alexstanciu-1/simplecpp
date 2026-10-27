@@ -349,3 +349,5 @@
 #include "scpp/generated/public_divide_dynamic.cpp"
 #include "scpp/generated/public_remainder_mixed.cpp"
 #include "scpp/generated/public_remainder_dynamic.cpp"
+#include "scpp/generated/public_numeric_compound_replacement_mixed.cpp"
+#include "scpp/generated/public_numeric_compound_replacement_dynamic.cpp"

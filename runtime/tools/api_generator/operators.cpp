@@ -145,7 +145,8 @@ namespace scpp::api_generation
                     throw std::runtime_error("Compound rules require a nonempty array");
                 std::set<std::pair<std::string, std::string>> pairs;
                 for (const auto &rule : compound.at("rules").items) {
-                    fields_only(rule, "target right", "compound rule");
+                    fields_only(rule, "target right writeback_function_set", "compound rule");
+                    if (rule.has("writeback_function_set")) metadata.at("function_sets").at(rule.at("writeback_function_set").text());
                     const auto target = rule.at("target").text();
                     registry.at("types").at(target);
                     for (const auto &right : domains(rule.at("right"))) {
@@ -294,14 +295,14 @@ namespace scpp::api_generation
         const auto &registry = validated_registry(metadata);
         const auto name = request.at("operation").text(), target = request.at("target").text(), right = request.at("right").text();
         const auto &compound = registry.at("compounds").at(name);
-        bool admitted = false;
+        const value *selected_rule = nullptr;
         for (const auto &rule : compound.at("rules").items)
-            admitted |= rule.at("target").text() == target && contains(rule.at("right"), right);
-        if (!admitted) throw std::runtime_error("Unsupported compound operands");
+            if (rule.at("target").text() == target && contains(rule.at("right"), right)) selected_rule = &rule;
+        if (!selected_rule) throw std::runtime_error("Unsupported compound operands");
         value calculation = value::object();
         calculation["operation"] = compound.at("operation"); calculation["left"] = target; calculation["right"] = right;
         const auto plan = resolve_operator(metadata, calculation);
-        // This first protocol owns plain, same-result-type write-back only. A
+        // This protocol requires same-result-type write-back. A
         // conversion that happens to compile cannot authorize destination narrowing.
         if (plan.get("kind") != "call" || !plan.has("operand_type") || plan.get("result_type") != target)
             throw std::runtime_error("Compound requires a common-operand calculation returning the destination type");
@@ -311,6 +312,23 @@ namespace scpp::api_generation
         out["left_conversion"] = compound_conversion(metadata, target, plan.at("operand_type").text());
         out["right_conversion"] = compound_conversion(metadata, right, plan.at("operand_type").text());
         out["writeback_conversion"] = compound_conversion(metadata, plan.at("result_type").text(), target);
+        if (selected_rule->has("writeback_function_set")) {
+            const auto identity = selected_rule->at("writeback_function_set").text() + "_" + target;
+            const auto functions = expand_function_sets(metadata);
+            const auto &function = functions.at(identity), &signature = function.at("operation");
+            const auto &parameters = signature.at("parameters").items;
+            if (parameters.size() != 2 || signature.at("returns").text() != target)
+                throw std::runtime_error("Compound write-back signature mismatch");
+            for (const auto &parameter : parameters)
+                if (parameter.at("type").text() != target || parameter.get("passing") != "const_ref")
+                    throw std::runtime_error("Compound write-back must borrow saved left and calculated result");
+            auto &writeback = out["writeback_conversion"];
+            writeback["kind"] = "checked_saved_value"; writeback["api"] = identity;
+            writeback["header"] = function.at("header");
+            writeback["function"] = function.at("namespace").text() + "::" + signature.at("name").text();
+            writeback["arguments"] = value::array();
+            writeback["arguments"].items = {value("old_left"), value("calculated")};
+        }
         out["steps"] = value::array();
         for (const auto *step : {"capture_destination_and_retain_owners", "snapshot_left", "convert_left", "evaluate_right",
                  "convert_right", "calculate", "convert_writeback", "commit_destination", "return_value_snapshot"})

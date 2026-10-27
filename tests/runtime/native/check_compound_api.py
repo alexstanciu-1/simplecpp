@@ -48,6 +48,21 @@ for op in operations:
                 assert plan['right_conversion']['kind'] == ('identity' if target == right else 'call')
                 plans[op, target, right] = plan
 assert len(plans) == 19
+boxed_plans = {}
+for op in operations[:5]:
+    for family in ['mixed', 'dynamic']:
+        plan = resolve(op + '_assign', family, family)
+        assert plan['steps'] == expected_steps
+        assert plan['writeback_conversion']['kind'] == 'checked_saved_value'
+        assert plan['writeback_conversion']['arguments'] == ['old_left', 'calculated']
+        boxed_plans[op, family] = plan
+        resolve(op + '_assign', family, 'dynamic' if family == 'mixed' else 'mixed', error='Unsupported compound operands')
+changed = copy.deepcopy(metadata)
+changed['function_sets']['numeric_compound_replacement']['function']['operation']['parameters'][0]['passing'] = 'ref'
+resolve('add_assign', 'mixed', 'mixed', changed, 'must borrow saved left')
+changed = copy.deepcopy(metadata)
+changed['function_sets']['numeric_compound_replacement']['function']['operation']['returns'] = 'string'
+resolve('add_assign', 'dynamic', 'dynamic', changed, 'signature mismatch')
 for mutation, error in [
     (lambda c: c['rules'].append(c['rules'][0]), 'Ambiguous compound rule'),
     (lambda c: c.update(operation='positive'), 'must be binary'),
@@ -62,19 +77,21 @@ changed = copy.deepcopy(metadata)
 changed['global_operators']['compounds']['custom_update'] = changed['global_operators']['compounds'].pop('add_assign')
 assert resolve('custom_update', 'int64', 'int64', changed)['calculation']['function'] == plans['add', 'int64', 'int64']['calculation']['function']
 headers, apis = set(), set()
-for plan in plans.values():
+for plan in [*plans.values(), *boxed_plans.values()]:
     for key in ['calculation', 'left_conversion', 'right_conversion', 'writeback_conversion']:
-        if plan[key]['kind'] == 'call':
+        if plan[key]['kind'] in ['call', 'checked_saved_value']:
             headers.add(plan[key]['header']); apis.add(plan[key]['api'])
 base = {'metadata': metadata, 'request': {'roots': [], 'apis': sorted(apis)},
-        'imports': {'float64': publication['types']['float64']}, 'leaves': {}, 'layouts': {},
+        'imports': {t: publication['types'][t] for t in ['float64', 'mixed', 'dynamic']}, 'leaves': {}, 'layouts': {},
         'names': {}, 'api_imports': publication['apis']}
 assert call(base)['units'] == []
-print('PASS: 19 compound plans, admission/rejection, metadata ownership, published API reuse')
+print('PASS: 19 plain and 10 boxed compound plans, checked saved-value signature, admission and publication reuse')
 if not args.core:
     raise SystemExit(0)
 
 def conversion(plan, value):
+    if plan['kind'] == 'checked_saved_value':
+        return plan['function'] + '(' + ', '.join(plan['arguments']) + ')'
     return value if plan['kind'] == 'identity' else plan['function'] + '(' + value + ')'
 
 def lower(plan, rhs):
@@ -123,6 +140,30 @@ for op, rhs, throw_rhs in [('add', 3, True), ('divide', 0, False), ('power', -1,
     source += 'throw 7;' if throw_rhs else 'return int64('+str(rhs)+');'
     source += ' }; try { (void)[&]() {\n'+lower(plans[op, 'int64', 'int64'], 'rhs()')+'\n}(); } catch (...) { failed=true; }\n'
     source += 'CHECK(failed && captures==1 && evaluations==1 && target.native_value()==100); }\n'
+# Preserve the original boxed numeric kind even when RHS changes the live kind.
+for (op, family), plan in boxed_plans.items():
+    for old_float, rhs_float in [(False, False), (True, False), (False, True), (True, True)]:
+        valid = not (not old_float and rhs_float) and (op != 'remainder' or not (old_float or rhs_float))
+        original = 'float64' if old_float else 'int64'
+        rhs_type = 'float64' if rhs_float else 'int64'
+        # The new live kind is deliberately different from the saved kind.
+        mutation = 'int64' if old_float else 'float64'
+        getter = 'get_float' if old_float else 'get_int'
+        changed_getter = 'get_int' if old_float else 'get_float'
+        answer = 10 / 3 if old_float and op == 'divide' else expected[op]
+        source += '{ '+family+' target('+original+'(10)); int captures=0, evaluations=0; bool failed=false;\n'
+        source += 'auto capture=[&]() -> auto & { ++captures; return target; };\n'
+        source += 'auto rhs=[&]() { ++evaluations; target='+family+'('+mutation+'(100)); return '+family+'('+rhs_type+'(3)); };\n'
+        source += 'allocations=0; counting=true; try { const auto result=[&]() {\n'+lower(plan, 'rhs()')+'\n}(); counting=false;\n'
+        source += 'CHECK(allocations==0); CHECK(target.'+getter+'().native_value()=='+repr(answer)+');\n'
+        source += 'target='+family+'{}; CHECK(result.'+getter+'().native_value()=='+repr(answer)+');\n'
+        source += '} catch (...) { counting=false; failed=true; } CHECK(failed=='+str(not valid).lower()+');\n'
+        source += 'CHECK(captures==1 && evaluations==1); if(failed) CHECK(target.'+changed_getter+'().native_value()==100); }\n'
+    # A failed calculation must also leave a nonnumeric RHS mutation intact.
+    source += '{ '+family+' target(int64(10)); bool failed=false; auto capture=[&]() -> auto & { return target; };\n'
+    source += 'auto rhs=[&]() { target='+family+'(boolean(true)); return '+family+'{}; };\n'
+    source += 'try { (void)[&]() {\n'+lower(plan, 'rhs()')+'\n}(); } catch (...) { failed=true; }\n'
+    source += 'CHECK(failed && static_cast<bool>(target.get_bool())); }\n'
 # Destination failure suppresses the RHS altogether.
 source += '''{ int evaluations=0; bool failed=false;
 auto capture = []() -> int64 & { throw 7; };

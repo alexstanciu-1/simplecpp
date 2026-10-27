@@ -23,6 +23,7 @@ parser.add_argument('--spaceship', action='store_true', help='Measure integer an
 parser.add_argument('--unary', action='store_true', help='Measure canonical and boxed unary operations')
 parser.add_argument('--updates', action='store_true', help='Measure borrowed updates with owned results')
 parser.add_argument('--boxed-arithmetic', action='store_true', help='Measure homogeneous boxed arithmetic')
+parser.add_argument('--boxed-compounds', action='store_true', help='Measure saved-kind compound replacement')
 args = parser.parse_args()
 public = '''#include "scpp/operators/add_int64.hpp"
 #include "scpp/operators/equal_mixed.hpp"
@@ -75,6 +76,9 @@ if args.updates:
 if args.boxed_arithmetic:
     public = '#include "scpp/operators/add_dynamic.hpp"\nscpp::dynamic add(const scpp::dynamic &a,const scpp::dynamic &b) { return scpp::numeric_add(a,b); }\n'
     native = '#include "operators/arithmetic/boxed_numeric.hpp"\nscpp::detail::dynamic_value add(const scpp::detail::dynamic_value &a,const scpp::detail::dynamic_value &b) { return a+b; }\n'
+if args.boxed_compounds:
+    public = '#include "scpp/operators/numeric_compound_replacement_dynamic.hpp"\nscpp::dynamic replacement(const scpp::dynamic &old,const scpp::dynamic &result) { return scpp::numeric_compound_replacement(old,result); }\n'
+    native = '#include "operators/arithmetic/boxed_numeric.hpp"\nscpp::detail::dynamic_value replacement(const scpp::detail::dynamic_value &old,const scpp::detail::dynamic_value &result) { auto checked=old; scpp::detail::assign_numeric_result(checked,result); return checked; }\n'
 rows = []
 with tempfile.TemporaryDirectory(prefix='scpp-operator-cost-') as directory:
     stage = Path(directory)
@@ -95,6 +99,7 @@ with tempfile.TemporaryDirectory(prefix='scpp-operator-cost-') as directory:
     if args.unary: adapters = ['negative_dynamic']
     if args.updates: adapters = ['post_increment_dynamic']
     if args.boxed_arithmetic: adapters = ['add_dynamic']
+    if args.boxed_compounds: adapters = ['numeric_compound_replacement_dynamic']
     cases += [(f'adapter_{identity}', root/f'runtime/include/scpp/generated/public_{identity}.cpp', ['public','include']) for identity in adapters]
     for name, path, includes in cases:
         command = [args.compiler, '-std=c++23', '-O2', *['-I'+str(root/'runtime'/i) for i in includes]]

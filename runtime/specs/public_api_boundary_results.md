@@ -1337,3 +1337,41 @@ Eight-job release core/tool/test build: 25.05 s, peak child RSS 422,212 KiB.
 A subsequent include-isolation correction required another release build:
 22.66 s, 423,704 KiB. Final sanitizer core/tool/test build: 57.40 s,
 639,472 KiB. These are single observations, not whole compiler rebuild measurements.
+
+## B2h — boxed compound replacement against the saved kind
+
+Two ordinary function-set recipes return checked replacements for mixed and dynamic.
+Ten homogeneous arithmetic compound plans reuse them. Each recipe applies the native
+stored-kind check to a private copy of the preserved left value. The live destination
+is not passed to the check; the consumer commits only after successful validation.
+
+The public execution proof covers 19 plain plans and ten boxed plans. For every
+boxed operator it tests all four original-left/RHS numeric-kind pairings while the
+RHS changes the live destination to the opposite numeric kind. This proves both
+required directions: an original int rejects a float result despite a live float,
+and an original float accepts a float result despite a live int. Nonnumeric RHS
+failures retain earlier boolean mutations, results remain independent after later
+writes, and successful numeric paths allocate zero times. Mutable write-back
+parameters and wrong result signatures reject during metadata resolution.
+
+Release and ASan/UBSan with leak detection pass. Four release metadata regressions
+pass in 5.88 s; the sanitized execution/metadata proof passes, followed by three
+additional metadata regressions in 12.15 s. Sealed relocated publication passes in
+both modes, including resolving the checked write-back API from the sealed metadata.
+The existing foreign-exception inspection gap is unchanged; failure propagation is
+verified without claiming structured inspection of every native diagnostic.
+
+Whole execution-proof compile and link: release 2.1177 s, sanitized 3.3675 s.
+The release observation overlapped the sanitizer runtime build and is not an isolated
+caller benchmark. Eight-job core/tool builds: release 31.11 s, peak child RSS
+423,824 KiB; sanitized 67.73 s, 639,228 KiB. No new runtime semantic authority or
+per-operator write-back implementation was introduced.
+
+Isolated single compile-only observations after validation, reproduced with
+`measure_global_operators.py --boxed-compounds`:
+
+| Case | Seconds | Preprocessed bytes |
+| --- | ---: | ---: |
+| Public dynamic replacement caller | 0.0605 | 21,088 |
+| Native dynamic replacement caller | 3.6724 | 3,615,391 |
+| Private dynamic replacement adapter | 4.3058 | 3,691,565 |

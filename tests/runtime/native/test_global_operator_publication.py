@@ -27,11 +27,11 @@ with tempfile.TemporaryDirectory(prefix='scpp-operator-publication-') as directo
     shutil.copy2(args.tool, sdk/'tools/scpp_api_generator')
     seal_package(sdk, ['core'])
     request = stage/'request.json'
-    request.write_text(json.dumps({'package':'app.operators', 'roots':[], 'apis':['add_int64','equal_mixed','add_int64','divide_int64','less_float64','cast_uint64_from_string','cast_string_from_mixed','cast_boolean_from_dynamic','cast_uint64_from_mixed','condition_truthy_string','condition_truthy_dynamic','concat_text_float64','strict_identical_mixed','strict_identical_float64','logical_xor_boolean','isset_dynamic','empty_mixed','clean_float64','strict_identical_boxed_mixed_string','strict_not_identical_boxed_dynamic_int64','concat_text_mixed','concat_text_dynamic','power_int64','shift_left_mixed','compare_uint64','compare_float64','negative_dynamic','complement_int64','post_increment_dynamic','add_mixed','divide_dynamic']}))
+    request.write_text(json.dumps({'package':'app.operators', 'roots':[], 'apis':['add_int64','equal_mixed','add_int64','divide_int64','less_float64','cast_uint64_from_string','cast_string_from_mixed','cast_boolean_from_dynamic','cast_uint64_from_mixed','condition_truthy_string','condition_truthy_dynamic','concat_text_float64','strict_identical_mixed','strict_identical_float64','logical_xor_boolean','isset_dynamic','empty_mixed','clean_float64','strict_identical_boxed_mixed_string','strict_not_identical_boxed_dynamic_int64','concat_text_mixed','concat_text_dynamic','power_int64','shift_left_mixed','compare_uint64','compare_float64','negative_dynamic','complement_int64','post_increment_dynamic','add_mixed','divide_dynamic','numeric_compound_replacement_dynamic']}))
     os.environ['SCPP_API_GENERATOR'] = str(sdk/'tools/scpp_api_generator')
     manifest = concrete_types.generate(request, stage/'app', sdk, [sdk], 'clang++', [])
     assert manifest['sources'] == []
-    assert all(x in manifest['apis'] for x in ['add_int64','equal_mixed','divide_int64','less_float64','cast_uint64_from_string','cast_string_from_mixed','cast_boolean_from_dynamic','cast_uint64_from_mixed','condition_truthy_string','condition_truthy_dynamic','concat_text_float64','strict_identical_mixed','strict_identical_float64','logical_xor_boolean','isset_dynamic','empty_mixed','clean_float64','strict_identical_boxed_mixed_string','strict_not_identical_boxed_dynamic_int64','concat_text_mixed','concat_text_dynamic','power_int64','shift_left_mixed','compare_uint64','compare_float64','negative_dynamic','complement_int64','post_increment_dynamic','add_mixed','divide_dynamic'])
+    assert all(x in manifest['apis'] for x in ['add_int64','equal_mixed','divide_int64','less_float64','cast_uint64_from_string','cast_string_from_mixed','cast_boolean_from_dynamic','cast_uint64_from_mixed','condition_truthy_string','condition_truthy_dynamic','concat_text_float64','strict_identical_mixed','strict_identical_float64','logical_xor_boolean','isset_dynamic','empty_mixed','clean_float64','strict_identical_boxed_mixed_string','strict_not_identical_boxed_dynamic_int64','concat_text_mixed','concat_text_dynamic','power_int64','shift_left_mixed','compare_uint64','compare_float64','negative_dynamic','complement_int64','post_increment_dynamic','add_mixed','divide_dynamic','numeric_compound_replacement_dynamic'])
     logical_request={'action':'resolve_operator','metadata':json.loads((sdk/'metadata/public_api.json').read_text()),
                      'request':{'operation':'logical_not','operand':'dynamic'}}
     logical_plan=json.loads(subprocess.check_output([str(sdk/'tools/scpp_api_generator')],input=json.dumps(logical_request),text=True))
@@ -42,10 +42,16 @@ with tempfile.TemporaryDirectory(prefix='scpp-operator-publication-') as directo
     compound_plan=json.loads(subprocess.check_output([str(sdk/'tools/scpp_api_generator')],input=json.dumps(compound_request),text=True))
     assert compound_plan['calculation']['api'] in manifest['apis']
     assert compound_plan['left_conversion']['kind']==compound_plan['right_conversion']['kind']=='identity'
+    boxed_request={'action':'resolve_compound','metadata':logical_request['metadata'],
+                   'request':{'operation':'add_assign','target':'dynamic','right':'dynamic'}}
+    boxed_plan=json.loads(subprocess.check_output([str(sdk/'tools/scpp_api_generator')],input=json.dumps(boxed_request),text=True))
+    assert boxed_plan['writeback_conversion']['kind']=='checked_saved_value'
+    assert boxed_plan['writeback_conversion']['api'] in manifest['apis']
     (stage/'main.cpp').write_text('''#include "scpp/operators/add_int64.hpp"
 #include "scpp/operators/equal_mixed.hpp"
 #include "scpp/operators/add_mixed.hpp"
 #include "scpp/operators/divide_dynamic.hpp"
+#include "scpp/operators/numeric_compound_replacement_dynamic.hpp"
 #include "scpp/operators/divide_int64.hpp"
 #include "scpp/operators/less_float64.hpp"
 #include "scpp/conversions/cast_uint64_from_string.hpp"
@@ -103,6 +109,7 @@ int main() {
         && static_cast<bool>(LOGICAL_NOT_EXPRESSION)
         && scpp::numeric_add(value,value).get_int().native_value()==14
         && scpp::numeric_divide(scpp::dynamic(scpp::float64(12)),scpp::dynamic(scpp::int64(3))).get_float().native_value()==4
+        && BOXED_WRITEBACK(scpp::dynamic(scpp::int64(10)),scpp::dynamic(scpp::int64(13))).get_int().native_value()==13
         && destination.native_value()==13
         && old.get_int().native_value()==1 && updated.get_int().native_value()==2
         && reset_value.native_value()==0.0
@@ -114,7 +121,7 @@ int main() {
         && scpp::cast_uint64(scpp::string("18446744073709551615")).native_value()==18446744073709551615ULL
         && static_cast<bool>(scpp::numeric_less(scpp::float64(1.0),scpp::float64(2.0))) ? 0 : 1;
 }
-'''.replace('LOGICAL_NOT_EXPRESSION',logical_expression).replace('COMPOUND_CALCULATION',compound_plan['calculation']['function']))
+'''.replace('LOGICAL_NOT_EXPRESSION',logical_expression).replace('COMPOUND_CALCULATION',compound_plan['calculation']['function']).replace('BOXED_WRITEBACK',boxed_plan['writeback_conversion']['function']))
     flags = ['-fsanitize=address,undefined', '-fno-sanitize-recover=all'] if args.sanitize else []
     subprocess.run(['clang++','-std=c++23','-O2',*flags,'-I'+str(sdk/'public'),str(stage/'main.cpp'),
         str(sdk/'lib/libcore.a'),'-fuse-ld=mold','-o',str(stage/'proof')], check=True)

@@ -339,6 +339,8 @@
     "divide_mixed",
     "divide_dynamic",
     "remainder_mixed",
-    "remainder_dynamic"
+    "remainder_dynamic",
+    "numeric_compound_replacement_mixed",
+    "numeric_compound_replacement_dynamic"
   ]
 }

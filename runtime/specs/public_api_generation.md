@@ -653,3 +653,20 @@ ordering/comparison groups. Results preserve the boxed family. Native arithmetic
 owns payload-kind dispatch, numeric promotion, zero-divisor errors and integer-only
 remainder. This slice does not admit boxed/scalar or mixed/dynamic pairs. Compounds
 still require their separate preserved-left-kind check before live write-back.
+
+## Checked compound replacement
+
+A compound admission rule may name `writeback_function_set`. Its target-specific
+variant must accept two const-reference target values and return an owned target
+value. The resolver emits `checked_saved_value` with ordered arguments `old_left`
+and `calculated`. The consumer calls it during `convert_writeback`, then commits
+the returned replacement. It must not substitute the live destination for either
+argument. Invalid mutable-argument or mismatched-result signatures reject.
+
+Homogeneous boxed arithmetic uses two ordinary recipes, one per family. Each copies
+the saved left into private storage, applies the existing native stored-kind check
+and assignment there, and returns that checked value. It cannot modify the live
+destination; native diagnostic ownership and kind rules remain unchanged. Successful
+numeric storage stays inline with zero allocations. The same recipes serve all five
+arithmetic compounds without per-operator or operand-pair implementations. Text,
+scalar-peer, carrier and indexed destination protocols remain separate work.

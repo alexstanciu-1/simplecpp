@@ -2094,6 +2094,20 @@
               "int64",
               "float64"
             ]
+          },
+          {
+            "target": "mixed",
+            "right": [
+              "mixed"
+            ],
+            "writeback_function_set": "numeric_compound_replacement"
+          },
+          {
+            "target": "dynamic",
+            "right": [
+              "dynamic"
+            ],
+            "writeback_function_set": "numeric_compound_replacement"
           }
         ]
       },
@@ -2112,6 +2126,20 @@
               "int64",
               "float64"
             ]
+          },
+          {
+            "target": "mixed",
+            "right": [
+              "mixed"
+            ],
+            "writeback_function_set": "numeric_compound_replacement"
+          },
+          {
+            "target": "dynamic",
+            "right": [
+              "dynamic"
+            ],
+            "writeback_function_set": "numeric_compound_replacement"
           }
         ]
       },
@@ -2130,6 +2158,20 @@
               "int64",
               "float64"
             ]
+          },
+          {
+            "target": "mixed",
+            "right": [
+              "mixed"
+            ],
+            "writeback_function_set": "numeric_compound_replacement"
+          },
+          {
+            "target": "dynamic",
+            "right": [
+              "dynamic"
+            ],
+            "writeback_function_set": "numeric_compound_replacement"
           }
         ]
       },
@@ -2148,6 +2190,20 @@
               "int64",
               "float64"
             ]
+          },
+          {
+            "target": "mixed",
+            "right": [
+              "mixed"
+            ],
+            "writeback_function_set": "numeric_compound_replacement"
+          },
+          {
+            "target": "dynamic",
+            "right": [
+              "dynamic"
+            ],
+            "writeback_function_set": "numeric_compound_replacement"
           }
         ]
       },
@@ -2159,6 +2215,20 @@
             "right": [
               "int64"
             ]
+          },
+          {
+            "target": "mixed",
+            "right": [
+              "mixed"
+            ],
+            "writeback_function_set": "numeric_compound_replacement"
+          },
+          {
+            "target": "dynamic",
+            "right": [
+              "dynamic"
+            ],
+            "writeback_function_set": "numeric_compound_replacement"
           }
         ]
       },
@@ -4815,6 +4885,38 @@
           ],
           "uses": [
             "${variant}"
+          ]
+        }
+      }
+    },
+    "numeric_compound_replacement": {
+      "variants": {
+        "mixed": {},
+        "dynamic": {}
+      },
+      "function": {
+        "namespace": "scpp",
+        "header": "scpp/operators/numeric_compound_replacement_${variant}.hpp",
+        "source": "include/scpp/generated/public_numeric_compound_replacement_${variant}.cpp",
+        "operation": {
+          "name": "numeric_compound_replacement",
+          "returns": "${variant}",
+          "parameters": [
+            {
+              "name": "saved_left",
+              "type": "${variant}",
+              "passing": "const_ref"
+            },
+            {
+              "name": "calculated",
+              "type": "${variant}",
+              "passing": "const_ref"
+            }
+          ],
+          "transport": "native",
+          "body": "auto checked = ${native:saved_left}; scpp::detail::assign_numeric_result(checked, ${native:calculated}); return checked;",
+          "includes": [
+            "operators/arithmetic/boxed_numeric.hpp"
           ]
         }
       }
