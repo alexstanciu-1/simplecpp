@@ -1470,3 +1470,16 @@ and string overloads remain. Key kind validation precedes null-on-miss handling;
 no reference into receiver storage escapes. Numeric-string key normalization remains
 a property of the selected runtime build profile. This method does not perform
 source expression evaluation or expose a mutable path handle.
+
+### Direct boxed write staging
+
+`require_write_key_mixed` publishes `scpp::require_write_key(const mixed&)` through
+the ordinary function metadata. It borrows the native mixed key only during the
+check and returns no handle/reference. This is a lowering-support operation, not
+a newly registered source builtin. Mixed-key boxed `set` overloads use the same
+validation and self-alias handling as existing integer/string overloads.
+
+A prepared caller must materialize and validate its key before RHS evaluation,
+then perform the store on current receiver storage after RHS conversion. The
+ordinary eager C++ method call cannot enforce source expression order by itself.
+Receiver/path validity is intentionally not checked by the key-only function.

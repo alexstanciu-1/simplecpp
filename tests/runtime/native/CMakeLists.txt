@@ -542,3 +542,7 @@ add_executable(test_public_index_read test_public_index_read.cpp)
 target_link_libraries(test_public_index_read PRIVATE scpp_core_api)
 target_compile_definitions(test_public_index_read PRIVATE SCPP_TEST_PHP_KEYS=$<BOOL:${SCPP_LANGUAGE_TARGET_PHP}>)
 add_test(NAME scpp_test_public_index_read COMMAND test_public_index_read)
+
+add_executable(test_public_index_write test_public_index_write.cpp)
+target_link_libraries(test_public_index_write PRIVATE scpp_core_api)
+add_test(NAME scpp_test_public_index_write COMMAND test_public_index_write)

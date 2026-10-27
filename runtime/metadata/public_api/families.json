@@ -1929,6 +1929,23 @@
             "parameters": [
               {
                 "name": "key",
+                "type": "self",
+                "passing": "const_ref"
+              },
+              {
+                "name": "value",
+                "type": "self",
+                "passing": "const_ref"
+              }
+            ],
+            "body": "const auto native_key = ${native:key};\nscpp::index_path_check_store(${self}, native_key, ${native:value});\nif (this == &value) { const auto snapshot = ${native:value}; scpp::index_store(${self}, native_key, snapshot); }\nelse scpp::index_store(${self}, native_key, ${native:value});"
+          },
+          {
+            "name": "set",
+            "returns": "void",
+            "parameters": [
+              {
+                "name": "key",
                 "type": "int64",
                 "passing": "const_ref"
               },
@@ -2355,6 +2372,23 @@
             "expression": "scpp::null_index_read(${self}, scpp::mixed_t(${native:key}))",
             "const": true,
             "transport": "native"
+          },
+          {
+            "name": "set",
+            "returns": "void",
+            "parameters": [
+              {
+                "name": "key",
+                "type": "mixed",
+                "passing": "const_ref"
+              },
+              {
+                "name": "value",
+                "type": "self",
+                "passing": "const_ref"
+              }
+            ],
+            "body": "const auto native_key = ${native:key};\nscpp::index_path_check_store(${self}, native_key, ${native:value});\nif (this == &value) { const auto snapshot = ${native:value}; scpp::index_store(${self}, native_key, snapshot); }\nelse scpp::index_store(${self}, native_key, ${native:value});"
           },
           {
             "name": "set",

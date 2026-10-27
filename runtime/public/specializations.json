@@ -1,6 +1,6 @@
 {
   "abi": "529dd5502370f48d64891818e9439aae72831b990b4027e8abe25c50c1216c21",
-  "api_identity": "bf2817bc009c4b13d79cd2acff2b24f51aaec53753da82f8cbcfd0584432254c",
+  "api_identity": "197cd96f3436c2bdc9d64fe8f2a1cdc6f1c0f0510155aa5515559f2a3a2060f0",
   "apis": {
     "add_dynamic": {
       "header": "scpp/operators/add_dynamic.hpp",
@@ -7629,6 +7629,26 @@
       },
       "source": "include/scpp/generated/public_remainder_uint8.cpp"
     },
+    "require_write_key_mixed": {
+      "header": "scpp/access/require_write_key_mixed.hpp",
+      "namespace": "scpp",
+      "operation": {
+        "expression": "scpp::require_write_key(${native:key})",
+        "includes": [
+          "scpp/index_write.hpp"
+        ],
+        "name": "require_write_key",
+        "parameters": [
+          {
+            "name": "key",
+            "passing": "const_ref",
+            "type": "mixed"
+          }
+        ],
+        "returns": "void"
+      },
+      "source": "include/scpp/generated/public_require_write_key_mixed.cpp"
+    },
     "shell_exec": {
       "header": "scpp/process/shell_exec.hpp",
       "namespace": "scpp",
@@ -10223,7 +10243,10 @@
     "include/scpp/observations/is_int_mixed.hpp",
     "public/scpp/observations/is_float_mixed.hpp",
     "include/scpp/generated/public_is_float_mixed.cpp",
-    "include/scpp/observations/is_float_mixed.hpp"
+    "include/scpp/observations/is_float_mixed.hpp",
+    "public/scpp/access/require_write_key_mixed.hpp",
+    "include/scpp/generated/public_require_write_key_mixed.cpp",
+    "include/scpp/access/require_write_key_mixed.hpp"
   ],
   "generator": "metadata-api-v1",
   "leaves": {
@@ -10403,6 +10426,7 @@
   "public_files": {
     "modules/filesystem/scan.hpp": "12c63684c1896c3de8fd05db1a6ab2a2fbb7eea2a3747ed3de91f44e0e5cf7d7",
     "modules/tasks/worker_pool.hpp": "07fd862bb53ef73be8aec043b5027a4e247723fe8efc4196d8e931ffe820394e",
+    "scpp/access/require_write_key_mixed.hpp": "38c211792425b188691a235412867c85f5bf9830f7d5267c002614e785b0d1cc",
     "scpp/cli/cli_argc.hpp": "7fdf322903540d54e651893dbeeaf56df4ee599110b8058fa631bf02e01fac17",
     "scpp/cli/cli_args.hpp": "d5cce3701f6ee4f716114d745bda82249f78ffb4df2f3036e97e8a833d6d9a8c",
     "scpp/cli/cli_argv.hpp": "cf1c2c3d3e6c0ca08760300351006d937b7c4cbc1fedbbb1773deea622c4d842",
@@ -10508,7 +10532,7 @@
     "scpp/debug/dbg_value_string.hpp": "c9ba23f768a101ae39f6b73d562ae5d0968f03a3b0817b2ea12267e14471735a",
     "scpp/debug/flags.hpp": "db90f39d85ec543ac05fe8d7df0893793059794037a7d50a33e5fc1f41c84f27",
     "scpp/detail/value_layout.hpp": "278a58716d847ef9efa3af4b145a4ba901ea200d366a678bad3252e0b3e307e6",
-    "scpp/dynamic.hpp": "16a9aadf1bcd3f1acef90d3f14e918e7b2ded7c60aa2f0ddb48c37deafbbfe32",
+    "scpp/dynamic.hpp": "0eea0c57b1440975c6a31fda9ef6ed9c152a71c47da34b4150819f37d55de9c2",
     "scpp/error_value.hpp": "33c4dfbb6c5d919dc35ce1c68cba155211e72de47001f1bf77e3b73a3fa60017",
     "scpp/exception_info.hpp": "b7144992f7d9ae80e8c135123124c05ed57ef0b393e251fffdad577840d8c491",
     "scpp/failure.hpp": "d68ed12de1d0a4a645d15ee85d034123eb4e2b8e3f28c7458775ee69b6e18661",
@@ -10554,7 +10578,7 @@
     "scpp/memory/memory_get_peak_usage_real.hpp": "38833eadb3985f852ed2214a27954732e12136039bc85678bc708bf595428305",
     "scpp/memory/memory_get_usage.hpp": "d2550916bb0b4af9beb19b6e3c760aea1be9920c69baca8a8dfc3c5bfc011834",
     "scpp/memory/memory_get_usage_real.hpp": "5641521bf4e087f54c40e466bc4f895a4744f7bdae0a3a558e3a459112920d48",
-    "scpp/mixed.hpp": "aede5ae14327012cedd607d8a26fbf359a72765fda43d9949c7756d3c19fc4be",
+    "scpp/mixed.hpp": "a2be481c4ccb6bf4681ce039141ceb6f781c1808381a98553b8a6577257bd3e9",
     "scpp/null_t.hpp": "db31e1653226ba1fd7655e2c3a42b92374763f9bfebbc56277d6a4e583f9dbc4",
     "scpp/observations/clean_boolean.hpp": "7b008d427e905459d0bc04f673a4ea427c172377591f944cb37daf8de2366be4",
     "scpp/observations/clean_float64.hpp": "9783a603e85e2dbe2cc20812b8367e6cfcfefa66b5a7b2b9371cb7226f7b86d4",
@@ -11144,7 +11168,8 @@
     "include/scpp/generated/public_dbg_labelled_string.cpp",
     "include/scpp/generated/public_is_bool_mixed.cpp",
     "include/scpp/generated/public_is_int_mixed.cpp",
-    "include/scpp/generated/public_is_float_mixed.cpp"
+    "include/scpp/generated/public_is_float_mixed.cpp",
+    "include/scpp/generated/public_require_write_key_mixed.cpp"
   ],
   "types": {
     "dynamic": {

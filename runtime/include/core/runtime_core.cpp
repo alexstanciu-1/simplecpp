@@ -398,3 +398,5 @@
 #include "scpp/generated/public_is_bool_mixed.cpp"
 #include "scpp/generated/public_is_int_mixed.cpp"
 #include "scpp/generated/public_is_float_mixed.cpp"
+
+#include "scpp/generated/public_require_write_key_mixed.cpp"

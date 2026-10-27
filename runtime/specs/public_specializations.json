@@ -379,6 +379,7 @@
     "dbg_labelled_string",
     "mixed_predicate_bool",
     "mixed_predicate_int",
-    "mixed_predicate_float"
+    "mixed_predicate_float",
+    "require_write_key_mixed"
   ]
 }

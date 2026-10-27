@@ -1638,3 +1638,32 @@ ASan/UBSan/LSan: the new public read test and existing mixed/dynamic regression
 tests pass (three tests, 0.06s). Both public headers compile independently; generic
 metadata generation/admission tests pass (1.20s). The sanitizer core compiled once.
 No shared-state mutation or new synchronization was introduced.
+
+## E7 — staged mixed-key direct writes
+
+Expose `require_write_key(const mixed&)` as a public lowering-support function and
+add mixed-key `set` methods to both boxed recipes. The function uses the existing
+native key authority, without adding a source builtin or new key coercions. Callers
+materialize the key, validate it, evaluate/convert the RHS, then call set. A direct
+C++ `set(key_expression(), value_expression())` is not source evaluation staging.
+
+The methods retain existing receiver validation, mixed null bootstrap, dynamic null
+rejection and self-assignment snapshots. Key validation does not inspect receiver
+storage: a valid key permits RHS evaluation before a storage failure. No captured
+heap-interior reference or callback escapes across these stages. Source field-owner
+retention and frontend expression sequencing remain compiler-owned. Nested writes,
+keyed probes/removal and complete prepared access-plan metadata remain unfinished.
+
+The public-only fixture checks invalid-key RHS suppression, failed RHS without
+placeholder insertion, valid-key/null-dynamic failure after RHS effects, key value
+snapshot and local-root replacement before commit, ordinary replacement, mixed COW,
+dynamic identity, self-assignment and allocation-free repeated numeric replacement.
+These manually staged C++ fixtures prove the API can express the protocol; they do
+not claim source frontend adoption.
+
+Validation: four boxed read/write and lifetime tests pass under ASan/UBSan with
+leak detection (0.08s). Six release runtime/metadata checks pass (1.33s), independent
+public header compilation and relocated sealed reuse pass. Repeated numeric writes
+and key validation allocate zero times. Single-run public/native caller compilation:
+0.0548s / 2.1175s. Core was rebuilt once per configuration. Broader nested/access
+protocols and the carrier review gate remain open.

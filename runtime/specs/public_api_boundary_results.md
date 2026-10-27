@@ -2682,3 +2682,30 @@ ASan/UBSan/LSan: the new public read test and existing mixed/dynamic regression
 tests pass (three tests, 0.06s). Both public headers compile independently; generic
 metadata generation/admission tests pass (1.20s). The sanitizer core compiled once.
 No shared-state mutation or new synchronization was introduced.
+
+## E7: staged mixed-key direct writes (2026-10-28)
+
+The ordinary function emitter publishes a key-only validator, and both boxed family
+recipes add mixed-key set overloads through existing native storage validation and
+self-assignment handling. No generator branches, new source builtins or mutable
+interior-reference API were added. Public caller staging remains explicit.
+
+Six release checks pass (1.33s): metadata, packaging, mixed/dynamic regression and
+public indexed read/write proofs. The write fixture checks invalid key suppression
+of RHS effects, failed RHS without storage creation, valid-key receiver failure
+after RHS effects, saved key independence, post-RHS local root replacement, same-
+family ownership and mixed self-assignment. Repeated numeric replacement and key
+validation allocate nothing. This is not a cold string-write allocation claim or
+proof that the frontend emits the demonstrated staging.
+
+Relocated sealed runtime reuse emits zero implementation units and links/runs both
+new set signatures and the validator. All three changed public headers compile
+independently. Single isolated compile-only staged-write caller: 0.0548s public /
+2.1175s native. Core compiled once for release.
+
+Validation: four boxed read/write and lifetime tests pass under ASan/UBSan with
+leak detection (0.08s). Six release runtime/metadata checks pass (1.33s), independent
+public header compilation and relocated sealed reuse pass. Repeated numeric writes
+and key validation allocate zero times. Single-run public/native caller compilation:
+0.0548s / 2.1175s. Core was rebuilt once per configuration. Broader nested/access
+protocols and the carrier review gate remain open.

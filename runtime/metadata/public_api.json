@@ -430,6 +430,26 @@
           "scpp/detail/process_memory.hpp"
         ]
       }
+    },
+    "require_write_key_mixed": {
+      "namespace": "scpp",
+      "header": "scpp/access/require_write_key_mixed.hpp",
+      "source": "include/scpp/generated/public_require_write_key_mixed.cpp",
+      "operation": {
+        "name": "require_write_key",
+        "returns": "void",
+        "parameters": [
+          {
+            "name": "key",
+            "type": "mixed",
+            "passing": "const_ref"
+          }
+        ],
+        "expression": "scpp::require_write_key(${native:key})",
+        "includes": [
+          "scpp/index_write.hpp"
+        ]
+      }
     }
   },
   "capabilities": {
