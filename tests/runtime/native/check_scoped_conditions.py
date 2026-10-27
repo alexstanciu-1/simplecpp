@@ -22,6 +22,7 @@ metadata=concrete_types.metadata(root/'runtime')
 leaves={}
 names={f+'<string>':f+'_text' for f in ['nullable','result','result_or_false','result_or_bool']}
 names['nullable<error_value>']='optional_error'
+for f in ['result','result_or_false','result_or_bool']: names[f+'<nullable<string>>']=f+'_optional_text'
 request={'package':'application.observations','roots':list(names),'leaves':leaves,'names':names}
 envelope={'metadata':metadata,'request':request,'leaves':leaves,'names':names,'imports':{},'layouts':{}}
 def plan(data=envelope,error=None):
@@ -42,9 +43,13 @@ for source,p in conditions.items():
     assert 'const auto &payload =' in units[source]['source']
     assert 'static_assert(std::is_same_v<decltype((' in units[source]['source']
 assert {'condition_truthy_string','condition_truthy_error_value'} <= set(result['apis'])
-# Nested observation is still explicitly owned at the outer boundary.
-assert condition('result<nullable<string>>')['payload_access']=='owned_value'
+# Nested states delegate through the same scoped operation.
+assert condition('result<nullable<string>>')['payload_access']=='scoped_operation'
 condition('nullable<vector<string>>',error='Unsupported condition operand')
+legacy=copy.deepcopy(metadata);del legacy['conditions']['scoped_delegation']
+assert condition('result<nullable<string>>',legacy)['payload_access']=='owned_value'
+bad=copy.deepcopy(metadata);bad['conditions']['scoped_delegation']='flatten'
+condition('nullable<string>',bad,'Unknown scoped condition delegation policy')
 changed=copy.deepcopy(metadata)
 changed['families']['nullable']['carrier']['condition_observation']='missing'
 condition('nullable<string>',changed,'requires one method')
@@ -71,7 +76,7 @@ with tempfile.TemporaryDirectory(prefix='scpp-scoped-condition-') as directory:
     (app/'public').mkdir(parents=True)
     request_file=work/'request.json';request_file.write_text(json.dumps(request))
     manifest=concrete_types.generate(request_file,app,sdk,[sdk],'clang++',[])
-    assert len(manifest['sources'])==5,manifest['sources']
+    assert len(manifest['sources'])==8,manifest['sources']
     code=''.join('#include "scpp/'+name+'.hpp"\n' for name in names.values())+'#include "public_api_guard.hpp"\n'
     for source,name in names.items():
         code+='static scpp::boolean observe(const scpp::'+name+' &value) { '+observation(conditions[source],'value')+' }\n'
@@ -93,11 +98,17 @@ int main() {
     scpp::result_or_false_text rf(text), fs=scpp::result_or_false_text::from_false();
     scpp::result_or_bool_text rb(text), bs=scpp::result_or_bool_text::from_false(), ts=scpp::result_or_bool_text::from_true();
     scpp::optional_error retained(error), no_error(scpp::error_value{});
+    scpp::result_optional_text nested(optional), nested_absent(absent), nested_failed(error);
+    scpp::result_or_false_optional_text nested_false(optional), nested_false_absent(absent), nested_fs=scpp::result_or_false_optional_text::from_false();
+    scpp::result_or_bool_optional_text nested_bool(optional), nested_bool_absent(absent), nested_ts=scpp::result_or_bool_optional_text::from_true();
     const int before=allocations;
     for(int i=0;i<100;++i) {
         CHECK(observe(optional) && observe(result) && observe(rf) && observe(rb));
         CHECK(!observe(absent) && !observe(failed) && !observe(fs) && !observe(bs) && observe(ts));
         CHECK(observe(retained) && !observe(no_error));
+        CHECK(observe(nested) && !observe(nested_absent) && !observe(nested_failed));
+        CHECK(observe(nested_false) && !observe(nested_false_absent) && !observe(nested_fs));
+        CHECK(observe(nested_bool) && !observe(nested_bool_absent) && observe(nested_ts));
     }
     CHECK(allocations==before);
     int evaluations=0;
@@ -134,4 +145,13 @@ int main() {
     (app/'lib').mkdir();subprocess.run(['ar','rcs',str(app/'lib/librecord.a'),*[str(o) for o in objects]],check=True)
     seal_package(app,['record']);reused=concrete_types.generate(request_file,work/'reuse',sdk,[sdk,app],'clang++',[])
     assert not reused['sources']
+    # An older producer without scoped delegation cannot satisfy this demand.
+    publication_path=app/'public/specializations.json'
+    publication=json.loads(publication_path.read_text())
+    legacy_metadata=concrete_types.metadata(sdk);del legacy_metadata['conditions']['scoped_delegation']
+    publication['api_identity']=concrete_types.digest(json.dumps(legacy_metadata,sort_keys=True).encode())
+    publication_path.write_text(json.dumps(publication));seal_package(app,['record'])
+    try:concrete_types.generate(request_file,work/'old_consumer',sdk,[sdk,app],'clang++',[])
+    except ValueError as error:assert 'Incompatible dependency API metadata' in str(error),error
+    else:raise AssertionError('Old observation publication was accepted')
     print(f'PASS: sealed storage reuse; storage compile={storage:.4f}s caller compile={caller_time:.4f}s')

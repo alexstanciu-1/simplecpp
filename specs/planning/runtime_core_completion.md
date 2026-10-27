@@ -1383,3 +1383,25 @@ compiled sentinel regression also passes after adopting the scoped plan.
 Nested state-dependent carrier observations still use owned extraction and may copy;
 noncopyable nested observation remains a gap. Broader selection domains and the two
 pending logical/source-formation decisions still prevent complete carrier sign-off.
+
+## C29 — scoped nested condition composition
+
+Nested conditions now compose through the existing scoped observation method and
+state plan. A successful Result containing an absent nullable remains different from
+outer failure, although both are false in a condition. Successful inner payloads and
+boolean sentinels follow their own rules. This does not extend arithmetic/cast lifting.
+
+The explicit `conditions.scoped_delegation: carrier_states` policy changes publication
+identity, so an older generated nested type lacking the method cannot satisfy the
+new demand. A negative sealed-package test checks that boundary. Unsupported payload
+conditions still reject; removing the policy retains the earlier owned fallback.
+
+The long-string proof now includes all three Result families containing nullable
+strings. A separate native-only record fixture supplies an explicit constant condition
+fact and proves Result<nullable<move-only record>> observation without copies, moves,
+allocations or premature destruction. Fixture metadata is explicitly prepared and
+sealed; it is not an implementation of frontend fact production or source eligibility.
+
+This closes the demonstrated nested scoped-observation gap from C28. The pending
+logical-policy/source-formation decisions, broader admitted selection domains and
+full carrier acceptance review remain. Ownership/callback expansion is not unlocked.

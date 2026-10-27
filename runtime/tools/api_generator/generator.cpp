@@ -111,6 +111,33 @@ namespace scpp::api_generation
                 throw std::runtime_error("Inline storage requires native destruction");
             return resolved;
         }
+        std::string scoped_condition_body(const value &plan, const std::string &operand,
+            std::set<std::string> &headers)
+        {
+            const auto kind = plan.at("kind").text();
+            if (kind=="constant_after_evaluation")
+                return "return scpp::boolean(" + json_text(plan.at("value")) + ");";
+            if (kind=="call") {
+                this->required_apis_.insert(plan.at("api").text());
+                add_include(headers,plan.at("header").text());
+                return "return " + plan.at("function").text() + "(" + operand + ");";
+            }
+            if (kind!="carrier_condition" || plan.get("payload_access")=="owned_value")
+                throw std::runtime_error("Scoped condition cannot extract an owned payload");
+            std::string body;
+            for (const auto &state : plan.at("states").items) {
+                std::string branch;
+                if (state.get("condition")!="payload")
+                    branch = "return scpp::boolean(" + state.at("condition").text() + ");";
+                else if (plan.get("payload_access")=="none")
+                    branch = this->scoped_condition_body(plan.at("payload_condition"),operand,headers);
+                else branch = "return " + expand(plan.at("payload_expression").text(),{{"value",operand}}) + ";";
+                if (state.has("test_expression"))
+                    body += "if (" + expand(state.at("test_expression").text(),{{"value",operand}}) + ") { " + branch + " }\n";
+                else body += branch;
+            }
+            return body;
+        }
 		// A binding body returns its binding result; owned return transport is outside that lambda.
 		std::string operation(const value &op, substitutions context, const std::map<std::string,value> &types,
 			std::set<std::string> &public_headers, std::set<std::string> &private_headers,
@@ -124,16 +151,15 @@ namespace scpp::api_generation
                 const auto parameter = op.at("condition_observation").text();
                 const auto found = context.find("type:"+parameter);
                 if (found==context.end()) throw std::runtime_error("Unknown condition observation parameter");
-                const auto call = callable_condition(this->metadata_, found->second);
+                auto observation_metadata = this->metadata_; observation_metadata["types"] = this->leaves_;
+                const auto observation = scoped_condition(observation_metadata, found->second, this->names_);
                 value resolved = op; resolved.fields.erase("condition_observation");
                 // Validate unknown metadata even when the operation is unavailable.
                 fields_only(resolved,"name kind returns parameters const static noexcept explicit expression body transport includes uses requires_capabilities", "operation");
-                if (call.type==value::kind::null) return "";
-                this->required_apis_.insert(call.at("api").text());
-                add_include(private_headers,call.at("header").text());
+                if (observation.type==value::kind::null || observation.get("kind")=="constant_after_evaluation") return "";
                 const auto operand = op.at("expression").text();
                 resolved.fields.erase("expression");
-                resolved["body"] = "static_assert(std::is_same_v<decltype((" + operand + ")), const ${public:" + parameter + "} &>);\nconst auto &payload = " + operand + ";\nreturn " + call.at("function").text() + "(payload);";
+                resolved["body"] = "static_assert(std::is_same_v<decltype((" + operand + ")), const ${public:" + parameter + "} &>);\nconst auto &payload = " + operand + ";\n" + this->scoped_condition_body(observation,"payload",private_headers);
                 return this->operation(resolved,context,types,public_headers,private_headers,owner,declaration,checks,probe_headers);
             }
 			if (op.has("parameters") && op.at("parameters").type!=value::kind::array) throw std::runtime_error("parameters must be an array");
@@ -308,7 +334,7 @@ namespace scpp::api_generation
 				}
 				header+="    ~"+cpp+"() noexcept;\n"; source+=cpp+"::~"+cpp+"() noexcept { "+local.at("self")+".~"+alias+"(); }\n";
 				source+="static_assert(std::is_nothrow_destructible_v<"+alias+">);\n";
-				for (const auto &op : c.at("methods").items) { std::string declaration; source+=this->operation(op,local,types,public_headers,private_headers,cpp,declaration,checks,probe_headers); header+="    "+declaration; }
+				for (const auto &op : c.at("methods").items) { std::string declaration; source+=this->operation(op,local,types,public_headers,private_headers,cpp,declaration,checks,probe_headers); if (!declaration.empty()) header+="    "+declaration; }
 				header+="};\n";
 			}
 			if (recipe.has("functions")) for (const auto &op : recipe.at("functions").items) { std::string declaration; source+=this->operation(op,context,types,public_headers,private_headers,"",declaration,checks,probe_headers); header+=declaration; }

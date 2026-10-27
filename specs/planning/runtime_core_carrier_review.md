@@ -20,7 +20,7 @@ The following is a current acceptance map, not a count of historical checkpoints
 | One-layer arithmetic, update and compounds | Projection, unary, compound, special and power plan/execution proofs | These establish bounded admitted domains, not arbitrary nested lifting or frontend adoption. |
 | Equality/identity/order preserve the agreed distinctions | Carrier equality/order proofs, original-state dispatch and checked ordering projection | Keep literal/sentinel routes and payload admission in the final closure matrix. |
 | Required casts versus direct conditions | Conversion/projection tests and state-aware condition resolver | Required bool casts must still require payload; observation must not accidentally introduce copying. |
-| No-copy observations | C27 explicit constant leaf facts avoid extraction for inline-record conditions | C28 now uses scoped operations for callable payload conditions, including long strings and retained errors. Nested state-dependent observations still use owned extraction; noncopyable nested cases remain unavailable. |
+| No-copy observations | C27 explicit constant leaf facts avoid extraction for inline-record conditions | C28 covers callable payload conditions; C29 composes nested carrier states, including a noncopyable record fixture with explicit facts. Source fact production remains separate. |
 | Guarded logical operators | Existing contract/compiler audit in the logical-selection note | Known mismatch: new carrier logical_not delegates to general condition conversion. Decision is pending; current green tests must not be used to approve that behavior. Lazy and/or still need the corresponding ordered plan. |
 | Lazy usable-value coalescing | C25 exact scalar policy and short-circuit execution proofs | Metadata admits only int64/float64/boolean/string and three carrier families; wider admitted domains remain. result_or_bool rejection is intentional. |
 | Lazy ternary/Elvis with preserved result state | C26 exact scalar branch joins and short-circuit execution proofs | Exact scalar list remains; admitted record, ownership, boxed/contextual joins are not inferred from this proof. |
@@ -70,7 +70,8 @@ Acceptance proof for the first nonconstant observation path:
 
 C28 implements the callable-payload portion through the existing condition registry
 and operation emitter; see public_api_generation.md for the resulting schema.
-Nested scoped delegation remains an implementation direction within existing owners.
+C29 implements nested scoped delegation through the same condition/state plan.
+The remaining source-fact ownership decision is not resolved by those physical proofs.
 If nested delegation requires a separate semantic owner, stop and report that boundary
 rather than turning this into another independent type registry.
 

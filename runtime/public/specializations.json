@@ -1,6 +1,6 @@
 {
   "abi": "529dd5502370f48d64891818e9439aae72831b990b4027e8abe25c50c1216c21",
-  "api_identity": "ba17ddea8a0e4d45b8c3aeae22e59677df2f07d71583a8ca96e609a5940244e9",
+  "api_identity": "607cb4f96486ad816b45c29aaca390b10689f5d17f45fd152504a79e52fef977",
   "apis": {
     "add_dynamic": {
       "header": "scpp/operators/add_dynamic.hpp",
@@ -9971,7 +9971,7 @@
     "scpp/operators/text_greater_string_string.hpp": "65e88dadef71ee4ef52cdefc9198dcb552a50297ea0a0f52094c70f38b4c32d4",
     "scpp/operators/text_less_equal_string_string.hpp": "7c528e5646bd8494eeab4e566cc44d258820025b719046a1a1dbc07229eb0af7",
     "scpp/operators/text_less_string_string.hpp": "aaef1bbed67f387b40c4032c2b0497d6627c8755ddccffd8c8182c3ff6e87db2",
-    "scpp/result_vector_string.hpp": "bf751705b546c9c7841b491d1ae10fdfe163a414f6e37bc535685db9934c0623",
+    "scpp/result_vector_string.hpp": "45bfe2a5c202e8c44ed98016960336c8506d1cf5a1975f3d92c169f41228ee0c",
     "scpp/selection/coalesce_require_value.hpp": "bc7c32011f36fe22fc50a612e323817ee1a9832a6ff6c877b0db4e5e3b7d041c",
     "scpp/string.hpp": "aac6ff447c6c1135f22cbc12cb0a419c8079df28826de70f0170a07690ec2b69",
     "scpp/text/concat_strings.hpp": "38de27c455eae08bd171ed50b68dd01d781648a430f34914ca989326cdadb301",

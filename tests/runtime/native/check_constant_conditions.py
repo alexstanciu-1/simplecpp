@@ -2,6 +2,7 @@
 import argparse
 import copy
 import json
+import hashlib
 import os
 from pathlib import Path
 import shutil
@@ -20,7 +21,7 @@ parser.add_argument('--sanitize',action='store_true')
 args=parser.parse_args();args.tool=args.tool.resolve()
 metadata=concrete_types.metadata(root/'runtime')
 leaves={'record':{'cpp':'fixture::record','header':'record.hpp','owner':'application.records','capabilities':['move_storage']}}
-names={'nullable<record>':'optional_record'}
+names={'nullable<record>':'optional_record','result<nullable<record>>':'result_optional_record'}
 observations=copy.deepcopy(metadata)
 observations['conditions']['constants']={'record':True}
 
@@ -37,9 +38,10 @@ assert plain['kind']=='constant_after_evaluation' and plain['value'] is True and
 assert optional['kind']=='carrier_condition' and optional['payload_access']=='none'
 assert optional['projection']['payload_available']=='false' and 'expression' not in optional['projection']
 assert optional['payload_condition']==plain
-# Nesting is not silently flattened: observing the inner presence still requires
-# access, so this slice does not claim noncopyable nested observation support.
-resolve('result<nullable<record>>',error='payload access is unavailable')
+# The outer condition borrows the inner carrier, which observes presence without copying.
+nested=resolve('result<nullable<record>>')
+assert nested['payload_access']=='scoped_operation'
+assert nested['payload_condition']['payload_access']=='none'
 changed=copy.deepcopy(observations);changed['conditions']['constants']['record']=False
 assert resolve('record',changed)['value'] is False
 for key,value,error in [('record','true','explicit leaf and boolean'),('nullable<record>',True,'explicit leaf and boolean'),('int64',True,'Conflicting constant')]:
@@ -70,25 +72,36 @@ public:
 '''
 def observation(plan,var):
     if plan['kind']=='constant_after_evaluation':return 'scpp::boolean('+str(plan['value']).lower()+')'
-    assert plan['payload_access']=='none'
+    assert plan['payload_access'] in ['none','scoped_operation']
     body=''
     for state in plan['states']:
-        branch='return '+observation(plan['payload_condition'],var)+';' if state['condition']=='payload' else 'return scpp::boolean('+state['condition']+');'
+        if state['condition']=='payload':
+            result=plan['payload_expression'].replace('${value}',var) if plan['payload_access']=='scoped_operation' else observation(plan['payload_condition'],var)
+        else:result='scpp::boolean('+state['condition']+')'
+        branch='return '+result+';'
         body+=('if ('+state['test_expression'].replace('${value}',var)+') { '+branch+' }' if 'test_expression' in state else branch)
     return '([&]() -> scpp::boolean { '+body+' })()'
 with tempfile.TemporaryDirectory(prefix='scpp-constant-condition-') as directory:
     work=Path(directory);sdk=work/'sdk';app=work/'app'
     for folder in ['metadata','include','public']:shutil.copytree(root/'runtime'/folder,sdk/folder)
+    # Explicit prepared fixture facts for a native-only application record. This
+    # exercises generation, not inference or production frontend formation.
+    fixture_metadata=copy.deepcopy(observations);fixture_metadata['types'].update(leaves)
+    (sdk/'metadata/public_api.json').write_text(json.dumps(fixture_metadata))
+    publication=json.loads((sdk/'public/specializations.json').read_text())
+    publication['api_identity']=hashlib.sha256(json.dumps(concrete_types.metadata(sdk),sort_keys=True).encode()).hexdigest()
+    (sdk/'public/specializations.json').write_text(json.dumps(publication))
     (sdk/'lib').mkdir();(sdk/'tools').mkdir()
     shutil.copy2(args.core,sdk/'lib/libcore.a');shutil.copy2(args.tool,sdk/'tools/scpp_api_generator')
     seal_package(sdk,['core']);os.environ['SCPP_API_GENERATOR']=str(sdk/'tools/scpp_api_generator')
     (app/'public').mkdir(parents=True);(app/'public/record.hpp').write_text(fixture)
     request_file=work/'request.json';request_file.write_text(json.dumps({'package':'application.record_conditions','roots':list(names),'leaves':leaves,'names':names}))
     manifest=concrete_types.generate(request_file,app,sdk,[sdk],'clang++',[])
-    assert len(manifest['sources'])==1
-    code='#include "scpp/optional_record.hpp"\n#include "public_api_guard.hpp"\n'
+    assert len(manifest['sources'])==2
+    code='#include "scpp/optional_record.hpp"\n#include "scpp/result_optional_record.hpp"\n#include "public_api_guard.hpp"\n'
     code+='static scpp::boolean observe(const fixture::record &value) { (void)value; return '+observation(plain,'value')+'; }\n'
     code+='static scpp::boolean observe(const scpp::optional_record &value) { return '+observation(optional,'value')+'; }\n'
+    code+='static scpp::boolean observe(const scpp::result_optional_record &value) { return '+observation(nested,'value')+'; }\n'
     code+=r'''
 #include <cstdlib>
 #include <cstdio>
@@ -102,6 +115,19 @@ void operator delete(void *p,__SIZE_TYPE__) noexcept { std::free(p); }
 static_assert(!std::is_copy_constructible_v<fixture::record>);
 static_assert(!std::is_copy_constructible_v<scpp::optional_record>);
 int main() {
+    static_assert(!std::is_copy_constructible_v<scpp::result_optional_record>);
+    const auto failure=scpp::error_value::make(scpp::string("failure"));
+    fixture::counts nested_counts;
+    {
+        scpp::optional_record inner{fixture::record(nested_counts)};
+        scpp::result_optional_record outer(static_cast<scpp::optional_record&&>(inner));
+        scpp::result_optional_record absent, failed(failure);
+        const auto before=allocations; const auto moves=nested_counts.moves;
+        for(int i=0;i<100;++i) CHECK(observe(outer) && !observe(absent) && !observe(failed));
+        CHECK(allocations==before && nested_counts.moves==moves && nested_counts.destroyed==0);
+        outer=failure; CHECK(!observe(outer) && nested_counts.destroyed==1);
+    }
+    CHECK(nested_counts.destroyed==1);
     const int before=allocations; fixture::counts counts;
     {
         fixture::record value(counts);
@@ -131,14 +157,16 @@ int main() {
     flags=['-std=c++23','-O1']
     if args.sanitize:flags+=['-fsanitize=address,undefined','-fno-omit-frame-pointer']
     common=['clang++',*flags,'-I'+str(app/'public'),'-I'+str(sdk/'public')]
-    start=time.perf_counter();obj=work/'storage.o'
-    subprocess.run([*common,'-I'+str(app/'include'),'-I'+str(sdk/'include'),'-c',str(app/manifest['sources'][0]),'-o',str(obj)],check=True)
+    start=time.perf_counter();objects=[]
+    for index,source in enumerate(manifest['sources']):
+        obj=work/('storage'+str(index)+'.o');objects.append(obj)
+        subprocess.run([*common,'-I'+str(app/'include'),'-I'+str(sdk/'include'),'-c',str(app/source),'-o',str(obj)],check=True)
     storage=time.perf_counter()-start;start=time.perf_counter()
     subprocess.run([*common,'-I'+str(root/'tests/runtime/native'),'-c',str(caller),'-o',str(work/'caller.o')],check=True)
     caller_time=time.perf_counter()-start
-    subprocess.run(['clang++',*flags,str(work/'caller.o'),str(obj),str(args.core.resolve()),'-pthread','-o',str(work/'proof')],check=True)
+    subprocess.run(['clang++',*flags,str(work/'caller.o'),*[str(o) for o in objects],str(args.core.resolve()),'-pthread','-o',str(work/'proof')],check=True)
     subprocess.run([str(work/'proof')],check=True)
-    (app/'lib').mkdir();subprocess.run(['ar','rcs',str(app/'lib/librecord.a'),str(obj)],check=True)
+    (app/'lib').mkdir();subprocess.run(['ar','rcs',str(app/'lib/librecord.a'),*[str(o) for o in objects]],check=True)
     seal_package(app,['record']);reused=concrete_types.generate(request_file,work/'reuse',sdk,[sdk,app],'clang++',[])
     assert not reused['sources']
     print(f'PASS: sealed storage reuse; storage compile={storage:.4f}s caller compile={caller_time:.4f}s')

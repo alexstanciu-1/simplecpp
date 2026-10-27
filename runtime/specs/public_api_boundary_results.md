@@ -2300,3 +2300,31 @@ payload condition, so no runtime implementation unit changes. Its generated head
 has a whitespace-only change from omitted-method emission. The sanitizer generator
 build consequently also rebuilt core through the header dependency; no runtime
 semantic/core performance improvement is claimed from this slice.
+
+
+## C29 — nested scoped conditions (2026-10-27)
+
+The expanded scoped proof covers eight generated units: four string carriers,
+nullable<error_value>, and the three Result families over nullable<string>. Repeated
+observations preserve outer failure, successful inner absence, present long-string
+payloads and boolean sentinel states without observation allocations.
+
+The constant-condition proof adds Result<nullable<move-only record>> to its existing
+nullable record. Its fixture SDK explicitly supplies the record's constant condition
+fact and updates/seals that fixture metadata identity. This is a physical generation
+proof, not a production frontend fact provider. The outer type is statically
+noncopyable; repeated observation performs no moves/allocations, and failure assignment
+destroys the owned record exactly once. Public-only consumers and sealed reuse pass.
+
+Release single-run storage/public-caller costs: two record units **2.9755s / 0.1456s**;
+eight scoped units **10.6669s / 0.1247s**. These execution measurements preceded the
+final opt-in publication policy; that policy selects the same generated observation
+bodies. Final-policy metadata and sanitizer proofs are recorded below. No runtime
+implementation source changed; generator/core rebuilds were affected by the previous
+omitted-method whitespace header and its cleanup in this slice. No overall build-speed
+claim is inferred from these focused timings.
+
+Final-policy validation: six focused metadata tests pass in **8.76s**. ASan/UBSan
+with leak detection passes both compiled proofs and the sealed old-policy rejection.
+Sanitizer storage/public-caller costs: record **2.4146s / 0.1632s**, scoped nested
+**12.0633s / 0.1929s**. No runtime-source or frontend-admission change is implied.

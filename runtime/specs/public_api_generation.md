@@ -1290,3 +1290,26 @@ This first scoped path covers registered callable payload conditions. Nested car
 payloads retain their existing owned observation path; their state-dependent scoped
 composition is not claimed. Constant leaf observations still need no payload access.
 Direct conditions and guarded logical-operator policy remain separate contracts.
+
+## Scoped nested condition delegation
+
+`conditions.scoped_delegation: "carrier_states"` enables scoped composition of
+carrier-state conditions. It is an explicit metadata policy so publication identity
+changes when a nested specialization gains an observation method. Without it,
+callable leaf observation remains available and nested conditions retain their owned
+fallback. Unknown policy values reject.
+
+The shared condition planner first determines whether a payload condition can be
+observed without owned extraction. Registered calls, explicit constants and admitted
+carrier state plans compose. The operation emitter binds the exact internal const
+payload reference, emits the inner carrier's state predicates, and delegates its
+payload branch to the inner scoped method (or returns its constant fact). Each
+concrete type owns a bounded method; code is not generated for every nested-type pair.
+No general callback, raw reference API or recursive arithmetic/cast unwrapping is
+introduced. Source evaluation remains once at the caller; the internal observation
+cannot move or copy the observed payload.
+
+Generation still omits an observation for unsupported payload conditions. Noncopyable
+nested observations are available when their condition facts explicitly support this
+path; physical copyability does not manufacture a condition fact. The prepared source
+fact producer and source formation decisions remain separate from these native proofs.
