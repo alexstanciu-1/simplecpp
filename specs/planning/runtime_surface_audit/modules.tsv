@@ -1,0 +1,16 @@
+module	dependencies	function_rows	distinct_names	declared_types	type_bindings	properties	constants	language_header_function_bindings
+compiler	core	30	16	4	4	0	0	0
+core		55	32	3	26	0	19	20
+curl	core	13	9	2	2	9	19	0
+datetime	core	11	11	0	0	0	0	0
+filesystem	core	35	35	1	1	0	0	0
+io	core	12	10	1	1	0	0	0
+json	core	31	30	4	4	3	0	0
+process	core	5	5	2	2	6	0	0
+regex	core	25	13	0	0	0	2	0
+source	strings	20	20	4	4	0	0	0
+strings	core	73	54	2	2	0	3	11
+tasks	core	406	28	5	5	7	0	0
+tokenizer	core	12	12	1	1	0	0	0
+ui	core	12	12	3	3	0	0	0
+webview	ui	12	12	1	1	0	0	0

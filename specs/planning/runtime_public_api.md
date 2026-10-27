@@ -330,3 +330,25 @@ The value signatures and names are approved, including runtime-only exception ca
 foreign exception propagation and diagnosed outside-catch misuse. Delivery starts
 with the complete inline string API and now includes error_value/exception_info;
 see the value plan for the remaining slices.
+
+
+## Comprehensive surface audit for discussion
+
+The [contract audit and proposed delivery order](runtime_surface_contract_audit.md)
+now covers containers, boxed families, wrappers/ownership, shared operations,
+language/host protocols and all current module catalogs. Runtime public API demand
+and application middleware demand use the same lowering mechanics; runtime-published
+concrete exports are reused by applications. Raw public templates are excluded,
+not the contracts of vector_t, hash_t, mixed_t, dynamic_t or other generic families.
+The audit flags composition, dependency and metadata issues; its proposed sequence
+and owner corrections remain discussion items, not implementation authorization.
+
+## Composition checkpoint and next batch
+
+The complete scan/vector/Result publication proof and application-owned specialization
+reuse are implemented; see the audit checkpoint and runtime boundary results.
+The next bounded implementation batch is the missing small integer widths and their
+concrete key compatibility. It must delegate to existing numeric/key authorities,
+keep public closure template-free, and verify boundary behavior before broadening
+operators or consumers. Subsequent family/module batches follow the comprehensive
+audit; mixed/dynamic are mandatory, not omitted because they are harder to lower.

@@ -116,3 +116,8 @@ Focused tests cover the two nesting examples, aliases/default normalization,
 escaping, registry conflicts and rejected argument forms. Native tests cover
 embedded NULs, copy independence, growth, ownership after container destruction,
 and negative/end indexes. All consumer C++ still passes the template-token guard.
+
+The naming implementation is owned by `runtime/tools/type_names.py`. The compiler
+entrypoint delegates to it; relocated publications include the same tool in their
+private generation SDK. Runtime-selected exports and application-generated demands
+therefore share canonical identities and names.

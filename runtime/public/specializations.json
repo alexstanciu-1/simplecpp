@@ -1,0 +1,66 @@
+{
+  "abi": "b77d497d8c3b8e26a7f0289f3c18608eb44e915448948ac5594f1e0021c23208",
+  "artifacts": [
+    "scpp_runtime_core"
+  ],
+  "generator": "vector-result-v1",
+  "leaves": {
+    "string": {
+      "cpp": "scpp::string",
+      "header": "scpp/string.hpp",
+      "owner": "runtime.core"
+    }
+  },
+  "package": "runtime.core",
+  "public_files": {
+    "modules/filesystem/scan.hpp": "ffbdfa6b4110782d1fb126c4c62fbe3e11fee55eb20b6cf5cb91293bdc4b2c5a",
+    "modules/tasks/worker_pool.hpp": "07fd862bb53ef73be8aec043b5027a4e247723fe8efc4196d8e931ffe820394e",
+    "scpp/detail/value_layout.hpp": "278a58716d847ef9efa3af4b145a4ba901ea200d366a678bad3252e0b3e307e6",
+    "scpp/error_value.hpp": "33c4dfbb6c5d919dc35ce1c68cba155211e72de47001f1bf77e3b73a3fa60017",
+    "scpp/exception_info.hpp": "b7144992f7d9ae80e8c135123124c05ed57ef0b393e251fffdad577840d8c491",
+    "scpp/failure.hpp": "d68ed12de1d0a4a645d15ee85d034123eb4e2b8e3f28c7458775ee69b6e18661",
+    "scpp/integers.hpp": "a7af6e107fd3c33ce9a950804cbe5548702058770e3f850fecf5cc1aee18454c",
+    "scpp/result_vector_string.hpp": "28a6ba3d2c424d5ab7032cc3cfd4982538ab8192e832eee60d2e8c48f4c58753",
+    "scpp/string.hpp": "aac6ff447c6c1135f22cbc12cb0a419c8079df28826de70f0170a07690ec2b69",
+    "scpp/vector_string.hpp": "70e80c911d5040672d5fcc99e89724ae64d49b04c896c1680f90905a529fc929"
+  },
+  "sources": [
+    "include/core/generated/vector_string.cpp",
+    "include/core/generated/result_vector_string.cpp"
+  ],
+  "types": {
+    "result<vector<string>>": {
+      "cpp": "scpp::result_vector_string",
+      "dependencies": [
+        "vector<string>"
+      ],
+      "header": "scpp/result_vector_string.hpp",
+      "layout": [
+        96,
+        8
+      ],
+      "name": "result_vector_string",
+      "native": "scpp::result<scpp::vector_string>",
+      "ordinary_api": "vector-result-v1:result",
+      "owner": "runtime.core",
+      "source": "include/core/generated/result_vector_string.cpp"
+    },
+    "vector<string>": {
+      "cpp": "scpp::vector_string",
+      "dependencies": [
+        "string"
+      ],
+      "header": "scpp/vector_string.hpp",
+      "layout": [
+        40,
+        8
+      ],
+      "name": "vector_string",
+      "native": "scpp::vector_t<scpp::string>",
+      "ordinary_api": "vector-result-v1:vector",
+      "owner": "runtime.core",
+      "source": "include/core/generated/vector_string.cpp"
+    }
+  },
+  "version": 1
+}

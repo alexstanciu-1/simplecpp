@@ -1,0 +1,35 @@
+#include "scpp/vector_string.hpp"
+#include "scpp/result.hpp"
+#include "scpp/result_vector_string.hpp"
+#include "scpp/detail/concrete_access.hpp"
+#include "scpp/detail/error_value_access.hpp"
+#include <type_traits>
+namespace scpp {
+using native_result_vector_string = scpp::result<scpp::vector_string>;
+static_assert(sizeof(native_result_vector_string) == 96 && alignof(native_result_vector_string) == 8);
+static_assert(std::is_nothrow_destructible_v<native_result_vector_string>);
+result_vector_string::result_vector_string(void (*construct)(void *, const void *), const void *context) { construct(this->storage_, context); }
+result_vector_string::result_vector_string() { ::new (this->storage_) native_result_vector_string(); }
+result_vector_string::result_vector_string(const result_vector_string &other) { ::new (this->storage_) native_result_vector_string(detail::concrete_access::get<native_result_vector_string>(other)); }
+result_vector_string::result_vector_string(result_vector_string &&other) { ::new (this->storage_) native_result_vector_string(std::move(detail::concrete_access::get<native_result_vector_string>(other))); }
+result_vector_string &result_vector_string::operator=(const result_vector_string &other) { if (this != &other) detail::concrete_access::get<native_result_vector_string>(*this) = detail::concrete_access::get<native_result_vector_string>(other); return *this; }
+result_vector_string &result_vector_string::operator=(result_vector_string &&other) { if (this != &other) detail::concrete_access::get<native_result_vector_string>(*this) = std::move(detail::concrete_access::get<native_result_vector_string>(other)); return *this; }
+result_vector_string::~result_vector_string() noexcept { detail::concrete_access::get<native_result_vector_string>(*this).~native_result_vector_string(); }
+result_vector_string::result_vector_string(const scpp::vector_string &value) { ::new (this->storage_) native_result_vector_string(value); }
+result_vector_string::result_vector_string(scpp::vector_string &&value) { ::new (this->storage_) native_result_vector_string(std::move(value)); }
+result_vector_string::result_vector_string(const error_value &error) { ::new (this->storage_) native_result_vector_string(detail::error_value_access::get(error)); }
+result_vector_string &result_vector_string::operator=(const scpp::vector_string &value) { detail::concrete_access::get<native_result_vector_string>(*this) = value; return *this; }
+result_vector_string &result_vector_string::operator=(scpp::vector_string &&value) { detail::concrete_access::get<native_result_vector_string>(*this) = std::move(value); return *this; }
+result_vector_string &result_vector_string::operator=(const error_value &error) { detail::concrete_access::get<native_result_vector_string>(*this) = detail::error_value_access::get(error); return *this; }
+boolean result_vector_string::has_value() const { return boolean(detail::concrete_access::get<native_result_vector_string>(*this).has_value().native_value()); }
+boolean result_vector_string::has_error() const { return boolean(detail::concrete_access::get<native_result_vector_string>(*this).has_error().native_value()); }
+scpp::vector_string result_vector_string::value() const { return detail::concrete_access::get<native_result_vector_string>(*this).value(); }
+scpp::vector_string result_vector_string::require_value(const char *context) const { return detail::concrete_access::get<native_result_vector_string>(*this).require_value(context); }
+error_value result_vector_string::error() const { return detail::error_value_access::make([&] { return detail::concrete_access::get<native_result_vector_string>(*this).require_error("error()"); }); }
+error_value result_vector_string::require_error(const char *context) const { return detail::error_value_access::make([&] { return detail::concrete_access::get<native_result_vector_string>(*this).require_error(context); }); }
+boolean take(scpp::vector_string &value, error_value &error, const result_vector_string &source) {
+    const result_vector_string snapshot(source);
+    if (snapshot.has_value()) { value = snapshot.value(); error = error_value(); return boolean(true); }
+    error = snapshot.error(); return boolean(false);
+}
+}

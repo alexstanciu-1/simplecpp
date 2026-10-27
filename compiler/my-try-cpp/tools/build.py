@@ -1,5 +1,6 @@
 """Explicit dependency publication and the independent compiler build (Linux)."""
 import argparse
+import sys
 import fcntl
 import hashlib
 import json
@@ -169,6 +170,11 @@ def publish(kind, clang, jobs):
         shutil.copytree(source / "include", stage / "include")
         if kind == "runtime":
             shutil.copytree(source / "public", stage / "public")
+            if (source / "public/specializations.json").exists():
+                shutil.copytree(source / "metadata", stage / "metadata")
+                (stage / "tools").mkdir()
+                for tool in ("type_names.py", "concrete_types.py", "public_package.py"):
+                    shutil.copy2(source / "tools" / tool, stage / "tools" / tool)
         if kind == "middleware":
             # Support alone consumes this private bridge, paired with this publication.
             (stage / "detail").mkdir()
@@ -180,6 +186,10 @@ def publish(kind, clang, jobs):
         (stage / "lib").mkdir()
         for target in targets:
             shutil.copy2(build / f"lib{target}.a", stage / "lib")
+        if kind == "runtime" and (stage / "public/specializations.json").exists():
+            sys.path.insert(0, str(source / "tools"))
+            from public_package import seal_package
+            seal_package(stage, targets)
         if identity(source, config) != key:
             raise SystemExit("Sources changed during dependency build; retry publication")
         if kind == "runtime":
@@ -205,6 +215,9 @@ add_library(compiler_runtime INTERFACE IMPORTED)
 add_library(compiler_filesystem STATIC IMPORTED)
 set_target_properties(compiler_filesystem PROPERTIES
   IMPORTED_LOCATION "${CMAKE_CURRENT_LIST_DIR}/lib/libscpp_filesystem.a")
+add_library(compiler_filesystem_api INTERFACE IMPORTED)
+set_target_properties(compiler_filesystem_api PROPERTIES
+  INTERFACE_LINK_LIBRARIES "compiler_runtime_api;compiler_filesystem;compiler_runtime_core")
 add_library(compiler_datetime STATIC IMPORTED)
 set_target_properties(compiler_datetime PROPERTIES
   IMPORTED_LOCATION "${CMAKE_CURRENT_LIST_DIR}/lib/libscpp_datetime.a")

@@ -18,3 +18,6 @@
 
 #include "error_value.cpp"
 #include "exception_info.cpp"
+
+#include "generated/vector_string.cpp"
+#include "generated/result_vector_string.cpp"

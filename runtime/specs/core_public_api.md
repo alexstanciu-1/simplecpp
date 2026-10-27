@@ -152,3 +152,33 @@ their native allocation cost. Concurrent mutation/assignment of the same facade
 requires caller synchronization, as for ordinary C++ values.
 
 Compiler facade migration, source spans and textbuilder remain separate work.
+
+## Selected composition and publication
+
+The first selected composed module signature is `scpp::fs::scan(const string&) ->
+result_vector_string`, in `modules/filesystem/scan.hpp`. Its public dependency
+closure contains concrete `result_vector_string`, `vector_string`, `string`,
+`error_value` and scalar types. `scpp_filesystem_api` exposes only public headers.
+
+`runtime/tools/concrete_types.py` materializes prepared vector/Result demands using
+existing metadata representation recipes and shared `runtime/tools/type_names.py`
+canonical naming. `runtime/specs/public_specializations.json` selects physical
+exports; it is not another source semantic registry. Application middleware uses
+this same generator and imports compatible published exports before generating its
+additional demands. This first implementation supports copyable vector/Result
+payloads only; other families and language admission remain separate work.
+
+Generated classes contain an actual native outer object in probed inline storage,
+with concrete stored arguments. They delegate operations to that object. Owned
+accessors never expose interior references. Vector iteration delegates to the native
+preservation mechanism, including owner destruction and structural mutation; its
+cursor is noncopyable/nonmovable and constructed directly in final storage. Result
+extraction preserves the existing selected-output and error-clearing behavior.
+
+Publication seals the selected exports with target/compiler identity, public-header,
+implementation SDK and archive checksums. Conflicting names, ownership or ABI are
+errors, not requests to generate another definition. The compiler publisher exports
+the SDK privately for middleware compilation; ordinary consumers receive only its
+public root. This is compatibility validation for a selected build, not a stable
+cross-toolchain ABI promise. Removing generated demands requires a fresh staging
+output; the generator rejects an old inventory with abandoned implementation units.

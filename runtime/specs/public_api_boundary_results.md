@@ -216,3 +216,49 @@ Final inspection constructs every owned result inside the handler, rather than
 escaping a reference to the caught object. This remains lifetime-safe if the C++
 implementation copies on rethrow. Affected sanitizer, O0/O2 allocation, static/shared
 and dev002 checks were rerun after this tightening; the table records final timings.
+
+## Composed scan and publication proof (2026-10-27)
+
+Selected path: `fs_scan -> result<vector<string>>`. The generated vector stores
+concrete strings directly; the generated Result stores the concrete vector. Both
+outer representations are real inline native objects. The native and public scan
+entrypoints use the same filesystem scan/sort algorithm, constructing their chosen
+stored values directly. A missing rvalue append overload was caught by allocation
+parity testing and corrected before publication.
+
+On WSL/Clang 18/libstdc++, vector storage is 40 bytes and Result storage 96 bytes.
+The three-entry fixture (including a long filename) observes **42 operator-new calls
+for both native and public scan**, excluding path construction. This does not count
+all libc allocations or promise a fixed count on other platforms. Owned extraction
+and copying retain their native value costs; the boundary adds no wrapper allocation
+or second conversion container.
+
+Validation: 12 focused runtime checks, 13 compiler checks, shared scan, ASan/UBSan
+with leak detection, reproducible generation, all public headers independently
+compiled in both tasks modes, package relocation and failed-publication recovery.
+Coverage includes sorted scan results, failures and preserved outputs, invalid
+indices, no-error rejection, copy/move, cursor preservation and lifetime beyond
+owner destruction. The typed hash check uses concrete string keys with embedded
+NULs and independent copies; it is not yet a public hash facade.
+
+The relocated published SDK generated exactly one app-owned `vector<sample::record>`
+implementation while reusing the runtime vector/Result. Its main translation unit
+received only public roots through the actual package CMake targets. Conflicting ABI,
+names, public headers and archives were rejected. Removed demands reject stale output
+inventories. The existing compiler middleware naming entrypoint delegates to the
+runtime owner and works with relocated custom dependency paths.
+
+Current WSL compile observations (`measure_value_api.py --facility composition`,
+Clang 18/O2, three caller trials, no PCH): public scan caller median **0.0808 s**,
+native-header caller **6.3176 s**; preprocessing **11,718 vs 2,556,049 bytes**.
+Individual vector/Result/scan adapter compilations took 4.6351/4.3547/4.5891 s.
+Aggregate core rebuild+archive took 31.4049 s; no-op 0.0373 s. This machine exhibited
+substantial variability, so these are current cost observations, not a matched
+before/after regression result or compiler-wide speedup claim. No dev002 timing was
+performed for this checkpoint. Results are in `compiler/my-try-cpp/build/composition-api-cost.json`.
+
+Reproduce publication reuse after explicit runtime publication with:
+`python3 tests/runtime/native/test_publication_composition.py --package compiler/my-try-cpp/dependencies/runtime`.
+The shared physical generator currently supports prepared copyable vector/Result
+demands. Universal family admission, public hash, boxed families and compiler facade
+migration remain subsequent batches; see the comprehensive surface audit.

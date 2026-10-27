@@ -1,4 +1,5 @@
 #include "modules/filesystem/filesystem.hpp"
+#include "detail/scan.hpp"
 
 #include <algorithm>
 #include <chrono>
@@ -26,14 +27,6 @@ namespace filesystem_detail {
 	hash_t<mixed_t> out;
 	for (auto &name : names) {
 		static_cast<void>(out.append(mixed_t(string_t(std::move(name)))));
-	}
-	return out;
-}
-
-[[nodiscard]] vector_t<string_t> names_to_vector(std::vector<std::string> names) {
-	vector_t<string_t> out;
-	for (auto &name : names) {
-		out.append(string_t(std::move(name)));
 	}
 	return out;
 }
@@ -107,26 +100,9 @@ bool_t mkdir(const string_t &path) {
 }
 
 result<vector_t<string_t>> scan(const string_t &path) {
-	std::error_code error;
-	const auto native_path = scpp::filesystem::filesystem_detail::to_path(path);
-	if (!std::filesystem::is_directory(native_path, error) || error) {
-		return error_t(string_t("fs::scan(): not a directory"));
-	}
-	std::vector<std::string> names;
-	std::filesystem::directory_iterator entries(native_path, error);
-	if (error) {
-		return error_t(string_t("fs::scan(): cannot open directory"));
-	}
-	const std::filesystem::directory_iterator end;
-	while (entries != end) {
-		names.push_back(entries->path().filename().string());
-		entries.increment(error);
-		if (error) {
-			return error_t(string_t("fs::scan(): iteration failed"));
-		}
-	}
-	std::sort(names.begin(), names.end());
-	return scpp::filesystem::filesystem_detail::names_to_vector(std::move(names));
+    return filesystem::filesystem_detail::scan_owned<vector_t<string_t>>(path, [](std::string name) {
+        return string_t(std::move(name));
+    });
 }
 
 result<int_t<>> size(const string_t &path) {

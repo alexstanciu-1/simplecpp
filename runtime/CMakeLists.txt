@@ -67,6 +67,7 @@ if(SCPP_WITH_PROCESS)
 endif()
 
 add_library(scpp_filesystem
+	include/modules/filesystem/public_scan.cpp
 	include/modules/filesystem/file_lock.cpp
 	include/modules/filesystem/filesystem.cpp
 	include/modules/filesystem/snapshot.cpp
@@ -346,3 +347,7 @@ else()
 endif()
 
 add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/../tests/runtime/native ${CMAKE_CURRENT_BINARY_DIR}/tests_runtime_native)
+
+# Focused filesystem consumers receive only public headers and the owning libraries.
+add_library(scpp_filesystem_api INTERFACE)
+target_link_libraries(scpp_filesystem_api INTERFACE scpp_core_api "$<LINK_ONLY:scpp_filesystem>")
