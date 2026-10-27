@@ -62,28 +62,38 @@
       "name": "json_value",
       "runtime": "scpp::shared_p<scpp::json::node>",
       "runtime_header": "modules/json/document.hpp",
-      "public_header": "scpp_compiler/json_value.hpp"
+      "public_header": "scpp_compiler/json_value.hpp",
+      "bridge": "json"
     },
     {
       "type": "vector<json_node>",
       "name": "vector_json",
       "runtime": "scpp::vector_t<scpp::shared_p<scpp::json::node>>",
       "runtime_header": "scpp/vector_t.hpp",
-      "public_header": "scpp_compiler/json_value.hpp"
+      "public_header": "scpp_compiler/json_value.hpp",
+      "bridge": "json",
+      "runtime_dependencies": [
+        "modules/json/document.hpp"
+      ]
     },
     {
       "type": "string",
       "name": "string",
       "runtime": "scpp::string_t",
       "runtime_header": "scpp/string_t.hpp",
-      "public_header": "scpp_compiler/string.hpp"
+      "public_header": "scpp_compiler/string.hpp",
+      "bridge": "string"
     },
     {
       "type": "vector<string>",
       "name": "vector_string",
       "runtime": "scpp::vector_t<scpp::string_t>",
       "runtime_header": "scpp/vector_t.hpp",
-      "public_header": "scpp_compiler/vector_string.hpp"
+      "public_header": "scpp_compiler/vector_string.hpp",
+      "bridge": "containers",
+      "runtime_dependencies": [
+        "scpp/string_t.hpp"
+      ]
     },
     {
       "type": "int<32>",
@@ -91,7 +101,8 @@
       "runtime": "scpp::int_t<std::int32_t>",
       "runtime_header": "scpp/int_t.hpp",
       "public_header": "scpp_compiler/types.hpp",
-      "scalar_rep": "__INT32_TYPE__"
+      "scalar_rep": "__INT32_TYPE__",
+      "bridge": "scalars"
     },
     {
       "type": "int<64>",
@@ -99,7 +110,8 @@
       "runtime": "scpp::int_t<std::int64_t>",
       "runtime_header": "scpp/int_t.hpp",
       "public_header": "scpp_compiler/types.hpp",
-      "scalar_rep": "__INT64_TYPE__"
+      "scalar_rep": "__INT64_TYPE__",
+      "bridge": "scalars"
     },
     {
       "type": "uint<32>",
@@ -107,7 +119,8 @@
       "runtime": "scpp::int_t<std::uint32_t>",
       "runtime_header": "scpp/int_t.hpp",
       "public_header": "scpp_compiler/types.hpp",
-      "scalar_rep": "__UINT32_TYPE__"
+      "scalar_rep": "__UINT32_TYPE__",
+      "bridge": "scalars"
     },
     {
       "type": "uint<64>",
@@ -115,14 +128,16 @@
       "runtime": "scpp::int_t<std::uint64_t>",
       "runtime_header": "scpp/int_t.hpp",
       "public_header": "scpp_compiler/types.hpp",
-      "scalar_rep": "__UINT64_TYPE__"
+      "scalar_rep": "__UINT64_TYPE__",
+      "bridge": "scalars"
     },
     {
       "type": "bool",
       "name": "boolean",
       "runtime": "scpp::bool_t",
       "runtime_header": "scpp/bool_t.hpp",
-      "public_header": "scpp_compiler/types.hpp"
+      "public_header": "scpp_compiler/types.hpp",
+      "bridge": "scalars"
     }
   ]
 }

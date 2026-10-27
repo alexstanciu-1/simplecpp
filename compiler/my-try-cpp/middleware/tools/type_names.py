@@ -163,9 +163,15 @@ class Registry:
             return Type(mapping["name"])
         return Type(node.name, tuple(self.structural_tree(x) for x in node.arguments))
 
-    def bindings(self):
-        mappings = [m for m in self.mappings.values() if "public_header" in m]
-        headers = sorted({m["runtime_header"] for m in mappings})
+    def bindings(self, family):
+        if family not in ("scalars", "string", "containers", "json"):
+            raise ValueError(f"Unknown bridge family: {family}")
+        public = [m for m in self.mappings.values() if "public_header" in m]
+        if any(m.get("bridge") not in ("scalars", "string", "containers", "json") for m in public):
+            raise ValueError("Every public mapping needs a known bridge family")
+        mappings = [m for m in public if m["bridge"] == family]
+        headers = sorted({h for m in mappings
+                          for h in [m["runtime_header"], *m.get("runtime_dependencies", [])]})
         return "#pragma once\n" + "".join(f'#include "{h}"\n' for h in headers) + (
             "namespace scpp::compiler_support::bindings {\n" + "".join(
                 f'using native_{m["name"]} = {m["runtime"]};\n' for m in mappings) + "}\n")
@@ -175,14 +181,16 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("types", nargs="*")
     parser.add_argument("--registry", type=Path, default=Path(__file__).resolve().parents[1] / "types.json")
-    parser.add_argument("--bindings", type=Path)
+    parser.add_argument("--bindings-dir", type=Path)
     args = parser.parse_args()
     registry = Registry(json.loads(args.registry.read_text()))
-    if args.bindings:
-        text = registry.bindings()
-        args.bindings.parent.mkdir(parents=True, exist_ok=True)
-        if not args.bindings.exists() or args.bindings.read_text() != text:
-            args.bindings.write_text(text)
+    if args.bindings_dir:
+        args.bindings_dir.mkdir(parents=True, exist_ok=True)
+        for family in ("scalars", "string", "containers", "json"):
+            text = registry.bindings(family)
+            path = args.bindings_dir / f"runtime_{family}.hpp"
+            if not path.exists() or path.read_text() != text:
+                path.write_text(text)
     for requested in args.types:
         identity, name = registry.resolve(requested)
         print(f"{identity} => {name}")

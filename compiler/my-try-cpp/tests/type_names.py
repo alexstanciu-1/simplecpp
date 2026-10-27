@@ -69,8 +69,21 @@ class NamingTests(unittest.TestCase):
                 names.Registry(data)
 
     def test_private_bindings_use_registry(self):
-        text = self.registry.bindings()
-        self.assertIn("native_vector_string = scpp::vector_t<scpp::string_t>", text)
+        text = self.registry.bindings("scalars")
+        self.assertNotIn("json", text)
+        self.assertNotIn("vector", text)
+        self.assertNotIn("string", text)
+        containers = self.registry.bindings("containers")
+        self.assertIn("native_vector_string = scpp::vector_t<scpp::string_t>", containers)
+        self.assertIn('#include "scpp/string_t.hpp"', containers)
+        self.assertNotIn("json", containers)
+        strings = self.registry.bindings("string")
+        self.assertNotIn("vector", strings)
+        self.assertNotIn("json", strings)
+        self.assertIn("native_string = scpp::string_t", strings)
+        document = self.registry.bindings("json")
+        self.assertIn('#include "modules/json/document.hpp"', document)
+        self.assertIn('#include "scpp/vector_t.hpp"', document)
         self.assertIn("native_int32 = scpp::int_t<std::int32_t>", text)
         self.assertIn("native_uint64 = scpp::int_t<std::uint64_t>", text)
 

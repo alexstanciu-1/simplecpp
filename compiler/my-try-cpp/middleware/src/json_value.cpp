@@ -1,3 +1,4 @@
+#include "runtime_json.hpp"
 #include "scalar_access.hpp"
 #include "scpp_compiler/json_value.hpp"
 #include "string_state.hpp"

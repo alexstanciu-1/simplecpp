@@ -1,3 +1,4 @@
+#include "runtime_containers.hpp"
 #include "scalar_access.hpp"
 #include "scpp_compiler/vector_string.hpp"
 #include "string_state.hpp"

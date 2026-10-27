@@ -15,7 +15,7 @@ def generate():
               "\t\tboolean() noexcept;\n\t\tboolean(bool value) noexcept;\n",
               "\t\texplicit operator bool() const noexcept;\n\t\tboolean operator!() const noexcept;\n",
               "\n\tprivate:\n\t\tfriend struct scalar_access;\n\t\tbool value_;\n\t};\n\n"]
-    access = [banner, '#pragma once\n#include "scpp_compiler/types.hpp"\n#include "runtime_bindings.hpp"\n\n',
+    access = [banner, '#pragma once\n#include "scpp_compiler/types.hpp"\n#include "runtime_scalars.hpp"\n\n',
               'namespace scpp::compiler_support\n{\n\tstruct scalar_access\n\t{\n',
               '\t\tstatic bindings::native_boolean get(boolean value) noexcept\n\t\t{\n\t\t\treturn bindings::native_boolean(value.value_);\n\t\t}\n']
     source = [banner, '#include "scalar_access.hpp"\n#include "scpp/generated/operators.hpp"\n#include "operators/isset/isset.hpp"\n\n',

@@ -235,7 +235,8 @@ incremental target: model and support edits automatically rebuild affected objec
 Ordinary stage-source edits do not rebuild support. General middleware and runtime
 still require explicit publication commands.
 
-The middleware publishes a private `detail/` native bridge alongside its public
+The middleware publishes focused scalar, string, container and JSON headers in a
+private `detail/` native bridge alongside its public
 headers and library. Only support implementations can include this bridge and the
 runtime template headers; compiler/model consumers retain the template-free include
 boundary. Support never compiles against live `middleware/src` or generated build

@@ -8,14 +8,17 @@ find_package(Python3 REQUIRED COMPONENTS Interpreter)
 execute_process(COMMAND "${Python3_EXECUTABLE}" -B
   "${CMAKE_CURRENT_SOURCE_DIR}/tools/scalar_types.py" --check
   COMMAND_ERROR_IS_FATAL ANY)
-set(BINDINGS "${CMAKE_CURRENT_BINARY_DIR}/generated/runtime_bindings.hpp")
-add_custom_command(OUTPUT "${BINDINGS}"
+set(BINDINGS)
+foreach(family scalars string containers json)
+  list(APPEND BINDINGS "${CMAKE_CURRENT_BINARY_DIR}/generated/runtime_${family}.hpp")
+endforeach()
+add_custom_command(OUTPUT ${BINDINGS}
   COMMAND "${Python3_EXECUTABLE}" -B "${CMAKE_CURRENT_SOURCE_DIR}/tools/type_names.py"
-    --bindings "${BINDINGS}"
+    --bindings-dir "${CMAKE_CURRENT_BINARY_DIR}/generated"
   DEPENDS tools/type_names.py types.json
   VERBATIM)
 add_library(compiler_middleware STATIC src/textbuilder.cpp src/types.cpp src/string.cpp src/vector_string.cpp
-  src/json_value.cpp src/host.cpp "${BINDINGS}")
+  src/json_value.cpp src/host.cpp ${BINDINGS})
 target_compile_features(compiler_middleware PUBLIC cxx_std_23)
 target_include_directories(compiler_middleware PUBLIC include)
 target_include_directories(compiler_middleware PRIVATE "${CMAKE_CURRENT_BINARY_DIR}/generated")

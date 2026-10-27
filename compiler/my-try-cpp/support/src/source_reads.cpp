@@ -1,5 +1,6 @@
 #include "scpp_compiler/source_reads.hpp"
 #include "scalar_access.hpp"
+#include "scpp/vector_t.hpp"
 #include "string_state.hpp"
 #include "modules/tasks/tasks.hpp"
 #include "modules/datetime/datetime.hpp"

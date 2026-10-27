@@ -1,5 +1,6 @@
 #include "scpp_compiler/file_records.hpp"
 #include "scalar_access.hpp"
+#include "scpp/vector_t.hpp"
 #include "string_state.hpp"
 #include "scpp/hash_t.hpp"
 #include "scpp/memory.hpp"

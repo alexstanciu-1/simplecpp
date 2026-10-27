@@ -1,6 +1,6 @@
 #pragma once
 #include "scpp_compiler/string.hpp"
-#include "runtime_bindings.hpp"
+#include "runtime_string.hpp"
 
 namespace scpp::compiler_support
 {

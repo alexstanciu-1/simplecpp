@@ -172,7 +172,9 @@ def publish(kind, clang, jobs):
             (stage / "detail").mkdir()
             for header in ("scalar_access.hpp", "string_state.hpp"):
                 shutil.copy2(source / "src" / header, stage / "detail" / header)
-            shutil.copy2(build / "generated/runtime_bindings.hpp", stage / "detail/runtime_bindings.hpp")
+            for family in ("scalars", "string", "containers", "json"):
+                header = f"runtime_{family}.hpp"
+                shutil.copy2(build / "generated" / header, stage / "detail" / header)
         (stage / "lib").mkdir()
         for target in targets:
             shutil.copy2(build / f"lib{target}.a", stage / "lib")
