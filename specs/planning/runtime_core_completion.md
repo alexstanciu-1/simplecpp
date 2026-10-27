@@ -1085,3 +1085,18 @@ The proof generates ten application units and needs no runtime/generator rebuild
 This closes the initial sentinel operation execution gap. It does not imply every
 width/payload pair, source formation rule, compound/update or lazy protocol is
 covered. Those and scoped observations remain before the complete carrier review.
+
+## C16 — source formation ownership audit and decision gate
+
+[The formation-boundary audit](runtime_core_formation_boundary.md) identifies the
+existing semantic owners and separates generic definition validity, application
+formation, boundary/operation admission and physical realization. These cannot be
+collapsed into C++ copy traits or one source-admitted flag. In particular, existing
+Result tests distinguish a formed application from permission to transport its
+payload; nullable result_payload and payload copyability are also independent.
+
+The proposed scope-preserving route keeps source semantic checks in the compiler
+and provides a prepared-fact boundary for physical demands. Extracting a shared C++
+semantic formation model is a wider cross-owner refactor requiring confirmation.
+The question has been raised; neither direction is silently implemented or credited
+as complete. Scoped observations and other admitted core work can proceed meanwhile.
