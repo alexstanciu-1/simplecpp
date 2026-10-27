@@ -23,6 +23,11 @@ parser.add_argument('--sanitize', action='store_true')
 args = parser.parse_args()
 args.tool = args.tool.resolve()
 metadata = concrete_types.metadata(root / 'runtime')
+# A metadata-owned static factory uses the same native transport as instance methods.
+# Keep this fixture addition separate from the production API until sentinel recipes land.
+metadata['families']['nullable']['classes'][0]['methods'].append({
+    'name':'absent', 'static':True, 'returns':'self', 'parameters':[],
+    'expression':'${native_type}()', 'transport':'native'})
 # Use the production nullable recipe and its shared capability facts.
 leaves = {name:{'cpp':'fixture::'+name, 'header':'fixture_records.hpp', 'owner':'application.records',
                 'capabilities':caps}
@@ -209,7 +214,7 @@ int main() {
     const int before = allocations;
     int destructions = 0;
     {
-        scpp::optional_move_record empty_value;
+        auto empty_value = scpp::optional_move_record::absent();
         CHECK(absent(empty_value)); empty_value.reset(); CHECK(destructions == 0);
         fixture::move_record first(destructions);
         scpp::optional_move_record source(static_cast<fixture::move_record&&>(first));

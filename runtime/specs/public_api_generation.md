@@ -57,12 +57,18 @@ classes. Native-result factory construction supports nonmovable objects directly
 in final storage.
 
 An operation describes `name`, `kind` (method/constructor/function), `returns`,
-`parameters`, optional `const`, `noexcept`, `explicit`, `transport`, `uses`,
+`parameters`, optional `const`, `static`, `noexcept`, `explicit`, `transport`, `uses`,
 `includes`, and exactly one `expression` or `body`. Constructor expressions supply
 native constructor arguments. Parameters specify `name`, `type`, and `passing`
 (value/const_ref/ref/move_ref). Selected named signatures and dependencies are
 resolved structurally; the tool does not parse C++ to discover snippet dependencies.
 Unknown fields, bindings, placeholders and selected types are errors.
+
+`static: true` selects a class-owned method without a receiver. It cannot be a
+constructor/free function, `const`, or `explicit`; `${self}` is unavailable. Its
+parameters and owned return transport use the ordinary operation mechanism, so a
+metadata-defined factory can construct native storage directly without public tag
+types or a payload copy. Only the declaration carries the C++ `static` qualifier.
 
 Substitutions include:
 

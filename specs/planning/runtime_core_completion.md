@@ -1001,3 +1001,18 @@ Result payload admissions. Existing source result_payload and transfer constrain
 remain to be enforced in the broader formation work. Sentinel recipes, remaining
 operator domains, scoped observations and the first complete carrier review remain
 open. Existing runtime generated code stays byte-identical (332 units).
+
+## C12 — metadata-owned static factory transport
+
+The shared operation emitter now supports static class methods with the existing
+parameter and native-result transport. This supplies named sentinel factories
+without adding public native tag types or family-name branches. Static methods
+cannot use a receiver, const qualification or constructor/free-function syntax.
+
+The existing application nullable lifecycle proof exercises an absent factory with
+a noncopyable, non-default-constructible payload. It constructs the wrapper directly
+in owned storage, checks absence/reset, and retains the allocation/lifetime and
+sealed reuse checks. This is factory infrastructure, not completion of either
+sentinel recipe. Next add result_or_false/result_or_bool metadata and prove their
+state/take contracts, including false payload versus false sentinel and true sentinel
+without payload output assignment. The complete carrier review remains open.

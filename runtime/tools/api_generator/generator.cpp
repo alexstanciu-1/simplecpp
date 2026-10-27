@@ -116,12 +116,19 @@ namespace scpp::api_generation
 		{
 			if (op.has("parameters") && op.at("parameters").type!=value::kind::array) throw std::runtime_error("parameters must be an array");
             if (op.has("uses") && op.at("uses").type!=value::kind::array) throw std::runtime_error("uses must be an array");
-            fields_only(op,"name kind returns parameters const noexcept explicit expression body transport includes uses requires_capabilities", "operation");
+            fields_only(op,"name kind returns parameters const static noexcept explicit expression body transport includes uses requires_capabilities", "operation");
 			if (op.has("expression")==op.has("body")) throw std::runtime_error("Operation needs exactly one expression or body");
 			if (!this->selected(op,types)) return "";
             this->capability_checks(op,types,checks,probe_headers);
 			auto kind=op.get("kind","method");
 			if (kind!="method" && kind!="constructor" && kind!="function") throw std::runtime_error("Unknown operation kind");
+            if (op.has("static") && op.at("static").type!=value::kind::boolean)
+                throw std::runtime_error("static must be boolean");
+            if (op.yes("static")) {
+                if (owner.empty() || kind!="method" || op.yes("const") || op.yes("explicit"))
+                    throw std::runtime_error("Static operation must be a non-const class method");
+                context.erase("self");
+            }
 			if (op.has("uses")) for (const auto &dependency : op.at("uses").items) {
                 auto key=expand(dependency.text(),context); auto t=this->type(key,types);
                 context["public:"+key]=t.at("cpp").text(); context["native:"+key]=t.get("native",t.at("cpp").text());
@@ -167,7 +174,7 @@ namespace scpp::api_generation
 					body="return "+expand(t.at("construct").text(),{{"factory",factory},{"value","("+factory+")()"},{"cpp",result},{"native",t.get("native")}})+";";
 				} else throw std::runtime_error("Unknown result transport");
 			}
-			declaration=(op.yes("explicit") ? "explicit " : "")+(result.empty()?"":result+" ")+name+arguments+";\n";
+			declaration=std::string(op.yes("static") ? "static " : "")+(op.yes("explicit") ? "explicit " : "")+(result.empty()?"":result+" ")+name+arguments+";\n";
 			return (result.empty()?"":result+" ")+(owner.empty()?"":owner+"::")+name+arguments+" { "+body+" }\n";
 		}
 		void claim(const std::string &name, const std::string &identity)

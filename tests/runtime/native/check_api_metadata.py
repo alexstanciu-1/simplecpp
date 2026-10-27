@@ -193,3 +193,28 @@ dynamic['imports']=result['types']
 for key,record in dynamic['imports'].items():dynamic['names'][key]=record['name']
 assert invoke(dynamic)['units']==[]
 print('PASS: dynamic recipe, explicit conversion signatures, family-preserving iteration and import reuse')
+
+# Static factories have class ownership but no receiver or const qualification.
+factory = copy.deepcopy(base)
+factory['metadata']['families']['sequence'] = factory['metadata']['families'].pop('vector')
+factory['request'] = {'package':'test', 'roots':['sequence<string>']}
+factory['names'] = {}
+method = {'name':'make_empty', 'static':True, 'returns':'self',
+          'expression':'${native_type}()', 'transport':'native'}
+factory['metadata']['families']['sequence']['classes'][0]['methods'].append(method)
+u = invoke(factory)['units'][0]
+assert 'static scpp::sequence_0string_ make_empty();' in u['header']
+assert 'scpp::sequence_0string_ sequence_0string_::make_empty()' in u['source']
+assert 'static scpp::sequence_0string_' not in u['source']
+for changes, message in [
+    ({'static':'yes'}, 'static must be boolean'),
+    ({'const':True}, 'Static operation must'),
+    ({'explicit':True}, 'Static operation must'),
+    ({'kind':'constructor'}, 'Static operation must'),
+    ({'kind':'function'}, 'Static operation must'),
+    ({'expression':'${self}.size()'}, 'Unknown metadata substitution'),
+]:
+    bad = copy.deepcopy(factory)
+    bad['metadata']['families']['sequence']['classes'][0]['methods'][-1].update(changes)
+    invoke(bad,message)
+print('PASS: metadata-owned static factories and receiver/qualification rejection')

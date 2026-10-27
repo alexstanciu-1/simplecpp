@@ -1830,3 +1830,25 @@ scoped observations remain open, as does the first complete carrier review.
 
 All four focused regressions also pass under ASan/UBSan with leak detection
 in 29.75s.
+
+## C12 — metadata static factory prerequisite
+
+Static class methods now share ordinary signature/dependency/native-result
+transport. Metadata rejection checks cover nonboolean flags, const/explicit forms,
+constructor/function misuse and receiver substitutions. A renamed family proves
+there is no sentinel-family dispatch in the emitter.
+
+The eight-unit lifecycle proof adds an absent factory to application nullable
+metadata and calls it with a noncopyable, non-default-constructible payload. Release
+and ASan/UBSan with leak detection pass, including zero measured record-operation
+allocations, destruction checks, rejected copy/default compilation and sealed reuse.
+The separate nested vector copy scenario retains its four allocations.
+
+Single-run compile totals: generator rebuild 5.51s release / 17.59s sanitized;
+eight application storage units 9.9336s / 14.8181s; public caller 0.1356s / 0.2577s.
+Four focused regressions pass in 5.55s / 31.37s. Regression checks overlapped the
+compiled proof, so these are observed costs, not isolated performance comparisons.
+An initial release compilation caught and corrected string-prefix concatenation in
+the emitter; an initial test run also caught a reused Python fixture variable.
+Neither runtime metadata nor generated runtime units changed; no core rebuild was
+needed. The actual sentinel recipes remain the next slice.
