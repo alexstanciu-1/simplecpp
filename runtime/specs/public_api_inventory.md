@@ -3,7 +3,7 @@ Doc Status: supporting
 
 Checkpoint: 2026-10-27. This is a physical API inventory, not a new source-type
 registry. The first slice establishes publication and include isolation; it does
-not migrate the string/error/textbuilder representations.
+not migrate compiler facades. The next value slice adds runtime inline string.
 
 ## Implemented boundary
 
@@ -17,6 +17,7 @@ API targets. This works with static and shared runtime builds.
 | Header | Contract and dependencies | Compiled owner |
 | --- | --- | --- |
 | `scpp/integers.hpp` | Existing concrete scalar definitions; no includes. All currently supported ordinary operations remain declared. | Runtime core, `core/integers.cpp` |
+| `scpp/string.hpp` | Complete ordinary string API; concrete scalars and target-probed inline layout only. No public native borrow. | Runtime core, `core/string.cpp` |
 | `scpp/failure.hpp` | General error construction/throwing from synchronous borrowed NUL-terminated fields. Copies fields before throwing; null fields mean empty strings. No includes. | Runtime core, `core/failure.cpp` |
 | `modules/tasks/worker_pool.hpp` | Integer configuration/query and shutdown. Disabled configuration calls the core error primitive; diagnostic policy/arguments remain in this task header. | Tasks for enabled operations; core error machinery for disabled configuration |
 
@@ -38,11 +39,11 @@ names through that selected runtime root, without copying headers into its own
 publication. Runtime implementation roots remain private to middleware/support.
 The existing publication identity and explicit rebuild rules remain in force.
 
-## Next group: complete string/error/textbuilder API design
+## Value group: string implemented; remaining APIs approved
 
 | Facility / current owner | Required public operations and dependencies | Representation / contract questions to resolve before implementation |
 | --- | --- | --- |
-| String: `scpp/string_t.hpp` and registered string operations | Construction/copy/move/destruction, length-bearing bytes including NUL, checked access/slices, comparison and declared mutation; integer/boolean results. Current header pulls `detail.hpp`, STL string, bool and UTF-8 helpers. | Preserve independent values and byte/code-point distinctions. Native string currently stores `std::string` inline; the compiler facade adds a heap wrapper. Prefer no extra wrapper allocation. Select a concrete representation with target-proven layout/lifetime and preserve the declared runtime operation contracts. |
+| String: `scpp/string_t.hpp` and registered string operations | Construction/copy/move/destruction, length-bearing bytes including NUL, checked access/slices, comparison and declared mutation; integer/boolean results. Current header pulls `detail.hpp`, STL string, bool and UTF-8 helpers. | Preserve independent values and byte/code-point distinctions. Native string currently stores `std::string` inline; the compiler facade adds a heap wrapper. Prefer no extra wrapper allocation. Implemented as target-probed inline `scpp::string`; compiler facade migration is pending. |
 | Text builder: `modules/strings/strings.hpp` | Reserve/capacity/length, append string/bytes/integer/boolean/checked byte span, clear, copied string result and transferred string result. The existing header also exposes a string-parts builder and unrelated string helpers. | Keep builder state inline or otherwise justify allocation costs. Distinguish copy-producing `to_string` and transferring `take_string`. Full ordinary API includes `append_byte_span`: it introduces the source span contract even when most callers only append strings. Forward declarations can avoid eager header dependencies for references but cannot replace the missing concrete span definition. |
 | In-band error: `scpp/error_t.hpp` | Default/no-error, actual failure construction, copy/lifetime, presence, message/file strings and line integer; Result construction/extraction follows its own state rules. | Do not confuse a valid error with an empty message or merge error with null/false. Preserve ownership and source getter semantics; the C++ implementation currently returns references internally, whereas source values have their own declared transport rules. |
 | Thrown runtime error: `scpp/runtime_error.hpp` | Failure metadata inspection and host reporting; underlying exception storage also retains detail arrays and trace data. Currently includes iostream, strings, vectors, optional, trace/platform facilities. | Keep exact exception identity/diagnostics for compatibility. Define a focused public inspection/host boundary without exposing STL return types or tracing implementation. C++ runtime exceptions and in-band `error_t` are different contracts. |
@@ -54,11 +55,10 @@ behavior, not new semantic authorities. Its filesystem adapters intentionally th
 those must not replace the runtime filesystem Result contracts when public modules
 are migrated.
 
-Next design review should show: exact ordinary signatures for the selected types;
-by-value versus borrowed dependencies; representation/layout and allocation choices;
-complete failure/cleanup paths; reuse/generation ownership; and the isolated consumer
-program proving the whole path. This inventory does not authorize implementing those
-additional types in the first boundary slice.
+The approved [value API plan](../../specs/planning/runtime_core_value_api.md) now
+settles signatures, storage, capture and borrowing policy. Runtime string is implemented;
+builder, source spans, error and inspection remain follow-up slices. Compiler facades
+continue using their existing implementation until an explicit migration.
 
 ## Validation scope
 

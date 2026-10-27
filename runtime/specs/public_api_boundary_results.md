@@ -87,3 +87,60 @@ removal of exception implementation headers from disabled public callers.
 
 Reproduce with `tests/runtime/native/measure_worker_pool_headers.py --output OUTPUT`.
 Local evidence: `compiler/my-try-cpp/build/public-api-header-cost/results.json`.
+
+## Inline string slice — 2026-10-27
+
+The complete ordinary `scpp::string` API is implemented in runtime core. Other value
+APIs remain approved follow-ups; compiler string facades have not migrated. No
+compiler-wide speedup or source/support build improvement is claimed here.
+
+The generated target probe reports 32 bytes/alignment 8 on WSL and dev002, with
+nonthrowing native move construction, move assignment and destruction. The facade
+has exactly the native footprint, containing a live native object rather than a
+heap wrapper. These are target measurements, not cross-platform ABI constants.
+
+Allocation-hook results at both O0 and O2 on WSL (O2 also verified on dev002):
+
+| Operation | Allocations |
+| --- | ---: |
+| Empty/short construction, short copy, equality/vocabulary lookup | 0 |
+| Long construction | 1 |
+| Long copy | 1 |
+| Long move | 0 |
+| Long slice into the returned value | 1 |
+
+Long fixtures are 88 bytes. The retained native character allocation remains;
+there is no facade allocation. Inline object footprint grows from the compiler's
+8-byte pointer facade to 32 bytes, eliminating that facade's separate native object
+and allocator metadata once consumers migrate. This is not an RSS measurement.
+
+Validation: 9 focused Release tests; 5 ASan/UBSan tests with leak detection;
+3 shared-runtime tests; 3 dev002 tests. All passed. The isolated O0 build compiles
+the string, integer and failure implementation owners plus a public-only caller.
+Coverage includes independent copies/results, short/long strings, embedded NULs,
+UTF-8 and invalid-UTF-8 fallback, clamped slices, bounds errors, self-copy/move/append,
+capacity reuse, repeated lifecycle stress and failed construction/assignment/result
+allocation cleanup. Public headers remain standalone and template-free in both task
+modes. No task scheduling or shared mutable string behavior was introduced.
+
+Compile timings (Clang 18, O2, no PCH/LTO; alternating caller trials, median of 3):
+
+| Measurement | WSL | dev002 |
+| --- | ---: | ---: |
+| Public string caller | 0.0513 s | 0.0316 s |
+| Equivalent native-header caller | 0.8161 s | 0.4577 s |
+| New string adapter alone, one compilation | 3.3818 s | 1.8222 s |
+| Full runtime-core recompile + archive, one run, Ninja 8 jobs | 15.2012 s | 8.0902 s |
+| Runtime-core no-op build | 0.0262 s | 0.0170 s |
+
+The public caller preprocesses to 7,364 bytes versus 1,491,642 for the native header.
+The runtime still compiles core through its existing aggregate translation unit;
+8 jobs cannot parallelize that single unit. Full-core times are current costs, not
+matched before/after regressions. Tests are excluded from timed builds.
+
+Reproduce caller/adapter measurements with
+`python3 tests/runtime/native/measure_string_api.py --output <results.json>`.
+Target-local artifacts are `compiler/my-try-cpp/build/string-api-cost.json` and
+`string-core-build.json`; the latter measures removal/rebuild of only core's object,
+followed by a no-op. Existing build warning about redundant hash specialization
+instantiation is unchanged.

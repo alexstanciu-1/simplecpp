@@ -283,3 +283,19 @@ add_test(NAME scpp_test_concrete_integers COMMAND test_concrete_integers)
 find_package(Python3 COMPONENTS Interpreter REQUIRED)
 add_test(NAME scpp_test_integer_api_boundary COMMAND ${Python3_EXECUTABLE}
   ${CMAKE_CURRENT_SOURCE_DIR}/check_integer_api.py --compiler ${CMAKE_CXX_COMPILER})
+
+# Public-only consumer: no private runtime headers in its compile command.
+add_executable(test_public_string test_public_string.cpp)
+target_link_libraries(test_public_string PRIVATE scpp_core_api)
+add_test(NAME scpp_test_public_string COMMAND test_public_string)
+
+# Probe with the same ABI-affecting compile flags as the runtime build.
+string(TOUPPER "${CMAKE_BUILD_TYPE}" scpp_layout_build_type)
+separate_arguments(scpp_layout_flags NATIVE_COMMAND "${CMAKE_CXX_FLAGS} ${CMAKE_CXX_FLAGS_${scpp_layout_build_type}}")
+set(scpp_layout_arguments)
+foreach(flag IN LISTS scpp_layout_flags)
+  list(APPEND scpp_layout_arguments "--flag=${flag}")
+endforeach()
+add_test(NAME scpp_test_value_layout COMMAND ${Python3_EXECUTABLE}
+  ${CMAKE_CURRENT_SOURCE_DIR}/../../../runtime/tools/value_layout.py
+  --check --compiler ${CMAKE_CXX_COMPILER} ${scpp_layout_arguments})

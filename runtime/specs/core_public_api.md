@@ -71,8 +71,8 @@ See [the boundary inventory](public_api_inventory.md) for ownership and migratio
 ## Scope and next steps
 
 Concrete integers are used by the focused task worker-pool interface and compiler
-middleware. Strings, containers, general task callbacks and language lowering
-remain outside this migration. The existing `scpp/runtime.hpp` umbrella remains
+middleware. Inline strings are covered below; containers, general task callbacks
+and language lowering remain outside this migration. The existing `scpp/runtime.hpp` umbrella remains
 available for legacy/template consumers. New focused consumers do not need it.
 
 The new public API requires core linkage even when optional modules are disabled.
@@ -80,4 +80,39 @@ Task-owned disabled adapters call the general compiled `raise_runtime_error` pri
 from `scpp/failure.hpp`. Core constructs/throws errors but owns no task-module policy.
 Both task modes have template-free public include closures. The legacy template API
 retains its no-link throwing fallback during migration. Typed public exception
-inspection and string/error representations remain a subsequent slice.
+inspection and error representations remain subsequent slices; inline strings are
+covered below.
+
+## Inline string value
+
+`scpp/string.hpp` now exposes the complete ordinary string interface approved in
+[the value API plan](../../specs/planning/runtime_core_value_api.md#string-complete-proposed-ordinary-interface).
+It links through `scpp_core_api`. String owns an actual `string_t` in aligned inline
+storage; there is no separately allocated facade object. Short-string optimization,
+independent copies and native allocation failures are preserved. Operations delegate
+to existing string/UTF-8/operator authorities. `isset` is true for every string;
+`empty` reports zero bytes. No source-language type identity changes.
+
+Public lengths use uint64. Byte access is checked and returns uint32 in 0..255.
+Pointer inputs are synchronous host borrows: null single-pointer construction means
+empty, null with nonzero length throws, and equals/vocabulary inputs must be valid
+NUL-terminated pointers. No public operation exposes a raw pointer/view to contents.
+
+`tools/value_layout.py` probes the actual target compiler and emits
+`public/scpp/detail/value_layout.hpp`. Run with the runtime compiler and ABI flags
+(`--compiler`, repeatable `--flag=...`); `--check` verifies published output. The
+checked-in header is the current target's generated artifact, not a portable guessed
+size. A different target ABI must regenerate it before building/publishing runtime.
+Implementation assertions verify size, alignment and nonthrowing lifecycle traits.
+Publish these headers together with the matching runtime library. Cross-target probe
+execution and a stable binary ABI are not promised. Compatibility consumers can
+still include the historical root through `include/scpp/string.hpp`.
+
+The private `detail::string_access` bridge borrows only live native objects and
+constructs owned results synchronously in final storage. It never byte-copies native
+strings. Self-copy/move/swap preserve the object; ordinary moves retain native valid
+moved-from semantics. Clearing retains reusable capacity. `equals` and `is_one_of`
+borrow text and do not construct temporary strings.
+
+Builder, source spans, error values, exception inspection and compiler facade
+migration remain separate slices; this implementation adds no new module dependency.

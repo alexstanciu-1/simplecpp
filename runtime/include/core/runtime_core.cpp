@@ -13,3 +13,5 @@
 #include "integers.cpp"
 
 #include "failure.cpp"
+
+#include "string.cpp"
