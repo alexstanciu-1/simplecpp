@@ -317,3 +317,10 @@ choices, including source-span dependencies, copying/transfer, allocations and f
 inspection, before implementing that group. Shared specialization generation and
 published reuse remain later work under the agreed mechanism; no parallel semantic
 registry or separate public middleware layer is introduced by this first slice.
+
+## Inline value storage decision and signature review
+
+Inline, target-probed storage for string, in-band error and textbuilder is approved.
+The [complete proposed value APIs](runtime_core_value_api.md) record lifecycle,
+ordinary operations, exception inspection, source-buffer/span borrowing and remaining
+review decisions. Those signatures are proposals; implementation awaits this review.
