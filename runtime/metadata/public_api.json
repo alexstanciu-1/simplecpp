@@ -627,12 +627,20 @@
             "name": "payload",
             "test": "has_value",
             "condition": "payload",
-            "comparison_tag": "payload"
+            "comparison_tag": "payload",
+            "reconstruct": {
+              "kind": "payload",
+              "expression": "${target}(${value})"
+            }
           },
           {
             "name": "error",
             "condition": "false",
-            "comparison_tag": "error"
+            "comparison_tag": "error",
+            "reconstruct": {
+              "kind": "state",
+              "expression": "${target}(${source}.require_error(\"carrier conversion\"))"
+            }
           }
         ]
       }
@@ -813,7 +821,11 @@
             "name": "payload",
             "test": "has_value",
             "condition": "payload",
-            "comparison_tag": "payload"
+            "comparison_tag": "payload",
+            "reconstruct": {
+              "kind": "payload",
+              "expression": "${target}(${value})"
+            }
           },
           {
             "name": "absent",
@@ -824,7 +836,11 @@
               }
             },
             "condition": "false",
-            "comparison_tag": "absent"
+            "comparison_tag": "absent",
+            "reconstruct": {
+              "kind": "state",
+              "expression": "${target}()"
+            }
           }
         ]
       }

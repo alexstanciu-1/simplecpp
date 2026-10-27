@@ -95,10 +95,10 @@ bad = copy.deepcopy(metadata)
 for method in bad['families']['nullable']['classes'][0]['methods']:
     if method.get('name') == 'require_value': method['returns'] = 'self_ref'
 resolve('nullable<int64>', 'int64', meta=bad, error='owned payload')
-def convert(source, target, meta=metadata, error=None):
+def convert(source, target, meta=metadata, error=None, names=None):
     result = subprocess.run([str(args.tool)], input=json.dumps({
         'action':'resolve_conversion', 'metadata':meta,
-        'names':{'nullable<int64>':'optional_integer'},
+        'names':names or {'nullable<int64>':'optional_integer'},
         'request':{'source':source, 'target':target}}), text=True, capture_output=True)
     if error:
         assert result.returncode and error in result.stderr, result.stderr
@@ -115,8 +115,30 @@ for family in ['nullable','result']:
         assert plan['states'][-1]['conversion']['kind'] == ('expression' if family == 'nullable' and target == 'string' else 'checked_payload')
 assert convert('nullable<int8>','uint16')['payload_conversion']['operand_type'] == 'int64'
 for source,target in [('nullable<vector<string>>','string'), ('result<nullable<int64>>','boolean'),
-                      ('nullable<int64>','result<int64>'), ('nullable<int64>','nullable<int8>')]:
+                      ('result<nullable<int64>>','result<nullable<float64>>')]:
     convert(source,target,error='Unsupported checked conversion')
+for family in ['nullable','result']:
+    for target in ['int8','int64','float64','boolean','string']:
+        plan = convert(f'{family}<int64>', f'{family}<{target}>')
+        assert plan['kind'] == 'carrier_reconstruction'
+        assert plan['states'][0]['kind'] == 'payload'
+        assert plan['states'][1]['kind'] == 'state'
+        assert plan['commit'] == 'construct_destination_after_payload_conversion'
+convert('nullable<int64>','result<int64>',error='Cross-family carrier conversion')
+convert('result<int64>','nullable<int64>',error='Cross-family carrier conversion')
+convert('int64','nullable<int64>',error='Unsupported checked conversion')
+for recipe,message in [
+    ({'kind':'guess','expression':'${target}()'}, 'Unknown carrier reconstruction kind'),
+    ({'kind':'state','expression':'${target}(${value})'}, 'declared value source'),
+    ({'kind':'payload','expression':'${target}(${source})'}, 'declared value source'),
+    ({'kind':'state','expression':'${target}(${unknown})'}, 'Unknown reconstruction marker'),
+]:
+    bad = copy.deepcopy(metadata); bad['families']['nullable']['carrier']['states'][1]['reconstruct'] = recipe
+    convert('nullable<int64>','nullable<float64>',meta=bad,error=message)
+bad = copy.deepcopy(metadata)
+del bad['families']['nullable']['carrier']['states'][1]['reconstruct']
+convert('nullable<int64>','nullable<float64>',meta=bad,error='Missing carrier state reconstruction')
+print('PASS: same-family reconstruction, explicit state transport and no recursive/cross-family casts')
 for mutate,message in [
     (lambda c:c['states'].append({'name':'extra'}), 'final fallback'),
     (lambda c:c['states'][0].update(test='missing'), 'one observation'),
@@ -191,13 +213,14 @@ with tempfile.TemporaryDirectory(prefix='scpp-carrier-') as directory:
     seal_package(sdk, ['core'])
     os.environ['SCPP_API_GENERATOR'] = str(sdk / 'tools/scpp_api_generator')
     request = work / 'request.json'
-    request.write_text(json.dumps({'package':'app.carrier', 'roots':['nullable<int64>','nullable<float64>'],
-                                  'names':{'nullable<int64>':'optional_integer','nullable<float64>':'optional_float'}}))
+    request.write_text(json.dumps({'package':'app.carrier', 'roots':['nullable<int64>','nullable<float64>','result<int64>','result<float64>'],
+                                  'names':{'nullable<int64>':'optional_integer','nullable<float64>':'optional_float','result<int64>':'result_integer','result<float64>':'result_float'}}))
     app = work / 'app'
     # Storage ABI flags match the SDK. Instrument the generated implementation below.
     manifest = concrete_types.generate(request, app, sdk, [sdk], 'clang++', [])
-    assert len(manifest['sources']) == 2
-    names = {'nullable<int64>':'optional_integer','nullable<float64>':'optional_float'}
+    assert len(manifest['sources']) == 4
+    print('Carrier storage bytes:', {key:manifest['types'][key]['layout'][0] for key in ['nullable<int64>','nullable<float64>','result<int64>','result<float64>']})
+    names = {'nullable<int64>':'optional_integer','nullable<float64>':'optional_float','result<int64>':'result_integer','result<float64>':'result_float'}
     functions = []
     headers = {'scpp/optional_integer.hpp'}
     for op in ['add','subtract','multiply','divide','remainder','less','compare']:
@@ -277,6 +300,25 @@ with tempfile.TemporaryDirectory(prefix='scpp-carrier-') as directory:
                     body += f'const auto {side}_converted = {expression};\n'
                 body += 'return '+calc['function']+'(left_converted,right_converted);'
             functions.append('static scpp::boolean compare_'+op+'_'+suffix+'(const '+left_p['cpp']+'& original_left, '+right_p['cpp']+'& original_right, int &effects, bool mutate_right=false) { '+body+' }')
+    for family in ['nullable','result']:
+        for source_type,target_type in [('int64','float64'), ('float64','int64')]:
+            plan = convert(f'{family}<{source_type}>',f'{family}<{target_type}>',names=names)
+            payload = plan['payload_conversion']
+            headers.update([plan['projection']['header'],plan['target_header'],payload['header']])
+            assert payload['api'] in manifest['apis']
+            body = ''
+            for state in plan['states']:
+                expression = state['expression'].replace('${source}','source')
+                if state['kind'] == 'payload':
+                    projection = plan['projection']['expression'].replace('${value}','source')
+                    branch = f'const auto payload = {projection}; const auto converted = {payload["function"]}(payload); '
+                    branch += 'return ' + expression.replace('${value}','converted') + ';'
+                else: branch = 'return ' + expression + ';'
+                if 'test_expression' in state:
+                    body += 'if (' + state['test_expression'].replace('${value}','source') + ') { ' + branch + ' }\n'
+                else: body += branch
+            functions.append('static '+plan['target_cpp']+' reconstruct_'+family+'_'+target_type
+                             +'(const '+plan['projection']['cpp']+'& source) { '+body+' }')
     code = '\n'.join('#include "'+h+'"' for h in sorted(headers)) + '\n' + '\n'.join(functions)
     code += r'''
 #include "public_api_guard.hpp"
@@ -345,6 +387,17 @@ int main() {
     CHECK(convert_int8(copy).native_value() == 12);
     CHECK(convert_string(copy).equals("12"));
     CHECK(convert_string(absent).byte_size().native_value() == 0);
+    auto widened = reconstruct_nullable_float64(copy);
+    CHECK(widened.require_value("widened").native_value() == 12.0);
+    auto absent_widened = reconstruct_nullable_float64(absent);
+    CHECK(!absent_widened.has_value());
+    auto roundtrip = reconstruct_nullable_int64(widened);
+    widened.reset();
+    CHECK(roundtrip.require_value("roundtrip").native_value() == 12);
+    scpp::result_integer successful(int64(12));
+    auto result_widened = reconstruct_result_float64(successful);
+    CHECK(result_widened.require_value("result").native_value() == 12.0);
+    CHECK(reconstruct_result_int64(result_widened).require_value("roundtrip").native_value() == 12);
     CHECK(allocations == before);
     effects = 0; bool caught = false;
     try { (void)run_add(absent,right,effects); } catch (...) { caught = true; }
@@ -361,11 +414,33 @@ int main() {
     optional too_large(int64(128)); caught = false;
     try { (void)convert_int8(too_large); } catch (...) { caught = true; }
     CHECK(caught && too_large.require_value("unchanged").native_value() == 128);
+    scpp::optional_float huge(scpp::float64(1e300));
+    optional destination(int64(42)); caught = false;
+    try { destination = reconstruct_nullable_int64(huge); } catch (...) { caught = true; }
+    CHECK(caught && destination.require_value("retained").native_value() == 42);
+    CHECK(huge.require_value("source").native_value() == 1e300);
+    scpp::result_float huge_result(scpp::float64(1e300));
+    scpp::result_integer result_destination(int64(42)); caught = false;
+    try { result_destination = reconstruct_result_int64(huge_result); } catch (...) { caught = true; }
+    CHECK(caught && result_destination.require_value("retained").native_value() == 42);
+    CHECK(huge_result.has_value());
+    const auto failure = scpp::error_value::make(scpp::string("conversion failure"),int64(17),scpp::string("sample.phs"));
+    scpp::result_integer failed(failure);
+    const auto error_before = allocations;
+    auto converted_failure = reconstruct_result_float64(failed);
+    const auto error_allocations = allocations - error_before;
+    CHECK(converted_failure.has_error() && failed.has_error());
+    failed = int64(7);
+    const auto saved_error = converted_failure.require_error("retained error");
+    CHECK(saved_error.get_message().equals("conversion failure"));
+    CHECK(saved_error.get_line().native_value() == 17);
+    CHECK(saved_error.get_file().equals("sample.phs"));
+    std::printf("Result error preservation allocations=%d (separate from success cases)\n",error_allocations);
     // Extraction returns an owned value that survives mutation/destruction of its carrier.
     int64 retained(0);
     { optional temporary(int64(42)); retained = temporary.require_value("retain"); temporary.reset(); }
     CHECK(retained.native_value() == 42);
-    std::puts("PASS: public nullable arithmetic, ordered failures, take/reset, casts, conditions, comparisons, owned lifetime; success allocations=0");
+    std::puts("PASS: public nullable arithmetic, ordered failures, take/reset, casts, conditions, comparisons, reconstruction, owned lifetime; success allocations=0");
 }
 '''
     code = code.replace('CONDITION_NOT_ABSENT', negate('nullable<int64>')['result_expression'].replace('${result}', 'observe_condition(absent)'))

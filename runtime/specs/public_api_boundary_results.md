@@ -1601,3 +1601,31 @@ slice does not close the first complete carrier review or C as a whole.
 Eight focused metadata/identity/ordering regression tests passed after the result-
 identity correction: release 10.04s; ASan/UBSan with leak detection 61.12s. Public
 execution, allocations, lifetime and publication reuse were checked separately.
+
+## C5 same-family nullable/Result reconstruction
+
+The public proof now generates four application-owned specializations: nullable
+and Result of int64 and float64. It verifies widening/round trips, nullable absence,
+structured Result error metadata after source mutation, and failed narrowing that
+preserves the source and an existing destination. Release and ASan/UBSan with leak
+detection pass; sealed publication reuses all four specializations without new units.
+
+Successful measured scalar operations allocate zero. Result error preservation with
+the test's non-SSO message allocates twice in both configurations; this is reported
+separately, not hidden in a zero-allocation claim. Native Result has an rvalue error
+constructor, but the generated public recipe currently exposes only const-reference
+error construction. Moving the owned error snapshot into the destination remains
+required C lifecycle/allocation work. Public/native storage is equal by layout probes
+and generated assertions: each tested nullable is 16 bytes, each Result 96 bytes on
+this target. These sizes are target observations, not portable ABI constants.
+
+Single compile-only observations: four storage units combined 4.4031s release /
+5.8894s sanitized; public caller 0.2088s / 0.4028s. Tool builds were 2.29s / 6.33s,
+with lightweight release regressions overlapping sanitized tool compilation. Runtime
+core was not rebuilt; all 330 existing runtime generation plans remained identical.
+
+Eight focused regression tests passed: release 10.10s; ASan/UBSan with leak detection
+56.10s. The public execution/allocation/lifetime/publication proof ran separately.
+Cross-family and recursive conversion remain rejected. Literal-null comparisons,
+strict error identity, sentinel recipes and the remaining lifecycle/observation work
+remain open; neither the first complete carrier review nor full C is closed here.

@@ -17,7 +17,7 @@ each slice. The original inventory is a baseline, not a current completion count
 | A2 | Complete for the agreed checked scalar conversions | Carrier conversion is C; ownership casts are D. |
 | B1 | Complete for the agreed scalar-facing truth/text/identity/observation scope | Carrier forms remain C; boxed arithmetic and access completion are not B1 credit. |
 | B2 | Complete for the agreed non-carrier special/mutation and text public paths; closure evidence below | Carrier forms C; indexed retention E; native exception inspection and overflow disposition G. |
-| C | Initial nullable numeric path includes arithmetic, casts, conditions, comparisons and ordering | Four carrier families, state-preserving operations/conversions and conditional lifecycle. |
+| C | Nullable numeric path and nullable/Result scalar reconstruction implemented; review pending | Four carrier families, state-preserving operations/conversions and conditional lifecycle. |
 | D | Pending | Ownership, application targets and source Exception transport gaps. |
 | E | Existing vector/hash/boxed foundations; incomplete | Capability/access/initialization/cursor gaps and identity key-allocation debt. |
 | F | Pending | Callable transport and registered collection algorithms. |
@@ -839,3 +839,34 @@ Next for that review: same-family nullable conversion/reconstruction and the lit
 null comparison audit. Broader four-family state/error/lifetime tests, conditional
 lifecycle, and noncopyable/large-payload observation remain mandatory C work. All 330
 existing runtime generation plans are unchanged, so no runtime-core rebuild was needed.
+
+## C5 — same-family nullable/Result scalar reconstruction
+
+State metadata now supplies payload or non-payload reconstruction recipes. Payload
+casts complete before destination construction; non-payload states preserve their
+state data. The same generator path handles nullable absence and Result structured
+errors, including preserved message/line/file after source mutation. Different
+families, recursive peeling and implicit plain-value conversion-plus-wrapping reject.
+Native exact success constructors remain available separately.
+
+The public proof uses four application specializations (nullable/Result of int64 and
+float64), verifies widening/round trips, absence/error preservation, and failed
+narrowing without modifying the source or an existing destination. Both configurations
+pass allocation/lifetime/publication checks. Successful scalar paths allocate zero;
+preserving the test's non-SSO error message allocates twice, recorded separately.
+Measured public storage matches native layout: nullable 16 bytes, Result 96 bytes
+for each of the two tested payloads on this target. These are measurements, not
+portable fixed-layout promises.
+
+**Required C allocation follow-up:** native result already supports error_t&&,
+while the generated Result recipe exposes only const error_value& construction.
+The owned error snapshot is therefore copied again into the destination. Extend
+and prove move-aware error construction with the remaining Result-family lifecycle
+publication work, without moving from the original source. This is not waived by
+the scalar zero-allocation proof or by postponing the associated core rebuild.
+
+The next review prerequisite is the literal-null/sentinel comparison audit. Full
+C still requires sentinel-family recipes, structured-error strict identity,
+noncopyable/scoped observations, broader payload capabilities and the remaining
+state/lifetime matrix. All 330 existing runtime generation plans remain unchanged;
+this slice requires no runtime-core rebuild.

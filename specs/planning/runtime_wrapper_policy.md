@@ -357,3 +357,10 @@ Strict matching structured-error states reject until their identity API is suppl
 ordinary Result errors have a metadata state-equality result. Literal null/sentinel
 comparison routes remain an explicit audit item rather than being routed through
 plain-payload comparison by accident.
+
+C5 implements same-family scalar payload reconstruction for nullable and Result.
+Absence and structured error data are preserved; checked payload failure remains
+an exception and leaves source/existing destination unchanged. Four application
+specializations are execution-tested. Error snapshot move construction remains a
+required allocation follow-up (two allocations for the measured non-SSO message),
+alongside the previously recorded lifecycle and observation work.

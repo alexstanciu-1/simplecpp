@@ -41,7 +41,7 @@ namespace scpp::api_generation
                 std::set<std::string> seen;
                 for (std::size_t i = 0; i < states.items.size(); ++i) {
                     const auto &state = states.items[i];
-                    fields_only(state, "name test casts condition comparison_tag", "carrier state");
+                    fields_only(state, "name test casts condition comparison_tag reconstruct", "carrier state");
                     if (state.has("condition") && state.get("condition") != "payload"
                         && state.get("condition") != "true" && state.get("condition") != "false")
                         throw std::runtime_error("Unknown carrier condition policy");
@@ -63,6 +63,26 @@ namespace scpp::api_generation
                             }
                         }
                         if (predicates != 1) throw std::runtime_error("Carrier state requires one observation member");
+                    }
+                    if (state.has("reconstruct")) {
+                        const auto &recipe = state.at("reconstruct");
+                        fields_only(recipe, "kind expression", "carrier reconstruction");
+                        const auto kind = recipe.at("kind").text();
+                        if (kind != "payload" && kind != "state") throw std::runtime_error("Unknown carrier reconstruction kind");
+                        const auto expression = recipe.at("expression").text();
+                        std::map<std::string, unsigned> markers;
+                        for (std::size_t at = expression.find("${"); at != std::string::npos; at = expression.find("${", at)) {
+                            const auto end = expression.find('}', at + 2);
+                            if (end == std::string::npos) throw std::runtime_error("Unclosed reconstruction marker");
+                            const auto marker = expression.substr(at + 2, end - at - 2);
+                            if (marker != "target" && marker != "value" && marker != "source")
+                                throw std::runtime_error("Unknown reconstruction marker");
+                            ++markers[marker]; at = end + 1;
+                        }
+                        if (markers["target"] != 1 || markers["source"] > 1
+                            || markers["value"] != (kind == "payload" ? 1u : 0u)
+                            || (kind == "payload" && markers["source"] != 0))
+                            throw std::runtime_error("Reconstruction must use one target and only its declared value source");
                     }
                     if (!state.has("casts")) continue;
                     if (state.at("casts").type != value::kind::object) throw std::runtime_error("Carrier state casts require an object");
@@ -91,7 +111,7 @@ namespace scpp::api_generation
         const auto &carrier = family.at("carrier");
         const auto binding = types.bind(identity);
         value out = value::object();
-        out["source"] = identity;
+        out["source"] = identity; out["family"] = node.name;
         for (const auto &[parameter, argument] : binding.arguments)
             if (parameter == carrier.at("payload").text()) out["target"] = argument.canonical();
         out["kind"] = "checked_member";

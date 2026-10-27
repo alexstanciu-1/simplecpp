@@ -58,6 +58,39 @@ namespace scpp::api_generation
         return out;
     }
 
+    static value reconstruct_carrier(const value &metadata, const value &projection,
+        const value &destination)
+    {
+        if (projection.at("family").text() != destination.at("family").text())
+            throw std::runtime_error("Cross-family carrier conversion is not admitted");
+        if (!projection.has("states") || !destination.has("states"))
+            throw std::runtime_error("Carrier reconstruction requires state descriptions");
+        value request = value::object(); request["source"] = projection.at("target"); request["target"] = destination.at("target");
+        const auto calculation = resolve_plain_conversion(metadata, request);
+        value out = value::object(); out["kind"] = "carrier_reconstruction";
+        out["source"] = projection.at("source"); out["target"] = destination.at("source");
+        out["target_cpp"] = destination.at("cpp"); out["target_header"] = destination.at("header");
+        out["projection"] = projection; out["payload_conversion"] = calculation; out["states"] = value::array();
+        for (const auto &state : projection.at("states").items) {
+            const value *target_state = nullptr;
+            for (const auto &candidate : destination.at("states").items)
+                if (candidate.at("name").text() == state.at("name").text()) target_state = &candidate;
+            if (!target_state || !target_state->has("reconstruct"))
+                throw std::runtime_error("Missing carrier state reconstruction");
+            const auto &recipe = target_state->at("reconstruct");
+            value branch = value::object(); branch["name"] = state.at("name");
+            if (state.has("test")) branch["test_expression"] = "${value}." + state.at("test").text() + "()";
+            branch["kind"] = recipe.at("kind");
+            auto expression = recipe.at("expression").text();
+            expression.replace(expression.find("${target}"), std::string("${target}").size(), destination.at("cpp").text());
+            branch["expression"] = expression; out["states"].items.push_back(branch);
+        }
+        out["evaluation"] = "evaluate_source_once_then_select_state";
+        out["failure"] = "throw_without_mutating_source";
+        out["commit"] = "construct_destination_after_payload_conversion";
+        return out;
+    }
+
     value resolve_conversion(const value &metadata, const value &request, const value &names)
     {
         fields_only(request, "source target", "conversion request");
@@ -67,6 +100,11 @@ namespace scpp::api_generation
         validate_carriers(metadata);
         const auto projection = project_carrier(metadata, source, names);
         if (projection.type == value::kind::null) throw std::runtime_error("Unsupported checked conversion");
+        if (!r.at("targets").has(target)) {
+            const auto destination = project_carrier(metadata, target, names);
+            if (destination.type == value::kind::null) throw std::runtime_error("Unsupported checked conversion");
+            return reconstruct_carrier(metadata, projection, destination);
+        }
         value payload = value::object(); payload["source"] = projection.at("target"); payload["target"] = target;
         // Resolve once against plain conversions; never recursively peel a carrier.
         const auto calculation = resolve_plain_conversion(metadata, payload);

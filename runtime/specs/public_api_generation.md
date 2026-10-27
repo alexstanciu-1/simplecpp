@@ -864,3 +864,30 @@ The compiled proof covers nullable<int64> and nullable<float64>, including diffe
 payload identities, matching absence, inequality, alias mutation during RHS evaluation
 and ordered-extraction failure. Scalar numeric state policies do not close boxed,
 string/bool, structured-error strict identity or literal-sentinel comparison work.
+
+## Same-family state reconstruction
+
+A carrier state can describe `reconstruct: {kind, expression}`. `kind: payload`
+requires exactly one `${target}` and `${value}` marker and no `${source}`: checked
+payload conversion runs first, then its owned result enters the destination factory.
+`kind: state` requires one `${target}`, no `${value}`, and at most one `${source}`
+for copying non-payload state data. Unknown/duplicate markers reject. This permits
+nullable default absence and Result error-copy factories without generator family
+exceptions or public borrowed error references.
+
+`resolve_conversion` recognizes a carrier destination through the shared naming
+and descriptor path. Source and destination must have the same canonical family;
+all source states must have matching destination reconstruction recipes. Plain
+payload conversion is validated before a plan is returned, including for absent or
+error sources. No recursive carrier cast lookup is performed. Returned plans use
+`kind: carrier_reconstruction`, resolved `target_cpp`/`target_header`, the shared
+source `projection`, ordinary `payload_conversion` and ordered state branches.
+Target type markers are resolved; `${value}` is the converted owned payload and
+`${source}` is the once-evaluated live source.
+
+The consumer selects the source state, executes its factory, and commits an outer
+assignment only after complete construction. Cast/constructor exceptions remain
+exceptions, not Result errors. No move from the original source or extra wrapper-
+pair runtime implementation is introduced. The initial nullable/Result recipes
+support scalar payload casts; conditional lifecycle, broader payload conversion
+and sentinel families remain separate completion work.

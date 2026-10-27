@@ -222,3 +222,24 @@ These required-scalar rules do not grant cross-carrier conversion, arbitrary typ
 formation, move extraction or reference escape. Same-family state-preserving casts
 are a separate accepted completion item; runtime public-path coverage and frontend
 adoption are tracked separately.
+
+## Same-family carrier casts — v0.2, 2026-10-27
+
+Where source/target formation and the explicit payload conversion are admitted, a
+same-family carrier cast preserves the outer non-value state and converts only a
+successful payload. Nullable absence remains absence. Result structured errors
+preserve their message, line and file; false and true sentinel states retain their
+separate meanings when that family is admitted. Payload conversion admission is
+checked independently of the current runtime state.
+
+Evaluate the source once. A successful payload is converted before constructing
+the destination payload state. If conversion or construction throws, propagate the
+exception without mutating the source or converting it into a Result failure. An
+assignment using this cast must not replace its previous destination before the
+cast succeeds. Returned carriers own their state; later source mutation/destruction
+must not invalidate them.
+
+This does not admit blanket cross-family conversion or recursive peeling of nested
+payload carriers. Plain exact/admitted explicit success construction remains its
+own path, not permission to insert implicit numeric conversion plus wrapping.
+Current public implementation coverage is tracked separately from this contract.
