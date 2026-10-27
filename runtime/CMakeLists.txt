@@ -351,3 +351,12 @@ add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/../tests/runtime/native ${CMAKE_CUR
 # Focused filesystem consumers receive only public headers and the owning libraries.
 add_library(scpp_filesystem_api INTERFACE)
 target_link_libraries(scpp_filesystem_api INTERFACE scpp_core_api "$<LINK_ONLY:scpp_filesystem>")
+
+# Reusable physical API generation library; no compiler-language semantic admission.
+add_library(scpp_api_generation STATIC EXCLUDE_FROM_ALL
+  tools/api_generator/value.cpp tools/api_generator/names.cpp tools/api_generator/generator.cpp)
+target_include_directories(scpp_api_generation PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/tools/api_generator/public)
+target_link_libraries(scpp_api_generation PRIVATE scpp_runtime_core)
+target_link_libraries(scpp_api_generation PUBLIC scpp_public_configuration)
+add_executable(scpp_api_generator EXCLUDE_FROM_ALL tools/api_generator/main.cpp)
+target_link_libraries(scpp_api_generator PRIVATE scpp_api_generation scpp_runtime_core)

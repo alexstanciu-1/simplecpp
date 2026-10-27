@@ -42,9 +42,12 @@ namespace sample { struct record { scpp::string label; scpp::uint64 id; }; }
     own = manifest['types']['vector<sample::record>']
     main = root/'main.cpp'
     main.write_text('''#include "modules/filesystem/scan.hpp"
+#include "scpp/api_generation.hpp"
 #include "'''+own['header']+'''"
 int main(int argc, char **argv) {
     if (argc != 2) return 1;
+    const scpp::string request(R"({"action":"names","registry":{"version":1,"types":["string"],"families":{"sequence":{"parameters":["type"]}},"mappings":[]},"types":["sequence<string>"]})");
+    if (scpp::api_generation::generate(request).byte_size() == scpp::uint64(0)) return 6;
     scpp::vector_string listing;
     scpp::error_value error;
     if (!scpp::take(listing, error, scpp::fs::scan(scpp::string(argv[1])))) return 2;
@@ -75,7 +78,7 @@ add_library(app_middleware STATIC "${APP_IMPLEMENTATION}")
 target_include_directories(app_middleware PUBLIC "${APP_ROOT}/public" PRIVATE "${APP_ROOT}/include" "${RUNTIME_PACKAGE}/include")
 target_link_libraries(app_middleware PUBLIC compiler_runtime_api)
 add_executable(app main.cpp)
-target_link_libraries(app PRIVATE app_middleware compiler_filesystem_api)
+target_link_libraries(app PRIVATE app_middleware compiler_filesystem_api compiler_api_generation)
 ''')
     execute(['cmake','-S',root,'-B',root/'build','-G','Ninja',
              '-DCMAKE_CXX_COMPILER='+args.compiler,'-DCMAKE_BUILD_TYPE=Release',

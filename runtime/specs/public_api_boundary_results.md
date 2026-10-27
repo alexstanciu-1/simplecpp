@@ -285,3 +285,52 @@ Reproduce with `measure_value_api.py --facility integers`; local artifact:
 `compiler/my-try-cpp/build/small-integer-api-cost.json`. Public/generated integer files
 remain 11,452/30,464 bytes. Full operator closure and value-argument demand publication
 remain separate batches.
+
+## Metadata-driven C++ generator (2026-10-27)
+
+The selected scan/vector/Result path is now emitted by `scpp_api_generation`, a
+reentrant C++ library with a thin CLI. Public API metadata owns operation signatures,
+native bindings, lifecycle, companion cursor and adaptation snippets. The Python
+driver performs target probing, staging and publication validation only. Existing
+compiler naming entrypoints delegate to the same C++ naming implementation.
+
+A metadata-only proof renames the vector family to `sequence` and changes an operation
+snippet without modifying the generator. It also checks malformed schemas, duplicate
+class identities, missing dependencies, invalid lifecycle/transport and unknown
+placeholders. Target probes validate metadata-specified payload capabilities and
+combine companion layouts into one compile per dependent unit (two for this runtime
+closure, one for the app-owned vector). No extra compile is needed for each method.
+
+The generated scan retains **42 operator-new calls on both public/native paths**.
+Vector/Result storage remains **40/96 bytes**, and cursor storage **128 bytes**, on the
+tested Clang 18/libstdc++ target. Existing copy, mutation, error, lifetime and typed-hash
+proofs pass. ASan/UBSan with leak detection covers the generated scan, metadata
+success/rejection paths and concurrent calls into the reusable library. The normal
+focused runtime suite has 8 checks; compiler tests have 13. Naming parity and
+reproducible generation pass. Relocated publication proves a public-only client can
+both consume generated app storage and call the C++ generation library directly;
+runtime specializations are reused, with incompatible publications rejected.
+
+Build observations on WSL/Clang 18/O2/Ninja 8 jobs:
+
+- Grouped changed runtime/core/filesystem/tool/test build: **22.725 s**. This is an
+  observed incremental build, not a forced clean build; sanitizer work ran separately
+  in parallel, so it is not an isolated before/after comparison.
+- Ninja's actual core compilation in that group: **22.342 s**; scan adapter **3.354 s**.
+- Observed generator object compilations: JSON bridge **5.638 s**, naming **1.887 s**,
+  generation worker **5.387 s**. These are individual observed compilations, not costs
+  to sum as a parallel clean-build estimate.
+- One public scan caller compilation: **0.1294 s**, versus **3.0257 s** with native
+  headers. Preprocessing: **18,229 vs 2,556,049 bytes**. One trial was deliberately
+  used, and separate adapter recompiles skipped, to limit validation compile cost.
+- C++ planning CLI median: **0.00426 s**, ten trials including process startup,
+  excluding target compiler probes.
+
+Artifacts: `compiler/my-try-cpp/build/metadata-build-cost.json`,
+`metadata-api-caller-cost.json`, and `metadata-plan-cost.json`. No dev002 or new
+shared-runtime rebuild was performed for this slice. No compiler-wide speedup or
+universal family coverage is claimed.
+
+Publication source identity now excludes Python bytecode caches: generating a cache
+must not invalidate a package or trigger a false "sources changed during build"
+failure. The publication fixture verifies that cache changes preserve archive reuse.

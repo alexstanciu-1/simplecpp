@@ -378,3 +378,18 @@ Determine whether any runtime gain justifies the production build cost, which
 artifacts must participate, and whether a separate production profile is worthwhile.
 Do not assume that LTO removes boundary overhead or that either option is beneficial
 without measurements.
+
+## Metadata-driven C++ generation checkpoint
+
+The follow-up design replaces family-specific emission with a reusable C++ library
+and thin CLI. Type/operation knowledge belongs in API metadata, including small C++
+binding snippets where useful; generator mechanics remain independent of named
+families. The first implemented closure is scan/vector/string/Result with its
+nonmovable cursor. See [the generation contract](../../runtime/specs/public_api_generation.md)
+for ownership, schema, transport, probing and publication. Python retains only build
+orchestration; canonical naming resolution also delegates to the C++ library.
+
+Do not interpret this checkpoint as migration of every leaf or runtime module.
+The existing audit batch order remains, with new families described as metadata and
+existing native behavior reused. Generalize reusable mechanics only when a concrete
+contract requires them; do not accumulate named-family branches in the generator.

@@ -93,75 +93,37 @@ def structural_name(root):
 
 
 class Registry:
+    """Compatibility facade; canonical resolution is owned by the C++ library."""
     def __init__(self, data):
-        if data["version"] != 1:
-            raise ValueError("Unsupported registry version")
-        self.types = set(data["types"])
-        self.families = data["families"]
-        self.mappings = {}
-        self.aliases = {}
+        self.data = data
         self.claimed = {}
-        for name in [*self.types, *self.families]:
-            valid_name(name)
-        for mapping in data["mappings"]:
-            name = mapping["name"]
-            valid_name(name)
-            if "::" in name or name in CPP_KEYWORDS or name in self.aliases or name in self.families:
-                raise ValueError(f"Conflicting concrete name: {name}")
-            canonical = self.normalize(parse(mapping["type"])).canonical()
-            if canonical in self.mappings or (name in self.types and canonical != name):
-                raise ValueError(f"Conflicting mapping: {canonical}")
-            self.mappings[canonical] = mapping
-            self.aliases[name] = parse(canonical)
+        rows = self._resolve_many([m['type'] for m in data['mappings']])
+        self.mappings = {row[0]: mapping for row, mapping in zip(rows, data['mappings'])}
 
-    def normalize(self, node):
-        if not node.arguments and node.name in self.aliases:
-            return self.aliases[node.name]
-        if not node.arguments and node.name in self.types:
-            return node
-        if node.name not in self.families:
-            raise ValueError(f"Unregistered type or template family: {node.name}")
-        family = self.families[node.name]
-        parameters = family["parameters"]
-        defaults = family.get("defaults", [])
-        count = len(node.arguments)
-        if not len(parameters) - len(defaults) <= count <= len(parameters):
-            raise ValueError(f"Wrong argument count for {node.name}")
-        arguments = list(node.arguments)
-        arguments.extend(parse(x) for x in defaults[len(defaults) - (len(parameters) - count):])
-        normalized = []
-        for kind, argument in zip(parameters, arguments):
-            if kind == "type" and isinstance(argument, Type):
-                normalized.append(self.normalize(argument))
-            elif kind == "integer" and type(argument) is int and argument in family["values"]:
-                normalized.append(argument)
-            else:
-                raise ValueError(f"Invalid {kind} argument for {node.name}")
-        return Type(node.name, tuple(normalized))
+    def _resolve_many(self, types):
+        import sys
+        tool_root = str(Path(__file__).resolve().parent)
+        if tool_root not in sys.path:
+            sys.path.insert(0, tool_root)
+        from concrete_types import generator_tool
+        import subprocess
+        tool = generator_tool(Path(__file__).resolve().parents[1])
+        response = subprocess.run([str(tool)], input=json.dumps({
+            'action': 'names', 'registry': self.data, 'types': types}),
+            text=True, capture_output=True)
+        if response.returncode:
+            raise ValueError(response.stderr.strip())
+        return json.loads(response.stdout)
 
     def resolve(self, text):
-        node = self.normalize(parse(text))
-        identity = node.canonical()
-        if identity in self.mappings:
-            name = self.mappings[identity]["name"]
-        elif node.arguments:
-            # Nested aliases never shorten the structural tree: registration of
-            # another short name must not rename existing outer specializations.
-            name = structural_name(self.structural_tree(node))
-        else:
-            name = node.name
+        identity, name = self._resolve_many([text])[0]
         previous = self.claimed.setdefault(name, identity)
         if previous != identity:
-            raise ValueError(f"Concrete name collision: {name}")
+            raise ValueError(f'Concrete name collision: {name}')
         return identity, name
 
-    def structural_tree(self, node):
-        if any(not isinstance(x, Type) for x in node.arguments):
-            mapping = self.mappings.get(node.canonical())
-            if mapping is None:
-                raise ValueError("Non-type arguments require an explicit concrete mapping")
-            return Type(mapping["name"])
-        return Type(node.name, tuple(self.structural_tree(x) for x in node.arguments))
+    def normalize(self, node):
+        return parse(self.resolve(node.canonical())[0])
 
     def bindings(self, family):
         if family not in ("scalars", "string", "containers", "json"):

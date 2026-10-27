@@ -322,3 +322,9 @@ add_test(NAME scpp_test_public_scan COMMAND ${Python3_EXECUTABLE}
   ${CMAKE_CURRENT_SOURCE_DIR}/run_public_scan.py $<TARGET_FILE:test_public_scan>)
 add_test(NAME scpp_test_concrete_generation COMMAND ${Python3_EXECUTABLE}
   ${CMAKE_CURRENT_SOURCE_DIR}/check_concrete_types.py)
+
+add_executable(test_api_generation test_api_generation.cpp)
+target_link_libraries(test_api_generation PRIVATE scpp_api_generation Threads::Threads)
+add_test(NAME scpp_test_api_generation COMMAND test_api_generation)
+add_test(NAME scpp_test_api_metadata COMMAND ${Python3_EXECUTABLE}
+  ${CMAKE_CURRENT_SOURCE_DIR}/check_api_metadata.py --tool $<TARGET_FILE:scpp_api_generator>)

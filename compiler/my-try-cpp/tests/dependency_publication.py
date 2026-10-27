@@ -50,6 +50,8 @@ def main():
         second = driver.BUILD / "middleware/CMakeFiles/compiler_middleware.dir/second.cpp.o"
         timestamp = second.stat().st_mtime_ns
         published = archive.stat().st_mtime_ns
+        (source / "__pycache__").mkdir()
+        (source / "__pycache__/fixture.pyc").write_bytes(b"transient interpreter cache")
         driver.publish("middleware", clang, 8)
         assert archive.stat().st_mtime_ns == published
         first.write_text("int first() { return 3; }\n")

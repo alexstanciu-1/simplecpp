@@ -161,9 +161,10 @@ result_vector_string`, in `modules/filesystem/scan.hpp`. Its public dependency
 closure contains concrete `result_vector_string`, `vector_string`, `string`,
 `error_value` and scalar types. `scpp_filesystem_api` exposes only public headers.
 
-`runtime/tools/concrete_types.py` materializes prepared vector/Result demands using
-existing metadata representation recipes and shared `runtime/tools/type_names.py`
-canonical naming. `runtime/specs/public_specializations.json` selects physical
+`runtime/tools/api_generator/` materializes prepared API demands from metadata,
+using existing native representation recipes. The Python driver orchestrates target
+probes and publication checks; canonical naming is owned by the C++ library. See
+[the metadata generation contract](public_api_generation.md). `runtime/specs/public_specializations.json` selects physical
 exports; it is not another source semantic registry. Application middleware uses
 this same generator and imports compatible published exports before generating its
 additional demands. This first implementation supports copyable vector/Result

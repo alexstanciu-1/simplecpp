@@ -6,7 +6,7 @@ from pathlib import Path
 
 def sdk_identity(root):
     digest = hashlib.sha256()
-    for base in ('include', 'metadata'):
+    for base in ('include', 'metadata', 'tools/api_generator'):
         for path in sorted((root/base).rglob('*')):
             if path.is_file():
                 digest.update(str(path.relative_to(root)).encode())
@@ -22,4 +22,7 @@ def seal_package(root, targets):
         'lib/lib'+target+'.a':hashlib.sha256((root/('lib/lib'+target+'.a')).read_bytes()).hexdigest()
         for target in targets
     }
+    tool = root/'tools/scpp_api_generator'
+    if tool.is_file():
+        manifest['artifact_files']['tools/scpp_api_generator'] = hashlib.sha256(tool.read_bytes()).hexdigest()
     path.write_text(json.dumps(manifest, indent=2, sort_keys=True)+'\n')

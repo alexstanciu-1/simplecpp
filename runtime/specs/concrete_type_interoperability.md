@@ -6,6 +6,12 @@ changing source-language type identity. The compiler's type registry and prepare
 operation facts remain authoritative. This protocol is a physical runtime/backend
 contract, not a new source capability or an additional semantic registry.
 
+The compiler-worker names below describe the existing `my-try` lowering path.
+The new runtime-owned [metadata-driven public API generator](public_api_generation.md)
+uses the same lifetime/storage obligations, with type-specific exposure and small
+binding snippets in API metadata. It does not replace source evaluation/sequencing
+rules or add another source capability registry.
+
 ## Ownership and proof boundary
 
 Runtime [`cpp_types` metadata](../../specs/runtime_module_metadata.md#native-type-representation-recipes)

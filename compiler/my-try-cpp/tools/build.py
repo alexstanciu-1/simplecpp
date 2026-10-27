@@ -25,7 +25,7 @@ def run(args):
 def identity(root, config):
     digest = hashlib.sha256(json.dumps(config, sort_keys=True).encode())
     for path in sorted(root.rglob("*")):
-        if path.is_file():
+        if path.is_file() and "__pycache__" not in path.parts and path.suffix != ".pyc":
             digest.update(str(path.relative_to(root)).encode() + b"\0")
             digest.update(path.read_bytes())
     return digest.hexdigest()
@@ -158,12 +158,12 @@ def publish(kind, clang, jobs):
         extra = ["-DBUILD_SHARED_LIBS=OFF", "-DSCPP_LANGUAGE_TARGET_PHP=OFF"]
         extra += [f"-DSCPP_WITH_{name}=OFF" for name in
                   ("MYSQLI", "REGEX", "PROCESS", "CURL", "UI")]
-        targets = ["scpp_runtime_core", "scpp_json", "scpp_filesystem", "scpp_datetime", "scpp_tasks"]
+        targets = ["scpp_runtime_core", "scpp_json", "scpp_filesystem", "scpp_datetime", "scpp_tasks", "scpp_api_generation"]
     else:
         extra = [f"-DRUNTIME_PACKAGE={runtime}"]
         targets = ["compiler_middleware"]
     configure(source, build, clang, extra)
-    run(["ninja", "-C", build, f"-j{jobs}", *targets])
+    run(["ninja", "-C", build, f"-j{jobs}", *targets, *(["scpp_api_generator"] if kind == "runtime" else [])])
     package.parent.mkdir(parents=True, exist_ok=True)
     stage = Path(tempfile.mkdtemp(prefix=".publish-", dir=package.parent))
     try:
@@ -173,6 +173,9 @@ def publish(kind, clang, jobs):
             if (source / "public/specializations.json").exists():
                 shutil.copytree(source / "metadata", stage / "metadata")
                 (stage / "tools").mkdir()
+                shutil.copy2(build / "scpp_api_generator", stage / "tools/scpp_api_generator")
+                (stage / "tools/api_generator/scpp").mkdir(parents=True)
+                shutil.copy2(source / "tools/api_generator/public/scpp/api_generation.hpp", stage / "tools/api_generator/scpp/api_generation.hpp")
                 for tool in ("type_names.py", "concrete_types.py", "public_package.py"):
                     shutil.copy2(source / "tools" / tool, stage / "tools" / tool)
         if kind == "middleware":
@@ -212,6 +215,11 @@ set_target_properties(compiler_tasks_api PROPERTIES
   INTERFACE_LINK_LIBRARIES "compiler_runtime_api;compiler_tasks"
   INTERFACE_COMPILE_DEFINITIONS "SCPP_HAS_TASKS=1")
 add_library(compiler_runtime INTERFACE IMPORTED)
+add_library(compiler_api_generation STATIC IMPORTED)
+set_target_properties(compiler_api_generation PROPERTIES
+  IMPORTED_LOCATION "${CMAKE_CURRENT_LIST_DIR}/lib/libscpp_api_generation.a"
+  INTERFACE_INCLUDE_DIRECTORIES "${CMAKE_CURRENT_LIST_DIR}/tools/api_generator"
+  INTERFACE_LINK_LIBRARIES "compiler_runtime_api")
 add_library(compiler_filesystem STATIC IMPORTED)
 set_target_properties(compiler_filesystem PROPERTIES
   IMPORTED_LOCATION "${CMAKE_CURRENT_LIST_DIR}/lib/libscpp_filesystem.a")

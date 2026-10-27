@@ -10,6 +10,8 @@ import time
 parser = argparse.ArgumentParser(description=__doc__)
 parser.add_argument('--facility', choices=('string', 'errors', 'composition', 'integers'), default='string')
 parser.add_argument('--compiler', default='clang++')
+parser.add_argument('--trials', type=int, default=3)
+parser.add_argument('--skip-adapters', action='store_true')
 parser.add_argument('--output', type=Path, required=True)
 parser.add_argument('--core-build', type=Path, help='Also force core object rebuild in this existing CMake build')
 args = parser.parse_args()
@@ -43,7 +45,7 @@ with tempfile.TemporaryDirectory(prefix='scpp-string-cost-') as directory:
         command = [args.compiler, '-std=c++23', '-O2', '-DNDEBUG', '-I'+str(runtime/include)]
         preprocessed = subprocess.check_output([*command, '-E', '-P', str(path)])
         results[name] = {'preprocessed_bytes': len(preprocessed), 'seconds': []}
-    for trial in range(3):
+    for trial in range(args.trials):
         for name in ('public', 'native') if trial % 2 == 0 else ('native', 'public'):
             include = inputs[name][0]
             start = time.perf_counter()
@@ -56,7 +58,7 @@ with tempfile.TemporaryDirectory(prefix='scpp-string-cost-') as directory:
         adapters = ['integers']
     if args.facility == 'composition':
         adapters = ['generated/vector_string', 'generated/result_vector_string', '../modules/filesystem/public_scan']
-    for adapter in adapters:
+    for adapter in ([] if args.skip_adapters else adapters):
         start = time.perf_counter()
         subprocess.run([args.compiler, '-std=c++23', '-O2', '-DNDEBUG', '-I'+str(runtime/'include'),
                         '-c', str(runtime/('include/core/'+adapter+'.cpp')), '-o', str(directory/(Path(adapter).name+'.o'))], check=True)

@@ -1,12 +1,21 @@
 {
   "version": 1,
   "package": "runtime.core",
-  "roots": ["result<vector<string>>"],
+  "roots": [
+    "result<vector<string>>"
+  ],
   "leaves": {
-    "string": {"cpp": "scpp::string", "header": "scpp/string.hpp", "owner": "runtime.core"}
+    "string": {
+      "cpp": "scpp::string",
+      "header": "scpp/string.hpp",
+      "owner": "runtime.core"
+    }
   },
   "names": {
     "vector<string>": "vector_string",
     "result<vector<string>>": "result_vector_string"
-  }
+  },
+  "apis": [
+    "fs_scan"
+  ]
 }

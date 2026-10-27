@@ -13,13 +13,14 @@ with tempfile.TemporaryDirectory(prefix='scpp-concrete-check-') as directory:
     subprocess.run(['python3',str(runtime/'tools/concrete_types.py'),'--request',str(runtime/'specs/public_specializations.json'),
                     '--output',str(stage)],check=True)
     manifest = json.loads((stage/'public/specializations.json').read_text())
-    paths = ['public/specializations.json', *manifest['sources']]
+    paths = ['public/specializations.json', *manifest['generated_files']]
     for record in manifest['types'].values():
         paths += ['public/'+record['header'], 'include/'+record['header']]
     for relative in paths:
         assert (stage/relative).read_bytes() == (runtime/relative).read_bytes(), relative
     request = json.loads((runtime/'specs/public_specializations.json').read_text())
     request['roots'] = ['vector<string>']
+    request['apis'] = []
     reduced = stage/'reduced.json'
     reduced.write_text(json.dumps(request))
     result = subprocess.run(['python3', str(runtime/'tools/concrete_types.py'),

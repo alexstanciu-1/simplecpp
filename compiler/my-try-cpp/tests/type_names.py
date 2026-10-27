@@ -28,6 +28,7 @@ class NamingTests(unittest.TestCase):
     def test_mappings_defaults_and_aliases(self):
         self.assertEqual(self.registry.resolve("vector<string>")[1], "vector_string")
         self.assertEqual(self.registry.resolve("int<32>")[1], "int32")
+        self.assertEqual(self.registry.resolve("int<0032>"), self.registry.resolve("int<32>"))
         self.assertEqual(self.registry.resolve("int64")[0], "int<64>")
         self.assertEqual(self.registry.resolve("uint64")[0], "uint<64>")
         self.assertEqual(self.registry.resolve("uint<32>")[1], "uint32")
