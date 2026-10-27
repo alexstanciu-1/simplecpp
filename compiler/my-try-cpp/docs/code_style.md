@@ -1,7 +1,7 @@
 # C++ source style
 Doc Status: supporting
 
-Applies to handwritten `.cpp` and `.hpp` files in `src/`, `middleware/` and
+Applies to handwritten `.cpp` and `.hpp` files in `src/`, `model/`, `support/`, `middleware/` and
 `tests/`. This adapts the presentation rules from `../../my-try/docs/code_style.md`;
 it does not import PHP semantics or change the runtime/middleware boundary.
 Generated files, published dependency snapshots and build output are excluded.
@@ -105,7 +105,10 @@ static void reject(const char *message, const string &detail)
 Formatting must preserve literals, statement order and behavior. Review brace
 insertion around formerly unbraced conditions and loops. Use the focused build
 and tests described in `../README.md`; rebuild middleware explicitly when its
-handwritten sources change. Runtime recompilation is not required for this work.
+handwritten sources change. Compiler-specific `support/` rebuilds automatically
+with the compiler; its implementation files may instantiate runtime templates.
+Model definitions and compiler-stage include closures remain template-free.
+Runtime recompilation is not required for formatting work.
 
 A generic formatter alone does not enforce the body-length brace rule, meaningful
 grouping or purpose comments. Review those explicitly; do not claim that ordinary

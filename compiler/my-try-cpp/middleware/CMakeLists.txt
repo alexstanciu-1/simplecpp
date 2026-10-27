@@ -15,7 +15,7 @@ add_custom_command(OUTPUT "${BINDINGS}"
   DEPENDS tools/type_names.py types.json
   VERBATIM)
 add_library(compiler_middleware STATIC src/textbuilder.cpp src/types.cpp src/string.cpp src/vector_string.cpp
-  src/json_value.cpp src/host.cpp src/file_records.cpp src/discovery.cpp src/token_buffer.cpp src/source_reads.cpp src/token_sequence.cpp src/token_jobs.cpp "${BINDINGS}")
+  src/json_value.cpp src/host.cpp "${BINDINGS}")
 target_compile_features(compiler_middleware PUBLIC cxx_std_23)
 target_include_directories(compiler_middleware PUBLIC include)
 target_include_directories(compiler_middleware PRIVATE "${CMAKE_CURRENT_BINARY_DIR}/generated")

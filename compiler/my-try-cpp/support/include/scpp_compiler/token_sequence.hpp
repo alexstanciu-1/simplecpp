@@ -1,21 +1,9 @@
 #pragma once
 #include "scpp_compiler/token_buffer.hpp"
-#include "scpp_compiler/token_kind.hpp"
+#include "scpp_compiler/token.hpp"
 
 namespace scpp::compiler_support
 {
-	class token final
-	{
-	public:
-		token(uint64 offset, uint64 length, token_kind kind);
-		uint32 offset() const;
-		uint32 length() const;
-		token_kind kind() const;
-	private:
-		uint32 offset_;
-		uint32 packed_;
-	};
-
 	class token_builder;
 	class token_sequence final
 	{

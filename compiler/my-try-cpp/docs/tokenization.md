@@ -8,7 +8,7 @@ Each token is exactly eight bytes (size and alignment asserted in middleware):
 Tag zero is reserved. Values 1–125 classify six general categories, 25 single-byte
 punctuation spellings, 30 multi-byte spellings and 64 parser-recognized words.
 See [the inventory](token_inventory.md) and
-[the explicit tag enum](../middleware/include/scpp_compiler/token_kind.hpp).
+[the explicit tag enum](../model/include/scpp_compiler/token_kind.hpp).
 There is no stored EOF token. Collection count defines the end.
 
 The source buffer may contain at most 4,294,967,295 bytes. Tokens must have lengths

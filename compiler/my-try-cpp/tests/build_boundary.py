@@ -32,13 +32,21 @@ def main():
         ("middleware_source", PROJECT / "middleware/src/textbuilder.cpp"),
         ("middleware_header", PROJECT / "middleware/include/scpp_compiler/textbuilder.hpp"),
         ("compiler_source", PROJECT / "src/main.cpp"),
+        ("support_source", PROJECT / "support/src/token_sequence.cpp"),
+        ("model_header", PROJECT / "model/include/scpp_compiler/token.hpp"),
     ):
         stat = path.stat()
         try:
             os.utime(path, None)
             output, evidence[label + "_edit_seconds"] = run(["ninja", "-C", BUILD])
-            if label == "compiler_source":
+            if label in ("compiler_source", "support_source", "model_header"):
                 assert "Building CXX object" in output and "Linking CXX executable" in output, output
+                if label == "compiler_source":
+                    assert "compiler_support.dir" not in output, output
+                else:
+                    assert "compiler_support.dir" in output, output
+                if label == "model_header":
+                    assert "compiler_startup.dir" in output, output
             else:
                 assert "no work to do" in output, output
         finally:

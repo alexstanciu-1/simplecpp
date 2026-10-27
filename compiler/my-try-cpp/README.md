@@ -222,3 +222,27 @@ This runs 12 compatible tests; the scalar allocation-hook test is excluded becau
 its replacement allocation operators conflict with ThreadSanitizer. The default
 `sanitizers.py` mode remains ASan/UBSan. See the
 [memory safety audit](docs/memory_safety_audit.md) for sample coverage and limits.
+
+
+## Compiler model and support
+
+See [ownership, validation and build measurements](docs/model_support.md).
+
+Compiler-owned token definitions now live in `model/include/scpp_compiler/`.
+`support/` owns their runtime-backed storage and the dependent file records,
+discovery/read adapters and token job batches. `compiler_support` is a normal
+incremental target: model and support edits automatically rebuild affected objects.
+Ordinary stage-source edits do not rebuild support. General middleware and runtime
+still require explicit publication commands.
+
+The middleware publishes a private `detail/` native bridge alongside its public
+headers and library. Only support implementations can include this bridge and the
+runtime template headers; compiler/model consumers retain the template-free include
+boundary. Support never compiles against live `middleware/src` or generated build
+headers. The token's native scalar access implementation is in `support/src/token.cpp`;
+its declaration and 8-byte layout are compiler-owned model definitions.
+
+This slice preserves existing namespaces and public include spellings, token
+layout, exceptions and ownership. File-record and batch interfaces moved together
+because they depend on token storage; redesigning their data/worker responsibilities
+and introducing AST storage are separate work.

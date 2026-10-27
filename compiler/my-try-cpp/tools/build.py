@@ -167,6 +167,12 @@ def publish(kind, clang, jobs):
     stage = Path(tempfile.mkdtemp(prefix=".publish-", dir=package.parent))
     try:
         shutil.copytree(source / "include", stage / "include")
+        if kind == "middleware":
+            # Support alone consumes this private bridge, paired with this publication.
+            (stage / "detail").mkdir()
+            for header in ("scalar_access.hpp", "string_state.hpp"):
+                shutil.copy2(source / "src" / header, stage / "detail" / header)
+            shutil.copy2(build / "generated/runtime_bindings.hpp", stage / "detail/runtime_bindings.hpp")
         (stage / "lib").mkdir()
         for target in targets:
             shutil.copy2(build / f"lib{target}.a", stage / "lib")
