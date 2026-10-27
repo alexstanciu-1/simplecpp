@@ -88,7 +88,7 @@ no equivalent new public path identified. Published/recipe does not mean complet
 The recipe registry currently contains nine families: vector, hash,
 nullable, result, result_or_false, result_or_bool, float64, mixed and dynamic. At the original inventory, the first four all imposed copy
 construction/assignment and nothrow-destruction checks. Nullable and Result now use conditional
-lifecycle and payload APIs (C10/C11); vector/hash retain their blanket checks. This is a real coverage
+lifecycle and payload APIs (C10/C11); vector follows in E1; hash retains its blanket checks. This is a real coverage
 restriction: supporting `unique<T>` cannot be fixed by merely adding another name
 to the current copy-required recipes.
 
@@ -1305,3 +1305,24 @@ Prepared condition facts are supplied to the planner independently of the physic
 storage package. Sealed reuse proves storage reuse, not source-fact inference from a
 published native type. The pending formation-boundary decision is unchanged, as is
 the logical-operator policy question.
+
+## E1 checkpoint — conditional vector storage and companions
+
+Vector now selects copy lifecycle, copying APIs and its copying cursor from payload
+capabilities. Move-only application storage can append/move/remove/clear without
+instantiating the cursor. Companion class selection uses the existing shared
+capability mechanism; no vector-specific generator branch was added. Whole-vector
+move transfers storage and does not require moving individual elements.
+
+The release and sanitizer proof checks three owned records destroyed exactly once,
+no element moves during container transfer, zero allocations after initial reserve,
+copyable vector copy independence and cursor preservation across clear. It also
+proves public-only compilation and sealed application specialization reuse.
+
+This is physical storage coverage, not new source admission. E remains incomplete:
+hash conditional lifecycle, source initialization, safe access/borrowing and cursor
+protocol completion remain. Copy-only native types with explicitly deleted move
+operations need a separate capability/native-cursor review (`std::copy_constructible`
+is stricter than a copy trait). Indexed writes through current `set()` remain visible
+to a live cursor, unlike structural clear preservation; audit that against owning
+iteration semantics before changing it. No ownership/callback expansion occurred.

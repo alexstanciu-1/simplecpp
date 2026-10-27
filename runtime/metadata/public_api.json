@@ -188,7 +188,13 @@
           "native": "${native_type}",
           "lifecycle": {
             "default": "native",
-            "copy": "native",
+            "copy": {
+              "requires_capabilities": {
+                "T": [
+                  "copy_storage"
+                ]
+              }
+            },
             "move": "native",
             "destroy": "native"
           },
@@ -252,7 +258,12 @@
                   "passing": "const_ref"
                 }
               ],
-              "expression": "${self}.resize(detail::concrete_size(count), fill)"
+              "expression": "${self}.resize(detail::concrete_size(count), fill)",
+              "requires_capabilities": {
+                "T": [
+                  "copy_storage"
+                ]
+              }
             },
             {
               "name": "clear",
@@ -282,7 +293,12 @@
                   "passing": "value"
                 }
               ],
-              "expression": "${self}.compact(detail::concrete_size(capacity))"
+              "expression": "${self}.compact(detail::concrete_size(capacity))",
+              "requires_capabilities": {
+                "T": [
+                  "move_storage"
+                ]
+              }
             },
             {
               "name": "at",
@@ -295,7 +311,12 @@
                 }
               ],
               "const": true,
-              "expression": "${self}.at(detail::concrete_size(index))"
+              "expression": "${self}.at(detail::concrete_size(index))",
+              "requires_capabilities": {
+                "T": [
+                  "copy_storage"
+                ]
+              }
             },
             {
               "name": "index",
@@ -308,7 +329,12 @@
                 }
               ],
               "const": true,
-              "expression": "this->at(index)"
+              "expression": "this->at(index)",
+              "requires_capabilities": {
+                "T": [
+                  "copy_storage"
+                ]
+              }
             },
             {
               "name": "operator[]",
@@ -321,7 +347,12 @@
                 }
               ],
               "const": true,
-              "expression": "this->at(index)"
+              "expression": "this->at(index)",
+              "requires_capabilities": {
+                "T": [
+                  "copy_storage"
+                ]
+              }
             },
             {
               "name": "set",
@@ -338,7 +369,12 @@
                   "passing": "const_ref"
                 }
               ],
-              "expression": "${self}.at(detail::concrete_size(index)) = value"
+              "expression": "${self}.at(detail::concrete_size(index)) = value",
+              "requires_capabilities": {
+                "T": [
+                  "copy_storage"
+                ]
+              }
             },
             {
               "name": "append",
@@ -350,7 +386,12 @@
                   "passing": "const_ref"
                 }
               ],
-              "expression": "${self}.append(value)"
+              "expression": "${self}.append(value)",
+              "requires_capabilities": {
+                "T": [
+                  "copy_storage"
+                ]
+              }
             },
             {
               "name": "append",
@@ -362,7 +403,12 @@
                   "passing": "move_ref"
                 }
               ],
-              "expression": "${self}.append(std::move(value))"
+              "expression": "${self}.append(std::move(value))",
+              "requires_capabilities": {
+                "T": [
+                  "move_storage"
+                ]
+              }
             },
             {
               "name": "push_back",
@@ -374,7 +420,12 @@
                   "passing": "const_ref"
                 }
               ],
-              "expression": "this->append(value)"
+              "expression": "this->append(value)",
+              "requires_capabilities": {
+                "T": [
+                  "copy_storage"
+                ]
+              }
             },
             {
               "name": "push_back",
@@ -386,7 +437,12 @@
                   "passing": "move_ref"
                 }
               ],
-              "expression": "this->append(std::move(value))"
+              "expression": "this->append(std::move(value))",
+              "requires_capabilities": {
+                "T": [
+                  "move_storage"
+                ]
+              }
             },
             {
               "name": "remove",
@@ -399,7 +455,12 @@
                 }
               ],
               "transport": "native",
-              "expression": "${self}.remove(${native:index})"
+              "expression": "${self}.remove(${native:index})",
+              "requires_capabilities": {
+                "T": [
+                  "move_storage"
+                ]
+              }
             },
             {
               "name": "iterate",
@@ -407,7 +468,12 @@
               "parameters": [],
               "const": true,
               "transport": "native",
-              "expression": "${self}.value_range()"
+              "expression": "${self}.value_range()",
+              "requires_capabilities": {
+                "T": [
+                  "copy_storage"
+                ]
+              }
             }
           ]
         },
@@ -451,7 +517,12 @@
               "parameters": [],
               "body": "if (!this->valid()) raise_runtime_error(\"Finished iteration\", \"index_out_of_range\", \"core\", \"iteration\");\nauto iterator = ${self}.begin();\n++iterator;"
             }
-          ]
+          ],
+          "requires_capabilities": {
+            "T": [
+              "copy_storage"
+            ]
+          }
         }
       ],
       "functions": [
@@ -496,9 +567,8 @@
         }
       ],
       "checks": [
-        "std::is_copy_constructible_v<${public:T}>",
-        "std::is_copy_assignable_v<${public:T}>",
-        "std::is_nothrow_destructible_v<${public:T}>"
+        "std::is_nothrow_destructible_v<${public:T}>",
+        "std::is_copy_constructible_v<${public:T}> || std::is_move_constructible_v<${public:T}>"
       ],
       "conditional_capabilities": {
         "copy_storage": {
@@ -507,17 +577,11 @@
               "copy_storage"
             ]
           }
-        },
-        "move_storage": {
-          "requires_capabilities": {
-            "T": [
-              "move_storage"
-            ]
-          }
         }
       },
       "capabilities": [
-        "default_storage"
+        "default_storage",
+        "move_storage"
       ]
     },
     "result": {

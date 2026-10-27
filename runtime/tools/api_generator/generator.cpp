@@ -245,16 +245,20 @@ namespace scpp::api_generation
             std::set<std::string> class_ids;
 			for (const auto &c : recipe.at("classes").items) {
 				if (c.at("methods").type!=value::kind::array) throw std::runtime_error("methods must be an array");
-                fields_only(c,"id name native lifecycle methods includes", "class");
+                fields_only(c,"id name native lifecycle methods includes requires_capabilities", "class");
 				auto id=c.at("id").text(), cpp=expand(c.at("name").text(),context);
                 if (!class_ids.insert(id).second) throw std::runtime_error("Duplicate class identity: "+id);
                 if (id=="self" && cpp!=name) throw std::runtime_error("Primary class name must match selected concrete name");
+                if (id=="self" && c.has("requires_capabilities")) throw std::runtime_error("Primary class cannot be conditional");
+                if (!this->selected(c,types)) continue;
+                this->capability_checks(c,types,checks,probe_headers);
 				this->claim(cpp,canonical+":"+id); header+="class "+cpp+";\n";
 				value t=record; if (id!="self") t.fields.erase("capabilities"); t["cpp"]="scpp::"+cpp; t["native"]=expand(c.at("native").text(),context); types[id]=t; context["public:"+id]="scpp::"+cpp; context["native:"+id]=t.at("native").text();
 				value reference=t; reference["cpp"]="scpp::"+cpp+" &"; types[id+"_ref"]=reference;
 			}
 			if (!class_ids.contains("self")) throw std::runtime_error("Missing primary class identity");
 			for (const auto &c : recipe.at("classes").items) {
+                if (!this->selected(c,types)) continue;
 				auto id=c.at("id").text(), cpp=expand(c.at("name").text(),context), native_type=types.at(id).at("native").text();
 				auto alias="native_"+cpp; auto key=canonical+":"+id;
 				auto local=context; local["native_type"]=alias; local["self"]="detail::concrete_access::get<"+alias+">(*this)";

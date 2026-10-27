@@ -2204,3 +2204,27 @@ Prepared observation facts remain explicit planner inputs. The storage reuse pro
 does not claim those facts are inferred from a native artifact or that general source
 formation is settled. Long-string/error extraction copies and state-dependent scoped
 observations remain debt; no general borrowed interior-reference API is introduced.
+
+## E1 — move-only vector storage (2026-10-27)
+
+`check_vector_lifecycle.py` exercises production vector metadata with a move-only
+application record and an ordinary integer vector. Metadata assertions cover omitted
+copy methods/cursor/layout probes, retained ordinary APIs, conditional primary-class
+rejection, invalid capability parameters and references to omitted companions.
+
+Release and ASan/UBSan with leak detection pass: three records destroyed exactly
+once; append/remove/container move/clear allocate zero times after reserve; container
+moves do not move payloads. Ordinary copying is independent, and a cursor survives
+clear with its saved value. Public-only headers pass the private-template guard;
+sealing and importing the application generates no duplicate sources.
+
+Single-run compile costs for both generated storage units combined / public caller:
+release **2.8258s / 0.1149s**, sanitizer **3.7510s / 0.1400s**. These are focused
+fixture costs, not complete compiler rebuild times. Existing runtime generated
+implementation files were unchanged; only publication metadata identity changed.
+No runtime-core rebuild was needed. Generator builds used Ninja eight jobs.
+
+The first regression assertion incorrectly expected cursor snapshotting on `set()`;
+current native indexed assignment changes the live cursor value. The final proof
+uses structural clear preservation and the separate indexed-write audit remains E
+debt. No native iteration behavior was changed to satisfy this storage slice.

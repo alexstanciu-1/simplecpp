@@ -1234,3 +1234,20 @@ callback. Consumers must not extract a payload when the plan says none. Nested
 state-dependent observations cannot use this shortcut merely because a deeper leaf
 is constant. Prepared condition facts remain explicit planner inputs; sealed native
 storage reuse does not synthesize or validate source-language formation facts.
+
+## Conditional companion classes
+
+A recipe companion may declare `requires_capabilities` using the same parameter
+facts as methods and lifecycle entries. An unselected companion emits no forward
+class declaration, layout probe, implementation or public definition. Methods
+returning that companion must carry compatible guards; references to an omitted
+companion fail generation. The primary `self` class cannot be conditional: family
+admission owns whether a requested specialization exists.
+
+Vector uses this mechanism to omit copying iteration cursors for move-only elements.
+Container move transfers storage, so its move capability is independent of payload
+move; copying remains conditional on payload copy storage. Copy-returning access,
+fill resize and copying insertion require copy storage. Moving insertion, indexed
+removal and explicit-capacity compaction require move storage. Native layout probes
+still verify relocatability and nonthrowing destruction; these physical checks do
+not grant source-language template eligibility.
