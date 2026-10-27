@@ -1879,3 +1879,30 @@ sanitized; public caller: 0.1495s / 0.1944s. Five focused regressions pass in 6.
 The first storage compile caught inconsistent reference/value return deduction in
 the bool take snippet; explicitly returning an owned boolean corrected it. No
 runtime-core or generator rebuild was needed. Public metadata remains below 200KB.
+
+## C14 — scalar/boxed carrier equality execution
+
+The nonnumeric equality metadata owner now admits matching boolean/string as well
+as mixed/dynamic, using value_equal/value_not_equal public helper names. Four new
+runtime implementation units bring publication to 336. Existing boxed API identities
+and header paths remain, with their helper names migrated in public tests/consumers.
+Type metadata provides native boolean operand adaptation; the C++ generator is
+unchanged. Numeric equality remains with its promotion owner.
+
+A new public-only eight-specialization proof derives 69 functions from comparison
+plans and executes 676 boolean state expectations across all four families and
+ordinary equality/inequality/strict identity/nonidentity. It also exercises string
+comparison, distinct-kind strict comparison, boxed numeric equality and rejected
+boxed kind mismatch. Scalars/short strings allocate zero. Long string equality
+allocates four times (two snapshots and two owned extractions); this is recorded
+scoped-observation debt rather than a zero-copy claim. Sealed application reuse and
+relocated runtime imports pass, including the newly published plain functions.
+
+Release and ASan/UBSan with leak detection pass. Eight focused regressions complete
+in 8.26s / 49.72s. The compiled proof's eight storage units take 9.0602s / 13.1212s;
+its large generated matrix caller takes 3.1127s / 10.9189s. These are single-run
+costs of the exhaustive test caller, not a minimal public-header benchmark. Successful
+core rebuild/link takes 21.14s / 44.15s. Runs overlap and are not isolated comparisons.
+An initial core compilation exposed missing native boolean operand adaptation; it
+was corrected in metadata before the successful builds. No native semantics or
+generator source changes were required. Public metadata remains below 200KB.

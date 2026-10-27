@@ -27,11 +27,11 @@ with tempfile.TemporaryDirectory(prefix='scpp-operator-publication-') as directo
     shutil.copy2(args.tool, sdk/'tools/scpp_api_generator')
     seal_package(sdk, ['core'])
     request = stage/'request.json'
-    request.write_text(json.dumps({'package':'app.operators', 'roots':[], 'apis':['add_int64','equal_mixed','add_int64','divide_int64','less_float64','cast_uint64_from_string','cast_string_from_mixed','cast_boolean_from_dynamic','cast_uint64_from_mixed','condition_truthy_string','condition_truthy_dynamic','concat_text_float64','strict_identical_mixed','strict_identical_float64','logical_xor_boolean','isset_dynamic','empty_mixed','clean_float64','strict_identical_boxed_mixed_string','strict_not_identical_boxed_dynamic_int64','concat_text_mixed','concat_text_dynamic','power_int64','shift_left_mixed','compare_uint64','compare_float64','negative_dynamic','complement_int64','post_increment_dynamic','add_mixed','divide_dynamic','numeric_compound_replacement_dynamic','concat_string','concat_text_int64']}))
+    request.write_text(json.dumps({'package':'app.operators', 'roots':[], 'apis':['add_int64','equal_mixed','equal_boolean','equal_string','add_int64','divide_int64','less_float64','cast_uint64_from_string','cast_string_from_mixed','cast_boolean_from_dynamic','cast_uint64_from_mixed','condition_truthy_string','condition_truthy_dynamic','concat_text_float64','strict_identical_mixed','strict_identical_float64','logical_xor_boolean','isset_dynamic','empty_mixed','clean_float64','strict_identical_boxed_mixed_string','strict_not_identical_boxed_dynamic_int64','concat_text_mixed','concat_text_dynamic','power_int64','shift_left_mixed','compare_uint64','compare_float64','negative_dynamic','complement_int64','post_increment_dynamic','add_mixed','divide_dynamic','numeric_compound_replacement_dynamic','concat_string','concat_text_int64']}))
     os.environ['SCPP_API_GENERATOR'] = str(sdk/'tools/scpp_api_generator')
     manifest = concrete_types.generate(request, stage/'app', sdk, [sdk], 'clang++', [])
     assert manifest['sources'] == []
-    assert all(x in manifest['apis'] for x in ['add_int64','equal_mixed','divide_int64','less_float64','cast_uint64_from_string','cast_string_from_mixed','cast_boolean_from_dynamic','cast_uint64_from_mixed','condition_truthy_string','condition_truthy_dynamic','concat_text_float64','strict_identical_mixed','strict_identical_float64','logical_xor_boolean','isset_dynamic','empty_mixed','clean_float64','strict_identical_boxed_mixed_string','strict_not_identical_boxed_dynamic_int64','concat_text_mixed','concat_text_dynamic','power_int64','shift_left_mixed','compare_uint64','compare_float64','negative_dynamic','complement_int64','post_increment_dynamic','add_mixed','divide_dynamic','numeric_compound_replacement_dynamic','concat_string','concat_text_int64'])
+    assert all(x in manifest['apis'] for x in ['add_int64','equal_mixed','equal_boolean','equal_string','divide_int64','less_float64','cast_uint64_from_string','cast_string_from_mixed','cast_boolean_from_dynamic','cast_uint64_from_mixed','condition_truthy_string','condition_truthy_dynamic','concat_text_float64','strict_identical_mixed','strict_identical_float64','logical_xor_boolean','isset_dynamic','empty_mixed','clean_float64','strict_identical_boxed_mixed_string','strict_not_identical_boxed_dynamic_int64','concat_text_mixed','concat_text_dynamic','power_int64','shift_left_mixed','compare_uint64','compare_float64','negative_dynamic','complement_int64','post_increment_dynamic','add_mixed','divide_dynamic','numeric_compound_replacement_dynamic','concat_string','concat_text_int64'])
     logical_request={'action':'resolve_operator','metadata':json.loads((sdk/'metadata/public_api.json').read_text()),
                      'request':{'operation':'logical_not','operand':'dynamic'}}
     logical_plan=json.loads(subprocess.check_output([str(sdk/'tools/scpp_api_generator')],input=json.dumps(logical_request),text=True))
@@ -69,6 +69,8 @@ with tempfile.TemporaryDirectory(prefix='scpp-operator-publication-') as directo
     boxed_text_expression=boxed_text['writeback_conversion']['expression'].replace('${value}',boxed_text_calculation)
     (stage/'main.cpp').write_text('''#include "scpp/operators/add_int64.hpp"
 #include "scpp/operators/equal_mixed.hpp"
+#include "scpp/operators/equal_boolean.hpp"
+#include "scpp/operators/equal_string.hpp"
 #include "scpp/operators/add_mixed.hpp"
 #include "scpp/operators/divide_dynamic.hpp"
 #include "scpp/operators/numeric_compound_replacement_dynamic.hpp"
@@ -110,7 +112,9 @@ int main() {
     scpp::dynamic updated(scpp::int64(1)); const auto old=scpp::update_post_increment(updated);
     scpp::float64 reset_value(7.0); scpp::clean(reset_value);
     return scpp::numeric_add(scpp::int64(3),scpp::int64(4)).native_value()==7
-        && static_cast<bool>(scpp::boxed_equal(value,value))
+        && static_cast<bool>(scpp::value_equal(value,value))
+        && static_cast<bool>(scpp::value_equal(scpp::boolean(false),scpp::boolean(false)))
+        && static_cast<bool>(scpp::value_equal(scpp::string("same"),scpp::string("same")))
         && scpp::numeric_divide(scpp::int64(8),scpp::int64(2)).native_value()==4
         && scpp::cast_uint64(scpp::mixed(scpp::float64(9223372036854775808.0))).native_value()==9223372036854775808ULL
         && static_cast<bool>(scpp::condition_truthy(scpp::string("false")))

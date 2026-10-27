@@ -3,5 +3,5 @@
 #include "scpp/dynamic.hpp"
 #include "scpp/integers.hpp"
 namespace scpp {
-scpp::boolean boxed_equal(const scpp::dynamic &left, const scpp::dynamic &right);
+scpp::boolean value_equal(const scpp::dynamic &left, const scpp::dynamic &right);
 }

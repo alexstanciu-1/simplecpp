@@ -29,7 +29,7 @@ args = parser.parse_args()
 public = '''#include "scpp/operators/add_int64.hpp"
 #include "scpp/operators/equal_mixed.hpp"
 scpp::int64 add(scpp::int64 a, scpp::int64 b) { return scpp::numeric_add(a,b); }
-scpp::boolean equal(const scpp::mixed &a, const scpp::mixed &b) { return scpp::boxed_equal(a,b); }
+scpp::boolean equal(const scpp::mixed &a, const scpp::mixed &b) { return scpp::value_equal(a,b); }
 '''
 native = '''#include "operators/identity/boxed_scalar_equality.hpp"
 scpp::int_t<> add(scpp::int_t<> a, scpp::int_t<> b) { return a+b; }

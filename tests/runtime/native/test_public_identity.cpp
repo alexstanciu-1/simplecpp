@@ -48,7 +48,7 @@ int main() {
     const string binary("a\0b",uint64(3)); CHECK(strict_identical(binary,binary));
     CHECK(strict_not_identical(binary,string("a\0c",uint64(3))));
     matrix<mixed>(); matrix<dynamic>();
-    CHECK(boxed_equal(mixed(int64(1)),mixed(float64(1))));
+    CHECK(value_equal(mixed(int64(1)),mixed(float64(1))));
     CHECK(!strict_identical(mixed(int64(1)),mixed(float64(1))));
     auto a=make_mixed_table(), b=make_mixed_table();
     CHECK(strict_identical(a,b)); a.set(string("x"),mixed(int64(1)));

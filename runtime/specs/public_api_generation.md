@@ -315,7 +315,7 @@ Each operation defines a group, public function name, expression snippet, public
 list, optional result type and private includes. `${public:Selected}` denotes the
 normalized type. Omitting `returns` selects that type. The same operation emitter
 publishes one implementation per selected type, not one per original operand pair.
-The first slice exposes `numeric_add` and `boxed_equal`/`boxed_not_equal` through
+The original slice exposed `numeric_add` and `boxed_equal`/`boxed_not_equal` through
 focused `scpp/operators/*.hpp` headers. It does not add heterogeneous C++ operator
 syntax or wire the compiler frontend to this resolver. Boxed runtime-kind validation
 remains in the shared native equality owner.
@@ -1043,3 +1043,19 @@ new borrowed extraction is introduced. Rejected no-error assignment preserves an
 existing success payload. Source result_payload/formation and explicit source
 transfer permissions remain independently required; physical test records do not
 broaden source Result argument admission.
+
+
+### Matching-value equality and carrier domains
+
+The ordinary nonnumeric equality owner now publishes `value_equal` and
+`value_not_equal` for matching boolean, string, mixed and dynamic values, replacing
+the early boxed-only helper names. API identities and header paths remain
+`equal_TYPE` / `not_equal_TYPE`; boolean/string add four implementations. Numeric
+promotion continues to use `numeric_equal` / `numeric_not_equal`.
+
+Prepared domain rules reject incompatible ordinary payload pairs; carrier states
+cannot rescue a rejected pair. The same carrier state policy applies to all four
+families, and strict identity admits its existing distinct-kind constant results
+only after eager snapshots. Native operand adaptation stays in type metadata,
+including the concrete boolean to native bool_t conversion; the generator has no
+boolean/string or carrier-family branches.

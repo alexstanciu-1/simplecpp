@@ -454,3 +454,6 @@ add_test(NAME scpp_check_conditional_lifecycle COMMAND ${Python3_EXECUTABLE}
 
 add_test(NAME scpp_check_sentinel_carriers COMMAND ${Python3_EXECUTABLE}
   ${CMAKE_CURRENT_SOURCE_DIR}/check_sentinel_carriers.py --tool $<TARGET_FILE:scpp_api_generator>)
+
+add_test(NAME scpp_check_carrier_equality COMMAND ${Python3_EXECUTABLE}
+  ${CMAKE_CURRENT_SOURCE_DIR}/check_carrier_equality.py --tool $<TARGET_FILE:scpp_api_generator>)

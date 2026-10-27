@@ -7,5 +7,5 @@
 #include "scpp/operators/not_equal_mixed.hpp"
 #include "scpp/value_iteration.hpp"
 namespace scpp {
-scpp::boolean boxed_not_equal(const scpp::mixed &left, const scpp::mixed &right) { return ([&]() -> decltype(auto) { return (detail::concrete_access::get<scpp::mixed_t>(left) != detail::concrete_access::get<scpp::mixed_t>(right)).native_value(); })(); }
+scpp::boolean value_not_equal(const scpp::mixed &left, const scpp::mixed &right) { return ([&]() -> decltype(auto) { return (detail::concrete_access::get<scpp::mixed_t>(left) != detail::concrete_access::get<scpp::mixed_t>(right)).native_value(); })(); }
 }

@@ -7,5 +7,5 @@
 #include "scpp/operators/equal_dynamic.hpp"
 #include "scpp/value_iteration.hpp"
 namespace scpp {
-scpp::boolean boxed_equal(const scpp::dynamic &left, const scpp::dynamic &right) { return ([&]() -> decltype(auto) { return (detail::concrete_access::get<scpp::dynamic_t<>>(left) == detail::concrete_access::get<scpp::dynamic_t<>>(right)).native_value(); })(); }
+scpp::boolean value_equal(const scpp::dynamic &left, const scpp::dynamic &right) { return ([&]() -> decltype(auto) { return (detail::concrete_access::get<scpp::dynamic_t<>>(left) == detail::concrete_access::get<scpp::dynamic_t<>>(right)).native_value(); })(); }
 }

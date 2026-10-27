@@ -1,6 +1,6 @@
 {
   "abi": "529dd5502370f48d64891818e9439aae72831b990b4027e8abe25c50c1216c21",
-  "api_identity": "138618c9111a4cbb2e7757d1b26fa33412ca2664bac7f4e71b6d0e7d20ab9692",
+  "api_identity": "55c401d36b98e4d732d35f1e3976e2f8735d819cb20f9c5a7d959595454433c4",
   "apis": {
     "add_dynamic": {
       "header": "scpp/operators/add_dynamic.hpp",
@@ -3893,6 +3893,34 @@
       },
       "source": "include/scpp/generated/public_empty_mixed.cpp"
     },
+    "equal_boolean": {
+      "header": "scpp/operators/equal_boolean.hpp",
+      "namespace": "scpp",
+      "operation": {
+        "expression": "(scpp::bool_t(left.native_value()) == scpp::bool_t(right.native_value())).native_value()",
+        "includes": [
+          "operators/identity/boxed_scalar_equality.hpp"
+        ],
+        "name": "value_equal",
+        "parameters": [
+          {
+            "name": "left",
+            "passing": "const_ref",
+            "type": "boolean"
+          },
+          {
+            "name": "right",
+            "passing": "const_ref",
+            "type": "boolean"
+          }
+        ],
+        "returns": "boolean",
+        "uses": [
+          "boolean"
+        ]
+      },
+      "source": "include/scpp/generated/public_equal_boolean.cpp"
+    },
     "equal_dynamic": {
       "header": "scpp/operators/equal_dynamic.hpp",
       "namespace": "scpp",
@@ -3901,7 +3929,7 @@
         "includes": [
           "operators/identity/boxed_scalar_equality.hpp"
         ],
-        "name": "boxed_equal",
+        "name": "value_equal",
         "parameters": [
           {
             "name": "left",
@@ -3929,7 +3957,7 @@
         "includes": [
           "operators/identity/boxed_scalar_equality.hpp"
         ],
-        "name": "boxed_equal",
+        "name": "value_equal",
         "parameters": [
           {
             "name": "left",
@@ -3948,6 +3976,34 @@
         ]
       },
       "source": "include/scpp/generated/public_equal_mixed.cpp"
+    },
+    "equal_string": {
+      "header": "scpp/operators/equal_string.hpp",
+      "namespace": "scpp",
+      "operation": {
+        "expression": "(${native:left} == ${native:right}).native_value()",
+        "includes": [
+          "operators/identity/boxed_scalar_equality.hpp"
+        ],
+        "name": "value_equal",
+        "parameters": [
+          {
+            "name": "left",
+            "passing": "const_ref",
+            "type": "string"
+          },
+          {
+            "name": "right",
+            "passing": "const_ref",
+            "type": "string"
+          }
+        ],
+        "returns": "boolean",
+        "uses": [
+          "string"
+        ]
+      },
+      "source": "include/scpp/generated/public_equal_string.cpp"
     },
     "fs_scan": {
       "header": "modules/filesystem/scan.hpp",
@@ -5492,6 +5548,34 @@
       },
       "source": "include/scpp/generated/public_negative_mixed.cpp"
     },
+    "not_equal_boolean": {
+      "header": "scpp/operators/not_equal_boolean.hpp",
+      "namespace": "scpp",
+      "operation": {
+        "expression": "(scpp::bool_t(left.native_value()) != scpp::bool_t(right.native_value())).native_value()",
+        "includes": [
+          "operators/identity/boxed_scalar_equality.hpp"
+        ],
+        "name": "value_not_equal",
+        "parameters": [
+          {
+            "name": "left",
+            "passing": "const_ref",
+            "type": "boolean"
+          },
+          {
+            "name": "right",
+            "passing": "const_ref",
+            "type": "boolean"
+          }
+        ],
+        "returns": "boolean",
+        "uses": [
+          "boolean"
+        ]
+      },
+      "source": "include/scpp/generated/public_not_equal_boolean.cpp"
+    },
     "not_equal_dynamic": {
       "header": "scpp/operators/not_equal_dynamic.hpp",
       "namespace": "scpp",
@@ -5500,7 +5584,7 @@
         "includes": [
           "operators/identity/boxed_scalar_equality.hpp"
         ],
-        "name": "boxed_not_equal",
+        "name": "value_not_equal",
         "parameters": [
           {
             "name": "left",
@@ -5528,7 +5612,7 @@
         "includes": [
           "operators/identity/boxed_scalar_equality.hpp"
         ],
-        "name": "boxed_not_equal",
+        "name": "value_not_equal",
         "parameters": [
           {
             "name": "left",
@@ -5547,6 +5631,34 @@
         ]
       },
       "source": "include/scpp/generated/public_not_equal_mixed.cpp"
+    },
+    "not_equal_string": {
+      "header": "scpp/operators/not_equal_string.hpp",
+      "namespace": "scpp",
+      "operation": {
+        "expression": "(${native:left} != ${native:right}).native_value()",
+        "includes": [
+          "operators/identity/boxed_scalar_equality.hpp"
+        ],
+        "name": "value_not_equal",
+        "parameters": [
+          {
+            "name": "left",
+            "passing": "const_ref",
+            "type": "string"
+          },
+          {
+            "name": "right",
+            "passing": "const_ref",
+            "type": "string"
+          }
+        ],
+        "returns": "boolean",
+        "uses": [
+          "string"
+        ]
+      },
+      "source": "include/scpp/generated/public_not_equal_string.cpp"
     },
     "numeric_compound_replacement_dynamic": {
       "header": "scpp/operators/numeric_compound_replacement_dynamic.hpp",
@@ -9215,7 +9327,19 @@
     "include/scpp/identity/strict_identical_error_value.hpp",
     "public/scpp/identity/strict_not_identical_error_value.hpp",
     "include/scpp/generated/public_strict_not_identical_error_value.cpp",
-    "include/scpp/identity/strict_not_identical_error_value.hpp"
+    "include/scpp/identity/strict_not_identical_error_value.hpp",
+    "public/scpp/operators/equal_boolean.hpp",
+    "include/scpp/generated/public_equal_boolean.cpp",
+    "include/scpp/operators/equal_boolean.hpp",
+    "public/scpp/operators/equal_string.hpp",
+    "include/scpp/generated/public_equal_string.cpp",
+    "include/scpp/operators/equal_string.hpp",
+    "public/scpp/operators/not_equal_boolean.hpp",
+    "include/scpp/generated/public_not_equal_boolean.cpp",
+    "include/scpp/operators/not_equal_boolean.hpp",
+    "public/scpp/operators/not_equal_string.hpp",
+    "include/scpp/generated/public_not_equal_string.cpp",
+    "include/scpp/operators/not_equal_string.hpp"
   ],
   "generator": "metadata-api-v1",
   "leaves": {
@@ -9592,8 +9716,10 @@
     "scpp/operators/divide_uint32.hpp": "92e60358e55ca59fe80e68fff42534fd60ecd22ca4733bfd822ddb0b50c38a94",
     "scpp/operators/divide_uint64.hpp": "33cebcda7b2a796336b2dba2c53b5eb3016028b6306f8eb910d7e85d3743f469",
     "scpp/operators/divide_uint8.hpp": "51c8d0d3904a496f9fdd497573f374a7e8830392875bdb985053981cb64ec82e",
-    "scpp/operators/equal_dynamic.hpp": "71df99c5591248fd2e3fc23b3ba0615536cb519a25e0a3edf1c1ca181981f972",
-    "scpp/operators/equal_mixed.hpp": "90bc19da133d567b41b74a9e6e30d66f9f62222173198c7af9b9bc8f6ea9c1f5",
+    "scpp/operators/equal_boolean.hpp": "6e1cdc855477f3b5e8f21013345e8b136975ec057b51c283ddfc8bb35bcbf095",
+    "scpp/operators/equal_dynamic.hpp": "fa4ce87ce9de6ef05c3d29780704f6b321bc1b3b68d1d0d167eeff13eab33754",
+    "scpp/operators/equal_mixed.hpp": "2d062022a379ee91dc07fbc8b8abedef6f421eb72db3397d3cc4afa3cd418e01",
+    "scpp/operators/equal_string.hpp": "5da9d628963321bb26080d646f939b3d90f8dfc1872a23eac3ba78d9c9c18fd6",
     "scpp/operators/greater_equal_float64.hpp": "42b91285e47dde3fec6359e9a5dc3e5e6ea224916926a95590cef8542f360084",
     "scpp/operators/greater_equal_int16.hpp": "867a84d35f5b08d3a1aa5574398a2507c2279ffb009affa627c01b31a2998367",
     "scpp/operators/greater_equal_int32.hpp": "28bcb9cc74015acd8626ccdff7c5981aeea7eb3718c772a7d51e40be0757e375",
@@ -9646,8 +9772,10 @@
     "scpp/operators/negative_float64.hpp": "2ffeaea0937ae1c1382d37f7e8c7bc2aaeeadae6ad115ca4e389bbbfa28eb119",
     "scpp/operators/negative_int64.hpp": "bab6ebf83eb55738f73bb5bdbdac11658f797aaeb0bd7d589e5af9510d2e959c",
     "scpp/operators/negative_mixed.hpp": "77f458beed1a1167921380a90563ddda6776c01fe9805f6fe7ab4875677eb9d5",
-    "scpp/operators/not_equal_dynamic.hpp": "ad4da31487738bc443208713f147fdde1943f8541924d8fe3fb6fdbfd66bab81",
-    "scpp/operators/not_equal_mixed.hpp": "45e03a1e1e7969f556adf1a5c1e0e10d6288bf774eb19d1b30d84abb7f4dbf6f",
+    "scpp/operators/not_equal_boolean.hpp": "56819f52b66cf2a9df779e62e9793164476918d67c2815c343c72e5b254f7b91",
+    "scpp/operators/not_equal_dynamic.hpp": "008f1e9dad6ad853bef430fc42b477ac8d0f76846c94aaa7ef6dfb1daf4a24e9",
+    "scpp/operators/not_equal_mixed.hpp": "be47523df79917c2bd2a08b3e2d9b56a513cbc8e93546a4b3a7fe1db8df359ea",
+    "scpp/operators/not_equal_string.hpp": "a110293dfa4380bea3707e0b56d894c3fdfeea30939b125541b66dbd8b5fcb18",
     "scpp/operators/numeric_compound_replacement_dynamic.hpp": "33c6a6f70e79df28ed95dad4dc1d18008767e54d7b443ad33dbe9c857b10939d",
     "scpp/operators/numeric_compound_replacement_mixed.hpp": "b45bbd7e5ded50241d375f0d56a1181c5159d094b6615c5091c5c1627b084912",
     "scpp/operators/numeric_equal_float64.hpp": "635e11f1b9fd95629131812d5dcdb467be3d246b3f30729ef823dbd06cf76322",
@@ -10066,7 +10194,11 @@
     "include/scpp/generated/public_numeric_compound_replacement_dynamic.cpp",
     "include/scpp/generated/public_concat_string.cpp",
     "include/scpp/generated/public_strict_identical_error_value.cpp",
-    "include/scpp/generated/public_strict_not_identical_error_value.cpp"
+    "include/scpp/generated/public_strict_not_identical_error_value.cpp",
+    "include/scpp/generated/public_equal_boolean.cpp",
+    "include/scpp/generated/public_equal_string.cpp",
+    "include/scpp/generated/public_not_equal_boolean.cpp",
+    "include/scpp/generated/public_not_equal_string.cpp"
   ],
   "types": {
     "dynamic": {

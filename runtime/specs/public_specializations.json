@@ -344,6 +344,10 @@
     "numeric_compound_replacement_dynamic",
     "concat_string",
     "strict_identical_error_value",
-    "strict_not_identical_error_value"
+    "strict_not_identical_error_value",
+    "equal_boolean",
+    "equal_string",
+    "not_equal_boolean",
+    "not_equal_string"
   ]
 }

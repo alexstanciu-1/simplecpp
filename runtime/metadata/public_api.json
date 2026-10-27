@@ -3291,16 +3291,20 @@
         "operand": "scpp::float_t(${value}.native_value())"
       },
       "mixed": {
-        "domain": "mixed"
+        "domain": "mixed",
+        "operand": "${native:${value}}"
       },
       "dynamic": {
-        "domain": "dynamic"
+        "domain": "dynamic",
+        "operand": "${native:${value}}"
       },
       "boolean": {
-        "domain": "boolean"
+        "domain": "boolean",
+        "operand": "scpp::bool_t(${value}.native_value())"
       },
       "string": {
-        "domain": "string"
+        "domain": "string",
+        "operand": "${native:${value}}"
       },
       "null": {
         "domain": "null"
@@ -3382,22 +3386,6 @@
             "right": "unsigned",
             "selection": "maximum",
             "domain": "floating"
-          }
-        ]
-      },
-      "boxed_equality": {
-        "rules": [
-          {
-            "left": "mixed",
-            "right": "mixed",
-            "selection": "same_or_maximum",
-            "domain": "mixed"
-          },
-          {
-            "left": "dynamic",
-            "right": "dynamic",
-            "selection": "same_or_maximum",
-            "domain": "dynamic"
           }
         ]
       },
@@ -3891,6 +3879,34 @@
             "domain": "string"
           }
         ]
+      },
+      "value_equality": {
+        "rules": [
+          {
+            "left": "mixed",
+            "right": "mixed",
+            "selection": "same_or_maximum",
+            "domain": "mixed"
+          },
+          {
+            "left": "dynamic",
+            "right": "dynamic",
+            "selection": "same_or_maximum",
+            "domain": "dynamic"
+          },
+          {
+            "left": "boolean",
+            "right": "boolean",
+            "selection": "same_or_maximum",
+            "domain": "boolean"
+          },
+          {
+            "left": "string",
+            "right": "string",
+            "selection": "same_or_maximum",
+            "domain": "string"
+          }
+        ]
       }
     },
     "operations": {
@@ -3913,26 +3929,30 @@
         ]
       },
       "equal": {
-        "group": "boxed_equality",
-        "name": "boxed_equal",
+        "group": "value_equality",
+        "name": "value_equal",
         "returns": "boolean",
-        "expression": "(${native:left} == ${native:right}).native_value()",
+        "expression": "(${operand:left} == ${operand:right}).native_value()",
         "publish": [
           "mixed",
-          "dynamic"
+          "dynamic",
+          "boolean",
+          "string"
         ],
         "includes": [
           "operators/identity/boxed_scalar_equality.hpp"
         ]
       },
       "not_equal": {
-        "group": "boxed_equality",
-        "name": "boxed_not_equal",
+        "group": "value_equality",
+        "name": "value_not_equal",
         "returns": "boolean",
-        "expression": "(${native:left} != ${native:right}).native_value()",
+        "expression": "(${operand:left} != ${operand:right}).native_value()",
         "publish": [
           "mixed",
-          "dynamic"
+          "dynamic",
+          "boolean",
+          "string"
         ],
         "includes": [
           "operators/identity/boxed_scalar_equality.hpp"
@@ -4523,7 +4543,11 @@
         "uint16",
         "uint32",
         "uint64",
-        "float64"
+        "float64",
+        "boolean",
+        "string",
+        "mixed",
+        "dynamic"
       ],
       "payload_state": "payload",
       "operations": {
@@ -4563,6 +4587,24 @@
             "error": {
               "function_set": "strict_not_identical"
             },
+            "false": "false",
+            "true": "false"
+          }
+        },
+        "equal": {
+          "different_states": "false",
+          "same_states": {
+            "absent": "true",
+            "error": "true",
+            "false": "true",
+            "true": "true"
+          }
+        },
+        "not_equal": {
+          "different_states": "true",
+          "same_states": {
+            "absent": "false",
+            "error": "false",
             "false": "false",
             "true": "false"
           }

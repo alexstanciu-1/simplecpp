@@ -415,3 +415,13 @@ Public take tests distinguish false payload from false sentinel and true sentine
 from payload success. Numeric operator/conversion/condition planning reuses the
 same carrier descriptors. Broader payload comparison domains and complete public
 execution coverage remain pending; this does not close the four-family review.
+
+
+### Matching value comparison implementation checkpoint
+
+Matching boolean/string/mixed/dynamic payload equality now uses the shared value
+equality owner under all four carrier state policies. Strict identity uses the
+existing scalar/boxed owner. A compiled 676-case boolean state matrix confirms that
+matching sentinels compare equal across families and remain distinct from successful
+boolean payloads. Ordinary incompatible payload comparisons reject before state
+inspection. Ordering, remaining pair admissions and the full review stay open.

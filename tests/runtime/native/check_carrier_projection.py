@@ -49,8 +49,8 @@ for bad in ['nullable<boolean>', 'nullable<string>', 'result<nullable<int64>>', 
     resolve(bad, 'int64', error='Unsupported carrier payload')
 resolve('vector<int64>', 'int64', error='no carrier projection')
 resolve('nullable<int64>', 'uint64', error='Unsupported operator operand domains')
-for op in ['equal', 'concat']:
-    resolve('nullable<int64>', 'nullable<int64>', op, error='Unsupported operator operand type')
+resolve('nullable<int64>', 'nullable<int64>', 'concat', error='Unsupported operator operand type')
+resolve('nullable<int64>', 'nullable<int64>', 'equal', error='Unsupported operator operand domains')
 for op in ['numeric_equal','numeric_not_equal','strict_identical','strict_not_identical']:
     for left,right in [('nullable<int64>','nullable<int64>'), ('nullable<int64>','int64'),
                        ('int64','nullable<int64>'), ('nullable<int64>','nullable<float64>'),
@@ -67,7 +67,7 @@ assert resolve('nullable<int64>','nullable<float64>','numeric_equal')['calculati
 assert resolve('nullable<int64>','nullable<float64>','strict_identical')['calculation']['value'] == 'false'
 for op in ['less','less_equal','greater','greater_equal','compare']:
     assert resolve('nullable<int64>','int64',op)['kind'] == 'checked_payload_binary'
-resolve('nullable<int64>','nullable<boolean>','numeric_equal',error='Unsupported carrier payload')
+resolve('nullable<int64>','nullable<boolean>','numeric_equal',error='Unsupported operator operand domains')
 resolve('result<nullable<int64>>','nullable<int64>','numeric_equal',error='Unsupported carrier payload')
 bad = copy.deepcopy(metadata)
 bad['families']['nullable']['carrier']['states'][1]['comparison_tag'] = 'unknown_state'
@@ -107,7 +107,7 @@ for op in ['strict_identical','strict_not_identical']:
 for op in ['numeric_equal','numeric_not_equal']:
     resolve('nullable<int64>','null',op,error='Unsupported carrier payload')
 for op in ['equal','not_equal']:
-    resolve('nullable<int64>','null',op,error='Unsupported operator operand type')
+    resolve('nullable<int64>','null',op,error='Unsupported carrier payload')
 bad = copy.deepcopy(metadata)
 bad['families']['nullable']['carrier']['states'][1]['literals'] = ['null','null']
 resolve('nullable<int64>','null','strict_identical',meta=bad,error='Duplicate carrier state literal')

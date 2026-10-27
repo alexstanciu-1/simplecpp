@@ -50,33 +50,33 @@ int main()
             || (i >= 3 && i <= 5 && j >= 3 && j <= 5) || (i >= 6 && j >= 6);
         const bool admitted = same_group || i == 0 || j == 0;
         if (admitted) {
-            const auto equal = boxed_equal(values[i], values[j]);
-            CHECK(equal.native_value() == boxed_equal(a,b).native_value());
-            CHECK(equal.native_value() != boxed_not_equal(values[i],values[j]).native_value());
-            CHECK(equal.native_value() != boxed_not_equal(a,b).native_value());
+            const auto equal = value_equal(values[i], values[j]);
+            CHECK(equal.native_value() == value_equal(a,b).native_value());
+            CHECK(equal.native_value() != value_not_equal(values[i],values[j]).native_value());
+            CHECK(equal.native_value() != value_not_equal(a,b).native_value());
             if (i == 0 || j == 0) CHECK(equal.native_value() == (i == j));
         } else {
             unsigned caught = 0;
-            try { (void)boxed_equal(values[i],values[j]); } catch (const std::runtime_error &) { ++caught; }
-            try { (void)boxed_not_equal(values[i],values[j]); } catch (const std::runtime_error &) { ++caught; }
-            try { (void)boxed_equal(a,b); } catch (const std::runtime_error &) { ++caught; }
-            try { (void)boxed_not_equal(a,b); } catch (const std::runtime_error &) { ++caught; }
+            try { (void)value_equal(values[i],values[j]); } catch (const std::runtime_error &) { ++caught; }
+            try { (void)value_not_equal(values[i],values[j]); } catch (const std::runtime_error &) { ++caught; }
+            try { (void)value_equal(a,b); } catch (const std::runtime_error &) { ++caught; }
+            try { (void)value_not_equal(a,b); } catch (const std::runtime_error &) { ++caught; }
             CHECK(caught == 4); ++rejected;
         }
     }
     CHECK(rejected != 0);
-    CHECK(boxed_equal(values[4], values[5]));
+    CHECK(value_equal(values[4], values[5]));
     const mixed nan{float64{std::numeric_limits<double>::quiet_NaN()}};
-    CHECK(!boxed_equal(nan,nan));
+    CHECK(!value_equal(nan,nan));
     const string bytes("a\0b", uint64(3));
     const mixed text(bytes), same(bytes), shorter(string("a"));
     const dynamic dynamic_text(bytes), dynamic_same(bytes);
     allocations = 0; count_allocations = true;
     for (int i = 0; i != 100; ++i) {
         CHECK(numeric_add(left,right).native_value() == 70300);
-        CHECK(boxed_equal(text,same));
-        CHECK(boxed_not_equal(text,shorter));
-        CHECK(boxed_equal(dynamic_text,dynamic_same));
+        CHECK(value_equal(text,same));
+        CHECK(value_not_equal(text,shorter));
+        CHECK(value_equal(dynamic_text,dynamic_same));
     }
     count_allocations = false;
     CHECK(allocations == 0);

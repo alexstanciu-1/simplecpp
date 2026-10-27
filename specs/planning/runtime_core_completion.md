@@ -17,7 +17,7 @@ each slice. The original inventory is a baseline, not a current completion count
 | A2 | Complete for the agreed checked scalar conversions | Carrier conversion is C; ownership casts are D. |
 | B1 | Complete for the agreed scalar-facing truth/text/identity/observation scope | Carrier forms remain C; boxed arithmetic and access completion are not B1 credit. |
 | B2 | Complete for the agreed non-carrier special/mutation and text public paths; closure evidence below | Carrier forms C; indexed retention E; native exception inspection and overflow disposition G. |
-| C | Four carrier recipes with conditional lifecycle; numeric/presence plans, scalar reconstruction, Result error identity and sentinel take/state proofs implemented; review pending | Four carrier families, state-preserving operations/conversions and conditional lifecycle. |
+| C | Four carrier recipes with conditional lifecycle; numeric/presence plans, scalar/boxed equality, scalar reconstruction, Result error identity and sentinel take/state proofs implemented; review pending | Four carrier families, state-preserving operations/conversions and conditional lifecycle. |
 | D | Pending | Ownership, application targets and source Exception transport gaps. |
 | E | Existing vector/hash/boxed foundations; incomplete | Capability/access/initialization/cursor gaps and identity key-allocation debt. |
 | F | Pending | Callable transport and registered collection algorithms. |
@@ -1037,3 +1037,31 @@ execute the complete operator/conversion matrix as public C++ consumers.
 Remaining C work includes boolean/string/boxed comparison domains, source formation
 constraints, remaining mutation/lazy protocols, scoped observations and the full
 carrier state/lifetime matrix. The first complete carrier review is still open.
+
+
+## C14 — matching boolean/string/boxed carrier equality
+
+The existing ordinary nonnumeric equality owner now covers matching boolean,
+string, mixed and dynamic payloads. Its public names are value_equal/value_not_equal
+instead of the early boxed-only names; normalized API identities and header paths
+are retained. Numeric promotion keeps its existing numeric equality owner. Four
+additional published implementations handle boolean/string equality and inequality.
+Native operand conversions remain type metadata; no generator dispatch was added.
+
+All four carrier families reuse this equality owner and their existing state policy.
+Strict identity reuses its existing scalar/boxed rules, including distinct scalar
+kind results after eager snapshots. Incompatible ordinary payload domains still
+reject before observing state. This does not admit arbitrary boxed/plain ordinary
+comparisons or string/boolean ordering.
+
+A public-only consumer executes 676 boolean state comparisons across all four
+families and all four equality/identity operators, plus string and checked boxed
+cases, from 69 metadata-derived plan consumers. Short/scalar cases allocate zero.
+Long-string equality currently allocates four times: two whole operand snapshots
+and two owned payload extractions. Scoped observations should remove redundant
+extraction copies while preserving snapshots and their evaluation semantics; retain
+this cost alongside the existing Result error-identity observation debt.
+
+Remaining C work: full ordering/special/mutation/lazy and conversion execution
+coverage, source formation constraints and scoped observation. This slice is broader
+comparison coverage, not closure of all possible payload pairs or the carrier review.

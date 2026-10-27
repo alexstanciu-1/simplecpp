@@ -3,5 +3,5 @@
 #include "scpp/integers.hpp"
 #include "scpp/mixed.hpp"
 namespace scpp {
-scpp::boolean boxed_not_equal(const scpp::mixed &left, const scpp::mixed &right);
+scpp::boolean value_not_equal(const scpp::mixed &left, const scpp::mixed &right);
 }
