@@ -443,3 +443,32 @@ uses the adjusted compatible base pointer. Ordinary `==`/`!=`, weak observation 
 unique-handle identity admission are not added by this slice. Explicit null comparisons
 continue through the existing presence operation. Both native output modes use the
 existing runtime helper; prelowering keeps templates in middleware.
+
+## Uniform one-layer carrier arithmetic — 2026-10-27
+
+For `+`, `-`, `*`, `/` and `%`, the payload-state carriers `nullable<T>`,
+`result<T>`, `result_or_false<T>` and `result_or_bool<T>` participate uniformly:
+project at most one carrier layer from each operand, then apply the ordinary
+numeric operand admission, promotion and calculation rules. The other operand
+may be a plain admitted numeric value or another admitted carrier. The result
+is the ordinary numeric result, not a reconstructed carrier. This supersedes
+older same-family-only arithmetic admission where it conflicts.
+
+Payload types must qualify before execution; absence cannot rescue an invalid
+payload combination. No implicit recursive peeling occurs for a payload such as
+`nullable<int>` inside `result<nullable<int>>`. Boolean, null, string, boxed,
+container and ownership payloads gain no arithmetic permission from this rule.
+Existing signed/unsigned incompatibility and operation-specific restrictions
+remain in force. Type formation is a separate requirement.
+
+Evaluate the left operand once, obtain its checked owned payload, and perform
+its selected numeric conversion before evaluating the right operand. Then obtain
+and convert the right payload before calculating. A missing payload, structured
+error or either boolean sentinel fails checked extraction; none is replaced by
+zero, false or a propagated carrier. Failure preserves prior effects and prevents
+later evaluation. Owned scalar extraction remains valid after carrier mutation or
+cleanup. This rule does not add carrier compound/update, equality, identity,
+condition, text or explicit-cast admission; those have separate state policies.
+
+Implementation coverage is tracked in the runtime-core completion plan; this
+contract does not claim that every frontend or carrier public recipe is migrated.

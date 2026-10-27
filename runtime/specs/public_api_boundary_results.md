@@ -1495,3 +1495,28 @@ retention, boxed comparison/ordering completion, native diagnostic inspection or
 remaining core families. Signed native overflow limitations are visible at G closure;
 the successful sanitizer tests do not claim defined behavior for every overflowing
 input. The active runtime-core goal remains incomplete.
+
+## C1 checked carrier arithmetic projection
+
+`check_carrier_projection.py --tool <generator> --core <core.a> [--sanitize]`
+resolves nullable/Result/plain numeric arithmetic and generates an application-owned
+nullable<int64> for public-only execution. Five operations, ordered extraction
+failures, copy/reset/take, zero-value presence and owned extraction lifetime pass
+in release and ASan/UBSan with leak detection. Measured successful operations use
+zero allocations; errors are excluded from that allocation statement. The sealed
+application specialization is reused with zero newly generated implementation units.
+
+Compile-only single observations for the proof (Clang, -O1): generated storage
+1.0421s release / 1.6409s sanitized; public caller 0.1003s / 0.1306s. These are a
+small nullable proof and its storage unit, not a full compiler build or a direct
+native/public speedup benchmark. Final incremental generator builds: 4.96s release,
+20.23s sanitized; the latter overlapped lightweight release metadata checks. The
+runtime-core archive was not rebuilt. All 330 existing runtime generation plans
+were unchanged by the new descriptors/policy; publication metadata identity was
+refreshed after that equality check, without reprobing unchanged layouts.
+
+Four focused metadata/operator regression tests passed in each configuration:
+release 6.36s; ASan/UBSan with leak detection 29.46s. The execution proof above ran
+separately. Result execution, sentinel carrier recipes, state comparisons,
+conditions/conversions and conditional lifecycle remain pending; neither C nor the
+first complete carrier-path review is closed by these results.

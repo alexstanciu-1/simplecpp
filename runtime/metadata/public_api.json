@@ -618,7 +618,11 @@
         "std::is_copy_constructible_v<${public:T}>",
         "std::is_copy_assignable_v<${public:T}>",
         "std::is_nothrow_destructible_v<${public:T}>"
-      ]
+      ],
+      "carrier": {
+        "payload": "T",
+        "require_value": "require_value"
+      }
     },
     "nullable": {
       "parameters": [
@@ -787,7 +791,11 @@
           "expression": "scpp::boolean(!static_cast<bool>(value.has_value()))",
           "kind": "function"
         }
-      ]
+      ],
+      "carrier": {
+        "payload": "T",
+        "require_value": "require_value"
+      }
     },
     "hash": {
       "parameters": [
@@ -3597,6 +3605,26 @@
         "expression": "scpp::dynamic(${value})",
         "header": "scpp/dynamic.hpp"
       }
+    },
+    "carrier_projection": {
+      "operations": [
+        "add",
+        "subtract",
+        "multiply",
+        "divide",
+        "remainder"
+      ],
+      "payloads": [
+        "int8",
+        "int16",
+        "int32",
+        "int64",
+        "uint8",
+        "uint16",
+        "uint32",
+        "uint64",
+        "float64"
+      ]
     }
   },
   "conversions": {

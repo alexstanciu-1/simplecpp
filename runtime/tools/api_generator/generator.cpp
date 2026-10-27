@@ -204,7 +204,7 @@ namespace scpp::api_generation
 			if (!this->visiting_.insert(canonical).second) throw std::runtime_error("Unresolved layout dependency cycle: "+canonical);
 			auto application=this->naming_.bind(canonical); const auto &recipe=this->metadata_.at("families").at(application.type.name);
 			if (recipe.at("parameters").type!=value::kind::array || recipe.at("classes").type!=value::kind::array || recipe.at("classes").items.empty()) throw std::runtime_error("Family requires parameter and nonempty class arrays");
-            fields_only(recipe,"parameters defaults binding native includes classes functions checks capabilities requires_capabilities", "family "+application.type.name);
+            fields_only(recipe,"parameters defaults binding native includes classes functions checks capabilities requires_capabilities carrier", "family "+application.type.name);
 			substitutions context{{"name",name},{"namebase",name.back()=='_'?name.substr(0,name.size()-1):name}};
 			std::map<std::string,value> types;
 			std::set<std::string> public_headers,private_headers,probe_headers;
@@ -378,7 +378,7 @@ namespace scpp::api_generation
         } else if (input.get("action")=="resolve_compound") {
             output=resolve_compound(input.at("metadata"),input.at("request"));
         } else if (input.get("action")=="resolve_operator") {
-            output=resolve_operator(input.at("metadata"),input.at("request"));
+            output=resolve_operator(input.at("metadata"),input.at("request"), input.has("names") ? input.at("names") : value::object());
         } else if (input.get("action")=="names") {
 			naming names(input.at("registry")); output=value::array();
 			for (const auto &t : input.at("types").items) { auto [key,name]=names.resolve(t.text()); value row=value::array(); row.items={key,name}; output.items.push_back(row); }

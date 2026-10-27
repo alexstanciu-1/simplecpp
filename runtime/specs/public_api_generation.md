@@ -734,3 +734,40 @@ preserve mixed container `Array` and dynamic container `Object` text. Boxed `.=`
 explicitly constructs its replacement from the calculated string, allowing kind
 replacement while preserving failure-before-commit semantics. There are no new
 runtime adapters; the string calculation, context helpers and constructors are reused.
+
+## One-layer checked carrier projection
+
+A family can declare `carrier: {"payload":"T", "require_value":"require_value"}`.
+The payload names a family parameter. The checked member must exist exactly once
+on `self`, borrow a const receiver, accept one by-value `c_string` context and
+return the payload by value. Conditional or reference-returning extraction does
+not satisfy this first protocol. Its implementation remains an ordinary family
+method recipe; the resolver does not know native carrier class names.
+
+`global_operators.carrier_projection` contains explicit `operations` and `payloads`
+selectors. These authorize projection only for those operation and plain payload
+identities. Family metadata alone does not delegate every operator. The initial
+policy covers five arithmetic operations and the existing concrete numeric types;
+it excludes boxed values, bool, string, ownership and containers.
+
+`resolve_operator` also accepts an envelope-level `names` map, using the same
+metadata naming adapter and ordered family binding as physical generation. Aliases,
+defaults and application specialization names therefore resolve consistently. A
+carrier plan has kind `checked_payload_binary`, independent left/right projection
+records and a `calculation` containing the existing plain operator plan. Identity
+projections retain a plain operand; `checked_member` projections supply the concrete
+header, C++ type, owned-value transport and a `${value}` expression. Extraction is
+one layer only; the projected identities must pass the explicit payload selector
+and ordinary numeric admission before a plan is returned.
+
+The caller follows `steps`: evaluate/project/convert left, then evaluate/project/
+convert right, then calculate. Each intermediate is an owned value or a stable
+reference to that owned value, never a borrowed carrier interior. Extraction and
+conversion failures suppress later evaluation while retaining prior effects. The
+calculation returns its ordinary numeric result. No carrier-pair implementation
+units are emitted, and no source compiler adoption is implied.
+
+The initial implementation describes nullable and Result extraction. The execution
+proof covers application-owned `nullable<int64>`; Result state/lifetime execution,
+false/bool-sentinel recipes, conditions, comparisons and conversions remain separate
+completion work. This does not claim the first full carrier review gate has passed.

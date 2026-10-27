@@ -26,7 +26,7 @@ namespace scpp::api_generation
     static const value &validated_registry(const value &metadata)
     {
         const auto &registry = metadata.at("global_operators");
-        fields_only(registry, "types domains groups operations compounds operand_conversions", "global operators");
+        fields_only(registry, "types domains groups operations compounds operand_conversions carrier_projection", "global operators");
         for (const auto *field : {"types", "domains", "groups", "operations"}) {
             if (registry.at(field).type != value::kind::object)
                 throw std::runtime_error("Operator registry requires objects");
@@ -189,6 +189,39 @@ namespace scpp::api_generation
                 }
             }
         }
+        if (registry.has("carrier_projection")) {
+            const auto &policy = registry.at("carrier_projection");
+            fields_only(policy, "operations payloads", "carrier projection policy");
+            for (const auto &op : domains(policy.at("operations"))) {
+                if (registry.at("operations").at(op).get("form", "binary") != "binary")
+                    throw std::runtime_error("Carrier projection requires binary operations");
+            }
+            for (const auto &payload : domains(policy.at("payloads"))) registry.at("types").at(payload);
+        }
+        for (const auto &[name, family] : metadata.at("families").fields) {
+            if (!family.has("carrier")) continue;
+            const auto &carrier = family.at("carrier");
+            fields_only(carrier, "payload require_value", "carrier descriptor");
+            if (!contains(family.at("parameters"), carrier.at("payload").text()))
+                throw std::runtime_error("Unknown carrier payload parameter");
+            const auto method = carrier.at("require_value").text();
+            authored_name(method);
+            unsigned matches = 0;
+            for (const auto &record : family.at("classes").items) {
+                if (record.get("id") != "self") continue;
+                for (const auto &member : record.at("methods").items) {
+                    if (member.get("name") != method) continue;
+                    const auto &parameters = member.at("parameters").items;
+                    if (member.get("returns") != carrier.at("payload").text()
+                        || !member.yes("const") || member.has("requires_capabilities")
+                        || parameters.size() != 1 || parameters[0].get("type") != "c_string"
+                        || parameters[0].get("passing", "value") != "value")
+                        throw std::runtime_error("Carrier projection must return an owned payload from a const checked member");
+                    ++matches;
+                }
+            }
+            if (matches != 1) throw std::runtime_error("Carrier projection requires one checked member");
+        }
         return registry;
     }
 
@@ -340,9 +373,8 @@ namespace scpp::api_generation
         return plan;
     }
 
-    value resolve_operator(const value &metadata, const value &request)
+    static value resolve_plain_operator(const value &metadata, const value &registry, const value &request)
     {
-        const auto &registry = validated_registry(metadata);
         const auto &operation = registry.at("operations").at(request.at("operation").text());
         const auto functions = (operation.has("function_set") || operation.has("pair_function_set") || operation.has("operand_conversion_function_set")) ? expand_function_sets(metadata) : value::object();
         if (operation.get("form", "binary") == "unary") return resolve_unary_operator(registry, request, functions);
@@ -353,6 +385,60 @@ namespace scpp::api_generation
             plan["right_conversion"] = operation_operand_conversion(metadata, operation, functions, request.at("right").text(), selected);
         }
         return plan;
+    }
+
+    // Project each operand independently; only the ordinary resolver chooses a
+    // payload operation. No wrapper-pair overloads and no recursive extraction.
+    value resolve_operator(const value &metadata, const value &request, const value &names)
+    {
+        const auto &registry = validated_registry(metadata);
+        const auto &operation = registry.at("operations").at(request.at("operation").text());
+        if (operation.get("form", "binary") != "binary"
+            || (registry.at("types").has(request.at("left").text())
+                && registry.at("types").has(request.at("right").text())))
+            return resolve_plain_operator(metadata, registry, request);
+        fields_only(request, "operation left right", "operator request");
+        if (!registry.has("carrier_projection")
+            || !contains(registry.at("carrier_projection").at("operations"), request.at("operation").text()))
+            throw std::runtime_error("Unsupported operator operand type");
+        const auto &policy = registry.at("carrier_projection");
+        naming types(metadata_naming_registry(metadata, metadata.at("types"), names));
+        value out = value::object(), calculation = request;
+        bool projected = false;
+        for (const auto *side : {"left", "right"}) {
+            const auto [identity, public_name] = types.resolve(request.at(side).text());
+            value projection = value::object();
+            projection["source"] = identity; projection["target"] = identity;
+            projection["kind"] = "identity";
+            if (!registry.at("types").has(identity)) {
+                const auto binding = types.bind(identity);
+                const auto &family = metadata.at("families").at(binding.type.name);
+                if (!family.has("carrier")) throw std::runtime_error("Operand family has no carrier projection");
+                const auto &carrier = family.at("carrier");
+                for (const auto &[parameter, argument] : binding.arguments)
+                    if (parameter == carrier.at("payload").text()) projection["target"] = argument.canonical();
+                projection["kind"] = "checked_member";
+                projection["header"] = "scpp/" + public_name + ".hpp";
+                projection["cpp"] = "scpp::" + public_name;
+                projection["expression"] = "${value}." + carrier.at("require_value").text() + "(\"operator payload\")";
+                projection["ownership"] = "owned_value";
+                projected = true;
+            }
+            if (!contains(policy.at("payloads"), projection.at("target").text()))
+                throw std::runtime_error("Unsupported carrier payload; only one layer is projected");
+            calculation[side] = projection.at("target");
+            out[std::string(side) + "_projection"] = projection;
+        }
+        if (!projected) return resolve_plain_operator(metadata, registry, calculation);
+        out["calculation"] = resolve_plain_operator(metadata, registry, calculation);
+        out["operation"] = request.at("operation"); out["left"] = request.at("left"); out["right"] = request.at("right");
+        out["result_type"] = out.at("calculation").at("result_type");
+        out["kind"] = "checked_payload_binary";
+        out["steps"] = value::array();
+        for (const auto *step : {"evaluate_left", "project_left", "convert_left", "evaluate_right",
+                 "project_right", "convert_right", "calculate"}) out["steps"].items.emplace_back(step);
+        out["failure"] = "throw_preserve_prior_effects";
+        return out;
     }
 
     value resolve_compound(const value &metadata, const value &request)

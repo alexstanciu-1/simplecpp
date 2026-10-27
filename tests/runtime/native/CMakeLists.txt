@@ -445,3 +445,6 @@ add_test(NAME scpp_check_boxed_arithmetic_api COMMAND ${Python3_EXECUTABLE}
 
 add_test(NAME scpp_check_text_compound_api COMMAND ${Python3_EXECUTABLE}
   ${CMAKE_CURRENT_SOURCE_DIR}/check_text_compound_api.py --tool $<TARGET_FILE:scpp_api_generator>)
+
+add_test(NAME scpp_check_carrier_projection COMMAND ${Python3_EXECUTABLE}
+  ${CMAKE_CURRENT_SOURCE_DIR}/check_carrier_projection.py --tool $<TARGET_FILE:scpp_api_generator>)

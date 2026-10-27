@@ -17,7 +17,7 @@ each slice. The original inventory is a baseline, not a current completion count
 | A2 | Complete for the agreed checked scalar conversions | Carrier conversion is C; ownership casts are D. |
 | B1 | Complete for the agreed scalar-facing truth/text/identity/observation scope | Carrier forms remain C; boxed arithmetic and access completion are not B1 credit. |
 | B2 | Complete for the agreed non-carrier special/mutation and text public paths; closure evidence below | Carrier forms C; indexed retention E; native exception inspection and overflow disposition G. |
-| C | Policy agreed; shared family binding prepared; carrier operations pending | Four carrier families, state-preserving operations/conversions and conditional lifecycle. |
+| C | One-layer arithmetic plans implemented; nullable<int64> execution proved | Four carrier families, state-preserving operations/conversions and conditional lifecycle. |
 | D | Pending | Ownership, application targets and source Exception transport gaps. |
 | E | Existing vector/hash/boxed foundations; incomplete | Capability/access/initialization/cursor gaps and identity key-allocation debt. |
 | F | Pending | Callable transport and registered collection algorithms. |
@@ -729,3 +729,31 @@ in 6.52s; ASan/UBSan with leak detection: 4/4 pass in 26.61s.
 Generator plus public test incremental build: 7.40s release and 22.02s
 ASan/UBSan (eight jobs); runtime-core was not rebuilt. These are tool rebuild
 measurements, not public-caller compile costs or full compiler rebuild times.
+
+## C1 — checked arithmetic projection entry path
+
+Family descriptors identify the checked owned-payload member; the global metadata
+policy selects arithmetic operations and permitted plain numeric payloads. The
+resolver binds each operand with the existing naming/default machinery and then
+reuses the ordinary numeric operation/conversion plan. It emits no wrapper-pair
+runtime adapters and rejects recursive peeling. Nullable and Result have descriptors;
+false/bool-sentinel families remain pending, as do conditional lifecycle rules.
+
+`check_carrier_projection.py` checks the five-operation nullable/Result/plain matrix,
+width/float normalization, signedness rejection, one-layer and operation boundaries,
+renamed/defaulted families, application names and malformed projection descriptors.
+The compiled public-only application proof covers nullable<int64> arithmetic,
+left-before-right extraction failure, copy/reset/take, zero-payload presence and owned
+extraction surviving reset/destruction. Successful measured operations allocate zero;
+exception paths are not included in that claim. Sealed application publication reuse
+produces no implementation units.
+
+All 330 runtime generation plans compare equal before/after the metadata addition,
+so only the metadata identity in the publication inventory changed. No layout probe
+or runtime-core rebuild was needed for existing runtime units. The application-owned
+nullable layout and implementation were generated and compiled normally.
+
+This is an arithmetic entry slice, not a complete carrier path. Next: state-aware
+nullable truthiness, equality/strict identity and conversions, then review the complete
+path before ownership/callback expansion. Result errors/sentinels, remaining families
+and source frontend adoption are not inferred from the nullable proof.

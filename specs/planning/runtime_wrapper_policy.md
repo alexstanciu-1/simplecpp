@@ -327,3 +327,13 @@ The runtime-core completion goal is active. Begin with A1 ordinary numeric opera
 then follow the documented small-slice backlog, testing and committing/pushing each
 coherent slice. Review the first complete carrier path before ownership/callback
 expansion. Existing source/native admission gaps must remain explicit.
+
+## Implementation checkpoint — C1 checked projection
+
+The first shared one-layer arithmetic mechanism is implemented through family
+`carrier` metadata and the global `carrier_projection` policy. Nullable and Result
+resolve through it; the public-only execution/allocation/lifetime/publication proof
+currently covers application-owned nullable<int64>. This is partial W06/W07 progress,
+not completion of four-family behavior, conditional lifecycle or W09. The governing
+arithmetic decision is now recorded in expression_evaluation.md. Equality, strict
+identity, conditions and conversions retain their agreed separate state policies.
