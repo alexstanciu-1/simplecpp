@@ -2554,3 +2554,27 @@ Single isolated clang++ C++23/O2 caller compile:
 for the factory-reference lifetime fix; the native compatibility adapter's missing
 brace was also caught and repaired by its standalone fixture. The existing mixed-hash
 instantiation warning remains. Earlier carrier semantic decision gates are unchanged.
+
+## G4 — process-memory observations (2026-10-27)
+
+Ordinary metadata publishes current/peak process-memory queries with zero arguments
+or a boolean compatibility argument. Concrete C++ names are process_memory_usage and
+process_peak_memory_usage; source catalog names are unchanged. The different public
+names avoid conflicting with native scpp zero-argument functions by return type alone.
+Both paths call the same extracted private byte-observation provider; exact-text
+comparison verifies that provider logic is unchanged.
+
+Release and ASan/UBSan with leak detection pass. Tests exercise all overloads and
+both bool values, permitting nonnegative observations including zero rather than
+requiring a platform measurement or stable exact deltas. Actual unsupported-platform
+fallback execution is not claimed by the Linux test. After warmup, native/public
+allocation counts match: **3/3 per query in release**, **2/2 under sanitizers** for
+both current and peak samples. These are observed implementation counts, not fixed
+cross-platform guarantees or allocator-accounting semantics.
+
+All four focused public headers compile independently. The relocated sealed SDK
+imports the four functions with zero generated units and links/runs a public-only
+caller. Two metadata checks pass in **1.39s**. Single isolated clang++ C++23/O2
+compile-only caller costs: **0.0519s public / 0.8476s native**. The native comparison
+also benefits from removing the broad PHP common header. Core was rebuilt once per
+configuration; the existing mixed-hash instantiation warning remains.

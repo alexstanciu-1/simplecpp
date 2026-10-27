@@ -1397,3 +1397,14 @@ defaults composition fixture, `sequence<string>` and `vector<string>` both accep
 concrete factory name the same way. This is metadata authoring, not a family-name
 exception in the generator. Ordinary vector specializations retain `vector_filled`;
 different element parameter types distinguish their overloads.
+
+## Source helper names versus concrete provider names
+
+Metadata API identities need not equal C++ function names. The registered source
+`memory_get_usage`/`memory_get_peak_usage` helpers map to concrete public
+`scpp::process_memory_usage`/`scpp::process_peak_memory_usage`, with zero-argument and
+boolean overloads. Their focused headers live under `scpp/memory/` using the catalog
+spellings. This avoids colliding with the existing native zero-argument functions
+in namespace scpp, whose int_t return cannot distinguish a C++ overload. Both APIs
+share the private process-memory provider; no source spelling or accounting semantics
+change. Consumers use the function identity/name in metadata, not a naming guess.

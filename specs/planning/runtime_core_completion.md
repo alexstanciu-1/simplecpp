@@ -21,7 +21,7 @@ each slice. The original inventory is a baseline, not a current completion count
 | D | Pending | Ownership, application targets and source Exception transport gaps. |
 | E | Existing vector/hash/boxed foundations; incomplete | Access/initialization/key-policy gaps and identity key-allocation debt; conditional lifecycle, cursor fixes and boxed count are implemented. |
 | F | Pending | Callable transport and registered collection algorithms. |
-| G | Core wall-clock, CLI and environment/shell bindings implemented | Debug/memory/exception/helper gaps and requirement-by-requirement closure audit. |
+| G | Core wall-clock, CLI, environment/shell and memory bindings implemented | Debug/exception/helper gaps and requirement-by-requirement closure audit. |
 
 Full frontend adoption and module migration are excluded. The first complete carrier
 path remains a review gate before expanding ownership/callback implementation.
@@ -247,10 +247,10 @@ value API exists, not that source lowering has already migrated to it.
 | `core.cli_argc` | Published focused core reader, G2 | Complete public path |
 | `core.cli_argv` | Published focused core reader, G2 | Complete public path |
 | `core.cli_args` | Published focused core reader, G2 | Complete public path |
-| `core.memory_get_usage.0` | Missing focused public helper; retain current registered core ownership pending review | G |
-| `core.memory_get_usage.1` | Missing focused public helper; retain current registered core ownership pending review | G |
-| `core.memory_get_peak_usage.0` | Missing focused public helper; retain current registered core ownership pending review | G |
-| `core.memory_get_peak_usage.1` | Missing focused public helper; retain current registered core ownership pending review | G |
+| `core.memory_get_usage.0` | Published concrete process-memory observation, G4 | Complete public path |
+| `core.memory_get_usage.1` | Published concrete process-memory observation, G4 | Complete public path |
+| `core.memory_get_peak_usage.0` | Published concrete process-memory observation, G4 | Complete public path |
+| `core.memory_get_peak_usage.1` | Published concrete process-memory observation, G4 | Complete public path |
 | `core.is_bool.mixed` | Published mixed predicate method equivalent | B/E (helpers) |
 | `core.is_int.mixed` | Published mixed predicate method equivalent | B/E (helpers) |
 | `core.is_float.mixed` | Published mixed predicate method equivalent | B/E (helpers) |
@@ -1548,3 +1548,17 @@ throwing payload construction and native/public allocation parity. Existing carr
 fixtures now respect the runtime-owned result_or_false<string> name and reuse it;
 they must not force an application-owned duplicate of a published specialization.
 The carrier semantic review gates remain open.
+
+## Active-goal progress — G4 process-memory observations
+
+Expose both forms of current/peak process-memory observation through metadata,
+returning concrete int64. Public C++ names are process_memory_usage and
+process_peak_memory_usage; existing native zero-argument scpp names cannot coexist
+with concrete overloads differing only by return type. Source registry names remain
+unchanged. Extract the unchanged byte-observation implementation into a focused
+private header shared by native compatibility wrappers and public bindings.
+
+Preserve process resident/peak byte reporting, the same policy for both bool values,
+and zero when measurements are unavailable. This does not promise allocator-internal
+accounting or introduce new memory counters. Tests check public forms, native/public
+allocation parity, independent header use, sanitizers and sealed publication reuse.

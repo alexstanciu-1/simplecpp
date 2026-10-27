@@ -358,6 +358,78 @@
           "scpp/detail/string_access.hpp"
         ]
       }
+    },
+    "memory_get_usage": {
+      "namespace": "scpp",
+      "header": "scpp/memory/memory_get_usage.hpp",
+      "source": "include/scpp/generated/public_memory_get_usage.cpp",
+      "operation": {
+        "name": "process_memory_usage",
+        "returns": "int64",
+        "parameters": [],
+        "kind": "function",
+        "expression": "scpp::int64(detail::process_memory_usage_bytes())",
+        "includes": [
+          "scpp/detail/process_memory.hpp"
+        ]
+      }
+    },
+    "memory_get_usage_real": {
+      "namespace": "scpp",
+      "header": "scpp/memory/memory_get_usage_real.hpp",
+      "source": "include/scpp/generated/public_memory_get_usage_real.cpp",
+      "operation": {
+        "name": "process_memory_usage",
+        "returns": "int64",
+        "parameters": [
+          {
+            "name": "real_usage",
+            "type": "boolean",
+            "passing": "value"
+          }
+        ],
+        "kind": "function",
+        "expression": "scpp::int64(detail::process_memory_usage_bytes())",
+        "includes": [
+          "scpp/detail/process_memory.hpp"
+        ]
+      }
+    },
+    "memory_get_peak_usage": {
+      "namespace": "scpp",
+      "header": "scpp/memory/memory_get_peak_usage.hpp",
+      "source": "include/scpp/generated/public_memory_get_peak_usage.cpp",
+      "operation": {
+        "name": "process_peak_memory_usage",
+        "returns": "int64",
+        "parameters": [],
+        "kind": "function",
+        "expression": "scpp::int64(detail::process_peak_memory_usage_bytes())",
+        "includes": [
+          "scpp/detail/process_memory.hpp"
+        ]
+      }
+    },
+    "memory_get_peak_usage_real": {
+      "namespace": "scpp",
+      "header": "scpp/memory/memory_get_peak_usage_real.hpp",
+      "source": "include/scpp/generated/public_memory_get_peak_usage_real.cpp",
+      "operation": {
+        "name": "process_peak_memory_usage",
+        "returns": "int64",
+        "parameters": [
+          {
+            "name": "real_usage",
+            "type": "boolean",
+            "passing": "value"
+          }
+        ],
+        "kind": "function",
+        "expression": "scpp::int64(detail::process_peak_memory_usage_bytes())",
+        "includes": [
+          "scpp/detail/process_memory.hpp"
+        ]
+      }
     }
   },
   "capabilities": {

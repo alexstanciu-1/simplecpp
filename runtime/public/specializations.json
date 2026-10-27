@@ -1,6 +1,6 @@
 {
   "abi": "529dd5502370f48d64891818e9439aae72831b990b4027e8abe25c50c1216c21",
-  "api_identity": "56edb687285b1c571159b10c3044bbe90c98031577f6f48a3acea5468db78cc1",
+  "api_identity": "81715c50add5985ce2da962d12ca7f55f4ed543f942662b6f1b8a9236277319e",
   "apis": {
     "add_dynamic": {
       "header": "scpp/operators/add_dynamic.hpp",
@@ -5279,6 +5279,78 @@
       },
       "source": "include/scpp/generated/public_logical_xor_boolean.cpp"
     },
+    "memory_get_peak_usage": {
+      "header": "scpp/memory/memory_get_peak_usage.hpp",
+      "namespace": "scpp",
+      "operation": {
+        "expression": "scpp::int64(detail::process_peak_memory_usage_bytes())",
+        "includes": [
+          "scpp/detail/process_memory.hpp"
+        ],
+        "kind": "function",
+        "name": "process_peak_memory_usage",
+        "parameters": [],
+        "returns": "int64"
+      },
+      "source": "include/scpp/generated/public_memory_get_peak_usage.cpp"
+    },
+    "memory_get_peak_usage_real": {
+      "header": "scpp/memory/memory_get_peak_usage_real.hpp",
+      "namespace": "scpp",
+      "operation": {
+        "expression": "scpp::int64(detail::process_peak_memory_usage_bytes())",
+        "includes": [
+          "scpp/detail/process_memory.hpp"
+        ],
+        "kind": "function",
+        "name": "process_peak_memory_usage",
+        "parameters": [
+          {
+            "name": "real_usage",
+            "passing": "value",
+            "type": "boolean"
+          }
+        ],
+        "returns": "int64"
+      },
+      "source": "include/scpp/generated/public_memory_get_peak_usage_real.cpp"
+    },
+    "memory_get_usage": {
+      "header": "scpp/memory/memory_get_usage.hpp",
+      "namespace": "scpp",
+      "operation": {
+        "expression": "scpp::int64(detail::process_memory_usage_bytes())",
+        "includes": [
+          "scpp/detail/process_memory.hpp"
+        ],
+        "kind": "function",
+        "name": "process_memory_usage",
+        "parameters": [],
+        "returns": "int64"
+      },
+      "source": "include/scpp/generated/public_memory_get_usage.cpp"
+    },
+    "memory_get_usage_real": {
+      "header": "scpp/memory/memory_get_usage_real.hpp",
+      "namespace": "scpp",
+      "operation": {
+        "expression": "scpp::int64(detail::process_memory_usage_bytes())",
+        "includes": [
+          "scpp/detail/process_memory.hpp"
+        ],
+        "kind": "function",
+        "name": "process_memory_usage",
+        "parameters": [
+          {
+            "name": "real_usage",
+            "passing": "value",
+            "type": "boolean"
+          }
+        ],
+        "returns": "int64"
+      },
+      "source": "include/scpp/generated/public_memory_get_usage_real.cpp"
+    },
     "microtime_float": {
       "header": "scpp/time/microtime_float.hpp",
       "namespace": "scpp",
@@ -9670,7 +9742,19 @@
     "include/scpp/process/getenv.hpp",
     "public/scpp/process/shell_exec.hpp",
     "include/scpp/generated/public_shell_exec.cpp",
-    "include/scpp/process/shell_exec.hpp"
+    "include/scpp/process/shell_exec.hpp",
+    "public/scpp/memory/memory_get_usage.hpp",
+    "include/scpp/generated/public_memory_get_usage.cpp",
+    "include/scpp/memory/memory_get_usage.hpp",
+    "public/scpp/memory/memory_get_usage_real.hpp",
+    "include/scpp/generated/public_memory_get_usage_real.cpp",
+    "include/scpp/memory/memory_get_usage_real.hpp",
+    "public/scpp/memory/memory_get_peak_usage.hpp",
+    "include/scpp/generated/public_memory_get_peak_usage.cpp",
+    "include/scpp/memory/memory_get_peak_usage.hpp",
+    "public/scpp/memory/memory_get_peak_usage_real.hpp",
+    "include/scpp/generated/public_memory_get_peak_usage_real.cpp",
+    "include/scpp/memory/memory_get_peak_usage_real.hpp"
   ],
   "generator": "metadata-api-v1",
   "leaves": {
@@ -9988,6 +10072,10 @@
     "scpp/identity/strict_not_identical_null.hpp": "b1b86c5a6c38220e84e1a853bc26031e924cbaefa8bf0188228f5e6e74ae7645",
     "scpp/identity/strict_not_identical_string.hpp": "e290337055eb1c08a903ef008b17d0d08fbe316230b5383fd9c4222b61bb539a",
     "scpp/integers.hpp": "99af2c7358126433cf2de00f8265fafe20a523f124e70c91e97fcd2a8aec9b1f",
+    "scpp/memory/memory_get_peak_usage.hpp": "bab9b7a4a0043c4496dae881315803fea1a523fa90bf4aa01a5bc05b20ef4a49",
+    "scpp/memory/memory_get_peak_usage_real.hpp": "38833eadb3985f852ed2214a27954732e12136039bc85678bc708bf595428305",
+    "scpp/memory/memory_get_usage.hpp": "d2550916bb0b4af9beb19b6e3c760aea1be9920c69baca8a8dfc3c5bfc011834",
+    "scpp/memory/memory_get_usage_real.hpp": "5641521bf4e087f54c40e466bc4f895a4744f7bdae0a3a558e3a459112920d48",
     "scpp/mixed.hpp": "6ed209a3786215b2d4f547dbf4cf2ac0107ce7ab4242368f0c55227270448f0d",
     "scpp/null_t.hpp": "db31e1653226ba1fd7655e2c3a42b92374763f9bfebbc56277d6a4e583f9dbc4",
     "scpp/observations/clean_boolean.hpp": "7b008d427e905459d0bc04f673a4ea427c172377591f944cb37daf8de2366be4",
@@ -10559,7 +10647,11 @@
     "include/scpp/generated/public_cli_args.cpp",
     "include/core/generated/result_or_false_string.cpp",
     "include/scpp/generated/public_getenv.cpp",
-    "include/scpp/generated/public_shell_exec.cpp"
+    "include/scpp/generated/public_shell_exec.cpp",
+    "include/scpp/generated/public_memory_get_usage.cpp",
+    "include/scpp/generated/public_memory_get_usage_real.cpp",
+    "include/scpp/generated/public_memory_get_peak_usage.cpp",
+    "include/scpp/generated/public_memory_get_peak_usage_real.cpp"
   ],
   "types": {
     "dynamic": {

@@ -363,6 +363,10 @@
     "cli_argv",
     "cli_args",
     "getenv",
-    "shell_exec"
+    "shell_exec",
+    "memory_get_usage",
+    "memory_get_usage_real",
+    "memory_get_peak_usage",
+    "memory_get_peak_usage_real"
   ]
 }

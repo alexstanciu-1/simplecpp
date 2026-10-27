@@ -520,3 +520,10 @@ target_include_directories(test_process_strings_provider PRIVATE ${CMAKE_CURRENT
 add_executable(test_public_process_strings test_public_process_strings.cpp $<TARGET_OBJECTS:test_process_strings_provider>)
 target_link_libraries(test_public_process_strings PRIVATE scpp_core_api)
 add_test(NAME scpp_test_public_process_strings COMMAND test_public_process_strings)
+
+add_library(test_memory_provider OBJECT test_memory_provider.cpp)
+target_compile_features(test_memory_provider PRIVATE cxx_std_23)
+target_include_directories(test_memory_provider PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/../../../runtime/include)
+add_executable(test_public_memory test_public_memory.cpp $<TARGET_OBJECTS:test_memory_provider>)
+target_link_libraries(test_public_memory PRIVATE scpp_core_api)
+add_test(NAME scpp_test_public_memory COMMAND test_public_memory)

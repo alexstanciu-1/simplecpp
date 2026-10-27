@@ -27,10 +27,11 @@ with tempfile.TemporaryDirectory(prefix='scpp-operator-publication-') as directo
     shutil.copy2(args.tool, sdk/'tools/scpp_api_generator')
     seal_package(sdk, ['core'])
     request = stage/'request.json'
-    request.write_text(json.dumps({'package':'app.operators', 'roots':[], 'apis':['getenv','shell_exec','cli_argc','cli_argv','cli_args','microtime_string','microtime_float','add_int64','equal_mixed','equal_boolean','equal_string','add_int64','divide_int64','less_float64','cast_uint64_from_string','cast_string_from_mixed','cast_boolean_from_dynamic','cast_uint64_from_mixed','condition_truthy_string','condition_truthy_dynamic','concat_text_float64','strict_identical_mixed','strict_identical_float64','logical_xor_boolean','isset_dynamic','empty_mixed','clean_float64','strict_identical_boxed_mixed_string','strict_not_identical_boxed_dynamic_int64','concat_text_mixed','concat_text_dynamic','power_int64','shift_left_mixed','compare_uint64','compare_float64','negative_dynamic','complement_int64','post_increment_dynamic','add_mixed','divide_dynamic','numeric_compound_replacement_dynamic','concat_string','concat_text_int64']}))
+    request.write_text(json.dumps({'package':'app.operators', 'roots':[], 'apis':['memory_get_usage','memory_get_usage_real','memory_get_peak_usage','memory_get_peak_usage_real','getenv','shell_exec','cli_argc','cli_argv','cli_args','microtime_string','microtime_float','add_int64','equal_mixed','equal_boolean','equal_string','add_int64','divide_int64','less_float64','cast_uint64_from_string','cast_string_from_mixed','cast_boolean_from_dynamic','cast_uint64_from_mixed','condition_truthy_string','condition_truthy_dynamic','concat_text_float64','strict_identical_mixed','strict_identical_float64','logical_xor_boolean','isset_dynamic','empty_mixed','clean_float64','strict_identical_boxed_mixed_string','strict_not_identical_boxed_dynamic_int64','concat_text_mixed','concat_text_dynamic','power_int64','shift_left_mixed','compare_uint64','compare_float64','negative_dynamic','complement_int64','post_increment_dynamic','add_mixed','divide_dynamic','numeric_compound_replacement_dynamic','concat_string','concat_text_int64']}))
     os.environ['SCPP_API_GENERATOR'] = str(sdk/'tools/scpp_api_generator')
     manifest = concrete_types.generate(request, stage/'app', sdk, [sdk], 'clang++', [])
     assert manifest['sources'] == []
+    assert all(api in manifest['apis'] for api in ['memory_get_usage','memory_get_usage_real','memory_get_peak_usage','memory_get_peak_usage_real'])
     assert manifest['types']['result_or_false<string>']['owner'] == 'runtime.core'
     assert all(api in manifest['apis'] for api in ['microtime_string', 'microtime_float', 'cli_argc', 'cli_argv', 'cli_args', 'getenv', 'shell_exec'])
     assert all(x in manifest['apis'] for x in ['add_int64','equal_mixed','equal_boolean','equal_string','divide_int64','less_float64','cast_uint64_from_string','cast_string_from_mixed','cast_boolean_from_dynamic','cast_uint64_from_mixed','condition_truthy_string','condition_truthy_dynamic','concat_text_float64','strict_identical_mixed','strict_identical_float64','logical_xor_boolean','isset_dynamic','empty_mixed','clean_float64','strict_identical_boxed_mixed_string','strict_not_identical_boxed_dynamic_int64','concat_text_mixed','concat_text_dynamic','power_int64','shift_left_mixed','compare_uint64','compare_float64','negative_dynamic','complement_int64','post_increment_dynamic','add_mixed','divide_dynamic','numeric_compound_replacement_dynamic','concat_string','concat_text_int64'])
@@ -109,6 +110,10 @@ with tempfile.TemporaryDirectory(prefix='scpp-operator-publication-') as directo
 #include "scpp/cli/cli_args.hpp"
 #include "scpp/process/getenv.hpp"
 #include "scpp/process/shell_exec.hpp"
+#include "scpp/memory/memory_get_usage.hpp"
+#include "scpp/memory/memory_get_usage_real.hpp"
+#include "scpp/memory/memory_get_peak_usage.hpp"
+#include "scpp/memory/memory_get_peak_usage_real.hpp"
 #include "scpp/identity/strict_identical_boxed_mixed_string.hpp"
 #include "scpp/identity/strict_not_identical_boxed_dynamic_int64.hpp"
 int main() {
@@ -153,6 +158,8 @@ int main() {
         && scpp::cli_argc().native_value()==0
         && scpp::cli_argv().is_hash() && scpp::cli_args().is_hash()
         && scpp::getenv(scpp::string("")).is_false()
+        && scpp::process_memory_usage().native_value()>=0
+        && scpp::process_peak_memory_usage(scpp::boolean(true)).native_value()>=0
         && destination.native_value()==13
         && old.get_int().native_value()==1 && updated.get_int().native_value()==2
         && reset_value.native_value()==0.0
