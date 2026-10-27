@@ -1492,3 +1492,17 @@ to use the same loader and retain flat metadata fixtures.
 This is a file-layout consolidation supporting the remaining backlog, not additional
 runtime contract coverage. Section validation and sealed relocated publication tests
 prove the packaging boundary; no native runtime implementation changed.
+
+## Active-goal progress — E5 composition closure
+
+Re-run nested/defaulted vector composition against current runtime artifacts. This
+caught a test-recipe collision introduced when E5 added the result-only filled
+factory: the copied sequence family exported the same parameters as vector_string
+but a different return type. Give copied-family factories `${name}_filled` through
+the existing metadata substitution. Production vector API and generator stay intact.
+
+Extend the proof to nested filled construction, inner copy independence, defaulted
+family factories, zero-allocation observations and zero-count construction. The test
+can now stage a disposable sealed SDK from `--core`/`--tool`, allowing current-build
+validation without republishing the compiler's pinned dependency package. Defaulted
+and explicit identities still reuse one sealed application specialization.

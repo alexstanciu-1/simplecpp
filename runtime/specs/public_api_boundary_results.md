@@ -2451,3 +2451,25 @@ No runtime implementation or public declaration changed. There was no runtime/co
 rebuild or new allocation/sanitizer benchmark; existing native proofs remain evidence
 for the identical generated code. The relocation test compiled one public consumer.
 This consolidation adds no semantic coverage to the completion inventory.
+
+## E5 nested/defaulted composition follow-up — 2026-10-27
+
+`test_defaults_composition.py` now accepts current `--core`/`--tool` artifacts and
+creates a disposable sealed SDK. Its initial run caught a copied-recipe factory
+collision: sequence_string and vector_string both declared vector_filled with the
+same arguments and different return types. The fixture's distinct families now name
+that factory `${name}_filled` using the existing substitution mechanism. No runtime
+or generator behavior changed.
+
+The expanded public-only caller proves nested filled copies survive input/extracted
+copy mutation, both defaulted-family factories coexist with runtime vector helpers,
+repeated count/empty/capacity observations and zero-count construction allocate
+nothing after setup, and escaped inner/outer/defaulted cursors keep their values
+alive. Defaulted/explicit requests reuse the same sealed specialization with no new
+implementation units.
+
+Release and ASan/UBSan with leak detection pass. Focused Ninja builds (three generated
+storage units, one public caller and links, eight jobs) took **2.1772s release** and
+**3.5729s sanitizer**, single runs. These are small fixture builds, not full compiler
+or runtime rebuild timings. Existing runtime archives were reused. The first failed
+release build is excluded from these successful-run times.

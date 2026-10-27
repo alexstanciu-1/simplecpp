@@ -1386,3 +1386,14 @@ changing its content does not invalidate specialization compatibility. SDK seali
 still hashes all physical metadata files; changing a section changes SDK integrity.
 Keep each authored metadata file below 200KB and split at an existing section
 boundary when needed. This file layout adds no second semantic registry.
+
+### Result-only factory names in copied recipes
+
+A distinct application family copied from a recipe must give result-only factories
+its own C++ name. C++ cannot overload two factories by return type alone. In the
+defaults composition fixture, `sequence<string>` and `vector<string>` both accept
+`(int64, const string&)` for filled construction, so the copied family uses
+`${name}_filled` through ordinary name substitution. Its nested family gets its own
+concrete factory name the same way. This is metadata authoring, not a family-name
+exception in the generator. Ordinary vector specializations retain `vector_filled`;
+different element parameter types distinguish their overloads.
