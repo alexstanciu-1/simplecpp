@@ -1305,3 +1305,35 @@ metadata and reuses the existing API definition with zero generated application 
 Reproduce the execution proof with `check_compound_api.py --tool <generator>
 --core <core.a> [--sanitize]`. Fixed widths, boxed stored-kind write-back, text,
 carriers and general indexed owner lifetime remain outside this completed slice.
+
+## B2g — homogeneous boxed arithmetic
+
+Ten implementations publish addition, subtraction, multiplication, division and
+remainder for mixed/mixed and dynamic/dynamic through the existing global operation
+identities. Plain arithmetic recipes now use the same function-set owner; their
+final generated C++ files are unchanged. Variant-selected private includes avoid
+adding boxed dependencies to plain numeric adapters. Normalized duplicate-signature
+validation covers function-set and expression-owned arithmetic alike.
+
+Public tests cover all four int/float kind pairings, family-preserving results,
+integer-only remainder, null/bool/string/container rejection on both sides, zero
+divisors, unchanged inputs and saved-left snapshots. All successful numeric paths
+allocate zero. Seven focused release tests pass (4.16 s), as do the same seven with
+ASan/UBSan and leak detection (22.12 s). Sealed relocation/import checks pass in both
+modes with zero generated application units. Boxed numeric calculation is complete
+for homogeneous pairs; this does not establish compound stored-kind validation,
+scalar-peer admission, indexed capture or carrier behavior.
+
+Single compile-only observations on WSL after validation, reproduced with
+`measure_global_operators.py --boxed-arithmetic`:
+
+| Case | Seconds | Preprocessed bytes |
+| --- | ---: | ---: |
+| Public dynamic-add caller | 0.0563 | 20,971 |
+| Native dynamic-add caller | 3.6060 | 3,615,301 |
+| Private dynamic-add adapter | 4.7331 | 3,691,156 |
+
+Eight-job release core/tool/test build: 25.05 s, peak child RSS 422,212 KiB.
+A subsequent include-isolation correction required another release build:
+22.66 s, 423,704 KiB. Final sanitizer core/tool/test build: 57.40 s,
+639,472 KiB. These are single observations, not whole compiler rebuild measurements.

@@ -637,3 +637,19 @@ admitted by this slice. General destination validation and owner retention remai
 consumer obligations; indexed destinations need their separate access protocol.
 No new runtime implementations are emitted: plans reuse published calculations and
 casts through the existing API inventory.
+
+## Boxed arithmetic through the same global operations
+
+The five arithmetic operations use ordinary function sets for both existing plain
+implementations and homogeneous mixed/dynamic implementations. Variant snippets
+select native calculation and return transport; no generator type-name branch or
+second operator registry is introduced. Plain generated implementation files remain
+unchanged. Private includes are selected by the variant, so plain callers/adapters
+do not gain boxed dependencies. Normalized signature uniqueness applies to function
+sets as well as inline operator recipes.
+
+Arithmetic-specific domain groups include same-family boxed pairs without extending
+ordering/comparison groups. Results preserve the boxed family. Native arithmetic
+owns payload-kind dispatch, numeric promotion, zero-divisor errors and integer-only
+remainder. This slice does not admit boxed/scalar or mixed/dynamic pairs. Compounds
+still require their separate preserved-left-kind check before live write-back.

@@ -338,10 +338,11 @@ namespace scpp::api_generation
                 const auto plan = resolve_registered_operator(registry, request, function_sets);
                 if (plan.at("operand_type").text() != type.text())
                     throw std::runtime_error("Published operator must have normalized operands");
+                if (!signatures.emplace(operation.at("name").text(), type.text()).second)
+                    throw std::runtime_error("Duplicate normalized operator signature");
                 if (operation.has("function_set")) continue;
                 const auto identity = plan.at("api").text();
-                if (functions.has(identity) || !signatures.emplace(operation.at("name").text(), type.text()).second)
-                    throw std::runtime_error("Duplicate normalized operator signature");
+                if (functions.has(identity)) throw std::runtime_error("Duplicate normalized operator identity");
                 value function = value::object(), op = value::object();
                 function["namespace"] = "scpp"; function["header"] = plan.at("header");
                 function["source"] = "include/scpp/generated/public_" + identity + ".cpp";

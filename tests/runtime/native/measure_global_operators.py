@@ -22,6 +22,7 @@ parser.add_argument('--special-integers', action='store_true', help='Measure che
 parser.add_argument('--spaceship', action='store_true', help='Measure integer and floating spaceship')
 parser.add_argument('--unary', action='store_true', help='Measure canonical and boxed unary operations')
 parser.add_argument('--updates', action='store_true', help='Measure borrowed updates with owned results')
+parser.add_argument('--boxed-arithmetic', action='store_true', help='Measure homogeneous boxed arithmetic')
 args = parser.parse_args()
 public = '''#include "scpp/operators/add_int64.hpp"
 #include "scpp/operators/equal_mixed.hpp"
@@ -71,6 +72,9 @@ if args.unary:
 if args.updates:
     public = '#include "scpp/operators/post_increment_dynamic.hpp"\n#include "scpp/operators/pre_increment_int64.hpp"\nscpp::dynamic update(scpp::dynamic &v) { return scpp::update_post_increment(v); }\nscpp::int64 update(scpp::int64 &v) { return scpp::update_pre_increment(v); }\n'
     native = '#include "operators/arithmetic/boxed_numeric.hpp"\nscpp::detail::dynamic_value update(scpp::detail::dynamic_value &v) { return v++; }\nscpp::int_t<> update(scpp::int_t<> &v) { return ++v; }\n'
+if args.boxed_arithmetic:
+    public = '#include "scpp/operators/add_dynamic.hpp"\nscpp::dynamic add(const scpp::dynamic &a,const scpp::dynamic &b) { return scpp::numeric_add(a,b); }\n'
+    native = '#include "operators/arithmetic/boxed_numeric.hpp"\nscpp::detail::dynamic_value add(const scpp::detail::dynamic_value &a,const scpp::detail::dynamic_value &b) { return a+b; }\n'
 rows = []
 with tempfile.TemporaryDirectory(prefix='scpp-operator-cost-') as directory:
     stage = Path(directory)
@@ -90,6 +94,7 @@ with tempfile.TemporaryDirectory(prefix='scpp-operator-cost-') as directory:
     if args.spaceship: adapters = ['compare_float64']
     if args.unary: adapters = ['negative_dynamic']
     if args.updates: adapters = ['post_increment_dynamic']
+    if args.boxed_arithmetic: adapters = ['add_dynamic']
     cases += [(f'adapter_{identity}', root/f'runtime/include/scpp/generated/public_{identity}.cpp', ['public','include']) for identity in adapters]
     for name, path, includes in cases:
         command = [args.compiler, '-std=c++23', '-O2', *['-I'+str(root/'runtime'/i) for i in includes]]

@@ -16,7 +16,7 @@ each slice. The original inventory is a baseline, not a current completion count
 | A1 | Complete for the agreed ordinary numeric domain | Specialized and boxed extensions remain in B2/E, not implied by A1. |
 | A2 | Complete for the agreed checked scalar conversions | Carrier conversion is C; ownership casts are D. |
 | B1 | Complete for the agreed scalar-facing truth/text/identity/observation scope | Carrier forms remain C; boxed arithmetic and access completion are not B1 credit. |
-| B2 | Binary canonical/boxed bitwise and checked shifts, canonical power, numeric spaceship, numeric unary, scalar logical negation, prefix/postfix updates and canonical numeric compound plans implemented | Boxed/text compounds; carrier variants remain C. |
+| B2 | Binary canonical/boxed bitwise and checked shifts, canonical power, numeric spaceship, numeric unary, scalar logical negation, prefix/postfix updates, canonical numeric compound plans and homogeneous boxed arithmetic implemented | Boxed/text compounds; carrier variants remain C. |
 | C | Policy agreed; completion pending | Four carrier families, state-preserving operations/conversions and conditional lifecycle. |
 | D | Pending | Ownership, application targets and source Exception transport gaps. |
 | E | Existing vector/hash/boxed foundations; incomplete | Capability/access/initialization/cursor gaps and identity key-allocation debt. |
@@ -543,3 +543,17 @@ compound write-back after RHS/calculation failure. Successful paths allocate zer
 Publication reuse emits no duplicate definitions. This is runtime-plan evidence,
 not full compiler frontend adoption. Boxed stored-kind validation and text compound
 replacement remain B2 work; carrier write-back remains C and indexed owners E.
+
+## Active-goal progress — B2g boxed arithmetic prerequisite
+
+The existing global add/subtract/multiply/divide/remainder identities now resolve
+homogeneous mixed and dynamic operands to ten public implementations. Plain numeric
+implementations retain their generated code; their descriptors and boxed descriptors
+share ordinary function-set ownership. Arithmetic admission does not widen comparison
+or ordering admission. Duplicate normalized signature checks cover both recipe forms.
+
+Public consumers test all four numeric-kind pairings, family-preserving results,
+integer-only remainder, nonnumeric rejection, zero divisors, source snapshots and
+zero allocations on successful numeric paths. This is the calculation prerequisite
+for boxed compounds, not their completion: the preserved-left stored-kind check and
+text write-back remain B2, scalar-peer extension remains open, and carriers remain C.

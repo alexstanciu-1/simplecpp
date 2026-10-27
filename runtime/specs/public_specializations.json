@@ -329,6 +329,16 @@
     "post_decrement_int64",
     "post_decrement_float64",
     "post_decrement_mixed",
-    "post_decrement_dynamic"
+    "post_decrement_dynamic",
+    "add_mixed",
+    "add_dynamic",
+    "subtract_mixed",
+    "subtract_dynamic",
+    "multiply_mixed",
+    "multiply_dynamic",
+    "divide_mixed",
+    "divide_dynamic",
+    "remainder_mixed",
+    "remainder_dynamic"
   ]
 }

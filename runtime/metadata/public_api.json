@@ -2555,13 +2555,99 @@
             "domain": "floating"
           }
         ]
+      },
+      "numeric_boxed_arithmetic": {
+        "rules": [
+          {
+            "left": "signed",
+            "right": "signed",
+            "selection": "same_or_maximum",
+            "domain": "signed"
+          },
+          {
+            "left": "unsigned",
+            "right": "unsigned",
+            "selection": "same_or_maximum",
+            "domain": "unsigned"
+          },
+          {
+            "left": "floating",
+            "right": "floating",
+            "selection": "same_or_maximum",
+            "domain": "floating"
+          },
+          {
+            "left": "signed",
+            "right": "floating",
+            "selection": "maximum",
+            "domain": "floating"
+          },
+          {
+            "left": "floating",
+            "right": "signed",
+            "selection": "maximum",
+            "domain": "floating"
+          },
+          {
+            "left": "unsigned",
+            "right": "floating",
+            "selection": "maximum",
+            "domain": "floating"
+          },
+          {
+            "left": "floating",
+            "right": "unsigned",
+            "selection": "maximum",
+            "domain": "floating"
+          },
+          {
+            "left": "mixed",
+            "right": "mixed",
+            "selection": "same_or_maximum",
+            "domain": "mixed"
+          },
+          {
+            "left": "dynamic",
+            "right": "dynamic",
+            "selection": "same_or_maximum",
+            "domain": "dynamic"
+          }
+        ]
+      },
+      "integer_numeric_boxed_arithmetic": {
+        "rules": [
+          {
+            "left": "signed",
+            "right": "signed",
+            "selection": "same_or_maximum",
+            "domain": "signed"
+          },
+          {
+            "left": "unsigned",
+            "right": "unsigned",
+            "selection": "same_or_maximum",
+            "domain": "unsigned"
+          },
+          {
+            "left": "mixed",
+            "right": "mixed",
+            "selection": "same_or_maximum",
+            "domain": "mixed"
+          },
+          {
+            "left": "dynamic",
+            "right": "dynamic",
+            "selection": "same_or_maximum",
+            "domain": "dynamic"
+          }
+        ]
       }
     },
     "operations": {
       "add": {
-        "group": "numeric",
+        "group": "numeric_boxed_arithmetic",
         "name": "numeric_add",
-        "expression": "${public:Selected}(scpp::detail::generated_operator_detail::add(${operand:left}, ${operand:right}).native_value())",
+        "function_set": "add",
         "publish": [
           "int8",
           "int16",
@@ -2571,10 +2657,9 @@
           "uint16",
           "uint32",
           "uint64",
-          "float64"
-        ],
-        "includes": [
-          "scpp/generated/operator_detail.hpp"
+          "float64",
+          "mixed",
+          "dynamic"
         ]
       },
       "equal": {
@@ -2604,9 +2689,9 @@
         ]
       },
       "subtract": {
-        "group": "numeric",
+        "group": "numeric_boxed_arithmetic",
         "name": "numeric_subtract",
-        "expression": "${public:Selected}(scpp::detail::generated_operator_detail::sub(${operand:left}, ${operand:right}).native_value())",
+        "function_set": "subtract",
         "publish": [
           "int8",
           "int16",
@@ -2616,16 +2701,15 @@
           "uint16",
           "uint32",
           "uint64",
-          "float64"
-        ],
-        "includes": [
-          "scpp/generated/operator_detail.hpp"
+          "float64",
+          "mixed",
+          "dynamic"
         ]
       },
       "multiply": {
-        "group": "numeric",
+        "group": "numeric_boxed_arithmetic",
         "name": "numeric_multiply",
-        "expression": "${public:Selected}(scpp::detail::generated_operator_detail::mul(${operand:left}, ${operand:right}).native_value())",
+        "function_set": "multiply",
         "publish": [
           "int8",
           "int16",
@@ -2635,16 +2719,15 @@
           "uint16",
           "uint32",
           "uint64",
-          "float64"
-        ],
-        "includes": [
-          "scpp/generated/operator_detail.hpp"
+          "float64",
+          "mixed",
+          "dynamic"
         ]
       },
       "divide": {
-        "group": "numeric",
+        "group": "numeric_boxed_arithmetic",
         "name": "numeric_divide",
-        "expression": "${public:Selected}(scpp::detail::generated_operator_detail::div(${operand:left}, ${operand:right}).native_value())",
+        "function_set": "divide",
         "publish": [
           "int8",
           "int16",
@@ -2654,16 +2737,15 @@
           "uint16",
           "uint32",
           "uint64",
-          "float64"
-        ],
-        "includes": [
-          "scpp/generated/operator_detail.hpp"
+          "float64",
+          "mixed",
+          "dynamic"
         ]
       },
       "remainder": {
-        "group": "integer_numeric",
+        "group": "integer_numeric_boxed_arithmetic",
         "name": "numeric_remainder",
-        "expression": "${public:Selected}(scpp::detail::generated_operator_detail::mod(${operand:left}, ${operand:right}).native_value())",
+        "function_set": "remainder",
         "publish": [
           "int8",
           "int16",
@@ -2672,10 +2754,9 @@
           "uint8",
           "uint16",
           "uint32",
-          "uint64"
-        ],
-        "includes": [
-          "scpp/generated/operator_detail.hpp"
+          "uint64",
+          "mixed",
+          "dynamic"
         ]
       },
       "numeric_equal": {
@@ -4299,6 +4380,441 @@
           "body": "${variant:body}",
           "includes": [
             "operators/arithmetic/boxed_numeric.hpp"
+          ]
+        }
+      }
+    },
+    "add": {
+      "variants": {
+        "int8": {
+          "calculation": "${public:int8}(scpp::detail::generated_operator_detail::add(scpp::int_t<__INT8_TYPE__>(left.native_value()), scpp::int_t<__INT8_TYPE__>(right.native_value())).native_value())",
+          "transport": "public",
+          "include": "scpp/generated/operator_detail.hpp"
+        },
+        "int16": {
+          "calculation": "${public:int16}(scpp::detail::generated_operator_detail::add(scpp::int_t<__INT16_TYPE__>(left.native_value()), scpp::int_t<__INT16_TYPE__>(right.native_value())).native_value())",
+          "transport": "public",
+          "include": "scpp/generated/operator_detail.hpp"
+        },
+        "int32": {
+          "calculation": "${public:int32}(scpp::detail::generated_operator_detail::add(scpp::int_t<__INT32_TYPE__>(left.native_value()), scpp::int_t<__INT32_TYPE__>(right.native_value())).native_value())",
+          "transport": "public",
+          "include": "scpp/generated/operator_detail.hpp"
+        },
+        "int64": {
+          "calculation": "${public:int64}(scpp::detail::generated_operator_detail::add(scpp::int_t<__INT64_TYPE__>(left.native_value()), scpp::int_t<__INT64_TYPE__>(right.native_value())).native_value())",
+          "transport": "public",
+          "include": "scpp/generated/operator_detail.hpp"
+        },
+        "uint8": {
+          "calculation": "${public:uint8}(scpp::detail::generated_operator_detail::add(scpp::int_t<__UINT8_TYPE__>(left.native_value()), scpp::int_t<__UINT8_TYPE__>(right.native_value())).native_value())",
+          "transport": "public",
+          "include": "scpp/generated/operator_detail.hpp"
+        },
+        "uint16": {
+          "calculation": "${public:uint16}(scpp::detail::generated_operator_detail::add(scpp::int_t<__UINT16_TYPE__>(left.native_value()), scpp::int_t<__UINT16_TYPE__>(right.native_value())).native_value())",
+          "transport": "public",
+          "include": "scpp/generated/operator_detail.hpp"
+        },
+        "uint32": {
+          "calculation": "${public:uint32}(scpp::detail::generated_operator_detail::add(scpp::int_t<__UINT32_TYPE__>(left.native_value()), scpp::int_t<__UINT32_TYPE__>(right.native_value())).native_value())",
+          "transport": "public",
+          "include": "scpp/generated/operator_detail.hpp"
+        },
+        "uint64": {
+          "calculation": "${public:uint64}(scpp::detail::generated_operator_detail::add(scpp::int_t<__UINT64_TYPE__>(left.native_value()), scpp::int_t<__UINT64_TYPE__>(right.native_value())).native_value())",
+          "transport": "public",
+          "include": "scpp/generated/operator_detail.hpp"
+        },
+        "float64": {
+          "calculation": "${public:float64}(scpp::detail::generated_operator_detail::add(scpp::float_t(left.native_value()), scpp::float_t(right.native_value())).native_value())",
+          "transport": "public",
+          "include": "scpp/generated/operator_detail.hpp"
+        },
+        "mixed": {
+          "calculation": "(${native:left} + ${native:right})",
+          "transport": "native",
+          "include": "operators/arithmetic/boxed_numeric.hpp"
+        },
+        "dynamic": {
+          "calculation": "(${native:left} + ${native:right})",
+          "transport": "native",
+          "include": "operators/arithmetic/boxed_numeric.hpp"
+        }
+      },
+      "function": {
+        "namespace": "scpp",
+        "header": "scpp/operators/add_${variant}.hpp",
+        "source": "include/scpp/generated/public_add_${variant}.cpp",
+        "operation": {
+          "name": "numeric_add",
+          "returns": "${variant}",
+          "parameters": [
+            {
+              "name": "left",
+              "type": "${variant}",
+              "passing": "const_ref"
+            },
+            {
+              "name": "right",
+              "type": "${variant}",
+              "passing": "const_ref"
+            }
+          ],
+          "expression": "${variant:calculation}",
+          "transport": "${variant:transport}",
+          "includes": [
+            "${variant:include}"
+          ],
+          "uses": [
+            "${variant}"
+          ]
+        }
+      }
+    },
+    "subtract": {
+      "variants": {
+        "int8": {
+          "calculation": "${public:int8}(scpp::detail::generated_operator_detail::sub(scpp::int_t<__INT8_TYPE__>(left.native_value()), scpp::int_t<__INT8_TYPE__>(right.native_value())).native_value())",
+          "transport": "public",
+          "include": "scpp/generated/operator_detail.hpp"
+        },
+        "int16": {
+          "calculation": "${public:int16}(scpp::detail::generated_operator_detail::sub(scpp::int_t<__INT16_TYPE__>(left.native_value()), scpp::int_t<__INT16_TYPE__>(right.native_value())).native_value())",
+          "transport": "public",
+          "include": "scpp/generated/operator_detail.hpp"
+        },
+        "int32": {
+          "calculation": "${public:int32}(scpp::detail::generated_operator_detail::sub(scpp::int_t<__INT32_TYPE__>(left.native_value()), scpp::int_t<__INT32_TYPE__>(right.native_value())).native_value())",
+          "transport": "public",
+          "include": "scpp/generated/operator_detail.hpp"
+        },
+        "int64": {
+          "calculation": "${public:int64}(scpp::detail::generated_operator_detail::sub(scpp::int_t<__INT64_TYPE__>(left.native_value()), scpp::int_t<__INT64_TYPE__>(right.native_value())).native_value())",
+          "transport": "public",
+          "include": "scpp/generated/operator_detail.hpp"
+        },
+        "uint8": {
+          "calculation": "${public:uint8}(scpp::detail::generated_operator_detail::sub(scpp::int_t<__UINT8_TYPE__>(left.native_value()), scpp::int_t<__UINT8_TYPE__>(right.native_value())).native_value())",
+          "transport": "public",
+          "include": "scpp/generated/operator_detail.hpp"
+        },
+        "uint16": {
+          "calculation": "${public:uint16}(scpp::detail::generated_operator_detail::sub(scpp::int_t<__UINT16_TYPE__>(left.native_value()), scpp::int_t<__UINT16_TYPE__>(right.native_value())).native_value())",
+          "transport": "public",
+          "include": "scpp/generated/operator_detail.hpp"
+        },
+        "uint32": {
+          "calculation": "${public:uint32}(scpp::detail::generated_operator_detail::sub(scpp::int_t<__UINT32_TYPE__>(left.native_value()), scpp::int_t<__UINT32_TYPE__>(right.native_value())).native_value())",
+          "transport": "public",
+          "include": "scpp/generated/operator_detail.hpp"
+        },
+        "uint64": {
+          "calculation": "${public:uint64}(scpp::detail::generated_operator_detail::sub(scpp::int_t<__UINT64_TYPE__>(left.native_value()), scpp::int_t<__UINT64_TYPE__>(right.native_value())).native_value())",
+          "transport": "public",
+          "include": "scpp/generated/operator_detail.hpp"
+        },
+        "float64": {
+          "calculation": "${public:float64}(scpp::detail::generated_operator_detail::sub(scpp::float_t(left.native_value()), scpp::float_t(right.native_value())).native_value())",
+          "transport": "public",
+          "include": "scpp/generated/operator_detail.hpp"
+        },
+        "mixed": {
+          "calculation": "(${native:left} - ${native:right})",
+          "transport": "native",
+          "include": "operators/arithmetic/boxed_numeric.hpp"
+        },
+        "dynamic": {
+          "calculation": "(${native:left} - ${native:right})",
+          "transport": "native",
+          "include": "operators/arithmetic/boxed_numeric.hpp"
+        }
+      },
+      "function": {
+        "namespace": "scpp",
+        "header": "scpp/operators/subtract_${variant}.hpp",
+        "source": "include/scpp/generated/public_subtract_${variant}.cpp",
+        "operation": {
+          "name": "numeric_subtract",
+          "returns": "${variant}",
+          "parameters": [
+            {
+              "name": "left",
+              "type": "${variant}",
+              "passing": "const_ref"
+            },
+            {
+              "name": "right",
+              "type": "${variant}",
+              "passing": "const_ref"
+            }
+          ],
+          "expression": "${variant:calculation}",
+          "transport": "${variant:transport}",
+          "includes": [
+            "${variant:include}"
+          ],
+          "uses": [
+            "${variant}"
+          ]
+        }
+      }
+    },
+    "multiply": {
+      "variants": {
+        "int8": {
+          "calculation": "${public:int8}(scpp::detail::generated_operator_detail::mul(scpp::int_t<__INT8_TYPE__>(left.native_value()), scpp::int_t<__INT8_TYPE__>(right.native_value())).native_value())",
+          "transport": "public",
+          "include": "scpp/generated/operator_detail.hpp"
+        },
+        "int16": {
+          "calculation": "${public:int16}(scpp::detail::generated_operator_detail::mul(scpp::int_t<__INT16_TYPE__>(left.native_value()), scpp::int_t<__INT16_TYPE__>(right.native_value())).native_value())",
+          "transport": "public",
+          "include": "scpp/generated/operator_detail.hpp"
+        },
+        "int32": {
+          "calculation": "${public:int32}(scpp::detail::generated_operator_detail::mul(scpp::int_t<__INT32_TYPE__>(left.native_value()), scpp::int_t<__INT32_TYPE__>(right.native_value())).native_value())",
+          "transport": "public",
+          "include": "scpp/generated/operator_detail.hpp"
+        },
+        "int64": {
+          "calculation": "${public:int64}(scpp::detail::generated_operator_detail::mul(scpp::int_t<__INT64_TYPE__>(left.native_value()), scpp::int_t<__INT64_TYPE__>(right.native_value())).native_value())",
+          "transport": "public",
+          "include": "scpp/generated/operator_detail.hpp"
+        },
+        "uint8": {
+          "calculation": "${public:uint8}(scpp::detail::generated_operator_detail::mul(scpp::int_t<__UINT8_TYPE__>(left.native_value()), scpp::int_t<__UINT8_TYPE__>(right.native_value())).native_value())",
+          "transport": "public",
+          "include": "scpp/generated/operator_detail.hpp"
+        },
+        "uint16": {
+          "calculation": "${public:uint16}(scpp::detail::generated_operator_detail::mul(scpp::int_t<__UINT16_TYPE__>(left.native_value()), scpp::int_t<__UINT16_TYPE__>(right.native_value())).native_value())",
+          "transport": "public",
+          "include": "scpp/generated/operator_detail.hpp"
+        },
+        "uint32": {
+          "calculation": "${public:uint32}(scpp::detail::generated_operator_detail::mul(scpp::int_t<__UINT32_TYPE__>(left.native_value()), scpp::int_t<__UINT32_TYPE__>(right.native_value())).native_value())",
+          "transport": "public",
+          "include": "scpp/generated/operator_detail.hpp"
+        },
+        "uint64": {
+          "calculation": "${public:uint64}(scpp::detail::generated_operator_detail::mul(scpp::int_t<__UINT64_TYPE__>(left.native_value()), scpp::int_t<__UINT64_TYPE__>(right.native_value())).native_value())",
+          "transport": "public",
+          "include": "scpp/generated/operator_detail.hpp"
+        },
+        "float64": {
+          "calculation": "${public:float64}(scpp::detail::generated_operator_detail::mul(scpp::float_t(left.native_value()), scpp::float_t(right.native_value())).native_value())",
+          "transport": "public",
+          "include": "scpp/generated/operator_detail.hpp"
+        },
+        "mixed": {
+          "calculation": "(${native:left} * ${native:right})",
+          "transport": "native",
+          "include": "operators/arithmetic/boxed_numeric.hpp"
+        },
+        "dynamic": {
+          "calculation": "(${native:left} * ${native:right})",
+          "transport": "native",
+          "include": "operators/arithmetic/boxed_numeric.hpp"
+        }
+      },
+      "function": {
+        "namespace": "scpp",
+        "header": "scpp/operators/multiply_${variant}.hpp",
+        "source": "include/scpp/generated/public_multiply_${variant}.cpp",
+        "operation": {
+          "name": "numeric_multiply",
+          "returns": "${variant}",
+          "parameters": [
+            {
+              "name": "left",
+              "type": "${variant}",
+              "passing": "const_ref"
+            },
+            {
+              "name": "right",
+              "type": "${variant}",
+              "passing": "const_ref"
+            }
+          ],
+          "expression": "${variant:calculation}",
+          "transport": "${variant:transport}",
+          "includes": [
+            "${variant:include}"
+          ],
+          "uses": [
+            "${variant}"
+          ]
+        }
+      }
+    },
+    "divide": {
+      "variants": {
+        "int8": {
+          "calculation": "${public:int8}(scpp::detail::generated_operator_detail::div(scpp::int_t<__INT8_TYPE__>(left.native_value()), scpp::int_t<__INT8_TYPE__>(right.native_value())).native_value())",
+          "transport": "public",
+          "include": "scpp/generated/operator_detail.hpp"
+        },
+        "int16": {
+          "calculation": "${public:int16}(scpp::detail::generated_operator_detail::div(scpp::int_t<__INT16_TYPE__>(left.native_value()), scpp::int_t<__INT16_TYPE__>(right.native_value())).native_value())",
+          "transport": "public",
+          "include": "scpp/generated/operator_detail.hpp"
+        },
+        "int32": {
+          "calculation": "${public:int32}(scpp::detail::generated_operator_detail::div(scpp::int_t<__INT32_TYPE__>(left.native_value()), scpp::int_t<__INT32_TYPE__>(right.native_value())).native_value())",
+          "transport": "public",
+          "include": "scpp/generated/operator_detail.hpp"
+        },
+        "int64": {
+          "calculation": "${public:int64}(scpp::detail::generated_operator_detail::div(scpp::int_t<__INT64_TYPE__>(left.native_value()), scpp::int_t<__INT64_TYPE__>(right.native_value())).native_value())",
+          "transport": "public",
+          "include": "scpp/generated/operator_detail.hpp"
+        },
+        "uint8": {
+          "calculation": "${public:uint8}(scpp::detail::generated_operator_detail::div(scpp::int_t<__UINT8_TYPE__>(left.native_value()), scpp::int_t<__UINT8_TYPE__>(right.native_value())).native_value())",
+          "transport": "public",
+          "include": "scpp/generated/operator_detail.hpp"
+        },
+        "uint16": {
+          "calculation": "${public:uint16}(scpp::detail::generated_operator_detail::div(scpp::int_t<__UINT16_TYPE__>(left.native_value()), scpp::int_t<__UINT16_TYPE__>(right.native_value())).native_value())",
+          "transport": "public",
+          "include": "scpp/generated/operator_detail.hpp"
+        },
+        "uint32": {
+          "calculation": "${public:uint32}(scpp::detail::generated_operator_detail::div(scpp::int_t<__UINT32_TYPE__>(left.native_value()), scpp::int_t<__UINT32_TYPE__>(right.native_value())).native_value())",
+          "transport": "public",
+          "include": "scpp/generated/operator_detail.hpp"
+        },
+        "uint64": {
+          "calculation": "${public:uint64}(scpp::detail::generated_operator_detail::div(scpp::int_t<__UINT64_TYPE__>(left.native_value()), scpp::int_t<__UINT64_TYPE__>(right.native_value())).native_value())",
+          "transport": "public",
+          "include": "scpp/generated/operator_detail.hpp"
+        },
+        "float64": {
+          "calculation": "${public:float64}(scpp::detail::generated_operator_detail::div(scpp::float_t(left.native_value()), scpp::float_t(right.native_value())).native_value())",
+          "transport": "public",
+          "include": "scpp/generated/operator_detail.hpp"
+        },
+        "mixed": {
+          "calculation": "(${native:left} / ${native:right})",
+          "transport": "native",
+          "include": "operators/arithmetic/boxed_numeric.hpp"
+        },
+        "dynamic": {
+          "calculation": "(${native:left} / ${native:right})",
+          "transport": "native",
+          "include": "operators/arithmetic/boxed_numeric.hpp"
+        }
+      },
+      "function": {
+        "namespace": "scpp",
+        "header": "scpp/operators/divide_${variant}.hpp",
+        "source": "include/scpp/generated/public_divide_${variant}.cpp",
+        "operation": {
+          "name": "numeric_divide",
+          "returns": "${variant}",
+          "parameters": [
+            {
+              "name": "left",
+              "type": "${variant}",
+              "passing": "const_ref"
+            },
+            {
+              "name": "right",
+              "type": "${variant}",
+              "passing": "const_ref"
+            }
+          ],
+          "expression": "${variant:calculation}",
+          "transport": "${variant:transport}",
+          "includes": [
+            "${variant:include}"
+          ],
+          "uses": [
+            "${variant}"
+          ]
+        }
+      }
+    },
+    "remainder": {
+      "variants": {
+        "int8": {
+          "calculation": "${public:int8}(scpp::detail::generated_operator_detail::mod(scpp::int_t<__INT8_TYPE__>(left.native_value()), scpp::int_t<__INT8_TYPE__>(right.native_value())).native_value())",
+          "transport": "public",
+          "include": "scpp/generated/operator_detail.hpp"
+        },
+        "int16": {
+          "calculation": "${public:int16}(scpp::detail::generated_operator_detail::mod(scpp::int_t<__INT16_TYPE__>(left.native_value()), scpp::int_t<__INT16_TYPE__>(right.native_value())).native_value())",
+          "transport": "public",
+          "include": "scpp/generated/operator_detail.hpp"
+        },
+        "int32": {
+          "calculation": "${public:int32}(scpp::detail::generated_operator_detail::mod(scpp::int_t<__INT32_TYPE__>(left.native_value()), scpp::int_t<__INT32_TYPE__>(right.native_value())).native_value())",
+          "transport": "public",
+          "include": "scpp/generated/operator_detail.hpp"
+        },
+        "int64": {
+          "calculation": "${public:int64}(scpp::detail::generated_operator_detail::mod(scpp::int_t<__INT64_TYPE__>(left.native_value()), scpp::int_t<__INT64_TYPE__>(right.native_value())).native_value())",
+          "transport": "public",
+          "include": "scpp/generated/operator_detail.hpp"
+        },
+        "uint8": {
+          "calculation": "${public:uint8}(scpp::detail::generated_operator_detail::mod(scpp::int_t<__UINT8_TYPE__>(left.native_value()), scpp::int_t<__UINT8_TYPE__>(right.native_value())).native_value())",
+          "transport": "public",
+          "include": "scpp/generated/operator_detail.hpp"
+        },
+        "uint16": {
+          "calculation": "${public:uint16}(scpp::detail::generated_operator_detail::mod(scpp::int_t<__UINT16_TYPE__>(left.native_value()), scpp::int_t<__UINT16_TYPE__>(right.native_value())).native_value())",
+          "transport": "public",
+          "include": "scpp/generated/operator_detail.hpp"
+        },
+        "uint32": {
+          "calculation": "${public:uint32}(scpp::detail::generated_operator_detail::mod(scpp::int_t<__UINT32_TYPE__>(left.native_value()), scpp::int_t<__UINT32_TYPE__>(right.native_value())).native_value())",
+          "transport": "public",
+          "include": "scpp/generated/operator_detail.hpp"
+        },
+        "uint64": {
+          "calculation": "${public:uint64}(scpp::detail::generated_operator_detail::mod(scpp::int_t<__UINT64_TYPE__>(left.native_value()), scpp::int_t<__UINT64_TYPE__>(right.native_value())).native_value())",
+          "transport": "public",
+          "include": "scpp/generated/operator_detail.hpp"
+        },
+        "mixed": {
+          "calculation": "(${native:left} % ${native:right})",
+          "transport": "native",
+          "include": "operators/arithmetic/boxed_numeric.hpp"
+        },
+        "dynamic": {
+          "calculation": "(${native:left} % ${native:right})",
+          "transport": "native",
+          "include": "operators/arithmetic/boxed_numeric.hpp"
+        }
+      },
+      "function": {
+        "namespace": "scpp",
+        "header": "scpp/operators/remainder_${variant}.hpp",
+        "source": "include/scpp/generated/public_remainder_${variant}.cpp",
+        "operation": {
+          "name": "numeric_remainder",
+          "returns": "${variant}",
+          "parameters": [
+            {
+              "name": "left",
+              "type": "${variant}",
+              "passing": "const_ref"
+            },
+            {
+              "name": "right",
+              "type": "${variant}",
+              "passing": "const_ref"
+            }
+          ],
+          "expression": "${variant:calculation}",
+          "transport": "${variant:transport}",
+          "includes": [
+            "${variant:include}"
+          ],
+          "uses": [
+            "${variant}"
           ]
         }
       }

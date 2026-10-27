@@ -1,7 +1,36 @@
 {
   "abi": "529dd5502370f48d64891818e9439aae72831b990b4027e8abe25c50c1216c21",
-  "api_identity": "24e5e4848c9d6daf9f895e0770be4f5c10c8a21afe25f60aa8bdf9d138ce8ed9",
+  "api_identity": "08f3bc87bdd68ba666842d8a6f2f3020f2cf04470bbba4ae8d3cc9f7b93b0705",
   "apis": {
+    "add_dynamic": {
+      "header": "scpp/operators/add_dynamic.hpp",
+      "namespace": "scpp",
+      "operation": {
+        "expression": "(${native:left} + ${native:right})",
+        "includes": [
+          "operators/arithmetic/boxed_numeric.hpp"
+        ],
+        "name": "numeric_add",
+        "parameters": [
+          {
+            "name": "left",
+            "passing": "const_ref",
+            "type": "dynamic"
+          },
+          {
+            "name": "right",
+            "passing": "const_ref",
+            "type": "dynamic"
+          }
+        ],
+        "returns": "dynamic",
+        "transport": "native",
+        "uses": [
+          "dynamic"
+        ]
+      },
+      "source": "include/scpp/generated/public_add_dynamic.cpp"
+    },
     "add_float64": {
       "header": "scpp/operators/add_float64.hpp",
       "namespace": "scpp",
@@ -24,6 +53,7 @@
           }
         ],
         "returns": "float64",
+        "transport": "public",
         "uses": [
           "float64"
         ]
@@ -52,6 +82,7 @@
           }
         ],
         "returns": "int16",
+        "transport": "public",
         "uses": [
           "int16"
         ]
@@ -80,6 +111,7 @@
           }
         ],
         "returns": "int32",
+        "transport": "public",
         "uses": [
           "int32"
         ]
@@ -108,6 +140,7 @@
           }
         ],
         "returns": "int64",
+        "transport": "public",
         "uses": [
           "int64"
         ]
@@ -136,11 +169,41 @@
           }
         ],
         "returns": "int8",
+        "transport": "public",
         "uses": [
           "int8"
         ]
       },
       "source": "include/scpp/generated/public_add_int8.cpp"
+    },
+    "add_mixed": {
+      "header": "scpp/operators/add_mixed.hpp",
+      "namespace": "scpp",
+      "operation": {
+        "expression": "(${native:left} + ${native:right})",
+        "includes": [
+          "operators/arithmetic/boxed_numeric.hpp"
+        ],
+        "name": "numeric_add",
+        "parameters": [
+          {
+            "name": "left",
+            "passing": "const_ref",
+            "type": "mixed"
+          },
+          {
+            "name": "right",
+            "passing": "const_ref",
+            "type": "mixed"
+          }
+        ],
+        "returns": "mixed",
+        "transport": "native",
+        "uses": [
+          "mixed"
+        ]
+      },
+      "source": "include/scpp/generated/public_add_mixed.cpp"
     },
     "add_uint16": {
       "header": "scpp/operators/add_uint16.hpp",
@@ -164,6 +227,7 @@
           }
         ],
         "returns": "uint16",
+        "transport": "public",
         "uses": [
           "uint16"
         ]
@@ -192,6 +256,7 @@
           }
         ],
         "returns": "uint32",
+        "transport": "public",
         "uses": [
           "uint32"
         ]
@@ -220,6 +285,7 @@
           }
         ],
         "returns": "uint64",
+        "transport": "public",
         "uses": [
           "uint64"
         ]
@@ -248,6 +314,7 @@
           }
         ],
         "returns": "uint8",
+        "transport": "public",
         "uses": [
           "uint8"
         ]
@@ -3445,6 +3512,35 @@
       },
       "source": "include/scpp/generated/public_condition_truthy_uint8.cpp"
     },
+    "divide_dynamic": {
+      "header": "scpp/operators/divide_dynamic.hpp",
+      "namespace": "scpp",
+      "operation": {
+        "expression": "(${native:left} / ${native:right})",
+        "includes": [
+          "operators/arithmetic/boxed_numeric.hpp"
+        ],
+        "name": "numeric_divide",
+        "parameters": [
+          {
+            "name": "left",
+            "passing": "const_ref",
+            "type": "dynamic"
+          },
+          {
+            "name": "right",
+            "passing": "const_ref",
+            "type": "dynamic"
+          }
+        ],
+        "returns": "dynamic",
+        "transport": "native",
+        "uses": [
+          "dynamic"
+        ]
+      },
+      "source": "include/scpp/generated/public_divide_dynamic.cpp"
+    },
     "divide_float64": {
       "header": "scpp/operators/divide_float64.hpp",
       "namespace": "scpp",
@@ -3467,6 +3563,7 @@
           }
         ],
         "returns": "float64",
+        "transport": "public",
         "uses": [
           "float64"
         ]
@@ -3495,6 +3592,7 @@
           }
         ],
         "returns": "int16",
+        "transport": "public",
         "uses": [
           "int16"
         ]
@@ -3523,6 +3621,7 @@
           }
         ],
         "returns": "int32",
+        "transport": "public",
         "uses": [
           "int32"
         ]
@@ -3551,6 +3650,7 @@
           }
         ],
         "returns": "int64",
+        "transport": "public",
         "uses": [
           "int64"
         ]
@@ -3579,11 +3679,41 @@
           }
         ],
         "returns": "int8",
+        "transport": "public",
         "uses": [
           "int8"
         ]
       },
       "source": "include/scpp/generated/public_divide_int8.cpp"
+    },
+    "divide_mixed": {
+      "header": "scpp/operators/divide_mixed.hpp",
+      "namespace": "scpp",
+      "operation": {
+        "expression": "(${native:left} / ${native:right})",
+        "includes": [
+          "operators/arithmetic/boxed_numeric.hpp"
+        ],
+        "name": "numeric_divide",
+        "parameters": [
+          {
+            "name": "left",
+            "passing": "const_ref",
+            "type": "mixed"
+          },
+          {
+            "name": "right",
+            "passing": "const_ref",
+            "type": "mixed"
+          }
+        ],
+        "returns": "mixed",
+        "transport": "native",
+        "uses": [
+          "mixed"
+        ]
+      },
+      "source": "include/scpp/generated/public_divide_mixed.cpp"
     },
     "divide_uint16": {
       "header": "scpp/operators/divide_uint16.hpp",
@@ -3607,6 +3737,7 @@
           }
         ],
         "returns": "uint16",
+        "transport": "public",
         "uses": [
           "uint16"
         ]
@@ -3635,6 +3766,7 @@
           }
         ],
         "returns": "uint32",
+        "transport": "public",
         "uses": [
           "uint32"
         ]
@@ -3663,6 +3795,7 @@
           }
         ],
         "returns": "uint64",
+        "transport": "public",
         "uses": [
           "uint64"
         ]
@@ -3691,6 +3824,7 @@
           }
         ],
         "returns": "uint8",
+        "transport": "public",
         "uses": [
           "uint8"
         ]
@@ -4933,6 +5067,35 @@
       },
       "source": "include/scpp/generated/public_logical_xor_boolean.cpp"
     },
+    "multiply_dynamic": {
+      "header": "scpp/operators/multiply_dynamic.hpp",
+      "namespace": "scpp",
+      "operation": {
+        "expression": "(${native:left} * ${native:right})",
+        "includes": [
+          "operators/arithmetic/boxed_numeric.hpp"
+        ],
+        "name": "numeric_multiply",
+        "parameters": [
+          {
+            "name": "left",
+            "passing": "const_ref",
+            "type": "dynamic"
+          },
+          {
+            "name": "right",
+            "passing": "const_ref",
+            "type": "dynamic"
+          }
+        ],
+        "returns": "dynamic",
+        "transport": "native",
+        "uses": [
+          "dynamic"
+        ]
+      },
+      "source": "include/scpp/generated/public_multiply_dynamic.cpp"
+    },
     "multiply_float64": {
       "header": "scpp/operators/multiply_float64.hpp",
       "namespace": "scpp",
@@ -4955,6 +5118,7 @@
           }
         ],
         "returns": "float64",
+        "transport": "public",
         "uses": [
           "float64"
         ]
@@ -4983,6 +5147,7 @@
           }
         ],
         "returns": "int16",
+        "transport": "public",
         "uses": [
           "int16"
         ]
@@ -5011,6 +5176,7 @@
           }
         ],
         "returns": "int32",
+        "transport": "public",
         "uses": [
           "int32"
         ]
@@ -5039,6 +5205,7 @@
           }
         ],
         "returns": "int64",
+        "transport": "public",
         "uses": [
           "int64"
         ]
@@ -5067,11 +5234,41 @@
           }
         ],
         "returns": "int8",
+        "transport": "public",
         "uses": [
           "int8"
         ]
       },
       "source": "include/scpp/generated/public_multiply_int8.cpp"
+    },
+    "multiply_mixed": {
+      "header": "scpp/operators/multiply_mixed.hpp",
+      "namespace": "scpp",
+      "operation": {
+        "expression": "(${native:left} * ${native:right})",
+        "includes": [
+          "operators/arithmetic/boxed_numeric.hpp"
+        ],
+        "name": "numeric_multiply",
+        "parameters": [
+          {
+            "name": "left",
+            "passing": "const_ref",
+            "type": "mixed"
+          },
+          {
+            "name": "right",
+            "passing": "const_ref",
+            "type": "mixed"
+          }
+        ],
+        "returns": "mixed",
+        "transport": "native",
+        "uses": [
+          "mixed"
+        ]
+      },
+      "source": "include/scpp/generated/public_multiply_mixed.cpp"
     },
     "multiply_uint16": {
       "header": "scpp/operators/multiply_uint16.hpp",
@@ -5095,6 +5292,7 @@
           }
         ],
         "returns": "uint16",
+        "transport": "public",
         "uses": [
           "uint16"
         ]
@@ -5123,6 +5321,7 @@
           }
         ],
         "returns": "uint32",
+        "transport": "public",
         "uses": [
           "uint32"
         ]
@@ -5151,6 +5350,7 @@
           }
         ],
         "returns": "uint64",
+        "transport": "public",
         "uses": [
           "uint64"
         ]
@@ -5179,6 +5379,7 @@
           }
         ],
         "returns": "uint8",
+        "transport": "public",
         "uses": [
           "uint8"
         ]
@@ -6275,6 +6476,35 @@
       },
       "source": "include/scpp/generated/public_pre_increment_mixed.cpp"
     },
+    "remainder_dynamic": {
+      "header": "scpp/operators/remainder_dynamic.hpp",
+      "namespace": "scpp",
+      "operation": {
+        "expression": "(${native:left} % ${native:right})",
+        "includes": [
+          "operators/arithmetic/boxed_numeric.hpp"
+        ],
+        "name": "numeric_remainder",
+        "parameters": [
+          {
+            "name": "left",
+            "passing": "const_ref",
+            "type": "dynamic"
+          },
+          {
+            "name": "right",
+            "passing": "const_ref",
+            "type": "dynamic"
+          }
+        ],
+        "returns": "dynamic",
+        "transport": "native",
+        "uses": [
+          "dynamic"
+        ]
+      },
+      "source": "include/scpp/generated/public_remainder_dynamic.cpp"
+    },
     "remainder_int16": {
       "header": "scpp/operators/remainder_int16.hpp",
       "namespace": "scpp",
@@ -6297,6 +6527,7 @@
           }
         ],
         "returns": "int16",
+        "transport": "public",
         "uses": [
           "int16"
         ]
@@ -6325,6 +6556,7 @@
           }
         ],
         "returns": "int32",
+        "transport": "public",
         "uses": [
           "int32"
         ]
@@ -6353,6 +6585,7 @@
           }
         ],
         "returns": "int64",
+        "transport": "public",
         "uses": [
           "int64"
         ]
@@ -6381,11 +6614,41 @@
           }
         ],
         "returns": "int8",
+        "transport": "public",
         "uses": [
           "int8"
         ]
       },
       "source": "include/scpp/generated/public_remainder_int8.cpp"
+    },
+    "remainder_mixed": {
+      "header": "scpp/operators/remainder_mixed.hpp",
+      "namespace": "scpp",
+      "operation": {
+        "expression": "(${native:left} % ${native:right})",
+        "includes": [
+          "operators/arithmetic/boxed_numeric.hpp"
+        ],
+        "name": "numeric_remainder",
+        "parameters": [
+          {
+            "name": "left",
+            "passing": "const_ref",
+            "type": "mixed"
+          },
+          {
+            "name": "right",
+            "passing": "const_ref",
+            "type": "mixed"
+          }
+        ],
+        "returns": "mixed",
+        "transport": "native",
+        "uses": [
+          "mixed"
+        ]
+      },
+      "source": "include/scpp/generated/public_remainder_mixed.cpp"
     },
     "remainder_uint16": {
       "header": "scpp/operators/remainder_uint16.hpp",
@@ -6409,6 +6672,7 @@
           }
         ],
         "returns": "uint16",
+        "transport": "public",
         "uses": [
           "uint16"
         ]
@@ -6437,6 +6701,7 @@
           }
         ],
         "returns": "uint32",
+        "transport": "public",
         "uses": [
           "uint32"
         ]
@@ -6465,6 +6730,7 @@
           }
         ],
         "returns": "uint64",
+        "transport": "public",
         "uses": [
           "uint64"
         ]
@@ -6493,6 +6759,7 @@
           }
         ],
         "returns": "uint8",
+        "transport": "public",
         "uses": [
           "uint8"
         ]
@@ -7505,6 +7772,35 @@
       },
       "source": "include/scpp/generated/public_strict_not_identical_string.cpp"
     },
+    "subtract_dynamic": {
+      "header": "scpp/operators/subtract_dynamic.hpp",
+      "namespace": "scpp",
+      "operation": {
+        "expression": "(${native:left} - ${native:right})",
+        "includes": [
+          "operators/arithmetic/boxed_numeric.hpp"
+        ],
+        "name": "numeric_subtract",
+        "parameters": [
+          {
+            "name": "left",
+            "passing": "const_ref",
+            "type": "dynamic"
+          },
+          {
+            "name": "right",
+            "passing": "const_ref",
+            "type": "dynamic"
+          }
+        ],
+        "returns": "dynamic",
+        "transport": "native",
+        "uses": [
+          "dynamic"
+        ]
+      },
+      "source": "include/scpp/generated/public_subtract_dynamic.cpp"
+    },
     "subtract_float64": {
       "header": "scpp/operators/subtract_float64.hpp",
       "namespace": "scpp",
@@ -7527,6 +7823,7 @@
           }
         ],
         "returns": "float64",
+        "transport": "public",
         "uses": [
           "float64"
         ]
@@ -7555,6 +7852,7 @@
           }
         ],
         "returns": "int16",
+        "transport": "public",
         "uses": [
           "int16"
         ]
@@ -7583,6 +7881,7 @@
           }
         ],
         "returns": "int32",
+        "transport": "public",
         "uses": [
           "int32"
         ]
@@ -7611,6 +7910,7 @@
           }
         ],
         "returns": "int64",
+        "transport": "public",
         "uses": [
           "int64"
         ]
@@ -7639,11 +7939,41 @@
           }
         ],
         "returns": "int8",
+        "transport": "public",
         "uses": [
           "int8"
         ]
       },
       "source": "include/scpp/generated/public_subtract_int8.cpp"
+    },
+    "subtract_mixed": {
+      "header": "scpp/operators/subtract_mixed.hpp",
+      "namespace": "scpp",
+      "operation": {
+        "expression": "(${native:left} - ${native:right})",
+        "includes": [
+          "operators/arithmetic/boxed_numeric.hpp"
+        ],
+        "name": "numeric_subtract",
+        "parameters": [
+          {
+            "name": "left",
+            "passing": "const_ref",
+            "type": "mixed"
+          },
+          {
+            "name": "right",
+            "passing": "const_ref",
+            "type": "mixed"
+          }
+        ],
+        "returns": "mixed",
+        "transport": "native",
+        "uses": [
+          "mixed"
+        ]
+      },
+      "source": "include/scpp/generated/public_subtract_mixed.cpp"
     },
     "subtract_uint16": {
       "header": "scpp/operators/subtract_uint16.hpp",
@@ -7667,6 +7997,7 @@
           }
         ],
         "returns": "uint16",
+        "transport": "public",
         "uses": [
           "uint16"
         ]
@@ -7695,6 +8026,7 @@
           }
         ],
         "returns": "uint32",
+        "transport": "public",
         "uses": [
           "uint32"
         ]
@@ -7723,6 +8055,7 @@
           }
         ],
         "returns": "uint64",
+        "transport": "public",
         "uses": [
           "uint64"
         ]
@@ -7751,6 +8084,7 @@
           }
         ],
         "returns": "uint8",
+        "transport": "public",
         "uses": [
           "uint8"
         ]
@@ -8712,7 +9046,37 @@
     "include/scpp/operators/post_decrement_mixed.hpp",
     "public/scpp/operators/post_decrement_dynamic.hpp",
     "include/scpp/generated/public_post_decrement_dynamic.cpp",
-    "include/scpp/operators/post_decrement_dynamic.hpp"
+    "include/scpp/operators/post_decrement_dynamic.hpp",
+    "public/scpp/operators/add_mixed.hpp",
+    "include/scpp/generated/public_add_mixed.cpp",
+    "include/scpp/operators/add_mixed.hpp",
+    "public/scpp/operators/add_dynamic.hpp",
+    "include/scpp/generated/public_add_dynamic.cpp",
+    "include/scpp/operators/add_dynamic.hpp",
+    "public/scpp/operators/subtract_mixed.hpp",
+    "include/scpp/generated/public_subtract_mixed.cpp",
+    "include/scpp/operators/subtract_mixed.hpp",
+    "public/scpp/operators/subtract_dynamic.hpp",
+    "include/scpp/generated/public_subtract_dynamic.cpp",
+    "include/scpp/operators/subtract_dynamic.hpp",
+    "public/scpp/operators/multiply_mixed.hpp",
+    "include/scpp/generated/public_multiply_mixed.cpp",
+    "include/scpp/operators/multiply_mixed.hpp",
+    "public/scpp/operators/multiply_dynamic.hpp",
+    "include/scpp/generated/public_multiply_dynamic.cpp",
+    "include/scpp/operators/multiply_dynamic.hpp",
+    "public/scpp/operators/divide_mixed.hpp",
+    "include/scpp/generated/public_divide_mixed.cpp",
+    "include/scpp/operators/divide_mixed.hpp",
+    "public/scpp/operators/divide_dynamic.hpp",
+    "include/scpp/generated/public_divide_dynamic.cpp",
+    "include/scpp/operators/divide_dynamic.hpp",
+    "public/scpp/operators/remainder_mixed.hpp",
+    "include/scpp/generated/public_remainder_mixed.cpp",
+    "include/scpp/operators/remainder_mixed.hpp",
+    "public/scpp/operators/remainder_dynamic.hpp",
+    "include/scpp/generated/public_remainder_dynamic.cpp",
+    "include/scpp/operators/remainder_dynamic.hpp"
   ],
   "generator": "metadata-api-v1",
   "leaves": {
@@ -8980,11 +9344,13 @@
     "scpp/observations/isset_float64.hpp": "6a577b78988ff83d68cf6f984de9b4c00a3def5f189067a33f363dc62e53008b",
     "scpp/observations/isset_mixed.hpp": "cadbeab375f675243a428c7a73cea705fb9fd99d69187f21330b5c11553e4da6",
     "scpp/observations/isset_null.hpp": "cfd1ece3c93fdecfea4b0a3492e639c64b7814465430939d0113f633bc1ba45c",
+    "scpp/operators/add_dynamic.hpp": "fb61938c88a1d864b7ba0a82a81a5cb175a76f88d5f9aec93a95cf94ef80633c",
     "scpp/operators/add_float64.hpp": "e4485a8286662a154c5f12c51357055f4707226b20d8c3f65700cd43dcd748a9",
     "scpp/operators/add_int16.hpp": "083afe8d4872d6b3d3f109830eb543ca851f21f729a84d5524d343fef8b47da6",
     "scpp/operators/add_int32.hpp": "37c1eeea35b4967e35d447db05f556b7d9b9f1a2e4cfbc8a6b4409d710a257fd",
     "scpp/operators/add_int64.hpp": "cc0113061f5188ca2744ddadcce58e9f96eedc8b95175f07cf802ac37ca96449",
     "scpp/operators/add_int8.hpp": "2b155cb86abe3c81e448a2047274546eb23987f2a3c28a7594e1c09a70d30838",
+    "scpp/operators/add_mixed.hpp": "ae9e9efd792bd6a7cf927ad23260defb5e7b4db05ee5df55b1432011f25ebeca",
     "scpp/operators/add_uint16.hpp": "ea2b1f16916662945f7ef4cd70673721d6e9ff456637f381e6aca96e0ad7e3d9",
     "scpp/operators/add_uint32.hpp": "ecc455f1b4a6447a2268cd3fb8a89aed32c2352adb246178cfd15edee65c8f04",
     "scpp/operators/add_uint64.hpp": "7cae93ac547bcbbb521b747bafd129978a579557bd9202b47250cc3744e79728",
@@ -9010,11 +9376,13 @@
     "scpp/operators/complement_dynamic.hpp": "54db0d8ac9f413a8918ec70bb2ef7371582e80cc494c4b0cd985ee23f732c62f",
     "scpp/operators/complement_int64.hpp": "b2d71a04f02681f3ea79f9abd207e1c2612e53c5f33438025b711b41584273dc",
     "scpp/operators/complement_mixed.hpp": "ead1a09539edd04fe05ed8c8785684c8a79b016f08a85d37b5102c91347708b4",
+    "scpp/operators/divide_dynamic.hpp": "9bcc3246650d381cf445dc4e76268ba9ba29f0892da02881ac42c3be5ac93d1d",
     "scpp/operators/divide_float64.hpp": "8882b82070a4963b9d1233189f4e84810b33192309e38b4e8a83da8dd1c974bf",
     "scpp/operators/divide_int16.hpp": "6ce87e50a00a3b972466956fbedd0b9a78edda96f4885099a6c6359c5ee4e8b4",
     "scpp/operators/divide_int32.hpp": "215d716e35089831f33189877e95b61ebd9719257e78e2d2a50124e61ba73714",
     "scpp/operators/divide_int64.hpp": "c2522a0445559612ea7ba9282a6c778aee0785dfc02264ae32f8d5efb223d864",
     "scpp/operators/divide_int8.hpp": "f1d255121ee5fc6ae14e9e7d8ee9755e446cab5af6034e567eb252e0d762834f",
+    "scpp/operators/divide_mixed.hpp": "cecd59ddadccd5be7706df4d0e8f3ac7338ee35a0f72a24ddd92bc9205ed6d1c",
     "scpp/operators/divide_uint16.hpp": "f0416f681d43321986ac342ff0f92f0fdb5687e79aeddebd5c86ff34def8f40b",
     "scpp/operators/divide_uint32.hpp": "92e60358e55ca59fe80e68fff42534fd60ecd22ca4733bfd822ddb0b50c38a94",
     "scpp/operators/divide_uint64.hpp": "33cebcda7b2a796336b2dba2c53b5eb3016028b6306f8eb910d7e85d3743f469",
@@ -9058,11 +9426,13 @@
     "scpp/operators/less_uint64.hpp": "9143ded022e39cb671a31f65695caa3c2a22e6cd34a79461ee20bfd0629a964b",
     "scpp/operators/less_uint8.hpp": "728c4a9404d9080b227698c0709e923c71835329a478812040c169f9140c0cbc",
     "scpp/operators/logical_xor_boolean.hpp": "178dad008747a9b09b549d4fe1574fd329daa2d7b19048d1ed5aaa08df673aea",
+    "scpp/operators/multiply_dynamic.hpp": "9bdca68192a3538cb30583b42c499021cf791b984aa7d3e08568eb5014aadf38",
     "scpp/operators/multiply_float64.hpp": "411bc70310c68c27e220fff845498d56820ec42641517b0ded4393c8fabde961",
     "scpp/operators/multiply_int16.hpp": "ad32f575037a156e79982890b434862d8933c0ad805f33e0683f0d2024fa2a60",
     "scpp/operators/multiply_int32.hpp": "c6ccc2e373bb62790b9d82ba81e38ab9384be846cf7af6adb35004fd48ce24cc",
     "scpp/operators/multiply_int64.hpp": "b3369c6141795efafcf4ab8e02bb0d7523a9b86f581d8f75e658956c2632ae9a",
     "scpp/operators/multiply_int8.hpp": "93503c833ba0ab89e33cfc18cf9e619e7fab16f89457ef6b41558b4e99f05c28",
+    "scpp/operators/multiply_mixed.hpp": "88f36e67066e90674b19ff179210b9012d9e032397e68495520da94fa40d04bc",
     "scpp/operators/multiply_uint16.hpp": "e4011f2a4493a4da17fe002e6a782598cb2bffd3f4091370ea000c9a6c06c67d",
     "scpp/operators/multiply_uint32.hpp": "10b9129b022e228e541d42d4f3cf317232f093b6d2f614a6778ae448e5660322",
     "scpp/operators/multiply_uint64.hpp": "cecbc8c43265c05cefb5b494ee48501d77d55e5a2b07090ff1d077a5733ed735",
@@ -9112,10 +9482,12 @@
     "scpp/operators/pre_increment_float64.hpp": "0f44453c7a7e4f7777d8ab0e97450da033aba9478d1e6c6870ff505670537adf",
     "scpp/operators/pre_increment_int64.hpp": "d6350c7f38038fce7ff1e5e4dd263d436be5ab547c22bcb11e520373636234ac",
     "scpp/operators/pre_increment_mixed.hpp": "219f5e31558fd1c38266d11d869ffe8680ea11e5edf109a02ce09e3bc8577011",
+    "scpp/operators/remainder_dynamic.hpp": "dafe4f5df6197dce1851511422a3b8668e0eb31be3de4bb7d038953662491eb2",
     "scpp/operators/remainder_int16.hpp": "6d7906dc337b2cbd4e08d460f4aa602ad2ca5353b97b9fd520b375abdfe82ed1",
     "scpp/operators/remainder_int32.hpp": "2d850671954752bfc1971f003d602ef2fd906d269cbc8c269b8dd089be5212d1",
     "scpp/operators/remainder_int64.hpp": "1c51b57d9811125f34d2e7025da8353915b00de45084f657c817aff55377df4b",
     "scpp/operators/remainder_int8.hpp": "0f2105718ea034eed1b0337c524b1957e66999188e8bffb01bf1b3be2da157d3",
+    "scpp/operators/remainder_mixed.hpp": "cf7b927b059c79e0ccc601d07ce34229f17a8cc16e4eafd87038527331b19e81",
     "scpp/operators/remainder_uint16.hpp": "c113a9ffcc126e45b86359ee9b588e3c35e329decb7abc6d38da0468ca688586",
     "scpp/operators/remainder_uint32.hpp": "0cbb8f8d6628ea0ef6ed0bfb1929f05a50b3adf330e665d3aa50395cb3b97642",
     "scpp/operators/remainder_uint64.hpp": "c30a718f5ee7e254871cdd68726cb5ae950d6e58b04d3737e94a5264a0d4f1b0",
@@ -9126,11 +9498,13 @@
     "scpp/operators/shift_right_dynamic.hpp": "0f6b1d9d3b28f1a52b777d7639d8f37a82b197e9d46d2a3c0f7e6015bf582298",
     "scpp/operators/shift_right_int64.hpp": "ec010f6beae200610d5960b2f7156095ac2e38c7e9d97304aef9ed6246e5e901",
     "scpp/operators/shift_right_mixed.hpp": "ebbd61f02ce7fc008a4334f996c8d30ced3f454eb245d9cb9e3e05b0854527e6",
+    "scpp/operators/subtract_dynamic.hpp": "1ed6944b58a64af1bfa119d3728a389bee4bf4e3bdbbbe2c88ef04a97b31eab0",
     "scpp/operators/subtract_float64.hpp": "96fd721a25a7a7168546b5438185871de4e3d9da6a24bef39d43f97f7c04cf06",
     "scpp/operators/subtract_int16.hpp": "891cc21f3e0ce2ede973c1f63c79a9177cfb12a1389021f57f805d3e749b63a6",
     "scpp/operators/subtract_int32.hpp": "1aa1da27c485454c8b5f222306e972edb2874bd1d9cddc9fdfbbaf9b5b20a8f1",
     "scpp/operators/subtract_int64.hpp": "9ef65c0ff930475ed391d0a94a0e667554158205ce679a718a6f505892b3ea9e",
     "scpp/operators/subtract_int8.hpp": "c65db1c3758ee0fdd0010da7e9955b6ee1fecc69e7607b35500e83c24ddaef76",
+    "scpp/operators/subtract_mixed.hpp": "a770bf9a7e0345d73106cf76689352d70c180ffd5915ce3a083c0881b27f66e0",
     "scpp/operators/subtract_uint16.hpp": "add89e18c98e1e953baf2b6a6772cde88a814f5347997337d625e556617fd087",
     "scpp/operators/subtract_uint32.hpp": "1c4c2c40fd176f2612f625c1b248706349da6cde280978e37a1746c6a78e6dd3",
     "scpp/operators/subtract_uint64.hpp": "ae1feae12bb920a3012b507b97e5c239837bfd748da19859e5c811a17db575ad",
@@ -9469,7 +9843,17 @@
     "include/scpp/generated/public_post_decrement_int64.cpp",
     "include/scpp/generated/public_post_decrement_float64.cpp",
     "include/scpp/generated/public_post_decrement_mixed.cpp",
-    "include/scpp/generated/public_post_decrement_dynamic.cpp"
+    "include/scpp/generated/public_post_decrement_dynamic.cpp",
+    "include/scpp/generated/public_add_mixed.cpp",
+    "include/scpp/generated/public_add_dynamic.cpp",
+    "include/scpp/generated/public_subtract_mixed.cpp",
+    "include/scpp/generated/public_subtract_dynamic.cpp",
+    "include/scpp/generated/public_multiply_mixed.cpp",
+    "include/scpp/generated/public_multiply_dynamic.cpp",
+    "include/scpp/generated/public_divide_mixed.cpp",
+    "include/scpp/generated/public_divide_dynamic.cpp",
+    "include/scpp/generated/public_remainder_mixed.cpp",
+    "include/scpp/generated/public_remainder_dynamic.cpp"
   ],
   "types": {
     "dynamic": {
