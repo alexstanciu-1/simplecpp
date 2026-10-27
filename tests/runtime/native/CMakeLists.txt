@@ -412,3 +412,9 @@ target_link_libraries(test_public_special_integers PRIVATE scpp_core_api)
 add_test(NAME scpp_test_public_special_integers COMMAND test_public_special_integers)
 add_test(NAME scpp_check_special_integer_api COMMAND ${Python3_EXECUTABLE}
   ${CMAKE_CURRENT_SOURCE_DIR}/check_special_integer_api.py $<TARGET_FILE:scpp_api_generator>)
+
+add_executable(test_public_compare test_public_compare.cpp)
+target_link_libraries(test_public_compare PRIVATE scpp_core_api)
+add_test(NAME scpp_test_public_compare COMMAND test_public_compare)
+add_test(NAME scpp_check_compare_api COMMAND ${Python3_EXECUTABLE}
+  ${CMAKE_CURRENT_SOURCE_DIR}/check_compare_api.py $<TARGET_FILE:scpp_api_generator>)

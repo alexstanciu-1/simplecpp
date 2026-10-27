@@ -16,7 +16,7 @@ each slice. The original inventory is a baseline, not a current completion count
 | A1 | Complete for the agreed ordinary numeric domain | Specialized and boxed extensions remain in B2/E, not implied by A1. |
 | A2 | Complete for the agreed checked scalar conversions | Carrier conversion is C; ownership casts are D. |
 | B1 | Complete for the agreed scalar-facing truth/text/identity/observation scope | Carrier forms remain C; boxed arithmetic and access completion are not B1 credit. |
-| B2 | Binary canonical/boxed bitwise and checked shifts, canonical power implemented | Unary/update/compound and spaceship; carrier variants remain C. |
+| B2 | Binary canonical/boxed bitwise and checked shifts, canonical power and numeric spaceship implemented | Unary/update/compound; carrier variants remain C. |
 | C | Policy agreed; completion pending | Four carrier families, state-preserving operations/conversions and conditional lifecycle. |
 | D | Pending | Ownership, application targets and source Exception transport gaps. |
 | E | Existing vector/hash/boxed foundations; incomplete | Capability/access/initialization/cursor gaps and identity key-allocation debt. |
@@ -168,7 +168,7 @@ core contract; full frontend adoption remains excluded.
 
 ## Next implementation work
 
-Continue B2 with unary/update/compound and spaceship groups using existing operator
+Continue B2 with unary/update/compound groups using existing operator
 metadata and native error authorities.
 Proceed to C with the accepted one-layer carrier rules; the first complete carrier
 path must be reviewed before D/F expansion. Do not treat existing native template
@@ -472,3 +472,15 @@ The public operation preserves the original failure, but template-free inspectio
 of ValueError and legacy boxed kind errors is not yet covered. G must resolve this
 required core error surface; do not count catch-all delivery as complete inspection.
 The focused C++ harness currently checks the native standard-exception message.
+
+## Active-goal progress — B2b numeric spaceship
+
+Nine normalized public functions cover same-signedness integer spaceship and the
+canonical floating/int64 combinations. A generic per-side type restriction on
+metadata rules preserves the narrower floating admission without a pair matrix.
+The native numeric comparison owner now contains same-representation integer
+comparison as well as the existing NaN-checking float helper. Integer comparison
+never subtracts; all results are canonical int64 -1/0/1.
+
+B2 still needs unary operations and updates/compounds. Carrier extraction remains C;
+source evaluation and mutation protocols are not implemented by a value comparison.

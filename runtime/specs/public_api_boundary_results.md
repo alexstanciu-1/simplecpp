@@ -1142,3 +1142,38 @@ Initial eight-job core/tool/test rebuild: release **22.64 s**, peak child RSS
 **419,712 KiB**; sanitized **46.58 s**, **632,092 KiB**. The later test-only harness
 rebuilds were not separately timed. These are single observations, not statistical
 speedup claims. The existing native hash specialization warning remains unchanged.
+
+## B2b — numeric spaceship and restricted domain members
+
+Nine normalized adapters publish same-signedness integer spaceship and canonical
+float/int64 spaceship. Optional per-side metadata type restrictions preserve the
+narrower floating admission without a pair matrix. Integer comparison now shares
+the native numeric comparison owner and compares directly, never by subtraction.
+
+The 196-case metadata matrix checks exact admission, same-type/family-maximum
+selection, int64 results, malformed restrictions and changed metadata without type
+name exceptions. Nine template-free units publish and reuse with zero regenerated
+implementations. Public behavior tests cover all integer-width boundaries, the full
+six-value floating matrix (infinities and signed zeros included), NaN in either/both
+positions, structured diagnostics and permitted integer-to-float precision loss.
+Successful comparisons allocate zero times.
+
+Five release regression cases passed (**2.50 s**), with the metadata matrix checked
+separately. Six ASan/UBSan/leak regression cases passed (**20.43 s**), including the
+**9.33 s** metadata matrix. Sealed relocated publication and its public-only linked
+consumer pass in both modes. Source evaluation and carrier extraction are separate
+responsibilities; these tests do not claim frontend adoption.
+
+Single compile-only observations after checks finished, using
+`measure_global_operators.py --spaceship`:
+
+| Case | Seconds | Preprocessed bytes |
+| --- | ---: | ---: |
+| Public caller | 0.0555 | 13,166 |
+| Native caller | 1.3028 | 1,976,890 |
+| Private float adapter | 1.1687 | 1,989,621 |
+
+Initial generator-only rebuild: **3.09 s**, peak child RSS **135,072 KiB**.
+Subsequent eight-job core/tool/new-test build: release **21.36 s**, **421,708 KiB**;
+sanitized **48.66 s**, **632,176 KiB**. These are single observations, not statistical
+benchmarks. The existing native hash specialization warning remains unchanged.

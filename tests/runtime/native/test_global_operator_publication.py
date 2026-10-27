@@ -27,11 +27,11 @@ with tempfile.TemporaryDirectory(prefix='scpp-operator-publication-') as directo
     shutil.copy2(args.tool, sdk/'tools/scpp_api_generator')
     seal_package(sdk, ['core'])
     request = stage/'request.json'
-    request.write_text(json.dumps({'package':'app.operators', 'roots':[], 'apis':['add_int64','equal_mixed','add_int64','divide_int64','less_float64','cast_uint64_from_string','cast_string_from_mixed','cast_boolean_from_dynamic','cast_uint64_from_mixed','condition_truthy_string','condition_truthy_dynamic','concat_text_float64','strict_identical_mixed','strict_identical_float64','logical_xor_boolean','isset_dynamic','empty_mixed','clean_float64','strict_identical_boxed_mixed_string','strict_not_identical_boxed_dynamic_int64','concat_text_mixed','concat_text_dynamic','power_int64','shift_left_mixed']}))
+    request.write_text(json.dumps({'package':'app.operators', 'roots':[], 'apis':['add_int64','equal_mixed','add_int64','divide_int64','less_float64','cast_uint64_from_string','cast_string_from_mixed','cast_boolean_from_dynamic','cast_uint64_from_mixed','condition_truthy_string','condition_truthy_dynamic','concat_text_float64','strict_identical_mixed','strict_identical_float64','logical_xor_boolean','isset_dynamic','empty_mixed','clean_float64','strict_identical_boxed_mixed_string','strict_not_identical_boxed_dynamic_int64','concat_text_mixed','concat_text_dynamic','power_int64','shift_left_mixed','compare_uint64','compare_float64']}))
     os.environ['SCPP_API_GENERATOR'] = str(sdk/'tools/scpp_api_generator')
     manifest = concrete_types.generate(request, stage/'app', sdk, [sdk], 'clang++', [])
     assert manifest['sources'] == []
-    assert all(x in manifest['apis'] for x in ['add_int64','equal_mixed','divide_int64','less_float64','cast_uint64_from_string','cast_string_from_mixed','cast_boolean_from_dynamic','cast_uint64_from_mixed','condition_truthy_string','condition_truthy_dynamic','concat_text_float64','strict_identical_mixed','strict_identical_float64','logical_xor_boolean','isset_dynamic','empty_mixed','clean_float64','strict_identical_boxed_mixed_string','strict_not_identical_boxed_dynamic_int64','concat_text_mixed','concat_text_dynamic','power_int64','shift_left_mixed'])
+    assert all(x in manifest['apis'] for x in ['add_int64','equal_mixed','divide_int64','less_float64','cast_uint64_from_string','cast_string_from_mixed','cast_boolean_from_dynamic','cast_uint64_from_mixed','condition_truthy_string','condition_truthy_dynamic','concat_text_float64','strict_identical_mixed','strict_identical_float64','logical_xor_boolean','isset_dynamic','empty_mixed','clean_float64','strict_identical_boxed_mixed_string','strict_not_identical_boxed_dynamic_int64','concat_text_mixed','concat_text_dynamic','power_int64','shift_left_mixed','compare_uint64','compare_float64'])
     (stage/'main.cpp').write_text('''#include "scpp/operators/add_int64.hpp"
 #include "scpp/operators/equal_mixed.hpp"
 #include "scpp/operators/divide_int64.hpp"
@@ -47,6 +47,8 @@ with tempfile.TemporaryDirectory(prefix='scpp-operator-publication-') as directo
 #include "scpp/text/concat_text_dynamic.hpp"
 #include "scpp/operators/power_int64.hpp"
 #include "scpp/operators/shift_left_mixed.hpp"
+#include "scpp/operators/compare_uint64.hpp"
+#include "scpp/operators/compare_float64.hpp"
 #include "scpp/identity/strict_identical_mixed.hpp"
 #include "scpp/identity/strict_identical_float64.hpp"
 #include "scpp/operators/logical_xor_boolean.hpp"
@@ -73,6 +75,8 @@ int main() {
         && static_cast<bool>(scpp::strict_not_identical(scpp::dynamic(scpp::float64(7.0)),scpp::int64(7)))
         && scpp::integer_power(scpp::int64(2),scpp::int64(10)).native_value()==1024
         && scpp::integer_shift_left(scpp::mixed(scpp::int64(1)),scpp::mixed(scpp::int64(3))).get_int().native_value()==8
+        && scpp::numeric_compare(scpp::uint64(0),scpp::uint64(18446744073709551615ULL)).native_value()==-1
+        && scpp::numeric_compare(scpp::float64(-0.0),scpp::float64(0.0)).native_value()==0
         && reset_value.native_value()==0.0
         && !static_cast<bool>(scpp::isset(scpp::dynamic{}))
         && static_cast<bool>(scpp::empty(scpp::mixed(scpp::string(""))))

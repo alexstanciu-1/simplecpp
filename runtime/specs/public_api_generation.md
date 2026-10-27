@@ -551,3 +551,17 @@ The native helpers own integer-kind validation, shift-count checks and power dom
 overflow errors. These are eager binary calculations; they do not publish compound
 mutation or change frontend evaluation order. Unary operations, compounds, spaceship
 and carrier extraction/write-back remain separate B2/C work.
+
+## Restricted domain members and spaceship
+
+Operator domain rules may restrict `left_types` and/or `right_types` to a type name
+or nonempty list. Each named type must belong to that side's selected domain, with
+no duplicates. Restrictions narrow rule matching; they do not relax the existing
+no-overlapping-domain-rules validation or introduce hidden family-name exceptions.
+
+Spaceship reuses same-type/family-maximum selection for same-signedness integers.
+Its floating rule accepts float64/float64 and canonical int64/float64 in either order;
+fixed-width/float and unsigned/float combinations are not inferred from arithmetic
+admission. Nine implementations return int64. The native comparison owner compares
+integers directly rather than subtracting, and retains the floating NaN error.
+Carrier extraction and source snapshots remain separate C/compiler responsibilities.

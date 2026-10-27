@@ -293,6 +293,15 @@
     "shift_right_int64",
     "shift_right_mixed",
     "shift_right_dynamic",
-    "power_int64"
+    "power_int64",
+    "compare_int8",
+    "compare_int16",
+    "compare_int32",
+    "compare_int64",
+    "compare_uint8",
+    "compare_uint16",
+    "compare_uint32",
+    "compare_uint64",
+    "compare_float64"
   ]
 }

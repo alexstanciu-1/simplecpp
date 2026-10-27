@@ -2352,6 +2352,52 @@
             "domain": "signed"
           }
         ]
+      },
+      "numeric_spaceship": {
+        "rules": [
+          {
+            "left": "signed",
+            "right": "signed",
+            "selection": "same_or_maximum",
+            "domain": "signed"
+          },
+          {
+            "left": "unsigned",
+            "right": "unsigned",
+            "selection": "same_or_maximum",
+            "domain": "unsigned"
+          },
+          {
+            "left": "floating",
+            "right": "floating",
+            "selection": "same_or_maximum",
+            "domain": "floating"
+          },
+          {
+            "left": "signed",
+            "right": "floating",
+            "left_types": [
+              "int64"
+            ],
+            "right_types": [
+              "float64"
+            ],
+            "selection": "maximum",
+            "domain": "floating"
+          },
+          {
+            "left": "floating",
+            "right": "signed",
+            "left_types": [
+              "float64"
+            ],
+            "right_types": [
+              "int64"
+            ],
+            "selection": "maximum",
+            "domain": "floating"
+          }
+        ]
       }
     },
     "operations": {
@@ -2745,6 +2791,37 @@
         ],
         "operands": [
           "int64"
+        ]
+      },
+      "compare": {
+        "group": "numeric_spaceship",
+        "name": "numeric_compare",
+        "expression": "scpp::int64(scpp::numeric_compare(${operand:left}, ${operand:right}).native_value())",
+        "publish": [
+          "int8",
+          "int16",
+          "int32",
+          "int64",
+          "uint8",
+          "uint16",
+          "uint32",
+          "uint64",
+          "float64"
+        ],
+        "operands": [
+          "int8",
+          "int16",
+          "int32",
+          "int64",
+          "uint8",
+          "uint16",
+          "uint32",
+          "uint64",
+          "float64"
+        ],
+        "returns": "int64",
+        "includes": [
+          "operators/ordering/numeric_compare.hpp"
         ]
       }
     }

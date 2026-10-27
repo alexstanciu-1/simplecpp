@@ -19,6 +19,7 @@ parser.add_argument('--identity', action='store_true', help='Measure canonical a
 parser.add_argument('--identity-pairs', action='store_true', help='Measure borrowed boxed/plain identity')
 parser.add_argument('--boxed-text', action='store_true', help='Measure boxed text conversion')
 parser.add_argument('--special-integers', action='store_true', help='Measure checked power and boxed shift')
+parser.add_argument('--spaceship', action='store_true', help='Measure integer and floating spaceship')
 args = parser.parse_args()
 public = '''#include "scpp/operators/add_int64.hpp"
 #include "scpp/operators/equal_mixed.hpp"
@@ -59,6 +60,9 @@ if args.boxed_text:
 if args.special_integers:
     public = '#include "scpp/operators/power_int64.hpp"\n#include "scpp/operators/shift_left_mixed.hpp"\nscpp::int64 power(const scpp::int64 &a,const scpp::int64 &b) { return scpp::integer_power(a,b); }\nscpp::mixed shift(const scpp::mixed &a,const scpp::mixed &b) { return scpp::integer_shift_left(a,b); }\n'
     native = '#include "operators/arithmetic/power.hpp"\n#include "scpp/generated/operators.hpp"\nscpp::int_t<> power(const scpp::int_t<> &a,const scpp::int_t<> &b) { return scpp::pow(a,b); }\nscpp::mixed_t shift(const scpp::mixed_t &a,const scpp::mixed_t &b) { return a << b; }\n'
+if args.spaceship:
+    public = '#include "scpp/operators/compare_uint64.hpp"\n#include "scpp/operators/compare_float64.hpp"\nscpp::int64 integer(const scpp::uint64 &a,const scpp::uint64 &b) { return scpp::numeric_compare(a,b); }\nscpp::int64 floating(const scpp::float64 &a,const scpp::float64 &b) { return scpp::numeric_compare(a,b); }\n'
+    native = '#include "operators/ordering/numeric_compare.hpp"\nscpp::int_t<> integer(const scpp::int_t<__UINT64_TYPE__> &a,const scpp::int_t<__UINT64_TYPE__> &b) { return scpp::numeric_compare(a,b); }\nscpp::int_t<> floating(const scpp::float_t &a,const scpp::float_t &b) { return scpp::numeric_compare(a,b); }\n'
 rows = []
 with tempfile.TemporaryDirectory(prefix='scpp-operator-cost-') as directory:
     stage = Path(directory)
@@ -75,6 +79,7 @@ with tempfile.TemporaryDirectory(prefix='scpp-operator-cost-') as directory:
     if args.identity_pairs: adapters = ['strict_identical_boxed_mixed_string']
     if args.boxed_text: adapters = ['concat_text_dynamic']
     if args.special_integers: adapters = ['shift_left_mixed']
+    if args.spaceship: adapters = ['compare_float64']
     cases += [(f'adapter_{identity}', root/f'runtime/include/scpp/generated/public_{identity}.cpp', ['public','include']) for identity in adapters]
     for name, path, includes in cases:
         command = [args.compiler, '-std=c++23', '-O2', *['-I'+str(root/'runtime'/i) for i in includes]]

@@ -47,8 +47,19 @@ namespace scpp::api_generation
                 throw std::runtime_error("Operator rules must be an array");
             std::set<std::pair<std::string, std::string>> pairs;
             for (const auto &rule : group.at("rules").items) {
-                fields_only(rule, "left right selection domain reverse", "operator rule");
+                fields_only(rule, "left right selection domain reverse left_types right_types", "operator rule");
                 const auto left = domains(rule.at("left")), right = domains(rule.at("right"));
+                for (const auto *side : {"left", "right"}) {
+                    const auto filter = std::string(side) + "_types";
+                    if (!rule.has(filter)) continue;
+                    std::set<std::string> admitted;
+                    for (const auto &type : domains(rule.at(filter))) {
+                        if (!contains(rule.at(side), registry.at("types").at(type).at("domain").text()))
+                            throw std::runtime_error("Operator type restriction is outside its domain");
+                        if (!admitted.insert(type).second)
+                            throw std::runtime_error("Duplicate operator type restriction");
+                    }
+                }
                 const auto selection = rule.at("selection").text();
                 if (selection != "maximum" && selection != "same_or_maximum" && selection != "same_or_constant" && selection != "ordered_pair")
                     throw std::runtime_error("Unknown operator selection policy");
@@ -120,6 +131,8 @@ namespace scpp::api_generation
         for (const auto &rule : rules.items) {
             if (!contains(rule.at("left"), types.at(left).at("domain").text())
                 || !contains(rule.at("right"), types.at(right).at("domain").text())) continue;
+            if ((rule.has("left_types") && !contains(rule.at("left_types"), left))
+                || (rule.has("right_types") && !contains(rule.at("right_types"), right))) continue;
             const auto selection = rule.at("selection").text();
             if (selection == "ordered_pair") {
                 const bool reverse = rule.get("reverse", "false") == "true";
