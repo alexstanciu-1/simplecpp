@@ -122,7 +122,7 @@ batch compilations after metadata-only checks.
 | A1: ordinary numeric operations | Concrete numeric subtraction/multiplication/division, integer remainder and numeric equality/ordering through global metadata; reuse addition normalization and native arithmetic/error authorities | Extend the current slice, without wrappers or new widths. One combined matrix checks same/mixed widths, signedness rejection, float promotion, zero divisors, boundaries and comparison return types. No original operand-pair code expansion. |
 | A2: checked conversions | Concrete scalar checked casts, string parsing/formatting, admitted boxed scalar extraction/conversion; distinguish casts from raw representation constructors | A1/common resolver. Range errors, invalid whole-string parses, NaN/infinity policies and accepted precision loss; metadata names selected native cast authority. No silent unchecked narrowing. |
 | B1: scalar truth/text/identity | Existing truthiness, eager logical xor, concatenation, strict identity and primitive presence/empty/reset protocols | A2; preserve false-like strings and context-specific text formatting. Prove identity does not promote and predicates do not accidentally admit arithmetic. |
-| B2: special numeric/mutation groups | Bitwise, shifts, checked power, unary/update/compound and spaceship where already admitted | A1/A2. Preserve left-width shift checks, power errors, NaN behavior and validate-before-write. Lazy &&/||/??/ternary expose required observations while evaluation stays in the compiler. |
+| B2: special numeric/mutation groups | Bitwise, shifts, checked power, unary/update/compound and spaceship where already admitted | A1/A2. Preserve left-width shift checks, power errors, NaN behavior and validate-before-write. Lazy `&&`, `\|\|`, `??` and ternary expressions expose required observations while evaluation stays in the compiler. |
 | C: carrier family completion | Nullable/Result gaps plus false/bool-sentinel recipes, take, state observations, admissible lifted operations, conditional payload lifecycle | A/B, with conditional-copy design shared with D. Test all states including false sentinel versus false payload, Result failure, noncopyable cases where admitted and nested carriers. No Cartesian product of wrapper combinations. |
 | D: ownership and application targets | Shared/unique/weak, value storage, ancestry/casts/identity, stable extraction, source Exception transport | Conditional lifecycle and prepared target facts. Begin with a single application-defined record; prove weak lock, unique transfer, destruction once, failed casts and publication reuse. Then complete the families. |
 | E: container and access completion | Vector/hash capability gaps, initialization, safe nested indexed mutation/probes/removal, cursor debt, boxed count/empty helpers and required key policies | C/D where payloads need them. Prove alias/reentrancy, mutation during iteration, partial-init cleanup, stable handles and noncopyable storage only where admitted. |
@@ -379,3 +379,17 @@ This completes plain canonical scalar planning, not all identity work. Boxed/pla
 and carrier dispatch remain; fixed-width identity requires its own source admission
 rather than assuming every native template instantiation is part of the language.
 B1 eager xor and presence/empty/reset consolidation are also still pending.
+
+## Active-goal progress — B1e eager canonical logical xor
+
+One boolean backend plus existing conversion metadata handles bool/bool and the four
+canonical int/float pairings. Numeric operands convert independently to bool; no
+arithmetic promotion or pair matrix is generated. A compiled public-only/native
+consumer checks 85 value combinations, complete left conversion before RHS,
+unconditional RHS reachability for either left truth value, failure suppression at
+each stage and zero successful allocations.
+
+Plain canonical xor is covered. Carrier numeric xor remains C and must require its
+payload before converting; direct carrier condition truthiness is not equivalent.
+B1 boxed/plain identity and presence/empty/reset consolidation remain open, alongside
+explicit audit of fixed-width identity admission.

@@ -2268,6 +2268,28 @@
             "domain": "dynamic"
           }
         ]
+      },
+      "eager_truth_xor": {
+        "rules": [
+          {
+            "left": [
+              "signed",
+              "floating"
+            ],
+            "right": [
+              "signed",
+              "floating"
+            ],
+            "selection": "maximum",
+            "domain": "boolean"
+          },
+          {
+            "left": "boolean",
+            "right": "boolean",
+            "selection": "same_or_maximum",
+            "domain": "boolean"
+          }
+        ]
       }
     },
     "operations": {
@@ -2560,6 +2582,20 @@
         ],
         "returns": "boolean",
         "distinct_result": "true"
+      },
+      "logical_xor": {
+        "group": "eager_truth_xor",
+        "name": "logical_xor",
+        "expression": "left.native_value() != right.native_value()",
+        "publish": [
+          "boolean"
+        ],
+        "operands": [
+          "int64",
+          "float64",
+          "boolean"
+        ],
+        "returns": "boolean"
       }
     }
   },

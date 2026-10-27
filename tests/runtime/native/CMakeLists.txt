@@ -391,3 +391,6 @@ add_test(NAME scpp_check_identity_api COMMAND ${Python3_EXECUTABLE}
 
 add_test(NAME scpp_check_identity_plans COMMAND ${Python3_EXECUTABLE}
   ${CMAKE_CURRENT_SOURCE_DIR}/check_identity_plans.py --tool $<TARGET_FILE:scpp_api_generator>)
+
+add_test(NAME scpp_check_xor_api COMMAND ${Python3_EXECUTABLE}
+  ${CMAKE_CURRENT_SOURCE_DIR}/check_xor_api.py --tool $<TARGET_FILE:scpp_api_generator>)

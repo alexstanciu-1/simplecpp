@@ -980,3 +980,33 @@ were not separately timed. No runtime-core rebuild was needed. Reproduce with
 B1 boxed/plain identity, eager xor and remaining observations are still pending;
 carrier state-preserving identity remains C. Constant plans never authorize dropping
 operand effects or bypassing source exceptions.
+
+## B1e — eager canonical logical xor
+
+The global operator metadata selects one boolean implementation for bool/bool and
+all four canonical int/float pairings. Existing conversion metadata supplies each
+operand's independent checked boolean conversion. No generator change or operand-pair
+implementation matrix was needed. Carrier xor is deliberately deferred to C.
+
+`check_xor_api.py --tool <generator> --core <core.a> [--sanitize]` checks admission,
+conversion selection, template-free publication and zero-unit reuse. Its compiled
+public-only and native-equivalent consumers pass 85 truth-table cases (including
+negative zero, infinity and NaN), ordered conversion and eager RHS evaluation.
+Injected failures at each consumer evaluation/conversion stage suppress subsequent
+stages. Successful operations allocate zero times. These are consumer proofs, not
+frontend integration. Both release and ASan/UBSan with leak detection pass; relocated
+sealed publication also passes in both modes.
+
+Single observations for the complete proof program, compile **and link**:
+
+| Mode | Public consumer | Native equivalent |
+| --- | ---: | ---: |
+| Release | 0.7266 s | 3.0839 s |
+| ASan/UBSan | 2.7370 s | 5.5601 s |
+
+These are not the earlier small compile-only probes; other focused checks were
+running concurrently, so do not interpret their ratio as a stable benchmark.
+The core/tool rebuild took 27.95 s in release (419,456 KiB peak child RSS) and
+45.88 s sanitized (627,540 KiB). Nine focused metadata regressions passed in release
+in 3.53 s and sanitized in 23.39 s. The existing native hash specialization warning
+remains unchanged.

@@ -247,3 +247,4 @@
 #include "scpp/generated/public_strict_not_identical_null.cpp"
 #include "scpp/generated/public_strict_not_identical_mixed.cpp"
 #include "scpp/generated/public_strict_not_identical_dynamic.cpp"
+#include "scpp/generated/public_logical_xor_boolean.cpp"

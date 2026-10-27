@@ -237,6 +237,7 @@
     "strict_not_identical_string",
     "strict_not_identical_null",
     "strict_not_identical_mixed",
-    "strict_not_identical_dynamic"
+    "strict_not_identical_dynamic",
+    "logical_xor_boolean"
   ]
 }

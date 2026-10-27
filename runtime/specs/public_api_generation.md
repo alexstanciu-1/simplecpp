@@ -474,3 +474,23 @@ no truth conversion, string parsing or numeric promotion occurs. Fixed-width,
 boxed/plain, cross-box-family and carrier admission is not inferred from this rule.
 `check_identity_plans.py --core ...` compiles a small public-only consumer and native
 counterpart to prove result/evaluation behavior; it is not compiler frontend adoption.
+
+## Eager logical xor
+
+The `logical_xor` operator selects the existing boolean operand domain for canonical
+int/float pairings and bool/bool. Exact operand admission rejects bool/numeric mixing,
+strings, fixed-width integers, boxed values and null. This is independent truth
+conversion, not selection of a common arithmetic representation. Existing checked
+conversion plans produce each boolean operand; the sole published implementation
+`logical_xor_boolean` compares the two saved boolean values.
+
+A consumer must evaluate and convert the left operand completely before starting
+the right operand, then invoke the boolean implementation. False and true left
+values both reach the RHS. Failure in either evaluation/conversion stops subsequent
+work and preserves earlier effects. Public-only and native consumer proofs cover
+all 85 sampled value combinations, including signed zero, infinities and NaN.
+
+Carrier numeric xor remains C: require a successful payload before truth conversion.
+Do not substitute the carrier condition observation, which intentionally treats
+absence/sentinels differently. Lazy logical operators and source precedence are
+compiler-owned; the eager boolean API does not implement those semantics.

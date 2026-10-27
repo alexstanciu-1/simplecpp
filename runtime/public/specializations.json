@@ -1,6 +1,6 @@
 {
   "abi": "529dd5502370f48d64891818e9439aae72831b990b4027e8abe25c50c1216c21",
-  "api_identity": "eaafcae83814cd9d3c54b0428ccad8ff29cd8acad097d40b08172ba656a57964",
+  "api_identity": "ef652f7b30c1ea597f4e31ab8f1e4046d1f7ee71d11b48d30da7e942fb2b2ba1",
   "apis": {
     "add_float64": {
       "header": "scpp/operators/add_float64.hpp",
@@ -3999,6 +3999,31 @@
       },
       "source": "include/scpp/generated/public_less_uint8.cpp"
     },
+    "logical_xor_boolean": {
+      "header": "scpp/operators/logical_xor_boolean.hpp",
+      "namespace": "scpp",
+      "operation": {
+        "expression": "left.native_value() != right.native_value()",
+        "name": "logical_xor",
+        "parameters": [
+          {
+            "name": "left",
+            "passing": "const_ref",
+            "type": "boolean"
+          },
+          {
+            "name": "right",
+            "passing": "const_ref",
+            "type": "boolean"
+          }
+        ],
+        "returns": "boolean",
+        "uses": [
+          "boolean"
+        ]
+      },
+      "source": "include/scpp/generated/public_logical_xor_boolean.cpp"
+    },
     "multiply_float64": {
       "header": "scpp/operators/multiply_float64.hpp",
       "namespace": "scpp",
@@ -6316,7 +6341,10 @@
     "include/scpp/identity/strict_not_identical_mixed.hpp",
     "public/scpp/identity/strict_not_identical_dynamic.hpp",
     "include/scpp/generated/public_strict_not_identical_dynamic.cpp",
-    "include/scpp/identity/strict_not_identical_dynamic.hpp"
+    "include/scpp/identity/strict_not_identical_dynamic.hpp",
+    "public/scpp/operators/logical_xor_boolean.hpp",
+    "include/scpp/generated/public_logical_xor_boolean.cpp",
+    "include/scpp/operators/logical_xor_boolean.hpp"
   ],
   "generator": "metadata-api-v1",
   "leaves": {
@@ -6603,6 +6631,7 @@
     "scpp/operators/less_uint32.hpp": "3233ab4c0003ddc2e33c03d0611d0d30d80a002b1a6a0fdb2ba1c5a6136e0ad7",
     "scpp/operators/less_uint64.hpp": "9143ded022e39cb671a31f65695caa3c2a22e6cd34a79461ee20bfd0629a964b",
     "scpp/operators/less_uint8.hpp": "728c4a9404d9080b227698c0709e923c71835329a478812040c169f9140c0cbc",
+    "scpp/operators/logical_xor_boolean.hpp": "178dad008747a9b09b549d4fe1574fd329daa2d7b19048d1ed5aaa08df673aea",
     "scpp/operators/multiply_float64.hpp": "411bc70310c68c27e220fff845498d56820ec42641517b0ded4393c8fabde961",
     "scpp/operators/multiply_int16.hpp": "ad32f575037a156e79982890b434862d8933c0ad805f33e0683f0d2024fa2a60",
     "scpp/operators/multiply_int32.hpp": "c6ccc2e373bb62790b9d82ba81e38ab9384be846cf7af6adb35004fd48ce24cc",
@@ -6889,7 +6918,8 @@
     "include/scpp/generated/public_strict_not_identical_string.cpp",
     "include/scpp/generated/public_strict_not_identical_null.cpp",
     "include/scpp/generated/public_strict_not_identical_mixed.cpp",
-    "include/scpp/generated/public_strict_not_identical_dynamic.cpp"
+    "include/scpp/generated/public_strict_not_identical_dynamic.cpp",
+    "include/scpp/generated/public_logical_xor_boolean.cpp"
   ],
   "types": {
     "dynamic": {
