@@ -61,3 +61,54 @@ invalid=copy.deepcopy(base)
 invalid['metadata']['families']['vector']['classes'][0]['methods'][0]['returns']='missing'
 invoke(invalid,'Unregistered type')
 print('PASS: unknown family recipe, companion lifecycle, snippet emission and metadata rejection; no generated compilation')
+
+# Defaults are expanded before naming and scheduling, including chained dependencies.
+defaults = copy.deepcopy(base)
+sequence = copy.deepcopy(defaults['metadata']['families']['vector'])
+sequence['defaults'] = ['string']
+nested = json.loads(json.dumps(sequence).replace('"T"', '"V"').replace('${public:T}', '${public:V}').replace('${native:T}', '${native:V}'))
+nested['parameters'] = ['T', 'U', 'V']
+nested['defaults'] = ['string', 'sequence<T>', 'U']
+defaults['metadata']['families'].update(sequence=sequence, nested=nested)
+defaults['request'] = {'package':'test', 'roots':['nested', 'nested<>', 'nested<string>', 'nested<string,sequence<string>>', 'nested<string,sequence<string>,sequence<string>>']}
+defaults['names'] = {'nested':'nested_strings', 'sequence<string>':'sequence_string'}
+result = invoke(defaults)
+canonical = 'nested<string,sequence<string>,sequence<string>>'
+assert [u['identity'] for u in result['units']] == ['sequence<string>', canonical]
+assert result['types'][canonical]['name'] == 'nested_strings'
+assert result['types'][canonical]['native'] == 'scpp::vector_t<scpp::sequence_string>'
+# Explicit earlier arguments override defaults and are used by later defaults.
+explicit = copy.deepcopy(defaults)
+explicit['request']['roots'] = ['nested<vector<string>>']
+result = invoke(explicit)
+assert 'nested<vector<string>,sequence<vector<string>>,sequence<vector<string>>>' in result['types']
+# The same canonical identity imports as a single already-published specialization.
+reused = copy.deepcopy(defaults)
+reused['imports'] = invoke(defaults)['types']
+for key, record in reused['imports'].items(): reused['names'][key] = record['name']
+assert invoke(reused)['units'] == []
+for change, message in [
+    (lambda f:f.update(defaults='string'), 'Invalid trailing defaults'),
+    (lambda f:f.update(defaults=['string']*4), 'Invalid trailing defaults'),
+    (lambda f:f.update(defaults=['T', 'sequence<T>', 'U']), 'earlier parameter'),
+    (lambda f:f.update(defaults=['V', 'sequence<T>', 'U']), 'earlier parameter'),
+    (lambda f:f.update(defaults=['string', 'T<string>', 'U']), 'template family'),
+    (lambda f:f.update(parameters=['T','T','V']), 'Duplicate parameter'),
+    (lambda f:f.update(defaults=['missing', 'sequence<T>', 'U']), 'Unregistered type'),
+    (lambda f:f.update(defaults=['nested', 'sequence<T>', 'U']), 'expansion limit'),
+]:
+    invalid = copy.deepcopy(defaults)
+    change(invalid['metadata']['families']['nested'])
+    invoke(invalid, message)
+invalid = copy.deepcopy(defaults)
+invalid['request']['roots'] = ['string<>']
+invoke(invalid, 'Unregistered type')
+print('PASS: constant/dependent/chained defaults, explicit overrides, canonical reuse and invalid defaults')
+invalid = copy.deepcopy(defaults)
+invalid['names'][canonical] = 'conflicting_name'
+invoke(invalid, 'Conflicting mapping')
+invalid = copy.deepcopy(defaults)
+invalid['names'] = {}
+invalid['request']['roots'] = [canonical]
+invalid['metadata']['families']['nested']['defaults'][0] = 'T'
+invoke(invalid, 'earlier parameter')

@@ -39,7 +39,7 @@ an argument; `construct` describes constructing an owned public result from a na
 binding result. The existing concrete string/error bridges implement this transport.
 Application leaf definitions may add types but may not redefine runtime identities.
 
-`families` contains parameter names, an optional existing native `binding`, a
+`families` contains parameter names, optional trailing `defaults`, an existing native `binding` when needed, a
 parameterized `native` representation, explicit private `includes`, target-probed
 `checks`, a list of `classes`, and optional free `functions`. A companion class is an
 ordinary class entry, not a generator-recognized cursor. All classes are declared
@@ -82,6 +82,43 @@ value). `transport: native` applies the result type's `construct` binding to the
 factory. Void bodies run directly. Snippets must not return dangling references;
 compilation alone cannot prove arbitrary C++ safe. Native helpers and focused
 lifetime/failure tests remain essential. No new snippet control-flow language exists.
+
+## Template defaults
+
+Defaults are type expressions attached to the trailing parameters. For example:
+
+```json
+{
+  "parameters": ["T", "U", "V"],
+  "defaults": ["string", "sequence<T>", "U"]
+}
+```
+
+The resolver processes arguments left to right. Explicit arguments are normalized
+first; an omitted argument substitutes already-resolved earlier parameters into its
+default expression, then resolves the resulting type. References are whole type
+nodes, not text replacement: `T` can appear inside `vector<T>`. Chained defaults and
+explicit overrides therefore work without a family-specific rule. Earlier argument
+aliases are normalized before substitution. A parameter cannot be used as a template
+family (`T<string>`); template-template parameters are not part of this schema.
+
+All-default families accept both the bare family name and `family<>`. Empty argument
+lists on leaves are rejected. Required parameters still require explicit arguments.
+Parameter names must be unique, defaults must be a trailing list no longer than the
+parameter list, and a default cannot reference itself or a later parameter, even
+when all arguments are supplied explicitly. Undefined selected types are rejected;
+a depth bound rejects recursive cross-family default expansion without stack overflow.
+
+Expansion happens before canonical identity, concrete naming, import lookup and
+layout dependency planning. Omitted, partially explicit and fully explicit equivalent
+forms share one definition and reuse the same imported specialization. Inner concrete
+representations are resolved before outer storage is emitted.
+
+The shared naming registry retains its `parameters` kind list and optional
+`parameter_names` list; API metadata supplies that name list automatically. Existing
+constant defaults without names remain supported. The naming registry also supports
+its existing admitted integer values in dependent defaults; this does not add
+value-parameter emission to the public API recipe schema.
 
 ## Cursor contract
 

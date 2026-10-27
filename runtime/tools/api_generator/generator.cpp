@@ -40,6 +40,8 @@ namespace scpp::api_generation
 		for (const auto &[key,v] : metadata.at("families").fields) {
 			value f=value::object(); f["parameters"]=value::array();
 			for (const auto &p : v.at("parameters").items) f["parameters"].items.emplace_back("type");
+			f["parameter_names"]=v.at("parameters");
+			if (v.has("defaults")) f["defaults"]=v.at("defaults");
 			r["families"][key]=f;
 		}
 		for (const auto &[key,v] : names.fields) { value m=value::object(); m["type"]=key; m["name"]=v; r["mappings"].items.push_back(m); }
@@ -157,7 +159,7 @@ namespace scpp::api_generation
 			if (!this->visiting_.insert(canonical).second) throw std::runtime_error("Unresolved layout dependency cycle: "+canonical);
 			auto node=this->naming_.normalize(parse_type(canonical)); const auto &recipe=this->metadata_.at("families").at(node.name);
 			if (recipe.at("parameters").type!=value::kind::array || recipe.at("classes").type!=value::kind::array || recipe.at("classes").items.empty()) throw std::runtime_error("Family requires parameter and nonempty class arrays");
-            fields_only(recipe,"parameters binding native includes classes functions checks", "family "+node.name);
+            fields_only(recipe,"parameters defaults binding native includes classes functions checks", "family "+node.name);
 			substitutions context{{"name",name},{"namebase",name.back()=='_'?name.substr(0,name.size()-1):name}};
 			std::map<std::string,value> types;
 			std::set<std::string> public_headers,private_headers,probe_headers;

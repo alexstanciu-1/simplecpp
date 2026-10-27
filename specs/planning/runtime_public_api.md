@@ -393,3 +393,27 @@ Do not interpret this checkpoint as migration of every leaf or runtime module.
 The existing audit batch order remains, with new families described as metadata and
 existing native behavior reused. Generalize reusable mechanics only when a concrete
 contract requires them; do not accumulate named-family branches in the generator.
+
+### Defaults and nested-container follow-up
+
+Template defaults now flow from API metadata through shared C++ resolution, canonical
+naming, dependency planning and generation. Earlier-parameter references, nested and
+chained defaults resolve before specialization reuse. Compile/lifetime coverage is
+in `tests/runtime/native/test_defaults_composition.py`: generated defaulted families
+and `vector<vector<string>>`, reusing the runtime's concrete inner vector. This does
+not add template-template arguments or general value-parameter API emission.
+
+Validation for this follow-up: seven naming tests; metadata tests for defaults,
+canonical reuse, conflicts and malformed/recursive declarations; Release and
+ASan/UBSan/leak-detection compile/lifetime tests; all 13 compiler tests passed.
+The compiled fixture seals its own generated archive and proves that a subsequent
+request using omitted defaults reuses the explicit published identity with zero new
+implementation units. Only generation tooling and test specialization units needed
+compilation; runtime-core implementation was reused.
+
+Reproduce the composed proof with `python3 tests/runtime/native/test_defaults_composition.py
+--package compiler/my-try-cpp/dependencies/runtime`. Add `--sanitized-core
+compiler/my-try-cpp/build/sanitizers/runtime/libscpp_runtime_core.a` to instrument the
+generated fixture and link the existing sanitized core (run with leak detection in
+an environment without ptrace). `SCPP_API_GENERATOR` can select the sanitized C++ tool
+as well. Temporary fixture outputs are cleaned after the test.

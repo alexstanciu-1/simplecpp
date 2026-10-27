@@ -38,6 +38,23 @@ class NamingTests(unittest.TestCase):
         self.assertEqual(self.registry.resolve("vector<int32>"), self.registry.resolve("vector<int<32>>"))
         self.assertEqual(self.registry.resolve("vector<vector_string>")[1], "vector_0vector_1string_")
 
+    def test_dependent_defaults(self):
+        data = copy.deepcopy(DATA)
+        data['families']['bag'] = {
+            'parameters':['type','type'], 'parameter_names':['Element','Payload'],
+            'defaults':['vector<Element>']}
+        data['families']['sizes'] = {
+            'parameters':['integer','integer'], 'parameter_names':['N','M'],
+            'values':[8,16,32,64], 'defaults':['32','N']}
+        data['mappings'].append({'type':'sizes<32,32>','name':'sizes32'})
+        registry = names.Registry(data)
+        self.assertEqual(registry.resolve('bag<vector_string>'),
+                         registry.resolve('bag<vector<string>,vector<vector<string>>>'))
+        self.assertEqual(registry.resolve('sizes<>'), registry.resolve('sizes<32,32>'))
+        self.assertEqual(registry.resolve('sizes')[1], 'sizes32')
+        with self.assertRaises(ValueError):
+            registry.resolve('string<>')
+
     def test_escape_is_reversible_and_separates_depth(self):
         samples = ["T1", "some_0Type", "somezU0Type", "scope::Type", "z", "A_9B"]
         encoded = [names.escape(x) for x in samples]

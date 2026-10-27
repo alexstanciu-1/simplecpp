@@ -8,6 +8,7 @@ namespace scpp::api_generation
 	{
 		std::string name;
 		std::vector<type_name> arguments;
+		bool application = false;
 		std::string canonical() const;
 	};
 	type_name parse_type(const std::string &text);
@@ -19,6 +20,7 @@ namespace scpp::api_generation
 		std::map<std::string, type_name> aliases_;
 		std::map<std::string, std::string> mappings_, claimed_;
 		type_name structural_tree(type_name type) const;
+		type_name normalize_at(type_name type, unsigned depth) const;
 	public:
 		explicit naming(const value &registry);
 		type_name normalize(type_name type) const;
