@@ -1,6 +1,6 @@
 {
   "abi": "529dd5502370f48d64891818e9439aae72831b990b4027e8abe25c50c1216c21",
-  "api_identity": "cf62a5bf009c5980a8115d0bf8cee20ee15028f8c08b185455a2059fc70a112e",
+  "api_identity": "446b5e09391324bed4efbccb4f8bc0bafa0b43973f3aed3de470a960ec3cb65a",
   "apis": {
     "add_dynamic": {
       "header": "scpp/operators/add_dynamic.hpp",
@@ -8326,6 +8326,94 @@
         ]
       },
       "source": "include/scpp/generated/public_subtract_uint8.cpp"
+    },
+    "text_greater_equal_string_string": {
+      "header": "scpp/operators/text_greater_equal_string_string.hpp",
+      "namespace": "scpp",
+      "operation": {
+        "expression": "(${native:left} >= ${native:right}).native_value()",
+        "name": "value_greater_equal",
+        "parameters": [
+          {
+            "name": "left",
+            "passing": "const_ref",
+            "type": "string"
+          },
+          {
+            "name": "right",
+            "passing": "const_ref",
+            "type": "string"
+          }
+        ],
+        "returns": "boolean"
+      },
+      "source": "include/scpp/generated/public_text_greater_equal_string_string.cpp"
+    },
+    "text_greater_string_string": {
+      "header": "scpp/operators/text_greater_string_string.hpp",
+      "namespace": "scpp",
+      "operation": {
+        "expression": "(${native:left} > ${native:right}).native_value()",
+        "name": "value_greater",
+        "parameters": [
+          {
+            "name": "left",
+            "passing": "const_ref",
+            "type": "string"
+          },
+          {
+            "name": "right",
+            "passing": "const_ref",
+            "type": "string"
+          }
+        ],
+        "returns": "boolean"
+      },
+      "source": "include/scpp/generated/public_text_greater_string_string.cpp"
+    },
+    "text_less_equal_string_string": {
+      "header": "scpp/operators/text_less_equal_string_string.hpp",
+      "namespace": "scpp",
+      "operation": {
+        "expression": "(${native:left} <= ${native:right}).native_value()",
+        "name": "value_less_equal",
+        "parameters": [
+          {
+            "name": "left",
+            "passing": "const_ref",
+            "type": "string"
+          },
+          {
+            "name": "right",
+            "passing": "const_ref",
+            "type": "string"
+          }
+        ],
+        "returns": "boolean"
+      },
+      "source": "include/scpp/generated/public_text_less_equal_string_string.cpp"
+    },
+    "text_less_string_string": {
+      "header": "scpp/operators/text_less_string_string.hpp",
+      "namespace": "scpp",
+      "operation": {
+        "expression": "(${native:left} < ${native:right}).native_value()",
+        "name": "value_less",
+        "parameters": [
+          {
+            "name": "left",
+            "passing": "const_ref",
+            "type": "string"
+          },
+          {
+            "name": "right",
+            "passing": "const_ref",
+            "type": "string"
+          }
+        ],
+        "returns": "boolean"
+      },
+      "source": "include/scpp/generated/public_text_less_string_string.cpp"
     }
   },
   "artifacts": [
@@ -9339,7 +9427,19 @@
     "include/scpp/operators/not_equal_boolean.hpp",
     "public/scpp/operators/not_equal_string.hpp",
     "include/scpp/generated/public_not_equal_string.cpp",
-    "include/scpp/operators/not_equal_string.hpp"
+    "include/scpp/operators/not_equal_string.hpp",
+    "public/scpp/operators/text_less_string_string.hpp",
+    "include/scpp/generated/public_text_less_string_string.cpp",
+    "include/scpp/operators/text_less_string_string.hpp",
+    "public/scpp/operators/text_less_equal_string_string.hpp",
+    "include/scpp/generated/public_text_less_equal_string_string.cpp",
+    "include/scpp/operators/text_less_equal_string_string.hpp",
+    "public/scpp/operators/text_greater_string_string.hpp",
+    "include/scpp/generated/public_text_greater_string_string.cpp",
+    "include/scpp/operators/text_greater_string_string.hpp",
+    "public/scpp/operators/text_greater_equal_string_string.hpp",
+    "include/scpp/generated/public_text_greater_equal_string_string.cpp",
+    "include/scpp/operators/text_greater_equal_string_string.hpp"
   ],
   "generator": "metadata-api-v1",
   "leaves": {
@@ -9844,6 +9944,10 @@
     "scpp/operators/subtract_uint32.hpp": "1c4c2c40fd176f2612f625c1b248706349da6cde280978e37a1746c6a78e6dd3",
     "scpp/operators/subtract_uint64.hpp": "ae1feae12bb920a3012b507b97e5c239837bfd748da19859e5c811a17db575ad",
     "scpp/operators/subtract_uint8.hpp": "314e51f6a95bd32595a3e853576d82c7f990526bc0e7aed73ba9d087d32e3826",
+    "scpp/operators/text_greater_equal_string_string.hpp": "82e01b35ab6c2bcdbe6e45faef2cc96dec7dce1fe27f47013cc8c0fc0062814e",
+    "scpp/operators/text_greater_string_string.hpp": "65e88dadef71ee4ef52cdefc9198dcb552a50297ea0a0f52094c70f38b4c32d4",
+    "scpp/operators/text_less_equal_string_string.hpp": "7c528e5646bd8494eeab4e566cc44d258820025b719046a1a1dbc07229eb0af7",
+    "scpp/operators/text_less_string_string.hpp": "aaef1bbed67f387b40c4032c2b0497d6627c8755ddccffd8c8182c3ff6e87db2",
     "scpp/result_vector_string.hpp": "45bfe2a5c202e8c44ed98016960336c8506d1cf5a1975f3d92c169f41228ee0c",
     "scpp/string.hpp": "aac6ff447c6c1135f22cbc12cb0a419c8079df28826de70f0170a07690ec2b69",
     "scpp/text/concat_strings.hpp": "38de27c455eae08bd171ed50b68dd01d781648a430f34914ca989326cdadb301",
@@ -10198,7 +10302,11 @@
     "include/scpp/generated/public_equal_boolean.cpp",
     "include/scpp/generated/public_equal_string.cpp",
     "include/scpp/generated/public_not_equal_boolean.cpp",
-    "include/scpp/generated/public_not_equal_string.cpp"
+    "include/scpp/generated/public_not_equal_string.cpp",
+    "include/scpp/generated/public_text_less_string_string.cpp",
+    "include/scpp/generated/public_text_less_equal_string_string.cpp",
+    "include/scpp/generated/public_text_greater_string_string.cpp",
+    "include/scpp/generated/public_text_greater_equal_string_string.cpp"
   ],
   "types": {
     "dynamic": {

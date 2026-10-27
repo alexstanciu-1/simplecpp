@@ -1159,3 +1159,14 @@ planners share `resolve_projected_binary` for one-layer owned projection and ord
 scalar calculation. Binary entrypoints retain their own policy checks. This permits
 a carrier compound without granting its binary source form, as required by checked
 integer power. It adds no implicit cast, payload recursion or saved-kind write-back.
+
+### String relational bindings
+
+The `numeric_or_text_order` group shares ordinary numeric promotion rules and adds
+one string/string `ordered_pair` rule. Each relational operation selects a single
+string binding through its existing `pair_function_set`; the four bindings expose
+`value_less`, `value_less_equal`, `value_greater` and `value_greater_equal`. They delegate
+to native string byte ordering. The operation entrypoint remains `less`/`less_equal`/
+`greater`/`greater_equal` regardless of payload, and numeric public bindings retain
+their existing names. Carrier projection applies only after operation admission;
+adding string to the candidate payload vocabulary does not admit string arithmetic.

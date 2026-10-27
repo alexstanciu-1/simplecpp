@@ -3947,6 +3947,57 @@
             "domain": "string"
           }
         ]
+      },
+      "numeric_or_text_order": {
+        "rules": [
+          {
+            "left": "signed",
+            "right": "signed",
+            "selection": "same_or_maximum",
+            "domain": "signed"
+          },
+          {
+            "left": "unsigned",
+            "right": "unsigned",
+            "selection": "same_or_maximum",
+            "domain": "unsigned"
+          },
+          {
+            "left": "floating",
+            "right": "floating",
+            "selection": "same_or_maximum",
+            "domain": "floating"
+          },
+          {
+            "left": "signed",
+            "right": "floating",
+            "selection": "maximum",
+            "domain": "floating"
+          },
+          {
+            "left": "floating",
+            "right": "signed",
+            "selection": "maximum",
+            "domain": "floating"
+          },
+          {
+            "left": "unsigned",
+            "right": "floating",
+            "selection": "maximum",
+            "domain": "floating"
+          },
+          {
+            "left": "floating",
+            "right": "unsigned",
+            "selection": "maximum",
+            "domain": "floating"
+          },
+          {
+            "left": "string",
+            "right": "string",
+            "selection": "ordered_pair"
+          }
+        ]
       }
     },
     "operations": {
@@ -4110,7 +4161,7 @@
         "returns": "boolean"
       },
       "less": {
-        "group": "numeric",
+        "group": "numeric_or_text_order",
         "name": "numeric_less",
         "expression": "scpp::detail::generated_operator_detail::lt(${operand:left}, ${operand:right}).native_value()",
         "publish": [
@@ -4127,10 +4178,11 @@
         "includes": [
           "scpp/generated/operator_detail.hpp"
         ],
-        "returns": "boolean"
+        "returns": "boolean",
+        "pair_function_set": "text_less"
       },
       "less_equal": {
-        "group": "numeric",
+        "group": "numeric_or_text_order",
         "name": "numeric_less_equal",
         "expression": "scpp::detail::generated_operator_detail::le(${operand:left}, ${operand:right}).native_value()",
         "publish": [
@@ -4147,10 +4199,11 @@
         "includes": [
           "scpp/generated/operator_detail.hpp"
         ],
-        "returns": "boolean"
+        "returns": "boolean",
+        "pair_function_set": "text_less_equal"
       },
       "greater": {
-        "group": "numeric",
+        "group": "numeric_or_text_order",
         "name": "numeric_greater",
         "expression": "scpp::detail::generated_operator_detail::lt(${operand:right}, ${operand:left}).native_value()",
         "publish": [
@@ -4167,10 +4220,11 @@
         "includes": [
           "scpp/generated/operator_detail.hpp"
         ],
-        "returns": "boolean"
+        "returns": "boolean",
+        "pair_function_set": "text_greater"
       },
       "greater_equal": {
-        "group": "numeric",
+        "group": "numeric_or_text_order",
         "name": "numeric_greater_equal",
         "expression": "scpp::detail::generated_operator_detail::le(${operand:right}, ${operand:left}).native_value()",
         "publish": [
@@ -4187,7 +4241,8 @@
         "includes": [
           "scpp/generated/operator_detail.hpp"
         ],
-        "returns": "boolean"
+        "returns": "boolean",
+        "pair_function_set": "text_greater_equal"
       },
       "strict_identical": {
         "group": "strict_scalar_identity",
@@ -4645,7 +4700,8 @@
         "uint16",
         "uint32",
         "uint64",
-        "float64"
+        "float64",
+        "string"
       ]
     },
     "carrier_comparisons": {
@@ -6417,6 +6473,114 @@
             }
           ],
           "expression": "left + right"
+        }
+      }
+    },
+    "text_less": {
+      "variants": {
+        "string_string": {}
+      },
+      "function": {
+        "namespace": "scpp",
+        "header": "scpp/operators/text_less_${variant}.hpp",
+        "source": "include/scpp/generated/public_text_less_${variant}.cpp",
+        "operation": {
+          "name": "value_less",
+          "returns": "boolean",
+          "parameters": [
+            {
+              "name": "left",
+              "type": "string",
+              "passing": "const_ref"
+            },
+            {
+              "name": "right",
+              "type": "string",
+              "passing": "const_ref"
+            }
+          ],
+          "expression": "(${native:left} < ${native:right}).native_value()"
+        }
+      }
+    },
+    "text_less_equal": {
+      "variants": {
+        "string_string": {}
+      },
+      "function": {
+        "namespace": "scpp",
+        "header": "scpp/operators/text_less_equal_${variant}.hpp",
+        "source": "include/scpp/generated/public_text_less_equal_${variant}.cpp",
+        "operation": {
+          "name": "value_less_equal",
+          "returns": "boolean",
+          "parameters": [
+            {
+              "name": "left",
+              "type": "string",
+              "passing": "const_ref"
+            },
+            {
+              "name": "right",
+              "type": "string",
+              "passing": "const_ref"
+            }
+          ],
+          "expression": "(${native:left} <= ${native:right}).native_value()"
+        }
+      }
+    },
+    "text_greater": {
+      "variants": {
+        "string_string": {}
+      },
+      "function": {
+        "namespace": "scpp",
+        "header": "scpp/operators/text_greater_${variant}.hpp",
+        "source": "include/scpp/generated/public_text_greater_${variant}.cpp",
+        "operation": {
+          "name": "value_greater",
+          "returns": "boolean",
+          "parameters": [
+            {
+              "name": "left",
+              "type": "string",
+              "passing": "const_ref"
+            },
+            {
+              "name": "right",
+              "type": "string",
+              "passing": "const_ref"
+            }
+          ],
+          "expression": "(${native:left} > ${native:right}).native_value()"
+        }
+      }
+    },
+    "text_greater_equal": {
+      "variants": {
+        "string_string": {}
+      },
+      "function": {
+        "namespace": "scpp",
+        "header": "scpp/operators/text_greater_equal_${variant}.hpp",
+        "source": "include/scpp/generated/public_text_greater_equal_${variant}.cpp",
+        "operation": {
+          "name": "value_greater_equal",
+          "returns": "boolean",
+          "parameters": [
+            {
+              "name": "left",
+              "type": "string",
+              "passing": "const_ref"
+            },
+            {
+              "name": "right",
+              "type": "string",
+              "passing": "const_ref"
+            }
+          ],
+          "expression": "(${native:left} >= ${native:right}).native_value()"
         }
       }
     }

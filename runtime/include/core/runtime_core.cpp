@@ -359,3 +359,8 @@
 
 #include "scpp/generated/public_strict_identical_error_value.cpp"
 #include "scpp/generated/public_strict_not_identical_error_value.cpp"
+
+#include "scpp/generated/public_text_less_string_string.cpp"
+#include "scpp/generated/public_text_less_equal_string_string.cpp"
+#include "scpp/generated/public_text_greater_string_string.cpp"
+#include "scpp/generated/public_text_greater_equal_string_string.cpp"

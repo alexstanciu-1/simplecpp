@@ -489,3 +489,11 @@ canonical-int `**=` path uses checked integer power through the shared projectio
 worker and compound write-back protocol. Its metadata does not enable binary carrier
 `**`. Error and unavailable states must fail without write-back, preserving earlier
 RHS effects; successful results retain the destination carrier type.
+
+### String relational ordering implementation checkpoint
+
+`<`, `<=`, `>` and `>=` now resolve string/string through the ordinary payload owner,
+including one carrier layer on either side across the four families. Missing payloads
+throw rather than acquiring an ordering position. Complete bytes, including embedded
+NUL, follow existing string ordering. String/numeric, string/bool and string spaceship
+remain rejected; the numeric and strict-identity policies are unchanged.

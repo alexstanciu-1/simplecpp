@@ -45,8 +45,9 @@ for op in ['add', 'subtract', 'multiply', 'divide', 'remainder']:
             assert plan['left_projection']['kind'] == ('identity' if left == 'int64' else 'checked_member')
 assert resolve('nullable<int16>', 'int32')['result_type'] == 'int64'
 assert resolve('nullable<int64>', 'float64')['result_type'] == 'float64'
-for bad in ['nullable<boolean>', 'nullable<string>', 'result<nullable<int64>>', 'nullable<vector<string>>']:
+for bad in ['nullable<boolean>', 'result<nullable<int64>>', 'nullable<vector<string>>']:
     resolve(bad, 'int64', error='Unsupported carrier payload')
+resolve('nullable<string>', 'int64', error='Unsupported operator operand domains')
 resolve('vector<int64>', 'int64', error='no carrier projection')
 resolve('nullable<int64>', 'uint64', error='Unsupported operator operand domains')
 assert resolve('nullable<int64>', 'nullable<int64>', 'concat')['kind'] == 'converted_carrier_binary'

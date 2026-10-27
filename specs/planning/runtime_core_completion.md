@@ -17,7 +17,7 @@ each slice. The original inventory is a baseline, not a current completion count
 | A2 | Complete for the agreed checked scalar conversions | Carrier conversion is C; ownership casts are D. |
 | B1 | Complete for the agreed scalar-facing truth/text/identity/observation scope | Carrier forms remain C; boxed arithmetic and access completion are not B1 credit. |
 | B2 | Complete for the agreed non-carrier special/mutation and text public paths; closure evidence below | Carrier forms C; indexed retention E; native exception inspection and overflow disposition G. |
-| C | Four carrier recipes with conditional lifecycle; numeric/presence plans, scalar/boxed equality, scalar reconstruction, text, unary/update, canonical arithmetic compounds, bitwise/shift plans and compound power, Result error identity and sentinel take/state proofs implemented; review pending | Four carrier families, state-preserving operations/conversions and conditional lifecycle. |
+| C | Four carrier recipes with conditional lifecycle; numeric/presence plans, scalar/boxed equality, scalar reconstruction, text, unary/update, canonical arithmetic compounds, bitwise/shift plans, compound power and string relational ordering, Result error identity and sentinel take/state proofs implemented; review pending | Four carrier families, state-preserving operations/conversions and conditional lifecycle. |
 | D | Pending | Ownership, application targets and source Exception transport gaps. |
 | E | Existing vector/hash/boxed foundations; incomplete | Capability/access/initialization/cursor gaps and identity key-allocation debt. |
 | F | Pending | Callable transport and registered collection algorithms. |
@@ -1212,3 +1212,20 @@ All previously emitted runtime units remain unchanged.
 
 Lazy/selection protocols, wider ordering, scoped observations and the source-formation
 boundary still remain before the complete carrier review.
+
+## C23 — string relational ordering through ordinary metadata
+
+The four relational operations now select existing string byte-order behavior via
+four reusable concrete bindings. A numeric-or-text ordering group preserves numeric
+promotion and admits only string/string in its text branch; no string-to-number
+comparison, arithmetic, boolean ordering or string spaceship is inferred. Checked
+one-layer carrier projection reuses those bindings across the four families.
+
+The implementation uses the existing ordered-pair function binding mechanism; there
+are no generator code changes or carrier-pair runtime overloads. Missing payloads
+fail at their ordered extraction point. String payloads are copied before later
+operand effects so alias mutation cannot change the saved left bytes. Scoped borrowing
+and removal of avoidable long-payload copies remain separate work.
+
+Lazy/selection protocols, scoped observations and the pending source-formation
+boundary remain open before the complete carrier review.

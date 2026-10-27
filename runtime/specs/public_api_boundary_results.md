@@ -2098,3 +2098,29 @@ component and operation inspection. An optional native `test_pow` invocation was
 not run because that executable was not built in this configuration; its dry-run
 would also rebuild a filesystem unit. The public proof covers this slice without
 that unrelated build, and the missing executable is not counted as a passing test.
+
+## C23 — ordinary and carrier string relational bindings (2026-10-27)
+
+Four reusable string ordering bindings use the existing ordered-pair function-set
+mechanism. Numeric promotion remains in its existing branches; string/string selects
+byte ordering. No generator changes, carrier-pair overload product, string arithmetic,
+heterogeneous string comparison or string spaceship are added. Publication now has
+340 implementation units; existing generated files are unchanged and twelve new
+files provide the four sources plus public/compatibility headers. Core's explicit
+implementation list includes the new bindings.
+
+`check_carrier_order.py` validates 100 plain/carrier resolver combinations and rejected
+payload widening. Its public consumer executes 256 success cases and 80 missing-state
+cases, including embedded NUL bytes, empty strings, all four relational operations,
+plain peers and aliased RHS mutation after left extraction. Short successful cases
+allocate zero times; no zero-allocation claim is made for copying long payloads.
+The four application carrier units seal and reuse without regeneration.
+
+Eight focused release regressions pass in 4.05s; eight sanitizer regressions pass in
+28.17s. Release compiled proof passes, storage 5.6289s and caller 1.5043s. Generator
+code was unchanged. After wiring the new files into the explicit core implementation
+list, core builds take 25.02s release and 57.69s sanitized. These are single-run wall
+times with concurrent validation, not isolated benchmarks. Both builds retain the
+existing ineffective hash explicit-instantiation warning; no new warning was added.
+The compiled ASan/UBSan proof with leak detection also passes, including sealed
+reuse: four storage units 5.9458s, combined caller 3.8547s.

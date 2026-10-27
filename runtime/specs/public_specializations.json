@@ -348,6 +348,10 @@
     "equal_boolean",
     "equal_string",
     "not_equal_boolean",
-    "not_equal_string"
+    "not_equal_string",
+    "text_less_string_string",
+    "text_less_equal_string_string",
+    "text_greater_string_string",
+    "text_greater_equal_string_string"
   ]
 }
