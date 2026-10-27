@@ -88,7 +88,7 @@ no equivalent new public path identified. Published/recipe does not mean complet
 | Callables and higher-order collections | Native callable/collections implementations; registered map/filter functions | Concrete signature-based callback ABI, captures and destruction, invocation/error propagation and reference restrictions; then collection/sequence/keyed map/filter for admitted families. Do not expose std::function or generate per-function-name exceptions. | F |
 | Core utilities, debug and memory | Some per-value storage estimates and predicates; no general utility public surface | Registry helpers in the appendix, debug flags, required value_copy/reset/memory/identity helpers. Distinguish actual accounting semantics from estimated storage bytes. Audit language-adapter dependencies. | E/G |
 
-The recipe registry currently contains nine families: vector, hash,
+The original inventory contained nine recipe families: vector, hash,
 nullable, result, result_or_false, result_or_bool, float64, mixed and dynamic. At the original inventory, the first four all imposed copy
 construction/assignment and nothrow-destruction checks. Nullable and Result now use conditional
 lifecycle and payload APIs (C10/C11); vector follows in E1 and hash in E2; their remaining native constraints are recorded below. This is a real coverage
@@ -1692,3 +1692,40 @@ lifetime tests pass with ASan/UBSan and leak detection (0.11s). Independent head
 and sealed relocation/reuse pass. Single-run probe caller compilation: 0.0564s
 public / 2.1155s native. One core rebuild per configuration. The overall completion
 goal and carrier review gate remain open.
+
+## E9 — shared owning initialization backing
+
+The input audit distinguishes source call-scoped `initializer_list<T>` from the
+backend-owned temporary buffer. Publish only the owning `initializer_buffer<T>`
+recipe in this slice: fixed-capacity construction, ordered copying append, complete-
+input count and checked owned reads. The native inline/heap strategy is retained;
+copy/move/default construction of the buffer is deleted. No borrowed view escapes.
+The first source input contract requires copyable values; native-only move-only
+requests are rejected by this recipe rather than advertised as source permission.
+
+The four materialization proofs use string/int64/mixed/dynamic inputs, covering the
+value domains needed for vector, hash and the two boxed factories under one mechanism.
+This is backing-storage coverage, not factory or complete initialization coverage.
+Private factory adaptation must next reconcile public stored elements with native
+boxed factory inputs; it must remain one adaptation path rather than generator
+type-name exceptions. Keyed entry records and duplicate-key factory validation,
+source non-escape admission and actual factory dispatch remain open.
+
+A metadata-only experiment confirmed that a mixed member factory taking a
+`initializer_buffer<mixed>` creates a cycle in current signature/layout materialization.
+A separately demanded function binding resolves the same dependencies without a
+cycle. The experiment used placeholder factory bodies and proves graph resolution
+only; it does not prove construction behavior or justify changing source factory
+semantics. This evidence favors ordinary separate public function bindings before
+considering a general declaration/layout graph refactor.
+
+A syntax-only trait proof also confirms that native immutable initializer_entry is
+copy-constructible but not copy-assignable. The current generator copy lifecycle and
+copy_storage fact bundle both. Keyed entry transport must resolve that mismatch
+truthfully before reuse in this buffer, without weakening source non-escape or
+falsely assigning capabilities. Positional factory adaptation can proceed separately.
+
+Validation: four demanded buffers pass release and ASan/UBSan/LSan lifetime/allocation
+and sealed reuse proofs. Parallel generated storage compilation: 1.0313s release /
+1.0806s sanitized; caller: 0.1409s / 0.1721s. Three metadata checks pass (1.49s). No
+runtime-core rebuild was needed. These figures do not imply factory completion.

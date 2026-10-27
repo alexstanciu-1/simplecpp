@@ -2737,3 +2737,33 @@ lifetime tests pass with ASan/UBSan and leak detection (0.11s). Independent head
 and sealed relocation/reuse pass. Single-run probe caller compilation: 0.0564s
 public / 2.1155s native. One core rebuild per configuration. The overall completion
 goal and carrier review gate remain open.
+
+## E9: shared owning initializer backing (2026-10-28)
+
+One new metadata recipe realizes the existing native initializer_buffer with public
+element storage. It deletes default/copy/move, exposes construction/append and
+complete-input count/owned at, and never publishes view(). Four demanded inputs
+(string, int64, mixed, dynamic) use the same recipe. The runtime publication gains
+the recipe identity but no permanent buffer demand or implementation unit.
+
+Release and ASan/UBSan/LSan tests pass for inline zero-allocation small/empty inputs,
+large heap-backed input, incomplete reads, negative/out-of-range reads, append past
+capacity, failed long-string copy followed by successful retry, partial construction
+unwind, owned values surviving buffer destruction and mixed COW/dynamic identity.
+Application-owned sealed specialization reuse emits no new sources. The public-only
+caller has no private runtime headers. Metadata checks reject move-only input and
+verify the four nonmovable/noncopyable representations and absence of public views.
+
+Focused timings: four storage units compiled in parallel (maximum eight workers)
+in 1.0313s release / 1.0806s sanitized; public caller 0.1409s / 0.1721s. These are
+fixture compile costs, not a public/native caller comparison. Three metadata checks
+pass in 1.49s. No runtime-core rebuild was needed in either configuration.
+
+The prior metadata experiment proved a signature/layout cycle for a mixed member
+factory taking its own buffer and successful resolution of a separate function
+binding. Placeholder bodies were used: no factory behavior is credited. A separate
+syntax-only trait proof confirms native immutable initializer_entry is copy-
+constructible but not copy-assignable. Current copy_storage/lifecycle bundles both;
+keyed entry transport therefore needs an explicit local capability/lifecycle design,
+not a false copy_storage declaration. Factory execution, keyed duplicates and source
+view non-escape remain unfinished.

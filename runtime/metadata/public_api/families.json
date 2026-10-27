@@ -3155,5 +3155,79 @@
     "capabilities": [
       "default_storage"
     ]
+  },
+  "initializer_buffer": {
+    "parameters": [
+      "T"
+    ],
+    "native": "scpp::initializer_buffer<${public:T}>",
+    "includes": [
+      "scpp/data_initializer_input.hpp"
+    ],
+    "requires_capabilities": {
+      "T": [
+        "copy_storage"
+      ]
+    },
+    "classes": [
+      {
+        "id": "self",
+        "name": "${name}",
+        "native": "${native_type}",
+        "lifecycle": {
+          "default": "disabled",
+          "copy": "disabled",
+          "move": "disabled",
+          "destroy": "native"
+        },
+        "methods": [
+          {
+            "kind": "constructor",
+            "explicit": true,
+            "parameters": [
+              {
+                "name": "count",
+                "type": "uint64",
+                "passing": "value"
+              }
+            ],
+            "expression": "detail::concrete_size(count)"
+          },
+          {
+            "name": "append",
+            "returns": "void",
+            "parameters": [
+              {
+                "name": "value",
+                "type": "T",
+                "passing": "const_ref"
+              }
+            ],
+            "expression": "${self}.append(value)"
+          },
+          {
+            "name": "count",
+            "returns": "int64",
+            "parameters": [],
+            "const": true,
+            "transport": "native",
+            "expression": "${self}.view().count()"
+          },
+          {
+            "name": "at",
+            "returns": "T",
+            "parameters": [
+              {
+                "name": "index",
+                "type": "int64",
+                "passing": "value"
+              }
+            ],
+            "const": true,
+            "expression": "${self}.view().at(${native:index})"
+          }
+        ]
+      }
+    ]
   }
 }

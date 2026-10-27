@@ -550,3 +550,6 @@ add_test(NAME scpp_test_public_index_write COMMAND test_public_index_write)
 add_executable(test_public_keyed_probe test_public_keyed_probe.cpp)
 target_link_libraries(test_public_keyed_probe PRIVATE scpp_core_api)
 add_test(NAME scpp_test_public_keyed_probe COMMAND test_public_keyed_probe)
+
+add_test(NAME scpp_check_initializer_buffer COMMAND ${Python3_EXECUTABLE}
+  ${CMAKE_CURRENT_SOURCE_DIR}/check_initializer_buffer.py --tool $<TARGET_FILE:scpp_api_generator>)

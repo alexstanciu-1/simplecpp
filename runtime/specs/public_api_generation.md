@@ -1503,3 +1503,19 @@ returns true. It uses the existing checked removal owner and never creates entri
 This exposes one-step operations. A complete nested prefix resolver, typed-container
 probe capabilities and field-owner retention are separate remaining work. No generic
 borrowed child/reference or source callback is introduced by this slice.
+
+### Owning initialization backing
+
+`initializer_buffer<T>` is a lowering-support recipe backed by the existing native
+`initializer_buffer<PublicT>`. It is not the source `initializer_list<T>` view.
+Construction takes a concrete uint64 capacity; default/copy/move are deleted because
+the native buffer retains a pointer into its own local backing. `append` copies a
+prepared public value; `count` and `at` require complete input and return owned
+values. No public `view()` or interior reference is emitted. Source input admission
+and expression sequencing are still compiler-owned; move-only input is not admitted.
+
+The same recipe supports typed, mixed and dynamic input values. Empty/small backing
+is inline; large backing follows the native heap fallback. The native view exists
+only inside each checked read. Actual factory dispatch and keyed-entry transport
+remain separate work. Separate factory function bindings can consume these buffers
+without adding a boxed-type signature/layout dependency cycle.
