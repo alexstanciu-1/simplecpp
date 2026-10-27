@@ -80,8 +80,7 @@ Task-owned disabled adapters call the general compiled `raise_runtime_error` pri
 from `scpp/failure.hpp`. Core constructs/throws errors but owns no task-module policy.
 Both task modes have template-free public include closures. The legacy template API
 retains its no-link throwing fallback during migration. Typed public exception
-inspection and error representations remain subsequent slices; inline strings are
-covered below.
+inspection, error values and inline strings are covered below.
 
 ## Inline string value
 
@@ -114,5 +113,42 @@ strings. Self-copy/move/swap preserve the object; ordinary moves retain native v
 moved-from semantics. Clearing retains reusable capacity. `equals` and `is_one_of`
 borrow text and do not construct temporary strings.
 
-Builder, source spans, error values, exception inspection and compiler facade
-migration remain separate slices; this implementation adds no new module dependency.
+Builder, source spans and compiler facade migration remain separate slices; this implementation adds no new module dependency.
+
+## In-band errors and retained exception inspection
+
+`scpp/error_value.hpp` exposes an inline native `error_t`: independent copying,
+nonthrowing moves, no-error construction and `no_error`, presence/bool operations,
+`make(message, line, file)` and owned message/file getters. Making an error with
+empty fields still creates a present error. Defaults yield empty fields and line
+zero. Line uses concrete int64. No new Result/source identity or automatic
+conversion to a thrown exception is introduced. Failed assignment retains native
+fieldwise assignment behavior, not a new transactional guarantee.
+
+`scpp/exception_info.hpp` retains an actual `std::exception_ptr` inline. It has no
+public default constructor or destructive move; rvalues copy, keeping both handles
+valid. Copy/assignment/destruction are noexcept. The only factory,
+`capture_runtime_exception()`, verifies the active exception is `runtime_error`.
+Foreign exceptions rethrow unchanged; outside a catch it raises a runtime error
+with code `no_active_exception`, component `core`, operation
+`capture_runtime_exception`. Captured exceptions remain alive after the catch.
+
+Inspection returns owned strings for message/code/component/operation, detail
+keys/values, and trace module paths/relative addresses. Detail/trace counts and
+indices use int64; negative/out-of-range indices raise `index_out_of_range`, and
+unrepresentable counts raise `size_out_of_range`. Bounds failures leave the retained
+exception intact. `rethrow()` rethrows the retained original, regardless of the
+currently active exception. Native typed and standard-base catches are preserved.
+Message follows native `what()`'s NUL-terminated observation contract.
+
+Both headers use only the restricted public include root and link core. Layouts
+and lifecycle traits share the existing target probe and implementation assertions.
+No STL or native exception headers escape. The bridge inspects lazily by rethrowing
+the retained pointer and constructing owned results inside the catch. No reference
+to the caught object escapes, including on implementations that copy on rethrow.
+Exception machinery may allocate during capture, inspection and rethrow; no zero
+allocation guarantee is made for those operations. Returned long strings retain
+their native allocation cost. Concurrent mutation/assignment of the same facade
+requires caller synchronization, as for ordinary C++ values.
+
+Compiler facade migration, source spans and textbuilder remain separate work.

@@ -323,8 +323,10 @@ registry or separate public middleware layer is introduced by this first slice.
 Inline, target-probed storage for string, in-band error and textbuilder is approved.
 The [approved value APIs](runtime_core_value_api.md) record lifecycle,
 ordinary operations, exception inspection and source-buffer/span borrowing.
-The string implementation is the first value slice; the remaining APIs follow separately.
+String, error_value and retained exception_info are implemented. Source borrowing
+and textbuilder follow separately.
 
 The value signatures and names are approved, including runtime-only exception capture,
 foreign exception propagation and diagnosed outside-catch misuse. Delivery starts
-with the complete inline string API; see the value plan for the remaining slices.
+with the complete inline string API and now includes error_value/exception_info;
+see the value plan for the remaining slices.

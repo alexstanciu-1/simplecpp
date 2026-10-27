@@ -256,7 +256,7 @@ Result/take contracts stay unchanged. Private adapters may inspect existing nati
 fields without copying; public owned-string getters may allocate for long strings.
 No implicit conversion between this value and a thrown exception is introduced.
 
-## Proposed exception inspection: retain, inspect lazily, rethrow unchanged
+## Exception inspection: retain, inspect lazily, rethrow unchanged
 
 ```cpp
 class exception_info final
@@ -281,7 +281,7 @@ public:
 exception_info capture_runtime_exception();
 ```
 
-Recommendation: store the existing active exception through a private native
+Store the existing active exception through a private native
 exception_ptr in target-probed inline storage. No public default constructor and
 no destructive move operation: copies, including rvalue copying, retain the same
 exception. The factory is the only creation path, so every public instance denotes
@@ -333,9 +333,15 @@ exception-handling construct. The names and misuse policy are approved.
 1. Implemented: complete string interface and reusable target-layout probe protocol.
    Prove lifecycle, allocation costs, header purity and static/shared linkage before
    extending this representation approach. No compiler facade migration in this slice.
-2. Add error_value and retained exception_info with the approved capture policy.
+2. Implemented: error_value and retained exception_info with the approved capture policy.
 3. Add source_buffer/byte_span and textbuilder, including invalidation and transfer tests.
 4. Migrate compiler consumers separately and measure end-to-end build/runtime costs.
 
-The first slice does not implement exception inspection or byte borrowing. Their
-full signatures above remain approved requirements, not currently available APIs.
+String, error_value and exception_info are implemented. Byte borrowing and
+textbuilder remain approved requirements, not currently available APIs.
+
+The glibc/libstdc++ measurement exposes exception-machinery allocations during
+capture and rethrow-based inspection (one per observation on the tested target).
+The retained facade has no separate heap state. Avoiding repeated inspection
+rethrows would require reviewing its storage design in a later slice; this slice
+keeps the approved exception_ptr-only representation.

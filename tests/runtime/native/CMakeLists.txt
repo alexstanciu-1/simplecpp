@@ -299,3 +299,17 @@ endforeach()
 add_test(NAME scpp_test_value_layout COMMAND ${Python3_EXECUTABLE}
   ${CMAKE_CURRENT_SOURCE_DIR}/../../../runtime/tools/value_layout.py
   --check --compiler ${CMAKE_CXX_COMPILER} ${scpp_layout_arguments})
+
+add_library(error_api_fixture OBJECT error_api_fixture.cpp)
+target_link_libraries(error_api_fixture PRIVATE scpp_runtime_configuration)
+add_executable(test_public_errors test_public_errors.cpp $<TARGET_OBJECTS:error_api_fixture>)
+target_link_libraries(test_public_errors PRIVATE scpp_core_api)
+add_test(NAME scpp_test_public_errors COMMAND test_public_errors)
+
+# Explicit diagnostic target only: glibc interposition must not replace ASan's allocator.
+set(scpp_allocation_probe_flags "${CMAKE_CXX_FLAGS} ${CMAKE_CXX_FLAGS_DEBUG} ${CMAKE_CXX_FLAGS_RELEASE} ${CMAKE_CXX_FLAGS_RELWITHDEBINFO} ${CMAKE_CXX_FLAGS_MINSIZEREL}")
+if(CMAKE_SYSTEM_NAME STREQUAL "Linux" AND NOT scpp_allocation_probe_flags MATCHES "sanitize")
+  add_executable(test_public_errors_allocations EXCLUDE_FROM_ALL test_public_errors.cpp $<TARGET_OBJECTS:error_api_fixture>)
+  target_compile_definitions(test_public_errors_allocations PRIVATE SCPP_MEASURE_GLIBC_ALLOCATIONS=1)
+  target_link_libraries(test_public_errors_allocations PRIVATE scpp_core_api)
+endif()

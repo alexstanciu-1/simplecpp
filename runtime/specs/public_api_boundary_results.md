@@ -139,8 +139,80 @@ The runtime still compiles core through its existing aggregate translation unit;
 matched before/after regressions. Tests are excluded from timed builds.
 
 Reproduce caller/adapter measurements with
-`python3 tests/runtime/native/measure_string_api.py --output <results.json>`.
+`python3 tests/runtime/native/measure_value_api.py --output <results.json>`.
 Target-local artifacts are `compiler/my-try-cpp/build/string-api-cost.json` and
 `string-core-build.json`; the latter measures removal/rebuild of only core's object,
 followed by a no-op. Existing build warning about redundant hash specialization
 instantiation is unchanged.
+
+## Error value and retained exception slice — 2026-10-27
+
+The complete approved `error_value` and `exception_info` interfaces are implemented
+in runtime core. Compiler facade migration, source borrowing and textbuilder remain
+separate slices. Target probes on WSL/dev002 report error_value 80 bytes/alignment 8
+and exception_info 8 bytes/alignment 8. Both contain real native objects; neither
+adds a heap-allocated facade. Retained handles own the original exception and its
+existing diagnostics/trace, without eagerly copying those fields.
+
+Allocation measurements distinguish `operator new` from glibc heap calls. The
+explicit diagnostic target `test_public_errors_allocations` interposes malloc,
+calloc and realloc through glibc entrypoints; it must run without sanitizers. The
+ordinary target uses normal allocation paths under ASan/UBSan. Measurements exclude
+construction/throwing of the original exception, whose trace/diagnostics already
+have native allocation costs. Counts below agree at O0/O2 on WSL; O2 also agrees on
+dev002 (Clang 18/libstdc++/glibc).
+
+| Operation | Observed allocation calls |
+| --- | ---: |
+| Default/empty error value and empty owned fields | 0 operator-new calls |
+| Error make/copy with long message and file | 2 operator-new calls |
+| Error move | 0 operator-new calls |
+| Error long-message getter | 1 operator-new call |
+| Runtime exception capture | 1 glibc heap call; 0 operator-new calls |
+| Retained-handle copy/assignment, including rvalue copy | 0 heap calls |
+| Long-message exception inspection | 2 glibc heap calls; 1 operator-new call |
+
+The exception_ptr representation is allocation-free as a facade, but rethrowing it
+for verification/inspection allocates through the tested C++ exception machinery.
+The getter's second allocation owns the returned string. Do not advertise capture
+or inspection as allocation-free based on operator-new counts alone. Counts are
+implementation observations, not portable guarantees. Avoiding repeated inspection
+rethrows would require a later representation/API review; this slice preserves the
+approved retained-pointer-only storage and original exception identity.
+
+Validation passed: 10 focused Release tests, 6 ASan/UBSan tests with leak detection,
+4 shared-runtime tests, 3 dev002 tests, and isolated O0 allocation/lifecycle checks.
+Coverage includes empty-but-present error values, owned field snapshots, copy/move
+and self-assignment, first/second-field allocation failure cleanup, retained lifetime
+after catch, non-destructive rvalue copying, native exception identity, exact details
+and trace entries, rethrow under a different active catch, checked indices, failed
+inspection cleanup, foreign exception identity and diagnosed outside-catch capture.
+Public headers remain independently template-free in both task configurations.
+
+Build costs (Clang 18/O2, no PCH/LTO; caller medians from three alternating trials):
+
+| Measurement | WSL | dev002 |
+| --- | ---: | ---: |
+| Public error/inspection caller | 0.0607 s | 0.0228 s |
+| Equivalent native-header caller | 1.0956 s | 0.5307 s |
+| error_value adapter alone, one compilation | 1.0476 s | 0.5175 s |
+| exception_info adapter alone, one compilation | 1.1771 s | 0.6296 s |
+| Full runtime-core recompile + archive, one run, Ninja 8 jobs | 16.1507 s | 8.4686 s |
+| Runtime-core no-op | 0.0273 s | 0.0162 s |
+
+Public caller preprocessing is 9,505 bytes versus 1,555,107 bytes for native headers.
+Core remains one aggregate translation unit. These are current costs, not a matched
+before/after experiment or compiler-wide gain; compiler consumers have not migrated.
+Tests and middleware builds are excluded from timing.
+
+Reproduce with `python3 tests/runtime/native/measure_value_api.py --facility errors
+--core-build compiler/my-try-cpp/build/runtime --output <results.json>`. The script now covers string (default) and errors. Local
+and remote final artifacts are `compiler/my-try-cpp/build/errors-api-cost.json`,
+including the forced core rebuild and no-op measurements. The existing redundant hash specialization warning remains
+unchanged. Glibc allocator instrumentation is an explicit diagnostic executable,
+not runtime code or a replacement for sanitizer testing.
+
+Final inspection constructs every owned result inside the handler, rather than
+escaping a reference to the caught object. This remains lifetime-safe if the C++
+implementation copies on rethrow. Affected sanitizer, O0/O2 allocation, static/shared
+and dev002 checks were rerun after this tightening; the table records final timings.
