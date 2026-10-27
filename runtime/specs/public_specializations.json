@@ -2,7 +2,8 @@
   "version": 1,
   "package": "runtime.core",
   "roots": [
-    "result<vector<string>>"
+    "result<vector<string>>",
+    "mixed"
   ],
   "leaves": {
     "string": {

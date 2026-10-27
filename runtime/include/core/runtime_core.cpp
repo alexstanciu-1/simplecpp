@@ -21,3 +21,6 @@
 
 #include "generated/vector_string.cpp"
 #include "generated/result_vector_string.cpp"
+
+#include "generated/float64.cpp"
+#include "generated/mixed.cpp"

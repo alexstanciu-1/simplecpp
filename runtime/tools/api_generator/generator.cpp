@@ -49,6 +49,10 @@ namespace scpp::api_generation
         for (const auto &[key,v] : names.fields) {
             auto name = v.text();
             if (!name.empty() && name.back() == '_') continue;
+            // A zero-parameter recipe already has its canonical concrete name.
+            // Importing it must not register an alias that shadows its own recipe.
+            if (name == key && metadata.at("families").has(key)
+                && metadata.at("families").at(key).at("parameters").items.empty()) continue;
             value m=value::object(); m["type"]=key; m["name"]=v; r["mappings"].items.push_back(m);
         }
         naming registry(r);

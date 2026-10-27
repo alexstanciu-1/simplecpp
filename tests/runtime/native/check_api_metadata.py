@@ -25,6 +25,7 @@ def invoke(data, failure=None):
     assert result.returncode == 0, result.stderr
     return json.loads(result.stdout)
 
+base['request']['roots'] = ['result<vector<string>>']
 plan=invoke(base)
 assert len(plan['units']) == 3
 assert 'vector<string>' in plan['types']
@@ -149,3 +150,24 @@ reused['imports']=result['types']
 for key,record in reused['imports'].items():reused['names'][key]=record['name']
 assert invoke(reused)['units']==[]
 print('PASS: typed hash/nullable closure, generic capability selection, rejected keys and import reuse')
+
+# Mixed and float are zero-parameter recipes; their names are not generator cases.
+boxed=copy.deepcopy(base)
+boxed['request']={'package':'test','roots':['mixed']}
+result=invoke(boxed)
+assert [u['identity'] for u in result['units']]==['float64','mixed']
+assert result['types']['mixed']['native']=='scpp::mixed_t'
+assert 'null_index_read' in result['units'][-1]['source']
+assert 'bound_range' in result['units'][-1]['probes'][1]['native']
+assert 'template' not in result['units'][-1]['header']
+renamed=copy.deepcopy(boxed)
+renamed['metadata']['families']['boxed']=renamed['metadata']['families'].pop('mixed')
+renamed['request']['roots']=['boxed']
+assert invoke(renamed)['types']['boxed']['native']=='scpp::mixed_t'
+print('PASS: zero-parameter scalar/boxed recipes, owned extraction and binding-aware cursor')
+
+reused=copy.deepcopy(boxed)
+reused['imports']=result['types']
+for key,record in reused['imports'].items(): reused['names'][key]=record['name']
+assert invoke(reused)['units']==[]
+print('PASS: canonical zero-parameter recipe imports do not create shadowing aliases')

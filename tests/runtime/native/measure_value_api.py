@@ -8,7 +8,7 @@ import tempfile
 import time
 
 parser = argparse.ArgumentParser(description=__doc__)
-parser.add_argument('--facility', choices=('string', 'errors', 'composition', 'integers'), default='string')
+parser.add_argument('--facility', choices=('string', 'errors', 'composition', 'integers', 'mixed'), default='string')
 parser.add_argument('--compiler', default='clang++')
 parser.add_argument('--trials', type=int, default=3)
 parser.add_argument('--skip-adapters', action='store_true')
@@ -24,6 +24,11 @@ with tempfile.TemporaryDirectory(prefix='scpp-string-cost-') as directory:
         'public': ('public', '#include "scpp/string.hpp"\nscpp::uint64 example(const scpp::string &s) { return s.byte_size(); }\n'),
         'native': ('include', '#include "scpp/string_t.hpp"\nstd::size_t example(const scpp::string_t &s) { return s.byte_size(); }\n'),
     }
+    if args.facility == 'mixed':
+        inputs = {
+            'public': ('public', '#include "scpp/mixed.hpp"\nscpp::int64 example(const scpp::mixed &v) { return v.get_int(); }\n'),
+            'native': ('include', '#include "scpp/mixed_t.hpp"\nscpp::int_t<> example(const scpp::mixed_t &v) { return v.get_int(); }\n'),
+        }
     if args.facility == 'errors':
         inputs = {
             'public': ('public', '#include "scpp/error_value.hpp"\n#include "scpp/exception_info.hpp"\nscpp::boolean present(const scpp::error_value &e) { return e.has_error(); }\nscpp::int64 count(const scpp::exception_info &e) { return e.detail_count(); }\n'),
@@ -56,6 +61,8 @@ with tempfile.TemporaryDirectory(prefix='scpp-string-cost-') as directory:
     results['adapter_seconds'] = {}
     if args.facility == 'integers':
         adapters = ['integers']
+    if args.facility == 'mixed':
+        adapters = ['generated/float64', 'generated/mixed']
     if args.facility == 'composition':
         adapters = ['generated/vector_string', 'generated/result_vector_string', '../modules/filesystem/public_scan']
     for adapter in ([] if args.skip_adapters else adapters):

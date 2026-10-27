@@ -328,3 +328,9 @@ target_link_libraries(test_api_generation PRIVATE scpp_api_generation Threads::T
 add_test(NAME scpp_test_api_generation COMMAND test_api_generation)
 add_test(NAME scpp_test_api_metadata COMMAND ${Python3_EXECUTABLE}
   ${CMAKE_CURRENT_SOURCE_DIR}/check_api_metadata.py --tool $<TARGET_FILE:scpp_api_generator>)
+
+add_library(mixed_api_fixture OBJECT mixed_api_fixture.cpp)
+target_link_libraries(mixed_api_fixture PRIVATE scpp_runtime_configuration)
+add_executable(test_public_mixed test_public_mixed.cpp $<TARGET_OBJECTS:mixed_api_fixture>)
+target_link_libraries(test_public_mixed PRIVATE scpp_core_api)
+add_test(NAME scpp_test_public_mixed COMMAND test_public_mixed)

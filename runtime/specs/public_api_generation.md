@@ -218,3 +218,37 @@ Publication imports treat a structural name ending in `_` as an assertion of the
 canonical generated name, not as an authored alias. A mismatch is rejected; normal
 authored-name restrictions remain unchanged. This permits application-owned nested
 specializations to be reused even when they have no friendly name mapping.
+
+## First mixed value surface
+
+`mixed` and `float64` are zero-parameter recipes using the same class, lifecycle,
+transport and companion mechanisms as parameterized families. No generator dispatch
+or new signature form is needed. Runtime publication demands `mixed`, which pulls in
+`float64`. The existing `null_t` declaration and `null` constant now live in the public
+include root; the compatibility header forwards to that same definition.
+
+`float64` stores native `float_t` inline and exposes construction from native double
+or concrete int64 plus native-value inspection. This first scalar slice does not
+claim the full floating operator surface. Double is an explicitly described native
+interchange leaf, not a templated dependency. Mixed construction/assignment accepts
+null, boolean, int64, float64 and string. Exact extraction returns owned public values;
+it is not a permissive scalar cast. Numeric conversions/operators remain later work.
+
+Mixed reads bind `null_index_read`, not the permissive legacy `mixed_t::get`: null or
+missing entries produce mixed null, but scalar receivers reject. Writes use the
+existing checked write helpers, including null bootstrap. Removal probes before
+mutation, so an absent/null receiver is not turned into a table. Self-aliased writes
+snapshot the input before mutating the receiver; nonaliased writes avoid that extra
+copy. These adaptations are short metadata snippets, not new container algorithms.
+`reset` and `clean` replace the binding with native null. `make_mixed_table` constructs
+an explicitly empty owned mixed table, distinct from null.
+
+The mixed companion cursor uses native `bound_range`, via `value_iteration`, rather
+than a direct hash cursor. It therefore observes replacement/move/reset of the boxed
+binding as well as table mutations. Keys and values return owned mixed values; null
+and scalar traversal reject. The mixed cursor's `next()` is a no-op when finished, including when preservation
+exhausts the remaining entries immediately after consumption; key/value reads still
+reject a finished cursor. Internal pointers, mutable extraction, weak-table hooks
+and native ownership carriers are not exposed. No dynamic/container cross-family
+conversion is introduced. Public nullable/mixed recursive dependencies and implicit
+C++ conversions remain outside this slice.

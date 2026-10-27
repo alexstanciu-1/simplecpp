@@ -391,3 +391,70 @@ sanitized core path, add `--sanitize`, set `ASAN_OPTIONS=detect_leaks=1` and
 `SCPP_API_GENERATOR`. The fixture publishes only in a temporary directory and removes
 it on exit; runtime publication demands remain unchanged. Shared identity keys,
 shared-value reference operations, mixed and dynamic hashes remain later slices.
+
+## First mixed value and scalar publication (2026-10-27)
+
+`mixed` and `float64` now use zero-parameter metadata recipes. The existing null
+sentinel is exposed through a template-free public header with a compatibility
+forwarder. The runtime demand includes mixed and its floating dependency. Native
+inline storage, exact scalar extraction, checked read/write helpers, lazy removal,
+null reset and binding-aware traversal remain the behavior owners. The only generator
+change fixes importing canonical zero-parameter identities without registering aliases
+that shadow their recipes. No type-name-specific generation branch was added.
+
+The compiled public-only test covers scalar kinds (including signed zero, infinity
+and NaN), exact extraction failures, owned strings, null bootstrap, missing reads,
+invalid scalar receivers, nested copy isolation, empty versus null iteration,
+mutation, reset, move and destruction during traversal. Self-aliased writes snapshot
+before mutation; an injected allocation failure verifies that a failed snapshot
+leaves the receiving value unchanged. The mixed cursor's finished `next()` is a no-op
+because preserving an already-consumed last entry can immediately exhaust traversal;
+finished key/value reads still reject.
+
+Matched native/public `operator new` counts (inputs prepared before measurement):
+
+| Workload | Native | Public |
+| --- | ---: | ---: |
+| Null/bool/int/float construction, scalar copy and reset | 0 | 0 |
+| Owned string boxing, copy and extraction | 5 | 5 |
+| Integer-keyed table construction, writes, copy and read | 5 | 5 |
+| Same table with traversal surviving binding reset | 8 | 8 |
+
+These are scoped allocation counts, not all allocator traffic. Existing native string
+and table allocations remain; this slice does not convert deep copies to COW.
+Measured inline storage is **40 bytes mixed**, **8 bytes float64**, and **184 bytes
+mixed cursor**, with compile-time size/alignment checks against the native types.
+
+Release and ASan/UBSan with leak detection pass, including the allocation-failure
+case. Metadata tests also pass with the sanitized generator. Leak detection runs
+outside the ptrace sandbox. A relocated sealed publication compiles an application
+`vector<mixed>` with owned extraction, reuses runtime mixed/float definitions, and
+subsequently reuses the sealed application specialization with zero generated units.
+
+WSL, Clang 18, O2; one serial caller/adapter trial to limit compilation:
+
+| Compile | Seconds |
+| --- | ---: |
+| Public mixed integer-extraction caller | 0.0525 |
+| Equivalent native-header caller | 1.2491 |
+| Standalone generated float64 adapter | 0.9350 |
+| Standalone generated mixed adapter | 3.0543 |
+
+Caller preprocessing is **16,588 vs 1,575,118 bytes**. The observed grouped normal
+core/test/tool rebuild was **23.34 s** and the instrumented group **46.62 s**, Ninja
+8 jobs. Those groups overlapped and are not isolated before/after performance trials.
+The existing bundled core still dominates a rebuild when its generated adapters
+change; this is not a compiler-wide build-speed claim. No dev002 run was performed.
+
+Reproduction:
+
+- Build `test_public_mixed` and `scpp_api_generator` in the runtime configuration.
+- Run `test_public_mixed` normally and in the sanitizer configuration with
+  `ASAN_OPTIONS=detect_leaks=1 UBSAN_OPTIONS=halt_on_error=1` outside ptrace.
+- Run `tests/runtime/native/test_mixed_composition.py --core
+  compiler/my-try-cpp/build/runtime/libscpp_runtime_core.a` for relocation/reuse.
+- Run `tests/runtime/native/measure_value_api.py --facility mixed --trials 1
+  --output compiler/my-try-cpp/build/mixed-api-cost.json` for caller and adapter costs.
+
+Floating arithmetic, mixed arithmetic/conversions, shared/weak ownership exposure,
+dynamic crossing, and recursive public mixed/nullable signatures remain later work.

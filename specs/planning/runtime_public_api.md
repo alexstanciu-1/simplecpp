@@ -435,3 +435,25 @@ identity keys/reference operations and mixed/dynamic families remain explicit la
 work, not implicit coverage of the typed recipe. Generation/probing still costs more
 than the tiny public caller; consolidating probes is a possible future optimization,
 not a reason to reintroduce per-family generation paths.
+
+### First mixed / scalar publication completed (2026-10-27)
+
+The runtime now publishes metadata-generated mixed and float64, plus its existing
+null sentinel through the public include root. Zero-parameter recipes fit the existing
+pipeline; canonical identity import needed a local naming correction. The public
+surface uses native checked read/write and binding-aware iteration helpers, retaining
+owned extraction and mixed value semantics. Native deep-copy/string allocation costs
+remain, with no extra wrapper allocation.
+
+The proof covers allocation parity, failed self-alias snapshot, nested values,
+replacement/move/destruction during iteration, ASan/UBSan/leaks, and relocated
+runtime/application specialization reuse. See the [measurements](../../runtime/specs/public_api_boundary_results.md#first-mixed-value-and-scalar-publication-2026-10-27).
+
+Remaining scope: full floating and mixed operator/conversion surfaces; dynamic and
+cross-family scalar conversion; recursive signature versus layout dependency handling;
+shared/weak native ownership hooks. These are not implicitly exposed by the recipe.
+
+Follow-up: vector/hash cursor recipes currently guard `next()` with `valid()`. Review
+that contract when preservation exhausts the remaining entries immediately after the
+last value is consumed. The new mixed cursor handles this with an end-idempotent
+`next()`; existing family behavior was not changed in this slice.

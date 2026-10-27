@@ -189,3 +189,12 @@ Concrete integer hash keys are adapted privately by the same configured generato
 (`scpp/detail/concrete_integer_keys.hpp`). Each specialization delegates hashing and
 equality to its exact native `int_t<Rep>` key authority. This does not add public
 traits, implicit numeric conversions, or additional source-language key admission.
+
+## Mixed and scalar publication
+
+The first generated boxed surface is `scpp::mixed` in `scpp/mixed.hpp`, using the
+existing native mixed representation in inline storage. `scpp::float64` is the
+concrete floating interchange/extraction type; `scpp/null_t.hpp` publishes the
+existing null sentinel without a second scalar identity. The surface preserves
+mixed-only tables and owned extraction. See [generation rules](public_api_generation.md#first-mixed-value-surface)
+for the bounded signatures, native helper ownership and deferred operations.
