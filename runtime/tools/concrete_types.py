@@ -86,6 +86,7 @@ def generate(request, output, runtime, dependencies, compiler, flags):
     identity = abi(compiler, flags)
     api = metadata(runtime)
     api_identity = digest(json.dumps(api, sort_keys=True).encode())
+    imported_apis = {}
     imported, leaves, names = {}, dict(data.get('leaves', {})), dict(data.get('names', {}))
     for dependency in dependencies:
         manifest = json.loads((dependency/'public/specializations.json').read_text())
@@ -103,6 +104,10 @@ def generate(request, output, runtime, dependencies, compiler, flags):
         for relative, checksum in manifest['public_files'].items():
             if digest(safe_path(dependency/'public', relative).read_bytes()) != checksum:
                 raise ValueError('Modified/incomplete dependency public package: '+relative)
+        for key, value in manifest.get('apis', {}).items():
+            if key in imported_apis and imported_apis[key] != value:
+                raise ValueError('Conflicting API ownership: '+key)
+            imported_apis[key] = value
         for key, value in manifest['leaves'].items():
             if key in leaves and leaves[key] != value:
                 raise ValueError('Conflicting leaf identity: '+key)
@@ -115,7 +120,7 @@ def generate(request, output, runtime, dependencies, compiler, flags):
                 raise ValueError('Conflicting concrete name: '+key)
             names[key] = value['name']
     tool = generator_tool(runtime)
-    envelope = {'metadata':api,'request':data,'imports':imported,'leaves':leaves,'names':names,'layouts':{}}
+    envelope = {'metadata':api,'request':data,'api_imports':imported_apis,'imports':imported,'leaves':leaves,'names':names,'layouts':{}}
     def plan():
         return json.loads(run([tool], json.dumps(envelope)))
     with tempfile.TemporaryDirectory(prefix='scpp-api-generation-') as directory:
@@ -166,7 +171,7 @@ def generate(request, output, runtime, dependencies, compiler, flags):
             generated.append(forwarding)
         public_files={str(p.relative_to(stage/'public')):digest(p.read_bytes()) for p in sorted((stage/'public').rglob('*.hpp'))}
         manifest={'version':1,'generator':VERSION,'abi':identity,'api_identity':api_identity,'package':data['package'],
-                  'leaves':result['leaves'],'types':result['types'],'sources':sources,'generated_files':generated,
+                  'leaves':result['leaves'],'types':result['types'],'apis':result['apis'],'sources':sources,'generated_files':generated,
                   'public_files':public_files,'artifacts':data.get('artifacts',[data['package']])}
         # Nothing is installed until parsing, generation and every target probe succeed.
         for relative in generated: write(safe_path(output,relative),safe_path(stage,relative).read_text())

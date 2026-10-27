@@ -26,6 +26,7 @@ def invoke(data, failure=None):
     return json.loads(result.stdout)
 
 base['request']['roots'] = ['result<vector<string>>']
+base['request']['apis'] = ['fs_scan']
 plan=invoke(base)
 assert len(plan['units']) == 3
 assert 'vector<string>' in plan['types']

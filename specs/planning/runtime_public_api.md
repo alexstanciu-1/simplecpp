@@ -490,7 +490,8 @@ it does not settle or expand those broader surfaces.
 
 ### Agreed numeric promotion direction (2026-10-27)
 
-Accepted design for the forthcoming global operator metadata; implementation pending.
+Accepted design, now implemented by the first global metadata resolver below;
+frontend integration remains pending.
 Operator admission happens **before** promotion. A conversion ordering is never
 permission to use null, bool or string as a numeric operand.
 
@@ -529,10 +530,10 @@ and application specialization reuse must use the same mechanism.
 - [Condition truthiness](../conditional_expression_matrix.md#condition-rule-for-ternary)
   is separate from casts: strings `""` and `"0"` are false, other strings true.
   Wrapper absence, errors and sentinels retain their individual contracts.
-- Ordinary boxed scalar equality currently has coercive behavior, including
+- Before this slice, ordinary boxed scalar equality had coercive behavior, including
   null equal to zero, bool truth comparisons and numeric-string comparisons
-  (`runtime/include/operators/identity/boxed_scalar_equality.hpp`). Do not describe
-  it as uniformly strict or silently change it while publishing the public API.
+  (`runtime/include/operators/identity/boxed_scalar_equality.hpp`). The explicitly
+  approved tightening below replaces those coercions.
 - Native string ordering is lexical; boxed ordering is currently numeric-only.
   A uniform string-ordering proposal would therefore require an explicit extension.
 
@@ -540,7 +541,8 @@ Native helper availability alone does not establish source-level admission.
 
 #### Agreed boxed equality and preserved conversions (2026-10-27)
 
-Accepted direction; implementation and normative semantic migration are pending:
+Accepted direction, implemented by the first slice below and recorded in the
+checked boxed scalar equality amendment in `specs/dynamic_types.md`:
 
 - Tighten boxed scalar `==` and `!=`. Numbers compare numerically using the
   admitted numeric promotion rules; bool compares with bool; string compares with
@@ -571,10 +573,32 @@ Implementation direction: statically known unsupported pairs reject; boxed pairs
 whose active kinds do not admit equality throw, for both `==` and `!=`. Explicitly
 admitted null/absence and wrapper-state comparisons remain separate. The previous
 recommendation to return false for all incompatible kinds is withdrawn. This is a
-semantic reconciliation task, not a claim that the current runtime already throws
-consistently: its scalar helper still coerces, and the existing fixture also contains
-the old null/empty-string equality expectation that the agreed tightening replaces.
+semantic reconciliation task completed by the first slice below: the helper now
+throws for unsupported non-null scalar kinds, and the old null/empty-string equality
+expectation has been replaced. The legacy fixture still has unrelated migration debt.
 
 Null checks should observe the existing null/absence contracts, not falsiness;
 carrier error and sentinel states must not silently become null. Any wider
 wrapper equality migration needs its own explicit scope.
+
+### First global operator slice (2026-10-27)
+
+The reusable C++ metadata tool now resolves numeric addition and same-family boxed
+ordinary equality demands and publishes normalized functions through the existing
+operation emitter. Numeric promotion is available through this resolver; existing
+frontend integer promotion has not yet migrated. Numeric functions use one selected
+type on both sides; mixed original operand pairs do not produce extra definitions.
+
+Checked boxed scalar equality is implemented in the shared native helper and exposed
+through metadata-generated public functions. Null checks use null state alone;
+incompatible non-null scalar kinds throw. Truthiness and concatenation are unchanged.
+The source contract amendment is in `specs/dynamic_types.md`. Broader operation groups,
+frontend integration, heterogeneous handwritten C++ syntax and wrapper migrations
+remain outside this slice. Existing function publication now records and reuses API
+ownership alongside type ownership; no second publication mechanism was introduced.
+
+Validation and single-run compile measurements are recorded in
+[runtime boundary results](../../runtime/specs/public_api_boundary_results.md#first-global-operator-metadata-slice--2026-10-27).
+Six focused tests pass normally and with ASan/UBSan/leak detection; successful
+measured operations allocate zero times. The old mixed fixture's removed dynamic-box
+API usage remains separate test-migration debt.

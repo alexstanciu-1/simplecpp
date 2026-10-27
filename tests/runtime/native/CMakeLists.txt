@@ -340,3 +340,9 @@ target_link_libraries(dynamic_api_fixture PRIVATE scpp_runtime_configuration)
 add_executable(test_public_dynamic test_public_dynamic.cpp $<TARGET_OBJECTS:dynamic_api_fixture>)
 target_link_libraries(test_public_dynamic PRIVATE scpp_core_api)
 add_test(NAME scpp_test_public_dynamic COMMAND test_public_dynamic)
+
+add_executable(test_global_operators test_global_operators.cpp)
+target_link_libraries(test_global_operators PRIVATE scpp_core_api)
+add_test(NAME scpp_test_global_operators COMMAND test_global_operators)
+add_test(NAME scpp_check_global_operators COMMAND ${Python3_EXECUTABLE}
+  ${CMAKE_CURRENT_SOURCE_DIR}/check_global_operators.py $<TARGET_FILE:scpp_api_generator>)

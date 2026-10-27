@@ -1,6 +1,7 @@
 #include "scpp/api_generation.hpp"
 #include "value.hpp"
 #include "names.hpp"
+#include "operators.hpp"
 #include "scpp/detail/string_access.hpp"
 #include <set>
 #include <functional>
@@ -65,7 +66,8 @@ namespace scpp::api_generation
 	}
 	class generator final
 	{
-		value metadata_, request_, imports_, layouts_, leaves_, names_, exports_=value::object(), units_=value::array();
+		value api_imports_, api_exports_=value::object();
+        value metadata_, request_, imports_, layouts_, leaves_, names_, exports_=value::object(), units_=value::array();
 		std::set<std::string> visiting_;
 		std::map<std::string,std::string> class_names_;
 		naming naming_;
@@ -257,6 +259,13 @@ namespace scpp::api_generation
 			record["borrow"]="detail::concrete_access::get<${native}>(${value})";
 			record["construct"]="detail::concrete_access::make<${cpp}, ${native}>(${factory})";
 			record["ordinary_api"]=this->metadata_.at("version");
+            // Native argument/result transports need their representation headers even
+            // when emitted in a free-function unit rather than the owning class unit.
+            record["includes"]=value::array();
+            auto transport_headers=probe_headers;
+            transport_headers.insert(private_headers.begin(),private_headers.end());
+            transport_headers.insert("scpp/detail/concrete_access.hpp");
+            for (const auto &header : transport_headers) record["includes"].items.emplace_back(header);
             this->validate_capabilities(recipe);
             if (recipe.has("capabilities")) record["capabilities"]=recipe.at("capabilities");
 			types["self"]=record;
@@ -325,11 +334,11 @@ namespace scpp::api_generation
 			this->units_.items.push_back(unit); this->exports_[canonical]=record; this->visiting_.erase(canonical); return record;
 		}
 	public:
-		explicit generator(const value &input) : metadata_(input.at("metadata")), request_(input.at("request")), imports_(input.at("imports")), layouts_(input.at("layouts")),
+		explicit generator(const value &input) : api_imports_(input.has("api_imports") ? input.at("api_imports") : value::object()), metadata_(input.at("metadata")), request_(input.at("request")), imports_(input.at("imports")), layouts_(input.at("layouts")),
 			leaves_(merged_leaves(input)), names_(input.at("names")), naming_(registry_for(metadata_,leaves_,names_)) {}
 		value run()
 		{
-			fields_only(this->metadata_,"version types families bindings functions capabilities", "API metadata");
+			fields_only(this->metadata_,"version types families bindings functions capabilities global_operators", "API metadata");
 			if (this->metadata_.at("version").text()!="api-v1") throw std::runtime_error("Unsupported API metadata version");
 			if (this->metadata_.has("capabilities")) {
                 if (this->metadata_.at("capabilities").type != value::kind::object)
@@ -347,9 +356,19 @@ namespace scpp::api_generation
 				this->claim(t.at("name").text(),key+":self");
 			}
 			for (const auto &root : this->request_.at("roots").items) this->materialize(root.text());
-			if (this->request_.has("apis")) for (const auto &api : this->request_.at("apis").items) {
-				const auto &f=this->metadata_.at("functions").at(api.text());
+			const auto generated_functions=operator_functions(this->metadata_);
+            if (this->request_.has("apis")) for (const auto &api : this->request_.at("apis").items) {
+                if (generated_functions.has(api.text()) && this->metadata_.at("functions").has(api.text()))
+                    throw std::runtime_error("Duplicate global operator ownership");
+                const auto &f=generated_functions.has(api.text()) ? generated_functions.at(api.text()) : this->metadata_.at("functions").at(api.text());
 				fields_only(f,"namespace header source operation includes", "API function");
+                if (this->api_exports_.has(api.text())) continue;
+                this->api_exports_[api.text()]=f;
+                if (this->api_imports_.has(api.text())) {
+                    if (json_text(this->api_imports_.at(api.text())) != json_text(f))
+                        throw std::runtime_error("Conflicting API ownership: "+api.text());
+                    continue;
+                }
 				std::set<std::string> headers,private_headers,probe_headers; std::string declaration; value checks=value::array();
 				auto source=this->operation(f.at("operation"),{}, {},headers,private_headers,"",declaration,checks,probe_headers);
 				this->dependencies(f,private_headers,{}); add_include(private_headers,f.at("header").text());
@@ -359,13 +378,17 @@ namespace scpp::api_generation
 				unit["probes"]=value::array(); unit["probe_includes"]=""; this->units_.items.push_back(unit);
 			}
 			for (const auto &[key,t] : this->imports_.fields) if (!this->exports_.has(key)) this->exports_[key]=t;
-			value out=value::object(); out["types"]=this->exports_; out["units"]=this->units_; out["leaves"]=this->leaves_; return out;
+			value out=value::object(); out["types"]=this->exports_; out["units"]=this->units_; out["leaves"]=this->leaves_;
+            for (const auto &[key,api] : this->api_imports_.fields) if (!this->api_exports_.has(key)) this->api_exports_[key]=api;
+            out["apis"]=this->api_exports_; return out;
 		}
 	};
 	string generate(const string &request)
 	{
 		auto input=parse_json(detail::string_access::get(request).native_value()); value output;
-		if (input.get("action")=="names") {
+		if (input.get("action")=="resolve_operator") {
+            output=resolve_operator(input.at("metadata"),input.at("request"));
+        } else if (input.get("action")=="names") {
 			naming names(input.at("registry")); output=value::array();
 			for (const auto &t : input.at("types").items) { auto [key,name]=names.resolve(t.text()); value row=value::array(); row.items={key,name}; output.items.push_back(row); }
 		} else output=generator(input).run();

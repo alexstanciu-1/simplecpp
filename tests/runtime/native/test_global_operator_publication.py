@@ -1,0 +1,47 @@
+"""Reuse normalized operators from a relocated sealed runtime; no adapter rebuild."""
+import argparse
+import json
+import os
+from pathlib import Path
+import shutil
+import subprocess
+import sys
+import tempfile
+
+root = Path(__file__).resolve().parents[3]
+sys.path.insert(0, str(root/'runtime/tools'))
+import concrete_types
+from public_package import seal_package
+parser = argparse.ArgumentParser(description=__doc__)
+parser.add_argument('--core', type=Path, required=True)
+parser.add_argument('--tool', type=Path, required=True)
+parser.add_argument('--sanitize', action='store_true')
+args = parser.parse_args()
+with tempfile.TemporaryDirectory(prefix='scpp-operator-publication-') as directory:
+    stage = Path(directory)
+    sdk = stage/'runtime'
+    for name in ['public','include','metadata']:
+        shutil.copytree(root/'runtime'/name, sdk/name)
+    (sdk/'lib').mkdir(); (sdk/'tools').mkdir()
+    shutil.copy2(args.core, sdk/'lib/libcore.a')
+    shutil.copy2(args.tool, sdk/'tools/scpp_api_generator')
+    seal_package(sdk, ['core'])
+    request = stage/'request.json'
+    request.write_text(json.dumps({'package':'app.operators', 'roots':[], 'apis':['add_int64','equal_mixed','add_int64']}))
+    os.environ['SCPP_API_GENERATOR'] = str(sdk/'tools/scpp_api_generator')
+    manifest = concrete_types.generate(request, stage/'app', sdk, [sdk], 'clang++', [])
+    assert manifest['sources'] == []
+    assert 'add_int64' in manifest['apis'] and 'equal_mixed' in manifest['apis']
+    (stage/'main.cpp').write_text('''#include "scpp/operators/add_int64.hpp"
+#include "scpp/operators/equal_mixed.hpp"
+int main() {
+    scpp::mixed value(scpp::int64(7));
+    return scpp::numeric_add(scpp::int64(3),scpp::int64(4)).native_value()==7
+        && static_cast<bool>(scpp::boxed_equal(value,value)) ? 0 : 1;
+}
+''')
+    flags = ['-fsanitize=address,undefined', '-fno-sanitize-recover=all'] if args.sanitize else []
+    subprocess.run(['clang++','-std=c++23','-O2',*flags,'-I'+str(sdk/'public'),str(stage/'main.cpp'),
+        str(sdk/'lib/libcore.a'),'-fuse-ld=mold','-o',str(stage/'proof')], check=True)
+    subprocess.run([stage/'proof'], check=True)
+    print('PASS: sealed relocated operator import, zero generated units, public-only linked caller')

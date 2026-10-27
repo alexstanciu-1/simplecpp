@@ -281,3 +281,38 @@ reference counting. This API does not reject them, weaken edges or introduce a
 collector. Cycle reclamation is recorded as runtime debt in the public API plan.
 Tests deliberately remove their cycle edges before checking leak freedom; this is
 not evidence of automatic cyclic garbage collection.
+
+## Global operator resolution and normalized publication (first slice)
+
+`global_operators` in the same API metadata owns type-to-domain membership, each
+numeric domain's `maximum`, group admission rules and operation bindings. The C++
+`generate` entrypoint accepts `action: "resolve_operator"`, `metadata` and a `request`
+with `operation`, `left` and `right` canonical type identities. It returns the common
+`operand_type`, `result_type`, normalized `api`, function and header. It does not
+execute operands, insert source casts, or grant source-language admission. The caller
+must evaluate and convert the left operand before the right, following the language
+contract. Explicit casts are resolved before this query.
+
+Rules match domain pairs, not individual type combinations. `same_or_maximum` keeps
+identical types and otherwise chooses the named domain maximum; `maximum` always
+chooses that maximum. Missing rules reject; duplicate domain rules and unknown
+policies reject. Signed/unsigned have no shared arithmetic rule. No generator branch
+recognizes integer, float, mixed or dynamic names. Representation and transport stay
+in the existing leaf/family descriptors rather than a second type registry.
+
+Each operation defines a group, public function name, expression snippet, publication
+list, optional result type and private includes. `${public:Selected}` denotes the
+normalized type. Omitting `returns` selects that type. The same operation emitter
+publishes one implementation per selected type, not one per original operand pair.
+The first slice exposes `numeric_add` and `boxed_equal`/`boxed_not_equal` through
+focused `scpp/operators/*.hpp` headers. It does not add heterogeneous C++ operator
+syntax or wire the compiler frontend to this resolver. Boxed runtime-kind validation
+remains in the shared native equality owner.
+
+Normalized functions enter the ordinary `apis` demand list as operation/type names.
+The existing specialization manifest now also carries API descriptors. Verified
+imports pass `api_imports` to the generator; matching descriptors reuse definitions,
+conflicts reject, and repeated local demands emit once. Metadata/ABI/artifact checks
+remain the responsibility of the existing publisher. Native transport descriptors
+carry their private representation dependencies so free-function implementations
+compile independently, not only inside the core implementation bundle.

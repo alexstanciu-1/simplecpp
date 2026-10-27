@@ -4,9 +4,11 @@
 #include "scpp/detail/string_access.hpp"
 #include "scpp/dynamic.hpp"
 #include "scpp/dynamic_t.hpp"
+#include "scpp/float_t.hpp"
 #include "scpp/index_write_path.hpp"
 #include "scpp/int_t.hpp"
 #include "scpp/keyed_path.hpp"
+#include "scpp/mixed_t.hpp"
 #include "scpp/value_iteration.hpp"
 #include <type_traits>
 namespace scpp {

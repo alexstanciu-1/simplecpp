@@ -363,16 +363,24 @@ void loose_equality_and_text() {
 	for (const auto &left : samples) for (const auto &right : samples) {
 		const auto a = scpp::cast<value>(left);
 		const auto b = scpp::cast<value>(right);
-		require((a == b).native_value() == (left == right).native_value(), "shared scalar equality parity");
-		require((a != b).native_value() != (a == b).native_value(), "inequality complements equality");
-	}
-	const value null;
-	require((null == value{string_t{""}}).native_value(), "null equals empty text");
-	require(!(null == value{string_t{"0"}}).native_value(), "null differs from text zero");
-	require((value{scpp::bool_t{false}} == value{string_t{"0"}}).native_value(), "false equals text zero");
-	require((value{scpp::bool_t{true}} == value{string_t{"false"}}).native_value(), "bool equality uses truthiness not explicit bool cast");
-	require((value{int_t<>{2LL}} == value{string_t{" 2 "}}).native_value(), "numeric equality accepts surrounding whitespace");
-	require(!(value{int_t<>{2LL}} == value{string_t{"2x"}}).native_value(), "numeric equality rejects trailing text");
+        const bool left_numeric = left.is_int().native_value() || left.is_float().native_value();
+        const bool right_numeric = right.is_int().native_value() || right.is_float().native_value();
+        const bool admitted = left.kind() == right.kind() || left.is_null().native_value()
+            || right.is_null().native_value() || (left_numeric && right_numeric);
+        if (admitted) {
+            require((a == b).native_value() == (left == right).native_value(), "shared scalar equality parity");
+            require((a != b).native_value() != (a == b).native_value(), "inequality complements equality");
+        } else {
+            bool caught[4] = {};
+            try { (void)(a == b); } catch (const std::runtime_error &) { caught[0] = true; }
+            try { (void)(a != b); } catch (const std::runtime_error &) { caught[1] = true; }
+            try { (void)(left == right); } catch (const std::runtime_error &) { caught[2] = true; }
+            try { (void)(left != right); } catch (const std::runtime_error &) { caught[3] = true; }
+            require(caught[0] && caught[1] && caught[2] && caught[3], "unsupported equality throws in both families");
+        }
+    }
+    const value null;
+    require(!(null == value{string_t{""}}).native_value(), "null differs from empty text");
 	require(!(value{string_t{"2"}} == value{string_t{"02"}}).native_value(), "two strings compare as strings");
 	value first = value::make_container();
 	value alias = first;

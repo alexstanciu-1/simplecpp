@@ -77,6 +77,36 @@
       "cpp": "double",
       "header": "",
       "owner": "runtime.core"
+    },
+    "int8": {
+      "cpp": "scpp::int8",
+      "header": "scpp/integers.hpp",
+      "owner": "runtime.core"
+    },
+    "int16": {
+      "cpp": "scpp::int16",
+      "header": "scpp/integers.hpp",
+      "owner": "runtime.core"
+    },
+    "int32": {
+      "cpp": "scpp::int32",
+      "header": "scpp/integers.hpp",
+      "owner": "runtime.core"
+    },
+    "uint8": {
+      "cpp": "scpp::uint8",
+      "header": "scpp/integers.hpp",
+      "owner": "runtime.core"
+    },
+    "uint16": {
+      "cpp": "scpp::uint16",
+      "header": "scpp/integers.hpp",
+      "owner": "runtime.core"
+    },
+    "uint32": {
+      "cpp": "scpp::uint32",
+      "header": "scpp/integers.hpp",
+      "owner": "runtime.core"
     }
   },
   "families": {
@@ -2045,6 +2075,168 @@
       "checks": [
         "scpp::hash_detail::integer_key<${cpp}>"
       ]
+    }
+  },
+  "global_operators": {
+    "types": {
+      "int8": {
+        "domain": "signed"
+      },
+      "int16": {
+        "domain": "signed"
+      },
+      "int32": {
+        "domain": "signed"
+      },
+      "int64": {
+        "domain": "signed"
+      },
+      "uint8": {
+        "domain": "unsigned"
+      },
+      "uint16": {
+        "domain": "unsigned"
+      },
+      "uint32": {
+        "domain": "unsigned"
+      },
+      "uint64": {
+        "domain": "unsigned"
+      },
+      "float64": {
+        "domain": "floating"
+      },
+      "mixed": {
+        "domain": "mixed"
+      },
+      "dynamic": {
+        "domain": "dynamic"
+      }
+    },
+    "domains": {
+      "signed": {
+        "maximum": "int64"
+      },
+      "unsigned": {
+        "maximum": "uint64"
+      },
+      "floating": {
+        "maximum": "float64"
+      },
+      "mixed": {
+        "maximum": "mixed"
+      },
+      "dynamic": {
+        "maximum": "dynamic"
+      }
+    },
+    "groups": {
+      "numeric": {
+        "rules": [
+          {
+            "left": "signed",
+            "right": "signed",
+            "selection": "same_or_maximum",
+            "domain": "signed"
+          },
+          {
+            "left": "unsigned",
+            "right": "unsigned",
+            "selection": "same_or_maximum",
+            "domain": "unsigned"
+          },
+          {
+            "left": "floating",
+            "right": "floating",
+            "selection": "same_or_maximum",
+            "domain": "floating"
+          },
+          {
+            "left": "signed",
+            "right": "floating",
+            "selection": "maximum",
+            "domain": "floating"
+          },
+          {
+            "left": "floating",
+            "right": "signed",
+            "selection": "maximum",
+            "domain": "floating"
+          },
+          {
+            "left": "unsigned",
+            "right": "floating",
+            "selection": "maximum",
+            "domain": "floating"
+          },
+          {
+            "left": "floating",
+            "right": "unsigned",
+            "selection": "maximum",
+            "domain": "floating"
+          }
+        ]
+      },
+      "boxed_equality": {
+        "rules": [
+          {
+            "left": "mixed",
+            "right": "mixed",
+            "selection": "same_or_maximum",
+            "domain": "mixed"
+          },
+          {
+            "left": "dynamic",
+            "right": "dynamic",
+            "selection": "same_or_maximum",
+            "domain": "dynamic"
+          }
+        ]
+      }
+    },
+    "operations": {
+      "add": {
+        "group": "numeric",
+        "name": "numeric_add",
+        "expression": "${public:Selected}(${public:left}.native_value() + ${public:right}.native_value())",
+        "publish": [
+          "int8",
+          "int16",
+          "int32",
+          "int64",
+          "uint8",
+          "uint16",
+          "uint32",
+          "uint64",
+          "float64"
+        ]
+      },
+      "equal": {
+        "group": "boxed_equality",
+        "name": "boxed_equal",
+        "returns": "boolean",
+        "expression": "(${native:left} == ${native:right}).native_value()",
+        "publish": [
+          "mixed",
+          "dynamic"
+        ],
+        "includes": [
+          "operators/identity/boxed_scalar_equality.hpp"
+        ]
+      },
+      "not_equal": {
+        "group": "boxed_equality",
+        "name": "boxed_not_equal",
+        "returns": "boolean",
+        "expression": "(${native:left} != ${native:right}).native_value()",
+        "publish": [
+          "mixed",
+          "dynamic"
+        ],
+        "includes": [
+          "operators/identity/boxed_scalar_equality.hpp"
+        ]
+      }
     }
   }
 }

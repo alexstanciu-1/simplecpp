@@ -524,3 +524,71 @@ or move behavior to satisfy those tests.
 The same native test now selects its numeric-string key expectation from the existing
 `SCPP_LANGUAGE_TARGET_PHP` setting; this compiler runtime build has that option off.
 No key normalization behavior was changed.
+
+## First global operator metadata slice — 2026-10-27
+
+The existing C++ API library resolves domain admission and normalized operand/result
+types from `global_operators` metadata. This slice publishes nine normalized numeric
+addition functions and four boxed equality/inequality functions, rather than all
+numeric operand pairs. The existing manifest/emitter now records API ownership and
+reuses imported normalized definitions. Source frontend integration and other operator
+groups remain pending; this is not a compiler-wide promotion migration.
+
+Validation on WSL, Clang, eight build jobs:
+
+- Six focused release tests pass (1.22 s total): global operators, dynamic native
+  behavior, public dynamic lifetime/allocation behavior, reusable API generation,
+  metadata generation and global operator metadata checks.
+- The same six pass under ASan/UBSan with leak detection (4.14 s). LeakSanitizer
+  required execution outside the sandbox's ptrace environment. No sanitizer errors
+  were reported. Instrumented core and tooling were built, not merely the callers.
+- The public operator test covers 81 scalar pairs in both boxed families and both
+  equality operators: 42 incompatible non-null pairs throw. Null/present comparisons
+  return false; numeric int/float equality remains admitted. NaN, embedded NUL bytes,
+  inequality and normalized signed/unsigned/floating additions are checked.
+- A 100-iteration successful-operation loop (addition and boxed string comparisons)
+  reports **zero allocations**. This excludes constructing inputs and exception
+  paths; no allocation-free failure guarantee is claimed.
+- Metadata-only tests cover signed/unsigned rejection, null/bool/string arithmetic
+  rejection, same-type retention, family-maximum selection, metadata changes affecting
+  resolution, ambiguous-rule/signature rejection, deduplicated demands and matching/
+  conflicting API imports. Existing template-default and composition checks pass.
+- A relocated sealed-runtime publication test passes normally and with ASan/UBSan/
+  leak detection. Re-requesting normalized operators generates zero implementation
+  units; a public-only caller links and runs against the relocated archive.
+- Both generated equality adapters compile independently, proving their native
+  transport headers no longer depend on inclusion order in the core bundle.
+
+Single-run compile measurements (`-std=c++23 -O2`, no timing repetitions):
+
+| Case | Seconds | Preprocessed bytes |
+| --- | ---: | ---: |
+| Public addition + boxed equality caller | 0.0732 | 17,837 |
+| Equivalent native-header caller | 3.3736 | 3,602,497 |
+| Standalone mixed equality adapter | 3.5305 | 3,673,232 |
+| Standalone dynamic equality adapter | 3.4203 | 3,676,089 |
+
+The focused release rebuild, including the core bundle, took **20.41 s**, peak
+reported child RSS **406,204 KiB**. The instrumented focused build took **58.56 s**,
+peak **603,232 KiB**, including stale module prerequisites. These are touched-target
+build costs, not clean compiler builds or aggregate process-memory measurements.
+No dev002 measurement was requested for this slice. Timings are single observations,
+not stable speedup claims. Local raw measurements: `compiler/my-try-cpp/build/global-operator-cost.json`.
+
+Reproduce caller/adapter costs with
+`python3 tests/runtime/native/measure_global_operators.py`. Focused CTest selection:
+`scpp_(test_global_operators|test_dynamic_value|test_public_dynamic|test_api_generation|check_global_operators|test_api_metadata)$`.
+For instrumentation, use the sanitizer runtime build with
+`ASAN_OPTIONS=detect_leaks=1 UBSAN_OPTIONS=halt_on_error=1`.
+
+Known unrelated fixture limitation: `test_mixed_t_dynamic.cpp` still contains old
+`dynamic_`, `dynamic_box` and `dynamic_v` usages, so that whole legacy target does not
+compile against the separated-family runtime. Its null/empty-string expectation was
+updated, but its broader migration was not folded into this slice. The active dynamic
+fixture and public pair matrix prove the changed equality behavior for both families.
+The previously tracked REL-DEBT-04 bool/int comparison conflict is resolved in the
+shared helper; this does not claim the entire legacy fixture is repaired.
+
+Reproduce the publication proof with
+`python3 tests/runtime/native/test_global_operator_publication.py --core <runtime-build>/libscpp_runtime_core.a --tool <runtime-build>/scpp_api_generator`;
+add `--sanitize` with the instrumented build and sanitizer environment above.

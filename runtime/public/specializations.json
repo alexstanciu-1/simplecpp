@@ -1,6 +1,372 @@
 {
   "abi": "529dd5502370f48d64891818e9439aae72831b990b4027e8abe25c50c1216c21",
-  "api_identity": "92eb01edee4da45b257a96d9969fc150d7ad422e999a24ee589db04636fa4c97",
+  "api_identity": "6543bdb416358d410a0e6e024fd57f208f6039be3855945c77a533f3d368f7cf",
+  "apis": {
+    "add_float64": {
+      "header": "scpp/operators/add_float64.hpp",
+      "namespace": "scpp",
+      "operation": {
+        "expression": "${public:float64}(${public:left}.native_value() + ${public:right}.native_value())",
+        "name": "numeric_add",
+        "parameters": [
+          {
+            "name": "left",
+            "passing": "const_ref",
+            "type": "float64"
+          },
+          {
+            "name": "right",
+            "passing": "const_ref",
+            "type": "float64"
+          }
+        ],
+        "returns": "float64",
+        "uses": [
+          "float64"
+        ]
+      },
+      "source": "include/scpp/generated/public_add_float64.cpp"
+    },
+    "add_int16": {
+      "header": "scpp/operators/add_int16.hpp",
+      "namespace": "scpp",
+      "operation": {
+        "expression": "${public:int16}(${public:left}.native_value() + ${public:right}.native_value())",
+        "name": "numeric_add",
+        "parameters": [
+          {
+            "name": "left",
+            "passing": "const_ref",
+            "type": "int16"
+          },
+          {
+            "name": "right",
+            "passing": "const_ref",
+            "type": "int16"
+          }
+        ],
+        "returns": "int16",
+        "uses": [
+          "int16"
+        ]
+      },
+      "source": "include/scpp/generated/public_add_int16.cpp"
+    },
+    "add_int32": {
+      "header": "scpp/operators/add_int32.hpp",
+      "namespace": "scpp",
+      "operation": {
+        "expression": "${public:int32}(${public:left}.native_value() + ${public:right}.native_value())",
+        "name": "numeric_add",
+        "parameters": [
+          {
+            "name": "left",
+            "passing": "const_ref",
+            "type": "int32"
+          },
+          {
+            "name": "right",
+            "passing": "const_ref",
+            "type": "int32"
+          }
+        ],
+        "returns": "int32",
+        "uses": [
+          "int32"
+        ]
+      },
+      "source": "include/scpp/generated/public_add_int32.cpp"
+    },
+    "add_int64": {
+      "header": "scpp/operators/add_int64.hpp",
+      "namespace": "scpp",
+      "operation": {
+        "expression": "${public:int64}(${public:left}.native_value() + ${public:right}.native_value())",
+        "name": "numeric_add",
+        "parameters": [
+          {
+            "name": "left",
+            "passing": "const_ref",
+            "type": "int64"
+          },
+          {
+            "name": "right",
+            "passing": "const_ref",
+            "type": "int64"
+          }
+        ],
+        "returns": "int64",
+        "uses": [
+          "int64"
+        ]
+      },
+      "source": "include/scpp/generated/public_add_int64.cpp"
+    },
+    "add_int8": {
+      "header": "scpp/operators/add_int8.hpp",
+      "namespace": "scpp",
+      "operation": {
+        "expression": "${public:int8}(${public:left}.native_value() + ${public:right}.native_value())",
+        "name": "numeric_add",
+        "parameters": [
+          {
+            "name": "left",
+            "passing": "const_ref",
+            "type": "int8"
+          },
+          {
+            "name": "right",
+            "passing": "const_ref",
+            "type": "int8"
+          }
+        ],
+        "returns": "int8",
+        "uses": [
+          "int8"
+        ]
+      },
+      "source": "include/scpp/generated/public_add_int8.cpp"
+    },
+    "add_uint16": {
+      "header": "scpp/operators/add_uint16.hpp",
+      "namespace": "scpp",
+      "operation": {
+        "expression": "${public:uint16}(${public:left}.native_value() + ${public:right}.native_value())",
+        "name": "numeric_add",
+        "parameters": [
+          {
+            "name": "left",
+            "passing": "const_ref",
+            "type": "uint16"
+          },
+          {
+            "name": "right",
+            "passing": "const_ref",
+            "type": "uint16"
+          }
+        ],
+        "returns": "uint16",
+        "uses": [
+          "uint16"
+        ]
+      },
+      "source": "include/scpp/generated/public_add_uint16.cpp"
+    },
+    "add_uint32": {
+      "header": "scpp/operators/add_uint32.hpp",
+      "namespace": "scpp",
+      "operation": {
+        "expression": "${public:uint32}(${public:left}.native_value() + ${public:right}.native_value())",
+        "name": "numeric_add",
+        "parameters": [
+          {
+            "name": "left",
+            "passing": "const_ref",
+            "type": "uint32"
+          },
+          {
+            "name": "right",
+            "passing": "const_ref",
+            "type": "uint32"
+          }
+        ],
+        "returns": "uint32",
+        "uses": [
+          "uint32"
+        ]
+      },
+      "source": "include/scpp/generated/public_add_uint32.cpp"
+    },
+    "add_uint64": {
+      "header": "scpp/operators/add_uint64.hpp",
+      "namespace": "scpp",
+      "operation": {
+        "expression": "${public:uint64}(${public:left}.native_value() + ${public:right}.native_value())",
+        "name": "numeric_add",
+        "parameters": [
+          {
+            "name": "left",
+            "passing": "const_ref",
+            "type": "uint64"
+          },
+          {
+            "name": "right",
+            "passing": "const_ref",
+            "type": "uint64"
+          }
+        ],
+        "returns": "uint64",
+        "uses": [
+          "uint64"
+        ]
+      },
+      "source": "include/scpp/generated/public_add_uint64.cpp"
+    },
+    "add_uint8": {
+      "header": "scpp/operators/add_uint8.hpp",
+      "namespace": "scpp",
+      "operation": {
+        "expression": "${public:uint8}(${public:left}.native_value() + ${public:right}.native_value())",
+        "name": "numeric_add",
+        "parameters": [
+          {
+            "name": "left",
+            "passing": "const_ref",
+            "type": "uint8"
+          },
+          {
+            "name": "right",
+            "passing": "const_ref",
+            "type": "uint8"
+          }
+        ],
+        "returns": "uint8",
+        "uses": [
+          "uint8"
+        ]
+      },
+      "source": "include/scpp/generated/public_add_uint8.cpp"
+    },
+    "equal_dynamic": {
+      "header": "scpp/operators/equal_dynamic.hpp",
+      "namespace": "scpp",
+      "operation": {
+        "expression": "(${native:left} == ${native:right}).native_value()",
+        "includes": [
+          "operators/identity/boxed_scalar_equality.hpp"
+        ],
+        "name": "boxed_equal",
+        "parameters": [
+          {
+            "name": "left",
+            "passing": "const_ref",
+            "type": "dynamic"
+          },
+          {
+            "name": "right",
+            "passing": "const_ref",
+            "type": "dynamic"
+          }
+        ],
+        "returns": "boolean",
+        "uses": [
+          "dynamic"
+        ]
+      },
+      "source": "include/scpp/generated/public_equal_dynamic.cpp"
+    },
+    "equal_mixed": {
+      "header": "scpp/operators/equal_mixed.hpp",
+      "namespace": "scpp",
+      "operation": {
+        "expression": "(${native:left} == ${native:right}).native_value()",
+        "includes": [
+          "operators/identity/boxed_scalar_equality.hpp"
+        ],
+        "name": "boxed_equal",
+        "parameters": [
+          {
+            "name": "left",
+            "passing": "const_ref",
+            "type": "mixed"
+          },
+          {
+            "name": "right",
+            "passing": "const_ref",
+            "type": "mixed"
+          }
+        ],
+        "returns": "boolean",
+        "uses": [
+          "mixed"
+        ]
+      },
+      "source": "include/scpp/generated/public_equal_mixed.cpp"
+    },
+    "fs_scan": {
+      "header": "modules/filesystem/scan.hpp",
+      "includes": [
+        "scpp/detail/concrete_access.hpp",
+        "scpp/detail/string_access.hpp",
+        "modules/filesystem/detail/scan.hpp"
+      ],
+      "namespace": "scpp::fs",
+      "operation": {
+        "body": "return filesystem::filesystem_detail::scan_owned<${public:vector<string>}>(${native:path}, [](std::string name) {\n    return detail::string_access::make([&] { return string_t(std::move(name)); });\n});",
+        "kind": "function",
+        "name": "scan",
+        "parameters": [
+          {
+            "name": "path",
+            "passing": "const_ref",
+            "type": "string"
+          }
+        ],
+        "returns": "result<vector<string>>",
+        "transport": "native",
+        "uses": [
+          "vector<string>"
+        ]
+      },
+      "source": "include/modules/filesystem/public_scan.cpp"
+    },
+    "not_equal_dynamic": {
+      "header": "scpp/operators/not_equal_dynamic.hpp",
+      "namespace": "scpp",
+      "operation": {
+        "expression": "(${native:left} != ${native:right}).native_value()",
+        "includes": [
+          "operators/identity/boxed_scalar_equality.hpp"
+        ],
+        "name": "boxed_not_equal",
+        "parameters": [
+          {
+            "name": "left",
+            "passing": "const_ref",
+            "type": "dynamic"
+          },
+          {
+            "name": "right",
+            "passing": "const_ref",
+            "type": "dynamic"
+          }
+        ],
+        "returns": "boolean",
+        "uses": [
+          "dynamic"
+        ]
+      },
+      "source": "include/scpp/generated/public_not_equal_dynamic.cpp"
+    },
+    "not_equal_mixed": {
+      "header": "scpp/operators/not_equal_mixed.hpp",
+      "namespace": "scpp",
+      "operation": {
+        "expression": "(${native:left} != ${native:right}).native_value()",
+        "includes": [
+          "operators/identity/boxed_scalar_equality.hpp"
+        ],
+        "name": "boxed_not_equal",
+        "parameters": [
+          {
+            "name": "left",
+            "passing": "const_ref",
+            "type": "mixed"
+          },
+          {
+            "name": "right",
+            "passing": "const_ref",
+            "type": "mixed"
+          }
+        ],
+        "returns": "boolean",
+        "uses": [
+          "mixed"
+        ]
+      },
+      "source": "include/scpp/generated/public_not_equal_mixed.cpp"
+    }
+  },
   "artifacts": [
     "runtime.core"
   ],
@@ -22,7 +388,46 @@
     "include/scpp/dynamic.hpp",
     "public/modules/filesystem/scan.hpp",
     "include/modules/filesystem/public_scan.cpp",
-    "include/modules/filesystem/scan.hpp"
+    "include/modules/filesystem/scan.hpp",
+    "public/scpp/operators/add_int8.hpp",
+    "include/scpp/generated/public_add_int8.cpp",
+    "include/scpp/operators/add_int8.hpp",
+    "public/scpp/operators/add_int16.hpp",
+    "include/scpp/generated/public_add_int16.cpp",
+    "include/scpp/operators/add_int16.hpp",
+    "public/scpp/operators/add_int32.hpp",
+    "include/scpp/generated/public_add_int32.cpp",
+    "include/scpp/operators/add_int32.hpp",
+    "public/scpp/operators/add_int64.hpp",
+    "include/scpp/generated/public_add_int64.cpp",
+    "include/scpp/operators/add_int64.hpp",
+    "public/scpp/operators/add_uint8.hpp",
+    "include/scpp/generated/public_add_uint8.cpp",
+    "include/scpp/operators/add_uint8.hpp",
+    "public/scpp/operators/add_uint16.hpp",
+    "include/scpp/generated/public_add_uint16.cpp",
+    "include/scpp/operators/add_uint16.hpp",
+    "public/scpp/operators/add_uint32.hpp",
+    "include/scpp/generated/public_add_uint32.cpp",
+    "include/scpp/operators/add_uint32.hpp",
+    "public/scpp/operators/add_uint64.hpp",
+    "include/scpp/generated/public_add_uint64.cpp",
+    "include/scpp/operators/add_uint64.hpp",
+    "public/scpp/operators/add_float64.hpp",
+    "include/scpp/generated/public_add_float64.cpp",
+    "include/scpp/operators/add_float64.hpp",
+    "public/scpp/operators/equal_mixed.hpp",
+    "include/scpp/generated/public_equal_mixed.cpp",
+    "include/scpp/operators/equal_mixed.hpp",
+    "public/scpp/operators/equal_dynamic.hpp",
+    "include/scpp/generated/public_equal_dynamic.cpp",
+    "include/scpp/operators/equal_dynamic.hpp",
+    "public/scpp/operators/not_equal_mixed.hpp",
+    "include/scpp/generated/public_not_equal_mixed.cpp",
+    "include/scpp/operators/not_equal_mixed.hpp",
+    "public/scpp/operators/not_equal_dynamic.hpp",
+    "include/scpp/generated/public_not_equal_dynamic.cpp",
+    "include/scpp/operators/not_equal_dynamic.hpp"
   ],
   "generator": "metadata-api-v1",
   "leaves": {
@@ -48,6 +453,16 @@
       "native": "scpp::error_t",
       "owner": "runtime.core"
     },
+    "int16": {
+      "cpp": "scpp::int16",
+      "header": "scpp/integers.hpp",
+      "owner": "runtime.core"
+    },
+    "int32": {
+      "cpp": "scpp::int32",
+      "header": "scpp/integers.hpp",
+      "owner": "runtime.core"
+    },
     "int64": {
       "borrow": "scpp::int_t<>(${value}.native_value())",
       "capabilities": [
@@ -60,6 +475,11 @@
       "includes": [
         "scpp/int_t.hpp"
       ],
+      "owner": "runtime.core"
+    },
+    "int8": {
+      "cpp": "scpp::int8",
+      "header": "scpp/integers.hpp",
       "owner": "runtime.core"
     },
     "native_double": {
@@ -86,6 +506,16 @@
       "native": "scpp::string_t",
       "owner": "runtime.core"
     },
+    "uint16": {
+      "cpp": "scpp::uint16",
+      "header": "scpp/integers.hpp",
+      "owner": "runtime.core"
+    },
+    "uint32": {
+      "cpp": "scpp::uint32",
+      "header": "scpp/integers.hpp",
+      "owner": "runtime.core"
+    },
     "uint64": {
       "borrow": "${value}.native_value()",
       "capabilities": [
@@ -96,6 +526,11 @@
       "cpp": "scpp::uint64",
       "header": "scpp/integers.hpp",
       "includes": [],
+      "owner": "runtime.core"
+    },
+    "uint8": {
+      "cpp": "scpp::uint8",
+      "header": "scpp/integers.hpp",
       "owner": "runtime.core"
     },
     "void": {
@@ -117,6 +552,19 @@
     "scpp/integers.hpp": "99af2c7358126433cf2de00f8265fafe20a523f124e70c91e97fcd2a8aec9b1f",
     "scpp/mixed.hpp": "6ed209a3786215b2d4f547dbf4cf2ac0107ce7ab4242368f0c55227270448f0d",
     "scpp/null_t.hpp": "db31e1653226ba1fd7655e2c3a42b92374763f9bfebbc56277d6a4e583f9dbc4",
+    "scpp/operators/add_float64.hpp": "e4485a8286662a154c5f12c51357055f4707226b20d8c3f65700cd43dcd748a9",
+    "scpp/operators/add_int16.hpp": "083afe8d4872d6b3d3f109830eb543ca851f21f729a84d5524d343fef8b47da6",
+    "scpp/operators/add_int32.hpp": "37c1eeea35b4967e35d447db05f556b7d9b9f1a2e4cfbc8a6b4409d710a257fd",
+    "scpp/operators/add_int64.hpp": "cc0113061f5188ca2744ddadcce58e9f96eedc8b95175f07cf802ac37ca96449",
+    "scpp/operators/add_int8.hpp": "2b155cb86abe3c81e448a2047274546eb23987f2a3c28a7594e1c09a70d30838",
+    "scpp/operators/add_uint16.hpp": "ea2b1f16916662945f7ef4cd70673721d6e9ff456637f381e6aca96e0ad7e3d9",
+    "scpp/operators/add_uint32.hpp": "ecc455f1b4a6447a2268cd3fb8a89aed32c2352adb246178cfd15edee65c8f04",
+    "scpp/operators/add_uint64.hpp": "7cae93ac547bcbbb521b747bafd129978a579557bd9202b47250cc3744e79728",
+    "scpp/operators/add_uint8.hpp": "2eee2702243f1e4107d9c130df1eb16e0cd76554befb7d109e225252a496a264",
+    "scpp/operators/equal_dynamic.hpp": "71df99c5591248fd2e3fc23b3ba0615536cb519a25e0a3edf1c1ca181981f972",
+    "scpp/operators/equal_mixed.hpp": "90bc19da133d567b41b74a9e6e30d66f9f62222173198c7af9b9bc8f6ea9c1f5",
+    "scpp/operators/not_equal_dynamic.hpp": "ad4da31487738bc443208713f147fdde1943f8541924d8fe3fb6fdbfd66bab81",
+    "scpp/operators/not_equal_mixed.hpp": "45e03a1e1e7969f556adf1a5c1e0e10d6288bf774eb19d1b30d84abb7f4dbf6f",
     "scpp/result_vector_string.hpp": "162978d31bfb719e2b8bbb0b6d57162bacd0b53a30f92af1eef7c50b9af0f71e",
     "scpp/string.hpp": "aac6ff447c6c1135f22cbc12cb0a419c8079df28826de70f0170a07690ec2b69",
     "scpp/vector_string.hpp": "cb7a5b60004cebc25e567c0f4bea93dfdfd6e65fdd3e1b4860ef0f08636f93c2"
@@ -127,7 +575,20 @@
     "include/core/generated/float64.cpp",
     "include/core/generated/mixed.cpp",
     "include/core/generated/dynamic.cpp",
-    "include/modules/filesystem/public_scan.cpp"
+    "include/modules/filesystem/public_scan.cpp",
+    "include/scpp/generated/public_add_int8.cpp",
+    "include/scpp/generated/public_add_int16.cpp",
+    "include/scpp/generated/public_add_int32.cpp",
+    "include/scpp/generated/public_add_int64.cpp",
+    "include/scpp/generated/public_add_uint8.cpp",
+    "include/scpp/generated/public_add_uint16.cpp",
+    "include/scpp/generated/public_add_uint32.cpp",
+    "include/scpp/generated/public_add_uint64.cpp",
+    "include/scpp/generated/public_add_float64.cpp",
+    "include/scpp/generated/public_equal_mixed.cpp",
+    "include/scpp/generated/public_equal_dynamic.cpp",
+    "include/scpp/generated/public_not_equal_mixed.cpp",
+    "include/scpp/generated/public_not_equal_dynamic.cpp"
   ],
   "types": {
     "dynamic": {
@@ -136,6 +597,13 @@
       "cpp": "scpp::dynamic",
       "dependencies": [],
       "header": "scpp/dynamic.hpp",
+      "includes": [
+        "scpp/detail/concrete_access.hpp",
+        "scpp/dynamic_t.hpp",
+        "scpp/index_write_path.hpp",
+        "scpp/keyed_path.hpp",
+        "scpp/value_iteration.hpp"
+      ],
       "layout": [
         40,
         8
@@ -152,6 +620,10 @@
       "cpp": "scpp::float64",
       "dependencies": [],
       "header": "scpp/float64.hpp",
+      "includes": [
+        "scpp/detail/concrete_access.hpp",
+        "scpp/float_t.hpp"
+      ],
       "layout": [
         8,
         8
@@ -168,6 +640,13 @@
       "cpp": "scpp::mixed",
       "dependencies": [],
       "header": "scpp/mixed.hpp",
+      "includes": [
+        "scpp/detail/concrete_access.hpp",
+        "scpp/index_write_path.hpp",
+        "scpp/keyed_path.hpp",
+        "scpp/mixed_t.hpp",
+        "scpp/value_iteration.hpp"
+      ],
       "layout": [
         40,
         8
@@ -186,6 +665,11 @@
         "vector<string>"
       ],
       "header": "scpp/result_vector_string.hpp",
+      "includes": [
+        "scpp/detail/concrete_access.hpp",
+        "scpp/result.hpp",
+        "scpp/vector_string.hpp"
+      ],
       "layout": [
         96,
         8
@@ -204,6 +688,11 @@
         "string"
       ],
       "header": "scpp/vector_string.hpp",
+      "includes": [
+        "scpp/detail/concrete_access.hpp",
+        "scpp/string.hpp",
+        "scpp/vector_t.hpp"
+      ],
       "layout": [
         40,
         8

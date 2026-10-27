@@ -29,3 +29,12 @@ No native operator families or entrypoint semantics were changed in this pass.
 The managed-struct slice continues to exclude mixed fields, but JSON and existing
 runtime consumers still use mixed values; that exclusion does not eliminate
 REL-DEBT-04.
+
+### REL-DEBT-04 follow-up — 2026-10-27
+
+The checked boxed scalar equality amendment in `specs/dynamic_types.md` resolves
+bool/numeric and string/numeric ordinary equality as unsupported kind pairs that
+throw. The shared native helper now follows it, with public/runtime tests for both
+mixed and dynamic. Explicit null comparisons use null state alone. The old
+`test_mixed_t_dynamic.cpp` target still needs migration away from removed dynamic-box
+APIs; resolving this semantic conflict does not claim that legacy target now builds.

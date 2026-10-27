@@ -3,6 +3,8 @@
 #include "modules/filesystem/scan.hpp"
 #include "scpp/detail/concrete_access.hpp"
 #include "scpp/detail/string_access.hpp"
+#include "scpp/result.hpp"
+#include "scpp/vector_string.hpp"
 namespace scpp::fs {
 scpp::result_vector_string scan(const scpp::string &path) { return detail::concrete_access::make<scpp::result_vector_string, scpp::result<scpp::vector_string>>([&]() -> decltype(auto) { return filesystem::filesystem_detail::scan_owned<scpp::vector_string>(detail::string_access::get(path), [](std::string name) {
     return detail::string_access::make([&] { return string_t(std::move(name)); });

@@ -173,7 +173,7 @@ static void test_value_t_comparisons_and_logical() {
 	assert((scpp::mixed_t(scpp::int_t<>(0)) || scpp::mixed_t(scpp::float_t(1.0))).native_value() == true);
 	assert((!scpp::mixed_t(scpp::int_t<>(0))).native_value() == true);
 	assert((n1 == scpp::mixed_t(scpp::null_t{})).native_value() == true);
-	assert((n1 == s1).native_value() == true);
+	assert((n1 == s1).native_value() == false);
 
 	scpp_test::expect_throw<std::runtime_error>([&]() {
 		(void)(b1 == i1);

@@ -109,6 +109,23 @@ The v0.2 admission slice is homogeneous boxed expressions only. Cross-family and
 boxed/scalar pairs, compounds and indexed updates remain separate. Existing
 numeric arithmetic/comparison/concatenation contracts are unchanged.
 
+### v0.2 checked boxed scalar equality — 2026-10-27
+
+For same-family mixed/mixed and dynamic/dynamic `==` and `!=`, scalar kinds
+follow the same checked rule. Numeric int/float pairs compare numerically, with
+int-to-float conversion and its documented precision loss. Bool compares only
+with bool; string compares only with string by complete bytes, without parsing.
+Other non-null scalar kind pairs throw for both operators. A boxed null compares
+equal only to null; null versus a present scalar is false, without truth conversion.
+For admitted pairs `!=` negates `==`; it does not turn an invalid comparison into true.
+Statically known unsupported plain operand types remain preparation errors.
+
+This supersedes coercive boxed bool/numeric, numeric/string and null/empty-string
+runtime behavior. It reconciles the bool/int failure expectation tracked as
+REL-DEBT-04. It does not change container identity comparisons, cross-family
+admission, wrapper error/sentinel comparisons, strict identity, truthiness, explicit
+casts or concatenation. Evaluation still follows the ordered eager contract.
+
 ### v0.2 migration and repair rules
 
 This is an **intentional, approved breaking change**, not a temporary experiment or

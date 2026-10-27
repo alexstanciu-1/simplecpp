@@ -18,6 +18,19 @@
     "result<vector<string>>": "result_vector_string"
   },
   "apis": [
-    "fs_scan"
+    "fs_scan",
+    "add_int8",
+    "add_int16",
+    "add_int32",
+    "add_int64",
+    "add_uint8",
+    "add_uint16",
+    "add_uint32",
+    "add_uint64",
+    "add_float64",
+    "equal_mixed",
+    "equal_dynamic",
+    "not_equal_mixed",
+    "not_equal_dynamic"
   ]
 }
