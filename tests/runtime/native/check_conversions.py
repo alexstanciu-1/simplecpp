@@ -20,7 +20,7 @@ for source, normalized in metadata['conversions']['sources'].items():
         p=resolve(source,target)
         assert p['operand_type']==normalized and p['target']==target
         assert p['api']==f'cast_{target}_from_{normalized}'
-for source,target in [('boolean','int8'),('mixed','uint64'),('null','int64'),('int64','mixed')]:
+for source,target in [('null','int8'),('string','mixed'),('null','int64'),('int64','mixed')]:
     resolve(source,target,error='Unsupported checked conversion')
 changed=copy.deepcopy(metadata)
 changed['conversions']['bindings']['string']['targets'].remove('int8')

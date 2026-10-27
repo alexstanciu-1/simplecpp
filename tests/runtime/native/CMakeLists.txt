@@ -364,3 +364,9 @@ add_test(NAME scpp_check_conversions COMMAND ${Python3_EXECUTABLE}
 add_executable(test_scalar_conversion_surface test_scalar_conversion_surface.cpp)
 target_link_libraries(test_scalar_conversion_surface PRIVATE scpp_core_api)
 add_test(NAME scpp_test_scalar_conversion_surface COMMAND test_scalar_conversion_surface)
+
+add_executable(test_boxed_integer_casts test_boxed_integer_casts.cpp)
+target_link_libraries(test_boxed_integer_casts PRIVATE scpp_core_api)
+add_test(NAME scpp_test_boxed_integer_casts COMMAND test_boxed_integer_casts)
+add_test(NAME scpp_check_conversion_coverage COMMAND ${Python3_EXECUTABLE}
+  ${CMAKE_CURRENT_SOURCE_DIR}/check_conversion_coverage.py)

@@ -373,13 +373,16 @@ path; no extra heap wrapper or new ownership protocol is introduced. Boxed sourc
 bindings use `${native:value}`, which resolves the existing representation borrow
 and its private dependencies through ordinary operation generation.
 
-The next publication extends the registry to 57 adapters. All four original
-normalized sources additionally cast to boolean/string. Boolean, mixed and dynamic
-sources expose the native canonical destinations int64, float64, boolean and string;
-null exposes string only. Boxed numeric casts to narrower/unsigned integer targets
-and boolean casts to noncanonical integer widths remain rejected by this registry,
-matching the native named-cast surface currently used here. Any expansion must first
-reconcile source-contract admission and the shared native cast owner. Boxed container
-payloads reject scalar casts; boxed null rejects numeric/bool casts but renders an
-empty string. Boolean string casts retain true-to-"1" and false-to-empty semantics.
+The current publication contains 78 adapters. Original numeric/string sources
+cast to all numeric destinations plus boolean/string. Boolean, mixed and dynamic
+sources expose all integer widths, float64, boolean and string; null exposes string
+only. Boxed casts preserve the original payload type and apply the requested native
+checked cast directly: integer payloads remain int64 and floating payloads remain
+float64 until conversion. Strings retain destination-specific strict parsing.
+This neither changes boxed storage kinds nor admits null/container numeric casts.
+Boolean string casts retain true-to-"1" and false-to-empty semantics.
 String-to-boolean remains strict literal parsing, separate from truthiness.
+
+Scalar boxing remains in existing generated family constructors; explicit family
+crossing remains in generated `to_dynamic`/`to_mixed` functions. The coverage audit
+tracks these paths without generating duplicate global cast adapters.

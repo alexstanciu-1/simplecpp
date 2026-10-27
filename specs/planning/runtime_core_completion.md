@@ -302,3 +302,20 @@ rather than silently inventing an intermediate conversion policy. A2's remaining
 review must also check config/matrix casts to boxed results and ensure any already
 published methods are correctly represented by the global metadata mechanism.
 Carrier conversions remain C; this does not mark runtime-core complete.
+
+
+## A2 closure audit — payload-origin decision
+
+The user confirmed that mixed/dynamic must retain native payload identity during
+casts: integers are int64 and floats are float64, and use the same checked rules as
+those native types. The shared cast owner now applies the requested integer target
+to each original payload, with native boolean zero/one conversion extended uniformly
+to fixed widths. This supersedes the fixed-width admission question in A2c above.
+
+The publication now has 78 conversion adapters. Existing scalar-boxing constructors
+and explicit family conversions already satisfy those paths; no duplicate adapters
+were added. See `runtime_core_conversion_audit.md` for the complete A2 coverage and
+routing of carrier/ownership/container conversions to C/D/E. After this slice's
+validation and publication, A2's scalar scope is complete. B1 scalar truthiness,
+context-specific text conversion, strict identity and observation protocols is next.
+The full goal and the first-carrier review gate remain active.

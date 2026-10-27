@@ -777,3 +777,44 @@ Raw measurements: `compiler/my-try-cpp/build/core-boxed-conversions-cost.json`.
 Fixed-width boolean/boxed destinations beyond canonical int64 remain rejected pending
 source-contract reconciliation; cast-to-boxed inventory review remains before A2 can
 be closed. These results do not claim wrapper or full runtime-core completion.
+
+## A2d — origin-preserving fixed-width boxed casts and closure audit
+
+The user confirmed that boxed integers remain native int64 and boxed floats remain
+float64 through dispatch, then use the requested target's ordinary checked rule.
+The native owner now admits fixed-width integer destinations from both boxed
+families; boolean conversion yields zero/one uniformly. Dynamic required casts share
+the same destination admission and delegate to that cast owner. Publication adds
+21 adapters (78 total), without generator changes or new boxed storage kinds.
+
+`test_boxed_integer_casts` exercises all added signatures, verifies parity with
+native-origin public casts, preserves input values and checks negative-to-unsigned,
+narrow overflow, NaN and uint64 overflow failures. A boxed float at 2^63 casts to
+uint64 successfully; a boxed UINT64_MAX string parses successfully. These cases
+would fail if dispatch first narrowed everything to int64. Repeated successful
+numeric/boolean/string-payload casts record **zero allocations**.
+
+The new coverage audit records all 17 canonical scalar cast pairs in config, five
+configured boxing pairs, dynamic boxing and both existing explicit family functions.
+The full scalar/deferred ownership inventory is
+`specs/planning/runtime_core_conversion_audit.md`. Existing boxing and family
+conversion APIs are reused rather than duplicated in the cast registry.
+
+Eight focused cases pass in release (**2.37 s**) and ASan/UBSan/leak mode
+(**15.12 s**). Relocated sealed publication reuses `cast_uint64_from_mixed` with
+zero generated adapters and runs in both modes. This completes scalar A2;
+carrier/ownership/container conversion work remains routed to C/D/E.
+
+Single observations (`measure_global_operators.py --boxed-integers`):
+
+| Case | Seconds | Preprocessed bytes |
+| --- | ---: | ---: |
+| Public boxed uint64/int8 caller | 0.0540 | 21,300 |
+| Native equivalent caller | 3.0008 | 2,977,177 |
+| Independent boxed-to-uint64 adapter | 3.3584 | 3,209,222 |
+
+Eight-job release rebuild: **25.06 s**, peak child RSS **413,764 KiB**; sanitizer
+rebuild **54.76 s**, **620,172 KiB**. One build per configuration; generation used
+the already-built tool before adding core source includes. Raw caller observations:
+`compiler/my-try-cpp/build/core-boxed-integer-cost.json`. These timings do not claim
+clean compiler costs or a stable speedup ratio.

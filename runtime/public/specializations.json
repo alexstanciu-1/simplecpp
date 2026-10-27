@@ -1,6 +1,6 @@
 {
   "abi": "529dd5502370f48d64891818e9439aae72831b990b4027e8abe25c50c1216c21",
-  "api_identity": "52e40c6dc56c18d18e9eaaa2e5463f6b7f91008309570874ce4e9a8a0f9b18e0",
+  "api_identity": "eaddba5c0cb93eec80f9d087daa9d61680bbaf2df7a0076e03d6abc27e9b9273",
   "apis": {
     "add_float64": {
       "header": "scpp/operators/add_float64.hpp",
@@ -592,6 +592,54 @@
       },
       "source": "include/scpp/generated/public_cast_float64_from_uint64.cpp"
     },
+    "cast_int16_from_boolean": {
+      "header": "scpp/conversions/cast_int16_from_boolean.hpp",
+      "namespace": "scpp",
+      "operation": {
+        "expression": "${public:int16}(scpp::cast<scpp::int_t<__INT16_TYPE__>>(scpp::bool_t(value.native_value())).native_value())",
+        "includes": [
+          "scpp/cast.hpp"
+        ],
+        "name": "cast_int16",
+        "parameters": [
+          {
+            "name": "value",
+            "passing": "const_ref",
+            "type": "boolean"
+          }
+        ],
+        "returns": "int16",
+        "uses": [
+          "boolean",
+          "int16"
+        ]
+      },
+      "source": "include/scpp/generated/public_cast_int16_from_boolean.cpp"
+    },
+    "cast_int16_from_dynamic": {
+      "header": "scpp/conversions/cast_int16_from_dynamic.hpp",
+      "namespace": "scpp",
+      "operation": {
+        "expression": "${public:int16}(scpp::cast<scpp::int_t<__INT16_TYPE__>>(${native:value}).native_value())",
+        "includes": [
+          "scpp/cast.hpp"
+        ],
+        "name": "cast_int16",
+        "parameters": [
+          {
+            "name": "value",
+            "passing": "const_ref",
+            "type": "dynamic"
+          }
+        ],
+        "returns": "int16",
+        "uses": [
+          "dynamic",
+          "int16"
+        ]
+      },
+      "source": "include/scpp/generated/public_cast_int16_from_dynamic.cpp"
+    },
     "cast_int16_from_float64": {
       "header": "scpp/conversions/cast_int16_from_float64.hpp",
       "namespace": "scpp",
@@ -639,6 +687,30 @@
         ]
       },
       "source": "include/scpp/generated/public_cast_int16_from_int64.cpp"
+    },
+    "cast_int16_from_mixed": {
+      "header": "scpp/conversions/cast_int16_from_mixed.hpp",
+      "namespace": "scpp",
+      "operation": {
+        "expression": "${public:int16}(scpp::cast<scpp::int_t<__INT16_TYPE__>>(${native:value}).native_value())",
+        "includes": [
+          "scpp/cast.hpp"
+        ],
+        "name": "cast_int16",
+        "parameters": [
+          {
+            "name": "value",
+            "passing": "const_ref",
+            "type": "mixed"
+          }
+        ],
+        "returns": "int16",
+        "uses": [
+          "mixed",
+          "int16"
+        ]
+      },
+      "source": "include/scpp/generated/public_cast_int16_from_mixed.cpp"
     },
     "cast_int16_from_string": {
       "header": "scpp/conversions/cast_int16_from_string.hpp",
@@ -689,6 +761,54 @@
       },
       "source": "include/scpp/generated/public_cast_int16_from_uint64.cpp"
     },
+    "cast_int32_from_boolean": {
+      "header": "scpp/conversions/cast_int32_from_boolean.hpp",
+      "namespace": "scpp",
+      "operation": {
+        "expression": "${public:int32}(scpp::cast<scpp::int_t<__INT32_TYPE__>>(scpp::bool_t(value.native_value())).native_value())",
+        "includes": [
+          "scpp/cast.hpp"
+        ],
+        "name": "cast_int32",
+        "parameters": [
+          {
+            "name": "value",
+            "passing": "const_ref",
+            "type": "boolean"
+          }
+        ],
+        "returns": "int32",
+        "uses": [
+          "boolean",
+          "int32"
+        ]
+      },
+      "source": "include/scpp/generated/public_cast_int32_from_boolean.cpp"
+    },
+    "cast_int32_from_dynamic": {
+      "header": "scpp/conversions/cast_int32_from_dynamic.hpp",
+      "namespace": "scpp",
+      "operation": {
+        "expression": "${public:int32}(scpp::cast<scpp::int_t<__INT32_TYPE__>>(${native:value}).native_value())",
+        "includes": [
+          "scpp/cast.hpp"
+        ],
+        "name": "cast_int32",
+        "parameters": [
+          {
+            "name": "value",
+            "passing": "const_ref",
+            "type": "dynamic"
+          }
+        ],
+        "returns": "int32",
+        "uses": [
+          "dynamic",
+          "int32"
+        ]
+      },
+      "source": "include/scpp/generated/public_cast_int32_from_dynamic.cpp"
+    },
     "cast_int32_from_float64": {
       "header": "scpp/conversions/cast_int32_from_float64.hpp",
       "namespace": "scpp",
@@ -736,6 +856,30 @@
         ]
       },
       "source": "include/scpp/generated/public_cast_int32_from_int64.cpp"
+    },
+    "cast_int32_from_mixed": {
+      "header": "scpp/conversions/cast_int32_from_mixed.hpp",
+      "namespace": "scpp",
+      "operation": {
+        "expression": "${public:int32}(scpp::cast<scpp::int_t<__INT32_TYPE__>>(${native:value}).native_value())",
+        "includes": [
+          "scpp/cast.hpp"
+        ],
+        "name": "cast_int32",
+        "parameters": [
+          {
+            "name": "value",
+            "passing": "const_ref",
+            "type": "mixed"
+          }
+        ],
+        "returns": "int32",
+        "uses": [
+          "mixed",
+          "int32"
+        ]
+      },
+      "source": "include/scpp/generated/public_cast_int32_from_mixed.cpp"
     },
     "cast_int32_from_string": {
       "header": "scpp/conversions/cast_int32_from_string.hpp",
@@ -955,6 +1099,54 @@
       },
       "source": "include/scpp/generated/public_cast_int64_from_uint64.cpp"
     },
+    "cast_int8_from_boolean": {
+      "header": "scpp/conversions/cast_int8_from_boolean.hpp",
+      "namespace": "scpp",
+      "operation": {
+        "expression": "${public:int8}(scpp::cast<scpp::int_t<__INT8_TYPE__>>(scpp::bool_t(value.native_value())).native_value())",
+        "includes": [
+          "scpp/cast.hpp"
+        ],
+        "name": "cast_int8",
+        "parameters": [
+          {
+            "name": "value",
+            "passing": "const_ref",
+            "type": "boolean"
+          }
+        ],
+        "returns": "int8",
+        "uses": [
+          "boolean",
+          "int8"
+        ]
+      },
+      "source": "include/scpp/generated/public_cast_int8_from_boolean.cpp"
+    },
+    "cast_int8_from_dynamic": {
+      "header": "scpp/conversions/cast_int8_from_dynamic.hpp",
+      "namespace": "scpp",
+      "operation": {
+        "expression": "${public:int8}(scpp::cast<scpp::int_t<__INT8_TYPE__>>(${native:value}).native_value())",
+        "includes": [
+          "scpp/cast.hpp"
+        ],
+        "name": "cast_int8",
+        "parameters": [
+          {
+            "name": "value",
+            "passing": "const_ref",
+            "type": "dynamic"
+          }
+        ],
+        "returns": "int8",
+        "uses": [
+          "dynamic",
+          "int8"
+        ]
+      },
+      "source": "include/scpp/generated/public_cast_int8_from_dynamic.cpp"
+    },
     "cast_int8_from_float64": {
       "header": "scpp/conversions/cast_int8_from_float64.hpp",
       "namespace": "scpp",
@@ -1002,6 +1194,30 @@
         ]
       },
       "source": "include/scpp/generated/public_cast_int8_from_int64.cpp"
+    },
+    "cast_int8_from_mixed": {
+      "header": "scpp/conversions/cast_int8_from_mixed.hpp",
+      "namespace": "scpp",
+      "operation": {
+        "expression": "${public:int8}(scpp::cast<scpp::int_t<__INT8_TYPE__>>(${native:value}).native_value())",
+        "includes": [
+          "scpp/cast.hpp"
+        ],
+        "name": "cast_int8",
+        "parameters": [
+          {
+            "name": "value",
+            "passing": "const_ref",
+            "type": "mixed"
+          }
+        ],
+        "returns": "int8",
+        "uses": [
+          "mixed",
+          "int8"
+        ]
+      },
+      "source": "include/scpp/generated/public_cast_int8_from_mixed.cpp"
     },
     "cast_int8_from_string": {
       "header": "scpp/conversions/cast_int8_from_string.hpp",
@@ -1253,6 +1469,54 @@
       },
       "source": "include/scpp/generated/public_cast_string_from_uint64.cpp"
     },
+    "cast_uint16_from_boolean": {
+      "header": "scpp/conversions/cast_uint16_from_boolean.hpp",
+      "namespace": "scpp",
+      "operation": {
+        "expression": "${public:uint16}(scpp::cast<scpp::int_t<__UINT16_TYPE__>>(scpp::bool_t(value.native_value())).native_value())",
+        "includes": [
+          "scpp/cast.hpp"
+        ],
+        "name": "cast_uint16",
+        "parameters": [
+          {
+            "name": "value",
+            "passing": "const_ref",
+            "type": "boolean"
+          }
+        ],
+        "returns": "uint16",
+        "uses": [
+          "boolean",
+          "uint16"
+        ]
+      },
+      "source": "include/scpp/generated/public_cast_uint16_from_boolean.cpp"
+    },
+    "cast_uint16_from_dynamic": {
+      "header": "scpp/conversions/cast_uint16_from_dynamic.hpp",
+      "namespace": "scpp",
+      "operation": {
+        "expression": "${public:uint16}(scpp::cast<scpp::int_t<__UINT16_TYPE__>>(${native:value}).native_value())",
+        "includes": [
+          "scpp/cast.hpp"
+        ],
+        "name": "cast_uint16",
+        "parameters": [
+          {
+            "name": "value",
+            "passing": "const_ref",
+            "type": "dynamic"
+          }
+        ],
+        "returns": "uint16",
+        "uses": [
+          "dynamic",
+          "uint16"
+        ]
+      },
+      "source": "include/scpp/generated/public_cast_uint16_from_dynamic.cpp"
+    },
     "cast_uint16_from_float64": {
       "header": "scpp/conversions/cast_uint16_from_float64.hpp",
       "namespace": "scpp",
@@ -1300,6 +1564,30 @@
         ]
       },
       "source": "include/scpp/generated/public_cast_uint16_from_int64.cpp"
+    },
+    "cast_uint16_from_mixed": {
+      "header": "scpp/conversions/cast_uint16_from_mixed.hpp",
+      "namespace": "scpp",
+      "operation": {
+        "expression": "${public:uint16}(scpp::cast<scpp::int_t<__UINT16_TYPE__>>(${native:value}).native_value())",
+        "includes": [
+          "scpp/cast.hpp"
+        ],
+        "name": "cast_uint16",
+        "parameters": [
+          {
+            "name": "value",
+            "passing": "const_ref",
+            "type": "mixed"
+          }
+        ],
+        "returns": "uint16",
+        "uses": [
+          "mixed",
+          "uint16"
+        ]
+      },
+      "source": "include/scpp/generated/public_cast_uint16_from_mixed.cpp"
     },
     "cast_uint16_from_string": {
       "header": "scpp/conversions/cast_uint16_from_string.hpp",
@@ -1350,6 +1638,54 @@
       },
       "source": "include/scpp/generated/public_cast_uint16_from_uint64.cpp"
     },
+    "cast_uint32_from_boolean": {
+      "header": "scpp/conversions/cast_uint32_from_boolean.hpp",
+      "namespace": "scpp",
+      "operation": {
+        "expression": "${public:uint32}(scpp::cast<scpp::int_t<__UINT32_TYPE__>>(scpp::bool_t(value.native_value())).native_value())",
+        "includes": [
+          "scpp/cast.hpp"
+        ],
+        "name": "cast_uint32",
+        "parameters": [
+          {
+            "name": "value",
+            "passing": "const_ref",
+            "type": "boolean"
+          }
+        ],
+        "returns": "uint32",
+        "uses": [
+          "boolean",
+          "uint32"
+        ]
+      },
+      "source": "include/scpp/generated/public_cast_uint32_from_boolean.cpp"
+    },
+    "cast_uint32_from_dynamic": {
+      "header": "scpp/conversions/cast_uint32_from_dynamic.hpp",
+      "namespace": "scpp",
+      "operation": {
+        "expression": "${public:uint32}(scpp::cast<scpp::int_t<__UINT32_TYPE__>>(${native:value}).native_value())",
+        "includes": [
+          "scpp/cast.hpp"
+        ],
+        "name": "cast_uint32",
+        "parameters": [
+          {
+            "name": "value",
+            "passing": "const_ref",
+            "type": "dynamic"
+          }
+        ],
+        "returns": "uint32",
+        "uses": [
+          "dynamic",
+          "uint32"
+        ]
+      },
+      "source": "include/scpp/generated/public_cast_uint32_from_dynamic.cpp"
+    },
     "cast_uint32_from_float64": {
       "header": "scpp/conversions/cast_uint32_from_float64.hpp",
       "namespace": "scpp",
@@ -1397,6 +1733,30 @@
         ]
       },
       "source": "include/scpp/generated/public_cast_uint32_from_int64.cpp"
+    },
+    "cast_uint32_from_mixed": {
+      "header": "scpp/conversions/cast_uint32_from_mixed.hpp",
+      "namespace": "scpp",
+      "operation": {
+        "expression": "${public:uint32}(scpp::cast<scpp::int_t<__UINT32_TYPE__>>(${native:value}).native_value())",
+        "includes": [
+          "scpp/cast.hpp"
+        ],
+        "name": "cast_uint32",
+        "parameters": [
+          {
+            "name": "value",
+            "passing": "const_ref",
+            "type": "mixed"
+          }
+        ],
+        "returns": "uint32",
+        "uses": [
+          "mixed",
+          "uint32"
+        ]
+      },
+      "source": "include/scpp/generated/public_cast_uint32_from_mixed.cpp"
     },
     "cast_uint32_from_string": {
       "header": "scpp/conversions/cast_uint32_from_string.hpp",
@@ -1447,6 +1807,54 @@
       },
       "source": "include/scpp/generated/public_cast_uint32_from_uint64.cpp"
     },
+    "cast_uint64_from_boolean": {
+      "header": "scpp/conversions/cast_uint64_from_boolean.hpp",
+      "namespace": "scpp",
+      "operation": {
+        "expression": "${public:uint64}(scpp::cast<scpp::int_t<__UINT64_TYPE__>>(scpp::bool_t(value.native_value())).native_value())",
+        "includes": [
+          "scpp/cast.hpp"
+        ],
+        "name": "cast_uint64",
+        "parameters": [
+          {
+            "name": "value",
+            "passing": "const_ref",
+            "type": "boolean"
+          }
+        ],
+        "returns": "uint64",
+        "uses": [
+          "boolean",
+          "uint64"
+        ]
+      },
+      "source": "include/scpp/generated/public_cast_uint64_from_boolean.cpp"
+    },
+    "cast_uint64_from_dynamic": {
+      "header": "scpp/conversions/cast_uint64_from_dynamic.hpp",
+      "namespace": "scpp",
+      "operation": {
+        "expression": "${public:uint64}(scpp::cast<scpp::int_t<__UINT64_TYPE__>>(${native:value}).native_value())",
+        "includes": [
+          "scpp/cast.hpp"
+        ],
+        "name": "cast_uint64",
+        "parameters": [
+          {
+            "name": "value",
+            "passing": "const_ref",
+            "type": "dynamic"
+          }
+        ],
+        "returns": "uint64",
+        "uses": [
+          "dynamic",
+          "uint64"
+        ]
+      },
+      "source": "include/scpp/generated/public_cast_uint64_from_dynamic.cpp"
+    },
     "cast_uint64_from_float64": {
       "header": "scpp/conversions/cast_uint64_from_float64.hpp",
       "namespace": "scpp",
@@ -1494,6 +1902,30 @@
         ]
       },
       "source": "include/scpp/generated/public_cast_uint64_from_int64.cpp"
+    },
+    "cast_uint64_from_mixed": {
+      "header": "scpp/conversions/cast_uint64_from_mixed.hpp",
+      "namespace": "scpp",
+      "operation": {
+        "expression": "${public:uint64}(scpp::cast<scpp::int_t<__UINT64_TYPE__>>(${native:value}).native_value())",
+        "includes": [
+          "scpp/cast.hpp"
+        ],
+        "name": "cast_uint64",
+        "parameters": [
+          {
+            "name": "value",
+            "passing": "const_ref",
+            "type": "mixed"
+          }
+        ],
+        "returns": "uint64",
+        "uses": [
+          "mixed",
+          "uint64"
+        ]
+      },
+      "source": "include/scpp/generated/public_cast_uint64_from_mixed.cpp"
     },
     "cast_uint64_from_string": {
       "header": "scpp/conversions/cast_uint64_from_string.hpp",
@@ -1544,6 +1976,54 @@
       },
       "source": "include/scpp/generated/public_cast_uint64_from_uint64.cpp"
     },
+    "cast_uint8_from_boolean": {
+      "header": "scpp/conversions/cast_uint8_from_boolean.hpp",
+      "namespace": "scpp",
+      "operation": {
+        "expression": "${public:uint8}(scpp::cast<scpp::int_t<__UINT8_TYPE__>>(scpp::bool_t(value.native_value())).native_value())",
+        "includes": [
+          "scpp/cast.hpp"
+        ],
+        "name": "cast_uint8",
+        "parameters": [
+          {
+            "name": "value",
+            "passing": "const_ref",
+            "type": "boolean"
+          }
+        ],
+        "returns": "uint8",
+        "uses": [
+          "boolean",
+          "uint8"
+        ]
+      },
+      "source": "include/scpp/generated/public_cast_uint8_from_boolean.cpp"
+    },
+    "cast_uint8_from_dynamic": {
+      "header": "scpp/conversions/cast_uint8_from_dynamic.hpp",
+      "namespace": "scpp",
+      "operation": {
+        "expression": "${public:uint8}(scpp::cast<scpp::int_t<__UINT8_TYPE__>>(${native:value}).native_value())",
+        "includes": [
+          "scpp/cast.hpp"
+        ],
+        "name": "cast_uint8",
+        "parameters": [
+          {
+            "name": "value",
+            "passing": "const_ref",
+            "type": "dynamic"
+          }
+        ],
+        "returns": "uint8",
+        "uses": [
+          "dynamic",
+          "uint8"
+        ]
+      },
+      "source": "include/scpp/generated/public_cast_uint8_from_dynamic.cpp"
+    },
     "cast_uint8_from_float64": {
       "header": "scpp/conversions/cast_uint8_from_float64.hpp",
       "namespace": "scpp",
@@ -1591,6 +2071,30 @@
         ]
       },
       "source": "include/scpp/generated/public_cast_uint8_from_int64.cpp"
+    },
+    "cast_uint8_from_mixed": {
+      "header": "scpp/conversions/cast_uint8_from_mixed.hpp",
+      "namespace": "scpp",
+      "operation": {
+        "expression": "${public:uint8}(scpp::cast<scpp::int_t<__UINT8_TYPE__>>(${native:value}).native_value())",
+        "includes": [
+          "scpp/cast.hpp"
+        ],
+        "name": "cast_uint8",
+        "parameters": [
+          {
+            "name": "value",
+            "passing": "const_ref",
+            "type": "mixed"
+          }
+        ],
+        "returns": "uint8",
+        "uses": [
+          "mixed",
+          "uint8"
+        ]
+      },
+      "source": "include/scpp/generated/public_cast_uint8_from_mixed.cpp"
     },
     "cast_uint8_from_string": {
       "header": "scpp/conversions/cast_uint8_from_string.hpp",
@@ -4771,7 +5275,70 @@
     "include/scpp/conversions/cast_string_from_dynamic.hpp",
     "public/scpp/conversions/cast_string_from_null.hpp",
     "include/scpp/generated/public_cast_string_from_null.cpp",
-    "include/scpp/conversions/cast_string_from_null.hpp"
+    "include/scpp/conversions/cast_string_from_null.hpp",
+    "public/scpp/conversions/cast_int8_from_boolean.hpp",
+    "include/scpp/generated/public_cast_int8_from_boolean.cpp",
+    "include/scpp/conversions/cast_int8_from_boolean.hpp",
+    "public/scpp/conversions/cast_int16_from_boolean.hpp",
+    "include/scpp/generated/public_cast_int16_from_boolean.cpp",
+    "include/scpp/conversions/cast_int16_from_boolean.hpp",
+    "public/scpp/conversions/cast_int32_from_boolean.hpp",
+    "include/scpp/generated/public_cast_int32_from_boolean.cpp",
+    "include/scpp/conversions/cast_int32_from_boolean.hpp",
+    "public/scpp/conversions/cast_uint8_from_boolean.hpp",
+    "include/scpp/generated/public_cast_uint8_from_boolean.cpp",
+    "include/scpp/conversions/cast_uint8_from_boolean.hpp",
+    "public/scpp/conversions/cast_uint16_from_boolean.hpp",
+    "include/scpp/generated/public_cast_uint16_from_boolean.cpp",
+    "include/scpp/conversions/cast_uint16_from_boolean.hpp",
+    "public/scpp/conversions/cast_uint32_from_boolean.hpp",
+    "include/scpp/generated/public_cast_uint32_from_boolean.cpp",
+    "include/scpp/conversions/cast_uint32_from_boolean.hpp",
+    "public/scpp/conversions/cast_uint64_from_boolean.hpp",
+    "include/scpp/generated/public_cast_uint64_from_boolean.cpp",
+    "include/scpp/conversions/cast_uint64_from_boolean.hpp",
+    "public/scpp/conversions/cast_int8_from_mixed.hpp",
+    "include/scpp/generated/public_cast_int8_from_mixed.cpp",
+    "include/scpp/conversions/cast_int8_from_mixed.hpp",
+    "public/scpp/conversions/cast_int16_from_mixed.hpp",
+    "include/scpp/generated/public_cast_int16_from_mixed.cpp",
+    "include/scpp/conversions/cast_int16_from_mixed.hpp",
+    "public/scpp/conversions/cast_int32_from_mixed.hpp",
+    "include/scpp/generated/public_cast_int32_from_mixed.cpp",
+    "include/scpp/conversions/cast_int32_from_mixed.hpp",
+    "public/scpp/conversions/cast_uint8_from_mixed.hpp",
+    "include/scpp/generated/public_cast_uint8_from_mixed.cpp",
+    "include/scpp/conversions/cast_uint8_from_mixed.hpp",
+    "public/scpp/conversions/cast_uint16_from_mixed.hpp",
+    "include/scpp/generated/public_cast_uint16_from_mixed.cpp",
+    "include/scpp/conversions/cast_uint16_from_mixed.hpp",
+    "public/scpp/conversions/cast_uint32_from_mixed.hpp",
+    "include/scpp/generated/public_cast_uint32_from_mixed.cpp",
+    "include/scpp/conversions/cast_uint32_from_mixed.hpp",
+    "public/scpp/conversions/cast_uint64_from_mixed.hpp",
+    "include/scpp/generated/public_cast_uint64_from_mixed.cpp",
+    "include/scpp/conversions/cast_uint64_from_mixed.hpp",
+    "public/scpp/conversions/cast_int8_from_dynamic.hpp",
+    "include/scpp/generated/public_cast_int8_from_dynamic.cpp",
+    "include/scpp/conversions/cast_int8_from_dynamic.hpp",
+    "public/scpp/conversions/cast_int16_from_dynamic.hpp",
+    "include/scpp/generated/public_cast_int16_from_dynamic.cpp",
+    "include/scpp/conversions/cast_int16_from_dynamic.hpp",
+    "public/scpp/conversions/cast_int32_from_dynamic.hpp",
+    "include/scpp/generated/public_cast_int32_from_dynamic.cpp",
+    "include/scpp/conversions/cast_int32_from_dynamic.hpp",
+    "public/scpp/conversions/cast_uint8_from_dynamic.hpp",
+    "include/scpp/generated/public_cast_uint8_from_dynamic.cpp",
+    "include/scpp/conversions/cast_uint8_from_dynamic.hpp",
+    "public/scpp/conversions/cast_uint16_from_dynamic.hpp",
+    "include/scpp/generated/public_cast_uint16_from_dynamic.cpp",
+    "include/scpp/conversions/cast_uint16_from_dynamic.hpp",
+    "public/scpp/conversions/cast_uint32_from_dynamic.hpp",
+    "include/scpp/generated/public_cast_uint32_from_dynamic.cpp",
+    "include/scpp/conversions/cast_uint32_from_dynamic.hpp",
+    "public/scpp/conversions/cast_uint64_from_dynamic.hpp",
+    "include/scpp/generated/public_cast_uint64_from_dynamic.cpp",
+    "include/scpp/conversions/cast_uint64_from_dynamic.hpp"
   ],
   "generator": "metadata-api-v1",
   "leaves": {
@@ -4901,12 +5468,18 @@
     "scpp/conversions/cast_float64_from_mixed.hpp": "5acbbd692d10be42a1d4c417342f59a12df6b09c1f1f95e6189145cd80638bcf",
     "scpp/conversions/cast_float64_from_string.hpp": "e586874980e6fdc51eb0129ed75795abd1a1b54cf6ade59cba35bf8506291b21",
     "scpp/conversions/cast_float64_from_uint64.hpp": "97d3a047b61b1e1c743e737e0e474f96f45047460e1c98b27aec74ce3e029492",
+    "scpp/conversions/cast_int16_from_boolean.hpp": "6ca097f081be713c13b51dd54fe49692f5b18d57a17f7b6572bcc8f87ed0dfc2",
+    "scpp/conversions/cast_int16_from_dynamic.hpp": "6cb893bbe17ee1323d3764e90666e8e8cecfbcea3ed32c636b8821aba5bc3770",
     "scpp/conversions/cast_int16_from_float64.hpp": "00b51d12a78b7ccf81fdfaaf518dae52ef681f4a52f61db5d456128325780d65",
     "scpp/conversions/cast_int16_from_int64.hpp": "57ef77bc18706dd5ad4be26a43f5d20e2d0031624da827e33fa72b73785a87f2",
+    "scpp/conversions/cast_int16_from_mixed.hpp": "c3366c447b1fc55e965032999a973e6ae50bd42c06228632aded0a0bb413d6f9",
     "scpp/conversions/cast_int16_from_string.hpp": "62e74e279ccba70b6c8d182b62529eba93215aa4029a3b573ca5edacb4ec1333",
     "scpp/conversions/cast_int16_from_uint64.hpp": "a84adab2b38ba6c1a8d60de4be31c5e6face6a7aa9fa4265cba2f6be184f69d3",
+    "scpp/conversions/cast_int32_from_boolean.hpp": "a8d9fb135d272f5028f114adfacf3844677dd588e965e1180962ba1341f16d0e",
+    "scpp/conversions/cast_int32_from_dynamic.hpp": "dcc622e1d029d416b760d2cc24d5c08a7aa1a96c84778c362b6982eeda46d5b8",
     "scpp/conversions/cast_int32_from_float64.hpp": "62fafe1211a3288365ab91ef00ca52082ddc97c7aa542338e2a3078779e1a6c5",
     "scpp/conversions/cast_int32_from_int64.hpp": "24b6d1a74ef718ed642e6202d2a1d276da11ee9ab466bd1c2e5c260aa2d6a491",
+    "scpp/conversions/cast_int32_from_mixed.hpp": "e6ceff8c3e406a7a11ce089f3f8254df23827b75ffd701ac318481e864b83041",
     "scpp/conversions/cast_int32_from_string.hpp": "60f7ad528076c72da5457ca3c8ce8b97084aa1780125437aaa0d106738248333",
     "scpp/conversions/cast_int32_from_uint64.hpp": "c712dfe1adb100f92ac4051e62a849e38587750b170ac3775932e08c574e029f",
     "scpp/conversions/cast_int64_from_boolean.hpp": "56ab604dbcf272c478a4c8f4db0d727a6e034803914edf0940c8eb7e0982ce3e",
@@ -4916,8 +5489,11 @@
     "scpp/conversions/cast_int64_from_mixed.hpp": "53cc06dfab96a9a13616aacdd10ddf7a00b9d0e55ea9c6a070f8b70fb4c7e4d5",
     "scpp/conversions/cast_int64_from_string.hpp": "a74f4da660634a5b82828f489d063c9362123e4e4dd9d4d0ba607770e8d505e9",
     "scpp/conversions/cast_int64_from_uint64.hpp": "dd064b33d20ffb68eb7140e2ede0b73996f3864d87aa677ca2ef17fa0e9ae583",
+    "scpp/conversions/cast_int8_from_boolean.hpp": "b9bb3a9b1910a5bd62923c0623b49ca2743d6599918f99b5b706348e0eb59468",
+    "scpp/conversions/cast_int8_from_dynamic.hpp": "9194159a506feab5ae12b9c559afdb06c25074cfa6025b1086f6062d2dfaa4a6",
     "scpp/conversions/cast_int8_from_float64.hpp": "75a5cd18808a5042c82487a06611ca1760cd8067ff7d62347c8da9d4caf82e05",
     "scpp/conversions/cast_int8_from_int64.hpp": "9916a4895ce664ffa7dbe080101fa469daf67654d9bafeedf43630a9b48ce65a",
+    "scpp/conversions/cast_int8_from_mixed.hpp": "7f5d0462d83b7086c55e6e07949a9c8a9b51c338487d71633d687b6f29c854c6",
     "scpp/conversions/cast_int8_from_string.hpp": "1febaf2c879d672b948bde13ecc26deae8b6fe76e8120dd34e68e46758765877",
     "scpp/conversions/cast_int8_from_uint64.hpp": "e6dfd73605b06a0912f3f9b0724af7a8c0c2dcc551e4fa3e5bf84f42cefdac57",
     "scpp/conversions/cast_string_from_boolean.hpp": "325dd36a30d62b6227ef27225bd30098acda536aa8909925a2031b6c00652646",
@@ -4928,20 +5504,32 @@
     "scpp/conversions/cast_string_from_null.hpp": "051925668a01a6f6ba20be50485f33d6ec41b6fdc57f6d5771951447bc496611",
     "scpp/conversions/cast_string_from_string.hpp": "12fcc21fbecf95f9a806f534c164a9e907cf658ceae384e69aaa340d7b7303ee",
     "scpp/conversions/cast_string_from_uint64.hpp": "1004753c552d76c370b7208837429bcfb829ea7b80e6cab5f19e8c6a653e6ba7",
+    "scpp/conversions/cast_uint16_from_boolean.hpp": "a430ff59ccde3388340704014b477093434d9fad7c6b59d00d78e469f3f80338",
+    "scpp/conversions/cast_uint16_from_dynamic.hpp": "c129c1aba06e5930657280ee871d66dee691f98bf2227930167e9782d0f9f166",
     "scpp/conversions/cast_uint16_from_float64.hpp": "57e9dfe4beda4c4c2868dca2b20634fba589538f10f4a298dc5c34204071a25a",
     "scpp/conversions/cast_uint16_from_int64.hpp": "f9745ebb8e8ac9aea8372a503de5622fd4ddf145ec5bea6c560c7314ae47d77b",
+    "scpp/conversions/cast_uint16_from_mixed.hpp": "e4ab39339e66cf859cd223d5858ca5cdddf365c1d393ad8e6791401b52c1f5aa",
     "scpp/conversions/cast_uint16_from_string.hpp": "aaaea6f20d14d14a5c1fe3a2440a9d4a10f27184190ec89735cb7b96105c931b",
     "scpp/conversions/cast_uint16_from_uint64.hpp": "da2a99976e4af4bf63ba2396dca3b58e93f5cd9f7ee2cafbc65c9c313e778e6a",
+    "scpp/conversions/cast_uint32_from_boolean.hpp": "26f0b6b2a838197b8d7beb359e479ce1dccd928baed7f44e5d0b5f4d2f976d47",
+    "scpp/conversions/cast_uint32_from_dynamic.hpp": "436114da2c0568ab47c5bc745d6cc69a39928f9e603c4c42dcf16e473977c75e",
     "scpp/conversions/cast_uint32_from_float64.hpp": "0e647542ab3b1552b4a93a82b482f2e7e96e4a08b2997adb7547c8b0aa0b1dca",
     "scpp/conversions/cast_uint32_from_int64.hpp": "c9f96c198709f963981c1dfebc34101b9e41b55337da9b977fc86f317521636c",
+    "scpp/conversions/cast_uint32_from_mixed.hpp": "f74c3b18b19e7d44bc9c65ec21acf8941077ff195bc713af7cdd81c5dc58da70",
     "scpp/conversions/cast_uint32_from_string.hpp": "68b7dae45328c94cc2b17ba066fbfee351785f498cdaf9ee5359fdb504a64c52",
     "scpp/conversions/cast_uint32_from_uint64.hpp": "d4cd6a2c292443f5e94a487e6ac6313ff5649031f8e3eab540689c09a8b6be54",
+    "scpp/conversions/cast_uint64_from_boolean.hpp": "6b00484db3d09a96d3d13bb0cedbe06ec6c49edaf9b074ca958069e5f5613b56",
+    "scpp/conversions/cast_uint64_from_dynamic.hpp": "5a06bc3132238ede59d56d89676bb823669a81af080aa3203c36b0eca8f20cbd",
     "scpp/conversions/cast_uint64_from_float64.hpp": "0f942ea6fe7a906d8fd9aa638b6d7a8111b0f1e6bbf51ef413115175c48a1af3",
     "scpp/conversions/cast_uint64_from_int64.hpp": "cf28e4ca30716f0817e4cbbb7b7eeda12e57fc5e442d6671c4741d56a5d9a0ad",
+    "scpp/conversions/cast_uint64_from_mixed.hpp": "7a22332b9a16426be097033ee3225d1fa5b1798c939785f62c4dd11a7181a7e9",
     "scpp/conversions/cast_uint64_from_string.hpp": "311d4e19fe4522cc0a6540b0fa0fe4b192068eeb55d34f81ed4723fee334c03d",
     "scpp/conversions/cast_uint64_from_uint64.hpp": "d4c5b0dafd5b7563d00876bd1a6da82b6ee18e43e841ac4b8469781d585e68ca",
+    "scpp/conversions/cast_uint8_from_boolean.hpp": "20a8f4cf5d91d1739abf4dea433c5c93d7d74a515e33aff739ac49735f158858",
+    "scpp/conversions/cast_uint8_from_dynamic.hpp": "c277768ccbfdd6911ad0c0736be4f50344381e54845dd298ca325b6761dad526",
     "scpp/conversions/cast_uint8_from_float64.hpp": "a2a076ac23ff122dadf2124fb4dc345396b9e7c056b7ff17afe1d6da99fc81b2",
     "scpp/conversions/cast_uint8_from_int64.hpp": "2d1b0d07324abafac65a815f38182170f07a99508525480d946d2e3e77e3a458",
+    "scpp/conversions/cast_uint8_from_mixed.hpp": "90929498ce8e129ebde8614f08087909fb8b4c9208f4ca9b0828a86aa04d697b",
     "scpp/conversions/cast_uint8_from_string.hpp": "f27a3c3f0d03b0680a93cbd04efd06652606a53819cf3fae4448136fdc3bf105",
     "scpp/conversions/cast_uint8_from_uint64.hpp": "0903db400fa439a49ae72b456313f87f7949d4c4e5f4f9a60e353169f378206f",
     "scpp/detail/value_layout.hpp": "278a58716d847ef9efa3af4b145a4ba901ea200d366a678bad3252e0b3e307e6",
@@ -5224,7 +5812,28 @@
     "include/scpp/generated/public_cast_float64_from_dynamic.cpp",
     "include/scpp/generated/public_cast_boolean_from_dynamic.cpp",
     "include/scpp/generated/public_cast_string_from_dynamic.cpp",
-    "include/scpp/generated/public_cast_string_from_null.cpp"
+    "include/scpp/generated/public_cast_string_from_null.cpp",
+    "include/scpp/generated/public_cast_int8_from_boolean.cpp",
+    "include/scpp/generated/public_cast_int16_from_boolean.cpp",
+    "include/scpp/generated/public_cast_int32_from_boolean.cpp",
+    "include/scpp/generated/public_cast_uint8_from_boolean.cpp",
+    "include/scpp/generated/public_cast_uint16_from_boolean.cpp",
+    "include/scpp/generated/public_cast_uint32_from_boolean.cpp",
+    "include/scpp/generated/public_cast_uint64_from_boolean.cpp",
+    "include/scpp/generated/public_cast_int8_from_mixed.cpp",
+    "include/scpp/generated/public_cast_int16_from_mixed.cpp",
+    "include/scpp/generated/public_cast_int32_from_mixed.cpp",
+    "include/scpp/generated/public_cast_uint8_from_mixed.cpp",
+    "include/scpp/generated/public_cast_uint16_from_mixed.cpp",
+    "include/scpp/generated/public_cast_uint32_from_mixed.cpp",
+    "include/scpp/generated/public_cast_uint64_from_mixed.cpp",
+    "include/scpp/generated/public_cast_int8_from_dynamic.cpp",
+    "include/scpp/generated/public_cast_int16_from_dynamic.cpp",
+    "include/scpp/generated/public_cast_int32_from_dynamic.cpp",
+    "include/scpp/generated/public_cast_uint8_from_dynamic.cpp",
+    "include/scpp/generated/public_cast_uint16_from_dynamic.cpp",
+    "include/scpp/generated/public_cast_uint32_from_dynamic.cpp",
+    "include/scpp/generated/public_cast_uint64_from_dynamic.cpp"
   ],
   "types": {
     "dynamic": {

@@ -503,6 +503,13 @@ inline To cast(const float_t &value) {
     return To(detail::checked_floating_integer_cast<detail::int_rep_t<To>>(value.native_value()));
 }
 
+// Boolean payloads convert to every integer representation as exactly zero or one.
+template <typename To>
+    requires detail::is_int_t_v<To>
+inline To cast(const bool_t &value) {
+    return To(static_cast<detail::int_rep_t<To>>(value.native_value() ? 1 : 0));
+}
+
 // string_t -> bool_t
 // String-to-bool is strict in this project: only "", "0", "1", "true", and "false" are accepted.
 template <>
@@ -716,6 +723,20 @@ inline int_t<> cast<int_t<>, mixed_t>(const mixed_t &value) {
 	}
 }
 
+// Preserve the boxed payload kind and apply the requested checked destination.
+// In particular, integer payloads stay int64 and floats stay float64 until cast.
+template <typename To>
+    requires detail::is_int_t_v<To>
+inline To cast(const mixed_t &value) {
+    switch (value.kind()) {
+    case mixed_t::kind_t::bool_v: return cast<To>(value.bool_value());
+    case mixed_t::kind_t::int_v: return cast<To>(value.int_value());
+    case mixed_t::kind_t::float_v: return cast<To>(value.float_value());
+    case mixed_t::kind_t::string_v: return cast<To>(*value.string_if());
+    default: detail::throw_invalid_mixed_kind_for_cast("int_t", value);
+    }
+}
+
 // mixed_t -> float_t
 // Applies the configured explicit conversion rules after runtime kind dispatch.
 template <>
@@ -826,7 +847,7 @@ inline mixed_t cast<mixed_t, detail::dynamic_value>(const detail::dynamic_value 
 }
 
 template <typename To>
-requires (std::is_same_v<To, bool_t> || std::is_same_v<To, int_t<>>
+requires (std::is_same_v<To, bool_t> || detail::is_int_t_v<To>
 	|| std::is_same_v<To, float_t> || std::is_same_v<To, string_t>)
 inline To cast(const detail::dynamic_value &value) {
 	using kind = detail::dynamic_value::kind_t;
@@ -881,7 +902,7 @@ inline To required_cast(const From &value) {
 }
 
 template <typename To>
-requires (std::is_same_v<To, bool_t> || std::is_same_v<To, int_t<>>
+requires (std::is_same_v<To, bool_t> || detail::is_int_t_v<To>
 	|| std::is_same_v<To, float_t> || std::is_same_v<To, string_t>
 	|| detail::is_specialization_of_v<To, nullable>)
 inline To required_cast(const detail::dynamic_value &value) {

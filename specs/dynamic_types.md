@@ -667,3 +667,19 @@ $b dynamic = $a;
 $b["x"] = 2;
 echo (string) $a["x"], "\n"; // 2
 ```
+
+### v0.2 boxed fixed-width integer casts — 2026-10-27
+
+A scalar cast out of mixed/dynamic preserves the payload's original runtime type
+until applying the requested cast. Integer payloads are canonical signed int64;
+floating payloads are float64. Casting a boxed payload to int8/16/32/64 or
+uint8/16/32/64 therefore has the same checked result or failure as casting that
+native payload directly to the destination. `byte` remains the uint8 alias.
+There is no implicit preliminary conversion of every payload to int64.
+
+Boolean payloads use the native explicit zero/one integer conversion. String
+payloads use the destination's strict whole-string integer parser, including the
+full uint64 range; they do not first become canonical int64. Null and containers
+remain rejected for numeric casts. Casting does not mutate the box or change its
+stored kind. These rules add neither unsigned integer storage to boxed families
+nor new arithmetic admission or implicit boxing of out-of-range unsigned values.

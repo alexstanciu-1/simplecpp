@@ -177,6 +177,27 @@
     "cast_float64_from_dynamic",
     "cast_boolean_from_dynamic",
     "cast_string_from_dynamic",
-    "cast_string_from_null"
+    "cast_string_from_null",
+    "cast_int8_from_boolean",
+    "cast_int16_from_boolean",
+    "cast_int32_from_boolean",
+    "cast_uint8_from_boolean",
+    "cast_uint16_from_boolean",
+    "cast_uint32_from_boolean",
+    "cast_uint64_from_boolean",
+    "cast_int8_from_mixed",
+    "cast_int16_from_mixed",
+    "cast_int32_from_mixed",
+    "cast_uint8_from_mixed",
+    "cast_uint16_from_mixed",
+    "cast_uint32_from_mixed",
+    "cast_uint64_from_mixed",
+    "cast_int8_from_dynamic",
+    "cast_int16_from_dynamic",
+    "cast_int32_from_dynamic",
+    "cast_uint8_from_dynamic",
+    "cast_uint16_from_dynamic",
+    "cast_uint32_from_dynamic",
+    "cast_uint64_from_dynamic"
   ]
 }

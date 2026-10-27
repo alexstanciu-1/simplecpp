@@ -567,3 +567,10 @@ The following are not current first-slice semantics:
 - user-authored alignment attributes
 - ABI compatibility guarantees outside generated Simple C++ projects
 - broad reflection APIs beyond the layout-probe slice
+
+### 7.2 Explicit boolean-to-integer casts
+
+An explicit boolean cast to any supported fixed-width integer representation yields
+exactly zero or one. This is the same value rule as the canonical int64 destination;
+it does not admit booleans to arithmetic. Checked fixed-width casts from boxed
+payloads follow [the original payload type](dynamic_types.md#v02-boxed-fixed-width-integer-casts--2026-10-27).
