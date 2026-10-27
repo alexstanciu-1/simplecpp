@@ -2352,3 +2352,27 @@ release **9.4955s / 2.0366s**; sanitizer **12.2972s / 5.9202s**. This caller con
 the full generated case matrix and is much larger than the earlier simple callers.
 No generator code changed and no runtime-core rebuild was needed. Coalescing remains
 outside this slice because its boxed-null usability rules differ.
+
+## C31 — boxed coalescing observations (2026-10-27)
+
+The boxed mode of `check_carrier_coalesce.py` executes **30 success, 6 failure and
+6 container cases**, plus a native dynamic coalesce comparison. It covers exact
+mixed/dynamic pairs and nullable/Result/false-sentinel-left fallbacks, successful
+boxed-null payloads, absent/error/sentinel fallback, valid null-box fallback results,
+throwing unselected/selected RHS paths, value independence and dynamic identity.
+Static negative cases retain result_or_bool rejection on either side and reject
+unsupported join forms and malformed observation metadata.
+
+Release and ASan/UBSan with leak detection pass; public-only compilation and sealed
+application reuse pass. Scalar-valued boxed success cases allocate zero times after
+setup. Container setup/mutation and throwing cases are outside that allocation
+assertion. The native fixture proves direct dynamic null now evaluates fallback and
+that selecting a null fallback remains valid. This repairs a native mismatch with
+`conditional_expression_matrix.md`; no new source rule was introduced.
+
+Six generated units / public caller compile costs, single runs:
+release **6.9799s / 0.2843s**; sanitizer **9.2657s / 0.5063s**.
+The separate native comparison fixture compiled in **2.7827s / 2.7758s** respectively.
+Both configurations rebuilt core for the shared native helper change. The existing
+mixed-hash instantiation warning remains. Three focused metadata regressions passed
+in **5.76s**; scalar coalescing also retains its 60 success/36 failure planning cases.

@@ -15,7 +15,7 @@ namespace scpp::api_generation
     static void validate_coalesce_policy(const value &metadata)
     {
         const auto &policy = metadata.at("selections").at("coalesce");
-        fields_only(policy, "payloads carriers forms require_selected", "coalesce policy");
+        fields_only(policy, "payloads carriers forms require_selected payload_rules", "coalesce policy");
         if (policy.at("payloads").type!=value::kind::array || policy.at("payloads").items.empty()
             || policy.at("forms").type!=value::kind::array || policy.at("forms").items.empty()
             || policy.at("carriers").type!=value::kind::object)
@@ -25,6 +25,24 @@ namespace scpp::api_generation
         for (const auto &form : policy.at("forms").items)
             if (form.text()!="plain_plain" && form.text()!="carrier_plain" && form.text()!="same_carrier")
                 throw std::runtime_error("Unknown coalesce join form");
+        if (policy.has("payload_rules")) {
+            if (policy.at("payload_rules").type!=value::kind::object)
+                throw std::runtime_error("Coalesce payload rules require a map");
+            for (const auto &[payload, rule] : policy.at("payload_rules").fields) {
+                if (!contains(policy.at("payloads"),payload)) throw std::runtime_error("Unknown coalesce payload rule");
+                fields_only(rule,"forms plain_usable_expression plain_selected_usable_expression", "coalesce payload rule");
+                if (rule.at("forms").type!=value::kind::array || rule.at("forms").items.empty())
+                    throw std::runtime_error("Coalesce payload rule requires join forms");
+                for (const auto &form : rule.at("forms").items)
+                    if (!contains(policy.at("forms"),form.text())) throw std::runtime_error("Unknown coalesce payload join form");
+                for (const auto *field : {"plain_usable_expression", "plain_selected_usable_expression"}) {
+                    const auto expression=rule.at(field).text();
+                    if (expression.empty()) throw std::runtime_error("Empty coalesce observation expression");
+                    for (auto at=expression.find("${"); at!=std::string::npos; at=expression.find("${",at+8))
+                        if (expression.substr(at,8)!="${value}") throw std::runtime_error("Unknown coalesce observation marker");
+                }
+            }
+        }
         for (const auto &[family, payload_state] : policy.at("carriers").fields) {
             const auto &states = metadata.at("families").at(family).at("carrier").at("states");
             unsigned matches = 0;
@@ -147,6 +165,13 @@ namespace scpp::api_generation
             }
             if (!contains(policy.at("payloads"), branch.at("target").text()))
                 throw std::runtime_error("Unsupported coalesce payload");
+            branch["selected_usable_expression"] = branch.at("usable_expression");
+            if (branch.get("kind")=="identity" && policy.has("payload_rules")
+                && policy.at("payload_rules").has(canonical)) {
+                const auto &rule=policy.at("payload_rules").at(canonical);
+                branch["usable_expression"]=rule.at("plain_usable_expression");
+                branch["selected_usable_expression"]=rule.at("plain_selected_usable_expression");
+            }
             out[side] = branch;
         }
         const auto &left = out.at("left"), &right = out.at("right");
@@ -156,6 +181,9 @@ namespace scpp::api_generation
                 && left.at("source").text()==right.at("source").text() ? "same_carrier" : "unsupported";
         if (left.at("target").text()!=right.at("target").text() || !contains(policy.at("forms"), form))
             throw std::runtime_error("Unsupported coalesce join");
+        if (policy.has("payload_rules") && policy.at("payload_rules").has(left.at("target").text()))
+            if (!contains(policy.at("payload_rules").at(left.at("target").text()).at("forms"),form))
+                throw std::runtime_error("Unsupported coalesce payload join");
         const auto identity = policy.at("require_selected").text();
         const auto &function = metadata.at("functions").at(identity);
         out["require_selected"] = value::object();

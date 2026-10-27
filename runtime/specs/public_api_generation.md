@@ -1327,3 +1327,26 @@ rejection; dynamic containers retain their presence/identity behavior.
 
 Coalescing uses a different policy and is unchanged by this extension. In particular,
 boxed null usability must not be inferred from the successful ternary/Elvis proof.
+
+## Coalescing fallback observation versus selected value domain
+
+Optional `selections.coalesce.payload_rules` maps an admitted canonical payload to
+its permitted structural forms plus two small plain-value expressions:
+`plain_usable_expression` decides whether the left avoids fallback;
+`plain_selected_usable_expression` validates a value after fallback selection.
+The only substitution is `${value}`, bound to the already evaluated operand.
+Rules must name an admitted payload and a subset of the policy's join forms.
+Carrier branches keep their existing state-based usability independently of the
+payload's plain-value rule. No boxed type names occur in the resolver algorithm.
+
+Every resolved branch now carries both `usable_expression` and
+`selected_usable_expression`. Consumers use the first for left selection and the
+second for `require_right_usability`; they must not substitute general truthiness
+or reuse the first expression for selected-value validation.
+
+For exact mixed/dynamic pairs, a direct null box selects fallback, but a null box
+selected as that fallback is a valid owned result. A successful carrier containing
+boxed null is usable immediately. Current boxed forms are plain/plain and approved
+carrier/plain with exact payload identity. Broader mixed cross-type joins remain
+unimplemented; homogeneous boxed carrier pairs are not enabled by this slice.
+result_or_bool continues to reject on either side before execution.

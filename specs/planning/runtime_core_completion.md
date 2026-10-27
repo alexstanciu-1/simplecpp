@@ -1425,3 +1425,22 @@ containing boxed null have distinct usable-value rules, and must not inherit ter
 condition behavior. Inline-record/ownership and contextual joins also retain their
 separate admission/proof work. The pending logical/source-formation decisions and
 complete carrier review remain open.
+
+## C31 — exact boxed coalescing and selected-value observations
+
+Coalescing metadata now separates fallback usability from selected-value validity.
+Exact mixed/dynamic plain pairs and admitted carrier-left/plain-boxed fallbacks use
+this shared mechanism. A direct null box takes fallback; a successful carrier with
+a null-box payload skips fallback; a selected null box remains a valid result.
+No generated implementation for every operand pair or boxed-name resolver branch
+was introduced. Existing canonical scalar coalescing retains its original rules.
+
+The native coalesce helper previously treated direct dynamic null as always usable,
+unlike mixed null. It now follows the documented boxed-null rule, with a compiled
+native comparison proving fallback execution and valid selected null. Public proofs
+also retain mixed value independence and dynamic container identity.
+
+This is bounded exact-domain coverage. Broader mixed cross-type joins, record and
+ownership coalescing retain their planned work; no blanket homogeneous boxed-wrapper
+admission is claimed. result_or_bool remains rejected even in an unselected branch.
+The pending logical/source-formation decisions and carrier review remain open.

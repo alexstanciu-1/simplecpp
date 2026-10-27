@@ -2,6 +2,7 @@
 
 #include "lang/php/support/php_common.hpp"
 #include "scpp/cast.hpp"
+#include "scpp/support/dynamic_value.hpp"
 
 namespace scpp::detail {
 
@@ -161,8 +162,8 @@ inline bool_t coalesce_has_usable_value(const Value &value) {
 		return value.has_value();
 	} else if constexpr (::scpp::detail::is_specialization_of_v<value_t, result>) {
 		return value.has_value();
-	} else if constexpr (std::is_same_v<value_t, mixed_t>) {
-		return bool_t(value.kind() != mixed_t::kind_t::null_v);
+	} else if constexpr (std::is_same_v<value_t, mixed_t> || std::is_same_v<value_t, dynamic_value>) {
+		return bool_t(value.kind() != value_t::kind_t::null_v);
 	} else {
 		return bool_t(true);
 	}
