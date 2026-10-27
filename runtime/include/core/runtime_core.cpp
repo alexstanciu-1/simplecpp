@@ -372,3 +372,7 @@
 
 #include "scpp/generated/public_microtime_string.cpp"
 #include "scpp/generated/public_microtime_float.cpp"
+
+#include "scpp/generated/public_cli_argc.cpp"
+#include "scpp/generated/public_cli_argv.cpp"
+#include "scpp/generated/public_cli_args.cpp"

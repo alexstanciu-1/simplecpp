@@ -2495,3 +2495,30 @@ Single isolated compile-only caller costs at clang++ C++23/O2:
 not runtime throughput or full build measurements. Release and sanitizer core
 archives were each rebuilt once for the two new implementation units. The existing
 mixed-hash explicit-instantiation warning remains.
+
+## G2 — core CLI argument readers (2026-10-27)
+
+Ordinary function metadata publishes cli_argc, cli_argv and cli_args with concrete
+int64/mixed results. The native definitions moved unchanged into a focused private
+header; exact-text comparison against the prior process adapter passed. The startup
+setter remains private, and existing startup-before-execution ownership is unchanged.
+
+Release and ASan/UBSan with leak detection pass. A separate native fixture initializes
+context; the public-only caller observes it across translation units. The test covers
+the initial empty context, program name, empty/spaced/long arguments, mutation of one
+snapshot without affecting another or argv, source-byte changes affecting only later
+queries, and retained snapshots after source lifetime end/context reset.
+
+One hundred argc queries allocate zero times. For the four-argument fixture, native
+and public snapshot creation both allocate **13 times**: the boundary adds no wrapper
+allocation. This is measured parity, not a fixed allocation promise for all arguments.
+All three public headers compile independently. Relocated sealed publication imports
+all readers with zero generated units and runs a public-only linked caller. Metadata
+checks pass in **1.41s**.
+
+Single isolated clang++ C++23/O2 compile-only caller costs:
+**0.0536s public / 2.3717s native**. Core archives were rebuilt once per configuration.
+The private fixture initially lacked its C++23 feature setting; fixing its test target
+required only fixture compilation/linking, not another core compilation. Existing
+mixed-hash instantiation warnings remain. No concurrent context mutation contract was
+added, so no new TSan claim is made for the startup setter.

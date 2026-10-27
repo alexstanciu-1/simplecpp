@@ -244,9 +244,9 @@ value API exists, not that source lowering has already migrated to it.
 | `core.error.get_file` | Published error_value factory/getter equivalent | C (integration) |
 | `core.getenv` | Missing focused public helper; retain current registered core ownership pending review | G |
 | `core.shell_exec` | Missing focused public helper; retain current registered core ownership pending review | G |
-| `core.cli_argc` | Missing focused public helper; retain current registered core ownership pending review | G |
-| `core.cli_argv` | Missing focused public helper; retain current registered core ownership pending review | G |
-| `core.cli_args` | Missing focused public helper; retain current registered core ownership pending review | G |
+| `core.cli_argc` | Published focused core reader, G2 | Complete public path |
+| `core.cli_argv` | Published focused core reader, G2 | Complete public path |
+| `core.cli_args` | Published focused core reader, G2 | Complete public path |
 | `core.memory_get_usage.0` | Missing focused public helper; retain current registered core ownership pending review | G |
 | `core.memory_get_usage.1` | Missing focused public helper; retain current registered core ownership pending review | G |
 | `core.memory_get_peak_usage.0` | Missing focused public helper; retain current registered core ownership pending review | G |
@@ -1519,3 +1519,16 @@ The bool-false path still throws logic_error. Numeric observations allocate noth
 string formatting retains its native allocations, recorded separately. Public-only
 execution, lifetime/sanitizer checks, relocated sealed reuse and focused caller
 compile costs are recorded in the runtime boundary results.
+
+## Active-goal progress — G2 CLI argument readers
+
+Publish cli_argc/cli_argv/cli_args through ordinary function metadata, retaining
+canonical int64 and mixed result types. The unchanged native reader implementation
+moves into a focused private header included by the PHP process adapter. The existing
+startup context setter remains private; no new source globals or setter are exposed.
+
+A separate native test translation unit initializes context, while a public-only
+caller verifies cross-TU observations, independent snapshots, empty/spaced/long
+arguments, survival after context reset and input lifetime end, zero-allocation count
+queries and native/public snapshot allocation parity. This does not promise concurrent
+context mutation: startup initialization still precedes authored execution.

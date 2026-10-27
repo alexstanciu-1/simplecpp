@@ -506,3 +506,10 @@ add_test(NAME scpp_check_metadata_sections COMMAND ${Python3_EXECUTABLE}
 add_executable(test_public_microtime test_public_microtime.cpp)
 target_link_libraries(test_public_microtime PRIVATE scpp_core_api)
 add_test(NAME scpp_test_public_microtime COMMAND test_public_microtime)
+
+add_library(test_cli_provider OBJECT test_cli_provider.cpp)
+target_compile_features(test_cli_provider PRIVATE cxx_std_23)
+target_include_directories(test_cli_provider PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/../../../runtime/include)
+add_executable(test_public_cli test_public_cli.cpp $<TARGET_OBJECTS:test_cli_provider>)
+target_link_libraries(test_public_cli PRIVATE scpp_core_api)
+add_test(NAME scpp_test_public_cli COMMAND test_public_cli)

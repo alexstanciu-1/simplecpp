@@ -41,4 +41,7 @@ php::cli_argv()
 
 Current runtime owner:
 
-- `runtime/include/lang/php/php_process.hpp`
+- `runtime/include/scpp/detail/cli_arguments.hpp`, included by the existing
+  `runtime/include/lang/php/php_process.hpp` adapter
+- concrete core public reader: `scpp/cli/cli_argv.hpp`; startup context
+  initialization remains private

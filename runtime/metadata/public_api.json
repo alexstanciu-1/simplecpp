@@ -258,6 +258,54 @@
           "scpp/detail/microtime.hpp"
         ]
       }
+    },
+    "cli_argc": {
+      "namespace": "scpp",
+      "header": "scpp/cli/cli_argc.hpp",
+      "source": "include/scpp/generated/public_cli_argc.cpp",
+      "operation": {
+        "name": "cli_argc",
+        "returns": "int64",
+        "parameters": [],
+        "kind": "function",
+        "transport": "native",
+        "expression": "scpp::php::cli_argc()",
+        "includes": [
+          "scpp/detail/cli_arguments.hpp"
+        ]
+      }
+    },
+    "cli_argv": {
+      "namespace": "scpp",
+      "header": "scpp/cli/cli_argv.hpp",
+      "source": "include/scpp/generated/public_cli_argv.cpp",
+      "operation": {
+        "name": "cli_argv",
+        "returns": "mixed",
+        "parameters": [],
+        "kind": "function",
+        "transport": "native",
+        "expression": "scpp::php::cli_argv()",
+        "includes": [
+          "scpp/detail/cli_arguments.hpp"
+        ]
+      }
+    },
+    "cli_args": {
+      "namespace": "scpp",
+      "header": "scpp/cli/cli_args.hpp",
+      "source": "include/scpp/generated/public_cli_args.cpp",
+      "operation": {
+        "name": "cli_args",
+        "returns": "mixed",
+        "parameters": [],
+        "kind": "function",
+        "transport": "native",
+        "expression": "scpp::php::cli_args()",
+        "includes": [
+          "scpp/detail/cli_arguments.hpp"
+        ]
+      }
     }
   },
   "capabilities": {

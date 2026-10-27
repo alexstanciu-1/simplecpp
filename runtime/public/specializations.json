@@ -1,6 +1,6 @@
 {
   "abi": "529dd5502370f48d64891818e9439aae72831b990b4027e8abe25c50c1216c21",
-  "api_identity": "328ef8be04b36f3c6b978b5ecd41ed99d455303b37100c31c3f5f108419e4d4e",
+  "api_identity": "34777f850397ed5196994f7e1a090676aa48a8d4dd0823ebaa56eab67405e5f3",
   "apis": {
     "add_dynamic": {
       "header": "scpp/operators/add_dynamic.hpp",
@@ -2643,6 +2643,54 @@
         "returns": "void"
       },
       "source": "include/scpp/generated/public_clean_uint8.cpp"
+    },
+    "cli_argc": {
+      "header": "scpp/cli/cli_argc.hpp",
+      "namespace": "scpp",
+      "operation": {
+        "expression": "scpp::php::cli_argc()",
+        "includes": [
+          "scpp/detail/cli_arguments.hpp"
+        ],
+        "kind": "function",
+        "name": "cli_argc",
+        "parameters": [],
+        "returns": "int64",
+        "transport": "native"
+      },
+      "source": "include/scpp/generated/public_cli_argc.cpp"
+    },
+    "cli_args": {
+      "header": "scpp/cli/cli_args.hpp",
+      "namespace": "scpp",
+      "operation": {
+        "expression": "scpp::php::cli_args()",
+        "includes": [
+          "scpp/detail/cli_arguments.hpp"
+        ],
+        "kind": "function",
+        "name": "cli_args",
+        "parameters": [],
+        "returns": "mixed",
+        "transport": "native"
+      },
+      "source": "include/scpp/generated/public_cli_args.cpp"
+    },
+    "cli_argv": {
+      "header": "scpp/cli/cli_argv.hpp",
+      "namespace": "scpp",
+      "operation": {
+        "expression": "scpp::php::cli_argv()",
+        "includes": [
+          "scpp/detail/cli_arguments.hpp"
+        ],
+        "kind": "function",
+        "name": "cli_argv",
+        "parameters": [],
+        "returns": "mixed",
+        "transport": "native"
+      },
+      "source": "include/scpp/generated/public_cli_argv.cpp"
     },
     "coalesce_require_value": {
       "header": "scpp/selection/coalesce_require_value.hpp",
@@ -9552,7 +9600,16 @@
     "include/scpp/time/microtime_string.hpp",
     "public/scpp/time/microtime_float.hpp",
     "include/scpp/generated/public_microtime_float.cpp",
-    "include/scpp/time/microtime_float.hpp"
+    "include/scpp/time/microtime_float.hpp",
+    "public/scpp/cli/cli_argc.hpp",
+    "include/scpp/generated/public_cli_argc.cpp",
+    "include/scpp/cli/cli_argc.hpp",
+    "public/scpp/cli/cli_argv.hpp",
+    "include/scpp/generated/public_cli_argv.cpp",
+    "include/scpp/cli/cli_argv.hpp",
+    "public/scpp/cli/cli_args.hpp",
+    "include/scpp/generated/public_cli_args.cpp",
+    "include/scpp/cli/cli_args.hpp"
   ],
   "generator": "metadata-api-v1",
   "leaves": {
@@ -9732,6 +9789,9 @@
   "public_files": {
     "modules/filesystem/scan.hpp": "12c63684c1896c3de8fd05db1a6ab2a2fbb7eea2a3747ed3de91f44e0e5cf7d7",
     "modules/tasks/worker_pool.hpp": "07fd862bb53ef73be8aec043b5027a4e247723fe8efc4196d8e931ffe820394e",
+    "scpp/cli/cli_argc.hpp": "7fdf322903540d54e651893dbeeaf56df4ee599110b8058fa631bf02e01fac17",
+    "scpp/cli/cli_args.hpp": "d5cce3701f6ee4f716114d745bda82249f78ffb4df2f3036e97e8a833d6d9a8c",
+    "scpp/cli/cli_argv.hpp": "cf1c2c3d3e6c0ca08760300351006d937b7c4cbc1fedbbb1773deea622c4d842",
     "scpp/conditions/condition_truthy_boolean.hpp": "fd110caf13cf9eee1f8dabef93d3c875c2e526ce28fa73249df7e1903112be83",
     "scpp/conditions/condition_truthy_dynamic.hpp": "47a4341d7c07faeefe489859544f53f13684bb7af6383b20edd11ad00e4b92ee",
     "scpp/conditions/condition_truthy_error_value.hpp": "a82bf525b7fea8e7ba20916a2c52b46c97aeaae73829f01c88371ca60350d50e",
@@ -10429,7 +10489,10 @@
     "include/scpp/generated/public_count_mixed.cpp",
     "include/scpp/generated/public_count_dynamic.cpp",
     "include/scpp/generated/public_microtime_string.cpp",
-    "include/scpp/generated/public_microtime_float.cpp"
+    "include/scpp/generated/public_microtime_float.cpp",
+    "include/scpp/generated/public_cli_argc.cpp",
+    "include/scpp/generated/public_cli_argv.cpp",
+    "include/scpp/generated/public_cli_args.cpp"
   ],
   "types": {
     "dynamic": {

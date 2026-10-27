@@ -357,6 +357,9 @@
     "count_mixed",
     "count_dynamic",
     "microtime_string",
-    "microtime_float"
+    "microtime_float",
+    "cli_argc",
+    "cli_argv",
+    "cli_args"
   ]
 }
