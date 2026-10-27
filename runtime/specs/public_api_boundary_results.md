@@ -2014,3 +2014,36 @@ checks pass in 59.97s. Generator builds take 6.41s release / 18.55s sanitized. N
 runtime-core rebuild is needed. Single-run timings overlap other validation work.
 The compiled ASan/UBSan proof with leak detection also passes, including sealed reuse;
 its eight storage units take 12.0278s and its caller takes 1.4830s to compile.
+
+## C20 — canonical arithmetic carrier compounds (2026-10-27)
+
+The metadata opts the five canonical arithmetic compounds into checked payload
+projection. Existing ordinary directional compound rules remain the admission owner;
+no carrier-pair runtime overloads or implementation units are added. All generated
+file hashes remain unchanged across the 336 runtime implementation units; only the
+publication metadata fingerprint changes.
+
+`check_carrier_compound.py` resolves 156 plans across four families and plain peers.
+Its public-only consumer executes 348 successful cases and 464 failure cases, covering
+saved-left ordering, RHS alias mutation, returned snapshot independence, absent/
+error/sentinel extraction, zero divisors and prior RHS effects surviving failure.
+The successful measured region allocates zero times. The eight application storage
+units also seal and reuse with no regenerated source. This is not frontend or indexed
+owner-retention validation, and does not claim an extreme-integer overflow contract.
+
+Five focused release regressions pass in 3.69s; the corresponding sanitizer
+regressions pass in 25.73s. Initial negative fixtures were corrected to isolate their
+intended validation owners (ordinary compound versus carrier policy; nonempty domain
+versus payload admission). No failed behavioral proof was waived.
+
+The timed final generator rebuild takes 6.50s release and 19.51s sanitized; an earlier
+release build preceded the diagnostic/fixture cleanup. Runtime-core was not rebuilt.
+The compiled release proof passes: eight storage units 9.7756s, combined caller
+13.0225s. These are single-run wall times, with other validation active, not an
+isolated benchmark or a per-expression compilation cost. The caller deliberately
+contains the full success/failure matrix.
+
+The compiled ASan/UBSan proof with leak detection also passes, including publication
+reuse: storage compile 12.6209s and combined caller compile 39.8109s. Future test
+extensions should keep the executed semantics while avoiding redundant expansion of
+this already large caller matrix.

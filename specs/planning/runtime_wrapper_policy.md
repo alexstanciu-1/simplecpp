@@ -462,3 +462,13 @@ payload results. Numeric prefix/postfix updates instead preserve carrier storage
 and return updated/old carrier value snapshots. State failures occur before mutation;
 source ownership/target preparation stays compiler-owned. Physical construction is
 shared with compound write-back rather than implemented per carrier family.
+
+### Canonical arithmetic compound implementation checkpoint
+
+All four carriers now use ordinary directional compound admission after one checked
+payload projection. Canonical float destinations accept canonical int/float RHS;
+canonical int destinations accept int RHS, including remainder. Ordinary peers and
+carrier peers use the same rule. No missing state becomes a numeric value. The
+existing ordered compound planner owns snapshot, conversion, computation and commit;
+carrier metadata supplies checked access and payload reconstruction. Returned values
+remain independent snapshots of the destination type.

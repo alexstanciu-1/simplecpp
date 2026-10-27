@@ -3002,6 +3002,10 @@
             ],
             "writeback_function_set": "numeric_compound_replacement"
           }
+        ],
+        "carrier_targets": [
+          "int64",
+          "float64"
         ]
       },
       "subtract_assign": {
@@ -3038,6 +3042,10 @@
             ],
             "writeback_function_set": "numeric_compound_replacement"
           }
+        ],
+        "carrier_targets": [
+          "int64",
+          "float64"
         ]
       },
       "multiply_assign": {
@@ -3074,6 +3082,10 @@
             ],
             "writeback_function_set": "numeric_compound_replacement"
           }
+        ],
+        "carrier_targets": [
+          "int64",
+          "float64"
         ]
       },
       "divide_assign": {
@@ -3110,6 +3122,10 @@
             ],
             "writeback_function_set": "numeric_compound_replacement"
           }
+        ],
+        "carrier_targets": [
+          "int64",
+          "float64"
         ]
       },
       "remainder_assign": {
@@ -3137,6 +3153,9 @@
             ],
             "writeback_function_set": "numeric_compound_replacement"
           }
+        ],
+        "carrier_targets": [
+          "int64"
         ]
       },
       "bit_and_assign": {

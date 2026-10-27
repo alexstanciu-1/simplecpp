@@ -1128,3 +1128,18 @@ exposed. Missing payloads fail before mutation or old-carrier copying.
 This policy selects canonical numeric carrier values/updates and integer complement;
 it does not grant boxed, fixed-width, nested or arbitrary application payloads, new
 writable destinations, or new checked-overflow semantics.
+
+### Checked-payload compound plans
+
+`carrier_targets` also opts a compound into its binary owner's checked carrier
+projection policy. For this path the list bounds both operand payload domains, and
+an existing ordinary compound rule must admit the projected target/RHS pair. Rules
+requiring saved-kind or different-source write-back are not inferred for carriers.
+This preserves directional admission without repeating a family-pair rule table.
+
+The resulting `ordered_compound` includes `left_projection` and `right_projection`
+from the ordinary binary planner. Its steps insert `project_left` between the left
+snapshot and conversion, and `project_right` between RHS evaluation and conversion.
+The normalized scalar calculation remains unchanged. Carrier destinations reuse the
+single payload construction recipe; plain destinations use ordinary conversion.
+Text's state-aware converted-operand path retains its distinct policy and steps.

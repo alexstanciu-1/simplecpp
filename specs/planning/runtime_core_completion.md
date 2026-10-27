@@ -17,7 +17,7 @@ each slice. The original inventory is a baseline, not a current completion count
 | A2 | Complete for the agreed checked scalar conversions | Carrier conversion is C; ownership casts are D. |
 | B1 | Complete for the agreed scalar-facing truth/text/identity/observation scope | Carrier forms remain C; boxed arithmetic and access completion are not B1 credit. |
 | B2 | Complete for the agreed non-carrier special/mutation and text public paths; closure evidence below | Carrier forms C; indexed retention E; native exception inspection and overflow disposition G. |
-| C | Four carrier recipes with conditional lifecycle; numeric/presence plans, scalar/boxed equality, scalar reconstruction, Result error identity and sentinel take/state proofs implemented; review pending | Four carrier families, state-preserving operations/conversions and conditional lifecycle. |
+| C | Four carrier recipes with conditional lifecycle; numeric/presence plans, scalar/boxed equality, scalar reconstruction, text, unary/update and canonical arithmetic compound plans, Result error identity and sentinel take/state proofs implemented; review pending | Four carrier families, state-preserving operations/conversions and conditional lifecycle. |
 | D | Pending | Ownership, application targets and source Exception transport gaps. |
 | E | Existing vector/hash/boxed foundations; incomplete | Capability/access/initialization/cursor gaps and identity key-allocation debt. |
 | F | Pending | Callable transport and registered collection algorithms. |
@@ -1163,3 +1163,20 @@ Eight application units reuse the existing scalar publication. All 336 runtime
 implementation units stay unchanged and no core rebuild is required. Numeric
 compound/special-binary/lazy coverage, scoped observations and the pending formation
 boundary still remain before the complete carrier review.
+
+## C20 — canonical arithmetic carrier compounds
+
+The shared ordered compound planner now admits `+=`, `-=`, `*=`, `/=` and integer
+`%=` for canonical numeric payloads in all four carrier families. Payload admission
+reuses the ordinary directional compound rules: float destinations accept int or
+float RHS payloads; int destinations require int RHS payloads. Metadata explicitly
+opts the operations into carrier processing without enumerating family pairs.
+
+Plans preserve the destination snapshot, perform checked left extraction/conversion
+before RHS evaluation, then checked RHS extraction/conversion, calculation and payload
+reconstruction before committing. The result is an independent destination-typed
+snapshot. Failed extraction or calculation performs no write-back; prior RHS effects
+remain. This is not fixed-width, indexed, nested or boxed-carrier admission.
+
+Special binary/compound groups, lazy protocols, wider ordering, scoped observations
+and the source-formation decision remain open before the complete carrier review.

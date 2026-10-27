@@ -200,8 +200,12 @@ namespace scpp::api_generation
                 const auto &operation = registry.at("operations").at(compound.at("operation").text());
                 if (operation.get("form", "binary") != "binary") throw std::runtime_error("Compound calculation must be binary");
                 if (compound.has("carrier_targets")) {
-                    if (!operation.has("carrier_operands") || operation.get("compound_left_snapshot")!="converted")
-                        throw std::runtime_error("Carrier compound requires converted operand snapshots");
+                    if (operation.has("carrier_operands")) {
+                        if (operation.get("compound_left_snapshot")!="converted")
+                            throw std::runtime_error("Carrier compound requires converted operand snapshots");
+                    } else if (!registry.has("carrier_projection")
+                        || !contains(registry.at("carrier_projection").at("operations"), compound.at("operation").text()))
+                        throw std::runtime_error("Carrier compound requires a checked payload operation");
                     for (const auto &target : domains(compound.at("carrier_targets"))) registry.at("types").at(target);
                 }
                 if (compound.at("rules").type != value::kind::array || compound.at("rules").items.empty())
@@ -726,6 +730,22 @@ namespace scpp::api_generation
             }
             if (!contains(compound.at("carrier_targets"), storage))
                 throw std::runtime_error("Unsupported compound destination payload");
+            if (!registry.at("operations").at(compound.at("operation").text()).has("carrier_operands")) {
+                const auto canonical_right = types.resolve(right).first;
+                auto right_storage = canonical_right;
+                if (!registry.at("types").has(canonical_right)) {
+                    const auto projection = project_carrier(metadata, canonical_right, names);
+                    if (projection.type!=value::kind::null) right_storage = projection.at("target").text();
+                }
+                // Projection grants no extra source admission: reuse the ordinary
+                // directional compound rule after checking the canonical payload domain.
+                bool admitted = false;
+                if (contains(compound.at("carrier_targets"), right_storage))
+                    for (const auto &rule : compound.at("rules").items)
+                        if (rule.at("target").text()==storage && contains(rule.at("right"), right_storage)
+                            && !rule.has("writeback_function_set") && !rule.has("writeback_source")) admitted = true;
+                if (!admitted) throw std::runtime_error("Unsupported compound payload operands");
+            }
             carrier_rule["writeback_source"] = storage;
             if (destination.type!=value::kind::null) {
                 require_carrier_payload(destination);
@@ -737,7 +757,8 @@ namespace scpp::api_generation
         value calculation = value::object();
         calculation["operation"] = compound.at("operation"); calculation["left"] = target; calculation["right"] = right;
         const auto binary = resolve_operator(metadata, calculation, names);
-        const auto &plan = binary.get("kind")=="converted_carrier_binary" ? binary.at("calculation") : binary;
+        const bool projected = binary.get("kind")=="checked_payload_binary";
+        const auto &plan = projected || binary.get("kind")=="converted_carrier_binary" ? binary.at("calculation") : binary;
         // A differing result needs explicit admission; an available conversion
         // alone cannot authorize narrowing or replacement of the destination kind.
         const auto writeback_source = selected_rule->get("writeback_source", target);
@@ -746,8 +767,12 @@ namespace scpp::api_generation
         value out = value::object();
         out["operation"] = name; out["target"] = target; out["right"] = right; out["result_type"] = target;
         out["kind"] = "ordered_compound"; out["calculation"] = plan;
-        out["left_conversion"] = binary.at("left_conversion");
-        out["right_conversion"] = binary.at("right_conversion");
+        out["left_conversion"] = (projected ? plan : binary).at("left_conversion");
+        out["right_conversion"] = (projected ? plan : binary).at("right_conversion");
+        if (projected) {
+            out["left_projection"] = binary.at("left_projection");
+            out["right_projection"] = binary.at("right_projection");
+        }
         out["writeback_conversion"] = carrier_writeback.type!=value::kind::null
             ? carrier_writeback : operand_conversion(metadata, plan.at("result_type").text(), target);
         if (selected_rule->has("writeback_function_set")) {
@@ -776,10 +801,14 @@ namespace scpp::api_generation
         if (converted_snapshot) out["steps"].items.emplace_back("snapshot_converted_left");
         else {
             out["steps"].items.emplace_back("snapshot_left");
+            if (projected) out["steps"].items.emplace_back("project_left");
             out["steps"].items.emplace_back("convert_left");
         }
         for (const auto *step : {"evaluate_right", "convert_right", "calculate", "convert_writeback",
-                 "commit_destination", "return_value_snapshot"}) out["steps"].items.emplace_back(step);
+                 "commit_destination", "return_value_snapshot"}) {
+            if (projected && std::string(step)=="convert_right") out["steps"].items.emplace_back("project_right");
+            out["steps"].items.emplace_back(step);
+        }
         out["failure"] = "no_writeback_preserve_prior_effects";
         return out;
     }

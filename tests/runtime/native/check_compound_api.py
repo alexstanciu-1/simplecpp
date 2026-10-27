@@ -110,6 +110,8 @@ for mutation, error in [
     (lambda c: c.update(unknown='x'), 'unknown field'),
 ]:
     changed = copy.deepcopy(metadata)
+    # Isolate ordinary compound validation from the independent carrier policy.
+    del changed['global_operators']['compounds']['add_assign']['carrier_targets']
     mutation(changed['global_operators']['compounds']['add_assign'])
     resolve('add_assign', 'int64', 'int64', changed, error)
 # Operation identity and its backend are metadata, not special cases in C++.
