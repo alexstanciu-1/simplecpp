@@ -121,3 +121,10 @@ the compiled boundary, without LTO. It does not benchmark error-path allocations
 The measured WSL run took 325 microseconds, made zero `new/new[]` calls and produced
 4,999,950,000. This is a smoke measurement of the out-of-line facade, not a claim
 that it matches fully inlined template arithmetic performance.
+
+## Restricted public root checkpoint
+
+The subsequent first public-boundary slice removes exception implementation headers
+from disabled public callers. Both modes are now template-free and the new disabled
+path links core only. See [test and measurement results](public_api_boundary_results.md)
+for the current costs; the tables above record earlier checkpoints.

@@ -2,7 +2,7 @@
 Doc Status: planning
 
 Date: 2026-10-27. Planning baseline: `94361018b`.
-Status: proposed overall direction; no broad implementation authorized by this document.
+Status: first public-boundary slice implemented; remaining phases proposed.
 
 ## Goal and terminology
 
@@ -303,11 +303,17 @@ application-specific instantiation stays with its application, and measured beha
 memory, concurrency and build costs meet the agreed phase gates. No claim of universal
 template-free runtime coverage follows from the first migrated modules.
 
-## Recommended next implementation slice
+## First-slice completion and next review
 
-Start phase 1: publish a runtime-owned restricted public include root for the existing
-integers and worker-pool API, consume it directly from the compiler, and build a
-contract/dependency inventory for string, error and textbuilder. Show the proposed
-complete core API signatures and representation choices before implementing phase 2.
-This establishes the real public boundary and identifies the next dependency group
-without turning the plan into another collection of unrelated wrapper patches.
+The first restricted boundary slice is implemented: runtime-owned public include
+root, concrete integer and worker-pool APIs, core-linked task-owned disabled errors,
+direct compiler consumption, and a string/error/textbuilder dependency inventory.
+See [the inventory](../../runtime/specs/public_api_inventory.md) and
+[test/build measurements](../../runtime/specs/public_api_boundary_results.md).
+This completes the first slice, not the full runtime inventory or all migration phases.
+
+Next, review complete ordinary string/error/textbuilder signatures and representation
+choices, including source-span dependencies, copying/transfer, allocations and failure
+inspection, before implementing that group. Shared specialization generation and
+published reuse remain later work under the agreed mechanism; no parallel semantic
+registry or separate public middleware layer is introduced by this first slice.

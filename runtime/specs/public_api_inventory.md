@@ -70,3 +70,8 @@ compatibility TUs inspect diagnostics and execute the existing four-worker concu
 reuse and recovery workload. General failure tests check copied input lifetime and
 null fields. Static/shared linking and focused sanitizer results are recorded with
 the completed slice measurements.
+
+See [first-slice test and measurement results](public_api_boundary_results.md).
+The native text builder currently has ordinary value copy/move support through its
+string storage; the compiler facade deletes copying. The next API design must check
+the source contract and must not accidentally inherit that compiler-only restriction.
