@@ -565,3 +565,18 @@ fixed-width/float and unsigned/float combinations are not inferred from arithmet
 admission. Nine implementations return int64. The native comparison owner compares
 integers directly rather than subtracting, and retains the floating NaN error.
 Carrier extraction and source snapshots remain separate C/compiler responsibilities.
+
+## Unary operator form
+
+`form: unary` uses an explicit admitted operand list and the existing function-set
+owner. It has no binary group or fake second operand. `resolve_operator` accepts
+`operation` and `operand` and returns a borrowed one-argument call plan with
+`evaluation: evaluate_operand_once`, identity conversion and the declared result
+(or the input type by default). Publication validates the exact const-reference
+signature and reuses ordinary API inventory ownership. Binary plans are unchanged.
+
+Numeric positive/negative publish canonical int64/float64 and both boxed families;
+complement publishes int64 and both boxed families. Native kind checks and native
+integer overflow limitations remain unchanged. In particular this does not invent
+checked negation of the minimum signed integer. Logical negation, updates and carrier
+operations retain their separate admission/state protocols.

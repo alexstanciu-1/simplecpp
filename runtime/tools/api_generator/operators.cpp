@@ -78,8 +78,14 @@ namespace scpp::api_generation
         }
         for (const auto &[name, operation] : registry.at("operations").fields) {
             authored_name(name); authored_name(operation.at("name").text());
-            fields_only(operation, "group name expression publish returns includes function_set pair_function_set operands distinct_result", "global operation");
-            registry.at("groups").at(operation.at("group").text());
+            fields_only(operation, "form group name expression publish returns includes function_set pair_function_set operands distinct_result", "global operation");
+            const auto form = operation.get("form", "binary");
+            if (form != "binary" && form != "unary") throw std::runtime_error("Unknown operator form");
+            if (form == "unary") {
+                fields_only(operation, "form name publish returns function_set operands", "unary operation");
+                operation.at("function_set").text();
+                operation.at("operands");
+            } else registry.at("groups").at(operation.at("group").text());
             if (operation.has("expression") == operation.has("function_set"))
                 throw std::runtime_error("Operator needs exactly one expression or function set owner");
             if (operation.has("function_set")) {
@@ -96,7 +102,7 @@ namespace scpp::api_generation
             }
             if (operation.has("pair_function_set")) metadata.at("function_sets").at(operation.at("pair_function_set").text());
             bool constant_rule = false;
-            for (const auto &rule : registry.at("groups").at(operation.at("group").text()).at("rules").items)
+            if (form == "binary") for (const auto &rule : registry.at("groups").at(operation.at("group").text()).at("rules").items)
                 constant_rule |= rule.at("selection").text() == "same_or_constant";
             if (constant_rule) {
                 const auto result = operation.at("distinct_result").text();
@@ -114,6 +120,33 @@ namespace scpp::api_generation
             }
         }
         return registry;
+    }
+
+    static value resolve_unary_operator(const value &registry, const value &request, const value &function_sets)
+    {
+        fields_only(request, "operation operand", "unary operator request");
+        const auto name = request.at("operation").text(), type = request.at("operand").text();
+        const auto &operation = registry.at("operations").at(name);
+        if (!registry.at("types").has(type) || !contains(operation.at("operands"), type))
+            throw std::runtime_error("Unsupported unary operator operand");
+        if (!contains(operation.at("publish"), type))
+            throw std::runtime_error("Selected unary implementation is not published");
+        const auto identity = operation.at("function_set").text() + "_" + type;
+        const auto &function = function_sets.at(identity), &signature = function.at("operation");
+        const auto result_type = operation.get("returns", type);
+        const auto &parameters = signature.at("parameters").items;
+        if (parameters.size() != 1 || parameters[0].at("type").text() != type
+            || parameters[0].get("passing") != "const_ref"
+            || signature.at("returns").text() != result_type
+            || signature.at("name").text() != operation.at("name").text())
+            throw std::runtime_error("Unary function set signature mismatch");
+        value result = value::object();
+        result["operation"] = name; result["operand"] = type; result["operand_type"] = type;
+        result["result_type"] = result_type; result["kind"] = "call";
+        result["api"] = identity; result["header"] = function.at("header");
+        result["function"] = function.at("namespace").text() + "::" + signature.at("name").text();
+        result["conversion"] = "identity"; result["evaluation"] = "evaluate_operand_once";
+        return result;
     }
 
     static value resolve_registered_operator(const value &registry, const value &request, const value &function_sets)
@@ -203,6 +236,7 @@ namespace scpp::api_generation
         const auto &registry = validated_registry(metadata);
         const auto &operation = registry.at("operations").at(request.at("operation").text());
         const auto functions = (operation.has("function_set") || operation.has("pair_function_set")) ? expand_function_sets(metadata) : value::object();
+        if (operation.get("form", "binary") == "unary") return resolve_unary_operator(registry, request, functions);
         return resolve_registered_operator(registry, request, functions);
     }
 
@@ -216,6 +250,11 @@ namespace scpp::api_generation
         for (const auto &[name, operation] : registry.at("operations").fields) {
             for (const auto &type : operation.at("publish").items) {
                 value request = value::object(); request["operation"] = name;
+                if (operation.get("form", "binary") == "unary") {
+                    request["operand"] = type;
+                    (void)resolve_unary_operator(registry, request, function_sets);
+                    continue;
+                }
                 request["left"] = type; request["right"] = type;
                 const auto plan = resolve_registered_operator(registry, request, function_sets);
                 if (plan.at("operand_type").text() != type.text())

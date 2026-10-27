@@ -2823,6 +2823,55 @@
         "includes": [
           "operators/ordering/numeric_compare.hpp"
         ]
+      },
+      "positive": {
+        "form": "unary",
+        "name": "numeric_positive",
+        "function_set": "positive",
+        "publish": [
+          "int64",
+          "float64",
+          "mixed",
+          "dynamic"
+        ],
+        "operands": [
+          "int64",
+          "float64",
+          "mixed",
+          "dynamic"
+        ]
+      },
+      "negative": {
+        "form": "unary",
+        "name": "numeric_negative",
+        "function_set": "negative",
+        "publish": [
+          "int64",
+          "float64",
+          "mixed",
+          "dynamic"
+        ],
+        "operands": [
+          "int64",
+          "float64",
+          "mixed",
+          "dynamic"
+        ]
+      },
+      "complement": {
+        "form": "unary",
+        "name": "numeric_complement",
+        "function_set": "complement",
+        "publish": [
+          "int64",
+          "mixed",
+          "dynamic"
+        ],
+        "operands": [
+          "int64",
+          "mixed",
+          "dynamic"
+        ]
       }
     }
   },
@@ -3748,6 +3797,92 @@
           "expression": "scpp::pow(${native:left}, ${native:right})",
           "includes": [
             "operators/arithmetic/power.hpp"
+          ]
+        }
+      }
+    },
+    "positive": {
+      "variants": {
+        "int64": {},
+        "float64": {},
+        "mixed": {},
+        "dynamic": {}
+      },
+      "function": {
+        "namespace": "scpp",
+        "header": "scpp/operators/positive_${variant}.hpp",
+        "source": "include/scpp/generated/public_positive_${variant}.cpp",
+        "operation": {
+          "name": "numeric_positive",
+          "returns": "${variant}",
+          "parameters": [
+            {
+              "name": "value",
+              "type": "${variant}",
+              "passing": "const_ref"
+            }
+          ],
+          "transport": "native",
+          "expression": "+(${native:value})",
+          "includes": [
+            "operators/arithmetic/boxed_numeric.hpp"
+          ]
+        }
+      }
+    },
+    "negative": {
+      "variants": {
+        "int64": {},
+        "float64": {},
+        "mixed": {},
+        "dynamic": {}
+      },
+      "function": {
+        "namespace": "scpp",
+        "header": "scpp/operators/negative_${variant}.hpp",
+        "source": "include/scpp/generated/public_negative_${variant}.cpp",
+        "operation": {
+          "name": "numeric_negative",
+          "returns": "${variant}",
+          "parameters": [
+            {
+              "name": "value",
+              "type": "${variant}",
+              "passing": "const_ref"
+            }
+          ],
+          "transport": "native",
+          "expression": "-(${native:value})",
+          "includes": [
+            "operators/arithmetic/boxed_numeric.hpp"
+          ]
+        }
+      }
+    },
+    "complement": {
+      "variants": {
+        "int64": {},
+        "mixed": {},
+        "dynamic": {}
+      },
+      "function": {
+        "namespace": "scpp",
+        "header": "scpp/operators/complement_${variant}.hpp",
+        "source": "include/scpp/generated/public_complement_${variant}.cpp",
+        "operation": {
+          "name": "numeric_complement",
+          "returns": "${variant}",
+          "parameters": [
+            {
+              "name": "value",
+              "type": "${variant}",
+              "passing": "const_ref"
+            }
+          ],
+          "transport": "native",
+          "expression": "~(${native:value})",
+          "includes": [
+            "operators/arithmetic/boxed_numeric.hpp"
           ]
         }
       }

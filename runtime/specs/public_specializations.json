@@ -302,6 +302,17 @@
     "compare_uint16",
     "compare_uint32",
     "compare_uint64",
-    "compare_float64"
+    "compare_float64",
+    "positive_int64",
+    "positive_float64",
+    "positive_mixed",
+    "positive_dynamic",
+    "negative_int64",
+    "negative_float64",
+    "negative_mixed",
+    "negative_dynamic",
+    "complement_int64",
+    "complement_mixed",
+    "complement_dynamic"
   ]
 }

@@ -1,6 +1,6 @@
 {
   "abi": "529dd5502370f48d64891818e9439aae72831b990b4027e8abe25c50c1216c21",
-  "api_identity": "0c2c41a57412dcbb8088ce8d98f014fc664186df279366ecd8d0e1eef002429a",
+  "api_identity": "00c96da09e39425b47c858f4c4f83a808beb1d9ed999deb4f73abfcc3ca57528",
   "apis": {
     "add_float64": {
       "header": "scpp/operators/add_float64.hpp",
@@ -2829,6 +2829,69 @@
       },
       "source": "include/scpp/generated/public_compare_uint8.cpp"
     },
+    "complement_dynamic": {
+      "header": "scpp/operators/complement_dynamic.hpp",
+      "namespace": "scpp",
+      "operation": {
+        "expression": "~(${native:value})",
+        "includes": [
+          "operators/arithmetic/boxed_numeric.hpp"
+        ],
+        "name": "numeric_complement",
+        "parameters": [
+          {
+            "name": "value",
+            "passing": "const_ref",
+            "type": "dynamic"
+          }
+        ],
+        "returns": "dynamic",
+        "transport": "native"
+      },
+      "source": "include/scpp/generated/public_complement_dynamic.cpp"
+    },
+    "complement_int64": {
+      "header": "scpp/operators/complement_int64.hpp",
+      "namespace": "scpp",
+      "operation": {
+        "expression": "~(${native:value})",
+        "includes": [
+          "operators/arithmetic/boxed_numeric.hpp"
+        ],
+        "name": "numeric_complement",
+        "parameters": [
+          {
+            "name": "value",
+            "passing": "const_ref",
+            "type": "int64"
+          }
+        ],
+        "returns": "int64",
+        "transport": "native"
+      },
+      "source": "include/scpp/generated/public_complement_int64.cpp"
+    },
+    "complement_mixed": {
+      "header": "scpp/operators/complement_mixed.hpp",
+      "namespace": "scpp",
+      "operation": {
+        "expression": "~(${native:value})",
+        "includes": [
+          "operators/arithmetic/boxed_numeric.hpp"
+        ],
+        "name": "numeric_complement",
+        "parameters": [
+          {
+            "name": "value",
+            "passing": "const_ref",
+            "type": "mixed"
+          }
+        ],
+        "returns": "mixed",
+        "transport": "native"
+      },
+      "source": "include/scpp/generated/public_complement_mixed.cpp"
+    },
     "concat_text_boolean": {
       "header": "scpp/text/concat_text_boolean.hpp",
       "namespace": "scpp",
@@ -5122,6 +5185,90 @@
       },
       "source": "include/scpp/generated/public_multiply_uint8.cpp"
     },
+    "negative_dynamic": {
+      "header": "scpp/operators/negative_dynamic.hpp",
+      "namespace": "scpp",
+      "operation": {
+        "expression": "-(${native:value})",
+        "includes": [
+          "operators/arithmetic/boxed_numeric.hpp"
+        ],
+        "name": "numeric_negative",
+        "parameters": [
+          {
+            "name": "value",
+            "passing": "const_ref",
+            "type": "dynamic"
+          }
+        ],
+        "returns": "dynamic",
+        "transport": "native"
+      },
+      "source": "include/scpp/generated/public_negative_dynamic.cpp"
+    },
+    "negative_float64": {
+      "header": "scpp/operators/negative_float64.hpp",
+      "namespace": "scpp",
+      "operation": {
+        "expression": "-(${native:value})",
+        "includes": [
+          "operators/arithmetic/boxed_numeric.hpp"
+        ],
+        "name": "numeric_negative",
+        "parameters": [
+          {
+            "name": "value",
+            "passing": "const_ref",
+            "type": "float64"
+          }
+        ],
+        "returns": "float64",
+        "transport": "native"
+      },
+      "source": "include/scpp/generated/public_negative_float64.cpp"
+    },
+    "negative_int64": {
+      "header": "scpp/operators/negative_int64.hpp",
+      "namespace": "scpp",
+      "operation": {
+        "expression": "-(${native:value})",
+        "includes": [
+          "operators/arithmetic/boxed_numeric.hpp"
+        ],
+        "name": "numeric_negative",
+        "parameters": [
+          {
+            "name": "value",
+            "passing": "const_ref",
+            "type": "int64"
+          }
+        ],
+        "returns": "int64",
+        "transport": "native"
+      },
+      "source": "include/scpp/generated/public_negative_int64.cpp"
+    },
+    "negative_mixed": {
+      "header": "scpp/operators/negative_mixed.hpp",
+      "namespace": "scpp",
+      "operation": {
+        "expression": "-(${native:value})",
+        "includes": [
+          "operators/arithmetic/boxed_numeric.hpp"
+        ],
+        "name": "numeric_negative",
+        "parameters": [
+          {
+            "name": "value",
+            "passing": "const_ref",
+            "type": "mixed"
+          }
+        ],
+        "returns": "mixed",
+        "transport": "native"
+      },
+      "source": "include/scpp/generated/public_negative_mixed.cpp"
+    },
     "not_equal_dynamic": {
       "header": "scpp/operators/not_equal_dynamic.hpp",
       "namespace": "scpp",
@@ -5681,6 +5828,90 @@
         ]
       },
       "source": "include/scpp/generated/public_numeric_not_equal_uint8.cpp"
+    },
+    "positive_dynamic": {
+      "header": "scpp/operators/positive_dynamic.hpp",
+      "namespace": "scpp",
+      "operation": {
+        "expression": "+(${native:value})",
+        "includes": [
+          "operators/arithmetic/boxed_numeric.hpp"
+        ],
+        "name": "numeric_positive",
+        "parameters": [
+          {
+            "name": "value",
+            "passing": "const_ref",
+            "type": "dynamic"
+          }
+        ],
+        "returns": "dynamic",
+        "transport": "native"
+      },
+      "source": "include/scpp/generated/public_positive_dynamic.cpp"
+    },
+    "positive_float64": {
+      "header": "scpp/operators/positive_float64.hpp",
+      "namespace": "scpp",
+      "operation": {
+        "expression": "+(${native:value})",
+        "includes": [
+          "operators/arithmetic/boxed_numeric.hpp"
+        ],
+        "name": "numeric_positive",
+        "parameters": [
+          {
+            "name": "value",
+            "passing": "const_ref",
+            "type": "float64"
+          }
+        ],
+        "returns": "float64",
+        "transport": "native"
+      },
+      "source": "include/scpp/generated/public_positive_float64.cpp"
+    },
+    "positive_int64": {
+      "header": "scpp/operators/positive_int64.hpp",
+      "namespace": "scpp",
+      "operation": {
+        "expression": "+(${native:value})",
+        "includes": [
+          "operators/arithmetic/boxed_numeric.hpp"
+        ],
+        "name": "numeric_positive",
+        "parameters": [
+          {
+            "name": "value",
+            "passing": "const_ref",
+            "type": "int64"
+          }
+        ],
+        "returns": "int64",
+        "transport": "native"
+      },
+      "source": "include/scpp/generated/public_positive_int64.cpp"
+    },
+    "positive_mixed": {
+      "header": "scpp/operators/positive_mixed.hpp",
+      "namespace": "scpp",
+      "operation": {
+        "expression": "+(${native:value})",
+        "includes": [
+          "operators/arithmetic/boxed_numeric.hpp"
+        ],
+        "name": "numeric_positive",
+        "parameters": [
+          {
+            "name": "value",
+            "passing": "const_ref",
+            "type": "mixed"
+          }
+        ],
+        "returns": "mixed",
+        "transport": "native"
+      },
+      "source": "include/scpp/generated/public_positive_mixed.cpp"
     },
     "power_int64": {
       "header": "scpp/operators/power_int64.hpp",
@@ -8064,7 +8295,40 @@
     "include/scpp/operators/compare_uint64.hpp",
     "public/scpp/operators/compare_float64.hpp",
     "include/scpp/generated/public_compare_float64.cpp",
-    "include/scpp/operators/compare_float64.hpp"
+    "include/scpp/operators/compare_float64.hpp",
+    "public/scpp/operators/positive_int64.hpp",
+    "include/scpp/generated/public_positive_int64.cpp",
+    "include/scpp/operators/positive_int64.hpp",
+    "public/scpp/operators/positive_float64.hpp",
+    "include/scpp/generated/public_positive_float64.cpp",
+    "include/scpp/operators/positive_float64.hpp",
+    "public/scpp/operators/positive_mixed.hpp",
+    "include/scpp/generated/public_positive_mixed.cpp",
+    "include/scpp/operators/positive_mixed.hpp",
+    "public/scpp/operators/positive_dynamic.hpp",
+    "include/scpp/generated/public_positive_dynamic.cpp",
+    "include/scpp/operators/positive_dynamic.hpp",
+    "public/scpp/operators/negative_int64.hpp",
+    "include/scpp/generated/public_negative_int64.cpp",
+    "include/scpp/operators/negative_int64.hpp",
+    "public/scpp/operators/negative_float64.hpp",
+    "include/scpp/generated/public_negative_float64.cpp",
+    "include/scpp/operators/negative_float64.hpp",
+    "public/scpp/operators/negative_mixed.hpp",
+    "include/scpp/generated/public_negative_mixed.cpp",
+    "include/scpp/operators/negative_mixed.hpp",
+    "public/scpp/operators/negative_dynamic.hpp",
+    "include/scpp/generated/public_negative_dynamic.cpp",
+    "include/scpp/operators/negative_dynamic.hpp",
+    "public/scpp/operators/complement_int64.hpp",
+    "include/scpp/generated/public_complement_int64.cpp",
+    "include/scpp/operators/complement_int64.hpp",
+    "public/scpp/operators/complement_mixed.hpp",
+    "include/scpp/generated/public_complement_mixed.cpp",
+    "include/scpp/operators/complement_mixed.hpp",
+    "public/scpp/operators/complement_dynamic.hpp",
+    "include/scpp/generated/public_complement_dynamic.cpp",
+    "include/scpp/operators/complement_dynamic.hpp"
   ],
   "generator": "metadata-api-v1",
   "leaves": {
@@ -8359,6 +8623,9 @@
     "scpp/operators/compare_uint32.hpp": "57603ed9847977340550d114ff811a8f7fe4ac3517899f1e1f08400212039494",
     "scpp/operators/compare_uint64.hpp": "588fa9ae0d8fa6d4e2a8964f08f1e53215326c7230abbebeabea9f80e57f61bf",
     "scpp/operators/compare_uint8.hpp": "f0b70a7ae702e5241ff142cde7528c70aca8b634fd8ddaee5d54aadc718c28d4",
+    "scpp/operators/complement_dynamic.hpp": "54db0d8ac9f413a8918ec70bb2ef7371582e80cc494c4b0cd985ee23f732c62f",
+    "scpp/operators/complement_int64.hpp": "b2d71a04f02681f3ea79f9abd207e1c2612e53c5f33438025b711b41584273dc",
+    "scpp/operators/complement_mixed.hpp": "ead1a09539edd04fe05ed8c8785684c8a79b016f08a85d37b5102c91347708b4",
     "scpp/operators/divide_float64.hpp": "8882b82070a4963b9d1233189f4e84810b33192309e38b4e8a83da8dd1c974bf",
     "scpp/operators/divide_int16.hpp": "6ce87e50a00a3b972466956fbedd0b9a78edda96f4885099a6c6359c5ee4e8b4",
     "scpp/operators/divide_int32.hpp": "215d716e35089831f33189877e95b61ebd9719257e78e2d2a50124e61ba73714",
@@ -8416,6 +8683,10 @@
     "scpp/operators/multiply_uint32.hpp": "10b9129b022e228e541d42d4f3cf317232f093b6d2f614a6778ae448e5660322",
     "scpp/operators/multiply_uint64.hpp": "cecbc8c43265c05cefb5b494ee48501d77d55e5a2b07090ff1d077a5733ed735",
     "scpp/operators/multiply_uint8.hpp": "6f4ab538697ad70432c00e1faede70ac957d24fc66d94ddf9ebec33508571d9a",
+    "scpp/operators/negative_dynamic.hpp": "d852f0ea9cc1c8caea703f7c4976c6ccb0caa044f9432bd6b3dc19bfe154e23b",
+    "scpp/operators/negative_float64.hpp": "2ffeaea0937ae1c1382d37f7e8c7bc2aaeeadae6ad115ca4e389bbbfa28eb119",
+    "scpp/operators/negative_int64.hpp": "bab6ebf83eb55738f73bb5bdbdac11658f797aaeb0bd7d589e5af9510d2e959c",
+    "scpp/operators/negative_mixed.hpp": "77f458beed1a1167921380a90563ddda6776c01fe9805f6fe7ab4875677eb9d5",
     "scpp/operators/not_equal_dynamic.hpp": "ad4da31487738bc443208713f147fdde1943f8541924d8fe3fb6fdbfd66bab81",
     "scpp/operators/not_equal_mixed.hpp": "45e03a1e1e7969f556adf1a5c1e0e10d6288bf774eb19d1b30d84abb7f4dbf6f",
     "scpp/operators/numeric_equal_float64.hpp": "635e11f1b9fd95629131812d5dcdb467be3d246b3f30729ef823dbd06cf76322",
@@ -8436,6 +8707,10 @@
     "scpp/operators/numeric_not_equal_uint32.hpp": "c35d58b461c91d926f6ed2c2e3c165726fafe017fcc10e47b3c42f70ad15574d",
     "scpp/operators/numeric_not_equal_uint64.hpp": "4b671fe2a0a73022e9e75dc0c9cd43580a77a688e5bec4edb31e176423501005",
     "scpp/operators/numeric_not_equal_uint8.hpp": "c5b44b9a7cf8fc09802b25a5afacc86642842fb055d4d8ca400af8d60e5853d0",
+    "scpp/operators/positive_dynamic.hpp": "1959c8fdcd1ff9c21fd8a374812364c4554781e4c6476771ff15b466a646253d",
+    "scpp/operators/positive_float64.hpp": "614c28c0d98b48bf50defef079f4d332db2a82e4f5d9eb235b1b8ba7ae38e597",
+    "scpp/operators/positive_int64.hpp": "83528723d4d188b49dfc0671f46603f3ce4096d7cb4632d588684f94e7f30ca7",
+    "scpp/operators/positive_mixed.hpp": "1172e3f6d25e9c7ea499a28dadb0f05bcdf0395bd89441917540932087654011",
     "scpp/operators/power_int64.hpp": "709cc4022dbed03a6c36954d9405dfc80eed87a4fe36c2646d65c0990995ef2d",
     "scpp/operators/remainder_int16.hpp": "6d7906dc337b2cbd4e08d460f4aa602ad2ca5353b97b9fd520b375abdfe82ed1",
     "scpp/operators/remainder_int32.hpp": "2d850671954752bfc1971f003d602ef2fd906d269cbc8c269b8dd089be5212d1",
@@ -8767,7 +9042,18 @@
     "include/scpp/generated/public_compare_uint16.cpp",
     "include/scpp/generated/public_compare_uint32.cpp",
     "include/scpp/generated/public_compare_uint64.cpp",
-    "include/scpp/generated/public_compare_float64.cpp"
+    "include/scpp/generated/public_compare_float64.cpp",
+    "include/scpp/generated/public_positive_int64.cpp",
+    "include/scpp/generated/public_positive_float64.cpp",
+    "include/scpp/generated/public_positive_mixed.cpp",
+    "include/scpp/generated/public_positive_dynamic.cpp",
+    "include/scpp/generated/public_negative_int64.cpp",
+    "include/scpp/generated/public_negative_float64.cpp",
+    "include/scpp/generated/public_negative_mixed.cpp",
+    "include/scpp/generated/public_negative_dynamic.cpp",
+    "include/scpp/generated/public_complement_int64.cpp",
+    "include/scpp/generated/public_complement_mixed.cpp",
+    "include/scpp/generated/public_complement_dynamic.cpp"
   ],
   "types": {
     "dynamic": {

@@ -1177,3 +1177,40 @@ Initial generator-only rebuild: **3.09 s**, peak child RSS **135,072 KiB**.
 Subsequent eight-job core/tool/new-test build: release **21.36 s**, **421,708 KiB**;
 sanitized **48.66 s**, **632,176 KiB**. These are single observations, not statistical
 benchmarks. The existing native hash specialization warning remains unchanged.
+
+## B2c — unary numeric plans and APIs
+
+Eleven public functions expose canonical numeric positive/negative and canonical
+integer complement, with family-preserving boxed counterparts. Unary plans have
+one operand and an exact borrowed signature; they reuse ordinary function-set
+emission and publication rather than introducing artificial binary operands.
+
+Public behavior tests pass for integer boundaries within native arithmetic rules,
+floating signed zeros/infinities/NaN, boxed kind rejection, unchanged input values,
+and single operand evaluation. Successful operations allocate zero times. Native
+signed-overflow limitations are unchanged; minimum-int64 negation is not claimed
+safe or newly checked. Five release regressions passed (**3.47 s**), with unary
+metadata checked separately; six sanitizer regressions passed (**20.15 s**).
+
+The standalone native cost probe exposed an indirect dependency: boxed unary
+operators were available to generated adapters through broader family headers.
+The metadata now includes `operators/arithmetic/boxed_numeric.hpp` explicitly,
+and the metadata test checks that direct include. Final rebuilt behavior/metadata
+checks pass in release and ASan/UBSan/leak mode (final two sanitized cases **2.09 s**).
+Sealed relocated reuse passes in both final builds. Legacy boxed error inspection
+remains the explicitly recorded G gap.
+
+Final single compile-only observations, `measure_global_operators.py --unary`:
+
+| Case | Seconds | Preprocessed bytes |
+| --- | ---: | ---: |
+| Public caller | 0.0701 | 21,262 |
+| Native caller | 3.3430 | 3,615,280 |
+| Private dynamic-negation adapter | 3.5037 | 3,691,112 |
+
+Initial generator rebuild: **3.07 s**, peak child RSS **135,492 KiB**. Initial
+core/tool/test rebuilds: release **21.51 s**, **422,036 KiB**; sanitized **48.19 s**,
+**632,092 KiB**. The final direct-include rebuilds were not separately timed.
+Two incomplete native probe attempts lacked the direct operator header; only the
+successful corrected probe is reported above. These are single observations, not
+statistical benchmarks. The existing native hash warning is unchanged.

@@ -418,3 +418,9 @@ target_link_libraries(test_public_compare PRIVATE scpp_core_api)
 add_test(NAME scpp_test_public_compare COMMAND test_public_compare)
 add_test(NAME scpp_check_compare_api COMMAND ${Python3_EXECUTABLE}
   ${CMAKE_CURRENT_SOURCE_DIR}/check_compare_api.py $<TARGET_FILE:scpp_api_generator>)
+
+add_executable(test_public_unary test_public_unary.cpp)
+target_link_libraries(test_public_unary PRIVATE scpp_core_api)
+add_test(NAME scpp_test_public_unary COMMAND test_public_unary)
+add_test(NAME scpp_check_unary_api COMMAND ${Python3_EXECUTABLE}
+  ${CMAKE_CURRENT_SOURCE_DIR}/check_unary_api.py $<TARGET_FILE:scpp_api_generator>)
