@@ -1889,3 +1889,29 @@ single-run fixture timings exclude runtime generation and core builds. Each new 
 core configuration built once; no runtime implementation or generator changes were
 needed. Existing carrier logical-policy and prepared-fact ownership decisions remain
 pending; this proof does not advance ownership/callback implementation past that gate.
+
+## E16 — private homogeneous boxed-prefix resolution
+
+The existing keyed-path owner gains a shared saved-key prefix resolver and boolean
+readiness/final-probe operations. Each call starts at the current bound root and
+uses only already-evaluated keys. Interior pointers remain inside the operation;
+no root snapshot or pointer survives a source expression. Missing/invalid prefixes
+stop before the later saved-key adapter, isset remains null-sensitive, and empty
+retains its documented error path. Empty complete paths are rejected.
+
+The adapter is internal synchronous representation access, not a source callback.
+This slice supports homogeneous mixed/dynamic paths; heterogeneously typed paths,
+owner retention for field roots, and mutation commits remain separate work. Next,
+ordinary metadata bindings can accept a pre-lowered vector<mixed> of saved keys;
+this does not require a new public borrowed cursor or a new storage family.
+
+The native proof stages root/prefix mutation between observations, checks null/false
+leaf behavior, missing-prefix short circuit, invalid receiver behavior and zero
+allocations during repeated numeric-key observations. It establishes the private
+bridge, not source-expression lowering or public publication.
+
+Validation: focused release and ASan/UBSan with leak detection pass. Numeric saved-key
+observations allocate zero times after setup. Build including runtime-core dependency
+recompilation: 23.30s release / 47.64s sanitized, one build per configuration. These
+are not isolated public caller measurements; publication and its compile/reuse proof
+remain the next slice. No generator changes or source semantic changes were needed.

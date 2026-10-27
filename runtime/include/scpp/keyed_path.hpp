@@ -100,6 +100,34 @@ bool_t keyed_probe(const R *receiver, const K &key, bool emptiness) {
 	return emptiness ? ::scpp::php::empty(*entry) : ::scpp::php::isset(*entry);
 }
 
+// Internal saved-key adapter only: no source expression executes in key_at.
+// Each call starts from the current bound root; no interior pointer survives it.
+template <typename R, typename KeyAt>
+const R *keyed_resolve_prefix(const R *root, std::size_t count, const KeyAt &key_at, bool removing) {
+	const R *receiver = root;
+	for (std::size_t index = 0; index < count; ++index) {
+		if (!keyed_ready(receiver, removing)) return nullptr;
+		receiver = keyed_child(receiver, key_at(index), removing);
+	}
+	return receiver;
+}
+
+template <typename R, typename KeyAt>
+bool keyed_prefix_ready_adapted(const R *root, std::size_t count, const KeyAt &key_at, bool removing) {
+	return keyed_ready(keyed_resolve_prefix(root, count, key_at, removing), removing);
+}
+
+template <typename R, typename KeyAt>
+bool_t keyed_path_probe_adapted(const R *root, std::size_t count, const KeyAt &key_at, bool emptiness) {
+	if (count == 0) throw std::logic_error("keyed probe requires at least one saved key");
+	const R *receiver = keyed_resolve_prefix(root, count - 1, key_at, false);
+	if (!keyed_ready(receiver, false)) {
+		if (emptiness) detail::throw_invalid_empty();
+		return bool_t{false};
+	}
+	return keyed_probe(receiver, key_at(count - 1), emptiness);
+}
+
 template <typename K>
 const K &keyed_required_key(const K &key) { return key; }
 

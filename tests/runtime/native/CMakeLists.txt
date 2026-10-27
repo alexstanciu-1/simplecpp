@@ -567,3 +567,7 @@ add_test(NAME scpp_check_initializer_entry COMMAND ${Python3_EXECUTABLE}
 add_test(NAME scpp_check_keyed_initializers
     COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/check_keyed_initializers.py
     --tool $<TARGET_FILE:scpp_api_generator>)
+
+add_executable(test_keyed_prefix test_keyed_prefix.cpp)
+target_link_libraries(test_keyed_prefix PRIVATE scpp_runtime_core)
+add_test(NAME scpp_test_keyed_prefix COMMAND test_keyed_prefix)

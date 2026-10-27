@@ -2913,3 +2913,20 @@ single-run fixture timings exclude runtime generation and core builds. Each new 
 core configuration built once; no runtime implementation or generator changes were
 needed. Existing carrier logical-policy and prepared-fact ownership decisions remain
 pending; this proof does not advance ownership/callback implementation past that gate.
+
+## E16: private saved-key prefix resolution (2026-10-28)
+
+The existing keyed-path owner resolves homogeneous boxed prefixes from the current
+bound root using already-evaluated keys. Boolean readiness and final probe helpers
+keep interior pointers call-local. The native fixture checks root replacement,
+prefix removal between stages, no later saved-key access after failure, null versus
+false payload presence, empty errors and zero-length path rejection. Internal key
+adapters are representation access, not source callbacks. No new public pointer,
+cursor, container or factory family is introduced. Heterogeneous paths, field-owner
+retention, mutation commits and frontend source effects remain outside this proof.
+
+Validation: focused release and ASan/UBSan with leak detection pass. Numeric saved-key
+observations allocate zero times after setup. Build including runtime-core dependency
+recompilation: 23.30s release / 47.64s sanitized, one build per configuration. These
+are not isolated public caller measurements; publication and its compile/reuse proof
+remain the next slice. No generator changes or source semantic changes were needed.
