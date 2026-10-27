@@ -106,7 +106,7 @@ resolve('add_assign', 'dynamic', 'dynamic', changed, 'signature mismatch')
 for mutation, error in [
     (lambda c: c['rules'].append(c['rules'][0]), 'Ambiguous compound rule'),
     (lambda c: c.update(operation='positive'), 'must be binary'),
-    (lambda c: c.update(operation='numeric_equal'), 'returning the destination type'),
+    (lambda c: c.update(operation='numeric_equal'), 'declared write-back source'),
     (lambda c: c.update(unknown='x'), 'unknown field'),
 ]:
     changed = copy.deepcopy(metadata)

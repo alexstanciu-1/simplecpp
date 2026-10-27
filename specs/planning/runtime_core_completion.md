@@ -16,7 +16,7 @@ each slice. The original inventory is a baseline, not a current completion count
 | A1 | Complete for the agreed ordinary numeric domain | Specialized and boxed extensions remain in B2/E, not implied by A1. |
 | A2 | Complete for the agreed checked scalar conversions | Carrier conversion is C; ownership casts are D. |
 | B1 | Complete for the agreed scalar-facing truth/text/identity/observation scope | Carrier forms remain C; boxed arithmetic and access completion are not B1 credit. |
-| B2 | Binary canonical/boxed bitwise and checked shifts, canonical power, numeric spaceship, numeric unary, scalar logical negation, prefix/postfix updates, canonical numeric compound plans and boxed arithmetic/compounds including canonical numeric peers and bounded scalar text implemented | Boxed text compounds; carrier variants remain C. |
+| B2 | Binary canonical/boxed bitwise and checked shifts, canonical power, numeric spaceship, numeric unary, scalar logical negation, prefix/postfix updates, canonical numeric compound plans and boxed arithmetic/compounds including canonical numeric peers and scalar/boxed text implemented | Final B2 admission/coverage audit; carrier variants remain C. |
 | C | Policy agreed; completion pending | Four carrier families, state-preserving operations/conversions and conditional lifecycle. |
 | D | Pending | Ownership, application targets and source Exception transport gaps. |
 | E | Existing vector/hash/boxed foundations; incomplete | Capability/access/initialization/cursor gaps and identity key-allocation debt. |
@@ -168,8 +168,8 @@ core contract; full frontend adoption remains excluded.
 
 ## Next implementation work
 
-Continue B2 with boxed text compound protocols using existing operator metadata and
-native error authorities. Numeric scalar-peer arithmetic and compounds are covered.
+Audit B2 admission and public proof coverage before closing the batch. Numeric
+scalar-peer arithmetic/compounds and scalar/boxed text composition are implemented.
 Boxed bitwise/shift compounds remain source-deferred and are not an implicit extension
 of this goal. Canonical numeric compound plans reuse the published calculations and casts.
 Proceed to C with the accepted one-layer carrier rules; the first complete carrier
@@ -623,3 +623,25 @@ independent results, embedded NUL/UTF-8 bytes, failures before RHS and in right
 conversion/calculation, and allocation parity with primitive long-string calculation.
 This completes the bounded plain scalar/string-storage composition path. Boxed text
 replacement remains B2, carriers remain C, and full frontend adoption is excluded.
+
+## Active-goal progress — B2k boxed text replacement
+
+Text metadata now resolves 143 binary pairs and 25 compound forms. Boxed text uses
+canonical scalar/null or matching-family peers; string destinations also accept a
+boxed RHS. Cross-family and compact integer/boxed pairs stay excluded. A rule must
+explicitly declare the differing write-back source (string) before constructing a
+boxed replacement. Numeric saved-kind checks remain separate and unchanged.
+
+Allocation measurement exposed unnecessary raw boxed snapshots in the shared plan.
+Text now saves the converted string before RHS evaluation; numeric compounds retain
+the original value needed by their check. This avoids deep copying original boxed
+strings or containers just to render text. Public proofs cover all original boxed
+kinds, preserved aliases, both boxed binary orders, byte preservation, independent
+result storage, and injected conversion/replacement failures. Short boxed compounds
+match direct native construction plus independent destination/result storage costs;
+they are not claimed allocation-free. No runtime implementation units were added.
+
+The text composition paths are implemented. Before marking B2 complete, audit its
+remaining admitted operation rows against the current metadata and proofs. Carrier
+text/state/lifecycle work remains C; the first complete carrier path still requires
+review before ownership/callback expansion.

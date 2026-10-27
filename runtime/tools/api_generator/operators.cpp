@@ -79,7 +79,7 @@ namespace scpp::api_generation
         }
         for (const auto &[name, operation] : registry.at("operations").fields) {
             authored_name(name); authored_name(operation.at("name").text());
-            fields_only(operation, "form group name expression publish returns includes function_set pair_function_set operands distinct_result result_expression operand_passing operand_conversion_function_set", "global operation");
+            fields_only(operation, "form group name expression publish returns includes function_set pair_function_set operands distinct_result result_expression operand_passing operand_conversion_function_set compound_left_snapshot", "global operation");
             const auto form = operation.get("form", "binary");
             if (form != "binary" && form != "unary") throw std::runtime_error("Unknown operator form");
             if (form == "unary") {
@@ -87,6 +87,10 @@ namespace scpp::api_generation
                 operation.at("function_set").text();
                 operation.at("operands");
             } else registry.at("groups").at(operation.at("group").text());
+            if (operation.has("compound_left_snapshot")) {
+                if (form != "binary" || operation.get("compound_left_snapshot") != "converted")
+                    throw std::runtime_error("Unsupported compound left snapshot mode");
+            }
             if (operation.has("operand_conversion_function_set")) {
                 if (form != "binary") throw std::runtime_error("Operand conversion owner requires a binary operation");
                 metadata.at("function_sets").at(operation.at("operand_conversion_function_set").text());
@@ -169,10 +173,15 @@ namespace scpp::api_generation
                     throw std::runtime_error("Compound rules require a nonempty array");
                 std::set<std::pair<std::string, std::string>> pairs;
                 for (const auto &rule : compound.at("rules").items) {
-                    fields_only(rule, "target right writeback_function_set", "compound rule");
+                    fields_only(rule, "target right writeback_function_set writeback_source", "compound rule");
                     if (rule.has("writeback_function_set")) metadata.at("function_sets").at(rule.at("writeback_function_set").text());
                     const auto target = rule.at("target").text();
                     registry.at("types").at(target);
+                    if (rule.has("writeback_source")) {
+                        registry.at("types").at(rule.at("writeback_source").text());
+                        if (rule.has("writeback_function_set"))
+                            throw std::runtime_error("Converted write-back and saved-kind write-back are separate protocols");
+                    }
                     for (const auto &right : domains(rule.at("right"))) {
                         registry.at("types").at(right);
                         if (!pairs.emplace(target, right).second) throw std::runtime_error("Ambiguous compound rule");
@@ -359,10 +368,11 @@ namespace scpp::api_generation
         value calculation = value::object();
         calculation["operation"] = compound.at("operation"); calculation["left"] = target; calculation["right"] = right;
         const auto plan = resolve_operator(metadata, calculation);
-        // This protocol requires same-result-type write-back. A
-        // conversion that happens to compile cannot authorize destination narrowing.
-        if (plan.get("kind") != "call" || !plan.has("operand_type") || plan.get("result_type") != target)
-            throw std::runtime_error("Compound requires a common-operand calculation returning the destination type");
+        // A differing result needs explicit admission; an available conversion
+        // alone cannot authorize narrowing or replacement of the destination kind.
+        const auto writeback_source = selected_rule->get("writeback_source", target);
+        if (plan.get("kind") != "call" || !plan.has("operand_type") || plan.get("result_type") != writeback_source)
+            throw std::runtime_error("Compound calculation must return the declared write-back source");
         value out = value::object();
         out["operation"] = name; out["target"] = target; out["right"] = right; out["result_type"] = target;
         out["kind"] = "ordered_compound"; out["calculation"] = plan;
@@ -386,10 +396,19 @@ namespace scpp::api_generation
             writeback["arguments"] = value::array();
             writeback["arguments"].items = {value("old_left"), value("calculated")};
         }
+        const auto &operation = registry.at("operations").at(compound.at("operation").text());
+        const bool converted_snapshot = operation.get("compound_left_snapshot") == "converted";
+        if (converted_snapshot && selected_rule->has("writeback_function_set"))
+            throw std::runtime_error("Saved-kind write-back requires the original left snapshot");
         out["steps"] = value::array();
-        for (const auto *step : {"capture_destination_and_retain_owners", "snapshot_left", "convert_left", "evaluate_right",
-                 "convert_right", "calculate", "convert_writeback", "commit_destination", "return_value_snapshot"})
-            out["steps"].items.emplace_back(step);
+        out["steps"].items.emplace_back("capture_destination_and_retain_owners");
+        if (converted_snapshot) out["steps"].items.emplace_back("snapshot_converted_left");
+        else {
+            out["steps"].items.emplace_back("snapshot_left");
+            out["steps"].items.emplace_back("convert_left");
+        }
+        for (const auto *step : {"evaluate_right", "convert_right", "calculate", "convert_writeback",
+                 "commit_destination", "return_value_snapshot"}) out["steps"].items.emplace_back(step);
         out["failure"] = "no_writeback_preserve_prior_effects";
         return out;
     }

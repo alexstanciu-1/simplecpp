@@ -2332,8 +2332,34 @@
               "float64",
               "boolean",
               "string",
-              "null"
+              "null",
+              "mixed",
+              "dynamic"
             ]
+          },
+          {
+            "target": "mixed",
+            "right": [
+              "int64",
+              "float64",
+              "boolean",
+              "string",
+              "null",
+              "mixed"
+            ],
+            "writeback_source": "string"
+          },
+          {
+            "target": "dynamic",
+            "right": [
+              "int64",
+              "float64",
+              "boolean",
+              "string",
+              "null",
+              "dynamic"
+            ],
+            "writeback_source": "string"
           }
         ]
       }
@@ -2892,6 +2918,86 @@
               "string",
               "null"
             ],
+            "selection": "maximum",
+            "domain": "string"
+          },
+          {
+            "left": "mixed",
+            "right": [
+              "signed",
+              "floating",
+              "boolean",
+              "string",
+              "null",
+              "mixed"
+            ],
+            "right_types": [
+              "int64",
+              "float64",
+              "boolean",
+              "string",
+              "null",
+              "mixed"
+            ],
+            "selection": "maximum",
+            "domain": "string"
+          },
+          {
+            "left": [
+              "signed",
+              "floating",
+              "boolean",
+              "string",
+              "null"
+            ],
+            "left_types": [
+              "int64",
+              "float64",
+              "boolean",
+              "string",
+              "null"
+            ],
+            "right": "mixed",
+            "selection": "maximum",
+            "domain": "string"
+          },
+          {
+            "left": "dynamic",
+            "right": [
+              "signed",
+              "floating",
+              "boolean",
+              "string",
+              "null",
+              "dynamic"
+            ],
+            "right_types": [
+              "int64",
+              "float64",
+              "boolean",
+              "string",
+              "null",
+              "dynamic"
+            ],
+            "selection": "maximum",
+            "domain": "string"
+          },
+          {
+            "left": [
+              "signed",
+              "floating",
+              "boolean",
+              "string",
+              "null"
+            ],
+            "left_types": [
+              "int64",
+              "float64",
+              "boolean",
+              "string",
+              "null"
+            ],
+            "right": "dynamic",
             "selection": "maximum",
             "domain": "string"
           }
@@ -3468,14 +3574,16 @@
         "operand_conversion_function_set": "concat_text",
         "publish": [
           "string"
-        ]
+        ],
+        "compound_left_snapshot": "converted"
       }
     },
     "operand_conversions": {
       "mixed": {
         "sources": [
           "int64",
-          "float64"
+          "float64",
+          "string"
         ],
         "expression": "scpp::mixed(${value})",
         "header": "scpp/mixed.hpp"
@@ -3483,7 +3591,8 @@
       "dynamic": {
         "sources": [
           "int64",
-          "float64"
+          "float64",
+          "string"
         ],
         "expression": "scpp::dynamic(${value})",
         "header": "scpp/dynamic.hpp"

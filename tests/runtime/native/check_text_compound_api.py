@@ -36,11 +36,40 @@ for left in types:
             assert conversion['kind'] == ('identity' if source == 'string' else 'call')
             if source != 'string': assert conversion['api'] == 'concat_text_'+source
 plans = {t:resolve('string',t,True) for t in types}
-for excluded in ['uint64','mixed','dynamic','error_value']:
+for excluded in ['uint64','error_value']:
     resolve('string',excluded,error='Unsupported operator')
     resolve('string',excluded,True,error='Unsupported compound operands')
-for excluded in ['int64','float64','boolean','mixed','dynamic']:
+for excluded in ['int64','float64','boolean']:
     resolve(excluded,'string',True,error='Unsupported compound operands')
+boxed_plans = {}
+boxed_binaries = []
+canonical = ['int64','float64','boolean','string','null']
+for family in ['mixed','dynamic']:
+    plans[family] = resolve('string',family,True)
+    for right in canonical+[family]:
+        plan=resolve(family,right,True)
+        assert plan['calculation']['result_type']=='string' and plan['result_type']==family
+        assert plan['writeback_conversion']['kind']=='expression'
+        assert 'snapshot_converted_left' in plan['steps'] and 'snapshot_left' not in plan['steps']
+        boxed_plans[family,right]=plan
+        boxed_binaries.append(resolve(family,right))
+    for left in canonical: boxed_binaries.append(resolve(left,family))
+    other='dynamic' if family=='mixed' else 'mixed'
+    for excluded in [other,'int8','uint32','uint64','error_value']:
+        resolve(family,excluded,error='Unsupported operator')
+        resolve(excluded,family,error='Unsupported operator')
+        resolve(family,excluded,True,error='Unsupported compound operands')
+changed=copy.deepcopy(metadata)
+for rule in changed['global_operators']['compounds']['concat_assign']['rules']:
+    if rule['target']=='mixed': del rule['writeback_source']
+resolve('mixed','string',True,changed,'declared write-back source')
+changed=copy.deepcopy(metadata)
+for rule in changed['global_operators']['compounds']['concat_assign']['rules']:
+    if rule['target']=='mixed': rule['writeback_function_set']='numeric_compound_replacement'
+resolve('mixed','string',True,changed,'separate protocols')
+changed=copy.deepcopy(metadata)
+changed['global_operators']['operations']['add']['compound_left_snapshot']='converted'
+call({'action':'resolve_compound','metadata':changed,'request':{'operation':'add_assign','target':'mixed','right':'mixed'}}, 'requires the original left snapshot')
 changed = copy.deepcopy(metadata)
 changed['function_sets']['concat_text']['function']['operation']['returns'] = 'int64'
 resolve('float64','string',meta=changed,error='conversion signature mismatch')
@@ -52,30 +81,32 @@ changed = copy.deepcopy(metadata)
 changed['global_operators']['operations']['concat']['operand_conversion_function_set'] = 'condition_truthy'
 resolve('int64','string',meta=changed,error='conversion signature mismatch')
 headers, apis = set(), set()
-for plan in plans.values():
-    for part in [plan['calculation'],plan['left_conversion'],plan['right_conversion']]:
+for plan in [*plans.values(), *boxed_plans.values()]:
+    for part in [plan['calculation'],plan['left_conversion'],plan['right_conversion'],plan['writeback_conversion']]:
         if 'header' in part: headers.add(part['header'])
         if 'api' in part: apis.add(part['api'])
-assert call({'metadata':metadata,'request':{'roots':[],'apis':sorted(apis)},'imports':{},
+assert call({'metadata':metadata,'request':{'roots':[],'apis':sorted(apis)},'imports':{t:publication['types'][t] for t in ['mixed','dynamic']},
              'leaves':{},'layouts':{},'names':{},'api_imports':publication['apis']})['units'] == []
-print('PASS: 121 scalar text pairs, 11 string compounds, contextual conversion signatures and publication reuse')
+print('PASS: 143 text pairs, 25 text compounds, contextual conversion signatures and publication reuse')
 if not args.core: raise SystemExit(0)
 def convert(plan, operand):
+    if plan['kind']=='expression': return plan['expression'].replace('${value}',operand)
     return operand if plan['kind'] == 'identity' else plan['function']+'('+operand+')'
-def lower(plan):
-    assert plan['left_conversion']['kind'] == 'identity'
+def lower(plan, fail_writeback=False):
+    boxed=plan['writeback_conversion']['kind']=='expression'
     steps = {
         'capture_destination_and_retain_owners':'auto &destination=capture();',
+        'snapshot_converted_left':'const auto left='+convert(plan['left_conversion'],'destination')+';',
         'snapshot_left':'const auto old_left=destination;',
-        'convert_left':'const auto &left=old_left;',
+        'convert_left':('const auto &left=old_left;' if plan['left_conversion']['kind']=='identity' else 'const auto left='+convert(plan['left_conversion'],'old_left')+';'),
         'evaluate_right':'const auto right_value=rhs();',
         'convert_right':'const auto right='+convert(plan['right_conversion'],'right_value')+';',
         'calculate':'auto calculated='+plan['calculation']['function']+'(left,right);',
-        'convert_writeback':'const auto &replacement=calculated;',
+        'convert_writeback':('fail_next=true; ' if fail_writeback else '')+('auto replacement='+convert(plan['writeback_conversion'],'calculated')+';' if boxed else 'const auto &replacement=calculated;'),
         'commit_destination':'destination=replacement;',
-        'return_value_snapshot':'return calculated;',
+        'return_value_snapshot':'return replacement;' if boxed else 'return calculated;',
     }
-    assert plan['writeback_conversion']['kind'] == 'identity'
+    assert plan['writeback_conversion']['kind'] in ['identity','expression']
     return '\n'.join(steps[s] for s in plan['steps'])
 source = '#include "public_api_guard.hpp"\n'+''.join('#include "'+h+'"\n' for h in sorted(headers))
 source += '''#include <cstdio>
@@ -130,13 +161,54 @@ source += 'try { (void)[&]() {\n'+lower(plans['int64'])+'\n}(); } catch (...) { 
 source += 'fail_next=false; CHECK(failed && target.equals("changed")); }\n'
 source += '{ string target("self"); auto capture=[&]() -> auto & { return target; }; auto rhs=[&]() { return target; };\n'
 source += 'const auto result=[&]() {\n'+lower(plans['string'])+'\n}(); CHECK(target.equals("selfself") && result.equals(target)); }\n'
+# Boxed text replacement may change every original kind, including containers.
+for family in ['mixed','dynamic']:
+    container='make_mixed_table()' if family=='mixed' else 'make_dynamic_container()'
+    origins=[(family+'{}',''),(family+'(boolean(false))',''),(family+'(boolean(true))','1'),
+             (family+'(int64(10))','10'),(family+'(float64(1.23456789))','1.23457'),
+             (family+'(string("L"))','L'),(container,'Array' if family=='mixed' else 'Object')]
+    peers={'int64':('int64(3)','3'),'float64':('float64(3.5)','3.5'),'boolean':('boolean(true)','1'),
+           'string':('string("R")','R'),'null':('null_t{}',''),family:(family+'(int64(3))','3')}
+    for original,left_text in origins:
+        for right,(value,right_text) in peers.items():
+            plan=boxed_plans[family,right]; expected=left_text+right_text
+            source += '{ const string expected("'+expected+'"); '+family+' baseline_target; allocations=0; counting=true; const auto baseline_value=[&]() { auto replacement='+family+'(expected); baseline_target=replacement; return replacement; }(); counting=false; const auto baseline=allocations;\n'
+            if original == family+'{}' and right == 'int64':
+                source += 'std::printf("short '+family+' compound allocations=%u\\n",baseline);\n'
+            source += family+' target='+original+'; const auto alias=target; int captures=0,evaluations=0;\n'
+            source += 'auto capture=[&]() -> auto & { ++captures; return target; };\n'
+            source += 'auto rhs=[&]() { ++evaluations; target='+family+'(boolean(false)); return '+value+'; };\n'
+            source += 'allocations=0; counting=true; const auto result=[&]() {\n'+lower(plan)+'\n}(); counting=false;\n'
+            source += 'if(allocations!=baseline) std::fprintf(stderr,"alloc '+family+' '+right+' old='+left_text+': actual=%u baseline=%u\\n",allocations,baseline); CHECK(allocations==baseline && captures==1 && evaluations==1); CHECK(target.get_string().equals(expected));\n'
+            source += 'target='+family+'{}; CHECK(result.get_string().equals(expected)); CHECK(concat_text(alias).equals("'+left_text+'")); }\n'
+    # Converted string result must be boxed successfully before commit; allocation failure leaves RHS effects.
+    plan=boxed_plans[family,'string']
+    source += '{ '+family+' target(string("abcdefghijklmnopqrstuvwxyz0123456789")); bool failed=false; auto capture=[&]() -> auto & { return target; };\n'
+    source += 'auto rhs=[&]() { target='+family+'(boolean(false)); return string("R"); };\n'
+    source += 'try { (void)[&]() {\n'+lower(plan,True)+'\n}(); } catch (...) { failed=true; }\n'
+    source += 'fail_next=false; CHECK(failed && !static_cast<bool>(target.get_bool())); }\n'
+    source += '{ '+family+' target(string("abcdefghijklmnopqrstuvwxyz0123456789")); int effects=0; bool failed=false; auto capture=[&]() -> auto & { return target; };\n'
+    source += 'auto rhs=[&]() { ++effects; return string("R"); }; fail_next=true; try { (void)[&]() {\n'+lower(plan)+'\n}(); } catch (...) { failed=true; }\n'
+    source += 'fail_next=false; CHECK(failed && effects==0 && target.get_string().equals("abcdefghijklmnopqrstuvwxyz0123456789")); }\n'
+    source += '{ string target("L"); auto capture=[&]() -> auto & { return target; }; auto rhs=[]() { return '+family+'(boolean(true)); };\n'
+    source += 'const auto result=[&]() {\n'+lower(plans[family])+'\n}(); CHECK(result.equals("L1") && target.equals(result)); }\n'
+    source += '{ '+family+' target(string("a\\0b",uint64(3))); auto capture=[&]() -> auto & { return target; }; auto rhs=[]() { return string("é"); };\n'
+    source += 'const auto result=[&]() {\n'+lower(plan)+'\n}(); CHECK(result.get_string().equals(string("a\\0bé",uint64(5)))); }\n'
+# Additional boxed binary pairs reuse the same string backend; both static operand orders preserve text.
+for plan in boxed_binaries:
+    values={t:(t+'(int64(10))','10') for t in ['mixed','dynamic']}
+    values.update(int64=('int64(3)','3'),float64=('float64(3.5)','3.5'),boolean=('boolean(true)','1'),string=('string("R")','R'),null=('null_t{}',''))
+    lv,lt=values[plan['left']]; rv,rt=values[plan['right']]
+    source += '{ const auto lv='+lv+'; const auto left='+convert(plan['left_conversion'],'lv')+';\n'
+    source += 'const auto rv='+rv+'; const auto right='+convert(plan['right_conversion'],'rv')+';\n'
+    source += 'CHECK('+plan['function']+'(left,right).equals("'+lt+rt+'")); }\n'
 # Calculation boundary allocation parity with the existing primitive string API.
 source += '''{ const string a("abcdefghijklmnopqrstuvwxyz0123456789"), b("ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789");
 allocations=0; counting=true; const auto primitive=a+b; counting=false; const auto baseline=allocations;
 allocations=0; counting=true; const auto composed=concat_strings(a,b); counting=false;
 CHECK(composed.equals(primitive) && allocations==baseline);
 std::printf("long calculation allocations: primitive=%u, published=%u\\n",baseline,allocations); }
-std::puts("PASS: text conversion ordering, snapshots, embedded bytes, failure effects; short compounds allocate zero"); }
+std::puts("PASS: text conversion ordering, snapshots, embedded bytes, failure effects; short plain compounds allocate zero; boxed compounds match native snapshot costs"); }
 '''
 with tempfile.TemporaryDirectory(prefix='scpp-text-plan-') as directory:
     stage=Path(directory); (stage/'main.cpp').write_text(source)

@@ -710,3 +710,27 @@ forms for `.=`. The float context formatter stays distinct from explicit float-t
 string casts. Byte preservation, ordered conversion and owned result rules apply.
 Boxed and carrier text admission/write-back are separate completion slices; this
 plain scalar rule does not silently authorize them or uint64 text.
+
+## Explicit replacement sources and converted snapshots
+
+A compound rule may declare `writeback_source` when its calculation returns a type
+different from the destination. The calculation must return exactly that declared
+source, and the existing operand conversion mechanism constructs the destination.
+Without this declaration, the calculation must return the destination type. This
+permission belongs to the admitted rule; an available cast alone does not authorize
+narrowing or kind replacement. It cannot combine with saved-kind write-back.
+
+`compound_left_snapshot: converted` on a binary operation replaces the compound's
+raw snapshot/conversion steps with `snapshot_converted_left`. This step reads the
+captured destination and produces an owned converted value before RHS evaluation.
+Even an identity conversion must save a value, not retain a reference to the live
+destination. Saved-kind replacement requires the original snapshot and rejects this
+mode. Numeric compounds retain their original snapshot protocol.
+
+Text uses converted snapshots. Boxed text accepts canonical scalar/null peers and
+the same boxed family, including string-storage destinations with boxed RHS. Known
+cross-family and compact integer peers remain excluded. Existing conversion helpers
+preserve mixed container `Array` and dynamic container `Object` text. Boxed `.=`
+explicitly constructs its replacement from the calculated string, allowing kind
+replacement while preserving failure-before-commit semantics. There are no new
+runtime adapters; the string calculation, context helpers and constructors are reused.

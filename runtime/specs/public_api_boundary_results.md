@@ -1441,3 +1441,37 @@ sanitized **0.7243 s**. Generator bootstrap build: **4.54 s**, peak child RSS
 sanitized **58.79 s**, **639,620 KiB**. These are not whole compiler rebuild costs.
 Reproduce the proof with `check_text_compound_api.py --tool <generator>
 --core <core.a> [--sanitize]`.
+
+## B2k — boxed text replacement and converted snapshots
+
+Metadata explicitly admits a differing compound write-back source and reuses public
+string-to-box constructors. Text plans now cover 143 binary pairs and 25 compound
+forms. Numeric saved-kind protocols reject the converted snapshot mode and remain
+unchanged. No runtime implementation units were added; the inventory remains 330.
+
+The first allocation test compared a complete compound against boxing alone and
+failed (two allocations versus one). Inspection showed two independent issues:
+write-back must preserve independent destination/result strings, and the generic
+raw snapshot could unnecessarily copy the original boxed string/container. The
+baseline now compares equivalent construction plus destination copy, and text plans
+save the converted string directly before RHS evaluation, avoiding the raw box copy.
+
+All original boxed kinds are exercised, including null, both bool values, numeric,
+string and container kinds. The proofs cover canonical peers, same-family operands,
+preserved old aliases, both binary operand orders, embedded bytes and injected
+left-conversion/replacement allocation failures. Short boxed compounds perform two
+allocations in each family, matching direct construction plus independent destination/
+result storage across the tested original kinds. They are not allocation-free.
+Short plain-string compounds remain allocation-free; long string calculation still
+matches the primitive's single allocation.
+
+Release and ASan/UBSan with leak detection execution proofs pass. Six release metadata
+regressions pass (7.19 s), followed by five additional sanitized metadata regressions
+(30.62 s). Sealed relocated publication passes in both modes and resolves the converted snapshot
+and string-to-box replacement through its own metadata/tool with zero new application
+units. The expanded execution-proof compile/link takes 2.9469 s in release and
+9.1791 s sanitized; these are whole proofs, not small caller compile measurements.
+Generator-only builds: initial release 5.95 s (138,488 KiB peak child RSS), snapshot
+refactor 3.86 s (138,624 KiB), final sanitized 9.62 s (280,756 KiB). Runtime core was
+not rebuilt. Reproduce using `check_text_compound_api.py --tool <generator>
+--core <core.a> [--sanitize]`.
