@@ -2320,6 +2320,38 @@
             "domain": "boolean"
           }
         ]
+      },
+      "integer_binary_special": {
+        "rules": [
+          {
+            "left": "signed",
+            "right": "signed",
+            "selection": "same_or_maximum",
+            "domain": "signed"
+          },
+          {
+            "left": "mixed",
+            "right": "mixed",
+            "selection": "same_or_maximum",
+            "domain": "mixed"
+          },
+          {
+            "left": "dynamic",
+            "right": "dynamic",
+            "selection": "same_or_maximum",
+            "domain": "dynamic"
+          }
+        ]
+      },
+      "canonical_integer_power": {
+        "rules": [
+          {
+            "left": "signed",
+            "right": "signed",
+            "selection": "same_or_maximum",
+            "domain": "signed"
+          }
+        ]
       }
     },
     "operations": {
@@ -2628,6 +2660,92 @@
           "boolean"
         ],
         "returns": "boolean"
+      },
+      "bit_and": {
+        "group": "integer_binary_special",
+        "name": "integer_bit_and",
+        "function_set": "bit_and",
+        "publish": [
+          "int64",
+          "mixed",
+          "dynamic"
+        ],
+        "operands": [
+          "int64",
+          "mixed",
+          "dynamic"
+        ]
+      },
+      "bit_or": {
+        "group": "integer_binary_special",
+        "name": "integer_bit_or",
+        "function_set": "bit_or",
+        "publish": [
+          "int64",
+          "mixed",
+          "dynamic"
+        ],
+        "operands": [
+          "int64",
+          "mixed",
+          "dynamic"
+        ]
+      },
+      "bit_xor": {
+        "group": "integer_binary_special",
+        "name": "integer_bit_xor",
+        "function_set": "bit_xor",
+        "publish": [
+          "int64",
+          "mixed",
+          "dynamic"
+        ],
+        "operands": [
+          "int64",
+          "mixed",
+          "dynamic"
+        ]
+      },
+      "shift_left": {
+        "group": "integer_binary_special",
+        "name": "integer_shift_left",
+        "function_set": "shift_left",
+        "publish": [
+          "int64",
+          "mixed",
+          "dynamic"
+        ],
+        "operands": [
+          "int64",
+          "mixed",
+          "dynamic"
+        ]
+      },
+      "shift_right": {
+        "group": "integer_binary_special",
+        "name": "integer_shift_right",
+        "function_set": "shift_right",
+        "publish": [
+          "int64",
+          "mixed",
+          "dynamic"
+        ],
+        "operands": [
+          "int64",
+          "mixed",
+          "dynamic"
+        ]
+      },
+      "power": {
+        "group": "canonical_integer_power",
+        "name": "integer_power",
+        "function_set": "power",
+        "publish": [
+          "int64"
+        ],
+        "operands": [
+          "int64"
+        ]
       }
     }
   },
@@ -3357,6 +3475,202 @@
           "expression": "scpp::not_identical(${native:left}, ${variant:operand}).native_value()",
           "includes": [
             "operators/identity/strict_identity.hpp"
+          ]
+        }
+      }
+    },
+    "bit_and": {
+      "variants": {
+        "int64": {},
+        "mixed": {},
+        "dynamic": {}
+      },
+      "function": {
+        "namespace": "scpp",
+        "header": "scpp/operators/bit_and_${variant}.hpp",
+        "source": "include/scpp/generated/public_bit_and_${variant}.cpp",
+        "operation": {
+          "name": "integer_bit_and",
+          "returns": "${variant}",
+          "parameters": [
+            {
+              "name": "left",
+              "type": "${variant}",
+              "passing": "const_ref"
+            },
+            {
+              "name": "right",
+              "type": "${variant}",
+              "passing": "const_ref"
+            }
+          ],
+          "transport": "native",
+          "expression": "(${native:left} & ${native:right})",
+          "includes": [
+            "scpp/generated/operators.hpp"
+          ]
+        }
+      }
+    },
+    "bit_or": {
+      "variants": {
+        "int64": {},
+        "mixed": {},
+        "dynamic": {}
+      },
+      "function": {
+        "namespace": "scpp",
+        "header": "scpp/operators/bit_or_${variant}.hpp",
+        "source": "include/scpp/generated/public_bit_or_${variant}.cpp",
+        "operation": {
+          "name": "integer_bit_or",
+          "returns": "${variant}",
+          "parameters": [
+            {
+              "name": "left",
+              "type": "${variant}",
+              "passing": "const_ref"
+            },
+            {
+              "name": "right",
+              "type": "${variant}",
+              "passing": "const_ref"
+            }
+          ],
+          "transport": "native",
+          "expression": "(${native:left} | ${native:right})",
+          "includes": [
+            "scpp/generated/operators.hpp"
+          ]
+        }
+      }
+    },
+    "bit_xor": {
+      "variants": {
+        "int64": {},
+        "mixed": {},
+        "dynamic": {}
+      },
+      "function": {
+        "namespace": "scpp",
+        "header": "scpp/operators/bit_xor_${variant}.hpp",
+        "source": "include/scpp/generated/public_bit_xor_${variant}.cpp",
+        "operation": {
+          "name": "integer_bit_xor",
+          "returns": "${variant}",
+          "parameters": [
+            {
+              "name": "left",
+              "type": "${variant}",
+              "passing": "const_ref"
+            },
+            {
+              "name": "right",
+              "type": "${variant}",
+              "passing": "const_ref"
+            }
+          ],
+          "transport": "native",
+          "expression": "(${native:left} ^ ${native:right})",
+          "includes": [
+            "scpp/generated/operators.hpp"
+          ]
+        }
+      }
+    },
+    "shift_left": {
+      "variants": {
+        "int64": {},
+        "mixed": {},
+        "dynamic": {}
+      },
+      "function": {
+        "namespace": "scpp",
+        "header": "scpp/operators/shift_left_${variant}.hpp",
+        "source": "include/scpp/generated/public_shift_left_${variant}.cpp",
+        "operation": {
+          "name": "integer_shift_left",
+          "returns": "${variant}",
+          "parameters": [
+            {
+              "name": "left",
+              "type": "${variant}",
+              "passing": "const_ref"
+            },
+            {
+              "name": "right",
+              "type": "${variant}",
+              "passing": "const_ref"
+            }
+          ],
+          "transport": "native",
+          "expression": "(${native:left} << ${native:right})",
+          "includes": [
+            "scpp/generated/operators.hpp"
+          ]
+        }
+      }
+    },
+    "shift_right": {
+      "variants": {
+        "int64": {},
+        "mixed": {},
+        "dynamic": {}
+      },
+      "function": {
+        "namespace": "scpp",
+        "header": "scpp/operators/shift_right_${variant}.hpp",
+        "source": "include/scpp/generated/public_shift_right_${variant}.cpp",
+        "operation": {
+          "name": "integer_shift_right",
+          "returns": "${variant}",
+          "parameters": [
+            {
+              "name": "left",
+              "type": "${variant}",
+              "passing": "const_ref"
+            },
+            {
+              "name": "right",
+              "type": "${variant}",
+              "passing": "const_ref"
+            }
+          ],
+          "transport": "native",
+          "expression": "(${native:left} >> ${native:right})",
+          "includes": [
+            "scpp/generated/operators.hpp"
+          ]
+        }
+      }
+    },
+    "power": {
+      "variants": {
+        "int64": {}
+      },
+      "function": {
+        "namespace": "scpp",
+        "header": "scpp/operators/power_${variant}.hpp",
+        "source": "include/scpp/generated/public_power_${variant}.cpp",
+        "operation": {
+          "name": "integer_power",
+          "returns": "${variant}",
+          "parameters": [
+            {
+              "name": "left",
+              "type": "${variant}",
+              "passing": "const_ref"
+            },
+            {
+              "name": "right",
+              "type": "${variant}",
+              "passing": "const_ref"
+            }
+          ],
+          "transport": "native",
+          "expression": "scpp::pow(${native:left}, ${native:right})",
+          "includes": [
+            "operators/arithmetic/power.hpp"
           ]
         }
       }

@@ -1,6 +1,6 @@
 {
   "abi": "529dd5502370f48d64891818e9439aae72831b990b4027e8abe25c50c1216c21",
-  "api_identity": "834ad83af037cc59eb7533a02b8575c41069afe4744833e0bd140d4de6244cbb",
+  "api_identity": "923cc52f1b52d2aed46ae067dbd197fffa90b1821f56972770881524edabb6e8",
   "apis": {
     "add_float64": {
       "header": "scpp/operators/add_float64.hpp",
@@ -253,6 +253,240 @@
         ]
       },
       "source": "include/scpp/generated/public_add_uint8.cpp"
+    },
+    "bit_and_dynamic": {
+      "header": "scpp/operators/bit_and_dynamic.hpp",
+      "namespace": "scpp",
+      "operation": {
+        "expression": "(${native:left} & ${native:right})",
+        "includes": [
+          "scpp/generated/operators.hpp"
+        ],
+        "name": "integer_bit_and",
+        "parameters": [
+          {
+            "name": "left",
+            "passing": "const_ref",
+            "type": "dynamic"
+          },
+          {
+            "name": "right",
+            "passing": "const_ref",
+            "type": "dynamic"
+          }
+        ],
+        "returns": "dynamic",
+        "transport": "native"
+      },
+      "source": "include/scpp/generated/public_bit_and_dynamic.cpp"
+    },
+    "bit_and_int64": {
+      "header": "scpp/operators/bit_and_int64.hpp",
+      "namespace": "scpp",
+      "operation": {
+        "expression": "(${native:left} & ${native:right})",
+        "includes": [
+          "scpp/generated/operators.hpp"
+        ],
+        "name": "integer_bit_and",
+        "parameters": [
+          {
+            "name": "left",
+            "passing": "const_ref",
+            "type": "int64"
+          },
+          {
+            "name": "right",
+            "passing": "const_ref",
+            "type": "int64"
+          }
+        ],
+        "returns": "int64",
+        "transport": "native"
+      },
+      "source": "include/scpp/generated/public_bit_and_int64.cpp"
+    },
+    "bit_and_mixed": {
+      "header": "scpp/operators/bit_and_mixed.hpp",
+      "namespace": "scpp",
+      "operation": {
+        "expression": "(${native:left} & ${native:right})",
+        "includes": [
+          "scpp/generated/operators.hpp"
+        ],
+        "name": "integer_bit_and",
+        "parameters": [
+          {
+            "name": "left",
+            "passing": "const_ref",
+            "type": "mixed"
+          },
+          {
+            "name": "right",
+            "passing": "const_ref",
+            "type": "mixed"
+          }
+        ],
+        "returns": "mixed",
+        "transport": "native"
+      },
+      "source": "include/scpp/generated/public_bit_and_mixed.cpp"
+    },
+    "bit_or_dynamic": {
+      "header": "scpp/operators/bit_or_dynamic.hpp",
+      "namespace": "scpp",
+      "operation": {
+        "expression": "(${native:left} | ${native:right})",
+        "includes": [
+          "scpp/generated/operators.hpp"
+        ],
+        "name": "integer_bit_or",
+        "parameters": [
+          {
+            "name": "left",
+            "passing": "const_ref",
+            "type": "dynamic"
+          },
+          {
+            "name": "right",
+            "passing": "const_ref",
+            "type": "dynamic"
+          }
+        ],
+        "returns": "dynamic",
+        "transport": "native"
+      },
+      "source": "include/scpp/generated/public_bit_or_dynamic.cpp"
+    },
+    "bit_or_int64": {
+      "header": "scpp/operators/bit_or_int64.hpp",
+      "namespace": "scpp",
+      "operation": {
+        "expression": "(${native:left} | ${native:right})",
+        "includes": [
+          "scpp/generated/operators.hpp"
+        ],
+        "name": "integer_bit_or",
+        "parameters": [
+          {
+            "name": "left",
+            "passing": "const_ref",
+            "type": "int64"
+          },
+          {
+            "name": "right",
+            "passing": "const_ref",
+            "type": "int64"
+          }
+        ],
+        "returns": "int64",
+        "transport": "native"
+      },
+      "source": "include/scpp/generated/public_bit_or_int64.cpp"
+    },
+    "bit_or_mixed": {
+      "header": "scpp/operators/bit_or_mixed.hpp",
+      "namespace": "scpp",
+      "operation": {
+        "expression": "(${native:left} | ${native:right})",
+        "includes": [
+          "scpp/generated/operators.hpp"
+        ],
+        "name": "integer_bit_or",
+        "parameters": [
+          {
+            "name": "left",
+            "passing": "const_ref",
+            "type": "mixed"
+          },
+          {
+            "name": "right",
+            "passing": "const_ref",
+            "type": "mixed"
+          }
+        ],
+        "returns": "mixed",
+        "transport": "native"
+      },
+      "source": "include/scpp/generated/public_bit_or_mixed.cpp"
+    },
+    "bit_xor_dynamic": {
+      "header": "scpp/operators/bit_xor_dynamic.hpp",
+      "namespace": "scpp",
+      "operation": {
+        "expression": "(${native:left} ^ ${native:right})",
+        "includes": [
+          "scpp/generated/operators.hpp"
+        ],
+        "name": "integer_bit_xor",
+        "parameters": [
+          {
+            "name": "left",
+            "passing": "const_ref",
+            "type": "dynamic"
+          },
+          {
+            "name": "right",
+            "passing": "const_ref",
+            "type": "dynamic"
+          }
+        ],
+        "returns": "dynamic",
+        "transport": "native"
+      },
+      "source": "include/scpp/generated/public_bit_xor_dynamic.cpp"
+    },
+    "bit_xor_int64": {
+      "header": "scpp/operators/bit_xor_int64.hpp",
+      "namespace": "scpp",
+      "operation": {
+        "expression": "(${native:left} ^ ${native:right})",
+        "includes": [
+          "scpp/generated/operators.hpp"
+        ],
+        "name": "integer_bit_xor",
+        "parameters": [
+          {
+            "name": "left",
+            "passing": "const_ref",
+            "type": "int64"
+          },
+          {
+            "name": "right",
+            "passing": "const_ref",
+            "type": "int64"
+          }
+        ],
+        "returns": "int64",
+        "transport": "native"
+      },
+      "source": "include/scpp/generated/public_bit_xor_int64.cpp"
+    },
+    "bit_xor_mixed": {
+      "header": "scpp/operators/bit_xor_mixed.hpp",
+      "namespace": "scpp",
+      "operation": {
+        "expression": "(${native:left} ^ ${native:right})",
+        "includes": [
+          "scpp/generated/operators.hpp"
+        ],
+        "name": "integer_bit_xor",
+        "parameters": [
+          {
+            "name": "left",
+            "passing": "const_ref",
+            "type": "mixed"
+          },
+          {
+            "name": "right",
+            "passing": "const_ref",
+            "type": "mixed"
+          }
+        ],
+        "returns": "mixed",
+        "transport": "native"
+      },
+      "source": "include/scpp/generated/public_bit_xor_mixed.cpp"
     },
     "cast_boolean_from_boolean": {
       "header": "scpp/conversions/cast_boolean_from_boolean.hpp",
@@ -5196,6 +5430,32 @@
       },
       "source": "include/scpp/generated/public_numeric_not_equal_uint8.cpp"
     },
+    "power_int64": {
+      "header": "scpp/operators/power_int64.hpp",
+      "namespace": "scpp",
+      "operation": {
+        "expression": "scpp::pow(${native:left}, ${native:right})",
+        "includes": [
+          "operators/arithmetic/power.hpp"
+        ],
+        "name": "integer_power",
+        "parameters": [
+          {
+            "name": "left",
+            "passing": "const_ref",
+            "type": "int64"
+          },
+          {
+            "name": "right",
+            "passing": "const_ref",
+            "type": "int64"
+          }
+        ],
+        "returns": "int64",
+        "transport": "native"
+      },
+      "source": "include/scpp/generated/public_power_int64.cpp"
+    },
     "remainder_int16": {
       "header": "scpp/operators/remainder_int16.hpp",
       "namespace": "scpp",
@@ -5419,6 +5679,162 @@
         ]
       },
       "source": "include/scpp/generated/public_remainder_uint8.cpp"
+    },
+    "shift_left_dynamic": {
+      "header": "scpp/operators/shift_left_dynamic.hpp",
+      "namespace": "scpp",
+      "operation": {
+        "expression": "(${native:left} << ${native:right})",
+        "includes": [
+          "scpp/generated/operators.hpp"
+        ],
+        "name": "integer_shift_left",
+        "parameters": [
+          {
+            "name": "left",
+            "passing": "const_ref",
+            "type": "dynamic"
+          },
+          {
+            "name": "right",
+            "passing": "const_ref",
+            "type": "dynamic"
+          }
+        ],
+        "returns": "dynamic",
+        "transport": "native"
+      },
+      "source": "include/scpp/generated/public_shift_left_dynamic.cpp"
+    },
+    "shift_left_int64": {
+      "header": "scpp/operators/shift_left_int64.hpp",
+      "namespace": "scpp",
+      "operation": {
+        "expression": "(${native:left} << ${native:right})",
+        "includes": [
+          "scpp/generated/operators.hpp"
+        ],
+        "name": "integer_shift_left",
+        "parameters": [
+          {
+            "name": "left",
+            "passing": "const_ref",
+            "type": "int64"
+          },
+          {
+            "name": "right",
+            "passing": "const_ref",
+            "type": "int64"
+          }
+        ],
+        "returns": "int64",
+        "transport": "native"
+      },
+      "source": "include/scpp/generated/public_shift_left_int64.cpp"
+    },
+    "shift_left_mixed": {
+      "header": "scpp/operators/shift_left_mixed.hpp",
+      "namespace": "scpp",
+      "operation": {
+        "expression": "(${native:left} << ${native:right})",
+        "includes": [
+          "scpp/generated/operators.hpp"
+        ],
+        "name": "integer_shift_left",
+        "parameters": [
+          {
+            "name": "left",
+            "passing": "const_ref",
+            "type": "mixed"
+          },
+          {
+            "name": "right",
+            "passing": "const_ref",
+            "type": "mixed"
+          }
+        ],
+        "returns": "mixed",
+        "transport": "native"
+      },
+      "source": "include/scpp/generated/public_shift_left_mixed.cpp"
+    },
+    "shift_right_dynamic": {
+      "header": "scpp/operators/shift_right_dynamic.hpp",
+      "namespace": "scpp",
+      "operation": {
+        "expression": "(${native:left} >> ${native:right})",
+        "includes": [
+          "scpp/generated/operators.hpp"
+        ],
+        "name": "integer_shift_right",
+        "parameters": [
+          {
+            "name": "left",
+            "passing": "const_ref",
+            "type": "dynamic"
+          },
+          {
+            "name": "right",
+            "passing": "const_ref",
+            "type": "dynamic"
+          }
+        ],
+        "returns": "dynamic",
+        "transport": "native"
+      },
+      "source": "include/scpp/generated/public_shift_right_dynamic.cpp"
+    },
+    "shift_right_int64": {
+      "header": "scpp/operators/shift_right_int64.hpp",
+      "namespace": "scpp",
+      "operation": {
+        "expression": "(${native:left} >> ${native:right})",
+        "includes": [
+          "scpp/generated/operators.hpp"
+        ],
+        "name": "integer_shift_right",
+        "parameters": [
+          {
+            "name": "left",
+            "passing": "const_ref",
+            "type": "int64"
+          },
+          {
+            "name": "right",
+            "passing": "const_ref",
+            "type": "int64"
+          }
+        ],
+        "returns": "int64",
+        "transport": "native"
+      },
+      "source": "include/scpp/generated/public_shift_right_int64.cpp"
+    },
+    "shift_right_mixed": {
+      "header": "scpp/operators/shift_right_mixed.hpp",
+      "namespace": "scpp",
+      "operation": {
+        "expression": "(${native:left} >> ${native:right})",
+        "includes": [
+          "scpp/generated/operators.hpp"
+        ],
+        "name": "integer_shift_right",
+        "parameters": [
+          {
+            "name": "left",
+            "passing": "const_ref",
+            "type": "mixed"
+          },
+          {
+            "name": "right",
+            "passing": "const_ref",
+            "type": "mixed"
+          }
+        ],
+        "returns": "mixed",
+        "transport": "native"
+      },
+      "source": "include/scpp/generated/public_shift_right_mixed.cpp"
     },
     "strict_identical_boolean": {
       "header": "scpp/identity/strict_identical_boolean.hpp",
@@ -7321,7 +7737,55 @@
     "include/scpp/text/concat_text_mixed.hpp",
     "public/scpp/text/concat_text_dynamic.hpp",
     "include/scpp/generated/public_concat_text_dynamic.cpp",
-    "include/scpp/text/concat_text_dynamic.hpp"
+    "include/scpp/text/concat_text_dynamic.hpp",
+    "public/scpp/operators/bit_and_int64.hpp",
+    "include/scpp/generated/public_bit_and_int64.cpp",
+    "include/scpp/operators/bit_and_int64.hpp",
+    "public/scpp/operators/bit_and_mixed.hpp",
+    "include/scpp/generated/public_bit_and_mixed.cpp",
+    "include/scpp/operators/bit_and_mixed.hpp",
+    "public/scpp/operators/bit_and_dynamic.hpp",
+    "include/scpp/generated/public_bit_and_dynamic.cpp",
+    "include/scpp/operators/bit_and_dynamic.hpp",
+    "public/scpp/operators/bit_or_int64.hpp",
+    "include/scpp/generated/public_bit_or_int64.cpp",
+    "include/scpp/operators/bit_or_int64.hpp",
+    "public/scpp/operators/bit_or_mixed.hpp",
+    "include/scpp/generated/public_bit_or_mixed.cpp",
+    "include/scpp/operators/bit_or_mixed.hpp",
+    "public/scpp/operators/bit_or_dynamic.hpp",
+    "include/scpp/generated/public_bit_or_dynamic.cpp",
+    "include/scpp/operators/bit_or_dynamic.hpp",
+    "public/scpp/operators/bit_xor_int64.hpp",
+    "include/scpp/generated/public_bit_xor_int64.cpp",
+    "include/scpp/operators/bit_xor_int64.hpp",
+    "public/scpp/operators/bit_xor_mixed.hpp",
+    "include/scpp/generated/public_bit_xor_mixed.cpp",
+    "include/scpp/operators/bit_xor_mixed.hpp",
+    "public/scpp/operators/bit_xor_dynamic.hpp",
+    "include/scpp/generated/public_bit_xor_dynamic.cpp",
+    "include/scpp/operators/bit_xor_dynamic.hpp",
+    "public/scpp/operators/shift_left_int64.hpp",
+    "include/scpp/generated/public_shift_left_int64.cpp",
+    "include/scpp/operators/shift_left_int64.hpp",
+    "public/scpp/operators/shift_left_mixed.hpp",
+    "include/scpp/generated/public_shift_left_mixed.cpp",
+    "include/scpp/operators/shift_left_mixed.hpp",
+    "public/scpp/operators/shift_left_dynamic.hpp",
+    "include/scpp/generated/public_shift_left_dynamic.cpp",
+    "include/scpp/operators/shift_left_dynamic.hpp",
+    "public/scpp/operators/shift_right_int64.hpp",
+    "include/scpp/generated/public_shift_right_int64.cpp",
+    "include/scpp/operators/shift_right_int64.hpp",
+    "public/scpp/operators/shift_right_mixed.hpp",
+    "include/scpp/generated/public_shift_right_mixed.cpp",
+    "include/scpp/operators/shift_right_mixed.hpp",
+    "public/scpp/operators/shift_right_dynamic.hpp",
+    "include/scpp/generated/public_shift_right_dynamic.cpp",
+    "include/scpp/operators/shift_right_dynamic.hpp",
+    "public/scpp/operators/power_int64.hpp",
+    "include/scpp/generated/public_power_int64.cpp",
+    "include/scpp/operators/power_int64.hpp"
   ],
   "generator": "metadata-api-v1",
   "leaves": {
@@ -7598,6 +8062,15 @@
     "scpp/operators/add_uint32.hpp": "ecc455f1b4a6447a2268cd3fb8a89aed32c2352adb246178cfd15edee65c8f04",
     "scpp/operators/add_uint64.hpp": "7cae93ac547bcbbb521b747bafd129978a579557bd9202b47250cc3744e79728",
     "scpp/operators/add_uint8.hpp": "2eee2702243f1e4107d9c130df1eb16e0cd76554befb7d109e225252a496a264",
+    "scpp/operators/bit_and_dynamic.hpp": "f1ce5e5a951abe2b1758d8df13dd37f071a1719c5e64014ed61ca6874b542d90",
+    "scpp/operators/bit_and_int64.hpp": "3d3598d07fe37049dc968725c08262bbc9907df644bc2092b409b276eb9e851c",
+    "scpp/operators/bit_and_mixed.hpp": "91fa28d67dc2dbe15cf2f47bb540d25765a4109bd49214129df6ed18f41c3c56",
+    "scpp/operators/bit_or_dynamic.hpp": "a22691497df4558e4ff7e4ece0295db67a9d5270f31d55174a9eb649d262dd13",
+    "scpp/operators/bit_or_int64.hpp": "0fd6c3b7cdd8eab3dc7e498bd4acf7d6ee0bc24994856d078244d8a1fb63a287",
+    "scpp/operators/bit_or_mixed.hpp": "fa1b704b12f6c34913a1da13cf403e8381067c8d38531544237cab4a7da48fbe",
+    "scpp/operators/bit_xor_dynamic.hpp": "46f72ae4d8d685be23c6beda773aa7d66eb4a1baf4b1306bc9dbb8b8e1870376",
+    "scpp/operators/bit_xor_int64.hpp": "6b5a4485c5d8b171c819a92a8a6bd36c4c49525dffef2cf7db43279942276ce4",
+    "scpp/operators/bit_xor_mixed.hpp": "1fe52f079d71c0f75ae96747a140b383203f9cda713acd01ce8dc051fe7e306a",
     "scpp/operators/divide_float64.hpp": "8882b82070a4963b9d1233189f4e84810b33192309e38b4e8a83da8dd1c974bf",
     "scpp/operators/divide_int16.hpp": "6ce87e50a00a3b972466956fbedd0b9a78edda96f4885099a6c6359c5ee4e8b4",
     "scpp/operators/divide_int32.hpp": "215d716e35089831f33189877e95b61ebd9719257e78e2d2a50124e61ba73714",
@@ -7675,6 +8148,7 @@
     "scpp/operators/numeric_not_equal_uint32.hpp": "c35d58b461c91d926f6ed2c2e3c165726fafe017fcc10e47b3c42f70ad15574d",
     "scpp/operators/numeric_not_equal_uint64.hpp": "4b671fe2a0a73022e9e75dc0c9cd43580a77a688e5bec4edb31e176423501005",
     "scpp/operators/numeric_not_equal_uint8.hpp": "c5b44b9a7cf8fc09802b25a5afacc86642842fb055d4d8ca400af8d60e5853d0",
+    "scpp/operators/power_int64.hpp": "709cc4022dbed03a6c36954d9405dfc80eed87a4fe36c2646d65c0990995ef2d",
     "scpp/operators/remainder_int16.hpp": "6d7906dc337b2cbd4e08d460f4aa602ad2ca5353b97b9fd520b375abdfe82ed1",
     "scpp/operators/remainder_int32.hpp": "2d850671954752bfc1971f003d602ef2fd906d269cbc8c269b8dd089be5212d1",
     "scpp/operators/remainder_int64.hpp": "1c51b57d9811125f34d2e7025da8353915b00de45084f657c817aff55377df4b",
@@ -7683,6 +8157,12 @@
     "scpp/operators/remainder_uint32.hpp": "0cbb8f8d6628ea0ef6ed0bfb1929f05a50b3adf330e665d3aa50395cb3b97642",
     "scpp/operators/remainder_uint64.hpp": "c30a718f5ee7e254871cdd68726cb5ae950d6e58b04d3737e94a5264a0d4f1b0",
     "scpp/operators/remainder_uint8.hpp": "6b7b2501d769d4fecb4bf2da9a2a1002f0c3f332d3ebf7837fe7fed789165fc4",
+    "scpp/operators/shift_left_dynamic.hpp": "250cd93f817e6430a37ae7a71cf0772781c15183aa463382137badfc05191f5f",
+    "scpp/operators/shift_left_int64.hpp": "84e813f4babe2762e723d1eac81b68c28227f936626c5c3284524112360f378b",
+    "scpp/operators/shift_left_mixed.hpp": "0aeb22fb797f72055aa2b1ced9178e30631750c00f38e402f0e4b6df14b1c27f",
+    "scpp/operators/shift_right_dynamic.hpp": "0f6b1d9d3b28f1a52b777d7639d8f37a82b197e9d46d2a3c0f7e6015bf582298",
+    "scpp/operators/shift_right_int64.hpp": "ec010f6beae200610d5960b2f7156095ac2e38c7e9d97304aef9ed6246e5e901",
+    "scpp/operators/shift_right_mixed.hpp": "ebbd61f02ce7fc008a4334f996c8d30ced3f454eb245d9cb9e3e05b0854527e6",
     "scpp/operators/subtract_float64.hpp": "96fd721a25a7a7168546b5438185871de4e3d9da6a24bef39d43f97f7c04cf06",
     "scpp/operators/subtract_int16.hpp": "891cc21f3e0ce2ede973c1f63c79a9177cfb12a1389021f57f805d3e749b63a6",
     "scpp/operators/subtract_int32.hpp": "1aa1da27c485454c8b5f222306e972edb2874bd1d9cddc9fdfbbaf9b5b20a8f1",
@@ -7974,7 +8454,23 @@
     "include/scpp/generated/public_strict_not_identical_boxed_dynamic_string.cpp",
     "include/scpp/generated/public_strict_not_identical_boxed_dynamic_null.cpp",
     "include/scpp/generated/public_concat_text_mixed.cpp",
-    "include/scpp/generated/public_concat_text_dynamic.cpp"
+    "include/scpp/generated/public_concat_text_dynamic.cpp",
+    "include/scpp/generated/public_bit_and_int64.cpp",
+    "include/scpp/generated/public_bit_and_mixed.cpp",
+    "include/scpp/generated/public_bit_and_dynamic.cpp",
+    "include/scpp/generated/public_bit_or_int64.cpp",
+    "include/scpp/generated/public_bit_or_mixed.cpp",
+    "include/scpp/generated/public_bit_or_dynamic.cpp",
+    "include/scpp/generated/public_bit_xor_int64.cpp",
+    "include/scpp/generated/public_bit_xor_mixed.cpp",
+    "include/scpp/generated/public_bit_xor_dynamic.cpp",
+    "include/scpp/generated/public_shift_left_int64.cpp",
+    "include/scpp/generated/public_shift_left_mixed.cpp",
+    "include/scpp/generated/public_shift_left_dynamic.cpp",
+    "include/scpp/generated/public_shift_right_int64.cpp",
+    "include/scpp/generated/public_shift_right_mixed.cpp",
+    "include/scpp/generated/public_shift_right_dynamic.cpp",
+    "include/scpp/generated/public_power_int64.cpp"
   ],
   "types": {
     "dynamic": {

@@ -18,6 +18,7 @@ parser.add_argument('--text', action='store_true', help='Measure bounded text co
 parser.add_argument('--identity', action='store_true', help='Measure canonical and boxed strict identity')
 parser.add_argument('--identity-pairs', action='store_true', help='Measure borrowed boxed/plain identity')
 parser.add_argument('--boxed-text', action='store_true', help='Measure boxed text conversion')
+parser.add_argument('--special-integers', action='store_true', help='Measure checked power and boxed shift')
 args = parser.parse_args()
 public = '''#include "scpp/operators/add_int64.hpp"
 #include "scpp/operators/equal_mixed.hpp"
@@ -55,6 +56,9 @@ if args.identity_pairs:
 if args.boxed_text:
     public = '#include "scpp/text/concat_text_dynamic.hpp"\nscpp::string text(const scpp::dynamic &v) { return scpp::concat_text(v); }\n'
     native = '#include "lang/php/support/php_string.hpp"\nscpp::string_t text(const scpp::detail::dynamic_value &v) { return scpp::php::to_string(v); }\n'
+if args.special_integers:
+    public = '#include "scpp/operators/power_int64.hpp"\n#include "scpp/operators/shift_left_mixed.hpp"\nscpp::int64 power(const scpp::int64 &a,const scpp::int64 &b) { return scpp::integer_power(a,b); }\nscpp::mixed shift(const scpp::mixed &a,const scpp::mixed &b) { return scpp::integer_shift_left(a,b); }\n'
+    native = '#include "operators/arithmetic/power.hpp"\n#include "scpp/generated/operators.hpp"\nscpp::int_t<> power(const scpp::int_t<> &a,const scpp::int_t<> &b) { return scpp::pow(a,b); }\nscpp::mixed_t shift(const scpp::mixed_t &a,const scpp::mixed_t &b) { return a << b; }\n'
 rows = []
 with tempfile.TemporaryDirectory(prefix='scpp-operator-cost-') as directory:
     stage = Path(directory)
@@ -70,6 +74,7 @@ with tempfile.TemporaryDirectory(prefix='scpp-operator-cost-') as directory:
     if args.identity: adapters = ['strict_identical_mixed']
     if args.identity_pairs: adapters = ['strict_identical_boxed_mixed_string']
     if args.boxed_text: adapters = ['concat_text_dynamic']
+    if args.special_integers: adapters = ['shift_left_mixed']
     cases += [(f'adapter_{identity}', root/f'runtime/include/scpp/generated/public_{identity}.cpp', ['public','include']) for identity in adapters]
     for name, path, includes in cases:
         command = [args.compiler, '-std=c++23', '-O2', *['-I'+str(root/'runtime'/i) for i in includes]]

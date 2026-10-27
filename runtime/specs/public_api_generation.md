@@ -537,3 +537,17 @@ They are not explicit string casts and do not introduce boxed `+` dispatch.
 Existing native `Array`/`Object` labels and scalar formatting are preserved. Returned
 strings own their bytes; a long boxed string needs one result allocation, not an
 extra boundary wrapper allocation. Carrier text policy remains a separate recipe.
+
+## Specialized integer binary operations
+
+Bitwise and/or/xor and left/right shifts use ordinary function-set recipes and
+homogeneous domain selection for int64, mixed and dynamic. Native return transport
+preserves the selected public family. Exact operand admission prevents native
+integer templates from implicitly admitting fixed widths or boxed/plain pairs.
+Power uses the same mechanism with canonical int64 only. Sixteen implementations
+cover these six operations; no generator change or original-pair expansion is needed.
+
+The native helpers own integer-kind validation, shift-count checks and power domain/
+overflow errors. These are eager binary calculations; they do not publish compound
+mutation or change frontend evaluation order. Unary operations, compounds, spaceship
+and carrier extraction/write-back remain separate B2/C work.

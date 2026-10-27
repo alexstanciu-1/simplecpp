@@ -277,6 +277,22 @@
     "strict_not_identical_boxed_dynamic_string",
     "strict_not_identical_boxed_dynamic_null",
     "concat_text_mixed",
-    "concat_text_dynamic"
+    "concat_text_dynamic",
+    "bit_and_int64",
+    "bit_and_mixed",
+    "bit_and_dynamic",
+    "bit_or_int64",
+    "bit_or_mixed",
+    "bit_or_dynamic",
+    "bit_xor_int64",
+    "bit_xor_mixed",
+    "bit_xor_dynamic",
+    "shift_left_int64",
+    "shift_left_mixed",
+    "shift_left_dynamic",
+    "shift_right_int64",
+    "shift_right_mixed",
+    "shift_right_dynamic",
+    "power_int64"
   ]
 }

@@ -1105,3 +1105,40 @@ not statistical speedup claims; the existing native hash warning remains unchang
 The completion plan now distinguishes current batch status from chronological
 checkpoints. B1's agreed scalar-facing scope is complete; B2 and carrier C remain
 open, as do the later ownership/container/callback/helper batches.
+
+## B2a — binary bitwise, checked shifts and power
+
+Sixteen ordinary recipe variants publish canonical integer and homogeneous boxed
+bitwise/shift operations plus canonical checked power. The metadata admission matrix
+checks 486 cases: only canonical int64, homogeneous mixed and homogeneous dynamic
+binary integer operations are admitted, and power remains int64-only. Native return
+transport preserves boxed families; no generator code or arithmetic algorithms changed.
+
+The public behavior test covers bit patterns, signed boundaries, shift counts
+-1/0/62/63/64/max, invalid boxed kinds on either side, power zero/negative/overflow
+cases and a repeated-multiplication oracle over 231 small powers. Successful paths
+allocate zero times. Release focused regressions and admission checks pass. Five
+sanitized tests pass in **34.07 s**, including the **26.00 s** admission matrix.
+ASan/UBSan/leak checks and relocated sealed publication reuse pass.
+
+One initial release test failed because it attempted structured inspection of a
+native `ValueError`; `capture_runtime_exception()` intentionally rethrows that type.
+The corrected harness verifies its preserved standard-exception message. Only the
+test target was rebuilt in each mode. Structured power errors retain their code,
+component and operator metadata. Template-free inspection of ValueError and legacy
+boxed errors is explicitly unfinished G work, not counted as covered by catch-all
+exception delivery.
+
+Single compile-only observations after checks finished, from
+`measure_global_operators.py --special-integers`:
+
+| Case | Seconds | Preprocessed bytes |
+| --- | ---: | ---: |
+| Public power/boxed-shift caller | 0.0529 | 18,494 |
+| Native caller | 3.3984 | 3,610,747 |
+| Private mixed-shift adapter | 3.4359 | 3,681,798 |
+
+Initial eight-job core/tool/test rebuild: release **22.64 s**, peak child RSS
+**419,712 KiB**; sanitized **46.58 s**, **632,092 KiB**. The later test-only harness
+rebuilds were not separately timed. These are single observations, not statistical
+speedup claims. The existing native hash specialization warning remains unchanged.
