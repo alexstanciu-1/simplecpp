@@ -63,4 +63,25 @@ void index_existing_store(R &receiver, const V &value, const Keys &...keys) {
 	index_existing_commit(receiver, value, keys...);
 }
 
+// Homogeneous saved-key path support. No source expression runs in key_at.
+template <typename R, typename KeyAt>
+const R &index_existing_probe_adapted(const R &root, std::size_t count, const KeyAt &key_at) {
+	if (count == 0) throw std::logic_error("existing indexed operation requires a saved key");
+	const R *value = &root;
+	for (std::size_t index = 0; index < count; ++index)
+		value = &index_existing_at(*value, key_at(index));
+	return *value;
+}
+
+template <typename R, typename KeyAt>
+R index_existing_read_adapted(const R &root, std::size_t count, const KeyAt &key_at) {
+	return index_existing_probe_adapted(root, count, key_at);
+}
+
+template <typename R, typename KeyAt>
+void index_existing_store_adapted(R &root, std::size_t count, const KeyAt &key_at, const R &value) {
+	(void)index_existing_probe_adapted(root, count, key_at);
+	index_path_commit_value_adapted(root, count - 1, key_at, value, false);
+}
+
 } // namespace scpp

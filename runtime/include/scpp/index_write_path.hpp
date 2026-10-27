@@ -111,6 +111,16 @@ void index_path_commit_adapted(R &root, std::size_t prefix_count, const KeyAt &k
 }
 
 template <typename R, typename KeyAt>
+void index_path_commit_value_adapted(R &root, std::size_t prefix_count, const KeyAt &key_at,
+	const R &value, bool append) {
+	// A public caller may pass the root itself as RHS. Preserve its pre-commit value.
+	if (&root == &value) {
+		const R snapshot(value);
+		index_path_commit_adapted(root, prefix_count, key_at, snapshot, append);
+	} else index_path_commit_adapted(root, prefix_count, key_at, value, append);
+}
+
+template <typename R, typename KeyAt>
 void index_path_write_adapted(R &root, std::size_t count, const KeyAt &key_at,
 	const R &value, bool append) {
 	if (!append && count == 0) throw std::logic_error("indexed store requires a saved key");
@@ -120,11 +130,7 @@ void index_path_write_adapted(R &root, std::size_t count, const KeyAt &key_at,
 		target = &index_path_probe(*target, key_at(index));
 	if (append) index_path_check_append(*target, value);
 	else index_path_check_store(*target, key_at(prefix_count), value);
-	// A public caller may pass the root itself as RHS. Preserve its pre-commit value.
-	if (&root == &value) {
-		const R snapshot(value);
-		index_path_commit_adapted(root, prefix_count, key_at, snapshot, append);
-	} else index_path_commit_adapted(root, prefix_count, key_at, value, append);
+	index_path_commit_value_adapted(root, prefix_count, key_at, value, append);
 }
 
 } // namespace scpp

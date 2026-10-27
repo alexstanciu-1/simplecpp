@@ -406,6 +406,10 @@
     "index_path_store_mixed",
     "index_path_store_dynamic",
     "index_path_append_mixed",
-    "index_path_append_dynamic"
+    "index_path_append_dynamic",
+    "index_existing_read_mixed",
+    "index_existing_read_dynamic",
+    "index_existing_store_mixed",
+    "index_existing_store_dynamic"
   ]
 }

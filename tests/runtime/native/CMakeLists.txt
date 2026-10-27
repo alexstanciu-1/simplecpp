@@ -583,3 +583,7 @@ add_test(NAME scpp_test_public_keyed_erase COMMAND test_public_keyed_erase)
 add_executable(test_public_index_path test_public_index_path.cpp)
 target_link_libraries(test_public_index_path PRIVATE scpp_core_api)
 add_test(NAME scpp_test_public_index_path COMMAND test_public_index_path)
+
+add_executable(test_public_index_existing test_public_index_existing.cpp)
+target_link_libraries(test_public_index_existing PRIVATE scpp_core_api)
+add_test(NAME scpp_test_public_index_existing COMMAND test_public_index_existing)

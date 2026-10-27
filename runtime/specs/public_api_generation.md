@@ -1618,3 +1618,10 @@ its destination prefix, including an empty prefix for root append. Lowering must
 validate reached keys before evaluating later keys/RHS and convert the value before
 calling. Complete path validation precedes bootstrap/COW; only a root-self RHS needs
 an explicit snapshot. No public interior reference or source callback is exposed.
+
+`index_existing_read` returns an owned leaf from a complete existing boxed path.
+`index_existing_store` rechecks all segments before using the shared alias-safe commit
+helper. Lowering reads before RHS effects, computes/converts using ordinary compound
+rules, and invokes writeback afterwards. Missing paths never bootstrap. The same
+saved-key vector supports both stages without retaining interior references across
+source execution; current receiver structure and saved value are separate inputs.

@@ -2989,3 +2989,22 @@ numeric replacement allocates zero times after setup. Single-run four-operation
 caller compilation: 0.0699s public / 2.6039s native. Core rebuilt once per configuration;
 no generator changes were needed. Runtime inventory is 394 implementation units,
 not a completion percentage.
+
+## E20: owned existing-leaf snapshots and checked writeback (2026-10-28)
+
+The native existing-index owner supplies saved-key adapters; ordinary metadata
+publishes read/store for mixed and dynamic. Read returns an owned value. Writeback
+rechecks every segment without mutation and shares the ordinary write's root-self
+snapshot commit helper. Tests stage old-leaf arithmetic across RHS mutation, reject
+deleted/wrong-kind destinations without recreation, preserve mixed copies/dynamic
+identity, retain long-string snapshots after root reset, distinguish existing null
+from missing, and exercise root-self RHS and invalid paths. This is the runtime
+transport for compound lowering, not a new compound operator policy or proof of
+frontend/field-owner/heterogeneous-path integration.
+
+Validation: release and ASan/UBSan/LSan existing-only and ordinary-write regression
+tests pass; relocated sealed reuse links all new APIs without new implementation
+units. Four headers compile independently. Numeric read/writeback allocation count
+is zero after setup. Single-run existing-only caller compile: 0.0570s public /
+2.5540s native; ordinary-write control: 0.0640s / 2.5909s. Core rebuilt once per
+configuration. Runtime inventory: 398 implementation units, not a coverage ratio.

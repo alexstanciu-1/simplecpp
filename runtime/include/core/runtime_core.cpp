@@ -432,3 +432,8 @@
 #include "scpp/generated/public_index_path_store_dynamic.cpp"
 #include "scpp/generated/public_index_path_append_mixed.cpp"
 #include "scpp/generated/public_index_path_append_dynamic.cpp"
+
+#include "scpp/generated/public_index_existing_read_mixed.cpp"
+#include "scpp/generated/public_index_existing_read_dynamic.cpp"
+#include "scpp/generated/public_index_existing_store_mixed.cpp"
+#include "scpp/generated/public_index_existing_store_dynamic.cpp"

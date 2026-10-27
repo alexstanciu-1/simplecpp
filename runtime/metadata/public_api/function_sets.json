@@ -1982,5 +1982,79 @@
         ]
       }
     }
+  },
+  "index_existing_read": {
+    "variants": {
+      "mixed": {},
+      "dynamic": {}
+    },
+    "function": {
+      "namespace": "scpp",
+      "header": "scpp/access/index_existing_read_${variant}.hpp",
+      "source": "include/scpp/generated/public_index_existing_read_${variant}.cpp",
+      "operation": {
+        "name": "index_existing_read",
+        "returns": "${variant}",
+        "parameters": [
+          {
+            "name": "receiver",
+            "type": "${variant}",
+            "passing": "const_ref"
+          },
+          {
+            "name": "keys",
+            "type": "vector<mixed>",
+            "passing": "const_ref"
+          }
+        ],
+        "expression": "scpp::index_existing_read_adapted(${native:receiver}, ${native:keys}.size(), [&](std::size_t index) -> const scpp::mixed_t & { return detail::concrete_access::get<scpp::mixed_t>(${native:keys}.at(index)); })",
+        "includes": [
+          "scpp/index_existing.hpp"
+        ],
+        "uses": [
+          "mixed"
+        ],
+        "transport": "native"
+      }
+    }
+  },
+  "index_existing_store": {
+    "variants": {
+      "mixed": {},
+      "dynamic": {}
+    },
+    "function": {
+      "namespace": "scpp",
+      "header": "scpp/access/index_existing_store_${variant}.hpp",
+      "source": "include/scpp/generated/public_index_existing_store_${variant}.cpp",
+      "operation": {
+        "name": "index_existing_store",
+        "returns": "void",
+        "parameters": [
+          {
+            "name": "receiver",
+            "type": "${variant}",
+            "passing": "ref"
+          },
+          {
+            "name": "keys",
+            "type": "vector<mixed>",
+            "passing": "const_ref"
+          },
+          {
+            "name": "value",
+            "type": "${variant}",
+            "passing": "const_ref"
+          }
+        ],
+        "expression": "scpp::index_existing_store_adapted(${native:receiver}, ${native:keys}.size(), [&](std::size_t index) -> const scpp::mixed_t & { return detail::concrete_access::get<scpp::mixed_t>(${native:keys}.at(index)); }, ${native:value})",
+        "includes": [
+          "scpp/index_existing.hpp"
+        ],
+        "uses": [
+          "mixed"
+        ]
+      }
+    }
   }
 }

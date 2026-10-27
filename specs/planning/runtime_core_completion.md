@@ -1991,3 +1991,27 @@ numeric replacement allocates zero times after setup. Single-run four-operation
 caller compilation: 0.0699s public / 2.6039s native. Core rebuilt once per configuration;
 no generator changes were needed. Runtime inventory is 394 implementation units,
 not a completion percentage.
+
+## E20 — existing-only boxed snapshots and writeback
+
+The existing-index owner gains saved-key read and store adapters for homogeneous
+mixed/dynamic paths. Reads return owned values. Stores recheck every segment before
+mutable descent and cannot recreate a missing leaf or parent. Ordinary and existing-
+only writes share the same alias-safe commit-value helper; their validation policies
+remain distinct. Metadata publishes four functions without emitter changes.
+
+The public-only proof stages old-leaf read, RHS replacement, ordinary numeric compound
+calculation/conversion and existing-only writeback. It covers deletion and wrong-kind
+replacement failures, a valid replacement receiving the old-leaf result, missing-before-
+RHS behavior, mixed copies/dynamic aliases, escaped long-string snapshots, existing
+null versus missing, root-self RHS safety, invalid keys and empty paths. Numeric
+read/writeback loops allocate zero times. Existing-only store is a transport step;
+the compiler still owns compound operator planning, key/RHS evaluation and field-owner
+retention. Heterogeneous typed paths and full source lowering remain open.
+
+Validation: release and ASan/UBSan/LSan existing-only and ordinary-write regression
+tests pass; relocated sealed reuse links all new APIs without new implementation
+units. Four headers compile independently. Numeric read/writeback allocation count
+is zero after setup. Single-run existing-only caller compile: 0.0570s public /
+2.5540s native; ordinary-write control: 0.0640s / 2.5909s. Core rebuilt once per
+configuration. Runtime inventory: 398 implementation units, not a coverage ratio.
