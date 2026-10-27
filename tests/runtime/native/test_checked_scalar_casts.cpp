@@ -63,12 +63,31 @@ int main() {
         catch (const runtime_error &error) { CHECK(error.code() == "invalid_cast_float_literal"); failed=true; }
         CHECK(failed);
     }
+    CHECK(cast<unsigned64>(string_t("18446744073709551615")).native_value() == std::numeric_limits<unsigned long long>::max());
+    CHECK(cast<unsigned64>(string_t("9223372036854775808")).native_value() == (1ULL << 63));
+    CHECK(cast<int_t<>>(string_t("-9223372036854775808")).native_value() == std::numeric_limits<long long>::min());
+    CHECK(cast<int_t<>>(string_t("9223372036854775807")).native_value() == std::numeric_limits<long long>::max());
+    CHECK(cast<unsigned8>(string_t("-0")).native_value() == 0);
+    CHECK(cast<unsigned8>(string_t("0255")).native_value() == 255);
+    rejects<unsigned8>(string_t("256")); rejects<signed8>(string_t("128"));
+    rejects<unsigned64>(string_t("-1")); rejects<unsigned8>(string_t("-128"));
+    for (const auto *text : {"", "+1", " 1", "1 ", "1.0", "0x10", "18446744073709551616", "-9223372036854775809"}) {
+        bool failed = false;
+        try { (void)cast<unsigned64>(string_t(text)); }
+        catch (const runtime_error &error) { CHECK(error.code() == "invalid_cast_int_literal"); failed = true; }
+        CHECK(failed);
+    }
+    std::uint64_t integer_untouched = 42;
+    CHECK(!detail::parse_integer_string_strict(std::string("1\0x", 3), integer_untouched));
+    CHECK(integer_untouched == 42);
+    const string_t unsigned_max("18446744073709551615");
     double untouched = 42;
     CHECK(!detail::parse_double_string_strict(std::string("1\0x",3), untouched));
     CHECK(untouched==42);
     const string_t long_decimal("1.23456789012345678901234567890123456789");
     counting=true;
     for(int i=0;i<100;++i) {
+        CHECK(cast<unsigned64>(unsigned_max).native_value() == std::numeric_limits<unsigned long long>::max());
         CHECK(cast<signed8>(scpp::float_t(12.75)).native_value()==12);
         CHECK(cast<scpp::float_t>(long_decimal).native_value()>1.0);
     }

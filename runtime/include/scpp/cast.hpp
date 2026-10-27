@@ -353,14 +353,16 @@ inline bool parse_bool_string_strict(const std::string &value, bool &out) {
 	return false;
 }
 
-inline bool parse_int64_string_strict(const std::string &value, std::int64_t &out) {
+template <typename Rep>
+inline bool parse_integer_string_strict(const std::string &value, Rep &out) {
+	static_assert(std::is_integral_v<Rep>);
 	if (value.empty()) {
 		return false;
 	}
 
 	const char *begin = value.data();
 	const char *end = begin + value.size();
-	std::int64_t parsed = 0;
+	Rep parsed = 0;
 	const auto result = std::from_chars(begin, end, parsed, 10);
 	if (result.ec != std::errc() || result.ptr != end) {
 		return false;
@@ -513,15 +515,28 @@ inline bool_t cast<bool_t, string_t>(const string_t &value) {
 }
 
 // string_t -> int_t<Rep>
-// String-to-int is strict: the whole string must be a valid base-10 integer literal.
+// Parse in the target's widest signedness family, then check the target width.
+// Negative literals retain signed parsing so unsigned conversion reports a range
+// error (and -0 remains zero), rather than treating the sign as invalid syntax.
 template <typename To>
 	requires detail::is_int_t_v<To>
 inline To cast(const string_t &value) {
-	std::int64_t parsed = 0;
-	if (!detail::parse_int64_string_strict(value.native_value(), parsed)) {
-		detail::throw_invalid_cast_string("int_t", value.native_value());
+	using rep = detail::int_rep_t<To>;
+	const auto &text = value.native_value();
+	if constexpr (std::is_unsigned_v<rep>) {
+		if (!text.empty() && text.front() != '-') {
+			std::uint64_t parsed = 0;
+			if (!detail::parse_integer_string_strict(text, parsed)) {
+				detail::throw_invalid_cast_string("int_t", text);
+			}
+			return To(detail::checked_integer_cast<rep>(parsed));
+		}
 	}
-	return To(detail::checked_integer_cast<detail::int_rep_t<To>>(parsed));
+	std::int64_t parsed = 0;
+	if (!detail::parse_integer_string_strict(text, parsed)) {
+		detail::throw_invalid_cast_string("int_t", text);
+	}
+	return To(detail::checked_integer_cast<rep>(parsed));
 }
 
 // string_t -> float_t

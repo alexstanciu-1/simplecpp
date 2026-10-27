@@ -266,7 +266,7 @@ allocation checks and ASan/UBSan/leak checks pass; measurements are recorded in
 `runtime/specs/public_api_boundary_results.md`.
 
 This is a prerequisite, not completion of A2. Public conversion metadata and
-publication remain pending. In particular, string-to-unsigned integer conversion
-still parses through signed int64 and cannot yet accept the full uint64 range;
-resolve that before claiming complete scalar conversion coverage. No carrier,
+publication remain pending. The follow-up native integer parser now uses the target signedness family and
+accepts the full uint64 range. The remaining A2 work is metadata-driven public
+conversion admission, generation and publication, including boxed conversions. No carrier,
 ownership, callback or module scope is added by this slice.

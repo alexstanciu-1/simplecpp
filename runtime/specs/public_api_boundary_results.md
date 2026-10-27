@@ -673,3 +673,25 @@ Reproduce with native CMake targets `test_checked_scalar_casts`,
 `test_numeric_operators`, `test_global_operators`, then their matching CTest cases.
 A2 public conversion generation remains pending, including full-range unsigned
 string parsing; no wrapper conversion coverage is claimed here.
+
+### A2a follow-up — full unsigned integer parsing
+
+The native string cast now parses unsigned nonnegative literals in uint64 storage,
+then checks the requested target width. This accepts UINT64_MAX without routing
+through signed int64. Negative literals retain signed parsing: `-0` succeeds and
+representable negative values throw `integer_cast_out_of_range` for unsigned targets.
+The existing whole-string decimal grammar and error distinction remain: malformed
+or wider-than-family literals produce `invalid_cast_int_literal`; values parsed
+successfully but outside a narrower target produce `integer_cast_out_of_range`.
+Leading plus remains rejected for integers, as before.
+
+The focused scalar test covers signed minima/maxima, unsigned maximum and the
+signed/unsigned boundary, narrow overflow, negative unsigned inputs, malformed
+literals and embedded NUL. Parsing preconstructed UINT64_MAX text in the allocation
+loop adds **zero allocations**. All three focused cast/numeric/boxed test cases pass
+in release (0.02 s) and ASan/UBSan/leak mode (0.08 s).
+
+One eight-job build per configuration: release **20.14 s**, peak child RSS
+**407,128 KiB**; sanitizer **43.81 s**, **608,116 KiB**. These are changed-core/test
+rebuilds, not public-caller or clean compiler timings. Public conversion generation
+and publication remain pending; this closes the native unsigned parsing gap above.
