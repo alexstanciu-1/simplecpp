@@ -494,3 +494,19 @@ Carrier numeric xor remains C: require a successful payload before truth convers
 Do not substitute the carrier condition observation, which intentionally treats
 absence/sentinels differently. Lazy logical operators and source precedence are
 compiler-owned; the eager boolean API does not implement those semantics.
+
+## Primitive presence, emptiness and reset
+
+The ordinary function-set emitter also owns the remaining concrete scalar helpers:
+`isset` for float64/null/mixed/dynamic, `empty` for mixed/dynamic and `clean` for the
+published numeric widths, boolean and string. Existing integer/string presence,
+string emptiness and boxed resets remain type-owned; no duplicate signatures are
+published. Public signatures borrow inputs and mutate reset targets by reference.
+
+Presence and boxed emptiness bind the existing native observation authorities.
+Emptiness is not negated truthiness: boxed null, booleans and numbers throw
+`invalid_empty_operand`; strings and tables inspect cardinality without copying.
+Reset expressions use the public representation's assignment/clear operations;
+they do not detach aliases. Dynamic reset retains the existing binding-only semantics.
+Keyed access, carrier protocols and lazy multi-operand evaluation remain separate;
+a public single-value observation does not grant broad source admission.

@@ -1010,3 +1010,31 @@ The core/tool rebuild took 27.95 s in release (419,456 KiB peak child RSS) and
 45.88 s sanitized (627,540 KiB). Nine focused metadata regressions passed in release
 in 3.53 s and sanitized in 23.39 s. The existing native hash specialization warning
 remains unchanged.
+
+## B1f — primitive presence, emptiness and reset
+
+Seventeen ordinary metadata-generated adapters complete float/null/boxed presence,
+boxed collection emptiness and numeric/boolean/string cleanup. Existing type-owned
+operations are reused rather than emitted again. The generator implementation is
+unchanged. Public signatures contain no templates; reset borrows mutable storage.
+
+`test_public_observations` passes in release and ASan/UBSan with leak detection:
+false and zero remain present, boxed null is absent, "0" is nonempty, empty boxed
+strings/tables are empty, and a table containing null is nonempty. Unsupported boxed
+kinds throw `invalid_empty_operand`. Reset preserves native aliases, and cleaning a
+dynamic binding leaves a copied binding's shared container intact. Successful
+observation/reset paths allocate **zero** times, with setup and error paths excluded.
+
+`check_observation_api.py` verifies bounded metadata admission, template-free headers,
+17 implementation units and zero-unit API reuse; it prevents duplicate generation
+of existing type-owned helpers. Six focused regression cases pass in release
+(**3.82 s**) and sanitizer mode (**15.90 s**). Sealed relocated publication and a
+public-only linked consumer pass in both modes. This is runtime API evidence, not
+frontend adoption or proof of keyed/carrier behavior.
+
+One compile-only observation of a two-function presence/emptiness caller, measured
+after builds and sanitizer checks finished: public **0.0938 s**, native **3.4737 s**.
+Reproduce with `tests/runtime/native/measure_observation_api.py`. The Ninja eight-job
+core/tool/new-test rebuild took **21.91 s**, peak child RSS **417,300 KiB**, in release;
+sanitized **52.18 s**, **626,132 KiB**. These are single observations, not statistical
+benchmarks. The existing native hash specialization warning is unchanged.

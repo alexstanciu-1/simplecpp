@@ -393,3 +393,18 @@ Plain canonical xor is covered. Carrier numeric xor remains C and must require i
 payload before converting; direct carrier condition truthiness is not equivalent.
 B1 boxed/plain identity and presence/empty/reset consolidation remain open, alongside
 explicit audit of fixed-width identity admission.
+
+## Active-goal progress — B1f primitive observations and resets
+
+The public API now fills the scalar presence gaps (float64/null/mixed/dynamic),
+boxed collection emptiness and numeric/boolean/string cleanup. Seventeen generated
+adapters reuse ordinary function-set metadata. Existing integer/string observations
+and boxed reset functions retain their original owners.
+
+Focused proofs cover false/zero versus absence, empty string versus "0", boxed
+unsupported-kind failures, null-containing nonempty tables, reset through aliases,
+and dynamic copies retaining the old container after another binding is cleaned.
+Successful observation/reset paths allocate zero times with setup excluded.
+This closes the primitive observation/reset portion of B1; keyed operations,
+container capability completion and carrier rules stay in C/E. Boxed/plain identity
+and explicit fixed-width identity admission remain B1 work.

@@ -238,6 +238,23 @@
     "strict_not_identical_null",
     "strict_not_identical_mixed",
     "strict_not_identical_dynamic",
-    "logical_xor_boolean"
+    "logical_xor_boolean",
+    "isset_float64",
+    "isset_null",
+    "isset_mixed",
+    "isset_dynamic",
+    "empty_mixed",
+    "empty_dynamic",
+    "clean_int8",
+    "clean_int16",
+    "clean_int32",
+    "clean_int64",
+    "clean_uint8",
+    "clean_uint16",
+    "clean_uint32",
+    "clean_uint64",
+    "clean_boolean",
+    "clean_float64",
+    "clean_string"
   ]
 }

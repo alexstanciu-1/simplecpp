@@ -3047,6 +3047,123 @@
           ]
         }
       }
+    },
+    "isset": {
+      "variants": {
+        "float64": {
+          "operand": "scpp::float_t(value.native_value())"
+        },
+        "null": {
+          "operand": "value"
+        },
+        "mixed": {
+          "operand": "${native:value}"
+        },
+        "dynamic": {
+          "operand": "${native:value}"
+        }
+      },
+      "function": {
+        "namespace": "scpp",
+        "header": "scpp/observations/isset_${variant}.hpp",
+        "source": "include/scpp/generated/public_isset_${variant}.cpp",
+        "operation": {
+          "name": "isset",
+          "returns": "boolean",
+          "parameters": [
+            {
+              "name": "value",
+              "type": "${variant}",
+              "passing": "const_ref"
+            }
+          ],
+          "expression": "scpp::isset_one(${variant:operand}).native_value()",
+          "includes": [
+            "operators/isset/isset.hpp"
+          ]
+        }
+      }
+    },
+    "empty": {
+      "variants": {
+        "mixed": {},
+        "dynamic": {}
+      },
+      "function": {
+        "namespace": "scpp",
+        "header": "scpp/observations/empty_${variant}.hpp",
+        "source": "include/scpp/generated/public_empty_${variant}.cpp",
+        "operation": {
+          "name": "empty",
+          "returns": "boolean",
+          "parameters": [
+            {
+              "name": "value",
+              "type": "${variant}",
+              "passing": "const_ref"
+            }
+          ],
+          "expression": "scpp::empty(${native:value}).native_value()",
+          "includes": [
+            "operators/empty/empty.hpp"
+          ]
+        }
+      }
+    },
+    "clean": {
+      "variants": {
+        "int8": {
+          "reset": "value = scpp::int8(0)"
+        },
+        "int16": {
+          "reset": "value = scpp::int16(0)"
+        },
+        "int32": {
+          "reset": "value = scpp::int32(0)"
+        },
+        "int64": {
+          "reset": "value = scpp::int64(0)"
+        },
+        "uint8": {
+          "reset": "value = scpp::uint8(0)"
+        },
+        "uint16": {
+          "reset": "value = scpp::uint16(0)"
+        },
+        "uint32": {
+          "reset": "value = scpp::uint32(0)"
+        },
+        "uint64": {
+          "reset": "value = scpp::uint64(0)"
+        },
+        "boolean": {
+          "reset": "value = scpp::boolean(false)"
+        },
+        "float64": {
+          "reset": "value = scpp::float64(0.0)"
+        },
+        "string": {
+          "reset": "value.clear()"
+        }
+      },
+      "function": {
+        "namespace": "scpp",
+        "header": "scpp/observations/clean_${variant}.hpp",
+        "source": "include/scpp/generated/public_clean_${variant}.cpp",
+        "operation": {
+          "name": "clean",
+          "returns": "void",
+          "parameters": [
+            {
+              "name": "value",
+              "type": "${variant}",
+              "passing": "ref"
+            }
+          ],
+          "expression": "${variant:reset}",
+          "includes": []
+        }
+      }
     }
   }
 }

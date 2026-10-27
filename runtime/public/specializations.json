@@ -1,6 +1,6 @@
 {
   "abi": "529dd5502370f48d64891818e9439aae72831b990b4027e8abe25c50c1216c21",
-  "api_identity": "ef652f7b30c1ea597f4e31ab8f1e4046d1f7ee71d11b48d30da7e942fb2b2ba1",
+  "api_identity": "8becd160883075e22ed701e694e15e978b412e552a7cf8a69dbb16ea8ab4a1af",
   "apis": {
     "add_float64": {
       "header": "scpp/operators/add_float64.hpp",
@@ -2145,6 +2145,204 @@
       },
       "source": "include/scpp/generated/public_cast_uint8_from_uint64.cpp"
     },
+    "clean_boolean": {
+      "header": "scpp/observations/clean_boolean.hpp",
+      "namespace": "scpp",
+      "operation": {
+        "expression": "value = scpp::boolean(false)",
+        "includes": [],
+        "name": "clean",
+        "parameters": [
+          {
+            "name": "value",
+            "passing": "ref",
+            "type": "boolean"
+          }
+        ],
+        "returns": "void"
+      },
+      "source": "include/scpp/generated/public_clean_boolean.cpp"
+    },
+    "clean_float64": {
+      "header": "scpp/observations/clean_float64.hpp",
+      "namespace": "scpp",
+      "operation": {
+        "expression": "value = scpp::float64(0.0)",
+        "includes": [],
+        "name": "clean",
+        "parameters": [
+          {
+            "name": "value",
+            "passing": "ref",
+            "type": "float64"
+          }
+        ],
+        "returns": "void"
+      },
+      "source": "include/scpp/generated/public_clean_float64.cpp"
+    },
+    "clean_int16": {
+      "header": "scpp/observations/clean_int16.hpp",
+      "namespace": "scpp",
+      "operation": {
+        "expression": "value = scpp::int16(0)",
+        "includes": [],
+        "name": "clean",
+        "parameters": [
+          {
+            "name": "value",
+            "passing": "ref",
+            "type": "int16"
+          }
+        ],
+        "returns": "void"
+      },
+      "source": "include/scpp/generated/public_clean_int16.cpp"
+    },
+    "clean_int32": {
+      "header": "scpp/observations/clean_int32.hpp",
+      "namespace": "scpp",
+      "operation": {
+        "expression": "value = scpp::int32(0)",
+        "includes": [],
+        "name": "clean",
+        "parameters": [
+          {
+            "name": "value",
+            "passing": "ref",
+            "type": "int32"
+          }
+        ],
+        "returns": "void"
+      },
+      "source": "include/scpp/generated/public_clean_int32.cpp"
+    },
+    "clean_int64": {
+      "header": "scpp/observations/clean_int64.hpp",
+      "namespace": "scpp",
+      "operation": {
+        "expression": "value = scpp::int64(0)",
+        "includes": [],
+        "name": "clean",
+        "parameters": [
+          {
+            "name": "value",
+            "passing": "ref",
+            "type": "int64"
+          }
+        ],
+        "returns": "void"
+      },
+      "source": "include/scpp/generated/public_clean_int64.cpp"
+    },
+    "clean_int8": {
+      "header": "scpp/observations/clean_int8.hpp",
+      "namespace": "scpp",
+      "operation": {
+        "expression": "value = scpp::int8(0)",
+        "includes": [],
+        "name": "clean",
+        "parameters": [
+          {
+            "name": "value",
+            "passing": "ref",
+            "type": "int8"
+          }
+        ],
+        "returns": "void"
+      },
+      "source": "include/scpp/generated/public_clean_int8.cpp"
+    },
+    "clean_string": {
+      "header": "scpp/observations/clean_string.hpp",
+      "namespace": "scpp",
+      "operation": {
+        "expression": "value.clear()",
+        "includes": [],
+        "name": "clean",
+        "parameters": [
+          {
+            "name": "value",
+            "passing": "ref",
+            "type": "string"
+          }
+        ],
+        "returns": "void"
+      },
+      "source": "include/scpp/generated/public_clean_string.cpp"
+    },
+    "clean_uint16": {
+      "header": "scpp/observations/clean_uint16.hpp",
+      "namespace": "scpp",
+      "operation": {
+        "expression": "value = scpp::uint16(0)",
+        "includes": [],
+        "name": "clean",
+        "parameters": [
+          {
+            "name": "value",
+            "passing": "ref",
+            "type": "uint16"
+          }
+        ],
+        "returns": "void"
+      },
+      "source": "include/scpp/generated/public_clean_uint16.cpp"
+    },
+    "clean_uint32": {
+      "header": "scpp/observations/clean_uint32.hpp",
+      "namespace": "scpp",
+      "operation": {
+        "expression": "value = scpp::uint32(0)",
+        "includes": [],
+        "name": "clean",
+        "parameters": [
+          {
+            "name": "value",
+            "passing": "ref",
+            "type": "uint32"
+          }
+        ],
+        "returns": "void"
+      },
+      "source": "include/scpp/generated/public_clean_uint32.cpp"
+    },
+    "clean_uint64": {
+      "header": "scpp/observations/clean_uint64.hpp",
+      "namespace": "scpp",
+      "operation": {
+        "expression": "value = scpp::uint64(0)",
+        "includes": [],
+        "name": "clean",
+        "parameters": [
+          {
+            "name": "value",
+            "passing": "ref",
+            "type": "uint64"
+          }
+        ],
+        "returns": "void"
+      },
+      "source": "include/scpp/generated/public_clean_uint64.cpp"
+    },
+    "clean_uint8": {
+      "header": "scpp/observations/clean_uint8.hpp",
+      "namespace": "scpp",
+      "operation": {
+        "expression": "value = scpp::uint8(0)",
+        "includes": [],
+        "name": "clean",
+        "parameters": [
+          {
+            "name": "value",
+            "passing": "ref",
+            "type": "uint8"
+          }
+        ],
+        "returns": "void"
+      },
+      "source": "include/scpp/generated/public_clean_uint8.cpp"
+    },
     "concat_text_boolean": {
       "header": "scpp/text/concat_text_boolean.hpp",
       "namespace": "scpp",
@@ -2908,6 +3106,46 @@
       },
       "source": "include/scpp/generated/public_divide_uint8.cpp"
     },
+    "empty_dynamic": {
+      "header": "scpp/observations/empty_dynamic.hpp",
+      "namespace": "scpp",
+      "operation": {
+        "expression": "scpp::empty(${native:value}).native_value()",
+        "includes": [
+          "operators/empty/empty.hpp"
+        ],
+        "name": "empty",
+        "parameters": [
+          {
+            "name": "value",
+            "passing": "const_ref",
+            "type": "dynamic"
+          }
+        ],
+        "returns": "boolean"
+      },
+      "source": "include/scpp/generated/public_empty_dynamic.cpp"
+    },
+    "empty_mixed": {
+      "header": "scpp/observations/empty_mixed.hpp",
+      "namespace": "scpp",
+      "operation": {
+        "expression": "scpp::empty(${native:value}).native_value()",
+        "includes": [
+          "operators/empty/empty.hpp"
+        ],
+        "name": "empty",
+        "parameters": [
+          {
+            "name": "value",
+            "passing": "const_ref",
+            "type": "mixed"
+          }
+        ],
+        "returns": "boolean"
+      },
+      "source": "include/scpp/generated/public_empty_mixed.cpp"
+    },
     "equal_dynamic": {
       "header": "scpp/operators/equal_dynamic.hpp",
       "namespace": "scpp",
@@ -3494,6 +3732,86 @@
         ]
       },
       "source": "include/scpp/generated/public_greater_uint8.cpp"
+    },
+    "isset_dynamic": {
+      "header": "scpp/observations/isset_dynamic.hpp",
+      "namespace": "scpp",
+      "operation": {
+        "expression": "scpp::isset_one(${native:value}).native_value()",
+        "includes": [
+          "operators/isset/isset.hpp"
+        ],
+        "name": "isset",
+        "parameters": [
+          {
+            "name": "value",
+            "passing": "const_ref",
+            "type": "dynamic"
+          }
+        ],
+        "returns": "boolean"
+      },
+      "source": "include/scpp/generated/public_isset_dynamic.cpp"
+    },
+    "isset_float64": {
+      "header": "scpp/observations/isset_float64.hpp",
+      "namespace": "scpp",
+      "operation": {
+        "expression": "scpp::isset_one(scpp::float_t(value.native_value())).native_value()",
+        "includes": [
+          "operators/isset/isset.hpp"
+        ],
+        "name": "isset",
+        "parameters": [
+          {
+            "name": "value",
+            "passing": "const_ref",
+            "type": "float64"
+          }
+        ],
+        "returns": "boolean"
+      },
+      "source": "include/scpp/generated/public_isset_float64.cpp"
+    },
+    "isset_mixed": {
+      "header": "scpp/observations/isset_mixed.hpp",
+      "namespace": "scpp",
+      "operation": {
+        "expression": "scpp::isset_one(${native:value}).native_value()",
+        "includes": [
+          "operators/isset/isset.hpp"
+        ],
+        "name": "isset",
+        "parameters": [
+          {
+            "name": "value",
+            "passing": "const_ref",
+            "type": "mixed"
+          }
+        ],
+        "returns": "boolean"
+      },
+      "source": "include/scpp/generated/public_isset_mixed.cpp"
+    },
+    "isset_null": {
+      "header": "scpp/observations/isset_null.hpp",
+      "namespace": "scpp",
+      "operation": {
+        "expression": "scpp::isset_one(value).native_value()",
+        "includes": [
+          "operators/isset/isset.hpp"
+        ],
+        "name": "isset",
+        "parameters": [
+          {
+            "name": "value",
+            "passing": "const_ref",
+            "type": "null"
+          }
+        ],
+        "returns": "boolean"
+      },
+      "source": "include/scpp/generated/public_isset_null.cpp"
     },
     "less_equal_float64": {
       "header": "scpp/operators/less_equal_float64.hpp",
@@ -6344,7 +6662,58 @@
     "include/scpp/identity/strict_not_identical_dynamic.hpp",
     "public/scpp/operators/logical_xor_boolean.hpp",
     "include/scpp/generated/public_logical_xor_boolean.cpp",
-    "include/scpp/operators/logical_xor_boolean.hpp"
+    "include/scpp/operators/logical_xor_boolean.hpp",
+    "public/scpp/observations/isset_float64.hpp",
+    "include/scpp/generated/public_isset_float64.cpp",
+    "include/scpp/observations/isset_float64.hpp",
+    "public/scpp/observations/isset_null.hpp",
+    "include/scpp/generated/public_isset_null.cpp",
+    "include/scpp/observations/isset_null.hpp",
+    "public/scpp/observations/isset_mixed.hpp",
+    "include/scpp/generated/public_isset_mixed.cpp",
+    "include/scpp/observations/isset_mixed.hpp",
+    "public/scpp/observations/isset_dynamic.hpp",
+    "include/scpp/generated/public_isset_dynamic.cpp",
+    "include/scpp/observations/isset_dynamic.hpp",
+    "public/scpp/observations/empty_mixed.hpp",
+    "include/scpp/generated/public_empty_mixed.cpp",
+    "include/scpp/observations/empty_mixed.hpp",
+    "public/scpp/observations/empty_dynamic.hpp",
+    "include/scpp/generated/public_empty_dynamic.cpp",
+    "include/scpp/observations/empty_dynamic.hpp",
+    "public/scpp/observations/clean_int8.hpp",
+    "include/scpp/generated/public_clean_int8.cpp",
+    "include/scpp/observations/clean_int8.hpp",
+    "public/scpp/observations/clean_int16.hpp",
+    "include/scpp/generated/public_clean_int16.cpp",
+    "include/scpp/observations/clean_int16.hpp",
+    "public/scpp/observations/clean_int32.hpp",
+    "include/scpp/generated/public_clean_int32.cpp",
+    "include/scpp/observations/clean_int32.hpp",
+    "public/scpp/observations/clean_int64.hpp",
+    "include/scpp/generated/public_clean_int64.cpp",
+    "include/scpp/observations/clean_int64.hpp",
+    "public/scpp/observations/clean_uint8.hpp",
+    "include/scpp/generated/public_clean_uint8.cpp",
+    "include/scpp/observations/clean_uint8.hpp",
+    "public/scpp/observations/clean_uint16.hpp",
+    "include/scpp/generated/public_clean_uint16.cpp",
+    "include/scpp/observations/clean_uint16.hpp",
+    "public/scpp/observations/clean_uint32.hpp",
+    "include/scpp/generated/public_clean_uint32.cpp",
+    "include/scpp/observations/clean_uint32.hpp",
+    "public/scpp/observations/clean_uint64.hpp",
+    "include/scpp/generated/public_clean_uint64.cpp",
+    "include/scpp/observations/clean_uint64.hpp",
+    "public/scpp/observations/clean_boolean.hpp",
+    "include/scpp/generated/public_clean_boolean.cpp",
+    "include/scpp/observations/clean_boolean.hpp",
+    "public/scpp/observations/clean_float64.hpp",
+    "include/scpp/generated/public_clean_float64.cpp",
+    "include/scpp/observations/clean_float64.hpp",
+    "public/scpp/observations/clean_string.hpp",
+    "include/scpp/generated/public_clean_string.cpp",
+    "include/scpp/observations/clean_string.hpp"
   ],
   "generator": "metadata-api-v1",
   "leaves": {
@@ -6575,6 +6944,23 @@
     "scpp/integers.hpp": "99af2c7358126433cf2de00f8265fafe20a523f124e70c91e97fcd2a8aec9b1f",
     "scpp/mixed.hpp": "6ed209a3786215b2d4f547dbf4cf2ac0107ce7ab4242368f0c55227270448f0d",
     "scpp/null_t.hpp": "db31e1653226ba1fd7655e2c3a42b92374763f9bfebbc56277d6a4e583f9dbc4",
+    "scpp/observations/clean_boolean.hpp": "7b008d427e905459d0bc04f673a4ea427c172377591f944cb37daf8de2366be4",
+    "scpp/observations/clean_float64.hpp": "9783a603e85e2dbe2cc20812b8367e6cfcfefa66b5a7b2b9371cb7226f7b86d4",
+    "scpp/observations/clean_int16.hpp": "a0efb735aaf8eda4c58fe7194a0e48678cebcbc0046bccbb4b25f389ded3a74b",
+    "scpp/observations/clean_int32.hpp": "db24c152f9a77fbf615143f0d846ab3cabb44e18cc49425cca65bd3f4a1830f3",
+    "scpp/observations/clean_int64.hpp": "3bd52ca1cb7da6bd73c47bff248976c0945e81b8bc027e6f05f6a761ecbb4203",
+    "scpp/observations/clean_int8.hpp": "4bead1f76b49903d83cf0d1f56080e2bdbc9efc9034bd11c174a3f72047176c4",
+    "scpp/observations/clean_string.hpp": "6ddcc23b3912b5bcb761cbfe7a677d6fc0d5c9fe60f368be14464bd49b734bf6",
+    "scpp/observations/clean_uint16.hpp": "806ab175689753ccfd5bd631316d8b63eacdc0e68529104162bb2a5be9375113",
+    "scpp/observations/clean_uint32.hpp": "3e197baba50ecab7835a5ccbf5ef322c7476fe73c1d5b7c867cac3bddb0975b4",
+    "scpp/observations/clean_uint64.hpp": "b6b2a7e71e61a1317ed0de54b9e18946a7606875f37d0ce9b875717d24abbf40",
+    "scpp/observations/clean_uint8.hpp": "9ee32a2f29abdfb0bf529e98352f62ad521b2e382fa2049045baf78d63b853a7",
+    "scpp/observations/empty_dynamic.hpp": "cf293f1a4f4cf0991153e1561f337a43dbc04244ad3455120c87daf2ed977c91",
+    "scpp/observations/empty_mixed.hpp": "1ad22bd3bce4a01e13b1565ab89885eee5518f2efdf8933c85dcc2de1ce4226d",
+    "scpp/observations/isset_dynamic.hpp": "1dd2958f19c36bc934472c91ca84ae46cc17e73655cede724ed478b28af6471a",
+    "scpp/observations/isset_float64.hpp": "6a577b78988ff83d68cf6f984de9b4c00a3def5f189067a33f363dc62e53008b",
+    "scpp/observations/isset_mixed.hpp": "cadbeab375f675243a428c7a73cea705fb9fd99d69187f21330b5c11553e4da6",
+    "scpp/observations/isset_null.hpp": "cfd1ece3c93fdecfea4b0a3492e639c64b7814465430939d0113f633bc1ba45c",
     "scpp/operators/add_float64.hpp": "e4485a8286662a154c5f12c51357055f4707226b20d8c3f65700cd43dcd748a9",
     "scpp/operators/add_int16.hpp": "083afe8d4872d6b3d3f109830eb543ca851f21f729a84d5524d343fef8b47da6",
     "scpp/operators/add_int32.hpp": "37c1eeea35b4967e35d447db05f556b7d9b9f1a2e4cfbc8a6b4409d710a257fd",
@@ -6919,7 +7305,24 @@
     "include/scpp/generated/public_strict_not_identical_null.cpp",
     "include/scpp/generated/public_strict_not_identical_mixed.cpp",
     "include/scpp/generated/public_strict_not_identical_dynamic.cpp",
-    "include/scpp/generated/public_logical_xor_boolean.cpp"
+    "include/scpp/generated/public_logical_xor_boolean.cpp",
+    "include/scpp/generated/public_isset_float64.cpp",
+    "include/scpp/generated/public_isset_null.cpp",
+    "include/scpp/generated/public_isset_mixed.cpp",
+    "include/scpp/generated/public_isset_dynamic.cpp",
+    "include/scpp/generated/public_empty_mixed.cpp",
+    "include/scpp/generated/public_empty_dynamic.cpp",
+    "include/scpp/generated/public_clean_int8.cpp",
+    "include/scpp/generated/public_clean_int16.cpp",
+    "include/scpp/generated/public_clean_int32.cpp",
+    "include/scpp/generated/public_clean_int64.cpp",
+    "include/scpp/generated/public_clean_uint8.cpp",
+    "include/scpp/generated/public_clean_uint16.cpp",
+    "include/scpp/generated/public_clean_uint32.cpp",
+    "include/scpp/generated/public_clean_uint64.cpp",
+    "include/scpp/generated/public_clean_boolean.cpp",
+    "include/scpp/generated/public_clean_float64.cpp",
+    "include/scpp/generated/public_clean_string.cpp"
   ],
   "types": {
     "dynamic": {
