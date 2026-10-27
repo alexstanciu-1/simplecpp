@@ -1599,5 +1599,107 @@
         "expression": "(${native:left} >= ${native:right}).native_value()"
       }
     }
+  },
+  "dbg_value": {
+    "variants": {
+      "int64": {
+        "operand": "${native:value}"
+      },
+      "float64": {
+        "operand": "${native:value}"
+      },
+      "boolean": {
+        "operand": "scpp::bool_t(value.native_value())"
+      },
+      "string": {
+        "operand": "${native:value}"
+      }
+    },
+    "function": {
+      "namespace": "scpp::debug",
+      "header": "scpp/debug/dbg_value_${variant}.hpp",
+      "source": "include/scpp/generated/public_dbg_value_${variant}.cpp",
+      "operation": {
+        "name": "dbg_at",
+        "returns": "void",
+        "parameters": [
+          {
+            "name": "source_file",
+            "type": "c_string",
+            "passing": "value"
+          },
+          {
+            "name": "source_line",
+            "type": "int32",
+            "passing": "value"
+          },
+          {
+            "name": "value",
+            "type": "${variant}",
+            "passing": "const_ref"
+          }
+        ],
+        "expression": "scpp::php::dbg_at(source_file, source_line.native_value(), ${variant:operand})",
+        "includes": [
+          "scpp/support/dbg.hpp"
+        ]
+      }
+    }
+  },
+  "dbg_labelled": {
+    "variants": {
+      "int64": {
+        "operand": "${native:value}"
+      },
+      "float64": {
+        "operand": "${native:value}"
+      },
+      "boolean": {
+        "operand": "scpp::bool_t(value.native_value())"
+      },
+      "string": {
+        "operand": "${native:value}"
+      }
+    },
+    "function": {
+      "namespace": "scpp::debug",
+      "header": "scpp/debug/dbg_labelled_${variant}.hpp",
+      "source": "include/scpp/generated/public_dbg_labelled_${variant}.cpp",
+      "operation": {
+        "name": "dbg_at",
+        "returns": "void",
+        "parameters": [
+          {
+            "name": "source_file",
+            "type": "c_string",
+            "passing": "value"
+          },
+          {
+            "name": "source_line",
+            "type": "int32",
+            "passing": "value"
+          },
+          {
+            "name": "label",
+            "type": "string",
+            "passing": "const_ref"
+          },
+          {
+            "name": "value",
+            "type": "${variant}",
+            "passing": "const_ref"
+          },
+          {
+            "name": "flags",
+            "type": "int64",
+            "passing": "value"
+          }
+        ],
+        "expression": "scpp::php::dbg_at(source_file, source_line.native_value(), ${native:label}, ${variant:operand}, ${native:flags})",
+        "includes": [
+          "scpp/support/dbg.hpp"
+        ]
+      }
+    }
   }
 }

@@ -2602,3 +2602,27 @@ No native runtime behavior changed. An initial aggregate include preceded genera
 and failed; it was removed because constant sets need no archive definition. Tool
 builds then completed normally; the existing mixed-hash warning remains. Debug-call
 bindings and source-context forwarding are not claimed complete by this slice.
+
+## G6 — scalar debug bindings (2026-10-27)
+
+Two ordinary function-set recipes publish the eight registered scalar dbg signatures
+as scpp::debug::dbg_at. All calls forward explicit source file/int32 line context;
+labelled calls receive explicit flags. The existing formatter and native default
+flags remain the authorities. No generator code or native formatting code changed.
+
+Release and ASan/UBSan with leak detection pass. A public-only caller and native
+fixture compare output byte-for-byte over **20 cases**: four scalar types, value-only
+form and four labelled option combinations. Coverage includes source location, native
+scalar type names, embedded NUL/newline escaping, default/explicit/compact flags and
+multiple depth flags reported by the formatter rather than escaping as an exception.
+After warmup, native/public allocation counts match in every case; no zero-allocation
+claim is made for debug formatting or the test's stream capture.
+
+All eight public headers compile independently. The relocated sealed SDK imports all
+eight bindings and executes an integer debug call with zero regenerated units. Three
+metadata/function/constant regressions pass in **1.82s**. Single isolated clang++
+C++23/O2 caller compile costs: **0.0544s public / 1.9888s native**, for an integer
+value-only and labelled-string call. Core archives were rebuilt once per configuration;
+the existing mixed-hash instantiation warning remains. This closes the registered
+scalar debug calls and G5 flags, not unregistered native object inspection or frontend
+source-context lowering.

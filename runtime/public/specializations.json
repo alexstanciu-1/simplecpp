@@ -1,6 +1,6 @@
 {
   "abi": "529dd5502370f48d64891818e9439aae72831b990b4027e8abe25c50c1216c21",
-  "api_identity": "133bab509a4cc10ea60cd3cf0a8a2e7ae5e3e6aa23a0de7de83dbd0fd25801b4",
+  "api_identity": "8d3f9bb9231d3ecf2d69ca1a80f44a820551a6a94659a8300839dd83908ee97b",
   "apis": {
     "add_dynamic": {
       "header": "scpp/operators/add_dynamic.hpp",
@@ -3641,6 +3641,286 @@
         "returns": "int64"
       },
       "source": "include/scpp/generated/public_count_mixed.cpp"
+    },
+    "dbg_labelled_boolean": {
+      "header": "scpp/debug/dbg_labelled_boolean.hpp",
+      "namespace": "scpp::debug",
+      "operation": {
+        "expression": "scpp::php::dbg_at(source_file, source_line.native_value(), ${native:label}, scpp::bool_t(value.native_value()), ${native:flags})",
+        "includes": [
+          "scpp/support/dbg.hpp"
+        ],
+        "name": "dbg_at",
+        "parameters": [
+          {
+            "name": "source_file",
+            "passing": "value",
+            "type": "c_string"
+          },
+          {
+            "name": "source_line",
+            "passing": "value",
+            "type": "int32"
+          },
+          {
+            "name": "label",
+            "passing": "const_ref",
+            "type": "string"
+          },
+          {
+            "name": "value",
+            "passing": "const_ref",
+            "type": "boolean"
+          },
+          {
+            "name": "flags",
+            "passing": "value",
+            "type": "int64"
+          }
+        ],
+        "returns": "void"
+      },
+      "source": "include/scpp/generated/public_dbg_labelled_boolean.cpp"
+    },
+    "dbg_labelled_float64": {
+      "header": "scpp/debug/dbg_labelled_float64.hpp",
+      "namespace": "scpp::debug",
+      "operation": {
+        "expression": "scpp::php::dbg_at(source_file, source_line.native_value(), ${native:label}, ${native:value}, ${native:flags})",
+        "includes": [
+          "scpp/support/dbg.hpp"
+        ],
+        "name": "dbg_at",
+        "parameters": [
+          {
+            "name": "source_file",
+            "passing": "value",
+            "type": "c_string"
+          },
+          {
+            "name": "source_line",
+            "passing": "value",
+            "type": "int32"
+          },
+          {
+            "name": "label",
+            "passing": "const_ref",
+            "type": "string"
+          },
+          {
+            "name": "value",
+            "passing": "const_ref",
+            "type": "float64"
+          },
+          {
+            "name": "flags",
+            "passing": "value",
+            "type": "int64"
+          }
+        ],
+        "returns": "void"
+      },
+      "source": "include/scpp/generated/public_dbg_labelled_float64.cpp"
+    },
+    "dbg_labelled_int64": {
+      "header": "scpp/debug/dbg_labelled_int64.hpp",
+      "namespace": "scpp::debug",
+      "operation": {
+        "expression": "scpp::php::dbg_at(source_file, source_line.native_value(), ${native:label}, ${native:value}, ${native:flags})",
+        "includes": [
+          "scpp/support/dbg.hpp"
+        ],
+        "name": "dbg_at",
+        "parameters": [
+          {
+            "name": "source_file",
+            "passing": "value",
+            "type": "c_string"
+          },
+          {
+            "name": "source_line",
+            "passing": "value",
+            "type": "int32"
+          },
+          {
+            "name": "label",
+            "passing": "const_ref",
+            "type": "string"
+          },
+          {
+            "name": "value",
+            "passing": "const_ref",
+            "type": "int64"
+          },
+          {
+            "name": "flags",
+            "passing": "value",
+            "type": "int64"
+          }
+        ],
+        "returns": "void"
+      },
+      "source": "include/scpp/generated/public_dbg_labelled_int64.cpp"
+    },
+    "dbg_labelled_string": {
+      "header": "scpp/debug/dbg_labelled_string.hpp",
+      "namespace": "scpp::debug",
+      "operation": {
+        "expression": "scpp::php::dbg_at(source_file, source_line.native_value(), ${native:label}, ${native:value}, ${native:flags})",
+        "includes": [
+          "scpp/support/dbg.hpp"
+        ],
+        "name": "dbg_at",
+        "parameters": [
+          {
+            "name": "source_file",
+            "passing": "value",
+            "type": "c_string"
+          },
+          {
+            "name": "source_line",
+            "passing": "value",
+            "type": "int32"
+          },
+          {
+            "name": "label",
+            "passing": "const_ref",
+            "type": "string"
+          },
+          {
+            "name": "value",
+            "passing": "const_ref",
+            "type": "string"
+          },
+          {
+            "name": "flags",
+            "passing": "value",
+            "type": "int64"
+          }
+        ],
+        "returns": "void"
+      },
+      "source": "include/scpp/generated/public_dbg_labelled_string.cpp"
+    },
+    "dbg_value_boolean": {
+      "header": "scpp/debug/dbg_value_boolean.hpp",
+      "namespace": "scpp::debug",
+      "operation": {
+        "expression": "scpp::php::dbg_at(source_file, source_line.native_value(), scpp::bool_t(value.native_value()))",
+        "includes": [
+          "scpp/support/dbg.hpp"
+        ],
+        "name": "dbg_at",
+        "parameters": [
+          {
+            "name": "source_file",
+            "passing": "value",
+            "type": "c_string"
+          },
+          {
+            "name": "source_line",
+            "passing": "value",
+            "type": "int32"
+          },
+          {
+            "name": "value",
+            "passing": "const_ref",
+            "type": "boolean"
+          }
+        ],
+        "returns": "void"
+      },
+      "source": "include/scpp/generated/public_dbg_value_boolean.cpp"
+    },
+    "dbg_value_float64": {
+      "header": "scpp/debug/dbg_value_float64.hpp",
+      "namespace": "scpp::debug",
+      "operation": {
+        "expression": "scpp::php::dbg_at(source_file, source_line.native_value(), ${native:value})",
+        "includes": [
+          "scpp/support/dbg.hpp"
+        ],
+        "name": "dbg_at",
+        "parameters": [
+          {
+            "name": "source_file",
+            "passing": "value",
+            "type": "c_string"
+          },
+          {
+            "name": "source_line",
+            "passing": "value",
+            "type": "int32"
+          },
+          {
+            "name": "value",
+            "passing": "const_ref",
+            "type": "float64"
+          }
+        ],
+        "returns": "void"
+      },
+      "source": "include/scpp/generated/public_dbg_value_float64.cpp"
+    },
+    "dbg_value_int64": {
+      "header": "scpp/debug/dbg_value_int64.hpp",
+      "namespace": "scpp::debug",
+      "operation": {
+        "expression": "scpp::php::dbg_at(source_file, source_line.native_value(), ${native:value})",
+        "includes": [
+          "scpp/support/dbg.hpp"
+        ],
+        "name": "dbg_at",
+        "parameters": [
+          {
+            "name": "source_file",
+            "passing": "value",
+            "type": "c_string"
+          },
+          {
+            "name": "source_line",
+            "passing": "value",
+            "type": "int32"
+          },
+          {
+            "name": "value",
+            "passing": "const_ref",
+            "type": "int64"
+          }
+        ],
+        "returns": "void"
+      },
+      "source": "include/scpp/generated/public_dbg_value_int64.cpp"
+    },
+    "dbg_value_string": {
+      "header": "scpp/debug/dbg_value_string.hpp",
+      "namespace": "scpp::debug",
+      "operation": {
+        "expression": "scpp::php::dbg_at(source_file, source_line.native_value(), ${native:value})",
+        "includes": [
+          "scpp/support/dbg.hpp"
+        ],
+        "name": "dbg_at",
+        "parameters": [
+          {
+            "name": "source_file",
+            "passing": "value",
+            "type": "c_string"
+          },
+          {
+            "name": "source_line",
+            "passing": "value",
+            "type": "int32"
+          },
+          {
+            "name": "value",
+            "passing": "const_ref",
+            "type": "string"
+          }
+        ],
+        "returns": "void"
+      },
+      "source": "include/scpp/generated/public_dbg_value_string.cpp"
     },
     "debug_flags": {
       "constants": [
@@ -9859,7 +10139,31 @@
     "include/scpp/memory/memory_get_peak_usage_real.hpp",
     "public/scpp/debug/flags.hpp",
     "include/scpp/generated/public_debug_flags.cpp",
-    "include/scpp/debug/flags.hpp"
+    "include/scpp/debug/flags.hpp",
+    "public/scpp/debug/dbg_value_int64.hpp",
+    "include/scpp/generated/public_dbg_value_int64.cpp",
+    "include/scpp/debug/dbg_value_int64.hpp",
+    "public/scpp/debug/dbg_value_float64.hpp",
+    "include/scpp/generated/public_dbg_value_float64.cpp",
+    "include/scpp/debug/dbg_value_float64.hpp",
+    "public/scpp/debug/dbg_value_boolean.hpp",
+    "include/scpp/generated/public_dbg_value_boolean.cpp",
+    "include/scpp/debug/dbg_value_boolean.hpp",
+    "public/scpp/debug/dbg_value_string.hpp",
+    "include/scpp/generated/public_dbg_value_string.cpp",
+    "include/scpp/debug/dbg_value_string.hpp",
+    "public/scpp/debug/dbg_labelled_int64.hpp",
+    "include/scpp/generated/public_dbg_labelled_int64.cpp",
+    "include/scpp/debug/dbg_labelled_int64.hpp",
+    "public/scpp/debug/dbg_labelled_float64.hpp",
+    "include/scpp/generated/public_dbg_labelled_float64.cpp",
+    "include/scpp/debug/dbg_labelled_float64.hpp",
+    "public/scpp/debug/dbg_labelled_boolean.hpp",
+    "include/scpp/generated/public_dbg_labelled_boolean.cpp",
+    "include/scpp/debug/dbg_labelled_boolean.hpp",
+    "public/scpp/debug/dbg_labelled_string.hpp",
+    "include/scpp/generated/public_dbg_labelled_string.cpp",
+    "include/scpp/debug/dbg_labelled_string.hpp"
   ],
   "generator": "metadata-api-v1",
   "leaves": {
@@ -10134,6 +10438,14 @@
     "scpp/conversions/cast_uint8_from_mixed.hpp": "90929498ce8e129ebde8614f08087909fb8b4c9208f4ca9b0828a86aa04d697b",
     "scpp/conversions/cast_uint8_from_string.hpp": "f27a3c3f0d03b0680a93cbd04efd06652606a53819cf3fae4448136fdc3bf105",
     "scpp/conversions/cast_uint8_from_uint64.hpp": "0903db400fa439a49ae72b456313f87f7949d4c4e5f4f9a60e353169f378206f",
+    "scpp/debug/dbg_labelled_boolean.hpp": "ff40259958346dda01945d5fc9ce9cf2534416ffe7d700150fbd71fc2dd2aead",
+    "scpp/debug/dbg_labelled_float64.hpp": "63ee1e1db939362f4dfe97fe314bb9626968caa8dda3ff48c22973ca48f838b4",
+    "scpp/debug/dbg_labelled_int64.hpp": "56f331ff727973fe8445931139f7276004c5aa5349cecfe306fb762a1d970336",
+    "scpp/debug/dbg_labelled_string.hpp": "0743c97525073e0779dba9e5a406cd408d5a57f4e30921f4768ad7e93fdbfecf",
+    "scpp/debug/dbg_value_boolean.hpp": "dd9e396c70662537e85ff5fa463aafe4eef926937ab654ae125b26e67a31ae67",
+    "scpp/debug/dbg_value_float64.hpp": "0816dd2559283ea1f8feb843a54af6998db8a433f6fbfd2a4265ea1aa63a6a83",
+    "scpp/debug/dbg_value_int64.hpp": "289089d813b0bcc866e5a4c1f7f940dbaa0196d65d01edcb8d4348e667d2c322",
+    "scpp/debug/dbg_value_string.hpp": "c9ba23f768a101ae39f6b73d562ae5d0968f03a3b0817b2ea12267e14471735a",
     "scpp/debug/flags.hpp": "db90f39d85ec543ac05fe8d7df0893793059794037a7d50a33e5fc1f41c84f27",
     "scpp/detail/value_layout.hpp": "278a58716d847ef9efa3af4b145a4ba901ea200d366a678bad3252e0b3e307e6",
     "scpp/dynamic.hpp": "a18578f71dc2ffb64bacba244003580a5316b89dc66a3e749a0dde2d7563ac84",
@@ -10758,7 +11070,15 @@
     "include/scpp/generated/public_memory_get_usage_real.cpp",
     "include/scpp/generated/public_memory_get_peak_usage.cpp",
     "include/scpp/generated/public_memory_get_peak_usage_real.cpp",
-    "include/scpp/generated/public_debug_flags.cpp"
+    "include/scpp/generated/public_debug_flags.cpp",
+    "include/scpp/generated/public_dbg_value_int64.cpp",
+    "include/scpp/generated/public_dbg_value_float64.cpp",
+    "include/scpp/generated/public_dbg_value_boolean.cpp",
+    "include/scpp/generated/public_dbg_value_string.cpp",
+    "include/scpp/generated/public_dbg_labelled_int64.cpp",
+    "include/scpp/generated/public_dbg_labelled_float64.cpp",
+    "include/scpp/generated/public_dbg_labelled_boolean.cpp",
+    "include/scpp/generated/public_dbg_labelled_string.cpp"
   ],
   "types": {
     "dynamic": {

@@ -1431,3 +1431,20 @@ That namespace avoids colliding with existing native scpp constants. A regressio
 checks all values against the catalog. Generated public-only constexpr compilation
 proves the constants introduce no dynamic initialization or boundary allocation.
 Debug-call bindings and their source-location context remain a separate slice.
+
+## Scalar debug calls and source context
+
+`dbg_value` and `dbg_labelled` function sets expose the four registered scalar
+payloads (int64, float64, boolean, string) as `scpp::debug::dbg_at`. Every public
+signature starts with a borrowed source-file C string and concrete int32 source line;
+the native formatter consumes them synchronously and retains neither. The value-only
+form uses the native default flags. The labelled form accepts a public string label,
+the scalar value and explicit int64 flags. Source omitted flags are supplied from the
+existing catalog default (or public DBG_DEFAULT); this adds no public default-argument
+emission mechanism. Argument evaluation/snapshots and authored source locations remain
+compiler-owned.
+
+Explicit native payload conversion preserves existing type labels and formatting,
+including bool_t versus a native bool. The public calls forward to the same formatter;
+no new formatting, caller introspection, debug-gate or object-inspection policy is
+introduced. In particular, existing invalid-option reporting remains inside dbg_emit.

@@ -21,7 +21,7 @@ each slice. The original inventory is a baseline, not a current completion count
 | D | Pending | Ownership, application targets and source Exception transport gaps. |
 | E | Existing vector/hash/boxed foundations; incomplete | Access/initialization/key-policy gaps and identity key-allocation debt; conditional lifecycle, cursor fixes and boxed count are implemented. |
 | F | Pending | Callable transport and registered collection algorithms. |
-| G | Core utility bindings and debug flags implemented | Debug calls, exception/helper gaps and requirement-by-requirement closure audit. |
+| G | Core utility and scalar debug bindings implemented | Exception/helper gaps and requirement-by-requirement closure audit. |
 
 Full frontend adoption and module migration are excluded. The first complete carrier
 path remains a review gate before expanding ownership/callback implementation.
@@ -217,14 +217,14 @@ value API exists, not that source lowering has already migrated to it.
 | `core.sequence_filter.vector` | Missing callback/algorithm public path | F |
 | `core.keyed_map.hash` | Missing callback/algorithm public path | F |
 | `core.keyed_filter.hash` | Missing callback/algorithm public path | F |
-| `core.dbg.int.value` | Flags published in G5; debug call binding remains | G |
-| `core.dbg.int.flags` | Flags published in G5; debug call binding remains | G |
-| `core.dbg.float.value` | Flags published in G5; debug call binding remains | G |
-| `core.dbg.float.flags` | Flags published in G5; debug call binding remains | G |
-| `core.dbg.bool.value` | Flags published in G5; debug call binding remains | G |
-| `core.dbg.bool.flags` | Flags published in G5; debug call binding remains | G |
-| `core.dbg.string.value` | Flags published in G5; debug call binding remains | G |
-| `core.dbg.string.flags` | Flags published in G5; debug call binding remains | G |
+| `core.dbg.int.value` | Published scalar debug binding and flags, G5/G6 | G |
+| `core.dbg.int.flags` | Published scalar debug binding and flags, G5/G6 | G |
+| `core.dbg.float.value` | Published scalar debug binding and flags, G5/G6 | G |
+| `core.dbg.float.flags` | Published scalar debug binding and flags, G5/G6 | G |
+| `core.dbg.bool.value` | Published scalar debug binding and flags, G5/G6 | G |
+| `core.dbg.bool.flags` | Published scalar debug binding and flags, G5/G6 | G |
+| `core.dbg.string.value` | Published scalar debug binding and flags, G5/G6 | G |
+| `core.dbg.string.flags` | Published scalar debug binding and flags, G5/G6 | G |
 | `core.vector.append` | Vector recipe/published specialization method equivalent; helper/source mapping remains | E |
 | `core.microtime.0` | Published focused core binding, G1 | Complete public path |
 | `core.microtime.1` | Published focused core binding, G1 | Complete public path |
@@ -1576,3 +1576,17 @@ Constant sets reuse request.apis, imported API equality, sealed ownership and or
 output files. Their source unit only validates header declarations, so it is not
 included in the core aggregate. Runtime debug-call overloads are still outstanding;
 this slice does not claim the complete debug surface or change source flag names.
+
+## Active-goal progress — G6 scalar debug bindings
+
+Publish all eight registered scalar debug signatures through two existing function-set
+recipes. Public dbg_at calls forward explicit file/line context, with value-only and
+labelled/explicit-flags forms. Native payload conversion preserves the formatter's
+scalar type names. Source default flags still belong to catalog preparation; the
+public labelled call can receive the published DBG_DEFAULT value.
+
+The public-only proof compares native/public output and allocation counts across
+int/float/bool/string, default and explicit options, binary string escaping and invalid
+depth flags. This closes the registered scalar debug surface with the G5 constants;
+unregistered gates and generic native object inspection are not silently added to
+core source coverage. Source frontend adoption remains excluded.

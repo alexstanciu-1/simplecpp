@@ -368,6 +368,14 @@
     "memory_get_usage_real",
     "memory_get_peak_usage",
     "memory_get_peak_usage_real",
-    "debug_flags"
+    "debug_flags",
+    "dbg_value_int64",
+    "dbg_value_float64",
+    "dbg_value_boolean",
+    "dbg_value_string",
+    "dbg_labelled_int64",
+    "dbg_labelled_float64",
+    "dbg_labelled_boolean",
+    "dbg_labelled_string"
   ]
 }

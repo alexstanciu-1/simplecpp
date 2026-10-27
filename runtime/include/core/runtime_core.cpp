@@ -385,3 +385,12 @@
 #include "scpp/generated/public_memory_get_usage_real.cpp"
 #include "scpp/generated/public_memory_get_peak_usage.cpp"
 #include "scpp/generated/public_memory_get_peak_usage_real.cpp"
+
+#include "scpp/generated/public_dbg_value_int64.cpp"
+#include "scpp/generated/public_dbg_value_float64.cpp"
+#include "scpp/generated/public_dbg_value_boolean.cpp"
+#include "scpp/generated/public_dbg_value_string.cpp"
+#include "scpp/generated/public_dbg_labelled_int64.cpp"
+#include "scpp/generated/public_dbg_labelled_float64.cpp"
+#include "scpp/generated/public_dbg_labelled_boolean.cpp"
+#include "scpp/generated/public_dbg_labelled_string.cpp"
