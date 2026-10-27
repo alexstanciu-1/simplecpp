@@ -168,6 +168,13 @@ def publish(kind, clang, jobs):
     try:
         shutil.copytree(source / "include", stage / "include")
         if kind == "middleware":
+            # Re-export only selected public runtime headers, pinned to this publication.
+            mappings = json.loads((source / "types.json").read_text())["mappings"]
+            public_headers = {m["public_runtime_header"] for m in mappings if "public_runtime_header" in m}
+            for header in sorted(public_headers):
+                destination = stage / "include" / header
+                destination.parent.mkdir(parents=True, exist_ok=True)
+                shutil.copy2(runtime / "include" / header, destination)
             # Support alone consumes this private bridge, paired with this publication.
             (stage / "detail").mkdir()
             for header in ("scalar_access.hpp", "string_state.hpp"):

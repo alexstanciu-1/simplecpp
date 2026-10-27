@@ -101,8 +101,9 @@
       "runtime": "scpp::int_t<std::int32_t>",
       "runtime_header": "scpp/int_t.hpp",
       "public_header": "scpp_compiler/types.hpp",
-      "scalar_rep": "__INT32_TYPE__",
-      "bridge": "scalars"
+      "bridge": "scalars",
+      "public_runtime": "scpp::int32",
+      "public_runtime_header": "scpp/integers.hpp"
     },
     {
       "type": "int<64>",
@@ -110,8 +111,9 @@
       "runtime": "scpp::int_t<std::int64_t>",
       "runtime_header": "scpp/int_t.hpp",
       "public_header": "scpp_compiler/types.hpp",
-      "scalar_rep": "__INT64_TYPE__",
-      "bridge": "scalars"
+      "bridge": "scalars",
+      "public_runtime": "scpp::int64",
+      "public_runtime_header": "scpp/integers.hpp"
     },
     {
       "type": "uint<32>",
@@ -119,8 +121,9 @@
       "runtime": "scpp::int_t<std::uint32_t>",
       "runtime_header": "scpp/int_t.hpp",
       "public_header": "scpp_compiler/types.hpp",
-      "scalar_rep": "__UINT32_TYPE__",
-      "bridge": "scalars"
+      "bridge": "scalars",
+      "public_runtime": "scpp::uint32",
+      "public_runtime_header": "scpp/integers.hpp"
     },
     {
       "type": "uint<64>",
@@ -128,8 +131,9 @@
       "runtime": "scpp::int_t<std::uint64_t>",
       "runtime_header": "scpp/int_t.hpp",
       "public_header": "scpp_compiler/types.hpp",
-      "scalar_rep": "__UINT64_TYPE__",
-      "bridge": "scalars"
+      "bridge": "scalars",
+      "public_runtime": "scpp::uint64",
+      "public_runtime_header": "scpp/integers.hpp"
     },
     {
       "type": "bool",
@@ -137,7 +141,9 @@
       "runtime": "scpp::bool_t",
       "runtime_header": "scpp/bool_t.hpp",
       "public_header": "scpp_compiler/types.hpp",
-      "bridge": "scalars"
+      "bridge": "scalars",
+      "public_runtime": "scpp::boolean",
+      "public_runtime_header": "scpp/integers.hpp"
     }
   ]
 }

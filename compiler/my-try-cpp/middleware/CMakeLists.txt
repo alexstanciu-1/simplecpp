@@ -4,6 +4,9 @@ if(NOT EXISTS "${RUNTIME_PACKAGE}/package.cmake")
   message(FATAL_ERROR "Missing runtime package. Run tools/build.py runtime first.")
 endif()
 include("${RUNTIME_PACKAGE}/package.cmake")
+if(NOT EXISTS "${RUNTIME_PACKAGE}/include/scpp/integers.hpp")
+  message(FATAL_ERROR "Runtime lacks concrete integers. Run tools/build.py runtime explicitly.")
+endif()
 find_package(Python3 REQUIRED COMPONENTS Interpreter)
 execute_process(COMMAND "${Python3_EXECUTABLE}" -B
   "${CMAKE_CURRENT_SOURCE_DIR}/tools/scalar_types.py" --check
@@ -17,7 +20,7 @@ add_custom_command(OUTPUT ${BINDINGS}
     --bindings-dir "${CMAKE_CURRENT_BINARY_DIR}/generated"
   DEPENDS tools/type_names.py types.json
   VERBATIM)
-add_library(compiler_middleware STATIC src/textbuilder.cpp src/types.cpp src/string.cpp src/vector_string.cpp
+add_library(compiler_middleware STATIC src/textbuilder.cpp src/string.cpp src/vector_string.cpp
   src/json_value.cpp src/host.cpp ${BINDINGS})
 target_compile_features(compiler_middleware PUBLIC cxx_std_23)
 target_include_directories(compiler_middleware PUBLIC include)

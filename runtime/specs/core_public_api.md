@@ -60,16 +60,18 @@ Run `python3 runtime/tools/concrete_integers.py` to generate and `--check` to ve
 The compiled owner is `scpp_runtime_core`, also included by `core/runtime.cpp`.
 The current representation macros target the repository's Clang/GCC toolchains.
 
-The compiler middleware's existing scalar facade remains a compatibility consumer
-pending its separate package migration. It is not a second arithmetic authority:
-both facades delegate to the same runtime operators. Future compiler migration
-should re-export these runtime types, not create another scalar family.
+The compiler middleware now re-exports these exact runtime classes. Its generated
+scalar bridge adapts them privately to existing template APIs using `native_value()`;
+there is no second concrete scalar family. Explicit middleware publication copies
+the selected runtime's public integer header into its dependency include snapshot,
+paired with that runtime's compiled core. The compiler checks type identity and
+header equality while keeping implementation headers out of its include closure.
 
 ## Scope and next steps
 
-This slice migrates only the focused task worker-pool interface. It does not migrate
-strings, containers, general task callbacks, language lowering, or the compiler's
-published dependency packages. The existing `scpp/runtime.hpp` umbrella remains
+Concrete integers are used by the focused task worker-pool interface and compiler
+middleware. Strings, containers, general task callbacks and language lowering
+remain outside this migration. The existing `scpp/runtime.hpp` umbrella remains
 available for legacy/template consumers. New focused consumers do not need it.
 
 Tasks-disabled calls retain a header-only exception fallback. That fallback still

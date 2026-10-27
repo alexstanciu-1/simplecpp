@@ -7,29 +7,30 @@ namespace scpp::compiler_support
 {
 	struct scalar_access
 	{
-		static bindings::native_boolean get(boolean value) noexcept
-		{
-			return bindings::native_boolean(value.value_);
-		}
-
 		static bindings::native_int32 get(int32 value) noexcept
 		{
-			return bindings::native_int32(value.value_);
+			return bindings::native_int32(value.native_value());
 		}
 
 		static bindings::native_int64 get(int64 value) noexcept
 		{
-			return bindings::native_int64(value.value_);
+			return bindings::native_int64(value.native_value());
 		}
 
 		static bindings::native_uint32 get(uint32 value) noexcept
 		{
-			return bindings::native_uint32(value.value_);
+			return bindings::native_uint32(value.native_value());
 		}
 
 		static bindings::native_uint64 get(uint64 value) noexcept
 		{
-			return bindings::native_uint64(value.value_);
+			return bindings::native_uint64(value.native_value());
 		}
+
+		static bindings::native_boolean get(boolean value) noexcept
+		{
+			return bindings::native_boolean(value.native_value());
+		}
+
 	};
 }

@@ -21,18 +21,30 @@ def main():
         runtime.mkdir(parents=True)
         (runtime / "manifest.json").write_text(json.dumps({"identity": "fixture-runtime"}))
         driver.select("runtime", runtime)
+        (runtime / "include/scpp").mkdir(parents=True)
+        (runtime / "include/scpp/integers.hpp").write_text("// fixture public runtime header\n")
         source = driver.PROJECT / "middleware"
         (source / "include").mkdir(parents=True)
+        (source / "src").mkdir()
+        for header in ("scalar_access.hpp", "string_state.hpp"):
+            (source / "src" / header).write_text("// fixture private bridge\n")
+        (source / "types.json").write_text(json.dumps({"mappings": [
+            {"public_runtime_header": "scpp/integers.hpp"}]}))
         (source / "include/api.hpp").write_text("int first();\n")
         first = source / "first.cpp"
         first.write_text("int first() { return 1; }\n")
         (source / "second.cpp").write_text("int second() { return 2; }\n")
         (source / "CMakeLists.txt").write_text(
             "cmake_minimum_required(VERSION 3.20)\nproject(fixture LANGUAGES CXX)\n"
-            "add_library(compiler_middleware STATIC first.cpp second.cpp)\n")
+            "add_library(compiler_middleware STATIC first.cpp second.cpp)\n"
+            "file(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/generated)\n"
+            "foreach(family scalars string containers json)\n"
+            "file(WRITE ${CMAKE_CURRENT_BINARY_DIR}/generated/runtime_${family}.hpp \"// fixture\")\n"
+            "endforeach()\n")
         clang = shutil.which("clang++")
         driver.publish("middleware", clang, 8)
         package = driver.selected("middleware")
+        assert (package / "include/scpp/integers.hpp").read_bytes() == (runtime / "include/scpp/integers.hpp").read_bytes()
         archive = package / "lib/libcompiler_middleware.a"
         second = driver.BUILD / "middleware/CMakeFiles/compiler_middleware.dir/second.cpp.o"
         timestamp = second.stat().st_mtime_ns

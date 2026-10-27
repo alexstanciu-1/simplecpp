@@ -16,31 +16,37 @@ import or `using namespace compiler_support` in compiler code.
 | `io.hpp` | `print_line` |
 | `host.hpp` | startup error helpers and the native `run_host` adapter |
 
-`types.hpp` has no includes. The other focused headers include only their API
+`types.hpp` includes only the runtime-owned `scpp/integers.hpp`. The other focused headers include only their API
 dependencies. Vector/hash additions and common imports are deferred. Existing
 concrete vector facades remain explicitly selected by the compiler code that
 already uses them; their scalar size/index signatures use the same basic types.
 
 ## Concrete scalars
 
-`middleware/types.json` owns the runtime mappings:
+The concrete scalar classes belong to the runtime's `scpp/integers.hpp`:
+`scpp::int32`, `int64`, `uint32`, `uint64` and `boolean`. Middleware `types.hpp`
+re-exports those exact types into `scpp::compiler_support` and `scpp::compiler`.
+It does not define scalar classes or compile arithmetic implementations.
 
-- `int32` / `int64`: `scpp::int_t<std::int32_t>` / `scpp::int_t<std::int64_t>`.
-- `uint32` / `uint64`: `scpp::int_t<std::uint32_t>` / `scpp::int_t<std::uint64_t>`.
-- `boolean`: `scpp::bool_t`. C++ reserves `bool`, so it cannot name this facade.
+`middleware/types.json` maps the public runtime names and retains private
+`int_t<Rep>`/`bool_t` bindings for existing runtime adapters. The small generated
+`scalar_access` bridge materializes those template values through `native_value()`;
+it no longer has privileged access to scalar fields. Generate these declarations
+with `python3 -B middleware/tools/scalar_types.py`. Configuration and tests reject
+stale output. Runtime generation remains the owner of concrete representation and
+arithmetic; see [runtime-core API rules](../../../runtime/specs/core_public_api.md).
 
-`middleware/tools/scalar_types.py` prelowers these into concrete public classes
-and compiled implementations. Regenerate with `python3 -B middleware/tools/scalar_types.py`.
-Middleware configuration and focused tests reject stale generated files.
+Explicit middleware publication copies the selected runtime's public integer header
+into its include snapshot. The pinned runtime identity pairs that header with its
+compiled implementation. This copy is a dependency snapshot, not a second type
+family or a separately editable implementation. No broad runtime include directory
+is exported to compiler translation units. Boundary tests verify exact type identity,
+byte equality with the pinned header and a template-free include closure.
 
-Each scalar stores one private fixed native representation, without a heap
-allocation, pointer or runtime object cast. Middleware materializes the registered
-runtime value when invoking its constructors/operators and stores the resulting
-representation. This is a value bridge, not a public alias to a native integer.
-Size/alignment assertions check the runtime mapping. The public header uses
-Clang's fixed-width representation macros to avoid a transitive standard-library
-template dependency. Compiler code has no native-value accessor or implicit
-conversion back to a native integer.
+Each integer keeps native-sized storage, with no allocation or native-pointer cast.
+The runtime's explicit `native_value()` accessor is available, but compiler code
+should continue to use runtime operations; native extraction belongs at the private
+interoperability boundary. Implicit native conversions remain rejected.
 
 Construction from native literals is the bootstrap C++ input boundary; it uses
 the selected representation's C++ parameter conversion followed by the runtime
@@ -90,13 +96,14 @@ directly. Those wrappers remain a separate future boundary decision.
 
 `python3 tools/build.py middleware` explicitly rebuilds and publishes middleware;
 `python3 tools/build.py test` builds only compiler consumers and runs focused tests.
-No runtime change is required. Scalar tests cover widths, copies/conversions,
+The initial migration requires explicitly publishing the concrete-integer runtime
+before middleware. Subsequent compiler edits rebuild neither dependency. Scalar tests cover widths, copies/conversions,
 unsigned wrap, signed division/remainder, zero-divisor failures, short-circuiting,
 string helper semantics and a timed 100,000-iteration allocation-free scalar loop.
 Boundary probes check standalone headers, template exclusion and rejected native
 escapes, integer truthiness, mixed signedness and unsupported helpers.
 
-Local validation on 2026-10-26 (single trials, not performance guarantees):
+Historical pre-migration validation on 2026-10-26 (single trials, not performance guarantees):
 
 | Check | Result |
 | --- | --- |
@@ -117,3 +124,6 @@ membership in a borrowed, NUL-terminated, space-separated vocabulary. Empty toke
 are ignored; an empty key never matches. It compares the runtime-backed string
 bytes without constructing temporary strings or allocating. This is a middleware
 utility for closed metadata vocabularies, not a new source-language builtin.
+
+See [runtime-owned scalar migration](scalar_migration.md) for the current ownership,
+validation and before/after compiler build measurements.

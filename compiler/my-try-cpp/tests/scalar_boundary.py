@@ -11,8 +11,18 @@ ROOT = Path(__file__).resolve().parents[1]
 
 def main():
     receipt = json.loads((ROOT / 'dependencies/middleware.json').read_text())
-    include = ROOT / 'dependencies' / receipt['package'] / 'include'
+    package = ROOT / 'dependencies' / receipt['package']
+    include = package / 'include'
+    configuration = json.loads((package / 'manifest.json').read_text())['configuration']
+    runtime = ROOT / 'dependencies' / configuration['runtime']
+    assert (include / 'scpp/integers.hpp').read_bytes() == (runtime / 'include/scpp/integers.hpp').read_bytes()
+
     cases = [
+        ('same_runtime_types', '#include "scpp_compiler/types.hpp"\n' + ''.join(
+            f'static_assert(__is_same(scpp::compiler::{name}, scpp::{name}));\n'
+            f'static_assert(__is_same(scpp::compiler_support::{name}, scpp::{name}));\n'
+            for name in ('int32', 'int64', 'uint32', 'uint64', 'boolean')),
+         'return 0;', True),
         ('types_only', '#include "scpp_compiler/types.hpp"\n',
          'uint64 value = 0; ++value; return value == 1 ? 0 : 1;', True),
         ('no_native_escape', '#include "scpp_compiler/types.hpp"\n',
