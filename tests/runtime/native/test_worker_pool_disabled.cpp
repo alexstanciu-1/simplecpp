@@ -4,10 +4,14 @@
 #endif
 #include <string>
 
-int main()
+static int check(bool legacy)
 {
 	try {
-		scpp::tasks::configure_default_worker_pool(scpp::int_t<>(4));
+#ifdef TEST_TASKS_UMBRELLA
+		if (legacy) { scpp::tasks::configure_default_worker_pool(scpp::int_t<>(4)); }
+		else
+#endif
+		{ scpp::tasks::worker_pool::configure(scpp::int64(4)); }
 	}
 	catch (const scpp::runtime_error &error) {
 		return error.code() == "tasks_module_disabled" &&
@@ -17,4 +21,14 @@ int main()
 			? 0 : 1;
 	}
 	return 2;
+}
+
+int main()
+{
+	const int result = check(false);
+#ifdef TEST_TASKS_UMBRELLA
+	return result != 0 ? result : check(true);
+#else
+	return result;
+#endif
 }

@@ -3,6 +3,15 @@
 	"artifact": "scpp_runtime_config",
 	"runtime": {
 		"namespace": "scpp",
+		"concrete_integer_api": {
+			"header": "scpp/integers.hpp",
+			"types": [
+				["int32", "__INT32_TYPE__"],
+				["int64", "__INT64_TYPE__"],
+				["uint32", "__UINT32_TYPE__"],
+				["uint64", "__UINT64_TYPE__"]
+			]
+		},
 		"umbrella_header": "scpp/runtime.hpp",
 		"create_default_owner": "shared",
 		"default_cast_policy": "forbidden",

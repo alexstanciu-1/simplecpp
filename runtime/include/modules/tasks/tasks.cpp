@@ -746,3 +746,21 @@ void set_status(const shared_p<context> &resource, const string_t &value)
 }
 
 } // namespace scpp::tasks
+
+// Concrete public boundary shares the legacy pool implementation and state.
+namespace scpp::tasks::worker_pool {
+void configure(const int64 &workers)
+{
+	tasks::configure_default_worker_pool(int_t<>(workers.native_value()));
+}
+
+void shutdown()
+{
+	tasks::shutdown_default_worker_pool();
+}
+
+int64 size()
+{
+	return int64(tasks::default_worker_pool_size().native_value());
+}
+}

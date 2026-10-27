@@ -3,26 +3,32 @@ Doc Status: supporting
 
 ## Worker-pool slice
 
-`modules/tasks/worker_pool.hpp` exposes the existing configuration, configured-size
-query and shutdown operations. Callers need neither `tasks.hpp` nor scheduler,
-callback, batch-state or result-container definitions. The enabled implementation
-remains compiled in `tasks.cpp`; the private reusable pool and its scheduling
-behavior are unchanged. The existing `tasks.hpp` includes this focused header to
-preserve existing callers. The CMake `scpp_tasks` target declares its core linkage
-because the compiled task implementation uses core mixed/dynamic symbols.
+`modules/tasks/worker_pool.hpp` exposes `scpp::tasks::worker_pool::configure(const
+int64&)`, `size() -> int64` and `shutdown()`. The header uses the runtime-owned
+[concrete integer API](core_public_api.md). Enabled callers need no templates,
+scheduler, callback, batch-state or result-container definitions. The implementation
+remains compiled in `tasks.cpp`; both interfaces share the same reusable pool.
+The CMake `scpp_tasks` target publicly declares its core linkage so callers can
+use the concrete integer operators with static or shared composition.
 
-This slice deliberately retains the existing `int_t<>` signatures. It does not
-claim a template-free public boundary yet, or change generic `run`/`start` adapters.
+`tasks.hpp` includes this focused header and retains the existing
+`configure_default_worker_pool(int_t<>)`, `default_worker_pool_size() -> int_t<>`
+and `shutdown_default_worker_pool()` API. The focused API uses a nested namespace
+because C++ cannot overload the size query by return type alone. The old focused
+header's template signatures now require `tasks.hpp`; the legacy umbrella API
+retains its signatures. This is a deliberate source migration for direct users of
+the recent focused header, not a change to generated-language or generic task APIs.
 
 ### Disabled builds
 
-An absent `SCPP_HAS_TASKS` macro still defaults to zero. Configuration preserves
+An absent `SCPP_HAS_TASKS` macro still defaults to zero. Concrete configuration preserves
 its header-only throwing fallback, now in `detail/worker_pool_disabled.hpp`, so a
 disabled caller does not need to link the tasks library. It preserves the message,
 `tasks_module_disabled` code, `scpp::tasks` component and
 `task_set_worker_pool_size` operation. As before, the size query and shutdown have
 compiled definitions only; this change does not introduce disabled-mode success
-stubs for those operations.
+stubs for those operations. The legacy disabled configuration adapter delegates to
+the same fallback, preserving one diagnostic authority.
 
 The disabled implementation header is textually included: the exception dependency
 is not hidden from disabled callers. Moving it out of line would change their
@@ -42,29 +48,14 @@ Run the named targets `test_worker_pool_api`, `test_worker_pool_disabled_default
 configured runtime build, then `ctest --test-dir BUILD -R scpp_test_worker_pool`.
 
 `tests/runtime/native/measure_worker_pool_headers.py --output BUILD/header-cost`
-compares an identical configuration call through focused and generic headers in
+compares equivalent four-worker configuration calls through focused and generic headers in
 both enabled and disabled modes. It alternates three compile trials per case,
 records preprocessed bytes and asserts that focused dependencies exclude the
 full task header and runtime mixed/dynamic/hash/vector headers. It uses Clang,
 C++23 and O2, with no linking or PCH. Timing is caller compilation, not runtime
 execution speed or a full compiler rebuild.
 
-## Next experiment: concrete scalar API
-
-User direction: prefer resolved/prelowered runtime types in public APIs unless a
-template is necessary. The immediate obstacle is `int_t<>`, whose header alone
-preprocesses to about 1.42 MB in the current Linux/Clang environment. The focused
-worker-pool header is approximately 1.43 MB in enabled mode: scalar dependencies
-now dominate this interface.
-
-Evaluate a runtime-owned concrete integer surface with stable layout and checked
-operations, exposing only needed declarations and compiling template adaptation
-inside the runtime. Preserve scalar semantics, overload behavior and supported
-conversions, and assess ABI/source compatibility before adopting it. A type alias
-to `int_t<>` or `extern template` alone does not hide the required class definition.
-Do not add another task callback abstraction or redesign scheduling for this work.
-
-## Measured checkpoint — 2026-10-27
+## Previous int_t checkpoint — 2026-10-27
 
 WSL, Ubuntu Clang 18.1.3, C++23/O2, three alternating compile-only trials per case,
 warm filesystem caches. Each caller performs the same configuration call.
@@ -88,3 +79,46 @@ refreshed: this checkpoint tests the runtime sources directly.
 
 Local evidence is under `compiler/my-try-cpp/build/worker-pool-header-cost/` and
 `worker-pool-final.log` in its runtime, sanitizers and thread-sanitizer build areas.
+
+## Concrete integer checkpoint — 2026-10-27
+
+WSL, Ubuntu Clang 18.1.3, C++23/O2, three alternating compile-only trials per
+case after the builds completed. No runtime build ran alongside this measurement.
+
+| Mode | Header | Preprocessed bytes | Compile runs (s) | Median (s) |
+| --- | --- | ---: | --- | ---: |
+| Enabled | worker_pool.hpp | 5,431 | 0.0538, 0.0669, 0.0543 | 0.0543 |
+| Enabled | tasks.hpp | 2,965,480 | 3.5482, 3.0971, 2.8466 | 3.0971 |
+| Disabled | worker_pool.hpp | 1,258,737 | 1.1338, 1.3232, 0.9219 | 1.1338 |
+| Disabled | tasks.hpp | 2,934,583 | 3.3247, 3.2794, 2.9518 | 3.2794 |
+
+The enabled focused header shrank from 1,428,700 to 5,431 preprocessed bytes.
+Its median caller compile fell from the previous checkpoint's 1.0332 s to 0.0543 s
+(about 95% lower). Historical wall-time comparisons remain sensitive to WSL load;
+the current generic caller measured 3.0971 s. These are caller-only costs, not full
+compiler builds. Disabled compilation remains about 1.13 s because preserving the
+header-only exception fallback still exposes the existing exception implementation.
+The integer header alone preprocesses to 5,272 bytes and contains no templates.
+
+All six focused checks passed in normal, ASan/UBSan with leak detection, and
+ThreadSanitizer configurations. They include scalar layout/copy/conversion checks,
+arithmetic/comparison parity with the existing template operators, unsigned wrap,
+negative signed division/remainder, exact zero-divisor diagnostics, and preservation
+of the destination on failed compound operations. Signed overflow behavior is not
+redefined or claimed to be checked. The four-worker barrier and legacy/new API
+interoperability checks exercise the unchanged worker pool.
+
+Reproduction: build the four worker-pool targets plus `test_concrete_integers`, then
+run `ctest --test-dir BUILD -R 'scpp_test_(concrete_integers|worker_pool|integer_api_boundary)'`.
+The boundary test also verifies generated-file freshness. Local timing evidence is
+`compiler/my-try-cpp/build/concrete-integer-header-cost/results.json`.
+
+For the allocation/call-cost smoke measurement, compile
+`tests/runtime/native/measure_integer_arithmetic.cpp` with Clang C++23/O2,
+`-Iruntime/include`, the built `libscpp_runtime_core.a`, and `-pthread`.
+This standalone measurement intercepts `new/new[]`; do not combine those hooks
+with ThreadSanitizer. It validates a 100,000-iteration public integer sum across
+the compiled boundary, without LTO. It does not benchmark error-path allocations.
+The measured WSL run took 325 microseconds, made zero `new/new[]` calls and produced
+4,999,950,000. This is a smoke measurement of the out-of-line facade, not a claim
+that it matches fully inlined template arithmetic performance.

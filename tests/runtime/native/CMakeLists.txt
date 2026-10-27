@@ -267,3 +267,10 @@ foreach(mode default explicit umbrella)
   endif()
   add_test(NAME scpp_test_worker_pool_disabled_${mode} COMMAND test_worker_pool_disabled_${mode})
 endforeach()
+
+add_executable(test_concrete_integers test_concrete_integers.cpp)
+target_link_libraries(test_concrete_integers PRIVATE scpp_runtime_core)
+add_test(NAME scpp_test_concrete_integers COMMAND test_concrete_integers)
+find_package(Python3 COMPONENTS Interpreter REQUIRED)
+add_test(NAME scpp_test_integer_api_boundary COMMAND ${Python3_EXECUTABLE}
+  ${CMAKE_CURRENT_SOURCE_DIR}/check_integer_api.py --compiler ${CMAKE_CXX_COMPILER})

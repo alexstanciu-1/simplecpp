@@ -601,12 +601,15 @@ void cancel(const shared_p<batch_lifecycle> &resource);
 [[nodiscard]] string_t status(const shared_p<batch_lifecycle> &resource);
 [[nodiscard]] shared_p<progress_info> progress(const shared_p<batch_lifecycle> &resource);
 void set_status(const shared_p<context> &resource, const string_t &value);
+void configure_default_worker_pool(const int_t<> &workers);
+void shutdown_default_worker_pool();
 // Process-entry cleanup retains unjoined batches independently of source handles.
 void shutdown();
 namespace detail {
 void retain_background(const shared_p<batch_lifecycle>& resource);
 void wait_batch(const shared_p<batch_lifecycle>& resource);
 }
+[[nodiscard]] int_t<> default_worker_pool_size();
 [[nodiscard]] int_t<> default_worker_pool_live_workers();
 [[nodiscard]] int_t<> default_worker_pool_created_workers();
 void configure_publish_try_lock(const bool_t &enabled);
@@ -2134,6 +2137,10 @@ template <typename TItem, typename TKey, typename TCallback, typename TIndexCall
 	);
 }
 
+inline void configure_default_worker_pool(const int_t<> &workers)
+{
+	worker_pool::configure(int64(workers.native_value()));
+}
 
 inline void configure_publish_try_lock(const bool_t &)
 {

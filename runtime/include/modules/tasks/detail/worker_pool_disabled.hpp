@@ -2,8 +2,8 @@
 #include "scpp/runtime_error.hpp"
 
 // Header-only disabled behavior deliberately does not require linking the tasks module.
-namespace scpp::tasks {
-inline void configure_default_worker_pool(const int_t<> &)
+namespace scpp::tasks::worker_pool {
+inline void configure(const int64 &)
 {
 	throw runtime_error(
 		"task_set_worker_pool_size(): tasks runtime module is not enabled in this build",

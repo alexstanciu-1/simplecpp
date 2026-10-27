@@ -234,3 +234,11 @@ core plus filesystem support. CMake compiles the core-only bundle and filesystem
 module separately; the convenience bundle is not a second CMake core owner.
 Consumers should link named targets, rather than assume the interface aggregate
 produces a `libscpp_runtime` archive or shared library.
+
+### Focused concrete public interfaces
+
+New native interfaces follow [the runtime-core public API rules](../../runtime/specs/core_public_api.md).
+The existing umbrella remains available for compatibility consumers. Focused core
+headers expose concrete types with minimal transitive dependencies; template and
+semantic implementation stays behind that boundary. The first surface is
+`scpp/integers.hpp`, used by `modules/tasks/worker_pool.hpp`.

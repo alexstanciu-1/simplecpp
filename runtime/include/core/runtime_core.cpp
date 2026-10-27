@@ -9,3 +9,5 @@
 #include "../scpp/support/dbg.cpp"
 #include "../scpp/support/var_dump.cpp"
 #include "../scpp/async_core.cpp"
+
+#include "integers.cpp"

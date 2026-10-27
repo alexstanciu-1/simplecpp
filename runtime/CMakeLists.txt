@@ -27,7 +27,7 @@ add_library(scpp_runtime INTERFACE)
 
 # Optional consumers link the tasks owner explicitly.
 add_library(scpp_tasks EXCLUDE_FROM_ALL include/modules/tasks/tasks.cpp)
-target_link_libraries(scpp_tasks PUBLIC scpp_runtime_configuration PRIVATE scpp_runtime_core)
+target_link_libraries(scpp_tasks PUBLIC scpp_runtime_configuration scpp_runtime_core)
 target_compile_definitions(scpp_tasks PUBLIC SCPP_HAS_TASKS=1)
 find_package(Threads REQUIRED)
 target_link_libraries(scpp_tasks PUBLIC Threads::Threads)

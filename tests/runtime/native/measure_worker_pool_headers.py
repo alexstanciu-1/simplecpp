@@ -1,6 +1,7 @@
 """Measure focused versus generic task header compilation; no performance claim from line counts."""
 import argparse
 import json
+import re
 from pathlib import Path
 import statistics
 import subprocess
@@ -23,16 +24,20 @@ def main():
                               ('generic', 'modules/tasks/tasks.hpp')):
             name = f'{label}_{enabled}'
             source = args.output / f'{name}.cpp'
+            call = ('scpp::tasks::worker_pool::configure(scpp::int64(4))' if label == 'focused'
+                    else 'scpp::tasks::configure_default_worker_pool(scpp::int_t<>(4))')
             source.write_text(f'#include "{header}"\n'
-                              'void configure() { scpp::tasks::configure_default_worker_pool(scpp::int_t<>(4)); }\n')
+                              f'void configure() {{ {call}; }}\n')
             command = [args.compiler, '-std=c++23', '-O2', '-DNDEBUG',
                        f'-DSCPP_HAS_TASKS={enabled}', '-I'+str(include), str(source)]
             dependencies = subprocess.check_output([*command, '-M'], text=True)
             if label == 'focused':
-                for forbidden in ('modules/tasks/tasks.hpp', 'scpp/mixed_t.hpp',
+                for forbidden in ('modules/tasks/tasks.hpp', 'scpp/int_t.hpp', 'scpp/detail.hpp', 'scpp/mixed_t.hpp',
                                   'scpp/dynamic_t.hpp', 'scpp/hash_t.hpp', 'scpp/vector_t.hpp'):
                     assert forbidden not in dependencies, (name, forbidden)
             preprocessed = subprocess.check_output([*command, '-E', '-P'])
+            if label == 'focused' and enabled:
+                assert not re.search(rb'\b(template|typename)\b', preprocessed), name
             cases[name] = dict(command=command, runs_seconds=[],
                                preprocessed_bytes=len(preprocessed))
     # Alternate focused/generic cases; each compile uses its own object output.

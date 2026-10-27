@@ -7,6 +7,10 @@
 
 int exercise_worker_pool()
 {
+	if (scpp::tasks::default_worker_pool_size().native_value() != 4) { return 16; }
+	// The legacy API observes and configures the same pool, without replacing workers.
+	scpp::tasks::configure_default_worker_pool(scpp::int_t<>(4));
+	if (scpp::tasks::worker_pool::size().native_value() != 4) { return 17; }
 	const auto created = scpp::tasks::default_worker_pool_created_workers().native_value();
 	if (created != 4) { return 10; }
 	scpp::vector_t<scpp::int_t<>> items;
