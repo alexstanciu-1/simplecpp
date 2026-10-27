@@ -316,3 +316,17 @@ mandatory mixed/dynamic; compiler-critical modules; language/callback boundaries
 concurrency; remaining selected modules. Each batch needs its own contract proofs,
 publication closure, tests and commit. Source/strings ownership and source Exception
 remain explicit design checkpoints before their dependent batches.
+
+### First follow-up batch: small integer widths and key compatibility
+
+Implemented `int8`, `uint8`, `int16`, `uint16` using the existing numeric API
+configuration/generator. All eight concrete integer types have private exact-native
+hash-key adapters. Minimum/maximum keys, independent hash copies, explicit narrowing,
+unsigned wrap, arithmetic and failure diagnostics are checked against the native
+owner. No broad integer trait opt-in or public template was added.
+
+This completes this bounded batch, not section 7's entire scalar/operator closure:
+float, extended operators/conversions and generated compositions with canonical
+non-type arguments still require their own prepared-demand publication proof.
+The next container batch should establish the public typed-hash API and reuse path,
+then wrappers/ownership. Mixed/dynamic remains a distinct mandatory batch.

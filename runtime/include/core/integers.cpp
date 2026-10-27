@@ -10,8 +10,246 @@ namespace scpp
 		return (!bool_t(this->native_value())).native_value();
 	}
 
+	int8::int8(boolean value) noexcept : value_(int_t<__INT8_TYPE__>(static_cast<int>(static_cast<bool>(value))).native_value()) {}
+	int8::int8(int16 value) noexcept : value_(int_t<__INT8_TYPE__>(value.native_value()).native_value()) {}
+	int8::int8(int32 value) noexcept : value_(int_t<__INT8_TYPE__>(value.native_value()).native_value()) {}
+	int8::int8(int64 value) noexcept : value_(int_t<__INT8_TYPE__>(value.native_value()).native_value()) {}
+	int8::int8(uint8 value) noexcept : value_(int_t<__INT8_TYPE__>(value.native_value()).native_value()) {}
+	int8::int8(uint16 value) noexcept : value_(int_t<__INT8_TYPE__>(value.native_value()).native_value()) {}
+	int8::int8(uint32 value) noexcept : value_(int_t<__INT8_TYPE__>(value.native_value()).native_value()) {}
+	int8::int8(uint64 value) noexcept : value_(int_t<__INT8_TYPE__>(value.native_value()).native_value()) {}
+	int8 &int8::operator++() noexcept
+	{
+		auto value = int_t<__INT8_TYPE__>(this->value_);
+		++value;
+		this->value_ = value.native_value();
+		return *this;
+	}
+
+	int8 &int8::operator--() noexcept
+	{
+		auto value = int_t<__INT8_TYPE__>(this->value_);
+		--value;
+		this->value_ = value.native_value();
+		return *this;
+	}
+
+	int8 &int8::operator+=(int8 right)
+	{
+		*this = *this + right;
+		return *this;
+	}
+
+	int8 &int8::operator-=(int8 right)
+	{
+		*this = *this - right;
+		return *this;
+	}
+
+	int8 &int8::operator*=(int8 right)
+	{
+		*this = *this * right;
+		return *this;
+	}
+
+	int8 &int8::operator/=(int8 right)
+	{
+		*this = *this / right;
+		return *this;
+	}
+
+	int8 &int8::operator%=(int8 right)
+	{
+		*this = *this % right;
+		return *this;
+	}
+
+	int8 operator+(int8 left, int8 right)
+	{
+		return (int_t<__INT8_TYPE__>(left.native_value()) + int_t<__INT8_TYPE__>(right.native_value())).native_value();
+	}
+
+	int8 operator-(int8 left, int8 right)
+	{
+		return (int_t<__INT8_TYPE__>(left.native_value()) - int_t<__INT8_TYPE__>(right.native_value())).native_value();
+	}
+
+	int8 operator*(int8 left, int8 right)
+	{
+		return (int_t<__INT8_TYPE__>(left.native_value()) * int_t<__INT8_TYPE__>(right.native_value())).native_value();
+	}
+
+	int8 operator/(int8 left, int8 right)
+	{
+		return (int_t<__INT8_TYPE__>(left.native_value()) / int_t<__INT8_TYPE__>(right.native_value())).native_value();
+	}
+
+	int8 operator%(int8 left, int8 right)
+	{
+		return (int_t<__INT8_TYPE__>(left.native_value()) % int_t<__INT8_TYPE__>(right.native_value())).native_value();
+	}
+
+	boolean operator==(int8 left, int8 right)
+	{
+		return (int_t<__INT8_TYPE__>(left.native_value()) == int_t<__INT8_TYPE__>(right.native_value())).native_value();
+	}
+
+	boolean operator!=(int8 left, int8 right)
+	{
+		return (int_t<__INT8_TYPE__>(left.native_value()) != int_t<__INT8_TYPE__>(right.native_value())).native_value();
+	}
+
+	boolean operator<(int8 left, int8 right)
+	{
+		return (int_t<__INT8_TYPE__>(left.native_value()) < int_t<__INT8_TYPE__>(right.native_value())).native_value();
+	}
+
+	boolean operator<=(int8 left, int8 right)
+	{
+		return (int_t<__INT8_TYPE__>(left.native_value()) <= int_t<__INT8_TYPE__>(right.native_value())).native_value();
+	}
+
+	boolean operator>(int8 left, int8 right)
+	{
+		return (int_t<__INT8_TYPE__>(left.native_value()) > int_t<__INT8_TYPE__>(right.native_value())).native_value();
+	}
+
+	boolean operator>=(int8 left, int8 right)
+	{
+		return (int_t<__INT8_TYPE__>(left.native_value()) >= int_t<__INT8_TYPE__>(right.native_value())).native_value();
+	}
+
+	boolean isset(int8 value)
+	{
+		return scpp::isset(int_t<__INT8_TYPE__>(value.native_value())).native_value();
+	}
+
+	static_assert(sizeof(int8) == sizeof(int_t<__INT8_TYPE__>));
+	static_assert(alignof(int8) == alignof(int_t<__INT8_TYPE__>));
+
+	int16::int16(boolean value) noexcept : value_(int_t<__INT16_TYPE__>(static_cast<int>(static_cast<bool>(value))).native_value()) {}
+	int16::int16(int8 value) noexcept : value_(int_t<__INT16_TYPE__>(value.native_value()).native_value()) {}
+	int16::int16(int32 value) noexcept : value_(int_t<__INT16_TYPE__>(value.native_value()).native_value()) {}
+	int16::int16(int64 value) noexcept : value_(int_t<__INT16_TYPE__>(value.native_value()).native_value()) {}
+	int16::int16(uint8 value) noexcept : value_(int_t<__INT16_TYPE__>(value.native_value()).native_value()) {}
+	int16::int16(uint16 value) noexcept : value_(int_t<__INT16_TYPE__>(value.native_value()).native_value()) {}
+	int16::int16(uint32 value) noexcept : value_(int_t<__INT16_TYPE__>(value.native_value()).native_value()) {}
+	int16::int16(uint64 value) noexcept : value_(int_t<__INT16_TYPE__>(value.native_value()).native_value()) {}
+	int16 &int16::operator++() noexcept
+	{
+		auto value = int_t<__INT16_TYPE__>(this->value_);
+		++value;
+		this->value_ = value.native_value();
+		return *this;
+	}
+
+	int16 &int16::operator--() noexcept
+	{
+		auto value = int_t<__INT16_TYPE__>(this->value_);
+		--value;
+		this->value_ = value.native_value();
+		return *this;
+	}
+
+	int16 &int16::operator+=(int16 right)
+	{
+		*this = *this + right;
+		return *this;
+	}
+
+	int16 &int16::operator-=(int16 right)
+	{
+		*this = *this - right;
+		return *this;
+	}
+
+	int16 &int16::operator*=(int16 right)
+	{
+		*this = *this * right;
+		return *this;
+	}
+
+	int16 &int16::operator/=(int16 right)
+	{
+		*this = *this / right;
+		return *this;
+	}
+
+	int16 &int16::operator%=(int16 right)
+	{
+		*this = *this % right;
+		return *this;
+	}
+
+	int16 operator+(int16 left, int16 right)
+	{
+		return (int_t<__INT16_TYPE__>(left.native_value()) + int_t<__INT16_TYPE__>(right.native_value())).native_value();
+	}
+
+	int16 operator-(int16 left, int16 right)
+	{
+		return (int_t<__INT16_TYPE__>(left.native_value()) - int_t<__INT16_TYPE__>(right.native_value())).native_value();
+	}
+
+	int16 operator*(int16 left, int16 right)
+	{
+		return (int_t<__INT16_TYPE__>(left.native_value()) * int_t<__INT16_TYPE__>(right.native_value())).native_value();
+	}
+
+	int16 operator/(int16 left, int16 right)
+	{
+		return (int_t<__INT16_TYPE__>(left.native_value()) / int_t<__INT16_TYPE__>(right.native_value())).native_value();
+	}
+
+	int16 operator%(int16 left, int16 right)
+	{
+		return (int_t<__INT16_TYPE__>(left.native_value()) % int_t<__INT16_TYPE__>(right.native_value())).native_value();
+	}
+
+	boolean operator==(int16 left, int16 right)
+	{
+		return (int_t<__INT16_TYPE__>(left.native_value()) == int_t<__INT16_TYPE__>(right.native_value())).native_value();
+	}
+
+	boolean operator!=(int16 left, int16 right)
+	{
+		return (int_t<__INT16_TYPE__>(left.native_value()) != int_t<__INT16_TYPE__>(right.native_value())).native_value();
+	}
+
+	boolean operator<(int16 left, int16 right)
+	{
+		return (int_t<__INT16_TYPE__>(left.native_value()) < int_t<__INT16_TYPE__>(right.native_value())).native_value();
+	}
+
+	boolean operator<=(int16 left, int16 right)
+	{
+		return (int_t<__INT16_TYPE__>(left.native_value()) <= int_t<__INT16_TYPE__>(right.native_value())).native_value();
+	}
+
+	boolean operator>(int16 left, int16 right)
+	{
+		return (int_t<__INT16_TYPE__>(left.native_value()) > int_t<__INT16_TYPE__>(right.native_value())).native_value();
+	}
+
+	boolean operator>=(int16 left, int16 right)
+	{
+		return (int_t<__INT16_TYPE__>(left.native_value()) >= int_t<__INT16_TYPE__>(right.native_value())).native_value();
+	}
+
+	boolean isset(int16 value)
+	{
+		return scpp::isset(int_t<__INT16_TYPE__>(value.native_value())).native_value();
+	}
+
+	static_assert(sizeof(int16) == sizeof(int_t<__INT16_TYPE__>));
+	static_assert(alignof(int16) == alignof(int_t<__INT16_TYPE__>));
+
 	int32::int32(boolean value) noexcept : value_(int_t<__INT32_TYPE__>(static_cast<int>(static_cast<bool>(value))).native_value()) {}
+	int32::int32(int8 value) noexcept : value_(int_t<__INT32_TYPE__>(value.native_value()).native_value()) {}
+	int32::int32(int16 value) noexcept : value_(int_t<__INT32_TYPE__>(value.native_value()).native_value()) {}
 	int32::int32(int64 value) noexcept : value_(int_t<__INT32_TYPE__>(value.native_value()).native_value()) {}
+	int32::int32(uint8 value) noexcept : value_(int_t<__INT32_TYPE__>(value.native_value()).native_value()) {}
+	int32::int32(uint16 value) noexcept : value_(int_t<__INT32_TYPE__>(value.native_value()).native_value()) {}
 	int32::int32(uint32 value) noexcept : value_(int_t<__INT32_TYPE__>(value.native_value()).native_value()) {}
 	int32::int32(uint64 value) noexcept : value_(int_t<__INT32_TYPE__>(value.native_value()).native_value()) {}
 	int32 &int32::operator++() noexcept
@@ -124,7 +362,11 @@ namespace scpp
 	static_assert(alignof(int32) == alignof(int_t<__INT32_TYPE__>));
 
 	int64::int64(boolean value) noexcept : value_(int_t<__INT64_TYPE__>(static_cast<int>(static_cast<bool>(value))).native_value()) {}
+	int64::int64(int8 value) noexcept : value_(int_t<__INT64_TYPE__>(value.native_value()).native_value()) {}
+	int64::int64(int16 value) noexcept : value_(int_t<__INT64_TYPE__>(value.native_value()).native_value()) {}
 	int64::int64(int32 value) noexcept : value_(int_t<__INT64_TYPE__>(value.native_value()).native_value()) {}
+	int64::int64(uint8 value) noexcept : value_(int_t<__INT64_TYPE__>(value.native_value()).native_value()) {}
+	int64::int64(uint16 value) noexcept : value_(int_t<__INT64_TYPE__>(value.native_value()).native_value()) {}
 	int64::int64(uint32 value) noexcept : value_(int_t<__INT64_TYPE__>(value.native_value()).native_value()) {}
 	int64::int64(uint64 value) noexcept : value_(int_t<__INT64_TYPE__>(value.native_value()).native_value()) {}
 	int64 &int64::operator++() noexcept
@@ -236,9 +478,247 @@ namespace scpp
 	static_assert(sizeof(int64) == sizeof(int_t<__INT64_TYPE__>));
 	static_assert(alignof(int64) == alignof(int_t<__INT64_TYPE__>));
 
+	uint8::uint8(boolean value) noexcept : value_(int_t<__UINT8_TYPE__>(static_cast<int>(static_cast<bool>(value))).native_value()) {}
+	uint8::uint8(int8 value) noexcept : value_(int_t<__UINT8_TYPE__>(value.native_value()).native_value()) {}
+	uint8::uint8(int16 value) noexcept : value_(int_t<__UINT8_TYPE__>(value.native_value()).native_value()) {}
+	uint8::uint8(int32 value) noexcept : value_(int_t<__UINT8_TYPE__>(value.native_value()).native_value()) {}
+	uint8::uint8(int64 value) noexcept : value_(int_t<__UINT8_TYPE__>(value.native_value()).native_value()) {}
+	uint8::uint8(uint16 value) noexcept : value_(int_t<__UINT8_TYPE__>(value.native_value()).native_value()) {}
+	uint8::uint8(uint32 value) noexcept : value_(int_t<__UINT8_TYPE__>(value.native_value()).native_value()) {}
+	uint8::uint8(uint64 value) noexcept : value_(int_t<__UINT8_TYPE__>(value.native_value()).native_value()) {}
+	uint8 &uint8::operator++() noexcept
+	{
+		auto value = int_t<__UINT8_TYPE__>(this->value_);
+		++value;
+		this->value_ = value.native_value();
+		return *this;
+	}
+
+	uint8 &uint8::operator--() noexcept
+	{
+		auto value = int_t<__UINT8_TYPE__>(this->value_);
+		--value;
+		this->value_ = value.native_value();
+		return *this;
+	}
+
+	uint8 &uint8::operator+=(uint8 right)
+	{
+		*this = *this + right;
+		return *this;
+	}
+
+	uint8 &uint8::operator-=(uint8 right)
+	{
+		*this = *this - right;
+		return *this;
+	}
+
+	uint8 &uint8::operator*=(uint8 right)
+	{
+		*this = *this * right;
+		return *this;
+	}
+
+	uint8 &uint8::operator/=(uint8 right)
+	{
+		*this = *this / right;
+		return *this;
+	}
+
+	uint8 &uint8::operator%=(uint8 right)
+	{
+		*this = *this % right;
+		return *this;
+	}
+
+	uint8 operator+(uint8 left, uint8 right)
+	{
+		return (int_t<__UINT8_TYPE__>(left.native_value()) + int_t<__UINT8_TYPE__>(right.native_value())).native_value();
+	}
+
+	uint8 operator-(uint8 left, uint8 right)
+	{
+		return (int_t<__UINT8_TYPE__>(left.native_value()) - int_t<__UINT8_TYPE__>(right.native_value())).native_value();
+	}
+
+	uint8 operator*(uint8 left, uint8 right)
+	{
+		return (int_t<__UINT8_TYPE__>(left.native_value()) * int_t<__UINT8_TYPE__>(right.native_value())).native_value();
+	}
+
+	uint8 operator/(uint8 left, uint8 right)
+	{
+		return (int_t<__UINT8_TYPE__>(left.native_value()) / int_t<__UINT8_TYPE__>(right.native_value())).native_value();
+	}
+
+	uint8 operator%(uint8 left, uint8 right)
+	{
+		return (int_t<__UINT8_TYPE__>(left.native_value()) % int_t<__UINT8_TYPE__>(right.native_value())).native_value();
+	}
+
+	boolean operator==(uint8 left, uint8 right)
+	{
+		return (int_t<__UINT8_TYPE__>(left.native_value()) == int_t<__UINT8_TYPE__>(right.native_value())).native_value();
+	}
+
+	boolean operator!=(uint8 left, uint8 right)
+	{
+		return (int_t<__UINT8_TYPE__>(left.native_value()) != int_t<__UINT8_TYPE__>(right.native_value())).native_value();
+	}
+
+	boolean operator<(uint8 left, uint8 right)
+	{
+		return (int_t<__UINT8_TYPE__>(left.native_value()) < int_t<__UINT8_TYPE__>(right.native_value())).native_value();
+	}
+
+	boolean operator<=(uint8 left, uint8 right)
+	{
+		return (int_t<__UINT8_TYPE__>(left.native_value()) <= int_t<__UINT8_TYPE__>(right.native_value())).native_value();
+	}
+
+	boolean operator>(uint8 left, uint8 right)
+	{
+		return (int_t<__UINT8_TYPE__>(left.native_value()) > int_t<__UINT8_TYPE__>(right.native_value())).native_value();
+	}
+
+	boolean operator>=(uint8 left, uint8 right)
+	{
+		return (int_t<__UINT8_TYPE__>(left.native_value()) >= int_t<__UINT8_TYPE__>(right.native_value())).native_value();
+	}
+
+	boolean isset(uint8 value)
+	{
+		return scpp::isset(int_t<__UINT8_TYPE__>(value.native_value())).native_value();
+	}
+
+	static_assert(sizeof(uint8) == sizeof(int_t<__UINT8_TYPE__>));
+	static_assert(alignof(uint8) == alignof(int_t<__UINT8_TYPE__>));
+
+	uint16::uint16(boolean value) noexcept : value_(int_t<__UINT16_TYPE__>(static_cast<int>(static_cast<bool>(value))).native_value()) {}
+	uint16::uint16(int8 value) noexcept : value_(int_t<__UINT16_TYPE__>(value.native_value()).native_value()) {}
+	uint16::uint16(int16 value) noexcept : value_(int_t<__UINT16_TYPE__>(value.native_value()).native_value()) {}
+	uint16::uint16(int32 value) noexcept : value_(int_t<__UINT16_TYPE__>(value.native_value()).native_value()) {}
+	uint16::uint16(int64 value) noexcept : value_(int_t<__UINT16_TYPE__>(value.native_value()).native_value()) {}
+	uint16::uint16(uint8 value) noexcept : value_(int_t<__UINT16_TYPE__>(value.native_value()).native_value()) {}
+	uint16::uint16(uint32 value) noexcept : value_(int_t<__UINT16_TYPE__>(value.native_value()).native_value()) {}
+	uint16::uint16(uint64 value) noexcept : value_(int_t<__UINT16_TYPE__>(value.native_value()).native_value()) {}
+	uint16 &uint16::operator++() noexcept
+	{
+		auto value = int_t<__UINT16_TYPE__>(this->value_);
+		++value;
+		this->value_ = value.native_value();
+		return *this;
+	}
+
+	uint16 &uint16::operator--() noexcept
+	{
+		auto value = int_t<__UINT16_TYPE__>(this->value_);
+		--value;
+		this->value_ = value.native_value();
+		return *this;
+	}
+
+	uint16 &uint16::operator+=(uint16 right)
+	{
+		*this = *this + right;
+		return *this;
+	}
+
+	uint16 &uint16::operator-=(uint16 right)
+	{
+		*this = *this - right;
+		return *this;
+	}
+
+	uint16 &uint16::operator*=(uint16 right)
+	{
+		*this = *this * right;
+		return *this;
+	}
+
+	uint16 &uint16::operator/=(uint16 right)
+	{
+		*this = *this / right;
+		return *this;
+	}
+
+	uint16 &uint16::operator%=(uint16 right)
+	{
+		*this = *this % right;
+		return *this;
+	}
+
+	uint16 operator+(uint16 left, uint16 right)
+	{
+		return (int_t<__UINT16_TYPE__>(left.native_value()) + int_t<__UINT16_TYPE__>(right.native_value())).native_value();
+	}
+
+	uint16 operator-(uint16 left, uint16 right)
+	{
+		return (int_t<__UINT16_TYPE__>(left.native_value()) - int_t<__UINT16_TYPE__>(right.native_value())).native_value();
+	}
+
+	uint16 operator*(uint16 left, uint16 right)
+	{
+		return (int_t<__UINT16_TYPE__>(left.native_value()) * int_t<__UINT16_TYPE__>(right.native_value())).native_value();
+	}
+
+	uint16 operator/(uint16 left, uint16 right)
+	{
+		return (int_t<__UINT16_TYPE__>(left.native_value()) / int_t<__UINT16_TYPE__>(right.native_value())).native_value();
+	}
+
+	uint16 operator%(uint16 left, uint16 right)
+	{
+		return (int_t<__UINT16_TYPE__>(left.native_value()) % int_t<__UINT16_TYPE__>(right.native_value())).native_value();
+	}
+
+	boolean operator==(uint16 left, uint16 right)
+	{
+		return (int_t<__UINT16_TYPE__>(left.native_value()) == int_t<__UINT16_TYPE__>(right.native_value())).native_value();
+	}
+
+	boolean operator!=(uint16 left, uint16 right)
+	{
+		return (int_t<__UINT16_TYPE__>(left.native_value()) != int_t<__UINT16_TYPE__>(right.native_value())).native_value();
+	}
+
+	boolean operator<(uint16 left, uint16 right)
+	{
+		return (int_t<__UINT16_TYPE__>(left.native_value()) < int_t<__UINT16_TYPE__>(right.native_value())).native_value();
+	}
+
+	boolean operator<=(uint16 left, uint16 right)
+	{
+		return (int_t<__UINT16_TYPE__>(left.native_value()) <= int_t<__UINT16_TYPE__>(right.native_value())).native_value();
+	}
+
+	boolean operator>(uint16 left, uint16 right)
+	{
+		return (int_t<__UINT16_TYPE__>(left.native_value()) > int_t<__UINT16_TYPE__>(right.native_value())).native_value();
+	}
+
+	boolean operator>=(uint16 left, uint16 right)
+	{
+		return (int_t<__UINT16_TYPE__>(left.native_value()) >= int_t<__UINT16_TYPE__>(right.native_value())).native_value();
+	}
+
+	boolean isset(uint16 value)
+	{
+		return scpp::isset(int_t<__UINT16_TYPE__>(value.native_value())).native_value();
+	}
+
+	static_assert(sizeof(uint16) == sizeof(int_t<__UINT16_TYPE__>));
+	static_assert(alignof(uint16) == alignof(int_t<__UINT16_TYPE__>));
+
 	uint32::uint32(boolean value) noexcept : value_(int_t<__UINT32_TYPE__>(static_cast<int>(static_cast<bool>(value))).native_value()) {}
+	uint32::uint32(int8 value) noexcept : value_(int_t<__UINT32_TYPE__>(value.native_value()).native_value()) {}
+	uint32::uint32(int16 value) noexcept : value_(int_t<__UINT32_TYPE__>(value.native_value()).native_value()) {}
 	uint32::uint32(int32 value) noexcept : value_(int_t<__UINT32_TYPE__>(value.native_value()).native_value()) {}
 	uint32::uint32(int64 value) noexcept : value_(int_t<__UINT32_TYPE__>(value.native_value()).native_value()) {}
+	uint32::uint32(uint8 value) noexcept : value_(int_t<__UINT32_TYPE__>(value.native_value()).native_value()) {}
+	uint32::uint32(uint16 value) noexcept : value_(int_t<__UINT32_TYPE__>(value.native_value()).native_value()) {}
 	uint32::uint32(uint64 value) noexcept : value_(int_t<__UINT32_TYPE__>(value.native_value()).native_value()) {}
 	uint32 &uint32::operator++() noexcept
 	{
@@ -350,8 +830,12 @@ namespace scpp
 	static_assert(alignof(uint32) == alignof(int_t<__UINT32_TYPE__>));
 
 	uint64::uint64(boolean value) noexcept : value_(int_t<__UINT64_TYPE__>(static_cast<int>(static_cast<bool>(value))).native_value()) {}
+	uint64::uint64(int8 value) noexcept : value_(int_t<__UINT64_TYPE__>(value.native_value()).native_value()) {}
+	uint64::uint64(int16 value) noexcept : value_(int_t<__UINT64_TYPE__>(value.native_value()).native_value()) {}
 	uint64::uint64(int32 value) noexcept : value_(int_t<__UINT64_TYPE__>(value.native_value()).native_value()) {}
 	uint64::uint64(int64 value) noexcept : value_(int_t<__UINT64_TYPE__>(value.native_value()).native_value()) {}
+	uint64::uint64(uint8 value) noexcept : value_(int_t<__UINT64_TYPE__>(value.native_value()).native_value()) {}
+	uint64::uint64(uint16 value) noexcept : value_(int_t<__UINT64_TYPE__>(value.native_value()).native_value()) {}
 	uint64::uint64(uint32 value) noexcept : value_(int_t<__UINT64_TYPE__>(value.native_value()).native_value()) {}
 	uint64 &uint64::operator++() noexcept
 	{

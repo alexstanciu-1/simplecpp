@@ -34,7 +34,8 @@ It does not change source-language numeric semantics or retire existing runtime 
 
 ## First slice: concrete integers
 
-`scpp/integers.hpp` exposes `scpp::int32`, `int64`, `uint32`, `uint64` and the small
+`scpp/integers.hpp` exposes signed and unsigned concrete 8-, 16-, 32- and 64-bit
+classes (`int8` through `int64`, `uint8` through `uint64`) and the small
 `boolean` comparison result. These are classes, not aliases to `int_t<Rep>`.
 They have native-sized storage, zero initialization and trivial copying. Construction
 from the corresponding native representation and explicit `native_value()` access
@@ -182,3 +183,8 @@ the SDK privately for middleware compilation; ordinary consumers receive only it
 public root. This is compatibility validation for a selected build, not a stable
 cross-toolchain ABI promise. Removing generated demands requires a fresh staging
 output; the generator rejects an old inventory with abandoned implementation units.
+
+Concrete integer hash keys are adapted privately by the same configured generator
+(`scpp/detail/concrete_integer_keys.hpp`). Each specialization delegates hashing and
+equality to its exact native `int_t<Rep>` key authority. This does not add public
+traits, implicit numeric conversions, or additional source-language key admission.

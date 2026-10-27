@@ -15,10 +15,90 @@ namespace scpp
 		bool value_ = false;
 	};
 
+	class int8;
+	class int16;
 	class int32;
 	class int64;
+	class uint8;
+	class uint16;
 	class uint32;
 	class uint64;
+
+	class int8 final
+	{
+	public:
+		constexpr int8() noexcept = default;
+		constexpr int8(__INT8_TYPE__ value) noexcept : value_(value) {}
+		explicit int8(boolean value) noexcept;
+		constexpr __INT8_TYPE__ native_value() const noexcept { return this->value_; }
+		explicit int8(int16 value) noexcept;
+		explicit int8(int32 value) noexcept;
+		explicit int8(int64 value) noexcept;
+		explicit int8(uint8 value) noexcept;
+		explicit int8(uint16 value) noexcept;
+		explicit int8(uint32 value) noexcept;
+		explicit int8(uint64 value) noexcept;
+		int8 &operator++() noexcept;
+		int8 &operator--() noexcept;
+		int8 &operator+=(int8 right);
+		int8 &operator-=(int8 right);
+		int8 &operator*=(int8 right);
+		int8 &operator/=(int8 right);
+		int8 &operator%=(int8 right);
+	private:
+		__INT8_TYPE__ value_ = 0;
+	};
+
+	int8 operator+(int8 left, int8 right);
+	int8 operator-(int8 left, int8 right);
+	int8 operator*(int8 left, int8 right);
+	int8 operator/(int8 left, int8 right);
+	int8 operator%(int8 left, int8 right);
+	boolean operator==(int8 left, int8 right);
+	boolean operator!=(int8 left, int8 right);
+	boolean operator<(int8 left, int8 right);
+	boolean operator<=(int8 left, int8 right);
+	boolean operator>(int8 left, int8 right);
+	boolean operator>=(int8 left, int8 right);
+	boolean isset(int8 value);
+
+	class int16 final
+	{
+	public:
+		constexpr int16() noexcept = default;
+		constexpr int16(__INT16_TYPE__ value) noexcept : value_(value) {}
+		explicit int16(boolean value) noexcept;
+		constexpr __INT16_TYPE__ native_value() const noexcept { return this->value_; }
+		explicit int16(int8 value) noexcept;
+		explicit int16(int32 value) noexcept;
+		explicit int16(int64 value) noexcept;
+		explicit int16(uint8 value) noexcept;
+		explicit int16(uint16 value) noexcept;
+		explicit int16(uint32 value) noexcept;
+		explicit int16(uint64 value) noexcept;
+		int16 &operator++() noexcept;
+		int16 &operator--() noexcept;
+		int16 &operator+=(int16 right);
+		int16 &operator-=(int16 right);
+		int16 &operator*=(int16 right);
+		int16 &operator/=(int16 right);
+		int16 &operator%=(int16 right);
+	private:
+		__INT16_TYPE__ value_ = 0;
+	};
+
+	int16 operator+(int16 left, int16 right);
+	int16 operator-(int16 left, int16 right);
+	int16 operator*(int16 left, int16 right);
+	int16 operator/(int16 left, int16 right);
+	int16 operator%(int16 left, int16 right);
+	boolean operator==(int16 left, int16 right);
+	boolean operator!=(int16 left, int16 right);
+	boolean operator<(int16 left, int16 right);
+	boolean operator<=(int16 left, int16 right);
+	boolean operator>(int16 left, int16 right);
+	boolean operator>=(int16 left, int16 right);
+	boolean isset(int16 value);
 
 	class int32 final
 	{
@@ -27,7 +107,11 @@ namespace scpp
 		constexpr int32(__INT32_TYPE__ value) noexcept : value_(value) {}
 		explicit int32(boolean value) noexcept;
 		constexpr __INT32_TYPE__ native_value() const noexcept { return this->value_; }
+		explicit int32(int8 value) noexcept;
+		explicit int32(int16 value) noexcept;
 		explicit int32(int64 value) noexcept;
+		explicit int32(uint8 value) noexcept;
+		explicit int32(uint16 value) noexcept;
 		explicit int32(uint32 value) noexcept;
 		explicit int32(uint64 value) noexcept;
 		int32 &operator++() noexcept;
@@ -61,7 +145,11 @@ namespace scpp
 		constexpr int64(__INT64_TYPE__ value) noexcept : value_(value) {}
 		explicit int64(boolean value) noexcept;
 		constexpr __INT64_TYPE__ native_value() const noexcept { return this->value_; }
+		explicit int64(int8 value) noexcept;
+		explicit int64(int16 value) noexcept;
 		explicit int64(int32 value) noexcept;
+		explicit int64(uint8 value) noexcept;
+		explicit int64(uint16 value) noexcept;
 		explicit int64(uint32 value) noexcept;
 		explicit int64(uint64 value) noexcept;
 		int64 &operator++() noexcept;
@@ -88,6 +176,82 @@ namespace scpp
 	boolean operator>=(int64 left, int64 right);
 	boolean isset(int64 value);
 
+	class uint8 final
+	{
+	public:
+		constexpr uint8() noexcept = default;
+		constexpr uint8(__UINT8_TYPE__ value) noexcept : value_(value) {}
+		explicit uint8(boolean value) noexcept;
+		constexpr __UINT8_TYPE__ native_value() const noexcept { return this->value_; }
+		explicit uint8(int8 value) noexcept;
+		explicit uint8(int16 value) noexcept;
+		explicit uint8(int32 value) noexcept;
+		explicit uint8(int64 value) noexcept;
+		explicit uint8(uint16 value) noexcept;
+		explicit uint8(uint32 value) noexcept;
+		explicit uint8(uint64 value) noexcept;
+		uint8 &operator++() noexcept;
+		uint8 &operator--() noexcept;
+		uint8 &operator+=(uint8 right);
+		uint8 &operator-=(uint8 right);
+		uint8 &operator*=(uint8 right);
+		uint8 &operator/=(uint8 right);
+		uint8 &operator%=(uint8 right);
+	private:
+		__UINT8_TYPE__ value_ = 0;
+	};
+
+	uint8 operator+(uint8 left, uint8 right);
+	uint8 operator-(uint8 left, uint8 right);
+	uint8 operator*(uint8 left, uint8 right);
+	uint8 operator/(uint8 left, uint8 right);
+	uint8 operator%(uint8 left, uint8 right);
+	boolean operator==(uint8 left, uint8 right);
+	boolean operator!=(uint8 left, uint8 right);
+	boolean operator<(uint8 left, uint8 right);
+	boolean operator<=(uint8 left, uint8 right);
+	boolean operator>(uint8 left, uint8 right);
+	boolean operator>=(uint8 left, uint8 right);
+	boolean isset(uint8 value);
+
+	class uint16 final
+	{
+	public:
+		constexpr uint16() noexcept = default;
+		constexpr uint16(__UINT16_TYPE__ value) noexcept : value_(value) {}
+		explicit uint16(boolean value) noexcept;
+		constexpr __UINT16_TYPE__ native_value() const noexcept { return this->value_; }
+		explicit uint16(int8 value) noexcept;
+		explicit uint16(int16 value) noexcept;
+		explicit uint16(int32 value) noexcept;
+		explicit uint16(int64 value) noexcept;
+		explicit uint16(uint8 value) noexcept;
+		explicit uint16(uint32 value) noexcept;
+		explicit uint16(uint64 value) noexcept;
+		uint16 &operator++() noexcept;
+		uint16 &operator--() noexcept;
+		uint16 &operator+=(uint16 right);
+		uint16 &operator-=(uint16 right);
+		uint16 &operator*=(uint16 right);
+		uint16 &operator/=(uint16 right);
+		uint16 &operator%=(uint16 right);
+	private:
+		__UINT16_TYPE__ value_ = 0;
+	};
+
+	uint16 operator+(uint16 left, uint16 right);
+	uint16 operator-(uint16 left, uint16 right);
+	uint16 operator*(uint16 left, uint16 right);
+	uint16 operator/(uint16 left, uint16 right);
+	uint16 operator%(uint16 left, uint16 right);
+	boolean operator==(uint16 left, uint16 right);
+	boolean operator!=(uint16 left, uint16 right);
+	boolean operator<(uint16 left, uint16 right);
+	boolean operator<=(uint16 left, uint16 right);
+	boolean operator>(uint16 left, uint16 right);
+	boolean operator>=(uint16 left, uint16 right);
+	boolean isset(uint16 value);
+
 	class uint32 final
 	{
 	public:
@@ -95,8 +259,12 @@ namespace scpp
 		constexpr uint32(__UINT32_TYPE__ value) noexcept : value_(value) {}
 		explicit uint32(boolean value) noexcept;
 		constexpr __UINT32_TYPE__ native_value() const noexcept { return this->value_; }
+		explicit uint32(int8 value) noexcept;
+		explicit uint32(int16 value) noexcept;
 		explicit uint32(int32 value) noexcept;
 		explicit uint32(int64 value) noexcept;
+		explicit uint32(uint8 value) noexcept;
+		explicit uint32(uint16 value) noexcept;
 		explicit uint32(uint64 value) noexcept;
 		uint32 &operator++() noexcept;
 		uint32 &operator--() noexcept;
@@ -129,8 +297,12 @@ namespace scpp
 		constexpr uint64(__UINT64_TYPE__ value) noexcept : value_(value) {}
 		explicit uint64(boolean value) noexcept;
 		constexpr __UINT64_TYPE__ native_value() const noexcept { return this->value_; }
+		explicit uint64(int8 value) noexcept;
+		explicit uint64(int16 value) noexcept;
 		explicit uint64(int32 value) noexcept;
 		explicit uint64(int64 value) noexcept;
+		explicit uint64(uint8 value) noexcept;
+		explicit uint64(uint16 value) noexcept;
 		explicit uint64(uint32 value) noexcept;
 		uint64 &operator++() noexcept;
 		uint64 &operator--() noexcept;

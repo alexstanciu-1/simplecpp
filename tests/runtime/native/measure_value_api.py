@@ -8,7 +8,7 @@ import tempfile
 import time
 
 parser = argparse.ArgumentParser(description=__doc__)
-parser.add_argument('--facility', choices=('string', 'errors', 'composition'), default='string')
+parser.add_argument('--facility', choices=('string', 'errors', 'composition', 'integers'), default='string')
 parser.add_argument('--compiler', default='clang++')
 parser.add_argument('--output', type=Path, required=True)
 parser.add_argument('--core-build', type=Path, help='Also force core object rebuild in this existing CMake build')
@@ -26,6 +26,11 @@ with tempfile.TemporaryDirectory(prefix='scpp-string-cost-') as directory:
         inputs = {
             'public': ('public', '#include "scpp/error_value.hpp"\n#include "scpp/exception_info.hpp"\nscpp::boolean present(const scpp::error_value &e) { return e.has_error(); }\nscpp::int64 count(const scpp::exception_info &e) { return e.detail_count(); }\n'),
             'native': ('include', '#include "scpp/error_t.hpp"\n#include "scpp/runtime_error.hpp"\nscpp::bool_t present(const scpp::error_t &e) { return e.has_error(); }\nstd::size_t count(const scpp::runtime_error &e) { return e.details().size(); }\n'),
+        }
+    if args.facility == 'integers':
+        inputs = {
+            'public': ('public', '#include "scpp/integers.hpp"\nscpp::uint16 example(scpp::uint16 a, scpp::uint16 b) { return a + b; }\n'),
+            'native': ('include', '#include "scpp/generated/operators.hpp"\nscpp::int_t<__UINT16_TYPE__> example(scpp::int_t<__UINT16_TYPE__> a, scpp::int_t<__UINT16_TYPE__> b) { return a + b; }\n'),
         }
     if args.facility == 'composition':
         inputs = {
@@ -47,6 +52,8 @@ with tempfile.TemporaryDirectory(prefix='scpp-string-cost-') as directory:
             results[name]['seconds'].append(time.perf_counter()-start)
     adapters = ['string'] if args.facility == 'string' else ['error_value', 'exception_info']
     results['adapter_seconds'] = {}
+    if args.facility == 'integers':
+        adapters = ['integers']
     if args.facility == 'composition':
         adapters = ['generated/vector_string', 'generated/result_vector_string', '../modules/filesystem/public_scan']
     for adapter in adapters:

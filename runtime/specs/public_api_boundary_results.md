@@ -262,3 +262,26 @@ Reproduce publication reuse after explicit runtime publication with:
 The shared physical generator currently supports prepared copyable vector/Result
 demands. Universal family admission, public hash, boxed families and compiler facade
 migration remain subsequent batches; see the comprehensive surface audit.
+
+## Small integer/key batch (2026-10-27)
+
+The configured public scalar family now includes signed/unsigned 8/16/32/64-bit
+classes. The existing numeric generator also emits private key adapters for these
+exact classes. Hashing/equality delegate to the matching native integer authority;
+no public traits or templates are introduced. Scalar size/alignment remains native,
+trivial copying is retained, and no allocation-bearing storage is added.
+
+Validation passed: 12 focused runtime checks, 13 compiler checks, scalar and composed
+scan ASan/UBSan with leak detection, and relocated publication/application reuse.
+The numeric proof includes min/max keys for every width, independent hash copies,
+small-width narrowing/sign extension, unsigned wrap and zero-divisor diagnostics.
+The scan remains at 42 operator-new calls for both entrypoints.
+
+WSL/Clang 18/O2, three alternating caller trials: concrete uint16 addition caller
+median **0.0585 s**, equivalent native-operator-header caller **4.7350 s**; preprocessing
+**11,327 vs 3,303,631 bytes**. Standalone integer adapter compilation: **5.2920 s**.
+These are current local costs, not a matched compiler-wide speedup measurement.
+Reproduce with `measure_value_api.py --facility integers`; local artifact:
+`compiler/my-try-cpp/build/small-integer-api-cost.json`. Public/generated integer files
+remain 11,452/30,464 bytes. Full operator closure and value-argument demand publication
+remain separate batches.

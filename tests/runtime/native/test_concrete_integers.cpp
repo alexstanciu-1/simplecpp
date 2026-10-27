@@ -1,4 +1,5 @@
 #include "scpp/integers.hpp"
+#include "scpp/detail/concrete_integer_keys.hpp"
 #include "scpp/generated/operators.hpp"
 #include <limits>
 #include <type_traits>
@@ -64,9 +65,30 @@ bool check_integer()
 	return static_cast<bool>(scpp::isset(Public(0)));
 }
 
+template<class Public, class Rep>
+bool check_keys()
+{
+	using Native = scpp::int_t<Rep>;
+	scpp::hash_t<scpp::int64, Public> values;
+	const Rep inputs[] = {std::numeric_limits<Rep>::min(), Rep(0), Rep(7), std::numeric_limits<Rep>::max()};
+	for (Rep value : inputs) {
+		Public key(value);
+		if (scpp::hash_detail::key_ops<Public>::hash(key) != scpp::hash_detail::key_ops<Native>::hash(Native(value))) return false;
+		values.set(key, scpp::int64(42));
+		if (!values.has(key).native_value() || values.at(key).native_value() != 42) return false;
+	}
+	auto copy = values;
+	copy.set(Public(7), scpp::int64(9));
+	return values.at(Public(7)).native_value() == 42 && copy.at(Public(7)).native_value() == 9;
+}
+
 int main()
 {
-	if (!check_integer<scpp::int32, __INT32_TYPE__>() ||
+	if (!check_integer<scpp::int8, __INT8_TYPE__>() ||
+		!check_integer<scpp::int16, __INT16_TYPE__>() ||
+		!check_integer<scpp::uint8, __UINT8_TYPE__>() ||
+		!check_integer<scpp::uint16, __UINT16_TYPE__>() ||
+		!check_integer<scpp::int32, __INT32_TYPE__>() ||
 		!check_integer<scpp::int64, __INT64_TYPE__>() ||
 		!check_integer<scpp::uint32, __UINT32_TYPE__>() ||
 		!check_integer<scpp::uint64, __UINT64_TYPE__>()) { return 1; }
@@ -75,6 +97,19 @@ int main()
 		scpp::int32(scpp::boolean(true)).native_value() != 1 ||
 		scpp::uint32(scpp::uint64(0x100000001ULL)).native_value() != 1 ||
 		scpp::uint64(scpp::int64(-1)).native_value() != __UINT64_MAX__) { return 2; }
+	if (scpp::int8(scpp::int64(-129)).native_value() != scpp::int_t<__INT8_TYPE__>(-129).native_value() ||
+		scpp::uint8(scpp::uint64(256)).native_value() != 0 ||
+		scpp::int64(scpp::int8(-128)).native_value() != -128 ||
+		scpp::uint16(scpp::uint64(65536)).native_value() != 0 ||
+		scpp::int16(scpp::int64(-32769)).native_value() != scpp::int_t<__INT16_TYPE__>(-32769).native_value()) return 5;
+	if (!check_keys<scpp::int8, __INT8_TYPE__>()) return 6;
+	if (!check_keys<scpp::int16, __INT16_TYPE__>()) return 6;
+	if (!check_keys<scpp::int32, __INT32_TYPE__>()) return 6;
+	if (!check_keys<scpp::int64, __INT64_TYPE__>()) return 6;
+	if (!check_keys<scpp::uint8, __UINT8_TYPE__>()) return 6;
+	if (!check_keys<scpp::uint16, __UINT16_TYPE__>()) return 6;
+	if (!check_keys<scpp::uint32, __UINT32_TYPE__>()) return 6;
+	if (!check_keys<scpp::uint64, __UINT64_TYPE__>()) return 6;
 	scpp::boolean reached = false;
 	if (scpp::boolean(false) && (reached = true)) { return 3; }
 	if (reached || !scpp::isset(scpp::boolean(false))) { return 4; }

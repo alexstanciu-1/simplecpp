@@ -347,8 +347,13 @@ and owner corrections remain discussion items, not implementation authorization.
 
 The complete scan/vector/Result publication proof and application-owned specialization
 reuse are implemented; see the audit checkpoint and runtime boundary results.
-The next bounded implementation batch is the missing small integer widths and their
+The first bounded follow-up batch covers the missing small integer widths and their
 concrete key compatibility. It must delegate to existing numeric/key authorities,
 keep public closure template-free, and verify boundary behavior before broadening
 operators or consumers. Subsequent family/module batches follow the comprehensive
 audit; mixed/dynamic are mandatory, not omitted because they are harder to lower.
+
+Small-width/key batch implemented and validated: the public integer family now has
+all eight configured widths; private key adapters cover those exact types. This
+checkpoint does not claim full numeric operators or canonical value-argument demand
+publication. Remaining scope and batch order are tracked in the surface audit.

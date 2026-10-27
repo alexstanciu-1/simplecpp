@@ -63,7 +63,19 @@ def generate():
     header.append('\tboolean isset(boolean value);\n}\n')
     source.append('\tboolean isset(boolean value)\n\t{\n'
                   '\t\treturn scpp::isset(bool_t(value.native_value())).native_value();\n\t}\n}\n')
-    return {ROOT / 'public' / CONFIG['header']: ''.join(header),
+    keys = [banner, '#pragma once\n#include "scpp/integers.hpp"\n#include "scpp/hash_t.hpp"\nnamespace scpp::hash_detail\n{\n']
+    for name, rep in INTEGERS:
+        keys.append(f'''	template<> struct key_ops<scpp::{name}> final
+	{{
+		static std::uint64_t hash(const scpp::{name} &key)
+		{{ return key_ops<int_t<{rep}>>::hash(int_t<{rep}>(key.native_value())); }}
+		static bool equal(const scpp::{name} &left, const scpp::{name} &right)
+		{{ return key_ops<int_t<{rep}>>::equal(int_t<{rep}>(left.native_value()), int_t<{rep}>(right.native_value())); }}
+	}};
+''')
+    keys.append('}\n')
+    return {ROOT / 'include/scpp/detail/concrete_integer_keys.hpp': ''.join(keys),
+            ROOT / 'public'  / CONFIG['header']: ''.join(header),
             ROOT / 'include/core/integers.cpp': ''.join(source)}
 
 

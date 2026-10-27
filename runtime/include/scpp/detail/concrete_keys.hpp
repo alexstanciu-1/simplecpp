@@ -1,5 +1,5 @@
 #pragma once
-#include "scpp/hash_t.hpp"
+#include "scpp/detail/concrete_integer_keys.hpp"
 #include "scpp/detail/string_access.hpp"
 
 namespace scpp::hash_detail
