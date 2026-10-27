@@ -134,6 +134,15 @@ excuse to follow whatever broad native overload happens to compile. Core build
 reorganization and LTO/ThinLTO evaluation remain measured build work; they are not
 prerequisites for writing new operator semantics.
 
+## Wrapper-policy discussion gate
+
+Before starting the implementation goal, settle the
+[wrapper policy and constrained-argument backlog](runtime_wrapper_policy.md).
+It records the bare-source `copyable_value` contract, family-specific argument
+requirements, explicit ownership/nullable composition restrictions and supported
+Result-of-nullable states. Proposed one-layer lifting and cross-carrier admission
+are discussion items, not automatically approved by the numeric plan below.
+
 ## Recommended next slice for discussion
 
 **A1: complete ordinary concrete numeric arithmetic and comparisons.** It builds on
