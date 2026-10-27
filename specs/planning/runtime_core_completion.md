@@ -27,6 +27,9 @@ Full frontend adoption and module migration are excluded. The first complete car
 path remains a review gate before expanding ownership/callback implementation.
 No completion percentage is inferred from function, header or checkpoint counts.
 
+The [current carrier review](runtime_core_carrier_review.md) records why C is not yet
+ready for sign-off and the scoped-observation implementation/proof boundary.
+
 ## Scope and evidence
 
 Proposed finish line: every currently admitted runtime-core contract has a usable,

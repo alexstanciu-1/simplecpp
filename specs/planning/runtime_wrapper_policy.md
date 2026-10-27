@@ -7,6 +7,20 @@ Purpose: discuss the remaining semantic and generation boundaries before creatin
 an implementation goal. Existing normative constraints below are confirmed facts;
 proposed policy/mechanism rows are not new language permissions.
 
+## Current status (supersedes historical proposal wording below)
+
+The implementation goal is active. A/B are complete in their agreed bounded scope;
+C has all four carrier recipes and substantial bounded operator/selection coverage,
+but is not complete. Conditional lifecycle now covers carriers plus vector/hash
+(E1/E2); E3 closes finished-cursor advancement consistency. Ownership and callback
+expansion remain behind the first-complete-carrier review gate.
+
+The [current carrier review](runtime_core_carrier_review.md) records the remaining
+logical-policy and source-formation decisions, nonconstant scoped observations and
+broader admitted selection domains. Its metadata test rerun is not compiled/lifetime
+proof. Historical “pending implementation” or “goal not started” text below records
+the discussion at that checkpoint and must not override this current summary.
+
 ## Confirmed source template contract
 
 [Metaprogramming contract §6.1–6.3](../metaprogramming_contract.md#61-default-contract-for-a-bare-type-parameter)
@@ -41,7 +55,7 @@ compiler. Native C++ traits/probes prove physical bindings, not source admission
 
 Initial evidence: the physical vector/hash/nullable/Result recipes required
 copy construction and assignment unconditionally. Nullable and Result are migrated in C10/C11;
-vector/hash still need that work. This is a physical coverage limit,
+vector/hash follow in E1/E2, with remaining native constraints documented there. This is a physical coverage limit,
 not proof that the source requires every runtime payload to be copyable. Extend the
 same capability/lifecycle mechanism when implementing admitted noncopyable cases.
 Do not invent user constraint syntax as part of the API generator work.
@@ -94,7 +108,7 @@ true sentinel. A single `has_value`/boolean flag cannot represent every contract
 | Arithmetic / numeric ordering | For admitted combinations, require the selected payload(s), apply the ordinary payload operator rules, and return that operation's result. Non-value states throw; do not invent optional propagation or Result wrapping. Compile-time payload admission precedes runtime extraction. |
 | Ordinary equality | Observe original states and apply the existing state-comparison policy before payload equality. Do not require payloads from failure/absence just to compare. Admitted numeric payloads promote; incompatible known scalar pairs reject, boxed scalar kind checks can throw. Two structured Result failures compare equal under ordinary equality, unlike strict identity. |
 | Strict identity | A separate normalization/policy preserves scalar kinds and the specified error metadata. It is not ordinary equality with numeric promotion disabled by accident; bool sentinels versus payloads have their own documented normalization. |
-| Conditions / logical operators | Absent nullable, Result error and false sentinel are false; true sentinel is true; present payload delegates only if its type has a condition contract. A present empty typed vector does not acquire truthiness. Lazy and/or remain compiler-owned. |
+| Direct conditions (logical operators are a separate pending audit) | Absent nullable, Result error and false sentinel are false; true sentinel is true; present payload delegates only if its type has a condition contract. A present empty typed vector does not acquire truthiness. Lazy and/or remain compiler-owned. |
 | Text concatenation | Preserve the bounded text contract: present payload renders by text rules; absent nullable and boolean sentinels render empty text; structured Result failure throws. A true sentinel renders differently from a present true bool payload. |
 | take | State-dispatch with exact writable output contracts, owned snapshot/copy semantics and family-specific alternative output. A true result_or_bool sentinel returns true but does not assign the payload. No implicit move/borrow or catch-all behavior. |
 | Coalescing / selection | Use usable-value state rather than truthiness. result_or_bool remains prohibited for ??, even in an unselected branch. Preserve exact admitted join rules and lazy evaluation; do not recursively normalize nested carriers away. |

@@ -79,7 +79,9 @@ API should be introduced merely to express compiler-owned branch execution.
 
 ## Scoped observation gap remains real
 
-The condition resolver currently requires owned extraction for every carrier payload.
+The condition resolver requires owned extraction for nonconstant carrier payloads.
+C27 added explicit constant leaf observations without payload extraction; that closes
+the inline-record constant case, not general scoped observation.
 The inline-record condition amendment explicitly supports observation without copying
 or consuming even noncopyable records. A physical copying trait cannot substitute for
 that observation capability. The scoped-observation slice must represent the specific
