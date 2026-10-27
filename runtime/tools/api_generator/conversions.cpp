@@ -30,7 +30,7 @@ namespace scpp::api_generation
             }
         }
         for (const auto &[name, target] : r.at("targets").fields) {
-            authored_name(name); fields_only(target, "expression includes", "conversion target");
+            authored_name(name); fields_only(target, "expression includes transport", "conversion target");
             target.at("expression").text();
             if (!metadata.at("types").has(name) && !metadata.at("families").has(name)) throw std::runtime_error("Unknown conversion target");
         }
@@ -78,6 +78,7 @@ namespace scpp::api_generation
                 for (auto p = expression.find(marker); p != std::string::npos; p = expression.find(marker))
                     expression.replace(p, marker.size(), binding.at("operand").text());
                 op["expression"] = expression;
+                if (recipe.has("transport")) op["transport"] = recipe.at("transport");
                 op["includes"] = value::array();
                 for (const auto *record : {&binding, &recipe}) if (record->has("includes"))
                     for (const auto &header : record->at("includes").items) op["includes"].items.push_back(header);

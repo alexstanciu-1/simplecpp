@@ -2473,7 +2473,11 @@
       "uint32": "uint64",
       "uint64": "uint64",
       "float64": "float64",
-      "string": "string"
+      "string": "string",
+      "boolean": "boolean",
+      "mixed": "mixed",
+      "dynamic": "dynamic",
+      "null": "null"
     },
     "bindings": {
       "int64": {
@@ -2490,7 +2494,9 @@
           "uint16",
           "uint32",
           "uint64",
-          "float64"
+          "float64",
+          "boolean",
+          "string"
         ]
       },
       "uint64": {
@@ -2507,7 +2513,9 @@
           "uint16",
           "uint32",
           "uint64",
-          "float64"
+          "float64",
+          "boolean",
+          "string"
         ]
       },
       "float64": {
@@ -2524,7 +2532,9 @@
           "uint16",
           "uint32",
           "uint64",
-          "float64"
+          "float64",
+          "boolean",
+          "string"
         ]
       },
       "string": {
@@ -2542,7 +2552,54 @@
           "uint16",
           "uint32",
           "uint64",
-          "float64"
+          "float64",
+          "boolean",
+          "string"
+        ]
+      },
+      "boolean": {
+        "operand": "scpp::bool_t(value.native_value())",
+        "includes": [
+          "scpp/cast.hpp"
+        ],
+        "targets": [
+          "int64",
+          "float64",
+          "boolean",
+          "string"
+        ]
+      },
+      "mixed": {
+        "operand": "${native:value}",
+        "includes": [
+          "scpp/cast.hpp"
+        ],
+        "targets": [
+          "int64",
+          "float64",
+          "boolean",
+          "string"
+        ]
+      },
+      "dynamic": {
+        "operand": "${native:value}",
+        "includes": [
+          "scpp/cast.hpp"
+        ],
+        "targets": [
+          "int64",
+          "float64",
+          "boolean",
+          "string"
+        ]
+      },
+      "null": {
+        "operand": "value",
+        "includes": [
+          "scpp/cast.hpp"
+        ],
+        "targets": [
+          "string"
         ]
       }
     },
@@ -2581,6 +2638,15 @@
       },
       "float64": {
         "expression": "${public:float64}(scpp::cast<scpp::float_t>(${operand}).native_value())",
+        "includes": []
+      },
+      "boolean": {
+        "expression": "${public:boolean}(scpp::cast<scpp::bool_t>(${operand}).native_value())",
+        "includes": []
+      },
+      "string": {
+        "expression": "scpp::cast<scpp::string_t>(${operand})",
+        "transport": "native",
         "includes": []
       }
     }

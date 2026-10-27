@@ -162,7 +162,7 @@ assert 'null_index_read' in result['units'][-1]['source']
 assert 'bound_range' in result['units'][-1]['probes'][1]['native']
 assert 'template' not in result['units'][-1]['header']
 renamed=copy.deepcopy(boxed)
-renamed['metadata']['families']['boxed']=renamed['metadata']['families'].pop('mixed')
+renamed['metadata']['families']['boxed']=copy.deepcopy(renamed['metadata']['families']['mixed'])
 renamed['request']['roots']=['boxed']
 assert invoke(renamed)['types']['boxed']['native']=='scpp::mixed_t'
 print('PASS: zero-parameter scalar/boxed recipes, owned extraction and binding-aware cursor')
@@ -186,7 +186,7 @@ assert 'scpp::mixed key()' in unit['header']
 assert 'scpp::dynamic value()' in unit['header']
 assert 'scpp::cast<' in unit['source'] and 'template' not in unit['header']
 renamed=copy.deepcopy(dynamic)
-renamed['metadata']['families']['shared_box']=renamed['metadata']['families'].pop('dynamic')
+renamed['metadata']['families']['shared_box']=copy.deepcopy(renamed['metadata']['families']['dynamic'])
 renamed['request']['roots']=['shared_box']
 assert invoke(renamed)['types']['shared_box']['native']=='scpp::dynamic_t<>'
 dynamic['imports']=result['types']

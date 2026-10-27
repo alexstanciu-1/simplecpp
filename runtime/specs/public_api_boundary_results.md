@@ -735,3 +735,45 @@ observations are in `compiler/my-try-cpp/build/core-conversions-cost.json`.
 
 Boolean, string-result and boxed conversion publication remain in A2; wrappers
 remain in C. Full compiler frontend adoption is excluded from this goal.
+
+## A2c — boolean, owned text and boxed scalar conversions (2026-10-27)
+
+Publication now contains 57 conversion adapters. The additional 21 use the same
+registry, emitter and ownership inventory. The sole generator extension forwards
+optional target `transport` to the existing operation emitter. String results use
+native owned transport, and boxed sources use ordinary native parameter borrowing.
+
+`test_scalar_conversion_surface` exercises all new adapter signatures, strict boolean
+literal parsing, boolean/null string exceptions, unsigned maximum formatting, scalar
+boxed dispatch, rejected null/container scalar casts, non-finite integer rejection,
+and owned results surviving temporary boxed source destruction. A repeated successful
+numeric/boolean loop records **zero allocations**; copying long string text records
+**one allocation** for its owned result. The existing numeric conversion/native tests
+and metadata tests pass. Renaming fixtures retain unrelated types referenced by the
+conversion registry while proving that arbitrary family names still work.
+
+Six focused CTest cases pass in release (**2.33 s**) and ASan/UBSan/leak mode
+(**12.09 s**). The relocated sealed-runtime proof additionally reuses
+`cast_string_from_mixed` and `cast_boolean_from_dynamic` without generating adapters,
+and runs the public caller against the relocated archive in both configurations.
+
+Single-observation compile costs (`measure_global_operators.py --boxed-conversions`):
+
+| Case | Seconds | Preprocessed bytes |
+| --- | ---: | ---: |
+| Public boxed string + boolean caller | 0.0704 | 21,289 |
+| Native equivalent caller | 3.0137 | 2,976,452 |
+| Independent boxed-to-string adapter | 3.3130 | 3,209,800 |
+
+Eight-job changed-core/tool/test builds: release **22.08 s**, peak child RSS
+**411,500 KiB**; sanitizer **50.70 s**, **614,532 KiB**. The release test was rebuilt
+once afterward to add container rejection coverage. An earlier tooling build failed
+because new core includes were added before generation; the tool was relinked against
+the existing core archive, then generated the missing sources. Those unmeasured
+bootstrap/test-only steps are not part of the successful build timings. Future demand
+updates should build the tool and generate first, then add core source inclusions.
+Raw measurements: `compiler/my-try-cpp/build/core-boxed-conversions-cost.json`.
+
+Fixed-width boolean/boxed destinations beyond canonical int64 remain rejected pending
+source-contract reconciliation; cast-to-boxed inventory review remains before A2 can
+be closed. These results do not claim wrapper or full runtime-core completion.

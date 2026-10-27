@@ -366,3 +366,20 @@ checking, strict parsing, exceptions and accepted floating precision loss remain
 owned by the native cast contract. Public headers contain no templates. Boolean,
 string-result, boxed and carrier conversions remain pending. Neither this registry
 nor a raw C++ representation constructor admits those missing source-language casts.
+
+Conversion target recipes may select `transport: native` to return their native
+result through the existing owned return transport. String conversions use this
+path; no extra heap wrapper or new ownership protocol is introduced. Boxed source
+bindings use `${native:value}`, which resolves the existing representation borrow
+and its private dependencies through ordinary operation generation.
+
+The next publication extends the registry to 57 adapters. All four original
+normalized sources additionally cast to boolean/string. Boolean, mixed and dynamic
+sources expose the native canonical destinations int64, float64, boolean and string;
+null exposes string only. Boxed numeric casts to narrower/unsigned integer targets
+and boolean casts to noncanonical integer widths remain rejected by this registry,
+matching the native named-cast surface currently used here. Any expansion must first
+reconcile source-contract admission and the shared native cast owner. Boxed container
+payloads reject scalar casts; boxed null rejects numeric/bool casts but renders an
+empty string. Boolean string casts retain true-to-"1" and false-to-empty semantics.
+String-to-boolean remains strict literal parsing, separate from truthiness.

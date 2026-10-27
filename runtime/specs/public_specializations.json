@@ -156,6 +156,27 @@
     "cast_uint16_from_string",
     "cast_uint32_from_string",
     "cast_uint64_from_string",
-    "cast_float64_from_string"
+    "cast_float64_from_string",
+    "cast_boolean_from_int64",
+    "cast_string_from_int64",
+    "cast_boolean_from_uint64",
+    "cast_string_from_uint64",
+    "cast_boolean_from_float64",
+    "cast_string_from_float64",
+    "cast_boolean_from_string",
+    "cast_string_from_string",
+    "cast_int64_from_boolean",
+    "cast_float64_from_boolean",
+    "cast_boolean_from_boolean",
+    "cast_string_from_boolean",
+    "cast_int64_from_mixed",
+    "cast_float64_from_mixed",
+    "cast_boolean_from_mixed",
+    "cast_string_from_mixed",
+    "cast_int64_from_dynamic",
+    "cast_float64_from_dynamic",
+    "cast_boolean_from_dynamic",
+    "cast_string_from_dynamic",
+    "cast_string_from_null"
   ]
 }

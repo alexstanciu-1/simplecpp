@@ -286,3 +286,19 @@ Remaining A2 work: boolean targets/sources, string formatting results, admitted
 boxed conversions, and their complete publication/validation. Carrier conversions
 remain in C. No frontend integration, ownership/callback or module completion is
 claimed. Evidence is in `runtime/specs/public_api_boundary_results.md`.
+
+## Active-goal progress — A2c boolean, text and boxed conversions
+
+The same registry/publication path now provides 57 adapters, including boolean and
+string results, canonical scalar casts from boolean/mixed/dynamic, and null-to-string.
+Native string return transport constructs the owned public result in final storage;
+boxed arguments borrow the existing representation. No new family-specific generator
+branch or native scalar semantic change was required.
+
+The currently exposed native scalar cast paths are covered, but before closing A2
+reconcile fixed-width boolean/boxed destination admission with source contracts:
+those native overloads currently support canonical int64 only. Keep these rejected
+rather than silently inventing an intermediate conversion policy. A2's remaining
+review must also check config/matrix casts to boxed results and ensure any already
+published methods are correctly represented by the global metadata mechanism.
+Carrier conversions remain C; this does not mark runtime-core complete.

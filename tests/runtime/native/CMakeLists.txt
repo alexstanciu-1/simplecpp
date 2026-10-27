@@ -360,3 +360,7 @@ target_link_libraries(test_public_conversions PRIVATE scpp_core_api)
 add_test(NAME scpp_test_public_conversions COMMAND test_public_conversions)
 add_test(NAME scpp_check_conversions COMMAND ${Python3_EXECUTABLE}
   ${CMAKE_CURRENT_SOURCE_DIR}/check_conversions.py $<TARGET_FILE:scpp_api_generator>)
+
+add_executable(test_scalar_conversion_surface test_scalar_conversion_surface.cpp)
+target_link_libraries(test_scalar_conversion_surface PRIVATE scpp_core_api)
+add_test(NAME scpp_test_scalar_conversion_surface COMMAND test_scalar_conversion_surface)

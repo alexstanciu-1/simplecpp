@@ -27,21 +27,25 @@ with tempfile.TemporaryDirectory(prefix='scpp-operator-publication-') as directo
     shutil.copy2(args.tool, sdk/'tools/scpp_api_generator')
     seal_package(sdk, ['core'])
     request = stage/'request.json'
-    request.write_text(json.dumps({'package':'app.operators', 'roots':[], 'apis':['add_int64','equal_mixed','add_int64','divide_int64','less_float64','cast_uint64_from_string']}))
+    request.write_text(json.dumps({'package':'app.operators', 'roots':[], 'apis':['add_int64','equal_mixed','add_int64','divide_int64','less_float64','cast_uint64_from_string','cast_string_from_mixed','cast_boolean_from_dynamic']}))
     os.environ['SCPP_API_GENERATOR'] = str(sdk/'tools/scpp_api_generator')
     manifest = concrete_types.generate(request, stage/'app', sdk, [sdk], 'clang++', [])
     assert manifest['sources'] == []
-    assert all(x in manifest['apis'] for x in ['add_int64','equal_mixed','divide_int64','less_float64','cast_uint64_from_string'])
+    assert all(x in manifest['apis'] for x in ['add_int64','equal_mixed','divide_int64','less_float64','cast_uint64_from_string','cast_string_from_mixed','cast_boolean_from_dynamic'])
     (stage/'main.cpp').write_text('''#include "scpp/operators/add_int64.hpp"
 #include "scpp/operators/equal_mixed.hpp"
 #include "scpp/operators/divide_int64.hpp"
 #include "scpp/operators/less_float64.hpp"
 #include "scpp/conversions/cast_uint64_from_string.hpp"
+#include "scpp/conversions/cast_string_from_mixed.hpp"
+#include "scpp/conversions/cast_boolean_from_dynamic.hpp"
 int main() {
     scpp::mixed value(scpp::int64(7));
     return scpp::numeric_add(scpp::int64(3),scpp::int64(4)).native_value()==7
         && static_cast<bool>(scpp::boxed_equal(value,value))
         && scpp::numeric_divide(scpp::int64(8),scpp::int64(2)).native_value()==4
+        && scpp::cast_string(value).equals("7")
+        && static_cast<bool>(scpp::cast_boolean(scpp::dynamic(scpp::int64(1))))
         && scpp::cast_uint64(scpp::string("18446744073709551615")).native_value()==18446744073709551615ULL
         && static_cast<bool>(scpp::numeric_less(scpp::float64(1.0),scpp::float64(2.0))) ? 0 : 1;
 }
