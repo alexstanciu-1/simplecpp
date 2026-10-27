@@ -4,6 +4,16 @@ Doc Status: planning
 Date: 2026-10-27. Planning baseline: `94361018b`.
 Status: first public-boundary slice implemented; remaining phases proposed.
 
+## Current core completion inventory
+
+The [runtime-core completion inventory and batch plan](runtime_core_completion.md)
+records the remaining work at `6a1cb4af2`, excluding module migrations. It distinguishes
+published values, generatable but incomplete families, missing contracts and native-only
+surfaces needing explicit scope decisions. All 55 core catalog function signatures are
+accounted for. It supersedes informal percentage estimates, not the semantic contracts
+or previously accepted design decisions below. The next proposed slice is ordinary
+concrete numeric arithmetic/comparisons; implementation awaits discussion.
+
 ## Goal and terminology
 
 Make the Simple C++ runtime directly consumable through focused, fully template-free

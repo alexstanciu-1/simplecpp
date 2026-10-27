@@ -1,6 +1,10 @@
 # Public API boundary and next dependency inventory
 Doc Status: supporting
 
+Current completion audit: [runtime-core inventory and batches](../../specs/planning/runtime_core_completion.md)
+(checkpoint `6a1cb4af2`, excluding modules). The tables below retain the earlier
+value-boundary checkpoint; they are not a complete inventory of today's public surface.
+
 Checkpoint: 2026-10-27. This is a physical API inventory, not a new source-type
 registry. The first slice establishes publication and include isolation; it does
 not migrate compiler facades. Value slices now expose inline string/error values and retained exception inspection.
