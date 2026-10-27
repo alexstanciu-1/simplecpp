@@ -156,7 +156,7 @@ requires it; comparison snapshots retain their distinct sequencing rules.
 | --- | --- | --- |
 | W01 | Confirm one-layer checked lifting and ordinary payload result; no automatic optional/Result propagation | Agreed 2026-10-27; pending implementation |
 | W02 | Decide whether to broaden cross-carrier arithmetic consistently or preserve only today's bounded source admissions | Agreed 2026-10-27: uniform arithmetic across all four families for otherwise admitted numeric payload pairs |
-| W03 | Confirm reuse of existing state-aware equality, identity, condition, text, take and coalescing policies | Equality/ordering agreed 2026-10-27; strict identity deliberately tightened to preserve states; truthiness/conversion discussion below |
+| W03 | Confirm reuse of existing state-aware equality, identity, condition, text, take and coalescing policies | Equality/ordering and state-preserving strict identity agreed; existing truthiness and explicit conversion policy confirmed 2026-10-27 |
 | W04 | Account for all formation rules in one prepared descriptor path: bare-source default versus runtime parameters, result_payload and forbidden compositions | Confirmed constraints; enforcement audit and metadata integration remain |
 | W05 | Extend conditional lifecycle/operation capabilities, prove an admitted noncopyable payload and reject unavailable copy operations | Pending design; do not conflate this with new user-authored constraint syntax |
 | W06 | Define payload observation/projection transport and demand ownership in the existing C++ generator; no public templates or heap-interior references | Proposed implementation mechanism |
@@ -224,7 +224,7 @@ The compact mechanism remains separate per-operand state observation/extraction 
 one group policy and one normalized payload operation, not a generated implementation
 for every pair of wrapper types. No implementation goal starts during this discussion.
 
-## Truthiness and conversion discussion
+## Agreed truthiness and conversion policy — 2026-10-27
 
 Confirmed current condition rules: absent nullable, Result failure and false sentinel
 are false; true sentinel is true; successful payloads delegate to their admitted
@@ -248,7 +248,7 @@ structured Result error still throws. Explicit string cast formatting and text-c
 formatting remain distinct where specified (notably floats). Native helper breadth
 is not automatic source admission.
 
-Proposed conversion policy for discussion:
+Accepted conversion policy, pending implementation and normative migration:
 
 - Carrier to required scalar: one checked carrier layer, then the selected explicit
   scalar cast. No recursive peeling or treating error/sentinel states as numbers.
@@ -256,7 +256,7 @@ Proposed conversion policy for discussion:
 - Same-family carrier conversion, where formation and payload conversion are admitted:
   preserve outer non-value state; convert a successful payload only. Do not turn a
   thrown cast failure into a Result failure, invent move permissions, or mutate the
-  source. This is a proposed generalization, not a claim that every such conversion
+  source. This is an accepted generalization, not a claim that every such conversion
   exists today.
 - Plain payload into a carrier: retain admitted explicit/exact success construction;
   distinguish a wrapped bool false from a false sentinel. No implicit multi-step
@@ -266,6 +266,55 @@ Proposed conversion policy for discussion:
 - Ownership conversions retain target/ancestry/transfer/locking contracts, separate
   from scalar conversion and carrier lifting.
 
-Open checkpoint: retain the required-payload rule for explicit bool casts (distinct
-from condition truthiness), and retain the existing string-cast exception? Then settle
-same-family payload conversion and nested-condition admission before implementing.
+The user confirmed that bool casts require a successful payload, even when the
+carrier's condition is truthy, and that existing explicit string-cast exceptions
+remain. The conversion policy above is accepted. Same-family conversion preserves
+outer states; it does not authorize arbitrary cross-family or recursive casts.
+
+Nested conditions retain existing admitted condition delegation. The arithmetic/cast
+one-layer rule must not silently remove an already-admitted payload condition rule,
+nor may native recursive helpers admit new source combinations. Noncopyable observation
+must not acquire a copy requirement. No new decision is needed merely to preserve
+those contracts.
+
+## Remaining decisions before the implementation goal
+
+The discussed wrapper arithmetic, comparisons, strict identity, truthiness and
+conversion directions are settled. Existing formation, ownership, take, emptiness,
+lazy selection and evaluation-order contracts remain constraints. Remaining work
+must distinguish goal-scope choices from implementation design.
+
+Two overall scope choices remain for discussion:
+
+1. **Core completion denominator.** Proposed: the admitted core source contracts and
+   their public-runtime dependencies from the completion inventory. Keep native-only
+   fixed arrays, arenas, work queues, bitsets and async machinery as explicit follow-up
+   demands unless a required core consumer needs them. Modules remain excluded by the
+   user's instruction. This is not permission to omit a required dependency.
+2. **Frontend adoption.** Proposed: this goal finishes the runtime/public metadata,
+   shared native semantics and physical publication paths, with semantic spec updates
+   and compatibility impacts recorded. Integrating all of these paths into compiler
+   preparation/lowering is a separate goal. Runtime tests must not be represented as
+   source-program support. Any existing frontend disagreement is documented explicitly.
+
+Engineering checkpoints inside that goal, rather than new language decisions:
+
+- Assemble existing formation/capability facts; fix touched drift without broadening
+  source admission. Do not create a second semantic type registry.
+- Prove state-preserving observations and checked projection with owned/borrowed
+  transport appropriate to the existing lifetime contract.
+- Extend conditional lifecycle before claiming general noncopyable container support.
+- Design concrete callback signatures/capture transport at the callable batch; preserve
+  existing invocation/lifetime semantics. Escalate only genuinely new semantics or a
+  wide ownership refactor that cannot fit the approved batch.
+- Audit literal sentinel comparisons against the newly accepted strict-identity
+  implication; do not preserve an old special case that contradicts that decision.
+- Keep demand-driven ownership, generated output freshness, focused headers and bounded
+  compilation checks. Commit/push coherent tested slices; report measured allocations,
+  safety and compile costs without claiming every combination was tested.
+
+Suggested goal sequence remains core batches A through G, split into their documented
+sub-slices. Include a review checkpoint after the first complete carrier path and before
+ownership/callback expansion. The goal should finish only when each included contract
+has a tested public path or an explicitly user-accepted exclusion. No goal is created
+until the overall scope is settled and implementation is requested.

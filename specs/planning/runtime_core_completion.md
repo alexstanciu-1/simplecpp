@@ -136,12 +136,13 @@ prerequisites for writing new operator semantics.
 
 ## Wrapper-policy discussion gate
 
-Before starting the implementation goal, settle the
-[wrapper policy and constrained-argument backlog](runtime_wrapper_policy.md).
+The [wrapper policy and constrained-argument backlog](runtime_wrapper_policy.md)
+now records the accepted arithmetic, comparison, truthiness and conversion decisions.
 It records the bare-source `copyable_value` contract, family-specific argument
 requirements, explicit ownership/nullable composition restrictions and supported
-Result-of-nullable states. Proposed one-layer lifting and cross-carrier admission
-are discussion items, not automatically approved by the numeric plan below.
+Result-of-nullable states. Uniform one-layer carrier arithmetic/comparisons and checked conversion policies
+are approved but not yet implemented. The remaining goal-scope choices are the
+native-only surface denominator and separation of frontend adoption.
 
 ## Recommended next slice for discussion
 
