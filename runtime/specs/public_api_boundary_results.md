@@ -1906,3 +1906,25 @@ core rebuild/link takes 21.14s / 44.15s. Runs overlap and are not isolated compa
 An initial core compilation exposed missing native boolean operand adaptation; it
 was corrected in metadata before the successful builds. No native semantics or
 generator source changes were required. Public metadata remains below 200KB.
+
+## C15 — execute sentinel conditions, casts and ordered numeric plans
+
+Expanded the sentinel consumer to render condition/negation, bool/int8/string cast,
+same-family float64 reconstruction and add/subtract/multiply/divide/remainder/less/
+compare functions from resolved metadata plans. No native implementation, generator
+or metadata adjustment was needed. Ten application units include the two new floating
+sentinel targets; all runtime/generated publication files remain unchanged.
+
+Release and ASan/UBSan with leak detection pass. Execution verifies required bool
+and numeric payloads versus empty-string sentinel exceptions; false/true state
+reconstruction; source-preserving failed narrowing; skipped RHS work on failed left
+extraction; retained RHS effects on failed right extraction; and saved left payload
+survival when RHS work resets the source. Existing take/state/nested/noncopyable
+lifecycle and sealed reuse checks remain. Successful operations allocate zero.
+
+The final sanitizer run also includes explicit zero-divisor checks for division
+and remainder, added after the release run started; these two checks were not part
+of that release execution. Final metadata-only checks pass. Compile-only totals:
+ten storage units 11.1188s release / 14.8055s sanitized; caller 0.3103s / 0.6070s.
+No runtime-core or generator recompilation was required. Full source admission,
+compound/update/lazy protocols and scoped observation remain separate C work.

@@ -1065,3 +1065,23 @@ this cost alongside the existing Result error-identity observation debt.
 Remaining C work: full ordering/special/mutation/lazy and conversion execution
 coverage, source formation constraints and scoped observation. This slice is broader
 comparison coverage, not closure of all possible payload pairs or the carrier review.
+
+
+## C15 — sentinel operation execution and failure sequencing
+
+The sentinel public proof now renders conditions, logical negation, checked bool/
+int8/string casts, same-family int64-to-float64 reconstruction and seven numeric
+operations directly from resolved plans. It executes both false and true sentinel
+states as well as payloads. Bool/numeric casts require payloads, sentinel string
+casts return empty strings and reconstruction preserves the sentinel category.
+
+Ordered arithmetic/ordering checks verify failed left extraction skips later RHS
+work, right extraction failure retains prior effects, and saved left payloads survive
+mutation during RHS work. Checked narrowing preserves its source and old destination;
+zero-divisor cases throw after both payloads are available. The existing state/take,
+nested and noncopyable lifecycle cases and application publication reuse remain.
+The proof generates ten application units and needs no runtime/generator rebuild.
+
+This closes the initial sentinel operation execution gap. It does not imply every
+width/payload pair, source formation rule, compound/update or lazy protocol is
+covered. Those and scoped observations remain before the complete carrier review.

@@ -425,3 +425,12 @@ existing scalar/boxed owner. A compiled 676-case boolean state matrix confirms t
 matching sentinels compare equal across families and remain distinct from successful
 boolean payloads. Ordinary incompatible payload comparisons reject before state
 inspection. Ordering, remaining pair admissions and the full review stay open.
+
+
+### Sentinel operation execution checkpoint
+
+Public execution now verifies the planned condition versus required bool-cast
+distinction, empty-string sentinel casts, same-family reconstruction and ordered
+numeric extraction for both sentinel families. Non-value states throw in numeric
+operations; they are never propagated as results. This complements the state/take
+and comparison proofs without claiming full source-formation or mutation coverage.
