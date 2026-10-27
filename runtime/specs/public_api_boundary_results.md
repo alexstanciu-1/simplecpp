@@ -1852,3 +1852,30 @@ An initial release compilation caught and corrected string-prefix concatenation 
 the emitter; an initial test run also caught a reused Python fixture variable.
 Neither runtime metadata nor generated runtime units changed; no core rebuild was
 needed. The actual sentinel recipes remain the next slice.
+
+## C13 — sentinel carrier recipes and state/take proof
+
+Added result_or_false and result_or_bool through the existing metadata lifecycle,
+static factory and carrier policies. No generator or native runtime changes were
+needed. Regeneration preserves all 332 existing runtime implementation units byte
+for byte; only the metadata publication identity changes.
+
+Eight generated application units cover integer and boolean payloads, nested
+nullable and noncopyable/non-default records. Release and ASan/UBSan with leak
+detection pass. Checks include false payload versus false sentinel, true sentinel
+leaving the payload output untouched, preserved alternative output on payload
+success, reset/copy/move state transitions, exactly-once record destruction, checked
+missing payload failures and sealed application reuse. Measured successful operations
+allocate zero; exception construction is outside that interval.
+
+Metadata tests verify both recipes and shared arithmetic/comparison/condition/cast
+plans, including sentinel equality tags and the empty-string exceptions versus
+required bool/numeric payload extraction. This is not compiled execution of every
+operator plan or admission of boolean/string carrier comparisons.
+
+Single-run compilation totals for eight storage units: 10.4189s release / 12.7450s
+sanitized; public caller: 0.1495s / 0.1944s. Five focused regressions pass in 6.24s /
+37.51s. Runs overlapped, so these are observations rather than isolated comparisons.
+The first storage compile caught inconsistent reference/value return deduction in
+the bool take snippet; explicitly returning an owned boolean corrected it. No
+runtime-core or generator rebuild was needed. Public metadata remains below 200KB.

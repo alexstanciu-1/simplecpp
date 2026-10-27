@@ -405,3 +405,13 @@ Error operations stay independent of payload copying/default construction. A def
 Result-of-nullable can succeed with inner absence; non-default payloads delete the
 plain Result default constructor. This physical lifecycle proof does not extend
 source result_payload admission or grant implicit source moves.
+
+
+### Sentinel recipe implementation checkpoint
+
+Both result_or_false and result_or_bool have metadata-driven public recipes with
+conditional payload lifecycle, default false state and named sentinel factories.
+Public take tests distinguish false payload from false sentinel and true sentinel
+from payload success. Numeric operator/conversion/condition planning reuses the
+same carrier descriptors. Broader payload comparison domains and complete public
+execution coverage remain pending; this does not close the four-family review.

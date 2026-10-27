@@ -2381,6 +2381,525 @@
         "move_storage",
         "default_storage"
       ]
+    },
+    "result_or_false": {
+      "parameters": [
+        "T"
+      ],
+      "binding": "result_or_false",
+      "native": "${binding}<${public:T}>",
+      "includes": [],
+      "classes": [
+        {
+          "id": "self",
+          "name": "${name}",
+          "native": "${native_type}",
+          "lifecycle": {
+            "default": "native",
+            "copy": {
+              "requires_capabilities": {
+                "T": [
+                  "copy_storage"
+                ]
+              }
+            },
+            "move": {
+              "requires_capabilities": {
+                "T": [
+                  "move_storage"
+                ]
+              }
+            },
+            "destroy": "native"
+          },
+          "methods": [
+            {
+              "kind": "constructor",
+              "parameters": [
+                {
+                  "name": "value",
+                  "type": "T",
+                  "passing": "const_ref"
+                }
+              ],
+              "expression": "value",
+              "explicit": true,
+              "requires_capabilities": {
+                "T": [
+                  "copy_storage"
+                ]
+              }
+            },
+            {
+              "name": "operator=",
+              "returns": "self_ref",
+              "parameters": [
+                {
+                  "name": "value",
+                  "type": "T",
+                  "passing": "const_ref"
+                }
+              ],
+              "body": "${self} = value;\nreturn *this;",
+              "requires_capabilities": {
+                "T": [
+                  "copy_storage"
+                ]
+              }
+            },
+            {
+              "kind": "constructor",
+              "parameters": [
+                {
+                  "name": "value",
+                  "type": "T",
+                  "passing": "move_ref"
+                }
+              ],
+              "expression": "std::move(value)",
+              "explicit": true,
+              "requires_capabilities": {
+                "T": [
+                  "move_storage"
+                ]
+              }
+            },
+            {
+              "name": "operator=",
+              "returns": "self_ref",
+              "parameters": [
+                {
+                  "name": "value",
+                  "type": "T",
+                  "passing": "move_ref"
+                }
+              ],
+              "body": "${self} = std::move(value);\nreturn *this;",
+              "requires_capabilities": {
+                "T": [
+                  "move_storage"
+                ]
+              }
+            },
+            {
+              "name": "has_value",
+              "returns": "boolean",
+              "parameters": [],
+              "const": true,
+              "transport": "native",
+              "expression": "${self}.has_value().native_value()"
+            },
+            {
+              "name": "value",
+              "returns": "T",
+              "parameters": [],
+              "const": true,
+              "expression": "${self}.value()",
+              "requires_capabilities": {
+                "T": [
+                  "copy_storage"
+                ]
+              }
+            },
+            {
+              "name": "require_value",
+              "returns": "T",
+              "parameters": [
+                {
+                  "name": "context",
+                  "type": "c_string",
+                  "passing": "value"
+                }
+              ],
+              "const": true,
+              "expression": "${self}.require_value(context)",
+              "requires_capabilities": {
+                "T": [
+                  "copy_storage"
+                ]
+              }
+            },
+            {
+              "name": "from_false",
+              "static": true,
+              "returns": "self",
+              "expression": "${native_type}(scpp::false_sentinel)",
+              "transport": "native",
+              "parameters": []
+            },
+            {
+              "name": "is_false",
+              "returns": "boolean",
+              "const": true,
+              "expression": "${self}.is_false().native_value()",
+              "transport": "native",
+              "parameters": []
+            },
+            {
+              "name": "reset",
+              "returns": "void",
+              "expression": "${self}.reset()",
+              "parameters": []
+            }
+          ]
+        }
+      ],
+      "functions": [
+        {
+          "name": "take",
+          "returns": "boolean",
+          "parameters": [
+            {
+              "name": "value",
+              "type": "T",
+              "passing": "ref"
+            },
+            {
+              "name": "source",
+              "type": "self",
+              "passing": "const_ref"
+            }
+          ],
+          "kind": "function",
+          "body": "const ${public:self} snapshot(source);\nif (snapshot.has_value()) { value = snapshot.value(); return scpp::boolean(true); }\nreturn scpp::boolean(false);",
+          "requires_capabilities": {
+            "T": [
+              "copy_storage"
+            ]
+          }
+        }
+      ],
+      "checks": [
+        "std::is_nothrow_destructible_v<${public:T}>"
+      ],
+      "carrier": {
+        "payload": "T",
+        "require_value": "require_value",
+        "states": [
+          {
+            "name": "payload",
+            "test": "has_value",
+            "condition": "payload",
+            "comparison_tag": "payload",
+            "reconstruct": {
+              "kind": "payload",
+              "expression": "${target}(${value})"
+            }
+          },
+          {
+            "name": "false",
+            "condition": "false",
+            "comparison_tag": "false",
+            "casts": {
+              "string": {
+                "expression": "scpp::string()",
+                "header": "scpp/string.hpp"
+              }
+            },
+            "reconstruct": {
+              "kind": "state",
+              "expression": "${target}::from_false()"
+            }
+          }
+        ]
+      },
+      "conditional_capabilities": {
+        "copy_storage": {
+          "requires_capabilities": {
+            "T": [
+              "copy_storage"
+            ]
+          }
+        },
+        "move_storage": {
+          "requires_capabilities": {
+            "T": [
+              "move_storage"
+            ]
+          }
+        }
+      },
+      "capabilities": [
+        "default_storage"
+      ]
+    },
+    "result_or_bool": {
+      "parameters": [
+        "T"
+      ],
+      "binding": "result_or_bool",
+      "native": "${binding}<${public:T}>",
+      "includes": [],
+      "classes": [
+        {
+          "id": "self",
+          "name": "${name}",
+          "native": "${native_type}",
+          "lifecycle": {
+            "default": "native",
+            "copy": {
+              "requires_capabilities": {
+                "T": [
+                  "copy_storage"
+                ]
+              }
+            },
+            "move": {
+              "requires_capabilities": {
+                "T": [
+                  "move_storage"
+                ]
+              }
+            },
+            "destroy": "native"
+          },
+          "methods": [
+            {
+              "kind": "constructor",
+              "parameters": [
+                {
+                  "name": "value",
+                  "type": "T",
+                  "passing": "const_ref"
+                }
+              ],
+              "expression": "value",
+              "explicit": true,
+              "requires_capabilities": {
+                "T": [
+                  "copy_storage"
+                ]
+              }
+            },
+            {
+              "name": "operator=",
+              "returns": "self_ref",
+              "parameters": [
+                {
+                  "name": "value",
+                  "type": "T",
+                  "passing": "const_ref"
+                }
+              ],
+              "body": "${self} = value;\nreturn *this;",
+              "requires_capabilities": {
+                "T": [
+                  "copy_storage"
+                ]
+              }
+            },
+            {
+              "kind": "constructor",
+              "parameters": [
+                {
+                  "name": "value",
+                  "type": "T",
+                  "passing": "move_ref"
+                }
+              ],
+              "expression": "std::move(value)",
+              "explicit": true,
+              "requires_capabilities": {
+                "T": [
+                  "move_storage"
+                ]
+              }
+            },
+            {
+              "name": "operator=",
+              "returns": "self_ref",
+              "parameters": [
+                {
+                  "name": "value",
+                  "type": "T",
+                  "passing": "move_ref"
+                }
+              ],
+              "body": "${self} = std::move(value);\nreturn *this;",
+              "requires_capabilities": {
+                "T": [
+                  "move_storage"
+                ]
+              }
+            },
+            {
+              "name": "has_value",
+              "returns": "boolean",
+              "parameters": [],
+              "const": true,
+              "transport": "native",
+              "expression": "${self}.has_value().native_value()"
+            },
+            {
+              "name": "value",
+              "returns": "T",
+              "parameters": [],
+              "const": true,
+              "expression": "${self}.value()",
+              "requires_capabilities": {
+                "T": [
+                  "copy_storage"
+                ]
+              }
+            },
+            {
+              "name": "require_value",
+              "returns": "T",
+              "parameters": [
+                {
+                  "name": "context",
+                  "type": "c_string",
+                  "passing": "value"
+                }
+              ],
+              "const": true,
+              "expression": "${self}.require_value(context)",
+              "requires_capabilities": {
+                "T": [
+                  "copy_storage"
+                ]
+              }
+            },
+            {
+              "name": "from_false",
+              "static": true,
+              "returns": "self",
+              "expression": "${native_type}(scpp::false_sentinel)",
+              "transport": "native",
+              "parameters": []
+            },
+            {
+              "name": "is_false",
+              "returns": "boolean",
+              "const": true,
+              "expression": "${self}.is_false().native_value()",
+              "transport": "native",
+              "parameters": []
+            },
+            {
+              "name": "from_true",
+              "static": true,
+              "returns": "self",
+              "expression": "${native_type}(scpp::true_sentinel)",
+              "transport": "native",
+              "parameters": []
+            },
+            {
+              "name": "is_true",
+              "returns": "boolean",
+              "const": true,
+              "expression": "${self}.is_true().native_value()",
+              "transport": "native",
+              "parameters": []
+            },
+            {
+              "name": "reset",
+              "returns": "void",
+              "expression": "${self}.reset()",
+              "parameters": []
+            }
+          ]
+        }
+      ],
+      "functions": [
+        {
+          "name": "take",
+          "returns": "boolean",
+          "parameters": [
+            {
+              "name": "value",
+              "type": "T",
+              "passing": "ref"
+            },
+            {
+              "name": "alternative",
+              "type": "boolean",
+              "passing": "ref"
+            },
+            {
+              "name": "source",
+              "type": "self",
+              "passing": "const_ref"
+            }
+          ],
+          "kind": "function",
+          "body": "const ${public:self} snapshot(source);\nif (snapshot.has_value()) { value = snapshot.value(); return scpp::boolean(true); }\nalternative = snapshot.is_true(); return scpp::boolean(alternative);",
+          "requires_capabilities": {
+            "T": [
+              "copy_storage"
+            ]
+          }
+        }
+      ],
+      "checks": [
+        "std::is_nothrow_destructible_v<${public:T}>"
+      ],
+      "carrier": {
+        "payload": "T",
+        "require_value": "require_value",
+        "states": [
+          {
+            "name": "payload",
+            "test": "has_value",
+            "condition": "payload",
+            "comparison_tag": "payload",
+            "reconstruct": {
+              "kind": "payload",
+              "expression": "${target}(${value})"
+            }
+          },
+          {
+            "name": "false",
+            "condition": "false",
+            "comparison_tag": "false",
+            "casts": {
+              "string": {
+                "expression": "scpp::string()",
+                "header": "scpp/string.hpp"
+              }
+            },
+            "reconstruct": {
+              "kind": "state",
+              "expression": "${target}::from_false()"
+            },
+            "test": "is_false"
+          },
+          {
+            "name": "true",
+            "condition": "true",
+            "comparison_tag": "true",
+            "casts": {
+              "string": {
+                "expression": "scpp::string()",
+                "header": "scpp/string.hpp"
+              }
+            },
+            "reconstruct": {
+              "kind": "state",
+              "expression": "${target}::from_true()"
+            }
+          }
+        ]
+      },
+      "conditional_capabilities": {
+        "copy_storage": {
+          "requires_capabilities": {
+            "T": [
+              "copy_storage"
+            ]
+          }
+        },
+        "move_storage": {
+          "requires_capabilities": {
+            "T": [
+              "move_storage"
+            ]
+          }
+        }
+      },
+      "capabilities": [
+        "default_storage"
+      ]
     }
   },
   "functions": {
@@ -4012,14 +4531,18 @@
           "different_states": "false",
           "same_states": {
             "absent": "true",
-            "error": "true"
+            "error": "true",
+            "false": "true",
+            "true": "true"
           }
         },
         "numeric_not_equal": {
           "different_states": "true",
           "same_states": {
             "absent": "false",
-            "error": "false"
+            "error": "false",
+            "false": "false",
+            "true": "false"
           }
         },
         "strict_identical": {
@@ -4028,7 +4551,9 @@
             "absent": "true",
             "error": {
               "function_set": "strict_identical"
-            }
+            },
+            "false": "true",
+            "true": "true"
           }
         },
         "strict_not_identical": {
@@ -4037,7 +4562,9 @@
             "absent": "false",
             "error": {
               "function_set": "strict_not_identical"
-            }
+            },
+            "false": "false",
+            "true": "false"
           }
         }
       }

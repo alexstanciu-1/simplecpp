@@ -17,7 +17,7 @@ each slice. The original inventory is a baseline, not a current completion count
 | A2 | Complete for the agreed checked scalar conversions | Carrier conversion is C; ownership casts are D. |
 | B1 | Complete for the agreed scalar-facing truth/text/identity/observation scope | Carrier forms remain C; boxed arithmetic and access completion are not B1 credit. |
 | B2 | Complete for the agreed non-carrier special/mutation and text public paths; closure evidence below | Carrier forms C; indexed retention E; native exception inspection and overflow disposition G. |
-| C | Nullable/Result conditional lifecycle, numeric/presence paths, nullable/Result scalar reconstruction and Result error identity implemented; review pending | Four carrier families, state-preserving operations/conversions and conditional lifecycle. |
+| C | Four carrier recipes with conditional lifecycle; numeric/presence plans, scalar reconstruction, Result error identity and sentinel take/state proofs implemented; review pending | Four carrier families, state-preserving operations/conversions and conditional lifecycle. |
 | D | Pending | Ownership, application targets and source Exception transport gaps. |
 | E | Existing vector/hash/boxed foundations; incomplete | Capability/access/initialization/cursor gaps and identity key-allocation debt. |
 | F | Pending | Callable transport and registered collection algorithms. |
@@ -77,7 +77,7 @@ no equivalent new public path identified. Published/recipe does not mean complet
 | vector_t<T> | Recipe + published vector_string; indexing copies, set/append, size/capacity/resize/compact, iteration, count/empty/isset | Conditional lifecycle rather than unconditional copyable payloads; source initializer paths, full keyed/lvalue/probe protocols and helper spellings; stable shared-element extraction where admitted. Review end-idempotent cursor next() debt. | C/D/E |
 | hash_t<V,K> | Recipe, defaults, typed key capability checks, checked access/find/set/remove/append and cursor proofs | Complete admitted key bindings beyond currently selected string/integer policies; application-defined H/E bindings; initialization and nested keyed paths; move-only/conditional-copy support; cursor debt. No public insertion through read-only `operator[]`; source array notation follows its existing hash/container lowering, not a new public array family. | D/E |
 | nullable<T> and result<T> | Recipes with checked owned extraction and take; published result_vector_string | Conditional payload capabilities; complete construction/reset/swap/extraction where admitted; wrapper casts, state comparisons, lifted operations and lazy selection. Result errors cannot silently become values. | C |
-| result_or_false<T>, result_or_bool<T> | Native contracts; no public recipes | Both carrier recipes, sentinel/payload distinction including bool payloads, take outputs, conditional copying/moving, admitted lifted operations and nested demands. | C |
+| result_or_false<T>, result_or_bool<T> | Recipes, sentinel factories, conditional lifecycle, state/take and nested/noncopyable physical proofs | Broader payload/operator domains, source formation constraints and complete state-preserving plan execution matrix. | C |
 | mixed_t and dynamic_t | Published scalar/null construction and extraction, family-preserving containers, mutation/removal/iteration, explicit scalar family crossing, checked equality | Numeric/bitwise/order/unary/compound public paths; condition/text conversion; count/empty/isset/probe helpers; nested keyed operations. Preserve mixed value/COW versus dynamic identity. Cycle reclamation remains separately accepted debt, not an API migration. | A/B/E |
 | shared/unique/weak and value storage | Native contracts only | Concrete ownership recipes, destruction/retain/release/transfer/lock; absence and identity; admitted up/downcasts, stable extraction, shared-self; application-defined target layout dependencies. `value<T>` is an existing storage modifier, not a new unrelated template identity. | D |
 | Struct/class/enum and reference argument transport | Application leaf descriptors and simple record composition proofs | General prepared capability/representation facts, recursive declaration versus layout dependencies, noncopyable payloads, object identity/ancestry and safe references. Native references remain a passing/binding contract, not another public wrapper family. Do not expose heap-interior native references. | C/D/E |
@@ -85,8 +85,8 @@ no equivalent new public path identified. Published/recipe does not mean complet
 | Callables and higher-order collections | Native callable/collections implementations; registered map/filter functions | Concrete signature-based callback ABI, captures and destruction, invocation/error propagation and reference restrictions; then collection/sequence/keyed map/filter for admitted families. Do not expose std::function or generate per-function-name exceptions. | F |
 | Core utilities, debug and memory | Some per-value storage estimates and predicates; no general utility public surface | Registry helpers in the appendix, debug flags, required value_copy/reset/memory/identity helpers. Distinguish actual accounting semantics from estimated storage bytes. Audit language-adapter dependencies. | E/G |
 
-The recipe registry currently contains exactly seven families: vector, hash,
-nullable, result, float64, mixed and dynamic. At the original inventory, the first four all imposed copy
+The recipe registry currently contains nine families: vector, hash,
+nullable, result, result_or_false, result_or_bool, float64, mixed and dynamic. At the original inventory, the first four all imposed copy
 construction/assignment and nothrow-destruction checks. Nullable and Result now use conditional
 lifecycle and payload APIs (C10/C11); vector/hash retain their blanket checks. This is a real coverage
 restriction: supporting `unique<T>` cannot be fixed by merely adding another name
@@ -1016,3 +1016,24 @@ sealed reuse checks. This is factory infrastructure, not completion of either
 sentinel recipe. Next add result_or_false/result_or_bool metadata and prove their
 state/take contracts, including false payload versus false sentinel and true sentinel
 without payload output assignment. The complete carrier review remains open.
+
+## C13 — false/bool sentinel recipes
+
+Both sentinel families now use the existing metadata operation, lifecycle and
+carrier mechanisms. Default construction is false independently of payload default
+construction. Named from_false/from_true factories preserve sentinel identities;
+payload constructors/assignment remain distinct, including boolean false/true.
+The take recipes snapshot once, copy only on payload success and preserve unrelated
+outputs. A true bool sentinel returns true while leaving the payload output alone.
+
+The eight-unit application proof covers integer/boolean payloads, nested nullable
+success/absence, noncopyable non-default application records, moves/reset/destruction,
+checked missing-payload access and sealed reuse. Physical record proofs do not grant
+new source result_payload admission. Shared plan tests cover numeric arithmetic and
+state comparisons across all four carriers, conditions, required scalar extraction,
+empty-string sentinel exceptions and same-family reconstruction. They do not yet
+execute the complete operator/conversion matrix as public C++ consumers.
+
+Remaining C work includes boolean/string/boxed comparison domains, source formation
+constraints, remaining mutation/lazy protocols, scoped observations and the full
+carrier state/lifetime matrix. The first complete carrier review is still open.
