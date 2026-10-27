@@ -32,8 +32,9 @@ static_assert(!std::is_constructible_v<value, scpp::mixed_t>);
 static_assert(!std::is_assignable_v<value &, scpp::mixed_t>);
 static_assert(!std::is_constructible_v<scpp::mixed_t, value>);
 static_assert(!std::is_constructible_v<value, scpp::shared_p<scpp::hash_t<scpp::mixed_t>>>);
-static_assert(std::is_nothrow_move_constructible_v<value>);
-static_assert(std::is_nothrow_move_assignable_v<value>);
+// Preserving active cursors can allocate before a move commits.
+static_assert(std::is_move_constructible_v<value>);
+static_assert(std::is_move_assignable_v<value>);
 
 template <typename Entry>
 concept can_store = requires(value &receiver, const scpp::mixed_t &key, const Entry &entry) {
@@ -71,14 +72,20 @@ void mixed_construction_is_independent() {
 	scpp::index_append(dynamic, value{int_t<>{7LL}});
 	require(scpp::isset(dynamic, 0).native_value(),
 		"native integer probes use the same tagged path");
-	require(scpp::isset(dynamic, int_t<>{0LL}).native_value()
-		&& scpp::isset(dynamic, string_t{"0"}).native_value() && scpp::isset(dynamic, "0").native_value(),
-		"typed and text probe keys normalize consistently");
+	require(scpp::isset(dynamic, int_t<>{0LL}).native_value(), "typed integer key probes the entry");
+#if defined(SCPP_LANGUAGE_TARGET_PHP) && SCPP_LANGUAGE_TARGET_PHP
+	require(scpp::isset(dynamic, string_t{"0"}).native_value() && scpp::isset(dynamic, "0").native_value(),
+		"PHP text keys normalize to integer keys");
+#else
+	require(!scpp::isset(dynamic, string_t{"0"}).native_value() && !scpp::isset(dynamic, "0").native_value(),
+		"non-PHP text keys remain distinct from integer keys");
+#endif
 }
 
 void scalar_lifetimes() {
-	// This checkpoint measures the agreed target ABI, not a portable language promise.
-	require(sizeof(value) == 24 && alignof(value) == 8, "dynamic target layout");
+	// This checkpoint measures the current target ABI, not a portable language promise.
+	// The 24-byte payload now also carries the 16-byte iteration binding handle.
+	require(sizeof(value) == 40 && alignof(value) == 8, "dynamic target layout with cursor tracking");
 	value null;
 	require(null.is_null().native_value(), "default is null");
 	value flag{scpp::bool_t{false}};

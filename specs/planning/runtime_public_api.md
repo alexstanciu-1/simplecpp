@@ -457,3 +457,33 @@ Follow-up: vector/hash cursor recipes currently guard `next()` with `valid()`. R
 that contract when preservation exhausts the remaining entries immediately after the
 last value is consumed. The new mixed cursor handles this with an end-idempotent
 `next()`; existing family behavior was not changed in this slice.
+
+### First dynamic / explicit scalar conversion slice (2026-10-27)
+
+Dynamic is another zero-parameter metadata recipe, with native shared-container
+identity, owned scalar extraction, explicit container construction, checked reads and
+writes, reset and binding-aware iteration. Explicit `to_dynamic(mixed)` and
+`to_mixed(dynamic)` delegate to existing scalar/null cast rules and reject containers.
+No C++ generator changes were needed. Runtime/application publication reuse, allocation
+parity and sanitizer/lifetime proofs are recorded in the boundary results.
+
+#### Runtime debt: dynamic cycle reclamation
+
+Owner: native dynamic container ownership (`detail::dynamic_value` and its shared
+table), not API metadata or the generator. Containers currently retain strong shared
+references to nested dynamic containers. Self and multi-container cycles are admitted;
+reference counting alone cannot reclaim an unreachable cycle. Dropping/resetting the
+last external binding is therefore not a reclamation guarantee. The public API
+preserves this behavior by explicit user decision.
+
+A future design must decide how to reclaim cycles while preserving shared identity,
+alias-visible mutation, reset semantics and active cursor lifetimes. Evaluate ownership
+tracking/collection and its allocation, latency and threading costs separately; do not
+silently reject cycles or weaken stored edges as a generation workaround. Required
+future evidence includes unreachable self/multi-node cycles, reachable aliases, cycles
+with active cursors, exceptional writes and concurrent ownership changes. Current leak
+proofs break their cycle edges explicitly and make no collector claim.
+
+Next discussion: conversions/casts, truthiness and operators. The current slice only
+publishes the already-specified explicit scalar/null crossing between mixed and dynamic;
+it does not settle or expand those broader surfaces.

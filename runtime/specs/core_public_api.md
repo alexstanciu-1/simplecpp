@@ -198,3 +198,8 @@ concrete floating interchange/extraction type; `scpp/null_t.hpp` publishes the
 existing null sentinel without a second scalar identity. The surface preserves
 mixed-only tables and owned extraction. See [generation rules](public_api_generation.md#first-mixed-value-surface)
 for the bounded signatures, native helper ownership and deferred operations.
+
+`scpp::dynamic` in `scpp/dynamic.hpp` is the generated shared-container boxed surface.
+It reuses the same scalar types and publishes explicit `to_dynamic(mixed)` and
+`to_mixed(dynamic)` scalar/null conversions. Container crossings reject. Cycles retain
+the native strong-reference behavior; automatic reclamation remains runtime debt.

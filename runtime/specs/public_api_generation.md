@@ -252,3 +252,32 @@ reject a finished cursor. Internal pointers, mutable extraction, weak-table hook
 and native ownership carriers are not exposed. No dynamic/container cross-family
 conversion is introduced. Public nullable/mixed recursive dependencies and implicit
 C++ conversions remain outside this slice.
+
+## First dynamic value surface
+
+The `dynamic` zero-parameter recipe binds native `dynamic_t<>` entirely behind the
+public header. It uses the same scalar types and generation mechanisms as mixed;
+no C++ generator change or family-name branch is required. It owns `clean(dynamic&)`,
+`make_dynamic_container`, and the explicit `to_dynamic(mixed)` / `to_mixed(dynamic)`
+free functions. Both conversions delegate to the existing native cast owner, preserving
+scalar/null kind and value and rejecting containers before a destination assignment.
+The mixed recipe does not depend back on dynamic, so this introduces no declaration
+or layout cycle. No implicit family conversion, truthiness or operator API is added.
+
+A dynamic container copy shares identity. Owned return transport creates an owned
+binding, not a deep copy of its container. Scalar/string copies retain value semantics.
+Reset, assignment and `clean` replace a binding without clearing the containers of
+other aliases. Writes into null reject; explicit container construction is required.
+Reads, keyed removal and writes use the same native checked helper owners as mixed,
+with their distinct dynamic behavior. Self-aliased writes retain native shared identity.
+
+The binding-aware cursor returns dynamic values and scalar mixed keys (the existing
+integer/string key domain), never mixed container entries. It survives mutation,
+replacement, move and destruction under the existing preservation rules. Finished
+`next()` is idempotent; finished key/value reads reject.
+
+Strong-reference cycles remain supported and are not automatically reclaimed by
+reference counting. This API does not reject them, weaken edges or introduce a
+collector. Cycle reclamation is recorded as runtime debt in the public API plan.
+Tests deliberately remove their cycle edges before checking leak freedom; this is
+not evidence of automatic cyclic garbage collection.

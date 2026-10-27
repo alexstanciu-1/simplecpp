@@ -24,3 +24,5 @@
 
 #include "generated/float64.cpp"
 #include "generated/mixed.cpp"
+
+#include "generated/dynamic.cpp"

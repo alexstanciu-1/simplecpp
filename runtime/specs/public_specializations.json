@@ -3,7 +3,8 @@
   "package": "runtime.core",
   "roots": [
     "result<vector<string>>",
-    "mixed"
+    "mixed",
+    "dynamic"
   ],
   "leaves": {
     "string": {

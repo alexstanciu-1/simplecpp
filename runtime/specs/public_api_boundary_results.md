@@ -451,10 +451,76 @@ Reproduction:
 - Build `test_public_mixed` and `scpp_api_generator` in the runtime configuration.
 - Run `test_public_mixed` normally and in the sanitizer configuration with
   `ASAN_OPTIONS=detect_leaks=1 UBSAN_OPTIONS=halt_on_error=1` outside ptrace.
-- Run `tests/runtime/native/test_mixed_composition.py --core
+- Run `tests/runtime/native/test_boxed_composition.py --core
   compiler/my-try-cpp/build/runtime/libscpp_runtime_core.a` for relocation/reuse.
 - Run `tests/runtime/native/measure_value_api.py --facility mixed --trials 1
   --output compiler/my-try-cpp/build/mixed-api-cost.json` for caller and adapter costs.
 
 Floating arithmetic, mixed arithmetic/conversions, shared/weak ownership exposure,
 dynamic crossing, and recursive public mixed/nullable signatures remain later work.
+
+## First dynamic and explicit scalar conversion publication (2026-10-27)
+
+The runtime publishes `dynamic` through metadata alone, using native `dynamic_t<>`
+storage and the existing checked helpers. Its cursor returns dynamic values and
+mixed integer/string keys. Explicit `to_dynamic` / `to_mixed` use native cast rules,
+including container rejection. No implicit truthiness, family conversion or operator
+surface was added; no C++ generator modification was required.
+
+Public-only tests cover shared alias/nested mutation, reset retaining other aliases,
+null-write rejection, absent reads, scalar kinds and exact extraction, cursor mutation,
+replacement/move/destruction, and explicit scalar conversion round trips (including
+integer extrema, signed zero, infinity, NaN and strings). Failed container conversion
+and injected allocation failure leave destination bindings unchanged. Self-reference
+and self-append retain identity; tests explicitly remove those edges before exit.
+Cycle reclamation remains debt, not a property inferred from passing leak tests.
+
+Release and ASan/UBSan with leak detection pass. Metadata planning/import tests also
+pass under sanitizers. Allocation counts below are matched `operator new` calls, with
+input strings prepared before counting; they do not count every allocator mechanism.
+
+| Workload | Native | Public |
+| --- | ---: | ---: |
+| Scalars, copying/reset and numeric cross-family round trip | 0 | 0 |
+| String boxing, copy and extraction | 5 | 5 |
+| Integer-keyed table writes, alias copy and read | 3 | 3 |
+| Same table with traversal surviving binding reset | 6 | 6 |
+| String mixed → dynamic → mixed round trip | 6 | 6 |
+
+Copying an existing container with no active traversal allocates **0** times.
+Probed inline sizes are **40 bytes dynamic** and **184 bytes cursor**, matching the
+native representations. Allocation-bearing native payloads remain; no wrapper heap
+allocation is introduced.
+
+WSL/Clang 18/O2 observations, one caller/adapter trial:
+
+- Public integer-extraction caller: **0.0541 s**, **19,269** preprocessed bytes.
+- Native-header equivalent: **1.0457 s**, **1,713,237** preprocessed bytes.
+- Standalone generated dynamic adapter: **3.5409 s**.
+
+The fixture publication proof ran concurrently with part of the measurement; these
+are local observations, not isolated benchmark ratios or compiler-wide rebuild
+measurements. No dev002 run was performed. Local artifact:
+`compiler/my-try-cpp/build/dynamic-api-cost.json`.
+
+Reproduce with the `test_public_dynamic` runtime target, normally and with the sanitized
+core (`ASAN_OPTIONS=detect_leaks=1 UBSAN_OPTIONS=halt_on_error=1` outside ptrace).
+`test_boxed_composition.py --family dynamic --core
+compiler/my-try-cpp/build/runtime/libscpp_runtime_core.a` validates a relocated sealed
+runtime, an application `vector<dynamic>` with alias-preserving extraction, and reuse
+of that application's sealed specialization with zero regenerated units. The same
+fixture defaults to mixed to retain the value-copy counterpart.
+Run `measure_value_api.py --facility dynamic --trials 1 --output <file>` for caller and
+standalone adapter compilation. Broader casts, truthiness and operators are the next
+design discussion, not part of this completed slice.
+
+The native regression test retained pre-iteration assumptions (24-byte storage and
+unconditionally nonthrowing moves). Its expectations now include the existing cursor
+binding handle and potentially allocating preservation. An injected failure during
+public move construction verifies that source storage and its active cursor remain
+usable when preservation cannot allocate. This slice does not change native layout
+or move behavior to satisfy those tests.
+
+The same native test now selects its numeric-string key expectation from the existing
+`SCPP_LANGUAGE_TARGET_PHP` setting; this compiler runtime build has that option off.
+No key normalization behavior was changed.

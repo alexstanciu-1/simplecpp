@@ -1,6 +1,6 @@
 {
   "abi": "529dd5502370f48d64891818e9439aae72831b990b4027e8abe25c50c1216c21",
-  "api_identity": "2149645e2dd3ce24745732082fc2baea203abc18c176346521a30015f295e0f2",
+  "api_identity": "92eb01edee4da45b257a96d9969fc150d7ad422e999a24ee589db04636fa4c97",
   "artifacts": [
     "runtime.core"
   ],
@@ -17,6 +17,9 @@
     "public/scpp/mixed.hpp",
     "include/core/generated/mixed.cpp",
     "include/scpp/mixed.hpp",
+    "public/scpp/dynamic.hpp",
+    "include/core/generated/dynamic.cpp",
+    "include/scpp/dynamic.hpp",
     "public/modules/filesystem/scan.hpp",
     "include/modules/filesystem/public_scan.cpp",
     "include/modules/filesystem/scan.hpp"
@@ -106,6 +109,7 @@
     "modules/filesystem/scan.hpp": "12c63684c1896c3de8fd05db1a6ab2a2fbb7eea2a3747ed3de91f44e0e5cf7d7",
     "modules/tasks/worker_pool.hpp": "07fd862bb53ef73be8aec043b5027a4e247723fe8efc4196d8e931ffe820394e",
     "scpp/detail/value_layout.hpp": "278a58716d847ef9efa3af4b145a4ba901ea200d366a678bad3252e0b3e307e6",
+    "scpp/dynamic.hpp": "a18578f71dc2ffb64bacba244003580a5316b89dc66a3e749a0dde2d7563ac84",
     "scpp/error_value.hpp": "33c4dfbb6c5d919dc35ce1c68cba155211e72de47001f1bf77e3b73a3fa60017",
     "scpp/exception_info.hpp": "b7144992f7d9ae80e8c135123124c05ed57ef0b393e251fffdad577840d8c491",
     "scpp/failure.hpp": "d68ed12de1d0a4a645d15ee85d034123eb4e2b8e3f28c7458775ee69b6e18661",
@@ -122,9 +126,26 @@
     "include/core/generated/result_vector_string.cpp",
     "include/core/generated/float64.cpp",
     "include/core/generated/mixed.cpp",
+    "include/core/generated/dynamic.cpp",
     "include/modules/filesystem/public_scan.cpp"
   ],
   "types": {
+    "dynamic": {
+      "borrow": "detail::concrete_access::get<${native}>(${value})",
+      "construct": "detail::concrete_access::make<${cpp}, ${native}>(${factory})",
+      "cpp": "scpp::dynamic",
+      "dependencies": [],
+      "header": "scpp/dynamic.hpp",
+      "layout": [
+        40,
+        8
+      ],
+      "name": "dynamic",
+      "native": "scpp::dynamic_t<>",
+      "ordinary_api": "api-v1",
+      "owner": "runtime.core",
+      "source": "include/core/generated/dynamic.cpp"
+    },
     "float64": {
       "borrow": "detail::concrete_access::get<${native}>(${value})",
       "construct": "detail::concrete_access::make<${cpp}, ${native}>(${factory})",

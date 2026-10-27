@@ -171,3 +171,24 @@ reused['imports']=result['types']
 for key,record in reused['imports'].items(): reused['names'][key]=record['name']
 assert invoke(reused)['units']==[]
 print('PASS: canonical zero-parameter recipe imports do not create shadowing aliases')
+
+# Dynamic adds a recipe and existing scalar conversion bindings, not generator branches.
+dynamic=copy.deepcopy(base)
+dynamic['request']={'package':'test','roots':['dynamic']}
+result=invoke(dynamic)
+assert [u['identity'] for u in result['units']]==['float64','mixed','dynamic']
+unit=result['units'][-1]
+assert result['types']['dynamic']['native']=='scpp::dynamic_t<>'
+assert 'to_dynamic(const scpp::mixed &' in unit['header']
+assert 'to_mixed(const scpp::dynamic &' in unit['header']
+assert 'scpp::mixed key()' in unit['header']
+assert 'scpp::dynamic value()' in unit['header']
+assert 'scpp::cast<' in unit['source'] and 'template' not in unit['header']
+renamed=copy.deepcopy(dynamic)
+renamed['metadata']['families']['shared_box']=renamed['metadata']['families'].pop('dynamic')
+renamed['request']['roots']=['shared_box']
+assert invoke(renamed)['types']['shared_box']['native']=='scpp::dynamic_t<>'
+dynamic['imports']=result['types']
+for key,record in dynamic['imports'].items():dynamic['names'][key]=record['name']
+assert invoke(dynamic)['units']==[]
+print('PASS: dynamic recipe, explicit conversion signatures, family-preserving iteration and import reuse')
