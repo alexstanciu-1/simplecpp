@@ -112,3 +112,40 @@ invalid['names'] = {}
 invalid['request']['roots'] = [canonical]
 invalid['metadata']['families']['nested']['defaults'][0] = 'T'
 invoke(invalid, 'earlier parameter')
+
+# Conditional members are selected from declared capabilities, not family names.
+hashes=copy.deepcopy(base)
+hashes['request']={'package':'test','roots':['hash<string>', 'hash<string,int64>', 'hash<vector<string>>']}
+result=invoke(hashes)
+units={u['identity']:u for u in result['units']}
+assert ' append(' not in units['hash<string,string>']['header']
+assert ' append(' in units['hash<string,int64>']['header']
+assert 'nullable<vector<string>>' in units
+assert any('integer_key<scpp::int64>' in c for c in units['hash<string,int64>']['checks'])
+# Rename both family and capability: no generator update is required.
+renamed=copy.deepcopy(hashes)
+renamed['metadata']['families']['table']=renamed['metadata']['families'].pop('hash')
+renamed['metadata']=json.loads(json.dumps(renamed['metadata']).replace('"integer_key"','"append_key"'))
+renamed['request']['roots']=['table<string,int64>']
+assert ' append(' in invoke(renamed)['units'][-1]['header']
+# Nonselected operations do not materialize dependencies or expand snippets.
+skipped=copy.deepcopy(hashes)
+skipped['request']['roots']=['hash<string>']
+for op in skipped['metadata']['families']['hash']['classes'][0]['methods']:
+    if op.get('name')=='append':op['returns']='absent';op['expression']='${absent}'
+invoke(skipped)
+for change,message in [
+    (lambda x:x['metadata']['types']['string'].update(capabilities=['typo']), 'Unknown capability'),
+    (lambda x:x['metadata']['types']['string'].update(capabilities='typed_hash_key'), 'capabilities must be an array'),
+    (lambda x:x['metadata']['families']['hash'].update(requires_capabilities={'missing':['typed_hash_key']}), 'Unknown capability parameter'),
+    (lambda x:x['metadata']['families']['hash'].update(requires_capabilities={'K':['typo']}), 'Unknown capability'),
+    (lambda x:x['metadata']['families']['hash'].update(requires_capabilities={'K':'typed_hash_key'}), 'capabilities must be an array'),
+    (lambda x:x['request'].update(roots=['hash<string,boolean>']), 'Unsatisfied family capabilities'),
+    (lambda x:x['metadata']['capabilities']['integer_key'].update(checks=[]), 'Capability requires nonempty checks'),
+]:
+    invalid=copy.deepcopy(hashes);change(invalid);invoke(invalid,message)
+reused=copy.deepcopy(hashes)
+reused['imports']=result['types']
+for key,record in reused['imports'].items():reused['names'][key]=record['name']
+assert invoke(reused)['units']==[]
+print('PASS: typed hash/nullable closure, generic capability selection, rejected keys and import reuse')

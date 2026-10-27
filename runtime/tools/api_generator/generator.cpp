@@ -44,7 +44,19 @@ namespace scpp::api_generation
 			if (v.has("defaults")) f["defaults"]=v.at("defaults");
 			r["families"][key]=f;
 		}
-		for (const auto &[key,v] : names.fields) { value m=value::object(); m["type"]=key; m["name"]=v; r["mappings"].items.push_back(m); }
+		// Published structural names are assertions, not authored aliases. Keep their
+        // reserved trailing underscore out of the authored-name registry.
+        for (const auto &[key,v] : names.fields) {
+            auto name = v.text();
+            if (!name.empty() && name.back() == '_') continue;
+            value m=value::object(); m["type"]=key; m["name"]=v; r["mappings"].items.push_back(m);
+        }
+        naming registry(r);
+        for (const auto &[key,v] : names.fields) {
+            auto name = v.text();
+            if (!name.empty() && name.back() == '_' && registry.resolve(key).second != name)
+                throw std::runtime_error("Conflicting structural name: " + key);
+        }
 		return r;
 	}
 	class generator final
@@ -58,11 +70,11 @@ namespace scpp::api_generation
 			auto leaves=input.at("metadata").at("types");
             if (leaves.type!=value::kind::object) throw std::runtime_error("types must be an object");
             for (const auto &[key, leaf] : leaves.fields) {
-                fields_only(leaf,"cpp header owner native borrow construct includes", "leaf "+key);
+                fields_only(leaf,"cpp header owner native borrow construct includes capabilities", "leaf "+key);
                 leaf.at("cpp").text(); leaf.at("header").text(); leaf.at("owner").text();
             }
 			for (const auto &[key,v] : input.at("leaves").fields) {
-				fields_only(v,"cpp header owner native borrow construct includes", "leaf "+key);
+				fields_only(v,"cpp header owner native borrow construct includes capabilities", "leaf "+key);
                 if (leaves.has(key)) for (const auto &[field, item] : v.fields) {
                     if (!leaves.at(key).has(field) || json_text(leaves.at(key).at(field))!=json_text(item))
                         throw std::runtime_error("Conflicting leaf identity: "+key);
@@ -85,15 +97,70 @@ namespace scpp::api_generation
 		{
 			return expand(type.get("borrow","${value}"), {{"value",name},{"cpp",type.get("cpp")},{"native",type.get("native")}});
 		}
+        // Capability names are metadata identities; selection never dispatches on a type family.
+        void validate_capabilities(const value &record) const
+        {
+            if (!record.has("capabilities")) return;
+            const auto &list = record.at("capabilities");
+            if (list.type != value::kind::array) throw std::runtime_error("capabilities must be an array");
+            std::set<std::string> seen;
+            for (const auto &item : list.items) {
+                auto name = item.text();
+                if (!this->metadata_.has("capabilities") || !this->metadata_.at("capabilities").has(name))
+                    throw std::runtime_error("Unknown capability: " + name);
+                if (!seen.insert(name).second) throw std::runtime_error("Duplicate capability: " + name);
+            }
+        }
+        bool selected(const value &record, const std::map<std::string,value> &types) const
+        {
+            if (!record.has("requires_capabilities")) return true;
+            const auto &requirements = record.at("requires_capabilities");
+            if (requirements.type != value::kind::object)
+                throw std::runtime_error("requires_capabilities must be an object");
+            bool available = true;
+            for (const auto &[parameter, list] : requirements.fields) {
+                if (!types.contains(parameter)) throw std::runtime_error("Unknown capability parameter: " + parameter);
+                value required = value::object(); required["capabilities"] = list;
+                this->validate_capabilities(required);
+                const auto &type = types.at(parameter);
+                for (const auto &item : list.items) {
+                    bool found = false;
+                    if (type.has("capabilities")) for (const auto &capability : type.at("capabilities").items)
+                        if (capability.text() == item.text()) found = true;
+                    available = available && found;
+                }
+            }
+            return available;
+        }
+        void capability_checks(const value &requirement, const std::map<std::string,value> &types, value &checks, std::set<std::string> &headers)
+        {
+            if (!requirement.has("requires_capabilities")) return;
+            for (const auto &[parameter, list] : requirement.at("requires_capabilities").fields) {
+                const auto &type = types.at(parameter);
+                substitutions context{{"cpp",type.at("cpp").text()},{"native",type.get("native",type.at("cpp").text())}};
+                for (const auto &item : list.items) {
+                    const auto &recipe = this->metadata_.at("capabilities").at(item.text());
+                    this->dependencies(recipe,headers,context);
+                    for (const auto &check : recipe.at("checks").items) {
+                        auto expression = expand(check.text(),context);
+                        bool found = false;
+                        for (const auto &existing : checks.items) if (existing.text() == expression) found = true;
+                        if (!found) checks.items.emplace_back(expression);
+                    }
+                }
+            }
+        }
 		// A binding body returns its binding result; owned return transport is outside that lambda.
 		std::string operation(const value &op, substitutions context, const std::map<std::string,value> &types,
 			std::set<std::string> &public_headers, std::set<std::string> &private_headers,
-			const std::string &owner, std::string &declaration)
+			const std::string &owner, std::string &declaration, value &checks, std::set<std::string> &probe_headers)
 		{
 			if (op.has("parameters") && op.at("parameters").type!=value::kind::array) throw std::runtime_error("parameters must be an array");
             if (op.has("uses") && op.at("uses").type!=value::kind::array) throw std::runtime_error("uses must be an array");
-            fields_only(op,"name kind returns parameters const noexcept explicit expression body transport includes uses", "operation");
+            fields_only(op,"name kind returns parameters const noexcept explicit expression body transport includes uses requires_capabilities", "operation");
 			if (op.has("expression")==op.has("body")) throw std::runtime_error("Operation needs exactly one expression or body");
+			if (!this->selected(op,types)) return "";
+            this->capability_checks(op,types,checks,probe_headers);
 			auto kind=op.get("kind","method");
 			if (kind!="method" && kind!="constructor" && kind!="function") throw std::runtime_error("Unknown operation kind");
 			if (op.has("uses")) for (const auto &dependency : op.at("uses").items) {
@@ -159,21 +226,26 @@ namespace scpp::api_generation
 			if (!this->visiting_.insert(canonical).second) throw std::runtime_error("Unresolved layout dependency cycle: "+canonical);
 			auto node=this->naming_.normalize(parse_type(canonical)); const auto &recipe=this->metadata_.at("families").at(node.name);
 			if (recipe.at("parameters").type!=value::kind::array || recipe.at("classes").type!=value::kind::array || recipe.at("classes").items.empty()) throw std::runtime_error("Family requires parameter and nonempty class arrays");
-            fields_only(recipe,"parameters defaults binding native includes classes functions checks", "family "+node.name);
+            fields_only(recipe,"parameters defaults binding native includes classes functions checks capabilities requires_capabilities", "family "+node.name);
 			substitutions context{{"name",name},{"namebase",name.back()=='_'?name.substr(0,name.size()-1):name}};
 			std::map<std::string,value> types;
 			std::set<std::string> public_headers,private_headers,probe_headers;
 			value dependencies=value::array();
+            value requirements=value::array();
 			for (std::size_t i=0;i<node.arguments.size();++i) {
 				auto t=this->materialize(node.arguments[i].canonical()); auto param=recipe.at("parameters").items.at(i).text();
+				context["type:"+param]=node.arguments[i].canonical();
 				types[param]=t; context["public:"+param]=t.at("cpp").text(); context["native:"+param]=t.get("native",t.at("cpp").text());
 				add_include(public_headers,t.get("header")); add_include(probe_headers,t.get("header")); dependencies.items.emplace_back(node.arguments[i].canonical());
 			}
-			if (recipe.has("binding")) {
+			if (!this->selected(recipe,types)) throw std::runtime_error("Unsatisfied family capabilities: "+canonical);
+            this->capability_checks(recipe,types,requirements,probe_headers);
+            if (recipe.has("binding")) {
 				const auto &binding=this->metadata_.at("bindings").at(recipe.at("binding").text());
 				context["binding"]=binding.at("cpp").text(); add_include(probe_headers,binding.at("header").text());
 			}
 			this->dependencies(recipe,private_headers,context);
+            this->dependencies(recipe,probe_headers,context);
 			auto native=expand(recipe.at("native").text(),context);
 			value record=value::object(); record["name"]=name; record["cpp"]="scpp::"+name; record["header"]="scpp/"+name+".hpp";
 			record["owner"]=this->request_.at("package"); record["native"]=native; record["dependencies"]=dependencies;
@@ -181,10 +253,12 @@ namespace scpp::api_generation
 			record["borrow"]="detail::concrete_access::get<${native}>(${value})";
 			record["construct"]="detail::concrete_access::make<${cpp}, ${native}>(${factory})";
 			record["ordinary_api"]=this->metadata_.at("version");
+            this->validate_capabilities(recipe);
+            if (recipe.has("capabilities")) record["capabilities"]=recipe.at("capabilities");
 			types["self"]=record;
 			context["native_type"]=native;
 			std::string header="namespace scpp {\nnamespace detail { struct concrete_access; }\n", source;
-			value probes=value::array(); value checks=value::array(); bool ready=true;
+			value probes=value::array(); value checks=requirements; bool ready=true;
             if (recipe.has("checks")) {
                 if (recipe.at("checks").type!=value::kind::array) throw std::runtime_error("checks must be an array");
                 for (const auto &check : recipe.at("checks").items) checks.items.emplace_back(expand(check.text(),context));
@@ -233,10 +307,10 @@ namespace scpp::api_generation
 				}
 				header+="    ~"+cpp+"() noexcept;\n"; source+=cpp+"::~"+cpp+"() noexcept { "+local.at("self")+".~"+alias+"(); }\n";
 				source+="static_assert(std::is_nothrow_destructible_v<"+alias+">);\n";
-				for (const auto &op : c.at("methods").items) { std::string declaration; source+=this->operation(op,local,types,public_headers,private_headers,cpp,declaration); header+="    "+declaration; }
+				for (const auto &op : c.at("methods").items) { std::string declaration; source+=this->operation(op,local,types,public_headers,private_headers,cpp,declaration,checks,probe_headers); header+="    "+declaration; }
 				header+="};\n";
 			}
-			if (recipe.has("functions")) for (const auto &op : recipe.at("functions").items) { std::string declaration; source+=this->operation(op,context,types,public_headers,private_headers,"",declaration); header+=declaration; }
+			if (recipe.has("functions")) for (const auto &op : recipe.at("functions").items) { std::string declaration; source+=this->operation(op,context,types,public_headers,private_headers,"",declaration,checks,probe_headers); header+=declaration; }
 			public_headers.erase(record.at("header").text());
 			private_headers.insert(probe_headers.begin(),probe_headers.end());
 			add_include(private_headers,record.at("header").text()); add_include(private_headers,"scpp/detail/concrete_access.hpp");
@@ -251,9 +325,19 @@ namespace scpp::api_generation
 			leaves_(merged_leaves(input)), names_(input.at("names")), naming_(registry_for(metadata_,leaves_,names_)) {}
 		value run()
 		{
-			fields_only(this->metadata_,"version types families bindings functions", "API metadata");
+			fields_only(this->metadata_,"version types families bindings functions capabilities", "API metadata");
 			if (this->metadata_.at("version").text()!="api-v1") throw std::runtime_error("Unsupported API metadata version");
-			for (const auto &[key,t] : this->leaves_.fields) this->claim(t.at("cpp").text(),key);
+			if (this->metadata_.has("capabilities")) {
+                if (this->metadata_.at("capabilities").type != value::kind::object)
+                    throw std::runtime_error("capabilities registry must be an object");
+                for (const auto &[name, recipe] : this->metadata_.at("capabilities").fields) {
+                    authored_name(name);
+                    fields_only(recipe,"checks includes", "capability " + name);
+                    if (recipe.at("checks").type != value::kind::array || recipe.at("checks").items.empty())
+                        throw std::runtime_error("Capability requires nonempty checks: " + name);
+                }
+            }
+            for (const auto &[key,t] : this->leaves_.fields) { this->validate_capabilities(t); this->claim(t.at("cpp").text(),key); }
 			for (const auto &[key,t] : this->imports_.fields) {
 				if (this->naming_.resolve(key).second!=t.at("name").text()) throw std::runtime_error("Conflicting concrete name: "+key);
 				this->claim(t.at("name").text(),key+":self");
@@ -262,8 +346,8 @@ namespace scpp::api_generation
 			if (this->request_.has("apis")) for (const auto &api : this->request_.at("apis").items) {
 				const auto &f=this->metadata_.at("functions").at(api.text());
 				fields_only(f,"namespace header source operation includes", "API function");
-				std::set<std::string> headers,private_headers; std::string declaration;
-				auto source=this->operation(f.at("operation"),{}, {},headers,private_headers,"",declaration);
+				std::set<std::string> headers,private_headers,probe_headers; std::string declaration; value checks=value::array();
+				auto source=this->operation(f.at("operation"),{}, {},headers,private_headers,"",declaration,checks,probe_headers);
 				this->dependencies(f,private_headers,{}); add_include(private_headers,f.at("header").text());
 				value unit=value::object(); unit["identity"]=api; unit["header_path"]="public/"+f.at("header").text(); unit["source_path"]=f.at("source"); unit["ready"]="yes";
 				unit["header"]="// Generated by scpp_api_generator.\n#pragma once\n"+includes(headers)+"namespace "+f.at("namespace").text()+" {\n"+declaration+"}\n";

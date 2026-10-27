@@ -334,3 +334,60 @@ universal family coverage is claimed.
 Publication source identity now excludes Python bytecode caches: generating a cache
 must not invalidate a package or trigger a false "sources changed during build"
 failure. The publication fixture verifies that cache changes preserve archive reuse.
+
+## Typed hash, nullable and capability conditions (2026-10-27)
+
+Typed hash public recipes now cover string/integer keys, owned reads, writes,
+non-inserting nullable lookup and preserved iteration. Conditional operation
+selection is metadata-driven; the generic generator does not recognize hash or
+integer family names. Required capability claims are verified alongside layout
+probes. A canonical type substitution resolves signature dependencies such as
+`nullable<vector<string>>`. Concrete integers now use a private hash-only append
+policy, sharing native next-key/overflow behavior without broad numeric trait opt-in.
+
+The compiled fixture generates eight units (four hashes, three nullable types and
+one fixture-owned vector). It exercises nested vectors, an application-owned record,
+copy isolation, absent lookup without insertion, checked nullable extraction,
+mutation-preserved cursors and cursors escaping the owner's destruction. A sealed
+application publication is reused with **zero new implementation units**. This also
+covers structural generated names ending in `_`, which must not become authored
+aliases during import. Public consumer include paths exclude implementation headers.
+
+Allocation measurements count `operator new` calls, not every allocator mechanism:
+
+- Matched native/public hash workload: **32 / 32 calls**.
+- Empty hash and empty nullable construction: **0 calls**.
+- Missing lookup with a short key: **0 calls**.
+- Target storage: hash **168 bytes**, nullable string **40 bytes**, hash cursor
+  **120 bytes**. No wrapper heap allocation or wrapper ownership indirection is added.
+
+Release and ASan/UBSan with leak detection pass. The integer append proof checks
+zero and overflow for all eight concrete signed/unsigned widths plus native `int_t`;
+the public proof additionally checks negative keys and gaps. Sanitizer execution
+requires running outside a ptrace sandbox for LeakSanitizer. Metadata success and
+rejection paths also pass with the sanitized generator.
+
+WSL, Clang 18, Ninja 8 jobs; single trials to limit validation compilation:
+
+| Measurement | Seconds |
+| --- | ---: |
+| Generate eight units, including target layout/check probes | 14.279 |
+| Compile/link the complete Release fixture | 9.102 |
+| Public hash lookup caller compilation, O2 | 0.049 |
+| Equivalent native-header caller compilation, O2 | 1.905 |
+| Reuse sealed application specializations without compilation | 0.143 |
+| Instrumented fixture generation/probes | 13.145 |
+| Instrumented fixture compile/link | 16.588 |
+
+The matched caller preprocessing sizes are **16,917 vs 2,262,389 bytes**. Generation
+and build timings are fixture costs, not compiler-wide rebuild measurements; no
+new dev002 comparison was performed. Local artifacts are
+`compiler/my-try-cpp/build/typed-hash-cost.json` and `typed-hash-sanitizer-cost.json`.
+
+Reproduce with `python3 tests/runtime/native/test_typed_hash_composition.py --core
+compiler/my-try-cpp/build/runtime/libscpp_runtime_core.a`. For sanitizers, use the
+sanitized core path, add `--sanitize`, set `ASAN_OPTIONS=detect_leaks=1` and
+`UBSAN_OPTIONS=halt_on_error=1`, and select the sanitized generator through
+`SCPP_API_GENERATOR`. The fixture publishes only in a temporary directory and removes
+it on exit; runtime publication demands remain unchanged. Shared identity keys,
+shared-value reference operations, mixed and dynamic hashes remain later slices.

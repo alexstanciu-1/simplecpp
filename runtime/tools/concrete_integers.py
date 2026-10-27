@@ -65,7 +65,9 @@ def generate():
                   '\t\treturn scpp::isset(bool_t(value.native_value())).native_value();\n\t}\n}\n')
     keys = [banner, '#pragma once\n#include "scpp/integers.hpp"\n#include "scpp/hash_t.hpp"\nnamespace scpp::hash_detail\n{\n']
     for name, rep in INTEGERS:
-        keys.append(f'''	template<> struct key_ops<scpp::{name}> final
+        keys.append(f'''	template<> struct integer_key_policy<scpp::{name}> final
+	{{ using rep = {rep}; }};
+	template<> struct key_ops<scpp::{name}> final
 	{{
 		static std::uint64_t hash(const scpp::{name} &key)
 		{{ return key_ops<int_t<{rep}>>::hash(int_t<{rep}>(key.native_value())); }}

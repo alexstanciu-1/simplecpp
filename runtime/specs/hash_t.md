@@ -37,6 +37,13 @@ policy; the adapter does not inspect payload fields or establish language admiss
 The language compiler admits only the key families specified in
 [typed hash semantics](../../specs/array_semantics.md#v02-object-identity-hash-keys--2026-10-21).
 
+Concrete public integers use private hashing/equality adapters plus the hash-only
+`hash_detail::integer_key_policy` for numeric append. Native `int_t` and concrete
+integers share the same next-key and overflow algorithm. This policy does not opt
+concrete integers into legacy arithmetic operator traits. The generated template-free
+public typed-hash API omits `append` for noninteger keys; the native compatibility
+surface retains its explicit runtime rejection.
+
 `hash_t::make()` constructs an empty value through the registered runtime factory
 protocol, including concrete composition. It takes no arguments and has the same
 ownership and membership semantics as ordinary default construction.

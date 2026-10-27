@@ -4,6 +4,8 @@
 #include "scpp/hash_t.hpp"
 namespace scpp::hash_detail
 {
+	template<> struct integer_key_policy<scpp::int8> final
+	{ using rep = __INT8_TYPE__; };
 	template<> struct key_ops<scpp::int8> final
 	{
 		static std::uint64_t hash(const scpp::int8 &key)
@@ -11,6 +13,8 @@ namespace scpp::hash_detail
 		static bool equal(const scpp::int8 &left, const scpp::int8 &right)
 		{ return key_ops<int_t<__INT8_TYPE__>>::equal(int_t<__INT8_TYPE__>(left.native_value()), int_t<__INT8_TYPE__>(right.native_value())); }
 	};
+	template<> struct integer_key_policy<scpp::int16> final
+	{ using rep = __INT16_TYPE__; };
 	template<> struct key_ops<scpp::int16> final
 	{
 		static std::uint64_t hash(const scpp::int16 &key)
@@ -18,6 +22,8 @@ namespace scpp::hash_detail
 		static bool equal(const scpp::int16 &left, const scpp::int16 &right)
 		{ return key_ops<int_t<__INT16_TYPE__>>::equal(int_t<__INT16_TYPE__>(left.native_value()), int_t<__INT16_TYPE__>(right.native_value())); }
 	};
+	template<> struct integer_key_policy<scpp::int32> final
+	{ using rep = __INT32_TYPE__; };
 	template<> struct key_ops<scpp::int32> final
 	{
 		static std::uint64_t hash(const scpp::int32 &key)
@@ -25,6 +31,8 @@ namespace scpp::hash_detail
 		static bool equal(const scpp::int32 &left, const scpp::int32 &right)
 		{ return key_ops<int_t<__INT32_TYPE__>>::equal(int_t<__INT32_TYPE__>(left.native_value()), int_t<__INT32_TYPE__>(right.native_value())); }
 	};
+	template<> struct integer_key_policy<scpp::int64> final
+	{ using rep = __INT64_TYPE__; };
 	template<> struct key_ops<scpp::int64> final
 	{
 		static std::uint64_t hash(const scpp::int64 &key)
@@ -32,6 +40,8 @@ namespace scpp::hash_detail
 		static bool equal(const scpp::int64 &left, const scpp::int64 &right)
 		{ return key_ops<int_t<__INT64_TYPE__>>::equal(int_t<__INT64_TYPE__>(left.native_value()), int_t<__INT64_TYPE__>(right.native_value())); }
 	};
+	template<> struct integer_key_policy<scpp::uint8> final
+	{ using rep = __UINT8_TYPE__; };
 	template<> struct key_ops<scpp::uint8> final
 	{
 		static std::uint64_t hash(const scpp::uint8 &key)
@@ -39,6 +49,8 @@ namespace scpp::hash_detail
 		static bool equal(const scpp::uint8 &left, const scpp::uint8 &right)
 		{ return key_ops<int_t<__UINT8_TYPE__>>::equal(int_t<__UINT8_TYPE__>(left.native_value()), int_t<__UINT8_TYPE__>(right.native_value())); }
 	};
+	template<> struct integer_key_policy<scpp::uint16> final
+	{ using rep = __UINT16_TYPE__; };
 	template<> struct key_ops<scpp::uint16> final
 	{
 		static std::uint64_t hash(const scpp::uint16 &key)
@@ -46,6 +58,8 @@ namespace scpp::hash_detail
 		static bool equal(const scpp::uint16 &left, const scpp::uint16 &right)
 		{ return key_ops<int_t<__UINT16_TYPE__>>::equal(int_t<__UINT16_TYPE__>(left.native_value()), int_t<__UINT16_TYPE__>(right.native_value())); }
 	};
+	template<> struct integer_key_policy<scpp::uint32> final
+	{ using rep = __UINT32_TYPE__; };
 	template<> struct key_ops<scpp::uint32> final
 	{
 		static std::uint64_t hash(const scpp::uint32 &key)
@@ -53,6 +67,8 @@ namespace scpp::hash_detail
 		static bool equal(const scpp::uint32 &left, const scpp::uint32 &right)
 		{ return key_ops<int_t<__UINT32_TYPE__>>::equal(int_t<__UINT32_TYPE__>(left.native_value()), int_t<__UINT32_TYPE__>(right.native_value())); }
 	};
+	template<> struct integer_key_policy<scpp::uint64> final
+	{ using rep = __UINT64_TYPE__; };
 	template<> struct key_ops<scpp::uint64> final
 	{
 		static std::uint64_t hash(const scpp::uint64 &key)

@@ -17,7 +17,11 @@
       "owner": "runtime.core",
       "borrow": "${value}.native_value()",
       "construct": "scpp::uint64(${value})",
-      "includes": []
+      "includes": [],
+      "capabilities": [
+        "typed_hash_key",
+        "integer_key"
+      ]
     },
     "int64": {
       "cpp": "scpp::int64",
@@ -27,6 +31,10 @@
       "construct": "scpp::int64((${value}).native_value())",
       "includes": [
         "scpp/int_t.hpp"
+      ],
+      "capabilities": [
+        "typed_hash_key",
+        "integer_key"
       ]
     },
     "boolean": {
@@ -44,6 +52,9 @@
       "construct": "detail::string_access::make(${factory})",
       "includes": [
         "scpp/detail/string_access.hpp"
+      ],
+      "capabilities": [
+        "typed_hash_key"
       ]
     },
     "error_value": {
@@ -568,6 +579,504 @@
         "std::is_copy_assignable_v<${public:T}>",
         "std::is_nothrow_destructible_v<${public:T}>"
       ]
+    },
+    "nullable": {
+      "parameters": [
+        "T"
+      ],
+      "binding": "nullable",
+      "native": "${binding}<${public:T}>",
+      "classes": [
+        {
+          "id": "self",
+          "name": "${name}",
+          "native": "${native_type}",
+          "lifecycle": {
+            "default": "native",
+            "copy": "native",
+            "move": "native",
+            "destroy": "native"
+          },
+          "methods": [
+            {
+              "kind": "constructor",
+              "parameters": [
+                {
+                  "name": "value",
+                  "type": "T",
+                  "passing": "const_ref"
+                }
+              ],
+              "expression": "value",
+              "explicit": true
+            },
+            {
+              "name": "operator=",
+              "returns": "self_ref",
+              "parameters": [
+                {
+                  "name": "value",
+                  "type": "T",
+                  "passing": "const_ref"
+                }
+              ],
+              "body": "${self} = value;\nreturn *this;"
+            },
+            {
+              "kind": "constructor",
+              "parameters": [
+                {
+                  "name": "value",
+                  "type": "T",
+                  "passing": "move_ref"
+                }
+              ],
+              "expression": "std::move(value)",
+              "explicit": true
+            },
+            {
+              "name": "operator=",
+              "returns": "self_ref",
+              "parameters": [
+                {
+                  "name": "value",
+                  "type": "T",
+                  "passing": "move_ref"
+                }
+              ],
+              "body": "${self} = std::move(value);\nreturn *this;"
+            },
+            {
+              "name": "has_value",
+              "returns": "boolean",
+              "parameters": [],
+              "const": true,
+              "transport": "native",
+              "expression": "${self}.has_value().native_value()"
+            },
+            {
+              "name": "value",
+              "returns": "T",
+              "parameters": [],
+              "const": true,
+              "expression": "${self}.value()"
+            },
+            {
+              "name": "require_value",
+              "returns": "T",
+              "parameters": [
+                {
+                  "name": "context",
+                  "type": "c_string",
+                  "passing": "value"
+                }
+              ],
+              "const": true,
+              "expression": "${self}.require_value(context)"
+            },
+            {
+              "name": "reset",
+              "returns": "void",
+              "parameters": [],
+              "expression": "${self}.reset()",
+              "noexcept": true
+            },
+            {
+              "name": "value_or",
+              "returns": "T",
+              "parameters": [
+                {
+                  "name": "value",
+                  "type": "T",
+                  "passing": "const_ref"
+                }
+              ],
+              "expression": "${self}.value_or(value)",
+              "const": true
+            }
+          ]
+        }
+      ],
+      "checks": [
+        "std::is_copy_constructible_v<${public:T}>",
+        "std::is_copy_assignable_v<${public:T}>",
+        "std::is_nothrow_destructible_v<${public:T}>"
+      ],
+      "functions": [
+        {
+          "name": "take",
+          "returns": "boolean",
+          "parameters": [
+            {
+              "name": "value",
+              "type": "T",
+              "passing": "ref"
+            },
+            {
+              "name": "source",
+              "type": "self",
+              "passing": "const_ref"
+            }
+          ],
+          "kind": "function",
+          "body": "const ${public:self} snapshot(source);\nif (!snapshot.has_value()) return scpp::boolean(false);\nvalue = snapshot.value(); return scpp::boolean(true);"
+        },
+        {
+          "name": "was_found",
+          "returns": "boolean",
+          "parameters": [
+            {
+              "name": "value",
+              "type": "self",
+              "passing": "const_ref"
+            }
+          ],
+          "expression": "value.has_value()",
+          "kind": "function"
+        },
+        {
+          "name": "is_nullopt",
+          "returns": "boolean",
+          "parameters": [
+            {
+              "name": "value",
+              "type": "self",
+              "passing": "const_ref"
+            }
+          ],
+          "expression": "scpp::boolean(!static_cast<bool>(value.has_value()))",
+          "kind": "function"
+        }
+      ]
+    },
+    "hash": {
+      "parameters": [
+        "V",
+        "K"
+      ],
+      "defaults": [
+        "string"
+      ],
+      "binding": "hash",
+      "native": "${binding}<${public:V}, ${public:K}>",
+      "requires_capabilities": {
+        "K": [
+          "typed_hash_key"
+        ]
+      },
+      "includes": [
+        "scpp/detail/concrete_keys.hpp"
+      ],
+      "checks": [
+        "std::is_copy_constructible_v<${public:V}>",
+        "std::is_copy_assignable_v<${public:V}>",
+        "std::is_nothrow_destructible_v<${public:V}>",
+        "std::is_copy_constructible_v<${public:K}>",
+        "std::is_copy_assignable_v<${public:K}>",
+        "std::is_nothrow_destructible_v<${public:K}>"
+      ],
+      "classes": [
+        {
+          "id": "self",
+          "name": "${name}",
+          "native": "${native_type}",
+          "lifecycle": {
+            "default": "native",
+            "copy": "native",
+            "move": "native",
+            "destroy": "native"
+          },
+          "methods": [
+            {
+              "name": "size",
+              "returns": "uint64",
+              "parameters": [],
+              "expression": "${self}.size()",
+              "const": true,
+              "transport": "native"
+            },
+            {
+              "name": "capacity",
+              "returns": "uint64",
+              "parameters": [],
+              "expression": "${self}.capacity()",
+              "const": true,
+              "transport": "native"
+            },
+            {
+              "name": "key_capacity",
+              "returns": "uint64",
+              "parameters": [],
+              "expression": "${self}.key_capacity()",
+              "const": true,
+              "transport": "native"
+            },
+            {
+              "name": "index_capacity",
+              "returns": "uint64",
+              "parameters": [],
+              "expression": "${self}.index_capacity()",
+              "const": true,
+              "transport": "native"
+            },
+            {
+              "name": "estimated_storage_bytes",
+              "returns": "uint64",
+              "parameters": [],
+              "expression": "${self}.estimated_storage_bytes()",
+              "const": true,
+              "transport": "native"
+            },
+            {
+              "name": "empty",
+              "returns": "boolean",
+              "parameters": [],
+              "expression": "${self}.empty().native_value()",
+              "const": true,
+              "transport": "native"
+            },
+            {
+              "name": "is_packed",
+              "returns": "boolean",
+              "parameters": [],
+              "expression": "${self}.is_packed().native_value()",
+              "const": true,
+              "transport": "native"
+            },
+            {
+              "name": "clear",
+              "returns": "void",
+              "parameters": [],
+              "expression": "${self}.clear()"
+            },
+            {
+              "name": "has",
+              "returns": "boolean",
+              "parameters": [
+                {
+                  "name": "key",
+                  "type": "K",
+                  "passing": "const_ref"
+                }
+              ],
+              "expression": "${self}.has(key).native_value()",
+              "const": true,
+              "transport": "native"
+            },
+            {
+              "name": "at",
+              "returns": "V",
+              "parameters": [
+                {
+                  "name": "key",
+                  "type": "K",
+                  "passing": "const_ref"
+                }
+              ],
+              "expression": "${self}.at(key)",
+              "const": true
+            },
+            {
+              "name": "operator[]",
+              "returns": "V",
+              "parameters": [
+                {
+                  "name": "key",
+                  "type": "K",
+                  "passing": "const_ref"
+                }
+              ],
+              "expression": "this->at(key)",
+              "const": true
+            },
+            {
+              "name": "find",
+              "returns": "nullable<${type:V}>",
+              "parameters": [
+                {
+                  "name": "key",
+                  "type": "K",
+                  "passing": "const_ref"
+                }
+              ],
+              "expression": "${self}.find(key)",
+              "const": true,
+              "transport": "native"
+            },
+            {
+              "name": "remove",
+              "returns": "boolean",
+              "parameters": [
+                {
+                  "name": "key",
+                  "type": "K",
+                  "passing": "const_ref"
+                }
+              ],
+              "expression": "${self}.remove(key)",
+              "transport": "native"
+            },
+            {
+              "name": "set",
+              "returns": "self_ref",
+              "parameters": [
+                {
+                  "name": "key",
+                  "type": "K",
+                  "passing": "const_ref"
+                },
+                {
+                  "name": "value",
+                  "type": "V",
+                  "passing": "const_ref"
+                }
+              ],
+              "body": "${self}.set(key, value); return *this;"
+            },
+            {
+              "name": "append",
+              "returns": "K",
+              "parameters": [
+                {
+                  "name": "value",
+                  "type": "V",
+                  "passing": "const_ref"
+                }
+              ],
+              "expression": "${self}.append(value)",
+              "requires_capabilities": {
+                "K": [
+                  "integer_key"
+                ]
+              }
+            },
+            {
+              "name": "set",
+              "returns": "self_ref",
+              "parameters": [
+                {
+                  "name": "key",
+                  "type": "K",
+                  "passing": "const_ref"
+                },
+                {
+                  "name": "value",
+                  "type": "V",
+                  "passing": "move_ref"
+                }
+              ],
+              "body": "${self}.set(key, std::move(value)); return *this;"
+            },
+            {
+              "name": "append",
+              "returns": "K",
+              "parameters": [
+                {
+                  "name": "value",
+                  "type": "V",
+                  "passing": "move_ref"
+                }
+              ],
+              "expression": "${self}.append(std::move(value))",
+              "requires_capabilities": {
+                "K": [
+                  "integer_key"
+                ]
+              }
+            },
+            {
+              "name": "iterate",
+              "returns": "cursor",
+              "parameters": [],
+              "expression": "${self}.value_range()",
+              "const": true,
+              "transport": "native"
+            }
+          ]
+        },
+        {
+          "id": "cursor",
+          "name": "${namebase}_cursor_",
+          "native": "scpp::iteration_detail::table_range<${native_type}, ${public:K}, ${public:V}>",
+          "includes": [
+            "scpp/table_iteration.hpp"
+          ],
+          "lifecycle": {
+            "default": "disabled",
+            "copy": "disabled",
+            "move": "disabled",
+            "destroy": "native"
+          },
+          "methods": [
+            {
+              "name": "valid",
+              "returns": "boolean",
+              "parameters": [],
+              "transport": "native",
+              "expression": "${self}.begin() != ${self}.end()"
+            },
+            {
+              "name": "key",
+              "returns": "K",
+              "parameters": [],
+              "body": "if (!this->valid()) raise_runtime_error(\"Finished iteration\", \"index_out_of_range\", \"core\", \"iteration\");\nreturn (*${self}.begin()).key();"
+            },
+            {
+              "name": "value",
+              "returns": "V",
+              "parameters": [],
+              "body": "if (!this->valid()) raise_runtime_error(\"Finished iteration\", \"index_out_of_range\", \"core\", \"iteration\");\nreturn (*${self}.begin()).value_copy();"
+            },
+            {
+              "name": "next",
+              "returns": "void",
+              "parameters": [],
+              "body": "if (!this->valid()) raise_runtime_error(\"Finished iteration\", \"index_out_of_range\", \"core\", \"iteration\");\nauto iterator = ${self}.begin();\n++iterator;"
+            }
+          ]
+        }
+      ],
+      "functions": [
+        {
+          "name": "count",
+          "returns": "uint64",
+          "parameters": [
+            {
+              "name": "value",
+              "type": "self",
+              "passing": "const_ref"
+            }
+          ],
+          "kind": "function",
+          "expression": "value.size()"
+        },
+        {
+          "name": "empty",
+          "returns": "boolean",
+          "parameters": [
+            {
+              "name": "value",
+              "type": "self",
+              "passing": "const_ref"
+            }
+          ],
+          "kind": "function",
+          "expression": "value.empty()"
+        },
+        {
+          "name": "isset",
+          "returns": "boolean",
+          "parameters": [
+            {
+              "name": "value",
+              "type": "self",
+              "passing": "const_ref"
+            }
+          ],
+          "kind": "function",
+          "expression": "scpp::boolean(true)"
+        }
+      ]
     }
   },
   "functions": {
@@ -597,6 +1106,24 @@
           "vector<string>"
         ]
       }
+    }
+  },
+  "capabilities": {
+    "typed_hash_key": {
+      "includes": [
+        "scpp/detail/concrete_keys.hpp"
+      ],
+      "checks": [
+        "scpp::hash_detail::typed_hash_key<${cpp}>"
+      ]
+    },
+    "integer_key": {
+      "includes": [
+        "scpp/detail/concrete_integer_keys.hpp"
+      ],
+      "checks": [
+        "scpp::hash_detail::integer_key<${cpp}>"
+      ]
     }
   }
 }

@@ -417,3 +417,21 @@ compiler/my-try-cpp/build/sanitizers/runtime/libscpp_runtime_core.a` to instrume
 generated fixture and link the existing sanitized core (run with leak detection in
 an environment without ptrace). `SCPP_API_GENERATOR` can select the sanitized C++ tool
 as well. Temporary fixture outputs are cleaned after the test.
+
+### Typed hash / nullable proof completed (2026-10-27)
+
+The metadata generator now supports named capability requirements and canonical
+parameter expressions in dependent signatures. Typed hash and nullable are recipes
+in the existing metadata, including an ordinary companion cursor. Required native
+checks share the layout probe; no family-specific generator switch or additional
+per-method compilation is introduced. Concrete integer append uses a private hash
+policy and the existing runtime algorithm. Structural exported names now reuse
+correctly without being registered as authored aliases.
+
+Release, allocation parity, sanitizer/leak and application publication/reuse proofs
+are recorded in [boundary results](../../runtime/specs/public_api_boundary_results.md).
+No new permanent runtime specialization demand was needed for this proof. Shared
+identity keys/reference operations and mixed/dynamic families remain explicit later
+work, not implicit coverage of the typed recipe. Generation/probing still costs more
+than the tiny public caller; consolidating probes is a possible future optimization,
+not a reason to reintroduce per-family generation paths.

@@ -181,6 +181,19 @@ struct dyn_keys final {
 	}
 };
 
+// Hash-only append policy. Concrete integers opt in privately without joining
+// the legacy numeric operator traits.
+template <typename T_KEY>
+struct integer_key_policy {};
+
+template <typename T_KEY> requires detail::is_int_t_v<T_KEY>
+struct integer_key_policy<T_KEY> {
+    using rep = detail::int_rep_t<T_KEY>;
+};
+
+template <typename T_KEY>
+concept integer_key = requires { typename integer_key_policy<T_KEY>::rep; };
+
 template <typename T_KEY>
 struct key_ops;
 
@@ -520,8 +533,8 @@ private:
 		return values_[index];
 	}
 
-	[[nodiscard]] T_KEY next_append_key() const requires detail::is_int_t_v<T_KEY> {
-		using rep_t = detail::int_rep_t<T_KEY>;
+	[[nodiscard]] T_KEY next_append_key() const requires hash_detail::integer_key<T_KEY> {
+		using rep_t = typename hash_detail::integer_key_policy<T_KEY>::rep;
 		std::uint64_t max_key = 0;
 		bool found_non_negative_key = false;
 		for (std::uint32_t i = 0; i < keys_.size(); ++i) {
@@ -768,7 +781,7 @@ public:
 	}
 
 	[[nodiscard]] T_KEY append(const T_VALUE &value) requires std::copyable<T_VALUE> {
-		if constexpr (detail::is_int_t_v<T_KEY>) {
+		if constexpr (hash_detail::integer_key<T_KEY>) {
 			const auto key = next_append_key();
 			insert_or_assign_key(key, T_VALUE{value});
 			return key;
@@ -777,7 +790,7 @@ public:
 	}
 
 	[[nodiscard]] T_KEY append(T_VALUE &&value) {
-		if constexpr (detail::is_int_t_v<T_KEY>) {
+		if constexpr (hash_detail::integer_key<T_KEY>) {
 			const auto key = next_append_key();
 			insert_or_assign_key(key, std::move(value));
 			return key;

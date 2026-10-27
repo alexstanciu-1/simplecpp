@@ -1,6 +1,6 @@
 {
   "abi": "529dd5502370f48d64891818e9439aae72831b990b4027e8abe25c50c1216c21",
-  "api_identity": "fbdb793e2d4cf24e1fafcb01f359c093c19af6cbffae2b97e4a24985aa12aa47",
+  "api_identity": "63c24ea3074e5c04849fa40c01bd5dfeaa72adf74555bba9bb8a263852e5b154",
   "artifacts": [
     "runtime.core"
   ],
@@ -41,6 +41,10 @@
     },
     "int64": {
       "borrow": "scpp::int_t<>(${value}.native_value())",
+      "capabilities": [
+        "typed_hash_key",
+        "integer_key"
+      ],
       "construct": "scpp::int64((${value}).native_value())",
       "cpp": "scpp::int64",
       "header": "scpp/integers.hpp",
@@ -51,6 +55,9 @@
     },
     "string": {
       "borrow": "detail::string_access::get(${value})",
+      "capabilities": [
+        "typed_hash_key"
+      ],
       "construct": "detail::string_access::make(${factory})",
       "cpp": "scpp::string",
       "header": "scpp/string.hpp",
@@ -62,6 +69,10 @@
     },
     "uint64": {
       "borrow": "${value}.native_value()",
+      "capabilities": [
+        "typed_hash_key",
+        "integer_key"
+      ],
       "construct": "scpp::uint64(${value})",
       "cpp": "scpp::uint64",
       "header": "scpp/integers.hpp",
