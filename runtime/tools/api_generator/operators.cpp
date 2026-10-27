@@ -28,7 +28,7 @@ namespace scpp::api_generation
     static const value &validated_registry(const value &metadata)
     {
         const auto &registry = metadata.at("global_operators");
-        fields_only(registry, "types domains groups operations compounds operand_conversions carrier_projection", "global operators");
+        fields_only(registry, "types domains groups operations compounds operand_conversions carrier_projection carrier_comparisons", "global operators");
         for (const auto *field : {"types", "domains", "groups", "operations"}) {
             if (registry.at(field).type != value::kind::object)
                 throw std::runtime_error("Operator registry requires objects");
@@ -206,6 +206,27 @@ namespace scpp::api_generation
             }
             for (const auto &payload : domains(policy.at("payloads"))) registry.at("types").at(payload);
         }
+        if (registry.has("carrier_comparisons")) {
+            const auto &comparisons = registry.at("carrier_comparisons");
+            fields_only(comparisons, "payloads payload_state operations", "carrier comparisons");
+            authored_name(comparisons.at("payload_state").text());
+            for (const auto &type : domains(comparisons.at("payloads"))) registry.at("types").at(type);
+            for (const auto &[name, policy] : comparisons.at("operations").fields) {
+                const auto &operation = registry.at("operations").at(name);
+                if (operation.get("form", "binary") != "binary" || !operation.has("returns"))
+                    throw std::runtime_error("Carrier comparison requires a binary operation with an explicit result type");
+                metadata.at("types").at(operation.at("returns").text());
+                fields_only(policy, "different_states same_states", "carrier comparison policy");
+                const auto different = policy.at("different_states").text();
+                if (different != "true" && different != "false") throw std::runtime_error("Invalid different-state result");
+                if (policy.at("same_states").type != value::kind::object) throw std::runtime_error("Same-state results must be an object");
+                for (const auto &[state, result] : policy.at("same_states").fields) {
+                    authored_name(state);
+                    if (state == comparisons.at("payload_state").text()) throw std::runtime_error("Payload states require payload comparison");
+                    if (result.text() != "true" && result.text() != "false") throw std::runtime_error("Invalid same-state result");
+                }
+            }
+        }
         validate_carriers(metadata);
         return registry;
     }
@@ -372,6 +393,22 @@ namespace scpp::api_generation
         return plan;
     }
 
+    static value comparison_states(const value &projection, const std::string &payload)
+    {
+        value states = value::array();
+        if (projection.get("kind") == "identity") {
+            value state = value::object(); state["tag"] = payload; states.items.push_back(state); return states;
+        }
+        if (!projection.has("states")) throw std::runtime_error("Carrier comparison requires state observations");
+        for (const auto &source : projection.at("states").items) {
+            if (!source.has("comparison_tag")) throw std::runtime_error("Carrier state has no comparison tag");
+            value state = value::object(); state["tag"] = source.at("comparison_tag");
+            if (source.has("test")) state["test_expression"] = "${value}." + source.at("test").text() + "()";
+            states.items.push_back(state);
+        }
+        return states;
+    }
+
     // Project each operand independently; only the ordinary resolver chooses a
     // payload operation. No wrapper-pair overloads and no recursive extraction.
     value resolve_operator(const value &metadata, const value &request, const value &names)
@@ -396,10 +433,12 @@ namespace scpp::api_generation
                 && registry.at("types").has(request.at("right").text())))
             return resolve_plain_operator(metadata, registry, request);
         fields_only(request, "operation left right", "operator request");
-        if (!registry.has("carrier_projection")
-            || !contains(registry.at("carrier_projection").at("operations"), request.at("operation").text()))
+        const bool compare = registry.has("carrier_comparisons")
+            && registry.at("carrier_comparisons").at("operations").has(request.at("operation").text());
+        if (!compare && (!registry.has("carrier_projection")
+            || !contains(registry.at("carrier_projection").at("operations"), request.at("operation").text())))
             throw std::runtime_error("Unsupported operator operand type");
-        const auto &policy = registry.at("carrier_projection");
+        const auto &policy = registry.at(compare ? "carrier_comparisons" : "carrier_projection");
         naming types(metadata_naming_registry(metadata, metadata.at("types"), names));
         value out = value::object(), calculation = request;
         bool projected = false;
@@ -422,6 +461,26 @@ namespace scpp::api_generation
         out["calculation"] = resolve_plain_operator(metadata, registry, calculation);
         out["operation"] = request.at("operation"); out["left"] = request.at("left"); out["right"] = request.at("right");
         out["result_type"] = out.at("calculation").at("result_type");
+        if (compare) {
+            const auto payload = policy.at("payload_state").text();
+            const auto &comparison = policy.at("operations").at(request.at("operation").text());
+            out["left_states"] = comparison_states(out.at("left_projection"), payload);
+            out["right_states"] = comparison_states(out.at("right_projection"), payload);
+            // At most a small state vocabulary, never a family/type overload product.
+            for (const auto &left : out.at("left_states").items)
+                for (const auto &right : out.at("right_states").items)
+                    if (left.at("tag").text() == right.at("tag").text() && left.at("tag").text() != payload
+                        && !comparison.at("same_states").has(left.at("tag").text()))
+                        throw std::runtime_error("Unsupported carrier comparison state: " + left.at("tag").text());
+            out["kind"] = "state_comparison"; out["payload_state"] = payload;
+            out["different_states"] = comparison.at("different_states"); out["same_states"] = comparison.at("same_states");
+            out["steps"] = value::array();
+            for (const auto *step : {"evaluate_left_snapshot", "evaluate_right_snapshot", "observe_states",
+                     "compare_states", "project_present_payloads", "convert_payloads", "compare_payloads"})
+                out["steps"].items.emplace_back(step);
+            out["failure"] = "throw_preserve_prior_effects";
+            return out;
+        }
         out["kind"] = "checked_payload_binary";
         out["steps"] = value::array();
         for (const auto *step : {"evaluate_left", "project_left", "convert_left", "evaluate_right",

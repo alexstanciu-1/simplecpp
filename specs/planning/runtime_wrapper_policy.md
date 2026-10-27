@@ -349,3 +349,11 @@ states bypass extraction; payload states use the existing condition API, includi
 admitted nested delegation. Explicit bool casts retain their payload requirement.
 The nullable<int64> execution proof is allocation-free; noncopyable/scoped payload
 observation and large-payload copy avoidance are still mandatory completion work.
+
+C4 adds numeric state-aware equality/inequality, canonical numeric strict identity,
+and checked numeric ordering. Nullable<int64>/nullable<float64> execution proves
+promotion versus original-kind identity, absence and whole-operand snapshot order.
+Strict matching structured-error states reject until their identity API is supplied;
+ordinary Result errors have a metadata state-equality result. Literal null/sentinel
+comparison routes remain an explicit audit item rather than being routed through
+plain-payload comparison by accident.

@@ -626,11 +626,13 @@
           {
             "name": "payload",
             "test": "has_value",
-            "condition": "payload"
+            "condition": "payload",
+            "comparison_tag": "payload"
           },
           {
             "name": "error",
-            "condition": "false"
+            "condition": "false",
+            "comparison_tag": "error"
           }
         ]
       }
@@ -810,7 +812,8 @@
           {
             "name": "payload",
             "test": "has_value",
-            "condition": "payload"
+            "condition": "payload",
+            "comparison_tag": "payload"
           },
           {
             "name": "absent",
@@ -820,7 +823,8 @@
                 "header": "scpp/string.hpp"
               }
             },
-            "condition": "false"
+            "condition": "false",
+            "comparison_tag": "absent"
           }
         ]
       }
@@ -3641,7 +3645,12 @@
         "subtract",
         "multiply",
         "divide",
-        "remainder"
+        "remainder",
+        "less",
+        "less_equal",
+        "greater",
+        "greater_equal",
+        "compare"
       ],
       "payloads": [
         "int8",
@@ -3654,6 +3663,48 @@
         "uint64",
         "float64"
       ]
+    },
+    "carrier_comparisons": {
+      "payloads": [
+        "int8",
+        "int16",
+        "int32",
+        "int64",
+        "uint8",
+        "uint16",
+        "uint32",
+        "uint64",
+        "float64"
+      ],
+      "payload_state": "payload",
+      "operations": {
+        "numeric_equal": {
+          "different_states": "false",
+          "same_states": {
+            "absent": "true",
+            "error": "true"
+          }
+        },
+        "numeric_not_equal": {
+          "different_states": "true",
+          "same_states": {
+            "absent": "false",
+            "error": "false"
+          }
+        },
+        "strict_identical": {
+          "different_states": "false",
+          "same_states": {
+            "absent": "true"
+          }
+        },
+        "strict_not_identical": {
+          "different_states": "true",
+          "same_states": {
+            "absent": "false"
+          }
+        }
+      }
     }
   },
   "conversions": {

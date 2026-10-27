@@ -17,7 +17,7 @@ each slice. The original inventory is a baseline, not a current completion count
 | A2 | Complete for the agreed checked scalar conversions | Carrier conversion is C; ownership casts are D. |
 | B1 | Complete for the agreed scalar-facing truth/text/identity/observation scope | Carrier forms remain C; boxed arithmetic and access completion are not B1 credit. |
 | B2 | Complete for the agreed non-carrier special/mutation and text public paths; closure evidence below | Carrier forms C; indexed retention E; native exception inspection and overflow disposition G. |
-| C | Arithmetic, required-scalar casts and conditions implemented for the initial nullable path | Four carrier families, state-preserving operations/conversions and conditional lifecycle. |
+| C | Initial nullable numeric path includes arithmetic, casts, conditions, comparisons and ordering | Four carrier families, state-preserving operations/conversions and conditional lifecycle. |
 | D | Pending | Ownership, application targets and source Exception transport gaps. |
 | E | Existing vector/hash/boxed foundations; incomplete | Capability/access/initialization/cursor gaps and identity key-allocation debt. |
 | F | Pending | Callable transport and registered collection algorithms. |
@@ -809,3 +809,33 @@ Next for the first complete nullable path: state-aware equality/strict identity 
 same-family conversion/reconstruction. The review gate and full C completion remain
 open. Existing runtime generation still has 330 identical units; no core rebuild or
 new runtime adapter is required by condition planning.
+
+## C4 — numeric carrier state comparisons and checked ordering
+
+Numeric ordinary equality/inequality and canonical numeric strict identity now
+compose the shared state observations with existing payload operator plans. Whole
+operands are snapshotted left-to-right before state comparison. Constant state
+results skip extraction; two payloads use promotion or strict identity as selected
+by the scalar owner. The registered result identity is retained, including synthetic
+metadata aliases. There is no exact-carrier-family restriction or wrapper-pair
+implementation generation. Numeric ordering reuses one-layer checked projection.
+
+The public-only execution proof now generates nullable<int64> and nullable<float64>.
+It checks present/absent equality, both negations, promoted equal values versus strict
+numeric identity, matching absence across payload types, RHS effects despite absent
+left, alias mutation after the left snapshot, and ordering extraction failure.
+Successful measured scalar cases remain allocation-free. Both application-owned
+specializations reuse their sealed publication without new implementation units.
+
+Ordinary Result error equality is resolved in metadata. Strict Result-to-Result
+comparison with matching error states rejects explicitly: the structured-error
+identity public path remains required work, not a constant-true fallback. Other
+remaining comparison work includes bool/string/boxed carrier domains and literal
+null/sentinel routes; the latter must be audited against state-preserving strict
+identity before the first complete nullable review. Numeric incompatible payloads
+cannot be rescued by absence.
+
+Next for that review: same-family nullable conversion/reconstruction and the literal
+null comparison audit. Broader four-family state/error/lifetime tests, conditional
+lifecycle, and noncopyable/large-payload observation remain mandatory C work. All 330
+existing runtime generation plans are unchanged, so no runtime-core rebuild was needed.

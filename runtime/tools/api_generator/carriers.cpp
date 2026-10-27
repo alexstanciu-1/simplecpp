@@ -41,11 +41,12 @@ namespace scpp::api_generation
                 std::set<std::string> seen;
                 for (std::size_t i = 0; i < states.items.size(); ++i) {
                     const auto &state = states.items[i];
-                    fields_only(state, "name test casts condition", "carrier state");
+                    fields_only(state, "name test casts condition comparison_tag", "carrier state");
                     if (state.has("condition") && state.get("condition") != "payload"
                         && state.get("condition") != "true" && state.get("condition") != "false")
                         throw std::runtime_error("Unknown carrier condition policy");
                     authored_name(state.at("name").text());
+                    if (state.has("comparison_tag")) authored_name(state.at("comparison_tag").text());
                     if (!seen.insert(state.at("name").text()).second) throw std::runtime_error("Duplicate carrier state");
                     if (state.has("test") == (i + 1 == states.items.size()))
                         throw std::runtime_error("Carrier states require a final fallback only");

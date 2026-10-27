@@ -472,3 +472,36 @@ condition, text or explicit-cast admission; those have separate state policies.
 
 Implementation coverage is tracked in the runtime-core completion plan; this
 contract does not claim that every frontend or carrier public recipe is migrated.
+
+## State-preserving carrier comparisons — 2026-10-27
+
+For admitted payload comparisons, ordinary equality applies uniformly across
+nullable, result, result_or_false and result_or_bool and admitted plain peers.
+Validate payload comparison admission first, snapshot the whole left operand and
+then the whole right operand, and compare their outer state categories. A plain
+operand counts as a payload. Two payloads use ordinary payload equality; matching
+absence or boolean-sentinel states compare equal; two structured Result errors
+compare equal without comparing error metadata. Different states compare unequal.
+`!=` negates a successful equality result, not an invalid-comparison diagnostic.
+A missing value never rescues an invalid payload comparison.
+
+Strict identity also preserves carrier state categories. Matching payload states
+use payload strict identity without numeric promotion; matching structured errors
+compare their identity metadata. A sentinel is not strictly identical to a payload
+holding the same scalar. Carrier family identity itself is not an additional
+requirement: matching states can compare across otherwise admitted families. For
+pairs admitted by both operators, strict identity implies ordinary equality.
+`!==` negates successful strict identity. This supersedes older sentinel-to-payload
+strict normalization. Literal null/sentinel routes must preserve the same invariant
+under their separately admitted comparison rules.
+
+Ordering uses checked one-layer extraction instead of state sorting, followed by
+the payload ordering contract. A non-value state throws. Left extraction/conversion
+precedes right evaluation, as for arithmetic; equality snapshots both operands
+before observing states. `<=>` retains its separately admitted payload domain and
+NaN behavior. Boolean, string and numeric payload admission stays with each ordinary
+operator group; these rules do not grant arbitrary cross-domain comparison.
+
+These contracts define the completion target. Public-path implementation and source
+frontend adoption are tracked separately; in particular, strict structured-error
+identity and literal-sentinel routes must not be inferred from a scalar nullable proof.

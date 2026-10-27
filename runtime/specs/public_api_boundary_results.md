@@ -1572,3 +1572,32 @@ same-family reconstruction are still needed before the first complete carrier re
 
 Eight focused regression tests passed: release 9.24s; ASan/UBSan with leak detection
 47.08s. The public-only carrier execution/allocation/publication proof ran separately.
+
+## C4 numeric carrier comparisons and ordering
+
+The public proof now generates two application-owned specializations:
+nullable<int64> and nullable<float64>. Numeric equality/inequality, canonical strict
+identity/inequality, matching absence across payload identities, RHS effects with
+absent left, and alias mutation after the left snapshot pass in release and
+ASan/UBSan with leak detection. Checked ordering also proves that absent left
+suppresses RHS effects. The retained arithmetic/cast/condition/lifetime cases pass;
+all measured scalar success operations allocate zero. Sealed publication reuses
+both application specializations without newly emitted units.
+
+Compile-only single observations: two storage units combined 2.0817s release /
+2.9479s sanitized; the expanded public caller 0.1748s / 0.3579s. These proof sizes
+have grown, so they are not a fixed-workload comparison with earlier one-storage
+measurements. Final tool rebuilds were 4.74s / 13.22s; sanitized compilation overlapped
+lightweight release regressions. Runtime-core was not rebuilt. All 330 existing
+runtime generation plans remained identical after the metadata additions.
+
+The scalar result-alias regression also covers carrier plans, ensuring they retain
+the registered result identity instead of requiring a hard-coded spelling. Ordinary
+Result error state equality is metadata-tested; strict matching error identity
+rejects explicitly pending its public path. Literal null/sentinel comparisons,
+bool/string/boxed carrier domains and same-family reconstruction remain open. This
+slice does not close the first complete carrier review or C as a whole.
+
+Eight focused metadata/identity/ordering regression tests passed after the result-
+identity correction: release 10.04s; ASan/UBSan with leak detection 61.12s. Public
+execution, allocations, lifetime and publication reuse were checked separately.

@@ -834,3 +834,33 @@ and the existing optional `result_expression`. Logical negation uses `!${result}
 the condition must be evaluated once before that expression. Plain operands keep
 the operation's original explicit admission list. Lazy source branches and operand
 evaluation stay caller-owned, and no wrapper-pair adapter is generated.
+
+## State-aware carrier comparison plans
+
+Carrier states may expose a `comparison_tag`, independent of their local state name
+and predicate spelling. `global_operators.carrier_comparisons` selects numeric
+payloads, a `payload_state` tag and operation policies. Each policy supplies boolean
+`different_states` and `same_states` results; the payload tag cannot have a constant
+same-state result. It must use the existing payload operator plan. This initial
+policy covers numeric equality/inequality and canonical numeric strict identity.
+
+The resolver checks one-layer payload admission first, returns independent
+`left_states`/`right_states` observations and a `calculation` plan, and requires a
+policy for every matching non-payload state reachable on both sides. A plain peer
+has only the payload state. Unimplemented matching states reject explicitly: strict
+Result-to-Result error identity remains unavailable until its structured-error
+inspection/comparison path is provided. Ordinary Result error equality has a literal
+state result; it does not inspect message/file/line.
+
+`kind: state_comparison` requires whole left and right snapshots before state tests.
+Different or constant same-state results skip payload extraction and conversion.
+Matching payloads use the scalar calculation, including numeric promotion or a
+strict constant-after-evaluation result. This is a bounded state vocabulary, not a
+family × payload overload matrix, and does not impose exact carrier-family identity.
+Ordering reuses `checked_payload_binary` and its early checked extraction; absence
+is never assigned an ordering rank.
+
+The compiled proof covers nullable<int64> and nullable<float64>, including differing
+payload identities, matching absence, inequality, alias mutation during RHS evaluation
+and ordered-extraction failure. Scalar numeric state policies do not close boxed,
+string/bool, structured-error strict identity or literal-sentinel comparison work.

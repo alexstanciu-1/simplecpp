@@ -49,8 +49,34 @@ for bad in ['nullable<boolean>', 'nullable<string>', 'result<nullable<int64>>', 
     resolve(bad, 'int64', error='Unsupported carrier payload')
 resolve('vector<int64>', 'int64', error='no carrier projection')
 resolve('nullable<int64>', 'uint64', error='Unsupported operator operand domains')
-for op in ['equal', 'numeric_equal', 'strict_identical', 'concat']:
+for op in ['equal', 'concat']:
     resolve('nullable<int64>', 'nullable<int64>', op, error='Unsupported operator operand type')
+for op in ['numeric_equal','numeric_not_equal','strict_identical','strict_not_identical']:
+    for left,right in [('nullable<int64>','nullable<int64>'), ('nullable<int64>','int64'),
+                       ('int64','nullable<int64>'), ('nullable<int64>','nullable<float64>'),
+                       ('result<int64>','nullable<int64>')]:
+        p = resolve(left,right,op)
+        assert p['kind'] == 'state_comparison'
+        assert p['steps'][:2] == ['evaluate_left_snapshot','evaluate_right_snapshot']
+        assert p['different_states'] == str(op in ['numeric_not_equal','strict_not_identical']).lower()
+    if op.startswith('strict_'):
+        resolve('result<int64>','result<int64>',op,error='Unsupported carrier comparison state: error')
+    else:
+        assert resolve('result<int64>','result<int64>',op)['same_states']['error'] == str(op == 'numeric_equal').lower()
+assert resolve('nullable<int64>','nullable<float64>','numeric_equal')['calculation']['operand_type'] == 'float64'
+assert resolve('nullable<int64>','nullable<float64>','strict_identical')['calculation']['value'] == 'false'
+for op in ['less','less_equal','greater','greater_equal','compare']:
+    assert resolve('nullable<int64>','int64',op)['kind'] == 'checked_payload_binary'
+resolve('nullable<int64>','nullable<boolean>','numeric_equal',error='Unsupported carrier payload')
+resolve('result<nullable<int64>>','nullable<int64>','numeric_equal',error='Unsupported carrier payload')
+bad = copy.deepcopy(metadata)
+bad['families']['nullable']['carrier']['states'][1]['comparison_tag'] = 'unknown_state'
+resolve('nullable<int64>','nullable<int64>','numeric_equal',meta=bad,error='Unsupported carrier comparison state')
+bad = copy.deepcopy(metadata)
+bad['global_operators']['carrier_comparisons']['operations']['numeric_equal']['same_states']['payload'] = 'true'
+resolve('nullable<int64>','nullable<int64>','numeric_equal',meta=bad,error='Payload states require payload comparison')
+resolve('nullable<int64>','nullable<uint64>','numeric_equal',error='Unsupported operator operand domains')
+print('PASS: state-first comparison plans, numeric promotion versus strict identity, explicit error-identity gap and checked ordering')
 renamed = copy.deepcopy(metadata)
 renamed['families']['optional_number'] = renamed['families'].pop('nullable')
 renamed['families']['optional_number']['defaults'] = ['int64']
@@ -58,6 +84,7 @@ p = resolve('optional_number<>', 'int64', meta=renamed,
             names={'optional_number<int64>':'optional_integer'})
 assert p['left_projection']['cpp'] == 'scpp::optional_integer'
 assert p['left_projection']['target'] == 'int64'
+assert resolve('optional_number<>','int64','numeric_equal',meta=renamed, names={'optional_number<int64>':'optional_integer'})['kind'] == 'state_comparison'
 for update, message in [({'payload':'missing'}, 'Unknown carrier payload'),
                         ({'require_value':'missing'}, 'one checked member'),
                         ({'unexpected':'x'}, 'unknown field')]:
@@ -164,22 +191,22 @@ with tempfile.TemporaryDirectory(prefix='scpp-carrier-') as directory:
     seal_package(sdk, ['core'])
     os.environ['SCPP_API_GENERATOR'] = str(sdk / 'tools/scpp_api_generator')
     request = work / 'request.json'
-    request.write_text(json.dumps({'package':'app.carrier', 'roots':['nullable<int64>'],
-                                  'names':{'nullable<int64>':'optional_integer'}}))
+    request.write_text(json.dumps({'package':'app.carrier', 'roots':['nullable<int64>','nullable<float64>'],
+                                  'names':{'nullable<int64>':'optional_integer','nullable<float64>':'optional_float'}}))
     app = work / 'app'
     # Storage ABI flags match the SDK. Instrument the generated implementation below.
     manifest = concrete_types.generate(request, app, sdk, [sdk], 'clang++', [])
-    assert len(manifest['sources']) == 1
-    names = {'nullable<int64>':'optional_integer'}
+    assert len(manifest['sources']) == 2
+    names = {'nullable<int64>':'optional_integer','nullable<float64>':'optional_float'}
     functions = []
     headers = {'scpp/optional_integer.hpp'}
-    for op in ['add','subtract','multiply','divide','remainder']:
+    for op in ['add','subtract','multiply','divide','remainder','less','compare']:
         plan = resolve('nullable<int64>', 'nullable<int64>', op, names=names)
         calculation = plan['calculation']; headers.add(calculation['header'])
         assert calculation['api'] in manifest['apis']
         left = plan['left_projection']['expression'].replace('${value}', 'left')
         right = plan['right_projection']['expression'].replace('${value}', 'right')
-        functions.append(f'''static scpp::int64 run_{op}(const scpp::optional_integer &left,
+        functions.append(f'''static auto run_{op}(const scpp::optional_integer &left,
             const scpp::optional_integer &right, int &effects) {{
             const auto left_payload = {left};
             ++effects;
@@ -217,6 +244,39 @@ with tempfile.TemporaryDirectory(prefix='scpp-carrier-') as directory:
             body += 'if (' + state['test_expression'].replace('${value}','source') + ') { ' + branch + ' }\n'
         else: body += branch
     functions.append('static scpp::boolean observe_condition(const scpp::optional_integer &source) { ' + body + ' }')
+    for op in ['numeric_equal','numeric_not_equal','strict_identical','strict_not_identical']:
+        for right_type, suffix in [('int64','integer'), ('float64','float')]:
+            plan = resolve('nullable<int64>',f'nullable<{right_type}>',op,names=names)
+            left_p, right_p = plan['left_projection'], plan['right_projection']
+            headers.update([left_p['header'],right_p['header']])
+            tags = {tag:i for i,tag in enumerate(sorted({state['tag'] for side in ['left_states','right_states'] for state in plan[side]}))}
+            body = 'const auto left = original_left; ++effects; if (mutate_right) original_right.reset(); const auto right = original_right;\n'
+            for side in ['left','right']:
+                observe = ''
+                for state in plan[side+'_states']:
+                    result = 'return ' + str(tags[state['tag']]) + ';'
+                    if 'test_expression' in state:
+                        observe += 'if (' + state['test_expression'].replace('${value}',side) + ') { ' + result + ' }'
+                    else: observe += result
+                body += 'const int '+side+'_state = ([&]() { '+observe+' })();\n'
+            body += 'if (left_state != right_state) return scpp::boolean('+plan['different_states']+');\n'
+            for tag,result in plan['same_states'].items():
+                if tag in tags: body += f'if (left_state == {tags[tag]}) return scpp::boolean({result});\n'
+            calc = plan['calculation']
+            if calc['kind'] == 'constant_after_evaluation': body += 'return scpp::boolean('+calc['value']+');'
+            else:
+                headers.add(calc['header']); assert calc['api'] in manifest['apis']
+                for side, projection in [('left',left_p),('right',right_p)]:
+                    expression = projection['expression'].replace('${value}',side)
+                    body += f'const auto {side}_payload = {expression};\n'
+                    conversion = calc[side+'_conversion']
+                    expression = side+'_payload'
+                    if conversion['kind'] != 'identity':
+                        headers.add(conversion['header']); assert conversion['api'] in manifest['apis']
+                        expression = conversion['function']+'('+expression+')'
+                    body += f'const auto {side}_converted = {expression};\n'
+                body += 'return '+calc['function']+'(left_converted,right_converted);'
+            functions.append('static scpp::boolean compare_'+op+'_'+suffix+'(const '+left_p['cpp']+'& original_left, '+right_p['cpp']+'& original_right, int &effects, bool mutate_right=false) { '+body+' }')
     code = '\n'.join('#include "'+h+'"' for h in sorted(headers)) + '\n' + '\n'.join(functions)
     code += r'''
 #include "public_api_guard.hpp"
@@ -239,6 +299,30 @@ int main() {
     CHECK(run_divide(left,right,effects).native_value() == 4);
     CHECK(run_remainder(left,right,effects).native_value() == 0);
     CHECK(effects == 5);
+    CHECK(run_less(right,left,effects));
+    CHECK(run_compare(left,right,effects).native_value() == 1);
+    optional same(int64(12)), another_absent;
+    CHECK(compare_numeric_equal_integer(left,same,effects));
+    CHECK(!compare_numeric_equal_integer(left,right,effects));
+    CHECK(compare_strict_identical_integer(left,same,effects));
+    CHECK(compare_numeric_equal_integer(absent,another_absent,effects));
+    CHECK(compare_strict_identical_integer(absent,another_absent,effects));
+    CHECK(compare_numeric_not_equal_integer(absent,right,effects));
+    CHECK(compare_strict_not_identical_integer(absent,right,effects));
+    scpp::optional_float floating(scpp::float64(12)), absent_float;
+    CHECK(compare_numeric_equal_float(left,floating,effects));
+    CHECK(!compare_numeric_not_equal_float(left,floating,effects));
+    CHECK(!compare_strict_identical_float(left,floating,effects));
+    CHECK(compare_strict_not_identical_float(left,floating,effects));
+    CHECK(compare_numeric_equal_float(absent,absent_float,effects));
+    CHECK(compare_strict_identical_float(absent,absent_float,effects));
+    optional alias(int64(12));
+    CHECK(!compare_numeric_equal_integer(alias,alias,effects,true));
+    CHECK(!alias.has_value());
+    effects = 0;
+    CHECK(!compare_numeric_equal_integer(absent,right,effects));
+    CHECK(effects == 1); // RHS runs before states are compared, even with absent left.
+
     optional copy(left); left.reset();
     CHECK(!left.has_value() && copy.has_value());
     int64 output(9);
@@ -266,6 +350,9 @@ int main() {
     try { (void)run_add(absent,right,effects); } catch (...) { caught = true; }
     CHECK(caught && effects == 0);
     caught = false;
+    try { (void)run_less(absent,right,effects); } catch (...) { caught = true; }
+    CHECK(caught && effects == 0);
+    caught = false;
     try { (void)run_add(copy,absent,effects); } catch (...) { caught = true; }
     CHECK(caught && effects == 1 && copy.has_value());
     caught = false;
@@ -278,7 +365,7 @@ int main() {
     int64 retained(0);
     { optional temporary(int64(42)); retained = temporary.require_value("retain"); temporary.reset(); }
     CHECK(retained.native_value() == 42);
-    std::puts("PASS: public nullable arithmetic, ordered failures, take/reset, casts, conditions, owned lifetime; success allocations=0");
+    std::puts("PASS: public nullable arithmetic, ordered failures, take/reset, casts, conditions, comparisons, owned lifetime; success allocations=0");
 }
 '''
     code = code.replace('CONDITION_NOT_ABSENT', negate('nullable<int64>')['result_expression'].replace('${result}', 'observe_condition(absent)'))
@@ -286,15 +373,18 @@ int main() {
     flags = ['-fsanitize=address,undefined','-fno-omit-frame-pointer'] if args.sanitize else []
     common = ['clang++','-std=c++23','-O1',*flags,'-I'+str(app/'public'),'-I'+str(sdk/'public')]
     start = time.perf_counter()
-    subprocess.run([*common,'-I'+str(sdk/'include'),'-I'+str(app/'include'),'-c',str(app/manifest['sources'][0]),'-o',str(work/'storage.o')],check=True)
+    objects = []
+    for i,source in enumerate(manifest['sources']):
+        obj = work / f'storage{i}.o'; objects.append(str(obj))
+        subprocess.run([*common,'-I'+str(sdk/'include'),'-I'+str(app/'include'),'-c',str(app/source),'-o',str(obj)],check=True)
     storage_time = time.perf_counter()-start
     start = time.perf_counter()
     subprocess.run([*common,'-I'+str(root/'tests/runtime/native'),'-c',str(caller),'-o',str(work/'caller.o')],check=True)
     caller_time = time.perf_counter()-start
-    subprocess.run(['clang++',*flags,str(work/'caller.o'),str(work/'storage.o'),str(args.core.resolve()),'-pthread','-o',str(work/'proof')],check=True)
+    subprocess.run(['clang++',*flags,str(work/'caller.o'),*objects,str(args.core.resolve()),'-pthread','-o',str(work/'proof')],check=True)
     subprocess.run([str(work/'proof')],check=True)
     (app/'lib').mkdir()
-    subprocess.run(['ar','rcs',str(app/'lib/libcarrier.a'),str(work/'storage.o')],check=True)
+    subprocess.run(['ar','rcs',str(app/'lib/libcarrier.a'),*objects],check=True)
     seal_package(app,['carrier'])
     reused = concrete_types.generate(request,work/'reuse',sdk,[sdk,app],'clang++',[])
     assert reused['sources'] == []
