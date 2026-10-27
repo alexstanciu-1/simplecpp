@@ -16,7 +16,7 @@ each slice. The original inventory is a baseline, not a current completion count
 | A1 | Complete for the agreed ordinary numeric domain | Specialized and boxed extensions remain in B2/E, not implied by A1. |
 | A2 | Complete for the agreed checked scalar conversions | Carrier conversion is C; ownership casts are D. |
 | B1 | Complete for the agreed scalar-facing truth/text/identity/observation scope | Carrier forms remain C; boxed arithmetic and access completion are not B1 credit. |
-| B2 | Binary canonical/boxed bitwise and checked shifts, canonical power, numeric spaceship, numeric unary, scalar logical negation, prefix/postfix updates, canonical numeric compound plans and boxed arithmetic/compounds including canonical numeric peers and scalar/boxed text implemented | Final B2 admission/coverage audit; carrier variants remain C. |
+| B2 | Complete for the agreed non-carrier special/mutation and text public paths; closure evidence below | Carrier forms C; indexed retention E; native exception inspection and overflow disposition G. |
 | C | Policy agreed; completion pending | Four carrier families, state-preserving operations/conversions and conditional lifecycle. |
 | D | Pending | Ownership, application targets and source Exception transport gaps. |
 | E | Existing vector/hash/boxed foundations; incomplete | Capability/access/initialization/cursor gaps and identity key-allocation debt. |
@@ -168,10 +168,7 @@ core contract; full frontend adoption remains excluded.
 
 ## Next implementation work
 
-Audit B2 admission and public proof coverage before closing the batch. Numeric
-scalar-peer arithmetic/compounds and scalar/boxed text composition are implemented.
-Boxed bitwise/shift compounds remain source-deferred and are not an implicit extension
-of this goal. Canonical numeric compound plans reuse the published calculations and casts.
+B2 non-carrier public-path closure is recorded below, with limitations retained.
 Proceed to C with the accepted one-layer carrier rules; the first complete carrier
 path must be reviewed before D/F expansion. Do not treat existing native template
 instantiations as source admission or skip state/lifetime proofs to close a row.
@@ -645,3 +642,66 @@ The text composition paths are implemented. Before marking B2 complete, audit it
 remaining admitted operation rows against the current metadata and proofs. Carrier
 text/state/lifecycle work remains C; the first complete carrier path still requires
 review before ownership/callback expansion.
+
+## B2 closure audit — non-carrier public paths
+
+This closes B2's agreed public-path slice, not runtime-core completion or a blanket
+claim of safe behavior for every native arithmetic input. The audit inspected the
+current operation/rule descriptors, publication inventory and public headers, read
+the proof bodies, and resolved/imported all 58 normalized API identities behind the
+15 special-operation identities with zero duplicate units. Existing compound/text
+proofs cover their ordered plans separately. Counts are inventory checks, not a
+completion percentage.
+
+| Included requirement | Current public evidence | Boundary retained |
+| --- | --- | --- |
+| Canonical/boxed bitwise and checked shifts | `check_special_integer_api.py`, `test_public_special_integers.cpp`: same-family admission, both operand kind failures, valid/invalid count boundaries and zero successful allocations | Boxed bitwise compounds/scalar peers remain source-deferred; fixed-width expansion is not inferred. |
+| Checked canonical power and power compound | Special-integer proof checks negative exponent/overflow codes and boundaries; `check_compound_api.py` proves no write-back after failure | Float/boxed/fixed-width power is not admitted. |
+| Numeric spaceship | `check_compare_api.py`, `test_public_compare.cpp`: same-signed width normalization, bounded mixed float admission, extreme integers, NaN errors, zeros/infinities | No boxed, bool or string spaceship expansion. |
+| Unary numeric and logical negation | `check_unary_api.py`, `test_public_unary.cpp`, `check_logical_not.py`: exact signatures, admitted kinds, failures and observation composition | Condition helpers alone do not authorize every unary source type. |
+| Prefix/postfix updates | `check_update_api.py`, `test_public_updates.cpp`: mutable signatures, owned old/new snapshots, invalid-kind unchanged storage, allocation checks | No new checked-overflow rule; carrier updates remain C. |
+| Canonical and boxed arithmetic compounds, scalar peers | `check_compound_api.py`: destination once, saved/converted left order, RHS effects, result lifetime and preserved original boxed kind | Plain scalar destination with boxed RHS and fixed-width compounds remain deferred. |
+| Scalar/boxed text and replacement | `check_text_compound_api.py`: context-specific conversion, converted snapshot, byte preservation, kind replacement, allocation/error ordering and independent results | Carrier text remains C; indexed storage retention remains E. |
+| Required observations for lazy expressions | Published `condition_truthy`, boxed `is_null`, and owned scalar/boxed copies provide the non-carrier observations | Branch evaluation and source expression joins remain compiler-owned; carrier/ownership/callable observations remain C/D/F. |
+| Publication/purity/ownership | Existing focused metadata proofs import normalized implementations without duplicates; public-only consumers and sealed relocation proofs compile the planned paths | Full frontend adoption and module migration remain excluded. |
+
+The four compiled special-operator consumers were relinked against current release
+and sanitizer core archives for this audit. No C++ source or runtime-core rebuild was
+needed. The previously measured allocation and compile costs remain attached to each
+slice in `runtime/specs/public_api_boundary_results.md`.
+
+Remaining issues are not erased by this batch closure:
+
+- G still owns template-free inspection of native `ValueError`/foreign boxed
+  diagnostics; catch-all propagation is not complete structured error inspection.
+- Existing signed arithmetic overflow limitations, including minimum-int negation
+  and overflowing increment/decrement, were not given new checked semantics by this
+  migration. The expression contract expressly excludes introducing those semantics.
+  Boundary proofs use the supported range; no all-input UBSan/memory-safety guarantee
+  is claimed. Keep their disposition visible at final G closure.
+- Boxed comparison/ordering completion beyond the already published checked equality
+  and identity paths remains in the core backlog; the original boxed row's remaining
+  requirements are not waived by completing B2's special/mutation groups.
+- C, D, E, F and G remain incomplete. Wrapper, indexed, ownership and callback paths
+  are not credited from scalar/boxed proofs.
+
+## C entry path and review boundary
+
+Start with an application-demanded `nullable<int64>` path using the existing family
+recipe and the public int64 operations. That recipe already provides construction,
+assignment, owned checked extraction, reset, defaulting and `take`, but blanket copy
+requirements and missing operator/state policies prevent calling the family complete.
+
+The first vertical path must add metadata-owned one-layer projection and preserve
+left-before-right extraction failure, reuse scalar arithmetic, distinguish presence
+from truthiness, and exercise take/reset/owned lifetime plus publication reuse. Then
+complete its accepted equality/identity/conversion behavior and test the complete
+path before the agreed review gate. Do not delegate blindly to native wrapper
+operator templates: the recipe stores the public payload type, which must use its
+published scalar API rather than assume native template traits recognize it.
+
+This path does not authorize recursive peeling, promote all nullable payloads into
+conditions, or claim move-only support. Conditional lifecycle remains required C
+work shared with later ownership/container completion. The three Result-family
+recipes and their state distinctions remain explicit subsequent work. No D/F
+implementation should start before review of the first complete carrier path.

@@ -1475,3 +1475,23 @@ Generator-only builds: initial release 5.95 s (138,488 KiB peak child RSS), snap
 refactor 3.86 s (138,624 KiB), final sanitized 9.62 s (280,756 KiB). Runtime core was
 not rebuilt. Reproduce using `check_text_compound_api.py --tool <generator>
 --core <core.a> [--sanitize]`.
+
+## B2 non-carrier closure audit
+
+The current metadata and inventory resolve all 58 normalized API identities behind
+15 special-operation identities to existing public headers and reuse them with zero
+new implementation units. The closure table in `runtime_core_completion.md` maps
+requirements to proof bodies and preserves deferred/external ownership areas.
+
+Four special-operator executables were relinked against the current release and
+sanitizer archives; Ninja performed only four link steps per configuration, with no
+source/core compilation. Nine focused checks (four execution tests and five metadata
+checks) passed: release 9.68 s; ASan/UBSan with leak detection 51.05 s. Compound and
+text execution/publication evidence remains at its immediately preceding slice
+checkpoints; the audit did not repeat those compilations without a changed concern.
+
+This closes B2's agreed public-path subset. It does not close carrier forms, indexed
+retention, boxed comparison/ordering completion, native diagnostic inspection or
+remaining core families. Signed native overflow limitations are visible at G closure;
+the successful sanitizer tests do not claim defined behavior for every overflowing
+input. The active runtime-core goal remains incomplete.
