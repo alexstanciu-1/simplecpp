@@ -1901,6 +1901,20 @@
             "parameters": [
               {
                 "name": "key",
+                "type": "self",
+                "passing": "const_ref"
+              }
+            ],
+            "expression": "scpp::null_index_read(${self}, ${native:key})",
+            "const": true,
+            "transport": "native"
+          },
+          {
+            "name": "get",
+            "returns": "self",
+            "parameters": [
+              {
+                "name": "key",
                 "type": "int64",
                 "passing": "const_ref"
               }
@@ -2313,6 +2327,20 @@
             "returns": "void",
             "parameters": [],
             "expression": "${self} = ${native_type}()"
+          },
+          {
+            "name": "get",
+            "returns": "self",
+            "parameters": [
+              {
+                "name": "key",
+                "type": "mixed",
+                "passing": "const_ref"
+              }
+            ],
+            "expression": "scpp::null_index_read(${self}, ${native:key})",
+            "const": true,
+            "transport": "native"
           },
           {
             "name": "get",

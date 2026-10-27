@@ -125,6 +125,8 @@ with tempfile.TemporaryDirectory(prefix='scpp-operator-publication-') as directo
 #include "scpp/identity/strict_not_identical_boxed_dynamic_int64.hpp"
 static_assert(scpp::debug::DBG_DEFAULT.native_value()==262343);
 int main() {
+    const scpp::mixed missing_key(scpp::string("missing"));
+    if (!scpp::mixed{}.get(missing_key).is_null() || !scpp::dynamic{}.get(missing_key).is_null()) return 91;
     if (!scpp::predicates::is_int(scpp::mixed(scpp::int64(0)))) return 90;
 
     scpp::debug::dbg_at("publication.phs",scpp::int32(1),scpp::int64(7));

@@ -1612,3 +1612,29 @@ generated units, and application-owned hash specializations reuse from a sealed
 package. Single-run observation compilation: 0.0564s public / 2.9348s native.
 Weak/shared-table predicate fixtures remain outside this proof; existing kind
 observers are unchanged. See the boundary results for timings and limits.
+
+## E6 — runtime-checked mixed keys for boxed reads
+
+Both boxed recipes now expose `get(const mixed&)`, in addition to their existing
+integer/string overloads. They use the unchanged `null_index_read` owner: valid keys
+on null/missing receivers return same-family null; invalid runtime key kinds throw
+even on null, and scalar receivers throw. Results are owned values with mixed COW
+or dynamic identity semantics. No heap-interior reference is exposed.
+
+The mixed recipe uses the existing `self` parameter identity; spelling its own
+canonical name there instead incorrectly requests a layout dependency on itself.
+This slice needs no generator changes. Nested writes, captured destinations, keyed
+probes/removal and source key-evaluation staging are still incomplete or compiler-owned.
+
+The focused public-only proof checks valid and invalid runtime keys, unchanged entry
+counts, nested/null reads, temporary receivers, result lifetime after owner reset,
+mixed independence and dynamic alias identity. Warmed repeated scalar/missing reads
+allocate nothing. Initial string-key interning is explicitly outside that measured
+window and remains storage debt. Numeric-string behavior follows the existing build
+profile: the tested core has PHP-target normalization disabled. This is not evidence
+of PHP-target normalization execution or of weak-table public construction.
+
+ASan/UBSan/LSan: the new public read test and existing mixed/dynamic regression
+tests pass (three tests, 0.06s). Both public headers compile independently; generic
+metadata generation/admission tests pass (1.20s). The sanitizer core compiled once.
+No shared-state mutation or new synchronization was introduced.

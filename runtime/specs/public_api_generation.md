@@ -1460,3 +1460,13 @@ to the existing public kind observer, requiring no private template include.
 Hash `make()` is a static method returning self through native transport. It
 constructs an empty hash and shares ordinary family admission; no payload-copy
 capability is needed. It is separate from source collection initialization.
+
+### Runtime-checked boxed read keys
+
+Mixed and dynamic `get` overloads accept public mixed observations and delegate to
+`null_index_read` with native borrowing and owned return transport. Mixed declares
+its key as `self`; dynamic declares `mixed`, a real dependency. The existing integer
+and string overloads remain. Key kind validation precedes null-on-miss handling;
+no reference into receiver storage escapes. Numeric-string key normalization remains
+a property of the selected runtime build profile. This method does not perform
+source expression evaluation or expose a mutable path handle.

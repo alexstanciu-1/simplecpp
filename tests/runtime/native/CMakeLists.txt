@@ -537,3 +537,8 @@ target_include_directories(test_debug_provider PRIVATE ${CMAKE_CURRENT_SOURCE_DI
 add_executable(test_public_debug test_public_debug.cpp $<TARGET_OBJECTS:test_debug_provider>)
 target_link_libraries(test_public_debug PRIVATE scpp_core_api)
 add_test(NAME scpp_test_public_debug COMMAND test_public_debug)
+
+add_executable(test_public_index_read test_public_index_read.cpp)
+target_link_libraries(test_public_index_read PRIVATE scpp_core_api)
+target_compile_definitions(test_public_index_read PRIVATE SCPP_TEST_PHP_KEYS=$<BOOL:${SCPP_LANGUAGE_TARGET_PHP}>)
+add_test(NAME scpp_test_public_index_read COMMAND test_public_index_read)

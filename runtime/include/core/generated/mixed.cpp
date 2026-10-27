@@ -42,6 +42,7 @@ scpp::int64 mixed::get_int() const { return scpp::int64((([&]() -> decltype(auto
 scpp::float64 mixed::get_float() const { return detail::concrete_access::make<scpp::float64, scpp::float_t>([&]() -> decltype(auto) { return detail::concrete_access::get<native_mixed>(*this).get_float(); }); }
 scpp::string mixed::get_string() const { return detail::string_access::make([&]() -> decltype(auto) { return detail::concrete_access::get<native_mixed>(*this).get_string(); }); }
 void mixed::reset() { detail::concrete_access::get<native_mixed>(*this) = scpp::null; }
+scpp::mixed mixed::get(const scpp::mixed &key) const { return detail::concrete_access::make<scpp::mixed, scpp::mixed_t>([&]() -> decltype(auto) { return scpp::null_index_read(detail::concrete_access::get<native_mixed>(*this), detail::concrete_access::get<scpp::mixed_t>(key)); }); }
 scpp::mixed mixed::get(const scpp::int64 &key) const { return detail::concrete_access::make<scpp::mixed, scpp::mixed_t>([&]() -> decltype(auto) { return scpp::null_index_read(detail::concrete_access::get<native_mixed>(*this), scpp::mixed_t(scpp::int_t<>(key.native_value()))); }); }
 void mixed::set(const scpp::int64 &key, const scpp::mixed &value) { const auto native_key = scpp::mixed_t(scpp::int_t<>(key.native_value()));
 scpp::index_path_check_store(detail::concrete_access::get<native_mixed>(*this), native_key, detail::concrete_access::get<scpp::mixed_t>(value));

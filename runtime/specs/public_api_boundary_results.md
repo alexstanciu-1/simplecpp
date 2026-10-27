@@ -2657,3 +2657,28 @@ ASan/UBSan with leak detection: public observations and metadata checks pass
 reuse pass. Sanitized fixture storage compilation: 18.3667s; caller: 0.2163s.
 Core was rebuilt once successfully per configuration, after an initial release
 compile diagnosed the namespace collision. No concurrency behavior changed.
+
+## E6: runtime-checked mixed keys on boxed reads (2026-10-28)
+
+Both public boxed families now accept mixed keys through their existing checked-read
+provider. Release public mixed/dynamic regression tests, metadata packaging and the
+new index-read proof pass. The focused test covers invalid null/bool/float/table
+keys, including null receivers; valid integer/string keys; missing/null traversal;
+scalar receiver rejection; no insertion; mixed value versus dynamic identity; and
+result lifetime beyond source reset. Warmed repeated reads allocate zero times.
+
+An initial test assumed PHP numeric-string normalization; the configured core uses
+`SCPP_LANGUAGE_TARGET_PHP=OFF`. The test now selects its expectation from that build
+option without exposing private headers to the caller. PHP-enabled execution is not
+claimed by this run. Cold string-key interning can allocate and is excluded from the
+warmed lookup measurement; it remains existing storage debt.
+
+Relocated sealed-runtime reuse emits no new implementation units and links both new
+read signatures. Single isolated compile-only two-family read caller: 0.0607s public
+versus 1.8697s native. The core implementation compiled once for release; fixes to
+the test's count API and profile expectation required only small caller rebuilds.
+
+ASan/UBSan/LSan: the new public read test and existing mixed/dynamic regression
+tests pass (three tests, 0.06s). Both public headers compile independently; generic
+metadata generation/admission tests pass (1.20s). The sanitizer core compiled once.
+No shared-state mutation or new synchronization was introduced.

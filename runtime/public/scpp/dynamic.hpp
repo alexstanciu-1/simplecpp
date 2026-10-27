@@ -41,6 +41,7 @@ public:
     scpp::float64 get_float() const;
     scpp::string get_string() const;
     void reset();
+    scpp::dynamic get(const scpp::mixed &key) const;
     scpp::dynamic get(const scpp::int64 &key) const;
     void set(const scpp::int64 &key, const scpp::dynamic &value);
     scpp::boolean remove(const scpp::int64 &key);
