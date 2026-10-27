@@ -57,6 +57,12 @@ for op in operations[:5]:
         assert plan['writeback_conversion']['arguments'] == ['old_left', 'calculated']
         boxed_plans[op, family] = plan
         resolve(op + '_assign', family, 'dynamic' if family == 'mixed' else 'mixed', error='Unsupported compound operands')
+# Binary boxed bitwise support does not authorize source compound forms.
+# dynamic_types.md (boxed integer operators) and compact_layout_types.md §7.1
+# retain that separate, deferred admission even though native mixed has helpers.
+for op in ['bit_and', 'bit_or', 'bit_xor', 'shift_left', 'shift_right', 'power']:
+    for family in ['mixed', 'dynamic']:
+        resolve(op + '_assign', family, family, error='Unsupported compound operands')
 changed = copy.deepcopy(metadata)
 changed['function_sets']['numeric_compound_replacement']['function']['operation']['parameters'][0]['passing'] = 'ref'
 resolve('add_assign', 'mixed', 'mixed', changed, 'must borrow saved left')

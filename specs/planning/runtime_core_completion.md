@@ -16,7 +16,7 @@ each slice. The original inventory is a baseline, not a current completion count
 | A1 | Complete for the agreed ordinary numeric domain | Specialized and boxed extensions remain in B2/E, not implied by A1. |
 | A2 | Complete for the agreed checked scalar conversions | Carrier conversion is C; ownership casts are D. |
 | B1 | Complete for the agreed scalar-facing truth/text/identity/observation scope | Carrier forms remain C; boxed arithmetic and access completion are not B1 credit. |
-| B2 | Binary canonical/boxed bitwise and checked shifts, canonical power, numeric spaceship, numeric unary, scalar logical negation, prefix/postfix updates, canonical numeric compound plans and homogeneous boxed arithmetic/compounds implemented | Text compounds and remaining scalar-peer/bitwise admission; carrier variants remain C. |
+| B2 | Binary canonical/boxed bitwise and checked shifts, canonical power, numeric spaceship, numeric unary, scalar logical negation, prefix/postfix updates, canonical numeric compound plans and homogeneous boxed arithmetic/compounds implemented | Text compounds and admitted numeric scalar peers; carrier variants remain C. |
 | C | Policy agreed; completion pending | Four carrier families, state-preserving operations/conversions and conditional lifecycle. |
 | D | Pending | Ownership, application targets and source Exception transport gaps. |
 | E | Existing vector/hash/boxed foundations; incomplete | Capability/access/initialization/cursor gaps and identity key-allocation debt. |
@@ -168,8 +168,9 @@ core contract; full frontend adoption remains excluded.
 
 ## Next implementation work
 
-Continue B2 with text compound protocols and remaining scalar-peer/bitwise
-admission using existing operator metadata and native error authorities. Canonical numeric compound plans
+Continue B2 with text compound protocols and admitted numeric scalar peers
+using existing operator metadata and native error authorities. Boxed bitwise/shift
+compounds remain source-deferred and are not an implicit extension of this goal. Canonical numeric compound plans
 now reuse the published calculations and casts.
 Proceed to C with the accepted one-layer carrier rules; the first complete carrier
 path must be reviewed before D/F expansion. Do not treat existing native template
@@ -570,3 +571,26 @@ original int plus float still rejects, while original float plus int still succe
 Failures preserve RHS effects; successful results remain independent snapshots and
 allocate zero times. This completes homogeneous boxed arithmetic compounds, not text,
 scalar peers, bitwise compound admission or carrier/indexed write-back.
+
+## B2 admission audit — boxed bitwise compounds are source-deferred
+
+The previous remaining-work phrase “bitwise admission” was too broad. The
+[boxed integer amendment](../dynamic_types.md#v02-boxed-integer-operators--2026-10-20)
+admits homogeneous binary expressions and explicitly leaves compounds separate.
+[Checked shift counts](../compact_layout_types.md#71-checked-integer-shift-counts)
+expressly do not expand boxed compound admission. The legacy compiler's
+`Boxed_Operators::decide_integer` rejects non-expression contexts with “Boxed bitwise
+updates remain deferred”; this is supporting evidence, not the semantic authority.
+
+The native mixed compound operators and the general runtime compound derivation
+policy do not override that narrower source scope. Under this goal's accepted
+native-only rule, exposing additional boxed bitwise/shift compounds is not required
+without an included core contract demanding them. Keep them deferred, not implemented
+or counted as API coverage. Boxed power likewise remains outside the canonical-only
+power scope. Negative metadata proofs now retain all twelve homogeneous boxed
+bitwise/shift/power compound rejections. No runtime behavior or normative semantics
+changed in this audit.
+
+Numeric scalar-peer arithmetic/compounds and text replacement remain required B2
+work. Carrier forms remain C; this audit does not waive those families or the review
+gate before ownership/callback expansion.
