@@ -350,3 +350,7 @@ add_test(NAME scpp_check_global_operators COMMAND ${Python3_EXECUTABLE}
 add_executable(test_numeric_operators test_numeric_operators.cpp)
 target_link_libraries(test_numeric_operators PRIVATE scpp_core_api)
 add_test(NAME scpp_test_numeric_operators COMMAND test_numeric_operators)
+
+add_executable(test_checked_scalar_casts test_checked_scalar_casts.cpp)
+target_link_libraries(test_checked_scalar_casts PRIVATE scpp_runtime_core)
+add_test(NAME scpp_test_checked_scalar_casts COMMAND test_checked_scalar_casts)

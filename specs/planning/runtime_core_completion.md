@@ -255,3 +255,18 @@ metadata mechanism, with integer-only remainder and native zero-divisor checks.
 The normative promotion rule has been revised, with the existing frontend gap
 explicitly recorded. A2 checked conversions is next; no ownership/callback or module
 scope has been added. Validation is recorded in the runtime boundary results.
+
+## Active-goal progress — A2a
+
+Before publishing checked conversions, harden their shared native owner in
+`scpp/cast.hpp`: check finite/truncated floating values against exact integer
+bounds before conversion, and enforce the configured whole-string finite-decimal
+parse without a temporary lowercase string. Focused correctness, zero successful
+allocation checks and ASan/UBSan/leak checks pass; measurements are recorded in
+`runtime/specs/public_api_boundary_results.md`.
+
+This is a prerequisite, not completion of A2. Public conversion metadata and
+publication remain pending. In particular, string-to-unsigned integer conversion
+still parses through signed int64 and cannot yet accept the full uint64 range;
+resolve that before claiming complete scalar conversion coverage. No carrier,
+ownership, callback or module scope is added by this slice.

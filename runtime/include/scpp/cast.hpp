@@ -53,6 +53,9 @@ namespace detail {
 template <typename ToRep, typename Value>
 [[nodiscard]] ToRep checked_integer_cast(Value value);
 
+template <typename ToRep, typename Value>
+[[nodiscard]] ToRep checked_floating_integer_cast(Value value);
+
 } // namespace detail
 
 template <typename To, typename From>
@@ -88,7 +91,7 @@ inline To cast(const From &value) {
 template <typename To, typename From>
 requires(std::is_floating_point_v<detail::remove_cvref_t<From>> && detail::is_int_t_v<To>)
 inline To cast(const From &value) {
-	return To(detail::checked_integer_cast<detail::int_rep_t<To>>(static_cast<std::int64_t>(value)));
+	return To(detail::checked_floating_integer_cast<detail::int_rep_t<To>>(value));
 }
 
 template <typename To, typename From>
@@ -228,6 +231,20 @@ template <typename ToRep, typename Value>
 	return static_cast<ToRep>(value);
 }
 
+// Check the truncated value before any integral conversion. Powers of two give
+// exact exclusive upper bounds even when a floating type rounds integer max up.
+template <typename ToRep, typename Value>
+[[nodiscard]] inline ToRep checked_floating_integer_cast(Value value) {
+    static_assert(std::is_integral_v<ToRep> && std::is_floating_point_v<Value>);
+    const auto truncated = std::trunc(value);
+    const auto upper = std::ldexp(Value(1), std::numeric_limits<ToRep>::digits);
+    const auto lower = std::is_signed_v<ToRep> ? -upper : Value(0);
+    if (!std::isfinite(value) || truncated < lower || truncated >= upper) {
+        throw_int_range_cast_error("int_t", std::to_string(value));
+    }
+    return static_cast<ToRep>(truncated);
+}
+
 [[nodiscard]] inline const char *invalid_mixed_kind_code(const char *target) {
 	if (std::string_view(target) == "bool_t") {
 		return "invalid_mixed_kind_for_cast_bool";
@@ -354,36 +371,20 @@ inline bool parse_int64_string_strict(const std::string &value, std::int64_t &ou
 }
 
 inline bool parse_double_string_strict(const std::string &value, double &out) {
-	if (value.empty()) {
-		return false;
-	}
-	for (const unsigned char ch : value) {
-		if (std::isspace(ch) != 0) {
-			return false;
-		}
-	}
-
-	char *parse_end = nullptr;
-	errno = 0;
-	const double parsed = std::strtod(value.c_str(), &parse_end);
-	if (parse_end == nullptr || parse_end != value.c_str() + value.size()) {
-		return false;
-	}
-	if (errno == ERANGE || !std::isfinite(parsed)) {
-		return false;
-	}
-
-	std::string lower;
-	lower.reserve(value.size());
-	for (const unsigned char ch : value) {
-		lower.push_back(static_cast<char>(std::tolower(ch)));
-	}
-	if (lower == "nan" || lower == "+nan" || lower == "-nan" || lower == "inf" || lower == "+inf" || lower == "-inf" || lower == "infinity" || lower == "+infinity" || lower == "-infinity") {
-		return false;
-	}
-
-	out = parsed;
-	return true;
+    if (value.empty()) return false;
+    const char *begin = value.data();
+    const char *end = begin + value.size();
+    // from_chars deliberately rejects leading '+'. The existing decimal cast
+    // contract accepts it, but not a second sign or a sign without digits.
+    if (*begin == '+') {
+        ++begin;
+        if (begin == end || *begin == '+' || *begin == '-') return false;
+    }
+    double parsed = 0.0;
+    const auto result = std::from_chars(begin, end, parsed, std::chars_format::general);
+    if (result.ec != std::errc() || result.ptr != end || !std::isfinite(parsed)) return false;
+    out = parsed;
+    return true;
 }
 
 } // namespace detail
@@ -439,7 +440,7 @@ inline bool_t cast<bool_t, double>(const double &value) {
 
 template <>
 inline int_t<> cast<int_t<>, double>(const double &value) {
-	return int_t<>(static_cast<std::int64_t>(value));
+	return int_t<>(detail::checked_floating_integer_cast<std::int64_t>(value));
 }
 
 template <>
@@ -491,7 +492,13 @@ inline bool_t cast<bool_t, float_t>(const float_t &value) {
 // This is an explicit narrowing conversion and truncates toward zero.
 template <>
 inline int_t<> cast<int_t<>, float_t>(const float_t &value) {
-	return int_t<>(static_cast<std::int64_t>(value.native_value()));
+	return int_t<>(detail::checked_floating_integer_cast<std::int64_t>(value.native_value()));
+}
+
+template <typename To>
+    requires detail::is_int_t_v<To>
+inline To cast(const float_t &value) {
+    return To(detail::checked_floating_integer_cast<detail::int_rep_t<To>>(value.native_value()));
 }
 
 // string_t -> bool_t

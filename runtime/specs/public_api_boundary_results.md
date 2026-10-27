@@ -640,3 +640,36 @@ add `--sanitize` and the sanitizer environment for the instrumented variant.
 The revised semantic promotion contract records the frontend's remaining wider-operand
 behavior explicitly. No compiler preparation/lowering migration, new floating widths,
 boxed arithmetic, wrapper lifting or checked-cast API is claimed by A1. A2 is next.
+
+
+## A2a — checked scalar conversion prerequisite (2026-10-27)
+
+The shared native cast owner now validates floating-to-integer conversions before
+performing an integral conversion. Finite values truncate toward zero; the
+truncated value must be within the target range. Exact exclusive power-of-two
+bounds cover signed and unsigned 64-bit limits without rounding the maximum up.
+NaN, infinity and out-of-range values throw `integer_cast_out_of_range`.
+
+Decimal parsing uses `from_chars`, preserving optional leading plus and full-string
+consumption, rejecting hexadecimal, whitespace, non-finite and out-of-range
+spellings. This follows config.json's `strict_full_string_finite_decimal_parse`
+policy. Successful parsing no longer creates an allocated lowercase copy.
+
+`test_checked_scalar_casts` covers narrow signed/unsigned boundaries, signed and
+unsigned 64-bit limits, explicit native-template and wrapped overloads, malformed
+and embedded-NUL strings, and output preservation on parse failure. A loop of 100
+successful numeric casts and long decimal parses records **zero allocations**.
+The new test plus numeric and boxed operator regressions pass in release (0.02 s)
+and under ASan/UBSan with leak detection (0.08 s).
+
+Eight-job rebuild observations: the initial release build took 20.36 s and built
+the changed core but failed on a test-only `float_t` name ambiguity. Qualifying
+the test type and completing the build took another 3.02 s (188,104 KiB peak
+child RSS). These are separate build attempts, not a clean-build timing. The
+sanitizer rebuild took **50.93 s**, peak child RSS **608,032 KiB**. Existing public
+headers/adapters did not change; no new public-caller timing is claimed.
+
+Reproduce with native CMake targets `test_checked_scalar_casts`,
+`test_numeric_operators`, `test_global_operators`, then their matching CTest cases.
+A2 public conversion generation remains pending, including full-range unsigned
+string parsing; no wrapper conversion coverage is claimed here.
