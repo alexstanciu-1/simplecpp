@@ -1,6 +1,6 @@
 {
   "abi": "529dd5502370f48d64891818e9439aae72831b990b4027e8abe25c50c1216c21",
-  "api_identity": "17a67331da8467ada160ac1b30aa8695e4ba7930f5710ac1b3ff047eb134f0c4",
+  "api_identity": "61562cdd33d5be71d6fd927f6a5e22d8e2d4999b57fb24bd54ef13cf38a47bb4",
   "apis": {
     "add_dynamic": {
       "header": "scpp/operators/add_dynamic.hpp",
@@ -10036,7 +10036,7 @@
     "scpp/text/concat_text_uint16.hpp": "8a1f174bbbe6e7371f7426c374f424033fa7e11b5f7ebf2f48f518d7296f4a55",
     "scpp/text/concat_text_uint32.hpp": "007baf32ef8ffe91e48447a9b61495617ea6b20158d91e92863540100e82e55d",
     "scpp/text/concat_text_uint8.hpp": "4c7f008e87298a13f0551bba08daaa0b132d346ae96aa9350f1cb43e53b0ddee",
-    "scpp/vector_string.hpp": "cb7a5b60004cebc25e567c0f4bea93dfdfd6e65fdd3e1b4860ef0f08636f93c2"
+    "scpp/vector_string.hpp": "91b10acc2c907039c8e7cd2a02646884237769c9082580ce40af85f10a811248"
   },
   "sources": [
     "include/core/generated/vector_string.cpp",

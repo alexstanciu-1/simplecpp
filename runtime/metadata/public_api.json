@@ -527,6 +527,176 @@
       ],
       "functions": [
         {
+          "name": "vector_reserve",
+          "returns": "void",
+          "parameters": [
+            {
+              "name": "values",
+              "type": "self",
+              "passing": "ref"
+            },
+            {
+              "name": "capacity",
+              "type": "int64",
+              "passing": "value"
+            }
+          ],
+          "kind": "function",
+          "expression": "scpp::php::vector_reserve(${native:values}, ${native:capacity})",
+          "includes": [
+            "scpp/vector_helpers.hpp"
+          ]
+        },
+        {
+          "name": "vector_capacity",
+          "returns": "int64",
+          "parameters": [
+            {
+              "name": "values",
+              "type": "self",
+              "passing": "const_ref"
+            }
+          ],
+          "kind": "function",
+          "expression": "scpp::php::vector_capacity(${native:values})",
+          "includes": [
+            "scpp/vector_helpers.hpp"
+          ],
+          "transport": "native"
+        },
+        {
+          "name": "vector_resize",
+          "returns": "void",
+          "parameters": [
+            {
+              "name": "values",
+              "type": "self",
+              "passing": "ref"
+            },
+            {
+              "name": "count",
+              "type": "int64",
+              "passing": "value"
+            },
+            {
+              "name": "fill",
+              "type": "T",
+              "passing": "const_ref"
+            }
+          ],
+          "kind": "function",
+          "expression": "scpp::php::vector_resize(${native:values}, ${native:count}, fill)",
+          "includes": [
+            "scpp/vector_helpers.hpp"
+          ],
+          "requires_capabilities": {
+            "T": [
+              "copy_storage"
+            ]
+          }
+        },
+        {
+          "name": "vector_filled",
+          "returns": "self",
+          "parameters": [
+            {
+              "name": "count",
+              "type": "int64",
+              "passing": "value"
+            },
+            {
+              "name": "fill",
+              "type": "T",
+              "passing": "const_ref"
+            }
+          ],
+          "kind": "function",
+          "expression": "scpp::php::vector_filled(${native:count}, fill)",
+          "includes": [
+            "scpp/vector_helpers.hpp"
+          ],
+          "transport": "native",
+          "requires_capabilities": {
+            "T": [
+              "copy_storage"
+            ]
+          }
+        },
+        {
+          "name": "vector_clear",
+          "returns": "void",
+          "parameters": [
+            {
+              "name": "values",
+              "type": "self",
+              "passing": "ref"
+            }
+          ],
+          "kind": "function",
+          "expression": "scpp::php::vector_clear(${native:values})",
+          "includes": [
+            "scpp/vector_helpers.hpp"
+          ]
+        },
+        {
+          "name": "vector_clear_keep_capacity",
+          "returns": "void",
+          "parameters": [
+            {
+              "name": "values",
+              "type": "self",
+              "passing": "ref"
+            }
+          ],
+          "kind": "function",
+          "expression": "scpp::php::vector_clear_keep_capacity(${native:values})",
+          "includes": [
+            "scpp/vector_helpers.hpp"
+          ]
+        },
+        {
+          "name": "vector_compact",
+          "returns": "void",
+          "parameters": [
+            {
+              "name": "values",
+              "type": "self",
+              "passing": "ref"
+            }
+          ],
+          "kind": "function",
+          "expression": "scpp::php::vector_compact(${native:values})",
+          "includes": [
+            "scpp/vector_helpers.hpp"
+          ]
+        },
+        {
+          "name": "vector_compact",
+          "returns": "void",
+          "parameters": [
+            {
+              "name": "values",
+              "type": "self",
+              "passing": "ref"
+            },
+            {
+              "name": "capacity",
+              "type": "int64",
+              "passing": "value"
+            }
+          ],
+          "kind": "function",
+          "expression": "scpp::php::vector_compact(${native:values}, ${native:capacity})",
+          "includes": [
+            "scpp/vector_helpers.hpp"
+          ],
+          "requires_capabilities": {
+            "T": [
+              "move_storage"
+            ]
+          }
+        },
+        {
           "name": "count",
           "returns": "uint64",
           "parameters": [

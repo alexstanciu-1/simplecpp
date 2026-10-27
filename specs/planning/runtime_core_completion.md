@@ -228,14 +228,14 @@ value API exists, not that source lowering has already migrated to it.
 | `core.vector.append` | Vector recipe/published specialization method equivalent; helper/source mapping remains | E |
 | `core.microtime.0` | Missing focused public helper; retain current registered core ownership pending review | G |
 | `core.microtime.1` | Missing focused public helper; retain current registered core ownership pending review | G |
-| `core.vector_reserve.2` | Vector recipe/published specialization method equivalent; helper/source mapping remains | E |
-| `core.vector_capacity.1` | Vector recipe/published specialization method equivalent; helper/source mapping remains | E |
-| `core.vector_resize.3` | Vector recipe/published specialization method equivalent; helper/source mapping remains | E |
-| `core.vector_filled.2` | Missing filled-construction helper; do not infer identical failure/allocation behavior from resize | E |
-| `core.vector_clear.1` | Vector recipe/published specialization method equivalent; helper/source mapping remains | E |
-| `core.vector_clear_keep_capacity.1` | Clear method exists; bind/check capacity-retention helper contract explicitly | E |
-| `core.vector_compact.1` | Vector recipe/published specialization method equivalent; helper/source mapping remains | E |
-| `core.vector_compact.2` | Vector recipe/published specialization method equivalent; helper/source mapping remains | E |
+| `core.vector_reserve.2` | Published helper binding and vector recipe; frontend adoption remains excluded | E |
+| `core.vector_capacity.1` | Published helper binding and vector recipe; frontend adoption remains excluded | E |
+| `core.vector_resize.3` | Published helper binding and vector recipe; frontend adoption remains excluded | E |
+| `core.vector_filled.2` | Published copy-gated filled helper; partial-copy failure cleanup proved | E |
+| `core.vector_clear.1` | Published helper binding and vector recipe; frontend adoption remains excluded | E |
+| `core.vector_clear_keep_capacity.1` | Published helper; capacity retention and element destruction proved | E |
+| `core.vector_compact.1` | Published helper binding and vector recipe; frontend adoption remains excluded | E |
+| `core.vector_compact.2` | Published helper binding and vector recipe; frontend adoption remains excluded | E |
 | `core.Exception.make` | Missing source Exception object path; exception_info is not this type | D/G |
 | `core.Exception.get_message` | Missing source Exception object path; exception_info is not this type | D/G |
 | `core.error.make` | Published error_value factory/getter equivalent | C (integration) |
@@ -1458,3 +1458,24 @@ dynamic identity, unsupported kinds and repeated successful observations with ze
 allocations after setup. Release and sanitizer evidence and focused compile costs
 are recorded in `runtime/specs/public_api_boundary_results.md`. Metadata admission
 and imported-definition reuse checks include the two new published functions.
+
+## Active-goal progress — E5
+
+The vector recipe now publishes all eight strict helper signatures: reserve,
+capacity, resize, filled, clear, clear_keep_capacity, and both compact forms.
+They use source `int64` counts/capacities through the existing native provider;
+negative values throw `value_error` before mutation. Existing unsigned storage
+methods remain available. Fill helpers require `copy_storage`; explicit-capacity
+compact retains the native move requirement. These physical gates do not claim
+source formation validation or frontend migration.
+
+Extract the unchanged native helper definitions from the broad PHP support header
+into `scpp/vector_helpers.hpp`. The PHP support header includes that owner, preserving
+its API. The generated adapters now include the focused header, avoiding unrelated
+ownership-header include-order dependencies revealed by standalone compilation.
+
+Application-generated move-only, integer and throwing-copy record vectors plus
+runtime-published vector_string exercise helper semantics, partial-construction
+cleanup, nonallocating reserved operations and sealed application reuse. Source
+argument evaluation/value snapshots remain compiler-owned; this slice exposes the
+provider and does not add indexed destinations or alias capture lowering.

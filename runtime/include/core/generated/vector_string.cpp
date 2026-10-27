@@ -2,6 +2,7 @@
 #include "scpp/detail/concrete_access.hpp"
 #include "scpp/int_t.hpp"
 #include "scpp/string.hpp"
+#include "scpp/vector_helpers.hpp"
 #include "scpp/vector_iteration.hpp"
 #include "scpp/vector_string.hpp"
 #include "scpp/vector_t.hpp"
@@ -48,6 +49,14 @@ return (*detail::concrete_access::get<native_vector_string_cursor_>(*this).begin
 scpp::string vector_string_cursor_::value() { return ([&]() -> decltype(auto) { if (!this->valid()) raise_runtime_error("Finished iteration", "index_out_of_range", "core", "iteration");
 return (*detail::concrete_access::get<native_vector_string_cursor_>(*this).begin()).value_copy(); })(); }
 void vector_string_cursor_::next() { if (this->valid()) { auto iterator = detail::concrete_access::get<native_vector_string_cursor_>(*this).begin(); ++iterator; } }
+void vector_reserve(scpp::vector_string &values, scpp::int64 capacity) { scpp::php::vector_reserve(detail::concrete_access::get<scpp::vector_t<scpp::string>>(values), scpp::int_t<>(capacity.native_value())); }
+scpp::int64 vector_capacity(const scpp::vector_string &values) { return scpp::int64((([&]() -> decltype(auto) { return scpp::php::vector_capacity(detail::concrete_access::get<scpp::vector_t<scpp::string>>(values)); })()).native_value()); }
+void vector_resize(scpp::vector_string &values, scpp::int64 count, const scpp::string &fill) { scpp::php::vector_resize(detail::concrete_access::get<scpp::vector_t<scpp::string>>(values), scpp::int_t<>(count.native_value()), fill); }
+scpp::vector_string vector_filled(scpp::int64 count, const scpp::string &fill) { return detail::concrete_access::make<scpp::vector_string, scpp::vector_t<scpp::string>>([&]() -> decltype(auto) { return scpp::php::vector_filled(scpp::int_t<>(count.native_value()), fill); }); }
+void vector_clear(scpp::vector_string &values) { scpp::php::vector_clear(detail::concrete_access::get<scpp::vector_t<scpp::string>>(values)); }
+void vector_clear_keep_capacity(scpp::vector_string &values) { scpp::php::vector_clear_keep_capacity(detail::concrete_access::get<scpp::vector_t<scpp::string>>(values)); }
+void vector_compact(scpp::vector_string &values) { scpp::php::vector_compact(detail::concrete_access::get<scpp::vector_t<scpp::string>>(values)); }
+void vector_compact(scpp::vector_string &values, scpp::int64 capacity) { scpp::php::vector_compact(detail::concrete_access::get<scpp::vector_t<scpp::string>>(values), scpp::int_t<>(capacity.native_value())); }
 scpp::uint64 count(const scpp::vector_string &value) { return ([&]() -> decltype(auto) { return value.size(); })(); }
 scpp::boolean empty(const scpp::vector_string &value) { return ([&]() -> decltype(auto) { return value.empty(); })(); }
 scpp::boolean isset(const scpp::vector_string &value) { return ([&]() -> decltype(auto) { return scpp::boolean(true); })(); }

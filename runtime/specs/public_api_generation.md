@@ -1350,3 +1350,15 @@ boxed null is usable immediately. Current boxed forms are plain/plain and approv
 carrier/plain with exact payload identity. Broader mixed cross-type joins remain
 unimplemented; homogeneous boxed carrier pairs are not enabled by this slice.
 result_or_bool continues to reject on either side before execution.
+
+## Strict vector helper bindings
+
+Vector family functions expose the eight signatures in `specs/builtins/vector_helpers.md`
+through ordinary parameter transport and conditional capabilities. Signed source
+counts go to the native provider in `scpp/vector_helpers.hpp`; they must not be
+converted to the unsigned storage-method sizes before the provider checks them.
+Fill arguments remain public element representations inside native vector storage.
+Filled construction returns through the existing inline-storage owned transport.
+The PHP adapter includes the same provider rather than duplicating its behavior.
+Source evaluation order and fill snapshots belong to the compiler, not these C++
+entry points. There is no vector-specific branch in the API generator.

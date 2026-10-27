@@ -54,6 +54,14 @@ public:
     scpp::string value();
     void next();
 };
+void vector_reserve(scpp::vector_string &values, scpp::int64 capacity);
+scpp::int64 vector_capacity(const scpp::vector_string &values);
+void vector_resize(scpp::vector_string &values, scpp::int64 count, const scpp::string &fill);
+scpp::vector_string vector_filled(scpp::int64 count, const scpp::string &fill);
+void vector_clear(scpp::vector_string &values);
+void vector_clear_keep_capacity(scpp::vector_string &values);
+void vector_compact(scpp::vector_string &values);
+void vector_compact(scpp::vector_string &values, scpp::int64 capacity);
 scpp::uint64 count(const scpp::vector_string &value);
 scpp::boolean empty(const scpp::vector_string &value);
 scpp::boolean isset(const scpp::vector_string &value);

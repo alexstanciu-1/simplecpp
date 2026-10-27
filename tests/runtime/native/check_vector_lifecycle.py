@@ -20,7 +20,8 @@ parser.add_argument('--sanitize',action='store_true')
 args=parser.parse_args();args.tool=args.tool.resolve()
 metadata=concrete_types.metadata(root/'runtime')
 leaves={'record':{'cpp':'fixture::record','header':'record.hpp','owner':'application.records','capabilities':['move_storage']}}
-names={'vector<record>':'record_vector','vector<int64>':'integer_vector'}
+leaves['copy_record']={'cpp':'fixture::copy_record','header':'record.hpp','owner':'application.records','capabilities':['copy_storage','move_storage']}
+names={'vector<copy_record>':'copy_record_vector','vector<record>':'record_vector','vector<int64>':'integer_vector'}
 request={'package':'application.record_vectors','roots':list(names),'leaves':leaves,'names':names}
 envelope={'metadata':metadata,'request':request,'leaves':leaves,'names':names,'imports':{},'layouts':{}}
 def plan(data=envelope,error=None):
@@ -35,7 +36,7 @@ move=units['vector<record>'];ordinary=units['vector<int64>']
 assert len(move['probes'])==1 and len(ordinary['probes'])==2
 assert move['probes'][0]['lifecycle']=={'default':'native','copy':'disabled','move':'native','destroy':'native'}
 assert result['types']['vector<record>']['capabilities']==['default_storage','move_storage']
-for method in ['iterate','at','index','set','resize']:
+for method in ['iterate','at','index','set','resize','vector_filled','vector_resize']:
     assert ' '+method+'(' not in move['header'],move['header']
     assert ' '+method+'(' in ordinary['header'],ordinary['header']
 assert 'cursor' not in move['header']
@@ -57,6 +58,15 @@ print('PASS: conditional companion/lifecycle/method selection and invalid metada
 if not args.core:sys.exit(0)
 fixture=r'''#pragma once
 namespace fixture {
+struct copy_record {
+    static inline int live=0, budget=-1;
+    copy_record() { ++live; }
+    copy_record(const copy_record &) { if(budget==0) throw 7; if(budget>0) --budget; ++live; }
+    copy_record(copy_record &&) noexcept { ++live; }
+    copy_record &operator=(const copy_record &)=default;
+    copy_record &operator=(copy_record &&)=default;
+    ~copy_record() noexcept { --live; }
+};
 struct counts { int moves=0; int destroyed=0; };
 class record final {
     counts *counts_;
@@ -80,10 +90,12 @@ with tempfile.TemporaryDirectory(prefix='scpp-vector-lifecycle-') as directory:
     (app/'public').mkdir(parents=True);(app/'public/record.hpp').write_text(fixture)
     request_file=work/'request.json';request_file.write_text(json.dumps(request))
     manifest=concrete_types.generate(request_file,app,sdk,[sdk],'clang++',[])
-    assert len(manifest['sources'])==2
+    assert len(manifest['sources'])==3
     code=r'''#include "scpp/record_vector.hpp"
+#include "scpp/copy_record_vector.hpp"
 #include "scpp/integer_vector.hpp"
 #include "scpp/vector_string.hpp"
+#include "scpp/exception_info.hpp"
 #include "public_api_guard.hpp"
 #include <cstdlib>
 #include <cstdio>
@@ -121,10 +133,54 @@ int main() {
         try { (void)cursor.value(); } catch(...) { value_failed=true; }
         CHECK(key_failed && value_failed);
     }
+    {
+        fixture::copy_record fill;
+        fixture::copy_record::budget=1;
+        bool failed=false;
+        try { (void)scpp::vector_filled(scpp::int64(4),fill); } catch(int value) { CHECK(value==7); failed=true; }
+        CHECK(failed && fixture::copy_record::live==1);
+        fixture::copy_record::budget=-1;
+        { auto filled=scpp::vector_filled(scpp::int64(3),fill); CHECK(fixture::copy_record::live==4); }
+        CHECK(fixture::copy_record::live==1);
+    }
+    CHECK(fixture::copy_record::live==0);
+    // Signed source helpers preserve negative-argument failure and capacity.
+    {
+        auto values=scpp::vector_filled(scpp::int64(3),scpp::int64(7));
+        CHECK(values.size().native_value()==3 && values.at(scpp::uint64(2)).native_value()==7);
+        scpp::vector_reserve(values,scpp::int64(8));
+        const auto capacity=scpp::vector_capacity(values).native_value(); CHECK(capacity>=8);
+        for(int operation=0;operation<4;++operation) {
+            bool failed=false;
+            try {
+                if(operation==0) scpp::vector_reserve(values,scpp::int64(-1));
+                if(operation==1) scpp::vector_resize(values,scpp::int64(-1),scpp::int64(2));
+                if(operation==2) scpp::vector_compact(values,scpp::int64(-1));
+                if(operation==3) (void)scpp::vector_filled(scpp::int64(-1),scpp::int64(2));
+            } catch(...) { failed=true; CHECK(scpp::capture_runtime_exception().code().equals("value_error")); }
+            CHECK(failed && values.size().native_value()==3);
+            CHECK(scpp::vector_capacity(values).native_value()==capacity);
+            CHECK(values.at(scpp::uint64(0)).native_value()==7);
+        }
+        const int before=allocations;
+        scpp::vector_resize(values,scpp::int64(5),scpp::int64(9));
+        CHECK(values.at(scpp::uint64(2)).native_value()==7 && values.at(scpp::uint64(4)).native_value()==9);
+        scpp::vector_clear_keep_capacity(values); CHECK(values.empty());
+        CHECK(scpp::vector_capacity(values).native_value()==capacity);
+        scpp::vector_resize(values,scpp::int64(2),scpp::int64(4));
+        scpp::vector_clear(values); CHECK(values.empty());
+        CHECK(scpp::vector_capacity(values).native_value()==capacity && allocations==before);
+        scpp::vector_resize(values,scpp::int64(2),scpp::int64(4));
+        scpp::vector_compact(values,scpp::int64(1)); scpp::vector_compact(values);
+        CHECK(values.size().native_value()==2 && values.at(scpp::uint64(1)).native_value()==4);
+        CHECK(scpp::vector_filled(scpp::int64(0),scpp::int64(1)).empty());
+        auto texts=scpp::vector_filled(scpp::int64(2),scpp::string("fill"));
+        CHECK(texts.at(scpp::uint64(1)).equals("fill"));
+    }
     fixture::counts counts;
     {
         scpp::record_vector values;
-        values.reserve(scpp::uint64(3));
+        scpp::vector_reserve(values,scpp::int64(3));
         const int before=allocations;
         values.append(fixture::record(counts));
         values.push_back(fixture::record(counts));
@@ -137,7 +193,9 @@ int main() {
         scpp::record_vector assigned;
         assigned=static_cast<scpp::record_vector&&>(moved);
         CHECK(assigned.size().native_value()==2 && counts.moves==moves);
-        assigned.clear();
+        const auto kept=scpp::vector_capacity(assigned).native_value();
+        scpp::vector_clear_keep_capacity(assigned);
+        CHECK(scpp::vector_capacity(assigned).native_value()==kept);
         CHECK(counts.destroyed==3 && allocations==before);
     }
     CHECK(counts.destroyed==3);

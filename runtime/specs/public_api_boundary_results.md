@@ -2400,3 +2400,34 @@ runtime throughput or a full compiler rebuild. A preliminary run overlapped core
 builds and is not used for the comparison. Release and sanitizer core builds each
 ran once because the aggregate gained two implementation units; their elapsed times
 were not benchmarked. The existing mixed-hash explicit-instantiation warning remains.
+
+## E5 — strict vector helper publication (2026-10-27)
+
+The existing vector recipe now emits reserve/capacity/resize/filled/clear/
+clear_keep_capacity and both compact signatures. The lifecycle proof generates
+three application vector types (move-only, integer, throwing-copy record), plus
+exercises runtime-published vector_string filled construction. It proves:
+
+- negative reserve/resize/compact/filled requests throw `value_error`; existing
+  size, contents and capacity survive the checked failure;
+- filled construction copies the requested value, zero count works, and a failure
+  during copying destroys all partially constructed elements;
+- resize retains the prefix, both clear helpers retain capacity, and compact does
+  not truncate when its requested capacity is below size;
+- reserve/clear/capacity work with move-only storage; fill operations are omitted;
+- reserved scalar resize/clear operations and move-only operations allocate zero
+  times after setup; this is not a claim that filled construction allocates nothing;
+- public-only caller compilation, ASan/UBSan/leak detection and sealed application
+  specialization reuse pass.
+
+Standalone compilation exposed a pre-existing include-order dependency in the
+broad PHP support header (`value_copy` used an undeclared ownership helper).
+The unchanged vector provider definitions were extracted into a focused native
+header; an exact-text comparison verifies no provider behavior changed. PHP support
+includes the new header. This does not repair or expose unrelated value_copy APIs.
+
+Three storage units / caller compile, single runs: release **5.0525s / 0.1663s**
+(overlapped a core rebuild; informational only), sanitizer **6.5690s / 0.2222s**.
+Both core configurations were rebuilt after the header extraction. The existing
+mixed-hash instantiation warning remains. Metadata/lifecycle checks pass separately;
+these metadata checks are not substitutes for the compiled execution proof.
