@@ -25,6 +25,13 @@ set_target_properties(scpp_runtime_core PROPERTIES POSITION_INDEPENDENT_CODE ON)
 # Consumers retain the aggregate target name; implementations have truthful owners.
 add_library(scpp_runtime INTERFACE)
 
+# Optional consumers link the tasks owner explicitly.
+add_library(scpp_tasks EXCLUDE_FROM_ALL include/modules/tasks/tasks.cpp)
+target_link_libraries(scpp_tasks PUBLIC scpp_runtime_configuration)
+target_compile_definitions(scpp_tasks PUBLIC SCPP_HAS_TASKS=1)
+find_package(Threads REQUIRED)
+target_link_libraries(scpp_tasks PUBLIC Threads::Threads)
+
 add_library(scpp_json
 	include/modules/json/json.cpp
 	include/modules/json/document.cpp

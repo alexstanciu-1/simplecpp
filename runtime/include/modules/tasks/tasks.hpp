@@ -1,4 +1,5 @@
 #pragma once
+#include "batch_profile.hpp"
 
 #include "scpp/bool_t.hpp"
 #include "scpp/hash_t.hpp"
@@ -783,7 +784,7 @@ template <typename TItem, typename TCallback, typename TErrorHandler>
 					if (state->stop_requested.load()) {
 						break;
 					}
-					const std::size_t index = next_index.fetch_add(1, std::memory_order_relaxed);
+					const std::size_t index = claim_profiled_index(next_index);
 					if (index >= item_count) {
 						break;
 					}
@@ -871,10 +872,12 @@ template <typename TItem, typename TCallback, typename TErrorHandler>
 	const shared_p<batch_state> &state) -> result_vector_t<callback_result_t<TCallback, TItem>>
 {
 	auto slots = run_vector_slots_with_state(items, workers, callback, error_handler, timeout_ms, state);
+	const auto gather_start = active_batch_profile ? profile_now_ns() : 0;
 	result_vector_t<callback_result_t<TCallback, TItem>> results;
 	for (auto &slot : slots) {
 		if (slot.has_value()) { results.push_back(std::move(slot.value())); }
 	}
+	if (active_batch_profile) { active_batch_profile->gather_ns = profile_now_ns() - gather_start; }
 	return results;
 }
 

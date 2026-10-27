@@ -113,11 +113,17 @@ result<vector_t<string_t>> scan(const string_t &path) {
 		return error_t(string_t("fs::scan(): not a directory"));
 	}
 	std::vector<std::string> names;
-	for (const auto &entry : std::filesystem::directory_iterator(native_path, error)) {
+	std::filesystem::directory_iterator entries(native_path, error);
+	if (error) {
+		return error_t(string_t("fs::scan(): cannot open directory"));
+	}
+	const std::filesystem::directory_iterator end;
+	while (entries != end) {
+		names.push_back(entries->path().filename().string());
+		entries.increment(error);
 		if (error) {
 			return error_t(string_t("fs::scan(): iteration failed"));
 		}
-		names.push_back(entry.path().filename().string());
 	}
 	std::sort(names.begin(), names.end());
 	return scpp::filesystem::filesystem_detail::names_to_vector(std::move(names));

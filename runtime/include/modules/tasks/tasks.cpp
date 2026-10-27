@@ -2,6 +2,7 @@
 
 #include <deque>
 #include <memory>
+#include <time.h>
 
 #ifndef SCPP_TASKS_DEFAULT_WORKER_POOL_SIZE
 #define SCPP_TASKS_DEFAULT_WORKER_POOL_SIZE 0
@@ -439,9 +440,16 @@ void coordinator_dispatch::invoke(std::function<void()> body)
 
 void coordinator_dispatch::finish_workers(std::size_t count)
 {
-	std::lock_guard<std::mutex> lock(mutex_);
+	const auto waiting = active_worker_profile ? profile_now_ns() : 0;
+	std::unique_lock<std::mutex> lock(mutex_);
+	const auto acquired = active_worker_profile ? profile_now_ns() : 0;
 	remaining_ -= count;
 	changed_.notify_all();
+	lock.unlock();
+	if (active_worker_profile) {
+		active_worker_profile->lock_wait_ns += acquired - waiting;
+		active_worker_profile->lock_hold_ns += profile_now_ns() - acquired;
+	}
 }
 
 void coordinator_dispatch::drain()
@@ -464,9 +472,95 @@ void coordinator_dispatch::drain()
 	}
 }
 
+// Opt-in gated launch keeps production scheduling unchanged when profiling is disabled.
+std::uint64_t profile_thread_cpu_ns()
+{
+#if defined(CLOCK_THREAD_CPUTIME_ID)
+	timespec value{};
+	if (clock_gettime(CLOCK_THREAD_CPUTIME_ID, &value) != 0) {
+		throw std::runtime_error("Thread CPU clock unavailable");
+	}
+	return std::uint64_t(value.tv_sec) * 1000000000ULL + value.tv_nsec;
+#else
+	throw std::runtime_error("Thread CPU profiling unsupported on this platform");
+#endif
+}
+
+static void execute_profiled_worker_batch(std::size_t worker_count,
+	const worker_batch_body &body, coordinator_dispatch &dispatch, batch_profile &profile)
+{
+	const auto start = profile_now_ns();
+	std::vector<worker_thread> threads;
+	threads.reserve(worker_count);
+	std::vector<worker_profile> metrics(worker_count);
+	std::vector<std::exception_ptr> errors(worker_count);
+	std::mutex gate;
+	std::condition_variable changed;
+	std::size_t ready = 0;
+	bool released = false;
+	std::exception_ptr launch_error;
+	try {
+		for (std::size_t index = 0; index < worker_count; ++index) {
+			threads.emplace_back([&, index] {
+				{
+					std::unique_lock lock(gate);
+					++ready;
+					changed.notify_all();
+					changed.wait(lock, [&] { return released; });
+				}
+				auto &metric = metrics[index];
+				active_worker_profile = &metric;
+				try {
+					const auto cpu = profile_thread_cpu_ns();
+					try { body(index); }
+					catch (...) { errors[index] = std::current_exception(); }
+					metric.cpu_ns = profile_thread_cpu_ns() - cpu;
+				} catch (...) { errors[index] = std::current_exception(); }
+				metric.work_end = profile_now_ns();
+				dispatch.finish_workers();
+				metric.completion_end = profile_now_ns();
+				active_worker_profile = nullptr;
+			});
+		}
+	} catch (...) { launch_error = std::current_exception(); }
+	std::uint64_t release;
+	{
+		std::unique_lock lock(gate);
+		changed.wait(lock, [&] { return ready == threads.size(); });
+		release = profile_now_ns();
+		released = true;
+	}
+	changed.notify_all();
+	if (threads.size() != worker_count) { dispatch.finish_workers(worker_count - threads.size()); }
+	dispatch.drain();
+	for (auto &thread : threads) { thread.join(); }
+	const auto joined = profile_now_ns();
+	auto work_end = release;
+	auto completion_end = release;
+	for (const auto &metric : metrics) {
+		work_end = std::max(work_end, metric.work_end);
+		completion_end = std::max(completion_end, metric.completion_end);
+		profile.worker_cpu_ns += metric.cpu_ns;
+		profile.queue_claim_ns += metric.queue_claim_ns;
+		profile.completion_lock_wait_ns += metric.lock_wait_ns;
+		profile.completion_lock_hold_ns += metric.lock_hold_ns;
+	}
+	profile.workers = threads.size();
+	profile.startup_ns = release - start;
+	profile.work_ns = work_end - release;
+	profile.completion_tail_ns = completion_end - work_end;
+	profile.join_tail_ns = joined - completion_end;
+	if (launch_error) { std::rethrow_exception(launch_error); }
+	for (const auto &error : errors) { if (error) { std::rethrow_exception(error); } }
+}
+
 void execute_worker_batch(std::size_t worker_count, const worker_batch_body &body, coordinator_dispatch &dispatch)
 {
 	if (worker_count == 0) { return; }
+	if (active_batch_profile) {
+		execute_profiled_worker_batch(worker_count, body, dispatch, *active_batch_profile);
+		return;
+	}
 	if (!default_pool_worker_active && !coordinator_callback_active) {
 		if (auto pool = current_default_pool(); pool && pool->run_batch(worker_count, body, dispatch)) { return; }
 	}
