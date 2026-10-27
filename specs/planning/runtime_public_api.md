@@ -558,12 +558,22 @@ Accepted direction; implementation and normative semantic migration are pending:
   container equality and mixed/dynamic family crossing are outside this scalar
   equality change and retain their current contracts.
 
-One behavior needs confirmation before implementation: for incompatible non-null
-scalar kinds (for example bool versus int, or string versus int), should boxed
-equality return false or throw? Recommended: return false (`!=` true), keeping
-boxed equality a useful predicate without coercion. This recommendation is not
-yet an accepted rule; source-level admission for statically typed pairs remains
-separate from boxed runtime kind dispatch.
+Contract review correction: do not introduce a blanket false result for unsupported
+scalar equality pairs. The mixed comparison fixture explicitly expects bool/int
+equality to throw (`tests/runtime/native/test_mixed_t_dynamic.cpp`,
+`test_value_t_comparisons_and_logical`). The conflict with coercive runtime behavior
+is already recorded as REL-DEBT-04 in
+[release debt disposition](release_debt_disposition_2026_09_09.md).
+The higher-level mixed contract delegates to admitted native scalar operations;
+it does not authorize additional operators through implicit extraction.
+
+Implementation direction: statically known unsupported pairs reject; boxed pairs
+whose active kinds do not admit equality throw, for both `==` and `!=`. Explicitly
+admitted null/absence and wrapper-state comparisons remain separate. The previous
+recommendation to return false for all incompatible kinds is withdrawn. This is a
+semantic reconciliation task, not a claim that the current runtime already throws
+consistently: its scalar helper still coerces, and the existing fixture also contains
+the old null/empty-string equality expectation that the agreed tightening replaces.
 
 Null checks should observe the existing null/absence contracts, not falsiness;
 carrier error and sentinel states must not silently become null. Any wider
