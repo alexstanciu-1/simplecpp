@@ -6627,6 +6627,26 @@
         "same_carrier"
       ],
       "require_selected": "coalesce_require_value"
+    },
+    "conditional": {
+      "payloads": [
+        "int64",
+        "float64",
+        "boolean",
+        "string"
+      ],
+      "carriers": [
+        "nullable",
+        "result",
+        "result_or_false",
+        "result_or_bool"
+      ],
+      "forms": [
+        "plain_plain",
+        "carrier_plain",
+        "plain_carrier",
+        "same_carrier"
+      ]
     }
   }
 }

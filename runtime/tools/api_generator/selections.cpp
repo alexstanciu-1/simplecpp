@@ -1,6 +1,8 @@
 #include "selections.hpp"
 #include "carriers.hpp"
 #include "names.hpp"
+#include "conditions.hpp"
+#include "capabilities.hpp"
 
 namespace scpp::api_generation
 {
@@ -10,12 +12,9 @@ namespace scpp::api_generation
         return false;
     }
 
-    void validate_selections(const value &metadata)
+    static void validate_coalesce_policy(const value &metadata)
     {
-        if (!metadata.has("selections")) return;
-        const auto &registry = metadata.at("selections");
-        fields_only(registry, "coalesce", "selections");
-        const auto &policy = registry.at("coalesce");
+        const auto &policy = metadata.at("selections").at("coalesce");
         fields_only(policy, "payloads carriers forms require_selected", "coalesce policy");
         if (policy.at("payloads").type!=value::kind::array || policy.at("payloads").items.empty()
             || policy.at("forms").type!=value::kind::array || policy.at("forms").items.empty()
@@ -42,6 +41,86 @@ namespace scpp::api_generation
         if (signature.get("returns")!="void" || parameters.size()!=1
             || parameters[0].get("type")!="boolean" || parameters[0].get("passing")!="const_ref")
             throw std::runtime_error("Coalesce selected-value check must borrow boolean and return void");
+    }
+
+    void validate_selections(const value &metadata)
+    {
+        if (!metadata.has("selections")) return;
+        const auto &registry = metadata.at("selections");
+        fields_only(registry, "coalesce conditional", "selections");
+        if (registry.has("coalesce")) validate_coalesce_policy(metadata);
+        if (!registry.has("conditional")) return;
+        const auto &policy = registry.at("conditional");
+        fields_only(policy, "payloads carriers forms", "conditional selection policy");
+        if (policy.at("payloads").type!=value::kind::array || policy.at("payloads").items.empty()
+            || policy.at("carriers").type!=value::kind::array || policy.at("forms").type!=value::kind::array)
+            throw std::runtime_error("Invalid conditional selection domains");
+        naming types(metadata_naming_registry(metadata, metadata.at("types"), value::object()));
+        for (const auto &payload : policy.at("payloads").items) types.resolve(payload.text());
+        for (const auto &family : policy.at("carriers").items)
+            metadata.at("families").at(family.text()).at("carrier");
+        for (const auto &form : policy.at("forms").items)
+            if (form.text()!="plain_plain" && form.text()!="carrier_plain"
+                && form.text()!="plain_carrier" && form.text()!="same_carrier")
+                throw std::runtime_error("Unknown conditional selection join form");
+    }
+
+    value resolve_conditional(const value &metadata, const value &request, const value &names)
+    {
+        fields_only(request, "form condition then else", "conditional request");
+        const auto form = request.at("form").text();
+        if (form!="ternary" && form!="elvis") throw std::runtime_error("Unknown conditional form");
+        if ((form=="ternary")!=request.has("condition"))
+            throw std::runtime_error("Only full ternary has an independent condition");
+        validate_carriers(metadata);
+        validate_selections(metadata);
+        const auto &policy = metadata.at("selections").at("conditional");
+        naming types(metadata_naming_registry(metadata, metadata.at("types"), names));
+        value branches = value::object();
+        for (const auto *side : {"then", "else"}) {
+            const auto canonical = types.resolve(request.at(side).text()).first;
+            auto branch = project_carrier(metadata, canonical, names);
+            if (branch.type==value::kind::null) {
+                branch = value::object(); branch["source"] = canonical; branch["target"] = canonical;
+                branch["kind"] = "identity";
+            } else if (!contains(policy.at("carriers"), branch.at("family").text()))
+                throw std::runtime_error("Unsupported conditional carrier");
+            if (!contains(policy.at("payloads"), branch.at("target").text()))
+                throw std::runtime_error("Unsupported conditional payload");
+            const auto capabilities = type_capabilities(metadata, metadata.at("types"), names, canonical);
+            if (!capabilities.has("capabilities") || !contains(capabilities.at("capabilities"), "copy_storage"))
+                throw std::runtime_error("Conditional owned result requires copying");
+            branches[side] = branch;
+        }
+        const auto &left = branches.at("then"), &right = branches.at("else");
+        const bool left_plain = left.get("kind")=="identity", right_plain = right.get("kind")=="identity";
+        const auto join = left_plain && right_plain ? "plain_plain" : !left_plain && right_plain ? "carrier_plain"
+            : left_plain && !right_plain ? "plain_carrier" : left.at("source").text()==right.at("source").text() ? "same_carrier" : "unsupported";
+        if (left.at("target").text()!=right.at("target").text() || !contains(policy.at("forms"), join))
+            throw std::runtime_error("Unsupported conditional join");
+        const auto &destination = left_plain ? right : left;
+        const auto result = destination.at("source").text();
+        value out = value::object(); out["kind"] = "lazy_conditional"; out["form"] = form; out["result_type"] = result;
+        for (const auto *side : {"then", "else"}) {
+            const auto source = branches.at(side).at("source").text();
+            value conversion = value::object(); conversion["kind"] = "identity";
+            conversion["source"] = source; conversion["target"] = result;
+            if (source!=result) conversion = carrier_payload_construction(destination);
+            out[std::string(side)+"_conversion"] = conversion;
+        }
+        value condition_request = value::object();
+        condition_request["source"] = form=="ternary" ? request.at("condition") : request.at("then");
+        out["condition"] = resolve_condition(metadata, condition_request, names);
+        out["steps"] = value::array();
+        if (form=="ternary") {
+            for (const auto *step : {"evaluate_condition_once", "convert_condition", "select_one_branch",
+                    "evaluate_selected_branch_once", "convert_selected_branch", "return_owned_result"}) out["steps"].items.emplace_back(step);
+        } else {
+            for (const auto *step : {"evaluate_then_snapshot_once", "convert_saved_condition", "if_true_return_saved_then",
+                    "evaluate_else_once", "convert_else", "return_owned_result"}) out["steps"].items.emplace_back(step);
+        }
+        out["failure"] = "throw_preserve_prior_effects";
+        return out;
     }
 
     value resolve_coalesce(const value &metadata, const value &request, const value &names)

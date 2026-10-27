@@ -1192,3 +1192,24 @@ error implementation. A failed selected branch reports the existing coalesce cod
 component and operator. No error construction recipe is copied into plan consumers.
 This first policy is bounded to canonical scalar payloads; further source joins need
 explicit metadata admission and proofs rather than inference from physical copying.
+
+## Exact conditional joins
+
+`selections.conditional` supplies candidate payloads, carrier families and structural
+join forms. `resolve_conditional` accepts `form` (`ternary` or `elvis`), `then`, `else`,
+and an independent `condition` type only for full ternary. Both alternatives validate
+before execution. Current joins require an exact common payload and either identical
+carrier identities or an explicitly admitted carrier/plain arrangement. Effective
+copy-storage capability is required for these owned-result plans.
+
+The result carries its canonical type, a direct-condition plan and separate branch
+conversions. Same-type alternatives use identity copying; a plain payload selected
+for a carrier result uses that carrier's existing payload-construction recipe. State
+observation or extraction is not inserted into whole-carrier branch copying.
+
+Ternary stages evaluate/convert the condition, select exactly one branch, then evaluate
+and convert that branch. Elvis stages snapshot the left once, test that saved value,
+return its converted snapshot if truthy, otherwise evaluate/convert the fallback.
+Consumers must implement these branch boundaries; eager argument evaluation is not
+an equivalent runtime API. The planner adds no public callback templates and does
+not make general logical operators synonyms for direct condition conversion.

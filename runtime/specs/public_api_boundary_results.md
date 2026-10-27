@@ -2154,3 +2154,30 @@ remains unchanged. Timings are single-run wall times with other validation activ
 not isolated benchmarks. No logical-operator policy change is part of this slice.
 Six sanitizer regressions pass in 20.40s. The compiled ASan/UBSan proof with leak
 detection and sealed reuse also passes: storage 18.0382s, caller 1.5333s.
+
+## C26 — exact scalar/carrier ternary and Elvis joins (2026-10-27)
+
+The shared selection owner now separates full ternary from Elvis evaluation and
+preserves exact carrier branch identity. The condition owner handles truthiness;
+existing carrier recipes handle payload construction. No logical-operator policy is
+inferred. Both alternative types and physical copy requirements validate before
+execution; a renamed family proves there is no generator type-name exception.
+
+`check_carrier_conditional.py` proves exact scalar and all four scalar-carrier joins,
+rejects widening/cross-family/non-admitted payloads, and exercises 204 successful
+value/lazy cases plus 84 failure/state-preservation cases. Cases cover skipped throwing
+branches, falsey payloads selecting Elvis fallback, true sentinels skipping it, full
+ternary returning an unavailable state without extracting, and independent returned
+snapshots. The successful scalar/short-string region allocates zero times. Sixteen
+application specializations seal and reuse without regenerated sources.
+
+Five release regressions pass in 3.45s; five sanitizer regressions pass in 25.29s.
+Both compiled public proofs pass, including ASan/UBSan and leak detection. Release
+storage/caller compilation: 19.1941s / 3.4662s; sanitized: 24.6989s / 8.7881s.
+These are single-run wall times with other validation active, not isolated benchmarks.
+
+Initial release generator build 5.66s; review corrected capability access to use the
+resolved record's capabilities list before tests, with a 2.03s rebuild. Sanitized
+generator build 16.75s. All 341 runtime implementation units are unchanged and core
+was not rebuilt. General boxed/record/ownership joins and scoped observation remain
+open; these bounded proofs do not claim frontend adoption or general selection closure.

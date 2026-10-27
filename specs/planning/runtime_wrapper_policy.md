@@ -506,3 +506,13 @@ and identical carrier pairs. It returns an owned scalar, lazily evaluates fallba
 and checks the selected fallback's usable domain before extraction. Result-or-bool,
 cross-family joins, widening and automatic nested peeling are not admitted here.
 This does not settle the pending logical-operator policy.
+
+### Exact ternary/Elvis implementation checkpoint
+
+The initial scalar join policy admits exact plain pairs, same-carrier pairs and
+carrier/exact-payload pairs in both directions for all four carrier families. Branch
+conversion preserves the carrier type and its selected state. Full ternary uses a
+separate condition; Elvis tests its saved left value once using direct truthiness.
+Only the selected branch converts. Owned results require physical copying; this does
+not confer source template eligibility or ownership-transfer admission. Wider joins
+remain in the completion backlog.

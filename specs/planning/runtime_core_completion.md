@@ -17,7 +17,7 @@ each slice. The original inventory is a baseline, not a current completion count
 | A2 | Complete for the agreed checked scalar conversions | Carrier conversion is C; ownership casts are D. |
 | B1 | Complete for the agreed scalar-facing truth/text/identity/observation scope | Carrier forms remain C; boxed arithmetic and access completion are not B1 credit. |
 | B2 | Complete for the agreed non-carrier special/mutation and text public paths; closure evidence below | Carrier forms C; indexed retention E; native exception inspection and overflow disposition G. |
-| C | Four carrier recipes with conditional lifecycle; numeric/presence plans, scalar/boxed equality, scalar reconstruction, text, unary/update, canonical arithmetic compounds, bitwise/shift plans, compound power, string relational ordering and first scalar coalescing, Result error identity and sentinel take/state proofs implemented; logical-negation correction pending; review pending | Four carrier families, state-preserving operations/conversions and conditional lifecycle. |
+| C | Four carrier recipes and bounded scalar operator/selection paths implemented; review pending | Logical-negation correction, scoped observations, broader admitted selection domains, source-formation decision and full carrier review. |
 | D | Pending | Ownership, application targets and source Exception transport gaps. |
 | E | Existing vector/hash/boxed foundations; incomplete | Capability/access/initialization/cursor gaps and identity key-allocation debt. |
 | F | Pending | Callable transport and registered collection algorithms. |
@@ -1263,3 +1263,24 @@ The generator has no family-name branch and renamed carrier metadata is tested.
 This is a first scalar path, not general coalescing completion. Boxed, record,
 ownership and other admitted joins, ternary/Elvis, scoped observation and the logical
 operator decision remain open. The source-formation boundary is also still pending.
+
+## C26 — exact scalar/carrier ternary and Elvis joins
+
+The selection owner now resolves exact canonical scalar joins for full ternary and
+Elvis. Plain pairs return the scalar; admitted same-carrier and carrier/payload pairs
+in either order return the carrier. It validates both branch types and physical
+copying before execution, without using copyability as general source eligibility.
+Cross-family, widening and non-admitted payload joins remain rejected.
+
+Full ternary converts its independent condition and evaluates only the selected
+branch. It can return a selected absence/error/sentinel unchanged; no payload
+extraction is needed merely to return that carrier. Elvis snapshots its left value
+once, uses direct condition truthiness, and either returns that saved value or
+lazily evaluates/converts the fallback. A true bool sentinel remains a true sentinel;
+false/error/absent and falsey payloads take the fallback. Coalescing retains its
+separate usable-value behavior.
+
+Existing condition and payload-construction metadata provide all operations; no
+runtime implementation units are added. This does not resolve the pending logical
+operator question or implement general boxed/record/ownership joins. Scoped
+observations, broader admitted selection domains and source formation remain open.

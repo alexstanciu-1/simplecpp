@@ -373,7 +373,9 @@ namespace scpp::api_generation
                 input.has("names") ? input.at("names") : value::object(),input.at("imports"));
             input["metadata"]["types"]=leaves;
         }
-		if (input.get("action")=="resolve_coalesce") {
+		if (input.get("action")=="resolve_conditional") {
+            output=resolve_conditional(input.at("metadata"),input.at("request"), input.has("names") ? input.at("names") : value::object());
+        } else if (input.get("action")=="resolve_coalesce") {
             output=resolve_coalesce(input.at("metadata"),input.at("request"), input.has("names") ? input.at("names") : value::object());
         } else if (input.get("action")=="resolve_condition") {
             output=resolve_condition(input.at("metadata"),input.at("request"), input.has("names") ? input.at("names") : value::object());
