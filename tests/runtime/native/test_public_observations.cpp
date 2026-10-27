@@ -19,6 +19,10 @@
 #include "scpp/observations/clean_float64.hpp"
 #include "scpp/observations/clean_string.hpp"
 #include "scpp/exception_info.hpp"
+#include <limits>
+#include "scpp/observations/is_bool_mixed.hpp"
+#include "scpp/observations/is_int_mixed.hpp"
+#include "scpp/observations/is_float_mixed.hpp"
 #include <cstdio>
 #include <cstdlib>
 #include <new>
@@ -31,6 +35,21 @@ void operator delete(void *p,std::size_t) noexcept { std::free(p); }
 #define CHECK(x) do { if(!(x)) { std::fprintf(stderr,"observation failure %d\n",__LINE__); std::abort(); } } while(false)
 using namespace scpp;
 int main() {
+    const mixed kinds[]={mixed{},mixed(boolean(false)),mixed(int64(0)),
+        mixed(float64(-0.0)),mixed(float64(1.0)),
+        mixed(float64(std::numeric_limits<double>::infinity())),
+        mixed(float64(std::numeric_limits<double>::quiet_NaN())),
+        mixed(string("123")),make_mixed_table()};
+    counting=true;
+    for(int repeat=0;repeat<100;++repeat) {
+        for(unsigned i=0;i<sizeof(kinds)/sizeof(kinds[0]);++i) {
+            CHECK(predicates::is_bool(kinds[i]).native_value()==(i==1));
+            CHECK(predicates::is_int(kinds[i]).native_value()==(i==2));
+            CHECK(predicates::is_float(kinds[i]).native_value()==(i>=3 && i<=6));
+        }
+    }
+    counting=false; CHECK(allocations==0);
+
     CHECK(isset(int64(0))); CHECK(isset(boolean(false))); CHECK(isset(string("")));
     CHECK(isset(float64(0.0))); CHECK(isset(float64(-0.0))); CHECK(!isset(null_t{}));
     CHECK(!isset(mixed{})); CHECK(!isset(dynamic{}));

@@ -2626,3 +2626,34 @@ value-only and labelled-string call. Core archives were rebuilt once per configu
 the existing mixed-hash instantiation warning remains. This closes the registered
 scalar debug calls and G5 flags, not unregistered native object inspection or frontend
 source-context lowering.
+
+## G7: exact-mixed predicates and empty hash factory (2026-10-28)
+
+The existing function-set mechanism publishes three exact-mixed predicates in
+`scpp::predicates`; a root `scpp::is_bool` function collides with the native operator
+concept and was caught by the initial release build. No generator branch or native
+concept rename was introduced. Hash gains its registered static empty factory via
+the existing static-method recipe.
+
+Release evidence: public-only observations, 22-operation metadata admission/reuse
+and metadata packaging tests pass (combined 0.73s). Repeated predicates cover null,
+false, zero, integral float, negative zero, infinity, NaN, numeric text and owned
+table, with zero allocations. Hash tests cover zero-allocation empty factories for
+ordinary and move-only payloads, existing mutation/lifetime behavior and sealed
+application-specialization reuse. Relocated runtime reuse emits no implementation
+units and links a public-only predicate caller. Three headers compile independently.
+
+Single isolated compile-only observation caller: 0.0564s public, 2.9348s native.
+Application hash storage compilation was 10.3712s, public caller 0.1395s; these are
+fixture timings, not a full compiler rebuild or a claimed optimization speedup.
+
+Limits: weak/shared table states are not constructible through this bounded public
+fixture and are not newly claimed as covered. The predicate delegates to unchanged
+kind observers; source evaluation/eligibility remains compiler-owned. Empty hash
+construction is not collection-initializer coverage.
+
+ASan/UBSan with leak detection: public observations and metadata checks pass
+(3.14s combined); generated application hash lifetime/factory tests and sealed
+reuse pass. Sanitized fixture storage compilation: 18.3667s; caller: 0.2163s.
+Core was rebuilt once successfully per configuration, after an initial release
+compile diagnosed the namespace collision. No concurrency behavior changed.

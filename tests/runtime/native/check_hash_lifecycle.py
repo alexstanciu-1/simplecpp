@@ -95,6 +95,14 @@ static_assert(!std::is_copy_constructible_v<scpp::record_hash>);
 static_assert(!std::is_copy_assignable_v<scpp::record_hash>);
 static_assert(std::is_move_constructible_v<scpp::record_hash>);
 int main() {
+    {
+        const int before=allocations;
+        auto ordinary=scpp::integer_hash::make();
+        auto move_only=scpp::record_hash::make();
+        CHECK(ordinary.empty() && move_only.empty());
+        CHECK(allocations==before);
+    }
+
     // Empty cursors and exhausted preserved cursors accept repeated next().
     {
         scpp::integer_hash values;

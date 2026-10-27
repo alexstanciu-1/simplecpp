@@ -1226,6 +1226,14 @@
         },
         "methods": [
           {
+            "name": "make",
+            "static": true,
+            "returns": "self",
+            "parameters": [],
+            "expression": "${native_type}::make()",
+            "transport": "native"
+          },
+          {
             "name": "size",
             "returns": "uint64",
             "parameters": [],

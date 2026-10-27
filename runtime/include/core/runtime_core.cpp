@@ -394,3 +394,7 @@
 #include "scpp/generated/public_dbg_labelled_float64.cpp"
 #include "scpp/generated/public_dbg_labelled_boolean.cpp"
 #include "scpp/generated/public_dbg_labelled_string.cpp"
+
+#include "scpp/generated/public_is_bool_mixed.cpp"
+#include "scpp/generated/public_is_int_mixed.cpp"
+#include "scpp/generated/public_is_float_mixed.cpp"

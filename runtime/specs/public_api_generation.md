@@ -1448,3 +1448,15 @@ Explicit native payload conversion preserves existing type labels and formatting
 including bool_t versus a native bool. The public calls forward to the same formatter;
 no new formatting, caller introspection, debug-gate or object-inspection policy is
 introduced. In particular, existing invalid-option reporting remains inside dbg_emit.
+
+### Exact-mixed predicates and empty hash construction
+
+`mixed_predicate` generates `scpp::predicates::is_bool/is_int/is_float` from one
+function set, with a const mixed observation parameter and concrete boolean result.
+The namespace avoids the native `scpp::is_bool` concept; it does not change source
+spellings or authorize implicit boxing of other source types. The body delegates
+to the existing public kind observer, requiring no private template include.
+
+Hash `make()` is a static method returning self through native transport. It
+constructs an empty hash and shares ordinary family admission; no payload-copy
+capability is needed. It is separate from source collection initialization.

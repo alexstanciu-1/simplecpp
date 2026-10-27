@@ -204,7 +204,7 @@ value API exists, not that source lowering has already migrated to it.
 
 | Catalog identity | Public status / remaining work | Batch |
 | --- | --- | --- |
-| `core.hash.make` | Hash recipe default construction; source factory/initialization path remains | E |
+| `core.hash.make` | Hash recipe static empty make() factory; collection initialization remains separate | E |
 | `core.collection_map.vector` | Missing callback/algorithm public path | F |
 | `core.collection_map.hash` | Missing callback/algorithm public path | F |
 | `core.collection_map.mixed` | Missing callback/algorithm public path | F |
@@ -225,7 +225,7 @@ value API exists, not that source lowering has already migrated to it.
 | `core.dbg.bool.flags` | Published scalar debug binding and flags, G5/G6 | G |
 | `core.dbg.string.value` | Published scalar debug binding and flags, G5/G6 | G |
 | `core.dbg.string.flags` | Published scalar debug binding and flags, G5/G6 | G |
-| `core.vector.append` | Vector recipe/published specialization method equivalent; helper/source mapping remains | E |
+| `core.vector.append` | Published append member, matching the catalog instance dispatch; full frontend adoption excluded | Complete public path |
 | `core.microtime.0` | Published focused core binding, G1 | Complete public path |
 | `core.microtime.1` | Published focused core binding, G1 | Complete public path |
 | `core.vector_reserve.2` | Published helper binding and vector recipe; frontend adoption remains excluded | E |
@@ -251,9 +251,9 @@ value API exists, not that source lowering has already migrated to it.
 | `core.memory_get_usage.1` | Published concrete process-memory observation, G4 | Complete public path |
 | `core.memory_get_peak_usage.0` | Published concrete process-memory observation, G4 | Complete public path |
 | `core.memory_get_peak_usage.1` | Published concrete process-memory observation, G4 | Complete public path |
-| `core.is_bool.mixed` | Published mixed predicate method equivalent | B/E (helpers) |
-| `core.is_int.mixed` | Published mixed predicate method equivalent | B/E (helpers) |
-| `core.is_float.mixed` | Published mixed predicate method equivalent | B/E (helpers) |
+| `core.is_bool.mixed` | Published exact-mixed predicate function, G7 | Complete public path |
+| `core.is_int.mixed` | Published exact-mixed predicate function, G7 | Complete public path |
+| `core.is_float.mixed` | Published exact-mixed predicate function, G7 | Complete public path |
 | `core.strlen` | Published strlen(string) | Complete baseline |
 | `core.count.vector` | Published count(vector_string), generic vector recipe | E (capabilities) |
 | `core.count.hash` | Hash recipe count; no permanent hash demand required | E (capabilities) |
@@ -1590,3 +1590,25 @@ int/float/bool/string, default and explicit options, binary string escaping and 
 depth flags. This closes the registered scalar debug surface with the G5 constants;
 unregistered gates and generic native object inspection are not silently added to
 core source coverage. Source frontend adoption remains excluded.
+
+## G7 — exact-mixed predicate bindings and empty hash factory
+
+Use one function-set recipe for the three non-retaining exact-mixed predicates.
+Public C++ names live in `scpp::predicates`: native `scpp::is_bool` already names
+a concept, so placing the function there would collide. Source-language names
+and exact-mixed admission remain unchanged. The bindings call existing public
+kind observers; they do not extract, convert, lock or copy the payload.
+
+The hash family now includes static `make()` through the existing static-method
+recipe mechanism, delegating to native empty construction. This does not impose
+payload copying or default construction and does not implement collection
+initializers. The vector append inventory is corrected: the catalog registers an
+instance member, already exposed, rather than a missing free helper.
+
+Release and ASan/UBSan/LSan checks pass: predicates allocate nothing across the
+publicly constructible kind matrix; ordinary and move-only hash factories allocate
+nothing. Public headers compile independently, runtime publication reuses with zero
+generated units, and application-owned hash specializations reuse from a sealed
+package. Single-run observation compilation: 0.0564s public / 2.9348s native.
+Weak/shared-table predicate fixtures remain outside this proof; existing kind
+observers are unchanged. See the boundary results for timings and limits.

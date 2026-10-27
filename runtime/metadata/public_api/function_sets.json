@@ -1701,5 +1701,29 @@
         ]
       }
     }
+  },
+  "mixed_predicate": {
+    "variants": {
+      "bool": {},
+      "int": {},
+      "float": {}
+    },
+    "function": {
+      "namespace": "scpp::predicates",
+      "header": "scpp/observations/is_${variant}_mixed.hpp",
+      "source": "include/scpp/generated/public_is_${variant}_mixed.cpp",
+      "operation": {
+        "name": "is_${variant}",
+        "returns": "boolean",
+        "parameters": [
+          {
+            "name": "value",
+            "type": "mixed",
+            "passing": "const_ref"
+          }
+        ],
+        "expression": "value.is_${variant}()"
+      }
+    }
   }
 }

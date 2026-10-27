@@ -6,16 +6,20 @@ import tempfile
 import time
 root=Path(__file__).resolve().parents[3]
 sources={
-'public':'''#include "scpp/observations/isset_dynamic.hpp"
+'public':'''#include "scpp/observations/is_int_mixed.hpp"
+#include "scpp/observations/isset_dynamic.hpp"
 #include "scpp/observations/empty_mixed.hpp"
 #include "scpp/observations/count_dynamic.hpp"
+scpp::boolean integer_kind(const scpp::mixed &v) { return scpp::predicates::is_int(v); }
 scpp::int64 cardinality(const scpp::dynamic &v) { return scpp::count(v); }
 scpp::boolean present(const scpp::dynamic &v) { return scpp::isset(v); }
 scpp::boolean vacant(const scpp::mixed &v) { return scpp::empty(v); }
 ''',
-'native':'''#include "operators/isset/isset.hpp"
+'native':'''#include "lang/php/operators/type_predicates/type_predicates.hpp"
+#include "operators/isset/isset.hpp"
 #include "operators/empty/empty.hpp"
 #include "operators/count/count.hpp"
+scpp::bool_t integer_kind(const scpp::mixed_t &v) { return scpp::php::is_int(v); }
 scpp::int_t<> cardinality(const scpp::detail::dynamic_value &v) { return scpp::count(v); }
 scpp::bool_t present(const scpp::detail::dynamic_value &v) { return scpp::isset_one(v); }
 scpp::bool_t vacant(const scpp::mixed_t &v) { return scpp::empty(v); }

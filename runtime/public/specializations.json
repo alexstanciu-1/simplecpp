@@ -1,6 +1,6 @@
 {
   "abi": "529dd5502370f48d64891818e9439aae72831b990b4027e8abe25c50c1216c21",
-  "api_identity": "8d3f9bb9231d3ecf2d69ca1a80f44a820551a6a94659a8300839dd83908ee97b",
+  "api_identity": "0abc200e28b77472bbfd74a869b16ba0d2372bf428d21afe0bd26c9e0af1960e",
   "apis": {
     "add_dynamic": {
       "header": "scpp/operators/add_dynamic.hpp",
@@ -5771,6 +5771,57 @@
       },
       "source": "include/scpp/generated/public_microtime_string.cpp"
     },
+    "mixed_predicate_bool": {
+      "header": "scpp/observations/is_bool_mixed.hpp",
+      "namespace": "scpp::predicates",
+      "operation": {
+        "expression": "value.is_bool()",
+        "name": "is_bool",
+        "parameters": [
+          {
+            "name": "value",
+            "passing": "const_ref",
+            "type": "mixed"
+          }
+        ],
+        "returns": "boolean"
+      },
+      "source": "include/scpp/generated/public_is_bool_mixed.cpp"
+    },
+    "mixed_predicate_float": {
+      "header": "scpp/observations/is_float_mixed.hpp",
+      "namespace": "scpp::predicates",
+      "operation": {
+        "expression": "value.is_float()",
+        "name": "is_float",
+        "parameters": [
+          {
+            "name": "value",
+            "passing": "const_ref",
+            "type": "mixed"
+          }
+        ],
+        "returns": "boolean"
+      },
+      "source": "include/scpp/generated/public_is_float_mixed.cpp"
+    },
+    "mixed_predicate_int": {
+      "header": "scpp/observations/is_int_mixed.hpp",
+      "namespace": "scpp::predicates",
+      "operation": {
+        "expression": "value.is_int()",
+        "name": "is_int",
+        "parameters": [
+          {
+            "name": "value",
+            "passing": "const_ref",
+            "type": "mixed"
+          }
+        ],
+        "returns": "boolean"
+      },
+      "source": "include/scpp/generated/public_is_int_mixed.cpp"
+    },
     "multiply_dynamic": {
       "header": "scpp/operators/multiply_dynamic.hpp",
       "namespace": "scpp",
@@ -10163,7 +10214,16 @@
     "include/scpp/debug/dbg_labelled_boolean.hpp",
     "public/scpp/debug/dbg_labelled_string.hpp",
     "include/scpp/generated/public_dbg_labelled_string.cpp",
-    "include/scpp/debug/dbg_labelled_string.hpp"
+    "include/scpp/debug/dbg_labelled_string.hpp",
+    "public/scpp/observations/is_bool_mixed.hpp",
+    "include/scpp/generated/public_is_bool_mixed.cpp",
+    "include/scpp/observations/is_bool_mixed.hpp",
+    "public/scpp/observations/is_int_mixed.hpp",
+    "include/scpp/generated/public_is_int_mixed.cpp",
+    "include/scpp/observations/is_int_mixed.hpp",
+    "public/scpp/observations/is_float_mixed.hpp",
+    "include/scpp/generated/public_is_float_mixed.cpp",
+    "include/scpp/observations/is_float_mixed.hpp"
   ],
   "generator": "metadata-api-v1",
   "leaves": {
@@ -10511,6 +10571,9 @@
     "scpp/observations/count_mixed.hpp": "5e9bae3b378b7a69471767886ab0c33725b0ee6bcb22f91522f1c0249626d9c2",
     "scpp/observations/empty_dynamic.hpp": "cf293f1a4f4cf0991153e1561f337a43dbc04244ad3455120c87daf2ed977c91",
     "scpp/observations/empty_mixed.hpp": "1ad22bd3bce4a01e13b1565ab89885eee5518f2efdf8933c85dcc2de1ce4226d",
+    "scpp/observations/is_bool_mixed.hpp": "f329f69810889569b43c1e1f9011e42aeebddafea198edc7fe19e695c287be0f",
+    "scpp/observations/is_float_mixed.hpp": "285ec99c0b94973ea74eb683087c06be3677dae4a913ce0c66ebdd420642448e",
+    "scpp/observations/is_int_mixed.hpp": "4d7d80eac721724b7140c0c9fc94160661fc649badb6c6006844d10ccf6432cd",
     "scpp/observations/isset_dynamic.hpp": "1dd2958f19c36bc934472c91ca84ae46cc17e73655cede724ed478b28af6471a",
     "scpp/observations/isset_float64.hpp": "6a577b78988ff83d68cf6f984de9b4c00a3def5f189067a33f363dc62e53008b",
     "scpp/observations/isset_mixed.hpp": "cadbeab375f675243a428c7a73cea705fb9fd99d69187f21330b5c11553e4da6",
@@ -11078,7 +11141,10 @@
     "include/scpp/generated/public_dbg_labelled_int64.cpp",
     "include/scpp/generated/public_dbg_labelled_float64.cpp",
     "include/scpp/generated/public_dbg_labelled_boolean.cpp",
-    "include/scpp/generated/public_dbg_labelled_string.cpp"
+    "include/scpp/generated/public_dbg_labelled_string.cpp",
+    "include/scpp/generated/public_is_bool_mixed.cpp",
+    "include/scpp/generated/public_is_int_mixed.cpp",
+    "include/scpp/generated/public_is_float_mixed.cpp"
   ],
   "types": {
     "dynamic": {

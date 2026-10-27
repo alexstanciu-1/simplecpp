@@ -376,6 +376,9 @@
     "dbg_labelled_int64",
     "dbg_labelled_float64",
     "dbg_labelled_boolean",
-    "dbg_labelled_string"
+    "dbg_labelled_string",
+    "mixed_predicate_bool",
+    "mixed_predicate_int",
+    "mixed_predicate_float"
   ]
 }
