@@ -6,8 +6,9 @@ Status: proposed overall direction; no broad implementation authorized by this d
 
 ## Goal and terminology
 
-Make the Simple C++ runtime directly consumable through focused, mostly template-free
-public C++ interfaces. Runtime-owned generation and compiled adaptation implement
+Make the Simple C++ runtime directly consumable through focused, fully template-free
+public C++ interfaces. This is the target for the migrated surface; existing
+compatibility exceptions are transitional, not part of the finished public API. Runtime-owned generation and compiled adaptation implement
 that boundary. **The public API is the boundary; there is no separate public
 "runtime middleware" product, semantic layer, or additional namespace to learn.**
 
@@ -146,6 +147,45 @@ Promote reusable naming tooling when this phase needs it; do not grow an indepen
 runtime naming algorithm. Preparation still decides semantic validity; generation
 materializes an already selected physical interface.
 
+### Agreed specialization reuse — 2026-10-27
+
+Use **one prelowering mechanism, one naming scheme and one concrete definition per
+canonical specialization**. The runtime generates the types its public operations
+need, including their transitive type dependencies, and publishes concrete headers
+and compiled implementations. Compiler middleware and other consumers reuse those
+specializations instead of generating parallel classes with their own identities.
+For example, a runtime API returning `result<vector<string>>` must publish the
+required string, vector and Result representations and the operations it exposes.
+
+Application-specific demands such as `vector<MyRecord>` use the same mechanism
+and canonical naming rules, but build with the application because the reusable
+runtime cannot know future application types. This is a distinction in generation
+inputs and build ownership, not a second generator or public API layer.
+
+Publish a specialization inventory with each package, extending existing publication
+metadata. It records canonical specialization identity, concrete name, owning package,
+public headers, implementation artifacts, provided operations, dependencies and
+representation/build compatibility. This is an inventory of physical artifacts,
+not another semantic type registry. Names must agree across runtime and application
+generation; names alone do not establish compatible definitions.
+
+Before generating a demanded specialization or operation:
+
+1. Resolve its canonical identity through the existing type/recipe machinery and
+   inspect the selected dependency inventories.
+2. Reuse compatible published definitions and operations directly.
+3. Generate missing specializations in the package owning the demand. If only an
+   operation is missing, use the existing concrete type and generate an admissible
+   operation against it; never regenerate the type to supply that operation. If the
+   published interface cannot support it, reject and request an owning API extension.
+4. Reject conflicting name claims, duplicate definition ownership and incompatible
+   representation/build identities. Do not silently select a different definition.
+
+Template freedom applies to the complete operation surface: constructors,
+destructors, indexing, iteration, conversions, callbacks and returned wrappers,
+not merely class declarations. Implementations may instantiate templates privately.
+Unsupported public paths must reject rather than expose templates as a fallback.
+
 Choose representation per contract, not one global pimpl policy:
 
 - Native-sized concrete scalars, with cheap representation operations inline.
@@ -171,7 +211,7 @@ implementation. Check the shape and evidence before selecting the next slice.
 | --- | --- | --- |
 | 1. Inventory and enforce the public boundary | List public operations, their argument/result/ownership/error types, all transitive dependencies, semantic owner, current compatibility limits and consumer paths. Establish the restricted public include target using integers and worker-pool as existing proofs. | Independent consumer builds with only public roots; no private headers/PCH reachable; positive/negative include tests; baseline include/compile graph. |
 | 2. Complete a useful core path | Design string/byte input, error inspection and textbuilder together, then implement a bounded path such as build text, inspect bytes and report a checked failure. Reuse compiler facade knowledge but preserve native runtime contracts and avoid inheriting its extra wrapper allocations automatically. | Entire caller include closure is clean, including failures. Embedded NULs, copies/moves, lifetime and cleanup tested; allocations/copies compared at O0 and production O2. |
-| 3. Resolve wrappers and common collections | Add selected nullable/Result and ownership/container specializations needed by real public APIs. Start with a complete operation, not just class declarations. Exercise nesting, references, moves, extraction and failure. | For example, a collection of strings and a Result carrying it can be created, accessed, returned, copied/moved and destroyed without template leakage or extra boundary copies. Unsupported combinations reject. |
+| 3. Resolve wrappers and common collections | Use the shared prelowering mechanism and published specialization inventory to add/reuse selected nullable/Result and ownership/container specializations needed by real public APIs. Start with a complete operation, not just class declarations. Exercise nesting, references, moves, extraction and failure. | For example, a collection of strings and a Result carrying it can be created, accessed, returned, copied/moved and destroyed without template leakage or extra boundary copies. Unsupported combinations reject. |
 | 4. Migrate module paths | Expose filesystem, JSON and other used facilities through their correct runtime Result/handle contracts. Migrate generic task execution after its collection, callback and result dependencies have concrete interfaces. Inventory remaining optional modules rather than declaring coverage from these examples. | Standalone module clients; enabled/disabled and static/shared linking; no unrelated module inclusion; exact behavior and ownership parity. Tasks also prove worker reuse, concurrency, cancellation/errors and callback lifetime. |
 | 5. Remove heavy paths from compiler support | Replace general compiler facades/adapters with direct public APIs as each operation path becomes complete. Generate compiler-specific specializations against its model where required; keep processing in support. | Compiler and relevant support units no longer reach the displaced templates through alternative paths. Full src/support rebuilds, incremental edits and sample behavior/performance compared. |
 | 6. Consolidate runtime implementation and consumers | Split broad private dependency hubs and the core implementation bundle where measured dependency ownership warrants it. Migrate other approved consumers; retire obsolete facades and compatibility paths only after their inventory is resolved. | An implementation edit rebuilds its real dependents, not unrelated modules; public API coverage/exception inventory complete; no duplicate semantic owners or stale exposed headers. |
@@ -224,6 +264,9 @@ For each complete API path:
 - Build a caller with public headers only, without runtime PCH; inspect the full
   preprocessed closure for active templates and forbidden implementation headers.
   Track justified compatibility exceptions explicitly, with owners and removal gates.
+- Prove runtime/application demands reuse the same concrete names and definitions;
+  check nested dependency reuse, missing-operation handling, duplicate ownership
+  rejection and incompatible-publication rejection.
 - Prove behavior against the owning contracts and existing route, including invalid
   operations, Result states, lifetime, aliasing, borrowing and exceptional cleanup.
   Representation registration or one successful call is not complete API coverage.
@@ -240,7 +283,8 @@ For each complete API path:
 
 The overall goal is achieved when the selected runtime surface has usable complete
 public operation paths, ordinary consumers cannot reach implementation headers,
-exceptions/unmigrated scope are explicit, common types have one runtime owner,
+unmigrated compatibility scope is explicit, the migrated public closure contains no
+templates, common types have one runtime owner,
 application-specific instantiation stays with its application, and measured behavior,
 memory, concurrency and build costs meet the agreed phase gates. No claim of universal
 template-free runtime coverage follows from the first migrated modules.
