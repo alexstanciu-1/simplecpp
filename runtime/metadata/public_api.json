@@ -2120,6 +2120,15 @@
       },
       "dynamic": {
         "domain": "dynamic"
+      },
+      "boolean": {
+        "domain": "boolean"
+      },
+      "string": {
+        "domain": "string"
+      },
+      "null": {
+        "domain": "null"
       }
     },
     "domains": {
@@ -2137,6 +2146,15 @@
       },
       "dynamic": {
         "maximum": "dynamic"
+      },
+      "boolean": {
+        "maximum": "boolean"
+      },
+      "string": {
+        "maximum": "string"
+      },
+      "null": {
+        "maximum": "null"
       }
     },
     "groups": {
@@ -2215,6 +2233,39 @@
             "right": "unsigned",
             "selection": "same_or_maximum",
             "domain": "unsigned"
+          }
+        ]
+      },
+      "strict_scalar_identity": {
+        "rules": [
+          {
+            "left": [
+              "signed",
+              "floating",
+              "boolean",
+              "string",
+              "null"
+            ],
+            "right": [
+              "signed",
+              "floating",
+              "boolean",
+              "string",
+              "null"
+            ],
+            "selection": "same_or_constant"
+          },
+          {
+            "left": "mixed",
+            "right": "mixed",
+            "selection": "same_or_maximum",
+            "domain": "mixed"
+          },
+          {
+            "left": "dynamic",
+            "right": "dynamic",
+            "selection": "same_or_maximum",
+            "domain": "dynamic"
           }
         ]
       }
@@ -2459,6 +2510,56 @@
           "scpp/generated/operator_detail.hpp"
         ],
         "returns": "boolean"
+      },
+      "strict_identical": {
+        "group": "strict_scalar_identity",
+        "name": "strict_identical",
+        "function_set": "strict_identical",
+        "publish": [
+          "int64",
+          "float64",
+          "boolean",
+          "string",
+          "null",
+          "mixed",
+          "dynamic"
+        ],
+        "operands": [
+          "int64",
+          "float64",
+          "boolean",
+          "string",
+          "null",
+          "mixed",
+          "dynamic"
+        ],
+        "returns": "boolean",
+        "distinct_result": "false"
+      },
+      "strict_not_identical": {
+        "group": "strict_scalar_identity",
+        "name": "strict_not_identical",
+        "function_set": "strict_not_identical",
+        "publish": [
+          "int64",
+          "float64",
+          "boolean",
+          "string",
+          "null",
+          "mixed",
+          "dynamic"
+        ],
+        "operands": [
+          "int64",
+          "float64",
+          "boolean",
+          "string",
+          "null",
+          "mixed",
+          "dynamic"
+        ],
+        "returns": "boolean",
+        "distinct_result": "true"
       }
     }
   },

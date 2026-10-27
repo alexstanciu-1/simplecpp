@@ -444,3 +444,33 @@ must be implemented in their shared owner before publishing carrier identity.
 Mixed table identity retains native ordered contents comparison; dynamic object
 identity retains native shared-object identity. Publishing the mixed path does not
 claim it is allocation-free: its current key iterator materializes boxed string keys.
+
+## Representation-preserving binary plans
+
+Global operator rules may use a domain name or a nonempty array of domain names
+for each side. Validation rejects overlapping domain pairs, including overlap
+introduced through arrays; this grouping changes metadata size, not emitted code
+into a Cartesian product.
+
+`selection: same_or_constant` preserves exact operand types. Equal types select the
+published same-type implementation. Distinct admitted types return a plan with
+`kind: constant_after_evaluation`, boolean `value`, `conversion: identity`, and
+`evaluation: ordered_eager_left_then_right`. Such a plan has no API, header or common
+operand type: it is a result after evaluating/snapshotting both operands, **not**
+permission to fold away source effects or exceptions. Constant selection cannot
+name a numeric promotion domain. `distinct_result` is a boolean spelling owned by
+the operation; `operands` may bound exact input types independently of domain groups.
+
+An operation may reference a `function_set` instead of defining another expression.
+The resolver verifies the selected binary signature and obtains API/header/function
+identity from the expanded ordinary descriptor. The operation emitter does not
+emit duplicate definitions. Registry and function-set expansion are reused during
+bulk operation generation rather than recomputed for every normalized signature.
+
+Strict identity now uses this path for canonical int64, float64, boolean, string
+and null pairs, plus existing same-family mixed/mixed and dynamic/dynamic calls.
+Distinct plain scalar types return false for identity and true for its negation;
+no truth conversion, string parsing or numeric promotion occurs. Fixed-width,
+boxed/plain, cross-box-family and carrier admission is not inferred from this rule.
+`check_identity_plans.py --core ...` compiles a small public-only consumer and native
+counterpart to prove result/evaluation behavior; it is not compiler frontend adoption.

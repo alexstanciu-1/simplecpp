@@ -365,3 +365,17 @@ one-entry table with a short string key allocates twice during identity, while
 measured scalar/string/dynamic-identity observations allocate zero. Design a safe
 borrowed/internal key-comparison path with the table owner; preserve key kind,
 complete bytes and order. Do not add public borrowed references as a shortcut.
+
+## Active-goal progress — B1d heterogeneous plain-scalar identity plans
+
+Global metadata now resolves all 50 canonical plain-scalar identity/negation pairs
+without promotion or new pair adapters. Same types reuse existing function-set API
+records; mismatched types produce a constant only after ordered eager evaluation.
+Domain-set selectors and exact input admission keep the policy compact. A compiled
+public-only consumer proves both operand effects, exception order and zero successful
+allocations against the native helper. Runtime API source and archive are unchanged.
+
+This completes plain canonical scalar planning, not all identity work. Boxed/plain
+and carrier dispatch remain; fixed-width identity requires its own source admission
+rather than assuming every native template instantiation is part of the language.
+B1 eager xor and presence/empty/reset consolidation are also still pending.

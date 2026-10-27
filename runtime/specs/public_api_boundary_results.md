@@ -939,3 +939,44 @@ Raw caller observations: `compiler/my-try-cpp/build/core-identity-cost.json`.
 Heterogeneous scalar planning, boxed/plain pairs, eager xor and remaining observation
 protocols keep B1 open. Carrier state-preserving identity remains C; publishing these
 same-type paths does not endorse the legacy sentinel-as-payload carrier behavior.
+
+## B1d — heterogeneous plain-scalar identity planning (2026-10-27)
+
+The global operator metadata resolves all 50 identity/negation combinations among
+canonical int64, float64, boolean, string and null. Same types refer to existing
+function-set APIs. Distinct types return a constant only after ordered eager
+operand evaluation; no common numeric type or pair adapter is generated. Domain-set
+selectors, exact operand admission and result types are metadata-defined. Function
+set signatures and overlapping domain rules are validated, and bulk generation
+reuses the validated registry and expanded function descriptors.
+
+`check_identity_plans.py` verifies all scalar plans, same-family boxed call reuse,
+rejected unsupported input domains, metadata-selected constants/result types,
+conflicting rules and malformed backend signatures. It also proves zero-unit API
+reuse. With `--core`, it generates a small public-only consumer and native equivalent:
+all scalar results, left-before-right effects, left failure suppressing RHS, right
+failure preserving earlier effects, and **zero successful allocations** pass in both
+release and ASan/UBSan/leak mode. This is a consumer proof, not frontend integration.
+
+Eight metadata regression cases pass in release (**3.12 s**) and sanitizer mode
+(**21.98 s**). The final result-type generalization was rechecked with the focused
+identity-plan test in both modes. Relocated sealed publication still reuses the
+existing adapters. Runtime sources, public headers and core archive are unchanged;
+the publication inventory updates only its metadata identity.
+
+Focused 50-case proof program compile **and link** observations:
+
+| Mode | Public consumer | Native equivalent |
+| --- | ---: | ---: |
+| Release | 0.2755 s | 3.7116 s |
+| ASan/UBSan | 0.8149 s | 4.4307 s |
+
+These whole-program timings are not comparable to earlier compile-only small caller
+probes. The measured sanitized generator-only rebuild took **7.67 s**, peak child
+RSS **234,008 KiB**; release tooling and the final result-type validation refinement
+were not separately timed. No runtime-core rebuild was needed. Reproduce with
+`check_identity_plans.py --tool <generator> --core <core.a> [--sanitize]`.
+
+B1 boxed/plain identity, eager xor and remaining observations are still pending;
+carrier state-preserving identity remains C. Constant plans never authorize dropping
+operand effects or bypassing source exceptions.
