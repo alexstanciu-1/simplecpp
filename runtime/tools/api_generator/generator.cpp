@@ -36,36 +36,6 @@ namespace scpp::api_generation
 	{
 		std::string out; for (const auto &header : headers) out+="#include \""+header+"\"\n"; return out;
 	}
-	static value registry_for(const value &metadata, const value &leaves, const value &names)
-	{
-		value r=value::object(); r["version"].type=value::kind::number; r["version"].scalar="1"; r["types"]=value::array(); r["families"]=value::object(); r["mappings"]=value::array();
-		for (const auto &[key,v] : leaves.fields) r["types"].items.emplace_back(key);
-		for (const auto &[key,v] : metadata.at("families").fields) {
-			value f=value::object(); f["parameters"]=value::array();
-			for (const auto &p : v.at("parameters").items) f["parameters"].items.emplace_back("type");
-			f["parameter_names"]=v.at("parameters");
-			if (v.has("defaults")) f["defaults"]=v.at("defaults");
-			r["families"][key]=f;
-		}
-		// Published structural names are assertions, not authored aliases. Keep their
-        // reserved trailing underscore out of the authored-name registry.
-        for (const auto &[key,v] : names.fields) {
-            auto name = v.text();
-            if (!name.empty() && name.back() == '_') continue;
-            // A zero-parameter recipe already has its canonical concrete name.
-            // Importing it must not register an alias that shadows its own recipe.
-            if (name == key && metadata.at("families").has(key)
-                && metadata.at("families").at(key).at("parameters").items.empty()) continue;
-            value m=value::object(); m["type"]=key; m["name"]=v; r["mappings"].items.push_back(m);
-        }
-        naming registry(r);
-        for (const auto &[key,v] : names.fields) {
-            auto name = v.text();
-            if (!name.empty() && name.back() == '_' && registry.resolve(key).second != name)
-                throw std::runtime_error("Conflicting structural name: " + key);
-        }
-		return r;
-	}
 	class generator final
 	{
 		value api_imports_, api_exports_=value::object();
@@ -232,19 +202,19 @@ namespace scpp::api_generation
 			if (this->exports_.has(canonical)) return this->exports_.at(canonical);
 			if (this->imports_.has(canonical)) { this->exports_[canonical]=this->imports_.at(canonical); return this->exports_.at(canonical); }
 			if (!this->visiting_.insert(canonical).second) throw std::runtime_error("Unresolved layout dependency cycle: "+canonical);
-			auto node=this->naming_.normalize(parse_type(canonical)); const auto &recipe=this->metadata_.at("families").at(node.name);
+			auto application=this->naming_.bind(canonical); const auto &recipe=this->metadata_.at("families").at(application.type.name);
 			if (recipe.at("parameters").type!=value::kind::array || recipe.at("classes").type!=value::kind::array || recipe.at("classes").items.empty()) throw std::runtime_error("Family requires parameter and nonempty class arrays");
-            fields_only(recipe,"parameters defaults binding native includes classes functions checks capabilities requires_capabilities", "family "+node.name);
+            fields_only(recipe,"parameters defaults binding native includes classes functions checks capabilities requires_capabilities", "family "+application.type.name);
 			substitutions context{{"name",name},{"namebase",name.back()=='_'?name.substr(0,name.size()-1):name}};
 			std::map<std::string,value> types;
 			std::set<std::string> public_headers,private_headers,probe_headers;
 			value dependencies=value::array();
             value requirements=value::array();
-			for (std::size_t i=0;i<node.arguments.size();++i) {
-				auto t=this->materialize(node.arguments[i].canonical()); auto param=recipe.at("parameters").items.at(i).text();
-				context["type:"+param]=node.arguments[i].canonical();
+			for (const auto &[param, argument] : application.arguments) {
+				auto t=this->materialize(argument.canonical());
+				context["type:"+param]=argument.canonical();
 				types[param]=t; context["public:"+param]=t.at("cpp").text(); context["native:"+param]=t.get("native",t.at("cpp").text());
-				add_include(public_headers,t.get("header")); add_include(probe_headers,t.get("header")); dependencies.items.emplace_back(node.arguments[i].canonical());
+				add_include(public_headers,t.get("header")); add_include(probe_headers,t.get("header")); dependencies.items.emplace_back(argument.canonical());
 			}
 			if (!this->selected(recipe,types)) throw std::runtime_error("Unsatisfied family capabilities: "+canonical);
             this->capability_checks(recipe,types,requirements,probe_headers);
@@ -337,7 +307,7 @@ namespace scpp::api_generation
 		}
 	public:
 		explicit generator(const value &input) : api_imports_(input.has("api_imports") ? input.at("api_imports") : value::object()), metadata_(input.at("metadata")), request_(input.at("request")), imports_(input.at("imports")), layouts_(input.at("layouts")),
-			leaves_(merged_leaves(input)), names_(input.at("names")), naming_(registry_for(metadata_,leaves_,names_)) {}
+			leaves_(merged_leaves(input)), names_(input.at("names")), naming_(metadata_naming_registry(metadata_,leaves_,names_)) {}
 		value run()
 		{
 			fields_only(this->metadata_,"version types families bindings functions capabilities global_operators conversions function_sets", "API metadata");

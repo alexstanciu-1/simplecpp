@@ -17,7 +17,7 @@ each slice. The original inventory is a baseline, not a current completion count
 | A2 | Complete for the agreed checked scalar conversions | Carrier conversion is C; ownership casts are D. |
 | B1 | Complete for the agreed scalar-facing truth/text/identity/observation scope | Carrier forms remain C; boxed arithmetic and access completion are not B1 credit. |
 | B2 | Complete for the agreed non-carrier special/mutation and text public paths; closure evidence below | Carrier forms C; indexed retention E; native exception inspection and overflow disposition G. |
-| C | Policy agreed; completion pending | Four carrier families, state-preserving operations/conversions and conditional lifecycle. |
+| C | Policy agreed; shared family binding prepared; carrier operations pending | Four carrier families, state-preserving operations/conversions and conditional lifecycle. |
 | D | Pending | Ownership, application targets and source Exception transport gaps. |
 | E | Existing vector/hash/boxed foundations; incomplete | Capability/access/initialization/cursor gaps and identity key-allocation debt. |
 | F | Pending | Callable transport and registered collection algorithms. |
@@ -705,3 +705,27 @@ conditions, or claim move-only support. Conditional lifecycle remains required C
 work shared with later ownership/container completion. The three Result-family
 recipes and their state distinctions remain explicit subsequent work. No D/F
 implementation should start before review of the first complete carrier path.
+
+## C preparation — shared family identity and argument binding
+
+The metadata-to-naming adapter now belongs to the existing naming component,
+accessible to both physical generation and forthcoming carrier operation planning.
+`naming::bind` returns the normalized family application and its ordered named
+arguments. Physical generation consumes that binding instead of independently
+pairing positional arguments with recipe parameters. The existing owner still
+resolves aliases, dependent defaults, structural names and publication assertions;
+there is no second carrier type registry or family-name dispatch.
+
+This is preparation, not carrier-operation completion. It adds no runtime API,
+operator admission, recursive peeling or allocation guarantee. Next: metadata-owned
+one-layer projection for the first `nullable<int64>` operation path, using the
+shared binding and published payload operations.
+
+Validation: existing metadata tests exercise constant/dependent/chained defaults,
+explicit overrides, nested specializations, renamed recipes, capability selection,
+invalid metadata and publication reuse. The public generator/concurrency test and
+global-operator/compound resolution suites are also included. Release: 4/4 pass
+in 6.52s; ASan/UBSan with leak detection: 4/4 pass in 26.61s.
+Generator plus public test incremental build: 7.40s release and 22.02s
+ASan/UBSan (eight jobs); runtime-core was not rebuilt. These are tool rebuild
+measurements, not public-caller compile costs or full compiler rebuild times.

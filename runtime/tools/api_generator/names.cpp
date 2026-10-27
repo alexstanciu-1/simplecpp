@@ -4,6 +4,36 @@
 
 namespace scpp::api_generation
 {
+	value metadata_naming_registry(const value &metadata, const value &leaves, const value &names)
+	{
+		value r=value::object(); r["version"].type=value::kind::number; r["version"].scalar="1"; r["types"]=value::array(); r["families"]=value::object(); r["mappings"]=value::array();
+		for (const auto &[key,v] : leaves.fields) r["types"].items.emplace_back(key);
+		for (const auto &[key,v] : metadata.at("families").fields) {
+			value f=value::object(); f["parameters"]=value::array();
+			for (const auto &p : v.at("parameters").items) f["parameters"].items.emplace_back("type");
+			f["parameter_names"]=v.at("parameters");
+			if (v.has("defaults")) f["defaults"]=v.at("defaults");
+			r["families"][key]=f;
+		}
+		// Published structural names are assertions, not authored aliases. Keep their
+        // reserved trailing underscore out of the authored-name registry.
+        for (const auto &[key,v] : names.fields) {
+            auto name = v.text();
+            if (!name.empty() && name.back() == '_') continue;
+            // A zero-parameter recipe already has its canonical concrete name.
+            // Importing it must not register an alias that shadows its own recipe.
+            if (name == key && metadata.at("families").has(key)
+                && metadata.at("families").at(key).at("parameters").items.empty()) continue;
+            value m=value::object(); m["type"]=key; m["name"]=v; r["mappings"].items.push_back(m);
+        }
+        naming registry(r);
+        for (const auto &[key,v] : names.fields) {
+            auto name = v.text();
+            if (!name.empty() && name.back() == '_' && registry.resolve(key).second != name)
+                throw std::runtime_error("Conflicting structural name: " + key);
+        }
+		return r;
+	}
 	void authored_name(const std::string &name)
 	{
 		std::size_t start = 0;
@@ -191,6 +221,19 @@ namespace scpp::api_generation
 		}
 		type.application = false;
 		return type;
+	}
+	family_application naming::bind(const std::string &text) const
+	{
+		family_application result;
+		result.type = this->normalize(parse_type(text));
+		const auto &families = this->registry_.at("families");
+		if (!families.has(result.type.name)) throw std::runtime_error("Expected family application: " + text);
+		const auto &family = families.at(result.type.name);
+		if (!family.has("parameter_names")) throw std::runtime_error("Family has no parameter identities: " + result.type.name);
+		for (std::size_t i = 0; i < result.type.arguments.size(); ++i) {
+			result.arguments.emplace_back(family.at("parameter_names").items[i].text(), result.type.arguments[i]);
+		}
+		return result;
 	}
 	type_name naming::structural_tree(type_name type) const
 	{
