@@ -74,7 +74,7 @@ Sources: [type-use modifiers](../type_use_modifiers.md),
   from those examples. Resolve each through existing formation and operation facts;
   unresolved combinations stay explicit gaps rather than inheriting C++ permissiveness.
 
-## Proposed compact wrapper policy
+## Wrapper policy: agreed arithmetic, remaining groups proposed
 
 Separate three concepts: **payload-state carriers**, **ownership handles**, and
 **storage modifiers**. Mixed/dynamic are tagged value families, not generic wrappers
@@ -100,18 +100,17 @@ true sentinel. A single `has_value`/boolean flag cannot represent every contract
 | Compound/update | Preserve original destination, snapshot/validate/compute, then write back under its declared storage contract. No silent kind change, narrowing, move or wrapper-family change merely because a binary operation is admitted. |
 | empty / isset / reset | Separate contracts. empty is collection-only and does not unwrap wrappers. Presence is not truthiness or payload availability in every family. Reset/clean/unset follow their existing ownership/state rules. |
 
-Proposed lifting boundary: **one admitted carrier layer per selected operation**.
+Agreed arithmetic lifting boundary (2026-10-27): **one admitted carrier layer per selected operation**.
 A nested payload stays a real typed payload; another operation on it requires its
 own admission/extraction. This prevents automatic recursive peeling of, for example,
-result<nullable<int>> into a plain number. This boundary is a proposal, not a new
-ban on valid nested type formation.
+result<nullable<int>> into a plain number. This does not ban valid nested type formation or settle comparison/selection lifting.
 
-Examples to settle explicitly before implementation:
+Arithmetic examples covered by the decision:
 
 - For an admitted `result<int> + nullable<int>` numeric operation, success would
   require both payloads and return the ordinary promoted integer; either non-value
-  state would throw. The example proposes general lifting, not a claim that every
-  cross-carrier source combination is already admitted.
+  state would throw. Uniform lifting across all four carrier families is approved, pending implementation
+  and normative admission migration; this is not a claim that it already works in the compiler.
 - `result<nullable<int>>` with a successful empty nullable is neither outer error
   nor integer zero. The operation must not erase that distinction implicitly.
 - `shared<int>` is not an arithmetic operand merely because int is numeric; checked
@@ -155,8 +154,8 @@ requires it; comparison snapshots retain their distinct sequencing rules.
 
 | ID | Topic / deliverable | Status |
 | --- | --- | --- |
-| W01 | Confirm one-layer checked lifting and ordinary payload result; no automatic optional/Result propagation | Proposed; discuss first |
-| W02 | Decide whether to broaden cross-carrier arithmetic consistently or preserve only today's bounded source admissions | Open language-scope decision; do not infer broad permission from the native lifted templates |
+| W01 | Confirm one-layer checked lifting and ordinary payload result; no automatic optional/Result propagation | Agreed 2026-10-27; pending implementation |
+| W02 | Decide whether to broaden cross-carrier arithmetic consistently or preserve only today's bounded source admissions | Agreed 2026-10-27: uniform arithmetic across all four families for otherwise admitted numeric payload pairs |
 | W03 | Confirm reuse of existing state-aware equality, identity, condition, text, take and coalescing policies | Proposed preservation; any simplification changing these contracts needs separate approval |
 | W04 | Account for all formation rules in one prepared descriptor path: bare-source default versus runtime parameters, result_payload and forbidden compositions | Confirmed constraints; enforcement audit and metadata integration remain |
 | W05 | Extend conditional lifecycle/operation capabilities, prove an admitted noncopyable payload and reject unavailable copy operations | Pending design; do not conflate this with new user-authored constraint syntax |
@@ -166,9 +165,55 @@ requires it; comparison snapshots retain their distinct sequencing rules.
 | W09 | Complete metadata/behavior/lifetime/allocation/publication/compile-cost matrix; retain all formation-negative tests | Required proof; batch compilation rather than per-row builds |
 | W10 | Reconcile this backlog with core completion batches, then create an implementation goal with review/commit/push checkpoints | After discussion; no implementation goal started in this checkpoint |
 
-Confirmed constraints are recorded above; proposals are deliberately not labeled
-accepted decisions. The immediate discussion is W01/W02: should every otherwise
-admitted numeric payload combination lift across the four state carriers, with checked
-extraction and a plain numeric result, or should initial publication retain the narrower
-current cross-family admission set? The mechanism can support either; the source
-contract must make the choice before implementation.
+Confirmed constraints and accepted arithmetic decisions are recorded above. Other
+proposals remain unaccepted. Next discussion: equality, strict identity and ordering.
+
+## Accepted arithmetic decision — 2026-10-27
+
+Uniform arithmetic lifting applies across nullable, result, result_or_false and
+result_or_bool, including their combinations with admitted plain operands. Validate
+formation and the numeric payload operation first. Extract exactly one carrier
+layer with checked payload access, then use the ordinary promotion/operation and
+return its numeric result. Any non-value carrier state throws; do not propagate a
+wrapper or treat absence/sentinels as numbers. Preserve ordered operand evaluation
+and failure precedence. Inner carriers do not automatically unwrap; ownership
+handles and value-storage modifiers are not additional payload-state carriers.
+This decision changes the proposed admission scope; implementation and the source
+semantic migration remain future work. It does not automatically authorize ordering,
+wrapper equality or every specialized arithmetic operation on new payload domains.
+
+## Equality and ordering discussion — existing contracts and proposals
+
+Sources: `specs/expression_evaluation.md`, especially canonical-carrier completion,
+cross-family ordinary equality, mixed numeric equality and strict identity amendments.
+
+Proposed uniform ordinary equality across the four families: validate payload
+comparison admission first; evaluate/snapshot whole operands left-to-right; compare
+outer state tags, then invoke payload equality only for two present payloads. A plain
+operand is a payload for this rule. Matching absence states compare equal, matching
+false/true sentinels compare equal, and two structured Result errors compare equal
+without comparing their metadata. Different non-value states and non-value/payload
+pairs compare unequal. `!=` negates a successful equality result; invalid comparisons
+remain errors. Existing narrow literal-sentinel comparisons retain their own rules.
+This generalizes the shared mechanism without re-deciding truthiness or parsing text.
+Missing payloads cannot rescue a statically invalid payload comparison.
+
+Proposed ordering (`<`, `<=`, `>`, `>=`, and separately admitted `<=>`): checked
+one-layer extraction like arithmetic, followed by the payload's admitted ordering.
+A non-value state throws; do not sort null/errors/sentinels before numbers or strings.
+Boolean/string/numeric admission remains owned by the payload operator group, and
+NaN spaceship behavior remains separately governed. This is a proposal for uniform
+cross-carrier admission, not yet an accepted widening.
+
+Strict identity needs an explicit discussion checkpoint: current source-visible
+normalization lets a false sentinel be strictly identical to a successful false bool
+payload, although ordinary carrier equality keeps those states distinct. Likewise,
+ordinary equality treats two structured Result errors as equal, whereas strict
+identity inspects error identity metadata. Numeric identity does not promote. Do not
+silently replace these rules with the ordinary-equality state table or claim strict
+identity is universally a stronger version of ==. Preserve existing behavior pending
+an explicit user decision about changing or retaining it.
+
+The compact mechanism remains separate per-operand state observation/extraction plus
+one group policy and one normalized payload operation, not a generated implementation
+for every pair of wrapper types. No implementation goal starts during this discussion.
