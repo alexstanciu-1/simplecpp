@@ -47,9 +47,7 @@ scpp::int64 vector_string_cursor_::key() { return scpp::int64((([&]() -> decltyp
 return (*detail::concrete_access::get<native_vector_string_cursor_>(*this).begin()).key(); })()).native_value()); }
 scpp::string vector_string_cursor_::value() { return ([&]() -> decltype(auto) { if (!this->valid()) raise_runtime_error("Finished iteration", "index_out_of_range", "core", "iteration");
 return (*detail::concrete_access::get<native_vector_string_cursor_>(*this).begin()).value_copy(); })(); }
-void vector_string_cursor_::next() { if (!this->valid()) raise_runtime_error("Finished iteration", "index_out_of_range", "core", "iteration");
-auto iterator = detail::concrete_access::get<native_vector_string_cursor_>(*this).begin();
-++iterator; }
+void vector_string_cursor_::next() { if (this->valid()) { auto iterator = detail::concrete_access::get<native_vector_string_cursor_>(*this).begin(); ++iterator; } }
 scpp::uint64 count(const scpp::vector_string &value) { return ([&]() -> decltype(auto) { return value.size(); })(); }
 scpp::boolean empty(const scpp::vector_string &value) { return ([&]() -> decltype(auto) { return value.empty(); })(); }
 scpp::boolean isset(const scpp::vector_string &value) { return ([&]() -> decltype(auto) { return scpp::boolean(true); })(); }

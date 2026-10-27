@@ -95,6 +95,25 @@ static_assert(!std::is_copy_constructible_v<scpp::record_hash>);
 static_assert(!std::is_copy_assignable_v<scpp::record_hash>);
 static_assert(std::is_move_constructible_v<scpp::record_hash>);
 int main() {
+    // Empty cursors and exhausted preserved cursors accept repeated next().
+    {
+        scpp::integer_hash values;
+        { auto empty=values.iterate(); empty.next(); empty.next(); CHECK(!empty.valid()); }
+        values.set(scpp::int64(2),scpp::int64(7));
+        { auto exhausted=values.iterate(); (void)exhausted.value(); exhausted.next();
+          CHECK(!exhausted.valid()); exhausted.next(); CHECK(!exhausted.valid()); }
+        auto cursor=values.iterate();
+        CHECK(cursor.valid()); (void)cursor.value();
+        values.clear();
+        cursor.next(); CHECK(!cursor.valid());
+        const int before=allocations;
+        for(int i=0;i<100;++i) cursor.next();
+        CHECK(!cursor.valid() && allocations==before);
+        bool key_failed=false, value_failed=false;
+        try { (void)cursor.key(); } catch(...) { key_failed=true; }
+        try { (void)cursor.value(); } catch(...) { value_failed=true; }
+        CHECK(key_failed && value_failed);
+    }
     fixture::counts counts;
     {
         scpp::record_hash values;
@@ -137,6 +156,7 @@ int main() {
     CHECK(copied.at(scpp::int64(2)).native_value()==7);
     CHECK(copied.find(scpp::int64(2)).has_value());
     CHECK(cursor.key().native_value()==2 && cursor.value().native_value()==7);
+    cursor.next(); CHECK(!cursor.valid()); cursor.next(); CHECK(!cursor.valid());
     std::puts("PASS: move-only hash lifetime/transfer/erase, no mutation allocations, copy/cursor snapshots");
 }
 '''

@@ -83,6 +83,7 @@ with tempfile.TemporaryDirectory(prefix='scpp-vector-lifecycle-') as directory:
     assert len(manifest['sources'])==2
     code=r'''#include "scpp/record_vector.hpp"
 #include "scpp/integer_vector.hpp"
+#include "scpp/vector_string.hpp"
 #include "public_api_guard.hpp"
 #include <cstdlib>
 #include <cstdio>
@@ -97,6 +98,29 @@ static_assert(!std::is_copy_constructible_v<scpp::record_vector>);
 static_assert(!std::is_copy_assignable_v<scpp::record_vector>);
 static_assert(std::is_move_constructible_v<scpp::record_vector>);
 int main() {
+    // Exercise the runtime-published specialization, not only application output.
+    scpp::vector_string published;
+    auto published_cursor=published.iterate();
+    published_cursor.next(); published_cursor.next(); CHECK(!published_cursor.valid());
+    // Empty cursors and exhausted preserved cursors accept repeated next().
+    {
+        scpp::integer_vector values;
+        { auto empty=values.iterate(); empty.next(); empty.next(); CHECK(!empty.valid()); }
+        values.append(scpp::int64(7));
+        { auto exhausted=values.iterate(); (void)exhausted.value(); exhausted.next();
+          CHECK(!exhausted.valid()); exhausted.next(); CHECK(!exhausted.valid()); }
+        auto cursor=values.iterate();
+        CHECK(cursor.valid()); (void)cursor.value();
+        values.clear();
+        cursor.next(); CHECK(!cursor.valid());
+        const int before=allocations;
+        for(int i=0;i<100;++i) cursor.next();
+        CHECK(!cursor.valid() && allocations==before);
+        bool key_failed=false, value_failed=false;
+        try { (void)cursor.key(); } catch(...) { key_failed=true; }
+        try { (void)cursor.value(); } catch(...) { value_failed=true; }
+        CHECK(key_failed && value_failed);
+    }
     fixture::counts counts;
     {
         scpp::record_vector values;
@@ -124,6 +148,7 @@ int main() {
     integers.clear();
     CHECK(copied.at(scpp::uint64(0)).native_value()==7);
     CHECK(cursor.value().native_value()==7);
+    cursor.next(); CHECK(!cursor.valid()); cursor.next(); CHECK(!cursor.valid());
     std::puts("PASS: move-only vector ownership, zero post-reserve allocations, copy/cursor snapshots");
 }
 '''

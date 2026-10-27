@@ -515,7 +515,7 @@
               "name": "next",
               "returns": "void",
               "parameters": [],
-              "body": "if (!this->valid()) raise_runtime_error(\"Finished iteration\", \"index_out_of_range\", \"core\", \"iteration\");\nauto iterator = ${self}.begin();\n++iterator;"
+              "body": "if (this->valid()) { auto iterator = ${self}.begin(); ++iterator; }"
             }
           ],
           "requires_capabilities": {
@@ -1513,7 +1513,7 @@
               "name": "next",
               "returns": "void",
               "parameters": [],
-              "body": "if (!this->valid()) raise_runtime_error(\"Finished iteration\", \"index_out_of_range\", \"core\", \"iteration\");\nauto iterator = ${self}.begin();\n++iterator;"
+              "body": "if (this->valid()) { auto iterator = ${self}.begin(); ++iterator; }"
             }
           ],
           "requires_capabilities": {

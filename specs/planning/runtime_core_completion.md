@@ -1346,3 +1346,17 @@ initializers, safe access and failure guarantees still need their planned work.
 The earlier indexed-write cursor concern is resolved: `specs/array_semantics.md`,
 Mutation during value iteration, explicitly requires existing-value updates to remain
 visible before structural preservation. No semantic or native change is needed.
+
+## E3 checkpoint — consistent finished-cursor advancement
+
+Vector and hash cursor `next()` now follows the existing mixed/dynamic public
+protocol: it is a no-op when finished. Finished key/value reads still reject.
+The metadata snippets own the boundary behavior; native traversal/consumption and
+preservation semantics are unchanged. This closes the end-idempotent next debt,
+not the broader container access/initialization backlog.
+
+Tests cover empty cursors, normal exhaustion, preservation after the final value was
+consumed, repeated end advancement without allocation, and rejected end reads.
+They exercise both application-owned vector/hash specializations and the runtime's
+published vector_string implementation. Ownership and callback expansion remain
+behind the first-complete-carrier review gate.

@@ -132,7 +132,10 @@ The selected vector cursor is native `vector_range<public T>` in inline storage.
 It is neither default-constructible, copyable nor movable. `iterate()` constructs it
 directly. `valid()` and `key()` are non-const because the native range's accessors
 are non-const; no generated const_cast is needed. Consumption follows
-`valid -> value once -> next`. Repeated reads after consumption/mutation are not an
+`valid -> value once -> next`. For vector, hash, mixed and dynamic cursors,
+`next()` on a finished cursor is a no-op; finished `key()`/`value()` reads reject.
+This also covers preservation that exhausts a cursor after its last consumed value.
+Repeated reads after consumption/mutation are not an
 additional public guarantee. Native traversal preservation, owned values, mutation
 failure handling and survival beyond owner destruction remain unchanged.
 

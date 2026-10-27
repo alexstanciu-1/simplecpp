@@ -2252,3 +2252,26 @@ changed and no core rebuild was required. The generator itself needed no changes
 Removal for non-default-constructible key/value storage remains a native tombstone
 limitation, explicitly gated and retained in E backlog; source eligibility and
 application-specific key binding completion are not claimed by these native proofs.
+
+## E3 — finished-cursor advancement (2026-10-27)
+
+Vector/hash metadata now uses the same finished `next()` no-op as mixed/dynamic.
+Only the published vector_string implementation changed; signatures/layouts did
+not change. Generated application vector/hash cursors use the same recipe change.
+No native iterator or preservation algorithm was modified.
+
+Expanded lifecycle proofs cover empty cursors, ordinary exhaustion, preservation
+following consumption of the final value, repeated advancement with zero allocation,
+and rejected finished key/value reads. The runtime-owned vector_string path is
+also called. Public-only compilation and sealed application reuse remain checked.
+The complete metadata shape/default/hash/boxed generation script passes.
+
+One release and one sanitizer core rebuild were required: **21.11s / 45.40s**.
+These builds overlapped, so the measurements are observed wall times rather than
+isolated comparative benchmarks. Both used Ninja eight jobs. The existing native
+mixed-hash explicit-instantiation warning remains unrelated to this change.
+
+Release focused compile costs (storage / public caller): vector two units
+**2.8193s / 0.1233s**; hash five units **10.9426s / 0.1405s**.
+ASan/UBSan with leak detection passes for both expanded proofs. Sanitizer storage /
+public caller costs: vector **3.9181s / 0.1699s**, hash **18.1807s / 0.2034s**.
