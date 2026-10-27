@@ -1729,3 +1729,28 @@ Validation: four demanded buffers pass release and ASan/UBSan/LSan lifetime/allo
 and sealed reuse proofs. Parallel generated storage compilation: 1.0313s release /
 1.0806s sanitized; caller: 0.1409s / 0.1721s. Three metadata checks pass (1.49s). No
 runtime-core rebuild was needed. These figures do not imply factory completion.
+
+## E10 — common private positional factory bridge
+
+Vector, integer-keyed hash, mixed and dynamic now share adapted positional input
+population under the existing native initialization owner. The input view copies
+the adapted value directly; a reference-returning representation adapter does not
+first copy the public wrapper. Existing from_list paths retain identity adaptation.
+The receiving factory still owns result construction and cleanup, and publishes a
+result only after all entries are populated.
+
+The focused native proof uses public concrete integer/string values and public boxed
+representations, tests ordered invocation and empty outputs across all four factories,
+compares long-string allocation counts (native 3 / adapted 3), and injects adaptation
+failure after a populated prefix. Tracked payload lifetimes and sanitizer checks
+cover cleanup. This is private bridge coverage, not newly published factory bindings
+or frontend initialization. Representation adapters cannot defer source conversions
+until after all entry effects.
+
+Next: concrete factory publication through metadata, then keyed entry lifecycle and
+duplicate-key construction. Borrowed source views and arbitrary user callbacks remain
+behind their semantic non-escape requirements; no new callback boundary is exposed.
+
+Validation: release and ASan/UBSan with leak detection pass; long-string factory
+allocations match at 3 native / 3 adapted. Final focused build took 4.19s release /
+8.35s sanitized. No core rebuild or public API publication change was required.

@@ -1519,3 +1519,19 @@ is inline; large backing follows the native heap fallback. The native view exist
 only inside each checked read. Actual factory dispatch and keyed-entry transport
 remain separate work. Separate factory function bindings can consume these buffers
 without adding a boxed-type signature/layout dependency cycle.
+
+### Private positional factory adaptation
+
+The native initialization owner offers `from_list_adapted(input, adapt)` for vector,
+typed hash, mixed and dynamic. All use `populate_list_adapted`; existing from_list
+paths delegate with identity adaptation. Native initializer_list::copy_adapted_at
+materializes the adapter result by value, so an adapter borrowing a native payload
+from a public wrapper does not introduce a preceding public-wrapper copy.
+
+This is internal C++ machinery, not a public template/callback API or an escaping
+source view. Adapters must perform representation transport only. Source conversion
+and key/value evaluation belong before buffer materialization; moving checked source
+conversions into this later loop would change failure/effect order. As with other
+metadata snippets, arbitrary native callbacks are trusted implementation code, not
+a proof of general non-escape. Separate concrete factory bindings remain to be wired
+through public metadata; this helper alone does not publish initialization APIs.

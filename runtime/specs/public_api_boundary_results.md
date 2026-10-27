@@ -2767,3 +2767,25 @@ constructible but not copy-assignable. Current copy_storage/lifecycle bundles bo
 keyed entry transport therefore needs an explicit local capability/lifecycle design,
 not a false copy_storage declaration. Factory execution, keyed duplicates and source
 view non-escape remain unfinished.
+
+## E10: private positional factory adaptation (2026-10-28)
+
+The initialization owner now shares populate_list_adapted across vector, typed hash,
+mixed and dynamic factories. Existing from_list operations delegate with identity
+adaptation. The view copies an adapter's result directly by value; borrowing a native
+payload from a public representation therefore avoids an extra public-value copy.
+No borrowed view/callback is published in the template-free public surface.
+
+Release and ASan/UBSan/LSan tests pass across the four factories, including ordered
+input, valid empty results, public boxed representation transport, thrown adaptation after a populated prefix and destruction of
+tracked payloads. Long-string allocation parity is native 3 / adapted 3 in both
+configurations. Earlier entry evaluation/conversion still belongs to the compiler;
+adaptation must not become a late source checked cast.
+
+Final focused executable build: 4.19s release / 8.35s sanitized, including link
+(and sanitizer CMake regeneration). The release fixture first needed correct native
+vector-index spelling and the existing public-key policy include; those were fixture
+errors, not new runtime key semantics. No runtime-core rebuild occurred. Public
+headers/metadata/publication are unchanged, so this slice does not claim new factory
+publication or reuse coverage. Concrete factory bindings and keyed entry transport
+remain next work.

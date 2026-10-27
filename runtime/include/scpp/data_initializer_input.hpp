@@ -33,6 +33,14 @@ public:
 		return *items_[static_cast<std::size_t>(position)];
 	}
 
+	// Internal boundary adaptation: return by value even when the adapter borrows.
+	// A returned C++ reference is copied before this synchronous call ends.
+	template <typename Adapt>
+	auto copy_adapted_at(std::size_t position, const Adapt &adapt) const {
+		if (position >= this->size_) throw std::out_of_range("initializer_list index out of range");
+		return adapt(*this->items_[position]);
+	}
+
 	// Iteration copies values; it never exposes an element reference to source code.
 	class iterator final {
 		const std::optional<T> *position_;
@@ -82,10 +90,18 @@ public:
 
 namespace initialization_detail {
 
+template <typename Destination, typename T, typename Adapt>
+void populate_list_adapted(Destination &destination, initializer_list<T> input, const Adapt &adapt) {
+	if constexpr (requires { destination.reserve(input.size()); }) destination.reserve(input.size());
+	for (std::size_t index = 0; index < input.size(); ++index) {
+		auto value = input.copy_adapted_at(index, adapt);
+		(void)destination.append(value);
+	}
+}
+
 template <typename Destination, typename T>
 void populate_list(Destination &destination, initializer_list<T> input) {
-	if constexpr (requires { destination.reserve(input.size()); }) destination.reserve(input.size());
-	for (auto value : input) (void)destination.append(value);
+	populate_list_adapted(destination, input, [](const T &value) -> const T & { return value; });
 }
 
 template <typename Destination, typename V, typename K>
