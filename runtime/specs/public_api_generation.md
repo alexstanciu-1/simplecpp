@@ -1605,3 +1605,9 @@ it checks readiness before each reached key, saves that key once, and re-resolve
 from the same bound root after effects. Native key adapters only borrow representation
 inside the synchronous boolean operation. These are lowering support functions, not
 new source helpers or unrestricted callback/borrow APIs.
+
+`keyed_path_erase` uses the same saved-key vector and ordinary function-set machinery.
+It rechecks final membership without mutation, then uses existing native COW/identity
+owners for descent and removal. The caller performs lazy key evaluation with removal
+readiness; the final call consumes only saved keys and never executes source callbacks.
+No-op removal does not detach; actual allocation failure is not made transactional.

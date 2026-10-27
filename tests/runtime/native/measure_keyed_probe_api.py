@@ -11,6 +11,8 @@ sources={
 }
 sources['public_path'] = '#include "scpp/access/keyed_path_probe_mixed.hpp"\n#include "scpp/access/keyed_path_probe_dynamic.hpp"\nscpp::boolean probe(const scpp::mixed &r, const scpp::vector_mixed &k) { return scpp::keyed_path_probe(r,k,scpp::boolean(false)); }\nscpp::boolean probe(const scpp::dynamic &r, const scpp::vector_mixed &k) { return scpp::keyed_path_probe(r,k,scpp::boolean(false)); }\n'
 sources['native_path'] = '#include "scpp/keyed_path.hpp"\nscpp::bool_t probe(const scpp::mixed_t &r, const scpp::vector_t<scpp::mixed_t> &k) { return scpp::keyed_path_probe_adapted(&r,k.size(),[&](std::size_t i)->const scpp::mixed_t& { return k.at(i); },false); }\nscpp::bool_t probe(const scpp::detail::dynamic_value &r, const scpp::vector_t<scpp::mixed_t> &k) { return scpp::keyed_path_probe_adapted(&r,k.size(),[&](std::size_t i)->const scpp::mixed_t& { return k.at(i); },false); }\n'
+sources['public_erase'] = '#include "scpp/access/keyed_path_erase_mixed.hpp"\n#include "scpp/access/keyed_path_erase_dynamic.hpp"\nvoid erase(scpp::mixed &r, const scpp::vector_mixed &k) { scpp::keyed_path_erase(r,k); }\nvoid erase(scpp::dynamic &r, const scpp::vector_mixed &k) { scpp::keyed_path_erase(r,k); }\n'
+sources['native_erase'] = '#include "scpp/keyed_path.hpp"\nvoid erase(scpp::mixed_t &r, const scpp::vector_t<scpp::mixed_t> &k) { scpp::keyed_path_erase_adapted(r,k.size(),[&](std::size_t i)->const scpp::mixed_t& { return k.at(i); }); }\nvoid erase(scpp::detail::dynamic_value &r, const scpp::vector_t<scpp::mixed_t> &k) { scpp::keyed_path_erase_adapted(r,k.size(),[&](std::size_t i)->const scpp::mixed_t& { return k.at(i); }); }\n'
 rows=[]
 with tempfile.TemporaryDirectory(prefix='scpp-keyed-probe-cost-') as d:
     stage=Path(d)

@@ -424,3 +424,6 @@
 #include "scpp/generated/public_keyed_prefix_ready_dynamic.cpp"
 #include "scpp/generated/public_keyed_path_probe_mixed.cpp"
 #include "scpp/generated/public_keyed_path_probe_dynamic.cpp"
+
+#include "scpp/generated/public_keyed_path_erase_mixed.cpp"
+#include "scpp/generated/public_keyed_path_erase_dynamic.cpp"

@@ -175,4 +175,17 @@ inline void keyed_erase(detail::dynamic_value &receiver, const mixed_t &key) {
 	(void)receiver.get_table().remove(key);
 }
 
+// Validate the complete current path before any COW detachment. Saved keys contain
+// no source callbacks; allocation failures during mutation are not transactions.
+template <typename R, typename KeyAt>
+void keyed_path_erase_adapted(R &root, std::size_t count, const KeyAt &key_at) {
+	if (count == 0) throw std::logic_error("keyed removal requires at least one saved key");
+	const R *parent = keyed_resolve_prefix(&root, count - 1, key_at, true);
+	if (!keyed_present(parent, key_at(count - 1), true)) return;
+	R *target = &root;
+	for (std::size_t index = 0; index + 1 < count; ++index)
+		target = &keyed_descend(*target, key_at(index));
+	keyed_erase(*target, key_at(count - 1));
+}
+
 } // namespace scpp

@@ -1,6 +1,6 @@
 {
   "abi": "529dd5502370f48d64891818e9439aae72831b990b4027e8abe25c50c1216c21",
-  "api_identity": "6a250afab794ac80a3411fdafd6b722174e6a3f8cf661b887569cf518485903e",
+  "api_identity": "126b546f92f63381f3dc613c386651cd36d2f91da17a416f36746cdd6021cc63",
   "apis": {
     "add_dynamic": {
       "header": "scpp/operators/add_dynamic.hpp",
@@ -5131,6 +5131,62 @@
         "returns": "boolean"
       },
       "source": "include/scpp/generated/public_isset_null.cpp"
+    },
+    "keyed_path_erase_dynamic": {
+      "header": "scpp/access/keyed_path_erase_dynamic.hpp",
+      "namespace": "scpp",
+      "operation": {
+        "expression": "scpp::keyed_path_erase_adapted(${native:receiver}, ${native:keys}.size(), [&](std::size_t index) -> const scpp::mixed_t & { return detail::concrete_access::get<scpp::mixed_t>(${native:keys}.at(index)); })",
+        "includes": [
+          "scpp/keyed_path.hpp"
+        ],
+        "name": "keyed_path_erase",
+        "parameters": [
+          {
+            "name": "receiver",
+            "passing": "ref",
+            "type": "dynamic"
+          },
+          {
+            "name": "keys",
+            "passing": "const_ref",
+            "type": "vector<mixed>"
+          }
+        ],
+        "returns": "void",
+        "uses": [
+          "mixed"
+        ]
+      },
+      "source": "include/scpp/generated/public_keyed_path_erase_dynamic.cpp"
+    },
+    "keyed_path_erase_mixed": {
+      "header": "scpp/access/keyed_path_erase_mixed.hpp",
+      "namespace": "scpp",
+      "operation": {
+        "expression": "scpp::keyed_path_erase_adapted(${native:receiver}, ${native:keys}.size(), [&](std::size_t index) -> const scpp::mixed_t & { return detail::concrete_access::get<scpp::mixed_t>(${native:keys}.at(index)); })",
+        "includes": [
+          "scpp/keyed_path.hpp"
+        ],
+        "name": "keyed_path_erase",
+        "parameters": [
+          {
+            "name": "receiver",
+            "passing": "ref",
+            "type": "mixed"
+          },
+          {
+            "name": "keys",
+            "passing": "const_ref",
+            "type": "vector<mixed>"
+          }
+        ],
+        "returns": "void",
+        "uses": [
+          "mixed"
+        ]
+      },
+      "source": "include/scpp/generated/public_keyed_path_erase_mixed.cpp"
     },
     "keyed_path_probe_dynamic": {
       "header": "scpp/access/keyed_path_probe_dynamic.hpp",
@@ -10562,7 +10618,13 @@
     "include/scpp/access/keyed_path_probe_mixed.hpp",
     "public/scpp/access/keyed_path_probe_dynamic.hpp",
     "include/scpp/generated/public_keyed_path_probe_dynamic.cpp",
-    "include/scpp/access/keyed_path_probe_dynamic.hpp"
+    "include/scpp/access/keyed_path_probe_dynamic.hpp",
+    "public/scpp/access/keyed_path_erase_mixed.hpp",
+    "include/scpp/generated/public_keyed_path_erase_mixed.cpp",
+    "include/scpp/access/keyed_path_erase_mixed.hpp",
+    "public/scpp/access/keyed_path_erase_dynamic.hpp",
+    "include/scpp/generated/public_keyed_path_erase_dynamic.cpp",
+    "include/scpp/access/keyed_path_erase_dynamic.hpp"
   ],
   "generator": "metadata-api-v1",
   "leaves": {
@@ -10742,6 +10804,8 @@
   "public_files": {
     "modules/filesystem/scan.hpp": "12c63684c1896c3de8fd05db1a6ab2a2fbb7eea2a3747ed3de91f44e0e5cf7d7",
     "modules/tasks/worker_pool.hpp": "07fd862bb53ef73be8aec043b5027a4e247723fe8efc4196d8e931ffe820394e",
+    "scpp/access/keyed_path_erase_dynamic.hpp": "62d872bb71276875ead38f9509baeadaf94661ff0c391051d9f7d19cbb280917",
+    "scpp/access/keyed_path_erase_mixed.hpp": "d4a4637805eec0b917f75e04c4c242d412ec397ceeab9552429848e021548873",
     "scpp/access/keyed_path_probe_dynamic.hpp": "1fbf1cc71cc1fbb00bd1faf1c3a0bfe9f8ac5f75dea15800262763ebfad7cf48",
     "scpp/access/keyed_path_probe_mixed.hpp": "2f1f682e5eff02b9723b3ac56549095fd6e0381c8ca53b056c8391dcbd40aca4",
     "scpp/access/keyed_prefix_ready_dynamic.hpp": "fdc1e8001624754f82d29c25e0022c691b091ee4f3285533ba5ce12ba491f717",
@@ -11525,7 +11589,9 @@
     "include/scpp/generated/public_keyed_prefix_ready_mixed.cpp",
     "include/scpp/generated/public_keyed_prefix_ready_dynamic.cpp",
     "include/scpp/generated/public_keyed_path_probe_mixed.cpp",
-    "include/scpp/generated/public_keyed_path_probe_dynamic.cpp"
+    "include/scpp/generated/public_keyed_path_probe_dynamic.cpp",
+    "include/scpp/generated/public_keyed_path_erase_mixed.cpp",
+    "include/scpp/generated/public_keyed_path_erase_dynamic.cpp"
   ],
   "types": {
     "dynamic": {

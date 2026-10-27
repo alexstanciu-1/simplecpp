@@ -2949,3 +2949,23 @@ independently; six metadata regressions pass (2.33s). Single-run nested-probe ca
 compilation: 0.0559s public / 2.2876s native; direct-probe control 0.0558s / 2.1471s.
 Core rebuilt once per configuration. The runtime publishes 388 implementation units;
 that count is not a completion percentage. Existing carrier decisions remain pending.
+
+## E18: public homogeneous boxed removal (2026-10-28)
+
+The existing keyed owner rechecks the complete saved path without mutation before
+COW descent and erasure. Ordinary metadata publishes mixed/dynamic overloads using
+the existing vector<mixed>. Public-only tests establish no-op allocation behavior
+with shared storage, null-valued slot removal, mixed copy independence, dynamic alias
+visibility, remaining key identity and empty-parent retention. Invalid runtime keys
+and existing scalar intermediates throw; missing/null intermediates return. Staged
+root mutation is observed on the final call. Field-owner retention, heterogeneous
+typed paths and frontend evaluation are not claimed by this proof. Allocation failure
+during actual mutation retains the existing non-transactional contract.
+
+Validation: release and ASan/UBSan/LSan removal and existing nested-probe tests pass;
+relocated sealed publication reuses both APIs with zero new units. Both removal
+headers compile independently. Single-run caller cost: 0.0541s public / 2.5304s native.
+Core rebuilt once per configuration. Missing paths, missing leaves and null roots
+allocate zero times in the focused proof. Runtime inventory: 390 implementation
+units, not a coverage percentage. Carrier decisions and ownership/callback review
+remain pending.

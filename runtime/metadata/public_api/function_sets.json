@@ -1870,5 +1870,39 @@
         ]
       }
     }
+  },
+  "keyed_path_erase": {
+    "variants": {
+      "mixed": {},
+      "dynamic": {}
+    },
+    "function": {
+      "namespace": "scpp",
+      "header": "scpp/access/keyed_path_erase_${variant}.hpp",
+      "source": "include/scpp/generated/public_keyed_path_erase_${variant}.cpp",
+      "operation": {
+        "name": "keyed_path_erase",
+        "returns": "void",
+        "parameters": [
+          {
+            "name": "receiver",
+            "type": "${variant}",
+            "passing": "ref"
+          },
+          {
+            "name": "keys",
+            "type": "vector<mixed>",
+            "passing": "const_ref"
+          }
+        ],
+        "expression": "scpp::keyed_path_erase_adapted(${native:receiver}, ${native:keys}.size(), [&](std::size_t index) -> const scpp::mixed_t & { return detail::concrete_access::get<scpp::mixed_t>(${native:keys}.at(index)); })",
+        "includes": [
+          "scpp/keyed_path.hpp"
+        ],
+        "uses": [
+          "mixed"
+        ]
+      }
+    }
   }
 }

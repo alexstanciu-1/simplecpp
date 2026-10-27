@@ -1938,3 +1938,27 @@ independently; six metadata regressions pass (2.33s). Single-run nested-probe ca
 compilation: 0.0559s public / 2.2876s native; direct-probe control 0.0558s / 2.1471s.
 Core rebuilt once per configuration. The runtime publishes 388 implementation units;
 that count is not a completion percentage. Existing carrier decisions remain pending.
+
+## E18 — homogeneous boxed nested removal
+
+The existing keyed-path owner now performs a complete non-mutating saved-key recheck
+before mutable descent and final erasure. Missing/null parents or missing leaves
+return without COW detachment; existing wrong-kind receivers and invalid keys throw.
+A present null leaf is removed, and empty parents are retained. The internal saved-key
+adapter contains no source callbacks; allocation failure during the later mutation
+phase does not introduce a transaction guarantee.
+
+One ordinary function set publishes mixed/dynamic keyed_path_erase using the same
+runtime-owned vector<mixed> keys as prefix readiness/probes. Public tests cover
+allocation-free no-ops with shared storage, mixed independent copies, dynamic aliases,
+remaining key identity, null leaves, empty-parent retention, invalid paths and root
+mutation between stages. Homogeneous boxed removal is now published; typed paths,
+field owner retention and actual frontend lowering remain separate requirements.
+
+Validation: release and ASan/UBSan/LSan removal and existing nested-probe tests pass;
+relocated sealed publication reuses both APIs with zero new units. Both removal
+headers compile independently. Single-run caller cost: 0.0541s public / 2.5304s native.
+Core rebuilt once per configuration. Missing paths, missing leaves and null roots
+allocate zero times in the focused proof. Runtime inventory: 390 implementation
+units, not a coverage percentage. Carrier decisions and ownership/callback review
+remain pending.

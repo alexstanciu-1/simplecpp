@@ -400,6 +400,8 @@
     "keyed_prefix_ready_mixed",
     "keyed_prefix_ready_dynamic",
     "keyed_path_probe_mixed",
-    "keyed_path_probe_dynamic"
+    "keyed_path_probe_dynamic",
+    "keyed_path_erase_mixed",
+    "keyed_path_erase_dynamic"
   ]
 }
