@@ -6,7 +6,7 @@ import sys
 root=Path(__file__).resolve().parents[3]
 m=json.loads((root/'runtime/metadata/public_api.json').read_text())
 pub=json.loads((root/'runtime/public/specializations.json').read_text())
-expected={'int64','float64','boolean','string','null','mixed','dynamic'}
+expected={'int64','float64','boolean','string','null','mixed','dynamic','error_value'}
 apis=[]
 for name in ['strict_identical','strict_not_identical']:
     recipe=m['function_sets'][name]
@@ -23,7 +23,7 @@ def call(data,error=None):
     assert p.returncode==0,p.stderr
     return json.loads(p.stdout)
 plan=call(base)
-assert len(plan['units'])==14
+assert len(plan['units'])==16
 assert all('template' not in u['header'] for u in plan['units'])
 assert all('scpp::identical(' in u['source'] or 'scpp::not_identical(' in u['source'] for u in plan['units'])
 base['api_imports']=plan['apis'];assert call(base)['units']==[]

@@ -9,6 +9,26 @@ namespace scpp::api_generation
         for (const auto &item : list.items) if (item.text() == name) return true;
         return false;
     }
+    static void validate_owned_member(const value &family, const std::string &method, const std::string &target)
+    {
+        authored_name(method);
+        unsigned matches = 0;
+        for (const auto &record : family.at("classes").items) {
+            if (record.get("id") != "self") continue;
+            for (const auto &member : record.at("methods").items) {
+                if (member.get("name") != method) continue;
+                const auto &parameters = member.at("parameters").items;
+                if (member.get("returns") != target
+                    || !member.yes("const") || member.has("requires_capabilities")
+                    || parameters.size() != 1 || parameters[0].get("type") != "c_string"
+                    || parameters[0].get("passing", "value") != "value")
+                    throw std::runtime_error("Carrier projection must return an owned payload from a const checked member");
+                ++matches;
+            }
+        }
+        if (matches != 1) throw std::runtime_error("Carrier projection requires one checked member");
+    }
+
     void validate_carriers(const value &metadata)
     {
         for (const auto &[name, family] : metadata.at("families").fields) {
@@ -17,23 +37,7 @@ namespace scpp::api_generation
             fields_only(carrier, "payload require_value states", "carrier descriptor");
             if (!contains(family.at("parameters"), carrier.at("payload").text()))
                 throw std::runtime_error("Unknown carrier payload parameter");
-            const auto method = carrier.at("require_value").text();
-            authored_name(method);
-            unsigned matches = 0;
-            for (const auto &record : family.at("classes").items) {
-                if (record.get("id") != "self") continue;
-                for (const auto &member : record.at("methods").items) {
-                    if (member.get("name") != method) continue;
-                    const auto &parameters = member.at("parameters").items;
-                    if (member.get("returns") != carrier.at("payload").text()
-                        || !member.yes("const") || member.has("requires_capabilities")
-                        || parameters.size() != 1 || parameters[0].get("type") != "c_string"
-                        || parameters[0].get("passing", "value") != "value")
-                        throw std::runtime_error("Carrier projection must return an owned payload from a const checked member");
-                    ++matches;
-                }
-            }
-            if (matches != 1) throw std::runtime_error("Carrier projection requires one checked member");
+            validate_owned_member(family, carrier.at("require_value").text(), carrier.at("payload").text());
             if (carrier.has("states")) {
                 const auto &states = carrier.at("states");
                 if (states.type != value::kind::array || states.items.empty())
@@ -41,12 +45,18 @@ namespace scpp::api_generation
                 std::set<std::string> seen;
                 for (std::size_t i = 0; i < states.items.size(); ++i) {
                     const auto &state = states.items[i];
-                    fields_only(state, "name test casts condition comparison_tag reconstruct literals", "carrier state");
+                    fields_only(state, "name test casts condition comparison_tag comparison_value reconstruct literals", "carrier state");
                     if (state.has("condition") && state.get("condition") != "payload"
                         && state.get("condition") != "true" && state.get("condition") != "false")
                         throw std::runtime_error("Unknown carrier condition policy");
                     authored_name(state.at("name").text());
                     if (state.has("comparison_tag")) authored_name(state.at("comparison_tag").text());
+                    if (state.has("comparison_value")) {
+                        const auto &projection = state.at("comparison_value");
+                        fields_only(projection, "type member", "carrier comparison value");
+                        metadata.at("types").at(projection.at("type").text());
+                        validate_owned_member(family, projection.at("member").text(), projection.at("type").text());
+                    }
                     if (state.has("literals")) {
                         if (state.at("literals").type != value::kind::array || state.at("literals").items.empty())
                             throw std::runtime_error("Carrier state literals require a nonempty array");

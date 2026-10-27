@@ -378,3 +378,10 @@ Same-family reconstruction copies the original error once into an owned snapshot
 then moves that snapshot into its destination. No original carrier is consumed,
 and invalid no-error assignment preserves the destination. Conditional lifecycle,
 structured-error identity and the full carrier review remain open.
+
+C8 adds strict structured-error comparison to the initial Result numeric paths:
+matching error states compare presence/message/line/file through a published shared
+function. Ordinary equality retains its constant error-state result. Shared metadata
+selects owned state projections and the comparator; evaluation snapshots remain
+left-to-right. Eliminating redundant owned state copies is part of scoped-observation
+work, not permission to expose interior references or skip the left snapshot.

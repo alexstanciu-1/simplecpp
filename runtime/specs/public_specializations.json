@@ -342,6 +342,8 @@
     "remainder_dynamic",
     "numeric_compound_replacement_mixed",
     "numeric_compound_replacement_dynamic",
-    "concat_string"
+    "concat_string",
+    "strict_identical_error_value",
+    "strict_not_identical_error_value"
   ]
 }

@@ -352,3 +352,6 @@
 #include "scpp/generated/public_numeric_compound_replacement_mixed.cpp"
 #include "scpp/generated/public_numeric_compound_replacement_dynamic.cpp"
 #include "scpp/generated/public_concat_string.cpp"
+
+#include "scpp/generated/public_strict_identical_error_value.cpp"
+#include "scpp/generated/public_strict_not_identical_error_value.cpp"

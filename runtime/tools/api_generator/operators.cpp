@@ -223,7 +223,11 @@ namespace scpp::api_generation
                 for (const auto &[state, result] : policy.at("same_states").fields) {
                     authored_name(state);
                     if (state == comparisons.at("payload_state").text()) throw std::runtime_error("Payload states require payload comparison");
-                    if (result.text() != "true" && result.text() != "false") throw std::runtime_error("Invalid same-state result");
+                    if (result.type == value::kind::object) {
+                        fields_only(result, "function_set", "carrier state comparison");
+                        metadata.at("function_sets").at(result.at("function_set").text());
+                    } else if (result.text() != "true" && result.text() != "false")
+                        throw std::runtime_error("Invalid same-state result");
                 }
             }
         }
@@ -419,9 +423,39 @@ namespace scpp::api_generation
             if (!source.has("comparison_tag")) throw std::runtime_error("Carrier state has no comparison tag");
             value state = value::object(); state["tag"] = source.at("comparison_tag");
             if (source.has("test")) state["test_expression"] = "${value}." + source.at("test").text() + "()";
+            if (source.has("comparison_value")) {
+                const auto &access = source.at("comparison_value");
+                state["projection"] = value::object();
+                state["projection"]["target"] = access.at("type");
+                state["projection"]["expression"] = "${value}." + access.at("member").text() + "(\"carrier comparison\")";
+                state["projection"]["ownership"] = "owned_value";
+            }
             states.items.push_back(state);
         }
         return states;
+    }
+
+    static value state_comparison_call(const value &functions, const value &policy,
+        const value &left, const value &right, const std::string &result_type)
+    {
+        if (!left.has("projection") || !right.has("projection"))
+            throw std::runtime_error("Carrier state comparison requires owned state projections");
+        const auto type = left.at("projection").at("target").text();
+        if (right.at("projection").at("target").text() != type)
+            throw std::runtime_error("Carrier state comparison projection types differ");
+        const auto identity = policy.at("function_set").text() + "_" + type;
+        const auto &function = functions.at(identity), &signature = function.at("operation");
+        const auto &parameters = signature.at("parameters").items;
+        if (signature.get("returns") != result_type || parameters.size() != 2)
+            throw std::runtime_error("Carrier state comparison signature mismatch");
+        for (const auto &parameter : parameters)
+            if (parameter.get("type") != type || parameter.get("passing") != "const_ref")
+                throw std::runtime_error("Carrier state comparison must borrow its projected values");
+        value out = value::object(); out["kind"] = "call"; out["api"] = identity;
+        out["header"] = function.at("header"); out["result_type"] = result_type;
+        out["function"] = function.at("namespace").text() + "::" + signature.at("name").text();
+        out["left_projection"] = left.at("projection"); out["right_projection"] = right.at("projection");
+        return out;
     }
 
     static value resolve_carrier_literal(const value &metadata, const value &registry,
@@ -523,14 +557,22 @@ namespace scpp::api_generation
             const auto &comparison = policy.at("operations").at(request.at("operation").text());
             out["left_states"] = comparison_states(out.at("left_projection"), payload);
             out["right_states"] = comparison_states(out.at("right_projection"), payload);
+            out["same_states"] = value::object(); out["same_state_calculations"] = value::object();
+            const auto functions = expand_function_sets(metadata);
             // At most a small state vocabulary, never a family/type overload product.
             for (const auto &left : out.at("left_states").items)
                 for (const auto &right : out.at("right_states").items)
-                    if (left.at("tag").text() == right.at("tag").text() && left.at("tag").text() != payload
-                        && !comparison.at("same_states").has(left.at("tag").text()))
-                        throw std::runtime_error("Unsupported carrier comparison state: " + left.at("tag").text());
+                    if (left.at("tag").text() == right.at("tag").text() && left.at("tag").text() != payload) {
+                        const auto tag = left.at("tag").text();
+                        if (!comparison.at("same_states").has(tag))
+                            throw std::runtime_error("Unsupported carrier comparison state: " + tag);
+                        const auto &selected = comparison.at("same_states").at(tag);
+                        if (selected.type == value::kind::object)
+                            out["same_state_calculations"][tag] = state_comparison_call(functions, selected, left, right, out.at("result_type").text());
+                        else out["same_states"][tag] = selected;
+                    }
             out["kind"] = "state_comparison"; out["payload_state"] = payload;
-            out["different_states"] = comparison.at("different_states"); out["same_states"] = comparison.at("same_states");
+            out["different_states"] = comparison.at("different_states");
             out["steps"] = value::array();
             for (const auto *step : {"evaluate_left_snapshot", "evaluate_right_snapshot", "observe_states",
                      "compare_states", "project_present_payloads", "convert_payloads", "compare_payloads"})

@@ -65,6 +65,7 @@ assert resolve('strict_identical','int64','string',changed)['result_type']=='fla
 assert resolve('strict_identical','int64','int64',changed)['result_type']=='flag'
 # State plans retain the same registered result identity as the payload plan.
 assert resolve('strict_identical','nullable<int64>','nullable<int64>',changed)['result_type']=='flag'
+assert resolve('strict_identical','result<int64>','result<float64>',changed)['same_state_calculations']['error']['result_type']=='flag'
 changed=copy.deepcopy(metadata)
 changed['global_operators']['groups']['strict_scalar_identity']['rules'][0]['domain']='signed'
 resolve('strict_identical','int64','string',changed,error='Preserving selection cannot specify a promotion domain')

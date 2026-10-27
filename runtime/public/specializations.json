@@ -1,6 +1,6 @@
 {
   "abi": "529dd5502370f48d64891818e9439aae72831b990b4027e8abe25c50c1216c21",
-  "api_identity": "7e7f32295f9a17d750bc30c9974c8e4081ddc8a6216eff02b56e39b90db7b248",
+  "api_identity": "388af9ce3e6edeeead502941bed89ddb4c28b871234f813fd0975255ade2daf9",
   "apis": {
     "add_dynamic": {
       "header": "scpp/operators/add_dynamic.hpp",
@@ -7296,6 +7296,31 @@
       },
       "source": "include/scpp/generated/public_strict_identical_dynamic.cpp"
     },
+    "strict_identical_error_value": {
+      "header": "scpp/identity/strict_identical_error_value.hpp",
+      "namespace": "scpp",
+      "operation": {
+        "expression": "scpp::identical(${native:left}, ${native:right}).native_value()",
+        "includes": [
+          "operators/identity/strict_identity.hpp"
+        ],
+        "name": "strict_identical",
+        "parameters": [
+          {
+            "name": "left",
+            "passing": "const_ref",
+            "type": "error_value"
+          },
+          {
+            "name": "right",
+            "passing": "const_ref",
+            "type": "error_value"
+          }
+        ],
+        "returns": "boolean"
+      },
+      "source": "include/scpp/generated/public_strict_identical_error_value.cpp"
+    },
     "strict_identical_float64": {
       "header": "scpp/identity/strict_identical_float64.hpp",
       "namespace": "scpp",
@@ -7720,6 +7745,31 @@
         "returns": "boolean"
       },
       "source": "include/scpp/generated/public_strict_not_identical_dynamic.cpp"
+    },
+    "strict_not_identical_error_value": {
+      "header": "scpp/identity/strict_not_identical_error_value.hpp",
+      "namespace": "scpp",
+      "operation": {
+        "expression": "scpp::not_identical(${native:left}, ${native:right}).native_value()",
+        "includes": [
+          "operators/identity/strict_identity.hpp"
+        ],
+        "name": "strict_not_identical",
+        "parameters": [
+          {
+            "name": "left",
+            "passing": "const_ref",
+            "type": "error_value"
+          },
+          {
+            "name": "right",
+            "passing": "const_ref",
+            "type": "error_value"
+          }
+        ],
+        "returns": "boolean"
+      },
+      "source": "include/scpp/generated/public_strict_not_identical_error_value.cpp"
     },
     "strict_not_identical_float64": {
       "header": "scpp/identity/strict_not_identical_float64.hpp",
@@ -9159,7 +9209,13 @@
     "include/scpp/operators/numeric_compound_replacement_dynamic.hpp",
     "public/scpp/text/concat_strings.hpp",
     "include/scpp/generated/public_concat_string.cpp",
-    "include/scpp/text/concat_strings.hpp"
+    "include/scpp/text/concat_strings.hpp",
+    "public/scpp/identity/strict_identical_error_value.hpp",
+    "include/scpp/generated/public_strict_identical_error_value.cpp",
+    "include/scpp/identity/strict_identical_error_value.hpp",
+    "public/scpp/identity/strict_not_identical_error_value.hpp",
+    "include/scpp/generated/public_strict_not_identical_error_value.cpp",
+    "include/scpp/identity/strict_not_identical_error_value.hpp"
   ],
   "generator": "metadata-api-v1",
   "leaves": {
@@ -9385,6 +9441,7 @@
     "scpp/identity/strict_identical_boxed_mixed_null.hpp": "e1fb90e163bc80c2b3686a469e26d28a1df6e0943efebf99193baaad951bbb1b",
     "scpp/identity/strict_identical_boxed_mixed_string.hpp": "27a07dd73ba061af4529311742128c029905835e1e0e21e69be8d11644d42548",
     "scpp/identity/strict_identical_dynamic.hpp": "212b3a041a77628df12abd542dece3d275f76940ac14213d45af1ebe9716f59d",
+    "scpp/identity/strict_identical_error_value.hpp": "070a1b1dcbba04333e688f7b90f7ca87e35c7adf95ec3978a340575ffd7e7ede",
     "scpp/identity/strict_identical_float64.hpp": "e4173ee717f08f50fa9eb4d06daaf5e32e63f52cf71065fd8e663ceecc586c11",
     "scpp/identity/strict_identical_int64.hpp": "25ded432979733d3cd444b08db4488b77e918f307e2cd2938aa57d2f4d38ca1d",
     "scpp/identity/strict_identical_mixed.hpp": "9d9ef293a634186864f5b5d89fcf0694c71636f8c189a8b6805c69c04c378351",
@@ -9402,6 +9459,7 @@
     "scpp/identity/strict_not_identical_boxed_mixed_null.hpp": "3522d6db6b2cbfe3cdbdbdc151a904957a02ddc5b3cd0283b80b677e9a141288",
     "scpp/identity/strict_not_identical_boxed_mixed_string.hpp": "09b1a767f5edbe66da2c7de93713f138579030a13a0215a9f2021c9255dd1bde",
     "scpp/identity/strict_not_identical_dynamic.hpp": "76e8da655d355cf25063fae704ddf2e8eabe3dda9a69f822be9501149d410fa2",
+    "scpp/identity/strict_not_identical_error_value.hpp": "2e86da19d6e4bb0f2f8b23a4090a4c5e9a1c9be2630e7578eaf117f8e02b2c05",
     "scpp/identity/strict_not_identical_float64.hpp": "017de1f83dbe2e87fede52cb14de7061cd48af42de3a9219459c80b357ff80b5",
     "scpp/identity/strict_not_identical_int64.hpp": "6d6a0c1fe80a65a149b443f92afaa0a5260b7da9cc1559e1a4da659f77aaabde",
     "scpp/identity/strict_not_identical_mixed.hpp": "53bf092fd833a6aef9f7c19361f3a5790cfa33ae42faf95ccb9aaad1049572cb",
@@ -9942,7 +10000,9 @@
     "include/scpp/generated/public_remainder_dynamic.cpp",
     "include/scpp/generated/public_numeric_compound_replacement_mixed.cpp",
     "include/scpp/generated/public_numeric_compound_replacement_dynamic.cpp",
-    "include/scpp/generated/public_concat_string.cpp"
+    "include/scpp/generated/public_concat_string.cpp",
+    "include/scpp/generated/public_strict_identical_error_value.cpp",
+    "include/scpp/generated/public_strict_not_identical_error_value.cpp"
   ],
   "types": {
     "dynamic": {

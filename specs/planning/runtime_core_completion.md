@@ -17,7 +17,7 @@ each slice. The original inventory is a baseline, not a current completion count
 | A2 | Complete for the agreed checked scalar conversions | Carrier conversion is C; ownership casts are D. |
 | B1 | Complete for the agreed scalar-facing truth/text/identity/observation scope | Carrier forms remain C; boxed arithmetic and access completion are not B1 credit. |
 | B2 | Complete for the agreed non-carrier special/mutation and text public paths; closure evidence below | Carrier forms C; indexed retention E; native exception inspection and overflow disposition G. |
-| C | Nullable numeric/presence paths and nullable/Result scalar reconstruction implemented; review pending | Four carrier families, state-preserving operations/conversions and conditional lifecycle. |
+| C | Nullable numeric/presence paths, nullable/Result scalar reconstruction and Result error identity implemented; review pending | Four carrier families, state-preserving operations/conversions and conditional lifecycle. |
 | D | Pending | Ownership, application targets and source Exception transport gaps. |
 | E | Existing vector/hash/boxed foundations; incomplete | Capability/access/initialization/cursor gaps and identity key-allocation debt. |
 | F | Pending | Callable transport and registered collection algorithms. |
@@ -907,3 +907,24 @@ result<vector<string>>, moved-from error reuse, destination metadata lifetime,
 and rejected no-error construction/assignment. Failed assignment preserves the
 existing error. Public storage/layout is unchanged. This closes the extra error
 copy debt, not conditional lifecycle or the wider carrier review.
+
+## C8 — structured Result error identity
+
+Matching Result error states now select a shared published strict error comparison
+through metadata. The comparator checks presence/message/line/file; ordinary
+Result error equality remains true regardless of that metadata. A generic owned
+state-data accessor and a function-set policy extend the existing state-comparison
+plan. Payload admission and whole-operand evaluation order remain unchanged.
+
+The first public proof covers Result<int64>/Result<float64>, both strict forms,
+ordinary equality contrast, each differing metadata field and aliased RHS mutation.
+No error or Result type spelling is hard-coded in the resolver. Missing/mismatched
+state accessors and comparator signatures reject. This closes the initial numeric
+Result structured-error identity gap, not other payload domains or all carriers.
+
+**State observation allocation follow-up:** the long-message Result comparison
+uses whole operand copies and then owned error projections. Scoped state observation
+must eventually avoid redundant projected copies while retaining the required
+left snapshot against RHS mutation. Do not expose an unguarded interior reference
+or remove operand snapshots merely to reduce the count. This joins the existing
+noncopyable/scoped-observation work; direct error comparison borrows its operands.

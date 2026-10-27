@@ -839,18 +839,17 @@ evaluation stay caller-owned, and no wrapper-pair adapter is generated.
 
 Carrier states may expose a `comparison_tag`, independent of their local state name
 and predicate spelling. `global_operators.carrier_comparisons` selects numeric
-payloads, a `payload_state` tag and operation policies. Each policy supplies boolean
-`different_states` and `same_states` results; the payload tag cannot have a constant
-same-state result. It must use the existing payload operator plan. This initial
+payloads, a `payload_state` tag and operation policies. Each policy supplies a boolean
+`different_states` result and `same_states` constants or state-data functions. The
+payload tag cannot have a same-state policy. It must use the existing payload operator plan. This initial
 policy covers numeric equality/inequality and canonical numeric strict identity.
 
 The resolver checks one-layer payload admission first, returns independent
 `left_states`/`right_states` observations and a `calculation` plan, and requires a
 policy for every matching non-payload state reachable on both sides. A plain peer
-has only the payload state. Unimplemented matching states reject explicitly: strict
-Result-to-Result error identity remains unavailable until its structured-error
-inspection/comparison path is provided. Ordinary Result error equality has a literal
-state result; it does not inspect message/file/line.
+has only the payload state. Unimplemented matching states reject explicitly. A state may instead select a
+registered comparison function over owned state data, as described below. Ordinary
+Result error equality has a literal state result; it does not inspect message/file/line.
 
 `kind: state_comparison` requires whole left and right snapshots before state tests.
 Different or constant same-state results skip payload extraction and conversion.
@@ -863,7 +862,8 @@ is never assigned an ordering rank.
 The compiled proof covers nullable<int64> and nullable<float64>, including differing
 payload identities, matching absence, inequality, alias mutation during RHS evaluation
 and ordered-extraction failure. Scalar numeric state policies do not close boxed,
-string/bool, structured-error strict identity or literal-sentinel comparison work.
+string/bool or other carrier comparison work; later sections record the structured-
+error and literal-null additions.
 
 ## Same-family state reconstruction
 
@@ -927,3 +927,30 @@ snapshot instead of copying it again. It never moves from the original carrier.
 The existing native real-error check rejects `error_value::no_error`; failed
 assignment must preserve the destination. Moved-from error objects remain valid
 for destruction and assignment; this API does not promise their message contents.
+
+## Comparisons of owned non-payload state data
+
+A carrier state may declare `comparison_value: {type, member}` for a concrete
+registered type. The member must be an unconditional const method returning that
+owned type and taking one by-value diagnostic c_string, using the same validation
+as checked payload access. No borrowed heap-interior reference is exposed.
+
+A `carrier_comparisons` operation's `same_states` entry may be a boolean constant
+or `{function_set: name}`. For reachable matching states with function policy,
+both state projections must have the same target type. The chosen function-set
+variant must borrow two values of that type and return the operator's registered
+result type. It does not infer a conversion between different state data types.
+
+The `state_comparison` plan separates reachable constant `same_states` from
+`same_state_calculations`. Each calculation carries its public API/header/function,
+result identity and left/right owned projections. After evaluating whole operands
+left-to-right and identifying matching states, the consumer extracts left state
+data, then right state data, and invokes the selected function. Different states
+skip both projections. Payloads still use the original payload comparison plan;
+invalid payload admission is not rescued by non-payload states.
+
+Result strict identity selects the published error_value identity functions, which
+compare error presence, message, line and file through the existing native owner.
+Ordinary error equality remains a constant state result. The implementation has no
+Result-name or error-tag branch. These state functions do not themselves broaden
+standalone source error-expression admission or expose native templates.

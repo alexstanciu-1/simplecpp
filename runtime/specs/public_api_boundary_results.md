@@ -1691,3 +1691,43 @@ separate required work; no broad family-completion claim follows from this fix.
 
 The same three focused regressions pass under ASan/UBSan with leak detection
 in 31.24s. No generator source changes or additional generator builds were needed.
+
+## C8 structured Result error identity
+
+The shared state-comparison plan now admits a function over owned state data in
+addition to constant same-state results. Two public error_value identity functions
+reuse native presence/message/line/file comparison. Generation/probes publish 332
+units (two new function units); no wrapper-pair implementation or storage-layout
+change is introduced. Direct error comparison borrows its inputs and allocates zero.
+
+The public proof adds Result<int64>/Result<float64> state comparisons. It exercises
+matching errors across payload kinds, each differing message/line/file field,
+ordinary equality versus strict identity, strict negation, different carrier states
+and RHS mutation of an aliased source after the left snapshot. Direct error tests
+also distinguish no_error presence. Metadata tests rename the family/state tag,
+retain a synthetic result identity, and reject missing/incorrect state accessors
+and non-borrowing comparator signatures. Publication reuse remains covered.
+
+Release execution passes. The measured long-message strict Result comparison
+allocates four times: two whole-operand snapshots and two owned error projections.
+This is distinct from the allocation-free comparator and scalar success cases.
+Removing redundant state projections remains required scoped-observation work;
+whole-left snapshot semantics must survive any optimization. C7 reconstruction
+continues to allocate once. Observed carrier sizes remain 16/40/96 bytes for the
+same tested nullable/Result types on this target.
+
+Single release compile-only observations: five application storage units 5.9467s;
+expanded public caller 0.3391s. The initial generator preparation build took 21.77s
+and included a core rebuild; final core/tool compilation took 21.22s. Nine focused
+release metadata/operator/conversion/identity regressions passed in 11.08s while
+the sanitizer build ran. These are observed costs, not isolated benchmark claims.
+
+The public execution/allocation/lifetime/publication proof also passes ASan/UBSan
+with leak detection, retaining the same allocation counts. Sanitized compile-only
+observations: storage units 7.5520s; caller 0.6901s. Sanitized core/tool build cost
+51.64s. Inventory comparison confirms all previous APIs and type layouts unchanged,
+with exactly the two new concrete identity functions added.
+
+All nine focused regressions pass under ASan/UBSan with leak detection in 59.26s.
+The full carrier review remains open; sentinel families, wider payload domains and
+conditional/scoped lifecycle are not closed by this error-identity proof.

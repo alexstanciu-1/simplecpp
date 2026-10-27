@@ -60,7 +60,7 @@ for op in ['numeric_equal','numeric_not_equal','strict_identical','strict_not_id
         assert p['steps'][:2] == ['evaluate_left_snapshot','evaluate_right_snapshot']
         assert p['different_states'] == str(op in ['numeric_not_equal','strict_not_identical']).lower()
     if op.startswith('strict_'):
-        resolve('result<int64>','result<int64>',op,error='Unsupported carrier comparison state: error')
+        assert resolve('result<int64>','result<int64>',op)['same_state_calculations']['error']['api'] == op+'_error_value'
     else:
         assert resolve('result<int64>','result<int64>',op)['same_states']['error'] == str(op == 'numeric_equal').lower()
 assert resolve('nullable<int64>','nullable<float64>','numeric_equal')['calculation']['operand_type'] == 'float64'
@@ -76,7 +76,24 @@ bad = copy.deepcopy(metadata)
 bad['global_operators']['carrier_comparisons']['operations']['numeric_equal']['same_states']['payload'] = 'true'
 resolve('nullable<int64>','nullable<int64>','numeric_equal',meta=bad,error='Payload states require payload comparison')
 resolve('nullable<int64>','nullable<uint64>','numeric_equal',error='Unsupported operator operand domains')
-print('PASS: state-first comparison plans, numeric promotion versus strict identity, explicit error-identity gap and checked ordering')
+bad = copy.deepcopy(metadata)
+del bad['families']['result']['carrier']['states'][1]['comparison_value']
+resolve('result<int64>','result<int64>','strict_identical',meta=bad,error='requires owned state projections')
+bad = copy.deepcopy(metadata)
+bad['families']['result']['carrier']['states'][1]['comparison_value']['member'] = 'require_value'
+resolve('result<int64>','result<int64>','strict_identical',meta=bad,error='owned payload from a const checked member')
+bad = copy.deepcopy(metadata)
+bad['function_sets']['strict_identical']['function']['operation']['parameters'][0]['passing'] = 'value'
+resolve('result<int64>','result<float64>','strict_identical',meta=bad,error='must borrow its projected values')
+renamed_state = copy.deepcopy(metadata)
+renamed_state['families']['outcome'] = renamed_state['families'].pop('result')
+renamed_state['families']['outcome']['carrier']['states'][1]['comparison_tag'] = 'failure'
+for op in ['strict_identical','strict_not_identical']:
+    policies = renamed_state['global_operators']['carrier_comparisons']['operations'][op]['same_states']
+    policies['failure'] = policies.pop('error')
+    p = resolve('outcome<int64>','outcome<float64>',op,meta=renamed_state)
+    assert p['same_state_calculations']['failure']['api'] == op+'_error_value'
+print('PASS: state-first comparison plans, numeric promotion versus strict identity, structured error identity and checked ordering')
 for op in ['strict_identical','strict_not_identical']:
     for carrier in ['nullable<int64>','nullable<string>','nullable<vector<string>>']:
         for left,right,side in [(carrier,'null','left'),('null',carrier,'right')]:
@@ -285,39 +302,48 @@ with tempfile.TemporaryDirectory(prefix='scpp-carrier-') as directory:
             body += 'if (' + state['test_expression'].replace('${value}','source') + ') { ' + branch + ' }\n'
         else: body += branch
     functions.append('static scpp::boolean observe_condition(const scpp::optional_integer &source) { ' + body + ' }')
-    for op in ['numeric_equal','numeric_not_equal','strict_identical','strict_not_identical']:
-        for right_type, suffix in [('int64','integer'), ('float64','float')]:
-            plan = resolve('nullable<int64>',f'nullable<{right_type}>',op,names=names)
-            left_p, right_p = plan['left_projection'], plan['right_projection']
-            headers.update([left_p['header'],right_p['header']])
-            tags = {tag:i for i,tag in enumerate(sorted({state['tag'] for side in ['left_states','right_states'] for state in plan[side]}))}
-            body = 'const auto left = original_left; ++effects; if (mutate_right) original_right.reset(); const auto right = original_right;\n'
-            for side in ['left','right']:
-                observe = ''
-                for state in plan[side+'_states']:
-                    result = 'return ' + str(tags[state['tag']]) + ';'
-                    if 'test_expression' in state:
-                        observe += 'if (' + state['test_expression'].replace('${value}',side) + ') { ' + result + ' }'
-                    else: observe += result
-                body += 'const int '+side+'_state = ([&]() { '+observe+' })();\n'
-            body += 'if (left_state != right_state) return scpp::boolean('+plan['different_states']+');\n'
-            for tag,result in plan['same_states'].items():
-                if tag in tags: body += f'if (left_state == {tags[tag]}) return scpp::boolean({result});\n'
-            calc = plan['calculation']
-            if calc['kind'] == 'constant_after_evaluation': body += 'return scpp::boolean('+calc['value']+');'
-            else:
-                headers.add(calc['header']); assert calc['api'] in manifest['apis']
-                for side, projection in [('left',left_p),('right',right_p)]:
-                    expression = projection['expression'].replace('${value}',side)
-                    body += f'const auto {side}_payload = {expression};\n'
-                    conversion = calc[side+'_conversion']
-                    expression = side+'_payload'
-                    if conversion['kind'] != 'identity':
-                        headers.add(conversion['header']); assert conversion['api'] in manifest['apis']
-                        expression = conversion['function']+'('+expression+')'
-                    body += f'const auto {side}_converted = {expression};\n'
-                body += 'return '+calc['function']+'(left_converted,right_converted);'
-            functions.append('static scpp::boolean compare_'+op+'_'+suffix+'(const '+left_p['cpp']+'& original_left, '+right_p['cpp']+'& original_right, int &effects, bool mutate_right=false) { '+body+' }')
+    for family in ['nullable','result']:
+        for op in ['numeric_equal','numeric_not_equal','strict_identical','strict_not_identical']:
+            for right_type, suffix in [('int64','integer'), ('float64','float')]:
+                plan = resolve(f'{family}<int64>',f'{family}<{right_type}>',op,names=names)
+                left_p, right_p = plan['left_projection'], plan['right_projection']
+                headers.update([left_p['header'],right_p['header']])
+                tags = {tag:i for i,tag in enumerate(sorted({state['tag'] for side in ['left_states','right_states'] for state in plan[side]}))}
+                mutation = 'original_right.reset()' if family == 'nullable' else f'original_right = scpp::{right_type}(7)'
+                body = 'const auto left = original_left; ++effects; if (mutate_right) '+mutation+'; const auto right = original_right;\n'
+                for side in ['left','right']:
+                    observe = ''
+                    for state in plan[side+'_states']:
+                        result = 'return ' + str(tags[state['tag']]) + ';'
+                        if 'test_expression' in state:
+                            observe += 'if (' + state['test_expression'].replace('${value}',side) + ') { ' + result + ' }'
+                        else: observe += result
+                    body += 'const int '+side+'_state = ([&]() { '+observe+' })();\n'
+                body += 'if (left_state != right_state) return scpp::boolean('+plan['different_states']+');\n'
+                for tag,result in plan['same_states'].items():
+                    if tag in tags: body += f'if (left_state == {tags[tag]}) return scpp::boolean({result});\n'
+                for tag,calc_state in plan['same_state_calculations'].items():
+                    headers.add(calc_state['header']); assert calc_state['api'] in manifest['apis']
+                    body += f'if (left_state == {tags[tag]}) {{ '
+                    for side in ['left','right']:
+                        expr = calc_state[side+'_projection']['expression'].replace('${value}',side)
+                        body += 'const auto '+side+'_state_value = '+expr+'; '
+                    body += 'return '+calc_state['function']+'(left_state_value,right_state_value); }\n'
+                calc = plan['calculation']
+                if calc['kind'] == 'constant_after_evaluation': body += 'return scpp::boolean('+calc['value']+');'
+                else:
+                    headers.add(calc['header']); assert calc['api'] in manifest['apis']
+                    for side, projection in [('left',left_p),('right',right_p)]:
+                        expression = projection['expression'].replace('${value}',side)
+                        body += f'const auto {side}_payload = {expression};\n'
+                        conversion = calc[side+'_conversion']
+                        expression = side+'_payload'
+                        if conversion['kind'] != 'identity':
+                            headers.add(conversion['header']); assert conversion['api'] in manifest['apis']
+                            expression = conversion['function']+'('+expression+')'
+                        body += f'const auto {side}_converted = {expression};\n'
+                    body += 'return '+calc['function']+'(left_converted,right_converted);'
+                functions.append('static scpp::boolean '+('compare_' if family == 'nullable' else 'result_compare_')+op+'_'+suffix+'(const '+left_p['cpp']+'& original_left, '+right_p['cpp']+'& original_right, int &effects, bool mutate_right=false) { '+body+' }')
     for family in ['nullable','result']:
         for source_type,target_type in [('int64','float64'), ('float64','int64')]:
             plan = convert(f'{family}<{source_type}>',f'{family}<{target_type}>',names=names)
@@ -480,6 +506,38 @@ int main() {
     CHECK(huge_result.has_value());
     const auto failure = scpp::error_value::make(scpp::string("conversion failure"),int64(17),scpp::string("sample.phs"));
     scpp::result_integer failed(failure);
+    scpp::result_float failed_float(failure);
+    const auto direct_identity_before = allocations;
+    CHECK(scpp::strict_identical(failure,failure));
+    CHECK(!scpp::strict_not_identical(failure,failure));
+    CHECK(allocations == direct_identity_before);
+    effects = 0;
+    const auto identity_before = allocations;
+    CHECK(result_compare_strict_identical_float(failed,failed_float,effects));
+    const auto identity_allocations = allocations - identity_before;
+    CHECK(identity_allocations == 4); // Whole operand snapshots + owned state projections.
+    CHECK(effects == 1);
+    CHECK(!result_compare_strict_not_identical_float(failed,failed_float,effects));
+    CHECK(result_compare_numeric_equal_float(failed,failed_float,effects));
+    CHECK(!result_compare_numeric_not_equal_float(failed,failed_float,effects));
+    for (int difference = 0; difference < 3; ++difference) {
+        const auto different = scpp::error_value::make(
+            scpp::string(difference == 0 ? "different failure" : "conversion failure"),
+            int64(difference == 1 ? 18 : 17),
+            scpp::string(difference == 2 ? "other.phs" : "sample.phs"));
+        scpp::result_float different_result(different);
+        CHECK(!result_compare_strict_identical_float(failed,different_result,effects));
+        CHECK(result_compare_strict_not_identical_float(failed,different_result,effects));
+        CHECK(result_compare_numeric_equal_float(failed,different_result,effects));
+    }
+    CHECK(!scpp::strict_identical(failure,scpp::error_value::no_error));
+    CHECK(scpp::strict_identical(scpp::error_value::no_error,scpp::error_value::no_error));
+    scpp::result_integer alias_error(failure);
+    // RHS changes the source after the left snapshot. The saved left must stay an error.
+    CHECK(!result_compare_strict_identical_integer(alias_error,alias_error,effects,true));
+    CHECK(alias_error.has_value());
+    CHECK(!result_compare_strict_identical_float(failed,result_widened,effects));
+    std::printf("Result strict error identity allocations=%d; direct error comparison allocations=0\n",identity_allocations);
     const auto error_before = allocations;
     auto converted_failure = reconstruct_result_float64(failed);
     const auto error_allocations = allocations - error_before;

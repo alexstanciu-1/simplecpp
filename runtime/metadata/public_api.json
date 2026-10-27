@@ -664,6 +664,10 @@
             "reconstruct": {
               "kind": "state",
               "expression": "${target}(${source}.require_error(\"carrier conversion\"))"
+            },
+            "comparison_value": {
+              "type": "error_value",
+              "member": "require_error"
             }
           }
         ]
@@ -3738,13 +3742,19 @@
         "strict_identical": {
           "different_states": "false",
           "same_states": {
-            "absent": "true"
+            "absent": "true",
+            "error": {
+              "function_set": "strict_identical"
+            }
           }
         },
         "strict_not_identical": {
           "different_states": "true",
           "same_states": {
-            "absent": "false"
+            "absent": "false",
+            "error": {
+              "function_set": "strict_not_identical"
+            }
           }
         }
       }
@@ -4135,6 +4145,10 @@
         "dynamic": {
           "left": "${native:left}",
           "right": "${native:right}"
+        },
+        "error_value": {
+          "left": "${native:left}",
+          "right": "${native:right}"
         }
       },
       "function": {
@@ -4190,6 +4204,10 @@
           "right": "${native:right}"
         },
         "dynamic": {
+          "left": "${native:left}",
+          "right": "${native:right}"
+        },
+        "error_value": {
           "left": "${native:left}",
           "right": "${native:right}"
         }
