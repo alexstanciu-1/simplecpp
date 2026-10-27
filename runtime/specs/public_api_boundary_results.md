@@ -1408,3 +1408,36 @@ Isolated single compile-only scalar-boxing/addition caller measurements after al
 validation (`measure_global_operators.py --boxed-peers`): public **0.0589 s**,
 **21,006 preprocessed bytes**; native **3.7016 s**, **3,615,338 bytes**. No private
 adapter compile is needed for this slice because it introduces no new adapter.
+
+## B2j — bounded scalar text and string compound plans
+
+One primitive string-calculation API combines the existing thirteen text helpers
+without treating text as a numeric cast. The plain scalar admission slice selects
+121 binary text pairs and eleven string-destination compound forms. A per-operation
+conversion owner validates const-reference source/result signatures and selects the
+existing context formatter. Compound plans reuse those conversions unchanged.
+
+Public execution proofs cover all eleven scalar conversion forms on both sides,
+float context formatting, RHS mutation, independent result snapshots, self
+concatenation and embedded NUL/UTF-8 bytes. Injected allocation failures prove that
+left snapshot/conversion failures suppress RHS evaluation, while right conversion
+and calculation failures retain earlier mutations and skip compound write-back.
+Short successful compounds allocate zero times. The tested long string calculation
+allocates once through both the existing primitive and the new public entry point;
+there is no additional boundary allocation. Identity conversions borrow owned
+snapshots instead of copying them again.
+
+Release and ASan/UBSan with leak detection pass. Six release metadata regressions
+pass (7.15 s); five additional sanitized metadata regressions pass (31.99 s)
+after the sanitized execution proof. Sealed relocated publication passes in both
+modes and resolves and compiles the text compound
+using the SDK's own metadata/tool with zero new application implementation units.
+The generated runtime inventory now contains 330 implementation units. Boxed text
+replacement and carriers remain separate incomplete work.
+
+Single whole execution-proof compile **and link** observations: release **0.4750 s**,
+sanitized **0.7243 s**. Generator bootstrap build: **4.54 s**, peak child RSS
+**137,000 KiB**. Eight-job core/tool builds: release **21.60 s**, **423,676 KiB**;
+sanitized **58.79 s**, **639,620 KiB**. These are not whole compiler rebuild costs.
+Reproduce the proof with `check_text_compound_api.py --tool <generator>
+--core <core.a> [--sanitize]`.

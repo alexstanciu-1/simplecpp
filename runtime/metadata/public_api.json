@@ -2315,6 +2315,27 @@
             ]
           }
         ]
+      },
+      "concat_assign": {
+        "operation": "concat",
+        "rules": [
+          {
+            "target": "string",
+            "right": [
+              "int8",
+              "int16",
+              "int32",
+              "int64",
+              "uint8",
+              "uint16",
+              "uint32",
+              "float64",
+              "boolean",
+              "string",
+              "null"
+            ]
+          }
+        ]
       }
     },
     "types": {
@@ -2823,6 +2844,56 @@
             ],
             "selection": "maximum",
             "domain": "dynamic"
+          }
+        ]
+      },
+      "scalar_text": {
+        "rules": [
+          {
+            "left": [
+              "signed",
+              "unsigned",
+              "floating",
+              "boolean",
+              "string",
+              "null"
+            ],
+            "right": [
+              "signed",
+              "unsigned",
+              "floating",
+              "boolean",
+              "string",
+              "null"
+            ],
+            "left_types": [
+              "int8",
+              "int16",
+              "int32",
+              "int64",
+              "uint8",
+              "uint16",
+              "uint32",
+              "float64",
+              "boolean",
+              "string",
+              "null"
+            ],
+            "right_types": [
+              "int8",
+              "int16",
+              "int32",
+              "int64",
+              "uint8",
+              "uint16",
+              "uint32",
+              "float64",
+              "boolean",
+              "string",
+              "null"
+            ],
+            "selection": "maximum",
+            "domain": "string"
           }
         ]
       }
@@ -3389,6 +3460,15 @@
           "dynamic"
         ],
         "operand_passing": "ref"
+      },
+      "concat": {
+        "group": "scalar_text",
+        "name": "concat_strings",
+        "function_set": "concat",
+        "operand_conversion_function_set": "concat_text",
+        "publish": [
+          "string"
+        ]
       }
     },
     "operand_conversions": {
@@ -5050,6 +5130,33 @@
           "includes": [
             "operators/arithmetic/boxed_numeric.hpp"
           ]
+        }
+      }
+    },
+    "concat": {
+      "variants": {
+        "string": {}
+      },
+      "function": {
+        "namespace": "scpp",
+        "header": "scpp/text/concat_strings.hpp",
+        "source": "include/scpp/generated/public_concat_string.cpp",
+        "operation": {
+          "name": "concat_strings",
+          "returns": "string",
+          "parameters": [
+            {
+              "name": "left",
+              "type": "string",
+              "passing": "const_ref"
+            },
+            {
+              "name": "right",
+              "type": "string",
+              "passing": "const_ref"
+            }
+          ],
+          "expression": "left + right"
         }
       }
     }

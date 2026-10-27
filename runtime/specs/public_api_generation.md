@@ -692,3 +692,21 @@ admits only int64 peers. Boxed destinations accept those peers for the correspon
 compound and retain the saved-kind replacement check. Scalar destinations with boxed
 RHS, cross-family boxing and extra fixed-width/bool/string peers are not admitted.
 No new implementation units or operator-pair overloads are generated.
+
+## Context-specific operand conversion owners
+
+A binary operation may select an `operand_conversion_function_set`. For each
+nonidentity source, the selected variant must borrow that source by const reference
+and return the common operand type. The resolver publishes its API/header/function
+as the conversion plan. Identity remains a no-op; consumers may bind a reference to
+an already owned snapshot instead of making another copy. Compounds reuse the
+calculation's conversion plans, so a context cannot accidentally fall back to an
+unrelated explicit cast.
+
+Plain scalar concatenation uses `concat_text` conversion variants and one string
+calculation calling the existing primitive string concatenation. The bounded eleven
+scalar types produce 121 admitted binary plans; string storage accepts eleven RHS
+forms for `.=`. The float context formatter stays distinct from explicit float-to-
+string casts. Byte preservation, ordered conversion and owned result rules apply.
+Boxed and carrier text admission/write-back are separate completion slices; this
+plain scalar rule does not silently authorize them or uint64 text.

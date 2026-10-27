@@ -1,6 +1,6 @@
 {
   "abi": "529dd5502370f48d64891818e9439aae72831b990b4027e8abe25c50c1216c21",
-  "api_identity": "15fc83e2a6a1922598a6d70a2dcd9df22926959447813496050e8202113ffdb3",
+  "api_identity": "515991c3cda9d7f6a7ca480536950c2dad01ee28c11b04e5231bc8117eeba297",
   "apis": {
     "add_dynamic": {
       "header": "scpp/operators/add_dynamic.hpp",
@@ -2958,6 +2958,28 @@
         "transport": "native"
       },
       "source": "include/scpp/generated/public_complement_mixed.cpp"
+    },
+    "concat_string": {
+      "header": "scpp/text/concat_strings.hpp",
+      "namespace": "scpp",
+      "operation": {
+        "expression": "left + right",
+        "name": "concat_strings",
+        "parameters": [
+          {
+            "name": "left",
+            "passing": "const_ref",
+            "type": "string"
+          },
+          {
+            "name": "right",
+            "passing": "const_ref",
+            "type": "string"
+          }
+        ],
+        "returns": "string"
+      },
+      "source": "include/scpp/generated/public_concat_string.cpp"
     },
     "concat_text_boolean": {
       "header": "scpp/text/concat_text_boolean.hpp",
@@ -9134,7 +9156,10 @@
     "include/scpp/operators/numeric_compound_replacement_mixed.hpp",
     "public/scpp/operators/numeric_compound_replacement_dynamic.hpp",
     "include/scpp/generated/public_numeric_compound_replacement_dynamic.cpp",
-    "include/scpp/operators/numeric_compound_replacement_dynamic.hpp"
+    "include/scpp/operators/numeric_compound_replacement_dynamic.hpp",
+    "public/scpp/text/concat_strings.hpp",
+    "include/scpp/generated/public_concat_string.cpp",
+    "include/scpp/text/concat_strings.hpp"
   ],
   "generator": "metadata-api-v1",
   "leaves": {
@@ -9571,6 +9596,7 @@
     "scpp/operators/subtract_uint8.hpp": "314e51f6a95bd32595a3e853576d82c7f990526bc0e7aed73ba9d087d32e3826",
     "scpp/result_vector_string.hpp": "162978d31bfb719e2b8bbb0b6d57162bacd0b53a30f92af1eef7c50b9af0f71e",
     "scpp/string.hpp": "aac6ff447c6c1135f22cbc12cb0a419c8079df28826de70f0170a07690ec2b69",
+    "scpp/text/concat_strings.hpp": "38de27c455eae08bd171ed50b68dd01d781648a430f34914ca989326cdadb301",
     "scpp/text/concat_text_boolean.hpp": "cf8fb9b3c1d634620f2aede468c05c115284dfbbd51d6047dfa2934408f8f7dc",
     "scpp/text/concat_text_dynamic.hpp": "3a4c61bc54bb9c78a8ad31bea075de0aa7540022c486f472fe459ab487d137f1",
     "scpp/text/concat_text_float64.hpp": "489c5b8553ddaef8424b2a77f2429ed175312252affc0052c35d5bdeb28f3b39",
@@ -9915,7 +9941,8 @@
     "include/scpp/generated/public_remainder_mixed.cpp",
     "include/scpp/generated/public_remainder_dynamic.cpp",
     "include/scpp/generated/public_numeric_compound_replacement_mixed.cpp",
-    "include/scpp/generated/public_numeric_compound_replacement_dynamic.cpp"
+    "include/scpp/generated/public_numeric_compound_replacement_dynamic.cpp",
+    "include/scpp/generated/public_concat_string.cpp"
   ],
   "types": {
     "dynamic": {

@@ -79,7 +79,7 @@ namespace scpp::api_generation
         }
         for (const auto &[name, operation] : registry.at("operations").fields) {
             authored_name(name); authored_name(operation.at("name").text());
-            fields_only(operation, "form group name expression publish returns includes function_set pair_function_set operands distinct_result result_expression operand_passing", "global operation");
+            fields_only(operation, "form group name expression publish returns includes function_set pair_function_set operands distinct_result result_expression operand_passing operand_conversion_function_set", "global operation");
             const auto form = operation.get("form", "binary");
             if (form != "binary" && form != "unary") throw std::runtime_error("Unknown operator form");
             if (form == "unary") {
@@ -87,6 +87,10 @@ namespace scpp::api_generation
                 operation.at("function_set").text();
                 operation.at("operands");
             } else registry.at("groups").at(operation.at("group").text());
+            if (operation.has("operand_conversion_function_set")) {
+                if (form != "binary") throw std::runtime_error("Operand conversion owner requires a binary operation");
+                metadata.at("function_sets").at(operation.at("operand_conversion_function_set").text());
+            }
             if (operation.has("operand_passing")) {
                 if (form != "unary") throw std::runtime_error("Operand passing requires a unary operation");
                 const auto passing = operation.at("operand_passing").text();
@@ -309,17 +313,35 @@ namespace scpp::api_generation
         return plan;
     }
 
+    static value operation_operand_conversion(const value &metadata, const value &operation,
+        const value &functions, const std::string &source, const std::string &target)
+    {
+        if (source == target || !operation.has("operand_conversion_function_set"))
+            return operand_conversion(metadata, source, target);
+        const auto identity = operation.at("operand_conversion_function_set").text() + "_" + source;
+        const auto &function = functions.at(identity), &signature = function.at("operation");
+        const auto &parameters = signature.at("parameters").items;
+        if (parameters.size() != 1 || parameters[0].at("type").text() != source
+            || parameters[0].get("passing") != "const_ref" || signature.at("returns").text() != target)
+            throw std::runtime_error("Operator operand conversion signature mismatch");
+        value plan = value::object();
+        plan["source"] = source; plan["target"] = target; plan["kind"] = "call";
+        plan["api"] = identity; plan["header"] = function.at("header");
+        plan["function"] = function.at("namespace").text() + "::" + signature.at("name").text();
+        return plan;
+    }
+
     value resolve_operator(const value &metadata, const value &request)
     {
         const auto &registry = validated_registry(metadata);
         const auto &operation = registry.at("operations").at(request.at("operation").text());
-        const auto functions = (operation.has("function_set") || operation.has("pair_function_set")) ? expand_function_sets(metadata) : value::object();
+        const auto functions = (operation.has("function_set") || operation.has("pair_function_set") || operation.has("operand_conversion_function_set")) ? expand_function_sets(metadata) : value::object();
         if (operation.get("form", "binary") == "unary") return resolve_unary_operator(registry, request, functions);
         auto plan = resolve_registered_operator(registry, request, functions);
         if (plan.has("operand_type")) {
             const auto selected = plan.at("operand_type").text();
-            plan["left_conversion"] = operand_conversion(metadata, request.at("left").text(), selected);
-            plan["right_conversion"] = operand_conversion(metadata, request.at("right").text(), selected);
+            plan["left_conversion"] = operation_operand_conversion(metadata, operation, functions, request.at("left").text(), selected);
+            plan["right_conversion"] = operation_operand_conversion(metadata, operation, functions, request.at("right").text(), selected);
         }
         return plan;
     }
@@ -344,8 +366,8 @@ namespace scpp::api_generation
         value out = value::object();
         out["operation"] = name; out["target"] = target; out["right"] = right; out["result_type"] = target;
         out["kind"] = "ordered_compound"; out["calculation"] = plan;
-        out["left_conversion"] = operand_conversion(metadata, target, plan.at("operand_type").text());
-        out["right_conversion"] = operand_conversion(metadata, right, plan.at("operand_type").text());
+        out["left_conversion"] = plan.at("left_conversion");
+        out["right_conversion"] = plan.at("right_conversion");
         out["writeback_conversion"] = operand_conversion(metadata, plan.at("result_type").text(), target);
         if (selected_rule->has("writeback_function_set")) {
             const auto identity = selected_rule->at("writeback_function_set").text() + "_" + target;

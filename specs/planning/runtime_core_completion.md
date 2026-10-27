@@ -16,7 +16,7 @@ each slice. The original inventory is a baseline, not a current completion count
 | A1 | Complete for the agreed ordinary numeric domain | Specialized and boxed extensions remain in B2/E, not implied by A1. |
 | A2 | Complete for the agreed checked scalar conversions | Carrier conversion is C; ownership casts are D. |
 | B1 | Complete for the agreed scalar-facing truth/text/identity/observation scope | Carrier forms remain C; boxed arithmetic and access completion are not B1 credit. |
-| B2 | Binary canonical/boxed bitwise and checked shifts, canonical power, numeric spaceship, numeric unary, scalar logical negation, prefix/postfix updates, canonical numeric compound plans and boxed arithmetic/compounds including canonical numeric peers implemented | Text compounds; carrier variants remain C. |
+| B2 | Binary canonical/boxed bitwise and checked shifts, canonical power, numeric spaceship, numeric unary, scalar logical negation, prefix/postfix updates, canonical numeric compound plans and boxed arithmetic/compounds including canonical numeric peers and bounded scalar text implemented | Boxed text compounds; carrier variants remain C. |
 | C | Policy agreed; completion pending | Four carrier families, state-preserving operations/conversions and conditional lifecycle. |
 | D | Pending | Ownership, application targets and source Exception transport gaps. |
 | E | Existing vector/hash/boxed foundations; incomplete | Capability/access/initialization/cursor gaps and identity key-allocation debt. |
@@ -168,7 +168,7 @@ core contract; full frontend adoption remains excluded.
 
 ## Next implementation work
 
-Continue B2 with text compound protocols using existing operator metadata and
+Continue B2 with boxed text compound protocols using existing operator metadata and
 native error authorities. Numeric scalar-peer arithmetic and compounds are covered.
 Boxed bitwise/shift compounds remain source-deferred and are not an implicit extension
 of this goal. Canonical numeric compound plans reuse the published calculations and casts.
@@ -609,3 +609,17 @@ all compound numeric kind pairings, failure effects and zero successful allocati
 Cross-family, bool/string, fixed-width/unsigned peers, float remainder and native
 scalar destinations with boxed RHS remain rejected. This closes the admitted numeric
 scalar-peer arithmetic/compound gap; text compound work remains B2 and carriers C.
+
+## Active-goal progress — B2j bounded scalar text composition
+
+Global metadata now composes the existing text-conversion family with one primitive
+string calculation. It resolves 121 bounded scalar text pairs and eleven string
+compound RHS forms, selecting context-specific conversion signatures rather than
+explicit casts. Compounds reuse the calculated operand plans. Owned snapshots may
+be borrowed for identity conversions instead of copied again.
+
+Public proofs cover the distinct float formatter, RHS mutation, self concatenation,
+independent results, embedded NUL/UTF-8 bytes, failures before RHS and in right
+conversion/calculation, and allocation parity with primitive long-string calculation.
+This completes the bounded plain scalar/string-storage composition path. Boxed text
+replacement remains B2, carriers remain C, and full frontend adoption is excluded.

@@ -442,3 +442,6 @@ target_link_libraries(test_public_boxed_arithmetic PRIVATE scpp_core_api)
 add_test(NAME scpp_test_public_boxed_arithmetic COMMAND test_public_boxed_arithmetic)
 add_test(NAME scpp_check_boxed_arithmetic_api COMMAND ${Python3_EXECUTABLE}
   ${CMAKE_CURRENT_SOURCE_DIR}/check_boxed_arithmetic_api.py $<TARGET_FILE:scpp_api_generator>)
+
+add_test(NAME scpp_check_text_compound_api COMMAND ${Python3_EXECUTABLE}
+  ${CMAKE_CURRENT_SOURCE_DIR}/check_text_compound_api.py --tool $<TARGET_FILE:scpp_api_generator>)

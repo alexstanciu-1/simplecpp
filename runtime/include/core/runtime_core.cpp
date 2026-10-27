@@ -351,3 +351,4 @@
 #include "scpp/generated/public_remainder_dynamic.cpp"
 #include "scpp/generated/public_numeric_compound_replacement_mixed.cpp"
 #include "scpp/generated/public_numeric_compound_replacement_dynamic.cpp"
+#include "scpp/generated/public_concat_string.cpp"
