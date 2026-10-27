@@ -517,7 +517,7 @@ The global metadata mechanism should select a common type and reuse same-type
 operations, rather than enumerate every original operand pair. Runtime publication
 and application specialization reuse must use the same mechanism.
 
-#### Admission review findings; nonnumeric decisions still under discussion
+#### Admission review findings
 
 - Numeric boxed arithmetic requires int/float payloads; integer boxed bitwise
   operations reject null, bool, float, string and containers. Present numeric
@@ -536,6 +536,35 @@ and application specialization reuse must use the same mechanism.
 - Native string ordering is lexical; boxed ordering is currently numeric-only.
   A uniform string-ordering proposal would therefore require an explicit extension.
 
-Next decision: retain or deliberately tighten coercive boxed equality. Record the
-chosen operator-group admissions before implementing the global resolver. Native
-helper availability alone does not establish source-level admission.
+Native helper availability alone does not establish source-level admission.
+
+#### Agreed boxed equality and preserved conversions (2026-10-27)
+
+Accepted direction; implementation and normative semantic migration are pending:
+
+- Tighten boxed scalar `==` and `!=`. Numbers compare numerically using the
+  admitted numeric promotion rules; bool compares with bool; string compares with
+  string by bytes; null matches null. Do not parse numeric strings or perform
+  truth conversion for equality. Null must not compare equal to zero, false or
+  empty text. `!=` remains the negation of `==` for admitted comparisons.
+- Preserve existing truthiness, including false strings `""` and `"0"`, and
+  existing wrapper-specific condition rules. Equality changes do not redefine
+  condition conversion or explicit boolean casts.
+- Preserve existing concatenation and text-context conversions, including
+  null/false rendering empty text and true rendering `"1"`. Existing bounded
+  domains, carrier extraction and errors remain in force; no blanket admission
+  of every public type is implied.
+- Strict identity retains its separate kind/state-preserving contract. Boxed
+  container equality and mixed/dynamic family crossing are outside this scalar
+  equality change and retain their current contracts.
+
+One behavior needs confirmation before implementation: for incompatible non-null
+scalar kinds (for example bool versus int, or string versus int), should boxed
+equality return false or throw? Recommended: return false (`!=` true), keeping
+boxed equality a useful predicate without coercion. This recommendation is not
+yet an accepted rule; source-level admission for statically typed pairs remains
+separate from boxed runtime kind dispatch.
+
+Null checks should observe the existing null/absence contracts, not falsiness;
+carrier error and sentinel states must not silently become null. Any wider
+wrapper equality migration needs its own explicit scope.
