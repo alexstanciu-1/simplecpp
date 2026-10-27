@@ -571,3 +571,7 @@ add_test(NAME scpp_check_keyed_initializers
 add_executable(test_keyed_prefix test_keyed_prefix.cpp)
 target_link_libraries(test_keyed_prefix PRIVATE scpp_runtime_core)
 add_test(NAME scpp_test_keyed_prefix COMMAND test_keyed_prefix)
+
+add_executable(test_public_keyed_path test_public_keyed_path.cpp)
+target_link_libraries(test_public_keyed_path PRIVATE scpp_core_api)
+add_test(NAME scpp_test_public_keyed_path COMMAND test_public_keyed_path)

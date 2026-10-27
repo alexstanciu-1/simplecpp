@@ -1,6 +1,6 @@
 {
   "abi": "529dd5502370f48d64891818e9439aae72831b990b4027e8abe25c50c1216c21",
-  "api_identity": "05dacf3afd8963e88831e68290d8abc2dece1451eedf34005b14f8b8dfccb14b",
+  "api_identity": "6a250afab794ac80a3411fdafd6b722174e6a3f8cf661b887569cf518485903e",
   "apis": {
     "add_dynamic": {
       "header": "scpp/operators/add_dynamic.hpp",
@@ -5131,6 +5131,138 @@
         "returns": "boolean"
       },
       "source": "include/scpp/generated/public_isset_null.cpp"
+    },
+    "keyed_path_probe_dynamic": {
+      "header": "scpp/access/keyed_path_probe_dynamic.hpp",
+      "namespace": "scpp",
+      "operation": {
+        "expression": "scpp::keyed_path_probe_adapted(&${native:receiver}, ${native:keys}.size(), [&](std::size_t index) -> const scpp::mixed_t & { return detail::concrete_access::get<scpp::mixed_t>(${native:keys}.at(index)); }, emptiness.native_value()).native_value()",
+        "includes": [
+          "scpp/keyed_path.hpp"
+        ],
+        "name": "keyed_path_probe",
+        "parameters": [
+          {
+            "name": "receiver",
+            "passing": "const_ref",
+            "type": "dynamic"
+          },
+          {
+            "name": "keys",
+            "passing": "const_ref",
+            "type": "vector<mixed>"
+          },
+          {
+            "name": "emptiness",
+            "passing": "value",
+            "type": "boolean"
+          }
+        ],
+        "returns": "boolean",
+        "uses": [
+          "mixed"
+        ]
+      },
+      "source": "include/scpp/generated/public_keyed_path_probe_dynamic.cpp"
+    },
+    "keyed_path_probe_mixed": {
+      "header": "scpp/access/keyed_path_probe_mixed.hpp",
+      "namespace": "scpp",
+      "operation": {
+        "expression": "scpp::keyed_path_probe_adapted(&${native:receiver}, ${native:keys}.size(), [&](std::size_t index) -> const scpp::mixed_t & { return detail::concrete_access::get<scpp::mixed_t>(${native:keys}.at(index)); }, emptiness.native_value()).native_value()",
+        "includes": [
+          "scpp/keyed_path.hpp"
+        ],
+        "name": "keyed_path_probe",
+        "parameters": [
+          {
+            "name": "receiver",
+            "passing": "const_ref",
+            "type": "mixed"
+          },
+          {
+            "name": "keys",
+            "passing": "const_ref",
+            "type": "vector<mixed>"
+          },
+          {
+            "name": "emptiness",
+            "passing": "value",
+            "type": "boolean"
+          }
+        ],
+        "returns": "boolean",
+        "uses": [
+          "mixed"
+        ]
+      },
+      "source": "include/scpp/generated/public_keyed_path_probe_mixed.cpp"
+    },
+    "keyed_prefix_ready_dynamic": {
+      "header": "scpp/access/keyed_prefix_ready_dynamic.hpp",
+      "namespace": "scpp",
+      "operation": {
+        "expression": "scpp::keyed_prefix_ready_adapted(&${native:receiver}, ${native:keys}.size(), [&](std::size_t index) -> const scpp::mixed_t & { return detail::concrete_access::get<scpp::mixed_t>(${native:keys}.at(index)); }, removing.native_value())",
+        "includes": [
+          "scpp/keyed_path.hpp"
+        ],
+        "name": "keyed_prefix_ready",
+        "parameters": [
+          {
+            "name": "receiver",
+            "passing": "const_ref",
+            "type": "dynamic"
+          },
+          {
+            "name": "keys",
+            "passing": "const_ref",
+            "type": "vector<mixed>"
+          },
+          {
+            "name": "removing",
+            "passing": "value",
+            "type": "boolean"
+          }
+        ],
+        "returns": "boolean",
+        "uses": [
+          "mixed"
+        ]
+      },
+      "source": "include/scpp/generated/public_keyed_prefix_ready_dynamic.cpp"
+    },
+    "keyed_prefix_ready_mixed": {
+      "header": "scpp/access/keyed_prefix_ready_mixed.hpp",
+      "namespace": "scpp",
+      "operation": {
+        "expression": "scpp::keyed_prefix_ready_adapted(&${native:receiver}, ${native:keys}.size(), [&](std::size_t index) -> const scpp::mixed_t & { return detail::concrete_access::get<scpp::mixed_t>(${native:keys}.at(index)); }, removing.native_value())",
+        "includes": [
+          "scpp/keyed_path.hpp"
+        ],
+        "name": "keyed_prefix_ready",
+        "parameters": [
+          {
+            "name": "receiver",
+            "passing": "const_ref",
+            "type": "mixed"
+          },
+          {
+            "name": "keys",
+            "passing": "const_ref",
+            "type": "vector<mixed>"
+          },
+          {
+            "name": "removing",
+            "passing": "value",
+            "type": "boolean"
+          }
+        ],
+        "returns": "boolean",
+        "uses": [
+          "mixed"
+        ]
+      },
+      "source": "include/scpp/generated/public_keyed_prefix_ready_mixed.cpp"
     },
     "keyed_probe_dynamic": {
       "header": "scpp/access/keyed_probe_dynamic.hpp",
@@ -10415,7 +10547,22 @@
     "include/scpp/access/keyed_probe_dynamic.hpp",
     "public/scpp/access/reject_empty_operand.hpp",
     "include/scpp/generated/public_reject_empty_operand.cpp",
-    "include/scpp/access/reject_empty_operand.hpp"
+    "include/scpp/access/reject_empty_operand.hpp",
+    "public/scpp/vector_mixed.hpp",
+    "include/core/generated/vector_mixed.cpp",
+    "include/scpp/vector_mixed.hpp",
+    "public/scpp/access/keyed_prefix_ready_mixed.hpp",
+    "include/scpp/generated/public_keyed_prefix_ready_mixed.cpp",
+    "include/scpp/access/keyed_prefix_ready_mixed.hpp",
+    "public/scpp/access/keyed_prefix_ready_dynamic.hpp",
+    "include/scpp/generated/public_keyed_prefix_ready_dynamic.cpp",
+    "include/scpp/access/keyed_prefix_ready_dynamic.hpp",
+    "public/scpp/access/keyed_path_probe_mixed.hpp",
+    "include/scpp/generated/public_keyed_path_probe_mixed.cpp",
+    "include/scpp/access/keyed_path_probe_mixed.hpp",
+    "public/scpp/access/keyed_path_probe_dynamic.hpp",
+    "include/scpp/generated/public_keyed_path_probe_dynamic.cpp",
+    "include/scpp/access/keyed_path_probe_dynamic.hpp"
   ],
   "generator": "metadata-api-v1",
   "leaves": {
@@ -10595,6 +10742,10 @@
   "public_files": {
     "modules/filesystem/scan.hpp": "12c63684c1896c3de8fd05db1a6ab2a2fbb7eea2a3747ed3de91f44e0e5cf7d7",
     "modules/tasks/worker_pool.hpp": "07fd862bb53ef73be8aec043b5027a4e247723fe8efc4196d8e931ffe820394e",
+    "scpp/access/keyed_path_probe_dynamic.hpp": "1fbf1cc71cc1fbb00bd1faf1c3a0bfe9f8ac5f75dea15800262763ebfad7cf48",
+    "scpp/access/keyed_path_probe_mixed.hpp": "2f1f682e5eff02b9723b3ac56549095fd6e0381c8ca53b056c8391dcbd40aca4",
+    "scpp/access/keyed_prefix_ready_dynamic.hpp": "fdc1e8001624754f82d29c25e0022c691b091ee4f3285533ba5ce12ba491f717",
+    "scpp/access/keyed_prefix_ready_mixed.hpp": "d9431080706212a4c2d7a9a8fea7b74436b6c21391d7c865cdf76de11c621709",
     "scpp/access/keyed_probe_dynamic.hpp": "908bb00075c07e4d34ef47c4c1e161ed11a9425e3c6fd8cdcd7f0d98b0e5a452",
     "scpp/access/keyed_probe_mixed.hpp": "280727c35b8a1023bf032366d9bdd5bc5a03119dbab1b4e0c72ff30e1d22c2ad",
     "scpp/access/keyed_ready_dynamic.hpp": "12b33ca215a7df3b5dbe43cf409ed6763c1b392e4cd9369c0f0ccfd796fdfe8b",
@@ -10983,6 +11134,7 @@
     "scpp/text/concat_text_uint8.hpp": "4c7f008e87298a13f0551bba08daaa0b132d346ae96aa9350f1cb43e53b0ddee",
     "scpp/time/microtime_float.hpp": "e5962900bbb67770b3d11d247430ff4e75bfb68edabb89a0cca54c703725848e",
     "scpp/time/microtime_string.hpp": "00052b1a102db3a2dea4a7a499ef6fb3ee6ff9ea396f3c7253c1142b8ce63065",
+    "scpp/vector_mixed.hpp": "19f04cf9f6a73d92f2737d1807e4da757e9ff5d387fee7d3923cd12c000ac101",
     "scpp/vector_string.hpp": "91b10acc2c907039c8e7cd2a02646884237769c9082580ce40af85f10a811248"
   },
   "sources": [
@@ -11368,7 +11520,12 @@
     "include/scpp/generated/public_keyed_ready_dynamic.cpp",
     "include/scpp/generated/public_keyed_probe_mixed.cpp",
     "include/scpp/generated/public_keyed_probe_dynamic.cpp",
-    "include/scpp/generated/public_reject_empty_operand.cpp"
+    "include/scpp/generated/public_reject_empty_operand.cpp",
+    "include/core/generated/vector_mixed.cpp",
+    "include/scpp/generated/public_keyed_prefix_ready_mixed.cpp",
+    "include/scpp/generated/public_keyed_prefix_ready_dynamic.cpp",
+    "include/scpp/generated/public_keyed_path_probe_mixed.cpp",
+    "include/scpp/generated/public_keyed_path_probe_dynamic.cpp"
   ],
   "types": {
     "dynamic": {
@@ -11734,6 +11891,34 @@
       "ordinary_api": "api-v1",
       "owner": "runtime.core",
       "source": "include/core/generated/result_or_false_string.cpp"
+    },
+    "vector<mixed>": {
+      "borrow": "detail::concrete_access::get<${native}>(${value})",
+      "capabilities": [
+        "copy_storage",
+        "default_storage",
+        "move_storage"
+      ],
+      "construct": "detail::concrete_access::make<${cpp}, ${native}>(${factory})",
+      "cpp": "scpp::vector_mixed",
+      "dependencies": [
+        "mixed"
+      ],
+      "header": "scpp/vector_mixed.hpp",
+      "includes": [
+        "scpp/detail/concrete_access.hpp",
+        "scpp/mixed.hpp",
+        "scpp/vector_t.hpp"
+      ],
+      "layout": [
+        40,
+        8
+      ],
+      "name": "vector_mixed",
+      "native": "scpp::vector_t<scpp::mixed>",
+      "ordinary_api": "api-v1",
+      "owner": "runtime.core",
+      "source": "include/core/generated/vector_mixed.cpp"
     },
     "vector<string>": {
       "borrow": "detail::concrete_access::get<${native}>(${value})",

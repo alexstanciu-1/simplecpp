@@ -2930,3 +2930,22 @@ observations allocate zero times after setup. Build including runtime-core depen
 recompilation: 23.30s release / 47.64s sanitized, one build per configuration. These
 are not isolated public caller measurements; publication and its compile/reuse proof
 remain the next slice. No generator changes or source semantic changes were needed.
+
+## E17: public saved-key path observations (2026-10-28)
+
+Ordinary function sets publish mixed/dynamic prefix readiness and complete probes,
+with runtime-owned vector<mixed> keys. No generator change was required. The public
+fixture stages reached source effects and root binding, removes prefixes, replaces
+a dynamic child through an alias, skips absent-root keys, and retains owned saved
+keys. Repeated numeric-key observations of long-string leaves allocate zero times
+with setup excluded. Null/false/empty behavior and invalid-key/receiver errors are
+checked. The public boundary returns only booleans; interior references stay native
+and call-local. Typed heterogeneous paths, field retention and nested mutation remain
+separate work, and this manually staged proof is not frontend adoption.
+
+Validation: release and ASan/UBSan/LSan public execution and relocated sealed reuse
+pass, with zero new implementation units on import. Four public headers compile
+independently; six metadata regressions pass (2.33s). Single-run nested-probe caller
+compilation: 0.0559s public / 2.2876s native; direct-probe control 0.0558s / 2.1471s.
+Core rebuilt once per configuration. The runtime publishes 388 implementation units;
+that count is not a completion percentage. Existing carrier decisions remain pending.

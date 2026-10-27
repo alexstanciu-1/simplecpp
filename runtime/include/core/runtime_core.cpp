@@ -418,3 +418,9 @@
 #include "core/generated/dynamic_entries.cpp"
 #include "core/generated/mixed_keyed_initializer.cpp"
 #include "core/generated/dynamic_keyed_initializer.cpp"
+
+#include "core/generated/vector_mixed.cpp"
+#include "scpp/generated/public_keyed_prefix_ready_mixed.cpp"
+#include "scpp/generated/public_keyed_prefix_ready_dynamic.cpp"
+#include "scpp/generated/public_keyed_path_probe_mixed.cpp"
+#include "scpp/generated/public_keyed_path_probe_dynamic.cpp"

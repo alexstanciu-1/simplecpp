@@ -1594,3 +1594,14 @@ normalization stay in the native receiving container. Runtime-owned boxed factor
 publish their required entries/buffers; typed factories remain application demands.
 Owning input buffers do not expose the source call-scoped view or broaden source
 formation/callback escape permission.
+
+### Saved-key path observations
+
+`keyed_prefix_ready` and `keyed_path_probe` function sets resolve current homogeneous
+mixed/dynamic paths from an ordinary `vector<mixed>` of saved keys. Readiness accepts
+an empty prefix to check the bound root before the first key expression. The complete
+probe requires at least one saved key. Lowering still owns lazy source evaluation:
+it checks readiness before each reached key, saves that key once, and re-resolves
+from the same bound root after effects. Native key adapters only borrow representation
+inside the synchronous boolean operation. These are lowering support functions, not
+new source helpers or unrestricted callback/borrow APIs.

@@ -1792,5 +1792,83 @@
         ]
       }
     }
+  },
+  "keyed_prefix_ready": {
+    "variants": {
+      "mixed": {},
+      "dynamic": {}
+    },
+    "function": {
+      "namespace": "scpp",
+      "header": "scpp/access/keyed_prefix_ready_${variant}.hpp",
+      "source": "include/scpp/generated/public_keyed_prefix_ready_${variant}.cpp",
+      "operation": {
+        "name": "keyed_prefix_ready",
+        "returns": "boolean",
+        "parameters": [
+          {
+            "name": "receiver",
+            "type": "${variant}",
+            "passing": "const_ref"
+          },
+          {
+            "name": "keys",
+            "type": "vector<mixed>",
+            "passing": "const_ref"
+          },
+          {
+            "name": "removing",
+            "type": "boolean",
+            "passing": "value"
+          }
+        ],
+        "expression": "scpp::keyed_prefix_ready_adapted(&${native:receiver}, ${native:keys}.size(), [&](std::size_t index) -> const scpp::mixed_t & { return detail::concrete_access::get<scpp::mixed_t>(${native:keys}.at(index)); }, removing.native_value())",
+        "includes": [
+          "scpp/keyed_path.hpp"
+        ],
+        "uses": [
+          "mixed"
+        ]
+      }
+    }
+  },
+  "keyed_path_probe": {
+    "variants": {
+      "mixed": {},
+      "dynamic": {}
+    },
+    "function": {
+      "namespace": "scpp",
+      "header": "scpp/access/keyed_path_probe_${variant}.hpp",
+      "source": "include/scpp/generated/public_keyed_path_probe_${variant}.cpp",
+      "operation": {
+        "name": "keyed_path_probe",
+        "returns": "boolean",
+        "parameters": [
+          {
+            "name": "receiver",
+            "type": "${variant}",
+            "passing": "const_ref"
+          },
+          {
+            "name": "keys",
+            "type": "vector<mixed>",
+            "passing": "const_ref"
+          },
+          {
+            "name": "emptiness",
+            "type": "boolean",
+            "passing": "value"
+          }
+        ],
+        "expression": "scpp::keyed_path_probe_adapted(&${native:receiver}, ${native:keys}.size(), [&](std::size_t index) -> const scpp::mixed_t & { return detail::concrete_access::get<scpp::mixed_t>(${native:keys}.at(index)); }, emptiness.native_value()).native_value()",
+        "includes": [
+          "scpp/keyed_path.hpp"
+        ],
+        "uses": [
+          "mixed"
+        ]
+      }
+    }
   }
 }

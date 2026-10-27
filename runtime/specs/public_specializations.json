@@ -26,7 +26,8 @@
     "initializer_entry<mixed,mixed>": "mixed_entry",
     "initializer_entry<dynamic,mixed>": "dynamic_entry",
     "initializer_buffer<initializer_entry<mixed,mixed>>": "mixed_entries",
-    "initializer_buffer<initializer_entry<dynamic,mixed>>": "dynamic_entries"
+    "initializer_buffer<initializer_entry<dynamic,mixed>>": "dynamic_entries",
+    "vector<mixed>": "vector_mixed"
   },
   "apis": [
     "fs_scan",
@@ -395,6 +396,10 @@
     "keyed_ready_dynamic",
     "keyed_probe_mixed",
     "keyed_probe_dynamic",
-    "reject_empty_operand"
+    "reject_empty_operand",
+    "keyed_prefix_ready_mixed",
+    "keyed_prefix_ready_dynamic",
+    "keyed_path_probe_mixed",
+    "keyed_path_probe_dynamic"
   ]
 }

@@ -1915,3 +1915,26 @@ observations allocate zero times after setup. Build including runtime-core depen
 recompilation: 23.30s release / 47.64s sanitized, one build per configuration. These
 are not isolated public caller measurements; publication and its compile/reuse proof
 remain the next slice. No generator changes or source semantic changes were needed.
+
+## E17 — public saved-key prefix observations
+
+Two ordinary function sets publish keyed_prefix_ready and keyed_path_probe for mixed
+and dynamic. Their shared vector<mixed> key sequence is runtime-owned and generated
+through the existing vector recipe. The adapter borrows stored keys only inside the
+native call, returns boolean, and does not expose traversal pointers or callbacks.
+No emitter changes or separate path-storage family were needed.
+
+The public-only proof stages one root binding and reached key effects, removes a
+prefix during a later key expression, replaces a dynamic child through an alias,
+skips keys for absent roots, and verifies saved key ownership. Numeric-key observations
+of long-string leaves allocate zero times after setup. Null/false/empty leaves,
+invalid key kinds, invalid receivers and empty complete paths retain their distinct
+outcomes. These helpers support homogeneous boxed paths; typed heterogeneous paths,
+field-owner retention, nested mutation and real frontend lowering remain unfinished.
+
+Validation: release and ASan/UBSan/LSan public execution and relocated sealed reuse
+pass, with zero new implementation units on import. Four public headers compile
+independently; six metadata regressions pass (2.33s). Single-run nested-probe caller
+compilation: 0.0559s public / 2.2876s native; direct-probe control 0.0558s / 2.1471s.
+Core rebuilt once per configuration. The runtime publishes 388 implementation units;
+that count is not a completion percentage. Existing carrier decisions remain pending.
