@@ -1935,9 +1935,9 @@ operation facts, including source argument graphs; importing a published API nev
 bypasses those checks. Physical paths feed the same function emitter, dependency
 inventory, layout probes and sealed reuse mechanism as other demanded APIs.
 
-This protocol does not yet implement append/bootstrap,
-field-owner retention or heterogeneous boxed descent. Those need their own explicit
-protocol semantics; eager existing lookup must not stand in for them.
+Append and field-owner retention remain separate pending protocols. Creating stores
+and typed-to-boxed descent use the explicit extensions below; eager existing lookup
+must not stand in for those operations.
 
 
 ### Typed prefix readiness and removal
@@ -1995,7 +1995,7 @@ unsupported scalar/carrier leaves reject; boxed scalar/null kinds throw through 
 existing runtime authority. String `"0"` is not empty. No source admission is inferred
 from the physical registry; source-mode requests still need prepared operation and
 formation facts. This mechanism does not yet migrate every standalone observation
-entry or complete heterogeneous boxed descent/field retention.
+entry or complete field-owner retention; typed-to-boxed composition is described below.
 
 
 ### Native boxed elements inside typed paths
@@ -2074,3 +2074,21 @@ copy failures during commit retain the existing nontransactional guarantee.
 
 Final append is a separate pending protocol. Ordinary read null-on-miss policy also
 remains distinct from these existing-read and creating-store paths.
+
+
+### Ordinary indexed value reads
+
+`value_read` demands have exactly one step. Each receiver's `value_read` expression
+returns its registered element through public or native owned transport. Typed
+vector/hash recipes use checked lookup; mixed/dynamic use native `null_index_read`,
+which returns same-family null for a valid missing/null receiver and rejects invalid
+key kinds even when the receiver is null. Existing scalar receivers throw. Reads do
+not insert, bootstrap or expose interior references.
+
+The depth restriction preserves the distinction from existing-path readback. A nested
+ordinary expression materializes the preceding owned read before evaluating the next
+key expression. Callers then invoke another one-step read. Typed values remain copies,
+mixed table values retain COW, and dynamic object values retain identity. Combining all
+keys into one borrowed path would silently change that evaluation/ownership contract;
+use existing-path readback only where its prepared operation admits that contract.
+Whole-root binding, expression sequencing and source admission remain compiler-owned.

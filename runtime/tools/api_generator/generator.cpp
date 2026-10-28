@@ -437,6 +437,19 @@ namespace scpp::api_generation
             }
             if (storing) parameter("value", path.at("element"), "value");
             const auto &steps = path.at("steps").items;
+            if (path.get("operation") == "value_read") {
+                const auto &step = steps.front();
+                const auto key_type = this->materialize(step.at("key").text());
+                this->dependencies(key_type, headers, {});
+                operation["expression"] = expand(step.at("value_read").text(),
+                    {{"receiver", "std::as_const(${native:root})"}, {"key", "key_0"},
+                     {"native_key", this->borrow(key_type, "key_0")}});
+                if (step.get("element_storage", "public") == "native") operation["transport"] = "native";
+                operation["includes"] = value::array();
+                for (const auto &header : headers) operation["includes"].items.emplace_back(header);
+                function["operation"] = operation;
+                return function;
+            }
             if (!writing && !probing && !observing && steps.back().get("element_storage", "public") == "native")
                 operation["transport"] = "native";
             auto traverse = [&](bool mutable_access) {

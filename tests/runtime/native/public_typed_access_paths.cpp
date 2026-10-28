@@ -162,6 +162,32 @@ int main() {
     rows_create(inserted,key,uint64(0),int64(8));CHECK(rows_read(inserted,key,uint64(0))==int64(8));
     failed=false;try { matrix_create(matrix,uint64(0),uint64(1),int64(8)); } catch(...) { failed=true; }
     CHECK(failed && matrix.at(uint64(0)).size()==uint64(1)); // Vector indexed writes do not grow.
+    mixed null_receiver;
+    dynamic null_dynamic;
+    const auto read_allocations=allocations;
+    for(int i=0;i<100;++i) {
+        CHECK(mixed_value(null_receiver,inner_key).is_null());
+        CHECK(dynamic_value(null_dynamic,inner_key).is_null());
+        CHECK(mixed_value(mixed_parent,missing).is_null());
+        CHECK(dynamic_value(dynamic_parent,missing).is_null());
+    }
+    CHECK(allocations==read_allocations);
+    failed=false;try { mixed_value(null_receiver,invalid_key); } catch(...) { failed=true; } CHECK(failed);
+    failed=false;try { dynamic_value(null_dynamic,invalid_key); } catch(...) { failed=true; } CHECK(failed);
+    failed=false;try { mixed_value(scalar,inner_key); } catch(...) { failed=true; } CHECK(failed);
+    failed=false;try { dynamic_value(dynamic(int64(2)),inner_key); } catch(...) { failed=true; } CHECK(failed);
+    failed=false;try { rows_value(inserted,string("absent")); } catch(...) { failed=true; } CHECK(failed);
+    // Materialize the intermediate before evaluating the next key expression.
+    auto intermediate=mixed_value(mixed_parent,outer_key);
+    mixed replacement=make_mixed_table();replacement.set(inner_key,mixed(int64(400)));
+    mixed_parent.set(outer_key,replacement);
+    CHECK(mixed_value(intermediate,inner_key).get_int()==int64(1));
+    CHECK(mixed_value(mixed_value(mixed_parent,outer_key),inner_key).get_int()==int64(400));
+    auto dynamic_intermediate=dynamic_value(fresh_parent,outer_key);
+    fresh_child.set(inner_key,dynamic(int64(401)));
+    CHECK(dynamic_value(dynamic_intermediate,inner_key).get_int()==int64(401)); // Preserve handle identity.
+    auto copied_row=matrix_value(matrix,uint64(0));copied_row.set(uint64(0),int64(402));
+    CHECK(matrix_read(matrix,uint64(0),uint64(0))==int64(100));
     auto detached=row_read(matrix,uint64(0));detached.set(uint64(0),int64(200));
     CHECK(matrix_read(matrix,uint64(0),uint64(0))==int64(100));
     auto retained=retained_row();CHECK(retained.at(uint64(0))==int64(17));

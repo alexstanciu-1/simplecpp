@@ -52,6 +52,9 @@ for name,container,depth in [('mixed_create','vector<mixed>',3),('dynamic_create
  ('row_insert','hash<vector<int64>,string>',1)]:
     paths[name]={'root':container,'depth':depth,'operation':'store'}
 paths['boxed_key_check']={'root':'vector<mixed>','depth':3,'operation':'key_check'}
+for name,container in [('matrix_value','vector<vector<int64>>'),('rows_value','hash<vector<int64>,string>'),
+ ('mixed_value','mixed'),('dynamic_value','dynamic')]:
+    paths[name]={'root':container,'depth':1,'operation':'value_read'}
 data={'package':'application.paths','roots':[],'paths':paths,'apis':list(paths),'names':names}
 base={'metadata':metadata,'request':data,'leaves':{},'names':names,'imports':{},'layouts':{}}
 def plan(request,error=None):
@@ -66,7 +69,7 @@ assert set(paths).issubset(physical['apis']), list(physical['apis'])
 assert len({u['identity'] for u in physical['units']})==len(physical['units'])
 for api in (physical['apis'][name] for name in paths):
     assert api['operation']['returns'] in ['void','boolean','int64','vector<int64>','mixed','dynamic']
-    assert api['operation']['body']
+    assert api['operation'].get('body',api['operation'].get('expression'))
 for depth in [0,129,1.5]:
     bad=copy.deepcopy(base);bad['request']['paths']['matrix_read']['depth']=depth
     plan(bad,'depth')
@@ -127,6 +130,8 @@ plan(bad,'Invalid access element storage')
 key_only=copy.deepcopy(base);key_only['request']['apis']=['boxed_key_check']
 assert not any(u['identity'].startswith('vector<') for u in plan(key_only)['units'])
 assert len(plan(key_only)['apis']['boxed_key_check']['operation']['parameters'])==1
+bad=copy.deepcopy(base);bad['request']['paths']['mixed_value']['depth']=2
+plan(bad,'exactly one step')
 print('PASS: generic typed path composition, bounds on depth, prepared slot/fact checks')
 if not args.core:sys.exit(0)
 with tempfile.TemporaryDirectory(prefix='scpp-typed-paths-') as directory:

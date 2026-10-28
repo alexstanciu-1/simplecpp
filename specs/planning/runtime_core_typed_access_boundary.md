@@ -184,3 +184,13 @@ the root container. The runtime proof covers mixed bootstrap after validation, d
 constructed-child requirements, hash final insertion, checked vector replacement,
 and no partial creation on invalid keys. Append and ordinary null-on-miss reads are
 still distinct remaining protocols, not inferred from store/readability.
+
+
+## Ordinary value-read boundary (E29)
+
+One-step `value_read` now binds each receiver's ordinary read policy. Typed containers
+check missing entries; boxed receivers use their native null-on-miss authority.
+Nested source reads remain a sequence of owned one-step values, not one private
+multi-key borrowed path. This preserves intermediate copy/COW/identity behavior
+across later key-expression effects. Metadata rejects depth other than one. Existing
+path readback remains separately available for its prepared operation contract.

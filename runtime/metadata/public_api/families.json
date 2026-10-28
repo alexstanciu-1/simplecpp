@@ -588,7 +588,8 @@
       "includes": [],
       "key_check": "(void)${key}",
       "check_store": "(void)${receiver}.at(detail::concrete_size(${key}))",
-      "store": "${receiver}.at(detail::concrete_size(${key})) = ${value}"
+      "store": "${receiver}.at(detail::concrete_size(${key})) = ${value}",
+      "value_read": "${receiver}.at(detail::concrete_size(${key}))"
     }
   },
   "result": {
@@ -1627,7 +1628,8 @@
       "includes": [],
       "key_check": "(void)${key}",
       "check_store": "(void)0",
-      "store": "${receiver}.set(${key}, ${value})"
+      "store": "${receiver}.set(${key}, ${value})",
+      "value_read": "${receiver}.at(${key})"
     }
   },
   "float64": {
@@ -2160,7 +2162,8 @@
         "existing_erase",
         "observe",
         "key_check",
-        "store"
+        "store",
+        "value_read"
       ],
       "read": "scpp::index_existing_at(${receiver}, ${native_key})",
       "mutable": "scpp::keyed_descend(${receiver}, ${native_key})",
@@ -2174,7 +2177,8 @@
       "key_check": "scpp::require_write_key(${native_key})",
       "write_read": "scpp::index_path_probe(${receiver}, ${native_key})",
       "check_store": "scpp::index_path_check_store(${receiver}, ${native_key}, ${value})",
-      "store": "scpp::index_store(${receiver}, ${native_key}, ${value})"
+      "store": "scpp::index_store(${receiver}, ${native_key}, ${value})",
+      "value_read": "scpp::null_index_read(${receiver}, ${native_key})"
     }
   },
   "dynamic": {
@@ -2681,7 +2685,8 @@
         "existing_erase",
         "observe",
         "key_check",
-        "store"
+        "store",
+        "value_read"
       ],
       "read": "scpp::index_existing_at(${receiver}, ${native_key})",
       "mutable": "scpp::keyed_descend(${receiver}, ${native_key})",
@@ -2695,7 +2700,8 @@
       "key_check": "scpp::require_write_key(${native_key})",
       "write_read": "scpp::index_path_probe(${receiver}, ${native_key})",
       "check_store": "scpp::index_path_check_store(${receiver}, ${native_key}, ${value})",
-      "store": "scpp::index_store(${receiver}, ${native_key}, ${value})"
+      "store": "scpp::index_store(${receiver}, ${native_key}, ${value})",
+      "value_read": "scpp::null_index_read(${receiver}, ${native_key})"
     }
   },
   "result_or_false": {

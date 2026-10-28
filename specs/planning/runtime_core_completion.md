@@ -19,7 +19,7 @@ each slice. The original inventory is a baseline, not a current completion count
 | B2 | Complete for the agreed non-carrier special/mutation and text public paths; closure evidence below | Carrier forms C; indexed retention E; native exception inspection and overflow disposition G. |
 | C | Four carrier recipes and bounded scalar paths implemented; first prepared canonical path reviewed in C38 | Guarded negation and canonical lazy logical plans implemented in C32/C33; remaining source admission, broader selection and payload-specific integration remain; C38 passes the first-path checkpoint. Both decisions accepted 2026-10-28. |
 | D | Handle storage, presence planning, checked retention, shared ancestry/casts and weak/unique transports implemented (D1–D6) | Typed member access, operation-planner integration, ownership selections, value storage and source Exception transport remain. |
-| E | Existing vector/hash/boxed foundations; incomplete | Typed/boxed access, observations, removal and creating stores implemented in E23–E28; append, ordinary read policy, key adaptation/policies and field-owner retention; conditional lifecycle, cursor fixes, boxed access/probes, and positional/keyed built-in factories are implemented for the tested domains. |
+| E | Existing vector/hash/boxed foundations; incomplete | Typed/boxed access, observations, removal, creating stores and ordinary reads implemented in E23–E29; append, key adaptation/policies and field-owner retention; conditional lifecycle, cursor fixes, boxed access/probes, and positional/keyed built-in factories are implemented for the tested domains. |
 | F | Pending | Callable transport and registered collection algorithms. |
 | G | Core utility and scalar debug bindings implemented | Exception/helper gaps and requirement-by-requirement closure audit. |
 
@@ -2756,3 +2756,29 @@ units. These cumulative fixture costs are not compiler src/support build timings
 Final append and ordinary read miss policies remain distinct pending protocols.
 Key adaptation/policies, field-owner retention and the remaining C/D/F/G backlog also
 remain open. This slice does not complete batch E or the overall goal.
+
+
+## E29 — ordinary one-step value reads (2026-10-28)
+
+Receiver metadata now supplies ordinary value-read expressions. Demands are restricted
+to one step: nested source reads materialize owned intermediates before evaluating the
+next key, rather than borrowing an entire path after evaluating all keys. Typed
+containers use checked lookup; boxed receivers reuse native null_index_read and
+ordinary owned return transport. Existing-path readback remains a separate operation.
+
+Release and ASan/UBSan/LSan prove same-family null on boxed missing/null receivers,
+zero allocations for repeated misses, invalid keys throwing even on null receivers,
+scalar receiver errors and typed missing-key errors. Intermediate mixed values retain
+their prior snapshot across later root replacement; dynamic intermediates retain shared
+identity; typed read results are independent copies. Metadata rejects multi-step
+ordinary reads. All previous path tests, independent public headers, prepared facts,
+sealed reuse and six focused regressions pass.
+
+The cumulative 50-unit fixture compiles at eight jobs in 20.5492s release / 27.1807s
+sanitizer; public caller 0.2831s / 0.5236s. Runs were sequential by configuration;
+release overlapped metadata regressions. Runtime archives were reused; publication
+remains 406 units. These cumulative test compilation costs are not compiler build times.
+
+Append remains next in the indexed-access mechanism. Key adaptation/policies,
+field-owner retention, broader admitted payload coverage and C/D/F/G completion
+remain open. No source frontend integration or overall completion is claimed.
