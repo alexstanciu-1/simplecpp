@@ -98,3 +98,15 @@ part of this boundary.
 Full frontend adoption remains excluded. Prepared fixtures must be labeled as such;
 a public C++ consumer does not prove source eligibility or source evaluation lowering.
 This audit adds no implementation coverage and intentionally runs no C++ compiles.
+
+
+## F1 implementation checkpoint
+
+`resolve_signature` now performs canonical shape normalization and supplies ordinary
+operation signatures. Registered type aliases/defaults use the existing naming owner;
+input modes, variadic marker and return origin remain in structural identity. The
+source-provided variadic type is its lowered pack storage. Prepared source bindings
+cover return and input storage, with the exact request preserving mode/origin facts.
+No callback class, capture factory or collection API is claimed yet. The next step
+must make signature-driven class methods and native signature storage consume this
+same descriptor, rather than introducing an independent signature parser/emitter.

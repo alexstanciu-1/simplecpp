@@ -20,7 +20,7 @@ each slice. The original inventory is a baseline, not a current completion count
 | C | Four carrier recipes and bounded scalar paths implemented; first prepared canonical path reviewed in C38 | Guarded negation and canonical lazy logical plans implemented in C32/C33; remaining source admission, broader selection and payload-specific integration remain; C38 passes the first-path checkpoint. Both decisions accepted 2026-10-28. |
 | D | Handle storage, presence planning, checked retention, shared ancestry/casts and weak/unique transports implemented (D1–D6) | Retained property/container-field adapters proven in E36/E37 and bounded method transports in D7; scalar same-origin return bindings proven in D8; broader payload/member/planner integration, ownership selections, value storage and source Exception transport remain. |
 | E | Existing vector/hash/boxed foundations; incomplete | Typed/boxed access, observations, removal, creating stores, ordinary reads and append implemented in E23–E32; optional/boxed scalar key composition proven in E33; shared identity key storage/upcasts proven in E34; retained scalar/container-field adapters proven in E36/E37; broader member/key compositions remain; conditional lifecycle, cursor fixes, boxed access/probes, and positional/keyed built-in factories are implemented for the tested domains. |
-| F | Contract/native audit recorded in F0; implementation pending | Signature descriptor, callable transport and twelve registered collection overloads; see runtime_core_callable_boundary.md. |
+| F | Signature normalization implemented in F1 after the F0 audit | Signature-driven class materialization, callable transport and twelve registered collection overloads; see runtime_core_callable_boundary.md. |
 | G | Core utility and scalar debug bindings implemented | Exception/helper gaps and requirement-by-requirement closure audit. |
 
 Full frontend adoption and module migration are excluded. C38 passes the first complete canonical carrier
@@ -3066,3 +3066,28 @@ callables remain source-rejected; callable-valued Results require distinct state
 payload observations. Native capture-transfer permissions must remain intact even
 though task-module migration is excluded. This is an evidence-based design checkpoint,
 not completed callable coverage. No C++ compiles were run for the audit.
+
+
+## F1 — prepared signature identity and operation shape (2026-10-28)
+
+Add `resolve_signature` to the reusable C++ generation library. It normalizes registered
+types through the existing naming owner, preserves input modes/variadic markers and
+return-origin position, and produces an ordinary operation signature with deterministic
+parameter names. Identity excludes authored parameter names and normalizes omitted
+value/non-variadic defaults. A variadic's storage is already lowered by preparation;
+the physical tool neither infers packing nor grants source formation/capture admission.
+
+Focused tests distinguish value/ref/const-ref inputs, packed variadics versus ordinary
+vector inputs, reference versus value results, and nested/defaulted/aliased types.
+They reject void inputs, unsupported modes, malformed/non-final reference variadics,
+missing/ambiguous/mismatched return origins and oversized indices. Source-mode tests
+verify prepared type bindings and semantic admission. Signature identity is not a
+public storage family: class materialization, capture conversion, source callable
+integration and all twelve collection overloads remain incomplete.
+
+Nine release metadata regressions passed; the focused signature checks also passed
+under ASan/UBSan/LSan. Ninja records 2.007s release / 4.014s sanitized for the new
+signatures.cpp translation unit. These are generator compile costs, not compiler or
+public-caller rebuild timings. Core archives/publication were reused. Callback runtime
+allocation/lifetime measurements remain pending actual callable materialization; this
+shape-normalization slice does not claim such coverage.

@@ -1,3 +1,4 @@
+#include "signatures.hpp"
 #include "scpp/api_generation.hpp"
 #include "value.hpp"
 #include "names.hpp"
@@ -719,7 +720,10 @@ namespace scpp::api_generation
                 input.has("names") ? input.at("names") : value::object(),input.at("imports"));
             input["metadata"]["types"]=leaves;
         }
-		if (input.get("action")=="resolve_logical") {
+        if (input.get("action") == "resolve_signature") {
+            output = resolve_signature(input.at("metadata"), input.at("metadata").at("types"),
+                input.has("names") ? input.at("names") : value::object(), input.at("request"));
+        } else if (input.get("action")=="resolve_logical") {
             output=resolve_logical(input.at("metadata"),input.at("request"), input.has("names") ? input.at("names") : value::object());
         } else if (input.get("action")=="resolve_conditional") {
             output=resolve_conditional(input.at("metadata"),input.at("request"), input.has("names") ? input.at("names") : value::object());

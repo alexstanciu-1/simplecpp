@@ -2216,3 +2216,29 @@ source bodies or authorize references to properties/container interiors. Excepti
 propagate normally before a result is returned. Ordinary copying of the returned
 reference follows the payload's copy contract; binding an alias does not extend the
 caller's storage lifetime and does not depend on the receiver staying alive.
+
+
+### Prepared signature normalization
+
+`resolve_signature` accepts `returns`, ordered `parameters`, and optional numeric
+`return_origin` (a zero-based supplying parameter position). Each parameter has a
+registered `type`, optional `name`, `passing` (`value`, `ref`, `const_ref`) and boolean
+`variadic`. Defaults normalize to value/non-variadic. Source names do not affect
+identity. Variadic input must be last and by value; its type is the already-lowered
+pack storage supplied by preparation, not a request for this tool to infer packing.
+
+The result contains a canonical `descriptor`, structural `identity`/`name`, and
+`operation_signature` with deterministic parameter names. The structural identity
+includes input modes, the variadic marker and return-origin position. Thus a packed
+variadic and an ordinary parameter may share the same operation signature without
+becoming the same callable identity. Nested/defaulted/aliased registered types resolve
+through the existing naming owner. Origin validation requires one exact writable
+input, matching the D8 operation binding. No callback storage or source template
+admission is inferred from these internal signature nodes.
+
+Source mode consumes `return` and `parameter_<index>` prepared bindings plus producer
+requirements/facts. The request still carries the complete signature shape, so mode
+and origin edits invalidate its prepared admission. Full type formation, variadic
+packing, capture eligibility and source body analysis remain compiler-owned. The
+signature descriptor is a first generation-layer step; callable class materialization,
+capture conversion and publication integration are not implemented by this action.

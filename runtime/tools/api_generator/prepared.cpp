@@ -1,3 +1,4 @@
+#include "signatures.hpp"
 #include "prepared.hpp"
 #include "names.hpp"
 #include "capabilities.hpp"
@@ -38,6 +39,15 @@ namespace scpp::api_generation
     static std::map<std::string, std::string> requested_types(const value &input)
     {
         std::map<std::string, std::string> result;
+        if (input.get("action") == "resolve_signature") {
+            const auto signature = resolve_signature(input.at("metadata"), merged_type_leaves(input),
+                input.has("names") ? input.at("names") : value::object(), input.at("request")).at("descriptor");
+            result["return"] = signature.at("returns").text();
+            unsigned index = 0;
+            for (const auto &parameter : signature.at("parameters").items)
+                result["parameter_" + std::to_string(index++)] = parameter.at("type").text();
+            return result;
+        }
         if (input.get("action") == "generate") {
             const auto &roots = input.at("request").at("roots");
             if (roots.type != value::kind::array) throw std::runtime_error("Prepared roots require an array");
