@@ -314,3 +314,8 @@ Final composition, consolidated cast documentation and completion audit remain o
 Vector validation: twenty release tests and a fresh standalone UBSan build pass;
 both default and cross-element vector consumers pass ASan+UBSan with the recorded
 LSan environment limitation. Generated outputs remain ignored and untracked.
+
+The requested initial hash/mixed/dynamic review is recorded in
+[hash_mixed_dynamic_port_review.md](hash_mixed_dynamic_port_review.md). It identifies
+the existing typed/packed cores and the current independent dynamic payload family;
+no core algorithms or legacy modules were moved during that review.
