@@ -625,3 +625,6 @@ add_test(NAME scpp_test_shared_identity_header COMMAND test_shared_identity_head
 
 add_test(NAME scpp_check_typed_access_paths COMMAND ${Python3_EXECUTABLE}
   ${CMAKE_CURRENT_SOURCE_DIR}/check_typed_access_paths.py --tool $<TARGET_FILE:scpp_api_generator>)
+
+add_test(NAME scpp_check_object_hash_keys COMMAND ${Python3_EXECUTABLE}
+  ${CMAKE_CURRENT_SOURCE_DIR}/check_object_hash_keys.py --tool $<TARGET_FILE:scpp_api_generator>)

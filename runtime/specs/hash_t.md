@@ -34,6 +34,8 @@ Generated concrete handle representations opt into the same policy with the
 `scpp_runtime_hash_key` marker, `hash_key_hash() -> uint64_t` and
 `hash_key_equal(const Self&) -> bool`. These methods delegate to their native key
 policy; the adapter does not inspect payload fields or establish language admission.
+The template-free public form returns concrete `scpp::uint64` and `scpp::boolean`;
+`detail/concrete_keys.hpp` adapts these results without exposing native templates.
 The language compiler admits only the key families specified in
 [typed hash semantics](../../specs/array_semantics.md#v02-object-identity-hash-keys--2026-10-21).
 

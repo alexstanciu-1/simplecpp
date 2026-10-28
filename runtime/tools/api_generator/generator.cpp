@@ -316,7 +316,7 @@ namespace scpp::api_generation
             std::set<std::string> class_ids;
 			for (const auto &c : recipe.at("classes").items) {
 				if (c.at("methods").type!=value::kind::array) throw std::runtime_error("methods must be an array");
-                fields_only(c,"id name native lifecycle methods includes requires_capabilities", "class");
+                fields_only(c,"id name native lifecycle methods includes requires_capabilities aliases", "class");
 				auto id=c.at("id").text(), cpp=expand(c.at("name").text(),context);
                 if (!class_ids.insert(id).second) throw std::runtime_error("Duplicate class identity: "+id);
                 if (id=="self" && cpp!=name) throw std::runtime_error("Primary class name must match selected concrete name");
@@ -343,6 +343,18 @@ namespace scpp::api_generation
 				} else ready=false;
 				source+="using "+alias+" = "+native_type+";\nstatic_assert(sizeof("+alias+")=="+size+" && alignof("+alias+")=="+alignment+");\n";
 				header+="class "+cpp+" final {\n    alignas("+alignment+") unsigned char storage_["+size+"];\n    friend struct detail::concrete_access;\n    "+cpp+"(void (*construct)(void *, const void *), const void *context);\npublic:\n";
+                if (c.has("aliases")) {
+                    if (c.at("aliases").type != value::kind::object)
+                        throw std::runtime_error("Class aliases must be an object");
+                    for (const auto &[alias_name, target] : c.at("aliases").fields) {
+                        authored_name(alias_name);
+                        if (alias_name.find("::") != std::string::npos || alias_name == cpp)
+                            throw std::runtime_error("Class alias must be an unqualified member name");
+                        const auto resolved = this->type(target.text(), types);
+                        add_include(public_headers, resolved.get("header"));
+                        header += "    using " + alias_name + " = " + resolved.at("cpp").text() + ";\n";
+                    }
+                }
 				source+=cpp+"::"+cpp+"(void (*construct)(void *, const void *), const void *context) { construct(this->storage_, context); }\n";
                 const auto exception_spec = [&](const std::string &mode) -> std::string {
                     if (life.has("noexcept")) for (const auto &item : life.at("noexcept").items)

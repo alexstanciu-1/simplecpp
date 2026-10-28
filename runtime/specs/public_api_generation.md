@@ -47,7 +47,11 @@ before their signatures; concrete parameter dependencies are materialized first.
 A family's first slice requires copyable, assignable, nothrow-destructible payloads
 through explicit metadata checks. Unsupported payloads fail target probing.
 
-Each class has `id`, `name`, `native`, `lifecycle`, `methods` and optional `includes`.
+Each class has `id`, `name`, `native`, `lifecycle`, `methods` and optional `includes`
+and `aliases`. Class aliases map unqualified member names to registered type identities;
+targets are resolved through the same concrete type registry and add their public
+header dependency. They cannot introduce a public template. The shared key recipe
+uses a void marker alias to opt into the existing concrete-key adapter.
 Lifecycle entries `default`, `copy`, `move`, `destroy` select `native` or `disabled`;
 inline storage requires native nothrow destruction. Disabled copy/move operations
 are explicitly deleted. Enabled operations are target-probed, and destruction and
@@ -2148,3 +2152,17 @@ Saved string keys own their value across replacement/destruction of the input wr
 Source preparation remains responsible for the admitted payload/key domain and object
 ancestry conversion. Physical public methods do not imply source admission for arbitrary
 wrapper/key combinations. This composition adds no second conversion registry.
+
+
+### Shared identity keys
+
+The shared family advertises `typed_hash_key` and emits the explicit concrete-key
+marker plus `hash_key_hash() -> uint64` and `hash_key_equal(const Self&) -> boolean`.
+Private definitions delegate to the native shared identity policy; no payload fields
+participate. The private concrete-key adapter unboxes these scalar results. Native
+raw-scalar key adapters remain supported. Weak and unique public recipes do not
+advertise this capability, regardless of broader native implementation facilities.
+
+Source preparation admits the class/interface key and any shared upcast before
+lookup. Hash storage owns the converted key, preserving its identity and lifetime.
+This slice does not infer ancestry or admit arbitrary shared payloads in source code.

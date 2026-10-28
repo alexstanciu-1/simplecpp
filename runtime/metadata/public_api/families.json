@@ -3800,14 +3800,46 @@
             "includes": [
               "operators/identity/shared_identity.hpp"
             ]
+          },
+          {
+            "name": "hash_key_hash",
+            "returns": "uint64",
+            "parameters": [],
+            "const": true,
+            "transport": "native",
+            "expression": "scpp::hash_detail::key_ops<${native_type}>::hash(${self})",
+            "includes": [
+              "scpp/hash_t.hpp"
+            ]
+          },
+          {
+            "name": "hash_key_equal",
+            "returns": "boolean",
+            "parameters": [
+              {
+                "name": "other",
+                "type": "self",
+                "passing": "const_ref"
+              }
+            ],
+            "const": true,
+            "transport": "native",
+            "expression": "scpp::hash_detail::key_ops<${native_type}>::equal(${self}, ${native:other})",
+            "includes": [
+              "scpp/hash_t.hpp"
+            ]
           }
-        ]
+        ],
+        "aliases": {
+          "scpp_runtime_hash_key": "void"
+        }
       }
     ],
     "capabilities": [
       "default_storage",
       "move_storage",
-      "copy_storage"
+      "copy_storage",
+      "typed_hash_key"
     ]
   },
   "unique": {

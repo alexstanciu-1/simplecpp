@@ -19,7 +19,7 @@ each slice. The original inventory is a baseline, not a current completion count
 | B2 | Complete for the agreed non-carrier special/mutation and text public paths; closure evidence below | Carrier forms C; indexed retention E; native exception inspection and overflow disposition G. |
 | C | Four carrier recipes and bounded scalar paths implemented; first prepared canonical path reviewed in C38 | Guarded negation and canonical lazy logical plans implemented in C32/C33; remaining source admission, broader selection and payload-specific integration remain; C38 passes the first-path checkpoint. Both decisions accepted 2026-10-28. |
 | D | Handle storage, presence planning, checked retention, shared ancestry/casts and weak/unique transports implemented (D1–D6) | Typed member access, operation-planner integration, ownership selections, value storage and source Exception transport remain. |
-| E | Existing vector/hash/boxed foundations; incomplete | Typed/boxed access, observations, removal, creating stores, ordinary reads and append implemented in E23–E32; optional/boxed scalar key composition proven in E33; object key policies and field-owner retention remain; conditional lifecycle, cursor fixes, boxed access/probes, and positional/keyed built-in factories are implemented for the tested domains. |
+| E | Existing vector/hash/boxed foundations; incomplete | Typed/boxed access, observations, removal, creating stores, ordinary reads and append implemented in E23–E32; optional/boxed scalar key composition proven in E33; shared identity key storage/upcasts proven in E34; broader key compositions and field-owner retention remain; conditional lifecycle, cursor fixes, boxed access/probes, and positional/keyed built-in factories are implemented for the tested domains. |
 | F | Pending | Callable transport and registered collection algorithms. |
 | G | Core utility and scalar debug bindings implemented | Exception/helper gaps and requirement-by-requirement closure audit. |
 
@@ -2883,3 +2883,29 @@ prepared-fact rejection and sealed publication reuse. The 58-unit cumulative fix
 compiled at eight jobs in 24.4316s release / 41.5851s sanitizer; public callers took
 0.3483s / 0.7557s. These are fixture compilation costs, not compiler rebuild timings.
 Existing generator/core binaries were reused; no runtime publication rebuild was needed.
+
+
+## E34 — metadata-owned shared identity key bridge (2026-10-28)
+
+Shared wrappers now advertise the typed-key capability, with a marker alias and
+concrete scalar hashing/equality methods defined by metadata. Implementations delegate
+to the existing native shared-key policy. A private adapter unboxes public uint64 and
+boolean results; the native raw-scalar bridge is preserved. The generator only gains
+registered-type class aliases, not shared/hash-specific dispatch. Invalid alias shapes,
+qualified names and unregistered targets reject during planning. Weak/unique public
+keys remain ineligible even where broader native facilities exist.
+
+The prepared public-only proof covers shared ancestry conversion with multiple
+inheritance, identity rather than equal-field keys, alias replacement, independent map
+membership after copying, retained map/cursor key lifetime, and zero allocations for
+repeated upcasts/hash/equality/lookups. Prepared source admission is required even
+with imported representations; publication reuses the sealed application specialization.
+This does not complete object-key expression compositions, field-owner retention,
+ownership planner integration or any pending callback contracts.
+
+Release and ASan/UBSan/LSan correctness, lifetime, allocation and sealed-reuse checks
+passed. Five focused metadata regressions pass, including existing ownership storage,
+views, casts and prepared generation. Five generated units compiled at eight jobs in
+2.9467s release / 5.5981s sanitized; public-only caller 0.0933s / 0.1210s. Generator
+binaries were rebuilt; core archives were reused. Runtime publication was refreshed
+at 406 units, with no representation changes to the selected runtime-owned roots.

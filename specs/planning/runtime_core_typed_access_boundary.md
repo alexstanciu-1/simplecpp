@@ -226,3 +226,13 @@ not a substitute because it admits coercions that typed key extraction rejects.
 The focused fixture exercises absence ordering, lazy-prefix skipping, exact integer
 extraction and owned string-key lifetime. Object ancestry/key policies and broader
 admitted key shapes still need their own proof.
+
+
+## Shared identity key bridge (E34)
+
+The generic concrete-key protocol now has a public-scalar adapter. Shared metadata
+emits its opt-in marker and native-delegating hash/equality methods. Prepared ancestry
+conversion happens before lookup, and typed hash storage retains the converted key.
+Weak/unique public families do not advertise key capability. The focused storage,
+upcast, identity, lifetime and publication proof does not close broader key-expression
+composition or field-owner retention work.
