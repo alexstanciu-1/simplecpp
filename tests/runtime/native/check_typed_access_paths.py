@@ -70,6 +70,14 @@ assert len({u['identity'] for u in physical['units']})==len(physical['units'])
 for api in (physical['apis'][name] for name in paths):
     assert api['operation']['returns'] in ['void','boolean','int64','vector<int64>','mixed','dynamic']
     assert api['operation'].get('body',api['operation'].get('expression'))
+# Only readiness may inspect a root without a reached key. Every other operation
+# must reject before accessing the first/last step (especially store/key_check).
+checked_operations={'prefix_ready'}
+for name,path in paths.items():
+    if path['operation'] in checked_operations:continue
+    checked_operations.add(path['operation'])
+    bad=copy.deepcopy(base);bad['request']['paths'][name]['depth']=0
+    plan(bad,'depth')
 for depth in [0,129,1.5]:
     bad=copy.deepcopy(base);bad['request']['paths']['matrix_read']['depth']=depth
     plan(bad,'depth')

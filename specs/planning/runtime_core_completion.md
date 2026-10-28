@@ -2782,3 +2782,20 @@ remains 406 units. These cumulative test compilation costs are not compiler buil
 Append remains next in the indexed-access mechanism. Key adaptation/policies,
 field-owner retention, broader admitted payload coverage and C/D/F/G completion
 remain open. No source frontend integration or overall completion is claimed.
+
+
+## E30 — reject empty keyed paths before step access (2026-10-28)
+
+Append preparation uncovered a validation regression: earlier operation-list edits
+also broadened the zero-depth exception, allowing store/key_check requests to reach
+an empty step list. The depth boundary now names its sole current exception explicitly:
+zero-depth prefix readiness. Every other operation rejects before first/last-step
+access. Regression coverage exercises each distinct operation, including creating
+store and key-only validation, while retaining valid zero-depth readiness requests.
+
+The focused metadata suite passes with release and ASan/UBSan/LSan generators.
+Only the changed generator unit and links were rebuilt: Ninja records 1.745s release /
+3.662s instrumented (overlapping configurations), with 1.442s / 2.861s for the unit.
+No public consumer, runtime archive or publication regeneration was needed: valid
+requests and their output behavior are unchanged. Append remains pending; this is
+memory-safety boundary hardening, not append completion.

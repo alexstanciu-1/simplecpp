@@ -26,8 +26,9 @@ namespace scpp::api_generation
             || depth_value.scalar.size() > 3)
             throw std::runtime_error("Access path depth must be an integer from 1 to 128");
         const auto depth = std::stoul(depth_value.scalar);
-        if ((depth == 0 && operation != "value_read" && operation != "store" && operation != "key_check"
-            && operation != "prefix_ready") || depth > 128) throw std::runtime_error("Access path depth must be from 1 to 128");
+        const bool allows_empty_prefix = operation == "prefix_ready";
+        if ((depth == 0 && !allows_empty_prefix) || depth > 128)
+            throw std::runtime_error("Access path depth must be from 1 to 128, or zero for prefix readiness");
         if (operation == "value_read" && depth != 1)
             throw std::runtime_error("Ordinary value reads require exactly one step");
         naming names(metadata_naming_registry(metadata, leaves, aliases));
