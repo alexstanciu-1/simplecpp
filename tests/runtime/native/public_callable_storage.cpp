@@ -11,7 +11,29 @@ void operator delete(void *p) noexcept { std::free(p); }
 void operator delete(void *p,std::size_t) noexcept { std::free(p); }
 #define CHECK(x) do { if(!(x)) { std::fprintf(stderr,"callable storage line %d: %s\n",__LINE__,#x);std::abort(); } } while(false)
 using namespace scpp;
+#define CHECK_BOXED(Box, make_table, make_map, make_filter, map_api, filter_api, shared_child) do { \
+    auto mapper=make_map();auto predicate=make_filter(); \
+    auto source=make_table();source.set(string("second"),Box(int64(5)));source.set(string("first"),Box(int64(2))); \
+    auto child=make_table();child.set(string("n"),Box(int64(7)));source.set(string("child"),child); \
+    const auto copies=fixture::environment::copies; \
+    auto mapped=map_api(source,mapper);auto filtered=filter_api(source,predicate); \
+    CHECK(fixture::environment::copies==copies); \
+    CHECK(mapped.get(string("second")).get_int()==int64(5)); \
+    auto order=filtered.iterate();CHECK(order.valid() && order.key().get_string()==string("second")); \
+    order.next();CHECK(order.valid() && order.key().get_string()==string("child"));order.next();CHECK(!order.valid()); \
+    auto output_child=mapped.get(string("child"));output_child.set(string("n"),Box(int64(8)));mapped.set(string("child"),output_child); \
+    CHECK(source.get(string("child")).get(string("n")).get_int()==int64(shared_child ? 8 : 7)); \
+    mapped.remove(string("second"));CHECK(source.get(string("second")).get_int()==int64(5)); \
+    CHECK(map_api(make_table(),mapper).is_hash()); \
+    bool rejected=false;try { (void)map_api(Box(int64(1)),mapper); } catch(...) { rejected=true; } CHECK(rejected); \
+    rejected=false;try { (void)filter_api(Box(int64(1)),predicate); } catch(...) { rejected=true; } CHECK(rejected); \
+    auto throwing=make_table();throwing.append(Box(int64(1)));throwing.append(Box(int64(-1))); \
+    rejected=false;try { (void)map_api(throwing,mapper); } catch(...) { rejected=true; } CHECK(rejected && mapper.has_value()); \
+} while(false)
 int main() {
+    CHECK_BOXED(mixed,make_mixed_table,make_mixed_map,make_mixed_filter,MAP_MIXED,FILTER_MIXED,false);
+    CHECK_BOXED(dynamic,make_dynamic_container,make_dynamic_map,make_dynamic_filter,MAP_DYNAMIC,FILTER_DYNAMIC,true);
+    CHECK(fixture::environment::live==0);
     const auto initial=allocations;callback_int absent;CHECK(!absent.has_value());CHECK(allocations==initial);
     int argument_calls=0;const auto argument=[&] { ++argument_calls;return int64(2); };
     bool failed=false;try { (void)absent(argument()); } catch(...) { failed=true; }

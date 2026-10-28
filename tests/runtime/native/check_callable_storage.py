@@ -45,6 +45,14 @@ for signature, name in [
     normalized=plan({'action':'resolve_signature','metadata':metadata,'request':signature,'leaves':leaves,'names':names})
     key=normalized['key'];keys.append(key);signatures.append(signature)
     leaves[key]={'signature':signature};callback_types.append('callable<'+key+'>');names[callback_types[-1]]=name
+boxed_callbacks={}
+for box in ['mixed','dynamic']:
+    for operation,returns in [('map',box),('filter','boolean')]:
+        signature={'returns':returns,'parameters':[{'type':box}]}
+        normalized=plan({'action':'resolve_signature','metadata':metadata,'request':signature,'leaves':leaves,'names':names})
+        key=normalized['key'];keys.append(key);signatures.append(signature);leaves[key]={'signature':signature}
+        callback_types.append('callable<'+key+'>');names[callback_types[-1]]='callback_'+box+'_'+operation
+        boxed_callbacks[(box,operation)]=callback_types[-1]
 assert keys[3]!=keys[4]
 compositions={'vector<boolean>':'vector_boolean','hash<int64,string>':'hash_int64','vector<int64>':'vector_int64','vector<'+callback_types[0]+'>':'vector_callbacks',
               'hash<'+callback_types[0]+',string>':'hash_callbacks',
@@ -71,6 +79,12 @@ for carrier,label in [('vector<int64>','VECTOR'),('hash<int64,string>','HASH')]:
     collections['MAP_'+label]=('typed_collection_map',[carrier,carrier,callback_types[0]])
     collections['FILTER_'+label]=('typed_collection_filter',[carrier,'int64',callback_types[6]])
 collections['MAP_BOOLEAN']=('typed_collection_map',['vector<int64>','vector<boolean>',callback_types[6]])
+for (box,operation),callback in boxed_callbacks.items():
+    returns=box if operation=='map' else 'boolean'
+    expression='if (value.is_int() && value.get_int() == scpp::int64(-1)) throw scpp::runtime_error("boxed callback failure"); return value;' if operation=='map' else 'return scpp::boolean(!value.is_int() || value.get_int().native_value() > 3);'
+    functions['make_'+box+'_'+operation]={'returns':callback,'parameters':[], 'uses':[box], 'transport':'native','includes':['environment.hpp'],
+        'body':'fixture::environment captured(scpp::int64(0)); return scpp::callable_t<scpp::'+returns+'(scpp::'+box+')>([captured](scpp::'+box+' value) { '+expression+' }, true);'}
+    collections[operation.upper()+'_'+box.upper()]=('boxed_collection_'+operation,[box,callback])
 collection_apis={name:family+'<'+','.join(types)+'>' for name,(family,types) in collections.items()}
 factory='callable_from<'+keys[0]+',owned_closure>'
 data={'package':'application.callables','roots':[*callback_types,*compositions],'leaves':leaves,'names':names,

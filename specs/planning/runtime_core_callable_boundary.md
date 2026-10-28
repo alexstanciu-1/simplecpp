@@ -168,3 +168,14 @@ The fixture checks dense vector results, hash key order, fresh outer membership,
 empty/absent invocation behavior, callback exceptions and unchanged capture-copy counts.
 Boxed native/public value conversion and the complete twelve-entry dispatch mapping
 remain pending; these two physical recipes are not full collection surface closure.
+
+
+## F7 boxed collection bridge
+
+Two shared boxed recipes now adapt mixed/dynamic callback input and output through
+existing concrete_access storage conversion. Native algorithms retain their iteration,
+key, allocation and error behavior; the emitter has no family-name exception. The
+fixture proves encounter-order filtering, fresh outer membership, mixed child-value
+independence versus dynamic shared-child identity, scalar rejection and partial-result
+cleanup. Capture counters show no adapter environment copies. Complete registry dispatch
+and broader callable access/selection remain separate unfinished work.

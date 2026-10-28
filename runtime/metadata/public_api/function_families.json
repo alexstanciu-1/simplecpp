@@ -272,5 +272,75 @@
         "body": "static_assert(scpp::collections::detail::policy<${variant:native_Source}>::kind != scpp::collections::detail::carrier_kind::boxed);\nstatic_assert(std::is_same_v<decltype(callback(std::declval<${variant:public_Value}>())), scpp::boolean>);\nreturn scpp::collections::filter(${native:source}, [&callback](${variant:public_Value} value) -> scpp::bool_t { return scpp::bool_t(callback(std::move(value)).native_value()); });"
       }
     }
+  },
+  "boxed_collection_map": {
+    "parameters": [
+      "Box",
+      "Callback"
+    ],
+    "function": {
+      "namespace": "scpp",
+      "header": "scpp/collections/${variant}.hpp",
+      "source": "include/core/generated/${variant}.cpp",
+      "operation": {
+        "name": "${variant}",
+        "returns": "${variant:Box}",
+        "parameters": [
+          {
+            "name": "source",
+            "type": "${variant:Box}",
+            "passing": "const_ref"
+          },
+          {
+            "name": "callback",
+            "type": "${variant:Callback}",
+            "passing": "const_ref"
+          }
+        ],
+        "transport": "native",
+        "includes": [
+          "scpp/collections.hpp",
+          "scpp/detail/concrete_access.hpp",
+          "type_traits",
+          "utility"
+        ],
+        "body": "static_assert(scpp::collections::detail::policy<${variant:native_Box}>::kind == scpp::collections::detail::carrier_kind::boxed);\nstatic_assert(std::is_same_v<decltype(callback(std::declval<${variant:public_Box}>())), ${variant:public_Box}>);\nreturn scpp::collections::map(${native:source}, [&callback](${variant:native_Box} value) -> ${variant:native_Box} {\nauto input = scpp::detail::concrete_access::make<${variant:public_Box}, ${variant:native_Box}>([&]() { return std::move(value); });\nauto output = callback(std::move(input));\nreturn std::move(scpp::detail::concrete_access::get<${variant:native_Box}>(output));\n});"
+      }
+    }
+  },
+  "boxed_collection_filter": {
+    "parameters": [
+      "Box",
+      "Callback"
+    ],
+    "function": {
+      "namespace": "scpp",
+      "header": "scpp/collections/${variant}.hpp",
+      "source": "include/core/generated/${variant}.cpp",
+      "operation": {
+        "name": "${variant}",
+        "returns": "${variant:Box}",
+        "parameters": [
+          {
+            "name": "source",
+            "type": "${variant:Box}",
+            "passing": "const_ref"
+          },
+          {
+            "name": "callback",
+            "type": "${variant:Callback}",
+            "passing": "const_ref"
+          }
+        ],
+        "transport": "native",
+        "includes": [
+          "scpp/collections.hpp",
+          "scpp/detail/concrete_access.hpp",
+          "type_traits",
+          "utility"
+        ],
+        "body": "static_assert(scpp::collections::detail::policy<${variant:native_Box}>::kind == scpp::collections::detail::carrier_kind::boxed);\nstatic_assert(std::is_same_v<decltype(callback(std::declval<${variant:public_Box}>())), scpp::boolean>);\nreturn scpp::collections::filter(${native:source}, [&callback](${variant:native_Box} value) -> scpp::bool_t {\nauto input = scpp::detail::concrete_access::make<${variant:public_Box}, ${variant:native_Box}>([&]() { return std::move(value); });\nauto output = callback(std::move(input));\nreturn scpp::bool_t(output.native_value());\n});"
+      }
+    }
   }
 }

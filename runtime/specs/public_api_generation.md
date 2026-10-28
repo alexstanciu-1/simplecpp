@@ -2344,3 +2344,19 @@ local adapter and converts its exact public `boolean` result to native `bool_t`.
 The adapter does not copy the callable environment per invocation. Output ownership
 uses ordinary native return transport. Sequence/keyed surface admission and the full
 set of registry dispatch bindings remain separate from these physical bridges.
+
+
+### Boxed collection callback adapters
+
+`boxed_collection_map<Box,Callback>` and `boxed_collection_filter<Box,Callback>`
+require the native boxed collection policy. Each native value supplied by the ordinary
+iteration owner moves into its public inline-storage representation for callback
+invocation. Map moves the same-family result back to native storage; filter converts
+an exact public boolean result to native bool_t. These snippets reuse concrete_access
+and native return transport, rather than introduce a second representation layer.
+
+Callbacks remain borrowed for the synchronous algorithm. No capture copy occurs per
+element. Native collection policies continue to own scalar rejection, encounter order,
+fresh outer membership, mixed value semantics, dynamic identity and exception cleanup.
+The source producer still supplies exact signature/capture admission and the no-mutation
+contract; these physical adapters do not infer source-language eligibility.
