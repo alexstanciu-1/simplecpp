@@ -943,5 +943,54 @@
         }
       ]
     }
+  },
+  "value_observations": {
+    "isset": {
+      "types": [
+        "boolean",
+        "uint8",
+        "uint16",
+        "uint32",
+        "uint64",
+        "int8",
+        "int16",
+        "int32",
+        "int64",
+        "string",
+        "null"
+      ],
+      "families": [
+        "float64",
+        "mixed",
+        "dynamic",
+        "vector",
+        "hash",
+        "nullable",
+        "result",
+        "result_or_false",
+        "result_or_bool"
+      ],
+      "expression": "scpp::isset_one(${native}).native_value()",
+      "missing": "return boolean(false);",
+      "includes": [
+        "operators/isset/isset.hpp"
+      ]
+    },
+    "empty": {
+      "types": [
+        "string"
+      ],
+      "families": [
+        "vector",
+        "hash",
+        "mixed",
+        "dynamic"
+      ],
+      "expression": "scpp::empty(${native}).native_value()",
+      "missing": "scpp::detail::throw_invalid_empty();",
+      "includes": [
+        "operators/empty/empty.hpp"
+      ]
+    }
   }
 }

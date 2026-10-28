@@ -55,6 +55,24 @@ int main() {
     CHECK(tables.at(uint64(0)).size()==uint64(0));
     CHECK(tables.size()==uint64(1)); // Do not prune an empty parent.
     matrix.append(make_row(int64(100)));
+    path_optionals optionals;optionals.append(path_optional());optionals.append(path_optional(int64(0)));
+    vector_mixed boxes;boxes.append(mixed());boxes.append(mixed(int64(0)));boxes.append(mixed(string("")));
+    path_results results;results.append(path_result(mixed()));
+    results.append(path_result(error_value::make(string("failed"))));
+    const auto observation_allocations=allocations;
+    for(int i=0;i<100;++i) {
+        CHECK(matrix_isset(matrix,uint64(0),uint64(0)));
+        CHECK(!matrix_isset(matrix,uint64(0),uint64(9)));
+        CHECK(!row_empty(matrix,uint64(0)));
+        CHECK(!optional_isset(optionals,uint64(0)) && optional_isset(optionals,uint64(1)));
+        CHECK(!box_isset(boxes,uint64(0)) && box_isset(boxes,uint64(1)));
+        CHECK(box_empty(boxes,uint64(2)));
+        CHECK(result_isset(results,uint64(0)) && !result_isset(results,uint64(1)));
+    }
+    CHECK(allocations==observation_allocations);
+    failed=false;try { row_empty(matrix,uint64(9)); } catch(...) { failed=true; } CHECK(failed);
+    failed=false;try { box_empty(boxes,uint64(0)); } catch(...) { failed=true; } CHECK(failed);
+    failed=false;try { box_empty(boxes,uint64(1)); } catch(...) { failed=true; } CHECK(failed);
     auto detached=row_read(matrix,uint64(0));detached.set(uint64(0),int64(200));
     CHECK(matrix_read(matrix,uint64(0),uint64(0))==int64(100));
     auto retained=retained_row();CHECK(retained.at(uint64(0))==int64(17));

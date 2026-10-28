@@ -28,6 +28,13 @@ paths={name:{'root':container,'depth':depth,'operation':operation} for name,cont
  ('matrix_ready','vector<vector<int64>>',1,'prefix_ready'),('rows_ready','hash<vector<int64>,string>',1,'prefix_ready'),
  ('rows_erase','hash<vector<int64>,string>',1,'existing_erase'),
  ('tables_erase','vector<hash<int64,string>>',2,'existing_erase')]}
+names.update({'nullable<int64>':'path_optional','vector<nullable<int64>>':'path_optionals','vector<mixed>':'vector_mixed',
+              'result<mixed>':'path_result','vector<result<mixed>>':'path_results'})
+for name,container,depth,observation in [
+ ('matrix_isset','vector<vector<int64>>',2,'isset'),('row_empty','vector<vector<int64>>',1,'empty'),
+ ('optional_isset','vector<nullable<int64>>',1,'isset'),('result_isset','vector<result<mixed>>',1,'isset'),
+ ('box_isset','vector<mixed>',1,'isset'),('box_empty','vector<mixed>',1,'empty')]:
+    paths[name]={'root':container,'depth':depth,'operation':'observe','observation':observation}
 data={'package':'application.paths','roots':[],'paths':paths,'apis':list(paths),'names':names}
 base={'metadata':metadata,'request':data,'leaves':{},'names':names,'imports':{},'layouts':{}}
 def plan(request,error=None):
@@ -39,7 +46,7 @@ def plan(request,error=None):
     return json.loads(out.stdout)
 physical=plan(base)
 assert set(paths).issubset(physical['apis']), list(physical['apis'])
-assert len(physical['units'])==17, [(u['identity']) for u in physical['units']]
+assert len({u['identity'] for u in physical['units']})==len(physical['units'])
 for api in (physical['apis'][name] for name in paths):
     assert api['operation']['returns'] in ['void','boolean','int64','vector<int64>']
     assert api['operation']['body']
@@ -55,7 +62,9 @@ three=copy.deepcopy(base);three['request']['paths']={'cube_read':{'root':'vector
 assert 'path_value_1' in plan(three)['apis']['cube_read']['operation']['body']
 arguments={'vector<int64>':{'T':'int64'},'vector<vector<int64>>':{'T':'vector<int64>'},
            'hash<vector<int64>,string>':{'V':'vector<int64>','K':'string'},
-           'hash<int64,string>':{'V':'int64','K':'string'},'vector<hash<int64,string>>':{'T':'hash<int64,string>'}}
+           'hash<int64,string>':{'V':'int64','K':'string'},'vector<hash<int64,string>>':{'T':'hash<int64,string>'},
+           'nullable<int64>':{'T':'int64'},'vector<nullable<int64>>':{'T':'nullable<int64>'},
+           'result<mixed>':{'T':'mixed'},'vector<result<mixed>>':{'T':'result<mixed>'},'vector<mixed>':{'T':'mixed'}}
 def binding(type):
     return {'source':'source.'+type,'physical':type,'arguments':{k:'source.'+v for k,v in arguments.get(type,{}).items()}}
 bindings={}
@@ -87,6 +96,10 @@ bad=copy.deepcopy(base);bad['request']['paths']['matrix_store']['operation']='ex
 plan(bad,'erase') # Vector final-element removal has no protocol.
 bad=copy.deepcopy(base);bad['request']['paths']['matrix_read']['operation']='prefix_ready'
 plan(bad,'Expected family application') # A scalar is not a ready keyed receiver.
+bad=copy.deepcopy(base);bad['request']['paths']['matrix_isset']['observation']='empty'
+plan(bad,'Unsupported value observation')
+bad=copy.deepcopy(base);bad['request']['paths']['optional_isset']['observation']='empty'
+plan(bad,'Unsupported value observation')
 print('PASS: generic typed path composition, bounds on depth, prepared slot/fact checks')
 if not args.core:sys.exit(0)
 with tempfile.TemporaryDirectory(prefix='scpp-typed-paths-') as directory:

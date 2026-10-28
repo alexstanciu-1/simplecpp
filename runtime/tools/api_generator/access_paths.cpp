@@ -1,4 +1,5 @@
 #include "access_paths.hpp"
+#include "value_observations.hpp"
 #include "capabilities.hpp"
 #include "function_sets.hpp"
 #include "names.hpp"
@@ -8,11 +9,13 @@ namespace scpp::api_generation
     value describe_access_path(const value &metadata, const value &leaves,
         const value &aliases, const value &request)
     {
-        fields_only(request, "root depth operation", "access path");
+        fields_only(request, "root depth operation observation", "access path");
         const auto operation = request.at("operation").text();
         if (operation != "existing_read" && operation != "existing_store"
-            && operation != "prefix_ready" && operation != "existing_erase")
+            && operation != "prefix_ready" && operation != "existing_erase" && operation != "observe")
             throw std::runtime_error("Unsupported access path operation");
+        if (request.has("observation") && operation != "observe")
+            throw std::runtime_error("Observation requires observe operation");
         const auto &depth_value = request.at("depth");
         if (depth_value.type != value::kind::number || depth_value.scalar.empty()
             || depth_value.scalar.find_first_not_of("0123456789") != std::string::npos
@@ -40,10 +43,12 @@ namespace scpp::api_generation
             receiver = protocol.at("element").text();
             result["steps"].items.push_back(protocol);
         }
-        const bool probing = operation == "prefix_ready" || operation == "existing_erase";
+        const bool probing = operation == "prefix_ready" || operation == "existing_erase" || operation == "observe";
         if (probing) {
             for (const auto &step : result.at("steps").items) step.at("present").text();
-            if (operation == "existing_erase") result.at("steps").items.back().at("erase").text();
+            if (operation == "observe")
+                result["observation"] = describe_value_observation(metadata, leaves, aliases, receiver, request.at("observation").text());
+            else if (operation == "existing_erase") result.at("steps").items.back().at("erase").text();
             else {
                 const auto node = names.bind(receiver);
                 const auto &access = metadata.at("families").at(node.type.name).at("access");

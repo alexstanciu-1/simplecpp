@@ -392,6 +392,7 @@ namespace scpp::api_generation
             const bool storing = path.get("operation") == "existing_store";
             const bool erasing = path.get("operation") == "existing_erase";
             const bool probing = path.get("operation") == "prefix_ready";
+            const bool observing = path.get("operation") == "observe";
             const bool writing = storing || erasing;
             value function = value::object(); function["namespace"] = "scpp";
             function["header"] = "scpp/access/" + name + ".hpp";
@@ -399,7 +400,7 @@ namespace scpp::api_generation
             const auto symbol = "path_" + name;
             this->claim(symbol, "path-api:" + name);
             value operation = value::object(); operation["name"] = symbol;
-            operation["returns"] = writing ? value("void") : probing ? value("boolean") : path.at("element");
+            operation["returns"] = writing ? value("void") : (probing || observing) ? value("boolean") : path.at("element");
             operation["parameters"] = value::array();
             auto parameter = [&](const std::string &id, const value &type, const std::string &passing) {
                 value entry = value::object(); entry["name"] = id; entry["type"] = type; entry["passing"] = passing;
@@ -407,6 +408,7 @@ namespace scpp::api_generation
             };
             parameter("root", path.at("root"), writing ? "ref" : "const_ref");
             std::set<std::string> headers{"type_traits", "utility", "scpp/detail/concrete_access.hpp"};
+            if (observing) this->dependencies(path.at("observation"), headers, {});
             if (probing) this->dependencies(path.at("ready_protocol"), headers, {});
             unsigned index = 0;
             for (const auto &step : path.at("steps").items) {
@@ -414,7 +416,8 @@ namespace scpp::api_generation
                 const auto receiver = this->materialize(step.at("receiver").text());
                 this->dependencies(receiver, headers, {});
                 this->dependencies(step, headers, {});
-                this->materialize(step.at("element").text());
+                const auto element = this->materialize(step.at("element").text());
+                if (observing) this->dependencies(element, headers, {});
             }
             if (storing) parameter("value", path.at("element"), "value");
             const auto &steps = path.at("steps").items;
@@ -426,10 +429,10 @@ namespace scpp::api_generation
                     const auto element = this->materialize(step.at("element").text());
                     const auto expression = expand(step.at(mutable_access ? "mutable" : "read").text(),
                         {{"receiver", current}, {"key", "key_" + std::to_string(i)}});
-                    if (!mutable_access && (probing || erasing)) {
+                    if (!mutable_access && (probing || erasing || observing)) {
                         const auto present = expand(step.at("present").text(),
                             {{"receiver", current}, {"key", "key_" + std::to_string(i)}});
-                        body += "if (!(" + present + ")) " + (probing ? "return boolean(false);\n" : "return;\n");
+                        body += "if (!(" + present + ")) { " + (observing ? path.at("observation").at("missing").text() : probing ? "return boolean(false);" : "return;") + " }\n";
                     }
                     body += "static_assert(std::is_same_v<decltype((" + expression + ")), "
                         + (mutable_access ? "" : "const ") + element.at("cpp").text() + " &>);\n";
@@ -437,6 +440,11 @@ namespace scpp::api_generation
                         if (mutable_access && erasing) body += expand(step.at("erase").text(),
                             {{"receiver", current}, {"key", "key_" + std::to_string(i)}}) + ";\n";
                         else if (mutable_access) body += expression + " = value;\n";
+                        else if (observing) {
+                            body += "const auto &path_leaf = " + expression + ";\n";
+                            body += "return boolean(" + expand(path.at("observation").at("expression").text(),
+                                {{"native", this->borrow(element, "path_leaf")}, {"value", "path_leaf"}}) + ");\n";
+                        }
                         else if (probing) {
                             body += "const auto &path_leaf = " + expression + ";\n";
                             body += "return boolean(" + expand(path.at("ready").text(),
@@ -481,7 +489,7 @@ namespace scpp::api_generation
             function_naming_(function_naming_registry(metadata_,leaves_,names_)) {}
 		value run()
 		{
-			fields_only(this->metadata_,"version types families bindings functions capabilities global_operators conversions function_sets function_families constant_sets conditions selections", "API metadata");
+			fields_only(this->metadata_,"version types families bindings functions capabilities global_operators conversions function_sets function_families constant_sets conditions selections value_observations", "API metadata");
 			if (this->metadata_.at("version").text()!="api-v1") throw std::runtime_error("Unsupported API metadata version");
             for (const auto &[key,t] : this->leaves_.fields) { this->validate_capabilities(t); this->claim(t.at("cpp").text(),key); }
             validate_import_capabilities(this->metadata_,this->leaves_,this->names_,this->imports_);

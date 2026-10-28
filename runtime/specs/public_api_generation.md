@@ -1911,7 +1911,7 @@ list, for example:
 ```
 
 Names are unqualified authored identifiers. Operations are `existing_read`, `existing_store`, `prefix_ready` and
-`existing_erase`; depth is an integer from 1 through 128. The generator follows each
+`existing_erase` (and `observe` below); depth is an integer from 1 through 128. The generator follows each
 resolved element's access protocol, without family-name dispatch. Only demanded
 operations are emitted. Public symbols are prefixed `path_`, headers use
 `scpp/access/<name>.hpp`, and ordinary API ownership detects conflicting definitions.
@@ -1934,7 +1934,7 @@ operation facts, including source argument graphs; importing a published API nev
 bypasses those checks. Physical paths feed the same function emitter, dependency
 inventory, layout probes and sealed reuse mechanism as other demanded APIs.
 
-This protocol does not yet implement final null-sensitive/empty probes, append/bootstrap,
+This protocol does not yet implement append/bootstrap,
 field-owner retention or heterogeneous boxed descent. Those need their own explicit
 protocol semantics; eager existing lookup must not stand in for them.
 
@@ -1954,7 +1954,7 @@ uses separate prefix calls before/after reached key expressions and stops on fal
 no reference or pointer survives a call. For the current non-null typed vector/hash
 roots, readiness before the first key is statically known. Scalar leaf readiness is
 rejected rather than interpreted as truthiness. `isset`/`empty` leaf observations
-remain separate work and must not be replaced by this membership check.
+use the separate value-observation protocol below, never this membership check.
 
 `existing_erase` returns void. It validates all memberships with const access before
 mutable traversal; a missing intermediate or final slot is a no-op. Only families
@@ -1963,3 +1963,34 @@ vector-element removal is rejected. Removal does not prune empty parents. Saved 
 expressions have already executed; source callbacks never run during validation or
 commit. Prefix calls preserve the compiler's lazy key schedule. These operations do
 not require leaf copying and expose no owned payload or interior reference.
+
+
+### Value observations at typed path leaves
+
+`value_observations` is the physical observation registry. Each entry declares
+explicit `types` and `families`, an `expression`, a `missing` statement and private
+`includes`. Expressions receive `${value}` (a const public leaf reference) and
+`${native}` (its resolved private borrow). Type/family names are validated against
+the naming registry; unknown or unregistered domains reject. Family capability
+validation still runs. The descriptor has no special type-name cases.
+
+A path with `operation: "observe"` supplies `observation: "isset"` or `"empty"`
+and returns concrete boolean. Membership guards precede each descent. Missing
+`isset` returns false; missing `empty` calls the existing invalid-empty authority.
+The leaf remains a const call-scoped reference; neither extraction nor copying is
+needed. Prefix readiness calls preserve lazy key evaluation and current-root
+re-resolution; the terminal operation receives saved keys only.
+
+`isset` binds native `isset_one` after representation borrowing. Its initial registry
+covers concrete scalars/null/string, mixed/dynamic, vector/hash and the four carrier
+families. Native probe semantics remain authoritative: successful Result state stays
+present even with boxed-null payload, false/error/absent states remain absent, and a
+true result_or_bool sentinel remains present. This does not flatten nested payloads
+or substitute condition truthiness. Ownership observations remain separately gated.
+
+`empty` binds native `empty` for string, vector/hash and mixed/dynamic. Statically
+unsupported scalar/carrier leaves reject; boxed scalar/null kinds throw through the
+existing runtime authority. String `"0"` is not empty. No source admission is inferred
+from the physical registry; source-mode requests still need prepared operation and
+formation facts. This mechanism does not yet migrate every standalone observation
+entry or complete heterogeneous boxed descent/field retention.

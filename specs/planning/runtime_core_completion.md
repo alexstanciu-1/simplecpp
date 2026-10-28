@@ -19,7 +19,7 @@ each slice. The original inventory is a baseline, not a current completion count
 | B2 | Complete for the agreed non-carrier special/mutation and text public paths; closure evidence below | Carrier forms C; indexed retention E; native exception inspection and overflow disposition G. |
 | C | Four carrier recipes and bounded scalar paths implemented; first prepared canonical path reviewed in C38 | Guarded negation and canonical lazy logical plans implemented in C32/C33; remaining source admission, broader selection and payload-specific integration remain; C38 passes the first-path checkpoint. Both decisions accepted 2026-10-28. |
 | D | Handle storage, presence planning, checked retention, shared ancestry/casts and weak/unique transports implemented (D1–D6) | Typed member access, operation-planner integration, ownership selections, value storage and source Exception transport remain. |
-| E | Existing vector/hash/boxed foundations; incomplete | Typed read/store and prefix readiness/removal implemented in E23/E24; final value probes, heterogeneous paths and remaining key policies; conditional lifecycle, cursor fixes, boxed access/probes, and positional/keyed built-in factories are implemented for the tested domains. |
+| E | Existing vector/hash/boxed foundations; incomplete | Typed read/store, prefix readiness/removal and bounded leaf observations implemented in E23–E25; heterogeneous paths and remaining key policies; conditional lifecycle, cursor fixes, boxed access/probes, and positional/keyed built-in factories are implemented for the tested domains. |
 | F | Pending | Callable transport and registered collection algorithms. |
 | G | Core utility and scalar debug bindings implemented | Exception/helper gaps and requirement-by-requirement closure audit. |
 
@@ -2630,3 +2630,38 @@ This is a physical prefix/removal protocol proof, not frontend integration. Fina
 null-sensitive `isset` and supported `empty` observations remain next: membership
 must not replace value state. Boxed heterogeneous paths, field-owner retention and
 other batch D/F/G work remain open. The goal is not complete.
+
+
+## E25 — typed leaf presence and emptiness observations (2026-10-28)
+
+A shared value-observation descriptor selects explicit type/family domains and
+metadata expressions/missing behavior. Typed path `observe` uses this descriptor,
+const membership guards and call-scoped leaf borrowing. The native `isset_one` and
+`empty` functions remain the semantic authorities. No family-specific generator
+branch or copied intermediate/leaf was introduced. Native private includes and
+publication dependencies follow the resolved representation.
+
+Registered presence domains cover scalars, boxes, containers and four carriers;
+empty covers string, vector/hash and boxes, with runtime checks for boxed kinds.
+Ownership probes and standalone observation consolidation remain open. Source-mode
+admission still requires prepared facts and source argument graphs.
+
+Release and ASan/UBSan/LSan tests prove nullable absent versus present zero, boxed
+null versus numeric zero, successful Result carrying boxed null versus failure,
+collection/string emptiness, missing-path behavior and invalid boxed empty errors.
+Repeated successful observations allocate zero. Scalar/carrier empty rejects during
+metadata planning. Existing path mutation/removal/lifetime, independent header,
+sealed reuse and new-operation reuse tests remain green; six focused regressions
+pass. Publication caught a fixture alias conflict for runtime-owned vector<mixed>;
+the fixture now correctly reuses vector_mixed rather than renaming it.
+
+The expanded fixture emits 25 application units at eight jobs. Sequential configuration
+runs measured 9.7785s release / 13.3466s sanitizer, public caller 0.1438s / 0.2209s.
+Release overlapped metadata-only regressions. Core archives were reused; regenerated
+runtime publication remains 406 units. Coverage is bounded: the new compiled carrier
+cases are nullable<int64> and result<mixed>; registration alone is not proof of every
+carrier payload combination or full batch-C completion.
+
+Remaining E work includes typed/boxed heterogeneous compositions, key adaptation
+and policies, field-owner retention and broader admitted leaf coverage. D ownership
+selection/value/Exception transport, F callbacks and G closure also remain open.

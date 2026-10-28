@@ -133,3 +133,17 @@ and accepts only saved keys for that prefix. Leaf readiness requires a registere
 receiver protocol. It is not `isset`: null-sensitive final value observations and
 `empty` dispatch remain separate follow-up work, along with boxed heterogeneous
 composition and field-owner retention. Source evaluation stays compiler-owned.
+
+
+## Value-observation extension (E25)
+
+Typed leaf observations now select a shared physical metadata descriptor and reuse
+native `isset_one` / `empty` authorities after private representation borrowing.
+Missing membership is false for `isset` and the native invalid-empty error for
+`empty`. Probe access never copies the leaf. The registry admits explicit scalar,
+boxed, container and carrier domains for presence; emptiness stays limited to string,
+containers and runtime-checked boxes. Existing source preparation remains the
+admission owner. The direct typed-key surface still uses each family's concrete key;
+nullable/dynamic key adaptation, boxed heterogeneous descent and field retention
+remain separate integration work. Standalone observation consolidation is not
+claimed by this path slice.
