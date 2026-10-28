@@ -408,6 +408,7 @@ namespace scpp::api_generation
             };
             parameter("root", path.at("root"), writing ? "ref" : "const_ref");
             std::set<std::string> headers{"type_traits", "utility", "scpp/detail/concrete_access.hpp"};
+            this->dependencies(this->materialize(path.at("root").text()), headers, {});
             if (observing) this->dependencies(path.at("observation"), headers, {});
             if (probing) this->dependencies(path.at("ready_protocol"), headers, {});
             unsigned index = 0;
@@ -426,6 +427,8 @@ namespace scpp::api_generation
             auto traverse = [&](bool mutable_access) {
                 std::string body;
                 std::string current = mutable_access ? "${native:root}" : "std::as_const(${native:root})";
+                if (steps.empty()) return "return boolean(" + expand(path.at("ready").text(),
+                    {{"receiver", current}, {"removing", path.at("removing").text()}}) + ");\n";
                 for (std::size_t i = 0; i < steps.size(); ++i) {
                     const auto &step = steps[i];
                     const auto element = this->materialize(step.at("element").text());
@@ -434,28 +437,27 @@ namespace scpp::api_generation
                     const auto key_type = this->materialize(step.at("key").text());
                     this->dependencies(key_type, headers, {});
                     const substitutions access_context{{"receiver", current}, {"key", key},
-                        {"native_key", this->borrow(key_type, key)}};
+                        {"native_key", this->borrow(key_type, key)}, {"removing", path.at("removing").text()}};
                     const auto expression = expand(step.at(mutable_access ? "mutable" : "read").text(), access_context);
                     if (!mutable_access && (probing || erasing || observing)) {
-                        const auto present = expand(step.at("present").text(),
-                            {{"receiver", current}, {"key", "key_" + std::to_string(i)}});
+                        const auto present = expand(step.at("present").text(), access_context);
                         body += "if (!(" + present + ")) { " + (observing ? path.at("observation").at("missing").text() : probing ? "return boolean(false);" : "return;") + " }\n";
                     }
                     body += "static_assert(std::is_same_v<decltype((" + expression + ")), "
                         + (mutable_access ? "" : "const ") + (native_element ? element.at("native").text() : element.at("cpp").text()) + " &>);\n";
                     if (i + 1 == steps.size()) {
-                        if (mutable_access && erasing) body += expand(step.at("erase").text(),
-                            {{"receiver", current}, {"key", "key_" + std::to_string(i)}}) + ";\n";
+                        if (mutable_access && erasing) body += expand(step.at("erase").text(), access_context) + ";\n";
                         else if (mutable_access) body += expression + " = " + (native_element ? this->borrow(element, "value") : "value") + ";\n";
                         else if (observing) {
                             body += "const auto &path_leaf = " + expression + ";\n";
-                            body += "return boolean(" + expand(path.at("observation").at("expression").text(),
-                                {{"native", this->borrow(element, "path_leaf")}, {"value", "path_leaf"}}) + ");\n";
+                            substitutions observation_context{{"native", native_element ? "path_leaf" : this->borrow(element, "path_leaf")}};
+                            if (!native_element) observation_context["value"] = "path_leaf";
+                            body += "return boolean(" + expand(path.at("observation").at("expression").text(), observation_context) + ");\n";
                         }
                         else if (probing) {
                             body += "const auto &path_leaf = " + expression + ";\n";
                             body += "return boolean(" + expand(path.at("ready").text(),
-                                {{"receiver", this->borrow(element, "path_leaf")}}) + ");\n";
+                                {{"receiver", native_element ? "path_leaf" : this->borrow(element, "path_leaf")}, {"removing", path.at("removing").text()}}) + ");\n";
                         }
                         else body += (writing ? "(void)(" + expression + ");\n" : "return " + expression + ";\n");
                     } else {

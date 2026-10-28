@@ -1912,7 +1912,7 @@ list, for example:
 ```
 
 Names are unqualified authored identifiers. Operations are `existing_read`, `existing_store`, `prefix_ready` and
-`existing_erase` (and `observe` below); depth is an integer from 1 through 128. The generator follows each
+`existing_erase` (and `observe` below); depth is an integer from 1 through 128 (zero is also allowed for prefix readiness). The generator follows each
 resolved element's access protocol, without family-name dispatch. Only demanded
 operations are emitted. Public symbols are prefixed `path_`, headers use
 `scpp/access/<name>.hpp`, and ordinary API ownership detects conflicting definitions.
@@ -1970,8 +1970,9 @@ not require leaf copying and expose no owned payload or interior reference.
 
 `value_observations` is the physical observation registry. Each entry declares
 explicit `types` and `families`, an `expression`, a `missing` statement and private
-`includes`. Expressions receive `${value}` (a const public leaf reference) and
-`${native}` (its resolved private borrow). Type/family names are validated against
+`includes`. Expressions receive `${native}` (the resolved private borrow). `${value}` is also
+available when the leaf is stored as a public wrapper; native interiors do not
+pretend to be public references. Type/family names are validated against
 the naming registry; unknown or unregistered domains reject. Family capability
 validation still runs. The descriptor has no special type-name cases.
 
@@ -2017,7 +2018,29 @@ keys. Native `index_existing_at` validates all segments before mutable descent;
 `keyed_descend` supplies mixed COW and dynamic identity-preserving storage access.
 Typed vector/hash public children can therefore lead into their existing boxed
 storage without copy-modify-replace or a separate family-specific emitter. The initial
-compiled proof uses vectors with three-step mixed and dynamic paths. These recipes
-do not yet admit composed observations, readiness or removal. Weak mixed paths and
+compiled proof uses vectors with three-step mixed and dynamic paths. Composed observations, readiness and removal use the protocol extension below. Weak mixed paths and
 cross-family mixed/dynamic conversions remain gated; registration does not relax
 source-language family separation.
+
+
+### Boxed readiness, observations and removal composition
+
+Mixed/dynamic access protocols now supply native `keyed_present`, `keyed_ready` and
+`keyed_erase`. The generic composer passes `${removing}`: true for existing removal,
+false for observations, and chosen by `purpose: "probe" | "remove"` for a prefix
+readiness demand (default probe). Purpose is invalid on other operations. Receiver
+and key validation remain in those native functions: missing/null stops, wrong-kind
+receivers and keys produce probe false versus removal errors, and weak mixed paths
+remain rejected. Missing `empty` still throws through its value-observation policy.
+
+Prefix readiness allows depth zero to check the root before any key expression.
+For positive depths it follows only saved keys and checks the resulting receiver.
+Each call starts at the current root; callers must recheck after key-expression
+side effects and skip later keys when readiness fails. No interior reference is
+retained between calls. Whole-root binding/owner retention stays compiler-owned.
+
+Native leaf observations use the leaf reference directly rather than attempting to
+unwrap it as a public class. Removal first validates the full const path, then uses
+native mutable descent and erase; present null leaves are removable, missing paths
+are no-ops, and parents are not pruned. Existing mixed COW and dynamic shared identity
+continue to apply. No mixed/dynamic family crossing or vector-element erase is added.

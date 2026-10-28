@@ -9,23 +9,27 @@ namespace scpp::api_generation
     value describe_access_path(const value &metadata, const value &leaves,
         const value &aliases, const value &request)
     {
-        fields_only(request, "root depth operation observation", "access path");
+        fields_only(request, "root depth operation observation purpose", "access path");
         const auto operation = request.at("operation").text();
         if (operation != "existing_read" && operation != "existing_store"
             && operation != "prefix_ready" && operation != "existing_erase" && operation != "observe")
             throw std::runtime_error("Unsupported access path operation");
         if (request.has("observation") && operation != "observe")
             throw std::runtime_error("Observation requires observe operation");
+        const auto purpose = request.get("purpose", "probe");
+        if (request.has("purpose") && (operation != "prefix_ready" || (purpose != "probe" && purpose != "remove")))
+            throw std::runtime_error("Prefix purpose must be probe or remove");
         const auto &depth_value = request.at("depth");
         if (depth_value.type != value::kind::number || depth_value.scalar.empty()
             || depth_value.scalar.find_first_not_of("0123456789") != std::string::npos
             || depth_value.scalar.size() > 3)
             throw std::runtime_error("Access path depth must be an integer from 1 to 128");
         const auto depth = std::stoul(depth_value.scalar);
-        if (depth == 0 || depth > 128) throw std::runtime_error("Access path depth must be from 1 to 128");
+        if ((depth == 0 && operation != "prefix_ready") || depth > 128) throw std::runtime_error("Access path depth must be from 1 to 128");
         naming names(metadata_naming_registry(metadata, leaves, aliases));
         auto receiver = names.resolve(request.at("root").text()).first;
         value result = value::object(); result["root"] = receiver; result["operation"] = operation;
+        result["removing"] = operation == "existing_erase" || purpose == "remove" ? "true" : "false";
         result["steps"] = value::array();
         for (unsigned index = 0; index < depth; ++index) {
             const auto node = names.bind(receiver);

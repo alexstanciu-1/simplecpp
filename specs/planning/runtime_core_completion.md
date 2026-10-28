@@ -19,7 +19,7 @@ each slice. The original inventory is a baseline, not a current completion count
 | B2 | Complete for the agreed non-carrier special/mutation and text public paths; closure evidence below | Carrier forms C; indexed retention E; native exception inspection and overflow disposition G. |
 | C | Four carrier recipes and bounded scalar paths implemented; first prepared canonical path reviewed in C38 | Guarded negation and canonical lazy logical plans implemented in C32/C33; remaining source admission, broader selection and payload-specific integration remain; C38 passes the first-path checkpoint. Both decisions accepted 2026-10-28. |
 | D | Handle storage, presence planning, checked retention, shared ancestry/casts and weak/unique transports implemented (D1–D6) | Typed member access, operation-planner integration, ownership selections, value storage and source Exception transport remain. |
-| E | Existing vector/hash/boxed foundations; incomplete | Typed access/observations and typed-to-boxed existing read/store implemented in E23–E26; boxed probe/removal composition and remaining key policies; conditional lifecycle, cursor fixes, boxed access/probes, and positional/keyed built-in factories are implemented for the tested domains. |
+| E | Existing vector/hash/boxed foundations; incomplete | Typed/boxed existing access, observations and removal implemented in E23–E27; creating writes, key adaptation/policies and field-owner retention; conditional lifecycle, cursor fixes, boxed access/probes, and positional/keyed built-in factories are implemented for the tested domains. |
 | F | Pending | Callable transport and registered collection algorithms. |
 | G | Core utility and scalar debug bindings implemented | Exception/helper gaps and requirement-by-requirement closure audit. |
 
@@ -2695,3 +2695,32 @@ Composed boxed probes/removal remain next: readiness must distinguish probe fals
 removal wrong-kind errors and must retain lazy keys. Key adaptation/policies, field-owner
 retention, and the remaining C/D/F/G backlog are still open. This is not batch-E or
 overall goal completion.
+
+
+## E27 — composed boxed probes, readiness and removal (2026-10-28)
+
+Mixed/dynamic access metadata now registers membership, readiness and erase through
+the existing native keyed authorities. The generic composer passes removal purpose;
+prefix readiness accepts probe/remove purpose and depth zero for root checks before
+any key expression. Native leaf observations use their actual private reference,
+not a fictitious public-wrapper reference. No new family-specific emitter or probe
+exception swallowing was added.
+
+Release and ASan/UBSan/LSan pass: present-null removal, missing leaf/intermediate
+no-ops, unpruned parents, native boxed observations, missing empty errors, invalid
+boxed-key probe false versus removal throw, scalar receiver false versus removal
+throw, null root stopping, and fresh prefix checks after root mutation. Repeated
+removal/no-ops in the measured fixture allocate zero. Prior COW/shared-identity,
+read/store, carrier-observation and lifetime proofs remain green. Independent headers,
+sealed reuse, prepared facts and six focused metadata regressions pass.
+
+The combined fixture now emits 40 application units: 16.5769s release / 22.1673s
+sanitizer at eight jobs; public caller 0.2175s / 0.3933s. Configuration runs were
+sequential; release overlapped metadata regressions. These are expanded regression
+fixture compile times, not a compiler rebuild measurement. Runtime archives were
+reused and publication remains 406 units.
+
+This closes the tested existing-access/probe/removal typed-to-boxed path, not all
+indexed operations. Ordinary creating store/append, key adaptation/policies,
+field-owner retention, broader payload coverage and long-path performance remain.
+Remaining C/D/F/G work is unchanged; the goal remains active.

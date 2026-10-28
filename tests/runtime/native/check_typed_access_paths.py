@@ -39,6 +39,14 @@ names['vector<dynamic>']='path_dynamic_vector'
 for name,container in [('mixed','vector<mixed>'),('dynamic','vector<dynamic>')]:
     for suffix,operation in [('read','existing_read'),('store','existing_store')]:
         paths[name+'_'+suffix]={'root':container,'depth':3,'operation':operation}
+for name,container in [('mixed','vector<mixed>'),('dynamic','vector<dynamic>')]:
+    paths[name+'_ready']={'root':container,'depth':2,'operation':'prefix_ready'}
+    paths[name+'_erase']={'root':container,'depth':3,'operation':'existing_erase'}
+    paths[name+'_isset']={'root':container,'depth':3,'operation':'observe','observation':'isset'}
+paths['mixed_empty']={'root':'vector<mixed>','depth':3,'operation':'observe','observation':'empty'}
+paths['mixed_remove_ready']={'root':'vector<mixed>','depth':2,'operation':'prefix_ready','purpose':'remove'}
+paths['box_ready']={'root':'mixed','depth':0,'operation':'prefix_ready'}
+paths['box_remove_ready']={'root':'mixed','depth':0,'operation':'prefix_ready','purpose':'remove'}
 data={'package':'application.paths','roots':[],'paths':paths,'apis':list(paths),'names':names}
 base={'metadata':metadata,'request':data,'leaves':{},'names':names,'imports':{},'layouts':{}}
 def plan(request,error=None):
@@ -81,7 +89,7 @@ for name,path in paths.items():
         else:
             params=arguments[receiver]
             keys.append(params.get('K','uint64'));receiver=params.get('T',params.get('V'));elements.append(receiver)
-    bindings[prefix+'value']=binding(elements[-1])
+    bindings[prefix+'value']=binding(elements[-1] if elements else path['root'])
     for i,(key,element) in enumerate(zip(keys,elements)):
         bindings[prefix+'key_'+str(i)]=binding(key);bindings[prefix+'element_'+str(i)]=binding(element)
 requirements=[{'subject':slot,'contract':'application_formed'} for slot in bindings]+[{'subject':'operation','contract':'existing_path_admitted'}]
@@ -107,8 +115,8 @@ bad=copy.deepcopy(base);bad['request']['paths']['matrix_isset']['observation']='
 plan(bad,'Unsupported value observation')
 bad=copy.deepcopy(base);bad['request']['paths']['optional_isset']['observation']='empty'
 plan(bad,'Unsupported value observation')
-bad=copy.deepcopy(base);bad['request']['paths']['mixed_read']['operation']='existing_erase'
-plan(bad,'Unsupported receiver access operation')
+bad=copy.deepcopy(base);bad['request']['paths']['mixed_read']['purpose']='remove'
+plan(bad,'Prefix purpose')
 bad=copy.deepcopy(base);bad['metadata']['families']['mixed']['access']['element_storage']='pointer'
 plan(bad,'Invalid access element storage')
 print('PASS: generic typed path composition, bounds on depth, prepared slot/fact checks')

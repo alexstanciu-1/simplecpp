@@ -160,3 +160,15 @@ Composed boxed probes/removal remain gated pending receiver readiness/error-mode
 integration; ordinary missing/creating writes are separate from existing-only paths.
 No mixed-to-dynamic implicit crossing, weak-path admission or frontend integration
 is implied.
+
+
+## Boxed probes and removal (E27)
+
+The same native/public representation protocol now composes boxed observations and
+removal. Prefix readiness has explicit probe/removal purpose and accepts depth zero
+for root readiness. Native membership/readiness helpers own invalid-kind behavior;
+no blanket exception catch or inferred truthiness is used. Missing/null stops,
+whereas wrong-kind removal throws. Present null leaves are removed, parents remain,
+and completed const validation precedes mutable descent. The fixture covers current
+root rechecks and skipped later work. Field-owner retention, ordinary creating writes,
+key adaptation and remaining key policies are not closed by this slice.

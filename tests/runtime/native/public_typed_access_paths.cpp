@@ -98,6 +98,40 @@ int main() {
     CHECK(failed && mixed_read(mixed_roots,uint64(0),outer_key,inner_key).get_int()==int64(99));
     failed=false;try { dynamic_store(dynamic_roots,uint64(0),outer_key,missing,dynamic(int64(5))); } catch(...) { failed=true; }
     CHECK(failed && dynamic_read(dynamic_roots,uint64(0),outer_key,inner_key).get_int()==int64(99));
+    CHECK(mixed_ready(mixed_roots,uint64(0),outer_key));
+    CHECK(dynamic_ready(dynamic_roots,uint64(0),outer_key));
+    CHECK(mixed_isset(mixed_roots,uint64(0),outer_key,inner_key));
+    CHECK(dynamic_isset(dynamic_roots,uint64(0),outer_key,inner_key));
+    CHECK(!mixed_isset(mixed_roots,uint64(0),outer_key,missing));
+    mixed_store(mixed_roots,uint64(0),outer_key,inner_key,mixed(string("")));
+    CHECK(mixed_empty(mixed_roots,uint64(0),outer_key,inner_key));
+    mixed_store(mixed_roots,uint64(0),outer_key,inner_key,mixed());
+    CHECK(!mixed_isset(mixed_roots,uint64(0),outer_key,inner_key));
+    const auto erase_allocations=allocations;
+    mixed_erase(mixed_roots,uint64(0),outer_key,inner_key); // Removes a present null.
+    dynamic_erase(dynamic_roots,uint64(0),outer_key,inner_key);
+    mixed_erase(mixed_roots,uint64(0),outer_key,inner_key);
+    dynamic_erase(dynamic_roots,uint64(0),outer_key,inner_key);
+    CHECK(allocations==erase_allocations);
+    CHECK(mixed_ready(mixed_roots,uint64(0),outer_key)); // No parent pruning.
+    CHECK(!dynamic_isset(dynamic_roots,uint64(0),outer_key,inner_key));
+    failed=false;try { mixed_empty(mixed_roots,uint64(0),outer_key,inner_key); } catch(...) { failed=true; } CHECK(failed);
+    const mixed invalid_key(boolean(false));
+    CHECK(!mixed_isset(mixed_roots,uint64(0),outer_key,invalid_key));
+    failed=false;try { mixed_erase(mixed_roots,uint64(0),outer_key,invalid_key); } catch(...) { failed=true; } CHECK(failed);
+    mixed scalar(int64(4));CHECK(!box_ready(scalar));
+    failed=false;try { box_remove_ready(scalar); } catch(...) { failed=true; } CHECK(failed);
+    mixed absent;CHECK(!box_ready(absent) && !box_remove_ready(absent));
+    int later_keys=0;
+    if (box_ready(absent)) ++later_keys;
+    CHECK(later_keys==0);
+    mixed current=mixed_roots.at(uint64(0));current.set(outer_key,mixed(int64(8)));mixed_roots.set(uint64(0),current);
+    CHECK(!mixed_ready(mixed_roots,uint64(0),outer_key)); // Re-resolve after key effects.
+    CHECK(!mixed_isset(mixed_roots,uint64(0),outer_key,inner_key));
+    failed=false;try { mixed_remove_ready(mixed_roots,uint64(0),outer_key); } catch(...) { failed=true; } CHECK(failed);
+    failed=false;try { mixed_erase(mixed_roots,uint64(0),outer_key,inner_key); } catch(...) { failed=true; } CHECK(failed);
+    mixed_roots.set(uint64(0),mixed_parent); // Original COW snapshot has the existing leaf.
+    mixed_store(mixed_roots,uint64(0),outer_key,inner_key,mixed(int64(99)));
     auto saved_box=mixed_read(mixed_roots,uint64(0),outer_key,inner_key);
     mixed_roots.clear();CHECK(saved_box.get_int()==int64(99));
     auto detached=row_read(matrix,uint64(0));detached.set(uint64(0),int64(200));

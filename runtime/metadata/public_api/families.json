@@ -2149,14 +2149,20 @@
       "element_storage": "native",
       "operations": [
         "existing_read",
-        "existing_store"
+        "existing_store",
+        "prefix_ready",
+        "existing_erase",
+        "observe"
       ],
       "read": "scpp::index_existing_at(${receiver}, ${native_key})",
       "mutable": "scpp::keyed_descend(${receiver}, ${native_key})",
       "includes": [
         "scpp/index_existing.hpp",
         "scpp/keyed_path.hpp"
-      ]
+      ],
+      "present": "scpp::keyed_present(&(${receiver}), ${native_key}, ${removing})",
+      "ready": "scpp::keyed_ready(&(${receiver}), ${removing})",
+      "erase": "scpp::keyed_erase(${receiver}, ${native_key})"
     }
   },
   "dynamic": {
@@ -2658,14 +2664,20 @@
       "element_storage": "native",
       "operations": [
         "existing_read",
-        "existing_store"
+        "existing_store",
+        "prefix_ready",
+        "existing_erase",
+        "observe"
       ],
       "read": "scpp::index_existing_at(${receiver}, ${native_key})",
       "mutable": "scpp::keyed_descend(${receiver}, ${native_key})",
       "includes": [
         "scpp/index_existing.hpp",
         "scpp/keyed_path.hpp"
-      ]
+      ],
+      "present": "scpp::keyed_present(&(${receiver}), ${native_key}, ${removing})",
+      "ready": "scpp::keyed_ready(&(${receiver}), ${removing})",
+      "erase": "scpp::keyed_erase(${receiver}, ${native_key})"
     }
   },
   "result_or_false": {
