@@ -79,7 +79,7 @@ no equivalent new public path identified. Published/recipe does not mean complet
 | In-band errors and retained exceptions | Published error_value, failure construction, exception_info inspection/rethrow | Source `Exception` construction/identity/throw-catch transport is separate and still absent. Finish wrapper integration and any required diagnostic callbacks; no need to expose native STL trace containers. | C/D/G |
 | Global operators and conversions | C++ resolver + normalized addition; boxed equality/inequality; native helper enforces checked scalar equality | Most arithmetic, ordering, strict identity, shifts/bitwise, power, unary/mutation/compound, checked casts, truthiness, concat and wrapper dispatch. Existing support in concrete integer/string headers is not shared-resolver coverage. | A/B/C |
 | vector_t<T> | Recipe + published vector_string; indexing copies, set/append, size/capacity/resize/compact, iteration, count/empty/isset | Conditional lifecycle rather than unconditional copyable payloads; source initializer paths, full keyed/lvalue/probe protocols and helper spellings; stable shared-element extraction where admitted. Review end-idempotent cursor next() debt. | C/D/E |
-| hash_t<V,K> | Recipe, defaults, typed key capability checks, checked access/find/set/remove/append and cursor proofs | Complete admitted key bindings beyond currently selected string/integer policies; application-defined H/E bindings; initialization and nested keyed paths; move-only/conditional-copy support; cursor debt. No public insertion through read-only `operator[]`; source array notation follows its existing hash/container lowering, not a new public array family. | D/E |
+| hash_t<V,K> | Recipe, defaults, typed key capability checks, checked access/find/set/remove/append and cursor proofs | Complete admitted key bindings beyond currently selected string/integer policies; representation-specific hashing/equality bindings (not user-supplied H/E parameters; see E35); initialization and nested keyed paths; move-only/conditional-copy support; cursor debt. No public insertion through read-only `operator[]`; source array notation follows its existing hash/container lowering, not a new public array family. | D/E |
 | nullable<T> and result<T> | Recipes with checked owned extraction and take; published result_vector_string | Conditional payload capabilities; complete construction/reset/swap/extraction where admitted; wrapper casts, state comparisons, lifted operations and lazy selection. Result errors cannot silently become values. | C |
 | result_or_false<T>, result_or_bool<T> | Recipes, sentinel factories, conditional lifecycle, state/take and nested/noncopyable physical proofs | Broader payload/operator domains, source formation constraints and complete state-preserving plan execution matrix. | C |
 | mixed_t and dynamic_t | Published scalar/null construction and extraction, family-preserving containers, mutation/removal/iteration, explicit scalar family crossing, checked equality | Numeric/bitwise/order/unary/compound public paths; condition/text conversion; count/empty/isset/probe helpers; nested keyed operations. Preserve mixed value/COW versus dynamic identity. Cycle reclamation remains separately accepted debt, not an API migration. | A/B/E |
@@ -2909,3 +2909,29 @@ views, casts and prepared generation. Five generated units compiled at eight job
 2.9467s release / 5.5981s sanitized; public-only caller 0.0933s / 0.1210s. Generator
 binaries were rebuilt; core archives were reused. Runtime publication was refreshed
 at 406 units, with no representation changes to the selected runtime-owned roots.
+
+
+## E35 — optional object keys and nested access composition (2026-10-28)
+
+Key-policy audit: `specs/array_semantics.md` defines ordinary integer/string and
+shared class/interface keys with fixed semantics; `runtime/specs/hash_t.md` and the
+native `hash_t<T_VALUE,T_KEY>` declaration have no user-supplied hasher/comparator
+parameters. The older capability matrix uses H/E for hashing/equality representation
+bindings and explicitly identifies `key_ops<K>` as private implementation. The initial
+inventory's “application-defined H/E bindings” was ambiguous: application-owned key
+representations need the prescribed policy bridge (E34), not a new customizable hash
+policy API. This is a disposition of that inventory item under the agreed native-only
+scope rule, not removal of admitted source key contracts.
+
+Extend E34's prepared fixture with optional shared-derived extraction, admitted upcast
+to the declared base key, and hash<vector<int64>,shared<base>> access paths. Existing
+nullable, ownership and path metadata compose without new generator branches. The
+proof checks captured key lifetime after source reset, zero-allocation nested scalar
+reads/stores, absent optional failure before RHS, lazy missing-prefix skipping, and
+membership revalidation after deletion without recreating the entry. Broader field
+access/owner retention remains open, as do the remaining C/D/F/G items.
+
+Release and ASan/UBSan/LSan execution, prepared negatives, public-only compilation
+and sealed application reuse passed. The expanded fixture compiled 13 units at
+eight jobs in 5.7627s release / 8.8377s sanitized; callers took 0.1123s / 0.1590s.
+No runtime/generator changes or rebuilds were needed for this composition slice.

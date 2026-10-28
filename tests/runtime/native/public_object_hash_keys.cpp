@@ -34,5 +34,33 @@ int main() {
         CHECK(lookup.at(saved_key)==int64(23));
     }
     CHECK(fixture::base::live==0);
+    {
+        auto original=key_derived::make();optional_key optional(original);
+        key_base saved;
+        { const auto extracted=optional.require_value("indexed key");saved=TO_BASE(extracted); }
+        optional=optional_key();original.reset(); // Saved key retains the captured identity.
+        key_row row;row.append(int64(4));key_rows rows;rows.set(saved,row);
+        const auto before=allocations;
+        for(int i=0;i<100;++i) {
+            store_key_row(rows,saved,int64(0),int64(8));
+            CHECK(read_key_row(rows,saved,int64(0))==int64(8));
+        }
+        CHECK(allocations==before);
+        optional_key missing;int rhs_calls=0;bool failed=false;
+        try {
+            const auto key=TO_BASE(missing.require_value("indexed key"));
+            ++rhs_calls;store_key_row(rows,key,int64(0),int64(99));
+        } catch(...) { failed=true; }
+        CHECK(failed && rhs_calls==0);
+        auto other=key_derived::make();const auto absent=TO_BASE(other);int later_key_calls=0;
+        if(ready_key_row(rows,absent)) { ++later_key_calls;(void)missing.require_value("later key"); }
+        CHECK(later_key_calls==0);
+        // A saved key survives RHS effects, but existing-store must recheck membership.
+        erase_key_row(rows,saved);failed=false;
+        try { store_key_row(rows,saved,int64(0),int64(99)); } catch(...) { failed=true; }
+        CHECK(failed && !rows.has(saved));
+        erase_key_row(rows,saved); // Absent removal is a no-op.
+    }
+    CHECK(fixture::base::live==0);
     std::puts("PASS: identity/upcast, allocation-free lookup, map value semantics and retained key lifetime");
 }

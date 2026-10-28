@@ -236,3 +236,12 @@ conversion happens before lookup, and typed hash storage retains the converted k
 Weak/unique public families do not advertise key capability. The focused storage,
 upcast, identity, lifetime and publication proof does not close broader key-expression
 composition or field-owner retention work.
+
+
+## Optional object-key path composition (E35)
+
+The prepared proof composes nullable shared extraction, the existing ancestry API,
+and nested typed path operations. Saved keys retain their object independently of
+the source wrapper. Missing-prefix probes skip later extraction, while existing-store
+rechecks membership after RHS effects. No additional key converter or source inference
+was introduced. Field-owner retention remains a separate missing boundary.

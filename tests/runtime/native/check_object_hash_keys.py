@@ -22,13 +22,27 @@ args=parser.parse_args();args.tool=args.tool.resolve()
 leaves={name:{'cpp':'fixture::'+name,'header':'key_records.hpp','owner':'application.object_keys',
              'capabilities':['default_storage']} for name in ['base','derived']}
 names={'shared<base>':'key_base','shared<derived>':'key_derived','hash<int64,shared<base>>':'object_hash'}
-data={'package':'application.object_keys','roots':['hash<int64,shared<base>>'],'leaves':leaves,'names':names,
-      'apis':['shared_upcast<base,derived>']}
+names.update({'vector<int64>':'key_row','hash<vector<int64>,shared<base>>':'key_rows',
+              'nullable<shared<derived>>':'optional_key'})
+paths={name:{'root':'hash<vector<int64>,shared<base>>','depth':depth,'operation':operation}
+       for name,depth,operation in [('read_key_row',2,'existing_read'),('store_key_row',2,'existing_store'),
+                                    ('ready_key_row',1,'prefix_ready'),('erase_key_row',1,'existing_erase')]}
+data={'package':'application.object_keys','roots':['hash<int64,shared<base>>','nullable<shared<derived>>'],'leaves':leaves,'names':names,
+      'paths':paths,'apis':['shared_upcast<base,derived>',*paths]}
 def binding(physical,arguments=None):
     return {'source':'source.'+physical,'physical':physical,'arguments':{k:'source.'+v for k,v in (arguments or {}).items()}}
 bindings={'root_0':binding(data['roots'][0],{'V':'int64','K':'shared<base>'}),
           'api_0_To':binding('base'),'api_0_From':binding('derived')}
-dependencies={'key':binding('shared<base>',{'T':'base'}),'value':binding('int64')}
+bindings['root_1']=binding('nullable<shared<derived>>',{'T':'shared<derived>'})
+for name,path in paths.items():
+    prefix='path_'+name+'_'
+    bindings[prefix+'root']=binding(path['root'],{'V':'vector<int64>','K':'shared<base>'})
+    bindings[prefix+'key_0']=binding('shared<base>',{'T':'base'})
+    bindings[prefix+'element_0']=binding('vector<int64>',{'T':'int64'})
+    bindings[prefix+'value']=binding('int64') if path['depth']==2 else binding('vector<int64>',{'T':'int64'})
+    if path['depth']==2:
+        bindings[prefix+'key_1']=binding('int64');bindings[prefix+'element_1']=binding('int64')
+dependencies={'derived_key':binding('shared<derived>',{'T':'derived'}),'key':binding('shared<base>',{'T':'base'}),'value':binding('int64')}
 requirements=[{'subject':slot,'contract':'application_formed'} for slot in bindings]
 requirements += [{'subject':'dependency:'+slot,'contract':'application_formed'} for slot in dependencies]
 requirements += [{'subject':'operation','contract':'identity_key_ancestry_admitted'}]
@@ -84,6 +98,9 @@ with tempfile.TemporaryDirectory(prefix='scpp-object-keys-') as directory:
     manifest=concrete_types.generate(request,app,sdk,[sdk],'clang++',[])
     api=manifest['apis'][data['apis'][0]]
     caller='#include "'+manifest['types'][data['roots'][0]]['header']+'"\n#include "'+api['header']+'"\n'
+    caller+='\n'.join('#include "'+manifest['types'][identity]['header']+'"' for identity in data['roots'])+'\n'
+    caller+='\n'.join('#include "'+manifest['apis'][name]['header']+'"' for name in paths)+'\n'
+    caller+='\n'.join('#define '+name+' scpp::'+manifest['apis'][name]['operation']['name'] for name in paths)+'\n'
     caller+='#define TO_BASE scpp::'+api['operation']['name']+'\n'
     caller+=(root/'tests/runtime/native/public_object_hash_keys.cpp').read_text();(work/'caller.cpp').write_text(caller)
     flags=['-std=c++23','-O1']
