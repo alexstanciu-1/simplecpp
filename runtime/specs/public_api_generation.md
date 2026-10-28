@@ -843,7 +843,8 @@ required completion work; scalar zero-allocation evidence does not cover them.
 
 A unary operation may opt into `condition_operand: true` only when it uses the
 configured condition function-set owner, const operand passing and a boolean result.
-For a carrier, its plan becomes `condition_operator`, containing the condition plan
+For a carrier outside an explicitly configured `carrier_unary.payloads` domain,
+its plan becomes `condition_operator`, containing the condition plan
 and the existing optional `result_expression`. Logical negation uses `!${result}`;
 the condition must be evaluated once before that expression. Plain operands keep
 the operation's original explicit admission list. Lazy source branches and operand
@@ -1115,8 +1116,10 @@ public-library proof does not replace frontend destination/owner preparation.
 A unary operation may declare `carrier_unary` with admitted `payloads` and a
 `result` policy: `payload`, `updated_carrier`, or `old_carrier`. Payload policies
 require the scalar operation's const-reference input; update policies require its
-writable-reference input. Conditions retain their separate state-aware owner and
-cannot also select this checked-payload policy. Payload lists cannot exceed the
+writable-reference input. An operation may combine this policy with
+`condition_operand`: matching payloads use checked projection before any
+state-aware condition fallback. Direct `resolve_condition` remains unchanged.
+Payload lists cannot exceed the
 ordinary scalar operation's admission.
 
 The `carrier_unary` plan performs one checked payload projection and calls the
@@ -1625,3 +1628,15 @@ helper. Lowering reads before RHS effects, computes/converts using ordinary comp
 rules, and invokes writeback afterwards. Missing paths never bootstrap. The same
 saved-key vector supports both stages without retaining interior references across
 source execution; current receiver structure and saved value are separate inputs.
+
+
+### Guarded logical negation (2026-10-28)
+
+`logical_not` selects the shared checked carrier-unary plan for canonical boolean,
+int64 and float64 payloads across the four carrier families. The consumer evaluates
+the source once, obtains the required payload, calls the scalar calculation and
+applies its `result_expression` once. Unavailable states fail at projection; the
+boolean result is not a reconstructed carrier. Present false/zero negates to true.
+Direct conditions retain their separate nonthrowing unavailable-state decisions.
+This slice does not settle non-numeric condition-negation admission or add lazy
+and/or; those remain explicit carrier-review work.

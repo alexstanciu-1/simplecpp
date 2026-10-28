@@ -92,7 +92,7 @@ namespace scpp::api_generation
             if (operation.has("carrier_unary")) {
                 const auto &policy = operation.at("carrier_unary");
                 fields_only(policy, "payloads result", "carrier unary policy");
-                if (form!="unary" || operation.has("condition_operand"))
+                if (form!="unary")
                     throw std::runtime_error("Carrier unary requires a dedicated unary payload operation");
                 for (const auto &type : domains(policy.at("payloads")))
                     if (!contains(operation.at("operands"), type)) throw std::runtime_error("Carrier unary payload is outside scalar admission");
@@ -653,8 +653,14 @@ namespace scpp::api_generation
         if (operation.get("form", "binary") == "unary" && operation.yes("condition_operand")
             && !registry.at("types").has(request.at("operand").text())) {
             fields_only(request, "operation operand", "unary operator request");
-            if (project_carrier(metadata, request.at("operand").text(), names).type == value::kind::null)
+            const auto projection = project_carrier(metadata, request.at("operand").text(), names);
+            if (projection.type == value::kind::null)
                 return resolve_plain_operator(metadata, registry, request);
+            // Guarded payload domains take precedence over general condition observation.
+            // Remaining condition-negation domains retain their separate policy.
+            if (operation.has("carrier_unary")
+                && contains(operation.at("carrier_unary").at("payloads"), projection.at("target").text()))
+                return resolve_carrier_unary(metadata, registry, request, names);
             value condition_request = value::object(); condition_request["source"] = request.at("operand");
             value plan = value::object(); plan["kind"] = "condition_operator";
             plan["operation"] = request.at("operation"); plan["operand"] = request.at("operand");

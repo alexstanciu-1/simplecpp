@@ -1,6 +1,17 @@
 # Runtime-core carrier completion review
 Doc Status: planning
 
+## Accepted decisions — 2026-10-28
+
+The user confirmed both decisions: preserve guarded logical operators for
+bool/numeric carrier payloads (unavailable payloads throw when evaluated), and keep
+source eligibility/formation/boundary validation compiler-owned. The public API
+generator consumes prepared facts; no shared semantic-compiler extraction is
+approved. Direct-condition truthiness remains separate. Historical references below
+to these decisions being pending are superseded; implementation and carrier sign-off
+remain open. Non-numeric logical admission still requires its own contract audit.
+
+
 Review baseline: `0158f5b0b`, 2026-10-27.
 Owner: [runtime-core completion](runtime_core_completion.md), batch C.
 Result: **the first complete carrier path is not yet ready for sign-off**.
@@ -21,10 +32,10 @@ The following is a current acceptance map, not a count of historical checkpoints
 | Equality/identity/order preserve the agreed distinctions | Carrier equality/order proofs, original-state dispatch and checked ordering projection | Keep literal/sentinel routes and payload admission in the final closure matrix. |
 | Required casts versus direct conditions | Conversion/projection tests and state-aware condition resolver | Required bool casts must still require payload; observation must not accidentally introduce copying. |
 | No-copy observations | C27 explicit constant leaf facts avoid extraction for inline-record conditions | C28 covers callable payload conditions; C29 composes nested carrier states, including a noncopyable record fixture with explicit facts. Source fact production remains separate. |
-| Guarded logical operators | Existing contract/compiler audit in the logical-selection note | Known mismatch: new carrier logical_not delegates to general condition conversion. Decision is pending; current green tests must not be used to approve that behavior. Lazy and/or still need the corresponding ordered plan. |
+| Guarded logical operators | Existing contract/compiler audit in the logical-selection note | Known mismatch: new carrier logical_not delegates to general condition conversion. The guarded contract is now confirmed; correction evidence is tracked in C32. Lazy and/or still need the corresponding ordered plan. |
 | Lazy usable-value coalescing | C25 exact scalar policy and short-circuit execution proofs | C31 adds exact mixed/dynamic plain pairs and carrier-left/plain-boxed fallbacks, with distinct selected-value validity. Broader joins remain; result_or_bool rejection is intentional. |
 | Lazy ternary/Elvis with preserved result state | C26 exact scalar branch joins and short-circuit execution proofs | C30 also covers exact mixed/dynamic joins. Admitted record, ownership and contextual joins still need their own policies/proofs. |
-| Source formation and publication | Physical probes, canonical demands, sealed specialization reuse | Source definition/application/boundary facts remain distinct from physical storage facts. The prepared-fact ownership decision is pending. |
+| Source formation and publication | Physical probes, canonical demands, sealed specialization reuse | Source definition/application/boundary facts remain distinct from physical storage facts. Compiler-owned validation with prepared facts is confirmed; consumer implementation remains. |
 
 The review reran the 13 registered carrier/projection/lifecycle/selection/constant
 metadata tests on the release generator: **13 passed in 24.21s**, with no compilation.
@@ -75,15 +86,11 @@ The remaining source-fact ownership decision is not resolved by those physical p
 If nested delegation requires a separate semantic owner, stop and report that boundary
 rather than turning this into another independent type registry.
 
-## Decisions still pending
+## Confirmed decisions and remaining review
 
-1. Preserve existing guarded bool/numeric carrier logical rules (recommended), or
-   deliberately revise the contracts to unify logical operators with direct conditions.
-2. Keep source definition/formation/boundary validation compiler-owned and consume
-   prepared facts here (recommended), or approve the wider shared semantic-model
-   extraction described in `runtime_core_formation_boundary.md`.
-
-The pending decisions do not block the scoped-observation slice. They do block honest
-carrier sign-off and subsequent ownership/callback expansion. Full frontend adoption
-remains outside this goal; documenting that exclusion cannot erase the public-side
-prepared-demand requirements or a known logical contract mismatch.
+Both decisions above were accepted on 2026-10-28. C32 corrects canonical bool/numeric
+logical negation through checked projection. Lazy and/or and non-numeric negation
+admission still need explicit plans/proofs. Source definition/formation/boundary
+validation stays compiler-owned; the physical consumer still needs prepared-demand
+validation and publication tests. These implementation gaps keep carrier sign-off
+open; ownership/callback expansion is not yet approved by this review.

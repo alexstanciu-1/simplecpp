@@ -202,7 +202,7 @@ def negate(source):
     assert result.returncode == 0, result.stderr
     return json.loads(result.stdout)
 
-assert negate('nullable<int64>')['kind'] == 'condition_operator'
+assert negate('nullable<int64>')['kind'] == 'carrier_unary'
 assert negate('result<nullable<int64>>')['condition']['kind'] == 'carrier_condition'
 for scalar in metadata['function_sets']['condition_truthy']['variants']:
     assert condition(scalar)['api'] == 'condition_truthy_' + scalar
@@ -433,7 +433,6 @@ int main() {
     CHECK(scpp::take(output,copy) && output.native_value() == 12);
     optional zero(int64(0));
     CHECK(zero.has_value() && zero.require_value("zero").native_value() == 0);
-    CHECK(CONDITION_NOT_ABSENT);
     CHECK(!observe_condition(absent));
     CHECK(!observe_condition(zero));
     CHECK(observe_condition(copy));
@@ -480,6 +479,8 @@ int main() {
     CHECK(!null_strict_not_identical_right_text(absent_text,observations));
     CHECK(observations == 16 && evaluations == 1);
     CHECK(allocations == before);
+    { bool caught=false; try { (void)(CONDITION_NOT_ABSENT); } catch (...) { caught=true; } CHECK(caught); }
+
     effects = 0; bool caught = false;
     try { (void)run_add(absent,right,effects); } catch (...) { caught = true; }
     CHECK(caught && effects == 0);
@@ -585,7 +586,7 @@ int main() {
     std::puts("PASS: public nullable arithmetic, ordered failures, take/reset, casts, conditions, comparisons, reconstruction, literal presence, owned lifetime; success allocations=0");
 }
 '''
-    code = code.replace('CONDITION_NOT_ABSENT', negate('nullable<int64>')['result_expression'].replace('${result}', 'observe_condition(absent)'))
+    code = code.replace('CONDITION_NOT_ABSENT', negate('nullable<int64>')['calculation']['result_expression'].replace('${result}', 'scpp::condition_truthy(absent.require_value("logical operand"))'))
     caller = work / 'main.cpp'; caller.write_text(code)
     flags = ['-fsanitize=address,undefined','-fno-omit-frame-pointer'] if args.sanitize else []
     common = ['clang++','-std=c++23','-O1',*flags,'-I'+str(app/'public'),'-I'+str(sdk/'public')]

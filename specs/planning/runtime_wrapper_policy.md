@@ -1,6 +1,17 @@
 # Wrapper policy and constrained template arguments
 Doc Status: planning
 
+## Accepted decisions — 2026-10-28
+
+The user confirmed both decisions: preserve guarded logical operators for
+bool/numeric carrier payloads (unavailable payloads throw when evaluated), and keep
+source eligibility/formation/boundary validation compiler-owned. The public API
+generator consumes prepared facts; no shared semantic-compiler extraction is
+approved. Direct-condition truthiness remains separate. Historical references below
+to these decisions being pending are superseded; implementation and carrier sign-off
+remain open. Non-numeric logical admission still requires its own contract audit.
+
+
 Checkpoint: 2026-10-27, after core inventory `9cea7c941`.
 Owner: [runtime-core completion plan](runtime_core_completion.md).
 Purpose: discuss the remaining semantic and generation boundaries before creating
@@ -16,8 +27,8 @@ but is not complete. Conditional lifecycle now covers carriers plus vector/hash
 expansion remain behind the first-complete-carrier review gate.
 
 The [current carrier review](runtime_core_carrier_review.md) records the remaining
-logical-policy and source-formation decisions, nonconstant scoped observations and
-broader admitted selection domains. Its metadata test rerun is not compiled/lifetime
+guarded logical planning, prepared-fact consumption and broader admitted selection
+domains. The policy and source-formation ownership decisions are accepted. Its metadata test rerun is not compiled/lifetime
 proof. Historical “pending implementation” or “goal not started” text below records
 the discussion at that checkpoint and must not override this current summary.
 

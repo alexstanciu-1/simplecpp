@@ -92,8 +92,11 @@ for family,prefix in [('result_or_false','false'),('result_or_bool','bool')]:
         return 'return scpp::boolean('+state['condition']+');'
     consumer(prefix+'_condition','scpp::boolean',source,select_states(condition['states'],truth_branch))
     negate=resolve('resolve_operator',{'operation':'logical_not','operand':source})
-    expression=negate['result_expression'].replace('${result}',prefix+'_condition(source)')
+    assert negate['kind']=='carrier_unary'
+    expression=negate['calculation']['result_expression'].replace('${result}',negate['calculation']['function']+'('+negate['projection']['expression'].replace('${value}','source')+')')
     consumer(prefix+'_not','scpp::boolean',source,'return '+expression+';')
+    for state in (['false','true'] if family=='result_or_bool' else ['false']):
+        failure_checks.append(f'{{ bool caught=false; try {{ (void){prefix}_not(scpp::{names[source]}::from_{state}()); }} catch (...) {{ caught=true; }} CHECK(caught); }}')
     for target in ['boolean','int8','string']:
         cast=resolve('resolve_conversion',{'source':source,'target':target})
         call=cast['payload_conversion'];headers.add(call['header'])
@@ -114,7 +117,6 @@ for family,prefix in [('result_or_false','false'),('result_or_bool','bool')]:
     cpp='scpp::'+names[source]
     execution_checks += [
         f'CHECK(!{prefix}_condition({cpp}(int64(0))) && {prefix}_condition({cpp}(int64(7))));',
-        f'CHECK({prefix}_not({cpp}::from_false()));',
         f'CHECK(!{prefix}_cast_boolean({cpp}(int64(0))) && {prefix}_cast_boolean({cpp}(int64(7))));',
         f'CHECK({prefix}_cast_int8({cpp}(int64(127))).native_value()==127);',
         f'CHECK({prefix}_cast_string({cpp}(int64(12))).equals("12"));',
@@ -122,7 +124,7 @@ for family,prefix in [('result_or_false','false'),('result_or_bool','bool')]:
         f'CHECK({prefix}_rebuild({cpp}::from_false()).is_false());',
         f'CHECK({prefix}_rebuild({cpp}(int64(12))).value().native_value()==12.0);']
     if prefix=='bool':
-        execution_checks += [f'CHECK({prefix}_condition({cpp}::from_true()) && !{prefix}_not({cpp}::from_true()));',
+        execution_checks += [f'CHECK({prefix}_condition({cpp}::from_true()));',
                              f'CHECK({prefix}_cast_string({cpp}::from_true()).byte_size()==0);',
                              f'CHECK({prefix}_rebuild({cpp}::from_true()).is_true());']
     for sentinel in (['false','true'] if prefix=='bool' else ['false']):

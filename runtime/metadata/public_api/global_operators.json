@@ -1570,7 +1570,15 @@
       ],
       "returns": "boolean",
       "result_expression": "!${result}",
-      "condition_operand": true
+      "condition_operand": true,
+      "carrier_unary": {
+        "payloads": [
+          "boolean",
+          "int64",
+          "float64"
+        ],
+        "result": "payload"
+      }
     },
     "pre_increment": {
       "form": "unary",

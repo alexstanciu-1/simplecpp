@@ -21,9 +21,9 @@ args=parser.parse_args();args.tool=args.tool.resolve()
 metadata=concrete_types.metadata(root/'runtime')
 public_types={**metadata['types'],**json.loads((root/'runtime/public/specializations.json').read_text())['types']}
 families=['nullable','result','result_or_false','result_or_bool']
-names={f+'<'+t+'>':'unary_'+str(i)+'_'+t for i,f in enumerate(families) for t in ['int64','float64']}
+names={f+'<'+t+'>':'unary_'+str(i)+'_'+t for i,f in enumerate(families) for t in ['int64','float64','boolean']}
 request={'package':'application.carrier_unary','roots':list(names),'names':names}
-ops=['positive','negative','complement','pre_increment','post_increment','pre_decrement','post_decrement']
+ops=['logical_not','positive','negative','complement','pre_increment','post_increment','pre_decrement','post_decrement']
 
 def resolve(source,op,meta=metadata,error=None):
     p=subprocess.run([str(args.tool)],input=json.dumps({'metadata':meta,'names':names,'action':'resolve_operator',
@@ -36,6 +36,7 @@ def resolve(source,op,meta=metadata,error=None):
 plans={}
 for source in names:
     for op in ops:
+        if source.endswith('<boolean>') and op!='logical_not': continue
         if source.endswith('<float64>') and op=='complement':
             resolve(source,op,error='Unsupported carrier unary payload');continue
         p=resolve(source,op);plans[source,op]=p
@@ -44,7 +45,7 @@ for source in names:
             assert p['result_type']==source and p['writeback_conversion']['kind']=='construct_payload'
             assert p['steps'][0]=='capture_destination_and_retain_owners' and p['steps'][-1]=='return_value_snapshot'
             if op.startswith('post_'):assert p['steps'].index('project_payload')<p['steps'].index('snapshot_old_carrier')<p['steps'].index('calculate')
-        else:assert p['result_policy']=='payload' and p['result_type']==p['projection']['target']
+        else:assert p['result_policy']=='payload' and p['result_type']==('boolean' if op=='logical_not' else p['projection']['target'])
 for family in families:
     for bad in ['int8','boolean','string','mixed','dynamic','nullable<int64>']:
         for op in ['negative','post_increment']:resolve(family+'<'+bad+'>',op,error='Unsupported carrier unary payload')
@@ -66,19 +67,25 @@ for (source,op),p in plans.items():
     body='++captures; '+('auto' if mutation else 'const auto')+' payload='+expr+';'
     if p['result_policy']=='old_carrier':body+='const auto old=source;'
     result_type=cpp if mutation else public_types[p['result_type']]['cpp']
-    if not mutation:body+='return '+p['calculation']['function']+'(payload);'
+    if not mutation:
+        expression=p['calculation']['function']+'(payload)'
+        expression=p['calculation'].get('result_expression','${result}').replace('${result}',expression)
+        body+='return '+expression+';'
     else:
         wb=p['writeback_conversion'];headers.add(wb['header'])
         body+='(void)'+p['calculation']['function']+'(payload); const auto prepared='+wb['expression'].replace('${value}','payload')+'; source=prepared; return '+('old' if p['result_policy']=='old_carrier' else 'source')+';'
     functions.append('static '+result_type+' '+fn+'('+('' if mutation else 'const ')+cpp+' &source,int &captures) { '+body+' }')
-    value='scpp::'+payload+'(5)'
+    stored='true' if payload=='boolean' else '5'
+    value='scpp::'+payload+'('+stored+')'
     if mutation:
         updated=6 if op.endswith('increment') else 4
         returned=5 if op.startswith('post_') else updated
         checks.append(f'{{ {cpp} source({value}); int captures=0; auto result={fn}(source,captures); CHECK(captures==1 && source.value().native_value()=={updated} && result.value().native_value()=={returned}); source=scpp::{payload}(19); CHECK(result.value().native_value()=={returned}); }}')
     else:
-        expected='5' if op=='positive' else '-5' if op=='negative' else '-6'
-        checks.append(f'{{ const {cpp} source({value}); int captures=0; CHECK({fn}(source,captures).native_value()==({expected})); CHECK(captures==1 && source.value().native_value()==5); }}')
+        expected='false' if op=='logical_not' else '5' if op=='positive' else '-5' if op=='negative' else '-6'
+        checks.append(f'{{ const {cpp} source({value}); int captures=0; CHECK({fn}(source,captures).native_value()==({expected})); CHECK(captures==1 && source.value().native_value()=={stored}); }}')
+    if op=='logical_not':
+        checks.append(f'{{ const {cpp} source(scpp::{payload}(0)); int captures=0; CHECK({fn}(source,captures).native_value()); CHECK(captures==1 && !source.value().native_value()); }}')
     family=source.split('<')[0]
     states=[(cpp+'()','!source.has_value()')] if family=='nullable' else [(cpp+'(failure)','source.has_error() && source.error().get_line().native_value()==7 && source.error().get_message().equals("failure") && source.error().get_file().equals("input")')] if family=='result' else [(cpp+'::from_false()','source.is_false()')]
     if family=='result_or_bool':states.append((cpp+'::from_true()','source.is_true()'))
@@ -94,7 +101,7 @@ with tempfile.TemporaryDirectory(prefix='scpp-carrier-unary-') as directory:
     seal_package(sdk,['core']);os.environ['SCPP_API_GENERATOR']=str(sdk/'tools/scpp_api_generator')
     request_file=work/'request.json';request_file.write_text(json.dumps(request))
     manifest=concrete_types.generate(request_file,app,sdk,[sdk],'clang++',[])
-    assert len(manifest['sources'])==8
+    assert len(manifest['sources'])==12
     code='\n'.join('#include "'+h+'"' for h in sorted(headers))+r'''
 #include "public_api_guard.hpp"
 #include <cstdlib>

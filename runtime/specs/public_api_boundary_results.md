@@ -3073,3 +3073,40 @@ Single-run caller compile cost (`measure_boxed_ordering_api.py`, clang++ C++23 -
 public **0.0543s**, native **3.1721s**. These are caller translation-unit timings,
 not full runtime rebuild times. Core compiled once per configuration; a test-only
 vexing-parse correction required a caller retry, not another core compilation.
+
+## C32 — guarded canonical logical negation (2026-10-28)
+
+The user confirmed existing guarded bool/numeric logical semantics and compiler-owned
+source eligibility/formation/boundary validation with prepared facts consumed by the
+API generator. No shared semantic-model extraction is authorized or implemented.
+
+Logical negation now combines metadata-selected `carrier_unary` payload domains
+(boolean/int64/float64) with the existing condition owner. Matching carrier payloads
+use checked one-layer extraction and the ordinary scalar result expression; absent,
+error and sentinel states throw. Present false/zero produces true. Direct condition
+observation remains separate. The shared unary consumer test now honors calculation
+result expressions, rather than assuming every operation is a bare function call.
+No new runtime adapter or public template is needed; the publication manifest is
+regenerated. Non-numeric/nested negation admission and lazy and/or are still review
+work, not implicitly approved by preserving their pre-existing implementation.
+
+Validation: metadata projection/unary/sentinel checks pass. The compiled unary proof
+passes release and ASan/UBSan with leak detection: 64 plans, 76 successful value/
+snapshot cases and 80 unavailable-state cases across all four families; successful
+operations allocate zero and failure states are preserved. Both builds prove sealed
+application specialization reuse. Broader projection and sentinel execution/reuse
+fixtures pass release, keeping direct conditions, bool casts and logical negation
+distinct. The projection fixture's newly throwing case was moved outside its
+success-only allocation interval after that assertion correctly detected exception
+allocation; the zero-allocation assertion was not weakened.
+
+Single-run application storage/caller compile measurements: unary release
+16.5505s/1.1221s; unary sanitizer 21.2525s/2.2131s; sentinel release
+12.4949s/0.3023s; projection release 5.2790s/0.3122s. Some runs overlapped and these
+are workload timings, not controlled before/after comparisons. Runtime archives
+were reused without recompilation. Generator-only rebuilds covered the policy
+change and a final duplicate-projection cleanup; metadata checks passed afterward.
+
+Remaining C work: lazy logical execution plans, explicit non-numeric admission,
+prepared-demand validation and broader admitted selection joins before carrier
+sign-off and ownership/callback expansion.

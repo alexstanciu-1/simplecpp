@@ -1,6 +1,17 @@
 # Runtime-core source formation boundary audit
 Doc Status: planning
 
+## Accepted decisions — 2026-10-28
+
+The user confirmed both decisions: preserve guarded logical operators for
+bool/numeric carrier payloads (unavailable payloads throw when evaluated), and keep
+source eligibility/formation/boundary validation compiler-owned. The public API
+generator consumes prepared facts; no shared semantic-compiler extraction is
+approved. Direct-condition truthiness remains separate. Historical references below
+to these decisions being pending are superseded; implementation and carrier sign-off
+remain open. Non-numeric logical admission still requires its own contract audit.
+
+
 Checkpoint: 2026-10-27, after `589a8eca4`.
 Owner: [runtime-core completion](runtime_core_completion.md), batch C.
 This audit records an ownership decision gate; it does not change source admission.
@@ -54,7 +65,7 @@ provide result_payload without granting payload copying. Therefore a single
 The physical noncopyable record fixtures remain valid evidence for check 4, not
 proof that their records meet a source Result boundary or bare T contract.
 
-## Recommended boundary (pending confirmation)
+## Accepted boundary (2026-10-28)
 
 Keep checks 1–3 in the compiler's semantic owner. The physical library consumes
 prepared demands and only the facts required by the selected boundary/operation.

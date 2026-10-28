@@ -1,6 +1,17 @@
 # Runtime-core logical and selection boundary audit
 Doc Status: planning
 
+## Accepted decisions — 2026-10-28
+
+The user confirmed both decisions: preserve guarded logical operators for
+bool/numeric carrier payloads (unavailable payloads throw when evaluated), and keep
+source eligibility/formation/boundary validation compiler-owned. The public API
+generator consumes prepared facts; no shared semantic-compiler extraction is
+approved. Direct-condition truthiness remains separate. Historical references below
+to these decisions being pending are superseded; implementation and carrier sign-off
+remain open. Non-numeric logical admission still requires its own contract audit.
+
+
 Checkpoint: 2026-10-27, baseline `09dff7d73`.
 Owner: [runtime-core completion](runtime_core_completion.md), batch C.
 This records an implementation mismatch and the next proof boundaries. It does not
