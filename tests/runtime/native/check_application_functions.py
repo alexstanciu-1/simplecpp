@@ -21,7 +21,8 @@ parser.add_argument('--sanitize',action='store_true')
 args=parser.parse_args();args.tool=args.tool.resolve()
 leaves={'record':{'cpp':'fixture::record','header':'member_record.hpp','owner':'application.members',
                   'capabilities':['default_storage']}}
-names={'vector<int64>':'member_values','shared<record>':'member_owner','vector<shared<record>>':'member_owners'}
+leaves['derived']={**leaves['record'],'cpp':'fixture::derived'}
+names={'shared<derived>':'derived_member_owner','vector<int64>':'member_values','shared<record>':'member_owner','vector<shared<record>>':'member_owners'}
 receiver={'name':'owner','type':'shared<record>','passing':'const_ref'}
 functions={
  'read_member':{'returns':'int64','parameters':[receiver], 'expression':'${native:owner}.deref().value'},
@@ -38,8 +39,19 @@ functions.update({
  'write_field_value':{'returns':'int64','parameters':[receiver,{'name':'key','type':'int64'},{'name':'value','type':'int64'}],
                       'body':'scpp::path_member_value_store(${native:owner}.deref().values, key, value); return value;',
                       'includes':['scpp/access/member_value_store.hpp']}})
+functions.update({
+ 'invoke_member':{'returns':'int64','parameters':[receiver,{'name':'value','type':'int64'}],
+                  'expression':'${native:owner}.deref().invoke(value)'},
+ 'adjust_member':{'returns':'void','parameters':[receiver,{'name':'left','type':'int64','passing':'ref'},
+                                                {'name':'right','type':'int64','passing':'ref'}],
+                  'expression':'${native:owner}.deref().adjust(left, right)'},
+ 'describe_member':{'returns':'string','parameters':[receiver], 'expression':'${native:owner}.deref().describe()'},
+ 'invoke_inline':{'returns':'int64','parameters':[{'name':'owner','type':'record','passing':'ref'},
+                                               {'name':'value','type':'int64'}],
+                  'expression':'owner.invoke(value)'}})
+upcast='shared_upcast<record,derived>'
 data={'package':'application.members','roots':['vector<int64>','vector<shared<record>>'],'leaves':leaves,'names':names,
-      'application_functions':functions,'paths':paths,'apis':[*paths,*functions]}
+      'application_functions':functions,'paths':paths,'apis':[*paths,*functions,upcast]}
 def binding(physical,arguments=None):
     return {'source':'source.'+physical,'physical':physical,'arguments':{k:'source.'+v for k,v in (arguments or {}).items()}}
 bindings={'root_0':binding('vector<int64>',{'T':'int64'}),'root_1':binding('vector<shared<record>>',{'T':'shared<record>'})}
@@ -52,6 +64,8 @@ for name,operation in functions.items():
     for i,parameter in enumerate(operation['parameters']):
         type=parameter['type']
         bindings[prefix+'parameter_'+str(i)]=binding(type,{'T':'record'} if type=='shared<record>' else {'T':'int64'} if type=='vector<int64>' else {})
+bindings['api_'+str(data['apis'].index(upcast))+'_To']=binding('record')
+bindings['api_'+str(data['apis'].index(upcast))+'_From']=binding('derived')
 dependencies={'target':binding('record')}
 requirements=[{'subject':slot,'contract':'application_formed'} for slot in bindings]
 requirements += [{'subject':'dependency:target','contract':'application_formed'},
@@ -91,15 +105,22 @@ if not args.core:sys.exit(0)
 fixture='''#pragma once
 #include "scpp/integers.hpp"
 #include "scpp/member_values.hpp"
+#include "scpp/string.hpp"
 namespace fixture {
 struct record {
     static inline int live=0;
     scpp::int64 value{0};
     scpp::member_values values;
     record() { ++live; }
-    ~record() { --live; }
+    virtual ~record() { --live; }
+    virtual scpp::int64 invoke(scpp::int64 input) { value += input; return value; }
+    void adjust(scpp::int64 &left, scpp::int64 &right) { left += scpp::int64(1); right += scpp::int64(2); }
+    scpp::string describe() const { return scpp::string("owned method result survives the receiver lifetime"); }
     record(const record &)=delete;
     record &operator=(const record &)=delete;
+};
+struct derived final : record {
+    scpp::int64 invoke(scpp::int64 input) override { return record::invoke(input) + scpp::int64(100); }
 };
 }
 '''
@@ -115,6 +136,7 @@ with tempfile.TemporaryDirectory(prefix='scpp-application-functions-') as direct
     caller='\n'.join('#include "'+manifest['types'][identity]['header']+'"' for identity in data['roots'])+'\n'
     caller+='\n'.join('#include "'+manifest['apis'][name]['header']+'"' for name in functions)+'\n'
     caller+='\n'.join('#define '+name+' scpp::'+manifest['apis'][name]['operation']['name'] for name in functions)+'\n'
+    caller+='#include "'+manifest['apis'][upcast]['header']+'"\n#define MEMBER_UPCAST scpp::'+manifest['apis'][upcast]['operation']['name']+'\n'
     caller+=(root/'tests/runtime/native/public_application_functions.cpp').read_text();(work/'caller.cpp').write_text(caller)
     flags=['-std=c++23','-O1']
     if args.sanitize:flags+=['-fsanitize=address,undefined','-fno-omit-frame-pointer']

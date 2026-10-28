@@ -63,5 +63,28 @@ int main() {
         CHECK(failed); // A failed write did not regrow the cleared field.
     }
     CHECK(fixture::record::live==0);
+    string owned_result;
+    {
+        auto derived=derived_member_owner::make();auto original=MEMBER_UPCAST(derived);
+        auto receiver=original.retain_present();
+        original=member_owner::make();derived.reset(); // Argument evaluation replaces origin.
+        CHECK(invoke_member(receiver,int64(7))==int64(107)); // Dispatch stays virtual.
+        CHECK(read_member(original)==int64(0) && read_member(receiver)==int64(7));
+        int64 value(0);const auto before=allocations;
+        for(int i=0;i<100;++i) {
+            adjust_member(receiver,value,value); // Both fixed refs alias the same whole storage.
+            CHECK(invoke_member(receiver,int64(0))==int64(107));
+        }
+        CHECK(value==int64(300) && allocations==before);
+        owned_result=describe_member(receiver);
+        member_owner absent;int argument_calls=0;bool failed=false;
+        try { auto selected=absent.retain_present();++argument_calls;(void)invoke_member(selected,int64(1)); }
+        catch(...) { failed=true; } CHECK(failed && argument_calls==0);
+        fixture::record inline_receiver;
+        CHECK(invoke_inline(inline_receiver,int64(9))==int64(9));
+        CHECK(inline_receiver.value==int64(9)); // Borrowed whole-storage receiver, no record copy.
+    }
+    CHECK(owned_result.equals("owned method result survives the receiver lifetime"));
+    CHECK(fixture::record::live==0);
     std::puts("PASS: retained property receiver, RHS replacement/removal, failure ordering and zero-allocation access");
 }

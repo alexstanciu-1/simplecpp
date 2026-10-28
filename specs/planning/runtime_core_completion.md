@@ -18,7 +18,7 @@ each slice. The original inventory is a baseline, not a current completion count
 | B1 | Complete for the agreed scalar-facing truth/text/identity/observation scope | Carrier forms remain C; boxed arithmetic and access completion are not B1 credit. |
 | B2 | Complete for the agreed non-carrier special/mutation and text public paths; closure evidence below | Carrier forms C; indexed retention E; native exception inspection and overflow disposition G. |
 | C | Four carrier recipes and bounded scalar paths implemented; first prepared canonical path reviewed in C38 | Guarded negation and canonical lazy logical plans implemented in C32/C33; remaining source admission, broader selection and payload-specific integration remain; C38 passes the first-path checkpoint. Both decisions accepted 2026-10-28. |
-| D | Handle storage, presence planning, checked retention, shared ancestry/casts and weak/unique transports implemented (D1–D6) | First retained property-adapter publication proven in E36; broader member access, operation-planner integration, ownership selections, value storage and source Exception transport remain. |
+| D | Handle storage, presence planning, checked retention, shared ancestry/casts and weak/unique transports implemented (D1–D6) | Retained property/container-field adapters proven in E36/E37 and bounded method transports in D7; same-origin reference returns, broader member/planner integration, ownership selections, value storage and source Exception transport remain. |
 | E | Existing vector/hash/boxed foundations; incomplete | Typed/boxed access, observations, removal, creating stores, ordinary reads and append implemented in E23–E32; optional/boxed scalar key composition proven in E33; shared identity key storage/upcasts proven in E34; retained scalar/container-field adapters proven in E36/E37; broader member/key compositions remain; conditional lifecycle, cursor fixes, boxed access/probes, and positional/keyed built-in factories are implemented for the tested domains. |
 | F | Pending | Callable transport and registered collection algorithms. |
 | G | Core utility and scalar debug bindings implemented | Exception/helper gaps and requirement-by-requirement closure audit. |
@@ -2990,3 +2990,33 @@ Release and ASan/UBSan/LSan correctness, lifetime, allocation and sealed-reuse c
 passed. The cumulative fixture compiled 10 units at eight jobs in 2.8507s release /
 3.7235s sanitized; public callers took 0.1086s / 0.1691s. Generator/core binaries and
 runtime publication were reused. These are single-run fixture costs.
+
+
+## D7 — bounded method transport through application adapters (2026-10-28)
+
+Extend the existing application-function composition fixture to native virtual calls,
+fixed writable scalar-reference arguments, owned string returns and borrowed
+whole-storage receivers. Generated adapters use the same declared signatures and
+private representation borrowing as property access. No method-specific generator
+mechanism or additional runtime API is required for these transports.
+
+The public-only consumer captures/checks a shared receiver before argument effects,
+replaces the originating handle, and verifies dispatch still reaches the retained
+derived object. Aliased fixed references mutate the same caller storage; a borrowed
+noncopyable inline record is updated without copying; an owned string result survives
+all receiver destruction. Repeated scalar calls/reference updates allocate nothing.
+Missing receiver failure still precedes argument evaluation. These are trusted
+prepared transport fixtures, not source-language acceptance tests: visibility,
+reference eligibility, ancestry and evaluation order remain compiler-owned.
+
+This does not complete method transport. Same-origin reference returns need a truthful
+return-binding representation in the public operation schema; they must not be modeled
+as an unrelated reference-valued template family or an arbitrary heap-interior escape.
+Variadic/default argument composition, richer payloads, ownership selections,
+shared-self, source Exception and callback contracts remain open.
+
+Release and ASan/UBSan/LSan correctness, lifetime, allocation, prepared-negative and
+sealed publication-reuse checks passed. Sixteen cumulative generated units compiled
+at eight jobs in 4.8060s release / 5.8745s sanitized; public callers took 0.1357s /
+0.1833s. Runtime/generator binaries and runtime publication were reused; this slice
+changes only the proof and completion inventory.
