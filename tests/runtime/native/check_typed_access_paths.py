@@ -60,7 +60,8 @@ for name,container,depth in [('row_append','vector<int64>',0),('matrix_append','
  ('hash_append','hash<int64,int64>',0),('mixed_append','vector<mixed>',2),('dynamic_append','vector<dynamic>',2)]:
     paths[name]={'root':container,'depth':depth,'operation':'append'}
 paths['vector_key_check']={'root':'vector<int64>','depth':1,'operation':'key_check'}
-data={'package':'application.paths','roots':[],'paths':paths,'apis':list(paths),'names':names}
+names['nullable<string>']='path_optional_string'
+data={'package':'application.paths','roots':['nullable<string>'],'paths':paths,'apis':list(paths),'names':names}
 base={'metadata':metadata,'request':data,'leaves':{},'names':names,'imports':{},'layouts':{}}
 def plan(request,error=None):
     out=subprocess.run([str(args.tool)],input=json.dumps(request),text=True,capture_output=True)
@@ -97,10 +98,10 @@ arguments={'vector<int64>':{'T':'int64'},'vector<vector<int64>>':{'T':'vector<in
            'hash<vector<int64>,string>':{'V':'vector<int64>','K':'string'},
            'hash<int64,string>':{'V':'int64','K':'string'},'vector<hash<int64,string>>':{'T':'hash<int64,string>'},
            'nullable<int64>':{'T':'int64'},'vector<nullable<int64>>':{'T':'nullable<int64>'},
-           'result<mixed>':{'T':'mixed'},'vector<result<mixed>>':{'T':'result<mixed>'},'vector<mixed>':{'T':'mixed'},'vector<dynamic>':{'T':'dynamic'},'hash<int64,int64>':{'V':'int64','K':'int64'}}
+           'result<mixed>':{'T':'mixed'},'vector<result<mixed>>':{'T':'result<mixed>'},'vector<mixed>':{'T':'mixed'},'vector<dynamic>':{'T':'dynamic'},'hash<int64,int64>':{'V':'int64','K':'int64'},'nullable<string>':{'T':'string'}}
 def binding(type):
     return {'source':'source.'+type,'physical':type,'arguments':{k:'source.'+v for k,v in arguments.get(type,{}).items()}}
-bindings={}
+bindings={'root_0':binding('nullable<string>')}
 for name,path in paths.items():
     prefix='path_'+name+'_';bindings[prefix+'root']=binding(path['root'])
     receiver=path['root'];keys=[];elements=[]
@@ -153,6 +154,16 @@ bad=copy.deepcopy(base);bad['request']['paths']['mixed_value']['depth']=2
 plan(bad,'exactly one step')
 bad=copy.deepcopy(base);bad['request']['paths']['hash_append']['root']='hash<int64,string>'
 plan(bad,'Unsatisfied append capabilities')
+# Prepare the alias request before compilation; it has no standalone storage roots.
+alias='matrix_store_again';new_data=copy.deepcopy(data)
+new_data['roots']=[]
+new_data['paths']={alias:paths['matrix_store']};new_data['apis']=[alias]
+new_prepared=copy.deepcopy(prepared);new_prepared['request']=copy.deepcopy(new_data)
+new_prepared['bindings']={slot.replace('path_matrix_store_','path_'+alias+'_'):value
+    for slot,value in bindings.items() if slot.startswith('path_matrix_store_')}
+new_prepared['requirements']=[{'subject':slot,'contract':'application_formed'} for slot in new_prepared['bindings']]+[{'subject':'operation','contract':'existing_path_admitted'}]
+new_prepared['facts']=[{**r,'evidence':'fixture/'+r['subject']} for r in new_prepared['requirements']]
+plan({**base,'request':new_data,'action':'generate','mode':'source','prepared':new_prepared})
 print('PASS: generic typed path composition, bounds on depth, prepared slot/fact checks')
 if not args.core:sys.exit(0)
 with tempfile.TemporaryDirectory(prefix='scpp-typed-paths-') as directory:
@@ -164,6 +175,7 @@ with tempfile.TemporaryDirectory(prefix='scpp-typed-paths-') as directory:
     request=work/'request.json';wrapper={'mode':'source','prepared':prepared,'request':data};request.write_text(json.dumps(wrapper))
     manifest=concrete_types.generate(request,app,sdk,[sdk],'clang++',[])
     caller='\n'.join('#include "'+manifest['apis'][name]['header']+'"' for name in paths)+'\n'
+    caller+='\n'.join('#include \"'+manifest['types'][type]['header']+'\"' for type in data['roots'])+'\n'
     caller+='\n'.join('#define '+name+' scpp::'+manifest['apis'][name]['operation']['name'] for name in paths)+'\n'
     caller+=(root/'tests/runtime/native/public_typed_access_paths.cpp').read_text();(work/'caller.cpp').write_text(caller)
     flags=['-std=c++23','-O1']
@@ -190,13 +202,6 @@ with tempfile.TemporaryDirectory(prefix='scpp-typed-paths-') as directory:
     except subprocess.CalledProcessError as error:rejected=error.returncode==1
     assert rejected and not (work/'rejected').exists()
     # A new path demand reuses published inner/outer storage and emits one operation.
-    alias='matrix_store_again';new_data=copy.deepcopy(data)
-    new_data['paths']={alias:paths['matrix_store']};new_data['apis']=[alias]
-    new_prepared=copy.deepcopy(prepared);new_prepared['request']=copy.deepcopy(new_data)
-    new_prepared['bindings']={slot.replace('path_matrix_store_','path_'+alias+'_'):value
-        for slot,value in bindings.items() if slot.startswith('path_matrix_store_')}
-    new_prepared['requirements']=[{'subject':slot,'contract':'application_formed'} for slot in new_prepared['bindings']]+[{'subject':'operation','contract':'existing_path_admitted'}]
-    new_prepared['facts']=[{**r,'evidence':'fixture/'+r['subject']} for r in new_prepared['requirements']]
     request.write_text(json.dumps({'mode':'source','prepared':new_prepared,'request':new_data}))
     extra_output=work/'extra';extra=concrete_types.generate(request,extra_output,sdk,[sdk,app],'clang++',[])
     assert len(extra['sources'])==1

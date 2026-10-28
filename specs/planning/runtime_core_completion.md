@@ -19,7 +19,7 @@ each slice. The original inventory is a baseline, not a current completion count
 | B2 | Complete for the agreed non-carrier special/mutation and text public paths; closure evidence below | Carrier forms C; indexed retention E; native exception inspection and overflow disposition G. |
 | C | Four carrier recipes and bounded scalar paths implemented; first prepared canonical path reviewed in C38 | Guarded negation and canonical lazy logical plans implemented in C32/C33; remaining source admission, broader selection and payload-specific integration remain; C38 passes the first-path checkpoint. Both decisions accepted 2026-10-28. |
 | D | Handle storage, presence planning, checked retention, shared ancestry/casts and weak/unique transports implemented (D1–D6) | Typed member access, operation-planner integration, ownership selections, value storage and source Exception transport remain. |
-| E | Existing vector/hash/boxed foundations; incomplete | Typed/boxed access, observations, removal, creating stores, ordinary reads and append implemented in E23–E31; key adaptation/policies and field-owner retention; conditional lifecycle, cursor fixes, boxed access/probes, and positional/keyed built-in factories are implemented for the tested domains. |
+| E | Existing vector/hash/boxed foundations; incomplete | Typed/boxed access, observations, removal, creating stores, ordinary reads and append implemented in E23–E32; optional/boxed scalar key composition proven in E33; object key policies and field-owner retention remain; conditional lifecycle, cursor fixes, boxed access/probes, and positional/keyed built-in factories are implemented for the tested domains. |
 | F | Pending | Callable transport and registered collection algorithms. |
 | G | Core utility and scalar debug bindings implemented | Exception/helper gaps and requirement-by-requirement closure audit. |
 
@@ -2856,3 +2856,30 @@ sanitizer; public caller 0.3270s / 0.6555s. Configurations ran sequentially. Gen
 and core binaries were reused; publication metadata was regenerated with 406 units.
 These are fixture costs, not compiler rebuild times. Optional/boxed key conversion,
 object key policies, field-owner retention and remaining C/D/F/G coverage remain open.
+
+
+## E33 — optional and boxed scalar key composition (2026-10-28)
+
+The key adaptation audit confirms that the existing public extraction methods compose
+with indexed paths: admitted optional keys use checked owned `require_value`, and
+boxed keys at typed boundaries use exact-kind getters. General explicit casts are not
+a substitute: their coercions are broader than source key admission. No new generator
+conversion registry or runtime implementation is required for this scalar slice.
+
+The cumulative public-only fixture now checks zero-allocation integer extraction,
+absence before later keys/RHS, lazy missing-prefix skipping, rejection of numeric text,
+bool and null as integer keys, and an owned string key surviving optional replacement.
+Source admission remains compiler-owned; this does not admit nullable stored keys or
+complete object ancestry/key policies. Field-owner retention and remaining C/D/F/G
+coverage stay open.
+
+Initial proof attempts caught a missing standalone-root include and an unrelated root
+retained in the alias-only publication request without its dependency bindings. Both
+fixture issues were corrected. Alias request preparation now runs before compiled
+validation, so malformed prepared requests fail without paying compilation cost.
+
+Release and ASan/UBSan/LSan validation passed, including independent public headers,
+prepared-fact rejection and sealed publication reuse. The 58-unit cumulative fixture
+compiled at eight jobs in 24.4316s release / 41.5851s sanitizer; public callers took
+0.3483s / 0.7557s. These are fixture compilation costs, not compiler rebuild timings.
+Existing generator/core binaries were reused; no runtime publication rebuild was needed.

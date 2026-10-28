@@ -226,5 +226,38 @@ int main() {
     for(int i=0;i<100;++i) CHECK(!matrix_isset(matrix,int64(-1),int64(0)));
     CHECK(allocations==negative_probe_allocations);
     tables_erase(tables,int64(-1),key); // Missing signed vector prefix is a removal no-op.
+    path_optional optional_key(int64(0));
+    const auto key_allocations=allocations;
+    for(int i=0;i<100;++i) {
+        const auto saved_key=optional_key.require_value("indexed key");
+        vector_key_check(saved_key);
+        CHECK(matrix_read(matrix,saved_key,int64(0))==int64(100));
+        const mixed boxed_index(int64(0));
+        const auto extracted=boxed_index.get_int();
+        CHECK(matrix_read(matrix,extracted,int64(0))==int64(100));
+    }
+    CHECK(allocations==key_allocations);
+    path_optional absent_key;int later_key_calls=0, optional_rhs_calls=0;
+    failed=false;
+    try {
+        const auto saved_key=absent_key.require_value("indexed key");
+        ++later_key_calls;vector_key_check(saved_key);++optional_rhs_calls;
+        matrix_create(matrix,saved_key,int64(0),int64(999));
+    } catch(...) { failed=true; }
+    CHECK(failed && later_key_calls==0 && optional_rhs_calls==0);
+    int lazy_optional_checks=0;
+    if (matrix_ready(matrix,int64(-1))) { ++lazy_optional_checks;(void)absent_key.require_value("indexed key"); }
+    CHECK(lazy_optional_checks==0); // Missing prefix skips even failing later adaptation.
+    const mixed numeric_text(string("0"));
+    failed=false;try { const auto saved=numeric_text.get_int();++optional_rhs_calls;matrix_create(matrix,saved,int64(0),int64(999)); }
+    catch(...) { failed=true; } CHECK(failed && optional_rhs_calls==0);
+    failed=false;try { (void)mixed(boolean(false)).get_int(); } catch(...) { failed=true; } CHECK(failed);
+    failed=false;try { (void)mixed().get_int(); } catch(...) { failed=true; } CHECK(failed);
+    path_optional_string optional_name(key);
+    const auto saved_name=optional_name.require_value("indexed key");
+    optional_name=path_optional_string();
+    CHECK(rows_read(inserted,saved_name,int64(0))==int64(8)); // Owned key survives source replacement.
+    const mixed boxed_name(key);
+    CHECK(rows_read(inserted,boxed_name.get_string(),int64(0))==int64(8));
     std::puts("PASS: typed vector/hash paths mutate original storage, recheck RHS effects, preserve failures and owned reads; intermediate allocations=0");
 }

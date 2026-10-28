@@ -215,3 +215,14 @@ native checked signed overload; membership handles negatives as absent. Direct
 unsigned container size/access APIs remain unchanged. This is a correction to the
 source-facing path boundary, not a new key-coercion policy. Optional/boxed key
 conversion still needs its prepared composition proof.
+
+
+## Optional/boxed scalar key composition (E33)
+
+The public API already supplies checked optional extraction and exact-kind boxed
+getters. Key adaptation can compose these with key preflight and the path operations;
+it does not need another generator conversion subsystem. Explicit cast planning is
+not a substitute because it admits coercions that typed key extraction rejects.
+The focused fixture exercises absence ordering, lazy-prefix skipping, exact integer
+extraction and owned string-key lifetime. Object ancestry/key policies and broader
+admitted key shapes still need their own proof.

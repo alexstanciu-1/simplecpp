@@ -2130,3 +2130,21 @@ point would incorrectly change both probe results and source evaluation order. D
 container methods and size/capacity remain uint64 APIs; this change applies to the
 source-facing indexed-operation protocol and its generated signatures. Optional/boxed
 input conversion into the required int64 key remains a separate prepared conversion.
+
+
+### Optional and boxed key adaptation
+
+Required key adaptation uses existing public extraction APIs before indexed operations.
+An admitted nullable key is extracted with `require_value(context)` into an owned key;
+absence throws before later keys or RHS. Mixed input at a typed boundary uses its
+exact-kind getter (`get_int` or `get_string`) for the required key type. Numeric text,
+bool and null do not implicitly become integer keys. Do not substitute the general
+explicit-cast resolver, whose documented coercions are broader than key admission.
+
+After extraction, invoke the receiver's key-only validation where needed, then continue
+source evaluation. Lazy probe/removal prefixes must run before evaluating/adapting a
+later key. An earlier missing prefix can therefore skip a later absent nullable key.
+Saved string keys own their value across replacement/destruction of the input wrapper.
+Source preparation remains responsible for the admitted payload/key domain and object
+ancestry conversion. Physical public methods do not imply source admission for arbitrary
+wrapper/key combinations. This composition adds no second conversion registry.
