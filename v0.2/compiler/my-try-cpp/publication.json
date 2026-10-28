@@ -1,0 +1,65 @@
+{
+  "version": 1,
+  "namespace": "scpp",
+  "headers": {
+    "types": "scpp/integers.hpp",
+    "operators": "scpp/numeric.hpp",
+    "short_names": "scpp/short_names.hpp",
+    "native_bridge": "scpp/native_bridge.hpp",
+    "values": "scpp/values.hpp"
+  },
+  "types": [
+    "int32",
+    "uint32",
+    "int64",
+    "uint64"
+  ],
+  "values": [
+    "bool_t"
+  ],
+  "operators": [
+    {
+      "operation": "greater",
+      "operands": [
+        "uint64",
+        "uint64"
+      ]
+    },
+    {
+      "operation": "equal",
+      "operands": [
+        "uint64",
+        "uint64"
+      ]
+    },
+    {
+      "operation": "bit_or",
+      "operands": [
+        "uint32",
+        "uint32"
+      ]
+    },
+    {
+      "operation": "bit_and",
+      "operands": [
+        "uint32",
+        "uint32"
+      ]
+    },
+    {
+      "operation": "shift_left",
+      "operands": [
+        "uint32",
+        "uint32"
+      ]
+    },
+    {
+      "operation": "shift_right",
+      "operands": [
+        "uint32",
+        "uint32"
+      ]
+    }
+  ],
+  "short_aliases": []
+}
