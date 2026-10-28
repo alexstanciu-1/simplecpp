@@ -354,7 +354,7 @@ target_link_libraries(scpp_filesystem_api INTERFACE scpp_core_api "$<LINK_ONLY:s
 
 # Reusable physical API generation library; no compiler-language semantic admission.
 add_library(scpp_api_generation STATIC EXCLUDE_FROM_ALL
-  tools/api_generator/value.cpp tools/api_generator/prepared.cpp tools/api_generator/capabilities.cpp tools/api_generator/carriers.cpp tools/api_generator/conditions.cpp tools/api_generator/selections.cpp tools/api_generator/names.cpp tools/api_generator/function_sets.cpp tools/api_generator/conversions.cpp tools/api_generator/operators.cpp tools/api_generator/generator.cpp)
+  tools/api_generator/value.cpp tools/api_generator/access_paths.cpp tools/api_generator/prepared.cpp tools/api_generator/capabilities.cpp tools/api_generator/carriers.cpp tools/api_generator/conditions.cpp tools/api_generator/selections.cpp tools/api_generator/names.cpp tools/api_generator/function_sets.cpp tools/api_generator/conversions.cpp tools/api_generator/operators.cpp tools/api_generator/generator.cpp)
 target_include_directories(scpp_api_generation PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/tools/api_generator/public)
 target_link_libraries(scpp_api_generation PRIVATE scpp_runtime_core)
 target_link_libraries(scpp_api_generation PUBLIC scpp_public_configuration)

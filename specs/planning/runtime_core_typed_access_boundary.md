@@ -102,3 +102,22 @@ prepared fixture facts, but it must not advertise those as a real frontend produ
 A shared semantic-model extraction would be a separate cross-owner refactor requiring
 confirmation under the repository rules. No such extraction or path-specific family
 emitter is implemented by this audit.
+
+
+## Implemented first path (E23, 2026-10-28)
+
+The prepared ownership decision is settled: semantic validation stays compiler-owned;
+the generator consumes prepared facts. The first existing-read/store composition is
+implemented through family `access` metadata and demanded `paths`, documented in
+runtime/specs/public_api_generation.md. Vector/vector and hash/vector use the same
+resolver and function emitter, with no type-name branches. Depth-three composition
+also has metadata evidence. Lazy probes/removal, heterogeneous boxed paths and
+field-owner retention remain follow-up work; this does not complete batch E.
+
+Release and ASan/UBSan/LSan execution prove original-root writes, bounds/missing
+failure preservation, RHS replacement and deletion handling, owned reads surviving
+parent destruction, and zero allocations for repeated scalar read/store paths.
+Publication checks prove independent public headers, zero-unit sealed reuse and a
+new operation using imported inner/outer storage with exactly one emitted unit.
+Missing prepared facts, conflicting imported definitions, invalid depths/operations
+and oversized generated files reject. See E23 in the completion plan for timings.

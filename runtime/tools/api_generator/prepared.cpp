@@ -1,6 +1,7 @@
 #include "prepared.hpp"
 #include "names.hpp"
 #include "capabilities.hpp"
+#include "access_paths.hpp"
 #include <set>
 
 namespace scpp::api_generation
@@ -53,6 +54,23 @@ namespace scpp::api_generation
                     if (!input.at("metadata").at("function_families").has(requested.name)) continue;
                     for (const auto &[parameter, argument] : functions.bind(apis[index].text()).arguments)
                         result["api_" + std::to_string(index) + "_" + parameter] = argument.canonical();
+                }
+            }
+            if (input.at("request").has("paths") && input.at("request").has("apis")) {
+                const auto &paths = input.at("request").at("paths");
+                if (paths.type != value::kind::object) throw std::runtime_error("Access path demands require a map");
+                for (const auto &api : input.at("request").at("apis").items) {
+                    if (!paths.has(api.text())) continue;
+                    const auto path = describe_access_path(input.at("metadata"), merged_type_leaves(input),
+                        input.has("names") ? input.at("names") : value::object(), paths.at(api.text()));
+                    const auto prefix = "path_" + api.text() + "_";
+                    result[prefix + "root"] = path.at("root").text();
+                    result[prefix + "value"] = path.at("element").text();
+                    unsigned index = 0;
+                    for (const auto &step : path.at("steps").items) {
+                        result[prefix + "key_" + std::to_string(index)] = step.at("key").text();
+                        result[prefix + "element_" + std::to_string(index++)] = step.at("element").text();
+                    }
                 }
             }
         } else {

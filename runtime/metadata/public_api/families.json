@@ -577,7 +577,14 @@
     "capabilities": [
       "default_storage",
       "move_storage"
-    ]
+    ],
+    "access": {
+      "key": "uint64",
+      "element": "${variant:T}",
+      "read": "${receiver}.at(detail::concrete_size(${key}))",
+      "mutable": "${receiver}.at(detail::concrete_size(${key}))",
+      "includes": []
+    }
   },
   "result": {
     "parameters": [
@@ -1603,7 +1610,14 @@
     "capabilities": [
       "default_storage",
       "move_storage"
-    ]
+    ],
+    "access": {
+      "key": "${variant:K}",
+      "element": "${variant:V}",
+      "read": "${receiver}.at(${key})",
+      "mutable": "${receiver}.at(${key})",
+      "includes": []
+    }
   },
   "float64": {
     "parameters": [],

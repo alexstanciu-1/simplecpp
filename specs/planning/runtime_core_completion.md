@@ -19,7 +19,7 @@ each slice. The original inventory is a baseline, not a current completion count
 | B2 | Complete for the agreed non-carrier special/mutation and text public paths; closure evidence below | Carrier forms C; indexed retention E; native exception inspection and overflow disposition G. |
 | C | Four carrier recipes and bounded scalar paths implemented; first prepared canonical path reviewed in C38 | Guarded negation and canonical lazy logical plans implemented in C32/C33; remaining source admission, broader selection and payload-specific integration remain; C38 passes the first-path checkpoint. Both decisions accepted 2026-10-28. |
 | D | Handle storage, presence planning, checked retention, shared ancestry/casts and weak/unique transports implemented (D1–D6) | Typed member access, operation-planner integration, ownership selections, value storage and source Exception transport remain. |
-| E | Existing vector/hash/boxed foundations; incomplete | Typed nested access and remaining key policies; conditional lifecycle, cursor fixes, boxed access/probes, and positional/keyed built-in factories are implemented for the tested domains. |
+| E | Existing vector/hash/boxed foundations; incomplete | Typed existing read/store implemented in E23; lazy probes/removal, heterogeneous paths and remaining key policies; conditional lifecycle, cursor fixes, boxed access/probes, and positional/keyed built-in factories are implemented for the tested domains. |
 | F | Pending | Callable transport and registered collection algorithms. |
 | G | Core utility and scalar debug bindings implemented | Exception/helper gaps and requirement-by-requirement closure audit. |
 
@@ -2564,3 +2564,36 @@ there remain 406 runtime-owned implementation units.
 Functional ownership/access/callback backlog remains open. This slice improves the
 shared semantic dependency boundary rather than marking additional source contracts
 complete.
+
+
+## E23 — demanded typed existing-access composition (2026-10-28)
+
+Family access metadata now describes concrete key/element types and private const /
+mutable lookup expressions. A generic path descriptor resolves dependent steps;
+demanded operations feed the existing function emitter and publication inventory.
+No vector/hash names are embedded in the generator. Intermediate wrappers remain
+private call-scoped borrows, with exact reference-type assertions; reads return owned
+leaves. Writes validate the full const path before mutable traversal and leaf commit.
+The initial domain is copy-storage leaves and existing-only read/store, not lazy
+probes, removal, bootstrap, field retention or boxed heterogeneous paths.
+
+Prepared fixtures prove source bindings/facts are required even with imported APIs.
+Release and ASan/UBSan with leak detection pass: original storage mutation, failed
+bounds/missing paths preserving values, current-root re-resolution after RHS effects,
+no recreation of removed hash entries, and detached/retained owned reads. Repeated
+scalar nested read/store operations allocate zero, including long string hash keys.
+Independent public headers and guards pass. Sealed reuse emits zero units; a new path
+using published inner/outer specializations emits and links exactly one operation.
+Negative checks cover missing facts/bindings, conflicting definitions, depth and
+operation limits, and the generated-file limit. Six focused CTest regressions pass.
+
+Single-run compilation at eight jobs: nine application units 4.1913s release /
+7.2824s sanitizer; public caller 0.1167s / 0.1445s. Configurations ran sequentially;
+metadata regressions overlapped the sanitizer run. Existing runtime archives were
+reused. Runtime publication remains 406 units with refreshed metadata identity.
+These are focused compile costs, not full compiler build timings.
+
+Batch E remains incomplete. Next extend the same protocol to lazy presence/empty
+probes and removal, preserving compiler-owned evaluation and native missing-path
+semantics. Ownership selections, value/Exception transport and callbacks also remain
+open in their respective batches. No full frontend adoption is claimed.

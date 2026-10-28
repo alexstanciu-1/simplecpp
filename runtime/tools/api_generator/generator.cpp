@@ -7,6 +7,7 @@
 #include "conditions.hpp"
 #include "selections.hpp"
 #include "prepared.hpp"
+#include "access_paths.hpp"
 #include "function_sets.hpp"
 #include "scpp/detail/string_access.hpp"
 #include <set>
@@ -263,7 +264,7 @@ namespace scpp::api_generation
 			if (!this->visiting_.insert(canonical).second) throw std::runtime_error("Unresolved layout dependency cycle: "+canonical);
 			auto application=this->naming_.bind(canonical); const auto &recipe=this->metadata_.at("families").at(application.type.name);
 			if (recipe.at("parameters").type!=value::kind::array || recipe.at("classes").type!=value::kind::array || recipe.at("classes").items.empty()) throw std::runtime_error("Family requires parameter and nonempty class arrays");
-            fields_only(recipe,"parameters defaults binding native includes classes functions checks capabilities conditional_capabilities requires_capabilities carrier", "family "+application.type.name);
+            fields_only(recipe,"parameters defaults binding native includes classes functions checks capabilities conditional_capabilities requires_capabilities carrier access", "family "+application.type.name);
 			substitutions context{{"name",name},{"namebase",name.back()=='_'?name.substr(0,name.size()-1):name}};
 			std::map<std::string,value> types;
 			std::set<std::string> public_headers,private_headers,probe_headers;
@@ -383,6 +384,63 @@ namespace scpp::api_generation
 			unit["probe_includes"]=includes(probe_headers); unit["probes"]=probes; unit["checks"]=checks; unit["ready"]=ready?"yes":"no";
 			this->units_.items.push_back(unit); this->exports_[canonical]=record; this->visiting_.erase(canonical); return record;
 		}
+        value demanded_path(const std::string &name, const value &request)
+        {
+            authored_name(name);
+            if (name.find("::") != std::string::npos) throw std::runtime_error("Access path name must be unqualified");
+            const auto path = describe_access_path(this->metadata_, this->leaves_, this->names_, request);
+            const bool writing = path.get("operation") == "existing_store";
+            value function = value::object(); function["namespace"] = "scpp";
+            function["header"] = "scpp/access/" + name + ".hpp";
+            function["source"] = "include/core/generated/" + name + ".cpp";
+            const auto symbol = "path_" + name;
+            this->claim(symbol, "path-api:" + name);
+            value operation = value::object(); operation["name"] = symbol;
+            operation["returns"] = writing ? "void" : path.at("element");
+            operation["parameters"] = value::array();
+            auto parameter = [&](const std::string &id, const value &type, const std::string &passing) {
+                value entry = value::object(); entry["name"] = id; entry["type"] = type; entry["passing"] = passing;
+                operation["parameters"].items.push_back(entry);
+            };
+            parameter("root", path.at("root"), writing ? "ref" : "const_ref");
+            std::set<std::string> headers{"type_traits", "utility", "scpp/detail/concrete_access.hpp"};
+            unsigned index = 0;
+            for (const auto &step : path.at("steps").items) {
+                parameter("key_" + std::to_string(index++), step.at("key"), "const_ref");
+                const auto receiver = this->materialize(step.at("receiver").text());
+                this->dependencies(receiver, headers, {});
+                this->dependencies(step, headers, {});
+                this->materialize(step.at("element").text());
+            }
+            if (writing) parameter("value", path.at("element"), "value");
+            const auto &steps = path.at("steps").items;
+            auto traverse = [&](bool mutable_access) {
+                std::string body;
+                std::string current = mutable_access ? "${native:root}" : "std::as_const(${native:root})";
+                for (std::size_t i = 0; i < steps.size(); ++i) {
+                    const auto &step = steps[i];
+                    const auto element = this->materialize(step.at("element").text());
+                    const auto expression = expand(step.at(mutable_access ? "mutable" : "read").text(),
+                        {{"receiver", current}, {"key", "key_" + std::to_string(i)}});
+                    body += "static_assert(std::is_same_v<decltype((" + expression + ")), "
+                        + (mutable_access ? "" : "const ") + element.at("cpp").text() + " &>);\n";
+                    if (i + 1 == steps.size()) {
+                        if (mutable_access) body += expression + " = value;\n";
+                        else body += (writing ? "(void)(" + expression + ");\n" : "return " + expression + ";\n");
+                    } else {
+                        const auto slot = "path_value_" + std::to_string(i);
+                        body += std::string(mutable_access ? "auto &" : "const auto &") + slot + " = " + expression + ";\n";
+                        current = this->borrow(element, slot);
+                    }
+                }
+                return body;
+            };
+            operation["body"] = writing ? "{\n" + traverse(false) + "}\n" + traverse(true) : traverse(false);
+            operation["includes"] = value::array();
+            for (const auto &header : headers) operation["includes"].items.emplace_back(header);
+            function["operation"] = operation;
+            return function;
+        }
         value demanded_function(const std::string &request, std::string &identity)
         {
             const auto application = this->function_naming_.bind(request);
@@ -439,12 +497,21 @@ namespace scpp::api_generation
             }
             auto apis = this->request_.has("apis") ? this->request_.at("apis") : value::array();
             if (apis.type != value::kind::array) throw std::runtime_error("API demands require an array");
+            if (this->request_.has("paths") && this->request_.at("paths").type != value::kind::object)
+                throw std::runtime_error("Access path demands require a map");
             for (std::size_t index=0; index<apis.items.size() || !this->required_apis_.empty(); ++index) {
                 if (index==apis.items.size()) {
                     for (const auto &dependency : this->required_apis_) apis.items.emplace_back(dependency);
                     this->required_apis_.clear();
                 }
                 auto api = apis.items[index];
+                if (this->request_.has("paths") && this->request_.at("paths").has(api.text())) {
+                    const auto function = this->demanded_path(api.text(), this->request_.at("paths").at(api.text()));
+                    if ((generated_apis.has(api.text()) && json_text(generated_apis.at(api.text())) != json_text(function))
+                        || this->metadata_.at("functions").has(api.text()))
+                        throw std::runtime_error("Conflicting path API identity: " + api.text());
+                    generated_apis[api.text()] = function;
+                }
                 const auto requested = parse_type(api.text());
                 if (this->metadata_.has("function_families") && this->metadata_.at("function_families").has(requested.name)) {
                     std::string identity;
@@ -493,6 +560,8 @@ namespace scpp::api_generation
 			}
             std::set<std::string> output_paths;
             for (const auto &unit : this->units_.items) {
+                if (unit.at("header").text().size() >= 200000 || unit.at("source").text().size() >= 200000)
+                    throw std::runtime_error("Generated code file must remain below 200KB");
                 for (const auto *field : {"header_path", "source_path"}) {
                     if (!output_paths.insert(unit.at(field).text()).second)
                         throw std::runtime_error("Conflicting generated output path: " + unit.at(field).text());

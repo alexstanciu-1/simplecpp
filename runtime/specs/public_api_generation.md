@@ -1888,3 +1888,52 @@ requires shared storage and pointer-compatibility traits, but does not include t
 aggregate operator, mixed/hash-definition or full identity surfaces. Public headers
 and source admission remain unchanged. The standalone header proof and existing
 broad identity fixture cover both include paths and base-pointer adjustment.
+
+
+## Demanded typed existing-access paths
+
+A family may register an `access` protocol with `key`, `element`, `read`, `mutable`
+and `includes`. Parameter substitution uses the ordinary `${variant:T}` mechanism;
+access expressions use `${receiver}` and `${key}`. Key and element identities resolve
+through the existing naming/default/publication owner. Read and mutable expressions
+must return exactly `const PublicElement &` and `PublicElement &`, respectively;
+generated static assertions check this private representation promise. They must
+perform existing-only lookup, without insertion or source callbacks. Vector and hash
+currently register their native checked `at` operations. This registration does not
+license arbitrary source indexing or supply source type checking.
+
+An application request selects named entries in `paths` through its ordinary `apis`
+list, for example:
+
+```json
+{"paths":{"matrix_store":{"root":"vector<vector<int64>>","depth":2,
+"operation":"existing_store"}},"apis":["matrix_store"]}
+```
+
+Names are unqualified authored identifiers. Operations are `existing_read` and
+`existing_store`; depth is an integer from 1 through 128. The generator follows each
+resolved element's access protocol, without family-name dispatch. Only demanded
+operations are emitted. Public symbols are prefixed `path_`, headers use
+`scpp/access/<name>.hpp`, and ordinary API ownership detects conflicting definitions.
+Generated headers and implementation files must each remain below 200,000 bytes.
+
+The signature passes a whole root by const reference for reading or mutable reference
+for writing, concrete saved keys by const reference, and the store value by value.
+The leaf currently requires `copy_storage`. Reads return an owned leaf; intermediate
+public wrappers are borrowed and unwrapped only within the compiled function. Stores
+validate the entire const path before traversing mutable storage and assigning the
+leaf. No interior reference escapes. Native lookup/assignment remains the error
+owner; this is not a transactional guarantee against allocation failure in assignment.
+The caller owns source evaluation order and saved operands. Reinvoking store after
+RHS effects resolves the current root; missing entries are never recreated.
+
+Source-mode preparation requires binding slots `path_<name>_root`,
+`path_<name>_value`, `path_<name>_key_<index>` and
+`path_<name>_element_<index>`. The existing semantic owner supplies formation and
+operation facts, including source argument graphs; importing a published API never
+bypasses those checks. Physical paths feed the same function emitter, dependency
+inventory, layout probes and sealed reuse mechanism as other demanded APIs.
+
+This first protocol does not implement lazy probes, removal, append/bootstrap,
+field-owner retention or heterogeneous boxed descent. Those need their own explicit
+protocol semantics; eager existing lookup must not stand in for them.
