@@ -32,7 +32,7 @@ The following is a current acceptance map, not a count of historical checkpoints
 | Equality/identity/order preserve the agreed distinctions | Carrier equality/order proofs, original-state dispatch and checked ordering projection | Keep literal/sentinel routes and payload admission in the final closure matrix. |
 | Required casts versus direct conditions | Conversion/projection tests and state-aware condition resolver | Required bool casts must still require payload; observation must not accidentally introduce copying. |
 | No-copy observations | C27 explicit constant leaf facts avoid extraction for inline-record conditions | C28 covers callable payload conditions; C29 composes nested carrier states, including a noncopyable record fixture with explicit facts. Source fact production remains separate. |
-| Guarded logical operators | Existing contract/compiler audit in the logical-selection note | Known mismatch: new carrier logical_not delegates to general condition conversion. The guarded contract is now confirmed; correction evidence is tracked in C32. Lazy and/or still need the corresponding ordered plan. |
+| Guarded logical operators | Existing contract/compiler audit in the logical-selection note | Known mismatch: new carrier logical_not delegates to general condition conversion. The guarded contract is now confirmed; correction evidence is tracked in C32. C33 supplies canonical lazy and/or plans; non-numeric admission remains. |
 | Lazy usable-value coalescing | C25 exact scalar policy and short-circuit execution proofs | C31 adds exact mixed/dynamic plain pairs and carrier-left/plain-boxed fallbacks, with distinct selected-value validity. Broader joins remain; result_or_bool rejection is intentional. |
 | Lazy ternary/Elvis with preserved result state | C26 exact scalar branch joins and short-circuit execution proofs | C30 also covers exact mixed/dynamic joins. Admitted record, ownership and contextual joins still need their own policies/proofs. |
 | Source formation and publication | Physical probes, canonical demands, sealed specialization reuse | Source definition/application/boundary facts remain distinct from physical storage facts. Compiler-owned validation with prepared facts is confirmed; consumer implementation remains. |
@@ -89,8 +89,8 @@ rather than turning this into another independent type registry.
 ## Confirmed decisions and remaining review
 
 Both decisions above were accepted on 2026-10-28. C32 corrects canonical bool/numeric
-logical negation through checked projection. Lazy and/or and non-numeric negation
-admission still need explicit plans/proofs. Source definition/formation/boundary
+logical negation through checked projection. C33 supplies canonical lazy and/or plans. Non-numeric logical admission still
+needs its explicit contract audit and proofs. Source definition/formation/boundary
 validation stays compiler-owned; the physical consumer still needs prepared-demand
 validation and publication tests. These implementation gaps keep carrier sign-off
 open; ownership/callback expansion is not yet approved by this review.

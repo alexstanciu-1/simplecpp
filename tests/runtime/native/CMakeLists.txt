@@ -597,3 +597,6 @@ target_link_libraries(test_public_boxed_ordering PRIVATE scpp_core_api)
 add_test(NAME scpp_test_public_boxed_ordering COMMAND test_public_boxed_ordering)
 add_test(NAME scpp_check_boxed_ordering_api COMMAND ${Python3_EXECUTABLE}
   ${CMAKE_CURRENT_SOURCE_DIR}/check_boxed_ordering_api.py $<TARGET_FILE:scpp_api_generator>)
+
+add_test(NAME scpp_check_carrier_logical COMMAND ${Python3_EXECUTABLE}
+  ${CMAKE_CURRENT_SOURCE_DIR}/check_carrier_logical.py --tool $<TARGET_FILE:scpp_api_generator>)

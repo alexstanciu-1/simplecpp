@@ -61,11 +61,81 @@ namespace scpp::api_generation
             throw std::runtime_error("Coalesce selected-value check must borrow boolean and return void");
     }
 
+    static void validate_logical_policy(const value &metadata)
+    {
+        const auto &policy = metadata.at("selections").at("logical");
+        fields_only(policy, "operand_groups carrier_payloads operations", "logical policy");
+        if (policy.at("operand_groups").type != value::kind::array || policy.at("operand_groups").items.empty()
+            || policy.at("carrier_payloads").type != value::kind::array
+            || policy.at("operations").type != value::kind::object || policy.at("operations").fields.empty())
+            throw std::runtime_error("Invalid logical domains");
+        for (const auto &group : policy.at("operand_groups").items) {
+            if (group.type != value::kind::array || group.items.empty())
+                throw std::runtime_error("Logical operand group must be nonempty");
+            for (const auto &type : group.items)
+                if (callable_condition(metadata, type.text()).type == value::kind::null)
+                    throw std::runtime_error("Logical operand requires a callable condition");
+        }
+        for (const auto &type : policy.at("carrier_payloads").items) {
+            bool found = false;
+            for (const auto &group : policy.at("operand_groups").items) found = found || contains(group, type.text());
+            if (!found) throw std::runtime_error("Logical carrier payload is outside operand domains");
+        }
+        for (const auto &[name, operation] : policy.at("operations").fields) {
+            fields_only(operation, "short_circuit", "logical operation");
+            if (operation.at("short_circuit").type != value::kind::boolean)
+                throw std::runtime_error("Logical short circuit requires boolean");
+        }
+    }
+
+    value resolve_logical(const value &metadata, const value &request, const value &names)
+    {
+        fields_only(request, "operation left right", "logical request");
+        validate_carriers(metadata);
+        validate_logical_policy(metadata);
+        const auto &policy = metadata.at("selections").at("logical");
+        const auto &operation = policy.at("operations").at(request.at("operation").text());
+        naming types(metadata_naming_registry(metadata, metadata.at("types"), names));
+        value out = value::object();
+        out["kind"] = "lazy_logical";
+        out["operation"] = request.at("operation");
+        out["result_type"] = "boolean";
+        out["short_circuit"] = operation.at("short_circuit");
+        out["evaluation"] = "left_once_then_conditional_right_once";
+        out["failure"] = "throw_preserve_prior_effects";
+        for (const auto *side : {"left", "right"}) {
+            const auto canonical = types.resolve(request.at(side).text()).first;
+            auto projection = project_carrier(metadata, canonical, names);
+            if (projection.type == value::kind::null) {
+                projection = value::object(); projection["kind"] = "identity";
+                projection["source"] = canonical; projection["target"] = canonical;
+            } else {
+                if (!contains(policy.at("carrier_payloads"), projection.at("target").text()))
+                    throw std::runtime_error("Unsupported logical carrier payload");
+                require_carrier_payload(projection);
+            }
+            value operand = value::object(); operand["projection"] = projection;
+            operand["condition"] = callable_condition(metadata, projection.at("target").text());
+            out[side] = operand;
+        }
+        bool admitted = false;
+        for (const auto &group : policy.at("operand_groups").items)
+            admitted = admitted || (contains(group, out.at("left").at("projection").at("target").text())
+                && contains(group, out.at("right").at("projection").at("target").text()));
+        if (!admitted) throw std::runtime_error("Unsupported logical operand pair");
+        out["steps"] = value::array();
+        for (const auto *step : {"evaluate_left_once", "project_left", "observe_left",
+                "return_short_circuit_or_continue", "evaluate_right_once", "project_right", "observe_right", "return_boolean"})
+            out["steps"].items.emplace_back(step);
+        return out;
+    }
+
     void validate_selections(const value &metadata)
     {
         if (!metadata.has("selections")) return;
         const auto &registry = metadata.at("selections");
-        fields_only(registry, "coalesce conditional", "selections");
+        fields_only(registry, "coalesce conditional logical", "selections");
+        if (registry.has("logical")) validate_logical_policy(metadata);
         if (registry.has("coalesce")) validate_coalesce_policy(metadata);
         if (!registry.has("conditional")) return;
         const auto &policy = registry.at("conditional");

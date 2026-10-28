@@ -784,6 +784,30 @@
         "plain_carrier",
         "same_carrier"
       ]
+    },
+    "logical": {
+      "operand_groups": [
+        [
+          "boolean"
+        ],
+        [
+          "int64",
+          "float64"
+        ]
+      ],
+      "carrier_payloads": [
+        "boolean",
+        "int64",
+        "float64"
+      ],
+      "operations": {
+        "logical_and": {
+          "short_circuit": false
+        },
+        "logical_or": {
+          "short_circuit": true
+        }
+      }
     }
   },
   "sections": {

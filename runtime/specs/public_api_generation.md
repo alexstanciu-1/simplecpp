@@ -1640,3 +1640,31 @@ boolean result is not a reconstructed carrier. Present false/zero negates to tru
 Direct conditions retain their separate nonthrowing unavailable-state decisions.
 This slice does not settle non-numeric condition-negation admission or add lazy
 and/or; those remain explicit carrier-review work.
+
+
+### Lazy logical plans
+
+`selections.logical` declares `operand_groups`, `carrier_payloads` and an operations
+map whose entries contain a boolean `short_circuit` value. Two projected operand
+types must belong to a common group; membership in the general condition domain
+alone is insufficient. Carrier payloads must also be explicitly admitted. Each
+listed type requires the existing callable condition operation. `logical_and` uses
+false as its short-circuit value; `logical_or` uses true.
+
+`resolve_logical` takes `operation`, `left`, and `right` identities plus ordinary
+name mappings. It resolves and validates both operands before returning a
+`lazy_logical` plan. Each operand contains its ordinary checked carrier projection
+(or identity projection) and scalar condition call. The result is plain boolean.
+
+The consumer evaluates the left source once, performs any required projection,
+then observes its condition. If that equals `short_circuit`, it returns that value
+without evaluating or projecting the RHS. Otherwise it evaluates the RHS once,
+performs its projection and returns its condition result. Exceptions preserve prior
+source effects. The plan is a compiler-owned control-flow sequence, not an eager
+binary runtime function or a public callback template. Runtime/application API
+publication reuses the existing carrier and condition identities.
+
+The current policy covers canonical bool/bool and numeric/numeric pairs across
+plain values and the four carrier families. Bool/numeric mixing, boxed values,
+string, fixed-width extensions and nested carrier payloads are not admitted by
+this slice; their source-contract audit remains separate.

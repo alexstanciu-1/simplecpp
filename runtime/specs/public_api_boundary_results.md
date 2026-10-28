@@ -3110,3 +3110,39 @@ change and a final duplicate-projection cleanup; metadata checks passed afterwar
 Remaining C work: lazy logical execution plans, explicit non-numeric admission,
 prepared-demand validation and broader admitted selection joins before carrier
 sign-off and ownership/callback expansion.
+
+## C33 — lazy canonical logical plans (2026-10-28)
+
+The existing selection owner now resolves `logical_and`/`logical_or` through
+metadata-defined operand groups and a short-circuit boolean. Both operand types
+validate before a plan is returned. Each executed operand uses the ordinary
+checked carrier projection followed by its scalar condition call. The RHS source,
+projection and observation occur only after the left condition requires them.
+The result is plain boolean; source evaluation remains compiler-owned. No eager
+binary adapter, public callback template or family-specific generator switch was
+introduced. Direct conditions retain their separate semantics.
+
+The policy admits canonical bool/bool and numeric/numeric pairs, including int64/
+float64, across plain values and all four carriers. It rejects bool/numeric mixing.
+Boxed, string, fixed-width and nested-carrier logical admission remain explicit
+review work; this slice is not a claim that all condition types support logical ops.
+
+Evidence: `check_carrier_logical.py` checks all 450 operation/type pair requests
+(250 admitted, 200 rejected), invalid RHS types and malformed metadata. Its public
+execution fixture derives 36 consumers from plans, covering 132 success cases and
+54 failure/skip groups: truth tables, mixed numeric and cross-carrier/plain pairs,
+skipped throwing RHS effects, skipped unavailable RHS, required RHS failure and
+left failure before RHS. Successful paths allocate zero. Release and ASan/UBSan
+with leak detection pass; both prove sealed application specialization reuse with
+no regenerated units. Four existing carrier/boxed coalescing and conditional
+metadata regressions pass in 11.78s; these are metadata-only regression checks.
+
+Single-run application storage/caller compile: release 13.9585s/1.1164s; sanitizer
+19.3550s/2.3235s. Runs overlapped, so these are workload observations rather than
+controlled comparative measurements. The runtime archives were reused; only the
+C++ API generator and application proof units were compiled. Runtime publication
+metadata was regenerated through the existing tool.
+
+Next: audit non-numeric logical admission and implement prepared-demand consumption
+under the accepted compiler-owned source-validation boundary. Carrier sign-off,
+ownership and callback expansion remain incomplete.
