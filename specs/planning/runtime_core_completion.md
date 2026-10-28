@@ -20,7 +20,7 @@ each slice. The original inventory is a baseline, not a current completion count
 | C | Four carrier recipes and bounded scalar paths implemented; first prepared canonical path reviewed in C38 | Guarded negation and canonical lazy logical plans implemented in C32/C33; remaining source admission, broader selection and payload-specific integration remain; C38 passes the first-path checkpoint. Both decisions accepted 2026-10-28. |
 | D | Handle storage, presence planning, checked retention, shared ancestry/casts and weak/unique transports implemented (D1–D6) | Retained property/container-field adapters proven in E36/E37 and bounded method transports in D7; scalar same-origin return bindings proven in D8; broader payload/member/planner integration, ownership selections, value storage and source Exception transport remain. |
 | E | Existing vector/hash/boxed foundations; incomplete | Typed/boxed access, observations, removal, creating stores, ordinary reads and append implemented in E23–E32; optional/boxed scalar key composition proven in E33; shared identity key storage/upcasts proven in E34; retained scalar/container-field adapters proven in E36/E37; broader member/key compositions remain; conditional lifecycle, cursor fixes, boxed access/probes, and positional/keyed built-in factories are implemented for the tested domains. |
-| F | Signature normalization/declaration publication implemented in F1/F2 after the F0 audit | Signature-driven class materialization, callable transport and twelve registered collection overloads; see runtime_core_callable_boundary.md. |
+| F | Signature normalization/publication and first signature-driven callable storage/invocation proof implemented in F1–F3 | Reusable capture conversion, broader signature/container/Result composition and twelve registered collection overloads; see runtime_core_callable_boundary.md. |
 | G | Core utility and scalar debug bindings implemented | Exception/helper gaps and requirement-by-requirement closure audit. |
 
 Full frontend adoption and module migration are excluded. C38 passes the first complete canonical carrier
@@ -3117,3 +3117,32 @@ including lifetime/allocation assertions, compile negatives and sealed reuse; it
 18 units compiled at eight jobs in 5.7623s and its public caller in 0.1373s. These
 are regression fixture costs, not callable runtime measurements. Generator binaries
 were rebuilt; runtime core archives and global publication were reused.
+
+
+## F3 — signature-driven callable storage and invocation (2026-10-28)
+
+Family parameter roles distinguish storage from signature declarations. Signature
+components use existing materialization/dependency discovery; function-type spelling
+and invocation expansion reuse ordinary operation passing/return-origin rules.
+`signature_from` and `forward_arguments` avoid per-arity or callable-name emitter
+branches. Derived native signatures stay request-local; declarations and concrete
+classes reuse the existing publication inventory.
+
+The callable recipe publishes concrete lifecycle, invocation, presence and reset.
+The prepared fixture uses application-function snippets to construct owned captures;
+it is not yet a reusable compiler capture-conversion recipe. Scalar value, writable
+reference, const-reference and void signatures are proven, including same-origin
+reference survival after callback reset. Tests cover copy/move/destruction, permission
+preservation, absence after argument effects, explicit prepared snapshot before an
+argument replaces the original callback, propagated exceptions and sealed reuse.
+Source capture eligibility and expression sequencing remain compiler-owned.
+
+Release and ASan/UBSan/LSan proofs passed: this owned environment allocates once on
+creation and once on copy; default absence and repeated invocation allocate zero.
+Seven generated units compiled at eight jobs in 1.6627s release / 1.8949s sanitized;
+public-only callers took 0.1630s / 0.1977s. These are single-run fixture costs, not
+full compiler builds. Nine related metadata regressions and the API metadata suite
+passed. Generator binaries rebuilt; core archives were reused. Runtime publication
+refreshed its metadata identity without adding runtime-owned implementation units.
+Broader signature compositions, capture conversion, collection callbacks and carrier
+integration remain open; this is not completion of batch F.

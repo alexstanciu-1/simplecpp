@@ -42,6 +42,14 @@ namespace scpp::api_generation
 	{
 		std::string out; for (const auto &header : headers) out+="#include \""+header+"\"\n"; return out;
 	}
+    static std::string parameter_spelling(const std::string &cpp, const std::string &passing)
+    {
+        if (passing == "const_ref") return "const " + cpp + " &";
+        if (passing == "ref") return cpp + " &";
+        if (passing == "move_ref") return cpp + " &&";
+        if (passing == "value") return cpp + " ";
+        throw std::runtime_error("Unknown parameter passing: " + passing);
+    }
 	class generator final
 	{
 		value api_imports_, api_exports_=value::object();
@@ -50,6 +58,57 @@ namespace scpp::api_generation
         std::set<std::string> required_apis_;
 		std::map<std::string,std::string> class_names_;
 		naming naming_, function_naming_;
+        value signature_types_ = value::object();
+        value signature_type(const std::string &identity)
+        {
+            if (this->signature_types_.has(identity)) return this->signature_types_.at(identity);
+            if (!this->leaves_.has(identity) || !this->leaves_.at(identity).has("signature"))
+                throw std::runtime_error("Signature parameter requires a descriptor: " + identity);
+            if (!this->visiting_.insert(identity).second)
+                throw std::runtime_error("Unresolved signature dependency cycle: " + identity);
+            const auto normalized = resolve_signature(this->metadata_, this->leaves_, this->names_,
+                this->leaves_.at(identity).at("signature"));
+            const auto &operation = normalized.at("operation_signature");
+            std::set<std::string> headers;
+            value dependencies = value::array();
+            const auto component = [&](const std::string &name) {
+                const auto type = this->materialize(name);
+                add_include(headers, type.get("header")); dependencies.items.emplace_back(name);
+                return type.at("cpp").text();
+            };
+            auto native = component(operation.at("returns").text());
+            if (operation.has("return_origin")) native += " &";
+            native += "(";
+            bool first = true;
+            for (const auto &parameter : operation.at("parameters").items) {
+                if (!first) native += ", "; first = false;
+                auto spelling = parameter_spelling(component(parameter.at("type").text()), parameter.get("passing", "value"));
+                if (!spelling.empty() && spelling.back() == ' ') spelling.pop_back();
+                native += spelling;
+            }
+            native += ")";
+            value type = this->leaves_.at(identity);
+            type["cpp"] = native; type["native"] = native; type["header"] = "";
+            type["operation_signature"] = operation; type["dependencies"] = dependencies;
+            type["includes"] = value::array();
+            for (const auto &header : headers) type["includes"].items.emplace_back(header);
+            this->signature_types_[identity] = type; this->visiting_.erase(identity);
+            return type;
+        }
+        value materialize_argument(const value &family, const std::string &parameter, const std::string &identity)
+        {
+            std::string kind = "storage";
+            if (family.has("parameter_kinds")) {
+                std::string allowed;
+                for (const auto &name : family.at("parameters").items) allowed += name.text() + " ";
+                fields_only(family.at("parameter_kinds"), allowed, "family parameter kinds");
+                for (const auto &[name, mode] : family.at("parameter_kinds").fields)
+                    if (mode.text() != "storage" && mode.text() != "signature")
+                        throw std::runtime_error("Unknown family parameter kind");
+                kind = family.at("parameter_kinds").get(parameter, "storage");
+            }
+            return kind == "signature" ? this->signature_type(identity) : this->materialize(identity);
+        }
 		value type(const std::string &text, const std::map<std::string,value> &types)
 		{
 			if (types.contains(text)) return types.at(text);
@@ -168,6 +227,15 @@ namespace scpp::api_generation
 			std::set<std::string> &public_headers, std::set<std::string> &private_headers,
 			const std::string &owner, std::string &declaration, value &checks, std::set<std::string> &probe_headers)
 		{
+            if (op.has("signature_from")) {
+                fields_only(op, "name kind const static noexcept expression body transport includes uses requires_capabilities signature_from", "signature operation");
+                const auto parameter = op.at("signature_from").text();
+                if (!types.contains(parameter) || !types.at(parameter).has("operation_signature"))
+                    throw std::runtime_error("Operation requires a signature parameter");
+                auto resolved = types.at(parameter).at("operation_signature");
+                for (const auto &[key, item] : op.fields) if (key != "signature_from") resolved[key] = item;
+                return this->operation(resolved, context, types, public_headers, private_headers, owner, declaration, checks, probe_headers);
+            }
             if (op.has("condition_observation")) {
                 if (owner.empty() || op.get("returns")!="boolean" || !op.yes("const")
                     || op.yes("static") || op.has("body") || !op.has("expression")
@@ -207,7 +275,7 @@ namespace scpp::api_generation
                 context["public:"+key]=t.at("cpp").text(); context["native:"+key]=t.get("native",t.at("cpp").text());
                 add_include(public_headers,t.get("header"));
             }
-            auto name=expand(op.get("name"),context); std::string arguments="(";
+            auto name=expand(op.get("name"),context); std::string arguments="(", forwarded;
 			if (op.has("parameters")) for (const auto &p : op.at("parameters").items) {
 				fields_only(p,"name type passing", "parameter");
 				auto arg=p.at("name").text(); authored_name(arg);
@@ -215,16 +283,17 @@ namespace scpp::api_generation
 				add_include(public_headers,t.get("header"));
 				if (arguments!="(") arguments+=", ";
 				auto passing=p.get("passing","value");
-				if (passing=="const_ref") arguments+="const "+cpp+" &";
-				else if (passing=="ref") arguments+=cpp+" &";
-				else if (passing=="move_ref") arguments+=cpp+" &&";
-				else if (passing=="value") arguments+=cpp+" ";
-				else throw std::runtime_error("Unknown parameter passing: "+passing);
+                arguments += parameter_spelling(cpp, passing);
+                if (!forwarded.empty()) forwarded += ", ";
+                forwarded += passing == "value" || passing == "move_ref" ? "std::move(" + arg + ")" : arg;
 				arguments+=arg;
 				context["public:"+arg]=arg; context["native:"+arg]=this->borrow(t,arg);
 				if ((op.has("body") ? op.at("body").text() : op.at("expression").text()).find("${native:"+arg+"}")!=std::string::npos)
                     this->dependencies(t,private_headers,context);
             }
+            context["forward_arguments"] = forwarded;
+            if ((op.has("body") ? op.at("body").text() : op.at("expression").text()).find("${forward_arguments}") != std::string::npos)
+                add_include(private_headers, "utility");
 			arguments+=")";
 			if (op.yes("const")) arguments+=" const";
 			if (op.yes("noexcept")) arguments+=" noexcept";
@@ -292,15 +361,19 @@ namespace scpp::api_generation
 			if (!this->visiting_.insert(canonical).second) throw std::runtime_error("Unresolved layout dependency cycle: "+canonical);
 			auto application=this->naming_.bind(canonical); const auto &recipe=this->metadata_.at("families").at(application.type.name);
 			if (recipe.at("parameters").type!=value::kind::array || recipe.at("classes").type!=value::kind::array || recipe.at("classes").items.empty()) throw std::runtime_error("Family requires parameter and nonempty class arrays");
-            fields_only(recipe,"parameters defaults binding native includes classes functions checks capabilities conditional_capabilities requires_capabilities carrier access", "family "+application.type.name);
+            fields_only(recipe,"parameters defaults binding native includes classes functions checks capabilities conditional_capabilities requires_capabilities carrier access parameter_kinds", "family "+application.type.name);
 			substitutions context{{"name",name},{"namebase",name.back()=='_'?name.substr(0,name.size()-1):name}};
 			std::map<std::string,value> types;
 			std::set<std::string> public_headers,private_headers,probe_headers;
 			value dependencies=value::array();
             value requirements=value::array();
 			for (const auto &[param, argument] : application.arguments) {
-				auto t=this->materialize(argument.canonical());
+				auto t=this->materialize_argument(recipe, param, argument.canonical());
 				context["type:"+param]=argument.canonical();
+                if (t.has("signature")) {
+                    this->dependencies(t, probe_headers, context);
+                    this->dependencies(t, private_headers, context);
+                }
 				types[param]=t; context["public:"+param]=t.at("cpp").text(); context["native:"+param]=t.get("native",t.at("cpp").text());
 				add_include(public_headers,t.get("header")); add_include(probe_headers,t.get("header")); dependencies.items.emplace_back(argument.canonical());
 			}
@@ -568,7 +641,7 @@ namespace scpp::api_generation
             value bindings = value::object();
             for (const auto &[parameter, argument] : application.arguments) {
                 const auto canonical = argument.canonical();
-                const auto type = this->materialize(canonical);
+                const auto type = this->materialize_argument(family, parameter, canonical);
                 if (bindings.has(parameter) || bindings.has("public_" + parameter) || bindings.has("native_" + parameter))
                     throw std::runtime_error("Conflicting function parameter substitution: " + parameter);
                 bindings[parameter] = canonical;

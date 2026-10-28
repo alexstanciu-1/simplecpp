@@ -3967,5 +3967,64 @@
       "move_storage",
       "copy_storage"
     ]
+  },
+  "callable": {
+    "parameters": [
+      "Signature"
+    ],
+    "parameter_kinds": {
+      "Signature": "signature"
+    },
+    "native": "scpp::callable_t<${native:Signature}>",
+    "includes": [
+      "scpp/callable_t.hpp"
+    ],
+    "classes": [
+      {
+        "id": "self",
+        "name": "${name}",
+        "native": "${native_type}",
+        "lifecycle": {
+          "default": "native",
+          "copy": "native",
+          "move": "native",
+          "destroy": "native",
+          "noexcept": [
+            "default",
+            "move",
+            "move_assignment"
+          ]
+        },
+        "methods": [
+          {
+            "name": "operator()",
+            "signature_from": "Signature",
+            "const": true,
+            "expression": "${self}(${forward_arguments})"
+          },
+          {
+            "name": "has_value",
+            "returns": "boolean",
+            "parameters": [],
+            "const": true,
+            "noexcept": true,
+            "transport": "native",
+            "expression": "static_cast<bool>(${self})"
+          },
+          {
+            "name": "reset",
+            "returns": "void",
+            "parameters": [],
+            "noexcept": true,
+            "expression": "${self} = ${native_type}{}"
+          }
+        ]
+      }
+    ],
+    "capabilities": [
+      "default_storage",
+      "copy_storage",
+      "move_storage"
+    ]
   }
 }

@@ -2264,5 +2264,32 @@ conflicts remain rejected. There is no signature-specific publication registry.
 Source generation requests that declare signatures need bindings for
 `signature_<key>_return` and `signature_<key>_parameter_<index>`, plus producer semantic
 requirements/facts. A signature-only package emits no C++ storage units. This boundary
-supports canonical declaration/reuse; explicitly signature-parameterized class recipes
-and native function-type materialization remain a subsequent step.
+supports canonical declaration/reuse; signature-parameterized recipes consume these
+declarations as described below.
+
+
+### Signature parameters and invocation recipes
+
+Family `parameter_kinds` optionally maps declared parameters to `storage` (the
+implicit default) or `signature`. A signature parameter requires a canonical signature
+leaf. Its component storage types materialize through the ordinary dependency owner;
+its private function type uses their public C++ representations and declared passing
+modes. This derived type is request-local, not exported as fake storage or a layout.
+Signature leaves remain invalid as ordinary storage arguments.
+
+An operation can use `signature_from: "Signature"` to obtain returns, ordered
+parameters and return origin from that bound descriptor. It supplies ordinary method
+attributes and an expression/body, but cannot override the descriptor's signature.
+Expansion reuses the ordinary operation emitter, including same-origin return checks.
+`${forward_arguments}` expands ordered arguments: value/move inputs are moved;
+reference inputs remain references. `<utility>` is private and included on demand.
+There is no family-name or arity-specific invocation emitter.
+
+The `callable<Signature>` recipe uses private `callable_t` storage and publishes
+concrete default/copy/move/destruction, invocation, presence and reset operations.
+Public headers contain neither templates nor `std::function`. Native capture permission
+state survives its existing lifecycle. Concrete capture construction currently uses
+application-function recipes; a reusable capture-conversion recipe and collection
+adapters remain pending. A source producer must prove signature/capture admission and
+snapshot the chosen callback before argument effects. Public invocation checks absence
+after C++ argument evaluation; it does not perform source expression preparation.

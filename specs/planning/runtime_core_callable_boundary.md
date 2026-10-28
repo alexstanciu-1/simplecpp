@@ -23,7 +23,7 @@ proposal, not new language admission.
   collection map/filter for vector/hash/mixed/dynamic, sequence map/filter for vector,
   and keyed map/filter for hash. All twelve use one by-value callback input.
 
-There is currently no callable public recipe. Existing type naming accepts registered
+At the F0 baseline there was no callable public recipe. Existing type naming accepts registered
 leaf identities and fixed-arity template applications; it does not describe the full
 source callable signature. Treating each arity as a new runtime family would multiply
 recipes and still lose input modes, variadic shape and return-origin identity.
@@ -120,3 +120,15 @@ storage facts. Local/imported descriptors normalize in C++ before comparison; th
 publication driver supplies imported leaves without performing semantic normalization.
 Fake cpp types and storage use of signatures reject. Callable recipe parameter roles,
 native function-type formation and invocation expansion are still the next boundary.
+
+
+## F3 implementation checkpoint
+
+The callable recipe now consumes canonical signature parameters through generic family
+roles, derives its private function type from component storage, and expands invocation
+through the ordinary operation emitter. Scalar value, reference/const-reference, void
+and same-origin returns have compiled release/sanitizer lifetime and allocation proofs.
+Owned capture construction currently uses application-function snippets. Capture
+conversion as a reusable recipe, nested/variadic composition, container/Result
+integration and the twelve collection overloads remain pending. See the completion
+inventory for measured costs and the exact bounded proof.
