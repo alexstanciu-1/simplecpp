@@ -1,0 +1,27 @@
+file(REMOVE_RECURSE "${WORK}")
+file(MAKE_DIRECTORY "${WORK}")
+file(READ "${PUBLICATION}" publication)
+string(JSON publication SET "${publication}" types "[\"int64\"]")
+string(JSON publication SET "${publication}" values "[\"bool_t\"]")
+string(JSON publication SET "${publication}" operators "[]")
+string(JSON publication SET "${publication}" string operations "[\"equal\"]")
+string(JSON publication SET "${publication}" string casts "[]")
+file(WRITE "${WORK}/publication.json" "${publication}")
+execute_process(COMMAND "${GENERATOR}" "${METADATA}" "${WORK}/publication.json" "${WORK}/generated"
+  RESULT_VARIABLE status ERROR_VARIABLE errors)
+if(NOT status EQUAL 0)
+  message(FATAL_ERROR "Small string publication failed: ${errors}")
+endif()
+file(WRITE "${WORK}/consumer.cpp" "#include <scpp/short_names.hpp>\n#include <type_traits>\ntemplate<class T> concept adds = requires(T x) { x + x; };\nstatic_assert(!adds<string>);\nstatic_assert(!std::is_constructible_v<int64, string>);\nstatic_assert(!std::is_constructible_v<string, int64>);\nint main() { string a{\"Ada\"}; auto b = a; b.append(a); return static_cast<bool>(b == string{\"AdaAda\"}) ? 0 : 1; }\n")
+separate_arguments(flags NATIVE_COMMAND "${CXX_FLAGS}")
+execute_process(COMMAND "${CXX}" ${flags} -std=c++23 "--ld-path=${MOLD_LINKER}"
+  "-I${WORK}/generated/public" "-I${SOURCE}/runtime/src/numeric" "-I${SOURCE}/runtime/src/sequence"
+  "${WORK}/generated/src/runtime.cpp" "${WORK}/consumer.cpp" -o "${WORK}/consumer"
+  RESULT_VARIABLE status ERROR_VARIABLE errors)
+if(NOT status EQUAL 0)
+  message(FATAL_ERROR "Small string API compilation failed: ${errors}")
+endif()
+execute_process(COMMAND "${WORK}/consumer" RESULT_VARIABLE status ERROR_VARIABLE errors)
+if(NOT status EQUAL 0)
+  message(FATAL_ERROR "Small string behavior failed: ${errors}")
+endif()

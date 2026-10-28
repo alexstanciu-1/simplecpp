@@ -1,13 +1,40 @@
 // Generated from reviewed runtime metadata. Do not edit.
 #include "scpp/numeric.hpp"
 #include "scalar_semantics.hpp"
+#include "scpp/string.hpp"
+#include "sequence_semantics.hpp"
 namespace scpp {
+struct string::storage { std::string bytes; };
+namespace detail { struct string_access {
+    static const std::string& read(const string& value) noexcept { static const std::string empty; return value.storage_ ? value.storage_->bytes : empty; }
+}; }
+string::~string() { delete storage_; }
+string::string(const string& other) : storage_(other.storage_ ? new storage{other.storage_->bytes} : nullptr) {}
+string::string(string&& other) noexcept : storage_(std::exchange(other.storage_, nullptr)) {}
+string& string::operator=(const string& other) { if (this != &other) { string copy(other); std::swap(storage_, copy.storage_); } return *this; }
+string& string::operator=(string&& other) noexcept { if (this != &other) { delete storage_; storage_ = std::exchange(other.storage_, nullptr); } return *this; }
+string::string(const char* bytes) : storage_(new storage{detail::string_from_c_string(bytes)}) {}
+string::string(const char* bytes, int64 count) : storage_(new storage{detail::string_from_bytes(bytes, count.native_value())}) {}
+int64 string::size() const { return int64{detail::checked_integer_cast<long long>(detail::string_access::read(*this).size())}; }
+bool_t string::empty() const noexcept { return bool_t{detail::string_access::read(*this).empty()}; }
+const char* string::data() const noexcept { return detail::string_access::read(*this).data(); }
+void string::append(const string& other) { if (!storage_) { string copy(other); std::swap(storage_, copy.storage_); } else { storage_->bytes.append(detail::string_access::read(other)); } }
+void string::clear() noexcept { delete storage_; storage_ = nullptr; }
+string operator+(string left, const string& right) { left.append(right); return left; }
+string& operator+=(string& left, const string& right) { left.append(right); return left; }
+bool_t operator==(const string& left, const string& right) noexcept { return bool_t{detail::string_access::read(left) == detail::string_access::read(right)}; }
+bool_t operator>(const string& left, const string& right) noexcept { return bool_t{detail::string_access::read(left) > detail::string_access::read(right)}; }
+bool_t operator>=(const string& left, const string& right) noexcept { return bool_t{detail::string_access::read(left) >= detail::string_access::read(right)}; }
+bool_t operator<(const string& left, const string& right) noexcept { return bool_t{detail::string_access::read(left) < detail::string_access::read(right)}; }
+bool_t operator<=(const string& left, const string& right) noexcept { return bool_t{detail::string_access::read(left) <= detail::string_access::read(right)}; }
+bool_t operator!=(const string& left, const string& right) noexcept { return bool_t{detail::string_access::read(left) != detail::string_access::read(right)}; }
 namespace detail { struct integer_access { template<class T, class Rep> static T make(Rep value) { T out; out.value_ = value; return out; } }; }
 static_assert(std::numeric_limits<double>::is_iec559 && std::numeric_limits<double>::radix == 2 && std::numeric_limits<double>::digits == 53 && std::numeric_limits<double>::max_exponent == 1024);
 static_assert(sizeof(float64) == sizeof(double));
 bool_t::bool_t(float64 value) noexcept : value_(detail::truth_cast<bool>(value.native_value())) {}
 bool_t::bool_t(int32 value) noexcept : value_(detail::truth_cast<bool>(value.native_value())) {}
 bool_t::bool_t(int64 value) noexcept : value_(detail::truth_cast<bool>(value.native_value())) {}
+bool_t::bool_t(const string& value) : value_(detail::parse_boolean_text(detail::string_access::read(value))) {}
 float64::float64(bool_t value) noexcept : value_(detail::numeric_cast<double>(value.native_value())) {}
 float64::float64(double value) noexcept : value_(detail::numeric_cast<double>(value)) {}
 float64::float64(float value) noexcept : value_(detail::numeric_cast<double>(value)) {}
@@ -16,6 +43,7 @@ float64::float64(int32 value) noexcept : value_(detail::numeric_cast<double>(val
 float64::float64(int64 value) noexcept : value_(detail::numeric_cast<double>(value.native_value())) {}
 float64::float64(long value) noexcept : value_(detail::numeric_cast<double>(value)) {}
 float64::float64(long long value) noexcept : value_(detail::numeric_cast<double>(value)) {}
+float64::float64(const string& value) : value_(detail::parse_decimal<double>(detail::string_access::read(value))) {}
 float64::float64(unsigned int value) noexcept : value_(detail::numeric_cast<double>(value)) {}
 float64::float64(unsigned long value) noexcept : value_(detail::numeric_cast<double>(value)) {}
 float64::float64(unsigned long long value) noexcept : value_(detail::numeric_cast<double>(value)) {}
@@ -25,6 +53,7 @@ int32::int32(int value) noexcept : value_(detail::checked_integer_cast<__INT32_T
 int32::int32(int64 value) : value_(detail::checked_integer_cast<__INT32_TYPE__>(value.native_value())) {}
 int32::int32(long value) : value_(detail::checked_integer_cast<__INT32_TYPE__>(value)) {}
 int32::int32(long long value) : value_(detail::checked_integer_cast<__INT32_TYPE__>(value)) {}
+int32::int32(const string& value) : value_(detail::parse_decimal<__INT32_TYPE__>(detail::string_access::read(value))) {}
 int32::int32(unsigned int value) : value_(detail::checked_integer_cast<__INT32_TYPE__>(value)) {}
 int32::int32(unsigned long value) : value_(detail::checked_integer_cast<__INT32_TYPE__>(value)) {}
 int32::int32(unsigned long long value) : value_(detail::checked_integer_cast<__INT32_TYPE__>(value)) {}
@@ -34,9 +63,14 @@ int64::int64(int value) noexcept : value_(detail::checked_integer_cast<__INT64_T
 int64::int64(int32 value) noexcept : value_(detail::checked_integer_cast<__INT64_TYPE__>(value.native_value())) {}
 int64::int64(long value) noexcept : value_(detail::checked_integer_cast<__INT64_TYPE__>(value)) {}
 int64::int64(long long value) noexcept : value_(detail::checked_integer_cast<__INT64_TYPE__>(value)) {}
+int64::int64(const string& value) : value_(detail::parse_decimal<__INT64_TYPE__>(detail::string_access::read(value))) {}
 int64::int64(unsigned int value) noexcept : value_(detail::checked_integer_cast<__INT64_TYPE__>(value)) {}
 int64::int64(unsigned long value) : value_(detail::checked_integer_cast<__INT64_TYPE__>(value)) {}
 int64::int64(unsigned long long value) : value_(detail::checked_integer_cast<__INT64_TYPE__>(value)) {}
+string::string(bool_t value) : storage_(new storage{detail::format_boolean_text(value.native_value())}) {}
+string::string(float64 value) : storage_(new storage{detail::format_decimal(value.native_value())}) {}
+string::string(int32 value) : storage_(new storage{detail::format_decimal(value.native_value())}) {}
+string::string(int64 value) : storage_(new storage{detail::format_decimal(value.native_value())}) {}
 static_assert(std::numeric_limits<int>::digits == 31);
 static_assert(std::numeric_limits<int>::is_signed == true);
 static_assert(std::numeric_limits<long>::digits == 63);

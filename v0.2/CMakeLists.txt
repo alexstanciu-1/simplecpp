@@ -31,12 +31,13 @@ set(runtime_metadata ${CMAKE_CURRENT_SOURCE_DIR}/runtime/metadata/runtime.json)
 set(runtime_publication ${CMAKE_CURRENT_SOURCE_DIR}/runtime/metadata/publication.json)
 set(runtime_generated ${CMAKE_CURRENT_SOURCE_DIR}/runtime/generated)
 set(runtime_outputs
+  ${runtime_generated}/public/scpp/string.hpp
   ${runtime_generated}/public/scpp/values.hpp
   ${runtime_generated}/public/scpp/integers.hpp
   ${runtime_generated}/public/scpp/numeric.hpp
   ${runtime_generated}/public/scpp/native_bridge.hpp
   ${runtime_generated}/public/scpp/short_names.hpp
-  ${runtime_generated}/src/scalars.cpp
+  ${runtime_generated}/src/runtime.cpp
   ${runtime_generated}/prepared.json
   ${runtime_generated}/inventory.json)
 add_custom_command(OUTPUT ${runtime_outputs}
@@ -44,15 +45,29 @@ add_custom_command(OUTPUT ${runtime_outputs}
   DEPENDS scpp_api_generator ${runtime_metadata} ${runtime_publication}
   VERBATIM)
 add_custom_target(scpp_runtime_publication DEPENDS ${runtime_outputs})
-add_library(scpp_runtime STATIC ${runtime_generated}/src/scalars.cpp)
+add_library(scpp_runtime STATIC ${runtime_generated}/src/runtime.cpp)
 add_dependencies(scpp_runtime scpp_runtime_publication)
 target_include_directories(scpp_runtime
   PUBLIC ${runtime_generated}/public
-  PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/runtime/src/numeric)
+  PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/runtime/src/numeric ${CMAKE_CURRENT_SOURCE_DIR}/runtime/src/sequence)
 target_compile_features(scpp_runtime PUBLIC cxx_std_23)
 
 include(CTest)
 if(BUILD_TESTING)
+  add_executable(string_preparation_test tests/string_preparation.cpp)
+  target_link_libraries(string_preparation_test PRIVATE scpp_api_generation)
+  add_test(NAME string_preparation COMMAND string_preparation_test ${runtime_metadata} ${runtime_publication})
+  add_executable(string_consumer_test tests/string_consumer.cpp)
+  target_link_libraries(string_consumer_test PRIVATE scpp_runtime)
+  add_test(NAME string_consumer COMMAND string_consumer_test)
+  add_test(NAME string_publication COMMAND ${CMAKE_COMMAND}
+    -DMOLD_LINKER=${SCPP_MOLD_LINKER}
+    -DGENERATOR=$<TARGET_FILE:scpp_api_generator>
+    -DMETADATA=${runtime_metadata} -DPUBLICATION=${runtime_publication}
+    -DCXX=${CMAKE_CXX_COMPILER} "-DCXX_FLAGS=${CMAKE_CXX_FLAGS}"
+    -DSOURCE=${CMAKE_CURRENT_SOURCE_DIR}
+    -DWORK=${CMAKE_CURRENT_BINARY_DIR}/string-proof
+    -P ${CMAKE_CURRENT_SOURCE_DIR}/tests/string_publication.cmake)
   add_executable(sequence_semantics_test tests/sequence_semantics.cpp)
   target_include_directories(sequence_semantics_test PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/runtime/src/sequence)
   target_compile_features(sequence_semantics_test PRIVATE cxx_std_23)

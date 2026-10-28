@@ -2,6 +2,7 @@ file(MAKE_DIRECTORY "${WORK}")
 file(REMOVE_RECURSE "${WORK}/generated")
 file(READ "${PUBLICATION}" publication)
 string(JSON publication SET "${publication}" types "[\"int8\",\"int16\",\"int32\",\"int64\",\"uint8\",\"uint16\",\"uint32\",\"uint64\"]")
+string(JSON publication SET "${publication}" string casts "[\"int8\",\"int16\",\"int32\",\"int64\",\"uint8\",\"uint16\",\"uint32\",\"uint64\",\"float64\",\"bool_t\"]")
 set(requests "[]")
 set(index 0)
 foreach(type int8 int16 int32 int64 uint8 uint16 uint32 uint64)
@@ -68,8 +69,8 @@ if(NOT status EQUAL 0)
 endif()
 separate_arguments(flags NATIVE_COMMAND "${CXX_FLAGS}")
 execute_process(COMMAND "${CXX}" ${flags} -std=c++23 "--ld-path=${MOLD_LINKER}"
-  "-I${WORK}/generated/public" "-I${SOURCE}/runtime/src/numeric"
-  "${WORK}/generated/src/scalars.cpp" "${SOURCE}/tests/integer_all_types.cpp"
+  "-I${WORK}/generated/public" "-I${SOURCE}/runtime/src/numeric" "-I${SOURCE}/runtime/src/sequence"
+  "${WORK}/generated/src/runtime.cpp" "${SOURCE}/tests/integer_all_types.cpp"
   -o "${WORK}/consumer" RESULT_VARIABLE status ERROR_VARIABLE errors)
 if(NOT status EQUAL 0)
   message(FATAL_ERROR "Full integer compilation failed: ${errors}")

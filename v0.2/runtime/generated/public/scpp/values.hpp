@@ -1,6 +1,7 @@
 // Generated from reviewed runtime metadata. Do not edit.
 #pragma once
 namespace scpp {
+class string;
 class int32;
 class int64;
 class bool_t;
@@ -12,6 +13,7 @@ public:
     explicit bool_t(float64 value) noexcept;
     explicit bool_t(int32 value) noexcept;
     explicit bool_t(int64 value) noexcept;
+    explicit bool_t(const string& value);
     explicit constexpr bool_t(bool value) noexcept : value_(value) {}
     explicit bool_t(int) = delete;
     explicit bool_t(unsigned int) = delete;
@@ -52,6 +54,7 @@ public:
     explicit float64(int64 value) noexcept;
     explicit float64(long value) noexcept;
     explicit float64(long long value) noexcept;
+    explicit float64(const string& value);
     explicit float64(unsigned int value) noexcept;
     explicit float64(unsigned long value) noexcept;
     explicit float64(unsigned long long value) noexcept;

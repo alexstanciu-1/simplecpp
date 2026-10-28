@@ -25,7 +25,7 @@ The same scalar conversion and operation plan serves integers and floats. Scalar
 casts carry implementation, losslessness and can-fail facts separately: rounding
 can be nonthrowing without being lossless. No second generator or policy table in
 the compiler is introduced. Private algorithms are grouped in scalar_semantics.hpp;
-generated implementations are grouped in src/scalars.cpp.
+generated implementations are grouped in src/runtime.cpp.
 
 ## Construction and casts
 

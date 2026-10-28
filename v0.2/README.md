@@ -200,3 +200,21 @@ release preset and a fresh standalone UBSan copy, both using Ninja, eight build 
 Clang/libc++ and mold. ELF .comment records confirm mold linked both the generator
 and the independent consumer proof. The isolated compiler dependency inventory has
 no original-repository includes. Generated freshness and alias composition pass.
+
+## Owned string checkpoint
+
+Include `scpp/string.hpp` (or `scpp/short_names.hpp`) for the concrete string value:
+
+```cpp
+string name{"Ada"};
+string greeting = string{"Hello, "} + name;
+int64 count = greeting.size();
+int64 number = static_cast<int64>(string{"42"});
+string text = static_cast<string>(number);
+```
+
+The generated API has independent value copies, nonthrowing moves, byte-length
+queries, explicit text casts and requested concatenation/comparison operators.
+Standard storage stays private. See [the string contract](specs/string_slice.md)
+for pointer lifetime, strict parsing, allocation tradeoffs and reduced publication
+proofs. Generated vectors and final composition are the next slices.

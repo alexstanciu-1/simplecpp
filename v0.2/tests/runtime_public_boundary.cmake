@@ -1,6 +1,6 @@
 file(MAKE_DIRECTORY "${WORK}")
 separate_arguments(flags NATIVE_COMMAND "${CXX_FLAGS}")
-foreach(header integers numeric short_names native_bridge values)
+foreach(header integers numeric short_names native_bridge values string)
   file(READ "${GENERATED}/public/scpp/${header}.hpp" text)
   if(text MATCHES "template[ \t\r\n]*<" OR text MATCHES "numeric_add|cast_int|std::")
     message(FATAL_ERROR "Unexpected public implementation exposure in ${header}")

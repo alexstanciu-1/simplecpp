@@ -117,7 +117,7 @@ authorize bulk archival of the old repository tree.
    change is agreed. Prove exact boundary checks at powers of two and nonfinite
    inputs, permitted/rejected mixed combinations and bool/numeric separation.
 
-4. **Owned strings — pending.** Review existing string representation, byte/length,
+4. **Owned strings — implemented.** Review existing string representation, byte/length,
    pointer construction and scalar formatting/parsing responsibilities. Use private
    standard storage when it satisfies the contract. Generate lifecycle, explicit
    construction, concatenation, equality/ordering and a small byte-length API.
@@ -252,3 +252,21 @@ fallback are recorded in [string_slice.md](../string_slice.md). Private pointer,
 length, index and text-conversion primitives now have a focused proof. This is an
 intermediate slice: string/vector metadata and public lifecycle/API emission remain
 unfinished, as do public composition tests. No files needed retirement.
+
+## Checkpoint: generated owned strings
+
+String publication now resolves operator/cast dependencies and emits a concrete
+public class with hidden standard storage. The default has six concrete types,
+151 numeric and eight string operator signatures. String text casts are explicit
+and selectively requested; null casts remain absent. Independent public headers,
+reduced demand sets and composed scalar/string consumer behavior are tested.
+See [string_slice.md](../string_slice.md) for ownership, borrowed data lifetime,
+allocation tradeoffs and the exact metadata boundary. The generated implementation
+is now src/runtime.cpp; the scalar-only filename has been retired. Vectors and final
+composition/audit remain open.
+
+The string checkpoint passes seventeen release tests and a fresh standalone UBSan
+build with no original-tree dependencies. The generated consumer also passes
+ASan+UBSan with libstdc++ (known environment LSan limitation retained). Full-family
+text proofs cover extrema of all eight integer representations. See the string
+contract for the exact evidence and storage tradeoff.

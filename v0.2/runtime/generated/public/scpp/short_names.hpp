@@ -1,6 +1,8 @@
 // Generated from reviewed runtime metadata. Do not edit.
 #pragma once
 #include "scpp/numeric.hpp"
+#include "scpp/string.hpp"
+using scpp::string;
 using scpp::int32;
 using scpp::int64;
 using scpp::bool_t;

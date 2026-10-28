@@ -71,8 +71,8 @@ const std::vector<std::string> &native_cpp_spellings() {
 }
 
 runtime_plan prepare_runtime(const value &metadata, const value &publication) {
-    exact(metadata, "version types representation construction promotion_policies operations values source_types aliases floating scalar_casts", "runtime metadata");
-    exact(publication, "version namespace types operators headers values short_aliases", "runtime publication");
+    exact(metadata, "version types representation construction promotion_policies operations values source_types aliases floating scalar_casts string", "runtime metadata");
+    exact(publication, "version namespace types operators headers values short_aliases string", "runtime publication");
     version(metadata); version(publication); literal(publication, "namespace", "scpp");
     const auto &rep = metadata.at("representation");
     exact(rep, "binding default_initialization", "representation");
@@ -333,6 +333,64 @@ runtime_plan prepare_runtime(const value &metadata, const value &publication) {
             }
         } else throw std::runtime_error("Unsupported scalar cast policy");
     }
+    if (metadata.has("string")) {
+        const auto &record = metadata.at("string");
+        exact(record, "type source_type storage count_type construction null_pointer text_casts operations", "string metadata");
+        literal(record, "type", "string"); literal(record, "source_type", "string");
+        literal(record, "storage", "private_std_string"); literal(record, "construction", "explicit");
+        literal(record, "null_pointer", "reject");
+        require(types.contains(record.at("count_type").text()) && types.at(record.at("count_type").text()).is_signed,
+                "String count requires a signed integer type");
+        std::set<std::string> capabilities;
+        for (const auto &entry : array(record.at("operations"))) {
+            const auto op = entry.text();
+            require(std::set<std::string>{"add", "add_assign", "equal", "not_equal", "less", "less_equal", "greater", "greater_equal"}.contains(op),
+                    "Unsupported string operation");
+            require(capabilities.insert(op).second, "Duplicate string operation");
+        }
+        std::set<std::string> text_casts;
+        for (const auto &entry : array(record.at("text_casts"))) {
+            const auto cast = entry.text();
+            require(cast == "decimal_integer" || cast == "decimal_float" || cast == "boolean_words", "Unsupported text cast policy");
+            require(text_casts.insert(cast).second, "Duplicate text cast policy");
+        }
+        if (publication.has("string")) {
+            const auto &request = publication.at("string");
+            exact(request, "header operations casts", "string publication");
+            plan.string = {record.at("type").text(), record.at("count_type").text(), header(request.at("header")), {}};
+            require(selected.contains(plan.string.count_type), "String requires published count type");
+            require(!plan.boolean_type.empty(), "String requires published boolean type");
+            require(inputs.contains("long long"), "String count requires explicit native long long construction");
+            plan.source_types.emplace(record.at("source_type").text(), plan.string.name);
+            std::set<std::string> seen;
+            for (const auto &entry : array(request.at("operations"))) {
+                const auto op = entry.text();
+                require(capabilities.contains(op), "String operation is not enabled by metadata");
+                require(seen.insert(op).second, "Duplicate published string operation");
+                const std::map<std::string, std::string> symbols = {{"add", "+"}, {"add_assign", "+="}, {"equal", "=="}, {"not_equal", "!="}, {"less", "<"}, {"less_equal", "<="}, {"greater", ">"}, {"greater_equal", ">="}};
+                const auto name = plan.string.name;
+                plan.string.operations.push_back({op, symbols.at(op), op == "add" || op == "add_assign" ? "string_append" : "string_compare",
+                    "same_string", op == "add_assign" ? "compound" : "binary", {name, name, false}, {name, name, false}, name,
+                    op == "add" || op == "add_assign" ? name : plan.boolean_type});
+            }
+            std::sort(plan.string.operations.begin(), plan.string.operations.end(), [](const auto &a, const auto &b) { return a.operation < b.operation; });
+            seen.clear();
+            for (const auto &entry : array(request.at("casts"))) {
+                const auto target = entry.text();
+                require(seen.insert(target).second, "Duplicate published text cast");
+                const auto policy = selected.contains(target) ? "decimal_integer"
+                    : target == plan.floating_type && !target.empty() ? "decimal_float"
+                    : target == plan.boolean_type ? "boolean_words" : "";
+                require(*policy != '\0', "Text cast requires a published numeric or boolean type");
+                require(text_casts.contains(policy), "Text cast is not enabled by metadata");
+                const bool words = target == plan.boolean_type;
+                plan.conversions.push_back({target, plan.string.name, false, false,
+                    words ? "parse_boolean_text" : "parse_decimal", true});
+                plan.conversions.push_back({plan.string.name, target, false, target != plan.floating_type,
+                    words ? "format_boolean_text" : "format_decimal", true});
+            }
+        }
+    } else require(!publication.has("string"), "String publication requires metadata");
     std::sort(plan.conversions.begin(), plan.conversions.end(), [](const auto &a, const auto &b) {
         return std::pair{a.target, a.source} < std::pair{b.target, b.source};
     });
@@ -443,11 +501,46 @@ runtime_plan prepare_runtime(const value &metadata, const value &publication) {
     plan.native_bridge_header = header(headers.at("native_bridge"));
     plan.values_header = header(headers.at("values"));
     require(std::set{plan.values_header, plan.types_header, plan.operators_header, plan.short_names_header, plan.native_bridge_header}.size() == 5, "Conflicting public headers");
+    if (!plan.string.name.empty())
+        require(!std::set{plan.values_header, plan.types_header, plan.operators_header, plan.short_names_header, plan.native_bridge_header}.contains(plan.string.header), "Conflicting public headers");
     return plan;
 }
 
 value describe(const runtime_plan &plan) {
     value out = value::object(); out["kind"] = "prepared_runtime_api";
+    if (!plan.string.name.empty()) {
+        auto &record = out["string"]; record = value::object();
+        record["name"] = plan.string.name; record["count_type"] = plan.string.count_type;
+        record["header"] = plan.string.header; record["storage"] = "private_std_string";
+        record["lifecycle"] = "owned_copy_noexcept_move";
+        record["empty_state"] = "null_storage";
+        record["operations"] = value::array();
+        for (const auto &op : plan.string.operations) {
+            auto row = value::object(); row["operation"] = op.operation; row["symbol"] = op.symbol;
+            row["form"] = op.form; row["implementation"] = op.implementation; row["execution"] = op.execution; row["result"] = op.result;
+            row["left"] = op.left.identity; row["right"] = op.right.identity;
+            row["result_category"] = op.form == "compound" ? "left_reference" : "value";
+            record["operations"].items.push_back(row);
+        }
+        record["methods"] = value::array();
+        for (const auto &[method, result] : std::vector<std::pair<std::string, std::string>>{
+                {"size", plan.string.count_type}, {"empty", plan.boolean_type}, {"data", "const char*"}, {"append", "void"}, {"clear", "void"}}) {
+            auto row = value::object(); row["name"] = method; row["result"] = result;
+            row["receiver"] = method == "append" || method == "clear" ? "mutable_reference" : "const_reference";
+            row["arguments"] = value::array();
+            if (method == "append") row["arguments"].items.emplace_back("const " + plan.string.name + "&");
+            row["result_category"] = method == "data" ? "borrowed_bytes_until_mutation_or_destruction" : "value";
+            row["can_fail"] = flag(method == "size" || method == "append");
+            record["methods"].items.push_back(row);
+        }
+        record["construction"] = value::array();
+        for (const auto &arguments : std::vector<std::vector<std::string>>{{"const char*"}, {"const char*", plan.string.count_type}}) {
+            auto row = value::object(); row["arguments"] = value::array();
+            for (const auto &arg : arguments) row["arguments"].items.emplace_back(arg);
+            row["explicit"] = flag(true); row["null_pointer"] = "reject"; row["can_fail"] = flag(true);
+            record["construction"].items.push_back(row);
+        }
+    }
     out["short_aliases"] = value::array();
     for (const auto &alias : plan.short_aliases) out["short_aliases"].items.emplace_back(alias);
     out["values"] = value::array(); out["source_types"] = value::object(); out["aliases"] = value::object();
@@ -473,6 +566,7 @@ value describe(const runtime_plan &plan) {
         value row = value::object(); row["target"] = c.target; row["source"] = c.source;
         row["native_source"] = flag(c.native_source); row["lossless"] = flag(c.lossless);
         row["implementation"] = c.implementation; row["can_fail"] = flag(c.can_fail);
+        row["source_category"] = c.source == plan.string.name ? "const_reference" : "value";
         out["conversions"].items.push_back(row);
     }
     for (const auto &op : plan.operations) {

@@ -1006,5 +1006,24 @@
   ],
   "short_aliases": [
     "int_t"
-  ]
+  ],
+  "string": {
+    "header": "scpp/string.hpp",
+    "operations": [
+      "add",
+      "add_assign",
+      "equal",
+      "not_equal",
+      "less",
+      "less_equal",
+      "greater",
+      "greater_equal"
+    ],
+    "casts": [
+      "int32",
+      "int64",
+      "float64",
+      "bool_t"
+    ]
+  }
 }

@@ -14,14 +14,61 @@ std::string signature(const scalar_operation &op) {
     if (op.form == "postfix") out += ", int";
     return out + ")";
 }
+std::string conversion_input(const runtime_plan &plan, const scalar_conversion &conversion) {
+    return conversion.source == plan.string.name ? "const " + conversion.source + "&" : conversion.source;
+}
+std::pair<std::string, std::string> emit_string(const runtime_plan &plan) {
+    const auto &name = plan.string.name;
+    if (name.empty()) return {};
+    const auto &count = plan.string.count_type;
+    const auto &boolean = plan.boolean_type;
+    std::string header = "#pragma once\n#include \"" + plan.types_header + "\"\n#include \"" + plan.values_header
+        + "\"\nnamespace scpp {\nnamespace detail { struct string_access; }\nclass " + name + " final {\npublic:\n";
+    header += "    " + name + "() noexcept = default;\n    ~" + name + "();\n    " + name + "(const " + name + "&);\n    " + name + "(" + name + "&&) noexcept;\n";
+    header += "    " + name + "& operator=(const " + name + "&);\n    " + name + "& operator=(" + name + "&&) noexcept;\n";
+    header += "    explicit " + name + "(const char*);\n    explicit " + name + "(const char*, " + count + ");\n";
+    for (const auto &native : native_cpp_spellings()) header += "    explicit " + name + "(" + native + ") = delete;\n";
+    header += "#ifdef __SIZEOF_INT128__\n    explicit " + name + "(__int128) = delete;\n    explicit " + name + "(unsigned __int128) = delete;\n#endif\n";
+    for (const auto &c : plan.conversions) if (c.target == name)
+        header += "    explicit " + name + "(" + conversion_input(plan, c) + " value);\n";
+    header += "    " + count + " size() const;\n    " + boolean + " empty() const noexcept;\n    const char* data() const noexcept;\n    void append(const " + name + "&);\n    void clear() noexcept;\n";
+    header += "private:\n    struct storage;\n    storage* storage_ = nullptr;\n    friend struct detail::string_access;\n};\n";
+    std::string definitions = "struct " + name + "::storage { std::string bytes; };\n";
+    definitions += "namespace detail { struct string_access {\n    static const std::string& read(const " + name + "& value) noexcept { static const std::string empty; return value.storage_ ? value.storage_->bytes : empty; }\n}; }\n";
+    definitions += name + "::~" + name + "() { delete storage_; }\n";
+    definitions += name + "::" + name + "(const " + name + "& other) : storage_(other.storage_ ? new storage{other.storage_->bytes} : nullptr) {}\n";
+    definitions += name + "::" + name + "(" + name + "&& other) noexcept : storage_(std::exchange(other.storage_, nullptr)) {}\n";
+    definitions += name + "& " + name + "::operator=(const " + name + "& other) { if (this != &other) { " + name + " copy(other); std::swap(storage_, copy.storage_); } return *this; }\n";
+    definitions += name + "& " + name + "::operator=(" + name + "&& other) noexcept { if (this != &other) { delete storage_; storage_ = std::exchange(other.storage_, nullptr); } return *this; }\n";
+    definitions += name + "::" + name + "(const char* bytes) : storage_(new storage{detail::string_from_c_string(bytes)}) {}\n";
+    definitions += name + "::" + name + "(const char* bytes, " + count + " count) : storage_(new storage{detail::string_from_bytes(bytes, count.native_value())}) {}\n";
+    definitions += count + " " + name + "::size() const { return " + count + "{detail::checked_integer_cast<long long>(detail::string_access::read(*this).size())}; }\n";
+    definitions += boolean + " " + name + "::empty() const noexcept { return " + boolean + "{detail::string_access::read(*this).empty()}; }\n";
+    definitions += "const char* " + name + "::data() const noexcept { return detail::string_access::read(*this).data(); }\n";
+    definitions += "void " + name + "::append(const " + name + "& other) { if (!storage_) { " + name + " copy(other); std::swap(storage_, copy.storage_); } else { storage_->bytes.append(detail::string_access::read(other)); } }\n";
+    definitions += "void " + name + "::clear() noexcept { delete storage_; storage_ = nullptr; }\n";
+    for (const auto &op : plan.string.operations) {
+        const auto &symbol = op.symbol;
+        const auto signature = op.operation == "add" ? name + " operator+(" + name + " left, const " + name + "& right)"
+            : op.form == "compound" ? name + "& operator+=(" + name + "& left, const " + name + "& right)"
+            : boolean + " operator" + symbol + "(const " + name + "& left, const " + name + "& right) noexcept";
+        header += signature + ";\n";
+        definitions += signature + " { ";
+        if (op.operation == "add" || op.form == "compound") definitions += "left.append(right); return left;";
+        else definitions += "return " + boolean + "{detail::string_access::read(left) " + symbol + " detail::string_access::read(right)};";
+        definitions += " }\n";
+    }
+    return {header + "}\n", definitions};
+}
 std::string emit_values(const runtime_plan &plan) {
     std::string out = "#pragma once\nnamespace scpp {\n";
+    if (!plan.string.name.empty()) out += "class " + plan.string.name + ";\n";
     for (const auto &type : plan.types) out += "class " + type.name + ";\n";
     for (const auto &type : plan.values) out += "class " + type.name + ";\n";
     for (const auto &type : plan.values) {
         out += "class " + type.name + " final {\npublic:\n    constexpr " + type.name + "() noexcept = default;\n";
         for (const auto &c : plan.conversions) if (c.target == type.name)
-            out += "    explicit " + type.name + "(" + c.source + " value)" + (c.can_fail ? "" : " noexcept") + ";\n";
+            out += "    explicit " + type.name + "(" + conversion_input(plan, c) + " value)" + (c.can_fail ? "" : " noexcept") + ";\n";
         if (type.kind == "floating") {
             for (const auto &native : native_cpp_spellings())
                 if (!std::any_of(plan.conversions.begin(), plan.conversions.end(), [&](const auto &c) {
@@ -66,8 +113,13 @@ std::string emit_values(const runtime_plan &plan) {
 std::map<std::string, std::string> emit_runtime(const runtime_plan &plan) {
     const std::string banner = "// Generated from reviewed runtime metadata. Do not edit.\n";
     std::string declarations = banner + "#pragma once\nnamespace scpp {\nnamespace detail { struct integer_access; }\n";
-    std::string definitions = banner + "#include \"" + plan.operators_header + "\"\n#include \"scalar_semantics.hpp\"\nnamespace scpp {\n";
+    std::string definitions = banner + "#include \"" + plan.operators_header + "\"\n#include \"scalar_semantics.hpp\"\n";
+    if (!plan.string.name.empty()) definitions += "#include \"" + plan.string.header + "\"\n#include \"sequence_semantics.hpp\"\n";
+    definitions += "namespace scpp {\n";
+    const auto [string_header, string_definitions] = emit_string(plan);
+    definitions += string_definitions;
     definitions += "namespace detail { struct integer_access { template<class T, class Rep> static T make(Rep value) { T out; out.value_ = value; return out; } }; }\n";
+    if (!plan.string.name.empty()) declarations += "class " + plan.string.name + ";\n";
     for (const auto &t : plan.types) declarations += "class " + t.name + ";\n";
     for (const auto &t : plan.values) declarations += "class " + t.name + ";\n";
     const auto representation = [&](const std::string &name) {
@@ -82,8 +134,19 @@ std::map<std::string, std::string> emit_runtime(const runtime_plan &plan) {
         definitions += "static_assert(sizeof(" + plan.floating_type + ") == sizeof(double));\n";
     }
     for (const auto &c : plan.conversions) {
+        if (c.source == plan.string.name) {
+            const auto call = "detail::" + c.implementation + (c.implementation == "parse_decimal" ? "<" + representation(c.target) + ">" : "")
+                + "(detail::string_access::read(value))";
+            definitions += c.target + "::" + c.target + "(" + conversion_input(plan, c) + " value) : value_(" + call + ") {}\n";
+            continue;
+        }
+        if (c.target == plan.string.name) {
+            definitions += c.target + "::" + c.target + "(" + conversion_input(plan, c) + " value) : storage_(new storage{detail::"
+                + c.implementation + "(value.native_value())}) {}\n";
+            continue;
+        }
         const auto input = c.native_source ? "value" : "value.native_value()";
-        definitions += c.target + "::" + c.target + "(" + c.source + " value)" + (c.can_fail ? "" : " noexcept")
+        definitions += c.target + "::" + c.target + "(" + conversion_input(plan, c) + " value)" + (c.can_fail ? "" : " noexcept")
             + " : value_(detail::" + c.implementation + "<" + representation(c.target) + ">(" + input + ")) {}\n";
     }
     std::set<std::string> natives;
@@ -95,7 +158,7 @@ std::map<std::string, std::string> emit_runtime(const runtime_plan &plan) {
     for (const auto &t : plan.types) {
         declarations += "class " + t.name + " final {\npublic:\n    constexpr " + t.name + "() noexcept = default;\n";
         for (const auto &c : plan.conversions) if (c.target == t.name)
-            declarations += "    explicit " + t.name + "(" + c.source + " value)" + (c.can_fail ? "" : " noexcept") + ";\n";
+            declarations += "    explicit " + t.name + "(" + conversion_input(plan, c) + " value)" + (c.can_fail ? "" : " noexcept") + ";\n";
         // Deleted exact matches prevent standard conversions from bypassing admission.
         for (const auto &input : native_cpp_spellings()) {
             if (!natives.contains(input)) declarations += "    explicit " + t.name + "(" + input + ") = delete;\n";
@@ -169,6 +232,7 @@ std::map<std::string, std::string> emit_runtime(const runtime_plan &plan) {
     }
     bridge += "}\n"; operators += "}\n"; definitions += "}\n";
     std::string short_names = banner + "#pragma once\n#include \"" + plan.operators_header + "\"\n";
+    if (!plan.string.name.empty()) short_names += "#include \"" + plan.string.header + "\"\nusing scpp::" + plan.string.name + ";\n";
     for (const auto &t : plan.types) short_names += "using scpp::" + t.name + ";\n";
     for (const auto &type : plan.values) {
         short_names += "using scpp::" + type.name + ";\n";
@@ -178,8 +242,9 @@ std::map<std::string, std::string> emit_runtime(const runtime_plan &plan) {
     std::map<std::string, std::string> files = {
         {"public/" + plan.values_header, banner + emit_values(plan)},
         {"public/" + plan.types_header, declarations}, {"public/" + plan.operators_header, operators},
-        {"public/" + plan.short_names_header, short_names}, {"public/" + plan.native_bridge_header, bridge}, {"src/scalars.cpp", definitions},
+        {"public/" + plan.short_names_header, short_names}, {"public/" + plan.native_bridge_header, bridge}, {"src/runtime.cpp", definitions},
         {"prepared.json", json_text(describe(plan)) + "\n"}};
+    if (!plan.string.name.empty()) files["public/" + plan.string.header] = banner + string_header;
     value inventory = value::array();
     for (const auto &[path, contents] : files) inventory.items.emplace_back(path);
     files["inventory.json"] = json_text(inventory) + "\n";

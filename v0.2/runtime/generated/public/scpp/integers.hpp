@@ -2,6 +2,7 @@
 #pragma once
 namespace scpp {
 namespace detail { struct integer_access; }
+class string;
 class int32;
 class int64;
 class bool_t;
@@ -16,6 +17,7 @@ public:
     explicit int32(int64 value);
     explicit int32(long value);
     explicit int32(long long value);
+    explicit int32(const string& value);
     explicit int32(unsigned int value);
     explicit int32(unsigned long value);
     explicit int32(unsigned long long value);
@@ -50,6 +52,7 @@ public:
     explicit int64(int32 value) noexcept;
     explicit int64(long value) noexcept;
     explicit int64(long long value) noexcept;
+    explicit int64(const string& value);
     explicit int64(unsigned int value) noexcept;
     explicit int64(unsigned long value);
     explicit int64(unsigned long long value);

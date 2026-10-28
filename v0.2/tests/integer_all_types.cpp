@@ -12,7 +12,19 @@ template<class F> static void zero_fails(F work, const char *message) {
     }
     throw std::runtime_error("Missing zero-divisor failure");
 }
+template<class T> static void check_text() {
+    using Rep = decltype(T{}.native_value());
+    const auto make = [](Rep value) {
+        if constexpr (std::numeric_limits<Rep>::is_signed) return T{static_cast<long long>(value)};
+        else return T{static_cast<unsigned long long>(value)};
+    };
+    for (const auto value : {std::numeric_limits<Rep>::min(), std::numeric_limits<Rep>::max()}) {
+        const auto text = static_cast<string>(make(value));
+        require(static_cast<T>(text).native_value() == value);
+    }
+}
 template<class T> static void check() {
+    check_text<T>();
     const T a{20}, b{3};
     static_assert(std::is_same_v<decltype(a + b), T>);
     static_assert(std::is_same_v<decltype(a - b), T>);

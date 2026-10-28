@@ -579,5 +579,28 @@
     "floating_to_integer_truncate_checked",
     "numeric_to_boolean_nonzero",
     "boolean_to_numeric_01"
-  ]
+  ],
+  "string": {
+    "type": "string",
+    "source_type": "string",
+    "storage": "private_std_string",
+    "count_type": "int64",
+    "construction": "explicit",
+    "null_pointer": "reject",
+    "text_casts": [
+      "decimal_integer",
+      "decimal_float",
+      "boolean_words"
+    ],
+    "operations": [
+      "add",
+      "add_assign",
+      "equal",
+      "not_equal",
+      "less",
+      "less_equal",
+      "greater",
+      "greater_equal"
+    ]
+  }
 }

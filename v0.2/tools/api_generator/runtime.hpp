@@ -32,7 +32,12 @@ struct simple_value_type {
     std::string name, kind, representation;
     std::vector<std::string> operations;
 };
+struct string_plan {
+    std::string name, count_type, header;
+    std::vector<scalar_operation> operations;
+};
 struct runtime_plan {
+    string_plan string;
     std::vector<simple_value_type> values;
     std::map<std::string, std::string> source_types, aliases;
     std::vector<std::string> short_aliases;
