@@ -1,6 +1,6 @@
 file(MAKE_DIRECTORY "${WORK}")
 separate_arguments(flags NATIVE_COMMAND "${CXX_FLAGS}")
-file(WRITE "${WORK}/consumer.cpp" "#include <scpp_compiler/token.hpp>\nint main() { scpp::compiler::token t{scpp::uint64{0}, scpp::uint64{1}, scpp::compiler::token_kind::identifier}; }\n")
+file(WRITE "${WORK}/consumer.cpp" "#include <scpp_compiler/token.hpp>\n#include <scpp_compiler/token_buffer.hpp>\nint main() { scpp::compiler::token t{scpp::uint64{0}, scpp::uint64{1}, scpp::compiler::token_kind::identifier}; }\n")
 execute_process(COMMAND "${CXX}" ${flags} -std=c++23 "-I${GENERATED}/public" "-I${MODEL}"
   -fsyntax-only "${WORK}/consumer.cpp" RESULT_VARIABLE status ERROR_VARIABLE errors)
 if(NOT status EQUAL 0)

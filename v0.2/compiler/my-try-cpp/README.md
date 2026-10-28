@@ -3,8 +3,9 @@
 Doc Status: supporting
 
 This is the active v0.2 compiler foundation, not a complete compiler. It contains
-only the compact token model and its requested runtime publication. Scanner,
-builder, source storage, parsing and semantic compilation are not migrated yet.
+the compact token model, immutable in-memory source snapshots and their requested
+runtime publication. Scanner, builder, filesystem integration, parsing and semantic
+compilation are not migrated yet.
 
 ## Ownership and bounded reuse
 
@@ -43,10 +44,50 @@ spans, invalid spans, explicit construction and checked narrowing.
 active template/typename tokens; it also proves implicit native construction fails.
 `compiler_runtime_freshness` checks generated artifacts against metadata.
 
-Next: bring in immutable source storage and in-memory scanning in bounded slices.
+Next: bring in token sequence construction and in-memory scanning in bounded slices.
 Do not import the old filesystem/task/JSON aggregate to make tokenization compile.
 
 Validation recorded for this slice: all 27 release tests passed; the three
 compiler-focused checks passed under UBSan and in a fresh source-only export.
 The fresh build regenerated its runtime and its Ninja dependency records contained
 no paths into the original repository. Generated code remains untracked.
+
+## Immutable source snapshots
+
+`token_buffer` owns source bytes, with private `std::shared_ptr<const std::string>`
+storage behind the template-free API. This bounded reuse preserves the old
+`support/src/token_buffer.cpp` ownership, byte lookahead and spelling comparison
+contracts; it replaces the legacy shared/string/scalar adapters with private
+standard-library storage. Each copied handle allocates a small private state;
+it does not copy the byte payload. This is not a zero-allocation handle claim.
+
+`from_bytes(pointer, uint64 length)` is an explicit host ingress that copies the
+readable range. Null pointers are rejected even for zero length; `from_bytes("", 0)`
+(with an explicitly constructed uint64) creates a present empty source. Capacity
+is checked before dereferencing input. Arbitrary invalid non-null pointers remain
+a caller error. No source buffer pointer escapes. Source size constraints imposed
+by compact tokenization remain a future builder responsibility.
+
+Copies retain immutable identity after the original is replaced or destroyed.
+Moves empty the source, and self-copy/self-move preserve it. Distinct snapshots
+with equal bytes do not have the same storage identity. Missing snapshots have no
+identity, even with themselves. Distinct retained handles may read shared bytes;
+mutation/destruction of the same handle requires external synchronization.
+
+`peek` returns -1 outside the source, including for huge offsets; NUL is zero and
+all high bytes are unsigned. `byte_at` throws out_of_range outside the source.
+`matches` compares a bounded span against a non-null zero-terminated spelling;
+it checks spans without overflowing offset+length. Empty spelling matches at EOF
+of a present snapshot, but not in a missing snapshot. It does not allocate.
+
+Filesystem reading, runtime string ingress, general string equality and scheduling
+are intentionally deferred to their consumer slices. No runtime publication or
+operator matrix expansion was needed. The support implementation may use private
+standard-library/native operations; the model header remains template-free.
+
+The buffer proof covers caller-memory independence, embedded NUL/high bytes,
+missing/empty sources, overflow-resistant bounds, copy/move/self-assignment,
+replacement/destruction and rejected null/capacity inputs. All four compiler
+checks pass in release and UBSan builds.
+The focused buffer executable also passes ASan+UBSan with libstdc++; leak detection
+was disabled for this sandbox run, so this is not a LeakSanitizer proof.
