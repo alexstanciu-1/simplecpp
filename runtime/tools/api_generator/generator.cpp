@@ -389,14 +389,17 @@ namespace scpp::api_generation
             authored_name(name);
             if (name.find("::") != std::string::npos) throw std::runtime_error("Access path name must be unqualified");
             const auto path = describe_access_path(this->metadata_, this->leaves_, this->names_, request);
-            const bool writing = path.get("operation") == "existing_store";
+            const bool storing = path.get("operation") == "existing_store";
+            const bool erasing = path.get("operation") == "existing_erase";
+            const bool probing = path.get("operation") == "prefix_ready";
+            const bool writing = storing || erasing;
             value function = value::object(); function["namespace"] = "scpp";
             function["header"] = "scpp/access/" + name + ".hpp";
             function["source"] = "include/core/generated/" + name + ".cpp";
             const auto symbol = "path_" + name;
             this->claim(symbol, "path-api:" + name);
             value operation = value::object(); operation["name"] = symbol;
-            operation["returns"] = writing ? "void" : path.at("element");
+            operation["returns"] = writing ? value("void") : probing ? value("boolean") : path.at("element");
             operation["parameters"] = value::array();
             auto parameter = [&](const std::string &id, const value &type, const std::string &passing) {
                 value entry = value::object(); entry["name"] = id; entry["type"] = type; entry["passing"] = passing;
@@ -404,6 +407,7 @@ namespace scpp::api_generation
             };
             parameter("root", path.at("root"), writing ? "ref" : "const_ref");
             std::set<std::string> headers{"type_traits", "utility", "scpp/detail/concrete_access.hpp"};
+            if (probing) this->dependencies(path.at("ready_protocol"), headers, {});
             unsigned index = 0;
             for (const auto &step : path.at("steps").items) {
                 parameter("key_" + std::to_string(index++), step.at("key"), "const_ref");
@@ -412,7 +416,7 @@ namespace scpp::api_generation
                 this->dependencies(step, headers, {});
                 this->materialize(step.at("element").text());
             }
-            if (writing) parameter("value", path.at("element"), "value");
+            if (storing) parameter("value", path.at("element"), "value");
             const auto &steps = path.at("steps").items;
             auto traverse = [&](bool mutable_access) {
                 std::string body;
@@ -422,10 +426,22 @@ namespace scpp::api_generation
                     const auto element = this->materialize(step.at("element").text());
                     const auto expression = expand(step.at(mutable_access ? "mutable" : "read").text(),
                         {{"receiver", current}, {"key", "key_" + std::to_string(i)}});
+                    if (!mutable_access && (probing || erasing)) {
+                        const auto present = expand(step.at("present").text(),
+                            {{"receiver", current}, {"key", "key_" + std::to_string(i)}});
+                        body += "if (!(" + present + ")) " + (probing ? "return boolean(false);\n" : "return;\n");
+                    }
                     body += "static_assert(std::is_same_v<decltype((" + expression + ")), "
                         + (mutable_access ? "" : "const ") + element.at("cpp").text() + " &>);\n";
                     if (i + 1 == steps.size()) {
-                        if (mutable_access) body += expression + " = value;\n";
+                        if (mutable_access && erasing) body += expand(step.at("erase").text(),
+                            {{"receiver", current}, {"key", "key_" + std::to_string(i)}}) + ";\n";
+                        else if (mutable_access) body += expression + " = value;\n";
+                        else if (probing) {
+                            body += "const auto &path_leaf = " + expression + ";\n";
+                            body += "return boolean(" + expand(path.at("ready").text(),
+                                {{"receiver", this->borrow(element, "path_leaf")}}) + ");\n";
+                        }
                         else body += (writing ? "(void)(" + expression + ");\n" : "return " + expression + ";\n");
                     } else {
                         const auto slot = "path_value_" + std::to_string(i);

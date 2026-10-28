@@ -19,7 +19,7 @@ each slice. The original inventory is a baseline, not a current completion count
 | B2 | Complete for the agreed non-carrier special/mutation and text public paths; closure evidence below | Carrier forms C; indexed retention E; native exception inspection and overflow disposition G. |
 | C | Four carrier recipes and bounded scalar paths implemented; first prepared canonical path reviewed in C38 | Guarded negation and canonical lazy logical plans implemented in C32/C33; remaining source admission, broader selection and payload-specific integration remain; C38 passes the first-path checkpoint. Both decisions accepted 2026-10-28. |
 | D | Handle storage, presence planning, checked retention, shared ancestry/casts and weak/unique transports implemented (D1–D6) | Typed member access, operation-planner integration, ownership selections, value storage and source Exception transport remain. |
-| E | Existing vector/hash/boxed foundations; incomplete | Typed existing read/store implemented in E23; lazy probes/removal, heterogeneous paths and remaining key policies; conditional lifecycle, cursor fixes, boxed access/probes, and positional/keyed built-in factories are implemented for the tested domains. |
+| E | Existing vector/hash/boxed foundations; incomplete | Typed read/store and prefix readiness/removal implemented in E23/E24; final value probes, heterogeneous paths and remaining key policies; conditional lifecycle, cursor fixes, boxed access/probes, and positional/keyed built-in factories are implemented for the tested domains. |
 | F | Pending | Callable transport and registered collection algorithms. |
 | G | Core utility and scalar debug bindings implemented | Exception/helper gaps and requirement-by-requirement closure audit. |
 
@@ -2597,3 +2597,36 @@ Batch E remains incomplete. Next extend the same protocol to lazy presence/empty
 probes and removal, preserving compiler-owned evaluation and native missing-path
 semantics. Ownership selections, value/Exception transport and callbacks also remain
 open in their respective batches. No full frontend adoption is claimed.
+
+
+## E24 — typed prefix readiness and existing removal (2026-10-28)
+
+Access protocols now supply membership, receiver readiness and optional removal.
+The same composer emits boolean prefix readiness and void existing-only removal;
+no family-name dispatch or separate publication pipeline was introduced. Readiness
+requires a registered receiver at the leaf; scalars are rejected. Hash has removal;
+vector deliberately does not, while remaining usable as an intermediate receiver.
+Neither operation copies its leaf. Removal checks all const memberships before
+mutable descent, does not create entries and does not prune empty parents.
+
+The expanded public fixture proves skipped later work on missing prefixes, fresh
+readiness after root replacement, hash removal, vector-to-hash nested removal,
+missing intermediate/leaf no-ops and preserved parents. Removal and missing no-ops
+allocate zero. Existing read/store/lifetime checks still pass. Release and
+ASan/UBSan/LSan executions, independent headers, sealed zero-unit reuse, additional
+operation reuse and six focused CTest checks pass. Metadata rejects final vector
+erase and scalar readiness. An initial measurement counted the fixture's owned
+`at()` verification copy; that verification now runs outside the allocation window.
+An early publication run correctly rejected stale metadata while regeneration was
+still finishing; subsequent runs use the completed manifest.
+
+The expanded fixture compiles 16 application units at eight jobs: 6.4360s release /
+10.4922s sanitizer, public caller 0.1329s / 0.1591s. Configurations ran sequentially;
+release overlapped the final instrumented generator rebuild and metadata regressions.
+Physical metadata-only planning includes one additional runtime-owned helper that
+publication reuses. Runtime archives were reused; publication remains 406 units.
+
+This is a physical prefix/removal protocol proof, not frontend integration. Final
+null-sensitive `isset` and supported `empty` observations remain next: membership
+must not replace value state. Boxed heterogeneous paths, field-owner retention and
+other batch D/F/G work remain open. The goal is not complete.

@@ -1910,8 +1910,8 @@ list, for example:
 "operation":"existing_store"}},"apis":["matrix_store"]}
 ```
 
-Names are unqualified authored identifiers. Operations are `existing_read` and
-`existing_store`; depth is an integer from 1 through 128. The generator follows each
+Names are unqualified authored identifiers. Operations are `existing_read`, `existing_store`, `prefix_ready` and
+`existing_erase`; depth is an integer from 1 through 128. The generator follows each
 resolved element's access protocol, without family-name dispatch. Only demanded
 operations are emitted. Public symbols are prefixed `path_`, headers use
 `scpp/access/<name>.hpp`, and ordinary API ownership detects conflicting definitions.
@@ -1919,7 +1919,7 @@ Generated headers and implementation files must each remain below 200,000 bytes.
 
 The signature passes a whole root by const reference for reading or mutable reference
 for writing, concrete saved keys by const reference, and the store value by value.
-The leaf currently requires `copy_storage`. Reads return an owned leaf; intermediate
+Read/store leaves currently require `copy_storage`. Reads return an owned leaf; intermediate
 public wrappers are borrowed and unwrapped only within the compiled function. Stores
 validate the entire const path before traversing mutable storage and assigning the
 leaf. No interior reference escapes. Native lookup/assignment remains the error
@@ -1934,6 +1934,32 @@ operation facts, including source argument graphs; importing a published API nev
 bypasses those checks. Physical paths feed the same function emitter, dependency
 inventory, layout probes and sealed reuse mechanism as other demanded APIs.
 
-This first protocol does not implement lazy probes, removal, append/bootstrap,
+This protocol does not yet implement final null-sensitive/empty probes, append/bootstrap,
 field-owner retention or heterogeneous boxed descent. Those need their own explicit
 protocol semantics; eager existing lookup must not stand in for them.
+
+
+### Typed prefix readiness and removal
+
+`access` additionally accepts `present`, `ready` and `erase` expressions. `present`
+checks existing membership without insertion; `ready` observes whether a resolved
+value can receive the next key. `erase` removes an existing final slot. Vector has
+membership/readiness but deliberately no erase operation. Hash supplies all three.
+These are physical protocols, not source admission or null-sensitive value probes.
+
+A demanded `prefix_ready` path returns concrete `boolean` and receives only the saved
+keys for that prefix. It re-resolves from the current root, returning false at the
+first missing step, then applies the leaf receiver's readiness protocol. The caller
+uses separate prefix calls before/after reached key expressions and stops on false;
+no reference or pointer survives a call. For the current non-null typed vector/hash
+roots, readiness before the first key is statically known. Scalar leaf readiness is
+rejected rather than interpreted as truthiness. `isset`/`empty` leaf observations
+remain separate work and must not be replaced by this membership check.
+
+`existing_erase` returns void. It validates all memberships with const access before
+mutable traversal; a missing intermediate or final slot is a no-op. Only families
+with an erase protocol may be final receivers: a vector may be intermediate but
+vector-element removal is rejected. Removal does not prune empty parents. Saved key
+expressions have already executed; source callbacks never run during validation or
+commit. Prefix calls preserve the compiler's lazy key schedule. These operations do
+not require leaf copying and expose no owned payload or interior reference.

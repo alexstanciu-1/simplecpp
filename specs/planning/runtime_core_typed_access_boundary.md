@@ -121,3 +121,15 @@ Publication checks prove independent public headers, zero-unit sealed reuse and 
 new operation using imported inner/outer storage with exactly one emitted unit.
 Missing prepared facts, conflicting imported definitions, invalid depths/operations
 and oversized generated files reject. See E23 in the completion plan for timings.
+
+
+## Typed readiness/removal extension (E24)
+
+The same path mechanism now accepts prefix readiness and existing-only removal.
+Membership is const and non-creating; mutable removal begins only after a complete
+membership pass. A vector may occur as an intermediate receiver but has no erase
+protocol. Prefix readiness returns a scalar observation, never a retained pointer,
+and accepts only saved keys for that prefix. Leaf readiness requires a registered
+receiver protocol. It is not `isset`: null-sensitive final value observations and
+`empty` dispatch remain separate follow-up work, along with boxed heterogeneous
+composition and field-owner retention. Source evaluation stays compiler-owned.

@@ -10,7 +10,8 @@ namespace scpp::api_generation
     {
         fields_only(request, "root depth operation", "access path");
         const auto operation = request.at("operation").text();
-        if (operation != "existing_read" && operation != "existing_store")
+        if (operation != "existing_read" && operation != "existing_store"
+            && operation != "prefix_ready" && operation != "existing_erase")
             throw std::runtime_error("Unsupported access path operation");
         const auto &depth_value = request.at("depth");
         if (depth_value.type != value::kind::number || depth_value.scalar.empty()
@@ -31,13 +32,28 @@ namespace scpp::api_generation
             value arguments = value::object();
             for (const auto &[parameter, argument] : node.arguments) arguments[parameter] = argument.canonical();
             auto protocol = instantiate_function(family.at("access"), "", arguments);
-            fields_only(protocol, "key element read mutable includes", "access protocol");
+            fields_only(protocol, "key element read mutable includes present ready erase", "access protocol");
             protocol.at("read").text(); protocol.at("mutable").text();
             protocol["key"] = names.resolve(protocol.at("key").text()).first;
             protocol["element"] = names.resolve(protocol.at("element").text()).first;
             protocol["receiver"] = receiver;
             receiver = protocol.at("element").text();
             result["steps"].items.push_back(protocol);
+        }
+        const bool probing = operation == "prefix_ready" || operation == "existing_erase";
+        if (probing) {
+            for (const auto &step : result.at("steps").items) step.at("present").text();
+            if (operation == "existing_erase") result.at("steps").items.back().at("erase").text();
+            else {
+                const auto node = names.bind(receiver);
+                const auto &access = metadata.at("families").at(node.type.name).at("access");
+                value arguments = value::object();
+                for (const auto &[parameter, argument] : node.arguments) arguments[parameter] = argument.canonical();
+                result["ready_protocol"] = instantiate_function(access, "", arguments);
+                result["ready"] = result.at("ready_protocol").at("ready");
+            }
+            result["element"] = receiver;
+            return result;
         }
         // Owned read and value assignment need a copyable leaf, independently of
         // intermediate storage. This is a native capability, not source admission.

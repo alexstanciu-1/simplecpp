@@ -32,6 +32,29 @@ int main() {
     auto saved=rows_read(rows,key,uint64(0));CHECK(rows.remove(key));
     failed=false;try { rows_store(rows,key,uint64(0),saved+int64(1)); } catch(...) { failed=true; }
     CHECK(failed && rows.size()==uint64(0)); // Never recreates a deleted intermediate.
+    // Prefix calls contain only saved keys, and retain no interior storage.
+    int reached=0;
+    if (matrix_ready(matrix,uint64(9))) ++reached;
+    CHECK(reached==0);
+    CHECK(matrix_ready(matrix,uint64(0)));
+    matrix.clear(); // A later key expression changes the root.
+    CHECK(!matrix_ready(matrix,uint64(0)));
+    rows.set(key,make_row(int64(2)));
+    CHECK(rows_ready(rows,key));
+    rows_erase(rows,key);
+    CHECK(!rows_ready(rows,key));
+    const auto no_op_allocations=allocations;
+    rows_erase(rows,key);CHECK(allocations==no_op_allocations);
+    path_table table;table.set(key,int64(4));
+    path_tables tables;tables.append(table);
+    const auto removal_allocations=allocations;
+    tables_erase(tables,uint64(0),key);
+    tables_erase(tables,uint64(9),key); // Missing intermediate is a no-op.
+    tables_erase(tables,uint64(0),key); // Missing leaf is a no-op.
+    CHECK(allocations==removal_allocations);
+    CHECK(tables.at(uint64(0)).size()==uint64(0));
+    CHECK(tables.size()==uint64(1)); // Do not prune an empty parent.
+    matrix.append(make_row(int64(100)));
     auto detached=row_read(matrix,uint64(0));detached.set(uint64(0),int64(200));
     CHECK(matrix_read(matrix,uint64(0),uint64(0))==int64(100));
     auto retained=retained_row();CHECK(retained.at(uint64(0))==int64(17));

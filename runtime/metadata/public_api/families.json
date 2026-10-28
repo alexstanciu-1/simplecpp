@@ -583,6 +583,8 @@
       "element": "${variant:T}",
       "read": "${receiver}.at(detail::concrete_size(${key}))",
       "mutable": "${receiver}.at(detail::concrete_size(${key}))",
+      "present": "${key}.native_value() < ${receiver}.size()",
+      "ready": "true",
       "includes": []
     }
   },
@@ -1616,6 +1618,9 @@
       "element": "${variant:V}",
       "read": "${receiver}.at(${key})",
       "mutable": "${receiver}.at(${key})",
+      "present": "${receiver}.has(${key}).native_value()",
+      "ready": "true",
+      "erase": "(void)${receiver}.remove(${key})",
       "includes": []
     }
   },

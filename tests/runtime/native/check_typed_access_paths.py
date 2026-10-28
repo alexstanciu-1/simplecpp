@@ -20,11 +20,14 @@ parser.add_argument('--core',type=Path)
 parser.add_argument('--sanitize',action='store_true')
 args=parser.parse_args();args.tool=args.tool.resolve()
 metadata=concrete_types.metadata(root/'runtime')
-names={'vector<int64>':'path_row','vector<vector<int64>>':'path_matrix','hash<vector<int64>,string>':'path_rows'}
+names={'vector<int64>':'path_row','vector<vector<int64>>':'path_matrix','hash<vector<int64>,string>':'path_rows','hash<int64,string>':'path_table','vector<hash<int64,string>>':'path_tables'}
 paths={name:{'root':container,'depth':depth,'operation':operation} for name,container,depth,operation in [
  ('matrix_read','vector<vector<int64>>',2,'existing_read'),('matrix_store','vector<vector<int64>>',2,'existing_store'),
  ('rows_read','hash<vector<int64>,string>',2,'existing_read'),('rows_store','hash<vector<int64>,string>',2,'existing_store'),
- ('row_read','vector<vector<int64>>',1,'existing_read')]}
+ ('row_read','vector<vector<int64>>',1,'existing_read'),
+ ('matrix_ready','vector<vector<int64>>',1,'prefix_ready'),('rows_ready','hash<vector<int64>,string>',1,'prefix_ready'),
+ ('rows_erase','hash<vector<int64>,string>',1,'existing_erase'),
+ ('tables_erase','vector<hash<int64,string>>',2,'existing_erase')]}
 data={'package':'application.paths','roots':[],'paths':paths,'apis':list(paths),'names':names}
 base={'metadata':metadata,'request':data,'leaves':{},'names':names,'imports':{},'layouts':{}}
 def plan(request,error=None):
@@ -35,11 +38,11 @@ def plan(request,error=None):
     assert out.returncode==0,out.stderr
     return json.loads(out.stdout)
 physical=plan(base)
-assert len(physical['apis'])==5, list(physical['apis'])
-assert len(physical['units'])==9, [(u['identity']) for u in physical['units']]
-for api in physical['apis'].values():
-    assert api['operation']['returns'] in ['void','int64','vector<int64>']
-    assert 'const auto &path_value_0' in api['operation']['body'] or api['operation']['name']=='path_row_read'
+assert set(paths).issubset(physical['apis']), list(physical['apis'])
+assert len(physical['units'])==17, [(u['identity']) for u in physical['units']]
+for api in (physical['apis'][name] for name in paths):
+    assert api['operation']['returns'] in ['void','boolean','int64','vector<int64>']
+    assert api['operation']['body']
 for depth in [0,129,1.5]:
     bad=copy.deepcopy(base);bad['request']['paths']['matrix_read']['depth']=depth
     plan(bad,'depth')
@@ -51,14 +54,17 @@ plan(bad,'Unsupported access path operation')
 three=copy.deepcopy(base);three['request']['paths']={'cube_read':{'root':'vector<vector<vector<int64>>>','depth':3,'operation':'existing_read'}};three['request']['apis']=['cube_read']
 assert 'path_value_1' in plan(three)['apis']['cube_read']['operation']['body']
 arguments={'vector<int64>':{'T':'int64'},'vector<vector<int64>>':{'T':'vector<int64>'},
-           'hash<vector<int64>,string>':{'V':'vector<int64>','K':'string'}}
+           'hash<vector<int64>,string>':{'V':'vector<int64>','K':'string'},
+           'hash<int64,string>':{'V':'int64','K':'string'},'vector<hash<int64,string>>':{'T':'hash<int64,string>'}}
 def binding(type):
     return {'source':'source.'+type,'physical':type,'arguments':{k:'source.'+v for k,v in arguments.get(type,{}).items()}}
 bindings={}
 for name,path in paths.items():
     prefix='path_'+name+'_';bindings[prefix+'root']=binding(path['root'])
-    keys=['string' if path['root'].startswith('hash') else 'uint64','uint64'][:path['depth']]
-    elements=['vector<int64>','int64'][:path['depth']]
+    receiver=path['root'];keys=[];elements=[]
+    for _ in range(path['depth']):
+        params=arguments[receiver]
+        keys.append(params.get('K','uint64'));receiver=params.get('T',params.get('V'));elements.append(receiver)
     bindings[prefix+'value']=binding(elements[-1])
     for i,(key,element) in enumerate(zip(keys,elements)):
         bindings[prefix+'key_'+str(i)]=binding(key);bindings[prefix+'element_'+str(i)]=binding(element)
@@ -77,6 +83,10 @@ bad=copy.deepcopy(base);bad['api_imports']=physical['apis'];bad['request']['path
 plan(bad,'Conflicting API ownership')
 bad=copy.deepcopy(base);bad['metadata']['families']['vector']['access']['read']+=' /*'+('x'*200000)+'*/'
 plan(bad,'below 200KB')
+bad=copy.deepcopy(base);bad['request']['paths']['matrix_store']['operation']='existing_erase'
+plan(bad,'erase') # Vector final-element removal has no protocol.
+bad=copy.deepcopy(base);bad['request']['paths']['matrix_read']['operation']='prefix_ready'
+plan(bad,'Expected family application') # A scalar is not a ready keyed receiver.
 print('PASS: generic typed path composition, bounds on depth, prepared slot/fact checks')
 if not args.core:sys.exit(0)
 with tempfile.TemporaryDirectory(prefix='scpp-typed-paths-') as directory:
