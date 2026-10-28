@@ -34,6 +34,36 @@ namespace scpp::api_generation
         return found->second;
     }
 
+    static std::map<std::string, std::string> requested_types(const value &input)
+    {
+        std::map<std::string, std::string> result;
+        if (input.get("action") == "generate") {
+            const auto &roots = input.at("request").at("roots");
+            if (roots.type != value::kind::array) throw std::runtime_error("Prepared roots require an array");
+            for (std::size_t index = 0; index < roots.items.size(); ++index)
+                result["root_" + std::to_string(index)] = roots.items[index].text();
+        } else {
+            for (const auto &slot : binding_slots(input)) result[slot] = input.at("request").at(slot).text();
+        }
+        return result;
+    }
+
+    static void validate_binding(const value &binding, const std::string &expected, naming &types)
+    {
+        fields_only(binding, "source physical arguments", "prepared type binding");
+        required_text(binding, "source");
+        const auto physical = required_text(binding, "physical");
+        const auto canonical = types.resolve(physical).first;
+        if (physical != canonical || canonical != types.resolve(expected).first)
+            throw std::runtime_error("Prepared physical binding mismatch: " + expected);
+        if (binding.at("arguments").type != value::kind::object)
+            throw std::runtime_error("Prepared source arguments require a map");
+        for (const auto &[parameter, argument] : binding.at("arguments").fields) {
+            if (parameter.empty()) throw std::runtime_error("Prepared source parameter name is empty");
+            required_text(binding.at("arguments"), parameter);
+        }
+    }
+
     value validate_prepared_request(const value &input)
     {
         const auto mode = input.get("mode", "native");
@@ -44,7 +74,7 @@ namespace scpp::api_generation
         if (mode != "source") throw std::runtime_error("Unknown API request mode");
         if (!input.has("prepared")) throw std::runtime_error("Source request requires prepared facts");
         const auto &prepared = input.at("prepared");
-        fields_only(prepared, "version producer revision action request admission bindings requirements facts", "prepared request");
+        fields_only(prepared, "version producer revision action request admission bindings dependencies requirements facts", "prepared request");
         if (required_text(prepared, "version") != "prepared-api-v1")
             throw std::runtime_error("Unsupported prepared request version");
         required_text(prepared, "producer"); required_text(prepared, "revision");
@@ -52,25 +82,42 @@ namespace scpp::api_generation
         if (required_text(prepared, "action") != input.get("action")
             || json_text(prepared.at("request")) != json_text(input.at("request")))
             throw std::runtime_error("Prepared admission does not match requested operation");
-        const auto slots = binding_slots(input);
+        const auto requested = requested_types(input);
         const auto &bindings = prepared.at("bindings");
         std::string allowed;
-        for (const auto &slot : slots) allowed += slot + " ";
+        for (const auto &[slot, type] : requested) allowed += slot + " ";
         fields_only(bindings, allowed, "prepared bindings");
         naming types(metadata_naming_registry(input.at("metadata"), merged_type_leaves(input),
             input.has("names") ? input.at("names") : value::object()));
-        for (const auto &slot : slots) {
+        std::set<std::string> subjects{"operation"};
+        std::map<std::string, value> source_bindings;
+        auto remember = [&](const value &binding) {
+            const auto source = binding.at("source").text();
+            const auto [position, inserted] = source_bindings.emplace(source, binding);
+            if (!inserted && json_text(position->second) != json_text(binding))
+                throw std::runtime_error("Conflicting prepared source binding: " + source);
+        };
+        for (const auto &[slot, expected] : requested) {
             const auto &binding = bindings.at(slot);
-            fields_only(binding, "source physical arguments", "prepared type binding");
-            required_text(binding, "source");
-            const auto physical = required_text(binding, "physical");
-            const auto canonical = types.resolve(physical).first;
-            if (physical != canonical || canonical != types.resolve(input.at("request").at(slot).text()).first)
-                throw std::runtime_error("Prepared physical binding mismatch: " + std::string(slot));
-            if (binding.at("arguments").type != value::kind::object)
-                throw std::runtime_error("Prepared source arguments require a map");
-            for (const auto &[parameter, argument] : binding.at("arguments").fields)
-                required_text(binding.at("arguments"), parameter);
+            validate_binding(binding, expected, types);
+            subjects.insert(slot); remember(binding);
+        }
+        if (prepared.has("dependencies")) {
+            if (prepared.at("dependencies").type != value::kind::object)
+                throw std::runtime_error("Prepared dependencies require a map");
+            for (const auto &[name, binding] : prepared.at("dependencies").fields) {
+                if (name.empty()) throw std::runtime_error("Empty prepared dependency name");
+                validate_binding(binding, required_text(binding, "physical"), types);
+                subjects.insert("dependency:" + name); remember(binding);
+            }
+        }
+        if (input.get("action") == "generate") {
+            // Only compiler-declared source arguments need semantic bindings.
+            // Private recipe/layout dependencies remain physical-only.
+            for (const auto &[source, binding] : source_bindings)
+                for (const auto &[parameter, argument] : binding.at("arguments").fields)
+                    if (!source_bindings.contains(argument.text()))
+                        throw std::runtime_error("Missing prepared source dependency: " + source + "/" + parameter);
         }
         if (prepared.at("requirements").type != value::kind::array
             || prepared.at("requirements").items.empty() || prepared.at("facts").type != value::kind::array)
@@ -79,7 +126,7 @@ namespace scpp::api_generation
         for (const auto &fact : prepared.at("facts").items) {
             fields_only(fact, "subject contract evidence", "prepared semantic fact");
             const auto subject = required_text(fact, "subject"), contract = required_text(fact, "contract");
-            if (subject != "operation" && !bindings.has(subject))
+            if (!subjects.contains(subject))
                 throw std::runtime_error("Unknown prepared fact subject");
             required_text(fact, "evidence");
             if (!facts.emplace(subject, contract).second) throw std::runtime_error("Duplicate prepared fact");
@@ -87,7 +134,7 @@ namespace scpp::api_generation
         for (const auto &requirement : prepared.at("requirements").items) {
             fields_only(requirement, "subject contract", "prepared semantic requirement");
             const auto subject = required_text(requirement, "subject"), contract = required_text(requirement, "contract");
-            if (subject != "operation" && !bindings.has(subject))
+            if (!subjects.contains(subject))
                 throw std::runtime_error("Unknown prepared requirement subject");
             if (!requirements.emplace(subject, contract).second) throw std::runtime_error("Duplicate prepared requirement");
             if (!facts.contains({subject, contract}))

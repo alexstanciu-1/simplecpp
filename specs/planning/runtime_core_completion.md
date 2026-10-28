@@ -17,7 +17,7 @@ each slice. The original inventory is a baseline, not a current completion count
 | A2 | Complete for the agreed checked scalar conversions | Carrier conversion is C; ownership casts are D. |
 | B1 | Complete for the agreed scalar-facing truth/text/identity/observation scope | Carrier forms remain C; boxed arithmetic and access completion are not B1 credit. |
 | B2 | Complete for the agreed non-carrier special/mutation and text public paths; closure evidence below | Carrier forms C; indexed retention E; native exception inspection and overflow disposition G. |
-| C | Four carrier recipes and bounded scalar operator/selection paths implemented; review pending | Guarded negation and canonical lazy logical plans implemented in C32/C33; non-numeric admission, broader selection, prepared-fact consumer and full review remain. Both decisions accepted 2026-10-28. |
+| C | Four carrier recipes and bounded scalar operator/selection paths implemented; review pending | Guarded negation and canonical lazy logical plans implemented in C32/C33; remaining source admission, broader selection and combined prepared-path review remain (C35–C37 implement the consumer). Both decisions accepted 2026-10-28. |
 | D | Pending | Ownership, application targets and source Exception transport gaps. |
 | E | Existing vector/hash/boxed foundations; incomplete | Typed nested access and remaining key policies; conditional lifecycle, cursor fixes, boxed access/probes, and positional/keyed built-in factories are implemented for the tested domains. |
 | F | Pending | Callable transport and registered collection algorithms. |
@@ -2282,3 +2282,41 @@ Five-process logical planning means including startup/JSON were 0.0344s native /
 Source-mode storage generation and dependency demands remain the next adoption
 step. Actual frontend fact production and complete compiler integration remain
 excluded. The carrier review is still open, not marked complete by protocol coverage.
+
+## C37 — prepared storage generation and dependencies (2026-10-28)
+
+Source-mode `generate` now validates root-index bindings and explicitly declared
+source dependencies through the same prepared validator before materialization.
+Source argument references must resolve to declared source bindings; conflicting
+bindings reject. Requirements for dependency subjects need explicit evidence even
+when every physical type is imported. Private recipe/layout dependencies are not
+classified as source declarations. Source argument semantics and completeness of
+requirements remain compiler-owned; the consumer does not infer them from native
+parameter names or storage traits.
+
+The existing Python driver accepts an explicit source envelope around its ordinary
+request and forwards it through every layout-probe pass. Native request files remain
+unchanged. Physical manifests contain no source-admission flag. New source requests
+must validate again against their own evidence even when a sealed specialization
+can be reused without emitting units.
+
+`check_prepared_generation.py` passes native-plan identity, missing binding/evidence,
+conflicting source identity, duplicate identical roots and imported-type tests.
+The validator cases also pass using the ASan/UBSan generator with leak detection.
+The end-to-end driver generates two nested-vector units, compiles/executes public-only
+consumers in release and ASan/UBSan/LSan, seals the application and reuses it with zero
+new units. Removing required facts rejects before the destination is published.
+Owned extraction survives parent destruction and remains independent after mutation;
+empty construction and repeated scalar reads allocate zero. This proves the fixture
+path, not arbitrary source-template formation or full frontend production.
+
+Single-run application storage/caller compile: release 3.2566s/0.0917s; sanitizer
+5.3723s/0.1055s. Runs overlapped; no controlled speedup is claimed. Runtime archives
+were reused. The first release run proved execution/reuse but its negative-test
+handler expected the wrong Python exception class; correcting the handler and
+rerunning verified the driver's existing CalledProcessError rejection protocol.
+All operation prepared-request regression checks also pass.
+
+Next: combine prepared carrier storage with prepared operation execution and review
+the first complete carrier path. Broader selection domains, ownership and callbacks
+remain incomplete; no goal-completion claim is made.

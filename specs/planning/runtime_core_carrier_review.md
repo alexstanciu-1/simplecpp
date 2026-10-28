@@ -93,5 +93,6 @@ logical negation through checked projection. C33 supplies canonical lazy and/or 
 needs its explicit contract audit and proofs. Source definition/formation/boundary
 validation stays compiler-owned; C35 implements prepared-demand
 validation for logical plans with compiled/publication proofs. C36 extends it to all operation planners;
-source-mode generation and dependency boundaries still need adoption. These implementation gaps keep carrier sign-off
+C37 adds source-mode generation and declared dependencies. The combined prepared
+carrier storage/operation path still needs its review before expansion. These implementation gaps keep carrier sign-off
 open; ownership/callback expansion is not yet approved by this review.

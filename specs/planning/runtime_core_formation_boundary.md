@@ -141,3 +141,13 @@ request protocols. Source storage-generation roots and dependency demands are st
 not adopted; native generation remains explicit physical-only evidence. Tests check
 per-slot missing evidence and unchanged physical plans, including destinations and
 unselected branches. There is still no real frontend fact producer in this slice.
+
+## C37 storage/dependency consumer checkpoint
+
+Prepared storage generation now validates ordered roots and compiler-declared source
+dependency bindings before materialization/reuse. The driver preserves evidence
+through layout probes; sealed imports never replace required semantic facts. Source
+argument references must resolve within the declared source binding set, while their
+semantic meaning remains compiler-owned. Private recipe dependencies stay physical.
+The bounded fixture uses nested vectors; this is not a frontend source-formation
+producer or proof of arbitrary source-template admission.

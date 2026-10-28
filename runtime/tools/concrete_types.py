@@ -109,7 +109,16 @@ def metadata(runtime):
 
 
 def generate(request, output, runtime, dependencies, compiler, flags):
-    data = json.loads(request.read_text())
+    document = json.loads(request.read_text())
+    context = {}
+    if 'mode' in document or 'prepared' in document:
+        if set(document) - {'mode', 'prepared', 'request'}:
+            raise ValueError('Unknown prepared generation envelope field')
+        data = document['request']
+        context = {'action':'generate', 'mode':document.get('mode', 'native')}
+        if 'prepared' in document: context['prepared'] = document['prepared']
+    else:
+        data = document
     identity = abi(compiler, flags)
     api = metadata(runtime)
     api_identity = digest(json.dumps(api, sort_keys=True).encode())
@@ -148,6 +157,7 @@ def generate(request, output, runtime, dependencies, compiler, flags):
             names[key] = value['name']
     tool = generator_tool(runtime)
     envelope = {'metadata':api,'request':data,'api_imports':imported_apis,'imports':imported,'leaves':leaves,'names':names,'layouts':{}}
+    envelope.update(context)
     def plan():
         return json.loads(run([tool], json.dumps(envelope)))
     with tempfile.TemporaryDirectory(prefix='scpp-api-generation-') as directory:

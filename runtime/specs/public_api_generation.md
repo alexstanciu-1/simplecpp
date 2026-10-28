@@ -1685,8 +1685,8 @@ Requests without `mode` retain the existing native physical-planning behavior.
 `mode: "native"` is its explicit spelling and rejects a `prepared` record.
 `mode: "source"` requires a `prepared-api-v1` record. The supported operation
 protocols and their type-binding slots are listed below. Other source actions fail
-explicitly; this is not general source formation completion. Physical storage
-generation remains a native request.
+explicitly; this is not general source formation completion. Source storage
+generation uses the additional protocol below.
 
 The prepared record has these required fields:
 
@@ -1736,3 +1736,36 @@ prepared evidence; laziness cannot bypass static admission. The same validator
 checks every slot, rejects extra bindings and retains the exact request/provenance.
 A completed type application cannot substitute for an independently required
 conversion or operation boundary fact.
+
+
+### Prepared storage generation and declared source dependencies
+
+`action: "generate"` uses the same prepared validator before materialization,
+including imported roots. Root slots are `root_0`, `root_1`, etc., in request order.
+Their physical identities must match the corresponding canonical requested roots.
+An optional `dependencies` map carries additional compiler-declared source bindings
+with the same `source`, `physical`, `arguments` fields. Facts/requirements refer to
+these entries as `dependency:<name>`. All declared argument source identities must
+resolve to a root or declared dependency binding. Conflicting bindings for the same
+source identity reject; repeated identical root bindings are valid.
+
+These are source declarations supplied by the compiler. The validator does not
+infer their semantic argument meaning from recipe parameter names, nor does it turn
+all private C++ recipe/layout dependencies into source types. It resolves physical
+identities through the existing naming owner, checks source-reference consistency,
+and checks explicitly required evidence. The compiler still owns source formation,
+role/default legality and the completeness of declared semantic requirements.
+
+`concrete_types.py` accepts its existing native request files unchanged. For a
+source request it also accepts `{mode: "source", prepared: <record>, request:
+<ordinary generation request>}`. The prepared record's action is `generate` and its
+request must equal the inner ordinary request. The driver passes the record through
+every layout/probe planning pass; it does not silently remove it. Unsupported wrapper
+fields or source requests without evidence reject. All generated files are staged
+until every validation/probe succeeds.
+
+Publication manifests continue to describe physical specializations only. A new
+request must supply its own prepared evidence even when all requested types are
+already in a sealed dependency. Source permission is not cached in the imported
+physical manifest. Generated code is identical to native generation for the same
+physical demand; no boundary wrapper or runtime allocation is introduced.
