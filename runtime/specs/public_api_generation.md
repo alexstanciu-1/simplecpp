@@ -1878,3 +1878,13 @@ Scoped carrier observation can invoke the same member operation on a borrowed pu
 payload, without extracting/copying it or exposing its reference. A physical nested
 composition proof does not grant source-template eligibility: that stays a separate
 prepared compiler fact, particularly for move-only or ownership payloads.
+
+## Focused shared identity implementation boundary
+
+Private ownership units include `operators/identity/shared_identity.hpp` for the
+compatible shared-view identity overload. The general strict-identity header includes
+that same owner rather than defining a second implementation. The focused header
+requires shared storage and pointer-compatibility traits, but does not include the
+aggregate operator, mixed/hash-definition or full identity surfaces. Public headers
+and source admission remain unchanged. The standalone header proof and existing
+broad identity fixture cover both include paths and base-pointer adjustment.

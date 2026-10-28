@@ -3688,7 +3688,7 @@
             "transport": "native",
             "expression": "scpp::identical(${self}, ${native:other}).native_value()",
             "includes": [
-              "operators/identity/strict_identity.hpp"
+              "operators/identity/shared_identity.hpp"
             ]
           }
         ]

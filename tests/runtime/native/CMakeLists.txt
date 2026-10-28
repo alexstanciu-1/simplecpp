@@ -618,3 +618,7 @@ add_test(NAME scpp_check_ownership_views COMMAND ${Python3_EXECUTABLE}
 
 add_test(NAME scpp_check_ownership_casts COMMAND ${Python3_EXECUTABLE}
   ${CMAKE_CURRENT_SOURCE_DIR}/check_ownership_casts.py --tool $<TARGET_FILE:scpp_api_generator>)
+
+add_executable(test_shared_identity_header test_shared_identity_header.cpp)
+target_link_libraries(test_shared_identity_header PRIVATE scpp_runtime_configuration)
+add_test(NAME scpp_test_shared_identity_header COMMAND test_shared_identity_header)

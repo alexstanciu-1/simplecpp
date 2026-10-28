@@ -18,7 +18,7 @@ each slice. The original inventory is a baseline, not a current completion count
 | B1 | Complete for the agreed scalar-facing truth/text/identity/observation scope | Carrier forms remain C; boxed arithmetic and access completion are not B1 credit. |
 | B2 | Complete for the agreed non-carrier special/mutation and text public paths; closure evidence below | Carrier forms C; indexed retention E; native exception inspection and overflow disposition G. |
 | C | Four carrier recipes and bounded scalar paths implemented; first prepared canonical path reviewed in C38 | Guarded negation and canonical lazy logical plans implemented in C32/C33; remaining source admission, broader selection and payload-specific integration remain; C38 passes the first-path checkpoint. Both decisions accepted 2026-10-28. |
-| D | Handle storage, checked retention, shared ancestry/casts/type tests and weak/unique transports implemented (D1–D4) | Typed member access, operation-planner integration, ownership selections, value storage and source Exception transport remain. |
+| D | Handle storage, presence planning, checked retention, shared ancestry/casts and weak/unique transports implemented (D1–D6) | Typed member access, operation-planner integration, ownership selections, value storage and source Exception transport remain. |
 | E | Existing vector/hash/boxed foundations; incomplete | Typed nested access and remaining key policies; conditional lifecycle, cursor fixes, boxed access/probes, and positional/keyed built-in factories are implemented for the tested domains. |
 | F | Pending | Callable transport and registered collection algorithms. |
 | G | Core utility and scalar debug bindings implemented | Exception/helper gaps and requirement-by-requirement closure audit. |
@@ -2527,3 +2527,40 @@ before testing the intended false native exception promise.
 Presence/null operators beyond condition negation, ownership selections and remaining
 conversion/identity planner integration still require their own coverage. Typed member
 access, value storage, shared-self and source Exception remain outstanding.
+
+
+## D6 — focused native shared-identity boundary (2026-10-28)
+
+The compatible shared-view identity overload now lives in
+operators/identity/shared_identity.hpp. The broad strict-identity header includes
+that owner; both same-target shared methods and demanded ancestry identity APIs use
+the focused include. The overload body/signature is unchanged, with one definition.
+This closes the specific broad-identity include cost noted in D2/D3; it does not
+claim that all private ownership headers are now minimal.
+
+A standalone native header proof verifies multiple/virtual base adjustment and
+absence. Dependency inspection excludes aggregate operators, mixed/hash definitions
+and the full identity header. The existing broad identity fixture also passes,
+including nullable normalization, unrelated-type fallback and scalar overloads.
+Both focused and compatibility paths pass release and ASan/UBSan/LSan execution.
+Generated ancestry APIs likewise pass both configurations, zero-allocation operations,
+negative admission/native compile cases and sealed reuse. Four focused CTest checks
+pass. No semantic admission or public-header contract changed.
+
+Same native caller, different includes, single runs: release full 3.2770s vs focused
+0.9697s; sanitizer full 3.0471s vs focused 1.0188s. Object sizes remain about 13.3KB
+release / 56.8KB instrumented (filename/assertion metadata differs). These are focused
+compile observations, not runtime speed measurements. The release include comparison
+overlapped the sanitizer runtime rebuild.
+
+The nine-unit ancestry fixture now compiles sequentially in 8.4011s release /
+9.3847s sanitizer, with public callers 0.1074s / 0.1402s. D3 recorded 22.8248s /
+24.1012s for those generated units before the focused include; these are single-run
+historical comparisons, not a controlled statistical benchmark. The two fixture runs
+overlapped. Runtime core was rebuilt once per configuration: its translation unit
+recorded 21.648s release / 49.641s sanitizer. Publication metadata was regenerated;
+there remain 406 runtime-owned implementation units.
+
+Functional ownership/access/callback backlog remains open. This slice improves the
+shared semantic dependency boundary rather than marking additional source contracts
+complete.

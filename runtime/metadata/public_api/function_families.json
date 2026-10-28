@@ -53,7 +53,7 @@
         ],
         "transport": "native",
         "includes": [
-          "operators/identity/strict_identity.hpp",
+          "operators/identity/shared_identity.hpp",
           "type_traits"
         ],
         "body": "static_assert(std::is_convertible_v<${variant:public_Left} *, ${variant:public_Right} *> || std::is_convertible_v<${variant:public_Right} *, ${variant:public_Left} *>);\nreturn scpp::identical(${native:left}, ${native:right}).native_value();"
