@@ -17,6 +17,94 @@ std::string signature(const scalar_operation &op) {
 std::string conversion_input(const runtime_plan &plan, const scalar_conversion &conversion) {
     return conversion.source == plan.string.name ? "const " + conversion.source + "&" : conversion.source;
 }
+std::pair<std::string, std::string> owned_lifecycle(const std::string &name) {
+    const auto declarations = "    " + name + "() noexcept = default;\n    ~" + name + "();\n    " + name + "(const " + name + "&);\n    " + name + "(" + name + "&&) noexcept;\n    " + name + "& operator=(const " + name + "&);\n    " + name + "& operator=(" + name + "&&) noexcept;\n";
+    std::string definitions = name + "::~" + name + "() { delete storage_; }\n";
+    definitions += name + "::" + name + "(const " + name + "& other) : storage_(other.storage_ ? new storage(*other.storage_) : nullptr) {}\n";
+    definitions += name + "::" + name + "(" + name + "&& other) noexcept : storage_(std::exchange(other.storage_, nullptr)) {}\n";
+    definitions += name + "& " + name + "::operator=(const " + name + "& other) { if (this != &other) { " + name + " copy(other); std::swap(storage_, copy.storage_); } return *this; }\n";
+    definitions += name + "& " + name + "::operator=(" + name + "&& other) noexcept { if (this != &other) { delete storage_; storage_ = std::exchange(other.storage_, nullptr); } return *this; }\n";
+    return {declarations, definitions};
+}
+std::pair<std::string, std::string> emit_vectors(const runtime_plan &plan) {
+    if (plan.vectors.empty()) return {};
+    std::string header = "#pragma once\n#include \"" + plan.operators_header + "\"\n";
+    if (!plan.string.name.empty()) header += "#include \"" + plan.string.header + "\"\n";
+    header += "namespace scpp {\nnamespace detail { struct vector_access; }\n";
+    for (const auto &v : plan.vectors) header += "class " + v.name + ";\n";
+    std::string definitions;
+    for (const auto &v : plan.vectors) {
+        definitions += "static_assert(std::is_copy_constructible_v<" + v.element + "> && std::is_nothrow_move_constructible_v<" + v.element + "> && std::is_nothrow_move_assignable_v<" + v.element + ">);\n";
+        definitions += "struct " + v.name + "::storage { std::vector<" + v.element + "> values; };\n";
+    }
+    definitions += "namespace detail { struct vector_access {\n";
+    for (const auto &v : plan.vectors)
+        definitions += "    static const std::vector<" + v.element + ">& read(const " + v.name + "& value) noexcept { static const std::vector<" + v.element + "> empty; return value.storage_ ? value.storage_->values : empty; }\n";
+    definitions += "}; }\n";
+    for (const auto &v : plan.vectors) {
+        const auto &name = v.name, &element = v.element, &count = v.count_type;
+        const auto [lifecycle_header, lifecycle_definitions] = owned_lifecycle(name);
+        header += "class " + name + " final {\npublic:\n" + lifecycle_header;
+        definitions += lifecycle_definitions;
+        for (const auto &source : v.casts_from) {
+            header += "    explicit " + name + "(const " + source + "&);\n";
+            definitions += name + "::" + name + "(const " + source + "& source) { " + name + " converted; for (const auto& item : detail::vector_access::read(source)) converted.append(static_cast<" + element + ">(item)); std::swap(storage_, converted.storage_); }\n";
+        }
+        header += "    " + count + " size() const;\n    " + plan.boolean_type + " empty() const noexcept;\n    void clear() noexcept;\n";
+        header += "    void append(" + element + " value);\n    " + element + " at(" + count + " index) const;\n    void set(" + count + " index, " + element + " value);\n";
+        definitions += count + " " + name + "::size() const { return " + count + "{detail::checked_integer_cast<long long>(detail::vector_access::read(*this).size())}; }\n";
+        definitions += plan.boolean_type + " " + name + "::empty() const noexcept { return " + plan.boolean_type + "{detail::vector_access::read(*this).empty()}; }\n";
+        definitions += "void " + name + "::clear() noexcept { delete storage_; storage_ = nullptr; }\n";
+        definitions += "void " + name + "::append(" + element + " value) { if (!storage_) storage_ = new storage; storage_->values.push_back(std::move(value)); }\n";
+        definitions += element + " " + name + "::at(" + count + " index) const { const auto& values = detail::vector_access::read(*this); return values[detail::sequence_index(index.native_value(), values.size())]; }\n";
+        definitions += "void " + name + "::set(" + count + " index, " + element + " value) { const auto offset = detail::sequence_index(index.native_value(), detail::vector_access::read(*this).size()); storage_->values[offset] = std::move(value); }\n";
+        std::vector<std::string> indices{count}, values{element};
+        if (v.native_index) {
+            indices.push_back("int");
+            header += "    " + element + " at(int index) const;\n";
+            definitions += element + " " + name + "::at(int index) const { return at(" + count + "{index}); }\n";
+        }
+        if (!v.native_value.empty()) {
+            values.push_back(v.native_value);
+            header += "    void append(" + v.native_value + " value);\n";
+            definitions += "void " + name + "::append(" + v.native_value + " value) { append(" + element + "{value}); }\n";
+        }
+        for (const auto &index : indices) for (const auto &value : values) {
+            if (index == count && value == element) continue;
+            header += "    void set(" + index + " index, " + value + " value);\n";
+            definitions += "void " + name + "::set(" + index + " index, " + value + " value) { set("
+                + (index == count ? "index" : count + "{index}") + ", "
+                + (value == element ? "std::move(value)" : element + "{value}") + "); }\n";
+        }
+        const auto fences = [&](const std::vector<std::string> &natives) {
+            std::set<std::string> deleted;
+            for (const auto &native : natives) {
+                if (v.native_index && native != "int") {
+                    deleted.insert("    void at(" + native + ") const = delete;\n");
+                    for (const auto &value : values) deleted.insert("    void set(" + native + ", " + value + ") = delete;\n");
+                }
+                if (!v.native_value.empty() && native != v.native_value) {
+                    deleted.insert("    void append(" + native + ") = delete;\n");
+                    for (const auto &index : indices) deleted.insert("    void set(" + index + ", " + native + ") = delete;\n");
+                }
+            }
+            for (const auto &decl : deleted) header += decl;
+        };
+        fences(native_cpp_spellings());
+        if (v.native_index || !v.native_value.empty()) {
+            header += "#ifdef __SIZEOF_INT128__\n"; fences({"__int128", "unsigned __int128"}); header += "#endif\n";
+        }
+        header += "private:\n    struct storage;\n    storage* storage_ = nullptr;\n    friend struct detail::vector_access;\n};\n";
+        for (const auto &op : v.operations) {
+            const auto symbol = op == "equal" ? "==" : "!=";
+            const auto signature = plan.boolean_type + " operator" + symbol + "(const " + name + "& left, const " + name + "& right)";
+            header += signature + ";\n";
+            definitions += signature + " { const auto& a = detail::vector_access::read(left); const auto& b = detail::vector_access::read(right); return " + plan.boolean_type + "{"
+                + (op == "equal" ? "" : "!") + "std::equal(a.begin(), a.end(), b.begin(), b.end(), [](const " + element + "& x, const " + element + "& y) { return static_cast<bool>(x == y); })}; }\n";
+        }
+    }
+    return {header + "}\n", definitions};
+}
 std::pair<std::string, std::string> emit_string(const runtime_plan &plan) {
     const auto &name = plan.string.name;
     if (name.empty()) return {};
@@ -24,8 +112,8 @@ std::pair<std::string, std::string> emit_string(const runtime_plan &plan) {
     const auto &boolean = plan.boolean_type;
     std::string header = "#pragma once\n#include \"" + plan.types_header + "\"\n#include \"" + plan.values_header
         + "\"\nnamespace scpp {\nnamespace detail { struct string_access; }\nclass " + name + " final {\npublic:\n";
-    header += "    " + name + "() noexcept = default;\n    ~" + name + "();\n    " + name + "(const " + name + "&);\n    " + name + "(" + name + "&&) noexcept;\n";
-    header += "    " + name + "& operator=(const " + name + "&);\n    " + name + "& operator=(" + name + "&&) noexcept;\n";
+    const auto [lifecycle_header, lifecycle_definitions] = owned_lifecycle(name);
+    header += lifecycle_header;
     header += "    explicit " + name + "(const char*);\n    explicit " + name + "(const char*, " + count + ");\n";
     for (const auto &native : native_cpp_spellings()) header += "    explicit " + name + "(" + native + ") = delete;\n";
     header += "#ifdef __SIZEOF_INT128__\n    explicit " + name + "(__int128) = delete;\n    explicit " + name + "(unsigned __int128) = delete;\n#endif\n";
@@ -35,11 +123,7 @@ std::pair<std::string, std::string> emit_string(const runtime_plan &plan) {
     header += "private:\n    struct storage;\n    storage* storage_ = nullptr;\n    friend struct detail::string_access;\n};\n";
     std::string definitions = "struct " + name + "::storage { std::string bytes; };\n";
     definitions += "namespace detail { struct string_access {\n    static const std::string& read(const " + name + "& value) noexcept { static const std::string empty; return value.storage_ ? value.storage_->bytes : empty; }\n}; }\n";
-    definitions += name + "::~" + name + "() { delete storage_; }\n";
-    definitions += name + "::" + name + "(const " + name + "& other) : storage_(other.storage_ ? new storage{other.storage_->bytes} : nullptr) {}\n";
-    definitions += name + "::" + name + "(" + name + "&& other) noexcept : storage_(std::exchange(other.storage_, nullptr)) {}\n";
-    definitions += name + "& " + name + "::operator=(const " + name + "& other) { if (this != &other) { " + name + " copy(other); std::swap(storage_, copy.storage_); } return *this; }\n";
-    definitions += name + "& " + name + "::operator=(" + name + "&& other) noexcept { if (this != &other) { delete storage_; storage_ = std::exchange(other.storage_, nullptr); } return *this; }\n";
+    definitions += lifecycle_definitions;
     definitions += name + "::" + name + "(const char* bytes) : storage_(new storage{detail::string_from_c_string(bytes)}) {}\n";
     definitions += name + "::" + name + "(const char* bytes, " + count + " count) : storage_(new storage{detail::string_from_bytes(bytes, count.native_value())}) {}\n";
     definitions += count + " " + name + "::size() const { return " + count + "{detail::checked_integer_cast<long long>(detail::string_access::read(*this).size())}; }\n";
@@ -115,9 +199,12 @@ std::map<std::string, std::string> emit_runtime(const runtime_plan &plan) {
     std::string declarations = banner + "#pragma once\nnamespace scpp {\nnamespace detail { struct integer_access; }\n";
     std::string definitions = banner + "#include \"" + plan.operators_header + "\"\n#include \"scalar_semantics.hpp\"\n";
     if (!plan.string.name.empty()) definitions += "#include \"" + plan.string.header + "\"\n#include \"sequence_semantics.hpp\"\n";
+    if (!plan.vectors.empty()) definitions += "#include \"" + plan.vectors_header + "\"\n#include \"sequence_semantics.hpp\"\n#include <vector>\n#include <algorithm>\n";
     definitions += "namespace scpp {\n";
     const auto [string_header, string_definitions] = emit_string(plan);
     definitions += string_definitions;
+    const auto [vectors_header, vectors_definitions] = emit_vectors(plan);
+    definitions += vectors_definitions;
     definitions += "namespace detail { struct integer_access { template<class T, class Rep> static T make(Rep value) { T out; out.value_ = value; return out; } }; }\n";
     if (!plan.string.name.empty()) declarations += "class " + plan.string.name + ";\n";
     for (const auto &t : plan.types) declarations += "class " + t.name + ";\n";
@@ -233,6 +320,8 @@ std::map<std::string, std::string> emit_runtime(const runtime_plan &plan) {
     bridge += "}\n"; operators += "}\n"; definitions += "}\n";
     std::string short_names = banner + "#pragma once\n#include \"" + plan.operators_header + "\"\n";
     if (!plan.string.name.empty()) short_names += "#include \"" + plan.string.header + "\"\nusing scpp::" + plan.string.name + ";\n";
+    if (!plan.vectors.empty()) short_names += "#include \"" + plan.vectors_header + "\"\n";
+    for (const auto &v : plan.vectors) short_names += "using scpp::" + v.name + ";\n";
     for (const auto &t : plan.types) short_names += "using scpp::" + t.name + ";\n";
     for (const auto &type : plan.values) {
         short_names += "using scpp::" + type.name + ";\n";
@@ -245,6 +334,7 @@ std::map<std::string, std::string> emit_runtime(const runtime_plan &plan) {
         {"public/" + plan.short_names_header, short_names}, {"public/" + plan.native_bridge_header, bridge}, {"src/runtime.cpp", definitions},
         {"prepared.json", json_text(describe(plan)) + "\n"}};
     if (!plan.string.name.empty()) files["public/" + plan.string.header] = banner + string_header;
+    if (!plan.vectors.empty()) files["public/" + plan.vectors_header] = banner + vectors_header;
     value inventory = value::array();
     for (const auto &[path, contents] : files) inventory.items.emplace_back(path);
     files["inventory.json"] = json_text(inventory) + "\n";

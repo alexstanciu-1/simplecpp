@@ -129,7 +129,7 @@ authorize bulk archival of the old repository tree.
    explicitly rather than importing dynamic PHP coercion. Prove copy/move, empty,
    embedded NUL, self-append, ordering and failure behavior.
 
-5. **Generated vectors — pending.** Use one specialization preparation path for
+5. **Generated vectors — implemented.** Use one specialization preparation path for
    vector_string and vector_int64, with public constructors, lifecycle, size/empty,
    append, at, set, clear and equality. Private std::vector is permitted. Resolve
    element operation dependencies from metadata and reject unsupported element
@@ -299,3 +299,18 @@ core behind an adapted public boundary; report a blocker if that cannot be done
 without changing the protected algorithms. No bulk module import is authorized by
 this queue entry. Record the bounded port slices and unresolved semantics after
 the review rather than guessing them in advance.
+
+## Checkpoint: generated vectors
+
+One specialization path now publishes concrete vector_int64 and vector_string,
+with value-copy reads, explicit set, checked indices, requested equality and optional
+native-int/C-string member adapters. Explicit cross-element constructors require
+published element conversions and discard partial targets on failure. Additional
+bool/null/float/int32 specializations and an adapters-disabled publication are tested.
+See [vector_slice.md](../vector_slice.md). No hash or mixed implementation was imported;
+the requested follow-on review retains its Swiss-table preservation constraints.
+Final composition, consolidated cast documentation and completion audit remain open.
+
+Vector validation: twenty release tests and a fresh standalone UBSan build pass;
+both default and cross-element vector consumers pass ASan+UBSan with the recorded
+LSan environment limitation. Generated outputs remain ignored and untracked.

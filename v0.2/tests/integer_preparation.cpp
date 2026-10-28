@@ -31,6 +31,7 @@ int main(int argc, char **argv) {
     require(argc == 3);
     const auto metadata = load(argv[1]);
     auto publication = load(argv[2]);
+    publication.fields.erase("vectors");
     publication.fields.erase("string"); // Scalar-only publication variants below.
     std::erase_if(publication["operators"].items, [&](const auto &r) {
         for (const auto &arg : r.at("operands").items)

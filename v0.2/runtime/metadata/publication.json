@@ -1025,5 +1025,30 @@
       "float64",
       "bool_t"
     ]
+  },
+  "vectors": {
+    "header": "scpp/vectors.hpp",
+    "specializations": [
+      {
+        "element": "int64",
+        "native_index": true,
+        "native_value": "int",
+        "operations": [
+          "equal",
+          "not_equal"
+        ],
+        "casts_from": []
+      },
+      {
+        "element": "string",
+        "native_index": true,
+        "native_value": "const char*",
+        "operations": [
+          "equal",
+          "not_equal"
+        ],
+        "casts_from": []
+      }
+    ]
   }
 }

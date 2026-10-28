@@ -223,3 +223,20 @@ queries, explicit text casts and requested concatenation/comparison operators.
 Standard storage stays private. See [the string contract](specs/string_slice.md)
 for pointer lifetime, strict parsing, allocation tradeoffs and reduced publication
 proofs. Generated vectors and final composition are the next slices.
+
+## Generated vectors
+
+`scpp/vectors.hpp` (also included by short_names.hpp) provides vector_string and
+vector_int64 in the default publication:
+
+```cpp
+vector_string names;
+names.append("Ada");
+string first = names.at(0); // Value copy, no interior reference.
+names.set(0, "Grace");
+```
+
+Metadata selects native member conveniences and requested explicit cross-element
+casts. Core-only publications work with explicit runtime indices/values. See the
+[vector contract](specs/vector_slice.md) for bounds, ownership, conversion failures
+and the private storage tradeoff. Generated code stays outside Git.

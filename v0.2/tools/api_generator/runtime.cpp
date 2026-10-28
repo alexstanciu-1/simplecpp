@@ -71,8 +71,8 @@ const std::vector<std::string> &native_cpp_spellings() {
 }
 
 runtime_plan prepare_runtime(const value &metadata, const value &publication) {
-    exact(metadata, "version types representation construction promotion_policies operations values source_types aliases floating scalar_casts string", "runtime metadata");
-    exact(publication, "version namespace types operators headers values short_aliases string", "runtime publication");
+    exact(metadata, "version types representation construction promotion_policies operations values source_types aliases floating scalar_casts string vector", "runtime metadata");
+    exact(publication, "version namespace types operators headers values short_aliases string vectors", "runtime publication");
     version(metadata); version(publication); literal(publication, "namespace", "scpp");
     const auto &rep = metadata.at("representation");
     exact(rep, "binding default_initialization", "representation");
@@ -503,6 +503,91 @@ runtime_plan prepare_runtime(const value &metadata, const value &publication) {
     require(std::set{plan.values_header, plan.types_header, plan.operators_header, plan.short_names_header, plan.native_bridge_header}.size() == 5, "Conflicting public headers");
     if (!plan.string.name.empty())
         require(!std::set{plan.values_header, plan.types_header, plan.operators_header, plan.short_names_header, plan.native_bridge_header}.contains(plan.string.header), "Conflicting public headers");
+    if (metadata.has("vector")) {
+        const auto &record = metadata.at("vector");
+        exact(record, "source_type storage count_type read mutation element_families native_index native_value operations", "vector metadata");
+        literal(record, "source_type", "vector"); literal(record, "storage", "private_std_vector");
+        literal(record, "read", "value_copy"); literal(record, "mutation", "explicit_set");
+        literal(record, "native_index", "int");
+        const auto count = record.at("count_type").text();
+        require(types.contains(count) && types.at(count).is_signed, "Vector count requires signed integer type");
+        std::set<std::string> families, operations, native_values;
+        for (const auto &entry : array(record.at("element_families"))) {
+            const auto family = entry.text();
+            require(std::set<std::string>{"integer", "floating", "boolean", "null", "string"}.contains(family), "Unsupported vector element family");
+            require(families.insert(family).second, "Duplicate vector element family");
+        }
+        for (const auto &entry : array(record.at("operations"))) {
+            require(entry.text() == "equal" || entry.text() == "not_equal", "Unsupported vector operation");
+            require(operations.insert(entry.text()).second, "Duplicate vector operation");
+        }
+        for (const auto &entry : array(record.at("native_value"))) {
+            require(entry.text() == "int" || entry.text() == "const char*", "Unsupported vector native value");
+            require(native_values.insert(entry.text()).second, "Duplicate vector native value");
+        }
+        if (publication.has("vectors")) {
+            const auto &request = publication.at("vectors");
+            exact(request, "header specializations", "vector publication");
+            plan.vectors_header = header(request.at("header"));
+            require(!std::set{plan.values_header, plan.types_header, plan.operators_header, plan.short_names_header,
+                plan.native_bridge_header, plan.string.header}.contains(plan.vectors_header), "Conflicting public headers");
+            require(selected.contains(count) && inputs.contains("long long"), "Vector requires published count and native long long construction");
+            require(!plan.boolean_type.empty(), "Vector requires published boolean type");
+            std::set<std::string> names;
+            for (const auto &item : array(request.at("specializations"))) {
+                exact(item, "element native_index native_value operations casts_from", "vector specialization");
+                const auto element = item.at("element").text();
+                std::string family;
+                if (selected.contains(element)) family = "integer";
+                else if (!plan.string.name.empty() && element == plan.string.name) family = "string";
+                else if (selected_values.contains(element)) family = value_types.at(element).kind;
+                require(!family.empty() && families.contains(family), "Vector requires supported published element type");
+                vector_plan vector{"vector_" + element, element, count, "", boolean(item.at("native_index")), {}, {}};
+                require(names.insert(vector.name).second, "Duplicate vector specialization");
+                if (vector.native_index) require(inputs.contains("int"), "Vector native index requires int construction");
+                const auto native = item.at("native_value").text();
+                if (native != "none") {
+                    require(native_values.contains(native), "Vector native value is not enabled");
+                    if (native == "const char*") require(family == "string", "C-string adapter requires string element");
+                    else require(std::any_of(plan.conversions.begin(), plan.conversions.end(), [&](const auto &c) {
+                        return c.target == element && c.source == "int" && c.native_source;
+                    }), "Vector int adapter requires checked element construction");
+                    vector.native_value = native;
+                }
+                std::set<std::string> seen;
+                for (const auto &op : array(item.at("operations"))) {
+                    require(operations.contains(op.text()), "Vector operation is not enabled");
+                    require(seen.insert(op.text()).second, "Duplicate published vector operation");
+                    vector.operations.push_back(op.text());
+                }
+                if (!vector.operations.empty()) {
+                    const bool equality = family == "string" ? std::any_of(plan.string.operations.begin(), plan.string.operations.end(), [](const auto &op) { return op.operation == "equal"; })
+                        : family == "integer" || family == "floating" ? std::any_of(plan.operations.begin(), plan.operations.end(), [&](const auto &op) { return op.operation == "equal" && op.left.identity == element && op.right.identity == element && !op.left.native && !op.right.native; })
+                        : std::find(value_types.at(element).operations.begin(), value_types.at(element).operations.end(), "equal") != value_types.at(element).operations.end();
+                    require(equality, "Vector equality requires published element equality");
+                }
+                seen.clear();
+                for (const auto &from : array(item.at("casts_from"))) {
+                    require(seen.insert(from.text()).second, "Duplicate vector cast");
+                    require(from.text() != vector.name, "Vector identity uses copy construction");
+                    vector.casts_from.push_back(from.text());
+                }
+                std::sort(vector.operations.begin(), vector.operations.end());
+                std::sort(vector.casts_from.begin(), vector.casts_from.end());
+                plan.vectors.push_back(vector);
+                plan.source_types.emplace("vector<" + element + ">", vector.name);
+            }
+            require(!plan.vectors.empty(), "Empty vector publication");
+            std::sort(plan.vectors.begin(), plan.vectors.end(), [](const auto &a, const auto &b) { return a.name < b.name; });
+            for (const auto &target : plan.vectors) for (const auto &from : target.casts_from) {
+                const auto source = std::find_if(plan.vectors.begin(), plan.vectors.end(), [&](const auto &v) { return v.name == from; });
+                require(source != plan.vectors.end(), "Vector cast requires published source specialization");
+                require(std::any_of(plan.conversions.begin(), plan.conversions.end(), [&](const auto &c) {
+                    return c.target == target.element && c.source == source->element && !c.native_source;
+                }), "Vector cast requires published explicit element conversion");
+            }
+        }
+    } else require(!publication.has("vectors"), "Vector publication requires metadata");
     return plan;
 }
 
@@ -541,6 +626,53 @@ value describe(const runtime_plan &plan) {
             record["construction"].items.push_back(row);
         }
     }
+    out["vectors"] = value::array();
+    for (const auto &v : plan.vectors) {
+        auto row = value::object(); row["name"] = v.name; row["element"] = v.element;
+        row["source_type"] = "vector<" + v.element + ">"; row["count_type"] = v.count_type;
+        row["storage"] = "private_std_vector"; row["lifecycle"] = "owned_copy_noexcept_move";
+        row["read"] = "checked_index_value_copy"; row["set"] = "checked_index_move_value";
+        row["native_index"] = flag(v.native_index); row["native_value"] = v.native_value;
+        row["operations"] = value::array(); row["casts_from"] = value::array();
+        for (const auto &op : v.operations) {
+            auto operation = value::object(); operation["operation"] = op;
+            operation["symbol"] = op == "equal" ? "==" : "!=";
+            operation["implementation"] = "elementwise_equality"; operation["element_dependency"] = "operator==";
+            operation["result"] = plan.boolean_type;
+            row["operations"].items.push_back(operation);
+        }
+        row["methods"] = value::array();
+        const auto method = [&](const std::string &name, const std::string &result, const std::vector<std::string> &arguments,
+                                bool mutates, const std::string &adaptation) {
+            auto member = value::object(); member["name"] = name; member["result"] = result;
+            member["receiver"] = mutates ? "mutable_reference" : "const_reference";
+            member["result_category"] = "value"; member["adaptation"] = adaptation;
+            member["arguments"] = value::array();
+            for (const auto &argument : arguments) member["arguments"].items.emplace_back(argument);
+            row["methods"].items.push_back(member);
+        };
+        method("size", v.count_type, {}, false, "checked_count");
+        method("empty", plan.boolean_type, {}, false, "none"); method("clear", "void", {}, true, "none");
+        std::vector<std::string> indices{v.count_type}, values{v.element};
+        if (v.native_index) indices.push_back("int");
+        if (!v.native_value.empty()) values.push_back(v.native_value);
+        for (const auto &index : indices) {
+            method("at", v.element, {index}, false, index == v.count_type ? "checked_index_copy" : "checked_native_index_copy");
+            for (const auto &element : values) method("set", "void", {index, element}, true,
+                index == v.count_type && element == v.element ? "checked_index_move_value" : "explicit_arguments_then_checked_set");
+        }
+        for (const auto &element : values) method("append", "void", {element}, true,
+            element == v.element ? "move_value" : "explicit_element_then_append");
+        for (const auto &from : v.casts_from) {
+            auto cast = value::object(); cast["source"] = from; cast["explicit"] = flag(true);
+            const auto source = std::find_if(plan.vectors.begin(), plan.vectors.end(), [&](const auto &item) { return item.name == from; });
+            cast["element_source"] = source->element; cast["element_target"] = v.element;
+            cast["implementation"] = "elementwise_explicit_conversion"; cast["failure"] = "discard_partial_target_keep_source";
+            row["casts_from"].items.push_back(cast);
+        }
+        out["vectors"].items.push_back(row);
+    }
+    if (!plan.vectors.empty()) out["vectors_header"] = plan.vectors_header;
     out["short_aliases"] = value::array();
     for (const auto &alias : plan.short_aliases) out["short_aliases"].items.emplace_back(alias);
     out["values"] = value::array(); out["source_types"] = value::object(); out["aliases"] = value::object();

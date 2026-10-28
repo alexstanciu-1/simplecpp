@@ -602,5 +602,28 @@
       "greater",
       "greater_equal"
     ]
+  },
+  "vector": {
+    "source_type": "vector",
+    "storage": "private_std_vector",
+    "count_type": "int64",
+    "read": "value_copy",
+    "mutation": "explicit_set",
+    "element_families": [
+      "integer",
+      "floating",
+      "boolean",
+      "null",
+      "string"
+    ],
+    "native_index": "int",
+    "native_value": [
+      "int",
+      "const char*"
+    ],
+    "operations": [
+      "equal",
+      "not_equal"
+    ]
   }
 }

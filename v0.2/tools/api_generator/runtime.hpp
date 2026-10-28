@@ -36,8 +36,15 @@ struct string_plan {
     std::string name, count_type, header;
     std::vector<scalar_operation> operations;
 };
+struct vector_plan {
+    std::string name, element, count_type, native_value;
+    bool native_index = false;
+    std::vector<std::string> operations, casts_from;
+};
 struct runtime_plan {
     string_plan string;
+    std::string vectors_header;
+    std::vector<vector_plan> vectors;
     std::vector<simple_value_type> values;
     std::map<std::string, std::string> source_types, aliases;
     std::vector<std::string> short_aliases;

@@ -36,6 +36,6 @@ int main(int argc, char **argv) {
                 file << contents;
             }
         }
-        std::cout << (check ? "Verified " : "Generated ") << plan.types.size() + plan.values.size() + (!plan.string.name.empty() ? 1 : 0) << " runtime types and " << plan.operations.size() << " numeric operator signatures\n";
+        std::cout << (check ? "Verified " : "Generated ") << plan.types.size() + plan.values.size() + plan.vectors.size() + (!plan.string.name.empty() ? 1 : 0) << " runtime types and " << plan.operations.size() << " numeric operator signatures\n";
     } catch (const std::exception &error) { std::cerr << error.what() << '\n'; return 1; }
 }

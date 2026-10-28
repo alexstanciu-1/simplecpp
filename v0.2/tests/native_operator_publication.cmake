@@ -1,6 +1,7 @@
 file(MAKE_DIRECTORY "${WORK}")
 file(REMOVE_RECURSE "${WORK}/generated")
 file(READ "${PUBLICATION}" publication)
+string(JSON publication REMOVE "${publication}" vectors)
 # Request only one direction and one native type. Other signatures must not become
 # available through standard native conversions merely because this one exists.
 string(JSON publication SET "${publication}" operators

@@ -19,6 +19,7 @@ int main(int argc, char **argv) {
     require(argc == 3);
     const auto m = load(argv[1]);
     auto p = load(argv[2]);
+    p.fields.erase("vectors");
     p.fields.erase("string"); // String dependencies are covered by string_preparation.
     const auto plan = prepare_runtime(m, p);
     require(plan.values.size() == 3 && plan.boolean_type == "bool_t");
