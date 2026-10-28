@@ -191,5 +191,25 @@ int main() {
     auto detached=row_read(matrix,uint64(0));detached.set(uint64(0),int64(200));
     CHECK(matrix_read(matrix,uint64(0),uint64(0))==int64(100));
     auto retained=retained_row();CHECK(retained.at(uint64(0))==int64(17));
+    path_row appended;appended.reserve(uint64(128));
+    const auto append_allocations=allocations;
+    for(int i=0;i<100;++i) row_append(appended,int64(i));
+    CHECK(allocations==append_allocations && appended.size()==uint64(100));
+    matrix_append(matrix,uint64(0),int64(333));
+    CHECK(matrix_read(matrix,uint64(0),uint64(1))==int64(333));
+    path_integer_table integer_table;integer_table.set(int64(9),int64(9));
+    hash_append(integer_table,int64(10));CHECK(integer_table.at(int64(10))==int64(10));
+    CHECK(integer_table.remove(int64(10)));hash_append(integer_table,int64(11));
+    CHECK(integer_table.at(int64(10))==int64(11)); // Maximum existing key, not live count or a historical cursor.
+    vector_mixed append_mixed;append_mixed.append(mixed());
+    mixed_append(append_mixed,uint64(0),outer_key,mixed(int64(12)));
+    CHECK(mixed_read(append_mixed,uint64(0),outer_key,mixed(int64(0))).get_int()==int64(12));
+    path_dynamic_vector append_dynamic;append_dynamic.append(dynamic());
+    failed=false;try { dynamic_append(append_dynamic,uint64(0),outer_key,dynamic(int64(13))); } catch(...) { failed=true; } CHECK(failed);
+    CHECK(append_dynamic.at(uint64(0)).is_null());
+    dynamic append_parent=make_dynamic_container();dynamic append_child=make_dynamic_container();append_parent.set(outer_key,append_child);
+    append_dynamic.set(uint64(0),append_parent);dynamic_append(append_dynamic,uint64(0),outer_key,dynamic(int64(13)));
+    CHECK(append_child.get(int64(0)).get_int()==int64(13));
+    failed=false;try { matrix_append(matrix,uint64(9),int64(1)); } catch(...) { failed=true; } CHECK(failed);
     std::puts("PASS: typed vector/hash paths mutate original storage, recheck RHS effects, preserve failures and owned reads; intermediate allocations=0");
 }

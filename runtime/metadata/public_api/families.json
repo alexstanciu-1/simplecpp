@@ -589,7 +589,11 @@
       "key_check": "(void)${key}",
       "check_store": "(void)${receiver}.at(detail::concrete_size(${key}))",
       "store": "${receiver}.at(detail::concrete_size(${key})) = ${value}",
-      "value_read": "${receiver}.at(detail::concrete_size(${key}))"
+      "value_read": "${receiver}.at(detail::concrete_size(${key}))",
+      "append": {
+        "check": "(void)0",
+        "commit": "(void)${receiver}.append(${value})"
+      }
     }
   },
   "result": {
@@ -1629,7 +1633,16 @@
       "key_check": "(void)${key}",
       "check_store": "(void)0",
       "store": "${receiver}.set(${key}, ${value})",
-      "value_read": "${receiver}.at(${key})"
+      "value_read": "${receiver}.at(${key})",
+      "append": {
+        "check": "(void)0",
+        "commit": "(void)${receiver}.append(${value})",
+        "requires_capabilities": {
+          "K": [
+            "integer_key"
+          ]
+        }
+      }
     }
   },
   "float64": {
@@ -2163,7 +2176,8 @@
         "observe",
         "key_check",
         "store",
-        "value_read"
+        "value_read",
+        "append"
       ],
       "read": "scpp::index_existing_at(${receiver}, ${native_key})",
       "mutable": "scpp::keyed_descend(${receiver}, ${native_key})",
@@ -2178,7 +2192,11 @@
       "write_read": "scpp::index_path_probe(${receiver}, ${native_key})",
       "check_store": "scpp::index_path_check_store(${receiver}, ${native_key}, ${value})",
       "store": "scpp::index_store(${receiver}, ${native_key}, ${value})",
-      "value_read": "scpp::null_index_read(${receiver}, ${native_key})"
+      "value_read": "scpp::null_index_read(${receiver}, ${native_key})",
+      "append": {
+        "check": "scpp::index_path_check_append(${receiver}, ${value})",
+        "commit": "scpp::index_append(${receiver}, ${value})"
+      }
     }
   },
   "dynamic": {
@@ -2686,7 +2704,8 @@
         "observe",
         "key_check",
         "store",
-        "value_read"
+        "value_read",
+        "append"
       ],
       "read": "scpp::index_existing_at(${receiver}, ${native_key})",
       "mutable": "scpp::keyed_descend(${receiver}, ${native_key})",
@@ -2701,7 +2720,11 @@
       "write_read": "scpp::index_path_probe(${receiver}, ${native_key})",
       "check_store": "scpp::index_path_check_store(${receiver}, ${native_key}, ${value})",
       "store": "scpp::index_store(${receiver}, ${native_key}, ${value})",
-      "value_read": "scpp::null_index_read(${receiver}, ${native_key})"
+      "value_read": "scpp::null_index_read(${receiver}, ${native_key})",
+      "append": {
+        "check": "scpp::index_path_check_append(${receiver}, ${value})",
+        "commit": "scpp::index_append(${receiver}, ${value})"
+      }
     }
   },
   "result_or_false": {

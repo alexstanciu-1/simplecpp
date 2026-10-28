@@ -194,3 +194,14 @@ Nested source reads remain a sequence of owned one-step values, not one private
 multi-key borrowed path. This preserves intermediate copy/COW/identity behavior
 across later key-expression effects. Metadata rejects depth other than one. Existing
 path readback remains separately available for its prepared operation contract.
+
+
+## Final append (E31)
+
+Append now resolves a separate terminal receiver after zero or more saved prefix
+keys. Its inserted value type comes from that receiver's element binding, with
+explicit prepared append-receiver facts. The same const-validation/mutable-commit
+mechanism handles typed and native boxed storage. Receiver metadata supplies check
+and commit; hash append admission reuses integer-key capabilities. Root append is
+an explicit safe empty-prefix case alongside readiness, while keyed operations
+continue to reject empty step lists. Intermediate append is not introduced.

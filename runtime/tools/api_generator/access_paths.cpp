@@ -11,7 +11,7 @@ namespace scpp::api_generation
     {
         fields_only(request, "root depth operation observation purpose", "access path");
         const auto operation = request.at("operation").text();
-        if (operation != "existing_read" && operation != "existing_store"
+        if (operation != "append" && operation != "existing_read" && operation != "existing_store"
             && operation != "value_read" && operation != "store" && operation != "key_check"
             && operation != "prefix_ready" && operation != "existing_erase" && operation != "observe")
             throw std::runtime_error("Unsupported access path operation");
@@ -26,9 +26,9 @@ namespace scpp::api_generation
             || depth_value.scalar.size() > 3)
             throw std::runtime_error("Access path depth must be an integer from 1 to 128");
         const auto depth = std::stoul(depth_value.scalar);
-        const bool allows_empty_prefix = operation == "prefix_ready";
+        const bool allows_empty_prefix = operation == "prefix_ready" || operation == "append";
         if ((depth == 0 && !allows_empty_prefix) || depth > 128)
-            throw std::runtime_error("Access path depth must be from 1 to 128, or zero for prefix readiness");
+            throw std::runtime_error("Access path depth must be from 1 to 128, or zero for prefix readiness/append");
         if (operation == "value_read" && depth != 1)
             throw std::runtime_error("Ordinary value reads require exactly one step");
         naming names(metadata_naming_registry(metadata, leaves, aliases));
@@ -36,15 +36,15 @@ namespace scpp::api_generation
         value result = value::object(); result["root"] = receiver; result["operation"] = operation;
         result["removing"] = operation == "existing_erase" || purpose == "remove" ? "true" : "false";
         result["steps"] = value::array();
-        for (unsigned index = 0; index < depth; ++index) {
-            const auto node = names.bind(receiver);
+        auto resolve_protocol = [&](const std::string &identity) {
+            const auto node = names.bind(identity);
             const auto &family = metadata.at("families").at(node.type.name);
-            if (!family.has("access")) throw std::runtime_error("Receiver has no access protocol: " + receiver);
-            (void)type_capabilities(metadata, leaves, aliases, receiver);
+            if (!family.has("access")) throw std::runtime_error("Receiver has no access protocol: " + identity);
+            (void)type_capabilities(metadata, leaves, aliases, identity);
             value arguments = value::object();
             for (const auto &[parameter, argument] : node.arguments) arguments[parameter] = argument.canonical();
             auto protocol = instantiate_function(family.at("access"), "", arguments);
-            fields_only(protocol, "key element read mutable includes present ready erase element_storage operations key_check write_read check_store store value_read", "access protocol");
+            fields_only(protocol, "key element read mutable includes present ready erase element_storage operations key_check write_read check_store store value_read append", "access protocol");
             if (protocol.has("operations")) {
                 const auto &allowed = protocol.at("operations");
                 if (allowed.type != value::kind::array) throw std::runtime_error("Access operations require an array");
@@ -57,9 +57,27 @@ namespace scpp::api_generation
             protocol.at("read").text(); protocol.at("mutable").text();
             protocol["key"] = names.resolve(protocol.at("key").text()).first;
             protocol["element"] = names.resolve(protocol.at("element").text()).first;
-            protocol["receiver"] = receiver;
+            protocol["receiver"] = identity;
+            return protocol;
+        };
+        for (unsigned index = 0; index < depth; ++index) {
+            auto protocol = resolve_protocol(receiver);
             receiver = protocol.at("element").text();
             result["steps"].items.push_back(protocol);
+        }
+        if (operation == "append") {
+            auto terminal = resolve_protocol(receiver);
+            const auto &append = terminal.at("append");
+            fields_only(append, "check commit requires_capabilities", "append protocol");
+            const auto node = names.bind(receiver);
+            type_bindings arguments;
+            for (const auto &[parameter, argument] : node.arguments)
+                arguments[parameter] = type_capabilities(metadata, leaves, aliases, argument.canonical());
+            if (!capabilities_selected(metadata, append, arguments))
+                throw std::runtime_error("Unsatisfied append capabilities: " + receiver);
+            append.at("check").text(); append.at("commit").text();
+            result["terminal"] = terminal;
+            receiver = terminal.at("element").text();
         }
         if (operation == "value_read") result.at("steps").items.back().at("value_read").text();
         if (operation == "key_check") {

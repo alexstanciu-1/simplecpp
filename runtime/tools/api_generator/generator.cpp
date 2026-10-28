@@ -389,7 +389,8 @@ namespace scpp::api_generation
             authored_name(name);
             if (name.find("::") != std::string::npos) throw std::runtime_error("Access path name must be unqualified");
             const auto path = describe_access_path(this->metadata_, this->leaves_, this->names_, request);
-            const bool creating = path.get("operation") == "store";
+            const bool appending = path.get("operation") == "append";
+            const bool creating = appending || path.get("operation") == "store";
             const bool key_check = path.get("operation") == "key_check";
             const bool storing = creating || path.get("operation") == "existing_store";
             const bool erasing = path.get("operation") == "existing_erase";
@@ -435,6 +436,12 @@ namespace scpp::api_generation
                 const auto element = this->materialize(step.at("element").text());
                 if (observing) this->dependencies(element, headers, {});
             }
+            if (appending) {
+                const auto &terminal = path.at("terminal");
+                this->dependencies(this->materialize(terminal.at("receiver").text()), headers, {});
+                this->dependencies(this->materialize(terminal.at("element").text()), headers, {});
+                this->dependencies(terminal, headers, {});
+            }
             if (storing) parameter("value", path.at("element"), "value");
             const auto &steps = path.at("steps").items;
             if (path.get("operation") == "value_read") {
@@ -455,7 +462,7 @@ namespace scpp::api_generation
             auto traverse = [&](bool mutable_access) {
                 std::string body;
                 std::string current = mutable_access ? "${native:root}" : "std::as_const(${native:root})";
-                if (steps.empty()) return "return boolean(" + expand(path.at("ready").text(),
+                if (steps.empty() && !appending) return "return boolean(" + expand(path.at("ready").text(),
                     {{"receiver", current}, {"removing", path.at("removing").text()}}) + ");\n";
                 for (std::size_t i = 0; i < steps.size(); ++i) {
                     const auto &step = steps[i];
@@ -467,7 +474,7 @@ namespace scpp::api_generation
                     const auto stored_value = native_element ? this->borrow(element, "value") : "value";
                     const substitutions access_context{{"receiver", current}, {"key", key},
                         {"native_key", this->borrow(key_type, key)}, {"value", stored_value}, {"removing", path.at("removing").text()}};
-                    const auto read = creating && i + 1 < steps.size() ? step.get("write_read", step.at("read").text()) : step.at("read").text();
+                    const auto read = creating && (appending || i + 1 < steps.size()) ? step.get("write_read", step.at("read").text()) : step.at("read").text();
                     const auto expression = expand(mutable_access ? step.at("mutable").text() : read, access_context);
                     if (!mutable_access && (probing || erasing || observing)) {
                         const auto present = expand(step.at("present").text(), access_context);
@@ -475,7 +482,7 @@ namespace scpp::api_generation
                     }
                     body += "static_assert(std::is_same_v<decltype((" + expression + ")), "
                         + (mutable_access ? "" : "const ") + (native_element ? element.at("native").text() : element.at("cpp").text()) + " &>);\n";
-                    if (i + 1 == steps.size()) {
+                    if (i + 1 == steps.size() && !appending) {
                         if (creating) body += expand(step.at(mutable_access ? "store" : "check_store").text(), access_context) + ";\n";
                         else if (mutable_access && erasing) body += expand(step.at("erase").text(), access_context) + ";\n";
                         else if (mutable_access) body += expression + " = " + (native_element ? this->borrow(element, "value") : "value") + ";\n";
@@ -496,6 +503,13 @@ namespace scpp::api_generation
                         body += std::string(mutable_access ? "auto &" : "const auto &") + slot + " = " + expression + ";\n";
                         current = native_element ? slot : this->borrow(element, slot);
                     }
+                }
+                if (appending) {
+                    const auto &terminal = path.at("terminal");
+                    const auto element = this->materialize(terminal.at("element").text());
+                    const auto stored = terminal.get("element_storage", "public") == "native" ? this->borrow(element, "value") : "value";
+                    body += expand(terminal.at("append").at(mutable_access ? "commit" : "check").text(),
+                        {{"receiver", current}, {"value", stored}}) + ";\n";
                 }
                 return body;
             };

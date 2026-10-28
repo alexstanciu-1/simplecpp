@@ -19,7 +19,7 @@ each slice. The original inventory is a baseline, not a current completion count
 | B2 | Complete for the agreed non-carrier special/mutation and text public paths; closure evidence below | Carrier forms C; indexed retention E; native exception inspection and overflow disposition G. |
 | C | Four carrier recipes and bounded scalar paths implemented; first prepared canonical path reviewed in C38 | Guarded negation and canonical lazy logical plans implemented in C32/C33; remaining source admission, broader selection and payload-specific integration remain; C38 passes the first-path checkpoint. Both decisions accepted 2026-10-28. |
 | D | Handle storage, presence planning, checked retention, shared ancestry/casts and weak/unique transports implemented (D1–D6) | Typed member access, operation-planner integration, ownership selections, value storage and source Exception transport remain. |
-| E | Existing vector/hash/boxed foundations; incomplete | Typed/boxed access, observations, removal, creating stores and ordinary reads implemented in E23–E29; append, key adaptation/policies and field-owner retention; conditional lifecycle, cursor fixes, boxed access/probes, and positional/keyed built-in factories are implemented for the tested domains. |
+| E | Existing vector/hash/boxed foundations; incomplete | Typed/boxed access, observations, removal, creating stores, ordinary reads and append implemented in E23–E31; key adaptation/policies and field-owner retention; conditional lifecycle, cursor fixes, boxed access/probes, and positional/keyed built-in factories are implemented for the tested domains. |
 | F | Pending | Callable transport and registered collection algorithms. |
 | G | Core utility and scalar debug bindings implemented | Exception/helper gaps and requirement-by-requirement closure audit. |
 
@@ -2799,3 +2799,36 @@ Only the changed generator unit and links were rebuilt: Ninja records 1.745s rel
 No public consumer, runtime archive or publication regeneration was needed: valid
 requests and their output behavior are unchanged. Append remains pending; this is
 memory-safety boundary hardening, not append completion.
+
+
+## E31 — final append with an explicit terminal receiver (2026-10-28)
+
+Append resolves zero or more saved prefix keys, then a terminal receiver protocol
+separate from the inserted value type. Source preparation binds that receiver
+explicitly. Receiver check/commit snippets and existing capability selection implement
+vector, integer-hash and boxed append; string-keyed hash rejects through integer-key
+requirements, without a generator family-name branch. Prefix traversal shares creating
+store preflight, and the complete const check precedes mutable descent/commit.
+Zero-key append is now an explicit empty-prefix exception alongside readiness; keyed
+operations retain E30 rejection coverage.
+
+Release and ASan/UBSan/LSan pass: reserved-vector append allocates zero; nested vector
+append reaches original storage; integer hashes append from the maximum existing key
+rather than live count; mixed missing/null paths bootstrap; dynamic null paths reject
+and constructed children preserve identity; failed vector prefixes reject. Prepared
+append-receiver omissions and string-keyed append reject during metadata validation.
+Prior read/store/probe/removal/lifetime, header, publication reuse and six regressions
+remain green. The initial fixture wrongly expected a historical append cursor after
+removing the highest key; it was corrected to the existing max-existing-key contract,
+without changing runtime behavior.
+
+The cumulative 56-unit fixture at eight jobs compiles in 27.8439s release / 37.7613s
+sanitizer; public caller 0.3309s / 0.6897s. Configuration runs were sequential. The first
+sanitizer launch never started because automatic permission review timed out; its
+permitted single retry ran successfully. Core archives were reused and publication
+remains 406 units. These are cumulative regression fixture compilation costs, not
+compiler build times or runtime performance measurements.
+
+Key adaptation/policies, field-owner retention and broader admitted payload coverage
+remain in E; C/D/F/G work remains open. Intermediate append is still outside the source
+contract. No whole-batch or goal completion is claimed.

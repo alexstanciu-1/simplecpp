@@ -55,6 +55,10 @@ paths['boxed_key_check']={'root':'vector<mixed>','depth':3,'operation':'key_chec
 for name,container in [('matrix_value','vector<vector<int64>>'),('rows_value','hash<vector<int64>,string>'),
  ('mixed_value','mixed'),('dynamic_value','dynamic')]:
     paths[name]={'root':container,'depth':1,'operation':'value_read'}
+names['hash<int64,int64>']='path_integer_table'
+for name,container,depth in [('row_append','vector<int64>',0),('matrix_append','vector<vector<int64>>',1),
+ ('hash_append','hash<int64,int64>',0),('mixed_append','vector<mixed>',2),('dynamic_append','vector<dynamic>',2)]:
+    paths[name]={'root':container,'depth':depth,'operation':'append'}
 data={'package':'application.paths','roots':[],'paths':paths,'apis':list(paths),'names':names}
 base={'metadata':metadata,'request':data,'leaves':{},'names':names,'imports':{},'layouts':{}}
 def plan(request,error=None):
@@ -72,7 +76,7 @@ for api in (physical['apis'][name] for name in paths):
     assert api['operation'].get('body',api['operation'].get('expression'))
 # Only readiness may inspect a root without a reached key. Every other operation
 # must reject before accessing the first/last step (especially store/key_check).
-checked_operations={'prefix_ready'}
+checked_operations={'prefix_ready','append'}
 for name,path in paths.items():
     if path['operation'] in checked_operations:continue
     checked_operations.add(path['operation'])
@@ -92,7 +96,7 @@ arguments={'vector<int64>':{'T':'int64'},'vector<vector<int64>>':{'T':'vector<in
            'hash<vector<int64>,string>':{'V':'vector<int64>','K':'string'},
            'hash<int64,string>':{'V':'int64','K':'string'},'vector<hash<int64,string>>':{'T':'hash<int64,string>'},
            'nullable<int64>':{'T':'int64'},'vector<nullable<int64>>':{'T':'nullable<int64>'},
-           'result<mixed>':{'T':'mixed'},'vector<result<mixed>>':{'T':'result<mixed>'},'vector<mixed>':{'T':'mixed'},'vector<dynamic>':{'T':'dynamic'}}
+           'result<mixed>':{'T':'mixed'},'vector<result<mixed>>':{'T':'result<mixed>'},'vector<mixed>':{'T':'mixed'},'vector<dynamic>':{'T':'dynamic'},'hash<int64,int64>':{'V':'int64','K':'int64'}}
 def binding(type):
     return {'source':'source.'+type,'physical':type,'arguments':{k:'source.'+v for k,v in arguments.get(type,{}).items()}}
 bindings={}
@@ -106,6 +110,10 @@ for name,path in paths.items():
             params=arguments[receiver]
             keys.append(params.get('K','uint64'));receiver=params.get('T',params.get('V'));elements.append(receiver)
     bindings[prefix+'value']=binding(elements[-1] if elements else path['root'])
+    if path['operation']=='append':
+        bindings[prefix+'append_receiver']=binding(receiver)
+        parameters=arguments.get(receiver,{})
+        bindings[prefix+'value']=binding(parameters.get('T',parameters.get('V',receiver)))
     for i,(key,element) in enumerate(zip(keys,elements)):
         bindings[prefix+'key_'+str(i)]=binding(key);bindings[prefix+'element_'+str(i)]=binding(element)
 requirements=[{'subject':slot,'contract':'application_formed'} for slot in bindings]+[{'subject':'operation','contract':'existing_path_admitted'}]
@@ -119,6 +127,8 @@ for imported in [{},physical['apis']]:
     plan(bad,'operation/existing_path_admitted')
 bad=copy.deepcopy(source);del bad['prepared']['bindings']['path_rows_store_key_0']
 plan(bad,'path_rows_store_key_0')
+bad=copy.deepcopy(source);del bad['prepared']['bindings']['path_matrix_append_append_receiver']
+plan(bad,'path_matrix_append_append_receiver')
 bad=copy.deepcopy(base);bad['api_imports']=physical['apis'];bad['request']['paths']['matrix_store']['depth']=1
 plan(bad,'Conflicting API ownership')
 bad=copy.deepcopy(base);bad['metadata']['families']['vector']['access']['read']+=' /*'+('x'*200000)+'*/'
@@ -140,6 +150,8 @@ assert not any(u['identity'].startswith('vector<') for u in plan(key_only)['unit
 assert len(plan(key_only)['apis']['boxed_key_check']['operation']['parameters'])==1
 bad=copy.deepcopy(base);bad['request']['paths']['mixed_value']['depth']=2
 plan(bad,'exactly one step')
+bad=copy.deepcopy(base);bad['request']['paths']['hash_append']['root']='hash<int64,string>'
+plan(bad,'Unsatisfied append capabilities')
 print('PASS: generic typed path composition, bounds on depth, prepared slot/fact checks')
 if not args.core:sys.exit(0)
 with tempfile.TemporaryDirectory(prefix='scpp-typed-paths-') as directory:

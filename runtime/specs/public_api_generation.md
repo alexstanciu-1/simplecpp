@@ -1912,7 +1912,7 @@ list, for example:
 ```
 
 Names are unqualified authored identifiers. Operations are `existing_read`, `existing_store`, `prefix_ready` and
-`existing_erase` (and `observe` below); depth is an integer from 1 through 128 (zero is also allowed for prefix readiness). The generator follows each
+`existing_erase` (and `observe` below); depth is an integer from 1 through 128 (zero is also allowed for prefix readiness or append). The generator follows each
 resolved element's access protocol, without family-name dispatch. Only demanded
 operations are emitted. Public symbols are prefixed `path_`, headers use
 `scpp/access/<name>.hpp`, and ordinary API ownership detects conflicting definitions.
@@ -1935,7 +1935,7 @@ operation facts, including source argument graphs; importing a published API nev
 bypasses those checks. Physical paths feed the same function emitter, dependency
 inventory, layout probes and sealed reuse mechanism as other demanded APIs.
 
-Append and field-owner retention remain separate pending protocols. Creating stores
+Field-owner retention remains a separate pending protocol. Creating stores
 and typed-to-boxed descent use the explicit extensions below; eager existing lookup
 must not stand in for those operations.
 
@@ -2072,7 +2072,7 @@ keys are checked again at commit preflight for native callers, but this does not
 replace the early key-only check required by source evaluation order. Allocation or
 copy failures during commit retain the existing nontransactional guarantee.
 
-Final append is a separate pending protocol. Ordinary read null-on-miss policy also
+Final append uses the terminal protocol described below. Ordinary read null-on-miss policy also
 remains distinct from these existing-read and creating-store paths.
 
 
@@ -2092,3 +2092,24 @@ mixed table values retain COW, and dynamic object values retain identity. Combin
 keys into one borrowed path would silently change that evaluation/ownership contract;
 use existing-path readback only where its prepared operation admits that contract.
 Whole-root binding, expression sequencing and source admission remain compiler-owned.
+
+
+### Final append terminal protocol
+
+An `append` demand counts saved prefix keys in `depth`; zero appends to the root.
+Each prefix step uses ordinary store validation/descent. The resolved terminal
+receiver supplies an `append` record with `check`, `commit` and optional
+`requires_capabilities`. The latter uses existing family-parameter capability binding,
+not a hash-specific generator branch. The inserted value's type is the terminal
+receiver's element type, independent of the last prefix element's receiver type.
+Source preparation supplies `path_<name>_append_receiver` in addition to root, saved
+key/element and value bindings.
+
+The public signature passes the mutable whole root, saved prefix keys and an owned
+converted value. Full const traversal and terminal check precede mutable descent and
+commit. There is no final key argument and no intermediate append step. Vector grows
+by one; integer-keyed hash uses max-existing-key plus one; string-keyed hash rejects
+through capability admission. Mixed may bootstrap null/missing intermediate tables;
+dynamic requires constructed container children. COW, identity and allocation-failure
+guarantees stay with the native owners. Key preflight and source/RHS sequencing remain
+caller/compiler responsibilities.

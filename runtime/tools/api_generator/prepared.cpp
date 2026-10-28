@@ -66,6 +66,7 @@ namespace scpp::api_generation
                     const auto prefix = "path_" + api.text() + "_";
                     result[prefix + "root"] = path.at("root").text();
                     result[prefix + "value"] = path.at("element").text();
+                    if (path.has("terminal")) result[prefix + "append_receiver"] = path.at("terminal").at("receiver").text();
                     unsigned index = 0;
                     for (const auto &step : path.at("steps").items) {
                         result[prefix + "key_" + std::to_string(index)] = step.at("key").text();

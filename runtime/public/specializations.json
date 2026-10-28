@@ -1,6 +1,6 @@
 {
   "abi": "529dd5502370f48d64891818e9439aae72831b990b4027e8abe25c50c1216c21",
-  "api_identity": "b88369e2675fec0027e512d13021206cbf249e43e2e9c502734eaa77de6dc92b",
+  "api_identity": "98be680df9bed073c96b928f1ba97f1ddd4927cd65af8b68915f498a67f5a3ae",
   "apis": {
     "add_dynamic": {
       "header": "scpp/operators/add_dynamic.hpp",
