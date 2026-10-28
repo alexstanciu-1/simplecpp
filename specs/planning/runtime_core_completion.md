@@ -18,7 +18,7 @@ each slice. The original inventory is a baseline, not a current completion count
 | B1 | Complete for the agreed scalar-facing truth/text/identity/observation scope | Carrier forms remain C; boxed arithmetic and access completion are not B1 credit. |
 | B2 | Complete for the agreed non-carrier special/mutation and text public paths; closure evidence below | Carrier forms C; indexed retention E; native exception inspection and overflow disposition G. |
 | C | Four carrier recipes and bounded scalar paths implemented; first prepared canonical path reviewed in C38 | Guarded negation and canonical lazy logical plans implemented in C32/C33; remaining source admission, broader selection and payload-specific integration remain; C38 passes the first-path checkpoint. Both decisions accepted 2026-10-28. |
-| D | Handle storage, presence planning, checked retention, shared ancestry/casts and weak/unique transports implemented (D1–D6) | Retained property/container-field adapters proven in E36/E37 and bounded method transports in D7; same-origin reference returns, broader member/planner integration, ownership selections, value storage and source Exception transport remain. |
+| D | Handle storage, presence planning, checked retention, shared ancestry/casts and weak/unique transports implemented (D1–D6) | Retained property/container-field adapters proven in E36/E37 and bounded method transports in D7; scalar same-origin return bindings proven in D8; broader payload/member/planner integration, ownership selections, value storage and source Exception transport remain. |
 | E | Existing vector/hash/boxed foundations; incomplete | Typed/boxed access, observations, removal, creating stores, ordinary reads and append implemented in E23–E32; optional/boxed scalar key composition proven in E33; shared identity key storage/upcasts proven in E34; retained scalar/container-field adapters proven in E36/E37; broader member/key compositions remain; conditional lifecycle, cursor fixes, boxed access/probes, and positional/keyed built-in factories are implemented for the tested domains. |
 | F | Pending | Callable transport and registered collection algorithms. |
 | G | Core utility and scalar debug bindings implemented | Exception/helper gaps and requirement-by-requirement closure audit. |
@@ -3020,3 +3020,30 @@ sealed publication-reuse checks passed. Sixteen cumulative generated units compi
 at eight jobs in 4.8060s release / 5.8745s sanitized; public callers took 0.1357s /
 0.1833s. Runtime/generator binaries and runtime publication were reused; this slice
 changes only the proof and completion inventory.
+
+
+## D8 — same-origin return bindings (2026-10-28)
+
+The ordinary operation schema now represents `return_origin` separately from its
+returned storage type. It requires exactly one matching writable reference parameter,
+a public expression transport and a non-void, non-constructor operation. Generated
+signatures return T&. Private code statically checks the native expression's exact
+reference type, executes it once and returns the named caller parameter, never an
+arbitrary alias chosen by the native expression. Source body/origin proof remains
+compiler-owned; structural checks do not establish source reference eligibility.
+
+The scalar public proof verifies parameter identity, nonrecursive adapter forwarding,
+ordinary copying versus alias binding, zero allocations and alias validity after
+receiver destruction. Metadata rejects absent/ambiguous origins, const/value
+parameters, wrong types, body snippets and native conversion. Focused compile-negative
+checks reject temporary public arguments and a native expression returning a value
+instead of the declared reference. Broader payload/source reference cases, variadic
+composition, ownership selection, shared-self, source Exception and callbacks remain
+open. No unrelated reference template identity or interior-borrow API was introduced.
+
+Release and ASan/UBSan/LSan correctness, lifetime, zero-allocation binding, compile
+negatives and sealed reuse passed, along with eight focused metadata regressions.
+Eighteen cumulative fixture units compiled at eight jobs in 6.6605s release / 6.6408s
+sanitized; public callers took 0.1504s / 0.2118s. Generator binaries were rebuilt;
+core archives and runtime-global publication were reused. Timing differences are
+single-run observations, not a sanitizer performance claim.

@@ -2173,7 +2173,7 @@ This slice does not infer ancestry or admit arbitrary shared payloads in source 
 A request may supply `application_functions`, a map from unqualified API identity to
 ordinary operation metadata. `apis` selects which definitions to emit. The permitted
 fields are `returns`, `parameters`, `expression` or `body`, `transport`, `includes`,
-`uses`, and `requires_capabilities`. Signature resolution, representation borrowing,
+`uses`, `requires_capabilities`, and `return_origin`. Signature resolution, representation borrowing,
 result transport and code emission use the existing operation pipeline. The tool
 assigns namespace `scpp`, symbol `app_<identity>`, header
 `scpp/application/<identity>.hpp`, and the corresponding private generated unit.
@@ -2195,3 +2195,24 @@ An indexed shared element may be read into an owned handle and checked the same 
 The public boundary never returns an interior reference. This is distinct from
 container replacement: clearing the original container during RHS evaluation does
 not redirect the already-selected object's property write.
+
+
+### Same-origin reference return binding
+
+An operation may specify `return_origin: "parameter_name"` alongside its ordinary
+`returns` storage type. This is a return binding, not a reference-valued type identity.
+Exactly one parameter of that resolved storage type must use `passing: "ref"`, and
+its name must match the origin. Constructors, void, body snippets and native return
+conversion are not admitted by this binding. The operation must supply an expression.
+The generated public signature returns `T &` and requires the caller's existing
+writable storage; temporary and const arguments cannot bind to it.
+
+The private adapter statically checks that the expression returns exactly `T &`,
+executes it once for its effects, discards the returned alias and returns the named
+whole parameter itself. Thus no alias selected by the native expression crosses the
+public boundary. Source preparation still proves the callee's same-origin contract,
+reference eligibility and receiver lifetime; this structural check does not inspect
+source bodies or authorize references to properties/container interiors. Exceptions
+propagate normally before a result is returned. Ordinary copying of the returned
+reference follows the payload's copy contract; binding an alias does not extend the
+caller's storage lifetime and does not depend on the receiver staying alive.

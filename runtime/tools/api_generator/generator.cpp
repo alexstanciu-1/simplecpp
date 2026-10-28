@@ -170,7 +170,7 @@ namespace scpp::api_generation
             if (op.has("condition_observation")) {
                 if (owner.empty() || op.get("returns")!="boolean" || !op.yes("const")
                     || op.yes("static") || op.has("body") || !op.has("expression")
-                    || !op.at("parameters").items.empty() || op.has("transport"))
+                    || !op.at("parameters").items.empty() || op.has("transport") || op.has("return_origin"))
                     throw std::runtime_error("Condition observation requires a scoped const boolean method");
                 const auto parameter = op.at("condition_observation").text();
                 const auto found = context.find("type:"+parameter);
@@ -179,7 +179,7 @@ namespace scpp::api_generation
                 const auto observation = scoped_condition(observation_metadata, found->second, this->names_);
                 value resolved = op; resolved.fields.erase("condition_observation");
                 // Validate unknown metadata even when the operation is unavailable.
-                fields_only(resolved,"name kind returns parameters const static noexcept explicit expression body transport includes uses requires_capabilities", "operation");
+                fields_only(resolved,"name kind returns parameters const static noexcept explicit expression body transport includes uses requires_capabilities return_origin", "operation");
                 if (observation.type==value::kind::null || observation.get("kind")=="constant_after_evaluation") return "";
                 const auto operand = op.at("expression").text();
                 resolved.fields.erase("expression");
@@ -188,7 +188,7 @@ namespace scpp::api_generation
             }
 			if (op.has("parameters") && op.at("parameters").type!=value::kind::array) throw std::runtime_error("parameters must be an array");
             if (op.has("uses") && op.at("uses").type!=value::kind::array) throw std::runtime_error("uses must be an array");
-            fields_only(op,"name kind returns parameters const static noexcept explicit expression body transport includes uses requires_capabilities", "operation");
+            fields_only(op,"name kind returns parameters const static noexcept explicit expression body transport includes uses requires_capabilities return_origin", "operation");
 			if (op.has("expression")==op.has("body")) throw std::runtime_error("Operation needs exactly one expression or body");
 			if (!this->selected(op,types)) return "";
             this->capability_checks(op,types,checks,probe_headers);
@@ -229,6 +229,9 @@ namespace scpp::api_generation
 			if (op.yes("noexcept")) arguments+=" noexcept";
 			this->dependencies(op,private_headers,context);
 			std::string result, body;
+            if (op.has("return_origin") && (kind == "constructor" || !op.has("expression")
+                || op.get("transport", "public") != "public"))
+                throw std::runtime_error("Origin return requires a public expression operation");
 			if (kind=="constructor") {
 				name=owner;
 				if (!op.has("expression")) throw std::runtime_error("Constructor requires a native argument expression");
@@ -238,7 +241,27 @@ namespace scpp::api_generation
 				bool is_void=result=="void";
 				auto snippet=op.has("expression") ? (is_void ? "" : "return ")+expand(op.at("expression").text(),context)+";" : expand(op.at("body").text(),context);
 				auto factory="[&]() -> decltype(auto) { "+snippet+" }";
-				if (is_void) body=snippet;
+                if (op.has("return_origin")) {
+                    const auto origin = op.at("return_origin").text();
+                    unsigned origins = 0; bool selected_origin = false;
+                    for (const auto &parameter : op.at("parameters").items) {
+                        const auto parameter_type = this->type(expand(parameter.at("type").text(), context), types);
+                        if (parameter.get("passing", "value") == "ref" && parameter_type.at("cpp").text() == result) {
+                            ++origins;
+                            selected_origin = selected_origin || parameter.at("name").text() == origin;
+                        }
+                    }
+                    if (is_void || origins != 1 || !selected_origin)
+                        throw std::runtime_error("Origin return requires exactly one matching writable parameter");
+                    add_include(private_headers, "type_traits");
+                    const auto expression = expand(op.at("expression").text(), context);
+                    result += " &";
+                    // Source preparation proves origin semantics. The public adapter
+                    // executes the call but only returns its named whole parameter.
+                    body = "static_assert(std::is_same_v<decltype((" + expression + ")), " + result + ">); "
+                        + "(void)(" + expression + "); return " + origin + ";";
+                }
+                else if (is_void) body=snippet;
 				else if (op.get("transport","public")=="public") body="return ("+factory+")();";
 				else if (op.get("transport")=="native") {
 					if (!t.has("construct")) throw std::runtime_error("Missing native return transport for "+result);
@@ -597,7 +620,7 @@ namespace scpp::api_generation
                         || (this->metadata_.has("function_families") && this->metadata_.at("function_families").has(name))
                         || (this->request_.has("paths") && this->request_.at("paths").has(name)))
                         throw std::runtime_error("Conflicting application API identity: " + name);
-                    fields_only(operation, "returns parameters expression body transport includes uses requires_capabilities", "application function");
+                    fields_only(operation, "returns parameters expression body transport includes uses requires_capabilities return_origin", "application function");
                     value function = value::object();
                     function["namespace"] = "scpp";
                     function["header"] = "scpp/application/" + name + ".hpp";

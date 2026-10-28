@@ -80,6 +80,16 @@ int main() {
         member_owner absent;int argument_calls=0;bool failed=false;
         try { auto selected=absent.retain_present();++argument_calls;(void)invoke_member(selected,int64(1)); }
         catch(...) { failed=true; } CHECK(failed && argument_calls==0);
+        int64 external(10);const auto binding_allocations=allocations;
+        auto &alias=select_member(receiver,external);
+        CHECK(&alias==&external && external==int64(11));
+        auto &forwarded=forward_member(receiver,external);
+        CHECK(&forwarded==&external && external==int64(12));
+        auto copied=select_member(receiver,external);copied=int64(99);
+        CHECK(external==int64(13) && copied==int64(99));
+        CHECK(allocations==binding_allocations);
+        receiver.reset(); // Returned alias belongs to the caller, not the receiver.
+        forwarded=int64(41);CHECK(external==int64(41));
         fixture::record inline_receiver;
         CHECK(invoke_inline(inline_receiver,int64(9))==int64(9));
         CHECK(inline_receiver.value==int64(9)); // Borrowed whole-storage receiver, no record copy.

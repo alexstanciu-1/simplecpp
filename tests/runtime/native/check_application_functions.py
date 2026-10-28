@@ -49,6 +49,14 @@ functions.update({
  'invoke_inline':{'returns':'int64','parameters':[{'name':'owner','type':'record','passing':'ref'},
                                                {'name':'value','type':'int64'}],
                   'expression':'owner.invoke(value)'}})
+functions.update({
+ 'select_member':{'returns':'int64','return_origin':'value',
+                  'parameters':[receiver,{'name':'value','type':'int64','passing':'ref'}],
+                  'expression':'${native:owner}.deref().select(value)'},
+ 'forward_member':{'returns':'int64','return_origin':'value',
+                   'parameters':[receiver,{'name':'value','type':'int64','passing':'ref'}],
+                   'expression':'scpp::app_select_member(owner, value)',
+                   'includes':['scpp/application/select_member.hpp']}})
 upcast='shared_upcast<record,derived>'
 data={'package':'application.members','roots':['vector<int64>','vector<shared<record>>'],'leaves':leaves,'names':names,
       'application_functions':functions,'paths':paths,'apis':[*paths,*functions,upcast]}
@@ -100,6 +108,16 @@ plan(bad,'Conflicting API ownership')
 undemanded=copy.deepcopy(envelope);undemanded.pop('prepared');undemanded['mode']='native'
 undemanded['request']['roots']=[];undemanded['request']['apis']=[]
 assert not plan(undemanded)['units']
+for change in ['missing','value','const_ref','two','wrong_type','native','body']:
+    bad=copy.deepcopy(envelope);bad.pop('prepared');bad['mode']='native'
+    operation=bad['request']['application_functions']['select_member']
+    if change=='missing':operation['return_origin']='absent'
+    elif change in ['value','const_ref']:operation['parameters'][1]['passing']=change
+    elif change=='two':operation['parameters'].append({'name':'second','type':'int64','passing':'ref'})
+    elif change=='wrong_type':operation['returns']='string'
+    elif change=='native':operation['transport']='native'
+    else:operation['body']=operation.pop('expression')+';'
+    plan(bad,'Origin return requires')
 print('PASS: application signature facts, admission, demand-only emission and ownership conflicts')
 if not args.core:sys.exit(0)
 fixture='''#pragma once
@@ -115,6 +133,7 @@ struct record {
     virtual ~record() { --live; }
     virtual scpp::int64 invoke(scpp::int64 input) { value += input; return value; }
     void adjust(scpp::int64 &left, scpp::int64 &right) { left += scpp::int64(1); right += scpp::int64(2); }
+    scpp::int64 &select(scpp::int64 &candidate) { candidate += scpp::int64(1); return candidate; }
     scpp::string describe() const { return scpp::string("owned method result survives the receiver lifetime"); }
     record(const record &)=delete;
     record &operator=(const record &)=delete;
@@ -153,4 +172,16 @@ with tempfile.TemporaryDirectory(prefix='scpp-application-functions-') as direct
     subprocess.run([str(work/'proof')],check=True)
     (app/'lib').mkdir();subprocess.run(['ar','rcs',str(app/'lib/libkeys.a'),*objects],check=True);seal_package(app,['keys'])
     reused=concrete_types.generate(request,work/'reuse',sdk,[sdk,app],'clang++',[]);assert not reused['sources']
+    invalid_operation=copy.deepcopy(functions['select_member']);invalid_operation['expression']='scpp::int64(1)'
+    invalid_data={**data,'roots':[],'apis':['wrong_return'],'application_functions':{'wrong_return':invalid_operation}}
+    invalid_request=work/'invalid.json';invalid_request.write_text(json.dumps(invalid_data))
+    invalid_output=work/'invalid'
+    invalid=concrete_types.generate(invalid_request,invalid_output,sdk,[sdk,app],'clang++',[])
+    assert len(invalid['sources'])==1
+    failure=subprocess.run(['clang++',*flags,'-I'+str(invalid_output/'public'),*private[len(['clang++',*flags]):],
+        '-fsyntax-only',str(invalid_output/invalid['sources'][0])],text=True,capture_output=True)
+    assert failure.returncode and 'static assertion failed' in failure.stderr,failure.stderr
+    rejected='#include "'+manifest['apis']['select_member']['header']+'"\nvoid reject(scpp::member_owner &owner) { scpp::app_select_member(owner, scpp::int64(1)); }\n'
+    failure=subprocess.run([*public,'-fsyntax-only','-x','c++','-'],input=rejected,text=True,capture_output=True)
+    assert failure.returncode and ('lvalue' in failure.stderr or 'temporary' in failure.stderr),failure.stderr
     print(f'PASS: public-only application functions and sealed reuse; {len(objects)} units at 8 jobs={storage:.4f}s public caller={consumer:.4f}s')
