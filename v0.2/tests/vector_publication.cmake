@@ -1,6 +1,7 @@
 file(REMOVE_RECURSE "${WORK}")
 file(MAKE_DIRECTORY "${WORK}")
 file(READ "${PUBLICATION}" publication)
+string(JSON publication REMOVE "${publication}" carriers)
 # All adapters off; this publication exercises core-only members, additional
 # element families and explicit conversion requests in both directions.
 string(JSON publication SET "${publication}" vectors specializations [=[[

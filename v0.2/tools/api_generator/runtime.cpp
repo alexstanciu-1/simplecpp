@@ -71,8 +71,8 @@ const std::vector<std::string> &native_cpp_spellings() {
 }
 
 runtime_plan prepare_runtime(const value &metadata, const value &publication) {
-    exact(metadata, "version types representation construction promotion_policies operations values source_types aliases floating scalar_casts string vector", "runtime metadata");
-    exact(publication, "version namespace types operators headers values short_aliases string vectors", "runtime publication");
+    exact(metadata, "version types representation construction promotion_policies operations values source_types aliases floating scalar_casts string vector carriers", "runtime metadata");
+    exact(publication, "version namespace types operators headers values short_aliases string vectors carriers", "runtime publication");
     version(metadata); version(publication); literal(publication, "namespace", "scpp");
     const auto &rep = metadata.at("representation");
     exact(rep, "binding default_initialization", "representation");
@@ -588,6 +588,47 @@ runtime_plan prepare_runtime(const value &metadata, const value &publication) {
             }
         }
     } else require(!publication.has("vectors"), "Vector publication requires metadata");
+    if (metadata.has("carriers")) {
+        const auto &record = metadata.at("carriers");
+        exact(record, "extraction construction families error", "carrier metadata");
+        const auto extraction = record.at("extraction").text();
+        require(extraction == "implicit_checked_one_layer_value_copy" || extraction == "explicit_checked_one_layer_value_copy", "Unsupported carrier extraction policy");
+        const auto &error = record.at("error");
+        exact(error, "type message line file state", "carrier error");
+        literal(error, "type", "error_t"); literal(error, "message", "string"); literal(error, "line", "int64");
+        literal(error, "file", "string"); literal(error, "state", "explicit_present");
+        literal(record, "construction", "explicit");
+        const auto &families = record.at("families");
+        exact(families, "nullable result result_or_false result_or_bool", "carrier families");
+        for (const auto &[family, state] : families.fields)
+            require(state.text() == (family == "nullable" ? "empty" : family == "result" ? "value" : "false"), "Unsupported carrier default state");
+        if (publication.has("carriers")) {
+            const auto &request = publication.at("carriers");
+            exact(request, "header specializations", "carrier publication");
+            plan.carriers_header = header(request.at("header"));
+            require(!std::set{plan.types_header, plan.values_header, plan.operators_header, plan.short_names_header,
+                plan.native_bridge_header, plan.string.header, plan.vectors_header}.contains(plan.carriers_header), "Conflicting public headers");
+            require(!plan.boolean_type.empty(), "Carriers require published boolean type");
+            std::set<std::string> names;
+            for (const auto &item : array(request.at("specializations"))) {
+                exact(item, "family payload", "carrier specialization");
+                const auto family = item.at("family").text(), payload = item.at("payload").text();
+                require(families.has(family), "Unknown carrier family");
+                if (family == "nullable") require(selected_values.contains("null_t"), "Nullable requires published null_t");
+                bool supported = selected.contains(payload) || (!plan.string.name.empty() && payload == plan.string.name)
+                    || std::any_of(plan.vectors.begin(), plan.vectors.end(), [&](const auto &v) { return v.name == payload; })
+                    || (selected_values.contains(payload) && value_types.at(payload).kind != "null");
+                require(supported, "Carrier payload must be a published scalar, string or vector; null/nested carriers are not admitted");
+                const auto name = family + "_" + payload;
+                require(names.insert(name).second, "Duplicate carrier specialization");
+                if (family == "result") require(!plan.string.name.empty() && selected.contains("int64"), "Result error payload requires string and int64");
+                plan.carriers.push_back({name, family, payload, families.at(family).text(), extraction.starts_with("implicit")});
+                plan.source_types.emplace(family + "<" + payload + ">", name);
+            }
+            require(!plan.carriers.empty(), "Empty carrier publication");
+            std::sort(plan.carriers.begin(), plan.carriers.end(), [](const auto &a, const auto &b) { return a.name < b.name; });
+        }
+    } else require(!publication.has("carriers"), "Carrier publication requires metadata");
     return plan;
 }
 
@@ -673,6 +714,23 @@ value describe(const runtime_plan &plan) {
         out["vectors"].items.push_back(row);
     }
     if (!plan.vectors.empty()) out["vectors_header"] = plan.vectors_header;
+    out["carriers"] = value::array();
+    for (const auto &c : plan.carriers) {
+        auto row = value::object(); row["name"] = c.name; row["family"] = c.family; row["payload"] = c.payload;
+        row["default_state"] = c.default_state; row["boxing"] = "explicit";
+        row["extraction"] = c.implicit_extraction ? "implicit_checked_one_layer_value_copy" : "explicit_checked_one_layer_value_copy"; row["extraction_can_fail"] = flag(true);
+        row["non_payload_extraction"] = "throw_runtime_error"; row["condition"] = "query_state_explicitly";
+        row["lifecycle"] = "owned_copy_move_resets_source_to_default";
+        row["lifted_operators"] = flag(false); row["result_category"] = "value";
+        row["explicit_lowering"] = "value_then_payload_operation";
+        out["carriers"].items.push_back(row);
+    }
+    if (!plan.carriers.empty()) out["carriers_header"] = plan.carriers_header;
+    if (std::any_of(plan.carriers.begin(), plan.carriers.end(), [](const auto &c) { return c.family == "result"; })) {
+        out["error"] = value::object(); out["error"]["type"] = "error_t"; out["error"]["state"] = "explicit_present";
+        out["error"]["message"] = "string"; out["error"]["line"] = "int64"; out["error"]["file"] = "string";
+        out["error"]["inspection"] = "value_copy"; out["error"]["global_short_name"] = flag(false);
+    }
     out["short_aliases"] = value::array();
     for (const auto &alias : plan.short_aliases) out["short_aliases"].items.emplace_back(alias);
     out["values"] = value::array(); out["source_types"] = value::object(); out["aliases"] = value::object();

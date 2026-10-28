@@ -1,6 +1,7 @@
 file(REMOVE_RECURSE "${WORK}")
 file(MAKE_DIRECTORY "${WORK}")
 file(READ "${PUBLICATION}" publication)
+string(JSON publication REMOVE "${publication}" carriers)
 string(JSON publication REMOVE "${publication}" vectors)
 string(JSON publication SET "${publication}" types "[\"int64\"]")
 string(JSON publication SET "${publication}" values "[\"bool_t\"]")

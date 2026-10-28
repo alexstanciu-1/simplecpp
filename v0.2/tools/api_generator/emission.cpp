@@ -26,6 +26,59 @@ std::pair<std::string, std::string> owned_lifecycle(const std::string &name) {
     definitions += name + "& " + name + "::operator=(" + name + "&& other) noexcept { if (this != &other) { delete storage_; storage_ = std::exchange(other.storage_, nullptr); } return *this; }\n";
     return {declarations, definitions};
 }
+std::pair<std::string, std::string> emit_carriers(const runtime_plan &plan) {
+    if (plan.carriers.empty()) return {};
+    const bool errors = std::any_of(plan.carriers.begin(), plan.carriers.end(), [](const auto &c) { return c.family == "result"; });
+    std::string header = "#pragma once\n#include \"" + plan.operators_header + "\"\n";
+    if (!plan.string.name.empty()) header += "#include \"" + plan.string.header + "\"\n";
+    if (!plan.vectors.empty()) header += "#include \"" + plan.vectors_header + "\"\n";
+    header += "namespace scpp {\n";
+    std::string definitions;
+    if (errors) {
+        header += "class error_t final {\npublic:\n    error_t() = default;\n    explicit error_t(string message, int64 line = int64{}, string file = string{});\n    static const error_t no_error;\n    bool_t has_error() const noexcept;\n    explicit operator bool() const noexcept;\n    string get_message() const;\n    int64 get_line() const noexcept;\n    string get_file() const;\nprivate:\n    bool present_ = false;\n    string message_;\n    int64 line_;\n    string file_;\n};\n";
+        definitions += "const error_t error_t::no_error{};\nerror_t::error_t(string message, int64 line, string file) : present_(true), message_(std::move(message)), line_(line), file_(std::move(file)) {}\nbool_t error_t::has_error() const noexcept { return bool_t{present_}; }\nerror_t::operator bool() const noexcept { return present_; }\nstring error_t::get_message() const { return message_; }\nint64 error_t::get_line() const noexcept { return line_; }\nstring error_t::get_file() const { return file_; }\n";
+    }
+    for (const auto &c : plan.carriers) {
+        const auto &name = c.name, &payload = c.payload;
+        const bool result = c.family == "result", nullable = c.family == "nullable", bool_states = c.family == "result_or_bool";
+        const auto [life_header, life_definitions] = owned_lifecycle(name);
+        header += "class " + name + " final {\npublic:\n" + life_header;
+        header += "    explicit " + name + "(" + payload + " value);\n    bool_t has_value() const noexcept;\n    " + payload + " value() const;\n    " + (c.implicit_extraction ? "" : "explicit ") + "operator " + payload + "() const;\n";
+        definitions += "struct " + name + "::storage { using content_type = detail::carrier_storage<" + payload
+            + (result ? ", error_t" : "") + ">; content_type content; };\n" + life_definitions;
+        definitions += name + "::" + name + "(" + payload + " value) : storage_(new storage{storage::content_type{std::move(value)}}) {}\n";
+        definitions += "bool_t " + name + "::has_value() const noexcept { return bool_t{storage_ ? storage_->content.has_value() : " + (result ? "true" : "false") + "}; }\n";
+        definitions += payload + " " + name + "::value() const { ";
+        if (result) definitions += "if (!storage_) return " + payload + "{}; ";
+        definitions += "if (!storage_) throw std::runtime_error(\"carrier_no_value\"); return storage_->content.value(); }\n";
+        definitions += name + "::operator " + payload + "() const { return value(); }\n";
+        if (nullable) {
+            header += "    explicit " + name + "(null_t) noexcept;\n";
+            definitions += name + "::" + name + "(null_t) noexcept {}\n";
+        }
+        if (result) {
+            header += "    explicit " + name + "(error_t error);\n    bool_t has_error() const noexcept;\n    error_t error() const;\n";
+            definitions += name + "::" + name + "(error_t error) : storage_(new storage{storage::content_type::failure(std::move(error))}) {}\n";
+            definitions += "bool_t " + name + "::has_error() const noexcept { return bool_t{storage_ && storage_->content.has_error()}; }\n";
+            definitions += "error_t " + name + "::error() const { if (!storage_) throw std::runtime_error(\"result_no_error\"); return storage_->content.error(); }\n";
+        } else {
+            header += "    void reset() noexcept;\n";
+            definitions += "void " + name + "::reset() noexcept { delete storage_; storage_ = nullptr; }\n";
+            if (!nullable) {
+                header += "    static " + name + " from_false() noexcept;\n    bool_t is_false() const noexcept;\n";
+                definitions += name + " " + name + "::from_false() noexcept { return {}; }\n";
+                definitions += "bool_t " + name + "::is_false() const noexcept { return bool_t{!storage_ || storage_->content.is_false()}; }\n";
+            }
+            if (bool_states) {
+                header += "    static " + name + " from_true();\n    bool_t is_true() const noexcept;\n";
+                definitions += name + " " + name + "::from_true() { " + name + " out; out.storage_ = new storage{storage::content_type::sentinel_true()}; return out; }\n";
+                definitions += "bool_t " + name + "::is_true() const noexcept { return bool_t{storage_ && storage_->content.is_true()}; }\n";
+            }
+        }
+        header += "private:\n    struct storage;\n    storage* storage_ = nullptr;\n};\n";
+    }
+    return {header + "}\n", definitions};
+}
 std::pair<std::string, std::string> emit_vectors(const runtime_plan &plan) {
     if (plan.vectors.empty()) return {};
     std::string header = "#pragma once\n#include \"" + plan.operators_header + "\"\n";
@@ -200,11 +253,14 @@ std::map<std::string, std::string> emit_runtime(const runtime_plan &plan) {
     std::string definitions = banner + "#include \"" + plan.operators_header + "\"\n#include \"scalar_semantics.hpp\"\n";
     if (!plan.string.name.empty()) definitions += "#include \"" + plan.string.header + "\"\n#include \"sequence_semantics.hpp\"\n";
     if (!plan.vectors.empty()) definitions += "#include \"" + plan.vectors_header + "\"\n#include \"sequence_semantics.hpp\"\n#include <vector>\n#include <algorithm>\n";
+    if (!plan.carriers.empty()) definitions += "#include \"" + plan.carriers_header + "\"\n#include \"carrier_semantics.hpp\"\n";
     definitions += "namespace scpp {\n";
     const auto [string_header, string_definitions] = emit_string(plan);
     definitions += string_definitions;
     const auto [vectors_header, vectors_definitions] = emit_vectors(plan);
     definitions += vectors_definitions;
+    const auto [carriers_header, carriers_definitions] = emit_carriers(plan);
+    definitions += carriers_definitions;
     definitions += "namespace detail { struct integer_access { template<class T, class Rep> static T make(Rep value) { T out; out.value_ = value; return out; } }; }\n";
     if (!plan.string.name.empty()) declarations += "class " + plan.string.name + ";\n";
     for (const auto &t : plan.types) declarations += "class " + t.name + ";\n";
@@ -322,6 +378,8 @@ std::map<std::string, std::string> emit_runtime(const runtime_plan &plan) {
     if (!plan.string.name.empty()) short_names += "#include \"" + plan.string.header + "\"\nusing scpp::" + plan.string.name + ";\n";
     if (!plan.vectors.empty()) short_names += "#include \"" + plan.vectors_header + "\"\n";
     for (const auto &v : plan.vectors) short_names += "using scpp::" + v.name + ";\n";
+    if (!plan.carriers.empty()) short_names += "#include \"" + plan.carriers_header + "\"\n";
+    for (const auto &c : plan.carriers) short_names += "using scpp::" + c.name + ";\n";
     for (const auto &t : plan.types) short_names += "using scpp::" + t.name + ";\n";
     for (const auto &type : plan.values) {
         short_names += "using scpp::" + type.name + ";\n";
@@ -335,6 +393,7 @@ std::map<std::string, std::string> emit_runtime(const runtime_plan &plan) {
         {"prepared.json", json_text(describe(plan)) + "\n"}};
     if (!plan.string.name.empty()) files["public/" + plan.string.header] = banner + string_header;
     if (!plan.vectors.empty()) files["public/" + plan.vectors_header] = banner + vectors_header;
+    if (!plan.carriers.empty()) files["public/" + plan.carriers_header] = banner + carriers_header;
     value inventory = value::array();
     for (const auto &[path, contents] : files) inventory.items.emplace_back(path);
     files["inventory.json"] = json_text(inventory) + "\n";

@@ -625,5 +625,22 @@
       "equal",
       "not_equal"
     ]
+  },
+  "carriers": {
+    "construction": "explicit",
+    "extraction": "implicit_checked_one_layer_value_copy",
+    "families": {
+      "nullable": "empty",
+      "result": "value",
+      "result_or_false": "false",
+      "result_or_bool": "false"
+    },
+    "error": {
+      "type": "error_t",
+      "message": "string",
+      "line": "int64",
+      "file": "string",
+      "state": "explicit_present"
+    }
   }
 }

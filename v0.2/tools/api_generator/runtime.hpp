@@ -41,7 +41,13 @@ struct vector_plan {
     bool native_index = false;
     std::vector<std::string> operations, casts_from;
 };
+struct carrier_plan {
+    std::string name, family, payload, default_state;
+    bool implicit_extraction = true;
+};
 struct runtime_plan {
+    std::string carriers_header;
+    std::vector<carrier_plan> carriers;
     string_plan string;
     std::string vectors_header;
     std::vector<vector_plan> vectors;

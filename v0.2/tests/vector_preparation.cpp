@@ -16,7 +16,8 @@ template<class F> static void fails(F f, const char *message) {
 }
 int main(int argc, char **argv) {
     require(argc == 3);
-    const auto m = load(argv[1]), p = load(argv[2]);
+    const auto m = load(argv[1]);
+    auto p = load(argv[2]); p.fields.erase("carriers");
     const auto plan = prepare_runtime(m, p);
     require(plan.vectors.size() == 2 && plan.vectors[0].name == "vector_int64");
     require(plan.source_types.at("vector<string>") == "vector_string");

@@ -9,7 +9,9 @@ implemented or implied by generated physical plans.
 ## Published types and names
 
 The default publication emits int32, int64, bool_t, null_t, float64, string,
-vector_int64 and vector_string. The integer registry supports all eight signed/
+vector_int64 and vector_string as its core types. The subsequent carrier extension
+adds sixteen nullable/result specializations and scpp::error_t by default.
+The integer registry supports all eight signed/
 unsigned widths (8/16/32/64); independent publications exercise them all. Vector
 specialization supports published integer, floating, boolean, null and string
 values. Names and configured defaults come from metadata. int_t aliases the signed
@@ -117,9 +119,9 @@ elided. Plain C++ callers retain all published value checks.
 Implemented scope: runtime, metadata, native API generator and physical plans for
 the families above, including a runnable plain C++ example. Source compiler import,
 end-to-end PHS/JSS lowering, external package/ABI sealing, cross-target generation,
-carriers, arbitrary user element types, nested vectors and general iteration are
-not implemented by this goal. Carrier defaults discussed earlier remain future
-metadata/compiler work; no nullable/result extraction is claimed here.
+arbitrary user element types, nested vectors and general iteration are
+not implemented by this goal. The later [carrier slice](carrier_slice.md) now implements nullable/result extraction;
+its source compiler/take integration remains future work.
 
 Other open decisions are a future runtime error ABI, any stronger signed-overflow
 policy, public collection iteration and specialized storage/performance work. The
@@ -134,3 +136,11 @@ core and separate tagged families. It has not imported those implementations.
 - [Plain C++ example](../examples/runtime_demo.cpp), built as scpp_runtime_demo
 - [Completion audit](planning/runtime_completion_audit.md)
 - [Hash/mixed/dynamic port review](planning/hash_mixed_dynamic_port_review.md)
+
+## Subsequent carrier extension
+
+The carrier contract extends this original scalar/string/vector summary with
+nullable/result/result_or_false/result_or_bool specializations and structured errors.
+It reuses the payload operators above, adds no lifted matrix, and preserves explicit
+boxing while permitting checked one-layer extraction by default. See carrier_slice.md
+for the exact construction/state API and the scope of supported payloads.

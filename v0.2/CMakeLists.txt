@@ -31,6 +31,7 @@ set(runtime_metadata ${CMAKE_CURRENT_SOURCE_DIR}/runtime/metadata/runtime.json)
 set(runtime_publication ${CMAKE_CURRENT_SOURCE_DIR}/runtime/metadata/publication.json)
 set(runtime_generated ${CMAKE_CURRENT_SOURCE_DIR}/runtime/generated)
 set(runtime_outputs
+  ${runtime_generated}/public/scpp/carriers.hpp
   ${runtime_generated}/public/scpp/vectors.hpp
   ${runtime_generated}/public/scpp/string.hpp
   ${runtime_generated}/public/scpp/values.hpp
@@ -58,6 +59,20 @@ target_link_libraries(scpp_runtime_demo PRIVATE scpp_runtime)
 
 include(CTest)
 if(BUILD_TESTING)
+  add_executable(carrier_preparation_test tests/carrier_preparation.cpp)
+  target_link_libraries(carrier_preparation_test PRIVATE scpp_api_generation)
+  add_test(NAME carrier_preparation COMMAND carrier_preparation_test ${runtime_metadata} ${runtime_publication})
+  add_test(NAME carrier_publication COMMAND ${CMAKE_COMMAND}
+    -DMOLD_LINKER=${SCPP_MOLD_LINKER}
+    -DGENERATOR=$<TARGET_FILE:scpp_api_generator>
+    -DMETADATA=${runtime_metadata} -DPUBLICATION=${runtime_publication}
+    -DCXX=${CMAKE_CXX_COMPILER} "-DCXX_FLAGS=${CMAKE_CXX_FLAGS}"
+    -DSOURCE=${CMAKE_CURRENT_SOURCE_DIR}
+    -DWORK=${CMAKE_CURRENT_BINARY_DIR}/carrier-proof
+    -P ${CMAKE_CURRENT_SOURCE_DIR}/tests/carrier_publication.cmake)
+  add_executable(carrier_consumer_test tests/carrier_consumer.cpp)
+  target_link_libraries(carrier_consumer_test PRIVATE scpp_runtime)
+  add_test(NAME carrier_consumer COMMAND carrier_consumer_test)
   add_test(NAME runtime_demo COMMAND scpp_runtime_demo)
   set_tests_properties(runtime_demo PROPERTIES PASS_REGULAR_EXPRESSION "Ada: 21; ratio=7")
   add_executable(vector_preparation_test tests/vector_preparation.cpp)

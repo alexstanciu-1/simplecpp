@@ -18,7 +18,7 @@ template<class F> static void fails(F f, const char *message) {
 int main(int argc, char **argv) {
     require(argc == 3);
     const auto m = load(argv[1]);
-    auto p = load(argv[2]);
+    auto p = load(argv[2]); p.fields.erase("carriers");
     p.fields.erase("vectors");
     p.fields.erase("string"); // String dependencies are covered by string_preparation.
     const auto plan = prepare_runtime(m, p);

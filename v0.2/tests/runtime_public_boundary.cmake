@@ -1,6 +1,6 @@
 file(MAKE_DIRECTORY "${WORK}")
 separate_arguments(flags NATIVE_COMMAND "${CXX_FLAGS}")
-foreach(header integers numeric short_names native_bridge values string vectors)
+foreach(header integers numeric short_names native_bridge values string vectors carriers)
   file(READ "${GENERATED}/public/scpp/${header}.hpp" text)
   if(text MATCHES "template[ \t\r\n]*<" OR text MATCHES "numeric_add|cast_int|std::")
     message(FATAL_ERROR "Unexpected public implementation exposure in ${header}")
@@ -15,7 +15,7 @@ foreach(header integers numeric short_names native_bridge values string vectors)
   execute_process(COMMAND "${CXX}" ${flags} -std=c++23
     "-I${GENERATED}/public" -M "${WORK}/${header}.cpp"
     RESULT_VARIABLE status OUTPUT_VARIABLE dependencies ERROR_VARIABLE errors)
-  if(NOT status EQUAL 0 OR dependencies MATCHES "scalar_semantics|sequence_semantics|tools/api_generator|runtime/include")
+  if(NOT status EQUAL 0 OR dependencies MATCHES "scalar_semantics|sequence_semantics|carrier_semantics|tools/api_generator|runtime/include")
     message(FATAL_ERROR "Public dependency closure failure: ${errors} ${dependencies}")
   endif()
 endforeach()

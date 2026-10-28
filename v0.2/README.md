@@ -8,7 +8,8 @@ standard-library and build-tool dependencies are permitted.
 
 Implemented slices are native JSON parsing, the generator's metadata value model,
 and metadata-driven integer, bool_t/null, float64, string and concrete vector APIs
-with explicit checked casts and selectively published operators/adapters.
+with explicit checked casts and selectively published operators/adapters. Nullable
+and result-family carriers now add metadata-selected checked payload extraction.
 Compiler integration and broader runtime imports are not implemented here yet.
 Standard-library types and private templates are appropriate for tool support;
 generated runtime consumer headers remain template-free.
@@ -119,3 +120,18 @@ were not suppressed. Neither limitation is counted as a successful sanitizer che
 
 See the family contracts and completion audit linked above for exact behavior,
 reviewed legacy provenance, validation evidence and remaining compiler obligations.
+
+## Nullable and result carriers
+
+```cpp
+nullable_int64 maybe{int64{20}};
+result_int64 computed{int64{3}};
+int64 sum = maybe + computed;
+```
+
+The default publishes all four carrier families for int64, bool_t, string and
+vector_string. Payload construction stays explicit; extraction is an implicit,
+checked one-layer value copy. Empty/error/sentinel extraction throws. See the
+[carrier contract](specs/carrier_slice.md) for states, boolean distinctions,
+scpp::error_t and the optional explicit-only extraction policy. No new lifted
+arithmetic overload matrix or source compiler integration is introduced.

@@ -1050,5 +1050,74 @@
         "casts_from": []
       }
     ]
+  },
+  "carriers": {
+    "header": "scpp/carriers.hpp",
+    "specializations": [
+      {
+        "family": "nullable",
+        "payload": "int64"
+      },
+      {
+        "family": "nullable",
+        "payload": "bool_t"
+      },
+      {
+        "family": "nullable",
+        "payload": "string"
+      },
+      {
+        "family": "nullable",
+        "payload": "vector_string"
+      },
+      {
+        "family": "result",
+        "payload": "int64"
+      },
+      {
+        "family": "result",
+        "payload": "bool_t"
+      },
+      {
+        "family": "result",
+        "payload": "string"
+      },
+      {
+        "family": "result",
+        "payload": "vector_string"
+      },
+      {
+        "family": "result_or_false",
+        "payload": "int64"
+      },
+      {
+        "family": "result_or_false",
+        "payload": "bool_t"
+      },
+      {
+        "family": "result_or_false",
+        "payload": "string"
+      },
+      {
+        "family": "result_or_false",
+        "payload": "vector_string"
+      },
+      {
+        "family": "result_or_bool",
+        "payload": "int64"
+      },
+      {
+        "family": "result_or_bool",
+        "payload": "bool_t"
+      },
+      {
+        "family": "result_or_bool",
+        "payload": "string"
+      },
+      {
+        "family": "result_or_bool",
+        "payload": "vector_string"
+      }
+    ]
   }
 }
