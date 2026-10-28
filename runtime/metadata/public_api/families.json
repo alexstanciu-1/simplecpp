@@ -2142,7 +2142,22 @@
       "copy_storage",
       "move_storage",
       "default_storage"
-    ]
+    ],
+    "access": {
+      "key": "mixed",
+      "element": "mixed",
+      "element_storage": "native",
+      "operations": [
+        "existing_read",
+        "existing_store"
+      ],
+      "read": "scpp::index_existing_at(${receiver}, ${native_key})",
+      "mutable": "scpp::keyed_descend(${receiver}, ${native_key})",
+      "includes": [
+        "scpp/index_existing.hpp",
+        "scpp/keyed_path.hpp"
+      ]
+    }
   },
   "dynamic": {
     "parameters": [],
@@ -2636,7 +2651,22 @@
       "copy_storage",
       "move_storage",
       "default_storage"
-    ]
+    ],
+    "access": {
+      "key": "mixed",
+      "element": "dynamic",
+      "element_storage": "native",
+      "operations": [
+        "existing_read",
+        "existing_store"
+      ],
+      "read": "scpp::index_existing_at(${receiver}, ${native_key})",
+      "mutable": "scpp::keyed_descend(${receiver}, ${native_key})",
+      "includes": [
+        "scpp/index_existing.hpp",
+        "scpp/keyed_path.hpp"
+      ]
+    }
   },
   "result_or_false": {
     "parameters": [

@@ -1896,7 +1896,8 @@ A family may register an `access` protocol with `key`, `element`, `read`, `mutab
 and `includes`. Parameter substitution uses the ordinary `${variant:T}` mechanism;
 access expressions use `${receiver}` and `${key}`. Key and element identities resolve
 through the existing naming/default/publication owner. Read and mutable expressions
-must return exactly `const PublicElement &` and `PublicElement &`, respectively;
+must return exactly const/mutable references to the declared element representation
+(public by default, native when explicitly selected), respectively;
 generated static assertions check this private representation promise. They must
 perform existing-only lookup, without insertion or source callbacks. Vector and hash
 currently register their native checked `at` operations. This registration does not
@@ -1994,3 +1995,29 @@ existing runtime authority. String `"0"` is not empty. No source admission is in
 from the physical registry; source-mode requests still need prepared operation and
 formation facts. This mechanism does not yet migrate every standalone observation
 entry or complete heterogeneous boxed descent/field retention.
+
+
+### Native boxed elements inside typed paths
+
+An access protocol may declare `element_storage: "native"`; the default is `public`.
+This describes the private lookup result, not the public API type. Exact reference
+assertions use the chosen representation. After a public child, descent unwraps the
+concrete wrapper; after a native child, it continues with that native reference.
+`existing_read` uses the ordinary native return transport for a native leaf, producing
+an owned public value. `existing_store` borrows its already-saved by-value public input
+for native leaf assignment. No interior reference escapes the function.
+
+Access expressions may use `${native_key}`, resolved using the key type's ordinary
+borrow descriptor and private includes, alongside `${key}`. Protocols may restrict
+admitted physical operations with an `operations` array. Unsupported demands reject
+before emission, independently of source admission.
+
+Mixed and dynamic register existing-only read/store with native elements and mixed
+keys. Native `index_existing_at` validates all segments before mutable descent;
+`keyed_descend` supplies mixed COW and dynamic identity-preserving storage access.
+Typed vector/hash public children can therefore lead into their existing boxed
+storage without copy-modify-replace or a separate family-specific emitter. The initial
+compiled proof uses vectors with three-step mixed and dynamic paths. These recipes
+do not yet admit composed observations, readiness or removal. Weak mixed paths and
+cross-family mixed/dynamic conversions remain gated; registration does not relax
+source-language family separation.

@@ -35,7 +35,16 @@ namespace scpp::api_generation
             value arguments = value::object();
             for (const auto &[parameter, argument] : node.arguments) arguments[parameter] = argument.canonical();
             auto protocol = instantiate_function(family.at("access"), "", arguments);
-            fields_only(protocol, "key element read mutable includes present ready erase", "access protocol");
+            fields_only(protocol, "key element read mutable includes present ready erase element_storage operations", "access protocol");
+            if (protocol.has("operations")) {
+                const auto &allowed = protocol.at("operations");
+                if (allowed.type != value::kind::array) throw std::runtime_error("Access operations require an array");
+                bool supported = false;
+                for (const auto &entry : allowed.items) if (entry.text() == operation) supported = true;
+                if (!supported) throw std::runtime_error("Unsupported receiver access operation: " + operation);
+            }
+            const auto storage = protocol.get("element_storage", "public");
+            if (storage != "public" && storage != "native") throw std::runtime_error("Invalid access element storage");
             protocol.at("read").text(); protocol.at("mutable").text();
             protocol["key"] = names.resolve(protocol.at("key").text()).first;
             protocol["element"] = names.resolve(protocol.at("element").text()).first;

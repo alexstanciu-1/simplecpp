@@ -73,6 +73,33 @@ int main() {
     failed=false;try { row_empty(matrix,uint64(9)); } catch(...) { failed=true; } CHECK(failed);
     failed=false;try { box_empty(boxes,uint64(0)); } catch(...) { failed=true; } CHECK(failed);
     failed=false;try { box_empty(boxes,uint64(1)); } catch(...) { failed=true; } CHECK(failed);
+    const mixed outer_key(string("outer")), inner_key(string("inner"));
+    mixed mixed_child=make_mixed_table();mixed_child.set(inner_key,mixed(int64(1)));
+    mixed mixed_parent=make_mixed_table();mixed_parent.set(outer_key,mixed_child);
+    vector_mixed mixed_roots;mixed_roots.append(mixed_parent);
+    mixed_store(mixed_roots,uint64(0),outer_key,inner_key,mixed(int64(2)));
+    CHECK(mixed_read(mixed_roots,uint64(0),outer_key,inner_key).get_int()==int64(2));
+    CHECK(mixed_parent.get(outer_key).get(inner_key).get_int()==int64(1)); // COW preserves the old snapshot.
+    dynamic dynamic_child=make_dynamic_container();dynamic_child.set(inner_key,dynamic(int64(3)));
+    dynamic dynamic_parent=make_dynamic_container();dynamic_parent.set(outer_key,dynamic_child);
+    path_dynamic_vector dynamic_roots;dynamic_roots.append(dynamic_parent);
+    dynamic_store(dynamic_roots,uint64(0),outer_key,inner_key,dynamic(int64(4)));
+    CHECK(dynamic_parent.get(outer_key).get(inner_key).get_int()==int64(4)); // Shared identity.
+    const auto boxed_path_allocations=allocations;
+    for(int i=0;i<100;++i) {
+        mixed_store(mixed_roots,uint64(0),outer_key,inner_key,mixed(int64(i)));
+        dynamic_store(dynamic_roots,uint64(0),outer_key,inner_key,dynamic(int64(i)));
+        CHECK(mixed_read(mixed_roots,uint64(0),outer_key,inner_key).get_int()==int64(i));
+        CHECK(dynamic_read(dynamic_roots,uint64(0),outer_key,inner_key).get_int()==int64(i));
+    }
+    CHECK(allocations==boxed_path_allocations);
+    const mixed missing(string("missing"));
+    failed=false;try { mixed_store(mixed_roots,uint64(0),outer_key,missing,mixed(int64(5))); } catch(...) { failed=true; }
+    CHECK(failed && mixed_read(mixed_roots,uint64(0),outer_key,inner_key).get_int()==int64(99));
+    failed=false;try { dynamic_store(dynamic_roots,uint64(0),outer_key,missing,dynamic(int64(5))); } catch(...) { failed=true; }
+    CHECK(failed && dynamic_read(dynamic_roots,uint64(0),outer_key,inner_key).get_int()==int64(99));
+    auto saved_box=mixed_read(mixed_roots,uint64(0),outer_key,inner_key);
+    mixed_roots.clear();CHECK(saved_box.get_int()==int64(99));
     auto detached=row_read(matrix,uint64(0));detached.set(uint64(0),int64(200));
     CHECK(matrix_read(matrix,uint64(0),uint64(0))==int64(100));
     auto retained=retained_row();CHECK(retained.at(uint64(0))==int64(17));

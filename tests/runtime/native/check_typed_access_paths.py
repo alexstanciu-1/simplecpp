@@ -35,6 +35,10 @@ for name,container,depth,observation in [
  ('optional_isset','vector<nullable<int64>>',1,'isset'),('result_isset','vector<result<mixed>>',1,'isset'),
  ('box_isset','vector<mixed>',1,'isset'),('box_empty','vector<mixed>',1,'empty')]:
     paths[name]={'root':container,'depth':depth,'operation':'observe','observation':observation}
+names['vector<dynamic>']='path_dynamic_vector'
+for name,container in [('mixed','vector<mixed>'),('dynamic','vector<dynamic>')]:
+    for suffix,operation in [('read','existing_read'),('store','existing_store')]:
+        paths[name+'_'+suffix]={'root':container,'depth':3,'operation':operation}
 data={'package':'application.paths','roots':[],'paths':paths,'apis':list(paths),'names':names}
 base={'metadata':metadata,'request':data,'leaves':{},'names':names,'imports':{},'layouts':{}}
 def plan(request,error=None):
@@ -48,7 +52,7 @@ physical=plan(base)
 assert set(paths).issubset(physical['apis']), list(physical['apis'])
 assert len({u['identity'] for u in physical['units']})==len(physical['units'])
 for api in (physical['apis'][name] for name in paths):
-    assert api['operation']['returns'] in ['void','boolean','int64','vector<int64>']
+    assert api['operation']['returns'] in ['void','boolean','int64','vector<int64>','mixed','dynamic']
     assert api['operation']['body']
 for depth in [0,129,1.5]:
     bad=copy.deepcopy(base);bad['request']['paths']['matrix_read']['depth']=depth
@@ -64,7 +68,7 @@ arguments={'vector<int64>':{'T':'int64'},'vector<vector<int64>>':{'T':'vector<in
            'hash<vector<int64>,string>':{'V':'vector<int64>','K':'string'},
            'hash<int64,string>':{'V':'int64','K':'string'},'vector<hash<int64,string>>':{'T':'hash<int64,string>'},
            'nullable<int64>':{'T':'int64'},'vector<nullable<int64>>':{'T':'nullable<int64>'},
-           'result<mixed>':{'T':'mixed'},'vector<result<mixed>>':{'T':'result<mixed>'},'vector<mixed>':{'T':'mixed'}}
+           'result<mixed>':{'T':'mixed'},'vector<result<mixed>>':{'T':'result<mixed>'},'vector<mixed>':{'T':'mixed'},'vector<dynamic>':{'T':'dynamic'}}
 def binding(type):
     return {'source':'source.'+type,'physical':type,'arguments':{k:'source.'+v for k,v in arguments.get(type,{}).items()}}
 bindings={}
@@ -72,8 +76,11 @@ for name,path in paths.items():
     prefix='path_'+name+'_';bindings[prefix+'root']=binding(path['root'])
     receiver=path['root'];keys=[];elements=[]
     for _ in range(path['depth']):
-        params=arguments[receiver]
-        keys.append(params.get('K','uint64'));receiver=params.get('T',params.get('V'));elements.append(receiver)
+        if receiver in ['mixed','dynamic']:
+            keys.append('mixed');elements.append(receiver)
+        else:
+            params=arguments[receiver]
+            keys.append(params.get('K','uint64'));receiver=params.get('T',params.get('V'));elements.append(receiver)
     bindings[prefix+'value']=binding(elements[-1])
     for i,(key,element) in enumerate(zip(keys,elements)):
         bindings[prefix+'key_'+str(i)]=binding(key);bindings[prefix+'element_'+str(i)]=binding(element)
@@ -100,6 +107,10 @@ bad=copy.deepcopy(base);bad['request']['paths']['matrix_isset']['observation']='
 plan(bad,'Unsupported value observation')
 bad=copy.deepcopy(base);bad['request']['paths']['optional_isset']['observation']='empty'
 plan(bad,'Unsupported value observation')
+bad=copy.deepcopy(base);bad['request']['paths']['mixed_read']['operation']='existing_erase'
+plan(bad,'Unsupported receiver access operation')
+bad=copy.deepcopy(base);bad['metadata']['families']['mixed']['access']['element_storage']='pointer'
+plan(bad,'Invalid access element storage')
 print('PASS: generic typed path composition, bounds on depth, prepared slot/fact checks')
 if not args.core:sys.exit(0)
 with tempfile.TemporaryDirectory(prefix='scpp-typed-paths-') as directory:

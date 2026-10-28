@@ -19,7 +19,7 @@ each slice. The original inventory is a baseline, not a current completion count
 | B2 | Complete for the agreed non-carrier special/mutation and text public paths; closure evidence below | Carrier forms C; indexed retention E; native exception inspection and overflow disposition G. |
 | C | Four carrier recipes and bounded scalar paths implemented; first prepared canonical path reviewed in C38 | Guarded negation and canonical lazy logical plans implemented in C32/C33; remaining source admission, broader selection and payload-specific integration remain; C38 passes the first-path checkpoint. Both decisions accepted 2026-10-28. |
 | D | Handle storage, presence planning, checked retention, shared ancestry/casts and weak/unique transports implemented (D1–D6) | Typed member access, operation-planner integration, ownership selections, value storage and source Exception transport remain. |
-| E | Existing vector/hash/boxed foundations; incomplete | Typed read/store, prefix readiness/removal and bounded leaf observations implemented in E23–E25; heterogeneous paths and remaining key policies; conditional lifecycle, cursor fixes, boxed access/probes, and positional/keyed built-in factories are implemented for the tested domains. |
+| E | Existing vector/hash/boxed foundations; incomplete | Typed access/observations and typed-to-boxed existing read/store implemented in E23–E26; boxed probe/removal composition and remaining key policies; conditional lifecycle, cursor fixes, boxed access/probes, and positional/keyed built-in factories are implemented for the tested domains. |
 | F | Pending | Callable transport and registered collection algorithms. |
 | G | Core utility and scalar debug bindings implemented | Exception/helper gaps and requirement-by-requirement closure audit. |
 
@@ -2665,3 +2665,33 @@ carrier payload combination or full batch-C completion.
 Remaining E work includes typed/boxed heterogeneous compositions, key adaptation
 and policies, field-owner retention and broader admitted leaf coverage. D ownership
 selection/value/Exception transport, F callbacks and G closure also remain open.
+
+
+## E26 — typed-to-boxed existing read/store composition (2026-10-28)
+
+Access protocols now describe public versus native element storage and optional
+supported-operation lists. Exact reference assertions, intermediate borrowing and
+ordinary return/value transport follow that representation. Native keys use the
+same resolved borrow descriptor as other API arguments. Mixed/dynamic register
+existing read/store through their native validation and mutable-descent authorities;
+there is no separate per-family generator. Typed containers can lead into boxed
+native storage while retaining their concrete public boundary.
+
+The three-step vector<mixed> and vector<dynamic> proof passes release and
+ASan/UBSan/LSan: mixed COW preserves the original snapshot; dynamic aliases observe
+updates; missing final keys fail without changing existing values; repeated scalar
+reads/writes allocate zero after initial detachment. Owned returned scalar boxes
+survive root clearing. Existing typed probes/removal, independent headers, publication
+reuse and prepared-fact checks pass, alongside six focused metadata regressions.
+Invalid element-storage declarations and unregistered boxed removal reject.
+
+Thirty application units at eight jobs compile in 11.7574s release / 16.9550s
+sanitizer; public callers take 0.1811s / 0.2846s. Configuration runs were sequential;
+release overlapped metadata regressions. Runtime archives were reused and publication
+still has 406 runtime-owned units. No ordinary creating write or implicit mixed/dynamic
+family crossing is introduced.
+
+Composed boxed probes/removal remain next: readiness must distinguish probe false from
+removal wrong-kind errors and must retain lazy keys. Key adaptation/policies, field-owner
+retention, and the remaining C/D/F/G backlog are still open. This is not batch-E or
+overall goal completion.

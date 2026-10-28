@@ -147,3 +147,16 @@ admission owner. The direct typed-key surface still uses each family's concrete 
 nullable/dynamic key adaptation, boxed heterogeneous descent and field retention
 remain separate integration work. Standalone observation consolidation is not
 claimed by this path slice.
+
+
+## Native boxed element composition (E26)
+
+Access metadata now distinguishes public-wrapper elements from native stored elements.
+The same composer unwraps public children and directly borrows native children; owned
+read return transport and saved store-value transport use the existing representation
+owner. Mixed/dynamic recipes register existing-only operations with mixed key borrowing.
+A three-step vector-to-boxed-to-boxed proof covers both COW and shared identity.
+Composed boxed probes/removal remain gated pending receiver readiness/error-mode
+integration; ordinary missing/creating writes are separate from existing-only paths.
+No mixed-to-dynamic implicit crossing, weak-path admission or frontend integration
+is implied.

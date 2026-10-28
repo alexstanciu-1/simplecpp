@@ -421,25 +421,32 @@ namespace scpp::api_generation
             }
             if (storing) parameter("value", path.at("element"), "value");
             const auto &steps = path.at("steps").items;
+            if (!writing && !probing && !observing && steps.back().get("element_storage", "public") == "native")
+                operation["transport"] = "native";
             auto traverse = [&](bool mutable_access) {
                 std::string body;
                 std::string current = mutable_access ? "${native:root}" : "std::as_const(${native:root})";
                 for (std::size_t i = 0; i < steps.size(); ++i) {
                     const auto &step = steps[i];
                     const auto element = this->materialize(step.at("element").text());
-                    const auto expression = expand(step.at(mutable_access ? "mutable" : "read").text(),
-                        {{"receiver", current}, {"key", "key_" + std::to_string(i)}});
+                    const bool native_element = step.get("element_storage", "public") == "native";
+                    const auto key = "key_" + std::to_string(i);
+                    const auto key_type = this->materialize(step.at("key").text());
+                    this->dependencies(key_type, headers, {});
+                    const substitutions access_context{{"receiver", current}, {"key", key},
+                        {"native_key", this->borrow(key_type, key)}};
+                    const auto expression = expand(step.at(mutable_access ? "mutable" : "read").text(), access_context);
                     if (!mutable_access && (probing || erasing || observing)) {
                         const auto present = expand(step.at("present").text(),
                             {{"receiver", current}, {"key", "key_" + std::to_string(i)}});
                         body += "if (!(" + present + ")) { " + (observing ? path.at("observation").at("missing").text() : probing ? "return boolean(false);" : "return;") + " }\n";
                     }
                     body += "static_assert(std::is_same_v<decltype((" + expression + ")), "
-                        + (mutable_access ? "" : "const ") + element.at("cpp").text() + " &>);\n";
+                        + (mutable_access ? "" : "const ") + (native_element ? element.at("native").text() : element.at("cpp").text()) + " &>);\n";
                     if (i + 1 == steps.size()) {
                         if (mutable_access && erasing) body += expand(step.at("erase").text(),
                             {{"receiver", current}, {"key", "key_" + std::to_string(i)}}) + ";\n";
-                        else if (mutable_access) body += expression + " = value;\n";
+                        else if (mutable_access) body += expression + " = " + (native_element ? this->borrow(element, "value") : "value") + ";\n";
                         else if (observing) {
                             body += "const auto &path_leaf = " + expression + ";\n";
                             body += "return boolean(" + expand(path.at("observation").at("expression").text(),
@@ -454,7 +461,7 @@ namespace scpp::api_generation
                     } else {
                         const auto slot = "path_value_" + std::to_string(i);
                         body += std::string(mutable_access ? "auto &" : "const auto &") + slot + " = " + expression + ";\n";
-                        current = this->borrow(element, slot);
+                        current = native_element ? slot : this->borrow(element, slot);
                     }
                 }
                 return body;
