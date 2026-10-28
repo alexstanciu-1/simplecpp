@@ -202,5 +202,75 @@
         "body": "static_assert(std::is_copy_constructible_v<${variant:public_Closure}>);\nconst auto flags = permissions.native_value();\nif (flags != 0 && flags != 2 && flags != 3) throw scpp::runtime_error(\"Invalid callable capture permissions\");\nreturn scpp::callable_t<${variant:native_Signature}>(closure, static_cast<scpp::task_permissions>(flags));"
       }
     }
+  },
+  "typed_collection_map": {
+    "parameters": [
+      "Source",
+      "Output",
+      "Callback"
+    ],
+    "function": {
+      "namespace": "scpp",
+      "header": "scpp/collections/${variant}.hpp",
+      "source": "include/core/generated/${variant}.cpp",
+      "operation": {
+        "name": "${variant}",
+        "returns": "${variant:Output}",
+        "parameters": [
+          {
+            "name": "source",
+            "type": "${variant:Source}",
+            "passing": "const_ref"
+          },
+          {
+            "name": "callback",
+            "type": "${variant:Callback}",
+            "passing": "const_ref"
+          }
+        ],
+        "transport": "native",
+        "includes": [
+          "scpp/collections.hpp",
+          "type_traits",
+          "utility"
+        ],
+        "body": "static_assert(scpp::collections::detail::policy<${variant:native_Source}>::kind != scpp::collections::detail::carrier_kind::boxed);\nreturn scpp::collections::map(${native:source}, callback);"
+      }
+    }
+  },
+  "typed_collection_filter": {
+    "parameters": [
+      "Source",
+      "Value",
+      "Callback"
+    ],
+    "function": {
+      "namespace": "scpp",
+      "header": "scpp/collections/${variant}.hpp",
+      "source": "include/core/generated/${variant}.cpp",
+      "operation": {
+        "name": "${variant}",
+        "returns": "${variant:Source}",
+        "parameters": [
+          {
+            "name": "source",
+            "type": "${variant:Source}",
+            "passing": "const_ref"
+          },
+          {
+            "name": "callback",
+            "type": "${variant:Callback}",
+            "passing": "const_ref"
+          }
+        ],
+        "transport": "native",
+        "includes": [
+          "scpp/collections.hpp",
+          "type_traits",
+          "utility"
+        ],
+        "body": "static_assert(scpp::collections::detail::policy<${variant:native_Source}>::kind != scpp::collections::detail::carrier_kind::boxed);\nstatic_assert(std::is_same_v<decltype(callback(std::declval<${variant:public_Value}>())), scpp::boolean>);\nreturn scpp::collections::filter(${native:source}, [&callback](${variant:public_Value} value) -> scpp::bool_t { return scpp::bool_t(callback(std::move(value)).native_value()); });"
+      }
+    }
   }
 }

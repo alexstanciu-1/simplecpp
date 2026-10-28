@@ -20,7 +20,7 @@ each slice. The original inventory is a baseline, not a current completion count
 | C | Four carrier recipes and bounded scalar paths implemented; first prepared canonical path reviewed in C38 | Guarded negation and canonical lazy logical plans implemented in C32/C33; remaining source admission, broader selection and payload-specific integration remain; C38 passes the first-path checkpoint. Both decisions accepted 2026-10-28. |
 | D | Handle storage, presence planning, checked retention, shared ancestry/casts and weak/unique transports implemented (D1–D6) | Retained property/container-field adapters proven in E36/E37 and bounded method transports in D7; scalar same-origin return bindings proven in D8; broader payload/member/planner integration, ownership selections, value storage and source Exception transport remain. |
 | E | Existing vector/hash/boxed foundations; incomplete | Typed/boxed access, observations, removal, creating stores, ordinary reads and append implemented in E23–E32; optional/boxed scalar key composition proven in E33; shared identity key storage/upcasts proven in E34; retained scalar/container-field adapters proven in E36/E37; broader member/key compositions remain; conditional lifecycle, cursor fixes, boxed access/probes, and positional/keyed built-in factories are implemented for the tested domains. |
-| F | Signature normalization/publication and signature-driven callable storage/invocation and owned conversion implemented in F1–F4; nested/variadic and container/Result proofs in F5 | Broader callable selection/access integration and twelve registered collection overloads; see runtime_core_callable_boundary.md. |
+| F | Signature normalization/publication and signature-driven callable storage/invocation and owned conversion implemented in F1–F4; nested/variadic and container/Result proofs in F5; typed map/filter bridges in F6 | Broader callable selection/access integration, boxed collection adapters and complete twelve-entry dispatch; see runtime_core_callable_boundary.md. |
 | G | Core utility and scalar debug bindings implemented | Exception/helper gaps and requirement-by-requirement closure audit. |
 
 Full frontend adoption and module migration are excluded. C38 passes the first complete canonical carrier
@@ -3190,3 +3190,24 @@ generator binaries were reused; publication metadata identity refreshed. These a
 single-run fixture costs. The fixture constructs the prepared vector pack explicitly;
 it does not prove frontend source argument packing. Callable selection/access plans,
 shared capture compositions and collection adapters remain open.
+
+
+## F6 — typed collection map/filter bridges (2026-10-28)
+
+Demanded metadata recipes delegate typed map/filter to the existing native collection
+algorithms. They accept already-prepared source/callback snapshots by borrow; source
+sequencing, exact signature admission and no-mutation obligations remain compiler-owned.
+Map supports different output element storage. Filter adapts public boolean to native
+bool_t with a borrowed callback; neither bridge copies its environment per element.
+Boxed policies explicitly reject at this boundary until their value transport is added.
+
+The proof covers vector/hash mapping and filtering, int-to-boolean mapping, dense vector
+output, hash key/order retention, fresh outer membership, empty input with absent
+callback, nonempty absent invocation and callback exceptions after partial output.
+Capture copy counts remain unchanged across successful transformations. Release and
+ASan/UBSan/LSan proofs, noncopyable capture negative and sealed publication reuse passed;
+four related metadata regressions passed. Thirty cumulative units compiled at eight
+jobs in 10.2442s release / 15.9522s sanitized; public callers took 0.2490s / 0.3933s.
+Core and generator binaries were reused; runtime publication identity refreshed.
+Boxed adapters, source registry dispatch coverage and callable selection/access remain
+open. These fixture costs are not a full compiler rebuild measurement.

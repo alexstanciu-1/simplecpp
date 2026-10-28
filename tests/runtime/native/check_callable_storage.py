@@ -40,12 +40,13 @@ names=dict(zip(callback_types,['callback_int','callback_ref','callback_void']))
 for signature, name in [
     ({'returns':'int64','parameters':[{'type':'vector<int64>','variadic':True}]},'callback_pack'),
     ({'returns':'int64','parameters':[{'type':'vector<int64>'}]},'callback_vector'),
-    ({'returns':callback_types[0],'parameters':[{'type':callback_types[0]}]},'callback_nested')]:
+    ({'returns':callback_types[0],'parameters':[{'type':callback_types[0]}]},'callback_nested'),
+    ({'returns':'boolean','parameters':[{'type':'int64'}]},'callback_predicate')]:
     normalized=plan({'action':'resolve_signature','metadata':metadata,'request':signature,'leaves':leaves,'names':names})
     key=normalized['key'];keys.append(key);signatures.append(signature)
     leaves[key]={'signature':signature};callback_types.append('callable<'+key+'>');names[callback_types[-1]]=name
 assert keys[3]!=keys[4]
-compositions={'vector<int64>':'vector_int64','vector<'+callback_types[0]+'>':'vector_callbacks',
+compositions={'vector<boolean>':'vector_boolean','hash<int64,string>':'hash_int64','vector<int64>':'vector_int64','vector<'+callback_types[0]+'>':'vector_callbacks',
               'hash<'+callback_types[0]+',string>':'hash_callbacks',
               **{family+'<'+callback_types[0]+'>':family+'_callback' for family in ['result','result_or_false','result_or_bool']}}
 names.update(compositions)
@@ -63,14 +64,22 @@ functions['make_pack_callback']={'returns':callback_types[3],'parameters':[], 't
  'expression':'scpp::callable_t<scpp::int64(scpp::vector_int64)>([](scpp::vector_int64 values) { scpp::int64 sum(0); for (scpp::uint64 i(0); i < values.size(); ++i) sum += values.at(i); return sum; }, true)'}
 functions['make_nested_callback']={'returns':callback_types[5],'parameters':[], 'transport':'native','uses':[callback_types[0]],
  'expression':'scpp::callable_t<scpp::callback_int(scpp::callback_int)>([](scpp::callback_int value) { return value; }, true)'}
+functions['make_predicate']={'returns':callback_types[6],'parameters':[], 'transport':'native',
+ 'expression':'scpp::callable_t<scpp::boolean(scpp::int64)>([](scpp::int64 value) { return scpp::boolean(value.native_value() > 3); }, true)'}
+collections={}
+for carrier,label in [('vector<int64>','VECTOR'),('hash<int64,string>','HASH')]:
+    collections['MAP_'+label]=('typed_collection_map',[carrier,carrier,callback_types[0]])
+    collections['FILTER_'+label]=('typed_collection_filter',[carrier,'int64',callback_types[6]])
+collections['MAP_BOOLEAN']=('typed_collection_map',['vector<int64>','vector<boolean>',callback_types[6]])
+collection_apis={name:family+'<'+','.join(types)+'>' for name,(family,types) in collections.items()}
 factory='callable_from<'+keys[0]+',owned_closure>'
 data={'package':'application.callables','roots':[*callback_types,*compositions],'leaves':leaves,'names':names,
-      'application_functions':functions,'apis':[*functions,factory]}
+      'application_functions':functions,'apis':[*functions,factory,*collection_apis.values()]}
 def binding(type):
     arguments={'Signature':'source.'+keys[callback_types.index(type)]} if type in callback_types else {}
     if type in compositions:
         family=type.split('<')[0]
-        arguments={'V':'source.'+callback_types[0],'K':'source.string'} if family=='hash' else {'T':'source.'+('int64' if type=='vector<int64>' else callback_types[0])}
+        arguments={'V':'source.'+('int64' if type=='hash<int64,string>' else callback_types[0]),'K':'source.string'} if family=='hash' else {'T':'source.'+('int64' if type=='vector<int64>' else 'boolean' if type=='vector<boolean>' else callback_types[0])}
     return {'source':'source.'+type,'physical':type,'arguments':arguments}
 bindings={f'root_{i}':binding(type) for i,type in enumerate(data['roots'])}
 for key,signature in zip(keys,signatures):
@@ -82,11 +91,13 @@ for name,operation in functions.items():
     for i,type in enumerate(operation.get('uses',[])):bindings['function_'+name+'_uses_'+str(i)]=binding(type)
 bindings[f'api_{len(functions)}_Signature']=binding(keys[0])
 bindings[f'api_{len(functions)}_Closure']=binding('owned_closure')
+for i,(family,types) in enumerate(collections.values(),start=len(functions)+1):
+    for parameter,type in zip(metadata['function_families'][family]['parameters'],types):bindings[f'api_{i}_{parameter}']=binding(type)
 dependencies={f'signature_{i}':binding(key) for i,key in enumerate(keys)}
 dependencies['string']=binding('string')
 requirements=[{'subject':slot,'contract':'application_formed'} for slot in bindings]
 requirements += [{'subject':'dependency:'+slot,'contract':'signature_admitted'} for slot in dependencies]
-requirements += [{'subject':'operation','contract':'owned_capture_and_signature_admitted'}]
+requirements += [{'subject':'operation','contract':contract} for contract in ['owned_capture_and_signature_admitted','collection_exact_signature_and_no_mutation']]
 prepared={'version':'prepared-api-v1','producer':'fixture.semantic-owner','revision':'fixture-v1','action':'generate',
  'request':copy.deepcopy(data),'admission':'fixture/callables','bindings':bindings,'dependencies':dependencies,
  'requirements':requirements,'facts':[{**r,'evidence':'fixture/'+r['subject']} for r in requirements]}
@@ -115,13 +126,13 @@ fixture='''#pragma once
 #include "scpp/integers.hpp"
 namespace fixture {
 struct environment {
-    static inline int live=0;
+    static inline int live=0, copies=0;
     scpp::int64 offset;
     explicit environment(scpp::int64 value):offset(value) { ++live; }
 #ifdef SCPP_NONCOPYABLE_CLOSURE
     environment(const environment &)=delete;
 #else
-    environment(const environment &other):offset(other.offset) { ++live; }
+    environment(const environment &other):offset(other.offset) { ++live; ++copies; }
 #endif
     ~environment() { --live; }
     scpp::int64 operator()(scpp::int64 value) const { return value + this->offset; }
@@ -140,6 +151,7 @@ with tempfile.TemporaryDirectory(prefix='scpp-callables-') as directory:
     caller='\n'.join('#include "'+manifest['apis'][name]['header']+'"' for name in data['apis'])+'\n'
     caller+='\n'.join('#include \"'+manifest['types'][type]['header']+'\"' for type in compositions)+'\n'
     caller+='\n'.join('#define '+name+' scpp::'+manifest['apis'][name]['operation']['name'] for name in functions)+'\n'
+    caller+='\n'.join('#define '+name+' scpp::'+manifest['apis'][api]['operation']['name'] for name,api in collection_apis.items())+'\n'
     caller+='#define FROM_CLOSURE scpp::'+manifest['apis'][factory]['operation']['name']+'\n'
     caller+=(root/'tests/runtime/native/public_callable_storage.cpp').read_text();(work/'caller.cpp').write_text(caller)
     flags=['-std=c++23','-O1']

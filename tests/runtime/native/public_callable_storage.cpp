@@ -48,6 +48,34 @@ int main() {
         CHECK(sum(pack)==int64(0));
         pack.append(int64(2));pack.append(int64(5));
         CHECK(sum(pack)==int64(7) && pack.size()==uint64(2));
+        auto mapper=make_owned_callback(int64(10));
+        auto predicate=make_predicate();
+        const auto captures=fixture::environment::copies;
+        auto mapped=MAP_VECTOR(pack,mapper);
+        CHECK(mapped.size()==uint64(2) && mapped.at(uint64(0))==int64(12) && mapped.at(uint64(1))==int64(15));
+        auto filtered=FILTER_VECTOR(pack,predicate);
+        CHECK(filtered.size()==uint64(1) && filtered.at(uint64(0))==int64(5));
+        auto booleans=MAP_BOOLEAN(pack,predicate);
+        CHECK(booleans.size()==uint64(2) && !booleans.at(uint64(0)) && booleans.at(uint64(1)));
+        hash_int64 entries;entries.set(string("second"),int64(5));entries.set(string("first"),int64(2));
+        auto mapped_hash=MAP_HASH(entries,mapper);
+        auto filtered_hash=FILTER_HASH(entries,predicate);
+        CHECK(mapped_hash.at(string("second"))==int64(15) && mapped_hash.at(string("first"))==int64(12));
+        CHECK(filtered_hash.size()==uint64(1) && filtered_hash.at(string("second"))==int64(5));
+        auto order=mapped_hash.iterate();CHECK(order.valid() && order.key()==string("second"));
+        order.next();CHECK(order.valid() && order.key()==string("first"));
+        order.next();CHECK(!order.valid());
+        filtered_hash.clear();mapped.set(uint64(0),int64(99));
+        CHECK(entries.size()==uint64(2) && pack.at(uint64(0))==int64(2));
+        CHECK(fixture::environment::copies==captures);
+        callback_int missing;
+        vector_int64 no_values;
+        CHECK(MAP_VECTOR(no_values,missing).empty());
+        failed=false;try { (void)MAP_VECTOR(pack,missing); } catch(...) { failed=true; }
+        CHECK(failed);
+        vector_int64 throwing;throwing.append(int64(1));throwing.append(int64(-1));
+        failed=false;try { (void)MAP_VECTOR(throwing,mapper); } catch(...) { failed=true; }
+        CHECK(failed && throwing.size()==uint64(2) && mapper.has_value());
         auto nested=make_nested_callback();
         auto original=make_owned_callback(int64(10));
         auto returned=nested(original);original.reset();nested.reset();

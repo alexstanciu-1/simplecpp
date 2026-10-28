@@ -2326,3 +2326,21 @@ Result recipes therefore expose scoped payload observation by borrowing the stor
 callable: a success containing an absent callable remains a success, but its payload
 condition is false. No capture copy or invocation is required. This does not admit
 nullable/ownership/boxed callable compositions or `empty` on callable payloads.
+
+
+### Typed collection callback adapters
+
+`typed_collection_map<Source,Output,Callback>` and
+`typed_collection_filter<Source,Value,Callback>` are demanded physical bridge recipes.
+They borrow already-prepared source/callback snapshots and delegate iteration,
+allocation, ordering and exception cleanup to `scpp::collections`. The producer owns
+source carrier/signature admission, expression sequencing and the no-mutation contract.
+These recipes reject native boxed policy carriers; boxed transport is a separate
+remaining adapter, not an implicit conversion to typed storage.
+
+Typed map passes the concrete callback directly and permits the native algorithm to
+form an output with a different public element type. Filter borrows the callback in a
+local adapter and converts its exact public `boolean` result to native `bool_t`.
+The adapter does not copy the callable environment per invocation. Output ownership
+uses ordinary native return transport. Sequence/keyed surface admission and the full
+set of registry dispatch bindings remain separate from these physical bridges.

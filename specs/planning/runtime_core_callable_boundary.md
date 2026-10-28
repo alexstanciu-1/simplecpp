@@ -156,3 +156,15 @@ payload presence delegates through the shared condition registry with zero alloc
 This proves prepared public storage behavior, not source argument packing or full
 selection/access-plan coverage. Collection adapters, wider callable observations and
 source sequencing integration remain open.
+
+
+## F6 typed collection bridge
+
+Two demanded recipes now adapt typed map/filter to the existing native collection
+owner. The same recipes cover vector and hash storage; map can change element type,
+and filter converts the public boolean result without copying its borrowed callback.
+No iteration, allocation, key-order or partial-result cleanup logic is duplicated.
+The fixture checks dense vector results, hash key order, fresh outer membership,
+empty/absent invocation behavior, callback exceptions and unchanged capture-copy counts.
+Boxed native/public value conversion and the complete twelve-entry dispatch mapping
+remain pending; these two physical recipes are not full collection surface closure.
