@@ -19,7 +19,7 @@ each slice. The original inventory is a baseline, not a current completion count
 | B2 | Complete for the agreed non-carrier special/mutation and text public paths; closure evidence below | Carrier forms C; indexed retention E; native exception inspection and overflow disposition G. |
 | C | Four carrier recipes and bounded scalar paths implemented; first prepared canonical path reviewed in C38 | Guarded negation and canonical lazy logical plans implemented in C32/C33; remaining source admission, broader selection and payload-specific integration remain; C38 passes the first-path checkpoint. Both decisions accepted 2026-10-28. |
 | D | Handle storage, presence planning, checked retention, shared ancestry/casts and weak/unique transports implemented (D1–D6) | Typed member access, operation-planner integration, ownership selections, value storage and source Exception transport remain. |
-| E | Existing vector/hash/boxed foundations; incomplete | Typed/boxed existing access, observations and removal implemented in E23–E27; creating writes, key adaptation/policies and field-owner retention; conditional lifecycle, cursor fixes, boxed access/probes, and positional/keyed built-in factories are implemented for the tested domains. |
+| E | Existing vector/hash/boxed foundations; incomplete | Typed/boxed access, observations, removal and creating stores implemented in E23–E28; append, ordinary read policy, key adaptation/policies and field-owner retention; conditional lifecycle, cursor fixes, boxed access/probes, and positional/keyed built-in factories are implemented for the tested domains. |
 | F | Pending | Callable transport and registered collection algorithms. |
 | G | Core utility and scalar debug bindings implemented | Exception/helper gaps and requirement-by-requirement closure audit. |
 
@@ -2724,3 +2724,35 @@ This closes the tested existing-access/probe/removal typed-to-boxed path, not al
 indexed operations. Ordinary creating store/append, key adaptation/policies,
 field-owner retention, broader payload coverage and long-path performance remain.
 Remaining C/D/F/G work is unchanged; the goal remains active.
+
+
+## E28 — key-only validation and creating stores (2026-10-28)
+
+Access metadata now distinguishes ordinary store traversal/check/commit from existing
+updates. Mixed permits missing/null intermediates during const validation and bootstraps
+only at commit; dynamic requires constructed containers; typed intermediates must exist.
+Hash final keys may insert, while vector indices remain bounded replacements. The
+same emitter and representation owner handle all paths without family-name branches.
+
+A demanded key check receives only the reached concrete key and invokes its registered
+native validation before later keys/RHS. Metadata proof verifies that this standalone
+check does not emit a vector/root specialization. The caller/compiler still owns source
+evaluation and converted value snapshots; commit-time validation alone is insufficient
+for that ordering. No new frontend producer is claimed.
+
+Release and ASan/UBSan/LSan pass: invalid boxed keys skip the simulated RHS; direct
+invalid-key preflight causes no partial mixed bootstrap; valid nested mixed creation
+works; existing replacement allocates zero; null dynamic writes fail; constructed
+dynamic children preserve alias visibility; typed missing intermediates fail without
+insertion; hash final insertion/replacement works; vector writes do not grow. Prior
+access/observation/removal/lifetime, independent header, sealed publication reuse and
+prepared facts remain green. Six focused metadata regressions pass.
+
+The expanded 46-unit fixture compiled at eight jobs in 18.7994s release / 26.1292s
+sanitizer; public caller 0.2430s / 0.4477s. Configurations ran sequentially, with release
+overlapping metadata regressions. Core archives were reused; publication remains 406
+units. These cumulative fixture costs are not compiler src/support build timings.
+
+Final append and ordinary read miss policies remain distinct pending protocols.
+Key adaptation/policies, field-owner retention and the remaining C/D/F/G backlog also
+remain open. This slice does not complete batch E or the overall goal.

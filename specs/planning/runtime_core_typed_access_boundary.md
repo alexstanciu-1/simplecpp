@@ -172,3 +172,15 @@ whereas wrong-kind removal throws. Present null leaves are removed, parents rema
 and completed const validation precedes mutable descent. The fixture covers current
 root rechecks and skipped later work. Field-owner retention, ordinary creating writes,
 key adaptation and remaining key policies are not closed by this slice.
+
+
+## Key preflight and ordinary store (E28)
+
+Creating stores use explicit const write traversal and final check/commit snippets.
+The ordinary path owner therefore distinguishes insertion/bootstrap from existing-only
+updates without family switches. A key-only demand exposes the reached key's native
+validation before subsequent source expressions; it neither receives nor materializes
+the root container. The runtime proof covers mixed bootstrap after validation, dynamic
+constructed-child requirements, hash final insertion, checked vector replacement,
+and no partial creation on invalid keys. Append and ordinary null-on-miss reads are
+still distinct remaining protocols, not inferred from store/readability.

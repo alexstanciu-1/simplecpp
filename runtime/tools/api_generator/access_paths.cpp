@@ -12,6 +12,7 @@ namespace scpp::api_generation
         fields_only(request, "root depth operation observation purpose", "access path");
         const auto operation = request.at("operation").text();
         if (operation != "existing_read" && operation != "existing_store"
+            && operation != "store" && operation != "key_check"
             && operation != "prefix_ready" && operation != "existing_erase" && operation != "observe")
             throw std::runtime_error("Unsupported access path operation");
         if (request.has("observation") && operation != "observe")
@@ -25,7 +26,8 @@ namespace scpp::api_generation
             || depth_value.scalar.size() > 3)
             throw std::runtime_error("Access path depth must be an integer from 1 to 128");
         const auto depth = std::stoul(depth_value.scalar);
-        if ((depth == 0 && operation != "prefix_ready") || depth > 128) throw std::runtime_error("Access path depth must be from 1 to 128");
+        if ((depth == 0 && operation != "store" && operation != "key_check"
+            && operation != "prefix_ready") || depth > 128) throw std::runtime_error("Access path depth must be from 1 to 128");
         naming names(metadata_naming_registry(metadata, leaves, aliases));
         auto receiver = names.resolve(request.at("root").text()).first;
         value result = value::object(); result["root"] = receiver; result["operation"] = operation;
@@ -39,7 +41,7 @@ namespace scpp::api_generation
             value arguments = value::object();
             for (const auto &[parameter, argument] : node.arguments) arguments[parameter] = argument.canonical();
             auto protocol = instantiate_function(family.at("access"), "", arguments);
-            fields_only(protocol, "key element read mutable includes present ready erase element_storage operations", "access protocol");
+            fields_only(protocol, "key element read mutable includes present ready erase element_storage operations key_check write_read check_store store", "access protocol");
             if (protocol.has("operations")) {
                 const auto &allowed = protocol.at("operations");
                 if (allowed.type != value::kind::array) throw std::runtime_error("Access operations require an array");
@@ -55,6 +57,15 @@ namespace scpp::api_generation
             protocol["receiver"] = receiver;
             receiver = protocol.at("element").text();
             result["steps"].items.push_back(protocol);
+        }
+        if (operation == "key_check") {
+            result.at("steps").items.back().at("key_check").text();
+            result["element"] = receiver;
+            return result;
+        }
+        if (operation == "store") {
+            result.at("steps").items.back().at("check_store").text();
+            result.at("steps").items.back().at("store").text();
         }
         const bool probing = operation == "prefix_ready" || operation == "existing_erase" || operation == "observe";
         if (probing) {

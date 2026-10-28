@@ -389,7 +389,9 @@ namespace scpp::api_generation
             authored_name(name);
             if (name.find("::") != std::string::npos) throw std::runtime_error("Access path name must be unqualified");
             const auto path = describe_access_path(this->metadata_, this->leaves_, this->names_, request);
-            const bool storing = path.get("operation") == "existing_store";
+            const bool creating = path.get("operation") == "store";
+            const bool key_check = path.get("operation") == "key_check";
+            const bool storing = creating || path.get("operation") == "existing_store";
             const bool erasing = path.get("operation") == "existing_erase";
             const bool probing = path.get("operation") == "prefix_ready";
             const bool observing = path.get("operation") == "observe";
@@ -400,14 +402,27 @@ namespace scpp::api_generation
             const auto symbol = "path_" + name;
             this->claim(symbol, "path-api:" + name);
             value operation = value::object(); operation["name"] = symbol;
-            operation["returns"] = writing ? value("void") : (probing || observing) ? value("boolean") : path.at("element");
+            operation["returns"] = (writing || key_check) ? value("void") : (probing || observing) ? value("boolean") : path.at("element");
             operation["parameters"] = value::array();
             auto parameter = [&](const std::string &id, const value &type, const std::string &passing) {
                 value entry = value::object(); entry["name"] = id; entry["type"] = type; entry["passing"] = passing;
                 operation["parameters"].items.push_back(entry);
             };
-            parameter("root", path.at("root"), writing ? "ref" : "const_ref");
+            if (!key_check) parameter("root", path.at("root"), writing ? "ref" : "const_ref");
             std::set<std::string> headers{"type_traits", "utility", "scpp/detail/concrete_access.hpp"};
+            if (key_check) {
+                const auto &step = path.at("steps").items.back();
+                const auto key_type = this->materialize(step.at("key").text());
+                parameter("key", step.at("key"), "const_ref");
+                this->dependencies(key_type, headers, {});
+                this->dependencies(step, headers, {});
+                operation["body"] = expand(step.at("key_check").text(),
+                    {{"key", "key"}, {"native_key", this->borrow(key_type, "key")}}) + ";";
+                operation["includes"] = value::array();
+                for (const auto &header : headers) operation["includes"].items.emplace_back(header);
+                function["operation"] = operation;
+                return function;
+            }
             this->dependencies(this->materialize(path.at("root").text()), headers, {});
             if (observing) this->dependencies(path.at("observation"), headers, {});
             if (probing) this->dependencies(path.at("ready_protocol"), headers, {});
@@ -436,9 +451,11 @@ namespace scpp::api_generation
                     const auto key = "key_" + std::to_string(i);
                     const auto key_type = this->materialize(step.at("key").text());
                     this->dependencies(key_type, headers, {});
+                    const auto stored_value = native_element ? this->borrow(element, "value") : "value";
                     const substitutions access_context{{"receiver", current}, {"key", key},
-                        {"native_key", this->borrow(key_type, key)}, {"removing", path.at("removing").text()}};
-                    const auto expression = expand(step.at(mutable_access ? "mutable" : "read").text(), access_context);
+                        {"native_key", this->borrow(key_type, key)}, {"value", stored_value}, {"removing", path.at("removing").text()}};
+                    const auto read = creating && i + 1 < steps.size() ? step.get("write_read", step.at("read").text()) : step.at("read").text();
+                    const auto expression = expand(mutable_access ? step.at("mutable").text() : read, access_context);
                     if (!mutable_access && (probing || erasing || observing)) {
                         const auto present = expand(step.at("present").text(), access_context);
                         body += "if (!(" + present + ")) { " + (observing ? path.at("observation").at("missing").text() : probing ? "return boolean(false);" : "return;") + " }\n";
@@ -446,7 +463,8 @@ namespace scpp::api_generation
                     body += "static_assert(std::is_same_v<decltype((" + expression + ")), "
                         + (mutable_access ? "" : "const ") + (native_element ? element.at("native").text() : element.at("cpp").text()) + " &>);\n";
                     if (i + 1 == steps.size()) {
-                        if (mutable_access && erasing) body += expand(step.at("erase").text(), access_context) + ";\n";
+                        if (creating) body += expand(step.at(mutable_access ? "store" : "check_store").text(), access_context) + ";\n";
+                        else if (mutable_access && erasing) body += expand(step.at("erase").text(), access_context) + ";\n";
                         else if (mutable_access) body += expression + " = " + (native_element ? this->borrow(element, "value") : "value") + ";\n";
                         else if (observing) {
                             body += "const auto &path_leaf = " + expression + ";\n";

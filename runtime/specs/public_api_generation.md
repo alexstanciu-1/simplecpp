@@ -2044,3 +2044,33 @@ unwrap it as a public class. Removal first validates the full const path, then u
 native mutable descent and erase; present null leaves are removable, missing paths
 are no-ops, and parents are not pruned. Existing mixed COW and dynamic shared identity
 continue to apply. No mixed/dynamic family crossing or vector-element erase is added.
+
+
+### Key preflight and creating stores
+
+Access protocols may supply `key_check`, `write_read`, `check_store` and `store`.
+A `key_check` demand selects the reached receiver's key contract but emits a function
+with only that key parameter: no root, earlier keys or RHS. Its body binds the native
+key validator (or a no-op for an already concrete typed key). It does not materialize
+root container specializations just to check a key. Source callers invoke checks
+left-to-right after each key conversion and before later keys/RHS; an exception stops
+those later expressions. Key checks do not validate receiver kinds or vector bounds.
+
+`store` is distinct from `existing_store`. Its const intermediate traversal uses
+`write_read` where supplied, otherwise ordinary checked read. The final receiver's
+`check_store` validates before any mutable descent; the final `store` performs the
+assignment/insertion. Both receive `${value}` in the declared element representation.
+The public RHS parameter is saved by value, retaining the normal copy/identity rules.
+No callback/source expression runs during the validation/commit pair.
+
+Vector store checks bounds and replaces; it never grows an index. Hash store may
+insert a final key but missing typed intermediates still throw. Mixed validation
+uses native `index_path_probe` and `index_path_check_store`, permitting missing/null
+intermediates without creating them until commit. Dynamic requires constructed
+container children. Native store/descend preserves COW and shared identity. Invalid
+keys are checked again at commit preflight for native callers, but this does not
+replace the early key-only check required by source evaluation order. Allocation or
+copy failures during commit retain the existing nontransactional guarantee.
+
+Final append is a separate pending protocol. Ordinary read null-on-miss policy also
+remains distinct from these existing-read and creating-store paths.

@@ -134,6 +134,34 @@ int main() {
     mixed_store(mixed_roots,uint64(0),outer_key,inner_key,mixed(int64(99)));
     auto saved_box=mixed_read(mixed_roots,uint64(0),outer_key,inner_key);
     mixed_roots.clear();CHECK(saved_box.get_int()==int64(99));
+    vector_mixed creating;creating.append(mixed());
+    int rhs_runs=0;
+    failed=false;
+    try { boxed_key_check(invalid_key);++rhs_runs;mixed_create(creating,uint64(0),outer_key,invalid_key,mixed(int64(7))); }
+    catch(...) { failed=true; }
+    CHECK(failed && rhs_runs==0 && creating.at(uint64(0)).is_null());
+    failed=false;try { mixed_create(creating,uint64(0),outer_key,invalid_key,mixed(int64(7))); } catch(...) { failed=true; }
+    CHECK(failed && creating.at(uint64(0)).is_null()); // Whole preflight precedes bootstrap.
+    boxed_key_check(outer_key);boxed_key_check(inner_key);
+    mixed_create(creating,uint64(0),outer_key,inner_key,mixed(int64(7)));
+    CHECK(mixed_read(creating,uint64(0),outer_key,inner_key).get_int()==int64(7));
+    const auto replace_allocations=allocations;
+    mixed_create(creating,uint64(0),outer_key,inner_key,mixed(int64(8)));
+    CHECK(allocations==replace_allocations);
+    path_dynamic_vector creating_dynamic;creating_dynamic.append(dynamic());
+    failed=false;try { dynamic_create(creating_dynamic,uint64(0),outer_key,inner_key,dynamic(int64(7))); } catch(...) { failed=true; }
+    CHECK(failed && creating_dynamic.at(uint64(0)).is_null());
+    dynamic fresh_parent=make_dynamic_container();dynamic fresh_child=make_dynamic_container();fresh_parent.set(outer_key,fresh_child);
+    creating_dynamic.set(uint64(0),fresh_parent);
+    dynamic_create(creating_dynamic,uint64(0),outer_key,inner_key,dynamic(int64(7)));
+    CHECK(fresh_child.get(inner_key).get_int()==int64(7));
+    path_rows inserted;
+    failed=false;try { rows_create(inserted,key,uint64(0),int64(7)); } catch(...) { failed=true; }
+    CHECK(failed && inserted.size()==uint64(0)); // Missing typed intermediates are not created.
+    row_insert(inserted,key,make_row(int64(7)));
+    rows_create(inserted,key,uint64(0),int64(8));CHECK(rows_read(inserted,key,uint64(0))==int64(8));
+    failed=false;try { matrix_create(matrix,uint64(0),uint64(1),int64(8)); } catch(...) { failed=true; }
+    CHECK(failed && matrix.at(uint64(0)).size()==uint64(1)); // Vector indexed writes do not grow.
     auto detached=row_read(matrix,uint64(0));detached.set(uint64(0),int64(200));
     CHECK(matrix_read(matrix,uint64(0),uint64(0))==int64(100));
     auto retained=retained_row();CHECK(retained.at(uint64(0))==int64(17));

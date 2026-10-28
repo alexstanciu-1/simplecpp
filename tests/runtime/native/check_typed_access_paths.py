@@ -47,6 +47,11 @@ paths['mixed_empty']={'root':'vector<mixed>','depth':3,'operation':'observe','ob
 paths['mixed_remove_ready']={'root':'vector<mixed>','depth':2,'operation':'prefix_ready','purpose':'remove'}
 paths['box_ready']={'root':'mixed','depth':0,'operation':'prefix_ready'}
 paths['box_remove_ready']={'root':'mixed','depth':0,'operation':'prefix_ready','purpose':'remove'}
+for name,container,depth in [('mixed_create','vector<mixed>',3),('dynamic_create','vector<dynamic>',3),
+ ('matrix_create','vector<vector<int64>>',2),('rows_create','hash<vector<int64>,string>',2),
+ ('row_insert','hash<vector<int64>,string>',1)]:
+    paths[name]={'root':container,'depth':depth,'operation':'store'}
+paths['boxed_key_check']={'root':'vector<mixed>','depth':3,'operation':'key_check'}
 data={'package':'application.paths','roots':[],'paths':paths,'apis':list(paths),'names':names}
 base={'metadata':metadata,'request':data,'leaves':{},'names':names,'imports':{},'layouts':{}}
 def plan(request,error=None):
@@ -119,6 +124,9 @@ bad=copy.deepcopy(base);bad['request']['paths']['mixed_read']['purpose']='remove
 plan(bad,'Prefix purpose')
 bad=copy.deepcopy(base);bad['metadata']['families']['mixed']['access']['element_storage']='pointer'
 plan(bad,'Invalid access element storage')
+key_only=copy.deepcopy(base);key_only['request']['apis']=['boxed_key_check']
+assert not any(u['identity'].startswith('vector<') for u in plan(key_only)['units'])
+assert len(plan(key_only)['apis']['boxed_key_check']['operation']['parameters'])==1
 print('PASS: generic typed path composition, bounds on depth, prepared slot/fact checks')
 if not args.core:sys.exit(0)
 with tempfile.TemporaryDirectory(prefix='scpp-typed-paths-') as directory:
