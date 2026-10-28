@@ -579,17 +579,19 @@
       "move_storage"
     ],
     "access": {
-      "key": "uint64",
+      "key": "int64",
       "element": "${variant:T}",
-      "read": "${receiver}.at(detail::concrete_size(${key}))",
-      "mutable": "${receiver}.at(detail::concrete_size(${key}))",
-      "present": "${key}.native_value() < ${receiver}.size()",
+      "read": "${receiver}.at(${native_key})",
+      "mutable": "${receiver}.at(${native_key})",
+      "present": "${key}.native_value() >= 0 && static_cast<std::uint64_t>(${key}.native_value()) < ${receiver}.size()",
       "ready": "true",
-      "includes": [],
+      "includes": [
+        "cstdint"
+      ],
       "key_check": "(void)${key}",
-      "check_store": "(void)${receiver}.at(detail::concrete_size(${key}))",
-      "store": "${receiver}.at(detail::concrete_size(${key})) = ${value}",
-      "value_read": "${receiver}.at(detail::concrete_size(${key}))",
+      "check_store": "(void)${receiver}.at(${native_key})",
+      "store": "${receiver}.at(${native_key}) = ${value}",
+      "value_read": "${receiver}.at(${native_key})",
       "append": {
         "check": "(void)0",
         "commit": "(void)${receiver}.append(${value})"

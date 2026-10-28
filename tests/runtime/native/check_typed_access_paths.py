@@ -59,6 +59,7 @@ names['hash<int64,int64>']='path_integer_table'
 for name,container,depth in [('row_append','vector<int64>',0),('matrix_append','vector<vector<int64>>',1),
  ('hash_append','hash<int64,int64>',0),('mixed_append','vector<mixed>',2),('dynamic_append','vector<dynamic>',2)]:
     paths[name]={'root':container,'depth':depth,'operation':'append'}
+paths['vector_key_check']={'root':'vector<int64>','depth':1,'operation':'key_check'}
 data={'package':'application.paths','roots':[],'paths':paths,'apis':list(paths),'names':names}
 base={'metadata':metadata,'request':data,'leaves':{},'names':names,'imports':{},'layouts':{}}
 def plan(request,error=None):
@@ -108,7 +109,7 @@ for name,path in paths.items():
             keys.append('mixed');elements.append(receiver)
         else:
             params=arguments[receiver]
-            keys.append(params.get('K','uint64'));receiver=params.get('T',params.get('V'));elements.append(receiver)
+            keys.append(params.get('K','int64'));receiver=params.get('T',params.get('V'));elements.append(receiver)
     bindings[prefix+'value']=binding(elements[-1] if elements else path['root'])
     if path['operation']=='append':
         bindings[prefix+'append_receiver']=binding(receiver)
@@ -203,8 +204,8 @@ with tempfile.TemporaryDirectory(prefix='scpp-typed-paths-') as directory:
         '-c',str(extra_output/extra['sources'][0]),'-o',str(extra_object)],check=True)
     extra_caller=work/'extra_caller.cpp';extra_caller.write_text('#include "'+extra['apis'][alias]['header']+'"\n#include "scpp/access/matrix_read.hpp"\n#include "public_api_guard.hpp"\n'
         'int main() { scpp::path_row row;row.append(scpp::int64(1));scpp::path_matrix matrix;matrix.append(row);'
-        'scpp::'+extra['apis'][alias]['operation']['name']+'(matrix,scpp::uint64(0),scpp::uint64(0),scpp::int64(41));'
-        'return scpp::path_matrix_read(matrix,scpp::uint64(0),scpp::uint64(0))==scpp::int64(41) ? 0 : 1; }')
+        'scpp::'+extra['apis'][alias]['operation']['name']+'(matrix,scpp::int64(0),scpp::int64(0),scpp::int64(41));'
+        'return scpp::path_matrix_read(matrix,scpp::int64(0),scpp::int64(0))==scpp::int64(41) ? 0 : 1; }')
     subprocess.run(['clang++',*flags,'-I'+str(extra_output/'public'),*public[len(['clang++',*flags]):],'-I'+str(root/'tests/runtime/native'),
         str(extra_caller),str(extra_object),str(app/'lib/libpaths.a'),str(args.core.resolve()),'-pthread','-o',str(work/'extra_proof')],check=True)
     subprocess.run([str(work/'extra_proof')],check=True)

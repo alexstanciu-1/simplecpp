@@ -2113,3 +2113,20 @@ through capability admission. Mixed may bootstrap null/missing intermediate tabl
 dynamic requires constructed container children. COW, identity and allocation-failure
 guarantees stay with the native owners. Key preflight and source/RHS sequencing remain
 caller/compiler responsibilities.
+
+
+### Signed source vector keys versus unsigned storage APIs
+
+Vector access-path metadata takes concrete `int64`, matching the source integer-key
+domain. Private lookup uses the existing integer borrow mapping and the native vector's
+checked signed-integer overload.
+Membership first rejects negative indices, then compares the unsigned magnitude to
+size. A negative prefix therefore yields false for isset/readiness and no-op for
+removal; empty and ordinary reads retain their respective error contracts.
+
+Key-only validation accepts negative integers: they are valid key values whose bounds
+are checked at the write after RHS evaluation. Converting them to uint64 before that
+point would incorrectly change both probe results and source evaluation order. Direct
+container methods and size/capacity remain uint64 APIs; this change applies to the
+source-facing indexed-operation protocol and its generated signatures. Optional/boxed
+input conversion into the required int64 key remains a separate prepared conversion.

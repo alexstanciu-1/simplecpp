@@ -63,7 +63,7 @@ steps:
     key: string
     element: vector<int64>
   - receiver: vector<int64>
-    key: uint64
+    key: int64
     element: int64
 value: int64
 source-boundary: prepared by the existing semantic owner
@@ -205,3 +205,13 @@ mechanism handles typed and native boxed storage. Receiver metadata supplies che
 and commit; hash append admission reuses integer-key capabilities. Root append is
 an explicit safe empty-prefix case alongside readiness, while keyed operations
 continue to reject empty step lists. Intermediate append is not introduced.
+
+
+## Signed vector source keys (E32)
+
+The key-domain audit found that unsigned path inputs could not preserve negative
+source-index probes or write ordering. Vector path metadata now uses int64 and the
+native checked signed overload; membership handles negatives as absent. Direct
+unsigned container size/access APIs remain unchanged. This is a correction to the
+source-facing path boundary, not a new key-coercion policy. Optional/boxed key
+conversion still needs its prepared composition proof.

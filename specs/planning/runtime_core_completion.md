@@ -2832,3 +2832,27 @@ compiler build times or runtime performance measurements.
 Key adaptation/policies, field-owner retention and broader admitted payload coverage
 remain in E; C/D/F/G work remains open. Intermediate append is still outside the source
 contract. No whole-batch or goal completion is claimed.
+
+
+## E32 — signed source vector keys and negative-index behavior (2026-10-28)
+
+The key-domain audit found an actual source-facing mismatch: unsigned path keys could
+not express negative-index probes and would encourage conversion failure before a
+write's RHS. Vector path keys now use public int64 and its existing native signed
+borrow mapping. Membership rejects negative indices before comparing with size.
+Direct container at/set and size/capacity remain unsigned APIs; this correction is
+limited to generated source-operation path signatures and their prepared bindings.
+
+Release and ASan/UBSan/LSan prove negative isset/readiness false with zero allocations,
+negative removal-prefix no-op, ordinary read/empty errors, and key validation accepting
+a negative integer before RHS execution followed by bounds failure at store. Existing
+values remain unchanged. Prior positive-index paths, append, public header guards,
+publication reuse and six metadata regressions pass. An initial compile caught direct
+public-int64-to-native-vector transport; the recipe now uses the existing private
+integer borrow, without exposing native templates or changing vector implementation.
+
+The 57-unit cumulative fixture compiles at eight jobs in 24.1298s release / 40.2000s
+sanitizer; public caller 0.3270s / 0.6555s. Configurations ran sequentially. Generator
+and core binaries were reused; publication metadata was regenerated with 406 units.
+These are fixture costs, not compiler rebuild times. Optional/boxed key conversion,
+object key policies, field-owner retention and remaining C/D/F/G coverage remain open.
