@@ -3290,3 +3290,24 @@ All operation prepared-request regression checks also pass.
 Next: combine prepared carrier storage with prepared operation execution and review
 the first complete carrier path. Broader selection domains, ownership and callbacks
 remain incomplete; no goal-completion claim is made.
+
+## C38 — combined prepared carrier path review (2026-10-28)
+
+The logical fixture's `--prepared` mode now uses prepared source storage generation
+as well as prepared operation planning. Twelve canonical carrier specializations
+carry explicit primitive source-dependency facts through layout probes, public-only
+compilation/execution, sealed publication and source-mode reuse. Missing facts on
+reuse reject before output is installed; source permission is not taken from the
+physical manifest.
+
+Release and ASan/UBSan/LSan pass: 36 consumers, 132 successful value/effect cases,
+54 failure/skip groups, zero successful-path allocations and no regenerated units
+on sealed reuse. Runtime archives were reused. Application storage/caller compilation
+was 13.7637s/0.9627s release and 18.5086s/2.0954s sanitizer (overlapping single runs).
+
+The detailed review in runtime_core_carrier_review.md now passes the **first-path**
+checkpoint for canonical bool/numeric carriers, allowing the planned D application-
+record ownership prototype. This is not completion of C or a change to the overall
+scope. Broader joins, non-numeric/source-role admission, ownership/callback integration
+and all other unfinished batches remain backlog. Actual frontend fact production
+remains outside this public-runtime goal.

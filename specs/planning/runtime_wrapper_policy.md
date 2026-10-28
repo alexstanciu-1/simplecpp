@@ -23,8 +23,8 @@ proposed policy/mechanism rows are not new language permissions.
 The implementation goal is active. A/B are complete in their agreed bounded scope;
 C has all four carrier recipes and substantial bounded operator/selection coverage,
 but is not complete. Conditional lifecycle now covers carriers plus vector/hash
-(E1/E2); E3 closes finished-cursor advancement consistency. Ownership and callback
-expansion remain behind the first-complete-carrier review gate.
+(E1/E2); E3 closes finished-cursor advancement consistency. C38 passes the first complete canonical carrier path review, permitting the planned
+ownership prototype; callback expansion still needs its ownership/transport proofs.
 
 The [current carrier review](runtime_core_carrier_review.md) records the remaining
 guarded logical planning, prepared-fact consumption and broader admitted selection

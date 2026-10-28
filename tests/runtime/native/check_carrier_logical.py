@@ -125,7 +125,9 @@ with tempfile.TemporaryDirectory(prefix='scpp-carrier-logical-') as directory:
     (sdk/'lib').mkdir();(sdk/'tools').mkdir()
     shutil.copy2(args.core,sdk/'lib/libcore.a');shutil.copy2(args.tool,sdk/'tools/scpp_api_generator')
     seal_package(sdk,['core']);os.environ['SCPP_API_GENERATOR']=str(sdk/'tools/scpp_api_generator')
-    request_file=work/'request.json';request_file.write_text(json.dumps(request))
+    from prepared_fixture import scalar_carrier_storage
+    storage_request=scalar_carrier_storage(request) if args.prepared else request
+    request_file=work/'request.json';request_file.write_text(json.dumps(storage_request))
     manifest=concrete_types.generate(request_file,app,sdk,[sdk],'clang++',[])
     assert len(manifest['sources'])==12
     code='\n'.join('#include "'+h+'"' for h in sorted(headers))+r'''
@@ -158,4 +160,12 @@ void operator delete(void *p,__SIZE_TYPE__) noexcept { std::free(p); }
     (app/'lib').mkdir();subprocess.run(['ar','rcs',str(app/'lib/liblogical.a'),*objects],check=True)
     seal_package(app,['logical']);reused=concrete_types.generate(request_file,work/'reuse',sdk,[sdk,app],'clang++',[])
     assert not reused['sources']
+    if args.prepared:
+        assert 'prepared' not in reused and 'preparation' not in reused
+        bad=copy.deepcopy(storage_request);bad['prepared']['facts']=[]
+        request_file.write_text(json.dumps(bad));rejected=False
+        try:concrete_types.generate(request_file,work/'rejected',sdk,[sdk,app],'clang++',[])
+        except subprocess.CalledProcessError as error:rejected=error.returncode==1
+        assert rejected and not (work/'rejected').exists()
+        print('PASS: combined prepared storage/operation execution and sealed reuse; missing source facts reject')
     print(f'PASS: sealed reuse; storage compile={storage:.4f}s caller compile={caller_time:.4f}s')

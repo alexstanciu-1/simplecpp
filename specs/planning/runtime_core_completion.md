@@ -17,14 +17,15 @@ each slice. The original inventory is a baseline, not a current completion count
 | A2 | Complete for the agreed checked scalar conversions | Carrier conversion is C; ownership casts are D. |
 | B1 | Complete for the agreed scalar-facing truth/text/identity/observation scope | Carrier forms remain C; boxed arithmetic and access completion are not B1 credit. |
 | B2 | Complete for the agreed non-carrier special/mutation and text public paths; closure evidence below | Carrier forms C; indexed retention E; native exception inspection and overflow disposition G. |
-| C | Four carrier recipes and bounded scalar operator/selection paths implemented; review pending | Guarded negation and canonical lazy logical plans implemented in C32/C33; remaining source admission, broader selection and combined prepared-path review remain (C35–C37 implement the consumer). Both decisions accepted 2026-10-28. |
+| C | Four carrier recipes and bounded scalar paths implemented; first prepared canonical path reviewed in C38 | Guarded negation and canonical lazy logical plans implemented in C32/C33; remaining source admission, broader selection and payload-specific integration remain; C38 passes the first-path checkpoint. Both decisions accepted 2026-10-28. |
 | D | Pending | Ownership, application targets and source Exception transport gaps. |
 | E | Existing vector/hash/boxed foundations; incomplete | Typed nested access and remaining key policies; conditional lifecycle, cursor fixes, boxed access/probes, and positional/keyed built-in factories are implemented for the tested domains. |
 | F | Pending | Callable transport and registered collection algorithms. |
 | G | Core utility and scalar debug bindings implemented | Exception/helper gaps and requirement-by-requirement closure audit. |
 
-Full frontend adoption and module migration are excluded. The first complete carrier
-path remains a review gate before expanding ownership/callback implementation.
+Full frontend adoption and module migration are excluded. C38 passes the first complete canonical carrier
+path review, permitting the planned ownership prototype; callbacks still depend on
+the ownership/transport evidence they require.
 No completion percentage is inferred from function, header or checkpoint counts.
 
 The [current carrier review](runtime_core_carrier_review.md) records why C is not yet
@@ -2320,3 +2321,24 @@ All operation prepared-request regression checks also pass.
 Next: combine prepared carrier storage with prepared operation execution and review
 the first complete carrier path. Broader selection domains, ownership and callbacks
 remain incomplete; no goal-completion claim is made.
+
+## C38 — combined prepared carrier path review (2026-10-28)
+
+The logical fixture's `--prepared` mode now uses prepared source storage generation
+as well as prepared operation planning. Twelve canonical carrier specializations
+carry explicit primitive source-dependency facts through layout probes, public-only
+compilation/execution, sealed publication and source-mode reuse. Missing facts on
+reuse reject before output is installed; source permission is not taken from the
+physical manifest.
+
+Release and ASan/UBSan/LSan pass: 36 consumers, 132 successful value/effect cases,
+54 failure/skip groups, zero successful-path allocations and no regenerated units
+on sealed reuse. Runtime archives were reused. Application storage/caller compilation
+was 13.7637s/0.9627s release and 18.5086s/2.0954s sanitizer (overlapping single runs).
+
+The detailed review in runtime_core_carrier_review.md now passes the **first-path**
+checkpoint for canonical bool/numeric carriers, allowing the planned D application-
+record ownership prototype. This is not completion of C or a change to the overall
+scope. Broader joins, non-numeric/source-role admission, ownership/callback integration
+and all other unfinished batches remain backlog. Actual frontend fact production
+remains outside this public-runtime goal.
