@@ -3,9 +3,9 @@
 Doc Status: supporting
 
 This is the active v0.2 compiler foundation, not a complete compiler. It contains
-the compact token model, immutable in-memory source snapshots and their requested
-runtime publication. Scanner, builder, filesystem integration, parsing and semantic
-compilation are not migrated yet.
+the compact token model, immutable source snapshots, token sequence construction
+and their requested runtime publication. Scanner, filesystem integration, parsing
+and semantic compilation are not migrated yet.
 
 ## Ownership and bounded reuse
 
@@ -44,7 +44,7 @@ spans, invalid spans, explicit construction and checked narrowing.
 active template/typename tokens; it also proves implicit native construction fails.
 `compiler_runtime_freshness` checks generated artifacts against metadata.
 
-Next: bring in token sequence construction and in-memory scanning in bounded slices.
+Next: bring in in-memory scanning in bounded slices.
 Do not import the old filesystem/task/JSON aggregate to make tokenization compile.
 
 Validation recorded for this slice: all 27 release tests passed; the three
@@ -91,3 +91,45 @@ replacement/destruction and rejected null/capacity inputs. All four compiler
 checks pass in release and UBSan builds.
 The focused buffer executable also passes ASan+UBSan with libstdc++; leak detection
 was disabled for this sandbox run, so this is not a LeakSanitizer proof.
+
+## Token sequence construction
+
+Reviewed donors: the legacy `support/include/scpp_compiler/token_sequence.hpp`
+and `support/src/token_sequence.cpp`. The v0.2 builder retains their bounded
+reserve hint, source ownership, ordered-span checks and single-use publication.
+It uses private standard-library contiguous storage and shared ownership, without
+importing legacy vector/memory implementations or exposing public templates.
+This compiler-specific storage does not add arbitrary record types to the generated
+runtime vector API.
+
+A builder requires a present source of at most 4294967295 bytes and a nonnegative
+previous-token-count hint. Reserve is bounded by source bytes, defaulting to at
+most 256 slots; it is a hint, not a token count or language rule. Each append
+checks containment by subtraction and checks ordering/non-overlap; the token
+constructor owns length and tag validity. Gaps and adjacent spans are allowed.
+Rejected appends preserve prior tokens and allow continued construction.
+
+`finish()` publishes a present immutable generation, including for zero tokens,
+transferring the token array without copying it. Further append/finish calls fail.
+The handle is allocated before moving builder data; the data move is statically
+required to be nonthrowing. No fallible step follows consumption. Publication
+failure before consumption leaves the builder available for retry.
+
+Sequence copies share both token storage and their retained source. Moves leave
+an absent sequence; self-copy/move preserve identity. `source()` returns an owning
+snapshot, `at()` returns a token value, and negative/out-of-range indexes throw.
+An absent sequence has zero size/capacity but no readable source. Capacity is
+allocated token payload capacity, not a measurement of total memory overhead.
+No mutable reference escapes. As with source snapshots, concurrent changes to
+the same handle or builder require external synchronization.
+
+The focused proof covers absent/empty generations, invalid hints and spans,
+recovery after rejected append, contiguous growth, single-use publication,
+copy/move/self-assignment, and retained source lifetime after generation release.
+The 4-GiB source-size rejection is checked in code; the tests do not allocate a
+4-GiB fixture. Allocation-failure injection and concurrent lifecycle testing are
+not claimed by this slice.
+
+Validation for sequence construction: all five compiler checks pass in release
+and UBSan configurations. The focused sequence executable also passes ASan+UBSan
+with libstdc++ and leak detection disabled; no LeakSanitizer proof is claimed.
