@@ -33,6 +33,7 @@ signatures=[{'returns':'int64','parameters':[{'type':'int64'}]},
 normalized=[plan({'action':'resolve_signature','metadata':metadata,'request':signature,'leaves':{},'names':{}}) for signature in signatures]
 keys=[item['key'] for item in normalized]
 leaves={key:{'signature':signature} for key,signature in zip(keys,signatures)}
+leaves['owned_closure']={'cpp':'fixture::environment','header':'environment.hpp','owner':'application.callables','capabilities':['copy_storage']}
 callback_types=['callable<'+key+'>' for key in keys]
 names=dict(zip(callback_types,['callback_int','callback_ref','callback_void']))
 functions={
@@ -45,8 +46,9 @@ functions={
   'expression':'scpp::callable_t<void(scpp::int64 &, const scpp::int64 &)>([](scpp::int64 &value, const scpp::int64 &delta) { value += delta; }, true)'},
  'callback_permissions':{'returns':'uint64','parameters':[{'name':'callback','type':callback_types[0],'passing':'const_ref'}],
   'transport':'native','expression':'static_cast<std::uint64_t>(${native:callback}.transfer_permissions())','includes':['cstdint']}}
+factory='callable_from<'+keys[0]+',owned_closure>'
 data={'package':'application.callables','roots':callback_types,'leaves':leaves,'names':names,
-      'application_functions':functions,'apis':list(functions)}
+      'application_functions':functions,'apis':[*functions,factory]}
 def binding(type):
     arguments={'Signature':'source.'+keys[callback_types.index(type)]} if type in callback_types else {}
     return {'source':'source.'+type,'physical':type,'arguments':arguments}
@@ -57,6 +59,8 @@ for key,signature in zip(keys,signatures):
 for name,operation in functions.items():
     bindings['function_'+name+'_return']=binding(operation['returns'])
     for i,parameter in enumerate(operation['parameters']):bindings['function_'+name+'_parameter_'+str(i)]=binding(parameter['type'])
+bindings['api_4_Signature']=binding(keys[0])
+bindings['api_4_Closure']=binding('owned_closure')
 dependencies={f'signature_{i}':binding(key) for i,key in enumerate(keys)}
 requirements=[{'subject':slot,'contract':'application_formed'} for slot in bindings]
 requirements += [{'subject':'dependency:'+slot,'contract':'signature_admitted'} for slot in dependencies]
@@ -67,7 +71,7 @@ prepared={'version':'prepared-api-v1','producer':'fixture.semantic-owner','revis
 envelope={'metadata':metadata,'request':data,'leaves':leaves,'names':names,'imports':{},'layouts':{},
           'action':'generate','mode':'source','prepared':prepared}
 result=plan(envelope)
-assert len(result['units'])==7
+assert len(result['units'])==8
 for unit in result['units']:
     assert 'std::function' not in unit['header'] and 'template' not in unit['header']
 for bad_change,error in [('storage','Signature parameter'),('mode','Unknown family parameter kind'),
@@ -80,6 +84,8 @@ for bad_change,error in [('storage','Signature parameter'),('mode','Unknown fami
     plan(bad,error)
 bad=copy.deepcopy(envelope);bad['prepared']['facts']=[f for f in bad['prepared']['facts'] if f['subject']!='operation']
 plan(bad,'owned_capture_and_signature_admitted')
+bad['api_imports']=result['apis']
+plan(bad,'owned_capture_and_signature_admitted')
 print('PASS: signature roles, generic invocation expansion, prepared capture facts and template-free declarations')
 if not args.core:sys.exit(0)
 fixture='''#pragma once
@@ -89,8 +95,13 @@ struct environment {
     static inline int live=0;
     scpp::int64 offset;
     explicit environment(scpp::int64 value):offset(value) { ++live; }
+#ifdef SCPP_NONCOPYABLE_CLOSURE
+    environment(const environment &)=delete;
+#else
     environment(const environment &other):offset(other.offset) { ++live; }
+#endif
     ~environment() { --live; }
+    scpp::int64 operator()(scpp::int64 value) const { return value + this->offset; }
 };
 }
 '''
@@ -103,8 +114,9 @@ with tempfile.TemporaryDirectory(prefix='scpp-callables-') as directory:
     (app/'public').mkdir(parents=True);(app/'public/environment.hpp').write_text(fixture)
     request=work/'request.json';request.write_text(json.dumps({'mode':'source','prepared':prepared,'request':data}))
     manifest=concrete_types.generate(request,app,sdk,[sdk],'clang++',[])
-    caller='\n'.join('#include "'+manifest['apis'][name]['header']+'"' for name in functions)+'\n'
+    caller='\n'.join('#include "'+manifest['apis'][name]['header']+'"' for name in data['apis'])+'\n'
     caller+='\n'.join('#define '+name+' scpp::'+manifest['apis'][name]['operation']['name'] for name in functions)+'\n'
+    caller+='#define FROM_CLOSURE scpp::'+manifest['apis'][factory]['operation']['name']+'\n'
     caller+=(root/'tests/runtime/native/public_callable_storage.cpp').read_text();(work/'caller.cpp').write_text(caller)
     flags=['-std=c++23','-O1']
     if args.sanitize:flags+=['-fsanitize=address,undefined','-fno-omit-frame-pointer']
@@ -119,6 +131,10 @@ with tempfile.TemporaryDirectory(prefix='scpp-callables-') as directory:
     consumer=time.perf_counter()-start
     subprocess.run(['clang++',*flags,str(work/'caller.o'),*objects,str(args.core.resolve()),'-pthread','-o',str(work/'proof')],check=True)
     subprocess.run([str(work/'proof')],check=True)
+    factory_source=app/manifest['apis'][factory]['source']
+    rejected=subprocess.run([*private,'-DSCPP_NONCOPYABLE_CLOSURE','-fsyntax-only',str(factory_source)],capture_output=True,text=True)
+    assert rejected.returncode and 'is_copy_constructible' in rejected.stderr,rejected.stderr
+    print('PASS: noncopyable closure rejected at the compiled conversion boundary')
     (app/'lib').mkdir();subprocess.run(['ar','rcs',str(app/'lib/libcallables.a'),*objects],check=True);seal_package(app,['callables'])
     reused=concrete_types.generate(request,work/'reuse',sdk,[sdk,app],'clang++',[]);assert not reused['sources']
     print(f'PASS: public-only callable lifetime and sealed reuse; {len(objects)} units at 8 jobs={storage:.4f}s public caller={consumer:.4f}s')

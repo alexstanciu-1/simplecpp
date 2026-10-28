@@ -132,3 +132,14 @@ Owned capture construction currently uses application-function snippets. Capture
 conversion as a reusable recipe, nested/variadic composition, container/Result
 integration and the twelve collection overloads remain pending. See the completion
 inventory for measured costs and the exact bounded proof.
+
+
+## F4 implementation checkpoint
+
+Owned conversion now has a reusable demanded function-family recipe,
+`callable_from<Signature,Closure>`, rather than requiring every application to spell
+native callable construction. It copies a concrete closure, preserves prepared transfer
+permissions, and rejects malformed permission values before capture copying. Exact
+signature/capture admission remains producer-owned. Release/sanitizer proofs cover
+capture independence and lifetime, permission states, noncopyable compile rejection
+and sealed reuse. Signature composition and collection/Result integration remain next.

@@ -20,7 +20,7 @@ each slice. The original inventory is a baseline, not a current completion count
 | C | Four carrier recipes and bounded scalar paths implemented; first prepared canonical path reviewed in C38 | Guarded negation and canonical lazy logical plans implemented in C32/C33; remaining source admission, broader selection and payload-specific integration remain; C38 passes the first-path checkpoint. Both decisions accepted 2026-10-28. |
 | D | Handle storage, presence planning, checked retention, shared ancestry/casts and weak/unique transports implemented (D1–D6) | Retained property/container-field adapters proven in E36/E37 and bounded method transports in D7; scalar same-origin return bindings proven in D8; broader payload/member/planner integration, ownership selections, value storage and source Exception transport remain. |
 | E | Existing vector/hash/boxed foundations; incomplete | Typed/boxed access, observations, removal, creating stores, ordinary reads and append implemented in E23–E32; optional/boxed scalar key composition proven in E33; shared identity key storage/upcasts proven in E34; retained scalar/container-field adapters proven in E36/E37; broader member/key compositions remain; conditional lifecycle, cursor fixes, boxed access/probes, and positional/keyed built-in factories are implemented for the tested domains. |
-| F | Signature normalization/publication and first signature-driven callable storage/invocation proof implemented in F1–F3 | Reusable capture conversion, broader signature/container/Result composition and twelve registered collection overloads; see runtime_core_callable_boundary.md. |
+| F | Signature normalization/publication and signature-driven callable storage/invocation and owned conversion implemented in F1–F4 | Broader signature/container/Result composition and twelve registered collection overloads; see runtime_core_callable_boundary.md. |
 | G | Core utility and scalar debug bindings implemented | Exception/helper gaps and requirement-by-requirement closure audit. |
 
 Full frontend adoption and module migration are excluded. C38 passes the first complete canonical carrier
@@ -3146,3 +3146,27 @@ passed. Generator binaries rebuilt; core archives were reused. Runtime publicati
 refreshed its metadata identity without adding runtime-owned implementation units.
 Broader signature compositions, capture conversion, collection callbacks and carrier
 integration remain open; this is not completion of batch F.
+
+
+## F4 — reusable owned closure conversion (2026-10-28)
+
+The demanded `callable_from<Signature,Closure>` function recipe copies an admitted
+concrete closure into existing native callable storage and preserves compiler-supplied
+transfer permissions. Function-family validation now accepts the same signature roles
+already consumed by the shared materializer. No capture parser, arity-specific factory
+or separate emitter was introduced. Signature and borrowed-capture eligibility remain
+compiler-owned; native constructibility does not establish source admission.
+
+The physical bridge accepts the native permission states 0, 2 and 3 and rejects other
+values before copying. The fixture verifies original-closure mutation/destruction does
+not alter its captured copy, all three permission states, invalid-value cleanup, retained
+lifetime, and missing prepared evidence even when importing a generated API. A compiled
+negative rejects noncopyable closure storage. This covers concrete closure conversion;
+variadic/nested signatures, container/Result integration and collection APIs remain open.
+
+Release and ASan/UBSan/LSan lifetime/allocation proofs and sealed reuse passed. The
+noncopyable compile-negative passed in the sanitizer proof. Six focused metadata
+regressions passed. Eight fixture units compiled at eight jobs in 1.6425s release /
+2.1910s sanitized; public callers took 0.1610s / 0.2168s. Existing owned creation/copy
+measurements remain one allocation each and invocation zero. Core archives were reused;
+generator naming validation rebuilt and runtime publication identity was refreshed.

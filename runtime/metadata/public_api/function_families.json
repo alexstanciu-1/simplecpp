@@ -167,5 +167,40 @@
         "noexcept": true
       }
     }
+  },
+  "callable_from": {
+    "parameters": [
+      "Signature",
+      "Closure"
+    ],
+    "parameter_kinds": {
+      "Signature": "signature"
+    },
+    "function": {
+      "namespace": "scpp",
+      "header": "scpp/callables/${variant}.hpp",
+      "source": "include/core/generated/${variant}.cpp",
+      "operation": {
+        "name": "${variant}",
+        "returns": "callable<${variant:Signature}>",
+        "parameters": [
+          {
+            "name": "closure",
+            "type": "${variant:Closure}",
+            "passing": "const_ref"
+          },
+          {
+            "name": "permissions",
+            "type": "uint8"
+          }
+        ],
+        "transport": "native",
+        "includes": [
+          "scpp/callable_t.hpp",
+          "type_traits"
+        ],
+        "body": "static_assert(std::is_copy_constructible_v<${variant:public_Closure}>);\nconst auto flags = permissions.native_value();\nif (flags != 0 && flags != 2 && flags != 3) throw scpp::runtime_error(\"Invalid callable capture permissions\");\nreturn scpp::callable_t<${variant:native_Signature}>(closure, static_cast<scpp::task_permissions>(flags));"
+      }
+    }
   }
 }

@@ -42,7 +42,7 @@ namespace scpp::api_generation
             if (families.type != value::kind::object)
                 throw std::runtime_error("Function families require an object");
             for (const auto &[name, recipe] : families.fields) {
-                fields_only(recipe, "parameters defaults function", "function family");
+                fields_only(recipe, "parameters defaults parameter_kinds function", "function family");
                 if (recipe.at("parameters").type != value::kind::array || recipe.at("function").type != value::kind::object)
                     throw std::runtime_error("Function family requires parameter array and function object");
                 if (extended.at("families").has(name) || leaves.has(name))

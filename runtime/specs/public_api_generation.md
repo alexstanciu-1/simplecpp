@@ -2288,8 +2288,26 @@ There is no family-name or arity-specific invocation emitter.
 The `callable<Signature>` recipe uses private `callable_t` storage and publishes
 concrete default/copy/move/destruction, invocation, presence and reset operations.
 Public headers contain neither templates nor `std::function`. Native capture permission
-state survives its existing lifecycle. Concrete capture construction currently uses
-application-function recipes; a reusable capture-conversion recipe and collection
-adapters remain pending. A source producer must prove signature/capture admission and
+state survives its existing lifecycle. Concrete capture construction uses the demanded `callable_from` recipe described
+below; collection adapters remain pending. A source producer must prove signature/capture admission and
 snapshot the chosen callback before argument effects. Public invocation checks absence
 after C++ argument evaluation; it does not perform source expression preparation.
+
+
+### Owned closure conversion
+
+`callable_from<Signature,Closure>` is a demanded function-family recipe. Its Signature
+parameter has the same non-storage role as the callable class; Closure is ordinary
+concrete storage with a public call operator. It accepts `const Closure &` and a
+`uint8` permission value and returns the concrete `callable<Signature>`. Conversion
+copies the closure using its ordinary copy semantics. Native `callable_t`/`std::function`
+construction stays private; no runtime-specific closure emitter is added.
+
+Permission values preserve the existing native states: 0 (no transfer), 2 (joined
+shared), 3 (isolated and joined). Other values throw before copying the closure.
+These are physical bridge inputs supplied by compiler preparation, not a source
+permission-granting facility. The producer owns exact signature compatibility,
+copyability, direct/transitive borrowed-capture rejection and transfer eligibility.
+Native copy-constructibility is also asserted during bridge compilation; native C++
+convertibility alone is not proof of source signature admission. Prepared requirements
+are checked on both generation and imported API reuse.

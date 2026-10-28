@@ -2,6 +2,7 @@
 #include "environment.hpp"
 #include <cstdio>
 #include <cstdlib>
+#include <initializer_list>
 #include <new>
 #include <utility>
 static unsigned allocations=0;
@@ -41,5 +42,28 @@ int main() {
     auto mutate=make_void_callback();const auto before=allocations;mutate(value,value);
     CHECK(value==int64(18) && allocations==before);
     CHECK(fixture::environment::live==0);
+    {
+        callback_int retained;
+        {
+            fixture::environment closure(int64(30));
+            retained=FROM_CLOSURE(closure,uint8(2));
+            CHECK(fixture::environment::live==2);
+            CHECK(callback_permissions(retained)==uint64(2));
+            closure.offset=int64(99);
+            CHECK(retained(int64(1))==int64(31));
+            auto local=FROM_CLOSURE(closure,uint8(0));
+            CHECK(callback_permissions(local)==uint64(0));
+            auto transferable=FROM_CLOSURE(closure,uint8(3));
+            CHECK(callback_permissions(transferable)==uint64(3));
+            const auto live=fixture::environment::live;
+            for (const auto invalid : {1,4,255}) {
+                failed=false;
+                try { (void)FROM_CLOSURE(closure,uint8(invalid)); } catch(...) { failed=true; }
+                CHECK(failed && fixture::environment::live==live);
+            }
+        }
+        CHECK(fixture::environment::live==1 && retained(int64(2))==int64(32));
+        retained.reset();CHECK(fixture::environment::live==0);
+    }
     std::printf("PASS: callable captures, copy/move/reset, permissions, snapshot, reference/void invocation; creation allocations=%u copy allocations=%u invocation allocations=0\n",creation,copying);
 }
