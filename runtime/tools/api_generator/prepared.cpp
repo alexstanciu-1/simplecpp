@@ -13,6 +13,27 @@ namespace scpp::api_generation
         return entry.text();
     }
 
+    // Request protocol fields, not semantic type or capability rules.
+    static std::vector<std::string> binding_slots(const value &input)
+    {
+        const auto action = input.get("action");
+        const auto &request = input.at("request");
+        if (action == "resolve_operator")
+            return request.has("operand") ? std::vector<std::string>{"operand"}
+                : std::vector<std::string>{"left", "right"};
+        if (action == "resolve_conditional")
+            return request.has("condition") ? std::vector<std::string>{"condition", "then", "else"}
+                : std::vector<std::string>{"then", "else"};
+        static const std::map<std::string, std::vector<std::string>> protocols = {
+            {"resolve_logical", {"left", "right"}}, {"resolve_coalesce", {"left", "right"}},
+            {"resolve_condition", {"source"}}, {"resolve_conversion", {"source", "target"}},
+            {"resolve_compound", {"target", "right"}}
+        };
+        const auto found = protocols.find(action);
+        if (found == protocols.end()) throw std::runtime_error("Prepared source action is not implemented");
+        return found->second;
+    }
+
     value validate_prepared_request(const value &input)
     {
         const auto mode = input.get("mode", "native");
@@ -31,15 +52,14 @@ namespace scpp::api_generation
         if (required_text(prepared, "action") != input.get("action")
             || json_text(prepared.at("request")) != json_text(input.at("request")))
             throw std::runtime_error("Prepared admission does not match requested operation");
-        // This first vertical path binds the existing logical request protocol.
-        // Other request owners must supply their own binding slots before adoption.
-        if (input.get("action") != "resolve_logical")
-            throw std::runtime_error("Prepared source action is not implemented");
+        const auto slots = binding_slots(input);
         const auto &bindings = prepared.at("bindings");
-        fields_only(bindings, "left right", "prepared bindings");
+        std::string allowed;
+        for (const auto &slot : slots) allowed += slot + " ";
+        fields_only(bindings, allowed, "prepared bindings");
         naming types(metadata_naming_registry(input.at("metadata"), merged_type_leaves(input),
             input.has("names") ? input.at("names") : value::object()));
-        for (const auto *slot : {"left", "right"}) {
+        for (const auto &slot : slots) {
             const auto &binding = bindings.at(slot);
             fields_only(binding, "source physical arguments", "prepared type binding");
             required_text(binding, "source");

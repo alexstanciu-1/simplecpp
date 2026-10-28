@@ -6,7 +6,7 @@ from pathlib import Path
 import subprocess
 import sys
 import time
-from prepared_fixture import logical
+from prepared_fixture import logical, request as prepare_request
 root=Path(__file__).resolve().parents[3]
 sys.path.insert(0,str(root/'runtime/tools'))
 import concrete_types
@@ -55,7 +55,7 @@ bad=copy.deepcopy(prepared);del bad['mode']
 call(bad,'require source mode')
 bad=copy.deepcopy(prepared);bad['prepared']['revision']=''
 call(bad,'nonempty revision')
-bad=logical({**base,'action':'resolve_operator'})
+bad=logical({**base,'action':'names'})
 call(bad,'source action is not implemented')
 # A source attestation cannot bypass the physical operation's own admission.
 bad=logical({**base,'request':{'operation':'logical_and','left':'nullable<int64>','right':'mixed'}})
@@ -64,6 +64,37 @@ call(bad,'Unsupported logical operand pair')
 alias=copy.deepcopy(prepared);alias['names']={'nullable<int64>':'prepared_optional'}
 alias['request']['left']='prepared_optional';alias['prepared']['request']=copy.deepcopy(alias['request'])
 assert call(alias)['left']['projection']['target']=='int64'
+# Every operation request owner uses the same evidence validator.
+cases=[
+    ('resolve_condition', {'source':'result<nullable<int64>>'}, ['source']),
+    ('resolve_conversion', {'source':'nullable<int64>','target':'int8'}, ['source','target']),
+    ('resolve_operator', {'operation':'logical_not','operand':'nullable<int64>'}, ['operand']),
+    ('resolve_operator', {'operation':'add','left':'nullable<int64>','right':'result<int64>'}, ['left','right']),
+    ('resolve_operator', {'operation':'strict_identical','left':'nullable<int64>','right':'null'}, ['left','right']),
+    ('resolve_compound', {'operation':'add_assign','target':'nullable<int64>','right':'int64'}, ['target','right']),
+    ('resolve_coalesce', {'left':'nullable<int64>','right':'int64'}, ['left','right']),
+    ('resolve_conditional', {'form':'ternary','condition':'boolean','then':'nullable<int64>','else':'int64'}, ['condition','then','else']),
+    ('resolve_conditional', {'form':'elvis','then':'nullable<int64>','else':'int64'}, ['then','else']),
+]
+for action,request,slots in cases:
+    plain={'metadata':metadata,'action':action,'request':request}
+    data=prepare_request(plain,slots)
+    result=call(data);assert result.pop('preparation')==data['prepared'] and result==call(plain)
+    for slot in slots:
+        bad=copy.deepcopy(data)
+        bad['prepared']['facts']=[fact for fact in bad['prepared']['facts'] if fact['subject']!=slot]
+        call(bad,'Missing prepared semantic fact: '+slot)
+    bad=copy.deepcopy(data);bad['request']['unapproved_field']=True
+    call(bad,'does not match requested operation')
+    bad=copy.deepcopy(data);bad['prepared']['bindings']['unexpected']=copy.deepcopy(data['prepared']['bindings'][slots[0]])
+    call(bad,'prepared bindings')
+# Formation evidence never substitutes for the separately demanded boundary fact.
+data=prepare_request({'metadata':metadata,'action':'resolve_conversion',
+    'request':{'source':'result<int64>','target':'int64'}},['source','target'])
+data['prepared']['facts']=[fact for fact in data['prepared']['facts']
+    if not (fact['subject']=='source' and fact['contract']=='boundary_admitted')]
+call(data,'Missing prepared semantic fact: source/boundary_admitted')
+print('PASS: all operation request shapes, per-slot facts, whole-request binding and separate boundary admission')
 print('PASS: prepared provenance/bindings, required semantic facts, import non-bypass, aliases and native-mode separation')
 # Timing includes the process and JSON work; not a compiler or runtime benchmark.
 for label,data in [('native',base),('prepared',prepared)]:

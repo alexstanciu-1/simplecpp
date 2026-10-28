@@ -131,3 +131,13 @@ see runtime/specs/public_api_generation.md and the C35 completion evidence. Sour
 requirements and their evidence remain distinct from physical traits and imports.
 The remaining action/generation boundaries and actual frontend producer are not
 implied by this first path; frontend producer integration stays outside this goal.
+
+## C36 operation-owner adoption
+
+All current operation planning actions now consume the same prepared record:
+conditions, conversions, unary/binary operators, compounds, coalescing and both
+conditional forms, as well as logical plans. The type-binding slots are the existing
+request protocols. Source storage-generation roots and dependency demands are still
+not adopted; native generation remains explicit physical-only evidence. Tests check
+per-slot missing evidence and unchanged physical plans, including destinations and
+unselected branches. There is still no real frontend fact producer in this slice.

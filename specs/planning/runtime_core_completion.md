@@ -2253,3 +2253,32 @@ Remaining: adopt this same boundary in other operation and generation requests,
 validate request-specific physical bindings and prepared dependencies there, then
 review the complete carrier path before ownership/callback expansion. Source-level
 producer integration remains excluded from this goal.
+
+## C36 — prepared facts across operation planners (2026-10-28)
+
+The same prepared validator now covers all current operation planning actions:
+conditions, conversions, unary/binary operators, compounds, coalescing, ternary,
+Elvis and logical plans. Binding slots follow the existing request protocols;
+there is no new source type/capability registry or family-name branch. Exact
+request/provenance checking and per-slot required evidence remain centralized.
+Both source and destination/branch facts are required when declared by the producer.
+Application formation does not satisfy a separately required boundary fact.
+
+`check_prepared_requests.py` passes release and ASan/UBSan with leak detection,
+covering nine additional request shapes, every type slot's missing-fact case,
+extra bindings, stale requests, literal-null identity, nested condition observation,
+casts, compounds and lazy selections. For every positive case the prepared plan,
+after removing its evidence record, equals the native physical plan exactly.
+The C35 import/non-bypass/provenance tests remain green. The full prepared logical
+metadata regression also passes; it is not a fresh compiled execution claim.
+
+No runtime behavior or generated consumer body changed, so runtime archives and
+consumer execution builds were not repeated. C35's compiled allocation/lifetime/
+publication proofs remain their recorded evidence. Only prepared.cpp was rebuilt
+in each generator configuration: Ninja recorded 1.301s release / 2.494s sanitizer.
+Five-process logical planning means including startup/JSON were 0.0344s native /
+0.0363s prepared in release and 0.3139s / 0.3183s instrumented; not a runtime cost.
+
+Source-mode storage generation and dependency demands remain the next adoption
+step. Actual frontend fact production and complete compiler integration remain
+excluded. The carrier review is still open, not marked complete by protocol coverage.

@@ -1679,13 +1679,14 @@ A mixed table remains an invalid condition, while a constructed dynamic table is
 true. A skipped RHS avoids both source evaluation and runtime-kind validation.
 
 
-### Prepared source requests — first logical path
+### Prepared source operation requests
 
 Requests without `mode` retain the existing native physical-planning behavior.
 `mode: "native"` is its explicit spelling and rejects a `prepared` record.
-`mode: "source"` requires a `prepared-api-v1` record and currently supports only
-`resolve_logical`. Other source actions fail explicitly; this is not general source
-formation completion. Physical storage generation remains a native request.
+`mode: "source"` requires a `prepared-api-v1` record. The supported operation
+protocols and their type-binding slots are listed below. Other source actions fail
+explicitly; this is not general source formation completion. Physical storage
+generation remains a native request.
 
 The prepared record has these required fields:
 
@@ -1694,7 +1695,7 @@ The prepared record has these required fields:
   certificates independently verified by the API tool.
 - `action`, `request`: exact copies of the selected action and request. A stale or
   repurposed admission record rejects before physical planning.
-- `bindings`: one entry for each `left`/`right` slot, with canonical source identity
+- `bindings`: one entry for each type slot of the selected request, with canonical source identity
   (`source`), canonical physical identity (`physical`) and a source argument map
   (`arguments`). Physical names/aliases resolve through the existing naming owner.
   Source identity and argument meaning remain compiler-owned; the tool retains them.
@@ -1715,3 +1716,23 @@ and an existing specialization cannot bypass missing source evidence. The return
 plan retains the record in `preparation`; no source admission is persisted in a
 physical specialization manifest or reused for another request. Non-prepared plans
 are physical evidence only. Full frontend production/integration remains separate.
+
+
+| Prepared action | Required type-binding slots |
+| --- | --- |
+| resolve_logical, resolve_coalesce | left, right |
+| resolve_condition | source |
+| resolve_conversion | source, target |
+| resolve_compound | target, right |
+| resolve_operator, unary | operand |
+| resolve_operator, binary | left, right |
+| resolve_conditional, ternary | condition, then, else |
+| resolve_conditional, Elvis | then, else |
+
+These slots describe the existing request protocols, not a second semantic type
+registry. The owning resolver still checks operation names, form, type admission
+and physical capabilities. An unselected branch or a destination still needs its
+prepared evidence; laziness cannot bypass static admission. The same validator
+checks every slot, rejects extra bindings and retains the exact request/provenance.
+A completed type application cannot substitute for an independently required
+conversion or operation boundary fact.
