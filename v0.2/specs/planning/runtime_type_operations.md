@@ -243,3 +243,12 @@ release preset and a fresh standalone UBSan copy, both using Ninja, eight build 
 Clang/libc++ and mold. ELF .comment records confirm mold linked both the generator
 and the independent consumer proof. The isolated compiler dependency inventory has
 no original-repository includes. Generated freshness and alias composition pass.
+
+## Checkpoint: string and sequence private boundaries
+
+The user approved simpler explicit decimal/text casts, true/false boolean text and
+no null-to-string cast. The reviewed reuse, exact parsing defaults and toolchain
+fallback are recorded in [string_slice.md](../string_slice.md). Private pointer,
+length, index and text-conversion primitives now have a focused proof. This is an
+intermediate slice: string/vector metadata and public lifecycle/API emission remain
+unfinished, as do public composition tests. No files needed retirement.
