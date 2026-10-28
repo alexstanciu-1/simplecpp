@@ -179,3 +179,15 @@ fixture proves encounter-order filtering, fresh outer membership, mixed child-va
 independence versus dynamic shared-child identity, scalar rejection and partial-result
 cleanup. Capture counters show no adapter environment copies. Complete registry dispatch
 and broader callable access/selection remain separate unfinished work.
+
+
+## F8 selected registration bindings
+
+All twelve source collection registrations now have metadata mappings to the four
+physical bridge recipes. Generic `resolve_api_binding` canonicalizes the supplied
+prepared types and uses existing substitution/naming; it does not perform source
+overload resolution. Sequence/keyed aliases reuse the collection physical identity.
+The compiled collection fixture obtains its demands from these mappings. Source
+preparation, callback admission and no-mutation obligations remain compiler-owned.
+This closes the missing registration-to-physical-demand mapping, not batch F's wider
+callable selection/access requirements or full frontend adoption.

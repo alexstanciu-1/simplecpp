@@ -2360,3 +2360,24 @@ element. Native collection policies continue to own scalar rejection, encounter 
 fresh outer membership, mixed value semantics, dynamic identity and exception cleanup.
 The source producer still supplies exact signature/capture admission and the no-mutation
 contract; these physical adapters do not infer source-language eligibility.
+
+
+### Selected API bindings
+
+`resolve_api_binding` consumes `{"binding": "registry.overload.id", "types": {...}}`.
+The `api_bindings` metadata section maps an already-selected source registration to
+an ordered parameter list and demanded function-family expression. Expressions use
+existing `${variant:Parameter}` substitutions. The tool canonicalizes provided types
+through the shared naming owner, rejects missing/extra/duplicate parameters and
+non-function targets, and returns the canonical `api`, generated `function`, and types.
+It neither selects an overload nor infers its source arguments or callback signature.
+
+Source requests require a prepared binding for each named type slot, plus producer
+requirements/facts for overload/signature admission. Signature/storage dependencies
+use the existing prepared protocol. The returned API enters ordinary generation and
+publication; no new binary inventory, callable registry or code-emission path exists.
+
+All twelve core collection registrations have bindings to the four typed/boxed
+map/filter recipes. Sequence and keyed registrations reuse the corresponding typed
+physical API identity, while their stricter source carrier admission remains
+compiler-owned. Binding inventory tests compare against the existing core declarations.

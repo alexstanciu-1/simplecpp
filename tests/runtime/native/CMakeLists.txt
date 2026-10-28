@@ -637,3 +637,6 @@ add_test(NAME scpp_check_signatures COMMAND ${Python3_EXECUTABLE}
 
 add_test(NAME scpp_check_callable_storage COMMAND ${Python3_EXECUTABLE}
   ${CMAKE_CURRENT_SOURCE_DIR}/check_callable_storage.py --tool $<TARGET_FILE:scpp_api_generator>)
+
+add_test(NAME scpp_check_api_bindings COMMAND ${Python3_EXECUTABLE}
+  ${CMAKE_CURRENT_SOURCE_DIR}/check_api_bindings.py --tool $<TARGET_FILE:scpp_api_generator>)

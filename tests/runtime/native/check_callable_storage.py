@@ -85,7 +85,19 @@ for (box,operation),callback in boxed_callbacks.items():
     functions['make_'+box+'_'+operation]={'returns':callback,'parameters':[], 'uses':[box], 'transport':'native','includes':['environment.hpp'],
         'body':'fixture::environment captured(scpp::int64(0)); return scpp::callable_t<scpp::'+returns+'(scpp::'+box+')>([captured](scpp::'+box+' value) { '+expression+' }, true);'}
     collections[operation.upper()+'_'+box.upper()]=('boxed_collection_'+operation,[box,callback])
-collection_apis={name:family+'<'+','.join(types)+'>' for name,(family,types) in collections.items()}
+collection_apis={}
+for name,(family,types) in collections.items():
+    operation=family.rsplit('_',1)[1]
+    carrier=types[0].split('<')[0]
+    identity='core.collection_'+operation+'.'+carrier
+    values={'Callback':types[-1]}
+    if family.startswith('typed_'):
+        values['T']=types[0].split('<',1)[1].split(',')[0].rstrip('>')
+        if operation=='map':values['R']=types[1].split('<',1)[1].split(',')[0].rstrip('>')
+        if carrier=='hash':values['K']='string'
+    resolved=plan({'action':'resolve_api_binding','metadata':metadata,'request':{'binding':identity,'types':values},'leaves':leaves,'names':names})
+    assert resolved['api']==family+'<'+','.join(types)+'>'
+    collection_apis[name]=resolved['api']
 factory='callable_from<'+keys[0]+',owned_closure>'
 data={'package':'application.callables','roots':[*callback_types,*compositions],'leaves':leaves,'names':names,
       'application_functions':functions,'apis':[*functions,factory,*collection_apis.values()]}

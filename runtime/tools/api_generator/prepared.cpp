@@ -1,3 +1,4 @@
+#include "api_bindings.hpp"
 #include "signatures.hpp"
 #include "prepared.hpp"
 #include "names.hpp"
@@ -39,6 +40,12 @@ namespace scpp::api_generation
     static std::map<std::string, std::string> requested_types(const value &input)
     {
         std::map<std::string, std::string> result;
+        if (input.get("action") == "resolve_api_binding") {
+            const auto binding = resolve_api_binding(input.at("metadata"), merged_type_leaves(input),
+                input.has("names") ? input.at("names") : value::object(), input.at("request"));
+            for (const auto &[parameter, type] : binding.at("types").fields) result[parameter] = type.text();
+            return result;
+        }
         if (input.get("action") == "resolve_signature") {
             const auto signature = resolve_signature(input.at("metadata"), merged_type_leaves(input),
                 input.has("names") ? input.at("names") : value::object(), input.at("request")).at("descriptor");

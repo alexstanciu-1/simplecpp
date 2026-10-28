@@ -1,0 +1,90 @@
+{
+  "core.collection_map.vector": {
+    "parameters": [
+      "T",
+      "R",
+      "Callback"
+    ],
+    "api": "typed_collection_map<vector<${variant:T}>,vector<${variant:R}>,${variant:Callback}>"
+  },
+  "core.sequence_map.vector": {
+    "parameters": [
+      "T",
+      "R",
+      "Callback"
+    ],
+    "api": "typed_collection_map<vector<${variant:T}>,vector<${variant:R}>,${variant:Callback}>"
+  },
+  "core.collection_filter.vector": {
+    "parameters": [
+      "T",
+      "Callback"
+    ],
+    "api": "typed_collection_filter<vector<${variant:T}>,${variant:T},${variant:Callback}>"
+  },
+  "core.sequence_filter.vector": {
+    "parameters": [
+      "T",
+      "Callback"
+    ],
+    "api": "typed_collection_filter<vector<${variant:T}>,${variant:T},${variant:Callback}>"
+  },
+  "core.collection_map.hash": {
+    "parameters": [
+      "T",
+      "R",
+      "K",
+      "Callback"
+    ],
+    "api": "typed_collection_map<hash<${variant:T},${variant:K}>,hash<${variant:R},${variant:K}>,${variant:Callback}>"
+  },
+  "core.keyed_map.hash": {
+    "parameters": [
+      "T",
+      "R",
+      "K",
+      "Callback"
+    ],
+    "api": "typed_collection_map<hash<${variant:T},${variant:K}>,hash<${variant:R},${variant:K}>,${variant:Callback}>"
+  },
+  "core.collection_filter.hash": {
+    "parameters": [
+      "T",
+      "K",
+      "Callback"
+    ],
+    "api": "typed_collection_filter<hash<${variant:T},${variant:K}>,${variant:T},${variant:Callback}>"
+  },
+  "core.keyed_filter.hash": {
+    "parameters": [
+      "T",
+      "K",
+      "Callback"
+    ],
+    "api": "typed_collection_filter<hash<${variant:T},${variant:K}>,${variant:T},${variant:Callback}>"
+  },
+  "core.collection_map.mixed": {
+    "parameters": [
+      "Callback"
+    ],
+    "api": "boxed_collection_map<mixed,${variant:Callback}>"
+  },
+  "core.collection_filter.mixed": {
+    "parameters": [
+      "Callback"
+    ],
+    "api": "boxed_collection_filter<mixed,${variant:Callback}>"
+  },
+  "core.collection_map.dynamic": {
+    "parameters": [
+      "Callback"
+    ],
+    "api": "boxed_collection_map<dynamic,${variant:Callback}>"
+  },
+  "core.collection_filter.dynamic": {
+    "parameters": [
+      "Callback"
+    ],
+    "api": "boxed_collection_filter<dynamic,${variant:Callback}>"
+  }
+}

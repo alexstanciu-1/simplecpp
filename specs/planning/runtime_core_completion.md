@@ -20,7 +20,7 @@ each slice. The original inventory is a baseline, not a current completion count
 | C | Four carrier recipes and bounded scalar paths implemented; first prepared canonical path reviewed in C38 | Guarded negation and canonical lazy logical plans implemented in C32/C33; remaining source admission, broader selection and payload-specific integration remain; C38 passes the first-path checkpoint. Both decisions accepted 2026-10-28. |
 | D | Handle storage, presence planning, checked retention, shared ancestry/casts and weak/unique transports implemented (D1–D6) | Retained property/container-field adapters proven in E36/E37 and bounded method transports in D7; scalar same-origin return bindings proven in D8; broader payload/member/planner integration, ownership selections, value storage and source Exception transport remain. |
 | E | Existing vector/hash/boxed foundations; incomplete | Typed/boxed access, observations, removal, creating stores, ordinary reads and append implemented in E23–E32; optional/boxed scalar key composition proven in E33; shared identity key storage/upcasts proven in E34; retained scalar/container-field adapters proven in E36/E37; broader member/key compositions remain; conditional lifecycle, cursor fixes, boxed access/probes, and positional/keyed built-in factories are implemented for the tested domains. |
-| F | Signature normalization/publication and signature-driven callable storage/invocation and owned conversion implemented in F1–F4; nested/variadic and container/Result proofs in F5; typed/boxed map/filter bridges in F6/F7 | Broader callable selection/access integration and complete twelve-entry dispatch; see runtime_core_callable_boundary.md. |
+| F | Signature normalization/publication and signature-driven callable storage/invocation and owned conversion implemented in F1–F4; nested/variadic and container/Result proofs in F5; typed/boxed map/filter bridges and twelve registration bindings in F6–F8 | Broader callable selection/access integration, shared capture compositions and remaining closure audit; see runtime_core_callable_boundary.md. |
 | G | Core utility and scalar debug bindings implemented | Exception/helper gaps and requirement-by-requirement closure audit. |
 
 Full frontend adoption and module migration are excluded. C38 passes the first complete canonical carrier
@@ -206,18 +206,18 @@ value API exists, not that source lowering has already migrated to it.
 | Catalog identity | Public status / remaining work | Batch |
 | --- | --- | --- |
 | `core.hash.make` | Hash recipe static empty make() factory; collection initialization remains separate | E |
-| `core.collection_map.vector` | Missing callback/algorithm public path | F |
-| `core.collection_map.hash` | Missing callback/algorithm public path | F |
-| `core.collection_map.mixed` | Missing callback/algorithm public path | F |
-| `core.collection_map.dynamic` | Missing callback/algorithm public path | F |
-| `core.collection_filter.vector` | Missing callback/algorithm public path | F |
-| `core.collection_filter.hash` | Missing callback/algorithm public path | F |
-| `core.collection_filter.mixed` | Missing callback/algorithm public path | F |
-| `core.collection_filter.dynamic` | Missing callback/algorithm public path | F |
-| `core.sequence_map.vector` | Missing callback/algorithm public path | F |
-| `core.sequence_filter.vector` | Missing callback/algorithm public path | F |
-| `core.keyed_map.hash` | Missing callback/algorithm public path | F |
-| `core.keyed_filter.hash` | Missing callback/algorithm public path | F |
+| `core.collection_map.vector` | Shared physical recipe and registration binding; bounded proofs F6–F8 | F |
+| `core.collection_map.hash` | Shared physical recipe and registration binding; bounded proofs F6–F8 | F |
+| `core.collection_map.mixed` | Shared physical recipe and registration binding; bounded proofs F6–F8 | F |
+| `core.collection_map.dynamic` | Shared physical recipe and registration binding; bounded proofs F6–F8 | F |
+| `core.collection_filter.vector` | Shared physical recipe and registration binding; bounded proofs F6–F8 | F |
+| `core.collection_filter.hash` | Shared physical recipe and registration binding; bounded proofs F6–F8 | F |
+| `core.collection_filter.mixed` | Shared physical recipe and registration binding; bounded proofs F6–F8 | F |
+| `core.collection_filter.dynamic` | Shared physical recipe and registration binding; bounded proofs F6–F8 | F |
+| `core.sequence_map.vector` | Shared physical recipe and registration binding; bounded proofs F6–F8 | F |
+| `core.sequence_filter.vector` | Shared physical recipe and registration binding; bounded proofs F6–F8 | F |
+| `core.keyed_map.hash` | Shared physical recipe and registration binding; bounded proofs F6–F8 | F |
+| `core.keyed_filter.hash` | Shared physical recipe and registration binding; bounded proofs F6–F8 | F |
 | `core.dbg.int.value` | Published scalar debug binding and flags, G5/G6 | G |
 | `core.dbg.int.flags` | Published scalar debug binding and flags, G5/G6 | G |
 | `core.dbg.float.value` | Published scalar debug binding and flags, G5/G6 | G |
@@ -3231,3 +3231,25 @@ jobs in 16.9920s release / 24.0955s sanitized; public callers took 0.3272s / 0.8
 These single-run fixture costs include earlier callable proofs. Generator/core binaries
 were reused and publication metadata identity refreshed. Full twelve-entry registry
 dispatch and callable access/selection closure remain unfinished.
+
+
+## F8 — selected collection registration bindings (2026-10-28)
+
+Generic `resolve_api_binding` maps an already-selected registration and prepared type
+slots to a canonical demanded function-family API. It reuses existing substitution,
+type naming and preparation owners. All twelve collection registrations have metadata
+bindings; sequence/keyed aliases resolve to the same physical identity as collection
+operations, without duplicate emitted implementations. Source overload selection,
+exact callback admission and no-mutation rules remain compiler-owned.
+
+The inventory test compares all twelve IDs to core declarations, checks source prepared
+evidence and missing/extra/duplicate parameters, and rejects storage-family targets.
+The compiled callable fixture now obtains its collection demands through these bindings
+and confirms identical APIs before compilation. Six focused metadata regressions passed;
+final resolver checks passed in release and under ASan/UBSan/LSan. The compiled release
+fixture passed correctness/allocation/lifetime, noncopyable rejection and sealed reuse:
+42 cumulative units took 19.8128s at eight jobs, public caller 0.3348s. Runtime adapter
+code is unchanged from F7's sanitizer proof, so it was not redundantly recompiled under
+sanitizers; the new resolver itself was sanitized. Generator binaries rebuilt, core
+archives reused, publication identity refreshed. Wider callable selection/access and
+shared-capture coverage remain open; batch F is not yet signed off.

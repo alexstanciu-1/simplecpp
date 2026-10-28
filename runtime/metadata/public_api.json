@@ -839,7 +839,8 @@
     "families": "public_api/families.json",
     "function_sets": "public_api/function_sets.json",
     "global_operators": "public_api/global_operators.json",
-    "function_families": "public_api/function_families.json"
+    "function_families": "public_api/function_families.json",
+    "api_bindings": "public_api/api_bindings.json"
   },
   "constant_sets": {
     "debug_flags": {

@@ -1,3 +1,4 @@
+#include "api_bindings.hpp"
 #include "signatures.hpp"
 #include "scpp/api_generation.hpp"
 #include "value.hpp"
@@ -656,7 +657,7 @@ namespace scpp::api_generation
             function_naming_(function_naming_registry(metadata_,leaves_,names_)) {}
 		value run()
 		{
-			fields_only(this->metadata_,"version types families bindings functions capabilities global_operators conversions function_sets function_families constant_sets conditions selections value_observations", "API metadata");
+			fields_only(this->metadata_,"version types families bindings functions capabilities global_operators conversions function_sets function_families constant_sets conditions selections value_observations api_bindings", "API metadata");
 			if (this->metadata_.at("version").text()!="api-v1") throw std::runtime_error("Unsupported API metadata version");
             for (const auto &[key,t] : this->leaves_.fields) { this->validate_capabilities(t); if (!t.has("signature")) this->claim(t.at("cpp").text(),key); }
             validate_import_capabilities(this->metadata_,this->leaves_,this->names_,this->imports_);
@@ -797,7 +798,10 @@ namespace scpp::api_generation
                 input.has("names") ? input.at("names") : value::object(),input.at("imports"));
             input["metadata"]["types"]=leaves;
         }
-        if (input.get("action") == "resolve_signature") {
+        if (input.get("action") == "resolve_api_binding") {
+            output = resolve_api_binding(input.at("metadata"), input.at("metadata").at("types"),
+                input.has("names") ? input.at("names") : value::object(), input.at("request"));
+        } else if (input.get("action") == "resolve_signature") {
             output = resolve_signature(input.at("metadata"), input.at("metadata").at("types"),
                 input.has("names") ? input.at("names") : value::object(), input.at("request"));
         } else if (input.get("action")=="resolve_logical") {
