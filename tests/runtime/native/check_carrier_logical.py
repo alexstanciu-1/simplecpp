@@ -17,6 +17,7 @@ parser=argparse.ArgumentParser(description=__doc__)
 parser.add_argument('--tool',type=Path,required=True)
 parser.add_argument('--core',type=Path)
 parser.add_argument('--sanitize',action='store_true')
+parser.add_argument('--prepared',action='store_true')
 args=parser.parse_args();args.tool=args.tool.resolve()
 metadata=concrete_types.metadata(root/'runtime')
 families=['nullable','result','result_or_false','result_or_bool']
@@ -24,8 +25,12 @@ names={f+'<'+t+'>':'logical_'+str(i)+'_'+t for i,f in enumerate(families) for t 
 request={'package':'application.carrier_logical','roots':list(names),'names':names}
 
 def resolve(left,right,op='logical_and',meta=metadata,error=None):
-    p=subprocess.run([str(args.tool)],input=json.dumps({'metadata':meta,'names':names,'action':'resolve_logical',
-        'request':{'operation':op,'left':left,'right':right}}),text=True,capture_output=True)
+    envelope={'metadata':meta,'names':names,'action':'resolve_logical',
+        'request':{'operation':op,'left':left,'right':right}}
+    if args.prepared:
+        from prepared_fixture import logical
+        envelope=logical(envelope)
+    p=subprocess.run([str(args.tool)],input=json.dumps(envelope),text=True,capture_output=True)
     if error:
         assert p.returncode and error in p.stderr,p.stderr
         return

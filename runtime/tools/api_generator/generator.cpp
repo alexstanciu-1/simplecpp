@@ -6,6 +6,7 @@
 #include "conversions.hpp"
 #include "conditions.hpp"
 #include "selections.hpp"
+#include "prepared.hpp"
 #include "function_sets.hpp"
 #include "scpp/detail/string_access.hpp"
 #include <set>
@@ -446,6 +447,7 @@ namespace scpp::api_generation
 	string generate(const string &request)
 	{
 		auto input=parse_json(detail::string_access::get(request).native_value()); value output;
+        const auto prepared = validate_prepared_request(input);
         if (input.get("action").starts_with("resolve_")) {
             const auto leaves=merged_type_leaves(input);
             if (input.has("imports")) validate_import_capabilities(input.at("metadata"),leaves,
@@ -470,6 +472,7 @@ namespace scpp::api_generation
 			naming names(input.at("registry")); output=value::array();
 			for (const auto &t : input.at("types").items) { auto [key,name]=names.resolve(t.text()); value row=value::array(); row.items={key,name}; output.items.push_back(row); }
 		} else output=generator(input).run();
+		if (prepared.type != value::kind::null) output["preparation"] = prepared;
 		auto text=json_text(output); return string(text.data(),uint64(text.size()));
 	}
 }

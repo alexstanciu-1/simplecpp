@@ -91,6 +91,7 @@ rather than turning this into another independent type registry.
 Both decisions above were accepted on 2026-10-28. C32 corrects canonical bool/numeric
 logical negation through checked projection. C33 supplies canonical lazy and/or plans. Non-numeric logical admission still
 needs its explicit contract audit and proofs. Source definition/formation/boundary
-validation stays compiler-owned; the physical consumer still needs prepared-demand
-validation and publication tests. These implementation gaps keep carrier sign-off
+validation stays compiler-owned; C35 implements prepared-demand
+validation for logical plans with compiled/publication proofs. Other operation and
+generation boundaries still need adoption. These implementation gaps keep carrier sign-off
 open; ownership/callback expansion is not yet approved by this review.

@@ -1677,3 +1677,41 @@ crossing and boxed/carrier pairs reject. The distinction is metadata-described a
 uses the ordinary condition calls; the generator has no boxed type-name branch.
 A mixed table remains an invalid condition, while a constructed dynamic table is
 true. A skipped RHS avoids both source evaluation and runtime-kind validation.
+
+
+### Prepared source requests — first logical path
+
+Requests without `mode` retain the existing native physical-planning behavior.
+`mode: "native"` is its explicit spelling and rejects a `prepared` record.
+`mode: "source"` requires a `prepared-api-v1` record and currently supports only
+`resolve_logical`. Other source actions fail explicitly; this is not general source
+formation completion. Physical storage generation remains a native request.
+
+The prepared record has these required fields:
+
+- `producer`, `revision`, `admission`: nonempty compiler provenance and the evidence
+  identity approving this exact operation. These are trusted compiler inputs, not
+  certificates independently verified by the API tool.
+- `action`, `request`: exact copies of the selected action and request. A stale or
+  repurposed admission record rejects before physical planning.
+- `bindings`: one entry for each `left`/`right` slot, with canonical source identity
+  (`source`), canonical physical identity (`physical`) and a source argument map
+  (`arguments`). Physical names/aliases resolve through the existing naming owner.
+  Source identity and argument meaning remain compiler-owned; the tool retains them.
+- `requirements`: nonempty `{subject, contract}` records selected by the compiler.
+- `facts`: `{subject, contract, evidence}` records; every requirement must have an
+  explicit matching fact. Subjects identify `left`, `right` or `operation`.
+  Duplicate requirements/facts, unknown subjects and empty evidence reject.
+
+There is no source-capability inference or semantic contract registry in this
+consumer. In particular, imported `copy_storage` does not supply `copyable_value`,
+and successful physical storage does not supply `result_payload`. The compiler
+owns the completeness/truth of the requirement set and admission; this boundary
+checks consistency and missing evidence, not arbitrary source programs.
+
+Validation runs before physical import validation and planning. Both sets of checks
+must pass: prepared evidence cannot authorize an unsupported physical operation,
+and an existing specialization cannot bypass missing source evidence. The returned
+plan retains the record in `preparation`; no source admission is persisted in a
+physical specialization manifest or reused for another request. Non-prepared plans
+are physical evidence only. Full frontend production/integration remains separate.

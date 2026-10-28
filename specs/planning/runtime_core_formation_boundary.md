@@ -123,3 +123,11 @@ work. Neither option is silently implemented or counted as formation completion.
 Unrelated core work can continue while this decision is pending: scoped carrier
 observations and the remaining admitted operation protocols do not require moving
 source semantic ownership. The complete carrier review remains open.
+
+## C35 implementation checkpoint
+
+The first trusted prepared-request consumer is implemented for logical plans;
+see runtime/specs/public_api_generation.md and the C35 completion evidence. Source
+requirements and their evidence remain distinct from physical traits and imports.
+The remaining action/generation boundaries and actual frontend producer are not
+implied by this first path; frontend producer integration stays outside this goal.

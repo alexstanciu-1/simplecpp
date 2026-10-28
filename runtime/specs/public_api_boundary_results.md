@@ -3184,3 +3184,42 @@ permission; narrowing or broadening source semantics is not inferred here.
 Next work remains the prepared-demand consumer and its source/physical distinction,
 then the remaining selection/ownership/callback review. Non-numeric logical source
 admission is not marked universally complete by this boxed slice.
+
+## C35 — first prepared semantic request consumer (2026-10-28)
+
+The C++ API tool now distinguishes native physical requests from source-mode
+requests. The first source path is `resolve_logical`; other source actions reject
+explicitly. A prepared record binds the exact action/request to compiler provenance,
+admission evidence, source/physical type bindings and source argument mappings.
+Explicit semantic requirements must match supplied facts with evidence. Physical
+imports and native storage traits never fill a missing semantic fact. The existing
+physical planner still validates the operation after the prepared boundary passes.
+Returned plans retain the preparation record; physical publication manifests do not
+store a reusable source-admission flag.
+
+The compiler remains responsible for the truth/completeness of its requirements,
+source identities and argument semantics. This consumer checks binding consistency
+and required evidence, not arbitrary source programs or authenticity of JSON.
+The test producer is explicitly a fixture. No frontend semantic extraction,
+frontend producer, new source semantics or general source-formation completion is
+claimed. Native calls without mode remain backward-compatible physical-only calls.
+
+Validation: `check_prepared_requests.py` passes release and instrumented generator
+ASan/UBSan with leak detection. It covers exact-request binding, canonical physical
+identity and aliases, provenance, missing/duplicate evidence, unknown subjects,
+explicit native/source separation, unsupported source actions, and physical admission
+failure despite a supplied source attestation. Missing copyable_value/result_payload
+facts reject even with imported physical capabilities; native copy_storage does not
+substitute. The compiled logical fixture in `--prepared` mode passes release and
+ASan/UBSan/LSan: 36 consumers, 132 success cases, 54 failure/skip groups, zero success
+allocations and sealed application specialization reuse. Runtime archives are reused.
+
+Single-run application storage/caller compile: release 14.4375s/1.0981s; sanitizer
+17.9429s/2.2202s. Runs overlapped, so these are workload observations. Five-process
+planning means including JSON/startup were native/prepared 0.0355s/0.0343s release
+and 0.3160s/0.3206s instrumented; the small differences are not a speedup claim.
+
+Remaining: adopt this same boundary in other operation and generation requests,
+validate request-specific physical bindings and prepared dependencies there, then
+review the complete carrier path before ownership/callback expansion. Source-level
+producer integration remains excluded from this goal.
