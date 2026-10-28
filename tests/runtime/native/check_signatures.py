@@ -2,15 +2,20 @@
 import argparse
 import copy
 import json
+import os
+import shutil
+import tempfile
 from pathlib import Path
 import subprocess
 import sys
 root=Path(__file__).resolve().parents[3]
 sys.path.insert(0,str(root/'runtime/tools'))
 import concrete_types
+from public_package import seal_package
 parser=argparse.ArgumentParser(description=__doc__)
 parser.add_argument('--tool',type=Path,required=True)
-args=parser.parse_args()
+parser.add_argument('--core',type=Path)
+args=parser.parse_args();args.tool=args.tool.resolve()
 base={'action':'resolve_signature','metadata':concrete_types.metadata(root/'runtime'),
       'names':{'vector<int64>':'signature_vector'},'leaves':{},'imports':{}}
 def resolve(request,error=None,envelope=None):
@@ -79,3 +84,52 @@ resolve(request,'callable_signature_admitted',bad)
 bad=copy.deepcopy(source);bad['prepared']['bindings']['parameter_0']['physical']='uint64'
 resolve(request,'binding mismatch',bad)
 print('PASS: canonical signature identities, modes, variadic distinction, origins, nested types and prepared admission')
+
+# Signatures are canonical non-storage declarations, never fake C++ leaf types.
+key=normal['key']
+assert not key.endswith('_')
+data={'package':'application.signatures','roots':[], 'leaves':{key:{'signature':request}}}
+generation={**base,'action':'generate','request':data,'leaves':data['leaves'],'layouts':{}}
+published=resolve(data,envelope=generation)
+assert not published['units']
+record=published['leaves'][key]
+assert record=={'owner':'runtime.signature','signature':normal['descriptor']}
+renamed_generation=copy.deepcopy(generation);renamed_generation['leaves'][key]['signature']=renamed
+renamed_generation['request']['leaves']=renamed_generation['leaves']
+renamed_generation['leaf_imports']=published['leaves']
+assert resolve(data,envelope=renamed_generation)['leaves'][key]==record
+for target in [key,'vector<'+key+'>']:
+    bad=copy.deepcopy(generation);bad['request']['roots']=[target]
+    resolve(data,'Signature descriptor is not storage',bad)
+bad=copy.deepcopy(generation);bad['leaves'][key]['signature']['parameters'][0]['passing']='ref'
+resolve(data,'Signature identity does not match',bad)
+bad=copy.deepcopy(generation);bad['leaves'][key]['cpp']='int'
+resolve(data,'signature leaf',bad)
+prefix='signature_'+key+'_'
+signature_bindings={prefix+'return':bindings['return'],prefix+'parameter_0':bindings['parameter_0']}
+signature_requirements=[{'subject':slot,'contract':'signature_type_admitted'} for slot in signature_bindings]
+signature_requirements.append({'subject':'operation','contract':'callable_signature_admitted'})
+publication_prepared={**prepared,'action':'generate','request':data,'bindings':signature_bindings,
+    'requirements':signature_requirements,'facts':[{**r,'evidence':'fixture/'+r['subject']} for r in signature_requirements]}
+source_generation={**generation,'mode':'source','prepared':publication_prepared}
+assert resolve(data,envelope=source_generation).pop('preparation')==publication_prepared
+bad=copy.deepcopy(source_generation);bad['prepared']['facts']=[]
+resolve(data,'Missing prepared semantic fact',bad)
+print('PASS: canonical signature declarations, imported normalization and non-storage rejection')
+if args.core:
+    with tempfile.TemporaryDirectory(prefix='scpp-signature-publication-') as directory:
+        work=Path(directory);sdk=work/'sdk';app=work/'app'
+        for folder in ['metadata','include','public']:shutil.copytree(root/'runtime'/folder,sdk/folder)
+        (sdk/'lib').mkdir();(sdk/'tools').mkdir()
+        shutil.copy2(args.core,sdk/'lib/libcore.a');shutil.copy2(args.tool,sdk/'tools/scpp_api_generator')
+        seal_package(sdk,['core']);os.environ['SCPP_API_GENERATOR']=str(sdk/'tools/scpp_api_generator')
+        request_file=work/'request.json'
+        request_file.write_text(json.dumps({'mode':'source','prepared':publication_prepared,'request':data}))
+        manifest=concrete_types.generate(request_file,app,sdk,[sdk],'clang++',[])
+        assert not manifest['sources'] and manifest['leaves'][key]==record
+        (app/'lib').mkdir();subprocess.run(['ar','rcs',str(app/'lib/libsignatures.a')],check=True)
+        seal_package(app,['signatures'])
+        request_file.write_text(json.dumps(renamed_generation['request']))
+        reused=concrete_types.generate(request_file,work/'reuse',sdk,[sdk,app],'clang++',[])
+        assert not reused['sources'] and reused['leaves'][key]==record
+        print('PASS: sealed signature-only package reuse without compilation or storage artifacts')

@@ -1,3 +1,4 @@
+#include "signatures.hpp"
 #include "capabilities.hpp"
 #include "names.hpp"
 #include <set>
@@ -59,23 +60,41 @@ namespace scpp::api_generation
 
     value merged_type_leaves(const value &input)
     {
-        validate_registry(input.at("metadata"));
-        auto leaves = input.at("metadata").at("types");
-        if (leaves.type != value::kind::object) throw std::runtime_error("types must be an object");
-        for (const auto &[key, leaf] : leaves.fields) {
-            fields_only(leaf,"cpp header owner native borrow construct includes capabilities", "leaf " + key);
-            leaf.at("cpp").text(); leaf.at("header").text(); leaf.at("owner").text();
+        const auto &metadata = input.at("metadata");
+        validate_registry(metadata);
+        std::vector<value> sources{metadata.at("types")};
+        if (input.has("leaf_imports")) sources.push_back(input.at("leaf_imports"));
+        if (input.has("leaves")) sources.push_back(input.at("leaves"));
+        // Register all identities before normalizing descriptors that reference
+        // other registered types. This does not assign them storage or layout.
+        value registered = value::object();
+        for (const auto &source : sources) {
+            if (source.type != value::kind::object) throw std::runtime_error("Type leaves require an object");
+            for (const auto &[key, leaf] : source.fields) registered[key] = leaf;
         }
-        if (!input.has("leaves")) return leaves;
-        if (input.at("leaves").type != value::kind::object) throw std::runtime_error("leaves must be an object");
-        for (const auto &[key, leaf] : input.at("leaves").fields) {
-            fields_only(leaf,"cpp header owner native borrow construct includes capabilities", "leaf " + key);
+        value leaves = value::object();
+        for (const auto &source : sources) for (const auto &[key, original] : source.fields) {
+            auto leaf = original;
+            if (leaf.has("signature")) {
+                fields_only(leaf, "signature owner", "signature leaf " + key);
+                if (leaf.has("owner") && leaf.at("owner").text() != "runtime.signature")
+                    throw std::runtime_error("Signature descriptors have canonical ownership");
+                const auto normalized = resolve_signature(metadata, registered,
+                    input.has("names") ? input.at("names") : value::object(), leaf.at("signature"));
+                if (normalized.at("key").text() != key)
+                    throw std::runtime_error("Signature identity does not match its descriptor: " + key);
+                leaf["signature"] = normalized.at("descriptor"); leaf["owner"] = "runtime.signature";
+            } else {
+                fields_only(leaf, "cpp header owner native borrow construct includes capabilities", "leaf " + key);
+            }
             if (leaves.has(key)) {
                 for (const auto &[field, item] : leaf.fields)
                     if (!leaves.at(key).has(field) || json_text(leaves.at(key).at(field)) != json_text(item))
                         throw std::runtime_error("Conflicting leaf identity: " + key);
             } else {
-                leaf.at("cpp").text(); leaf.at("header").text(); leaf.at("owner").text();
+                if (!leaf.has("signature")) {
+                    leaf.at("cpp").text(); leaf.at("header").text(); leaf.at("owner").text();
+                }
                 leaves[key] = leaf;
             }
         }

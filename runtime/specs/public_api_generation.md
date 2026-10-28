@@ -2242,3 +2242,27 @@ and origin edits invalidate its prepared admission. Full type formation, variadi
 packing, capture eligibility and source body analysis remain compiler-owned. The
 signature descriptor is a first generation-layer step; callable class materialization,
 capture conversion and publication integration are not implemented by this action.
+
+
+### Non-storage signature declarations
+
+`resolve_signature` also returns `key`, a deterministic registry identifier derived
+from the structural name without its trailing generated-name terminator. A declaration
+may use that key in `leaves` with `{"signature": descriptor}`. The tool normalizes the
+descriptor, verifies that it matches the key and assigns canonical descriptor ownership
+`runtime.signature`. This is an identity owner, not a claim that a binary storage unit
+exists. Signature declarations have no `cpp`, header, layout or storage capabilities.
+They cannot be roots, container elements or other ordinary storage arguments.
+
+Signature descriptors are exported in the existing leaf inventory. Imported and
+local declarations are normalized in C++ before comparison; authored parameter names
+and omitted passing defaults therefore do not create conflicting definitions. The
+publication driver passes dependency declarations as `leaf_imports`, retaining its
+binary/SDK checks and leaving semantic normalization to the C++ tool. Ordinary leaf
+conflicts remain rejected. There is no signature-specific publication registry.
+
+Source generation requests that declare signatures need bindings for
+`signature_<key>_return` and `signature_<key>_parameter_<index>`, plus producer semantic
+requirements/facts. A signature-only package emits no C++ storage units. This boundary
+supports canonical declaration/reuse; explicitly signature-parameterized class recipes
+and native function-type materialization remain a subsequent step.

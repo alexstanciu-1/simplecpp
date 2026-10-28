@@ -73,6 +73,9 @@ namespace scpp::api_generation
         identity.arguments.insert(identity.arguments.begin(), returned);
         value result = value::object(); result["descriptor"] = descriptor;
         result["identity"] = identity.canonical(); result["name"] = structural_name(identity);
+        auto key = structural_name(identity);
+        if (!key.empty() && key.back() == '_') key.pop_back();
+        result["key"] = key;
         result["operation_signature"] = operation;
         return result;
     }

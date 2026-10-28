@@ -110,3 +110,13 @@ cover return and input storage, with the exact request preserving mode/origin fa
 No callback class, capture factory or collection API is claimed yet. The next step
 must make signature-driven class methods and native signature storage consume this
 same descriptor, rather than introducing an independent signature parser/emitter.
+
+
+## F2 implementation checkpoint
+
+Canonical signatures can now be declared as non-storage leaves, normalized and
+published through the existing inventory. Source generation binds their return/input
+storage facts. Local/imported descriptors normalize in C++ before comparison; the
+publication driver supplies imported leaves without performing semantic normalization.
+Fake cpp types and storage use of signatures reject. Callable recipe parameter roles,
+native function-type formation and invocation expansion are still the next boundary.

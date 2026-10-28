@@ -123,6 +123,7 @@ def generate(request, output, runtime, dependencies, compiler, flags):
     api = metadata(runtime)
     api_identity = digest(json.dumps(api, sort_keys=True).encode())
     imported_apis = {}
+    leaf_imports = {}
     imported, leaves, names = {}, dict(data.get('leaves', {})), dict(data.get('names', {}))
     for dependency in dependencies:
         manifest = json.loads((dependency/'public/specializations.json').read_text())
@@ -145,9 +146,9 @@ def generate(request, output, runtime, dependencies, compiler, flags):
                 raise ValueError('Conflicting API ownership: '+key)
             imported_apis[key] = value
         for key, value in manifest['leaves'].items():
-            if key in leaves and leaves[key] != value:
-                raise ValueError('Conflicting leaf identity: '+key)
-            leaves[key] = value
+            if key in leaf_imports and leaf_imports[key] != value:
+                raise ValueError('Conflicting imported leaf identity: '+key)
+            leaf_imports[key] = value
         for key, value in manifest['types'].items():
             if key in imported and imported[key] != value:
                 raise ValueError('Duplicate/conflicting definition ownership: '+key)
@@ -156,7 +157,7 @@ def generate(request, output, runtime, dependencies, compiler, flags):
                 raise ValueError('Conflicting concrete name: '+key)
             names[key] = value['name']
     tool = generator_tool(runtime)
-    envelope = {'metadata':api,'request':data,'api_imports':imported_apis,'imports':imported,'leaves':leaves,'names':names,'layouts':{}}
+    envelope = {'metadata':api,'request':data,'api_imports':imported_apis,'imports':imported,'leaves':leaves,'leaf_imports':leaf_imports,'names':names,'layouts':{}}
     envelope.update(context)
     def plan():
         return json.loads(run([tool], json.dumps(envelope)))

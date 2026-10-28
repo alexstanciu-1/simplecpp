@@ -282,7 +282,11 @@ namespace scpp::api_generation
 		value materialize(const std::string &text)
 		{
 			auto [canonical,name]=this->naming_.resolve(text);
-			if (this->leaves_.has(canonical)) return this->leaves_.at(canonical);
+			if (this->leaves_.has(canonical)) {
+                if (this->leaves_.at(canonical).has("signature"))
+                    throw std::runtime_error("Signature descriptor is not storage: " + canonical);
+                return this->leaves_.at(canonical);
+            }
 			if (this->exports_.has(canonical)) return this->exports_.at(canonical);
 			if (this->imports_.has(canonical)) { this->exports_[canonical]=this->imports_.at(canonical); return this->exports_.at(canonical); }
 			if (!this->visiting_.insert(canonical).second) throw std::runtime_error("Unresolved layout dependency cycle: "+canonical);
@@ -581,7 +585,7 @@ namespace scpp::api_generation
 		{
 			fields_only(this->metadata_,"version types families bindings functions capabilities global_operators conversions function_sets function_families constant_sets conditions selections value_observations", "API metadata");
 			if (this->metadata_.at("version").text()!="api-v1") throw std::runtime_error("Unsupported API metadata version");
-            for (const auto &[key,t] : this->leaves_.fields) { this->validate_capabilities(t); this->claim(t.at("cpp").text(),key); }
+            for (const auto &[key,t] : this->leaves_.fields) { this->validate_capabilities(t); if (!t.has("signature")) this->claim(t.at("cpp").text(),key); }
             validate_import_capabilities(this->metadata_,this->leaves_,this->names_,this->imports_);
 			for (const auto &[key,t] : this->imports_.fields) {
 				if (this->naming_.resolve(key).second!=t.at("name").text()) throw std::runtime_error("Conflicting concrete name: "+key);

@@ -20,7 +20,7 @@ each slice. The original inventory is a baseline, not a current completion count
 | C | Four carrier recipes and bounded scalar paths implemented; first prepared canonical path reviewed in C38 | Guarded negation and canonical lazy logical plans implemented in C32/C33; remaining source admission, broader selection and payload-specific integration remain; C38 passes the first-path checkpoint. Both decisions accepted 2026-10-28. |
 | D | Handle storage, presence planning, checked retention, shared ancestry/casts and weak/unique transports implemented (D1–D6) | Retained property/container-field adapters proven in E36/E37 and bounded method transports in D7; scalar same-origin return bindings proven in D8; broader payload/member/planner integration, ownership selections, value storage and source Exception transport remain. |
 | E | Existing vector/hash/boxed foundations; incomplete | Typed/boxed access, observations, removal, creating stores, ordinary reads and append implemented in E23–E32; optional/boxed scalar key composition proven in E33; shared identity key storage/upcasts proven in E34; retained scalar/container-field adapters proven in E36/E37; broader member/key compositions remain; conditional lifecycle, cursor fixes, boxed access/probes, and positional/keyed built-in factories are implemented for the tested domains. |
-| F | Signature normalization implemented in F1 after the F0 audit | Signature-driven class materialization, callable transport and twelve registered collection overloads; see runtime_core_callable_boundary.md. |
+| F | Signature normalization/declaration publication implemented in F1/F2 after the F0 audit | Signature-driven class materialization, callable transport and twelve registered collection overloads; see runtime_core_callable_boundary.md. |
 | G | Core utility and scalar debug bindings implemented | Exception/helper gaps and requirement-by-requirement closure audit. |
 
 Full frontend adoption and module migration are excluded. C38 passes the first complete canonical carrier
@@ -3091,3 +3091,29 @@ signatures.cpp translation unit. These are generator compile costs, not compiler
 public-caller rebuild timings. Core archives/publication were reused. Callback runtime
 allocation/lifetime measurements remain pending actual callable materialization; this
 shape-normalization slice does not claim such coverage.
+
+
+## F2 — canonical signature declarations and publication (2026-10-28)
+
+Repair the leaf-definition boundary before callable materialization: signatures are
+non-storage descriptors, with no fake cpp/header/layout. A canonical key derived by
+F1 must match the normalized descriptor. They use the existing leaf inventory and
+source prepared bindings; direct roots/container arguments reject until an explicit
+signature role consumes them. Descriptor ownership is canonical and does not imply
+a runtime binary definition.
+
+Dependency leaves now enter the C++ merge owner as `leaf_imports`; the Python driver
+continues checking dependency binaries/SDKs but no longer duplicates local-versus-import
+semantic comparison. This allows equivalent renamed/defaulted signature declarations
+to normalize before comparison while keeping ordinary leaf conflict checks. The
+signature-only publication proof seals and reuses a declaration package with zero
+emitted storage units; no C++ consumer compilation is needed for that package. Full
+callable class/native signature/capture materialization remains incomplete.
+
+Nine focused release regressions passed. Signature declaration/normalization and
+sealed signature-only reuse passed in release and under ASan/UBSan/LSan. The existing
+compiled application-function proof also passed after the import-merge change,
+including lifetime/allocation assertions, compile negatives and sealed reuse; its
+18 units compiled at eight jobs in 5.7623s and its public caller in 0.1373s. These
+are regression fixture costs, not callable runtime measurements. Generator binaries
+were rebuilt; runtime core archives and global publication were reused.

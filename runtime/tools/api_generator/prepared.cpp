@@ -49,6 +49,18 @@ namespace scpp::api_generation
             return result;
         }
         if (input.get("action") == "generate") {
+            if (input.at("request").has("leaves")) {
+                const auto leaves = merged_type_leaves(input);
+                for (const auto &[key, leaf] : input.at("request").at("leaves").fields) {
+                    if (!leaf.has("signature")) continue;
+                    const auto &signature = leaves.at(key).at("signature");
+                    const auto prefix = "signature_" + key + "_";
+                    result[prefix + "return"] = signature.at("returns").text();
+                    unsigned index = 0;
+                    for (const auto &parameter : signature.at("parameters").items)
+                        result[prefix + "parameter_" + std::to_string(index++)] = parameter.at("type").text();
+                }
+            }
             const auto &roots = input.at("request").at("roots");
             if (roots.type != value::kind::array) throw std::runtime_error("Prepared roots require an array");
             for (std::size_t index = 0; index < roots.items.size(); ++index)
