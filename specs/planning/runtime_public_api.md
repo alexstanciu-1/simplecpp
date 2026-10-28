@@ -2,17 +2,19 @@
 Doc Status: planning
 
 Date: 2026-10-27. Planning baseline: `94361018b`.
-Status: first public-boundary slice implemented; remaining phases proposed.
+Status: paused by the user on 2026-10-28 pending runtime restructuring in another chat.
 
-## Current core completion inventory
+## Current core completion inventory and resume instructions
 
-The [runtime-core completion inventory and batch plan](runtime_core_completion.md)
-records the remaining work at `6a1cb4af2`, excluding module migrations. It distinguishes
-published values, generatable but incomplete families, missing contracts and native-only
-surfaces needing explicit scope decisions. All 55 core catalog function signatures are
-accounted for. It supersedes informal percentage estimates, not the semantic contracts
-or previously accepted design decisions below. The next proposed slice is ordinary
-concrete numeric arithmetic/comparisons; implementation awaits discussion.
+The [runtime-core completion plan and paused handoff](runtime_core_completion.md)
+contains the current implementation status through `5a6d69f4e`, explicit remaining
+work and resume instructions. Read it before continuing; the original phases below
+are planning history and must be reconciled with the restructuring outcome.
+
+The [runtime/public API simplification side audit](runtime_public_api_simplification_side_audit_2026_10_28.md)
+records redundancy, ownership and retirement concerns for that restructuring. Its
+older inspection snapshot requires revalidation. Neither this pause nor the audit
+changes the agreed language contracts or declares runtime-core completion.
 
 ## Goal and terminology
 

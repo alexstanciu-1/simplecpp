@@ -5,6 +5,82 @@ Checkpoint: 2026-10-27, implementation baseline `6a1cb4af2`.
 This is the current completion inventory under [the runtime API migration plan](runtime_public_api.md),
 not a new semantic registry. No implementation is authorized merely by a row here.
 
+## Paused handoff — 2026-10-28
+
+**Status: paused by the user. Do not continue this completion goal automatically.**
+The user is restructuring the runtime in another chat because the current design has
+accumulated redundancy. This goal is unfinished, not blocked or completed. Its original
+scope and accepted language contracts remain intact; implementation sequencing and
+mechanisms must be reconciled with the restructuring before any further slices.
+
+Last implementation checkpoint: `5a6d69f4e` on `v0.2/develop-cpp`, pushed to
+`origin` (`https://github.com/alexstanciu-1/simplecpp.git`). No build/test process or
+uncommitted implementation change remained at handoff. This documentation commit also
+includes the previously untracked
+[runtime/public API simplification side audit](runtime_public_api_simplification_side_audit_2026_10_28.md).
+That audit used earlier revisions: its fingerprints, counts, consumer references and
+proposals require reinspection; it is planning evidence, not semantic authority.
+
+### Implemented and verified at pause
+
+- A1/A2/B1/B2 are complete only for their agreed bounded scopes. C/D/E/G retain the
+  limitations in the status table below; none is silently promoted to complete.
+- Callable F1–F5: canonical signature identity/publication; concrete lifecycle and
+  invocation; owned closure conversion; nested/variadic physical signatures; bounded
+  vector/hash and Result composition. Source eligibility remains compiler-owned.
+- F6/F7: typed and boxed map/filter metadata adapters reuse native algorithms.
+  Proofs cover element-type changes, key/order preservation, fresh membership,
+  mixed value versus dynamic identity, empty/scalar rejection, exceptions, capture
+  copies and lifetime. These are prepared public API proofs, not frontend adoption.
+- F8: all twelve registered collection overloads map through generic API bindings
+  to four shared physical recipes. Sequence/keyed aliases reuse physical identities.
+  Generator/protocol changes and six focused metadata regressions passed; final
+  binding checks passed in release and under ASan/UBSan/LSan.
+- Latest compiled release proof: 42 cumulative fixture units at eight jobs, 19.8128s;
+  public-only caller 0.3348s. Allocation/lifetime, compiled rejection and sealed reuse
+  passed. The unchanged runtime adapters had passed ASan/UBSan/LSan in F7 (24.0955s
+  implementation / 0.8896s caller). These are single-run fixture measurements, not
+  full compiler or runtime rebuild costs.
+
+### Explicit resume procedure
+
+1. Resume only after an explicit user instruction. Read this handoff, the status
+   table, `runtime_wrapper_policy.md`, `runtime_core_callable_boundary.md`, the linked
+   side audit, and the restructuring chat's resulting documents/commits. Follow
+   repository onboarding and owning normative specs before edits.
+2. Inspect current branch, worktree, HEAD and remote divergence. Do not reset or
+   overwrite restructuring work, restore retired files, or cherry-pick old adapters
+   merely to make historical tests pass. The checkpoint above is evidence, not a
+   required target architecture.
+3. Reconcile the completion inventory with the new ownership model. Classify each
+   old recipe, resolver, manifest/probe path and test as retained, migrated, replaced
+   or retired. Keep one authoritative mechanism for each responsibility; retain
+   distinct source admission, representation and execution contracts where needed.
+   Revalidate the side audit's retirement gates and live compiler middleware users.
+4. Update this plan's status/next slice around the actual restructuring outcome.
+   Preserve outstanding C/D/E/F/G obligations: broader carrier payload/selection
+   integration; ownership/member/value/Exception transport; remaining keyed/member
+   compositions; callable access/selection and shared captures; helper/exception gaps
+   and contract-by-contract closure. Modules and full frontend adoption remain excluded.
+5. Before restructuring, the next candidate was callable selection/access and shared
+   capture coverage after F8. **Do not resume that sequence blindly.** Prefer the
+   smallest coherent slice in the new owner; report a wide ownership refactor for
+   user confirmation rather than silently extending scope.
+6. Re-establish focused validation using surviving tools. At this checkpoint the
+   relevant scripts were `tests/runtime/native/check_api_bindings.py` (metadata and
+   prepared admission), `check_callable_storage.py` (compiled ownership/collection/
+   publication proof), and `check_signatures.py`. Their generator/core arguments
+   pointed into `compiler/my-try-cpp/build/runtime/`; sanitizer equivalents lived in
+   `build/sanitizers/runtime/`. Paths and cached packages may be obsolete after the
+   restructuring: verify or regenerate through the new supported path first.
+7. Batch meaningful release correctness/allocation/lifetime/publication tests, run
+   focused sanitizer checks for changed ownership or generator behavior, and measure
+   public-caller compilation separately from implementation compilation. Do not
+   repeatedly rebuild unchanged core merely to update planning documents.
+8. Commit and push tested coherent slices to the agreed branch after each commit.
+   Resume the persistent goal only through the user's resume action; do not mark it
+   complete until every original scoped obligation has current authoritative proof.
+
 ## Current implementation status
 
 Updated 2026-10-28. This summary supersedes unfinished-work statements in the
