@@ -273,3 +273,29 @@ build with no original-tree dependencies. The generated consumer also passes
 ASan+UBSan with libstdc++ (known environment LSan limitation retained). Full-family
 text proofs cover extrema of all eight integer representations. See the string
 contract for the exact evidence and storage tradeoff.
+
+## Requested follow-on review: hash, mixed and dynamic
+
+After generated vectors, the user requested review of porting `hash_t`, then
+`mixed_t`, then `dynamic_t`. This follow-on review is now authorized; the earlier
+exclusion of mixed/dynamic applies to the original scalar/string/vector delivery,
+not to this subsequently requested review. Complete its remaining composition audit
+as well; do not substitute follow-on work for unfinished original requirements.
+
+Hard constraints from the user:
+
+- Preserve hash_t's custom Swiss-table implementation and core algorithms. Do not
+  replace it with std::unordered_map, another container, or a newly designed table.
+- Adapt the public API and metadata/generator wiring where needed for v0.2.
+- mixed_t and dynamic_t must use hash_t as their backing hash implementation.
+- Continue bounded reviewed reuse into v0.2, with validated slice commits and no
+  generated or compiled artifacts tracked in Git.
+
+Start with runtime/specs/hash_t.md, runtime/include/scpp/hash_t.hpp and its
+support/hash_t.hpp/.cpp implementation. Then inspect mixed_t.hpp and its support
+files, followed by dynamic_t.hpp. Establish the dependency and ownership boundaries,
+existing core invariants and behavior proofs before proposing a port. Preserve the
+core behind an adapted public boundary; report a blocker if that cannot be done
+without changing the protected algorithms. No bulk module import is authorized by
+this queue entry. Record the bounded port slices and unresolved semantics after
+the review rather than guessing them in advance.
