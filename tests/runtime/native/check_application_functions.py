@@ -21,23 +21,37 @@ parser.add_argument('--sanitize',action='store_true')
 args=parser.parse_args();args.tool=args.tool.resolve()
 leaves={'record':{'cpp':'fixture::record','header':'member_record.hpp','owner':'application.members',
                   'capabilities':['default_storage']}}
-names={'shared<record>':'member_owner','vector<shared<record>>':'member_owners'}
+names={'vector<int64>':'member_values','shared<record>':'member_owner','vector<shared<record>>':'member_owners'}
 receiver={'name':'owner','type':'shared<record>','passing':'const_ref'}
 functions={
  'read_member':{'returns':'int64','parameters':[receiver], 'expression':'${native:owner}.deref().value'},
  'write_member':{'returns':'int64','parameters':[receiver,{'name':'value','type':'int64'}],
                  'body':'auto &object = ${native:owner}.deref(); object.value = value; return object.value;'}}
-data={'package':'application.members','roots':['vector<shared<record>>'],'leaves':leaves,'names':names,
-      'application_functions':functions,'apis':list(functions)}
+paths={name:{'root':'vector<int64>','depth':1,'operation':operation}
+       for name,operation in [('member_value_read','existing_read'),('member_value_store','existing_store')]}
+functions.update({
+ 'replace_values':{'returns':'void','parameters':[receiver,{'name':'value','type':'vector<int64>','passing':'const_ref'}],
+                   'expression':'${native:owner}.deref().values = value'},
+ 'read_field_value':{'returns':'int64','parameters':[receiver,{'name':'key','type':'int64'}],
+                     'expression':'scpp::path_member_value_read(${native:owner}.deref().values, key)',
+                     'includes':['scpp/access/member_value_read.hpp']},
+ 'write_field_value':{'returns':'int64','parameters':[receiver,{'name':'key','type':'int64'},{'name':'value','type':'int64'}],
+                      'body':'scpp::path_member_value_store(${native:owner}.deref().values, key, value); return value;',
+                      'includes':['scpp/access/member_value_store.hpp']}})
+data={'package':'application.members','roots':['vector<int64>','vector<shared<record>>'],'leaves':leaves,'names':names,
+      'application_functions':functions,'paths':paths,'apis':[*paths,*functions]}
 def binding(physical,arguments=None):
     return {'source':'source.'+physical,'physical':physical,'arguments':{k:'source.'+v for k,v in (arguments or {}).items()}}
-bindings={'root_0':binding('vector<shared<record>>',{'T':'shared<record>'})}
+bindings={'root_0':binding('vector<int64>',{'T':'int64'}),'root_1':binding('vector<shared<record>>',{'T':'shared<record>'})}
+for name in paths:
+    bindings['path_'+name+'_root']=binding('vector<int64>',{'T':'int64'})
+    for suffix in ['value','key_0','element_0']:bindings['path_'+name+'_'+suffix]=binding('int64')
 for name,operation in functions.items():
     prefix='function_'+name+'_'
     bindings[prefix+'return']=binding(operation['returns'])
     for i,parameter in enumerate(operation['parameters']):
         type=parameter['type']
-        bindings[prefix+'parameter_'+str(i)]=binding(type,{'T':'record'} if type=='shared<record>' else {})
+        bindings[prefix+'parameter_'+str(i)]=binding(type,{'T':'record'} if type=='shared<record>' else {'T':'int64'} if type=='vector<int64>' else {})
 dependencies={'target':binding('record')}
 requirements=[{'subject':slot,'contract':'application_formed'} for slot in bindings]
 requirements += [{'subject':'dependency:target','contract':'application_formed'},
@@ -55,7 +69,7 @@ def plan(value,error=None):
     assert result.returncode==0,result.stderr
     return json.loads(result.stdout)
 result=plan(envelope)
-assert set(result['apis'])==set(functions)
+assert set(result['apis'])==set(data['apis'])
 for imported in [{},result['apis']]:
     bad=copy.deepcopy(envelope);bad['api_imports']=imported
     bad['prepared']['facts']=[f for f in bad['prepared']['facts'] if f['subject']!='operation']
@@ -76,10 +90,12 @@ print('PASS: application signature facts, admission, demand-only emission and ow
 if not args.core:sys.exit(0)
 fixture='''#pragma once
 #include "scpp/integers.hpp"
+#include "scpp/member_values.hpp"
 namespace fixture {
 struct record {
     static inline int live=0;
     scpp::int64 value{0};
+    scpp::member_values values;
     record() { ++live; }
     ~record() { --live; }
     record(const record &)=delete;

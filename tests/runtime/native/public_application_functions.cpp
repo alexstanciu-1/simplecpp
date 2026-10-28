@@ -39,5 +39,29 @@ int main() {
         CHECK(fixture::record::live==live && read_member(selected)==int64(23));
     }
     CHECK(fixture::record::live==0);
+    {
+        auto origin=member_owner::make();member_values initial;initial.append(int64(3));
+        replace_values(origin,initial);
+        auto selected=origin.retain_present(); // Capture owner before key/RHS effects.
+        origin=member_owner::make();
+        member_values replacement;replacement.append(int64(17));
+        replace_values(selected,replacement); // RHS replaces the selected object's field.
+        CHECK(write_field_value(selected,int64(0),int64(29))==int64(29));
+        CHECK(read_field_value(selected,int64(0))==int64(29));
+        bool failed=false;try { (void)read_field_value(origin,int64(0)); } catch(...) { failed=true; }
+        CHECK(failed); // The originating variable now denotes a different object.
+        const auto before=allocations;
+        for(int i=0;i<100;++i) {
+            CHECK(write_field_value(selected,int64(0),int64(i))==int64(i));
+            CHECK(read_field_value(selected,int64(0))==int64(i));
+        }
+        CHECK(allocations==before); // No extracted field-container copy.
+        member_values empty;replace_values(selected,empty);failed=false;
+        try { (void)write_field_value(selected,int64(0),int64(42)); } catch(...) { failed=true; }
+        CHECK(failed); // Existing-only write rechecks the current field bounds.
+        failed=false;try { (void)read_field_value(selected,int64(0)); } catch(...) { failed=true; }
+        CHECK(failed); // A failed write did not regrow the cleared field.
+    }
+    CHECK(fixture::record::live==0);
     std::puts("PASS: retained property receiver, RHS replacement/removal, failure ordering and zero-allocation access");
 }

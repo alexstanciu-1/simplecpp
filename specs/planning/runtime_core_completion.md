@@ -19,7 +19,7 @@ each slice. The original inventory is a baseline, not a current completion count
 | B2 | Complete for the agreed non-carrier special/mutation and text public paths; closure evidence below | Carrier forms C; indexed retention E; native exception inspection and overflow disposition G. |
 | C | Four carrier recipes and bounded scalar paths implemented; first prepared canonical path reviewed in C38 | Guarded negation and canonical lazy logical plans implemented in C32/C33; remaining source admission, broader selection and payload-specific integration remain; C38 passes the first-path checkpoint. Both decisions accepted 2026-10-28. |
 | D | Handle storage, presence planning, checked retention, shared ancestry/casts and weak/unique transports implemented (D1–D6) | First retained property-adapter publication proven in E36; broader member access, operation-planner integration, ownership selections, value storage and source Exception transport remain. |
-| E | Existing vector/hash/boxed foundations; incomplete | Typed/boxed access, observations, removal, creating stores, ordinary reads and append implemented in E23–E32; optional/boxed scalar key composition proven in E33; shared identity key storage/upcasts proven in E34; broader key compositions and field-owner retention remain; conditional lifecycle, cursor fixes, boxed access/probes, and positional/keyed built-in factories are implemented for the tested domains. |
+| E | Existing vector/hash/boxed foundations; incomplete | Typed/boxed access, observations, removal, creating stores, ordinary reads and append implemented in E23–E32; optional/boxed scalar key composition proven in E33; shared identity key storage/upcasts proven in E34; retained scalar/container-field adapters proven in E36/E37; broader member/key compositions remain; conditional lifecycle, cursor fixes, boxed access/probes, and positional/keyed built-in factories are implemented for the tested domains. |
 | F | Pending | Callable transport and registered collection algorithms. |
 | G | Core utility and scalar debug bindings implemented | Exception/helper gaps and requirement-by-requirement closure audit. |
 
@@ -2966,3 +2966,27 @@ These are single-run fixture measurements with ordinary scheduling/cache variati
 not evidence that sanitizing improves compile speed. Generator binaries were rebuilt;
 core archives and runtime publication were reused because no core representation or
 runtime-global metadata changed.
+
+
+## E37 — retained container-field path composition (2026-10-28)
+
+Application adapters now have a focused composition proof for a vector field inside
+a retained shared record. The private adapter borrows that field and invokes the
+existing demanded indexed-path operation; it does not extract/copy a container or
+return an interior reference. Replacing the originating handle cannot redirect the
+write. Replacing the selected object's field during RHS evaluation is observed by
+commit, and clearing it causes existing-only write failure without regrowing it.
+Repeated scalar field reads/stores allocate nothing.
+
+The fixture explicitly demands the field's concrete representation before its record
+layout is probed. Source record layout discovery, member admission and evaluation
+sequencing remain compiler-owned; no implicit layout inference is claimed. This
+closes the first retained container-field composition proof, not general method calls,
+recursive source layouts, ownership selections or callback transport. Runtime and
+generator code were unchanged; application definitions and indexed paths compose via
+the same public API generation/publication pipeline.
+
+Release and ASan/UBSan/LSan correctness, lifetime, allocation and sealed-reuse checks
+passed. The cumulative fixture compiled 10 units at eight jobs in 2.8507s release /
+3.7235s sanitized; public callers took 0.1086s / 0.1691s. Generator/core binaries and
+runtime publication were reused. These are single-run fixture costs.

@@ -256,3 +256,13 @@ owned handle read from a vector. Removing/replacing its origin cannot redirect t
 selected object's write. It intentionally does not expose an object/interior reference.
 Field-contained indexed paths, richer member types and instance calls remain follow-up
 composition work, with the same source-preparation ownership boundary.
+
+
+## Retained container fields (E37)
+
+The property adapter privately accesses the selected object's current field and calls
+the ordinary generated path API. It retains object identity across RHS effects but
+does not snapshot the field container. The proof covers field replacement, clearing,
+failed existing-only write and zero-copy/zero-allocation repeated scalar access.
+Concrete field storage is explicitly demanded before the fixture record's layout;
+general source layout discovery remains with the compiler.
