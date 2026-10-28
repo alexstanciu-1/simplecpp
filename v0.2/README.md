@@ -74,6 +74,11 @@ generator validates metadata, creates a typed plan and emits concrete constructo
 operators, short names, implementations and inventories under `v0.2/runtime/generated/`.
 `prepared.json` exposes resolved conversion and execution facts.
 The generator builds without linking the generated runtime.
+Generated code, prepared plans and inventories under `runtime/generated/` are
+local build products, excluded from Git along with compilation output. Commit
+metadata, generator sources, handwritten runtime code and tests. A fresh checkout
+recreates the generated API through the normal CMake build; consumers still include
+the locally generated headers and link `scpp_runtime`.
 
 ```cpp
 #include <scpp/short_names.hpp>

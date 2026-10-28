@@ -64,6 +64,9 @@ Each slice records exact reviewed legacy sources and intentional departures. Imp
 only its behavior and necessary dependencies into v0.2. Old-tree paths never become
 build inputs. Do not migrate whole modules for a small primitive. Keep generated
 artifacts under runtime/generated and regenerate from metadata, never hand-patch them.
+Generated code, inventories, prepared plans and compilation outputs must not be
+tracked in Git. Keep runtime/generated locally for consumers; the normal build
+recreates it from committed metadata and generator sources on a fresh checkout.
 
 ### Periodic file cleanup
 
