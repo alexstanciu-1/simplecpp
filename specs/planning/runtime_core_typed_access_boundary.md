@@ -245,3 +245,14 @@ and nested typed path operations. Saved keys retain their object independently o
 the source wrapper. Missing-prefix probes skip later extraction, while existing-store
 rechecks membership after RHS effects. No additional key converter or source inference
 was introduced. Field-owner retention remains a separate missing boundary.
+
+
+## Retained property adapters (E36)
+
+Application-owned function metadata fills the publication gap for prepared member
+adapters without adding source member semantics to the runtime generator. The first
+scalar read/write proof captures a checked shared owner before RHS, including an
+owned handle read from a vector. Removing/replacing its origin cannot redirect the
+selected object's write. It intentionally does not expose an object/interior reference.
+Field-contained indexed paths, richer member types and instance calls remain follow-up
+composition work, with the same source-preparation ownership boundary.

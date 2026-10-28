@@ -628,3 +628,6 @@ add_test(NAME scpp_check_typed_access_paths COMMAND ${Python3_EXECUTABLE}
 
 add_test(NAME scpp_check_object_hash_keys COMMAND ${Python3_EXECUTABLE}
   ${CMAKE_CURRENT_SOURCE_DIR}/check_object_hash_keys.py --tool $<TARGET_FILE:scpp_api_generator>)
+
+add_test(NAME scpp_check_application_functions COMMAND ${Python3_EXECUTABLE}
+  ${CMAKE_CURRENT_SOURCE_DIR}/check_application_functions.py --tool $<TARGET_FILE:scpp_api_generator>)

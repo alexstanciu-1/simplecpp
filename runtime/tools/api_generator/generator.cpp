@@ -585,6 +585,29 @@ namespace scpp::api_generation
                     generated_apis[name] = constants;
                 }
             }
+            if (this->request_.has("application_functions")) {
+                const auto &definitions = this->request_.at("application_functions");
+                if (definitions.type != value::kind::object)
+                    throw std::runtime_error("Application functions require a map");
+                for (const auto &[name, operation] : definitions.fields) {
+                    authored_name(name);
+                    if (name.find("::") != std::string::npos)
+                        throw std::runtime_error("Application function identity must be unqualified");
+                    if (generated_apis.has(name) || this->metadata_.at("functions").has(name)
+                        || (this->metadata_.has("function_families") && this->metadata_.at("function_families").has(name))
+                        || (this->request_.has("paths") && this->request_.at("paths").has(name)))
+                        throw std::runtime_error("Conflicting application API identity: " + name);
+                    fields_only(operation, "returns parameters expression body transport includes uses requires_capabilities", "application function");
+                    value function = value::object();
+                    function["namespace"] = "scpp";
+                    function["header"] = "scpp/application/" + name + ".hpp";
+                    function["source"] = "include/core/generated/application_" + name + ".cpp";
+                    function["operation"] = operation;
+                    function["operation"]["name"] = "app_" + name;
+                    function["operation"]["kind"] = "function";
+                    generated_apis[name] = function;
+                }
+            }
             auto apis = this->request_.has("apis") ? this->request_.at("apis") : value::array();
             if (apis.type != value::kind::array) throw std::runtime_error("API demands require an array");
             if (this->request_.has("paths") && this->request_.at("paths").type != value::kind::object)

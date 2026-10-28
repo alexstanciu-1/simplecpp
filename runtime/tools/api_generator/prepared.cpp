@@ -56,6 +56,30 @@ namespace scpp::api_generation
                         result["api_" + std::to_string(index) + "_" + parameter] = argument.canonical();
                 }
             }
+            if (input.at("request").has("application_functions")) {
+                const auto &definitions = input.at("request").at("application_functions");
+                if (definitions.type != value::kind::object)
+                    throw std::runtime_error("Application functions require a map");
+                if (input.at("request").has("apis"))
+                    for (const auto &api : input.at("request").at("apis").items) {
+                        if (!definitions.has(api.text())) continue;
+                        const auto &operation = definitions.at(api.text());
+                        const auto prefix = "function_" + api.text() + "_";
+                        result[prefix + "return"] = operation.at("returns").text();
+                        if (operation.at("parameters").type != value::kind::array)
+                            throw std::runtime_error("Application parameters require an array");
+                        unsigned index = 0;
+                        for (const auto &parameter : operation.at("parameters").items)
+                            result[prefix + "parameter_" + std::to_string(index++)] = parameter.at("type").text();
+                        if (operation.has("uses")) {
+                            if (operation.at("uses").type != value::kind::array)
+                                throw std::runtime_error("Application uses require an array");
+                            index = 0;
+                            for (const auto &type : operation.at("uses").items)
+                                result[prefix + "uses_" + std::to_string(index++)] = type.text();
+                        }
+                    }
+            }
             if (input.at("request").has("paths") && input.at("request").has("apis")) {
                 const auto &paths = input.at("request").at("paths");
                 if (paths.type != value::kind::object) throw std::runtime_error("Access path demands require a map");

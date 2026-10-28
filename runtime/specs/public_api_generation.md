@@ -2166,3 +2166,32 @@ advertise this capability, regardless of broader native implementation facilitie
 Source preparation admits the class/interface key and any shared upcast before
 lookup. Hash storage owns the converted key, preserving its identity and lifetime.
 This slice does not infer ancestry or admit arbitrary shared payloads in source code.
+
+
+### Application-owned function definitions
+
+A request may supply `application_functions`, a map from unqualified API identity to
+ordinary operation metadata. `apis` selects which definitions to emit. The permitted
+fields are `returns`, `parameters`, `expression` or `body`, `transport`, `includes`,
+`uses`, and `requires_capabilities`. Signature resolution, representation borrowing,
+result transport and code emission use the existing operation pipeline. The tool
+assigns namespace `scpp`, symbol `app_<identity>`, header
+`scpp/application/<identity>.hpp`, and the corresponding private generated unit.
+Definitions cannot override runtime APIs, demanded function families or indexed paths.
+No application property names, ancestry, visibility or expression-order rules are
+inferred by this mechanism. Trusted snippets remain code supplied by their owner.
+
+Source mode requires prepared bindings named `function_<identity>_return`,
+`function_<identity>_parameter_<index>`, and `function_<identity>_uses_<index>` for
+selected definitions, plus the producer's semantic requirements and facts. This
+includes definitions already available through an imported publication. Changed
+operation metadata conflicts with an imported definition; identical definitions reuse
+its unit. Application definitions do not alter runtime-global API metadata identity.
+
+For a shared property write, source preparation checks admission and the caller first
+captures `retain_present()` before RHS evaluation. The application adapter privately
+borrows the retained native receiver, mutates the field and returns an owned result.
+An indexed shared element may be read into an owned handle and checked the same way.
+The public boundary never returns an interior reference. This is distinct from
+container replacement: clearing the original container during RHS evaluation does
+not redirect the already-selected object's property write.

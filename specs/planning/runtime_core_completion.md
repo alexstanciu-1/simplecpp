@@ -18,7 +18,7 @@ each slice. The original inventory is a baseline, not a current completion count
 | B1 | Complete for the agreed scalar-facing truth/text/identity/observation scope | Carrier forms remain C; boxed arithmetic and access completion are not B1 credit. |
 | B2 | Complete for the agreed non-carrier special/mutation and text public paths; closure evidence below | Carrier forms C; indexed retention E; native exception inspection and overflow disposition G. |
 | C | Four carrier recipes and bounded scalar paths implemented; first prepared canonical path reviewed in C38 | Guarded negation and canonical lazy logical plans implemented in C32/C33; remaining source admission, broader selection and payload-specific integration remain; C38 passes the first-path checkpoint. Both decisions accepted 2026-10-28. |
-| D | Handle storage, presence planning, checked retention, shared ancestry/casts and weak/unique transports implemented (D1–D6) | Typed member access, operation-planner integration, ownership selections, value storage and source Exception transport remain. |
+| D | Handle storage, presence planning, checked retention, shared ancestry/casts and weak/unique transports implemented (D1–D6) | First retained property-adapter publication proven in E36; broader member access, operation-planner integration, ownership selections, value storage and source Exception transport remain. |
 | E | Existing vector/hash/boxed foundations; incomplete | Typed/boxed access, observations, removal, creating stores, ordinary reads and append implemented in E23–E32; optional/boxed scalar key composition proven in E33; shared identity key storage/upcasts proven in E34; broader key compositions and field-owner retention remain; conditional lifecycle, cursor fixes, boxed access/probes, and positional/keyed built-in factories are implemented for the tested domains. |
 | F | Pending | Callable transport and registered collection algorithms. |
 | G | Core utility and scalar debug bindings implemented | Exception/helper gaps and requirement-by-requirement closure audit. |
@@ -2935,3 +2935,34 @@ Release and ASan/UBSan/LSan execution, prepared negatives, public-only compilati
 and sealed application reuse passed. The expanded fixture compiled 13 units at
 eight jobs in 5.7627s release / 8.8377s sanitized; callers took 0.1123s / 0.1590s.
 No runtime/generator changes or rebuilds were needed for this composition slice.
+
+
+## E36 — application-owned function metadata and retained properties (2026-10-28)
+
+The ownership contract already supplies checked shared retention; the missing public
+boundary was publication of adapters for application-defined members. Requests now
+provide bounded `application_functions` definitions, selected through ordinary `apis`.
+They reuse signature resolution, private representation borrowing, owned return
+transport, emission, name/path checks and sealed publication. Source mode consumes
+prepared return/parameter/uses bindings and the producer's semantic facts, including
+when the implementation is imported. Definitions cannot override runtime functions,
+function families or indexed-path identities. No property-name or shared-family
+special case was added to the generator.
+
+The first proof publishes scalar property read/write adapters for a noncopyable
+application record. The caller checks/retains the selected shared receiver before
+RHS evaluation. It verifies replacement of the originating handle, removal of the
+original indexed element, null/missing failures before RHS, exception cleanup and
+zero allocations for repeated retention/read/write. Only owned results cross the
+public boundary. A trusted fixture stands in for source preparation; visibility,
+mutability, member resolution and ordering remain compiler-owned. This is not general
+frontend adoption or completion of method calls, field-contained container paths,
+inline storage, ownership selections or callback transport.
+
+Release and ASan/UBSan/LSan correctness, lifetime, allocation and sealed publication
+reuse passed. Eight focused metadata regressions passed. Four generated units compiled
+at eight jobs in 3.2587s release / 2.8026s sanitized; public caller 0.1274s / 0.1208s.
+These are single-run fixture measurements with ordinary scheduling/cache variation,
+not evidence that sanitizing improves compile speed. Generator binaries were rebuilt;
+core archives and runtime publication were reused because no core representation or
+runtime-global metadata changed.
