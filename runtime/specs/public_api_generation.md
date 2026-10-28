@@ -1839,3 +1839,23 @@ type fallback from accepting an invalid source operation. Downcasts, unrelated
 identity and unique/weak conversions are not admitted by these recipes. Explicit
 checked-downcast transport and global operator/conversion planner integration remain
 separate backlog items.
+
+## Checked object and ownership transports
+
+Demanded `shared_object_cast<To,From>` and `shared_object_is<To,From>` bind the
+existing `checked_object_cast` and `object_is` authorities in `scpp/object_cast.hpp`.
+The checked cast requires a present compatible object, preserves the shared control
+block and throws `invalid_object_cast` on absence or runtime mismatch. The type test
+returns false for those cases. Statically admitted polymorphic interface cross-casts
+use the same path. These recipes do not infer source ancestry/finality/polymorphism;
+source-mode producers must require and supply their relevant prepared facts.
+
+`weak_upcast<To,From>` binds the native weak converting constructor: it preserves
+control-block observation without locking or extending target lifetime, including
+already expired sources. `unique_upcast<To,From>` takes an explicit public rvalue
+reference, invokes the native converting move constructor and leaves the source
+empty. Native constraints require compatible pointers and virtual target destruction
+for distinct pointee types. Source restrictions (including interface destinations,
+reference invariance and transfer positions) remain compiler-owned and are not
+expanded by these physical APIs. Neither weak downcasts nor implicit unique copying
+are introduced.

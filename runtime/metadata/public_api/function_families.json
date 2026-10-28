@@ -59,5 +59,113 @@
         "body": "static_assert(std::is_convertible_v<${variant:public_Left} *, ${variant:public_Right} *> || std::is_convertible_v<${variant:public_Right} *, ${variant:public_Left} *>);\nreturn scpp::identical(${native:left}, ${native:right}).native_value();"
       }
     }
+  },
+  "shared_object_cast": {
+    "parameters": [
+      "To",
+      "From"
+    ],
+    "function": {
+      "namespace": "scpp",
+      "header": "scpp/ownership/${variant}.hpp",
+      "source": "include/core/generated/${variant}.cpp",
+      "operation": {
+        "name": "${variant}",
+        "returns": "shared<${variant:To}>",
+        "parameters": [
+          {
+            "name": "source",
+            "type": "shared<${variant:From}>",
+            "passing": "const_ref"
+          }
+        ],
+        "transport": "native",
+        "expression": "scpp::checked_object_cast<${variant:public_To}>(${native:source})",
+        "includes": [
+          "scpp/object_cast.hpp"
+        ]
+      }
+    }
+  },
+  "shared_object_is": {
+    "parameters": [
+      "To",
+      "From"
+    ],
+    "function": {
+      "namespace": "scpp",
+      "header": "scpp/ownership/${variant}.hpp",
+      "source": "include/core/generated/${variant}.cpp",
+      "operation": {
+        "name": "${variant}",
+        "returns": "boolean",
+        "parameters": [
+          {
+            "name": "source",
+            "type": "shared<${variant:From}>",
+            "passing": "const_ref"
+          }
+        ],
+        "transport": "native",
+        "expression": "scpp::object_is<${variant:public_To}>(${native:source}).native_value()",
+        "includes": [
+          "scpp/object_cast.hpp"
+        ],
+        "noexcept": true
+      }
+    }
+  },
+  "weak_upcast": {
+    "parameters": [
+      "To",
+      "From"
+    ],
+    "function": {
+      "namespace": "scpp",
+      "header": "scpp/ownership/${variant}.hpp",
+      "source": "include/core/generated/${variant}.cpp",
+      "operation": {
+        "name": "${variant}",
+        "returns": "weak<${variant:To}>",
+        "parameters": [
+          {
+            "name": "source",
+            "type": "weak<${variant:From}>",
+            "passing": "const_ref"
+          }
+        ],
+        "transport": "native",
+        "expression": "scpp::weak_p<${variant:public_To}>(${native:source})",
+        "noexcept": true
+      }
+    }
+  },
+  "unique_upcast": {
+    "parameters": [
+      "To",
+      "From"
+    ],
+    "function": {
+      "namespace": "scpp",
+      "header": "scpp/ownership/${variant}.hpp",
+      "source": "include/core/generated/${variant}.cpp",
+      "operation": {
+        "name": "${variant}",
+        "returns": "unique<${variant:To}>",
+        "parameters": [
+          {
+            "name": "source",
+            "type": "unique<${variant:From}>",
+            "passing": "move_ref"
+          }
+        ],
+        "transport": "native",
+        "expression": "scpp::unique_p<${variant:public_To}>(std::move(${native:source}))",
+        "includes": [
+          "utility"
+        ],
+        "noexcept": true
+      }
+    }
   }
 }

@@ -18,7 +18,7 @@ each slice. The original inventory is a baseline, not a current completion count
 | B1 | Complete for the agreed scalar-facing truth/text/identity/observation scope | Carrier forms remain C; boxed arithmetic and access completion are not B1 credit. |
 | B2 | Complete for the agreed non-carrier special/mutation and text public paths; closure evidence below | Carrier forms C; indexed retention E; native exception inspection and overflow disposition G. |
 | C | Four carrier recipes and bounded scalar paths implemented; first prepared canonical path reviewed in C38 | Guarded negation and canonical lazy logical plans implemented in C32/C33; remaining source admission, broader selection and payload-specific integration remain; C38 passes the first-path checkpoint. Both decisions accepted 2026-10-28. |
-| D | First application-record ownership slice implemented (D1) | Retained access, ancestry/casts/identity, value storage and source Exception transport remain. |
+| D | Handle storage, checked retention, shared ancestry/casts/type tests and weak/unique transports implemented (D1–D4) | Typed member access, operation-planner integration, ownership selections, value storage and source Exception transport remain. |
 | E | Existing vector/hash/boxed foundations; incomplete | Typed nested access and remaining key policies; conditional lifecycle, cursor fixes, boxed access/probes, and positional/keyed built-in factories are implemented for the tested domains. |
 | F | Pending | Callable transport and registered collection algorithms. |
 | G | Core utility and scalar debug bindings implemented | Exception/helper gaps and requirement-by-requirement closure audit. |
@@ -2455,3 +2455,40 @@ Remaining D work includes checked downcasts, other admitted ownership transports
 typed member access, identity/conversion planner integration, value storage and
 source Exception. Neither these physical APIs nor compiler-provided fixture facts
 claim complete source operator adoption or full ownership-family completion.
+
+
+## D4 — checked object casts and weak/unique transport (2026-10-28)
+
+Four function-family recipes bind existing native authorities without generator
+changes: shared_object_cast/shared_object_is use object_cast.hpp, weak_upcast uses
+the native weak converting constructor, and unique_upcast uses its explicit native
+converting move constructor. The inheritance_v0_2.md contract owns ancestry,
+polymorphism, finality, virtual destruction and permitted transfer contexts. These
+source facts remain compiler-owned; physical API existence does not relax them.
+
+Release and ASan/UBSan/LSan pass with a noncopyable polymorphic application model:
+checked narrowing and interface cross-casts preserve shared identity/control blocks;
+empty/mismatched checks return false; required casts throw invalid_object_cast.
+Failures preserve the assigned destination and source. Retained interface views
+keep their original object alive. Weak upcasts allocate/retain nothing, work for
+expired observers and acquire ownership only on lock. Unique upcasts empty the
+source, destroy replaced destinations and eventually invoke the derived destructor
+exactly once through a virtual base destructor. Successful operations allocate zero.
+
+Negative native compiles reject nonvirtual unique targets, nonpolymorphic narrowing,
+weak downcasts and a named unique argument without explicit move. Prepared metadata
+checks require declared ancestry, polymorphism, virtual destruction and transfer
+facts even for imported APIs. Sealed publication reuse emits zero units. Four focused
+generator regressions pass. The initial caller compilation caught a fixture's implicit
+public-boolean-to-native-bool assignment; it now uses the required explicit bridge.
+
+The fixture emits nine handle and nine operation units. Compile wall times with
+**eight jobs**, run sequentially by configuration: release 5.6593s storage/APIs and
+0.1585s public caller; sanitizer 6.3003s and 0.1935s. These parallel timings are not a
+speedup comparison with D3's sequential compilation. No generator or runtime archive
+recompilation was needed; the runtime-owned inventory remains 406 units.
+
+Ownership completion remains open. Next are typed member/access transport and
+operation/selection integration, then value storage, shared-self and source Exception
+requirements. Interface/finality source admission is represented by prepared fixture
+facts here, not by a newly implemented semantic frontend.
