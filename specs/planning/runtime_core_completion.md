@@ -20,7 +20,7 @@ each slice. The original inventory is a baseline, not a current completion count
 | C | Four carrier recipes and bounded scalar paths implemented; first prepared canonical path reviewed in C38 | Guarded negation and canonical lazy logical plans implemented in C32/C33; remaining source admission, broader selection and payload-specific integration remain; C38 passes the first-path checkpoint. Both decisions accepted 2026-10-28. |
 | D | Handle storage, presence planning, checked retention, shared ancestry/casts and weak/unique transports implemented (D1–D6) | Retained property/container-field adapters proven in E36/E37 and bounded method transports in D7; scalar same-origin return bindings proven in D8; broader payload/member/planner integration, ownership selections, value storage and source Exception transport remain. |
 | E | Existing vector/hash/boxed foundations; incomplete | Typed/boxed access, observations, removal, creating stores, ordinary reads and append implemented in E23–E32; optional/boxed scalar key composition proven in E33; shared identity key storage/upcasts proven in E34; retained scalar/container-field adapters proven in E36/E37; broader member/key compositions remain; conditional lifecycle, cursor fixes, boxed access/probes, and positional/keyed built-in factories are implemented for the tested domains. |
-| F | Pending | Callable transport and registered collection algorithms. |
+| F | Contract/native audit recorded in F0; implementation pending | Signature descriptor, callable transport and twelve registered collection overloads; see runtime_core_callable_boundary.md. |
 | G | Core utility and scalar debug bindings implemented | Exception/helper gaps and requirement-by-requirement closure audit. |
 
 Full frontend adoption and module migration are excluded. C38 passes the first complete canonical carrier
@@ -3047,3 +3047,22 @@ Eighteen cumulative fixture units compiled at eight jobs in 6.6605s release / 6.
 sanitized; public callers took 0.1504s / 0.2118s. Generator binaries were rebuilt;
 core archives and runtime-global publication were reused. Timing differences are
 single-run observations, not a sanitizer performance claim.
+
+
+## F0 — callable boundary audit and implementation sequence (2026-10-28)
+
+The [callable boundary audit](runtime_core_callable_boundary.md) inventories the
+normative signature/capture/storage/Result contracts and their native owners. A
+metadata inspection confirms twelve registered collection overloads, all unary
+by-value consumers, but full callable identity also includes references, variadics
+and return origin. The current ordinary type parser cannot faithfully describe that
+entire contract. The proposed signature descriptor must reuse existing operation,
+type materialization and publication owners, without per-arity families.
+
+Two integration traps are explicit: callable absence is checked after argument
+side effects (unlike method receiver checking), and native filter requires bool_t
+rather than the public boolean result. Borrowed erasure and nullable/ownership-wrapped
+callables remain source-rejected; callable-valued Results require distinct state and
+payload observations. Native capture-transfer permissions must remain intact even
+though task-module migration is excluded. This is an evidence-based design checkpoint,
+not completed callable coverage. No C++ compiles were run for the audit.
