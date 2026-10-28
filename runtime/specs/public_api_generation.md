@@ -1859,3 +1859,22 @@ for distinct pointee types. Source restrictions (including interface destination
 reference invariance and transfer positions) remain compiler-owned and are not
 expanded by these physical APIs. Neither weak downcasts nor implicit unique copying
 are introduced.
+
+## Metadata-owned method conditions
+
+`conditions.family_methods` maps a physical family to an existing unconditional
+primary-class method returning public `boolean` from a const, argument-free receiver.
+The condition resolver emits `member_call` with its public header and expression,
+`operand_access: const_ref`, and evaluate-once sequencing. It checks family storage
+capabilities and rejects missing/ambiguous/conditional/mutating observations or
+conflicting carrier-state owners. The map contains no special generator family names.
+
+Shared and unique use their handle-presence method. Weak has no entry and remains
+unavailable for implicit conditions or condition-based negation. Global unary `!`
+uses the same registered condition observation outside its separate guarded scalar
+carrier domain. This does not admit explicit bool casts or logical binary operations.
+
+Scoped carrier observation can invoke the same member operation on a borrowed public
+payload, without extracting/copying it or exposing its reference. A physical nested
+composition proof does not grant source-template eligibility: that stays a separate
+prepared compiler fact, particularly for move-only or ownership payloads.

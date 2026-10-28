@@ -66,6 +66,60 @@ for invalid in [True, ['unknown'], ['move','move']]:
     bad['metadata']['families']['unique']['classes'][0]['lifecycle']['noexcept']=invalid
     failure=subprocess.run([str(args.tool)],input=json.dumps(bad),text=True,capture_output=True)
     assert failure.returncode and 'noexcept' in failure.stderr
+# Condition and negation plans use nonescaping const observation, never payload copies.
+def observation_request(action, request):
+    value={**envelope,'action':action,'request':request}
+    slot='source' if action=='resolve_condition' else 'operand'
+    subject=request[slot]
+    requirement={'subject':'operation','contract':'ownership_observation_admitted'}
+    value['prepared']={'version':'prepared-api-v1','producer':'fixture.semantic-owner','revision':'fixture-v1',
+        'action':action,'request':copy.deepcopy(request),'admission':'fixture/ownership-observation',
+        'bindings':{slot:{'source':'source.'+subject,'physical':subject,'arguments':{}}},
+        'requirements':[requirement],'facts':[{**requirement,'evidence':'fixture/approved-observation'}]}
+    return value
+conditions={};negations={}
+for family in ['shared','unique']:
+    source=family+'<record>'
+    request=observation_request('resolve_condition',{'source':source})
+    conditions[family]=plan(request)
+    assert conditions[family].pop('preparation')==request['prepared']
+    assert conditions[family]['kind']=='member_call' and conditions[family]['operand_access']=='const_ref'
+    request=observation_request('resolve_operator',{'operation':'logical_not','operand':source})
+    negations[family]=plan(request)
+    assert negations[family].pop('preparation')==request['prepared']
+    assert negations[family]['kind']=='condition_operator' and negations[family]['condition']==conditions[family]
+    request['prepared']['facts']=[]
+    failure=subprocess.run([str(args.tool)],input=json.dumps(request),text=True,capture_output=True)
+    assert failure.returncode and 'ownership_observation_admitted' in failure.stderr
+for action,request in [('resolve_condition',{'source':'weak<record>'}),
+    ('resolve_operator',{'operation':'logical_not','operand':'weak<record>'}),
+    ('resolve_conversion',{'source':'shared<record>','target':'boolean'}),
+    ('resolve_logical',{'operation':'logical_and','left':'shared<record>','right':'boolean'})]:
+    value={**envelope,'action':action,'request':request,'mode':'native'};value.pop('prepared')
+    failure=subprocess.run([str(args.tool)],input=json.dumps(value),text=True,capture_output=True)
+    assert failure.returncode,failure.stdout
+for invalid in ['missing','reset']:
+    bad=observation_request('resolve_condition',{'source':'shared<record>'})
+    bad=copy.deepcopy(bad);bad['metadata']['conditions']['family_methods']['shared']=invalid
+    failure=subprocess.run([str(args.tool)],input=json.dumps(bad),text=True,capture_output=True)
+    assert failure.returncode and 'Condition observation requires' in failure.stderr
+# Same protocol works on a renamed recipe: no hard-coded ownership family names.
+generic=copy.deepcopy(envelope);generic.pop('prepared');generic['mode']='native'
+generic['metadata']['families']['holder']=copy.deepcopy(generic['metadata']['families']['shared'])
+generic['metadata']['conditions']['family_methods']['holder']='has_value'
+generic['action']='resolve_condition';generic['request']={'source':'holder<record>'}
+assert plan(generic)['kind']=='member_call'
+# Supplemental physical composition proof, not source Result<unique> admission.
+native_data=copy.deepcopy(data);native_data['roots'].append('result<unique<record>>')
+native_data['names']['result<unique<record>>']='result_unique'
+native_envelope={**envelope,'mode':'native','request':native_data,'names':native_data['names']};native_envelope.pop('prepared')
+nested_plan=plan({**native_envelope,'action':'resolve_condition','request':{'source':'result<unique<record>>'}})
+assert nested_plan['payload_access']=='scoped_operation'
+assert nested_plan['payload_condition']['kind']=='member_call'
+nested_units=plan(native_envelope)['units']
+assert len(nested_units)==4
+assert 'payload.has_value()' in next(u for u in nested_units if u['identity']=='result<unique<record>>')['source']
+print('PASS: prepared ownership conditions/negation; weak, bool cast and logical admission remain restricted')
 print('PASS: ownership recipes, weak signature dependency, capability selection and prepared admission')
 if not args.core: sys.exit(0)
 fixture = r'''#pragma once
@@ -104,6 +158,7 @@ void native_unique() { auto handle=scpp::unique<record>(); observe_native(handle
 caller = r'''#include "scpp/shared_record.hpp"
 #include "scpp/unique_record.hpp"
 #include "scpp/weak_record.hpp"
+#include "scpp/result_unique.hpp"
 #include "public_api_guard.hpp"
 #include <cstdlib>
 #include <cstdio>
@@ -123,6 +178,7 @@ static_assert(!std::is_copy_constructible_v<unique_record> && !std::is_copy_assi
 static_assert(std::is_nothrow_move_constructible_v<unique_record> && std::is_nothrow_move_assignable_v<unique_record>);
 static_assert(std::is_nothrow_copy_constructible_v<shared_record> && std::is_nothrow_copy_assignable_v<weak_record>);
 static_assert(!std::is_convertible_v<weak_record,bool>);
+// GENERATED_OBSERVATIONS
 static void checked_receiver(shared_record &source, bool fail_argument) {
     auto receiver=source.retain_present();
     // Prepared evaluation selects/checks the receiver before argument effects.
@@ -132,6 +188,29 @@ static void checked_receiver(shared_record &source, bool fail_argument) {
     CHECK(receiver.identical(receiver));
 }
 int main() {
+    {
+        auto shared=shared_record::make();auto unique=unique_record::make();
+        shared_record absent_shared;unique_record absent_unique;
+        const auto before=allocations;int evaluations=0;
+        for(int i=0;i<100;++i) {
+            CHECK(observe(shared) && observe(unique) && !negate(shared) && !negate(unique));
+            CHECK(!observe(absent_shared) && !observe(absent_unique) && negate(absent_shared) && negate(absent_unique));
+        }
+        CHECK(observe(([&]() -> const unique_record & { ++evaluations;return unique; })()));
+        CHECK(evaluations==1);
+        auto moved=std::move(unique);CHECK(!observe(unique) && observe(moved));
+        shared.reset();CHECK(!observe(shared));
+        CHECK(allocations==before);
+    }
+    CHECK(fixture::live()==0);
+    {
+        auto owner=unique_record::make();result_unique present(std::move(owner)),empty;
+        auto error=error_value::make(string("fixture failure"));result_unique failed(error);
+        const auto before=allocations;
+        for(int i=0;i<100;++i) CHECK(observe(present) && !observe(empty) && !observe(failed));
+        CHECK(!owner.has_value() && fixture::live()==1 && allocations==before);
+    }
+    CHECK(fixture::live()==0);
     {
         shared_record empty_left, empty_right;
         CHECK(empty_left.identical(empty_right));
@@ -203,6 +282,19 @@ int main() {
     std::printf("PASS: checked retention/identity/lifetime/transfer/throw cleanup; shared allocations=%u unique=%u; empty/copy/lock/transfer=0\n",shared_cost,unique_cost);
 }
 '''
+observations=''
+for family in ['shared','unique']:
+    expression=conditions[family]['expression'].replace('${value}','value')
+    negation=negations[family]['result_expression'].replace('${result}',expression)
+    observations+='static boolean observe(const '+family+'_record &value) { return '+expression+'; }\n'
+    observations+='static boolean negate(const '+family+'_record &value) { return '+negation+'; }\n'
+nested_body=''
+for state in nested_plan['states']:
+    expression=nested_plan['payload_expression'].replace('${value}','value') if state['condition']=='payload' else 'scpp::boolean('+state['condition']+')'
+    branch='return '+expression+';'
+    nested_body+=('if ('+state['test_expression'].replace('${value}','value')+') { '+branch+' }' if 'test_expression' in state else branch)
+observations+='static boolean observe(const result_unique &value) { '+nested_body+' }\n'
+caller=caller.replace('// GENERATED_OBSERVATIONS',observations)
 with tempfile.TemporaryDirectory(prefix='scpp-ownership-') as directory:
     work=Path(directory); sdk=work/'sdk'; app=work/'app'
     for folder in ['metadata','include','public']: shutil.copytree(root/'runtime'/folder,sdk/folder)
@@ -214,6 +306,9 @@ with tempfile.TemporaryDirectory(prefix='scpp-ownership-') as directory:
     request.write_text(json.dumps(wrapper))
     manifest=concrete_types.generate(request,app,sdk,[sdk],'clang++',[])
     assert len(manifest['sources'])==3
+    supplemental=work/'physical-composition.json';supplemental.write_text(json.dumps(native_data))
+    manifest=concrete_types.generate(supplemental,app,sdk,[sdk],'clang++',[])
+    assert len(manifest['sources'])==4
     (work/'record.cpp').write_text(implementation); (work/'caller.cpp').write_text(caller)
     flags=['-std=c++23','-O1']
     if args.sanitize: flags+=['-fsanitize=address,undefined','-fno-omit-frame-pointer']
@@ -236,6 +331,7 @@ with tempfile.TemporaryDirectory(prefix='scpp-ownership-') as directory:
     recipe=false_promise['metadata']['families']['shared']
     recipe['native']='${public:T}'
     recipe['classes'][0]['methods']=[]
+    del false_promise['metadata']['conditions']['family_methods']['shared']
     recipe['classes'][0]['lifecycle']={'default':'native','copy':'disabled','move':'disabled','destroy':'native','noexcept':['default']}
     false_promise['layouts']={'shared<record>:self':[1,1]}
     invalid=plan(false_promise)['units'][0]

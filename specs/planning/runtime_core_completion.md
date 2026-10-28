@@ -2492,3 +2492,38 @@ Ownership completion remains open. Next are typed member/access transport and
 operation/selection integration, then value storage, shared-self and source Exception
 requirements. Interface/finality source admission is represented by prepared fixture
 facts here, not by a newly implemented semantic frontend.
+
+## D5 — ownership condition and negation planning (2026-10-28)
+
+Condition metadata now selects an unconditional const boolean method on a physical
+family's primary class. Shared and unique select handle presence; weak has no entry.
+The planner emits evaluate-once, const-reference `member_call` observations, and
+unary logical-not delegates through that same owner outside the guarded scalar
+carrier domain. Family capability checks and method-signature/owner validation are
+reused; there are no hard-coded shared/unique branches. A renamed recipe proof
+exercises the same path. No public bool cast or logical binary admission was added.
+
+Prepared condition/negation requests pass for shared/unique and reject missing
+observation facts. Weak condition/negation, explicit bool casts and logical binary
+use reject. Release and ASan/UBSan/LSan consumers observe present/absent and moved/reset
+handles, evaluate operand expressions once, and allocate zero on success. The existing
+lifetime/destruction/publication tests remain green. Seven focused condition,
+carrier-logical/unary/selection and prepared-request regressions pass.
+
+The scoped carrier emitter also consumes member observations. A supplemental **native
+physical** result<unique<record>> fixture proves checked observation of a noncopyable
+payload without copying, moving or escaping its reference; success/empty-handle/error
+states behave as planned. This adds no blanket source Result-of-ownership admission.
+Prepared source generation remains the original handle roots; the additional physical
+composition is explicitly generated in native mode and carries no semantic permission.
+
+Single-run storage plus record fixture / public caller compilation: 7.0149s / 0.1682s
+release, 7.5573s / 0.2468s sanitizer (overlapping sequential-TU runs). Runtime archives
+were reused; regeneration changed metadata identity, with 406 runtime-owned units.
+The stricter validation correctly rejected the old negative noexcept fixture after it
+removed a method but retained its observer registration; the fixture now removes both
+before testing the intended false native exception promise.
+
+Presence/null operators beyond condition negation, ownership selections and remaining
+conversion/identity planner integration still require their own coverage. Typed member
+access, value storage, shared-self and source Exception remain outstanding.

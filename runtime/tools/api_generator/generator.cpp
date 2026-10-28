@@ -136,6 +136,10 @@ namespace scpp::api_generation
             const auto kind = plan.at("kind").text();
             if (kind=="constant_after_evaluation")
                 return "return scpp::boolean(" + json_text(plan.at("value")) + ");";
+            if (kind=="member_call") {
+                add_include(headers,plan.at("header").text());
+                return "return " + operand + "." + plan.at("method").text() + "();";
+            }
             if (kind=="call") {
                 this->required_apis_.insert(plan.at("api").text());
                 add_include(headers,plan.at("header").text());

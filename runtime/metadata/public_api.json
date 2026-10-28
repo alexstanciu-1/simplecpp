@@ -721,7 +721,11 @@
   },
   "conditions": {
     "function_set": "condition_truthy",
-    "scoped_delegation": "carrier_states"
+    "scoped_delegation": "carrier_states",
+    "family_methods": {
+      "shared": "has_value",
+      "unique": "has_value"
+    }
   },
   "selections": {
     "coalesce": {
