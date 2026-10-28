@@ -47,7 +47,7 @@ namespace scpp::api_generation
 		std::set<std::string> visiting_;
         std::set<std::string> required_apis_;
 		std::map<std::string,std::string> class_names_;
-		naming naming_;
+		naming naming_, function_naming_;
 		value type(const std::string &text, const std::map<std::string,value> &types)
 		{
 			if (types.contains(text)) return types.at(text);
@@ -379,12 +379,31 @@ namespace scpp::api_generation
 			unit["probe_includes"]=includes(probe_headers); unit["probes"]=probes; unit["checks"]=checks; unit["ready"]=ready?"yes":"no";
 			this->units_.items.push_back(unit); this->exports_[canonical]=record; this->visiting_.erase(canonical); return record;
 		}
+        value demanded_function(const std::string &request, std::string &identity)
+        {
+            const auto application = this->function_naming_.bind(request);
+            const auto &family = this->metadata_.at("function_families").at(application.type.name);
+            identity = application.type.canonical();
+            const auto name = this->function_naming_.resolve(identity).second;
+            value bindings = value::object();
+            for (const auto &[parameter, argument] : application.arguments) {
+                const auto canonical = argument.canonical();
+                const auto type = this->materialize(canonical);
+                if (bindings.has(parameter) || bindings.has("public_" + parameter) || bindings.has("native_" + parameter))
+                    throw std::runtime_error("Conflicting function parameter substitution: " + parameter);
+                bindings[parameter] = canonical;
+                bindings["public_" + parameter] = type.at("cpp");
+                bindings["native_" + parameter] = type.get("native", type.at("cpp").text());
+            }
+            return instantiate_function(family.at("function"), name, bindings);
+        }
 	public:
 		explicit generator(const value &input) : api_imports_(input.has("api_imports") ? input.at("api_imports") : value::object()), metadata_(input.at("metadata")), request_(input.at("request")), imports_(input.at("imports")), layouts_(input.at("layouts")),
-			leaves_(merged_type_leaves(input)), names_(input.at("names")), naming_(metadata_naming_registry(metadata_,leaves_,names_)) {}
+			leaves_(merged_type_leaves(input)), names_(input.at("names")), naming_(metadata_naming_registry(metadata_,leaves_,names_)),
+            function_naming_(function_naming_registry(metadata_,leaves_,names_)) {}
 		value run()
 		{
-			fields_only(this->metadata_,"version types families bindings functions capabilities global_operators conversions function_sets constant_sets conditions selections", "API metadata");
+			fields_only(this->metadata_,"version types families bindings functions capabilities global_operators conversions function_sets function_families constant_sets conditions selections", "API metadata");
 			if (this->metadata_.at("version").text()!="api-v1") throw std::runtime_error("Unsupported API metadata version");
             for (const auto &[key,t] : this->leaves_.fields) { this->validate_capabilities(t); this->claim(t.at("cpp").text(),key); }
             validate_import_capabilities(this->metadata_,this->leaves_,this->names_,this->imports_);
@@ -415,12 +434,21 @@ namespace scpp::api_generation
                 }
             }
             auto apis = this->request_.has("apis") ? this->request_.at("apis") : value::array();
+            if (apis.type != value::kind::array) throw std::runtime_error("API demands require an array");
             for (std::size_t index=0; index<apis.items.size() || !this->required_apis_.empty(); ++index) {
                 if (index==apis.items.size()) {
                     for (const auto &dependency : this->required_apis_) apis.items.emplace_back(dependency);
                     this->required_apis_.clear();
                 }
-                const auto api = apis.items[index];
+                auto api = apis.items[index];
+                const auto requested = parse_type(api.text());
+                if (this->metadata_.has("function_families") && this->metadata_.at("function_families").has(requested.name)) {
+                    std::string identity;
+                    const auto function = this->demanded_function(api.text(), identity);
+                    if (generated_apis.has(identity) && json_text(generated_apis.at(identity)) != json_text(function))
+                        throw std::runtime_error("Conflicting demanded API identity: " + identity);
+                    api = identity; generated_apis[identity] = function;
+                }
                 if (generated_apis.has(api.text()) && this->metadata_.at("functions").has(api.text()))
                     throw std::runtime_error("Duplicate global operator ownership");
                 const auto &f=generated_apis.has(api.text()) ? generated_apis.at(api.text()) : this->metadata_.at("functions").at(api.text());

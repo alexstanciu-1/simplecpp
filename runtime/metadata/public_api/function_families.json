@@ -1,0 +1,63 @@
+{
+  "shared_upcast": {
+    "parameters": [
+      "To",
+      "From"
+    ],
+    "function": {
+      "namespace": "scpp",
+      "header": "scpp/ownership/${variant}.hpp",
+      "source": "include/core/generated/${variant}.cpp",
+      "operation": {
+        "name": "${variant}",
+        "returns": "shared<${variant:To}>",
+        "parameters": [
+          {
+            "name": "source",
+            "type": "shared<${variant:From}>",
+            "passing": "const_ref"
+          }
+        ],
+        "transport": "native",
+        "noexcept": true,
+        "expression": "scpp::shared_p<${variant:public_To}>(${native:source})"
+      }
+    }
+  },
+  "shared_identical": {
+    "parameters": [
+      "Left",
+      "Right"
+    ],
+    "defaults": [
+      "Left"
+    ],
+    "function": {
+      "namespace": "scpp",
+      "header": "scpp/ownership/${variant}.hpp",
+      "source": "include/core/generated/${variant}.cpp",
+      "operation": {
+        "name": "${variant}",
+        "returns": "boolean",
+        "parameters": [
+          {
+            "name": "left",
+            "type": "shared<${variant:Left}>",
+            "passing": "const_ref"
+          },
+          {
+            "name": "right",
+            "type": "shared<${variant:Right}>",
+            "passing": "const_ref"
+          }
+        ],
+        "transport": "native",
+        "includes": [
+          "operators/identity/strict_identity.hpp",
+          "type_traits"
+        ],
+        "body": "static_assert(std::is_convertible_v<${variant:public_Left} *, ${variant:public_Right} *> || std::is_convertible_v<${variant:public_Right} *, ${variant:public_Left} *>);\nreturn scpp::identical(${native:left}, ${native:right}).native_value();"
+      }
+    }
+  }
+}

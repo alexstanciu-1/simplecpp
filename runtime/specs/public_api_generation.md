@@ -1806,3 +1806,36 @@ This first physical operation does not provide ancestry-based overload demand,
 ordinary equality, or unique/weak receiver or identity admission. Those restrictions
 remain compiler-owned. No global operator-planner coverage is implied by these
 class methods; prepared integration and typed member operations remain subsequent work.
+
+## Demanded function families
+
+`function_families` describes free-function recipes with `parameters`, optional
+trailing `defaults`, and a `function` record in the existing function-set format.
+A request names a concrete demand in `apis`, for example
+`shared_upcast<Base,Derived>` or `shared_identical<Derived>` (defaulting its second
+parameter to the first). Only requested demands emit code; there is no Cartesian
+expansion. These are operation identities, not source or physical storage types.
+
+Binding/default resolution and structural naming use the existing naming owner in
+a separate function registry. Function/type family name collisions reject. The
+existing function-set substitution pass supplies `${variant}` as the concrete name,
+`${variant:T}` as a canonical argument, and `${variant:public_T}` /
+`${variant:native_T}` as representations. Ordinary operation substitutions remain
+for the operation emitter. Expansion does not recursively interpret inserted snippets.
+Parameter names that collide with these substitution keys reject.
+
+The expanded function uses the same signature, transport, dependency, output-path
+collision and sealed-publication code as other APIs. Defaulted and explicit demands
+canonicalize to the same identity. A conflicting imported definition rejects.
+Source-mode generation requires a prepared binding for every bound argument, named
+`api_<request-index>_<parameter>`, including defaulted arguments. Compiler-required
+ancestry/formation evidence is validated before imports are reused; this does not
+infer ancestry or replace compiler eligibility validation.
+
+Initial recipes expose shared upcast through the native shared boundary constructor
+and compatible shared identity through the existing strict-identity authority.
+Identity additionally asserts pointer compatibility to prevent the native unrelated-
+type fallback from accepting an invalid source operation. Downcasts, unrelated
+identity and unique/weak conversions are not admitted by these recipes. Explicit
+checked-downcast transport and global operator/conversion planner integration remain
+separate backlog items.

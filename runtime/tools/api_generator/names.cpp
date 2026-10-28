@@ -34,6 +34,24 @@ namespace scpp::api_generation
         }
 		return r;
 	}
+    value function_naming_registry(const value &metadata, const value &leaves, const value &names)
+    {
+        auto extended = metadata;
+        if (metadata.has("function_families")) {
+            const auto &families = metadata.at("function_families");
+            if (families.type != value::kind::object)
+                throw std::runtime_error("Function families require an object");
+            for (const auto &[name, recipe] : families.fields) {
+                fields_only(recipe, "parameters defaults function", "function family");
+                if (recipe.at("parameters").type != value::kind::array || recipe.at("function").type != value::kind::object)
+                    throw std::runtime_error("Function family requires parameter array and function object");
+                if (extended.at("families").has(name) || leaves.has(name))
+                    throw std::runtime_error("Function family conflicts with type: " + name);
+                extended["families"][name] = recipe;
+            }
+        }
+        return metadata_naming_registry(extended, leaves, names);
+    }
 	void authored_name(const std::string &name)
 	{
 		std::size_t start = 0;

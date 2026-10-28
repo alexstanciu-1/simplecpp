@@ -19,6 +19,7 @@ namespace scpp::api_generation
 	};
 	// Shared metadata adapter for physical generation and operation planning.
 	value metadata_naming_registry(const value &metadata, const value &leaves, const value &names);
+	value function_naming_registry(const value &metadata, const value &leaves, const value &names);
 	type_name parse_type(const std::string &text);
 	std::string structural_name(const type_name &type);
 	void authored_name(const std::string &name);

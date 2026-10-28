@@ -42,6 +42,19 @@ namespace scpp::api_generation
             if (roots.type != value::kind::array) throw std::runtime_error("Prepared roots require an array");
             for (std::size_t index = 0; index < roots.items.size(); ++index)
                 result["root_" + std::to_string(index)] = roots.items[index].text();
+            if (input.at("request").has("apis") && input.at("metadata").has("function_families")) {
+                naming functions(function_naming_registry(input.at("metadata"), merged_type_leaves(input),
+                    input.has("names") ? input.at("names") : value::object()));
+                if (input.at("request").at("apis").type != value::kind::array)
+                    throw std::runtime_error("API demands require an array");
+                const auto &apis = input.at("request").at("apis").items;
+                for (std::size_t index = 0; index < apis.size(); ++index) {
+                    const auto requested = parse_type(apis[index].text());
+                    if (!input.at("metadata").at("function_families").has(requested.name)) continue;
+                    for (const auto &[parameter, argument] : functions.bind(apis[index].text()).arguments)
+                        result["api_" + std::to_string(index) + "_" + parameter] = argument.canonical();
+                }
+            }
         } else {
             for (const auto &slot : binding_slots(input)) result[slot] = input.at("request").at(slot).text();
         }

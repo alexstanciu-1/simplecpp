@@ -23,13 +23,13 @@ namespace scpp::api_generation
         return out;
     }
 
-    static value expand_value(value item, const std::string &variant, const value &bindings)
+    value instantiate_function(value item, const std::string &variant, const value &bindings)
     {
         if (item.type == value::kind::text) return value(expand_text(item.text(), variant, bindings));
         if (item.type == value::kind::array)
-            for (auto &child : item.items) child = expand_value(child, variant, bindings);
+            for (auto &child : item.items) child = instantiate_function(child, variant, bindings);
         if (item.type == value::kind::object)
-            for (auto &[key, child] : item.fields) child = expand_value(child, variant, bindings);
+            for (auto &[key, child] : item.fields) child = instantiate_function(child, variant, bindings);
         return item;
     }
 
@@ -53,7 +53,7 @@ namespace scpp::api_generation
                 }
                 const auto identity = name + "_" + variant;
                 if (out.has(identity)) throw std::runtime_error("Duplicate function set API identity");
-                out[identity] = expand_value(set.at("function"), variant, bindings);
+                out[identity] = instantiate_function(set.at("function"), variant, bindings);
             }
         }
         return out;

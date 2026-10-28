@@ -2417,3 +2417,41 @@ strict-identity header is now included privately by the shared implementation; i
 compile cost is visible here. Consider a focused native ownership-identity header
 when adding ancestry support, preserving one semantic authority and its existing
 multiple/virtual-inheritance tests. Public callers still see only concrete headers.
+
+## D3 — demanded functions and shared ancestry (2026-10-28)
+
+Ancestry exposed the next physical-generation need: operations parameterized by two
+application types, without making a fake storage class or enumerating all pairs.
+`function_families` now reuses the existing parameter/default/structural-name owner,
+function-set substitution pass, operation emitter and publication protocol. Only
+requested `apis` demands emit units. The function naming registry is owned once per
+generation request; it is separate from the storage-type registry. Defaulted and
+explicit demands canonicalize identically, and function identities cannot be used
+as storage types. This is no new semantic compiler or ownership-specific emitter.
+
+Source generation requires bindings for every function argument (including defaults)
+and validates declared formation/ancestry evidence before imported reuse. The
+fixture supplies compiler facts; actual frontend producer integration is excluded.
+
+Initial recipes provide shared upcast via the existing native shared-boundary
+constructor and compatible shared strict identity via the existing native authority.
+An explicit native compatibility assertion prevents identity's unrelated-type
+fallback. Release and ASan/UBSan/LSan proofs pass: same-target/defaulted functions,
+multiple/virtual-inheritance view adjustment, empty handles, operand snapshots,
+retention after original handles reset, zero view-operation allocations, and sealed
+reuse with zero emitted units. Unrelated identity and reverse/downcast construction
+fail compilation; missing ancestry facts reject before publication even on imports.
+Conflicting API definitions, bad defaults/arity and function-as-storage reject.
+Six focused generator regression tests also pass.
+
+The proof emits three concrete handle units and six demanded API units, rather than
+all target combinations. Single-run sequential storage/API compilation: 22.8248s
+release / 24.1012s sanitizer; public caller 0.1177s / 0.1382s. Runs overlapped; these
+are not controlled speedup figures. Runtime archives remain reused and runtime-owned
+inventory stays at 406 units. The broad private strict-identity header dominates
+repeated identity compilation and remains a focused dependency improvement target.
+
+Remaining D work includes checked downcasts, other admitted ownership transports,
+typed member access, identity/conversion planner integration, value storage and
+source Exception. Neither these physical APIs nor compiler-provided fixture facts
+claim complete source operator adoption or full ownership-family completion.
