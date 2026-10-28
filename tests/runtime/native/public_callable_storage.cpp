@@ -43,6 +43,46 @@ int main() {
     CHECK(value==int64(18) && allocations==before);
     CHECK(fixture::environment::live==0);
     {
+        auto sum=make_pack_callback();
+        vector_int64 pack;
+        CHECK(sum(pack)==int64(0));
+        pack.append(int64(2));pack.append(int64(5));
+        CHECK(sum(pack)==int64(7) && pack.size()==uint64(2));
+        auto nested=make_nested_callback();
+        auto original=make_owned_callback(int64(10));
+        auto returned=nested(original);original.reset();nested.reset();
+        CHECK(returned(int64(3))==int64(13));
+
+        vector_callbacks callbacks;callbacks.append(returned);
+        hash_callbacks keyed;keyed.set(string("run"),returned);
+        auto vector_copy=callbacks;auto hash_copy=keyed;
+        callbacks.clear();keyed.clear();returned.reset();
+        auto selected=vector_copy.at(uint64(0));vector_copy.clear();
+        CHECK(selected(int64(1))==int64(11));
+        auto selected_key=hash_copy.at(string("run"));hash_copy.clear();
+        CHECK(selected_key(int64(2))==int64(12));
+
+        result_callback success(selected);
+        result_or_false_callback falseable(selected);
+        result_or_bool_callback boolable(selected);
+        const auto observed=allocations;
+        CHECK(success.has_value() && success.observe_payload_condition());
+        CHECK(falseable.has_value() && falseable.observe_payload_condition());
+        CHECK(boolable.has_value() && boolable.observe_payload_condition());
+        CHECK(allocations==observed);
+        auto extracted=success.value();selected.reset();
+        CHECK(extracted(int64(4))==int64(14));
+        result_callback empty_success(callback_int{});
+        result_or_false_callback empty_falseable(callback_int{});
+        result_or_bool_callback empty_boolable(callback_int{});
+        const auto empty_observed=allocations;
+        CHECK(empty_success.has_value() && !empty_success.observe_payload_condition());
+        CHECK(empty_falseable.has_value() && !empty_falseable.is_false() && !empty_falseable.observe_payload_condition());
+        CHECK(empty_boolable.has_value() && !empty_boolable.is_false() && !empty_boolable.is_true() && !empty_boolable.observe_payload_condition());
+        CHECK(allocations==empty_observed);
+    }
+    CHECK(fixture::environment::live==0);
+    {
         callback_int retained;
         {
             fixture::environment closure(int64(30));

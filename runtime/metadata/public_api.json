@@ -724,7 +724,8 @@
     "scoped_delegation": "carrier_states",
     "family_methods": {
       "shared": "has_value",
-      "unique": "has_value"
+      "unique": "has_value",
+      "callable": "has_value"
     }
   },
   "selections": {

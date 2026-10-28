@@ -20,7 +20,7 @@ each slice. The original inventory is a baseline, not a current completion count
 | C | Four carrier recipes and bounded scalar paths implemented; first prepared canonical path reviewed in C38 | Guarded negation and canonical lazy logical plans implemented in C32/C33; remaining source admission, broader selection and payload-specific integration remain; C38 passes the first-path checkpoint. Both decisions accepted 2026-10-28. |
 | D | Handle storage, presence planning, checked retention, shared ancestry/casts and weak/unique transports implemented (D1–D6) | Retained property/container-field adapters proven in E36/E37 and bounded method transports in D7; scalar same-origin return bindings proven in D8; broader payload/member/planner integration, ownership selections, value storage and source Exception transport remain. |
 | E | Existing vector/hash/boxed foundations; incomplete | Typed/boxed access, observations, removal, creating stores, ordinary reads and append implemented in E23–E32; optional/boxed scalar key composition proven in E33; shared identity key storage/upcasts proven in E34; retained scalar/container-field adapters proven in E36/E37; broader member/key compositions remain; conditional lifecycle, cursor fixes, boxed access/probes, and positional/keyed built-in factories are implemented for the tested domains. |
-| F | Signature normalization/publication and signature-driven callable storage/invocation and owned conversion implemented in F1–F4 | Broader signature/container/Result composition and twelve registered collection overloads; see runtime_core_callable_boundary.md. |
+| F | Signature normalization/publication and signature-driven callable storage/invocation and owned conversion implemented in F1–F4; nested/variadic and container/Result proofs in F5 | Broader callable selection/access integration and twelve registered collection overloads; see runtime_core_callable_boundary.md. |
 | G | Core utility and scalar debug bindings implemented | Exception/helper gaps and requirement-by-requirement closure audit. |
 
 Full frontend adoption and module migration are excluded. C38 passes the first complete canonical carrier
@@ -3170,3 +3170,23 @@ regressions passed. Eight fixture units compiled at eight jobs in 1.6425s releas
 2.1910s sanitized; public callers took 0.1610s / 0.2168s. Existing owned creation/copy
 measurements remain one allocation each and invocation zero. Core archives were reused;
 generator naming validation rebuilt and runtime publication identity was refreshed.
+
+
+## F5 — callable signature/container/Result composition (2026-10-28)
+
+Expand the common callable proof to a trailing packed variadic, its distinct ordinary
+vector-input signature, and nested callable input/result storage. No generator code
+change was needed. Typed vector/hash copies and extraction retain callback environments
+after original containers are cleared. Structured, falseable and boolable Results all
+preserve a successful absent callback as a payload state, distinct from their sentinels.
+Callable presence is registered through the existing condition family-method mechanism;
+Result scoped payload observations borrow the callback and allocate nothing.
+
+Release and ASan/UBSan/LSan correctness/lifetime/allocation and sealed-reuse proofs
+passed, including the existing noncopyable conversion negative. Six condition/carrier/
+signature metadata regressions passed. Twenty generated units compiled at eight jobs
+in 5.7535s release / 9.0227s sanitized; public callers took 0.2030s / 0.3176s. Core and
+generator binaries were reused; publication metadata identity refreshed. These are
+single-run fixture costs. The fixture constructs the prepared vector pack explicitly;
+it does not prove frontend source argument packing. Callable selection/access plans,
+shared capture compositions and collection adapters remain open.

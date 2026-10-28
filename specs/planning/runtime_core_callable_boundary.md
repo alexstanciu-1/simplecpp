@@ -143,3 +143,16 @@ permissions, and rejects malformed permission values before capture copying. Exa
 signature/capture admission remains producer-owned. Release/sanitizer proofs cover
 capture independence and lifetime, permission states, noncopyable compile rejection
 and sealed reuse. Signature composition and collection/Result integration remain next.
+
+
+## F5 implementation checkpoint
+
+Nested callable inputs/results and distinct variadic/vector signatures materialize
+through existing dependency handling. The compiled fixture passes owned vector packs
+(including empty), returns an owned callback through another callback, stores/copies
+callbacks in vector/hash and extracts them after container clearing. Structured,
+falseable and boolable Results preserve success with an absent callback; scoped
+payload presence delegates through the shared condition registry with zero allocations.
+This proves prepared public storage behavior, not source argument packing or full
+selection/access-plan coverage. Collection adapters, wider callable observations and
+source sequencing integration remain open.

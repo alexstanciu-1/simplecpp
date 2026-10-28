@@ -2311,3 +2311,18 @@ copyability, direct/transitive borrowed-capture rejection and transfer eligibili
 Native copy-constructibility is also asserted during bridge compilation; native C++
 convertibility alone is not proof of source signature admission. Prepared requirements
 are checked on both generation and imported API reuse.
+
+
+### Callable composition and condition observation
+
+Signature components can themselves be concrete callable/container types. Their
+ordinary materialization dependencies supply public headers and private layout probes;
+no nested-signature special case is needed. A trailing variadic descriptor retains its
+identity marker while using the producer's already-lowered vector storage. The tool
+does not pack source arguments or infer source variadic admission.
+
+Callable conditions use the shared `family_methods` registry and `has_value`.
+Result recipes therefore expose scoped payload observation by borrowing the stored
+callable: a success containing an absent callable remains a success, but its payload
+condition is false. No capture copy or invocation is required. This does not admit
+nullable/ownership/boxed callable compositions or `empty` on callable payloads.

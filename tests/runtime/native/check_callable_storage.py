@@ -36,6 +36,19 @@ leaves={key:{'signature':signature} for key,signature in zip(keys,signatures)}
 leaves['owned_closure']={'cpp':'fixture::environment','header':'environment.hpp','owner':'application.callables','capabilities':['copy_storage']}
 callback_types=['callable<'+key+'>' for key in keys]
 names=dict(zip(callback_types,['callback_int','callback_ref','callback_void']))
+# Variadic source identity remains distinct from its physical vector input.
+for signature, name in [
+    ({'returns':'int64','parameters':[{'type':'vector<int64>','variadic':True}]},'callback_pack'),
+    ({'returns':'int64','parameters':[{'type':'vector<int64>'}]},'callback_vector'),
+    ({'returns':callback_types[0],'parameters':[{'type':callback_types[0]}]},'callback_nested')]:
+    normalized=plan({'action':'resolve_signature','metadata':metadata,'request':signature,'leaves':leaves,'names':names})
+    key=normalized['key'];keys.append(key);signatures.append(signature)
+    leaves[key]={'signature':signature};callback_types.append('callable<'+key+'>');names[callback_types[-1]]=name
+assert keys[3]!=keys[4]
+compositions={'vector<int64>':'vector_int64','vector<'+callback_types[0]+'>':'vector_callbacks',
+              'hash<'+callback_types[0]+',string>':'hash_callbacks',
+              **{family+'<'+callback_types[0]+'>':family+'_callback' for family in ['result','result_or_false','result_or_bool']}}
+names.update(compositions)
 functions={
  'make_owned_callback':{'returns':callback_types[0],'parameters':[{'name':'offset','type':'int64'}],'transport':'native',
   'includes':['environment.hpp'],
@@ -46,22 +59,31 @@ functions={
   'expression':'scpp::callable_t<void(scpp::int64 &, const scpp::int64 &)>([](scpp::int64 &value, const scpp::int64 &delta) { value += delta; }, true)'},
  'callback_permissions':{'returns':'uint64','parameters':[{'name':'callback','type':callback_types[0],'passing':'const_ref'}],
   'transport':'native','expression':'static_cast<std::uint64_t>(${native:callback}.transfer_permissions())','includes':['cstdint']}}
+functions['make_pack_callback']={'returns':callback_types[3],'parameters':[], 'transport':'native','uses':['vector<int64>'],
+ 'expression':'scpp::callable_t<scpp::int64(scpp::vector_int64)>([](scpp::vector_int64 values) { scpp::int64 sum(0); for (scpp::uint64 i(0); i < values.size(); ++i) sum += values.at(i); return sum; }, true)'}
+functions['make_nested_callback']={'returns':callback_types[5],'parameters':[], 'transport':'native','uses':[callback_types[0]],
+ 'expression':'scpp::callable_t<scpp::callback_int(scpp::callback_int)>([](scpp::callback_int value) { return value; }, true)'}
 factory='callable_from<'+keys[0]+',owned_closure>'
-data={'package':'application.callables','roots':callback_types,'leaves':leaves,'names':names,
+data={'package':'application.callables','roots':[*callback_types,*compositions],'leaves':leaves,'names':names,
       'application_functions':functions,'apis':[*functions,factory]}
 def binding(type):
     arguments={'Signature':'source.'+keys[callback_types.index(type)]} if type in callback_types else {}
+    if type in compositions:
+        family=type.split('<')[0]
+        arguments={'V':'source.'+callback_types[0],'K':'source.string'} if family=='hash' else {'T':'source.'+('int64' if type=='vector<int64>' else callback_types[0])}
     return {'source':'source.'+type,'physical':type,'arguments':arguments}
-bindings={f'root_{i}':binding(type) for i,type in enumerate(callback_types)}
+bindings={f'root_{i}':binding(type) for i,type in enumerate(data['roots'])}
 for key,signature in zip(keys,signatures):
     bindings['signature_'+key+'_return']=binding(signature['returns'])
     for i,parameter in enumerate(signature['parameters']):bindings['signature_'+key+'_parameter_'+str(i)]=binding(parameter['type'])
 for name,operation in functions.items():
     bindings['function_'+name+'_return']=binding(operation['returns'])
     for i,parameter in enumerate(operation['parameters']):bindings['function_'+name+'_parameter_'+str(i)]=binding(parameter['type'])
-bindings['api_4_Signature']=binding(keys[0])
-bindings['api_4_Closure']=binding('owned_closure')
+    for i,type in enumerate(operation.get('uses',[])):bindings['function_'+name+'_uses_'+str(i)]=binding(type)
+bindings[f'api_{len(functions)}_Signature']=binding(keys[0])
+bindings[f'api_{len(functions)}_Closure']=binding('owned_closure')
 dependencies={f'signature_{i}':binding(key) for i,key in enumerate(keys)}
+dependencies['string']=binding('string')
 requirements=[{'subject':slot,'contract':'application_formed'} for slot in bindings]
 requirements += [{'subject':'dependency:'+slot,'contract':'signature_admitted'} for slot in dependencies]
 requirements += [{'subject':'operation','contract':'owned_capture_and_signature_admitted'}]
@@ -71,7 +93,8 @@ prepared={'version':'prepared-api-v1','producer':'fixture.semantic-owner','revis
 envelope={'metadata':metadata,'request':data,'leaves':leaves,'names':names,'imports':{},'layouts':{},
           'action':'generate','mode':'source','prepared':prepared}
 result=plan(envelope)
-assert len(result['units'])==8
+assert set(callback_types).issubset(result['types'])
+assert set(compositions).issubset(result['types'])
 for unit in result['units']:
     assert 'std::function' not in unit['header'] and 'template' not in unit['header']
 for bad_change,error in [('storage','Signature parameter'),('mode','Unknown family parameter kind'),
@@ -115,6 +138,7 @@ with tempfile.TemporaryDirectory(prefix='scpp-callables-') as directory:
     request=work/'request.json';request.write_text(json.dumps({'mode':'source','prepared':prepared,'request':data}))
     manifest=concrete_types.generate(request,app,sdk,[sdk],'clang++',[])
     caller='\n'.join('#include "'+manifest['apis'][name]['header']+'"' for name in data['apis'])+'\n'
+    caller+='\n'.join('#include \"'+manifest['types'][type]['header']+'\"' for type in compositions)+'\n'
     caller+='\n'.join('#define '+name+' scpp::'+manifest['apis'][name]['operation']['name'] for name in functions)+'\n'
     caller+='#define FROM_CLOSURE scpp::'+manifest['apis'][factory]['operation']['name']+'\n'
     caller+=(root/'tests/runtime/native/public_callable_storage.cpp').read_text();(work/'caller.cpp').write_text(caller)
