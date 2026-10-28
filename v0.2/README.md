@@ -7,7 +7,8 @@ this directory are reference material, never build inputs. Normal external compi
 standard-library and build-tool dependencies are permitted.
 
 Implemented slices are native JSON parsing, the generator's metadata value model,
-and metadata-driven integer, boolean/null and float64 APIs with explicit scalar casts.
+and metadata-driven integer, bool_t/null, float64, string and concrete vector APIs
+with explicit checked casts and selectively published operators/adapters.
 Compiler integration and broader runtime imports are not implemented here yet.
 Standard-library types and private templates are appropriate for tool support;
 generated runtime consumer headers remain template-free.
@@ -20,6 +21,7 @@ rejects a different generator/compiler or missing mold.
 cmake --preset default
 cmake --build --preset default
 ctest --preset default
+./build/clang/scpp_runtime_demo
 ```
 
 The build directory is `build/clang/` (ignored by Git). Generated public API files
@@ -28,6 +30,41 @@ preset also sets `CMAKE_BUILD_PARALLEL_LEVEL=8`. Project executables and the sep
 generated-consumer link proofs explicitly use the discovered mold linker. The
 `ubsan` configure/build/test presets retain that toolchain and eight build jobs while
 enabling undefined-behavior checks with recovery disabled.
+
+The [plain C++ example](examples/runtime_demo.cpp) composes every implemented family
+and prints `Ada: 21; ratio=7`. The [API summary](specs/runtime_api_summary.md) lists
+supported/rejected operators and casts, ownership boundaries and deferred language
+decisions. The active hash/mixed/dynamic follow-on is a separate reviewed port;
+none of those implementations has been imported yet.
+
+## Generator and artifact ownership
+
+runtime/metadata/runtime.json owns identities, conversion policies and operation
+bindings. publication.json selects concrete types, operators, native adapters and
+collection specializations. tools/api_generator prepares a typed plan and emits
+runtime/generated/public/scpp headers, src/runtime.cpp, prepared.json and inventory.
+The generator builds independently of the runtime; consumers link scpp_runtime,
+which exports only the generated public include root.
+
+Generated code, plans, inventories and compilation outputs are local artifacts,
+ignored by Git. Commit metadata, generator sources, handwritten primitives, tests
+and examples. A fresh checkout recreates its API through the normal build.
+
+From this directory, generation can also run independently:
+
+```sh
+./build/clang/scpp_api_generator \
+  runtime/metadata/runtime.json runtime/metadata/publication.json \
+  runtime/generated
+```
+
+Add --check for read-only freshness. Generation validates before writing and rejects
+retired output paths in an existing inventory; use an empty staging output when
+changing artifact names. I/O publication is not transactional. Output is specific
+to the native generation target. CMake currently expects the default header groups.
+Cross-compilation and sealed prebuilt ABI packages are not provided.
+
+## JSON tooling and bounded reuse
 
 The reader owns its input and is neither copyable nor movable. It validates UTF-8,
 JSON grammar, decoded duplicate keys and depth (default 128, permitted 1..256).
@@ -65,178 +102,20 @@ The second reuse slice adapts `runtime/tools/api_generator/value.hpp` and
 `value.cpp` from the same revision. It replaces runtime-reader adaptation with the
 native reader and strengthens access/output checks.
 
-## Integer generation slice
+## Validation
 
-`runtime/metadata/runtime.json` owns integer facts and policies;
-`publication.json` selects int32/int64, boolean/null and the requested integer
-operators, including optional native-int adapters. The native
-generator validates metadata, creates a typed plan and emits concrete constructors,
-operators, short names, implementations and inventories under `v0.2/runtime/generated/`.
-`prepared.json` exposes resolved conversion and execution facts.
-The generator builds without linking the generated runtime.
-Generated code, prepared plans and inventories under `runtime/generated/` are
-local build products, excluded from Git along with compilation output. Commit
-metadata, generator sources, handwritten runtime code and tests. A fresh checkout
-recreates the generated API through the normal CMake build; consumers still include
-the locally generated headers and link `scpp_runtime`.
+Focused tests cover parser/model behavior, preparation rejection, deterministic
+emission, generated freshness, independent public headers and valid/invalid overload
+composition. Separate publications exercise every integer width, reduced string
+APIs, core-only vectors, additional vector element families and explicit elementwise
+casts. The runnable example composes every default family.
 
-```cpp
-#include <scpp/short_names.hpp>
-#include <scpp/native_bridge.hpp> // Optional native int arithmetic.
+Fresh standalone Clang/libc++ UBSan builds pass without old-tree dependencies or
+pregenerated files. String/vector ownership and partial-cast failure consumers pass
+Clang/libstdc++ ASan+UBSan. Leak detection is disabled because LeakSanitizer cannot
+run in the traced execution environment. libc++ ASan has an independently reproduced
+allocation/deallocation mismatch in the installed exception libraries; its checks
+were not suppressed. Neither limitation is counted as a successful sanitizer check.
 
-int32 a{20};
-int64 b{3};
-int64 sum = a + b;
-auto incremented = a + 1; // int32 on a target with 32-bit int.
-auto reversed = 1 + b;    // int64.
-int32 narrow = static_cast<int32>(b);
-```
-
-Consumers link the CMake target `scpp_runtime`; only the generated public
-include root is exported. Constructors are explicit and checked, including native
-inputs. Mixed addition uses int64. This slice preserves native signed-addition
-overflow limits; it does not introduce checked arithmetic. Conversion failure uses
-standard `std::out_of_range` until a runtime error surface is adopted.
-
-Native operands are mapped by their complete type range into the existing domain
-promotion policy. The default bridge exposes only int in
-both directions; it does not inspect literal values. Unrequested fundamental
-inputs have exact deleted overloads, preventing accidental conversion to an
-admitted operand type. These declarations add no runtime implementations. Bridge functions explicitly cast
-to runtime types and call the core same-type operator. Constructors stay explicit:
-write `int64 x{12}`, not `int64 x = 12`. Restricting native int values to literals
-is a coding convention; C++ overload resolution cannot enforce that distinction.
-
-Run generation independently from this directory:
-
-```sh
-./build/clang/scpp_api_generator \
-  runtime/metadata/runtime.json runtime/metadata/publication.json \
-  runtime/generated
-```
-
-Add `--check` to verify without writing. Output is native-target-specific; no
-cross-compilation or sealed ABI publication is provided yet. The initial CMake
-integration expects the default header grouping. See the
-[integer slice contract](specs/integer_slice.md) for exact scope, provenance and
-unsupported inputs. This is an adapted extraction of existing scalar preparation,
-class emission and behavior owners, not a parallel engine using the old tree.
-
-## Validation checkpoint — 2026-10-28
-
-- Clang 18/libc++ release build and focused tests passed.
-- A standalone copy of this directory under `/tmp` built and passed libc++ UBSan
-  tests with recovery disabled. Its compiler dependency inventory contains no
-  original repository paths.
-- Clang/libstdc++ ASan+UBSan tests passed with leak detection disabled: LeakSanitizer
-  cannot run under the current traced execution environment. No leak-proof claim.
-- libc++ ASan validation remains blocked by an allocation/deallocation mismatch in
-  the installed exception libraries. A standalone program containing only a
-  `std::runtime_error` throw/catch reproduces the same failure without this reader.
-  The reader was not changed to hide it, and the mismatch check was not disabled.
-
-The metadata value slice passed the same release and isolated libc++ UBSan checks,
-plus Clang/libstdc++ ASan+UBSan with leak detection disabled. Both focused tests
-pass together. The libc++ ASan and leak-check limitations above remain unresolved;
-they are not counted as successful checks. Isolated compilation inputs contain no
-old-tree dependencies.
-
-The integer/native-operand slice passes all eight focused tests in Clang/libc++ release and in
-isolated libc++ UBSan and Clang/libstdc++ ASan+UBSan builds (same leak-check limitation).
-Proofs cover metadata negatives, the 56-pair integer planning domain, native range
-adaptation, the then-published twenty compiled addition overloads, checked narrowing,
-combined-header overload resolution, restricted-publication compile negatives,
-header independence, fresh staging determinism and read-only freshness. This does not establish compiled
-coverage of every integer specialization or integration with the PHS compiler.
-
-The earlier optional-bridge refinement passed all eight release tests. That default
-publishes eight supported overloads: four core and four native-int adapters. Proofs
-cover core-only exclusion, bridge composition, explicit construction, checked casts,
-unsupported native inputs and the required same-type forwarding dependency.
-Earlier sanitizer checkpoints above predate this refinement.
-
-The next binary-operation slice adds metadata-bound `- * / % & | ^`, preserving
-explicit construction and the separate native-int bridge. All nine release tests
-pass, including an independent publication compiling every integer width and the
-eight binary operators. The default requests same-type operations plus the prior
-mixed addition pair; it does not expand every mixed operator combination. See the
-[active family plan](specs/planning/runtime_type_operations.md) for the full goal,
-remaining groups, compiler boundary and completion requirements.
-
-This binary-operation checkpoint also passes all nine tests in a fresh standalone
-Clang/libc++ UBSan build with recovery disabled. The build starts without generated
-artifacts; compiler dependency records contain no original-repository paths.
-
-## Current value and operation-form checkpoint
-
-The metadata root is now `runtime/metadata/runtime.json`; the integer-only name and
-driver have been retired. One runtime plan prepares types, source mappings and
-operations. Consumers link `scpp_runtime`. Generated `scpp/values.hpp` provides
-`bool_t`/null; integer comparisons return `bool_t`. Integer unary, shifts, compound
-assignment and prefix/postfix operations are now generated from their own forms.
-The default has 69 core and 48 optional native-int integer operator signatures.
-The full-publication proof compiles all eight integer types, all 64 comparison pairs,
-shifts, unary and mutation behavior, including checked write-back preservation.
-See [the value contract](specs/values_slice.md) for precise behavior and remaining
-scalar-cast work at that checkpoint. Floating support is recorded below; strings
-and vectors remain later slices in the active goal.
-
-The value/form checkpoint passes all eleven tests in a fresh standalone Clang/libc++
-UBSan build with recovery disabled. Generation starts from no derived files, and
-compiler dependency records contain no original-repository paths.
-
-The public boolean name is `bool_t`. `int_t` aliases the configured signed integer
-default (currently int64), using the same metadata fact as source int. These aliases
-introduce no wrappers or duplicate overloads. `scpp::float_t` aliases the floating default (float64). It is not globally imported
-by short_names.hpp because C math headers have their own float_t typedef.
-
-## Floating checkpoint
-
-Float64 now supports arithmetic, comparison, unary and mutation operations through
-the shared prepared model. Explicit integer/float/bool_t casts are generated from
-metadata. Wide integer/float expressions require an explicit float cast; narrow
-integer types may participate in requested mixed operations. See the
-[floating contract](specs/floating_slice.md) for conversion bounds, NaN/zero behavior,
-alias rules and the exact supported/rejected surface. String/vector slices and
-compiler integration are still outstanding.
-
-Validation for the floating/build checkpoint: all thirteen tests pass in the default
-release preset and a fresh standalone UBSan copy, both using Ninja, eight build jobs,
-Clang/libc++ and mold. ELF .comment records confirm mold linked both the generator
-and the independent consumer proof. The isolated compiler dependency inventory has
-no original-repository includes. Generated freshness and alias composition pass.
-
-## Owned string checkpoint
-
-Include `scpp/string.hpp` (or `scpp/short_names.hpp`) for the concrete string value:
-
-```cpp
-string name{"Ada"};
-string greeting = string{"Hello, "} + name;
-int64 count = greeting.size();
-int64 number = static_cast<int64>(string{"42"});
-string text = static_cast<string>(number);
-```
-
-The generated API has independent value copies, nonthrowing moves, byte-length
-queries, explicit text casts and requested concatenation/comparison operators.
-Standard storage stays private. See [the string contract](specs/string_slice.md)
-for pointer lifetime, strict parsing, allocation tradeoffs and reduced publication
-proofs. Generated vectors and final composition are the next slices.
-
-## Generated vectors
-
-`scpp/vectors.hpp` (also included by short_names.hpp) provides vector_string and
-vector_int64 in the default publication:
-
-```cpp
-vector_string names;
-names.append("Ada");
-string first = names.at(0); // Value copy, no interior reference.
-names.set(0, "Grace");
-```
-
-Metadata selects native member conveniences and requested explicit cross-element
-casts. Core-only publications work with explicit runtime indices/values. See the
-[vector contract](specs/vector_slice.md) for bounds, ownership, conversion failures
-and the private storage tradeoff. Generated code stays outside Git.
+See the family contracts and completion audit linked above for exact behavior,
+reviewed legacy provenance, validation evidence and remaining compiler obligations.

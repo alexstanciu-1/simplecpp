@@ -110,4 +110,5 @@ Shift failure uses the standalone standard exception boundary. Tests cover conte
 short-circuiting, no implicit arithmetic, explicit comparison results, every integer
 width, extreme signed/unsigned comparison, checked shift counts, mutation return
 categories and failure preservation. Floating support is covered by its separate
-contract; strings/vectors and full compiler integration remain later work.
+contract; string/vector contracts now describe their implemented surfaces. Full
+compiler integration remains separate work.

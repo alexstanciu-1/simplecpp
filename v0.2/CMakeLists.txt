@@ -53,8 +53,13 @@ target_include_directories(scpp_runtime
   PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/runtime/src/numeric ${CMAKE_CURRENT_SOURCE_DIR}/runtime/src/sequence)
 target_compile_features(scpp_runtime PUBLIC cxx_std_23)
 
+add_executable(scpp_runtime_demo examples/runtime_demo.cpp)
+target_link_libraries(scpp_runtime_demo PRIVATE scpp_runtime)
+
 include(CTest)
 if(BUILD_TESTING)
+  add_test(NAME runtime_demo COMMAND scpp_runtime_demo)
+  set_tests_properties(runtime_demo PROPERTIES PASS_REGULAR_EXPRESSION "Ada: 21; ratio=7")
   add_executable(vector_preparation_test tests/vector_preparation.cpp)
   target_link_libraries(vector_preparation_test PRIVATE scpp_api_generation)
   add_test(NAME vector_preparation COMMAND vector_preparation_test ${runtime_metadata} ${runtime_publication})

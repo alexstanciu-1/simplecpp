@@ -2,7 +2,8 @@
 
 Doc Status: planning
 Date: 2026-10-28
-Status: active goal; implementation proceeds in bounded slices below.
+Status: original runtime/API-generator goal completed; hash/mixed/dynamic follow-on
+review recorded separately. Historical checkpoints below retain their original scope.
 
 ## Outcome and boundaries
 
@@ -140,7 +141,7 @@ authorize bulk archival of the old repository tree.
    Cross-element vector casts require explicit element conversion requests; do not
    invent implicit container conversion or vector arithmetic.
 
-6. **Composition and cleanup — pending.** Produce a plain C++ example using all
+6. **Composition and cleanup — implemented.** Produce a plain C++ example using all
    families and optional short names/bridge. Verify declarations together under
    Clang, valid and invalid overloads, core-only closure, no public template leaks,
    standalone generation/build without old-tree paths, freshness and determinism.
@@ -319,3 +320,14 @@ The requested initial hash/mixed/dynamic review is recorded in
 [hash_mixed_dynamic_port_review.md](hash_mixed_dynamic_port_review.md). It identifies
 the existing typed/packed cores and the current independent dynamic payload family;
 no core algorithms or legacy modules were moved during that review.
+
+## Final composition and completion audit
+
+The runnable examples/runtime_demo.cpp composes every default family and the optional
+short names/native bridge. runtime_api_summary.md consolidates the exact supported
+and rejected casts/operators, physical pre-lowering ownership and deferred decisions.
+The requirement-by-requirement [completion audit](runtime_completion_audit.md) verifies
+all six slices. A source-only staged export regenerates the API and passes all 21
+Release and all 21 UBSan tests under Ninja/8 jobs/Clang/libc++/mold, with no original-tree
+dependencies. Generated files remain local and ignored. No compiler integration or
+hash/mixed/dynamic implementation is claimed by completion of this original goal.

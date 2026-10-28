@@ -3,7 +3,7 @@
 Doc Status: supporting
 
 Status: string metadata, preparation, generated lifecycle/operators and explicit
-text casts are implemented. Generated vector support remains pending.
+text casts are implemented. Generated vector support is described in vector_slice.md.
 
 ## Reviewed reuse
 
@@ -112,8 +112,8 @@ deterministic ordering. `string_publication` compiles/runs a reduced API with on
 string equality, no text casts, no float and no numeric operators. Public-header
 closure checks include string.hpp.
 
-Next: generated vectors and final cross-family composition. Neither is claimed
-complete by the string checkpoint.
+Generated vectors and cross-family composition are covered by vector_slice.md and
+runtime_api_summary.md; the evidence above describes the string-specific checkpoint.
 
 Cleanup: the generated scalars.cpp name is retired in favor of runtime.cpp now that
 it owns scalar and string definitions. Inventory/build/fixture references follow the
