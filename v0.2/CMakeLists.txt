@@ -1,0 +1,106 @@
+cmake_minimum_required(VERSION 3.21)
+project(scpp_v02_foundation LANGUAGES CXX)
+
+if(NOT CMAKE_GENERATOR STREQUAL "Ninja")
+  message(FATAL_ERROR "v0.2 uses Ninja. Configure with cmake --preset default.")
+endif()
+if(NOT CMAKE_CXX_COMPILER_ID MATCHES "Clang")
+  message(FATAL_ERROR "v0.2 uses Clang. Configure with cmake --preset default.")
+endif()
+find_program(SCPP_MOLD_LINKER NAMES ld.mold mold REQUIRED)
+add_link_options("--ld-path=${SCPP_MOLD_LINKER}")
+message(STATUS "v0.2 linker: ${SCPP_MOLD_LINKER}; default build preset: 8 jobs")
+
+# Tool-private support; this is not the runtime's template-free public API.
+add_library(scpp_tool_json INTERFACE)
+target_include_directories(scpp_tool_json INTERFACE ${CMAKE_CURRENT_SOURCE_DIR}/tools/support)
+target_compile_features(scpp_tool_json INTERFACE cxx_std_23)
+
+add_library(scpp_metadata_value STATIC tools/api_generator/value.cpp)
+target_include_directories(scpp_metadata_value PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/tools)
+target_link_libraries(scpp_metadata_value PRIVATE scpp_tool_json)
+target_compile_features(scpp_metadata_value PUBLIC cxx_std_23)
+
+add_library(scpp_api_generation STATIC
+  tools/api_generator/runtime.cpp tools/api_generator/emission.cpp)
+target_link_libraries(scpp_api_generation PUBLIC scpp_metadata_value)
+add_executable(scpp_api_generator tools/api_generator/main.cpp)
+target_link_libraries(scpp_api_generator PRIVATE scpp_api_generation)
+
+set(runtime_metadata ${CMAKE_CURRENT_SOURCE_DIR}/runtime/metadata/runtime.json)
+set(runtime_publication ${CMAKE_CURRENT_SOURCE_DIR}/runtime/metadata/publication.json)
+set(runtime_generated ${CMAKE_CURRENT_SOURCE_DIR}/runtime/generated)
+set(runtime_outputs
+  ${runtime_generated}/public/scpp/values.hpp
+  ${runtime_generated}/public/scpp/integers.hpp
+  ${runtime_generated}/public/scpp/numeric.hpp
+  ${runtime_generated}/public/scpp/native_bridge.hpp
+  ${runtime_generated}/public/scpp/short_names.hpp
+  ${runtime_generated}/src/scalars.cpp
+  ${runtime_generated}/prepared.json
+  ${runtime_generated}/inventory.json)
+add_custom_command(OUTPUT ${runtime_outputs}
+  COMMAND scpp_api_generator ${runtime_metadata} ${runtime_publication} ${runtime_generated}
+  DEPENDS scpp_api_generator ${runtime_metadata} ${runtime_publication}
+  VERBATIM)
+add_custom_target(scpp_runtime_publication DEPENDS ${runtime_outputs})
+add_library(scpp_runtime STATIC ${runtime_generated}/src/scalars.cpp)
+add_dependencies(scpp_runtime scpp_runtime_publication)
+target_include_directories(scpp_runtime
+  PUBLIC ${runtime_generated}/public
+  PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/runtime/src/numeric)
+target_compile_features(scpp_runtime PUBLIC cxx_std_23)
+
+include(CTest)
+if(BUILD_TESTING)
+  add_executable(json_reader_test tests/json_reader.cpp)
+  target_link_libraries(json_reader_test PRIVATE scpp_tool_json)
+  add_test(NAME json_reader COMMAND json_reader_test)
+  add_executable(metadata_value_test tests/metadata_value.cpp)
+  target_link_libraries(metadata_value_test PRIVATE scpp_metadata_value scpp_tool_json)
+  add_test(NAME metadata_value COMMAND metadata_value_test)
+  add_executable(integer_preparation_test tests/integer_preparation.cpp)
+  target_link_libraries(integer_preparation_test PRIVATE scpp_api_generation)
+  add_test(NAME integer_preparation COMMAND integer_preparation_test ${runtime_metadata} ${runtime_publication})
+  add_executable(value_preparation_test tests/value_preparation.cpp)
+  target_link_libraries(value_preparation_test PRIVATE scpp_api_generation)
+  add_test(NAME value_preparation COMMAND value_preparation_test ${runtime_metadata} ${runtime_publication})
+  add_executable(floating_preparation_test tests/floating_preparation.cpp)
+  target_link_libraries(floating_preparation_test PRIVATE scpp_api_generation)
+  add_test(NAME floating_preparation COMMAND floating_preparation_test ${runtime_metadata} ${runtime_publication})
+  add_executable(floating_consumer_test tests/floating_consumer.cpp)
+  target_link_libraries(floating_consumer_test PRIVATE scpp_runtime)
+  add_test(NAME floating_consumer COMMAND floating_consumer_test)
+  add_executable(value_consumer_test tests/value_consumer.cpp)
+  target_link_libraries(value_consumer_test PRIVATE scpp_runtime)
+  add_test(NAME value_consumer COMMAND value_consumer_test)
+  add_executable(integer_consumer_test tests/integer_consumer.cpp)
+  target_link_libraries(integer_consumer_test PRIVATE scpp_runtime)
+  add_test(NAME integer_consumer COMMAND integer_consumer_test)
+  add_test(NAME runtime_freshness COMMAND scpp_api_generator
+    ${runtime_metadata} ${runtime_publication} ${runtime_generated} --check)
+  add_test(NAME runtime_generation COMMAND ${CMAKE_COMMAND}
+    -DCXX=${CMAKE_CXX_COMPILER} "-DCXX_FLAGS=${CMAKE_CXX_FLAGS}"
+    -DGENERATOR=$<TARGET_FILE:scpp_api_generator>
+    -DMETADATA=${runtime_metadata} -DPUBLICATION=${runtime_publication}
+    -DWORK=${CMAKE_CURRENT_BINARY_DIR}/generation-proof
+    -P ${CMAKE_CURRENT_SOURCE_DIR}/tests/runtime_generation.cmake)
+  add_test(NAME runtime_public_boundary COMMAND ${CMAKE_COMMAND}
+    -DCXX=${CMAKE_CXX_COMPILER} "-DCXX_FLAGS=${CMAKE_CXX_FLAGS}"
+    -DGENERATED=${runtime_generated} -DWORK=${CMAKE_CURRENT_BINARY_DIR}/public-proof
+    -P ${CMAKE_CURRENT_SOURCE_DIR}/tests/runtime_public_boundary.cmake)
+  add_test(NAME integer_full_publication COMMAND ${CMAKE_COMMAND}
+    -DMOLD_LINKER=${SCPP_MOLD_LINKER}
+    -DGENERATOR=$<TARGET_FILE:scpp_api_generator>
+    -DMETADATA=${runtime_metadata} -DPUBLICATION=${runtime_publication}
+    -DCXX=${CMAKE_CXX_COMPILER} "-DCXX_FLAGS=${CMAKE_CXX_FLAGS}"
+    -DSOURCE=${CMAKE_CURRENT_SOURCE_DIR}
+    -DWORK=${CMAKE_CURRENT_BINARY_DIR}/integer-full-proof
+    -P ${CMAKE_CURRENT_SOURCE_DIR}/tests/integer_full_publication.cmake)
+  add_test(NAME native_operator_publication COMMAND ${CMAKE_COMMAND}
+    -DGENERATOR=$<TARGET_FILE:scpp_api_generator>
+    -DMETADATA=${runtime_metadata} -DPUBLICATION=${runtime_publication}
+    -DCXX=${CMAKE_CXX_COMPILER} "-DCXX_FLAGS=${CMAKE_CXX_FLAGS}"
+    -DWORK=${CMAKE_CURRENT_BINARY_DIR}/native-publication-proof
+    -P ${CMAKE_CURRENT_SOURCE_DIR}/tests/native_operator_publication.cmake)
+endif()

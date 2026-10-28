@@ -1,0 +1,583 @@
+{
+  "version": 1,
+  "types": {
+    "int8": {
+      "signed": true,
+      "bits": 8
+    },
+    "int16": {
+      "signed": true,
+      "bits": 16
+    },
+    "int32": {
+      "signed": true,
+      "bits": 32
+    },
+    "int64": {
+      "signed": true,
+      "bits": 64
+    },
+    "uint8": {
+      "signed": false,
+      "bits": 8
+    },
+    "uint16": {
+      "signed": false,
+      "bits": 16
+    },
+    "uint32": {
+      "signed": false,
+      "bits": 32
+    },
+    "uint64": {
+      "signed": false,
+      "bits": 64
+    }
+  },
+  "representation": {
+    "binding": "fixed_width_integer",
+    "default_initialization": "zero"
+  },
+  "construction": {
+    "public_integer_inputs": "checked",
+    "native_integer_inputs": [
+      "int",
+      "unsigned int",
+      "long",
+      "unsigned long",
+      "long long",
+      "unsigned long long"
+    ],
+    "native_conversion": "checked",
+    "explicit": true
+  },
+  "promotion_policies": {
+    "integer_domain_maximum": {
+      "same_type": "preserve",
+      "different_signed": "int64",
+      "different_unsigned": "uint64",
+      "signed_and_unsigned_below_64_bits": "int64",
+      "signed_and_uint64": "reject"
+    }
+  },
+  "operations": {
+    "add": {
+      "public_operator": "+",
+      "promotion": "integer_domain_maximum",
+      "implementation": "integer_add",
+      "result": "execution_type",
+      "native_arguments": {
+        "policy": "type_range",
+        "inputs": "native_integer_inputs"
+      },
+      "form": "binary"
+    },
+    "subtract": {
+      "public_operator": "-",
+      "promotion": "integer_domain_maximum",
+      "implementation": "integer_subtract",
+      "result": "execution_type",
+      "native_arguments": {
+        "policy": "type_range",
+        "inputs": "native_integer_inputs"
+      },
+      "form": "binary"
+    },
+    "multiply": {
+      "public_operator": "*",
+      "promotion": "integer_domain_maximum",
+      "implementation": "integer_multiply",
+      "result": "execution_type",
+      "native_arguments": {
+        "policy": "type_range",
+        "inputs": "native_integer_inputs"
+      },
+      "form": "binary"
+    },
+    "divide": {
+      "public_operator": "/",
+      "promotion": "integer_domain_maximum",
+      "implementation": "integer_divide",
+      "result": "execution_type",
+      "native_arguments": {
+        "policy": "type_range",
+        "inputs": "native_integer_inputs"
+      },
+      "form": "binary"
+    },
+    "remainder": {
+      "public_operator": "%",
+      "promotion": "integer_domain_maximum",
+      "implementation": "integer_remainder",
+      "result": "execution_type",
+      "native_arguments": {
+        "policy": "type_range",
+        "inputs": "native_integer_inputs"
+      },
+      "form": "binary"
+    },
+    "bit_and": {
+      "public_operator": "&",
+      "promotion": "integer_domain_maximum",
+      "implementation": "integer_bit_and",
+      "result": "execution_type",
+      "native_arguments": {
+        "policy": "type_range",
+        "inputs": "native_integer_inputs"
+      },
+      "form": "binary"
+    },
+    "bit_or": {
+      "public_operator": "|",
+      "promotion": "integer_domain_maximum",
+      "implementation": "integer_bit_or",
+      "result": "execution_type",
+      "native_arguments": {
+        "policy": "type_range",
+        "inputs": "native_integer_inputs"
+      },
+      "form": "binary"
+    },
+    "bit_xor": {
+      "public_operator": "^",
+      "promotion": "integer_domain_maximum",
+      "implementation": "integer_bit_xor",
+      "result": "execution_type",
+      "native_arguments": {
+        "policy": "type_range",
+        "inputs": "native_integer_inputs"
+      },
+      "form": "binary"
+    },
+    "equal": {
+      "public_operator": "==",
+      "promotion": "exact_integer_comparison",
+      "implementation": "integer_equal",
+      "result": "boolean",
+      "form": "binary"
+    },
+    "not_equal": {
+      "public_operator": "!=",
+      "promotion": "exact_integer_comparison",
+      "implementation": "integer_not_equal",
+      "result": "boolean",
+      "form": "binary"
+    },
+    "less": {
+      "public_operator": "<",
+      "promotion": "exact_integer_comparison",
+      "implementation": "integer_less",
+      "result": "boolean",
+      "form": "binary"
+    },
+    "less_equal": {
+      "public_operator": "<=",
+      "promotion": "exact_integer_comparison",
+      "implementation": "integer_less_equal",
+      "result": "boolean",
+      "form": "binary"
+    },
+    "greater": {
+      "public_operator": ">",
+      "promotion": "exact_integer_comparison",
+      "implementation": "integer_greater",
+      "result": "boolean",
+      "form": "binary"
+    },
+    "greater_equal": {
+      "public_operator": ">=",
+      "promotion": "exact_integer_comparison",
+      "implementation": "integer_greater_equal",
+      "result": "boolean",
+      "form": "binary"
+    },
+    "positive": {
+      "public_operator": "+",
+      "promotion": "preserve_operand",
+      "implementation": "integer_positive",
+      "result": "operand_type",
+      "form": "unary"
+    },
+    "negate": {
+      "public_operator": "-",
+      "promotion": "preserve_operand",
+      "implementation": "integer_negate",
+      "result": "operand_type",
+      "form": "unary"
+    },
+    "bit_not": {
+      "public_operator": "~",
+      "promotion": "preserve_operand",
+      "implementation": "integer_bit_not",
+      "result": "operand_type",
+      "form": "unary"
+    },
+    "shift_left": {
+      "public_operator": "<<",
+      "promotion": "left_with_checked_count",
+      "implementation": "integer_shift_left",
+      "result": "left_type",
+      "form": "binary"
+    },
+    "shift_right": {
+      "public_operator": ">>",
+      "promotion": "left_with_checked_count",
+      "implementation": "integer_shift_right",
+      "result": "left_type",
+      "form": "binary"
+    },
+    "add_assign": {
+      "public_operator": "+=",
+      "promotion": "integer_domain_maximum",
+      "implementation": "integer_add",
+      "result": "left_reference",
+      "native_arguments": {
+        "policy": "type_range",
+        "inputs": "native_integer_inputs"
+      },
+      "form": "compound"
+    },
+    "subtract_assign": {
+      "public_operator": "-=",
+      "promotion": "integer_domain_maximum",
+      "implementation": "integer_subtract",
+      "result": "left_reference",
+      "native_arguments": {
+        "policy": "type_range",
+        "inputs": "native_integer_inputs"
+      },
+      "form": "compound"
+    },
+    "multiply_assign": {
+      "public_operator": "*=",
+      "promotion": "integer_domain_maximum",
+      "implementation": "integer_multiply",
+      "result": "left_reference",
+      "native_arguments": {
+        "policy": "type_range",
+        "inputs": "native_integer_inputs"
+      },
+      "form": "compound"
+    },
+    "divide_assign": {
+      "public_operator": "/=",
+      "promotion": "integer_domain_maximum",
+      "implementation": "integer_divide",
+      "result": "left_reference",
+      "native_arguments": {
+        "policy": "type_range",
+        "inputs": "native_integer_inputs"
+      },
+      "form": "compound"
+    },
+    "remainder_assign": {
+      "public_operator": "%=",
+      "promotion": "integer_domain_maximum",
+      "implementation": "integer_remainder",
+      "result": "left_reference",
+      "native_arguments": {
+        "policy": "type_range",
+        "inputs": "native_integer_inputs"
+      },
+      "form": "compound"
+    },
+    "bit_and_assign": {
+      "public_operator": "&=",
+      "promotion": "integer_domain_maximum",
+      "implementation": "integer_bit_and",
+      "result": "left_reference",
+      "native_arguments": {
+        "policy": "type_range",
+        "inputs": "native_integer_inputs"
+      },
+      "form": "compound"
+    },
+    "bit_or_assign": {
+      "public_operator": "|=",
+      "promotion": "integer_domain_maximum",
+      "implementation": "integer_bit_or",
+      "result": "left_reference",
+      "native_arguments": {
+        "policy": "type_range",
+        "inputs": "native_integer_inputs"
+      },
+      "form": "compound"
+    },
+    "bit_xor_assign": {
+      "public_operator": "^=",
+      "promotion": "integer_domain_maximum",
+      "implementation": "integer_bit_xor",
+      "result": "left_reference",
+      "native_arguments": {
+        "policy": "type_range",
+        "inputs": "native_integer_inputs"
+      },
+      "form": "compound"
+    },
+    "prefix_increment": {
+      "public_operator": "++",
+      "promotion": "preserve_operand",
+      "implementation": "integer_increment",
+      "result": "left_reference",
+      "form": "prefix"
+    },
+    "postfix_increment": {
+      "public_operator": "++",
+      "promotion": "preserve_operand",
+      "implementation": "integer_increment",
+      "result": "old_value",
+      "form": "postfix"
+    },
+    "prefix_decrement": {
+      "public_operator": "--",
+      "promotion": "preserve_operand",
+      "implementation": "integer_decrement",
+      "result": "left_reference",
+      "form": "prefix"
+    },
+    "postfix_decrement": {
+      "public_operator": "--",
+      "promotion": "preserve_operand",
+      "implementation": "integer_decrement",
+      "result": "old_value",
+      "form": "postfix"
+    },
+    "shift_left_assign": {
+      "public_operator": "<<=",
+      "promotion": "left_with_checked_count",
+      "implementation": "integer_shift_left",
+      "result": "left_reference",
+      "form": "compound"
+    },
+    "shift_right_assign": {
+      "public_operator": ">>=",
+      "promotion": "left_with_checked_count",
+      "implementation": "integer_shift_right",
+      "result": "left_reference",
+      "form": "compound"
+    }
+  },
+  "values": {
+    "null_t": {
+      "kind": "null",
+      "representation": "empty",
+      "construction": "default",
+      "operations": [
+        "equal",
+        "not_equal"
+      ]
+    },
+    "bool_t": {
+      "kind": "boolean",
+      "representation": "native_bool",
+      "construction": "explicit",
+      "condition": "explicit_native_bool",
+      "operations": [
+        "not",
+        "equal",
+        "not_equal"
+      ]
+    }
+  },
+  "source_types": {
+    "int": "int64",
+    "bool": "bool_t",
+    "null": "null_t",
+    "float": "float64"
+  },
+  "aliases": {
+    "int_t": "int",
+    "float_t": "float"
+  },
+  "floating": {
+    "type": "float64",
+    "representation": "ieee_binary64",
+    "native_inputs": [
+      "float",
+      "double"
+    ],
+    "integer_inputs": "native_integer_inputs",
+    "mixed_integer": "exact_type_range",
+    "division_by_zero": "throw",
+    "operations": {
+      "add": {
+        "public_operator": "+",
+        "promotion": "floating_exact_integer",
+        "implementation": "floating_add",
+        "result": "execution_type",
+        "native_arguments": {
+          "policy": "type_range",
+          "inputs": "native_integer_inputs"
+        },
+        "form": "binary"
+      },
+      "subtract": {
+        "public_operator": "-",
+        "promotion": "floating_exact_integer",
+        "implementation": "floating_subtract",
+        "result": "execution_type",
+        "native_arguments": {
+          "policy": "type_range",
+          "inputs": "native_integer_inputs"
+        },
+        "form": "binary"
+      },
+      "multiply": {
+        "public_operator": "*",
+        "promotion": "floating_exact_integer",
+        "implementation": "floating_multiply",
+        "result": "execution_type",
+        "native_arguments": {
+          "policy": "type_range",
+          "inputs": "native_integer_inputs"
+        },
+        "form": "binary"
+      },
+      "divide": {
+        "public_operator": "/",
+        "promotion": "floating_exact_integer",
+        "implementation": "floating_divide",
+        "result": "execution_type",
+        "native_arguments": {
+          "policy": "type_range",
+          "inputs": "native_integer_inputs"
+        },
+        "form": "binary"
+      },
+      "equal": {
+        "public_operator": "==",
+        "promotion": "floating_exact_integer",
+        "implementation": "floating_equal",
+        "result": "boolean",
+        "form": "binary"
+      },
+      "not_equal": {
+        "public_operator": "!=",
+        "promotion": "floating_exact_integer",
+        "implementation": "floating_not_equal",
+        "result": "boolean",
+        "form": "binary"
+      },
+      "less": {
+        "public_operator": "<",
+        "promotion": "floating_exact_integer",
+        "implementation": "floating_less",
+        "result": "boolean",
+        "form": "binary"
+      },
+      "less_equal": {
+        "public_operator": "<=",
+        "promotion": "floating_exact_integer",
+        "implementation": "floating_less_equal",
+        "result": "boolean",
+        "form": "binary"
+      },
+      "greater": {
+        "public_operator": ">",
+        "promotion": "floating_exact_integer",
+        "implementation": "floating_greater",
+        "result": "boolean",
+        "form": "binary"
+      },
+      "greater_equal": {
+        "public_operator": ">=",
+        "promotion": "floating_exact_integer",
+        "implementation": "floating_greater_equal",
+        "result": "boolean",
+        "form": "binary"
+      },
+      "positive": {
+        "public_operator": "+",
+        "promotion": "floating_exact_integer",
+        "implementation": "floating_positive",
+        "result": "operand_type",
+        "form": "unary"
+      },
+      "negate": {
+        "public_operator": "-",
+        "promotion": "floating_exact_integer",
+        "implementation": "floating_negate",
+        "result": "operand_type",
+        "form": "unary"
+      },
+      "add_assign": {
+        "public_operator": "+=",
+        "promotion": "floating_exact_integer",
+        "implementation": "floating_add",
+        "result": "left_reference",
+        "native_arguments": {
+          "policy": "type_range",
+          "inputs": "native_integer_inputs"
+        },
+        "form": "compound"
+      },
+      "subtract_assign": {
+        "public_operator": "-=",
+        "promotion": "floating_exact_integer",
+        "implementation": "floating_subtract",
+        "result": "left_reference",
+        "native_arguments": {
+          "policy": "type_range",
+          "inputs": "native_integer_inputs"
+        },
+        "form": "compound"
+      },
+      "multiply_assign": {
+        "public_operator": "*=",
+        "promotion": "floating_exact_integer",
+        "implementation": "floating_multiply",
+        "result": "left_reference",
+        "native_arguments": {
+          "policy": "type_range",
+          "inputs": "native_integer_inputs"
+        },
+        "form": "compound"
+      },
+      "divide_assign": {
+        "public_operator": "/=",
+        "promotion": "floating_exact_integer",
+        "implementation": "floating_divide",
+        "result": "left_reference",
+        "native_arguments": {
+          "policy": "type_range",
+          "inputs": "native_integer_inputs"
+        },
+        "form": "compound"
+      },
+      "prefix_increment": {
+        "public_operator": "++",
+        "promotion": "floating_exact_integer",
+        "implementation": "floating_increment",
+        "result": "left_reference",
+        "form": "prefix"
+      },
+      "postfix_increment": {
+        "public_operator": "++",
+        "promotion": "floating_exact_integer",
+        "implementation": "floating_increment",
+        "result": "old_value",
+        "form": "postfix"
+      },
+      "prefix_decrement": {
+        "public_operator": "--",
+        "promotion": "floating_exact_integer",
+        "implementation": "floating_decrement",
+        "result": "left_reference",
+        "form": "prefix"
+      },
+      "postfix_decrement": {
+        "public_operator": "--",
+        "promotion": "floating_exact_integer",
+        "implementation": "floating_decrement",
+        "result": "old_value",
+        "form": "postfix"
+      }
+    }
+  },
+  "scalar_casts": [
+    "integer_to_floating_rounding",
+    "floating_to_integer_truncate_checked",
+    "numeric_to_boolean_nonzero",
+    "boolean_to_numeric_01"
+  ]
+}
