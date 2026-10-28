@@ -1644,9 +1644,11 @@ and/or; those remain explicit carrier-review work.
 
 ### Lazy logical plans
 
-`selections.logical` declares `operand_groups`, `carrier_payloads` and an operations
+`selections.logical` declares `operand_groups`, optional `plain_operand_groups`,
+`carrier_payloads` and an operations
 map whose entries contain a boolean `short_circuit` value. Two projected operand
-types must belong to a common group; membership in the general condition domain
+types must belong to a common group; groups in `plain_operand_groups` are considered
+only when both operands have identity projections (no carrier extraction). Membership in the general condition domain
 alone is insufficient. Carrier payloads must also be explicitly admitted. Each
 listed type requires the existing callable condition operation. `logical_and` uses
 false as its short-circuit value; `logical_or` uses true.
@@ -1665,6 +1667,13 @@ binary runtime function or a public callback template. Runtime/application API
 publication reuses the existing carrier and condition identities.
 
 The current policy covers canonical bool/bool and numeric/numeric pairs across
-plain values and the four carrier families. Bool/numeric mixing, boxed values,
-string, fixed-width extensions and nested carrier payloads are not admitted by
-this slice; their source-contract audit remains separate.
+plain values and the four carrier families. Bool/numeric mixing, plain string,
+fixed-width extensions and nested carrier payloads remain outside these groups.
+
+
+The boxed logical extension selects plain-only groups for each of mixed and dynamic
+with boolean, int64 and float64 peers. Same-family boxes are admitted; mixed/dynamic
+crossing and boxed/carrier pairs reject. The distinction is metadata-described and
+uses the ordinary condition calls; the generator has no boxed type-name branch.
+A mixed table remains an invalid condition, while a constructed dynamic table is
+true. A skipped RHS avoids both source evaluation and runtime-kind validation.

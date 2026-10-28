@@ -807,7 +807,27 @@
         "logical_or": {
           "short_circuit": true
         }
-      }
+      },
+      "plain_operand_groups": [
+        [
+          "mixed",
+          "boolean"
+        ],
+        [
+          "mixed",
+          "int64",
+          "float64"
+        ],
+        [
+          "dynamic",
+          "boolean"
+        ],
+        [
+          "dynamic",
+          "int64",
+          "float64"
+        ]
+      ]
     }
   },
   "sections": {

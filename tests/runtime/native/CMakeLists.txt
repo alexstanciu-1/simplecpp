@@ -600,3 +600,6 @@ add_test(NAME scpp_check_boxed_ordering_api COMMAND ${Python3_EXECUTABLE}
 
 add_test(NAME scpp_check_carrier_logical COMMAND ${Python3_EXECUTABLE}
   ${CMAKE_CURRENT_SOURCE_DIR}/check_carrier_logical.py --tool $<TARGET_FILE:scpp_api_generator>)
+
+add_test(NAME scpp_check_boxed_logical COMMAND ${Python3_EXECUTABLE}
+  ${CMAKE_CURRENT_SOURCE_DIR}/check_boxed_logical.py --tool $<TARGET_FILE:scpp_api_generator>)

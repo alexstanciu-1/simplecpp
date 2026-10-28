@@ -3146,3 +3146,41 @@ metadata was regenerated through the existing tool.
 Next: audit non-numeric logical admission and implement prepared-demand consumption
 under the accepted compiler-owned source-validation boundary. Carrier sign-off,
 ownership and callback expansion remain incomplete.
+
+## C34 — non-numeric audit and boxed logical paths (2026-10-28)
+
+Read-only inspection of the existing semantic owners confirms boxed AND/OR admit
+the same boxed family or plain bool/int/float peers. Cross-boxed families and
+boxed/carrier combinations reject. Evidence: `Boxed_Operators::decide_logical` and
+`Guarded_Operators::try_decide`; runtime condition semantics remain owned by
+`operators/conditional/condition_truthiness.hpp`, under `dynamic_types.md` and the
+conditional matrix. Historical compiler execution reports were not rerun here.
+
+The shared selection metadata now has optional `plain_operand_groups`, used only
+when both projections are identity. This expresses the boxed groups without
+accidentally granting boxed/carrier combinations or adding generator type-name
+exceptions. Existing canonical checked carrier groups are unchanged. Public
+consumers reuse the existing condition functions; no runtime adapter or archive
+recompile is required.
+
+`check_boxed_logical.py` derives 28 public-only consumers from returned plans.
+Release and ASan/UBSan with leak detection pass: boxed truth tables across null,
+bool, int, float and string; all plain peer directions; skipped/reached invalid
+mixed tables; and dynamic object truth (including an empty constructed object).
+Successful paths, including long strings, allocate zero. Caller compile single
+runs: 0.2195s release / 0.3635s sanitizer; these include the fixture and are not
+public/native comparisons. Canonical logical metadata regression passes, with
+added cross-boxed and boxed/carrier rejection checks. Publication metadata is
+regenerated; compiled consumer checks use public headers and the existing archive.
+
+The audit also distinguishes unary domains: nullable-string negation is an existing
+condition route; guarded Result/string negation is unresolved in the old compiler's
+string slice. Ordinary unary preparation admits explicit condition-negation roles
+(records, ownership, callable, nullable, boxed and error), rather than every type
+with a condition helper. The physical generator's broad fallback must not be used
+as evidence of source admission. Prepared semantic facts must carry that operation
+permission; narrowing or broadening source semantics is not inferred here.
+
+Next work remains the prepared-demand consumer and its source/physical distinction,
+then the remaining selection/ownership/callback review. Non-numeric logical source
+admission is not marked universally complete by this boxed slice.

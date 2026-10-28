@@ -99,3 +99,11 @@ that observation capability. The scoped-observation slice must represent the spe
 non-escaping operation and prove lifetime/alias behavior; merely removing the copy
 requirement would leave an unusable or unsafe call path. This remains unfinished C/D
 work, not a reason to infer generic source argument eligibility from native traits.
+
+## Current non-numeric audit — C34
+
+Boxed same-family/plain-bool-or-number lazy operations now have public plans.
+Cross-boxed and boxed/carrier pairs remain rejected. Nullable-string negation is an
+existing condition route; Result/string guarded negation is not inferred from it.
+Source operation eligibility must come from prepared semantic facts, independently
+of the physical condition helper. See the C34 evidence in runtime_core_completion.md.

@@ -64,17 +64,22 @@ namespace scpp::api_generation
     static void validate_logical_policy(const value &metadata)
     {
         const auto &policy = metadata.at("selections").at("logical");
-        fields_only(policy, "operand_groups carrier_payloads operations", "logical policy");
+        fields_only(policy, "operand_groups plain_operand_groups carrier_payloads operations", "logical policy");
         if (policy.at("operand_groups").type != value::kind::array || policy.at("operand_groups").items.empty()
             || policy.at("carrier_payloads").type != value::kind::array
             || policy.at("operations").type != value::kind::object || policy.at("operations").fields.empty())
             throw std::runtime_error("Invalid logical domains");
-        for (const auto &group : policy.at("operand_groups").items) {
-            if (group.type != value::kind::array || group.items.empty())
-                throw std::runtime_error("Logical operand group must be nonempty");
-            for (const auto &type : group.items)
-                if (callable_condition(metadata, type.text()).type == value::kind::null)
-                    throw std::runtime_error("Logical operand requires a callable condition");
+        for (const auto *field : {"operand_groups", "plain_operand_groups"}) {
+            if (!policy.has(field)) continue;
+            if (policy.at(field).type != value::kind::array)
+                throw std::runtime_error("Logical operand groups require an array");
+            for (const auto &group : policy.at(field).items) {
+                if (group.type != value::kind::array || group.items.empty())
+                    throw std::runtime_error("Logical operand group must be nonempty");
+                for (const auto &type : group.items)
+                    if (callable_condition(metadata, type.text()).type == value::kind::null)
+                        throw std::runtime_error("Logical operand requires a callable condition");
+            }
         }
         for (const auto &type : policy.at("carrier_payloads").items) {
             bool found = false;
@@ -119,9 +124,14 @@ namespace scpp::api_generation
             out[side] = operand;
         }
         bool admitted = false;
-        for (const auto &group : policy.at("operand_groups").items)
-            admitted = admitted || (contains(group, out.at("left").at("projection").at("target").text())
-                && contains(group, out.at("right").at("projection").at("target").text()));
+        const bool plain = out.at("left").at("projection").get("kind") == "identity"
+            && out.at("right").at("projection").get("kind") == "identity";
+        for (const auto *field : {"operand_groups", "plain_operand_groups"}) {
+            if (!policy.has(field) || (std::string(field) == "plain_operand_groups" && !plain)) continue;
+            for (const auto &group : policy.at(field).items)
+                admitted = admitted || (contains(group, out.at("left").at("projection").at("target").text())
+                    && contains(group, out.at("right").at("projection").at("target").text()));
+        }
         if (!admitted) throw std::runtime_error("Unsupported logical operand pair");
         out["steps"] = value::array();
         for (const auto *step : {"evaluate_left_once", "project_left", "observe_left",

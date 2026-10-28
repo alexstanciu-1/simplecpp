@@ -43,8 +43,17 @@ for left in operands:
                 assert p['kind']=='lazy_logical' and p['result_type']=='boolean'
                 assert p['short_circuit']==(op=='logical_or')
                 assert p['steps'].index('observe_left') < p['steps'].index('evaluate_right_once')
-for bad in ['string','mixed','dynamic','null','vector<int64>','nullable<string>','result<nullable<int64>>']:
+for bad in ['string','null','vector<int64>','nullable<string>','result<nullable<int64>>']:
     resolve('boolean',bad,error='Unsupported logical')
+for box in ['mixed','dynamic']:
+    for op in ['logical_and','logical_or']:
+        for peer in [box,'boolean','int64','float64']:
+            assert resolve(box,peer,op)['left']['projection']['kind']=='identity'
+            assert resolve(peer,box,op)['right']['projection']['kind']=='identity'
+        for carrier in names:
+            resolve(box,carrier,op,error='Unsupported logical operand pair')
+            resolve(carrier,box,op,error='Unsupported logical operand pair')
+        resolve(box,'dynamic' if box=='mixed' else 'mixed',op,error='Unsupported logical operand pair')
 bad=copy.deepcopy(metadata);bad['selections']['logical']['operand_groups'].append(['vector<int64>'])
 resolve('boolean','boolean',meta=bad,error='requires a callable condition')
 bad=copy.deepcopy(metadata);bad['selections']['logical']['operations']['logical_and']['short_circuit']='false'
