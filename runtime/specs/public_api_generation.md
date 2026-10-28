@@ -1769,3 +1769,23 @@ request must supply its own prepared evidence even when all requested types are
 already in a sealed dependency. Source permission is not cached in the imported
 physical manifest. Generated code is identical to native generation for the same
 physical demand; no boundary wrapper or runtime allocation is introduced.
+
+## Explicit nonthrowing lifecycle contracts
+
+A class lifecycle may additionally declare `noexcept` as an array drawn from
+`default`, `copy`, `move`, `copy_assignment` and `move_assignment`. The generator
+preserves these exception specifications on both public declarations and compiled
+definitions. Each enabled annotation requires the corresponding native
+`std::is_nothrow_*` trait, checked during layout probing and in the emitted
+implementation. Unknown or duplicate entries reject. Capability-disabled operations
+remain deleted; annotations do not enable operations. Destruction retains its
+existing mandatory nonthrowing contract. Omitting this array preserves the existing
+exception specifications; the tool does not infer a promise from a family name.
+
+The first ownership recipes use this mechanism for empty construction, moves and
+shared/weak handle copies. Pointee copyability and movability are independent of
+handle operations. `make()` is selected only for default-constructible targets and
+uses the runtime's existing allocation helpers. Weak construction borrows a shared
+handle; explicit `lock()` returns a retained or empty shared handle. No implicit
+weak condition or raw/interior-pointer access is exposed by these recipes. Source
+ownership eligibility remains a compiler-prepared fact, not a storage capability.

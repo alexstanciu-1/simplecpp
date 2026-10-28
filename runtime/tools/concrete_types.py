@@ -184,6 +184,8 @@ def generate(request, output, runtime, dependencies, compiler, flags):
                                         'copy_assignment':'copy_assignable', 'move_assignment':'move_assignable'}.items():
                         policy = probe['lifecycle'].get(mode, probe['lifecycle'].get(mode.removesuffix('_assignment')))
                         if policy == 'native': code += f'static_assert(std::is_{trait}_v<{alias}>);\n'
+                        if mode in probe['lifecycle'].get('noexcept', []):
+                            code += f'static_assert(std::is_nothrow_{trait}_v<{alias}>);\n'
                     code += f'std::printf("%zu %zu\\n", sizeof({alias}), alignof({alias}));\n'
                 code += '}\n'
                 executable=stage/'layout_probe'

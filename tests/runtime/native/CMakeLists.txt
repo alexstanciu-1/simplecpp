@@ -609,3 +609,6 @@ add_test(NAME scpp_check_prepared_requests COMMAND ${Python3_EXECUTABLE}
 
 add_test(NAME scpp_check_prepared_generation COMMAND ${Python3_EXECUTABLE}
   ${CMAKE_CURRENT_SOURCE_DIR}/check_prepared_generation.py --tool $<TARGET_FILE:scpp_api_generator>)
+
+add_test(NAME scpp_check_ownership_storage COMMAND ${Python3_EXECUTABLE}
+  ${CMAKE_CURRENT_SOURCE_DIR}/check_ownership_storage.py --tool $<TARGET_FILE:scpp_api_generator>)

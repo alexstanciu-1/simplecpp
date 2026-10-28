@@ -18,7 +18,7 @@ each slice. The original inventory is a baseline, not a current completion count
 | B1 | Complete for the agreed scalar-facing truth/text/identity/observation scope | Carrier forms remain C; boxed arithmetic and access completion are not B1 credit. |
 | B2 | Complete for the agreed non-carrier special/mutation and text public paths; closure evidence below | Carrier forms C; indexed retention E; native exception inspection and overflow disposition G. |
 | C | Four carrier recipes and bounded scalar paths implemented; first prepared canonical path reviewed in C38 | Guarded negation and canonical lazy logical plans implemented in C32/C33; remaining source admission, broader selection and payload-specific integration remain; C38 passes the first-path checkpoint. Both decisions accepted 2026-10-28. |
-| D | Pending | Ownership, application targets and source Exception transport gaps. |
+| D | First application-record ownership slice implemented (D1) | Retained access, ancestry/casts/identity, value storage and source Exception transport remain. |
 | E | Existing vector/hash/boxed foundations; incomplete | Typed nested access and remaining key policies; conditional lifecycle, cursor fixes, boxed access/probes, and positional/keyed built-in factories are implemented for the tested domains. |
 | F | Pending | Callable transport and registered collection algorithms. |
 | G | Core utility and scalar debug bindings implemented | Exception/helper gaps and requirement-by-requirement closure audit. |
@@ -2342,3 +2342,45 @@ record ownership prototype. This is not completion of C or a change to the overa
 scope. Broader joins, non-numeric/source-role admission, ownership/callback integration
 and all other unfinished batches remain backlog. Actual frontend fact production
 remains outside this public-runtime goal.
+
+
+## D1 — application-record ownership and nonthrowing lifecycle (2026-10-28)
+
+Shared, unique and weak recipes now use the same metadata generation pipeline for
+one application-defined, noncopyable and nonmovable record. Shared copies retain
+ownership without copying the target; unique moves transfer ownership; explicit
+weak lock yields a retained or empty shared handle. Default construction/reset and
+capability-selected default allocation are exposed. A weak-only physical demand
+materializes its shared signature dependency. Source-mode demands require prepared
+application/target facts even on sealed import reuse; fixtures are not a frontend
+semantic producer.
+
+The compiled prototype exposed a missing public exception specification. Lifecycle
+metadata now accepts an explicit `noexcept` operation list; layout probes and emitted
+implementation assertions verify each native guarantee. This is a shared lifecycle
+mechanism, with no ownership-name branch. Disabled operations remain disabled.
+Existing recipes without annotations retain their output. A deliberately false
+nonthrowing default-construction promise is rejected by the compiled proof.
+
+Release and ASan/UBSan/LSan pass: default-empty construction, shared copying and
+assignment, weak derivation/successful and expired locking, unique move construction
+and replacement, destruction exactly once, and throwing constructor cleanup. Both
+shared and unique creation allocate once, matching the native reference; empty,
+copy, lock and transfer paths allocate zero. The native reference uses an external
+observer to prevent allocation elision (the initial fixture permitted it and failed
+the parity assertion). Public headers compile independently with no private runtime
+include root. Application publication reuses with zero new units, and missing source
+facts reject before output installation.
+
+Five focused generator regressions pass (ownership, vector/conditional lifecycle,
+prepared operation requests and prepared storage). Single-run application storage
+plus record fixture / public caller compilation: release 3.6346s / 0.1435s; sanitizer
+3.9442s / 0.1636s. Runs overlapped, not controlled performance comparisons. Generator
+translation-unit rebuilds took 6.173s release / 20.269s instrumented. Runtime archives
+were reused; regeneration changed only publication metadata identity, with the same
+406 runtime implementation units.
+
+D remains incomplete: no raw or interior-pointer API, retained member-access protocol,
+ancestry/cast/identity support, value-storage migration or source Exception transport
+is claimed by this slice. The next step is the retained-access/identity boundary for
+these same application targets, preserving the compiler-owned eligibility decision.

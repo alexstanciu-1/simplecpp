@@ -91,7 +91,7 @@ namespace scpp::api_generation
         value lifecycle(const value &policy, const std::map<std::string,value> &types,
             value &checks, std::set<std::string> &headers)
         {
-            fields_only(policy,"default copy move destroy copy_assignment move_assignment", "lifecycle");
+            fields_only(policy,"default copy move destroy copy_assignment move_assignment noexcept", "lifecycle");
             value resolved = value::object();
             for (const auto *mode : {"default", "copy", "move", "destroy", "copy_assignment", "move_assignment"}) {
                 if ((std::string(mode) == "copy_assignment" || std::string(mode) == "move_assignment") && !policy.has(mode)) continue;
@@ -111,6 +111,23 @@ namespace scpp::api_generation
             }
             if (resolved.get("destroy") != "native")
                 throw std::runtime_error("Inline storage requires native destruction");
+            if (policy.has("noexcept")) {
+                if (policy.at("noexcept").type != value::kind::array)
+                    throw std::runtime_error("Lifecycle noexcept must be an array");
+                value selected_modes = value::array();
+                std::set<std::string> seen;
+                for (const auto &item : policy.at("noexcept").items) {
+                    const auto mode = item.text();
+                    if (mode != "default" && mode != "copy" && mode != "move"
+                        && mode != "copy_assignment" && mode != "move_assignment")
+                        throw std::runtime_error("Unknown lifecycle noexcept operation: " + mode);
+                    if (!seen.insert(mode).second)
+                        throw std::runtime_error("Duplicate lifecycle noexcept operation: " + mode);
+                    const auto fallback = mode == "copy_assignment" ? "copy" : mode == "move_assignment" ? "move" : mode;
+                    if (resolved.get(mode, resolved.get(fallback)) == "native") selected_modes.items.push_back(item);
+                }
+                resolved["noexcept"] = selected_modes;
+            }
             return resolved;
         }
         std::string scoped_condition_body(const value &plan, const std::string &operand,
@@ -322,7 +339,18 @@ namespace scpp::api_generation
 				source+="using "+alias+" = "+native_type+";\nstatic_assert(sizeof("+alias+")=="+size+" && alignof("+alias+")=="+alignment+");\n";
 				header+="class "+cpp+" final {\n    alignas("+alignment+") unsigned char storage_["+size+"];\n    friend struct detail::concrete_access;\n    "+cpp+"(void (*construct)(void *, const void *), const void *context);\npublic:\n";
 				source+=cpp+"::"+cpp+"(void (*construct)(void *, const void *), const void *context) { construct(this->storage_, context); }\n";
-				if (life.get("default")=="native") { header+="    "+cpp+"();\n"; source+=cpp+"::"+cpp+"() { ::new (this->storage_) "+alias+"(); }\n"; }
+                const auto exception_spec = [&](const std::string &mode) -> std::string {
+                    if (life.has("noexcept")) for (const auto &item : life.at("noexcept").items)
+                        if (item.text() == mode) return " noexcept";
+                    return "";
+                };
+                if (life.has("noexcept")) for (const auto &item : life.at("noexcept").items) {
+                    const auto mode = item.text();
+                    const auto trait = mode == "default" ? "default_constructible" : mode == "copy" ? "copy_constructible"
+                        : mode == "move" ? "move_constructible" : mode == "copy_assignment" ? "copy_assignable" : "move_assignable";
+                    source += "static_assert(std::is_nothrow_" + std::string(trait) + "_v<" + alias + ">);\n";
+                }
+                if (life.get("default")=="native") { header+="    "+cpp+"()"+exception_spec("default")+";\n"; source+=cpp+"::"+cpp+"()"+exception_spec("default")+" { ::new (this->storage_) "+alias+"(); }\n"; }
 				else header+="    "+cpp+"() = delete;\n";
 				for (bool move : {false,true}) {
 					auto mode=move?"move":"copy"; auto arg=(move?"":"const ")+cpp+(move?" &&other":" &other");
@@ -330,11 +358,11 @@ namespace scpp::api_generation
 					const auto assignment=life.get(move ? "move_assignment" : "copy_assignment", life.get(mode));
 					auto tail=life.get(mode)=="native"?";\n":" = delete;\n";
 					auto assignment_tail=assignment=="native"?";\n":" = delete;\n";
-					header+="    "+cpp+"("+arg+")"+tail+"    "+cpp+" &operator=("+arg+")"+assignment_tail;
+					header+="    "+cpp+"("+arg+")"+exception_spec(mode)+tail+"    "+cpp+" &operator=("+arg+")"+exception_spec(move ? "move_assignment" : "copy_assignment")+assignment_tail;
 					if (life.get(mode)=="native")
-						source+=cpp+"::"+cpp+"("+arg+") { ::new (this->storage_) "+alias+"("+rhs+"); }\n";
+						source+=cpp+"::"+cpp+"("+arg+")"+exception_spec(mode)+" { ::new (this->storage_) "+alias+"("+rhs+"); }\n";
 					if (assignment=="native")
-						source+=cpp+" &"+cpp+"::operator=("+arg+") { if (this != &other) "+local.at("self")+" = "+rhs+"; return *this; }\n";
+						source+=cpp+" &"+cpp+"::operator=("+arg+")"+exception_spec(move ? "move_assignment" : "copy_assignment")+" { if (this != &other) "+local.at("self")+" = "+rhs+"; return *this; }\n";
 				}
 				header+="    ~"+cpp+"() noexcept;\n"; source+=cpp+"::~"+cpp+"() noexcept { "+local.at("self")+".~"+alias+"(); }\n";
 				source+="static_assert(std::is_nothrow_destructible_v<"+alias+">);\n";

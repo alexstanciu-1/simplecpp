@@ -3608,5 +3608,197 @@
         ]
       }
     ]
+  },
+  "shared": {
+    "parameters": [
+      "T"
+    ],
+    "binding": "shared",
+    "native": "${binding}<${public:T}>",
+    "classes": [
+      {
+        "id": "self",
+        "name": "${name}",
+        "native": "${native_type}",
+        "lifecycle": {
+          "default": "native",
+          "copy": "native",
+          "move": "native",
+          "destroy": "native",
+          "noexcept": [
+            "default",
+            "move",
+            "move_assignment",
+            "copy",
+            "copy_assignment"
+          ]
+        },
+        "methods": [
+          {
+            "name": "reset",
+            "returns": "void",
+            "parameters": [],
+            "expression": "${self}.reset()",
+            "noexcept": true
+          },
+          {
+            "name": "has_value",
+            "returns": "boolean",
+            "parameters": [],
+            "const": true,
+            "transport": "native",
+            "expression": "${self}.has_value().native_value()",
+            "noexcept": true
+          },
+          {
+            "name": "make",
+            "static": true,
+            "returns": "self",
+            "parameters": [],
+            "transport": "native",
+            "expression": "scpp::shared<${public:T}>()",
+            "includes": [
+              "scpp/memory.hpp"
+            ],
+            "requires_capabilities": {
+              "T": [
+                "default_storage"
+              ]
+            }
+          }
+        ]
+      }
+    ],
+    "capabilities": [
+      "default_storage",
+      "move_storage",
+      "copy_storage"
+    ]
+  },
+  "unique": {
+    "parameters": [
+      "T"
+    ],
+    "binding": "unique",
+    "native": "${binding}<${public:T}>",
+    "classes": [
+      {
+        "id": "self",
+        "name": "${name}",
+        "native": "${native_type}",
+        "lifecycle": {
+          "default": "native",
+          "copy": "disabled",
+          "move": "native",
+          "destroy": "native",
+          "noexcept": [
+            "default",
+            "move",
+            "move_assignment"
+          ]
+        },
+        "methods": [
+          {
+            "name": "reset",
+            "returns": "void",
+            "parameters": [],
+            "expression": "${self}.reset()",
+            "noexcept": true
+          },
+          {
+            "name": "has_value",
+            "returns": "boolean",
+            "parameters": [],
+            "const": true,
+            "transport": "native",
+            "expression": "${self}.has_value().native_value()",
+            "noexcept": true
+          },
+          {
+            "name": "make",
+            "static": true,
+            "returns": "self",
+            "parameters": [],
+            "transport": "native",
+            "expression": "scpp::unique<${public:T}>()",
+            "includes": [
+              "scpp/memory.hpp"
+            ],
+            "requires_capabilities": {
+              "T": [
+                "default_storage"
+              ]
+            }
+          }
+        ]
+      }
+    ],
+    "capabilities": [
+      "default_storage",
+      "move_storage"
+    ]
+  },
+  "weak": {
+    "parameters": [
+      "T"
+    ],
+    "binding": "weak",
+    "native": "${binding}<${public:T}>",
+    "classes": [
+      {
+        "id": "self",
+        "name": "${name}",
+        "native": "${native_type}",
+        "lifecycle": {
+          "default": "native",
+          "copy": "native",
+          "move": "native",
+          "destroy": "native",
+          "noexcept": [
+            "default",
+            "move",
+            "move_assignment",
+            "copy",
+            "copy_assignment"
+          ]
+        },
+        "methods": [
+          {
+            "name": "reset",
+            "returns": "void",
+            "parameters": [],
+            "expression": "${self}.reset()",
+            "noexcept": true
+          },
+          {
+            "kind": "constructor",
+            "parameters": [
+              {
+                "name": "source",
+                "type": "shared<${type:T}>",
+                "passing": "const_ref"
+              }
+            ],
+            "expression": "${native:source}",
+            "explicit": true,
+            "noexcept": true
+          },
+          {
+            "name": "lock",
+            "returns": "shared<${type:T}>",
+            "parameters": [],
+            "const": true,
+            "transport": "native",
+            "expression": "${self}.lock()",
+            "noexcept": true
+          }
+        ]
+      }
+    ],
+    "capabilities": [
+      "default_storage",
+      "move_storage",
+      "copy_storage"
+    ]
   }
 }
