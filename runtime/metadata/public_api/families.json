@@ -3665,6 +3665,31 @@
                 "default_storage"
               ]
             }
+          },
+          {
+            "name": "retain_present",
+            "returns": "self",
+            "parameters": [],
+            "const": true,
+            "transport": "native",
+            "body": "auto retained = ${self};\n(void)retained.deref();\nreturn retained;"
+          },
+          {
+            "name": "identical",
+            "returns": "boolean",
+            "parameters": [
+              {
+                "name": "other",
+                "type": "self",
+                "passing": "const_ref"
+              }
+            ],
+            "const": true,
+            "transport": "native",
+            "expression": "scpp::identical(${self}, ${native:other}).native_value()",
+            "includes": [
+              "operators/identity/strict_identity.hpp"
+            ]
           }
         ]
       }

@@ -2384,3 +2384,36 @@ D remains incomplete: no raw or interior-pointer API, retained member-access pro
 ancestry/cast/identity support, value-storage migration or source Exception transport
 is claimed by this slice. The next step is the retained-access/identity boundary for
 these same application targets, preserving the compiler-owned eligibility decision.
+
+## D2 — checked shared retention and same-target identity (2026-10-28)
+
+The shared recipe adds `retain_present()` and same-target `identical(other)` through
+ordinary metadata bodies and native transport. Retention takes an owned shared
+snapshot and checks presence with the existing native dereference authority. It
+exposes no raw/interior reference and never copies the noncopyable target. Identity
+calls the existing strict-identity helper; no separate pointer-identity semantics
+were invented. Unique and weak gain neither operation.
+
+Contract audit: instance_methods_v0_2.md requires receiver selection/check before
+arguments and retention through invocation/unwinding. Unique receivers remain a
+source lifetime gate. expression_evaluation.md permits shared strict identity with
+same/compatible target views, but not ordinary equality or unique/weak identity.
+This slice covers the same-target public primitive; ancestry-aware demand/planning,
+typed member access and complete prepared-operation integration remain unfinished.
+Arbitrary C++ call syntax does not acquire the source evaluation-order guarantee.
+
+The expanded ownership fixture passes release and ASan/UBSan/LSan: absent receivers
+reject before argument effects, original-handle reset cannot destroy the retained
+receiver, argument exceptions release exactly once, and strict identity preserves
+absence, distinct objects and left-before-right snapshots across replacement. All
+previous transfer/allocation/publication tests remain green. Successful retention
+and identity allocate zero; sealed reuse emits no new units. Source eligibility
+checks still reject missing target facts even when importing generated handles.
+
+Application storage plus fixture / public caller compile: 5.9874s / 0.1599s release,
+6.1607s / 0.1989s sanitizer (overlapping single runs, not a controlled comparison).
+No generator or runtime archive rebuild was required. The existing broad native
+strict-identity header is now included privately by the shared implementation; its
+compile cost is visible here. Consider a focused native ownership-identity header
+when adding ancestry support, preserving one semantic authority and its existing
+multiple/virtual-inheritance tests. Public callers still see only concrete headers.

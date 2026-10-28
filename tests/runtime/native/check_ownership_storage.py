@@ -42,6 +42,9 @@ assert len(units) == 3
 assert units['unique<record>']['probes'][0]['lifecycle']['copy'] == 'disabled'
 assert units['shared<record>']['probes'][0]['lifecycle']['copy'] == 'native'
 assert '#include "scpp/shared_record.hpp"' in units['weak<record>']['header']
+for family in ['unique','weak']:
+    assert ' retain_present(' not in units[family+'<record>']['header']
+    assert ' identical(' not in units[family+'<record>']['header']
 # A weak-only demand recursively publishes the shared signature dependency.
 weak_only = copy.deepcopy(envelope); weak_only.pop('prepared'); weak_only['mode']='native'
 weak_only['request']['roots']=['weak<record>']
@@ -120,7 +123,46 @@ static_assert(!std::is_copy_constructible_v<unique_record> && !std::is_copy_assi
 static_assert(std::is_nothrow_move_constructible_v<unique_record> && std::is_nothrow_move_assignable_v<unique_record>);
 static_assert(std::is_nothrow_copy_constructible_v<shared_record> && std::is_nothrow_copy_assignable_v<weak_record>);
 static_assert(!std::is_convertible_v<weak_record,bool>);
+static void checked_receiver(shared_record &source, bool fail_argument) {
+    auto receiver=source.retain_present();
+    // Prepared evaluation selects/checks the receiver before argument effects.
+    source.reset();
+    CHECK(receiver.has_value() && fixture::live()==1);
+    if(fail_argument) throw 29;
+    CHECK(receiver.identical(receiver));
+}
 int main() {
+    {
+        shared_record empty_left, empty_right;
+        CHECK(empty_left.identical(empty_right));
+        bool argument_reached=false, rejected=false;
+        try { auto receiver=empty_left.retain_present(); argument_reached=true; }
+        catch(...) { rejected=true; }
+        CHECK(rejected && !argument_reached && fixture::live()==0);
+        for(int pass=0;pass<2;++pass) {
+            const bool fail=pass!=0;
+            auto receiver_source=shared_record::make();
+            const auto before=allocations;
+            const auto destroyed=fixture::destroyed();
+            bool caught=false;
+            try { checked_receiver(receiver_source,fail); }
+            catch(int value) { caught=value==29; }
+            CHECK(caught==fail && !receiver_source.has_value());
+            CHECK(fixture::live()==0 && fixture::destroyed()==destroyed+1);
+            // C++ exception machinery is not counted as a successful-path allocation claim.
+            if(!fail) CHECK(allocations==before);
+        }
+        auto original=shared_record::make(); auto different=shared_record::make();
+        const auto before=allocations;
+        auto left_snapshot=original;
+        original=different;
+        auto right_snapshot=original;
+        CHECK(!left_snapshot.identical(right_snapshot));
+        CHECK(original.identical(different));
+        CHECK(!original.identical(empty_left) && !empty_left.identical(original));
+        CHECK(allocations==before);
+    }
+    CHECK(fixture::live()==0);
     auto before=allocations;
     shared_record empty; unique_record unique_empty; weak_record weak_empty;
     CHECK(!empty.has_value() && !unique_empty.has_value() && !weak_empty.lock().has_value());
@@ -158,7 +200,7 @@ int main() {
         catch(int value) { caught=value==17; }
         CHECK(caught && fixture::live()==0 && fixture::destroyed()==destroyed);
     }
-    std::printf("PASS: ownership lifetime/transfer/throw cleanup; shared allocations=%u unique=%u; empty/copy/lock/transfer=0\n",shared_cost,unique_cost);
+    std::printf("PASS: checked retention/identity/lifetime/transfer/throw cleanup; shared allocations=%u unique=%u; empty/copy/lock/transfer=0\n",shared_cost,unique_cost);
 }
 '''
 with tempfile.TemporaryDirectory(prefix='scpp-ownership-') as directory:

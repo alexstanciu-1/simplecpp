@@ -1789,3 +1789,20 @@ uses the runtime's existing allocation helpers. Weak construction borrows a shar
 handle; explicit `lock()` returns a retained or empty shared handle. No implicit
 weak condition or raw/interior-pointer access is exposed by these recipes. Source
 ownership eligibility remains a compiler-prepared fact, not a storage capability.
+
+## Checked shared receiver retention
+
+The shared recipe exposes `retain_present()` as an owned, checked shared-handle
+snapshot. It retains the same native object and checks presence through the existing
+native dereference authority; it never returns a pointee reference or copies T.
+A prepared caller must emit this selection as a separate statement before argument
+expressions, then keep the result alive through invocation and exception unwinding.
+The method alone does not impose evaluation order on an arbitrary C++ call expression.
+
+Same-target `identical(other)` delegates to the existing runtime strict-identity
+helper and preserves absent-handle identity. Callers must snapshot operands left
+then right before comparison, as required by the source evaluation contract.
+This first physical operation does not provide ancestry-based overload demand,
+ordinary equality, or unique/weak receiver or identity admission. Those restrictions
+remain compiler-owned. No global operator-planner coverage is implied by these
+class methods; prepared integration and typed member operations remain subsequent work.
