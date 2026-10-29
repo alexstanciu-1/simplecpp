@@ -22,7 +22,7 @@ target_link_libraries(scpp_metadata_value PRIVATE scpp_tool_json)
 target_compile_features(scpp_metadata_value PUBLIC cxx_std_23)
 
 add_library(scpp_api_generation STATIC
-  tools/api_generator/runtime.cpp tools/api_generator/emission.cpp)
+  tools/api_generator/runtime.cpp tools/api_generator/emission.cpp tools/api_generator/ownership.cpp)
 target_link_libraries(scpp_api_generation PUBLIC scpp_metadata_value)
 add_executable(scpp_api_generator tools/api_generator/main.cpp)
 target_link_libraries(scpp_api_generator PRIVATE scpp_api_generation)
@@ -160,3 +160,7 @@ if(BUILD_TESTING)
 endif()
 
 add_subdirectory(compiler)
+
+if(BUILD_TESTING)
+  add_subdirectory(tests/ownership)
+endif()

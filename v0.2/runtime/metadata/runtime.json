@@ -642,5 +642,19 @@
       "file": "string",
       "state": "explicit_present"
     }
+  },
+  "ownership": {
+    "binding": "std_smart_pointer_inline",
+    "families": [
+      "shared",
+      "weak",
+      "unique"
+    ],
+    "default": "empty",
+    "construction": "explicit_factory",
+    "access": "checked_borrow",
+    "empty_access": "throw_runtime_error",
+    "weak_access": "explicit_lock",
+    "payload": "registered_record"
   }
 }

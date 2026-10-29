@@ -10,6 +10,9 @@ Implemented slices are native JSON parsing, the generator's metadata value model
 and metadata-driven integer, bool_t/null, float64, string and concrete vector APIs
 with explicit checked casts and selectively published operators/adapters. Nullable
 and result-family carriers now add metadata-selected checked payload extraction.
+The [first ownership slice](specs/ownership_slice.md) generates concrete shared, weak
+and unique handles for small registered records in a separate proof publication.
+Their private standard smart pointers live inline, without per-handle heap wrappers.
 The [compiler foundation](compiler/README.md) now includes compact tokens, immutable
 source snapshots and checked token sequence construction, using its own generated
 runtime publication. Scanning, parsing, semantic compilation and broader runtime

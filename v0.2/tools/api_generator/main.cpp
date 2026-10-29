@@ -37,6 +37,8 @@ int main(int argc, char **argv) {
                 file << contents;
             }
         }
-        std::cout << (check ? "Verified " : "Generated ") << plan.types.size() + plan.values.size() + plan.vectors.size() + plan.carriers.size() + std::any_of(plan.carriers.begin(), plan.carriers.end(), [](const auto &c) { return c.family == "result"; }) + (!plan.string.name.empty() ? 1 : 0) << " runtime types and " << plan.operations.size() << " numeric operator signatures\n";
+        std::size_t ownership_types = 0;
+        for (const auto &record : plan.ownership.records) ownership_types += record.families.size();
+        std::cout << (check ? "Verified " : "Generated ") << ownership_types + plan.types.size() + plan.values.size() + plan.vectors.size() + plan.carriers.size() + std::any_of(plan.carriers.begin(), plan.carriers.end(), [](const auto &c) { return c.family == "result"; }) + (!plan.string.name.empty() ? 1 : 0) << " runtime types and " << plan.operations.size() << " numeric operator signatures\n";
     } catch (const std::exception &error) { std::cerr << error.what() << '\n'; return 1; }
 }

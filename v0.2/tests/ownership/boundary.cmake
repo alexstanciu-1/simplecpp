@@ -1,0 +1,53 @@
+file(MAKE_DIRECTORY "${WORK}")
+separate_arguments(flags NATIVE_COMMAND "${CXX_FLAGS}")
+file(WRITE "${WORK}/consumer.cpp" "#include <scpp/ownership.hpp>\nint main() { scpp::shared_record_probe value; return value ? 1 : 0; }\n")
+execute_process(COMMAND "${CXX}" ${flags} -std=c++23 "-I${GENERATED}/public" "-I${RECORDS}"
+  -fsyntax-only "${WORK}/consumer.cpp" RESULT_VARIABLE status ERROR_VARIABLE errors)
+if(NOT status EQUAL 0)
+  message(FATAL_ERROR "Ownership public inclusion failed: ${errors}")
+endif()
+execute_process(COMMAND "${CXX}" ${flags} -std=c++23 "-I${GENERATED}/public" "-I${RECORDS}"
+  -E -P "${WORK}/consumer.cpp" RESULT_VARIABLE status OUTPUT_VARIABLE source ERROR_VARIABLE errors)
+if(NOT status EQUAL 0 OR source MATCHES "(^|[^A-Za-z0-9_])(template|typename)([^A-Za-z0-9_]|$)" OR source MATCHES "std::")
+  message(FATAL_ERROR "Ownership public closure exposes standard/template implementation: ${errors}")
+endif()
+execute_process(COMMAND "${CXX}" ${flags} -std=c++23 "-I${GENERATED}/public" "-I${RECORDS}"
+  -M "${WORK}/consumer.cpp" RESULT_VARIABLE status OUTPUT_VARIABLE dependencies ERROR_VARIABLE errors)
+if(NOT status EQUAL 0 OR dependencies MATCHES "ownership_semantics|runtime/include|tools/api_generator")
+  message(FATAL_ERROR "Ownership implementation leaked into public headers: ${dependencies} ${errors}")
+endif()
+# Required contract failures must reach the C++ ownership API, not missing includes.
+foreach(probe unique_copy weak_bool weak_deref raw_adopt)
+  if(probe STREQUAL "unique_copy")
+    set(body "scpp::unique_record_probe a; auto b = a;")
+  elseif(probe STREQUAL "weak_bool")
+    set(body "scpp::weak_record_probe a; if (a) {}")
+  elseif(probe STREQUAL "weak_deref")
+    set(body "scpp::weak_record_probe a; (void)*a;")
+  else()
+    set(body "scpp::record_probe* raw = nullptr; scpp::shared_record_probe a{raw};")
+  endif()
+  file(WRITE "${WORK}/${probe}.cpp" "#include <scpp/ownership.hpp>\nint main() { ${body} }\n")
+  execute_process(COMMAND "${CXX}" ${flags} -std=c++23 "-I${GENERATED}/public" "-I${RECORDS}"
+    -fsyntax-only "${WORK}/${probe}.cpp" RESULT_VARIABLE status ERROR_VARIABLE errors)
+  if(status EQUAL 0 OR errors MATCHES "file not found")
+    message(FATAL_ERROR "Ownership rejection proof failed (${probe}): ${errors}")
+  endif()
+endforeach()
+
+# Deliberately incompatible native storage must fail compilation, not run unsafely.
+file(READ "${GENERATED}/public/scpp/ownership.hpp" header)
+string(REGEX MATCH "storage_\\[([0-9]+)\\]" storage "${header}")
+if(NOT storage)
+  message(FATAL_ERROR "No generated ownership storage found")
+endif()
+math(EXPR wrong_size "${CMAKE_MATCH_1} + 1")
+string(REPLACE "${storage}" "storage_[${wrong_size}]" wrong_header "${header}")
+file(MAKE_DIRECTORY "${WORK}/wrong-layout/scpp")
+file(WRITE "${WORK}/wrong-layout/scpp/ownership.hpp" "${wrong_header}")
+execute_process(COMMAND "${CXX}" ${flags} -std=c++23 "-I${WORK}/wrong-layout"
+  "-I${GENERATED}/public" "-I${RECORDS}" "-I${PRIVATE}"
+  -fsyntax-only "${GENERATED}/src/ownership.cpp" RESULT_VARIABLE status ERROR_VARIABLE errors)
+if(status EQUAL 0 OR NOT errors MATCHES "static assertion failed")
+  message(FATAL_ERROR "Ownership native layout mismatch was not diagnosed: ${errors}")
+endif()

@@ -394,6 +394,7 @@ std::map<std::string, std::string> emit_runtime(const runtime_plan &plan) {
     if (!plan.string.name.empty()) files["public/" + plan.string.header] = banner + string_header;
     if (!plan.vectors.empty()) files["public/" + plan.vectors_header] = banner + vectors_header;
     if (!plan.carriers.empty()) files["public/" + plan.carriers_header] = banner + carriers_header;
+    emit_ownership(plan, files);
     value inventory = value::array();
     for (const auto &[path, contents] : files) inventory.items.emplace_back(path);
     files["inventory.json"] = json_text(inventory) + "\n";

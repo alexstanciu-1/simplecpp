@@ -45,7 +45,18 @@ struct carrier_plan {
     std::string name, family, payload, default_state;
     bool implicit_extraction = true;
 };
+struct ownership_record {
+    std::string name, header;
+    std::vector<std::string> families;
+    std::vector<std::vector<std::string>> constructors;
+};
+struct ownership_plan {
+    std::string header;
+    std::vector<ownership_record> records;
+    unsigned shared_size = 0, shared_align = 0, weak_size = 0, weak_align = 0, unique_size = 0, unique_align = 0;
+};
 struct runtime_plan {
+    ownership_plan ownership;
     std::string carriers_header;
     std::vector<carrier_plan> carriers;
     string_plan string;
@@ -61,6 +72,10 @@ struct runtime_plan {
     std::vector<scalar_operation> operations;
     std::string types_header, operators_header, short_names_header, native_bridge_header;
 };
+
+void prepare_ownership(const value &metadata, const value &publication, runtime_plan &plan);
+value describe_ownership(const ownership_plan &plan);
+void emit_ownership(const runtime_plan &plan, std::map<std::string, std::string> &files);
 
 // Physical preparation only: no source admission, expression order or file I/O.
 runtime_plan prepare_runtime(const value &metadata, const value &publication);

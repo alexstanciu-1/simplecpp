@@ -71,8 +71,8 @@ const std::vector<std::string> &native_cpp_spellings() {
 }
 
 runtime_plan prepare_runtime(const value &metadata, const value &publication) {
-    exact(metadata, "version types representation construction promotion_policies operations values source_types aliases floating scalar_casts string vector carriers", "runtime metadata");
-    exact(publication, "version namespace types operators headers values short_aliases string vectors carriers", "runtime publication");
+    exact(metadata, "version types representation construction promotion_policies operations values source_types aliases floating scalar_casts string vector carriers ownership", "runtime metadata");
+    exact(publication, "version namespace types operators headers values short_aliases string vectors carriers ownership", "runtime publication");
     version(metadata); version(publication); literal(publication, "namespace", "scpp");
     const auto &rep = metadata.at("representation");
     exact(rep, "binding default_initialization", "representation");
@@ -629,6 +629,7 @@ runtime_plan prepare_runtime(const value &metadata, const value &publication) {
             std::sort(plan.carriers.begin(), plan.carriers.end(), [](const auto &a, const auto &b) { return a.name < b.name; });
         }
     } else require(!publication.has("carriers"), "Carrier publication requires metadata");
+    prepare_ownership(metadata, publication, plan);
     return plan;
 }
 
@@ -779,6 +780,7 @@ value describe(const runtime_plan &plan) {
     out["headers"]["operators"] = plan.operators_header; out["headers"]["short_names"] = plan.short_names_header;
     out["headers"]["native_bridge"] = plan.native_bridge_header;
     out["headers"]["values"] = plan.values_header;
+    if (!plan.ownership.records.empty()) out["ownership"] = describe_ownership(plan.ownership);
     return out;
 }
 }

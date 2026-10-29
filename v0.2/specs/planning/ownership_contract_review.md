@@ -2,7 +2,8 @@
 
 Doc Status: planning
 Date: 2026-10-29
-Status: proposal only; no ownership implementation or compiler adaptation authorized by this document.
+Status: design baseline with the first implementation checkpoint below. Remaining
+proposals are not implemented contracts; compiler adaptation remains deferred.
 
 ## Reviewed owners and evidence
 
@@ -208,3 +209,13 @@ surface. Fix value exception specifications and propagate real payload capabilit
 Do not bulk import detail.hpp, shared_conversion.hpp, shared_self.hpp, the error
 subsystem or an ownership arithmetic matrix. No source/compiler behavior has been
 changed by this review.
+
+## First implementation checkpoint — 2026-10-29
+
+Shared/weak/unique now have a bounded metadata-driven concrete-record publication
+and inline private standard-pointer storage. The precise implemented API, omissions,
+allocation measurements and native-target constraints are in
+[ownership_slice.md](../ownership_slice.md). Two test records prove copyable and
+noncopyable payload ownership. Generated artifacts stay ignored; no compiler
+consumer was adapted. Inline value generation and the remaining proposal entries
+above remain future slices.

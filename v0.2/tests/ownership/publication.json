@@ -1,0 +1,52 @@
+{
+  "version": 1,
+  "namespace": "scpp",
+  "headers": {
+    "types": "scpp/integers.hpp",
+    "operators": "scpp/numeric.hpp",
+    "short_names": "scpp/short_names.hpp",
+    "native_bridge": "scpp/native_bridge.hpp",
+    "values": "scpp/values.hpp"
+  },
+  "types": [
+    "int64"
+  ],
+  "values": [
+    "bool_t"
+  ],
+  "operators": [],
+  "short_aliases": [],
+  "ownership": {
+    "header": "scpp/ownership.hpp",
+    "records": [
+      {
+        "name": "record_probe",
+        "header": "scpp/ownership_records.hpp",
+        "constructors": [
+          [
+            "int64"
+          ]
+        ],
+        "families": [
+          "shared",
+          "weak",
+          "unique"
+        ]
+      },
+      {
+        "name": "record_noncopyable",
+        "header": "scpp/ownership_records.hpp",
+        "constructors": [
+          [
+            "int64"
+          ]
+        ],
+        "families": [
+          "shared",
+          "weak",
+          "unique"
+        ]
+      }
+    ]
+  }
+}

@@ -144,3 +144,11 @@ nullable/result/result_or_false/result_or_bool specializations and structured er
 It reuses the payload operators above, adds no lifted matrix, and preserves explicit
 boxing while permitting checked one-layer extraction by default. See carrier_slice.md
 for the exact construction/state API and the scope of supported payloads.
+
+## Concrete ownership extension
+
+The [ownership slice](ownership_slice.md) provides optional generated shared/weak/unique
+record handles through a separate publication. These are not carrier payload
+extractions and do not expand the numeric operator matrix. Default runtime and
+compiler publications do not request ownership specializations yet. Inline value
+generation and compiler adaptation remain later slices.
