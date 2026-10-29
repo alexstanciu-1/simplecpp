@@ -126,3 +126,5 @@ The first module reuse proof is complete: all eleven native datetime functions,
 including host-local formatting/parsing. See [completion evidence](../datetime_local_validation.md).
 The [packed-storage batch](runtime_packed_storage_batch.md) is the next proposed core slice;
 its audit identifies key-encoding and allocation-failure repairs needed before reuse.
+Preserve the optimized compact pooled-key design; the larger-key proposal was
+withdrawn after review of the v0.1 design notes and explicit user correction.
