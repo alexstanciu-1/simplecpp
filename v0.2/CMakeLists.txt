@@ -55,6 +55,23 @@ add_custom_target(scpp_api_generator DEPENDS scpp_api_tooling scpp_layout_facts)
 set(runtime_metadata ${CMAKE_CURRENT_SOURCE_DIR}/runtime/metadata/runtime.json)
 set(runtime_publication ${CMAKE_CURRENT_SOURCE_DIR}/runtime/metadata/publication.json)
 set(runtime_generated ${CMAKE_CURRENT_BINARY_DIR}/generated)
+option(SCPP_ENABLE_DATETIME "Publish and build the bounded datetime module" OFF)
+include(cmake/Datetime.cmake)
+if(SCPP_ENABLE_DATETIME)
+  # An explicit build profile: existing core demand plus uint64 and datetime.
+  # Rust preparation still validates every required type/carrier and operation.
+  set_property(DIRECTORY APPEND PROPERTY CMAKE_CONFIGURE_DEPENDS
+    ${runtime_publication} ${CMAKE_CURRENT_SOURCE_DIR}/runtime/metadata/datetime_publication.json)
+  file(READ ${runtime_publication} datetime_profile)
+  file(READ ${CMAKE_CURRENT_SOURCE_DIR}/runtime/metadata/datetime_publication.json datetime_request)
+  string(JSON type_count LENGTH "${datetime_profile}" types)
+  string(JSON datetime_profile SET "${datetime_profile}" types ${type_count} "\"uint64\"")
+  string(JSON datetime_profile SET "${datetime_profile}" datetime "${datetime_request}")
+  set(runtime_publication ${CMAKE_CURRENT_BINARY_DIR}/datetime-publication.json)
+  file(CONFIGURE OUTPUT ${runtime_publication} CONTENT "${datetime_profile}\n" @ONLY)
+  # Separate output identity allows clean enable/disable without stale artifacts.
+  set(runtime_generated ${CMAKE_CURRENT_BINARY_DIR}/generated-datetime)
+endif()
 set(runtime_outputs
   ${runtime_generated}/public/scpp/carriers.hpp
   ${runtime_generated}/public/scpp/vectors.hpp
@@ -67,6 +84,9 @@ set(runtime_outputs
   ${runtime_generated}/src/runtime.cpp
   ${runtime_generated}/prepared.json
   ${runtime_generated}/inventory.json)
+if(SCPP_ENABLE_DATETIME)
+  list(APPEND runtime_outputs ${runtime_generated}/public/scpp/datetime.hpp ${runtime_generated}/src/datetime.cpp)
+endif()
 add_custom_command(OUTPUT ${runtime_outputs}
   COMMAND ${generator_launcher} ${runtime_metadata} ${runtime_publication} ${runtime_generated}
   DEPENDS scpp_api_generator ${rust_generator} ${native_facts} ${native_context} ${generator_launcher} ${runtime_metadata} ${runtime_publication}
@@ -78,6 +98,12 @@ target_include_directories(scpp_runtime
   PUBLIC ${runtime_generated}/public
   PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/runtime/src/numeric ${CMAKE_CURRENT_SOURCE_DIR}/runtime/src/sequence)
 target_compile_features(scpp_runtime PUBLIC cxx_std_23)
+
+if(SCPP_ENABLE_DATETIME)
+  scpp_add_datetime(scpp_datetime scpp_runtime ${runtime_generated})
+  add_executable(scpp_datetime_demo examples/datetime_demo.cpp)
+  target_link_libraries(scpp_datetime_demo PRIVATE scpp_datetime)
+endif()
 
 add_executable(scpp_runtime_demo examples/runtime_demo.cpp)
 target_link_libraries(scpp_runtime_demo PRIVATE scpp_runtime)
@@ -108,7 +134,7 @@ if(BUILD_TESTING)
   add_test(NAME carrier_publication COMMAND ${CMAKE_COMMAND}
     -DMOLD_LINKER=${SCPP_MOLD_LINKER}
     -DGENERATOR=${generator_launcher}
-    -DMETADATA=${runtime_metadata} -DPUBLICATION=${runtime_publication}
+    -DMETADATA=${runtime_metadata} -DPUBLICATION=${CMAKE_CURRENT_SOURCE_DIR}/runtime/metadata/publication.json
     -DCXX=${CMAKE_CXX_COMPILER} "-DCXX_FLAGS=${CMAKE_CXX_FLAGS}"
     -DSOURCE=${CMAKE_CURRENT_SOURCE_DIR}
     -DWORK=${CMAKE_CURRENT_BINARY_DIR}/carrier-proof
@@ -124,7 +150,7 @@ if(BUILD_TESTING)
   add_test(NAME vector_publication COMMAND ${CMAKE_COMMAND}
     -DMOLD_LINKER=${SCPP_MOLD_LINKER}
     -DGENERATOR=${generator_launcher}
-    -DMETADATA=${runtime_metadata} -DPUBLICATION=${runtime_publication}
+    -DMETADATA=${runtime_metadata} -DPUBLICATION=${CMAKE_CURRENT_SOURCE_DIR}/runtime/metadata/publication.json
     -DCXX=${CMAKE_CXX_COMPILER} "-DCXX_FLAGS=${CMAKE_CXX_FLAGS}"
     -DSOURCE=${CMAKE_CURRENT_SOURCE_DIR}
     -DWORK=${CMAKE_CURRENT_BINARY_DIR}/vector-proof
@@ -135,7 +161,7 @@ if(BUILD_TESTING)
   add_test(NAME string_publication COMMAND ${CMAKE_COMMAND}
     -DMOLD_LINKER=${SCPP_MOLD_LINKER}
     -DGENERATOR=${generator_launcher}
-    -DMETADATA=${runtime_metadata} -DPUBLICATION=${runtime_publication}
+    -DMETADATA=${runtime_metadata} -DPUBLICATION=${CMAKE_CURRENT_SOURCE_DIR}/runtime/metadata/publication.json
     -DCXX=${CMAKE_CXX_COMPILER} "-DCXX_FLAGS=${CMAKE_CXX_FLAGS}"
     -DSOURCE=${CMAKE_CURRENT_SOURCE_DIR}
     -DWORK=${CMAKE_CURRENT_BINARY_DIR}/string-proof
@@ -158,7 +184,7 @@ if(BUILD_TESTING)
   add_test(NAME runtime_generation COMMAND ${CMAKE_COMMAND}
     -DCXX=${CMAKE_CXX_COMPILER} "-DCXX_FLAGS=${CMAKE_CXX_FLAGS}"
     -DGENERATOR=${generator_launcher}
-    -DMETADATA=${runtime_metadata} -DPUBLICATION=${runtime_publication}
+    -DMETADATA=${runtime_metadata} -DPUBLICATION=${CMAKE_CURRENT_SOURCE_DIR}/runtime/metadata/publication.json
     -DWORK=${CMAKE_CURRENT_BINARY_DIR}/generation-proof
     -P ${CMAKE_CURRENT_SOURCE_DIR}/tests/runtime_generation.cmake)
   add_test(NAME runtime_public_boundary COMMAND ${CMAKE_COMMAND}
@@ -168,14 +194,14 @@ if(BUILD_TESTING)
   add_test(NAME integer_full_publication COMMAND ${CMAKE_COMMAND}
     -DMOLD_LINKER=${SCPP_MOLD_LINKER}
     -DGENERATOR=${generator_launcher}
-    -DMETADATA=${runtime_metadata} -DPUBLICATION=${runtime_publication}
+    -DMETADATA=${runtime_metadata} -DPUBLICATION=${CMAKE_CURRENT_SOURCE_DIR}/runtime/metadata/publication.json
     -DCXX=${CMAKE_CXX_COMPILER} "-DCXX_FLAGS=${CMAKE_CXX_FLAGS}"
     -DSOURCE=${CMAKE_CURRENT_SOURCE_DIR}
     -DWORK=${CMAKE_CURRENT_BINARY_DIR}/integer-full-proof
     -P ${CMAKE_CURRENT_SOURCE_DIR}/tests/integer_full_publication.cmake)
   add_test(NAME native_operator_publication COMMAND ${CMAKE_COMMAND}
     -DGENERATOR=${generator_launcher}
-    -DMETADATA=${runtime_metadata} -DPUBLICATION=${runtime_publication}
+    -DMETADATA=${runtime_metadata} -DPUBLICATION=${CMAKE_CURRENT_SOURCE_DIR}/runtime/metadata/publication.json
     -DCXX=${CMAKE_CXX_COMPILER} "-DCXX_FLAGS=${CMAKE_CXX_FLAGS}"
     -DWORK=${CMAKE_CURRENT_BINARY_DIR}/native-publication-proof
     -P ${CMAKE_CURRENT_SOURCE_DIR}/tests/native_operator_publication.cmake)
@@ -185,4 +211,5 @@ endif()
 if(BUILD_TESTING)
   add_subdirectory(tests/ownership)
   add_subdirectory(tests/hash)
+  add_subdirectory(tests/datetime)
 endif()

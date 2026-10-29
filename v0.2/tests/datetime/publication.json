@@ -1,0 +1,48 @@
+{
+  "version": 1,
+  "namespace": "scpp",
+  "headers": {
+    "types": "scpp/integers.hpp",
+    "operators": "scpp/numeric.hpp",
+    "short_names": "scpp/short_names.hpp",
+    "native_bridge": "scpp/native_bridge.hpp",
+    "values": "scpp/values.hpp"
+  },
+  "types": [
+    "int64",
+    "uint64"
+  ],
+  "values": [
+    "bool_t",
+    "null_t"
+  ],
+  "operators": [],
+  "short_aliases": [],
+  "string": {
+    "header": "scpp/string.hpp",
+    "operations": [],
+    "casts": []
+  },
+  "carriers": {
+    "header": "scpp/carriers.hpp",
+    "specializations": [
+      {
+        "family": "result",
+        "payload": "int64"
+      }
+    ]
+  },
+  "datetime": {
+    "header": "scpp/datetime.hpp",
+    "operations": [
+      "now_unix_seconds",
+      "now_unix_millis",
+      "monotonic_millis",
+      "monotonic_micros",
+      "monotonic_nanos",
+      "sleep_millis",
+      "format_iso_utc",
+      "parse_iso_utc"
+    ]
+  }
+}

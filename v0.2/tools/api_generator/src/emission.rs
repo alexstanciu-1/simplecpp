@@ -27,6 +27,7 @@ const NATIVES: &[&str] = &[
     "long double",
 ];
 macro_rules! add { ($out:expr,$($args:tt)*) => {$out.push_str(&format!($($args)*))}; }
+mod datetime;
 mod hash;
 mod ownership;
 mod sequences;
@@ -526,6 +527,7 @@ fn emit_scalar_core(
     if let Some(r) = runtime {
         ownership::emit(r, &mut files);
         hash::emit(r, &mut files);
+        datetime::emit(r, &mut files);
     }
     let inventory = serde_json::to_string(&files.keys().collect::<Vec<_>>())
         .map_err(|e| Error(e.to_string()))?

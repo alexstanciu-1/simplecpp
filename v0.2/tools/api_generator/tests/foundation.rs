@@ -868,3 +868,65 @@ fn hash_publication_resolves_dependencies_and_rejects_unowned_forms() {
     invalid["hash"]["key_policy"] = object!("coerce");
     assert!(runtime_plan(&invalid, &p).is_err());
 }
+
+#[test]
+fn datetime_preparation_owns_module_dependencies_and_selected_exports() {
+    let m: Value =
+        serde_json::from_str(include_str!("../../../runtime/metadata/runtime.json")).unwrap();
+    let p: Value =
+        serde_json::from_str(include_str!("../../../tests/datetime/publication.json")).unwrap();
+    let plan = runtime_plan(&m, &p).unwrap();
+    assert_eq!(plan.datetime.as_ref().unwrap().operations.len(), 8);
+    let describe = plan.describe();
+    assert_eq!(describe["datetime"]["build"]["requires"], "scpp_runtime");
+    for absent in ["carriers", "string"] {
+        let mut bad = p.clone();
+        bad.as_object_mut().unwrap().remove(absent);
+        assert!(runtime_plan(&m, &bad).is_err());
+    }
+    let mut bad = p.clone();
+    bad["types"] = object!(["int64"]);
+    assert!(runtime_plan(&m, &bad).is_err());
+    for operations in [
+        object!([]),
+        object!(["parse_common_local"]),
+        object!(["sleep_millis", "sleep_millis"]),
+    ] {
+        let mut bad = p.clone();
+        bad["datetime"]["operations"] = operations;
+        assert!(runtime_plan(&m, &bad).is_err());
+    }
+    let mut bad = p.clone();
+    bad["datetime"]["header"] = object!("scpp/carriers.hpp");
+    assert!(runtime_plan(&m, &bad).is_err());
+    let mut bad = m.clone();
+    bad["datetime"]["utc_years"] = object!("host");
+    assert!(runtime_plan(&bad, &p).is_err());
+    let mut absent = m.clone();
+    absent.as_object_mut().unwrap().remove("datetime");
+    assert!(runtime_plan(&absent, &p).is_err());
+    let mut subset = p.clone();
+    subset["datetime"]["operations"] = object!(["monotonic_nanos"]);
+    subset["types"] = object!(["uint64"]);
+    subset.as_object_mut().unwrap().remove("string");
+    subset.as_object_mut().unwrap().remove("carriers");
+    assert_eq!(
+        runtime_plan(&m, &subset)
+            .unwrap()
+            .datetime
+            .unwrap()
+            .operations
+            .len(),
+        1
+    );
+    // Unrequested modules leave existing descriptions and artifacts untouched.
+    let mut absent = p.clone();
+    absent.as_object_mut().unwrap().remove("datetime");
+    assert!(
+        runtime_plan(&m, &absent)
+            .unwrap()
+            .describe()
+            .get("datetime")
+            .is_none()
+    );
+}

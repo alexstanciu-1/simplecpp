@@ -409,6 +409,7 @@ pub fn prepare(metadata: &Value, publication: &Value, facts: &TargetFacts) -> Re
         "carriers",
         "ownership",
         "hash",
+        "datetime",
     ])?;
     publication.fields(&[
         "version",

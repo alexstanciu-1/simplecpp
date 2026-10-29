@@ -176,6 +176,9 @@ pub(crate) fn prepare(
     if let Some(hashes) = &base.hashes {
         names.extend(hashes.specializations.iter().map(|h| h.name.clone()));
     }
+    if base.datetime.is_some() {
+        names.insert("dt".into());
+    }
     names.extend(base.scalars.aliases.keys().cloned());
     if let Some(s) = &base.string {
         names.insert(s.name.clone());

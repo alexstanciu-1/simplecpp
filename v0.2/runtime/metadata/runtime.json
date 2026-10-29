@@ -679,5 +679,21 @@
     "read": "value_copy",
     "optional_lookup": "nullable",
     "append": "max_live_nonnegative_plus_one"
+  },
+  "datetime": {
+    "binding": "native_clock_utc",
+    "utc_years": "0000_9999",
+    "parse_failure": "result_error",
+    "format_failure": "throw_runtime_error",
+    "operations": [
+      "now_unix_seconds",
+      "now_unix_millis",
+      "monotonic_millis",
+      "monotonic_micros",
+      "monotonic_nanos",
+      "sleep_millis",
+      "format_iso_utc",
+      "parse_iso_utc"
+    ]
   }
 }

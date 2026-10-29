@@ -1,7 +1,7 @@
 # Datetime module reuse batch
 
 Doc Status: planning
-Status: audit complete; proposed implementation scope awaiting discussion.
+Status: D0–D6 complete; eight-function module delivered and validated.
 Date: 2026-10-29
 Donor reviewed at: 46d3ebf31 (repository revision, not a claim that this commit introduced datetime).
 
@@ -9,8 +9,7 @@ Donor reviewed at: 46d3ebf31 (repository revision, not a claim that this commit 
 
 Port the eight clock/sleep/UTC functions first through the sole Rust API generator,
 with a separately selectable native datetime target. This is a useful module reuse
-proof without requiring new value families. No implementation goal starts from this
-planning note alone.
+proof without requiring new value families. The user approved this scope; D0–D6 are complete; see [validation evidence](../datetime_validation.md).
 
 ## Authority and inspected evidence
 
@@ -29,7 +28,7 @@ planning note alone.
 These paths are repository-root relative. Existing top-level contracts govern;
 this planning note neither expands source support nor changes semantics.
 
-## Proposed surface
+## Delivered surface
 
 Preserve the runtime namespace `scpp::dt` and donor function names. Use explicit
 concrete v0.2 types, borrowed const input references and owned return values.
@@ -63,7 +62,7 @@ and implementation templates private. Preserve module/core dependency direction.
    and repair these locally instead of copying them unchanged.
 2. Four-digit year domain is not fully explicit. Parser currently admits year 0000;
    formatter can emit more than four year digits on hosts supporting distant dates.
-   Proposed clarification for review: accept years 0000–9999 and throw on formatting
+   Approved clarification: accept years 0000–9999 and throw on formatting
    outside that range or host UTC representability. Preserve host failure behavior;
    do not promise support for all pre-epoch timestamps on every platform.
 3. Duration casts may overflow before the donor's count check. Check conversions at
@@ -89,7 +88,7 @@ Do not build a general module framework speculatively. If that requires a wide
 refactor across compiler/catalog/build owners, report the boundary before proceeding.
 Existing source metadata remains untouched until source compiler integration is in scope.
 
-## Proposed backlog
+## Completed backlog
 
 | ID | Action | Acceptance |
 | --- | --- | --- |
@@ -105,11 +104,11 @@ Clock tests must not assume wall-clock monotonicity, unique successive readings 
 precise scheduler timing. Sleep tests use bounded small requests. Avoid concurrent
 process-global timezone/locale mutation; use isolated test processes when needed.
 
-## Discussion points
+## Approved decisions
 
-- Approve the eight-function scope, leaving local-time functions for the next slice.
-- Agree the four-digit UTC year clarification (0000–9999; format failure outside it).
-- Keep the first consumer native; connect source compiler metadata in a later batch.
+- Eight-function scope; local-time functions deferred.
+- Four-digit UTC years 0000–9999; format failure outside that range.
+- First consumer is native; source compiler integration is a later batch.
 
-After agreement, create the implementation goal from D0–D6. Commit successful passes
-under the user's standing preference; pushing is a separate requested action.
+The implementation goal covers D0–D6. Successful validation is followed by a commit
+under the user's standing preference; pushing remains a separate requested action.

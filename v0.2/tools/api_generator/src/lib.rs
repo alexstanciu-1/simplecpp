@@ -1,4 +1,5 @@
 //! Runtime API preparation, independent of compiler syntax and runtime linkage.
+pub mod datetime;
 pub mod emission;
 pub mod hash;
 pub mod integer;

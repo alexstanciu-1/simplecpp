@@ -54,6 +54,7 @@ pub fn prepare(
         "carriers",
         "ownership",
         "hash",
+        "datetime",
     ])?;
     publication.fields(&[
         "version",
