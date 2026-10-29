@@ -1,4 +1,4 @@
-//! Scalar C++ emission from resolved plans. No policy admission or promotion resolution.
+//! C++ emission from resolved plans. No policy admission or promotion resolution.
 use crate::{
     Error, Result, ensure,
     scalar::{Cast, Form, Operation, Promotion, ScalarPlan, ValueKind},
@@ -27,6 +27,8 @@ const NATIVES: &[&str] = &[
     "long double",
 ];
 macro_rules! add { ($out:expr,$($args:tt)*) => {$out.push_str(&format!($($args)*))}; }
+mod ownership;
+mod sequences;
 fn signature(op: &Operation) -> String {
     let mut s = format!(
         "{}{} operator{}({}{} left",
@@ -59,8 +61,18 @@ fn int128_fences(out: &mut String, name: &str) {
         "#ifdef __SIZEOF_INT128__\n    explicit {name}(__int128) = delete;\n    explicit {name}(unsigned __int128) = delete;\n#endif\n"
     );
 }
-fn values(plan: &ScalarPlan) -> String {
+fn input(source: &str, string: Option<&str>) -> String {
+    if string == Some(source) {
+        format!("const {source}&")
+    } else {
+        source.into()
+    }
+}
+fn values(plan: &ScalarPlan, string: Option<&str>) -> String {
     let mut out = String::from("#pragma once\nnamespace scpp {\n");
+    if let Some(name) = string {
+        add!(out, "class {name};\n");
+    }
     for name in plan
         .types
         .iter()
@@ -79,7 +91,7 @@ fn values(plan: &ScalarPlan) -> String {
             add!(
                 out,
                 "    explicit {n}({} value){};\n",
-                c.source,
+                input(&c.source, string),
                 if c.can_fail { "" } else { " noexcept" }
             );
         }
@@ -165,15 +177,54 @@ pub fn emit_scalars(plan: &ScalarPlan) -> Result<BTreeMap<String, String>> {
         }),
         "Scalar emission does not support text conversions",
     )?;
+    emit_scalar_core(plan, None)
+}
+
+fn emit_scalar_core(
+    plan: &ScalarPlan,
+    runtime: Option<&crate::runtime::RuntimePlan>,
+) -> Result<BTreeMap<String, String>> {
+    let string = runtime
+        .and_then(|r| r.string.as_ref())
+        .map(|s| s.name.as_str());
     let types = &plan.headers["types"];
     let vals = &plan.headers["values"];
     let ops = &plan.headers["operators"];
     let mut declarations = format!(
         "{BANNER}#pragma once\nnamespace scpp {{\nnamespace detail {{ struct integer_access; }}\n"
     );
-    let mut definitions = format!(
-        "{BANNER}#include \"{ops}\"\n#include \"scalar_semantics.hpp\"\nnamespace scpp {{\nnamespace detail {{ struct integer_access {{ template<class T, class Rep> static T make(Rep value) {{ T out; out.value_ = value; return out; }} }}; }}\n"
-    );
+    let mut definitions =
+        format!("{BANNER}#include \"{ops}\"\n#include \"scalar_semantics.hpp\"\n");
+    if let Some(r) = runtime {
+        if let Some(s) = &r.string {
+            add!(
+                definitions,
+                "#include \"{}\"\n#include \"sequence_semantics.hpp\"\n",
+                s.header
+            );
+        }
+        if let Some(h) = &r.vectors_header {
+            add!(
+                definitions,
+                "#include \"{h}\"\n#include \"sequence_semantics.hpp\"\n#include <vector>\n#include <algorithm>\n"
+            );
+        }
+        if let Some(h) = &r.carriers_header {
+            add!(
+                definitions,
+                "#include \"{h}\"\n#include \"carrier_semantics.hpp\"\n"
+            );
+        }
+    }
+    definitions.push_str("namespace scpp {\n");
+    let mut family_files = BTreeMap::new();
+    if let Some(r) = runtime {
+        sequences::emit(r, &mut family_files, &mut definitions);
+    }
+    definitions.push_str("namespace detail { struct integer_access { template<class T, class Rep> static T make(Rep value) { T out; out.value_ = value; return out; } }; }\n");
+    if let Some(name) = string {
+        add!(declarations, "class {name};\n");
+    }
     for name in plan
         .types
         .iter()
@@ -199,6 +250,31 @@ pub fn emit_scalars(plan: &ScalarPlan) -> Result<BTreeMap<String, String>> {
         definitions.push_str("static_assert(std::numeric_limits<double>::is_iec559 && std::numeric_limits<double>::radix == 2 && std::numeric_limits<double>::digits == 53 && std::numeric_limits<double>::max_exponent == 1024);\nstatic_assert(sizeof(float64) == sizeof(double));\n");
     }
     for c in &plan.conversions {
+        if string == Some(c.source.as_str()) {
+            let suffix = if c.implementation == Cast::ParseDecimal {
+                format!("<{}>", representation(&c.target)?)
+            } else {
+                String::new()
+            };
+            add!(
+                definitions,
+                "{0}::{0}({1} value) : value_(detail::{2}{suffix}(detail::string_access::read(value))) {{}}\n",
+                c.target,
+                input(&c.source, string),
+                c.implementation.name()
+            );
+            continue;
+        }
+        if string == Some(c.target.as_str()) {
+            add!(
+                definitions,
+                "{0}::{0}({1} value) : storage_(new storage{{detail::{2}(value.native_value())}}) {{}}\n",
+                c.target,
+                input(&c.source, string),
+                c.implementation.name()
+            );
+            continue;
+        }
         add!(
             definitions,
             "{}::{}({} value){} : value_(detail::{}<{}>({})) {{}}\n",
@@ -238,7 +314,7 @@ pub fn emit_scalars(plan: &ScalarPlan) -> Result<BTreeMap<String, String>> {
             add!(
                 declarations,
                 "    explicit {n}({} value){};\n",
-                c.source,
+                input(&c.source, string),
                 if c.can_fail { "" } else { " noexcept" }
             );
         }
@@ -388,6 +464,28 @@ pub fn emit_scalars(plan: &ScalarPlan) -> Result<BTreeMap<String, String>> {
     operators.push_str("}\n");
     definitions.push_str("}\n");
     let mut short = format!("{BANNER}#pragma once\n#include \"{ops}\"\n");
+    if let Some(r) = runtime {
+        if let Some(s) = &r.string {
+            add!(
+                short,
+                "#include \"{}\"\nusing scpp::{};\n",
+                s.header,
+                s.name
+            );
+        }
+        if let Some(h) = &r.vectors_header {
+            add!(short, "#include \"{h}\"\n");
+        }
+        for v in &r.vectors {
+            add!(short, "using scpp::{};\n", v.name);
+        }
+        if let Some(h) = &r.carriers_header {
+            add!(short, "#include \"{h}\"\n");
+        }
+        for c in &r.carriers {
+            add!(short, "using scpp::{};\n", c.name);
+        }
+    }
     for t in &plan.types {
         add!(short, "using scpp::{};\n", t.name);
     }
@@ -404,7 +502,7 @@ pub fn emit_scalars(plan: &ScalarPlan) -> Result<BTreeMap<String, String>> {
         (format!("public/{types}"), declarations),
         (
             format!("public/{vals}"),
-            format!("{BANNER}{}", values(plan)),
+            format!("{BANNER}{}", values(plan, string)),
         ),
         (format!("public/{ops}"), operators),
         (format!("public/{}", plan.headers["native_bridge"]), bridge),
@@ -412,14 +510,24 @@ pub fn emit_scalars(plan: &ScalarPlan) -> Result<BTreeMap<String, String>> {
         ("src/runtime.cpp".into(), definitions),
         (
             "prepared.json".into(),
-            serde_json::to_string(&plan.describe()).map_err(|e| Error(e.to_string()))? + "\n",
+            serde_json::to_string(&runtime.map_or_else(|| plan.describe(), |r| r.describe()))
+                .map_err(|e| Error(e.to_string()))?
+                + "\n",
         ),
     ]);
+    files.extend(family_files);
+    if let Some(r) = runtime {
+        ownership::emit(r, &mut files);
+    }
     let inventory = serde_json::to_string(&files.keys().collect::<Vec<_>>())
         .map_err(|e| Error(e.to_string()))?
         + "\n";
     files.insert("inventory.json".into(), inventory);
     Ok(files)
+}
+
+pub fn emit_runtime(plan: &crate::runtime::RuntimePlan) -> Result<BTreeMap<String, String>> {
+    emit_scalar_core(&plan.scalars, Some(plan))
 }
 
 /// Validate old inventory before mutation. Like the production writer, publication
@@ -436,6 +544,10 @@ pub fn publish(
             &std::fs::read(&inventory).map_err(io)?,
             "old generated inventory",
         )?;
+        ensure(
+            matches!(old, crate::json::Value::Array(_)),
+            "Invalid old generated inventory",
+        )?;
         for path in old.array()? {
             ensure(
                 files.contains_key(path.text()?),
@@ -447,7 +559,9 @@ pub fn publish(
         let target = output.join(path);
         if check {
             ensure(
-                std::fs::read(&target).map_err(io)? == contents.as_bytes(),
+                std::fs::read(&target)
+                    .map_err(|e| Error(format!("Cannot read {}: {e}", target.display())))?
+                    == contents.as_bytes(),
                 &format!("Stale generated file: {}", target.display()),
             )?;
         } else {

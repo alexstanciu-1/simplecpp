@@ -1,8 +1,9 @@
 #!/usr/bin/env python3
-"""Complete prepared-document parity for runtime families ported after scalars."""
+"""Frozen C++ artifact contract, Rust preparation/emission and rejection proofs."""
 import argparse
 import copy
 import json
+import hashlib
 from pathlib import Path
 import subprocess
 import tempfile
@@ -19,22 +20,21 @@ class Parity:
             m, p = root / 'metadata.json', root / 'publication.json'
             m.write_bytes(metadata if isinstance(metadata, bytes) else json.dumps(metadata).encode())
             p.write_bytes(publication if isinstance(publication, bytes) else json.dumps(publication).encode())
-            commands = [
-                [self.args.cpp, m, p, root / 'cpp'],
-                [self.args.rust, 'prepare-runtime', m, p, self.args.facts, self.args.context],
-            ]
-            results = [subprocess.run(list(map(str, command)), capture_output=True, text=True, timeout=60) for command in commands]
-            for engine, result in zip(['cpp', 'rust'], results):
-                assert result.returncode == (0 if accepted else 1), f'{name}: {engine}: {result.stderr}'
-                if not accepted:
-                    assert result.stderr and not result.stdout, (name, engine)
+            command = [self.args.rust, 'emit-runtime', m, p, self.args.facts, self.args.context, root / 'rust']
+            result = subprocess.run(list(map(str, command)), capture_output=True, text=True, timeout=60)
+            assert result.returncode == (0 if accepted else 1), f'{name}: {result.stderr}'
             if accepted:
-                expected = json.loads((root / 'cpp/prepared.json').read_text())
-                actual = json.loads(results[1].stdout)
-                encode = lambda value: json.dumps(value, sort_keys=True, separators=(',', ':'))
-                assert encode(expected) == encode(actual), f'{name}: complete prepared document differs'
+                files = {str(f.relative_to(root / 'rust')): hashlib.sha256(f.read_bytes()).hexdigest()
+                         for f in sorted((root / 'rust').rglob('*')) if f.is_file()}
+                assert files == self.args.baseline[name], (name, 'frozen artifact contract differs')
+                prepared = subprocess.run(list(map(str, [self.args.rust, 'prepare-runtime', m, p, self.args.facts, self.args.context])), capture_output=True, text=True, timeout=60)
+                assert prepared.returncode == 0, prepared.stderr
+                actual = json.loads((root / 'rust/prepared.json').read_text())
+                assert actual == json.loads(prepared.stdout), name
                 self.accepted += 1
                 return actual
+            assert result.stderr and not result.stdout, name
+            assert not (root / 'rust').exists(), (name, 'rejected input wrote output')
             self.rejected += 1
 
     def mutations(self, metadata, publication, mutations, label):
@@ -300,11 +300,12 @@ def ownership_cases(proof, m, p, default):
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
-    for field in ['rust', 'cpp', 'facts', 'context', 'work']:
+    for field in ['rust', 'facts', 'context', 'work']:
         parser.add_argument('--' + field, type=Path, required=True)
     args = parser.parse_args()
-    for field in ['rust', 'cpp', 'facts', 'context']:
+    for field in ['rust', 'facts', 'context']:
         setattr(args, field, getattr(args, field).resolve())
+    args.baseline = json.loads(Path(__file__).with_name("runtime_baseline.json").read_text())["cases"]
     root = Path(__file__).resolve().parents[2]
     m = json.loads((root / 'runtime/metadata/runtime.json').read_text())
     p = json.loads((root / 'runtime/metadata/publication.json').read_text())

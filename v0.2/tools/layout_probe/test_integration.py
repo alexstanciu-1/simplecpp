@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Real-probe/cache tests and scoped Rust/C++ preparation parity. No production writes."""
+"""Real-probe/cache and Rust target-fact integration proofs. No production writes."""
 import argparse
 import json
 from pathlib import Path
@@ -21,12 +21,11 @@ def run(args, ok=True):
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument('--rust', type=Path, required=True)
-    parser.add_argument('--cpp', type=Path, required=True)
     parser.add_argument('--cxx', required=True)
     parser.add_argument('--flag', action='append', default=[])
     parser.add_argument('--work', type=Path, required=True)
     args = parser.parse_args()
-    args.rust, args.cpp = args.rust.resolve(), args.cpp.resolve()
+    args.rust = args.rust.resolve()
     source = Path(__file__).resolve().parents[2]
     driver = Path(__file__).with_name('probe.py')
     args.work.mkdir(parents=True, exist_ok=True)
@@ -75,14 +74,13 @@ def main():
         facts = json.loads(facts_file.read_text())
         assert facts['schema'] == 1
         assert facts['double']['digits'] == 53 and facts['double']['iec559']
-        # Same-input C++ preparation oracle. Rust currently covers integer construction only.
+        # Compare composed and narrow plans on the same measured facts.
         metadata = source / 'runtime/metadata/runtime.json'
         pub = json.loads((source / 'tests/generator_parity/compiler_publication.json').read_text())
         pub.update(types=['int8','int16','int32','int64','uint8','uint16','uint32','uint64'], values=[], operators=[], short_aliases=[])
         publication = work / 'publication.json'
         publication.write_text(json.dumps(pub))
-        run([args.cpp, metadata, publication, work / 'cpp'])
-        cpp = json.loads((work / 'cpp/prepared.json').read_text())
+        cpp = json.loads(run([args.rust, 'prepare-runtime', metadata, publication, facts_file, context_file]))
         rust = json.loads(run([args.rust, 'prepare-integer-construction', metadata, publication, facts_file, context_file]))
         for field in ['types', 'native_inputs', 'conversions']:
             assert cpp[field] == rust[field], field
@@ -96,9 +94,8 @@ def main():
         run([args.rust, 'prepare-integer-construction', metadata, publication, facts_file, context_file], ok=False)
         # A missing expected context must never fall back to host facts.
         run([args.rust, 'validate-target', facts_file, work / 'missing.json'], ok=False)
-        # Compare measured native ranges and ownership storage with the existing ownership plan.
-        run([args.cpp, metadata, source / 'tests/ownership/publication.json', work / 'owners'])
-        owners = json.loads((work / 'owners/prepared.json').read_text())
+        # Check that prepared ownership and native ranges use measured C++ facts.
+        owners = json.loads(run([args.rust, 'prepare-runtime', metadata, source / 'tests/ownership/publication.json', facts_file, context_file]))
         for native in cpp['native_inputs']:
             measured = facts['native_integers'][native['cpp']]
             assert (native['signed'], native['digits']) == (measured['signed'], measured['digits'])
@@ -108,7 +105,7 @@ def main():
                     assert facts['ownership'][family['family']] == {'size': family['size'], 'alignment': family['alignment']}
         report = {'native_probe':'passed','cache_noop_and_invalidation':'passed','cross_target_rejection':'passed',
                   'integer_types':len(rust['types']), 'checked_conversions':len(rust['conversions']),
-                  'cpp_projection_parity':'passed','ownership_native_fact_parity':'passed'}
+                  'composed_projection_consistency':'passed','ownership_native_fact_parity':'passed'}
         (args.work / 'summary.json').write_text(json.dumps(report, indent=2) + '\n')
         print(json.dumps(report))
 

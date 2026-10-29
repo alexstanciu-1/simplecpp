@@ -791,3 +791,30 @@ fn scalar_emission_preserves_resolved_requests_and_inventory() {
     assert!(!operators.contains("operator-"));
     assert!(files["src/runtime.cpp"].contains("detail::integer_add<__INT64_TYPE__>"));
 }
+
+#[test]
+fn runtime_emission_uses_supplied_layouts_and_resolved_family_plans() {
+    let mut measured = facts();
+    measured["ownership"]["shared"]["size"] = object!(32);
+    let target = TargetFacts::parse(
+        &bytes(&measured),
+        &TargetContext::parse(&bytes(&context())).unwrap(),
+    )
+    .unwrap();
+    let plan = scpp_api_tooling::runtime::prepare(
+        &json::parse(&bytes(&ownership_metadata()), "metadata").unwrap(),
+        &json::parse(&bytes(&ownership_publication()), "publication").unwrap(),
+        &target,
+    )
+    .unwrap();
+    let files = scpp_api_tooling::emission::emit_runtime(&plan).unwrap();
+    assert!(files["src/ownership.cpp"].contains("== 32 && alignof(std::shared_ptr<"));
+    assert!(!files["src/ownership.cpp"].contains("sizeof(std::shared_ptr<void>)"));
+    assert_eq!(
+        serde_json::from_str::<Value>(&files["prepared.json"]).unwrap(),
+        plan.describe()
+    );
+    let inventory: Vec<String> = serde_json::from_str(&files["inventory.json"]).unwrap();
+    assert_eq!(inventory.len() + 1, files.len());
+    assert!(inventory.iter().all(|path| files.contains_key(path)));
+}

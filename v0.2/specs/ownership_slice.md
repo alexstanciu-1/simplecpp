@@ -7,13 +7,11 @@ language admission or compiler adaptation is implemented by this slice.
 ## Owners and publication
 
 `runtime/metadata/runtime.json` defines the supported ownership policy.
-`tools/api_generator/ownership.cpp` prepares requested concrete specializations,
-records native handle layout and explicit qualification conversions, and emits the
-concrete lifecycle/API. Inline value capabilities remain native-payload-dependent. It is part of the
-existing production generator. Rust preparation now mirrors this contract in
-`tools/api_generator/src/ownership.rs`, composed through RuntimePlan. It obtains
-handle layouts from the C++ probe and preserves payload-dependent value traits.
-Production C++ emission remains unchanged during migration.
+`tools/api_generator/src/ownership.rs` prepares concrete record specializations,
+qualification conversions and layouts from validated native C++ probe facts.
+`tools/api_generator/src/emission/ownership.rs` emits the concrete lifecycle/API.
+Inline value capabilities remain native-payload-dependent. Both owners belong to
+the sole production Rust generator, not a separate lowering pipeline.
 `runtime/src/ownership/ownership_semantics.hpp` privately owns placement lifetime
 operations and checked payload access. Actual shared/weak/unique ownership uses
 standard-library smart pointers; there is no new reference-count algorithm.
@@ -50,7 +48,7 @@ shared/weak/unique only. Requests are sorted for deterministic output.
 
 The test publication at `tests/ownership/publication.json` uses four small handwritten
 records: copyable, immovable, over-aligned move-only and throwing-move payloads. These are consumer proofs, not built-in
-runtime records. Generated artifacts are under `runtime/generated/ownership-proof/`
+runtime records. Generated artifacts are under the selected build directory's `generated/ownership-proof/`
 and ignored by Git. Default runtime and compiler publications are unchanged.
 This alternative publication is linked separately, never with another independently
 generated definition of the same scpp scalar types. Request one unified publication
