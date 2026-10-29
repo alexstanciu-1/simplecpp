@@ -17,7 +17,8 @@ class Parity:
         with tempfile.TemporaryDirectory(dir=self.work) as directory:
             root = Path(directory)
             m, p = root / 'metadata.json', root / 'publication.json'
-            m.write_text(json.dumps(metadata)); p.write_text(json.dumps(publication))
+            m.write_bytes(metadata if isinstance(metadata, bytes) else json.dumps(metadata).encode())
+            p.write_bytes(publication if isinstance(publication, bytes) else json.dumps(publication).encode())
             commands = [
                 [self.args.cpp, m, p, root / 'cpp'],
                 [self.args.rust, 'prepare-runtime', m, p, self.args.facts, self.args.context],
@@ -157,6 +158,69 @@ def vector_cases(proof, m, p):
     proof.check('missing-vector-metadata',changed,p,False)
 
 
+def carrier_cases(proof, m, p):
+    expected = proof.check('default-carriers',m,p)
+    assert len(expected['carriers']) == 16
+    q = copy.deepcopy(p); q['carriers']['specializations'].reverse()
+    assert expected == proof.check('carrier-order',m,q)
+    changed = copy.deepcopy(m); changed['carriers']['extraction'] = 'explicit_checked_one_layer_value_copy'
+    explicit = proof.check('explicit-carriers',changed,p)
+    assert all(c['extraction'] == 'explicit_checked_one_layer_value_copy' for c in explicit['carriers'])
+    assert explicit['operations'] == expected['operations']
+    q = copy.deepcopy(p); del q['carriers']
+    without = proof.check('unpublished-carriers',m,q)
+    assert without['operations'] == expected['operations'] and without['conversions'] == expected['conversions']
+    assert 'error' not in without
+    full = copy.deepcopy(p); full['types'] = sorted(m['types'])
+    elements = full['types'] + ['float64','bool_t','null_t','string']
+    full['operators'] = []
+    full['vectors']['specializations'] = [dict(element=t,native_index=False,native_value='none',operations=[],casts_from=[]) for t in elements]
+    payloads = [t for t in elements if t != 'null_t'] + ['vector_' + t for t in elements]
+    full['carriers']['specializations'] = [dict(family=f,payload=t) for f in m['carriers']['families'] for t in payloads]
+    all_carriers = proof.check('all-carrier-payloads',m,full)
+    assert len(all_carriers['carriers']) == 92 and not all_carriers['operations']
+    proof.check('all-explicit-carrier-payloads',changed,full)
+    for family in m['carriers']['families']:
+        q = copy.deepcopy(full); q['carriers']['specializations'] = [dict(family=family,payload='int64')]
+        result = proof.check('only-' + family,m,q)
+        assert ('error' in result) == (family == 'result')
+    for path, value in [
+        (['carriers','extraction'],'unchecked'), (['carriers','construction'],'implicit'),
+        (['carriers','families','result'],'error'), (['carriers','families','nullable'],'value'),
+        (['carriers','families','result_or_bool'],'true'), (['carriers','families','other'],'value'),
+        (['carriers','error','state'],'message_not_empty'), (['carriers','error','line'],'int32'),
+        (['carriers','error','type'],'string'), (['carriers','error','message'],'native'),
+    ]:
+        proof.mutations(m,p,[(path,value)],'metadata')
+        q = copy.deepcopy(p); del q['carriers']
+        proof.mutations(m,q,[(path,value)],'metadata')
+    proof.mutations(m,p,[
+        (['carriers','specializations'],[]),
+        (['carriers','specializations'],p['carriers']['specializations'] * 2),
+        (['carriers','specializations',0,'payload'],'null_t'),
+        (['carriers','specializations',0,'payload'],'nullable_int64'),
+        (['carriers','specializations',0,'payload'],'error_t'),
+        (['carriers','specializations',0,'payload'],'missing'),
+        (['carriers','specializations',0,'family'],'unknown'),
+        (['carriers','header'],p['vectors']['header']),
+        (['carriers','header'],p['string']['header']),
+    ],'publication')
+    q = copy.deepcopy(p); q['carriers']['specializations'] = [dict(family='nullable',payload='int64')]
+    q['values'].remove('null_t')
+    proof.check('nullable-needs-null',m,q,False)
+    q = copy.deepcopy(p); q.pop('string'); q.pop('vectors')
+    q['carriers']['specializations'] = [dict(family='result',payload='int64')]
+    proof.check('result-needs-string',m,q,False)
+    q = copy.deepcopy(p); q.pop('vectors'); q['types'] = ['int32']; q['operators'] = []
+    q['string']['casts'] = []; q['carriers']['specializations'] = [dict(family='result',payload='int32')]
+    changed = copy.deepcopy(m); changed['string']['count_type'] = 'int32'
+    proof.check('result-needs-int64',changed,q,False)
+    q = copy.deepcopy(p); q['operators'] = [dict(operation='add',operands=['nullable_int64','int64'])]
+    proof.check('no-lifted-carrier-operator',m,q,False)
+    changed = copy.deepcopy(m); del changed['carriers']
+    proof.check('missing-carrier-metadata',changed,p,False)
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     for field in ['rust', 'cpp', 'facts', 'context', 'work']:
@@ -167,14 +231,20 @@ def main():
     root = Path(__file__).resolve().parents[2]
     m = json.loads((root / 'runtime/metadata/runtime.json').read_text())
     p = json.loads((root / 'runtime/metadata/publication.json').read_text())
-    for field in ['carriers', 'ownership']: m.pop(field, None)
-    for field in ['carriers', 'ownership']: p.pop(field, None)
+    for field in ['ownership']: m.pop(field, None)
+    for field in ['ownership']: p.pop(field, None)
     args.work.mkdir(parents=True, exist_ok=True)
     with tempfile.TemporaryDirectory(dir=args.work) as work:
         proof = Parity(args, work)
-        string_p = copy.deepcopy(p); string_p.pop('vectors', None)
+        string_p = copy.deepcopy(p); string_p.pop('vectors', None); string_p.pop('carriers', None)
+        vector_p = copy.deepcopy(p); vector_p.pop('carriers', None)
         string_cases(proof, m, string_p)
-        vector_cases(proof, m, p)
+        vector_cases(proof, m, vector_p)
+        carrier_cases(proof, m, p)
+        from corpus import cases
+        for case in cases(root):
+            if not case.name.startswith('ownership'):
+                proof.check('G1-' + case.name, case.metadata, case.publication, not case.rejection)
         report = {'accepted': proof.accepted, 'rejected': proof.rejected}
     (args.work / 'summary.json').write_text(json.dumps(report, indent=2) + '\n')
     print(json.dumps(report))

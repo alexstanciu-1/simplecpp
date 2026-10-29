@@ -1,6 +1,8 @@
 //! Runtime API preparation, independent of compiler syntax and runtime linkage.
 pub mod integer;
 pub mod json;
+pub mod runtime;
+pub mod scalar;
 pub mod target;
 
 use std::fmt;
@@ -21,6 +23,19 @@ pub(crate) fn ensure(ok: bool, message: &str) -> Result<()> {
     }
 }
 
-pub mod scalar;
-
-pub mod runtime;
+// Shared publication path contract for every prepared family.
+pub(crate) fn public_header(value: &json::Value) -> Result<String> {
+    let path = value.text()?;
+    ensure(
+        path.starts_with("scpp/")
+            && path.ends_with(".hpp")
+            && !path.contains("..")
+            && !path.contains("//")
+            && !path.contains("/.")
+            && path
+                .bytes()
+                .all(|b| b.is_ascii_lowercase() || b.is_ascii_digit() || b"_/.".contains(&b)),
+        "Invalid public header path",
+    )?;
+    Ok(path.into())
+}

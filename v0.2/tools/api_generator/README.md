@@ -3,8 +3,8 @@
 Doc Status: supporting
 
 The C++ `scpp_api_generator` remains the production generator. The Rust
-`scpp-api-tooling` library/CLI implements G2 scalar preparation: bounded JSON loading, native target facts,
-integer/bool/null/float conversions and resolved operators. It emits
+`scpp-api-tooling` library/CLI implements G2 scalar, string, vector and carrier preparation: bounded JSON loading,
+native target facts, resolved operators/conversions and concrete family plans. It emits
 inspection JSON only. It does not generate C++ or replace the G1 CLI contract.
 
 ## Shared ownership
@@ -129,11 +129,21 @@ claimed by this slice. The frozen G1 baseline is unchanged.
 ## Composed runtime preparation
 
 `prepare-runtime METADATA PUBLICATION FACTS CONTEXT` composes the scalar planner
-with string and vector preparation. Its outer publication validation rejects unsupported
+with string, vector and nullable/result carrier preparation. Its outer publication validation rejects unsupported
 family demands before delegating the scalar projection. String metadata is validated
 even when unrequested. Vector preparation resolves concrete element identities,
 method adaptations, equality dependencies and admitted elementwise casts after all
-specializations are registered. Carrier/ownership preparation remains pending here.
+specializations are registered. Carrier plans resolve family/default state, concrete
+payload identity, one-layer checked extraction and required error dependencies.
+Both implicit and explicit extraction are supported. They add no lifted operators
+or cross-carrier conversions. Result error facts appear only when a result family
+is published; null/nested carrier/error payloads remain rejected.
+
+`runtime.rs` owns family composition; scalar preparation remains the sole owner of
+numeric policy. Family conversions share the scalar conversion inventory and all
+public header paths use one validator. Known ownership metadata remains outside
+this entrypoint's semantic validation and ownership publication demands are rejected.
+Ownership/value preparation, C++ emission and production cutover remain pending.
 `prepare-scalars` keeps its deliberately narrower publication boundary.
 
 The typed string plan resolves operators, count type and header, and contributes
@@ -144,10 +154,12 @@ No runtime behavior or C++ generation has changed.
 
 Run `tests/generator_parity/runtime_parity.py` with the same --rust, --cpp, --facts,
 --context and --work arguments as scalar_parity.py for complete runtime-plan parity.
-The string slice passed 13 accepted and 29 rejected cases. The combined string/vector
-suite passes 20 accepted and 64 rejected cases, including all 12 admitted element
-identities and their admitted elementwise casts. Four pure Rust proofs cover these
-families independently of the C++ executable.
+The final combined suite passes 43 accepted and 130 rejected cases, including all
+12 vector element identities, their admitted casts, 92 carrier specializations
+under both extraction policies and every G1 case without ownership publication.
+Complete prepared documents are compared, preserving array ordering and JSON value
+types. This is preparation parity, not an emission or production CLI parity claim.
+Six pure Rust proofs cover these families independently of the C++ executable.
 
 ## Reproduce validation
 
@@ -173,6 +185,10 @@ python3 -B tests/generator_parity/scalar_parity.py \
   --rust target/debug/scpp-api-tooling --cpp build/clang/scpp_api_generator \
   --facts build/clang/native-layout/facts.json \
   --context build/clang/native-layout/context.json --work build/scalar-parity
+python3 -B tests/generator_parity/runtime_parity.py \
+  --rust target/debug/scpp-api-tooling --cpp build/clang/scpp_api_generator \
+  --facts build/clang/native-layout/facts.json \
+  --context build/clang/native-layout/context.json --work build/runtime-parity
 ctest --preset default
 python3 -B compiler/tests/measure_foundation.py
 ```

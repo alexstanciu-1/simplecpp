@@ -29,6 +29,8 @@ pub struct RuntimePlan {
     pub string: Option<StringPlan>,
     pub vectors: Vec<VectorPlan>,
     pub vectors_header: Option<String>,
+    pub carriers: Vec<CarrierPlan>,
+    pub carriers_header: Option<String>,
 }
 
 pub fn prepare(metadata: &Value, publication: &Value, facts: &TargetFacts) -> Result<RuntimePlan> {
@@ -42,13 +44,14 @@ pub fn prepare(metadata: &Value, publication: &Value, facts: &TargetFacts) -> Re
         "short_aliases",
         "string",
         "vectors",
+        "carriers",
     ])?;
     // Validate the outer demand first, then delegate the scalar projection to its sole owner.
     let scalar_request = Value::Object(
         publication
             .object()?
             .iter()
-            .filter(|(key, _)| !matches!(key.as_str(), "string" | "vectors"))
+            .filter(|(key, _)| !matches!(key.as_str(), "string" | "vectors" | "carriers"))
             .map(|(k, v)| (k.clone(), v.clone()))
             .collect(),
     );
@@ -59,36 +62,25 @@ pub fn prepare(metadata: &Value, publication: &Value, facts: &TargetFacts) -> Re
         string: None,
         vectors: vec![],
         vectors_header: None,
+        carriers: vec![],
+        carriers_header: None,
     };
     prepare_string(metadata, publication, &registry, &mut plan)?;
     prepare_vectors(metadata, publication, &registry, &mut plan)?;
+    prepare_carriers(metadata, publication, &mut plan)?;
     plan.scalars
         .conversions
         .sort_by(|a, b| (&a.target, &a.source).cmp(&(&b.target, &b.source)));
     Ok(plan)
 }
 
-fn header(value: &Value) -> Result<String> {
-    let path = value.text()?;
-    ensure(
-        path.starts_with("scpp/")
-            && path.ends_with(".hpp")
-            && !path.contains("..")
-            && !path.contains("//")
-            && !path.contains("/.")
-            && path
-                .bytes()
-                .all(|b| b.is_ascii_lowercase() || b.is_ascii_digit() || b"_/.".contains(&b)),
-        "Invalid public header path",
-    )?;
-    Ok(path.into())
-}
 impl RuntimePlan {
     fn check_header(&self, path: &str) -> Result<()> {
         ensure(
             !self.scalars.headers.values().any(|p| p == path)
                 && !self.string.as_ref().is_some_and(|s| s.header == path)
-                && self.vectors_header.as_deref() != Some(path),
+                && self.vectors_header.as_deref() != Some(path)
+                && self.carriers_header.as_deref() != Some(path),
             "Conflicting public headers",
         )
     }
@@ -115,7 +107,24 @@ impl RuntimePlan {
         if let Some(header) = &self.vectors_header {
             out["vectors_header"] = json!(header);
         }
+        out["carriers"] = json!(
+            self.carriers
+                .iter()
+                .map(CarrierPlan::describe)
+                .collect::<Vec<_>>()
+        );
+        if let Some(header) = &self.carriers_header {
+            out["carriers_header"] = json!(header);
+        }
+        if self.requires_error() {
+            out["error"] = json!({"type":"error_t","state":"explicit_present","message":"string","line":"int64","file":"string","inspection":"value_copy","global_short_name":false});
+        }
         out
+    }
+    pub fn requires_error(&self) -> bool {
+        self.carriers
+            .iter()
+            .any(|c| c.family == CarrierFamily::Result)
     }
 }
 fn string_binding(name: &str) -> Result<(&'static str, bool, bool)> {
@@ -183,7 +192,7 @@ fn prepare_string(
         return Ok(());
     };
     request.fields(&["header", "operations", "casts"])?;
-    let header = header(request.at("header")?)?;
+    let header = crate::public_header(request.at("header")?)?;
     plan.check_header(&header)?;
     ensure(
         plan.has_integer(count),
@@ -376,7 +385,7 @@ fn prepare_vectors(
         return Ok(());
     };
     request.fields(&["header", "specializations"])?;
-    let header = header(request.at("header")?)?;
+    let header = crate::public_header(request.at("header")?)?;
     plan.check_header(&header)?;
     ensure(
         plan.has_integer(count) && plan.has_native("long long"),
@@ -606,5 +615,160 @@ impl VectorPlan {
             "operations":self.operations.iter().map(|op|json!({"operation":op,"symbol":if op=="equal"{"=="}else{"!="},"implementation":"elementwise_equality","element_dependency":"operator==","result":"bool_t"})).collect::<Vec<_>>(),
             "methods":self.methods.iter().map(|m|json!({"name":m.name,"result":m.result,"receiver":if m.mutates{"mutable_reference"}else{"const_reference"},"result_category":"value","adaptation":m.adaptation,"arguments":m.arguments})).collect::<Vec<_>>(),
             "casts_from":self.casts.iter().map(|c|json!({"source":c.source,"explicit":true,"element_source":c.element_source,"element_target":self.element,"implementation":"elementwise_explicit_conversion","failure":"discard_partial_target_keep_source"})).collect::<Vec<_>>()})
+    }
+}
+
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum CarrierFamily {
+    Nullable,
+    Result,
+    ResultOrFalse,
+    ResultOrBool,
+}
+impl CarrierFamily {
+    fn parse(name: &str) -> Result<Self> {
+        match name {
+            "nullable" => Ok(Self::Nullable),
+            "result" => Ok(Self::Result),
+            "result_or_false" => Ok(Self::ResultOrFalse),
+            "result_or_bool" => Ok(Self::ResultOrBool),
+            _ => Err(Error("Unknown carrier family".into())),
+        }
+    }
+    fn name(self) -> &'static str {
+        match self {
+            Self::Nullable => "nullable",
+            Self::Result => "result",
+            Self::ResultOrFalse => "result_or_false",
+            Self::ResultOrBool => "result_or_bool",
+        }
+    }
+    pub fn default_state(self) -> &'static str {
+        match self {
+            Self::Nullable => "empty",
+            Self::Result => "value",
+            Self::ResultOrFalse | Self::ResultOrBool => "false",
+        }
+    }
+}
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum Extraction {
+    ImplicitCheckedCopy,
+    ExplicitCheckedCopy,
+}
+impl Extraction {
+    fn parse(name: &str) -> Result<Self> {
+        match name {
+            "implicit_checked_one_layer_value_copy" => Ok(Self::ImplicitCheckedCopy),
+            "explicit_checked_one_layer_value_copy" => Ok(Self::ExplicitCheckedCopy),
+            _ => Err(Error("Unsupported carrier extraction policy".into())),
+        }
+    }
+    fn name(self) -> &'static str {
+        match self {
+            Self::ImplicitCheckedCopy => "implicit_checked_one_layer_value_copy",
+            Self::ExplicitCheckedCopy => "explicit_checked_one_layer_value_copy",
+        }
+    }
+}
+#[derive(Clone, Debug)]
+pub struct CarrierPlan {
+    pub name: String,
+    pub family: CarrierFamily,
+    pub payload: String,
+    pub extraction: Extraction,
+}
+fn prepare_carriers(metadata: &Value, publication: &Value, plan: &mut RuntimePlan) -> Result<()> {
+    let request = publication.object()?.get("carriers");
+    let Some(record) = metadata.object()?.get("carriers") else {
+        return ensure(request.is_none(), "Carrier publication requires metadata");
+    };
+    record.fields(&["extraction", "construction", "families", "error"])?;
+    let extraction = Extraction::parse(record.at("extraction")?.text()?)?;
+    record.literal("construction", "explicit")?;
+    let error = record.at("error")?;
+    error.fields(&["type", "message", "line", "file", "state"])?;
+    for (field, expected) in [
+        ("type", "error_t"),
+        ("message", "string"),
+        ("line", "int64"),
+        ("file", "string"),
+        ("state", "explicit_present"),
+    ] {
+        error.literal(field, expected)?;
+    }
+    let families = record.at("families")?;
+    families.fields(&["nullable", "result", "result_or_false", "result_or_bool"])?;
+    for (name, state) in families.object()? {
+        ensure(
+            state.text()? == CarrierFamily::parse(name)?.default_state(),
+            "Unsupported carrier default state",
+        )?;
+    }
+    let Some(request) = request else {
+        return Ok(());
+    };
+    request.fields(&["header", "specializations"])?;
+    let header = crate::public_header(request.at("header")?)?;
+    plan.check_header(&header)?;
+    ensure(
+        plan.has_value("bool_t"),
+        "Carriers require published boolean type",
+    )?;
+    let mut carriers = BTreeMap::new();
+    for item in request.at("specializations")?.array()? {
+        item.fields(&["family", "payload"])?;
+        let name = item.at("family")?.text()?;
+        families.at(name)?;
+        let family = CarrierFamily::parse(name)?;
+        let payload = item.at("payload")?.text()?;
+        ensure(
+            family != CarrierFamily::Nullable || plan.has_value("null_t"),
+            "Nullable requires published null_t",
+        )?;
+        let supported = plan.has_integer(payload)
+            || (payload == "string" && plan.string.is_some())
+            || plan.vectors.iter().any(|v| v.name == payload)
+            || plan
+                .scalars
+                .values
+                .iter()
+                .any(|v| v.name == payload && v.kind != scalar::ValueKind::Null);
+        ensure(
+            supported,
+            "Carrier payload must be a published scalar, string or vector; null/nested carriers are not admitted",
+        )?;
+        ensure(
+            family != CarrierFamily::Result || (plan.string.is_some() && plan.has_integer("int64")),
+            "Result error payload requires string and int64",
+        )?;
+        let identity = format!("{name}_{payload}");
+        ensure(
+            !carriers.contains_key(&identity),
+            "Duplicate carrier specialization",
+        )?;
+        carriers.insert(
+            identity.clone(),
+            CarrierPlan {
+                name: identity.clone(),
+                family,
+                payload: payload.into(),
+                extraction,
+            },
+        );
+        plan.scalars
+            .source_types
+            .insert(format!("{name}<{payload}>"), identity);
+    }
+    ensure(!carriers.is_empty(), "Empty carrier publication")?;
+    plan.carriers = carriers.into_values().collect();
+    plan.carriers_header = Some(header);
+    Ok(())
+}
+impl CarrierPlan {
+    fn describe(&self) -> serde_json::Value {
+        json!({"name":self.name,"family":self.family.name(),"payload":self.payload,"default_state":self.family.default_state(),"boxing":"explicit",
+            "extraction":self.extraction.name(),"extraction_can_fail":true,"non_payload_extraction":"throw_runtime_error","condition":"query_state_explicitly",
+            "lifecycle":"owned_copy_move_resets_source_to_default","lifted_operators":false,"result_category":"value","explicit_lowering":"value_then_payload_operation"})
     }
 }

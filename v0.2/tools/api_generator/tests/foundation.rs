@@ -582,3 +582,86 @@ fn vector_equality_and_element_casts_require_published_dependencies() {
     p["vectors"]["specializations"][0]["element"] = object!("bool_t");
     assert!(runtime_plan(&m, &p).unwrap_err().0.contains("int adapter"));
 }
+
+fn carrier_metadata() -> Value {
+    let mut m = vector_metadata();
+    m["carriers"] = object!({"construction":"explicit","extraction":"implicit_checked_one_layer_value_copy",
+        "families":{"nullable":"empty","result":"value","result_or_false":"false","result_or_bool":"false"},
+        "error":{"type":"error_t","message":"string","line":"int64","file":"string","state":"explicit_present"}});
+    m
+}
+fn carrier_publication() -> Value {
+    let mut p = vector_publication();
+    p["carriers"] = object!({"header":"scpp/carriers.hpp","specializations":[
+        {"family":"nullable","payload":"int64"},{"family":"result","payload":"vector_string"},
+        {"family":"result_or_false","payload":"bool_t"},{"family":"result_or_bool","payload":"float64"}]});
+    p
+}
+#[test]
+fn carrier_plans_preserve_states_extraction_and_payload_operations() {
+    use scpp_api_tooling::runtime::{CarrierFamily, Extraction};
+    let m = carrier_metadata();
+    let p = carrier_publication();
+    let plan = runtime_plan(&m, &p).unwrap();
+    assert!(plan.requires_error());
+    let sentinel = plan
+        .carriers
+        .iter()
+        .find(|c| c.family == CarrierFamily::ResultOrFalse)
+        .unwrap();
+    assert_eq!(sentinel.payload, "bool_t");
+    assert_eq!(sentinel.family.default_state(), "false");
+    assert_eq!(sentinel.extraction, Extraction::ImplicitCheckedCopy);
+    let mut explicit = m.clone();
+    explicit["carriers"]["extraction"] = object!("explicit_checked_one_layer_value_copy");
+    let explicit = runtime_plan(&explicit, &p).unwrap();
+    assert!(
+        explicit
+            .carriers
+            .iter()
+            .all(|c| c.extraction == Extraction::ExplicitCheckedCopy)
+    );
+    assert_eq!(
+        plan.describe()["operations"],
+        explicit.describe()["operations"]
+    );
+    let mut without = p;
+    without.as_object_mut().unwrap().remove("carriers");
+    let without = runtime_plan(&m, &without).unwrap();
+    assert_eq!(
+        plan.describe()["operations"],
+        without.describe()["operations"]
+    );
+    assert_eq!(
+        plan.describe()["conversions"],
+        without.describe()["conversions"]
+    );
+    assert!(!without.requires_error());
+}
+#[test]
+fn carrier_payload_and_state_dependencies_are_checked() {
+    let m = carrier_metadata();
+    for payload in ["null_t", "nullable_int64", "error_t", "vector_missing"] {
+        let mut p = carrier_publication();
+        p["carriers"]["specializations"][0]["payload"] = object!(payload);
+        assert!(runtime_plan(&m, &p).unwrap_err().0.contains("payload"));
+    }
+    let mut p = carrier_publication();
+    p["values"]
+        .as_array_mut()
+        .unwrap()
+        .retain(|v| v != "null_t");
+    assert!(runtime_plan(&m, &p).unwrap_err().0.contains("null_t"));
+    p = carrier_publication();
+    p["carriers"]["header"] = p["vectors"]["header"].clone();
+    assert!(runtime_plan(&m, &p).unwrap_err().0.contains("Conflicting"));
+    let mut m = m;
+    m["carriers"]["families"]["result"] = object!("error");
+    p.as_object_mut().unwrap().remove("carriers");
+    assert!(
+        runtime_plan(&m, &p)
+            .unwrap_err()
+            .0
+            .contains("default state")
+    );
+}

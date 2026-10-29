@@ -330,20 +330,9 @@ fn headers(publication: &Value) -> Result<BTreeMap<String, String>> {
     let mut paths = BTreeSet::new();
     let mut result = BTreeMap::new();
     for field in fields {
-        let path = headers.at(field)?.text()?;
-        ensure(
-            path.starts_with("scpp/")
-                && path.ends_with(".hpp")
-                && !path.contains("..")
-                && !path.contains("//")
-                && !path.contains("/.")
-                && path
-                    .bytes()
-                    .all(|b| b.is_ascii_lowercase() || b.is_ascii_digit() || b"_/.".contains(&b)),
-            "Invalid public header path",
-        )?;
-        ensure(paths.insert(path), "Conflicting public headers")?;
-        result.insert(field.into(), path.into());
+        let path = crate::public_header(headers.at(field)?)?;
+        ensure(paths.insert(path.clone()), "Conflicting public headers")?;
+        result.insert(field.into(), path);
     }
     Ok(result)
 }

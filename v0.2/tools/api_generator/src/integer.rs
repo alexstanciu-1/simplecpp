@@ -91,18 +91,7 @@ pub fn prepare(
         "short_names",
         "native_bridge",
     ] {
-        let path = headers.at(field)?.text()?;
-        ensure(
-            path.starts_with("scpp/")
-                && path.ends_with(".hpp")
-                && !path.contains("..")
-                && !path.contains("//")
-                && !path.contains("/.")
-                && path
-                    .bytes()
-                    .all(|b| b.is_ascii_lowercase() || b.is_ascii_digit() || b"_/.".contains(&b)),
-            "Invalid public header path",
-        )?;
+        let path = crate::public_header(headers.at(field)?)?;
         ensure(paths.insert(path), "Conflicting public headers")?;
     }
     let registry = registry(metadata, facts)?;

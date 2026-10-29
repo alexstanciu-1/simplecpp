@@ -4,7 +4,8 @@ Doc Status: planning
 Date: 2026-10-29
 Decision: approved direction; slice 1 implemented on 2026-10-29.
 API-generator/physical pre-lowering migration to Rust approved on 2026-10-29.
-G1, the G2 foundation and scalar preparation are implemented; remaining work is planned.
+G1 and G2 preparation through scalars, strings, vectors and carriers are implemented.
+Ownership/value preparation, emission and production cutover remain planned.
 
 ## Decision and scope
 
@@ -468,3 +469,27 @@ including all 12 admitted elements and all admitted elementwise cast combination
 Two additional pure Rust proofs cover methods, ordering and missing dependencies;
 workspace tests, strict Clippy and focused C++ vector checks pass. Production
 generation remains C++; carrier/ownership preparation and emission remain pending.
+
+## G2 carrier preparation checkpoint — 2026-10-29
+
+RuntimePlan now composes nullable, result, result_or_false and result_or_bool plans
+with typed family and extraction policy. It checks published payloads, nullable's
+null dependency, result's string/int64 error dependencies, default states, header
+collisions and unsupported nested/null/error payloads. Both checked one-layer value
+copy policies are supported. There is no new operator matrix or implicit carrier
+conversion inventory. Structured error facts appear only for published result
+specializations. Public header validation is shared by all prepared families.
+
+Combined full-document preparation parity passes 43 accepted and 130 rejected
+cases, including 92 carrier specializations with both extraction policies and all
+G1 cases without ownership publication. String/vector regression cases remain in
+the same suite. Existing narrower scalar and integer inspection entrypoints remain
+available. Ownership metadata validation/preparation, C++ emission and production
+cutover are the remaining generator migration work; the C++ generator stays active.
+
+Final validation for these three family slices: 30 Rust unit/integration tests plus
+the compiler compile-fail doctest pass in debug/release; strict Clippy, formatting
+and the isolated Rust-only workspace export pass. Scalar parity still passes its
+19 accepted / 537 rejected cases and 2,692-signature matrix. All 31 existing C++
+tests pass in release and UBSan. Frozen G1 artifacts and production build wiring
+are unchanged; generated files and validation outputs remain ignored.
