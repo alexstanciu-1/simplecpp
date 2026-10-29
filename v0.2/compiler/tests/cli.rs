@@ -42,7 +42,7 @@ fn command_line_contract() {
     assert!(
         String::from_utf8(run(&["--help"]).stdout)
             .unwrap()
-            .contains("no scanning or compilation yet")
+            .contains("PHS scanning; no compilation yet")
     );
     assert_eq!(
         run(&["--version"]).stdout,
@@ -64,6 +64,20 @@ fn command_line_contract() {
         assert!(error.starts_with("error: "));
         assert!(!error.contains("panicked"));
     }
+    std::fs::write(&file, b"$x int = 12;\n").unwrap();
+    let result = run(&["scan", path]);
+    assert!(result.status.success());
+    assert_eq!(result.stdout, b"0 2 2\n3 3 1\n7 1 31\n9 2 3\n11 1 7\n");
+    assert!(result.stderr.is_empty());
+    std::fs::write(&file, b"$x;\n1e+").unwrap();
+    let result = run(&["scan", path]);
+    assert_eq!(result.status.code(), Some(1));
+    assert!(result.stdout.is_empty()); // No partial token dump.
+    assert!(
+        String::from_utf8(result.stderr)
+            .unwrap()
+            .contains(":2:1: error: Expected exponent digits")
+    );
     let missing = fixture.0.join("missing");
     let result = run(&["source", missing.to_str().unwrap()]);
     assert_eq!(result.status.code(), Some(1));

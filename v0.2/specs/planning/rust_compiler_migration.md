@@ -545,3 +545,30 @@ include compiler-model and shared-tooling diagnostic edits as well as CLI edits.
 
 The full runtime prepared-plan regression retains 128 accepted / 249 rejected
 cases, and all 31 C++ release regression checks pass, including frozen G1 parity.
+
+
+## Compiler scanner and ownership checkpoint — 2026-10-29
+
+Production API generation is runtime-owned. Continue compiler development separately;
+this supersedes the eager compiler dependency on scpp-api-tooling. Its unused Cargo
+dependency is removed. Future semantic/physical integration must consume an explicit
+runtime-owned contract; no generator code or runtime bindings are duplicated here.
+The generator remains unchanged in this slice.
+
+The first scanner targets PHS source-body syntax and reuses the reviewed C++ donor's
+ASCII/name, decimal, quoted-string, trivia and punctuation boundaries. scanner.rs
+owns the worker and spelling classification; SourceFile owns diagnostic locations,
+Token owns compact representation, and TokenBuilder owns ordered publication.
+The [compiler README](../../compiler/README.md#phs-scanning-contract-and-donor-review)
+records the exact admitted lexical subset and intentional diagnostic difference.
+
+A new scan command exposes complete offset/length/tag dumps. First lexical failure
+returns a source-associated diagnostic with no partial output. No literal decoding,
+error recovery, parsing, symbols, modules or semantic/runtime binding is introduced.
+The 22 compiler tests plus compile-fail doctest pass in debug/release; strict Clippy,
+formatting and an isolated compiler-only offline export pass. The timing/export
+script now needs neither the API-tooling crate nor cached third-party packages.
+
+Next: review the donor parser and specify the smallest typed-local/expression AST
+slice, followed by name resolution. Runtime operation demands should remain symbolic
+until the runtime-owned integration contract is ready.

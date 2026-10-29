@@ -3,15 +3,16 @@
 Doc Status: supporting
 
 The compiler is now Rust-only. It implements byte sources, checked spans, compact
-tokens, immutable token-sequence publication, diagnostics and a source-inspection
-CLI. Scanning, parsing, symbols, semantic compilation, runtime metadata integration
+tokens, immutable token-sequence publication, in-memory PHS scanning, diagnostics
+and source/token inspection commands. Parsing, symbols, semantic compilation, runtime metadata integration
 and C++ emission remain future slices in the
 [migration plan](../specs/planning/rust_compiler_migration.md).
 
 The v0.2 workspace owns the lockfile, Rust 1.99.1 pin and Cargo configuration
-(eight jobs; mold on x86_64 Linux). The compiler depends on the shared Rust
-[API tooling library](../tools/api_generator/README.md), which uses Serde. It has
-no C++ runtime linkage, generated-header prerequisite, build script or FFI.
+(eight jobs; mold on x86_64 Linux). The compiler uses only the Rust standard
+library: no API-tooling crate dependency, C++ runtime linkage, generated-header
+prerequisite, build script or FFI. Runtime work owns production API generation;
+future compiler integration consumes its published contract.
 Cargo and CMake do not invoke each other. Build outputs live in ignored v0.2/target/.
 
 ## Build and validate
@@ -19,43 +20,42 @@ Cargo and CMake do not invoke each other. Build outputs live in ignored v0.2/tar
 Install Rust 1.99.1 with rustfmt/Clippy and the host cc/mold tools. From v0.2/:
 
 ```sh
-cargo fetch --locked
-cargo fmt --all --check
-cargo clippy --workspace --all-targets --locked --offline -- -D warnings
-cargo test --workspace --locked --offline
-cargo test --workspace --release --locked --offline
+cargo fmt -p scpp-compiler --check
+cargo clippy -p scpp-compiler --all-targets --locked --offline -- -D warnings
+cargo test -p scpp-compiler --locked --offline
+cargo test -p scpp-compiler --release --locked --offline
 cargo run -p scpp-compiler --locked --offline -- --help
 cargo run -p scpp-compiler --locked --offline -- source compiler/Cargo.toml 0
 python3 -B compiler/tests/measure_foundation.py
 ```
 
-Offline builds require cached packages and the installed toolchain. The measurement
-script exports both Rust packages without C++ sources, runtime files or generated
-headers, then builds/tests the workspace offline. It measures clean/incremental
+Compiler builds require the installed toolchain, with no external crate packages.
+The measurement script exports only compiler sources/tests and a minimal workspace,
+without API tooling, runtime files or generated headers, then builds/tests offline. It measures clean/incremental
 compiler builds with a fresh target and a warm filesystem cache; its results are
 observations of this small foundation, not forecasts of the full compiler.
 
-## Rebuild observations — 2026-10-29
+## Rebuild observations — scanner slice, 2026-10-29
 
 Measured with Rust 1.99.1, Ryzen 5 PRO 4650G, Linux/WSL2, eight Cargo jobs and
-mold. Packages were cached, Cargo targets initially fresh, filesystem cache warm;
-one observation per case. Edit cases change diagnostic/help text in real source
-files in a temporary export, not repository sources. Model/shared edits run across
-both workspace crates; each check/build cache is warmed before its edit.
+mold. Compiler-only export, no external packages, initially fresh Cargo targets,
+filesystem cache not flushed; one observation per case. Edits change diagnostic/help
+text in temporary exported sources. Each edit starts with warmed check/build caches.
 
 | Work | Wall time |
 | --- | ---: |
-| Clean compiler debug build, including dependencies | 6.194 s |
-| Unchanged compiler debug build | 0.069 s |
-| Compiler CLI edit, debug rebuild | 0.264 s |
-| Compiler model edit, workspace check / debug rebuild | 0.208 / 0.424 s |
-| Shared tooling edit, workspace check / debug rebuild | 0.334 / 0.737 s |
-| Cold / unchanged compiler check | 4.128 / 0.073 s |
-| Clean compiler release build, including dependencies | 7.815 s |
+| Clean compiler debug build | 0.917 s |
+| Unchanged debug build | 0.067 s |
+| CLI edit, debug rebuild | 0.307 s |
+| Compiler model edit, check / debug rebuild | 0.234 / 0.470 s |
+| Scanner edit, check / debug rebuild | 0.218 / 0.403 s |
+| Cold / unchanged check | 0.428 / 0.064 s |
+| Clean compiler release build | 1.067 s |
 
-These numbers describe this foundation and small implementation edits. Signature,
-generic or dependency changes can invalidate more work. Reproduce with the script
-above; full local output is ignored at build/g3-scalar-rust-timings.json.
+These describe this foundation and small implementation edits, not forecasts of
+full compiler costs. Reproduce with the script above; full local output is ignored
+at build/compiler-scanner-timings.json. Earlier shared-tooling measurements included
+a dependency the compiler no longer has.
 
 ## Model ownership
 
@@ -91,7 +91,9 @@ above; full local output is ignored at build/g3-scalar-rust-timings.json.
   escapes control characters in paths/messages and prints byte coordinates. Path
   display is lossy for invalid Unicode, while file access retains the original path.
 - `main.rs`: `source <path> [byte-offset]` prints a location note. This is not a
-  compile/check command. Input/I/O errors return exit 1; successful commands exit 0.
+  compile/check command. `scan <path>` prints offset, length and numeric tag per
+  token, after complete successful scanning. Lexical/I/O errors return exit 1 with
+  no partial token output; successful commands exit 0.
 
 Unsafe code is forbidden. Model errors use typed Result values. Allocation failure
 follows Rust's standard behavior; no recoverable out-of-memory guarantee is made.
@@ -123,3 +125,55 @@ Rust-only workspace export passes. All 31 retained C++ tests pass in release and
 UBSan. G1 frozen parity and G2 probe integration pass with the relocated fixture.
 A fresh source-only C++ export also builds and passes all 31 checks, without
 retired compiler sources or pre-generated runtime files.
+
+
+## PHS scanning contract and donor review
+
+The first source flavor is strict PHS source-body syntax (`.phs`); scanning is not
+full PHP admission. No PHP/HTML mode, BOM stripping or source normalization is
+introduced. Source bytes and gaps remain exact. Recognizing constituent tokens
+alone does not admit a construct, operation or identifier in a parser context.
+
+Reviewed donors: `compiler/my-try-cpp/src/tokenize/scanner.cpp`, `spellings.cpp`,
+`docs/tokenization.md` and `docs/token_inventory.md` at fab676e4f. These remain
+reference material, never build inputs. The new `scanner.rs` owns scanning and
+fixed-spelling classification together, using borrowed byte slices and Rust match
+patterns. No middleware, source-revision coordinator, module discovery, batch/task
+machinery or runtime-backed containers are ported.
+
+Adopted lexical rules:
+
+- ASCII letters/underscore start identifiers; digits may follow. Variables include
+  their leading `$`. The existing 64 lowercase word tags classify exact spelling;
+  `int`, `string` and `vector` remain identifiers. Classification is case-sensitive.
+- Decimal digit runs, optional decimal point and exponent form numeric tokens;
+  `.5`, `12.`, `1e-3` are recognized. Signs are separate tokens except in exponents.
+  Missing exponent digits and immediately attached letters/underscore/dot fail.
+  No hex/binary forms, separators, numeric conversion or range checking is added.
+- Single/double quoted strings remain whole tokens. Backslash protects the next
+  byte. Interpolation, escapes and literal contents are not decoded. Arbitrary
+  bytes inside strings/comments are retained; non-ASCII identifiers are not admitted.
+- Space, tab, CR and LF are trivia. `//`, `#` (except `#[`) and non-nesting `/* */`
+  comments are omitted. Unterminated strings/comments fail at their opening byte.
+- Punctuation uses the longest registered spelling. `<<` and `>>` remain adjacent
+  individual angles, preserving generic syntax; `<<=` and `>>=` are single tokens.
+  There is no stored EOF token. Actual NUL outside a string/comment is an error.
+
+`scan(Arc<SourceFile>, previous_count)` returns either a complete TokenSequence or
+its first Diagnostic. The count is a bounded reserve hint, not an incremental-scan
+request. Failure publishes no partial generation and leaves old generations usable.
+No per-token string copy or allocation is introduced; the builder owns token storage.
+Compact token-length limits are checked before publication.
+
+Deliberate diagnostic difference from the donor: locations use SourceFile's existing
+LF-based line table, with CR retained as a byte. This avoids a second location model;
+the C++ scanner's independent bare-CR line counting is not carried over. Error spans
+point to the first offending/opening byte. Recovery is deferred until parser needs
+and synchronization rules are specified.
+
+Validation: 22 compiler tests plus one compile-fail doctest pass in debug/release,
+with strict Clippy and formatting. Tests cover all word tags/punctuation families,
+exact independent spans, quotes/comments, malformed numbers, all single input bytes
+with short suffixes, retained source identity, no partial CLI output, and actual
+24-bit token-length acceptance/rejection. The compiler-only offline export also
+builds/tests with no API-tooling sources or external packages.

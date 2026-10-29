@@ -15,16 +15,16 @@ and unique handles, const-pointee variants and inline values for registered reco
 in a separate proof publication. Value copy/move capabilities follow their payload.
 Their private standard smart pointers live inline, without per-handle heap wrappers.
 The [Rust compiler foundation](compiler/README.md) provides byte sources, spans,
-compact tokens, immutable token-sequence publication, diagnostics and a source-inspection
-CLI. Its replaced C++ foundation has been removed. Cargo builds independently with
+compact tokens, immutable token-sequence publication, PHS scanning, diagnostics and
+source/token inspection commands. Its replaced C++ foundation has been removed. Cargo builds independently with
 eight jobs and mold, without a C++ runtime or generator-binary dependency.
-Scanning, parsing and semantic compilation remain pending.
+It uses only the Rust standard library. Parsing and semantic compilation remain pending.
 The runtime stays C++; API generation
 and physical pre-lowering are migrating to a shared Rust tooling library. The
 [G2 tooling](tools/api_generator/README.md) provides that library, JSON loading,
 scalar/string/vector/carrier/ownership preparation and a small C++ layout probe.
 Rust preparation covers the current metadata families. The C++
-generator remains the production path; Rust scalar emission has artifact and consumer parity; other family emitters remain pending. Scanning and tooling migration follow the
+generator remains the production path; Rust scalar emission has artifact and consumer parity; other family emitters remain pending. Compiler and tooling migration follow the
 [migration plan](specs/planning/rust_compiler_migration.md).
 Standard-library types and private templates are appropriate for tool support;
 generated runtime consumer headers remain template-free.

@@ -5,8 +5,9 @@ use std::io::{self, Write};
 use std::path::PathBuf;
 use std::process::ExitCode;
 
-const HELP: &str = "Simple C++ compiler foundation (no scanning or compilation yet)\n\
+const HELP: &str = "Simple C++ compiler foundation (PHS scanning; no compilation yet)\n\
 Usage: scpp-compiler source <path> [byte-offset]\n\
+       scpp-compiler scan <path>\n\
        scpp-compiler --help | --version\n\
 Reports a one-based line and byte-column for a source offset (default 0).\n";
 
@@ -22,8 +23,28 @@ fn run(args: Vec<OsString>, output: &mut impl Write) -> Result<(), String> {
         )
         .map_err(|e| e.to_string());
     }
+    if args.len() == 2 && args[0] == "scan" {
+        let path = PathBuf::from(&args[1]);
+        let bytes = std::fs::read(&path)
+            .map_err(|e| format!("cannot read {}: {e}", path.to_string_lossy().escape_debug()))?;
+        let source = SourceMap::default()
+            .add(path, bytes)
+            .map_err(|e| e.to_string())?;
+        let tokens = scpp_compiler::scanner::scan(source, 0).map_err(|e| e.to_string())?;
+        for token in tokens.tokens() {
+            writeln!(
+                output,
+                "{} {} {}",
+                token.offset(),
+                token.length(),
+                token.kind().tag()
+            )
+            .map_err(|e| e.to_string())?;
+        }
+        return Ok(());
+    }
     if !(args.len() == 2 || args.len() == 3) || args[0] != "source" {
-        return Err("expected source <path> [byte-offset]; use --help".to_owned());
+        return Err("expected source <path> [byte-offset] or scan <path>; use --help".to_owned());
     }
     let offset = if args.len() == 3 {
         args[2]
