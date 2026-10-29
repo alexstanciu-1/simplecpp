@@ -22,6 +22,8 @@ tagged scalars and COW containers. [Private dynamic ownership](specs/dynamic_sto
 adds shared-container identity and checked scalar family conversion.
 [Concrete mixed/dynamic APIs](specs/boxed_slice.md) are now generated on request;
 operators and source compiler integration remain separate work.
+[Results containing mixed/dynamic](specs/boxed_results.md) are also available on
+explicit request, providing the checked-result prerequisite for JSON.
 
 The optional [datetime module](specs/datetime_module.md) provides eleven clock,
 sleep, UTC and host-local operations. Enable it with `-DSCPP_ENABLE_DATETIME=ON` when

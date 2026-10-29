@@ -12,7 +12,10 @@ extraction policy and structured-error field identities. Publication selects con
 family/payload pairs. Defaults publish nullable, result, result_or_false and
 result_or_bool for int64, bool_t, string and vector_string: sixteen concrete classes
 in scpp/carriers.hpp, with short names available through short_names.hpp.
-Other published integers, float64 and concrete vectors can be requested. Null payloads,
+Other published integers, float64 and concrete vectors can be requested.
+The [boxed-result extension](boxed_results.md) additionally admits result_mixed and
+result_dynamic when their boxed family is published. Other boxed carrier families
+remain unadmitted. Bare `null_t` payloads,
 nested carriers, errors as payloads, arbitrary user classes and move-only payloads
 are not admitted in this slice. Nullable additionally requires published null_t.
 

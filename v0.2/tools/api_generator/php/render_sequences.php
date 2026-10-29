@@ -151,6 +151,13 @@ function renderCarriers(array $plan): array {
     if(isset($plan['vectors_header'])) {
         $h .= includeHeader($plan['vectors_header']);
     }
+    $payloadHeaders = [];
+    foreach ($plan['carriers'] as $carrier) {
+        if (isset($carrier['payload_header'])) $payloadHeaders[] = $carrier['payload_header'];
+    }
+    $payloadHeaders = array_unique($payloadHeaders);
+    sort($payloadHeaders, SORT_STRING);
+    foreach ($payloadHeaders as $header) $h .= includeHeader($header);
     $h .= "namespace scpp {\n";
     $d = '';
     if(isset($plan['error'])) {

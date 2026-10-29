@@ -179,3 +179,8 @@ They preserve mixed COW and dynamic shared identity. Scalar cross-family convers
 is explicit and demand-selected; container conversion rejects. The public include
 closure remains template-free. Operators, source normalization/integration and
 traversal remain deferred.
+
+`result_mixed` and `result_dynamic` are now supported when their corresponding
+boxed family is published. They retain the existing result state/extraction policy
+and each payload family’s ownership behavior; see [boxed results](boxed_results.md).
+Other boxed carrier families remain deferred.

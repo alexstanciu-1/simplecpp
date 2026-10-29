@@ -136,3 +136,7 @@ The subsequent `9f73b288c` tooling cutover replaced the Rust API generator with
 PHP. New public runtime publication must use that sole PHP path. Private mixed and
 dynamic storage now share family-safe mechanics; shared-cycle reclamation remains
 RT-DEBT-02 as recorded in the dynamic storage contract.
+
+The next module trajectory is JSON. Its result_mixed/result_dynamic prerequisite
+is implemented; parser/writer reuse, classified-key normalization and private
+traversal remain a separate slice. See [boxed results](../boxed_results.md).
