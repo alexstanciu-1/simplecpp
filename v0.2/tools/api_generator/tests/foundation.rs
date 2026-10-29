@@ -665,3 +665,110 @@ fn carrier_payload_and_state_dependencies_are_checked() {
             .contains("default state")
     );
 }
+
+fn ownership_metadata() -> Value {
+    let mut m = carrier_metadata();
+    m["ownership"] = object!({"binding":"std_smart_pointer_inline","families":["shared","weak","unique"],"default":"empty",
+        "construction":"explicit_factory","access":"checked_borrow","empty_access":"throw_runtime_error","weak_access":"explicit_lock",
+        "payload":"registered_record","const_pointee":"explicit_add_const",
+        "value":{"binding":"inline_record","construction":"explicit","special_members":"payload","access":"borrow"}});
+    m
+}
+fn ownership_publication() -> Value {
+    let mut p = scalar_publication();
+    p["ownership"] = object!({"header":"scpp/ownership.hpp","records":[{"name":"record","header":"scpp/record.hpp","constructors":[[],["int64"]],
+        "families":["shared","weak","unique","value"],"const_families":["shared","weak","unique"]}]});
+    p
+}
+#[test]
+fn ownership_qualification_edges_and_inline_value_capabilities() {
+    use scpp_api_tooling::ownership::{Family, QualificationEffect};
+    let plan = runtime_plan(&ownership_metadata(), &ownership_publication()).unwrap();
+    let record = &plan.ownership.as_ref().unwrap().records[0];
+    assert_eq!(record.families.len(), 7);
+    assert_eq!(
+        record
+            .families
+            .iter()
+            .map(|s| s.qualifications.len())
+            .sum::<usize>(),
+        6
+    );
+    let unique = record
+        .families
+        .iter()
+        .find(|s| s.family == Family::Unique && s.const_pointee)
+        .unwrap();
+    assert_eq!(unique.qualifications.len(), 1);
+    assert_eq!(
+        unique.qualifications[0].effect,
+        QualificationEffect::TransferSourceEmpty
+    );
+    let value = record
+        .families
+        .iter()
+        .find(|s| s.family == Family::Value)
+        .unwrap();
+    assert!(value.layout.is_none() && value.qualifications.is_empty());
+    let described = plan.describe();
+    let value = described["ownership"]["records"][0]["families"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .find(|s| s["family"] == "value")
+        .unwrap();
+    assert_eq!(value["default"], "payload_value_initialization");
+    assert_eq!(value["special_members"], "native_payload_dependent");
+    assert!(value.get("size").is_none());
+}
+#[test]
+fn ownership_layouts_come_from_target_facts_not_rust_host() {
+    use scpp_api_tooling::ownership::Family;
+    let mut measured = facts();
+    measured["ownership"]["shared"]["size"] = object!(32);
+    let target = TargetFacts::parse(
+        &bytes(&measured),
+        &TargetContext::parse(&bytes(&context())).unwrap(),
+    )
+    .unwrap();
+    let plan = scpp_api_tooling::runtime::prepare(
+        &json::parse(&bytes(&ownership_metadata()), "metadata").unwrap(),
+        &json::parse(&bytes(&ownership_publication()), "publication").unwrap(),
+        &target,
+    )
+    .unwrap();
+    for s in &plan.ownership.unwrap().records[0].families {
+        if s.family == Family::Shared {
+            assert_eq!(s.layout.as_ref().unwrap().size, 32);
+        }
+    }
+}
+#[test]
+fn ownership_rejects_collisions_weak_dependencies_and_non_scalar_constructors() {
+    let m = ownership_metadata();
+    for name in ["class", "int_t", "error_t", "record__x", "std"] {
+        let mut p = ownership_publication();
+        p["ownership"]["records"][0]["name"] = object!(name);
+        assert!(runtime_plan(&m, &p).is_err());
+    }
+    let mut p = ownership_publication();
+    p["ownership"]["records"][0]["const_families"] = object!(["weak"]);
+    assert!(
+        runtime_plan(&m, &p)
+            .unwrap_err()
+            .0
+            .contains("matching shared")
+    );
+    p = ownership_publication();
+    p["ownership"]["records"][0]["constructors"] = object!([["string"]]);
+    assert!(
+        runtime_plan(&m, &p)
+            .unwrap_err()
+            .0
+            .contains("published scalar")
+    );
+    let mut m = m;
+    m["ownership"]["weak_access"] = object!("implicit");
+    p.as_object_mut().unwrap().remove("ownership");
+    assert!(runtime_plan(&m, &p).is_err());
+}

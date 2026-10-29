@@ -22,8 +22,8 @@ Scanning, parsing and semantic compilation remain pending.
 The runtime stays C++; API generation
 and physical pre-lowering are migrating to a shared Rust tooling library. The
 [G2 tooling](tools/api_generator/README.md) provides that library, JSON loading,
-scalar/string/vector/carrier preparation and a small C++ layout probe.
-Ownership/value preparation remains pending in Rust. The C++
+scalar/string/vector/carrier/ownership preparation and a small C++ layout probe.
+Rust preparation covers the current metadata families. The C++
 generator remains the production path; Rust emission is not implemented. Scanning and tooling migration follow the
 [migration plan](specs/planning/rust_compiler_migration.md).
 Standard-library types and private templates are appropriate for tool support;

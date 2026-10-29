@@ -221,6 +221,83 @@ def carrier_cases(proof, m, p):
     proof.check('missing-carrier-metadata',changed,p,False)
 
 
+def ownership_cases(proof, m, p, default):
+    import itertools
+    expected = proof.check('ownership-default',m,p)
+    q = copy.deepcopy(p); q['ownership']['records'].reverse()
+    for r in q['ownership']['records']:
+        r['constructors'].reverse()
+        for f in ['families','const_families']:
+            if f in r: r[f].reverse()
+    assert expected == proof.check('ownership-order',m,q)
+    q = copy.deepcopy(default); q['ownership'] = copy.deepcopy(p['ownership'])
+    proof.check('all-families-composed',m,q)
+    def subsets(items):
+        return [list(s) for n in range(len(items)+1) for s in itertools.combinations(items,n)]
+    for mutable in subsets(['shared','weak','unique','value']):
+        for const in subsets(['shared','weak','unique']):
+            q = copy.deepcopy(p); q['ownership']['records'] = [q['ownership']['records'][0]]
+            q['ownership']['records'][0].update(families=mutable,const_families=const)
+            valid = bool(mutable or const) and all('weak' not in f or 'shared' in f for f in [mutable,const])
+            proof.check('owner-subsets-' + str((mutable,const)),m,q,valid)
+    q = copy.deepcopy(p); q['ownership']['records'] = [q['ownership']['records'][0]]
+    r = q['ownership']['records'][0]; r['families'] = ['value']; r.pop('const_families')
+    r['constructors'] = [[]]
+    proof.check('default-value',m,q)
+    r['constructors'] = [['bool_t','int64'],['int64','bool_t']]
+    proof.check('ordered-constructor-arguments',m,q)
+    r['header'] = 'scpp/./records.hpp'
+    proof.check('legacy-record-dot-component',m,q)
+    q['ownership']['header'] = 'scpp/./owners.hpp'
+    proof.check('legacy-owner-dot-component',m,q)
+    q = copy.deepcopy(p); q['ownership']['records'] = [q['ownership']['records'][0]]
+    del q['ownership']['records'][0]['families']
+    proof.check('const-only-no-mutable-field',m,q)
+    for path,value in [
+        (['ownership','binding'],'external'), (['ownership','families'],['shared','weak']),
+        (['ownership','families'],['shared','weak','unique','unique']),
+        (['ownership','default'],'value'), (['ownership','construction'],'implicit'),
+        (['ownership','access'],'unchecked'), (['ownership','weak_access'],'implicit'),
+        (['ownership','payload'],'generic'), (['ownership','const_pointee'],'implicit'),
+        (['ownership','value','special_members'],'always_noexcept'),
+        (['ownership','value','binding'],'heap_record'), (['ownership','extra'],True),
+    ]:
+        proof.mutations(m,p,[(path,value)],'metadata')
+        proof.mutations(m,default,[(path,value)],'metadata')
+    proof.mutations(m,p,[
+        (['ownership','records'],[]),
+        (['ownership','header'],p['headers']['types']),
+        (['ownership','records',0,'header'],p['ownership']['header']),
+        (['ownership','records',0,'header'],'../outside.hpp'),
+        (['ownership','records',0,'name'],'int64'),
+        (['ownership','records',0,'families'],['weak']),
+        (['ownership','records',0,'families'],['shared','shared']),
+        (['ownership','records',0,'const_families'],['value']),
+        (['ownership','records',0,'const_families'],['weak']),
+        (['ownership','records',0,'constructors'],[]),
+        (['ownership','records',0,'constructors'],[[],[]]),
+        (['ownership','records',0,'constructors'],[['string']]),
+        (['ownership','records',0,'constructors'],[['shared_record_probe']]),
+        (['ownership','records'],p['ownership']['records'] * 2),
+    ],'publication')
+    for name in ['class','std','detail','record__x','_record','Record','r-x','error_t','null','co_await','']:
+        proof.mutations(m,p,[(['ownership','records',0,'name'],name)],'publication')
+    for collision in ['string','vector_int64','nullable_int64','int_t']:
+        q = copy.deepcopy(default); q['ownership'] = copy.deepcopy(p['ownership'])
+        q['ownership']['records'][0]['name'] = collision
+        proof.check('owner-name-collision-' + collision,m,q,False)
+    q = copy.deepcopy(p); q['ownership']['records'][1]['name'] = 'shared_record_probe'
+    proof.check('record-specialization-collision',m,q,False)
+    for missing in ['value','const_pointee']:
+        changed = copy.deepcopy(m); del changed['ownership'][missing]
+        proof.check('missing-owner-policy-' + missing,changed,p,False)
+        q = copy.deepcopy(p); q['ownership']['records'] = [q['ownership']['records'][0]]
+        q['ownership']['records'][0]['families'] = ['shared']; q['ownership']['records'][0].pop('const_families')
+        proof.check('unused-owner-policy-' + missing,changed,q)
+    changed = copy.deepcopy(m); del changed['ownership']
+    proof.check('missing-owner-metadata',changed,p,False)
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     for field in ['rust', 'cpp', 'facts', 'context', 'work']:
@@ -231,8 +308,6 @@ def main():
     root = Path(__file__).resolve().parents[2]
     m = json.loads((root / 'runtime/metadata/runtime.json').read_text())
     p = json.loads((root / 'runtime/metadata/publication.json').read_text())
-    for field in ['ownership']: m.pop(field, None)
-    for field in ['ownership']: p.pop(field, None)
     args.work.mkdir(parents=True, exist_ok=True)
     with tempfile.TemporaryDirectory(dir=args.work) as work:
         proof = Parity(args, work)
@@ -241,10 +316,11 @@ def main():
         string_cases(proof, m, string_p)
         vector_cases(proof, m, vector_p)
         carrier_cases(proof, m, p)
+        ownership = json.loads((root / 'tests/ownership/publication.json').read_text())
+        ownership_cases(proof,m,ownership,p)
         from corpus import cases
         for case in cases(root):
-            if not case.name.startswith('ownership'):
-                proof.check('G1-' + case.name, case.metadata, case.publication, not case.rejection)
+            proof.check('G1-' + case.name, case.metadata, case.publication, not case.rejection)
         report = {'accepted': proof.accepted, 'rejected': proof.rejected}
     (args.work / 'summary.json').write_text(json.dumps(report, indent=2) + '\n')
     print(json.dumps(report))

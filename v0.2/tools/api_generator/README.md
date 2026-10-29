@@ -3,7 +3,7 @@
 Doc Status: supporting
 
 The C++ `scpp_api_generator` remains the production generator. The Rust
-`scpp-api-tooling` library/CLI implements G2 scalar, string, vector and carrier preparation: bounded JSON loading,
+`scpp-api-tooling` library/CLI implements G2 preparation for scalars, strings, vectors, carriers and ownership/value records: bounded JSON loading,
 native target facts, resolved operators/conversions and concrete family plans. It emits
 inspection JSON only. It does not generate C++ or replace the G1 CLI contract.
 
@@ -129,7 +129,7 @@ claimed by this slice. The frozen G1 baseline is unchanged.
 ## Composed runtime preparation
 
 `prepare-runtime METADATA PUBLICATION FACTS CONTEXT` composes the scalar planner
-with string, vector and nullable/result carrier preparation. Its outer publication validation rejects unsupported
+with string, vector, nullable/result carrier and ownership/value preparation. Its outer publication validation rejects unsupported
 family demands before delegating the scalar projection. String metadata is validated
 even when unrequested. Vector preparation resolves concrete element identities,
 method adaptations, equality dependencies and admitted elementwise casts after all
@@ -141,9 +141,10 @@ is published; null/nested carrier/error payloads remain rejected.
 
 `runtime.rs` owns family composition; scalar preparation remains the sole owner of
 numeric policy. Family conversions share the scalar conversion inventory and all
-public header paths use one validator. Known ownership metadata remains outside
-this entrypoint's semantic validation and ownership publication demands are rejected.
-Ownership/value preparation, C++ emission and production cutover remain pending.
+scalar/sequence header paths use one validator. Ownership preparation is composed
+last, checking names and headers against every other published family. All current
+metadata families are now validated by prepare-runtime, including unrequested
+optional metadata. C++ emission and production cutover remain pending.
 `prepare-scalars` keeps its deliberately narrower publication boundary.
 
 The typed string plan resolves operators, count type and header, and contributes
@@ -154,12 +155,34 @@ No runtime behavior or C++ generation has changed.
 
 Run `tests/generator_parity/runtime_parity.py` with the same --rust, --cpp, --facts,
 --context and --work arguments as scalar_parity.py for complete runtime-plan parity.
-The final combined suite passes 43 accepted and 130 rejected cases, including all
-12 vector element identities, their admitted casts, 92 carrier specializations
-under both extraction policies and every G1 case without ownership publication.
-Complete prepared documents are compared, preserving array ordering and JSON value
-types. This is preparation parity, not an emission or production CLI parity claim.
-Six pure Rust proofs cover these families independently of the C++ executable.
+The combined suite now passes 128 accepted and 249 rejected cases, including all
+12 vector element identities, their admitted casts, 92 carrier specializations,
+every mutable/const ownership-family subset and the complete G1 corpus (17 accepted,
+37 rejected cases). Complete prepared documents are compared, preserving array
+ordering and JSON value types. This is preparation parity, not an emission or
+production CLI parity claim. Pure Rust tests exercise the same typed owners without
+a C++ executable or repository metadata fixtures.
+
+## Ownership/value preparation
+
+`ownership.rs` prepares registered record identities, constructor signatures,
+shared/weak/unique handles, inline values and const-pointee variants. Weak requires
+matching shared at the same qualification. It resolves explicit qualification
+constructors once: copy retains identity; move transfers and empties the source;
+unique has move-only qualification; shared-to-const-weak retains identity.
+
+Handle sizes/alignments come only from validated C++ probe facts. Inline values
+have no guessed size, alignment or copy/move/noexcept traits: those remain native
+payload obligations for the future C++ emitter's declarations and assertions.
+A default inline value constructor is published only when [] is explicitly requested.
+Record definitions remain trusted consumer-owned C++ headers, not parsed Rust input.
+
+Names are checked against C++ binding restrictions and all published runtime,
+alias, record and wrapper identities. Constructor arguments must be published
+scalar types. Header collisions include scalar, string, vector and carrier outputs.
+For exact production parity, ownership retains its existing header-path rule,
+which accepts /./ components; the other families reject those components. Tests
+cover that distinction. This migration does not silently tighten existing policies.
 
 ## Reproduce validation
 

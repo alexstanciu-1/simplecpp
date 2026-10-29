@@ -4,8 +4,8 @@ Doc Status: planning
 Date: 2026-10-29
 Decision: approved direction; slice 1 implemented on 2026-10-29.
 API-generator/physical pre-lowering migration to Rust approved on 2026-10-29.
-G1 and G2 preparation through scalars, strings, vectors and carriers are implemented.
-Ownership/value preparation, emission and production cutover remain planned.
+G1 and G2 preparation for all current metadata families are implemented.
+C++ emission and production cutover remain planned.
 
 ## Decision and scope
 
@@ -493,3 +493,26 @@ and the isolated Rust-only workspace export pass. Scalar parity still passes its
 19 accepted / 537 rejected cases and 2,692-signature matrix. All 31 existing C++
 tests pass in release and UBSan. Frozen G1 artifacts and production build wiring
 are unchanged; generated files and validation outputs remain ignored.
+
+## G2 ownership/value preparation checkpoint — 2026-10-29
+
+Rust now prepares the complete current metadata family set. The ownership module
+validates registered records, scalar constructor signatures, mutable/const family
+publication, name/header collisions and weak/shared dependencies. Typed qualification
+edges preserve copy retention and move transfer semantics; unique conversion is
+move-only. Handle layouts come from validated probe facts. Inline value layout and
+special-member capabilities remain native-payload-dependent, without guessed facts.
+
+Production ownership headers admit /./ components, unlike the other families.
+This existing distinction is preserved and tested for parity, not silently tightened.
+The prepared-model comparison now covers the complete frozen G1 corpus and all
+ownership-family subsets: 128 accepted publications and 249 rejected inputs.
+No G1 baseline or C++ generator source changed. G2 preparation is complete for the
+current contract; G3 emission/CLI artifacts and G4 build cutover remain.
+
+Validation: 33 Rust unit/integration tests plus the compiler compile-fail doctest
+pass in debug/release, with strict Clippy, formatting and isolated Rust-only export.
+All 31 C++ regression checks pass in release and UBSan. The full runtime prepared
+comparison passes 128 accepted / 249 rejected cases; the separate scalar matrix
+retains 19 accepted / 537 rejected cases and 2,692 signatures. Existing generated
+consumer tests still exercise the production C++ emitter, not a Rust emitter.

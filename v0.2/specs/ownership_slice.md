@@ -10,7 +10,10 @@ language admission or compiler adaptation is implemented by this slice.
 `tools/api_generator/ownership.cpp` prepares requested concrete specializations,
 records native handle layout and explicit qualification conversions, and emits the
 concrete lifecycle/API. Inline value capabilities remain native-payload-dependent. It is part of the
-existing generator, not another CLI or lowering pipeline.
+existing production generator. Rust preparation now mirrors this contract in
+`tools/api_generator/src/ownership.rs`, composed through RuntimePlan. It obtains
+handle layouts from the C++ probe and preserves payload-dependent value traits.
+Production C++ emission remains unchanged during migration.
 `runtime/src/ownership/ownership_semantics.hpp` privately owns placement lifetime
 operations and checked payload access. Actual shared/weak/unique ownership uses
 standard-library smart pointers; there is no new reference-count algorithm.

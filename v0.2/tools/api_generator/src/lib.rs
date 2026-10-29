@@ -1,6 +1,7 @@
 //! Runtime API preparation, independent of compiler syntax and runtime linkage.
 pub mod integer;
 pub mod json;
+pub mod ownership;
 pub mod runtime;
 pub mod scalar;
 pub mod target;

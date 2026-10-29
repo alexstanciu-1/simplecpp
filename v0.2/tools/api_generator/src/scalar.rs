@@ -1,5 +1,5 @@
-//! Scalar preparation only. Optional non-scalar metadata is not interpreted here;
-//! publication demands for those families are rejected until their preparation is ported.
+//! Scalar-only preparation. The runtime planner composes this with other families;
+//! this narrower entrypoint rejects non-scalar demands and does not validate their metadata.
 use crate::integer::{IntegerType, NativeInput};
 use crate::{Error, Result, ensure, integer, json::Value, target::TargetFacts};
 use std::collections::{BTreeMap, BTreeSet};

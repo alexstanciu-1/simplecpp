@@ -31,6 +31,7 @@ pub struct RuntimePlan {
     pub vectors_header: Option<String>,
     pub carriers: Vec<CarrierPlan>,
     pub carriers_header: Option<String>,
+    pub ownership: Option<crate::ownership::OwnershipPlan>,
 }
 
 pub fn prepare(metadata: &Value, publication: &Value, facts: &TargetFacts) -> Result<RuntimePlan> {
@@ -45,13 +46,19 @@ pub fn prepare(metadata: &Value, publication: &Value, facts: &TargetFacts) -> Re
         "string",
         "vectors",
         "carriers",
+        "ownership",
     ])?;
     // Validate the outer demand first, then delegate the scalar projection to its sole owner.
     let scalar_request = Value::Object(
         publication
             .object()?
             .iter()
-            .filter(|(key, _)| !matches!(key.as_str(), "string" | "vectors" | "carriers"))
+            .filter(|(key, _)| {
+                !matches!(
+                    key.as_str(),
+                    "string" | "vectors" | "carriers" | "ownership"
+                )
+            })
             .map(|(k, v)| (k.clone(), v.clone()))
             .collect(),
     );
@@ -64,10 +71,12 @@ pub fn prepare(metadata: &Value, publication: &Value, facts: &TargetFacts) -> Re
         vectors_header: None,
         carriers: vec![],
         carriers_header: None,
+        ownership: None,
     };
     prepare_string(metadata, publication, &registry, &mut plan)?;
     prepare_vectors(metadata, publication, &registry, &mut plan)?;
     prepare_carriers(metadata, publication, &mut plan)?;
+    plan.ownership = crate::ownership::prepare(metadata, publication, &plan, facts)?;
     plan.scalars
         .conversions
         .sort_by(|a, b| (&a.target, &a.source).cmp(&(&b.target, &b.source)));
@@ -75,7 +84,7 @@ pub fn prepare(metadata: &Value, publication: &Value, facts: &TargetFacts) -> Re
 }
 
 impl RuntimePlan {
-    fn check_header(&self, path: &str) -> Result<()> {
+    pub(crate) fn check_header(&self, path: &str) -> Result<()> {
         ensure(
             !self.scalars.headers.values().any(|p| p == path)
                 && !self.string.as_ref().is_some_and(|s| s.header == path)
@@ -118,6 +127,9 @@ impl RuntimePlan {
         }
         if self.requires_error() {
             out["error"] = json!({"type":"error_t","state":"explicit_present","message":"string","line":"int64","file":"string","inspection":"value_copy","global_short_name":false});
+        }
+        if let Some(ownership) = &self.ownership {
+            out["ownership"] = ownership.describe();
         }
         out
     }

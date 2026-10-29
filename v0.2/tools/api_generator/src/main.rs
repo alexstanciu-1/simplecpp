@@ -37,7 +37,7 @@ fn run(args: &[OsString]) -> Result<serde_json::Value> {
             Ok(integer::prepare(&metadata, &publication, &facts)?.describe())
         };
     }
-    Err(Error("Usage: scpp-api-tooling validate-target FACTS CONTEXT | prepare-runtime|prepare-scalars|prepare-integer-construction METADATA PUBLICATION FACTS CONTEXT (G2 subset; no C++ emission)".into()))
+    Err(Error("Usage: scpp-api-tooling validate-target FACTS CONTEXT | prepare-runtime|prepare-scalars|prepare-integer-construction METADATA PUBLICATION FACTS CONTEXT (preparation only; no C++ emission)".into()))
 }
 fn main() -> ExitCode {
     let result = run(&std::env::args_os().skip(1).collect::<Vec<_>>()).and_then(|value| {
