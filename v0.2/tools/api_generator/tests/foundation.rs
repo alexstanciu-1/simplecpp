@@ -448,3 +448,78 @@ fn scalar_values_defaults_and_fail_closed_publication() {
     p["vectors"] = object!({});
     assert!(scalar_plan(&m, &p).unwrap_err().0.contains("Unknown field"));
 }
+
+fn string_metadata() -> Value {
+    let mut m = scalar_metadata();
+    m["construction"]["native_integer_inputs"]
+        .as_array_mut()
+        .unwrap()
+        .push(object!("long long"));
+    m["string"] = object!({"type":"string","source_type":"string","storage":"private_std_string","count_type":"int64",
+        "construction":"explicit","null_pointer":"reject","text_casts":["decimal_integer","decimal_float","boolean_words"],
+        "operations":["add","add_assign","equal","not_equal","less","less_equal","greater","greater_equal"]});
+    m
+}
+fn string_publication() -> Value {
+    let mut p = scalar_publication();
+    p["string"] = object!({"header":"scpp/string.hpp","operations":["add","add_assign","equal"],"casts":["int64","float64","bool_t"]});
+    p
+}
+fn runtime_plan(
+    m: &Value,
+    p: &Value,
+) -> scpp_api_tooling::Result<scpp_api_tooling::runtime::RuntimePlan> {
+    scpp_api_tooling::runtime::prepare(
+        &json::parse(&bytes(m), "metadata")?,
+        &json::parse(&bytes(p), "publication")?,
+        &target(),
+    )
+}
+#[test]
+fn string_plan_resolves_casts_borrows_mutation_and_count() {
+    use scpp_api_tooling::scalar::Cast;
+    let plan = runtime_plan(&string_metadata(), &string_publication()).unwrap();
+    assert_eq!(plan.scalars.source_types["string"], "string");
+    assert_eq!(plan.string.as_ref().unwrap().count_type, "int64");
+    let parse = plan
+        .scalars
+        .conversions
+        .iter()
+        .find(|c| c.source == "string" && c.target == "bool_t")
+        .unwrap();
+    assert_eq!(parse.implementation, Cast::ParseBooleanText);
+    assert!(parse.can_fail && !parse.lossless);
+    let out = plan.describe();
+    assert_eq!(
+        out["string"]["operations"][1]["result_category"],
+        "left_reference"
+    );
+    assert_eq!(
+        out["string"]["methods"][2]["result_category"],
+        "borrowed_bytes_until_mutation_or_destruction"
+    );
+    let row = out["conversions"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .find(|c| c["source"] == "string")
+        .unwrap();
+    assert_eq!(row["source_category"], "const_reference");
+}
+#[test]
+fn string_demands_validate_missing_capabilities_and_dependencies() {
+    let m = string_metadata();
+    let mut p = string_publication();
+    p["string"]["casts"] = object!(["null_t"]);
+    assert!(runtime_plan(&m, &p).is_err());
+    p = string_publication();
+    p["string"]["header"] = p["headers"]["types"].clone();
+    assert!(runtime_plan(&m, &p).unwrap_err().0.contains("Conflicting"));
+    let mut m = m;
+    m["string"]["operations"] = object!([]);
+    assert!(runtime_plan(&m, &string_publication()).is_err());
+    p = string_publication();
+    p.as_object_mut().unwrap().remove("string");
+    m["string"]["null_pointer"] = object!("empty");
+    assert!(runtime_plan(&m, &p).is_err()); // validate even unrequested registered metadata
+}

@@ -58,6 +58,10 @@ pub enum Cast {
     Numeric,
     FloatingInteger,
     Truth,
+    ParseDecimal,
+    FormatDecimal,
+    ParseBooleanText,
+    FormatBooleanText,
 }
 impl Cast {
     fn name(self) -> &'static str {
@@ -66,6 +70,10 @@ impl Cast {
             Self::Numeric => "numeric_cast",
             Self::FloatingInteger => "floating_integer_cast",
             Self::Truth => "truth_cast",
+            Self::ParseDecimal => "parse_decimal",
+            Self::FormatDecimal => "format_decimal",
+            Self::ParseBooleanText => "parse_boolean_text",
+            Self::FormatBooleanText => "format_boolean_text",
         }
     }
 }
@@ -302,7 +310,7 @@ fn bindings(value: &Value, floating: bool) -> Result<BTreeMap<String, Binding>> 
     )?;
     Ok(result)
 }
-fn names(value: &Value, message: &str) -> Result<BTreeSet<String>> {
+pub(crate) fn names(value: &Value, message: &str) -> Result<BTreeSet<String>> {
     let mut seen = BTreeSet::new();
     for name in value.array()? {
         ensure(seen.insert(name.text()?.into()), message)?;
@@ -960,7 +968,7 @@ impl ScalarPlan {
             "types":self.types.iter().map(|t|json!({"name":t.name,"representation":t.representation,"signed":t.signed,"bits":t.bits})).collect::<Vec<_>>(),
             "native_inputs":self.native_inputs.iter().map(|n|json!({"cpp":n.cpp,"signed":n.signed,"digits":n.digits})).collect::<Vec<_>>(),
             "values":self.values.iter().map(|v|json!({"name":v.name,"kind":v.kind.name(),"representation":v.kind.representation(),"operations":v.operations})).collect::<Vec<_>>(),
-            "conversions":self.conversions.iter().map(|c|json!({"target":c.target,"source":c.source,"native_source":c.native_source,"lossless":c.lossless,"implementation":c.implementation.name(),"can_fail":c.can_fail,"source_category":"value"})).collect::<Vec<_>>(),
+            "conversions":self.conversions.iter().map(|c|json!({"target":c.target,"source":c.source,"native_source":c.native_source,"lossless":c.lossless,"implementation":c.implementation.name(),"can_fail":c.can_fail,"source_category":if matches!(c.implementation,Cast::ParseDecimal|Cast::ParseBooleanText){"const_reference"}else{"value"}})).collect::<Vec<_>>(),
             "operations":operations,"source_types":self.source_types,"aliases":self.aliases,"short_aliases":self.short_aliases,"headers":self.headers
         })
     }

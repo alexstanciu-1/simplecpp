@@ -442,3 +442,15 @@ export pass. Exact scalar parity passes 19 accepted publications (including the
 2,692-signature matrix) and 537 rejected inputs, comparing every field and JSON
 value type. All 31 existing C++ tests pass in release/UBSan, including frozen G1
 parity. G2 probe/cache and original 104-conversion projection checks also pass.
+
+## G2 string preparation checkpoint — 2026-10-29
+
+Added RuntimePlan composition and prepare-runtime inspection CLI, delegating scalar
+policy to the existing scalar planner. String preparation validates capabilities,
+count/bool/native dependencies, publication headers, operators and explicit text
+casts, including borrowed input categories and failure facts. Optional string
+metadata is validated even without publication. No C++ emission or cutover.
+
+Exact full-document parity passes 13 accepted and 29 rejected string cases. Two
+new pure Rust proofs cover resolved casts/methods and rejected dependencies; all
+workspace tests and strict Clippy pass. Scalar parity remains unchanged.

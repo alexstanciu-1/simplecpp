@@ -126,6 +126,24 @@ and exercise typed policy resolution without C++ or repository metadata files.
 Exact diagnostic wording, C++ emission parity and non-scalar preparation are not
 claimed by this slice. The frozen G1 baseline is unchanged.
 
+## Composed runtime preparation
+
+`prepare-runtime METADATA PUBLICATION FACTS CONTEXT` composes the scalar planner
+with string preparation. Its outer publication validation rejects unsupported
+family demands before delegating the scalar projection. String metadata is validated
+even when unrequested; vector/carrier/ownership preparation remains pending here.
+`prepare-scalars` keeps its deliberately narrower publication boundary.
+
+The typed string plan resolves operators, count type and header, and contributes
+text conversions to the shared conversion inventory. Parsing borrows string input;
+formatting consumes a value. Bool words, decimal numeric conversions, fallibility,
+construction checks and member/result categories match the C++ prepared contract.
+No runtime behavior or C++ generation has changed.
+
+Run `tests/generator_parity/runtime_parity.py` with the same --rust, --cpp, --facts,
+--context and --work arguments as scalar_parity.py for complete runtime-plan parity.
+The string slice passes 13 accepted and 29 rejected cases plus two pure Rust proofs.
+
 ## Reproduce validation
 
 Run from `v0.2/`:
