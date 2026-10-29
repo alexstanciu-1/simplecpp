@@ -2,8 +2,12 @@
 
 Doc Status: planning
 Date: 2026-10-29
-Status: compact-design preservation required; initial larger-key proposal withdrawn.
+Status: donor reproductions complete; compact repair proposal ready for discussion.
 Reviewed runtime revision: 84e90960d.
+
+Follow-up: [donor investigation and compact repair options](runtime_packed_storage_investigation.md)
+records executable evidence, history, allocation failures and measured layout sizes.
+P0 is complete for the recorded cases; P1 has a proposal, not an agreed implementation.
 
 ## User correction and governing direction
 
