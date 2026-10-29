@@ -25,8 +25,28 @@ CMakeUserPresets.json
 .scpp-token-cache/
 .scpp-portability-index.json
 
-# Rust compiler build/cache outputs (Cargo.lock is intentionally tracked).
-/compiler/target/
+# Cargo output at workspace or individual package roots, including rustdoc,
+# incremental caches, build-script output, benchmarks and packaged crates.
+target/
 
-# Shared Rust workspace output.
-/target/
+# Rust artifacts produced outside Cargo's normal target directory.
+*.rlib
+*.rmeta
+*.crate
+*.pdb
+*.dylib
+**/*.rs.bk
+
+# Repository-local Cargo/rustup homes: caches, installed tools and credentials.
+# Keep .cargo/config.toml, Cargo.lock and rust-toolchain.toml tracked.
+**/.cargo/registry/
+**/.cargo/git/
+**/.cargo/bin/
+**/.cargo/.package-cache*
+**/.cargo/.global-cache*
+**/.cargo/.crates.toml
+**/.cargo/.crates2.json
+**/.cargo/credentials
+**/.cargo/credentials.toml
+**/.cargo/env
+.rustup/
