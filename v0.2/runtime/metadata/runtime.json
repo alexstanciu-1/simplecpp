@@ -722,7 +722,11 @@
       "encode_int64",
       "encode_float64",
       "encode_bool_t",
-      "encode_string"
+      "encode_string",
+      "encode_nullable_int64",
+      "encode_nullable_float64",
+      "encode_nullable_bool_t",
+      "encode_nullable_string"
     ]
   }
 }

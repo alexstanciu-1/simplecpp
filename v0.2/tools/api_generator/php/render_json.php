@@ -13,13 +13,14 @@ function renderJson(array $plan, array &$files): void {
         $signature = "$result $name(const $argument& input)";
         $h .= "$signature;\n";
         $decode = $name !== 'encode';
-        $input = match ($op['transport']) {
-            'bytes' => 'std::string_view{input.data(), static_cast<std::size_t>(input.size().native_value())}',
-            'boxed' => "detail::ownership_access::get<detail::{$family}_value>(input)",
-            'int64' => 'static_cast<std::int64_t>(input.native_value())',
-            'float64', 'bool_t' => 'input.native_value()',
-        };
-        $d .= "$signature {\n    auto native = detail::json::$name($input);\n";
+        $source = $op['nullablePayload'] !== null ? 'value' : 'input';
+        $input = jsonNativeArgument($op, $source);
+        $d .= "$signature {\n";
+        if ($op['nullablePayload'] !== null) {
+            $d .= "    auto native = [&]() {\n        if (!input.has_value().native_value()) return detail::json::encode_null();\n        const auto value = input.value();\n        return detail::json::encode($input);\n    }();\n";
+        } else {
+            $d .= "    auto native = detail::json::$name($input);\n";
+        }
         $d .= "    if (!native.error.empty()) return $result{error_t{string{native.error.data(), int64{detail::checked_integer_cast<long long>(native.error.size())}}}};\n";
         if ($decode) {
             $d .= "    $family value;\n    detail::ownership_access::get<detail::{$family}_value>(value) = std::move(native.value);\n    return $result{std::move(value)};\n";
@@ -30,4 +31,13 @@ function renderJson(array $plan, array &$files): void {
     }
     $files['public/' . $module['header']] = $h . "}\n";
     $files['src/json.cpp'] = $d . "}\n";
+}
+
+function jsonNativeArgument(array $operation, string $source): string {
+    return match ($operation['transport']) {
+        'bytes' => "std::string_view{{$source}.data(), static_cast<std::size_t>({$source}.size().native_value())}",
+        'boxed' => "detail::ownership_access::get<detail::{$operation['family']}_value>($source)",
+        'int64' => "static_cast<std::int64_t>({$source}.native_value())",
+        'float64', 'bool_t' => "$source.native_value()",
+    };
 }

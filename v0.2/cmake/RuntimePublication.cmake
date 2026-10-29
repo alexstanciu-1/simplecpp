@@ -31,6 +31,9 @@ if(SCPP_ENABLE_DATETIME OR SCPP_ENABLE_JSON)
         "{\"family\":\"result\",\"payload\":\"${family}\"}")
       math(EXPR count "${count} + 1")
     endforeach()
+    # The base profile already has the other three nullable scalar payloads.
+    string(JSON runtime_profile SET "${runtime_profile}" carriers specializations ${count}
+      "{\"family\":\"nullable\",\"payload\":\"float64\"}")
     string(APPEND profile_name "-json")
   endif()
   set(runtime_publication ${CMAKE_CURRENT_BINARY_DIR}/publication${profile_name}.json)

@@ -11,6 +11,10 @@ const JSON_OPERATIONS = [
     'encode_float64' => ['encode', null, 'result_string', 'float64'],
     'encode_bool_t' => ['encode', null, 'result_string', 'bool_t'],
     'encode_string' => ['encode', null, 'result_string', 'string'],
+    'encode_nullable_int64' => ['encode', null, 'result_string', 'nullable_int64', 'int64'],
+    'encode_nullable_float64' => ['encode', null, 'result_string', 'nullable_float64', 'float64'],
+    'encode_nullable_bool_t' => ['encode', null, 'result_string', 'nullable_bool_t', 'bool_t'],
+    'encode_nullable_string' => ['encode', null, 'result_string', 'nullable_string', 'string'],
 ];
 function prepareJson(mixed $metadata, mixed $publication, array &$plan): void {
     $m = familyMetadata($metadata, $publication, 'json', 'json', 'JSON');
@@ -31,14 +35,20 @@ function prepareJson(mixed $metadata, mixed $publication, array &$plan): void {
     foreach (names(at($p, 'operations'), 'Duplicate JSON operation') as $id) {
         requireThat(in_array($id, $registered, true), 'Unregistered JSON operation');
         [$name, $family, $result, $argument] = JSON_OPERATIONS[$id];
+        $nullablePayload = JSON_OPERATIONS[$id][4] ?? null;
         if ($family !== null) {
             requireThat(in_array($family, array_column($plan['boxed']['families'] ?? [], 'name'), true), 'JSON requires published boxed family');
+        } elseif ($nullablePayload !== null) {
+            $matches = array_filter($plan['carriers'], fn(array $carrier): bool =>
+                $carrier['name'] === $argument && $carrier['family'] === 'nullable' && $carrier['payload'] === $nullablePayload);
+            requireThat($matches !== [], 'JSON requires published nullable argument');
         } else {
             requireThat($argument === 'string' || hasType($plan, $argument) || hasValue($plan, $argument), 'JSON requires published scalar argument');
         }
-        $transport = $argument === 'string' ? 'bytes' : ($family !== null ? 'boxed' : $argument);
+        $transportType = $nullablePayload ?? $argument;
+        $transport = $transportType === 'string' ? 'bytes' : ($family !== null ? 'boxed' : $transportType);
         requireThat(in_array($result, array_column($plan['carriers'], 'name'), true), 'JSON requires published result carrier');
-        $operations[] = compact('id', 'name', 'family', 'result', 'argument', 'transport');
+        $operations[] = compact('id', 'name', 'family', 'result', 'argument', 'transport', 'nullablePayload');
     }
     requireThat($operations !== [], 'Empty JSON publication');
     $plan['json'] = ['module' => 'json', 'namespace' => 'scpp::json', 'header' => $header,

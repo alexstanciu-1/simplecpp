@@ -25,8 +25,8 @@ operators and source compiler integration remain separate work.
 [Results containing mixed/dynamic](specs/boxed_results.md) are also available on
 explicit request. The optional [JSON module](specs/json_module.md) now decodes directly
 into either family and encodes both through checked results. Direct int64, float64,
-bool_t and string encoding is also available; all eight operations are generated
-independently on request.
+bool_t and string encoding, including their nullable forms, is also available.
+All twelve operations are generated independently on request.
 
 The optional [datetime module](specs/datetime_module.md) provides eleven clock,
 sleep, UTC and host-local operations. Enable it with `-DSCPP_ENABLE_DATETIME=ON` when

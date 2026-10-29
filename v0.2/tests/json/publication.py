@@ -83,6 +83,25 @@ with tempfile.TemporaryDirectory(prefix='scpp-json-') as tmp:
             field = 'types' if argument == 'int64' else 'values'
             missing[field].remove(argument)
         generate(metadata, missing, False)
+    for payload in ['int64', 'float64', 'bool_t', 'string']:
+        pub = copy.deepcopy(publication)
+        del pub['boxed']
+        pub['carriers']['specializations'] = [{'family':'result', 'payload':'string'}, {'family':'nullable', 'payload':payload}]
+        pub['json']['operations'] = ['encode_nullable_'+payload]
+        for policy in ['implicit_checked_one_layer_value_copy', 'explicit_checked_one_layer_value_copy']:
+            meta = copy.deepcopy(metadata); meta['carriers']['extraction'] = policy
+            out, plan = generate(meta, pub)
+            assert 'boxed' not in plan and plan['json']['operations'][0]['nullablePayload'] == payload
+            compile(out, f'int main() {{ auto r = scpp::json::encode(scpp::nullable_{payload}{{}}); }}')
+            compile(out, '', preprocess=True)
+            compile(out, f'int main() {{ auto r = scpp::json::encode(scpp::{payload}{{}}); }}', False)
+            includes = ['numeric','sequence','ownership','boxed','hash','json']
+            cmd = [a.cxx, '-std=c++23', '-stdlib=libc++', '-fsyntax-only', '-I'+str(out/'public')]
+            cmd += ['-I'+str(a.source/'runtime/src'/folder) for folder in includes]
+            result = subprocess.run(cmd+[str(out/'src/json.cpp')], capture_output=True, text=True, timeout=60)
+            assert result.returncode == 0, result.stderr
+        missing = copy.deepcopy(pub); missing['carriers']['specializations'].pop(); generate(metadata, missing, False)
+        wrong = copy.deepcopy(pub); wrong['carriers']['specializations'][-1]['family'] = 'result'; generate(metadata, wrong, False)
     for bad in [[], ['decode','decode'], ['from_json'], ['encode']]:
         pub = copy.deepcopy(publication); pub['json']['operations'] = bad; generate(metadata, pub, False)
     for header in ['scpp/boxed.hpp', 'scpp/carriers.hpp', '../json.hpp']:

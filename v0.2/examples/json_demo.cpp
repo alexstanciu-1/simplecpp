@@ -8,6 +8,8 @@ int main() {
     std::puts(rendered.value().data());
     const auto scalar = scpp::json::encode(scpp::int64{42LL});
     if (!scalar.has_value().native_value() || scalar.value().size().native_value() != 2) return 4;
+    const auto empty = scpp::json::encode(scpp::nullable_float64{});
+    if (!empty.has_value().native_value() || empty.value().size().native_value() != 4) return 5;
     // Malformed data is a checked result; this subsequent call remains independent.
     const auto limited = scpp::json::decode_mixed(scpp::string{R"({"2147483648":0})"});
     return limited.has_error().native_value() ? 0 : 3;

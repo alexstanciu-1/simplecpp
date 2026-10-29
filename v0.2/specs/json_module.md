@@ -19,6 +19,10 @@ The PHP API generator publishes the following concrete operations on request:
 | `encode_float64` | `result_string encode(const float64&)` |
 | `encode_bool_t` | `result_string encode(const bool_t&)` |
 | `encode_string` | `result_string encode(const string&)` |
+| `encode_nullable_int64` | `result_string encode(const nullable_int64&)` |
+| `encode_nullable_float64` | `result_string encode(const nullable_float64&)` |
+| `encode_nullable_bool_t` | `result_string encode(const nullable_bool_t&)` |
+| `encode_nullable_string` | `result_string encode(const nullable_string&)` |
 
 Add `"json": {"header": "scpp/json.hpp", "operations": [...]}` to a publication.
 Each operation requires its argument/payload type and result carrier explicitly published,
@@ -38,7 +42,7 @@ native transport record. Link a publication's generated core/boxed definitions a
 
 ## Production build profile
 
-`SCPP_ENABLE_JSON=ON` publishes both families, their result carriers and all eight
+`SCPP_ENABLE_JSON=ON` publishes both families, their result carriers, the four nullable scalar types and all twelve
 JSON operations, then builds `scpp_json` and `scpp_json_demo`. Scalar family crossing
 is not requested. `cmake/RuntimePublication.cmake` composes explicit build demand
 from the default core and module requests; PHP remains the admission authority.
@@ -90,6 +94,25 @@ check, classic-locale max_digits10 formatting and checked failure as boxed float
 Allocation failures retain their exception contract. The native writer owns one
 set of scalar formatting overloads; boxed dispatch delegates to them, while typed
 bindings pass the scalar directly without constructing a boxed value.
+
+## Nullable scalar encoding
+
+The four nullable encode requests require the corresponding published nullable
+carrier and `result_string`. Each can be selected without a boxed API or a public
+scalar encode overload. Empty encodes as successful `"null"`; present values follow
+their scalar rule, so zero, false and empty string never collapse into null.
+The generated binding queries presence and obtains one payload copy only when
+present, then delegates to the shared native writer. This retains the existing
+carrier value-copy contract (including string-copy allocation) and does not box
+or mutate the payload. Nonfinite floats are checked errors; allocation failures
+propagate. The source nullable remains unchanged after either failure.
+
+Both explicit and implicit carrier extraction policies are supported. Select the
+nullable encode request to obtain its presence-aware semantics: an ordinary
+implicit carrier-to-scalar conversion at a scalar-only API remains ordinary checked
+carrier extraction and throws when empty. This slice does not change that general
+conversion policy or add encoders for result/boolean-sentinel carriers. Nested
+carriers and nullable containers remain unadmitted.
 
 ## Reuse and boundaries
 

@@ -141,9 +141,49 @@ void typed_scalars() {
     }
     require(failed && succeeded);
 }
+template<class Nullable, class Value> void nullable_scalar(Value value) {
+    Nullable empty;
+    require(bytes(json::encode(empty).value()) == "null");
+    require(!empty.has_value().native_value());
+    Nullable present{value};
+    require(bytes(json::encode(present).value()) == bytes(json::encode(value).value()));
+    require(present.has_value().native_value());
+    present.reset();
+    require(bytes(json::encode(present).value()) == "null");
+}
+void nullable_scalars() {
+    nullable_scalar<nullable_int64>(int64{0LL});
+    nullable_scalar<nullable_int64>(int64{std::numeric_limits<long long>::min()});
+    nullable_scalar<nullable_bool_t>(bool_t{false});
+    nullable_scalar<nullable_bool_t>(bool_t{true});
+    nullable_scalar<nullable_float64>(float64{-0.0});
+    nullable_scalar<nullable_float64>(float64{1.25});
+    nullable_scalar<nullable_string>(string{});
+    nullable_scalar<nullable_string>(string{"null"});
+    nullable_scalar<nullable_string>(string{"a\0b", int64{3LL}});
+    nullable_float64 invalid{float64{std::numeric_limits<double>::infinity()}};
+    require(json::encode(invalid).has_error().native_value());
+    require(invalid.has_value().native_value());
+    invalid.reset();
+    require(bytes(json::encode(invalid).value()) == "null");
+    const string long_text{"a sufficiently long nullable string to allocate a payload copy during encoding"};
+    const nullable_string original{long_text};
+    bool failed = false, succeeded = false;
+    for (long n = 0; n < 32; ++n) {
+        allocation_probe::fail_after = n;
+        try {
+            auto result = json::encode(original);
+            allocation_probe::fail_after = -1;
+            require(bytes(result.value()) == "\"" + bytes(long_text) + "\"");
+            succeeded = true;
+        } catch (const std::bad_alloc&) { allocation_probe::fail_after = -1; failed = true; }
+        require(original.has_value().native_value() && bytes(original.value()) == bytes(long_text));
+    }
+    require(failed && succeeded);
+}
 struct comma_punctuation : std::numpunct<char> { char do_decimal_point() const override { return ','; } };
 int main() {
-    grammar<mixed>(); grammar<dynamic>(); ownership_and_cycles(); allocation_failures(); typed_scalars();
+    grammar<mixed>(); grammar<dynamic>(); ownership_and_cycles(); allocation_failures(); typed_scalars(); nullable_scalars();
     auto old = std::locale::global(std::locale(std::locale::classic(), new comma_punctuation));
     require(bytes(json::encode(dynamic::from_floating(float64{1.25})).value()) == "1.25");
     require(json::decode(string{"1.25"}).value().get_floating().native_value() == 1.25);

@@ -235,6 +235,7 @@ class writer {
     }
 public:
     writer() { output_.reserve(64); }
+    void write(std::nullptr_t) { output_ += "null"; }
     void write(bool value) { output_ += value ? "true" : "false"; }
     void write(std::int64_t value) { output_ += std::to_string(value); }
     void write(double value) {
@@ -249,7 +250,7 @@ public:
     template<boxed_family Family> void write(const boxed_value<Family>& value) {
         using kind = typename boxed_value<Family>::kind;
         switch (value.type()) {
-            case kind::null: output_ += "null"; break;
+            case kind::null: write(nullptr); break;
             case kind::boolean: write(value.get_boolean()); break;
             case kind::integer: write(value.get_integer()); break;
             case kind::floating: write(value.get_floating()); break;
@@ -274,6 +275,7 @@ outcome<dynamic_value> decode(std::string_view input) { return decode_family<dyn
 outcome<mixed_value> decode_mixed(std::string_view input) { return decode_family<mixed_value>(input); }
 outcome<std::string> encode(const mixed_value& value) { return encode_value(value); }
 outcome<std::string> encode(const dynamic_value& value) { return encode_value(value); }
+outcome<std::string> encode_null() { return encode_value(nullptr); }
 outcome<std::string> encode(std::int64_t value) { return encode_value(value); }
 outcome<std::string> encode(double value) { return encode_value(value); }
 outcome<std::string> encode(bool value) { return encode_value(value); }

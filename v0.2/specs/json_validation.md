@@ -84,3 +84,23 @@ sources compile, and unavailable encode/decode overloads, native C++ arguments,
 null_t and absent dependencies reject. These tests prove direct typed transport;
 no throughput or allocation-count improvement is claimed. The production example
 also calls direct int64 encoding.
+
+## Nullable scalar encoding follow-up
+
+The four nullable scalar encoders use the existing presence query and one explicit
+payload-copy extraction. The consumer verifies empty/reset states, present zero,
+false, empty text, embedded NUL, and a present nonfinite float. Checked encoding
+failure preserves the nullable; reset and retry succeed. Allocation injection while
+copying/encoding a long nullable string preserves its source payload on every failure.
+
+Publication proofs independently request each nullable encoder without boxed APIs
+or public scalar encode overloads. Both implicit and explicit carrier extraction
+policies compile; missing and mismatched carrier dependencies reject. There is no
+new public template, nullable storage implementation or implicit boxing path.
+
+The focused UBSan suite passed 3/3 and the consumer passed ASan+UBSan with libstdc++
+(leak detection disabled). All source-only production profiles passed again,
+including disabling both modules and re-enabling JSON. The production profile adds
+nullable_float64 to the base core's existing nullable scalar requests; its example
+now exercises empty nullable encoding. Frozen output expectations are unchanged.
+The full Release regression suite passed 52/52 after this extension.
