@@ -184,4 +184,5 @@ endif()
 
 if(BUILD_TESTING)
   add_subdirectory(tests/ownership)
+  add_subdirectory(tests/hash)
 endif()

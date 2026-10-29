@@ -27,6 +27,7 @@ const NATIVES: &[&str] = &[
     "long double",
 ];
 macro_rules! add { ($out:expr,$($args:tt)*) => {$out.push_str(&format!($($args)*))}; }
+mod hash;
 mod ownership;
 mod sequences;
 fn signature(op: &Operation) -> String {
@@ -485,6 +486,12 @@ fn emit_scalar_core(
         for c in &r.carriers {
             add!(short, "using scpp::{};\n", c.name);
         }
+        if let Some(hashes) = &r.hashes {
+            add!(short, "#include \"{}\"\n", hashes.header);
+            for h in &hashes.specializations {
+                add!(short, "using scpp::{};\n", h.name);
+            }
+        }
     }
     for t in &plan.types {
         add!(short, "using scpp::{};\n", t.name);
@@ -518,6 +525,7 @@ fn emit_scalar_core(
     files.extend(family_files);
     if let Some(r) = runtime {
         ownership::emit(r, &mut files);
+        hash::emit(r, &mut files);
     }
     let inventory = serde_json::to_string(&files.keys().collect::<Vec<_>>())
         .map_err(|e| Error(e.to_string()))?

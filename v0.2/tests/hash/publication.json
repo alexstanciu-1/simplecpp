@@ -1,0 +1,59 @@
+{
+  "version": 1,
+  "namespace": "scpp",
+  "headers": {
+    "types": "scpp/integers.hpp",
+    "operators": "scpp/numeric.hpp",
+    "short_names": "scpp/short_names.hpp",
+    "native_bridge": "scpp/native_bridge.hpp",
+    "values": "scpp/values.hpp"
+  },
+  "types": [
+    "int64"
+  ],
+  "values": [
+    "bool_t",
+    "null_t"
+  ],
+  "operators": [],
+  "short_aliases": [],
+  "string": {
+    "header": "scpp/string.hpp",
+    "operations": [],
+    "casts": []
+  },
+  "carriers": {
+    "header": "scpp/carriers.hpp",
+    "specializations": [
+      {
+        "family": "nullable",
+        "payload": "int64"
+      },
+      {
+        "family": "nullable",
+        "payload": "string"
+      }
+    ]
+  },
+  "hashes": {
+    "header": "scpp/hashes.hpp",
+    "specializations": [
+      {
+        "value": "int64",
+        "key": "int64"
+      },
+      {
+        "value": "int64",
+        "key": "string"
+      },
+      {
+        "value": "string",
+        "key": "int64"
+      },
+      {
+        "value": "string",
+        "key": "string"
+      }
+    ]
+  }
+}

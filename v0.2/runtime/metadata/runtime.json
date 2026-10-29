@@ -663,5 +663,21 @@
       "access": "borrow"
     },
     "const_pointee": "explicit_add_const"
+  },
+  "hash": {
+    "binding": "ordered_typed_swiss",
+    "key_types": [
+      "int64",
+      "string"
+    ],
+    "value_types": [
+      "int64",
+      "string"
+    ],
+    "count_type": "int64",
+    "key_policy": "strict",
+    "read": "value_copy",
+    "optional_lookup": "nullable",
+    "append": "max_live_nonnegative_plus_one"
   }
 }

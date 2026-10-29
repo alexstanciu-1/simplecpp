@@ -2,7 +2,7 @@
 
 Doc Status: planning
 Date: 2026-10-29
-Status: typed-hash direction agreed; Rust generator prerequisite completed; implementation goal not yet started.
+Status: implementation goal complete; H0–H6 delivered and validated.
 Baseline: v0.2/develop-rust at 6eb564954.
 
 ## Assessment
@@ -104,6 +104,16 @@ for all cases. Any remaining unsupported cases must remain explicit rather than
 silently receiving different behavior. Public traversal design, mutation semantics
 integration and associated lifecycle/failure proofs are deferred together.
 
+## Approved details and progress
+
+User approved the scoped defaults and implementation goal. Concrete contract:
+[typed hashes](../hash_slice.md). H0 complete: baseline 0c230e0bc, clean tree and
+previous cutover validation. H1 complete: explicit runtime arguments, void set,
+bool_t remove, nullable find, copied at and integer append. Append uses max live
+nonnegative key plus one (or zero); deletion of the maximum can permit reuse and
+INT64_MAX rejects before mutation. Donor and contracts agree. Traversal remains debt.
+H0–H6 are complete. See [validation evidence](../hash_slice_validation.md). No commit/push is part of this goal.
+
 ## Action backlog
 
 | ID | Action | Acceptance evidence |
@@ -117,8 +127,7 @@ integration and associated lifecycle/failure proofs are deferred together.
 | H6 | Validate and consolidate | Release, UBSan, supported focused lifetime sanitizer checks, standalone export, freshness, docs and provenance |
 
 H2 follows the H1 ownership boundary. Preparation owns concrete facts; emission
-consumes them. Each step should leave a reviewable proof. This backlog does not
-start an implementation goal by itself.
+consumes them. Each step should leave a reviewable proof. The implementation goal is complete.
 
 ## Reuse and verification requirements
 
@@ -167,4 +176,4 @@ Suggested objective:
 > generated public APIs and behavioral/boundary/performance proofs. Keep traversal
 > and mutation preservation explicitly deferred under RT-DEBT-01.
 
-No implementation goal has been created by this assessment.
+The implementation goal was started after user approval. Completion evidence is recorded in `../hash_slice_validation.md`.

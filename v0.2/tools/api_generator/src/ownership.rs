@@ -173,6 +173,9 @@ pub(crate) fn prepare(
     let mut names = inputs.clone();
     names.extend(base.vectors.iter().map(|v| v.name.clone()));
     names.extend(base.carriers.iter().map(|v| v.name.clone()));
+    if let Some(hashes) = &base.hashes {
+        names.extend(hashes.specializations.iter().map(|h| h.name.clone()));
+    }
     names.extend(base.scalars.aliases.keys().cloned());
     if let Some(s) = &base.string {
         names.insert(s.name.clone());

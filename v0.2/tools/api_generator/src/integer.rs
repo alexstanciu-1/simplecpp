@@ -53,6 +53,7 @@ pub fn prepare(
         "vector",
         "carriers",
         "ownership",
+        "hash",
     ])?;
     publication.fields(&[
         "version",

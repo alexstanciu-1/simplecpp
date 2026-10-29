@@ -4,7 +4,7 @@ Doc Status: supporting
 
 `scpp-api-tooling` is the sole production runtime API generator and preparation
 library. Rust prepares and emits scalars, strings, concrete vectors, nullable/result
-carriers and ownership/value records. The runtime and generated consumers remain
+carriers, typed hashes and ownership/value records. The runtime and generated consumers remain
 C++. The superseded C++ generator, metadata value model and private JSON reader have
 been removed; Git history retains the donor implementation at fab676e4f.
 
@@ -19,6 +19,7 @@ the tooling library, which has no compiler AST, symbol or diagnostic dependency.
 - `integer.rs` and `scalar.rs`: integer identities, conversions, scalar operations,
   promotion, operand adaptations and checked write-back facts.
 - `runtime.rs`: composed string/vector/carrier plans and family dependencies.
+- `hash.rs`: strict int64/string hash identities, nullable dependencies and operation contracts.
 - `ownership.rs`: record families, qualification conversions and measured layouts.
 - `emission.rs` and `emission/`: rendering prepared facts into concrete C++ artifacts.
   Emission does not repeat semantic admission or promotion resolution.
