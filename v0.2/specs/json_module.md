@@ -15,11 +15,17 @@ The PHP API generator publishes the following concrete operations on request:
 | `decode_mixed` | `result_mixed decode_mixed(const string&)` |
 | `encode_mixed` | `result_string encode(const mixed&)` |
 | `encode_dynamic` | `result_string encode(const dynamic&)` |
+| `encode_int64` | `result_string encode(const int64&)` |
+| `encode_float64` | `result_string encode(const float64&)` |
+| `encode_bool_t` | `result_string encode(const bool_t&)` |
+| `encode_string` | `result_string encode(const string&)` |
 
 Add `"json": {"header": "scpp/json.hpp", "operations": [...]}` to a publication.
-Each operation requires its boxed family and result carrier explicitly published,
+Each operation requires its argument/payload type and result carrier explicitly published,
 including their ordinary dependencies. Families/operations can be selected independently;
-scalar family conversion need not be enabled. Missing dependencies, invalid operations,
+scalar family conversion need not be enabled. Typed scalar encoding does not require
+a published boxed family and writes directly, using the same scalar formatter as
+boxed encoding. Missing dependencies, invalid operations,
 duplicates and header conflicts reject before emission. The default publication is unchanged.
 `tests/json/publication.json` is the complete bounded request example.
 
@@ -32,7 +38,7 @@ native transport record. Link a publication's generated core/boxed definitions a
 
 ## Production build profile
 
-`SCPP_ENABLE_JSON=ON` publishes both families, their result carriers and all four
+`SCPP_ENABLE_JSON=ON` publishes both families, their result carriers and all eight
 JSON operations, then builds `scpp_json` and `scpp_json_demo`. Scalar family crossing
 is not requested. `cmake/RuntimePublication.cmake` composes explicit build demand
 from the default core and module requests; PHP remains the admission authority.
@@ -72,6 +78,19 @@ validated. Raw bytes above ASCII retain the donor behavior (no new UTF-8 validat
 Allocation failures and unrelated runtime exceptions propagate; formatting does not
 swallow allocation failure into partial numeric output.
 
+## Direct typed scalar encoding
+
+Only the four listed scalar types are admitted in this slice. Operations remain
+independently demand-selected; unsupported/unrequested types and native C++ values
+have no convenience overloads. No generic public encode template is introduced.
+`encode(string)` encodes a JSON string, including quotes and embedded byte escapes;
+it never parses the contents. Both booleans encode as JSON literals. Int64 uses
+exact decimal text, including its minimum/maximum. Float64 uses the same finite
+check, classic-locale max_digits10 formatting and checked failure as boxed floats.
+Allocation failures retain their exception contract. The native writer owns one
+set of scalar formatting overloads; boxed dispatch delegates to them, while typed
+bindings pass the scalar directly without constructing a boxed value.
+
 ## Reuse and boundaries
 
 The lexical reader and grammar are adapted from `runtime/include/modules/json/detail/reader.hpp`
@@ -81,7 +100,7 @@ paths record provenance only: builds use v0.2 sources exclusively. The private
 `boxed_inspection` adapter exposes no public cursor, mutable reference or subscription.
 Public traversal/liveness remains RT-DEBT-01.
 
-Typed `from_json`, typed scalar/vector/hash encoding, source compiler registration,
+Typed `from_json`, typed vector/hash encoding, source compiler registration,
 PHP compatibility wrappers and persistent `{}`/`[]` identity remain separate work.
 The donor's recursive parser/writer has no explicit nesting-depth budget; this slice
 does not establish a hostile-input resource-limit contract or a throughput claim.

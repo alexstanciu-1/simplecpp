@@ -108,12 +108,46 @@ void allocation_failures() {
         catch (const std::bad_alloc&) { allocation_probe::fail_after = -1; }
     }
 }
+void typed_scalars() {
+    for (long long number : {0LL, -1LL, std::numeric_limits<long long>::min(), std::numeric_limits<long long>::max()}) {
+        auto value = int64{number};
+        require(bytes(json::encode(value).value()) == std::to_string(number));
+        require(bytes(json::encode(value).value()) == bytes(json::encode(mixed::from_integer(value)).value()));
+    }
+    for (bool number : {false, true})
+        require(bytes(json::encode(bool_t{number}).value()) == (number ? "true" : "false"));
+    for (double number : {0.0, -0.0, 1.25, 1.2345678901234567e100, std::numeric_limits<double>::denorm_min(), std::numeric_limits<double>::max()}) {
+        auto value = float64{number};
+        require(bytes(json::encode(value).value()) == bytes(json::encode(dynamic::from_floating(value)).value()));
+    }
+    for (double number : {std::numeric_limits<double>::infinity(), std::numeric_limits<double>::quiet_NaN()})
+        require(json::encode(float64{number}).has_error().native_value());
+    const string text{"a\0\n\"\\", int64{5LL}};
+    require(bytes(json::encode(text).value()) == R"("a\u0000\n\"\\")");
+    require(bytes(json::encode(string{"null"}).value()) == R"("null")");
+    require(bytes(json::encode(string{}).value()) == R"("")");
+    // Direct scalar calls preserve failure propagation and permit independent retry.
+    const string long_text{"a long string used to force output allocation beyond the short string buffer"};
+    bool failed = false, succeeded = false;
+    for (long n = 0; n < 24; ++n) {
+        allocation_probe::fail_after = n;
+        try {
+            auto result = json::encode(long_text);
+            allocation_probe::fail_after = -1;
+            require(result.has_value().native_value());
+            require(bytes(result.value()) == "\"" + bytes(long_text) + "\"");
+            succeeded = true;
+        } catch (const std::bad_alloc&) { allocation_probe::fail_after = -1; failed = true; }
+    }
+    require(failed && succeeded);
+}
 struct comma_punctuation : std::numpunct<char> { char do_decimal_point() const override { return ','; } };
 int main() {
-    grammar<mixed>(); grammar<dynamic>(); ownership_and_cycles(); allocation_failures();
+    grammar<mixed>(); grammar<dynamic>(); ownership_and_cycles(); allocation_failures(); typed_scalars();
     auto old = std::locale::global(std::locale(std::locale::classic(), new comma_punctuation));
     require(bytes(json::encode(dynamic::from_floating(float64{1.25})).value()) == "1.25");
     require(json::decode(string{"1.25"}).value().get_floating().native_value() == 1.25);
+    require(bytes(json::encode(float64{1.25}).value()) == "1.25");
     std::locale::global(old);
     std::puts("JSON consumer passed");
 }

@@ -235,23 +235,25 @@ class writer {
     }
 public:
     writer() { output_.reserve(64); }
-    template<class Value> void write(const Value& value) {
-        using kind = typename Value::kind;
+    void write(bool value) { output_ += value ? "true" : "false"; }
+    void write(std::int64_t value) { output_ += std::to_string(value); }
+    void write(double value) {
+        if (!std::isfinite(value)) throw encode_failure{"json_encode: non-finite float is not supported"};
+        std::ostringstream stream;
+        stream.exceptions(std::ios::badbit | std::ios::failbit);
+        stream.imbue(std::locale::classic());
+        stream << std::setprecision(std::numeric_limits<double>::max_digits10) << value;
+        output_ += stream.str();
+    }
+    void write(std::string_view value) { json_escape_string(value, output_); }
+    template<boxed_family Family> void write(const boxed_value<Family>& value) {
+        using kind = typename boxed_value<Family>::kind;
         switch (value.type()) {
             case kind::null: output_ += "null"; break;
-            case kind::boolean: output_ += value.get_boolean() ? "true" : "false"; break;
-            case kind::integer: output_ += std::to_string(value.get_integer()); break;
-            case kind::floating: {
-                const double number = value.get_floating();
-                if (!std::isfinite(number)) throw encode_failure{"json_encode: non-finite float is not supported"};
-                std::ostringstream stream;
-                stream.exceptions(std::ios::badbit | std::ios::failbit);
-                stream.imbue(std::locale::classic());
-                stream << std::setprecision(std::numeric_limits<double>::max_digits10) << number;
-                output_ += stream.str();
-                break;
-            }
-            case kind::string: json_escape_string(value.get_string(), output_); break;
+            case kind::boolean: write(value.get_boolean()); break;
+            case kind::integer: write(value.get_integer()); break;
+            case kind::floating: write(value.get_floating()); break;
+            case kind::string: write(std::string_view{value.get_string()}); break;
             case kind::container: table(value); break;
         }
     }
@@ -263,13 +265,17 @@ template<class Value> outcome<Value> decode_family(std::string_view input) {
         return {{}, "json error at byte " + std::to_string(failure.position) + ": " + failure.message};
     }
 }
-template<class Value> outcome<std::string> encode_family(const Value& value) {
+template<class Value> outcome<std::string> encode_value(const Value& value) {
     try { writer output; output.write(value); return {std::move(output).finish(), {}}; }
     catch (const encode_failure& failure) { return {{}, failure.message}; }
 }
 } // namespace
 outcome<dynamic_value> decode(std::string_view input) { return decode_family<dynamic_value>(input); }
 outcome<mixed_value> decode_mixed(std::string_view input) { return decode_family<mixed_value>(input); }
-outcome<std::string> encode(const mixed_value& value) { return encode_family(value); }
-outcome<std::string> encode(const dynamic_value& value) { return encode_family(value); }
+outcome<std::string> encode(const mixed_value& value) { return encode_value(value); }
+outcome<std::string> encode(const dynamic_value& value) { return encode_value(value); }
+outcome<std::string> encode(std::int64_t value) { return encode_value(value); }
+outcome<std::string> encode(double value) { return encode_value(value); }
+outcome<std::string> encode(bool value) { return encode_value(value); }
+outcome<std::string> encode(std::string_view value) { return encode_value(value); }
 } // namespace scpp::detail::json

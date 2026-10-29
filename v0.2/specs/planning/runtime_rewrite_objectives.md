@@ -142,5 +142,6 @@ checked results, donor key normalization with checked INT32_MAX failures, and
 private synchronous encoding traversal. The production `SCPP_ENABLE_JSON` profile
 composes with datetime and supports builds with tests disabled. See the
 [JSON contract](../json_module.md) and [validation](../json_validation.md).
-Typed JSON extraction/encoding, source registration and public traversal remain
+Direct typed scalar encoding is also available without boxing. Typed JSON
+extraction/container encoding, source registration and public traversal remain
 separate work; the private module adapter does not settle RT-DEBT-01.

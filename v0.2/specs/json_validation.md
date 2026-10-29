@@ -45,7 +45,7 @@ core can be built without a JSON dependency.
 ## Limits and next boundary
 
 No performance claim, exhaustive fuzzing, hostile nesting/resource budget, public
-traversal, typed JSON extraction/encoding or source compiler registration is claimed.
+traversal, typed JSON extraction/container encoding or source compiler registration is claimed.
 The reader/writer still recurse. Raw input strings preserve donor byte acceptance;
 Unicode escapes are validated separately. Persistent empty object identity remains
 outside the hash-derived container model.
@@ -64,3 +64,23 @@ The default build also passed after extracting profile composition into
 `cmake/RuntimePublication.cmake`. The JSON/datetime focused Release suite passed
 11/11. Runtime algorithms and generated API policies are unchanged in this follow-up;
 no additional sanitizer claim is needed for the CMake composition change.
+
+## Direct scalar encoding follow-up
+
+The full Release suite passed 52/52 after adding int64, float64, bool_t and string
+encode requests. Focused UBSan passed 3/3; the updated consumer also passed
+ASan+UBSan with libstdc++ and leak detection disabled. Source-only production
+profile checks passed again for all four combinations and JSON re-enablement.
+Frozen output expectations remain unchanged; only metadata input fingerprints moved.
+
+Scalar coverage checks exact integer extremes, both booleans, finite double boundary
+values/negative zero, checked nonfinite failures, embedded NUL/control/quote escaping,
+empty strings, literal string contents ("null" stays a JSON string), allocation
+failure/retry and classic-locale formatting. Boxed and typed numeric results agree.
+
+Each scalar operation is additionally prepared without any public boxed family.
+Its public include closure is template-free, its generated runtime and module
+sources compile, and unavailable encode/decode overloads, native C++ arguments,
+null_t and absent dependencies reject. These tests prove direct typed transport;
+no throughput or allocation-count improvement is claimed. The production example
+also calls direct int64 encoding.

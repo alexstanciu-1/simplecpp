@@ -7,6 +7,10 @@ const JSON_OPERATIONS = [
     'decode_mixed' => ['decode_mixed', 'mixed', 'result_mixed', 'string'],
     'encode_mixed' => ['encode', 'mixed', 'result_string', 'mixed'],
     'encode_dynamic' => ['encode', 'dynamic', 'result_string', 'dynamic'],
+    'encode_int64' => ['encode', null, 'result_string', 'int64'],
+    'encode_float64' => ['encode', null, 'result_string', 'float64'],
+    'encode_bool_t' => ['encode', null, 'result_string', 'bool_t'],
+    'encode_string' => ['encode', null, 'result_string', 'string'],
 ];
 function prepareJson(mixed $metadata, mixed $publication, array &$plan): void {
     $m = familyMetadata($metadata, $publication, 'json', 'json', 'JSON');
@@ -27,9 +31,14 @@ function prepareJson(mixed $metadata, mixed $publication, array &$plan): void {
     foreach (names(at($p, 'operations'), 'Duplicate JSON operation') as $id) {
         requireThat(in_array($id, $registered, true), 'Unregistered JSON operation');
         [$name, $family, $result, $argument] = JSON_OPERATIONS[$id];
-        requireThat(in_array($family, array_column($plan['boxed']['families'] ?? [], 'name'), true), 'JSON requires published boxed family');
+        if ($family !== null) {
+            requireThat(in_array($family, array_column($plan['boxed']['families'] ?? [], 'name'), true), 'JSON requires published boxed family');
+        } else {
+            requireThat($argument === 'string' || hasType($plan, $argument) || hasValue($plan, $argument), 'JSON requires published scalar argument');
+        }
+        $transport = $argument === 'string' ? 'bytes' : ($family !== null ? 'boxed' : $argument);
         requireThat(in_array($result, array_column($plan['carriers'], 'name'), true), 'JSON requires published result carrier');
-        $operations[] = compact('id', 'name', 'family', 'result', 'argument');
+        $operations[] = compact('id', 'name', 'family', 'result', 'argument', 'transport');
     }
     requireThat($operations !== [], 'Empty JSON publication');
     $plan['json'] = ['module' => 'json', 'namespace' => 'scpp::json', 'header' => $header,

@@ -56,6 +56,33 @@ with tempfile.TemporaryDirectory(prefix='scpp-json-') as tmp:
         missing = copy.deepcopy(pub); del missing['carriers']; generate(metadata, missing, False)
         missing = copy.deepcopy(pub); missing['boxed']['families'] = ['mixed' if family == 'dynamic' else 'dynamic']
         generate(metadata, missing, False)
+    for argument, expression in [('int64','scpp::int64{42LL}'), ('float64','scpp::float64{1.25}'), ('bool_t','scpp::bool_t{false}'), ('string','scpp::string{"null"}')]:
+        pub = copy.deepcopy(publication)
+        del pub['boxed']
+        pub['carriers']['specializations'] = [{'family':'result', 'payload':'string'}]
+        pub['json']['operations'] = ['encode_'+argument]
+        out, plan = generate(metadata, pub)
+        assert 'boxed' not in plan and not (out/'public/scpp/boxed.hpp').exists()
+        assert plan['json']['operations'][0]['transport'] == ('bytes' if argument == 'string' else argument)
+        compile(out, f'int main() {{ auto r = scpp::json::encode({expression}); }}')
+        compile(out, '', preprocess=True)
+        for rejected in ['42LL', 'true', '1.25', '"text"', 'scpp::null_t{}']:
+            compile(out, f'int main() {{ auto r = scpp::json::encode({rejected}); }}', False)
+        compile(out, 'int main() { auto r = scpp::json::decode(scpp::string{}); }', False)
+        for other in ['int64', 'float64', 'bool_t', 'string']:
+            if other != argument:
+                compile(out, f'int main() {{ auto r = scpp::json::encode(scpp::{other}{{}}); }}', False)
+        cmd = [a.cxx, '-std=c++23', '-stdlib=libc++', '-fsyntax-only', '-I'+str(out/'public')]
+        cmd += ['-I'+str(a.source/'runtime/src'/folder) for folder in ['numeric','sequence','ownership','boxed','hash','json']]
+        result = subprocess.run(cmd+[str(out/'src/json.cpp'),str(out/'src/runtime.cpp')], capture_output=True, text=True, timeout=60)
+        assert result.returncode == 0, result.stderr
+        missing = copy.deepcopy(pub); del missing['carriers']; generate(metadata, missing, False)
+        missing = copy.deepcopy(pub)
+        if argument == 'string': del missing['string']
+        else:
+            field = 'types' if argument == 'int64' else 'values'
+            missing[field].remove(argument)
+        generate(metadata, missing, False)
     for bad in [[], ['decode','decode'], ['from_json'], ['encode']]:
         pub = copy.deepcopy(publication); pub['json']['operations'] = bad; generate(metadata, pub, False)
     for header in ['scpp/boxed.hpp', 'scpp/carriers.hpp', '../json.hpp']:

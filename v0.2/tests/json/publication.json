@@ -54,7 +54,11 @@
       "decode",
       "decode_mixed",
       "encode_mixed",
-      "encode_dynamic"
+      "encode_dynamic",
+      "encode_int64",
+      "encode_float64",
+      "encode_bool_t",
+      "encode_string"
     ]
   }
 }

@@ -192,5 +192,6 @@ explicit mixed decoding, and checked encoding of either family. The parser build
 the selected family directly; the writer uses private synchronous traversal.
 Recognized numeric object names above INT32_MAX produce checked decode errors.
 Enable `SCPP_ENABLE_JSON` and link `scpp_json` for the production build; it composes
-with datetime and does not require tests. Typed JSON extraction/encoding and source
-compiler integration remain deferred.
+with datetime and does not require tests. Int64, float64, bool_t and string also
+have direct, demand-selected encode overloads with no boxing. Typed container
+encoding, typed extraction and source compiler integration remain deferred.
