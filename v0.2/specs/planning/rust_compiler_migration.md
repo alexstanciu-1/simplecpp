@@ -550,6 +550,32 @@ The full runtime prepared-plan regression retains 128 accepted / 249 rejected
 cases, and all 31 C++ release regression checks pass, including frozen G1 parity.
 
 
+## Compiler scanner and ownership checkpoint — 2026-10-29
+
+Production API generation is runtime-owned. Continue compiler development separately;
+this supersedes the eager compiler dependency on scpp-api-tooling. Its unused Cargo
+dependency is removed. Future semantic/physical integration must consume an explicit
+runtime-owned contract; no generator code or runtime bindings are duplicated here.
+The generator remains unchanged in this slice.
+
+The first scanner targets PHS source-body syntax and reuses the reviewed C++ donor's
+ASCII/name, decimal, quoted-string, trivia and punctuation boundaries. scanner.rs
+owns the worker and spelling classification; SourceFile owns diagnostic locations,
+Token owns compact representation, and TokenBuilder owns ordered publication.
+The [compiler README](../../compiler/README.md#initial-php-scanning-contract-and-donor-review)
+records the exact admitted lexical subset and intentional diagnostic difference.
+
+A new scan command exposes complete offset/length/tag dumps. First lexical failure
+returns a source-associated diagnostic with no partial output. No literal decoding,
+error recovery, parsing, symbols, modules or semantic/runtime binding is introduced.
+The 22 compiler tests plus compile-fail doctest pass in debug/release; strict Clippy,
+formatting and an isolated compiler-only offline export pass. The timing/export
+script now needs neither the API-tooling crate nor cached third-party packages.
+
+Next: review the donor parser and specify the smallest typed-local/expression AST
+slice, followed by name resolution. Runtime operation demands should remain symbolic
+until the runtime-owned integration contract is ready.
+
 ## G3/G4 full emission and production cutover — 2026-10-29
 
 User decision: complete Rust API tooling and eliminate the parallel C++ path before
@@ -611,3 +637,51 @@ Final cutover evidence:
   allowing subsequent ordinary build commands to use the same toolchain/cache.
 
 The runtime typed-hash backlog can now resume through the sole Rust generator.
+
+
+## Compiler phase layout checkpoint — 2026-10-29
+
+Integrated runtime cutover 0c230e0bc with the independent scanner slice. Documentation
+retains both completions; the compiler has no dependency on the production generator.
+
+The compiler now follows the reviewed my-try phase layout: 01_prepare_inputs owns
+source storage/loading; 02_tokenize owns tokens, sequences and lexical workers;
+compiler/driver.rs coordinates phases with invocation-owned sources. Main retains
+argument parsing and presentation. Diagnostics remain shared source-associated data.
+Rust module paths are inputs and tokenize; no flat compatibility module aliases are
+retained. The [compiler README](../../compiler/README.md#phase-layout-and-dependency-direction)
+records dependency direction and the later parse/analyze/backend/native owners.
+
+No scanner semantics, runtime behavior, parser, global model, incremental scheduler
+or empty future-stage directories are added. Driver tests prove recovery after read
+and lexical errors and preservation of earlier source/token snapshots. Compiler-only
+export, debug/release tests, formatting and strict Clippy validate the new layout.
+
+
+## Three syntax flavors and first shared AST — 2026-10-29
+
+Approved: C++, PHP and JS are syntax flavors of Simple C++, not compatibility
+implementations. PHP and strict-PHP++/PHS are no longer separate modes. Project
+settings own strictness/defaults; common analysis will enforce them. Mixed flavors
+are allowed per file, though consistency is encouraged. This supersedes strict-PHS
+first framing for the rewrite. No runtime generator responsibility moves here.
+
+The first parser slice now covers all three flavors: explicitly typed and inferred
+locals, unresolved PHP writes, integer spelling, references, arithmetic, shifts and
+blocks. One AST preserves explicit/inferred annotations and declaration-versus-write
+intent. Nested type argument syntax consumes individual angles; expression shifts
+consume adjacent pairs without token mutation. Flavor travels with token generations.
+The [frontend contract](../compiler_frontends.md) records syntax, ownership and limits.
+
+The driver accepts flavor per file; CLI scan/parse require cpp/php/js. Shared lexical
+machinery isolates PHP variable/comments and JS identifier rules. Flavor-specific
+frontends own declaration grammar; common helpers own the shared expression grammar.
+Thirty compiler tests plus one compile-fail doctest cover the retained foundation and
+new AST/CLI/driver behavior. Debug/release, strict Clippy and isolated export validate
+the slice. Parsing succeeds independently of semantic profile admission.
+
+Next: common scope/name resolution and project settings, followed by type inference,
+profile enforcement and runtime operation demands. Project manifests, whole-program
+mixed-flavor resolution, literal value conversion and executable emission are not
+implemented by this syntactic slice. Integer 3 will take the configured default
+integer type during analysis; no runtime numeric policy is duplicated in the parser.
