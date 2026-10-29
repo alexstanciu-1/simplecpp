@@ -73,11 +73,11 @@ and operations; public include closures remain template-free, while private
 templates remain available for implementation reuse.
 
 Core families include scalars, strings, vectors, nullable/result carriers, record
-values and ownership handles, typed hashes, mixed and dynamic. Hash/mixed/dynamic
-and traversal are major remaining areas:
+values and ownership handles, typed hashes, mixed and dynamic. Typed hashes are now implemented; packed storage, mixed/dynamic
+and traversal remain. Current progression:
 
-1. Preserve the custom typed-hash algorithms and define concrete lookup, insertion,
-   replacement, removal and ordering APIs.
+1. Completed: custom typed-hash algorithms, concrete lookup/mutation APIs and
+   internal ordering proofs; see [validation](../hash_slice_validation.md).
 2. Preserve packed storage forms and transitions, with independent proofs before
    introducing boxed values.
 3. Preserve mixed's tagged values and documented copy/detach ownership behavior.
@@ -121,3 +121,7 @@ target relevant costs rather than treating a green functional test as sufficient
 - [Legacy core capability inventory](legacy_core_gap_inventory_2026_10_29.md)
 - [Ownership contract](../ownership_slice.md)
 - [Rust compiler and API tooling migration](rust_compiler_migration.md)
+
+The first module reuse proof is complete: eight clock/sleep/UTC datetime functions.
+See the [local datetime completion proposal](runtime_datetime_local_batch.md) for
+the recommended next bounded slice, followed by packed storage for mixed/dynamic.
