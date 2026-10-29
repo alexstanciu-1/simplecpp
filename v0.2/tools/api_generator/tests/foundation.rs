@@ -523,3 +523,62 @@ fn string_demands_validate_missing_capabilities_and_dependencies() {
     m["string"]["null_pointer"] = object!("empty");
     assert!(runtime_plan(&m, &p).is_err()); // validate even unrequested registered metadata
 }
+
+fn vector_metadata() -> Value {
+    let mut m = string_metadata();
+    m["vector"] = object!({"source_type":"vector","storage":"private_std_vector","count_type":"int64","read":"value_copy","mutation":"explicit_set",
+        "element_families":["integer","floating","boolean","null","string"],"native_index":"int","native_value":["int","const char*"],"operations":["equal","not_equal"]});
+    m
+}
+fn vector_publication() -> Value {
+    let mut p = string_publication();
+    p["vectors"] = object!({"header":"scpp/vectors.hpp","specializations":[
+        {"element":"int64","native_index":true,"native_value":"int","operations":[],"casts_from":["vector_string"]},
+        {"element":"string","native_index":false,"native_value":"const char*","operations":["equal"],"casts_from":["vector_int64"]}]});
+    p
+}
+#[test]
+fn vector_plan_resolves_methods_and_cross_specialization_edges() {
+    let plan = runtime_plan(&vector_metadata(), &vector_publication()).unwrap();
+    let integers = &plan.vectors[0];
+    assert_eq!(integers.casts[0].element_source, "string");
+    assert!(integers.methods.iter().any(|m| m.name == "at"
+        && m.arguments == ["int"]
+        && m.adaptation == "checked_native_index_copy"));
+    assert!(integers.methods.iter().any(|m| m.name == "set"
+        && m.arguments == ["int", "int"]
+        && m.adaptation == "explicit_arguments_then_checked_set"));
+    assert_eq!(plan.scalars.source_types["vector<string>"], "vector_string");
+    let mut p = vector_publication();
+    p["vectors"]["specializations"]
+        .as_array_mut()
+        .unwrap()
+        .reverse();
+    assert_eq!(
+        plan.describe(),
+        runtime_plan(&vector_metadata(), &p).unwrap().describe()
+    );
+}
+#[test]
+fn vector_equality_and_element_casts_require_published_dependencies() {
+    let m = vector_metadata();
+    let mut p = vector_publication();
+    p["vectors"]["specializations"][0]["operations"] = object!(["equal"]);
+    assert!(
+        runtime_plan(&m, &p)
+            .unwrap_err()
+            .0
+            .contains("element equality")
+    );
+    p = vector_publication();
+    p["string"]["casts"] = object!([]);
+    assert!(
+        runtime_plan(&m, &p)
+            .unwrap_err()
+            .0
+            .contains("element conversion")
+    );
+    p = vector_publication();
+    p["vectors"]["specializations"][0]["element"] = object!("bool_t");
+    assert!(runtime_plan(&m, &p).unwrap_err().0.contains("int adapter"));
+}

@@ -454,3 +454,17 @@ metadata is validated even without publication. No C++ emission or cutover.
 Exact full-document parity passes 13 accepted and 29 rejected string cases. Two
 new pure Rust proofs cover resolved casts/methods and rejected dependencies; all
 workspace tests and strict Clippy pass. Scalar parity remains unchanged.
+
+## G2 vector preparation checkpoint — 2026-10-29
+
+RuntimePlan now includes concrete vector specializations, pre-resolved method
+arguments/adaptations and cross-specialization cast edges. Preparation checks count
+and boolean dependencies, element family publication, native adapters, equality
+operators and admitted element conversions. All specialization identities are
+registered before cast edges are resolved, preserving request-order independence.
+
+Combined string/vector exact-plan parity passes 20 accepted and 64 rejected cases,
+including all 12 admitted elements and all admitted elementwise cast combinations.
+Two additional pure Rust proofs cover methods, ordering and missing dependencies;
+workspace tests, strict Clippy and focused C++ vector checks pass. Production
+generation remains C++; carrier/ownership preparation and emission remain pending.

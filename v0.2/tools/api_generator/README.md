@@ -129,9 +129,11 @@ claimed by this slice. The frozen G1 baseline is unchanged.
 ## Composed runtime preparation
 
 `prepare-runtime METADATA PUBLICATION FACTS CONTEXT` composes the scalar planner
-with string preparation. Its outer publication validation rejects unsupported
+with string and vector preparation. Its outer publication validation rejects unsupported
 family demands before delegating the scalar projection. String metadata is validated
-even when unrequested; vector/carrier/ownership preparation remains pending here.
+even when unrequested. Vector preparation resolves concrete element identities,
+method adaptations, equality dependencies and admitted elementwise casts after all
+specializations are registered. Carrier/ownership preparation remains pending here.
 `prepare-scalars` keeps its deliberately narrower publication boundary.
 
 The typed string plan resolves operators, count type and header, and contributes
@@ -142,7 +144,10 @@ No runtime behavior or C++ generation has changed.
 
 Run `tests/generator_parity/runtime_parity.py` with the same --rust, --cpp, --facts,
 --context and --work arguments as scalar_parity.py for complete runtime-plan parity.
-The string slice passes 13 accepted and 29 rejected cases plus two pure Rust proofs.
+The string slice passed 13 accepted and 29 rejected cases. The combined string/vector
+suite passes 20 accepted and 64 rejected cases, including all 12 admitted element
+identities and their admitted elementwise casts. Four pure Rust proofs cover these
+families independently of the C++ executable.
 
 ## Reproduce validation
 
