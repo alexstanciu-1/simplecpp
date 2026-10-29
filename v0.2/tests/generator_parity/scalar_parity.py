@@ -1,8 +1,9 @@
 #!/usr/bin/env python3
-"""Scalar prepared-plan parity and optional exact artifact/consumer proofs. No cutover."""
+"""Scalar frozen artifact contract and optional generated-consumer proofs."""
 import argparse
 import copy
 import json
+import hashlib
 import re
 from pathlib import Path
 import subprocess
@@ -15,14 +16,15 @@ def run(command):
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
-    for flag in ['rust', 'cpp', 'facts', 'context', 'work']:
+    for flag in ['rust', 'facts', 'context', 'work']:
         parser.add_argument('--' + flag, type=Path, required=True)
     parser.add_argument("--emit", action="store_true", help="Compare complete scalar artifact bytes and compile consumers")
     parser.add_argument("--cxx", default="clang++")
     parser.add_argument("--flag", action="append", default=[])
     args = parser.parse_args()
     root = Path(__file__).resolve().parents[2]
-    args.rust, args.cpp = args.rust.resolve(), args.cpp.resolve()
+    args.rust = args.rust.resolve()
+    baseline = json.loads(Path(__file__).with_name("scalar_baseline.json").read_text())["cases"]
     args.facts, args.context = args.facts.resolve(), args.context.resolve()
     metadata = json.loads((root / 'runtime/metadata/runtime.json').read_text())
     # Explicit scalar boundary: optional-family validation belongs to the composed runtime planner.
@@ -39,20 +41,15 @@ def main():
                 case = Path(case)
                 m, p = case / 'metadata.json', case / 'publication.json'
                 m.write_text(json.dumps(meta)); p.write_text(json.dumps(pub))
-                cpp = run([args.cpp, m, p, case / 'cpp'])
                 rust = run([args.rust, 'prepare-scalars', m, p, args.facts, args.context])
                 expected = 0 if accepted else 1
-                for name, result in [('cpp', cpp), ('rust', rust)]:
+                for name, result in [('rust', rust)]:
                     assert result.returncode == expected, f'{label}: {name} exit {result.returncode}: {result.stderr}'
                     if not accepted:
                         assert result.stderr and not result.stdout, (label, name)
                 if accepted:
-                    expected_plan = json.loads((case / 'cpp/prepared.json').read_text())
                     actual = json.loads(rust.stdout)
-                    # No fields are dropped, including conversions and physical adaptation facts.
-                    expected_json = json.dumps(expected_plan, sort_keys=True, separators=(',', ':'))
-                    actual_json = json.dumps(actual, sort_keys=True, separators=(',', ':'))
-                    assert actual_json == expected_json, f'{label}: complete prepared document differs'
+                    key = hashlib.sha256(m.read_bytes() + b'\0' + p.read_bytes()).hexdigest()
                     if args.emit:
                         generated = case / 'rust'
                         command = [args.rust, 'emit-scalars', m, p, args.facts, args.context, generated]
@@ -60,10 +57,10 @@ def main():
                         assert emitted.returncode == 0, emitted.stderr
                         def tree(directory):
                             return {str(f.relative_to(directory)): f.read_bytes() for f in directory.rglob('*') if f.is_file()}
-                        reference, candidate = tree(case / 'cpp'), tree(generated)
-                        assert reference.keys() == candidate.keys(), label + ': artifact set'
-                        for path in reference:
-                            assert reference[path] == candidate[path], label + ': artifact bytes differ: ' + path
+                        candidate = tree(generated)
+                        hashes = {name: hashlib.sha256(data).hexdigest() for name, data in candidate.items()}
+                        assert hashes == baseline[key], label + ': frozen artifact contract differs'
+                        assert json.loads(candidate['prepared.json']) == actual, label
                         stamps = {str(f): f.stat().st_mtime_ns for f in generated.rglob('*') if f.is_file()}
                         assert run(command + ['--check']).returncode == 0
                         assert stamps == {str(f): f.stat().st_mtime_ns for f in generated.rglob('*') if f.is_file()}

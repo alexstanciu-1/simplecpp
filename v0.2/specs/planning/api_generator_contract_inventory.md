@@ -1,6 +1,10 @@
 # G1: existing API generator contract and parity inventory
 
 Doc Status: planning
+
+Historical donor inventory: the described C++ generator was retired at the full
+Rust cutover. Frozen fixtures retain this contract; production commands and current
+owners are documented in [Runtime API tooling](../../tools/api_generator/README.md).
 Date: 2026-10-29
 Reference: C++ generator sources at f9e6b0774, unchanged by G1.
 Scope: contract capture and test infrastructure only; no Rust generator or layout

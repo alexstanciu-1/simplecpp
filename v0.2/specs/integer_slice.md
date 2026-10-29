@@ -3,7 +3,8 @@
 Doc Status: normative
 
 Scope: the first standalone v0.2 integer slice, not full language/compiler admission.
-The tool uses C++23 with Clang/GCC fixed-width type macros. Generation runs for the
+The Rust tool emits C++23 with Clang/GCC fixed-width type macros and uses explicit
+native C++ probe facts. Generation runs for the
 native target; cross-compilation and portable prebuilt ABI packages are not provided.
 
 ## Owners
@@ -11,14 +12,14 @@ native target; cross-compilation and portable prebuilt ABI packages are not prov
 - `runtime/metadata/runtime.json`: integer identities, supported native constructor
   input signatures, checked conversion policy, domain promotion and operation-form bindings.
 - `runtime/metadata/publication.json`: concrete type/operator demands and header groups.
-- `tools/api_generator/runtime.cpp`: validates those records and prepares concrete
+- `tools/api_generator/src/scalar.rs`: validates those records and prepares concrete
   types, native range facts, conversion guarantees and operation execution/result types.
-- `tools/api_generator/emission.cpp`: emits only the prepared surface. It
+- `tools/api_generator/src/emission.rs`: emits only the prepared surface. It
   neither infers source semantics nor chooses an alternative promotion policy.
 - `runtime/src/numeric/scalar_semantics.hpp`: private range conversion and arithmetic.
 
 The generator is independent of the generated runtime. Generated artifacts live in
-`v0.2/runtime/generated/`; no old-tree headers, libraries or tools are used. There is one active
+the selected CMake build directory's `generated/`; no old-tree headers, libraries or tools are used. There is one active
 runtime generator in v0.2. The JSON prepared-plan description is diagnostic/tooling
 output, not a validated external source-admission protocol.
 
@@ -32,7 +33,7 @@ expose no templates or private implementation headers. `short_names.hpp` is opti
 All admitted numeric constructors are explicit and check representability before
 conversion. `static_cast` uses the same constructors. Cross-public-type construction
 is emitted only among published types. Lossless source ranges produce noexcept
-constructors; native ranges are obtained from the generator's standard library and
+constructors; native ranges are obtained from the validated C++ layout probe and
 asserted in the generated runtime implementation. Regenerate for a different target.
 
 For this standalone slice, failure throws standard `std::out_of_range` with
@@ -144,7 +145,8 @@ unintended numeric conversion. Compiler-source preparation remains separate.
 
 ## Generation and limits
 
-The CLI accepts metadata, publication and an output directory, with optional
+The CMake-configured Rust launcher accepts metadata, publication and an output
+directory, with optional
 `--check` for read-only freshness. Complete validation/emission precedes file writes.
 An existing inventory containing retired output paths rejects and requires fresh
 staging. I/O failure during writes is not transactionally rolled back; use a fresh

@@ -6,28 +6,31 @@ This is the active destination for explicitly reviewed reuse slices. Files outsi
 this directory are reference material, never build inputs. Normal external compiler,
 standard-library and build-tool dependencies are permitted.
 
-Implemented slices are native JSON parsing, the generator's metadata value model,
-and metadata-driven integer, bool_t/null, float64, string and concrete vector APIs
-with explicit checked casts and selectively published operators/adapters. Nullable
-and result-family carriers now add metadata-selected checked payload extraction.
-The [ownership/value foundation](specs/ownership_slice.md) generates concrete shared, weak
-and unique handles, const-pointee variants and inline values for registered records
-in a separate proof publication. Value copy/move capabilities follow their payload.
-Their private standard smart pointers live inline, without per-handle heap wrappers.
-The [Rust compiler foundation](compiler/README.md) provides byte sources, spans,
-compact tokens, immutable token-sequence publication, diagnostics and a source-inspection
-CLI. Its replaced C++ foundation has been removed. Cargo builds independently with
-eight jobs and mold, without a C++ runtime or generator-binary dependency.
-Scanning, parsing and semantic compilation remain pending.
-The runtime stays C++; API generation
-and physical pre-lowering are migrating to a shared Rust tooling library. The
-[G2 tooling](tools/api_generator/README.md) provides that library, JSON loading,
-scalar/string/vector/carrier/ownership preparation and a small C++ layout probe.
-Rust preparation covers the current metadata families. The C++
-generator remains the production path; Rust scalar emission has artifact and consumer parity; other family emitters remain pending. Scanning and tooling migration follow the
-[migration plan](specs/planning/rust_compiler_migration.md).
-Standard-library types and private templates are appropriate for tool support;
-generated runtime consumer headers remain template-free.
+The [runtime rewrite objectives](specs/planning/runtime_rewrite_objectives.md)
+record the agreed architectural purpose: remove runtime complexity that compensated
+for the type-blind compiler, preserve Simple C++ contracts, and reuse proven v0.1
+implementation and knowledge, including modules. The note also records the intended
+compiler/runtime boundary, core milestone and open design decisions.
+
+The runtime implements metadata-selected integers, bool/null, float64, strings,
+concrete vectors, nullable/result carriers and concrete record ownership/value APIs.
+The [API summary](specs/runtime_api_summary.md) and linked family contracts define
+supported behavior. Hash/mixed/dynamic remain future runtime work.
+
+The sole API preparation/generation implementation is now the shared Rust
+[tooling library](tools/api_generator/README.md). It emits the C++ runtime API from
+resolved plans and explicit native C++ probe facts. The C++ generator and its private
+JSON implementation have been retired after exact artifact parity proofs. The
+runtime remains C++; generated public headers remain template-free.
+
+The [Rust compiler foundation](compiler/README.md) provides source bytes, spans,
+tokens, immutable token sequences and diagnostics. Scanning, parsing and semantic
+compilation are separate future slices. Rust tooling builds independently; CMake
+invokes Cargo for runtime generation, with no reverse dependency.
+
+Install Rust 1.99.1 and put Cargo on PATH, then run `cargo fetch --locked` once to
+populate the dependency cache. Normal CMake/Cargo builds use locked offline packages.
+Python 3.10+ is required for the native layout probe even without tests.
 
 Build from this directory with the default preset: Ninja, 8 jobs, Clang,
 libc++ and mold. Ninja/Clang/mold must be installed and discoverable; configuration
@@ -41,7 +44,7 @@ ctest --preset default
 ```
 
 The build directory is `build/clang/` (ignored by Git). Generated public API files
-remain in `runtime/generated/`. The build preset sets eight jobs; the configure
+live in `build/clang/generated/` (or the selected build directory). The build preset sets eight jobs; the configure
 preset also sets `CMAKE_BUILD_PARALLEL_LEVEL=8`. Project executables and the separate
 generated-consumer link proofs explicitly use the discovered mold linker. The
 `ubsan` configure/build/test presets retain that toolchain and eight build jobs while
@@ -56,78 +59,33 @@ none of those implementations has been imported yet.
 
 ## Generator and artifact ownership
 
-The [G1 generator inventory](specs/planning/api_generator_contract_inventory.md)
-records the current C++ contract and reproducible parity checks for the planned
-Rust port. Python 3.10+ is required when BUILD_TESTING is enabled; production
-generation remains the existing C++ executable.
+The [historical G1 inventory](specs/planning/api_generator_contract_inventory.md)
+records the retired C++ contract. Frozen artifact fixtures and Rust tests now own
+its regression evidence; no C++ generator binary is required.
 
-runtime/metadata/runtime.json owns identities, conversion policies and operation
-bindings. publication.json selects concrete types, operators, native adapters and
-collection specializations. tools/api_generator prepares a typed plan and emits
-runtime/generated/public/scpp headers, src/runtime.cpp, prepared.json and inventory.
-The generator builds independently of the runtime; consumers link scpp_runtime,
-which exports only the generated public include root.
+`runtime/metadata/runtime.json` owns identities, policies and operation bindings.
+`publication.json` selects concrete types/operators/adapters. Rust tooling prepares
+one typed model and emits public headers, C++ definitions, prepared.json and inventory.
+The runtime links only the emitted API and handwritten private runtime algorithms.
+Native layout facts come from the standalone C++ probe, never from a legacy runtime.
 
-Generated code, plans, inventories and compilation outputs are local artifacts,
-ignored by Git. Commit metadata, generator sources, handwritten primitives, tests
-and examples. A fresh checkout recreates its API through the normal build.
-
-From this directory, generation can also run independently:
+Generation and target facts are build-local, so Release and UBSan do not share writable
+artifacts. Generated files and Cargo/CMake outputs remain untracked. The configured
+launcher invokes Rust with the current build's explicit facts/context:
 
 ```sh
-./build/clang/scpp_api_generator \
-  runtime/metadata/runtime.json runtime/metadata/publication.json \
-  runtime/generated
+./build/clang/scpp_api_generator runtime/metadata/runtime.json \
+  runtime/metadata/publication.json build/clang/generated --check
 ```
 
-Add --check for read-only freshness. Generation validates before writing and rejects
-retired output paths in an existing inventory; use an empty staging output when
-changing artifact names. I/O publication is not transactional. Output is specific
-to the native generation target. CMake currently expects the default header groups.
-Cross-compilation and sealed prebuilt ABI packages are not provided.
+Remove `--check` to publish. Preparation validates before writing; check mode is
+read-only. Obsolete inventory entries reject. Publication is per-file rather than
+transactional. Cross-compilation and sealed ABI packages remain outside this slice.
 
-## JSON tooling and bounded reuse
-
-The following describes the production C++ generator's custom JSON implementation.
-The new Rust tooling uses Serde/serde_json behind a metadata adapter that preserves
-raw number tokens, decoded duplicate-key rejection and the 128-container limit.
-See the [tooling boundary](tools/api_generator/README.md).
-
-The reader owns its input and is neither copyable nor movable. It validates UTF-8,
-JSON grammar, decoded duplicate keys and depth (default 128, permitted 1..256).
-Numbers can be read as original token text without floating conversion; signed
-64-bit extraction is separately checked. Parse/protocol failures throw `read_error`
-with category, byte position and path, and make the reader terminal. Allocation
-failures are not translated. Consumers must finish the document before publishing
-results. The reader has no Result/shared-pointer language adapter.
-
-`tools/api_generator/value.*` owns the metadata tree and deterministic serialization.
-It reuses the former generator's value model (null, text, number, boolean, array,
-object), preserving number token spelling rather than converting through floating
-point. Object keys serialize in map order; this is deterministic output, not a
-numeric-normalizing canonical JSON format. Parsing accepts an optional diagnostic
-filename and completes validation before returning a tree. Output depth is limited
-to 128 containers, matching the default input limit.
-
-The representation remains tool-private with directly accessible fields for future
-generator reuse. Checked accessors reject non-object access; null can be initialized
-as an object through `operator[]`. Serialization rejects inconsistent field kinds,
-invalid booleans/number tokens and invalid UTF-8, and escapes strings independently
-of the process locale. This is a local strengthening of the imported model, not a
-new general-purpose runtime JSON API.
-
-Reuse provenance: repository revision `a2dbdb018`,
-`runtime/include/modules/json/detail/reader.hpp` and the native cursor portion of
-`runtime/include/modules/json/pull_reader.hpp`. These paths are historical references.
-Their lexical/cursor algorithms are adapted under `tools/support/json/` using
-`std::string`, `bool`, native depth and `std::int64_t` values. The old language adapter
-is excluded. Focused proof cases are adapted/extended from
-`tests/runtime/native/test_json_pull_reader.cpp`; no synchronization with old copies
-is required. Future imports require agreement on their bounded responsibility.
-
-The second reuse slice adapts `runtime/tools/api_generator/value.hpp` and
-`value.cpp` from the same revision. It replaces runtime-reader adaptation with the
-native reader and strengthens access/output checks.
+Rust JSON metadata parsing uses Serde behind a bounded adapter preserving raw number
+tokens, decoded duplicate-key rejection and a 128-container depth limit. This is a
+tooling boundary, not a runtime JSON module port. Historical JSON reuse and its
+retirement are documented in the migration record.
 
 ## Validation
 

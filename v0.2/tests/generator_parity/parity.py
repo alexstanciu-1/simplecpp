@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""G1 contract oracle and future two-generator comparison. Never writes production output."""
+"""Frozen G1 artifacts and Rust publication lifecycle. Never writes production output."""
 import argparse
 import hashlib
 import json
@@ -86,7 +86,7 @@ def publish(generator, case, work):
     publication.write_bytes(case.publication)
     args = [metadata, publication, output]
     if case.rejection:
-        invoke(generator, args, 1, case.rejection)
+        invoke(generator, args, 1)
         require(not output.exists(), f"{case.name}: invalid input wrote output")
         return {"rejection_fragment": case.rejection}, None
     stdout = invoke(generator, args)
@@ -95,7 +95,7 @@ def publish(generator, case, work):
     require(inventory == sorted(set(first) - {"inventory.json"}), f"{case.name}: inventory mismatch")
     timestamps = {p: p.stat().st_mtime_ns for p in output.rglob("*") if p.is_file()}
     checked = invoke(generator, args + ["--check"])
-    require(checked == stdout.replace("Generated ", "Verified ", 1), "check summary mismatch")
+    require(json.loads(checked) == {**json.loads(stdout), "status": "verified"}, "check summary mismatch")
     compare(first, tree(output), case.name + " read-only check")
     require(all(p.stat().st_mtime_ns == mtime for p, mtime in timestamps.items()), "--check rewrote an artifact")
     invoke(generator, [metadata, publication, work / "repeat"])
@@ -210,7 +210,10 @@ def main():
                 "native facts differ from the G1 fixture; use a reviewed target-specific baseline, never silently recapture")
         require(expected["cases"].keys() == snapshot["cases"].keys(), "parity corpus changed without baseline review")
         for name, case in snapshot["cases"].items():
-            require(case == expected["cases"][name], f"G1 baseline drift: {name}")
+            # CLI summaries are now structured JSON. Diagnostics retain failure status,
+            # not C++ wording. Artifact bytes and prepared facts are unchanged.
+            without_summary = lambda item: {k: v for k, v in item.items() if k != "summary"}
+            require(without_summary(case) == without_summary(expected["cases"][name]), f"G1 baseline drift: {name}")
     summary = {"accepted": sum(not c.rejection for c in corpus),
                "rejected": sum(bool(c.rejection) for c in corpus),
                "candidate_compared": args.candidate is not None,

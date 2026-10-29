@@ -2,256 +2,154 @@
 
 Doc Status: supporting
 
-The C++ `scpp_api_generator` remains the production generator. The Rust
-`scpp-api-tooling` library/CLI implements G2 preparation for scalars, strings, vectors, carriers and ownership/value records: bounded JSON loading,
-native target facts, resolved operators/conversions and concrete family plans. It emits
-inspection JSON only. It does not generate C++ or replace the G1 CLI contract.
+`scpp-api-tooling` is the sole production runtime API generator and preparation
+library. Rust prepares and emits scalars, strings, concrete vectors, nullable/result
+carriers and ownership/value records. The runtime and generated consumers remain
+C++. The superseded C++ generator, metadata value model and private JSON reader have
+been removed; Git history retains the donor implementation at fab676e4f.
 
-## Shared ownership
+## Ownership
 
-The v0.2 Cargo workspace contains this package and `compiler/`. The compiler depends
-on the tooling library; tooling has no compiler AST, symbol or diagnostic dependency.
-`json.rs` owns metadata decoding, `target.rs` validates supplied target facts, and
-`integer.rs` owns shared integer identities/range conversions and the original
-construction projection. `scalar.rs` validates scalar policy and prepares resolved
-conversions, operation forms, promotions, operand adaptations and write-back facts. `main.rs` is a thin I/O
-adapter. No build script, C++ runtime linkage or generated headers are required.
-Neither Cargo nor CMake invokes the other build system.
+The Cargo workspace contains this package and `compiler/`. The compiler depends on
+the tooling library, which has no compiler AST, symbol or diagnostic dependency.
 
-The workspace owns Cargo.lock, rust-toolchain.toml and .cargo/config.toml. Rust
-1.99.1 is pinned, builds use eight jobs and the Linux linker uses mold. Output lives
-in ignored `v0.2/target/`; generated probe files live under ignored `v0.2/build/`.
+- `json.rs`: bounded metadata decoding through Serde/serde_json, retaining raw
+  numbers, rejecting decoded duplicate keys, invalid UTF-8 and depth beyond 128.
+- `target.rs`: validation of explicitly supplied native C++ target facts/context.
+- `integer.rs` and `scalar.rs`: integer identities, conversions, scalar operations,
+  promotion, operand adaptations and checked write-back facts.
+- `runtime.rs`: composed string/vector/carrier plans and family dependencies.
+- `ownership.rs`: record families, qualification conversions and measured layouts.
+- `emission.rs` and `emission/`: rendering prepared facts into concrete C++ artifacts.
+  Emission does not repeat semantic admission or promotion resolution.
+- `main.rs`: CLI input/output; `emission::publish` owns artifact freshness/publication.
 
-## JSON boundary
+Rust builds independently of generated headers, the C++ runtime and CMake. There is
+no build script or FFI. CMake invokes Cargo for production generation; Cargo never
+invokes CMake. The workspace pins Rust 1.99.1 and dependency versions in Cargo.lock.
+CMake retains explicitly supplied CARGO_HOME/RUSTUP_HOME through optional
+SCPP_CARGO_HOME/SCPP_RUSTUP_HOME cache entries for subsequent builds.
+Eight build jobs and mold are configured. Private Rust/C++ implementation templates
+and standard containers are permitted; generated public include closures remain
+free of templates and standard-library storage types.
 
-The production C++ generator still uses our custom JSON implementation under
-`tools/support/json/`, through `value.*`. Rust uses serde 1.0.229 and serde_json
-1.0.154, pinned by the workspace lockfile. Its adapter delegates JSON grammar to
-serde_json rather than maintaining another handwritten parser.
+## Setup and production commands
 
-The adapter preserves raw number tokens (including huge exponents and integers),
-rejects duplicate decoded keys, invalid UTF-8/surrogates, trailing input and nesting
-beyond 128 containers. Typed extraction separately rejects fractional/exponent
-spellings for integer schema fields and checks bounds. Tests cover these distinctions.
-Diagnostics carry an input label and byte offset; exact C++ diagnostic text is not
-promised. The Rust tree is not a replacement serialization API for the runtime.
-
-Active third-party packages are serde, serde_core, serde_json, itoa, memchr and zmij.
-Serde derive is not enabled; optional proc-macro dependencies recorded in Cargo.lock
-are not built by this configuration. Initial package fetching needs network access;
-subsequent locked offline tests use the local cache.
-
-## Native C++ layout probe
-
-`../layout_probe/probe.cpp` depends only on standard C++ headers. It measures native
-integer sizes/alignments/ranges, fixed-width integer facts, pointer/byte sizes,
-binary64 properties, standard-library identity, int128 availability and shared,
-weak and unique pointer layouts. The Python driver compiles/runs it independently
-of the runtime and generator. The initial supported target is native x86_64 Linux;
-explicit cross-compilation and other target triples fail before probe execution.
-
-Schema-1 `facts.json` carries a context ID. `context.json` describes the target,
-compiler path/version/binary hash, flags, probe/driver source hashes and the hash of
-the preprocessed probe, including expanded standard-library headers. Every driver
-invocation rechecks these inputs. Unchanged inputs preserve cached files; changed
-inputs or damaged cache artifacts regenerate them. The cache also hashes facts and
-the executable. The driver preserves the clang++ invocation name when it is a symlink.
-
-Rust requires an independently supplied expected context, validates schema, required
-fields, supported target, integer/layout constraints and binary64, then checks the
-facts' context ID. The caller must run the trusted driver for the current build.
-Supplying both stale facts and their stale context is not a freshness proof. This
-is a trusted build-input protocol, not signed attestation or an ABI compatibility
-certificate. Layout assertions in generated C++ remain necessary.
-
-Publication is atomic per file, not transactional across all files. Do not run
-concurrent writers into one probe output directory. Context checks detect mixed
-facts/context; the next driver invocation repairs interrupted cache publication.
-
-## Scalar preparation boundary
-
-`prepare-scalars METADATA PUBLICATION FACTS CONTEXT` returns the full
-`prepared_runtime_api` JSON document for scalar-only publications. It covers:
-
-- All eight integer identities, explicit native/cross-integer construction, all
-  33 integer operation bindings and domain-maximum promotion. Signed/uint64
-  arithmetic is rejected; exact comparison preserves the original operands.
-- Unary, binary, compound, prefix/postfix and shift forms. Compound calculations
-  resolve their execution type before checked write-back; shifts retain the left
-  type and use a checked count without promoting the right operand.
-- Registered native integer adapters, exact range-to-identity matching and
-  required public execution-overload dependencies. Native-only operators and
-  native mutation receivers are rejected.
-- bool_t/null_t value capabilities, configured source defaults and aliases.
-  Null has no numeric casts; short aliases follow explicit publication demands.
-- float64 operations and native construction, explicit integer/float/bool casts,
-  rounding and checked truncation facts. Mixed operators require the complete
-  integer type range to fit binary64 exactly; int64/uint64 require an explicit cast.
-  Mixed normalization and compound write-back require admitted cast policies.
-
-Typed enums distinguish form, promotion, cast implementation, value kind and
-operand adaptation. Preparation computes these facts once. Description serializes
-resolved facts; it does not redo promotion or cast admission. Runtime binding
-capabilities are code-owned; metadata selects policies/enabled bindings, and
-publication selects concrete demands. Integer construction and scalar preparation
-share their integer registry and range-conversion implementation.
-
-Unknown scalar fields, unsupported binding changes, duplicate requests, missing
-publication dependencies and invalid headers fail. Publications requesting strings,
-vectors, carriers or ownership are rejected. Known optional non-scalar metadata
-sections may be present but are not semantically validated by this scalar entrypoint.
-This is not yet a full-runtime metadata validator. Tests strip those sections when
-claiming scalar admission parity; an additional case checks the full default
-metadata with scalar-only demands.
-
-`prepare-integer-construction` remains as the narrower first-G2 inspection command,
-requiring empty operators, values and short_aliases. Its existing projection is
-unchanged. Neither command emits C++; production CLI/artifact compatibility and
-runtime emission remain G3/G4 work. No compiler lowering integration is added.
-
-## Exact scalar parity proof
-
-`tests/generator_parity/scalar_parity.py` compares complete prepared JSON documents
-with the current C++ generator. No fields are dropped or normalized; JSON object
-ordering/formatting is irrelevant, while array order and every resolved fact must
-match. A single accepted matrix contains 2,692 signatures, covering every integer
-and floating operation form, all admitted ordered runtime pairs, and registered
-native adapters. Rejected matrix entries and policy/publication mutations exercise
-failure gates. Reordering metadata/publication lists must preserve the same plan.
-
-The comparison includes conversions, losslessness/failure facts, aliases, headers,
-operand adaptations, execution/result types, result categories and write-back.
-Native widths come from the supplied C++ probe. Pure Rust tests use synthetic facts
-and exercise typed policy resolution without C++ or repository metadata files.
-Exact diagnostic wording, C++ emission parity and non-scalar preparation are not
-claimed by this slice. The frozen G1 baseline is unchanged.
-
-## Composed runtime preparation
-
-`prepare-runtime METADATA PUBLICATION FACTS CONTEXT` composes the scalar planner
-with string, vector, nullable/result carrier and ownership/value preparation. Its outer publication validation rejects unsupported
-family demands before delegating the scalar projection. String metadata is validated
-even when unrequested. Vector preparation resolves concrete element identities,
-method adaptations, equality dependencies and admitted elementwise casts after all
-specializations are registered. Carrier plans resolve family/default state, concrete
-payload identity, one-layer checked extraction and required error dependencies.
-Both implicit and explicit extraction are supported. They add no lifted operators
-or cross-carrier conversions. Result error facts appear only when a result family
-is published; null/nested carrier/error payloads remain rejected.
-
-`runtime.rs` owns family composition; scalar preparation remains the sole owner of
-numeric policy. Family conversions share the scalar conversion inventory and all
-scalar/sequence header paths use one validator. Ownership preparation is composed
-last, checking names and headers against every other published family. All current
-metadata families are now validated by prepare-runtime, including unrequested
-optional metadata. Non-scalar emission and production cutover remain pending.
-`prepare-scalars` keeps its deliberately narrower publication boundary.
-
-The typed string plan resolves operators, count type and header, and contributes
-text conversions to the shared conversion inventory. Parsing borrows string input;
-formatting consumes a value. Bool words, decimal numeric conversions, fallibility,
-construction checks and member/result categories match the C++ prepared contract.
-No runtime behavior or C++ generation has changed.
-
-Run `tests/generator_parity/runtime_parity.py` with the same --rust, --cpp, --facts,
---context and --work arguments as scalar_parity.py for complete runtime-plan parity.
-The combined suite now passes 128 accepted and 249 rejected cases, including all
-12 vector element identities, their admitted casts, 92 carrier specializations,
-every mutable/const ownership-family subset and the complete G1 corpus (17 accepted,
-37 rejected cases). Complete prepared documents are compared, preserving array
-ordering and JSON value types. This is preparation parity, not an emission or
-production CLI parity claim. Pure Rust tests exercise the same typed owners without
-a C++ executable or repository metadata fixtures.
-
-## Ownership/value preparation
-
-`ownership.rs` prepares registered record identities, constructor signatures,
-shared/weak/unique handles, inline values and const-pointee variants. Weak requires
-matching shared at the same qualification. It resolves explicit qualification
-constructors once: copy retains identity; move transfers and empties the source;
-unique has move-only qualification; shared-to-const-weak retains identity.
-
-Handle sizes/alignments come only from validated C++ probe facts. Inline values
-have no guessed size, alignment or copy/move/noexcept traits: those remain native
-payload obligations for the future C++ emitter's declarations and assertions.
-A default inline value constructor is published only when [] is explicitly requested.
-Record definitions remain trusted consumer-owned C++ headers, not parsed Rust input.
-
-Names are checked against C++ binding restrictions and all published runtime,
-alias, record and wrapper identities. Constructor arguments must be published
-scalar types. Header collisions include scalar, string, vector and carrier outputs.
-For exact production parity, ownership retains its existing header-path rule,
-which accepts /./ components; the other families reject those components. Tests
-cover that distinction. This migration does not silently tighten existing policies.
-
-## Reproduce validation
-
-Run from `v0.2/`:
+Install the pinned Rust toolchain (including rustfmt/Clippy), Clang/libc++, Ninja,
+mold and Python 3.10+. Cargo must be on PATH. Fetch packages once with network
+access; normal builds are locked and offline. Run from v0.2/:
 
 ```sh
 cargo fetch --locked
+cmake --preset default
+cmake --build --preset default
+ctest --preset default
+```
+
+CMake builds the release tooling binary in `build/clang/cargo/`, validates native
+facts in `build/clang/native-layout/`, and generates runtime artifacts under
+`build/clang/generated/`. Other configurations have independent outputs.
+`BUILD_TESTING=OFF` still builds the generator and probe: both are production inputs.
+
+The configured launcher preserves the old positional invocation shape, but executes
+only Rust with that build's explicit facts/context:
+
+```sh
+./build/clang/scpp_api_generator runtime/metadata/runtime.json \
+  runtime/metadata/publication.json build/clang/generated --check
+```
+
+The direct CLI accepts explicit target inputs:
+
+```sh
+cargo build -p scpp-api-tooling --locked --offline
+./target/debug/scpp-api-tooling emit-runtime METADATA PUBLICATION FACTS CONTEXT OUTPUT
+./target/debug/scpp-api-tooling emit-runtime METADATA PUBLICATION FACTS CONTEXT OUTPUT --check
+```
+
+Successful generation/check prints JSON with `status` and `artifacts`; failures
+return exit 1 and stderr without success output. Exact old C++ diagnostic wording
+and its human-readable success summary are deliberately not preserved. Artifact
+paths within OUTPUT, file bytes, inventory behavior and prepared JSON are preserved.
+All inputs are prepared before writing. An obsolete/invalid old inventory rejects
+before mutation. Check mode never writes. Ordinary publication is per-file, not a
+transaction, and unlisted files are left alone. Do not run writers concurrently into
+one output directory.
+
+## Inspection and scalar projection
+
+The same library also provides:
+
+```text
+validate-target FACTS CONTEXT
+prepare-runtime METADATA PUBLICATION FACTS CONTEXT
+prepare-scalars METADATA PUBLICATION FACTS CONTEXT
+prepare-integer-construction METADATA PUBLICATION FACTS CONTEXT
+emit-scalars METADATA PUBLICATION FACTS CONTEXT OUTPUT [--check]
+```
+
+These are projections/inspection of shared owners, not alternative production
+implementations. Scalar emission delegates to the same renderer as full runtime
+emission. The narrow integer command rejects operators/values/short aliases; scalar
+commands reject non-scalar demands. Full preparation validates every current metadata
+family, even optional unrequested metadata. Source admission, symbols, evaluation
+order and compiler lowering remain outside this tooling library.
+
+Native integer and floating behavior, string conversions, vector casts, carrier
+states/extraction, inline value traits and ownership qualification retain their
+existing family contracts. Ownership's historical `/./` header components remain
+accepted; other family header validators reject them. Tightening that policy is
+separate work.
+
+## Native facts and rebuilds
+
+`tools/layout_probe/probe.cpp` uses standard C++ headers only. The Python driver
+measures integer ranges/layouts, binary64 and smart-pointer layouts; fingerprints
+include compiler identity, flags, probe/driver source and preprocessed headers.
+Every CMake build rechecks the context and asks Cargo to check its dependency graph.
+Unchanged checks preserve output timestamps, so runtime generation/compilation does
+not rerun. Metadata, publication, tooling binary and target-fact changes invalidate
+generation. Target/compiler/header changes are re-probed.
+
+Rust validates facts against an independently supplied expected context. Supplying
+matching stale facts and stale context is not freshness verification: the current
+build must run the trusted probe driver. Layout assertions remain in generated C++.
+This is native x86_64 Linux generation, not cross-compilation, signed attestation or
+a sealed portable ABI. Regenerate/rebuild when changing toolchains.
+
+## Validation and retirement evidence
+
+Before retirement, exact C++/Rust artifact parity passed for 128 accepted runtime
+cases and 19 accepted scalar cases. Rejection checks covered 249 runtime and 537
+scalar cases. The scalar matrix contains 2,692 operation signatures and was compiled;
+existing scalar consumers ran against Rust output. Ownership variants include
+mutable/const subsets and inline payload capabilities.
+
+`tests/generator_parity/baseline.json`, `runtime_baseline.json` and
+`scalar_baseline.json` retain independently captured C++ artifact hashes. They are
+regression fixtures, not generated production inputs. No old binary is needed to
+run them. Changes to the contract require reviewed fixture changes, not automatic
+recapture. The fixtures describe the measured x86_64 Clang/libc++ target.
+
+CTest exercises frozen artifacts, malformed inputs, CLI freshness/inventory behavior,
+native-probe caching/invalidation, generated public headers, compile-fail cases and
+all retained runtime consumers, including ownership layout/lifetime/allocation
+proofs. C++ preparation/JSON implementation tests were retired with their owners;
+Rust tests and the frozen corpora retain the relevant tooling contracts.
+
+```sh
 cargo fmt --all --check
 cargo clippy --workspace --all-targets --locked --offline -- -D warnings
 cargo test --workspace --locked --offline
 cargo test --workspace --release --locked --offline
-cargo build --workspace --locked --offline
-cmake --preset default
-cmake --build --preset default
-cmake --build --preset default --target scpp_layout_facts
-cargo run -p scpp-api-tooling --locked --offline -- validate-target \
-  build/clang/native-layout/facts.json build/clang/native-layout/context.json
-python3 -B tools/layout_probe/test_integration.py \
-  --rust target/debug/scpp-api-tooling --cpp build/clang/scpp_api_generator \
-  --cxx clang++ --flag=-stdlib=libc++ --flag=-fuse-ld=mold \
-  --work build/g2-integration
-python3 -B tests/generator_parity/scalar_parity.py \
-  --rust target/debug/scpp-api-tooling --cpp build/clang/scpp_api_generator \
-  --facts build/clang/native-layout/facts.json \
-  --context build/clang/native-layout/context.json --work build/scalar-parity
-python3 -B tests/generator_parity/runtime_parity.py \
-  --rust target/debug/scpp-api-tooling --cpp build/clang/scpp_api_generator \
-  --facts build/clang/native-layout/facts.json \
-  --context build/clang/native-layout/context.json --work build/runtime-parity
-ctest --preset default
+cmake --preset ubsan
+cmake --build --preset ubsan
+ctest --preset ubsan
 python3 -B compiler/tests/measure_foundation.py
+python3 -B tests/build_cutover.py
 ```
 
-`scpp_layout_facts` is an explicit target available with BUILD_TESTING enabled; it
-is not a prerequisite of production generation. The integration proof creates its
-own narrowed publication and temporary probe copies. It compares all eight integer
-types and 104 conversions with C++ prepared facts, compares ownership/native layouts,
-checks cache no-op behavior and invalidation by flags/source/headers, and rejects
-stale context, missing context, unsupported requests and cross-target execution.
-Pure Rust tests use synthetic facts and need no C++ toolchain. The isolated export
-copies both Rust packages and verifies workspace tests without any C++ files.
-
-Earlier G2 foundation validation remains recorded in the migration plan. Current
-scalar-slice results are recorded there as well; production generation remains C++.
-See the [migration plan](../../specs/planning/rust_compiler_migration.md) for the
-remaining batches and [G1 inventory](../../specs/planning/api_generator_contract_inventory.md)
-for the unchanged production contract and full parity gate.
-
-
-## G3 scalar C++ emission
-
-The shared `emission` module renders `ScalarPlan` without re-resolving semantic
-policy. The experimental CLI writes the same eight scalar artifacts as production:
-five public headers, private definitions, prepared.json and inventory.json.
-
-```sh
-target/debug/scpp-api-tooling emit-scalars METADATA PUBLICATION FACTS CONTEXT OUTPUT
-target/debug/scpp-api-tooling emit-scalars METADATA PUBLICATION FACTS CONTEXT OUTPUT --check
-```
-
-Only scalar publications are admitted. The command validates/prepares all inputs
-before writing; obsolete inventory entries reject publication before mutation.
-Writing is per-file, not transactional. Check mode compares bytes without writes.
-The command reports JSON status; full production CLI compatibility and build cutover
-remain later slices. CMake still invokes the C++ generator.
-
-Add `--emit --cxx /usr/bin/clang++ --flag=-stdlib=libc++` to the scalar parity
-script to compare all artifact bytes, compile the 2,692-operation matrix, check
-standalone/template-free public headers, and run the existing three scalar
-consumers. All 19 accepted cases match; all 537 rejected cases leave no output.
-Freshness and obsolete-inventory behavior are tested too. String, vector, carrier
-and ownership emission remain pending.
+The isolated Rust export includes nested emission modules and needs no C++ files.
+See the [migration record](../../specs/planning/rust_compiler_migration.md) for the
+cutover validation and remaining compiler work. Runtime hash work resumes only after
+this single-generator cutover.

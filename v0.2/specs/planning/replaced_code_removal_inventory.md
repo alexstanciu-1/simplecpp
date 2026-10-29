@@ -1,6 +1,12 @@
 # Replaced-code removal inventory
 
 Doc Status: planning
+
+Current update — 2026-10-29: the full Rust generator cutover has retired the seven
+C++ API-generator files, two private JSON headers and their nine implementation-only
+tests. Native consumers remain. The inventory below records earlier stages and is
+historical where it describes those files as active. See
+[runtime tooling cutover](rust_compiler_migration.md#g3g4-full-emission-and-production-cutover--2026-10-29).
 Date: 2026-10-29
 Baseline: a3ad4e463. Scope: v0.2 only. The inventory below records the pre-removal
 assessment. The user subsequently authorized the recommended Rust sequence and

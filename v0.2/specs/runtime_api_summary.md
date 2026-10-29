@@ -99,7 +99,7 @@ use int64 x{12}, not int64 x = 12.
 ## Ownership and physical pre-lowering
 
 Metadata owns identities, conversion policies, operation bindings and publication
-demands. The native C++ generator validates and prepares them once, then emits
+demands. The Rust API tooling validates and prepares them once, then emits
 concrete declarations and implementation wiring. Private runtime algorithms own
 value-dependent checks. Public include closures expose no templates or std storage.
 Strings/vectors hide their storage behind pointers; materialized storage adds an
@@ -110,7 +110,7 @@ prepared.json records conversion and execution/result facts, reference/value for
 source/runtime mappings and concrete collection adaptations. It supports physical
 pre-lowering planning; it does not perform source symbol resolution, admission,
 evaluation ordering or a sealed compiler-import protocol. The future symbol-aware
-my-try-cpp integration owns those tasks, source literal typing, contextual explicit
+compiler integration owns those tasks, source literal typing, contextual explicit
 normalization, language-flavor choices and any proof allowing a runtime check to be
 elided. Plain C++ callers retain all published value checks.
 

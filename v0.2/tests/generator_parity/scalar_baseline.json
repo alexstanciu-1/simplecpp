@@ -1,0 +1,195 @@
+{
+  "cases": {
+    "1087df6c9e33962872ddf0f2a80df77d74c7616fb9900d8fc687866d427ccf47": {
+      "inventory.json": "781cf7a7a104600f3c3c15e918f3971564c4dfc059a20f9d62ba6b8977f7cec9",
+      "prepared.json": "d6292ab4d756af74897651b43dcd3d5297bb45ecf9a666137467ea7021b26232",
+      "public/scpp/integers.hpp": "777aa52aec099594f41128d2291cb08a8ee006982dd4409c26cb0e9134f711ba",
+      "public/scpp/native_bridge.hpp": "c7a84bb079b8ab2203e57c32555c9c167003ca6f23154767b9251c6ea219d4e8",
+      "public/scpp/numeric.hpp": "4fb91b4680d4728b3c8c72a71ca954d08543d9553167c084a703966c656f8f05",
+      "public/scpp/short_names.hpp": "1074d54e17a7980aae94a0549ad671e3369d7418e83f9efd80f4b980cf05c629",
+      "public/scpp/values.hpp": "468f9cd685e93f0f2c8428fc765404fc1f70e29e3a04146934cb9e45dd6ef94f",
+      "src/runtime.cpp": "33db9365d633b20f4b18206ec41a5d4fc51a6ce2f053138f01b8b24dca8201a9"
+    },
+    "14ffb4fc9359503a941bbff8e9f3dde4dcf4e2e79d563aa1f5f559050444b257": {
+      "inventory.json": "781cf7a7a104600f3c3c15e918f3971564c4dfc059a20f9d62ba6b8977f7cec9",
+      "prepared.json": "78a793fe6b5eb75d6f68c8cd4fcca41ec25ff92ba059886749b345ed336d54df",
+      "public/scpp/integers.hpp": "1f662f9de76dccc5cf76ccd0aca65744ae589a3e69218394ce2b23056b534fe0",
+      "public/scpp/native_bridge.hpp": "dbdea65c0a107014db31ef092a5358eea27418679e0d06337d606e5106967af0",
+      "public/scpp/numeric.hpp": "8cad0ba1dcbf6ab026f2cae500bcfeae3fc80b65ed884fdc07190a2142884f09",
+      "public/scpp/short_names.hpp": "0b7f52b88999a4437f580b386b6191d2576c5e923ef4e0e7436757923e4bb29e",
+      "public/scpp/values.hpp": "9044def2b2ab3d51d5419e2663f9e2f371036cc30dfe67b1450fe83f8310cafc",
+      "src/runtime.cpp": "714902b5f0a33df58603e91f5ea01f4f3362d85a0555dc963cb794f03eec9f6e"
+    },
+    "199e1cacaf99f24800e488df3f6de18187dc8df5703ad19ed323e7ed720685fe": {
+      "inventory.json": "781cf7a7a104600f3c3c15e918f3971564c4dfc059a20f9d62ba6b8977f7cec9",
+      "prepared.json": "6d2eb49f31f7ae1aabf9e39070711a702f245f2b121df288a08d5c7b877d80af",
+      "public/scpp/integers.hpp": "aecfcf3fa5f5ebdb9ac19965865dffeb251632b6764d567718fea08f4f9b8305",
+      "public/scpp/native_bridge.hpp": "dbdea65c0a107014db31ef092a5358eea27418679e0d06337d606e5106967af0",
+      "public/scpp/numeric.hpp": "8cad0ba1dcbf6ab026f2cae500bcfeae3fc80b65ed884fdc07190a2142884f09",
+      "public/scpp/short_names.hpp": "d3c18a7cbf140274fd616b8f024ac159adfed6df8bac83dcf4973f203d8b6d0b",
+      "public/scpp/values.hpp": "366da77f98c6c561fd6f392eace4ad8315f1ce99746c9ed225ce4e87e87f9656",
+      "src/runtime.cpp": "b5cad1e74c4e8c7538accf039dcd2272ab0eaf81c9b0a6cc76414569b44faa70"
+    },
+    "43c43f8f6eb7023b495c6c3b54fea9525bf4a839dcf5792ea7c890037598d08f": {
+      "inventory.json": "781cf7a7a104600f3c3c15e918f3971564c4dfc059a20f9d62ba6b8977f7cec9",
+      "prepared.json": "a73a5e396cd4aaa753f13afaf4b5cb2e174d735b2cc1ba166b18ef8ea76683c7",
+      "public/scpp/integers.hpp": "aecfcf3fa5f5ebdb9ac19965865dffeb251632b6764d567718fea08f4f9b8305",
+      "public/scpp/native_bridge.hpp": "8e47b707485426fbc610d7afab3c600e71ce473d0c39476e47e36a3d55354d20",
+      "public/scpp/numeric.hpp": "63427fa25313b11ed24bf55fb4b2e78b5184fd60c42fe9d78e7ceb40ff5f026c",
+      "public/scpp/short_names.hpp": "d3c18a7cbf140274fd616b8f024ac159adfed6df8bac83dcf4973f203d8b6d0b",
+      "public/scpp/values.hpp": "366da77f98c6c561fd6f392eace4ad8315f1ce99746c9ed225ce4e87e87f9656",
+      "src/runtime.cpp": "bad8740b0ab8cb72e06ffa06cb9c9f735939fd63994c90d276b76771e7f8d582"
+    },
+    "48cf1fe8bef8ba925eae56bd4e417c6d68a6df1261afde140b5c52e6c0c8402b": {
+      "inventory.json": "781cf7a7a104600f3c3c15e918f3971564c4dfc059a20f9d62ba6b8977f7cec9",
+      "prepared.json": "3b3b24931bfd55f173aca2e373a665787f35b73177b87c282acfaf808d00ed8b",
+      "public/scpp/integers.hpp": "fb554f1c298152ca7101ae1001becf0c08d86a4af513fe08aaff120f1966290b",
+      "public/scpp/native_bridge.hpp": "dbdea65c0a107014db31ef092a5358eea27418679e0d06337d606e5106967af0",
+      "public/scpp/numeric.hpp": "8cad0ba1dcbf6ab026f2cae500bcfeae3fc80b65ed884fdc07190a2142884f09",
+      "public/scpp/short_names.hpp": "7ef19a9a7111305c5c7bf33cd8b9e7d30cc74aa7fe7bf3d10593c01787bbc8b2",
+      "public/scpp/values.hpp": "39bf76ad3501d07b6bdfe1a4e7ef35fa842d618347090c458844626863700e94",
+      "src/runtime.cpp": "03352976a35676e02a84bfce1fa77c1e92986297912fa44202a15943860c938d"
+    },
+    "60e8a95454b264f2b2b6c6eb7a6a410f8901ca15e7d16f266e2924fb6259542a": {
+      "inventory.json": "781cf7a7a104600f3c3c15e918f3971564c4dfc059a20f9d62ba6b8977f7cec9",
+      "prepared.json": "acad30b5f844733a5304ed94e71e91603bf8e097da95c94dfc5546bbac31382a",
+      "public/scpp/integers.hpp": "11b8931c90b2a3e525049d2796b971d0a5ed0d96cd4a88e6eadf3c53e7a80933",
+      "public/scpp/native_bridge.hpp": "dbdea65c0a107014db31ef092a5358eea27418679e0d06337d606e5106967af0",
+      "public/scpp/numeric.hpp": "8cad0ba1dcbf6ab026f2cae500bcfeae3fc80b65ed884fdc07190a2142884f09",
+      "public/scpp/short_names.hpp": "4c44ae45dd8e482635a2fed09a14c8991563a99bef797487815fd309116609f2",
+      "public/scpp/values.hpp": "2456579c336a5748b7f56f2939d3038588077df537b1352114cb6df7066e94b9",
+      "src/runtime.cpp": "2f0928371d3bdaf45f1c616f5f44305d16ebff85d6fe6527e9f04f8a5f4f1c9c"
+    },
+    "65fc09c81401eacff7a56b339d027fb9f8a7c01cea4f6b3095cd561e96b777ed": {
+      "inventory.json": "781cf7a7a104600f3c3c15e918f3971564c4dfc059a20f9d62ba6b8977f7cec9",
+      "prepared.json": "a73a5e396cd4aaa753f13afaf4b5cb2e174d735b2cc1ba166b18ef8ea76683c7",
+      "public/scpp/integers.hpp": "aecfcf3fa5f5ebdb9ac19965865dffeb251632b6764d567718fea08f4f9b8305",
+      "public/scpp/native_bridge.hpp": "8e47b707485426fbc610d7afab3c600e71ce473d0c39476e47e36a3d55354d20",
+      "public/scpp/numeric.hpp": "63427fa25313b11ed24bf55fb4b2e78b5184fd60c42fe9d78e7ceb40ff5f026c",
+      "public/scpp/short_names.hpp": "d3c18a7cbf140274fd616b8f024ac159adfed6df8bac83dcf4973f203d8b6d0b",
+      "public/scpp/values.hpp": "366da77f98c6c561fd6f392eace4ad8315f1ce99746c9ed225ce4e87e87f9656",
+      "src/runtime.cpp": "bad8740b0ab8cb72e06ffa06cb9c9f735939fd63994c90d276b76771e7f8d582"
+    },
+    "6f89b3035bbb2efa2c0b006158dccaf2b04b9ee03cd6650d0c9afbbd26bc8502": {
+      "inventory.json": "781cf7a7a104600f3c3c15e918f3971564c4dfc059a20f9d62ba6b8977f7cec9",
+      "prepared.json": "1374fd646a8e794fe8fd5f2b2419fa619e69acbdc57f7ae45e932248cba3406b",
+      "public/scpp/integers.hpp": "954c3540264258a14786c8491b397ad7b2be38f5ba82ada515b3f9738f1241fa",
+      "public/scpp/native_bridge.hpp": "dbdea65c0a107014db31ef092a5358eea27418679e0d06337d606e5106967af0",
+      "public/scpp/numeric.hpp": "8cad0ba1dcbf6ab026f2cae500bcfeae3fc80b65ed884fdc07190a2142884f09",
+      "public/scpp/short_names.hpp": "9c077b7f536639d8e998a3678e4113a53aede27bf38ef86257ddd32d24ef4781",
+      "public/scpp/values.hpp": "161ac108f813ba8585971bd8e6995ffd4b0b575b1edf75b21366481e41940b70",
+      "src/runtime.cpp": "4ac5a53923fd1980a6b260ddd4c9dd6639bc8e9ff8cd562a0a75ebf158194a7c"
+    },
+    "74d2795728ee68eea94fb0e9059c8501059366248fc218d5079e6d608407b772": {
+      "inventory.json": "781cf7a7a104600f3c3c15e918f3971564c4dfc059a20f9d62ba6b8977f7cec9",
+      "prepared.json": "ac74a888ceb08507520043245fe76584ab53c1845e2a9bcd872c263bd0c813c9",
+      "public/scpp/integers.hpp": "6fce81cb3f135bd73422a316a1f506e7cc0752c670d04c076fbd711d930c162e",
+      "public/scpp/native_bridge.hpp": "dbdea65c0a107014db31ef092a5358eea27418679e0d06337d606e5106967af0",
+      "public/scpp/numeric.hpp": "8cad0ba1dcbf6ab026f2cae500bcfeae3fc80b65ed884fdc07190a2142884f09",
+      "public/scpp/short_names.hpp": "d3c18a7cbf140274fd616b8f024ac159adfed6df8bac83dcf4973f203d8b6d0b",
+      "public/scpp/values.hpp": "366da77f98c6c561fd6f392eace4ad8315f1ce99746c9ed225ce4e87e87f9656",
+      "src/runtime.cpp": "b5cad1e74c4e8c7538accf039dcd2272ab0eaf81c9b0a6cc76414569b44faa70"
+    },
+    "8052eefac42079eeb3528a4ccfefe2bf6e309fcc490d1ef13d6754c727f06730": {
+      "inventory.json": "781cf7a7a104600f3c3c15e918f3971564c4dfc059a20f9d62ba6b8977f7cec9",
+      "prepared.json": "391de61050753a08645a04ef848ae201b7839d7c92c060cbfd590dac737b7430",
+      "public/scpp/integers.hpp": "aecfcf3fa5f5ebdb9ac19965865dffeb251632b6764d567718fea08f4f9b8305",
+      "public/scpp/native_bridge.hpp": "dbdea65c0a107014db31ef092a5358eea27418679e0d06337d606e5106967af0",
+      "public/scpp/numeric.hpp": "69872c517e6321377065b606d841d175e09aa7786475e5ee8da2683af0c66b1c",
+      "public/scpp/short_names.hpp": "162bc74ad7ec9de49429f2457b9445ca66b200c4dd0bae1f617a2ccd7718af87",
+      "public/scpp/values.hpp": "366da77f98c6c561fd6f392eace4ad8315f1ce99746c9ed225ce4e87e87f9656",
+      "src/runtime.cpp": "cc59a791439778e45ac10f7d7a412f6ebefb9c798471d19ac226300dab60886f"
+    },
+    "8554e89948f1f2bc170a5a64d9b260f0fda2bc0200c2a8177877f1eb10013c4d": {
+      "inventory.json": "781cf7a7a104600f3c3c15e918f3971564c4dfc059a20f9d62ba6b8977f7cec9",
+      "prepared.json": "06fd887aa46cecb1d5678c4383504e7f6433c5d4efa6f81cd9e2b18157d005cc",
+      "public/scpp/integers.hpp": "da943974cd7e395c9ee2ff729d031db27c0a206f84ed2e965c7ff3f8b22f7123",
+      "public/scpp/native_bridge.hpp": "dbdea65c0a107014db31ef092a5358eea27418679e0d06337d606e5106967af0",
+      "public/scpp/numeric.hpp": "8cad0ba1dcbf6ab026f2cae500bcfeae3fc80b65ed884fdc07190a2142884f09",
+      "public/scpp/short_names.hpp": "8192ca49ea14ff5aed87af0a26780a9ffcb2a7a72822876cd23880b41bffc3d7",
+      "public/scpp/values.hpp": "869739005f72bc5773c23849da3cfed7a07d1fcccc6e791c861ad4382b4ae7cc",
+      "src/runtime.cpp": "2f0928371d3bdaf45f1c616f5f44305d16ebff85d6fe6527e9f04f8a5f4f1c9c"
+    },
+    "883793918841caf0131c5fe0f025a3fc5bfbb3b5555300bfdb8bc49b5c8d5782": {
+      "inventory.json": "781cf7a7a104600f3c3c15e918f3971564c4dfc059a20f9d62ba6b8977f7cec9",
+      "prepared.json": "2607a668aa078736c013808745185a6ec9ebe2af1cd3994c9b51c99b180db159",
+      "public/scpp/integers.hpp": "9a19a2c2222c27158c6fc68caeba164f2fdd000c417056d86d0a6c9deff61afe",
+      "public/scpp/native_bridge.hpp": "dbdea65c0a107014db31ef092a5358eea27418679e0d06337d606e5106967af0",
+      "public/scpp/numeric.hpp": "8cad0ba1dcbf6ab026f2cae500bcfeae3fc80b65ed884fdc07190a2142884f09",
+      "public/scpp/short_names.hpp": "cf282e89d06999c3009a3a5a3b837bba073cdc7637a1f31f8a5a8fd430c9bf8f",
+      "public/scpp/values.hpp": "a1817a6758f6ea1decc854ebfa6c91472d2c0e94a8826e69694ac366cc3c4f53",
+      "src/runtime.cpp": "92f6cfafff64e59109ca35de2a36aaaf238739f70fe44cbf73a48db1ef1a47d3"
+    },
+    "91078d4eb6c7b7b0a40a7b16ffcba2b8a3a95772eabdf6877931882a89ead5f1": {
+      "inventory.json": "781cf7a7a104600f3c3c15e918f3971564c4dfc059a20f9d62ba6b8977f7cec9",
+      "prepared.json": "2cd728cbb8df0a53a17e758489f475386deb29a4e8efdbdf81c312c71da609f6",
+      "public/scpp/integers.hpp": "e905221dc70d90998397c28649b7fd9d177462536fd50921c276a87b947f5cb8",
+      "public/scpp/native_bridge.hpp": "dbdea65c0a107014db31ef092a5358eea27418679e0d06337d606e5106967af0",
+      "public/scpp/numeric.hpp": "8cad0ba1dcbf6ab026f2cae500bcfeae3fc80b65ed884fdc07190a2142884f09",
+      "public/scpp/short_names.hpp": "852c934e17c0b7e09e4000a6f3c4e629ea5b044c578c6537684c674b014350f3",
+      "public/scpp/values.hpp": "d9bd0f225f3c60d11e49a121d598f8a37eaf05b7f488b41e7ced32983b4937ae",
+      "src/runtime.cpp": "2806438343e619abb15e1d14696feda59f02718171e804d99cc82f586a527be5"
+    },
+    "9f4085e1d9f66006110cf2a56dfd2f51633bd2f4672c11ffd44e32eee20974f1": {
+      "inventory.json": "781cf7a7a104600f3c3c15e918f3971564c4dfc059a20f9d62ba6b8977f7cec9",
+      "prepared.json": "7783f0dcd8eb16933ce81deb8afaaba2273b575e6352684079431bcfd3669538",
+      "public/scpp/integers.hpp": "aecfcf3fa5f5ebdb9ac19965865dffeb251632b6764d567718fea08f4f9b8305",
+      "public/scpp/native_bridge.hpp": "dbdea65c0a107014db31ef092a5358eea27418679e0d06337d606e5106967af0",
+      "public/scpp/numeric.hpp": "8cad0ba1dcbf6ab026f2cae500bcfeae3fc80b65ed884fdc07190a2142884f09",
+      "public/scpp/short_names.hpp": "d3c18a7cbf140274fd616b8f024ac159adfed6df8bac83dcf4973f203d8b6d0b",
+      "public/scpp/values.hpp": "eb3c737507f9ce6c047cf01bf65496a5f0acc98596cb9cb7ab0aed0c9d2d8fd1",
+      "src/runtime.cpp": "deae0e91d826be7fadf815b29653449aa8187fbe17bab3caf0979d489d9dc95e"
+    },
+    "bdca30cccd1b71b5fba848942dfa1cc6f6bc618c2b184c9aca0f10740c94e196": {
+      "inventory.json": "781cf7a7a104600f3c3c15e918f3971564c4dfc059a20f9d62ba6b8977f7cec9",
+      "prepared.json": "20360e389d85e004623c0955133bd212ae637dafb2045f482d18460432713fab",
+      "public/scpp/integers.hpp": "086cc46a84ea2765121cf2c9984403586b175a7323a0a5fbff185f14d837a353",
+      "public/scpp/native_bridge.hpp": "dbdea65c0a107014db31ef092a5358eea27418679e0d06337d606e5106967af0",
+      "public/scpp/numeric.hpp": "8cad0ba1dcbf6ab026f2cae500bcfeae3fc80b65ed884fdc07190a2142884f09",
+      "public/scpp/short_names.hpp": "d3c18a7cbf140274fd616b8f024ac159adfed6df8bac83dcf4973f203d8b6d0b",
+      "public/scpp/values.hpp": "366da77f98c6c561fd6f392eace4ad8315f1ce99746c9ed225ce4e87e87f9656",
+      "src/runtime.cpp": "45fae6d48a166245e9921dbd51ee6332632f3090d03eb5cc114c378fa68699c0"
+    },
+    "c0740a7d814601b0ff07727ebc6eced8848e6995839d629990ec3721e3426791": {
+      "inventory.json": "781cf7a7a104600f3c3c15e918f3971564c4dfc059a20f9d62ba6b8977f7cec9",
+      "prepared.json": "d6292ab4d756af74897651b43dcd3d5297bb45ecf9a666137467ea7021b26232",
+      "public/scpp/integers.hpp": "777aa52aec099594f41128d2291cb08a8ee006982dd4409c26cb0e9134f711ba",
+      "public/scpp/native_bridge.hpp": "c7a84bb079b8ab2203e57c32555c9c167003ca6f23154767b9251c6ea219d4e8",
+      "public/scpp/numeric.hpp": "4fb91b4680d4728b3c8c72a71ca954d08543d9553167c084a703966c656f8f05",
+      "public/scpp/short_names.hpp": "1074d54e17a7980aae94a0549ad671e3369d7418e83f9efd80f4b980cf05c629",
+      "public/scpp/values.hpp": "468f9cd685e93f0f2c8428fc765404fc1f70e29e3a04146934cb9e45dd6ef94f",
+      "src/runtime.cpp": "33db9365d633b20f4b18206ec41a5d4fc51a6ce2f053138f01b8b24dca8201a9"
+    },
+    "c9e95b27c3a97fbbeec410adcda9c0483c08e1ab645c16d24234acc319ae4105": {
+      "inventory.json": "781cf7a7a104600f3c3c15e918f3971564c4dfc059a20f9d62ba6b8977f7cec9",
+      "prepared.json": "30916a0ae82977ce561add422edb2d75ddd56e2f0cd9f4372fb042abe2eefc30",
+      "public/scpp/integers.hpp": "aecfcf3fa5f5ebdb9ac19965865dffeb251632b6764d567718fea08f4f9b8305",
+      "public/scpp/native_bridge.hpp": "dbdea65c0a107014db31ef092a5358eea27418679e0d06337d606e5106967af0",
+      "public/scpp/numeric.hpp": "8cad0ba1dcbf6ab026f2cae500bcfeae3fc80b65ed884fdc07190a2142884f09",
+      "public/scpp/short_names.hpp": "162bc74ad7ec9de49429f2457b9445ca66b200c4dd0bae1f617a2ccd7718af87",
+      "public/scpp/values.hpp": "366da77f98c6c561fd6f392eace4ad8315f1ce99746c9ed225ce4e87e87f9656",
+      "src/runtime.cpp": "b5cad1e74c4e8c7538accf039dcd2272ab0eaf81c9b0a6cc76414569b44faa70"
+    },
+    "d266392ef692014a764501e2e305c97f6247bc7e6ce3de2fada236bca16a2b4a": {
+      "inventory.json": "781cf7a7a104600f3c3c15e918f3971564c4dfc059a20f9d62ba6b8977f7cec9",
+      "prepared.json": "888d4cc5d9750e58dcb8fbbcb27cadc4ecb2ef5b2c759bebc05ba60e61059804",
+      "public/scpp/integers.hpp": "88624fadbf05322f071688a36476d5be25bb1d0e5c4892825837c9a971682ca9",
+      "public/scpp/native_bridge.hpp": "dbdea65c0a107014db31ef092a5358eea27418679e0d06337d606e5106967af0",
+      "public/scpp/numeric.hpp": "8cad0ba1dcbf6ab026f2cae500bcfeae3fc80b65ed884fdc07190a2142884f09",
+      "public/scpp/short_names.hpp": "d0ff8b26a875e234d3a222d967be127dd46c3052c251d867431ab15ca90f0e34",
+      "public/scpp/values.hpp": "b3551b0b583625b7bb7e017d79b881bf8675e0eda13c44a834a894d7823f51ba",
+      "src/runtime.cpp": "2806438343e619abb15e1d14696feda59f02718171e804d99cc82f586a527be5"
+    },
+    "e1b9e61cda695e94a5e534f8dfe538ad512e9b62b0d18f5eaf3566fcfd770d2a": {
+      "inventory.json": "781cf7a7a104600f3c3c15e918f3971564c4dfc059a20f9d62ba6b8977f7cec9",
+      "prepared.json": "a7565702a187a5cddbc26e11d4001113159d5363470b160c4802108029b7cde7",
+      "public/scpp/integers.hpp": "1a493dbe519eb5a73e79841b1d16d7bb368e0e983f1980f79924e019203de981",
+      "public/scpp/native_bridge.hpp": "dbdea65c0a107014db31ef092a5358eea27418679e0d06337d606e5106967af0",
+      "public/scpp/numeric.hpp": "8cad0ba1dcbf6ab026f2cae500bcfeae3fc80b65ed884fdc07190a2142884f09",
+      "public/scpp/short_names.hpp": "0a2b6d4743e049a22bbf8505f658c188705bce32ced3d00bee329190074b94c9",
+      "public/scpp/values.hpp": "47be4334a262a6849c5f9daf86d271a6266a0722c38c0b19940300a8158889e1",
+      "src/runtime.cpp": "2f0928371d3bdaf45f1c616f5f44305d16ebff85d6fe6527e9f04f8a5f4f1c9c"
+    }
+  },
+  "reference": "fab676e4f C++ generator; exact artifact hashes; x86_64 Clang/libc++"
+}

@@ -12,7 +12,9 @@ The v0.2 workspace owns the lockfile, Rust 1.99.1 pin and Cargo configuration
 (eight jobs; mold on x86_64 Linux). The compiler depends on the shared Rust
 [API tooling library](../tools/api_generator/README.md), which uses Serde. It has
 no C++ runtime linkage, generated-header prerequisite, build script or FFI.
-Cargo and CMake do not invoke each other. Build outputs live in ignored v0.2/target/.
+Cargo never invokes CMake. Runtime CMake builds now invoke Cargo for the shared API
+generator; standalone compiler Cargo builds remain independent. Their outputs live
+in ignored v0.2/target/.
 
 ## Build and validate
 

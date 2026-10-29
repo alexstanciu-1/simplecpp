@@ -4,8 +4,10 @@ Doc Status: planning
 Date: 2026-10-29
 Decision: approved direction; slice 1 implemented on 2026-10-29.
 API-generator/physical pre-lowering migration to Rust approved on 2026-10-29.
-G1 and G2 preparation for all current metadata families are implemented.
-G3 scalar C++ emission is implemented; other family emitters and production cutover remain planned.
+G1–G4 runtime API tooling migration is implemented for all current families.
+Rust is the sole production generator. Compiler scanning/semantic work remains
+planned. Earlier checkpoints below retain historical context; see the final cutover
+checkpoint for current implementation and validation.
 
 ## Decision and scope
 
@@ -15,16 +17,17 @@ and a small native layout probe in C++. The three responsibilities remain the
 project backbone, with compiler and API tooling sharing a typed Rust library boundary.
 
 This extends and supersedes the earlier decision to retain the generator in C++.
-The Rust compiler foundation is implemented; the production API generator is still
-C++. The first G2 batch establishes the workspace, shared library and native probe;
-production cutover remains deferred. Preserve numeric, carrier and ownership semantics during the
-migration; a tooling language change is not a runtime-policy redesign.
+The Rust compiler foundation and full runtime API preparation/emission are
+implemented. CMake now invokes Rust with explicit native probe facts. Numeric,
+carrier and ownership semantics are preserved; this tooling migration does not
+redesign runtime policy.
 
 This supersedes the proposal to evolve the C++ compiler into the production v0.2
 compiler, including adapting its source snapshots and token sequences to generated
 runtime ownership handles. The C++ compiler foundation has now been retired after the separately authorized
 Rust sequence replacement. Its donor code remains available in Git history. This
-does not retire the production C++ API generator or authorize a bulk legacy import.
+was followed by the separate G3/G4 retirement of the C++ API generator. Neither
+replacement authorizes a bulk legacy runtime import.
 
 The primary reasons are maintainability for the project owner, less declaration
 and lifecycle boilerplate, stronger memory-safety feedback, and removing runtime
@@ -41,7 +44,7 @@ repository remains material for bounded, explicitly agreed reuse, not a dependen
 | Owner | Responsibility |
 | --- | --- |
 | Rust compiler | Source loading, scanning, parsing, symbols, types, diagnostics, semantic preparation, evaluation order and C++ emission |
-| Rust runtime API tooling library and CLI (partial G2) | Metadata validation; concrete runtime publication; physical type/signature/dependency/adaptation plans |
+| Rust runtime API tooling library and CLI (G1–G4 complete) | Metadata validation; concrete runtime publication; physical type/signature/dependency/adaptation plans |
 | Small C++ layout probe | Native C++ target facts required by preparation and generated layout checks |
 | C++ runtime | Representation, storage, lifecycle, actual operations and checks requiring runtime values |
 | Runtime metadata | Supported identities, operation/conversion policy and binding facts consumed through the generator's prepared model |
@@ -545,3 +548,66 @@ include compiler-model and shared-tooling diagnostic edits as well as CLI edits.
 
 The full runtime prepared-plan regression retains 128 accepted / 249 rejected
 cases, and all 31 C++ release regression checks pass, including frozen G1 parity.
+
+
+## G3/G4 full emission and production cutover — 2026-10-29
+
+User decision: complete Rust API tooling and eliminate the parallel C++ path before
+resuming runtime development. Runtime semantics and the typed-hash batch remain
+unchanged by this migration.
+
+Rust now emits every current family from the shared prepared model. Scalar emission
+and complete runtime emission share one renderer; sequence/carrier and ownership
+rendering have separate local owners. Before retiring C++, complete artifact bytes
+matched across 128 accepted runtime cases and 19 accepted scalar cases (including
+the 2,692-signature matrix). All 249 runtime and 537 scalar negative cases rejected.
+Frozen C++ hashes retain independent regression evidence without retaining a second
+implementation or binary dependency. Exact diagnostic wording is not preserved;
+CLI success output deliberately changes to structured JSON. Generated file contents,
+relative artifact paths and prepared documents remain identical.
+
+CMake now builds the Rust tooling package with locked offline Cargo, invokes the
+native probe as a production dependency and runs the Rust CLI through a configured
+argument-only launcher. Cargo does not invoke CMake. Every build rechecks Cargo and
+native context; timestamps are retained when unchanged. Runtime artifacts are now
+under each build directory's generated/ root, avoiding shared Release/UBSan writes.
+The production path also works with BUILD_TESTING=OFF.
+
+Retired: seven C++ API-generator source/header files, two private JSON headers and
+nine implementation-specific C++ preparation/JSON tests. Their relevant contracts
+are exercised by Rust unit tests, frozen G1/scalar/runtime corpora and retained
+native consumer/publication proofs. No generated C++ runtime algorithms were changed.
+
+Current checks: all 25 CTests pass in Release and UBSan. Cargo debug/release workspace
+tests pass (22 tooling tests, 13 compiler tests and one compile-fail doctest), as do
+formatting and strict Clippy. Additional isolated-export, rebuild and focused
+sanitizer results are recorded after their runs below.
+
+Reproduce the source-only and rebuild proof with `python3 -B tests/build_cutover.py`.
+It exports only sources, runs all CTests, verifies unchanged generated/object
+mtime stability, and checks metadata, publication, Rust source and target-flag
+invalidation before a BUILD_TESTING=OFF build. The Rust-only export proof remains
+`compiler/tests/measure_foundation.py` and now includes nested Rust modules.
+
+
+Final cutover evidence:
+
+- Source-only export: all 25 CTests pass without old generator sources, binaries or
+  generated inputs. BUILD_TESTING=OFF generation/build and the runtime demo pass.
+- Unchanged build: 0.447 seconds in the observed export, with unchanged generated
+  files and C++ object timestamps. Cargo/probe validation still runs.
+- Dependency invalidation: metadata, publication, Rust emitter source and C++ target
+  flags each trigger generation; changed flags produce a new native context.
+- Focused costs, one source-only run on the local 12-logical-CPU WSL host with eight
+  jobs and cached packages: release generator build plus probe 10.047 seconds;
+  default publication alone 0.032 seconds; runtime/consumer compilation 7.275 seconds.
+  These are separate observed phases, not a comparison against the old toolchain.
+- Rust-only export builds and tests both packages without C++ inputs. Its observed
+  clean debug compiler build was 9.413 seconds; warm unchanged build 0.073 seconds.
+- Five focused generated consumers pass Clang/libstdc++ ASan+UBSan: string, vector,
+  carrier, ownership lifetime/allocation and inline-value/const ownership. Leak
+  detection was disabled for the existing environment restriction; no LSan claim.
+- CMake preserves explicitly configured Cargo/rustup roots in optional cache entries,
+  allowing subsequent ordinary build commands to use the same toolchain/cache.
+
+The runtime typed-hash backlog can now resume through the sole Rust generator.

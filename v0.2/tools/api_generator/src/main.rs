@@ -13,7 +13,9 @@ fn read(path: &OsString) -> Result<Vec<u8>> {
         .map_err(|e| Error(format!("Cannot read {}: {e}", Path::new(path).display())))
 }
 fn run(args: &[OsString]) -> Result<serde_json::Value> {
-    if (args.len() == 6 || args.len() == 7) && args[0] == "emit-scalars" {
+    if (args.len() == 6 || args.len() == 7)
+        && (args[0] == "emit-scalars" || args[0] == "emit-runtime")
+    {
         let check = args.len() == 7;
         if check && args[6] != "--check" {
             return Err(Error("Unknown generator option".into()));
@@ -22,8 +24,13 @@ fn run(args: &[OsString]) -> Result<serde_json::Value> {
         let facts = TargetFacts::parse(&read(&args[3])?, &context)?;
         let metadata = json::parse(&read(&args[1])?, "runtime metadata")?;
         let publication = json::parse(&read(&args[2])?, "publication")?;
-        let plan = scpp_api_tooling::scalar::prepare(&metadata, &publication, &facts)?;
-        let files = scpp_api_tooling::emission::emit_scalars(&plan)?;
+        let files = if args[0] == "emit-runtime" {
+            let plan = scpp_api_tooling::runtime::prepare(&metadata, &publication, &facts)?;
+            scpp_api_tooling::emission::emit_runtime(&plan)?
+        } else {
+            let plan = scpp_api_tooling::scalar::prepare(&metadata, &publication, &facts)?;
+            scpp_api_tooling::emission::emit_scalars(&plan)?
+        };
         scpp_api_tooling::emission::publish(&files, Path::new(&args[5]), check)?;
         return Ok(
             serde_json::json!({"status":if check {"verified"} else {"generated"},"artifacts":files.len()}),
@@ -53,7 +60,7 @@ fn run(args: &[OsString]) -> Result<serde_json::Value> {
             Ok(integer::prepare(&metadata, &publication, &facts)?.describe())
         };
     }
-    Err(Error("Usage: scpp-api-tooling emit-scalars METADATA PUBLICATION FACTS CONTEXT OUTPUT [--check] | validate-target FACTS CONTEXT | prepare-runtime|prepare-scalars|prepare-integer-construction METADATA PUBLICATION FACTS CONTEXT (prepare commands only inspect plans)".into()))
+    Err(Error("Usage: scpp-api-tooling emit-runtime|emit-scalars METADATA PUBLICATION FACTS CONTEXT OUTPUT [--check] | validate-target FACTS CONTEXT | prepare-runtime|prepare-scalars|prepare-integer-construction METADATA PUBLICATION FACTS CONTEXT (prepare commands only inspect plans)".into()))
 }
 fn main() -> ExitCode {
     let result = run(&std::env::args_os().skip(1).collect::<Vec<_>>()).and_then(|value| {

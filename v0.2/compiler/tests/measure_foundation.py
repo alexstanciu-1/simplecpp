@@ -31,8 +31,10 @@ with tempfile.TemporaryDirectory(prefix="scpp-rust-foundation-") as temporary:
         shutil.copy2(workspace / crate / "Cargo.toml", root / crate / "Cargo.toml")
         for directory in ["src", "tests"]:
             (root / crate / directory).mkdir()
-            for source in (workspace / crate / directory).glob("*.rs"):
-                shutil.copy2(source, root / crate / directory / source.name)
+            for source in (workspace / crate / directory).rglob("*.rs"):
+                destination = root / crate / directory / source.relative_to(workspace / crate / directory)
+                destination.parent.mkdir(parents=True, exist_ok=True)
+                shutil.copy2(source, destination)
     cpu = platform.processor()
     if Path("/proc/cpuinfo").exists():
         cpu = next((line.split(":", 1)[1].strip() for line in Path("/proc/cpuinfo").read_text().splitlines() if line.startswith("model name")), cpu)
