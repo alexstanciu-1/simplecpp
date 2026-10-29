@@ -73,14 +73,15 @@ and operations; public include closures remain template-free, while private
 templates remain available for implementation reuse.
 
 Core families include scalars, strings, vectors, nullable/result carriers, record
-values and ownership handles, typed hashes, mixed and dynamic. Typed hashes are now implemented; packed storage, mixed/dynamic
-and traversal remain. Current progression:
+values and ownership handles, typed hashes, mixed and dynamic. Typed hashes and private packed storage are implemented; private mixed ownership
+is now proved. Public mixed/dynamic APIs and traversal remain. Current progression:
 
 1. Completed: custom typed-hash algorithms, concrete lookup/mutation APIs and
    internal ordering proofs; see [validation](../hash_slice_validation.md).
-2. Preserve packed storage forms and transitions, with independent proofs before
-   introducing boxed values.
-3. Preserve mixed's tagged values and documented copy/detach ownership behavior.
+2. Completed: private packed storage forms, bounded key codes and transactional
+   transitions; see [validation](../packed_storage_validation.md).
+3. Completed private slice: mixed tagged values and COW ownership; see
+   [contract](../mixed_storage.md). Public publication and operators remain separate.
 4. Preserve independent dynamic-valued containers and shared container identity.
    Mixed and dynamic remain separate families.
 5. Integrate traversal lifetime and mutation guarantees before claiming general
@@ -124,7 +125,7 @@ target relevant costs rather than treating a green functional test as sufficient
 
 The first module reuse proof is complete: all eleven native datetime functions,
 including host-local formatting/parsing. See [completion evidence](../datetime_local_validation.md).
-The [packed-storage batch](runtime_packed_storage_batch.md) is the next proposed core slice;
-its audit identifies key-encoding and allocation-failure repairs needed before reuse.
+The [packed-storage batch](runtime_packed_storage_batch.md) is complete, including
+key-limit and allocation-failure repairs. Private mixed ownership builds on it.
 Preserve the optimized compact pooled-key design; the larger-key proposal was
 withdrawn after review of the v0.1 design notes and explicit user correction.
