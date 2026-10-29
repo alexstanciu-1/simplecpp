@@ -93,12 +93,12 @@ ctest --preset ubsan
 python3 -B tests/build_cutover.py
 ```
 
-The source-only proof removes the compiler and Cargo/toolchain configuration from
-a temporary export, then builds/tests the runtime, checks PHP/template invalidation,
+The source-only proof removes the compiler from a temporary export and verifies that no Rust source
+or toolchain configuration is present, then builds/tests the runtime, checks PHP/template invalidation,
 and exercises production builds with datetime enabled and disabled.
 
-The compiler is a separate migration: its current Rust sources are retained for
-now, while `compiler/my-try/` will be mined incrementally into `v0.2/compiler/`.
+The compiler is now PHP: `compiler/my-try/` is being mined incrementally into
+`v0.2/compiler/`. Rust sources and toolchain configuration have been removed.
 
 ## PHP replacement validation — 2026-10-29
 

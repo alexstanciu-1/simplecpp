@@ -13,11 +13,11 @@ report = {}
 with tempfile.TemporaryDirectory(prefix='scpp-php-cutover-') as temporary:
     root = Path(temporary) / 'v0.2'
     shutil.copytree(source, root, ignore=shutil.ignore_patterns('build', 'target', 'generated', '__pycache__'))
-    assert not list((root / 'tools/api_generator').rglob('*.rs'))
+    assert not list(root.rglob('*.rs'))
     shutil.rmtree(root / 'compiler')
     for path in [root / 'Cargo.toml', root / 'Cargo.lock', root / 'rust-toolchain.toml']:
-        path.unlink()
-    shutil.rmtree(root / '.cargo')
+        assert not path.exists(), f'Retired Rust configuration remains: {path}'
+    assert not (root / '.cargo').exists()
     assert not (root / 'tools/support/json/pull_reader.hpp').exists()
     env = os.environ.copy()
     env.pop('CARGO_TARGET_DIR', None)

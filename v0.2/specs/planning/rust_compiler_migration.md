@@ -1,5 +1,9 @@
 # Rust compiler and API tooling migration plan
 
+> Status update (2026-10-29): Rust implementation and toolchain retired.
+> This note is historical context; current owners are the PHP compiler and PHP API
+> generator. See [compiler status](../../compiler/README.md).
+
 Doc Status: planning
 Date: 2026-10-29
 Decision: approved direction; slice 1 implemented on 2026-10-29.

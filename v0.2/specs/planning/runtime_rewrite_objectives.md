@@ -1,5 +1,9 @@
 # v0.2 runtime rewrite: architectural purpose and objectives
 
+> Status update (2026-10-29): Rust implementation and toolchain retired.
+> This note is historical context; current owners are the PHP compiler and PHP API
+> generator. See [compiler status](../../compiler/README.md).
+
 Doc Status: planning
 Date: 2026-10-29
 Status: agreed direction recorded from the runtime workspace discussion.

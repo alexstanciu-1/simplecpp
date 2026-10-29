@@ -1,5 +1,9 @@
 # G1: existing API generator contract and parity inventory
 
+> Status update (2026-10-29): Rust implementation and toolchain retired.
+> This note is historical context; current owners are the PHP compiler and PHP API
+> generator. See [compiler status](../../compiler/README.md).
+
 Doc Status: planning
 
 Historical donor inventory: the described C++ generator was retired at the full

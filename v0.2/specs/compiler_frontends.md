@@ -2,7 +2,8 @@
 
 Doc Status: supporting
 Date: 2026-10-29
-Scope: approved rewrite direction and implemented first parser subset. This is not
+Scope: approved rewrite direction and the intended first parser subset. The active
+PHP rebuild currently implements source loading and tokenization only. This is not
 an assertion of complete C++, PHP or JavaScript compatibility.
 
 ## Language and policy boundary
@@ -40,7 +41,7 @@ DeclareOrAssign intent; analysis decides introduction versus update. No parser b
 or consults a symbol table. All locals in this first subset are mutable; immutable
 binding syntax is deferred rather than silently mapped to mutable let/auto.
 
-Implemented statements: initialized local declarations, simple-name assignments,
+Planned first statements: initialized local declarations, simple-name assignments,
 expression statements and brace blocks. Semicolons are mandatory; no JS automatic
 semicolon insertion. Expressions: decimal integer tokens, names, parentheses, unary
 plus/minus, multiplication/division/remainder, addition/subtraction and shifts.
@@ -58,51 +59,39 @@ existing lexical tokens but compound assignment parsing remains deferred.
 
 ## Lexical boundary
 
-Source bytes, spans, compact tokens, token publication and diagnostics are shared.
+Source bytes, spans, token publication and diagnostics are shared.
 The current scanner shares decimal/quote/trivia/punctuation machinery with explicit
 flavor rules: PHP admits $-prefixed variable tokens and # comments (except #[);
 JS admits $ as an identifier character; C++ rejects $ names in this bounded subset.
 C++/JS reject # constructs for now. Identifier spelling is ASCII. Keyword
 classification is flavor-specific; PHP-only words such as echo remain ordinary
-identifiers in C++/JS. auto and let have flavor-specific tags. The initial keyword
+identifiers in C++/JS. auto and let are recognized only in their respective flavors. All keywords share
+one integer token kind; consumers read the exact spelling from the source span. The initial keyword
 sets are intentionally bounded, not full host-language reservation tables.
 
-Lexing whole quote/numeric spellings does not admit them in the current expression
+Lexing whole quote/numeric spellings does not admit them in the planned expression
 parser or establish escape/conversion semantics. Additional literal families require
 review of their flavor rules before parser support. Strings, interpolation and
 literal decoding must preserve source intent without importing host-language behavior.
 
-## Owners and representation
+## PHP rebuild ownership
 
-- language.rs owns syntax flavor identity, independent of the driver and profile policy.
-- 02_tokenize owns lexical scanning and immutable flavor-associated generations.
-- 03_parse/cpp.rs, php.rs and js.rs own their declaration/assignment grammars.
-- 03_parse/parser.rs provides shared cursor, type/block parsing and the current common
-  expression grammar. Shared machinery avoids cloning identical grammar algorithms;
-  each frontend can add syntax-specific normalization without inventing semantic rules.
-- 03_parse/ast.rs owns one source-level AST. Names normalize PHP's leading $ away while
-  retaining the full source span. Types retain syntax. Integer values retain raw spans.
-  Expression nodes occupy a file-local arena, avoiding recursively boxed binary chains;
-  statement blocks and type arguments remain bounded trees. Source/tokens stay retained.
-- The driver sequences load, scan and parse, returning a complete ParsedFile or error.
-  The CLI prints a success summary only after parsing succeeds. There is no partial AST
-  publication or error recovery in this first slice.
+The active PHP entry point is `compiler/main.php`. `compiler/compiler/flavor.php`
+owns per-source flavor and keyword classification; `01_prepare_inputs/` owns
+immutable source snapshots; `02_tokenize/` owns shared scanning and immutable token
+lists; `compiler/frontend.php` coordinates loading and scanning. PHP token kinds are
+integer-backed enum values in 1..127 with separate readable labels; keyword spelling
+is retained in source spans. PHP records do not claim a packed native layout. The CLI currently
+inspects tokens only. The parser behavior above remains planned until its PHP migration slice.
+See [retained parser ideas](../compiler/docs/parser_migration_notes.md).
 
-Recursive parser calls have a 128-level resource guard, separate from strictness.
-No arbitrary keyword-driven semantics, runtime bindings or backend code live in the
-AST. The future common analysis must resolve names/types, apply the project profile,
-establish evaluation order and produce settled facts for the common backend.
+## Future parser ownership and proof boundary
 
-## Review and proof boundary
+`03_parse/flavors/` will own flavor-specific declaration and assignment grammar.
+Shared parsing machinery will own cursors, types, blocks and common expressions;
+one source-level AST will retain source intent without resolved types or policy.
+Common analysis will resolve names/types, apply the project profile, establish
+execution order and settle facts for the common backend.
 
-Reviewed donor: my-try/03_parse/parser.php expression precedence/adjacent-angle handling
-and structures/structures_declarations.php syntax/semantic separation. Reused the
-concepts, not its retained scope machinery, parser-driven collection callbacks,
-incremental identity reconciliation or worker scheduling.
-
-Tests compare equivalent flavor programs against independent expected AST meaning,
-check original spans and source retention, distinguish inference/write intent, verify
-precedence and immutable angle handling, reject malformed/wrong-flavor input, and
-exercise one driver across multiple flavors. They also cover EOF diagnostics, nesting
-limits and a 10,000-operation flat expression without recursive expression storage.
-Semantic equivalence and executable-program parity remain future analysis/backend gates.
+The retired parser's design and test cases are summarized in the migration notes.
+They are future validation requirements, not executable PHP parser coverage today.

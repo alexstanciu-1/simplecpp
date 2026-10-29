@@ -27,9 +27,9 @@ It resolves metadata and explicit native C++ probe facts into public headers,
 C++ definitions and a prepared API description. The runtime remains C++;
 generated public headers remain template-free.
 
-The existing [Rust compiler foundation](compiler/README.md) is retained pending
-incremental replacement from `compiler/my-try/`. It is independent of the runtime
-build. This generator replacement does not migrate the compiler.
+The [PHP compiler](compiler/README.md) is being rebuilt incrementally from
+`compiler/my-try/`. Source loading and flavor-aware tokenization work today.
+It is independent of the runtime build; Rust has been retired.
 
 Runtime builds require 64-bit PHP 8.5 or later and Python 3.10+ (including with
 tests disabled). No Cargo, Rust toolchain, Composer packages or old-tree files
@@ -73,7 +73,7 @@ The runtime links only the emitted API and handwritten private runtime algorithm
 Native layout facts come from the standalone C++ probe, never from a legacy runtime.
 
 Generation and target facts are build-local, so Release and UBSan do not share writable
-artifacts. Generated files and Cargo/CMake outputs remain untracked. The configured
+artifacts. Generated files and CMake outputs remain untracked. The configured
 launcher invokes PHP with the current build's explicit facts/context:
 
 ```sh

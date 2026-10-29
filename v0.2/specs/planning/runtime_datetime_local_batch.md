@@ -1,5 +1,9 @@
 # Local datetime completion batch
 
+> Status update (2026-10-29): Rust implementation and toolchain retired.
+> This note is historical context; current owners are the PHP compiler and PHP API
+> generator. See [compiler status](../../compiler/README.md).
+
 Doc Status: planning
 Date: 2026-10-29
 Status: L0–L5 complete and validated; host DST delegation retained.

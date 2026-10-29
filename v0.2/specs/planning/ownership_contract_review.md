@@ -1,5 +1,9 @@
 # Ownership foundation review and proposed v0.2 contract
 
+> Status update (2026-10-29): Rust implementation and toolchain retired.
+> This note is historical context; current owners are the PHP compiler and PHP API
+> generator. See [compiler status](../../compiler/README.md).
+
 Doc Status: planning
 
 Decision update, 2026-10-29: the [Rust compiler migration](rust_compiler_migration.md)

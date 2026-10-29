@@ -1,5 +1,9 @@
 # Replaced-code removal inventory
 
+> Status update (2026-10-29): Rust implementation and toolchain retired.
+> This note is historical context; current owners are the PHP compiler and PHP API
+> generator. See [compiler status](../../compiler/README.md).
+
 Doc Status: planning
 
 Current update — 2026-10-29: the full Rust generator cutover has retired the seven

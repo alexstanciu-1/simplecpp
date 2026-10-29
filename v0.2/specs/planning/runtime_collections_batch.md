@@ -1,5 +1,9 @@
 # Runtime assessment and typed-hash batch
 
+> Status update (2026-10-29): Rust implementation and toolchain retired.
+> This note is historical context; current owners are the PHP compiler and PHP API
+> generator. See [compiler status](../../compiler/README.md).
+
 Doc Status: planning
 Date: 2026-10-29
 Status: implementation goal complete; H0–H6 delivered and validated.
