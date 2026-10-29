@@ -2,16 +2,139 @@
 
 Doc Status: supporting
 
-Decision update, 2026-10-29: migrate the compiler to independent Rust following
-[the migration plan](../specs/planning/rust_compiler_migration.md). The C++ foundation
-described below remains implemented and buildable pending replacement. Its proposed
-next implementation steps and runtime ownership adaptation are superseded; no Rust
-implementation or build cutover has occurred.
+## Rust foundation — implemented 2026-10-29
 
-This is the active v0.2 compiler foundation, not a complete compiler. It contains
-the compact token model, immutable source snapshots, token sequence construction
-and their requested runtime publication. Scanner, filesystem integration, parsing
-and semantic compilation are not migrated yet.
+The standalone Rust library and `scpp-compiler` executable now implement migration
+slice 1. The [migration plan](../specs/planning/rust_compiler_migration.md) remains
+the roadmap. Scanning, token-sequence publication, parsing, symbols, semantic
+compilation, metadata integration and C++ emission are not implemented in Rust yet.
+The existing C++ foundation remains in place and buildable, pending reviewed cutover.
+
+Cargo selects `src/*.rs` and `tests/*.rs`; CMake retains its explicit C++ source list.
+There is no build script, FFI, third-party Rust dependency, runtime linkage or
+runtime-publication prerequisite. Source files coexist in `compiler/` to avoid a
+second eventual compiler directory. CMake does not invoke Cargo, and Cargo does not
+invoke CMake or the API generator.
+
+### Install and run
+
+On Ubuntu/WSL, install host tools and the pinned stable Rust toolchain:
+
+```sh
+sudo apt-get update
+sudo apt-get install -y curl ca-certificates build-essential mold python3
+curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs \
+  | sh -s -- -y --profile minimal --default-toolchain 1.99.1 \
+      --component rustfmt --component clippy
+. "$HOME/.cargo/env"
+```
+
+Run from this `compiler/` directory so Cargo discovers `.cargo/config.toml` and
+the pinned `rust-toolchain.toml`:
+
+```sh
+cargo fmt --all --check
+cargo clippy --locked --offline --all-targets -- -D warnings
+cargo test --locked --offline
+cargo test --locked --offline --release
+cargo run --locked --offline -- --help
+cargo run --locked --offline -- source Cargo.toml 0
+python3 tests/measure_foundation.py
+```
+
+Cargo uses eight jobs. On x86_64-unknown-linux-gnu, the host `cc` linker driver uses
+mold; rustc compiles the Rust code. The existing Ninja/Clang/libc++/mold C++ presets
+are unchanged. Rust 1.99.1, rustfmt and Clippy are pinned; Cargo.lock is intentional
+reproducibility metadata and is tracked. `target/`, binaries and timing output are
+ignored. Offline builds require the pinned toolchain to be installed first.
+
+### Implemented ownership and location contract
+
+- `source.rs`: one append-only SourceMap owns immutable Arc<SourceFile> snapshots.
+  Equal paths/bytes create distinct IDs and snapshots. IDs belong to one map and
+  must not be exchanged between compilations; they are not persistent global IDs.
+  Retained Arcs survive map destruction. Byte input is transferred as Vec<u8>;
+  borrowed input requires an explicit copy. Missing sources use Option, not an
+  allocated empty state wrapper. Empty bytes form a valid present source.
+- Sources preserve arbitrary bytes, including NUL and invalid UTF-8. No decoding or
+  newline normalization occurs. Length is limited to u32::MAX bytes. Half-open
+  spans validate start <= end <= source length; zero-width EOF spans are legal.
+  A Span contains coordinates only, not identity; users bind it to its source.
+  Applying a span rechecks containment. `byte_at` returns Option<u8>.
+- Locations are one-based lines and **byte columns**. LF starts the next line;
+  CR, tabs and multibyte characters count as bytes. EOF after a trailing LF is
+  column one of the next line. Unicode/display-width caret rendering is deferred.
+- `token.rs`: eight-byte Copy token, with a 32-bit offset and packed 24-bit length /
+  eight-bit tag. Length is 1..16777215; zero tags are unrepresentable through the
+  public constructor. All nonzero tags remain representable. Named tags preserve
+  the C++ vocabulary, without claiming those source constructs are implemented.
+  Token construction checks representation; `span(source)` checks containment.
+  Ordering and retained sequence ownership belong to the next scanner/publication
+  slice. The native record layout is not a serialized wire format.
+- `diagnostic.rs`: error/note records retain the source Arc and a validated span.
+  Formatting gives path:line:byte-column, escapes control characters in paths and
+  messages, and does not decode source bytes. Path display is lossy for invalid
+  Unicode, but filesystem access uses the original PathBuf. No rich excerpt or
+  machine-readable diagnostic protocol is claimed yet.
+- `main.rs`: `source <path> [byte-offset]` loads bytes and prints a location note;
+  it is explicitly a source-inspection command, not a compile/check claim. Invalid
+  commands, offsets and I/O failures report errors and exit 1; successful commands
+  exit 0. Ordinary stdout write failures return an error rather than panic.
+
+Validation failures use typed Result errors in the library, not C++ exceptions.
+Rust moves consume the binding; there is no usable moved-from empty handle protocol.
+Borrowed byte slices have Rust lifetimes; the C++ no-interior-reference restriction
+is not copied into this internal Rust API. Standard allocation-failure behavior
+remains in effect; these Results do not promise recoverable out-of-memory errors.
+Unsafe code is forbidden by the package lint configuration.
+
+Bounded donors at baseline 8e147257a: the existing C++ `include/token*.hpp`,
+`src/token*.cpp`, and token/buffer/sequence tests in this directory. The token tag
+vocabulary and packing limits are retained. Snapshot, byte-range and retention
+invariants are adapted to Rust; state pointers, handwritten special members and
+runtime scalar adapters are not ported. The sequence donor was inspected to keep
+source containment separate from packing; its builder/publication remains slice 2.
+
+### Validation and timings
+
+Eight Rust tests pass in debug and release. Formatting and Clippy with warnings
+as errors pass. Proofs cover byte retention/identity, empty sources, invalid spans,
+CRLF and byte coordinates, diagnostic retention/escaping, all 255 nonzero token
+tags, packing limits, source containment and CLI success/failure paths. The 4-GiB
+limit uses the actual checked-length helper without allocating a 4-GiB fixture.
+All 34 existing C++ CTest checks still pass with the existing compiler in place.
+
+`tests/measure_foundation.py` copies only Rust sources, tests, manifest/lockfile and
+Cargo/toolchain configuration into a temporary directory and builds/tests offline.
+No C++ compiler source, runtime, generated API or repository build output is copied.
+This proves the standalone build boundary and keeps timed edits out of working code.
+The linked Linux executable requires libc/libgcc_s/loader, not a C++ or scpp runtime;
+its linker comment identifies mold.
+
+Measured on 2026-10-29: Rust/Cargo 1.99.1, mold 2.40.4, Linux WSL2 6.6.87.2,
+glibc 2.39, AMD Ryzen 5 PRO 4650G, 12 logical CPUs, eight build jobs. Toolchain was
+already installed; there were no package downloads. Each row is one wall-clock
+observation, with fresh Cargo targets where stated and OS filesystem caches not
+flushed. These numbers characterize this small foundation, not the future compiler
+or a controlled C++/Rust comparison.
+
+| Operation | Seconds |
+| --- | ---: |
+| Clean debug build in Rust-only export | 0.675 |
+| Unchanged debug build | 0.058 |
+| Incremental CLI help-text edit and relink | 0.247 |
+| Cold cargo check in separate target | 0.352 |
+| Warm cargo check | 0.059 |
+| Test build and run after debug build | 0.950 |
+| Warm foundation integration tests | 0.073 |
+| Release build with no prior release outputs | 0.593 |
+
+### Preserved C++ baseline
+
+The following sections describe the existing C++ implementation and historical
+validation. Its old next-step recommendations are superseded by the Rust migration;
+no C++ compiler source, build wiring or runtime publication was removed in slice 1.
+It contains compact tokens, immutable source snapshots and token sequence construction.
 
 The active layout is `compiler/include/`, `compiler/src/` and `compiler/tests/`.
 Headers use direct includes such as `#include "token.hpp"`; CMake exports the

@@ -24,3 +24,6 @@ CMakeUserPresets.json
 /compiler/dependencies/
 .scpp-token-cache/
 .scpp-portability-index.json
+
+# Rust compiler build/cache outputs (Cargo.lock is intentionally tracked).
+/compiler/target/

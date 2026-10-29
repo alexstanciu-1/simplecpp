@@ -2,7 +2,8 @@
 
 Doc Status: planning
 Date: 2026-10-29
-Decision: approved direction; implementation has not started.
+Decision: approved direction; slice 1 implemented on 2026-10-29.
+The remaining migration slices are planned, not implemented.
 
 ## Decision and scope
 
@@ -197,3 +198,19 @@ proofs, the compiler builds independently in Rust, generator/runtime integration
 one documented metadata boundary, and the superseded C++ compiler path is retired.
 This is not a claim of complete language coverage or a requirement to port every
 legacy compiler facility. No runtime/API-generator language rewrite is included.
+
+## Slice 1 checkpoint — 2026-10-29
+
+Implemented the standalone Cargo library/CLI in compiler/ alongside the unchanged
+C++ source list. It uses stable Rust 1.99.1, eight jobs and mold on the tested Linux
+target, with no third-party packages, runtime linkage or generator dependency.
+Sources, IDs, half-open byte spans, compact tokens and retained location diagnostics
+are implemented. The CLI loads a file and reports a byte location; it does not scan
+or compile source yet. Token-sequence publication and scanner work remain slice 2.
+
+Eight Rust tests pass in debug/release, formatting and strict Clippy pass, and all
+34 C++ checks pass. A Rust-only temporary export builds/tests offline. The
+[compiler README](../../compiler/README.md) records adopted donor contracts,
+intentional Rust API differences, installation commands and reproducible timing
+measurements. No C++ implementation, build wiring or generated publication was
+removed. This checkpoint implements the separately authorized first slice only.
