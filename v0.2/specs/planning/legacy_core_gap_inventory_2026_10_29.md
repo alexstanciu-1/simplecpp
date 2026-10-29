@@ -108,3 +108,12 @@ and its implemented subset is [ownership_slice.md](../ownership_slice.md).
 template-free interfaces with verified behavior and ownership, not that every legacy
 header has a replacement. Track each row as reuse/adapt/compiler-owned/defer/retire
 when its consumer is selected. No percentage-complete claim follows from this inventory.
+
+## Ownership/value implementation follow-up — 2026-10-29
+
+The first recommended foundation step is now implemented for registered concrete
+records: inline values propagate payload copy/move/noexcept behavior, and generated
+shared/weak/unique const-pointee handles support explicit add-const qualification.
+See [ownership_slice.md](../ownership_slice.md) for the exact boundary and proof.
+The table above retains its c8ed69fba inventory baseline. Source value normalization,
+compiler adaptation and the remaining ownership operations are still pending.

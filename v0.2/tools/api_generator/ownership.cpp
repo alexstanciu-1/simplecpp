@@ -38,6 +38,16 @@ std::string join(const std::vector<std::string> &types, bool arguments) {
     }
     return s;
 }
+std::string name(const ownership_record &r, const ownership_specialization &s) {
+    return s.family + (s.const_pointee ? "_const_" : "_") + r.name;
+}
+std::string payload(const ownership_record &r, const ownership_specialization &s) {
+    return (s.const_pointee ? "const " : "") + r.name;
+}
+std::string native_type(const ownership_record &r, const ownership_specialization &s) {
+    return "std::" + s.family + "_ptr<" + payload(r, s) + ">";
+}
+
 }
 
 void prepare_ownership(const value &metadata, const value &publication, runtime_plan &plan) {
@@ -45,7 +55,7 @@ void prepare_ownership(const value &metadata, const value &publication, runtime_
         require(!publication.has("ownership"), "missing metadata"); return;
     }
     const auto &m = metadata.at("ownership");
-    fields_only(m, "binding families default construction access empty_access weak_access payload", "ownership metadata");
+    fields_only(m, "binding families default construction access empty_access weak_access payload value const_pointee", "ownership metadata");
     literal(m, "binding", "std_smart_pointer_inline"); literal(m, "default", "empty");
     literal(m, "construction", "explicit_factory"); literal(m, "access", "checked_borrow");
     literal(m, "empty_access", "throw_runtime_error"); literal(m, "weak_access", "explicit_lock");
@@ -53,6 +63,13 @@ void prepare_ownership(const value &metadata, const value &publication, runtime_
     std::set<std::string> families;
     for (const auto &f : array(m.at("families"))) require(families.insert(f.text()).second, "duplicate family");
     require(families == std::set<std::string>{"shared", "weak", "unique"}, "unsupported families");
+    if (m.has("value")) {
+        const auto &v = m.at("value");
+        fields_only(v, "binding construction special_members access", "inline value metadata");
+        literal(v, "binding", "inline_record"); literal(v, "construction", "explicit");
+        literal(v, "special_members", "payload"); literal(v, "access", "borrow");
+    }
+    if (m.has("const_pointee")) literal(m, "const_pointee", "explicit_add_const");
     if (!publication.has("ownership")) return;
     const auto &p = publication.at("ownership");
     fields_only(p, "header records", "ownership publication");
@@ -70,18 +87,37 @@ void prepare_ownership(const value &metadata, const value &publication, runtime_
     for (const auto &[name, target] : plan.aliases) names.insert(name);
     names.insert(plan.string.name); names.insert("error_t"); names.insert("null");
     for (const auto &r : array(p.at("records"))) {
-        fields_only(r, "name header constructors families", "ownership record");
+        fields_only(r, "name header constructors families const_families", "ownership record");
         ownership_record record; record.name = r.at("name").text(); record.header = path(r.at("header"));
         require(identifier(record.name) && names.insert(record.name).second, "invalid or conflicting record name");
         require(!headers.contains(record.header), "record header conflicts with generated header");
-        std::set<std::string> requested;
-        for (const auto &f : array(r.at("families"))) {
-            require(families.contains(f.text()) && requested.insert(f.text()).second, "invalid or duplicate family");
-            require(names.insert(f.text() + "_" + record.name).second, "conflicting specialization");
+        for (bool is_const : {false, true}) {
+            const auto field = is_const ? "const_families" : "families";
+            if (!r.has(field)) continue;
+            std::set<std::string> requested;
+            for (const auto &f : array(r.at(field))) {
+                require((families.contains(f.text()) || (!is_const && f.text() == "value" && m.has("value"))) &&
+                    requested.insert(f.text()).second, "invalid or duplicate family");
+                require(!is_const || m.has("const_pointee"), "missing const-pointee policy");
+                require(names.insert(f.text() + (is_const ? "_const_" : "_") + record.name).second, "conflicting specialization");
+            }
+            require(!requested.contains("weak") || requested.contains("shared"), "weak requires matching shared publication");
+            for (const auto &f : requested) record.families.push_back({f, is_const});
         }
-        require(!requested.empty(), "empty family request");
-        require(!requested.contains("weak") || requested.contains("shared"), "weak requires shared publication");
-        record.families.assign(requested.begin(), requested.end());
+        require(!record.families.empty(), "empty family request");
+        // Prepare concrete qualification conversions once for both emission and lowering facts.
+        for (auto &target : record.families) {
+            if (!target.const_pointee) continue;
+            for (const auto &source : record.families) {
+                if (source.const_pointee || source.family == "value") continue;
+                if (source.family == target.family) {
+                    if (target.family != "unique") target.conversions.push_back({source.family, false});
+                    target.conversions.push_back({source.family, true});
+                } else if (target.family == "weak" && source.family == "shared") {
+                    target.conversions.push_back({source.family, false});
+                }
+            }
+        }
         std::set<std::vector<std::string>> signatures;
         for (const auto &args : array(r.at("constructors"))) {
             std::vector<std::string> signature;
@@ -104,17 +140,36 @@ void prepare_ownership(const value &metadata, const value &publication, runtime_
 }
 
 value describe_ownership(const ownership_plan &o) {
-    auto out = value::object(); out["header"] = o.header; out["binding"] = "std_smart_pointer_inline";
-    out["empty_access"] = "std::runtime_error:ownership_empty_access";
-    out["weak_lock_failure"] = "empty_shared"; out["copy_allocation"] = "none";
-    out["weak_condition"] = "not_published"; out["payload_access"] = "checked_borrow_no_implicit_extraction";
+    auto out = value::object(); out["header"] = o.header; out["handle_binding"] = "std_smart_pointer_inline";
+    out["handle_empty_access"] = "std::runtime_error:ownership_empty_access";
+    out["weak_lock_failure"] = "empty_shared"; out["handle_copy_allocation"] = "none";
+    out["weak_condition"] = "not_published"; out["handle_payload_access"] = "checked_borrow_no_implicit_extraction";
     out["records"] = value::array();
     for (const auto &r : o.records) {
         auto row = value::object(); row["name"] = r.name; row["header"] = r.header;
         row["constructors"] = value::array(); row["families"] = value::array();
         for (const auto &args : r.constructors) { auto a = value::array(); for (const auto &t : args) a.items.emplace_back(t); row["constructors"].items.push_back(a); }
-        for (const auto &f : r.families) {
-            auto family = value::object(); family["name"] = f + "_" + r.name; family["family"] = f;
+        for (const auto &specialization : r.families) {
+            const auto &f = specialization.family;
+            auto family = value::object(); family["name"] = name(r, specialization); family["family"] = f;
+            if (f == "value") {
+                family["binding"] = "inline_record";
+                family["special_members"] = "native_payload_dependent";
+                family["default"] = std::find(r.constructors.begin(), r.constructors.end(), std::vector<std::string>{}) != r.constructors.end() ? "payload_value_initialization" : "not_published";
+                family["wrapper_allocation"] = "none";
+                row["families"].items.push_back(family);
+                continue;
+            }
+            family["pointee"] = specialization.const_pointee ? "const" : "mutable";
+            family["qualification_constructors"] = value::array();
+            for (const auto &conversion : specialization.conversions) {
+                auto c = value::object();
+                c["source"] = name(r, {conversion.source_family, false});
+                c["parameter"] = conversion.move ? "rvalue_reference" : "const_reference";
+                c["construction"] = "explicit";
+                c["effect"] = conversion.move ? "transfer_source_empty" : "retain_identity";
+                family["qualification_constructors"].items.push_back(c);
+            }
             family["default"] = "empty"; family["move"] = "transfer_source_empty";
             family["copy"] = f == "unique" ? "deleted" : "retain_identity";
             family["size"] = number(f == "shared" ? o.shared_size : f == "weak" ? o.weak_size : o.unique_size);
@@ -137,12 +192,31 @@ void emit_ownership(const runtime_plan &plan, std::map<std::string, std::string>
     std::string cpp = "// Generated ownership definitions.\n#include \"" + o.header + "\"\n#include \"ownership_semantics.hpp\"\nnamespace scpp {\n";
     for (const auto &r : o.records) {
         cpp += "static_assert(std::is_class_v<" + r.name + "> && std::is_nothrow_destructible_v<" + r.name + ">);\n";
-        for (const auto &f : r.families) h += "class " + f + "_" + r.name + ";\n";
-        // Shared must be complete before the weak member declarations/definitions.
-        for (const auto &f : r.families) {
-            const auto n = f + "_" + r.name;
-            const auto native = "std::" + f + "_ptr<" + r.name + ">";
-            const auto shared = "shared_" + r.name;
+        for (const auto &s : r.families) h += "class " + name(r, s) + ";\n";
+        for (const auto &specialization : r.families) {
+            const auto &f = specialization.family;
+            const auto n = name(r, specialization);
+            const auto t = payload(r, specialization);
+            if (f == "value") {
+                h += "class " + n + " final {\npublic:\n";
+                for (const auto &args : r.constructors) {
+                    const auto spec = " noexcept(noexcept(" + r.name + "(" + join(args, true) + ")))";
+                    h += "    explicit " + n + "(" + join(args, false) + ")" + spec + ";\n";
+                    cpp += n + "::" + n + "(" + join(args, false) + ")" + spec + " : payload_(" + join(args, true) + ") {}\n";
+                }
+                for (bool read_only : {false, true}) {
+                    const auto type = (read_only ? "const " : "") + r.name;
+                    const std::string qualifier = read_only ? " const" : "";
+                    h += "    " + type + "& operator*()" + qualifier + " noexcept;\n    " + type + "* operator->()" + qualifier + " noexcept;\n";
+                    cpp += type + "& " + n + "::operator*()" + qualifier + " noexcept { return payload_; }\n";
+                    cpp += type + "* " + n + "::operator->()" + qualifier + " noexcept { return std::addressof(payload_); }\n";
+                }
+                h += "private:\n    " + r.name + " payload_;\n};\n";
+                cpp += "static_assert(sizeof(" + n + ") == sizeof(" + r.name + ") && alignof(" + n + ") == alignof(" + r.name + "));\n";
+                continue;
+            }
+            const auto native = native_type(r, specialization);
+            const auto shared = name(r, {"shared", specialization.const_pointee});
             const auto size = f == "shared" ? o.shared_size : f == "weak" ? o.weak_size : o.unique_size;
             const auto alignment = f == "shared" ? o.shared_align : f == "weak" ? o.weak_align : o.unique_align;
             const auto get = [&](const std::string &obj) { return "detail::ownership_access::get<" + native + ">(" + obj + ")"; };
@@ -166,19 +240,29 @@ void emit_ownership(const runtime_plan &plan, std::map<std::string, std::string>
             cpp += "void " + n + "::swap(" + n + "& other) noexcept { " + self + ".swap(" + get("other") + "); }\n";
             if (f == "weak") {
                 h += "    explicit " + n + "(const " + shared + "& owner) noexcept;\n    " + shared + " lock() const noexcept;\n";
-                const auto strong = "detail::ownership_access::get<std::shared_ptr<" + r.name + ">>";
+                const auto strong = "detail::ownership_access::get<std::shared_ptr<" + t + ">>";
                 cpp += n + "::" + n + "(const " + shared + "& owner) noexcept { detail::ownership_access::construct<" + native + ">(*this, " + strong + "(owner)); }\n";
                 cpp += shared + " " + n + "::lock() const noexcept { " + shared + " result; " + strong + "(result) = " + self + ".lock(); return result; }\n";
             } else {
-                h += "    bool_t has_value() const noexcept;\n    explicit operator bool() const noexcept;\n    " + r.name + "& operator*() const;\n    " + r.name + "* operator->() const;\n";
+                h += "    bool_t has_value() const noexcept;\n    explicit operator bool() const noexcept;\n    " + t + "& operator*() const;\n    " + t + "* operator->() const;\n";
                 cpp += "bool_t " + n + "::has_value() const noexcept { return bool_t{static_cast<bool>(" + self + ")}; }\n";
                 cpp += n + "::operator bool() const noexcept { return static_cast<bool>(" + self + "); }\n";
-                cpp += r.name + "& " + n + "::operator*() const { return detail::ownership_access::checked(" + self + "); }\n";
-                cpp += r.name + "* " + n + "::operator->() const { return std::addressof(detail::ownership_access::checked(" + self + ")); }\n";
+                cpp += t + "& " + n + "::operator*() const { return detail::ownership_access::checked(" + self + "); }\n";
+                cpp += t + "* " + n + "::operator->() const { return std::addressof(detail::ownership_access::checked(" + self + ")); }\n";
                 for (const auto &args : r.constructors) {
                     h += "    static " + n + " make(" + join(args, false) + ");\n";
-                    cpp += n + " " + n + "::make(" + join(args, false) + ") { " + n + " result; " + get("result") + " = std::make_" + f + "<" + r.name + ">(" + join(args, true) + "); return result; }\n";
+                    cpp += n + " " + n + "::make(" + join(args, false) + ") { " + n + " result; " + get("result") + " = std::make_" + f + "<" + t + ">(" + join(args, true) + "); return result; }\n";
                 }
+            }
+            // Only add const, preserving the native control block. No reverse or implicit conversion.
+            for (const auto &conversion : specialization.conversions) {
+                const ownership_specialization source{conversion.source_family, false};
+                const auto source_name = name(r, source);
+                const auto parameter = conversion.move ? source_name + "&& other" : "const " + source_name + "& other";
+                auto expression = "detail::ownership_access::get<" + native_type(r, source) + ">(other)";
+                if (conversion.move) expression = "std::move(" + expression + ")";
+                h += "    explicit " + n + "(" + parameter + ") noexcept;\n";
+                cpp += n + "::" + n + "(" + parameter + ") noexcept { detail::ownership_access::construct<" + native + ">(*this, " + expression + "); }\n";
             }
             h += "private:\n    friend struct detail::ownership_access;\n    alignas(" + std::to_string(alignment) + ") unsigned char storage_[" + std::to_string(size) + "];\n};\n";
         }

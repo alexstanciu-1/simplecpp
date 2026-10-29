@@ -148,7 +148,8 @@ for the exact construction/state API and the scope of supported payloads.
 ## Concrete ownership extension
 
 The [ownership slice](ownership_slice.md) provides optional generated shared/weak/unique
-record handles through a separate publication. These are not carrier payload
+record handles, const-pointee variants and inline values through a separate publication. These are not carrier payload
 extractions and do not expand the numeric operator matrix. Default runtime and
-compiler publications do not request ownership specializations yet. Inline value
-generation and compiler adaptation remain later slices.
+compiler publications do not request ownership specializations yet. Inline values
+inherit native payload copy/move capabilities; explicit const qualification preserves
+handle identity without allocation. Compiler adaptation remains a later slice.

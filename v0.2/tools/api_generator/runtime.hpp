@@ -45,9 +45,18 @@ struct carrier_plan {
     std::string name, family, payload, default_state;
     bool implicit_extraction = true;
 };
+struct ownership_conversion {
+    std::string source_family;
+    bool move = false;
+};
+struct ownership_specialization {
+    std::string family;
+    bool const_pointee = false;
+    std::vector<ownership_conversion> conversions{};
+};
 struct ownership_record {
     std::string name, header;
-    std::vector<std::string> families;
+    std::vector<ownership_specialization> families;
     std::vector<std::vector<std::string>> constructors;
 };
 struct ownership_plan {

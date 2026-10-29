@@ -30,3 +30,7 @@ add_test(NAME ownership_boundary COMMAND ${CMAKE_COMMAND}
   -DGENERATED=${ownership_generated} -DRECORDS=${CMAKE_CURRENT_SOURCE_DIR}/include
   -DWORK=${CMAKE_CURRENT_BINARY_DIR}/boundary
   -P ${CMAKE_CURRENT_SOURCE_DIR}/boundary.cmake)
+
+add_executable(ownership_value_const_test value_const_consumer.cpp)
+target_link_libraries(ownership_value_const_test PRIVATE ownership_proof_runtime)
+add_test(NAME ownership_value_const COMMAND ownership_value_const_test)

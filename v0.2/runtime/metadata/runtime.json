@@ -655,6 +655,13 @@
     "access": "checked_borrow",
     "empty_access": "throw_runtime_error",
     "weak_access": "explicit_lock",
-    "payload": "registered_record"
+    "payload": "registered_record",
+    "value": {
+      "binding": "inline_record",
+      "construction": "explicit",
+      "special_members": "payload",
+      "access": "borrow"
+    },
+    "const_pointee": "explicit_add_const"
   }
 }

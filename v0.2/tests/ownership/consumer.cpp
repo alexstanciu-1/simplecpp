@@ -10,18 +10,7 @@
 #include <utility>
 
 namespace ownership_test { extern std::atomic<int> live, destroyed, copied; }
-static std::atomic<long> allocations{0}, releases{0};
-static std::atomic<bool> fail_allocation{false};
-void *operator new(std::size_t size) {
-    if (fail_allocation.exchange(false)) throw std::bad_alloc();
-    if (void *p = std::malloc(size ? size : 1)) { ++allocations; return p; }
-    throw std::bad_alloc();
-}
-void operator delete(void *p) noexcept { if (p) { ++releases; std::free(p); } }
-void *operator new[](std::size_t n) { return ::operator new(n); }
-void operator delete[](void *p) noexcept { ::operator delete(p); }
-void operator delete(void *p, std::size_t) noexcept { ::operator delete(p); }
-void operator delete[](void *p, std::size_t) noexcept { ::operator delete(p); }
+#include "allocation_probe.hpp"
 
 using namespace scpp;
 static void require(bool ok, std::source_location location = std::source_location::current()) {

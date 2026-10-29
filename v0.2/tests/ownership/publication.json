@@ -30,6 +30,12 @@
         "families": [
           "shared",
           "weak",
+          "unique",
+          "value"
+        ],
+        "const_families": [
+          "shared",
+          "weak",
           "unique"
         ]
       },
@@ -44,7 +50,39 @@
         "families": [
           "shared",
           "weak",
+          "unique",
+          "value"
+        ],
+        "const_families": [
+          "shared",
+          "weak",
           "unique"
+        ]
+      },
+      {
+        "name": "record_move_only",
+        "header": "scpp/ownership_records.hpp",
+        "constructors": [
+          [],
+          [
+            "int64"
+          ]
+        ],
+        "families": [
+          "value"
+        ]
+      },
+      {
+        "name": "record_throwing_move",
+        "header": "scpp/ownership_records.hpp",
+        "constructors": [
+          [],
+          [
+            "int64"
+          ]
+        ],
+        "families": [
+          "value"
         ]
       }
     ]

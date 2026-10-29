@@ -219,3 +219,14 @@ allocation measurements and native-target constraints are in
 noncopyable payload ownership. Generated artifacts stay ignored; no compiler
 consumer was adapted. Inline value generation and the remaining proposal entries
 above remain future slices.
+
+## Inline value / const-pointee checkpoint — 2026-10-29
+
+The next bounded slice implements direct inline record values with payload-derived
+special members and exception specifications, plus shared/weak/unique const-pointee
+specializations and explicit add-const conversions. The generator prepares concrete
+qualification signatures; no runtime type deduction or ownership overload matrix is
+introduced. Four proof records cover copyable, immovable, over-aligned move-only and
+throwing-move payloads. See [ownership_slice.md](../ownership_slice.md) for the current
+contract and measurements. Source normalization, inheritance/self protocols and
+compiler adaptation remain future work; the earlier checkpoint is historical.
