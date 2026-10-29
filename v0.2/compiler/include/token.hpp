@@ -1,6 +1,6 @@
 #pragma once
 #include "scpp/numeric.hpp"
-#include "scpp_compiler/token_kind.hpp"
+#include "token_kind.hpp"
 
 namespace scpp::compiler_support
 {

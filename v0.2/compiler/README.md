@@ -1,4 +1,4 @@
-# First compiler model slice
+# Compiler foundation
 
 Doc Status: supporting
 
@@ -6,6 +6,11 @@ This is the active v0.2 compiler foundation, not a complete compiler. It contain
 the compact token model, immutable source snapshots, token sequence construction
 and their requested runtime publication. Scanner, filesystem integration, parsing
 and semantic compilation are not migrated yet.
+
+The active layout is `compiler/include/`, `compiler/src/` and `compiler/tests/`.
+Headers use direct includes such as `#include "token.hpp"`; CMake exports the
+compiler include directory. C++ namespaces remain `scpp::compiler` and
+`scpp::compiler_support`. Legacy donor paths below retain their original names.
 
 ## Ownership and bounded reuse
 

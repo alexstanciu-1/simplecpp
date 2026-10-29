@@ -1,6 +1,6 @@
 #pragma once
-#include "scpp_compiler/token_buffer.hpp"
-#include "scpp_compiler/token.hpp"
+#include "token_buffer.hpp"
+#include "token.hpp"
 
 namespace scpp::compiler_support
 {

@@ -1,4 +1,4 @@
-#include "scpp_compiler/token.hpp"
+#include "token.hpp"
 #include <stdexcept>
 
 namespace scpp::compiler_support

@@ -1,4 +1,4 @@
-#include "scpp_compiler/token_buffer.hpp"
+#include "token_buffer.hpp"
 #include <memory>
 #include <stdexcept>
 #include <string>

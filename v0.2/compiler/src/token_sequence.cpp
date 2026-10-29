@@ -1,4 +1,4 @@
-#include "scpp_compiler/token_sequence.hpp"
+#include "token_sequence.hpp"
 #include <algorithm>
 #include <cstdint>
 #include <memory>

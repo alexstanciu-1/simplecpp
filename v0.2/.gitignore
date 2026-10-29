@@ -21,6 +21,6 @@ CMakeUserPresets.json
 /coverage/
 
 # Published dependency snapshots, if introduced by the compiler build.
-/compiler/my-try-cpp/dependencies/
+/compiler/dependencies/
 .scpp-token-cache/
 .scpp-portability-index.json

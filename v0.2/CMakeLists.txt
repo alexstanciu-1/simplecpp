@@ -159,4 +159,4 @@ if(BUILD_TESTING)
     -P ${CMAKE_CURRENT_SOURCE_DIR}/tests/native_operator_publication.cmake)
 endif()
 
-add_subdirectory(compiler/my-try-cpp)
+add_subdirectory(compiler)
