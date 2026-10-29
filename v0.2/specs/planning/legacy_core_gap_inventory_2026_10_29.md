@@ -1,6 +1,11 @@
 # Legacy core runtime gap inventory
 
 Doc Status: planning
+
+Decision update, 2026-10-29: the [Rust compiler migration](rust_compiler_migration.md)
+supersedes proposed adaptation of the C++ compiler to runtime ownership handles.
+Runtime ownership/value support remains useful for generated programs and plain C++
+consumers. Earlier compiler-adaptation recommendations below retain historical context.
 Date: 2026-10-29
 Baseline: v0.2 ownership slice c8ed69fba.
 

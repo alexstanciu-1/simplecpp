@@ -1,6 +1,11 @@
 # Ownership foundation review and proposed v0.2 contract
 
 Doc Status: planning
+
+Decision update, 2026-10-29: the [Rust compiler migration](rust_compiler_migration.md)
+supersedes proposed adaptation of the C++ compiler to runtime ownership handles.
+Runtime ownership/value support remains useful for generated programs and plain C++
+consumers. Earlier compiler-adaptation recommendations below retain historical context.
 Date: 2026-10-29
 Status: design baseline with the first implementation checkpoint below. Remaining
 proposals are not implemented contracts; compiler adaptation remains deferred.

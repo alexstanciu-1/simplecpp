@@ -4,6 +4,18 @@ Doc Status: planning
 
 Date: 2026-10-28
 
+## Rust compiler decision — 2026-10-29
+
+The compiler will be implemented independently in Rust. The runtime and existing
+API generator/physical pre-lowering remain C++. The active decision, ownership
+boundaries and staged migration are recorded in
+[the v0.2 Rust compiler migration plan](../../v0.2/specs/planning/rust_compiler_migration.md).
+This supersedes earlier instructions below to evolve my-try-cpp or adapt the C++
+compiler to generated runtime ownership handles. Preserve its reviewed contracts
+and tests as migration evidence; do not translate its implementation mechanically.
+Earlier checkpoints remain historical. This update changes planning only: no Rust
+implementation, code moves, build changes or deletion is authorized by this edit.
+
 ## Status and scope
 
 This document records the discussion and agreed direction for a deep runtime
@@ -16,9 +28,10 @@ The v0.2 backbone is:
 1. The runtime.
 2. The existing metadata-driven runtime public API generator, including its
    pre-lowering engine.
-3. The existing compiler in `compiler/my-try-cpp/`.
+3. An independent Rust compiler, following the migration decision above.
 
-Reuse and evolve these three components. Review other tooling and code, then keep,
+Reuse and evolve the runtime and generator; migrate compiler responsibilities to
+Rust in reviewed slices. Review other tooling and code, then keep,
 replace or remove it based on responsibilities and consumers. This is not permission
 to bulk-delete legacy tooling or rewrite working engines.
 
@@ -55,9 +68,9 @@ against components outside `v0.2/`.
 - Each reuse slice requires explicit confirmation/agreement on its responsibility
   and scope before code is imported. Approval of this direction is not blanket
   approval to copy modules or their transitive dependency closures.
-- Reuse and adapt the existing runtime, generator/pre-lowering engine and
-  `my-try-cpp` in small coherent slices. Do not rewrite them merely to avoid review
-  of their dependencies, or introduce a disposable competing generator.
+- Reuse and adapt the existing runtime and generator/pre-lowering engine in small
+  coherent slices. The Rust compiler selectively reuses reviewed contracts and tests
+  from my-try-cpp; no competing generator or bulk compiler import is planned.
 - Review and explicitly adopt relevant contracts and proofs inside `v0.2/`.
   Existing specs remain evidence and the basis for identifying intentional changes;
   their old location is not a hidden ongoing contract dependency of the new project.

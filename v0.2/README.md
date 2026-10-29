@@ -18,6 +18,9 @@ The [compiler foundation](compiler/README.md) now includes compact tokens, immut
 source snapshots and checked token sequence construction, using its own generated
 runtime publication. Scanning, parsing, semantic compilation and broader runtime
 imports remain pending.
+The agreed next direction is an [independent Rust compiler](specs/planning/rust_compiler_migration.md).
+This is a migration plan, not an implemented compiler switch; runtime and API
+generation stay in C++. The existing C++ compiler foundation is the migration baseline.
 Standard-library types and private templates are appropriate for tool support;
 generated runtime consumer headers remain template-free.
 

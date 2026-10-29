@@ -2,6 +2,12 @@
 
 Doc Status: supporting
 
+Decision update, 2026-10-29: migrate the compiler to independent Rust following
+[the migration plan](../specs/planning/rust_compiler_migration.md). The C++ foundation
+described below remains implemented and buildable pending replacement. Its proposed
+next implementation steps and runtime ownership adaptation are superseded; no Rust
+implementation or build cutover has occurred.
+
 This is the active v0.2 compiler foundation, not a complete compiler. It contains
 the compact token model, immutable source snapshots, token sequence construction
 and their requested runtime publication. Scanner, filesystem integration, parsing
