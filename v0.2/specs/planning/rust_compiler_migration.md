@@ -1,16 +1,23 @@
-# Rust compiler decision and migration plan
+# Rust compiler and API tooling migration plan
 
 Doc Status: planning
 Date: 2026-10-29
 Decision: approved direction; slice 1 implemented on 2026-10-29.
-The remaining migration slices are planned, not implemented.
+API-generator/physical pre-lowering migration to Rust approved on 2026-10-29.
+The remaining compiler and tooling slices are planned, not implemented.
 
 ## Decision and scope
 
-Implement the v0.2 compiler in Rust, independently of the C++ runtime. Keep the
-runtime and the metadata-driven API generator, including physical pre-lowering,
-in C++ for now. The three components remain the project backbone; only the
-compiler implementation language and its bootstrap dependency boundary change.
+Implement both the compiler and metadata-driven runtime API generator, including
+physical pre-lowering, in Rust. Keep the runtime, generated application/API code
+and a small native layout probe in C++. The three responsibilities remain the
+project backbone, with compiler and API tooling sharing a typed Rust library boundary.
+
+This extends and supersedes the earlier decision to retain the generator in C++.
+The Rust compiler foundation is implemented; the production API generator is still
+C++. No generator port, workspace change, probe or build cutover is implemented by
+this planning update. Preserve numeric, carrier and ownership semantics during the
+migration; a tooling language change is not a runtime-policy redesign.
 
 This supersedes the proposal to evolve the C++ compiler into the production v0.2
 compiler, including adapting its source snapshots and token sequences to generated
@@ -33,7 +40,8 @@ repository remains material for bounded, explicitly agreed reuse, not a dependen
 | Owner | Responsibility |
 | --- | --- |
 | Rust compiler | Source loading, scanning, parsing, symbols, types, diagnostics, semantic preparation, evaluation order and C++ emission |
-| C++ API generator | Metadata validation; concrete runtime publication; physical type/signature/dependency/adaptation plans |
+| Rust runtime API tooling library and CLI (planned) | Metadata validation; concrete runtime publication; physical type/signature/dependency/adaptation plans |
+| Small C++ layout probe (planned) | Native C++ target facts required by preparation and generated layout checks |
 | C++ runtime | Representation, storage, lifecycle, actual operations and checks requiring runtime values |
 | Runtime metadata | Supported identities, operation/conversion policy and binding facts consumed through the generator's prepared model |
 | Adopted language contracts | Source admission and semantics, including language-flavor decisions; implementation language does not redefine them |
@@ -51,38 +59,161 @@ Compile-time evaluation must implement the adopted target semantics explicitly,
 including overflow, widths, rounding, extraction and short-circuit behavior; Rust's
 native behavior is not the specification of Simple C++.
 
-## Generator integration and bootstrap
+## Shared Rust library boundary
 
-Use the existing generator executable and file artifacts as the initial process
-boundary. Do not add C++/Rust FFI, a second generator, or a Rust port of the generator
-as a prerequisite. Plain C++ consumers keep using the same publication mechanism.
+Use one Cargo workspace with two packages: the compiler library/CLI and a runtime
+API tooling library with its own thin standalone generator CLI. Retain compiler/
+and tools/api_generator/ as responsibility locations where practical; stage any
+file moves explicitly. This is a planned workspace, not the current package layout.
+At workspace introduction, consolidate the toolchain pin, lockfile, Cargo build
+configuration and output ignores; update commands and the isolated-export proof.
 
-The intended flow is:
+The compiler depends on API tooling; API tooling must not depend on compiler AST,
+symbol tables, source diagnostics or compiler-internal IDs. The library accepts
+runtime identities, typed publication demands and target facts, and returns typed
+validated policies and physical plans. The compiler maps its symbols/types to those
+identities. Keep metadata loading/validation, preparation and C++ emission as clear
+modules within the tooling package, not separate frameworks or competing engines.
 
-1. The compiler obtains validated target-policy facts from generator preparation.
-2. It parses/resolves source and accumulates concrete publication demands.
-3. The generator resolves those demands into a checked physical plan and C++ API.
-4. The compiler binds its prepared operations to that plan and emits C++.
-5. Clang compiles emitted C++ together with the requested runtime publication.
+Preparation owns runtime-policy resolution once. Neither the compiler nor C++
+emission may reconstruct promotion/cast/publication tables independently. The
+compiler owns contextual language admission, sequencing and proof-based lowering;
+the library does not resolve source symbols or become a second semantic compiler.
+Metadata remains authoritative for runtime policy; prepared models are derived.
 
-Before implementing this integration, inspect the existing prepared.json model and
-CLI. Preserve usable preparation/emission logic. If current output only describes
-an already selected publication, add the smallest explicit policy-query/preparation
-interface needed to break discovery dependencies. Do not presume an unimplemented
-query protocol exists or generate the entire overload matrix to discover policy.
+Compiler integration uses the typed library directly. The standalone CLI wraps the
+same library for plain C++ users, CMake and debugging. Keep JSON prepared/inventory
+artifacts where useful for inspection and external consumers, but do not require
+serialization/process round trips between Rust components. No C++/Rust FFI is needed.
+The current C++ CLI remains the baseline until the Rust CLI passes the migration gate.
 
-Document schema/version compatibility, target/configuration identity, required
-fields, failure diagnostics and deterministic output at the integration slice.
-Reject incompatible or stale facts. Generated plans remain derived artifacts;
-protocol compatibility does not turn them into independently authored truth.
-Regenerate native layout facts using the target C++ toolchain, never infer them
-from Rust host layouts. Initial validation targets the existing native platform;
-cross-compilation is separate work.
+Document the library contracts and external artifact/CLI schema compatibility,
+required fields, target identity, failure categories and deterministic ordering.
+Review JSON parsing behavior before selecting a serialization dependency, including
+unknown fields, duplicate keys and numeric representation. A focused package is
+permitted; changing accepted inputs accidentally is not. Keep diagnostic categories
+and useful context; require exact message parity only where it is a documented contract.
 
-A standalone Cargo build/test of the compiler core must not require Clang, a
-runtime build, or generator execution. End-to-end compilation intentionally needs
-the generator and C++ toolchain. Start with one-way process orchestration and an
-explicit integration test, avoiding a Cargo/CMake build cycle.
+## C++ layout probe and bootstrap
+
+The current generator measures native smart-pointer layout while running as C++.
+A Rust generator must not infer C++ sizes/alignment from Rust types or constants.
+Introduce a small C++ toolchain probe that emits versioned target facts consumed
+explicitly by preparation. Inventory all native assumptions first: smart-pointer
+sizes/alignment, scalar representation facts and any additional facts currently
+obtained from the generator's compilation environment.
+
+The probe may use the selected standard library, but must not include the generated
+runtime or require runtime linkage. It contains measurements, not metadata policy
+or a second preparation implementation. This is the deliberate small C++ tooling
+exception alongside the runtime and generated code.
+
+- Compile and run the probe for the initially supported native target with the same
+  C++ compiler, language mode, standard library, ABI switches and relevant flags as
+  the runtime consumers. Record schema and toolchain/target/configuration identity.
+- Supply its output as an explicit preparation input. Reject absent required facts,
+  unsupported schemas, malformed values and mismatched target configuration rather
+  than silently falling back to Rust host measurements or guessed defaults.
+- Invalidate cached facts when probe source, schema, compiler/toolchain selection,
+  target, standard library or ABI-affecting configuration changes. Do not depend
+  solely on an existing file's timestamp or treat a compiler version as complete
+  ABI proof. Record the relevant identity inputs and regeneration dependencies.
+- Preserve generated C++ static assertions for each concrete representation. Probe
+  facts and size/alignment assertions do not guarantee arbitrary ABI compatibility;
+  runtime and consumers still require a consistent target/toolchain build.
+- Cross-compilation is a later design: a target executable cannot automatically be
+  run on the host. Unsupported cross-target probing must fail explicitly. Do not
+  substitute host facts. A future approved target-facts provider can extend this.
+- Generated probe results, plans and C++ output remain ignored build artifacts.
+  Small intentional target-fact fixtures may be tracked as tests, clearly identified
+  as fixtures rather than deployable machine configuration.
+
+The intended build dependency graph is:
+
+```text
+Cargo -> Rust tooling library + standalone generator
+C++ toolchain -> small native layout probe -> target facts
+metadata + publication + target facts + Rust generator -> generated C++ API/plans
+C++ toolchain -> generated API + handwritten runtime + consumer
+```
+
+CMake/Ninja owns C++ build orchestration and generation dependencies, invoking Cargo
+for the generator with an explicit manifest/package/profile/output location. Cargo
+must not invoke CMake back through build.rs. Rust packages can build and run their
+pure unit tests without the C++ probe or runtime; real target generation and C++
+consumer integration tests require valid probe facts and the native toolchain.
+
+The future compiler flow is policy preparation, source resolution and demand
+collection, physical preparation, then C++ emission using the resolved plan. Review
+whether the current prepared model can expose policy before a publication is chosen;
+add the smallest explicit library API needed. Do not generate a full overload matrix
+for policy discovery. This replaces the earlier process-first integration proposal.
+
+## API tooling migration slices and gates
+
+Prioritize this migration before substantial compiler-to-generator integration.
+Scanner work is independent; compiler source-semantic work must not grow substitute
+runtime-policy tables while the shared library is being established. Each tooling
+slice receives focused validation and a commit. Temporary dual generation is a
+comparison mechanism with a retirement gate, not two independently evolving products.
+
+### G1. Capture the existing generator contract
+
+Inventory handwritten preparation, emission, JSON support, native assumptions,
+CLI/file behavior and all supported publication families. Use the current default,
+compiler and ownership-proof publications plus existing reduced/negative publication
+tests. Record which artifacts require byte parity versus semantic comparison.
+Baseline measured on 2026-10-29: nine C++ source/header files, 2,146 physical lines,
+133,862 bytes including private JSON support; tests/metadata/output excluded. These
+counts are scope evidence, not an estimate of verification effort.
+
+Acceptance: a reproducible parity corpus and explicit contract checklist covering
+admitted/rejected requests, artifact paths, freshness/check behavior, deterministic
+ordering, generated header boundaries and target facts. Retain intentional fixtures
+and compact summaries; keep bulky regenerated outputs ignored.
+
+### G2. Establish the shared model and native facts
+
+Introduce the two-package workspace, typed metadata/preparation model, thin Rust CLI
+skeleton and bounded JSON loading. Implement the C++ layout probe and target-fact
+validation independently of the runtime. Port preparation in coherent family batches,
+starting with scalars and then sequences/carriers/ownership. The C++ generator stays
+the production path during these incomplete slices.
+
+Acceptance: pure Rust tests run without C++ tooling; malformed metadata, unsupported
+requests, missing/incompatible target facts and invalid layout inputs are rejected.
+Compare complete prepared facts with the C++ baseline on the same native toolchain,
+normalizing only explicitly reviewed nonsemantic differences. Shared model types
+must express resolved operations rather than a mirror of JSON field access.
+
+### G3. Port emission and prove equivalent generated consumers
+
+Port C++ emission by the same coherent families using the prepared Rust model.
+Preserve generated artifact structure and CLI compatibility where useful; record
+intentional differences rather than silently adjusting expectations. Both generators
+run on the same metadata/publication and matching toolchain facts into separate
+output directories; do not overwrite the production output with incomplete results.
+
+Acceptance: compare prepared facts and generated output across the parity corpus;
+any differences are reviewed, not blanket-normalized. Compile and run existing C++
+consumer, template-free boundary, compile-failure, layout-mismatch, lifetime and
+allocation proofs against Rust-generated artifacts. Run the applicable Release and
+UBSan suites. Verify deterministic regeneration, freshness checks and a source-only
+build. Measure generator build/run costs separately from generated C++ compilation.
+
+### G4. Switch generation and retire the superseded toolchain path
+
+After G3 passes, switch CMake generation to the Rust CLI plus explicit probe facts.
+Prove rebuild behavior after metadata, publication, generator and target-configuration
+changes, and that an unchanged build does not regenerate/recompile unnecessarily.
+Update operator commands and fresh-checkout setup before cutover.
+
+Acceptance: one production generator/preparation implementation, no Cargo/CMake
+cycle, no dependency on archived/prebuilt C++ generator artifacts, and independent
+runtime and tooling validation paths. Remove or archive the C++ generator and its
+JSON support in a reviewed cleanup after checking remaining consumers. Retain useful
+fixtures and history. This does not retire the separate C++ compiler foundation;
+its own migration gate below still applies. Do not port the runtime to Rust.
 
 ## Rust implementation posture
 
@@ -96,8 +227,9 @@ explicit integration test, avoiding a Cargo/CMake build cycle.
   the default architecture. Keep unsafe code out of the initial compiler slice.
 - Use generics when they remove actual repetition. Avoid speculative abstractions,
   procedural macros, async infrastructure and premature parallelism.
-- Start with one Cargo package containing a library and thin CLI, grouped into
-  coherent modules. Split packages only when a real dependency/build boundary helps.
+- The initial compiler slice uses one package. At G2, introduce the two-package
+  workspace described above, with one-way compiler-to-tooling dependencies and
+  coherent modules rather than additional speculative packages.
 - Select and pin a stable Rust toolchain at implementation time, commit Cargo.lock
   for reproducible application builds, and review dependencies individually. A
   focused serialization dependency is acceptable; no large framework is required.
@@ -107,7 +239,7 @@ explicit integration test, avoiding a Cargo/CMake build cycle.
 - Ignore Cargo target directories, generated C++, plans, caches and local benchmark
   output. Keep intentional source fixtures and compact validation summaries.
 
-## Migration slices and acceptance
+## Compiler migration slices and acceptance
 
 Each slice needs an agreed scope, a working proof, updated documentation and a
 commit. Keep the C++ baseline until its replacement satisfies the stated checks.
@@ -152,7 +284,8 @@ use unresolved demands until the next slice if that boundary is not yet ready.
 
 ### 4. Metadata boundary and first executable end-to-end proof
 
-Resolve the generator interface described above, request only needed concrete
+After the Rust tooling parity/cutover gates G3/G4, use the shared typed library
+interface described above, request only needed concrete
 runtime operations, bind the semantic representation to the physical plan, emit
 C++, compile and run a small program. This slice completes slice 3's target binding;
 its interface design can be prepared alongside slice 3 to avoid rework.
@@ -197,7 +330,9 @@ The migration is complete when the agreed source subset passes semantic and exec
 proofs, the compiler builds independently in Rust, generator/runtime integration uses
 one documented metadata boundary, and the superseded C++ compiler path is retired.
 This is not a claim of complete language coverage or a requirement to port every
-legacy compiler facility. No runtime/API-generator language rewrite is included.
+legacy compiler facility. The API tooling migration additionally requires G1–G4
+parity and cutover gates. The runtime remains C++; no runtime language rewrite or
+source semantic redesign is included.
 
 ## Slice 1 checkpoint — 2026-10-29
 

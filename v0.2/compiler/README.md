@@ -9,6 +9,9 @@ slice 1. The [migration plan](../specs/planning/rust_compiler_migration.md) rema
 the roadmap. Scanning, token-sequence publication, parsing, symbols, semantic
 compilation, metadata integration and C++ emission are not implemented in Rust yet.
 The existing C++ foundation remains in place and buildable, pending reviewed cutover.
+The plan now also moves API generation/physical pre-lowering to a separate Rust
+library package shared with the compiler. That workspace/library and its C++ layout
+probe are not implemented yet; the current package still has no such dependency.
 
 Cargo selects `src/*.rs` and `tests/*.rs`; CMake retains its explicit C++ source list.
 There is no build script, FFI, third-party Rust dependency, runtime linkage or

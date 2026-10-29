@@ -6,8 +6,10 @@ Date: 2026-10-28
 
 ## Rust compiler decision — 2026-10-29
 
-The compiler will be implemented independently in Rust. The runtime and existing
-API generator/physical pre-lowering remain C++. The active decision, ownership
+The compiler and API generator/physical pre-lowering will be implemented in Rust,
+with a shared typed tooling library and standalone generator CLI. The runtime and
+a small native layout probe remain C++. This extends the earlier compiler-only
+Rust decision; the production generator has not yet migrated. The active decision, ownership
 boundaries and staged migration are recorded in
 [the v0.2 Rust compiler migration plan](../../v0.2/specs/planning/rust_compiler_migration.md).
 This supersedes earlier instructions below to evolve my-try-cpp or adapt the C++
@@ -26,12 +28,12 @@ Exact schema, paths and generated signatures below are design sketches.
 The v0.2 backbone is:
 
 1. The runtime.
-2. The existing metadata-driven runtime public API generator, including its
-   pre-lowering engine.
+2. The metadata-driven runtime public API generator and physical pre-lowering,
+   migrating from C++ to a shared Rust tooling library.
 3. An independent Rust compiler, following the migration decision above.
 
-Reuse and evolve the runtime and generator; migrate compiler responsibilities to
-Rust in reviewed slices. Review other tooling and code, then keep,
+Reuse and evolve runtime behavior; migrate compiler and generator responsibilities
+to Rust in reviewed slices, preserving reviewed preparation/emission contracts. Review other tooling and code, then keep,
 replace or remove it based on responsibilities and consumers. This is not permission
 to bulk-delete legacy tooling or rewrite working engines.
 
