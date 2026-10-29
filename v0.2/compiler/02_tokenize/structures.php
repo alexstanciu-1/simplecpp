@@ -143,8 +143,16 @@ enum token_kind: int
 
 final readonly class token
 {
-	public function __construct(public int $offset, public int $length, public token_kind $kind)
+	public int $offset;
+	public int $length;
+	public token_kind $kind;
+
+	public function __construct(int $offset, int $length, token_kind $kind)
 	{
+		$this->offset = $offset;
+		$this->length = $length;
+		$this->kind = $kind;
+
 		if (($offset < 0) || ($offset > 4294967295) || ($length < 1) || ($length > 16777215)) {
 			throw new \InvalidArgumentException('Invalid token span');
 		}
@@ -154,9 +162,15 @@ final readonly class token
 /** Published tokens retain their source and its flavor; scanning state stays in the worker. */
 final readonly class token_list
 {
+	public source_file $source;
+	public array $tokens;
+
 	/** @param list<token> $tokens */
-	public function __construct(public source_file $source, public array $tokens)
+	public function __construct(source_file $source, array $tokens)
 	{
+		$this->source = $source;
+		$this->tokens = $tokens;
+
 		if (!array_is_list($tokens)) {
 			throw new \InvalidArgumentException('Tokens must be a list');
 		}

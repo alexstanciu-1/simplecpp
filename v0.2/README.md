@@ -28,7 +28,8 @@ C++ definitions and a prepared API description. The runtime remains C++;
 generated public headers remain template-free.
 
 The [PHP compiler](compiler/README.md) is being rebuilt incrementally from
-`compiler/my-try/`. Source loading and flavor-aware tokenization work today.
+`compiler/my-try/`. Source loading, flavor-aware tokenization and a first declaration/assignment parser
+work today.
 It is independent of the runtime build; Rust has been retired.
 
 Runtime builds require 64-bit PHP 8.5 or later and Python 3.10+ (including with

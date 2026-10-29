@@ -81,12 +81,20 @@ function readFile(string $path): string {
 // Numbers outside PHP's exact nonnegative integer domain stay lexical. Semantic
 // readers reject them where an integer is required; parsing never rounds them.
 final readonly class JsonNumber {
-    public function __construct(public string $spelling) {
+    public string $spelling;
+
+    public function __construct(string $spelling) {
+        $this->spelling = $spelling;
     }
 }
 final class JsonReader {
     private int $offset = 0;
-    public function __construct(private string $input, private string $file) {
+    private string $input;
+    private string $file;
+
+    public function __construct(string $input, string $file) {
+        $this->input = $input;
+        $this->file = $file;
     }
     private function fail(string $path, string $message): never {
         throw new \RuntimeException("{$this->file}: byte {$this->offset} at $path: $message");

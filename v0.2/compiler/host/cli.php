@@ -5,15 +5,15 @@ namespace scpp\compiler;
 
 final class Compiler_Cli
 {
-	/** Inspect complete token generations; failures produce stderr and no partial stdout. */
+	/** Inspect complete token or syntax generations; failures produce stderr and no partial stdout. */
 	public static function run(array $arguments): int
 	{
 		if (($arguments === [$arguments[0]]) || ($arguments === [$arguments[0], '--help'])) {
-			fwrite(STDOUT, "Usage: php main.php tokens <cpp|php|js> <file>\nOutputs JSON token spans; parsing and compilation are not implemented yet.\n");
+			fwrite(STDOUT, "Usage: php main.php <tokens|parse> <cpp|php|js> <file>\nOutputs JSON tokens or declaration/assignment syntax; semantic compilation is not implemented yet.\n");
 			return 0;
 		}
-		if ((count($arguments) !== 4) || ($arguments[1] !== 'tokens')) {
-			fwrite(STDERR, "Usage: php main.php tokens <cpp|php|js> <file>\n");
+		if ((count($arguments) !== 4) || !in_array($arguments[1], ['tokens', 'parse'], true)) {
+			fwrite(STDERR, "Usage: php main.php <tokens|parse> <cpp|php|js> <file>\n");
 			return 2;
 		}
 		$flavor = flavor::tryFrom($arguments[2]);
@@ -22,6 +22,11 @@ final class Compiler_Cli
 			return 2;
 		}
 		try {
+			if ($arguments[1] === 'parse') {
+				$file = (new Source_Frontend())->parse_file($arguments[3], $flavor);
+				fwrite(STDOUT, json_encode(Syntax_Inspection::file($file), JSON_THROW_ON_ERROR | JSON_PRETTY_PRINT) . "\n");
+				return 0;
+			}
 			$list = (new Source_Frontend())->scan_file($arguments[3], $flavor);
 			$rows = [];
 			foreach ($list->tokens as $index => $token) {

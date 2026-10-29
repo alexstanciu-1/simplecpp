@@ -65,7 +65,12 @@ final class Tokenizer
 		token_kind::assign,
 	];
 
-	public function __construct(private readonly source_file $source) {}
+	private readonly source_file $source;
+
+	public function __construct(source_file $source)
+	{
+		$this->source = $source;
+	}
 
 	/** Publish only a complete generation; failures cannot expose partial tokens. */
 	public function tokenize(): token_list

@@ -9,8 +9,16 @@ final readonly class source_file
 	/** @var list<int> */
 	private array $line_starts;
 
-	public function __construct(public string $path, public string $content, public flavor $flavor)
+	public string $path;
+	public string $content;
+	public flavor $flavor;
+
+	public function __construct(string $path, string $content, flavor $flavor)
 	{
+		$this->path = $path;
+		$this->content = $content;
+		$this->flavor = $flavor;
+
 		if (strlen($content) > 4294967295) {
 			throw new \LengthException('Source exceeds 32-bit byte capacity');
 		}

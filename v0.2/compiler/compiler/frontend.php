@@ -15,4 +15,14 @@ final class Source_Frontend
 	{
 		return (new Tokenizer($source))->tokenize();
 	}
+
+	public function parse_file(string $path, flavor $flavor): parsed_file
+	{
+		return $this->parse(File_Loader::load($path, $flavor));
+	}
+
+	public function parse(source_file $source): parsed_file
+	{
+		return (new Parser($this->scan($source)))->parse();
+	}
 }

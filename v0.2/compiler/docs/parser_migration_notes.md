@@ -4,8 +4,9 @@ Doc Status: planning
 Date: 2026-10-29
 
 The Rust compiler has been retired. These are design and proof notes, not claims
-that the PHP compiler already parses programs. The active PHP pipeline stops at
-complete tokenization. The language direction is in
+that the PHP compiler implements the full grammar below. The PHP pipeline now parses initialized declarations and simple assignments with
+named types and integer/name values. Broader expression/type/block ideas below
+remain planned. The language direction is in
 [the flavor contract](../../specs/compiler_frontends.md); mine the working PHP
 pipeline in `compiler/my-try/` as each stage is introduced.
 
