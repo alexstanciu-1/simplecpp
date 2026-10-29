@@ -184,3 +184,11 @@ traversal remain deferred.
 boxed family is published. They retain the existing result state/extraction policy
 and each payload family’s ownership behavior; see [boxed results](boxed_results.md).
 Other boxed carrier families remain deferred.
+
+## Bounded JSON publication
+
+The optional [JSON module](json_module.md) publishes default dynamic decoding,
+explicit mixed decoding, and checked encoding of either family. The parser builds
+the selected family directly; the writer uses private synchronous traversal.
+Recognized numeric object names above INT32_MAX produce checked decode errors.
+Typed JSON extraction/encoding and source compiler integration remain deferred.

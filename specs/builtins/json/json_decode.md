@@ -45,6 +45,17 @@ mixed-return test expectations. Select `json_decode_mixed` when mixed is require
 The out-of-line dynamic decoder has a new symbol (`decode_dynamic`) to prevent
 linking the former mixed-return ABI. Rebuild runtime artifacts and generated code.
 
+### v0.2 compact-runtime key limit — 2026-10-29
+
+The runtime rewrite under `v0.2/` limits integer table keys to INT32_MAX.
+JSON retains donor unsigned-decimal name recognition through UINT32_MAX, but
+recognized names above INT32_MAX return a checked decode error at the opening
+quote of the name. They do not propagate the storage-limit exception or become
+string keys to evade the limit. Names above UINT32_MAX remain strings, as do
+signed and noncanonical leading-zero spellings. Both selected families follow
+this rule. This amendment does not change numeric scalar values or retrofit the
+older runtime's storage representation.
+
 ### Typed runtime extraction
 
 `scpp::json::from_json<T>(value)` accepts either decoded family and uses the same

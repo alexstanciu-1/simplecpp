@@ -17,6 +17,7 @@ template<boxed_family Family> class boxed_value final {
 public:
     enum class kind { null, boolean, integer, floating, string, container };
 private:
+    friend struct boxed_inspection;
     using table = packed_table<boxed_value>;
     using payload = std::variant<std::monostate, bool, std::int64_t, double,
         std::shared_ptr<const std::string>, std::shared_ptr<table>>;

@@ -2,6 +2,7 @@
 declare(strict_types=1);
 namespace Scpp\Api;
 require_once __DIR__ . '/render_boxed.php';
+require_once __DIR__ . '/render_json.php';
 
 const BANNER = "// Generated from reviewed runtime metadata. Do not edit.\n";
 const NATIVES = ['int', 'unsigned int', 'long', 'unsigned long', 'long long', 'unsigned long long', 'short', 'unsigned short', 'bool', 'char', 'signed char', 'unsigned char', 'wchar_t', 'char8_t', 'char16_t', 'char32_t', 'float', 'double', 'long double'];
@@ -268,6 +269,7 @@ function render(array $plan): array {
     renderOwnership($plan, $files);
     renderHashes($plan, $files);
     renderDatetime($plan, $files);
+    renderJson($plan, $files);
     renderBoxed($plan, $files);
     ksort($files, SORT_STRING);
     $files['inventory.json'] = encode(array_keys($files)) . "\n";

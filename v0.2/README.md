@@ -23,7 +23,9 @@ adds shared-container identity and checked scalar family conversion.
 [Concrete mixed/dynamic APIs](specs/boxed_slice.md) are now generated on request;
 operators and source compiler integration remain separate work.
 [Results containing mixed/dynamic](specs/boxed_results.md) are also available on
-explicit request, providing the checked-result prerequisite for JSON.
+explicit request. The optional [JSON module](specs/json_module.md) now decodes directly
+into either family and encodes both through checked results; its four operations
+are generated independently on request.
 
 The optional [datetime module](specs/datetime_module.md) provides eleven clock,
 sleep, UTC and host-local operations. Enable it with `-DSCPP_ENABLE_DATETIME=ON` when
@@ -66,7 +68,7 @@ string and vector APIs; it does not exercise carriers. It prints `Ada: 21; ratio
 The [API summary](specs/runtime_api_summary.md) lists
 supported/rejected operators and casts, ownership boundaries and deferred language
 decisions. Typed hashes and private packed storage have been ported; boxed
-mixed/dynamic families and their compiler integration remain separate work.
+mixed/dynamic APIs are generated, while source compiler integration remains separate work.
 
 ## Generator and artifact ownership
 

@@ -54,6 +54,7 @@ set(runtime_publication ${CMAKE_CURRENT_SOURCE_DIR}/runtime/metadata/publication
 set(runtime_generated ${CMAKE_CURRENT_BINARY_DIR}/generated)
 option(SCPP_ENABLE_DATETIME "Publish and build the bounded datetime module" OFF)
 include(cmake/Datetime.cmake)
+include(cmake/Json.cmake)
 if(SCPP_ENABLE_DATETIME)
   # An explicit build profile: existing core demand plus uint64 and datetime.
   # PHP preparation still validates every required type/carrier and operation.
@@ -223,5 +224,6 @@ if(BUILD_TESTING)
   add_subdirectory(tests/dynamic)
   add_subdirectory(tests/boxed)
   add_subdirectory(tests/boxed_results)
+  add_subdirectory(tests/json)
   add_subdirectory(tests/datetime)
 endif()

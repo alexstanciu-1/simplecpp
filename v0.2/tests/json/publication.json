@@ -1,0 +1,60 @@
+{
+  "version": 1,
+  "namespace": "scpp",
+  "headers": {
+    "types": "scpp/integers.hpp",
+    "operators": "scpp/numeric.hpp",
+    "short_names": "scpp/short_names.hpp",
+    "native_bridge": "scpp/native_bridge.hpp",
+    "values": "scpp/values.hpp"
+  },
+  "types": [
+    "int64"
+  ],
+  "values": [
+    "bool_t",
+    "null_t",
+    "float64"
+  ],
+  "operators": [],
+  "short_aliases": [],
+  "string": {
+    "header": "scpp/string.hpp",
+    "operations": [],
+    "casts": []
+  },
+  "boxed": {
+    "header": "scpp/boxed.hpp",
+    "families": [
+      "mixed",
+      "dynamic"
+    ],
+    "scalar_conversions": true
+  },
+  "carriers": {
+    "header": "scpp/carriers.hpp",
+    "specializations": [
+      {
+        "family": "result",
+        "payload": "mixed"
+      },
+      {
+        "family": "result",
+        "payload": "dynamic"
+      },
+      {
+        "family": "result",
+        "payload": "string"
+      }
+    ]
+  },
+  "json": {
+    "header": "scpp/json.hpp",
+    "operations": [
+      "decode",
+      "decode_mixed",
+      "encode_mixed",
+      "encode_dynamic"
+    ]
+  }
+}

@@ -2,10 +2,11 @@
 declare(strict_types=1);
 namespace Scpp\Api;
 require_once __DIR__ . '/boxed.php';
+require_once __DIR__ . '/json.php';
 
 function checkHeader(array $plan, string $header): void {
     $paths = array_values($plan['headers']);
-    foreach (['string', 'hashes', 'datetime', 'boxed'] as $key) {
+    foreach (['string', 'hashes', 'datetime', 'boxed', 'json'] as $key) {
         if (isset($plan[$key])) {
             $paths[] = $plan[$key]['header'];
         }
@@ -27,7 +28,7 @@ function familyMetadata(mixed $metadata, mixed $publication, string $key, string
 }
 
 function prepareRuntime(mixed $metadata, mixed $publication, array $facts): array {
-    fields($publication, array_merge(SCALAR_FIELDS, ['string', 'vectors', 'carriers', 'ownership', 'hashes', 'datetime', 'boxed']));
+    fields($publication, array_merge(SCALAR_FIELDS, ['string', 'vectors', 'carriers', 'ownership', 'hashes', 'datetime', 'boxed', 'json']));
     $scalarRequest = (object)array_intersect_key(object($publication), array_flip(SCALAR_FIELDS));
     $plan = prepareScalars($metadata, $scalarRequest, $facts);
     $registry = registry($metadata, $facts);
@@ -37,6 +38,7 @@ function prepareRuntime(mixed $metadata, mixed $publication, array $facts): arra
     prepareCarriers($metadata, $publication, $plan);
     prepareHashes($metadata, $publication, $plan);
     prepareDatetime($metadata, $publication, $plan);
+    prepareJson($metadata, $publication, $plan);
     prepareOwnership($metadata, $publication, $facts, $plan);
     sortConversions($plan['conversions']);
     return $plan;
@@ -402,6 +404,7 @@ function prepareOwnership(mixed $metadata, mixed $publication, array $facts, arr
     if(isset($plan['datetime'])) {
         $used[] = 'dt';
     }
+    if (isset($plan['json'])) $used[] = 'json';
     $records = [];
     foreach(listValue(at($p, 'records')) as $r) {
         fields($r, ['name', 'header', 'constructors', 'families', 'const_families']);
