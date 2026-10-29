@@ -4,7 +4,7 @@ Doc Status: planning
 Date: 2026-10-29
 Decision: approved direction; slice 1 implemented on 2026-10-29.
 API-generator/physical pre-lowering migration to Rust approved on 2026-10-29.
-G1 and the first G2 batch are implemented; remaining compiler/tooling work is planned.
+G1, the G2 foundation and scalar preparation are implemented; remaining work is planned.
 
 ## Decision and scope
 
@@ -418,3 +418,27 @@ remaining C++ tests pass in release/UBSan. G1 parity and G2 native-probe integra
 pass without changing the publication contents or frozen baseline.
 A fresh source-only C++ export also builds and passes all 31 checks, without
 retired compiler sources or pre-generated runtime files.
+
+## G2 scalar preparation checkpoint — 2026-10-29
+
+Rust now prepares the complete scalar-only document: integer construction/casts,
+all integer operators and promotion, bool/null value capabilities, configured
+source defaults and aliases, float64 construction/casts/operators, native bridge
+dependencies and physical operand/write-back adaptations. The scalar model uses
+typed forms, promotions, conversion implementations and adaptations. The original
+integer-construction projection reuses the same registry/range conversion owner.
+
+The new prepare-scalars CLI emits inspection JSON only. All fields match the C++
+prepared plan for scalar-only publications, including a 2,692-signature matrix.
+Known optional non-scalar metadata is outside this entrypoint's semantic validation;
+non-scalar publication demands are rejected. Strings, vectors, carriers, ownership,
+C++ emission and build cutover remain future work. The C++ generator remains the
+production path and the frozen G1 fixtures have not changed. See the
+[tooling README](../../tools/api_generator/README.md) for scope and proof commands.
+
+Validation: 24 Rust unit/integration tests plus the compiler's compile-fail doctest
+pass in debug/release; formatting, strict Clippy and the isolated Rust-only workspace
+export pass. Exact scalar parity passes 19 accepted publications (including the
+2,692-signature matrix) and 537 rejected inputs, comparing every field and JSON
+value type. All 31 existing C++ tests pass in release/UBSan, including frozen G1
+parity. G2 probe/cache and original 104-conversion projection checks also pass.

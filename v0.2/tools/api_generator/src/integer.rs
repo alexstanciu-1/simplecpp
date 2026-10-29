@@ -105,6 +105,52 @@ pub fn prepare(
         )?;
         ensure(paths.insert(path), "Conflicting public headers")?;
     }
+    let registry = registry(metadata, facts)?;
+    let mut types = BTreeMap::new();
+    for name in publication.at("types")?.array()? {
+        let name = name.text()?;
+        let item = registry
+            .get(name)
+            .ok_or_else(|| Error("Unknown published integer type".into()))?;
+        ensure(
+            types.insert(name.to_owned(), item.clone()).is_none(),
+            "Duplicate published type",
+        )?;
+    }
+    ensure(!types.is_empty(), "Empty integer construction publication")?;
+    let native_inputs = native_inputs(metadata, facts)?;
+    let conversions = conversions(&types, &native_inputs);
+    Ok(IntegerConstructionPlan {
+        types: types.into_values().collect(),
+        native_inputs,
+        conversions,
+    })
+}
+impl IntegerConstructionPlan {
+    /// A scoped projection for C++ parity, not a complete prepared_runtime_api artifact.
+    pub fn describe(&self) -> serde_json::Value {
+        serde_json::json!({
+            "kind": "prepared_integer_construction", "schema": 1,
+            "types": self.types.iter().map(|t| serde_json::json!({"name":t.name,"representation":t.representation,"signed":t.signed,"bits":t.bits})).collect::<Vec<_>>(),
+            "native_inputs": self.native_inputs.iter().map(|n| serde_json::json!({"cpp":n.cpp,"signed":n.signed,"digits":n.digits})).collect::<Vec<_>>(),
+            "conversions": self.conversions.iter().map(|c| serde_json::json!({"target":c.target,"source":c.source,"native_source":c.native_source,"lossless":c.lossless,"implementation":"checked_integer_cast","can_fail":!c.lossless,"source_category":"value"})).collect::<Vec<_>>()
+        })
+    }
+}
+
+impl IntegerType {
+    pub fn digits(&self) -> u32 {
+        self.bits - u32::from(self.signed)
+    }
+    pub fn fits(&self, signed: bool, digits: u32) -> bool {
+        (!signed || self.signed) && self.digits() >= digits
+    }
+}
+
+pub(crate) fn registry(
+    metadata: &Value,
+    facts: &TargetFacts,
+) -> Result<BTreeMap<String, IntegerType>> {
     let representation = metadata.at("representation")?;
     representation.fields(&["binding", "default_initialization"])?;
     representation.literal("binding", "fixed_width_integer")?;
@@ -151,18 +197,10 @@ pub fn prepare(
         );
     }
     ensure(!registry.is_empty(), "Expected integer type definitions")?;
-    let mut types = BTreeMap::new();
-    for name in publication.at("types")?.array()? {
-        let name = name.text()?;
-        let item = registry
-            .get(name)
-            .ok_or_else(|| Error("Unknown published integer type".into()))?;
-        ensure(
-            types.insert(name.to_owned(), item.clone()).is_none(),
-            "Duplicate published type",
-        )?;
-    }
-    ensure(!types.is_empty(), "Empty integer construction publication")?;
+    Ok(registry)
+}
+pub(crate) fn native_inputs(metadata: &Value, facts: &TargetFacts) -> Result<Vec<NativeInput>> {
+    let construction = metadata.at("construction")?;
     let mut native_inputs = BTreeMap::new();
     for name in construction.at("native_integer_inputs")?.array()? {
         let name = name.text()?;
@@ -185,17 +223,20 @@ pub fn prepare(
         )?;
     }
     ensure(!native_inputs.is_empty(), "Empty native integer input set")?;
+    Ok(native_inputs.into_values().collect())
+}
+pub(crate) fn conversions(
+    types: &BTreeMap<String, IntegerType>,
+    native_inputs: &[NativeInput],
+) -> Vec<CheckedConversion> {
     let mut conversions = Vec::new();
     for target in types.values() {
-        let fits = |signed: bool, digits: u32| {
-            (!signed || target.signed) && target.bits - u32::from(target.signed) >= digits
-        };
-        for source in native_inputs.values() {
+        for source in native_inputs.iter() {
             conversions.push(CheckedConversion {
                 target: target.name.clone(),
                 source: source.cpp.clone(),
                 native_source: true,
-                lossless: fits(source.signed, source.digits),
+                lossless: target.fits(source.signed, source.digits),
             });
         }
         for source in types.values().filter(|s| s.name != target.name) {
@@ -203,27 +244,12 @@ pub fn prepare(
                 target: target.name.clone(),
                 source: source.name.clone(),
                 native_source: false,
-                lossless: fits(source.signed, source.bits - u32::from(source.signed)),
+                lossless: target.fits(source.signed, source.digits()),
             });
         }
     }
     conversions.sort_by(|a, b| {
         (&a.target, &a.source, a.native_source).cmp(&(&b.target, &b.source, b.native_source))
     });
-    Ok(IntegerConstructionPlan {
-        types: types.into_values().collect(),
-        native_inputs: native_inputs.into_values().collect(),
-        conversions,
-    })
-}
-impl IntegerConstructionPlan {
-    /// A scoped projection for C++ parity, not a complete prepared_runtime_api artifact.
-    pub fn describe(&self) -> serde_json::Value {
-        serde_json::json!({
-            "kind": "prepared_integer_construction", "schema": 1,
-            "types": self.types.iter().map(|t| serde_json::json!({"name":t.name,"representation":t.representation,"signed":t.signed,"bits":t.bits})).collect::<Vec<_>>(),
-            "native_inputs": self.native_inputs.iter().map(|n| serde_json::json!({"cpp":n.cpp,"signed":n.signed,"digits":n.digits})).collect::<Vec<_>>(),
-            "conversions": self.conversions.iter().map(|c| serde_json::json!({"target":c.target,"source":c.source,"native_source":c.native_source,"lossless":c.lossless,"implementation":"checked_integer_cast","can_fail":!c.lossless,"source_category":"value"})).collect::<Vec<_>>()
-        })
-    }
+    conversions
 }

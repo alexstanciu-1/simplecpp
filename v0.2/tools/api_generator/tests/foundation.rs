@@ -199,3 +199,252 @@ fn partial_preparation_rejects_unsupported_publications_and_bad_inputs() {
     m["types"]["int8"]["bits"] = object!(8.0);
     assert!(integer::prepare(&json::parse(&bytes(&m), "m").unwrap(), &p, &target()).is_err());
 }
+
+fn scalar_metadata() -> Value {
+    let mut m = metadata();
+    for bits in [8, 16, 32, 64] {
+        for signed in [true, false] {
+            m["types"][format!("{}{bits}", if signed { "int" } else { "uint" })] =
+                object!({"signed":signed,"bits":bits});
+        }
+    }
+    m["promotion_policies"] = object!({"integer_domain_maximum":{
+        "same_type":"preserve","different_signed":"int64","different_unsigned":"uint64",
+        "signed_and_unsigned_below_64_bits":"int64","signed_and_uint64":"reject"}});
+    m["operations"] = object!({});
+    for (name, symbol, implementation, promotion, form, result) in [
+        (
+            "add",
+            "+",
+            "integer_add",
+            "integer_domain_maximum",
+            "binary",
+            "execution_type",
+        ),
+        (
+            "add_assign",
+            "+=",
+            "integer_add",
+            "integer_domain_maximum",
+            "compound",
+            "left_reference",
+        ),
+        (
+            "less",
+            "<",
+            "integer_less",
+            "exact_integer_comparison",
+            "binary",
+            "boolean",
+        ),
+        (
+            "shift_left",
+            "<<",
+            "integer_shift_left",
+            "left_with_checked_count",
+            "binary",
+            "left_type",
+        ),
+        (
+            "negate",
+            "-",
+            "integer_negate",
+            "preserve_operand",
+            "unary",
+            "operand_type",
+        ),
+    ] {
+        m["operations"][name] = object!({"public_operator":symbol,"implementation":implementation,
+            "promotion":promotion,"form":form,"result":result});
+    }
+    m["operations"]["add"]["native_arguments"] =
+        object!({"policy":"type_range","inputs":"native_integer_inputs"});
+    m["values"] = object!({
+        "bool_t":{"kind":"boolean","representation":"native_bool","construction":"explicit","condition":"explicit_native_bool","operations":["equal","not_equal","not"]},
+        "null_t":{"kind":"null","representation":"empty","construction":"default","operations":["equal","not_equal"]}});
+    m["source_types"] = object!({"int":"int64","bool":"bool_t","float":"float64","null":"null_t"});
+    m["aliases"] = object!({"int_t":"int","float_t":"float"});
+    m["floating"] = object!({"type":"float64","representation":"ieee_binary64","native_inputs":["float","double"],
+        "integer_inputs":"native_integer_inputs","mixed_integer":"exact_type_range","division_by_zero":"throw","operations":{}});
+    for name in ["add", "add_assign", "less", "negate"] {
+        let mut binding = m["operations"][name].clone();
+        binding["promotion"] = object!("floating_exact_integer");
+        binding["implementation"] = object!(
+            binding["implementation"]
+                .as_str()
+                .unwrap()
+                .replace("integer_", "floating_")
+        );
+        m["floating"]["operations"][name] = binding;
+    }
+    m["scalar_casts"] = object!([
+        "integer_to_floating_rounding",
+        "floating_to_integer_truncate_checked",
+        "numeric_to_boolean_nonzero",
+        "boolean_to_numeric_01"
+    ]);
+    m
+}
+fn scalar_publication() -> Value {
+    let mut p = publication();
+    p["types"] = object!([
+        "int8", "uint8", "int16", "uint16", "int32", "uint32", "int64", "uint64"
+    ]);
+    p["values"] = object!(["bool_t", "null_t", "float64"]);
+    p["short_aliases"] = object!(["int_t"]);
+    p
+}
+fn scalar_plan(
+    m: &Value,
+    p: &Value,
+) -> scpp_api_tooling::Result<scpp_api_tooling::scalar::ScalarPlan> {
+    scpp_api_tooling::scalar::prepare(
+        &json::parse(&bytes(m), "metadata")?,
+        &json::parse(&bytes(p), "publication")?,
+        &target(),
+    )
+}
+
+#[test]
+fn scalar_domain_matrix_and_direct_extreme_comparisons() {
+    use scpp_api_tooling::scalar::{Adaptation, Promotion};
+    let m = scalar_metadata();
+    let mut p = scalar_publication();
+    let mut admitted = 0;
+    for (left, l) in m["types"].as_object().unwrap() {
+        for (right, r) in m["types"].as_object().unwrap() {
+            p["operators"] = object!([{"operation":"add","operands":[left,right]}]);
+            if (left == "uint64" && r["signed"] == true)
+                || (right == "uint64" && l["signed"] == true)
+            {
+                assert!(scalar_plan(&m, &p).unwrap_err().0.contains("not admitted"));
+            } else {
+                let plan = scalar_plan(&m, &p).unwrap();
+                let expected = if left == right {
+                    left.as_str()
+                } else if l["signed"] == true || r["signed"] == true {
+                    "int64"
+                } else {
+                    "uint64"
+                };
+                assert_eq!(plan.operations[0].execution, expected);
+                admitted += 1;
+            }
+        }
+    }
+    assert_eq!(admitted, 56);
+    p["operators"] =
+        object!([{"operation":"less","operands":["int64","uint64"],"both_orders":true}]);
+    let plan = scalar_plan(&m, &p).unwrap();
+    assert_eq!(plan.operations.len(), 2);
+    for op in plan.operations {
+        assert_eq!(op.promotion, Promotion::ExactComparison);
+        assert_eq!(op.execution, "direct_values");
+        assert_eq!(op.result, "bool_t");
+        assert_eq!(op.left_conversion, Adaptation::Identity);
+    }
+}
+
+#[test]
+fn scalar_mutation_shift_and_native_dependencies_are_resolved() {
+    use scpp_api_tooling::scalar::{Adaptation, Form};
+    let m = scalar_metadata();
+    let mut p = scalar_publication();
+    p["operators"] = object!([
+        {"operation":"add_assign","operands":["int8","int32"]},
+        {"operation":"shift_left","operands":["int8","uint64"]}]);
+    let plan = scalar_plan(&m, &p).unwrap();
+    assert_eq!(plan.operations[0].form, Form::Compound);
+    assert_eq!(
+        (&*plan.operations[0].execution, &*plan.operations[0].result),
+        ("int64", "int8")
+    );
+    assert_eq!(
+        plan.operations[1].right_conversion,
+        Some(Adaptation::Identity)
+    );
+    assert_eq!(
+        plan.describe()["operations"][0]["write_back"],
+        "checked_after_calculation"
+    );
+    p["operators"] = object!([{"operation":"add","operands":["int8",{"native":"int"}]}]);
+    assert!(scalar_plan(&m, &p).unwrap_err().0.contains("same-type"));
+    p["operators"]
+        .as_array_mut()
+        .unwrap()
+        .push(object!({"operation":"add","operands":["int64","int64"]}));
+    let plan = scalar_plan(&m, &p).unwrap();
+    let op = plan
+        .operations
+        .iter()
+        .find(|op| op.right.as_ref().unwrap().native)
+        .unwrap();
+    assert_eq!(op.right.as_ref().unwrap().identity, "int32");
+    assert_eq!(op.right_conversion, Some(Adaptation::LosslessNativeInteger));
+}
+
+#[test]
+fn scalar_float_admission_uses_cast_policy_and_preserves_explicit_wide_casts() {
+    use scpp_api_tooling::scalar::{Adaptation, Cast};
+    let m = scalar_metadata();
+    let mut p = scalar_publication();
+    let plan = scalar_plan(&m, &p).unwrap();
+    let wide = plan
+        .conversions
+        .iter()
+        .find(|c| c.source == "int64" && c.target == "float64")
+        .unwrap();
+    assert!(!wide.lossless && !wide.can_fail);
+    assert_eq!(wide.implementation, Cast::Numeric);
+    for integer in ["int64", "uint64"] {
+        p["operators"] = object!([{"operation":"add","operands":[integer,"float64"]}]);
+        assert!(scalar_plan(&m, &p).unwrap_err().0.contains("explicit cast"));
+    }
+    p["operators"] = object!([{"operation":"add_assign","operands":["int32","float64"]}]);
+    let plan = scalar_plan(&m, &p).unwrap();
+    assert_eq!(
+        plan.operations[0].left_conversion,
+        Adaptation::ExactIntegerToFloating
+    );
+    assert_eq!(plan.operations[0].result, "int32");
+    for (policy, message) in [
+        ("integer_to_floating_rounding", "normalization"),
+        ("floating_to_integer_truncate_checked", "write-back"),
+    ] {
+        let mut changed = m.clone();
+        changed["scalar_casts"]
+            .as_array_mut()
+            .unwrap()
+            .retain(|c| c != policy);
+        assert!(scalar_plan(&changed, &p).unwrap_err().0.contains(message));
+    }
+}
+
+#[test]
+fn scalar_values_defaults_and_fail_closed_publication() {
+    let mut m = scalar_metadata();
+    let mut p = scalar_publication();
+    m["source_types"]["int"] = object!("int32");
+    let plan = scalar_plan(&m, &p).unwrap();
+    assert_eq!(plan.aliases["int_t"], "int32");
+    assert_eq!(plan.short_aliases, ["int_t"]);
+    assert!(
+        !plan
+            .conversions
+            .iter()
+            .any(|c| c.source == "null_t" || c.target == "null_t")
+    );
+    p["types"] = object!([]);
+    assert!(scalar_plan(&m, &p).unwrap().types.is_empty());
+    p["values"] = object!(["null_t"]);
+    assert!(
+        scalar_plan(&m, &p)
+            .unwrap_err()
+            .0
+            .contains("published boolean")
+    );
+    m["values"]["null_t"]["operations"] = object!([]);
+    assert!(scalar_plan(&m, &p).is_ok());
+    p["vectors"] = object!({});
+    assert!(scalar_plan(&m, &p).unwrap_err().0.contains("Unknown field"));
+}

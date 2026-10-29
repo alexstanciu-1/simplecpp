@@ -20,14 +20,20 @@ fn run(args: &[OsString]) -> Result<serde_json::Value> {
             serde_json::json!({"context_id":facts.context().id(),"target":facts.context().target(),"standard_library":facts.standard_library(),"status":"valid"}),
         );
     }
-    if args.len() == 5 && args[0] == "prepare-integer-construction" {
+    if args.len() == 5
+        && (args[0] == "prepare-integer-construction" || args[0] == "prepare-scalars")
+    {
         let context = TargetContext::parse(&read(&args[4])?)?;
         let facts = TargetFacts::parse(&read(&args[3])?, &context)?;
         let metadata = json::parse(&read(&args[1])?, "runtime metadata")?;
         let publication = json::parse(&read(&args[2])?, "publication")?;
-        return Ok(integer::prepare(&metadata, &publication, &facts)?.describe());
+        return if args[0] == "prepare-scalars" {
+            Ok(scpp_api_tooling::scalar::prepare(&metadata, &publication, &facts)?.describe())
+        } else {
+            Ok(integer::prepare(&metadata, &publication, &facts)?.describe())
+        };
     }
-    Err(Error("Usage: scpp-api-tooling validate-target FACTS CONTEXT | prepare-integer-construction METADATA PUBLICATION FACTS CONTEXT (G2 subset; no C++ emission)".into()))
+    Err(Error("Usage: scpp-api-tooling validate-target FACTS CONTEXT | prepare-scalars|prepare-integer-construction METADATA PUBLICATION FACTS CONTEXT (G2 subset; no C++ emission)".into()))
 }
 fn main() -> ExitCode {
     let result = run(&std::env::args_os().skip(1).collect::<Vec<_>>()).and_then(|value| {

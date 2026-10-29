@@ -20,3 +20,5 @@ pub(crate) fn ensure(ok: bool, message: &str) -> Result<()> {
         Err(Error(message.into()))
     }
 }
+
+pub mod scalar;

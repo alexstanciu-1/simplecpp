@@ -3,8 +3,8 @@
 Doc Status: supporting
 
 The C++ `scpp_api_generator` remains the production generator. The Rust
-`scpp-api-tooling` library/CLI implements the first G2 migration batch: bounded JSON
-loading, native target facts and a typed integer-construction projection. It emits
+`scpp-api-tooling` library/CLI implements G2 scalar preparation: bounded JSON loading, native target facts,
+integer/bool/null/float conversions and resolved operators. It emits
 inspection JSON only. It does not generate C++ or replace the G1 CLI contract.
 
 ## Shared ownership
@@ -12,7 +12,9 @@ inspection JSON only. It does not generate C++ or replace the G1 CLI contract.
 The v0.2 Cargo workspace contains this package and `compiler/`. The compiler depends
 on the tooling library; tooling has no compiler AST, symbol or diagnostic dependency.
 `json.rs` owns metadata decoding, `target.rs` validates supplied target facts, and
-`integer.rs` prepares resolved integer construction facts. `main.rs` is a thin I/O
+`integer.rs` owns shared integer identities/range conversions and the original
+construction projection. `scalar.rs` validates scalar policy and prepares resolved
+conversions, operation forms, promotions, operand adaptations and write-back facts. `main.rs` is a thin I/O
 adapter. No build script, C++ runtime linkage or generated headers are required.
 Neither Cargo nor CMake invokes the other build system.
 
@@ -66,19 +68,63 @@ Publication is atomic per file, not transactional across all files. Do not run
 concurrent writers into one probe output directory. Context checks detect mixed
 facts/context; the next driver invocation repairs interrupted cache publication.
 
-## Integer preparation boundary
+## Scalar preparation boundary
 
-`prepare-integer-construction` accepts the current metadata document plus a narrowed
-publication containing integer types and headers, with empty operators, values and
-short_aliases. Optional-family demands are rejected. It returns typed identities,
-selected native inputs and checked native/cross-integer conversions, including
-lossless and can_fail facts. Target range facts come exclusively from the probe.
+`prepare-scalars METADATA PUBLICATION FACTS CONTEXT` returns the full
+`prepared_runtime_api` JSON document for scalar-only publications. It covers:
 
-This projection validates integer identity/construction metadata only. Other known
-metadata sections may be present but their policies are not semantically validated.
-It is not a full-runtime validator or a production publication plan. Scalar
-operators and remaining scalar/sequence/carrier/ownership preparation are later G2
-batches; emission and cutover remain G3/G4. No compiler lowering integration is added.
+- All eight integer identities, explicit native/cross-integer construction, all
+  33 integer operation bindings and domain-maximum promotion. Signed/uint64
+  arithmetic is rejected; exact comparison preserves the original operands.
+- Unary, binary, compound, prefix/postfix and shift forms. Compound calculations
+  resolve their execution type before checked write-back; shifts retain the left
+  type and use a checked count without promoting the right operand.
+- Registered native integer adapters, exact range-to-identity matching and
+  required public execution-overload dependencies. Native-only operators and
+  native mutation receivers are rejected.
+- bool_t/null_t value capabilities, configured source defaults and aliases.
+  Null has no numeric casts; short aliases follow explicit publication demands.
+- float64 operations and native construction, explicit integer/float/bool casts,
+  rounding and checked truncation facts. Mixed operators require the complete
+  integer type range to fit binary64 exactly; int64/uint64 require an explicit cast.
+  Mixed normalization and compound write-back require admitted cast policies.
+
+Typed enums distinguish form, promotion, cast implementation, value kind and
+operand adaptation. Preparation computes these facts once. Description serializes
+resolved facts; it does not redo promotion or cast admission. Runtime binding
+capabilities are code-owned; metadata selects policies/enabled bindings, and
+publication selects concrete demands. Integer construction and scalar preparation
+share their integer registry and range-conversion implementation.
+
+Unknown scalar fields, unsupported binding changes, duplicate requests, missing
+publication dependencies and invalid headers fail. Publications requesting strings,
+vectors, carriers or ownership are rejected. Known optional non-scalar metadata
+sections may be present but are not semantically validated by this scalar entrypoint.
+This is not yet a full-runtime metadata validator. Tests strip those sections when
+claiming scalar admission parity; an additional case checks the full default
+metadata with scalar-only demands.
+
+`prepare-integer-construction` remains as the narrower first-G2 inspection command,
+requiring empty operators, values and short_aliases. Its existing projection is
+unchanged. Neither command emits C++; production CLI/artifact compatibility and
+runtime emission remain G3/G4 work. No compiler lowering integration is added.
+
+## Exact scalar parity proof
+
+`tests/generator_parity/scalar_parity.py` compares complete prepared JSON documents
+with the current C++ generator. No fields are dropped or normalized; JSON object
+ordering/formatting is irrelevant, while array order and every resolved fact must
+match. A single accepted matrix contains 2,692 signatures, covering every integer
+and floating operation form, all admitted ordered runtime pairs, and registered
+native adapters. Rejected matrix entries and policy/publication mutations exercise
+failure gates. Reordering metadata/publication lists must preserve the same plan.
+
+The comparison includes conversions, losslessness/failure facts, aliases, headers,
+operand adaptations, execution/result types, result categories and write-back.
+Native widths come from the supplied C++ probe. Pure Rust tests use synthetic facts
+and exercise typed policy resolution without C++ or repository metadata files.
+Exact diagnostic wording, C++ emission parity and non-scalar preparation are not
+claimed by this slice. The frozen G1 baseline is unchanged.
 
 ## Reproduce validation
 
@@ -100,6 +146,10 @@ python3 -B tools/layout_probe/test_integration.py \
   --rust target/debug/scpp-api-tooling --cpp build/clang/scpp_api_generator \
   --cxx clang++ --flag=-stdlib=libc++ --flag=-fuse-ld=mold \
   --work build/g2-integration
+python3 -B tests/generator_parity/scalar_parity.py \
+  --rust target/debug/scpp-api-tooling --cpp build/clang/scpp_api_generator \
+  --facts build/clang/native-layout/facts.json \
+  --context build/clang/native-layout/context.json --work build/scalar-parity
 ctest --preset default
 python3 -B compiler/tests/measure_foundation.py
 ```
@@ -113,8 +163,8 @@ stale context, missing context, unsupported requests and cross-target execution.
 Pure Rust tests use synthetic facts and need no C++ toolchain. The isolated export
 copies both Rust packages and verifies workspace tests without any C++ files.
 
-Recorded G2 validation: 15 Rust tests in debug/release, strict Clippy and formatting;
-all 36 C++ tests in release and UBSan; native probe integration and Rust-only export.
+Earlier G2 foundation validation remains recorded in the migration plan. Current
+scalar-slice results are recorded there as well; production generation remains C++.
 See the [migration plan](../../specs/planning/rust_compiler_migration.md) for the
 remaining batches and [G1 inventory](../../specs/planning/api_generator_contract_inventory.md)
 for the unchanged production contract and full parity gate.

@@ -21,8 +21,8 @@ eight jobs and mold, without a C++ runtime or generator-binary dependency.
 Scanning, parsing and semantic compilation remain pending.
 The runtime stays C++; API generation
 and physical pre-lowering are migrating to a shared Rust tooling library. The
-[first G2 batch](tools/api_generator/README.md) establishes that library, JSON
-loading, integer-construction preparation and a small C++ layout probe. The C++
+[G2 tooling](tools/api_generator/README.md) provides that library, JSON loading,
+complete scalar preparation (integers, bool/null/float) and a small C++ layout probe. The C++
 generator remains the production path; Rust emission is not implemented. Scanning and tooling migration follow the
 [migration plan](specs/planning/rust_compiler_migration.md).
 Standard-library types and private templates are appropriate for tool support;
