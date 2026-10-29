@@ -349,3 +349,16 @@ Eight Rust tests pass in debug/release, formatting and strict Clippy pass, and a
 intentional Rust API differences, installation commands and reproducible timing
 measurements. No C++ implementation, build wiring or generated publication was
 removed. This checkpoint implements the separately authorized first slice only.
+
+## G1 checkpoint — 2026-10-29
+
+The [generator contract inventory](api_generator_contract_inventory.md) now records
+input/JSON rules, supported families, prepared facts, artifact and CLI behavior,
+native assumptions and comparison gates. A frozen fingerprint fixture covers 17
+accepted publications and 37 rejected inputs, plus CLI lifecycle checks. Comparator
+mutation tests verify that changes are detected. The candidate hook is exercised
+with the unchanged C++ executable; Rust/C++ parity is not yet claimed.
+
+The current C++ generator remains the production implementation. G1 adds only
+contract fixtures, a Python test harness, test-only CMake wiring and documentation.
+Probe implementation, the Rust shared library and build cutover remain G2–G4 work.

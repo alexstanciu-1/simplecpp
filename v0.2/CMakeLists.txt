@@ -59,6 +59,15 @@ target_link_libraries(scpp_runtime_demo PRIVATE scpp_runtime)
 
 include(CTest)
 if(BUILD_TESTING)
+  find_package(Python3 3.10 REQUIRED COMPONENTS Interpreter)
+  add_test(NAME generator_parity COMMAND ${Python3_EXECUTABLE} -B
+    ${CMAKE_CURRENT_SOURCE_DIR}/tests/generator_parity/parity.py
+    --reference $<TARGET_FILE:scpp_api_generator>
+    --candidate $<TARGET_FILE:scpp_api_generator>
+    --source ${CMAKE_CURRENT_SOURCE_DIR}
+    --work ${CMAKE_CURRENT_BINARY_DIR}/generator-parity)
+  add_test(NAME generator_parity_comparison COMMAND ${Python3_EXECUTABLE} -B
+    ${CMAKE_CURRENT_SOURCE_DIR}/tests/generator_parity/test_comparison.py)
   add_executable(carrier_preparation_test tests/carrier_preparation.cpp)
   target_link_libraries(carrier_preparation_test PRIVATE scpp_api_generation)
   add_test(NAME carrier_preparation COMMAND carrier_preparation_test ${runtime_metadata} ${runtime_publication})

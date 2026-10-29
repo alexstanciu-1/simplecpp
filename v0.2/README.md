@@ -56,6 +56,11 @@ none of those implementations has been imported yet.
 
 ## Generator and artifact ownership
 
+The [G1 generator inventory](specs/planning/api_generator_contract_inventory.md)
+records the current C++ contract and reproducible parity checks for the planned
+Rust port. Python 3.10+ is required when BUILD_TESTING is enabled; production
+generation remains the existing C++ executable.
+
 runtime/metadata/runtime.json owns identities, conversion policies and operation
 bindings. publication.json selects concrete types, operators, native adapters and
 collection specializations. tools/api_generator prepares a typed plan and emits
