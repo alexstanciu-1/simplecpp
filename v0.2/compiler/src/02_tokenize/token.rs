@@ -144,6 +144,8 @@ impl TokenKind {
     pub const KW_VOID: Self = Self(NonZeroU8::new(122).unwrap());
     pub const KW_WEAK: Self = Self(NonZeroU8::new(123).unwrap());
     pub const KW_WHILE: Self = Self(NonZeroU8::new(124).unwrap());
+    pub const KW_AUTO: Self = Self(NonZeroU8::new(126).unwrap());
+    pub const KW_LET: Self = Self(NonZeroU8::new(127).unwrap());
     pub const KW_XOR: Self = Self(NonZeroU8::new(125).unwrap());
 }
 

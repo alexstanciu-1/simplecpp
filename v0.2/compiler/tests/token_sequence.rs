@@ -1,3 +1,4 @@
+use scpp_compiler::language::Flavor;
 use scpp_compiler::{
     inputs::source::SourceMap,
     tokenize::token::{Token, TokenKind},
@@ -12,7 +13,7 @@ fn token(offset: u64, length: u64) -> Token {
 #[test]
 fn empty_generation_is_present_and_retains_its_source() {
     let source = SourceMap::default().add("empty".into(), vec![]).unwrap();
-    let sequence = TokenBuilder::new(Arc::clone(&source), usize::MAX).finish();
+    let sequence = TokenBuilder::new(Arc::clone(&source), usize::MAX, Flavor::Php).finish();
     assert!(sequence.is_empty());
     assert_eq!(sequence.len(), 0);
     assert_eq!(sequence.get(0), None);
@@ -27,7 +28,7 @@ fn failed_append_preserves_order_and_allows_recovery() {
     let source = SourceMap::default()
         .add("code".into(), b"one two;".to_vec())
         .unwrap();
-    let mut builder = TokenBuilder::new(source, 0);
+    let mut builder = TokenBuilder::new(source, 0, Flavor::Php);
     builder.push(token(0, 3)).unwrap();
     for invalid in [token(2, 2), token(0, 1)] {
         assert_eq!(
@@ -57,7 +58,7 @@ fn generation_and_source_survive_original_owners() {
     {
         let mut sources = SourceMap::default();
         let source = sources.add("bytes".into(), vec![b'A', 0, 255]).unwrap();
-        let mut builder = TokenBuilder::new(Arc::clone(&source), 1);
+        let mut builder = TokenBuilder::new(Arc::clone(&source), 1, Flavor::Php);
         builder.push(token(0, 3)).unwrap();
         let sequence = builder.finish();
         retained = sequence.clone();
@@ -75,7 +76,7 @@ fn growth_retains_every_token_in_order() {
     let source = SourceMap::default()
         .add("many".into(), vec![0; 600])
         .unwrap();
-    let mut builder = TokenBuilder::new(source, 0);
+    let mut builder = TokenBuilder::new(source, 0, Flavor::Php);
     for offset in 0..600 {
         builder.push(token(offset, 1)).unwrap();
     }

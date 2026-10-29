@@ -2,6 +2,8 @@
 use crate::{
     diagnostic::{Diagnostic, Severity},
     inputs::{load::load, source::SourceMap},
+    language::Flavor,
+    parse::{self, ast::ParsedFile},
     tokenize::{scanner, token_sequence::TokenSequence},
 };
 use std::path::PathBuf;
@@ -13,9 +15,14 @@ pub struct Driver {
 }
 
 impl Driver {
-    pub fn scan_file(&mut self, path: PathBuf) -> Result<TokenSequence, String> {
+    pub fn scan_file(&mut self, path: PathBuf, flavor: Flavor) -> Result<TokenSequence, String> {
         let source = load(&mut self.sources, path).map_err(|e| e.to_string())?;
-        scanner::scan(source, 0).map_err(|e| e.to_string())
+        scanner::scan(source, 0, flavor).map_err(|e| e.to_string())
+    }
+
+    pub fn parse_file(&mut self, path: PathBuf, flavor: Flavor) -> Result<ParsedFile, String> {
+        let tokens = self.scan_file(path, flavor)?;
+        parse::parse(tokens).map_err(|e| e.to_string())
     }
 
     pub fn inspect_source(&mut self, path: PathBuf, offset: u64) -> Result<Diagnostic, String> {

@@ -1,5 +1,6 @@
 //! Source-bound, ordered token generations. Scanning and token classification are separate.
 use crate::inputs::source::SourceFile;
+use crate::language::Flavor;
 use crate::tokenize::token::Token;
 use std::{fmt, sync::Arc};
 
@@ -21,6 +22,7 @@ impl std::error::Error for SequenceError {}
 
 #[derive(Debug)]
 struct Generation {
+    flavor: Flavor,
     source: Arc<SourceFile>,
     tokens: Vec<Token>,
 }
@@ -31,6 +33,9 @@ struct Generation {
 pub struct TokenSequence(Arc<Generation>);
 
 impl TokenSequence {
+    pub fn flavor(&self) -> Flavor {
+        self.0.flavor
+    }
     pub fn source(&self) -> &Arc<SourceFile> {
         &self.0.source
     }
@@ -57,7 +62,7 @@ impl TokenSequence {
 /// ```compile_fail
 /// use scpp_compiler::{inputs::source::SourceMap, tokenize::token_sequence::TokenBuilder};
 /// let source = SourceMap::default().add("empty".into(), vec![]).unwrap();
-/// let builder = TokenBuilder::new(source, 0);
+/// let builder = TokenBuilder::new(source, 0, scpp_compiler::language::Flavor::Php);
 /// let first = builder.finish();
 /// let second = builder.finish(); // publication consumes the builder
 /// ```
@@ -68,7 +73,7 @@ impl TokenBuilder {
     /// The reserve hint is bounded by source bytes (every token is nonempty).
     /// Zero uses a default of at most 256 slots. Allocation failure follows Rust's
     /// standard allocation behavior; it is not represented by SequenceError.
-    pub fn new(source: Arc<SourceFile>, previous_count: usize) -> Self {
+    pub fn new(source: Arc<SourceFile>, previous_count: usize, flavor: Flavor) -> Self {
         let hint = if previous_count == 0 {
             256
         } else {
@@ -76,6 +81,7 @@ impl TokenBuilder {
         };
         let capacity = hint.min(source.byte_len() as usize);
         Self(Generation {
+            flavor,
             source,
             tokens: Vec::with_capacity(capacity),
         })
@@ -113,7 +119,7 @@ mod tests {
     fn bounded_reserve_and_publication_preserve_token_allocation() {
         let mut sources = SourceMap::default();
         let source = sources.add("small".into(), vec![0; 8]).unwrap();
-        let mut builder = TokenBuilder::new(source, usize::MAX);
+        let mut builder = TokenBuilder::new(source, usize::MAX, Flavor::Php);
         assert_eq!(builder.0.tokens.capacity(), 8);
         builder
             .push(Token::new(0, 1, TokenKind::INTEGER).unwrap())

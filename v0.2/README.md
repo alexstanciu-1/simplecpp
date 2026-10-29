@@ -24,8 +24,8 @@ JSON implementation have been retired after exact artifact parity proofs. The
 runtime remains C++; generated public headers remain template-free.
 
 The [Rust compiler foundation](compiler/README.md) provides source bytes, spans,
-tokens, immutable token sequences, PHS scanning and diagnostics. Parsing and semantic
-compilation are future slices. The compiler uses only the Rust standard library. Rust tooling builds independently; CMake
+tokens, immutable token sequences, flavor-aware scanning, C++/PHP/JS parsing into
+a shared AST, and diagnostics. Semantic compilation remains a future slice. The compiler uses only the Rust standard library. Rust tooling builds independently; CMake
 invokes Cargo for runtime generation, with no reverse dependency.
 
 Install Rust 1.99.1 and put Cargo on PATH, then run `cargo fetch --locked` once to

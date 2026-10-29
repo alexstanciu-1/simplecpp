@@ -1,12 +1,13 @@
-use scpp_compiler::compiler::driver::Driver;
+use scpp_compiler::{compiler::driver::Driver, language::Flavor};
 use std::ffi::OsString;
 use std::io::{self, Write};
 use std::path::PathBuf;
 use std::process::ExitCode;
 
-const HELP: &str = "Simple C++ compiler foundation (PHS scanning; no compilation yet)\n\
+const HELP: &str = "Simple C++ compiler foundation (three syntax flavors; no compilation yet)\n\
 Usage: scpp-compiler source <path> [byte-offset]\n\
-       scpp-compiler scan <path>\n\
+       scpp-compiler scan <cpp|php|js> <path>\n\
+       scpp-compiler parse <cpp|php|js> <path>\n\
        scpp-compiler --help | --version\n\
 Reports a one-based line and byte-column for a source offset (default 0).\n";
 
@@ -22,9 +23,20 @@ fn run(args: Vec<OsString>, output: &mut impl Write) -> Result<(), String> {
         )
         .map_err(|e| e.to_string());
     }
-    if args.len() == 2 && args[0] == "scan" {
-        let path = PathBuf::from(&args[1]);
-        let tokens = Driver::default().scan_file(path)?;
+    if args.len() == 3 && (args[0] == "scan" || args[0] == "parse") {
+        let flavor: Flavor = args[1].to_str().ok_or("flavor must be UTF-8")?.parse()?;
+        let path = PathBuf::from(&args[2]);
+        if args[0] == "parse" {
+            let parsed = Driver::default().parse_file(path, flavor)?;
+            return writeln!(
+                output,
+                "parsed {} statements, {} expressions",
+                parsed.statements.len(),
+                parsed.expressions.len()
+            )
+            .map_err(|e| e.to_string());
+        }
+        let tokens = Driver::default().scan_file(path, flavor)?;
         for token in tokens.tokens() {
             writeln!(
                 output,
@@ -38,7 +50,10 @@ fn run(args: Vec<OsString>, output: &mut impl Write) -> Result<(), String> {
         return Ok(());
     }
     if !(args.len() == 2 || args.len() == 3) || args[0] != "source" {
-        return Err("expected source <path> [byte-offset] or scan <path>; use --help".to_owned());
+        return Err(
+            "expected source <path> [byte-offset] or scan/parse <cpp|php|js> <path>; use --help"
+                .to_owned(),
+        );
     }
     let offset = if args.len() == 3 {
         args[2]

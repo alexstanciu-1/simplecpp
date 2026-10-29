@@ -69,7 +69,7 @@ with tempfile.TemporaryDirectory(prefix="scpp-rust-foundation-") as temporary:
     measure("unchanged_debug_build", ["build"])
     main = root / "compiler/src/main.rs"
     original = main.read_text()
-    edited = original.replace("(PHS scanning; no compilation yet)", "(timing probe; PHS scanning; no compilation yet)")
+    edited = original.replace("(three syntax flavors; no compilation yet)", "(timing probe; three syntax flavors; no compilation yet)")
     assert edited != original
     main.write_text(edited)
     measure("incremental_cli_text_edit", ["build"])

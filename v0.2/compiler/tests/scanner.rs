@@ -1,3 +1,4 @@
+use scpp_compiler::language::Flavor;
 use scpp_compiler::{
     inputs::source::SourceMap,
     tokenize::scanner::scan,
@@ -11,6 +12,7 @@ fn scanned(bytes: &[u8]) -> scpp_compiler::tokenize::token_sequence::TokenSequen
             .add("test.phs".into(), bytes.into())
             .unwrap(),
         0,
+        Flavor::Php,
     )
     .unwrap()
 }
@@ -20,7 +22,7 @@ fn phs_local_has_exact_byte_spans_and_source_identity() {
     let source = SourceMap::default()
         .add("local.phs".into(), b"/*hi*/$x int = -12 + .5e+2;".to_vec())
         .unwrap();
-    let tokens = scan(Arc::clone(&source), usize::MAX).unwrap();
+    let tokens = scan(Arc::clone(&source), usize::MAX, Flavor::Php).unwrap();
     assert!(Arc::ptr_eq(tokens.source(), &source));
     let actual: Vec<_> = tokens
         .tokens()
@@ -191,7 +193,7 @@ fn malformed_input_reports_first_error_and_preserves_old_generations() {
         let source = SourceMap::default()
             .add("bad.phs".into(), bytes.to_vec())
             .unwrap();
-        let error = scan(Arc::clone(&source), old.len()).unwrap_err();
+        let error = scan(Arc::clone(&source), old.len(), Flavor::Php).unwrap_err();
         assert_eq!(error.span().start(), offset);
         assert_eq!(error.message(), reason);
         assert!(Arc::ptr_eq(error.source(), &source));
@@ -202,7 +204,7 @@ fn malformed_input_reports_first_error_and_preserves_old_generations() {
         .add("lines.phs".into(), b"\r\n\r @".to_vec())
         .unwrap();
     assert_eq!(
-        scan(source, 0).unwrap_err().to_string(),
+        scan(source, 0, Flavor::Php).unwrap_err().to_string(),
         "lines.phs:2:3: error: Unsupported token"
     );
 }
@@ -213,7 +215,7 @@ fn all_single_bytes_and_short_prefixes_terminate_with_contained_spans() {
         for suffix in [&b""[..], &b"a"[..], &b"'"[..], &b"/*"[..]] {
             let bytes = [&[first], suffix].concat();
             let source = SourceMap::default().add("bytes".into(), bytes).unwrap();
-            match scan(Arc::clone(&source), 0) {
+            match scan(Arc::clone(&source), 0, Flavor::Php) {
                 Ok(tokens) => {
                     for token in tokens.tokens() {
                         assert!(token.span(&source).is_ok());
@@ -233,7 +235,7 @@ fn token_length_boundary_is_checked_without_truncation() {
     bytes.push(b'a');
     let source = SourceMap::default().add("long".into(), bytes).unwrap();
     assert_eq!(
-        scan(source, 0).unwrap_err().message(),
+        scan(source, 0, Flavor::Php).unwrap_err().message(),
         "Token length exceeds 24-bit capacity"
     );
 }

@@ -562,7 +562,7 @@ The first scanner targets PHS source-body syntax and reuses the reviewed C++ don
 ASCII/name, decimal, quoted-string, trivia and punctuation boundaries. scanner.rs
 owns the worker and spelling classification; SourceFile owns diagnostic locations,
 Token owns compact representation, and TokenBuilder owns ordered publication.
-The [compiler README](../../compiler/README.md#phs-scanning-contract-and-donor-review)
+The [compiler README](../../compiler/README.md#initial-php-scanning-contract-and-donor-review)
 records the exact admitted lexical subset and intentional diagnostic difference.
 
 A new scan command exposes complete offset/length/tag dumps. First lexical failure
@@ -656,3 +656,32 @@ No scanner semantics, runtime behavior, parser, global model, incremental schedu
 or empty future-stage directories are added. Driver tests prove recovery after read
 and lexical errors and preservation of earlier source/token snapshots. Compiler-only
 export, debug/release tests, formatting and strict Clippy validate the new layout.
+
+
+## Three syntax flavors and first shared AST — 2026-10-29
+
+Approved: C++, PHP and JS are syntax flavors of Simple C++, not compatibility
+implementations. PHP and strict-PHP++/PHS are no longer separate modes. Project
+settings own strictness/defaults; common analysis will enforce them. Mixed flavors
+are allowed per file, though consistency is encouraged. This supersedes strict-PHS
+first framing for the rewrite. No runtime generator responsibility moves here.
+
+The first parser slice now covers all three flavors: explicitly typed and inferred
+locals, unresolved PHP writes, integer spelling, references, arithmetic, shifts and
+blocks. One AST preserves explicit/inferred annotations and declaration-versus-write
+intent. Nested type argument syntax consumes individual angles; expression shifts
+consume adjacent pairs without token mutation. Flavor travels with token generations.
+The [frontend contract](../compiler_frontends.md) records syntax, ownership and limits.
+
+The driver accepts flavor per file; CLI scan/parse require cpp/php/js. Shared lexical
+machinery isolates PHP variable/comments and JS identifier rules. Flavor-specific
+frontends own declaration grammar; common helpers own the shared expression grammar.
+Thirty compiler tests plus one compile-fail doctest cover the retained foundation and
+new AST/CLI/driver behavior. Debug/release, strict Clippy and isolated export validate
+the slice. Parsing succeeds independently of semantic profile admission.
+
+Next: common scope/name resolution and project settings, followed by type inference,
+profile enforcement and runtime operation demands. Project manifests, whole-program
+mixed-flavor resolution, literal value conversion and executable emission are not
+implemented by this syntactic slice. Integer 3 will take the configured default
+integer type during analysis; no runtime numeric policy is duplicated in the parser.

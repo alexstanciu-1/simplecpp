@@ -1,4 +1,5 @@
-//! In-memory PHS lexical scanning. No decoding, name resolution or runtime policy.
+//! Shared lexical machinery with explicit source-flavor rules. No decoding, name resolution or runtime policy.
+use crate::language::Flavor;
 use crate::{
     diagnostic::{Diagnostic, Severity},
     inputs::source::SourceFile,
@@ -9,10 +10,18 @@ use std::sync::Arc;
 
 /// Returns a complete generation or the first lexical diagnostic. No partial
 /// generation escapes. The source bytes are borrowed and token spellings not copied.
-pub fn scan(source: Arc<SourceFile>, previous_count: usize) -> Result<TokenSequence, Diagnostic> {
+pub fn scan(
+    source: Arc<SourceFile>,
+    previous_count: usize,
+    flavor: Flavor,
+) -> Result<TokenSequence, Diagnostic> {
     let bytes = source.bytes();
-    let mut cursor = Cursor { bytes, offset: 0 };
-    let mut builder = TokenBuilder::new(Arc::clone(&source), previous_count);
+    let mut cursor = Cursor {
+        bytes,
+        offset: 0,
+        flavor,
+    };
+    let mut builder = TokenBuilder::new(Arc::clone(&source), previous_count, flavor);
     while cursor.offset < bytes.len() {
         cursor
             .trivia()
@@ -48,10 +57,14 @@ fn name_byte(byte: u8) -> bool {
 }
 
 struct Cursor<'a> {
+    flavor: Flavor,
     bytes: &'a [u8],
     offset: usize,
 }
 impl Cursor<'_> {
+    fn name_start(&self, byte: u8) -> bool {
+        letter(byte) || (self.flavor == Flavor::Js && byte == b'$')
+    }
     fn peek(&self) -> Option<u8> {
         self.bytes.get(self.offset).copied()
     }
@@ -66,7 +79,9 @@ impl Cursor<'_> {
     fn trivia(&mut self) -> Result<(), Failure> {
         loop {
             self.advance_while(|b| matches!(b, b' ' | b'\t' | b'\r' | b'\n'));
-            if self.starts(b"//") || (self.starts(b"#") && !self.starts(b"#[")) {
+            if self.starts(b"//")
+                || (self.flavor == Flavor::Php && self.starts(b"#") && !self.starts(b"#["))
+            {
                 self.advance_while(|b| b != b'\r' && b != b'\n');
             } else if self.starts(b"/*") {
                 let start = self.offset;
@@ -86,7 +101,7 @@ impl Cursor<'_> {
     fn token(&mut self) -> Result<Kind, Failure> {
         let start = self.offset;
         let byte = self.bytes[start];
-        if byte == b'$' {
+        if byte == b'$' && self.flavor == Flavor::Php {
             self.offset += 1;
             if !self.peek().is_some_and(letter) {
                 return Err((start, "Expected variable name"));
@@ -94,9 +109,14 @@ impl Cursor<'_> {
             self.advance_while(name_byte);
             return Ok(Kind::VARIABLE);
         }
-        if letter(byte) {
-            self.advance_while(name_byte);
-            return Ok(word(&self.bytes[start..self.offset]));
+        if self.name_start(byte) {
+            while self
+                .peek()
+                .is_some_and(|b| self.name_start(b) || b.is_ascii_digit())
+            {
+                self.offset += 1;
+            }
+            return Ok(word(&self.bytes[start..self.offset], self.flavor));
         }
         if matches!(byte, b'\'' | b'"') {
             self.offset += 1;
@@ -120,6 +140,9 @@ impl Cursor<'_> {
             || (byte == b'.' && self.bytes.get(start + 1).is_some_and(u8::is_ascii_digit))
         {
             return self.number();
+        }
+        if byte == b'#' && self.flavor != Flavor::Php {
+            return Err((start, "Unsupported token"));
         }
         if let Some((kind, length)) = punctuation(&self.bytes[start..]) {
             self.offset += length;
@@ -156,7 +179,76 @@ impl Cursor<'_> {
 }
 
 // Tags classify spellings, not semantic support or reserved-name status.
-fn word(bytes: &[u8]) -> Kind {
+fn word(bytes: &[u8], flavor: Flavor) -> Kind {
+    if flavor == Flavor::Cpp && bytes == b"auto" {
+        return Kind::KW_AUTO;
+    }
+    if flavor == Flavor::Js && bytes == b"let" {
+        return Kind::KW_LET;
+    }
+    let keyword = match flavor {
+        Flavor::Php => true,
+        Flavor::Cpp => matches!(
+            bytes,
+            b"class"
+                | b"struct"
+                | b"if"
+                | b"else"
+                | b"return"
+                | b"const"
+                | b"true"
+                | b"false"
+                | b"void"
+                | b"for"
+                | b"while"
+                | b"break"
+                | b"continue"
+                | b"switch"
+                | b"case"
+                | b"default"
+                | b"namespace"
+                | b"template"
+                | b"typename"
+                | b"new"
+                | b"public"
+                | b"private"
+                | b"protected"
+                | b"static"
+                | b"try"
+                | b"catch"
+                | b"throw"
+        ),
+        Flavor::Js => matches!(
+            bytes,
+            b"function"
+                | b"class"
+                | b"if"
+                | b"else"
+                | b"return"
+                | b"const"
+                | b"true"
+                | b"false"
+                | b"null"
+                | b"for"
+                | b"while"
+                | b"break"
+                | b"continue"
+                | b"switch"
+                | b"case"
+                | b"default"
+                | b"new"
+                | b"try"
+                | b"catch"
+                | b"finally"
+                | b"throw"
+                | b"async"
+                | b"await"
+        ),
+    };
+    if !keyword {
+        return Kind::IDENTIFIER;
+    }
+
     match bytes {
         b"abstract" => Kind::KW_ABSTRACT,
         b"and" => Kind::KW_AND,

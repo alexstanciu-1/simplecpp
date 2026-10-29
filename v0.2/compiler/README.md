@@ -3,8 +3,8 @@
 Doc Status: supporting
 
 The compiler is now Rust-only. It implements byte sources, checked spans, compact
-tokens, immutable token-sequence publication, in-memory PHS scanning, diagnostics
-and source/token inspection commands. Parsing, symbols, semantic compilation, runtime metadata integration
+tokens, immutable token-sequence publication, flavor-aware scanning, a shared AST with C++/PHP/JS parser frontends, diagnostics
+and source/token/parser inspection commands. Symbols, semantic compilation, runtime metadata integration
 and C++ emission remain future slices in the
 [migration plan](../specs/planning/rust_compiler_migration.md).
 
@@ -69,6 +69,7 @@ src/
   main.rs                       CLI arguments, presentation and process exit
   lib.rs                        module declarations
   diagnostic.rs                 source-associated diagnostic representation
+  language.rs                   syntax flavor identity
   compiler/
     mod.rs
     driver.rs                   loading/phase sequencing and invocation-owned sources
@@ -81,10 +82,14 @@ src/
     scanner.rs                  lexical processing and spelling classification
     token.rs                    compact representation
     token_sequence.rs           checked construction and immutable publication
+  03_parse/                     Rust module: parse
+    mod.rs
+    ast.rs                      common source-level AST
+    parser.rs                   shared parsing machinery
+    cpp.rs, php.rs, js.rs        flavor-specific declaration grammars
 ```
 
-Future phase owners are `03_parse/` (syntax and parser-invoked collection),
-`04_analyze/` (name/type resolution and semantic preparation), `05_backend/cpp/`
+Future phase owners are `04_analyze/` (name/type resolution and semantic preparation), `05_backend/cpp/`
 (target bindings and rendering) and `06_native/` (native build/run). Add these only
 with real implementations. A separate session module is unnecessary while Driver's
 only retained state is its SourceMap; no empty scaffold or global model is added.
@@ -92,7 +97,7 @@ only retained state is its SourceMap; no empty scaffold or global model is added
 Workers may consume earlier-stage data and shared diagnostics, but must not invoke
 later processing or depend on the driver. Input representation performs no I/O;
 the loader does no scanning. The scanner remains an in-memory worker. Driver orders
-loading/scanning and returns data; main owns text presentation. Driver normalizes
+loading/scanning/parsing and returns data; main owns text presentation. Driver normalizes
 failures to command error text at this boundary; lexical workers retain their typed
 diagnostics and loading exposes a typed LoadError.
 
@@ -141,7 +146,7 @@ No worker, mutable global root, incremental scheduler or backend is introduced.
   escapes control characters in paths/messages and prints byte coordinates. Path
   display is lossy for invalid Unicode, while file access retains the original path.
 - `main.rs`: `source <path> [byte-offset]` prints a location note. This is not a
-  compile/check command. `scan <path>` prints offset, length and numeric tag per
+  compile/check command. `scan <cpp|php|js> <path>` prints offset, length and numeric tag per
   token, after complete successful scanning. Lexical/I/O errors return exit 1 with
   no partial token output; successful commands exit 0.
 
@@ -177,10 +182,12 @@ A fresh source-only C++ export also builds and passes all 31 checks, without
 retired compiler sources or pre-generated runtime files.
 
 
-## PHS scanning contract and donor review
+## Initial PHP scanning contract and donor review
 
-The first source flavor is strict PHS source-body syntax (`.phs`); scanning is not
-full PHP admission. No PHP/HTML mode, BOM stripping or source normalization is
+The first scanner adopted PHP-like source-body syntax from the PHS donor;
+this is not a separate strict-PHP mode or full PHP admission. The current
+[flavor contract](../specs/compiler_frontends.md) supersedes the original single-flavor
+framing and describes C++/PHP/JS selection. No PHP/HTML mode, BOM stripping or source normalization is
 introduced. Source bytes and gaps remain exact. Recognizing constituent tokens
 alone does not admit a construct, operation or identifier in a parser context.
 
@@ -209,7 +216,7 @@ Adopted lexical rules:
   individual angles, preserving generic syntax; `<<=` and `>>=` are single tokens.
   There is no stored EOF token. Actual NUL outside a string/comment is an error.
 
-`scan(Arc<SourceFile>, previous_count)` returns either a complete TokenSequence or
+`scan(Arc<SourceFile>, previous_count, flavor)` returns either a complete TokenSequence or
 its first Diagnostic. The count is a bounded reserve hint, not an incremental-scan
 request. Failure publishes no partial generation and leaves old generations usable.
 No per-token string copy or allocation is introduced; the builder owns token storage.
@@ -235,3 +242,39 @@ Debug/release, strict Clippy and formatting pass. The compiler-only export recur
 copies Rust modules and builds/tests without runtime/API-tooling inputs. Runtime
 cutover 0c230e0bc is integrated; production generator files are unchanged by this
 reorganization.
+
+
+## Three-flavor parser slice
+
+See the [flavor and AST contract](../specs/compiler_frontends.md) for the exact
+subset, declaration/inference/write distinctions and project strictness boundary.
+The compiler has one PHP flavor; there is no strict-PHP++/PHS mode switch. Parsing
+preserves information needed by future common analysis without applying strictness
+or choosing default numeric types.
+
+From v0.2/, inspect a source with explicit flavor selection:
+
+```sh
+cargo run -p scpp-compiler --locked --offline -- scan php path/to/input.phs
+cargo run -p scpp-compiler --locked --offline -- parse cpp path/to/input.cpp
+cargo run -p scpp-compiler --locked --offline -- parse js path/to/input.js
+```
+
+Parse prints a statement/expression count after complete success; it is not a
+compilation/type-check command. Flavor is retained with tokens; the parser cannot
+accidentally receive a second, inconsistent flavor argument. Multiple flavors may
+be parsed through the same Driver, each with an independent source identity.
+Project configuration loading, profile enforcement and cross-file name resolution
+remain later work. Lexical and grammatical errors are rejected now.
+
+Validation: 30 compiler tests plus the compile-fail doctest, debug/release, strict
+Clippy, formatting and compiler-only export. New proofs cover cross-flavor AST
+intent, CLI/driver selection, nested type arguments and shifts, preserved spans,
+malformed syntax, bounded nesting and long arithmetic expression chains.
+
+
+Fresh parser-slice timing (same Rust 1.99.1/Ryzen 4650G/WSL2, eight jobs, mold;
+one observation, compiler-only export): clean debug 1.148 s, clean release 1.194 s,
+CLI edit rebuild 0.351 s, model edit check/rebuild 0.300/0.537 s, scanner edit
+check/rebuild 0.304/0.450 s. Full ignored report: build/compiler-parser-timings.json.
+These are small diagnostic-text edits, not estimates for a complete compiler.
