@@ -1,0 +1,84 @@
+{
+  "version": 1,
+  "namespace": "scpp",
+  "headers": {
+    "types": "scpp/integers.hpp",
+    "operators": "scpp/numeric.hpp",
+    "short_names": "scpp/short_names.hpp",
+    "native_bridge": "scpp/native_bridge.hpp",
+    "values": "scpp/values.hpp"
+  },
+  "types": [
+    "int64"
+  ],
+  "values": [
+    "bool_t",
+    "null_t",
+    "float64"
+  ],
+  "operators": [],
+  "short_aliases": [],
+  "string": {
+    "header": "scpp/string.hpp",
+    "operations": [],
+    "casts": []
+  },
+  "boxed": {
+    "header": "scpp/boxed.hpp",
+    "families": [
+      "mixed",
+      "dynamic"
+    ],
+    "scalar_conversions": true
+  },
+  "carriers": {
+    "header": "scpp/carriers.hpp",
+    "specializations": [
+      {
+        "family": "result",
+        "payload": "mixed"
+      },
+      {
+        "family": "result",
+        "payload": "dynamic"
+      },
+      {
+        "family": "result",
+        "payload": "string"
+      },
+      {
+        "family": "nullable",
+        "payload": "int64"
+      },
+      {
+        "family": "nullable",
+        "payload": "float64"
+      },
+      {
+        "family": "nullable",
+        "payload": "bool_t"
+      },
+      {
+        "family": "nullable",
+        "payload": "string"
+      }
+    ]
+  },
+  "json": {
+    "header": "scpp/json.hpp",
+    "operations": [
+      "decode",
+      "decode_mixed",
+      "encode_mixed",
+      "encode_dynamic",
+      "encode_int64",
+      "encode_float64",
+      "encode_bool_t",
+      "encode_string",
+      "encode_nullable_int64",
+      "encode_nullable_float64",
+      "encode_nullable_bool_t",
+      "encode_nullable_string"
+    ]
+  }
+}

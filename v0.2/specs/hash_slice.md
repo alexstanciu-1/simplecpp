@@ -10,6 +10,7 @@ public traversal are not implemented by this slice.
 `tools/api_generator/php/families.php` prepares concrete requested identities and methods;
 `tools/api_generator/php/render_modules.php` emits declarations and wiring from that plan.
 `runtime/src/hash/typed_hash.hpp` owns the reviewed private table algorithms.
+`hash_index.hpp` owns shared index primitives used by typed and packed storage.
 
 A publication requests `hashes: {header: "scpp/hashes.hpp", specializations:
 [{value: "int64", key: "string"}]}`. The name is `hash_VALUE_KEY`, matching source

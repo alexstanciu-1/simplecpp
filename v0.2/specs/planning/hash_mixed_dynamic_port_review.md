@@ -2,7 +2,8 @@
 
 Doc Status: planning
 Date: 2026-10-28
-Status: initial bounded review; no hash/mixed/dynamic code imported into v0.2.
+Status: historical initial review; typed hashes are now delivered. The
+[packed-storage audit](runtime_packed_storage_batch.md) records current findings and scope.
 
 ## User constraints and review result
 

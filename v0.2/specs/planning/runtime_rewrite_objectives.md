@@ -77,16 +77,19 @@ and operations; public include closures remain template-free, while private
 templates remain available for implementation reuse.
 
 Core families include scalars, strings, vectors, nullable/result carriers, record
-values and ownership handles, typed hashes, mixed and dynamic. Typed hashes are now implemented; packed storage, mixed/dynamic
-and traversal remain. Current progression:
+values and ownership handles, typed hashes, mixed and dynamic. Typed hashes and private packed storage are implemented; private mixed ownership
+and dynamic shared-container ownership are now proved. Bounded public mixed/dynamic APIs are now generated on request; operators, source
+integration and traversal remain. Current progression:
 
 1. Completed: custom typed-hash algorithms, concrete lookup/mutation APIs and
    internal ordering proofs; see [validation](../hash_slice_validation.md).
-2. Preserve packed storage forms and transitions, with independent proofs before
-   introducing boxed values.
-3. Preserve mixed's tagged values and documented copy/detach ownership behavior.
-4. Preserve independent dynamic-valued containers and shared container identity.
-   Mixed and dynamic remain separate families.
+2. Completed: private packed storage forms, bounded key codes and transactional
+   transitions; see [validation](../packed_storage_validation.md).
+3. Completed private slice: mixed tagged values and COW ownership; see
+   [contract](../mixed_storage.md). Bounded public publication is complete; operators remain separate.
+4. Completed private slice: independent dynamic-valued containers, shared identity
+   and explicit scalar family conversion; see [contract](../dynamic_storage.md).
+   Mixed and dynamic remain separate families; see the [public API](../boxed_slice.md).
 5. Integrate traversal lifetime and mutation guarantees before claiming general
    iteration support. Implementation is explicitly deferred under RT-DEBT-01 in the
    [typed-hash batch](runtime_collections_batch.md); review compiler/runtime
@@ -128,4 +131,21 @@ target relevant costs rather than treating a green functional test as sufficient
 
 The first module reuse proof is complete: all eleven native datetime functions,
 including host-local formatting/parsing. See [completion evidence](../datetime_local_validation.md).
-Packed storage for mixed/dynamic is the next proposed core review.
+The [packed-storage batch](runtime_packed_storage_batch.md) is complete, including
+key-limit and allocation-failure repairs. Private mixed ownership builds on it.
+Preserve the optimized compact pooled-key design; the larger-key proposal was
+withdrawn after review of the v0.1 design notes and explicit user correction.
+
+The subsequent `9f73b288c` tooling cutover replaced the Rust API generator with
+PHP. New public runtime publication must use that sole PHP path. Private mixed and
+dynamic storage now share family-safe mechanics; shared-cycle reclamation remains
+RT-DEBT-02 as recorded in the dynamic storage contract.
+
+The bounded JSON module is now implemented: direct selected-family parsing,
+checked results, donor key normalization with checked INT32_MAX failures, and
+private synchronous encoding traversal. The production `SCPP_ENABLE_JSON` profile
+composes with datetime and supports builds with tests disabled. See the
+[JSON contract](../json_module.md) and [validation](../json_validation.md).
+Direct typed scalar and nullable-scalar encoding is also available without boxing. Typed JSON
+extraction/container encoding, source registration and public traversal remain
+separate work; the private module adapter does not settle RT-DEBT-01.

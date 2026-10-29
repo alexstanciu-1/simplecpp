@@ -1,10 +1,12 @@
 <?php
 declare(strict_types=1);
 namespace Scpp\Api;
+require_once __DIR__ . '/boxed.php';
+require_once __DIR__ . '/json.php';
 
 function checkHeader(array $plan, string $header): void {
     $paths = array_values($plan['headers']);
-    foreach (['string', 'hashes', 'datetime'] as $key) {
+    foreach (['string', 'hashes', 'datetime', 'boxed', 'json'] as $key) {
         if (isset($plan[$key])) {
             $paths[] = $plan[$key]['header'];
         }
@@ -26,15 +28,17 @@ function familyMetadata(mixed $metadata, mixed $publication, string $key, string
 }
 
 function prepareRuntime(mixed $metadata, mixed $publication, array $facts): array {
-    fields($publication, array_merge(SCALAR_FIELDS, ['string', 'vectors', 'carriers', 'ownership', 'hashes', 'datetime']));
+    fields($publication, array_merge(SCALAR_FIELDS, ['string', 'vectors', 'carriers', 'ownership', 'hashes', 'datetime', 'boxed', 'json']));
     $scalarRequest = (object)array_intersect_key(object($publication), array_flip(SCALAR_FIELDS));
     $plan = prepareScalars($metadata, $scalarRequest, $facts);
     $registry = registry($metadata, $facts);
     prepareString($metadata, $publication, $registry, $plan);
     prepareVectors($metadata, $publication, $registry, $plan);
+    prepareBoxed($metadata, $publication, $facts, $plan);
     prepareCarriers($metadata, $publication, $plan);
     prepareHashes($metadata, $publication, $plan);
     prepareDatetime($metadata, $publication, $plan);
+    prepareJson($metadata, $publication, $plan);
     prepareOwnership($metadata, $publication, $facts, $plan);
     sortConversions($plan['conversions']);
     return $plan;
@@ -203,6 +207,18 @@ function prepareVectors(mixed $metadata, mixed $publication, array $registry, ar
     $plan['vectors'] = array_values($vectors);
     $plan['vectors_header'] = $header;
 }
+// Resolve published payload identities before carrier admission. This does not
+// recursively synthesize dependencies or infer payloads from requested names.
+function carrierPayload(array $plan, string $name): ?array {
+    if (hasType($plan, $name) || ($name !== 'null_t' && hasValue($plan, $name))) return ['kind' => 'scalar'];
+    if ($name === 'string' && isset($plan['string'])) return ['kind' => 'string'];
+    if (in_array($name, array_column($plan['vectors'], 'name'), true)) return ['kind' => 'vector'];
+    foreach ($plan['boxed']['families'] ?? [] as $family) {
+        if ($family['name'] === $name) return ['kind' => 'boxed', 'header' => $plan['boxed']['header'], 'copy' => $family['copy']];
+    }
+    return null;
+}
+
 const CARRIER_DEFAULTS = ['nullable' => 'empty', 'result' => 'value', 'result_or_false' => 'false', 'result_or_bool' => 'false'];
 function prepareCarriers(mixed $metadata, mixed $publication, array &$plan): void {
     $m = familyMetadata($metadata, $publication, 'carriers', 'carriers', 'Carrier');
@@ -236,11 +252,17 @@ function prepareCarriers(mixed $metadata, mixed $publication, array &$plan): voi
         at($families, $family);
         $payload = textValue(at($item, 'payload'));
         requireThat($family !== 'nullable' || hasValue($plan, 'null_t'), 'Nullable requires published null_t');
-        requireThat(hasType($plan, $payload) || ($payload === 'string' && isset($plan['string'])) || in_array($payload, array_column($plan['vectors'], 'name'), true) || ($payload !== 'null_t' && hasValue($plan, $payload)), 'Carrier payload must be a published scalar, string or vector; null/nested carriers are not admitted');
+        $payloadInfo = carrierPayload($plan, $payload);
+        requireThat($payloadInfo !== null, 'Carrier payload must be a published scalar, string, vector or supported boxed family');
+        requireThat($payloadInfo['kind'] !== 'boxed' || $family === 'result', 'Boxed payloads currently require the result family');
         requireThat($family !== 'result' || (isset($plan['string']) && hasType($plan, 'int64')), 'Result error payload requires string and int64');
         $name = $family . '_' . $payload;
         requireThat(!isset($carriers[$name]), 'Duplicate carrier specialization');
         $carriers[$name] = compact('name', 'family', 'payload', 'extraction') + ['default_state' => CARRIER_DEFAULTS[$family], 'boxing' => 'explicit', 'extraction_can_fail' => true, 'non_payload_extraction' => 'throw_runtime_error', 'condition' => 'query_state_explicitly', 'lifecycle' => 'owned_copy_move_resets_source_to_default', 'lifted_operators' => false, 'result_category' => 'value', 'explicit_lowering' => 'value_then_payload_operation'];
+        if ($payloadInfo['kind'] === 'boxed') {
+            $carriers[$name]['payload_header'] = $payloadInfo['header'];
+            $carriers[$name]['payload_copy'] = $payloadInfo['copy'];
+        }
         $plan['source_types']->{"$family<$payload>"} = $name;
         if($family === 'result') {
             $plan['error'] = ['type' => 'error_t', 'state' => 'explicit_present', 'message' => 'string', 'line' => 'int64', 'file' => 'string', 'inspection' => 'value_copy', 'global_short_name' => false];
@@ -375,13 +397,14 @@ function prepareOwnership(mixed $metadata, mixed $publication, array $facts, arr
     checkHeader($plan, $header);
     requireThat(hasValue($plan, 'bool_t'), 'Ownership: bool_t must be published');
     $inputs = array_merge(array_column($plan['types'], 'name'), array_column($plan['values'], 'name'));
-    $used = array_merge($inputs, array_column($plan['vectors'], 'name'), array_column($plan['carriers'], 'name'), array_column($plan['hashes']['specializations'] ?? [], 'name'), array_keys(object($plan['aliases'])), ['error_t', 'null']);
+    $used = array_merge($inputs, array_column($plan['vectors'], 'name'), array_column($plan['carriers'], 'name'), array_column($plan['hashes']['specializations'] ?? [], 'name'), array_keys(object($plan['aliases'])), ['error_t', 'null'], isset($plan['boxed']) ? array_merge(['boxed_kind'], array_column($plan['boxed']['families'], 'name')) : []);
     if(isset($plan['string'])) {
         $used[] = 'string';
     }
     if(isset($plan['datetime'])) {
         $used[] = 'dt';
     }
+    if (isset($plan['json'])) $used[] = 'json';
     $records = [];
     foreach(listValue(at($p, 'records')) as $r) {
         fields($r, ['name', 'header', 'constructors', 'families', 'const_families']);

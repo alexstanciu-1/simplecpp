@@ -15,12 +15,36 @@ compiler/runtime boundary, core milestone and open design decisions.
 The runtime implements metadata-selected integers, bool/null, float64, strings,
 concrete vectors, typed hashes, nullable/result carriers and concrete record ownership/value APIs.
 The [API summary](specs/runtime_api_summary.md) and linked family contracts define
-supported behavior. [Typed hashes](specs/hash_slice.md) are generated on request; mixed/dynamic remain future runtime work.
+supported behavior. [Typed hashes](specs/hash_slice.md) are generated on request.
+The [private packed-storage foundation](specs/packed_storage.md) preserves compact
+keys and dense-list storage. [Private mixed ownership](specs/mixed_storage.md) adds
+tagged scalars and COW containers. [Private dynamic ownership](specs/dynamic_storage.md)
+adds shared-container identity and checked scalar family conversion.
+[Concrete mixed/dynamic APIs](specs/boxed_slice.md) are now generated on request;
+operators and source compiler integration remain separate work.
+[Results containing mixed/dynamic](specs/boxed_results.md) are also available on
+explicit request. The optional [JSON module](specs/json_module.md) now decodes directly
+into either family and encodes both through checked results. Direct int64, float64,
+bool_t and string encoding, including their nullable forms, is also available.
+All twelve operations are generated independently on request.
 
 The optional [datetime module](specs/datetime_module.md) provides eleven clock,
 sleep, UTC and host-local operations. Enable it with `-DSCPP_ENABLE_DATETIME=ON` when
 configuring, then link `scpp_datetime`; the core has no datetime dependency.
 Source compiler integration and PHP compatibility wrappers remain deferred.
+
+The JSON module also has a production build profile. From `v0.2/`:
+
+```sh
+cmake --preset default -DSCPP_ENABLE_JSON=ON
+cmake --build --preset default
+./build/clang/scpp_json_demo
+```
+
+Link `scpp_json` to use it. `SCPP_ENABLE_JSON` and `SCPP_ENABLE_DATETIME` can be
+enabled together and both work with `BUILD_TESTING=OFF`. Each profile has a separate
+generated API directory; disabling a module removes it from the active targets and
+publication. Both options default to OFF.
 
 The sole API generator is [PHP 8.5 tooling](tools/api_generator/README.md).
 It resolves metadata and explicit native C++ probe facts into public headers,
@@ -58,8 +82,8 @@ The [plain C++ example](examples/runtime_demo.cpp) combines numeric, bool/null,
 string and vector APIs; it does not exercise carriers. It prints `Ada: 21; ratio=7`.
 The [API summary](specs/runtime_api_summary.md) lists
 supported/rejected operators and casts, ownership boundaries and deferred language
-decisions. The active hash/mixed/dynamic follow-on is a separate reviewed port;
-none of those implementations has been imported yet.
+decisions. Typed hashes and private packed storage have been ported; boxed
+mixed/dynamic APIs are generated, while source compiler integration remains separate work.
 
 ## Generator and artifact ownership
 

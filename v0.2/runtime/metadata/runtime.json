@@ -699,5 +699,34 @@
       "parse_common_local"
     ],
     "local_dst": "host_normalize_and_select"
+  },
+  "boxed": {
+    "binding": "private_inline_boxed",
+    "families": [
+      "dynamic",
+      "mixed"
+    ],
+    "integer_keys": "nonnegative_int31",
+    "string_keys": "classified_bytes",
+    "read": "same_family_null_on_miss",
+    "conversion": "explicit_scalar_only"
+  },
+  "json": {
+    "binding": "native_json",
+    "key_limit": "checked_decode_error",
+    "operations": [
+      "decode",
+      "decode_mixed",
+      "encode_mixed",
+      "encode_dynamic",
+      "encode_int64",
+      "encode_float64",
+      "encode_bool_t",
+      "encode_string",
+      "encode_nullable_int64",
+      "encode_nullable_float64",
+      "encode_nullable_bool_t",
+      "encode_nullable_string"
+    ]
   }
 }

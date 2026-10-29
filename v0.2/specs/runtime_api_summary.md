@@ -170,3 +170,29 @@ through the PHP generator. The production CMake option `SCPP_ENABLE_DATETIME` ad
 no new container or dynamic runtime capability is required. Source callable integration
 and PHP compatibility functions remain deferred. Host-local DST resolution is delegated
 to the host, and valid Unix timestamp -1 is distinguished from conversion failure.
+
+## Bounded mixed/dynamic publication
+
+The optional [boxed API](boxed_slice.md) publishes concrete mixed/dynamic classes
+with explicit factories/getters, copied reads, membership, mutation and clean.
+They preserve mixed COW and dynamic shared identity. Scalar cross-family conversion
+is explicit and demand-selected; container conversion rejects. The public include
+closure remains template-free. Operators, source normalization/integration and
+traversal remain deferred.
+
+`result_mixed` and `result_dynamic` are now supported when their corresponding
+boxed family is published. They retain the existing result state/extraction policy
+and each payload family’s ownership behavior; see [boxed results](boxed_results.md).
+Other boxed carrier families remain deferred.
+
+## Bounded JSON publication
+
+The optional [JSON module](json_module.md) publishes default dynamic decoding,
+explicit mixed decoding, and checked encoding of either family. The parser builds
+the selected family directly; the writer uses private synchronous traversal.
+Recognized numeric object names above INT32_MAX produce checked decode errors.
+Enable `SCPP_ENABLE_JSON` and link `scpp_json` for the production build; it composes
+with datetime and does not require tests. Int64, float64, bool_t and string also
+have direct, demand-selected encode overloads with no boxing. Their nullable forms
+encode empty as null and present values through the same scalar writer. Typed container
+encoding, typed extraction and source compiler integration remain deferred.
