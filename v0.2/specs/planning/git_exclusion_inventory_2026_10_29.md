@@ -102,3 +102,23 @@ outputs from sources. No build/test run was needed for this read-only inventory.
 No file removal, untracking, ignore-rule edit, remote archival or history rewrite
 was performed. Directory totals classify candidates; they are not a file-by-file
 proof that each item can be regenerated.
+
+## Safe cleanup applied — 2026-10-29
+
+Follow-up approval applied only the disposable-output cleanup. Untracked 118
+generated files in tests/.runtime/, one volatile constants test-results JSON,
+and one Python bytecode cache. The test runner identifies .runtime as its state
+root and test-results JSON as volatile execution state. All 120 local copies were
+retained and SHA-256 verified unchanged after untracking.
+
+Ignore rules now additionally cover CMakeUserPresets.json, sanitizer test scratch
+roots, Python bytecode/test/tool caches and OS metadata. v0.2 also excludes raw
+profile/coverage output, prospective compiler dependency publications and token
+caches. Existing generated API/build exclusions remain in force. Targeted checks
+verified both excluded outputs and retained metadata, tests and shared presets.
+
+Historical evidence and archives remain tracked pending a separate archival
+workflow. Legacy public headers, generated benchmark corpora, distributed binaries,
+launch scripts, intentional fixtures and shared extension configuration were not
+removed. No history rewrite was performed. Earlier measurements above describe
+the pre-cleanup snapshot, not the resulting tracked file count.

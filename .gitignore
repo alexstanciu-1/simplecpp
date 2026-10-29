@@ -14,6 +14,7 @@ CMakeCache.txt
 cmake_install.cmake
 Makefile
 compile_commands.json
+CMakeUserPresets.json
 
 # Object / binaries
 *.o
@@ -45,6 +46,7 @@ sandbox/
 
 # Runtime test outputs
 tests/.runtime/
+tests/.runtime_san_*/
 tests/.run-tests/
 tests/runtime/native/output/
 tests/runtime/native/*.out
@@ -106,3 +108,14 @@ nbproject/private/cache/
 # Python bytecode and local compiler experiments (curated evidence lives in specs/planning/results/)
 __pycache__/
 /compiler/my-try/temp/
+
+# Disposable Python test/tool caches (keep authored fixtures and evidence).
+*.pyc
+*.pyo
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# OS metadata
+.DS_Store
+Thumbs.db

@@ -11,3 +11,16 @@ rules.ninja
 CTestTestfile.cmake
 DartConfiguration.tcl
 Testing/
+
+# Machine-local configuration and disposable instrumentation output.
+CMakeUserPresets.json
+*.profraw
+*.profdata
+*.gcda
+*.gcno
+/coverage/
+
+# Published dependency snapshots, if introduced by the compiler build.
+/compiler/my-try-cpp/dependencies/
+.scpp-token-cache/
+.scpp-portability-index.json
