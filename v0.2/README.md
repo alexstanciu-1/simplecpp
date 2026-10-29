@@ -19,8 +19,9 @@ supported behavior. [Typed hashes](specs/hash_slice.md) are generated on request
 The [private packed-storage foundation](specs/packed_storage.md) preserves compact
 keys and dense-list storage. [Private mixed ownership](specs/mixed_storage.md) adds
 tagged scalars and COW containers. [Private dynamic ownership](specs/dynamic_storage.md)
-adds shared-container identity and checked scalar family conversion. Public
-mixed/dynamic families remain future work.
+adds shared-container identity and checked scalar family conversion.
+[Concrete mixed/dynamic APIs](specs/boxed_slice.md) are now generated on request;
+operators and source compiler integration remain separate work.
 
 The optional [datetime module](specs/datetime_module.md) provides eleven clock,
 sleep, UTC and host-local operations. Enable it with `-DSCPP_ENABLE_DATETIME=ON` when

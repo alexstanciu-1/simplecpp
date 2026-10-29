@@ -1,9 +1,10 @@
-// Native measurement only. No metadata policy or generated runtime dependency.
+// Native measurement only. Private boxed layout is measured directly; no generated API dependency.
 #include <climits>
 #include <cstdint>
 #include <iostream>
 #include <limits>
 #include <memory>
+#include "../../runtime/src/boxed/boxed_value.hpp"
 #ifndef SCPP_PROBE_CONTEXT_ID
 #define SCPP_PROBE_CONTEXT_ID "unbound"
 #endif
@@ -53,6 +54,9 @@ int main() {
     layout<std::shared_ptr<void>>("shared", false);
     layout<std::weak_ptr<void>>("weak", true);
     layout<std::unique_ptr<unsigned char>>("unique", true);
+    std::cout << "},\"boxed\":{";
+    layout<scpp::detail::boxed_value<scpp::detail::boxed_family::mixed>>("mixed", false);
+    layout<scpp::detail::boxed_value<scpp::detail::boxed_family::dynamic>>("dynamic", true);
     std::cout << "}}\n";
     return std::cout ? 0 : 1;
 }

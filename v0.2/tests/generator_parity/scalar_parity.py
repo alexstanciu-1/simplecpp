@@ -28,7 +28,7 @@ def main():
     args.facts, args.context = args.facts.resolve(), args.context.resolve()
     metadata = json.loads((root / 'runtime/metadata/runtime.json').read_text())
     # Explicit scalar boundary: optional-family validation belongs to the composed runtime planner.
-    scalar_metadata = {k: v for k, v in metadata.items() if k not in ['string', 'vector', 'carriers', 'ownership', 'hash', 'datetime']}
+    scalar_metadata = {k: v for k, v in metadata.items() if k not in ['string', 'vector', 'carriers', 'ownership', 'hash', 'datetime', 'boxed']}
     publication = json.loads((root / 'runtime/metadata/publication.json').read_text())
     publication = {k: v for k, v in publication.items() if k not in ['string', 'vectors', 'carriers', 'ownership']}
     args.work.mkdir(parents=True, exist_ok=True)

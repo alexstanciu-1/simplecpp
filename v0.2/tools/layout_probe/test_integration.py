@@ -33,8 +33,11 @@ def main():
         work = Path(temporary)
         # Copy the driver/source so source invalidation can be tested without editing working code.
         import shutil
-        probe_source = work / 'source'
-        probe_source.mkdir()
+        probe_source = work / 'source/tools/layout_probe'
+        probe_source.mkdir(parents=True)
+        boxed_source = work / 'source/runtime/src/boxed'
+        boxed_source.mkdir(parents=True)
+        shutil.copy2(source / 'runtime/src/boxed/boxed_value.hpp', boxed_source / 'boxed_value.hpp')
         for name in ['probe.py', 'probe.cpp']:
             shutil.copy2(driver.parent / name, probe_source / name)
         command = [sys.executable, '-B', probe_source / 'probe.py', '--cxx', args.cxx,
@@ -57,6 +60,11 @@ def main():
             stream.write('\n// context invalidation proof\n')
         assert 'Generated' in run(command)
         assert json.loads(context_file.read_text())['context_id'] != context['context_id']
+        boxed_context = json.loads(context_file.read_text())
+        with (boxed_source / 'boxed_value.hpp').open('a') as stream:
+            stream.write('\ninline constexpr unsigned scpp_boxed_probe_revision = 1;\n')
+        assert 'Generated' in run(command)
+        assert json.loads(context_file.read_text())['context_id'] != boxed_context['context_id']
         header = work / 'environment.hpp'
         header.write_text('inline constexpr unsigned scpp_probe_header_revision = 1;\n')
         header_command = command + ['--flag=-include', '--flag=' + str(header)]

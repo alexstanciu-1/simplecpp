@@ -74,18 +74,18 @@ templates remain available for implementation reuse.
 
 Core families include scalars, strings, vectors, nullable/result carriers, record
 values and ownership handles, typed hashes, mixed and dynamic. Typed hashes and private packed storage are implemented; private mixed ownership
-and dynamic shared-container ownership are now proved. Public mixed/dynamic APIs
-and traversal remain. Current progression:
+and dynamic shared-container ownership are now proved. Bounded public mixed/dynamic APIs are now generated on request; operators, source
+integration and traversal remain. Current progression:
 
 1. Completed: custom typed-hash algorithms, concrete lookup/mutation APIs and
    internal ordering proofs; see [validation](../hash_slice_validation.md).
 2. Completed: private packed storage forms, bounded key codes and transactional
    transitions; see [validation](../packed_storage_validation.md).
 3. Completed private slice: mixed tagged values and COW ownership; see
-   [contract](../mixed_storage.md). Public publication and operators remain separate.
+   [contract](../mixed_storage.md). Bounded public publication is complete; operators remain separate.
 4. Completed private slice: independent dynamic-valued containers, shared identity
    and explicit scalar family conversion; see [contract](../dynamic_storage.md).
-   Mixed and dynamic remain separate families; public generation is still pending.
+   Mixed and dynamic remain separate families; see the [public API](../boxed_slice.md).
 5. Integrate traversal lifetime and mutation guarantees before claiming general
    iteration support. Implementation is explicitly deferred under RT-DEBT-01 in the
    [typed-hash batch](runtime_collections_batch.md); review compiler/runtime

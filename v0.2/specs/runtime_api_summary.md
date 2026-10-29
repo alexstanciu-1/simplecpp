@@ -170,3 +170,12 @@ through the PHP generator. The production CMake option `SCPP_ENABLE_DATETIME` ad
 no new container or dynamic runtime capability is required. Source callable integration
 and PHP compatibility functions remain deferred. Host-local DST resolution is delegated
 to the host, and valid Unix timestamp -1 is distinguished from conversion failure.
+
+## Bounded mixed/dynamic publication
+
+The optional [boxed API](boxed_slice.md) publishes concrete mixed/dynamic classes
+with explicit factories/getters, copied reads, membership, mutation and clean.
+They preserve mixed COW and dynamic shared identity. Scalar cross-family conversion
+is explicit and demand-selected; container conversion rejects. The public include
+closure remains template-free. Operators, source normalization/integration and
+traversal remain deferred.

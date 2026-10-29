@@ -1,10 +1,11 @@
 <?php
 declare(strict_types=1);
 namespace Scpp\Api;
+require_once __DIR__ . '/boxed.php';
 
 function checkHeader(array $plan, string $header): void {
     $paths = array_values($plan['headers']);
-    foreach (['string', 'hashes', 'datetime'] as $key) {
+    foreach (['string', 'hashes', 'datetime', 'boxed'] as $key) {
         if (isset($plan[$key])) {
             $paths[] = $plan[$key]['header'];
         }
@@ -26,7 +27,7 @@ function familyMetadata(mixed $metadata, mixed $publication, string $key, string
 }
 
 function prepareRuntime(mixed $metadata, mixed $publication, array $facts): array {
-    fields($publication, array_merge(SCALAR_FIELDS, ['string', 'vectors', 'carriers', 'ownership', 'hashes', 'datetime']));
+    fields($publication, array_merge(SCALAR_FIELDS, ['string', 'vectors', 'carriers', 'ownership', 'hashes', 'datetime', 'boxed']));
     $scalarRequest = (object)array_intersect_key(object($publication), array_flip(SCALAR_FIELDS));
     $plan = prepareScalars($metadata, $scalarRequest, $facts);
     $registry = registry($metadata, $facts);
@@ -35,6 +36,7 @@ function prepareRuntime(mixed $metadata, mixed $publication, array $facts): arra
     prepareCarriers($metadata, $publication, $plan);
     prepareHashes($metadata, $publication, $plan);
     prepareDatetime($metadata, $publication, $plan);
+    prepareBoxed($metadata, $publication, $facts, $plan);
     prepareOwnership($metadata, $publication, $facts, $plan);
     sortConversions($plan['conversions']);
     return $plan;
@@ -375,7 +377,7 @@ function prepareOwnership(mixed $metadata, mixed $publication, array $facts, arr
     checkHeader($plan, $header);
     requireThat(hasValue($plan, 'bool_t'), 'Ownership: bool_t must be published');
     $inputs = array_merge(array_column($plan['types'], 'name'), array_column($plan['values'], 'name'));
-    $used = array_merge($inputs, array_column($plan['vectors'], 'name'), array_column($plan['carriers'], 'name'), array_column($plan['hashes']['specializations'] ?? [], 'name'), array_keys(object($plan['aliases'])), ['error_t', 'null']);
+    $used = array_merge($inputs, array_column($plan['vectors'], 'name'), array_column($plan['carriers'], 'name'), array_column($plan['hashes']['specializations'] ?? [], 'name'), array_keys(object($plan['aliases'])), ['error_t', 'null'], isset($plan['boxed']) ? array_merge(['boxed_kind'], array_column($plan['boxed']['families'], 'name')) : []);
     if(isset($plan['string'])) {
         $used[] = 'string';
     }

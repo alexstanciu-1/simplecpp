@@ -699,5 +699,16 @@
       "parse_common_local"
     ],
     "local_dst": "host_normalize_and_select"
+  },
+  "boxed": {
+    "binding": "private_inline_boxed",
+    "families": [
+      "dynamic",
+      "mixed"
+    ],
+    "integer_keys": "nonnegative_int31",
+    "string_keys": "classified_bytes",
+    "read": "same_family_null_on_miss",
+    "conversion": "explicit_scalar_only"
   }
 }

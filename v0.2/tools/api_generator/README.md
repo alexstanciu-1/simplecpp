@@ -24,6 +24,8 @@ is also the rendering input, avoiding a second serialization model.
 - `php/target.php`: explicit C++ target facts/context validation.
 - `php/scalars.php`: integer, boolean, null and floating API preparation.
 - `php/families.php`: strings, vectors, carriers, hashes, datetime and record ownership.
+- `php/boxed.php`: optional mixed/dynamic publication with measured inline layouts,
+  explicit scalar factories and same-family container operations.
 - `php/render*.php`: rendering from prepared facts; no promotion or source admission.
 - `templates/*.cpp.tpl`: readable C++ fragments with named `@placeholder@` slots.
   These retain the existing output spelling; no Rust source is a build input.
@@ -113,3 +115,7 @@ now, while `compiler/my-try/` will be mined incrementally into `v0.2/compiler/`.
 - One source-only observation: default publication generation took 0.167 seconds;
   unchanged build/probe checking took 0.407 seconds. These are local observations,
   not a cross-machine performance guarantee.
+
+The [boxed publication contract](../../specs/boxed_slice.md) describes the optional
+`boxed` request. Native facts measure the actual private boxed layout; the generated
+public classes use opaque inline storage with compile-time ABI checks.

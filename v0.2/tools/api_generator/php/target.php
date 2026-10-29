@@ -34,7 +34,7 @@ function targetFacts(mixed $facts, mixed $context): array {
     foreach ($flags as $flag) {
         textValue($flag);
     }
-    fields($facts, ['schema', 'context_id', 'char_bits', 'pointer_bytes', 'standard_library', 'native_integers', 'fixed_integers', 'double', 'has_int128', 'ownership']);
+    fields($facts, ['schema', 'context_id', 'char_bits', 'pointer_bytes', 'standard_library', 'native_integers', 'fixed_integers', 'double', 'has_int128', 'ownership', 'boxed']);
     requireThat(unsigned(at($facts, 'schema')) === 1, 'Unsupported target facts schema');
     requireThat(fingerprint(at($facts, 'context_id')) === $id, 'Target context mismatch: stale or incompatible facts');
     requireThat(unsigned(at($facts, 'char_bits')) === 8 && unsigned(at($facts, 'pointer_bytes')) === 8, 'Unsupported native byte/pointer representation');
@@ -73,6 +73,14 @@ function targetFacts(mixed $facts, mixed $context): array {
         $row = at($owners, $family);
         fields($row, ['size', 'alignment']);
         $out['ownership'][$family] = layout($row);
+    }
+    if (property_exists($facts, 'boxed')) {
+        fields($facts->boxed, ['mixed', 'dynamic']);
+        foreach (['mixed', 'dynamic'] as $family) {
+            $row = at($facts->boxed, $family);
+            fields($row, ['size', 'alignment']);
+            $out['boxed'][$family] = layout($row);
+        }
     }
     $out['has_int128'] = boolean(at($facts, 'has_int128'));
     return $out;
