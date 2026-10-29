@@ -74,7 +74,8 @@ templates remain available for implementation reuse.
 
 Core families include scalars, strings, vectors, nullable/result carriers, record
 values and ownership handles, typed hashes, mixed and dynamic. Typed hashes and private packed storage are implemented; private mixed ownership
-is now proved. Public mixed/dynamic APIs and traversal remain. Current progression:
+and dynamic shared-container ownership are now proved. Public mixed/dynamic APIs
+and traversal remain. Current progression:
 
 1. Completed: custom typed-hash algorithms, concrete lookup/mutation APIs and
    internal ordering proofs; see [validation](../hash_slice_validation.md).
@@ -82,8 +83,9 @@ is now proved. Public mixed/dynamic APIs and traversal remain. Current progressi
    transitions; see [validation](../packed_storage_validation.md).
 3. Completed private slice: mixed tagged values and COW ownership; see
    [contract](../mixed_storage.md). Public publication and operators remain separate.
-4. Preserve independent dynamic-valued containers and shared container identity.
-   Mixed and dynamic remain separate families.
+4. Completed private slice: independent dynamic-valued containers, shared identity
+   and explicit scalar family conversion; see [contract](../dynamic_storage.md).
+   Mixed and dynamic remain separate families; public generation is still pending.
 5. Integrate traversal lifetime and mutation guarantees before claiming general
    iteration support. Implementation is explicitly deferred under RT-DEBT-01 in the
    [typed-hash batch](runtime_collections_batch.md); review compiler/runtime
@@ -129,3 +131,8 @@ The [packed-storage batch](runtime_packed_storage_batch.md) is complete, includi
 key-limit and allocation-failure repairs. Private mixed ownership builds on it.
 Preserve the optimized compact pooled-key design; the larger-key proposal was
 withdrawn after review of the v0.1 design notes and explicit user correction.
+
+The subsequent `9f73b288c` tooling cutover replaced the Rust API generator with
+PHP. New public runtime publication must use that sole PHP path. Private mixed and
+dynamic storage now share family-safe mechanics; shared-cycle reclamation remains
+RT-DEBT-02 as recorded in the dynamic storage contract.

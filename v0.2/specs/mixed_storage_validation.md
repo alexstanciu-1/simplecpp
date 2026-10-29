@@ -4,6 +4,10 @@ Doc Status: supporting
 Date: 2026-10-29
 Contract: [mixed_storage.md](mixed_storage.md).
 
+Follow-up: [dynamic ownership validation](dynamic_storage_validation.md) records
+revalidation after moving mixed into the shared boxed-value owner. The evidence
+below describes the original mixed-only slice.
+
 - Full Release CTest: 39/39 passed, including prior packed, typed-hash, public
   boundary and generator freshness checks.
 - Focused libc++ UBSan: packed and mixed storage 2/2 passed. Final mixed assertions

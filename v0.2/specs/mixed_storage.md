@@ -5,8 +5,9 @@ Scope: private v0.2 ownership foundation; not a published mixed API.
 
 ## Ownership boundary
 
-`runtime/src/boxed/mixed_value.hpp/.cpp` owns the private tagged value.
-`packed_table<mixed_value>` owns its containers. `scpp_mixed_storage` links the
+`runtime/src/boxed/boxed_value.hpp/.cpp` owns tagged-value mechanics;
+`mixed_value.hpp` names the distinct mixed instantiation.
+`packed_table<mixed_value>` owns its containers. `scpp_boxed_storage` links the
 compiled packed-key pool. The COW rule is mined from the donor's
 `mixed_t::detach_shared_table_for_write` at `6e7ee001f`, while the separated-family
 amendment in `specs/dynamic_types.md` governs meaning.
@@ -19,7 +20,8 @@ values remain admitted; the packed integer-key bound is a separate restriction.
 Strings use indirect immutable owned bytes. Copying a string value can share those
 bytes because no mutable access escapes; `get_string()` returns an independent byte
 copy. Embedded NUL is preserved. String assignment replaces the binding. Containers
-hold only mixed values. There is no dynamic carrier or cross-family adapter.
+hold only mixed values. There is no dynamic container carrier or implicit crossing.
+Explicit scalar/null conversion is described in [dynamic storage](dynamic_storage.md).
 
 Mixed copies share container storage until mutation. A write to shared storage
 copies its packed table, including mixed payload values, then mutates the prepared
@@ -68,12 +70,12 @@ can allocate and throw without changing the value.
 
 ## Deliberate limits
 
-This slice proves ownership only. It does not publish mixed through Rust metadata or
+This slice proves ownership only. It does not publish mixed through PHP generator metadata or
 generated C++ APIs, claim general native shared/weak carrier support, add operators,
-casts/coercions, boxed-key dispatch, JSON, public traversal or compiler integration.
+general casts/coercions, boxed-key dispatch, JSON, public traversal or compiler integration.
 Those owners must select explicit operations later; the old type-blind overload
-matrix and traversal subscriptions are not imported. Dynamic remains the next
-separate family, with shared container identity rather than COW. RT-DEBT-01 remains.
+matrix and traversal subscriptions are not imported. Dynamic now has its own
+private instantiation with shared container identity rather than COW. RT-DEBT-01 remains.
 
 ## Proofs
 

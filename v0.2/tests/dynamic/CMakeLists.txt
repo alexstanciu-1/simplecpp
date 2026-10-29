@@ -1,0 +1,4 @@
+add_executable(dynamic_storage_test storage.cpp)
+target_include_directories(dynamic_storage_test PRIVATE ${PROJECT_SOURCE_DIR}/runtime/src/boxed)
+target_link_libraries(dynamic_storage_test PRIVATE scpp_boxed_storage)
+add_test(NAME dynamic_storage COMMAND dynamic_storage_test)

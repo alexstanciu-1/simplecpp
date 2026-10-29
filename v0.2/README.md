@@ -18,7 +18,9 @@ The [API summary](specs/runtime_api_summary.md) and linked family contracts defi
 supported behavior. [Typed hashes](specs/hash_slice.md) are generated on request.
 The [private packed-storage foundation](specs/packed_storage.md) preserves compact
 keys and dense-list storage. [Private mixed ownership](specs/mixed_storage.md) adds
-tagged scalars and COW containers; public mixed/dynamic families remain future work.
+tagged scalars and COW containers. [Private dynamic ownership](specs/dynamic_storage.md)
+adds shared-container identity and checked scalar family conversion. Public
+mixed/dynamic families remain future work.
 
 The optional [datetime module](specs/datetime_module.md) provides eleven clock,
 sleep, UTC and host-local operations. Enable it with `-DSCPP_ENABLE_DATETIME=ON` when
