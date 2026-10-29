@@ -14,14 +14,12 @@ The [ownership/value foundation](specs/ownership_slice.md) generates concrete sh
 and unique handles, const-pointee variants and inline values for registered records
 in a separate proof publication. Value copy/move capabilities follow their payload.
 Their private standard smart pointers live inline, without per-handle heap wrappers.
-The [compiler foundation](compiler/README.md) now includes compact tokens, immutable
-source snapshots and checked token sequence construction, using its own generated
-runtime publication. Scanning, parsing, semantic compilation and broader runtime
-imports remain pending.
-The first [independent Rust compiler slice](compiler/README.md) now provides byte
-sources, spans, compact tokens, diagnostics and a source-inspection CLI. Cargo builds
-it with eight jobs and mold; it has no C++ runtime or generator-binary dependency.
-The existing C++ compiler remains in place. The runtime stays C++; API generation
+The [Rust compiler foundation](compiler/README.md) provides byte sources, spans,
+compact tokens, immutable token-sequence publication, diagnostics and a source-inspection
+CLI. Its replaced C++ foundation has been removed. Cargo builds independently with
+eight jobs and mold, without a C++ runtime or generator-binary dependency.
+Scanning, parsing and semantic compilation remain pending.
+The runtime stays C++; API generation
 and physical pre-lowering are migrating to a shared Rust tooling library. The
 [first G2 batch](tools/api_generator/README.md) establishes that library, JSON
 loading, integer-construction preparation and a small C++ layout probe. The C++

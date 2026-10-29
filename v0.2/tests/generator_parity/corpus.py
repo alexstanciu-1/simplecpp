@@ -26,7 +26,7 @@ def cases(root: Path):
 
     metadata = load("runtime/metadata/runtime.json")
     default = load("runtime/metadata/publication.json")
-    compiler = load("compiler/publication.json")
+    compiler = load("tests/generator_parity/compiler_publication.json")
     ownership = load("tests/ownership/publication.json")
     result = []
 

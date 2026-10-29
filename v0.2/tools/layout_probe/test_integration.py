@@ -77,7 +77,7 @@ def main():
         assert facts['double']['digits'] == 53 and facts['double']['iec559']
         # Same-input C++ preparation oracle. Rust currently covers integer construction only.
         metadata = source / 'runtime/metadata/runtime.json'
-        pub = json.loads((source / 'compiler/publication.json').read_text())
+        pub = json.loads((source / 'tests/generator_parity/compiler_publication.json').read_text())
         pub.update(types=['int8','int16','int32','int64','uint8','uint16','uint32','uint64'], values=[], operators=[], short_aliases=[])
         publication = work / 'publication.json'
         publication.write_text(json.dumps(pub))

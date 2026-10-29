@@ -21,9 +21,9 @@ migration; a tooling language change is not a runtime-policy redesign.
 
 This supersedes the proposal to evolve the C++ compiler into the production v0.2
 compiler, including adapting its source snapshots and token sequences to generated
-runtime ownership handles. The existing C++ compiler foundation remains working
-reference/proof material during migration. This plan does not remove it, change
-builds, introduce Rust code, activate a goal or authorize a bulk legacy import.
+runtime ownership handles. The C++ compiler foundation has now been retired after the separately authorized
+Rust sequence replacement. Its donor code remains available in Git history. This
+does not retire the production C++ API generator or authorize a bulk legacy import.
 
 The primary reasons are maintainability for the project owner, less declaration
 and lifecycle boilerplate, stronger memory-safety feedback, and removing runtime
@@ -394,3 +394,27 @@ and a Rust-only workspace export builds/tests offline with cached dependencies.
 All 36 existing C++ tests pass in release and UBSan. Integration compares native
 facts, ownership layouts and the complete integer-construction projection against
 the unchanged C++ generator. C++ production generation and G1 fixtures are unchanged.
+
+## Rust sequence publication and C++ foundation retirement — 2026-10-29
+
+TokenBuilder now owns source-bound mutable tokens and checks containment and
+nonoverlapping order. Consuming finish publishes an immutable shared generation
+without copying/reallocating its token buffer. Rust moves replace the old runtime
+finished flag; Option expresses absence. Token and SourceFile remain the owners of
+representation and source-size validation. Scanner/token classification is not part
+of this slice; compiler migration slice 2 remains incomplete until scanning is added.
+
+Removed the 12 C++ foundation/build/test files and the root CMake compiler hook.
+Relocated compiler/publication.json unchanged to
+tests/generator_parity/compiler_publication.json and updated both parity/probe
+consumers. The five compiler-specific CTests are intentionally retired; runtime and
+API-generator checks remain. Old checkpoint statements about keeping the C++
+foundation describe their historical state. The current compiler README describes
+the Rust API and its proofs. Production API generation remains C++.
+
+Replacement validation: 20 Rust tests plus the single-use compile-fail doctest pass
+in debug/release; strict Clippy, formatting and isolated Rust export pass. All 31
+remaining C++ tests pass in release/UBSan. G1 parity and G2 native-probe integration
+pass without changing the publication contents or frozen baseline.
+A fresh source-only C++ export also builds and passes all 31 checks, without
+retired compiler sources or pre-generated runtime files.

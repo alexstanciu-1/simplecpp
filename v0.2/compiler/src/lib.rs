@@ -2,3 +2,4 @@
 pub mod diagnostic;
 pub mod source;
 pub mod token;
+pub mod token_sequence;

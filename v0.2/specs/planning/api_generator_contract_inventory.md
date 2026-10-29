@@ -230,3 +230,10 @@ from an unreviewed replacement generator to make a failing parity check pass.
 G1 validation: all 36 CTest checks pass in Release and UBSan with Ninja/eight build
 jobs/Clang/libc++/mold, including the parity contract and four comparator tests. No
 production generator, runtime, Rust compiler or generated artifact is changed by G1.
+
+## Fixture location after compiler foundation retirement
+
+The former compiler/publication.json now lives at
+tests/generator_parity/compiler_publication.json as an intentional consumer fixture.
+Its contents and the frozen G1 baseline are unchanged. The corpus and native-probe
+integration both load this location; neither requires the retired C++ compiler.
