@@ -30,6 +30,20 @@ native transport record. Link a publication's generated core/boxed definitions a
 `scpp_boxed_storage`, then call `scpp_add_json(target core generated)` from
 `cmake/Json.cmake`. The module depends on core, never the reverse.
 
+## Production build profile
+
+`SCPP_ENABLE_JSON=ON` publishes both families, their result carriers and all four
+JSON operations, then builds `scpp_json` and `scpp_json_demo`. Scalar family crossing
+is not requested. `cmake/RuntimePublication.cmake` composes explicit build demand
+from the default core and module requests; PHP remains the admission authority.
+The option composes with `SCPP_ENABLE_DATETIME`, including with tests disabled.
+
+Each option combination selects a distinct generated directory: `generated`,
+`generated-json`, `generated-datetime` or `generated-datetime-json`. Reconfiguration
+selects the matching publication and target graph; old output directories are inert.
+Generated boxed definitions belong to core when requested; parser/writer definitions
+belong only to the separate JSON library. Both options default to OFF.
+
 ## Storage and failures
 
 One donor-derived grammar constructs mixed or dynamic directly, without an intermediate

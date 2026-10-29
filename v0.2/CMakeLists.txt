@@ -50,26 +50,9 @@ file(CHMOD ${generator_launcher} PERMISSIONS OWNER_READ OWNER_WRITE OWNER_EXECUT
 add_custom_target(scpp_api_generator DEPENDS scpp_api_tooling scpp_layout_facts)
 
 set(runtime_metadata ${CMAKE_CURRENT_SOURCE_DIR}/runtime/metadata/runtime.json)
-set(runtime_publication ${CMAKE_CURRENT_SOURCE_DIR}/runtime/metadata/publication.json)
-set(runtime_generated ${CMAKE_CURRENT_BINARY_DIR}/generated)
-option(SCPP_ENABLE_DATETIME "Publish and build the bounded datetime module" OFF)
+include(cmake/RuntimePublication.cmake)
 include(cmake/Datetime.cmake)
 include(cmake/Json.cmake)
-if(SCPP_ENABLE_DATETIME)
-  # An explicit build profile: existing core demand plus uint64 and datetime.
-  # PHP preparation still validates every required type/carrier and operation.
-  set_property(DIRECTORY APPEND PROPERTY CMAKE_CONFIGURE_DEPENDS
-    ${runtime_publication} ${CMAKE_CURRENT_SOURCE_DIR}/runtime/metadata/datetime_publication.json)
-  file(READ ${runtime_publication} datetime_profile)
-  file(READ ${CMAKE_CURRENT_SOURCE_DIR}/runtime/metadata/datetime_publication.json datetime_request)
-  string(JSON type_count LENGTH "${datetime_profile}" types)
-  string(JSON datetime_profile SET "${datetime_profile}" types ${type_count} "\"uint64\"")
-  string(JSON datetime_profile SET "${datetime_profile}" datetime "${datetime_request}")
-  set(runtime_publication ${CMAKE_CURRENT_BINARY_DIR}/datetime-publication.json)
-  file(CONFIGURE OUTPUT ${runtime_publication} CONTENT "${datetime_profile}\n" @ONLY)
-  # Separate output identity allows clean enable/disable without stale artifacts.
-  set(runtime_generated ${CMAKE_CURRENT_BINARY_DIR}/generated-datetime)
-endif()
 set(runtime_outputs
   ${runtime_generated}/public/scpp/carriers.hpp
   ${runtime_generated}/public/scpp/vectors.hpp
@@ -84,6 +67,10 @@ set(runtime_outputs
   ${runtime_generated}/inventory.json)
 if(SCPP_ENABLE_DATETIME)
   list(APPEND runtime_outputs ${runtime_generated}/public/scpp/datetime.hpp ${runtime_generated}/src/datetime.cpp)
+endif()
+if(SCPP_ENABLE_JSON)
+  list(APPEND runtime_outputs ${runtime_generated}/public/scpp/boxed.hpp ${runtime_generated}/src/boxed.cpp
+    ${runtime_generated}/public/scpp/json.hpp ${runtime_generated}/src/json.cpp)
 endif()
 add_custom_command(OUTPUT ${runtime_outputs}
   COMMAND ${generator_launcher} ${runtime_metadata} ${runtime_publication} ${runtime_generated}
@@ -103,13 +90,23 @@ if(SCPP_ENABLE_DATETIME)
   target_link_libraries(scpp_datetime_demo PRIVATE scpp_datetime)
 endif()
 
-# Private packed-storage foundation. No public family or generator binding yet.
+# Private storage shared by generated boxed APIs and module implementations.
 add_library(scpp_packed_storage STATIC runtime/src/hash/packed_key.cpp)
 target_compile_features(scpp_packed_storage PUBLIC cxx_std_23)
 add_library(scpp_boxed_storage STATIC runtime/src/boxed/boxed_value.cpp runtime/src/boxed/boxed_conversion.cpp)
 target_include_directories(scpp_boxed_storage PRIVATE runtime/src/hash)
 target_link_libraries(scpp_boxed_storage PRIVATE scpp_packed_storage)
 target_compile_features(scpp_boxed_storage PUBLIC cxx_std_23)
+
+if(SCPP_ENABLE_JSON)
+  target_sources(scpp_runtime PRIVATE ${runtime_generated}/src/boxed.cpp)
+  target_include_directories(scpp_runtime PRIVATE
+    ${CMAKE_CURRENT_SOURCE_DIR}/runtime/src/boxed ${CMAKE_CURRENT_SOURCE_DIR}/runtime/src/ownership)
+  target_link_libraries(scpp_runtime PRIVATE scpp_boxed_storage)
+  scpp_add_json(scpp_json scpp_runtime ${runtime_generated})
+  add_executable(scpp_json_demo examples/json_demo.cpp)
+  target_link_libraries(scpp_json_demo PRIVATE scpp_json)
+endif()
 
 add_executable(scpp_runtime_demo examples/runtime_demo.cpp)
 target_link_libraries(scpp_runtime_demo PRIVATE scpp_runtime)

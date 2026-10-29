@@ -191,4 +191,6 @@ The optional [JSON module](json_module.md) publishes default dynamic decoding,
 explicit mixed decoding, and checked encoding of either family. The parser builds
 the selected family directly; the writer uses private synchronous traversal.
 Recognized numeric object names above INT32_MAX produce checked decode errors.
-Typed JSON extraction/encoding and source compiler integration remain deferred.
+Enable `SCPP_ENABLE_JSON` and link `scpp_json` for the production build; it composes
+with datetime and does not require tests. Typed JSON extraction/encoding and source
+compiler integration remain deferred.

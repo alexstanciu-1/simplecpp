@@ -137,6 +137,10 @@ PHP. New public runtime publication must use that sole PHP path. Private mixed a
 dynamic storage now share family-safe mechanics; shared-cycle reclamation remains
 RT-DEBT-02 as recorded in the dynamic storage contract.
 
-The next module trajectory is JSON. Its result_mixed/result_dynamic prerequisite
-is implemented; parser/writer reuse, classified-key normalization and private
-traversal remain a separate slice. See [boxed results](../boxed_results.md).
+The bounded JSON module is now implemented: direct selected-family parsing,
+checked results, donor key normalization with checked INT32_MAX failures, and
+private synchronous encoding traversal. The production `SCPP_ENABLE_JSON` profile
+composes with datetime and supports builds with tests disabled. See the
+[JSON contract](../json_module.md) and [validation](../json_validation.md).
+Typed JSON extraction/encoding, source registration and public traversal remain
+separate work; the private module adapter does not settle RT-DEBT-01.

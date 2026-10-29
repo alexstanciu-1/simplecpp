@@ -32,6 +32,19 @@ sleep, UTC and host-local operations. Enable it with `-DSCPP_ENABLE_DATETIME=ON`
 configuring, then link `scpp_datetime`; the core has no datetime dependency.
 Source compiler integration and PHP compatibility wrappers remain deferred.
 
+The JSON module also has a production build profile. From `v0.2/`:
+
+```sh
+cmake --preset default -DSCPP_ENABLE_JSON=ON
+cmake --build --preset default
+./build/clang/scpp_json_demo
+```
+
+Link `scpp_json` to use it. `SCPP_ENABLE_JSON` and `SCPP_ENABLE_DATETIME` can be
+enabled together and both work with `BUILD_TESTING=OFF`. Each profile has a separate
+generated API directory; disabling a module removes it from the active targets and
+publication. Both options default to OFF.
+
 The sole API generator is [PHP 8.5 tooling](tools/api_generator/README.md).
 It resolves metadata and explicit native C++ probe facts into public headers,
 C++ definitions and a prepared API description. The runtime remains C++;

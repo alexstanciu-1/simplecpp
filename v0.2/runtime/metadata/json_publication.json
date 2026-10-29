@@ -1,0 +1,11 @@
+{
+  "boxed": {
+    "header": "scpp/boxed.hpp",
+    "families": ["mixed", "dynamic"],
+    "scalar_conversions": false
+  },
+  "json": {
+    "header": "scpp/json.hpp",
+    "operations": ["decode", "decode_mixed", "encode_mixed", "encode_dynamic"]
+  }
+}

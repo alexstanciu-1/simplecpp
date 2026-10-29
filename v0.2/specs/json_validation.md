@@ -49,3 +49,18 @@ traversal, typed JSON extraction/encoding or source compiler registration is cla
 The reader/writer still recurse. Raw input strings preserve donor byte acceptance;
 Unicode escapes are validated separately. Persistent empty object identity remains
 outside the hash-derived container model.
+
+## Production profile follow-up
+
+`python3 -B v0.2/tests/json/build_profiles.py` exports only v0.2 sources to a
+fresh temporary tree, excluding compiler/Cargo/build artifacts, and builds with
+`BUILD_TESTING=OFF`. The completed sequence is JSON only, JSON plus datetime,
+datetime only, core only, and JSON re-enabled in the same build directory.
+Every profile passed its core/module examples, target and prepared-publication
+checks, core-symbol separation and unchanged-build object timestamp checks.
+This covers all four option combinations and returning to a previous output inventory.
+
+The default build also passed after extracting profile composition into
+`cmake/RuntimePublication.cmake`. The JSON/datetime focused Release suite passed
+11/11. Runtime algorithms and generated API policies are unchanged in this follow-up;
+no additional sanitizer claim is needed for the CMake composition change.
