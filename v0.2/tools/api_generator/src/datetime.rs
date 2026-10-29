@@ -13,13 +13,15 @@ pub enum Binding {
     UnsignedClock,
     Sleep,
     FormatUtc,
-    ParseUtc,
+    Parse,
+    FormatLocal,
+    FormatLocalNow,
 }
 #[derive(Clone, Debug)]
 pub struct Operation {
     pub name: String,
     pub result: String,
-    pub argument: Option<&'static str>,
+    pub arguments: Vec<&'static str>,
     pub binding: Binding,
 }
 #[derive(Clone, Debug)]
@@ -29,14 +31,16 @@ pub struct DatetimePlan {
     pub operations: Vec<Operation>,
 }
 fn operation(name: &str) -> Result<Operation> {
-    let (result, argument, binding) = match name {
+    let (result, arguments, binding) = match name {
         "now_unix_seconds" | "now_unix_millis" | "monotonic_millis" => {
-            ("int64", None, Binding::SignedClock)
+            ("int64", vec![], Binding::SignedClock)
         }
-        "monotonic_micros" | "monotonic_nanos" => ("uint64", None, Binding::UnsignedClock),
-        "sleep_millis" => ("void", Some("int64"), Binding::Sleep),
-        "format_iso_utc" => ("string", Some("int64"), Binding::FormatUtc),
-        "parse_iso_utc" => ("result_int64", Some("string"), Binding::ParseUtc),
+        "monotonic_micros" | "monotonic_nanos" => ("uint64", vec![], Binding::UnsignedClock),
+        "sleep_millis" => ("void", vec!["int64"], Binding::Sleep),
+        "format_iso_utc" => ("string", vec!["int64"], Binding::FormatUtc),
+        "parse_iso_utc" | "parse_common_local" => ("result_int64", vec!["string"], Binding::Parse),
+        "format_local" => ("string", vec!["string", "int64"], Binding::FormatLocal),
+        "format_local_now" => ("string", vec!["string"], Binding::FormatLocalNow),
         _ => {
             return Err(crate::Error(format!(
                 "Unsupported datetime operation: {name}"
@@ -46,7 +50,7 @@ fn operation(name: &str) -> Result<Operation> {
     Ok(Operation {
         name: name.into(),
         result: result.into(),
-        argument,
+        arguments,
         binding,
     })
 }
@@ -66,10 +70,12 @@ pub fn prepare(
         "parse_failure",
         "format_failure",
         "operations",
+        "local_dst",
     ])?;
     for (key, value) in [
-        ("binding", "native_clock_utc"),
+        ("binding", "native_datetime"),
         ("utc_years", "0000_9999"),
+        ("local_dst", "host_normalize_and_select"),
         ("parse_failure", "result_error"),
         ("format_failure", "throw_runtime_error"),
     ] {
@@ -123,14 +129,14 @@ pub fn prepare(
             "Datetime requires explicit native integer transport",
         )?;
         includes.insert(base.scalars.headers["types"].clone());
-        if matches!(op.binding, Binding::FormatUtc | Binding::ParseUtc) {
+        if op.result == "string" || op.arguments.contains(&"string") {
             let string = base
                 .string
                 .as_ref()
                 .ok_or_else(|| crate::Error("Datetime requires published string".into()))?;
             includes.insert(string.header.clone());
         }
-        if op.binding == Binding::ParseUtc {
+        if op.binding == Binding::Parse {
             ensure(
                 base.carriers
                     .iter()
@@ -156,10 +162,10 @@ pub fn prepare(
 impl DatetimePlan {
     pub fn describe(&self) -> serde_json::Value {
         json!({"module":"datetime", "namespace":"scpp::dt", "header":self.header,
-            "utc_years":[0,9999], "parse_failure":"result_error", "format_failure":"throw_runtime_error",
+            "utc_years":[0,9999], "local_dst":"host_normalize_and_select", "parse_failure":"result_error", "format_failure":"throw_runtime_error",
             "operations":self.operations.iter().map(|o| json!({"name":o.name,"result":o.result,
-                "arguments":o.argument.map(|a| vec![format!("const {a}&")]).unwrap_or_default()})).collect::<Vec<_>>(),
+                "arguments":o.arguments.iter().map(|a| format!("const {a}&")).collect::<Vec<_>>()})).collect::<Vec<_>>(),
             "build":{"target":"scpp_datetime", "requires":"scpp_runtime", "generated_sources":["src/datetime.cpp"],
-                "private_sources":["runtime/src/datetime/datetime.cpp"],"private_includes":["runtime/src/datetime"]}})
+                "private_sources":["runtime/src/datetime/datetime.cpp"],"private_includes":["runtime/src/datetime","runtime/src/numeric"]}})
     }
 }

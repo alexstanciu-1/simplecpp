@@ -19,6 +19,12 @@ Doc Status: normative
 - Strict PHP++ family-prefixed form of the narrow common local formatter.
 - Supported tokens match `date.md`.
 
+Numeric fields use ASCII digits independently of locale. Unknown characters,
+embedded NUL bytes and escaped characters are preserved as bytes; a trailing
+backslash is literal. `Y` has a minimum field width of four, not a four-digit
+maximum; local formatting retains the host calendar range. Native timestamp
+conversion must check representability before narrowing.
+
 ## Error policy
 
 - Throws a runtime error if the timestamp cannot be represented by the host local-time conversion API.

@@ -33,3 +33,9 @@ add_test(NAME datetime_publication COMMAND ${Python3_EXECUTABLE} -B ${CMAKE_CURR
   --work ${CMAKE_CURRENT_BINARY_DIR}/publication-proof)
 # A different local UTC offset must not alter the fixed UTC interface.
 add_test(NAME datetime_timezone COMMAND ${CMAKE_COMMAND} -E env TZ=UTC+11 $<TARGET_FILE:datetime_consumer_test>)
+
+add_executable(datetime_local_test local.cpp)
+target_link_libraries(datetime_local_test PRIVATE datetime_proof_module)
+add_test(NAME datetime_local_utc COMMAND ${CMAKE_COMMAND} -E env TZ=UTC0 $<TARGET_FILE:datetime_local_test> utc)
+add_test(NAME datetime_local_dst COMMAND ${CMAKE_COMMAND} -E env TZ=EST5EDT,M3.2.0/2,M11.1.0/2 $<TARGET_FILE:datetime_local_test> dst)
+add_test(NAME datetime_local_offset COMMAND ${CMAKE_COMMAND} -E env TZ=UTC+11 $<TARGET_FILE:datetime_local_test> offset)

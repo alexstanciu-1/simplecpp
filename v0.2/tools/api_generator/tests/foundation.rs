@@ -876,9 +876,21 @@ fn datetime_preparation_owns_module_dependencies_and_selected_exports() {
     let p: Value =
         serde_json::from_str(include_str!("../../../tests/datetime/publication.json")).unwrap();
     let plan = runtime_plan(&m, &p).unwrap();
-    assert_eq!(plan.datetime.as_ref().unwrap().operations.len(), 8);
+    assert_eq!(plan.datetime.as_ref().unwrap().operations.len(), 11);
     let describe = plan.describe();
     assert_eq!(describe["datetime"]["build"]["requires"], "scpp_runtime");
+    let format = plan
+        .datetime
+        .as_ref()
+        .unwrap()
+        .operations
+        .iter()
+        .find(|o| o.name == "format_local")
+        .unwrap();
+    assert_eq!(format.arguments, vec!["string", "int64"]);
+    let mut wrong_dst = m.clone();
+    wrong_dst["datetime"]["local_dst"] = object!("reject_gaps");
+    assert!(runtime_plan(&wrong_dst, &p).is_err());
     for absent in ["carriers", "string"] {
         let mut bad = p.clone();
         bad.as_object_mut().unwrap().remove(absent);
@@ -889,7 +901,7 @@ fn datetime_preparation_owns_module_dependencies_and_selected_exports() {
     assert!(runtime_plan(&m, &bad).is_err());
     for operations in [
         object!([]),
-        object!(["parse_common_local"]),
+        object!(["parse_natural_language"]),
         object!(["sleep_millis", "sleep_millis"]),
     ] {
         let mut bad = p.clone();

@@ -681,7 +681,7 @@
     "append": "max_live_nonnegative_plus_one"
   },
   "datetime": {
-    "binding": "native_clock_utc",
+    "binding": "native_datetime",
     "utc_years": "0000_9999",
     "parse_failure": "result_error",
     "format_failure": "throw_runtime_error",
@@ -693,7 +693,11 @@
       "monotonic_nanos",
       "sleep_millis",
       "format_iso_utc",
-      "parse_iso_utc"
-    ]
+      "parse_iso_utc",
+      "format_local",
+      "format_local_now",
+      "parse_common_local"
+    ],
+    "local_dst": "host_normalize_and_select"
   }
 }

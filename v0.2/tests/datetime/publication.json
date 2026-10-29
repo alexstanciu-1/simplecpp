@@ -42,7 +42,10 @@
       "monotonic_nanos",
       "sleep_millis",
       "format_iso_utc",
-      "parse_iso_utc"
+      "parse_iso_utc",
+      "format_local",
+      "format_local_now",
+      "parse_common_local"
     ]
   }
 }

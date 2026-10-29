@@ -2,6 +2,7 @@
 
 Doc Status: supporting
 Date: 2026-10-29
+Status: evidence for the initial eight-function slice; [local completion](datetime_local_validation.md) supersedes its local-time deferral.
 Contract: [datetime_module.md](datetime_module.md)
 Backlog: [runtime_datetime_batch.md](planning/runtime_datetime_batch.md)
 

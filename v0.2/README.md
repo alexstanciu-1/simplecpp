@@ -17,10 +17,10 @@ concrete vectors, typed hashes, nullable/result carriers and concrete record own
 The [API summary](specs/runtime_api_summary.md) and linked family contracts define
 supported behavior. [Typed hashes](specs/hash_slice.md) are generated on request; mixed/dynamic remain future runtime work.
 
-The optional [datetime module](specs/datetime_module.md) provides eight clock,
-sleep and fixed-UTC operations. Enable it with `-DSCPP_ENABLE_DATETIME=ON` when
+The optional [datetime module](specs/datetime_module.md) provides eleven clock,
+sleep, UTC and host-local operations. Enable it with `-DSCPP_ENABLE_DATETIME=ON` when
 configuring, then link `scpp_datetime`; the core has no datetime dependency.
-Source compiler integration and local-time APIs remain deferred.
+Source compiler integration and PHP compatibility wrappers remain deferred.
 
 The sole API preparation/generation implementation is now the shared Rust
 [tooling library](tools/api_generator/README.md). It emits the C++ runtime API from

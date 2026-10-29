@@ -56,4 +56,16 @@ int main() {
     auto elapsed=std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::steady_clock::now()-start).count();
     require(sum==170921009600000LL && allocation_probe::calls==count);
     std::printf("datetime: 100000 borrowed native parses: %lld us, zero allocations\n",static_cast<long long>(elapsed));
+    const std::string_view local_text="2024-02-29 12:34:56";
+    const auto local_reference=parse_common_local(local_text);
+    require(!local_reference.error);
+    count=allocation_probe::calls; start=std::chrono::steady_clock::now();
+    for(int i=0;i<10000;++i) {
+        const auto local=parse_common_local(local_text);
+        require(!local.error && local.value==local_reference.value);
+    }
+    elapsed=std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::steady_clock::now()-start).count();
+    require(allocation_probe::calls==count);
+    std::printf("datetime: 10000 borrowed local parses: %lld us, zero C++ allocations\n",static_cast<long long>(elapsed));
+
 }

@@ -2,12 +2,12 @@
 
 Doc Status: normative
 Scope: concrete native v0.2 runtime and Rust API publication. Source compiler
-integration, local-time functions and PHP compatibility wrappers are deferred.
+integration and PHP compatibility wrappers are deferred.
 Top-level `specs/builtins/datetime/` contracts remain the semantic authority.
 
 ## Publication and ownership
 
-Optional `datetime` metadata registers the reviewed `native_clock_utc` provider and
+Optional `datetime` metadata registers the reviewed `native_datetime` provider and
 operation set. A native publication selects a header and nonempty operation list:
 
 ```json
@@ -44,6 +44,9 @@ This native API guarantee does not itself add source metadata borrowing annotati
 | sleep_millis | const int64& | void |
 | format_iso_utc | const int64& | string |
 | parse_iso_utc | const string& | result_int64 |
+| format_local | const string& format, const int64& seconds | string |
+| format_local_now | const string& format | string |
+| parse_common_local | const string& | result_int64 |
 
 The native transport uses explicitly published long-long/unsigned-long-long integer
 construction. Format/parse require string; parse also requires result_int64 and its
@@ -87,6 +90,39 @@ UTC conversion ignores local UTC offsets; pre-epoch host support is not universa
 The resulting public string owns its bytes. Native parsing and fixed-buffer rendering allocate no C++ objects; host UTC conversion
 may maintain its own internal state. Concrete string/result ownership can allocate.
 
+## Host-local behavior
+
+`format_local` supports Y/y/m/n/d/j/H/G/i/s/U. The donor token switch and backslash
+escaping are preserved, including a literal trailing backslash and unknown bytes.
+Embedded NUL is ordinary format data. Numeric rendering uses ASCII `to_chars`,
+independent of locale. Year arithmetic widens before adding 1900; Y has a minimum
+width of four, without the fixed UTC formatter's four-digit year limit. Checked host
+localtime representability still applies, even to an empty or U-only format.
+`format_local_now` samples wall-clock seconds once and uses the same formatter.
+Returned strings own their bytes; internal formatting and public transport can allocate.
+
+`parse_common_local` accepts YYYY-MM-DD, YYYY-MM-DD HH:MM:SS, YYYY-MM-DDTHH:MM:SS
+and the UTC Z form. Shared fixed-width parsing validates calendar components;
+malformed text, embedded NUL and trailing data return errors. Date-only forms use
+midnight. The Z form delegates to the UTC parser independently of the local zone.
+
+The host owns local interpretation with `tm_isdst=-1`. Gaps can normalize to a
+different wall-clock time; overlaps use the host's choice, without a portable
+first/second occurrence guarantee. No runtime call changes process-global TZ or
+locale. External synchronization of changes to those settings remains the host's
+responsibility, not a new runtime timezone service.
+
+When mktime returns -1, checked local conversion of that value must match the
+host-normalized calendar fields before accepting it. This distinguishes a valid -1
+epoch from failure without relying solely on errno or rejecting DST normalization.
+Host-to-int64 conversion is checked. Parse failures return result_int64 errors;
+formatting failures throw. Allocation failures propagate and leave input bytes intact.
+
+The private calendar parser, leap validation and UTC/local host-conversion helpers
+have one owner. Rust operation plans carry an argument vector, so two-argument local
+formatting follows the same declaration path as other module operations. Native
+metadata explicitly records `local_dst: host_normalize_and_select`.
+
 ## Build composition
 
 `cmake --preset default -DSCPP_ENABLE_DATETIME=ON` explicitly composes the default
@@ -106,8 +142,8 @@ must build without the legacy runtime tree, including with tests disabled.
 ## Deferred scope
 
 The legacy source callable catalog remains unchanged. This slice does not claim
-compiler support merely because native functions exist. Local formatting/parsing,
-DST resolution, PHP time/date/strtotime/microtime adapters, named zones, locale-aware
+compiler support merely because native functions exist. Custom DST resolution, PHP time/date/strtotime/microtime adapters, named zones, locale-aware
 formatters, calendar arithmetic and general module/plugin discovery are separate work.
 
-Donor provenance and validation are recorded in `datetime_validation.md`.
+Donor provenance and initial validation are recorded in `datetime_validation.md`;
+local completion evidence is in `datetime_local_validation.md`.

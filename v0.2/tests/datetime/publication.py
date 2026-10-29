@@ -29,6 +29,9 @@ for name, operations, types, strings, carriers, body in [
     ('unsigned',['monotonic_nanos'],['uint64'],False,False,'(void)scpp::dt::monotonic_nanos();'),
     ('format',['format_iso_utc'],['int64'],True,False,'return scpp::dt::format_iso_utc(scpp::int64{0}).size().native_value()!=20;'),
     ('parse',['parse_iso_utc'],['int64'],True,True,'return !scpp::dt::parse_iso_utc(scpp::string{"1970-01-01T00:00:00Z"}).has_value().native_value();'),
+    ('local-format',['format_local'],['int64'],True,False,'return scpp::dt::format_local(scpp::string{"U"},scpp::int64{0}).size().native_value()!=1;'),
+    ('local-now',['format_local_now'],['int64'],True,False,'return scpp::dt::format_local_now(scpp::string{"x"}).size().native_value()!=1;'),
+    ('local-parse',['parse_common_local'],['int64'],True,True,'return !scpp::dt::parse_common_local(scpp::string{"1970-01-01T00:00:00Z"}).has_value().native_value();'),
 ]:
     request=json.loads(json.dumps(p))
     request['types']=types
@@ -55,8 +58,8 @@ for name, operations, types, strings, carriers, body in [
     run([exe])
     # Deferred/unselected operations must not appear in the generated declarations.
     run([a.generator,a.metadata,pub,generated,'--check'])
-    for rejected in ['scpp::dt::parse_common_local(scpp::string{})',
+    for rejected in ['scpp::dt::parse_natural_language(scpp::string{})',
                      'scpp::dt::sleep_millis(1)', 'scpp::dt::format_iso_utc(0)']:
         sample.write_text('#include "scpp/datetime.hpp"\nint main(){ '+rejected+'; }\n')
         run(flags+['-fsyntax-only',sample],success=False)
-print('Datetime: signed/unsigned clocks, format-only and parse-only standalone publications pass')
+print('Datetime: signed/unsigned clocks, UTC and local standalone publications pass')

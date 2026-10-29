@@ -122,6 +122,6 @@ target relevant costs rather than treating a green functional test as sufficient
 - [Ownership contract](../ownership_slice.md)
 - [Rust compiler and API tooling migration](rust_compiler_migration.md)
 
-The first module reuse proof is complete: eight clock/sleep/UTC datetime functions.
-See the [local datetime completion proposal](runtime_datetime_local_batch.md) for
-the recommended next bounded slice, followed by packed storage for mixed/dynamic.
+The first module reuse proof is complete: all eleven native datetime functions,
+including host-local formatting/parsing. See [completion evidence](../datetime_local_validation.md).
+Packed storage for mixed/dynamic is the next proposed core review.

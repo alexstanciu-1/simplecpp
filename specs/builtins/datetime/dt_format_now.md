@@ -21,6 +21,12 @@ Doc Status: normative
 - Supported tokens match `date.md`.
 - The timestamp source is wall-clock time and may move if the host system clock changes.
 
+Numeric fields use ASCII digits independently of locale. Unknown characters,
+embedded NUL bytes and escaped characters are preserved as bytes; a trailing
+backslash is literal. `Y` has a minimum field width of four, not a four-digit
+maximum; local formatting retains the host calendar range. Native timestamp
+conversion must check representability before narrowing.
+
 ## Error policy
 
 - Throws a runtime error if the current timestamp cannot be represented by the host local-time conversion API.

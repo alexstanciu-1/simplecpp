@@ -164,8 +164,9 @@ strictly typed. Hashes own independent copies and expose no public traversal yet
 
 ## Optional datetime module
 
-[Datetime](datetime_module.md) publishes selected `scpp::dt` clock/sleep/UTC functions
+[Datetime](datetime_module.md) publishes selected `scpp::dt` clock/sleep/UTC/local functions
 through the Rust generator. The production CMake option `SCPP_ENABLE_DATETIME` adds
 `scpp_datetime`, depending on core. Types are existing int64/uint64/string/result_int64;
 no new container or dynamic runtime capability is required. Source callable integration
-and the donor's local-time/PHP compatibility functions are deferred.
+and PHP compatibility functions remain deferred. Host-local DST resolution is delegated
+to the host, and valid Unix timestamp -1 is distinguished from conversion failure.

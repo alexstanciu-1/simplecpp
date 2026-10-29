@@ -2,10 +2,10 @@
 
 Doc Status: planning
 Date: 2026-10-29
-Status: reviewed proposal for discussion; implementation not started.
+Status: L0–L5 complete and validated; host DST delegation retained.
 Reviewed repository revision: 4db60739d.
 
-## Recommended next slice
+## Completed slice
 
 Complete the three remaining native datetime functions before returning to the
 packed-storage foundation for mixed/dynamic. This reuses the existing module target,
@@ -39,7 +39,7 @@ Parsing admits YYYY-MM-DD, YYYY-MM-DD HH:MM:SS, YYYY-MM-DDTHH:MM:SS and the exis
 reject malformed/NUL/trailing input. Local input years have four digits; actual
 representability is host-dependent. UTC Z input delegates to the completed UTC parser.
 
-## Proposed policy: retain host DST resolution
+## Approved policy: retain host DST resolution
 
 The current contracts explicitly interpret non-UTC input through the host C/C++
 runtime. Keep tm_isdst=-1 and let the host resolve gaps/overlaps. Do not introduce an
@@ -47,9 +47,8 @@ independent timezone database, fold flag, earliest/latest selection or gap-rejec
 rule. Document that a normalized local input need not round-trip to the same wall
 clock fields and that the selected occurrence of an overlap is not portable.
 
-This is the proposed explicit clarification of existing host delegation, not an
-already-approved new semantic decision. Rejecting DST gaps would be an alternative
-contract change requiring agreement.
+The user approved this explicit clarification of existing host delegation. Rejecting
+DST gaps would be a separate contract change.
 
 The donor's unconditional mktime result == -1 failure test must be repaired. When
 that value is returned, use checked local conversion and comparison with the host's
@@ -74,7 +73,7 @@ The probe was temporary audit evidence, not a committed regression test. Impleme
 must add deterministic epoch/format cases and isolated host-policy tests that do not
 assert one portable overlap choice or platform support for all pre-epoch values.
 
-## Proposed backlog
+## Completed backlog
 
 | ID | Work | Acceptance |
 | --- | --- | --- |
@@ -85,7 +84,7 @@ assert one portable overlap choice or platform support for all pre-epoch values.
 | L4 | Extend Rust preparation/emission and native module selection | Selected-operation/dependency proofs; minimal consumers |
 | L5 | Validate, document and commit | Release/UBSan, focused lifetime/failure tests, timezone process isolation, standalone export and costs |
 
-No implementation goal is created by this proposal. After agreement, implement L0–L5
-as one bounded goal and commit after successful validation. Pushing remains separately
-requested. Traversal RT-DEBT-01, boxed composition, mixed/dynamic, source compiler
-integration and PHP compatibility remain outside this batch.
+L0–L5 were implemented as one goal. See [validation evidence](../datetime_local_validation.md).
+The successful pass is committed under the standing user preference; pushing remains
+separately requested. Traversal RT-DEBT-01, boxed composition, mixed/dynamic, source
+compiler integration and PHP compatibility remain outside this batch.
