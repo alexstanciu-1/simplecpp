@@ -772,3 +772,22 @@ fn ownership_rejects_collisions_weak_dependencies_and_non_scalar_constructors() 
     p.as_object_mut().unwrap().remove("ownership");
     assert!(runtime_plan(&m, &p).is_err());
 }
+
+#[test]
+fn scalar_emission_preserves_resolved_requests_and_inventory() {
+    let mut publication = scalar_publication();
+    publication["operators"] = object!([
+        {"operation":"add","operands":["int8","int16"]}
+    ]);
+    let plan = scalar_plan(&scalar_metadata(), &publication).unwrap();
+    let files = scpp_api_tooling::emission::emit_scalars(&plan).unwrap();
+    let inventory: Vec<String> = serde_json::from_str(&files["inventory.json"]).unwrap();
+    assert_eq!(inventory.len() + 1, files.len());
+    assert!(inventory.iter().all(|path| files.contains_key(path)));
+    let prepared: Value = serde_json::from_str(&files["prepared.json"]).unwrap();
+    assert_eq!(prepared, plan.describe());
+    let operators = &files[&format!("public/{}", plan.headers["operators"])];
+    assert!(operators.contains("int64 operator+(int8 left, int16 right)"));
+    assert!(!operators.contains("operator-"));
+    assert!(files["src/runtime.cpp"].contains("detail::integer_add<__INT64_TYPE__>"));
+}

@@ -51,12 +51,12 @@ with tempfile.TemporaryDirectory(prefix="scpp-rust-foundation-") as temporary:
     environment.pop("CARGO_BUILD_TARGET", None)
     environment["CARGO_TARGET_DIR"] = str(root / "target")
 
-    def measure(label, arguments, target=None):
+    def measure(label, arguments, target=None, workspace_build=False):
         env = environment.copy()
         if target:
             env["CARGO_TARGET_DIR"] = str(root / target)
         start = time.perf_counter()
-        result = subprocess.run(["cargo", *arguments, "-p", "scpp-compiler", "--locked", "--offline"], cwd=root, env=env, text=True, capture_output=True)
+        result = subprocess.run(["cargo", *arguments, *(["--workspace"] if workspace_build else ["-p", "scpp-compiler"]), "--locked", "--offline"], cwd=root, env=env, text=True, capture_output=True)
         if result.returncode:
             raise RuntimeError(result.stdout + result.stderr)
         report["seconds"][label] = round(time.perf_counter() - start, 3)
@@ -75,5 +75,22 @@ with tempfile.TemporaryDirectory(prefix="scpp-rust-foundation-") as temporary:
     measure("test_build_and_run", ["test"])
     measure("warm_foundation_tests", ["test", "--test", "foundation"])
     measure("release_build", ["build", "--release"])
+    # Warm both binaries before measuring changes to their shared tooling dependency.
+    measure("workspace_debug_warmup", ["build"], workspace_build=True)
+    measure("workspace_check_warmup", ["check"], workspace_build=True)
+    for label, relative, old, new in [
+        ("compiler_model", "compiler/src/token_sequence.rs", "token span is outside the retained source", "token span exceeds the retained source"),
+        ("shared_tooling", "tools/api_generator/src/lib.rs", "Invalid public header path", "Invalid generated public header path"),
+    ]:
+        subprocess.run(["cargo", "check", "--workspace", "--locked", "--offline"], cwd=root, env=environment, check=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+        source = root / relative
+        saved = source.read_text()
+        assert old in saved
+        source.write_text(saved.replace(old, new))
+        measure(label + "_edit_check", ["check"], workspace_build=True)
+        measure(label + "_edit_debug_build", ["build"], workspace_build=True)
+        source.write_text(saved)
+        # Restore/warm outside the edit measurement; no repository source is modified.
+        subprocess.run(["cargo", "build", "--workspace", "--locked", "--offline"], cwd=root, env=environment, check=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
     subprocess.run(["cargo", "test", "--workspace", "--locked", "--offline"], cwd=root, env=environment, check=True, stdout=subprocess.DEVNULL)
     print(json.dumps(report, indent=2))

@@ -1,8 +1,9 @@
 #!/usr/bin/env python3
-"""Exact complete prepared-plan comparison for scalar-only publications. No C++ cutover."""
+"""Scalar prepared-plan parity and optional exact artifact/consumer proofs. No cutover."""
 import argparse
 import copy
 import json
+import re
 from pathlib import Path
 import subprocess
 import tempfile
@@ -16,12 +17,15 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     for flag in ['rust', 'cpp', 'facts', 'context', 'work']:
         parser.add_argument('--' + flag, type=Path, required=True)
+    parser.add_argument("--emit", action="store_true", help="Compare complete scalar artifact bytes and compile consumers")
+    parser.add_argument("--cxx", default="clang++")
+    parser.add_argument("--flag", action="append", default=[])
     args = parser.parse_args()
     root = Path(__file__).resolve().parents[2]
     args.rust, args.cpp = args.rust.resolve(), args.cpp.resolve()
     args.facts, args.context = args.facts.resolve(), args.context.resolve()
     metadata = json.loads((root / 'runtime/metadata/runtime.json').read_text())
-    # Explicit scalar boundary: optional-family validation belongs to later G2 batches.
+    # Explicit scalar boundary: optional-family validation belongs to the composed runtime planner.
     scalar_metadata = {k: v for k, v in metadata.items() if k not in ['string', 'vector', 'carriers', 'ownership']}
     publication = json.loads((root / 'runtime/metadata/publication.json').read_text())
     publication = {k: v for k, v in publication.items() if k not in ['string', 'vectors', 'carriers', 'ownership']}
@@ -49,9 +53,54 @@ def main():
                     expected_json = json.dumps(expected_plan, sort_keys=True, separators=(',', ':'))
                     actual_json = json.dumps(actual, sort_keys=True, separators=(',', ':'))
                     assert actual_json == expected_json, f'{label}: complete prepared document differs'
+                    if args.emit:
+                        generated = case / 'rust'
+                        command = [args.rust, 'emit-scalars', m, p, args.facts, args.context, generated]
+                        emitted = run(command)
+                        assert emitted.returncode == 0, emitted.stderr
+                        def tree(directory):
+                            return {str(f.relative_to(directory)): f.read_bytes() for f in directory.rglob('*') if f.is_file()}
+                        reference, candidate = tree(case / 'cpp'), tree(generated)
+                        assert reference.keys() == candidate.keys(), label + ': artifact set'
+                        for path in reference:
+                            assert reference[path] == candidate[path], label + ': artifact bytes differ: ' + path
+                        stamps = {str(f): f.stat().st_mtime_ns for f in generated.rglob('*') if f.is_file()}
+                        assert run(command + ['--check']).returncode == 0
+                        assert stamps == {str(f): f.stat().st_mtime_ns for f in generated.rglob('*') if f.is_file()}
+                        if label in ['default-scalars', 'complete-scalar-matrix']:
+                            flags = [args.cxx, *args.flag, '-std=c++23', '-I' + str(generated / 'public'), '-I' + str(root / 'runtime/src/numeric')]
+                            obj = case / 'runtime.o'
+                            compiled = run(flags + ['-c', generated / 'src/runtime.cpp', '-o', obj])
+                            assert compiled.returncode == 0, compiled.stderr
+                            for header in (generated / 'public').rglob('*.hpp'):
+                                sample = case / 'header.cpp'; sample.write_text('#include "' + str(header.relative_to(generated / 'public')) + '"\nint main() {}\n')
+                                preprocessed = run(flags + ['-E', '-P', sample])
+                                assert preprocessed.returncode == 0, preprocessed.stderr
+                                assert not re.search(r'\b(template|typename)\b', preprocessed.stdout), str(header)
+                                compiled = run(flags + ['-fsyntax-only', sample])
+                                assert compiled.returncode == 0, compiled.stderr
+                            if label == 'default-scalars':
+                                for consumer in ['integer_consumer', 'value_consumer', 'floating_consumer']:
+                                    exe = case / consumer
+                                    compiled = run(flags + [root / ('tests/' + consumer + '.cpp'), obj, '-o', exe])
+                                    assert compiled.returncode == 0, compiled.stderr
+                                    assert run([exe]).returncode == 0, consumer
+                                # Read-only freshness failure and obsolete-inventory protection.
+                                target = generated / 'src/runtime.cpp'; target.write_text('stale')
+                                failed = run(command + ['--check'])
+                                assert failed.returncode == 1 and target.read_text() == 'stale'
+                                assert run(command).returncode == 0
+                                inventory = generated / 'inventory.json'
+                                inventory.write_text('["retired.hpp"]')
+                                before = tree(generated)
+                                assert run(command).returncode == 1 and tree(generated) == before
                     counts['max_operations'] = max(counts['max_operations'], len(actual['operations']))
                     counts['accepted'] += 1
                     return actual
+                if args.emit:
+                    rejected_output = case / 'rejected'
+                    result = run([args.rust, 'emit-scalars', m, p, args.facts, args.context, rejected_output])
+                    assert result.returncode == 1 and not rejected_output.exists(), label
                 counts['rejected'] += 1
 
         check('default-scalars', scalar_metadata, publication)
@@ -204,6 +253,10 @@ def main():
         m = work / 'full-metadata.json'; m.write_text(json.dumps(metadata))
         result = run([args.rust, 'prepare-scalars', m, p, args.facts, args.context])
         assert result.returncode == 1 and not result.stdout
+        if args.emit:
+            output = work / 'unsupported-emission'
+            result = run([args.rust, 'emit-scalars', m, p, args.facts, args.context, output])
+            assert result.returncode == 1 and not output.exists()
     (args.work / 'summary.json').write_text(json.dumps(counts, indent=2) + '\n')
     print(json.dumps(counts))
 

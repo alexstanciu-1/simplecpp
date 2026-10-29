@@ -144,7 +144,7 @@ numeric policy. Family conversions share the scalar conversion inventory and all
 scalar/sequence header paths use one validator. Ownership preparation is composed
 last, checking names and headers against every other published family. All current
 metadata families are now validated by prepare-runtime, including unrequested
-optional metadata. C++ emission and production cutover remain pending.
+optional metadata. Non-scalar emission and production cutover remain pending.
 `prepare-scalars` keeps its deliberately narrower publication boundary.
 
 The typed string plan resolves operators, count type and header, and contributes
@@ -230,3 +230,28 @@ scalar-slice results are recorded there as well; production generation remains C
 See the [migration plan](../../specs/planning/rust_compiler_migration.md) for the
 remaining batches and [G1 inventory](../../specs/planning/api_generator_contract_inventory.md)
 for the unchanged production contract and full parity gate.
+
+
+## G3 scalar C++ emission
+
+The shared `emission` module renders `ScalarPlan` without re-resolving semantic
+policy. The experimental CLI writes the same eight scalar artifacts as production:
+five public headers, private definitions, prepared.json and inventory.json.
+
+```sh
+target/debug/scpp-api-tooling emit-scalars METADATA PUBLICATION FACTS CONTEXT OUTPUT
+target/debug/scpp-api-tooling emit-scalars METADATA PUBLICATION FACTS CONTEXT OUTPUT --check
+```
+
+Only scalar publications are admitted. The command validates/prepares all inputs
+before writing; obsolete inventory entries reject publication before mutation.
+Writing is per-file, not transactional. Check mode compares bytes without writes.
+The command reports JSON status; full production CLI compatibility and build cutover
+remain later slices. CMake still invokes the C++ generator.
+
+Add `--emit --cxx /usr/bin/clang++ --flag=-stdlib=libc++` to the scalar parity
+script to compare all artifact bytes, compile the 2,692-operation matrix, check
+standalone/template-free public headers, and run the existing three scalar
+consumers. All 19 accepted cases match; all 537 rejected cases leave no output.
+Freshness and obsolete-inventory behavior are tested too. String, vector, carrier
+and ownership emission remain pending.

@@ -64,7 +64,7 @@ pub enum Cast {
     FormatBooleanText,
 }
 impl Cast {
-    fn name(self) -> &'static str {
+    pub(crate) fn name(self) -> &'static str {
         match self {
             Self::CheckedInteger => "checked_integer_cast",
             Self::Numeric => "numeric_cast",

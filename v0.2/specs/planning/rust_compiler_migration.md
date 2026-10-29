@@ -5,7 +5,7 @@ Date: 2026-10-29
 Decision: approved direction; slice 1 implemented on 2026-10-29.
 API-generator/physical pre-lowering migration to Rust approved on 2026-10-29.
 G1 and G2 preparation for all current metadata families are implemented.
-C++ emission and production cutover remain planned.
+G3 scalar C++ emission is implemented; other family emitters and production cutover remain planned.
 
 ## Decision and scope
 
@@ -516,3 +516,32 @@ All 31 C++ regression checks pass in release and UBSan. The full runtime prepare
 comparison passes 128 accepted / 249 rejected cases; the separate scalar matrix
 retains 19 accepted / 537 rejected cases and 2,692 signatures. Existing generated
 consumer tests still exercise the production C++ emitter, not a Rust emitter.
+
+
+## G3 scalar emission checkpoint — 2026-10-29
+
+The Rust shared library now emits integer, bool/null and float C++ artifacts from
+ScalarPlan. Preparation still owns cast admission, promotions, operand adaptations
+and result/write-back categories. Emission only renders resolved bindings. The
+experimental emit-scalars command takes explicit probe facts/context and supports
+read-only --check; generation rejects obsolete inventory entries before writing.
+Publication is per-file, not transactional, matching the existing writer boundary.
+
+All eight artifacts match the production C++ generator byte-for-byte across 19
+accepted publications. The 537 rejected cases create no output. The complete
+2,692-operation matrix compiles with Clang/libc++; generated headers compile alone
+and expose no template declarations after preprocessing. Existing integer, value
+and floating consumers compile/link/run against Rust-emitted definitions. Checks
+also prove freshness does not rewrite files and obsolete inventories prevent writes.
+
+Non-goals: string/vector/carrier/ownership emission, production CLI compatibility,
+CMake cutover and compiler integration. These remain subsequent G3/G4 slices; the
+C++ generator and frozen G1 baseline remain in place. Artifacts stay ignored.
+
+Validation also passes 34 Rust unit/integration tests and one compile-fail doctest
+in debug/release, formatting and strict Clippy. The isolated Rust-only workspace
+export builds and tests without native runtime inputs. Rebuild measurements now
+include compiler-model and shared-tooling diagnostic edits as well as CLI edits.
+
+The full runtime prepared-plan regression retains 128 accepted / 249 rejected
+cases, and all 31 C++ release regression checks pass, including frozen G1 parity.

@@ -35,6 +35,28 @@ headers, then builds/tests the workspace offline. It measures clean/incremental
 compiler builds with a fresh target and a warm filesystem cache; its results are
 observations of this small foundation, not forecasts of the full compiler.
 
+## Rebuild observations — 2026-10-29
+
+Measured with Rust 1.99.1, Ryzen 5 PRO 4650G, Linux/WSL2, eight Cargo jobs and
+mold. Packages were cached, Cargo targets initially fresh, filesystem cache warm;
+one observation per case. Edit cases change diagnostic/help text in real source
+files in a temporary export, not repository sources. Model/shared edits run across
+both workspace crates; each check/build cache is warmed before its edit.
+
+| Work | Wall time |
+| --- | ---: |
+| Clean compiler debug build, including dependencies | 6.194 s |
+| Unchanged compiler debug build | 0.069 s |
+| Compiler CLI edit, debug rebuild | 0.264 s |
+| Compiler model edit, workspace check / debug rebuild | 0.208 / 0.424 s |
+| Shared tooling edit, workspace check / debug rebuild | 0.334 / 0.737 s |
+| Cold / unchanged compiler check | 4.128 / 0.073 s |
+| Clean compiler release build, including dependencies | 7.815 s |
+
+These numbers describe this foundation and small implementation edits. Signature,
+generic or dependency changes can invalidate more work. Reproduce with the script
+above; full local output is ignored at build/g3-scalar-rust-timings.json.
+
 ## Model ownership
 
 - `source.rs`: an append-only SourceMap owns immutable Arc<SourceFile> snapshots.

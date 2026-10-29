@@ -13,6 +13,22 @@ fn read(path: &OsString) -> Result<Vec<u8>> {
         .map_err(|e| Error(format!("Cannot read {}: {e}", Path::new(path).display())))
 }
 fn run(args: &[OsString]) -> Result<serde_json::Value> {
+    if (args.len() == 6 || args.len() == 7) && args[0] == "emit-scalars" {
+        let check = args.len() == 7;
+        if check && args[6] != "--check" {
+            return Err(Error("Unknown generator option".into()));
+        }
+        let context = TargetContext::parse(&read(&args[4])?)?;
+        let facts = TargetFacts::parse(&read(&args[3])?, &context)?;
+        let metadata = json::parse(&read(&args[1])?, "runtime metadata")?;
+        let publication = json::parse(&read(&args[2])?, "publication")?;
+        let plan = scpp_api_tooling::scalar::prepare(&metadata, &publication, &facts)?;
+        let files = scpp_api_tooling::emission::emit_scalars(&plan)?;
+        scpp_api_tooling::emission::publish(&files, Path::new(&args[5]), check)?;
+        return Ok(
+            serde_json::json!({"status":if check {"verified"} else {"generated"},"artifacts":files.len()}),
+        );
+    }
     if args.len() == 3 && args[0] == "validate-target" {
         let context = TargetContext::parse(&read(&args[2])?)?;
         let facts = TargetFacts::parse(&read(&args[1])?, &context)?;
@@ -37,7 +53,7 @@ fn run(args: &[OsString]) -> Result<serde_json::Value> {
             Ok(integer::prepare(&metadata, &publication, &facts)?.describe())
         };
     }
-    Err(Error("Usage: scpp-api-tooling validate-target FACTS CONTEXT | prepare-runtime|prepare-scalars|prepare-integer-construction METADATA PUBLICATION FACTS CONTEXT (preparation only; no C++ emission)".into()))
+    Err(Error("Usage: scpp-api-tooling emit-scalars METADATA PUBLICATION FACTS CONTEXT OUTPUT [--check] | validate-target FACTS CONTEXT | prepare-runtime|prepare-scalars|prepare-integer-construction METADATA PUBLICATION FACTS CONTEXT (prepare commands only inspect plans)".into()))
 }
 fn main() -> ExitCode {
     let result = run(&std::env::args_os().skip(1).collect::<Vec<_>>()).and_then(|value| {

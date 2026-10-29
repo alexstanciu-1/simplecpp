@@ -24,7 +24,7 @@ and physical pre-lowering are migrating to a shared Rust tooling library. The
 [G2 tooling](tools/api_generator/README.md) provides that library, JSON loading,
 scalar/string/vector/carrier/ownership preparation and a small C++ layout probe.
 Rust preparation covers the current metadata families. The C++
-generator remains the production path; Rust emission is not implemented. Scanning and tooling migration follow the
+generator remains the production path; Rust scalar emission has artifact and consumer parity; other family emitters remain pending. Scanning and tooling migration follow the
 [migration plan](specs/planning/rust_compiler_migration.md).
 Standard-library types and private templates are appropriate for tool support;
 generated runtime consumer headers remain template-free.
