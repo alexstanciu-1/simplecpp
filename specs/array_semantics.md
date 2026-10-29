@@ -191,6 +191,22 @@ No implicit bool/float/null key coercion is introduced. Static invalid types rej
 during preparation; unknown invalid mixed key kinds throw at runtime, even when the
 receiver is null. Existing numeric-string normalization applies to mixed/dynamic.
 
+#### v0.2 compact runtime key limit (2026-10-29)
+
+The rewritten compact mixed/dynamic table storage admits integer keys only in
+`0…INT32_MAX` (0…2147483647). Negative or larger integer keys throw before narrowing,
+including on probes/removal; they must not alias string identities or tombstones.
+Append chooses one greater than the greatest live integer key, or zero when none
+exists, and throws before mutation if that key would exceed `INT32_MAX`. This is a
+key-domain limit, not a live-entry-count limit. Removing the maximum key permits
+append to use the new live maximum. Typed hashes retain their declared key domain.
+
+This approved limit governs the new v0.2 runtime foundation; it is not a claim that
+all existing compiler/runtime consumers have migrated. Source numeric-string
+normalization remains a separate adapter responsibility: when it yields an integer,
+that integer is subject to this limit. The private storage accepts already classified
+integer keys and byte-exact string keys and does not itself normalize strings.
+
 Null receivers/intermediates return same-family null for valid keys.
 Existing non-container scalars throw instead of being treated as missing keys.
 Nested reads reuse this rule at each step without creating intermediate storage.

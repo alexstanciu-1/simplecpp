@@ -2,19 +2,21 @@
 
 Doc Status: planning
 Date: 2026-10-29
-Status: donor reproductions complete; compact repair proposal ready for discussion.
+Status: bounded compact-key implementation approved; private foundation implemented.
 Reviewed runtime revision: 84e90960d.
 
 Follow-up: [donor investigation and compact repair options](runtime_packed_storage_investigation.md)
 records executable evidence, history, allocation failures and measured layout sizes.
-P0 is complete for the recorded cases; P1 has a proposal, not an agreed implementation.
+P0 is complete. The user approved the bounded alternative in P1: integer keys
+0…INT32_MAX, rejecting negative/wide keys, append overflow before mutation, reserved
+pool codes, non-interning probes and transactional updates. No exceptional-integer
+pool or larger key representation is needed. See [the implemented contract](../packed_storage.md).
 
 ## User correction and governing direction
 
 The user rejected replacing the optimized compact key representation with a larger
 explicit-tag/full-int64 entry representation. Preserve the existing optimized design;
-identify and fix mistakes within its owning mechanisms. No implementation goal or
-representation change is authorized by this note.
+identify and fix mistakes within its owning mechanisms. The later approval authorizes the bounded private implementation described above.
 
 The previous 16-byte-key recommendation was premature. It treated observed encoding
 problems as justification to abandon a storage optimization before checking the v0.1
@@ -66,14 +68,14 @@ Those are not prerequisites for this packed-storage port and are not added to sc
 - Typed hashes continue storing their declared key type; do not force that layout
   onto pooled mixed/dynamic tables.
 
-## Current-code issues to reproduce and repair
+## Historical donor issues reproduced before approval
 
 Inspected owners: `runtime/include/scpp/support/hash_t.hpp` (dyn_keys and packed_table)
 and `runtime/include/scpp/util/global_string_pool.hpp/.cpp`.
 
 - Integer pack currently casts int64 to uint32. Codes for 1 and 4294967297 coincide;
   2147483648 has the string flag; -1 has the tombstone code 0xffffffff. These are
-  observed encoding consequences, not permission to restrict the language key domain.
+  historical encoding consequences; the later approved key-domain limit now rejects these inputs.
 - String ID 0x7fffffff also produces the tombstone code. Reserved codes must not be
   allocated as live identities; exhaustion must be checked before narrowing.
 - Append can cross the immediate-integer/tag boundary without a guard or repair path.
@@ -105,12 +107,14 @@ to compile the storage. RT-DEBT-01 remains deferred.
 | --- | --- | --- |
 | P0 | Reconstruct compact codec/pool invariants and run donor reproductions | Distinguish documented design, implemented behavior and defects |
 | P1 | Review local compact repairs | Reserved-code handling, exceptional integers, append limits and rollback; memory/cost evidence before approval |
-| P2 | Adapt shared index primitives and private packed engine | Preserve typed-hash behavior, packed fast path, order and width transitions |
-| P3 | Adapt pool boundaries and failure handling | Stable IDs, byte/NUL keys, non-interning probes, coherent failed transitions |
-| P4 | Prove independent payload/lifecycle behavior | Reference membership/order traces, copy/move/clear, failure injection and churn |
-| P5 | Validate standalone reuse and consolidate | Release/UBSan, focused sanitizers, memory/lookup/churn measurements and commit |
+| P2 (done) | Adapt shared index primitives and private packed engine | Preserve typed-hash behavior, packed fast path, order and width transitions |
+| P3 (done) | Adapt pool boundaries and failure handling | Stable IDs, byte/NUL keys, non-interning probes, coherent failed transitions |
+| P4 (done) | Prove independent payload/lifecycle behavior | Reference membership/order traces, copy/move/clear, failure injection and churn |
+| P5 (done) | Validate standalone reuse and consolidate | Release/UBSan, focused sanitizers, memory/lookup/churn measurements and commit |
 
-P0–P1 precede agreement on an implementation goal. Do not publish mixed/dynamic,
+P0–P1 are settled by the later bounded-design approval. Do not publish mixed/dynamic,
 add a test-only public runtime family, or choose a larger per-entry representation as
 part of this audit. The next implementation must preserve optimization and prove the
 necessary fixes rather than replace the optimized model wholesale.
+
+Completed evidence: [packed-storage validation](../packed_storage_validation.md).

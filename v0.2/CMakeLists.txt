@@ -105,6 +105,10 @@ if(SCPP_ENABLE_DATETIME)
   target_link_libraries(scpp_datetime_demo PRIVATE scpp_datetime)
 endif()
 
+# Private packed-storage foundation. No public family or generator binding yet.
+add_library(scpp_packed_storage STATIC runtime/src/hash/packed_key.cpp)
+target_compile_features(scpp_packed_storage PUBLIC cxx_std_23)
+
 add_executable(scpp_runtime_demo examples/runtime_demo.cpp)
 target_link_libraries(scpp_runtime_demo PRIVATE scpp_runtime)
 
@@ -211,5 +215,6 @@ endif()
 if(BUILD_TESTING)
   add_subdirectory(tests/ownership)
   add_subdirectory(tests/hash)
+  add_subdirectory(tests/packed)
   add_subdirectory(tests/datetime)
 endif()

@@ -2,7 +2,12 @@
 
 Doc Status: planning
 Date: 2026-10-29
-Status: investigation complete for the cases below; repair proposal awaits discussion.
+Status: historical investigation; subsequent approval selected bounded integer keys.
+
+Decision update: the user approved integer keys 0…INT32_MAX and rejection outside
+that range, rather than the exceptional-integer pool candidate below. Append throws
+at that boundary. See [the implemented contract](../packed_storage.md). The candidate
+comparison is retained as investigation history, not the current recommendation.
 
 This records evidence for [the packed-storage batch](runtime_packed_storage_batch.md).
 It does not authorize implementation or change language semantics.

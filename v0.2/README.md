@@ -15,7 +15,9 @@ compiler/runtime boundary, core milestone and open design decisions.
 The runtime implements metadata-selected integers, bool/null, float64, strings,
 concrete vectors, typed hashes, nullable/result carriers and concrete record ownership/value APIs.
 The [API summary](specs/runtime_api_summary.md) and linked family contracts define
-supported behavior. [Typed hashes](specs/hash_slice.md) are generated on request; mixed/dynamic remain future runtime work.
+supported behavior. [Typed hashes](specs/hash_slice.md) are generated on request.
+The [private packed-storage foundation](specs/packed_storage.md) preserves compact
+keys and dense-list storage; public mixed/dynamic families remain future work.
 
 The optional [datetime module](specs/datetime_module.md) provides eleven clock,
 sleep, UTC and host-local operations. Enable it with `-DSCPP_ENABLE_DATETIME=ON` when
@@ -59,8 +61,8 @@ The [plain C++ example](examples/runtime_demo.cpp) combines numeric, bool/null,
 string and vector APIs; it does not exercise carriers. It prints `Ada: 21; ratio=7`.
 The [API summary](specs/runtime_api_summary.md) lists
 supported/rejected operators and casts, ownership boundaries and deferred language
-decisions. The active hash/mixed/dynamic follow-on is a separate reviewed port;
-none of those implementations has been imported yet.
+decisions. Typed hashes and private packed storage have been ported; boxed
+mixed/dynamic families and their compiler integration remain separate work.
 
 ## Generator and artifact ownership
 
