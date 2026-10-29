@@ -7,8 +7,8 @@ public traversal are not implemented by this slice.
 ## Owners and publication
 
 `runtime/metadata/runtime.json` owns the optional hash binding/policy record.
-`tools/api_generator/src/hash.rs` prepares concrete requested identities and methods;
-`src/emission/hash.rs` emits declarations and wiring from that plan.
+`tools/api_generator/php/families.php` prepares concrete requested identities and methods;
+`tools/api_generator/php/render_modules.php` emits declarations and wiring from that plan.
 `runtime/src/hash/typed_hash.hpp` owns the reviewed private table algorithms.
 `hash_index.hpp` owns shared index primitives used by typed and packed storage.
 

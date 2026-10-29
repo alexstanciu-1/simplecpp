@@ -1,5 +1,5 @@
 #!@Python3_EXECUTABLE@
-"""Build-configured invocation of the sole Rust generator with explicit target facts."""
+"""Build-configured invocation of the PHP generator with explicit target facts."""
 import os
 import sys
 
@@ -7,5 +7,5 @@ if len(sys.argv) not in (4, 5):
     sys.exit('Usage: scpp_api_generator RUNTIME.json PUBLICATION.json OUTPUT [--check]')
 if len(sys.argv) == 5 and sys.argv[4] != '--check':
     sys.exit('Unknown generator option')
-os.execv('@rust_generator@', ['@rust_generator@', 'emit-runtime', sys.argv[1], sys.argv[2],
+os.execv('@PHP_EXECUTABLE@', ['@PHP_EXECUTABLE@', '@php_generator_source@', 'emit-runtime', sys.argv[1], sys.argv[2],
     '@native_facts@', '@native_context@', sys.argv[3], *sys.argv[4:]])

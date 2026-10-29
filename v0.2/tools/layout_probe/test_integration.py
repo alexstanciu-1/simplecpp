@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Real-probe/cache and Rust target-fact integration proofs. No production writes."""
+"""Real-probe/cache and PHP target-fact integration proofs. No production writes."""
 import argparse
 import json
 from pathlib import Path
@@ -20,12 +20,12 @@ def run(args, ok=True):
 
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument('--rust', type=Path, required=True)
+    parser.add_argument('--generator', type=Path, required=True)
     parser.add_argument('--cxx', required=True)
     parser.add_argument('--flag', action='append', default=[])
     parser.add_argument('--work', type=Path, required=True)
     args = parser.parse_args()
-    args.rust = args.rust.resolve()
+    args.generator = args.generator.resolve()
     source = Path(__file__).resolve().parents[2]
     driver = Path(__file__).with_name('probe.py')
     args.work.mkdir(parents=True, exist_ok=True)
@@ -42,7 +42,7 @@ def main():
         facts_file, context_file = work / 'native/facts.json', work / 'native/context.json'
         assert 'Generated' in run(command)
         facts, context = json.loads(facts_file.read_text()), json.loads(context_file.read_text())
-        assert json.loads(run([args.rust, 'validate-target', facts_file, context_file]))['status'] == 'valid'
+        assert json.loads(run([args.generator, 'validate-target', facts_file, context_file]))['status'] == 'valid'
         timestamps = [p.stat().st_mtime_ns for p in [facts_file, context_file, work / 'native/probe']]
         assert 'current' in run(command)
         assert timestamps == [p.stat().st_mtime_ns for p in [facts_file, context_file, work / 'native/probe']]
@@ -51,7 +51,7 @@ def main():
         assert changed_context['context_id'] != context['context_id']
         stale = work / 'stale.json'
         stale.write_text(json.dumps(facts))
-        run([args.rust, 'validate-target', stale, context_file], ok=False)
+        run([args.generator, 'validate-target', stale, context_file], ok=False)
         # Even an unused source comment changes the source fingerprint.
         with (probe_source / 'probe.cpp').open('a') as stream:
             stream.write('\n// context invalidation proof\n')
@@ -80,23 +80,23 @@ def main():
         pub.update(types=['int8','int16','int32','int64','uint8','uint16','uint32','uint64'], values=[], operators=[], short_aliases=[])
         publication = work / 'publication.json'
         publication.write_text(json.dumps(pub))
-        cpp = json.loads(run([args.rust, 'prepare-runtime', metadata, publication, facts_file, context_file]))
-        rust = json.loads(run([args.rust, 'prepare-integer-construction', metadata, publication, facts_file, context_file]))
+        composed = json.loads(run([args.generator, 'prepare-runtime', metadata, publication, facts_file, context_file]))
+        prepared = json.loads(run([args.generator, 'prepare-integer-construction', metadata, publication, facts_file, context_file]))
         for field in ['types', 'native_inputs', 'conversions']:
-            assert cpp[field] == rust[field], field
-        assert len(rust['conversions']) == 104
+            assert composed[field] == prepared[field], field
+        assert len(prepared['conversions']) == 104
         # Reordering publication requests is not a physical-plan change.
         pub['types'].reverse()
         publication.write_text(json.dumps(pub))
-        assert rust == json.loads(run([args.rust, 'prepare-integer-construction', metadata, publication, facts_file, context_file]))
+        assert prepared == json.loads(run([args.generator, 'prepare-integer-construction', metadata, publication, facts_file, context_file]))
         pub['values'] = ['bool_t']
         publication.write_text(json.dumps(pub))
-        run([args.rust, 'prepare-integer-construction', metadata, publication, facts_file, context_file], ok=False)
+        run([args.generator, 'prepare-integer-construction', metadata, publication, facts_file, context_file], ok=False)
         # A missing expected context must never fall back to host facts.
-        run([args.rust, 'validate-target', facts_file, work / 'missing.json'], ok=False)
+        run([args.generator, 'validate-target', facts_file, work / 'missing.json'], ok=False)
         # Check that prepared ownership and native ranges use measured C++ facts.
-        owners = json.loads(run([args.rust, 'prepare-runtime', metadata, source / 'tests/ownership/publication.json', facts_file, context_file]))
-        for native in cpp['native_inputs']:
+        owners = json.loads(run([args.generator, 'prepare-runtime', metadata, source / 'tests/ownership/publication.json', facts_file, context_file]))
+        for native in composed['native_inputs']:
             measured = facts['native_integers'][native['cpp']]
             assert (native['signed'], native['digits']) == (measured['signed'], measured['digits'])
         for record in owners['ownership']['records']:
@@ -104,7 +104,7 @@ def main():
                 if family['family'] != 'value':
                     assert facts['ownership'][family['family']] == {'size': family['size'], 'alignment': family['alignment']}
         report = {'native_probe':'passed','cache_noop_and_invalidation':'passed','cross_target_rejection':'passed',
-                  'integer_types':len(rust['types']), 'checked_conversions':len(rust['conversions']),
+                  'integer_types':len(prepared['types']), 'checked_conversions':len(prepared['conversions']),
                   'composed_projection_consistency':'passed','ownership_native_fact_parity':'passed'}
         (args.work / 'summary.json').write_text(json.dumps(report, indent=2) + '\n')
         print(json.dumps(report))

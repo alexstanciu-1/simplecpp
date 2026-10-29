@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Source-only Rust-generator cutover and rebuild proof. Edits only a temporary export."""
+"""Source-only PHP-generator cutover and rebuild proof. Edits only a temporary export."""
 import json
 import os
 from pathlib import Path
@@ -10,10 +10,14 @@ import time
 
 source = Path(__file__).resolve().parents[1]
 report = {}
-with tempfile.TemporaryDirectory(prefix='scpp-rust-cutover-') as temporary:
+with tempfile.TemporaryDirectory(prefix='scpp-php-cutover-') as temporary:
     root = Path(temporary) / 'v0.2'
     shutil.copytree(source, root, ignore=shutil.ignore_patterns('build', 'target', 'generated', '__pycache__'))
-    assert not list((root / 'tools/api_generator').glob('*.cpp'))
+    assert not list((root / 'tools/api_generator').rglob('*.rs'))
+    shutil.rmtree(root / 'compiler')
+    for path in [root / 'Cargo.toml', root / 'Cargo.lock', root / 'rust-toolchain.toml']:
+        path.unlink()
+    shutil.rmtree(root / '.cargo')
     assert not (root / 'tools/support/json/pull_reader.hpp').exists()
     env = os.environ.copy()
     env.pop('CARGO_TARGET_DIR', None)
@@ -47,10 +51,11 @@ with tempfile.TemporaryDirectory(prefix='scpp-rust-cutover-') as temporary:
 
     output = generated / 'prepared.json'
     for label, path in [('metadata', runtime_json), ('publication', publication),
-                        ('rust_source', root / 'tools/api_generator/src/emission.rs')]:
+                        ('php_source', root / 'tools/api_generator/php/render.php'),
+                        ('cpp_template', root / 'tools/api_generator/templates/integer_storage.cpp.tpl')]:
         before = output.stat().st_mtime_ns
         with path.open('a') as stream:
-            stream.write('\n// rebuild probe\n' if path.suffix == '.rs' else '\n')
+            stream.write('\n// rebuild probe\n' if path.suffix in ('.php', '.tpl') else '\n')
         run(label + '_invalidation', ['cmake', '--build', '--preset', 'default', '--target', 'scpp_runtime_publication'])
         assert output.stat().st_mtime_ns != before, label + ' did not invalidate generation'
     context = root / 'build/clang/native-layout/context.json'
@@ -61,7 +66,7 @@ with tempfile.TemporaryDirectory(prefix='scpp-rust-cutover-') as temporary:
     run('target_invalidation', ['cmake', '--build', '--preset', 'default', '--target', 'scpp_runtime_publication'])
     assert json.loads(context.read_text())['context_id'] != old_context
     assert output.stat().st_mtime_ns != before
-    report['dependency_invalidation'] = ['metadata', 'publication', 'rust_source', 'target_flags']
+    report['dependency_invalidation'] = ['metadata', 'publication', 'php_source', 'cpp_template', 'target_flags']
     run('production_configure', ['cmake', '--preset', 'default', '-DBUILD_TESTING=OFF'])
     run('production_build', ['cmake', '--build', '--preset', 'default'])
     assert run('production_demo', [str(root / 'build/clang/scpp_runtime_demo')]).strip() == 'Ada: 21; ratio=7'
