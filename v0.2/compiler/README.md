@@ -58,9 +58,58 @@ full compiler costs. Reproduce with the script above; full local output is ignor
 at build/compiler-scanner-timings.json. Earlier shared-tooling measurements included
 a dependency the compiler no longer has.
 
+## Phase layout and dependency direction
+
+The layout follows the reviewed `compiler/my-try/` phase structure. Numbered physical
+folders map to ordinary Rust module names with `#[path]` in lib.rs; this remains one
+crate, without root compatibility aliases for the old flat module paths.
+
+```text
+src/
+  main.rs                       CLI arguments, presentation and process exit
+  lib.rs                        module declarations
+  diagnostic.rs                 source-associated diagnostic representation
+  compiler/
+    mod.rs
+    driver.rs                   loading/phase sequencing and invocation-owned sources
+  01_prepare_inputs/            Rust module: inputs
+    mod.rs
+    source.rs                   source identities, bytes, spans and locations
+    load.rs                     filesystem acquisition into a supplied SourceMap
+  02_tokenize/                  Rust module: tokenize
+    mod.rs
+    scanner.rs                  lexical processing and spelling classification
+    token.rs                    compact representation
+    token_sequence.rs           checked construction and immutable publication
+```
+
+Future phase owners are `03_parse/` (syntax and parser-invoked collection),
+`04_analyze/` (name/type resolution and semantic preparation), `05_backend/cpp/`
+(target bindings and rendering) and `06_native/` (native build/run). Add these only
+with real implementations. A separate session module is unnecessary while Driver's
+only retained state is its SourceMap; no empty scaffold or global model is added.
+
+Workers may consume earlier-stage data and shared diagnostics, but must not invoke
+later processing or depend on the driver. Input representation performs no I/O;
+the loader does no scanning. The scanner remains an in-memory worker. Driver orders
+loading/scanning and returns data; main owns text presentation. Driver normalizes
+failures to command error text at this boundary; lexical workers retain their typed
+diagnostics and loading exposes a typed LoadError.
+
+Records preserve their own invariants and expose queries; they do not dispatch
+phase algorithms or own other stages' scheduling state. Parsing collects syntax
+and declarations; analysis resolves them. Backend emission must consume settled
+semantic decisions rather than repeat source validation. Runtime generation remains
+runtime-owned. Native tool invocation does not decide language semantics.
+
+Invocation-owned source snapshots may outlive the driver through results. Each load
+adds a fresh identity; this is not an incremental cache. Failed scans publish no token
+sequence, though their loaded bytes remain in the source map for that invocation.
+No worker, mutable global root, incremental scheduler or backend is introduced.
+
 ## Model ownership
 
-- `source.rs`: an append-only SourceMap owns immutable Arc<SourceFile> snapshots.
+- `01_prepare_inputs/source.rs`: an append-only SourceMap owns immutable Arc<SourceFile> snapshots.
   Equal paths/bytes still create distinct IDs and snapshots. IDs belong to one map,
   not a persistent global namespace. Retained Arcs survive map destruction. Input
   bytes transfer from Vec and preserve NUL, invalid UTF-8 and line endings.
@@ -68,11 +117,11 @@ a dependency the compiler no longer has.
   allow zero-width EOF locations. Spans carry coordinates only; applying a span
   to a source rechecks containment. Locations use one-based lines and byte columns,
   not Unicode/display columns. LF starts a new line; CR remains an ordinary byte.
-- `token.rs`: an eight-byte Copy token stores a 32-bit offset, 24-bit nonzero length
+- `02_tokenize/token.rs`: an eight-byte Copy token stores a 32-bit offset, 24-bit nonzero length
   and nonzero eight-bit tag. All 255 nonzero tags are representable; named tags retain
   the donor vocabulary without claiming language support. Token::new checks
   representation; Token::span checks containment. Layout is not a wire format.
-- `token_sequence.rs`: TokenBuilder owns a source Arc and mutable Vec<Token>.
+- `02_tokenize/token_sequence.rs`: TokenBuilder owns a source Arc and mutable Vec<Token>.
   `push(Token)` binds valid token coordinates to that source and rejects overlap,
   backward order and out-of-source spans before mutation. Gaps and adjacent spans
   are legal. A failed push leaves the builder usable. It does not classify tokens
@@ -178,3 +227,11 @@ exact independent spans, quotes/comments, malformed numbers, all single input by
 with short suffixes, retained source identity, no partial CLI output, and actual
 24-bit token-length acceptance/rejection. The compiler-only offline export also
 builds/tests with no API-tooling sources or external packages.
+
+
+Structural reorganization validation: the unchanged CLI/scanner proofs pass, plus
+one driver recovery/lifetime proof (23 tests and one compile-fail doctest in total).
+Debug/release, strict Clippy and formatting pass. The compiler-only export recursively
+copies Rust modules and builds/tests without runtime/API-tooling inputs. Runtime
+cutover 0c230e0bc is integrated; production generator files are unchanged by this
+reorganization.

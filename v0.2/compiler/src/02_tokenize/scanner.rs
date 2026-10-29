@@ -1,9 +1,9 @@
 //! In-memory PHS lexical scanning. No decoding, name resolution or runtime policy.
 use crate::{
     diagnostic::{Diagnostic, Severity},
-    source::SourceFile,
-    token::{Token, TokenKind as Kind},
-    token_sequence::{TokenBuilder, TokenSequence},
+    inputs::source::SourceFile,
+    tokenize::token::{Token, TokenKind as Kind},
+    tokenize::token_sequence::{TokenBuilder, TokenSequence},
 };
 use std::sync::Arc;
 

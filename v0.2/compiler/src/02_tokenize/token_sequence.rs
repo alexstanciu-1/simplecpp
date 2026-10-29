@@ -1,6 +1,6 @@
 //! Source-bound, ordered token generations. Scanning and token classification are separate.
-use crate::source::SourceFile;
-use crate::token::Token;
+use crate::inputs::source::SourceFile;
+use crate::tokenize::token::Token;
 use std::{fmt, sync::Arc};
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
@@ -55,7 +55,7 @@ impl TokenSequence {
 /// Mutable construction with single-use publication enforced by Rust ownership.
 ///
 /// ```compile_fail
-/// use scpp_compiler::{source::SourceMap, token_sequence::TokenBuilder};
+/// use scpp_compiler::{inputs::source::SourceMap, tokenize::token_sequence::TokenBuilder};
 /// let source = SourceMap::default().add("empty".into(), vec![]).unwrap();
 /// let builder = TokenBuilder::new(source, 0);
 /// let first = builder.finish();
@@ -107,7 +107,7 @@ impl TokenBuilder {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::{source::SourceMap, token::TokenKind};
+    use crate::{inputs::source::SourceMap, tokenize::token::TokenKind};
 
     #[test]
     fn bounded_reserve_and_publication_preserve_token_allocation() {

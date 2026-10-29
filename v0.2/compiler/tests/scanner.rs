@@ -1,11 +1,11 @@
 use scpp_compiler::{
-    scanner::scan,
-    source::SourceMap,
-    token::{Token, TokenKind as K},
+    inputs::source::SourceMap,
+    tokenize::scanner::scan,
+    tokenize::token::{Token, TokenKind as K},
 };
 use std::sync::Arc;
 
-fn scanned(bytes: &[u8]) -> scpp_compiler::token_sequence::TokenSequence {
+fn scanned(bytes: &[u8]) -> scpp_compiler::tokenize::token_sequence::TokenSequence {
     scan(
         SourceMap::default()
             .add("test.phs".into(), bytes.into())

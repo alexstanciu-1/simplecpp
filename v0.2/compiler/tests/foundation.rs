@@ -1,6 +1,6 @@
 use scpp_compiler::diagnostic::{Diagnostic, Severity};
-use scpp_compiler::source::{Location, SourceError, SourceMap};
-use scpp_compiler::token::{Token, TokenError, TokenKind};
+use scpp_compiler::inputs::source::{Location, SourceError, SourceMap};
+use scpp_compiler::tokenize::token::{Token, TokenError, TokenKind};
 use std::sync::Arc;
 
 #[test]

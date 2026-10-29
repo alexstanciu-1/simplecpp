@@ -1,7 +1,7 @@
 use scpp_compiler::{
-    source::SourceMap,
-    token::{Token, TokenKind},
-    token_sequence::{SequenceError, TokenBuilder, TokenSequence},
+    inputs::source::SourceMap,
+    tokenize::token::{Token, TokenKind},
+    tokenize::token_sequence::{SequenceError, TokenBuilder, TokenSequence},
 };
 use std::sync::Arc;
 

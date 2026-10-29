@@ -1,5 +1,4 @@
-use scpp_compiler::diagnostic::{Diagnostic, Severity};
-use scpp_compiler::source::SourceMap;
+use scpp_compiler::compiler::driver::Driver;
 use std::ffi::OsString;
 use std::io::{self, Write};
 use std::path::PathBuf;
@@ -25,12 +24,7 @@ fn run(args: Vec<OsString>, output: &mut impl Write) -> Result<(), String> {
     }
     if args.len() == 2 && args[0] == "scan" {
         let path = PathBuf::from(&args[1]);
-        let bytes = std::fs::read(&path)
-            .map_err(|e| format!("cannot read {}: {e}", path.to_string_lossy().escape_debug()))?;
-        let source = SourceMap::default()
-            .add(path, bytes)
-            .map_err(|e| e.to_string())?;
-        let tokens = scpp_compiler::scanner::scan(source, 0).map_err(|e| e.to_string())?;
+        let tokens = Driver::default().scan_file(path)?;
         for token in tokens.tokens() {
             writeln!(
                 output,
@@ -55,22 +49,7 @@ fn run(args: Vec<OsString>, output: &mut impl Write) -> Result<(), String> {
         0
     };
     let path = PathBuf::from(&args[1]);
-    let bytes = std::fs::read(&path)
-        .map_err(|e| format!("cannot read {}: {e}", path.to_string_lossy().escape_debug()))?;
-    let mut sources = SourceMap::default();
-    let source = sources.add(path, bytes).map_err(|e| e.to_string())?;
-    let span = source.span(offset, offset).map_err(|e| {
-        format!(
-            "{}: {e} (offset {offset})",
-            source.name().to_string_lossy().escape_debug()
-        )
-    })?;
-    let message = format!(
-        "source contains {} bytes; offset {offset}",
-        source.byte_len()
-    );
-    let diagnostic =
-        Diagnostic::new(Severity::Note, message, source, span).map_err(|e| e.to_string())?;
+    let diagnostic = Driver::default().inspect_source(path, offset)?;
     writeln!(output, "{diagnostic}").map_err(|e| e.to_string())
 }
 

@@ -1,5 +1,5 @@
 //! Diagnostics retain their source snapshot and validate their location once.
-use crate::source::{Location, SourceError, SourceFile, Span};
+use crate::inputs::source::{Location, SourceError, SourceFile, Span};
 use std::fmt;
 use std::sync::Arc;
 

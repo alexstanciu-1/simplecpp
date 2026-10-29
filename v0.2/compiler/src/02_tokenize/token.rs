@@ -1,5 +1,5 @@
 //! Compact token representation; lexical classification belongs to scanner.rs.
-use crate::source::{SourceError, SourceFile, Span};
+use crate::inputs::source::{SourceError, SourceFile, Span};
 use std::fmt;
 use std::num::NonZeroU8;
 

@@ -83,8 +83,8 @@ with tempfile.TemporaryDirectory(prefix="scpp-rust-foundation-") as temporary:
     measure("compiler_debug_warmup", ["build"])
     measure("compiler_check_warmup", ["check"])
     for label, relative, old, new in [
-        ("compiler_model", "compiler/src/token_sequence.rs", "token span is outside the retained source", "token span exceeds the retained source"),
-        ("scanner", "compiler/src/scanner.rs", "Unsupported token", "Unsupported source token"),
+        ("compiler_model", "compiler/src/02_tokenize/token_sequence.rs", "token span is outside the retained source", "token span exceeds the retained source"),
+        ("scanner", "compiler/src/02_tokenize/scanner.rs", "Unsupported token", "Unsupported source token"),
     ]:
         subprocess.run(["cargo", "check", "--workspace", "--locked", "--offline"], cwd=root, env=environment, check=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
         source = root / relative

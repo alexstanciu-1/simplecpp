@@ -637,3 +637,22 @@ Final cutover evidence:
   allowing subsequent ordinary build commands to use the same toolchain/cache.
 
 The runtime typed-hash backlog can now resume through the sole Rust generator.
+
+
+## Compiler phase layout checkpoint — 2026-10-29
+
+Integrated runtime cutover 0c230e0bc with the independent scanner slice. Documentation
+retains both completions; the compiler has no dependency on the production generator.
+
+The compiler now follows the reviewed my-try phase layout: 01_prepare_inputs owns
+source storage/loading; 02_tokenize owns tokens, sequences and lexical workers;
+compiler/driver.rs coordinates phases with invocation-owned sources. Main retains
+argument parsing and presentation. Diagnostics remain shared source-associated data.
+Rust module paths are inputs and tokenize; no flat compatibility module aliases are
+retained. The [compiler README](../../compiler/README.md#phase-layout-and-dependency-direction)
+records dependency direction and the later parse/analyze/backend/native owners.
+
+No scanner semantics, runtime behavior, parser, global model, incremental scheduler
+or empty future-stage directories are added. Driver tests prove recovery after read
+and lexical errors and preservation of earlier source/token snapshots. Compiler-only
+export, debug/release tests, formatting and strict Clippy validate the new layout.
