@@ -153,3 +153,19 @@ extractions and do not expand the numeric operator matrix. Default runtime and
 compiler publications do not request ownership specializations yet. Inline values
 inherit native payload copy/move capabilities; explicit const qualification preserves
 handle identity without allocation. Compiler adaptation remains a later slice.
+
+## Typed hashes
+
+See [the hash slice contract](hash_slice.md). On-request `hash_VALUE_KEY` classes
+support all int64/string key/value combinations, copied `at`, nullable `find`,
+`has`, `set`, `remove`, `clear`, `size`, `empty`, and int64-key `append`. Keys are
+strictly typed. Hashes own independent copies and expose no public traversal yet
+(RT-DEBT-01). `tests/hash/publication.json` is the standalone publication example.
+
+## Optional datetime module
+
+[Datetime](datetime_module.md) publishes selected `scpp::dt` clock/sleep/UTC functions
+through the Rust generator. The production CMake option `SCPP_ENABLE_DATETIME` adds
+`scpp_datetime`, depending on core. Types are existing int64/uint64/string/result_int64;
+no new container or dynamic runtime capability is required. Source callable integration
+and the donor's local-time/PHP compatibility functions are deferred.

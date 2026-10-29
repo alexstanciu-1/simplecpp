@@ -13,9 +13,14 @@ implementation and knowledge, including modules. The note also records the inten
 compiler/runtime boundary, core milestone and open design decisions.
 
 The runtime implements metadata-selected integers, bool/null, float64, strings,
-concrete vectors, nullable/result carriers and concrete record ownership/value APIs.
+concrete vectors, typed hashes, nullable/result carriers and concrete record ownership/value APIs.
 The [API summary](specs/runtime_api_summary.md) and linked family contracts define
-supported behavior. Hash/mixed/dynamic remain future runtime work.
+supported behavior. [Typed hashes](specs/hash_slice.md) are generated on request; mixed/dynamic remain future runtime work.
+
+The optional [datetime module](specs/datetime_module.md) provides eight clock,
+sleep and fixed-UTC operations. Enable it with `-DSCPP_ENABLE_DATETIME=ON` when
+configuring, then link `scpp_datetime`; the core has no datetime dependency.
+Source compiler integration and local-time APIs remain deferred.
 
 The sole API preparation/generation implementation is now the shared Rust
 [tooling library](tools/api_generator/README.md). It emits the C++ runtime API from

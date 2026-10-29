@@ -65,4 +65,13 @@ with tempfile.TemporaryDirectory(prefix='scpp-rust-cutover-') as temporary:
     run('production_configure', ['cmake', '--preset', 'default', '-DBUILD_TESTING=OFF'])
     run('production_build', ['cmake', '--build', '--preset', 'default'])
     assert run('production_demo', [str(root / 'build/clang/scpp_runtime_demo')]).strip() == 'Ada: 21; ratio=7'
+    run('datetime_configure', ['cmake', '--preset', 'default', '-DSCPP_ENABLE_DATETIME=ON'])
+    run('datetime_build', ['cmake', '--build', '--preset', 'default'])
+    assert run('datetime_demo', [str(root / 'build/clang/scpp_datetime_demo')]).strip() == '2024-02-29T12:34:56Z'
+    core_symbols = run('core_symbols', ['nm', '-C', str(root / 'build/clang/libscpp_runtime.a')])
+    assert 'scpp::dt::' not in core_symbols and 'scpp::detail::datetime::' not in core_symbols
+    run('datetime_disable', ['cmake', '--preset', 'default', '-DSCPP_ENABLE_DATETIME=OFF'])
+    run('core_only_build', ['cmake', '--build', '--preset', 'default'])
+    targets = run('core_only_targets', ['ninja', '-C', 'build/clang', '-t', 'targets', 'all'])
+    assert 'scpp_datetime:' not in targets
 print(json.dumps(report, indent=2))

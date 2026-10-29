@@ -20,6 +20,11 @@ Doc Status: normative
 - Formats Unix seconds as UTC text in exactly `YYYY-MM-DDTHH:MM:SSZ` form.
 - Locale and host timezone do not affect the output.
 
+Years use the proleptic Gregorian calendar and exactly four digits, `0000` through
+`9999`, including year zero. Formatting outside that year range throws a runtime
+error. Host UTC conversion limits still apply within the range; pre-epoch formatting
+is not promised on hosts whose UTC conversion API rejects it.
+
 ## Error policy
 
 - Throws a runtime error if the timestamp cannot be represented by the host UTC conversion API.

@@ -32,6 +32,8 @@ pub struct RuntimePlan {
     pub carriers: Vec<CarrierPlan>,
     pub carriers_header: Option<String>,
     pub ownership: Option<crate::ownership::OwnershipPlan>,
+    pub hashes: Option<crate::hash::HashPublication>,
+    pub datetime: Option<crate::datetime::DatetimePlan>,
 }
 
 pub fn prepare(metadata: &Value, publication: &Value, facts: &TargetFacts) -> Result<RuntimePlan> {
@@ -47,6 +49,8 @@ pub fn prepare(metadata: &Value, publication: &Value, facts: &TargetFacts) -> Re
         "vectors",
         "carriers",
         "ownership",
+        "hashes",
+        "datetime",
     ])?;
     // Validate the outer demand first, then delegate the scalar projection to its sole owner.
     let scalar_request = Value::Object(
@@ -56,7 +60,7 @@ pub fn prepare(metadata: &Value, publication: &Value, facts: &TargetFacts) -> Re
             .filter(|(key, _)| {
                 !matches!(
                     key.as_str(),
-                    "string" | "vectors" | "carriers" | "ownership"
+                    "string" | "vectors" | "carriers" | "ownership" | "hashes" | "datetime"
                 )
             })
             .map(|(k, v)| (k.clone(), v.clone()))
@@ -72,10 +76,14 @@ pub fn prepare(metadata: &Value, publication: &Value, facts: &TargetFacts) -> Re
         carriers: vec![],
         carriers_header: None,
         ownership: None,
+        hashes: None,
+        datetime: None,
     };
     prepare_string(metadata, publication, &registry, &mut plan)?;
     prepare_vectors(metadata, publication, &registry, &mut plan)?;
     prepare_carriers(metadata, publication, &mut plan)?;
+    plan.hashes = crate::hash::prepare(metadata, publication, &plan)?;
+    plan.datetime = crate::datetime::prepare(metadata, publication, &plan)?;
     plan.ownership = crate::ownership::prepare(metadata, publication, &plan, facts)?;
     plan.scalars
         .conversions
@@ -89,7 +97,9 @@ impl RuntimePlan {
             !self.scalars.headers.values().any(|p| p == path)
                 && !self.string.as_ref().is_some_and(|s| s.header == path)
                 && self.vectors_header.as_deref() != Some(path)
-                && self.carriers_header.as_deref() != Some(path),
+                && self.carriers_header.as_deref() != Some(path)
+                && self.hashes.as_ref().is_none_or(|h| h.header != path)
+                && self.datetime.as_ref().is_none_or(|m| m.header != path),
             "Conflicting public headers",
         )
     }
@@ -127,6 +137,12 @@ impl RuntimePlan {
         }
         if self.requires_error() {
             out["error"] = json!({"type":"error_t","state":"explicit_present","message":"string","line":"int64","file":"string","inspection":"value_copy","global_short_name":false});
+        }
+        if let Some(hashes) = &self.hashes {
+            out["hashes"] = hashes.describe();
+        }
+        if let Some(module) = &self.datetime {
+            out["datetime"] = module.describe();
         }
         if let Some(ownership) = &self.ownership {
             out["ownership"] = ownership.describe();

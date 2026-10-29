@@ -3,7 +3,7 @@ use super::{BANNER, NATIVES, input, int128_fences};
 use crate::runtime::{CarrierFamily, Extraction, RuntimePlan};
 use std::collections::{BTreeMap, BTreeSet};
 
-fn lifecycle(n: &str) -> (String, String) {
+pub(super) fn lifecycle(n: &str) -> (String, String) {
     (
         format!(
             "    {n}() noexcept = default;\n    ~{n}();\n    {n}(const {n}&);\n    {n}({n}&&) noexcept;\n    {n}& operator=(const {n}&);\n    {n}& operator=({n}&&) noexcept;\n"

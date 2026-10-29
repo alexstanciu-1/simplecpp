@@ -1,0 +1,13 @@
+{
+  "header": "scpp/datetime.hpp",
+  "operations": [
+    "now_unix_seconds",
+    "now_unix_millis",
+    "monotonic_millis",
+    "monotonic_micros",
+    "monotonic_nanos",
+    "sleep_millis",
+    "format_iso_utc",
+    "parse_iso_utc"
+  ]
+}

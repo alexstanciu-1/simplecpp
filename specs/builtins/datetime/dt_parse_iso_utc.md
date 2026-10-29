@@ -22,6 +22,10 @@ Doc Status: normative
 - Rejects malformed values and out-of-range date/time components.
 - Leap seconds are not supported in this pass.
 
+Years use the proleptic Gregorian calendar and exactly four digits, `0000` through
+`9999`, including year zero. Parsing computes Unix seconds independently of the
+host `time_t` range. Embedded NUL, trailing bytes and leap seconds are invalid.
+
 ## Error policy
 
 - Invalid input returns an error result.
