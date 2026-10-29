@@ -22,20 +22,18 @@ sleep, UTC and host-local operations. Enable it with `-DSCPP_ENABLE_DATETIME=ON`
 configuring, then link `scpp_datetime`; the core has no datetime dependency.
 Source compiler integration and PHP compatibility wrappers remain deferred.
 
-The sole API preparation/generation implementation is now the shared Rust
-[tooling library](tools/api_generator/README.md). It emits the C++ runtime API from
-resolved plans and explicit native C++ probe facts. The C++ generator and its private
-JSON implementation have been retired after exact artifact parity proofs. The
-runtime remains C++; generated public headers remain template-free.
+The sole API generator is [PHP 8.5 tooling](tools/api_generator/README.md).
+It resolves metadata and explicit native C++ probe facts into public headers,
+C++ definitions and a prepared API description. The runtime remains C++;
+generated public headers remain template-free.
 
-The [Rust compiler foundation](compiler/README.md) provides source bytes, spans,
-tokens, immutable token sequences, flavor-aware scanning, C++/PHP/JS parsing into
-a shared AST, and diagnostics. Semantic compilation remains a future slice. The compiler uses only the Rust standard library. Rust tooling builds independently; CMake
-invokes Cargo for runtime generation, with no reverse dependency.
+The existing [Rust compiler foundation](compiler/README.md) is retained pending
+incremental replacement from `compiler/my-try/`. It is independent of the runtime
+build. This generator replacement does not migrate the compiler.
 
-Install Rust 1.99.1 and put Cargo on PATH, then run `cargo fetch --locked` once to
-populate the dependency cache. Normal CMake/Cargo builds use locked offline packages.
-Python 3.10+ is required for the native layout probe even without tests.
+Runtime builds require 64-bit PHP 8.5 or later and Python 3.10+ (including with
+tests disabled). No Cargo, Rust toolchain, Composer packages or old-tree files
+are needed for generation.
 
 Build from this directory with the default preset: Ninja, 8 jobs, Clang,
 libc++ and mold. Ninja/Clang/mold must be installed and discoverable; configuration
@@ -65,18 +63,18 @@ none of those implementations has been imported yet.
 ## Generator and artifact ownership
 
 The [historical G1 inventory](specs/planning/api_generator_contract_inventory.md)
-records the retired C++ contract. Frozen artifact fixtures and Rust tests now own
+records the retired C++ contract. Frozen artifact fixtures and PHP/Python tests now own
 its regression evidence; no C++ generator binary is required.
 
 `runtime/metadata/runtime.json` owns identities, policies and operation bindings.
-`publication.json` selects concrete types/operators/adapters. Rust tooling prepares
-one typed model and emits public headers, C++ definitions, prepared.json and inventory.
+`publication.json` selects concrete types/operators/adapters. PHP tooling prepares
+one resolved API description and emits public headers, C++ definitions, prepared.json and inventory.
 The runtime links only the emitted API and handwritten private runtime algorithms.
 Native layout facts come from the standalone C++ probe, never from a legacy runtime.
 
 Generation and target facts are build-local, so Release and UBSan do not share writable
 artifacts. Generated files and Cargo/CMake outputs remain untracked. The configured
-launcher invokes Rust with the current build's explicit facts/context:
+launcher invokes PHP with the current build's explicit facts/context:
 
 ```sh
 ./build/clang/scpp_api_generator runtime/metadata/runtime.json \
@@ -87,10 +85,10 @@ Remove `--check` to publish. Preparation validates before writing; check mode is
 read-only. Obsolete inventory entries reject. Publication is per-file rather than
 transactional. Cross-compilation and sealed ABI packages remain outside this slice.
 
-Rust JSON metadata parsing uses Serde behind a bounded adapter preserving raw number
-tokens, decoded duplicate-key rejection and a 128-container depth limit. This is a
-tooling boundary, not a runtime JSON module port. Historical JSON reuse and its
-retirement are documented in the migration record.
+PHP metadata parsing preserves large/raw number tokens, rejects decoded duplicate
+keys and limits nesting to 128 containers. This is a tooling boundary, not a
+runtime JSON module port. See the generator README for the current implementation
+and validation commands.
 
 ## Validation
 

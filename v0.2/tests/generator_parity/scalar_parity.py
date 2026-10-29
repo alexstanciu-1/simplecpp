@@ -16,14 +16,14 @@ def run(command):
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
-    for flag in ['rust', 'facts', 'context', 'work']:
+    for flag in ['generator', 'facts', 'context', 'work']:
         parser.add_argument('--' + flag, type=Path, required=True)
     parser.add_argument("--emit", action="store_true", help="Compare complete scalar artifact bytes and compile consumers")
     parser.add_argument("--cxx", default="clang++")
     parser.add_argument("--flag", action="append", default=[])
     args = parser.parse_args()
     root = Path(__file__).resolve().parents[2]
-    args.rust = args.rust.resolve()
+    args.generator = args.generator.resolve()
     baseline = json.loads(Path(__file__).with_name("scalar_baseline.json").read_text())["cases"]
     args.facts, args.context = args.facts.resolve(), args.context.resolve()
     metadata = json.loads((root / 'runtime/metadata/runtime.json').read_text())
@@ -41,18 +41,18 @@ def main():
                 case = Path(case)
                 m, p = case / 'metadata.json', case / 'publication.json'
                 m.write_text(json.dumps(meta)); p.write_text(json.dumps(pub))
-                rust = run([args.rust, 'prepare-scalars', m, p, args.facts, args.context])
+                prepared = run([args.generator, 'prepare-scalars', m, p, args.facts, args.context])
                 expected = 0 if accepted else 1
-                for name, result in [('rust', rust)]:
+                for name, result in [('generator', prepared)]:
                     assert result.returncode == expected, f'{label}: {name} exit {result.returncode}: {result.stderr}'
                     if not accepted:
                         assert result.stderr and not result.stdout, (label, name)
                 if accepted:
-                    actual = json.loads(rust.stdout)
+                    actual = json.loads(prepared.stdout)
                     key = hashlib.sha256(m.read_bytes() + b'\0' + p.read_bytes()).hexdigest()
                     if args.emit:
-                        generated = case / 'rust'
-                        command = [args.rust, 'emit-scalars', m, p, args.facts, args.context, generated]
+                        generated = case / 'generator'
+                        command = [args.generator, 'emit-scalars', m, p, args.facts, args.context, generated]
                         emitted = run(command)
                         assert emitted.returncode == 0, emitted.stderr
                         def tree(directory):
@@ -96,7 +96,7 @@ def main():
                     return actual
                 if args.emit:
                     rejected_output = case / 'rejected'
-                    result = run([args.rust, 'emit-scalars', m, p, args.facts, args.context, rejected_output])
+                    result = run([args.generator, 'emit-scalars', m, p, args.facts, args.context, rejected_output])
                     assert result.returncode == 1 and not rejected_output.exists(), label
                 counts['rejected'] += 1
 
@@ -245,14 +245,14 @@ def main():
         check('missing-domain-maximum', scalar_metadata, p, False)
         p = copy.deepcopy(base); p['headers']['values'] = p['headers']['types']
         check('header-collision', scalar_metadata, p, False)
-        # Non-scalar demand is a deliberate Rust-only boundary, not a parity claim.
+        # Non-scalar demand is a deliberate PHP-only boundary, not a parity claim.
         p = work / 'full-publication.json'; p.write_text((root / 'runtime/metadata/publication.json').read_text())
         m = work / 'full-metadata.json'; m.write_text(json.dumps(metadata))
-        result = run([args.rust, 'prepare-scalars', m, p, args.facts, args.context])
+        result = run([args.generator, 'prepare-scalars', m, p, args.facts, args.context])
         assert result.returncode == 1 and not result.stdout
         if args.emit:
             output = work / 'unsupported-emission'
-            result = run([args.rust, 'emit-scalars', m, p, args.facts, args.context, output])
+            result = run([args.generator, 'emit-scalars', m, p, args.facts, args.context, output])
             assert result.returncode == 1 and not output.exists()
     (args.work / 'summary.json').write_text(json.dumps(counts, indent=2) + '\n')
     print(json.dumps(counts))

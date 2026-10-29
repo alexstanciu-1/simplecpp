@@ -7,11 +7,11 @@ language admission or compiler adaptation is implemented by this slice.
 ## Owners and publication
 
 `runtime/metadata/runtime.json` defines the supported ownership policy.
-`tools/api_generator/src/ownership.rs` prepares concrete record specializations,
+`tools/api_generator/php/families.php` prepares concrete record specializations,
 qualification conversions and layouts from validated native C++ probe facts.
-`tools/api_generator/src/emission/ownership.rs` emits the concrete lifecycle/API.
+`tools/api_generator/php/render_modules.php` emits the concrete lifecycle/API.
 Inline value capabilities remain native-payload-dependent. Both owners belong to
-the sole production Rust generator, not a separate lowering pipeline.
+the sole production PHP generator, not a separate lowering pipeline.
 `runtime/src/ownership/ownership_semantics.hpp` privately owns placement lifetime
 operations and checked payload access. Actual shared/weak/unique ownership uses
 standard-library smart pointers; there is no new reference-count algorithm.

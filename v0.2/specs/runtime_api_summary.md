@@ -99,7 +99,7 @@ use int64 x{12}, not int64 x = 12.
 ## Ownership and physical pre-lowering
 
 Metadata owns identities, conversion policies, operation bindings and publication
-demands. The Rust API tooling validates and prepares them once, then emits
+demands. The PHP API tooling validates and prepares them once, then emits
 concrete declarations and implementation wiring. Private runtime algorithms own
 value-dependent checks. Public include closures expose no templates or std storage.
 Strings/vectors hide their storage behind pointers; materialized storage adds an
@@ -165,7 +165,7 @@ strictly typed. Hashes own independent copies and expose no public traversal yet
 ## Optional datetime module
 
 [Datetime](datetime_module.md) publishes selected `scpp::dt` clock/sleep/UTC/local functions
-through the Rust generator. The production CMake option `SCPP_ENABLE_DATETIME` adds
+through the PHP generator. The production CMake option `SCPP_ENABLE_DATETIME` adds
 `scpp_datetime`, depending on core. Types are existing int64/uint64/string/result_int64;
 no new container or dynamic runtime capability is required. Source callable integration
 and PHP compatibility functions remain deferred. Host-local DST resolution is delegated

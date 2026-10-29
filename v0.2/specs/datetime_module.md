@@ -1,7 +1,7 @@
 # Bounded datetime module
 
 Doc Status: normative
-Scope: concrete native v0.2 runtime and Rust API publication. Source compiler
+Scope: concrete native v0.2 runtime and PHP API publication. Source compiler
 integration and PHP compatibility wrappers are deferred.
 Top-level `specs/builtins/datetime/` contracts remain the semantic authority.
 
@@ -21,7 +21,7 @@ synthesized. `prepared.json` records signatures and the module's build dependenc
 `inventory.json` records generated artifacts. Existing publications without datetime
 retain their exact generated artifacts.
 
-`tools/api_generator/src/datetime.rs` owns preparation; `emission/datetime.rs` renders
+`tools/api_generator/php/families.php` owns preparation; `php/render_modules.php` renders
 concrete declarations and adapters. `runtime/src/datetime/` owns reusable native
 behavior and checked temporal conversions. Generated `src/datetime.cpp` bridges
 native values to the existing concrete runtime types. Public headers contain no
@@ -119,7 +119,7 @@ Host-to-int64 conversion is checked. Parse failures return result_int64 errors;
 formatting failures throw. Allocation failures propagate and leave input bytes intact.
 
 The private calendar parser, leap validation and UTC/local host-conversion helpers
-have one owner. Rust operation plans carry an argument vector, so two-argument local
+have one owner. PHP operation plans carry an argument vector, so two-argument local
 formatting follows the same declaration path as other module operations. Native
 metadata explicitly records `local_dst: host_normalize_and_select`.
 
@@ -128,7 +128,7 @@ metadata explicitly records `local_dst: host_normalize_and_select`.
 `cmake --preset default -DSCPP_ENABLE_DATETIME=ON` explicitly composes the default
 core publication with uint64 and `runtime/metadata/datetime_publication.json`.
 This is a bounded CMake profile, not a second semantic dependency resolver.
-Rust validates the complete demand. CMake emits it in `build/clang/generated-datetime`
+PHP validates the complete demand. CMake emits it in `build/clang/generated-datetime`
 (and the analogous directory for other build trees).
 
 Link `scpp_datetime` for the module; it depends on `scpp_runtime`. The core does not

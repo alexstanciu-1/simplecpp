@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Frozen G1 artifacts and Rust publication lifecycle. Never writes production output."""
+"""Frozen G1 artifacts and PHP publication lifecycle. Never writes production output."""
 import argparse
 import hashlib
 import json

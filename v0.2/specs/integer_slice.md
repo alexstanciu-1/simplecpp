@@ -3,7 +3,7 @@
 Doc Status: normative
 
 Scope: the first standalone v0.2 integer slice, not full language/compiler admission.
-The Rust tool emits C++23 with Clang/GCC fixed-width type macros and uses explicit
+The PHP tool emits C++23 with Clang/GCC fixed-width type macros and uses explicit
 native C++ probe facts. Generation runs for the
 native target; cross-compilation and portable prebuilt ABI packages are not provided.
 
@@ -12,9 +12,9 @@ native target; cross-compilation and portable prebuilt ABI packages are not prov
 - `runtime/metadata/runtime.json`: integer identities, supported native constructor
   input signatures, checked conversion policy, domain promotion and operation-form bindings.
 - `runtime/metadata/publication.json`: concrete type/operator demands and header groups.
-- `tools/api_generator/src/scalar.rs`: validates those records and prepares concrete
+- `tools/api_generator/php/scalars.php`: validates those records and prepares concrete
   types, native range facts, conversion guarantees and operation execution/result types.
-- `tools/api_generator/src/emission.rs`: emits only the prepared surface. It
+- `tools/api_generator/php/render.php`: emits only the prepared surface. It
   neither infers source semantics nor chooses an alternative promotion policy.
 - `runtime/src/numeric/scalar_semantics.hpp`: private range conversion and arithmetic.
 
@@ -145,7 +145,7 @@ unintended numeric conversion. Compiler-source preparation remains separate.
 
 ## Generation and limits
 
-The CMake-configured Rust launcher accepts metadata, publication and an output
+The CMake-configured PHP launcher accepts metadata, publication and an output
 directory, with optional
 `--check` for read-only freshness. Complete validation/emission precedes file writes.
 An existing inventory containing retired output paths rejects and requires fresh

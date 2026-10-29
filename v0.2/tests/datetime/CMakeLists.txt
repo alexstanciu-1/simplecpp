@@ -8,7 +8,7 @@ foreach(path public/scpp/integers.hpp public/scpp/values.hpp public/scpp/numeric
 endforeach()
 add_custom_command(OUTPUT ${datetime_outputs}
   COMMAND ${generator_launcher} ${runtime_metadata} ${datetime_publication} ${datetime_generated}
-  DEPENDS scpp_api_generator ${rust_generator} ${native_facts} ${native_context} ${generator_launcher} ${runtime_metadata} ${datetime_publication}
+  DEPENDS scpp_api_generator ${generator_sources} ${api_tooling} ${native_facts} ${native_context} ${generator_launcher} ${runtime_metadata} ${datetime_publication}
   VERBATIM)
 add_custom_target(datetime_publication DEPENDS ${datetime_outputs})
 add_library(datetime_proof_runtime STATIC ${datetime_generated}/src/runtime.cpp)

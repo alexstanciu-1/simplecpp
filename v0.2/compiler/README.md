@@ -13,7 +13,7 @@ The v0.2 workspace owns the lockfile, Rust 1.99.1 pin and Cargo configuration
 library: no API-tooling crate dependency, C++ runtime linkage, generated-header
 prerequisite, build script or FFI. Runtime work owns production API generation;
 future compiler integration consumes its published contract.
-Cargo never invokes CMake. Runtime CMake invokes Cargo for API generation;
+Cargo never invokes CMake. Runtime CMake invokes the independent PHP API generator;
 standalone compiler builds remain independent, with outputs in ignored v0.2/target/.
 
 ## Build and validate

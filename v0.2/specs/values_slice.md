@@ -20,7 +20,7 @@ Prepared plans expose mappings only for published targets. No claim of implement
 source compiler integration follows from these mappings.
 
 The existing generator now has a runtime-wide prepare/emit model in
-`tools/api_generator/src/scalar.rs`, `runtime.rs` and `emission.rs`. One executable,
+`tools/api_generator/php/scalars.php`, `php/families.php` and `php/render.php`. One executable,
 output inventory, freshness check and publication pipeline serve both families.
 `scpp_runtime` is the CMake consumer target. No parallel integer-only driver remains.
 

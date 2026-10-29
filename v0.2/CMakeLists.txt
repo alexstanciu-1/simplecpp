@@ -11,26 +11,23 @@ find_program(SCPP_MOLD_LINKER NAMES ld.mold mold REQUIRED)
 add_link_options("--ld-path=${SCPP_MOLD_LINKER}")
 message(STATUS "v0.2 linker: ${SCPP_MOLD_LINKER}; default build preset: 8 jobs")
 
-# One production generator: Cargo builds tooling; it never invokes CMake.
+# PHP prepares and renders runtime APIs; the C++ probe supplies target facts.
 find_package(Python3 3.10 REQUIRED COMPONENTS Interpreter)
-find_program(CARGO_EXECUTABLE cargo REQUIRED)
-# Preserve an explicitly selected toolchain/cache environment for subsequent builds.
-set(SCPP_CARGO_HOME "$ENV{CARGO_HOME}" CACHE PATH "Optional Cargo dependency cache")
-set(SCPP_RUSTUP_HOME "$ENV{RUSTUP_HOME}" CACHE PATH "Optional rustup toolchain root")
-set(rust_environment)
-foreach(name CARGO_HOME RUSTUP_HOME)
-  if(SCPP_${name})
-    list(APPEND rust_environment "${name}=${SCPP_${name}}")
-  endif()
-endforeach()
-set(rust_target ${CMAKE_CURRENT_BINARY_DIR}/cargo)
-set(rust_generator ${rust_target}/release/scpp-api-tooling)
-add_custom_target(scpp_api_tooling
-  COMMAND ${CMAKE_COMMAND} -E env ${rust_environment} ${CARGO_EXECUTABLE} build -p scpp-api-tooling --release --locked --offline
-    --target-dir ${rust_target}
-  WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
-  BYPRODUCTS ${rust_generator}
-  VERBATIM)
+find_program(PHP_EXECUTABLE NAMES php8.5 php REQUIRED)
+execute_process(COMMAND ${PHP_EXECUTABLE} -r "exit(PHP_VERSION_ID >= 80500 && PHP_INT_SIZE === 8 ? 0 : 1);"
+  RESULT_VARIABLE php_supported)
+if(NOT php_supported EQUAL 0)
+  message(FATAL_ERROR "The API generator requires 64-bit PHP 8.5 or later")
+endif()
+set(php_generator_source ${CMAKE_CURRENT_SOURCE_DIR}/tools/api_generator/generate.php)
+file(GLOB_RECURSE generator_sources CONFIGURE_DEPENDS
+  ${CMAKE_CURRENT_SOURCE_DIR}/tools/api_generator/php/*.php
+  ${CMAKE_CURRENT_SOURCE_DIR}/tools/api_generator/templates/*.cpp.tpl)
+list(APPEND generator_sources ${php_generator_source})
+set(api_tooling ${CMAKE_CURRENT_BINARY_DIR}/scpp-api-tooling)
+configure_file(tools/api_generator/tooling.py.in ${api_tooling} @ONLY)
+file(CHMOD ${api_tooling} PERMISSIONS OWNER_READ OWNER_WRITE OWNER_EXECUTE GROUP_READ GROUP_EXECUTE WORLD_READ WORLD_EXECUTE)
+add_custom_target(scpp_api_tooling DEPENDS ${generator_sources} ${api_tooling})
 
 # Always revalidate compiler/header context; the probe preserves unchanged files.
 string(TOUPPER "${CMAKE_BUILD_TYPE}" probe_build_type)
@@ -59,7 +56,7 @@ option(SCPP_ENABLE_DATETIME "Publish and build the bounded datetime module" OFF)
 include(cmake/Datetime.cmake)
 if(SCPP_ENABLE_DATETIME)
   # An explicit build profile: existing core demand plus uint64 and datetime.
-  # Rust preparation still validates every required type/carrier and operation.
+  # PHP preparation still validates every required type/carrier and operation.
   set_property(DIRECTORY APPEND PROPERTY CMAKE_CONFIGURE_DEPENDS
     ${runtime_publication} ${CMAKE_CURRENT_SOURCE_DIR}/runtime/metadata/datetime_publication.json)
   file(READ ${runtime_publication} datetime_profile)
@@ -89,7 +86,7 @@ if(SCPP_ENABLE_DATETIME)
 endif()
 add_custom_command(OUTPUT ${runtime_outputs}
   COMMAND ${generator_launcher} ${runtime_metadata} ${runtime_publication} ${runtime_generated}
-  DEPENDS scpp_api_generator ${rust_generator} ${native_facts} ${native_context} ${generator_launcher} ${runtime_metadata} ${runtime_publication}
+  DEPENDS scpp_api_generator ${generator_sources} ${api_tooling} ${native_facts} ${native_context} ${generator_launcher} ${runtime_metadata} ${runtime_publication}
   VERBATIM)
 add_custom_target(scpp_runtime_publication DEPENDS ${runtime_outputs})
 add_library(scpp_runtime STATIC ${runtime_generated}/src/runtime.cpp)
@@ -110,6 +107,8 @@ target_link_libraries(scpp_runtime_demo PRIVATE scpp_runtime)
 
 include(CTest)
 if(BUILD_TESTING)
+  add_test(NAME generator_input_contract COMMAND ${PHP_EXECUTABLE}
+    ${CMAKE_CURRENT_SOURCE_DIR}/tools/api_generator/tests/contracts.php ${native_facts} ${native_context})
   add_test(NAME generator_parity COMMAND ${Python3_EXECUTABLE} -B
     ${CMAKE_CURRENT_SOURCE_DIR}/tests/generator_parity/parity.py
     --reference ${generator_launcher}
@@ -117,16 +116,16 @@ if(BUILD_TESTING)
     --work ${CMAKE_CURRENT_BINARY_DIR}/generator-parity)
   add_test(NAME runtime_family_contract COMMAND ${Python3_EXECUTABLE} -B
     ${CMAKE_CURRENT_SOURCE_DIR}/tests/generator_parity/runtime_parity.py
-    --rust ${rust_generator} --facts ${native_facts} --context ${native_context}
+    --generator ${api_tooling} --facts ${native_facts} --context ${native_context}
     --work ${CMAKE_CURRENT_BINARY_DIR}/runtime-family-contract)
   add_test(NAME scalar_contract COMMAND ${Python3_EXECUTABLE} -B
     ${CMAKE_CURRENT_SOURCE_DIR}/tests/generator_parity/scalar_parity.py
-    --rust ${rust_generator} --facts ${native_facts} --context ${native_context}
+    --generator ${api_tooling} --facts ${native_facts} --context ${native_context}
     --work ${CMAKE_CURRENT_BINARY_DIR}/scalar-contract --emit
     --cxx ${CMAKE_CXX_COMPILER} --flag=-stdlib=libc++)
   add_test(NAME native_probe_contract COMMAND ${Python3_EXECUTABLE} -B
     ${CMAKE_CURRENT_SOURCE_DIR}/tools/layout_probe/test_integration.py
-    --rust ${rust_generator} --cxx ${CMAKE_CXX_COMPILER}
+    --generator ${api_tooling} --cxx ${CMAKE_CXX_COMPILER}
     --flag=-stdlib=libc++ --flag=--ld-path=${SCPP_MOLD_LINKER}
     --work ${CMAKE_CURRENT_BINARY_DIR}/probe-contract)
   add_test(NAME generator_parity_comparison COMMAND ${Python3_EXECUTABLE} -B

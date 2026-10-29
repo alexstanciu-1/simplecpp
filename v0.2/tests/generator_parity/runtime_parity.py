@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Frozen C++ artifact contract, Rust preparation/emission and rejection proofs."""
+"""Frozen C++ artifact contract, PHP preparation/emission and rejection proofs."""
 import argparse
 import copy
 import json
@@ -20,21 +20,21 @@ class Parity:
             m, p = root / 'metadata.json', root / 'publication.json'
             m.write_bytes(metadata if isinstance(metadata, bytes) else json.dumps(metadata).encode())
             p.write_bytes(publication if isinstance(publication, bytes) else json.dumps(publication).encode())
-            command = [self.args.rust, 'emit-runtime', m, p, self.args.facts, self.args.context, root / 'rust']
+            command = [self.args.generator, 'emit-runtime', m, p, self.args.facts, self.args.context, root / 'generator']
             result = subprocess.run(list(map(str, command)), capture_output=True, text=True, timeout=60)
             assert result.returncode == (0 if accepted else 1), f'{name}: {result.stderr}'
             if accepted:
-                files = {str(f.relative_to(root / 'rust')): hashlib.sha256(f.read_bytes()).hexdigest()
-                         for f in sorted((root / 'rust').rglob('*')) if f.is_file()}
+                files = {str(f.relative_to(root / 'generator')): hashlib.sha256(f.read_bytes()).hexdigest()
+                         for f in sorted((root / 'generator').rglob('*')) if f.is_file()}
                 assert files == self.args.baseline[name], (name, 'frozen artifact contract differs')
-                prepared = subprocess.run(list(map(str, [self.args.rust, 'prepare-runtime', m, p, self.args.facts, self.args.context])), capture_output=True, text=True, timeout=60)
+                prepared = subprocess.run(list(map(str, [self.args.generator, 'prepare-runtime', m, p, self.args.facts, self.args.context])), capture_output=True, text=True, timeout=60)
                 assert prepared.returncode == 0, prepared.stderr
-                actual = json.loads((root / 'rust/prepared.json').read_text())
+                actual = json.loads((root / 'generator/prepared.json').read_text())
                 assert actual == json.loads(prepared.stdout), name
                 self.accepted += 1
                 return actual
             assert result.stderr and not result.stdout, name
-            assert not (root / 'rust').exists(), (name, 'rejected input wrote output')
+            assert not (root / 'generator').exists(), (name, 'rejected input wrote output')
             self.rejected += 1
 
     def mutations(self, metadata, publication, mutations, label):
@@ -300,10 +300,10 @@ def ownership_cases(proof, m, p, default):
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
-    for field in ['rust', 'facts', 'context', 'work']:
+    for field in ['generator', 'facts', 'context', 'work']:
         parser.add_argument('--' + field, type=Path, required=True)
     args = parser.parse_args()
-    for field in ['rust', 'facts', 'context']:
+    for field in ['generator', 'facts', 'context']:
         setattr(args, field, getattr(args, field).resolve())
     args.baseline = json.loads(Path(__file__).with_name("runtime_baseline.json").read_text())["cases"]
     root = Path(__file__).resolve().parents[2]
