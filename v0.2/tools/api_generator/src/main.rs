@@ -1,0 +1,43 @@
+use scpp_api_tooling::{
+    Error, Result, integer, json,
+    target::{TargetContext, TargetFacts},
+};
+use std::{
+    ffi::OsString,
+    io::{self, Write},
+    path::Path,
+    process::ExitCode,
+};
+fn read(path: &OsString) -> Result<Vec<u8>> {
+    std::fs::read(path)
+        .map_err(|e| Error(format!("Cannot read {}: {e}", Path::new(path).display())))
+}
+fn run(args: &[OsString]) -> Result<serde_json::Value> {
+    if args.len() == 3 && args[0] == "validate-target" {
+        let context = TargetContext::parse(&read(&args[2])?)?;
+        let facts = TargetFacts::parse(&read(&args[1])?, &context)?;
+        return Ok(
+            serde_json::json!({"context_id":facts.context().id(),"target":facts.context().target(),"standard_library":facts.standard_library(),"status":"valid"}),
+        );
+    }
+    if args.len() == 5 && args[0] == "prepare-integer-construction" {
+        let context = TargetContext::parse(&read(&args[4])?)?;
+        let facts = TargetFacts::parse(&read(&args[3])?, &context)?;
+        let metadata = json::parse(&read(&args[1])?, "runtime metadata")?;
+        let publication = json::parse(&read(&args[2])?, "publication")?;
+        return Ok(integer::prepare(&metadata, &publication, &facts)?.describe());
+    }
+    Err(Error("Usage: scpp-api-tooling validate-target FACTS CONTEXT | prepare-integer-construction METADATA PUBLICATION FACTS CONTEXT (G2 subset; no C++ emission)".into()))
+}
+fn main() -> ExitCode {
+    let result = run(&std::env::args_os().skip(1).collect::<Vec<_>>()).and_then(|value| {
+        writeln!(io::stdout().lock(), "{value}").map_err(|e| Error(e.to_string()))
+    });
+    match result {
+        Ok(()) => ExitCode::SUCCESS,
+        Err(e) => {
+            let _ = writeln!(io::stderr().lock(), "{e}");
+            ExitCode::FAILURE
+        }
+    }
+}

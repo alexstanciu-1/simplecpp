@@ -9,13 +9,14 @@ slice 1. The [migration plan](../specs/planning/rust_compiler_migration.md) rema
 the roadmap. Scanning, token-sequence publication, parsing, symbols, semantic
 compilation, metadata integration and C++ emission are not implemented in Rust yet.
 The existing C++ foundation remains in place and buildable, pending reviewed cutover.
-The plan now also moves API generation/physical pre-lowering to a separate Rust
-library package shared with the compiler. That workspace/library and its C++ layout
-probe are not implemented yet; the current package still has no such dependency.
+The compiler now depends on the shared Rust `scpp-api-tooling` package in the
+v0.2 workspace. Its initial integer-construction model and native layout probe are
+described in the [tooling README](../tools/api_generator/README.md). Semantic
+compiler integration remains future work.
 
 Cargo selects `src/*.rs` and `tests/*.rs`; CMake retains its explicit C++ source list.
-There is no build script, FFI, third-party Rust dependency, runtime linkage or
-runtime-publication prerequisite. Source files coexist in `compiler/` to avoid a
+There is no build script, FFI, C++ runtime linkage or runtime-publication
+prerequisite. The tooling dependency uses Serde for JSON loading. Source files coexist in `compiler/` to avoid a
 second eventual compiler directory. CMake does not invoke Cargo, and Cargo does not
 invoke CMake or the API generator.
 
@@ -32,10 +33,12 @@ curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs \
 . "$HOME/.cargo/env"
 ```
 
-Run from this `compiler/` directory so Cargo discovers `.cargo/config.toml` and
-the pinned `rust-toolchain.toml`:
+Run from this `compiler/` directory; Cargo discovers the workspace configuration,
+lockfile and toolchain pin in its parent directory. Fetch locked dependencies once
+before the offline checks:
 
 ```sh
+cargo fetch --locked
 cargo fmt --all --check
 cargo clippy --locked --offline --all-targets -- -D warnings
 cargo test --locked --offline
@@ -49,7 +52,8 @@ Cargo uses eight jobs. On x86_64-unknown-linux-gnu, the host `cc` linker driver 
 mold; rustc compiles the Rust code. The existing Ninja/Clang/libc++/mold C++ presets
 are unchanged. Rust 1.99.1, rustfmt and Clippy are pinned; Cargo.lock is intentional
 reproducibility metadata and is tracked. `target/`, binaries and timing output are
-ignored. Offline builds require the pinned toolchain to be installed first.
+ignored; new build outputs live in `v0.2/target/`. Offline builds require the
+pinned toolchain and locked package sources to be cached first.
 
 ### Implemented ownership and location contract
 
@@ -99,6 +103,19 @@ runtime scalar adapters are not ported. The sequence donor was inspected to keep
 source containment separate from packing; its builder/publication remains slice 2.
 
 ### Validation and timings
+
+G2 workspace validation: all 15 Rust tests (eight compiler, seven tooling) pass in
+debug/release; formatting and strict Clippy pass. All 36 C++ checks pass in release
+and UBSan. The isolated export now includes both Rust packages and tests the whole
+workspace offline, using cached locked dependencies. It copies no C++ sources.
+
+With the tooling dependency, the same timing script measured 8.290 s clean debug,
+0.073 s unchanged, 0.318 s incremental CLI edit, 3.652/0.069 s cold/warm check, and
+8.781 s clean release. These single observations include dependency compilation,
+with a warm filesystem cache and eight jobs; they are not a performance guarantee.
+
+The following measurements record the earlier, std-only compiler foundation
+before the G2 dependency was introduced.
 
 Eight Rust tests pass in debug and release. Formatting and Clippy with warnings
 as errors pass. Proofs cover byte retention/identity, empty sources, invalid spans,

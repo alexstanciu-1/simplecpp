@@ -60,6 +60,20 @@ target_link_libraries(scpp_runtime_demo PRIVATE scpp_runtime)
 include(CTest)
 if(BUILD_TESTING)
   find_package(Python3 3.10 REQUIRED COMPONENTS Interpreter)
+  # Explicit G2 probe target; production API generation still uses the C++ engine.
+  string(TOUPPER "${CMAKE_BUILD_TYPE}" probe_build_type)
+  separate_arguments(probe_flags NATIVE_COMMAND "${CMAKE_CXX_FLAGS} ${CMAKE_CXX_FLAGS_${probe_build_type}}")
+  set(probe_flag_args)
+  foreach(flag IN LISTS probe_flags)
+    list(APPEND probe_flag_args "--flag=${flag}")
+  endforeach()
+  add_custom_target(scpp_layout_facts
+    COMMAND ${Python3_EXECUTABLE} -B ${CMAKE_CURRENT_SOURCE_DIR}/tools/layout_probe/probe.py
+      --cxx ${CMAKE_CXX_COMPILER} ${probe_flag_args} "--flag=--ld-path=${SCPP_MOLD_LINKER}"
+      --cross-compiling ${CMAKE_CROSSCOMPILING} --out ${CMAKE_CURRENT_BINARY_DIR}/native-layout
+    BYPRODUCTS ${CMAKE_CURRENT_BINARY_DIR}/native-layout/facts.json
+      ${CMAKE_CURRENT_BINARY_DIR}/native-layout/context.json
+    VERBATIM)
   add_test(NAME generator_parity COMMAND ${Python3_EXECUTABLE} -B
     ${CMAKE_CURRENT_SOURCE_DIR}/tests/generator_parity/parity.py
     --reference $<TARGET_FILE:scpp_api_generator>

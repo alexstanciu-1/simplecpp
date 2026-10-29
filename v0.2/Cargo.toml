@@ -1,0 +1,3 @@
+[workspace]
+members = ["compiler", "tools/api_generator"]
+resolver = "3"

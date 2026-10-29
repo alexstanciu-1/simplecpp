@@ -27,3 +27,6 @@ CMakeUserPresets.json
 
 # Rust compiler build/cache outputs (Cargo.lock is intentionally tracked).
 /compiler/target/
+
+# Shared Rust workspace output.
+/target/

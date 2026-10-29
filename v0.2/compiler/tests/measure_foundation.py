@@ -13,7 +13,7 @@ import subprocess
 import tempfile
 import time
 
-package = Path(__file__).resolve().parents[1]
+workspace = Path(__file__).resolve().parents[2]
 
 
 def output(command, cwd):
@@ -25,11 +25,14 @@ with tempfile.TemporaryDirectory(prefix="scpp-rust-foundation-") as temporary:
     for name in ["Cargo.toml", "Cargo.lock", "rust-toolchain.toml", ".cargo/config.toml"]:
         destination = root / name
         destination.parent.mkdir(parents=True, exist_ok=True)
-        shutil.copy2(package / name, destination)
-    for directory in ["src", "tests"]:
-        (root / directory).mkdir()
-        for source in (package / directory).glob("*.rs"):
-            shutil.copy2(source, root / directory / source.name)
+        shutil.copy2(workspace / name, destination)
+    for crate in ["compiler", "tools/api_generator"]:
+        (root / crate).mkdir(parents=True)
+        shutil.copy2(workspace / crate / "Cargo.toml", root / crate / "Cargo.toml")
+        for directory in ["src", "tests"]:
+            (root / crate / directory).mkdir()
+            for source in (workspace / crate / directory).glob("*.rs"):
+                shutil.copy2(source, root / crate / directory / source.name)
     cpu = platform.processor()
     if Path("/proc/cpuinfo").exists():
         cpu = next((line.split(":", 1)[1].strip() for line in Path("/proc/cpuinfo").read_text().splitlines() if line.startswith("model name")), cpu)
@@ -40,7 +43,7 @@ with tempfile.TemporaryDirectory(prefix="scpp-rust-foundation-") as temporary:
         "cpu": cpu,
         "logical_cpus": os.cpu_count(),
         "build_jobs": 8,
-        "dependencies": "standard library only; installed toolchain; no downloads",
+        "dependencies": "installed toolchain and locked Serde packages already cached; no downloads",
         "cache_conditions": "fresh exported sources and Cargo targets; OS filesystem cache not flushed; one run per measurement",
         "seconds": {},
     }
@@ -53,14 +56,14 @@ with tempfile.TemporaryDirectory(prefix="scpp-rust-foundation-") as temporary:
         if target:
             env["CARGO_TARGET_DIR"] = str(root / target)
         start = time.perf_counter()
-        result = subprocess.run(["cargo", *arguments, "--locked", "--offline"], cwd=root, env=env, text=True, capture_output=True)
+        result = subprocess.run(["cargo", *arguments, "-p", "scpp-compiler", "--locked", "--offline"], cwd=root, env=env, text=True, capture_output=True)
         if result.returncode:
             raise RuntimeError(result.stdout + result.stderr)
         report["seconds"][label] = round(time.perf_counter() - start, 3)
 
     measure("clean_debug_build", ["build"])
     measure("unchanged_debug_build", ["build"])
-    main = root / "src/main.rs"
+    main = root / "compiler/src/main.rs"
     original = main.read_text()
     edited = original.replace("(no scanning or compilation yet)", "(timing probe; no scanning or compilation yet)")
     assert edited != original
@@ -72,4 +75,5 @@ with tempfile.TemporaryDirectory(prefix="scpp-rust-foundation-") as temporary:
     measure("test_build_and_run", ["test"])
     measure("warm_foundation_tests", ["test", "--test", "foundation"])
     measure("release_build", ["build", "--release"])
+    subprocess.run(["cargo", "test", "--workspace", "--locked", "--offline"], cwd=root, env=environment, check=True, stdout=subprocess.DEVNULL)
     print(json.dumps(report, indent=2))

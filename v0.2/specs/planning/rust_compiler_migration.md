@@ -4,7 +4,7 @@ Doc Status: planning
 Date: 2026-10-29
 Decision: approved direction; slice 1 implemented on 2026-10-29.
 API-generator/physical pre-lowering migration to Rust approved on 2026-10-29.
-The remaining compiler and tooling slices are planned, not implemented.
+G1 and the first G2 batch are implemented; remaining compiler/tooling work is planned.
 
 ## Decision and scope
 
@@ -15,8 +15,8 @@ project backbone, with compiler and API tooling sharing a typed Rust library bou
 
 This extends and supersedes the earlier decision to retain the generator in C++.
 The Rust compiler foundation is implemented; the production API generator is still
-C++. No generator port, workspace change, probe or build cutover is implemented by
-this planning update. Preserve numeric, carrier and ownership semantics during the
+C++. The first G2 batch establishes the workspace, shared library and native probe;
+production cutover remains deferred. Preserve numeric, carrier and ownership semantics during the
 migration; a tooling language change is not a runtime-policy redesign.
 
 This supersedes the proposal to evolve the C++ compiler into the production v0.2
@@ -40,8 +40,8 @@ repository remains material for bounded, explicitly agreed reuse, not a dependen
 | Owner | Responsibility |
 | --- | --- |
 | Rust compiler | Source loading, scanning, parsing, symbols, types, diagnostics, semantic preparation, evaluation order and C++ emission |
-| Rust runtime API tooling library and CLI (planned) | Metadata validation; concrete runtime publication; physical type/signature/dependency/adaptation plans |
-| Small C++ layout probe (planned) | Native C++ target facts required by preparation and generated layout checks |
+| Rust runtime API tooling library and CLI (partial G2) | Metadata validation; concrete runtime publication; physical type/signature/dependency/adaptation plans |
+| Small C++ layout probe | Native C++ target facts required by preparation and generated layout checks |
 | C++ runtime | Representation, storage, lifecycle, actual operations and checks requiring runtime values |
 | Runtime metadata | Supported identities, operation/conversion policy and binding facts consumed through the generator's prepared model |
 | Adopted language contracts | Source admission and semantics, including language-flavor decisions; implementation language does not redefine them |
@@ -64,9 +64,9 @@ native behavior is not the specification of Simple C++.
 Use one Cargo workspace with two packages: the compiler library/CLI and a runtime
 API tooling library with its own thin standalone generator CLI. Retain compiler/
 and tools/api_generator/ as responsibility locations where practical; stage any
-file moves explicitly. This is a planned workspace, not the current package layout.
-At workspace introduction, consolidate the toolchain pin, lockfile, Cargo build
-configuration and output ignores; update commands and the isolated-export proof.
+file moves explicitly. The first G2 batch establishes this workspace and consolidates
+the toolchain pin, lockfile, Cargo build configuration and output ignores at v0.2/.
+Commands and the isolated-export proof now use the two-package workspace.
 
 The compiler depends on API tooling; API tooling must not depend on compiler AST,
 symbol tables, source diagnostics or compiler-internal IDs. The library accepts
@@ -362,3 +362,35 @@ with the unchanged C++ executable; Rust/C++ parity is not yet claimed.
 The current C++ generator remains the production implementation. G1 adds only
 contract fixtures, a Python test harness, test-only CMake wiring and documentation.
 Probe implementation, the Rust shared library and build cutover remain G2–G4 work.
+
+## G2 first batch checkpoint — 2026-10-29
+
+The [tooling README](../../tools/api_generator/README.md) records the implemented
+shared Rust library, thin inspection CLI, bounded JSON adapter and native C++ probe.
+The compiler has a one-way tooling-library dependency; neither Rust package links
+the C++ runtime. Cargo and CMake remain independent builds.
+
+Rust JSON loading uses serde/serde_json with raw-token preservation and decoded
+duplicate-key/depth checks. The existing custom C++ reader remains in production.
+No custom JSON grammar was ported to Rust. Package versions are locked.
+
+The first typed preparation projection covers integer identities, native inputs
+and checked construction. All eight integer types and 104 conversions match the
+C++ prepared model exactly. This is not full metadata validation: policies outside
+that projection are not semantically validated, and unsupported publication
+demands fail. Scalar operators/casts beyond construction and the remaining families
+still need coherent G2 batches; G2 is not complete.
+
+The explicit CMake probe target measures native integers, binary64 and smart-pointer
+layouts without runtime dependencies. Context matching, cache stability/invalidation
+(including expanded headers), malformed facts and cross-target rejection are tested.
+The consumer must obtain its expected context from the current trusted probe driver;
+a matching stale facts/context pair alone cannot establish freshness. Native x86_64
+Linux is the supported initial target. No cross-compilation or ABI certification is
+claimed. Existing generated C++ layout assertions remain in place.
+
+Validation: 15 Rust tests pass in debug/release, formatting and strict Clippy pass,
+and a Rust-only workspace export builds/tests offline with cached dependencies.
+All 36 existing C++ tests pass in release and UBSan. Integration compares native
+facts, ownership layouts and the complete integer-construction projection against
+the unchanged C++ generator. C++ production generation and G1 fixtures are unchanged.

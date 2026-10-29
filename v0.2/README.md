@@ -20,11 +20,12 @@ runtime publication. Scanning, parsing, semantic compilation and broader runtime
 imports remain pending.
 The first [independent Rust compiler slice](compiler/README.md) now provides byte
 sources, spans, compact tokens, diagnostics and a source-inspection CLI. Cargo builds
-it independently with eight jobs and mold; it has no runtime or generator dependency.
+it with eight jobs and mold; it has no C++ runtime or generator-binary dependency.
 The existing C++ compiler remains in place. The runtime stays C++; API generation
-and physical pre-lowering are now also planned to migrate to a shared Rust tooling
-library, with a small C++ layout probe. The generator is still implemented in C++
-today. Scanning and tooling migration follow the
+and physical pre-lowering are migrating to a shared Rust tooling library. The
+[first G2 batch](tools/api_generator/README.md) establishes that library, JSON
+loading, integer-construction preparation and a small C++ layout probe. The C++
+generator remains the production path; Rust emission is not implemented. Scanning and tooling migration follow the
 [migration plan](specs/planning/rust_compiler_migration.md).
 Standard-library types and private templates are appropriate for tool support;
 generated runtime consumer headers remain template-free.
@@ -87,6 +88,11 @@ to the native generation target. CMake currently expects the default header grou
 Cross-compilation and sealed prebuilt ABI packages are not provided.
 
 ## JSON tooling and bounded reuse
+
+The following describes the production C++ generator's custom JSON implementation.
+The new Rust tooling uses Serde/serde_json behind a metadata adapter that preserves
+raw number tokens, decoded duplicate-key rejection and the 128-container limit.
+See the [tooling boundary](tools/api_generator/README.md).
 
 The reader owns its input and is neither copyable nor movable. It validates UTF-8,
 JSON grammar, decoded duplicate keys and depth (default 128, permitted 1..256).
