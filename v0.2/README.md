@@ -10,7 +10,10 @@ Implemented slices are native JSON parsing, the generator's metadata value model
 and metadata-driven integer, bool_t/null, float64, string and concrete vector APIs
 with explicit checked casts and selectively published operators/adapters. Nullable
 and result-family carriers now add metadata-selected checked payload extraction.
-Compiler integration and broader runtime imports are not implemented here yet.
+The [compiler foundation](compiler/README.md) now includes compact tokens, immutable
+source snapshots and checked token sequence construction, using its own generated
+runtime publication. Scanning, parsing, semantic compilation and broader runtime
+imports remain pending.
 Standard-library types and private templates are appropriate for tool support;
 generated runtime consumer headers remain template-free.
 
@@ -32,8 +35,9 @@ generated-consumer link proofs explicitly use the discovered mold linker. The
 `ubsan` configure/build/test presets retain that toolchain and eight build jobs while
 enabling undefined-behavior checks with recovery disabled.
 
-The [plain C++ example](examples/runtime_demo.cpp) composes every implemented family
-and prints `Ada: 21; ratio=7`. The [API summary](specs/runtime_api_summary.md) lists
+The [plain C++ example](examples/runtime_demo.cpp) combines numeric, bool/null,
+string and vector APIs; it does not exercise carriers. It prints `Ada: 21; ratio=7`.
+The [API summary](specs/runtime_api_summary.md) lists
 supported/rejected operators and casts, ownership boundaries and deferred language
 decisions. The active hash/mixed/dynamic follow-on is a separate reviewed port;
 none of those implementations has been imported yet.
@@ -109,7 +113,8 @@ Focused tests cover parser/model behavior, preparation rejection, deterministic
 emission, generated freshness, independent public headers and valid/invalid overload
 composition. Separate publications exercise every integer width, reduced string
 APIs, core-only vectors, additional vector element families and explicit elementwise
-casts. The runnable example composes every default family.
+casts. The runnable example covers the numeric, bool/null, string and vector families;
+carriers have separate consumer and publication tests.
 
 Fresh standalone Clang/libc++ UBSan builds pass without old-tree dependencies or
 pregenerated files. String/vector ownership and partial-cast failure consumers pass
@@ -118,8 +123,9 @@ run in the traced execution environment. libc++ ASan has an independently reprod
 allocation/deallocation mismatch in the installed exception libraries; its checks
 were not suppressed. Neither limitation is counted as a successful sanitizer check.
 
-See the family contracts and completion audit linked above for exact behavior,
-reviewed legacy provenance, validation evidence and remaining compiler obligations.
+See the family contracts in the API summary for current behavior and the
+[compiler README](compiler/README.md) for compiler ownership and validation. Completed
+plans and milestone evidence are retained under [specs/archive](specs/archive/README.md).
 
 ## Nullable and result carriers
 

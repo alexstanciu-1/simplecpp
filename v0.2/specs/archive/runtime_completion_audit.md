@@ -1,6 +1,9 @@
 # Runtime/generator completion audit
 
-Doc Status: planning
+Doc Status: historical
+
+Archived: 2026-10-29. Retained as a dated record; statements about pending work,
+validation counts and next steps describe the original milestone, not current status.
 Date: 2026-10-28
 
 Objective: metadata-driven operators, checked casts and overloads for numerics,

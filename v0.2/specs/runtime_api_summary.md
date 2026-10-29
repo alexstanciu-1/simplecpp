@@ -134,7 +134,7 @@ core and separate tagged families. It has not imported those implementations.
   [floating contract](floating_slice.md), [string contract](string_slice.md),
   [vector contract](vector_slice.md)
 - [Plain C++ example](../examples/runtime_demo.cpp), built as scpp_runtime_demo
-- [Completion audit](planning/runtime_completion_audit.md)
+- [Historical completion audit](archive/runtime_completion_audit.md)
 - [Hash/mixed/dynamic port review](planning/hash_mixed_dynamic_port_review.md)
 
 ## Subsequent carrier extension

@@ -1,6 +1,9 @@
 # Git exclusion inventory
 
-Doc Status: planning
+Doc Status: historical
+
+Archived: 2026-10-29. Retained as a dated record; statements about pending work,
+validation counts and next steps describe the original milestone, not current status.
 
 Date: 2026-10-29. Scope: whole repository, with v0.2 as the active source of truth.
 This is an inventory and recommendation, not authorization to delete legacy

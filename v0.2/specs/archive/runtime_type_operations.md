@@ -1,6 +1,9 @@
 # Runtime types, conversions and operators
 
-Doc Status: planning
+Doc Status: historical
+
+Archived: 2026-10-29. Retained as a dated record; statements about pending work,
+validation counts and next steps describe the original milestone, not current status.
 Date: 2026-10-28
 Status: original runtime/API-generator goal completed; hash/mixed/dynamic follow-on
 review recorded separately. Historical checkpoints below retain their original scope.
@@ -317,7 +320,7 @@ both default and cross-element vector consumers pass ASan+UBSan with the recorde
 LSan environment limitation. Generated outputs remain ignored and untracked.
 
 The requested initial hash/mixed/dynamic review is recorded in
-[hash_mixed_dynamic_port_review.md](hash_mixed_dynamic_port_review.md). It identifies
+[hash_mixed_dynamic_port_review.md](../planning/hash_mixed_dynamic_port_review.md). It identifies
 the existing typed/packed cores and the current independent dynamic payload family;
 no core algorithms or legacy modules were moved during that review.
 

@@ -984,7 +984,7 @@ resolution, explicit-constructor checks, negative publication probes and regener
 ## Resumed family goal and first binary slice (2026-10-28)
 
 The goal resumed after the smaller-runtime discussion. Its active, coherent plan
-is now inside v0.2: [runtime type operations](../../v0.2/specs/planning/runtime_type_operations.md).
+is now inside v0.2: [runtime type operations](../../v0.2/specs/archive/runtime_type_operations.md).
 The original scope is retained, with compiler integration separately excluded.
 The first slice replaces addition-only generation assumptions with operation-aware
 prepared facts and adds the remaining binary arithmetic/bitwise primitives. Default
