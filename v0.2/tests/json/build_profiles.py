@@ -22,15 +22,17 @@ with tempfile.TemporaryDirectory(prefix='scpp-json-profiles-') as temporary:
         targets = run('ninja', '-C', str(build), '-t', 'targets', 'all')
         assert ('scpp_json:' in targets) == js
         assert ('scpp_datetime:' in targets) == dt
-        plan = json.loads((build/'generated/prepared.json').read_text())
+        plan = json.loads((root/'runtime/generated/prepared.json').read_text())
         assert ('json' in plan) == js and ('datetime' in plan) == dt
         assert ('boxed' in plan) == js
+        assert 'native_bridge' not in plan['headers']
+        assert not (root/'runtime/generated/public/scpp/native_bridge.hpp').exists()
         types = {t['name'] for t in plan['types']}
         assert types == {'int64', 'byte'} | ({'int32'} if numeric else set()) | ({'uint64'} if dt else set())
-        assert (build/'generated/public/scpp/json.hpp').exists() == js
-        assert (build/'generated/src/json.cpp').exists() == js
-        assert (build/'generated/public/scpp/datetime.hpp').exists() == dt
-        assert (build/'generated/src/datetime.cpp').exists() == dt
+        assert (root/'runtime/generated/public/scpp/json.hpp').exists() == js
+        assert (root/'runtime/generated/src/json.cpp').exists() == js
+        assert (root/'runtime/generated/public/scpp/datetime.hpp').exists() == dt
+        assert (root/'runtime/generated/src/datetime.cpp').exists() == dt
         assert not list(build.glob('generated-*')), 'Obsolete profile-specific directories'
         assert run(str(build/'scpp_runtime_demo')).strip() == 'Ada: 21; ratio=7'
         if js:
@@ -45,3 +47,18 @@ with tempfile.TemporaryDirectory(prefix='scpp-json-profiles-') as temporary:
         assert before == {str(p):p.stat().st_mtime_ns for p in build.rglob('*.o')}
         assert 'Generating ' not in log and 'Building CXX' not in log
         print('production profile passed:', profile or 'core', flush=True)
+
+    # Opt in, compile native arithmetic, then disable and remove the stale header.
+    generated = root/'runtime/generated'
+    probe = root/'bridge_probe.cpp'
+    for enabled in [True, False]:
+        run('cmake', '--preset', 'default', '-DSCPP_ENABLE_NATIVE_BRIDGE='+('ON' if enabled else 'OFF'))
+        run('cmake', '--build', '--preset', 'default')
+        assert (generated/'public/scpp/native_bridge.hpp').exists() == enabled
+        header = 'native_bridge' if enabled else 'numeric'
+        probe.write_text('#include <scpp/'+header+'.hpp>\n'
+            'template<class T> concept native_add = requires(T v) { v + 2; 2 + v; };\n'
+            'static_assert('+('' if enabled else '!')+'native_add<scpp::int64>);\n'
+            'auto typed_add() { return scpp::int64{1} + scpp::int64{2}; }\n')
+        run('clang++', '-std=c++23', '-stdlib=libc++', '-fsyntax-only', '-I'+str(generated/'public'), str(probe))
+        print('native bridge profile passed:', enabled, flush=True)

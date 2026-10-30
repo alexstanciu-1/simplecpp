@@ -48,10 +48,10 @@ is not requested. `cmake/RuntimePublication.cmake` composes explicit build deman
 from the default core and module requests; PHP remains the admission authority.
 The option composes with `SCPP_ENABLE_DATETIME`, including with tests disabled.
 
-Option combinations share the build-local `generated/` directory. Regeneration
+Option combinations share the shared `runtime/generated/` directory. Regeneration
 fully cleans obsolete generated extensions before emitting the selected publication.
 Disabling modules therefore removes their old source/header output from that root.
-Independent test publications use sibling directories.
+Independent test publications stay under the build directory, outside this cleanup root.
 Generated boxed definitions belong to core when requested; parser/writer definitions
 belong only to the separate JSON library. Both options default to OFF.
 

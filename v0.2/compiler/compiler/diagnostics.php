@@ -6,9 +6,9 @@ namespace scpp\compiler;
 final class diagnostic extends \RuntimeException
 {
 	public readonly source_file $source;
-	public readonly int $offset;
+	public readonly int $offset /** uint32; byte position including EOF */;
 
-	public function __construct(source_file $source, int $offset, string $message)
+	public function __construct(source_file $source, int $offset /** uint32; byte position including EOF */, string $message)
 	{
 		$this->source = $source;
 		$this->offset = $offset;

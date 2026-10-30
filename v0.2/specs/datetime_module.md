@@ -128,14 +128,13 @@ metadata explicitly records `local_dst: host_normalize_and_select`.
 `cmake --preset default -DSCPP_ENABLE_DATETIME=ON` explicitly composes the default
 core publication with uint64 and `runtime/metadata/datetime_publication.json`.
 This is a bounded CMake profile, not a second semantic dependency resolver.
-PHP validates the complete demand. CMake emits it in `build/clang/generated-datetime`
-(and the analogous directory for other build trees).
+PHP validates the complete demand. CMake emits it in `runtime/generated/`.
 
 Link `scpp_datetime` for the module; it depends on `scpp_runtime`. The core does not
 depend on datetime. With the option OFF (default), no production datetime target is
 created. Tests build an independent minimal publication fixture, including when the
 production option is OFF. Both target owners use `cmake/Datetime.cmake`.
-Enable/disable uses separate artifact directories and does not load stale outputs.
+Regeneration removes disabled module artifacts from the shared publication.
 `scpp_datetime_demo` demonstrates UTC parse/format when enabled. Source-only exports
 must build without the legacy runtime tree, including with tests disabled.
 

@@ -3,8 +3,7 @@
 Doc Status: supporting
 Date: 2026-10-29
 
-The contract is [hash_slice.md](hash_slice.md); the action backlog is
-[the collections batch](planning/runtime_collections_batch.md). The donor is
+The contract is [hash_slice.md](hash_slice.md). The donor is
 `runtime/include/scpp/support/hash_t.hpp` at `0c230e0bc`.
 
 ## Evidence

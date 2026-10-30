@@ -46,9 +46,22 @@ cmake --build --preset default
 Link `scpp_json` to use it. `SCPP_ENABLE_JSON` and `SCPP_ENABLE_DATETIME` can be
 enabled together and both work with `BUILD_TESTING=OFF`. `SCPP_ENABLE_NUMERIC=ON`
 adds the configured optional integer demand; datetime selects uint64 as a dependency.
-All options share the build-local `generated/` root: regeneration cleans disabled
+All options share the shared `runtime/generated/` root: regeneration cleans disabled
 module artifacts as well as removing the corresponding build targets. Options default
 to OFF.
+
+Native scalar operator adapters are optional and default to OFF. To generate
+`runtime/generated/public/scpp/native_bridge.hpp` for handwritten C++ consumers:
+
+```sh
+cmake --preset default -DSCPP_ENABLE_NATIVE_BRIDGE=ON
+cmake --build --preset default
+```
+
+Consumers must explicitly include `<scpp/native_bridge.hpp>`. Core code uses typed
+operands, such as `value + scpp::int64{2}`. Disabling the option removes the header
+on regeneration; explicit native construction remains available. The selected
+request is written to `build/clang/runtime-publication.json` for all configurations.
 
 The sole API generator is [PHP 8.5 tooling](tools/api_generator/README.md).
 It resolves metadata and explicit native C++ probe facts into public headers,
@@ -76,7 +89,7 @@ ctest --preset default
 ```
 
 The build directory is `build/clang/` (ignored by Git). Generated public API files
-live in `build/clang/generated/` (or the selected build directory). The build preset sets eight jobs; the configure
+live in `runtime/generated/`. The build preset sets eight jobs; the configure
 preset also sets `CMAKE_BUILD_PARALLEL_LEVEL=8`. Project executables and the separate
 generated-consumer link proofs explicitly use the discovered mold linker. The
 `ubsan` configure/build/test presets retain that toolchain and eight build jobs while
@@ -91,9 +104,8 @@ mixed/dynamic APIs are generated, while source compiler integration remains sepa
 
 ## Generator and artifact ownership
 
-The [historical G1 inventory](specs/planning/api_generator_contract_inventory.md)
-records the retired C++ contract. Frozen artifact fixtures and PHP/Python tests now own
-its regression evidence; no C++ generator binary is required.
+The [PHP API generator](tools/api_generator/README.md) owns publication.
+Frozen artifact fixtures and PHP/Python tests provide regression evidence.
 
 `runtime/metadata/runtime.json` owns identities, policies and operation bindings.
 `publication.json` selects concrete types/operators/adapters. PHP tooling prepares
@@ -101,13 +113,17 @@ one resolved API description and emits public headers, C++ definitions, prepared
 The runtime links only the emitted API and handwritten private runtime algorithms.
 Native layout facts come from the standalone C++ probe, never from a legacy runtime.
 
-Generation and target facts are build-local, so Release and UBSan do not share writable
-artifacts. Generated files and CMake outputs remain untracked. The configured
+The production publication lives in `runtime/generated/` for inspection and testing.
+Each build checks it against its own demand and target facts before compilation;
+unchanged output keeps its timestamps. It represents the most recently built
+configuration, so builds sharing this checkout must run sequentially. Target facts,
+objects and isolated proof publications remain build-local. Generated files and
+CMake outputs remain untracked. The configured
 launcher invokes PHP with the current build's explicit facts/context:
 
 ```sh
 ./build/clang/scpp_api_generator runtime/metadata/runtime.json \
-  runtime/metadata/publication.json build/clang/generated --check
+  build/clang/runtime-publication.json runtime/generated --check
 ```
 
 Remove `--check` to publish. Preparation validates before writing; check mode is
@@ -138,8 +154,7 @@ allocation/deallocation mismatch in the installed exception libraries; its check
 were not suppressed. Neither limitation is counted as a successful sanitizer check.
 
 See the family contracts in the API summary for current behavior and the
-[compiler README](compiler/README.md) for compiler ownership and validation. Completed
-plans and milestone evidence are retained under [specs/archive](specs/archive/README.md).
+[compiler README](compiler/README.md) for compiler ownership and validation. Retired plans remain available in Git history.
 
 ## Nullable and result carriers
 

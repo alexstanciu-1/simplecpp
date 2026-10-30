@@ -1,4 +1,4 @@
-set(datetime_generated ${runtime_generated}-datetime-proof)
+set(datetime_generated ${CMAKE_BINARY_DIR}/generated-datetime-proof)
 set(datetime_publication ${CMAKE_CURRENT_SOURCE_DIR}/publication.json)
 set(datetime_outputs)
 foreach(path public/scpp/integers.hpp public/scpp/values.hpp public/scpp/numeric.hpp

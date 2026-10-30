@@ -4,7 +4,7 @@ declare(strict_types=1);
 namespace scpp\compiler;
 
 /** Syntax selection belongs to each source, independently of project policy. */
-enum flavor: string
+enum flavor: string /** Native backing width undecided; preserve cpp/php/js labels. */
 {
 	case cpp = 'cpp';
 	case php = 'php';

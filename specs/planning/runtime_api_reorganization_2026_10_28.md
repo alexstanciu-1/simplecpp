@@ -11,7 +11,8 @@ with a shared typed tooling library and standalone generator CLI. The runtime an
 a small native layout probe remain C++. This extends the earlier compiler-only
 Rust decision; the production generator has not yet migrated. The active decision, ownership
 boundaries and staged migration are recorded in
-[the v0.2 Rust compiler migration plan](../../v0.2/specs/planning/rust_compiler_migration.md).
+the now-retired v0.2 Rust migration plan (retained in Git history). Current
+implementation ownership is documented in the [PHP compiler README](../../v0.2/compiler/README.md).
 This supersedes earlier instructions below to evolve my-try-cpp or adapt the C++
 compiler to generated runtime ownership handles. Preserve its reviewed contracts
 and tests as migration evidence; do not translate its implementation mechanically.
@@ -999,7 +1000,8 @@ resolution, explicit-constructor checks, negative publication probes and regener
 ## Resumed family goal and first binary slice (2026-10-28)
 
 The goal resumed after the smaller-runtime discussion. Its active, coherent plan
-is now inside v0.2: [runtime type operations](../../v0.2/specs/archive/runtime_type_operations.md).
+was recorded in the now-retired v0.2 runtime type operations plan. The current
+contracts are indexed by the [runtime API summary](../../v0.2/specs/runtime_api_summary.md).
 The original scope is retained, with compiler integration separately excluded.
 The first slice replaces addition-only generation assumptions with operation-aware
 prepared facts and adds the remaining binary arithmetic/bitwise primitives. Default

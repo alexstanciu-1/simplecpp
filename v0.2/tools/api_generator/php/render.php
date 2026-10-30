@@ -266,7 +266,10 @@ function render(array $plan): array {
         $short .= includeHeader($plan['boxed']['header']);
         foreach ($plan['boxed']['families'] as $family) $short .= "using scpp::{$family['name']};\n";
     }
-    $files += ['public/' . $types => $h, 'public/' . $vals => renderValues($plan), 'public/' . $ops => $operators . "}\n", 'public/' . $headers['native_bridge'] => $bridge . "}\n", 'public/' . $headers['short_names'] => $short, 'src/runtime.cpp' => $d . "}\n", 'prepared.json' => encode($plan) . "\n"];
+    $files += ['public/' . $types => $h, 'public/' . $vals => renderValues($plan), 'public/' . $ops => $operators . "}\n", 'public/' . $headers['short_names'] => $short, 'src/runtime.cpp' => $d . "}\n", 'prepared.json' => encode($plan) . "\n"];
+    if (isset($headers['native_bridge'])) {
+        $files['public/' . $headers['native_bridge']] = $bridge . "}\n";
+    }
     renderOwnership($plan, $files);
     renderHashes($plan, $files);
     renderDatetime($plan, $files);

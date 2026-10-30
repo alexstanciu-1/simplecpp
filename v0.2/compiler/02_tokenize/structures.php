@@ -4,7 +4,7 @@ declare(strict_types=1);
 namespace scpp\compiler;
 
 /** Closed lexical vocabulary with explicit IDs in 1..127; zero is reserved. */
-enum token_kind: int
+enum token_kind: int /** uint8; IDs 1..127, zero reserved */
 {
 	case identifier = 1;
 	case variable = 2;
@@ -141,13 +141,19 @@ enum token_kind: int
 
 }
 
+/**
+ * Native layout intent: offset occupies one uint32; length and kind share another.
+ * Length uses the low 24 bits; token_kind uses the next 7 bits (IDs 1..127),
+ * leaving the highest bit reserved. PHP retains separate properties; packing
+ * belongs to the future native representation, not the logical length value.
+ */
 final readonly class token
 {
-	public int $offset;
-	public int $length;
+	public int $offset /** uint32 */;
+	public int $length /** uint32; range 1..0xFFFFFF */;
 	public token_kind $kind;
 
-	public function __construct(int $offset, int $length, token_kind $kind)
+	public function __construct(int $offset /** uint32 */, int $length /** uint32; range 1..0xFFFFFF */, token_kind $kind)
 	{
 		$this->offset = $offset;
 		$this->length = $length;
@@ -163,10 +169,10 @@ final readonly class token
 final readonly class token_list
 {
 	public source_file $source;
-	public array $tokens;
+	public array $tokens /** list<token> */;
 
 	/** @param list<token> $tokens */
-	public function __construct(source_file $source, array $tokens)
+	public function __construct(source_file $source, array $tokens /** list<token> */)
 	{
 		$this->source = $source;
 		$this->tokens = $tokens;
@@ -183,14 +189,14 @@ final readonly class token_list
 		}
 	}
 
-	public function text_at(int $index): string
+	public function text_at(int $index /** uint32; index < token count */): string
 	{
 		$token = $this->tokens[$index] ?? throw new \OutOfRangeException('Token index outside list');
 		return substr($this->source->content, $token->offset, $token->length);
 	}
 
 	/** Adjacent angles can spell shifts without losing individual generic delimiters. */
-	public function operator_text_at(int $index): string
+	public function operator_text_at(int $index /** uint32; index < token count */): string
 	{
 		$text = $this->text_at($index);
 		$first = $this->tokens[$index];

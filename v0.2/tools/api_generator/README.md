@@ -49,7 +49,7 @@ The positional runtime launcher supplies that build's explicit native facts:
 
 ```sh
 ./build/clang/scpp_api_generator runtime/metadata/runtime.json \
-  runtime/metadata/publication.json build/clang/generated --check
+  build/clang/runtime-publication.json runtime/generated --check
 ```
 
 The general launcher accepts the same commands as `php tools/api_generator/generate.php`:
@@ -114,8 +114,10 @@ The compiler is now PHP: `compiler/my-try/` is being mined incrementally into
 - Frozen artifact fixtures were unchanged; runtime and scalar parity/rejection gates
   passed, including the compiled 2,692-signature scalar matrix.
 - The source-only export passed without compiler sources or Cargo configuration.
-  Metadata, publication, PHP source, C++ template and target-flag edits each triggered
-  regeneration. An unchanged build performed no generation or C++ compilation.
+  Content checks preserve generated timestamps for metadata/publication whitespace
+  and PHP comments. Publication operators and emitted template changes trigger regeneration. Target
+  context changes are re-probed; layout-neutral flags preserve identical output.
+  An unchanged build performs no writes or C++ compilation.
 - Production core and datetime enable/disable builds and demos passed. Core symbols
   remained independent of datetime.
 - One source-only observation: default publication generation took 0.167 seconds;
@@ -134,3 +136,13 @@ Only explicitly requested types/operators are emitted. The build option
 `SCPP_ENABLE_NUMERIC=ON` composes `runtime/metadata/numeric_publication.json` with
 core. This is API publication selection, not implemented source-level PRJ parsing.
 See [the numeric/byte and cleanup contract](../../specs/numeric_module.md).
+
+## Optional native bridge
+
+CMake defaults `SCPP_ENABLE_NATIVE_BRIDGE=OFF`. Enable it to publish native C++
+scalar operator adapters, then explicitly include `<scpp/native_bridge.hpp>`.
+The build selects its request in `build/clang/runtime-publication.json`.
+Direct generator callers opt in by supplying `headers.native_bridge` and native
+operator requests; omitting the header requires omitting those requests as well.
+Explicit native constructors are available independently. See the
+[integer contract](../../specs/integer_slice.md#optional-native-operator-publication).

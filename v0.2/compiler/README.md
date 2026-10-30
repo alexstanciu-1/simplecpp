@@ -7,6 +7,10 @@ concepts from `compiler/my-try/`. It requires 64-bit PHP 8.5 or newer; this slic
 needs no PHP 8.6 features or packages. A future Simple C++ implementation will be
 ported manually or with assistance, without imposing converter constraints here.
 
+Before editing, read the local [working rules](AGENTS.md) and
+[coding style](docs/code_style.md). They consolidate the applicable donor rules
+with the current PHP-first decisions; donor-specific infrastructure is not inherited.
+
 ## Current working slice
 
 ```sh
@@ -78,7 +82,11 @@ exact spelling in `text_hex`. Adding a keyword does not consume another kind ID.
 
 ## PHP authoring style
 
-Declare properties explicitly in the class body so the complete data layout is
-visible independently of its constructor. Constructors take ordinary parameters
-and assign fields explicitly; do not use constructor property promotion. Preserve
-explicit types, visibility and readonly declarations where applicable.
+The [coding style](docs/code_style.md) owns naming, explicit property declarations,
+types, formatting, purpose comments and the conventions for a later handwritten
+C++ port. In particular, declare properties in the class body and assign them
+explicitly in constructors; do not use constructor property promotion.
+
+Maintain the [native size and collection intent](docs/code_style.md#native-size-and-collection-intent)
+comments on properties and signatures when changing their contracts. They guide
+the future native port without changing PHP storage or introducing conversion tooling.

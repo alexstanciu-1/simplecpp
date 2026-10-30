@@ -6,7 +6,7 @@ namespace scpp\compiler;
 final class Compiler_Cli
 {
 	/** Inspect complete token or syntax generations; failures produce stderr and no partial stdout. */
-	public static function run(array $arguments): int
+	public static function run(array $arguments /** list<string> */): int /** int32; process exit status 0..2 */
 	{
 		if (($arguments === [$arguments[0]]) || ($arguments === [$arguments[0], '--help'])) {
 			fwrite(STDOUT, "Usage: php main.php <tokens|parse> <cpp|php|js> <file>\nOutputs JSON tokens or declaration/assignment syntax; semantic compilation is not implemented yet.\n");

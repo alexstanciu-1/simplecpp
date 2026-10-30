@@ -9,6 +9,7 @@ using scpp::int64;
 template<class A, class B> concept adds = requires(A a, B b) { a + b; };
 template<class A> concept increments = requires(A a) { ++a; };
 static_assert(sizeof(byte) == 1);
+static_assert(adds<int64, int64> && !adds<int64, int> && !adds<int, int64>);
 static_assert(!std::is_same_v<byte, int64>);
 static_assert(!std::is_convertible_v<int64, byte> && !std::is_convertible_v<byte, int64>);
 static_assert(!std::is_constructible_v<byte, scpp::float64> && !std::is_constructible_v<scpp::float64, byte>);

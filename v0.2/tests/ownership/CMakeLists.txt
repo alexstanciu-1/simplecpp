@@ -1,4 +1,4 @@
-set(ownership_generated ${runtime_generated}-ownership-proof)
+set(ownership_generated ${CMAKE_BINARY_DIR}/generated-ownership-proof)
 set(ownership_publication ${CMAKE_CURRENT_SOURCE_DIR}/publication.json)
 set(ownership_outputs)
 foreach(path public/scpp/integers.hpp public/scpp/values.hpp public/scpp/numeric.hpp

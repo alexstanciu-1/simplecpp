@@ -7,10 +7,10 @@ namespace scpp\compiler;
 final readonly class syntax_span
 {
 	public source_file $source;
-	public int $start;
-	public int $end;
+	public int $start /** uint32 */;
+	public int $end /** uint32; exclusive */;
 
-	public function __construct(source_file $source, int $start, int $end)
+	public function __construct(source_file $source, int $start /** uint32 */, int $end /** uint32; exclusive */)
 	{
 		$this->source = $source;
 		$this->start = $start;
@@ -76,7 +76,7 @@ final readonly class name_expression extends syntax_expression
 	}
 }
 
-enum assignment_intent: int
+enum assignment_intent: int /** uint8; IDs 1..2 */
 {
 	case existing_binding = 1;
 	case declare_or_assign = 2;
@@ -130,10 +130,10 @@ final readonly class assignment_statement extends syntax_statement
 final readonly class parsed_file
 {
 	public token_list $tokens;
-	public array $statements;
+	public array $statements /** list<syntax_statement> */;
 
 	/** @param list<syntax_statement> $statements */
-	public function __construct(token_list $tokens, array $statements)
+	public function __construct(token_list $tokens, array $statements /** list<syntax_statement> */)
 	{
 		$this->tokens = $tokens;
 		$this->statements = $statements;

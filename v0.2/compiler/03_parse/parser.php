@@ -51,7 +51,7 @@ final class Parser
 		throw new diagnostic($this->cursor->tokens->source, $this->cursor->offset(), 'Expected integer or name');
 	}
 
-	public function declaration(int $start, syntax_name $name, ?named_type_syntax $annotation): local_declaration
+	public function declaration(int $start /** uint32 */, syntax_name $name, ?named_type_syntax $annotation): local_declaration
 	{
 		$this->cursor->take(token_kind::assign, '=');
 		$value = $this->value();
@@ -59,7 +59,7 @@ final class Parser
 		return new local_declaration(new syntax_span($this->cursor->tokens->source, $start, $end), $name, $annotation, $value);
 	}
 
-	public function assignment(int $start, syntax_name $name, assignment_intent $intent): assignment_statement
+	public function assignment(int $start /** uint32 */, syntax_name $name, assignment_intent $intent): assignment_statement
 	{
 		$this->cursor->take(token_kind::assign, '=');
 		$value = $this->value();

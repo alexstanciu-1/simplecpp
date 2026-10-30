@@ -6,8 +6,8 @@ namespace scpp\compiler;
 /** Byte scanner adapted from my-try's stage worker, with per-source flavor rules. */
 final class Tokenizer
 {
-	private int $offset = 0;
-	private const PUNCTUATION = [
+	private int $offset /** uint32; byte position including EOF */ = 0;
+	private const PUNCTUATION /** list<token_kind> */ = [
 		token_kind::ellipsis,
 		token_kind::power_assign,
 		token_kind::left_assign,

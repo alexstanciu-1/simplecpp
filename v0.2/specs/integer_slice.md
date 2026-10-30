@@ -148,9 +148,10 @@ unintended numeric conversion. Compiler-source preparation remains separate.
 The CMake-configured PHP launcher accepts metadata, publication and an output
 directory, with optional
 `--check` for read-only freshness. Complete validation/emission precedes file writes.
-An existing inventory containing retired output paths rejects and requires fresh
-staging. I/O failure during writes is not transactionally rolled back; use a fresh
-staging directory for publication. No package sealing/import ABI protocol is claimed.
+Normal publication cleans `.hpp`, `.cpp` and `.json` files recursively in its
+dedicated output directory and writes a versioned manifest last. Other extensions
+are preserved. I/O failure is not transactionally rolled back; regenerate to repair
+incomplete output. See [the cleanup contract](numeric_module.md#publication-cleanup). No package sealing/import ABI protocol is claimed.
 
 Output is deterministic for the same metadata and native target. Type and operator
 request order is normalized. Each output includes an inventory and a prepared-plan
@@ -185,3 +186,17 @@ error ABI or transitive headers were imported. Zero failures use the standalone
 slice's standard exception boundary. Operation binding, symbol and implementation
 are now prepared metadata facts, keyed together with operand types. The generator
 validates bindings against implemented primitive capabilities before publication.
+
+## Optional native operator publication
+
+The `headers.native_bridge` publication entry is optional. Omitting it emits no
+native bridge header; native operator requests without it are rejected. Explicit
+native constructors remain independent of bridge publication. Core numeric headers
+and short-name imports never include the bridge implicitly.
+
+CMake defaults `SCPP_ENABLE_NATIVE_BRIDGE` to OFF and selects only runtime-operand
+scalar operators from the checked-in requests. ON retains the explicit native
+operator requests and bridge header path. The selected request is always written
+to the build directory's `runtime-publication.json`. Normal regeneration removes
+an old bridge header when disabled. Handwritten C++ consumers opt in with an
+explicit include; compiler-emitted typed operands need no bridge.

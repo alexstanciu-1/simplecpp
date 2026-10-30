@@ -37,8 +37,8 @@ with tempfile.TemporaryDirectory(prefix='scpp-php-cutover-') as temporary:
     publication = root / 'runtime/metadata/publication.json'
     run('generation_only', [str(generator), str(runtime_json), str(publication), str(root / 'build/staging')])
     run('runtime_and_consumers_build', ['cmake', '--build', '--preset', 'default'])
-    run('source_only_ctest', ['ctest', '--preset', 'default'])
-    generated = root / 'build/clang/generated'
+    run('source_only_ctest', ['ctest', '--preset', 'default', '-j', '8'])
+    generated = root / 'runtime/generated'
     def stamps():
         paths = [p for p in generated.rglob('*') if p.is_file()]
         paths += list((root / 'build/clang').rglob('*.o'))
@@ -57,7 +57,20 @@ with tempfile.TemporaryDirectory(prefix='scpp-php-cutover-') as temporary:
         with path.open('a') as stream:
             stream.write('\n// rebuild probe\n' if path.suffix in ('.php', '.tpl') else '\n')
         run(label + '_invalidation', ['cmake', '--build', '--preset', 'default', '--target', 'scpp_runtime_publication'])
-        assert output.stat().st_mtime_ns != before, label + ' did not invalidate generation'
+        changed = output.stat().st_mtime_ns != before
+        assert changed == (label == 'cpp_template'), label + ' did not respect output freshness'
+    # A real publication change must replace the shared API, not merely check it.
+    original = publication.read_text()
+    request = json.loads(original)
+    request['operators'].pop()
+    original_plan = output.read_text()
+    publication.write_text(json.dumps(request))
+    before = output.stat().st_mtime_ns
+    run('publication_change', ['cmake', '--build', '--preset', 'default', '--target', 'scpp_runtime_publication'])
+    assert output.stat().st_mtime_ns != before
+    assert output.read_text() != original_plan
+    publication.write_text(original)
+    run('publication_restore', ['cmake', '--build', '--preset', 'default', '--target', 'scpp_runtime_publication'])
     context = root / 'build/clang/native-layout/context.json'
     old_context = json.loads(context.read_text())['context_id']
     before = output.stat().st_mtime_ns
@@ -65,8 +78,21 @@ with tempfile.TemporaryDirectory(prefix='scpp-php-cutover-') as temporary:
         '-DCMAKE_CXX_FLAGS=-stdlib=libc++ -Wall -Wextra -Wpedantic -DSCPP_CUTOVER_TEST=1'])
     run('target_invalidation', ['cmake', '--build', '--preset', 'default', '--target', 'scpp_runtime_publication'])
     assert json.loads(context.read_text())['context_id'] != old_context
-    assert output.stat().st_mtime_ns != before
-    report['dependency_invalidation'] = ['metadata', 'publication', 'php_source', 'cpp_template', 'target_flags']
+    assert output.stat().st_mtime_ns == before, 'A layout-neutral flag should preserve identical generated output'
+    report['target_context'] = 'changed flags re-probed; identical output preserved'
+    report['unchanged_output_inputs'] = ['metadata whitespace', 'publication whitespace', 'PHP comment']
+    report['dependency_invalidation'] = ['publication operators', 'cpp_template']
+    # Another build tree can replace the shared publication with different demand.
+    alternate = root / 'build/alternate'
+    run('alternate_configure', ['cmake', '--preset', 'default', '-B', str(alternate),
+        '-DBUILD_TESTING=OFF', '-DSCPP_ENABLE_JSON=ON'])
+    run('alternate_publication', ['cmake', '--build', str(alternate), '--target', 'scpp_runtime_publication'])
+    assert (generated / 'public/scpp/json.hpp').exists()
+    run('restore_primary_publication', ['cmake', '--build', '--preset', 'default', '--target', 'scpp_runtime_publication'])
+    assert not (generated / 'public/scpp/json.hpp').exists()
+    run('restored_freshness', [str(generator), str(runtime_json), str(root / 'build/clang/runtime-publication.json'), str(generated), '--check'])
+    report['shared_publication'] = 'alternate profile replaced; original build restored its demand and target context'
+
     run('production_configure', ['cmake', '--preset', 'default', '-DBUILD_TESTING=OFF'])
     run('production_build', ['cmake', '--build', '--preset', 'default'])
     assert run('production_demo', [str(root / 'build/clang/scpp_runtime_demo')]).strip() == 'Ada: 21; ratio=7'

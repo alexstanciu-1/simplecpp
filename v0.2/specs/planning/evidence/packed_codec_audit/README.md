@@ -25,5 +25,5 @@ in `probe.cpp` only measures a possible payload-slot size; it is not a candidate
 codec implementation or benchmark. Allocation-failure probes inspect counts and
 membership, avoiding iteration or value access through potentially malformed arrays.
 
-See [the investigation](../../runtime_packed_storage_investigation.md) for findings,
-limitations and the proposed decision.
+See [packed-storage validation](../../../packed_storage_validation.md) for the
+approved repair and retained investigation rationale.

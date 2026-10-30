@@ -105,6 +105,7 @@ function scalarHeaders(mixed $publication): array {
     fields($headers, $keys);
     $out = [];
     foreach ($keys as $key) {
+        if ($key === 'native_bridge' && !property_exists($headers, $key)) continue;
         $path = headerPath(at($headers, $key));
         requireThat(!in_array($path, $out, true), 'Conflicting public headers');
         $out[$key] = $path;
@@ -308,6 +309,7 @@ function prepareScalars(mixed $metadata, mixed $publication, array $facts, bool 
             }
             else {
                 fields($arg, ['native']);
+                requireThat(isset($headers['native_bridge']), 'Native operators require a native_bridge header');
                 requireThat($binding['native'], 'Native arithmetic is not enabled');
                 $cpp = textValue(at($arg, 'native'));
                 $native = null;

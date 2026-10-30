@@ -77,9 +77,11 @@ extra disposable-extension files. A version mismatch is a stale manifest.
 Filesystem write failure can leave incomplete output; regeneration repairs it.
 Atomic directory replacement and concurrent writers are not promised.
 
-CMake uses one build-local `generated/` directory for production, cleaning disabled
-module artifacts on regeneration. Separate proof publications use sibling roots,
-such as `generated-ownership-proof/`, so one publication never owns another's files.
-Build-local storage keeps Release and sanitizer outputs independent. Old output
+CMake uses `runtime/generated/` for production, cleaning disabled module artifacts
+on regeneration. Each build checks this shared publication against its own demand
+and target facts, regenerating only when stale. Run configurations sequentially
+within a checkout; the directory reflects the latest build. Separate proof
+publications stay build-local, such as `build/clang/generated-ownership-proof/`,
+outside the production cleanup root. Old output
 roots outside the selected directory require an explicit clean; the generator does
 not search the repository for abandoned builds.

@@ -1,9 +1,5 @@
 # v0.2 runtime rewrite: architectural purpose and objectives
 
-> Status update (2026-10-29): Rust implementation and toolchain retired.
-> This note is historical context; current owners are the PHP compiler and PHP API
-> generator. See [compiler status](../../compiler/README.md).
-
 Doc Status: planning
 Date: 2026-10-29
 Status: agreed direction recorded from the runtime workspace discussion.
@@ -92,7 +88,7 @@ integration and traversal remain. Current progression:
    Mixed and dynamic remain separate families; see the [public API](../boxed_slice.md).
 5. Integrate traversal lifetime and mutation guarantees before claiming general
    iteration support. Implementation is explicitly deferred under RT-DEBT-01 in the
-   [typed-hash batch](runtime_collections_batch.md); review compiler/runtime
+   [traversal debt below](#explicit-debt-rt-debt-01--traversal-and-mutation-preservation); review compiler/runtime
    responsibility case by case once the compiler is in place.
 
 Completion should mean that a plain C++ consumer can construct, combine, traverse
@@ -113,8 +109,7 @@ family combination.
 
 Compiler development, full legacy API parity, async and speculative combinations
 are outside the first core milestone. Module implementation migration is staged
-separately, not excluded from the overall runtime rewrite. This note was followed by an explicit sequencing decision: finish the Rust API generator
-and retire the C++ generation path before resuming the typed-hash batch.
+separately, not excluded from the overall runtime rewrite. The PHP API generator is now the sole publication path; the typed-hash slice is delivered.
 
 Validation should cover behavior, public boundaries and lifecycle guarantees;
 reused algorithms need focused equivalence evidence. Performance checks should
@@ -122,16 +117,16 @@ target relevant costs rather than treating a green functional test as sufficient
 
 ## Related work
 
-- [Runtime assessment and typed-hash batch](runtime_collections_batch.md)
+- [Typed-hash contract](../hash_slice.md)
 - [Current runtime API summary](../runtime_api_summary.md)
-- [Hash/mixed/dynamic port review](hash_mixed_dynamic_port_review.md)
+- [Boxed API contract](../boxed_slice.md)
 - [Legacy core capability inventory](legacy_core_gap_inventory_2026_10_29.md)
 - [Ownership contract](../ownership_slice.md)
-- [Rust compiler and API tooling migration](rust_compiler_migration.md)
+- [Current PHP compiler](../../compiler/README.md)
 
 The first module reuse proof is complete: all eleven native datetime functions,
 including host-local formatting/parsing. See [completion evidence](../datetime_local_validation.md).
-The [packed-storage batch](runtime_packed_storage_batch.md) is complete, including
+The [packed-storage batch](../packed_storage.md) is complete, including
 key-limit and allocation-failure repairs. Private mixed ownership builds on it.
 Preserve the optimized compact pooled-key design; the larger-key proposal was
 withdrawn after review of the v0.1 design notes and explicit user correction.
@@ -149,3 +144,26 @@ composes with datetime and supports builds with tests disabled. See the
 Direct typed scalar and nullable-scalar encoding is also available without boxing. Typed JSON
 extraction/container encoding, source registration and public traversal remain
 separate work; the private module adapter does not settle RT-DEBT-01.
+
+## Explicit debt: RT-DEBT-01 — traversal and mutation preservation
+
+Status: deferred by user decision, 2026-10-29.
+Revisit trigger: compiler integration of collection traversal.
+
+The existing language contract requires traversal to start live, then preserve
+remaining shallow entries before structural mutation or binding replacement.
+It also requires independent nested positions, preservation-failure rollback and
+safe source lifetime. That contract remains recorded; this batch does not implement
+it or claim complete collection-contract support.
+
+Do not add traversal subscriptions, preservation snapshots or cursor-driven
+lifecycle changes now. Do not substitute iterator invalidation or eager snapshots
+as a new source contract. Existing vector nonthrowing moves/clear and the shared
+lifecycle emitter need no traversal-driven refactor in this batch.
+
+When the compiler is available, assess each case: what it can prove or lower safely,
+what remains data-dependent, and what minimal runtime support is necessary.
+Compiler elimination of some machinery is a possibility, not an established proof
+for all cases. Any remaining unsupported cases must remain explicit rather than
+silently receiving different behavior. Public traversal design, mutation semantics
+integration and associated lifecycle/failure proofs are deferred together.

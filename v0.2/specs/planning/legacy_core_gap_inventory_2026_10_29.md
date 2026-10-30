@@ -1,13 +1,9 @@
 # Legacy core runtime gap inventory
 
-> Status update (2026-10-29): Rust implementation and toolchain retired.
-> This note is historical context; current owners are the PHP compiler and PHP API
-> generator. See [compiler status](../../compiler/README.md).
-
 Doc Status: planning
 
-Decision update, 2026-10-29: the [Rust compiler migration](rust_compiler_migration.md)
-supersedes proposed adaptation of the C++ compiler to runtime ownership handles.
+The [PHP compiler](../../compiler/README.md) supersedes the retired compiler
+implementations. Adapting their ownership handles is no longer planned.
 Runtime ownership/value support remains useful for generated programs and plain C++
 consumers. Earlier compiler-adaptation recommendations below retain historical context.
 Date: 2026-10-29
@@ -106,8 +102,8 @@ not a complete behavioral parity audit or a fresh execution of legacy tests.
 6. Keep fixed arrays, stable hashing, row arenas/bitsets/queues, callbacks and async
    as explicit demand-driven slices rather than prerequisites for all compiler work.
 
-This order does not authorize a bulk port. The existing hash review remains active
-at [hash_mixed_dynamic_port_review.md](hash_mixed_dynamic_port_review.md); the detailed
+This order does not authorize a bulk port. The current boxed API is documented
+in [boxed_slice.md](../boxed_slice.md); the detailed
 ownership baseline is [ownership_contract_review.md](ownership_contract_review.md)
 and its implemented subset is [ownership_slice.md](../ownership_slice.md).
 

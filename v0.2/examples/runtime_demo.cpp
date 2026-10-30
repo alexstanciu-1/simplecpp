@@ -1,5 +1,4 @@
 #include <scpp/short_names.hpp>
-#include <scpp/native_bridge.hpp>
 #include <cmath>
 #include <cstdio>
 
@@ -7,7 +6,7 @@ int main() {
     // Keep float_t local: C math headers also declare a global native float_t.
     using scpp::float_t;
     int_t total{20};
-    total += 1;
+    total += int64{1};
     float_t ratio = static_cast<float_t>(total) / float64{3.0};
     bool_t ready = total > int64{3};
     null_t absent = null;

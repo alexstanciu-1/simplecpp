@@ -125,8 +125,8 @@ its source compiler/take integration remains future work.
 
 Other open decisions are a future runtime error ABI, any stronger signed-overflow
 policy, public collection iteration and specialized storage/performance work. The
-hash/mixed/dynamic port review is recorded separately and preserves the custom hash
-core and separate tagged families. It has not imported those implementations.
+implemented hash and boxed contracts preserve the custom hash core and separate
+tagged families; source compiler integration remains separate work.
 
 ## Contracts and evidence
 
@@ -134,8 +134,8 @@ core and separate tagged families. It has not imported those implementations.
   [floating contract](floating_slice.md), [string contract](string_slice.md),
   [vector contract](vector_slice.md)
 - [Plain C++ example](../examples/runtime_demo.cpp), built as scpp_runtime_demo
-- [Historical completion audit](archive/runtime_completion_audit.md)
-- [Hash/mixed/dynamic port review](planning/hash_mixed_dynamic_port_review.md)
+- [Hash contract](hash_slice.md), [packed storage](packed_storage.md),
+  [boxed API](boxed_slice.md)
 
 ## Subsequent carrier extension
 

@@ -7,7 +7,7 @@ namespace scpp\compiler;
 final readonly class source_file
 {
 	/** @var list<int> */
-	private array $line_starts;
+	private array $line_starts /** list<uint32>; element offsets, count can reach 0x100000000 */;
 
 	public string $path;
 	public string $content;
@@ -32,7 +32,7 @@ final readonly class source_file
 	}
 
 	/** Return one-based line and byte column, including the EOF position. */
-	public function location(int $offset): array
+	public function location(int $offset /** uint32; byte position including EOF */): array /** array{line:uint64,column:uint64}; each in 1..0x100000000 */
 	{
 		if (($offset < 0) || ($offset > strlen($this->content))) {
 			throw new \OutOfRangeException('Source offset is outside its snapshot');

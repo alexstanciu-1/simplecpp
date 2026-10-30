@@ -6,7 +6,7 @@ namespace scpp\compiler;
 /** A parser-local cursor; reading never mutates the published token generation. */
 final class Syntax_Cursor
 {
-	private int $index = 0;
+	private int $index /** uint32; token position including EOF */ = 0;
 
 	public readonly token_list $tokens;
 
@@ -20,7 +20,7 @@ final class Syntax_Cursor
 		return $this->index === count($this->tokens->tokens);
 	}
 
-	public function offset(): int
+	public function offset(): int /** uint32; byte position including EOF */
 	{
 		return $this->tokens->tokens[$this->index]->offset ?? strlen($this->tokens->source->content);
 	}

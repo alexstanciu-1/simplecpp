@@ -60,11 +60,13 @@ set(runtime_outputs
   ${runtime_generated}/public/scpp/values.hpp
   ${runtime_generated}/public/scpp/integers.hpp
   ${runtime_generated}/public/scpp/numeric.hpp
-  ${runtime_generated}/public/scpp/native_bridge.hpp
   ${runtime_generated}/public/scpp/short_names.hpp
   ${runtime_generated}/src/runtime.cpp
   ${runtime_generated}/prepared.json
   ${runtime_generated}/inventory.json)
+if(SCPP_ENABLE_NATIVE_BRIDGE)
+  list(APPEND runtime_outputs ${runtime_generated}/public/scpp/native_bridge.hpp)
+endif()
 if(SCPP_ENABLE_DATETIME)
   list(APPEND runtime_outputs ${runtime_generated}/public/scpp/datetime.hpp ${runtime_generated}/src/datetime.cpp)
 endif()
@@ -72,11 +74,16 @@ if(SCPP_ENABLE_JSON)
   list(APPEND runtime_outputs ${runtime_generated}/public/scpp/boxed.hpp ${runtime_generated}/src/boxed.cpp
     ${runtime_generated}/public/scpp/json.hpp ${runtime_generated}/src/json.cpp)
 endif()
-add_custom_command(OUTPUT ${runtime_outputs}
-  COMMAND ${generator_launcher} ${runtime_metadata} ${runtime_publication} ${runtime_generated}
+# This source-local publication may have been written by another build profile.
+# Check its contents on every build; unchanged output keeps its timestamps.
+add_custom_target(scpp_runtime_publication
+  COMMAND ${CMAKE_COMMAND}
+    -DGENERATOR=${generator_launcher} -DMETADATA=${runtime_metadata}
+    -DPUBLICATION=${runtime_publication} -DOUTPUT=${runtime_generated}
+    -P ${CMAKE_CURRENT_SOURCE_DIR}/cmake/PublishRuntime.cmake
+  BYPRODUCTS ${runtime_outputs}
   DEPENDS scpp_api_generator ${generator_sources} ${api_tooling} ${native_facts} ${native_context} ${generator_launcher} ${runtime_metadata} ${runtime_publication}
   VERBATIM)
-add_custom_target(scpp_runtime_publication DEPENDS ${runtime_outputs})
 add_library(scpp_runtime STATIC ${runtime_generated}/src/runtime.cpp)
 add_dependencies(scpp_runtime scpp_runtime_publication)
 target_include_directories(scpp_runtime

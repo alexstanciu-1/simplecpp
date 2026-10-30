@@ -3,7 +3,7 @@
 Doc Status: supporting
 Date: 2026-10-29
 Contract: [datetime_module.md](datetime_module.md)
-Backlog: [runtime_datetime_local_batch.md](planning/runtime_datetime_local_batch.md)
+Contract: [datetime_module.md](datetime_module.md)
 
 ## Delivered slice and provenance
 

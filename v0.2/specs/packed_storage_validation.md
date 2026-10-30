@@ -69,3 +69,13 @@ unallocated. Estimates include table-owned vector capacities, not allocator over
 or shared pool storage. The reverse pool retains pointer-sized slots without a new
 kind bitmap or exceptional-integer map. Erased slots and pooled strings remain
 retained according to the contract; no compaction or concurrency claim is made.
+
+## Retained donor investigation evidence
+
+The [standalone donor audit](planning/evidence/packed_codec_audit/README.md)
+records allocation failures, key-boundary defects and measured layouts against
+the old implementation. It is investigation evidence, not a correctness suite.
+The approved repair preserves compact four-byte keys, shared pooled string
+identities and narrow bucket indices. Integer keys are bounded to 0..INT32_MAX;
+neither a larger key representation nor an exceptional-integer pool was adopted.
+Stored hash width, bucket-index width and semantic key identity remain distinct.
