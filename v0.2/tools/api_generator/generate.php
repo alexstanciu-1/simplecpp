@@ -3,34 +3,13 @@
 declare(strict_types=1);
 namespace Scpp\Api;
 require_once __DIR__ . '/php/input.php';
+require_once __DIR__ . '/php/publication.php';
 require_once __DIR__ . '/php/target.php';
 require_once __DIR__ . '/php/scalars.php';
 require_once __DIR__ . '/php/families.php';
 require_once __DIR__ . '/php/render.php';
 require_once __DIR__ . '/php/render_sequences.php';
 require_once __DIR__ . '/php/render_modules.php';
-
-function publish(array $files, string $output, bool $check): void {
-    $inventory = $output . '/inventory.json';
-    if(file_exists($inventory)) {
-        $old = decode(readFile($inventory), 'old generated inventory');
-        requireThat(is_array($old), 'Invalid old generated inventory');
-        foreach($old as $path) {
-            requireThat(array_key_exists(textValue($path), $files), 'Obsolete generated outputs; regenerate in empty staging');
-        }
-    }
-    foreach($files as $path => $contents) {
-        $target = $output . '/' . $path;
-        if($check) {
-            requireThat(readFile($target) === $contents, "Stale generated file: $target");
-        }
-        else {
-            $parent = dirname($target);
-            requireThat(is_dir($parent) || @mkdir($parent, 0777, true), "Cannot create $parent");
-            requireThat(@file_put_contents($target, $contents) === strlen($contents), "Cannot write $target");
-        }
-    }
-}
 
 function run(array $args): array {
     requireThat(PHP_VERSION_ID >= 80500 && PHP_INT_SIZE === 8, 'The API generator requires 64-bit PHP 8.5 or later');

@@ -42,7 +42,7 @@ with tempfile.TemporaryDirectory(prefix='scpp-boxed-publication-') as tmp:
     # Rendering is deterministic when request order changes.
     reverse = copy.deepcopy(publication); reverse['boxed']['families'].reverse()
     other, _ = run(metadata, reverse)
-    for artifact in json.loads((case/'out/inventory.json').read_text()):
+    for artifact in json.loads((case/'out/inventory.json').read_text())['files']:
         assert (case/'out'/artifact).read_bytes() == (other/'out'/artifact).read_bytes(), artifact
     for family, absent in [('mixed', 'dynamic'), ('dynamic', 'mixed')]:
         pub = copy.deepcopy(publication)

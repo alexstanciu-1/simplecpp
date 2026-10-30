@@ -1,4 +1,4 @@
-set(hash_generated ${runtime_generated}/hash-proof)
+set(hash_generated ${runtime_generated}-hash-proof)
 set(hash_publication ${CMAKE_CURRENT_SOURCE_DIR}/publication.json)
 set(hash_outputs)
 foreach(path public/scpp/integers.hpp public/scpp/values.hpp public/scpp/numeric.hpp

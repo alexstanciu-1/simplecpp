@@ -674,7 +674,12 @@ A scalar cast out of mixed/dynamic preserves the payload's original runtime type
 until applying the requested cast. Integer payloads are canonical signed int64;
 floating payloads are float64. Casting a boxed payload to int8/16/32/64 or
 uint8/16/32/64 therefore has the same checked result or failure as casting that
-native payload directly to the destination. `byte` remains the uint8 alias.
+native payload directly to the destination. The 2026-10-30 v0.2 amendment makes
+`byte` a distinct core type instead of a uint8 alias; the fixed-width boxed rules
+in this paragraph continue to describe the integer types. Direct boxed-to-byte
+conversion is not admitted by the rebuilt runtime yet: extract/convert to an
+integer explicitly before constructing byte. See
+[the byte contract](../v0.2/specs/numeric_module.md).
 There is no implicit preliminary conversion of every payload to int64.
 
 Boolean payloads use the native explicit zero/one integer conversion. String

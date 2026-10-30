@@ -79,6 +79,7 @@ function prepareString(mixed $metadata, mixed $publication, array $registry, arr
         $operations[] = ['operation' => $op, 'symbol' => $mutates ? '+=':SYMBOLS[$op], 'form' => $mutates ? 'compound':'binary', 'implementation' => $append ? 'string_append':'string_compare', 'execution' => 'string', 'result' => $append ? 'string':'bool_t', 'left' => 'string', 'right' => 'string', 'result_category' => $mutates ? 'left_reference':'value'];
     }
     foreach (names(at($p, 'casts'), 'Duplicate published text cast') as $target) {
+        requireThat($target !== 'byte', 'Byte text conversion requires an explicit integer conversion');
         $policy = hasType($plan, $target) ? 'decimal_integer':($target === 'float64' && hasValue($plan, $target) ? 'decimal_float':($target === 'bool_t' && hasValue($plan, $target) ? 'boolean_words':''));
         requireThat($policy !== '', 'Text cast requires a published numeric or boolean type');
         requireThat(in_array($policy, $casts, true), 'Text cast is not enabled by metadata');

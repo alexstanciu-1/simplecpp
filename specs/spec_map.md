@@ -78,7 +78,7 @@ The authority stack for the current project is:
    - `specs/exceptions_v0_2.md` (bounded Exception factory, single-type throw/catch, bounded finally and exceptional cleanup)
    - `specs/destructors_v0_2.md` (automatic cleanup, nonthrowing destructors and copy/move preservation)
    - `specs/namespaces_v0_2.md` (namespace identity, body-local imports and qualified lookup)
-   - `specs/compact_layout_types.md`
+   - `specs/compact_layout_types.md` (includes the 2026-10-30 distinct core byte and optional numeric-module amendment)
    - `specs/metaprogramming_contract.md`
    - `specs/count_empty_isset_contract.md`
    - `specs/output_v0_2.md` (ordered echo statements and bounded output admission)

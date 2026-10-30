@@ -25,7 +25,7 @@ def cases(root: Path):
         return json.loads((root / name).read_bytes())
 
     metadata = load("runtime/metadata/runtime.json")
-    default = load("runtime/metadata/publication.json")
+    default = load("tests/generator_parity/numeric_publication.json")
     compiler = load("tests/generator_parity/compiler_publication.json")
     ownership = load("tests/ownership/publication.json")
     result = []

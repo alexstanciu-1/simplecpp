@@ -1,4 +1,4 @@
-set(boxed_result_generated ${runtime_generated}/boxed-result-proof)
+set(boxed_result_generated ${runtime_generated}-boxed-result-proof)
 set(boxed_result_publication ${CMAKE_CURRENT_SOURCE_DIR}/publication.json)
 set(boxed_result_outputs)
 foreach(path public/scpp/integers.hpp public/scpp/values.hpp public/scpp/numeric.hpp

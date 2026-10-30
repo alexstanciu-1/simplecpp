@@ -29,7 +29,7 @@ def main():
     metadata = json.loads((root / 'runtime/metadata/runtime.json').read_text())
     # Explicit scalar boundary: optional-family validation belongs to the composed runtime planner.
     scalar_metadata = {k: v for k, v in metadata.items() if k not in ['string', 'vector', 'carriers', 'ownership', 'hash', 'datetime', 'boxed', 'json']}
-    publication = json.loads((root / 'runtime/metadata/publication.json').read_text())
+    publication = json.loads((root / 'tests/generator_parity/numeric_publication.json').read_text())
     publication = {k: v for k, v in publication.items() if k not in ['string', 'vectors', 'carriers', 'ownership']}
     args.work.mkdir(parents=True, exist_ok=True)
     counts = {'accepted': 0, 'rejected': 0, 'max_operations': 0}
@@ -49,7 +49,9 @@ def main():
                         assert result.stderr and not result.stdout, (label, name)
                 if accepted:
                     actual = json.loads(prepared.stdout)
-                    key = hashlib.sha256(m.read_bytes() + b'\0' + p.read_bytes()).hexdigest()
+                    # Preserve frozen scalar case identities; capability admission is tested separately.
+                    legacy_pub = {k: v for k, v in pub.items() if k != 'modules'}
+                    key = hashlib.sha256(m.read_bytes() + b'\0' + json.dumps(legacy_pub).encode()).hexdigest()
                     if args.emit:
                         generated = case / 'generator'
                         command = [args.generator, 'emit-scalars', m, p, args.facts, args.context, generated]
@@ -90,7 +92,8 @@ def main():
                                 inventory = generated / 'inventory.json'
                                 inventory.write_text('["retired.hpp"]')
                                 before = tree(generated)
-                                assert run(command).returncode == 1 and tree(generated) == before
+                                assert run(command + ['--check']).returncode == 1 and tree(generated) == before
+                                assert run(command).returncode == 0
                     counts['max_operations'] = max(counts['max_operations'], len(actual['operations']))
                     counts['accepted'] += 1
                     return actual
@@ -246,7 +249,7 @@ def main():
         p = copy.deepcopy(base); p['headers']['values'] = p['headers']['types']
         check('header-collision', scalar_metadata, p, False)
         # Non-scalar demand is a deliberate PHP-only boundary, not a parity claim.
-        p = work / 'full-publication.json'; p.write_text((root / 'runtime/metadata/publication.json').read_text())
+        p = work / 'full-publication.json'; p.write_text((root / 'tests/generator_parity/numeric_publication.json').read_text())
         m = work / 'full-metadata.json'; m.write_text(json.dumps(metadata))
         result = run([args.generator, 'prepare-scalars', m, p, args.facts, args.context])
         assert result.returncode == 1 and not result.stdout

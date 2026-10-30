@@ -91,7 +91,9 @@ def publish(generator, case, work):
         return {"rejection_fragment": case.rejection}, None
     stdout = invoke(generator, args)
     first = tree(output)
-    inventory = json.loads(first["inventory.json"])
+    manifest = json.loads(first["inventory.json"])
+    require(manifest["generator"] == "scpp-api" and manifest["version"] == 1, "manifest identity/version")
+    inventory = manifest["files"]
     require(inventory == sorted(set(first) - {"inventory.json"}), f"{case.name}: inventory mismatch")
     timestamps = {p: p.stat().st_mtime_ns for p in output.rglob("*") if p.is_file()}
     checked = invoke(generator, args + ["--check"])
@@ -146,25 +148,19 @@ def cli_contract(generator, case, root):
     require(not chosen.exists(), "missing output check rewrote file")
     invoke(generator, args)
     inventory = output / "inventory.json"
-    for old, marker in [(b'{}', "Invalid old generated inventory"),
-                        (b'["obsolete.cpp"]', "Obsolete generated outputs"),
-                        (b'[', "byte")]:
+    for old in [b'{}', b'["obsolete.cpp"]', b'[', b'[]']:
         inventory.write_bytes(old)
         before = tree(output)
-        for check in [[], ["--check"]]:
-            invoke(generator, args + check, 1, marker)
-            compare(before, tree(output), "invalid/obsolete inventory must not mutate output")
-    # Current inventory tracks known artifacts, not arbitrary directory contents.
-    inventory.write_bytes(original["inventory.json"])
+        invoke(generator, args + ["--check"], 1, "Stale generated file")
+        compare(before, tree(output), "check must not mutate old manifest")
+        invoke(generator, args)
+        compare(original, tree(output), "full regeneration repairs any prior manifest")
     (output / "unlisted.txt").write_text("leave me alone")
-    invoke(generator, args + ["--check"])
+    (output / "obsolete.cpp").write_text("old generated code")
+    invoke(generator, args + ["--check"], 1, "Obsolete generated file")
     invoke(generator, args)
-    require((output / "unlisted.txt").read_text() == "leave me alone", "unlisted file changed")
-    # An empty prior inventory is accepted; check remains based on expected outputs.
-    inventory.write_text("[]")
-    invoke(generator, args + ["--check"], 1, "Stale generated file")
-    invoke(generator, args)
-    require(inventory.read_bytes() == original["inventory.json"], "inventory repair failed")
+    require(not (output / "obsolete.cpp").exists(), "obsolete generated file survived")
+    require((output / "unlisted.txt").read_text() == "leave me alone", "non-generated extension changed")
     # A filesystem obstruction fails normally. Writes are not promised transactional.
     blocked = root / "blocked"
     blocked.write_text("not a directory")

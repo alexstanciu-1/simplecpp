@@ -111,7 +111,7 @@ with tempfile.TemporaryDirectory(prefix='scpp-json-') as tmp:
     out, _ = generate(metadata, publication)
     pub = copy.deepcopy(publication); pub['json']['operations'].reverse()
     reverse, _ = generate(metadata, pub)
-    for artifact in json.loads((out/'inventory.json').read_text()):
+    for artifact in json.loads((out/'inventory.json').read_text())['files']:
         assert (out/artifact).read_bytes() == (reverse/artifact).read_bytes(), artifact
     pub = copy.deepcopy(publication); del pub['json']
     absent, plan = generate(metadata, pub)

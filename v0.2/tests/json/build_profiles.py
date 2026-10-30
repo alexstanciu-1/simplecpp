@@ -14,16 +14,24 @@ with tempfile.TemporaryDirectory(prefix='scpp-json-profiles-') as temporary:
         assert result.returncode == 0, result.stdout+result.stderr
         return result.stdout
     build = root/'build/clang'
-    for dt, js, profile in [(False, True, '-json'), (True, True, '-datetime-json'), (True, False, '-datetime'), (False, False, ''), (False, True, '-json')]:
+    for numeric, dt, js, profile in [(False, False, False, 'core'), (True, False, False, 'numeric'), (True, True, True, 'all'), (False, True, True, 'datetime-json'), (False, True, False, 'datetime'), (False, False, False, 'core-again'), (False, False, True, 'json')]:
         run('cmake', '--preset', 'default', '-DBUILD_TESTING=OFF',
+            '-DSCPP_ENABLE_NUMERIC='+('ON' if numeric else 'OFF'),
             '-DSCPP_ENABLE_DATETIME='+('ON' if dt else 'OFF'), '-DSCPP_ENABLE_JSON='+('ON' if js else 'OFF'))
         run('cmake', '--build', '--preset', 'default')
         targets = run('ninja', '-C', str(build), '-t', 'targets', 'all')
         assert ('scpp_json:' in targets) == js
         assert ('scpp_datetime:' in targets) == dt
-        plan = json.loads((build/('generated'+profile)/'prepared.json').read_text())
+        plan = json.loads((build/'generated/prepared.json').read_text())
         assert ('json' in plan) == js and ('datetime' in plan) == dt
         assert ('boxed' in plan) == js
+        types = {t['name'] for t in plan['types']}
+        assert types == {'int64', 'byte'} | ({'int32'} if numeric else set()) | ({'uint64'} if dt else set())
+        assert (build/'generated/public/scpp/json.hpp').exists() == js
+        assert (build/'generated/src/json.cpp').exists() == js
+        assert (build/'generated/public/scpp/datetime.hpp').exists() == dt
+        assert (build/'generated/src/datetime.cpp').exists() == dt
+        assert not list(build.glob('generated-*')), 'Obsolete profile-specific directories'
         assert run(str(build/'scpp_runtime_demo')).strip() == 'Ada: 21; ratio=7'
         if js:
             assert run(str(build/'scpp_json_demo')).strip() == '{"name":"Ada","values":[null,false,42]}'

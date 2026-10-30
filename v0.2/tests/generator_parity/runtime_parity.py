@@ -308,7 +308,7 @@ def main():
     args.baseline = json.loads(Path(__file__).with_name("runtime_baseline.json").read_text())["cases"]
     root = Path(__file__).resolve().parents[2]
     m = json.loads((root / 'runtime/metadata/runtime.json').read_text())
-    p = json.loads((root / 'runtime/metadata/publication.json').read_text())
+    p = json.loads((root / 'tests/generator_parity/numeric_publication.json').read_text())
     args.work.mkdir(parents=True, exist_ok=True)
     with tempfile.TemporaryDirectory(dir=args.work) as work:
         proof = Parity(args, work)

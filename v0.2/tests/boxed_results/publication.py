@@ -59,6 +59,6 @@ with tempfile.TemporaryDirectory(prefix='scpp-boxed-results-') as tmp:
     out, _ = generate(metadata, publication)
     shuffled = copy.deepcopy(publication); shuffled['carriers']['specializations'].reverse()
     reverse, _ = generate(metadata, shuffled)
-    for artifact in json.loads((out/'inventory.json').read_text()):
+    for artifact in json.loads((out/'inventory.json').read_text())['files']:
         assert (out/artifact).read_bytes() == (reverse/artifact).read_bytes(), artifact
     print('boxed result publication passed:', serial, 'cases')

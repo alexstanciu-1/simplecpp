@@ -61,5 +61,8 @@
       ]
     }
   ],
-  "short_aliases": []
+  "short_aliases": [],
+  "modules": [
+    "numeric"
+  ]
 }

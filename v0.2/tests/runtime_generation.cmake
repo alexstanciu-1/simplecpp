@@ -34,10 +34,11 @@ if(status EQUAL 0 OR EXISTS "${WORK}/invalid")
   message(FATAL_ERROR "Invalid metadata must fail before writing artifacts")
 endif()
 file(WRITE "${WORK}/b/inventory.json" "[\"obsolete.cpp\"]")
+file(WRITE "${WORK}/b/obsolete.cpp" "obsolete")
 execute_process(COMMAND "${GENERATOR}" "${METADATA}" "${PUBLICATION}" "${WORK}/b"
   RESULT_VARIABLE status ERROR_VARIABLE errors)
-if(status EQUAL 0 OR NOT errors MATCHES "Obsolete generated outputs")
-  message(FATAL_ERROR "Obsolete inventory was not rejected")
+if(NOT status EQUAL 0 OR EXISTS "${WORK}/b/obsolete.cpp")
+  message(FATAL_ERROR "Obsolete output was not cleaned: ${errors}")
 endif()
 
 # The source default and public alias must move together, without a new wrapper.

@@ -1,4 +1,4 @@
-set(json_generated ${runtime_generated}/json-proof)
+set(json_generated ${runtime_generated}-json-proof)
 set(json_publication ${CMAKE_CURRENT_SOURCE_DIR}/publication.json)
 set(json_outputs)
 foreach(path public/scpp/integers.hpp public/scpp/values.hpp public/scpp/numeric.hpp

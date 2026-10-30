@@ -8,7 +8,7 @@ implemented or implied by generated physical plans.
 
 ## Published types and names
 
-The default publication emits int32, int64, bool_t, null_t, float64, string,
+The default publication emits int64, byte, bool_t, null_t, float64, string,
 vector_int64 and vector_string as its core types. The subsequent carrier extension
 adds sixteen nullable/result specializations and scpp::error_t by default.
 The integer registry supports all eight signed/
@@ -196,3 +196,11 @@ with datetime and does not require tests. Int64, float64, bool_t and string also
 have direct, demand-selected encode overloads with no boxing. Their nullable forms
 encode empty as null and present values through the same scalar writer. Typed container
 encoding, typed extraction and source compiler integration remain deferred.
+
+## Numeric module and byte update — 2026-10-30
+
+Additional integer widths require explicit `numeric` activation and demand. Byte
+is a distinct unsigned eight-bit core value with checked explicit integer casts
+and bitwise operations, not an arithmetic integer alias. See the
+[normative numeric/byte contract](numeric_module.md) for operations and module
+composition. There are no additional floating widths or char8 in this slice.

@@ -68,9 +68,15 @@ Preparation commands print JSON. Successful generation/check prints JSON contain
 Scalar projections reject non-scalar demands; complete runtime preparation validates
 registered optional-family metadata even when that family is not requested.
 
-Complete preparation/rendering and old-inventory validation precede writes.
-`--check` is read-only. An obsolete inventory entry rejects before mutation;
-unlisted files remain untouched. Publication is per-file, not transactional.
+Complete preparation/rendering precedes cleanup and writes. The output root is
+dedicated generated storage. Normal generation fully clears `.hpp`, `.cpp` and
+`.json` files recursively, then emits the complete new publication. Other extensions
+are preserved; symlink directories are not followed. The versioned `inventory.json`
+manifest (`generator`, `version`, `files`) is written last. Bump `OUTPUT_VERSION` in
+`php/publication.php` when the output contract changes; old/malformed manifests need
+no migration because regeneration always starts with cleanup.
+`--check` is read-only and rejects missing, changed or obsolete generated files.
+Publication is per-file, not transactional.
 Do not run concurrent writers against one output directory.
 
 ## Rebuilds and proofs
@@ -119,3 +125,12 @@ The compiler is now PHP: `compiler/my-try/` is being mined incrementally into
 The [boxed publication contract](../../specs/boxed_slice.md) describes the optional
 `boxed` request. Native facts measure the actual private boxed layout; the generated
 public classes use opaque inline storage with compile-time ABI checks.
+
+## Core and numeric demand
+
+Core's default integer/byte types are int64 and distinct byte; float64 remains core.
+Additional integer widths require `"modules": ["numeric"]` in publication metadata.
+Only explicitly requested types/operators are emitted. The build option
+`SCPP_ENABLE_NUMERIC=ON` composes `runtime/metadata/numeric_publication.json` with
+core. This is API publication selection, not implemented source-level PRJ parsing.
+See [the numeric/byte and cleanup contract](../../specs/numeric_module.md).

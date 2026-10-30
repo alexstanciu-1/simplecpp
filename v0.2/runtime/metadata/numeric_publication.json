@@ -1,0 +1,409 @@
+{
+  "types": [
+    "int32"
+  ],
+  "operators": [
+    {
+      "operation": "add",
+      "operands": [
+        "int32",
+        "int32"
+      ]
+    },
+    {
+      "operation": "add",
+      "operands": [
+        "int32",
+        "int64"
+      ],
+      "both_orders": true
+    },
+    {
+      "operation": "add",
+      "operands": [
+        "int32",
+        {
+          "native": "int"
+        }
+      ],
+      "both_orders": true
+    },
+    {
+      "operation": "subtract",
+      "operands": [
+        "int32",
+        "int32"
+      ]
+    },
+    {
+      "operation": "subtract",
+      "operands": [
+        "int32",
+        {
+          "native": "int"
+        }
+      ],
+      "both_orders": true
+    },
+    {
+      "operation": "multiply",
+      "operands": [
+        "int32",
+        "int32"
+      ]
+    },
+    {
+      "operation": "multiply",
+      "operands": [
+        "int32",
+        {
+          "native": "int"
+        }
+      ],
+      "both_orders": true
+    },
+    {
+      "operation": "divide",
+      "operands": [
+        "int32",
+        "int32"
+      ]
+    },
+    {
+      "operation": "divide",
+      "operands": [
+        "int32",
+        {
+          "native": "int"
+        }
+      ],
+      "both_orders": true
+    },
+    {
+      "operation": "remainder",
+      "operands": [
+        "int32",
+        "int32"
+      ]
+    },
+    {
+      "operation": "remainder",
+      "operands": [
+        "int32",
+        {
+          "native": "int"
+        }
+      ],
+      "both_orders": true
+    },
+    {
+      "operation": "bit_and",
+      "operands": [
+        "int32",
+        "int32"
+      ]
+    },
+    {
+      "operation": "bit_and",
+      "operands": [
+        "int32",
+        {
+          "native": "int"
+        }
+      ],
+      "both_orders": true
+    },
+    {
+      "operation": "bit_or",
+      "operands": [
+        "int32",
+        "int32"
+      ]
+    },
+    {
+      "operation": "bit_or",
+      "operands": [
+        "int32",
+        {
+          "native": "int"
+        }
+      ],
+      "both_orders": true
+    },
+    {
+      "operation": "bit_xor",
+      "operands": [
+        "int32",
+        "int32"
+      ]
+    },
+    {
+      "operation": "bit_xor",
+      "operands": [
+        "int32",
+        {
+          "native": "int"
+        }
+      ],
+      "both_orders": true
+    },
+    {
+      "operation": "equal",
+      "operands": [
+        "int32",
+        "int32"
+      ]
+    },
+    {
+      "operation": "not_equal",
+      "operands": [
+        "int32",
+        "int32"
+      ]
+    },
+    {
+      "operation": "less",
+      "operands": [
+        "int32",
+        "int32"
+      ]
+    },
+    {
+      "operation": "less_equal",
+      "operands": [
+        "int32",
+        "int32"
+      ]
+    },
+    {
+      "operation": "greater",
+      "operands": [
+        "int32",
+        "int32"
+      ]
+    },
+    {
+      "operation": "greater_equal",
+      "operands": [
+        "int32",
+        "int32"
+      ]
+    },
+    {
+      "operation": "positive",
+      "operands": [
+        "int32"
+      ]
+    },
+    {
+      "operation": "negate",
+      "operands": [
+        "int32"
+      ]
+    },
+    {
+      "operation": "bit_not",
+      "operands": [
+        "int32"
+      ]
+    },
+    {
+      "operation": "shift_left",
+      "operands": [
+        "int32",
+        "int32"
+      ]
+    },
+    {
+      "operation": "shift_right",
+      "operands": [
+        "int32",
+        "int32"
+      ]
+    },
+    {
+      "operation": "add_assign",
+      "operands": [
+        "int32",
+        "int32"
+      ]
+    },
+    {
+      "operation": "add_assign",
+      "operands": [
+        "int32",
+        {
+          "native": "int"
+        }
+      ]
+    },
+    {
+      "operation": "subtract_assign",
+      "operands": [
+        "int32",
+        "int32"
+      ]
+    },
+    {
+      "operation": "subtract_assign",
+      "operands": [
+        "int32",
+        {
+          "native": "int"
+        }
+      ]
+    },
+    {
+      "operation": "multiply_assign",
+      "operands": [
+        "int32",
+        "int32"
+      ]
+    },
+    {
+      "operation": "multiply_assign",
+      "operands": [
+        "int32",
+        {
+          "native": "int"
+        }
+      ]
+    },
+    {
+      "operation": "divide_assign",
+      "operands": [
+        "int32",
+        "int32"
+      ]
+    },
+    {
+      "operation": "divide_assign",
+      "operands": [
+        "int32",
+        {
+          "native": "int"
+        }
+      ]
+    },
+    {
+      "operation": "remainder_assign",
+      "operands": [
+        "int32",
+        "int32"
+      ]
+    },
+    {
+      "operation": "remainder_assign",
+      "operands": [
+        "int32",
+        {
+          "native": "int"
+        }
+      ]
+    },
+    {
+      "operation": "bit_and_assign",
+      "operands": [
+        "int32",
+        "int32"
+      ]
+    },
+    {
+      "operation": "bit_and_assign",
+      "operands": [
+        "int32",
+        {
+          "native": "int"
+        }
+      ]
+    },
+    {
+      "operation": "bit_or_assign",
+      "operands": [
+        "int32",
+        "int32"
+      ]
+    },
+    {
+      "operation": "bit_or_assign",
+      "operands": [
+        "int32",
+        {
+          "native": "int"
+        }
+      ]
+    },
+    {
+      "operation": "bit_xor_assign",
+      "operands": [
+        "int32",
+        "int32"
+      ]
+    },
+    {
+      "operation": "bit_xor_assign",
+      "operands": [
+        "int32",
+        {
+          "native": "int"
+        }
+      ]
+    },
+    {
+      "operation": "prefix_increment",
+      "operands": [
+        "int32"
+      ]
+    },
+    {
+      "operation": "postfix_increment",
+      "operands": [
+        "int32"
+      ]
+    },
+    {
+      "operation": "prefix_decrement",
+      "operands": [
+        "int32"
+      ]
+    },
+    {
+      "operation": "postfix_decrement",
+      "operands": [
+        "int32"
+      ]
+    },
+    {
+      "operation": "add_assign",
+      "operands": [
+        "int32",
+        "int64"
+      ]
+    },
+    {
+      "operation": "shift_left_assign",
+      "operands": [
+        "int32",
+        "int32"
+      ]
+    },
+    {
+      "operation": "shift_right_assign",
+      "operands": [
+        "int32",
+        "int32"
+      ]
+    },
+    {
+      "operation": "add",
+      "operands": [
+        "int32",
+        "float64"
+      ],
+      "both_orders": true
+    }
+  ],
+  "string_casts": [
+    "int32"
+  ]
+}

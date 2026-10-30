@@ -47,5 +47,8 @@
       "format_local_now",
       "parse_common_local"
     ]
-  }
+  },
+  "modules": [
+    "numeric"
+  ]
 }

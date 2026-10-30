@@ -498,6 +498,20 @@ wider record-layout queries remain separate. Sizes and alignments come from the
 target C++ compiler, not from the compiler host or fixed padding assumptions.
 This does not introduce source constant-call evaluation.
 
+## v0.2 byte and numeric-module amendment — 2026-10-30
+
+For the PHP-first v0.2 rebuild, `byte` is a distinct unsigned eight-bit core type,
+not an alias of uint8. Core retains int64 and float64; additional integer widths
+require the optional numeric module and explicit demand. Byte admits explicit
+checked integer conversions, bitwise operations, shifts by int64 counts in 0..7,
+and same-type equality. It does not participate in ordinary integer arithmetic
+or implicit numeric promotion. Use an explicit integer conversion first.
+
+This supersedes byte-alias statements below for the new v0.2 implementation;
+legacy implementations remain migration donors. Full runtime admission and
+publication details: [core byte and numeric module](../v0.2/specs/numeric_module.md).
+Compiler/PRJ enforcement and byte string helpers remain separate future slices.
+
 ## 7. v0.2 integer arithmetic and numeric comparisons
 
 Agreed 2026-10-10; promotion revised 2026-10-27. For `+`, `-`, `*`, `/`, `%`,

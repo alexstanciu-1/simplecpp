@@ -12,7 +12,9 @@ for the type-blind compiler, preserve Simple C++ contracts, and reuse proven v0.
 implementation and knowledge, including modules. The note also records the intended
 compiler/runtime boundary, core milestone and open design decisions.
 
-The runtime implements metadata-selected integers, bool/null, float64, strings,
+The runtime core publishes int64 and distinct byte, with additional integer widths
+selected through the optional [numeric module](specs/numeric_module.md). It also
+implements bool/null, float64, strings,
 concrete vectors, typed hashes, nullable/result carriers and concrete record ownership/value APIs.
 The [API summary](specs/runtime_api_summary.md) and linked family contracts define
 supported behavior. [Typed hashes](specs/hash_slice.md) are generated on request.
@@ -42,9 +44,11 @@ cmake --build --preset default
 ```
 
 Link `scpp_json` to use it. `SCPP_ENABLE_JSON` and `SCPP_ENABLE_DATETIME` can be
-enabled together and both work with `BUILD_TESTING=OFF`. Each profile has a separate
-generated API directory; disabling a module removes it from the active targets and
-publication. Both options default to OFF.
+enabled together and both work with `BUILD_TESTING=OFF`. `SCPP_ENABLE_NUMERIC=ON`
+adds the configured optional integer demand; datetime selects uint64 as a dependency.
+All options share the build-local `generated/` root: regeneration cleans disabled
+module artifacts as well as removing the corresponding build targets. Options default
+to OFF.
 
 The sole API generator is [PHP 8.5 tooling](tools/api_generator/README.md).
 It resolves metadata and explicit native C++ probe facts into public headers,
@@ -107,8 +111,10 @@ launcher invokes PHP with the current build's explicit facts/context:
 ```
 
 Remove `--check` to publish. Preparation validates before writing; check mode is
-read-only. Obsolete inventory entries reject. Publication is per-file rather than
-transactional. Cross-compilation and sealed ABI packages remain outside this slice.
+read-only. Normal generation fully cleans `.hpp`, `.cpp` and `.json` files in its
+dedicated output directory before rewriting the new publication, with a versioned
+manifest written last. Other extensions are preserved. Publication is per-file
+rather than transactional. Cross-compilation and sealed ABI packages remain outside this slice.
 
 PHP metadata parsing preserves large/raw number tokens, rejects decoded duplicate
 keys and limits nesting to 128 containers. This is a tooling boundary, not a

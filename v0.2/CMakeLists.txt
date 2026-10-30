@@ -113,6 +113,30 @@ target_link_libraries(scpp_runtime_demo PRIVATE scpp_runtime)
 
 include(CTest)
 if(BUILD_TESTING)
+  # Wide-number regression consumers have their own explicit numeric publication.
+  # Its generated directory is a sibling, never a child of another publication.
+  set(numeric_proof_generated ${CMAKE_CURRENT_BINARY_DIR}/generated-numeric-proof)
+  set(numeric_proof_publication ${CMAKE_CURRENT_SOURCE_DIR}/tests/generator_parity/numeric_publication.json)
+  set(numeric_proof_outputs)
+  foreach(path public/scpp/carriers.hpp public/scpp/vectors.hpp public/scpp/string.hpp
+      public/scpp/values.hpp public/scpp/integers.hpp public/scpp/numeric.hpp
+      public/scpp/native_bridge.hpp public/scpp/short_names.hpp src/runtime.cpp prepared.json inventory.json)
+    list(APPEND numeric_proof_outputs ${numeric_proof_generated}/${path})
+  endforeach()
+  add_custom_command(OUTPUT ${numeric_proof_outputs}
+    COMMAND ${generator_launcher} ${runtime_metadata} ${numeric_proof_publication} ${numeric_proof_generated}
+    DEPENDS scpp_api_generator ${generator_sources} ${api_tooling} ${native_facts} ${native_context}
+      ${generator_launcher} ${runtime_metadata} ${numeric_proof_publication} VERBATIM)
+  add_library(numeric_proof_runtime STATIC ${numeric_proof_generated}/src/runtime.cpp)
+  target_include_directories(numeric_proof_runtime PUBLIC ${numeric_proof_generated}/public
+    PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/runtime/src/numeric ${CMAKE_CURRENT_SOURCE_DIR}/runtime/src/sequence)
+  target_compile_features(numeric_proof_runtime PUBLIC cxx_std_23)
+  add_executable(byte_consumer_test tests/byte_consumer.cpp)
+  target_link_libraries(byte_consumer_test PRIVATE scpp_runtime)
+  add_test(NAME byte_consumer COMMAND byte_consumer_test)
+  add_test(NAME generator_cleanup COMMAND ${PHP_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/api_generator/tests/publication.php)
+  add_test(NAME numeric_contract COMMAND ${PHP_EXECUTABLE}
+    ${CMAKE_CURRENT_SOURCE_DIR}/tools/api_generator/tests/numeric.php ${native_facts} ${native_context})
   add_test(NAME generator_input_contract COMMAND ${PHP_EXECUTABLE}
     ${CMAKE_CURRENT_SOURCE_DIR}/tools/api_generator/tests/contracts.php ${native_facts} ${native_context})
   add_test(NAME generator_parity COMMAND ${Python3_EXECUTABLE} -B
@@ -139,34 +163,34 @@ if(BUILD_TESTING)
   add_test(NAME carrier_publication COMMAND ${CMAKE_COMMAND}
     -DMOLD_LINKER=${SCPP_MOLD_LINKER}
     -DGENERATOR=${generator_launcher}
-    -DMETADATA=${runtime_metadata} -DPUBLICATION=${CMAKE_CURRENT_SOURCE_DIR}/runtime/metadata/publication.json
+    -DMETADATA=${runtime_metadata} -DPUBLICATION=${numeric_proof_publication}
     -DCXX=${CMAKE_CXX_COMPILER} "-DCXX_FLAGS=${CMAKE_CXX_FLAGS}"
     -DSOURCE=${CMAKE_CURRENT_SOURCE_DIR}
     -DWORK=${CMAKE_CURRENT_BINARY_DIR}/carrier-proof
     -P ${CMAKE_CURRENT_SOURCE_DIR}/tests/carrier_publication.cmake)
   add_executable(carrier_consumer_test tests/carrier_consumer.cpp)
-  target_link_libraries(carrier_consumer_test PRIVATE scpp_runtime)
+  target_link_libraries(carrier_consumer_test PRIVATE numeric_proof_runtime)
   add_test(NAME carrier_consumer COMMAND carrier_consumer_test)
   add_test(NAME runtime_demo COMMAND scpp_runtime_demo)
   set_tests_properties(runtime_demo PROPERTIES PASS_REGULAR_EXPRESSION "Ada: 21; ratio=7")
   add_executable(vector_consumer_test tests/vector_consumer.cpp)
-  target_link_libraries(vector_consumer_test PRIVATE scpp_runtime)
+  target_link_libraries(vector_consumer_test PRIVATE numeric_proof_runtime)
   add_test(NAME vector_consumer COMMAND vector_consumer_test)
   add_test(NAME vector_publication COMMAND ${CMAKE_COMMAND}
     -DMOLD_LINKER=${SCPP_MOLD_LINKER}
     -DGENERATOR=${generator_launcher}
-    -DMETADATA=${runtime_metadata} -DPUBLICATION=${CMAKE_CURRENT_SOURCE_DIR}/runtime/metadata/publication.json
+    -DMETADATA=${runtime_metadata} -DPUBLICATION=${numeric_proof_publication}
     -DCXX=${CMAKE_CXX_COMPILER} "-DCXX_FLAGS=${CMAKE_CXX_FLAGS}"
     -DSOURCE=${CMAKE_CURRENT_SOURCE_DIR}
     -DWORK=${CMAKE_CURRENT_BINARY_DIR}/vector-proof
     -P ${CMAKE_CURRENT_SOURCE_DIR}/tests/vector_publication.cmake)
   add_executable(string_consumer_test tests/string_consumer.cpp)
-  target_link_libraries(string_consumer_test PRIVATE scpp_runtime)
+  target_link_libraries(string_consumer_test PRIVATE numeric_proof_runtime)
   add_test(NAME string_consumer COMMAND string_consumer_test)
   add_test(NAME string_publication COMMAND ${CMAKE_COMMAND}
     -DMOLD_LINKER=${SCPP_MOLD_LINKER}
     -DGENERATOR=${generator_launcher}
-    -DMETADATA=${runtime_metadata} -DPUBLICATION=${CMAKE_CURRENT_SOURCE_DIR}/runtime/metadata/publication.json
+    -DMETADATA=${runtime_metadata} -DPUBLICATION=${numeric_proof_publication}
     -DCXX=${CMAKE_CXX_COMPILER} "-DCXX_FLAGS=${CMAKE_CXX_FLAGS}"
     -DSOURCE=${CMAKE_CURRENT_SOURCE_DIR}
     -DWORK=${CMAKE_CURRENT_BINARY_DIR}/string-proof
@@ -176,37 +200,37 @@ if(BUILD_TESTING)
   target_compile_features(sequence_semantics_test PRIVATE cxx_std_23)
   add_test(NAME sequence_semantics COMMAND sequence_semantics_test)
   add_executable(floating_consumer_test tests/floating_consumer.cpp)
-  target_link_libraries(floating_consumer_test PRIVATE scpp_runtime)
+  target_link_libraries(floating_consumer_test PRIVATE numeric_proof_runtime)
   add_test(NAME floating_consumer COMMAND floating_consumer_test)
   add_executable(value_consumer_test tests/value_consumer.cpp)
-  target_link_libraries(value_consumer_test PRIVATE scpp_runtime)
+  target_link_libraries(value_consumer_test PRIVATE numeric_proof_runtime)
   add_test(NAME value_consumer COMMAND value_consumer_test)
   add_executable(integer_consumer_test tests/integer_consumer.cpp)
-  target_link_libraries(integer_consumer_test PRIVATE scpp_runtime)
+  target_link_libraries(integer_consumer_test PRIVATE numeric_proof_runtime)
   add_test(NAME integer_consumer COMMAND integer_consumer_test)
   add_test(NAME runtime_freshness COMMAND scpp_api_generator
     ${runtime_metadata} ${runtime_publication} ${runtime_generated} --check)
   add_test(NAME runtime_generation COMMAND ${CMAKE_COMMAND}
     -DCXX=${CMAKE_CXX_COMPILER} "-DCXX_FLAGS=${CMAKE_CXX_FLAGS}"
     -DGENERATOR=${generator_launcher}
-    -DMETADATA=${runtime_metadata} -DPUBLICATION=${CMAKE_CURRENT_SOURCE_DIR}/runtime/metadata/publication.json
+    -DMETADATA=${runtime_metadata} -DPUBLICATION=${numeric_proof_publication}
     -DWORK=${CMAKE_CURRENT_BINARY_DIR}/generation-proof
     -P ${CMAKE_CURRENT_SOURCE_DIR}/tests/runtime_generation.cmake)
   add_test(NAME runtime_public_boundary COMMAND ${CMAKE_COMMAND}
     -DCXX=${CMAKE_CXX_COMPILER} "-DCXX_FLAGS=${CMAKE_CXX_FLAGS}"
-    -DGENERATED=${runtime_generated} -DWORK=${CMAKE_CURRENT_BINARY_DIR}/public-proof
+    -DGENERATED=${numeric_proof_generated} -DWORK=${CMAKE_CURRENT_BINARY_DIR}/public-proof
     -P ${CMAKE_CURRENT_SOURCE_DIR}/tests/runtime_public_boundary.cmake)
   add_test(NAME integer_full_publication COMMAND ${CMAKE_COMMAND}
     -DMOLD_LINKER=${SCPP_MOLD_LINKER}
     -DGENERATOR=${generator_launcher}
-    -DMETADATA=${runtime_metadata} -DPUBLICATION=${CMAKE_CURRENT_SOURCE_DIR}/runtime/metadata/publication.json
+    -DMETADATA=${runtime_metadata} -DPUBLICATION=${numeric_proof_publication}
     -DCXX=${CMAKE_CXX_COMPILER} "-DCXX_FLAGS=${CMAKE_CXX_FLAGS}"
     -DSOURCE=${CMAKE_CURRENT_SOURCE_DIR}
     -DWORK=${CMAKE_CURRENT_BINARY_DIR}/integer-full-proof
     -P ${CMAKE_CURRENT_SOURCE_DIR}/tests/integer_full_publication.cmake)
   add_test(NAME native_operator_publication COMMAND ${CMAKE_COMMAND}
     -DGENERATOR=${generator_launcher}
-    -DMETADATA=${runtime_metadata} -DPUBLICATION=${CMAKE_CURRENT_SOURCE_DIR}/runtime/metadata/publication.json
+    -DMETADATA=${runtime_metadata} -DPUBLICATION=${numeric_proof_publication}
     -DCXX=${CMAKE_CXX_COMPILER} "-DCXX_FLAGS=${CMAKE_CXX_FLAGS}"
     -DWORK=${CMAKE_CURRENT_BINARY_DIR}/native-publication-proof
     -P ${CMAKE_CURRENT_SOURCE_DIR}/tests/native_operator_publication.cmake)

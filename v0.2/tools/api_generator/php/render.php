@@ -1,6 +1,7 @@
 <?php
 declare(strict_types=1);
 namespace Scpp\Api;
+require_once __DIR__ . '/publication.php';
 require_once __DIR__ . '/render_boxed.php';
 require_once __DIR__ . '/render_json.php';
 
@@ -272,7 +273,7 @@ function render(array $plan): array {
     renderJson($plan, $files);
     renderBoxed($plan, $files);
     ksort($files, SORT_STRING);
-    $files['inventory.json'] = encode(array_keys($files)) . "\n";
+    $files['inventory.json'] = encode(['generator' => 'scpp-api', 'version' => OUTPUT_VERSION, 'files' => array_keys($files)]) . "\n";
     ksort($files, SORT_STRING);
     return $files;
 }
