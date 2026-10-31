@@ -90,6 +90,7 @@ The authority stack for the current project is:
    - `specs/builtins/process/getenv.md` (environment snapshots, absence and NUL-name rejection)
    - `specs/error_values_and_take.md`
    - `specs/v0_2_preparation_diagnostics.md`
+   - `specs/compiler_entry_v0_2.md` (bounded integer entry, checked process-exit conversion and no-argument void functions)
    - `specs/async_await.md`
    - relevant builtin contracts under `specs/builtins/`
 

@@ -178,7 +178,7 @@ final class JsonReader {
         if (preg_match('/\G-?(?:0|[1-9][0-9]*)(?:\.[0-9]+)?(?:[eE][+-]?[0-9]+)?/', $this->input, $match, 0, $this->offset) === 1) {
             $this->offset += strlen($match[0]);
             $token = $match[0];
-            if (ctype_digit($token) && (strlen($token) < strlen((string) PHP_INT_MAX) || (strlen($token) === strlen((string) PHP_INT_MAX) && strcmp($token, (string) PHP_INT_MAX) <= 0))) {
+            if ((strspn($token, '0123456789') === strlen($token)) && (strlen($token) < strlen((string) PHP_INT_MAX) || (strlen($token) === strlen((string) PHP_INT_MAX) && strcmp($token, (string) PHP_INT_MAX) <= 0))) {
                 return (int) $token;
             }
             return new JsonNumber($token);

@@ -1,14 +1,16 @@
 """Exercise the PHP entry point as a subprocess, including transactional failure."""
 import json
+import os
 from pathlib import Path
 import subprocess
 import tempfile
 
+php = os.environ.get('PHP_EXECUTABLE', 'php')
 main = Path(__file__).resolve().parents[1] / 'main.php'
 
 
 def run(*args):
-    return subprocess.run(['php', str(main), *map(str, args)], capture_output=True)
+    return subprocess.run([str(php), str(main), *map(str, args)], capture_output=True)
 
 
 assert run('--help').returncode == 0

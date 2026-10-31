@@ -44,7 +44,7 @@ cmake --build --preset default
 ctest --preset default
 ```
 
-CMake selects `PHP_EXECUTABLE` and creates two launchers in the build directory.
+CMake selects `PHP_EXECUTABLE` (a 64-bit PHP 8.5+ binary found on PATH) and creates two launchers in the build directory.
 The positional runtime launcher supplies that build's explicit native facts:
 
 ```sh

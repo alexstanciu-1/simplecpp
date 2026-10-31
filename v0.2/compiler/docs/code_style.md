@@ -10,6 +10,13 @@ touched code without turning a bounded task into a whole-tree formatting pass.
 
 ## PHP types and declarations
 
+- Give every class, interface, trait and enum a directly attached doc comment
+  explaining its role, ownership or place in the compiler flow. For AST and fact
+  records, include a short source-code example where it clarifies what the record
+  represents, followed by the mapping to its fields or facts. Label flavor-specific
+  examples and distinguish parsed-only syntax from executable support. Do not add
+  examples that merely repeat a class name or imply unimplemented functionality.
+
 - Use `declare(strict_types=1);` and `namespace scpp\compiler;` for compiler code.
   Data types use lowercase `snake_case`; workers use `Capitalized_Snake_Case`.
   Use descriptive `snake_case` members and functions, consistent with their owner.
@@ -77,7 +84,8 @@ Current reviewed bounds:
 
 | Data | Intent and reason |
 | --- | --- |
-| Source size, byte offsets, exclusive span ends, scanner position | `uint32`; source size is at most 0xFFFFFFFF and EOF equals source size. |
+| AST start/end and header end | `uint32`; token positions, end exclusive, tied to the root token generation. |
+| Source size, byte offsets, exclusive byte ends, scanner position | `uint32`; source size is at most 0xFFFFFFFF and EOF equals source size. |
 | Token length | `uint32`, restricted to 1..0xFFFFFF. |
 | Token-list indexes and parser cursor | `uint32`; positive-length, nonoverlapping tokens limit count to source size. The cursor can equal count at EOF. |
 | Line-start elements | `uint32` byte offsets. The list count itself can reach 0x100000000 for an all-newline maximum-size source. |

@@ -3,6 +3,9 @@
 declare(strict_types=1);
 namespace scpp\compiler;
 
+/**
+ * A source-language failure carrying the original source snapshot and byte offset, formatted as path:line:column.
+ */
 final class diagnostic extends \RuntimeException
 {
 	public readonly source_file $source;

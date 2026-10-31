@@ -4,7 +4,7 @@ Doc Status: supporting
 Date: 2026-10-29
 Scope: approved rewrite direction and the intended first parser subset. The active
 PHP rebuild implements loading, tokenization and the bounded declaration/assignment
-parser described below. This is not
+parser and the bounded [integer entry slice](../../specs/compiler_entry_v0_2.md). This is not
 an assertion of complete C++, PHP or JavaScript compatibility.
 
 ## Language and policy boundary
@@ -39,8 +39,8 @@ remain semantic responsibilities. Successful parsing does not mean a valid progr
 
 The shared AST distinguishes an explicit/inferred Local from an Assignment.
 C++/JS assignments carry ExistingBinding intent. PHP bare assignments carry
-DeclareOrAssign intent; analysis decides introduction versus update. No parser builds
-or consults a symbol table. All locals in this first subset are mutable; immutable
+DeclareOrAssign intent; analysis decides introduction versus update. Parsing does not resolve names or directly mutate a global symbol index.
+Local collection records occurrences; function discovery notifies the coordinator. All locals in this first subset are mutable; immutable
 binding syntax is deferred rather than silently mapped to mutable let/auto.
 
 Implemented now: initialized local declarations and simple-name assignments;
@@ -54,8 +54,14 @@ Planned extensions: expression statements and brace blocks. Semicolons are manda
 semicolon insertion. Expressions: decimal integer tokens, names, parentheses, unary
 plus/minus, multiplication/division/remainder, addition/subtraction and shifts.
 Precedence descends in that order; binary operators associate left. Assignments are
-statements, not expressions in this slice. There are no functions, calls, member
-access, comparisons, strings/floats in expressions, const declarations, PHP tags/HTML
+statements, not expressions in this slice. The executable subset additionally admits `return` with an integer/name value.
+The [void-function slice](../../specs/compiler_entry_v0_2.md#no-argument-void-function-extension)
+adds no-parameter definitions (`void f() {}` in C++, `function f(): void {}` in PHP/JS),
+no-argument statement calls, and bare returns inside void functions. Function bodies
+have private local scopes; named signatures settle before body preparation.
+The bounded [echo slice](../compiler/docs/output_slice.md) accepts an integer or quoted literal
+as its single operand in all flavors. String literals are currently output-only.
+There is no member access, comparisons, general string/float expressions, const declarations, PHP tags/HTML
 modes, C++ preprocessing, JS prototypes or JS template literals yet.
 
 Planned type syntax will preserve nested type arguments, including vector<vector<int>>.
@@ -97,14 +103,70 @@ See [retained parser ideas](../compiler/docs/parser_migration_notes.md).
 
 `03_parse/flavors/` owns flavor-specific declaration and assignment grammar.
 Shared parsing machinery owns cursors, named type syntax, integer/name values and
-complete-file publication. Typed AST records retain source intent without resolved
+complete-file publication. Each completed statement is recorded by a source-local
+`Symbol_Collector` during parsing; `Parser::parse()` publishes syntax and collection
+together in one `ast_file_node`. Collection preserves occurrences without resolving
+names or granting forward visibility. There is no later collection traversal.
+Typed AST records retain source intent without resolved
 types or policy; they do not own compiler processing or host serialization.
 The donor supplies typed node families and syntax/analysis separation, without
-importing its incremental scopes, collection callbacks or converter-specific storage.
-Common analysis will resolve names/types, apply the project profile, establish
-execution order and settle facts for the common backend.
+importing its incremental scopes, synchronized global publication or converter-specific storage.
+The bounded entry analysis now resolves integer locals and return values in source
+order and settles facts for C++ emission. Richer types, profile enforcement and
+execution-order rules remain future work; see the [entry guide](../compiler/docs/entry_slice.md).
 
 The retired parser's design and test cases are summarized in the migration notes.
 The PHP tests now cover declaration equivalence, write intent, exact spans, unresolved
 names/types, malformed and wrong-flavor input, EOF diagnostics, 10,000 flat statements
 and CLI publication. Arithmetic, generic types and nesting proofs remain future work.
+
+## Multifile entry slice
+
+The `program` command accepts an explicit mixed-flavor inventory and a selected
+root-relative entry. Shared program preparation rejects executable statements in
+secondary sources; they admit comments/whitespace and void function definitions. Each
+source produces a translation unit and one adapter supplies `main`. See the
+[multifile guide](../compiler/docs/multifile_slice.md) for invocation, verification
+and deferred work. The command runs sequentially; see the
+[execution guide](../compiler/docs/execution.md). PRJ discovery,
+incremental reuse remains pending; no-argument void calls now resolve across files.
+
+## File AST ownership
+
+The parsed result owns one `ast_file_node` containing a keyed declaration map.
+Currently only `func:name` nodes exist. Top-level executable statements become
+one implicit file-private `func:main`, placed first; declaration-only files have
+no implicit entry. The original statement spans remain unchanged. Explicit `main`
+is reserved and not yet supported as source syntax.
+
+Body-local collections and prepared facts attach to the same function-body model
+for entry and ordinary functions. Public symbol publication references declaration
+nodes directly. Duplicate function keys diagnose before insertion; cross-file
+duplicates remain a whole-program analysis check. This representation adds no
+constant, class, interface or trait syntax. Existing CLI views are derived from it.
+
+## AST token positions
+
+All AST syntax records inherit `ast_node` with token-based `[start, end)` and a
+single-assignment syntax parent. The file root retains the token generation and
+source information. Tokens retain byte offsets and lengths; source text and
+line/column diagnostics are recovered through that root. Nodes retain names and
+other semantic input fields directly. They do not retain byte spans or source
+references. Empty ranges anchor to the next token, or source EOF; synthetic entry
+names/type spellings are fields without authored tokens. Function nodes acquire their
+full end when the body completes; header discovery remains earlier and reads only
+initialized header information. These positions do not establish incremental reuse.
+
+## Declaration-owned names and type facts
+
+AST classes consistently use the `ast_` prefix. Names and written type names are
+fields on their owners, not child syntax nodes. Local declarations retain optional
+`type_name` and resolved `type_def`; functions retain optional `return_type_name`
+and resolved `return_type_def`. Resolution is checked before consumers can read
+these facts. The current implementation resolves builtin int/int64 to one canonical
+int64 definition and void to its own definition; it does not add inference or types.
+
+Function calls retain direct links to settled function declarations. Local indexes
+and variable bindings reference local declaration nodes directly. The declaration
+phase completes before any body uses foreign signature facts. Reset/reanalysis is
+sequential; old handles are not independent snapshots of declaration-owned facts.

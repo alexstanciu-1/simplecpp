@@ -4,7 +4,7 @@ Doc Status: supporting
 
 These rules apply to the entire `v0.2/compiler/` subtree. After the repository's
 required reading, read [README.md](README.md), [code_style.md](docs/code_style.md)
-and the contract owning the change. The [frontend contract](../specs/compiler_frontends.md)
+the [AST ownership decisions](docs/ast_model.md), and the contract owning the change. The [frontend contract](../specs/compiler_frontends.md)
 records the current language-flavor and parser boundaries.
 
 ## Current direction
@@ -12,6 +12,25 @@ records the current language-flavor and parser boundaries.
 - Work in small end-to-end slices. Agree each slice's scope and verification
   checklist with the user before implementation, then complete the agreed checks
   and review before moving to the next slice.
+- Run the PHP compiler sequentially on 64-bit PHP 8.5+, using ordinary `php`.
+  ZTS and `parallel` are not requirements. Read [execution guidance](docs/execution.md).
+  PHP is the bootstrap implementation. The agreed native ownership model includes
+  private lowering; concrete shared lowering needs are reviewed individually.
+  Do not restore PHP worker runtimes, transport adapters,
+  phase-receipt serialization or fact export/import solely for interpreter isolation.
+- Keep stage ownership and sequencing explicit. Source syntax and semantic facts
+  remain ordinary in-process objects. The coordinator completes collection before
+  preparation and completes preparation before lowering/publication. Sequential
+  execution does not prove native thread safety.
+- Before changing frontend, preparation, lowering or orchestration, read the
+  [thread-safety plan through lowering](../specs/planning/two_traversal_preparation.md).
+  It records exclusive source/body ownership, early declaration notifications into
+  a coordinator-owned pending index (direct calls in PHP, synchronized delivery in
+  native execution), publication only after frontend completion,
+  relationship resolution before contract preparation, owner-private reference
+  indexes, immutable external reads, phase joins and incremental reader lifetimes.
+  It is an agreed design, not proof of current implementation safety or authorization
+  to implement a scheduler, AST-fact refactor or native synchronization machinery.
 - Author the compiler in PHP 8.5. The later Simple C++ port will be manual or
   assisted; do not impose the donor's PHP-to-PHP++ converter restrictions here.
 - Simple C++ is one language with cpp/php/js syntax flavors. There is one PHP
@@ -25,6 +44,16 @@ records the current language-flavor and parser boundaries.
   compatibility machinery. Do not create empty stages for future functionality.
 
 ## Data and processing ownership
+
+Keep one `ast_file_node` per frontend result. Prepared facts belong to their owning
+AST node, with a nearby doc comment stating readiness and null meaning. Do not grow
+a second prepared AST or restore parsed/collected file wrappers. Remaining prepared
+records are migration work, not a reason to introduce more identity wrappers.
+
+Every class, interface, trait and enum needs a role doc comment. Include a short
+code example in that comment when it clarifies the represented syntax, prepared
+facts or usage; keep examples within the documented support boundary. See
+[coding style](docs/code_style.md#php-types-and-declarations).
 
 For all PHP compiler work, maintain the adjacent native-intent comments specified
 in [coding style](docs/code_style.md#native-size-and-collection-intent): integer
@@ -56,6 +85,16 @@ rejection paths; do not invent widths or annotate ordinary locals mechanically.
   Keep semantic type identity, storage representation and operation capability
   distinct. Required fields are nonnullable and populated before use/publication;
   genuine absence is explicit. Non-owning intent alone does not imply nullability.
+- Prefix all AST subclasses with `ast_`. Names and optional written type names
+  live directly on their owning declarations. Resolved type definitions live in
+  protected declaration fields with checked accessors. Calls link to function
+  declarations; symbol indexes do not introduce identity wrappers. Introduce a
+  specialized preparation record only for additional semantic data, not a repeated
+  identity/type. Declaration traits share data/local invariants, not analysis policy.
+- AST nodes inherit token-based `[start, end)` positions and one syntax-parent
+  link from `ast_node`. The file root owns tokens/source; recover byte positions
+  from tokens for diagnostics and literal decoding. Do not reintroduce per-node
+  source pointers or span/range wrappers. Semantic references are not parents.
 - Preserve source bytes, spans, stable identities and syntax order. Indexes are
   lookup aids, not new semantic owners; document their maintenance when introduced.
 - Token kinds have explicit integer IDs in 1..127, with zero reserved. All keywords

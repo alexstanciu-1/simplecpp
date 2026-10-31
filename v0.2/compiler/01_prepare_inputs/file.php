@@ -3,6 +3,9 @@
 declare(strict_types=1);
 namespace scpp\compiler;
 
+/**
+ * Loads one source file into an immutable snapshot with the explicitly selected syntax flavor.
+ */
 final class File_Loader
 {
 	public static function load(string $path, flavor $flavor): source_file

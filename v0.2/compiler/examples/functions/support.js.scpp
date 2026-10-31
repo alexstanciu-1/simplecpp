@@ -1,0 +1,4 @@
+function finish(): void
+{
+	return;
+}

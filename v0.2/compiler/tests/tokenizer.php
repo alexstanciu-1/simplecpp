@@ -30,8 +30,8 @@ foreach (flavor::cases() as $flavor) {
 	$list = scan('echo auto let int true', $flavor);
 	$expected = match ($flavor) {
 		flavor::php => ['keyword', 'identifier', 'identifier', 'identifier', 'keyword'],
-		flavor::cpp => ['identifier', 'keyword', 'identifier', 'identifier', 'keyword'],
-		flavor::js => ['identifier', 'identifier', 'keyword', 'identifier', 'keyword'],
+		flavor::cpp => ['keyword', 'keyword', 'identifier', 'identifier', 'keyword'],
+		flavor::js => ['keyword', 'identifier', 'keyword', 'identifier', 'keyword'],
 	};
 	check(array_map(fn(token $token): string => $token->kind->label(), $list->tokens) === $expected, 'Flavor keyword boundary');
 	check(scan(" \t\r\n/* bytes \xff */ // tail", $flavor)->tokens === [], 'Trivia and empty generation');

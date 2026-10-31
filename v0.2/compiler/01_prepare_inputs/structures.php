@@ -3,6 +3,19 @@
 declare(strict_types=1);
 namespace scpp\compiler;
 
+/** Source identity and selection, before loading its bytes. */
+final readonly class source_input
+{
+	public string $path;
+	public flavor $flavor;
+
+	public function __construct(string $path, flavor $flavor)
+	{
+		$this->path = $path;
+		$this->flavor = $flavor;
+	}
+}
+
 /** Immutable input snapshot; every downstream span refers to these exact bytes. */
 final readonly class source_file
 {
@@ -48,5 +61,18 @@ final readonly class source_file
 			}
 		}
 		return ['line' => $low + 1, 'column' => $offset - $this->line_starts[$low] + 1];
+	}
+}
+
+/** Explicit source membership; map keys are stable root-relative identities, not input positions. */
+final readonly class program_sources
+{
+	public string $entry_path;
+	public array $sources /** array<string,source_file>; input order retained */;
+
+	public function __construct(string $entry_path, array $sources /** array<string,source_file> */)
+	{
+		$this->entry_path = $entry_path;
+		$this->sources = $sources;
 	}
 }

@@ -142,6 +142,8 @@ enum token_kind: int /** uint8; IDs 1..127, zero reserved */
 }
 
 /**
+ * One lexical token: source byte offset, byte length and lexical kind.
+ *
  * Native layout intent: offset occupies one uint32; length and kind share another.
  * Length uses the low 24 bits; token_kind uses the next 7 bits (IDs 1..127),
  * leaving the highest bit reserved. PHP retains separate properties; packing
