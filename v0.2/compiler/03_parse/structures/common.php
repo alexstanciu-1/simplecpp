@@ -12,7 +12,17 @@ namespace scpp\compiler;
  * ```
  * The node retains the token spelling 0008; preparation later checks and normalizes it to 8.
  */
-final class ast_integer_expression extends ast_expression {}
+final class ast_integer_expression extends ast_expression
+{
+	public function settle_integer(int $value /** int64 */): void
+	{
+		$this->settle_value(type_definition::int64, $value);
+	}
+	public function integer(): int /** int64 */
+	{
+		return $this->constant() ?? throw new \LogicException('Integer value is not prepared');
+	}
+}
 
 /**
  * A variable-name read, storing its normalized name directly; preparation resolves the declaration in the enclosing body.
@@ -25,6 +35,24 @@ final class ast_integer_expression extends ast_expression {}
  */
 final class ast_name_expression extends ast_expression
 {
+	/** Prepared fact: exact local identity; null before preparation or after reset. */
+	protected ?ast_local_declaration $local_def = null;
+
+	public function settle_local(ast_local_declaration $local): void
+	{
+		$this->settle_value($local->type_def(), $local->constant());
+		$this->local_def = $local;
+	}
+	public function local_def(): ast_local_declaration
+	{
+		return $this->local_def ?? throw new \LogicException('Local reference is not settled');
+	}
+	public function reset_preparation(): void
+	{
+		parent::reset_preparation();
+		$this->local_def = null;
+	}
+
 	public readonly string $name;
 
 	public function __construct(string $name, int $start /** uint32; token position */, int $end /** uint32; exclusive */)
@@ -51,6 +79,7 @@ final class ast_local_declaration extends ast_statement implements ast_declarati
 	/** Prepared fact: canonical local type; null until successful declaration preparation or after reset. */
 	protected ?type_definition $type_def = null;
 	public readonly int $id /** uint32; body-local declaration ordinal, assigned by collection */;
+	/** Prepared fact: initializer constant; null means unknown after type settlement, or unprepared before it. */
 	protected ?int $constant /** int64 when known */ = null;
 	public readonly ast_expression $initializer;
 

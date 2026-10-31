@@ -91,6 +91,8 @@ abstract class ast_node
 interface ast_declaration_interface
 {
 	public function declaration_key(): string;
+	public function next_declaration(): ?ast_declaration_interface;
+	public function link_next(ast_declaration_interface $next): void;
 }
 
 /**
@@ -106,6 +108,23 @@ interface ast_declaration_interface
 trait ast_declaration
 {
 	public readonly string $name;
+	/** Same-key declaration in this source scope; not syntax ownership or global-index membership. */
+	protected ?ast_declaration_interface $next = null;
+
+	public function next_declaration(): ?ast_declaration_interface
+	{
+		return $this->next;
+	}
+
+	/** Collection links an unchained duplicate once; existing source chains are never repurposed globally. */
+	public function link_next(ast_declaration_interface $next): void
+	{
+		if (($this->next !== null) || ($next === $this) || ($next->next_declaration() !== null)
+			|| (get_class($next) !== get_class($this)) || ($next->declaration_key() !== $this->declaration_key())) {
+			throw new \LogicException('Invalid duplicate declaration link');
+		}
+		$this->next = $next;
+	}
 
 	/** Default local key; neither a declaration category nor a namespace is included. */
 	public function declaration_key(): string
@@ -125,6 +144,31 @@ trait ast_declaration
  */
 abstract class ast_expression extends ast_node
 {
+	/** Prepared fact: canonical scalar type; null until scalar preparation succeeds. */
+	protected ?type_definition $type_def = null;
+	/** Prepared fact: value at this occurrence; null means unknown once type_def is settled. */
+	protected ?int $constant /** int64 */ = null;
+
+	public function type_def(): type_definition
+	{
+		return $this->type_def ?? throw new \LogicException('Expression type is not settled');
+	}
+	public function constant(): ?int /** int64 */
+	{
+		$this->type_def();
+		return $this->constant;
+	}
+	protected function settle_value(type_definition $type, ?int $constant /** int64 */): void
+	{
+		if ($this->type_def !== null) { throw new \LogicException('Expression is already prepared'); }
+		$this->type_def = $type;
+		$this->constant = $constant;
+	}
+	public function reset_preparation(): void
+	{
+		$this->type_def = null;
+		$this->constant = null;
+	}
 }
 
 /**

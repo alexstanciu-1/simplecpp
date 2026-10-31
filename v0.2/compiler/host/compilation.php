@@ -23,42 +23,47 @@ final class Compilation_Inspection
 				'return_type' => $function->return_type_name,
 				'body_locals' => count($function->body()->locals)];
 		}
-		return ['locals' => $locals, 'references' => $references, 'functions' => $functions];
+		$result = ['locals' => $locals, 'references' => $references, 'functions' => $functions];
+		if ($file->diagnostics !== []) {
+			$result['diagnostics'] = array_map(static fn(diagnostic $error): string => $error->getMessage(), $file->diagnostics);
+		}
+		return $result;
 	}
 
 	/** Report settled identities, value facts, explicit exit conversions and actual work counts. */
 	public static function program(prepared_entry $program): array /** array<string,mixed> */
 	{
-		$result = self::body($program);
+		$result = self::body($program->body());
 		$result['native_int_digits'] = $program->target->digits;
 		$result['functions'] = [];
-		foreach ($program->functions as $function) {
-			$result['functions'][] = ['name' => $function->declaration->name, 'return_type' => $function->declaration->return_type_def()->name,
-				'body' => self::body($function->body)];
+		foreach ($program->file->functions() as $function) {
+			$result['functions'][] = ['name' => $function->name, 'return_type' => $function->return_type_def()->name,
+				'body' => self::body($function->body())];
 		}
 		return $result;
 	}
 
 	/** Body views report resolved callable contracts without traversing another function's body. */
-	private static function body(prepared_body $program): array /** array<string,mixed> */
+	private static function body(ast_function_body $program): array /** array<string,mixed> */
 	{
+		$program->require_prepared();
 		$statements = [];
 		foreach ($program->statements as $statement)
 		{
-			if ($statement instanceof prepared_echo) {
-				$statements[] = ['kind' => 'echo', 'value' => $statement->value instanceof prepared_output_string
-					? ['type' => 'string_literal', 'bytes_hex' => bin2hex($statement->value->bytes)]
+			if ($statement instanceof ast_echo_statement) {
+				$statements[] = ['kind' => 'echo', 'value' => $statement->value instanceof ast_string_expression
+					? ['type' => 'string_literal', 'bytes_hex' => bin2hex($statement->value->bytes())]
 					: self::value($statement->value)];
 			}
-			elseif ($statement instanceof prepared_declaration) {
-				$statements[] = ['kind' => 'local', 'id' => $statement->binding->id,
-					'type' => $statement->binding->type_def()->name, 'initializer' => self::value($statement->initializer)];
+			elseif ($statement instanceof ast_local_declaration) {
+				$statements[] = ['kind' => 'local', 'id' => $statement->id,
+					'type' => $statement->type_def()->name, 'initializer' => self::value($statement->initializer)];
 			}
-			elseif ($statement instanceof prepared_return) {
-				$statements[] = ['kind' => 'return', 'conversion' => $statement->conversion->name,
+			elseif (($statement instanceof ast_return_statement) && ($statement->value !== null)) {
+				$statements[] = ['kind' => 'return', 'conversion' => $statement->conversion()->name,
 					'value' => self::value($statement->value)];
 			}
-			elseif ($statement instanceof prepared_void_return) {
+			elseif ($statement instanceof ast_return_statement) {
 				$statements[] = ['kind' => 'return', 'value' => null];
 			}
 			elseif ($statement instanceof ast_call_statement) {
@@ -72,12 +77,12 @@ final class Compilation_Inspection
 	}
 
 	/** Constants use decimal JSON strings so inspection does not lose int64 precision in consumers. */
-	private static function value(prepared_value $value): array /** array<string,mixed> */
+	private static function value(ast_expression $value): array /** array<string,mixed> */
 	{
-		$row = ['type' => $value->type->name,
-			'constant' => $value->constant === null ? null : (string) $value->constant];
-		if ($value instanceof prepared_reference) {
-			$row['binding'] = $value->binding->id;
+		$row = ['type' => $value->type_def()->name,
+			'constant' => $value->constant() === null ? null : (string) $value->constant()];
+		if ($value instanceof ast_name_expression) {
+			$row['binding'] = $value->local_def()->id;
 		}
 		return $row;
 	}

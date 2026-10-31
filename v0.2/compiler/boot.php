@@ -19,6 +19,7 @@ require_once __DIR__ . '/03_parse/structures/functions.php';
 require_once __DIR__ . '/03_parse/structures/output.php';
 require_once __DIR__ . '/03_parse/collect/structures.php';
 require_once __DIR__ . '/03_parse/collect/collect.php';
+require_once __DIR__ . '/03_parse/collect/diagnostics.php';
 require_once __DIR__ . '/compiler/symbols.php';
 require_once __DIR__ . '/03_parse/cursor.php';
 require_once __DIR__ . '/03_parse/parser.php';

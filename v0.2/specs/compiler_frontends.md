@@ -141,8 +141,13 @@ is reserved and not yet supported as source syntax.
 
 Body-local collections and prepared facts attach to the same function-body model
 for entry and ordinary functions. Public symbol publication references declaration
-nodes directly. Duplicate function keys diagnose before insertion; cross-file
-duplicates remain a whole-program analysis check. This representation adds no
+nodes directly. Duplicate keys retain the first declaration and chain subsequent
+source-local declarations; every body is parsed. Complete file roots expose a
+simple duplicate diagnostic list. Whole-program preparation reconciles cross-file
+candidates and reports every additional declaration against the original location
+before settling facts or lowering. `parse` and `collect` CLI commands retain full
+inspection JSON with a diagnostic list, print errors to stderr and exit 1. Syntax
+errors still stop parsing; general syntax recovery is not implemented. This representation adds no
 constant, class, interface or trait syntax. Existing CLI views are derived from it.
 
 ## AST token positions

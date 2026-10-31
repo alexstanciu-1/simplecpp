@@ -4,8 +4,8 @@ declare(strict_types=1);
 require_once __DIR__ . '/../boot.php';
 
 use scpp\compiler\{Cpp_Emitter, Exit_Preparation, Preparation, Source_Frontend,
-	diagnostic, entry_target, exit_conversion, flavor, prepared_declaration, prepared_reference,
-	prepared_return, ast_return_statement, type_definition, source_file};
+	diagnostic, entry_target, exit_conversion, flavor, ast_local_declaration, ast_name_expression,
+	ast_return_statement, type_definition, source_file};
 
 function verify(bool $condition, string $message): void
 {
@@ -29,14 +29,14 @@ foreach ([['$ret int = 8; return $ret;', flavor::php], ['int ret = 8; return ret
 	verify($collected->main()->body()->locals[0] === $parsed->main()->body()->statements[0], 'Collection retains declaration identity');
 	verify($collected->main()->body()->references[0] === $parsed->main()->body()->statements[1]->value, 'Collection retains unresolved reference');
 	$program = $preparation->prepare($collected, $target);
-	[$local, $return] = $program->statements;
-	verify(($local instanceof prepared_declaration) && ($return instanceof prepared_return), 'Typed facts');
-	verify(($return->value instanceof prepared_reference) && ($return->value->binding === $local->binding), 'Exact binding');
-	verify($local->binding === $collected->main()->body()->locals[0], 'Semantic binding uses collected identity');
-	verify($local->binding->type_def() === type_definition::int64, 'Canonical default int identity');
-	verify(($return->value->constant === 8) && ($return->conversion === exit_conversion::proven), 'Known exit proof');
-	verify(($program->statement_visits === 2) && ($program->expression_visits === 2)
-		&& ($program->name_lookups === 1), 'Single-pass work counts');
+	[$local, $return] = $program->body()->statements;
+	verify(($local instanceof ast_local_declaration) && ($return instanceof ast_return_statement), 'Typed facts');
+	verify(($return->value instanceof ast_name_expression) && ($return->value->local_def() === $local), 'Exact binding');
+	verify($local === $collected->main()->body()->locals[0], 'Semantic binding uses collected identity');
+	verify($local->type_def() === type_definition::int64, 'Canonical default int identity');
+	verify(($return->value->constant() === 8) && ($return->conversion() === exit_conversion::proven), 'Known exit proof');
+	verify(($program->body()->statement_visits === 2) && ($program->body()->expression_visits === 2)
+		&& ($program->body()->name_lookups === 1), 'Single-pass work counts');
 	$outputs[] = $emitter->emit($program);
 	try {
 		$emitter->emit($parsed);
@@ -63,7 +63,8 @@ foreach ([['int ret=ret; return ret;', 'during its initialization'],
 		$preparation->prepare($file, $target);
 		throw new RuntimeException('Expected diagnostic: ' . $text);
 	}
-	catch (diagnostic $error) {
+	catch (diagnostic|\scpp\compiler\diagnostic_group $error) {
+		if ($error instanceof \scpp\compiler\diagnostic_group) { $error = $error->diagnostics[0]; }
 		verify(str_contains($error->getMessage(), $message), $error->getMessage());
 		verify(($error->source === $file->tokens->source) && ($error->offset <= strlen($text)), 'Diagnostic location');
 	}
@@ -74,7 +75,7 @@ verify($emitter->emit($preparation->prepare($frontend->collect($good), $target))
 $leading = $frontend->prepare(new source_file('decimal', 'int ret=0008; return ret;', flavor::cpp), $target);
 verify(str_contains($emitter->emit($leading), '{8LL}'), 'Leading zeros emit decimal, never octal');
 $maximum = $frontend->prepare(new source_file('max', 'int unused=9223372036854775807; return 8;', flavor::cpp), $target);
-verify($maximum->statements[0]->initializer->constant === PHP_INT_MAX, 'Exact int64 maximum');
+verify($maximum->body()->statements[0]->initializer->constant() === PHP_INT_MAX, 'Exact int64 maximum');
 $span = $parsed->main()->body()->statements[1];
 verify(Exit_Preparation::decide(null, $target, $span) === exit_conversion::checked, 'Unknown exit requires runtime check');
 foreach ([$target->minimum, $target->maximum] as $boundary) {

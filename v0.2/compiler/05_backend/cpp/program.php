@@ -11,11 +11,12 @@ final class Cpp_Program
 	/** Canonical output ordering never changes the retained source or syntax order. */
 	public static function emit(prepared_program $program): cpp_program_output
 	{
+		$program->require_prepared();
 		$bodies = [];
 		foreach ($program->files as $path => $file) {
 			$bodies[$path] = (string) $path === $program->entry_path
 				? (new Cpp_Emitter())->entry_body($program->entry)
-				: (new Cpp_Emitter())->functions($program->functions[$path]);
+				: (new Cpp_Emitter())->functions($file->functions());
 		}
 		return self::assemble($program->entry_path, $bodies);
 	}

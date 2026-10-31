@@ -82,7 +82,8 @@ foreach ([
 		$frontend->prepare(new source_file('diagnostic', $text, flavor::cpp), new entry_target(31));
 		throw new RuntimeException('Expected diagnostic');
 	}
-	catch (diagnostic $error) {
+	catch (diagnostic|\scpp\compiler\diagnostic_group $error) {
+		if ($error instanceof \scpp\compiler\diagnostic_group) { $error = $error->diagnostics[0]; }
 		$offset = $needle === null ? strlen($text) : strpos($text, $needle);
 		verify($error->offset === $offset, 'Diagnostic no longer points to original byte: ' . $error->getMessage());
 		$location = $error->source->location($offset);

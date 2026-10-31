@@ -43,11 +43,18 @@ final class Parser
 		};
 		$statements = [];
 		$functions = [];
+		$tails = [];
 		while (!$this->cursor->at_end())
 		{
 			if ($grammar->function_start($this)) {
-				$function = $this->function_declaration($grammar, $functions);
-				$functions['func:' . $function->declaration_key()] = $function;
+				$function = $this->function_declaration($grammar);
+				$key = 'func:' . $function->declaration_key();
+				if (isset($functions[$key])) {
+					($tails[$key] ?? $functions[$key])->link_next($function);
+					$tails[$key] = $function;
+				} else {
+					$functions[$key] = $function;
+				}
 				continue;
 			}
 			$statement = $this->statement($grammar);
@@ -61,7 +68,7 @@ final class Parser
 			$main->complete_body($collector->body(0, count($this->cursor->tokens->tokens), $statements));
 			$functions = ['func:main' => $main] + $functions;
 		}
-		$this->root->complete($functions);
+		$this->root->complete($functions, Declaration_Diagnostics::file($functions));
 		return $this->root;
 	}
 
@@ -90,16 +97,13 @@ final class Parser
 	}
 
 	/** Discover the stable header before parsing its body; local collection never enters the global index. */
-	private function function_declaration(statement_grammar $grammar, array $declarations /** array<string,ast_function_declaration> */): ast_function_declaration
+	private function function_declaration(statement_grammar $grammar): ast_function_declaration
 	{
 		$function = $grammar->function_header($this);
 		$function->attach($this->root);
 		$source = $this->cursor->tokens->source;
 		if ($function->name === 'main') {
 			throw new diagnostic($source, $this->root->byte_at($function->name_position()), 'Explicit main is not supported yet');
-		}
-		if (isset($declarations['func:' . $function->declaration_key()])) {
-			throw new diagnostic($source, $this->root->byte_at($function->name_position()), 'Duplicate function: ' . $function->name);
 		}
 		$this->sink?->discovered($function);
 		$body_start = $this->cursor->take(token_kind::lbrace, '{');
@@ -141,7 +145,7 @@ final class Parser
 	public function return_type(): string
 	{
 		if ($this->cursor->keyword('void')) {
-			$start = $this->cursor->take(token_kind::keyword, 'void');
+			$this->cursor->take(token_kind::keyword, 'void');
 			return 'void';
 		}
 		return $this->named_type();

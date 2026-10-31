@@ -14,6 +14,22 @@ namespace scpp\compiler;
  */
 final class ast_string_expression extends ast_expression
 {
+	/** Prepared fact: output-only decoded bytes; null means unprepared, empty string is valid. */
+	protected ?string $decoded_bytes = null;
+	public function settle_bytes(string $bytes): void
+	{
+		if ($this->decoded_bytes !== null) { throw new \LogicException('String is already decoded'); }
+		$this->decoded_bytes = $bytes;
+	}
+	public function bytes(): string
+	{
+		return $this->decoded_bytes ?? throw new \LogicException('String is not decoded');
+	}
+	public function reset_preparation(): void
+	{
+		parent::reset_preparation();
+		$this->decoded_bytes = null;
+	}
 }
 
 /**

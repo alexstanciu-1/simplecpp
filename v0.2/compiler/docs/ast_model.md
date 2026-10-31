@@ -16,7 +16,17 @@ also accepts discovery notifications. Neither API returns a second copy of synta
 The root owns tokens/source context and one keyed declaration collection. Keys such
 as `func:ping` identify actual declaration nodes. Indexes and resolved references
 point to these nodes without creating new declaration identities. Duplicate keys
-must diagnose rather than overwrite.
+retain the first node and link subsequent declarations through the trait’s
+`next_declaration()` accessor. All bodies remain available to analysis tools.
+The link belongs to one source-local scope only; the global symbol index keeps
+its separate candidate arrays and must never repurpose these links. Collection
+uses temporary tail indexes for constant-time appends.
+
+The completed root carries a plain list of duplicate diagnostics. Compilation
+gathers local and cross-file duplicates into a minimal `diagnostic_group` before
+settling declarations or bodies. Every extra declaration refers to the first
+location; global ordering uses source path and token position. An ambiguous key
+must not resolve to its first candidate. General syntax recovery is deferred.
 
 Declarations implement `ast_declaration_interface::declaration_key()`. The shared
 `ast_declaration` trait defaults that local key to the name. Index owners add
@@ -60,11 +70,20 @@ wrappers that merely repeat those identities. A compound fact record is justifie
 when it holds substantial additional data owned by a node, not simply because a
 preparation pass produced it. It must not recreate a competing statement tree.
 
-**Current boundary:** declarations and calls already own resolved facts. Other
-prepared expression/statement records and completed program/body handles still
-exist. Their migration is separate work, not claimed complete by removal of the
-file wrappers. Keep useful conversion, literal-decoding and value facts while
-moving their ownership deliberately.
+**Current representation:** integer values, occurrence-specific local bindings/value
+facts, decoded output bytes and return conversions live on their AST nodes.
+There is no parallel prepared expression/statement hierarchy, second statement
+list, or function/body wrapper. Output-only strings still do not introduce a
+general string type. Unknown constants remain distinct from unprepared values
+through checked type accessors; empty decoded strings remain valid facts.
+
+Bodies retain completion state and work counters. Preparation resets affected
+facts before analysis; it marks a body complete only after all statements succeed.
+Emission and inspection traverse the original statement list and require completion.
+`prepared_entry` retains only file, target and completion revision; `prepared_program`
+retains the source inventory, selected entry and source completion revisions.
+These revisions reject stale handles after reset/reanalysis; they are not incremental
+snapshots or an incremental invalidation protocol. No AST child lists are duplicated.
 
 ## Processing, completion and future concurrency
 

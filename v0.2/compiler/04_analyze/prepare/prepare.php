@@ -38,37 +38,36 @@ final class Preparation
 	}
 
 	/** Prepare only the selected executable body, consuming already settled callable contracts. */
-	public function entry(ast_file_node $file, entry_target $target, array $callables /** array<string,ast_function_declaration> */,
-		array $functions /** list<prepared_function> */): prepared_entry
+	public function entry(ast_file_node $file, entry_target $target, array $callables /** array<string,ast_function_declaration> */): void
 	{
 		$source = $file->tokens->source;
 		$main = $file->main();
 		if ($main === null) {
 			throw new diagnostic($source, strlen($source->content), 'Entry slice requires an explicit value return');
 		}
-		$body = $this->function_body($main->body(), $callables, $target);
-		$main->body()->settle_preparation($body);
-		return new prepared_entry($file, $target, $body->statements, $body->statement_visits,
-			$body->expression_visits, $body->name_lookups, $functions);
+		$this->function_body($main->body(), $callables, $target);
 	}
 
-	public function function_body(ast_function_body $syntax, array $callables /** array<string,ast_function_declaration> */, ?entry_target $target = null): prepared_body
+	public function function_body(ast_function_body $syntax, array $callables /** array<string,ast_function_declaration> */, ?entry_target $target = null): void
 	{
-		return $this->body($syntax->statements, $syntax->locals, $syntax->source(),
+		Function_Preparation::reset_body($syntax);
+		$errors = Declaration_Diagnostics::locals($syntax);
+		if ($errors !== []) { throw new diagnostic_group($errors); }
+		$this->body($syntax->statements, $syntax->source(),
 			($target === null ? $syntax->byte_end() : strlen($syntax->source()->content)), $target, $callables);
+		$syntax->settle_preparation($this->statement_visits, $this->expression_visits, $this->name_lookups);
 	}
 
 	/** One source-order body traversal; null exit target denotes a void function, never inferred return typing. */
-	private function body(array $syntax /** list<ast_statement> */, array $declarations /** array<uint32,ast_local_declaration> */,
-		source_file $source, int $end /** uint32 */, ?entry_target $target, array $callables /** array<string,ast_function_declaration> */): prepared_body
+	private function body(array $syntax /** list<ast_statement> */,
+		source_file $source, int $end /** uint32 */, ?entry_target $target, array $callables /** array<string,ast_function_declaration> */): void
 	{
 		$this->locals = [];
 		$this->statement_visits = 0;
 		$this->expression_visits = 0;
 		$this->name_lookups = 0;
-		$statements = [];
 		$returned = false;
-		foreach ($syntax as $position => $statement)
+		foreach ($syntax as $statement)
 		{
 			$this->statement_visits++;
 			if ($returned) {
@@ -76,18 +75,17 @@ final class Preparation
 					'Statements after return are outside the entry slice');
 			}
 			if ($statement instanceof ast_local_declaration) {
-				$statements[] = $this->declaration($declarations[$position]);
+				$this->declaration($statement);
 			}
 			elseif ($statement instanceof ast_echo_statement)
 			{
 				if ($statement->value instanceof ast_string_expression) {
 					++$this->expression_visits;
-					$value = new prepared_output_string($statement->value, Output_Literals::decode($statement->value));
+					$statement->value->settle_bytes(Output_Literals::decode($statement->value));
 				}
 				else {
-					$value = $this->value($statement->value);
+					$this->value($statement->value);
 				}
-				$statements[] = new prepared_echo($statement, $value);
 			}
 			elseif ($statement instanceof ast_call_statement)
 			{
@@ -97,7 +95,6 @@ final class Preparation
 					throw new diagnostic($source, $statement->byte_start(), 'Unknown function: ' . $statement->name);
 				}
 				$statement->settle_function($function);
-				$statements[] = $statement;
 			}
 			elseif ($statement instanceof ast_return_statement)
 			{
@@ -105,15 +102,13 @@ final class Preparation
 					if ($statement->value !== null) {
 						throw new diagnostic($source, $statement->byte_start(), 'Void function cannot return a value');
 					}
-					$statements[] = new prepared_void_return($statement);
 				}
 				else {
 					if ($statement->value === null) {
 						throw new diagnostic($source, $statement->byte_start(), 'Entry requires a value return');
 					}
-					$value = $this->value($statement->value);
-					$conversion = Exit_Preparation::decide($value->constant, $target, $value->syntax);
-					$statements[] = new prepared_return($statement, $value, $conversion);
+					$this->value($statement->value);
+					$statement->settle_conversion(Exit_Preparation::decide($statement->value->constant(), $target, $statement->value));
 				}
 				$returned = true;
 			}
@@ -124,11 +119,10 @@ final class Preparation
 		if (($target !== null) && !$returned) {
 			throw new diagnostic($source, $end, 'Entry slice requires an explicit value return');
 		}
-		return new prepared_function_body($statements, $this->statement_visits, $this->expression_visits, $this->name_lookups);
 	}
 
 	/** Establish a binding only after its initializer succeeds; collection grants no forward visibility. */
-	private function declaration(ast_local_declaration $declaration): prepared_declaration
+	private function declaration(ast_local_declaration $declaration): void
 	{
 		$name = $declaration->declaration_key();
 		$source = $declaration->source();
@@ -144,18 +138,18 @@ final class Preparation
 			throw new diagnostic($source, $root->byte_at($declaration->type_position()),
 				'Unknown or unsupported type: ' . $declaration->type_name);
 		}
-		$value = $this->value($declaration->initializer, $name);
-		$declaration->settle_type(type_definition::int64, $value->constant);
+		$this->value($declaration->initializer, $name);
+		$declaration->settle_type(type_definition::int64, $declaration->initializer->constant());
 		$this->locals[$name] = $declaration;
-		return new prepared_declaration($declaration, $value);
 	}
 
 	/** Resolve each expression once; a reference retains its exact declaration binding. */
-	private function value(ast_expression $syntax, ?string $initializing = null): prepared_value
+	private function value(ast_expression $syntax, ?string $initializing = null): void
 	{
 		$this->expression_visits++;
 		if ($syntax instanceof ast_integer_expression) {
-			return new prepared_integer($syntax, $this->integer($syntax));
+			$syntax->settle_integer($this->integer($syntax));
+			return;
 		}
 		if ($syntax instanceof ast_name_expression)
 		{
@@ -170,7 +164,8 @@ final class Preparation
 				throw new diagnostic($syntax->source(), $syntax->byte_start(),
 					'Unknown or not-yet-initialized local: ' . $name);
 			}
-			return new prepared_reference($syntax, $binding);
+			$syntax->settle_local($binding);
+			return;
 		}
 		throw new \LogicException('Unhandled expression preparation');
 	}

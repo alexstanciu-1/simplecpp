@@ -8,7 +8,7 @@ namespace scpp\compiler;
  */
 final class Compiler_Cli
 {
-	/** Inspect complete token or syntax generations; failures produce stderr and no partial stdout. */
+	/** Inspect complete token or syntax generations; duplicate errors retain complete syntax JSON; syntax failures produce no partial stdout. */
 	public static function run(array $arguments /** list<string> */): int /** int32; process exit status 0..2 */
 	{
 		if ((count($arguments) <= 1) || (($arguments[1] ?? null) === '--help')) {
@@ -48,6 +48,7 @@ final class Compiler_Cli
 			if ($arguments[1] === 'parse') {
 				$file = (new Source_Frontend())->parse_file($arguments[3], $flavor);
 				fwrite(STDOUT, json_encode(Syntax_Inspection::file($file), JSON_THROW_ON_ERROR | JSON_PRETTY_PRINT) . "\n");
+				if ($file->diagnostics !== []) { throw new diagnostic_group($file->diagnostics); }
 				return 0;
 			}
 			$list = (new Source_Frontend())->scan_file($arguments[3], $flavor);
@@ -101,6 +102,7 @@ final class Compiler_Cli
 			}
 		}
 		fwrite(STDOUT, json_encode($data, JSON_THROW_ON_ERROR | JSON_PRETTY_PRINT) . "\n");
+		if ($collection->diagnostics !== []) { throw new diagnostic_group($collection->diagnostics); }
 		return 0;
 	}
 

@@ -133,7 +133,9 @@ public AST nodes directly; there is no collected-function identity wrapper.
 Parsing and local collection complete together; no separate file wrapper is retained.
 The lasting [AST and preparation decisions](docs/ast_model.md) govern further simplification.
 
-The parser rejects duplicate keys before insertion. `main` is reserved for the
+The parser keeps the first declaration under each key and links duplicates through
+`next_declaration()`, retaining every body. The completed root carries a simple
+diagnostic list. Preparation reports all duplicates together before resolving names. `main` is reserved for the
 implicit entry; explicit `main` declarations are not implemented. Constants and
 class-like declarations are not introduced by this structural slice. CLI syntax
 inspection keeps its existing statements/functions presentation as a derived view.

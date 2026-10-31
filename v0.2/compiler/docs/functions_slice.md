@@ -39,7 +39,7 @@ merely because their source is included.
   settled signature fields, so forward, self-recursive and mutually recursive calls work.
 - `04_analyze/prepare/prepare.php`: one shared statement-preparation path for entry
   and void bodies, with separate local environments and explicit return rules.
-- `05_backend/cpp/`: completed body handles supply local definitions and needed
+- `05_backend/cpp/`: completed AST bodies supply local definitions and needed
   prototypes. Foreign bodies are never copied into the caller's translation unit.
 
 Discovery uses direct PHP calls, not serialized transport. Each compilation gets a

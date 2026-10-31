@@ -31,14 +31,14 @@ unresolved(fn() => $ping->return_type_def());
 unresolved(fn() => $call->function_def());
 $callables = Function_Preparation::declarations(Symbol_Publication::completed(['facts' => $file]));
 verify($callables['ping'] === $ping && $ping->return_type_def() === type_definition::void, 'Declaration phase introduced a wrapper');
-unresolved(fn() => $ping->body()->preparation());
+unresolved(fn() => $ping->body()->require_prepared());
 unresolved(fn() => $ping->body()->locals[0]->type_def());
-$prepared = (new Preparation())->function_body($main->body(), $callables, new entry_target(31));
+(new Preparation())->function_body($main->body(), $callables, new entry_target(31));
 verify($first->type_def() === $second->type_def() && $first->type_def() === type_definition::int64, 'Type aliases did not resolve to one identity');
-verify($prepared->statements[1]->initializer->binding === $first, 'Reference does not link to its declaration');
-verify($prepared->statements[2] === $call && $call instanceof ast_call_statement && $call->function_def() === $ping,
+verify($main->body()->statements[1]->initializer->local_def() === $first, 'Reference does not link to its declaration');
+verify($main->body()->statements[2] === $call && $call instanceof ast_call_statement && $call->function_def() === $ping,
 	'Call does not retain a direct declaration link');
-unresolved(fn() => $ping->body()->preparation());
+unresolved(fn() => $ping->body()->require_prepared());
 Function_Preparation::reset($main);
 unresolved(fn() => $first->type_def());
 unresolved(fn() => $call->function_def());

@@ -14,14 +14,18 @@ final class Syntax_Inspection
 			$rows[] = self::statement($statement);
 		}
 		$functions = [];
-		foreach ($file->declarations as $function) {
+		foreach ($file->functions() as $function) {
 			if ($function->is_private) { continue; }
 			$body = array_map(self::statement(...), $function->body()->statements);
 			$functions[] = ['name' => self::name($function, $function->name, $function->name_position()), 'return_type' => self::name($function, $function->return_type_name, $function->return_type_position()),
 				'body' => $body, 'header' => ['start' => $function->byte_start(), 'end' => $function->root()->byte_at($function->header_end)],
 				'body_span' => self::span($function->body())];
 		}
-		return ['flavor' => $file->tokens->source->flavor->value, 'statements' => $rows, 'functions' => $functions];
+		$result = ['flavor' => $file->tokens->source->flavor->value, 'statements' => $rows, 'functions' => $functions];
+		if ($file->diagnostics !== []) {
+			$result['diagnostics'] = array_map(static fn(diagnostic $error): string => $error->getMessage(), $file->diagnostics);
+		}
+		return $result;
 	}
 
 	private static function span(ast_node $span): array /** array{start:uint32,end:uint32} */

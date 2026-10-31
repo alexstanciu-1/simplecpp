@@ -3,8 +3,8 @@
 declare(strict_types=1);
 require_once __DIR__ . '/../boot.php';
 
-use scpp\compiler\{Cpp_Emitter, Source_Frontend, entry_target, flavor, prepared_echo,
-	prepared_output_string, prepared_reference, source_file};
+use scpp\compiler\{Cpp_Emitter, Source_Frontend, entry_target, flavor, ast_echo_statement,
+	ast_string_expression, ast_name_expression, source_file};
 
 function verify(bool $condition, string $message): void
 {
@@ -22,13 +22,13 @@ foreach ([
 {
 	$entry = (new Source_Frontend())->prepare(new source_file('output',
 		$prefix . ' echo "text\n\0"; return 8;', $flavor), new entry_target(31));
-	verify($entry->statements[1] instanceof prepared_echo, 'Missing echo facts');
-	$value = $entry->statements[1]->value;
-	verify($value instanceof prepared_reference && $value->binding === $entry->statements[0]->binding,
+	verify($entry->body()->statements[1] instanceof ast_echo_statement, 'Missing echo facts');
+	$value = $entry->body()->statements[1]->value;
+	verify($value instanceof ast_name_expression && $value->local_def() === $entry->body()->statements[0],
 		'Echo did not resolve its own local binding');
-	$string = $entry->statements[2]->value;
-	verify($string instanceof prepared_output_string && $string->bytes === "text\n\0", 'Incorrect literal facts');
-	verify($entry->expression_visits === 4, 'Unexpected expression traversal count');
+	$string = $entry->body()->statements[2]->value;
+	verify($string instanceof ast_string_expression && $string->bytes() === "text\n\0", 'Incorrect literal facts');
+	verify($entry->body()->expression_visits === 4, 'Unexpected expression traversal count');
 	$before = serialize($entry);
 	$outputs[] = (new Cpp_Emitter())->emit($entry);
 	verify(serialize($entry) === $before, 'Lowering mutated prepared data');

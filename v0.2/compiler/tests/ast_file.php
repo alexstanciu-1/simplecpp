@@ -34,10 +34,13 @@ foreach ([
 	$prepared = (new Preparation())->prepare($file, new entry_target(31));
 	verify($prepared->file === $file, 'Preparation must retain the same file root');
 	verify($main->return_type_def() === type_definition::int64, 'Entry contract lost integer return');
-	verify($main->body()->preparation()->statements === $prepared->statements, 'Entry preparation not attached to AST body');
-	$old = $main->body()->preparation();
-	(new Preparation())->prepare($file, new entry_target(31));
-	verify($main->body()->preparation() !== $old && count($old->statements) === 2, 'Sequential reanalysis damaged old facts');
+	$main->body()->require_prepared();
+	verify($main->body() === $prepared->body(), 'Entry does not use the original AST body');
+	$again = (new Preparation())->prepare($file, new entry_target(31));
+	verify($again->body() === $main->body(), 'Reanalysis replaced the AST body');
+	try { $prepared->body(); throw new RuntimeException('Old preparation handle remained valid'); }
+	catch (LogicException $expected) {}
+
 }
 $empty = $frontend->collect(new source_file('empty', '', flavor::cpp));
 verify($empty->declarations === [], 'Empty source acquired an entry');
@@ -48,7 +51,7 @@ foreach (['void ping() {} void ping() {}', 'void main() {}', 'main(); return 8;'
 		$frontend->prepare(new source_file('invalid', $text, flavor::cpp), new entry_target(31));
 		throw new RuntimeException('Accepted duplicate, explicit main, or call to private entry');
 	}
-	catch (diagnostic $expected) {
+	catch (diagnostic|\scpp\compiler\diagnostic_group $expected) {
 	}
 }
 echo "AST ownership, keyed identity, private entry, shared body facts and reanalysis passed\n";

@@ -20,3 +20,19 @@ final class diagnostic extends \RuntimeException
 		parent::__construct($source->path . ':' . $location['line'] . ':' . $location['column'] . ': ' . $message);
 	}
 }
+
+/**
+ * Minimal batch failure: all duplicate diagnostics, formatted one per line for the CLI.
+ * Example: three declarations of ping produce two diagnostics, both naming the original location.
+ */
+final class diagnostic_group extends \RuntimeException
+{
+	public readonly array $diagnostics /** non-empty-list<diagnostic> */;
+
+	public function __construct(array $diagnostics /** non-empty-list<diagnostic> */)
+	{
+		if ($diagnostics === []) { throw new \InvalidArgumentException('Empty diagnostic group'); }
+		$this->diagnostics = $diagnostics;
+		parent::__construct(implode("\n", array_map(static fn(diagnostic $error): string => $error->getMessage(), $diagnostics)));
+	}
+}

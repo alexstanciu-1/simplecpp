@@ -22,7 +22,7 @@ $sources = [
 $program = $frontend->prepare(new program_sources('main.scpp', $sources), $target);
 verify($program->entry->file === $program->files['main.scpp'], 'Entry uses the existing AST file root');
 verify($program->files['a/notes.scpp']->tokens->source === $sources['a/notes.scpp'], 'Secondary source identity');
-verify($program->entry->statement_visits === 2, 'Entry prepared once');
+verify($program->entry->body()->statement_visits === 2, 'Entry prepared once');
 $first = Cpp_Program::emit($program);
 $second = Cpp_Program::emit($frontend->prepare(new program_sources('main.scpp', array_reverse($sources, true)), $target));
 verify($first->files === $second->files, 'Input reordering changed deterministic C++ output');
@@ -66,7 +66,7 @@ foreach ([10, 100, 1000] as $count)
 	$start = hrtime(true);
 	$prepared = $frontend->prepare(new program_sources('main.scpp', $many), $target);
 	$elapsed = (hrtime(true) - $start) / 1_000_000;
-	verify((count($prepared->files) === ($count + 1)) && ($prepared->entry->expression_visits === 2), 'Program work shape');
+	verify((count($prepared->files) === ($count + 1)) && ($prepared->entry->body()->expression_visits === 2), 'Program work shape');
 	$measurements[] = ['secondary_files' => $count, 'prepare_pipeline_ms' => round($elapsed, 3)];
 }
 echo json_encode($measurements, JSON_THROW_ON_ERROR) . "\nProgram preparation checks passed\n";

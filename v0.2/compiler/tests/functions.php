@@ -5,7 +5,7 @@ require_once __DIR__ . '/../boot.php';
 
 use scpp\compiler\{Cpp_Emitter, Cpp_Program, Function_Preparation, Preparation, Program_Frontend,
 	Source_Frontend, Symbol_Publication, ast_function_declaration, declaration_sink, diagnostic,
-	entry_target, flavor, ast_call_statement, prepared_void_return, program_sources, source_file};
+	entry_target, flavor, ast_call_statement, ast_return_statement, program_sources, source_file};
 
 function verify(bool $condition, string $message): void
 {
@@ -56,15 +56,16 @@ foreach ([
 	verify(count($symbols->functions) === 2, 'Global index contains wrong declarations');
 	$program = scpp\compiler\Program_Preparation::prepare('source', ['source' => $file], $target, $symbols);
 	$entry = $program->entry;
-	[$ping, $pong] = $entry->functions;
-	verify($entry->statements[0] instanceof ast_call_statement, 'Missing prepared entry call');
-	verify($entry->statements[0]->function_def() === $ping->declaration, 'Entry call did not bind exact callable contract');
-	verify($ping->body->statements[1]->function_def() === $pong->declaration, 'Forward function call binding differs');
-	verify($ping->body->statements[2] instanceof prepared_void_return, 'Bare return has wrong facts');
-	verify($pong->body->statements === [], 'Empty void body requires invented statements');
-	verify($file->declarations['func:ping'] === $ping->declaration, 'Signature facts not attached to declaration');
-	verify($file->declarations['func:ping']->body()->preparation() === $ping->body, 'Body facts not attached to body owner');
-	verify($ping->body->statements[0]->binding->id === 0, 'Body-local identity not independent');
+	[$ping, $pong] = $entry->file->functions();
+	verify($entry->body()->statements[0] instanceof ast_call_statement, 'Missing prepared entry call');
+	verify($entry->body()->statements[0]->function_def() === $ping, 'Entry call did not bind exact callable contract');
+	verify($ping->body()->statements[1]->function_def() === $pong, 'Forward function call binding differs');
+	verify($ping->body()->statements[2] instanceof ast_return_statement, 'Bare return has wrong facts');
+	verify($pong->body()->statements === [], 'Empty void body requires invented statements');
+	verify($file->declarations['func:ping'] === $ping, 'Signature facts not attached to declaration');
+	$ping->body()->require_prepared();
+	verify($file->declarations['func:ping']->body() === $ping->body(), 'Body identity changed');
+	verify($ping->body()->statements[0]->id === 0, 'Body-local identity not independent');
 	$outputs[] = (new Cpp_Emitter())->emit($entry);
 	try {
 		$probe->publication->discovered($file->functions()[0]);
@@ -79,10 +80,10 @@ verify(count(array_unique($outputs)) === 1, 'Function output differs by source f
 $file = $frontend->collect(new source_file('contracts',
 	'function first(): void { return 9; } function second(): void { first(); } return 8;', flavor::php));
 $callables = Function_Preparation::declarations(Symbol_Publication::completed(['contracts' => $file]));
-$caller = (new Preparation())->function_body($file->functions()[1]->body(), $callables);
-verify($caller->statements[0]->function_def() === $file->functions()[0], 'Call required callee body');
+(new Preparation())->function_body($file->functions()[1]->body(), $callables);
+verify($file->functions()[1]->body()->statements[0]->function_def() === $file->functions()[0], 'Call required callee body');
 try {
-	$file->functions()[0]->body()->preparation();
+	$file->functions()[0]->body()->require_prepared();
 	throw new RuntimeException('Call lookup prepared a foreign body');
 }
 catch (LogicException $expected) {
@@ -90,9 +91,9 @@ catch (LogicException $expected) {
 
 $recursive = $frontend->prepare(new source_file('recursive',
 	'function a(): void { b(); } function b(): void { a(); } return 8;', flavor::php), $target);
-verify($recursive->functions[0]->body->statements[0]->function_def() === $recursive->functions[1]->declaration, 'Mutual recursion failed');
+verify($recursive->file->functions()[0]->body()->statements[0]->function_def() === $recursive->file->functions()[1], 'Mutual recursion failed');
 $self = $frontend->prepare(new source_file('self', 'void a() { a(); } return 8;', flavor::cpp), $target);
-verify($self->functions[0]->body->statements[0]->function_def() === $self->functions[0]->declaration, 'Self recursion failed');
+verify($self->file->functions()[0]->body()->statements[0]->function_def() === $self->file->functions()[0], 'Self recursion failed');
 
 foreach ([
 	['function f(): void { return 8; } return 8;', 'cannot return a value'],
@@ -115,7 +116,7 @@ foreach ([
 		$frontend->prepare(new source_file('bad', $text, flavor::php), $target);
 		throw new RuntimeException('Accepted invalid source: ' . $text);
 	}
-	catch (diagnostic $error) {
+	catch (diagnostic|\scpp\compiler\diagnostic_group $error) {
 		verify(str_contains($error->getMessage(), $message), $error->getMessage());
 	}
 }
@@ -140,7 +141,7 @@ $sources = [
 	'end' => new source_file('end', 'function finish(): void { return; }', flavor::js),
 ];
 $program = (new Program_Frontend())->prepare(new program_sources('main', $sources), $target);
-verify($program->entry->statements[0]->function_def() === $program->functions['mid'][0]->declaration, 'Cross-source identity lost');
+verify($program->entry->body()->statements[0]->function_def() === $program->files['mid']->functions()[0], 'Cross-source identity lost');
 $facts_before = serialize($program);
 $output = Cpp_Program::emit($program);
 verify(serialize($program) === $facts_before, 'Lowering mutated semantic facts');
@@ -155,7 +156,7 @@ foreach ([$duplicates, array_reverse($duplicates, true)] as $inventory)
 		(new Program_Frontend())->prepare(new program_sources('main', $inventory), $target);
 		throw new RuntimeException('Duplicate cross-file function accepted');
 	}
-	catch (diagnostic $error) {
+	catch (diagnostic|\scpp\compiler\diagnostic_group $error) {
 		$messages[] = $error->getMessage();
 	}
 }

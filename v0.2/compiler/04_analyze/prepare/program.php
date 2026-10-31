@@ -12,28 +12,37 @@ final class Program_Preparation
 	public static function prepare(string $entry_path, array $files /** array<string,ast_file_node> */,
 		entry_target $target, ?global_symbols $symbols = null): prepared_program
 	{
+		foreach ($files as $file) {
+			$file->begin_preparation();
+			foreach ($file->declarations as $head) {
+				for ($node = $head; $node !== null; $node = $node->next_declaration()) { Function_Preparation::reset($node); }
+			}
+		}
 		if (!isset($files[$entry_path])) {
 			throw new \RuntimeException('Selected entry is not in the source inventory: ' . $entry_path);
 		}
+		$symbols ??= Symbol_Publication::completed($files);
+		$errors = Declaration_Diagnostics::program($files, $symbols);
+		if ($errors !== []) { throw new diagnostic_group($errors); }
 		foreach ($files as $path => $file)
 		{
 			$path = (string) $path;
 			self::admit($file, $path === $entry_path);
 		}
-		$callables = Function_Preparation::declarations($symbols ?? Symbol_Publication::completed($files));
+		$callables = Function_Preparation::declarations($symbols);
 		foreach ($files as $file) {
 			$main = $file->main();
 			if ($main !== null) {
-				Function_Preparation::reset($main);
 				$main->settle_return_type(type_definition::int64);
 			}
 		}
-		$functions = [];
-		foreach ($files as $path => $file) {
-			$functions[$path] = Function_Preparation::bodies($file, $callables);
+		foreach ($files as $file) {
+			Function_Preparation::bodies($file, $callables);
 		}
-		$entry = (new Preparation())->entry($files[$entry_path], $target, $callables, $functions[$entry_path]);
-		return new prepared_program($entry_path, $files, $entry, $functions);
+		(new Preparation())->entry($files[$entry_path], $target, $callables);
+		foreach ($files as $file) { $file->settle_preparation(); }
+		$entry = new prepared_entry($files[$entry_path], $target);
+		return new prepared_program($entry_path, $files, $entry);
 	}
 
 	/** Only the explicitly selected entry may contain executable statements. */

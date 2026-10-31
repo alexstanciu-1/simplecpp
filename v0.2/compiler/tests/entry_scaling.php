@@ -48,8 +48,8 @@ try
 			$start = hrtime(true);
 			Cpp_Publication::write($publication, $output);
 			$publish_ms = milliseconds($start);
-			if (($program->statement_visits !== ($count + 1)) || ($program->expression_visits !== ($count + 1))
-				|| ($program->name_lookups !== $count) || (count($collection->main()->body()->references) !== $count)) {
+			if (($program->body()->statement_visits !== ($count + 1)) || ($program->body()->expression_visits !== ($count + 1))
+				|| ($program->body()->name_lookups !== $count) || (count($collection->main()->body()->references) !== $count)) {
 				throw new RuntimeException('Entry work is not one visit per statement/expression and one lookup per reference');
 			}
 			$runs[] = compact('input_ms', 'tokenize_ms', 'parse_collect_ms', 'prepare_ms', 'render_ms', 'publish_ms');

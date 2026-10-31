@@ -51,7 +51,7 @@ final class Cpp_Emitter
 	}
 
 	/** Each source emits its own definitions; foreign information is limited to settled call contracts. */
-	public function functions(array $functions /** list<prepared_function> */): string
+	public function functions(array $functions /** list<ast_function_declaration> */): string
 	{
 		if ($functions === []) {
 			return Cpp_Program::empty_unit();
@@ -61,25 +61,26 @@ final class Cpp_Emitter
 
 	private function render(prepared_entry $program, string $function): string
 	{
-		return $this->unit($program, $program->functions, $function);
+		$program->require_prepared();
+		return $this->unit($program, $program->file->functions(), $function);
 	}
 
 	/** Assemble local definitions and deterministic forward declarations without a shared naming registry. */
-	private function unit(?prepared_entry $entry, array $functions /** list<prepared_function> */, string $entry_name): string
+	private function unit(?prepared_entry $entry, array $functions /** list<ast_function_declaration> */, string $entry_name): string
 	{
 		$declarations = [];
 		$definitions = [];
 		$checked = false;
 		$uses_output = false;
 		foreach ($functions as $function) {
-			$name = self::function_name($function->declaration);
+			$name = self::function_name($function);
 			$declarations[$name] = true;
 			$definitions[] = 'void ' . $name . "()\n{\n"
-				. implode("\n", $this->statements($function->body, $declarations, $checked, $uses_output)) . "\n}\n";
+				. implode("\n", $this->statements($function->body(), $declarations, $checked, $uses_output)) . "\n}\n";
 		}
 		if ($entry !== null) {
 			$definitions[] = 'int ' . $entry_name . "()\n{\n"
-				. implode("\n", $this->statements($entry, $declarations, $checked, $uses_output)) . "\n}\n";
+				. implode("\n", $this->statements($entry->body(), $declarations, $checked, $uses_output)) . "\n}\n";
 		}
 		$header = "// Generated from completed source-owned bodies.\n#include <scpp/integers.hpp>\n";
 		if ($entry !== null) {
@@ -101,32 +102,33 @@ final class Cpp_Emitter
 	}
 
 	/** Lower already resolved statements and retain only contract-derived external declarations. */
-	private function statements(prepared_body $body, array &$declarations /** array<string,bool> */,
+	private function statements(ast_function_body $body, array &$declarations /** array<string,bool> */,
 		bool &$checked, bool &$uses_output): array /** list<string> */
 	{
+		$body->require_prepared();
 		$lines = [];
 		foreach ($body->statements as $statement)
 		{
-			if ($statement instanceof prepared_declaration) {
-				$lines[] = "\t[[maybe_unused]] " . $this->type($statement->binding->type_def()) . ' ' . $this->name($statement->binding)
+			if ($statement instanceof ast_local_declaration) {
+				$lines[] = "\t[[maybe_unused]] " . $this->type($statement->type_def()) . ' ' . $this->name($statement)
 					. ' = ' . $this->value($statement->initializer) . ';';
 			}
-			elseif ($statement instanceof prepared_return) {
-				$checked = $checked || ($statement->conversion === exit_conversion::checked);
-				$lines[] = "\treturn " . Cpp_Exit::expression($statement->conversion, $this->value($statement->value)) . ';';
+			elseif (($statement instanceof ast_return_statement) && ($statement->value !== null)) {
+				$checked = $checked || ($statement->conversion() === exit_conversion::checked);
+				$lines[] = "\treturn " . Cpp_Exit::expression($statement->conversion(), $this->value($statement->value)) . ';';
 			}
-			elseif ($statement instanceof prepared_echo)
+			elseif ($statement instanceof ast_echo_statement)
 			{
 				$uses_output = true;
 				$value = $statement->value;
-				if ($value instanceof prepared_output_string) {
-					$lines[] = "\t" . 'scpp_echo_bytes(' . Cpp_Output::bytes($value->bytes) . ', ' . strlen($value->bytes) . ');';
+				if ($value instanceof ast_string_expression) {
+					$lines[] = "\t" . 'scpp_echo_bytes(' . Cpp_Output::bytes($value->bytes()) . ', ' . strlen($value->bytes()) . ');';
 				}
 				else {
 					$lines[] = "\t" . 'scpp_echo_int((' . $this->value($value) . ').native_value());';
 				}
 			}
-			elseif ($statement instanceof prepared_void_return) {
+			elseif ($statement instanceof ast_return_statement) {
 				$lines[] = "\treturn;";
 			}
 			elseif ($statement instanceof ast_call_statement) {
@@ -159,13 +161,13 @@ final class Cpp_Emitter
 	}
 
 	/** Typed values carry normalized constants or direct bindings; no source-name lookup occurs here. */
-	private function value(prepared_value $value): string
+	private function value(ast_expression $value): string
 	{
-		if ($value instanceof prepared_integer) {
-			return $this->type($value->type) . '{' . $value->value . 'LL}';
+		if ($value instanceof ast_integer_expression) {
+			return $this->type($value->type_def()) . '{' . $value->integer() . 'LL}';
 		}
-		if ($value instanceof prepared_reference) {
-			return $this->name($value->binding);
+		if ($value instanceof ast_name_expression) {
+			return $this->name($value->local_def());
 		}
 		throw new \LogicException('Unhandled prepared value');
 	}

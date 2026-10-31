@@ -58,7 +58,11 @@ final class ast_function_body extends ast_node
 	public readonly array $locals /** array<uint32,ast_local_declaration>; keyed by body statement position */;
 	public readonly array $references /** list<ast_name_expression> */;
 
-	private ?prepared_body $facts = null;
+	/** Preparation statistics: zero until successful whole-body preparation; completion is checked separately. */
+	private bool $prepared = false;
+	public int $statement_visits /** uint32 */ = 0;
+	public int $expression_visits /** uint32 */ = 0;
+	public int $name_lookups /** uint32 */ = 0;
 
 	public function __construct(int $start /** uint32; token position */, int $end /** uint32; exclusive token position */, array $statements /** list<ast_statement> */,
 		array $locals /** array<uint32,ast_local_declaration> */, array $references /** list<ast_name_expression> */)
@@ -71,20 +75,20 @@ final class ast_function_body extends ast_node
 	}
 	public function reset_preparation(): void
 	{
-		$this->facts = null;
+		$this->prepared = false;
+		$this->statement_visits = $this->expression_visits = $this->name_lookups = 0;
 	}
-
-	public function settle_preparation(prepared_body $facts): void
+	public function settle_preparation(int $statements /** uint32 */, int $expressions /** uint32 */, int $lookups /** uint32 */): void
 	{
-		if ($this->facts !== null) {
-			throw new \LogicException('Function body is already prepared');
-		}
-		$this->facts = $facts;
+		if ($this->prepared) { throw new \LogicException('Function body is already prepared'); }
+		$this->statement_visits = $statements;
+		$this->expression_visits = $expressions;
+		$this->name_lookups = $lookups;
+		$this->prepared = true;
 	}
-
-	public function preparation(): prepared_body
+	public function require_prepared(): void
 	{
-		return $this->facts ?? throw new \LogicException('Function preparation is not complete');
+		if (!$this->prepared) { throw new \LogicException('Function preparation is not complete'); }
 	}
 
 }
@@ -178,6 +182,19 @@ final class ast_function_declaration extends ast_node implements ast_declaration
  */
 final class ast_return_statement extends ast_statement
 {
+	/** Prepared fact: entry conversion; null before preparation or for a void return. */
+	protected ?exit_conversion $conversion = null;
+	public function settle_conversion(exit_conversion $conversion): void
+	{
+		if ($this->conversion !== null) { throw new \LogicException('Return conversion already settled'); }
+		$this->conversion = $conversion;
+	}
+	public function conversion(): exit_conversion
+	{
+		return $this->conversion ?? throw new \LogicException('Entry conversion is not settled');
+	}
+	public function reset_preparation(): void { $this->conversion = null; }
+
 	public readonly ?ast_expression $value;
 
 	public function __construct(int $start /** uint32; token position */, int $end /** uint32; exclusive token position */,

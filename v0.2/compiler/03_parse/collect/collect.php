@@ -9,6 +9,8 @@ namespace scpp\compiler;
 final class Symbol_Collector
 {
 	private array $locals /** array<uint32,ast_local_declaration>; keyed by statement position */ = [];
+	private array $heads /** array<string,ast_local_declaration>; scope-local name index */ = [];
+	private array $tails /** array<string,ast_local_declaration>; only duplicated names */ = [];
 	private array $references /** list<ast_name_expression> */ = [];
 	/** Record one completed statement during parsing, without lookup, typing or publication outside its source. */
 	public function statement(ast_statement $statement, int $position /** uint32 */): void
@@ -17,6 +19,13 @@ final class Symbol_Collector
 			return;
 		}
 		if ($statement instanceof ast_local_declaration) {
+			$key = $statement->declaration_key();
+			if (isset($this->heads[$key])) {
+				($this->tails[$key] ?? $this->heads[$key])->link_next($statement);
+				$this->tails[$key] = $statement;
+			} else {
+				$this->heads[$key] = $statement;
+			}
 			$statement->identify(count($this->locals));
 			$this->locals[$position] = $statement;
 			$value = $statement->initializer;
