@@ -186,3 +186,17 @@ full rebuild. Shared/overlapping canonical directories are visited once per chec
 and policy; the final check remains independent. No AST, module, source_unit,
 compilation_session or change_status fields change in this refactor. Discovery,
 activation, inventories and CLI orchestration retain their behavior.
+
+## Application-only dependency boundary (supersedes earlier dependency scanning)
+
+Project_Compiler owns project loading/reuse/compilation/publication outside the CLI.
+Only the selected application is discovered and compiled. Dependencies of either
+flavor supply graph metadata and manually built artifact paths; their source trees
+and inventories are untouched. Application inventories are written only when their
+contents differ. Module.artifacts and cpp_program_output.link_inputs retain the
+unchecked paths; saved input layout is version 4. No AST/source-unit changes.
+
+Version/artifact validation, automatic dependency invalidation/building and Simple
+C++ declaration export/import are deferred explicitly in dependency_artifacts_debt.md.
+Earlier sections describing runtime source compilation and scanning are historical
+checkpoints, not the current application-build contract.

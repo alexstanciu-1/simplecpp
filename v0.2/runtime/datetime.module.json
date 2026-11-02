@@ -1,6 +1,14 @@
 {
     "name": "runtime-datetime",
     "type": "c++",
-    "sources": ["generated/src/datetime.cpp", "src/datetime/datetime.cpp"],
-    "dependencies": {"runtime": {}}
+    "sources": [
+        "generated/src/datetime.cpp",
+        "src/datetime/datetime.cpp"
+    ],
+    "dependencies": {
+        "runtime": {}
+    },
+    "artifacts": [
+        "../build/clang/libscpp_datetime.a"
+    ]
 }

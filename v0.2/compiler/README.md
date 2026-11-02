@@ -217,10 +217,14 @@ runtime metadata ingestion remain deferred.
 
 Use `project <module-dir|module.json> <facts.json> <output-dir>` for the common
 manifest loader, discovery, runtime defaults and additive submodule activation.
-See [the module format and native boundary](docs/modules.md). Native module inputs
-are listed separately in the output manifest; they bypass the compiler frontend.
+See [the module format and native boundary](docs/modules.md). Dependency artifact paths are listed as `link_inputs`; dependency sources are not
+loaded or scanned. Version/artifact checks and declaration import remain deferred.
 
 The manifest command supports whole-project change detection: any changed input
 rebuilds all compiler units; an unchanged invocation reuses a verified bundle.
 Its JSON report includes `rebuilt`. The existing explicit-file and panel paths
 remain full runs; native compilation/linking is still performed by the caller.
+
+`Project_Compiler` is the reusable orchestration owner; CLI adapters only parse and
+present. Unchanged application source inventories are not rewritten. See the module
+guide for the application-only incremental boundary and manually built dependencies.

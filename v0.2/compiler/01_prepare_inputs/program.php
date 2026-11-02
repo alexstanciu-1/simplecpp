@@ -42,7 +42,7 @@ final class Program_Loader
 	}
 
 	/** Resolve a selected dependency closure privately before publishing the session.
-	 * @param array<string,array{root:string,sources:array<string,flavor>,dependencies:list<string>,entry?:string,type?:string,manifest?:string}> $definitions
+	 * @param array<string,array{root:string,sources:array<string,flavor>,dependencies:list<string>,entry?:string,type?:string,manifest?:string,artifacts?:list<string>}> $definitions
 	 * The caller selects disk validation; both paths create identical ownership records.
 	 */
 	public static function modules(array $definitions, string $entry, bool $disk = true,
@@ -68,7 +68,7 @@ final class Program_Loader
 			if (!in_array($type, ['default', 'c++'], true)) {
 				throw new \RuntimeException('Unknown module type: ' . $type);
 			}
-			$module = new module($name, $root, $type, $input['manifest'] ?? null);
+			$module = new module($name, $root, $type, $input['manifest'] ?? null, $input['artifacts'] ?? []);
 			foreach ($input['dependencies'] as $dependency) {
 				if (isset($module->dependencies[$dependency])) {
 					continue;

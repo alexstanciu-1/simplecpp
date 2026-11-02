@@ -66,18 +66,21 @@ final class module
 {
 	public readonly string $name;
 	public readonly string $root;
+	public readonly array $artifacts /** list<string>; manually built link inputs, unchecked */;
 	public readonly ?string $manifest; /** Canonical configuration input; null for explicit in-memory inventories. */
 	public readonly string $type; /** default: compiler source; c++: native translation units. */
 	public array $dependencies /** array<string,module>; native non-owning references */ = [];
 	public array $sources /** array<string,source_unit>; native owning index */ = [];
 	public ?source_unit $entry = null; /** Native non-owning reference; null for library modules. */
 
-	public function __construct(string $name, string $root, string $type = 'default', ?string $manifest = null)
+	public function __construct(string $name, string $root, string $type = 'default', ?string $manifest = null,
+		array $artifacts /** list<string> */ = [])
 	{
 		$this->name = $name;
 		$this->root = $root;
 		$this->type = $type;
 		$this->manifest = $manifest;
+		$this->artifacts = $artifacts;
 	}
 }
 

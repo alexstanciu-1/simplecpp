@@ -72,7 +72,7 @@ with tempfile.TemporaryDirectory(prefix='scpp-incremental-') as temporary:
     assert run.report['changes'][str(extra)] == 'removed'
     assert len(removed['sources']) == 1
     assert not (output/added['sources']['app/other.php']).exists()
-    # Module manifests, native sources, headers, header additions/removals, and target inputs invalidate.
+    # Only app inputs and facts invalidate. Dependency sources, headers and artifacts are not tracked.
     for path, text in [(app/'module.json', (app/'module.json').read_text()+'\n'),
                        (native/'value.cpp', '#include "value.hpp"\n// changed\n'),
                        (native/'value.hpp', '// v2\n'), (native/'extra.hpp', '// new\n'),
@@ -80,10 +80,10 @@ with tempfile.TemporaryDirectory(prefix='scpp-incremental-') as temporary:
         old_time = path.stat().st_mtime if path.exists() else 0
         path.write_text(text)
         os.utime(path, (old_time + 2, old_time + 2))
-        run(True)
+        run(path.parent != native)
         run(False)
     (native/'extra.hpp').unlink()
-    run(True)
+    run(False)
     # Source failure never records a successful baseline and remains a failure on retry.
     before = snapshot()
     source.write_text('return;')

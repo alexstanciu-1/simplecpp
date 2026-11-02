@@ -8,8 +8,10 @@ final class Module_Loader
 {
 	private array $documents /** array<string,\stdClass>; canonical manifest path -> validated document */ = [];
 	private array $paths /** array<string,string>; unique module name -> canonical manifest */ = [];
-	private array $definitions /** array<string,array{root:string,type:string,sources:array<string,flavor>,dependencies:list<string>,manifest:string,entry?:string}> */ = [];
+	private array $definitions /** array<string,array{root:string,type:string,sources:array<string,flavor>,dependencies:list<string>,manifest:string,artifacts:list<string>,entry?:string}> */ = [];
 	private string $runtime;
+	private string $entry_manifest;
+	private array $dependency_roots /** array<string,bool> */ = [];
 	private string|false $output_directory = false;
 
 	public function __construct(?string $runtime = null)
@@ -25,6 +27,8 @@ final class Module_Loader
 		$this->paths = [];
 		$this->definitions = [];
 		$manifest = $this->manifest_path($path);
+		$this->entry_manifest = $manifest;
+		$this->dependency_roots = [];
 		$entry = $this->read($manifest);
 		$runtime = $this->manifest_path($this->runtime);
 		if ($this->read($runtime) !== 'runtime') {
@@ -32,7 +36,13 @@ final class Module_Loader
 		}
 		$this->activate($manifest, $runtime);
 		$this->definitions[$entry]['dependencies'][] = 'runtime';
+		foreach ($this->definitions as $name => $input) {
+			if ($name !== $entry) {
+				$this->dependency_roots[$input['root']] = true;
+			}
+		}
 		$definition = &$this->definitions[$entry];
+		$definition['sources'] = $this->sources($definition['root'], $definition['type'], $this->documents[$manifest]);
 		if (!isset($definition['entry']))
 		{
 			$matches = array_filter(array_keys($definition['sources']),
@@ -44,7 +54,7 @@ final class Module_Loader
 			$definition['entry'] = array_values($matches)[0];
 		}
 		$session = Program_Loader::modules($this->definitions, $entry, true, array_keys($this->definitions));
-		$this->write_inventories($session);
+		$this->write_inventory($session);
 		return $session;
 	}
 
@@ -106,7 +116,7 @@ final class Module_Loader
 			throw new \RuntimeException('Invalid module JSON: ' . $path . ': ' . $error->getMessage());
 		}
 		$document = $this->fields($document,
-			['name', 'type', 'entry', 'sources', 'dependencies', 'modules', 'defaults'], $path);
+			['name', 'type', 'entry', 'sources', 'dependencies', 'modules', 'defaults', 'artifacts'], $path);
 		$root = dirname($path);
 		$name = property_exists($document, 'name') ? $document->name : basename($root);
 		$type = property_exists($document, 'type') ? $document->type : 'default';
@@ -134,9 +144,11 @@ final class Module_Loader
 				throw new \RuntimeException('Invalid submodule path: ' . $alias);
 			}
 		}
-		$sources = $this->sources($root, $type, $document);
-		$definition = ['manifest' => $path, 'root' => $root, 'type' => $type, 'sources' => $sources, 'dependencies' => []];
-		if (property_exists($document, 'entry')) {
+		$sources = [];
+		$artifacts = array_map(fn(string $artifact): string => $this->relative($root, $artifact),
+			$this->strings($document->artifacts ?? [], 'artifacts'));
+		$definition = ['manifest' => $path, 'root' => $root, 'type' => $type, 'sources' => $sources, 'dependencies' => [], 'artifacts' => $artifacts];
+		if (($path === $this->entry_manifest) && property_exists($document, 'entry')) {
 			if (!is_string($document->entry)) {
 				throw new \RuntimeException('entry must be a relative source path');
 			}
@@ -260,7 +272,7 @@ final class Module_Loader
 				continue;
 			}
 			if (is_dir($absolute)) {
-				if (realpath($absolute) === $this->output_directory) {
+				if ((realpath($absolute) === $this->output_directory) || isset($this->dependency_roots[realpath($absolute)])) {
 					continue;
 				}
 				if (!in_array(strtolower($entry), ['build', 'generated', 'vendor', 'node_modules'], true)
@@ -275,44 +287,42 @@ final class Module_Loader
 		return $result;
 	}
 
-	/** Write inspectable inventories only after graph validation; multiple manifests may share a root. */
-	private function write_inventories(compilation_session $session): void
+	/** Publish only the application inventory after graph loading; leave identical output untouched. */
+	private function write_inventory(compilation_session $session): void
 	{
-		$roots = [];
+		$module = $session->entry;
+		$root = $module->root;
 		$protected = array_fill_keys(array_keys($this->documents), true);
-		foreach ($session->modules as $module)
-		{
-			$sources = [];
-			foreach ($module->sources as $unit) {
-				$protected[realpath($module->root . '/' . $unit->path)] = true;
-				$sources[$unit->path] = $module->type === 'c++' ? 'c++' : $unit->flavor->value;
-			}
-			$roots[$module->root][$module->name] = (object) $sources;
+		$sources = [];
+		foreach ($module->sources as $unit) {
+			$protected[realpath($root . '/' . $unit->path)] = true;
+			$sources[$unit->path] = $unit->flavor->value;
 		}
-		foreach ($roots as $root => $modules)
-		{
-			$path = $root . '/module.sources.json';
-			if (!is_link($path) && isset($protected[realpath($path)])) {
-				throw new \RuntimeException('Inventory collides with an input: ' . $path);
+		$modules = [$module->name => (object) $sources];
+		$path = $root . '/module.sources.json';
+		if (!is_link($path) && isset($protected[realpath($path)])) {
+			throw new \RuntimeException('Inventory collides with an input: ' . $path);
+		}
+		if (is_link($path)) {
+			throw new \RuntimeException('Inventory must not be a symlink: ' . $path);
+		}
+		ksort($modules, SORT_STRING);
+		$text = json_encode(['generated' => true, 'modules' => $modules], JSON_PRETTY_PRINT | JSON_THROW_ON_ERROR) . "\n";
+		if (is_file($path) && (file_get_contents($path) === $text)) {
+			return;
+		}
+		$temp = tempnam($root, '.module-sources-');
+		if ($temp === false) {
+			throw new \RuntimeException('Cannot create inventory: ' . $path);
+		}
+		try {
+			if ((file_put_contents($temp, $text) !== strlen($text)) || !rename($temp, $path)) {
+				throw new \RuntimeException('Cannot publish inventory: ' . $path);
 			}
-			if (is_link($path)) {
-				throw new \RuntimeException('Inventory must not be a symlink: ' . $path);
-			}
-			ksort($modules, SORT_STRING);
-			$text = json_encode(['generated' => true, 'modules' => $modules], JSON_PRETTY_PRINT | JSON_THROW_ON_ERROR) . "\n";
-			$temp = tempnam($root, '.module-sources-');
-			if ($temp === false) {
-				throw new \RuntimeException('Cannot create inventory: ' . $path);
-			}
-			try {
-				if ((file_put_contents($temp, $text) !== strlen($text)) || !rename($temp, $path)) {
-					throw new \RuntimeException('Cannot publish inventory: ' . $path);
-				}
-			}
-			finally {
-				if (is_file($temp)) {
-					unlink($temp);
-				}
+		}
+		finally {
+			if (is_file($temp)) {
+				unlink($temp);
 			}
 		}
 	}

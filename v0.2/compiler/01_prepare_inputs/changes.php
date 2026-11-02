@@ -15,14 +15,22 @@ final class Project_Changes
 		$source_paths = [];
 		$visited = [];
 		$excluded = realpath($output);
+		$dependency_roots = [];
+		foreach ($session->modules as $module) {
+			if (($module !== $session->entry) && ($module->root !== $session->entry->root)) {
+				$dependency_roots[$module->root] = true;
+			}
+		}
 		foreach ($session->modules as $name => $module)
 		{
 			if ($excluded === $module->root) {
 				throw new \RuntimeException('Project output must not be a module root');
 			}
-			self::scan($module->root, $files, $excluded, $visited);
+			if ($module === $session->entry) {
+				self::scan($module->root, $files, $excluded, $visited, false, $dependency_roots);
+			}
 			$sources = [];
-			foreach ($module->sources as $unit) {
+			foreach ($module === $session->entry ? $module->sources : [] as $unit) {
 				$path = $module->root . '/' . $unit->path;
 				self::file($path, $files);
 				$sources[$unit->path] = ['flavor' => $unit->flavor->value, ...$files[$path]];
@@ -32,17 +40,17 @@ final class Project_Changes
 			sort($dependencies, SORT_STRING);
 			ksort($sources, SORT_STRING);
 			$modules[$name] = ['root' => $module->root, 'type' => $module->type,
-				'manifest' => $module->manifest, 'dependencies' => $dependencies, 'sources' => $sources];
-			if ($module->manifest !== null) {
+				'manifest' => $module->manifest, 'artifacts' => $module->artifacts, 'dependencies' => $dependencies, 'sources' => $sources];
+			if (($module === $session->entry) && ($module->manifest !== null)) {
 				self::file($module->manifest, $files);
 			}
 		}
 		self::file($facts, $files);
-		self::scan(dirname(__DIR__), $files, false, $visited, true);
+		self::scan(dirname(__DIR__), $files, false, $visited, true, $dependency_roots);
 		$other_inputs = array_diff_key($files, $source_paths);
 		ksort($other_inputs, SORT_STRING);
 		ksort($modules, SORT_STRING);
-		return ['version' => 3, 'php' => PHP_VERSION, 'entry' => $session->entry_key(),
+		return ['version' => 4, 'php' => PHP_VERSION, 'entry' => $session->entry_key(),
 			'modules' => $modules, 'other_inputs' => $other_inputs];
 	}
 
@@ -68,6 +76,9 @@ final class Project_Changes
 		foreach ($session->units() as $unit)
 		{
 			$path = $unit->module->root . '/' . $unit->path;
+			if (!isset($current_sources[$path])) {
+				continue;
+			}
 			$source = $current_sources[$path];
 			$unit->mtime = $source['mtime'];
 			$unit->size = $source['size'];
@@ -93,7 +104,7 @@ final class Project_Changes
 	/** Reject old/corrupt saved layouts before reconstructing removed source units. */
 	public static function valid(mixed $state): bool
 	{
-		if (!is_array($state) || (($state['version'] ?? null) !== 3)
+		if (!is_array($state) || (($state['version'] ?? null) !== 4)
 			|| !is_string($state['php'] ?? null) || !is_string($state['entry'] ?? null)
 			|| !is_array($state['modules'] ?? null) || !is_array($state['other_inputs'] ?? null)) {
 			return false;
@@ -126,10 +137,10 @@ final class Project_Changes
 			&& is_int($stat['size'] ?? null) && ($stat['size'] >= 0);
 	}
 
-	/** Generated runtime headers are inputs too; only build trees, VCS state and inspection inventories are excluded. */
+	/** Scan application/compiler inputs only; declared dependency trees are excluded. */
 	private static function scan(string $directory, array &$files /** array<string,array{mtime:int64,size:uint64}> */,
 		string|false $excluded, array &$visited /** array<string,bool>; scan policy + canonical directory */,
-		bool $compiler = false): void
+		bool $compiler = false, array $dependency_roots /** array<string,bool> */ = []): void
 	{
 		$key = ($compiler ? 'compiler:' : 'module:') . (realpath($directory) ?: $directory);
 		if (isset($visited[$key])) {
@@ -149,14 +160,14 @@ final class Project_Changes
 			$path = $directory . '/' . $entry;
 			if (is_dir($path))
 			{
-				if ((realpath($path) === $excluded) || (strtolower($entry) === 'build')
+				if (isset($dependency_roots[realpath($path)]) || (realpath($path) === $excluded) || (strtolower($entry) === 'build')
 					|| ($compiler && ($entry === 'tests'))) {
 					continue;
 				}
 				if (is_link($path)) {
 					throw new \RuntimeException('Cannot track a symlinked input directory: ' . $path);
 				}
-				self::scan($path, $files, $excluded, $visited, $compiler);
+				self::scan($path, $files, $excluded, $visited, $compiler, $dependency_roots);
 			}
 			elseif (is_file($path) && (!$compiler || (pathinfo($path, PATHINFO_EXTENSION) === 'php'))) {
 				self::file($path, $files);

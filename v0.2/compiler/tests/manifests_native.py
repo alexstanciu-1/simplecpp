@@ -27,23 +27,26 @@ with tempfile.TemporaryDirectory(prefix='scpp-manifest-native-') as temporary:
     (app/'module.json').write_text(json.dumps({'dependencies': {
         'lib': {'path': '../lib'}, 'native': {'path': '../native'}}}))
     (lib/'module.json').write_text('{}')
-    (native/'module.json').write_text('{"type":"c++"}')
+    (native/'module.json').write_text('{"type":"c++","artifacts":["helper.o"]}')
     # Native syntax must never enter the Simple C++ tokenizer/parser.
     (native/'helper.cpp').write_text('#include <cstdint>\nstatic_assert(sizeof(std::int64_t) == 8);\n')
     (app/'main.cpp').write_text('helper(); return 8;')
+    (app/'helper.php').write_text('function helper(): void { echo "module"; }')
     (lib/'helper.php').write_text('function helper(): void { echo "module"; }')
+    success(run('clang++', '-std=c++23', '-stdlib=libc++', '-c', native/'helper.cpp', '-o', native/'helper.o'))
     output = work/'bundle'
     command = [php, root/'compiler/main.php', 'project', app,
                root/'build/clang/native-layout/facts.json', output]
     success(run(*command))
     bundle = json.loads((output/'manifest.json').read_text())
     assert len(bundle['sources']) == 2
-    assert len(bundle['native_sources']) == 4  # Runtime's three sources plus the application native module.
+    assert 'native_sources' not in bundle
+    assert len(bundle['link_inputs']) == 2  # Manually built object plus runtime archive.
     binary = work/'program'
     includes = [root/'runtime/generated/public', root/'runtime/src/numeric', root/'runtime/src/sequence']
     success(run('clang++', '-std=c++23', '-stdlib=libc++', '-O1', '-g0', '-fuse-ld=mold',
                 *[arg for path in includes for arg in ('-I', path)],
-                *[output/path for path in bundle['translation_units']], *bundle['native_sources'], '-o', binary))
+                *[output/path for path in bundle['translation_units']], *bundle['link_inputs'], '-o', binary))
     result = run(binary)
     assert result.returncode == 8 and result.stdout == 'module', result
     before = {p: p.read_bytes() for p in output.rglob('*') if p.is_file()}

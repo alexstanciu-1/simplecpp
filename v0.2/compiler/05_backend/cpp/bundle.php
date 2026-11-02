@@ -120,6 +120,9 @@ final class Cpp_Bundle
 		}
 		$data = ['format' => self::FORMAT, 'entry' => $output->entry_path,
 			'sources' => (object) $output->source_units, 'translation_units' => array_keys($output->files)];
+		if ($output->link_inputs !== []) {
+			$data['link_inputs'] = $output->link_inputs;
+		}
 		if ($output->native_sources !== []) {
 			$data['native_sources'] = $output->native_sources;
 		}

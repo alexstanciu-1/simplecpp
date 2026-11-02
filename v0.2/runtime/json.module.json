@@ -1,9 +1,17 @@
 {
     "name": "runtime-json",
     "type": "c++",
-    "sources": ["generated/src/json.cpp", "src/json/json_native.cpp"],
+    "sources": [
+        "generated/src/json.cpp",
+        "src/json/json_native.cpp"
+    ],
     "dependencies": {
         "runtime": {},
-        "runtime-boxed": {"path": "boxed.module.json"}
-    }
+        "runtime-boxed": {
+            "path": "boxed.module.json"
+        }
+    },
+    "artifacts": [
+        "../build/clang/libscpp_json.a"
+    ]
 }

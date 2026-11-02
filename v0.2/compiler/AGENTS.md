@@ -56,7 +56,9 @@ For module/incremental work, read the [common module plan](../specs/planning/com
 Application and runtime modules share dependency ownership and orchestration.
 Sessions own modules; modules own source units; units own AST roots. Dependency,
 entry and owner-backlink fields have non-owning native intent. The initial rule is
-full rebuild on any module or application source change. The project command compares
+full rebuild on detected application changes; dependencies are manually built.
+Do not scan dependency source trees or validate runtime/module artifacts or versions.
+Read [the deferred dependency work](../specs/planning/dependency_artifacts_debt.md). The project command compares
 mtime and size and reuses only an unchanged, intact emitted bundle; there is no partial AST
 or source-level reuse. See the module guide for the change-detection boundary.
 

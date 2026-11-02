@@ -25,8 +25,14 @@ final class Cpp_Program
 				$native[] = $unit->module->root . '/' . $unit->path;
 			}
 		}
+		$links = [];
+		foreach (array_reverse($program->session?->modules ?? [], true) as $module) {
+			if ($module !== $program->session->entry) {
+				$links = array_merge($links, $module->artifacts);
+			}
+		}
 		sort($native, SORT_STRING);
-		return new cpp_program_output($output->entry_path, $output->source_units, $output->files, $native);
+		return new cpp_program_output($output->entry_path, $output->source_units, $output->files, $native, array_values(array_unique($links)));
 	}
 
 	public static function empty_unit(): string

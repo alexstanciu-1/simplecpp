@@ -38,8 +38,8 @@ namespace {
 		file_put_contents($root . '/shared.hpp', '// header');
 		file_put_contents($root . '/facts.json', '{}');
 		$session = Program_Loader::modules([
-			'app' => ['root' => $root, 'entry' => 'main.cpp', 'sources' => ['main.cpp' => flavor::cpp], 'dependencies' => ['lib']],
-			'lib' => ['root' => $root, 'sources' => ['helper.cpp' => flavor::cpp], 'dependencies' => []],
+			'app' => ['root' => $root, 'entry' => 'main.cpp', 'sources' => ['main.cpp' => flavor::cpp, 'helper.cpp' => flavor::cpp], 'dependencies' => ['lib']],
+			'lib' => ['root' => $root, 'sources' => [], 'dependencies' => []],
 		], 'app');
 		$state = Project_Changes::capture($session, $root . '/facts.json', $root . '/out');
 		verify($GLOBALS['directory_reads'][$root] === 1, 'Shared root scanned more than once');

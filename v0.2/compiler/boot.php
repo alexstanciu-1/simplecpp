@@ -46,3 +46,4 @@ require_once __DIR__ . '/compiler/program.php';
 require_once __DIR__ . '/05_backend/cpp/structures.php';
 require_once __DIR__ . '/05_backend/cpp/program.php';
 require_once __DIR__ . '/05_backend/cpp/bundle.php';
+require_once __DIR__ . '/compiler/project.php';
