@@ -1,0 +1,7 @@
+// Layout counterpart: my-try/phpp/06_native/cpp_build.phs
+function sample_unit_190(): void
+{
+    $value int = 191;
+    sample_unit_191();
+    return;
+}

@@ -51,7 +51,7 @@ final class ast_file_node extends ast_node
 		array $diagnostics /** list<diagnostic> */ = []): void
 	{
 		foreach ($declarations as $key => $head) {
-			for ($declaration = $head; $declaration !== null; $declaration = $declaration->next_declaration()) {
+			for ($declaration = $head; $declaration !== null; $declaration = $declaration->duplicate_element()) {
 				if (($key !== 'func:' . $declaration->declaration_key()) || ($declaration->parent !== $this)) {
 					throw new \LogicException('Invalid AST declaration ownership');
 				}
@@ -68,7 +68,7 @@ final class ast_file_node extends ast_node
 		$functions = [];
 		$duplicates = false;
 		foreach ($this->declarations as $head) {
-			for ($node = $head; $node !== null; $node = $node->next_declaration()) {
+			for ($node = $head; $node !== null; $node = $node->duplicate_element()) {
 				if (!$node->is_private) { $functions[] = $node; }
 				$duplicates = $duplicates || ($node !== $head);
 			}

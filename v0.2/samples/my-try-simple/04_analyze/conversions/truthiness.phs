@@ -1,0 +1,7 @@
+// Layout counterpart: my-try/phpp/04_analyze/conversions/truthiness.phs
+function sample_unit_049(): void
+{
+    $value int = 50;
+    sample_unit_050();
+    return;
+}

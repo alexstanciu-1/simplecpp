@@ -91,8 +91,8 @@ abstract class ast_node
 interface ast_declaration_interface
 {
 	public function declaration_key(): string;
-	public function next_declaration(): ?ast_declaration_interface;
-	public function link_next(ast_declaration_interface $next): void;
+	public function duplicate_element(): ?ast_declaration_interface;
+	public function link_duplicate(ast_declaration_interface $duplicate_element): void;
 }
 
 /**
@@ -109,21 +109,21 @@ trait ast_declaration
 {
 	public readonly string $name;
 	/** Same-key declaration in this source scope; not syntax ownership or global-index membership. */
-	protected ?ast_declaration_interface $next = null;
+	protected ?ast_declaration_interface $duplicate_element = null;
 
-	public function next_declaration(): ?ast_declaration_interface
+	public function duplicate_element(): ?ast_declaration_interface
 	{
-		return $this->next;
+		return $this->duplicate_element;
 	}
 
 	/** Collection links an unchained duplicate once; existing source chains are never repurposed globally. */
-	public function link_next(ast_declaration_interface $next): void
+	public function link_duplicate(ast_declaration_interface $duplicate_element): void
 	{
-		if (($this->next !== null) || ($next === $this) || ($next->next_declaration() !== null)
-			|| (get_class($next) !== get_class($this)) || ($next->declaration_key() !== $this->declaration_key())) {
+		if (($this->duplicate_element !== null) || ($duplicate_element === $this) || ($duplicate_element->duplicate_element() !== null)
+			|| (get_class($duplicate_element) !== get_class($this)) || ($duplicate_element->declaration_key() !== $this->declaration_key())) {
 			throw new \LogicException('Invalid duplicate declaration link');
 		}
-		$this->next = $next;
+		$this->duplicate_element = $duplicate_element;
 	}
 
 	/** Default local key; neither a declaration category nor a namespace is included. */

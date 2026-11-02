@@ -1,0 +1,149 @@
+class CliInteger {
+    public bool $valid = false;
+    public int $value = 0;
+}
+
+function accounting_integer(string $text): CliInteger {
+    $result CliInteger = new CliInteger();
+    $length int = strlen($text);
+    if ($length === 0 || $length > 11) { return $result; }
+    $offset int = 0;
+    $negative bool = false;
+    if (string_byte_at($text, 0) === 45) {
+        $negative = true;
+        $offset = 1;
+    }
+    if ($offset === $length) { return $result; }
+    $magnitude int = 0;
+    while ($offset < $length) {
+        $digit int = string_byte_at($text, $offset) - 48;
+        if ($digit < 0 || $digit > 9) { return $result; }
+        $magnitude = $magnitude * 10 + $digit;
+        if ($magnitude > 1000000000) { return $result; }
+        $offset += 1;
+    }
+    $result->value = $magnitude;
+    if ($negative) { $result->value = -$magnitude; }
+    $result->valid = true;
+    return $result;
+}
+
+function accounting_usage(): void {
+    echo "accounting self-test\n";
+    echo "accounting sale NET TAX PAYMENT [REFERENCE]\n";
+    echo "accounting stock RECEIVED UNIT_COST ISSUED\n";
+    echo "accounting allocate AMOUNT PARTS\n";
+    echo "Amounts are integer minor units; each command starts a fresh company.\n";
+}
+
+function accounting_sale(int $net, int $tax, int $payment, string $reference): int {
+    $checks WorkloadChecks = new WorkloadChecks();
+    $ledger GeneralLedger = setup_accounting_ledger($checks);
+    if ($checks->failed !== 0) { echo "error=chart.setup\n"; return 1; }
+    $sales SalesService = new SalesService();
+    $invoice SalesInvoice = new SalesInvoice();
+    $invoice->number = "CLI-001";
+    $invoice->net_amount = $net;
+    $invoice->tax_amount = $tax;
+    $issued AccountingCheck = $sales->issue($ledger, $invoice);
+    if (!$issued->accepted) { echo "error=", $issued->code, "\n"; return 2; }
+    echo "invoice=", $invoice->number, " net=", $net, " tax=", $tax, " gross=", $invoice->gross_amount(), "\n";
+    $status int = 0;
+    if ($payment === 0) {
+        echo "payment=skipped\n";
+    } else {
+        $received AccountingCheck = $sales->receive($ledger, $invoice, $reference, $payment);
+        echo "payment=", $received->code, "\n";
+        if (!$received->accepted) { $status = 2; }
+    }
+    echo "reference=", $reference, "\n";
+    echo "paid=", $invoice->paid_amount, " outstanding=", $invoice->outstanding(), "\n";
+    echo "bank=", $ledger->balance_of("bank"), " receivables=", $ledger->balance_of("receivables"), " entries=", $ledger->entry_count(), "\n";
+    $trial TrialBalance = $ledger->trial_balance();
+    $control AccountingCheck = $sales->reconcile($ledger);
+    echo "balanced=", $trial->is_balanced(), " reconciled=", $control->accepted, "\n";
+    if (!$trial->is_balanced() || !$control->accepted) { return 1; }
+    return $status;
+}
+
+function accounting_stock(int $quantity, int $unit_cost, int $issued_quantity): int {
+    $checks WorkloadChecks = new WorkloadChecks();
+    $ledger GeneralLedger = setup_accounting_ledger($checks);
+    if ($checks->failed !== 0) { echo "error=chart.setup\n"; return 1; }
+    $stock InventoryBook = new InventoryBook();
+    $registered AccountingCheck = $stock->register_item("CLI-PART", "CLI inventory item");
+    if (!$registered->accepted) { echo "error=", $registered->code, "\n"; return 1; }
+    $received AccountingCheck = $stock->receive($ledger, "CLI-RECEIPT", "CLI-PART", $quantity, $unit_cost);
+    if (!$received->accepted) { echo "error=", $received->code, "\n"; return 2; }
+    $issue StockIssueResult = $stock->issue($ledger, "CLI-SHIPMENT", "CLI-PART", $issued_quantity);
+    $status int = 0;
+    if ($issue->accepted) {
+        echo "shipment=ok cost=", $issue->cost, "\n";
+    } else {
+        echo "shipment=", $issue->code, "\n";
+        $status = 2;
+    }
+    echo "quantity=", $stock->quantity_of("CLI-PART"), " value=", $stock->total_value(), " cost_of_sales=", $ledger->balance_of("cost-of-sales"), " entries=", $ledger->entry_count(), "\n";
+    $trial TrialBalance = $ledger->trial_balance();
+    $control AccountingCheck = $stock->reconcile($ledger);
+    echo "balanced=", $trial->is_balanced(), " reconciled=", $control->accepted, "\n";
+    if (!$trial->is_balanced() || !$control->accepted) { return 1; }
+    return $status;
+}
+
+function accounting_allocate(int $amount, int $parts): int {
+    $split AllocationResult = MoneyAllocation::equally($amount, $parts);
+    if (!$split->valid) { echo "error=", $split->reason, "\n"; return 2; }
+    echo "allocation total=", $amount, " parts=", $parts, "\n";
+    $sum int = 0;
+    for ($index int = 0; $index < count($split->amounts); $index++) {
+        $portion int = $split->amounts[$index];
+        echo "share[", $index, "]=", $portion, "\n";
+        $sum += $portion;
+    }
+    echo "sum=", $sum, "\n";
+    if ($sum !== $amount) { return 1; }
+    return 0;
+}
+
+function accounting_cli(): int {
+    $argument_count int = cli_argc();
+    $arguments mixed = cli_argv();
+    if ($argument_count === 1) { return accounting_self_test(); }
+    $command string = $arguments[1];
+    if ($command === "--help" && $argument_count === 2) { accounting_usage(); return 0; }
+    if ($command === "self-test" && $argument_count === 2) { return accounting_self_test(); }
+    if ($command === "sale" && ($argument_count === 5 || $argument_count === 6)) {
+        $net_text string = $arguments[2];
+        $tax_text string = $arguments[3];
+        $payment_text string = $arguments[4];
+        $net CliInteger = accounting_integer($net_text);
+        $tax CliInteger = accounting_integer($tax_text);
+        $payment CliInteger = accounting_integer($payment_text);
+        if (!$net->valid || !$tax->valid || !$payment->valid) { echo "error=argument.integer\n"; return 64; }
+        $reference string = "CLI-PAYMENT";
+        if ($argument_count === 6) { $reference = $arguments[5]; }
+        return accounting_sale($net->value, $tax->value, $payment->value, $reference);
+    }
+    if ($command === "stock" && $argument_count === 5) {
+        $quantity_text string = $arguments[2];
+        $cost_text string = $arguments[3];
+        $issue_text string = $arguments[4];
+        $quantity CliInteger = accounting_integer($quantity_text);
+        $cost CliInteger = accounting_integer($cost_text);
+        $issue CliInteger = accounting_integer($issue_text);
+        if (!$quantity->valid || !$cost->valid || !$issue->valid) { echo "error=argument.integer\n"; return 64; }
+        return accounting_stock($quantity->value, $cost->value, $issue->value);
+    }
+    if ($command === "allocate" && $argument_count === 4) {
+        $amount_text string = $arguments[2];
+        $parts_text string = $arguments[3];
+        $amount CliInteger = accounting_integer($amount_text);
+        $parts CliInteger = accounting_integer($parts_text);
+        if (!$amount->valid || !$parts->valid) { echo "error=argument.integer\n"; return 64; }
+        return accounting_allocate($amount->value, $parts->value);
+    }
+    echo "error=argument.usage\n";
+    accounting_usage();
+    return 64;
+}

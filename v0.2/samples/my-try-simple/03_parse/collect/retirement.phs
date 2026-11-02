@@ -1,0 +1,7 @@
+// Layout counterpart: my-try/phpp/03_parse/collect/retirement.phs
+function sample_unit_008(): void
+{
+    $value int = 9;
+    sample_unit_009();
+    return;
+}

@@ -15,7 +15,7 @@ final class Program_Preparation
 		foreach ($files as $file) {
 			$file->begin_preparation();
 			foreach ($file->declarations as $head) {
-				for ($node = $head; $node !== null; $node = $node->next_declaration()) { Function_Preparation::reset($node); }
+				for ($node = $head; $node !== null; $node = $node->duplicate_element()) { Function_Preparation::reset($node); }
 			}
 		}
 		if (!isset($files[$entry_path])) {

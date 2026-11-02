@@ -1,0 +1,18 @@
+
+/* Neutral lexical lifetime facts; no syntax, environment or worker back-links. */
+namespace scpp\compiler;
+
+final class storage_lifetime_region {
+	public int $next_order = 0;
+	public $parent nullable<storage_lifetime_region>;public int $entered_at;public function __construct(set:$parent, set:$entered_at) {}
+}
+
+/** Establishment within a region, independent of parser token generations. */
+final class storage_lifetime {
+	public storage_lifetime_region $region;public int $order;public function __construct(set:$region, set:$order) {}
+}
+
+/** A borrow always has both an origin and its establishment lifetime. */
+final class storage_borrow {
+	public prepared_place $place;public storage_lifetime $lifetime;public function __construct(set:$place, set:$lifetime) {}
+}

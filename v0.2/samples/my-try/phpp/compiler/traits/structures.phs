@@ -1,0 +1,31 @@
+namespace scpp\compiler;
+
+/** Independent working syntax paired with its authored provenance. */
+final class trait_member_instance {
+	public collected_name $origin;public collected_name $working;public function __construct(set:$origin, set:$working) {}
+}
+
+/** A consumer owns syntax, collection, scopes and a private token snapshot as one unit. */
+final class trait_instance {
+	public collected_trait $origin;
+	/** @reference.weak */
+	private $consumer_reference weak<collected_record>;
+	public parsed_file $parsed;
+	/** Private collection owner: not published as another source file. */
+	public collected_file $collection;
+	public $members Storage<trait_member_instance>;
+	public string $origin_input;
+	public string $consumer_input;
+
+	public function __construct(collected_trait $origin, collected_record $consumer, parsed_file $parsed) {
+		$this->origin = $origin;
+		$this->consumer_reference = weak($consumer);
+		$this->parsed = $parsed;
+		$this->collection = $parsed->collection;
+		$this->members = new Storage<trait_member_instance>();
+		$this->origin_input = $origin->collection->source_file()->content;
+		$this->consumer_input = $consumer->collection->source_file()->content;
+	}
+
+	public function consumer(): collected_record { return lock($this->consumer_reference); }
+}

@@ -1,0 +1,7 @@
+// Layout counterpart: my-try/phpp/04_analyze/operators/indexing_signature.phs
+function sample_unit_057(): void
+{
+    $value int = 58;
+    sample_unit_058();
+    return;
+}

@@ -1,0 +1,7 @@
+// Layout counterpart: my-try/phpp/04_analyze/prepare/semantics/ownership_observation.phs
+function sample_unit_124(): void
+{
+    $value int = 125;
+    sample_unit_125();
+    return;
+}

@@ -1,0 +1,7 @@
+// Layout counterpart: my-try/phpp/05_backend/cpp/source_calls.phs
+function sample_unit_182(): void
+{
+    $value int = 183;
+    sample_unit_183();
+    return;
+}

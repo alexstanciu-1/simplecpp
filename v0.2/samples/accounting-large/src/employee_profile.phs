@@ -1,0 +1,125 @@
+// Fictional employee expense limits and employment state.
+// Draft values are mutable. Services retain validated copies, never caller handles.
+class EmployeeProfile {
+    public string $id = "";
+    public string $display_name = "";
+    public string $department = "";
+    public string $cost_center = "";
+    public string $expense_account = "";
+    public string $payable_account = "";
+    public int $monthly_salary = 0;
+    public int $expense_limit = 0;
+    public int $advance_limit = 0;
+    public int $open_advance = 0;
+    public int $start_period = 0;
+    public int $end_period = 0;
+    public bool $active = false;
+    public bool $payment_hold = false;
+
+    public function validate(): AccountingCheck {
+        if (!DocumentRules::text($this->id, 1, 40)) {
+            return accounting_failure("employee_profile.id", "id must contain 1..40 printable bytes");
+        }
+        if (!DocumentRules::text($this->display_name, 1, 80)) {
+            return accounting_failure("employee_profile.display_name", "display_name must contain 1..80 printable bytes");
+        }
+        if (!DocumentRules::text($this->department, 1, 80)) {
+            return accounting_failure("employee_profile.department", "department must contain 1..80 printable bytes");
+        }
+        if (!DocumentRules::text($this->cost_center, 1, 80)) {
+            return accounting_failure("employee_profile.cost_center", "cost_center must contain 1..80 printable bytes");
+        }
+        if (!DocumentRules::text($this->expense_account, 1, 80)) {
+            return accounting_failure("employee_profile.expense_account", "expense_account must contain 1..80 printable bytes");
+        }
+        if (!DocumentRules::text($this->payable_account, 1, 80)) {
+            return accounting_failure("employee_profile.payable_account", "payable_account must contain 1..80 printable bytes");
+        }
+        if (!DocumentRules::integer($this->monthly_salary, 0, 1000000000)) {
+            return accounting_failure("employee_profile.monthly_salary", "monthly_salary must be in [0, 1000000000]");
+        }
+        if (!DocumentRules::integer($this->expense_limit, 0, 1000000000)) {
+            return accounting_failure("employee_profile.expense_limit", "expense_limit must be in [0, 1000000000]");
+        }
+        if (!DocumentRules::integer($this->advance_limit, 0, 1000000000)) {
+            return accounting_failure("employee_profile.advance_limit", "advance_limit must be in [0, 1000000000]");
+        }
+        if (!DocumentRules::integer($this->open_advance, 0, 1000000000)) {
+            return accounting_failure("employee_profile.open_advance", "open_advance must be in [0, 1000000000]");
+        }
+        if (!DocumentRules::integer($this->start_period, 1, 1200)) {
+            return accounting_failure("employee_profile.start_period", "start_period must be in [1, 1200]");
+        }
+        if (!DocumentRules::integer($this->end_period, 1, 1200)) {
+            return accounting_failure("employee_profile.end_period", "end_period must be in [1, 1200]");
+        }
+        if ($this->open_advance > $this->advance_limit) {
+            return accounting_failure("employee_profile.advance", "Advance exceeds employee limit");
+        }
+        if ($this->end_period < $this->start_period) {
+            return accounting_failure("employee_profile.term", "Employment periods are reversed");
+        }
+        return accounting_success();
+    }
+
+    public function available_advance(): int {
+        return $this->advance_limit - $this->open_advance;
+    }
+
+    public function copy(): EmployeeProfile {
+        $snapshot EmployeeProfile = new EmployeeProfile();
+        $snapshot->id = $this->id;
+        $snapshot->display_name = $this->display_name;
+        $snapshot->department = $this->department;
+        $snapshot->cost_center = $this->cost_center;
+        $snapshot->expense_account = $this->expense_account;
+        $snapshot->payable_account = $this->payable_account;
+        $snapshot->monthly_salary = $this->monthly_salary;
+        $snapshot->expense_limit = $this->expense_limit;
+        $snapshot->advance_limit = $this->advance_limit;
+        $snapshot->open_advance = $this->open_advance;
+        $snapshot->start_period = $this->start_period;
+        $snapshot->end_period = $this->end_period;
+        $snapshot->active = $this->active;
+        $snapshot->payment_hold = $this->payment_hold;
+        return $snapshot;
+    }
+
+    public function differences(EmployeeProfile $other): vector<string> {
+        $fields vector<string> = [];
+        if ($this->id !== $other->id) { $fields[] = "id"; }
+        if ($this->display_name !== $other->display_name) { $fields[] = "display_name"; }
+        if ($this->department !== $other->department) { $fields[] = "department"; }
+        if ($this->cost_center !== $other->cost_center) { $fields[] = "cost_center"; }
+        if ($this->expense_account !== $other->expense_account) { $fields[] = "expense_account"; }
+        if ($this->payable_account !== $other->payable_account) { $fields[] = "payable_account"; }
+        if ($this->monthly_salary !== $other->monthly_salary) { $fields[] = "monthly_salary"; }
+        if ($this->expense_limit !== $other->expense_limit) { $fields[] = "expense_limit"; }
+        if ($this->advance_limit !== $other->advance_limit) { $fields[] = "advance_limit"; }
+        if ($this->open_advance !== $other->open_advance) { $fields[] = "open_advance"; }
+        if ($this->start_period !== $other->start_period) { $fields[] = "start_period"; }
+        if ($this->end_period !== $other->end_period) { $fields[] = "end_period"; }
+        if ($this->active !== $other->active) { $fields[] = "active"; }
+        if ($this->payment_hold !== $other->payment_hold) { $fields[] = "payment_hold"; }
+        return $fields;
+    }
+
+    public function describe(): string {
+        $text string = "EmployeeProfile\n";
+        $text .= "id=" . $this->id . "\n";
+        $text .= "display_name=" . $this->display_name . "\n";
+        $text .= "department=" . $this->department . "\n";
+        $text .= "cost_center=" . $this->cost_center . "\n";
+        $text .= "expense_account=" . $this->expense_account . "\n";
+        $text .= "payable_account=" . $this->payable_account . "\n";
+        $text .= "monthly_salary=" . (string)$this->monthly_salary . "\n";
+        $text .= "expense_limit=" . (string)$this->expense_limit . "\n";
+        $text .= "advance_limit=" . (string)$this->advance_limit . "\n";
+        $text .= "open_advance=" . (string)$this->open_advance . "\n";
+        $text .= "start_period=" . (string)$this->start_period . "\n";
+        $text .= "end_period=" . (string)$this->end_period . "\n";
+        $text .= "active=" . DocumentRules::flag($this->active) . "\n";
+        $text .= "payment_hold=" . DocumentRules::flag($this->payment_hold) . "\n";
+        return $text;
+    }
+}

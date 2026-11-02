@@ -1,0 +1,125 @@
+// One unapplied cash receipt allocation to a customer document.
+// Draft values are mutable. Services retain validated copies, never caller handles.
+class ReceiptAllocation {
+    public string $id = "";
+    public string $receipt_id = "";
+    public string $customer_id = "";
+    public string $invoice_id = "";
+    public string $bank_account = "";
+    public string $operator_name = "";
+    public int $receipt_amount = 0;
+    public int $invoice_open = 0;
+    public int $allocated_amount = 0;
+    public int $discount_allowed = 0;
+    public int $period = 0;
+    public int $sequence = 0;
+    public bool $confirmed = false;
+    public bool $reversed = false;
+
+    public function validate(): AccountingCheck {
+        if (!DocumentRules::text($this->id, 1, 40)) {
+            return accounting_failure("receipt_allocation.id", "id must contain 1..40 printable bytes");
+        }
+        if (!DocumentRules::text($this->receipt_id, 1, 80)) {
+            return accounting_failure("receipt_allocation.receipt_id", "receipt_id must contain 1..80 printable bytes");
+        }
+        if (!DocumentRules::text($this->customer_id, 1, 80)) {
+            return accounting_failure("receipt_allocation.customer_id", "customer_id must contain 1..80 printable bytes");
+        }
+        if (!DocumentRules::text($this->invoice_id, 1, 80)) {
+            return accounting_failure("receipt_allocation.invoice_id", "invoice_id must contain 1..80 printable bytes");
+        }
+        if (!DocumentRules::text($this->bank_account, 1, 80)) {
+            return accounting_failure("receipt_allocation.bank_account", "bank_account must contain 1..80 printable bytes");
+        }
+        if (!DocumentRules::text($this->operator_name, 1, 80)) {
+            return accounting_failure("receipt_allocation.operator_name", "operator_name must contain 1..80 printable bytes");
+        }
+        if (!DocumentRules::integer($this->receipt_amount, 0, 1000000000)) {
+            return accounting_failure("receipt_allocation.receipt_amount", "receipt_amount must be in [0, 1000000000]");
+        }
+        if (!DocumentRules::integer($this->invoice_open, 0, 1000000000)) {
+            return accounting_failure("receipt_allocation.invoice_open", "invoice_open must be in [0, 1000000000]");
+        }
+        if (!DocumentRules::integer($this->allocated_amount, 0, 1000000000)) {
+            return accounting_failure("receipt_allocation.allocated_amount", "allocated_amount must be in [0, 1000000000]");
+        }
+        if (!DocumentRules::integer($this->discount_allowed, 0, 1000000000)) {
+            return accounting_failure("receipt_allocation.discount_allowed", "discount_allowed must be in [0, 1000000000]");
+        }
+        if (!DocumentRules::integer($this->period, 1, 1200)) {
+            return accounting_failure("receipt_allocation.period", "period must be in [1, 1200]");
+        }
+        if (!DocumentRules::integer($this->sequence, 1, 1000000)) {
+            return accounting_failure("receipt_allocation.sequence", "sequence must be in [1, 1000000]");
+        }
+        if ($this->allocated_amount > $this->receipt_amount) {
+            return accounting_failure("receipt_allocation.cash", "Allocation exceeds receipt");
+        }
+        if ($this->allocated_amount + $this->discount_allowed > $this->invoice_open) {
+            return accounting_failure("receipt_allocation.invoice", "Settlement exceeds open invoice");
+        }
+        return accounting_success();
+    }
+
+    public function unapplied_cash(): int {
+        return $this->receipt_amount - $this->allocated_amount;
+    }
+
+    public function copy(): ReceiptAllocation {
+        $snapshot ReceiptAllocation = new ReceiptAllocation();
+        $snapshot->id = $this->id;
+        $snapshot->receipt_id = $this->receipt_id;
+        $snapshot->customer_id = $this->customer_id;
+        $snapshot->invoice_id = $this->invoice_id;
+        $snapshot->bank_account = $this->bank_account;
+        $snapshot->operator_name = $this->operator_name;
+        $snapshot->receipt_amount = $this->receipt_amount;
+        $snapshot->invoice_open = $this->invoice_open;
+        $snapshot->allocated_amount = $this->allocated_amount;
+        $snapshot->discount_allowed = $this->discount_allowed;
+        $snapshot->period = $this->period;
+        $snapshot->sequence = $this->sequence;
+        $snapshot->confirmed = $this->confirmed;
+        $snapshot->reversed = $this->reversed;
+        return $snapshot;
+    }
+
+    public function differences(ReceiptAllocation $other): vector<string> {
+        $fields vector<string> = [];
+        if ($this->id !== $other->id) { $fields[] = "id"; }
+        if ($this->receipt_id !== $other->receipt_id) { $fields[] = "receipt_id"; }
+        if ($this->customer_id !== $other->customer_id) { $fields[] = "customer_id"; }
+        if ($this->invoice_id !== $other->invoice_id) { $fields[] = "invoice_id"; }
+        if ($this->bank_account !== $other->bank_account) { $fields[] = "bank_account"; }
+        if ($this->operator_name !== $other->operator_name) { $fields[] = "operator_name"; }
+        if ($this->receipt_amount !== $other->receipt_amount) { $fields[] = "receipt_amount"; }
+        if ($this->invoice_open !== $other->invoice_open) { $fields[] = "invoice_open"; }
+        if ($this->allocated_amount !== $other->allocated_amount) { $fields[] = "allocated_amount"; }
+        if ($this->discount_allowed !== $other->discount_allowed) { $fields[] = "discount_allowed"; }
+        if ($this->period !== $other->period) { $fields[] = "period"; }
+        if ($this->sequence !== $other->sequence) { $fields[] = "sequence"; }
+        if ($this->confirmed !== $other->confirmed) { $fields[] = "confirmed"; }
+        if ($this->reversed !== $other->reversed) { $fields[] = "reversed"; }
+        return $fields;
+    }
+
+    public function describe(): string {
+        $text string = "ReceiptAllocation\n";
+        $text .= "id=" . $this->id . "\n";
+        $text .= "receipt_id=" . $this->receipt_id . "\n";
+        $text .= "customer_id=" . $this->customer_id . "\n";
+        $text .= "invoice_id=" . $this->invoice_id . "\n";
+        $text .= "bank_account=" . $this->bank_account . "\n";
+        $text .= "operator_name=" . $this->operator_name . "\n";
+        $text .= "receipt_amount=" . (string)$this->receipt_amount . "\n";
+        $text .= "invoice_open=" . (string)$this->invoice_open . "\n";
+        $text .= "allocated_amount=" . (string)$this->allocated_amount . "\n";
+        $text .= "discount_allowed=" . (string)$this->discount_allowed . "\n";
+        $text .= "period=" . (string)$this->period . "\n";
+        $text .= "sequence=" . (string)$this->sequence . "\n";
+        $text .= "confirmed=" . DocumentRules::flag($this->confirmed) . "\n";
+        $text .= "reversed=" . DocumentRules::flag($this->reversed) . "\n";
+        return $text;
+    }
+}

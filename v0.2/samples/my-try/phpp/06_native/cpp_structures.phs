@@ -1,0 +1,95 @@
+namespace scpp\compiler;
+
+/** Explicit Linux/Clang build configuration, independent of semantic preparation. */
+abstract class native_cpp_toolchain {
+	public string $compiler;
+	public string $runtime_include;
+	/** Explicit linker executable; zero threads leaves its own default unchanged. */
+	public string $linker = '/usr/bin/ld';
+	public int $linker_threads = 0;
+	public bool $pch = false;
+	public bool $native_debug = false;
+	public int $optimization = 0;
+	public function __construct(string $compiler, string $runtime_include) {
+		$this->compiler = $compiler;
+		$this->runtime_include = $runtime_include;
+	}
+}
+
+/** Existing content-addressed executor settings. */
+final class native_cpp_config extends native_cpp_toolchain {
+	public string $cache_directory;
+	/** Maximum independent Clang processes; layout/link prerequisites remain ordered. */
+	public int $jobs = 1;
+	/** Explicit opt-in: runtime changes require a fresh cache directory. */
+	public bool $runtime_snapshot = false;
+	public function __construct(string $compiler, string $runtime_include, string $cache_directory) {
+		parent::__construct($compiler, $runtime_include);
+		$this->cache_directory = $cache_directory;
+	}
+}
+
+/** Ninja alone owns freshness in this directory; no native action cache beneath it. */
+final class native_ninja_config extends native_cpp_toolchain {
+	public string $build_directory;
+	public string $ninja = '/usr/bin/ninja';
+	public bool $reuse = false;
+	public int $jobs = 0;
+	public function __construct(string $compiler, string $runtime_include, string $build_directory) {
+		parent::__construct($compiler, $runtime_include);
+		$this->build_directory = $build_directory;
+	}
+}
+
+final class native_ninja_result {
+	public string $executable = '';
+	public string $output = '';
+}
+
+final class native_cpp_result {
+	public string $executable = '';
+	/** Diagnostics from actions executed in this invocation; cached actions are not replayed. */
+	public string $diagnostics = '';
+	public int $compiled = 0;
+	public int $reused = 0;
+	public int $pch_built = 0;
+	public int $linked = 0;
+	public int $layouts_built = 0;
+	public int $layouts_reused = 0;
+}
+
+/** Invocation-local action result, not a retained semantic record. */
+final class native_cpp_artifact {
+	public string $path;
+	public string $digest;
+	public bool $reused;
+	public function __construct(string $path, string $digest, bool $reused) {
+		$this->path = $path;
+		$this->digest = $digest;
+		$this->reused = $reused;
+	}
+}
+
+/** Published generated input, not an AST or semantic dependency. */
+final class native_cpp_input {
+	public string $digest = '';
+	public $includes vector<string> = [];
+}
+
+/** Invocation-local process phase; no semantic/preparation state enters native scheduling. */
+enum native_compile_phase { case discovery; case validation; case compilation; case finished; }
+
+final class native_compile_request {
+	public native_compile_phase $phase = native_compile_phase::discovery;
+	public $process nullable<\process_handle> = null;
+	public $stage nullable<\scpp\Output_Stage> = null;
+	public $artifact nullable<native_cpp_artifact> = null;
+	public $leader nullable<native_compile_request> = null;
+	public $inputs nullable<Native_Dependency_Inputs> = null;
+	public $pch_inputs vector<string> = [];
+	public string $discovery = '';
+	public string $key = '';
+	public string $expected = '';
+	public string $diagnostics = '';
+	public $command vector<string>;public string $suffix;public bool $force;public bool $template_free;public function __construct(set:$command, set:$suffix, set:$force = false, set:$template_free = false) {}
+}

@@ -1,0 +1,7 @@
+// Layout counterpart: my-try/phpp/05_backend/cpp/wrapper_transport.phs
+function sample_unit_188(): void
+{
+    $value int = 189;
+    sample_unit_189();
+    return;
+}

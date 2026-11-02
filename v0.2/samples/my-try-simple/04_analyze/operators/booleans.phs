@@ -1,0 +1,7 @@
+// Layout counterpart: my-try/phpp/04_analyze/operators/booleans.phs
+function sample_unit_050(): void
+{
+    $value int = 51;
+    sample_unit_051();
+    return;
+}

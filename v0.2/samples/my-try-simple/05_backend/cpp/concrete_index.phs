@@ -1,0 +1,7 @@
+// Layout counterpart: my-try/phpp/05_backend/cpp/concrete_index.phs
+function sample_unit_151(): void
+{
+    $value int = 152;
+    sample_unit_152();
+    return;
+}

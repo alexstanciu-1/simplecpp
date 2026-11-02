@@ -122,3 +122,6 @@ Thumbs.db
 
 # Compiler-generated module inventories (never configuration).
 module.sources.json
+
+# App-local incremental frontend service state.
+.scpp/

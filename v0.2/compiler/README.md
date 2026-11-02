@@ -15,6 +15,20 @@ The compiler runs sequentially using ordinary `php`; NTS and ZTS builds are both
 supported, and no Parallel extension is required. See [execution guidance](docs/execution.md)
 for tool selection, the current flow and retained MT experiment evidence.
 
+## Persistent app-local frontend
+
+```sh
+XDEBUG_MODE=off php v0.2/compiler/main.php frontend v0.2/samples/my-try-simple
+# Edit a source, then invoke the same command again.
+XDEBUG_MODE=off php v0.2/compiler/main.php frontend v0.2/samples/my-try-simple status
+XDEBUG_MODE=off php v0.2/compiler/main.php frontend v0.2/samples/my-try-simple stop
+```
+
+The first request starts a detached service for this app; later CLI processes reuse
+its in-memory frontend session. It stops after one idle hour. This path performs
+only tokenize, parse/local collect and symbol publication. See the
+[service lifecycle and checks](docs/frontend_service.md).
+
 ## Local stage inspection panel
 
 Run `python3 v0.2/tools/compiler_panel/server.py` from the repository root and open
@@ -145,7 +159,7 @@ Parsing and local collection complete together; no separate file wrapper is reta
 The lasting [AST and preparation decisions](docs/ast_model.md) govern further simplification.
 
 The parser keeps the first declaration under each key and links duplicates through
-`next_declaration()`, retaining every body. The completed root carries a simple
+`duplicate_element()`, retaining every body. The completed root carries a simple
 diagnostic list. Preparation reports all duplicates together before resolving names. `main` is reserved for the
 implicit entry; explicit `main` declarations are not implemented. Constants and
 class-like declarations are not introduced by this structural slice. CLI syntax
@@ -228,3 +242,10 @@ remain full runs; native compilation/linking is still performed by the caller.
 `Project_Compiler` is the reusable orchestration owner; CLI adapters only parse and
 present. Unchanged application source inventories are not rewritten. See the module
 guide for the application-only incremental boundary and manually built dependencies.
+
+## Incremental frontend
+
+`Project_Compiler::frontend($path, $previous)` performs tokenize/parse/collection
+and symbol indexing only, reusing unchanged AST/token objects in memory. See
+[incremental frontend generations](docs/incremental_frontend.md). Executable
+compilation still runs full preparation/emission; incremental facts are deferred.

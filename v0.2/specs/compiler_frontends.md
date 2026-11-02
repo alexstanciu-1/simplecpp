@@ -73,7 +73,15 @@ existing lexical tokens but compound assignment parsing remains deferred.
 
 ## Lexical boundary
 
-Source bytes, spans, token publication and diagnostics are shared.
+Source bytes, spans, token publication and diagnostics are shared. Source must be
+valid UTF-8 in all three flavors, including comments and quoted literals. The PHP
+bootstrap uses `preg_match_all` with UTF-8 validation; offsets, lengths and diagnostic
+columns remain byte-based. Invalid encoding diagnoses the start of its first invalid
+sequence before lexical classification. No BOM stripping, Unicode identifier rules,
+Unicode whitespace expansion or normalization is introduced. ASCII whitespace remains
+space, tab, CR and LF. Valid NUL bytes inside quoted strings remain supported.
+The [native tokenizer debt](planning/native_tokenizer_debt.md) records the intended
+native implementation review.
 The current scanner shares decimal/quote/trivia/punctuation machinery with explicit
 flavor rules: PHP admits $-prefixed variable tokens and # comments (except #[);
 JS admits $ as an identifier character; C++ rejects $ names in this bounded subset.

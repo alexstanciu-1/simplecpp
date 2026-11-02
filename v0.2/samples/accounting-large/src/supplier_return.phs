@@ -1,0 +1,125 @@
+// Return authorization with pending supplier credit value.
+// Draft values are mutable. Services retain validated copies, never caller handles.
+class SupplierReturn {
+    public string $id = "";
+    public string $supplier_id = "";
+    public string $receipt_id = "";
+    public string $item_code = "";
+    public string $reason = "";
+    public string $carrier_reference = "";
+    public int $authorized_quantity = 0;
+    public int $dispatched_quantity = 0;
+    public int $credited_quantity = 0;
+    public int $unit_cost = 0;
+    public int $period = 0;
+    public int $restocking_fee = 0;
+    public bool $approved = false;
+    public bool $closed = false;
+
+    public function validate(): AccountingCheck {
+        if (!DocumentRules::text($this->id, 1, 40)) {
+            return accounting_failure("supplier_return.id", "id must contain 1..40 printable bytes");
+        }
+        if (!DocumentRules::text($this->supplier_id, 1, 80)) {
+            return accounting_failure("supplier_return.supplier_id", "supplier_id must contain 1..80 printable bytes");
+        }
+        if (!DocumentRules::text($this->receipt_id, 1, 80)) {
+            return accounting_failure("supplier_return.receipt_id", "receipt_id must contain 1..80 printable bytes");
+        }
+        if (!DocumentRules::text($this->item_code, 1, 80)) {
+            return accounting_failure("supplier_return.item_code", "item_code must contain 1..80 printable bytes");
+        }
+        if (!DocumentRules::text($this->reason, 1, 80)) {
+            return accounting_failure("supplier_return.reason", "reason must contain 1..80 printable bytes");
+        }
+        if (!DocumentRules::text($this->carrier_reference, 1, 80)) {
+            return accounting_failure("supplier_return.carrier_reference", "carrier_reference must contain 1..80 printable bytes");
+        }
+        if (!DocumentRules::integer($this->authorized_quantity, 1, 1000000)) {
+            return accounting_failure("supplier_return.authorized_quantity", "authorized_quantity must be in [1, 1000000]");
+        }
+        if (!DocumentRules::integer($this->dispatched_quantity, 0, 1000000)) {
+            return accounting_failure("supplier_return.dispatched_quantity", "dispatched_quantity must be in [0, 1000000]");
+        }
+        if (!DocumentRules::integer($this->credited_quantity, 0, 1000000)) {
+            return accounting_failure("supplier_return.credited_quantity", "credited_quantity must be in [0, 1000000]");
+        }
+        if (!DocumentRules::integer($this->unit_cost, 0, 1000000)) {
+            return accounting_failure("supplier_return.unit_cost", "unit_cost must be in [0, 1000000]");
+        }
+        if (!DocumentRules::integer($this->period, 1, 1200)) {
+            return accounting_failure("supplier_return.period", "period must be in [1, 1200]");
+        }
+        if (!DocumentRules::integer($this->restocking_fee, 0, 1000000000)) {
+            return accounting_failure("supplier_return.restocking_fee", "restocking_fee must be in [0, 1000000000]");
+        }
+        if ($this->dispatched_quantity > $this->authorized_quantity) {
+            return accounting_failure("supplier_return.dispatch", "Dispatch exceeds authorization");
+        }
+        if ($this->credited_quantity > $this->dispatched_quantity) {
+            return accounting_failure("supplier_return.credit", "Credit exceeds dispatch");
+        }
+        return accounting_success();
+    }
+
+    public function credit_due(): int {
+        return ($this->dispatched_quantity - $this->credited_quantity) * $this->unit_cost;
+    }
+
+    public function copy(): SupplierReturn {
+        $snapshot SupplierReturn = new SupplierReturn();
+        $snapshot->id = $this->id;
+        $snapshot->supplier_id = $this->supplier_id;
+        $snapshot->receipt_id = $this->receipt_id;
+        $snapshot->item_code = $this->item_code;
+        $snapshot->reason = $this->reason;
+        $snapshot->carrier_reference = $this->carrier_reference;
+        $snapshot->authorized_quantity = $this->authorized_quantity;
+        $snapshot->dispatched_quantity = $this->dispatched_quantity;
+        $snapshot->credited_quantity = $this->credited_quantity;
+        $snapshot->unit_cost = $this->unit_cost;
+        $snapshot->period = $this->period;
+        $snapshot->restocking_fee = $this->restocking_fee;
+        $snapshot->approved = $this->approved;
+        $snapshot->closed = $this->closed;
+        return $snapshot;
+    }
+
+    public function differences(SupplierReturn $other): vector<string> {
+        $fields vector<string> = [];
+        if ($this->id !== $other->id) { $fields[] = "id"; }
+        if ($this->supplier_id !== $other->supplier_id) { $fields[] = "supplier_id"; }
+        if ($this->receipt_id !== $other->receipt_id) { $fields[] = "receipt_id"; }
+        if ($this->item_code !== $other->item_code) { $fields[] = "item_code"; }
+        if ($this->reason !== $other->reason) { $fields[] = "reason"; }
+        if ($this->carrier_reference !== $other->carrier_reference) { $fields[] = "carrier_reference"; }
+        if ($this->authorized_quantity !== $other->authorized_quantity) { $fields[] = "authorized_quantity"; }
+        if ($this->dispatched_quantity !== $other->dispatched_quantity) { $fields[] = "dispatched_quantity"; }
+        if ($this->credited_quantity !== $other->credited_quantity) { $fields[] = "credited_quantity"; }
+        if ($this->unit_cost !== $other->unit_cost) { $fields[] = "unit_cost"; }
+        if ($this->period !== $other->period) { $fields[] = "period"; }
+        if ($this->restocking_fee !== $other->restocking_fee) { $fields[] = "restocking_fee"; }
+        if ($this->approved !== $other->approved) { $fields[] = "approved"; }
+        if ($this->closed !== $other->closed) { $fields[] = "closed"; }
+        return $fields;
+    }
+
+    public function describe(): string {
+        $text string = "SupplierReturn\n";
+        $text .= "id=" . $this->id . "\n";
+        $text .= "supplier_id=" . $this->supplier_id . "\n";
+        $text .= "receipt_id=" . $this->receipt_id . "\n";
+        $text .= "item_code=" . $this->item_code . "\n";
+        $text .= "reason=" . $this->reason . "\n";
+        $text .= "carrier_reference=" . $this->carrier_reference . "\n";
+        $text .= "authorized_quantity=" . (string)$this->authorized_quantity . "\n";
+        $text .= "dispatched_quantity=" . (string)$this->dispatched_quantity . "\n";
+        $text .= "credited_quantity=" . (string)$this->credited_quantity . "\n";
+        $text .= "unit_cost=" . (string)$this->unit_cost . "\n";
+        $text .= "period=" . (string)$this->period . "\n";
+        $text .= "restocking_fee=" . (string)$this->restocking_fee . "\n";
+        $text .= "approved=" . DocumentRules::flag($this->approved) . "\n";
+        $text .= "closed=" . DocumentRules::flag($this->closed) . "\n";
+        return $text;
+    }
+}

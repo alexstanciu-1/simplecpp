@@ -1,0 +1,7 @@
+// Layout counterpart: my-try/phpp/03_parse/structures/structures_async.phs
+function sample_unit_018(): void
+{
+    $value int = 19;
+    sample_unit_019();
+    return;
+}

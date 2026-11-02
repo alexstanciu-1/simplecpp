@@ -1,0 +1,122 @@
+// Three-way matching of one supplier invoice line.
+// Draft values are mutable. Services retain validated copies, never caller handles.
+class SupplierInvoiceMatch {
+    public string $id = "";
+    public string $invoice_id = "";
+    public string $order_line_id = "";
+    public string $receipt_line_id = "";
+    public string $supplier_id = "";
+    public string $reviewer = "";
+    public int $invoice_quantity = 0;
+    public int $available_receipt_quantity = 0;
+    public int $ordered_unit_cost = 0;
+    public int $invoiced_unit_cost = 0;
+    public int $tolerance_amount = 0;
+    public int $tax_amount = 0;
+    public bool $approved = false;
+    public bool $price_override = false;
+
+    public function validate(): AccountingCheck {
+        if (!DocumentRules::text($this->id, 1, 40)) {
+            return accounting_failure("supplier_invoice_match.id", "id must contain 1..40 printable bytes");
+        }
+        if (!DocumentRules::text($this->invoice_id, 1, 80)) {
+            return accounting_failure("supplier_invoice_match.invoice_id", "invoice_id must contain 1..80 printable bytes");
+        }
+        if (!DocumentRules::text($this->order_line_id, 1, 80)) {
+            return accounting_failure("supplier_invoice_match.order_line_id", "order_line_id must contain 1..80 printable bytes");
+        }
+        if (!DocumentRules::text($this->receipt_line_id, 1, 80)) {
+            return accounting_failure("supplier_invoice_match.receipt_line_id", "receipt_line_id must contain 1..80 printable bytes");
+        }
+        if (!DocumentRules::text($this->supplier_id, 1, 80)) {
+            return accounting_failure("supplier_invoice_match.supplier_id", "supplier_id must contain 1..80 printable bytes");
+        }
+        if (!DocumentRules::text($this->reviewer, 1, 80)) {
+            return accounting_failure("supplier_invoice_match.reviewer", "reviewer must contain 1..80 printable bytes");
+        }
+        if (!DocumentRules::integer($this->invoice_quantity, 1, 1000000)) {
+            return accounting_failure("supplier_invoice_match.invoice_quantity", "invoice_quantity must be in [1, 1000000]");
+        }
+        if (!DocumentRules::integer($this->available_receipt_quantity, 0, 1000000)) {
+            return accounting_failure("supplier_invoice_match.available_receipt_quantity", "available_receipt_quantity must be in [0, 1000000]");
+        }
+        if (!DocumentRules::integer($this->ordered_unit_cost, 0, 1000000)) {
+            return accounting_failure("supplier_invoice_match.ordered_unit_cost", "ordered_unit_cost must be in [0, 1000000]");
+        }
+        if (!DocumentRules::integer($this->invoiced_unit_cost, 0, 1000000)) {
+            return accounting_failure("supplier_invoice_match.invoiced_unit_cost", "invoiced_unit_cost must be in [0, 1000000]");
+        }
+        if (!DocumentRules::integer($this->tolerance_amount, 0, 1000000000)) {
+            return accounting_failure("supplier_invoice_match.tolerance_amount", "tolerance_amount must be in [0, 1000000000]");
+        }
+        if (!DocumentRules::integer($this->tax_amount, 0, 1000000000)) {
+            return accounting_failure("supplier_invoice_match.tax_amount", "tax_amount must be in [0, 1000000000]");
+        }
+        if ($this->invoice_quantity > $this->available_receipt_quantity) {
+            return accounting_failure("supplier_invoice_match.quantity", "Invoice exceeds unmatched receipts");
+        }
+        return accounting_success();
+    }
+
+    public function price_variance(): int {
+        return ($this->invoiced_unit_cost - $this->ordered_unit_cost) * $this->invoice_quantity;
+    }
+
+    public function copy(): SupplierInvoiceMatch {
+        $snapshot SupplierInvoiceMatch = new SupplierInvoiceMatch();
+        $snapshot->id = $this->id;
+        $snapshot->invoice_id = $this->invoice_id;
+        $snapshot->order_line_id = $this->order_line_id;
+        $snapshot->receipt_line_id = $this->receipt_line_id;
+        $snapshot->supplier_id = $this->supplier_id;
+        $snapshot->reviewer = $this->reviewer;
+        $snapshot->invoice_quantity = $this->invoice_quantity;
+        $snapshot->available_receipt_quantity = $this->available_receipt_quantity;
+        $snapshot->ordered_unit_cost = $this->ordered_unit_cost;
+        $snapshot->invoiced_unit_cost = $this->invoiced_unit_cost;
+        $snapshot->tolerance_amount = $this->tolerance_amount;
+        $snapshot->tax_amount = $this->tax_amount;
+        $snapshot->approved = $this->approved;
+        $snapshot->price_override = $this->price_override;
+        return $snapshot;
+    }
+
+    public function differences(SupplierInvoiceMatch $other): vector<string> {
+        $fields vector<string> = [];
+        if ($this->id !== $other->id) { $fields[] = "id"; }
+        if ($this->invoice_id !== $other->invoice_id) { $fields[] = "invoice_id"; }
+        if ($this->order_line_id !== $other->order_line_id) { $fields[] = "order_line_id"; }
+        if ($this->receipt_line_id !== $other->receipt_line_id) { $fields[] = "receipt_line_id"; }
+        if ($this->supplier_id !== $other->supplier_id) { $fields[] = "supplier_id"; }
+        if ($this->reviewer !== $other->reviewer) { $fields[] = "reviewer"; }
+        if ($this->invoice_quantity !== $other->invoice_quantity) { $fields[] = "invoice_quantity"; }
+        if ($this->available_receipt_quantity !== $other->available_receipt_quantity) { $fields[] = "available_receipt_quantity"; }
+        if ($this->ordered_unit_cost !== $other->ordered_unit_cost) { $fields[] = "ordered_unit_cost"; }
+        if ($this->invoiced_unit_cost !== $other->invoiced_unit_cost) { $fields[] = "invoiced_unit_cost"; }
+        if ($this->tolerance_amount !== $other->tolerance_amount) { $fields[] = "tolerance_amount"; }
+        if ($this->tax_amount !== $other->tax_amount) { $fields[] = "tax_amount"; }
+        if ($this->approved !== $other->approved) { $fields[] = "approved"; }
+        if ($this->price_override !== $other->price_override) { $fields[] = "price_override"; }
+        return $fields;
+    }
+
+    public function describe(): string {
+        $text string = "SupplierInvoiceMatch\n";
+        $text .= "id=" . $this->id . "\n";
+        $text .= "invoice_id=" . $this->invoice_id . "\n";
+        $text .= "order_line_id=" . $this->order_line_id . "\n";
+        $text .= "receipt_line_id=" . $this->receipt_line_id . "\n";
+        $text .= "supplier_id=" . $this->supplier_id . "\n";
+        $text .= "reviewer=" . $this->reviewer . "\n";
+        $text .= "invoice_quantity=" . (string)$this->invoice_quantity . "\n";
+        $text .= "available_receipt_quantity=" . (string)$this->available_receipt_quantity . "\n";
+        $text .= "ordered_unit_cost=" . (string)$this->ordered_unit_cost . "\n";
+        $text .= "invoiced_unit_cost=" . (string)$this->invoiced_unit_cost . "\n";
+        $text .= "tolerance_amount=" . (string)$this->tolerance_amount . "\n";
+        $text .= "tax_amount=" . (string)$this->tax_amount . "\n";
+        $text .= "approved=" . DocumentRules::flag($this->approved) . "\n";
+        $text .= "price_override=" . DocumentRules::flag($this->price_override) . "\n";
+        return $text;
+    }
+}

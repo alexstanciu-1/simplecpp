@@ -1,0 +1,53 @@
+
+/* Observe ancestry through the owning scheduler, not registry caches or backend inference. */
+namespace scpp\compiler;
+
+final class Conversion_Relationships implements conversion_relationship_query {
+	public function is_callable_compatible(canonical_type_use $source, callable_type_definition $target): bool {
+		if (!(Type_Queries::canonical($source)->definition() instanceof closure_type_definition)) { return false; }
+		$identity = Model::$type_catalog->closures()->identity($source);
+		$this->context->worker->prepare_anonymous($identity, $this->context->owner);
+		$borrowed Storage<storage_lifetime> = Capture_Preparation::borrowed_lifetimes($source, $this->context);
+		if (!$borrowed->is_empty()) { return false; }
+		if (!Callable_Contracts::matches_erased($identity->signature(), $target->signature())) { return false; }
+		Capability_Preparation::require_copy($source, $this->context);
+		return true;
+	}
+	private preparation_context $context;public function __construct(set:$context) {
+	}
+
+	public function is_subtype(canonical_type_use $source, canonical_type_use $target): bool {
+		if ($target->matches(Language_Types::exception_type(Model::$language_scope))) {
+			return Exception_Preparation::is_exception($source, $this->context);
+		}
+		$source_owner = Type_Queries::source_declaration($source);
+		$target_owner = Type_Queries::source_declaration($target);
+		if (!($source_owner instanceof collected_member_owner) || !($target_owner instanceof collected_member_owner)) {
+			return false;
+		}
+		return $this->reaches(object_cast($source_owner, collected_member_owner::class),
+			object_cast($target_owner, collected_member_owner::class));
+	}
+
+	/** Observe the target contract: a later edit can remove safe base destruction. */
+	public function has_virtual_destruction(canonical_type_use $type): bool {
+		if ($type->matches(Language_Types::exception_type(Model::$language_scope))) { return true; }
+		$record = Type_Queries::source_record($type);
+		if ($record === null) { return false; }
+		return $this->context->worker->require_type_contract($record, $this->context)->polymorphic;
+	}
+
+	/** Relationship completion rejects cycles; each visited edge becomes a consumer dependency. */
+	private function reaches(collected_member_owner $source, collected_member_owner $target): bool {
+		if ($source === $target) { return true; }
+		$relations = $this->context->worker->require_relationships($source, $this->context);
+		$base = lock($relations->base);
+		if ($base !== null) {
+			if ($this->reaches($base, $target)) { return true; }
+		}
+		foreach ($relations->interfaces  as $interface) {
+			if ($this->reaches($interface, $target)) { return true; }
+		}
+		return false;
+	}
+}

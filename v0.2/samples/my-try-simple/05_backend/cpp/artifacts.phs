@@ -1,0 +1,7 @@
+// Layout counterpart: my-try/phpp/05_backend/cpp/artifacts.phs
+function sample_unit_145(): void
+{
+    $value int = 146;
+    sample_unit_146();
+    return;
+}

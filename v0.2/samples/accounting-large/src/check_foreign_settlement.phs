@@ -1,0 +1,64 @@
+function sample_foreign_settlement(): ForeignSettlement {
+    $draft ForeignSettlement = new ForeignSettlement();
+    $draft->id = "FXPAY-001";
+    $draft->supplier_id = "SUP-FCY";
+    $draft->invoice_id = "FCY-BILL";
+    $draft->currency = "FCY";
+    $draft->rate_id = "FX-001";
+    $draft->bank_reference = "FX-BANK";
+    $draft->foreign_due = 10000;
+    $draft->foreign_paid = 6000;
+    $draft->base_carrying = 12000;
+    $draft->base_released = 7200;
+    $draft->base_cash_paid = 7500;
+    $draft->period = 1;
+    $draft->approved = true;
+    $draft->final_settlement = false;
+    return $draft;
+}
+
+function check_foreign_settlement(WorkloadChecks $checks): void {
+    $draft ForeignSettlement = sample_foreign_settlement();
+    $checks->accepted($draft->validate(), "foreign_settlement valid draft");
+    $checks->equal($draft->realized_loss(), 300, "foreign_settlement independent business result");
+    $copy ForeignSettlement = $draft->copy();
+    $checks->equal(count($draft->differences($copy)), 0, "foreign_settlement snapshot equivalence");
+    $checks->expect($draft->describe() === $copy->describe(), "foreign_settlement snapshot report");
+    $copy = $draft->copy();
+    $copy->id = "";
+    $checks->rejected($copy->validate(), "foreign_settlement.id", "foreign_settlement id required");
+    $copy = $draft->copy();
+    $copy->id = "bad\nrow";
+    $checks->rejected($copy->validate(), "foreign_settlement.id", "foreign_settlement id control");
+    $copy = $draft->copy();
+    $copy->id = DocumentRules::repeat("x", 41);
+    $checks->rejected($copy->validate(), "foreign_settlement.id", "foreign_settlement id width");
+    $copy = $draft->copy();
+    $copy->id = "FXPAY-001-changed";
+    $checks->expect($draft->id === "FXPAY-001", "foreign_settlement id snapshot isolation");
+    $changes_id vector<string> = $draft->differences($copy);
+    $checks->equal(count($changes_id), 1, "foreign_settlement id change count");
+    if (count($changes_id) === 1) {
+        $checks->expect($changes_id[0] === "id", "foreign_settlement id change identity");
+    }
+    $copy = $draft->copy();
+    $copy->foreign_due = -1;
+    $checks->rejected($copy->validate(), "foreign_settlement.foreign_due", "foreign_settlement foreign_due below");
+    $copy = $draft->copy();
+    $copy->foreign_due = 1000000001;
+    $checks->rejected($copy->validate(), "foreign_settlement.foreign_due", "foreign_settlement foreign_due above");
+    $copy = $draft->copy();
+    $copy->foreign_paid = -1;
+    $checks->rejected($copy->validate(), "foreign_settlement.foreign_paid", "foreign_settlement foreign_paid below");
+    $copy = $draft->copy();
+    $copy->foreign_paid = 1000000001;
+    $checks->rejected($copy->validate(), "foreign_settlement.foreign_paid", "foreign_settlement foreign_paid above");
+    $copy = $draft->copy();
+    $copy->approved = false;
+    $checks->expect($draft->approved === true, "foreign_settlement approved snapshot isolation");
+    $changes_approved vector<string> = $draft->differences($copy);
+    $checks->equal(count($changes_approved), 1, "foreign_settlement approved change count");
+    if (count($changes_approved) === 1) {
+        $checks->expect($changes_approved[0] === "approved", "foreign_settlement approved change identity");
+    }
+}

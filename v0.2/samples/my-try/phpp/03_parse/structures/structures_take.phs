@@ -1,0 +1,97 @@
+
+/* Conditional output binding, not an ordinary callable or assignment target. */
+namespace scpp\compiler;
+
+final class take_expression_node extends expression_node {
+	
+	/** Common access preserves the property-free base while spans remain concrete data. */
+	public function set_span(int $first, int $end): void {
+		if (($first < 0) || ($end < $first) || ($end > 4294967295)) {
+			throw new \scpp_portability_logic_exception('AST token span exceeds uint32 bounds');
+		}
+		$this->first_token_index = $first;
+		$this->end_token_index = $end;
+	}
+
+	public function start_token(): int {
+		return (int)$this->first_token_index;
+	}
+
+	public function end_token(): int {
+		return (int)$this->end_token_index;
+	}
+
+	/** Inclusive start in the owning token snapshot. */
+	public $first_token_index uint32;
+	/** Exclusive end: token count is end - first, including zero for an empty span. */
+	public $end_token_index uint32;
+
+	
+	public function preparation(): nullable<prepared_take> {
+		return $this->prepared_facts;
+	}
+
+	public function set_preparation(prepared_take $facts): void {
+		$this->prepared_facts = $facts;
+	}
+
+	public function clear_preparation(): void {
+		$this->prepared_facts = null;
+	}
+
+	public expression_node $source;
+	public expression_node $value_binding;
+	public $alternative_binding nullable<expression_node> = null;
+	private $prepared_facts nullable<prepared_take> = null;
+
+	public function kind(): node_kind {
+		return node_kind::take_expression;
+	}
+
+	public function require_preparation(): prepared_expression {
+		return $this->require_take_preparation();
+	}
+
+	public function require_take_preparation(): prepared_take {
+		return $this->prepared_facts;
+	}
+
+	/** Named owning edges serve cleanup and incremental source movement alike. */
+	public function maintain(node_maintenance_worker_i $worker): void {
+		$worker->enter($this);
+		$worker->edge($this, $this->value_binding);
+		if ($this->alternative_binding !== null) {
+			$worker->edge($this, $this->alternative_binding);
+		}
+		$worker->edge($this, $this->source);
+	}
+
+	public function children(): child_iterator_i {
+		return new take_children_iterator($this);
+	}
+}
+
+final class take_children_iterator extends children_iterator {
+	private int $next_field = 0;
+	private take_expression_node $syntax;public function __construct(set:$syntax) {}
+
+	/** Inspect binding syntax first, followed by the source, without allocating child lists. */
+	protected function read_next(): nullable<ast_node> {
+		if ($this->next_field === 0) {
+			$this->next_field = 1;
+			return $this->syntax->value_binding;
+		}
+		if ($this->next_field === 1)
+		{
+			$this->next_field = 2;
+			if ($this->syntax->alternative_binding !== null) {
+				return $this->syntax->alternative_binding;
+			}
+		}
+		if ($this->next_field === 2) {
+			$this->next_field = 3;
+			return $this->syntax->source;
+		}
+		return null;
+	}
+}

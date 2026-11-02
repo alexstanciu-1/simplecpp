@@ -24,19 +24,19 @@ foreach ([
 	$functions = $file->functions();
 	verify(array_map(static fn(ast_function_declaration $f): string => $f->name, $functions) === ['f', 'other', 'f', 'f'], 'Lost source order or later declarations');
 	$head = $file->declarations['func:f'];
-	verify($head === $functions[0] && $head->next_declaration() === $functions[2]
-		&& $functions[2]->next_declaration() === $functions[3] && $functions[3]->next_declaration() === null, 'Wrong function chain');
+	verify($head === $functions[0] && $head->duplicate_element() === $functions[2]
+		&& $functions[2]->duplicate_element() === $functions[3] && $functions[3]->duplicate_element() === null, 'Wrong function chain');
 	foreach ($functions as $function) {
 		verify($function->parent === $file && $function->body()->parent === $function, 'Duplicate syntax lost ownership');
 	}
 	$locals = array_values($head->body()->locals);
-	verify($locals[0]->next_declaration() === $locals[1] && $locals[1]->next_declaration() === null, 'Wrong local chain');
+	verify($locals[0]->duplicate_element() === $locals[1] && $locals[1]->duplicate_element() === null, 'Wrong local chain');
 	verify($locals[0]->id === 0 && $locals[1]->id === 1, 'Lost local identity');
 	verify(count($file->diagnostics) === 4, 'Did not collect all source diagnostics');
 	verify(count(Syntax_Inspection::file($file)['functions']) === 4, 'Inspection omitted duplicate bodies');
 	verify(count(Compilation_Inspection::collection($file)['diagnostics']) === 4, 'Collection lost errors');
 	$symbols = $publisher->publish(['a' => $file]);
-	verify(count($symbols->functions['f']) === 3, 'Discovery/publication lost candidates');
+	verify(count($symbols->declarations['func:f']) === 3, 'Discovery/publication lost candidates');
 	$b = $frontend->collect(new source_file('b', 'void f() {}', \scpp\compiler\flavor::cpp));
 	$messages = [];
 	foreach ([['a' => $file, 'b' => $b], ['b' => $b, 'a' => $file]] as $files) {
@@ -52,7 +52,7 @@ foreach ([
 		}
 	}
 	verify($messages[0] === $messages[1], 'Diagnostics depend on source arrival order');
-	verify($head->next_declaration() === $functions[2] && $b->declarations['func:f']->next_declaration() === null, 'Global publication changed local chains');
+	verify($head->duplicate_element() === $functions[2] && $b->declarations['func:f']->duplicate_element() === null, 'Global publication changed local chains');
 	try { $head->return_type_def(); throw new RuntimeException('Ambiguous declaration was settled'); }
 	catch (LogicException $expected) {}
 }

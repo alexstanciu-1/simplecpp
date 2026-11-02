@@ -1,0 +1,64 @@
+function sample_supplier_contract(): SupplierContract {
+    $draft SupplierContract = new SupplierContract();
+    $draft->id = "SUP-001";
+    $draft->legal_name = "Central Components";
+    $draft->control_account = "payables";
+    $draft->currency = "LOC";
+    $draft->buyer = "procurement";
+    $draft->remittance_reference = "CENTRAL";
+    $draft->order_limit = 80000;
+    $draft->committed = 15000;
+    $draft->term_days = 45;
+    $draft->price_tolerance = 100;
+    $draft->quantity_tolerance = 0;
+    $draft->minimum_payment = 100;
+    $draft->active = true;
+    $draft->payment_hold = false;
+    return $draft;
+}
+
+function check_supplier_contract(WorkloadChecks $checks): void {
+    $draft SupplierContract = sample_supplier_contract();
+    $checks->accepted($draft->validate(), "supplier_contract valid draft");
+    $checks->equal($draft->uncommitted_limit(), 65000, "supplier_contract independent business result");
+    $copy SupplierContract = $draft->copy();
+    $checks->equal(count($draft->differences($copy)), 0, "supplier_contract snapshot equivalence");
+    $checks->expect($draft->describe() === $copy->describe(), "supplier_contract snapshot report");
+    $copy = $draft->copy();
+    $copy->id = "";
+    $checks->rejected($copy->validate(), "supplier_contract.id", "supplier_contract id required");
+    $copy = $draft->copy();
+    $copy->id = "bad\nrow";
+    $checks->rejected($copy->validate(), "supplier_contract.id", "supplier_contract id control");
+    $copy = $draft->copy();
+    $copy->id = DocumentRules::repeat("x", 41);
+    $checks->rejected($copy->validate(), "supplier_contract.id", "supplier_contract id width");
+    $copy = $draft->copy();
+    $copy->id = "SUP-001-changed";
+    $checks->expect($draft->id === "SUP-001", "supplier_contract id snapshot isolation");
+    $changes_id vector<string> = $draft->differences($copy);
+    $checks->equal(count($changes_id), 1, "supplier_contract id change count");
+    if (count($changes_id) === 1) {
+        $checks->expect($changes_id[0] === "id", "supplier_contract id change identity");
+    }
+    $copy = $draft->copy();
+    $copy->order_limit = -1;
+    $checks->rejected($copy->validate(), "supplier_contract.order_limit", "supplier_contract order_limit below");
+    $copy = $draft->copy();
+    $copy->order_limit = 1000000001;
+    $checks->rejected($copy->validate(), "supplier_contract.order_limit", "supplier_contract order_limit above");
+    $copy = $draft->copy();
+    $copy->committed = -1;
+    $checks->rejected($copy->validate(), "supplier_contract.committed", "supplier_contract committed below");
+    $copy = $draft->copy();
+    $copy->committed = 1000000001;
+    $checks->rejected($copy->validate(), "supplier_contract.committed", "supplier_contract committed above");
+    $copy = $draft->copy();
+    $copy->active = false;
+    $checks->expect($draft->active === true, "supplier_contract active snapshot isolation");
+    $changes_active vector<string> = $draft->differences($copy);
+    $checks->equal(count($changes_active), 1, "supplier_contract active change count");
+    if (count($changes_active) === 1) {
+        $checks->expect($changes_active[0] === "active", "supplier_contract active change identity");
+    }
+}

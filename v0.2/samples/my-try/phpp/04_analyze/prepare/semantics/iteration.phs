@@ -1,0 +1,96 @@
+
+/* Resolve registered iteration signatures and lexical bindings, independently of C++ ranges. */
+namespace scpp\compiler;
+
+final class Iteration_Preparation {
+	/** Resolve the source before introducing loop-local keys or reusing value storage. */
+	public static function prepare(foreach_node $syntax, preparation_context $context): prepared_iteration {
+		$value = Expression_Preparation::prepare($syntax->iterable, $context);
+		$receiver = $value->type;
+		if ($receiver->by_value()) {
+			throw new \scpp_portability_runtime_exception('S2S foreach with effective storage modifiers is deferred');
+		}
+		$type = Type_Queries::canonical($receiver);
+		$contract = Model::$iteration_contracts->lookup($type->definition());
+		$protocol nullable<prepared_iterator_protocol> = null;
+		$declaration = Type_Queries::source_declaration($receiver);
+		if ($declaration instanceof collected_member_owner) {
+			$owner = object_cast($declaration, collected_member_owner::class);
+			$protocol = $context->worker->require_type_contract($owner, $context)->iterator_protocol;
+		}
+		if (($contract === null) && ($protocol === null)) {
+			throw new \scpp_portability_runtime_exception('S2S foreach requires a registered iterable type; wrapper unwrapping is deferred');
+		}
+		$arguments vector<canonical_type_use> = [];
+		if ($type instanceof applied_template_type) {
+			$arguments = object_cast($type, applied_template_type::class)->arguments();
+		}
+		$facts = new prepared_iteration();
+		$facts->contract = $contract;
+		if ($protocol !== null) {
+			if (!Type_Queries::is_nominal_handle($receiver)) { throw new \scpp_portability_runtime_exception('Iterator foreach requires a shared source handle'); }
+			if ($value->place !== null) { Reference_Preparation::require_mutable_contents($value->place, $receiver); }
+			$facts->source_iterator = Iterator_Preparation::calls($protocol, $receiver, $context);
+			$facts->key_type = $protocol->key_type;
+			$facts->value_type = $protocol->value_type;
+		}
+		else {
+			$registered iteration_declaration = $contract;
+			$facts->key_type = Contract_Type_Substitution::resolve($registered->key(), $receiver, $arguments);
+			$facts->value_type = Contract_Type_Substitution::resolve($registered->value(), $receiver, $arguments);
+		}
+		if ($syntax->key !== null)
+		{
+			$key variable_reference_node = $syntax->key;
+			if ($key->name === $syntax->value->name) {
+				throw new \scpp_portability_runtime_exception('S2S foreach key and value require distinct names');
+			}
+			$facts->key = self::bind($key, $facts->key_type, true, $context);
+		}
+		$facts->value = self::bind($syntax->value, $facts->value_type, false, $context);
+		return $facts;
+	}
+
+	/** Runtime binds values only on paths that actually enter the loop body. */
+	public static function enter(prepared_iteration $iteration, preparation_context $context): void {
+		$bindings vector<prepared_binding> = [$iteration->value];
+		if ($iteration->key !== null) { $bindings[] = $iteration->key; }
+		foreach ($bindings  as $binding) {
+			$declaration = object_cast(lock($binding->declaration), collected_name::class);
+			$targets = $context->locals->named($declaration->name);
+			if (count($targets) !== 1) { throw new \scpp_portability_logic_exception('Iteration binding lost its local storage'); }
+			Local_Assignment::assigned($targets[0], $context);
+		}
+	}
+
+	/** An implicit iteration value uses the same assignment conversion as an ordinary write. */
+	private static function bind(variable_reference_node $syntax, canonical_type_use $source, bool $fresh, preparation_context $context): prepared_binding {
+		$existing vector<prepared_source_storage> = [];
+		if (!$fresh) {
+			$existing = $context->locals->named($syntax->name);
+		}
+		$binding = new prepared_binding();
+		$binding->type = $source;
+		$binding->declaration = weak($syntax->occurrence());
+		$binding->resolved_kind = binding_kind::declaration;
+		if (count($existing) !== 0)
+		{
+			if (count($existing) !== 1) {
+				throw new \scpp_portability_runtime_exception('S2S foreach needs one value assignment target');
+			}
+			$binding->type = $existing[0]->storage_type();
+			Reference_Preparation::require_writable(Reference_Preparation::storage_place($existing[0]));
+			$binding->declaration = $existing[0]->declaration;
+			$binding->resolved_kind = binding_kind::assignment;
+		}
+		$binding->conversion = Conversion_Preparation::decide($source, $binding->type, conversion_context::assignment,
+			new Conversion_Relationships($context));
+		Capability_Preparation::require_copy($source, $context);
+		Capability_Preparation::require_copy($binding->type, $context);
+		Type_Preparation::require_value_type($binding->type);
+		if ($binding->resolved_kind === binding_kind::declaration) {
+			$context->locals->add($syntax->name, $binding);
+		}
+		return $binding;
+	}
+}

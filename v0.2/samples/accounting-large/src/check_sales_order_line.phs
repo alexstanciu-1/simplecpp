@@ -1,0 +1,64 @@
+function sample_sales_order_line(): SalesOrderLine {
+    $draft SalesOrderLine = new SalesOrderLine();
+    $draft->id = "SO-L1";
+    $draft->order_id = "SO-001";
+    $draft->customer_id = "CUS-001";
+    $draft->item_code = "PART-A";
+    $draft->warehouse = "MAIN";
+    $draft->delivery_reference = "DEL-001";
+    $draft->ordered = 10;
+    $draft->reserved = 6;
+    $draft->shipped = 4;
+    $draft->invoiced = 3;
+    $draft->unit_price = 1250;
+    $draft->required_period = 2;
+    $draft->closed = false;
+    $draft->credit_released = true;
+    return $draft;
+}
+
+function check_sales_order_line(WorkloadChecks $checks): void {
+    $draft SalesOrderLine = sample_sales_order_line();
+    $checks->accepted($draft->validate(), "sales_order_line valid draft");
+    $checks->equal($draft->unshipped_quantity(), 6, "sales_order_line independent business result");
+    $copy SalesOrderLine = $draft->copy();
+    $checks->equal(count($draft->differences($copy)), 0, "sales_order_line snapshot equivalence");
+    $checks->expect($draft->describe() === $copy->describe(), "sales_order_line snapshot report");
+    $copy = $draft->copy();
+    $copy->id = "";
+    $checks->rejected($copy->validate(), "sales_order_line.id", "sales_order_line id required");
+    $copy = $draft->copy();
+    $copy->id = "bad\nrow";
+    $checks->rejected($copy->validate(), "sales_order_line.id", "sales_order_line id control");
+    $copy = $draft->copy();
+    $copy->id = DocumentRules::repeat("x", 41);
+    $checks->rejected($copy->validate(), "sales_order_line.id", "sales_order_line id width");
+    $copy = $draft->copy();
+    $copy->id = "SO-L1-changed";
+    $checks->expect($draft->id === "SO-L1", "sales_order_line id snapshot isolation");
+    $changes_id vector<string> = $draft->differences($copy);
+    $checks->equal(count($changes_id), 1, "sales_order_line id change count");
+    if (count($changes_id) === 1) {
+        $checks->expect($changes_id[0] === "id", "sales_order_line id change identity");
+    }
+    $copy = $draft->copy();
+    $copy->ordered = 0;
+    $checks->rejected($copy->validate(), "sales_order_line.ordered", "sales_order_line ordered below");
+    $copy = $draft->copy();
+    $copy->ordered = 1000001;
+    $checks->rejected($copy->validate(), "sales_order_line.ordered", "sales_order_line ordered above");
+    $copy = $draft->copy();
+    $copy->reserved = -1;
+    $checks->rejected($copy->validate(), "sales_order_line.reserved", "sales_order_line reserved below");
+    $copy = $draft->copy();
+    $copy->reserved = 1000001;
+    $checks->rejected($copy->validate(), "sales_order_line.reserved", "sales_order_line reserved above");
+    $copy = $draft->copy();
+    $copy->closed = true;
+    $checks->expect($draft->closed === false, "sales_order_line closed snapshot isolation");
+    $changes_closed vector<string> = $draft->differences($copy);
+    $checks->equal(count($changes_closed), 1, "sales_order_line closed change count");
+    if (count($changes_closed) === 1) {
+        $checks->expect($changes_closed[0] === "closed", "sales_order_line closed change identity");
+    }
+}

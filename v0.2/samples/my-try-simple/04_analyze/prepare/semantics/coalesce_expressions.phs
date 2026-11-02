@@ -1,0 +1,7 @@
+// Layout counterpart: my-try/phpp/04_analyze/prepare/semantics/coalesce_expressions.phs
+function sample_unit_095(): void
+{
+    $value int = 96;
+    sample_unit_096();
+    return;
+}

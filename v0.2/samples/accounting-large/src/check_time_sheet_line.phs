@@ -1,0 +1,64 @@
+function sample_time_sheet_line(): TimeSheetLine {
+    $draft TimeSheetLine = new TimeSheetLine();
+    $draft->id = "TIME-L1";
+    $draft->sheet_id = "TIME-001";
+    $draft->employee_id = "EMP-001";
+    $draft->project_id = "JOB-001";
+    $draft->activity = "installation";
+    $draft->approver = "project-a";
+    $draft->minutes_worked = 480;
+    $draft->nonbillable_minutes = 60;
+    $draft->cost_per_hour = 3000;
+    $draft->bill_per_hour = 5000;
+    $draft->period = 1;
+    $draft->day_number = 5;
+    $draft->approved = true;
+    $draft->posted = false;
+    return $draft;
+}
+
+function check_time_sheet_line(WorkloadChecks $checks): void {
+    $draft TimeSheetLine = sample_time_sheet_line();
+    $checks->accepted($draft->validate(), "time_sheet_line valid draft");
+    $checks->equal($draft->billable_minutes(), 420, "time_sheet_line independent business result");
+    $copy TimeSheetLine = $draft->copy();
+    $checks->equal(count($draft->differences($copy)), 0, "time_sheet_line snapshot equivalence");
+    $checks->expect($draft->describe() === $copy->describe(), "time_sheet_line snapshot report");
+    $copy = $draft->copy();
+    $copy->id = "";
+    $checks->rejected($copy->validate(), "time_sheet_line.id", "time_sheet_line id required");
+    $copy = $draft->copy();
+    $copy->id = "bad\nrow";
+    $checks->rejected($copy->validate(), "time_sheet_line.id", "time_sheet_line id control");
+    $copy = $draft->copy();
+    $copy->id = DocumentRules::repeat("x", 41);
+    $checks->rejected($copy->validate(), "time_sheet_line.id", "time_sheet_line id width");
+    $copy = $draft->copy();
+    $copy->id = "TIME-L1-changed";
+    $checks->expect($draft->id === "TIME-L1", "time_sheet_line id snapshot isolation");
+    $changes_id vector<string> = $draft->differences($copy);
+    $checks->equal(count($changes_id), 1, "time_sheet_line id change count");
+    if (count($changes_id) === 1) {
+        $checks->expect($changes_id[0] === "id", "time_sheet_line id change identity");
+    }
+    $copy = $draft->copy();
+    $copy->minutes_worked = 0;
+    $checks->rejected($copy->validate(), "time_sheet_line.minutes_worked", "time_sheet_line minutes_worked below");
+    $copy = $draft->copy();
+    $copy->minutes_worked = 1441;
+    $checks->rejected($copy->validate(), "time_sheet_line.minutes_worked", "time_sheet_line minutes_worked above");
+    $copy = $draft->copy();
+    $copy->nonbillable_minutes = -1;
+    $checks->rejected($copy->validate(), "time_sheet_line.nonbillable_minutes", "time_sheet_line nonbillable_minutes below");
+    $copy = $draft->copy();
+    $copy->nonbillable_minutes = 1441;
+    $checks->rejected($copy->validate(), "time_sheet_line.nonbillable_minutes", "time_sheet_line nonbillable_minutes above");
+    $copy = $draft->copy();
+    $copy->approved = false;
+    $checks->expect($draft->approved === true, "time_sheet_line approved snapshot isolation");
+    $changes_approved vector<string> = $draft->differences($copy);
+    $checks->equal(count($changes_approved), 1, "time_sheet_line approved change count");
+    if (count($changes_approved) === 1) {
+        $checks->expect($changes_approved[0] === "approved", "time_sheet_line approved change identity");
+    }
+}

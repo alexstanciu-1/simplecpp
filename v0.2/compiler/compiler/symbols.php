@@ -16,7 +16,7 @@ final class Symbol_Publication implements declaration_sink
 			throw new \LogicException('Cannot notify a completed symbol publication');
 		}
 		if (!$function->is_private) {
-			$this->pending[$function->declaration_key()][] = $function;
+			$this->pending[$function->symbol_key()][] = $function;
 		}
 	}
 

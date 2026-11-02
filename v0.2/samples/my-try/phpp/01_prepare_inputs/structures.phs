@@ -1,0 +1,110 @@
+
+/*
+ * Role: source-loading data records.
+ * Used by: File_Loader and Module_Loader.
+ * Flow: filesystem input -> file records -> module file list.
+ * Each file references its retained token_list, never the scanner.
+ */
+namespace scpp\compiler;
+
+/** Flags describe the current update; deleted rows remain until explicit cleanup. */
+final class file {
+	public int $changes = 0;
+	/** Module-relative identity; absolute paths are passed separately for IO. */
+	public string $path;
+	public int $mtime = 0;
+	public int $size = 0;
+	/** Input for the next tokenization; existing token lists retain their own snapshot. */
+	public string $content = '';
+	/** Discovered paths are read by the tokenizer; false selects supplied in-memory bytes. */
+	public bool $disk_source = false;
+	/**
+	 * Convenience backlink to the completed tokenization result; not its owner.
+	 * @reference.source source_record.tokens
+	 * @reference.weak
+	 */
+	public $tokens nullable<token_list> = null;
+}
+
+final class module {
+	/** Empty denotes the single-module convenience identity; not a filesystem key. */
+	public string $logical_name = '';
+	public string $name;
+	public string $declared_path;
+	public string $resolved_path;
+	public int $position = 0;
+	/** Configuration-backed modules participate in filesystem scanning. */
+	public bool $disk_source = false;
+	public change_state $changes = change_state::unchanged;
+	/** Explicit project inventory; false retains recursive directory discovery. */
+	public bool $selected_sources = false;
+	public $source_paths vector<string> = [];
+	/** Last reconciliation run in which this module was present. */
+	public $revision uint32 = 0;
+	/**
+	 * Module-relative paths own and index stable source records.
+	 * @storage.owner
+	 */
+	public $sources Keyed_Storage<source_record>;
+
+	/** Initialize identity and both path forms before publishing module membership. */
+	public function __construct(string $declared_path, string $resolved_path, string $name) {
+		$this->name = $name;
+		$this->declared_path = $declared_path;
+		$this->resolved_path = $resolved_path;
+		$this->sources = new Keyed_Storage<source_record>();
+	}
+}
+
+/** Stable module membership; stage publication replaces snapshots without replacing this identity. */
+final class source_record {
+	/** Normalized module-relative path, including subfolders. */
+	public string $path;
+	/** Pending filesystem work; successful publication clears live changes. */
+	public change_state $changes = change_state::added;
+	public $revision uint32 = 0;
+	/** @reference.weak Model.modules */
+	public $module_reference weak<module>;
+	/** Current input range and retained token/source storage. */
+	public $tokens nullable<token_list> = null;
+	public $parsed nullable<parsed_file> = null;
+
+	/** Own the published input before deriving its path and weak module link. */
+	public file $file;public function __construct(module $owner, set:$file) {
+		$this->module_reference = weak($owner);
+		$this->path = $file->path;
+	}
+
+	/** Acquire the module while constructing an IO path from this relative identity. */
+	public function owning_module(): module {
+		return object_cast(lock($this->module_reference), module::class);
+	}
+}
+
+/** Incoming module configuration; an omitted name preserves the exact path spelling. */
+final class module_input {
+	public string $logical_name;
+	public string $name;
+	public string $declared_path;
+	public bool $selected_sources = false;
+	public $source_paths vector<string> = [];
+
+	public function __construct(string $path, nullable<string> $name = null) {
+		$this->declared_path = $path;
+		$this->name = $name ?? $path;
+		$this->logical_name = $name ?? '';
+	}
+}
+
+/** Executable selection uses a logical module and normalized module-relative path. */
+final class program_entry_selection {
+	// TODO CH15-READONLY-FIELDS-01: restore readonly enforcement for module_name and source_path.
+	// Constructor-only writes remain a convention; see docs/catalog/15_blocking_debt.md.
+	public string $module_name;
+	public string $source_path;
+
+	public function __construct(string $module_name, string $source_path) {
+		$this->module_name = $module_name;
+		$this->source_path = $source_path;
+	}
+}

@@ -1,0 +1,200 @@
+
+/* Shared boxed operator admission; runtime families own payload behavior. */
+namespace scpp\compiler;
+
+final class Boxed_Operators {
+	/** Admission is narrower than condition truthiness; wrappers have their own logical contract. */
+	public static function decide_logical(operator_kind $source_operator, vector<canonical_type_use> $operands): operator_decision {
+		if (count($operands) !== 2) {
+			throw new \scpp_portability_logic_exception('Boxed logical operation requires two operands');
+		}
+		if (($source_operator !== operator_kind::logical_and) && ($source_operator !== operator_kind::logical_or)) {
+			throw new \scpp_portability_runtime_exception('S2S boxed logical operation supports only AND and OR');
+		}
+		if (Boxed_Conversions::is_boxed($operands[0]) && Boxed_Conversions::is_boxed($operands[1])) {
+			if (!$operands[0]->matches($operands[1])) {
+				throw new \scpp_portability_runtime_exception('S2S boxed logical operands require the same boxed family');
+			}
+		}
+		$decision = new operator_decision();
+		$decision->source_operator = $source_operator;
+		$decision->operation = $source_operator === operator_kind::logical_and
+			? operator_operation::condition_and : operator_operation::condition_or;
+		$decision->result_type = Language_Types::boolean(Model::$language_scope);
+		foreach ($operands  as $operand) {
+			if ($operand->by_value() || (!self::is_numeric_operand($operand)
+				&& !$operand->matches($decision->result_type))) {
+				throw new \scpp_portability_runtime_exception('S2S boxed logical operands require a matching boxed family, bool, ordinary int or float');
+			}
+			$decision->operand_truthiness[] = Condition_Truthiness::decide($operand);
+		}
+		return $decision;
+	}
+
+	/** Numeric payload kinds are checked at runtime; known nonnumeric peers reject here. */
+	public static function decide(operator_kind $source_operator, vector<canonical_type_use> $operands, operator_context $use): operator_decision {
+		if (self::is_integer_operation($source_operator)) {
+			return self::decide_integer($source_operator, $operands, $use);
+		}
+		if (self::is_comparison($source_operator)) {
+			return self::decide_comparison($source_operator, $operands);
+		}
+		$decision = new operator_decision();
+		$decision->source_operator = $source_operator;
+		$unary = false;
+		if ($source_operator === operator_kind::unary_plus) {
+			$decision->operation = operator_operation::boxed_positive;
+			$unary = true;
+		}
+		elseif ($source_operator === operator_kind::unary_minus) {
+			$decision->operation = operator_operation::boxed_negative;
+			$unary = true;
+		}
+		elseif ($source_operator === operator_kind::addition) {
+			$decision->operation = operator_operation::boxed_addition;
+		}
+		elseif ($source_operator === operator_kind::subtraction) {
+			$decision->operation = operator_operation::boxed_subtraction;
+		}
+		elseif ($source_operator === operator_kind::multiplication) {
+			$decision->operation = operator_operation::boxed_multiplication;
+		}
+		elseif ($source_operator === operator_kind::division) {
+			$decision->operation = operator_operation::boxed_division;
+		}
+		elseif ($source_operator === operator_kind::remainder) {
+			$decision->operation = operator_operation::boxed_remainder;
+		}
+		else {
+			throw new \scpp_portability_runtime_exception('S2S boxed operator is outside the numeric arithmetic slice');
+		}
+		if (count($operands) !== ($unary ? 1 : 2)) {
+			throw new \scpp_portability_logic_exception('Boxed arithmetic operand count mismatch');
+		}
+		$box = $operands[0];
+		if (!Boxed_Conversions::is_boxed($box)) {
+			$box = $operands[1];
+		}
+		$decision->result_type = $box;
+		foreach ($operands  as $operand) {
+			if (!self::is_numeric_operand($operand)) {
+				throw new \scpp_portability_runtime_exception('S2S boxed arithmetic requires matching boxed, ordinary int or float operands');
+			}
+			if ($source_operator === operator_kind::remainder) {
+				if (!Boxed_Conversions::is_boxed($operand) && !$operand->matches(Language_Types::integer(Model::$language_scope))) {
+					throw new \scpp_portability_runtime_exception('S2S boxed remainder requires boxed or ordinary int operands');
+				}
+			}
+			$decision->operands[] = Conversion_Preparation::decide($operand, $box, conversion_context::operator_operand);
+		}
+		return $decision;
+	}
+
+	/** Integer-kind dispatch is distinct from numeric arithmetic and admits no scalar peers. */
+	private static function is_integer_operation(operator_kind $source_operator): bool {
+		return ($source_operator === operator_kind::bitwise_and) || ($source_operator === operator_kind::bitwise_or)
+			|| ($source_operator === operator_kind::bitwise_xor) || ($source_operator === operator_kind::shift_left)
+			|| ($source_operator === operator_kind::shift_right) || ($source_operator === operator_kind::bitwise_not);
+	}
+
+	private static function decide_integer(operator_kind $source_operator, vector<canonical_type_use> $operands, operator_context $use): operator_decision {
+		if ($use !== operator_context::expression) { throw new \scpp_portability_runtime_exception('Boxed bitwise updates remain deferred'); }
+		$unary = $source_operator === operator_kind::bitwise_not;
+		if (count($operands) !== ($unary ? 1 : 2)) { throw new \scpp_portability_logic_exception('Boxed integer operand count mismatch'); }
+		$box = $operands[0];
+		$decision = new operator_decision();
+		$decision->source_operator = $source_operator;
+		$decision->result_type = $box;
+		foreach ($operands  as $operand) {
+			if ($operand->by_value() || !Boxed_Conversions::is_boxed($operand) || !$operand->matches($box)) {
+				throw new \scpp_portability_runtime_exception('Boxed bitwise operators require the same boxed family');
+			}
+			$decision->operands[] = Conversion_Preparation::decide($operand, $box, conversion_context::operator_operand);
+		}
+		switch ($source_operator) {
+			case operator_kind::bitwise_and: $decision->operation = operator_operation::boxed_bitwise_and; break;
+			case operator_kind::bitwise_or: $decision->operation = operator_operation::boxed_bitwise_or; break;
+			case operator_kind::bitwise_xor: $decision->operation = operator_operation::boxed_bitwise_xor; break;
+			case operator_kind::shift_left: $decision->operation = operator_operation::boxed_shift_left; break;
+			case operator_kind::shift_right: $decision->operation = operator_operation::boxed_shift_right; break;
+			case operator_kind::bitwise_not: $decision->operation = operator_operation::boxed_complement; break;
+			default: throw new \scpp_portability_logic_exception('Expected boxed integer operation');
+		}
+		return $decision;
+	}
+
+	/** Ordering has a numeric domain; equality and strict identity have separate policies. */
+	private static function is_comparison(operator_kind $source_operator): bool {
+		return ($source_operator === operator_kind::equal) || ($source_operator === operator_kind::not_equal)
+			|| ($source_operator === operator_kind::identical) || ($source_operator === operator_kind::not_identical)
+			|| ($source_operator === operator_kind::less) || ($source_operator === operator_kind::less_equal)
+			|| ($source_operator === operator_kind::greater) || ($source_operator === operator_kind::greater_equal);
+	}
+
+	private static function is_numeric_operand(canonical_type_use $operand): bool {
+		return !$operand->by_value() && (Boxed_Conversions::is_boxed($operand)
+			|| $operand->matches(Language_Types::integer(Model::$language_scope))
+			|| $operand->matches(Language_Types::floating(Model::$language_scope)));
+	}
+
+	/** Keep literal null unboxed for strict identity: its helper normalizes empty handles. */
+	private static function decide_comparison(operator_kind $source_operator, vector<canonical_type_use> $operands): operator_decision {
+		if (count($operands) !== 2) {
+			throw new \scpp_portability_logic_exception('Boxed comparison requires two operands');
+		}
+		$decision = new operator_decision();
+		$decision->source_operator = $source_operator;
+		$decision->result_type = Language_Types::boolean(Model::$language_scope);
+		$strict = ($source_operator === operator_kind::identical) || ($source_operator === operator_kind::not_identical);
+		$equality = $strict || ($source_operator === operator_kind::equal) || ($source_operator === operator_kind::not_equal);
+		if ($source_operator === operator_kind::equal) {
+			$decision->operation = operator_operation::boxed_equal;
+		}
+		elseif ($source_operator === operator_kind::not_equal) {
+			$decision->operation = operator_operation::boxed_not_equal;
+		}
+		elseif ($source_operator === operator_kind::identical) {
+			$decision->operation = operator_operation::boxed_identical;
+		}
+		elseif ($source_operator === operator_kind::not_identical) {
+			$decision->operation = operator_operation::boxed_not_identical;
+		}
+		elseif ($source_operator === operator_kind::less) {
+			$decision->operation = operator_operation::boxed_less;
+		}
+		elseif ($source_operator === operator_kind::less_equal) {
+			$decision->operation = operator_operation::boxed_less_equal;
+		}
+		elseif ($source_operator === operator_kind::greater) {
+			$decision->operation = operator_operation::boxed_greater;
+		}
+		else {
+			$decision->operation = operator_operation::boxed_greater_equal;
+		}
+		$box = $operands[0];
+		if (!Boxed_Conversions::is_boxed($box)) {
+			$box = $operands[1];
+		}
+		foreach ($operands  as $operand) {
+			if ($operand->by_value()) {
+				throw new \scpp_portability_runtime_exception('S2S boxed comparison does not support storage modifiers');
+			}
+			if ($equality) {
+				if (!$operand->matches($box) && !Boxed_Conversions::is_scalar_payload($operand) && !Nullable_Conversions::is_null($operand)) {
+					throw new \scpp_portability_runtime_exception('S2S boxed equality requires matching boxed, scalar or null operands');
+				}
+			}
+			elseif (!self::is_numeric_operand($operand)) {
+				throw new \scpp_portability_runtime_exception('S2S boxed ordering requires boxed or ordinary numeric operands');
+			}
+			if ($strict) {
+				$decision->operands[] = Conversion_Preparation::operation($operand, $operand,
+					conversion_context::operator_operand, conversion_operation::identity);
+			}
+			else {
+				$decision->operands[] = Conversion_Preparation::decide($operand, $box, conversion_context::operator_operand);
+			}
+		}
+		return $decision;
+	}
+}

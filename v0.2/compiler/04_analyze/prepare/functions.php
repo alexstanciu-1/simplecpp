@@ -35,7 +35,7 @@ final class Function_Preparation
 		$errors = Declaration_Diagnostics::ordered(Declaration_Diagnostics::functions($symbols));
 		if ($errors !== []) { throw new diagnostic_group($errors); }
 		$callables = [];
-		foreach ($symbols->functions as $name => $candidates)
+		foreach ($symbols->declarations as $candidates)
 		{
 			$declaration = $candidates[0];
 			$type = $declaration->return_type_name;
@@ -43,7 +43,7 @@ final class Function_Preparation
 				throw new diagnostic($declaration->source(), $declaration->root()->byte_at($declaration->return_type_position()), 'Only explicit void functions are supported');
 			}
 			$declaration->settle_return_type(type_definition::void);
-			$callables[$name] = $declaration;
+			$callables[$declaration->name] = $declaration;
 		}
 		return $callables;
 	}

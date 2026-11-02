@@ -1,0 +1,70 @@
+namespace scpp\compiler;
+
+/** Executable-program admission is semantic preparation, not backend policy. */
+final class Program_Preparation {
+	/** One file may contribute several bodies, but never concatenate their execution. */
+	public static function source_body(collected_file $source): function_body_node {
+		$selected nullable<function_body_node> = null;
+		$empty_body nullable<function_body_node> = null;
+		$bodies Storage<namespace_body_node> = $source->root->namespace_bodies;
+		foreach ($bodies  as $namespace_body) {
+			$body = $namespace_body->body;
+			$statements Storage<statement_node> = $body->statements;
+			if ($statements->is_empty()) {
+				if ($empty_body === null) {
+					$empty_body = $body;
+				}
+				continue;
+			}
+			if ($selected !== null) {
+				throw new \scpp_portability_runtime_exception('Executable statements may belong to only one namespace body: ' . $source->source_file()->path);
+			}
+			$selected = $body;
+		}
+		if ($selected !== null) {
+			return $selected;
+		}
+		if ($empty_body !== null) {
+			return $empty_body;
+		}
+		throw new \scpp_portability_logic_exception('A parsed file must contain a source namespace body');
+	}
+
+	public static function entry(Storage<prepared_file> $files, nullable<program_entry_selection> $selection, bool $required): nullable<prepared_file> {
+		$selected nullable<prepared_file> = null;
+		$names hash<bool> = [];
+		foreach (Model::$modules  as $module) {
+			if ($module->changes === change_state::deleted) { continue; }
+			$name = Source_Registry::logical_module($module);
+			if (isset($names[$name])) { throw new \scpp_portability_runtime_exception('Duplicate logical module: ' . $name); }
+			$names[$name] = true;
+		}
+		if ($selection === null) {
+			if (count($files) === 1) { $selected = $files[0]; }
+			elseif (!$required) { return null; }
+		}
+		else {
+			$choice program_entry_selection = $selection;
+			foreach ($files  as $prepared) {
+				$source = $prepared->source;
+				if (($source->source_file()->path === $choice->source_path)
+					&& (Source_Registry::collection_module($source) === $choice->module_name)) {
+					if ($selected !== null) { throw new \scpp_portability_runtime_exception('Ambiguous program entry'); }
+					$selected = $prepared;
+				}
+			}
+		}
+		if ($selected === null) { throw new \scpp_portability_runtime_exception('Select an existing program entry by logical module and relative source path'); }
+		$entry prepared_file = $selected;
+		foreach ($files  as $prepared) {
+			if ($prepared !== $entry) {
+				$entry_statements Storage<statement_node> = $prepared->executable_body()->statements;
+				if (!$entry_statements->is_empty()) {
+					throw new \scpp_portability_runtime_exception('Top-level executable statements are only allowed in the selected entry: '
+						. $prepared->source->source_file()->path);
+				}
+			}
+		}
+		return $entry;
+	}
+}

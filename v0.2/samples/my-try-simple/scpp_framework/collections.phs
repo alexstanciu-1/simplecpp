@@ -1,0 +1,7 @@
+// Layout counterpart: my-try/phpp/scpp_framework/collections.phs
+function sample_unit_246(): void
+{
+    $value int = 247;
+    sample_unit_247();
+    return;
+}

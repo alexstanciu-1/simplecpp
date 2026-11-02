@@ -1,0 +1,7 @@
+// Layout counterpart: my-try/phpp/04_analyze/prepare/semantics/runtime_calls.phs
+function sample_unit_128(): void
+{
+    $value int = 129;
+    sample_unit_129();
+    return;
+}

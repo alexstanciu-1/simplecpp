@@ -1,0 +1,238 @@
+namespace scpp\compiler;
+
+/** Unresolved metadata owns no canonical identities or stage workers. */
+final class runtime_type_spec {
+	public $callable nullable<runtime_callable_spec> = null;
+	public bool $void_to_null = false;
+	public string $name = '';
+	/** Explicit variable spelling distinguishes a type parameter from a registered type. */
+	public string $parameter = '';
+	public $arguments Storage<runtime_type_spec>;
+	public function __construct() {
+		$this->arguments = new Storage<runtime_type_spec>();
+	}
+}
+
+/** Ordinary provider definitions reuse registry contracts, not language-role flags. */
+final class runtime_type_parameter_spec {
+	public string $name = '';
+	public $formation_contracts vector<generic_contract> = [];
+	public $capability_dependencies vector<generic_contract> = [];
+	public $default_type nullable<runtime_type_spec> = null;
+}
+
+final class runtime_type_definition_spec {
+	public $initialization Storage<runtime_initialization_spec>;
+	public $indexing nullable<runtime_indexing_spec> = null;
+	public $iteration nullable<runtime_iteration_spec> = null;
+	public string $identity = '';
+	public string $name = '';
+	public nominal_type_kind $kind = nominal_type_kind::structure;
+	/** Explicit native default and source-new factory opt-ins. */
+	public bool $default_constructible = false;
+	public string $construction = '';
+	/** Explicit empty brackets through the registered construction factory. */
+	public bool $empty_initialization = false;
+	public record_storage_kind $storage = record_storage_kind::inline_value;
+	public $capabilities vector<generic_contract> = [];
+	public $parameters Storage<runtime_type_parameter_spec>;
+
+	public function __construct() {
+		$this->parameters = new Storage<runtime_type_parameter_spec>();
+		$this->initialization = new Storage<runtime_initialization_spec>();
+	}
+}
+
+final class runtime_initialization_spec {
+	public runtime_type_spec $value;
+	public $key nullable<runtime_type_spec> = null;
+	public runtime_type_spec $nested;
+	public $where Keyed_Storage<runtime_type_spec>;
+	public function __construct() { $this->where = new Keyed_Storage<runtime_type_spec>(); }
+}
+
+/** Independent protocol opt-ins; type references use the owning definition's parameters. */
+final class runtime_iteration_spec {
+	public runtime_type_spec $key;
+	public runtime_type_spec $value;
+}
+
+final class runtime_indexing_spec {
+	public runtime_type_spec $key;
+	public runtime_type_spec $value;
+	public runtime_type_spec $nested;
+	public $path nullable<runtime_type_spec> = null;
+	public operator_operation $read_operation = operator_operation::index_checked_read;
+	public bool $write = false;
+	public index_append_policy $append = index_append_policy::unsupported;
+	public bool $probes = false;
+	public bool $removal = false;
+}
+
+final class runtime_parameter_spec {
+	/** Provider copies the input independently of caller-side value transport. */
+	public bool $requires_copy = false;
+	public task_transfer_policy $transfer_policy = task_transfer_policy::none;
+	public bool $variadic = false;
+	public $default_value nullable<runtime_default_spec> = null;
+	public string $name = '';
+	public runtime_type_spec $type;
+	public passing_mode $mode = passing_mode::value;
+	public storage_access $access = storage_access::writable;
+}
+
+/** Explicit scalar tag avoids JSON integer/float ambiguity and host numeric rounding. */
+final class runtime_default_spec {
+	public string $type_name = '';
+	public string $text = '';
+}
+
+abstract class runtime_signature_spec {
+	public runtime_type_spec $return_type;
+	public $parameters Storage<runtime_parameter_spec>;
+	public function __construct() { $this->parameters = new Storage<runtime_parameter_spec>(); }
+}
+
+final class runtime_callable_spec extends runtime_signature_spec {}
+
+/** Named result relation in immutable startup metadata. */
+final class runtime_replacement_spec {
+	public string $result_name = '';
+	public string $replacement_name = '';
+}
+
+/** Scalar or matching boxed-family result requirement in startup metadata. */
+final class runtime_boxed_result_spec {
+	public string $result_name = '';
+	public string $family_name = '';
+}
+
+/** Directed shared-handle conversion required by a provider operation. */
+final class runtime_shared_conversion_spec {
+	public string $from_name = '';
+	public string $to_name = '';
+}
+
+final class runtime_function_spec extends runtime_signature_spec {
+	/** Provider permits synchronous readonly borrowing in place of value snapshots. */
+	public bool $snapshot_borrow_safe = false;
+	public $member nullable<runtime_callable_member_spec> = null;
+	public string $identity = '';
+	public string $name = '';
+	public $qualified_aliases vector<string> = [];
+	public $type_parameters vector<string> = [];
+	public task_transfer_policy $transfer_policy = task_transfer_policy::isolated_transfer;
+	public $transfer_types vector<string> = [];
+	public $replacement_results Storage<runtime_replacement_spec>;
+	public $boxed_results Storage<runtime_boxed_result_spec>;
+	public $shared_conversions Storage<runtime_shared_conversion_spec>;
+	public function __construct() {
+		parent::__construct();
+		$this->replacement_results = new Storage<runtime_replacement_spec>();
+		$this->boxed_results = new Storage<runtime_boxed_result_spec>();
+		$this->shared_conversions = new Storage<runtime_shared_conversion_spec>();
+	}
+}
+
+/** Membership is independent of the function signature and backend symbol. */
+final class runtime_callable_member_spec {
+	public runtime_type_spec $owner;
+	public bool $static_member;
+}
+
+/** Backend metadata is separate from type/function semantics, joined only by identity. */
+class runtime_cpp_spec {
+	public string $identity = '';
+	public string $symbol = '';
+	/** Backend-only opt-in to PHS file/line prefix arguments. */
+	public bool $source_context = false;
+	public bool $native_payloads = false;
+	public string $header = '';
+}
+
+/** Unresolved C++ type recipe. Absence of arguments retains declaration-order shorthand. */
+final class runtime_cpp_type_spec extends runtime_cpp_spec {
+	public string $type_name = '';
+	public string $modifier_name = '';
+	/** Physical interface only; selects a declared parameter or the modifier payload. */
+	public string $pointee_parameter = '';
+	public bool $pointee_modified_type = false;
+	public bool $concrete_boundary = false;
+	public string $literal_interface = '';
+	public string $byte_interface = '';
+	public $arguments nullable<Storage<runtime_cpp_argument_spec>> = null;
+}
+
+final class runtime_cpp_argument_spec {
+	/** Provider permits declaration-only layout inspection of this argument. */
+	public bool $layout_declaration = false;
+	public string $native_name = '';
+	public string $parameter = '';
+	public bool $modified_type = false;
+	public bool $payload = false;
+	public string $header = '';
+}
+
+/** Bounded scalar constants; values retain normalized exact decimal spelling. */
+final class runtime_constant_spec {
+	public $owner nullable<runtime_type_spec> = null;
+	public string $name = '';
+	public string $type = '';
+	public string $decimal = '';
+}
+
+final class runtime_property_spec {
+	public string $identity = '';
+	public string $name = '';
+	public runtime_type_spec $owner;
+	public runtime_type_spec $type;
+	public bool $static_member = false;
+	public storage_access $access = storage_access::writable;
+}
+
+final class runtime_module_spec {
+	public runtime_cpp_build_spec $cpp_build;
+	public $cpp_initialization Keyed_Storage<runtime_cpp_spec>;
+	public string $name = '';
+	public string $file = '';
+	public $dependencies vector<string> = [];
+	public $functions Storage<runtime_function_spec>;
+	public $constants Storage<runtime_constant_spec>;
+	public $properties Storage<runtime_property_spec>;
+	public $cpp_properties Keyed_Storage<runtime_cpp_spec>;
+	public $types Storage<runtime_type_definition_spec>;
+	public $cpp_types Keyed_Storage<runtime_cpp_type_spec>;
+	public $cpp Keyed_Storage<runtime_cpp_spec>;
+	public function __construct() {
+		$this->cpp_build = new runtime_cpp_build_spec();
+		$this->functions = new Storage<runtime_function_spec>();
+		$this->cpp_initialization = new Keyed_Storage<runtime_cpp_spec>();
+		$this->constants = new Storage<runtime_constant_spec>();
+		$this->properties = new Storage<runtime_property_spec>();
+		$this->cpp_properties = new Keyed_Storage<runtime_cpp_spec>();
+		$this->types = new Storage<runtime_type_definition_spec>();
+		$this->cpp_types = new Keyed_Storage<runtime_cpp_type_spec>();
+		$this->cpp = new Keyed_Storage<runtime_cpp_spec>();
+	}
+}
+
+/** Portable build requirements, independent of source AST and native cache state. */
+final class runtime_cpp_build_spec {
+	/** Named host-resolved SDK requirements; executable metadata is forbidden. */
+	public $providers vector<string> = [];
+	/** Host-resolved arguments, never accepted from module JSON. */
+	public $compile_options vector<string> = [];
+	public $link_options vector<string> = [];
+	public $diagnostics vector<string> = [];
+	public $sources vector<string> = [];
+	public $libraries vector<string> = [];
+	public $definitions vector<string> = [];
+}
+
+/** Immutable-by-contract startup input, retained across semantic registry resets. */
+final class runtime_catalog_input {
+	public $modules Keyed_Storage<runtime_module_spec>;
+	public function __construct() {
+		$this->modules = new Keyed_Storage<runtime_module_spec>();
+	}
+}

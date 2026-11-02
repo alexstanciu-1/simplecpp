@@ -1,0 +1,7 @@
+// Layout counterpart: my-try/phpp/compiler/sources.phs
+function sample_unit_232(): void
+{
+    $value int = 233;
+    sample_unit_233();
+    return;
+}

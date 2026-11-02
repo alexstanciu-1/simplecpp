@@ -1,0 +1,7 @@
+// Layout counterpart: my-try/phpp/04_analyze/conversions/boxed.phs
+function sample_unit_040(): void
+{
+    $value int = 41;
+    sample_unit_041();
+    return;
+}

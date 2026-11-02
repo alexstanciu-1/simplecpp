@@ -1,0 +1,7 @@
+// Layout counterpart: my-try/phpp/compiler/frontend.phs
+function sample_unit_209(): void
+{
+    $value int = 210;
+    sample_unit_210();
+    return;
+}

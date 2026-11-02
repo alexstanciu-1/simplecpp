@@ -1,0 +1,6 @@
+// Layout counterpart: my-try/phpp/scpp_framework/strings.phs
+function sample_unit_255(): void
+{
+    $value int = 256;
+    return;
+}

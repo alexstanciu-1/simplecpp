@@ -1,0 +1,7 @@
+// Layout counterpart: my-try/phpp/05_backend/cpp/initializer_buffer.phs
+function sample_unit_165(): void
+{
+    $value int = 166;
+    sample_unit_166();
+    return;
+}

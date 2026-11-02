@@ -1,0 +1,7 @@
+// Layout counterpart: my-try/phpp/04_analyze/operators/mutations.phs
+function sample_unit_060(): void
+{
+    $value int = 61;
+    sample_unit_061();
+    return;
+}

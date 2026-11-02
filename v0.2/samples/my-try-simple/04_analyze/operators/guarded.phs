@@ -1,0 +1,7 @@
+// Layout counterpart: my-try/phpp/04_analyze/operators/guarded.phs
+function sample_unit_054(): void
+{
+    $value int = 55;
+    sample_unit_055();
+    return;
+}

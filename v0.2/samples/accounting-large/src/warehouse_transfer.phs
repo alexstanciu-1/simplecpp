@@ -1,0 +1,128 @@
+// Separate dispatch and receipt control for an internal transfer.
+// Draft values are mutable. Services retain validated copies, never caller handles.
+class WarehouseTransfer {
+    public string $id = "";
+    public string $item_code = "";
+    public string $source_location = "";
+    public string $destination_location = "";
+    public string $dispatch_reference = "";
+    public string $receipt_reference = "";
+    public int $requested = 0;
+    public int $dispatched = 0;
+    public int $received = 0;
+    public int $unit_cost = 0;
+    public int $period = 0;
+    public int $loss_quantity = 0;
+    public bool $approved = false;
+    public bool $closed = false;
+
+    public function validate(): AccountingCheck {
+        if (!DocumentRules::text($this->id, 1, 40)) {
+            return accounting_failure("warehouse_transfer.id", "id must contain 1..40 printable bytes");
+        }
+        if (!DocumentRules::text($this->item_code, 1, 80)) {
+            return accounting_failure("warehouse_transfer.item_code", "item_code must contain 1..80 printable bytes");
+        }
+        if (!DocumentRules::text($this->source_location, 1, 80)) {
+            return accounting_failure("warehouse_transfer.source_location", "source_location must contain 1..80 printable bytes");
+        }
+        if (!DocumentRules::text($this->destination_location, 1, 80)) {
+            return accounting_failure("warehouse_transfer.destination_location", "destination_location must contain 1..80 printable bytes");
+        }
+        if (!DocumentRules::text($this->dispatch_reference, 1, 80)) {
+            return accounting_failure("warehouse_transfer.dispatch_reference", "dispatch_reference must contain 1..80 printable bytes");
+        }
+        if (!DocumentRules::text($this->receipt_reference, 1, 80)) {
+            return accounting_failure("warehouse_transfer.receipt_reference", "receipt_reference must contain 1..80 printable bytes");
+        }
+        if (!DocumentRules::integer($this->requested, 1, 1000000)) {
+            return accounting_failure("warehouse_transfer.requested", "requested must be in [1, 1000000]");
+        }
+        if (!DocumentRules::integer($this->dispatched, 0, 1000000)) {
+            return accounting_failure("warehouse_transfer.dispatched", "dispatched must be in [0, 1000000]");
+        }
+        if (!DocumentRules::integer($this->received, 0, 1000000)) {
+            return accounting_failure("warehouse_transfer.received", "received must be in [0, 1000000]");
+        }
+        if (!DocumentRules::integer($this->unit_cost, 0, 1000000)) {
+            return accounting_failure("warehouse_transfer.unit_cost", "unit_cost must be in [0, 1000000]");
+        }
+        if (!DocumentRules::integer($this->period, 1, 1200)) {
+            return accounting_failure("warehouse_transfer.period", "period must be in [1, 1200]");
+        }
+        if (!DocumentRules::integer($this->loss_quantity, 0, 1000000)) {
+            return accounting_failure("warehouse_transfer.loss_quantity", "loss_quantity must be in [0, 1000000]");
+        }
+        if ($this->source_location === $this->destination_location) {
+            return accounting_failure("warehouse_transfer.location", "Transfer requires distinct locations");
+        }
+        if ($this->dispatched > $this->requested) {
+            return accounting_failure("warehouse_transfer.dispatch", "Dispatch exceeds request");
+        }
+        if ($this->received + $this->loss_quantity > $this->dispatched) {
+            return accounting_failure("warehouse_transfer.receipt", "Receipts and losses exceed dispatch");
+        }
+        return accounting_success();
+    }
+
+    public function in_transit_value(): int {
+        return ($this->dispatched - $this->received - $this->loss_quantity) * $this->unit_cost;
+    }
+
+    public function copy(): WarehouseTransfer {
+        $snapshot WarehouseTransfer = new WarehouseTransfer();
+        $snapshot->id = $this->id;
+        $snapshot->item_code = $this->item_code;
+        $snapshot->source_location = $this->source_location;
+        $snapshot->destination_location = $this->destination_location;
+        $snapshot->dispatch_reference = $this->dispatch_reference;
+        $snapshot->receipt_reference = $this->receipt_reference;
+        $snapshot->requested = $this->requested;
+        $snapshot->dispatched = $this->dispatched;
+        $snapshot->received = $this->received;
+        $snapshot->unit_cost = $this->unit_cost;
+        $snapshot->period = $this->period;
+        $snapshot->loss_quantity = $this->loss_quantity;
+        $snapshot->approved = $this->approved;
+        $snapshot->closed = $this->closed;
+        return $snapshot;
+    }
+
+    public function differences(WarehouseTransfer $other): vector<string> {
+        $fields vector<string> = [];
+        if ($this->id !== $other->id) { $fields[] = "id"; }
+        if ($this->item_code !== $other->item_code) { $fields[] = "item_code"; }
+        if ($this->source_location !== $other->source_location) { $fields[] = "source_location"; }
+        if ($this->destination_location !== $other->destination_location) { $fields[] = "destination_location"; }
+        if ($this->dispatch_reference !== $other->dispatch_reference) { $fields[] = "dispatch_reference"; }
+        if ($this->receipt_reference !== $other->receipt_reference) { $fields[] = "receipt_reference"; }
+        if ($this->requested !== $other->requested) { $fields[] = "requested"; }
+        if ($this->dispatched !== $other->dispatched) { $fields[] = "dispatched"; }
+        if ($this->received !== $other->received) { $fields[] = "received"; }
+        if ($this->unit_cost !== $other->unit_cost) { $fields[] = "unit_cost"; }
+        if ($this->period !== $other->period) { $fields[] = "period"; }
+        if ($this->loss_quantity !== $other->loss_quantity) { $fields[] = "loss_quantity"; }
+        if ($this->approved !== $other->approved) { $fields[] = "approved"; }
+        if ($this->closed !== $other->closed) { $fields[] = "closed"; }
+        return $fields;
+    }
+
+    public function describe(): string {
+        $text string = "WarehouseTransfer\n";
+        $text .= "id=" . $this->id . "\n";
+        $text .= "item_code=" . $this->item_code . "\n";
+        $text .= "source_location=" . $this->source_location . "\n";
+        $text .= "destination_location=" . $this->destination_location . "\n";
+        $text .= "dispatch_reference=" . $this->dispatch_reference . "\n";
+        $text .= "receipt_reference=" . $this->receipt_reference . "\n";
+        $text .= "requested=" . (string)$this->requested . "\n";
+        $text .= "dispatched=" . (string)$this->dispatched . "\n";
+        $text .= "received=" . (string)$this->received . "\n";
+        $text .= "unit_cost=" . (string)$this->unit_cost . "\n";
+        $text .= "period=" . (string)$this->period . "\n";
+        $text .= "loss_quantity=" . (string)$this->loss_quantity . "\n";
+        $text .= "approved=" . DocumentRules::flag($this->approved) . "\n";
+        $text .= "closed=" . DocumentRules::flag($this->closed) . "\n";
+        return $text;
+    }
+}

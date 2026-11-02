@@ -1,0 +1,7 @@
+// Layout counterpart: my-try/phpp/04_analyze/prepare/semantics/type_contracts.phs
+function sample_unit_137(): void
+{
+    $value int = 138;
+    sample_unit_138();
+    return;
+}

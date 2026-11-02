@@ -1,0 +1,7 @@
+// Layout counterpart: my-try/phpp/scpp_framework/exceptions.phs
+function sample_unit_247(): void
+{
+    $value int = 248;
+    sample_unit_248();
+    return;
+}

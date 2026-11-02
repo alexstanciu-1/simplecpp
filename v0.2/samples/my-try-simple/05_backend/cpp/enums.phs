@@ -1,0 +1,7 @@
+// Layout counterpart: my-try/phpp/05_backend/cpp/enums.phs
+function sample_unit_159(): void
+{
+    $value int = 160;
+    sample_unit_160();
+    return;
+}

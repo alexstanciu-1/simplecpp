@@ -1,0 +1,7 @@
+// Layout counterpart: my-try/phpp/compiler/scope_publication.phs
+function sample_unit_230(): void
+{
+    $value int = 231;
+    sample_unit_231();
+    return;
+}

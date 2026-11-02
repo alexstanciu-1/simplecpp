@@ -1,0 +1,2 @@
+$exit_code int = large_accounting_cli();
+return $exit_code;

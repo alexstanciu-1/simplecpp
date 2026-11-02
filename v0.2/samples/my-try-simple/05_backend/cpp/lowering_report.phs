@@ -1,0 +1,7 @@
+// Layout counterpart: my-try/phpp/05_backend/cpp/lowering_report.phs
+function sample_unit_169(): void
+{
+    $value int = 170;
+    sample_unit_170();
+    return;
+}

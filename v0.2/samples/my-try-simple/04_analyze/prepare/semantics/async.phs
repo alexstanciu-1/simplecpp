@@ -1,0 +1,7 @@
+// Layout counterpart: my-try/phpp/04_analyze/prepare/semantics/async.phs
+function sample_unit_087(): void
+{
+    $value int = 88;
+    sample_unit_088();
+    return;
+}

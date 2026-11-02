@@ -1,0 +1,64 @@
+function sample_goods_receipt_line(): GoodsReceiptLine {
+    $draft GoodsReceiptLine = new GoodsReceiptLine();
+    $draft->id = "GR-L1";
+    $draft->receipt_id = "GR-001";
+    $draft->order_line_id = "PO-L1";
+    $draft->supplier_id = "SUP-001";
+    $draft->item_code = "PART-A";
+    $draft->lot_id = "LOT-01";
+    $draft->delivered = 12;
+    $draft->rejected = 2;
+    $draft->matched = 6;
+    $draft->unit_cost = 500;
+    $draft->period = 1;
+    $draft->inspection_score = 95;
+    $draft->inspected = true;
+    $draft->quarantined = false;
+    return $draft;
+}
+
+function check_goods_receipt_line(WorkloadChecks $checks): void {
+    $draft GoodsReceiptLine = sample_goods_receipt_line();
+    $checks->accepted($draft->validate(), "goods_receipt_line valid draft");
+    $checks->equal($draft->unmatched_value(), 2000, "goods_receipt_line independent business result");
+    $copy GoodsReceiptLine = $draft->copy();
+    $checks->equal(count($draft->differences($copy)), 0, "goods_receipt_line snapshot equivalence");
+    $checks->expect($draft->describe() === $copy->describe(), "goods_receipt_line snapshot report");
+    $copy = $draft->copy();
+    $copy->id = "";
+    $checks->rejected($copy->validate(), "goods_receipt_line.id", "goods_receipt_line id required");
+    $copy = $draft->copy();
+    $copy->id = "bad\nrow";
+    $checks->rejected($copy->validate(), "goods_receipt_line.id", "goods_receipt_line id control");
+    $copy = $draft->copy();
+    $copy->id = DocumentRules::repeat("x", 41);
+    $checks->rejected($copy->validate(), "goods_receipt_line.id", "goods_receipt_line id width");
+    $copy = $draft->copy();
+    $copy->id = "GR-L1-changed";
+    $checks->expect($draft->id === "GR-L1", "goods_receipt_line id snapshot isolation");
+    $changes_id vector<string> = $draft->differences($copy);
+    $checks->equal(count($changes_id), 1, "goods_receipt_line id change count");
+    if (count($changes_id) === 1) {
+        $checks->expect($changes_id[0] === "id", "goods_receipt_line id change identity");
+    }
+    $copy = $draft->copy();
+    $copy->delivered = 0;
+    $checks->rejected($copy->validate(), "goods_receipt_line.delivered", "goods_receipt_line delivered below");
+    $copy = $draft->copy();
+    $copy->delivered = 1000001;
+    $checks->rejected($copy->validate(), "goods_receipt_line.delivered", "goods_receipt_line delivered above");
+    $copy = $draft->copy();
+    $copy->rejected = -1;
+    $checks->rejected($copy->validate(), "goods_receipt_line.rejected", "goods_receipt_line rejected below");
+    $copy = $draft->copy();
+    $copy->rejected = 1000001;
+    $checks->rejected($copy->validate(), "goods_receipt_line.rejected", "goods_receipt_line rejected above");
+    $copy = $draft->copy();
+    $copy->inspected = false;
+    $checks->expect($draft->inspected === true, "goods_receipt_line inspected snapshot isolation");
+    $changes_inspected vector<string> = $draft->differences($copy);
+    $checks->equal(count($changes_inspected), 1, "goods_receipt_line inspected change count");
+    if (count($changes_inspected) === 1) {
+        $checks->expect($changes_inspected[0] === "inspected", "goods_receipt_line inspected change identity");
+    }
+}

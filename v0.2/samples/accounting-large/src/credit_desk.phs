@@ -1,0 +1,78 @@
+class CreditReservation {
+    public string $reference = "";
+    public string $customer_id = "";
+    public int $amount = 0;
+    public bool $released = false;
+}
+
+class CreditDesk {
+    private $customers hash<CustomerProfile> = [];
+    private $reservations hash<CreditReservation> = [];
+
+    public function add_customer(CustomerProfile $draft): AccountingCheck {
+        $valid AccountingCheck = $draft->validate();
+        if (!$valid->accepted) { return $valid; }
+        if (isset($this->customers[$draft->id])) {
+            return accounting_failure("credit.duplicate", $draft->id);
+        }
+        if ($draft->exposure !== 0) {
+            return accounting_failure("credit.opening", "New customers start without reservations");
+        }
+        $this->customers[$draft->id] = $draft->copy();
+        return accounting_success();
+    }
+
+    public function customer(string $id): CustomerProfile {
+        if (!isset($this->customers[$id])) { return new CustomerProfile(); }
+        return $this->customers[$id]->copy();
+    }
+
+    public function hold(string $id, bool $blocked): AccountingCheck {
+        if (!isset($this->customers[$id])) { return accounting_failure("credit.customer", $id); }
+        $customer CustomerProfile = $this->customers[$id];
+        $customer->on_hold = $blocked;
+        return accounting_success();
+    }
+
+    // A reservation is an off-ledger commitment, not a posted receivable.
+    public function reserve(string $id, string $reference, int $amount): AccountingCheck {
+        if (!DocumentRules::text($reference, 1, 80) || $amount <= 0 || !MoneyRules::accepts($amount)) {
+            return accounting_failure("credit.request", "Reference and positive bounded amount required");
+        }
+        if (!isset($this->customers[$id])) { return accounting_failure("credit.customer", $id); }
+        if (isset($this->reservations[$reference])) { return accounting_failure("credit.reference", $reference); }
+        $customer CustomerProfile = $this->customers[$id];
+        if (!$customer->active || $customer->on_hold) { return accounting_failure("credit.hold", $id); }
+        if ($amount > $customer->available_credit()) { return accounting_failure("credit.limit", $id); }
+        $reservation CreditReservation = new CreditReservation();
+        $reservation->reference = $reference;
+        $reservation->customer_id = $id;
+        $reservation->amount = $amount;
+        $this->reservations[$reference] = $reservation;
+        $customer->exposure += $amount;
+        return accounting_success();
+    }
+
+    public function release(string $reference): AccountingCheck {
+        if (!isset($this->reservations[$reference])) { return accounting_failure("credit.reference", $reference); }
+        $reservation CreditReservation = $this->reservations[$reference];
+        if ($reservation->released) { return accounting_failure("credit.released", $reference); }
+        $customer CustomerProfile = $this->customers[$reservation->customer_id];
+        $customer->exposure -= $reservation->amount;
+        $reservation->released = true;
+        return accounting_success();
+    }
+
+    public function reconcile(): AccountingCheck {
+        foreach ($this->customers as $id => $customer) {
+            $reserved int = 0;
+            foreach ($this->reservations as $reservation) {
+                if ($reservation->customer_id === $id && !$reservation->released) {
+                    $reserved += $reservation->amount;
+                }
+            }
+            if ($reserved !== $customer->exposure) { return accounting_failure("credit.control", $id); }
+        }
+        return accounting_success();
+    }
+}

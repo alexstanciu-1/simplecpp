@@ -1,0 +1,13 @@
+
+/* Exact native integer spelling shared by scalar constants, labels and enum declarations. */
+namespace scpp\compiler;
+
+final class CPP_Integer_Literals {
+	/** Preparation proves the range; signed minimum must not start as an unsigned C++ literal. */
+	public static function constant(string $decimal, bool $unsigned = false): string {
+		if ($decimal === '-9223372036854775808') {
+			return '(-9223372036854775807LL - 1LL)';
+		}
+		return $decimal . ($unsigned ? 'ULL' : 'LL');
+	}
+}

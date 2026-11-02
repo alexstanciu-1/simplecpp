@@ -1,0 +1,7 @@
+// Layout counterpart: my-try/phpp/04_analyze/prepare/data/callable_adaptation.phs
+function sample_unit_068(): void
+{
+    $value int = 69;
+    sample_unit_069();
+    return;
+}

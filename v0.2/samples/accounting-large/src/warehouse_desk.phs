@@ -1,0 +1,144 @@
+class WarehouseBin {
+    public string $location_id = "";
+    public string $item_code = "";
+    public int $quantity = 0;
+    public int $unit_cost = 0;
+}
+
+class WarehouseDesk {
+    private $locations hash<WarehouseLocation> = [];
+    private $bins hash<WarehouseBin> = [];
+    private $transfers hash<WarehouseTransfer> = [];
+    private $counts hash<StockCountLine> = [];
+
+    private function key(string $location, string $item): string {
+        return (string)strlen($location) . ":" . $location . $item;
+    }
+
+    public function add_location(WarehouseLocation $draft): AccountingCheck {
+        $valid AccountingCheck = $draft->validate();
+        if (!$valid->accepted) { return $valid; }
+        if (isset($this->locations[$draft->id])) { return accounting_failure("warehouse.duplicate", $draft->id); }
+        if ($draft->occupied !== 0 || $draft->reserved_capacity !== 0 || !$draft->active) {
+            return accounting_failure("warehouse.opening", "New location must be active and empty");
+        }
+        $this->locations[$draft->id] = $draft->copy();
+        return accounting_success();
+    }
+
+    public function quantity(string $location, string $item): int {
+        $key string = $this->key($location, $item);
+        if (!isset($this->bins[$key])) { return 0; }
+        return $this->bins[$key]->quantity;
+    }
+
+    public function value(): int {
+        $total int = 0;
+        foreach ($this->bins as $bin) { $total += $bin->quantity * $bin->unit_cost; }
+        return $total;
+    }
+
+    // This warehouse variant uses one fixed acquisition cost per item/location.
+    // Heterogeneous lot costing remains in the original InventoryBook sample.
+    public function receive(GeneralLedger $ledger, string $location_id, string $item, string $reference, int $quantity, int $cost): AccountingCheck {
+        if (!isset($this->locations[$location_id])) { return accounting_failure("warehouse.location", $location_id); }
+        $location WarehouseLocation = $this->locations[$location_id];
+        if (!DocumentRules::text($item, 1, 80) || !$location->active || $location->quarantine_only || $quantity <= 0 || $quantity > $location->free_capacity() || $cost <= 0) {
+            return accounting_failure("warehouse.receipt", "Receipt exceeds active location capacity or has invalid item/cost");
+        }
+        $key string = $this->key($location_id, $item);
+        if (isset($this->bins[$key])) {
+            if ($this->bins[$key]->unit_cost !== $cost) { return accounting_failure("warehouse.cost", "Fixed-cost bin cannot mix costs"); }
+        }
+        $amount AmountResult = MoneyRules::multiply($cost, $quantity);
+        if (!$amount->valid) { return accounting_failure($amount->reason, "Warehouse receipt"); }
+        $posted AccountingCheck = document_post($ledger, $reference, "warehouse-receipt", $location->stock_account, "goods-received", $amount->amount);
+        if (!$posted->accepted) { return $posted; }
+        if (!isset($this->bins[$key])) {
+            $created WarehouseBin = new WarehouseBin();
+            $created->location_id = $location_id;
+            $created->item_code = $item;
+            $created->unit_cost = $cost;
+            $this->bins[$key] = $created;
+        }
+        $bin WarehouseBin = $this->bins[$key];
+        $bin->quantity += $quantity;
+        $location->occupied += $quantity;
+        return accounting_success();
+    }
+
+    public function transfer(WarehouseTransfer $draft): AccountingCheck {
+        $valid AccountingCheck = $draft->validate();
+        if (!$valid->accepted) { return $valid; }
+        if (isset($this->transfers[$draft->id])) { return accounting_failure("warehouse.transfer-duplicate", $draft->id); }
+        if (!$draft->approved || $draft->requested !== $draft->dispatched || $draft->received !== $draft->dispatched || $draft->loss_quantity !== 0) {
+            return accounting_failure("warehouse.transfer-state", "This operation requires an immediate complete loss-free transfer");
+        }
+        if (!isset($this->locations[$draft->source_location]) || !isset($this->locations[$draft->destination_location])) {
+            return accounting_failure("warehouse.location", "Both transfer locations must exist");
+        }
+        $source WarehouseLocation = $this->locations[$draft->source_location];
+        $target WarehouseLocation = $this->locations[$draft->destination_location];
+        if (!$source->active || !$target->active || $target->quarantine_only || $source->stock_account !== $target->stock_account) {
+            return accounting_failure("warehouse.transfer-account", "Transfer must preserve the inventory control account");
+        }
+        $source_key string = $this->key($source->id, $draft->item_code);
+        $target_key string = $this->key($target->id, $draft->item_code);
+        if (!isset($this->bins[$source_key])) { return accounting_failure("warehouse.stock", $draft->item_code); }
+        $source_bin WarehouseBin = $this->bins[$source_key];
+        if ($draft->requested > $source_bin->quantity || $draft->requested > $target->free_capacity() || $draft->unit_cost !== $source_bin->unit_cost) {
+            return accounting_failure("warehouse.transfer-quantity", "Transfer exceeds stock/capacity or differs from carrying cost");
+        }
+        if (isset($this->bins[$target_key])) {
+            if ($this->bins[$target_key]->unit_cost !== $source_bin->unit_cost) { return accounting_failure("warehouse.cost", "Target bin uses another cost"); }
+        }
+        // All validation precedes both sides of the in-memory movement.
+        if (!isset($this->bins[$target_key])) {
+            $created WarehouseBin = new WarehouseBin();
+            $created->location_id = $target->id;
+            $created->item_code = $draft->item_code;
+            $created->unit_cost = $source_bin->unit_cost;
+            $this->bins[$target_key] = $created;
+        }
+        $target_bin WarehouseBin = $this->bins[$target_key];
+        $source_bin->quantity -= $draft->requested;
+        $target_bin->quantity += $draft->requested;
+        $source->occupied -= $draft->requested;
+        $target->occupied += $draft->requested;
+        $this->transfers[$draft->id] = $draft->copy();
+        return accounting_success();
+    }
+
+    public function count_stock(GeneralLedger $ledger, StockCountLine $draft): AccountingCheck {
+        $valid AccountingCheck = $draft->validate();
+        if (!$valid->accepted) { return $valid; }
+        if (isset($this->counts[$draft->id])) { return accounting_failure("warehouse.count-duplicate", $draft->id); }
+        $key string = $this->key($draft->location, $draft->item_code);
+        if (!isset($this->bins[$key])) { return accounting_failure("warehouse.stock", $draft->item_code); }
+        $bin WarehouseBin = $this->bins[$key];
+        $location WarehouseLocation = $this->locations[$draft->location];
+        if ($draft->posted || $draft->period !== $ledger->current_period() || $draft->book_quantity !== $bin->quantity || $draft->unit_cost !== $bin->unit_cost) {
+            return accounting_failure("warehouse.count-stale", "Count is posted or differs from current stock facts");
+        }
+        $delta int = $draft->counted_quantity - $draft->book_quantity;
+        $absolute_delta int = $delta;
+        if ($absolute_delta < 0) { $absolute_delta = -$absolute_delta; }
+        if ($absolute_delta > $draft->tolerance_quantity && !$draft->recounted) { return accounting_failure("warehouse.recount", "Material variance needs a recount"); }
+        if ($delta > $location->free_capacity()) { return accounting_failure("warehouse.capacity", "Count exceeds location capacity"); }
+        $amount AmountResult = MoneyRules::multiply($bin->unit_cost, $absolute_delta);
+        if (!$amount->valid) { return accounting_failure($amount->reason, "Count variance"); }
+        if ($delta !== 0) {
+            $debit string = $location->stock_account;
+            $credit string = "cost-of-sales";
+            if ($delta < 0) { $debit = "cost-of-sales"; $credit = $location->stock_account; }
+            $posted AccountingCheck = document_post($ledger, "count:" . $draft->id, "stock-count", $debit, $credit, $amount->amount);
+            if (!$posted->accepted) { return $posted; }
+        }
+        $bin->quantity = $draft->counted_quantity;
+        $location->occupied += $delta;
+        $saved StockCountLine = $draft->copy();
+        $saved->posted = true;
+        $this->counts[$saved->id] = $saved;
+        return accounting_success();
+    }
+}

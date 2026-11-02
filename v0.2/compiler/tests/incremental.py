@@ -86,11 +86,13 @@ with tempfile.TemporaryDirectory(prefix='scpp-incremental-') as temporary:
     run(False)
     # Source failure never records a successful baseline and remains a failure on retry.
     before = snapshot()
+    successful_stamp = source.stat()
     source.write_text('return;')
     run(failure=True)
     run(failure=True)
     assert snapshot() == before
     source.write_text('return 7;')
+    os.utime(source, (successful_stamp.st_atime, successful_stamp.st_mtime + 2))
     run(True)
     # A graph failure also leaves successful output intact.
     before = snapshot()

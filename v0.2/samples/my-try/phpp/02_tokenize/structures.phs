@@ -1,0 +1,80 @@
+
+/*
+ * Role: token spans and retained spelling.
+ * Used by: Tokenizer.
+ */
+namespace scpp\compiler;
+
+final class token {
+	public $offset uint32;
+	public $length uint32;
+
+	// Retained spelling for now; a native string view is a future representation.
+	protected string $_text;
+
+	public function __construct(int $offset, int $length, string $text) {
+		$this->offset = $offset;
+		$this->length = $length;
+		$this->_text = $text;
+	}
+
+	public function text(): string {
+		return $this->_text;
+	}
+}
+
+/** A reused half-open token interval and its equivalent interval in the current input. */
+final class retained_token_range {
+	public int $first;
+	public int $end;
+	public int $current_first;
+
+	public function __construct(int $first, int $end, int $current_first) {
+		$this->first = $first;
+		$this->end = $end;
+		$this->current_first = $current_first;
+	}
+}
+
+/** One file's appended source/token storage and the current input range; no scanner state. */
+final class token_list {
+	/** Current input in appended storage; byte offsets in tokens already include content_offset. */
+	public int $first_token = 0;
+	public int $end_token = 0;
+	public int $content_offset = 0;
+	/** Reused syntax intervals awaiting post-output compaction. @storage.owner */
+	public $retained_ranges Storage<retained_token_range>;
+
+	/**
+	 * Numeric storage of token records.
+	 * @storage.owner
+	 */
+	public $tokens Storage<token>;
+
+	/** Source dependency and authoritative bytes for all spans. @reference.source source_record.file */
+	public file $file;public string $content;public function __construct(set:$file, set:$content) {
+		$this->tokens = new Storage<token>();
+		$this->retained_ranges = new Storage<retained_token_range>();
+	}
+
+	/** Adjacent angle tokens can spell a shift while remaining separate generic delimiters. */
+	public function operator_text_at(int $index): string {
+		$tokens Storage<token> = $this->tokens;
+		$first = $tokens[$index];
+		$text = $first->text();
+		if ((($text === '<') || ($text === '>')) && ($index + 1 < count($tokens)))
+		{
+			$second = $tokens[$index + 1];
+			if (($second->text() === $text)
+				&& ((int) $second->offset === (int) $first->offset + (int) $first->length)) {
+				return $text . $text;
+			}
+		}
+		return $text;
+	}
+
+	public function text_at(int $index): string {
+		$tokens Storage<token> = $this->tokens;
+		return $tokens[$index]->text();
+	}
+}

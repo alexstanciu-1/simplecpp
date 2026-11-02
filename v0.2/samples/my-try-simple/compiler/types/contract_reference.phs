@@ -1,0 +1,7 @@
+// Layout counterpart: my-try/phpp/compiler/types/contract_reference.phs
+function sample_unit_240(): void
+{
+    $value int = 241;
+    sample_unit_241();
+    return;
+}

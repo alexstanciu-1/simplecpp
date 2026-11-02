@@ -1,0 +1,7 @@
+// Layout counterpart: my-try/phpp/04_analyze/operators/identity.phs
+function sample_unit_055(): void
+{
+    $value int = 56;
+    sample_unit_056();
+    return;
+}

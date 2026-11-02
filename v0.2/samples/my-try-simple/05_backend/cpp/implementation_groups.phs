@@ -1,0 +1,7 @@
+// Layout counterpart: my-try/phpp/05_backend/cpp/implementation_groups.phs
+function sample_unit_163(): void
+{
+    $value int = 164;
+    sample_unit_164();
+    return;
+}

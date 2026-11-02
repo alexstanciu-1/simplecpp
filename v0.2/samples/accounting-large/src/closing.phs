@@ -1,0 +1,194 @@
+class PrepaymentSchedule {
+    public string $reference = "";
+    public string $expense_account = "";
+    public int $first_period = 1;
+    public int $original_amount = 0;
+    public int $released_amount = 0;
+    public $portions vector<int> = [];
+    public $released_periods hash<bool, int> = [];
+}
+
+class AccrualRecord {
+    public string $reference = "";
+    public string $expense_account = "";
+    public int $period = 1;
+    public int $amount = 0;
+    public bool $reversed = false;
+}
+
+class AdjustmentBook {
+    private $prepayments hash<PrepaymentSchedule> = [];
+    private $prepayment_order vector<string> = [];
+    private $accruals hash<AccrualRecord> = [];
+    private $accrual_order vector<string> = [];
+
+    public function prepay(GeneralLedger $ledger, string $reference, string $expense_account, int $amount, int $periods): AccountingCheck {
+        if ($reference === "" || isset($this->prepayments[$reference])) {
+            return accounting_failure("prepayment.reference", "Prepayment reference is empty or already used");
+        }
+        if ($amount <= 0 || $periods <= 0 || $periods > 120 || $ledger->current_period() + $periods - 1 > 1200) {
+            return accounting_failure("prepayment.schedule", "Prepayment amount or schedule is invalid");
+        }
+        if ($expense_account !== "operating-expense" && $expense_account !== "bank-fees") {
+            return accounting_failure("prepayment.account", "Prepayment must release to an allowed expense account");
+        }
+        if ($amount > $ledger->balance_of("bank")) {
+            return accounting_failure("prepayment.funds", "Bank cannot fund prepayment");
+        }
+        $allocation AllocationResult = MoneyAllocation::equally($amount, $periods);
+        if (!$allocation->valid) {
+            return accounting_failure($allocation->reason, "Prepayment allocation failed");
+        }
+        $entry JournalEntry = new JournalEntry();
+        $entry->reference = "prepayment:" . $reference;
+        $entry->origin = "period-adjustments";
+        $entry->period = $ledger->current_period();
+        $entry->add_debit("prepayments", $amount, $reference);
+        $entry->add_credit("bank", $amount, $reference);
+        $check AccountingCheck = $ledger->post($entry);
+        if (!$check->accepted) {
+            return $check;
+        }
+        $schedule PrepaymentSchedule = new PrepaymentSchedule();
+        $schedule->reference = $reference;
+        $schedule->expense_account = $expense_account;
+        $schedule->first_period = $entry->period;
+        $schedule->original_amount = $amount;
+        $schedule->portions = $allocation->amounts;
+        $this->prepayments[$reference] = $schedule;
+        $this->prepayment_order[] = $reference;
+        return accounting_success();
+    }
+
+    public function release_prepayment(GeneralLedger $ledger, string $reference): AccountingCheck {
+        if (!isset($this->prepayments[$reference])) {
+            return accounting_failure("prepayment.missing", $reference);
+        }
+        $schedule PrepaymentSchedule = $this->prepayments[$reference];
+        $period int = $ledger->current_period();
+        $index int = $period - $schedule->first_period;
+        if ($index < 0 || $index >= count($schedule->portions)) {
+            return accounting_failure("prepayment.period", "Current period is outside the release schedule");
+        }
+        if (isset($schedule->released_periods[$period])) {
+            return accounting_failure("prepayment.released", "Current period has already been released");
+        }
+        if ($index > 0 && !isset($schedule->released_periods[$period - 1])) {
+            return accounting_failure("prepayment.sequence", "Previous scheduled release is missing");
+        }
+        $amount int = $schedule->portions[$index];
+        if ($amount > 0) {
+            $entry JournalEntry = new JournalEntry();
+            $entry->reference = "prepayment-release:" . (string)$period . ":" . $reference;
+            $entry->origin = "period-adjustments";
+            $entry->period = $period;
+            $entry->add_debit($schedule->expense_account, $amount, $reference);
+            $entry->add_credit("prepayments", $amount, $reference);
+            $check AccountingCheck = $ledger->post($entry);
+            if (!$check->accepted) {
+                return $check;
+            }
+        }
+        $schedule->released_amount += $amount;
+        $schedule->released_periods[$period] = true;
+        return accounting_success();
+    }
+
+    public function accrue(GeneralLedger $ledger, string $reference, string $expense_account, int $amount): AccountingCheck {
+        if ($reference === "" || isset($this->accruals[$reference])) {
+            return accounting_failure("accrual.reference", "Accrual reference is empty or already used");
+        }
+        if ($amount <= 0 || !MoneyRules::accepts($amount)) {
+            return accounting_failure("accrual.amount", "Accrual amount must be positive and bounded");
+        }
+        if ($expense_account !== "operating-expense" && $expense_account !== "bank-fees") {
+            return accounting_failure("accrual.account", "Accrual must charge an allowed expense account");
+        }
+        $entry JournalEntry = new JournalEntry();
+        $entry->reference = "accrual:" . $reference;
+        $entry->origin = "period-adjustments";
+        $entry->period = $ledger->current_period();
+        $entry->add_debit($expense_account, $amount, $reference);
+        $entry->add_credit("accruals", $amount, $reference);
+        $check AccountingCheck = $ledger->post($entry);
+        if (!$check->accepted) {
+            return $check;
+        }
+        $record AccrualRecord = new AccrualRecord();
+        $record->reference = $reference;
+        $record->expense_account = $expense_account;
+        $record->period = $entry->period;
+        $record->amount = $amount;
+        $this->accruals[$reference] = $record;
+        $this->accrual_order[] = $reference;
+        return accounting_success();
+    }
+
+    public function reverse_accrual(GeneralLedger $ledger, string $reference): AccountingCheck {
+        if (!isset($this->accruals[$reference])) {
+            return accounting_failure("accrual.missing", $reference);
+        }
+        $record AccrualRecord = $this->accruals[$reference];
+        if ($record->reversed) {
+            return accounting_failure("accrual.reversed", $reference);
+        }
+        if ($ledger->current_period() <= $record->period) {
+            return accounting_failure("accrual.period", "Accrual reverses in a later period");
+        }
+        $check AccountingCheck = $ledger->reverse("accrual:" . $reference, "accrual-reversal:" . $reference);
+        if ($check->accepted) {
+            $record->reversed = true;
+        }
+        return $check;
+    }
+
+    public function prepayment_balance(): int {
+        $total int = 0;
+        foreach ($this->prepayment_order as $reference) {
+            $schedule PrepaymentSchedule = $this->prepayments[$reference];
+            $total += $schedule->original_amount - $schedule->released_amount;
+        }
+        return $total;
+    }
+
+    public function accrual_balance(): int {
+        $total int = 0;
+        foreach ($this->accrual_order as $reference) {
+            $record AccrualRecord = $this->accruals[$reference];
+            if (!$record->reversed) {
+                $total += $record->amount;
+            }
+        }
+        return $total;
+    }
+
+    public function reconcile(GeneralLedger $ledger): AccountingCheck {
+        if ($this->prepayment_balance() !== $ledger->balance_of("prepayments")) {
+            return accounting_failure("prepayment.control", "Schedule balances differ from prepayment control");
+        }
+        if ($this->accrual_balance() !== -$ledger->balance_of("accruals")) {
+            return accounting_failure("accrual.control", "Accrual balances differ from liability control");
+        }
+        return accounting_success();
+    }
+
+    public function ready_to_close(GeneralLedger $ledger): AccountingCheck {
+        $period int = $ledger->current_period();
+        foreach ($this->prepayment_order as $reference) {
+            $schedule PrepaymentSchedule = $this->prepayments[$reference];
+            $last_period int = $schedule->first_period + count($schedule->portions) - 1;
+            for ($due int = $schedule->first_period; $due <= $last_period && $due <= $period; $due++) {
+                if (!isset($schedule->released_periods[$due])) {
+                    return accounting_failure("close.prepayment-pending", $reference);
+                }
+            }
+        }
+        foreach ($this->accrual_order as $reference) {
+            $record AccrualRecord = $this->accruals[$reference];
+            if ($period > $record->period && !$record->reversed) {
+                return accounting_failure("close.accrual-pending", $reference);
+            }
+        }
+        return $this->reconcile($ledger);
+    }
+}

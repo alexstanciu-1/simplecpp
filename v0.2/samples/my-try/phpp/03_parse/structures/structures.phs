@@ -1,0 +1,17 @@
+
+namespace scpp\compiler;
+
+final class parsed_file {
+	/** False while parsing or after failure; consumers must wait for a successful join. */
+	public bool $complete = false;
+	/** Publish a completed parse with initialized syntax, provenance and owned scopes. */
+	public token_list $tokens;public file_node $root;public collected_file $collection;public $scopes Storage<scope>;public function __construct(set:$tokens, set:$root, set:$collection, set:$scopes) {}
+
+	public function source_file(): file {
+		return $this->tokens->file;
+	}
+
+	public function root_scope(): scope {
+		return $this->root->single_body()->body_scope();
+	}
+}

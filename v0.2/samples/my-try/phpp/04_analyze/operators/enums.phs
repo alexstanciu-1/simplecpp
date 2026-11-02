@@ -1,0 +1,25 @@
+namespace scpp\compiler;
+
+/** Enum identity is not its integral storage representation. */
+final class Enum_Operators {
+	public static function decide(operator_kind $source_operator, vector<canonical_type_use> $operands, preparation_context $context): operator_decision {
+		if (count($operands) !== 2) { throw new \scpp_portability_logic_exception('Enum comparison requires two operands'); }
+		if (!$operands[0]->matches($operands[1])) {
+			throw new \scpp_portability_runtime_exception('S2S enum comparison requires the same enum type');
+		}
+		$decision = new operator_decision();
+		$decision->source_operator = $source_operator;
+		$decision->result_type = $context->boolean;
+		if (($source_operator === operator_kind::equal) || ($source_operator === operator_kind::identical)) {
+			$decision->operation = operator_operation::enum_equal;
+		}
+		elseif (($source_operator === operator_kind::not_equal) || ($source_operator === operator_kind::not_identical)) {
+			$decision->operation = operator_operation::enum_not_equal;
+		}
+		else { throw new \scpp_portability_runtime_exception('S2S enums support only equality and inequality'); }
+		foreach ($operands  as $operand) {
+			$decision->operands[] = Conversion_Preparation::decide($operand, $operands[0], conversion_context::operator_operand);
+		}
+		return $decision;
+	}
+}

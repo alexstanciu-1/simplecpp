@@ -1,0 +1,7 @@
+// Layout counterpart: my-try/phpp/03_parse/token_cleanup.phs
+function sample_unit_035(): void
+{
+    $value int = 36;
+    sample_unit_036();
+    return;
+}

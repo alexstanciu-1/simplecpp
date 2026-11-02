@@ -17,7 +17,7 @@ The root owns tokens/source context and one keyed declaration collection. Keys s
 as `func:ping` identify actual declaration nodes. Indexes and resolved references
 point to these nodes without creating new declaration identities. Duplicate keys
 retain the first node and link subsequent declarations through the trait’s
-`next_declaration()` accessor. All bodies remain available to analysis tools.
+`duplicate_element()` accessor. All bodies remain available to analysis tools.
 The link belongs to one source-local scope only; the global symbol index keeps
 its separate candidate arrays and must never repurpose these links. Collection
 uses temporary tail indexes for constant-time appends.
@@ -116,3 +116,9 @@ require comparable measurements; fewer PHP objects alone do not establish a spee
 Keep tests for direct identity, readiness boundaries, diagnostics, lowering purity
 and end-to-end behavior. Explain each class/structure's role in its doc comment and
 include a short code example when it makes that role clearer.
+
+Incremental frontend sessions may share an unchanged AST root and its tokens/source
+snapshot by reference. Each generation owns its own global candidate index. See
+[incremental frontend generations](incremental_frontend.md); preparation of shared
+roots is not part of that slice. Function keys use `func:name`; `symbol_key()` derives
+them without a slot/key/status record.

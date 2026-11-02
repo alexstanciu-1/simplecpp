@@ -1,0 +1,137 @@
+function fund_company(GeneralLedger $ledger, WorkloadChecks $checks, int $amount): void {
+    $entry JournalEntry = new JournalEntry();
+    $entry->reference = "opening-capital";
+    $entry->origin = "capital";
+    $entry->period = $ledger->current_period();
+    $entry->add_debit("bank", $amount, "Owner contribution");
+    $entry->add_credit("capital", $amount, "Owner contribution");
+    $checks->accepted($ledger->post($entry), "owner contribution posted");
+}
+
+function check_purchasing_flow(WorkloadChecks $checks): void {
+    $ledger GeneralLedger = setup_accounting_ledger($checks);
+    fund_company($ledger, $checks, 50000);
+    $purchases PurchasingBook = new PurchasingBook();
+    $checks->accepted($purchases->register_supplier("SUP-001", "Fictional wholesale company", 50000), "supplier registered");
+    $draft SupplierBill = new SupplierBill();
+    $draft->supplier_code = "SUP-001";
+    $draft->number = "BILL-001";
+    $draft->net_amount = 10000;
+    $draft->tax_amount = 2000;
+    $draft->due_day = 100;
+    $checks->accepted($purchases->record_bill($ledger, $draft), "expense bill posted");
+    $checks->equal($purchases->supplier_balance("SUP-001"), 12000, "supplier gross balance");
+    $checks->equal($ledger->balance_of("operating-expense"), 10000, "expense bill debit");
+    $checks->equal($ledger->balance_of("input-tax"), 2000, "input tax separated");
+    $key string = $purchases->bill_key("SUP-001", "BILL-001");
+    $draft->net_amount = 999;
+    $checks->equal($purchases->total_balance(), 12000, "posted bill owns amount snapshot");
+    $checks->rejected($purchases->record_bill($ledger, $draft), "bill.duplicate", "supplier bill duplicate rejected");
+    $checks->accepted($purchases->credit($ledger, $key, "CR-001", 1000, 200), "supplier credit posted");
+    $checks->equal($purchases->total_balance(), 10800, "credit reduces payable");
+    $checks->equal($ledger->balance_of("operating-expense"), 9000, "credit reverses expense");
+    $checks->equal($ledger->balance_of("input-tax"), 1800, "credit reverses input tax");
+    $proposal PaymentProposal = $purchases->propose_payments(100, 5000);
+    $checks->equal(count($proposal->rows), 1, "payment proposal selects due bill");
+    $checks->equal($proposal->total, 5000, "payment proposal obeys budget");
+    $checks->equal($purchases->total_balance(), 10800, "proposal leaves payables unchanged");
+    $checks->accepted($purchases->pay($ledger, $key, "PAY-001", 5000), "supplier partial payment");
+    $checks->equal($purchases->total_balance(), 5800, "remaining supplier balance");
+    $checks->equal($ledger->balance_of("bank"), 45000, "payment reduces bank");
+    $checks->rejected($purchases->pay($ledger, $key, "PAY-001", 1000), "journal.duplicate", "duplicate supplier payment rejected");
+    $checks->equal($purchases->total_balance(), 5800, "duplicate payment is atomic");
+    $checks->accepted($purchases->hold_supplier("SUP-001", true), "supplier placed on hold");
+    $held PaymentProposal = $purchases->propose_payments(100, 10000);
+    $checks->equal(count($held->rows), 0, "held supplier excluded from proposal");
+    $checks->rejected($purchases->pay($ledger, $key, "PAY-002", 5800), "supplier.hold", "held supplier cannot be paid");
+    $checks->accepted($purchases->hold_supplier("SUP-001", false), "supplier released from hold");
+    $checks->accepted($purchases->pay($ledger, $key, "PAY-002", 5800), "supplier final payment");
+    $checks->equal($purchases->total_balance(), 0, "supplier settled");
+    $checks->accepted($purchases->reconcile($ledger), "payables reconcile");
+    $checks->rejected($purchases->credit($ledger, $key, "CR-002", 1, 0), "credit.balance", "no credit beyond settled balance");
+    $reports FinancialReports = new FinancialReports();
+    $position FinancialPosition = $reports->financial_position($ledger);
+    $checks->expect($position->balances(), "purchase scenario financial position balances");
+    $checks->equal($position->current_profit, -9000, "purchase scenario expense loss");
+}
+
+function check_asset_flow(WorkloadChecks $checks): void {
+    $ledger GeneralLedger = setup_accounting_ledger($checks);
+    fund_company($ledger, $checks, 100000);
+    $assets AssetRegister = new AssetRegister();
+    $straight StraightLineDepreciation = new StraightLineDepreciation();
+    $checks->accepted($assets->acquire($ledger, "MACHINE-01", "Fictional machine", 10001, 1001, 3, $straight), "asset acquired");
+    $checks->accepted($assets->depreciate($ledger, "MACHINE-01"), "first straight-line charge");
+    $checks->equal($assets->total_depreciation(), 3000, "straight-line first charge");
+    $checks->rejected($assets->depreciate($ledger, "MACHINE-01"), "asset.period-duplicate", "duplicate depreciation rejected");
+    $checks->accepted($assets->reconcile($ledger), "asset first period controls");
+    $checks->accepted($ledger->close_period(1), "asset period one closed");
+    $checks->accepted($assets->depreciate($ledger, "MACHINE-01"), "second straight-line charge");
+    $checks->equal($assets->total_depreciation(), 6000, "straight-line cumulative charge");
+    $checks->accepted($assets->dispose($ledger, "MACHINE-01", "DISP-001", 5000), "asset disposed at gain");
+    $checks->equal($ledger->balance_of("asset-gain"), -999, "asset gain measured against carrying amount");
+    $checks->equal($assets->total_cost(), 0, "disposed asset removed from cost control");
+    $checks->equal($assets->total_depreciation(), 0, "disposed asset removed from accumulated control");
+    $checks->accepted($assets->reconcile($ledger), "disposal clears asset controls");
+    $checks->rejected($assets->dispose($ledger, "MACHINE-01", "DISP-002", 1), "asset.disposed", "double disposal rejected");
+    $declining DecliningBalanceDepreciation = new DecliningBalanceDepreciation();
+    $declining->basis_points = 2500;
+    $checks->accepted($assets->acquire($ledger, "DEVICE-01", "Fictional device", 10000, 1000, 2, $declining), "declining asset acquired");
+    $checks->accepted($assets->depreciate($ledger, "DEVICE-01"), "declining policy dispatched through base");
+    $checks->equal($assets->total_depreciation(), 2500, "declining first charge differs from straight line");
+    $checks->accepted($ledger->close_period(2), "asset period two closed");
+    $checks->accepted($assets->depreciate($ledger, "DEVICE-01"), "declining final life charge");
+    $checks->equal($assets->total_depreciation(), 9000, "final charge stops at residual value");
+    $checks->rejected($assets->depreciate($ledger, "DEVICE-01"), "asset.finished", "fully depreciated asset rejects more charges");
+    $checks->accepted($assets->dispose($ledger, "DEVICE-01", "DISP-003", 0), "asset scrapped");
+    $checks->equal($ledger->balance_of("asset-loss"), 1000, "scrap recognizes residual loss");
+    $checks->accepted($assets->reconcile($ledger), "scrap clears controls");
+}
+
+function check_budget_flow(WorkloadChecks $checks): void {
+    $ledger GeneralLedger = setup_accounting_ledger($checks);
+    fund_company($ledger, $checks, 10000);
+    $budget BudgetBook = new BudgetBook();
+    $checks->accepted($budget->add($ledger, "operating-expense", 1, 2000), "expense budget line");
+    $checks->accepted($budget->add($ledger, "revenue", 1, -5000), "revenue budget uses credit sign");
+    $checks->rejected($budget->add($ledger, "revenue", 1, -1000), "budget.duplicate", "duplicate budget cell rejected");
+    $checks->accepted($budget->approve(), "budget approved");
+    $checks->rejected($budget->add($ledger, "bank", 1, 1), "budget.locked", "approved budget immutable");
+    $entry JournalEntry = new JournalEntry();
+    $entry->reference = "budget-actual";
+    $entry->add_debit("operating-expense", 2500, "Actual operating expense");
+    $entry->add_credit("bank", 2500, "Actual operating expense");
+    $checks->accepted($ledger->post($entry), "budget actual posted");
+    $report BudgetReport = $budget->variance($ledger, 1, 1);
+    $checks->equal(count($report->rows), 2, "budget report row count");
+    $checks->equal($report->rows[0]->variance, 500, "expense adverse variance");
+    $checks->equal($report->rows[1]->variance, 5000, "missing revenue variance");
+    $checks->equal($report->variance_total, 5500, "budget aggregate variance");
+    $empty BudgetReport = $budget->variance($ledger, 2, 2);
+    $checks->equal(count($empty->rows), 0, "budget period filter");
+    $reports FinancialReports = new FinancialReports();
+    $profit ProfitAndLoss = $reports->profit_and_loss($ledger);
+    $checks->equal($profit->profit, -2500, "profit and loss actual expense");
+    $position FinancialPosition = $reports->financial_position($ledger);
+    $checks->expect($position->balances(), "budget scenario financial position");
+    $working WorkingCapital = $reports->working_capital($ledger);
+    $checks->equal($working->cash, 7500, "working capital cash");
+}
+
+function check_sales_snapshot(WorkloadChecks $checks): void {
+    $ledger GeneralLedger = setup_accounting_ledger($checks);
+    $sales SalesService = new SalesService();
+    $invoice SalesInvoice = new SalesInvoice();
+    $invoice->number = "SNAPSHOT-001";
+    $invoice->net_amount = 10000;
+    $invoice->tax_amount = 2000;
+    $checks->accepted($sales->issue($ledger, $invoice), "snapshot invoice issued");
+    $invoice->net_amount = 100000;
+    $checks->equal($sales->total_outstanding(), 12000, "caller mutation cannot alter issued invoice");
+    $checks->rejected($sales->receive($ledger, $invoice, "TOO-MUCH", 13000), "receipt.invalid", "receipt uses stored amount");
+    $checks->accepted($ledger->close_period(1), "invoice period closed before settlement");
+    $checks->accepted($sales->receive($ledger, $invoice, "LATER-PAYMENT", 12000), "invoice settled in later open period");
+    $checks->equal($ledger->turnover("bank", 2, 2), 12000, "receipt belongs to payment period");
+    $checks->equal($invoice->outstanding(), 0, "returned invoice view refreshed after settlement");
+    $checks->accepted($sales->reconcile($ledger), "sales control reconciles after later settlement");
+}

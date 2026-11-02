@@ -7,5 +7,6 @@ require_once __DIR__ . '/host/syntax.php';
 require_once __DIR__ . '/host/compilation.php';
 require_once __DIR__ . '/host/program.php';
 require_once __DIR__ . '/host/cli.php';
+require_once __DIR__ . '/host/frontend_service.php';
 
 exit(\scpp\compiler\Compiler_Cli::run($argv));

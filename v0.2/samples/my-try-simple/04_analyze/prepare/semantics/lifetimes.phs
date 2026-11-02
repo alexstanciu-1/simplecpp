@@ -1,0 +1,7 @@
+// Layout counterpart: my-try/phpp/04_analyze/prepare/semantics/lifetimes.phs
+function sample_unit_115(): void
+{
+    $value int = 116;
+    sample_unit_116();
+    return;
+}

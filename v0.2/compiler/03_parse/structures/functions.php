@@ -24,6 +24,12 @@ final class ast_call_statement extends ast_statement
 		parent::__construct($start, $end);
 	}
 
+	/** Stable lookup handle; incremental indexing never caches a declaration in the call node. */
+	public function symbol_key(): string
+	{
+		return 'func:' . $this->name;
+	}
+
 	public function settle_function(ast_function_declaration $function): void
 	{
 		if ($this->function_def !== null) { throw new \LogicException('Call target is already settled'); }
@@ -123,6 +129,12 @@ final class ast_function_declaration extends ast_node implements ast_declaration
 		$this->return_type_name = $return_type_name;
 		$this->header_end = $header_end;
 		parent::__construct($start, $header_end, true);
+	}
+
+	/** Canonical global handle; the local declaration key remains usable by source-scope indexes. */
+	public function symbol_key(): string
+	{
+		return 'func:' . $this->declaration_key();
 	}
 
 	public function complete_body(ast_function_body $body): void

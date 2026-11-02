@@ -1,0 +1,7 @@
+// Layout counterpart: my-try/phpp/04_analyze/conversions/ownership.phs
+function sample_unit_045(): void
+{
+    $value int = 46;
+    sample_unit_046();
+    return;
+}

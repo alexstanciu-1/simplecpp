@@ -1,0 +1,64 @@
+function sample_stock_count_line(): StockCountLine {
+    $draft StockCountLine = new StockCountLine();
+    $draft->id = "COUNT-L1";
+    $draft->count_id = "COUNT-001";
+    $draft->item_code = "PART-A";
+    $draft->location = "MAIN-A";
+    $draft->counter = "counter-a";
+    $draft->approver = "supervisor-a";
+    $draft->book_quantity = 20;
+    $draft->counted_quantity = 18;
+    $draft->unit_cost = 500;
+    $draft->tolerance_quantity = 1;
+    $draft->period = 1;
+    $draft->revision = 1;
+    $draft->recounted = true;
+    $draft->posted = false;
+    return $draft;
+}
+
+function check_stock_count_line(WorkloadChecks $checks): void {
+    $draft StockCountLine = sample_stock_count_line();
+    $checks->accepted($draft->validate(), "stock_count_line valid draft");
+    $checks->equal($draft->variance_value(), -1000, "stock_count_line independent business result");
+    $copy StockCountLine = $draft->copy();
+    $checks->equal(count($draft->differences($copy)), 0, "stock_count_line snapshot equivalence");
+    $checks->expect($draft->describe() === $copy->describe(), "stock_count_line snapshot report");
+    $copy = $draft->copy();
+    $copy->id = "";
+    $checks->rejected($copy->validate(), "stock_count_line.id", "stock_count_line id required");
+    $copy = $draft->copy();
+    $copy->id = "bad\nrow";
+    $checks->rejected($copy->validate(), "stock_count_line.id", "stock_count_line id control");
+    $copy = $draft->copy();
+    $copy->id = DocumentRules::repeat("x", 41);
+    $checks->rejected($copy->validate(), "stock_count_line.id", "stock_count_line id width");
+    $copy = $draft->copy();
+    $copy->id = "COUNT-L1-changed";
+    $checks->expect($draft->id === "COUNT-L1", "stock_count_line id snapshot isolation");
+    $changes_id vector<string> = $draft->differences($copy);
+    $checks->equal(count($changes_id), 1, "stock_count_line id change count");
+    if (count($changes_id) === 1) {
+        $checks->expect($changes_id[0] === "id", "stock_count_line id change identity");
+    }
+    $copy = $draft->copy();
+    $copy->book_quantity = -1;
+    $checks->rejected($copy->validate(), "stock_count_line.book_quantity", "stock_count_line book_quantity below");
+    $copy = $draft->copy();
+    $copy->book_quantity = 1000001;
+    $checks->rejected($copy->validate(), "stock_count_line.book_quantity", "stock_count_line book_quantity above");
+    $copy = $draft->copy();
+    $copy->counted_quantity = -1;
+    $checks->rejected($copy->validate(), "stock_count_line.counted_quantity", "stock_count_line counted_quantity below");
+    $copy = $draft->copy();
+    $copy->counted_quantity = 1000001;
+    $checks->rejected($copy->validate(), "stock_count_line.counted_quantity", "stock_count_line counted_quantity above");
+    $copy = $draft->copy();
+    $copy->recounted = false;
+    $checks->expect($draft->recounted === true, "stock_count_line recounted snapshot isolation");
+    $changes_recounted vector<string> = $draft->differences($copy);
+    $checks->equal(count($changes_recounted), 1, "stock_count_line recounted change count");
+    if (count($changes_recounted) === 1) {
+        $checks->expect($changes_recounted[0] === "recounted", "stock_count_line recounted change identity");
+    }
+}

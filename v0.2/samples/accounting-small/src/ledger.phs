@@ -1,0 +1,248 @@
+class GeneralLedger {
+    private $accounts hash<LedgerAccount> = [];
+    private $account_order vector<string> = [];
+    private $entries vector<JournalEntry> = [];
+    private $posted_references hash<bool> = [];
+    private $reversed_references hash<bool> = [];
+    private int $open_period = 1;
+
+    public function current_period(): int {
+        return $this->open_period;
+    }
+
+    public function has_account(string $code): bool {
+        return isset($this->accounts[$code]);
+    }
+
+    public function has_reference(string $reference): bool {
+        return isset($this->posted_references[$reference]);
+    }
+
+    public function close_period(int $expected_period): AccountingCheck {
+        if ($expected_period !== $this->open_period || $expected_period >= 1200) {
+            return accounting_failure("period.sequence", "Close must name the current period");
+        }
+        $report TrialBalance = $this->trial_balance();
+        if (!$report->is_balanced()) {
+            return accounting_failure("period.unbalanced", "Ledger is not balanced");
+        }
+        $this->open_period += 1;
+        return accounting_success();
+    }
+
+    public function set_account_active(string $code, bool $active): AccountingCheck {
+        if (!isset($this->accounts[$code])) {
+            return accounting_failure("account.missing", $code);
+        }
+        $account LedgerAccount = $this->accounts[$code];
+        if (!$active && $account->balance() !== 0) {
+            return accounting_failure("account.nonzero", "Account must be cleared before deactivation");
+        }
+        $account->active = $active;
+        return accounting_success();
+    }
+
+    public function add_account(string $code, string $label, AccountCategory $category): AccountingCheck {
+        if ($code === "" || $label === "") {
+            return accounting_failure("account.empty", "Account code and label are required");
+        }
+        if (isset($this->accounts[$code])) {
+            return accounting_failure("account.duplicate", $code);
+        }
+        $record LedgerAccount = new LedgerAccount();
+        $record->code = $code;
+        $record->label = $label;
+        $record->category = $category;
+        $this->accounts[$code] = $record;
+        $this->account_order[] = $code;
+        return accounting_success();
+    }
+
+    public function validate(JournalEntry $entry): AccountingCheck {
+        if ($entry->reference === "") {
+            return accounting_failure("journal.reference", "Reference is required");
+        }
+        if (isset($this->posted_references[$entry->reference])) {
+            return accounting_failure("journal.duplicate", $entry->reference);
+        }
+        if ($entry->period !== $this->open_period) {
+            return accounting_failure("journal.period", "Posting period is not open");
+        }
+        if (count($entry->lines) < 2 || count($entry->lines) > 10000) {
+            return accounting_failure("journal.lines", "At least two lines are required");
+        }
+        $debits int = 0;
+        $credits int = 0;
+        foreach ($entry->lines as $line) {
+            if (!isset($this->accounts[$line->account_code])) {
+                return accounting_failure("journal.account", $line->account_code);
+            }
+            $account LedgerAccount = $this->accounts[$line->account_code];
+            if (!$account->active) {
+                return accounting_failure("journal.inactive", $line->account_code);
+            }
+            if ($line->debit < 0 || $line->credit < 0) {
+                return accounting_failure("journal.negative", "Amounts must be nonnegative");
+            }
+            if (($line->debit === 0) === ($line->credit === 0)) {
+                return accounting_failure("journal.side", "Exactly one posting side must be positive");
+            }
+            if ($line->debit > 1000000000 || $line->credit > 1000000000) {
+                return accounting_failure("journal.limit", "Line exceeds workload amount limit");
+            }
+            $debits += $line->debit;
+            $credits += $line->credit;
+            if ($debits > 1000000000 || $credits > 1000000000) {
+                return accounting_failure("journal.total-limit", "Entry exceeds workload amount limit");
+            }
+        }
+        if ($debits !== $credits) {
+            return accounting_failure("journal.unbalanced", "Debits differ from credits");
+        }
+        $changes hash<int> = [];
+        foreach ($entry->lines as $line) {
+            if (!isset($changes[$line->account_code])) {
+                $changes[$line->account_code] = 0;
+            }
+            $changes[$line->account_code] += $line->debit - $line->credit;
+        }
+        foreach ($changes as $code => $change) {
+            $ending int = $this->balance_of($code) + $change;
+            if (!MoneyRules::accepts($ending)) {
+                return accounting_failure("journal.balance-limit", $code);
+            }
+        }
+        return accounting_success();
+    }
+
+    public function reverse(string $original_reference, string $reversal_reference): AccountingCheck {
+        if ($reversal_reference === "" || !isset($this->posted_references[$original_reference])) {
+            return accounting_failure("reversal.reference", "Original entry is missing or reversal reference is empty");
+        }
+        if (isset($this->reversed_references[$original_reference])) {
+            return accounting_failure("reversal.duplicate", $original_reference);
+        }
+        $reversal JournalEntry = new JournalEntry();
+        $reversal->reference = $reversal_reference;
+        $reversal->origin = "reversal:" . $original_reference;
+        $reversal->period = $this->open_period;
+        // Finish iteration before appending a new journal entry.
+        foreach ($this->entries as $entry) {
+            if ($entry->reference === $original_reference) {
+                foreach ($entry->lines as $line) {
+                    if ($line->debit > 0) {
+                        $reversal->add_credit($line->account_code, $line->debit, $line->memo);
+                    } else {
+                        $reversal->add_debit($line->account_code, $line->credit, $line->memo);
+                    }
+                }
+                break;
+            }
+        }
+        $check AccountingCheck = $this->post($reversal);
+        if ($check->accepted) {
+            $this->reversed_references[$original_reference] = true;
+        }
+        return $check;
+    }
+
+    public function turnover(string $code, int $first_period, int $last_period): int {
+        $total int = 0;
+        foreach ($this->entries as $entry) {
+            if ($entry->period < $first_period || $entry->period > $last_period) {
+                continue;
+            }
+            foreach ($entry->lines as $line) {
+                if ($line->account_code === $code) {
+                    $total += $line->debit - $line->credit;
+                }
+            }
+        }
+        return $total;
+    }
+
+    public function reference_movement(string $reference, string $code): int {
+        foreach ($this->entries as $entry) {
+            if ($entry->reference !== $reference) {
+                continue;
+            }
+            $total int = 0;
+            foreach ($entry->lines as $line) {
+                if ($line->account_code === $code) {
+                    $total += $line->debit - $line->credit;
+                }
+            }
+            return $total;
+        }
+        return 0;
+    }
+
+    public function category_balance(AccountCategory $category): int {
+        $total int = 0;
+        foreach ($this->account_order as $code) {
+            $account LedgerAccount = $this->accounts[$code];
+            if ($account->category === $category) {
+                $total += $account->balance();
+            }
+        }
+        return $total;
+    }
+
+    public function post(JournalEntry $entry): AccountingCheck {
+        $check AccountingCheck = $this->validate($entry);
+        if (!$check->accepted) {
+            return $check;
+        }
+        // Retain a snapshot: callers may continue editing their draft handles.
+        $snapshot JournalEntry = new JournalEntry();
+        $snapshot->reference = $entry->reference;
+        $snapshot->origin = $entry->origin;
+        $snapshot->period = $entry->period;
+        foreach ($entry->lines as $line) {
+            $copy JournalLine = new JournalLine();
+            $copy->account_code = $line->account_code;
+            $copy->memo = $line->memo;
+            $copy->debit = $line->debit;
+            $copy->credit = $line->credit;
+            $snapshot->lines[] = $copy;
+            $account LedgerAccount = $this->accounts[$line->account_code];
+            $account->debits += $line->debit;
+            $account->credits += $line->credit;
+        }
+        $this->entries[] = $snapshot;
+        $this->posted_references[$entry->reference] = true;
+        return accounting_success();
+    }
+
+    public function balance_of(string $code): int {
+        if (!isset($this->accounts[$code])) {
+            return 0;
+        }
+        $account LedgerAccount = $this->accounts[$code];
+        return $account->balance();
+    }
+
+    public function entry_count(): int {
+        return count($this->entries);
+    }
+
+    public function trial_balance(): TrialBalance {
+        $report TrialBalance = new TrialBalance();
+        foreach ($this->account_order as $code) {
+            $account LedgerAccount = $this->accounts[$code];
+            $row TrialBalanceRow = new TrialBalanceRow();
+            $row->account_code = $code;
+            $row->label = $account->label;
+            $balance int = $account->balance();
+            if ($balance > 0) {
+                $row->debit = $balance;
+            } else {
+                $row->credit = -$balance;
+            }
+            $report->debit_total += $row->debit;
+            $report->credit_total += $row->credit;
+            $report->rows[] = $row;
+        }
+        return $report;
+    }
+}

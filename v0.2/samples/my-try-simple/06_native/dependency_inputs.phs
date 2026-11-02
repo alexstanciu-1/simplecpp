@@ -1,0 +1,7 @@
+// Layout counterpart: my-try/phpp/06_native/dependency_inputs.phs
+function sample_unit_194(): void
+{
+    $value int = 195;
+    sample_unit_195();
+    return;
+}

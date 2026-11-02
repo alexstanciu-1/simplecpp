@@ -1,0 +1,76 @@
+namespace scpp\compiler;
+
+/** Immutable-by-contract public snapshot; no AST/work retention in a delivered diagnostic. */
+final class compiler_diagnostic {
+	public string $code;public string $severity;public string $path;public int $line;public int $column;public string $message;public function __construct(set:$code, set:$severity, set:$path, set:$line, set:$column, set:$message) {
+	}
+}
+
+final class source_location {
+	public string $path;public int $line;public int $column;public function __construct(set:$path, set:$line, set:$column) {
+	}
+}
+
+/** Current source coordinates, shared by diagnostics and provider call-site context. */
+final class Source_Locations {
+	public static function at(token_list $tokens, int $index): source_location {
+		$ranges Storage<retained_token_range> = $tokens->retained_ranges;
+		foreach ($ranges  as $range) {
+			if (($index >= $range->first) && ($index < $range->end)) {
+				$index += $range->current_first - $range->first;
+				break;
+			}
+		}
+		$rows Storage<token> = $tokens->tokens;
+		$offset = (int)$rows[$index]->offset;
+		$line = 1; $column = 1;
+		for ($position = $tokens->content_offset; $position < $offset; $position++) {
+			$byte = string_byte_at($tokens->content, $position);
+			if ($byte === 10) {
+				$line++; $column = 1;
+			}
+			elseif ($byte === 13) {
+				$line++; $column = 1;
+				if ($position + 1 < $offset) {
+					if (string_byte_at($tokens->content, $position + 1) === 10) {
+						$position++;
+					}
+				}
+			}
+			else {
+				$column++;
+			}
+		}
+		return new source_location($tokens->file->path, $line, $column);
+	}
+}
+
+/** Delivery renders existing records, never determines language validity. */
+final class Diagnostic_Reporting {
+	public static function text(Storage<compiler_diagnostic> $diagnostics): string {
+		$text = '';
+		foreach ($diagnostics  as $diagnostic) {
+			$text .= $diagnostic->path . ':' . $diagnostic->line . ':' . $diagnostic->column
+				. ': ' . $diagnostic->severity . ' [' . $diagnostic->code . '] ' . $diagnostic->message . "\n";
+		}
+		return $text;
+	}
+}
+
+/** Render settled semantic identity for errors without backend spellings or type inference. */
+final class Type_Descriptions {
+	public static function text(canonical_type_use $type): string {
+		$canonical = Type_Queries::canonical($type);
+		$text = $canonical->definition()->name();
+		if ($canonical instanceof applied_template_type) {
+			$application = object_cast($canonical, applied_template_type::class);
+			$text .= '<';
+			foreach ($application->arguments()  as $index => $argument) {
+				if ($index !== 0) { $text .= ', '; }
+				$text .= self::text($argument);
+			}
+			$text .= '>';
+		}
+		return $type->by_value() ? 'value<' . $text . '>' : $text;
+	}
+}

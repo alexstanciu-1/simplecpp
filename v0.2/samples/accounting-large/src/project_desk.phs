@@ -1,0 +1,86 @@
+class ProjectDesk {
+    private $projects hash<ProjectBudget> = [];
+    private $time_lines hash<TimeSheetLine> = [];
+    private $milestones hash<ProjectMilestone> = [];
+
+    public function add_project(ProjectBudget $draft): AccountingCheck {
+        $valid AccountingCheck = $draft->validate();
+        if (!$valid->accepted) { return $valid; }
+        if (isset($this->projects[$draft->id])) { return accounting_failure("project.duplicate", $draft->id); }
+        if (!$draft->active || $draft->cost_actual !== 0 || $draft->cost_committed !== 0 || $draft->billed !== 0) {
+            return accounting_failure("project.opening", "New project must have no cost or billing history");
+        }
+        $this->projects[$draft->id] = $draft->copy();
+        return accounting_success();
+    }
+
+    public function snapshot(string $id): ProjectBudget {
+        if (!isset($this->projects[$id])) { return new ProjectBudget(); }
+        return $this->projects[$id]->copy();
+    }
+
+    public function milestone(string $id): ProjectMilestone {
+        if (!isset($this->milestones[$id])) { return new ProjectMilestone(); }
+        return $this->milestones[$id]->copy();
+    }
+
+    public function post_time(GeneralLedger $ledger, TimeSheetLine $draft): AccountingCheck {
+        $valid AccountingCheck = $draft->validate();
+        if (!$valid->accepted) { return $valid; }
+        if (isset($this->time_lines[$draft->id])) { return accounting_failure("project.time-duplicate", $draft->id); }
+        if (!isset($this->projects[$draft->project_id])) { return accounting_failure("project.missing", $draft->project_id); }
+        $project ProjectBudget = $this->projects[$draft->project_id];
+        if (!$project->active || !$draft->approved || $draft->posted || $draft->period !== $ledger->current_period()) {
+            return accounting_failure("project.time-state", "Approved unposted time in the current period required");
+        }
+        $cost AmountResult = document_ratio($draft->cost_per_hour, $draft->minutes_worked, 60);
+        if (!$cost->valid || $cost->amount <= 0 || $cost->amount > $project->uncommitted_budget()) {
+            return accounting_failure("project.budget", "Time cost exceeds available project authorization");
+        }
+        $posted AccountingCheck = document_post($ledger, "time:" . $draft->id, "project-labor", $project->cost_account, "accruals", $cost->amount);
+        if (!$posted->accepted) { return $posted; }
+        $saved TimeSheetLine = $draft->copy();
+        $saved->posted = true;
+        $this->time_lines[$saved->id] = $saved;
+        $project->cost_actual += $cost->amount;
+        return accounting_success();
+    }
+
+    public function bill(GeneralLedger $ledger, ProjectMilestone $draft): AccountingCheck {
+        $valid AccountingCheck = $draft->validate();
+        if (!$valid->accepted) { return $valid; }
+        if (isset($this->milestones[$draft->id])) { return accounting_failure("project.milestone-duplicate", $draft->id); }
+        if (!isset($this->projects[$draft->project_id])) { return accounting_failure("project.missing", $draft->project_id); }
+        $project ProjectBudget = $this->projects[$draft->project_id];
+        if (!$project->active || $project->billing_hold || !$draft->accepted || $draft->closed) {
+            return accounting_failure("project.billing-hold", "Accepted milestone on an active unblocked project required");
+        }
+        if ($draft->invoiced_amount !== 0 || $draft->recognized_amount !== 0 || $draft->contract_amount <= 0 || $draft->contract_amount > $project->contract_value - $project->billed) {
+            return accounting_failure("project.contract", "New milestone exceeds unbilled contract");
+        }
+        $posted AccountingCheck = document_post($ledger, "milestone:" . $draft->id, "project-invoice", "receivables", $draft->deferred_account, $draft->contract_amount);
+        if (!$posted->accepted) { return $posted; }
+        $saved ProjectMilestone = $draft->copy();
+        $saved->invoiced_amount = $saved->contract_amount;
+        $this->milestones[$saved->id] = $saved;
+        $project->billed += $saved->contract_amount;
+        return accounting_success();
+    }
+
+    public function recognize(GeneralLedger $ledger, string $id, string $reference, int $completion): AccountingCheck {
+        if (!isset($this->milestones[$id])) { return accounting_failure("project.milestone", $id); }
+        $milestone ProjectMilestone = $this->milestones[$id];
+        if ($completion < $milestone->completion_basis_points || $completion > 10000) {
+            return accounting_failure("project.progress", "Recognition progress cannot decrease");
+        }
+        $earned AmountResult = MoneyRules::rate($milestone->contract_amount, $completion);
+        if (!$earned->valid) { return accounting_failure($earned->reason, "Milestone recognition"); }
+        $delta int = $earned->amount - $milestone->recognized_amount;
+        if ($delta <= 0) { return accounting_failure("project.no-revenue", "No additional revenue to recognize"); }
+        $posted AccountingCheck = document_post($ledger, $reference, "project-recognition", $milestone->deferred_account, $milestone->revenue_account, $delta);
+        if (!$posted->accepted) { return $posted; }
+        $milestone->recognized_amount = $earned->amount;
+        $milestone->completion_basis_points = $completion;
+        return accounting_success();
+    }
+}

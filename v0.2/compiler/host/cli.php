@@ -26,6 +26,20 @@ final class Compiler_Cli
 				return 1;
 			}
 		}
+		if ($command === 'frontend') {
+			if (count($arguments) < 3 || count($arguments) > 4) {
+				fwrite(STDERR, self::usage());
+				return 2;
+			}
+			try {
+				$result = Frontend_Service::request($arguments[2], $arguments[3] ?? 'frontend');
+				fwrite(STDOUT, json_encode($result, JSON_THROW_ON_ERROR | JSON_PRETTY_PRINT) . "\n");
+				return 0;
+			} catch (\RuntimeException $error) {
+				fwrite(STDERR, $error->getMessage() . "\n");
+				return 1;
+			}
+		}
 		$required = match ($command) {
 			'tokens', 'parse', 'collect' => 4,
 			'prepare' => 5,
@@ -69,6 +83,7 @@ final class Compiler_Cli
 	private static function usage(): string
 	{
 		return "Usage: php main.php <tokens|parse|collect> <cpp|php|js> <file>\n"
+			. "       php main.php frontend <app-dir> [status|stop]\n"
 			. "       php main.php prepare <flavor> <file> <native-facts.json>\n"
 			. "       php main.php cpp <flavor> <file> <native-facts.json> <output.cpp>\n"
 			. "       php main.php project <module-dir|module.json> <facts.json> <output-dir> [--force]\n"

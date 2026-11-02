@@ -1,0 +1,7 @@
+// Layout counterpart: my-try/phpp/scpp_framework/processes.phs
+function sample_unit_254(): void
+{
+    $value int = 255;
+    sample_unit_255();
+    return;
+}

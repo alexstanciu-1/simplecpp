@@ -21,7 +21,9 @@ Use existing flavor-specific variable/function declaration syntax for cpp/js.
 Single quotes decode only escaped quote/backslash. Double quotes accept `\\`,
 `\"`, `\$`, `\n`, `\r`, `\t` and isolated `\0`. Interpolation, other escapes,
 multiple operands and unsupported value types diagnose. String literals are
-output-only; this slice does not introduce general string locals or expressions.
+output-only. Source spelling must be valid UTF-8 (including quoted text); NUL is
+allowed inside literals. The runtime byte-output API does not impose that encoding
+restriction on its input buffers. This slice does not introduce general string locals or expressions.
 
 ## Ownership
 

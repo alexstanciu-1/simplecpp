@@ -1,0 +1,64 @@
+function sample_purchase_order_line(): PurchaseOrderLine {
+    $draft PurchaseOrderLine = new PurchaseOrderLine();
+    $draft->id = "PO-L1";
+    $draft->order_id = "PO-001";
+    $draft->supplier_id = "SUP-001";
+    $draft->item_code = "PART-A";
+    $draft->warehouse = "MAIN";
+    $draft->expense_account = "operating-expense";
+    $draft->ordered = 20;
+    $draft->received = 12;
+    $draft->returned = 2;
+    $draft->unit_cost = 500;
+    $draft->invoiced = 8;
+    $draft->expected_period = 2;
+    $draft->approved = true;
+    $draft->cancelled = false;
+    return $draft;
+}
+
+function check_purchase_order_line(WorkloadChecks $checks): void {
+    $draft PurchaseOrderLine = sample_purchase_order_line();
+    $checks->accepted($draft->validate(), "purchase_order_line valid draft");
+    $checks->equal($draft->open_commitment(), 4000, "purchase_order_line independent business result");
+    $copy PurchaseOrderLine = $draft->copy();
+    $checks->equal(count($draft->differences($copy)), 0, "purchase_order_line snapshot equivalence");
+    $checks->expect($draft->describe() === $copy->describe(), "purchase_order_line snapshot report");
+    $copy = $draft->copy();
+    $copy->id = "";
+    $checks->rejected($copy->validate(), "purchase_order_line.id", "purchase_order_line id required");
+    $copy = $draft->copy();
+    $copy->id = "bad\nrow";
+    $checks->rejected($copy->validate(), "purchase_order_line.id", "purchase_order_line id control");
+    $copy = $draft->copy();
+    $copy->id = DocumentRules::repeat("x", 41);
+    $checks->rejected($copy->validate(), "purchase_order_line.id", "purchase_order_line id width");
+    $copy = $draft->copy();
+    $copy->id = "PO-L1-changed";
+    $checks->expect($draft->id === "PO-L1", "purchase_order_line id snapshot isolation");
+    $changes_id vector<string> = $draft->differences($copy);
+    $checks->equal(count($changes_id), 1, "purchase_order_line id change count");
+    if (count($changes_id) === 1) {
+        $checks->expect($changes_id[0] === "id", "purchase_order_line id change identity");
+    }
+    $copy = $draft->copy();
+    $copy->ordered = 0;
+    $checks->rejected($copy->validate(), "purchase_order_line.ordered", "purchase_order_line ordered below");
+    $copy = $draft->copy();
+    $copy->ordered = 1000001;
+    $checks->rejected($copy->validate(), "purchase_order_line.ordered", "purchase_order_line ordered above");
+    $copy = $draft->copy();
+    $copy->received = -1;
+    $checks->rejected($copy->validate(), "purchase_order_line.received", "purchase_order_line received below");
+    $copy = $draft->copy();
+    $copy->received = 1000001;
+    $checks->rejected($copy->validate(), "purchase_order_line.received", "purchase_order_line received above");
+    $copy = $draft->copy();
+    $copy->approved = false;
+    $checks->expect($draft->approved === true, "purchase_order_line approved snapshot isolation");
+    $changes_approved vector<string> = $draft->differences($copy);
+    $checks->equal(count($changes_approved), 1, "purchase_order_line approved change count");
+    if (count($changes_approved) === 1) {
+        $checks->expect($changes_approved[0] === "approved", "purchase_order_line approved change identity");
+    }
+}

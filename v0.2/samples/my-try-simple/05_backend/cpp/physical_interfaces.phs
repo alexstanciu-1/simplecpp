@@ -1,0 +1,7 @@
+// Layout counterpart: my-try/phpp/05_backend/cpp/physical_interfaces.phs
+function sample_unit_172(): void
+{
+    $value int = 173;
+    sample_unit_173();
+    return;
+}

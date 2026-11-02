@@ -1,0 +1,32 @@
+namespace scpp\compiler;
+
+/** Drive analysis/materialization rounds without making either stage invoke the other. */
+final class Preparation_Run {
+	/** Successful rounds publish only after every demanded implementation has settled. */
+	public static function prepare(Storage<collected_file> $sources, scope $language, int $jobs = 1): Storage<prepared_file> {
+		for (;;)
+		{
+			$worker = new Preparation_Worker($language);
+			try {
+				return $worker->prepare($sources, $jobs);
+			} catch (\scpp_portability_exception $__scpp_portability_exception_1) {if ($__scpp_portability_exception_1->matches(8)) {$error = $__scpp_portability_exception_1;
+				if (!$worker->is_materialization_yield($error)) {
+					throw $error;
+				}
+			}else { throw $__scpp_portability_exception_1; }}
+			$requests Storage<callable_instance_request> = $worker->materialization_requests();
+			if ($requests->is_empty()) {
+				throw new \scpp_portability_logic_exception('Preparation yielded without a materialization request');
+			}
+			$progress = false;
+			foreach ($requests  as $request) {
+				if (Callable_Inventory::find($request->origin, $request->called_type) !== null) {
+					continue;
+				}
+				Callable_Instances::obtain($request->origin, $request->called_type);
+				$progress = true;
+			}
+			if (!$progress) { throw new \scpp_portability_logic_exception('Callable materialization made no progress'); }
+		}
+	}
+}

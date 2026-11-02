@@ -1,0 +1,7 @@
+// Layout counterpart: my-try/phpp/04_analyze/prepare/semantics/iterator.phs
+function sample_unit_112(): void
+{
+    $value int = 113;
+    sample_unit_113();
+    return;
+}

@@ -1,0 +1,125 @@
+// Ancillary receipt cost awaiting allocation across accepted goods.
+// Draft values are mutable. Services retain validated copies, never caller handles.
+class LandedCostCharge {
+    public string $id = "";
+    public string $receipt_id = "";
+    public string $supplier_id = "";
+    public string $charge_type = "";
+    public string $allocation_basis = "";
+    public string $clearing_account = "";
+    public int $charge_amount = 0;
+    public int $allocated_amount = 0;
+    public int $base_weight = 0;
+    public int $allocated_weight = 0;
+    public int $period = 0;
+    public int $tax_amount = 0;
+    public bool $approved = false;
+    public bool $recoverable_tax = false;
+
+    public function validate(): AccountingCheck {
+        if (!DocumentRules::text($this->id, 1, 40)) {
+            return accounting_failure("landed_cost_charge.id", "id must contain 1..40 printable bytes");
+        }
+        if (!DocumentRules::text($this->receipt_id, 1, 80)) {
+            return accounting_failure("landed_cost_charge.receipt_id", "receipt_id must contain 1..80 printable bytes");
+        }
+        if (!DocumentRules::text($this->supplier_id, 1, 80)) {
+            return accounting_failure("landed_cost_charge.supplier_id", "supplier_id must contain 1..80 printable bytes");
+        }
+        if (!DocumentRules::text($this->charge_type, 1, 80)) {
+            return accounting_failure("landed_cost_charge.charge_type", "charge_type must contain 1..80 printable bytes");
+        }
+        if (!DocumentRules::text($this->allocation_basis, 1, 80)) {
+            return accounting_failure("landed_cost_charge.allocation_basis", "allocation_basis must contain 1..80 printable bytes");
+        }
+        if (!DocumentRules::text($this->clearing_account, 1, 80)) {
+            return accounting_failure("landed_cost_charge.clearing_account", "clearing_account must contain 1..80 printable bytes");
+        }
+        if (!DocumentRules::integer($this->charge_amount, 0, 1000000000)) {
+            return accounting_failure("landed_cost_charge.charge_amount", "charge_amount must be in [0, 1000000000]");
+        }
+        if (!DocumentRules::integer($this->allocated_amount, 0, 1000000000)) {
+            return accounting_failure("landed_cost_charge.allocated_amount", "allocated_amount must be in [0, 1000000000]");
+        }
+        if (!DocumentRules::integer($this->base_weight, 1, 1000000)) {
+            return accounting_failure("landed_cost_charge.base_weight", "base_weight must be in [1, 1000000]");
+        }
+        if (!DocumentRules::integer($this->allocated_weight, 0, 1000000)) {
+            return accounting_failure("landed_cost_charge.allocated_weight", "allocated_weight must be in [0, 1000000]");
+        }
+        if (!DocumentRules::integer($this->period, 1, 1200)) {
+            return accounting_failure("landed_cost_charge.period", "period must be in [1, 1200]");
+        }
+        if (!DocumentRules::integer($this->tax_amount, 0, 1000000000)) {
+            return accounting_failure("landed_cost_charge.tax_amount", "tax_amount must be in [0, 1000000000]");
+        }
+        if ($this->allocated_amount > $this->charge_amount) {
+            return accounting_failure("landed_cost_charge.amount", "Allocated cost exceeds charge");
+        }
+        if ($this->allocated_weight > $this->base_weight) {
+            return accounting_failure("landed_cost_charge.weight", "Allocated weight exceeds total basis");
+        }
+        return accounting_success();
+    }
+
+    public function unallocated_cost(): int {
+        return $this->charge_amount - $this->allocated_amount;
+    }
+
+    public function copy(): LandedCostCharge {
+        $snapshot LandedCostCharge = new LandedCostCharge();
+        $snapshot->id = $this->id;
+        $snapshot->receipt_id = $this->receipt_id;
+        $snapshot->supplier_id = $this->supplier_id;
+        $snapshot->charge_type = $this->charge_type;
+        $snapshot->allocation_basis = $this->allocation_basis;
+        $snapshot->clearing_account = $this->clearing_account;
+        $snapshot->charge_amount = $this->charge_amount;
+        $snapshot->allocated_amount = $this->allocated_amount;
+        $snapshot->base_weight = $this->base_weight;
+        $snapshot->allocated_weight = $this->allocated_weight;
+        $snapshot->period = $this->period;
+        $snapshot->tax_amount = $this->tax_amount;
+        $snapshot->approved = $this->approved;
+        $snapshot->recoverable_tax = $this->recoverable_tax;
+        return $snapshot;
+    }
+
+    public function differences(LandedCostCharge $other): vector<string> {
+        $fields vector<string> = [];
+        if ($this->id !== $other->id) { $fields[] = "id"; }
+        if ($this->receipt_id !== $other->receipt_id) { $fields[] = "receipt_id"; }
+        if ($this->supplier_id !== $other->supplier_id) { $fields[] = "supplier_id"; }
+        if ($this->charge_type !== $other->charge_type) { $fields[] = "charge_type"; }
+        if ($this->allocation_basis !== $other->allocation_basis) { $fields[] = "allocation_basis"; }
+        if ($this->clearing_account !== $other->clearing_account) { $fields[] = "clearing_account"; }
+        if ($this->charge_amount !== $other->charge_amount) { $fields[] = "charge_amount"; }
+        if ($this->allocated_amount !== $other->allocated_amount) { $fields[] = "allocated_amount"; }
+        if ($this->base_weight !== $other->base_weight) { $fields[] = "base_weight"; }
+        if ($this->allocated_weight !== $other->allocated_weight) { $fields[] = "allocated_weight"; }
+        if ($this->period !== $other->period) { $fields[] = "period"; }
+        if ($this->tax_amount !== $other->tax_amount) { $fields[] = "tax_amount"; }
+        if ($this->approved !== $other->approved) { $fields[] = "approved"; }
+        if ($this->recoverable_tax !== $other->recoverable_tax) { $fields[] = "recoverable_tax"; }
+        return $fields;
+    }
+
+    public function describe(): string {
+        $text string = "LandedCostCharge\n";
+        $text .= "id=" . $this->id . "\n";
+        $text .= "receipt_id=" . $this->receipt_id . "\n";
+        $text .= "supplier_id=" . $this->supplier_id . "\n";
+        $text .= "charge_type=" . $this->charge_type . "\n";
+        $text .= "allocation_basis=" . $this->allocation_basis . "\n";
+        $text .= "clearing_account=" . $this->clearing_account . "\n";
+        $text .= "charge_amount=" . (string)$this->charge_amount . "\n";
+        $text .= "allocated_amount=" . (string)$this->allocated_amount . "\n";
+        $text .= "base_weight=" . (string)$this->base_weight . "\n";
+        $text .= "allocated_weight=" . (string)$this->allocated_weight . "\n";
+        $text .= "period=" . (string)$this->period . "\n";
+        $text .= "tax_amount=" . (string)$this->tax_amount . "\n";
+        $text .= "approved=" . DocumentRules::flag($this->approved) . "\n";
+        $text .= "recoverable_tax=" . DocumentRules::flag($this->recoverable_tax) . "\n";
+        return $text;
+    }
+}

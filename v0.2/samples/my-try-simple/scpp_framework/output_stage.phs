@@ -1,0 +1,7 @@
+// Layout counterpart: my-try/phpp/scpp_framework/output_stage.phs
+function sample_unit_253(): void
+{
+    $value int = 254;
+    sample_unit_254();
+    return;
+}

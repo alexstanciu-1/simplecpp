@@ -1,0 +1,4 @@
+// Simplified compiler-layout workload entry.
+sample_unit_000();
+echo "my-try-simple: OK\n";
+return 8;

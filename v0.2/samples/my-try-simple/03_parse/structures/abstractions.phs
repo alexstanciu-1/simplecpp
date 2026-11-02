@@ -1,0 +1,7 @@
+// Layout counterpart: my-try/phpp/03_parse/structures/abstractions.phs
+function sample_unit_015(): void
+{
+    $value int = 16;
+    sample_unit_016();
+    return;
+}

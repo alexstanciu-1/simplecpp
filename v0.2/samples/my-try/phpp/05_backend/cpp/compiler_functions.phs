@@ -1,0 +1,137 @@
+namespace scpp\compiler;
+
+/** Emit reusable compiler helpers from settled specialization facts, never source call names. */
+final class CPP_Compiler_Functions {
+	private static function enum_facts(prepared_compiler_call $specialization): prepared_enum_call {
+		if (!($specialization instanceof prepared_enum_call)) {
+			throw new \scpp_portability_logic_exception('Unsupported compiler helper specialization');
+		}
+		return object_cast($specialization, prepared_enum_call::class);
+	}
+
+	private static function owner_name(prepared_enum_call $facts): string {
+		$entry = object_cast(Type_Queries::source_declaration($facts->enumeration->type), collected_enum::class);
+		return $entry->qualified_name();
+	}
+
+	private static function helper_kind(prepared_enum_call $facts): string {
+		if ($facts->kind() === compiler_function_kind::enum_name) { return 'enum_name'; }
+		if ($facts->kind() === compiler_function_kind::enum_value) { return 'enum_value'; }
+		$input = object_cast(Type_Queries::canonical($facts->input_type)->definition(), integer_type_definition::class);
+		return 'enum_from_value_' . ($input->signed() ? 'i' : 'u') . $input->bit_width();
+	}
+
+	private static function path(string $kind, string $name): string {
+		return 'helpers/' . $kind . '_' . CPP_Artifacts::component($name);
+	}
+
+	/** Concrete calls reuse ordinary argument snapshots and the existing operation bridge. */
+	public static function transport(prepared_enum_call $facts): cpp_runtime_operation {
+		$request = new cpp_runtime_operation(cpp_runtime_operation_kind::enum_helper);
+		$request->enum_helper = $facts;
+		$request->result = $facts->result_type;
+		$inputs Storage<canonical_type_use> = $request->inputs;
+		$inputs->append($facts->input_type);
+		return $request;
+	}
+
+	public static function identity(prepared_enum_call $facts): string {
+		$key = self::helper_kind($facts) . ':' . self::owner_name($facts);
+		$cases Keyed_Storage<prepared_enum_case> = $facts->enumeration->cases;
+		foreach ($cases  as $case_value) { $key .= ':' . $case_value->name . '=' . $case_value->decimal; }
+		return $key;
+	}
+
+	/** One helper algorithm serves ordinary artifacts and compiled implementations. */
+	public static function native_expression(prepared_enum_call $facts, string $argument, cpp_generation_context $context): string {
+		$input = CPP_Declarations::type($facts->input_type, $context);
+		$output = CPP_Declarations::type($facts->result_type, $context);
+		return '([](' . $input . ' value) -> ' . $output . ' { ' . self::body($facts, $context) . ' })(' . $argument . ')';
+	}
+
+	public static function reference(prepared_compiler_call $specialization, cpp_generation_context $context): string {
+		if ($context->concrete_types()) { throw new \scpp_portability_runtime_exception('prelower_templates: compiler helper requires concrete transport'); }
+		if ($specialization instanceof prepared_layout_query) {
+			return self::layout_reference(object_cast($specialization, prepared_layout_query::class), $context);
+		}
+		$facts = self::enum_facts($specialization);
+		$name = self::owner_name($facts);
+		$kind = self::helper_kind($facts);
+		$context->compiler_helpers[$kind . ':' . $name] = $facts;
+		$context->headers[self::path($kind, $name) . '.hpp'] = true;
+		return CPP_Generator::source_name($kind, $name);
+	}
+
+	/** The target compiler supplies layout; no host-side size or padding guesses. */
+	private static function layout_reference(prepared_layout_query $facts, cpp_generation_context $context): string {
+		$representation = CPP_Types::payload($facts->target_type);
+		CPP_Types::record_dependencies($representation, $context);
+		$type = $representation->spelling;
+		$operation = $facts->kind();
+		$expression = 'sizeof(' . $type . ')';
+		if ($operation === compiler_function_kind::layout_alignof) {
+			$expression = 'alignof(' . $type . ')';
+		}
+		elseif ($facts->field !== null) {
+			$field prepared_field = $facts->field;
+			$declaration = object_cast(lock($field->declaration), collected_name::class);
+			$name = CPP_Generator::source_name('field', $declaration->name);
+			if ($operation === compiler_function_kind::layout_offsetof) {
+				$context->headers['cstddef'] = true;
+				$expression = 'offsetof(' . $type . ', ' . $name . ')';
+			}
+			else {
+				$context->headers['utility'] = true;
+				$expression = 'sizeof(std::declval<' . $type . '>().' . $name . ')';
+			}
+		}
+		$result = CPP_Declarations::type($facts->result_type, $context);
+		return '([]() -> ' . $result . ' { return ' . $result . '(' . $expression . '); })';
+	}
+
+	/** Separate implementation keeps metadata/string construction out of the enum type header. */
+	public static function append_artifacts(prepared_compiler_call $specialization, Storage<cpp_artifact> $artifacts): void {
+		$facts = self::enum_facts($specialization);
+		$name = self::owner_name($facts);
+		$kind = self::helper_kind($facts);
+		$path = self::path($kind, $name);
+		$context = new cpp_generation_context();
+		$return_type = CPP_Declarations::type($facts->result_type, $context);
+		$input_type = CPP_Declarations::type($facts->input_type, $context);
+		$signature = $return_type . ' ' . CPP_Generator::source_name($kind, $name) . '(' . $input_type . ' value)';
+		$artifacts->append(CPP_Artifacts::described('helper:' . $kind . ':' . $name . ':header', cpp_artifact_kind::header,
+			$path . '.hpp', "#pragma once\n" . CPP_Artifacts::includes($context->headers, '') . $signature . ";\n", $context->headers));
+		$text = $signature . " {\n" . self::body($facts, $context) . "}\n";
+		$context->headers[$path . '.hpp'] = true;
+		$artifacts->append(CPP_Artifacts::described('helper:' . $kind . ':' . $name . ':implementation', cpp_artifact_kind::translation_unit,
+			$path . '.cpp', CPP_Artifacts::includes($context->headers, '') . $text, $context->headers));
+	}
+
+	private static function body(prepared_enum_call $facts, cpp_generation_context $context): string {
+		$enum_type = CPP_Declarations::type($facts->enumeration->type, $context);
+		$return_type = CPP_Declarations::type($facts->result_type, $context);
+		if ($facts->kind() === compiler_function_kind::enum_value) {
+			$context->headers['type_traits'] = true;
+			return "\treturn " . $return_type . '(static_cast<std::underlying_type_t<' . $enum_type . ">>(value));\n";
+		}
+		$from_value = $facts->kind() === compiler_function_kind::enum_from_value;
+		$text = $from_value ? '' : "\tswitch (value) {\n";
+		$cases Keyed_Storage<prepared_enum_case> = $facts->enumeration->cases;
+		foreach ($cases  as $case_value) {
+			$case_name = $enum_type . '::' . CPP_Generator::source_name('case', $case_value->name);
+			if ($from_value) {
+				$context->headers['utility'] = true;
+				$constant = CPP_Integer_Literals::constant($case_value->decimal, !$facts->enumeration->storage->signed());
+				$text .= "\tif (std::cmp_equal(value.native_value(), " . $constant . ')) return ' . $case_name . ";\n";
+			}
+			else {
+				$text .= "\tcase " . $case_name . ': return '
+					. CPP_Generator::generate_string_value($facts->result_type, $case_value->name, $context) . ";\n";
+			}
+		}
+		if (!$from_value) { $text .= "\t}\n"; }
+		$text .= "\tthrow std::runtime_error(\"Invalid value for enum helper\");\n";
+		$context->headers['stdexcept'] = true;
+		return $text;
+	}
+}

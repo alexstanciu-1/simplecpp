@@ -15,7 +15,7 @@ final class Declaration_Diagnostics
 	{
 		$errors = [];
 		foreach ($heads as $head) {
-			for ($node = $head; $node !== null; $node = $node->next_declaration()) {
+			for ($node = $head; $node !== null; $node = $node->duplicate_element()) {
 				if ($node !== $head) { $errors[] = self::duplicate($node, $head, 'function'); }
 				array_push($errors, ...self::locals($node->body()));
 			}
@@ -27,7 +27,7 @@ final class Declaration_Diagnostics
 	public static function functions(global_symbols $symbols): array /** list<diagnostic> */
 	{
 		$errors = [];
-		foreach ($symbols->functions as $candidates) {
+		foreach ($symbols->declarations as $candidates) {
 			if (count($candidates) < 2) { continue; }
 			usort($candidates, static function (ast_function_declaration $a, ast_function_declaration $b): int /** int32 */ {
 				return strcmp($a->source()->path, $b->source()->path) ?: ($a->start <=> $b->start);

@@ -1,0 +1,7 @@
+// Layout counterpart: my-try/phpp/05_backend/cpp/keyed_paths.phs
+function sample_unit_166(): void
+{
+    $value int = 167;
+    sample_unit_167();
+    return;
+}

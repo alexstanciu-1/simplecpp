@@ -1,0 +1,7 @@
+// Layout counterpart: my-try/phpp/01_prepare_inputs/file.phs
+function sample_unit_000(): void
+{
+    $value int = 1;
+    sample_unit_001();
+    return;
+}

@@ -1,0 +1,122 @@
+// One signed cash-flow expectation with confidence and settlement state.
+// Draft values are mutable. Services retain validated copies, never caller handles.
+class CashForecastItem {
+    public string $id = "";
+    public string $source_document = "";
+    public string $counterparty = "";
+    public string $bank_account = "";
+    public string $category = "";
+    public string $currency = "";
+    public int $expected_amount = 0;
+    public int $settled_amount = 0;
+    public int $confidence_basis_points = 0;
+    public int $due_period = 0;
+    public int $priority = 0;
+    public int $grace_days = 0;
+    public bool $inflow = false;
+    public bool $cancelled = false;
+
+    public function validate(): AccountingCheck {
+        if (!DocumentRules::text($this->id, 1, 40)) {
+            return accounting_failure("cash_forecast_item.id", "id must contain 1..40 printable bytes");
+        }
+        if (!DocumentRules::text($this->source_document, 1, 80)) {
+            return accounting_failure("cash_forecast_item.source_document", "source_document must contain 1..80 printable bytes");
+        }
+        if (!DocumentRules::text($this->counterparty, 1, 80)) {
+            return accounting_failure("cash_forecast_item.counterparty", "counterparty must contain 1..80 printable bytes");
+        }
+        if (!DocumentRules::text($this->bank_account, 1, 80)) {
+            return accounting_failure("cash_forecast_item.bank_account", "bank_account must contain 1..80 printable bytes");
+        }
+        if (!DocumentRules::text($this->category, 1, 80)) {
+            return accounting_failure("cash_forecast_item.category", "category must contain 1..80 printable bytes");
+        }
+        if (!DocumentRules::text($this->currency, 1, 3)) {
+            return accounting_failure("cash_forecast_item.currency", "currency must contain 1..3 printable bytes");
+        }
+        if (!DocumentRules::integer($this->expected_amount, 0, 1000000000)) {
+            return accounting_failure("cash_forecast_item.expected_amount", "expected_amount must be in [0, 1000000000]");
+        }
+        if (!DocumentRules::integer($this->settled_amount, 0, 1000000000)) {
+            return accounting_failure("cash_forecast_item.settled_amount", "settled_amount must be in [0, 1000000000]");
+        }
+        if (!DocumentRules::integer($this->confidence_basis_points, 0, 10000)) {
+            return accounting_failure("cash_forecast_item.confidence_basis_points", "confidence_basis_points must be in [0, 10000]");
+        }
+        if (!DocumentRules::integer($this->due_period, 1, 1200)) {
+            return accounting_failure("cash_forecast_item.due_period", "due_period must be in [1, 1200]");
+        }
+        if (!DocumentRules::integer($this->priority, 0, 10)) {
+            return accounting_failure("cash_forecast_item.priority", "priority must be in [0, 10]");
+        }
+        if (!DocumentRules::integer($this->grace_days, 0, 365)) {
+            return accounting_failure("cash_forecast_item.grace_days", "grace_days must be in [0, 365]");
+        }
+        if ($this->settled_amount > $this->expected_amount) {
+            return accounting_failure("cash_forecast_item.settlement", "Settlement exceeds forecast");
+        }
+        return accounting_success();
+    }
+
+    public function remaining_amount(): int {
+        return $this->expected_amount - $this->settled_amount;
+    }
+
+    public function copy(): CashForecastItem {
+        $snapshot CashForecastItem = new CashForecastItem();
+        $snapshot->id = $this->id;
+        $snapshot->source_document = $this->source_document;
+        $snapshot->counterparty = $this->counterparty;
+        $snapshot->bank_account = $this->bank_account;
+        $snapshot->category = $this->category;
+        $snapshot->currency = $this->currency;
+        $snapshot->expected_amount = $this->expected_amount;
+        $snapshot->settled_amount = $this->settled_amount;
+        $snapshot->confidence_basis_points = $this->confidence_basis_points;
+        $snapshot->due_period = $this->due_period;
+        $snapshot->priority = $this->priority;
+        $snapshot->grace_days = $this->grace_days;
+        $snapshot->inflow = $this->inflow;
+        $snapshot->cancelled = $this->cancelled;
+        return $snapshot;
+    }
+
+    public function differences(CashForecastItem $other): vector<string> {
+        $fields vector<string> = [];
+        if ($this->id !== $other->id) { $fields[] = "id"; }
+        if ($this->source_document !== $other->source_document) { $fields[] = "source_document"; }
+        if ($this->counterparty !== $other->counterparty) { $fields[] = "counterparty"; }
+        if ($this->bank_account !== $other->bank_account) { $fields[] = "bank_account"; }
+        if ($this->category !== $other->category) { $fields[] = "category"; }
+        if ($this->currency !== $other->currency) { $fields[] = "currency"; }
+        if ($this->expected_amount !== $other->expected_amount) { $fields[] = "expected_amount"; }
+        if ($this->settled_amount !== $other->settled_amount) { $fields[] = "settled_amount"; }
+        if ($this->confidence_basis_points !== $other->confidence_basis_points) { $fields[] = "confidence_basis_points"; }
+        if ($this->due_period !== $other->due_period) { $fields[] = "due_period"; }
+        if ($this->priority !== $other->priority) { $fields[] = "priority"; }
+        if ($this->grace_days !== $other->grace_days) { $fields[] = "grace_days"; }
+        if ($this->inflow !== $other->inflow) { $fields[] = "inflow"; }
+        if ($this->cancelled !== $other->cancelled) { $fields[] = "cancelled"; }
+        return $fields;
+    }
+
+    public function describe(): string {
+        $text string = "CashForecastItem\n";
+        $text .= "id=" . $this->id . "\n";
+        $text .= "source_document=" . $this->source_document . "\n";
+        $text .= "counterparty=" . $this->counterparty . "\n";
+        $text .= "bank_account=" . $this->bank_account . "\n";
+        $text .= "category=" . $this->category . "\n";
+        $text .= "currency=" . $this->currency . "\n";
+        $text .= "expected_amount=" . (string)$this->expected_amount . "\n";
+        $text .= "settled_amount=" . (string)$this->settled_amount . "\n";
+        $text .= "confidence_basis_points=" . (string)$this->confidence_basis_points . "\n";
+        $text .= "due_period=" . (string)$this->due_period . "\n";
+        $text .= "priority=" . (string)$this->priority . "\n";
+        $text .= "grace_days=" . (string)$this->grace_days . "\n";
+        $text .= "inflow=" . DocumentRules::flag($this->inflow) . "\n";
+        $text .= "cancelled=" . DocumentRules::flag($this->cancelled) . "\n";
+        return $text;
+    }
+}

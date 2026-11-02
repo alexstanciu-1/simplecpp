@@ -1,0 +1,101 @@
+
+/* Probe admission is shared by plain values and keyed leaves. */
+namespace scpp\compiler;
+
+final class Value_Probe_Preparation {
+	public static function prepare(value_probe_node $syntax, preparation_context $context): prepared_value_probe {
+		if ($syntax->operand instanceof field_access_node) {
+			throw new \scpp_portability_runtime_exception('S2S property-path probes are deferred');
+		}
+		$previous = $context->statement_assignment;
+		$context->statement_assignment = false;
+		try {
+			$facts = new prepared_value_probe();
+			$facts->type = $context->boolean;
+			$facts->operation = $syntax->probe_kind;
+			$probe_type canonical_type_use;
+			if ($syntax->operand instanceof index_node) {
+				$facts->path = Keyed_Path_Preparation::prepare($syntax->operand, $context, false);
+				$steps Storage<prepared_keyed_step> = $facts->path->steps;
+				$leaf prepared_keyed_step = $steps[$steps->count() - 1];
+				$probe_type = $leaf->element_type;
+			}
+			else {
+				$operand = Expression_Preparation::prepare($syntax->operand, $context);
+				$probe_type = $operand->type;
+			}
+			if (($facts->path === null) && ($syntax->probe_kind === value_probe_kind::empty)) {
+				$targets = Model::$language_scope->callables_named('empty');
+				$arguments = new Storage<expression_node>();
+				$arguments->append($syntax->operand);
+				if (Runtime_Call_Preparation::has_exact_match($targets, $arguments)) {
+					$facts->runtime_call = Runtime_Call_Preparation::prepare($targets, $arguments, $context);
+					if (!$facts->runtime_call->type->matches($context->boolean)) { throw new \scpp_portability_runtime_exception('Runtime empty must return bool'); }
+					return $facts;
+				}
+			}
+			self::require_type($probe_type, $syntax->probe_kind);
+			$definition = Type_Queries::canonical($probe_type)->definition();
+			if (($definition instanceof callable_type_definition) || ($definition instanceof closure_type_definition)) {
+				$facts->presence = Condition_Truthiness::decide($probe_type);
+			}
+			// An enum case is present independently of its backing value. Keyed lookup
+			// still establishes leaf existence before this observation is evaluated.
+			if (Type_Queries::is_enum($probe_type)) {
+				$facts->presence = new truthiness_decision();
+				$facts->presence->source_type = $probe_type;
+				$facts->presence->operation = truthiness_operation::always_true;
+			}
+			// Wrapper probes observe outer state, never the payload's truthiness or presence.
+			$payload = Nullable_Conversions::payload($probe_type);
+			$result_role = Result_Conversions::role($probe_type);
+			if ($result_role !== null) { $payload = Result_Conversions::require_payload($probe_type, $result_role); }
+			if ($payload !== null) {
+				$facts->presence = new truthiness_decision();
+				$facts->presence->source_type = $probe_type;
+				$facts->presence->operation = truthiness_operation::value_presence;
+				if (($result_role !== null) && ($result_role->result_family() === result_kind::boolean_sentinels)) {
+					$facts->presence->operation = truthiness_operation::sentinel_presence;
+				}
+			}
+			return $facts;
+		} finally { $context->statement_assignment = $previous; }
+	}
+
+	public static function require_type(canonical_type_use $type, value_probe_kind $operation): void {
+		if ($operation === value_probe_kind::empty) {
+			$definition = Type_Queries::canonical($type)->definition();
+			if (!$type->by_value() && (String_Conversions::is_string($type)
+				|| Boxed_Conversions::is_boxed($type)
+				|| ($definition === Model::$type_catalog->definition('vector'))
+				|| ($definition === Model::$type_catalog->definition('hash')))) { return; }
+			throw new \scpp_portability_runtime_exception('S2S empty requires a collection or string; wrappers do not delegate emptiness');
+		}
+		if (Type_Queries::source_record($type) !== null) { return; }
+		$definition = Type_Queries::canonical($type)->definition();
+		if (($definition instanceof callable_type_definition) || ($definition instanceof closure_type_definition)) { return; }
+		if ($type->by_value()) {
+			throw new \scpp_portability_runtime_exception('S2S probes do not support effective storage modifiers');
+		}
+		if (Type_Queries::is_enum($type)) { return; }
+		$payload = Nullable_Conversions::payload($type);
+		if (Ownership_Conversions::role($type) !== null) {
+			Ownership_Conversions::require_presence($type);
+			return;
+		}
+		$result_role = Result_Conversions::role($type);
+		$container = Model::$indexing_contracts->lookup(Type_Queries::canonical($type)->definition());
+		if ($container !== null) {
+			if ($container->supports_probes()) { return; }
+		}
+		if ($result_role !== null) {
+			Result_Conversions::require_payload($type, $result_role);
+		}
+		elseif ($payload !== null) {
+			Nullable_Conversions::require_value_payload($payload);
+		}
+		elseif (!Conversion_Preparation::is_scalar($type) && !Nullable_Conversions::is_null($type)) {
+			throw new \scpp_portability_runtime_exception('S2S value probes require a scalar, nullable scalar, Result scalar, mixed, registered container or null');
+		}
+	}
+}

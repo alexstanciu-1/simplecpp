@@ -1,0 +1,7 @@
+// Layout counterpart: my-try/phpp/04_analyze/prepare/semantics/compiler_calls.phs
+function sample_unit_096(): void
+{
+    $value int = 97;
+    sample_unit_097();
+    return;
+}

@@ -1,0 +1,7 @@
+// Layout counterpart: my-try/phpp/04_analyze/conversions/nullable.phs
+function sample_unit_044(): void
+{
+    $value int = 45;
+    sample_unit_045();
+    return;
+}

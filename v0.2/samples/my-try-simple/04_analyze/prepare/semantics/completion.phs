@@ -1,0 +1,7 @@
+// Layout counterpart: my-try/phpp/04_analyze/prepare/semantics/completion.phs
+function sample_unit_097(): void
+{
+    $value int = 98;
+    sample_unit_098();
+    return;
+}

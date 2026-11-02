@@ -1,0 +1,80 @@
+
+/* Directional contract compatibility, independent of member lookup and C++ slots. */
+namespace scpp\compiler;
+
+final class Callable_Adaptation {
+	public static function same(prepared_callable_adaptation $left, prepared_callable_adaptation $right): bool {
+		if (count($left->parameters) !== count($right->parameters)) { return false; }
+		foreach ($left->parameters  as $index => $conversion) {
+			if (!self::same_conversion($conversion, $right->parameters[$index])) { return false; }
+		}
+		return self::same_conversion($left->result, $right->result);
+	}
+
+	private static function same_conversion(conversion_decision $left, conversion_decision $right): bool {
+		if (($left->operation !== $right->operation) || !$left->source_type->matches($right->source_type)
+			|| !$left->target_type->matches($right->target_type)) { return false; }
+		if ($left->payload_conversion === null) { return $right->payload_conversion === null; }
+		if ($right->payload_conversion === null) { return false; }
+		return self::same_conversion($left->payload_conversion, $right->payload_conversion);
+	}
+
+	/** Invariant consumers do not supply an ancestry query. */
+	public static function exact(callable_signature $required, callable_signature $provided): bool {
+		return self::between($required, $provided) !== null;
+	}
+
+	/** An observed relationship query enables only shared-value ancestry adaptation. */
+	public static function between(callable_signature $required, callable_signature $provided, nullable<conversion_relationship_query> $relationships = null): nullable<prepared_callable_adaptation> {
+		if (($required->reference_return === null) !== ($provided->reference_return === null)) { return null; }
+		if ($required->reference_return !== null) {
+			if ($required->reference_return->parameter_index() !== $provided->reference_return->parameter_index()) { return null; }
+		}
+		$result = self::conversion($provided->return_type, $required->return_type,
+			conversion_context::return_value, $required->reference_return === null, $relationships);
+		if ($result === null) { return null; }
+		$before Storage<callable_parameter> = $required->parameters;
+		$after Storage<callable_parameter> = $provided->parameters;
+		if ($before->count() !== $after->count()) { return null; }
+		$facts = new prepared_callable_adaptation();
+		$facts->result = $result;
+		foreach ($before  as $index => $parameter) {
+			$current = $after[$index];
+			if (($parameter->mode !== $current->mode) || ($parameter->access !== $current->access)
+				|| (($parameter->element_type === null) !== ($current->element_type === null))
+				|| (($parameter->default_value === null) !== ($current->default_value === null))) { return null; }
+			if ($parameter->element_type !== null) {
+				if (!$parameter->element_type->matches($current->element_type)) { return null; }
+			}
+			$conversion = self::conversion($parameter->type, $current->type, conversion_context::argument,
+				($parameter->mode === passing_mode::value) && ($parameter->element_type === null), $relationships);
+			if ($conversion === null) { return null; }
+			$facts->parameters[] = $conversion;
+		}
+		return $facts;
+	}
+
+	private static function conversion(canonical_type_use $source, canonical_type_use $target, conversion_context $context, bool $allow_shared, nullable<conversion_relationship_query> $relationships): nullable<conversion_decision> {
+		if ($source->matches($target)) {
+			return Conversion_Preparation::operation($source, $target, $context, conversion_operation::identity);
+		}
+		if (!$allow_shared || ($relationships === null)) { return null; }
+		$source_payload = Type_Queries::nullable_handle_payload($source);
+		$target_payload = Type_Queries::nullable_handle_payload($target);
+		if (($source_payload !== null) || ($target_payload !== null)) {
+			// An adapter may broaden acceptance, never insert a failing absence check.
+			if ($target_payload === null) { return null; }
+			$actual = $source_payload ?? $source;
+			if (!Type_Queries::is_nominal_handle($actual)) { return null; }
+			if (!$actual->matches($target_payload) && !$relationships->is_subtype($actual, $target_payload)) { return null; }
+			return Nullable_Conversions::decide($source, $target, $context, $relationships);
+		}
+		$source_role = Ownership_Conversions::role($source);
+		$target_role = Ownership_Conversions::role($target);
+		if (($source_role === null) || ($target_role === null)) { return null; }
+		if (($source_role->ownership_family() !== ownership_kind::shared)
+			|| ($target_role->ownership_family() !== ownership_kind::shared)) { return null; }
+		if (!$relationships->is_subtype(Ownership_Conversions::payload($source), Ownership_Conversions::payload($target))) { return null; }
+		return Conversion_Preparation::operation($source, $target, $context, conversion_operation::ownership_upcast);
+	}
+}

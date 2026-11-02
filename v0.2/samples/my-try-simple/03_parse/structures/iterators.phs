@@ -1,0 +1,7 @@
+// Layout counterpart: my-try/phpp/03_parse/structures/iterators.phs
+function sample_unit_016(): void
+{
+    $value int = 17;
+    sample_unit_017();
+    return;
+}

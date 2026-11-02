@@ -1,0 +1,276 @@
+enum PurchaseChargeKind: int32 {
+    case Expense = 1;
+    case ReceivedGoods = 2;
+}
+
+class SupplierBill {
+    public string $number = "";
+    public string $supplier_code = "";
+    public PurchaseChargeKind $charge_kind = PurchaseChargeKind::Expense;
+    public int $net_amount = 0;
+    public int $tax_amount = 0;
+    public int $due_day = 0;
+}
+
+class PayableRecord {
+    public string $key = "";
+    public string $supplier_code = "";
+    public string $number = "";
+    public string $charge_account = "";
+    public int $period = 1;
+    public int $net_amount = 0;
+    public int $tax_amount = 0;
+    public int $paid_amount = 0;
+    public int $credited_net = 0;
+    public int $credited_tax = 0;
+    public int $due_day = 0;
+
+    public function balance(): int {
+        return $this->net_amount + $this->tax_amount - $this->paid_amount - $this->credited_net - $this->credited_tax;
+    }
+}
+
+class SupplierRecord {
+    public string $code = "";
+    public string $name = "";
+    public bool $on_hold = false;
+    public int $approved_limit = 1000000000;
+}
+
+class PaymentProposalRow {
+    public string $bill_key = "";
+    public string $supplier_code = "";
+    public int $due_day = 0;
+    public int $amount = 0;
+}
+
+class PaymentProposal {
+    public $rows vector<PaymentProposalRow> = [];
+    public int $total = 0;
+    public int $remaining_budget = 0;
+}
+
+class PurchasingBook {
+    private $suppliers hash<SupplierRecord> = [];
+    private $bills hash<PayableRecord> = [];
+    private $bill_order vector<string> = [];
+
+    public function register_supplier(string $code, string $name, int $limit): AccountingCheck {
+        if ($code === "" || $name === "" || $limit < 0 || !MoneyRules::accepts($limit)) {
+            return accounting_failure("supplier.invalid", "Supplier identity and bounded limit are required");
+        }
+        if (isset($this->suppliers[$code])) {
+            return accounting_failure("supplier.duplicate", $code);
+        }
+        $supplier SupplierRecord = new SupplierRecord();
+        $supplier->code = $code;
+        $supplier->name = $name;
+        $supplier->approved_limit = $limit;
+        $this->suppliers[$code] = $supplier;
+        return accounting_success();
+    }
+
+    public function hold_supplier(string $code, bool $hold): AccountingCheck {
+        if (!isset($this->suppliers[$code])) {
+            return accounting_failure("supplier.missing", $code);
+        }
+        $supplier SupplierRecord = $this->suppliers[$code];
+        $supplier->on_hold = $hold;
+        return accounting_success();
+    }
+
+    public function bill_key(string $supplier_code, string $number): string {
+        // Length prefixes prevent collisions when identifiers contain separators.
+        return (string)strlen($supplier_code) . ":" . $supplier_code . ":" . $number;
+    }
+
+    public function supplier_balance(string $supplier_code): int {
+        $total int = 0;
+        foreach ($this->bill_order as $key) {
+            $bill PayableRecord = $this->bills[$key];
+            if ($bill->supplier_code === $supplier_code) {
+                $total += $bill->balance();
+            }
+        }
+        return $total;
+    }
+
+    public function record_bill(GeneralLedger $ledger, SupplierBill $draft): AccountingCheck {
+        if ($draft->number === "" || !isset($this->suppliers[$draft->supplier_code])) {
+            return accounting_failure("bill.identity", "Bill number or registered supplier is missing");
+        }
+        $supplier SupplierRecord = $this->suppliers[$draft->supplier_code];
+        if ($supplier->on_hold) {
+            return accounting_failure("supplier.hold", $supplier->code);
+        }
+        $key string = $this->bill_key($draft->supplier_code, $draft->number);
+        if (isset($this->bills[$key])) {
+            return accounting_failure("bill.duplicate", $key);
+        }
+        if ($draft->net_amount <= 0 || $draft->tax_amount < 0 || $draft->due_day < 0 || $draft->due_day > 36524) {
+            return accounting_failure("bill.amount", "Bill amounts or due date are invalid");
+        }
+        $gross AmountResult = MoneyRules::add($draft->net_amount, $draft->tax_amount);
+        if (!$gross->valid) {
+            return accounting_failure($gross->reason, $key);
+        }
+        if ($this->supplier_balance($supplier->code) + $gross->amount > $supplier->approved_limit) {
+            return accounting_failure("supplier.limit", $supplier->code);
+        }
+        $charge_account string = "operating-expense";
+        if ($draft->charge_kind === PurchaseChargeKind::ReceivedGoods) {
+            $charge_account = "goods-received";
+        }
+        $entry JournalEntry = new JournalEntry();
+        $entry->reference = "bill:" . $key;
+        $entry->origin = "purchasing";
+        $entry->period = $ledger->current_period();
+        $entry->add_debit($charge_account, $draft->net_amount, $draft->number);
+        if ($draft->tax_amount > 0) {
+            $entry->add_debit("input-tax", $draft->tax_amount, $draft->number);
+        }
+        $entry->add_credit("payables", $gross->amount, $draft->number);
+        $check AccountingCheck = $ledger->post($entry);
+        if (!$check->accepted) {
+            return $check;
+        }
+        $record PayableRecord = new PayableRecord();
+        $record->key = $key;
+        $record->supplier_code = $draft->supplier_code;
+        $record->number = $draft->number;
+        $record->charge_account = $charge_account;
+        $record->period = $entry->period;
+        $record->net_amount = $draft->net_amount;
+        $record->tax_amount = $draft->tax_amount;
+        $record->due_day = $draft->due_day;
+        $this->bills[$key] = $record;
+        $this->bill_order[] = $key;
+        return accounting_success();
+    }
+
+    public function pay(GeneralLedger $ledger, string $key, string $reference, int $amount): AccountingCheck {
+        if (!isset($this->bills[$key])) {
+            return accounting_failure("bill.missing", $key);
+        }
+        if ($reference === "") {
+            return accounting_failure("payment.reference", "Payment reference is required");
+        }
+        $bill PayableRecord = $this->bills[$key];
+        $supplier SupplierRecord = $this->suppliers[$bill->supplier_code];
+        if ($supplier->on_hold) {
+            return accounting_failure("supplier.hold", $supplier->code);
+        }
+        if ($amount <= 0 || $amount > $bill->balance()) {
+            return accounting_failure("payment.amount", "Payment exceeds the open bill balance");
+        }
+        if ($amount > $ledger->balance_of("bank")) {
+            return accounting_failure("payment.funds", "Bank balance cannot fund payment");
+        }
+        $entry JournalEntry = new JournalEntry();
+        $entry->reference = "supplier-payment:" . $reference;
+        $entry->origin = "purchasing";
+        $entry->period = $ledger->current_period();
+        $entry->add_debit("payables", $amount, $bill->number);
+        $entry->add_credit("bank", $amount, $bill->number);
+        $check AccountingCheck = $ledger->post($entry);
+        if ($check->accepted) {
+            $bill->paid_amount += $amount;
+        }
+        return $check;
+    }
+
+    public function credit(GeneralLedger $ledger, string $key, string $reference, int $net, int $tax): AccountingCheck {
+        if (!isset($this->bills[$key]) || $reference === "") {
+            return accounting_failure("credit.identity", "Bill and credit reference are required");
+        }
+        $bill PayableRecord = $this->bills[$key];
+        if ($net < 0 || $tax < 0 || ($net === 0 && $tax === 0)) {
+            return accounting_failure("credit.amount", "Credit must contain a positive amount");
+        }
+        if ($net > $bill->net_amount - $bill->credited_net || $tax > $bill->tax_amount - $bill->credited_tax) {
+            return accounting_failure("credit.components", "Credit exceeds original net or tax component");
+        }
+        $gross AmountResult = MoneyRules::add($net, $tax);
+        if (!$gross->valid || $gross->amount > $bill->balance()) {
+            return accounting_failure("credit.balance", "Credit exceeds remaining bill balance");
+        }
+        $entry JournalEntry = new JournalEntry();
+        $entry->reference = "supplier-credit:" . $reference;
+        $entry->origin = "purchasing";
+        $entry->period = $ledger->current_period();
+        $entry->add_debit("payables", $gross->amount, $reference);
+        if ($net > 0) {
+            $entry->add_credit($bill->charge_account, $net, $reference);
+        }
+        if ($tax > 0) {
+            $entry->add_credit("input-tax", $tax, $reference);
+        }
+        $check AccountingCheck = $ledger->post($entry);
+        if ($check->accepted) {
+            $bill->credited_net += $net;
+            $bill->credited_tax += $tax;
+        }
+        return $check;
+    }
+
+    public function propose_payments(int $through_day, int $budget): PaymentProposal {
+        $proposal PaymentProposal = new PaymentProposal();
+        if ($budget <= 0 || !MoneyRules::accepts($budget)) {
+            return $proposal;
+        }
+        $proposal->remaining_budget = $budget;
+        $selected hash<bool> = [];
+        // Oldest due first, insertion order for ties; no mutation of the bill book.
+        while (true) {
+            $best_key string = "";
+            $best_day int = 36525;
+            foreach ($this->bill_order as $key) {
+                if (isset($selected[$key])) {
+                    continue;
+                }
+                $bill PayableRecord = $this->bills[$key];
+                $supplier SupplierRecord = $this->suppliers[$bill->supplier_code];
+                if ($supplier->on_hold || $bill->balance() <= 0 || $bill->due_day > $through_day) {
+                    continue;
+                }
+                if ($bill->due_day < $best_day) {
+                    $best_key = $key;
+                    $best_day = $bill->due_day;
+                }
+            }
+            if ($best_key === "" || $proposal->remaining_budget === 0) {
+                break;
+            }
+            $selected[$best_key] = true;
+            $bill PayableRecord = $this->bills[$best_key];
+            $row PaymentProposalRow = new PaymentProposalRow();
+            $row->bill_key = $best_key;
+            $row->supplier_code = $bill->supplier_code;
+            $row->due_day = $bill->due_day;
+            $row->amount = $bill->balance();
+            if ($row->amount > $proposal->remaining_budget) {
+                $row->amount = $proposal->remaining_budget;
+            }
+            $proposal->rows[] = $row;
+            $proposal->total += $row->amount;
+            $proposal->remaining_budget -= $row->amount;
+        }
+        return $proposal;
+    }
+
+    public function total_balance(): int {
+        $total int = 0;
+        foreach ($this->bill_order as $key) {
+            $bill PayableRecord = $this->bills[$key];
+            $total += $bill->balance();
+        }
+        return $total;
+    }
+
+    public function reconcile(GeneralLedger $ledger): AccountingCheck {
+        if ($this->total_balance() !== -$ledger->balance_of("payables")) {
+            return accounting_failure("payables.control", "Supplier balances do not reconcile with general ledger");
+        }
+        return accounting_success();
+    }
+}

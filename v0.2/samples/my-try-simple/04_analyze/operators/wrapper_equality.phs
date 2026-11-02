@@ -1,0 +1,7 @@
+// Layout counterpart: my-try/phpp/04_analyze/operators/wrapper_equality.phs
+function sample_unit_064(): void
+{
+    $value int = 65;
+    sample_unit_065();
+    return;
+}

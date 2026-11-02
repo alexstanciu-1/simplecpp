@@ -44,8 +44,12 @@ with tempfile.TemporaryDirectory() as directory:
     result = run('parse', 'js', source)
     assert result.returncode == 1 and not result.stdout
     assert b':2:7: Expected integer or name' in result.stderr
+    source.write_bytes('"é\x00"'.encode())
+    assert json.loads(run('tokens', 'php', source).stdout)['tokens'][0]['text_hex'] == '22c3a90022'
     source.write_bytes(b'"\xff\x00"')
-    assert json.loads(run('tokens', 'php', source).stdout)['tokens'][0]['text_hex'] == '22ff0022'
+    result = run('tokens', 'php', source)
+    assert result.returncode == 1 and not result.stdout
+    assert b':1:2: Invalid UTF-8 source' in result.stderr
     source.write_bytes(b'good;\n$')
     result = run('tokens', 'php', source)
     assert result.returncode == 1 and not result.stdout

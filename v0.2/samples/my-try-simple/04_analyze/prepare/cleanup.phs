@@ -1,0 +1,7 @@
+// Layout counterpart: my-try/phpp/04_analyze/prepare/cleanup.phs
+function sample_unit_066(): void
+{
+    $value int = 67;
+    sample_unit_067();
+    return;
+}

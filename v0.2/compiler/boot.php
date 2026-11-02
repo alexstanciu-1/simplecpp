@@ -43,6 +43,7 @@ require_once __DIR__ . '/01_prepare_inputs/manifest.php';
 require_once __DIR__ . '/01_prepare_inputs/changes.php';
 require_once __DIR__ . '/04_analyze/prepare/program.php';
 require_once __DIR__ . '/compiler/program.php';
+require_once __DIR__ . '/compiler/incremental.php';
 require_once __DIR__ . '/05_backend/cpp/structures.php';
 require_once __DIR__ . '/05_backend/cpp/program.php';
 require_once __DIR__ . '/05_backend/cpp/bundle.php';

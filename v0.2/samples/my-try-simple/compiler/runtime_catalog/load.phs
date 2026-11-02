@@ -1,0 +1,7 @@
+// Layout counterpart: my-try/phpp/compiler/runtime_catalog/load.phs
+function sample_unit_222(): void
+{
+    $value int = 223;
+    sample_unit_223();
+    return;
+}

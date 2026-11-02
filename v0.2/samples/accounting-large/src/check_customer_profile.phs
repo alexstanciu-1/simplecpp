@@ -1,0 +1,64 @@
+function sample_customer_profile(): CustomerProfile {
+    $draft CustomerProfile = new CustomerProfile();
+    $draft->id = "CUS-001";
+    $draft->legal_name = "Northwind Workshop";
+    $draft->control_account = "receivables";
+    $draft->currency = "LOC";
+    $draft->collector = "team-north";
+    $draft->payment_reference = "NW-ACCOUNT";
+    $draft->credit_limit = 50000;
+    $draft->exposure = 12000;
+    $draft->term_days = 30;
+    $draft->grace_days = 5;
+    $draft->discount_basis_points = 200;
+    $draft->statement_day = 15;
+    $draft->active = true;
+    $draft->on_hold = false;
+    return $draft;
+}
+
+function check_customer_profile(WorkloadChecks $checks): void {
+    $draft CustomerProfile = sample_customer_profile();
+    $checks->accepted($draft->validate(), "customer_profile valid draft");
+    $checks->equal($draft->available_credit(), 38000, "customer_profile independent business result");
+    $copy CustomerProfile = $draft->copy();
+    $checks->equal(count($draft->differences($copy)), 0, "customer_profile snapshot equivalence");
+    $checks->expect($draft->describe() === $copy->describe(), "customer_profile snapshot report");
+    $copy = $draft->copy();
+    $copy->id = "";
+    $checks->rejected($copy->validate(), "customer_profile.id", "customer_profile id required");
+    $copy = $draft->copy();
+    $copy->id = "bad\nrow";
+    $checks->rejected($copy->validate(), "customer_profile.id", "customer_profile id control");
+    $copy = $draft->copy();
+    $copy->id = DocumentRules::repeat("x", 41);
+    $checks->rejected($copy->validate(), "customer_profile.id", "customer_profile id width");
+    $copy = $draft->copy();
+    $copy->id = "CUS-001-changed";
+    $checks->expect($draft->id === "CUS-001", "customer_profile id snapshot isolation");
+    $changes_id vector<string> = $draft->differences($copy);
+    $checks->equal(count($changes_id), 1, "customer_profile id change count");
+    if (count($changes_id) === 1) {
+        $checks->expect($changes_id[0] === "id", "customer_profile id change identity");
+    }
+    $copy = $draft->copy();
+    $copy->credit_limit = -1;
+    $checks->rejected($copy->validate(), "customer_profile.credit_limit", "customer_profile credit_limit below");
+    $copy = $draft->copy();
+    $copy->credit_limit = 1000000001;
+    $checks->rejected($copy->validate(), "customer_profile.credit_limit", "customer_profile credit_limit above");
+    $copy = $draft->copy();
+    $copy->exposure = -1;
+    $checks->rejected($copy->validate(), "customer_profile.exposure", "customer_profile exposure below");
+    $copy = $draft->copy();
+    $copy->exposure = 1000000001;
+    $checks->rejected($copy->validate(), "customer_profile.exposure", "customer_profile exposure above");
+    $copy = $draft->copy();
+    $copy->active = false;
+    $checks->expect($draft->active === true, "customer_profile active snapshot isolation");
+    $changes_active vector<string> = $draft->differences($copy);
+    $checks->equal(count($changes_active), 1, "customer_profile active change count");
+    if (count($changes_active) === 1) {
+        $checks->expect($changes_active[0] === "active", "customer_profile active change identity");
+    }
+}

@@ -1,0 +1,7 @@
+// Layout counterpart: my-try/phpp/03_parse/parser.phs
+function sample_unit_010(): void
+{
+    $value int = 11;
+    sample_unit_011();
+    return;
+}

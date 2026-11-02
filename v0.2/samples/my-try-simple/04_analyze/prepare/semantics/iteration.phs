@@ -1,0 +1,7 @@
+// Layout counterpart: my-try/phpp/04_analyze/prepare/semantics/iteration.phs
+function sample_unit_111(): void
+{
+    $value int = 112;
+    sample_unit_112();
+    return;
+}

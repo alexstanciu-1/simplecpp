@@ -1,0 +1,128 @@
+// A bounded receivable collection case; no jurisdiction-specific rules.
+// Draft values are mutable. Services retain validated copies, never caller handles.
+class CollectionCase {
+    public string $id = "";
+    public string $customer_id = "";
+    public string $invoice_id = "";
+    public string $owner = "";
+    public string $status = "";
+    public string $contact_note = "";
+    public int $original_balance = 0;
+    public int $outstanding = 0;
+    public int $disputed = 0;
+    public int $overdue_days = 0;
+    public int $reminders_sent = 0;
+    public int $promised_payment = 0;
+    public bool $legal_hold = false;
+    public bool $promise_confirmed = false;
+
+    public function validate(): AccountingCheck {
+        if (!DocumentRules::text($this->id, 1, 40)) {
+            return accounting_failure("collection_case.id", "id must contain 1..40 printable bytes");
+        }
+        if (!DocumentRules::text($this->customer_id, 1, 80)) {
+            return accounting_failure("collection_case.customer_id", "customer_id must contain 1..80 printable bytes");
+        }
+        if (!DocumentRules::text($this->invoice_id, 1, 80)) {
+            return accounting_failure("collection_case.invoice_id", "invoice_id must contain 1..80 printable bytes");
+        }
+        if (!DocumentRules::text($this->owner, 1, 80)) {
+            return accounting_failure("collection_case.owner", "owner must contain 1..80 printable bytes");
+        }
+        if (!DocumentRules::text($this->status, 1, 80)) {
+            return accounting_failure("collection_case.status", "status must contain 1..80 printable bytes");
+        }
+        if (!DocumentRules::text($this->contact_note, 1, 80)) {
+            return accounting_failure("collection_case.contact_note", "contact_note must contain 1..80 printable bytes");
+        }
+        if (!DocumentRules::integer($this->original_balance, 0, 1000000000)) {
+            return accounting_failure("collection_case.original_balance", "original_balance must be in [0, 1000000000]");
+        }
+        if (!DocumentRules::integer($this->outstanding, 0, 1000000000)) {
+            return accounting_failure("collection_case.outstanding", "outstanding must be in [0, 1000000000]");
+        }
+        if (!DocumentRules::integer($this->disputed, 0, 1000000000)) {
+            return accounting_failure("collection_case.disputed", "disputed must be in [0, 1000000000]");
+        }
+        if (!DocumentRules::integer($this->overdue_days, 0, 3650)) {
+            return accounting_failure("collection_case.overdue_days", "overdue_days must be in [0, 3650]");
+        }
+        if (!DocumentRules::integer($this->reminders_sent, 0, 100)) {
+            return accounting_failure("collection_case.reminders_sent", "reminders_sent must be in [0, 100]");
+        }
+        if (!DocumentRules::integer($this->promised_payment, 0, 1000000000)) {
+            return accounting_failure("collection_case.promised_payment", "promised_payment must be in [0, 1000000000]");
+        }
+        if ($this->outstanding > $this->original_balance) {
+            return accounting_failure("collection_case.balance", "Outstanding exceeds original claim");
+        }
+        if ($this->disputed > $this->outstanding) {
+            return accounting_failure("collection_case.dispute", "Dispute exceeds outstanding");
+        }
+        if ($this->promised_payment > $this->outstanding) {
+            return accounting_failure("collection_case.promise", "Promise exceeds outstanding");
+        }
+        return accounting_success();
+    }
+
+    public function collectible_amount(): int {
+        return $this->outstanding - $this->disputed;
+    }
+
+    public function copy(): CollectionCase {
+        $snapshot CollectionCase = new CollectionCase();
+        $snapshot->id = $this->id;
+        $snapshot->customer_id = $this->customer_id;
+        $snapshot->invoice_id = $this->invoice_id;
+        $snapshot->owner = $this->owner;
+        $snapshot->status = $this->status;
+        $snapshot->contact_note = $this->contact_note;
+        $snapshot->original_balance = $this->original_balance;
+        $snapshot->outstanding = $this->outstanding;
+        $snapshot->disputed = $this->disputed;
+        $snapshot->overdue_days = $this->overdue_days;
+        $snapshot->reminders_sent = $this->reminders_sent;
+        $snapshot->promised_payment = $this->promised_payment;
+        $snapshot->legal_hold = $this->legal_hold;
+        $snapshot->promise_confirmed = $this->promise_confirmed;
+        return $snapshot;
+    }
+
+    public function differences(CollectionCase $other): vector<string> {
+        $fields vector<string> = [];
+        if ($this->id !== $other->id) { $fields[] = "id"; }
+        if ($this->customer_id !== $other->customer_id) { $fields[] = "customer_id"; }
+        if ($this->invoice_id !== $other->invoice_id) { $fields[] = "invoice_id"; }
+        if ($this->owner !== $other->owner) { $fields[] = "owner"; }
+        if ($this->status !== $other->status) { $fields[] = "status"; }
+        if ($this->contact_note !== $other->contact_note) { $fields[] = "contact_note"; }
+        if ($this->original_balance !== $other->original_balance) { $fields[] = "original_balance"; }
+        if ($this->outstanding !== $other->outstanding) { $fields[] = "outstanding"; }
+        if ($this->disputed !== $other->disputed) { $fields[] = "disputed"; }
+        if ($this->overdue_days !== $other->overdue_days) { $fields[] = "overdue_days"; }
+        if ($this->reminders_sent !== $other->reminders_sent) { $fields[] = "reminders_sent"; }
+        if ($this->promised_payment !== $other->promised_payment) { $fields[] = "promised_payment"; }
+        if ($this->legal_hold !== $other->legal_hold) { $fields[] = "legal_hold"; }
+        if ($this->promise_confirmed !== $other->promise_confirmed) { $fields[] = "promise_confirmed"; }
+        return $fields;
+    }
+
+    public function describe(): string {
+        $text string = "CollectionCase\n";
+        $text .= "id=" . $this->id . "\n";
+        $text .= "customer_id=" . $this->customer_id . "\n";
+        $text .= "invoice_id=" . $this->invoice_id . "\n";
+        $text .= "owner=" . $this->owner . "\n";
+        $text .= "status=" . $this->status . "\n";
+        $text .= "contact_note=" . $this->contact_note . "\n";
+        $text .= "original_balance=" . (string)$this->original_balance . "\n";
+        $text .= "outstanding=" . (string)$this->outstanding . "\n";
+        $text .= "disputed=" . (string)$this->disputed . "\n";
+        $text .= "overdue_days=" . (string)$this->overdue_days . "\n";
+        $text .= "reminders_sent=" . (string)$this->reminders_sent . "\n";
+        $text .= "promised_payment=" . (string)$this->promised_payment . "\n";
+        $text .= "legal_hold=" . DocumentRules::flag($this->legal_hold) . "\n";
+        $text .= "promise_confirmed=" . DocumentRules::flag($this->promise_confirmed) . "\n";
+        return $text;
+    }
+}

@@ -1,0 +1,7 @@
+// Layout counterpart: my-try/phpp/03_parse/scopes/lookup.phs
+function sample_unit_012(): void
+{
+    $value int = 13;
+    sample_unit_013();
+    return;
+}

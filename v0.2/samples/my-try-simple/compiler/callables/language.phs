@@ -1,0 +1,7 @@
+// Layout counterpart: my-try/phpp/compiler/callables/language.phs
+function sample_unit_203(): void
+{
+    $value int = 204;
+    sample_unit_204();
+    return;
+}

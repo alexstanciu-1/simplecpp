@@ -1,0 +1,122 @@
+// Fictional payroll inputs; amounts are explicit, not statutory rules.
+// Draft values are mutable. Services retain validated copies, never caller handles.
+class PayrollInstruction {
+    public string $id = "";
+    public string $employee_id = "";
+    public string $department = "";
+    public string $wage_account = "";
+    public string $payable_account = "";
+    public string $bank_reference = "";
+    public int $base_pay = 0;
+    public int $overtime_pay = 0;
+    public int $bonus_pay = 0;
+    public int $employee_deduction = 0;
+    public int $employer_charge = 0;
+    public int $period = 0;
+    public bool $approved = false;
+    public bool $paid = false;
+
+    public function validate(): AccountingCheck {
+        if (!DocumentRules::text($this->id, 1, 40)) {
+            return accounting_failure("payroll_instruction.id", "id must contain 1..40 printable bytes");
+        }
+        if (!DocumentRules::text($this->employee_id, 1, 80)) {
+            return accounting_failure("payroll_instruction.employee_id", "employee_id must contain 1..80 printable bytes");
+        }
+        if (!DocumentRules::text($this->department, 1, 80)) {
+            return accounting_failure("payroll_instruction.department", "department must contain 1..80 printable bytes");
+        }
+        if (!DocumentRules::text($this->wage_account, 1, 80)) {
+            return accounting_failure("payroll_instruction.wage_account", "wage_account must contain 1..80 printable bytes");
+        }
+        if (!DocumentRules::text($this->payable_account, 1, 80)) {
+            return accounting_failure("payroll_instruction.payable_account", "payable_account must contain 1..80 printable bytes");
+        }
+        if (!DocumentRules::text($this->bank_reference, 1, 80)) {
+            return accounting_failure("payroll_instruction.bank_reference", "bank_reference must contain 1..80 printable bytes");
+        }
+        if (!DocumentRules::integer($this->base_pay, 0, 1000000000)) {
+            return accounting_failure("payroll_instruction.base_pay", "base_pay must be in [0, 1000000000]");
+        }
+        if (!DocumentRules::integer($this->overtime_pay, 0, 1000000000)) {
+            return accounting_failure("payroll_instruction.overtime_pay", "overtime_pay must be in [0, 1000000000]");
+        }
+        if (!DocumentRules::integer($this->bonus_pay, 0, 1000000000)) {
+            return accounting_failure("payroll_instruction.bonus_pay", "bonus_pay must be in [0, 1000000000]");
+        }
+        if (!DocumentRules::integer($this->employee_deduction, 0, 1000000000)) {
+            return accounting_failure("payroll_instruction.employee_deduction", "employee_deduction must be in [0, 1000000000]");
+        }
+        if (!DocumentRules::integer($this->employer_charge, 0, 1000000000)) {
+            return accounting_failure("payroll_instruction.employer_charge", "employer_charge must be in [0, 1000000000]");
+        }
+        if (!DocumentRules::integer($this->period, 1, 1200)) {
+            return accounting_failure("payroll_instruction.period", "period must be in [1, 1200]");
+        }
+        if ($this->employee_deduction > $this->base_pay + $this->overtime_pay + $this->bonus_pay) {
+            return accounting_failure("payroll_instruction.deduction", "Deduction exceeds gross pay");
+        }
+        return accounting_success();
+    }
+
+    public function net_pay(): int {
+        return $this->base_pay + $this->overtime_pay + $this->bonus_pay - $this->employee_deduction;
+    }
+
+    public function copy(): PayrollInstruction {
+        $snapshot PayrollInstruction = new PayrollInstruction();
+        $snapshot->id = $this->id;
+        $snapshot->employee_id = $this->employee_id;
+        $snapshot->department = $this->department;
+        $snapshot->wage_account = $this->wage_account;
+        $snapshot->payable_account = $this->payable_account;
+        $snapshot->bank_reference = $this->bank_reference;
+        $snapshot->base_pay = $this->base_pay;
+        $snapshot->overtime_pay = $this->overtime_pay;
+        $snapshot->bonus_pay = $this->bonus_pay;
+        $snapshot->employee_deduction = $this->employee_deduction;
+        $snapshot->employer_charge = $this->employer_charge;
+        $snapshot->period = $this->period;
+        $snapshot->approved = $this->approved;
+        $snapshot->paid = $this->paid;
+        return $snapshot;
+    }
+
+    public function differences(PayrollInstruction $other): vector<string> {
+        $fields vector<string> = [];
+        if ($this->id !== $other->id) { $fields[] = "id"; }
+        if ($this->employee_id !== $other->employee_id) { $fields[] = "employee_id"; }
+        if ($this->department !== $other->department) { $fields[] = "department"; }
+        if ($this->wage_account !== $other->wage_account) { $fields[] = "wage_account"; }
+        if ($this->payable_account !== $other->payable_account) { $fields[] = "payable_account"; }
+        if ($this->bank_reference !== $other->bank_reference) { $fields[] = "bank_reference"; }
+        if ($this->base_pay !== $other->base_pay) { $fields[] = "base_pay"; }
+        if ($this->overtime_pay !== $other->overtime_pay) { $fields[] = "overtime_pay"; }
+        if ($this->bonus_pay !== $other->bonus_pay) { $fields[] = "bonus_pay"; }
+        if ($this->employee_deduction !== $other->employee_deduction) { $fields[] = "employee_deduction"; }
+        if ($this->employer_charge !== $other->employer_charge) { $fields[] = "employer_charge"; }
+        if ($this->period !== $other->period) { $fields[] = "period"; }
+        if ($this->approved !== $other->approved) { $fields[] = "approved"; }
+        if ($this->paid !== $other->paid) { $fields[] = "paid"; }
+        return $fields;
+    }
+
+    public function describe(): string {
+        $text string = "PayrollInstruction\n";
+        $text .= "id=" . $this->id . "\n";
+        $text .= "employee_id=" . $this->employee_id . "\n";
+        $text .= "department=" . $this->department . "\n";
+        $text .= "wage_account=" . $this->wage_account . "\n";
+        $text .= "payable_account=" . $this->payable_account . "\n";
+        $text .= "bank_reference=" . $this->bank_reference . "\n";
+        $text .= "base_pay=" . (string)$this->base_pay . "\n";
+        $text .= "overtime_pay=" . (string)$this->overtime_pay . "\n";
+        $text .= "bonus_pay=" . (string)$this->bonus_pay . "\n";
+        $text .= "employee_deduction=" . (string)$this->employee_deduction . "\n";
+        $text .= "employer_charge=" . (string)$this->employer_charge . "\n";
+        $text .= "period=" . (string)$this->period . "\n";
+        $text .= "approved=" . DocumentRules::flag($this->approved) . "\n";
+        $text .= "paid=" . DocumentRules::flag($this->paid) . "\n";
+        return $text;
+    }
+}

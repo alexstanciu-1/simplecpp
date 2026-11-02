@@ -1,0 +1,7 @@
+// Layout counterpart: my-try/phpp/compiler/traits/inventory.phs
+function sample_unit_237(): void
+{
+    $value int = 238;
+    sample_unit_238();
+    return;
+}

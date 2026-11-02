@@ -1,0 +1,265 @@
+
+/* Enum syntax owns ordered cases; preparation selects backing semantics and storage. */
+namespace scpp\compiler;
+
+final class enum_node extends declaration_node {
+	
+	/** Common access preserves the property-free base while spans remain concrete data. */
+	public function set_span(int $first, int $end): void {
+		if (($first < 0) || ($end < $first) || ($end > 4294967295)) {
+			throw new \scpp_portability_logic_exception('AST token span exceeds uint32 bounds');
+		}
+		$this->first_token_index = $first;
+		$this->end_token_index = $end;
+	}
+
+	public function start_token(): int {
+		return (int)$this->first_token_index;
+	}
+
+	public function end_token(): int {
+		return (int)$this->end_token_index;
+	}
+
+	/** Inclusive start in the owning token snapshot. */
+	public $first_token_index uint32;
+	/** Exclusive end: token count is end - first, including zero for an empty span. */
+	public $end_token_index uint32;
+
+	
+	private $collected_occurrence weak<collected_name> = null;
+
+	public function optional_occurrence(): nullable<collected_name> {
+		return lock($this->collected_occurrence);
+	}
+
+	public function occurrence(): collected_name {
+		return lock($this->collected_occurrence);
+	}
+
+	/** Reject replacement of a live occurrence; retirement discipline belongs to the lifecycle. */
+	public function attach_occurrence(collected_name $entry): void {
+		if ($this->optional_occurrence() !== null) {
+			throw new \scpp_portability_logic_exception('Syntax occurrence is already attached');
+		}
+		$this->collected_occurrence = weak($entry);
+	}
+
+	
+	public function preparation(): nullable<prepared_enum> {
+		return $this->prepared_facts;
+	}
+
+	public function set_preparation(prepared_enum $facts): void {
+		$this->prepared_facts = $facts;
+	}
+
+	public function clear_preparation(): void {
+		$this->prepared_facts = null;
+	}
+
+
+	private $prepared_facts nullable<prepared_enum> = null;
+
+	public string $name;
+	/** Absence means a unit declaration, not an inferred integer backing type. */
+	public $backing_type nullable<type_node> = null;
+	/** @storage.owner */
+	public $cases Storage<enum_case_node>;
+
+	public function __construct() {
+		$this->cases = new Storage<enum_case_node>();
+	}
+
+	public function kind(): node_kind {
+		return node_kind::enum_declaration;
+	}
+
+	public function require_preparation(): prepared_enum {
+		return $this->prepared_facts;
+	}
+
+	public function collect(Symbol_Collector $collector, scope $scope, int $index): void {
+		$collector->collect_enum($this, $scope, $index);
+	}
+
+	public function children(): child_iterator_i {
+		return new enum_children_iterator($this);
+	}
+
+	/** Owned edges follow grammar order; no member publication or stage processing happens here. */
+	public function maintain(node_maintenance_worker_i $worker): void {
+		$worker->enter($this);
+		if ($this->backing_type !== null) {
+			$backing type_node = $this->backing_type;
+			$worker->edge($this, $backing);
+		}
+		$cases Storage<enum_case_node> = $this->cases;
+		foreach ($cases  as $case_node) {
+			$worker->edge($this, $case_node);
+		}
+	}
+}
+
+/** Syntax identifies an owner type and named member; preparation selects the member's role. */
+final class static_member_reference_node extends assignable_expression_node {
+	
+	/** Common access preserves the property-free base while spans remain concrete data. */
+	public function set_span(int $first, int $end): void {
+		if (($first < 0) || ($end < $first) || ($end > 4294967295)) {
+			throw new \scpp_portability_logic_exception('AST token span exceeds uint32 bounds');
+		}
+		$this->first_token_index = $first;
+		$this->end_token_index = $end;
+	}
+
+	public function start_token(): int {
+		return (int)$this->first_token_index;
+	}
+
+	public function end_token(): int {
+		return (int)$this->end_token_index;
+	}
+
+	/** Inclusive start in the owning token snapshot. */
+	public $first_token_index uint32;
+	/** Exclusive end: token count is end - first, including zero for an empty span. */
+	public $end_token_index uint32;
+
+
+	public $owner_type nullable<type_node> = null;
+	public $qualifier nullable<expression_node> = null;
+	/** Includes the source $ prefix for a property; constants/cases have no prefix. */
+	public string $member_name;
+	private $enum_case_facts nullable<prepared_enum_case_reference> = null;
+	private $constant_facts nullable<prepared_constant_reference> = null;
+	private $property_facts nullable<prepared_static_property> = null;
+
+	public function kind(): node_kind {
+		return node_kind::static_member_reference;
+	}
+
+	/** Exactly one typed alternative is retained after successful publication. */
+	public function preparation(): nullable<prepared_expression> {
+		if ($this->enum_case_facts !== null) { return $this->enum_case_facts; }
+		if ($this->constant_facts !== null) { return $this->constant_facts; }
+		return $this->property_facts;
+	}
+
+	public function require_preparation(): prepared_expression {
+		$facts = $this->preparation();
+		if ($facts === null) { throw new \scpp_portability_logic_exception('Static member has no preparation'); }
+		return $facts;
+	}
+
+	public function clear_preparation(): void {
+		$this->enum_case_facts = null;
+		$this->constant_facts = null;
+		$this->property_facts = null;
+	}
+
+	public function set_enum_case_preparation(prepared_enum_case_reference $facts): void {
+		$this->clear_preparation();
+		$this->enum_case_facts = $facts;
+	}
+
+	public function optional_enum_case_preparation(): nullable<prepared_enum_case_reference> {
+		return $this->enum_case_facts;
+	}
+
+	public function enum_case_preparation(): prepared_enum_case_reference {
+		if ($this->enum_case_facts === null) { throw new \scpp_portability_logic_exception('Static member has no enum_case preparation'); }
+		return $this->enum_case_facts;
+	}
+
+	public function set_constant_preparation(prepared_constant_reference $facts): void {
+		$this->clear_preparation();
+		$this->constant_facts = $facts;
+	}
+
+	public function optional_constant_preparation(): nullable<prepared_constant_reference> {
+		return $this->constant_facts;
+	}
+
+	public function constant_preparation(): prepared_constant_reference {
+		if ($this->constant_facts === null) { throw new \scpp_portability_logic_exception('Static member has no constant preparation'); }
+		return $this->constant_facts;
+	}
+
+	public function set_property_preparation(prepared_static_property $facts): void {
+		$this->clear_preparation();
+		$this->property_facts = $facts;
+	}
+
+	public function optional_property_preparation(): nullable<prepared_static_property> {
+		return $this->property_facts;
+	}
+
+	public function property_preparation(): prepared_static_property {
+		if ($this->property_facts === null) { throw new \scpp_portability_logic_exception('Static member has no property preparation'); }
+		return $this->property_facts;
+	}
+
+	/** Compile-time type consumers must not discard an expression qualifier's effects. */
+	public function require_type_owner(): type_node {
+		if ($this->owner_type === null) { throw new \scpp_portability_runtime_exception('Expression-qualified member is not a compile-time type or constant expression'); }
+		return $this->owner_type;
+	}
+
+	public function children(): child_iterator_i {
+		return new static_member_children_iterator($this);
+	}
+
+	public function maintain(node_maintenance_worker_i $worker): void {
+		$worker->enter($this);
+		if ($this->owner_type !== null) { $worker->edge($this, $this->owner_type); }
+		if ($this->qualifier !== null) { $worker->edge($this, $this->qualifier); }
+	}
+}
+
+/** Cases are owned by their enum, never published as namespace constants. */
+final class enum_case_node extends ast_node {
+	
+	/** Common access preserves the property-free base while spans remain concrete data. */
+	public function set_span(int $first, int $end): void {
+		if (($first < 0) || ($end < $first) || ($end > 4294967295)) {
+			throw new \scpp_portability_logic_exception('AST token span exceeds uint32 bounds');
+		}
+		$this->first_token_index = $first;
+		$this->end_token_index = $end;
+	}
+
+	public function start_token(): int {
+		return (int)$this->first_token_index;
+	}
+
+	public function end_token(): int {
+		return (int)$this->end_token_index;
+	}
+
+	/** Inclusive start in the owning token snapshot. */
+	public $first_token_index uint32;
+	/** Exclusive end: token count is end - first, including zero for an empty span. */
+	public $end_token_index uint32;
+
+
+	public string $name;
+	public $value nullable<expression_node> = null;
+
+	public function kind(): node_kind {
+		return node_kind::enum_case;
+	}
+
+	public function children(): child_iterator_i {
+		return new enum_case_children_iterator($this);
+	}
+
+	/** Retain source expressions without deciding which initializer forms are admitted. */
+	public function maintain(node_maintenance_worker_i $worker): void {
+		$worker->enter($this);
+		if ($this->value !== null) {
+			$initializer expression_node = $this->value;
+			$worker->edge($this, $initializer);
+		}
+	}
+}

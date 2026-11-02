@@ -1,0 +1,182 @@
+struct AccountingDate {
+    public int64 $year;
+    public int64 $month;
+    public int64 $day;
+}
+
+class CalendarRules {
+    public static function leap_year(int $year): bool {
+        return ($year % 400 === 0) || ($year % 4 === 0 && $year % 100 !== 0);
+    }
+
+    public static function days_in_month(int $year, int $month): int {
+        if ($month < 1 || $month > 12) {
+            return 0;
+        }
+        if ($month === 2) {
+            if (CalendarRules::leap_year($year)) {
+                return 29;
+            }
+            return 28;
+        }
+        if ($month === 4 || $month === 6 || $month === 9 || $month === 11) {
+            return 30;
+        }
+        return 31;
+    }
+
+    public static function valid(AccountingDate $date): bool {
+        $year int = $date->year;
+        $month int = $date->month;
+        $day int = $date->day;
+        if ($year < 2000 || $year > 2099) {
+            return false;
+        }
+        return $day >= 1 && $day <= CalendarRules::days_in_month($year, $month);
+    }
+
+    public static function ordinal(AccountingDate $date): int {
+        if (!CalendarRules::valid($date)) {
+            return -1;
+        }
+        $days int = 0;
+        for ($year int = 2000; $year < $date->year; $year++) {
+            $days += 365;
+            if (CalendarRules::leap_year($year)) {
+                $days += 1;
+            }
+        }
+        for ($month int = 1; $month < $date->month; $month++) {
+            $days += CalendarRules::days_in_month($date->year, $month);
+        }
+        return $days + $date->day - 1;
+    }
+
+    public static function from_ordinal(int $ordinal): AccountingDate {
+        $date AccountingDate = new AccountingDate();
+        $date->year = 0;
+        $date->month = 0;
+        $date->day = 0;
+        if ($ordinal < 0 || $ordinal > 36524) {
+            return $date;
+        }
+        $remaining int = $ordinal;
+        $year int = 2000;
+        while ($year <= 2099) {
+            $year_days int = 365;
+            if (CalendarRules::leap_year($year)) {
+                $year_days = 366;
+            }
+            if ($remaining < $year_days) {
+                break;
+            }
+            $remaining -= $year_days;
+            $year += 1;
+        }
+        $month int = 1;
+        while ($month <= 12) {
+            $month_days int = CalendarRules::days_in_month($year, $month);
+            if ($remaining < $month_days) {
+                break;
+            }
+            $remaining -= $month_days;
+            $month += 1;
+        }
+        $date->year = $year;
+        $date->month = $month;
+        $date->day = ($remaining + 1);
+        return $date;
+    }
+
+    public static function add_days(AccountingDate $date, int $days): AccountingDate {
+        $ordinal int = CalendarRules::ordinal($date);
+        if ($ordinal < 0 || $days < -36525 || $days > 36525) {
+            return CalendarRules::from_ordinal(-1);
+        }
+        return CalendarRules::from_ordinal($ordinal + $days);
+    }
+
+    public static function month_end(AccountingDate $date): AccountingDate {
+        if (!CalendarRules::valid($date)) {
+            return CalendarRules::from_ordinal(-1);
+        }
+        $result AccountingDate = $date;
+        $result->day = CalendarRules::days_in_month($date->year, $date->month);
+        return $result;
+    }
+
+    public static function compare(AccountingDate $left, AccountingDate $right): int {
+        $left_day int = CalendarRules::ordinal($left);
+        $right_day int = CalendarRules::ordinal($right);
+        if ($left_day < $right_day) {
+            return -1;
+        }
+        if ($left_day > $right_day) {
+            return 1;
+        }
+        return 0;
+    }
+}
+
+enum PaymentTermKind: int32 {
+    case DaysAfterInvoice = 1;
+    case DaysAfterMonthEnd = 2;
+    case Immediate = 3;
+}
+
+class PaymentTerms {
+    public PaymentTermKind $kind = PaymentTermKind::DaysAfterInvoice;
+    public int $days = 30;
+    public int $discount_days = 0;
+    public int $discount_basis_points = 0;
+
+    public function validate(): AccountingCheck {
+        if ($this->days < 0 || $this->days > 365) {
+            return accounting_failure("terms.days", "Credit days must be within one year");
+        }
+        if ($this->discount_days < 0 || $this->discount_days > $this->days) {
+            return accounting_failure("terms.discount-days", "Discount window exceeds credit days");
+        }
+        if ($this->discount_basis_points < 0 || $this->discount_basis_points > 10000) {
+            return accounting_failure("terms.discount-rate", "Discount rate is invalid");
+        }
+        if ($this->kind === PaymentTermKind::Immediate && $this->days !== 0) {
+            return accounting_failure("terms.immediate", "Immediate terms cannot grant credit days");
+        }
+        return accounting_success();
+    }
+
+    public function due_date(AccountingDate $invoice_date): AccountingDate {
+        $check AccountingCheck = $this->validate();
+        if (!$check->accepted || !CalendarRules::valid($invoice_date)) {
+            return CalendarRules::from_ordinal(-1);
+        }
+        if ($this->kind === PaymentTermKind::Immediate) {
+            return $invoice_date;
+        }
+        if ($this->kind === PaymentTermKind::DaysAfterMonthEnd) {
+            return CalendarRules::add_days(CalendarRules::month_end($invoice_date), $this->days);
+        }
+        return CalendarRules::add_days($invoice_date, $this->days);
+    }
+
+    public function settlement_discount(int $balance, AccountingDate $invoice_date, AccountingDate $payment_date): AmountResult {
+        $result AmountResult = new AmountResult();
+        $check AccountingCheck = $this->validate();
+        if (!$check->accepted || $balance < 0 || !MoneyRules::accepts($balance)) {
+            $result->reason = "terms.invalid";
+            return $result;
+        }
+        $issued int = CalendarRules::ordinal($invoice_date);
+        $paid int = CalendarRules::ordinal($payment_date);
+        if ($issued < 0 || $paid < $issued) {
+            $result->reason = "terms.payment-date";
+            return $result;
+        }
+        if ($paid - $issued > $this->discount_days) {
+            $result->valid = true;
+            return $result;
+        }
+        return MoneyRules::rate($balance, $this->discount_basis_points);
+    }
+}

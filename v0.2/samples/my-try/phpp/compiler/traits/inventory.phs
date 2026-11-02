@@ -1,0 +1,123 @@
+namespace scpp\compiler;
+
+/** Transient views of local members, not a second retained owner or inherited-member cache. */
+final class Member_Inventory {
+	/** Include private occurrences for graph consumers without publishing synthetic files. */
+	public static function source_collections(Storage<collected_file> $sources): Storage<collected_file> {
+		$result Storage<collected_file> = new Storage<collected_file>();
+		$seen hash<bool, collected_file> = new hash<bool, collected_file>();
+		foreach ($sources  as $source) {
+			if (!isset($seen[$source])) { $seen[$source] = true; $result->append($source); }
+			if ($source->deleted) { continue; }
+			$entries Storage<collected_name> = $source->entries;
+			foreach ($source->defined_elements  as $index) {
+				$entry = $entries[$index];
+				if ($entry->change_status === change_state::deleted) { continue; }
+				if ($entry instanceof collected_record) {
+					$instances Storage<trait_instance> = object_cast($entry, collected_record::class)->trait_instances;
+					foreach ($instances  as $instance) {
+						$collection = $instance->collection;
+						if (!isset($seen[$collection])) { $seen[$collection] = true; $result->append($collection); }
+					}
+				}
+			}
+		}
+		return $result;
+	}
+
+	public static function methods(collected_member_owner $owner): Storage<method_node> {
+		$result Storage<method_node> = new Storage<method_node>();
+		$authored Storage<method_node> = $owner->syntax()->methods;
+		foreach ($authored  as $method) { $result->append($method); }
+		foreach (self::contributions($owner)  as $member) {
+			if ($member->working instanceof collected_method) {
+				$contributed = object_cast($member->working, collected_method::class);
+				if (!$contributed->callable_syntax()->has_parsed_body()) { continue; }
+				// Analysis validates conflicts across all contributions, including hidden ones.
+				if (self::shadowed_lifecycle($contributed)) { continue; }
+				$result->append(object_cast($member->working->syntax(), method_node::class));
+			}
+		}
+		return $result;
+	}
+
+	/** Local lifecycle declarations hide contributed bodies, not conflict evidence. */
+	public static function shadowed_lifecycle(collected_method $method): bool {
+		if (($method->name !== '__construct') && ($method->name !== '__destruct')) { return false; }
+		$owner = $method->declaring_type();
+		$contributed = false;
+		foreach (self::contributions($owner)  as $member) {
+			if ($member->working === $method) { $contributed = true; break; }
+		}
+		if (!$contributed) { return false; }
+		$authored Storage<method_node> = $owner->syntax()->methods;
+		foreach ($authored  as $local) {
+			if ($local->name === $method->name) { return true; }
+		}
+		return false;
+	}
+
+	/** Bodyless contributions are contracts, not competing method implementations. */
+	public static function requirements(collected_member_owner $owner): Storage<collected_method> {
+		$result Storage<collected_method> = new Storage<collected_method>();
+		foreach (self::contributions($owner)  as $member) {
+			if ($member->working instanceof collected_method) {
+				$method = object_cast($member->working, collected_method::class);
+				if (!$method->callable_syntax()->has_parsed_body()) { $result->append($method); }
+			}
+		}
+		return $result;
+	}
+
+	public static function is_requirement(collected_method $method): bool {
+		foreach (self::requirements($method->declaring_type())  as $requirement) {
+			if ($requirement === $method) { return true; }
+		}
+		return false;
+	}
+
+	public static function properties(collected_member_owner $owner): Storage<property_node> {
+		$result Storage<property_node> = new Storage<property_node>();
+		$authored Storage<property_node> = $owner->syntax()->properties;
+		foreach ($authored  as $property) { $result->append($property); }
+		foreach (self::contributions($owner)  as $member) {
+			if ($member->working instanceof collected_field) {
+				$result->append(object_cast($member->working->syntax(), property_node::class));
+			}
+		}
+		return $result;
+	}
+
+	public static function constants(collected_member_owner $owner): Storage<member_constant_node> {
+		$result Storage<member_constant_node> = new Storage<member_constant_node>();
+		$authored Storage<member_constant_node> = $owner->syntax()->constants;
+		foreach ($authored  as $constant) { $result->append($constant); }
+		foreach (self::contributions($owner)  as $member) {
+			if ($member->working instanceof collected_constant) {
+				$result->append(object_cast($member->working->syntax(), member_constant_node::class));
+			}
+		}
+		return $result;
+	}
+
+	public static function contributions(collected_member_owner $owner): Storage<trait_member_instance> {
+		$result Storage<trait_member_instance> = new Storage<trait_member_instance>();
+		if (!($owner instanceof collected_record)) { return $result; }
+		$instances Storage<trait_instance> = object_cast($owner, collected_record::class)->trait_instances;
+		foreach ($instances  as $instance) {
+			$members Storage<trait_member_instance> = $instance->members;
+			foreach ($members  as $member) { $result->append($member); }
+		}
+		return $result;
+	}
+
+	public static function scopes(collected_member_owner $owner): Storage<scope> {
+		$result Storage<scope> = new Storage<scope>();
+		$result->append($owner->syntax()->member_scope());
+		if ($owner instanceof collected_record) {
+			$instances Storage<trait_instance> = object_cast($owner, collected_record::class)->trait_instances;
+			foreach ($instances  as $instance) { $result->append($instance->parsed->root_scope()); }
+		}
+		return $result;
+	}
+}

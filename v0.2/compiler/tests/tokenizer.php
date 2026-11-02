@@ -34,7 +34,7 @@ foreach (flavor::cases() as $flavor) {
 		flavor::js => ['keyword', 'identifier', 'keyword', 'identifier', 'keyword'],
 	};
 	check(array_map(fn(token $token): string => $token->kind->label(), $list->tokens) === $expected, 'Flavor keyword boundary');
-	check(scan(" \t\r\n/* bytes \xff */ // tail", $flavor)->tokens === [], 'Trivia and empty generation');
+	check(scan(" \t\r\n/* bytes é 😀 */ // tail", $flavor)->tokens === [], 'Trivia and empty generation');
 }
 check(scan('')->tokens === [], 'Empty source');
 check(scan('$a$b', flavor::js)->text_at(0) === '$a$b', 'JS dollar identifier');
@@ -48,9 +48,9 @@ check($list->operator_text_at(6) === '>', 'Comment prevents shift');
 check($list->text_at(8) === '<<=' && $list->text_at(9) === '>>=', 'Compound shifts');
 check(array_map(fn(token $token): string => $token->kind->label(), scan('0 .5 12. 1e-3 -2 +3')->tokens) ===
 	['integer', 'floating', 'floating', 'floating', '-', 'integer', '+', 'integer'], 'Decimal boundaries');
-$text = "'a\\'b' \"\xff\0\"";
+$text = "'a\\'b' \"é\0\"";
 $list = scan($text);
-check($list->text_at(0) === "'a\\'b'" && $list->text_at(1) === "\"\xff\0\"", 'Lossless quoted bytes');
+check($list->text_at(0) === "'a\\'b'" && $list->text_at(1) === "\"é\0\"", 'Lossless quoted bytes');
 foreach ([['$', flavor::php, 0], ['$1', flavor::php, 0], ['$a', flavor::cpp, 0],
 	['#[A]', flavor::js, 0], ['# x', flavor::cpp, 0], ['1e+', flavor::php, 0],
 	['12abc', flavor::php, 0], ['0x12', flavor::cpp, 0], ['1.2.3', flavor::js, 0],
@@ -107,6 +107,66 @@ foreach (flavor::cases() as $flavor) {
 	$list = scan('iffy Else returning', $flavor);
 	foreach ($list->tokens as $token) {
 		check($token->kind === token_kind::identifier, 'Keyword matching is exact and case-sensitive');
+	}
+}
+
+
+// UTF-8 is a whole-source precondition; token and diagnostic locations remain byte-based.
+foreach (flavor::cases() as $flavor) {
+	$text = "// Ελληνικά 😀\n'Română 日本語 é\0' ;";
+	$list = scan($text, $flavor);
+	check(count($list->tokens) === 2, 'Unicode comment/string token count');
+	check($list->tokens[0]->offset === strpos($text, "'"), 'Unicode prefix byte offset');
+	check($list->tokens[0]->length === strlen("'Română 日本語 é\0'"), 'Unicode token byte length');
+	check($list->tokens[1]->offset === strlen($text) - 1, 'Following punctuation byte offset');
+	foreach (["\x80", "\xC0\xAF", "\xE2\x82", "\xED\xA0\x80", "\xF4\x90\x80\x80", "\xFF"] as $invalid) {
+		foreach (["// é\n'", "// é\n// ", "// é\n/* "] as $prefix) {
+			try {
+				scan($prefix . $invalid . "' */", $flavor);
+				throw new RuntimeException('Invalid UTF-8 accepted');
+			} catch (diagnostic $error) {
+				check($error->offset === strlen($prefix), 'Invalid sequence start byte');
+				check(str_ends_with($error->getMessage(), 'Invalid UTF-8 source'), 'UTF-8 diagnostic');
+			}
+		}
+	}
+	foreach (['café', "x\u{00A0}", "\u{FEFF}x"] as $text) {
+		try {
+			scan($text, $flavor);
+			throw new RuntimeException('Unicode identifiers/whitespace/BOM silently admitted');
+		} catch (diagnostic $error) {
+			check(str_ends_with($error->getMessage(), 'Unsupported token'), 'ASCII lexical policy retained');
+		}
+	}
+	foreach ([['1e+', 'Expected exponent digits'], ['12abc', 'Unsupported numeric literal'],
+		['1.2.3', 'Unsupported numeric literal'], ['/*', 'Unterminated block comment'], ['/*/', 'Unterminated block comment'],
+		["'unfinished\\", 'Unterminated quoted string']] as [$bad, $message]) {
+		try {
+			scan("// é\n" . $bad, $flavor);
+			throw new RuntimeException('Malformed lexeme accepted');
+		} catch (diagnostic $error) {
+			check($error->offset === strlen("// é\n"), 'Original diagnostic anchor retained');
+			check(str_ends_with($error->getMessage(), $message), 'Original diagnostic text retained');
+		}
+	}
+}
+// Exercise regex repetition without depending on source-size-specific engine limits.
+$long = '"' . str_repeat('a\\"😀', 20000) . '"';
+check(scan($long)->tokens[0]->length === strlen($long), 'Long escaped Unicode string');
+check(scan('/*' . str_repeat('**é', 20000) . '*/')->tokens === [], 'Long block comment');
+try {
+	scan(str_repeat('a', 16777216));
+	throw new RuntimeException('Oversized token accepted');
+} catch (diagnostic $error) {
+	check($error->offset === 0 && str_ends_with($error->getMessage(), 'Token length exceeds 24-bit capacity'), 'Token size diagnostic retained');
+}
+foreach ([['/*' . str_repeat('x/*', 20000), 'Unterminated block comment'],
+	['"' . str_repeat('a\\"', 20000), 'Unterminated quoted string']] as [$text, $message]) {
+	try {
+		scan($text);
+		throw new RuntimeException('Long malformed lexeme accepted');
+	} catch (diagnostic $error) {
+		check($error->offset === 0 && str_ends_with($error->getMessage(), $message), 'Long malformed diagnostic');
 	}
 }
 echo "Tokenizer checks passed\n";

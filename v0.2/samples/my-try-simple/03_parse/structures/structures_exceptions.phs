@@ -1,0 +1,7 @@
+// Layout counterpart: my-try/phpp/03_parse/structures/structures_exceptions.phs
+function sample_unit_023(): void
+{
+    $value int = 24;
+    sample_unit_024();
+    return;
+}

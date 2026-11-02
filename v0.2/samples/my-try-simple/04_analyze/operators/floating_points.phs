@@ -1,0 +1,7 @@
+// Layout counterpart: my-try/phpp/04_analyze/operators/floating_points.phs
+function sample_unit_053(): void
+{
+    $value int = 54;
+    sample_unit_054();
+    return;
+}

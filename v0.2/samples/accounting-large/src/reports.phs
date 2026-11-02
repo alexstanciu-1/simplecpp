@@ -1,0 +1,129 @@
+class FinancialPosition {
+    public int $assets = 0;
+    public int $liabilities = 0;
+    public int $equity = 0;
+    public int $current_profit = 0;
+
+    public function balances(): bool {
+        return $this->assets === $this->liabilities + $this->equity + $this->current_profit;
+    }
+}
+
+class ProfitAndLoss {
+    public int $revenue = 0;
+    public int $expenses = 0;
+    public int $profit = 0;
+}
+
+class WorkingCapital {
+    public int $cash = 0;
+    public int $receivables = 0;
+    public int $inventory = 0;
+    public int $payables = 0;
+    public int $net_operating_capital = 0;
+}
+
+class FinancialReports {
+    public function profit_and_loss(GeneralLedger $ledger): ProfitAndLoss {
+        $report ProfitAndLoss = new ProfitAndLoss();
+        $report->revenue = -$ledger->category_balance(AccountCategory::Revenue);
+        $report->expenses = $ledger->category_balance(AccountCategory::Expense);
+        $report->profit = $report->revenue - $report->expenses;
+        return $report;
+    }
+
+    public function financial_position(GeneralLedger $ledger): FinancialPosition {
+        $report FinancialPosition = new FinancialPosition();
+        $income ProfitAndLoss = $this->profit_and_loss($ledger);
+        $report->assets = $ledger->category_balance(AccountCategory::Asset);
+        $report->liabilities = -$ledger->category_balance(AccountCategory::Liability);
+        $report->equity = -$ledger->category_balance(AccountCategory::Equity);
+        $report->current_profit = $income->profit;
+        return $report;
+    }
+
+    public function working_capital(GeneralLedger $ledger): WorkingCapital {
+        $report WorkingCapital = new WorkingCapital();
+        $report->cash = $ledger->balance_of("bank");
+        $report->receivables = $ledger->balance_of("receivables");
+        $report->inventory = $ledger->balance_of("inventory");
+        $report->payables = -$ledger->balance_of("payables");
+        $report->net_operating_capital = $report->receivables + $report->inventory - $report->payables;
+        return $report;
+    }
+}
+
+class BudgetLine {
+    public string $account_code = "";
+    public int $period = 1;
+    public int $planned_amount = 0;
+}
+
+class BudgetVarianceRow {
+    public string $account_code = "";
+    public int $period = 1;
+    public int $planned_amount = 0;
+    public int $actual_amount = 0;
+    public int $variance = 0;
+}
+
+class BudgetReport {
+    public $rows vector<BudgetVarianceRow> = [];
+    public int $planned_total = 0;
+    public int $actual_total = 0;
+    public int $variance_total = 0;
+}
+
+class BudgetBook {
+    private $lines vector<BudgetLine> = [];
+    private $keys hash<bool> = [];
+    private bool $locked = false;
+
+    public function add(GeneralLedger $ledger, string $account_code, int $period, int $amount): AccountingCheck {
+        if ($this->locked) {
+            return accounting_failure("budget.locked", "Approved budget cannot change");
+        }
+        if (!$ledger->has_account($account_code) || $period < 1 || $period > 1200 || !MoneyRules::accepts($amount)) {
+            return accounting_failure("budget.line", "Budget line has an invalid account, period, or amount");
+        }
+        $key string = (string)$period . ":" . $account_code;
+        if (isset($this->keys[$key])) {
+            return accounting_failure("budget.duplicate", $key);
+        }
+        $line BudgetLine = new BudgetLine();
+        $line->account_code = $account_code;
+        $line->period = $period;
+        $line->planned_amount = $amount;
+        $this->lines[] = $line;
+        $this->keys[$key] = true;
+        return accounting_success();
+    }
+
+    public function approve(): AccountingCheck {
+        if ($this->locked || count($this->lines) === 0) {
+            return accounting_failure("budget.approval", "Budget is empty or already approved");
+        }
+        $this->locked = true;
+        return accounting_success();
+    }
+
+    public function variance(GeneralLedger $ledger, int $first_period, int $last_period): BudgetReport {
+        $report BudgetReport = new BudgetReport();
+        foreach ($this->lines as $line) {
+            if ($line->period < $first_period || $line->period > $last_period) {
+                continue;
+            }
+            $row BudgetVarianceRow = new BudgetVarianceRow();
+            $row->account_code = $line->account_code;
+            $row->period = $line->period;
+            $row->planned_amount = $line->planned_amount;
+            $row->actual_amount = $ledger->turnover($line->account_code, $line->period, $line->period);
+            $row->variance = $row->actual_amount - $row->planned_amount;
+            $report->rows[] = $row;
+            $report->planned_total += $row->planned_amount;
+            $report->actual_total += $row->actual_amount;
+            $report->variance_total += $row->variance;
+        }
+        return $report;
+    }
+}

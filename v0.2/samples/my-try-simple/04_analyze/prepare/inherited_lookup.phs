@@ -1,0 +1,7 @@
+// Layout counterpart: my-try/phpp/04_analyze/prepare/inherited_lookup.phs
+function sample_unit_082(): void
+{
+    $value int = 83;
+    sample_unit_083();
+    return;
+}

@@ -21,7 +21,7 @@ final class Symbol_Collector
 		if ($statement instanceof ast_local_declaration) {
 			$key = $statement->declaration_key();
 			if (isset($this->heads[$key])) {
-				($this->tails[$key] ?? $this->heads[$key])->link_next($statement);
+				($this->tails[$key] ?? $this->heads[$key])->link_duplicate($statement);
 				$this->tails[$key] = $statement;
 			} else {
 				$this->heads[$key] = $statement;

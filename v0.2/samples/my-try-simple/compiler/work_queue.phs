@@ -1,0 +1,7 @@
+// Layout counterpart: my-try/phpp/compiler/work_queue.phs
+function sample_unit_245(): void
+{
+    $value int = 246;
+    sample_unit_246();
+    return;
+}

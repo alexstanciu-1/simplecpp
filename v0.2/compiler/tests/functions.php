@@ -53,7 +53,7 @@ foreach ([
 	verify($probe->seen === $file->functions(), 'Discovery identity differs from retained identity');
 	verify(count($file->main()->body()->locals) === 1, 'Function locals leaked into entry collection');
 	$symbols = $probe->publication->publish(['source' => $file]);
-	verify(count($symbols->functions) === 2, 'Global index contains wrong declarations');
+	verify(count($symbols->declarations) === 2, 'Global index contains wrong declarations');
 	$program = scpp\compiler\Program_Preparation::prepare('source', ['source' => $file], $target, $symbols);
 	$entry = $program->entry;
 	[$ping, $pong] = $entry->file->functions();

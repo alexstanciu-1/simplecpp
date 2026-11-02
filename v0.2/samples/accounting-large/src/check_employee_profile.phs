@@ -1,0 +1,64 @@
+function sample_employee_profile(): EmployeeProfile {
+    $draft EmployeeProfile = new EmployeeProfile();
+    $draft->id = "EMP-001";
+    $draft->display_name = "Alex Example";
+    $draft->department = "OPS";
+    $draft->cost_center = "CC-OPS";
+    $draft->expense_account = "operating-expense";
+    $draft->payable_account = "payables";
+    $draft->monthly_salary = 100000;
+    $draft->expense_limit = 20000;
+    $draft->advance_limit = 15000;
+    $draft->open_advance = 5000;
+    $draft->start_period = 1;
+    $draft->end_period = 1200;
+    $draft->active = true;
+    $draft->payment_hold = false;
+    return $draft;
+}
+
+function check_employee_profile(WorkloadChecks $checks): void {
+    $draft EmployeeProfile = sample_employee_profile();
+    $checks->accepted($draft->validate(), "employee_profile valid draft");
+    $checks->equal($draft->available_advance(), 10000, "employee_profile independent business result");
+    $copy EmployeeProfile = $draft->copy();
+    $checks->equal(count($draft->differences($copy)), 0, "employee_profile snapshot equivalence");
+    $checks->expect($draft->describe() === $copy->describe(), "employee_profile snapshot report");
+    $copy = $draft->copy();
+    $copy->id = "";
+    $checks->rejected($copy->validate(), "employee_profile.id", "employee_profile id required");
+    $copy = $draft->copy();
+    $copy->id = "bad\nrow";
+    $checks->rejected($copy->validate(), "employee_profile.id", "employee_profile id control");
+    $copy = $draft->copy();
+    $copy->id = DocumentRules::repeat("x", 41);
+    $checks->rejected($copy->validate(), "employee_profile.id", "employee_profile id width");
+    $copy = $draft->copy();
+    $copy->id = "EMP-001-changed";
+    $checks->expect($draft->id === "EMP-001", "employee_profile id snapshot isolation");
+    $changes_id vector<string> = $draft->differences($copy);
+    $checks->equal(count($changes_id), 1, "employee_profile id change count");
+    if (count($changes_id) === 1) {
+        $checks->expect($changes_id[0] === "id", "employee_profile id change identity");
+    }
+    $copy = $draft->copy();
+    $copy->monthly_salary = -1;
+    $checks->rejected($copy->validate(), "employee_profile.monthly_salary", "employee_profile monthly_salary below");
+    $copy = $draft->copy();
+    $copy->monthly_salary = 1000000001;
+    $checks->rejected($copy->validate(), "employee_profile.monthly_salary", "employee_profile monthly_salary above");
+    $copy = $draft->copy();
+    $copy->expense_limit = -1;
+    $checks->rejected($copy->validate(), "employee_profile.expense_limit", "employee_profile expense_limit below");
+    $copy = $draft->copy();
+    $copy->expense_limit = 1000000001;
+    $checks->rejected($copy->validate(), "employee_profile.expense_limit", "employee_profile expense_limit above");
+    $copy = $draft->copy();
+    $copy->active = false;
+    $checks->expect($draft->active === true, "employee_profile active snapshot isolation");
+    $changes_active vector<string> = $draft->differences($copy);
+    $checks->equal(count($changes_active), 1, "employee_profile active change count");
+    if (count($changes_active) === 1) {
+        $checks->expect($changes_active[0] === "active", "employee_profile active change identity");
+    }
+}

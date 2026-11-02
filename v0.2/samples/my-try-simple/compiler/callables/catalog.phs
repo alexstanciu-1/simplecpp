@@ -1,0 +1,7 @@
+// Layout counterpart: my-try/phpp/compiler/callables/catalog.phs
+function sample_unit_199(): void
+{
+    $value int = 200;
+    sample_unit_200();
+    return;
+}

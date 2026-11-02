@@ -1,0 +1,7 @@
+// Layout counterpart: my-try/phpp/scpp_framework/lock_reservation.phs
+function sample_unit_252(): void
+{
+    $value int = 253;
+    sample_unit_253();
+    return;
+}

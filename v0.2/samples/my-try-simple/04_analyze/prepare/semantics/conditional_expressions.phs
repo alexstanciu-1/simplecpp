@@ -1,0 +1,7 @@
+// Layout counterpart: my-try/phpp/04_analyze/prepare/semantics/conditional_expressions.phs
+function sample_unit_098(): void
+{
+    $value int = 99;
+    sample_unit_099();
+    return;
+}

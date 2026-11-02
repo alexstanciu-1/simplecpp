@@ -1,0 +1,7 @@
+// Layout counterpart: my-try/phpp/03_parse/structures/structures_object_type.phs
+function sample_unit_028(): void
+{
+    $value int = 29;
+    sample_unit_029();
+    return;
+}

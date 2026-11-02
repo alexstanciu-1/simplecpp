@@ -1,0 +1,255 @@
+namespace scpp\compiler;
+
+/** Install registry-resolved recipes; matching source arguments belongs to preparation. */
+final class Runtime_Catalog_Patterns {
+	public static function owner_positions(semantic_type_definition $owner): hash<int> {
+		$positions hash<int> = [];
+		if ($owner instanceof abstract_template_type_definition) {
+			$recipe = object_cast($owner, abstract_template_type_definition::class);
+			for ($index = 0; $index < $recipe->arity(); $index++) {
+				$positions[$recipe->parameter($index)->name()] = $index;
+			}
+		}
+		return $positions;
+	}
+	/** Every variable must be declared once and inferable from an input pattern. */
+	public static function contract(runtime_function_spec $spec, registered_type_catalog $types): runtime_generic_contract {
+		$positions hash<int> = [];
+		$owner_count = 0;
+		if ($spec->member !== null) {
+			$membership runtime_callable_member_spec = $spec->member;
+			$owner = Runtime_Catalog_Registration::member_definition($membership->owner, $types);
+			$positions = self::owner_positions($owner);
+			$owner_count = count($positions);
+		}
+		foreach ($spec->type_parameters  as $name) {
+			if (isset($positions[$name])) { throw new \scpp_portability_runtime_exception('Duplicate runtime type parameter'); }
+			$positions[$name] = count($positions);
+		}
+		$result = new runtime_generic_contract();
+		$result->transfer_policy = $spec->transfer_policy;
+		$result->type_parameter_count = count($positions);
+		$result->owner_parameter_count = $owner_count;
+		$parameters Storage<runtime_pattern_parameter> = $result->parameters;
+		$optional_seen = false;
+		$variadic_seen = false;
+		foreach ($spec->parameters  as $input) {
+			if ($variadic_seen) { throw new \scpp_portability_runtime_exception('Runtime variadic parameter must be last'); }
+			$variadic_seen = $input->variadic;
+			if ($input->variadic) {
+				// The language's packed-parameter ABI requires its registered vector definition.
+				object_cast($types->definition('vector'), abstract_template_type_definition::class);
+			}
+			if ($input->variadic && (($input->mode !== passing_mode::value) || ($input->default_value !== null))) {
+				throw new \scpp_portability_runtime_exception('Runtime variadic parameters require value passing without an explicit default');
+			}
+			if ($input->mode === passing_mode::observation) {
+				if ((count($spec->parameters) !== 1) || ($input->access !== storage_access::read_only)) {
+					throw new \scpp_portability_runtime_exception('Runtime observation requires one fixed readonly input and a value return');
+				}
+			}
+			$pattern = self::type($input->type, $types, $positions);
+			if ($pattern instanceof runtime_concrete_pattern) {
+				$concrete = object_cast($pattern, runtime_concrete_pattern::class);
+				if ($types->registry()->type($concrete->type->type_id()) instanceof no_value_type) {
+					throw new \scpp_portability_runtime_exception('Void runtime parameter');
+				}
+			}
+			if ($pattern instanceof runtime_concrete_pattern) {
+				$slot_type = object_cast($pattern, runtime_concrete_pattern::class)->type;
+				if ($slot_type->matches($types->null_type()) && (($input->mode !== passing_mode::value) || $input->variadic)) {
+					throw new \scpp_portability_runtime_exception('Runtime null slots require fixed value passing');
+				}
+			}
+			$parameter = new runtime_pattern_parameter($pattern, $input->mode, $input->access);
+			$parameter->variadic = $input->variadic;
+			$parameter->requires_copy = $input->requires_copy;
+			$parameter->transfer_policy = $input->transfer_policy;
+			if ($input->default_value !== null) {
+				if ($input->mode !== passing_mode::value) { throw new \scpp_portability_runtime_exception('Runtime defaults require value parameters'); }
+				$default_spec runtime_default_spec = $input->default_value;
+				$parameter->default_value = Runtime_Default_Registration::resolve($default_spec, $types);
+				if ($pattern instanceof runtime_concrete_pattern) {
+					Runtime_Default_Registration::require_type($parameter->default_value, object_cast($pattern, runtime_concrete_pattern::class)->type);
+				}
+				elseif (!($pattern instanceof runtime_variable_pattern)) {
+					throw new \scpp_portability_runtime_exception('Runtime scalar default cannot initialize a type application');
+				}
+				$optional_seen = true;
+			}
+			elseif ($optional_seen && !$input->variadic) { throw new \scpp_portability_runtime_exception('Runtime required parameter cannot follow an optional parameter'); }
+			$parameters->append($parameter);
+		}
+		foreach ($positions  as $position) {
+			if ($position < $owner_count) { continue; }
+			$found = false;
+			foreach ($parameters  as $parameter) {
+				if (self::contains($parameter->type, $position)) { $found = true; }
+			}
+			if (!$found) { throw new \scpp_portability_runtime_exception('Runtime type parameter must be inferable from an input'); }
+		}
+		foreach ($spec->transfer_types  as $name) {
+			if (!isset($positions[$name])) { throw new \scpp_portability_runtime_exception('Unknown transfer type parameter: ' . $name); }
+			$result->transfer_positions[] = $positions[$name];
+		}
+		$requirements Storage<runtime_replacement_requirement> = $result->replacement_results;
+		foreach ($spec->replacement_results  as $relation) {
+			if (!isset($positions[$relation->result_name]) || !isset($positions[$relation->replacement_name])) {
+				throw new \scpp_portability_runtime_exception('Unknown replacement result type parameter');
+			}
+			$requirements->append(new runtime_replacement_requirement(
+				$positions[$relation->result_name], $positions[$relation->replacement_name]));
+		}
+		$shared_requirements Storage<runtime_shared_conversion_requirement> = $result->shared_conversions;
+		foreach ($spec->shared_conversions  as $relation) {
+			if (!isset($positions[$relation->from_name]) || !isset($positions[$relation->to_name])) {
+				throw new \scpp_portability_runtime_exception('Unknown shared conversion type parameter');
+			}
+			$shared_requirements->append(new runtime_shared_conversion_requirement(
+				$positions[$relation->from_name], $positions[$relation->to_name]));
+		}
+		$boxed_requirements Storage<runtime_boxed_result_requirement> = $result->boxed_results;
+		foreach ($spec->boxed_results  as $boxed_result) {
+			if (!isset($positions[$boxed_result->result_name])) {
+				throw new \scpp_portability_runtime_exception('Unknown boxed result type parameter');
+			}
+			$family_spec = new runtime_type_spec();
+			$family_spec->name = $boxed_result->family_name;
+			$family_type = Runtime_Catalog_Registration::type($family_spec, $types);
+			$boxed_requirements->append(new runtime_boxed_result_requirement($positions[$boxed_result->result_name], $family_type));
+		}
+		$result->return_type = self::type($spec->return_type, $types, $positions, true);
+		return $result;
+	}
+
+	/** Resolve explicit variables, closed types and application structure without dummy types. */
+	public static function type(runtime_type_spec $spec, registered_type_catalog $types, hash<int> $positions, bool $output = false): runtime_type_pattern {
+		if ($spec->void_to_null && !$output) { throw new \scpp_portability_runtime_exception('Void-to-null mapping is only valid in provider result types'); }
+		if ($spec->callable !== null) { return self::callable_type($spec, $types, $positions); }
+		if ($spec->parameter !== '') {
+			if (!isset($positions[$spec->parameter])) { throw new \scpp_portability_runtime_exception('Unknown runtime type parameter: ' . $spec->parameter); }
+			return new runtime_variable_pattern($positions[$spec->parameter], $spec->void_to_null);
+		}
+		if ($spec->name === 'null') { return new runtime_concrete_pattern(Runtime_Catalog_Registration::type($spec, $types)); }
+		$definition = $types->definition($spec->name);
+		if (!($definition instanceof abstract_template_type_definition)) {
+			return new runtime_concrete_pattern(Runtime_Catalog_Registration::type($spec, $types));
+		}
+		$template_definition = object_cast($definition, abstract_template_type_definition::class);
+		$count = count($spec->arguments);
+		if (($count < $template_definition->required_arity()) || ($count > $template_definition->arity())) {
+			throw new \scpp_portability_runtime_exception('Invalid runtime type pattern arity');
+		}
+		$result = new runtime_application_pattern($template_definition);
+		$arguments Storage<runtime_type_pattern> = $result->arguments;
+		$closed vector<canonical_type_use> = [];
+		foreach ($spec->arguments  as $argument) {
+			$child = self::type($argument, $types, $positions, $output);
+			$arguments->append($child);
+			if ($child instanceof runtime_concrete_pattern) {
+				$closed[] = object_cast($child, runtime_concrete_pattern::class)->type;
+			}
+		}
+		for ($index = $count; $index < $template_definition->arity(); $index++) {
+			$default_type = $template_definition->parameter($index)->default_type();
+			if ($default_type === null) { throw new \scpp_portability_logic_exception('Missing registered template default'); }
+			$default_pattern runtime_type_pattern = new runtime_concrete_pattern($default_type);
+			$arguments->append($default_pattern);
+			$closed[] = $default_type;
+		}
+		if (count($closed) === count($arguments)) {
+			$registry = $types->registry();
+			$application = $registry->intern_application($template_definition, $closed);
+			return new runtime_concrete_pattern($registry->use($application->type_id()));
+		}
+		return $result;
+	}
+
+	private static function callable_type(runtime_type_spec $spec, registered_type_catalog $types, hash<int> $positions): runtime_type_pattern {
+		$signature runtime_callable_spec = $spec->callable;
+		$result = new runtime_callable_pattern();
+		$result->return_type = self::type($signature->return_type, $types, $positions);
+		$closed = $result->return_type instanceof runtime_concrete_pattern;
+		$parameters Storage<runtime_pattern_parameter> = $result->parameters;
+		$names hash<bool> = [];
+		$variadic_seen = false;
+		foreach ($signature->parameters  as $input) {
+			if (isset($names[$input->name])) { throw new \scpp_portability_runtime_exception('Duplicate runtime callable parameter name'); }
+			$names[$input->name] = true;
+			if ($variadic_seen) { throw new \scpp_portability_runtime_exception('Runtime variadic parameter must be last'); }
+			$variadic_seen = $input->variadic;
+			if ($input->variadic && ($input->mode !== passing_mode::value)) {
+				throw new \scpp_portability_runtime_exception('Runtime callable variadic inputs must be by value');
+			}
+			if ($input->variadic) { object_cast($types->definition('vector'), abstract_template_type_definition::class); }
+			$pattern = self::type($input->type, $types, $positions);
+			if ($pattern instanceof runtime_concrete_pattern) {
+				$concrete = object_cast($pattern, runtime_concrete_pattern::class);
+				if ($types->registry()->type($concrete->type->type_id()) instanceof no_value_type) {
+					throw new \scpp_portability_runtime_exception('Void runtime callable parameter');
+				}
+			}
+			else { $closed = false; }
+			if ($pattern instanceof runtime_concrete_pattern) {
+				$slot_type = object_cast($pattern, runtime_concrete_pattern::class)->type;
+				if ($slot_type->matches($types->null_type()) && (($input->mode !== passing_mode::value) || $input->variadic)) {
+					throw new \scpp_portability_runtime_exception('Runtime null slots require fixed value passing');
+				}
+			}
+			$parameter = new runtime_pattern_parameter($pattern, $input->mode, $input->access);
+			$parameter->variadic = $input->variadic;
+			$parameter->requires_copy = $input->requires_copy;
+			$parameter->transfer_policy = $input->transfer_policy;
+			$parameters->append($parameter);
+		}
+		if ($closed) { return new runtime_concrete_pattern(Runtime_Catalog_Registration::type($spec, $types)); }
+		return $result;
+	}
+
+	private static function contains(runtime_type_pattern $pattern, int $position): bool {
+		if ($pattern instanceof runtime_callable_pattern) {
+			$callable = object_cast($pattern, runtime_callable_pattern::class);
+			if (self::contains($callable->return_type, $position)) { return true; }
+			foreach ($callable->parameters  as $parameter) {
+				if (self::contains($parameter->type, $position)) { return true; }
+			}
+			return false;
+		}
+		if ($pattern instanceof runtime_variable_pattern) {
+			return object_cast($pattern, runtime_variable_pattern::class)->position === $position;
+		}
+		if ($pattern instanceof runtime_application_pattern) {
+			$application = object_cast($pattern, runtime_application_pattern::class);
+			foreach ($application->arguments  as $child) {
+				if (self::contains($child, $position)) { return true; }
+			}
+		}
+		return false;
+	}
+
+	/** Alpha-equivalent recipes collide regardless of authored variable names. */
+	public static function key(runtime_type_pattern $pattern): string {
+		if ($pattern instanceof runtime_callable_pattern) {
+			$callable = object_cast($pattern, runtime_callable_pattern::class);
+			$key = 'fn(';
+			foreach ($callable->parameters  as $parameter) {
+				$key .= self::key($parameter->type) . ($parameter->mode === passing_mode::reference ? '&' : '=')
+					. ($parameter->access === storage_access::read_only ? 'c' : 'w')
+					. ($parameter->variadic ? '...' : '') . ',';
+			}
+			return $key . ')->' . self::key($callable->return_type);
+		}
+		if ($pattern instanceof runtime_variable_pattern) {
+			$variable = object_cast($pattern, runtime_variable_pattern::class);
+			return '$' . $variable->position . ($variable->void_to_null ? ':void_to_null' : '');
+		}
+		if ($pattern instanceof runtime_concrete_pattern) {
+			$type = object_cast($pattern, runtime_concrete_pattern::class)->type;
+			return 't' . $type->type_id() . ($type->by_value() ? 'v' : '');
+		}
+		$application = object_cast($pattern, runtime_application_pattern::class);
+		$result = 'a' . $application->definition->definition_id() . '<';
+		foreach ($application->arguments  as $child) { $result .= self::key($child) . ','; }
+		return $result . '>';
+	}
+}

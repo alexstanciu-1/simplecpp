@@ -41,7 +41,7 @@ with tempfile.TemporaryDirectory(prefix='scpp-output-') as temporary:
     literals = [(b'""', b''), (b'"\\n\\r\\t\\0"', b'\n\r\t\0'),
                 (b'"\\\\\\\"\\$"', b'\\"$'), (b"'a\\nb'", b'a\\nb'),
                 (b"'a\\'b\\\\c'", b"a'b\\c"), (b"'$literal'", b'$literal'),
-                ('"é"'.encode(), 'é'.encode()), (b'"raw\0\xff"', b'raw\0\xff')]
+                ('"é"'.encode(), 'é'.encode()), ('"raw\0😀"'.encode(), 'raw\0😀'.encode())]
     for flavor, prefix in forms.items():
         source = work / 'single.scpp'
         source.write_bytes(prefix.encode() + b' echo 0; echo 9223372036854775807; '
@@ -53,7 +53,7 @@ with tempfile.TemporaryDirectory(prefix='scpp-output-') as temporary:
             args = [php, main, stage, flavor, source] + ([facts] if stage == 'prepare' else [])
             json.loads(success(run(*args)).stdout)
         before = cpp.read_bytes()
-        for bad in [b'echo 1, 2;', b'echo;', b'echo unknown;', b'echo 1.5;', b'echo true;',
+        for bad in [b'echo "\xff";', b'echo 1, 2;', b'echo;', b'echo unknown;', b'echo 1.5;', b'echo true;',
                     b'echo "\\x41";', b'echo "\\012";', b'echo "$name";', b'echo "\\q";',
                     b'echo 9223372036854775808;']:
             source.write_bytes(bad + b' return 8;')

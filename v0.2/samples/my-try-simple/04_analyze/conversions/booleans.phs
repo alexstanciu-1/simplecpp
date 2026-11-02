@@ -1,0 +1,7 @@
+// Layout counterpart: my-try/phpp/04_analyze/conversions/booleans.phs
+function sample_unit_039(): void
+{
+    $value int = 40;
+    sample_unit_040();
+    return;
+}

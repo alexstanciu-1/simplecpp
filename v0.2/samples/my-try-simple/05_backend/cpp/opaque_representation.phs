@@ -1,0 +1,7 @@
+// Layout counterpart: my-try/phpp/05_backend/cpp/opaque_representation.phs
+function sample_unit_170(): void
+{
+    $value int = 171;
+    sample_unit_171();
+    return;
+}

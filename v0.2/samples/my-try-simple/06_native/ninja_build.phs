@@ -1,0 +1,7 @@
+// Layout counterpart: my-try/phpp/06_native/ninja_build.phs
+function sample_unit_196(): void
+{
+    $value int = 197;
+    sample_unit_197();
+    return;
+}

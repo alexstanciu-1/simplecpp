@@ -1,0 +1,7 @@
+// Layout counterpart: my-try/phpp/04_analyze/prepare/data/enums.phs
+function sample_unit_070(): void
+{
+    $value int = 71;
+    sample_unit_071();
+    return;
+}

@@ -1,0 +1,7 @@
+// Layout counterpart: my-try/phpp/04_analyze/operators/indexing.phs
+function sample_unit_056(): void
+{
+    $value int = 57;
+    sample_unit_057();
+    return;
+}

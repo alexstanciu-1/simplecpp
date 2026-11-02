@@ -1,0 +1,128 @@
+// A confirmed customer demand with delivery and billing controls.
+// Draft values are mutable. Services retain validated copies, never caller handles.
+class SalesOrderLine {
+    public string $id = "";
+    public string $order_id = "";
+    public string $customer_id = "";
+    public string $item_code = "";
+    public string $warehouse = "";
+    public string $delivery_reference = "";
+    public int $ordered = 0;
+    public int $reserved = 0;
+    public int $shipped = 0;
+    public int $invoiced = 0;
+    public int $unit_price = 0;
+    public int $required_period = 0;
+    public bool $closed = false;
+    public bool $credit_released = false;
+
+    public function validate(): AccountingCheck {
+        if (!DocumentRules::text($this->id, 1, 40)) {
+            return accounting_failure("sales_order_line.id", "id must contain 1..40 printable bytes");
+        }
+        if (!DocumentRules::text($this->order_id, 1, 80)) {
+            return accounting_failure("sales_order_line.order_id", "order_id must contain 1..80 printable bytes");
+        }
+        if (!DocumentRules::text($this->customer_id, 1, 80)) {
+            return accounting_failure("sales_order_line.customer_id", "customer_id must contain 1..80 printable bytes");
+        }
+        if (!DocumentRules::text($this->item_code, 1, 80)) {
+            return accounting_failure("sales_order_line.item_code", "item_code must contain 1..80 printable bytes");
+        }
+        if (!DocumentRules::text($this->warehouse, 1, 80)) {
+            return accounting_failure("sales_order_line.warehouse", "warehouse must contain 1..80 printable bytes");
+        }
+        if (!DocumentRules::text($this->delivery_reference, 1, 80)) {
+            return accounting_failure("sales_order_line.delivery_reference", "delivery_reference must contain 1..80 printable bytes");
+        }
+        if (!DocumentRules::integer($this->ordered, 1, 1000000)) {
+            return accounting_failure("sales_order_line.ordered", "ordered must be in [1, 1000000]");
+        }
+        if (!DocumentRules::integer($this->reserved, 0, 1000000)) {
+            return accounting_failure("sales_order_line.reserved", "reserved must be in [0, 1000000]");
+        }
+        if (!DocumentRules::integer($this->shipped, 0, 1000000)) {
+            return accounting_failure("sales_order_line.shipped", "shipped must be in [0, 1000000]");
+        }
+        if (!DocumentRules::integer($this->invoiced, 0, 1000000)) {
+            return accounting_failure("sales_order_line.invoiced", "invoiced must be in [0, 1000000]");
+        }
+        if (!DocumentRules::integer($this->unit_price, 0, 1000000)) {
+            return accounting_failure("sales_order_line.unit_price", "unit_price must be in [0, 1000000]");
+        }
+        if (!DocumentRules::integer($this->required_period, 1, 1200)) {
+            return accounting_failure("sales_order_line.required_period", "required_period must be in [1, 1200]");
+        }
+        if ($this->shipped > $this->ordered) {
+            return accounting_failure("sales_order_line.shipment", "Shipment exceeds order");
+        }
+        if ($this->invoiced > $this->shipped) {
+            return accounting_failure("sales_order_line.billing", "Billing exceeds shipment");
+        }
+        if ($this->reserved > $this->ordered - $this->shipped) {
+            return accounting_failure("sales_order_line.reservation", "Reservation exceeds remaining demand");
+        }
+        return accounting_success();
+    }
+
+    public function unshipped_quantity(): int {
+        return $this->ordered - $this->shipped;
+    }
+
+    public function copy(): SalesOrderLine {
+        $snapshot SalesOrderLine = new SalesOrderLine();
+        $snapshot->id = $this->id;
+        $snapshot->order_id = $this->order_id;
+        $snapshot->customer_id = $this->customer_id;
+        $snapshot->item_code = $this->item_code;
+        $snapshot->warehouse = $this->warehouse;
+        $snapshot->delivery_reference = $this->delivery_reference;
+        $snapshot->ordered = $this->ordered;
+        $snapshot->reserved = $this->reserved;
+        $snapshot->shipped = $this->shipped;
+        $snapshot->invoiced = $this->invoiced;
+        $snapshot->unit_price = $this->unit_price;
+        $snapshot->required_period = $this->required_period;
+        $snapshot->closed = $this->closed;
+        $snapshot->credit_released = $this->credit_released;
+        return $snapshot;
+    }
+
+    public function differences(SalesOrderLine $other): vector<string> {
+        $fields vector<string> = [];
+        if ($this->id !== $other->id) { $fields[] = "id"; }
+        if ($this->order_id !== $other->order_id) { $fields[] = "order_id"; }
+        if ($this->customer_id !== $other->customer_id) { $fields[] = "customer_id"; }
+        if ($this->item_code !== $other->item_code) { $fields[] = "item_code"; }
+        if ($this->warehouse !== $other->warehouse) { $fields[] = "warehouse"; }
+        if ($this->delivery_reference !== $other->delivery_reference) { $fields[] = "delivery_reference"; }
+        if ($this->ordered !== $other->ordered) { $fields[] = "ordered"; }
+        if ($this->reserved !== $other->reserved) { $fields[] = "reserved"; }
+        if ($this->shipped !== $other->shipped) { $fields[] = "shipped"; }
+        if ($this->invoiced !== $other->invoiced) { $fields[] = "invoiced"; }
+        if ($this->unit_price !== $other->unit_price) { $fields[] = "unit_price"; }
+        if ($this->required_period !== $other->required_period) { $fields[] = "required_period"; }
+        if ($this->closed !== $other->closed) { $fields[] = "closed"; }
+        if ($this->credit_released !== $other->credit_released) { $fields[] = "credit_released"; }
+        return $fields;
+    }
+
+    public function describe(): string {
+        $text string = "SalesOrderLine\n";
+        $text .= "id=" . $this->id . "\n";
+        $text .= "order_id=" . $this->order_id . "\n";
+        $text .= "customer_id=" . $this->customer_id . "\n";
+        $text .= "item_code=" . $this->item_code . "\n";
+        $text .= "warehouse=" . $this->warehouse . "\n";
+        $text .= "delivery_reference=" . $this->delivery_reference . "\n";
+        $text .= "ordered=" . (string)$this->ordered . "\n";
+        $text .= "reserved=" . (string)$this->reserved . "\n";
+        $text .= "shipped=" . (string)$this->shipped . "\n";
+        $text .= "invoiced=" . (string)$this->invoiced . "\n";
+        $text .= "unit_price=" . (string)$this->unit_price . "\n";
+        $text .= "required_period=" . (string)$this->required_period . "\n";
+        $text .= "closed=" . DocumentRules::flag($this->closed) . "\n";
+        $text .= "credit_released=" . DocumentRules::flag($this->credit_released) . "\n";
+        return $text;
+    }
+}

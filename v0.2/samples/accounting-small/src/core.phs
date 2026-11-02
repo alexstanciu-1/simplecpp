@@ -1,0 +1,89 @@
+class AccountingCheck {
+    public bool $accepted = true;
+    public string $code = "ok";
+    public string $detail = "";
+
+    public function reject(string $code, string $detail): void {
+        $this->accepted = false;
+        $this->code = $code;
+        $this->detail = $detail;
+    }
+}
+
+function accounting_failure(string $code, string $detail): AccountingCheck {
+    $check AccountingCheck = new AccountingCheck();
+    $check->reject($code, $detail);
+    return $check;
+}
+
+function accounting_success(): AccountingCheck {
+    return new AccountingCheck();
+}
+
+enum AccountCategory: int32 {
+    case Asset = 1;
+    case Liability = 2;
+    case Equity = 3;
+    case Revenue = 4;
+    case Expense = 5;
+}
+
+class LedgerAccount {
+    public string $code = "";
+    public string $label = "";
+    public AccountCategory $category = AccountCategory::Asset;
+    public bool $active = true;
+    public int $debits = 0;
+    public int $credits = 0;
+
+    public function balance(): int {
+        return $this->debits - $this->credits;
+    }
+}
+
+class JournalLine {
+    public string $account_code = "";
+    public string $memo = "";
+    public int $debit = 0;
+    public int $credit = 0;
+}
+
+class JournalEntry {
+    public string $reference = "";
+    public string $origin = "";
+    public int $period = 1;
+    public $lines vector<JournalLine> = [];
+
+    public function add_debit(string $account_code, int $amount, string $memo): void {
+        $line JournalLine = new JournalLine();
+        $line->account_code = $account_code;
+        $line->debit = $amount;
+        $line->memo = $memo;
+        $this->lines[] = $line;
+    }
+
+    public function add_credit(string $account_code, int $amount, string $memo): void {
+        $line JournalLine = new JournalLine();
+        $line->account_code = $account_code;
+        $line->credit = $amount;
+        $line->memo = $memo;
+        $this->lines[] = $line;
+    }
+}
+
+class TrialBalanceRow {
+    public string $account_code = "";
+    public string $label = "";
+    public int $debit = 0;
+    public int $credit = 0;
+}
+
+class TrialBalance {
+    public $rows vector<TrialBalanceRow> = [];
+    public int $debit_total = 0;
+    public int $credit_total = 0;
+
+    public function is_balanced(): bool {
+        return $this->debit_total === $this->credit_total;
+    }
+}

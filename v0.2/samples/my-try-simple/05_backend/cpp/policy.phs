@@ -1,0 +1,7 @@
+// Layout counterpart: my-try/phpp/05_backend/cpp/policy.phs
+function sample_unit_173(): void
+{
+    $value int = 174;
+    sample_unit_174();
+    return;
+}

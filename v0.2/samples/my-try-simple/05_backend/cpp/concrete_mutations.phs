@@ -1,0 +1,7 @@
+// Layout counterpart: my-try/phpp/05_backend/cpp/concrete_mutations.phs
+function sample_unit_154(): void
+{
+    $value int = 155;
+    sample_unit_155();
+    return;
+}

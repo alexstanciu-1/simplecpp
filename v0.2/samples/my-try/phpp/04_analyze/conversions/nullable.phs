@@ -1,0 +1,64 @@
+
+/* Nullable role queries and bounded value-boundary policy; no spelling-based admission. */
+namespace scpp\compiler;
+
+final class Nullable_Conversions {
+	public static function is_null(canonical_type_use $type): bool {
+		return Type_Queries::canonical($type)->family() === type_family::null_sentinel;
+	}
+
+	public static function payload(canonical_type_use $type): nullable<canonical_type_use> {
+		$canonical = Type_Queries::canonical($type);
+		$definition = $canonical->definition();
+		if (!($definition instanceof nullable_semantics)) { return null; }
+		$role = object_cast($definition, nullable_semantics::class);
+		return $role->payload_type(object_cast($canonical, applied_template_type::class));
+	}
+
+	/** Value boundaries and presence do not require a payload truthiness contract. */
+	public static function require_value_payload(canonical_type_use $payload): void {
+		// Formation has already completed payload capabilities. Copying and consuming
+		// remain the value-boundary owner's responsibility, not a nullable type list.
+		$query = new Capability_Facts();
+		if (!$query->has_capability($payload, generic_contract::value_storable)) {
+			throw new \scpp_portability_runtime_exception('S2S nullable value boundary requires value_storable');
+		}
+	}
+
+	/** Presence composes only exact payload identity or already-admitted handle ancestry. */
+	public static function decide(canonical_type_use $source, canonical_type_use $target, conversion_context $context, nullable<conversion_relationship_query> $relationships = null): conversion_decision {
+		$source_payload = self::payload($source);
+		$target_payload = self::payload($target);
+		if ((($source_payload !== null) && $source->by_value())
+			|| (($target_payload !== null) && $target->by_value())) {
+			throw new \scpp_portability_runtime_exception('S2S nullable boundaries do not support storage modifiers');
+		}
+		if ($source_payload !== null) { self::require_value_payload($source_payload); }
+		if ($target_payload !== null) { self::require_value_payload($target_payload); }
+		if (self::is_null($source) && ($target_payload !== null)) {
+			return Conversion_Preparation::operation($source, $target, $context, conversion_operation::nullable_empty);
+		}
+		if ($source->matches($target)) {
+			return Conversion_Preparation::operation($source, $target, $context, conversion_operation::identity);
+		}
+		$actual = $source_payload ?? $source;
+		$expected = $target_payload ?? $target;
+		$payload_conversion nullable<conversion_decision> = null;
+		if (!$actual->matches($expected)) {
+			if (!Type_Queries::is_nominal_handle($actual) || !Type_Queries::is_nominal_handle($expected)) {
+				throw new \scpp_portability_runtime_exception('S2S nullable boundary requires the same payload type or a proven object upcast');
+			}
+			$payload_conversion = Ownership_Conversions::decide($actual, $expected, $context, $relationships);
+		}
+		$operation = conversion_operation::nullable_extract;
+		if ($target_payload !== null) {
+			$operation = $source_payload === null ? conversion_operation::nullable_wrap : conversion_operation::nullable_map;
+		}
+		elseif ($context === conversion_context::explicit_cast) {
+			$operation = conversion_operation::explicit_runtime_cast;
+		}
+		$decision = Conversion_Preparation::operation($source, $target, $context, $operation);
+		$decision->payload_conversion = $payload_conversion;
+		return $decision;
+	}
+}

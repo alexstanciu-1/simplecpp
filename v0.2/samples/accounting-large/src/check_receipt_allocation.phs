@@ -1,0 +1,64 @@
+function sample_receipt_allocation(): ReceiptAllocation {
+    $draft ReceiptAllocation = new ReceiptAllocation();
+    $draft->id = "ALLOC-001";
+    $draft->receipt_id = "RCPT-001";
+    $draft->customer_id = "CUS-001";
+    $draft->invoice_id = "INV-001";
+    $draft->bank_account = "bank";
+    $draft->operator_name = "cashier";
+    $draft->receipt_amount = 10000;
+    $draft->invoice_open = 12000;
+    $draft->allocated_amount = 7000;
+    $draft->discount_allowed = 0;
+    $draft->period = 1;
+    $draft->sequence = 1;
+    $draft->confirmed = true;
+    $draft->reversed = false;
+    return $draft;
+}
+
+function check_receipt_allocation(WorkloadChecks $checks): void {
+    $draft ReceiptAllocation = sample_receipt_allocation();
+    $checks->accepted($draft->validate(), "receipt_allocation valid draft");
+    $checks->equal($draft->unapplied_cash(), 3000, "receipt_allocation independent business result");
+    $copy ReceiptAllocation = $draft->copy();
+    $checks->equal(count($draft->differences($copy)), 0, "receipt_allocation snapshot equivalence");
+    $checks->expect($draft->describe() === $copy->describe(), "receipt_allocation snapshot report");
+    $copy = $draft->copy();
+    $copy->id = "";
+    $checks->rejected($copy->validate(), "receipt_allocation.id", "receipt_allocation id required");
+    $copy = $draft->copy();
+    $copy->id = "bad\nrow";
+    $checks->rejected($copy->validate(), "receipt_allocation.id", "receipt_allocation id control");
+    $copy = $draft->copy();
+    $copy->id = DocumentRules::repeat("x", 41);
+    $checks->rejected($copy->validate(), "receipt_allocation.id", "receipt_allocation id width");
+    $copy = $draft->copy();
+    $copy->id = "ALLOC-001-changed";
+    $checks->expect($draft->id === "ALLOC-001", "receipt_allocation id snapshot isolation");
+    $changes_id vector<string> = $draft->differences($copy);
+    $checks->equal(count($changes_id), 1, "receipt_allocation id change count");
+    if (count($changes_id) === 1) {
+        $checks->expect($changes_id[0] === "id", "receipt_allocation id change identity");
+    }
+    $copy = $draft->copy();
+    $copy->receipt_amount = -1;
+    $checks->rejected($copy->validate(), "receipt_allocation.receipt_amount", "receipt_allocation receipt_amount below");
+    $copy = $draft->copy();
+    $copy->receipt_amount = 1000000001;
+    $checks->rejected($copy->validate(), "receipt_allocation.receipt_amount", "receipt_allocation receipt_amount above");
+    $copy = $draft->copy();
+    $copy->invoice_open = -1;
+    $checks->rejected($copy->validate(), "receipt_allocation.invoice_open", "receipt_allocation invoice_open below");
+    $copy = $draft->copy();
+    $copy->invoice_open = 1000000001;
+    $checks->rejected($copy->validate(), "receipt_allocation.invoice_open", "receipt_allocation invoice_open above");
+    $copy = $draft->copy();
+    $copy->confirmed = false;
+    $checks->expect($draft->confirmed === true, "receipt_allocation confirmed snapshot isolation");
+    $changes_confirmed vector<string> = $draft->differences($copy);
+    $checks->equal(count($changes_confirmed), 1, "receipt_allocation confirmed change count");
+    if (count($changes_confirmed) === 1) {
+        $checks->expect($changes_confirmed[0] === "confirmed", "receipt_allocation confirmed change identity");
+    }
+}

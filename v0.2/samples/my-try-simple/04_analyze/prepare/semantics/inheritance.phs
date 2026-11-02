@@ -1,0 +1,7 @@
+// Layout counterpart: my-try/phpp/04_analyze/prepare/semantics/inheritance.phs
+function sample_unit_109(): void
+{
+    $value int = 110;
+    sample_unit_110();
+    return;
+}

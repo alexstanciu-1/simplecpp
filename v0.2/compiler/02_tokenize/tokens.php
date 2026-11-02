@@ -3,10 +3,9 @@
 declare(strict_types=1);
 namespace scpp\compiler;
 
-/** Byte scanner adapted from my-try's stage worker, with per-source flavor rules. */
+/** UTF-8 bulk lexer for the PHP bootstrap; preserves byte spans and flavor-specific lexical rules. */
 final class Tokenizer
 {
-	private int $offset /** uint32; byte position including EOF */ = 0;
 	private const PUNCTUATION /** list<token_kind> */ = [
 		token_kind::ellipsis,
 		token_kind::power_assign,
@@ -66,49 +65,93 @@ final class Tokenizer
 	];
 
 	private readonly source_file $source;
-	/** First-byte buckets preserve longest-match order; immutable after worker construction. */
-	private readonly array $punctuation /** array<string,list<array{string,token_kind}>> */;
+	/** Built once per process; no source state is retained in these lookup tables. */
+	private static array $patterns /** array<string,string>; flavor -> PCRE pattern */ = [];
+	private static array $punctuation /** array<string,token_kind> */ = [];
 
 	public function __construct(source_file $source)
 	{
 		$this->source = $source;
-		$punctuation = [];
-		foreach (self::PUNCTUATION as $kind) {
-			$spelling = $kind->label();
-			$punctuation[$spelling[0]][] = [$spelling, $kind];
-		}
-		$this->punctuation = $punctuation;
 	}
 
-	/** Publish only a complete generation; failures cannot expose partial tokens. */
+	/** Publish only a complete generation; UTF-8 or lexical failures expose no partial tokens. */
 	public function tokenize(): token_list
 	{
-		$this->offset = 0;
-		$tokens = [];
-		while ($this->offset < strlen($this->source->content)) {
-			$this->skip_trivia();
-			if ($this->peek() === '') {
-				break;
+		$source = $this->source;
+		$pattern = self::pattern($source->flavor);
+		$result = preg_match_all($pattern, $source->content, $matches, PREG_OFFSET_CAPTURE);
+		if ($result === false) {
+			if (preg_last_error() === PREG_BAD_UTF8_ERROR) {
+				throw new diagnostic($source, self::invalid_utf8_offset($source->content), 'Invalid UTF-8 source');
 			}
-			$start = $this->offset;
-			$kind = $this->scan_token();
-			$length = $this->offset - $start;
+			throw new diagnostic($source, 0, 'Tokenizer regular expression failed: ' . preg_last_error_msg());
+		}
+		$tokens = [];
+		$end = 0;
+		foreach ($matches[0] as [$word, $start])
+		{
+			if ($start !== $end) {
+				throw new diagnostic($source, $end, 'Unsupported token');
+			}
+			$length = strlen($word);
+			$end = $start + $length;
+			$first = $word[0];
+			if (str_contains(" \t\r\n", $first) || str_starts_with($word, '//')
+				|| (($source->flavor === flavor::php) && ($first === '#') && !str_starts_with($word, '#['))) {
+				continue;
+			}
+			if (str_starts_with($word, '/*')) {
+				if (($length < 4) || !str_ends_with($word, '*/')) { throw new diagnostic($source, $start, 'Unterminated block comment'); }
+				continue;
+			}
+			if (($first === '"') || ($first === "'")) {
+				if (!self::closed_quote($word)) { throw new diagnostic($source, $start, 'Unterminated quoted string'); }
+				$kind = $first === '"' ? token_kind::double_string : token_kind::single_string;
+			}
+			elseif (($first === '$') && ($source->flavor === flavor::php)) {
+				if ($length === 1) { throw new diagnostic($source, $start, 'Expected variable name'); }
+				$kind = token_kind::variable;
+			}
+			elseif ((($first >= '0') && ($first <= '9')) || (($first === '.') && ($length > 1) && ($word[1] >= '0') && ($word[1] <= '9'))) {
+				// The regex retains incomplete exponents so errors stay anchored at the number's start.
+				$last = $word[$length - 1];
+				if (str_contains('eE+-', $last)) {
+					throw new diagnostic($source, $start, 'Expected exponent digits');
+				}
+				$next = $source->content[$end] ?? '';
+				if (($next === '.') || self::letter($next)) {
+					throw new diagnostic($source, $start, 'Unsupported numeric literal');
+				}
+				$kind = strpbrk($word, '.eE') === false ? token_kind::integer : token_kind::floating;
+			}
+			elseif (isset(self::$punctuation[$word]) && (($first !== '#') || ($source->flavor === flavor::php))) {
+				$kind = self::$punctuation[$word];
+			}
+			elseif (self::letter($first) || (($first === '$') && ($source->flavor === flavor::js))) {
+				$kind = $source->flavor->word_kind($word);
+			}
+			else {
+				throw new diagnostic($source, $start, 'Unsupported token');
+			}
 			if ($length > 16777215) {
-				throw new diagnostic($this->source, $start, 'Token length exceeds 24-bit capacity');
+				throw new diagnostic($source, $start, 'Token length exceeds 24-bit capacity');
 			}
 			$tokens[] = new token($start, $length, $kind);
 		}
-		return new token_list($this->source, $tokens);
+		if ($end !== strlen($source->content)) {
+			throw new diagnostic($source, $end, 'Unsupported token');
+		}
+		return new token_list($source, $tokens);
 	}
 
-	private function peek(): string
+	/** A failed quote match consumes the remaining source once, avoiding repeated suffix scans. */
+	private static function closed_quote(string $word): bool
 	{
-		return $this->source->content[$this->offset] ?? '';
-	}
-
-	private function starts(string $text): bool
-	{
-		return substr_compare($this->source->content, $text, $this->offset, strlen($text)) === 0;
+		$last = strlen($word) - 1;
+		if (($last === 0) || ($word[$last] !== $word[0])) { return false; }
+		$index = $last - 1;
+		while (($index > 0) && ($word[$index] === '\\')) { $index--; }
+		return (($last - 1 - $index) % 2) === 0;
 	}
 
 	private static function letter(string $byte): bool
@@ -116,130 +159,59 @@ final class Tokenizer
 		return ($byte === '_') || (($byte >= 'a') && ($byte <= 'z')) || (($byte >= 'A') && ($byte <= 'Z'));
 	}
 
-	private static function digit(string $byte): bool
+	/** Match complete lexemes, trivia and error openers; the final alternative consumes unsupported code points. */
+	private static function pattern(flavor $flavor): string
 	{
-		return ($byte !== '') && (ord($byte) >= 48) && (ord($byte) <= 57);
+		if (isset(self::$patterns[$flavor->value])) { return self::$patterns[$flavor->value]; }
+		$parts = [];
+		foreach (self::PUNCTUATION as $kind) {
+			$spelling = $kind->label();
+			self::$punctuation[$spelling] = $kind;
+			if (($kind !== token_kind::attribute) || ($flavor === flavor::php)) {
+				$parts[] = preg_quote($spelling, '~');
+			}
+		}
+		$trivia = '[ \t\r\n]++|//[^\r\n]*+|/\*[^*]*+(?:\*(?!/)[^*]*+)*+\*/|/\*[\s\S]*+\z';
+		if ($flavor === flavor::php) { $trivia .= '|\#(?!\[)[^\r\n]*+'; }
+		$strings = <<<'REGEX'
+"[^"\\]*+(?:\\[\s\S][^"\\]*+)*+"|'[^'\\]*+(?:\\[\s\S][^'\\]*+)*+'
+REGEX;
+		$names = match ($flavor) {
+			flavor::php => '\$[A-Za-z_][A-Za-z_0-9]*+|[A-Za-z_][A-Za-z_0-9]*+',
+			flavor::cpp => '[A-Za-z_][A-Za-z_0-9]*+',
+			flavor::js => '[A-Za-z_$][A-Za-z_$0-9]*+',
+		};
+		$numbers = '(?:[0-9]++(?:\.[0-9]*+)?|\.[0-9]++)(?:[eE][+-]?[0-9]*+)?';
+		return self::$patterns[$flavor->value] = '~(?:' . $trivia . '|' . $strings . '|' . $names . '|'
+			. $numbers . '|' . implode('|', $parts) . '|["\'][\s\S]*+\z|[\s\S])~u';
 	}
 
-	private function name_start(string $byte): bool
+	/** Slow failure-only locator: report the start of the first invalid UTF-8 sequence, not a PCRE offset guess. */
+	private static function invalid_utf8_offset(string $text): int /** uint32; byte offset */
 	{
-		return self::letter($byte) || (($this->source->flavor === flavor::js) && ($byte === '$'));
-	}
-
-	/** Trivia leaves original byte gaps intact; block comments do not nest. */
-	private function skip_trivia(): void
-	{
-		while ($this->peek() !== '') {
-			if (str_contains(" \t\r\n", $this->peek())) {
-				$this->offset++;
-				continue;
+		$size = strlen($text);
+		for ($offset = 0; $offset < $size;)
+		{
+			$lead = ord($text[$offset]);
+			if ($lead < 0x80) { $offset++; continue; }
+			$length = match (true) {
+				$lead >= 0xC2 && $lead <= 0xDF => 2,
+				$lead >= 0xE0 && $lead <= 0xEF => 3,
+				$lead >= 0xF0 && $lead <= 0xF4 => 4,
+				default => 0,
+			};
+			if (($length === 0) || ($offset + $length > $size)) { return $offset; }
+			for ($index = 1; $index < $length; $index++) {
+				$byte = ord($text[$offset + $index]);
+				if (($byte < 0x80) || ($byte > 0xBF)) { return $offset; }
 			}
-			if ($this->starts('//') || (($this->source->flavor === flavor::php) && $this->starts('#') && !$this->starts('#['))) {
-				while (($this->peek() !== '') && ($this->peek() !== "\r") && ($this->peek() !== "\n")) {
-					$this->offset++;
-				}
-				continue;
+			$second = ord($text[$offset + 1]);
+			if ((($lead === 0xE0) && ($second < 0xA0)) || (($lead === 0xED) && ($second > 0x9F))
+				|| (($lead === 0xF0) && ($second < 0x90)) || (($lead === 0xF4) && ($second > 0x8F))) {
+				return $offset;
 			}
-			if ($this->starts('/*')) {
-				$end = strpos($this->source->content, '*/', $this->offset + 2);
-				if ($end === false) {
-					throw new diagnostic($this->source, $this->offset, 'Unterminated block comment');
-				}
-				$this->offset = $end + 2;
-				continue;
-			}
-			break;
+			$offset += $length;
 		}
-	}
-
-	/** Classify spelling only; no decoding, symbol lookup or PHP runtime tokenization. */
-	private function scan_token(): token_kind
-	{
-		$start = $this->offset;
-		$byte = $this->peek();
-		if (($byte === '$') && ($this->source->flavor === flavor::php)) {
-			$this->offset++;
-			if (!self::letter($this->peek())) {
-				throw new diagnostic($this->source, $start, 'Expected variable name');
-			}
-			while (self::letter($this->peek()) || self::digit($this->peek())) {
-				$this->offset++;
-			}
-			return token_kind::variable;
-		}
-		if ($this->name_start($byte)) {
-			while ($this->name_start($this->peek()) || self::digit($this->peek())) {
-				$this->offset++;
-			}
-			return $this->source->flavor->word_kind(substr($this->source->content, $start, $this->offset - $start));
-		}
-		if (($byte === "'") || ($byte === '"')) {
-			return $this->quoted($byte);
-		}
-		if (self::digit($byte) || (($byte === '.') && self::digit($this->source->content[$start + 1] ?? ''))) {
-			return $this->number();
-		}
-		if (($byte !== '#') || ($this->source->flavor === flavor::php)) {
-			foreach ($this->punctuation[$byte] ?? [] as [$spelling, $kind]) {
-				if ($this->starts($spelling)) {
-					$this->offset += strlen($spelling);
-					return $kind;
-				}
-			}
-		}
-		throw new diagnostic($this->source, $start, 'Unsupported token');
-	}
-
-	/** Preserve quotes and escapes verbatim, including arbitrary interior bytes. */
-	private function quoted(string $quote): token_kind
-	{
-		$start = $this->offset++;
-		while ($this->peek() !== '') {
-			$byte = $this->peek();
-			$this->offset++;
-			if ($byte === $quote) {
-				return $quote === "'" ? token_kind::single_string : token_kind::double_string;
-			}
-			if (($byte === '\\') && ($this->peek() !== '')) {
-				$this->offset++;
-			}
-		}
-		throw new diagnostic($this->source, $start, 'Unterminated quoted string');
-	}
-
-	private function digits(): void
-	{
-		while (self::digit($this->peek())) {
-			$this->offset++;
-		}
-	}
-
-	/** Keep signs separate except inside a decimal exponent; reject malformed suffixes. */
-	private function number(): token_kind
-	{
-		$start = $this->offset;
-		$kind = token_kind::integer;
-		$this->digits();
-		if ($this->peek() === '.') {
-			$kind = token_kind::floating;
-			$this->offset++;
-			$this->digits();
-		}
-		if (($this->peek() === 'e') || ($this->peek() === 'E')) {
-			$kind = token_kind::floating;
-			$this->offset++;
-			if (($this->peek() === '+') || ($this->peek() === '-')) {
-				$this->offset++;
-			}
-			$exponent = $this->offset;
-			$this->digits();
-			if ($exponent === $this->offset) {
-				throw new diagnostic($this->source, $start, 'Expected exponent digits');
-			}
-		}
-		if (self::letter($this->peek()) || ($this->peek() === '.')) {
-			throw new diagnostic($this->source, $start, 'Unsupported numeric literal');
-		}
-		return $kind;
+		throw new \LogicException('PCRE reported invalid UTF-8 for valid source');
 	}
 }

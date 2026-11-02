@@ -1,0 +1,122 @@
+// Approved departmental spending ceiling with commitment release.
+// Draft values are mutable. Services retain validated copies, never caller handles.
+class DepartmentBudget {
+    public string $id = "";
+    public string $department = "";
+    public string $cost_center = "";
+    public string $expense_account = "";
+    public string $owner = "";
+    public string $version_label = "";
+    public int $approved_amount = 0;
+    public int $actual_amount = 0;
+    public int $committed_amount = 0;
+    public int $transferred_in = 0;
+    public int $transferred_out = 0;
+    public int $period = 0;
+    public bool $approved = false;
+    public bool $frozen = false;
+
+    public function validate(): AccountingCheck {
+        if (!DocumentRules::text($this->id, 1, 40)) {
+            return accounting_failure("department_budget.id", "id must contain 1..40 printable bytes");
+        }
+        if (!DocumentRules::text($this->department, 1, 80)) {
+            return accounting_failure("department_budget.department", "department must contain 1..80 printable bytes");
+        }
+        if (!DocumentRules::text($this->cost_center, 1, 80)) {
+            return accounting_failure("department_budget.cost_center", "cost_center must contain 1..80 printable bytes");
+        }
+        if (!DocumentRules::text($this->expense_account, 1, 80)) {
+            return accounting_failure("department_budget.expense_account", "expense_account must contain 1..80 printable bytes");
+        }
+        if (!DocumentRules::text($this->owner, 1, 80)) {
+            return accounting_failure("department_budget.owner", "owner must contain 1..80 printable bytes");
+        }
+        if (!DocumentRules::text($this->version_label, 1, 80)) {
+            return accounting_failure("department_budget.version_label", "version_label must contain 1..80 printable bytes");
+        }
+        if (!DocumentRules::integer($this->approved_amount, 0, 1000000000)) {
+            return accounting_failure("department_budget.approved_amount", "approved_amount must be in [0, 1000000000]");
+        }
+        if (!DocumentRules::integer($this->actual_amount, 0, 1000000000)) {
+            return accounting_failure("department_budget.actual_amount", "actual_amount must be in [0, 1000000000]");
+        }
+        if (!DocumentRules::integer($this->committed_amount, 0, 1000000000)) {
+            return accounting_failure("department_budget.committed_amount", "committed_amount must be in [0, 1000000000]");
+        }
+        if (!DocumentRules::integer($this->transferred_in, 0, 1000000000)) {
+            return accounting_failure("department_budget.transferred_in", "transferred_in must be in [0, 1000000000]");
+        }
+        if (!DocumentRules::integer($this->transferred_out, 0, 1000000000)) {
+            return accounting_failure("department_budget.transferred_out", "transferred_out must be in [0, 1000000000]");
+        }
+        if (!DocumentRules::integer($this->period, 1, 1200)) {
+            return accounting_failure("department_budget.period", "period must be in [1, 1200]");
+        }
+        if ($this->transferred_out > $this->approved_amount + $this->transferred_in) {
+            return accounting_failure("department_budget.transfer", "Transfer exceeds available authorization");
+        }
+        return accounting_success();
+    }
+
+    public function available_amount(): int {
+        return $this->approved_amount + $this->transferred_in - $this->transferred_out - $this->actual_amount - $this->committed_amount;
+    }
+
+    public function copy(): DepartmentBudget {
+        $snapshot DepartmentBudget = new DepartmentBudget();
+        $snapshot->id = $this->id;
+        $snapshot->department = $this->department;
+        $snapshot->cost_center = $this->cost_center;
+        $snapshot->expense_account = $this->expense_account;
+        $snapshot->owner = $this->owner;
+        $snapshot->version_label = $this->version_label;
+        $snapshot->approved_amount = $this->approved_amount;
+        $snapshot->actual_amount = $this->actual_amount;
+        $snapshot->committed_amount = $this->committed_amount;
+        $snapshot->transferred_in = $this->transferred_in;
+        $snapshot->transferred_out = $this->transferred_out;
+        $snapshot->period = $this->period;
+        $snapshot->approved = $this->approved;
+        $snapshot->frozen = $this->frozen;
+        return $snapshot;
+    }
+
+    public function differences(DepartmentBudget $other): vector<string> {
+        $fields vector<string> = [];
+        if ($this->id !== $other->id) { $fields[] = "id"; }
+        if ($this->department !== $other->department) { $fields[] = "department"; }
+        if ($this->cost_center !== $other->cost_center) { $fields[] = "cost_center"; }
+        if ($this->expense_account !== $other->expense_account) { $fields[] = "expense_account"; }
+        if ($this->owner !== $other->owner) { $fields[] = "owner"; }
+        if ($this->version_label !== $other->version_label) { $fields[] = "version_label"; }
+        if ($this->approved_amount !== $other->approved_amount) { $fields[] = "approved_amount"; }
+        if ($this->actual_amount !== $other->actual_amount) { $fields[] = "actual_amount"; }
+        if ($this->committed_amount !== $other->committed_amount) { $fields[] = "committed_amount"; }
+        if ($this->transferred_in !== $other->transferred_in) { $fields[] = "transferred_in"; }
+        if ($this->transferred_out !== $other->transferred_out) { $fields[] = "transferred_out"; }
+        if ($this->period !== $other->period) { $fields[] = "period"; }
+        if ($this->approved !== $other->approved) { $fields[] = "approved"; }
+        if ($this->frozen !== $other->frozen) { $fields[] = "frozen"; }
+        return $fields;
+    }
+
+    public function describe(): string {
+        $text string = "DepartmentBudget\n";
+        $text .= "id=" . $this->id . "\n";
+        $text .= "department=" . $this->department . "\n";
+        $text .= "cost_center=" . $this->cost_center . "\n";
+        $text .= "expense_account=" . $this->expense_account . "\n";
+        $text .= "owner=" . $this->owner . "\n";
+        $text .= "version_label=" . $this->version_label . "\n";
+        $text .= "approved_amount=" . (string)$this->approved_amount . "\n";
+        $text .= "actual_amount=" . (string)$this->actual_amount . "\n";
+        $text .= "committed_amount=" . (string)$this->committed_amount . "\n";
+        $text .= "transferred_in=" . (string)$this->transferred_in . "\n";
+        $text .= "transferred_out=" . (string)$this->transferred_out . "\n";
+        $text .= "period=" . (string)$this->period . "\n";
+        $text .= "approved=" . DocumentRules::flag($this->approved) . "\n";
+        $text .= "frozen=" . DocumentRules::flag($this->frozen) . "\n";
+        return $text;
+    }
+}

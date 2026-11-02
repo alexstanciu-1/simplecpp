@@ -13,10 +13,16 @@ enum change_status: int
 }
 
 /** Owns the selected graph; entry references a module owned by modules. */
-final readonly class compilation_session
+final class compilation_session
 {
-	public array $modules /** array<string,module>; native owning index */;
-	public module $entry; /** Native non-owning reference into modules. */
+	public readonly array $modules /** array<string,module>; native owning index */;
+	public readonly module $entry; /** Native non-owning reference into modules. */
+
+	/** Previous frontend generation owns replaced/removed roots; unchanged roots may be shared. */
+	public ?compilation_session $previous = null;
+	/** Null until the entire frontend generation has completed successfully. */
+	public ?global_symbols $symbols = null;
+	public array $removed_sources /** list<source_unit>; removed records reference old ASTs */ = [];
 
 	public function __construct(array $modules /** array<string,module> */, module $entry)
 	{
@@ -93,7 +99,7 @@ final class source_unit
 	public change_status $status = change_status::none;
 	public int $mtime /** int64; filesystem timestamp in seconds */ = 0;
 	public int $size /** uint64; file size in bytes */ = 0;
-	/** Owned completed frontend result; null until parsing/collection succeeds, or always null for native inputs. */
+	/** Retained frontend root; unchanged generations share this reference. Null before collection/native inputs. */
 	public ?ast_file_node $ast = null;
 
 	public function __construct(module $module, string $path, flavor $flavor)

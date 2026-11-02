@@ -1,0 +1,7 @@
+// Layout counterpart: my-try/phpp/04_analyze/conversions/integers.phs
+function sample_unit_042(): void
+{
+    $value int = 43;
+    sample_unit_043();
+    return;
+}

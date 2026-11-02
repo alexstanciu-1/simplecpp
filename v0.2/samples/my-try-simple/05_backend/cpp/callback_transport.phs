@@ -1,0 +1,7 @@
+// Layout counterpart: my-try/phpp/05_backend/cpp/callback_transport.phs
+function sample_unit_148(): void
+{
+    $value int = 149;
+    sample_unit_149();
+    return;
+}

@@ -62,6 +62,11 @@ Read [the deferred dependency work](../specs/planning/dependency_artifacts_debt.
 mtime and size and reuses only an unchanged, intact emitted bundle; there is no partial AST
 or source-level reuse. See the module guide for the change-detection boundary.
 
+Read [incremental frontend generations](docs/incremental_frontend.md) before changing
+frontend reuse. Unchanged AST/token objects are shared between retained sessions;
+never mutate their duplicate chains or prepared facts during frontend/index updates.
+Symbol handles are canonical string keys resolved through the selected publication.
+
 ## Data and processing ownership
 
 Keep one `ast_file_node` per frontend result. Prepared facts belong to their owning

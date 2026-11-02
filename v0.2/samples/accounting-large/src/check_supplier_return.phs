@@ -1,0 +1,64 @@
+function sample_supplier_return(): SupplierReturn {
+    $draft SupplierReturn = new SupplierReturn();
+    $draft->id = "RTV-001";
+    $draft->supplier_id = "SUP-001";
+    $draft->receipt_id = "GR-001";
+    $draft->item_code = "PART-A";
+    $draft->reason = "inspection failure";
+    $draft->carrier_reference = "SHIP-RETURN";
+    $draft->authorized_quantity = 4;
+    $draft->dispatched_quantity = 3;
+    $draft->credited_quantity = 1;
+    $draft->unit_cost = 500;
+    $draft->period = 1;
+    $draft->restocking_fee = 50;
+    $draft->approved = true;
+    $draft->closed = false;
+    return $draft;
+}
+
+function check_supplier_return(WorkloadChecks $checks): void {
+    $draft SupplierReturn = sample_supplier_return();
+    $checks->accepted($draft->validate(), "supplier_return valid draft");
+    $checks->equal($draft->credit_due(), 1000, "supplier_return independent business result");
+    $copy SupplierReturn = $draft->copy();
+    $checks->equal(count($draft->differences($copy)), 0, "supplier_return snapshot equivalence");
+    $checks->expect($draft->describe() === $copy->describe(), "supplier_return snapshot report");
+    $copy = $draft->copy();
+    $copy->id = "";
+    $checks->rejected($copy->validate(), "supplier_return.id", "supplier_return id required");
+    $copy = $draft->copy();
+    $copy->id = "bad\nrow";
+    $checks->rejected($copy->validate(), "supplier_return.id", "supplier_return id control");
+    $copy = $draft->copy();
+    $copy->id = DocumentRules::repeat("x", 41);
+    $checks->rejected($copy->validate(), "supplier_return.id", "supplier_return id width");
+    $copy = $draft->copy();
+    $copy->id = "RTV-001-changed";
+    $checks->expect($draft->id === "RTV-001", "supplier_return id snapshot isolation");
+    $changes_id vector<string> = $draft->differences($copy);
+    $checks->equal(count($changes_id), 1, "supplier_return id change count");
+    if (count($changes_id) === 1) {
+        $checks->expect($changes_id[0] === "id", "supplier_return id change identity");
+    }
+    $copy = $draft->copy();
+    $copy->authorized_quantity = 0;
+    $checks->rejected($copy->validate(), "supplier_return.authorized_quantity", "supplier_return authorized_quantity below");
+    $copy = $draft->copy();
+    $copy->authorized_quantity = 1000001;
+    $checks->rejected($copy->validate(), "supplier_return.authorized_quantity", "supplier_return authorized_quantity above");
+    $copy = $draft->copy();
+    $copy->dispatched_quantity = -1;
+    $checks->rejected($copy->validate(), "supplier_return.dispatched_quantity", "supplier_return dispatched_quantity below");
+    $copy = $draft->copy();
+    $copy->dispatched_quantity = 1000001;
+    $checks->rejected($copy->validate(), "supplier_return.dispatched_quantity", "supplier_return dispatched_quantity above");
+    $copy = $draft->copy();
+    $copy->approved = false;
+    $checks->expect($draft->approved === true, "supplier_return approved snapshot isolation");
+    $changes_approved vector<string> = $draft->differences($copy);
+    $checks->equal(count($changes_approved), 1, "supplier_return approved change count");
+    if (count($changes_approved) === 1) {
+        $checks->expect($changes_approved[0] === "approved", "supplier_return approved change identity");
+    }
+}

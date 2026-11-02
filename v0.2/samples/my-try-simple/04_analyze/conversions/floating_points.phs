@@ -1,0 +1,7 @@
+// Layout counterpart: my-try/phpp/04_analyze/conversions/floating_points.phs
+function sample_unit_041(): void
+{
+    $value int = 42;
+    sample_unit_042();
+    return;
+}

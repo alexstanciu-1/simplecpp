@@ -1,0 +1,8 @@
+
+/*
+ * Role: compile and execute emitted LLVM using the configured Clang.
+ * Call map: Host_Report / tests -> Native_Runner::run -> process; dump -> dump_streams.
+ */
+namespace scpp\compiler;
+
+

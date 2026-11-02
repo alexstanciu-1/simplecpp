@@ -1,0 +1,7 @@
+// Layout counterpart: my-try/phpp/04_analyze/prepare/data/instance_requests.phs
+function sample_unit_071(): void
+{
+    $value int = 72;
+    sample_unit_072();
+    return;
+}

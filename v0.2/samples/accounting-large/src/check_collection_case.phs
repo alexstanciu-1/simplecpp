@@ -1,0 +1,64 @@
+function sample_collection_case(): CollectionCase {
+    $draft CollectionCase = new CollectionCase();
+    $draft->id = "COL-001";
+    $draft->customer_id = "CUS-001";
+    $draft->invoice_id = "INV-001";
+    $draft->owner = "collector-a";
+    $draft->status = "open";
+    $draft->contact_note = "Reminder acknowledged";
+    $draft->original_balance = 20000;
+    $draft->outstanding = 15000;
+    $draft->disputed = 2000;
+    $draft->overdue_days = 40;
+    $draft->reminders_sent = 2;
+    $draft->promised_payment = 5000;
+    $draft->legal_hold = false;
+    $draft->promise_confirmed = true;
+    return $draft;
+}
+
+function check_collection_case(WorkloadChecks $checks): void {
+    $draft CollectionCase = sample_collection_case();
+    $checks->accepted($draft->validate(), "collection_case valid draft");
+    $checks->equal($draft->collectible_amount(), 13000, "collection_case independent business result");
+    $copy CollectionCase = $draft->copy();
+    $checks->equal(count($draft->differences($copy)), 0, "collection_case snapshot equivalence");
+    $checks->expect($draft->describe() === $copy->describe(), "collection_case snapshot report");
+    $copy = $draft->copy();
+    $copy->id = "";
+    $checks->rejected($copy->validate(), "collection_case.id", "collection_case id required");
+    $copy = $draft->copy();
+    $copy->id = "bad\nrow";
+    $checks->rejected($copy->validate(), "collection_case.id", "collection_case id control");
+    $copy = $draft->copy();
+    $copy->id = DocumentRules::repeat("x", 41);
+    $checks->rejected($copy->validate(), "collection_case.id", "collection_case id width");
+    $copy = $draft->copy();
+    $copy->id = "COL-001-changed";
+    $checks->expect($draft->id === "COL-001", "collection_case id snapshot isolation");
+    $changes_id vector<string> = $draft->differences($copy);
+    $checks->equal(count($changes_id), 1, "collection_case id change count");
+    if (count($changes_id) === 1) {
+        $checks->expect($changes_id[0] === "id", "collection_case id change identity");
+    }
+    $copy = $draft->copy();
+    $copy->original_balance = -1;
+    $checks->rejected($copy->validate(), "collection_case.original_balance", "collection_case original_balance below");
+    $copy = $draft->copy();
+    $copy->original_balance = 1000000001;
+    $checks->rejected($copy->validate(), "collection_case.original_balance", "collection_case original_balance above");
+    $copy = $draft->copy();
+    $copy->outstanding = -1;
+    $checks->rejected($copy->validate(), "collection_case.outstanding", "collection_case outstanding below");
+    $copy = $draft->copy();
+    $copy->outstanding = 1000000001;
+    $checks->rejected($copy->validate(), "collection_case.outstanding", "collection_case outstanding above");
+    $copy = $draft->copy();
+    $copy->legal_hold = true;
+    $checks->expect($draft->legal_hold === false, "collection_case legal_hold snapshot isolation");
+    $changes_legal_hold vector<string> = $draft->differences($copy);
+    $checks->equal(count($changes_legal_hold), 1, "collection_case legal_hold change count");
+    if (count($changes_legal_hold) === 1) {
+        $checks->expect($changes_legal_hold[0] === "legal_hold", "collection_case legal_hold change identity");
+    }
+}

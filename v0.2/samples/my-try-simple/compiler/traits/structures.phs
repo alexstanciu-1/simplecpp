@@ -1,0 +1,7 @@
+// Layout counterpart: my-try/phpp/compiler/traits/structures.phs
+function sample_unit_239(): void
+{
+    $value int = 240;
+    sample_unit_240();
+    return;
+}

@@ -13,6 +13,13 @@ final class Project_Compiler
 		$this->runtime = $runtime;
 	}
 
+	/** Incremental analyzer entry point; never invokes preparation, lowering or native emission. */
+	public function frontend(string $path, ?compilation_session $previous = null, ?string $output_directory = null): compilation_session
+	{
+		$candidate = (new Module_Loader($this->runtime))->load($path, $output_directory);
+		return (new Incremental_Frontend())->collect($candidate, $previous);
+	}
+
 	/** Compile the selected application; dependencies contribute metadata and prebuilt link inputs only. */
 	public function run(string $path, string $facts, string $directory, bool $force = false): array /** compilation report */
 	{

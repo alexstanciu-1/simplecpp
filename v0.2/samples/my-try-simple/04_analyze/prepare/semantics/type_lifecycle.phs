@@ -1,0 +1,7 @@
+// Layout counterpart: my-try/phpp/04_analyze/prepare/semantics/type_lifecycle.phs
+function sample_unit_138(): void
+{
+    $value int = 139;
+    sample_unit_139();
+    return;
+}

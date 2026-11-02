@@ -1,0 +1,117 @@
+function large_self_test(): int {
+    $baseline int = accounting_self_test();
+    $checks WorkloadChecks = new WorkloadChecks();
+    check_document_catalog($checks);
+    check_expanded_workflows($checks);
+    $checks->report();
+    if ($baseline !== 0 || $checks->failed !== 0) { return 1; }
+    echo "ACCOUNTING_512K_PASS\n";
+    return 0;
+}
+
+function large_scenario(string $name): int {
+    $checks WorkloadChecks = new WorkloadChecks();
+    if ($name === "credit") { check_credit_workflow($checks); }
+    elseif ($name === "procurement") { check_procurement_workflow($checks); }
+    elseif ($name === "expenses") { check_expense_workflow($checks); }
+    elseif ($name === "payroll") { check_payroll_workflow($checks); }
+    elseif ($name === "treasury") { check_treasury_workflow($checks); }
+    elseif ($name === "projects") { check_project_workflow($checks); }
+    elseif ($name === "warehouse") { check_warehouse_workflow($checks); }
+    elseif ($name === "allocations") { check_allocation_workflow($checks); }
+    else { echo "error=scenario.name\n"; return 64; }
+    $checks->report();
+    if ($checks->failed !== 0) { return 1; }
+    return 0;
+}
+
+function large_document(string $name): int {
+    if ($name === "CustomerProfile") { echo sample_customer_profile()->describe(); return 0; }
+    if ($name === "SupplierContract") { echo sample_supplier_contract()->describe(); return 0; }
+    if ($name === "SalesQuoteLine") { echo sample_sales_quote_line()->describe(); return 0; }
+    if ($name === "SalesOrderLine") { echo sample_sales_order_line()->describe(); return 0; }
+    if ($name === "CustomerCredit") { echo sample_customer_credit()->describe(); return 0; }
+    if ($name === "CollectionCase") { echo sample_collection_case()->describe(); return 0; }
+    if ($name === "ReceiptAllocation") { echo sample_receipt_allocation()->describe(); return 0; }
+    if ($name === "PurchaseOrderLine") { echo sample_purchase_order_line()->describe(); return 0; }
+    if ($name === "GoodsReceiptLine") { echo sample_goods_receipt_line()->describe(); return 0; }
+    if ($name === "SupplierInvoiceMatch") { echo sample_supplier_invoice_match()->describe(); return 0; }
+    if ($name === "SupplierReturn") { echo sample_supplier_return()->describe(); return 0; }
+    if ($name === "PaymentInstruction") { echo sample_payment_instruction()->describe(); return 0; }
+    if ($name === "WarehouseLocation") { echo sample_warehouse_location()->describe(); return 0; }
+    if ($name === "WarehouseTransfer") { echo sample_warehouse_transfer()->describe(); return 0; }
+    if ($name === "StockCountLine") { echo sample_stock_count_line()->describe(); return 0; }
+    if ($name === "LandedCostCharge") { echo sample_landed_cost_charge()->describe(); return 0; }
+    if ($name === "EmployeeProfile") { echo sample_employee_profile()->describe(); return 0; }
+    if ($name === "ExpenseClaimLine") { echo sample_expense_claim_line()->describe(); return 0; }
+    if ($name === "EmployeeAdvance") { echo sample_employee_advance()->describe(); return 0; }
+    if ($name === "PayrollInstruction") { echo sample_payroll_instruction()->describe(); return 0; }
+    if ($name === "ProjectBudget") { echo sample_project_budget()->describe(); return 0; }
+    if ($name === "TimeSheetLine") { echo sample_time_sheet_line()->describe(); return 0; }
+    if ($name === "ProjectMilestone") { echo sample_project_milestone()->describe(); return 0; }
+    if ($name === "LoanAgreement") { echo sample_loan_agreement()->describe(); return 0; }
+    if ($name === "LeaseAgreement") { echo sample_lease_agreement()->describe(); return 0; }
+    if ($name === "ExchangeRateQuote") { echo sample_exchange_rate_quote()->describe(); return 0; }
+    if ($name === "ForeignSettlement") { echo sample_foreign_settlement()->describe(); return 0; }
+    if ($name === "CashForecastItem") { echo sample_cash_forecast_item()->describe(); return 0; }
+    if ($name === "DepartmentBudget") { echo sample_department_budget()->describe(); return 0; }
+    if ($name === "AllocationDriver") { echo sample_allocation_driver()->describe(); return 0; }
+    if ($name === "AssetRevision") { echo sample_asset_revision()->describe(); return 0; }
+    if ($name === "TaxControlLine") { echo sample_tax_control_line()->describe(); return 0; }
+    echo "error=document.name\n";
+    return 64;
+}
+
+function large_accounting_cli(): int {
+    $argc int = cli_argc();
+    if ($argc === 1) { return large_self_test(); }
+    $args mixed = cli_argv();
+    $command string = $args[1];
+    if ($argc === 2 && $command === "self-test") { return large_self_test(); }
+    if ($argc === 2 && $command === "--help") {
+        accounting_usage();
+        echo "accounting scenario NAME\naccounting document TYPE\naccounting documents\n";
+        return 0;
+    }
+    if ($argc === 2 && $command === "documents") {
+        echo "CustomerProfile\n";
+        echo "SupplierContract\n";
+        echo "SalesQuoteLine\n";
+        echo "SalesOrderLine\n";
+        echo "CustomerCredit\n";
+        echo "CollectionCase\n";
+        echo "ReceiptAllocation\n";
+        echo "PurchaseOrderLine\n";
+        echo "GoodsReceiptLine\n";
+        echo "SupplierInvoiceMatch\n";
+        echo "SupplierReturn\n";
+        echo "PaymentInstruction\n";
+        echo "WarehouseLocation\n";
+        echo "WarehouseTransfer\n";
+        echo "StockCountLine\n";
+        echo "LandedCostCharge\n";
+        echo "EmployeeProfile\n";
+        echo "ExpenseClaimLine\n";
+        echo "EmployeeAdvance\n";
+        echo "PayrollInstruction\n";
+        echo "ProjectBudget\n";
+        echo "TimeSheetLine\n";
+        echo "ProjectMilestone\n";
+        echo "LoanAgreement\n";
+        echo "LeaseAgreement\n";
+        echo "ExchangeRateQuote\n";
+        echo "ForeignSettlement\n";
+        echo "CashForecastItem\n";
+        echo "DepartmentBudget\n";
+        echo "AllocationDriver\n";
+        echo "AssetRevision\n";
+        echo "TaxControlLine\n";
+        return 0;
+    }
+    if ($argc === 3) {
+        $name string = $args[2];
+        if ($command === "scenario") { return large_scenario($name); }
+        if ($command === "document") { return large_document($name); }
+    }
+    return accounting_cli();
+}

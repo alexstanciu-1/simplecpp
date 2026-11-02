@@ -1,0 +1,85 @@
+// Filesystem facade: ordinary observation failures become false for caller-owned diagnostics.
+// Output errors must remain errors, never be confused with absent/unchanged files.
+function scpp_portability_output_permissions(string $root, string $relative): int {
+    $value int = 0;
+    $failure error;
+    if (!take($value, $failure, scpp_output_permissions($root, $relative))) { throw new scpp_portability_runtime_exception($failure->get_message()); }
+    return $value;
+}
+function scpp_portability_input_digest(string $path): string {
+    $value string = '';
+    $failure error;
+    if (!take($value, $failure, scpp_input_digest($path))) { throw new scpp_portability_runtime_exception($failure->get_message()); }
+    return $value;
+}
+function scpp_portability_output_digest(string $root, string $relative): string {
+    $value string = '';
+    $failure error;
+    if (!take($value, $failure, scpp_output_digest($root, $relative))) { throw new scpp_portability_runtime_exception($failure->get_message()); }
+    return $value;
+}
+function scpp_portability_output_root(string $path): string {
+    $value string = '';
+    $failure error;
+    if (!take($value, $failure, scpp_output_root($path))) { throw new scpp_portability_runtime_exception($failure->get_message()); }
+    return $value;
+}
+function scpp_portability_output_read(string $root, string $relative): nullable<string> {
+    $value nullable<string>;
+    $failure error;
+    if (!take($value, $failure, scpp_output_read($root, $relative))) { throw new scpp_portability_runtime_exception($failure->get_message()); }
+    return $value;
+}
+function scpp_portability_output_write(string $root, string $relative, string $bytes): bool {
+    $value bool = false;
+    $failure error;
+    if (!take($value, $failure, scpp_output_write($root, $relative, $bytes))) { throw new scpp_portability_runtime_exception($failure->get_message()); }
+    return $value;
+}
+function scpp_portability_output_remove(string $root, string $relative, string $expected): bool {
+    $value bool = false;
+    $failure error;
+    if (!take($value, $failure, scpp_output_remove($root, $relative, $expected))) { throw new scpp_portability_runtime_exception($failure->get_message()); }
+    return $value;
+}
+function scpp_portability_fs_scan(string $path): result_or_false<vector<string>> {
+    $entries vector<string> = [];
+    $failure error;
+    if (!take($entries, $failure, fs_scan($path))) { return false_sentinel; }
+    return $entries;
+}
+function scpp_portability_fs_size(string $path): result_or_false<int> {
+    $value int = 0;
+    $failure error;
+    if (!take($value, $failure, fs_size($path))) { return false_sentinel; }
+    return $value;
+}
+function scpp_portability_fs_mtime(string $path): result_or_false<int> {
+    $value int = 0;
+    $failure error;
+    if (!take($value, $failure, fs_mtime($path))) { return false_sentinel; }
+    return $value;
+}
+
+function scpp_portability_fs_require_realpath(string $path): string {
+    $value string = '';
+    $failure error;
+    if (!take($value, $failure, fs_realpath($path))) { throw new scpp_portability_runtime_exception($failure->get_message()); }
+    return $value;
+}
+
+function scpp_portability_fs_read_text(string $path): string {
+    $value string = '';
+    $failure error;
+    if (!take($value, $failure, fs_get($path))) { throw new scpp_portability_runtime_exception($failure->get_message()); }
+    return $value;
+}
+
+function scpp_portability_fs_read_snapshot(string $path, int $mtime, int $size): string {
+    $content string = '';
+    $failure error;
+    if (!take($content, $failure, fs_read_snapshot($path, $mtime, $size))) {
+        throw new scpp_portability_runtime_exception($failure->get_message());
+    }
+    return $content;
+}

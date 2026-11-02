@@ -1,0 +1,64 @@
+function sample_employee_advance(): EmployeeAdvance {
+    $draft EmployeeAdvance = new EmployeeAdvance();
+    $draft->id = "ADV-001";
+    $draft->employee_id = "EMP-001";
+    $draft->purpose = "Site visit";
+    $draft->bank_reference = "ADV-PAY";
+    $draft->control_account = "prepayments";
+    $draft->approver = "manager-a";
+    $draft->authorized = 15000;
+    $draft->paid = 10000;
+    $draft->receipts_settled = 6000;
+    $draft->cash_returned = 1000;
+    $draft->period = 1;
+    $draft->due_period = 2;
+    $draft->approved = true;
+    $draft->closed = false;
+    return $draft;
+}
+
+function check_employee_advance(WorkloadChecks $checks): void {
+    $draft EmployeeAdvance = sample_employee_advance();
+    $checks->accepted($draft->validate(), "employee_advance valid draft");
+    $checks->equal($draft->outstanding_advance(), 3000, "employee_advance independent business result");
+    $copy EmployeeAdvance = $draft->copy();
+    $checks->equal(count($draft->differences($copy)), 0, "employee_advance snapshot equivalence");
+    $checks->expect($draft->describe() === $copy->describe(), "employee_advance snapshot report");
+    $copy = $draft->copy();
+    $copy->id = "";
+    $checks->rejected($copy->validate(), "employee_advance.id", "employee_advance id required");
+    $copy = $draft->copy();
+    $copy->id = "bad\nrow";
+    $checks->rejected($copy->validate(), "employee_advance.id", "employee_advance id control");
+    $copy = $draft->copy();
+    $copy->id = DocumentRules::repeat("x", 41);
+    $checks->rejected($copy->validate(), "employee_advance.id", "employee_advance id width");
+    $copy = $draft->copy();
+    $copy->id = "ADV-001-changed";
+    $checks->expect($draft->id === "ADV-001", "employee_advance id snapshot isolation");
+    $changes_id vector<string> = $draft->differences($copy);
+    $checks->equal(count($changes_id), 1, "employee_advance id change count");
+    if (count($changes_id) === 1) {
+        $checks->expect($changes_id[0] === "id", "employee_advance id change identity");
+    }
+    $copy = $draft->copy();
+    $copy->authorized = -1;
+    $checks->rejected($copy->validate(), "employee_advance.authorized", "employee_advance authorized below");
+    $copy = $draft->copy();
+    $copy->authorized = 1000000001;
+    $checks->rejected($copy->validate(), "employee_advance.authorized", "employee_advance authorized above");
+    $copy = $draft->copy();
+    $copy->paid = -1;
+    $checks->rejected($copy->validate(), "employee_advance.paid", "employee_advance paid below");
+    $copy = $draft->copy();
+    $copy->paid = 1000000001;
+    $checks->rejected($copy->validate(), "employee_advance.paid", "employee_advance paid above");
+    $copy = $draft->copy();
+    $copy->approved = false;
+    $checks->expect($draft->approved === true, "employee_advance approved snapshot isolation");
+    $changes_approved vector<string> = $draft->differences($copy);
+    $checks->equal(count($changes_approved), 1, "employee_advance approved change count");
+    if (count($changes_approved) === 1) {
+        $checks->expect($changes_approved[0] === "approved", "employee_advance approved change identity");
+    }
+}

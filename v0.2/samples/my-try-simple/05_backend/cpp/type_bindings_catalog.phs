@@ -1,0 +1,7 @@
+// Layout counterpart: my-try/phpp/05_backend/cpp/type_bindings_catalog.phs
+function sample_unit_186(): void
+{
+    $value int = 187;
+    sample_unit_187();
+    return;
+}

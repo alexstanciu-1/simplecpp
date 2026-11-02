@@ -1,0 +1,94 @@
+class SalesInvoice {
+    public string $number = "";
+    public int $period = 1;
+    public int $net_amount = 0;
+    public int $tax_amount = 0;
+    public int $paid_amount = 0;
+    public bool $posted = false;
+
+    public function gross_amount(): int {
+        return $this->net_amount + $this->tax_amount;
+    }
+
+    public function outstanding(): int {
+        return $this->gross_amount() - $this->paid_amount;
+    }
+}
+
+class SalesService {
+    private $issued_invoices hash<SalesInvoice> = [];
+
+    public function issue(GeneralLedger $ledger, SalesInvoice $invoice): AccountingCheck {
+        if ($invoice->posted || isset($this->issued_invoices[$invoice->number])) {
+            return accounting_failure("invoice.posted", $invoice->number);
+        }
+        if ($invoice->number === "" || $invoice->net_amount <= 0 || $invoice->tax_amount < 0 || $invoice->paid_amount !== 0) {
+            return accounting_failure("invoice.invalid", "Invoice requires a number and valid amounts");
+        }
+        $gross AmountResult = MoneyRules::add($invoice->net_amount, $invoice->tax_amount);
+        if (!$gross->valid) {
+            return accounting_failure($gross->reason, $invoice->number);
+        }
+        $entry JournalEntry = new JournalEntry();
+        $entry->reference = "sale:" . $invoice->number;
+        $entry->origin = "sales";
+        $entry->period = $invoice->period;
+        $entry->add_debit("receivables", $invoice->gross_amount(), $invoice->number);
+        $entry->add_credit("revenue", $invoice->net_amount, $invoice->number);
+        if ($invoice->tax_amount > 0) {
+            $entry->add_credit("tax-payable", $invoice->tax_amount, $invoice->number);
+        }
+        $check AccountingCheck = $ledger->post($entry);
+        if ($check->accepted) {
+            $invoice->posted = true;
+            $stored SalesInvoice = new SalesInvoice();
+            $stored->number = $invoice->number;
+            $stored->period = $invoice->period;
+            $stored->net_amount = $invoice->net_amount;
+            $stored->tax_amount = $invoice->tax_amount;
+            $stored->posted = true;
+            $this->issued_invoices[$invoice->number] = $stored;
+        }
+        return $check;
+    }
+
+    public function receive(GeneralLedger $ledger, SalesInvoice $invoice, string $receipt, int $amount): AccountingCheck {
+        if (!isset($this->issued_invoices[$invoice->number])) {
+            return accounting_failure("receipt.draft", $invoice->number);
+        }
+        $stored SalesInvoice = $this->issued_invoices[$invoice->number];
+        if ($receipt === "" || $amount <= 0 || $amount > $stored->outstanding()) {
+            return accounting_failure("receipt.invalid", "Receipt exceeds outstanding amount or is invalid");
+        }
+        $entry JournalEntry = new JournalEntry();
+        $entry->reference = "receipt:" . $receipt;
+        $entry->origin = "receipts";
+        $entry->period = $ledger->current_period();
+        $entry->add_debit("bank", $amount, $invoice->number);
+        $entry->add_credit("receivables", $amount, $invoice->number);
+        $check AccountingCheck = $ledger->post($entry);
+        if ($check->accepted) {
+            $stored->paid_amount += $amount;
+            $invoice->net_amount = $stored->net_amount;
+            $invoice->tax_amount = $stored->tax_amount;
+            $invoice->paid_amount = $stored->paid_amount;
+            $invoice->posted = true;
+        }
+        return $check;
+    }
+
+    public function total_outstanding(): int {
+        $total int = 0;
+        foreach ($this->issued_invoices as $number => $invoice) {
+            $total += $invoice->outstanding();
+        }
+        return $total;
+    }
+
+    public function reconcile(GeneralLedger $ledger): AccountingCheck {
+        if ($this->total_outstanding() !== $ledger->balance_of("receivables")) {
+            return accounting_failure("receivables.control", "Invoices do not reconcile with general ledger");
+        }
+        return accounting_success();
+    }
+}

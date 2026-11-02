@@ -1,0 +1,210 @@
+namespace scpp\compiler;
+
+/** Synchronous backend service. Canonical requests never mutate source/preparation facts. */
+final class CPP_Specializations {
+	private $entries Storage<cpp_specialization_entry>;
+	private $names hash<int> = [];
+
+	public function __construct() {
+		$this->entries = new Storage<cpp_specialization_entry>();
+	}
+
+	public function request_operation(cpp_runtime_operation $request): cpp_specialization_ref {
+		if ($request->kind === cpp_runtime_operation_kind::self_storage) {
+			return $this->intern(CPP_Self::storage_entry($request, $this));
+		}
+		if ($request->kind === cpp_runtime_operation_kind::finally_storage) {
+			return $this->intern(CPP_Finally::storage_entry($request, $this));
+		}
+		if ($request->kind === cpp_runtime_operation_kind::concrete_member) {
+			return $this->intern(CPP_Concrete_Members::entry($request, $this));
+		}
+		if ($request->kind === cpp_runtime_operation_kind::concrete_index) {
+			return $this->intern(CPP_Concrete_Index::entry($request, $this));
+		}
+		if ($request->kind === cpp_runtime_operation_kind::concrete_iteration) {
+			return $this->intern(CPP_Concrete_Iteration::entry($request, $this));
+		}
+		if ($request->kind === cpp_runtime_operation_kind::concrete_mutation) {
+			return $this->intern(CPP_Concrete_Mutations::entry($request, $this));
+		}
+		return $this->intern(CPP_Runtime_Operations::entry($request, $this));
+	}
+
+	/** Every public request uses the general concrete representation. */
+	public function request(canonical_type_use $type): cpp_specialization_ref {
+		return $this->request_composed($type);
+	}
+
+	private function intern(cpp_specialization_entry $entry): cpp_specialization_ref {
+		if (!isset($this->names[$entry->name])) { $this->install($entry); }
+		return $this->reference($this->names[$entry->name]);
+	}
+
+	/** Runtime ABI request from settled types; the representation worker uses existing bindings. */
+	public function request_opaque(canonical_type_use $type): cpp_specialization_ref {
+		return $this->intern(CPP_Opaque_Representation::entry($type, $this));
+	}
+
+	/** Integration entry for concrete physical arguments; no additional retained engine or registry. */
+	public function request_composed(canonical_type_use $type): cpp_specialization_ref {
+		return $this->intern(CPP_Opaque_Representation::entry($type, $this, true));
+	}
+
+	public function request_observation(prepared_call $call): cpp_specialization_ref {
+		$parameters Storage<callable_parameter> = $call->signature->parameters;
+		// Validate operation shape before requesting its owned representations.
+		$entry = CPP_Opaque_Representation::observation($call, $this);
+		$this->request_opaque($parameters[0]->type);
+		$this->request_opaque($call->signature->return_type);
+		return $this->intern($entry);
+	}
+
+	/** Construct a fresh value reference; callers never mutate an acquired entry ID. */
+	private function reference(int $index): cpp_specialization_ref {
+		$reference = new cpp_specialization_ref();
+		$reference->entry_id = $index;
+		return $reference;
+	}
+
+	public function entry(cpp_specialization_ref $reference): cpp_specialization_entry {
+		$entries Storage<cpp_specialization_entry> = $this->entries;
+		return $entries[(int)$reference->entry_id];
+	}
+
+	/** Joined worker results share canonical names, never invocation-local entry IDs. */
+	public function merge(CPP_Specializations $other): void {
+		$entries Storage<cpp_specialization_entry> = $other->entries;
+		foreach ($entries  as $entry) {
+			if (!isset($this->names[$entry->name])) { $this->install($entry); }
+		}
+	}
+
+	/** Avoid rendering an already requested entry; this index owns no separate semantic facts. */
+	public function find(string $name): nullable<cpp_specialization_entry> {
+		if (!isset($this->names[$name])) { return null; }
+		$entries Storage<cpp_specialization_entry> = $this->entries;
+		return $entries[$this->names[$name]];
+	}
+
+	/** Keep index and entry ownership synchronized; IDs fit the compact reference. */
+	private function install(cpp_specialization_entry $entry): void {
+		$entries Storage<cpp_specialization_entry> = $this->entries;
+		if ($entries->count() >= 4294967295) {
+			throw new \scpp_portability_runtime_exception('prelower_templates: specialization reference capacity exceeded');
+		}
+		$this->names[$entry->name] = $entries->count();
+		$entries->append($entry);
+	}
+
+	/** Select the configured physical binding without implementing its storage protocol here. */
+	public function representation(canonical_type_use $type, cpp_generation_context $context): cpp_type {
+		return CPP_Opaque_Representation::representation($type, $this, true);
+	}
+
+	/** Order an output-only index so discovery and cached-fragment replay cannot churn support bytes. */
+	private function emission_order(): vector<int> {
+		$entries Storage<cpp_specialization_entry> = $this->entries;
+		$order vector<int> = [];
+		foreach ($entries  as $id => $entry) {
+			$position = count($order);
+			$order[] = $id;
+			while ($position > 0)
+			{
+				$previous = $order[$position - 1];
+				if ($entries[$previous]->name < $entry->name) {
+					break;
+				}
+				$order[$position] = $previous;
+				$position -= 1;
+			}
+			$order[$position] = $id;
+		}
+		return $order;
+	}
+
+	/** Stable identity buckets distribute implementations independently of discovery order. */
+	public function append_artifacts(Storage<cpp_artifact> $artifacts): void {
+		$artifacts->append(new cpp_artifact('specializations:base-header', cpp_artifact_kind::header, 'specializations/base.hpp', CPP_Entry_Support::base_header()));
+		$artifacts->append(new cpp_artifact('specializations:base', cpp_artifact_kind::translation_unit, 'specializations/base.cpp', CPP_Entry_Support::base_body()));
+		$implementations hash<string> = [];
+		$layout_current hash<cpp_layout_batch, int> = [];
+		$layout_batches Storage<cpp_layout_batch> = new Storage<cpp_layout_batch>();
+		$layout_depths = new CPP_Layout_Depths();
+		$depths = $layout_depths->resolve($artifacts, $this->entries);
+		$maximum_depth = 0;
+		$entries Storage<cpp_specialization_entry> = $this->entries;
+		$order = $this->emission_order();
+		$member_prefixes hash<string> = [];
+		$member_declarations hash<string> = [];
+		// Invocation-local assembly index; retained requests stay with existing fragments.
+		foreach ($order  as $id) {
+			$member = $entries[$id];
+			if ($member->member_owner === '') { continue; }
+			$owner = $member->member_owner;
+			if (!isset($member_prefixes[$owner])) {
+				$member_prefixes[$owner] = '';
+				$member_declarations[$owner] = '';
+			}
+			$member_prefixes[$owner] .= $member->declaration_prefix;
+			$member_declarations[$owner] .= $member->declaration;
+		}
+		foreach ($order  as $id) {
+			$entry = $entries[$id];
+			$depth = $depths[$entry->name];
+			if ($depth > $maximum_depth) { $maximum_depth = $depth; }
+			if (($entry->layout_declarations !== '') || ($entry->layout_statements !== '')) {
+				$size = string_byte_len($entry->layout_declarations) + string_byte_len($entry->layout_statements);
+				if (!isset($layout_current[$depth])) {
+					$layout_current[$depth] = new cpp_layout_batch($depth, 0);
+					$layout_batches->append($layout_current[$depth]);
+				}
+				$batch = $layout_current[$depth];
+				if (($batch->bytes > 0) && ($batch->bytes + $size > 180000)) {
+					$batch = new cpp_layout_batch($depth, $batch->part + 1);
+					$layout_current[$depth] = $batch;
+					$layout_batches->append($batch);
+				}
+				$batch->declarations .= $entry->layout_declarations;
+				$batch->statements .= $entry->layout_statements;
+				$batch->bytes += $size;
+			}
+			if ($entry->member_owner === '') {
+				$prefix = '';
+				$members = '';
+				if (isset($member_prefixes[$entry->name])) {
+					$prefix = $member_prefixes[$entry->name];
+					$members = $member_declarations[$entry->name];
+				}
+				$declaration = ($prefix === '' ? '' : "#pragma once\n" . $prefix) . $entry->declaration
+					. $members . $entry->declaration_tail;
+				$artifacts->append(new cpp_artifact('specialization:' . $entry->name, cpp_artifact_kind::header,
+					$entry->header, $declaration));
+				if ($entry->declaration_tail !== '') {
+					$artifacts->append(new cpp_artifact('specialization-declaration:' . $entry->name, cpp_artifact_kind::header,
+						CPP_Opaque_Representation::declaration_header('scpp::internal::' . $entry->name),
+						"#pragma once\nnamespace scpp::internal { struct " . $entry->name . "; }\n"));
+				}
+			}
+			// Fixed digest prefixes avoid moving unrelated definitions when demand changes.
+			$bucket = 'b' . string_byte_slice(scpp_output_sha256($entry->name), 0, 2);
+			if (!isset($implementations[$bucket])) { $implementations[$bucket] = ''; }
+			$implementations[$bucket] .= '#include "' . $entry->header . '"' . "\n" . $entry->implementation . "\n";
+		}
+		// Preserve topological order; the existing native consumer resolves probes in manifest order.
+		for ($depth = 0; $depth <= $maximum_depth; $depth++) {
+			foreach ($layout_batches  as $batch) {
+				if (($batch->depth !== $depth) || ($batch->statements === '')) { continue; }
+				$probe = '#include <cstdio>' . "\n" . '#include <type_traits>' . "\n" . $batch->declarations
+					. 'int main() { std::printf("// scpp-native-layout-v1\\n");' . "\n" . $batch->statements . "}\n";
+				$suffix = ($depth === 0 ? '' : '_' . $depth) . ($batch->part === 0 ? '' : '_part_' . $batch->part);
+				$artifacts->append(new cpp_artifact('specializations:layout' . ($depth === 0 ? '' : ':' . $depth) . ($batch->part === 0 ? '' : ':part:' . $batch->part),
+					cpp_artifact_kind::layout_probe, 'specializations/layout' . $suffix . '.cpp', $probe));
+			}
+		}
+		foreach ($implementations  as $bucket => $implementation) {
+			$artifacts->append(new cpp_artifact('specializations:implementation:' . $bucket, cpp_artifact_kind::translation_unit,
+				'specializations/containers_' . $bucket . '.cpp', $implementation));
+		}
+	}
+}

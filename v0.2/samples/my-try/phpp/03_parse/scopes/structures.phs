@@ -1,0 +1,306 @@
+
+/* Role: encapsulate shared lexical and published scope indexes. */
+namespace scpp\compiler;
+
+final class scope {
+	/** Namespace owns its published scope; this backlink must not retain that owner. */
+	private $namespace_owner weak<namespace_identity> = null;
+
+	/** Upward observers; owners are Model roots or parsed_file.scopes. */
+	private $enclosing weak<scope> = null;
+	private $publication weak<scope> = null;
+	private bool $function_boundary = false;
+	private bool $import_environment = false;
+	/** Non-publication index of namespace_body_node.imports; aliases are not declarations. */
+	private $imports Key_Storage_List<import_node>;
+	private $preparation_lookups Key_Storage_List<preparation_lookup>;
+	private $template_parameters hash<int> = [];
+	/** @storage.reference collected_file.entries @reference.weak */
+	private $variables Key_Storage_List<collected_name>;
+	/** @storage.reference collected_file.entries @reference.weak */
+	private $functions Key_Storage_List<collected_function>;
+	/** Member-callable index; never contributes to unqualified free-function lookup. */
+	private $methods Key_Storage_List<collected_method>;
+	/** @storage.reference Model.runtime_callables @reference.weak */
+	private $runtime_functions Key_Storage_List<runtime_function_definition>;
+	/** Language scope owns compiler-provided function identities. */
+	private $compiler_functions Keyed_Storage<compiler_function_definition>;
+	/** Definitions owned here; published scopes retain the same definition objects. */
+	private $types Key_Storage_List<type_definition_i>;
+	/** Constant namespace is independent of variables, functions and types. */
+	private $constants Key_Storage_List<constant_target_i>;
+
+	public function __construct() {
+		$this->imports = new Key_Storage_List<import_node>();
+		$this->variables = new Key_Storage_List<collected_name>();
+		$this->preparation_lookups = new Key_Storage_List<preparation_lookup>();
+		$this->functions = new Key_Storage_List<collected_function>();
+		$this->methods = new Key_Storage_List<collected_method>();
+		$this->runtime_functions = new Key_Storage_List<runtime_function_definition>();
+		$this->compiler_functions = new Keyed_Storage<compiler_function_definition>();
+		$this->types = new Key_Storage_List<type_definition_i>();
+		$this->constants = new Key_Storage_List<constant_target_i>();
+	}
+
+	/** A published namespace scope cannot be reassigned to another namespace. */
+	public function set_namespace(namespace_identity $identity): void {
+		$previous = lock($this->namespace_owner);
+		if ($previous !== null) {
+			if ($previous !== $identity) {
+				throw new \scpp_portability_logic_exception('A published namespace scope cannot change identity');
+			}
+		}
+		$this->namespace_owner = weak($identity);
+	}
+
+	/** Lexical children inherit source identity, not namespace-parent lookup. */
+	public function source_namespace(): nullable<namespace_identity> {
+		$identity = lock($this->namespace_owner);
+		if ($identity !== null) {
+			return $identity;
+		}
+		$parent = $this->parent_scope();
+		if ($parent !== null) {
+			$parent_scope scope = $parent;
+			return $parent_scope->source_namespace();
+		}
+		return null;
+	}
+
+	public function set_parent(scope $parent): void {
+		$this->enclosing = weak($parent);
+	}
+
+	public function parent_scope(): nullable<scope> {
+		return lock($this->enclosing);
+	}
+
+	public function published_scope(): nullable<scope> {
+		return lock($this->publication);
+	}
+
+	public function mark_function(): void {
+		$this->function_boundary = true;
+	}
+
+	public function set_imports(Storage<import_node> $bindings): void {
+		$index Key_Storage_List<import_node> = new Key_Storage_List<import_node>();
+		foreach ($bindings  as $binding) { $index->add($binding->alias, $binding); }
+		$this->imports = $index;
+		$this->import_environment = true;
+	}
+
+	public function has_import_environment(): bool { return $this->import_environment; }
+	public function imports_named(string $name): vector<import_node> {
+		$imports Key_Storage_List<import_node> = $this->imports;
+		return $imports->named($name);
+	}
+
+	public function is_function(): bool {
+		return $this->function_boundary;
+	}
+
+	public function set_templates(hash<int> $slots): void {
+		$this->template_parameters = $slots;
+	}
+
+	public function has_template(string $name): bool {
+		return isset($this->template_parameters[$name]);
+	}
+
+	public function template_slot(string $name): int {
+		return $this->template_parameters[$name];
+	}
+
+	/** Register source identities without merging duplicates or doing name resolution. */
+	public function register(collected_name $entry): void {
+		if ($entry instanceof collected_function) {
+			$functions Key_Storage_List<collected_function> = $this->functions;
+			$function = object_cast($entry, collected_function::class);
+			$functions->add($function->name, $function);
+		}
+		elseif ($entry instanceof collected_method) {
+			$methods Key_Storage_List<collected_method> = $this->methods;
+			$method = object_cast($entry, collected_method::class);
+			$methods->add($method->name, $method);
+		}
+		elseif ($entry instanceof collected_constant) {
+			$this->register_constant(object_cast($entry, collected_constant::class));
+		}
+		else {
+			$variables Key_Storage_List<collected_name> = $this->variables;
+			$variables->add($entry->name, $entry);
+		}
+	}
+
+	public function register_type(type_definition_i $definition): void {
+		$this->register_type_as($definition->name(), $definition);
+	}
+
+	/** Publish a semantic definition under one source spelling, including true aliases. */
+	public function register_type_as(string $name, type_definition_i $definition): void {
+		$types Key_Storage_List<type_definition_i> = $this->types;
+		$types->add($name, $definition);
+	}
+
+	public function register_constant(constant_target_i $definition): void {
+		$constants Key_Storage_List<constant_target_i> = $this->constants;
+		$constants->add($definition->constant_name(), $definition);
+	}
+
+	/** Remove index membership by identity; same-name declarations from other owners survive. */
+	public function unregister(collected_name $entry): void {
+		$functions Key_Storage_List<collected_function> = $this->functions;
+		$variables Key_Storage_List<collected_name> = $this->variables;
+		$types Key_Storage_List<type_definition_i> = $this->types;
+		if ($entry instanceof collected_function) {
+			$functions->remove($entry->name, object_cast($entry, collected_function::class));
+		}
+		if ($entry instanceof collected_method) {
+			$methods Key_Storage_List<collected_method> = $this->methods;
+			$methods->remove($entry->name, object_cast($entry, collected_method::class));
+		}
+		if ($entry instanceof collected_constant) {
+			$constants Key_Storage_List<constant_target_i> = $this->constants;
+			$constant_target constant_target_i = object_cast($entry, collected_constant::class);
+			$constants->remove($entry->name, $constant_target);
+		}
+		$variables->remove($entry->name, $entry);
+		foreach ($types->named($entry->name)  as $definition) {
+			if ($definition->origin() === type_definition_origin::source) {
+				$declaration = Model::$type_catalog->source_declarations()->declaration($definition->definition_id());
+				if ($declaration !== $entry) {
+					continue;
+				}
+				$types->remove($entry->name, $definition);
+			}
+		}
+	}
+
+	/** Lookups are grouped by name; the kind disambiguates independent type/function pools. */
+	public function preparation_lookups_named(string $name): vector<preparation_lookup> {
+		$items Key_Storage_List<preparation_lookup> = $this->preparation_lookups;
+		return $items->named($name);
+	}
+
+	public function add_preparation_lookup(preparation_lookup $lookup): void {
+		$items Key_Storage_List<preparation_lookup> = $this->preparation_lookups;
+		$items->add($lookup->name, $lookup);
+	}
+
+	public function remove_preparation_lookup(preparation_lookup $lookup): void {
+		$items Key_Storage_List<preparation_lookup> = $this->preparation_lookups;
+		$items->remove($lookup->name, $lookup);
+	}
+
+	/** Local inventories include tombstones; callers choose live resolution explicitly. */
+	public function variables_named(string $name): vector<collected_name> {
+		$items Key_Storage_List<collected_name> = $this->variables;
+		return $items->named($name);
+	}
+
+	/** Return a typed snapshot; an absent name has no candidates. */
+	public function methods_named(string $name): vector<collected_method> {
+		$items Key_Storage_List<collected_method> = $this->methods;
+		return $items->named($name);
+	}
+
+	public function functions_named(string $name): vector<collected_function> {
+		$items Key_Storage_List<collected_function> = $this->functions;
+		return $items->named($name);
+	}
+
+	public function register_function(runtime_function_definition $target): void {
+		$functions Key_Storage_List<runtime_function_definition> = $this->runtime_functions;
+		$functions->add($target->name(), $target);
+	}
+
+	/** A single visible name pool; source inventories remain source-only for retirement. */
+	public function callables_named(string $name): vector<callable_definition_i> {
+		$result vector<callable_definition_i> = [];
+		foreach ($this->functions_named($name)  as $source_function) {
+			$result[] = $source_function;
+		}
+		$functions Key_Storage_List<runtime_function_definition> = $this->runtime_functions;
+		foreach ($functions->named($name)  as $runtime_function) {
+			$result[] = $runtime_function;
+		}
+		$compiler_functions Keyed_Storage<compiler_function_definition> = $this->compiler_functions;
+		if (isset($compiler_functions[$name])) { $result[] = $compiler_functions[$name]; }
+		return $result;
+	}
+
+	public function register_compiler_function(compiler_function_definition $definition): void {
+		$functions Keyed_Storage<compiler_function_definition> = $this->compiler_functions;
+		$functions->add($definition->name(), $definition);
+	}
+
+	/** The small definition store owns records; lookup does not introduce another registry. */
+	public function types_named(string $name): vector<type_definition_i> {
+		$items Key_Storage_List<type_definition_i> = $this->types;
+		return $items->named($name);
+	}
+
+	/** Constant lookup is exact and case-sensitive; callers select lexical precedence. */
+	public function constants_named(string $name): vector<constant_target_i> {
+		$items Key_Storage_List<constant_target_i> = $this->constants;
+		return $items->named($name);
+	}
+
+	/** Source-only identity snapshot for preparation observations and legacy consumers. */
+	public function source_types_named(string $name): vector<collected_type_definition> {
+		$result vector<collected_type_definition> = [];
+		foreach ($this->types_named($name)  as $definition) {
+			if ($definition->origin() === type_definition_origin::source) {
+				$result[] = Model::$type_catalog->source_declarations()->declaration($definition->definition_id());
+			}
+		}
+		return $result;
+	}
+
+	public function has_functions(): bool {
+		$functions Key_Storage_List<collected_function> = $this->functions;
+		return !$functions->is_empty();
+	}
+
+	public function has_variables(): bool {
+		$variables Key_Storage_List<collected_name> = $this->variables;
+		return !$variables->is_empty();
+	}
+
+	public function set_publication(scope $global): void {
+		$this->publication = weak($global);
+	}
+
+	/** Snapshot of local declaration references; no liveness or publication policy. */
+	public function declarations(): vector<collected_name> {
+		$result vector<collected_name> = [];
+		$functions Key_Storage_List<collected_function> = $this->functions;
+		$variables Key_Storage_List<collected_name> = $this->variables;
+		foreach ($functions->items()  as $function) {
+			$result[] = $function;
+		}
+		$methods Key_Storage_List<collected_method> = $this->methods;
+		foreach ($methods->items()  as $method) {
+			$result[] = $method;
+		}
+		foreach ($variables->items()  as $variable) {
+			$result[] = $variable;
+		}
+		$constants Key_Storage_List<constant_target_i> = $this->constants;
+		foreach ($constants->items()  as $constant) {
+			if ($constant instanceof collected_constant) { $result[] = object_cast($constant, collected_constant::class); }
+		}
+		return $result;
+	}
+
+	/** Snapshot membership while preserving type-definition identity. */
+	public function type_definitions(): vector<type_definition_i> {
+		$result vector<type_definition_i> = [];
+		$types Key_Storage_List<type_definition_i> = $this->types;
+		foreach ($types->items()  as $definition) {
+			$result[] = $definition;
+		}
+		return $result;
+	}
+}

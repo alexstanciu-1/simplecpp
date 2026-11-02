@@ -1,0 +1,7 @@
+// Layout counterpart: my-try/phpp/04_analyze/prepare/semantics/initialization.phs
+function sample_unit_110(): void
+{
+    $value int = 111;
+    sample_unit_111();
+    return;
+}

@@ -50,7 +50,7 @@ final class Parser
 				$function = $this->function_declaration($grammar);
 				$key = 'func:' . $function->declaration_key();
 				if (isset($functions[$key])) {
-					($tails[$key] ?? $functions[$key])->link_next($function);
+					($tails[$key] ?? $functions[$key])->link_duplicate($function);
 					$tails[$key] = $function;
 				} else {
 					$functions[$key] = $function;

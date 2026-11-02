@@ -1,0 +1,7 @@
+// Layout counterpart: my-try/phpp/05_backend/cpp/exceptions.phs
+function sample_unit_160(): void
+{
+    $value int = 161;
+    sample_unit_161();
+    return;
+}

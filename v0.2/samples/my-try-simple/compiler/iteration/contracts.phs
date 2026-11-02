@@ -1,0 +1,7 @@
+// Layout counterpart: my-try/phpp/compiler/iteration/contracts.phs
+function sample_unit_214(): void
+{
+    $value int = 215;
+    sample_unit_215();
+    return;
+}

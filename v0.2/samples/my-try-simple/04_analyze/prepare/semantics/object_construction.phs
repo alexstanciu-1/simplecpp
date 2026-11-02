@@ -1,0 +1,7 @@
+// Layout counterpart: my-try/phpp/04_analyze/prepare/semantics/object_construction.phs
+function sample_unit_122(): void
+{
+    $value int = 123;
+    sample_unit_123();
+    return;
+}

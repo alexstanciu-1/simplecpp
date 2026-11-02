@@ -1,0 +1,64 @@
+function sample_warehouse_transfer(): WarehouseTransfer {
+    $draft WarehouseTransfer = new WarehouseTransfer();
+    $draft->id = "TR-001";
+    $draft->item_code = "PART-A";
+    $draft->source_location = "MAIN-A";
+    $draft->destination_location = "MAIN-B";
+    $draft->dispatch_reference = "TR-D1";
+    $draft->receipt_reference = "TR-R1";
+    $draft->requested = 20;
+    $draft->dispatched = 15;
+    $draft->received = 10;
+    $draft->unit_cost = 500;
+    $draft->period = 1;
+    $draft->loss_quantity = 1;
+    $draft->approved = true;
+    $draft->closed = false;
+    return $draft;
+}
+
+function check_warehouse_transfer(WorkloadChecks $checks): void {
+    $draft WarehouseTransfer = sample_warehouse_transfer();
+    $checks->accepted($draft->validate(), "warehouse_transfer valid draft");
+    $checks->equal($draft->in_transit_value(), 2000, "warehouse_transfer independent business result");
+    $copy WarehouseTransfer = $draft->copy();
+    $checks->equal(count($draft->differences($copy)), 0, "warehouse_transfer snapshot equivalence");
+    $checks->expect($draft->describe() === $copy->describe(), "warehouse_transfer snapshot report");
+    $copy = $draft->copy();
+    $copy->id = "";
+    $checks->rejected($copy->validate(), "warehouse_transfer.id", "warehouse_transfer id required");
+    $copy = $draft->copy();
+    $copy->id = "bad\nrow";
+    $checks->rejected($copy->validate(), "warehouse_transfer.id", "warehouse_transfer id control");
+    $copy = $draft->copy();
+    $copy->id = DocumentRules::repeat("x", 41);
+    $checks->rejected($copy->validate(), "warehouse_transfer.id", "warehouse_transfer id width");
+    $copy = $draft->copy();
+    $copy->id = "TR-001-changed";
+    $checks->expect($draft->id === "TR-001", "warehouse_transfer id snapshot isolation");
+    $changes_id vector<string> = $draft->differences($copy);
+    $checks->equal(count($changes_id), 1, "warehouse_transfer id change count");
+    if (count($changes_id) === 1) {
+        $checks->expect($changes_id[0] === "id", "warehouse_transfer id change identity");
+    }
+    $copy = $draft->copy();
+    $copy->requested = 0;
+    $checks->rejected($copy->validate(), "warehouse_transfer.requested", "warehouse_transfer requested below");
+    $copy = $draft->copy();
+    $copy->requested = 1000001;
+    $checks->rejected($copy->validate(), "warehouse_transfer.requested", "warehouse_transfer requested above");
+    $copy = $draft->copy();
+    $copy->dispatched = -1;
+    $checks->rejected($copy->validate(), "warehouse_transfer.dispatched", "warehouse_transfer dispatched below");
+    $copy = $draft->copy();
+    $copy->dispatched = 1000001;
+    $checks->rejected($copy->validate(), "warehouse_transfer.dispatched", "warehouse_transfer dispatched above");
+    $copy = $draft->copy();
+    $copy->approved = false;
+    $checks->expect($draft->approved === true, "warehouse_transfer approved snapshot isolation");
+    $changes_approved vector<string> = $draft->differences($copy);
+    $checks->equal(count($changes_approved), 1, "warehouse_transfer approved change count");
+    if (count($changes_approved) === 1) {
+        $checks->expect($changes_approved[0] === "approved", "warehouse_transfer approved change identity");
+    }
+}

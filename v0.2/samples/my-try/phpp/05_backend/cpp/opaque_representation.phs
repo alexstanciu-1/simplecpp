@@ -1,0 +1,232 @@
+namespace scpp\compiler;
+
+/** Physical representation only: canonical identities/capabilities remain in their existing owners. */
+final class CPP_Opaque_Representation {
+	/** Concrete prototypes need the name, not the storage layout of their parameters. */
+	public static function declaration_header(string $spelling): string {
+		return 'specializations/declarations/' . \scpp_portability_substr_to_end($spelling, \scpp_portability_strlen('scpp::internal::')) . '.hpp';
+	}
+
+	public static function representation(canonical_type_use $type, CPP_Specializations $engine, bool $compose_arguments = false): cpp_type {
+		$request cpp_specialization_ref;
+		if ($compose_arguments) { $request = $engine->request_composed($type); }
+		else { $request = $engine->request_opaque($type); }
+		$entry = $engine->entry($request);
+		$mapping = new cpp_type();
+		$mapping->spelling = 'scpp::internal::' . $entry->name;
+		$mapping->headers[$entry->header] = true;
+		$mapping->specialization = $type;
+		$mapping->opaque = true;
+		$mapping->literal = CPP_Types::representation($type)->literal;
+		return $mapping;
+	}
+
+	/** Validate the bounded callable transport; physical layout ordering belongs to the engine. */
+	public static function require_native_type(canonical_type_use $type): void {
+		$canonical = Type_Queries::canonical($type);
+		if ($canonical->definition() instanceof callable_type_definition) {
+			CPP_Callback_Transport::signature($type);
+		}
+		if ($canonical instanceof applied_template_type) {
+			foreach (object_cast($canonical, applied_template_type::class)->arguments()  as $argument) {
+				self::require_native_type($argument);
+			}
+		}
+	}
+
+	/** Stable output identity: distinct semantic types may share one native C++ spelling. */
+	public static function identity(canonical_type_use $type): string {
+		$canonical = Type_Queries::canonical($type);
+		$text = $canonical->definition()->name();
+		if ($canonical->definition() instanceof async_task_type_definition) {
+			$text = 'async<' . self::identity(object_cast($canonical->definition(), async_task_type_definition::class)->value_type) . '>';
+		}
+		if ($canonical instanceof applied_template_type) {
+			$text .= '<';
+			$separator = '';
+			foreach (object_cast($canonical, applied_template_type::class)->arguments()  as $argument) {
+				$text .= $separator . self::identity($argument);
+				$separator = ',';
+			}
+			$text .= '>';
+		}
+		return $type->by_value() ? 'value<' . $text . '>' : $text;
+	}
+
+	/** Consume the prepared boundary; never infer borrowing from a spelling or capability. */
+	public static function borrowed_argument(prepared_call_argument $argument, string $expression): string {
+		if (($argument->boundary !== value_boundary_operation::observe_value)
+			&& ($argument->boundary !== value_boundary_operation::bind_reference)) {
+			throw new \scpp_portability_logic_exception('Opaque borrowed transport requires a prepared borrow/observation');
+		}
+		if ($argument->conversion !== null) { throw new \scpp_portability_logic_exception('Borrowed transport cannot convert storage'); }
+		return '(' . $expression . ').address()';
+	}
+
+	/** First operation mechanism: one readonly observation and direct owned-result construction. */
+	public static function observation(prepared_call $call, CPP_Specializations $engine): cpp_specialization_entry {
+		$arguments Storage<prepared_call_argument> = $call->arguments;
+		$parameters Storage<callable_parameter> = $call->signature->parameters;
+		if ((count($arguments) !== 1) || (count($parameters) !== 1)
+			|| ($call->signature->reference_return !== null) || ($call->variadic_parameter !== null)) {
+			throw new \scpp_portability_runtime_exception('Opaque observation requires one input and an owned result');
+		}
+		if (($arguments[0]->boundary !== value_boundary_operation::observe_value)
+			|| ($parameters[0]->mode !== passing_mode::observation)) {
+			throw new \scpp_portability_runtime_exception('Opaque operation requires a prepared observation');
+		}
+		self::borrowed_argument($arguments[0], 'input');
+		self::require_native_type($parameters[0]->type);
+		self::require_native_type($call->signature->return_type);
+		$target = object_cast(lock($call->target), runtime_function_definition::class);
+		$binding = Model::$cpp_callable_bindings->function_binding($target);
+		$input = CPP_Types::representation($parameters[0]->type);
+		$output = CPP_Types::representation($call->signature->return_type);
+		$name = 'observe_' . CPP_Artifacts::component($target->key() . ':' . $input->spelling . ':' . $output->spelling);
+		$existing = $engine->find($name);
+		if ($existing !== null) { return $existing; }
+		$header = 'specializations/' . $name . '.hpp';
+		$signature = 'void ' . $name . '(void* destination, const void* input)';
+		$headers = $input->headers;
+		foreach ($output->headers  as $path => $needed) { $headers[$path] = $needed; }
+		$headers[$binding->header()] = true;
+		$implementation = CPP_Artifacts::includes($headers, '') . "#include <new>\nnamespace scpp::internal {\n"
+			. $signature . ' { ::new(destination) ' . $output->spelling . '(' . $binding->symbol()
+			. '(*std::launder(static_cast<const ' . $input->spelling . "*>(input)))); }\n}\n";
+		$layout_dependencies hash<bool> = [];
+		return new cpp_specialization_entry($name, $header,
+			"#pragma once\nnamespace scpp::internal { " . $signature . "; }\n", $implementation, $layout_dependencies);
+	}
+
+	public static function entry(canonical_type_use $type, CPP_Specializations $engine, bool $compose_arguments = false): cpp_specialization_entry {
+		self::require_native_type($type);
+		$capabilities = new Capability_Facts();
+		if (!$capabilities->has_capability($type, generic_contract::value_storable)) {
+			throw new \scpp_portability_runtime_exception('Opaque representation requires a storable type');
+		}
+		// Both mappings consume the existing registry; composition substitutes physical arguments.
+		$mapping = $compose_arguments ? CPP_Types::implementation_representation($type, $engine) : CPP_Types::representation($type);
+		$identity = self::identity($type);
+		$name = $compose_arguments ? 'concrete_' . CPP_Artifacts::bounded_component($identity, $identity . ':' . $mapping->spelling)
+			: 'opaque_' . CPP_Artifacts::component($identity . ':' . $mapping->spelling);
+		$existing = $engine->find($name);
+		if ($existing !== null) { return $existing; }
+		$native = 'native_' . $name;
+		$prefix = 'SCPP_LAYOUT_' . $name;
+		$includes = CPP_Artifacts::preamble($mapping->headers, $mapping->forward_declarations, '');
+		$aliases = $includes . 'using ' . $native . ' = ' . $mapping->spelling . ";\n";
+		// Layout admission is provider metadata; operations keep their full native dependencies.
+		$layout_mapping = $compose_arguments ? CPP_Types::implementation_representation($type, $engine, true) : $mapping;
+		if ($layout_mapping->spelling !== $mapping->spelling) { throw new \scpp_portability_logic_exception('Layout requirement changed native representation'); }
+		$layout_aliases = CPP_Artifacts::preamble($layout_mapping->headers, $layout_mapping->forward_declarations, '')
+			. 'using ' . $native . ' = ' . $mapping->spelling . ";\n";
+		$copyable = $capabilities->has_capability($type, generic_contract::copyable_value);
+		$probe = 'std::printf("#define ' . $prefix . '_SIZE %zu\\n#define ' . $prefix . '_ALIGN %zu\\n", sizeof('
+			. $native . '), alignof(' . $native . "));\n";
+		$declaration = "#pragma once\n#ifndef " . $prefix . "_SIZE\n#error Native layout resolution is required\n#endif\n"
+			. 'namespace scpp::internal { struct alignas(' . $prefix . '_ALIGN) ' . $name . " final {\n"
+			. 'struct operation_result {}; ' . $name . '(operation_result, void (*construct)(void*, const void*), const void* input);' . "\n"
+			. 'private: unsigned char storage_[' . $prefix . "_SIZE];\npublic:\n"
+			. "void* address() noexcept { return storage_; }\nconst void* address() const noexcept { return storage_; }\n";
+		$payload nullable<cpp_type> = null;
+		$pointee nullable<canonical_type_use> = null;
+		if ($compose_arguments) { $pointee = CPP_Types::application_pointee($type); }
+		$implementation_headers hash<bool> = [];
+		if (Type_Queries::is_nominal_handle($type)
+			&& (Type_Queries::canonical($type)->definition()->origin() === type_definition_origin::source)) {
+			$implementation_headers['scpp/hash_t.hpp'] = true;
+		}
+		if ($pointee !== null) {
+			$payload = CPP_Types::payload($pointee, new cpp_generation_context($engine));
+			foreach ($payload->headers  as $header => $used) { $implementation_headers[$header] = $used; }
+			$payload_declaration = CPP_Types::payload_for($pointee, cpp_type_requirement::declaration, new cpp_generation_context($engine));
+			$declaration = CPP_Artifacts::preamble($payload_declaration->headers, $payload_declaration->forward_declarations, '') . $declaration;
+			$readonly_payload = ($type->by_value() ? 'const ' : '') . $payload->spelling;
+			$declaration .= $payload->spelling . '* operator->(); ' . $payload->spelling . "& operator*();\n"
+				. $readonly_payload . '* operator->() const; ' . $readonly_payload . "& operator*() const;\n";
+		}
+		$implementation = $aliases . CPP_Artifacts::includes($implementation_headers, '') . "#include <memory>\n#include <new>\n#include <utility>\nnamespace scpp::internal {\n"
+			. 'static_assert(sizeof(' . $name . ') == sizeof(' . $native . "));\n"
+			. 'static_assert(alignof(' . $name . ') == alignof(' . $native . "));\n"
+			. $native . '& unwrap(' . $name . '& value) { return *std::launder(static_cast<' . $native . "*>(value.address())); }\n"
+			. 'const ' . $native . '& unwrap(const ' . $name . '& value) { return *std::launder(static_cast<const ' . $native . "*>(value.address())); }\n";
+		if ($payload !== null) {
+			$readonly_payload = ($type->by_value() ? 'const ' : '') . $payload->spelling;
+			$implementation .= $payload->spelling . '* ' . $name . '::operator->() { return unwrap(*this).operator->(); }' . "\n"
+				. $payload->spelling . '& ' . $name . '::operator*() { return unwrap(*this).operator*(); }' . "\n"
+				. $readonly_payload . '* ' . $name . '::operator->() const { return unwrap(*this).operator->(); }' . "\n"
+				. $readonly_payload . '& ' . $name . '::operator*() const { return unwrap(*this).operator*(); }' . "\n";
+		}
+		$implementation .= $name . '::' . $name . '(operation_result, void (*construct)(void*, const void*), const void* input) { construct(address(), input); }' . "\n";
+		// Native traits govern the physical special members; semantic copy permission is independent.
+		$special_operations vector<string> = ['default', 'copy', 'move', 'copy_assign', 'move_assign'];
+		foreach ($special_operations  as $operation) {
+			$trait = '';
+			$signature = '';
+			$body = '';
+			if ($operation === 'default') {
+				$trait = 'is_default_constructible'; $signature = $name . '()';
+				$body = '::new(address()) ' . $native . '();';
+			}
+			elseif ($operation === 'copy') {
+				$trait = 'is_copy_constructible'; $signature = $name . '(const ' . $name . '& other)';
+				$body = '::new(address()) ' . $native . '(unwrap(other));';
+			}
+			elseif ($operation === 'move') {
+				$trait = 'is_move_constructible'; $signature = $name . '(' . $name . '&& other)';
+				$body = '::new(address()) ' . $native . '(std::move(unwrap(other)));';
+			}
+			elseif ($operation === 'copy_assign') {
+				$trait = 'is_copy_assignable'; $signature = 'operator=(const ' . $name . '& other)';
+				$body = 'unwrap(*this) = unwrap(other); return *this;';
+			}
+			else {
+				$trait = 'is_move_assignable'; $signature = 'operator=(' . $name . '&& other)';
+				$body = 'unwrap(*this) = std::move(unwrap(other)); return *this;';
+			}
+			$return_type = ($operation === 'copy_assign') || ($operation === 'move_assign') ? $name . '& ' : '';
+			$permission = (!$copyable && (($operation === 'copy') || ($operation === 'copy_assign'))) ? 'false' : 'true';
+			$macro = $prefix . '_' . $operation;
+			$probe .= 'std::printf("#define ' . $macro . ' %d\\n", int(' . $permission . ' && std::' . $trait . '_v<' . $native . ">));\n";
+			$nothrow_trait = 'is_nothrow_' . string_byte_slice($trait, 3, string_byte_len($trait));
+			$probe .= 'std::printf("#define ' . $macro . '_nothrow %d\\n", int(std::' . $nothrow_trait . '_v<' . $native . ">));\n";
+			$signature .= ' noexcept(' . $macro . '_nothrow)';
+			$declaration .= '#if ' . $macro . "\n" . $return_type . $signature . ";\n#else\n"
+				. $return_type . $signature . " = delete;\n#endif\n";
+			$implementation .= '#if ' . $macro . "\n" . $return_type . $name . '::' . $signature . ' { ' . $body . " }\n#endif\n";
+		}
+		if (Type_Queries::canonical($type)->definition() instanceof callable_type_definition) {
+			$callback = CPP_Callback_Transport::interface($type, $name, $native, $engine);
+			$declaration = $callback->declaration_prefix . $declaration . $callback->declaration;
+			$implementation .= $callback->implementation;
+		}
+		if (Type_Queries::canonical($type)->definition() instanceof async_task_type_definition) {
+			$async = CPP_Async::interface($type, $name, $native, $engine);
+			$declaration = $async->declaration_prefix . $declaration . $async->declaration;
+			$implementation .= $async->implementation;
+		}
+		$literal = CPP_Physical_Interfaces::literal($type, $mapping, $name, $native);
+		$declaration = $literal->declaration_prefix . $declaration . $literal->declaration;
+		$implementation .= $literal->implementation;
+		$identity_key = CPP_Physical_Interfaces::identity_key($type, $name, $native);
+		$declaration = $identity_key->declaration_prefix . $declaration . $identity_key->declaration;
+		$implementation .= $identity_key->implementation;
+
+		// A provider payload remains hidden. This check bridge preserves the ordinary
+		// receiver-before-arguments ordering without returning its native pointer.
+		$footer = "}; ";
+		if (Type_Queries::is_nominal_handle($type)
+			&& (Type_Queries::canonical($type)->definition()->origin() === type_definition_origin::runtime)) {
+			$footer .= 'void require_receiver(const ' . $name . "& value); ";
+			$implementation .= 'void require_receiver(const ' . $name
+				. '& value) { (void)unwrap(value).operator->(); }' . "\n";
+		}
+		$footer .= "}\n";
+
+		$declaration .= '~' . $name . "() noexcept;\n";
+		$implementation .= 'static_assert(std::is_nothrow_destructible_v<' . $native . ">);\n"
+			. $name . '::~' . $name . "() noexcept { std::destroy_at(&unwrap(*this)); }\n}\n";
+		return new cpp_specialization_entry($name, 'specializations/' . $name . '.hpp',
+			$declaration, $implementation, $layout_mapping->headers, $layout_aliases, $probe, $footer);
+	}
+}

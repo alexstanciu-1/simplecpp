@@ -1,0 +1,7 @@
+// Layout counterpart: my-try/phpp/scpp_framework/file_locks.phs
+function sample_unit_248(): void
+{
+    $value int = 249;
+    sample_unit_249();
+    return;
+}

@@ -1,0 +1,7 @@
+// Layout counterpart: my-try/phpp/06_native/compile_actions.phs
+function sample_unit_189(): void
+{
+    $value int = 190;
+    sample_unit_190();
+    return;
+}

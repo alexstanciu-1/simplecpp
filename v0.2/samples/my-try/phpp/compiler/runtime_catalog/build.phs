@@ -1,0 +1,104 @@
+namespace scpp\compiler;
+
+/** Shared wire contract, not a build executor or semantic-stage worker. */
+final class Runtime_Build_Contract {
+	private static function identifier(string $text): bool {
+		if ($text === '') { return false; }
+		for ($index = 0; $index < string_byte_len($text); $index++) {
+			$byte = string_byte_at($text, $index);
+			if (($byte === 95) || (($byte >= 65) && ($byte <= 90)) || (($byte >= 97) && ($byte <= 122))) { continue; }
+			if (($index > 0) && ($byte >= 48) && ($byte <= 57)) { continue; }
+			return false;
+		}
+		return true;
+	}
+
+	public static function definition_name(string $text): string {
+		$parts vector<string> = explode('=', $text);
+		if (count($parts) !== 2) { throw new \scpp_portability_runtime_exception('Runtime build definition requires NAME=VALUE'); }
+		if (!self::identifier($parts[0]) || ($parts[1] === '')) {
+			throw new \scpp_portability_runtime_exception('Runtime build definition requires NAME=VALUE');
+		}
+		if ($parts[0] === 'SCPP_LANGUAGE_TARGET_PHP') { throw new \scpp_portability_runtime_exception('Runtime module cannot override the language target'); }
+		for ($index = 0; $index < string_byte_len($parts[1]); $index++) {
+			$byte = string_byte_at($parts[1], $index);
+			if ((($byte >= 48) && ($byte <= 57)) || (($byte >= 65) && ($byte <= 90))
+				|| (($byte >= 97) && ($byte <= 122)) || ($byte === 95) || ($byte === 45) || ($byte === 46)) { continue; }
+			throw new \scpp_portability_runtime_exception('Unsupported runtime build definition value');
+		}
+		return $parts[0];
+	}
+
+	public static function validate(runtime_cpp_build_spec $spec): void {
+		foreach ($spec->providers  as $provider) {
+			if (($provider !== 'ui') && ($provider !== 'webview')) { throw new \scpp_portability_runtime_exception('Unknown runtime SDK provider'); }
+		}
+		self::options($spec->compile_options, false);
+		self::options($spec->link_options, true);
+		foreach ($spec->sources  as $source) {
+			if (!str_ends_with($source, '.cpp')) { throw new \scpp_portability_runtime_exception('Runtime provider source requires .cpp'); }
+			foreach (explode('/', $source)  as $component) {
+				if (($component === '') || ($component === '.') || ($component === '..')) { throw new \scpp_portability_runtime_exception('Invalid relative runtime provider path'); }
+				self::token($component);
+			}
+		}
+		foreach ($spec->libraries  as $library) { self::token($library); }
+		$definitions hash<string> = [];
+		foreach ($spec->definitions  as $definition) {
+			$name = self::definition_name($definition);
+			if (isset($definitions[$name])) {
+				if ($definitions[$name] !== $definition) { throw new \scpp_portability_runtime_exception('Conflicting runtime build definition: ' . $name); }
+			}
+			$definitions[$name] = $definition;
+		}
+	}
+
+	private static function token(string $text): void {
+		if (($text === '') || str_starts_with($text, '-')) { throw new \scpp_portability_runtime_exception('Invalid runtime build token'); }
+		for ($index = 0; $index < string_byte_len($text); $index++) {
+			$byte = string_byte_at($text, $index);
+			if ((($byte >= 48) && ($byte <= 57)) || (($byte >= 65) && ($byte <= 90))
+				|| (($byte >= 97) && ($byte <= 122)) || ($byte === 95) || ($byte === 45) || ($byte === 46) || ($byte === 43)) { continue; }
+			throw new \scpp_portability_runtime_exception('Invalid runtime build token');
+		}
+	}
+
+	/** Only SDK search paths, libraries and the existing Linux threading/link flags. */
+	public static function options(vector<string> $values, bool $link): void {
+		$path_next = false;
+		foreach ($values  as $value) {
+			for ($index = 0; $index < string_byte_len($value); $index++) {
+				$byte = string_byte_at($value, $index);
+				if (($byte === 0) || ($byte === 10) || ($byte === 13)) { throw new \scpp_portability_runtime_exception('Invalid runtime SDK option bytes'); }
+			}
+			if ($path_next) {
+				if (!str_starts_with($value, '/')) { throw new \scpp_portability_runtime_exception('Runtime SDK search path must be absolute'); }
+				$path_next = false; continue;
+			}
+			if (($value === '-pthread') || ($link && ($value === '-Wl,--export-dynamic'))) { continue; }
+			$prefix = $link ? '-L' : '-I';
+			if (($value === $prefix) || (!$link && ($value === '-isystem'))) { $path_next = true; continue; }
+			if (str_starts_with($value, $prefix . '/')) { continue; }
+			if ($link && str_starts_with($value, '-l')) { self::token(string_byte_slice($value, 2, string_byte_len($value) - 2)); continue; }
+			throw new \scpp_portability_runtime_exception('Unsupported runtime SDK option: ' . $value);
+		}
+		if ($path_next) { throw new \scpp_portability_runtime_exception('Missing runtime SDK search path'); }
+	}
+
+	public static function encode(runtime_cpp_build_spec $spec): string {
+		self::validate($spec);
+		if (count($spec->providers) !== 0) { throw new \scpp_portability_runtime_exception('Unresolved runtime SDK provider'); }
+		return '{"sources":' . self::strings($spec->sources) . ',"libraries":' . self::strings($spec->libraries)
+			. ',"definitions":' . self::strings($spec->definitions)
+			. ',"compile_options":' . self::strings($spec->compile_options)
+			. ',"link_options":' . self::strings($spec->link_options)
+			. ',"diagnostics":' . self::strings($spec->diagnostics) . '}';
+	}
+
+	private static function strings(vector<string> $values): string {
+		$text = '[';
+		$separator = '';
+		foreach ($values  as $value) { $text .= $separator . \scpp_portability_json_quote($value); $separator = ','; }
+		return $text . ']';
+	}
+}
