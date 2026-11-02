@@ -6,114 +6,136 @@ namespace scpp\compiler;
 /** Filesystem metadata of a complete project invocation; no per-file reuse or dependency watches. */
 final class Project_Changes
 {
-	/** Stat module inputs and retain their selection; no file contents are read for change detection. */
-	public static function capture(compilation_session $session, string $facts, string $output): array /** array{version:int,php:string,entry:string,graph:array,files:array,units:array} */
+	/** Capture one module/source representation and a separate map for remaining inputs. */
+	public static function capture(compilation_session $session, string $facts, string $output): array /** versioned saved input state */
 	{
-		$files = [];
-		$units = [];
 		clearstatcache();
-		$graph = [];
+		$files = [];
+		$modules = [];
+		$source_paths = [];
+		$visited = [];
 		$excluded = realpath($output);
 		foreach ($session->modules as $name => $module)
 		{
 			if ($excluded === $module->root) {
 				throw new \RuntimeException('Project output must not be a module root');
 			}
-			self::scan($module->root, $files, $excluded);
+			self::scan($module->root, $files, $excluded, $visited);
 			$sources = [];
 			foreach ($module->sources as $unit) {
-				$sources[$unit->path] = $unit->flavor->value;
-				self::file($module->root . '/' . $unit->path, $files);
-				$units[$module->root . '/' . $unit->path] = [$name, $module->root, $module->type, $unit->path, $unit->flavor->value];
+				$path = $module->root . '/' . $unit->path;
+				self::file($path, $files);
+				$sources[$unit->path] = ['flavor' => $unit->flavor->value, ...$files[$path]];
+				$source_paths[$path] = true;
 			}
 			$dependencies = array_keys($module->dependencies);
 			sort($dependencies, SORT_STRING);
 			ksort($sources, SORT_STRING);
-			$graph[$name] = [$module->root, $module->type, $module->manifest, $dependencies, $sources];
+			$modules[$name] = ['root' => $module->root, 'type' => $module->type,
+				'manifest' => $module->manifest, 'dependencies' => $dependencies, 'sources' => $sources];
 			if ($module->manifest !== null) {
 				self::file($module->manifest, $files);
 			}
 		}
 		self::file($facts, $files);
-		self::scan(dirname(__DIR__), $files, false, true);
-		ksort($files, SORT_STRING);
-		ksort($graph, SORT_STRING);
-		ksort($units, SORT_STRING);
-		return ['version' => 2, 'php' => PHP_VERSION, 'entry' => $session->entry_key(),
-			'graph' => $graph, 'files' => $files, 'units' => $units];
+		self::scan(dirname(__DIR__), $files, false, $visited, true);
+		$other_inputs = array_diff_key($files, $source_paths);
+		ksort($other_inputs, SORT_STRING);
+		ksort($modules, SORT_STRING);
+		return ['version' => 3, 'php' => PHP_VERSION, 'entry' => $session->entry_key(),
+			'modules' => $modules, 'other_inputs' => $other_inputs];
 	}
 
-	/** Mark current units and retain removed units separately until the caller completes the rebuild. */
-	public static function mark(compilation_session $session, array $current /** captured state */,
-		?array $previous /** previous successful captured state */): array /** list<source_unit>; removed units */
+	/** Derive a temporary path index for comparisons; source identity is serialized only under its module. */
+	private static function sources(?array $state /** saved input state */): array /** absolute path -> source identity and stat */
 	{
+		$result = [];
+		foreach ($state['modules'] ?? [] as $name => $module) {
+			foreach ($module['sources'] as $relative => $source) {
+				$result[$module['root'] . '/' . $relative] = ['module' => $name, 'root' => $module['root'],
+					'type' => $module['type'], 'path' => (string) $relative, ...$source];
+			}
+		}
+		return $result;
+	}
+
+	/** Mark active units and retain removed units until the caller completes the rebuild. */
+	public static function mark(compilation_session $session, array $current /** captured state */,
+		?array $previous /** previous successful state */): array /** list<source_unit>; removed units */
+	{
+		$current_sources = self::sources($current);
+		$previous_sources = self::sources($previous);
 		foreach ($session->units() as $unit)
 		{
 			$path = $unit->module->root . '/' . $unit->path;
-			$unit->mtime = $current['files'][$path]['mtime'];
-			$unit->size = $current['files'][$path]['size'];
-			$unit->status = !isset($previous['units'][$path]) ? change_status::added
-				: (($previous['files'][$path] !== $current['files'][$path])
-					|| ($previous['units'][$path] !== $current['units'][$path])
-					? change_status::changed : change_status::none);
+			$source = $current_sources[$path];
+			$unit->mtime = $source['mtime'];
+			$unit->size = $source['size'];
+			$unit->status = !isset($previous_sources[$path]) ? change_status::added
+				: ($previous_sources[$path] !== $source ? change_status::changed : change_status::none);
 		}
 		$removed = [];
-		foreach ($previous['units'] ?? [] as $path => $identity)
+		foreach (array_diff_key($previous_sources, $current_sources) as $source)
 		{
-			if (isset($current['units'][$path])) {
-				continue;
+			$owner = $session->modules[$source['module']] ?? null;
+			if (($owner === null) || ($owner->root !== $source['root'])) {
+				$owner = new module($source['module'], $source['root'], $source['type']);
 			}
-			[$name, $root, $type, $relative, $flavor] = $identity;
-			$owner = $session->modules[$name] ?? null;
-			if (($owner === null) || ($owner->root !== $root)) {
-				$owner = new module($name, $root, $type);
-			}
-			$unit = new source_unit($owner, $relative, flavor::from($flavor));
+			$unit = new source_unit($owner, $source['path'], flavor::from($source['flavor']));
 			$unit->status = change_status::removed;
-			$unit->mtime = $previous['files'][$path]['mtime'];
-			$unit->size = $previous['files'][$path]['size'];
+			$unit->mtime = $source['mtime'];
+			$unit->size = $source['size'];
 			$removed[] = $unit;
 		}
 		return $removed;
 	}
 
-	/** Reject legacy/corrupt persisted baselines before constructing source-unit change records. */
+	/** Reject old/corrupt saved layouts before reconstructing removed source units. */
 	public static function valid(mixed $state): bool
 	{
-		if (!is_array($state) || (($state['version'] ?? null) !== 2)
+		if (!is_array($state) || (($state['version'] ?? null) !== 3)
 			|| !is_string($state['php'] ?? null) || !is_string($state['entry'] ?? null)
-			|| !is_array($state['graph'] ?? null) || !is_array($state['files'] ?? null)
-			|| !is_array($state['units'] ?? null)) {
+			|| !is_array($state['modules'] ?? null) || !is_array($state['other_inputs'] ?? null)) {
 			return false;
 		}
-		foreach ($state['files'] as $path => $stat) {
-			if (!is_string($path) || !is_array($stat) || !is_int($stat['mtime'] ?? null)
-				|| !is_int($stat['size'] ?? null) || ($stat['size'] < 0)) {
+		foreach ($state['other_inputs'] as $path => $stat) {
+			if (!is_string($path) || !self::valid_stat($stat)) {
 				return false;
 			}
 		}
-		foreach ($state['units'] as $path => $identity)
+		foreach ($state['modules'] as $name => $module)
 		{
-			if (!isset($state['files'][$path]) || !is_array($identity) || !array_is_list($identity)
-				|| (count($identity) !== 5)) {
+			if (!is_string($name) || !is_array($module) || !is_string($module['root'] ?? null)
+				|| !in_array($module['type'] ?? null, ['default', 'c++'], true)
+				|| !is_array($module['dependencies'] ?? null) || !is_array($module['sources'] ?? null)) {
 				return false;
 			}
-			foreach ($identity as $field) {
-				if (!is_string($field)) {
+			foreach ($module['sources'] as $path => $source) {
+				if ((!is_string($path) && !is_int($path)) || !self::valid_stat($source)
+					|| !is_string($source['flavor'] ?? null) || (flavor::tryFrom($source['flavor']) === null)) {
 					return false;
 				}
-			}
-			if ((flavor::tryFrom($identity[4]) === null) || !in_array($identity[2], ['default', 'c++'], true)) {
-				return false;
 			}
 		}
 		return true;
 	}
 
+	private static function valid_stat(mixed $stat): bool
+	{
+		return is_array($stat) && is_int($stat['mtime'] ?? null)
+			&& is_int($stat['size'] ?? null) && ($stat['size'] >= 0);
+	}
+
 	/** Generated runtime headers are inputs too; only build trees, VCS state and inspection inventories are excluded. */
 	private static function scan(string $directory, array &$files /** array<string,array{mtime:int64,size:uint64}> */,
-		string|false $excluded, bool $compiler = false): void
+		string|false $excluded, array &$visited /** array<string,bool>; scan policy + canonical directory */,
+		bool $compiler = false): void
 	{
+		$key = ($compiler ? 'compiler:' : 'module:') . (realpath($directory) ?: $directory);
+		if (isset($visited[$key])) {
+			return;
+		}
+		$visited[$key] = true;
 		$entries = scandir($directory);
 		if ($entries === false) {
 			throw new \RuntimeException('Cannot inspect project inputs: ' . $directory);
@@ -134,7 +156,7 @@ final class Project_Changes
 				if (is_link($path)) {
 					throw new \RuntimeException('Cannot track a symlinked input directory: ' . $path);
 				}
-				self::scan($path, $files, $excluded, $compiler);
+				self::scan($path, $files, $excluded, $visited, $compiler);
 			}
 			elseif (is_file($path) && (!$compiler || (pathinfo($path, PATHINFO_EXTENSION) === 'php'))) {
 				self::file($path, $files);
@@ -144,6 +166,9 @@ final class Project_Changes
 
 	private static function file(string $path, array &$files /** array<string,array{mtime:int64,size:uint64}> */): void
 	{
+		if (isset($files[$path])) {
+			return;
+		}
 		$stat = @stat($path);
 		if ($stat === false) {
 			throw new \RuntimeException('Cannot stat project input: ' . $path);

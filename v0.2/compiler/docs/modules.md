@@ -150,9 +150,21 @@ PHP's stat cache is cleared at the start of each check.
 
 Successful publication saves the new baseline in the existing bundle manifest's
 `build` record. Failures preserve the previous successful baseline, leaving changes
-pending on retry. Old hash-based build records cause one full rebuild. A second
+pending on retry. Older saved-input layouts cause one full rebuild. A second
 metadata check before publication rejects detected changes during compilation;
 this does not synchronize concurrent edits or simultaneous builds of one output.
+
+The saved input layout (version 3) contains `modules`, with each module's identity,
+dependencies and source records, plus `other_inputs` for non-source metadata.
+Each source stores its relative path, flavor, mtime and size once under its module.
+There are no parallel persisted `graph`, `units` and `files` source inventories.
+Temporary absolute-path indexes are derived only when comparing source statuses.
+
+The previous bundle manifest is decoded and its cleanup paths validated once per
+invocation, then shared by baseline extraction, reuse checks and publication.
+Each canonical directory is scanned once per check and scan policy, even when
+multiple module manifests share a root. The final pre-publication check has its
+own fresh scan state. Source discovery retains its separate inclusion rules.
 
 Edits preserving both mtime and size can go unnoticed, including same-size edits
 within one second. This is the accepted cheap-check tradeoff. Use

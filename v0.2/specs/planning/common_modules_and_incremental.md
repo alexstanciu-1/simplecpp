@@ -176,3 +176,13 @@ manifest checks use plain metadata maps. No AST change, partial reuse, or native
 linker orchestration is introduced. Same-size edits preserving second-resolution
 mtime can be missed; --force explicitly requests a rebuild. See the module guide
 for the tracked-input boundary and exclusions.
+
+## Loading/incremental simplification
+
+The previous bundle manifest is loaded once and shared across baseline, reuse and
+cleanup. Saved input layout version 3 places each source's identity/stat under its
+module, with a separate map for other inputs. Older baseline layouts request a
+full rebuild. Shared/overlapping canonical directories are visited once per check
+and policy; the final check remains independent. No AST, module, source_unit,
+compilation_session or change_status fields change in this refactor. Discovery,
+activation, inventories and CLI orchestration retain their behavior.
