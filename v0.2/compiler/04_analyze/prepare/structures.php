@@ -88,12 +88,15 @@ final readonly class prepared_entry
  */
 final readonly class prepared_program
 {
+	/** Retains the graph lifetime for module compilations; null for standalone AST preparation. */
+	public ?compilation_session $session;
 	public string $entry_path;
 	public array $files /** array<string,ast_file_node> */;
 	public prepared_entry $entry;
 	private array $revisions /** array<string,uint32>; completion identities, not semantic facts */;
-	public function __construct(string $entry_path, array $files /** array<string,ast_file_node> */, prepared_entry $entry)
+	public function __construct(string $entry_path, array $files /** array<string,ast_file_node> */, prepared_entry $entry, ?compilation_session $session = null)
 	{
+		$this->session = $session;
 		$this->entry_path = $entry_path;
 		$this->files = $files;
 		$this->entry = $entry;
@@ -103,6 +106,9 @@ final readonly class prepared_program
 	}
 	public function require_prepared(): void
 	{
+		if ($this->session !== null && $this->session->files() !== $this->files) {
+			throw new \LogicException('Stale module compilation');
+		}
 		foreach ($this->files as $path => $file) {
 			if ($file->prepared_revision() !== $this->revisions[$path]) { throw new \LogicException('Stale program preparation'); }
 		}

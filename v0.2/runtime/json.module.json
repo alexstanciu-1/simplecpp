@@ -1,0 +1,9 @@
+{
+    "name": "runtime-json",
+    "type": "c++",
+    "sources": ["generated/src/json.cpp", "src/json/json_native.cpp"],
+    "dependencies": {
+        "runtime": {},
+        "runtime-boxed": {"path": "boxed.module.json"}
+    }
+}

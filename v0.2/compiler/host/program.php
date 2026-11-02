@@ -8,6 +8,17 @@ namespace scpp\compiler;
  */
 final class Program_Command
 {
+	/** Load an on-disk module graph and emit compiler units plus external native inputs. */
+	public static function project(array $arguments /** list<string> */): int /** int32; process exit status */
+	{
+		if (count($arguments) !== 5) {
+			fwrite(STDERR, "Usage: php main.php project <module-dir|module.json> <facts.json> <output-dir>\n");
+			return 2;
+		}
+		$session = (new Module_Loader())->load($arguments[2]);
+		return self::publish($session, $arguments[3], $arguments[4]);
+	}
+
 	/** Explicit CLI inventory is a bounded input adapter, not a project-config or discovery system. */
 	public static function run(array $arguments /** list<string> */): int /** int32; process exit status */
 	{
@@ -29,17 +40,28 @@ final class Program_Command
 			}
 			$requests[$path] = $flavor;
 		}
-		$sources = Program_Loader::inventory($arguments[2], $arguments[3], $requests);
-		$target = Native_Target::load($arguments[4]);
-		$program = (new Program_Frontend())->prepare_files($arguments[3], $sources, $target);
+		$session = Program_Loader::inventory($arguments[2], $arguments[3], $requests);
+		return self::publish($session, $arguments[4], $arguments[5]);
+	}
+
+	/** Both input adapters publish through the same preparation and bundle path. */
+	private static function publish(compilation_session $session, string $facts, string $directory): int /** int32 */
+	{
+		$target = Native_Target::load($facts);
+		$program = (new Program_Frontend())->prepare($session, $target);
 		$output = Cpp_Program::emit($program);
-		$inputs = [$arguments[4]];
-		foreach ($sources as $source) {
-			$inputs[] = $source->path;
+		$inputs = [$facts];
+		foreach ($session->modules as $module) {
+			if ($module->manifest !== null) {
+				$inputs[] = $module->manifest;
+			}
 		}
-		Cpp_Bundle::write($arguments[5], $output, $inputs);
-		fwrite(STDOUT, json_encode(['manifest' => $arguments[5] . '/manifest.json',
-			'sources' => count($sources), 'translation_units' => count($output->files)],
+		foreach ($program->files as $file) {
+			$inputs[] = $file->tokens->source->path;
+		}
+		Cpp_Bundle::write($directory, $output, $inputs);
+		fwrite(STDOUT, json_encode(['manifest' => $directory . '/manifest.json',
+			'sources' => count($program->files), 'translation_units' => count($output->files)],
 			JSON_THROW_ON_ERROR | JSON_PRETTY_PRINT) . "\n");
 		return 0;
 	}

@@ -10,7 +10,7 @@ final class Program_Preparation
 {
 	/** Settle every signature before preparing any body; publish the program only after all bodies succeed. */
 	public static function prepare(string $entry_path, array $files /** array<string,ast_file_node> */,
-		entry_target $target, ?global_symbols $symbols = null): prepared_program
+		entry_target $target, ?global_symbols $symbols = null, ?compilation_session $session = null): prepared_program
 	{
 		foreach ($files as $file) {
 			$file->begin_preparation();
@@ -42,7 +42,7 @@ final class Program_Preparation
 		(new Preparation())->entry($files[$entry_path], $target, $callables);
 		foreach ($files as $file) { $file->settle_preparation(); }
 		$entry = new prepared_entry($files[$entry_path], $target);
-		return new prepared_program($entry_path, $files, $entry);
+		return new prepared_program($entry_path, $files, $entry, $session);
 	}
 
 	/** Only the explicitly selected entry may contain executable statements. */

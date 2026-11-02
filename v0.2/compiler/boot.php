@@ -8,6 +8,7 @@ if ((PHP_VERSION_ID < 80500) || (PHP_INT_SIZE !== 8)) {
 
 require_once __DIR__ . '/compiler/flavor.php';
 require_once __DIR__ . '/01_prepare_inputs/structures.php';
+require_once __DIR__ . '/01_prepare_inputs/modules.php';
 require_once __DIR__ . '/01_prepare_inputs/file.php';
 require_once __DIR__ . '/compiler/diagnostics.php';
 require_once __DIR__ . '/02_tokenize/structures.php';
@@ -38,6 +39,7 @@ require_once __DIR__ . '/05_backend/cpp/publication.php';
 require_once __DIR__ . '/06_native/target.php';
 
 require_once __DIR__ . '/01_prepare_inputs/program.php';
+require_once __DIR__ . '/01_prepare_inputs/manifest.php';
 require_once __DIR__ . '/04_analyze/prepare/program.php';
 require_once __DIR__ . '/compiler/program.php';
 require_once __DIR__ . '/05_backend/cpp/structures.php';

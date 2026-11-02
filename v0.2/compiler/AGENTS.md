@@ -51,6 +51,13 @@ records the current language-flavor and parser boundaries.
   Preparation owns semantic decisions; lowering consumes settled facts. Do not
   rebuild handwritten scalar matrices or restore wrappers for native int64 storage.
 
+For module loading, read [the operational manifest contract](docs/modules.md).
+For module/incremental work, read the [common module plan](../specs/planning/common_modules_and_incremental.md).
+Application and runtime modules share dependency ownership and orchestration.
+Sessions own modules; modules own source units; units own AST roots. Dependency,
+entry and owner-backlink fields have non-owning native intent. The initial rule is
+full rebuild on any module change; change detection/reuse is not implemented yet.
+
 ## Data and processing ownership
 
 Keep one `ast_file_node` per frontend result. Prepared facts belong to their owning

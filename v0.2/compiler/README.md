@@ -205,3 +205,17 @@ resets owned facts; older handles must not be treated as immutable declaration
 snapshots across reset. Incremental/concurrent reader lifetimes remain deferred.
 
 Check phase boundaries with `php -n v0.2/compiler/tests/declaration_facts.php`.
+
+## Next: modules and incremental compilation
+
+See the [common module plan](../specs/planning/common_modules_and_incremental.md)
+for the shared application/runtime model, initial full-rebuild rule and agreed
+minimal records. The initial ownership/loading foundation is implemented; incremental reuse and
+runtime metadata ingestion remain deferred.
+
+## Module manifests
+
+Use `project <module-dir|module.json> <facts.json> <output-dir>` for the common
+manifest loader, discovery, runtime defaults and additive submodule activation.
+See [the module format and native boundary](docs/modules.md). Native module inputs
+are listed separately in the output manifest; they bypass the compiler frontend.

@@ -16,10 +16,10 @@ final class Compiler_Cli
 			return 0;
 		}
 		$command = $arguments[1];
-		if ($command === 'program')
+		if (in_array($command, ['program', 'project'], true))
 		{
 			try {
-				return Program_Command::run($arguments);
+				return $command === 'project' ? Program_Command::project($arguments) : Program_Command::run($arguments);
 			}
 			catch (\RuntimeException $error) {
 				fwrite(STDERR, $error->getMessage() . "\n");
@@ -71,6 +71,7 @@ final class Compiler_Cli
 		return "Usage: php main.php <tokens|parse|collect> <cpp|php|js> <file>\n"
 			. "       php main.php prepare <flavor> <file> <native-facts.json>\n"
 			. "       php main.php cpp <flavor> <file> <native-facts.json> <output.cpp>\n"
+			. "       php main.php project <module-dir|module.json> <facts.json> <output-dir>\n"
 			. "       php main.php program <root> <entry-relative> <facts.json> <output-dir> <flavor> <source-relative> [...]\n";
 	}
 

@@ -5,7 +5,7 @@ require_once __DIR__ . '/../boot.php';
 
 use scpp\compiler\{Cpp_Emitter, Cpp_Program, Function_Preparation, Preparation, Program_Frontend,
 	Source_Frontend, Symbol_Publication, ast_function_declaration, declaration_sink, diagnostic,
-	entry_target, flavor, ast_call_statement, ast_return_statement, program_sources, source_file};
+	entry_target, flavor, ast_call_statement, ast_return_statement, source_file};
 
 function verify(bool $condition, string $message): void
 {
@@ -140,12 +140,12 @@ $sources = [
 	'mid' => new source_file('mid', 'void start() { finish(); }', flavor::cpp),
 	'end' => new source_file('end', 'function finish(): void { return; }', flavor::js),
 ];
-$program = (new Program_Frontend())->prepare(new program_sources('main', $sources), $target);
+$program = (new Program_Frontend())->prepare_sources('main', $sources, $target);
 verify($program->entry->body()->statements[0]->function_def() === $program->files['mid']->functions()[0], 'Cross-source identity lost');
 $facts_before = serialize($program);
 $output = Cpp_Program::emit($program);
 verify(serialize($program) === $facts_before, 'Lowering mutated semantic facts');
-$reordered = (new Program_Frontend())->prepare(new program_sources('main', array_reverse($sources, true)), $target);
+$reordered = (new Program_Frontend())->prepare_sources('main', array_reverse($sources, true), $target);
 verify(Cpp_Program::emit($reordered)->files === $output->files, 'Input order changes function emission');
 $messages = [];
 $duplicates = $sources;
@@ -153,7 +153,7 @@ $duplicates['duplicate'] = new source_file('duplicate', 'void start() {}', flavo
 foreach ([$duplicates, array_reverse($duplicates, true)] as $inventory)
 {
 	try {
-		(new Program_Frontend())->prepare(new program_sources('main', $inventory), $target);
+		(new Program_Frontend())->prepare_sources('main', $inventory, $target);
 		throw new RuntimeException('Duplicate cross-file function accepted');
 	}
 	catch (diagnostic|\scpp\compiler\diagnostic_group $error) {

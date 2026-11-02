@@ -1,0 +1,6 @@
+{
+    "name": "runtime-datetime",
+    "type": "c++",
+    "sources": ["generated/src/datetime.cpp", "src/datetime/datetime.cpp"],
+    "dependencies": {"runtime": {}}
+}

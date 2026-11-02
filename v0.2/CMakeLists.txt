@@ -176,6 +176,8 @@ if(BUILD_TESTING)
   add_test(NAME compiler_duplicates COMMAND ${PHP_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/compiler/tests/duplicates.php)
   add_test(NAME compiler_functions COMMAND ${PHP_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/compiler/tests/functions.php)
   add_test(NAME compiler_output COMMAND ${PHP_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/compiler/tests/output.php)
+  add_test(NAME compiler_modules COMMAND ${PHP_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/compiler/tests/modules.php)
+  add_test(NAME compiler_manifests COMMAND ${PHP_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/compiler/tests/manifests.php)
   add_test(NAME compiler_program COMMAND ${PHP_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/compiler/tests/program.php)
   add_test(NAME generator_cleanup COMMAND ${PHP_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/api_generator/tests/publication.php)
   add_test(NAME compiler_lowering_generation COMMAND ${PHP_EXECUTABLE}

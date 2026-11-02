@@ -18,7 +18,15 @@ final class Cpp_Program
 				? (new Cpp_Emitter())->entry_body($program->entry)
 				: (new Cpp_Emitter())->functions($file->functions());
 		}
-		return self::assemble($program->entry_path, $bodies);
+		$output = self::assemble($program->entry_path, $bodies);
+		$native = [];
+		foreach ($program->session?->units() ?? [] as $unit) {
+			if ($unit->module->type === 'c++') {
+				$native[] = $unit->module->root . '/' . $unit->path;
+			}
+		}
+		sort($native, SORT_STRING);
+		return new cpp_program_output($output->entry_path, $output->source_units, $output->files, $native);
 	}
 
 	public static function empty_unit(): string

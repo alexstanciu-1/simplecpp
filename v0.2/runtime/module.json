@@ -1,0 +1,13 @@
+{
+    "name": "runtime",
+    "type": "c++",
+    "sources": [
+        "generated/src/runtime.cpp",
+        "src/output/output.cpp",
+        "src/entry/entry.cpp"
+    ],
+    "modules": {
+        "json": "json.module.json",
+        "datetime": "datetime.module.json"
+    }
+}

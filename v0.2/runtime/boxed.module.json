@@ -1,0 +1,11 @@
+{
+    "name": "runtime-boxed",
+    "type": "c++",
+    "sources": [
+        "generated/src/boxed.cpp",
+        "src/boxed/boxed_value.cpp",
+        "src/boxed/boxed_conversion.cpp",
+        "src/hash/packed_key.cpp"
+    ],
+    "dependencies": {"runtime": {}}
+}

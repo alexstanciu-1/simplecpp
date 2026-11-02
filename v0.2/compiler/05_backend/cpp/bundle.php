@@ -55,7 +55,7 @@ final class Cpp_Bundle
 		$manifest = $directory . '/manifest.json';
 		$old = self::previous($manifest);
 		$owned = array_fill_keys($old, true);
-		$protected = array_fill_keys(array_filter(array_map('realpath', $inputs)), true);
+		$protected = array_fill_keys(array_filter(array_map('realpath', array_merge($inputs, $output->native_sources))), true);
 		$paths = array_unique(array_merge($old, array_keys($output->files)));
 		foreach (array_merge(['manifest.json'], $paths) as $path)
 		{
@@ -72,6 +72,9 @@ final class Cpp_Bundle
 		}
 		$data = ['format' => self::FORMAT, 'entry' => $output->entry_path,
 			'sources' => (object) $output->source_units, 'translation_units' => array_keys($output->files)];
+		if ($output->native_sources !== []) {
+			$data['native_sources'] = $output->native_sources;
+		}
 		$text = json_encode($data, JSON_THROW_ON_ERROR | JSON_PRETTY_PRINT) . "\n";
 		if (file_exists($manifest) && !unlink($manifest)) {
 			throw new \RuntimeException('Cannot invalidate program manifest');

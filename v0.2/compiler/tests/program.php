@@ -3,7 +3,7 @@
 declare(strict_types=1);
 require_once __DIR__ . '/../boot.php';
 
-use scpp\compiler\{Cpp_Program, Program_Frontend, diagnostic, entry_target, flavor, program_sources, source_file};
+use scpp\compiler\{Cpp_Program, Program_Frontend, diagnostic, entry_target, flavor, source_file};
 
 function verify(bool $condition, string $message): void
 {
@@ -19,12 +19,12 @@ $sources = [
 	'a/notes.scpp' => new source_file('a/notes', '// empty', flavor::cpp),
 	'b/notes.scpp' => new source_file('b/notes', '/* empty */', flavor::js),
 ];
-$program = $frontend->prepare(new program_sources('main.scpp', $sources), $target);
+$program = $frontend->prepare_sources('main.scpp', $sources, $target);
 verify($program->entry->file === $program->files['main.scpp'], 'Entry uses the existing AST file root');
 verify($program->files['a/notes.scpp']->tokens->source === $sources['a/notes.scpp'], 'Secondary source identity');
 verify($program->entry->body()->statement_visits === 2, 'Entry prepared once');
 $first = Cpp_Program::emit($program);
-$second = Cpp_Program::emit($frontend->prepare(new program_sources('main.scpp', array_reverse($sources, true)), $target));
+$second = Cpp_Program::emit($frontend->prepare_sources('main.scpp', array_reverse($sources, true), $target));
 verify($first->files === $second->files, 'Input reordering changed deterministic C++ output');
 verify($first->source_units === $second->source_units, 'Input order changed source identities');
 verify(count(array_unique($first->source_units)) === 3, 'Same-basename sources collided');
@@ -38,20 +38,20 @@ catch (TypeError $expected) {
 $bad = $sources;
 $bad['b/notes.scpp'] = new source_file('bad', 'return 9;', flavor::js);
 try {
-	$frontend->prepare(new program_sources('main.scpp', $bad), $target);
+	$frontend->prepare_sources('main.scpp', $bad, $target);
 	throw new RuntimeException('Non-entry executable code was accepted');
 }
 catch (diagnostic $error) {
 	verify($error->source === $bad['b/notes.scpp'], 'Non-entry diagnostic points to wrong file');
 }
 try {
-	$frontend->prepare(new program_sources('missing.scpp', $sources), $target);
+	$frontend->prepare_sources('missing.scpp', $sources, $target);
 	throw new LogicException('Missing entry was accepted');
 }
 catch (RuntimeException $error) {
 	verify(str_contains($error->getMessage(), 'not in the source inventory'), 'Wrong entry diagnostic');
 }
-verify(Cpp_Program::emit($frontend->prepare(new program_sources('main.scpp', $sources), $target))->files === $first->files,
+verify(Cpp_Program::emit($frontend->prepare_sources('main.scpp', $sources, $target))->files === $first->files,
 	'Failure leaked program membership into a later run');
 
 // Empty-file scaling is a whole-program foundation proof, not an incremental claim.
@@ -64,7 +64,7 @@ foreach ([10, 100, 1000] as $count)
 		$many[$path] = new source_file($path, '// empty', flavor::cpp);
 	}
 	$start = hrtime(true);
-	$prepared = $frontend->prepare(new program_sources('main.scpp', $many), $target);
+	$prepared = $frontend->prepare_sources('main.scpp', $many, $target);
 	$elapsed = (hrtime(true) - $start) / 1_000_000;
 	verify((count($prepared->files) === ($count + 1)) && ($prepared->entry->body()->expression_visits === 2), 'Program work shape');
 	$measurements[] = ['secondary_files' => $count, 'prepare_pipeline_ms' => round($elapsed, 3)];

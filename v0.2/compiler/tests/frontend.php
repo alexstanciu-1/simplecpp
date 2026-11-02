@@ -4,7 +4,7 @@ declare(strict_types=1);
 require_once __DIR__ . '/../boot.php';
 
 use scpp\compiler\{Parser, Program_Frontend, Source_Frontend, diagnostic, entry_target,
-	flavor, program_sources, source_file};
+	flavor, source_file};
 
 function verify(bool $condition, string $message): void
 {
@@ -71,7 +71,7 @@ verify($next->main()->body()->statements[1]->value === $next->main()->body()->re
 // All frontend work must succeed before semantic preparation starts in any source.
 $entry = new source_file('entry', 'return missing;', flavor::cpp);
 try {
-	(new Program_Frontend())->prepare(new program_sources('entry', ['entry' => $entry, 'bad' => $bad]), new entry_target(31));
+	(new Program_Frontend())->prepare_sources('entry', ['entry' => $entry, 'bad' => $bad], new entry_target(31));
 	throw new RuntimeException('Malformed secondary source accepted');
 }
 catch (diagnostic $error) {

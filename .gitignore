@@ -119,3 +119,6 @@ __pycache__/
 # OS metadata
 .DS_Store
 Thumbs.db
+
+# Compiler-generated module inventories (never configuration).
+module.sources.json

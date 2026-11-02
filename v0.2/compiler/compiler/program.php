@@ -3,33 +3,44 @@
 declare(strict_types=1);
 namespace scpp\compiler;
 
-/**
- * Coordinates source loading, local parsing and global symbol publication before whole-program preparation.
- */
+/** Coordinates one complete module graph through source-owned frontends and global preparation. */
 final class Program_Frontend
 {
-	/** Complete each source-local read/scan/parse/collect job before entering whole-program preparation. */
-	public function prepare_files(string $entry_path, array $inputs /** array<string,source_input> */,
-		entry_target $target): prepared_program
+	public function prepare(compilation_session $session, entry_target $target): prepared_program
 	{
-		$files = [];
-		$frontend = new Source_Frontend();
-		$publication = new Symbol_Publication();
-		foreach ($inputs as $path => $input) {
-			$files[$path] = $frontend->collect_file($input->path, $input->flavor, $publication);
-		}
-		return Program_Preparation::prepare($entry_path, $files, $target, $publication->publish($files));
+		return $this->run($session, $target, static fn(source_unit $unit): source_file => Program_Loader::load($unit));
 	}
 
-	/** Each source is parsed and collected once before whole-program semantic admission. */
-	public function prepare(program_sources $sources, entry_target $target): prepared_program
+	/** In-memory callers use the same unit ownership and compilation path without reading disk. */
+	public function prepare_sources(string $entry, array $sources /** array<string,source_file> */,
+		entry_target $target): prepared_program
 	{
-		$files = [];
+		$session = Program_Loader::memory($entry, $sources);
+		return $this->run($session, $target, static fn(source_unit $unit): source_file => $sources[$unit->path]);
+	}
+
+	/** Rebuild all source results; this establishes no incremental reuse or module visibility policy. */
+	private function run(compilation_session $session, entry_target $target, \Closure $load): prepared_program
+	{
+		$units = array_filter($session->units(), static fn(source_unit $unit): bool => $unit->module->type === 'default');
+		foreach ($units as $unit) {
+			$unit->ast = null;
+		}
 		$frontend = new Source_Frontend();
 		$publication = new Symbol_Publication();
-		foreach ($sources->sources as $path => $source) {
-			$files[$path] = $frontend->collect($source, $publication);
+		try {
+			foreach ($units as $unit) {
+				$unit->ast = $frontend->collect($load($unit), $publication);
+			}
+			$files = $session->files();
+			return Program_Preparation::prepare($session->entry_key(), $files, $target,
+				$publication->publish($files), $session);
 		}
-		return Program_Preparation::prepare($sources->entry_path, $files, $target, $publication->publish($files));
+		catch (\Throwable $error) {
+			foreach ($units as $unit) {
+				$unit->ast = null;
+			}
+			throw $error;
+		}
 	}
 }

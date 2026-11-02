@@ -5,7 +5,7 @@ require_once __DIR__ . '/../../compiler/boot.php';
 require_once __DIR__ . '/../../compiler/host/syntax.php';
 require_once __DIR__ . '/../../compiler/host/compilation.php';
 
-use scpp\compiler\{File_Loader, flavor, Tokenizer, Parser, Symbol_Publication, Syntax_Inspection,
+use scpp\compiler\{Program_Loader, flavor, Tokenizer, Parser, Symbol_Publication, Syntax_Inspection,
 	Compilation_Inspection, Program_Preparation, Native_Target, Cpp_Program, diagnostic_group};
 
 /** Records stage work separately from inspection serialization; failed stages retain prior reports. */
@@ -36,12 +36,15 @@ final class Panel_Report
 $report = new Panel_Report();
 try {
 	$request = json_decode(file_get_contents($argv[1]), true, 512, JSON_THROW_ON_ERROR);
-	$files = [];
-	$publisher = new Symbol_Publication();
+	$requests = [];
 	foreach ($request['files'] as $input) {
-		$name = $input['name'];
+		$requests[$input['name']] = flavor::from($input['flavor']);
+	}
+	$session = Program_Loader::inventory(dirname($argv[1]) . '/sources', $request['entry'], $requests);
+	$publisher = new Symbol_Publication();
+	foreach ($session->units() as $name => $unit) {
 		$source = $report->stage('Input · ' . $name,
-			fn() => File_Loader::load(dirname($argv[1]) . '/sources/' . $name, flavor::from($input['flavor'])),
+			fn() => Program_Loader::load($unit),
 			fn($s): array => ['file' => $name, 'flavor' => $s->flavor->value, 'bytes' => strlen($s->content)]);
 		$tokens = $report->stage('Tokenize · ' . $name, fn() => (new Tokenizer($source))->tokenize(),
 			static function ($list): array {
@@ -52,10 +55,11 @@ try {
 				}
 				return ['count' => count($rows), 'tokens' => $rows];
 			});
-		$files[$name] = $report->stage('Parse + local collection · ' . $name,
+		$unit->ast = $report->stage('Parse + local collection · ' . $name,
 			fn() => (new Parser($tokens, $publisher))->parse(),
 			fn($file): array => ['ast' => Syntax_Inspection::file($file), 'collection' => Compilation_Inspection::collection($file)]);
 	}
+	$files = $session->files();
 	$symbols = $report->stage('Global symbol publication', fn() => $publisher->publish($files),
 		static function ($symbols): array {
 			$rows = [];
@@ -68,7 +72,7 @@ try {
 	$target = $report->stage('Native target facts', fn() => Native_Target::load(__DIR__ . '/../../build/clang/native-layout/facts.json'),
 		fn($t): array => ['int_digits' => $t->digits, 'minimum' => (string)$t->minimum, 'maximum' => (string)$t->maximum]);
 	$program = $report->stage('Preparation · declarations then bodies',
-		fn() => Program_Preparation::prepare($request['entry'], $files, $target, $symbols),
+		fn() => Program_Preparation::prepare($session->entry_key(), $files, $target, $symbols, $session),
 		static function ($p): array {
 			$result = ['entry' => Compilation_Inspection::program($p->entry), 'functions_by_file' => []];
 			foreach ($p->files as $path => $file) {
