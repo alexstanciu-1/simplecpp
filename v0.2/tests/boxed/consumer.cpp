@@ -28,9 +28,9 @@ int main() {
     auto child = dynamic::container(); d.set(string{"child"}, child);
     d.read(string{"child"}).set(int64{0LL}, dynamic::from_boolean(bool_t{true}));
     require(child.read(int64{0LL}).get_boolean().native_value());
-    auto text = mixed::from_string(string{"a\0b", int64{3LL}});
+    auto text = mixed::from_string(string{"a\0b", 3LL});
     auto converted = dynamic::from_mixed_scalar(text);
-    require(converted.get_string().size().native_value() == 3 && converted.get_string().data()[1] == '\0');
+    require(converted.get_string().size() == 3 && converted.get_string().data()[1] == '\0');
     require(mixed::from_dynamic_scalar(converted).kind() == boxed_kind::string);
     throws<std::runtime_error>([&] { converted = dynamic::from_mixed_scalar(m); });
     require(converted.kind() == boxed_kind::string);

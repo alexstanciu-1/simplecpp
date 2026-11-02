@@ -56,4 +56,10 @@ $ownerPlan = prepareRuntime(decode($metadata,'metadata'),decode($owners,'publica
 $artifacts = render($ownerPlan);
 requireThat(str_contains($artifacts['src/ownership.cpp'],'== 32 && alignof(std::shared_ptr<'), 'Emitter ignored supplied ownership layout');
 requireThat(str_contains($artifacts['public/'.$ownerPlan['ownership']['header']],'alignas(16) unsigned char storage_[32]'), 'Public ownership layout drifted');
+$conflict = $ownerPlan;
+$conflict['ownership']['header'] = 'scpp/output.hpp';
+rejects(fn() => render($conflict));
+$conflict['ownership']['header'] = 'scpp/entry.hpp';
+rejects(fn() => render($conflict));
+requireThat(str_contains($artifacts['public/scpp/output.hpp'], 'void echo_int'), 'Missing core output API');
 echo "Hash, datetime and target-layout publication contracts passed\n";

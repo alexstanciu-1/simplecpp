@@ -26,7 +26,8 @@ endif()
 set(php_generator_source ${CMAKE_CURRENT_SOURCE_DIR}/tools/api_generator/generate.php)
 file(GLOB_RECURSE generator_sources CONFIGURE_DEPENDS
   ${CMAKE_CURRENT_SOURCE_DIR}/tools/api_generator/php/*.php
-  ${CMAKE_CURRENT_SOURCE_DIR}/tools/api_generator/templates/*.cpp.tpl)
+  ${CMAKE_CURRENT_SOURCE_DIR}/tools/api_generator/templates/*.cpp.tpl
+  ${CMAKE_CURRENT_SOURCE_DIR}/tools/api_generator/templates/*.php.tpl)
 list(APPEND generator_sources ${php_generator_source})
 set(api_tooling ${CMAKE_CURRENT_BINARY_DIR}/scpp-api-tooling)
 configure_file(tools/api_generator/tooling.py.in ${api_tooling} @ONLY)
@@ -58,6 +59,8 @@ include(cmake/RuntimePublication.cmake)
 include(cmake/Datetime.cmake)
 include(cmake/Json.cmake)
 set(runtime_outputs
+  ${runtime_generated}/public/scpp/entry.hpp
+  ${runtime_generated}/public/scpp/output.hpp
   ${runtime_generated}/public/scpp/carriers.hpp
   ${runtime_generated}/public/scpp/vectors.hpp
   ${runtime_generated}/public/scpp/string.hpp
@@ -88,8 +91,23 @@ add_custom_target(scpp_runtime_publication
   BYPRODUCTS ${runtime_outputs}
   DEPENDS scpp_api_generator ${generator_sources} ${api_tooling} ${native_facts} ${native_context} ${generator_launcher} ${runtime_metadata} ${runtime_publication}
   VERBATIM)
-add_library(scpp_runtime STATIC ${runtime_generated}/src/runtime.cpp)
+add_library(scpp_runtime STATIC ${runtime_generated}/src/runtime.cpp runtime/src/output/output.cpp runtime/src/entry/entry.cpp)
 add_dependencies(scpp_runtime scpp_runtime_publication)
+# The PHP compiler consumes generated backend code, independently of runtime API demands.
+# Runtime-only source exports intentionally omit the compiler tree.
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/compiler/boot.php")
+  set(compiler_generated ${CMAKE_CURRENT_SOURCE_DIR}/compiler/generated)
+  add_custom_target(scpp_compiler_publication ALL
+    COMMAND ${CMAKE_COMMAND}
+      -DPHP=${PHP_EXECUTABLE} -DGENERATOR=${php_generator_source}
+      -DMETADATA=${runtime_metadata} -DFACTS=${native_facts} -DCONTEXT=${native_context}
+      -DOUTPUT=${compiler_generated}
+      -P ${CMAKE_CURRENT_SOURCE_DIR}/cmake/PublishCompiler.cmake
+    BYPRODUCTS ${compiler_generated}/cpp/native_values.php ${compiler_generated}/inventory.json
+    DEPENDS scpp_layout_facts ${generator_sources} ${native_facts} ${native_context} ${runtime_metadata}
+    VERBATIM)
+  add_dependencies(scpp_runtime scpp_compiler_publication)
+endif()
 target_include_directories(scpp_runtime
   PUBLIC ${runtime_generated}/public
   PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/runtime/src/numeric ${CMAKE_CURRENT_SOURCE_DIR}/runtime/src/sequence)
@@ -145,6 +163,8 @@ if(BUILD_TESTING)
   add_executable(byte_consumer_test tests/byte_consumer.cpp)
   target_link_libraries(byte_consumer_test PRIVATE scpp_runtime)
   add_test(NAME byte_consumer COMMAND byte_consumer_test)
+  add_test(NAME entry_runtime COMMAND ${Python3_EXECUTABLE} -B ${CMAKE_CURRENT_SOURCE_DIR}/tests/entry_runtime.py)
+  add_test(NAME output_runtime COMMAND ${Python3_EXECUTABLE} -B ${CMAKE_CURRENT_SOURCE_DIR}/tests/output_runtime.py)
   add_test(NAME compiler_entry COMMAND ${PHP_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/compiler/tests/entry.php)
   add_test(NAME compiler_frontend COMMAND ${PHP_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/compiler/tests/frontend.php)
   add_test(NAME compiler_ast_file COMMAND ${PHP_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/compiler/tests/ast_file.php)
@@ -158,6 +178,8 @@ if(BUILD_TESTING)
   add_test(NAME compiler_output COMMAND ${PHP_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/compiler/tests/output.php)
   add_test(NAME compiler_program COMMAND ${PHP_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/compiler/tests/program.php)
   add_test(NAME generator_cleanup COMMAND ${PHP_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/api_generator/tests/publication.php)
+  add_test(NAME compiler_lowering_generation COMMAND ${PHP_EXECUTABLE}
+    ${CMAKE_CURRENT_SOURCE_DIR}/tools/api_generator/tests/compiler.php ${native_facts} ${native_context})
   add_test(NAME numeric_contract COMMAND ${PHP_EXECUTABLE}
     ${CMAKE_CURRENT_SOURCE_DIR}/tools/api_generator/tests/numeric.php ${native_facts} ${native_context})
   add_test(NAME generator_input_contract COMMAND ${PHP_EXECUTABLE}

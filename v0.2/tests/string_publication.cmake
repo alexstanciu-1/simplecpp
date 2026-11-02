@@ -3,7 +3,7 @@ file(MAKE_DIRECTORY "${WORK}")
 file(READ "${PUBLICATION}" publication)
 string(JSON publication REMOVE "${publication}" carriers)
 string(JSON publication REMOVE "${publication}" vectors)
-string(JSON publication SET "${publication}" types "[\"int64\"]")
+string(JSON publication SET "${publication}" types "[]")
 string(JSON publication SET "${publication}" values "[\"bool_t\"]")
 string(JSON publication SET "${publication}" operators "[]")
 string(JSON publication SET "${publication}" string operations "[\"equal\"]")
@@ -14,7 +14,7 @@ execute_process(COMMAND "${GENERATOR}" "${METADATA}" "${WORK}/publication.json" 
 if(NOT status EQUAL 0)
   message(FATAL_ERROR "Small string publication failed: ${errors}")
 endif()
-file(WRITE "${WORK}/consumer.cpp" "#include <scpp/short_names.hpp>\n#include <type_traits>\ntemplate<class T> concept adds = requires(T x) { x + x; };\nstatic_assert(!adds<string>);\nstatic_assert(!std::is_constructible_v<int64, string>);\nstatic_assert(!std::is_constructible_v<string, int64>);\nint main() { string a{\"Ada\"}; auto b = a; b.append(a); return static_cast<bool>(b == string{\"AdaAda\"}) ? 0 : 1; }\n")
+file(WRITE "${WORK}/consumer.cpp" "#include <scpp/short_names.hpp>\n#include <type_traits>\ntemplate<class T> concept adds = requires(T x) { x + x; };\nstatic_assert(!adds<string>);\nstatic_assert(std::is_same_v<decltype(string{}.size()), __INT64_TYPE__>);\nint main() { string a{\"Ada\", 3LL}; auto b = a; b.append(a); return static_cast<bool>(b == string{\"AdaAda\"}) ? 0 : 1; }\n")
 separate_arguments(flags NATIVE_COMMAND "${CXX_FLAGS}")
 execute_process(COMMAND "${CXX}" ${flags} -std=c++23 "--ld-path=${MOLD_LINKER}"
   "-I${WORK}/generated/public" "-I${SOURCE}/runtime/src/numeric" "-I${SOURCE}/runtime/src/sequence"

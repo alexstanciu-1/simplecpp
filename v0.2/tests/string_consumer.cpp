@@ -25,12 +25,18 @@ static_assert(std::is_same_v<decltype(string{} == string{}), bool_t>);
 static_assert(std::is_nothrow_move_constructible_v<string> && std::is_nothrow_move_assignable_v<string>);
 static_assert(std::is_same_v<decltype(std::declval<string&>() += string{}), string&>);
 
+static_assert(std::is_same_v<decltype(string{}.size()), __INT64_TYPE__>);
+static_assert(std::is_constructible_v<string, const char*, __INT64_TYPE__>);
+static_assert(!std::is_constructible_v<string, const char*, int64>);
+
 int main() {
     string empty;
-    require(static_cast<bool>(empty.empty()) && empty.size().native_value() == 0 && empty.data()[0] == '\0');
+    require(static_cast<bool>(empty.empty()) && empty.size() == 0 && empty.data()[0] == '\0');
+    require(string{"x", 0LL}.size() == 0);
+    fails<std::out_of_range>([] { string invalid{"x", std::numeric_limits<__INT64_TYPE__>::min()}; });
     const char bytes[] = {'A', '\0', 'B'};
-    string binary{bytes, int64{3}};
-    require(binary.size().native_value() == 3 && std::memcmp(binary.data(), bytes, 3) == 0);
+    string binary{bytes, 3};
+    require(binary.size() == 3 && std::memcmp(binary.data(), bytes, 3) == 0);
     string ada{"Ada"}, grace{"Grace"};
     auto combined = ada + grace;
     require(static_cast<bool>(combined == string{"AdaGrace"}));
@@ -40,15 +46,15 @@ int main() {
     assigned = binary;
     require(static_cast<bool>(assigned == binary));
     assigned.clear();
-    require(binary.size().native_value() == 3);
+    require(binary.size() == 3);
     assigned = empty;
     require(static_cast<bool>(assigned == string{""}));
     auto copy = binary;
     copy += copy;
-    require(copy.size().native_value() == 6 && binary.size().native_value() == 3);
+    require(copy.size() == 6 && binary.size() == 3);
     require(std::memcmp(copy.data() + 3, bytes, 3) == 0);
     auto moved = std::move(copy);
-    require(static_cast<bool>(copy.empty()) && moved.size().native_value() == 6);
+    require(static_cast<bool>(copy.empty()) && moved.size() == 6);
     copy.append(ada); // A moved-from object remains usable.
     require(static_cast<bool>(copy == ada));
     auto *self = &copy;
@@ -60,13 +66,13 @@ int main() {
     empty.append(empty);
     require(static_cast<bool>(empty.empty()));
     const std::string long_bytes(4096, 'x');
-    string large{long_bytes.data(), int64{4096}};
+    string large{long_bytes.data(), 4096};
     auto independent = large;
     large.clear();
-    require(independent.size().native_value() == 4096 && static_cast<bool>(large.empty()));
+    require(independent.size() == 4096 && static_cast<bool>(large.empty()));
     fails<std::invalid_argument>([] { string invalid{nullptr}; });
-    fails<std::invalid_argument>([] { string invalid{nullptr, int64{0}}; });
-    fails<std::out_of_range>([] { string invalid{"x", int64{-1}}; });
+    fails<std::invalid_argument>([] { string invalid{nullptr, 0}; });
+    fails<std::out_of_range>([] { string invalid{"x", -1}; });
     require(static_cast<int64>(string{"-9223372036854775808"}).native_value() == std::numeric_limits<long long>::min());
     require(static_cast<bool>(static_cast<string>(int64{42}) == string{"42"}));
     require(static_cast<float64>(string{"1.25e2"}).native_value() == 125.0);

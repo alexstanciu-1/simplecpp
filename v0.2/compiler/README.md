@@ -15,6 +15,17 @@ The compiler runs sequentially using ordinary `php`; NTS and ZTS builds are both
 supported, and no Parallel extension is required. See [execution guidance](docs/execution.md)
 for tool selection, the current flow and retained MT experiment evidence.
 
+## Local stage inspection panel
+
+Run `python3 v0.2/tools/compiler_panel/server.py` from the repository root and open
+http://localhost:8765. The loopback-only panel reports compiler stages, generated
+C++, native build output and execution for single or multiple source files. See
+[panel setup and limits](../tools/compiler_panel/README.md).
+
+See [metadata-generated native lowering](docs/generated_lowering.md) for the shared
+API-generator direction and native int64 slice. Build `scpp_runtime` once before
+running the compiler in a fresh checkout to publish its PHP backend traits.
+
 ## Current working slice
 
 ```sh

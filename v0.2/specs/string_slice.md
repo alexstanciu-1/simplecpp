@@ -68,7 +68,8 @@ identity (currently int64), explicit pointer construction, null rejection,
 operator capabilities and text-cast policies. The optional publication `string`
 record requests a header, operator names and scalar cast peers. Each requested
 peer publishes both formatting and parsing; omitted peers publish neither.
-Preparation checks published count/boolean dependencies, permitted cast families,
+Preparation resolves the native count representation from target facts and checks
+published boolean dependencies, permitted cast families,
 header conflicts and duplicate/unknown requests. Absence of the publication record
 emits no string class or text conversions.
 
@@ -79,8 +80,15 @@ API plans, not source type checking, evaluation sequencing or compiler integrati
 The compiler still owns those decisions.
 
 `scpp/string.hpp` exposes the concrete `scpp::string`, also optionally imported by
-short_names.hpp. It provides explicit `const char*` and `(const char*, int64)`
-constructors, copy/move/assignment/destruction, size, empty, data, append and clear.
+short_names.hpp. It provides explicit `const char*` and `(const char*, __INT64_TYPE__)`
+constructors for the default int64 count identity, copy/move/assignment/destruction,
+size, empty, data, append and clear. `size()` returns that native signed count.
+The prepared `count_representation` is derived from the metadata count identity and
+validated target registry; its physical signatures use that representation. Counts
+do not require publishing the int64 wrapper or its native constructors. There is
+no compatibility overload accepting wrapped counts; native callers must migrate.
+Negative counts and null pointers (including null with zero count) still throw;
+size conversion remains checked before returning.
 Requested operators are +, +=, ==, !=, <, <=, > and >=. Comparisons return bool_t;
 += returns the left reference. There is no implicit string truthiness, numeric
 coercion, native numeric construction or automatic native-pointer concatenation.

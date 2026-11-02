@@ -28,7 +28,7 @@ int main() {
     auto epoch=dt::parse_iso_utc(string{"1970-01-01T00:00:00Z"});
     require(epoch.has_value().native_value() && epoch.value().native_value()==0);
     auto rendered=dt::format_iso_utc(epoch.value());
-    require(rendered.size().native_value()==20 && std::strcmp(rendered.data(),"1970-01-01T00:00:00Z")==0);
+    require(rendered.size()==20 && std::strcmp(rendered.data(),"1970-01-01T00:00:00Z")==0);
     string text{"2024-02-29T12:34:56Z"};
     count=allocation_probe::calls;
     auto parsed=dt::parse_iso_utc(text);
@@ -37,7 +37,7 @@ int main() {
     require(result_cost==1 && parsed.value().native_value()==1709210096LL);
     auto error=dt::parse_iso_utc(string{"2023-02-29T00:00:00Z"});
     require(error.has_error().native_value() && !error.has_value().native_value());
-    require(error.error().get_message().size().native_value()>0);
+    require(error.error().get_message().size()>0);
     auto original=std::locale();
     std::locale::global(std::locale{original,new alien_dates});
     auto unaffected=dt::format_iso_utc(int64{0});

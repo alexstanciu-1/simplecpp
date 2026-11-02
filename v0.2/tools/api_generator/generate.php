@@ -8,6 +8,7 @@ require_once __DIR__ . '/php/target.php';
 require_once __DIR__ . '/php/scalars.php';
 require_once __DIR__ . '/php/families.php';
 require_once __DIR__ . '/php/render.php';
+require_once __DIR__ . '/php/render_compiler.php';
 require_once __DIR__ . '/php/render_sequences.php';
 require_once __DIR__ . '/php/render_modules.php';
 
@@ -17,6 +18,15 @@ function run(array $args): array {
     if($command === 'validate-target' && count($args) === 3) {
         $facts = targetFacts(decode(readFile($args[1]), 'target facts'), decode(readFile($args[2]), 'target context'));
         return ['context_id' => $facts['id'], 'target' => $facts['target'], 'standard_library' => $facts['standard_library'], 'status' => 'valid'];
+    }
+    if ($command === 'emit-compiler') {
+        requireThat(in_array(count($args), [5, 6], true), 'Usage: generate.php emit-compiler METADATA FACTS CONTEXT OUTPUT [--check]');
+        $check = count($args) === 6;
+        requireThat(!$check || $args[5] === '--check', 'Unknown generator option');
+        $facts = targetFacts(decode(readFile($args[2]), 'target facts'), decode(readFile($args[3]), 'target context'));
+        $files = renderCompiler(decode(readFile($args[1]), 'runtime metadata'), $facts);
+        publish($files, $args[4], $check, ['php', 'json']);
+        return ['status' => $check ? 'verified':'generated', 'artifacts' => count($files)];
     }
     $emit = in_array($command, ['emit-runtime', 'emit-scalars'], true);
     requireThat(($emit && in_array(count($args), [6, 7], true)) || (!$emit && count($args) === 5 && in_array($command, ['prepare-runtime', 'prepare-scalars', 'prepare-integer-construction'], true)), 'Usage: generate.php emit-runtime|emit-scalars METADATA PUBLICATION FACTS CONTEXT OUTPUT [--check] | validate-target FACTS CONTEXT | prepare-runtime|prepare-scalars|prepare-integer-construction METADATA PUBLICATION FACTS CONTEXT');

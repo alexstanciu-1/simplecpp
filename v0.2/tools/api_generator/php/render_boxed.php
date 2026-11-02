@@ -12,11 +12,11 @@ function renderBoxed(array $plan, array &$files): void {
         $n = $family['name']; $native = $family['native'];
         $get = fn(string $value): string => "detail::ownership_access::get<$native>($value)";
         $peer = $n === 'mixed' ? 'dynamic' : 'mixed';
-        $vars = $family + ['n' => $n, 'conversion' => $box['scalar_conversions'] ? "    static $n from_{$peer}_scalar(const $peer& value);\n" : '',
+        $vars = $family + ['count' => $plan['string']['count_representation'], 'n' => $n, 'conversion' => $box['scalar_conversions'] ? "    static $n from_{$peer}_scalar(const $peer& value);\n" : '',
             'self' => $get('*this'), 'other' => $get('other'), 'result' => $get('result'), 'value' => $get('value')];
         $h .= template('boxed_declaration', $vars);
         $d .= template('boxed_definition', $vars);
-        foreach (['int64' => 'key.native_value()', 'string' => 'std::string_view{key.data(), static_cast<std::size_t>(key.size().native_value())}'] as $key => $expression) {
+        foreach (['int64' => 'key.native_value()', 'string' => 'std::string_view{key.data(), static_cast<std::size_t>(key.size())}'] as $key => $expression) {
             $self = $get('*this'); $result = $get('result'); $value = $get('value');
             $d .= "$n $n::read(const $key& key) const { $n result; $result = $self.read($expression); return result; }\n";
             $d .= "bool_t $n::has(const $key& key) const { return bool_t{{$self}.contains($expression)}; }\n";

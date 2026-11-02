@@ -1,6 +1,7 @@
 """Bounded echo: exact bytes, observable cross-file calls and failure preservation."""
 import json
 import os
+import re
 from pathlib import Path
 import subprocess
 import tempfile
@@ -21,6 +22,12 @@ def success(result):
 
 
 def build(units, binary, expected):
+    for unit in units:
+        text = Path(unit).read_text()
+        for header in re.findall(r'^\s*#\s*include\s*[<"]([^>"]+)[>"]', text, re.MULTILINE):
+            assert header.startswith('scpp/') and '..' not in Path(header).parts, header
+            assert (root / 'runtime/generated/public' / header).is_file(), header
+        assert 'std::numeric_limits' not in text and 'std::out_of_range' not in text
     success(run('clang++', '-std=c++23', '-stdlib=libc++', '-Wall', '-Wextra', '-Werror',
                 '-I', root / 'runtime/generated/public', *units,
                 root / 'build/clang/libscpp_runtime.a', '-o', binary))

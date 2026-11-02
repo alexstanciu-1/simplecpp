@@ -37,8 +37,8 @@ int main() {
     auto& self=moved; moved=self; moved=std::move(self); require(moved.size().native_value()==4);
     hash_int64_string keys;
     keys.set(string{"12"},int64{12}); keys.set(string{"012"},int64{13});
-    keys.set(string{"a\0b",int64{3}},int64{14});
-    require(keys.size().native_value()==3 && keys.at(string{"a\0b",int64{3}}).native_value()==14);
+    keys.set(string{"a\0b",3},int64{14});
+    require(keys.size().native_value()==3 && keys.at(string{"a\0b",3}).native_value()==14);
     hash_string_int64 values; values.set(int64{2},string{"hello"});
     auto detached=values.at(int64{2}); values.set(int64{2},string{"changed"});
     require(std::strcmp(detached.data(),"hello")==0);

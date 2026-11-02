@@ -25,10 +25,6 @@ literals, not a general expression type or local-variable type.
   the separately specified interpolation behavior with their semantic owners.
 - Add other output families only through the normative type-admission/formatting
   rules: integer modules, booleans, floats, null, wrappers and dynamic values.
-- Replace the bounded backend-owned stdout helpers with the appropriate v0.2
-  runtime output API when available. Preserve exact bytes, locale-independent
-  integer formatting and output/error ordering. Review buffering and IO failure
-  behavior with that API; do not invent user-defined formatting or coercions.
 - Add broader runtime error/formatting proofs and unsupported-type diagnostics as
   those types become available. Preserve source-owned lowering and immutable facts.
 
@@ -36,3 +32,11 @@ The initial proof must cover integer variables and literals, exact string bytes,
 function call order across source units, no automatic newline, and observable
 output change after a function-body edit. Rebuilding after an edit is not evidence
 of incremental reuse until the incremental compiler exists.
+
+## Runtime boundary completed
+
+The bounded integer/byte output implementation now lives in the compiled v0.2
+runtime. Generated code calls `scpp::echo_int` / `scpp::echo_bytes` through the
+minimal `scpp/output.hpp` public header. Exact bytes, decimal formatting and call
+ordering are preserved. Stdout buffering and immediate short-write failures retain
+the original behavior; deferred flush errors remain a follow-up IO policy question.

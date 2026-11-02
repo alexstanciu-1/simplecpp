@@ -3,11 +3,11 @@ declare(strict_types=1);
 namespace Scpp\Api;
 
 // Bump when generated output layout or contracts require a fresh publication.
-const OUTPUT_VERSION = 1;
+const OUTPUT_VERSION = 2;
 const OUTPUT_EXTENSIONS = ['hpp', 'cpp', 'json'];
 
 /** Enumerate disposable output without following directory or file symlinks. */
-function generatedPaths(string $output): array {
+function generatedPaths(string $output, array $extensions = OUTPUT_EXTENSIONS): array {
     requireThat(!is_link($output), 'Generated output directory must not be a symlink');
     if (!is_dir($output)) {
         requireThat(!file_exists($output), 'Generated output path is not a directory');
@@ -16,7 +16,7 @@ function generatedPaths(string $output): array {
     $paths = [];
     $iterator = new \RecursiveIteratorIterator(new \RecursiveDirectoryIterator($output, \FilesystemIterator::SKIP_DOTS));
     foreach ($iterator as $entry) {
-        if (in_array($entry->getExtension(), OUTPUT_EXTENSIONS, true) && !$entry->isDir()) {
+        if (in_array($entry->getExtension(), $extensions, true) && !$entry->isDir()) {
             $paths[] = substr($entry->getPathname(), strlen($output) + 1);
         }
     }
@@ -25,11 +25,12 @@ function generatedPaths(string $output): array {
 }
 
 /** Validate the complete new output before touching the dedicated output directory. */
-function publish(array $files, string $output, bool $check): void {
+function publish(array $files, string $output, bool $check, array $extensions = OUTPUT_EXTENSIONS): void {
     $output = rtrim($output, '/');
     requireThat($output !== '' && $output !== '.', 'Expected a dedicated generated output directory');
     foreach ($files as $path => $contents) {
-        requireThat(is_string($contents) && preg_match('~^[a-zA-Z0-9_./-]+\.(hpp|cpp|json)$~D', $path) === 1
+        requireThat(is_string($contents) && preg_match('~^[a-zA-Z0-9_./-]+$~D', $path) === 1
+            && in_array(pathinfo($path, PATHINFO_EXTENSION), $extensions, true)
             && !str_starts_with($path, '/') && !str_contains($path, '//') && !in_array('..', explode('/', $path), true), 'Invalid generated artifact path');
         $parent = $output;
         foreach (explode('/', $path) as $part) {
@@ -46,7 +47,7 @@ function publish(array $files, string $output, bool $check): void {
         $canonical[$path] = $contents;
     }
     $files = $canonical;
-    $old = generatedPaths($output);
+    $old = generatedPaths($output, $extensions);
     if ($check) {
         foreach ($old as $path) {
             requireThat(array_key_exists($path, $files), "Obsolete generated file: $path");

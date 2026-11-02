@@ -27,3 +27,5 @@ CMakeUserPresets.json
 
 # Disposable compiler output, including caches left by retired builds.
 /compiler/target/
+
+/compiler/generated/

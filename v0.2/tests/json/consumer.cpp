@@ -8,7 +8,7 @@
 #include <type_traits>
 using namespace scpp;
 void require(bool ok) { if (!ok) std::abort(); }
-std::string bytes(const string& value) { return {value.data(), static_cast<std::size_t>(value.size().native_value())}; }
+std::string bytes(const string& value) { return {value.data(), static_cast<std::size_t>(value.size())}; }
 static_assert(std::is_same_v<decltype(json::decode(string{})), result_dynamic>);
 static_assert(std::is_same_v<decltype(json::decode_mixed(string{})), result_mixed>);
 template<class Value> auto decode(const char* text) {
@@ -58,10 +58,10 @@ template<class Value> void grammar() {
     require(bytes(json::encode(decode<Value>(R"({"0":1,"1":2})").value()).value()) == "[1,2]");
     require(bytes(json::encode(decode<Value>(R"({"1":2,"0":1})").value()).value()) == R"({"1":2,"0":1})");
     require(bytes(json::encode(keys.value()).value()) == R"({"0":1,"00":2,"-1":3,"2147483647":4,"4294967296":5,"99999999999999999999999":6})");
-    auto escaped = Value::from_string(string{"\0\x01\b\f\n\r\t\"\\/", int64{10LL}});
+    auto escaped = Value::from_string(string{"\0\x01\b\f\n\r\t\"\\/", 10LL});
     require(bytes(json::encode(escaped).value()) == R"("\u0000\u0001\b\f\n\r\t\"\\/")");
     // Raw non-ASCII bytes remain donor-compatible; escaped Unicode is validated above.
-    auto raw = Value::from_string(string{"\xff", int64{1LL}});
+    auto raw = Value::from_string(string{"\xff", 1LL});
     require(bytes(json::encode(raw).value()) == std::string("\"\xff\"", 3));
     for (double bad : {std::numeric_limits<double>::infinity(), -std::numeric_limits<double>::infinity(), std::numeric_limits<double>::quiet_NaN()})
         require(json::encode(Value::from_floating(float64{bad})).has_error().native_value());
@@ -122,7 +122,7 @@ void typed_scalars() {
     }
     for (double number : {std::numeric_limits<double>::infinity(), std::numeric_limits<double>::quiet_NaN()})
         require(json::encode(float64{number}).has_error().native_value());
-    const string text{"a\0\n\"\\", int64{5LL}};
+    const string text{"a\0\n\"\\", 5LL};
     require(bytes(json::encode(text).value()) == R"("a\u0000\n\"\\")");
     require(bytes(json::encode(string{"null"}).value()) == R"("null")");
     require(bytes(json::encode(string{}).value()) == R"("")");
@@ -160,7 +160,7 @@ void nullable_scalars() {
     nullable_scalar<nullable_float64>(float64{1.25});
     nullable_scalar<nullable_string>(string{});
     nullable_scalar<nullable_string>(string{"null"});
-    nullable_scalar<nullable_string>(string{"a\0b", int64{3LL}});
+    nullable_scalar<nullable_string>(string{"a\0b", 3LL});
     nullable_float64 invalid{float64{std::numeric_limits<double>::infinity()}};
     require(json::encode(invalid).has_error().native_value());
     require(invalid.has_value().native_value());

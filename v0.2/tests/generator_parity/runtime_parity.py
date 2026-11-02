@@ -13,6 +13,7 @@ class Parity:
     def __init__(self, args, work):
         self.args, self.work = args, work
         self.accepted = self.rejected = 0
+        self.captured = {}
 
     def check(self, name, metadata, publication, accepted=True):
         with tempfile.TemporaryDirectory(dir=self.work) as directory:
@@ -26,7 +27,10 @@ class Parity:
             if accepted:
                 files = {str(f.relative_to(root / 'generator')): hashlib.sha256(f.read_bytes()).hexdigest()
                          for f in sorted((root / 'generator').rglob('*')) if f.is_file()}
-                assert files == self.args.baseline[name], (name, 'frozen artifact contract differs')
+                if self.args.capture:
+                    self.captured[name] = files
+                else:
+                    assert files == self.args.baseline[name], (name, 'frozen artifact contract differs')
                 prepared = subprocess.run(list(map(str, [self.args.generator, 'prepare-runtime', m, p, self.args.facts, self.args.context])), capture_output=True, text=True, timeout=60)
                 assert prepared.returncode == 0, prepared.stderr
                 actual = json.loads((root / 'generator/prepared.json').read_text())
@@ -89,7 +93,7 @@ def string_cases(proof, m, p):
         else: changed['construction']['native_integer_inputs'].remove(missing)
         q['operators'] = []; q['string'].update(operations=[], casts=[])
         if missing == 'bool_t': q['values'] = ['float64']
-        proof.check('missing-string-dependency-' + missing, changed, q, False)
+        proof.check('missing-string-dependency-' + missing, changed, q, missing != 'bool_t')
     changed = copy.deepcopy(m); del changed['string']
     proof.check('missing-string-metadata', changed, p, False)
 
@@ -302,6 +306,7 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     for field in ['generator', 'facts', 'context', 'work']:
         parser.add_argument('--' + field, type=Path, required=True)
+    parser.add_argument('--capture', type=Path, help='Explicit reviewed snapshot capture; never enabled by CTest')
     args = parser.parse_args()
     for field in ['generator', 'facts', 'context']:
         setattr(args, field, getattr(args, field).resolve())
@@ -323,6 +328,10 @@ def main():
         for case in cases(root):
             proof.check('G1-' + case.name, case.metadata, case.publication, not case.rejection)
         report = {'accepted': proof.accepted, 'rejected': proof.rejected}
+    if args.capture:
+        baseline = json.loads(Path(__file__).with_name('runtime_baseline.json').read_text())
+        baseline['cases'] = proof.captured
+        args.capture.write_text(json.dumps(baseline, indent=2, sort_keys=True) + '\n')
     (args.work / 'summary.json').write_text(json.dumps(report, indent=2) + '\n')
     print(json.dumps(report))
 

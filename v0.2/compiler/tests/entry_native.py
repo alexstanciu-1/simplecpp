@@ -75,16 +75,14 @@ with tempfile.TemporaryDirectory(prefix='scpp-entry-') as directory:
     assert len(set(emitted)) == 1, 'Flavor grammars diverged after preparation'
 
     # The source slice has no runtime input expression yet. Exercise the exact
-    # backend helper with a native test driver, without claiming new source syntax.
-    helper = success(run(php, '-r',
-        'require $argv[1]; echo \\scpp\\compiler\\Cpp_Exit::checked_helper();', root / 'compiler/boot.php')).stdout
+    # public runtime boundary with a native test driver, without claiming new source syntax.
     expression = success(run(php, '-r',
         'require $argv[1]; echo \\scpp\\compiler\\Cpp_Exit::expression('
-        '\\scpp\\compiler\\exit_conversion::checked, "scpp::int64{std::stoll(argv[1])}");',
+        '\\scpp\\compiler\\exit_conversion::checked, "std::stoll(argv[1])");',
         root / 'compiler/boot.php')).stdout
     cpp = work / 'dynamic.cpp'
-    cpp.write_text('#include <scpp/integers.hpp>\n#include <limits>\n#include <stdexcept>\n'
-                   '#include <string>\n#include <iostream>\n' + helper
+    cpp.write_text('#include <scpp/entry.hpp>\n#include <stdexcept>\n'
+                   '#include <string>\n#include <iostream>\n'
                    + '\nint main(int, char **argv) { try { std::cout << ' + expression
                    + '; return 0; } catch (const std::out_of_range &) { return 99; } }\n')
     binary = work / 'dynamic'

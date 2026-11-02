@@ -15,13 +15,13 @@ static_assert(sizeof(@native@) == @size@ && alignof(@native@) == @alignment@);
 @n@ @n@::from_boolean(bool_t value) noexcept { @n@ result; @result@ = @native@::boolean(value.native_value()); return result; }
 @n@ @n@::from_integer(int64 value) noexcept { @n@ result; @result@ = @native@::integer(value.native_value()); return result; }
 @n@ @n@::from_floating(float64 value) noexcept { @n@ result; @result@ = @native@::floating(value.native_value()); return result; }
-@n@ @n@::from_string(const string& value) { @n@ result; @result@ = @native@::string({value.data(), static_cast<std::size_t>(value.size().native_value())}); return result; }
+@n@ @n@::from_string(const string& value) { @n@ result; @result@ = @native@::string({value.data(), static_cast<std::size_t>(value.size())}); return result; }
 @n@ @n@::container() { @n@ result; @result@ = @native@::container(); return result; }
 boxed_kind @n@::kind() const noexcept { return static_cast<boxed_kind>(@self@.type()); }
 bool_t @n@::get_boolean() const { return bool_t{@self@.get_boolean()}; }
 int64 @n@::get_integer() const { return int64{static_cast<long long>(@self@.get_integer())}; }
 float64 @n@::get_floating() const { return float64{@self@.get_floating()}; }
-string @n@::get_string() const { const auto bytes = @self@.get_string(); return string{bytes.data(), int64{detail::checked_integer_cast<long long>(bytes.size())}}; }
+string @n@::get_string() const { const auto bytes = @self@.get_string(); return string{bytes.data(), detail::checked_integer_cast<@count@>(bytes.size())}; }
 int64 @n@::append(@n@ value) { return int64{static_cast<long long>(@self@.append(std::move(@value@)))}; }
 int64 @n@::container_size() const { return int64{detail::checked_integer_cast<long long>(@self@.container_size())}; }
 bool_t @n@::is_packed_container() const { return bool_t{@self@.is_packed_container()}; }

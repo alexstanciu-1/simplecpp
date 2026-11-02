@@ -3,33 +3,19 @@
 declare(strict_types=1);
 namespace scpp\compiler;
 
+require_once __DIR__ . '/../../generated/cpp/native_values.php';
+
 /**
- * Spells the already-selected entry exit conversion and its optional checked C++ helper.
+ * Spells the already-selected entry exit conversion through the public runtime boundary.
  */
 final class Cpp_Exit
 {
-	/** Emit one checked adapter; caller supplies the already evaluated source integer exactly once. */
-	public static function checked_helper(): string
-	{
-		return <<<'CPP'
-static int scpp_entry_exit(scpp::int64 value)
-{
-	const auto raw = value.native_value();
-	if ((raw < std::numeric_limits<int>::min()) || (raw > std::numeric_limits<int>::max())) {
-		throw std::out_of_range("Entry return is outside native int range");
-	}
-	return static_cast<int>(raw);
-}
-
-CPP;
-	}
-
 	/** Rendering follows the settled conversion; it never infers or validates source semantics. */
 	public static function expression(exit_conversion $conversion, string $value): string
 	{
 		return match ($conversion) {
-			exit_conversion::proven => 'static_cast<int>((' . $value . ').native_value())',
-			exit_conversion::checked => 'scpp_entry_exit(' . $value . ')',
+			exit_conversion::proven => 'static_cast<int>(' . $value . ')',
+			exit_conversion::checked => 'scpp::entry_exit_checked(' . $value . ')',
 		};
 	}
 }
@@ -39,6 +25,8 @@ CPP;
  */
 final class Cpp_Emitter
 {
+	use cpp_native_values;
+
 	/** Only a completed semantic program is accepted; output is assembled privately before publication. */
 	public function emit(prepared_entry $program): string
 	{
@@ -70,29 +58,24 @@ final class Cpp_Emitter
 	{
 		$declarations = [];
 		$definitions = [];
-		$checked = false;
 		$uses_output = false;
 		foreach ($functions as $function) {
 			$name = self::function_name($function);
 			$declarations[$name] = true;
 			$definitions[] = 'void ' . $name . "()\n{\n"
-				. implode("\n", $this->statements($function->body(), $declarations, $checked, $uses_output)) . "\n}\n";
+				. implode("\n", $this->statements($function->body(), $declarations, $uses_output)) . "\n}\n";
 		}
 		if ($entry !== null) {
 			$definitions[] = 'int ' . $entry_name . "()\n{\n"
-				. implode("\n", $this->statements($entry->body(), $declarations, $checked, $uses_output)) . "\n}\n";
+				. implode("\n", $this->statements($entry->body(), $declarations, $uses_output)) . "\n}\n";
 		}
-		$header = "// Generated from completed source-owned bodies.\n#include <scpp/integers.hpp>\n";
+		$header = "// Generated from completed source-owned bodies.\n";
 		if ($entry !== null) {
-			$header .= "#include <limits>\n";
-			$header .= 'static_assert(std::numeric_limits<int>::is_signed && std::numeric_limits<int>::digits == '
-				. $entry->target->digits . ', "Entry target does not match prepared native int");' . "\n\n";
-		}
-		if ($checked) {
-			$header .= "#include <stdexcept>\n" . Cpp_Exit::checked_helper() . "\n";
+			$header .= "#include <scpp/entry.hpp>\n";
+			$header .= 'SCPP_REQUIRE_ENTRY_TARGET(' . $entry->target->digits . ");\n\n";
 		}
 		if ($uses_output) {
-			$header .= Cpp_Output::helpers();
+			$header .= "#include <scpp/output.hpp>\n";
 		}
 		ksort($declarations, SORT_STRING);
 		foreach ($declarations as $name => $unused) {
@@ -103,18 +86,17 @@ final class Cpp_Emitter
 
 	/** Lower already resolved statements and retain only contract-derived external declarations. */
 	private function statements(ast_function_body $body, array &$declarations /** array<string,bool> */,
-		bool &$checked, bool &$uses_output): array /** list<string> */
+		bool &$uses_output): array /** list<string> */
 	{
 		$body->require_prepared();
 		$lines = [];
 		foreach ($body->statements as $statement)
 		{
 			if ($statement instanceof ast_local_declaration) {
-				$lines[] = "\t[[maybe_unused]] " . $this->type($statement->type_def()) . ' ' . $this->name($statement)
+				$lines[] = "\t[[maybe_unused]] " . $this->native_type($statement->type_def()) . ' ' . $this->name($statement)
 					. ' = ' . $this->value($statement->initializer) . ';';
 			}
 			elseif (($statement instanceof ast_return_statement) && ($statement->value !== null)) {
-				$checked = $checked || ($statement->conversion() === exit_conversion::checked);
 				$lines[] = "\treturn " . Cpp_Exit::expression($statement->conversion(), $this->value($statement->value)) . ';';
 			}
 			elseif ($statement instanceof ast_echo_statement)
@@ -122,10 +104,10 @@ final class Cpp_Emitter
 				$uses_output = true;
 				$value = $statement->value;
 				if ($value instanceof ast_string_expression) {
-					$lines[] = "\t" . 'scpp_echo_bytes(' . Cpp_Output::bytes($value->bytes()) . ', ' . strlen($value->bytes()) . ');';
+					$lines[] = "\t" . 'scpp::echo_bytes(' . Cpp_Output::bytes($value->bytes()) . ', ' . strlen($value->bytes()) . ');';
 				}
 				else {
-					$lines[] = "\t" . 'scpp_echo_int((' . $this->value($value) . ').native_value());';
+					$lines[] = "\t" . 'scpp::echo_int(' . $this->value($value) . ');';
 				}
 			}
 			elseif ($statement instanceof ast_return_statement) {
@@ -148,13 +130,6 @@ final class Cpp_Emitter
 		return 'scpp_function_' . bin2hex($declaration->name);
 	}
 
-	private function type(type_definition $type): string
-	{
-		return match ($type) {
-			type_definition::int64 => 'scpp::int64',
-		};
-	}
-
 	private function name(ast_local_declaration $binding): string
 	{
 		return 'local_' . $binding->id;
@@ -164,7 +139,7 @@ final class Cpp_Emitter
 	private function value(ast_expression $value): string
 	{
 		if ($value instanceof ast_integer_expression) {
-			return $this->type($value->type_def()) . '{' . $value->integer() . 'LL}';
+			return $this->native_integer($value->integer());
 		}
 		if ($value instanceof ast_name_expression) {
 			return $this->name($value->local_def());

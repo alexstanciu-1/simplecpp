@@ -71,14 +71,14 @@ function renderDatetime(array $plan, array &$files): void {
             $body = 'detail::datetime::sleep_millis(input0.native_value());';
         }
         elseif($name === 'format_iso_utc') {
-            $body = 'const auto bytes = detail::datetime::format_iso_utc(input0.native_value()); return string{bytes.data(), int64{20LL}};';
+            $body = 'const auto bytes = detail::datetime::format_iso_utc(input0.native_value()); return string{bytes.data(), 20LL};';
         }
         elseif($result === 'result_int64') {
-            $body = "const auto parsed = detail::datetime::$name({input0.data(), static_cast<std::size_t>(input0.size().native_value())}); if (parsed.error) return result_int64{error_t{string{parsed.error}}}; return result_int64{int64{static_cast<long long>(parsed.value)}};";
+            $body = "const auto parsed = detail::datetime::$name({input0.data(), static_cast<std::size_t>(input0.size())}); if (parsed.error) return result_int64{error_t{string{parsed.error}}}; return result_int64{int64{static_cast<long long>(parsed.value)}};";
         }
         else {
             $seconds = $name === 'format_local' ? ', input1.native_value()':'';
-            $body = "const auto bytes = detail::datetime::$name({input0.data(), static_cast<std::size_t>(input0.size().native_value())}$seconds); return string{bytes.data(), int64{detail::checked_integer_cast<long long>(bytes.size())}};";
+            $body = "const auto bytes = detail::datetime::$name({input0.data(), static_cast<std::size_t>(input0.size())}$seconds); return string{bytes.data(), detail::checked_integer_cast<{$plan['string']['count_representation']}>(bytes.size())};";
         }
         $d .= "$signature { $body }\n";
     }

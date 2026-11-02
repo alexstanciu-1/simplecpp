@@ -27,7 +27,7 @@ template<class Key> struct integer_hash_key {
 };
 template<class Key> struct string_hash_key {
     static std::string_view bytes(const Key& key) {
-        return {key.data(), static_cast<std::size_t>(key.size().native_value())};
+        return {key.data(), static_cast<std::size_t>(key.size())};
     }
     static std::uint64_t hash(const Key& key) {
         return hash_detail::mix64(static_cast<std::uint64_t>(std::hash<std::string_view>{}(bytes(key))));

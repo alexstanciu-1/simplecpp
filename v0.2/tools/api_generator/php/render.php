@@ -275,6 +275,10 @@ function render(array $plan): array {
     renderDatetime($plan, $files);
     renderJson($plan, $files);
     renderBoxed($plan, $files);
+    requireThat(!isset($files['public/scpp/output.hpp']), 'The core output header path is reserved');
+    $files['public/scpp/output.hpp'] = BANNER . template('output_declaration');
+    requireThat(!isset($files['public/scpp/entry.hpp']), 'The core entry header path is reserved');
+    $files['public/scpp/entry.hpp'] = BANNER . template('entry_declaration');
     ksort($files, SORT_STRING);
     $files['inventory.json'] = encode(['generator' => 'scpp-api', 'version' => OUTPUT_VERSION, 'files' => array_keys($files)]) . "\n";
     ksort($files, SORT_STRING);

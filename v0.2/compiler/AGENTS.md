@@ -12,6 +12,9 @@ records the current language-flavor and parser boundaries.
 - Work in small end-to-end slices. Agree each slice's scope and verification
   checklist with the user before implementation, then complete the agreed checks
   and review before moving to the next slice.
+- Run ordinary compiler work and timings with `XDEBUG_MODE=off`; enable Xdebug
+  only for an explicit debugging/profiling session. The panel enforces this for
+  its PHP subprocesses without modifying system PHP configuration.
 - Run the PHP compiler sequentially on 64-bit PHP 8.5+, using ordinary `php`.
   ZTS and `parallel` are not requirements. Read [execution guidance](docs/execution.md).
   PHP is the bootstrap implementation. The agreed native ownership model includes
@@ -42,6 +45,11 @@ records the current language-flavor and parser boundaries.
 - Preserve unrelated work. Keep changes within the agreed ownership area;
   discuss a newly discovered cross-owner redesign rather than silently adding
   compatibility machinery. Do not create empty stages for future functionality.
+
+- Follow the [metadata-generated native lowering direction](docs/generated_lowering.md).
+  The API generator owns generated PHP backend traits as well as runtime APIs.
+  Preparation owns semantic decisions; lowering consumes settled facts. Do not
+  rebuild handwritten scalar matrices or restore wrappers for native int64 storage.
 
 ## Data and processing ownership
 

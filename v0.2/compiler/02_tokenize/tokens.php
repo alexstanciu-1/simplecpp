@@ -66,10 +66,18 @@ final class Tokenizer
 	];
 
 	private readonly source_file $source;
+	/** First-byte buckets preserve longest-match order; immutable after worker construction. */
+	private readonly array $punctuation /** array<string,list<array{string,token_kind}>> */;
 
 	public function __construct(source_file $source)
 	{
 		$this->source = $source;
+		$punctuation = [];
+		foreach (self::PUNCTUATION as $kind) {
+			$spelling = $kind->label();
+			$punctuation[$spelling[0]][] = [$spelling, $kind];
+		}
+		$this->punctuation = $punctuation;
 	}
 
 	/** Publish only a complete generation; failures cannot expose partial tokens. */
@@ -172,8 +180,7 @@ final class Tokenizer
 			return $this->number();
 		}
 		if (($byte !== '#') || ($this->source->flavor === flavor::php)) {
-			foreach (self::PUNCTUATION as $kind) {
-				$spelling = $kind->label();
+			foreach ($this->punctuation[$byte] ?? [] as [$spelling, $kind]) {
 				if ($this->starts($spelling)) {
 					$this->offset += strlen($spelling);
 					return $kind;

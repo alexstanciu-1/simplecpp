@@ -68,7 +68,7 @@ not an implicit fallback. Copy/move within an identity remain ordinary value ope
 | Native bool | Bool_t | Explicit construction |
 | Bool_t | Native bool | Explicit observation/condition conversion |
 | const char* | String | Explicit checked non-null C-string construction |
-| const char*, signed runtime count | String | Explicit byte copy; reject null/negative count; preserve embedded NUL |
+| const char*, native signed count | String | Explicit byte copy; reject null/negative count; preserve embedded NUL |
 | Runtime integer | String | Requested locale-independent decimal formatting |
 | String | Runtime integer | Requested full-string decimal parsing and range check |
 | Float64 | String | Requested shortest round-trip finite decimal formatting |
@@ -204,3 +204,8 @@ is a distinct unsigned eight-bit core value with checked explicit integer casts
 and bitwise operations, not an arithmetic integer alias. See the
 [normative numeric/byte contract](numeric_module.md) for operations and module
 composition. There are no additional floating widths or char8 in this slice.
+
+String byte counts now use the metadata-selected native signed representation
+(default `__INT64_TYPE__`) for construction and `size()`. Wrapped count overloads
+are retired; vector/hash counts and other scalar wrappers remain unchanged. See
+[string boundaries](string_slice.md).

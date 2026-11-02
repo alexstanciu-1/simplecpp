@@ -9,7 +9,7 @@
 #include <string>
 using namespace scpp;
 void require(bool ok) { if(!ok) throw std::runtime_error("local datetime proof failed"); }
-std::string bytes(const string& value) { return {value.data(),static_cast<std::size_t>(value.size().native_value())}; }
+std::string bytes(const string& value) { return {value.data(),static_cast<std::size_t>(value.size())}; }
 long long parse(const char* text) { auto p=dt::parse_common_local(string{text}); require(p.has_value().native_value()); return p.value().native_value(); }
 std::string format(const char* pattern,long long time) { return bytes(dt::format_local(string{pattern},int64{time})); }
 struct alien_numbers : std::num_put<char> {
@@ -52,10 +52,10 @@ int main(int argc,char** argv) {
     std::string valid="2024-02-29 12:34:56";
     for(std::size_t i=0;i<valid.size();++i) {
         auto text=valid; text[i]='\0';
-        require(dt::parse_common_local(string{text.data(),int64{static_cast<long long>(text.size())}}).has_error().native_value());
+        require(dt::parse_common_local(string{text.data(),static_cast<long long>(text.size())}).has_error().native_value());
     }
     const char pattern[]={'Y','\0','U','\\'};
-    auto binary=dt::format_local(string{pattern,int64{4}},int64{0});
+    auto binary=dt::format_local(string{pattern,4},int64{0});
     auto expected=format("Y",0)+std::string(1,'\0')+"0\\";
     require(bytes(binary)==expected);
     require(format("",0).empty());

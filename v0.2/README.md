@@ -2,6 +2,8 @@
 
 Doc Status: supporting
 
+Runtime public APIs follow the [minimal public header rule](specs/runtime_public_headers.md).
+
 This is the active destination for explicitly reviewed reuse slices. Files outside
 this directory are reference material, never build inputs. Normal external compiler,
 standard-library and build-tool dependencies are permitted.

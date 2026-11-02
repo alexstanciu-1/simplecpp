@@ -44,7 +44,7 @@ final class Compilation_Inspection
 	}
 
 	/** Body views report resolved callable contracts without traversing another function's body. */
-	private static function body(ast_function_body $program): array /** array<string,mixed> */
+	public static function body(ast_function_body $program): array /** array<string,mixed> */
 	{
 		$program->require_prepared();
 		$statements = [];

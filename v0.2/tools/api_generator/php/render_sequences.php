@@ -20,7 +20,7 @@ function renderSequences(array $plan, array &$files, string &$definitions): void
 function renderString(array $plan): array {
     $s = $plan['string'];
     $n = $s['name'];
-    $count = $s['count_type'];
+    $count = $s['count_representation'];
     $types = $plan['headers']['types'];
     $vals = $plan['headers']['values'];
     [$lh, $ld] = lifecycle($n);

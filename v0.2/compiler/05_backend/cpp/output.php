@@ -4,7 +4,7 @@ declare(strict_types=1);
 namespace scpp\compiler;
 
 /**
- * Provides bounded C++ output helpers and byte-safe literal spelling for the current echo slice.
+ * Spells exact output literal bytes; the compiled runtime owns formatting and IO.
  */
 final class Cpp_Output
 {
@@ -18,34 +18,4 @@ final class Cpp_Output
 		return $literal . '"';
 	}
 
-	/** @todo Integrate the full runtime output API; see specs/planning/echo_debt.md. */
-	public static function helpers(): string
-	{
-		return <<<'CPP'
-#include <charconv>
-#include <cstddef>
-#include <cstdint>
-#include <cstdio>
-#include <stdexcept>
-#include <system_error>
-
-[[maybe_unused]] static void scpp_echo_bytes(const char *data, std::size_t length)
-{
-	if (std::fwrite(data, 1, length, stdout) != length) {
-		throw std::runtime_error("echo: stdout write failed");
-	}
-}
-
-[[maybe_unused]] static void scpp_echo_int(std::int64_t value)
-{
-	char buffer[32];
-	const auto result = std::to_chars(buffer, buffer + sizeof(buffer), value);
-	if (result.ec != std::errc{}) {
-		throw std::runtime_error("echo: integer formatting failed");
-	}
-	scpp_echo_bytes(buffer, static_cast<std::size_t>(result.ptr - buffer));
-}
-
-CPP;
-	}
 }

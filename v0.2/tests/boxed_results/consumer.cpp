@@ -49,9 +49,9 @@ void states() {
     result_mixed failure{error}; auto moved_error = std::move(failure);
     require(moved_error.has_error().native_value() && failure.value().kind() == boxed_kind::null);
     auto* self = &moved_error; moved_error = *self; moved_error = std::move(*self);
-    require(moved_error.error().get_message().size().native_value() == 21);
+    require(moved_error.error().get_message().size() == 21);
     result_string text{string{"ok"}};
-    require(text.value().size().native_value() == 2);
+    require(text.value().size() == 2);
 }
 void ownership() {
     auto m = mixed::container(); m.set(int64{0LL}, mixed::from_integer(int64{1LL}));
