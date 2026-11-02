@@ -43,9 +43,67 @@ final class Cpp_Bundle
 		return $data['translation_units'];
 	}
 
+	/** Successful input baseline; old hash-based or malformed records request a fresh build. */
+	public static function baseline(string $directory): ?array /** Project_Changes captured state */
+	{
+		$path = $directory . '/manifest.json';
+		if (!is_file($path) || is_link($path)) {
+			return null;
+		}
+		try {
+			$data = json_decode((string) file_get_contents($path), true, 512, JSON_THROW_ON_ERROR);
+			$state = $data['build']['inputs'] ?? null;
+			return Project_Changes::valid($state) ? $state : null;
+		}
+		catch (\JsonException $error) {
+			return null;
+		}
+	}
+
+	/** Reuse only a successful matching build whose complete generated artifacts are still intact. */
+	public static function reuse(string $directory, array $state /** Project_Changes captured state */): ?array /** manifest object shape */
+	{
+		$path = $directory . '/manifest.json';
+		if (is_link($directory) || is_link($path) || is_link($directory . '/units') || !is_file($path)) {
+			return null;
+		}
+		try
+		{
+			$data = json_decode((string) file_get_contents($path), true, 512, JSON_THROW_ON_ERROR);
+			if (!is_array($data) || (($data['format'] ?? null) !== self::FORMAT)
+				|| (($data['build']['inputs'] ?? null) !== $state)
+				|| !is_array($data['build']['artifacts'] ?? null)
+				|| !is_array($data['sources'] ?? null)) {
+				return null;
+			}
+			$expected_metadata = $data['build']['metadata'] ?? null;
+			$metadata = $data;
+			unset($metadata['build']);
+			if ($metadata !== $expected_metadata) {
+				return null;
+			}
+			$units = self::previous($path);
+			if (($units === []) || (array_keys($data['build']['artifacts']) !== $units)) {
+				return null;
+			}
+			foreach ($data['build']['artifacts'] as $unit => $expected) {
+				clearstatcache(true, $directory . '/' . $unit);
+				$stat = @stat($directory . '/' . $unit);
+				if (is_link($directory . '/' . $unit) || !is_file($directory . '/' . $unit)
+					|| ($stat === false) || (['mtime' => $stat['mtime'], 'size' => $stat['size']] !== $expected)) {
+					return null;
+				}
+			}
+			return $data;
+		}
+		catch (\JsonException|\RuntimeException $error) {
+			return null;
+		}
+	}
+
 	/** Publish a complete candidate and retire only previously inventoried units; manifest is written last. */
 	public static function write(string $directory, cpp_program_output $output,
-		array $inputs /** list<string>; protected source and target-facts paths */): void
+		array $inputs /** list<string>; protected source and target-facts paths */, ?array $state /** Project_Changes captured state */ = null): void
 	{
 		$directory = rtrim($directory, '/');
 		if (($directory === '') || is_link($directory) || is_link($directory . '/units')
@@ -75,7 +133,6 @@ final class Cpp_Bundle
 		if ($output->native_sources !== []) {
 			$data['native_sources'] = $output->native_sources;
 		}
-		$text = json_encode($data, JSON_THROW_ON_ERROR | JSON_PRETTY_PRINT) . "\n";
 		if (file_exists($manifest) && !unlink($manifest)) {
 			throw new \RuntimeException('Cannot invalidate program manifest');
 		}
@@ -88,6 +145,20 @@ final class Cpp_Bundle
 				throw new \RuntimeException('Cannot retire obsolete program unit: ' . $path);
 			}
 		}
+		if ($state !== null)
+		{
+			$artifacts = [];
+			foreach ($output->files as $path => $_) {
+				clearstatcache(true, $directory . '/' . $path);
+				$stat = stat($directory . '/' . $path);
+				if ($stat === false) {
+					throw new \RuntimeException('Cannot stat published artifact: ' . $path);
+				}
+				$artifacts[$path] = ['mtime' => $stat['mtime'], 'size' => $stat['size']];
+			}
+			$data['build'] = ['inputs' => $state, 'metadata' => $data, 'artifacts' => $artifacts];
+		}
+		$text = json_encode($data, JSON_THROW_ON_ERROR | JSON_PRETTY_PRINT) . "\n";
 		Cpp_Publication::write($manifest, $text);
 	}
 }

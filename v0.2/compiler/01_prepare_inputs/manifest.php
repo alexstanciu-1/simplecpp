@@ -10,6 +10,7 @@ final class Module_Loader
 	private array $paths /** array<string,string>; unique module name -> canonical manifest */ = [];
 	private array $definitions /** array<string,array{root:string,type:string,sources:array<string,flavor>,dependencies:list<string>,manifest:string,entry?:string}> */ = [];
 	private string $runtime;
+	private string|false $output_directory = false;
 
 	public function __construct(?string $runtime = null)
 	{
@@ -17,8 +18,9 @@ final class Module_Loader
 	}
 
 	/** Each invocation reloads configuration and discovery; generated inventories are never input caches. */
-	public function load(string $path): compilation_session
+	public function load(string $path, ?string $output_directory = null): compilation_session
 	{
+		$this->output_directory = $output_directory === null ? false : realpath($output_directory);
 		$this->documents = [];
 		$this->paths = [];
 		$this->definitions = [];
@@ -258,6 +260,9 @@ final class Module_Loader
 				continue;
 			}
 			if (is_dir($absolute)) {
+				if (realpath($absolute) === $this->output_directory) {
+					continue;
+				}
 				if (!in_array(strtolower($entry), ['build', 'generated', 'vendor', 'node_modules'], true)
 					&& !is_file($absolute . '/module.json')) {
 					$result = array_merge($result, $this->discover($root, $type, $path));

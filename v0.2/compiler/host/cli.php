@@ -71,7 +71,7 @@ final class Compiler_Cli
 		return "Usage: php main.php <tokens|parse|collect> <cpp|php|js> <file>\n"
 			. "       php main.php prepare <flavor> <file> <native-facts.json>\n"
 			. "       php main.php cpp <flavor> <file> <native-facts.json> <output.cpp>\n"
-			. "       php main.php project <module-dir|module.json> <facts.json> <output-dir>\n"
+			. "       php main.php project <module-dir|module.json> <facts.json> <output-dir> [--force]\n"
 			. "       php main.php program <root> <entry-relative> <facts.json> <output-dir> <flavor> <source-relative> [...]\n";
 	}
 

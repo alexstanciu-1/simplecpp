@@ -3,6 +3,15 @@
 declare(strict_types=1);
 namespace scpp\compiler;
 
+/** General change state shared by compiler models; native uint8 intent. */
+enum change_status: int
+{
+	case none = 0;
+	case added = 1;
+	case removed = 2;
+	case changed = 3;
+}
+
 /** Owns the selected graph; entry references a module owned by modules. */
 final readonly class compilation_session
 {
@@ -78,6 +87,9 @@ final class source_unit
 	public readonly module $module; /** Native non-owning owner backlink. */
 	public readonly string $path;
 	public readonly flavor $flavor;
+	public change_status $status = change_status::none;
+	public int $mtime /** int64; filesystem timestamp in seconds */ = 0;
+	public int $size /** uint64; file size in bytes */ = 0;
 	/** Owned completed frontend result; null until parsing/collection succeeds, or always null for native inputs. */
 	public ?ast_file_node $ast = null;
 

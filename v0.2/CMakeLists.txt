@@ -173,10 +173,13 @@ if(BUILD_TESTING)
   add_test(NAME compiler_declaration_facts COMMAND ${PHP_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/compiler/tests/declaration_facts.php)
   add_test(NAME compiler_duplicates_cli COMMAND ${CMAKE_COMMAND} -E env PHP_EXECUTABLE=${PHP_EXECUTABLE}
     ${Python3_EXECUTABLE} -B ${CMAKE_CURRENT_SOURCE_DIR}/compiler/tests/duplicates_cli.py)
+  add_test(NAME compiler_incremental COMMAND ${CMAKE_COMMAND} -E env PHP_EXECUTABLE=${PHP_EXECUTABLE}
+    ${Python3_EXECUTABLE} -B ${CMAKE_CURRENT_SOURCE_DIR}/compiler/tests/incremental.py)
   add_test(NAME compiler_duplicates COMMAND ${PHP_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/compiler/tests/duplicates.php)
   add_test(NAME compiler_functions COMMAND ${PHP_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/compiler/tests/functions.php)
   add_test(NAME compiler_output COMMAND ${PHP_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/compiler/tests/output.php)
   add_test(NAME compiler_modules COMMAND ${PHP_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/compiler/tests/modules.php)
+  add_test(NAME compiler_source_changes COMMAND ${PHP_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/compiler/tests/source_changes.php)
   add_test(NAME compiler_manifests COMMAND ${PHP_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/compiler/tests/manifests.php)
   add_test(NAME compiler_program COMMAND ${PHP_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/compiler/tests/program.php)
   add_test(NAME generator_cleanup COMMAND ${PHP_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/api_generator/tests/publication.php)

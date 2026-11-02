@@ -160,3 +160,19 @@ datetime manifests describe existing sources. This does not ingest runtime API
 metadata, generate optional publications, or add semantic bindings. There is no
 config field or profile machinery. Existing explicit inventory/panel callers keep
 their behavior. Full rescanning and rebuilding remain the initial policy.
+
+## Whole-project change detection checkpoint
+
+The project command compares mtime and size before preparation; content hashing
+was replaced at the user's request. Any detected change, including application
+source changes, triggers full compilation. Unchanged inputs may reuse the bundle.
+Success metadata remains in the existing bundle manifest and is updated only on
+publication. Failure leaves changes pending against the previous baseline.
+
+source_unit now carries mtime, size and the general change_status enum
+(none/added/removed/changed). Removed units are retained for the change pass without
+entering active compilation. There is no separate tracked-file model. Header and
+manifest checks use plain metadata maps. No AST change, partial reuse, or native
+linker orchestration is introduced. Same-size edits preserving second-resolution
+mtime can be missed; --force explicitly requests a rebuild. See the module guide
+for the tracked-input boundary and exclusions.

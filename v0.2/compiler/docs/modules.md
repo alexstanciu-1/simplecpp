@@ -4,7 +4,7 @@ Doc Status: supporting
 
 The PHP compiler accepts a directory containing `module.json`, or an explicit
 manifest filename. This is the bounded v0.2 loader; it does not replace the older
-PRJ format or implement profiles, package resolution, or incremental reuse.
+PRJ format or implement profiles, package resolution, or selective incremental compilation.
 
 ```sh
 XDEBUG_MODE=off php v0.2/compiler/main.php project /path/to/app \
@@ -122,14 +122,57 @@ The default CMake runtime build remains independent of per-application selection
 Native module inputs are consumed directly in the focused executable proof rather
 than also linking the same prebuilt runtime archive (which would duplicate symbols).
 
-Every manifest load rescans and every compilation rebuilds source ASTs. There is
-no manifest cache, change detector, or incremental reuse yet.
+## Initial incremental rule
+
+The `project` command reloads manifests and discovers membership every time. It
+compares mtime (seconds) and size for module-owned files, target facts and compiler
+PHP code, together with the selected graph. No file-content hashing is performed.
+Any detected change runs the entire frontend/preparation/emission pipeline again.
+Unchanged inputs reuse the existing bundle if the metadata and generated artifacts'
+mtime/size still match. Missing artifacts trigger rebuilding too.
+
+`source_unit` owns `status: change_status`, `mtime: int64`, and `size: uint64`.
+The shared integer enum is `none=0`, `added=1`, `removed=2`, `changed=3`, with native
+uint8 intent; it is not restricted to files. Status compares against the previous
+successful baseline. Removed sources remain source-unit records in the change pass,
+separate from active compilation membership. PHP retains their module references;
+a native implementation must preserve the corresponding retired owners' lifetimes.
+The JSON rebuild report includes changed source paths/statuses. Headers and
+manifests use ordinary metadata maps, without another tracked-file class.
+
+Module scans conservatively include non-source files too. They exclude `.git`,
+`build` directories, generated `module.sources.json` inspection inventories and the
+current output directory. Explicit sources are always checked, even under excluded
+build directories. Generated runtime directories are inputs and are not excluded.
+Symlinked input directories reject rather than silently leaving inputs untracked.
+External toolchain/system headers are outside this module-owned input boundary.
+PHP's stat cache is cleared at the start of each check.
+
+Successful publication saves the new baseline in the existing bundle manifest's
+`build` record. Failures preserve the previous successful baseline, leaving changes
+pending on retry. Old hash-based build records cause one full rebuild. A second
+metadata check before publication rejects detected changes during compilation;
+this does not synchronize concurrent edits or simultaneous builds of one output.
+
+Edits preserving both mtime and size can go unnoticed, including same-size edits
+within one second. This is the accepted cheap-check tradeoff. Use
+`project <module> <facts.json> <output-dir> --force` to request a full rebuild.
+
+A full rebuild regenerates every compiler translation unit. The command still emits
+a C++ bundle, not an executable; a native build consumer must rebuild its native
+objects/link result when `rebuilt` is true. No native build cache is introduced.
+Corrupt cleanup ownership manifests still reject safely instead of authorizing
+deletion. Explicit-file and panel paths continue to run fully.
+
+No AST cache, per-file reuse, symbol watches or dependency-based dirty propagation
+is implemented.
 
 ## Checks
 
 ```sh
 XDEBUG_MODE=off php v0.2/compiler/tests/manifests.php
 XDEBUG_MODE=off python3 -B v0.2/compiler/tests/manifests_native.py
+XDEBUG_MODE=off python3 -B v0.2/compiler/tests/incremental.py
 ```
 
 The native proof uses the default generated runtime and existing native facts. It

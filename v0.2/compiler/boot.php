@@ -40,6 +40,7 @@ require_once __DIR__ . '/06_native/target.php';
 
 require_once __DIR__ . '/01_prepare_inputs/program.php';
 require_once __DIR__ . '/01_prepare_inputs/manifest.php';
+require_once __DIR__ . '/01_prepare_inputs/changes.php';
 require_once __DIR__ . '/04_analyze/prepare/program.php';
 require_once __DIR__ . '/compiler/program.php';
 require_once __DIR__ . '/05_backend/cpp/structures.php';
